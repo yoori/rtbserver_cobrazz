@@ -17,10 +17,8 @@ int main(int /*argc*/, char** /*argv*/)
   ArgMap args_cont;
   args_cont[String::SubString("TEST")] = "XX";
   String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
-  Logging::ActiveObjectCallbackImpl_var callback(
-    new Logging::ActiveObjectCallbackImpl());
-  Generics::TaskRunner_var task_runner(
-    new Generics::TaskRunner(callback, 1));
+  Logging::ActiveObjectCallbackImpl_var callback(new Logging::ActiveObjectCallbackImpl());
+  Generics::TaskRunner_var task_runner(new Generics::TaskRunner(callback, 1));
 
   {
     Commons::TextTemplateCachePtr cache =
@@ -33,10 +31,9 @@ int main(int /*argc*/, char** /*argv*/)
     Generics::Timer timer;
     timer.start();
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
-      Commons::TextTemplatePtr t =
-        cache->get_sync(std::string("~tmp/t"), std::string());
+      Commons::TextTemplatePtr t = cache->get_sync(std::string("~tmp/t"), std::string());
       std::string res = t->instantiate(args);
       /*
       std::cout << res << std::endl;
@@ -58,10 +55,9 @@ int main(int /*argc*/, char** /*argv*/)
     Generics::Timer timer;
     timer.start();
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
-      Commons::TextTemplatePtr t =
-        cache->get_sync(std::string("~tmp/t"), std::string());
+      Commons::TextTemplatePtr t = cache->get_sync(std::string("~tmp/t"), std::string());
       std::string res = t->instantiate(args);
       /*
       std::cout << res << std::endl;

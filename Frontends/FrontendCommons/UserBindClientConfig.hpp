@@ -21,27 +21,26 @@ namespace AdServer::UserInfoSvcs
     UserBindDistributedGrpcClient::UserBindControllerRefs
       user_bind_controller_refs;
 
-    if(common_config.UserBind().present())
+    if (common_config.UserBind().present())
     {
       const auto& user_bind_config = *common_config.UserBind();
-      if(user_bind_config.BatchingOptions().present())
+      if (user_bind_config.BatchingOptions().present())
       {
-        batching_options =
-          Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
+        batching_options = Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
       }
 
-      for(const auto& group : user_bind_config.UserBindControllerGroup())
+      for (const auto& group : user_bind_config.UserBindControllerGroup())
       {
         UserBindDistributedGrpcClient::UserBindControllerRefGroup
           user_bind_controller_ref_group;
-        for(const auto& endpoint : group.Endpoint())
+        for (const auto& endpoint : group.Endpoint())
         {
           user_bind_controller_ref_group.emplace_back(endpoint);
         }
-        if(!user_bind_controller_ref_group.empty())
+
+        if (!user_bind_controller_ref_group.empty())
         {
-          user_bind_controller_refs.emplace_back(
-            std::move(user_bind_controller_ref_group));
+          user_bind_controller_refs.emplace_back(std::move(user_bind_controller_ref_group));
         }
       }
     }

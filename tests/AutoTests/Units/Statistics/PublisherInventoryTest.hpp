@@ -30,14 +30,10 @@ typedef std::list<ChannelInventoryDiff> ChannelInventoryDiffs;
 
 public:
 
-  PublisherInventoryTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  PublisherInventoryTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     pgconn_(open_pq()),
-    debug_time_((AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
-        ":" + "00-01-00").c_str())
+    debug_time_((AutoTest::Time().get_gm_time().format("%d-%m-%Y") + ":" + "00-01-00").c_str())
   { }
 
   virtual ~PublisherInventoryTest() noexcept
@@ -57,8 +53,7 @@ private:
                      double pub_rate,
                      unsigned int colo_id = 0);
   void ta_campaigns_scenario();
-  void pub_adv_commission_scenario(unsigned int tag,
-                                   double pub_rate = 1.0);
+  void pub_adv_commission_scenario(unsigned int tag, double pub_rate = 1.0);
   void no_impression_scenario();
   void billing_stats_logging();
   void non_billing_stats_logging();

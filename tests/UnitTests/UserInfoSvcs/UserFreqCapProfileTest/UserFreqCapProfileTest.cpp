@@ -38,10 +38,9 @@ fc_consider_and_period_check(
 {
   static const char* FUN = "fc_consider_and_period_check()";
 
-  if(TRACE_CONSIDER)
+  if (TRACE_CONSIDER)
   {
-    std::cout << "Before consider at '" <<
-      now.get_gm_time() << "':" << std::endl;
+    std::cout << "Before consider at '" << now.get_gm_time() << "':" << std::endl;
     fc_profile.print(std::cout, &fc_config);
   }
 
@@ -56,19 +55,18 @@ fc_consider_and_period_check(
     UserFreqCapProfile::CampaignIds(),
     fc_config);
 
-  if(TRACE_CONSIDER)
+  if (TRACE_CONSIDER)
   {
     std::cout << "After consider at '" << now.get_gm_time() << "':" << std::endl;
     fc_profile.print(std::cout, &fc_config);
   }
 
-  if(period != Generics::Time::ZERO)
+  if (period != Generics::Time::ZERO)
   {
-    if(empty_full_fcs(fc_profile, now + 1, fc_config))
+    if (empty_full_fcs(fc_profile, now + 1, fc_config))
     {
       std::cerr << FUN << ": fcs empty at " << STEP <<
-        ", expected full by period for time = '" <<
-        (now + 1).get_gm_time() << "': ";
+        ", expected full by period for time = '" << (now + 1).get_gm_time() << "': ";
       Algs::print(std::cerr, fcs.begin(), fcs.end());
       std::cerr << std::endl << "  profile:" << std::endl;
       fc_profile.print(std::cerr, &fc_config);
@@ -76,11 +74,10 @@ fc_consider_and_period_check(
       return false;
     }
 
-    if(empty_full_fcs(fc_profile, now + period - 1, fc_config))
+    if (empty_full_fcs(fc_profile, now + period - 1, fc_config))
     {
       std::cerr << FUN << ": fcs empty at " << STEP <<
-        ", expected full by period for time = '" <<
-        (now + period - 1).get_gm_time() << "': ";
+        ", expected full by period for time = '" << (now + period - 1).get_gm_time() << "': ";
       Algs::print(std::cerr, fcs.begin(), fcs.end());
       std::cerr << std::endl << "  profile:" << std::endl;
       fc_profile.print(std::cerr, &fc_config);
@@ -89,8 +86,7 @@ fc_consider_and_period_check(
     }
   }
 
-  if(period != Generics::Time::ZERO &&
-     !empty_full_fcs(fc_profile, now + period, fc_config))
+  if (period != Generics::Time::ZERO && !empty_full_fcs(fc_profile, now + period, fc_config))
   {
     std::cerr << FUN << ": fcs not empty at " << STEP << ": ";
     Algs::print(std::cerr, fcs.begin(), fcs.end());
@@ -122,7 +118,7 @@ int test_fc_full()
     UserFreqCapProfile::FreqCapIdArray fcs;
     fcs.push_back(1);
 
-    if(!fc_consider_and_period_check(
+    if (!fc_consider_and_period_check(
          fc_profile,
          "step #1",
          AdServer::Commons::RequestId(),
@@ -135,7 +131,7 @@ int test_fc_full()
       return 1;
     }
 
-    if(!fc_consider_and_period_check(
+    if (!fc_consider_and_period_check(
          fc_profile,
          "step #2",
          AdServer::Commons::RequestId(),
@@ -164,11 +160,10 @@ int test_fc_full()
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(10), *fc_config);
-      if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
+      if (check_fcs.size() != 1 || *check_fcs.begin() != 1)
       {
         std::cerr << FUN << ": unexpected fcs at step #3, "
-          "expected full by window for time = '" <<
-          Generics::Time(10) << "': ";
+          "expected full by window for time = '" << Generics::Time(10) << "': ";
         Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
         std::cerr << std::endl << "  profile:" << std::endl;
         fc_profile.print(std::cerr, fc_config);
@@ -182,11 +177,10 @@ int test_fc_full()
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(20), *fc_config);
-      if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
+      if (check_fcs.size() != 1 || *check_fcs.begin() != 1)
       {
         std::cerr << FUN << ": unexpected fcs at step #4, "
-          "expected full by window for time = '" <<
-          Generics::Time(20) << "': ";
+          "expected full by window for time = '" << Generics::Time(20) << "': ";
         Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
         std::cerr << std::endl << "  profile:" << std::endl;
         fc_profile.print(std::cerr, fc_config);
@@ -200,11 +194,10 @@ int test_fc_full()
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(22), *fc_config);
-      if(!check_fcs.empty())
+      if (!check_fcs.empty())
       {
         std::cerr << FUN << ": not empty fcs at step #5, "
-          "for time = '" <<
-          Generics::Time(22) << "': ";
+          "for time = '" << Generics::Time(22) << "': ";
         Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
         std::cerr << std::endl << "  profile:" << std::endl;
         fc_profile.print(std::cerr, fc_config);
@@ -261,7 +254,7 @@ int test_ucfc()
     UserFreqCapProfile::FreqCapIdArray fcs2;
     fcs2.push_back(2);
 
-    if(!fc_consider_and_period_check(
+    if (!fc_consider_and_period_check(
          fc_profile,
          "step #1",
          AdServer::Commons::RequestId::create_random_based(),
@@ -274,7 +267,7 @@ int test_ucfc()
       return 1;
     }
 
-    if(!fc_consider_and_period_check(
+    if (!fc_consider_and_period_check(
          fc_profile,
          "step #2",
          AdServer::Commons::RequestId::create_random_based(),
@@ -292,11 +285,10 @@ int test_ucfc()
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(7), *fc_config);
-      if(!check_fcs.empty())
+      if (!check_fcs.empty())
       {
         std::cerr << FUN << ": not empty fcs at step #3, "
-          "for time = '" <<
-          Generics::Time(22) << "': ";
+          "for time = '" << Generics::Time(22) << "': ";
         Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
         std::cerr << std::endl << "  profile:" << std::endl;
         fc_profile.print(std::cerr, fc_config);
@@ -306,8 +298,7 @@ int test_ucfc()
     }
 
     {
-      AdServer::Commons::RequestId req_id =
-        AdServer::Commons::RequestId::create_random_based();
+      AdServer::Commons::RequestId req_id = AdServer::Commons::RequestId::create_random_based();
 
       fc_profile.consider(
         req_id,
@@ -331,20 +322,16 @@ int test_ucfc()
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
 
-      fc_profile.confirm_request(
-        req_id,
-        Generics::Time(26),
-        *fc_config);
+      fc_profile.confirm_request(req_id, Generics::Time(26), *fc_config);
 
       UserFreqCapProfile::FreqCapIdArray check_fcs;
       UserFreqCapProfile::SeqOrderArray seq_orders;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
       fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(26 + 6), *fc_config);
-      if(check_fcs.size() != 1 || *check_fcs.begin() != 1)
+      if (check_fcs.size() != 1 || *check_fcs.begin() != 1)
       {
         std::cerr << FUN << ": unexpected fcs at step #4, "
-          "expected full by window for time = '" <<
-          Generics::Time(26 + 6) << "': ";
+          "expected full by window for time = '" << Generics::Time(26 + 6) << "': ";
         Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
         std::cerr << std::endl << "  profile:" << std::endl;
         fc_profile.print(std::cerr, fc_config);
@@ -365,10 +352,8 @@ int test_ucfc()
     fcs3.push_back(3);
 
     // two unconfirmed imps at one freq cap - one confirmed after
-    AdServer::Commons::RequestId req_id =
-      AdServer::Commons::RequestId::create_random_based();
-    AdServer::Commons::RequestId req_id2 =
-      AdServer::Commons::RequestId::create_random_based();
+    AdServer::Commons::RequestId req_id = AdServer::Commons::RequestId::create_random_based();
+    AdServer::Commons::RequestId req_id2 = AdServer::Commons::RequestId::create_random_based();
 
     fc_profile.consider(
       req_id,
@@ -403,21 +388,16 @@ int test_ucfc()
       UserFreqCapProfile::CampaignIds(),
       *fc_config);
 
-    fc_profile.confirm_request(
-      req_id,
-      Generics::Time(29),
-      *fc_config);
+    fc_profile.confirm_request(req_id, Generics::Time(29), *fc_config);
 
     UserFreqCapProfile::FreqCapIdArray check_fcs;
     UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
     fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(25 + 6), *fc_config);
-    if(check_fcs.size() != 2 || *check_fcs.begin() != 2 ||
-       *++check_fcs.begin() != 3)
+    if (check_fcs.size() != 2 || *check_fcs.begin() != 2 || *++check_fcs.begin() != 3)
     {
       std::cerr << FUN << ": unexpected fcs at step #5, "
-        "expected full by total for time = '" <<
-        Generics::Time(25 + 6) << "': ";
+        "expected full by total for time = '" << Generics::Time(25 + 6) << "': ";
       Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
       std::cerr << std::endl << "  profile:" << std::endl;
       fc_profile.print(std::cerr, fc_config);
@@ -425,18 +405,14 @@ int test_ucfc()
       return 1;
     }
 
-    fc_profile.confirm_request(
-      req_id2,
-      Generics::Time(25 + 6),
-      *fc_config);
+    fc_profile.confirm_request(req_id2, Generics::Time(25 + 6), *fc_config);
 
     check_fcs.clear();
     fc_profile.full(check_fcs, 0, seq_orders, campaign_freqs, Generics::Time(29 + 6), *fc_config);
-    if(check_fcs.size() != 1 || *check_fcs.begin() != 3)
+    if (check_fcs.size() != 1 || *check_fcs.begin() != 3)
     {
       std::cerr << FUN << ": unexpected fcs at step #6, "
-        "expected full by total for time = '" <<
-        Generics::Time(29 + 6) << "': ";
+        "expected full by total for time = '" << Generics::Time(29 + 6) << "': ";
       Algs::print(std::cerr, check_fcs.begin(), check_fcs.end());
       std::cerr << std::endl << "  profile:" << std::endl;
       fc_profile.print(std::cerr, fc_config);
@@ -456,7 +432,7 @@ check_fcs(
   const UserFreqCapProfile::FreqCapIdArray& check_fcs,
   const UserFreqCapProfile::FreqCapIdArray& etalon)
 {
-  if(check_fcs.size() != etalon.size() ||
+  if (check_fcs.size() != etalon.size() ||
     !std::equal(check_fcs.begin(), check_fcs.end(), etalon.begin()))
   {
     std::cerr << STEP << ": unexpected fcs: (";
@@ -495,15 +471,14 @@ concurrent_case_ADSC_9494()
 
     const Generics::Time BASE(0);
 
-    for(int i = 0; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
       // step 1: consider request
       UserFreqCapProfile::FreqCapIdArray fcs;
       fcs.push_back(1);
 
       // two unconfirmed imps at one freq cap - one confirmed after
-      AdServer::Commons::RequestId req_id =
-        AdServer::Commons::RequestId::create_random_based();
+      AdServer::Commons::RequestId req_id = AdServer::Commons::RequestId::create_random_based();
 
       fc_profile.consider(
         req_id,
@@ -519,15 +494,14 @@ concurrent_case_ADSC_9494()
       fc_profile.confirm_request(req_id, BASE, *fc_config);
     }
 
-    for(int i = 0; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
       // step 2: consider concurrent request
       UserFreqCapProfile::FreqCapIdArray fcs;
       fcs.push_back(1);
 
       // two unconfirmed imps at one freq cap - one confirmed after
-      AdServer::Commons::RequestId req_id =
-        AdServer::Commons::RequestId::create_random_based();
+      AdServer::Commons::RequestId req_id = AdServer::Commons::RequestId::create_random_based();
 
       fc_profile.consider(
         req_id,
@@ -540,7 +514,7 @@ concurrent_case_ADSC_9494()
         UserFreqCapProfile::CampaignIds(),
         *fc_config);
 
-      if(i == 1)
+      if (i == 1)
       {
         fc_profile.confirm_request(req_id, BASE, *fc_config);
       }
@@ -556,14 +530,8 @@ concurrent_case_ADSC_9494()
       UserFreqCapProfile::FreqCapIdArray full_fcs;
       UserFreqCapProfile::SeqOrderArray skip;
       UserFreqCapProfile::CampaignFreqs campaign_freqs;
-      fc_profile.full(
-        full_fcs,
-        0,
-        skip,
-        campaign_freqs,
-        BASE + 1 + 60 + 1,
-        *fc_config);
-      if(!check_fcs(FUN + ": step 2", full_fcs, etalon_fcs))
+      fc_profile.full(full_fcs, 0, skip, campaign_freqs, BASE + 1 + 60 + 1, *fc_config);
+      if (!check_fcs(FUN + ": step 2", full_fcs, etalon_fcs))
       {
         return 1;
       }
@@ -589,8 +557,7 @@ test_campaign_freqs()
 
   SmartMemBuf_var buf(new SmartMemBuf);
 
-  const AdServer::Commons::RequestId req_id =
-    AdServer::Commons::RequestId::create_random_based();
+  const AdServer::Commons::RequestId req_id = AdServer::Commons::RequestId::create_random_based();
   const Generics::Time BASE(0);
 
   {
@@ -608,9 +575,7 @@ test_campaign_freqs()
 
     buf = Algs::copy_membuf(fc_profile.transfer_membuf());
 
-    const UserFreqCapProfileReader reader(
-      buf->membuf().data(),
-      buf->membuf().size());
+    const UserFreqCapProfileReader reader(buf->membuf().data(), buf->membuf().size());
 
     ASSERT_EQUALS (reader.uc_freq_caps().size(), 1U);
     ASSERT_EQUALS (reader.freq_caps().size(), 0U);
@@ -632,9 +597,7 @@ test_campaign_freqs()
     fc_profile.confirm_request(req_id, BASE + 26, *fc_config);
     buf = Algs::copy_membuf(fc_profile.transfer_membuf());
 
-    const UserFreqCapProfileReader reader(
-      buf->membuf().data(),
-      buf->membuf().size());
+    const UserFreqCapProfileReader reader(buf->membuf().data(), buf->membuf().size());
 
     ASSERT_EQUALS (reader.uc_freq_caps().size(), 0U);
     ASSERT_EQUALS (reader.freq_caps().size(), 0U);
@@ -656,13 +619,7 @@ test_campaign_freqs()
     UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
-    fc_profile.full(
-      full_fcs,
-      0,
-      seq_orders,
-      campaign_freqs,
-      BASE + 1,
-      *fc_config);
+    fc_profile.full(full_fcs, 0, seq_orders, campaign_freqs, BASE + 1, *fc_config);
 
     ASSERT_EQUALS (campaign_freqs.size(), 1U);
     auto it = campaign_freqs.begin();
@@ -688,13 +645,7 @@ test_campaign_freqs()
     UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
-    fc_profile.full(
-      full_fcs,
-      0,
-      seq_orders,
-      campaign_freqs,
-      BASE + 120,
-      *fc_config);
+    fc_profile.full(full_fcs, 0, seq_orders, campaign_freqs, BASE + 120, *fc_config);
 
     ASSERT_EQUALS (campaign_freqs.size(), 1U);
     auto it = campaign_freqs.begin();
@@ -739,13 +690,7 @@ test_campaign_freqs()
     UserFreqCapProfile::SeqOrderArray seq_orders;
     UserFreqCapProfile::CampaignFreqs campaign_freqs;
 
-    fc_profile.full(
-      full_fcs,
-      0,
-      seq_orders,
-      campaign_freqs,
-      BASE + 1,
-      *fc_config);
+    fc_profile.full(full_fcs, 0, seq_orders, campaign_freqs, BASE + 1, *fc_config);
 
     ASSERT_EQUALS (campaign_freqs.size(), 2U);
     auto it = campaign_freqs.begin();

@@ -33,7 +33,7 @@ check_match_result(
   const Tags& matched_tags,
   const int (&etalon_tags)[ETALON_SIZE])
 {
-  if(matched_tags.size() != ETALON_SIZE ||
+  if (matched_tags.size() != ETALON_SIZE ||
      !std::equal(matched_tags.begin(), matched_tags.end(), etalon_tags))
   {
     std::cerr << test_name << ": unexpected match result:" << std::endl << "  ";
@@ -57,7 +57,7 @@ empty_do_not_fault_test() noexcept
   AhoCorasik<Tag> matcher;
 
   matcher.match(String::SubString("AAAAA"), callback);
-  if(!matched_tags.empty())
+  if (!matched_tags.empty())
   {
     std::cerr << TEST << ": error, non empty result: ";
     Algs::print(std::cerr, matched_tags.begin(), matched_tags.end());
@@ -86,7 +86,7 @@ match_test_1() noexcept
   matcher.match(String::SubString("awinwinwinwinAbbatAAABBA"), callback);
 
   const int ETALON_TAGS[] = { 1, 1, 2, 1, 2, 1, 2, 4, 3, 5, 4 };
-  if(!check_match_result(TEST, matched_tags, ETALON_TAGS))
+  if (!check_match_result(TEST, matched_tags, ETALON_TAGS))
   {
     return 1;
   }
@@ -113,7 +113,7 @@ match_test_2() noexcept
   matcher.match(String::SubString("ababcdeab"), callback);
 
   const int ETALON_TAGS[] = { 3, 2, 1, 4 };
-  if(!check_match_result(TEST, matched_tags, ETALON_TAGS))
+  if (!check_match_result(TEST, matched_tags, ETALON_TAGS))
   {
     return 1;
   }

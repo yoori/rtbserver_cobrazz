@@ -17,9 +17,7 @@ namespace AdServer::Commons
     if (!name.empty())
     {
       char thread_name[16] = {};
-      const auto size = std::min<std::size_t>(
-        name.size(),
-        sizeof(thread_name) - 1);
+      const auto size = std::min<std::size_t>(name.size(), sizeof(thread_name) - 1);
       name.copy(thread_name, size);
       pthread_setname_np(pthread_self(), thread_name);
     }

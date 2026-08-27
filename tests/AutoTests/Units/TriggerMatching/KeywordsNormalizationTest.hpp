@@ -19,10 +19,7 @@ class KeywordsNormalizationTest: public BaseDBUnit
 
 public:
 
-  KeywordsNormalizationTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  KeywordsNormalizationTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   {};

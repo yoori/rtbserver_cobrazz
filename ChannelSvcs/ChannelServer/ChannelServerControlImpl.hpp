@@ -16,9 +16,7 @@
 #include <ChannelSvcs/ChannelCommons/ChannelServer_s.hpp>
 #include "ChannelServerCore.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   /**
    * Implementation of common part ChannelServer
@@ -73,5 +71,4 @@ namespace ChannelSvcs
   typedef ReferenceCounting::SmartPtr<ChannelServerControlImpl>
     ChannelServerControlImpl_var;
 
-} /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs

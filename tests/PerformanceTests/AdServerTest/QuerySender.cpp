@@ -20,8 +20,7 @@ print_cookie(std::ostream& out, const CookieDef& cookie)
 {
   out << "    " << cookie.name << "=" << cookie.value << " " <<
       cookie.domain << " " << cookie.path << " " <<
-      HTTP::cookie_date(cookie.expires) <<
-      (cookie.secure ? " secure" : "") << std::endl;
+      HTTP::cookie_date(cookie.expires) << (cookie.secure ? " secure" : "") << std::endl;
 }
 
 class PrintCookies : public HTTP::ClientCookieFacility
@@ -44,21 +43,17 @@ bool url_not_empty (const char* url)
   return strlen(url) != 0;
 }
 
-bool need_send(unsigned long request_index,
-               double percentage)
+bool need_send(unsigned long request_index, double percentage)
 {
   double prc = percentage >= 100? 100: percentage < 0? 0: percentage;
-  int last_index =
-    int(double(request_index)*prc) / 100;
-  int current_index =
-    int(double(request_index + 1)*prc) / 100;
+  int last_index = int(double(request_index)*prc) / 100;
+  int current_index = int(double(request_index + 1)*prc) / 100;
   return (current_index > last_index);
 }
 
 // QueryScheduledTask class
 
-QueryScheduledTask::QueryScheduledTask(QuerySender* owner,
-                                       BaseRequest* request) :
+QueryScheduledTask::QueryScheduledTask(QuerySender* owner, BaseRequest* request) :
   owner_(owner),
   request_(request)
 { }
@@ -112,15 +107,11 @@ QuerySender::QuerySender(
   execution_time_constraint_ =
     new ThresholdConstraint<Generics::Time>("Test execution",
                                             "Time exceed",
-                                            Generics::Time(
-                                              cfg_.execution_time()),
+                                            Generics::Time(cfg_.execution_time()),
                                             Generics::Time::ZERO);
-  Constraint_var pool_queue_constraint_var =
-    Constraint_var(pool_queue_constraint_);
-  Constraint_var sender_queue_constraint_var =
-    Constraint_var(sender_queue_constraint_);
-  Constraint_var execution_time_constraint_var =
-    Constraint_var(execution_time_constraint_);
+  Constraint_var pool_queue_constraint_var = Constraint_var(pool_queue_constraint_);
+  Constraint_var sender_queue_constraint_var = Constraint_var(sender_queue_constraint_);
+  Constraint_var execution_time_constraint_var = Constraint_var(execution_time_constraint_);
   constraints_.register_constraint(pool_queue_constraint_var);
   constraints_.register_constraint(sender_queue_constraint_var);
   constraints_.register_constraint(execution_time_constraint_var);
@@ -137,8 +128,7 @@ void QuerySender::start() /*throw(Exception)*/
   int error = ACE_Task<ACE_MT_SYNCH>::activate (THR_NEW_LWP, 1); // FIXME Get rid of ACE
   if ( error != 0)
     {
-      logger_->stream(Logging::Logger::CRITICAL) <<
-        "QuerySender thread start failed";
+      logger_->stream(Logging::Logger::CRITICAL) << "QuerySender thread start failed";
       throw Exception("QuerySender thread start failed");
     }
 }
@@ -158,8 +148,7 @@ void QuerySender::on_response(
 {
 
   _log_response(data.http_request(), data.response_code());
-  stats_.push_response(data.http_request(), is_opted_out, ccid,
-                       ad_response);
+  stats_.push_response(data.http_request(), is_opted_out, ccid, ad_response);
   if (ad_response)
   {
     _schedule_child_requests(client_id,
@@ -175,8 +164,7 @@ void QuerySender::on_error(
   bool is_opted_out) noexcept
 {
   logger_->stream(Logging::Logger::TRACE) << description;
-  stats_.push_error(data.http_request(),
-                    is_opted_out);
+  stats_.push_error(data.http_request(), is_opted_out);
 }
 
 int QuerySender::svc() noexcept
@@ -189,13 +177,10 @@ int QuerySender::svc() noexcept
       {
         SecondStartWaiter waiter; // need for waiting next second on iteration ending
         // Send queued request
-        unsigned long sended_requests =
-            _send_queued_requests(request_per_sec);
+        unsigned long sended_requests = _send_queued_requests(request_per_sec);
 
         // Send 'ns-lookup' request
-        for(unsigned int i = 0;
-            i < request_per_sec - sended_requests;
-            i++)
+        for (unsigned int i = 0; i < request_per_sec - sended_requests; i++)
         {
           _send_main_request();
         }
@@ -206,9 +191,7 @@ int QuerySender::svc() noexcept
         // Check constraints
         if (!constraints_.check())
         {
-          logger_->log(
-            constraints_.error(),
-            Logging::Logger::ERROR);
+          logger_->log(constraints_.error(), Logging::Logger::ERROR);
           return 0;
         }
 
@@ -220,15 +203,12 @@ int QuerySender::svc() noexcept
     }
   catch (eh::Exception& e)
   {
-    logger_->stream( Logging::Logger::CRITICAL) <<
-      "Exception:" << e.what();
+    logger_->stream(Logging::Logger::CRITICAL) << "Exception:" << e.what();
     return 1;
   }
   catch (...)
   {
-    logger_->log(
-      String::SubString("Unexpected exception"),
-      Logging::Logger::CRITICAL);
+    logger_->log(String::SubString("Unexpected exception"), Logging::Logger::CRITICAL);
     return 1;
   }
 }
@@ -251,8 +231,7 @@ void QuerySender::_init_clients()
   for (unsigned int i = 0; i < cfg_.client_config()->count; i++)
     {
       CookiePool_var cookie(new CookiePoolPtr(new PrintCookies()));
-      HttpInterface_var client(
-        CreateCookieClient(http_pool_.in(), cookie.in()));
+      HttpInterface_var client(CreateCookieClient(http_pool_.in(), cookie.in()));
       clients_.push_back(client);
       cookies_.push_back(cookie);
     }
@@ -283,8 +262,7 @@ void QuerySender::dump(bool need_full)
   ShortReport(stats_, stat_msg).dump();
 
   unsigned long time_afer_last_dump = time(NULL) - full_dump_time_;
-  if (need_full ||
-       time_afer_last_dump >= cfg_.statistics_interval_dump())
+  if (need_full || time_afer_last_dump >= cfg_.statistics_interval_dump())
     {
       full_dump_time_ = time(NULL);
       stat_msg << std::endl;
@@ -297,8 +275,7 @@ void QuerySender::dump_confluence_report()
 {
   if (!cfg_.confluence_report_path().empty())
   {
-    ConfluenceReport(stats_, cfg_, constraints_,
-                     get_total_duration()).dump();
+    ConfluenceReport(stats_, cfg_, constraints_, get_total_duration()).dump();
   }
 }
 
@@ -329,8 +306,7 @@ void QuerySender::_send_main_request()
 
 bool QuerySender::_need_optout()
 {
-  unsigned long optout_rand =
-      Generics::safe_rand(100);
+  unsigned long optout_rand = Generics::safe_rand(100);
   return optout_rand < cfg_.client_config()->optout_rate;
 }
 
@@ -349,6 +325,7 @@ void QuerySender::_process_request(BaseRequest* request)
     client = clients_[client_id].in();
     cookies_[client_id]->as<PrintCookies>()->print_cookies(ostr);
   }
+
   if (request->isGet())
   {
     client->add_get_request(url.c_str(), response_cb_, HTTP::HttpServer(), headers);
@@ -462,24 +439,19 @@ unsigned long QuerySender::_get_requests_increment()
 {
   if (!cfg_.client_config()->step_interval)
     return 0;
-  return
-    cfg_.client_config()->incr_count_step /
-    cfg_.client_config()->step_interval;
+  return cfg_.client_config()->incr_count_step / cfg_.client_config()->step_interval;
 }
 
-void QuerySender::_log_response(const char* http_request,
-                                int response_code,
-                                const char* )
+void QuerySender::_log_response(const char* http_request, int response_code, const char*)
 {
   logger_->stream(Logging::Logger::TRACE) <<
-    "Receive response on request '" << http_request <<
-    "' status=" << response_code;
+    "Receive response on request '" << http_request << "' status=" << response_code;
 }
 
 void QuerySender::enqueue_request(BaseRequest* request)
 {
   ACE_Message_Block* message = request; // FIXME Get rid of ACE
-  if(putq(message) == -1)
+  if (putq(message) == -1)
     {
       int error = ACE_OS::last_error();
       message->release();
@@ -494,11 +466,9 @@ void QuerySender::enqueue_request(BaseRequest* request)
     }
 }
 
-void QuerySender::_schedule_request(BaseRequest* request,
-                                    unsigned long request_delay)
+void QuerySender::_schedule_request(BaseRequest* request, unsigned long request_delay)
 {
-  Generics::Time request_time =
-    Generics::Time::get_time_of_day() + request_delay;
+  Generics::Time request_time = Generics::Time::get_time_of_day() + request_delay;
   Generics::Goal_var goal(new QueryScheduledTask(this, request));
   scheduler_->schedule(goal, request_time);
 }
@@ -511,8 +481,7 @@ void QuerySender::_schedule_child_requests(unsigned long client_id,
   std::string server;
   unsigned long srv_idx = Generics::safe_rand(cfg_.server_urls()->size());
   cfg_.server_urls()->get(srv_idx, server);
-  if (url_not_empty(click_url) &&
-      need_send(click_count_++, cfg_.client_config()->click_rate))
+  if (url_not_empty(click_url) && need_send(click_count_++, cfg_.client_config()->click_rate))
   {
     ClickRequest* request = new ClickRequest(this,
                                              client_id,
@@ -521,6 +490,7 @@ void QuerySender::_schedule_child_requests(unsigned long client_id,
                                              click_url);
     _schedule_request(request, 0);
   }
+
   if (url_not_empty(passback_url) &&
       need_send(passback_count_++,  cfg_.client_config()->passback_rate))
   {
@@ -544,7 +514,7 @@ unsigned long QuerySender::_send_queued_requests(unsigned long max_requests)
         }
       ACE_Message_Block* message = 0;
       int result = getq(message);
-      if(result == -1)
+      if (result == -1)
         {
           int error = ACE_OS::last_error();
           char buf[256];
@@ -555,7 +525,8 @@ unsigned long QuerySender::_send_queued_requests(unsigned long max_requests)
           _shutdown_set();
           return 0;
         }
-      if(message)
+
+      if (message)
         {
           BaseRequest* request = dynamic_cast<BaseRequest*>(message);
           _process_request(request);

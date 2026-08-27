@@ -5,8 +5,7 @@
 
 namespace AdServer::Commons
 {
-  using CoroutineResumeScheduler =
-    std::function<void(std::coroutine_handle<>)>;
+  using CoroutineResumeScheduler = std::function<void(std::coroutine_handle<>)>;
 
   inline const CoroutineResumeScheduler*&
   current_coroutine_resume_scheduler_ref() noexcept
@@ -36,8 +35,7 @@ namespace AdServer::Commons
       current_coroutine_resume_scheduler_ref() = previous_;
     }
 
-    ScopedCoroutineResumeScheduler(const ScopedCoroutineResumeScheduler&) =
-      delete;
+    ScopedCoroutineResumeScheduler(const ScopedCoroutineResumeScheduler&) = delete;
 
     ScopedCoroutineResumeScheduler&
     operator=(const ScopedCoroutineResumeScheduler&) = delete;

@@ -40,14 +40,14 @@ sub create
   }
   else
   {
-    $args_copy{original_keyword} = 
-     substr($args->{original_keyword}, 0, 1) eq '-'? 
+    $args_copy{original_keyword} =
+     substr($args->{original_keyword}, 0, 1) eq '-'?
        "-" . make_autotest_name(
          $self->{ns}, substr($args->{original_keyword}, 0, 1)):
            make_autotest_name(
              $self->{ns}, $args->{original_keyword});
   }
-    
+
   my $campaign = $self->{ns}->create(
      TextAdvertisingCampaign => \%args_copy);
 
@@ -55,11 +55,11 @@ sub create
   $self->{ns}->output("CCG", $campaign->{ccg_id});
   if (defined $args->{original_keyword})
   {
-    $self->{ns}->output("Channel", 
+    $self->{ns}->output("Channel",
       $campaign->{CCGKeyword}->channel_id);
-    $self->{ns}->output("KWD", 
+    $self->{ns}->output("KWD",
       $args_copy{original_keyword});
-    $self->{ns}->output("CCGKeyword", 
+    $self->{ns}->output("CCGKeyword",
       $campaign->{CCGKeyword}->{ccg_keyword_id});
   }
 
@@ -95,7 +95,7 @@ sub activate_ccgkeyword
 {
   my ($self, $ns) = @_;
   new CCGKeywordUpdate::Case(
-    $ns, "ACTIVATE", 
+    $ns, "ACTIVATE",
     { ccgkeyword_status => 'D',
       original_keyword => 'KWD' } );
 }
@@ -104,7 +104,7 @@ sub deactivate_ccgkeyword
 {
   my ($self, $ns) = @_;
   new CCGKeywordUpdate::Case(
-    $ns, "DEACTIVATE", 
+    $ns, "DEACTIVATE",
     { original_keyword => 'KWD' } );
 }
 
@@ -112,7 +112,7 @@ sub deactivate_channel
 {
   my ($self, $ns) = @_;
   new CCGKeywordUpdate::Case(
-    $ns, "DEACTIVATECHANNEL", 
+    $ns, "DEACTIVATECHANNEL",
     { original_keyword => 'KWD' } );
 }
 
@@ -120,7 +120,7 @@ sub change_ccgkeyword
 {
   my ($self, $ns) = @_;
   my $case = new CCGKeywordUpdate::Case(
-    $ns, "CHANGE", 
+    $ns, "CHANGE",
     { original_keyword => '-KWD',
       ccgkeyword_click_url => 'http://www.CCGKeywordUpdate.com',
       max_cpc_bid => 10 } );

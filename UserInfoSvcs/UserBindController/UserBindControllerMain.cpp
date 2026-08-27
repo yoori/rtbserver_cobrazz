@@ -75,8 +75,7 @@ UserBindControllerApp_::main(int& argc, char** argv) noexcept
       }
 
       configuration_.reset(
-        new UserBindControllerConfigType(
-          ad_configuration->UserBindControllerConfig()));
+        new UserBindControllerConfigType(ad_configuration->UserBindControllerConfig()));
     }
     catch (const xml_schema::parsing& ex)
     {
@@ -105,15 +104,9 @@ UserBindControllerApp_::main(int& argc, char** argv) noexcept
       std::string(config().pid_file()));
 
     Logging::ActiveObjectCallbackImpl_var callback(
-      new Logging::ActiveObjectCallbackImpl(
-        logger(),
-        "UserBindControllerApp",
-        ASPECT));
+      new Logging::ActiveObjectCallbackImpl(logger(), "UserBindControllerApp", ASPECT));
 
-    controller_ = new AdServer::UserInfoSvcs::UserBindControllerImpl(
-      callback,
-      logger(),
-      config());
+    controller_ = new AdServer::UserInfoSvcs::UserBindControllerImpl(callback, logger(), config());
 
     grpc_adapter_ = new AdServer::UserInfoSvcs::UserBindControllerGrpc(
       controller_,
@@ -144,8 +137,7 @@ UserBindControllerApp_::main(int& argc, char** argv) noexcept
     }
     else
     {
-      std::cerr << FUN << ": caught UserBindControllerApp_::Exception: " <<
-        ex.what() << '\n';
+      std::cerr << FUN << ": caught UserBindControllerApp_::Exception: " << ex.what() << '\n';
     }
   }
   catch (const eh::Exception& ex)

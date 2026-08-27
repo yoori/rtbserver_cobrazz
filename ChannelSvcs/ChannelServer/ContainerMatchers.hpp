@@ -6,9 +6,7 @@
 #include <eh/Exception.hpp>
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   typedef std::set<unsigned int> ExcludeContainerType;
 
@@ -19,7 +17,7 @@ namespace ChannelSvcs
       : channel_id(c_id), channel_trigger_id(t_id) {};
     bool operator<(const PositiveAtom& cp) const noexcept
     {
-      if(channel_id != cp.channel_id)
+      if (channel_id != cp.channel_id)
       {
         return channel_id < cp.channel_id;
       }
@@ -34,19 +32,15 @@ namespace ChannelSvcs
 
   typedef std::vector<PositiveAtom> PositiveContainerType;
 
-}// namespace ChannelSvcs
-}// namespace AdServer
+} // namespace AdServer::ChannelSvcs
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
-  {
 
   inline
   bool PositiveAtom::operator==(const PositiveAtom& id) const noexcept
   {
-    return channel_id == id.channel_id &&
-      channel_trigger_id == id.channel_trigger_id;
+    return channel_id == id.channel_id && channel_trigger_id == id.channel_trigger_id;
   }
 
   inline
@@ -61,8 +55,8 @@ namespace AdServer
     return cp1 < cp2.channel_id;
   }
 
-  }// namespace ChannelSvcs
-}// namespace AdServer
+} // namespace AdServer::ChannelSvcs
+
 
 inline
 std::ostream& operator<<(std::ostream& os, const AdServer::ChannelSvcs::PositiveAtom& atom) noexcept
@@ -70,4 +64,3 @@ std::ostream& operator<<(std::ostream& os, const AdServer::ChannelSvcs::Positive
   os << atom.channel_id << '(' << atom.channel_trigger_id << ")";
   return os;
 }
-

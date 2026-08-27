@@ -145,10 +145,7 @@ namespace AdServer::RequestInfoSvcs
 
     private:
       static void
-      add_match_(
-        MatchMap& matches,
-        unsigned long channel_id,
-        unsigned long trigger_id)
+      add_match_(MatchMap& matches, unsigned long channel_id, unsigned long trigger_id)
       {
         auto [it, inserted] = matches.try_emplace(
           channel_id,
@@ -273,9 +270,7 @@ namespace AdServer::RequestInfoSvcs
       const Generics::Time& time)
       /*throw(eh::Exception)*/;
 
-    void merge_user_(
-      const Commons::UserId& target_user_id,
-      const Commons::UserId& source_user_id)
+    void merge_user_(const Commons::UserId& target_user_id, const Commons::UserId& source_user_id)
       /*throw(eh::Exception)*/;
 
   private:

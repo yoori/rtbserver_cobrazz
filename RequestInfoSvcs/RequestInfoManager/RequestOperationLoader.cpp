@@ -3,9 +3,7 @@
 #include "Compatibility/RequestOperationImpressionProfileAdapter.hpp"
 #include "RequestOperationLoader.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   RequestOperationLoader::RequestOperationLoader(
     RequestOperationProcessor* request_operation_processor)
@@ -48,22 +46,20 @@ namespace RequestInfoSvcs
         break;
       }
 
-      if(op_index == OP_CHANGE)
+      if (op_index == OP_CHANGE)
       {
-        if(skip_records == 0)
+        if (skip_records == 0)
         {
-          co_await co_read_change_request_user_id_(
-            file_reader,
-            request_operation_membuf);
+          co_await co_read_change_request_user_id_(file_reader, request_operation_membuf);
         }
         else
         {
           skip_change_request_user_id_(file_reader);
         }
       }
-      else if(op_index == OP_IMPRESSION)
+      else if (op_index == OP_IMPRESSION)
       {
-        if(skip_records == 0)
+        if (skip_records == 0)
         {
           co_await co_read_impression_(file_reader, request_operation_membuf);
         }
@@ -72,9 +68,9 @@ namespace RequestInfoSvcs
           skip_single_buffer_operation_(file_reader);
         }
       }
-      else if(op_index == OP_ACTION)
+      else if (op_index == OP_ACTION)
       {
-        if(skip_records == 0)
+        if (skip_records == 0)
         {
           co_await co_read_action_(file_reader, request_operation_membuf);
         }
@@ -83,13 +79,11 @@ namespace RequestInfoSvcs
           skip_single_buffer_operation_(file_reader);
         }
       }
-      else if(op_index == OP_REQUEST_ACTION)
+      else if (op_index == OP_REQUEST_ACTION)
       {
-        if(skip_records == 0)
+        if (skip_records == 0)
         {
-          co_await co_read_request_action_(
-            file_reader,
-            request_operation_membuf);
+          co_await co_read_request_action_(file_reader, request_operation_membuf);
         }
         else
         {
@@ -103,7 +97,7 @@ namespace RequestInfoSvcs
         throw Exception(ostr);
       }
 
-      if(skip_records == 0)
+      if (skip_records == 0)
       {
         ++processed_lines_count;
       }
@@ -122,12 +116,11 @@ namespace RequestInfoSvcs
     Generics::MemBuf& membuf)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "RequestOperationLoader::co_read_change_request_user_id_()";
+    static const char* FUN = "RequestOperationLoader::co_read_change_request_user_id_()";
 
     uint32_t op_size;
 
-    if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+    if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -136,7 +129,7 @@ namespace RequestInfoSvcs
 
     prepare_mem_buf_(membuf, op_size);
 
-    if(file_reader.read(membuf.data(), op_size) != op_size)
+    if (file_reader.read(membuf.data(), op_size) != op_size)
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file on 'change request' operation reading";
@@ -147,7 +140,7 @@ namespace RequestInfoSvcs
 
     uint32_t request_profile_size;
 
-    if(file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
+    if (file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
        sizeof(request_profile_size))
     {
       Stream::Error ostr;
@@ -159,8 +152,7 @@ namespace RequestInfoSvcs
     Generics::SmartMemBuf_var request_profile_membuf(
       new Generics::SmartMemBuf(request_profile_size));
 
-    if(file_reader.read(
-         request_profile_membuf->membuf().data(), request_profile_size) !=
+    if (file_reader.read(request_profile_membuf->membuf().data(), request_profile_size) !=
          request_profile_size)
     {
       Stream::Error ostr;
@@ -185,22 +177,21 @@ namespace RequestInfoSvcs
   }
 
   void
-  RequestOperationLoader::skip_change_request_user_id_(
-    ProfilingCommons::FileReader& file_reader)
+  RequestOperationLoader::skip_change_request_user_id_(ProfilingCommons::FileReader& file_reader)
     /*throw(Exception)*/
   {
     static const char* FUN = "RequestOperationLoader::skip_change_request_user_id_()";
 
     uint32_t op_size;
 
-    if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+    if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
       throw Exception(ostr);
     }
 
-    if(file_reader.skip(op_size) != op_size)
+    if (file_reader.skip(op_size) != op_size)
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -209,7 +200,7 @@ namespace RequestInfoSvcs
 
     uint32_t request_profile_size;
 
-    if(file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
+    if (file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
        sizeof(request_profile_size))
     {
       Stream::Error ostr;
@@ -217,7 +208,7 @@ namespace RequestInfoSvcs
       throw Exception(ostr);
     }
 
-    if(file_reader.skip(request_profile_size) != request_profile_size)
+    if (file_reader.skip(request_profile_size) != request_profile_size)
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -235,7 +226,7 @@ namespace RequestInfoSvcs
 
     uint32_t op_size;
 
-    if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+    if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -244,7 +235,7 @@ namespace RequestInfoSvcs
 
     prepare_mem_buf_(membuf, op_size);
 
-    if(file_reader.read(membuf.data(), op_size) != op_size)
+    if (file_reader.read(membuf.data(), op_size) != op_size)
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -259,24 +250,20 @@ namespace RequestInfoSvcs
       RequestOperationImpressionReader op_reader(membuf.data(), op_size);
 
       ImpressionInfo impression_info;
-      impression_info.user_id =
-        AdServer::Commons::UserId(op_reader.user_id());
-      impression_info.request_id =
-        AdServer::Commons::RequestId(op_reader.request_id());
+      impression_info.user_id = AdServer::Commons::UserId(op_reader.user_id());
+      impression_info.request_id = AdServer::Commons::RequestId(op_reader.request_id());
       impression_info.time = Generics::Time(op_reader.time());
       impression_info.verify_impression = op_reader.verify_impression();
-      if(op_reader.pub_revenue_type() != AdServer::CampaignSvcs::RT_NONE)
+      if (op_reader.pub_revenue_type() != AdServer::CampaignSvcs::RT_NONE)
       {
         ImpressionInfo::PubRevenue pub_revenue;
         pub_revenue.revenue_type =
-          static_cast<AdServer::CampaignSvcs::RevenueType>(
-            op_reader.pub_revenue_type());
+          static_cast<AdServer::CampaignSvcs::RevenueType>(op_reader.pub_revenue_type());
         pub_revenue.impression = RevenueDecimal(op_reader.pub_revenue());
         impression_info.pub_revenue = pub_revenue;
       }
 
-      co_await request_operation_processor_->co_process_impression(
-        impression_info);
+      co_await request_operation_processor_->co_process_impression(impression_info);
     }
     catch(const eh::Exception& ex)
     {
@@ -298,14 +285,14 @@ namespace RequestInfoSvcs
     {
       uint32_t op_size;
 
-      if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+      if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
       {
         throw Exception("unexpected end of file");
       }
 
       prepare_mem_buf_(membuf, op_size);
 
-      if(file_reader.read(membuf.data(), op_size) != op_size)
+      if (file_reader.read(membuf.data(), op_size) != op_size)
       {
         throw Exception("unexpected end of file");
       }
@@ -319,8 +306,7 @@ namespace RequestInfoSvcs
         op_reader.user_id()[0] ?
           AdServer::Commons::UserId(op_reader.user_id()) :
           AdServer::Commons::UserId(),
-        static_cast<RequestContainerProcessor::ActionType>(
-          op_reader.action_type()),
+        static_cast<RequestContainerProcessor::ActionType>(op_reader.action_type()),
         time,
         request_id);
     }
@@ -344,14 +330,14 @@ namespace RequestInfoSvcs
     {
       uint32_t op_size;
 
-      if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+      if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
       {
         throw Exception("unexpected end of file");
       }
 
       prepare_mem_buf_(membuf, op_size);
 
-      if(file_reader.read(membuf.data(), op_size) != op_size)
+      if (file_reader.read(membuf.data(), op_size) != op_size)
       {
         throw Exception("unexpected end of file");
       }
@@ -367,9 +353,7 @@ namespace RequestInfoSvcs
             AdServer::Commons::UserId(op_reader.user_id()) :
             AdServer::Commons::UserId(),
           request_id,
-          RequestPostActionInfo(
-            time,
-            String::SubString(op_reader.action_name())));
+          RequestPostActionInfo(time, String::SubString(op_reader.action_name())));
     }
     catch(const eh::Exception& ex)
     {
@@ -380,15 +364,14 @@ namespace RequestInfoSvcs
   }
 
   void
-  RequestOperationLoader::skip_single_buffer_operation_(
-    ProfilingCommons::FileReader& file_reader)
+  RequestOperationLoader::skip_single_buffer_operation_(ProfilingCommons::FileReader& file_reader)
     /*throw(Exception)*/
   {
     static const char* FUN = "RequestOperationLoader::skip_single_buffer_operation_()";
 
     uint32_t op_size;
 
-    if(file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
+    if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
     {
       Stream::Error ostr;
       ostr << FUN << ": unexpected end of file";
@@ -399,19 +382,16 @@ namespace RequestInfoSvcs
   }
 
   void
-  RequestOperationLoader::prepare_mem_buf_(
-    Generics::MemBuf& membuf,
-    unsigned long size)
+  RequestOperationLoader::prepare_mem_buf_(Generics::MemBuf& membuf, unsigned long size)
     noexcept
   {
-    if(size > membuf.capacity())
+    if (size > membuf.capacity())
     {
       membuf.alloc(2*size);
     }
-    else if(size > membuf.size())
+    else if (size > membuf.size())
     {
       membuf.resize(size);
     }
   }
-}
 }

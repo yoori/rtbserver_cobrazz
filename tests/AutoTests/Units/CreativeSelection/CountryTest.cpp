@@ -1,9 +1,6 @@
 #include "CountryTest.hpp"
 
-REFLECT_UNIT(CountryTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CountryTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 void
 CountryTest::process_testcase(AdClient& test_client, const char *cc_id)
@@ -57,17 +54,14 @@ CountryTest::process_testcase(AdClient& test_client, const char *cc_id)
 bool
 CountryTest::run_test()
 {
-  add_descr_phrase("Starting"
-                   " https://confluence.ocslab.com/display/ADS/CountryTest");
+  add_descr_phrase("Starting" " https://confluence.ocslab.com/display/ADS/CountryTest");
 
   AdClient test_client(AdClient::create_user(this));
 
   // Test that server returns creative only when country code matches.
   request.tid = fetch_string("TAG");
   request.referer_kw = fetch_string("KEYWORD");
-  process_testcase(
-                   test_client,
-                   fetch_string("CC").c_str());
+  process_testcase(test_client, fetch_string("CC").c_str());
 
 
   return true;

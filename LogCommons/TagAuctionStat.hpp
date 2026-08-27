@@ -5,210 +5,201 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-class TagAuctionStatInnerKey
+namespace AdServer::LogProcessing
 {
-public:
-  TagAuctionStatInnerKey()
-  :
-    tag_id_(),
-    auction_ccg_count_(),
-    hash_()
+
+  class TagAuctionStatInnerKey
   {
-  }
+  public:
+    TagAuctionStatInnerKey()
+    :
+      tag_id_(),
+      auction_ccg_count_(),
+      hash_()
+    {
+    }
 
-  TagAuctionStatInnerKey(
-    std::uint32_t tag_id,
-    unsigned long auction_ccg_count
-  )
-  :
-    tag_id_(tag_id),
-    auction_ccg_count_(auction_ccg_count),
-    hash_()
+    TagAuctionStatInnerKey(std::uint32_t tag_id, unsigned long auction_ccg_count)
+    :
+      tag_id_(tag_id),
+      auction_ccg_count_(auction_ccg_count),
+      hash_()
+    {
+      calc_hash_();
+    }
+
+    bool
+    operator==(const TagAuctionStatInnerKey& right) const
+    {
+      return &right == this ||
+        (tag_id_ == right.tag_id_ && auction_ccg_count_ == right.auction_ccg_count_);
+    }
+
+    std::uint32_t
+    tag_id() const
+    {
+      return tag_id_;
+    }
+
+    unsigned long
+    auction_ccg_count() const
+    {
+      return auction_ccg_count_;
+    }
+
+    size_t
+    hash() const
+    {
+      return hash_;
+    }
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+  private:
+    void
+    calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      hash_add(hasher, tag_id_);
+      hash_add(hasher, auction_ccg_count_);
+    }
+
+    std::uint32_t tag_id_;
+    unsigned long auction_ccg_count_;
+    size_t hash_;
+  };
+
+  class TagAuctionStatInnerData
   {
-    calc_hash_();
-  }
+  public:
+    TagAuctionStatInnerData(): requests_() {}
 
-  bool
-  operator==(const TagAuctionStatInnerKey& right) const
+    explicit
+    TagAuctionStatInnerData(unsigned long requests): requests_(requests) {}
+
+    bool
+    operator==(const TagAuctionStatInnerData& right) const
+    {
+      return requests_ == right.requests_;
+    }
+
+    TagAuctionStatInnerData&
+    operator+=(const TagAuctionStatInnerData& right)
+    {
+      requests_ += right.requests_;
+      return *this;
+    }
+
+    unsigned long
+    requests() const
+    {
+      return requests_;
+    }
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerData& data)
+      /*throw(eh::Exception)*/;
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
+      /*throw(eh::Exception)*/;
+
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const TagAuctionStatInnerData& data)
+      /*throw(eh::Exception)*/;
+
+  private:
+    unsigned long requests_;
+  };
+
+  struct TagAuctionStatKey
   {
-    return &right == this ||
-      (tag_id_ == right.tag_id_ &&
-      auction_ccg_count_ == right.auction_ccg_count_);
-  }
+    TagAuctionStatKey(): pub_sdate_(), colo_id_(), hash_() {}
 
-  std::uint32_t
-  tag_id() const
-  {
-    return tag_id_;
-  }
+    TagAuctionStatKey(const DayTimestamp& pub_sdate, std::uint32_t colo_id)
+    :
+      pub_sdate_(pub_sdate),
+      colo_id_(colo_id),
+      hash_()
+    {
+      calc_hash_();
+    }
 
-  unsigned long
-  auction_ccg_count() const
-  {
-    return auction_ccg_count_;
-  }
+    bool
+    operator==(const TagAuctionStatKey& right) const
+    {
+      return &right == this || (pub_sdate_ == right.pub_sdate_ && colo_id_ == right.colo_id_);
+    }
 
-  size_t
-  hash() const
-  {
-    return hash_;
-  }
+  public:
+    const DayTimestamp&
+    pub_sdate() const
+    {
+      return pub_sdate_;
+    }
 
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerKey& key)
-    /*throw(eh::Exception)*/;
+    std::uint32_t
+    colo_id() const
+    {
+      return colo_id_;
+    }
 
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
-    /*throw(eh::Exception)*/;
+    size_t
+    hash() const
+    {
+      return hash_;
+    }
 
-  friend BufferWriter&
-  operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
-    /*throw(eh::Exception)*/;
+    friend
+    std::istream&
+    operator>>(std::istream& is, TagAuctionStatKey& key) /*throw(eh::Exception)*/;
 
-private:
-  void
-  calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    hash_add(hasher, tag_id_);
-    hash_add(hasher, auction_ccg_count_);
-  }
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const TagAuctionStatKey& key)
+      /*throw(eh::Exception)*/;
 
-  std::uint32_t tag_id_;
-  unsigned long auction_ccg_count_;
-  size_t hash_;
-};
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const TagAuctionStatKey& key)
+      /*throw(eh::Exception)*/;
 
-class TagAuctionStatInnerData
-{
-public:
-  TagAuctionStatInnerData(): requests_() {}
+  private:
+    void
+    calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      pub_sdate_.hash_add(hasher);
+      hash_add(hasher, colo_id_);
+    }
 
-  explicit
-  TagAuctionStatInnerData(unsigned long requests): requests_(requests) {}
+    DayTimestamp pub_sdate_;
+    std::uint32_t colo_id_;
+    size_t hash_;
+  };
 
-  bool
-  operator==(const TagAuctionStatInnerData& right) const
-  {
-    return requests_ == right.requests_;
-  }
+  typedef StatCollector<
+            TagAuctionStatInnerKey, TagAuctionStatInnerData, false, true
+          > TagAuctionStatInnerCollector;
 
-  TagAuctionStatInnerData&
-  operator+=(const TagAuctionStatInnerData& right)
-  {
-    requests_ += right.requests_;
-    return *this;
-  }
+  typedef TagAuctionStatInnerCollector TagAuctionStatData;
 
-  unsigned long
-  requests() const
-  {
-    return requests_;
-  }
+  typedef StatCollector<TagAuctionStatKey, TagAuctionStatData>
+    TagAuctionStatCollector;
 
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerData& data)
-    /*throw(eh::Exception)*/;
+  typedef LogDefaultTraits<TagAuctionStatCollector> TagAuctionStatTraits;
 
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
-    /*throw(eh::Exception)*/;
-
-  friend BufferWriter&
-  operator<<(BufferWriter& out, const TagAuctionStatInnerData& data)
-    /*throw(eh::Exception)*/;
-
-private:
-  unsigned long requests_;
-};
-
-struct TagAuctionStatKey
-{
-  TagAuctionStatKey(): pub_sdate_(), colo_id_(), hash_() {}
-
-  TagAuctionStatKey(
-    const DayTimestamp& pub_sdate,
-    std::uint32_t colo_id
-  )
-  :
-    pub_sdate_(pub_sdate),
-    colo_id_(colo_id),
-    hash_()
-  {
-    calc_hash_();
-  }
-
-  bool
-  operator==(const TagAuctionStatKey& right) const
-  {
-    return &right == this ||
-      (pub_sdate_ == right.pub_sdate_ && colo_id_ == right.colo_id_);
-  }
-
-public:
-  const DayTimestamp&
-  pub_sdate() const
-  {
-    return pub_sdate_;
-  }
-
-  std::uint32_t
-  colo_id() const
-  {
-    return colo_id_;
-  }
-
-  size_t
-  hash() const
-  {
-    return hash_;
-  }
-
-  friend
-  std::istream&
-  operator>>(std::istream& is, TagAuctionStatKey& key) /*throw(eh::Exception)*/;
-
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatKey& key)
-    /*throw(eh::Exception)*/;
-
-  friend BufferWriter&
-  operator<<(BufferWriter& out, const TagAuctionStatKey& key)
-    /*throw(eh::Exception)*/;
-
-private:
-  void
-  calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    pub_sdate_.hash_add(hasher);
-    hash_add(hasher, colo_id_);
-  }
-
-  DayTimestamp pub_sdate_;
-  std::uint32_t colo_id_;
-  size_t hash_;
-};
-
-typedef StatCollector<
-          TagAuctionStatInnerKey, TagAuctionStatInnerData, false, true
-        > TagAuctionStatInnerCollector;
-
-typedef TagAuctionStatInnerCollector TagAuctionStatData;
-
-typedef StatCollector<TagAuctionStatKey, TagAuctionStatData>
-  TagAuctionStatCollector;
-
-typedef LogDefaultTraits<TagAuctionStatCollector> TagAuctionStatTraits;
-
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

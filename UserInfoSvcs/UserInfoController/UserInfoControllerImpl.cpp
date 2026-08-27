@@ -20,13 +20,10 @@ namespace
   }
 
   std::string
-  endpoint_from_grpc_ref_(
-    const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
+  endpoint_from_grpc_ref_(const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
   {
     const std::string host =
-      endpoint.host().present() && *endpoint.host() != "*" ?
-      *endpoint.host() :
-      "127.0.0.1";
+      endpoint.host().present() && *endpoint.host() != "*" ? *endpoint.host() : "127.0.0.1";
 
     return host + ":" + std::to_string(endpoint.port());
   }
@@ -45,16 +42,14 @@ namespace AdServer::UserInfoSvcs
       task_runner_(new Generics::TaskRunner(callback_, 1)),
       config_(config)
   {
-    static const char* FUN =
-      "UserInfoControllerImpl::UserInfoControllerImpl()";
+    static const char* FUN = "UserInfoControllerImpl::UserInfoControllerImpl()";
 
     try
     {
       add_child_object(task_runner_);
       add_child_object(scheduler_);
       fill_refs_();
-      task_runner_->enqueue_task(
-        Task_var(new InitUserInfoManagerSourceTask(this, 0)));
+      task_runner_->enqueue_task(Task_var(new InitUserInfoManagerSourceTask(this, 0)));
     }
     catch (const eh::Exception& ex)
     {
@@ -67,8 +62,7 @@ namespace AdServer::UserInfoSvcs
   UserInfoControllerImpl::~UserInfoControllerImpl() noexcept = default;
 
   void
-  UserInfoControllerImpl::fill_session_description(
-    SessionDescription& response) const
+  UserInfoControllerImpl::fill_session_description(SessionDescription& response) const
   {
     UserInfoConfig_var user_info_config;
     {
@@ -110,8 +104,7 @@ namespace AdServer::UserInfoSvcs
   }
 
   bool
-  UserInfoControllerImpl::get_user_info_manager_sources_(
-    UserInfoConfig* user_info_config)
+  UserInfoControllerImpl::get_user_info_manager_sources_(UserInfoConfig* user_info_config)
   {
     std::ostringstream tracing;
     std::ostringstream errors;
@@ -129,8 +122,7 @@ namespace AdServer::UserInfoSvcs
           UserInfoManagerGrpc::NewStub(channel);
 
         grpc::ClientContext context;
-        context.set_deadline(
-          std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
+        context.set_deadline(std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
         adserver::user_info_svcs::user_info_manager::GetSourceRequest request;
         adserver::user_info_svcs::user_info_manager::GetSourceResponse response;
         const auto status = stub->get_source(&context, request, &response);
@@ -182,10 +174,7 @@ namespace AdServer::UserInfoSvcs
 
     if (has_errors)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_INFO_CONTROLLER,
-        "ADS-IMPL-72") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_CONTROLLER, "ADS-IMPL-72") <<
         "Errors of getting UserInfoManager gRPC sources:" << errors.str();
     }
 
@@ -195,9 +184,7 @@ namespace AdServer::UserInfoSvcs
     }
     else if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(
-        Logging::Logger::TRACE,
-        Aspect::USER_INFO_CONTROLLER) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::USER_INFO_CONTROLLER) <<
         "Not ready UserInfoManagers: " << tracing.str();
     }
 
@@ -227,8 +214,7 @@ namespace AdServer::UserInfoSvcs
           user_info_config_.swap(user_info_config);
         }
 
-        task_runner_->enqueue_task(
-          Task_var(new CheckUserInfoManagerStateTask(this, 0)));
+        task_runner_->enqueue_task(Task_var(new CheckUserInfoManagerStateTask(this, 0)));
       }
       else
       {
@@ -239,10 +225,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_INFO_CONTROLLER,
-        "ADS-IMPL-72") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_CONTROLLER, "ADS-IMPL-72") <<
         "Can't get UserInfoManager gRPC sources: " << ex.what();
     }
   }
@@ -287,17 +270,13 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_INFO_CONTROLLER,
-        "ADS-IMPL-52") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_CONTROLLER, "ADS-IMPL-52") <<
         "check_user_info_manager_state_ failed: " << ex.what();
     }
   }
 
   void
-  UserInfoControllerImpl::check_source_consistency_(
-    UserInfoConfig* user_info_config) const
+  UserInfoControllerImpl::check_source_consistency_(UserInfoConfig* user_info_config) const
   {
     std::vector<long> chunk_refs(user_info_config->common_chunks_number, -1);
     std::ostringstream errors;
@@ -312,8 +291,7 @@ namespace AdServer::UserInfoSvcs
         {
           has_errors = true;
           errors << "Server '" << server.endpoint << "' has chunk " << chunk_id <<
-            " >= common_chunks_number(" <<
-            user_info_config->common_chunks_number << "). ";
+            " >= common_chunks_number(" << user_info_config->common_chunks_number << "). ";
         }
         else if (chunk_refs[chunk_id] != -1)
         {

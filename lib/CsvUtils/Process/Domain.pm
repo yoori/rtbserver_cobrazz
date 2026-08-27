@@ -19,7 +19,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)
@@ -39,7 +39,7 @@ sub process
 sub get_domain_
 {
   my ($url) = @_;
-  if($url =~ m/(?:http:\/\/|https:\/\/)?(?:www\.)?([^\/]+)/)
+  if ($url =~ m/(?:http:\/\/|https:\/\/)?(?:www\.)?([^\/]+)/)
   {
     return $1;
   }

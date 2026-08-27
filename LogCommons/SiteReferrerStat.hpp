@@ -39,8 +39,7 @@ namespace AdServer::LogProcessing
         return true;
       }
       return user_status_ == rhs.user_status_ &&
-        tag_id_ == rhs.tag_id_ &&
-        host_.get() == rhs.host_.get();
+        tag_id_ == rhs.tag_id_ && host_.get() == rhs.host_.get();
     }
 
     char user_status() const
@@ -65,8 +64,7 @@ namespace AdServer::LogProcessing
 
     friend
     FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is,
-      SiteReferrerStatInnerKey_V_3_1& key)
+    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey_V_3_1& key)
       /*throw(eh::Exception)*/;
 
     friend
@@ -126,9 +124,7 @@ namespace AdServer::LogProcessing
 
     bool operator==(const SiteReferrerStatInnerData_V_3_1& rhs) const
     {
-      return requests_ == rhs.requests_ &&
-        imps_ == rhs.imps_ &&
-        clicks_ == rhs.clicks_;
+      return requests_ == rhs.requests_ && imps_ == rhs.imps_ && clicks_ == rhs.clicks_;
     }
 
     SiteReferrerStatInnerData_V_3_1&
@@ -158,8 +154,7 @@ namespace AdServer::LogProcessing
 
     friend
     FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is,
-      SiteReferrerStatInnerData_V_3_1& data)
+    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerData_V_3_1& data)
       /*throw(eh::Exception)*/;
 
     friend
@@ -203,9 +198,7 @@ namespace AdServer::LogProcessing
       calc_hash_();
     }
 
-    SiteReferrerStatInnerKey(
-      const SiteReferrerStatInnerKey_V_3_1& key
-    )
+    SiteReferrerStatInnerKey(const SiteReferrerStatInnerKey_V_3_1& key)
       /*throw(eh::Exception)*/
     :
       user_status_(key.user_status()),
@@ -225,8 +218,7 @@ namespace AdServer::LogProcessing
       }
       return user_status_ == rhs.user_status_ &&
         tag_id_ == rhs.tag_id_ &&
-        ext_tag_id_.get() == rhs.ext_tag_id_.get() &&
-        host_.get() == rhs.host_.get();
+        ext_tag_id_.get() == rhs.ext_tag_id_.get() && host_.get() == rhs.host_.get();
     }
 
     char user_status() const
@@ -322,9 +314,7 @@ namespace AdServer::LogProcessing
     bool operator==(const SiteReferrerStatInnerData_V_3_2& rhs) const
     {
       return requests_ == rhs.requests_ &&
-        imps_ == rhs.imps_ &&
-        clicks_ == rhs.clicks_ &&
-        passbacks_ == rhs.passbacks_;
+        imps_ == rhs.imps_ && clicks_ == rhs.clicks_ && passbacks_ == rhs.passbacks_;
     }
 
     SiteReferrerStatInnerData_V_3_2&
@@ -360,8 +350,7 @@ namespace AdServer::LogProcessing
 
     friend
     FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is,
-      SiteReferrerStatInnerData_V_3_2& data)
+    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerData_V_3_2& data)
       /*throw(eh::Exception)*/;
 
     friend
@@ -430,9 +419,7 @@ namespace AdServer::LogProcessing
     {
     }
 
-    SiteReferrerStatInnerData(
-      const SiteReferrerStatInnerData_V_3_1& data
-    )
+    SiteReferrerStatInnerData(const SiteReferrerStatInnerData_V_3_1& data)
       /*throw(eh::Exception)*/
     :
       requests_(data.requests()),
@@ -451,9 +438,7 @@ namespace AdServer::LogProcessing
     {
     }
 
-    SiteReferrerStatInnerData(
-      const SiteReferrerStatInnerData_V_3_2& data
-    )
+    SiteReferrerStatInnerData(const SiteReferrerStatInnerData_V_3_2& data)
       /*throw(eh::Exception)*/
     :
       requests_(data.requests()),
@@ -485,8 +470,7 @@ namespace AdServer::LogProcessing
         floor_lost_cost_ == rhs.floor_lost_cost_ &&
         floor_no_bid_cost_ == rhs.floor_no_bid_cost_ &&
         bid_won_amount_ == rhs.bid_won_amount_ &&
-        bid_lost_amount_ == rhs.bid_lost_amount_ &&
-        cost_ == rhs.cost_;
+        bid_lost_amount_ == rhs.bid_lost_amount_ && cost_ == rhs.cost_;
     }
 
     SiteReferrerStatInnerData&
@@ -604,10 +588,7 @@ namespace AdServer::LogProcessing
   {
     SiteReferrerStatKey(): sdate_(), colo_id_(), hash_() {}
 
-    SiteReferrerStatKey(
-      const DayTimestamp& sdate,
-      std::uint32_t colo_id
-    )
+    SiteReferrerStatKey(const DayTimestamp& sdate, std::uint32_t colo_id)
     :
       sdate_(sdate),
       colo_id_(colo_id),

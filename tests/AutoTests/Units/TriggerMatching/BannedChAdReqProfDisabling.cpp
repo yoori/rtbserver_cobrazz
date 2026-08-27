@@ -1,10 +1,7 @@
 
 #include "BannedChAdReqProfDisabling.hpp"
 
-REFLECT_UNIT(BannedChAdReqProfDisabling) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(BannedChAdReqProfDisabling) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -24,20 +21,16 @@ BannedChAdReqProfDisabling::run_test()
     "configuration need for this test");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_FRONTEND, 1)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_FRONTEND, 1)),
     "AdFrontend with special "
     "configuration need for this test");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().get_service(CTE_ALL, STE_FRONTEND, 1).remote),
+    AutoTest::predicate_checker(get_config().get_service(CTE_ALL, STE_FRONTEND, 1).remote),
     "AdFrontend with special "
     "configuration need for this test");
 
-  AdClient client(
-    AdClient::create_user(
-      this, AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
   std::string no_track_words      = fetch_string ("no_track_words");
   std::string no_track_urls       = fetch_string ("no_track_urls");
@@ -86,8 +79,7 @@ BannedChAdReqProfDisabling::run_test()
 
   std::string uid_raw;
   client.get_cookies().find_value("uid", uid_raw);
-  std::string uid =
-    AutoTest::prepare_uid(uid_raw,  AutoTest::UUE_ADMIN_PARAMVALUE);
+  std::string uid = AutoTest::prepare_uid(uid_raw,  AutoTest::UUE_ADMIN_PARAMVALUE);
 
   FAIL_CONTEXT(
     BaseProfileChecker(
@@ -144,8 +136,7 @@ BannedChAdReqProfDisabling::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.history_channels.size()),
+    AutoTest::predicate_checker(!client.debug_info.history_channels.size()),
     "history_channels must be empty");
 
   return true;

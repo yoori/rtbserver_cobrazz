@@ -299,8 +299,7 @@ namespace AdServer::CampaignSvcs
         const CampaignConfig* campaign_config,
         const CampaignManagerCore::AdSlotContext& ad_slot_context) const
       {
-        auto logger_request_info =
-          std::make_shared<CampaignManagerLogger::RequestInfo>();
+        auto logger_request_info = std::make_shared<CampaignManagerLogger::RequestInfo>();
         const auto& effective_common_info =
           request_info.request_params ?
           *request_info.request_params->common_info :
@@ -450,8 +449,7 @@ namespace AdServer::CampaignSvcs
   {}
 
   CampaignManagerLogger::AdSelectionInfo::Revenue&
-  CampaignManagerLogger::AdSelectionInfo::Revenue::operator*=(
-    const RevenueDecimal& op)
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator*=(const RevenueDecimal& op)
   {
     request = RevenueDecimal::mul(request, op, Generics::DMR_FLOOR);
     impression = RevenueDecimal::mul(impression, op, Generics::DMR_FLOOR);
@@ -476,18 +474,14 @@ namespace AdServer::CampaignSvcs
     Revenue& reminder)
   {
     request = RevenueDecimal::div(request, divider, reminder.request);
-    impression = RevenueDecimal::div(
-      impression,
-      divider,
-      reminder.impression);
+    impression = RevenueDecimal::div(impression, divider, reminder.impression);
     click = RevenueDecimal::div(click, divider, reminder.click);
     action = RevenueDecimal::div(action, divider, reminder.action);
     return *this;
   }
 
   CampaignManagerLogger::AdSelectionInfo::Revenue&
-  CampaignManagerLogger::AdSelectionInfo::Revenue::operator+=(
-    const Revenue& add)
+  CampaignManagerLogger::AdSelectionInfo::Revenue::operator+=(const Revenue& add)
   {
     request += add.request;
     impression += add.impression;
@@ -546,9 +540,7 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogger::AdSelectionInfo::Revenue::print(std::ostream& out) const noexcept
   {
     out << "request = " << request <<
-      ", impression = " << impression <<
-      ", click = " << click <<
-      ", action = " << action;
+      ", impression = " << impression << ", click = " << click << ", action = " << action;
     return out;
   }
 
@@ -596,8 +588,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      RequestBasicChannelsLogger(
-        const RequestBasicChannelsFlushTraits& flush_traits)
+      RequestBasicChannelsLogger(const RequestBasicChannelsFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
             AdServer::LogProcessing::RequestBasicChannelsTraits,
@@ -607,8 +598,7 @@ namespace AdServer::CampaignSvcs
               AdServer::LogProcessing::DistributionSavePolicy<
                 AdServer::LogProcessing::RequestBasicChannelsTraits>
                 (flush_traits.distrib_count)),
-          inventory_users_percentage_(
-            flush_traits.inventory_users_percentage),
+          inventory_users_percentage_(flush_traits.inventory_users_percentage),
           dump_channel_triggers_(flush_traits.dump_channel_triggers),
           adrequest_anonymize_(flush_traits.adrequest_anonymize)
       {}
@@ -630,8 +620,7 @@ namespace AdServer::CampaignSvcs
         /*throw(Exception)*/;
 
       void
-      process_match_request(
-        const CampaignManagerLogger::MatchRequestInfo& match_request_info)
+      process_match_request(const CampaignManagerLogger::MatchRequestInfo& match_request_info)
         /*throw(Exception)*/;
 
     protected:
@@ -644,8 +633,7 @@ namespace AdServer::CampaignSvcs
         const CampaignManagerLogger::AdRequestSelectionInfo* ad_request_selection_info) const
         noexcept;
 
-      bool need_dump_channels_(
-        const CampaignManagerLogger::RequestInfo& request_info) const
+      bool need_dump_channels_(const CampaignManagerLogger::RequestInfo& request_info) const
         noexcept;
 
       void add_record_(
@@ -690,8 +678,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      ResearchWebStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      ResearchWebStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::ResearchWebStatTraits,
@@ -907,8 +894,7 @@ namespace AdServer::CampaignSvcs
         : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::PassbackImpressionTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
-              AdServer::LogProcessing::PassbackImpressionTraits> >(
-              flush_traits)
+              AdServer::LogProcessing::PassbackImpressionTraits> >(flush_traits)
       {}
 
       void process_passback(const CampaignManagerLogger::PassbackInfo& passback_info)
@@ -951,8 +937,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      TagRequestLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      TagRequestLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::TagRequestTraits,
@@ -988,8 +973,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      TagPositionStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      TagPositionStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
             AdServer::LogProcessing::TagPositionStatTraits>(flush_traits),
@@ -1018,8 +1002,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      CcgStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      CcgStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
             AdServer::LogProcessing::CcgStatTraits>(flush_traits),
@@ -1048,8 +1031,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      CcStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      CcStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
             AdServer::LogProcessing::CcStatTraits>(flush_traits),
@@ -1078,12 +1060,10 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      SearchTermStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      SearchTermStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::SearchTermStatTraits>(
-              flush_traits),
+            AdServer::LogProcessing::SearchTermStatTraits>(flush_traits),
           STAT_HITS_ONE_(1)
       {}
 
@@ -1114,12 +1094,10 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      SearchEngineStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      SearchEngineStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::SearchEngineStatTraits>(
-              flush_traits),
+            AdServer::LogProcessing::SearchEngineStatTraits>(flush_traits),
           STAT_HITS_ONE_(1, 0),
           STAT_EMPTY_PAGE_HITS_ONE_(1, 1)
       {}
@@ -1152,12 +1130,10 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      TagAuctionStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      TagAuctionStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
-            AdServer::LogProcessing::TagAuctionStatTraits>(
-              flush_traits),
+            AdServer::LogProcessing::TagAuctionStatTraits>(flush_traits),
           STAT_REQUEST_ONE_(1)
       {}
 
@@ -1190,9 +1166,7 @@ namespace AdServer::CampaignSvcs
           }
 
 
-          CollectorT::DataT::KeyT inner_key(
-            ad_ri.request_tag_id,
-            account_ccg_count);
+          CollectorT::DataT::KeyT inner_key(ad_ri.request_tag_id, account_ccg_count);
 
           data.add(inner_key, STAT_REQUEST_ONE_);
           add_record(std::move(key), std::move(data));
@@ -1215,8 +1189,7 @@ namespace AdServer::CampaignSvcs
     public:
       DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
 
-      UserAgentStatLogger(
-        const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+      UserAgentStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
         : AdServer::LogProcessing::LogHolderPool<
             AdServer::LogProcessing::UserAgentStatTraits>(flush_traits)
@@ -1418,10 +1391,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        CollectorT::KeyT key(
-          time,
-          time + time_offset,
-          colo_id);
+        CollectorT::KeyT key(time, time + time_offset, colo_id);
 
         const CollectorT::DataT::DataT inner_data(
           'A',
@@ -1534,12 +1504,8 @@ namespace AdServer::CampaignSvcs
       noexcept
     {
       return (!request_info.user_id.is_null() ?
-        check_percentage_sampling_(
-          request_info.user_id.hash(),
-          inventory_users_percentage_) :
-        check_percentage_sampling_(
-          request_info.request_id.hash(),
-          inventory_users_percentage_)) &&
+        check_percentage_sampling_(request_info.user_id.hash(), inventory_users_percentage_) :
+        check_percentage_sampling_(request_info.request_id.hash(), inventory_users_percentage_)) &&
         !adrequest_anonymize_
         ;
     }
@@ -1554,10 +1520,7 @@ namespace AdServer::CampaignSvcs
 
       try
       {
-        CollectorT::KeyT key(
-          request_info.time,
-          request_info.isp_time,
-          request_info.colo_id);
+        CollectorT::KeyT key(request_info.time, request_info.isp_time, request_info.colo_id);
 
         CollectorT::DataT data;
 
@@ -1661,8 +1624,7 @@ namespace AdServer::CampaignSvcs
           temporary_user_id = request_info.merged_user_id;
         }
 
-        const bool dump_triggers =
-          dump_channel_triggers_;
+        const bool dump_triggers = dump_channel_triggers_;
 
         CollectorT::DataT::DataT::Match match_request(
           request_info.user_status != US_TEMPORARY && need_dump_channels_(request_info) ?
@@ -1728,9 +1690,7 @@ namespace AdServer::CampaignSvcs
               CollectorT::DataT::KeyT::OptionalUInt32(web_op.cc_id) :
               CollectorT::DataT::KeyT::OptionalUInt32()),
           CollectorT::DataT::DataT(1));
-        add_record(
-          CollectorT::KeyT(web_op.time, web_op.colo_id),
-          std::move(data));
+        add_record(CollectorT::KeyT(web_op.time, web_op.colo_id), std::move(data));
       }
       catch (const eh::Exception &ex)
       {
@@ -1837,8 +1797,7 @@ namespace AdServer::CampaignSvcs
       const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
       : AdServer::LogProcessing::LogHolderPool<
-          AdServer::LogProcessing::CreativeStatTraits>(
-            flush_traits),
+          AdServer::LogProcessing::CreativeStatTraits>(flush_traits),
         THRESHOLD_ONE_(false, 1, 0),
         STAT_REQUESTS_INCREMENT_(
           1, // requests
@@ -1910,8 +1869,7 @@ namespace AdServer::CampaignSvcs
         adapt_user_status(user_status),
         LogProcessing::OptionalValue<unsigned long>(), // geo_channel_id
         last_platform_channel_id ?
-          LogProcessing::OptionalValue<unsigned long>(
-            last_platform_channel_id) :
+          LogProcessing::OptionalValue<unsigned long>(last_platform_channel_id) :
           LogProcessing::OptionalValue<unsigned long>(),
         0,
         household_based,
@@ -2071,14 +2029,11 @@ namespace AdServer::CampaignSvcs
               UserProperty(
                 PropertyNames::CLIENT_APP_VERSION.text(), request_info.client_app_version));
             user_properties.push_back(
-              UserProperty(
-              PropertyNames::CLIENT_APP.text(), request_info.client_app));
+              UserProperty(PropertyNames::CLIENT_APP.text(), request_info.client_app));
             user_properties.push_back(
-              UserProperty(
-                PropertyNames::OS_VERSION.text(), request_info.full_platform));
+              UserProperty(PropertyNames::OS_VERSION.text(), request_info.full_platform));
             user_properties.push_back(
-              UserProperty(
-                PropertyNames::BROWSER_VERSION.text(), request_info.web_browser));
+              UserProperty(PropertyNames::BROWSER_VERSION.text(), request_info.web_browser));
 
             LogProcessing::RequestData::CmpChannelList cmp_channel_list;
             std::transform(
@@ -2121,10 +2076,8 @@ namespace AdServer::CampaignSvcs
               ad_info.ccg_id,
               CollectorT::DataT::DeliveryThresholdT(
                 ExDeliveryThresholdDecimal::div(
-                  ExDeliveryThresholdDecimal(
-                    false, ad_info.tag_delivery_threshold, 0),
-                  ExDeliveryThresholdDecimal(
-                    false, TAG_DELIVERY_MAX, 0)).str()),
+                  ExDeliveryThresholdDecimal(false, ad_info.tag_delivery_threshold, 0),
+                  ExDeliveryThresholdDecimal(false, TAG_DELIVERY_MAX, 0)).str()),
               ad_info.has_custom_actions,
               ad_info.currency_exchange_id,
               std::move(user_properties),
@@ -2162,8 +2115,7 @@ namespace AdServer::CampaignSvcs
                 request_info.geo_channels.begin(),
                 request_info.geo_channels.end()),
               request_info.last_platform_channel_id ?
-              LogProcessing::OptionalValue<unsigned long>(
-                  request_info.last_platform_channel_id) :
+              LogProcessing::OptionalValue<unsigned long>(request_info.last_platform_channel_id) :
                 LogProcessing::OptionalValue<unsigned long>(),
               ad_ri.tag_size,
               ad_ri.size_id,
@@ -2281,9 +2233,7 @@ namespace AdServer::CampaignSvcs
       {
         LogProcessing::NumberArray ccg_ids;
         ccg_ids.reserve(adv_action_info.ccg_ids.size());
-        ccg_ids.assign(
-          adv_action_info.ccg_ids.begin(),
-          adv_action_info.ccg_ids.end());
+        ccg_ids.assign(adv_action_info.ccg_ids.begin(), adv_action_info.ccg_ids.end());
 
         CollectorT::DataT data(
           adv_action_info.time,
@@ -2311,14 +2261,12 @@ namespace AdServer::CampaignSvcs
     /* ActionRequestLogger */
     void
     ActionRequestLogger::
-    process_action(
-      const CampaignManagerLogger::AdvActionInfo& adv_action_info)
+    process_action(const CampaignManagerLogger::AdvActionInfo& adv_action_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "ActionRequestLogger::process_action()";
 
-      if (!adv_action_info.log_as_test &&
-         adv_action_info.action_id.present())
+      if (!adv_action_info.log_as_test && adv_action_info.action_id.present())
       {
         try
         {
@@ -2331,16 +2279,11 @@ namespace AdServer::CampaignSvcs
               adv_action_info.referer,
               user_status != 'U' ? user_status : 'N' // TO CHANGE
               ),
-            CollectorT::DataT::DataT(
-              1,
-              adv_action_info.action_value
-              )
+            CollectorT::DataT::DataT(1, adv_action_info.action_value)
           );
 
           add_record(
-            CollectorT::KeyT(
-            adv_action_info.time,
-            adv_action_info.colo_id),
+            CollectorT::KeyT(adv_action_info.time, adv_action_info.colo_id),
             std::move(data));
         }
         catch(const eh::Exception& ex)
@@ -2411,8 +2354,7 @@ namespace AdServer::CampaignSvcs
     // TagRequestLogger
 
     void
-    TagRequestLogger::process_request(
-      const CampaignManagerLogger::RequestInfo& request_info)
+    TagRequestLogger::process_request(const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
     {
       static const char* FUN = "TagRequestLogger::process_request()";
@@ -2423,8 +2365,7 @@ namespace AdServer::CampaignSvcs
         {
           CollectorT::DataT::OptInSectionOptional opt_in;
 
-          if (request_info.user_status == US_OPTIN ||
-             request_info.user_status == US_BLACKLISTED)
+          if (request_info.user_status == US_OPTIN || request_info.user_status == US_BLACKLISTED)
           {
             opt_in = CollectorT::DataT::OptInSection(
               0, // site_id,
@@ -2575,8 +2516,7 @@ namespace AdServer::CampaignSvcs
     {
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
-      if (!request_info.log_as_test &&
-        !ad_request_selection_info.lost_auction_ccgs.empty())
+      if (!request_info.log_as_test && !ad_request_selection_info.lost_auction_ccgs.empty())
       {
         AdvDateDataMap adv_date_to_data;
 
@@ -2585,8 +2525,7 @@ namespace AdServer::CampaignSvcs
           ++lost_auction_ccg_it)
         {
           adv_date_to_data[Algs::round_to_day(lost_auction_ccg_it->adv_time)].
-            add(CollectorT::DataT::KeyT(lost_auction_ccg_it->id),
-              STAT_LOST_AUCTION_ONE_);
+            add(CollectorT::DataT::KeyT(lost_auction_ccg_it->id), STAT_LOST_AUCTION_ONE_);
         }
 
         for (auto& adv_tz : adv_date_to_data)
@@ -2607,8 +2546,7 @@ namespace AdServer::CampaignSvcs
     {
       using AdvDateDataMap = std::map<Generics::Time, CollectorT::DataT>;
 
-      if (!request_info.log_as_test &&
-        !ad_request_selection_info.lost_auction_creatives.empty())
+      if (!request_info.log_as_test && !ad_request_selection_info.lost_auction_creatives.empty())
       {
         AdvDateDataMap adv_date_to_data;
 
@@ -2617,8 +2555,7 @@ namespace AdServer::CampaignSvcs
           ++lost_auction_cc_it)
         {
           adv_date_to_data[Algs::round_to_day(lost_auction_cc_it->adv_time)].
-            add(CollectorT::DataT::KeyT(lost_auction_cc_it->id),
-              STAT_LOST_AUCTION_ONE_);
+            add(CollectorT::DataT::KeyT(lost_auction_cc_it->id), STAT_LOST_AUCTION_ONE_);
         }
 
         for (auto& adv_tz : adv_date_to_data)
@@ -2656,11 +2593,8 @@ namespace AdServer::CampaignSvcs
         !request_info.search_words->str().empty())
       {
         CollectorT::DataT data;
-        data.add(
-          CollectorT::DataT::KeyT(request_info.search_words->str()),
-          STAT_HITS_ONE_);
-        add_record(CollectorT::KeyT(request_info.time, request_info.colo_id),
-          std::move(data));
+        data.add(CollectorT::DataT::KeyT(request_info.search_words->str()), STAT_HITS_ONE_);
+        add_record(CollectorT::KeyT(request_info.time, request_info.colo_id), std::move(data));
       }
     }
 
@@ -2691,9 +2625,7 @@ namespace AdServer::CampaignSvcs
         data.add(
           CollectorT::DataT::KeyT(request_info.search_engine_id, request_info.search_engine_host),
           request_info.page_keywords_present ? STAT_HITS_ONE_ : STAT_EMPTY_PAGE_HITS_ONE_);
-        add_record(
-          CollectorT::KeyT(request_info.time, request_info.colo_id),
-          std::move(data));
+        add_record(CollectorT::KeyT(request_info.time, request_info.colo_id), std::move(data));
       }
     }
 
@@ -2722,10 +2654,7 @@ namespace AdServer::CampaignSvcs
   class CampaignManagerLogger::Impl: public Generics::SimpleActiveObject
   {
   public:
-    Impl(
-      CampaignManagerLogger& owner,
-      Logging::Logger* logger,
-      unsigned long threads)
+    Impl(CampaignManagerLogger& owner, Logging::Logger* logger, unsigned long threads)
       : owner_(owner),
         logger_(ReferenceCounting::add_ref(logger)),
         threads_(std::max<unsigned long>(threads, 1)),
@@ -2764,9 +2693,7 @@ namespace AdServer::CampaignSvcs
     get_stats() const noexcept;
 
     void
-    process_request(
-      const RequestInfo& request_info,
-      unsigned long profiling_type)
+    process_request(const RequestInfo& request_info, unsigned long profiling_type)
       /*throw(Exception)*/;
 
     void
@@ -2907,8 +2834,7 @@ namespace AdServer::CampaignSvcs
 
   /** CampaignManagerLogger */
   void
-  CampaignManagerLogger::Impl::init_loggers(
-    const CampaignManagerLogger::Params& params)
+  CampaignManagerLogger::Impl::init_loggers(const CampaignManagerLogger::Params& params)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::CampaignManagerLogger()";
@@ -3009,8 +2935,7 @@ namespace AdServer::CampaignSvcs
   {}
 
   void
-  CampaignManagerLogger::set_campaign_config(
-    AdInstances::ConstCampaignConfigPtr campaign_config)
+  CampaignManagerLogger::set_campaign_config(AdInstances::ConstCampaignConfigPtr campaign_config)
   {
     impl_->set_campaign_config(std::move(campaign_config));
   }
@@ -3055,8 +2980,7 @@ namespace AdServer::CampaignSvcs
       ]()
       {
         const auto campaign_config = impl->get_campaign_config();
-        const auto request_info =
-          snapshot.make_request_info(campaign_config.get());
+        const auto request_info = snapshot.make_request_info(campaign_config.get());
         impl->process_request(*request_info, profiling_type);
       }
     );
@@ -3078,11 +3002,9 @@ namespace AdServer::CampaignSvcs
     RequestInfoLogSnapshot snapshot;
     snapshot.colocation = ReferenceCounting::add_ref(colocation);
     snapshot.common_info =
-      std::make_shared<CampaignManagerCore::CommonAdRequest>(
-        std::move(common_info));
+      std::make_shared<CampaignManagerCore::CommonAdRequest>(std::move(common_info));
     snapshot.context_info =
-      std::make_shared<CampaignManagerCore::ContextAdRequest>(
-        std::move(context_info));
+      std::make_shared<CampaignManagerCore::ContextAdRequest>(std::move(context_info));
     snapshot.request_params = std::move(request_params);
     snapshot.ad_slot_context = std::move(ad_slot_context);
     snapshot.geo_channels = std::move(geo_channels);
@@ -3096,16 +3018,14 @@ namespace AdServer::CampaignSvcs
       ]()
       {
         const auto campaign_config = impl->get_campaign_config();
-        const auto request_info =
-          snapshot.make_request_info(campaign_config.get());
+        const auto request_info = snapshot.make_request_info(campaign_config.get());
         impl->process_request(*request_info, profiling_type);
       }
     );
   }
 
   void
-  CampaignManagerLogger::process_anon_request(
-    const AnonymousRequestInfo& anon_request_info)
+  CampaignManagerLogger::process_anon_request(const AnonymousRequestInfo& anon_request_info)
     /*throw(Exception)*/
   {
     impl_->enqueue_task([impl = impl_.get(), anon_request_info]()
@@ -3166,11 +3086,9 @@ namespace AdServer::CampaignSvcs
       slot_snapshot.ad_slot_context = std::move(ad_slot.ad_slot_context);
       slot_snapshot.ad_slot_min_cpm = ad_slot.ad_slot_min_cpm;
       slot_snapshot.tag_sizes = std::move(ad_slot.tag_sizes);
-      slot_snapshot.disable_impression_tracking =
-        ad_slot.disable_impression_tracking;
+      slot_snapshot.disable_impression_tracking = ad_slot.disable_impression_tracking;
 
-      for (const auto& selected_campaign :
-        slot_snapshot.ad_selection_result.selected_campaigns)
+      for (const auto& selected_campaign : slot_snapshot.ad_selection_result.selected_campaigns)
       {
         slot_snapshot.campaigns.emplace_back(
           ReferenceCounting::add_ref(selected_campaign.campaign));
@@ -3191,9 +3109,7 @@ namespace AdServer::CampaignSvcs
             campaign_config.get(),
             ad_slot.ad_slot_context);
           auto ad_request_selection_info =
-            snapshot.make_ad_request_selection_info(
-              ad_slot,
-              campaign_config.get());
+            snapshot.make_ad_request_selection_info(ad_slot, campaign_config.get());
           impl->process_ad_request(*request_info, ad_request_selection_info);
         }
       }
@@ -3216,12 +3132,7 @@ namespace AdServer::CampaignSvcs
   CampaignManagerLogger::process_click(const ClickInfo& request_id)
     /*throw(Exception)*/
   {
-    impl_->enqueue_task(
-      [impl = impl_.get(), request_id]()
-      {
-        impl->process_click(request_id);
-      }
-    );
+    impl_->enqueue_task([impl = impl_.get(), request_id]() { impl->process_click(request_id); });
   }
 
   void
@@ -3293,13 +3204,7 @@ namespace AdServer::CampaignSvcs
         operation
       ]()
       {
-        impl->process_oo_operation(
-          colo_id,
-          time,
-          time_offset,
-          user_id,
-          log_as_test,
-          operation);
+        impl->process_oo_operation(colo_id, time, time_offset, user_id, log_as_test, operation);
       }
     );
   }
@@ -3397,12 +3302,10 @@ namespace AdServer::CampaignSvcs
         std::unique_lock<std::mutex> guard(queue_shard.mutex);
         queue_shard.cond.wait(guard, [this, &queue_shard]()
           {
-            return queue_closed_.load(std::memory_order_acquire) ||
-              !queue_shard.tasks.empty();
+            return queue_closed_.load(std::memory_order_acquire) || !queue_shard.tasks.empty();
           });
 
-        if (queue_shard.tasks.empty() &&
-          queue_closed_.load(std::memory_order_acquire))
+        if (queue_shard.tasks.empty() && queue_closed_.load(std::memory_order_acquire))
         {
           return;
         }
@@ -3411,9 +3314,7 @@ namespace AdServer::CampaignSvcs
       }
 
       processing_tasks_.fetch_add(tasks.size(), std::memory_order_acq_rel);
-      processing_requests_total_.fetch_add(
-        tasks.size(),
-        std::memory_order_relaxed);
+      processing_requests_total_.fetch_add(tasks.size(), std::memory_order_relaxed);
 
       for (auto& task : tasks)
       {
@@ -3423,16 +3324,12 @@ namespace AdServer::CampaignSvcs
         }
         catch(const eh::Exception& ex)
         {
-          logger_->sstream(
-            Logging::Logger::EMERGENCY,
-            "CampaignManagerLogger") <<
+          logger_->sstream(Logging::Logger::EMERGENCY, "CampaignManagerLogger") <<
             "CampaignManagerLogger::worker_loop_(): caught eh::Exception: " << ex.what();
         }
         catch(...)
         {
-          logger_->sstream(
-            Logging::Logger::EMERGENCY,
-            "CampaignManagerLogger") <<
+          logger_->sstream(Logging::Logger::EMERGENCY, "CampaignManagerLogger") <<
             "CampaignManagerLogger::worker_loop_(): caught unknown exception";
         }
 
@@ -3467,10 +3364,8 @@ namespace AdServer::CampaignSvcs
     }
 
     stats.queue_total = queue_total_.load(std::memory_order_relaxed);
-    stats.processing_requests =
-      processing_tasks_.load(std::memory_order_relaxed);
-    stats.processing_requests_total =
-      processing_requests_total_.load(std::memory_order_relaxed);
+    stats.processing_requests = processing_tasks_.load(std::memory_order_relaxed);
+    stats.processing_requests_total = processing_requests_total_.load(std::memory_order_relaxed);
     stats.request_in_progress = stats.queue_size + stats.processing_requests;
 
     return stats;
@@ -3584,8 +3479,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_impression(
-    const ImpressionInfo& impression_info)
+  CampaignManagerLogger::Impl::process_impression(const ImpressionInfo& impression_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::process_impression()";
@@ -3633,8 +3527,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_click(
-    const ClickInfo& request_id)
+  CampaignManagerLogger::Impl::process_click(const ClickInfo& request_id)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::process_click()";
@@ -3652,8 +3545,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_anon_request(
-    const AnonymousRequestInfo& anon_request_info)
+  CampaignManagerLogger::Impl::process_anon_request(const AnonymousRequestInfo& anon_request_info)
     /*throw(Exception)*/
   {
     user_agent_stat_logger_->process_anon_request(anon_request_info);
@@ -3675,8 +3567,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_action(
-    const AdvActionInfo& adv_action_info)
+  CampaignManagerLogger::Impl::process_action(const AdvActionInfo& adv_action_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::process_action()";
@@ -3695,8 +3586,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_passback(
-    const PassbackInfo& passback_info)
+  CampaignManagerLogger::Impl::process_passback(const PassbackInfo& passback_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::process_passback()";
@@ -3722,11 +3612,9 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      passback_stat_logger_->process_passback_track(
-        passback_track_info);
+      passback_stat_logger_->process_passback_track(passback_track_info);
 
-      creative_stat_logger_->process_passback_track(
-        passback_track_info);
+      creative_stat_logger_->process_passback_track(passback_track_info);
     }
     catch(const eh::Exception& ex)
     {
@@ -3737,8 +3625,7 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignManagerLogger::Impl::process_web_operation(
-    const WebOperationInfo& web_op_info)
+  CampaignManagerLogger::Impl::process_web_operation(const WebOperationInfo& web_op_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "CampaignManagerLogger::process_web_operation()";
@@ -3776,11 +3663,7 @@ namespace AdServer::CampaignSvcs
     {
       if ((operation == 'I' || operation == 'F') && !log_as_test)
       {
-        request_basic_channels_logger_->process_oo_operation(
-          colo_id,
-          time,
-          time_offset,
-          user_id);
+        request_basic_channels_logger_->process_oo_operation(colo_id, time, time_offset, user_id);
       }
     }
     catch(const eh::Exception& e)

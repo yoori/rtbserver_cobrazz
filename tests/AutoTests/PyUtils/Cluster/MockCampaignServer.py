@@ -68,7 +68,7 @@ class CampaignServerTestMixin(ComparisonMixin):
     self.delete_app_formats          = []
     self.sizes                       = []
     self.delete_sizes                = []
-    self.accounts                    = [] 
+    self.accounts                    = []
     self.deleted_accounts            = []
     self.activate_creative_options   = []
     self.delete_creative_options     = []
@@ -142,8 +142,8 @@ class CampaignServerTestMixin(ComparisonMixin):
                                       time2orb(currentTime()),   # first_load_stamp
                                       time2orb(currentTime()),   # finish_load_stamp
                                       time2orb(currentTime()),   # current_time
-                                      self.global_freq_cap_id,   
-                                      self.currency_exchange_id, 
+                                      self.global_freq_cap_id,
+                                      self.currency_exchange_id,
                                       self.max_keyword_ecpm,
                                       self.tanx_publisher_account_id,
                                       self.google_publisher_account_id,
@@ -212,8 +212,8 @@ class CampaignServerTestMixin(ComparisonMixin):
                                       time2orb(currentTime()),   # first_load_stamp
                                       time2orb(currentTime()),   # finish_load_stamp
                                       time2orb(currentTime()),   # current_time
-                                      self.global_freq_cap_id,   
-                                      self.currency_exchange_id, 
+                                      self.global_freq_cap_id,
+                                      self.currency_exchange_id,
                                       self.max_keyword_ecpm,
                                       self.tanx_publisher_account_id,
                                       self.google_publisher_account_id,
@@ -300,10 +300,10 @@ class CampaignServerTestMixin(ComparisonMixin):
                              self.get_behav_info(simple.behav_param_list_id) # behave_info
                              )
     return map(simple2chsv, self.simple_channels)
-                                    
+
   def CampaignServer_update_stat( self ):
     tlog(10, "CampaignServer.update_stat")
-                                    
+
   def CampaignServer_need_config( self, req_timestamp ):
     tlog(10, "CampaignServer.need_config")
     return True
@@ -344,7 +344,7 @@ class CampaignServerTestMixin(ComparisonMixin):
   def CampaignServer_fraud_conditions( self ):
     tlog(10, "CampaignServer.fraud_conditions")
     return self.fraud_conditions
-        
+
   def CampaignServer_detectors( self, request_timestamp ):
     tlog(10, "CampaignServer.search_engines %s" % time2str(orb2time(request_timestamp)))
     return DetectorsConfig( time2orb(currentTime()),

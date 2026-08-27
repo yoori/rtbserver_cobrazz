@@ -18,8 +18,7 @@
 
 namespace
 {
-  const char PLATFORM_MATCHER_RULES_ENV[] =
-    "ADSERVER_PLATFORM_MATCHER_RULES";
+  const char PLATFORM_MATCHER_RULES_ENV[] = "ADSERVER_PLATFORM_MATCHER_RULES";
 
   constexpr char DEFAULT_PLATFORM_RULES[] = R"PLATFORM_RULES(# platform_id	name	type	use_name	marker	match_regexp	output_regexp	priority
 1156225	blackberry			BlackBerry			8
@@ -199,37 +198,33 @@ namespace
   {
     Options options;
 
-    for(int i = 1; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
       const std::string arg(argv[i]);
-      if(arg == "--help" || arg == "-h")
+      if (arg == "--help" || arg == "-h")
       {
         print_usage();
         std::exit(0);
       }
-      else if(arg == "--count")
+      else if (arg == "--count")
       {
-        if(++i == argc)
+        if (++i == argc)
         {
           throw std::runtime_error("--count requires value");
         }
-        options.count = AdServer::Tests::Frontends::parse_uint64(
-          argv[i],
-          "--count");
+        options.count = AdServer::Tests::Frontends::parse_uint64(argv[i], "--count");
       }
-      else if(arg == "--threads")
+      else if (arg == "--threads")
       {
-        if(++i == argc)
+        if (++i == argc)
         {
           throw std::runtime_error("--threads requires value");
         }
-        options.threads = AdServer::Tests::Frontends::parse_uint64(
-          argv[i],
-          "--threads");
+        options.threads = AdServer::Tests::Frontends::parse_uint64(argv[i], "--threads");
       }
-      else if(arg == "--platform-rules")
+      else if (arg == "--platform-rules")
       {
-        if(++i == argc)
+        if (++i == argc)
         {
           throw std::runtime_error("--platform-rules requires value");
         }
@@ -250,10 +245,10 @@ namespace
     std::string result;
     result.reserve(value.size());
 
-    for(std::size_t i = 0; i < value.size(); ++i)
+    for (std::size_t i = 0; i < value.size(); ++i)
     {
       const char ch = value[i];
-      if(ch != '\\' || i + 1 == value.size())
+      if (ch != '\\' || i + 1 == value.size())
       {
         result += ch;
         continue;
@@ -289,12 +284,11 @@ namespace
     std::vector<std::string> result;
     std::size_t field_begin = 0;
 
-    for(std::size_t i = 0; i <= line.size(); ++i)
+    for (std::size_t i = 0; i <= line.size(); ++i)
     {
-      if(i == line.size() || line[i] == '\t')
+      if (i == line.size() || line[i] == '\t')
       {
-        result.emplace_back(
-          unescape_value(line.substr(field_begin, i - field_begin)));
+        result.emplace_back(unescape_value(line.substr(field_begin, i - field_begin)));
         field_begin = i + 1;
       }
     }
@@ -303,17 +297,13 @@ namespace
   }
 
   unsigned long
-  parse_unsigned_long(
-    const std::string& value,
-    const char* field_name,
-    unsigned long line_number)
+  parse_unsigned_long(const std::string& value, const char* field_name, unsigned long line_number)
   {
     unsigned long result = 0;
-    if(!String::StringManip::str_to_int(String::SubString(value), result))
+    if (!String::StringManip::str_to_int(String::SubString(value), result))
     {
       std::ostringstream error;
-      error << "invalid " << field_name << " at line " << line_number <<
-        ": '" << value << "'";
+      error << "invalid " << field_name << " at line " << line_number << ": '" << value << "'";
       throw std::runtime_error(error.str());
     }
 
@@ -327,21 +317,21 @@ namespace
     std::string line;
     unsigned long line_number = 0;
 
-    while(std::getline(input, line))
+    while (std::getline(input, line))
     {
       ++line_number;
-      if(!line.empty() && line.back() == '\r')
+      if (!line.empty() && line.back() == '\r')
       {
         line.pop_back();
       }
 
-      if(line.empty() || line[0] == '#')
+      if (line.empty() || line[0] == '#')
       {
         continue;
       }
 
       std::vector<std::string> fields = split_fields(line);
-      if(fields.size() != 8)
+      if (fields.size() != 8)
       {
         std::ostringstream error;
         error << "invalid platform matcher rule at line " << line_number <<
@@ -350,20 +340,14 @@ namespace
       }
 
       PlatformMatcherRule rule;
-      rule.platform_id = parse_unsigned_long(
-        fields[0],
-        "platform_id",
-        line_number);
+      rule.platform_id = parse_unsigned_long(fields[0], "platform_id", line_number);
       rule.name = std::move(fields[1]);
       rule.type = std::move(fields[2]);
       rule.use_name = std::move(fields[3]);
       rule.marker = std::move(fields[4]);
       rule.match_regexp = std::move(fields[5]);
       rule.output_regexp = std::move(fields[6]);
-      rule.priority = parse_unsigned_long(
-        fields[7],
-        "priority",
-        line_number);
+      rule.priority = parse_unsigned_long(fields[7], "priority", line_number);
       result.emplace_back(std::move(rule));
     }
 
@@ -375,7 +359,7 @@ namespace
     FrontendCommons::PlatformMatcher& platform_matcher,
     const PlatformMatcherRuleArray& rules)
   {
-    for(const auto& rule : rules)
+    for (const auto& rule : rules)
     {
       platform_matcher.add_rule(
         rule.platform_id,
@@ -390,20 +374,19 @@ namespace
   }
 
   PlatformMatcherRuleStats
-  collect_platform_matcher_rule_stats(
-    const PlatformMatcherRuleArray& rules) noexcept
+  collect_platform_matcher_rule_stats(const PlatformMatcherRuleArray& rules) noexcept
   {
     PlatformMatcherRuleStats stats;
     stats.rules = rules.size();
 
-    for(const auto& rule : rules)
+    for (const auto& rule : rules)
     {
-      if(!rule.match_regexp.empty())
+      if (!rule.match_regexp.empty())
       {
         ++stats.match_regexps;
       }
 
-      if(!rule.output_regexp.empty())
+      if (!rule.output_regexp.empty())
       {
         ++stats.output_regexps;
       }
@@ -413,18 +396,14 @@ namespace
   }
 
   MatcherConfig
-  make_platform_matcher(
-    PlatformMatcherRuleArray rules,
-    std::string rules_source)
+  make_platform_matcher(PlatformMatcherRuleArray rules, std::string rules_source)
   {
-    if(rules.empty())
+    if (rules.empty())
     {
-      throw std::runtime_error(
-        "platform rules source '" + rules_source + "' is empty");
+      throw std::runtime_error("platform rules source '" + rules_source + "' is empty");
     }
 
-    FrontendCommons::PlatformMatcher_var platform_matcher(
-      new FrontendCommons::PlatformMatcher());
+    FrontendCommons::PlatformMatcher_var platform_matcher(new FrontendCommons::PlatformMatcher());
     add_platform_matcher_rules(*platform_matcher, rules);
 
     return {
@@ -438,37 +417,32 @@ namespace
   load_platform_matcher(const std::string& path)
   {
     std::ifstream input(path);
-    if(!input)
+    if (!input)
     {
-      throw std::runtime_error(
-        "can't open platform rules file '" + path + "'");
+      throw std::runtime_error("can't open platform rules file '" + path + "'");
     }
 
-    return make_platform_matcher(
-      load_platform_matcher_rules(input),
-      path);
+    return make_platform_matcher(load_platform_matcher_rules(input), path);
   }
 
   MatcherConfig
   load_default_platform_matcher()
   {
     std::istringstream input(DEFAULT_PLATFORM_RULES);
-    return make_platform_matcher(
-      load_platform_matcher_rules(input),
-      "compiled-in platform rules");
+    return make_platform_matcher(load_platform_matcher_rules(input), "compiled-in platform rules");
   }
 
   MatcherConfig
   make_platform_matcher(const Options& options)
   {
-    if(!options.platform_rules_path.empty())
+    if (!options.platform_rules_path.empty())
     {
       return load_platform_matcher(options.platform_rules_path);
     }
 
-    if(const char* env_path = std::getenv(PLATFORM_MATCHER_RULES_ENV))
+    if (const char* env_path = std::getenv(PLATFORM_MATCHER_RULES_ENV))
     {
-      if(env_path[0] != 0)
+      if (env_path[0] != 0)
       {
         return load_platform_matcher(env_path);
       }
@@ -481,7 +455,7 @@ namespace
   checksum_string(const std::string& value)
   {
     std::uint64_t result = value.size();
-    if(!value.empty())
+    if (!value.empty())
     {
       result += static_cast<unsigned char>(value.front());
       result += static_cast<unsigned char>(value.back());
@@ -497,22 +471,16 @@ namespace
     std::uint64_t offset)
   {
     WorkerResult result;
-    constexpr std::uint64_t examples_size =
-      sizeof(USER_AGENTS) / sizeof(USER_AGENTS[0]);
+    constexpr std::uint64_t examples_size = sizeof(USER_AGENTS) / sizeof(USER_AGENTS[0]);
 
-    for(std::uint64_t i = 0; i < count; ++i)
+    for (std::uint64_t i = 0; i < count; ++i)
     {
-      const std::string_view user_agent =
-        USER_AGENTS[(i + offset) % examples_size];
+      const std::string_view user_agent = USER_AGENTS[(i + offset) % examples_size];
       std::string platform;
       std::string full_platform;
       FrontendCommons::PlatformMatcher::PlatformIdSet platform_ids;
 
-      if(platform_matcher.match(
-          &platform_ids,
-          platform,
-          full_platform,
-          user_agent))
+      if (platform_matcher.match(&platform_ids, platform, full_platform, user_agent))
       {
         result.checksum += platform_ids.size();
         result.checksum += checksum_string(platform);
@@ -542,13 +510,10 @@ main(int argc, char** argv)
     const std::uint64_t count_per_thread = options.count / options.threads;
     const std::uint64_t tail_count = options.count % options.threads;
 
-    for(std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
+    for (std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
     {
-      const std::uint64_t thread_count =
-        count_per_thread + (thread_i < tail_count ? 1 : 0);
-      const std::uint64_t offset = thread_i * count_per_thread + std::min(
-        thread_i,
-        tail_count);
+      const std::uint64_t thread_count = count_per_thread + (thread_i < tail_count ? 1 : 0);
+      const std::uint64_t offset = thread_i * count_per_thread + std::min(thread_i, tail_count);
 
       threads.emplace_back(
         [
@@ -559,14 +524,11 @@ main(int argc, char** argv)
           offset
         ]()
         {
-          results[thread_i] = run_match_benchmark(
-            *matcher,
-            thread_count,
-            offset);
+          results[thread_i] = run_match_benchmark(*matcher, thread_count, offset);
         });
     }
 
-    for(auto& thread : threads)
+    for (auto& thread : threads)
     {
       thread.join();
     }
@@ -575,25 +537,23 @@ main(int argc, char** argv)
     const auto finished_at = std::chrono::steady_clock::now();
 
     WorkerResult total;
-    for(const auto& result : results)
+    for (const auto& result : results)
     {
       total.matched += result.matched;
       total.checksum += result.checksum;
     }
 
-    if(total.matched == 0)
+    if (total.matched == 0)
     {
       throw std::runtime_error("PlatformMatcher didn't match any user agent");
     }
 
-    const double elapsed_sec = std::chrono::duration<double>(
-      finished_at - started_at).count();
+    const double elapsed_sec = std::chrono::duration<double>(finished_at - started_at).count();
     const double user_cpu_sec = cpu_finished.user - cpu_started.user;
     const double sys_cpu_sec = cpu_finished.sys - cpu_started.sys;
     const double cpu_sec = user_cpu_sec + sys_cpu_sec;
     const double rate = static_cast<double>(options.count) / elapsed_sec;
-    const double cpu_ns_per_call =
-      cpu_sec * 1000000000.0 / static_cast<double>(options.count);
+    const double cpu_ns_per_call = cpu_sec * 1000000000.0 / static_cast<double>(options.count);
 
     std::cout
       << "count=" << options.count << '\n'
@@ -606,18 +566,12 @@ main(int argc, char** argv)
         matcher_config.rule_stats.output_regexps << '\n'
       << "matched=" << total.matched << '\n'
       << "checksum=" << total.checksum << '\n'
-      << "elapsed_sec=" << AdServer::Tests::Frontends::format_float(
-        elapsed_sec) << '\n'
-      << "rate_per_sec=" << AdServer::Tests::Frontends::format_float(
-        rate) << '\n'
-      << "cpu_sec=" << AdServer::Tests::Frontends::format_float(
-        cpu_sec) << '\n'
-      << "user_cpu_sec=" << AdServer::Tests::Frontends::format_float(
-        user_cpu_sec) << '\n'
-      << "sys_cpu_sec=" << AdServer::Tests::Frontends::format_float(
-        sys_cpu_sec) << '\n'
-      << "cpu_ns_per_call=" << AdServer::Tests::Frontends::format_float(
-        cpu_ns_per_call) << '\n';
+      << "elapsed_sec=" << AdServer::Tests::Frontends::format_float(elapsed_sec) << '\n'
+      << "rate_per_sec=" << AdServer::Tests::Frontends::format_float(rate) << '\n'
+      << "cpu_sec=" << AdServer::Tests::Frontends::format_float(cpu_sec) << '\n'
+      << "user_cpu_sec=" << AdServer::Tests::Frontends::format_float(user_cpu_sec) << '\n'
+      << "sys_cpu_sec=" << AdServer::Tests::Frontends::format_float(sys_cpu_sec) << '\n'
+      << "cpu_ns_per_call=" << AdServer::Tests::Frontends::format_float(cpu_ns_per_call) << '\n';
 
     return 0;
   }

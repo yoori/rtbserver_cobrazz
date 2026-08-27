@@ -7,9 +7,7 @@
 #include <ChannelSvcs/ChannelManagerController/ThreadHandlerTemplate.hpp>
 #include "ChannelLoadSessionImpl.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   struct Filter
@@ -54,9 +52,9 @@ namespace ChannelSvcs
     {
       /*
       ChannelSvcs::GroupLoadDescriptionSeq servers_copy(servers);
-      for(CORBA::ULong group_i = 0; group_i < servers_copy.length(); ++group_i)
+      for (CORBA::ULong group_i = 0; group_i < servers_copy.length(); ++group_i)
       {
-        for(CORBA::ULong server_i = 0; server_i < servers_copy[group_i].length(); ++server_i)
+        for (CORBA::ULong server_i = 0; server_i < servers_copy[group_i].length(); ++server_i)
         {
           auto& server = servers_copy[group_i][server_i];
           server.load_server =
@@ -78,8 +76,7 @@ namespace ChannelSvcs
     }
   }
 
-  ChannelLoadSessionImpl::ChannelLoadSessionImpl(
-      ChannelLoadSessionImpl& init)
+  ChannelLoadSessionImpl::ChannelLoadSessionImpl(ChannelLoadSessionImpl& init)
       /*throw(eh::Exception, Exception)*/
       : CORBA::ValueBase(),
         CORBA::AbstractBase(),
@@ -116,7 +113,7 @@ namespace ChannelSvcs
     }
     catch(const Exception& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << __func__ << ": Exception: " << e.what();
@@ -125,7 +122,7 @@ namespace ChannelSvcs
     }
     catch(const eh::Exception& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << __func__ << ": eh::Exception: " << e.what();
@@ -175,10 +172,10 @@ namespace ChannelSvcs
   void ChannelLoadSessionImpl::bad_(size_t index) noexcept
   {
     WGuard_ lock(init_lock_);
-    if(index == index_)
+    if (index == index_)
     {
       index_++;
-      if(index_ == load_servers().length())
+      if (index_ == load_servers().length())
       {
         index_ = 0;
       }
@@ -195,7 +192,7 @@ namespace ChannelSvcs
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
-    if(!load_servers().length())
+    if (!load_servers().length())
     {
       throw AdServer::ChannelSvcs::NotConfigured();
     }
@@ -206,12 +203,12 @@ namespace ChannelSvcs
       SmartCheck cquery(__func__, len);
       cquery.params = &query;
       Generics::Task_var task;
-      for(size_t i = 0; i < len; i++)
+      for (size_t i = 0; i < len; i++)
       {
         cquery.id_ = i;
         cquery.ref_ = &load_servers()[index][i];
         task = new Protected::CallTask<SmartCheck>(cquery);
-        if(i != len - 1)
+        if (i != len - 1)
         {
           task_runner_->enqueue_task(task);
         }
@@ -223,27 +220,25 @@ namespace ChannelSvcs
       size_t answer_len = 0;
       Generics::Time master, max_time, temp, temp2, first_stamp;
       bool first = true;
-      SmartCheck::Handler::ResultsVector& results =
-        cquery.callback_->get_result();
-      if(cquery.callback_->count_exception() > 0)
+      SmartCheck::Handler::ResultsVector& results = cquery.callback_->get_result();
+      if (cquery.callback_->count_exception() > 0)
       {
         Stream::Error ostr;
         bad_(index);
         ostr << __func__ << ": " << cquery.callback_->count_exception()
-          << " ChannelServers are failed. : "
-          << cquery.callback_->get_exception().str();
+          << " ChannelServers are failed. : " << cquery.callback_->get_exception().str();
         CORBACommons::throw_desc<
           ChannelSvcs::ImplementationException>(ostr.str());
       }
-      for(size_t i = 0; i < len;i++)
+      for (size_t i = 0; i < len;i++)
       {
         ChannelSvcs::ChannelCurrent::CheckData_var& value = results[i];
-        if(value)
+        if (value)
         {
           answer_len += value->versions.length();
           temp = CorbaAlgs::unpack_time(value->master_stamp);
           temp2 = CorbaAlgs::unpack_time(value->max_time);
-          if(first)
+          if (first)
           {
             master = temp;
             max_time = temp2;
@@ -255,14 +250,15 @@ namespace ChannelSvcs
           {
             master = std::min(master, temp);
             max_time = std::max(max_time, temp2);
-            first_stamp = std::max(
-              first_stamp, CorbaAlgs::unpack_time(value->first_stamp));
+            first_stamp = std::max(first_stamp, CorbaAlgs::unpack_time(value->first_stamp));
           }
-          if(value->special_adv)
+
+          if (value->special_adv)
           {
             data->special_adv = true;
           }
-          if(value->special_track)
+
+          if (value->special_track)
           {
             data->special_track = true;
           }
@@ -272,17 +268,18 @@ namespace ChannelSvcs
       data->first_stamp = CorbaAlgs::pack_time(first_stamp);
       data->versions.length(answer_len);
       data->max_time = CorbaAlgs::pack_time(max_time);
-      if(data->source_id < 0 && source_id() > 0)
+      if (data->source_id < 0 && source_id() > 0)
       {
         data->source_id = source_id() + index;
       }
-      if(answer_len > 0)
+
+      if (answer_len > 0)
       {
         size_t j = 0;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
           ChannelSvcs::ChannelCurrent::CheckData_var& value = results[i];
-          if(value)
+          if (value)
           {
             std::copy(value->versions.get_buffer(),
                       value->versions.get_buffer() + value->versions.length(),
@@ -297,8 +294,7 @@ namespace ChannelSvcs
     {
       Stream::Error ostr;
       bad_(index);
-      ostr << __func__ << ": SmartCheck::Handler::Exception: "
-        << e.what();
+      ostr << __func__ << ": SmartCheck::Handler::Exception: " << e.what();
       CORBACommons::throw_desc<
         ChannelSvcs::ImplementationException>(ostr.str());
     }
@@ -339,7 +335,7 @@ namespace ChannelSvcs
   ::CORBA::ULong ChannelLoadSessionImpl::get_count_chunks()
     /*throw(AdServer::ChannelSvcs::ImplementationException)*/
   {
-    if(load_servers().length() == 1 && load_servers()[0].length() == 1)
+    if (load_servers().length() == 1 && load_servers()[0].length() == 1)
     {
       try
       {
@@ -391,7 +387,7 @@ namespace ChannelSvcs
   {
     AdServer::ChannelSvcs::ChannelIdSeq ids;
     const ::AdServer::ChannelSvcs::ChannelIdSeq* ids_ptr;
-    if(ref_->count_chunks)
+    if (ref_->count_chunks)
     {
       ids.length(ids_->length());
       CORBA::ULong* end = std::remove_copy_if(
@@ -424,7 +420,7 @@ namespace ChannelSvcs
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
-    if(!load_servers().length())
+    if (!load_servers().length())
     {
       throw AdServer::ChannelSvcs::NotConfigured();
     }
@@ -435,27 +431,25 @@ namespace ChannelSvcs
       UpdateTriggers query(__func__, len);
       query.ids_ = &ids;
       Generics::Task_var task;
-      for(size_t i = 0; i < len; i++)
+      for (size_t i = 0; i < len; i++)
       {
         query.id_ = i;
         query.ref_ = &load_servers()[index][i];
         task = new Protected::CallTask<UpdateTriggers>(query);
-        if(i != len - 1)
+        if (i != len - 1)
         {
           task_runner_->enqueue_task(task);
         }
       }
       task->execute();
       result = new AdServer::ChannelSvcs::ChannelCurrent::UpdateData;
-      UpdateTriggers::Handler::ResultsVector& results =
-        query.callback_->get_result();
-      if(query.callback_->count_exception() > 0)
+      UpdateTriggers::Handler::ResultsVector& results = query.callback_->get_result();
+      if (query.callback_->count_exception() > 0)
       {
         Stream::Error ostr;
         bad_(index);
         ostr << __func__ << ": " << query.callback_->count_exception()
-          << " ChannelServers are failed. : "
-          << query.callback_->get_exception().str();
+          << " ChannelServers are failed. : " << query.callback_->get_exception().str();
         CORBACommons::throw_desc<
           ChannelSvcs::ImplementationException>(ostr.str());
       }
@@ -463,11 +457,10 @@ namespace ChannelSvcs
       {
         result->source_id = -1;
         size_t old_length = 0;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
-          ChannelSvcs::ChannelCurrent::UpdateData_var& value =
-            results[i];
-          if(value)
+          ChannelSvcs::ChannelCurrent::UpdateData_var& value = results[i];
+          if (value)
           {
             result->source_id = value->source_id;
             old_length += value->channels.length();
@@ -475,11 +468,10 @@ namespace ChannelSvcs
         }
         result->channels.length(old_length);
         old_length = 0;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
-          ChannelSvcs::ChannelCurrent::UpdateData_var& value =
-            results[i];
-          if(value && value->channels.length())
+          ChannelSvcs::ChannelCurrent::UpdateData_var& value = results[i];
+          if (value && value->channels.length())
           {
             std::copy(
                 value->channels.get_buffer(),
@@ -488,7 +480,8 @@ namespace ChannelSvcs
             old_length += value->channels.length();
           }
         }
-        if(result->source_id < 0 && source_id() > 0)
+
+        if (result->source_id < 0 && source_id() > 0)
         {
           result->source_id = source_id() + index;
         }
@@ -568,7 +561,7 @@ namespace ChannelSvcs
       debug_in.limit = 10000;
       std::vector<unsigned long> channels_id;
 
-      for(int i = 0; i < 434686; ++i)
+      for (int i = 0; i < 434686; ++i)
       {
         channels_id.emplace_back(i);
       }
@@ -594,7 +587,7 @@ namespace ChannelSvcs
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
-    if(!load_servers().length())
+    if (!load_servers().length())
     {
       throw AdServer::ChannelSvcs::NotConfigured();
     }
@@ -605,28 +598,26 @@ namespace ChannelSvcs
       UpdatePosCCG query(__func__, len);
       query.in = &query_in;
       Generics::Task_var task;
-      for(size_t i = 0; i < len; i++)
+      for (size_t i = 0; i < len; i++)
       {
         query.id_ = i;
         query.ref_ = &load_servers()[index][i];
         task = new Protected::CallTask<UpdatePosCCG>(query);
-        if(i != len - 1)
+        if (i != len - 1)
         {
           task_runner_->enqueue_task(task);
         }
       }
       task->execute();
       result = new AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult;
-      UpdatePosCCG::Handler::ResultsVector& results =
-        query.callback_->get_result();
+      UpdatePosCCG::Handler::ResultsVector& results = query.callback_->get_result();
 
-      if(query.callback_->count_exception() > 0)
+      if (query.callback_->count_exception() > 0)
       {
         Stream::Error ostr;
         bad_(index);
         ostr << __func__ << ": " << query.callback_->count_exception()
-          << " ChannelServers are failed. : "
-          << query.callback_->get_exception().str();
+          << " ChannelServers are failed. : " << query.callback_->get_exception().str();
         CORBACommons::throw_desc<
           ChannelSvcs::ImplementationException>(ostr.str());
       }
@@ -634,31 +625,28 @@ namespace ChannelSvcs
       unsigned long start_min = ULONG_MAX, start_max = query_in.start;
       bool use_min = false;
       result->source_id = -1;
-      for(size_t i = 0; i < len; i++)
+      for (size_t i = 0; i < len; i++)
       {
-        AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var& value =
-          results[i];
+        AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var& value = results[i];
         result->source_id = value->source_id;
         length_of_result[0] += value->keywords.length();
         length_of_result[1] += value->deleted.length();
-        start_min = std::min(
-          static_cast<unsigned long>(value->start_id), start_min);
-        start_max = std::max(
-          static_cast<unsigned long>(value->start_id), start_max);
-        if(value->keywords.length() >= query_in.limit)
+        start_min = std::min(static_cast<unsigned long>(value->start_id), start_min);
+        start_max = std::max(static_cast<unsigned long>(value->start_id), start_max);
+        if (value->keywords.length() >= query_in.limit)
         {
           use_min = true;
         }
       }
-      if(length_of_result[0] > query_in.limit)
+
+      if (length_of_result[0] > query_in.limit)
       {
         std::multiset<unsigned int> channels;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
-          for(size_t j = 0; j < results[i]->keywords.length(); j++)
+          for (size_t j = 0; j < results[i]->keywords.length(); j++)
           {
-            AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw =
-              results[i]->keywords[j];
+            AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw = results[i]->keywords[j];
             channels.insert(kw.channel_id);
           }
         }
@@ -666,7 +654,7 @@ namespace ChannelSvcs
         std::advance(ch_it, query_in.limit);
         result->start_id = *ch_it + 1;
       }
-      else if(use_min)
+      else if (use_min)
       {
         result->start_id = start_min;
       }
@@ -675,7 +663,7 @@ namespace ChannelSvcs
         result->start_id = start_max;
       }
 
-      if(length_of_result[0])
+      if (length_of_result[0])
       {
         result->keywords.length(length_of_result[0]);
       }
@@ -684,13 +672,12 @@ namespace ChannelSvcs
         result->deleted.length(length_of_result[1]);
       }
       length_of_result[0] = length_of_result[1] = 0;
-      for(size_t i = 0; i < results.size(); i++)
+      for (size_t i = 0; i < results.size(); i++)
       {
-        for(size_t j = 0; j < results[i]->keywords.length(); j++)
+        for (size_t j = 0; j < results[i]->keywords.length(); j++)
         {
-          AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw =
-            results[i]->keywords[j];
-          if(kw.channel_id < result->start_id)
+          AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw = results[i]->keywords[j];
+          if (kw.channel_id < result->start_id)
           {
             result->keywords[length_of_result[0]++] = kw;
           }
@@ -699,7 +686,8 @@ namespace ChannelSvcs
             break;
           }
         }
-        if(result->deleted.length())
+
+        if (result->deleted.length())
         {
           std::copy(
             results[i]->deleted.get_buffer(),
@@ -709,7 +697,7 @@ namespace ChannelSvcs
         }
       }
       result->keywords.length(length_of_result[0]);
-      if(result->source_id < 0 && source_id() > 0)
+      if (result->source_id < 0 && source_id() > 0)
       {
         result->source_id = source_id() + index;
       }
@@ -748,5 +736,4 @@ namespace ChannelSvcs
     }
   }
 
-}// namespace ChannelSvcs
-} // namespace AdServer
+} // namespace AdServer::ChannelSvcs

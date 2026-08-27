@@ -1,4 +1,4 @@
-#!/usr/bin/perl  
+#!/usr/bin/perl
 
 use DACSUtils;
 
@@ -8,7 +8,7 @@ sub run
   my $read_source = 0;
   my $read_dest = 0;
   my $read_sn = 0;
-  
+
   foreach $opt(@ARGV)
   {
     if (substr($opt, 0, 1) eq '-')
@@ -58,20 +58,20 @@ sub run
         die "Unknown '$opt'.\n$usage";
       }
     }
-  } 
+  }
 
-  if(!defined($source) || !defined($destination) || !defined($sn))
+  if (!defined($source) || !defined($destination) || !defined($sn))
   {
     die "Not defined source, dest file or service name.\n$usage";
   }
 
   my $locations = DACSUtils::load($source);
-  
-  my $conf_locations = 
+
+  my $conf_locations =
     DACSUtils::generate_conf_locations(
       DACSUtils::get_hosts($locations),
       $sn);
-  
+
   DACSUtils::save($conf_locations, $destination);
 }
 

@@ -7,9 +7,7 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class CTROptimizer
   {
@@ -84,9 +82,7 @@ namespace CampaignSvcs
       HourAmountDistribution() noexcept;
 
       void
-      add(unsigned long hour_i,
-        const RevenueDecimal& amount,
-        const Generics::Time* time_in_hour)
+      add(unsigned long hour_i, const RevenueDecimal& amount, const Generics::Time* time_in_hour)
         noexcept;
 
       HourAmountDistribution&
@@ -214,9 +210,7 @@ namespace CampaignSvcs
       noexcept;
 
     static HourAmount
-    approximate_hour_lineary_(
-      const HourAmount& left,
-      const HourAmount& right)
+    approximate_hour_lineary_(const HourAmount& left, const HourAmount& right)
       noexcept;
 
     template<typename ResultIteratorType, typename IteratorType>
@@ -236,5 +230,4 @@ namespace CampaignSvcs
 
     RevenueDecimalArray basic_load_distribution_;
   };
-}
 }

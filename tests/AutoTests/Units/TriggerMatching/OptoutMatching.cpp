@@ -1,9 +1,7 @@
 
 #include "OptoutMatching.hpp"
 
-REFLECT_UNIT(OptoutMatching) (
-  "TriggerMatching",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW);
+REFLECT_UNIT(OptoutMatching) ("TriggerMatching", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -249,15 +247,12 @@ void OptoutMatching::post_condition()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, diffs, channel_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs, channel_stats_)).check(),
     "ChannelInventory check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_each_diff_checker(
-        conn_, TriggerDiff().hits(6), trigger_stats_)).check(),
+      AutoTest::stats_each_diff_checker(conn_, TriggerDiff().hits(6), trigger_stats_)).check(),
     "ChannelTriggerStats check");
 }
 

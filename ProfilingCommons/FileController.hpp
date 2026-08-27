@@ -8,9 +8,7 @@
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/AtomicInt.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   class FileController: public virtual ReferenceCounting::Interface
   {
@@ -197,17 +195,11 @@ namespace ProfilingCommons
     ~StatImpl() noexcept = default;
 
     virtual void
-    add_read_time_(
-      const Generics::Time& start,
-      const Generics::Time& stop,
-      unsigned long)
+    add_read_time_(const Generics::Time& start, const Generics::Time& stop, unsigned long)
       noexcept;
 
     virtual void
-    add_write_time_(
-      const Generics::Time& start,
-      const Generics::Time& stop,
-      unsigned long)
+    add_write_time_(const Generics::Time& start, const Generics::Time& stop, unsigned long)
       noexcept;
 
     void
@@ -269,5 +261,4 @@ namespace ProfilingCommons
     const unsigned long write_block_size_;
     SyncPolicy::Mutex operations_lock_;
   };
-}
 }

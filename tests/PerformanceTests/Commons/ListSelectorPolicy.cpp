@@ -9,8 +9,7 @@
 
 const unsigned long MAX_PARAMVALUE_LENGTH = 540;
 
-std::string make_filepath(const char* filename,
-                          const char* basepath)
+std::string make_filepath(const char* filename, const char* basepath)
 {
   if (!basepath)
     {
@@ -33,6 +32,7 @@ bool is_rel_path(const char* filename)
     {
       return true;
     }
+
   if (*filename == '/')
     {
       return false;
@@ -40,8 +40,7 @@ bool is_rel_path(const char* filename)
   return true;
 }
 
-bool need_set(unsigned long request_index,
-              unsigned long percentage)
+bool need_set(unsigned long request_index, unsigned long percentage)
 {
   unsigned long last_index = percentage > 100? 100: percentage;
   unsigned long current_index = (request_index + 1) % 100;
@@ -63,18 +62,18 @@ ConfigFileList::ConfigFileList(const char* filepath,
     }
   file.open(path.c_str(), std::ios::in);
 
-  if(!file.is_open())
+  if (!file.is_open())
   {
     Stream::Error ostr;
     ostr << "Error: can't open file " << path;
     throw InvalidList(ostr);
   }
 
-  while(true)
+  while (true)
   {
     std::string line;
     std::getline(file, line);
-    if(line.empty()) break;
+    if (line.empty()) break;
     list_.push_back(line);
   }
   file.close();
@@ -108,7 +107,7 @@ ConfigDirFilesList::ConfigDirFilesList(const char* filespath,
       {
         std::fstream file;
         file.open(f_path.c_str(), std::ios::in);
-        if(!file.is_open())
+        if (!file.is_open())
         {
           Stream::Error ostr;
           ostr << "Error: can't open file " << f_path;
@@ -185,8 +184,7 @@ RandomSelectorPolicy::~RandomSelectorPolicy() noexcept
 {
 }
 
-void RandomSelectorPolicy::get_(std::string& value,
-                                unsigned short flags)
+void RandomSelectorPolicy::get_(std::string& value, unsigned short flags)
 {
   if (!list_->size()) return;
   unsigned long index = Generics::safe_rand(list_->size());
@@ -211,8 +209,7 @@ RandomSetSelectorPolicy::~RandomSetSelectorPolicy() noexcept
 {
 }
 
-void RandomSetSelectorPolicy::get_(std::string& value,
-                                   unsigned short flags)
+void RandomSetSelectorPolicy::get_(std::string& value, unsigned short flags)
 {
 
   unsigned short size = max_set_size_;
@@ -243,8 +240,7 @@ const String::SubString SelectorPolicy::RANDOM_FUNC("random");
 const String::SubString SelectorPolicy::SEQ_FUNC("sequence");
 
 
-SelectorPolicy::SelectorPolicy(const String::SubString& entity_name,
-  unsigned long empty_prc)
+SelectorPolicy::SelectorPolicy(const String::SubString& entity_name, unsigned long empty_prc)
   : entity_name(entity_name.str()), empty_prc_(empty_prc), request_count_(0)
 {
 }
@@ -253,8 +249,7 @@ SelectorPolicy::~SelectorPolicy() noexcept
 {
 }
 
-void SelectorPolicy::get(std::string& value,
-                         unsigned short flags)
+void SelectorPolicy::get(std::string& value, unsigned short flags)
 {
   if ( !(flags & PO_ALWAYS_SET) && need_set(request_count_++, empty_prc_)) return;
   get_(value, flags);
@@ -288,11 +283,13 @@ SelectorPolicy::make_policy(
     {
       seq_size = 0;
     }
+
     if (result[2].empty())
     {
       function_name = RANDOM_FUNC;
       list_name = result[1];
     }
+
     if (function_name != RANDOM_FUNC && function_name != SEQ_FUNC )
     {
       Stream::Error ostr;
@@ -300,10 +297,12 @@ SelectorPolicy::make_policy(
       throw InvalidConfigRequestData(ostr);
     }
   }
+
   if (is_cookie)
   {
     policy_name = list_name;
   }
+
   if (value.empty() || !function_name.empty())
   {
     RequestLists::const_iterator list_it = lists.find(list_name.str());
@@ -313,12 +312,12 @@ SelectorPolicy::make_policy(
       ostr << "'" << entity_name << "' list '" << list_name << "' not found in config";
       throw InvalidConfigRequestData(ostr);
     }
+
     if (value.empty() || seq_size > 0)
     {
       if (function_name == RANDOM_FUNC)
       {
-        return new RandomSetSelectorPolicy(policy_name, empty_prc,
-          list_it->second, seq_size);
+        return new RandomSetSelectorPolicy(policy_name, empty_prc, list_it->second, seq_size);
       }
       else
       {
@@ -343,14 +342,12 @@ void make_cookie_policy_list(SelectorPolicyArray& cookie_policies,
   String::RegEx cookie_re(String::SubString("(#[\\w|:]+#)"));
   cookie_re.gsearch(cookies, value);
   unsigned int cookie_index = 0;
-  for (String::RegEx::Result::const_iterator it = cookies.begin();
-    it != cookies.end(); ++it)
+  for (String::RegEx::Result::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
   {
     std::ostringstream ostr;
     ostr << "cookie#" << cookie_index;
     SelectorPolicy_var cookie_policy_var =
-      SelectorPolicy_var(SelectorPolicy::make_policy(
-        ostr.str(), *it, lists, true));
+      SelectorPolicy_var(SelectorPolicy::make_policy(ostr.str(), *it, lists, true));
     cookie_policies.push_back(cookie_policy_var);
     cookie_index++;
   }

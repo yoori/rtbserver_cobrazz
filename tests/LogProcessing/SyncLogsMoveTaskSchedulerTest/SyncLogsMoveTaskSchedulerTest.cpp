@@ -126,12 +126,7 @@ namespace
   public:
     Fixture()
       : callback_(new Callback),
-        task_runner_(new Generics::TaskRunner(
-          callback_,
-          HARD_THREADS,
-          0,
-          0,
-          HARD_THREADS)),
+        task_runner_(new Generics::TaskRunner(callback_, HARD_THREADS, 0, 0, HARD_THREADS)),
         scheduler_(new AdServer::LogProcessing::MoveTaskScheduler(
           task_runner_,
           HARD_THREADS,
@@ -150,9 +145,7 @@ namespace
     void
     enqueue(TaskState& state, const Generics::Time& modification_time)
     {
-      scheduler_->enqueue_task(
-        Generics::Task_var(new BlockingTask(state)),
-        modification_time);
+      scheduler_->enqueue_task(Generics::Task_var(new BlockingTask(state)), modification_time);
     }
 
   private:
@@ -168,7 +161,7 @@ namespace
     TaskState state;
     const auto now = Generics::Time::get_time_of_day();
 
-    for(unsigned i = 0; i < HARD_THREADS; ++i)
+    for (unsigned i = 0; i < HARD_THREADS; ++i)
     {
       fixture.enqueue(state, now);
     }
@@ -188,7 +181,7 @@ namespace
     TaskState state;
     const auto old_time = Generics::Time::get_time_of_day() - Generics::Time(120);
 
-    for(unsigned i = 0; i < HARD_THREADS; ++i)
+    for (unsigned i = 0; i < HARD_THREADS; ++i)
     {
       fixture.enqueue(state, old_time);
     }
@@ -209,14 +202,14 @@ namespace
     const auto now = Generics::Time::get_time_of_day();
     const auto old_time = now - Generics::Time(120);
 
-    for(unsigned i = 0; i < 3; ++i)
+    for (unsigned i = 0; i < 3; ++i)
     {
       fixture.enqueue(fresh_state, now);
     }
 
     const bool first_fresh_started = fresh_state.wait_started(1, std::chrono::seconds(2));
 
-    for(unsigned i = 0; i < 4; ++i)
+    for (unsigned i = 0; i < 4; ++i)
     {
       fixture.enqueue(overdue_state, old_time);
     }

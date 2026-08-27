@@ -19,7 +19,7 @@ target_link_libraries(UserInfoAdmin
     gRPC::grpc++
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(UserInfoAdmin
     PRIVATE
       Protobuf::libprotobuf

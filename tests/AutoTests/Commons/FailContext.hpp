@@ -13,19 +13,12 @@ namespace AutoTest
   {
   public:
     template<size_t Count>
-    ValidateDescriptionLength(
-      const char (&) [Count],
-      const unsigned int,
-      const char*)
+    ValidateDescriptionLength(const char (&) [Count], const unsigned int, const char*)
     {
-      static_assert(Count > (length_valid_description_length-1),
-        "description length is not valid");
+      static_assert(Count > (length_valid_description_length-1), "description length is not valid");
     }
 
-    ValidateDescriptionLength(
-      const String::SubString&,
-      const unsigned int,
-      const char*)
+    ValidateDescriptionLength(const String::SubString&, const unsigned int, const char*)
     {}
   };
 

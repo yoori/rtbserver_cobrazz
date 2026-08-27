@@ -27,8 +27,7 @@ namespace
       return val;
     }
 
-    uint32_t operator()(
-      const Generics::Time& val) const
+    uint32_t operator()(const Generics::Time& val) const
     {
       return val.tv_sec;
     }
@@ -36,14 +35,12 @@ namespace
 
   struct TimeUIntCmp
   {
-    bool operator()(const Generics::Time& left,
-      uint32_t right) const
+    bool operator()(const Generics::Time& left, uint32_t right) const
     {
       return static_cast<unsigned long>(left.tv_sec) < right;
     }
 
-    bool operator()(uint32_t left,
-      const Generics::Time& right) const
+    bool operator()(uint32_t left, const Generics::Time& right) const
     {
       return left < static_cast<unsigned long>(right.tv_sec);
     }
@@ -57,15 +54,12 @@ namespace
   template<typename PlainReaderType, typename IdType>
   struct CommonIdImpressionCmp
   {
-    bool operator()(const PlainReaderType& left,
-      const IdType& right) const
+    bool operator()(const PlainReaderType& left, const IdType& right) const
     {
       return right > left.id();
     }
 
-    bool operator()(
-      const IdType& left,
-      const PlainReaderType& right) const
+    bool operator()(const IdType& left, const PlainReaderType& right) const
     {
       return left < right.id();
     }
@@ -100,8 +94,7 @@ namespace
       std::merge(
         left.times().begin(), left.times().end(),
         &time_, &time_ + 1,
-        Algs::modify_inserter(
-          std::back_inserter(ret.times()), TimeToUInt()),
+        Algs::modify_inserter(std::back_inserter(ret.times()), TimeToUInt()),
         TimeUIntCmp());
 
       return ret;
@@ -129,9 +122,7 @@ namespace
     typename IdType>
   struct CommonIdToPlainWriter
   {
-    CommonIdToPlainWriter(
-      const Generics::Time& time,
-      const AdServer::Commons::FreqCap& freq_cap)
+    CommonIdToPlainWriter(const Generics::Time& time, const AdServer::Commons::FreqCap& freq_cap)
       : time_(time),
         freq_cap_(freq_cap),
         check_time_(time - freq_cap.window_time)
@@ -159,8 +150,7 @@ namespace
       ret.id() = val;
       ret.total() = 1;
 
-      if((freq_cap_.window_limit != 0 &&
-         freq_cap_.window_time != Generics::Time::ZERO) ||
+      if ((freq_cap_.window_limit != 0 && freq_cap_.window_time != Generics::Time::ZERO) ||
          freq_cap_.period != Generics::Time::ZERO)
       {
         ret.times().push_back(time_.tv_sec);
@@ -172,12 +162,11 @@ namespace
   private:
     void filter_impressions_(PlainWriterType& val) const
     {
-      typename PlainWriterType::times_Container::
-        reverse_iterator erase_it = val.times().rbegin();
+      typename PlainWriterType::times_Container::reverse_iterator erase_it = val.times().rbegin();
 
       unsigned long count = 0;
 
-      if(freq_cap_.period != Generics::Time::ZERO &&
+      if (freq_cap_.period != Generics::Time::ZERO &&
          erase_it != val.times().rend() &&
          Generics::Time(*erase_it) > time_ - freq_cap_.period)
       {
@@ -185,12 +174,11 @@ namespace
         ++erase_it;
       }
 
-      if(freq_cap_.window_time != Generics::Time::ZERO)
+      if (freq_cap_.window_time != Generics::Time::ZERO)
       {
-        for(; erase_it != val.times().rend(); ++erase_it, ++count)
+        for (; erase_it != val.times().rend(); ++erase_it, ++count)
         {
-          if(Generics::Time(*erase_it) < check_time_ ||
-             count >= freq_cap_.window_limit)
+          if (Generics::Time(*erase_it) < check_time_ || count >= freq_cap_.window_limit)
           {
             break;
           }
@@ -221,16 +209,14 @@ namespace
   class ImpressionsFilter
   {
   public:
-    ImpressionsFilter(
-      const AdServer::Commons::FreqCap& freq_cap)
+    ImpressionsFilter(const AdServer::Commons::FreqCap& freq_cap)
       : freq_cap_(freq_cap)
     {}
 
     template<typename PlainWriterType>
     bool operator()(const PlainWriterType& val) const
     {
-      return freq_cap_.lifelimit != 0 ||
-        !val.times().empty();
+      return freq_cap_.lifelimit != 0 || !val.times().empty();
     }
 
   private:
@@ -239,10 +225,9 @@ namespace
 
   template<typename IteratorType>
   std::ostream&
-  print_times(std::ostream& out,
-    IteratorType it, IteratorType it_end)
+  print_times(std::ostream& out, IteratorType it, IteratorType it_end)
   {
-    for(; it != it_end; ++it)
+    for (; it != it_end; ++it)
     {
       out << " " << Generics::Time(*it).get_gm_time();
     }
@@ -251,10 +236,9 @@ namespace
 
   template<typename IteratorType>
   std::ostream&
-  print_imps(std::ostream& out,
-    IteratorType it, IteratorType it_end, const char* prefix)
+  print_imps(std::ostream& out, IteratorType it, IteratorType it_end, const char* prefix)
   {
-    for(; it != it_end; ++it)
+    for (; it != it_end; ++it)
     {
       out << prefix << (*it).id() << " (total = " << (*it).total()
         << ") (hold = " << (*it).times().size() << "):";
@@ -265,9 +249,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   template<typename ResultType>
   struct PlainImpressionConvert
@@ -293,12 +275,12 @@ namespace UserInfoSvcs
     IdImpressionList* category_ids,
     IdImpressionList* channel_ids) const
   {
-    if(plain_profile_->membuf().size() != 0)
+    if (plain_profile_->membuf().size() != 0)
     {
       PlainProfileReader plain_reader(
         plain_profile_->membuf().data(), plain_profile_->membuf().size());
 
-      if(news_ids)
+      if (news_ids)
       {
         std::copy(
           plain_reader.news_item_impressions().begin(),
@@ -308,7 +290,7 @@ namespace UserInfoSvcs
             PlainImpressionConvert<NewsItemImpression>()));
       }
 
-      if(category_ids)
+      if (category_ids)
       {
         std::copy(
           plain_reader.category_impressions().begin(),
@@ -318,7 +300,7 @@ namespace UserInfoSvcs
             PlainImpressionConvert<IdImpression>()));
       }
 
-      if(channel_ids)
+      if (channel_ids)
       {
         std::copy(
           plain_reader.channel_impressions().begin(),
@@ -339,14 +321,12 @@ namespace UserInfoSvcs
     const IdSet& category_imps,
     const IdSet& channel_imps)
   {
-    if(plain_profile_->membuf().size() == 0)
+    if (plain_profile_->membuf().size() == 0)
     {
       PlainProfileWriter plain_writer;
       Generics::MemBuf mb(plain_writer.size());
       plain_profile_->membuf().assign(mb.data(), mb.size());
-      plain_writer.save(
-        plain_profile_->membuf().data(),
-        plain_profile_->membuf().size());
+      plain_writer.save(plain_profile_->membuf().data(), plain_profile_->membuf().size());
     }
 
     PlainProfileReader plain_reader(
@@ -397,19 +377,13 @@ namespace UserInfoSvcs
 
     Generics::MemBuf mb(plain_writer.size());
     plain_profile_->membuf().assign(mb.data(), mb.size());
-    plain_writer.save(
-      plain_profile_->membuf().data(),
-      plain_profile_->membuf().size());
+    plain_writer.save(plain_profile_->membuf().data(), plain_profile_->membuf().size());
   }
 
   std::ostream&
   WDFreqCapProfile::print(std::ostream& out, const char* prefix) const
   {
-    return print(
-      out,
-      plain_profile_->membuf().data(),
-      plain_profile_->membuf().size(),
-      prefix);
+    return print(out, plain_profile_->membuf().data(), plain_profile_->membuf().size(), prefix);
   }
 
   std::ostream& WDFreqCapProfile::print(
@@ -418,7 +392,7 @@ namespace UserInfoSvcs
     unsigned long buf_size,
     const char* prefix)
   {
-    if(buf_size == 0)
+    if (buf_size == 0)
     {
       out << std::endl << prefix << "  Profile is empty." << std::endl;
     }
@@ -446,5 +420,4 @@ namespace UserInfoSvcs
 
     return out;
   }
-}
 }

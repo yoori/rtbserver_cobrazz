@@ -26,7 +26,7 @@ sub eval_cost
       $imps += $arr->[0];
       $reqs += $arr->[1];
 
-      if($imps > MIN_IMPS)
+      if ($imps > MIN_IMPS)
       {
         last;
       }
@@ -44,12 +44,12 @@ sub eval_cost
   }
 
   {
-    for(my $i = 0; $i < scalar(@costs_arr); ++$i)
+    for (my $i = 0; $i < scalar(@costs_arr); ++$i)
     {
       my $imps = 0;
       my $reqs = 0;
       my $cost = 0;
-      for(my $j = 0; $j < scalar(@costs_arr); ++$j)
+      for (my $j = 0; $j < scalar(@costs_arr); ++$j)
       {
         my $v = $costs_arr[$i + $j];
         $cost = $v->[0];
@@ -57,10 +57,10 @@ sub eval_cost
         $imps += $a->[0];
         $reqs += $a->[1];
 
-        if($imps > MIN_IMPS && $reqs > 0)
+        if ($imps > MIN_IMPS && $reqs > 0)
         {
           my $cur_ratio = $imps * 1.0 / $reqs;
-          if($cur_ratio >= $bid_ratio_max * BID_RATIO)
+          if ($cur_ratio >= $bid_ratio_max * BID_RATIO)
           {
             return $cost;
           }
@@ -103,7 +103,7 @@ while (my $line = <$fh>)
   {
     my @fields = $csv->fields();
     my $key = $fields[0];
-    for(my $i = 0; $i < KEY_FIELDS; ++$i)
+    for (my $i = 0; $i < KEY_FIELDS; ++$i)
     {
       $key = $key . "," . $fields[$i];
     }
@@ -111,7 +111,7 @@ while (my $line = <$fh>)
     my $reqs = $fields[KEY_FIELDS + 1];
     my $imps = $fields[KEY_FIELDS + 2];
 
-    if(defined($prev_key) && $key ne $prev_key)
+    if (defined($prev_key) && $key ne $prev_key)
     {
       my $bid_cost = eval_cost(\%cur_costs);
       my @k = split(',', $key);
@@ -122,7 +122,7 @@ while (my $line = <$fh>)
     }
     else
     {
-      if(exists($cur_costs{$cost}))
+      if (exists($cur_costs{$cost}))
       {
 	my $arr = $cur_costs{$cost};
         $arr->[0] += $imps;
@@ -138,7 +138,7 @@ while (my $line = <$fh>)
   }
 }
 
-if(defined($prev_key))
+if (defined($prev_key))
 {
   my $bid_cost = eval_cost(\%cur_costs);
   my @k = split(',', $prev_key);

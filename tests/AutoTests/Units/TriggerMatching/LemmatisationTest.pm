@@ -20,13 +20,13 @@ sub init {
     my @bp_triggers = (
       [ "en", "plane" ], #1
       [ "en", "Willem Wilsons\n" .
-           "hotmail localhost\n" . 
+           "hotmail localhost\n" .
               "\"iBooks iphone\"" ], #2
       [ "en", "ferries flurries" ], #3
       [ "en", "\"fly seven\"\n" .
           "\"plane\"\n" .
             "[\"exactlemmatisation cars\"]" ], #4
-      [ "en", 
+      [ "en",
           qq[\xc3\xa6sir\x20gods\x20host]  ."\n" .
            "fly seven-miles"], #5
       [ "ja", qq[\xe9\xb3\xb4\xe3\x81\x84\xe3\x81\xa6\x20\xe9\xae\xae\xe6\x98\x8e] .
@@ -39,7 +39,7 @@ sub init {
              "aa zurron zupa\n" .
                 qq[m\xc3\xbasica in\xc3\xa9dita] ] #8
     );
-    
+
 
     for my $t (@bp_triggers)
     {
@@ -96,7 +96,7 @@ sub init {
       $ns->output("BPSearch/" . $i, $channel->search_key());
       output_channel_triggers($ns, "BPTrigger/" . $i, $channel, 'S');
     }
-   
+
     my $channel = $ns->create(DB::BehavioralChannel->blank(
       name => 'UrlKwdChannel',
       account_id => $acc,
@@ -111,7 +111,7 @@ sub init {
     $ns->output("UrkKwdChannel", $channel);
     $ns->output("BPUrkKwd", $channel->url_kwd_key());
   }
-   
+
   my @keywords = (
     "plane", #1
     "planes", #2

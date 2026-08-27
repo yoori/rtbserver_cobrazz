@@ -30,7 +30,7 @@ namespace AdServer::RequestInfoSvcs
     Commons::HostDistributionFile::IndexToHostMap chunk_id_to_host = host_distr->all_indexes();
     std::map<std::string, std::shared_ptr<Client>> clients_by_endpoint;
 
-    for(Commons::HostDistributionFile::IndexToHostMap::const_iterator iter =
+    for (Commons::HostDistributionFile::IndexToHostMap::const_iterator iter =
           chunk_id_to_host.begin();
         iter != chunk_id_to_host.end();
         ++iter)
@@ -42,11 +42,10 @@ namespace AdServer::RequestInfoSvcs
       }
 
       const auto endpoint_it = expression_matcher_endpoints.find(iter->second);
-      if(endpoint_it != expression_matcher_endpoints.end())
+      if (endpoint_it != expression_matcher_endpoints.end())
       {
-        auto [client_it, inserted] = clients_by_endpoint.try_emplace(
-          endpoint_it->second);
-        if(inserted)
+        auto [client_it, inserted] = clients_by_endpoint.try_emplace(endpoint_it->second);
+        if (inserted)
         {
           AdServer::Grpc::BatchingOptions options;
           options.max_batch_delay = Generics::Time::ZERO;
@@ -70,19 +69,18 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserTriggerMatchProfileProviderImpl::co_get_user_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserTriggerMatchProfileProviderImpl::co_get_user_profile(const AdServer::Commons::UserId& user_id)
   {
     const unsigned long chunk_index =
       AdServer::Commons::uuid_distribution_hash(user_id) % common_chunks_number_;
 
-    if(own_chunks_.count(chunk_index) > 0)
+    if (own_chunks_.count(chunk_index) > 0)
     {
       co_return co_await self_provider_->co_get_user_profile(user_id);
     }
 
     const auto client_it = chunks_client_map_.find(chunk_index);
-    if(client_it == chunks_client_map_.end())
+    if (client_it == chunks_client_map_.end())
     {
       Stream::Error ostr;
       ostr << "No ExpressionMatcher gRPC endpoint for chunk " << chunk_index;
@@ -96,7 +94,7 @@ namespace AdServer::RequestInfoSvcs
 
     const auto result =
       co_await client_it->second->coro_client.co_get_user_trigger_match_profile(request);
-    if(!result.status.ok())
+    if (!result.status.ok())
     {
       Stream::Error ostr;
       ostr << "ExpressionMatcher gRPC get_user_trigger_match_profile failed: endpoint=" <<
@@ -105,7 +103,7 @@ namespace AdServer::RequestInfoSvcs
       throw UserTriggerMatchProfileProvider::Exception(ostr);
     }
 
-    if(!result.response.found())
+    if (!result.response.found())
     {
       co_return Generics::ConstSmartMemBuf_var();
     }

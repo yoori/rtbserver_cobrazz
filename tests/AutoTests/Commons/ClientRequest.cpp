@@ -9,8 +9,7 @@ namespace AutoTest
 
   ClientRequest::ClientRequest()
     /*throw(ClientRequest::Exception, eh::Exception)*/
-    : timeout_(
-        AutoTest::GlobalSettings::instance().frontend_timeout()),
+    : timeout_(AutoTest::GlobalSettings::instance().frontend_timeout()),
       bytes_out_(0),
       bytes_in_(0),
       status_(0),
@@ -45,8 +44,7 @@ namespace AutoTest
   {
     address_ = addr;
 
-    http_connection_ = HTTP_Connection_var(
-                                           new HTTP::HTTP_Connection(addr, 0));
+    http_connection_ = HTTP_Connection_var(new HTTP::HTTP_Connection(addr, 0));
   }
 
   bool
@@ -56,7 +54,7 @@ namespace AutoTest
     Generics::Time& time)
     /*throw(Exception, eh::Exception)*/
   {
-    if(http_connection_.get() == 0)
+    if (http_connection_.get() == 0)
     {
       throw Exception("ClientRequest::send: http_connection_ == 0");
     }
@@ -89,15 +87,14 @@ namespace AutoTest
       // socket options
 
       struct linger linger_info = {1, 0};
-      if(
+      if (
         http_connection_->stream().set_option(
           SOL_SOCKET,
           SO_LINGER,
           &linger_info,
           sizeof (linger_info)) == -1)
       {
-        throw Exception("ClientRequest::send: unable to set socket "
-                        "option (SO_LINGER)");
+        throw Exception("ClientRequest::send: unable to set socket " "option (SO_LINGER)");
       }
 
       try
@@ -158,8 +155,7 @@ namespace AutoTest
 
       Stream::Error ostr;
       ostr << "ClientRequest::send: HTTP_Connection::Exception exception caught "
-        "while requesting " << address_.url() << ". :" <<
-        std::endl << e.what();
+        "while requesting " << address_.url() << ". :" << std::endl << e.what();
 
       throw Exception(ostr);
     }
@@ -174,12 +170,9 @@ namespace AutoTest
   }
 
   void
-  ClientRequest::print(
-    std::ostream& out,
-    Decoder::Types data_type) const
+  ClientRequest::print(std::ostream& out, Decoder::Types data_type) const
   {
-    const std::string& data =
-      data_type == Decoder::T_REQUEST? request_data_: response_data_;
+    const std::string& data = data_type == Decoder::T_REQUEST? request_data_: response_data_;
 
     if (decoder_ && !data.empty())
     {

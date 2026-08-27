@@ -23,7 +23,7 @@ sub process
   my $time_str = $row->[$self->{field_}];
   my $time_epoch = '';
 
-  if($time_str =~ m|^(\d{4})-(\d{2})-(\d{2})$|)
+  if ($time_str =~ m|^(\d{4})-(\d{2})-(\d{2})$|)
   {
     $time_epoch = timelocal_nocheck(0, 0, 0, $3, $2, $1);
   }

@@ -20,9 +20,7 @@ struct CollReachTestProcessor :
     Exception;
 
   void
-  process_reach(
-    const AdServer::RequestInfoSvcs::CampaignReachProcessor::ReachInfo&
-      reach_info)
+  process_reach(const AdServer::RequestInfoSvcs::CampaignReachProcessor::ReachInfo& reach_info)
     /*throw(Exception)*/
   {
     Sync::PosixGuard lock(mutex_);

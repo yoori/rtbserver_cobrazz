@@ -12,8 +12,8 @@ sub create_campaign
   my $keyword = make_autotest_name($self->{ns_}, "Keyword");
 
   die "Category '$args->{headline}' is not defined" .
-    " in the category list of '$self->{prefix_}'!" 
-      if defined $args->{headline} and 
+    " in the category list of '$self->{prefix_}'!"
+      if defined $args->{headline} and
         not defined $self->{category_names_}->{$args->{headline}};
 
   my $advertiser = $self->{ns_}->create(
@@ -27,7 +27,7 @@ sub create_campaign
       account_id => $advertiser,
       template_id => $self->{template_},
       size_id => $self->{size_},
-      creative_headline_value => 
+      creative_headline_value =>
         defined $args->{headline}?
           $self->{category_names_}->{$args->{headline}}: undef,
       channel_id => DB::BehavioralChannel->blank(
@@ -37,7 +37,7 @@ sub create_campaign
         behavioral_parameters => [
           DB::BehavioralChannel::BehavioralParameter->blank(
             trigger_type => "P") ]),
-      campaigncreativegroup_cpm => 10, 
+      campaigncreativegroup_cpm => 10,
         site_links => [
           {site_id => $self->{publisher_}->{site_id}}] });
 
@@ -51,7 +51,7 @@ sub create_publisher
 {
   my ($self, $args) = @_;
 
-  $self->{publisher_} = 
+  $self->{publisher_} =
     $self->{ns_}->create(
       Publisher => {
         name => "Publisher",
@@ -100,7 +100,7 @@ sub create_categories
     }
     else
     {
-      $name = 
+      $name =
         make_autotest_name($self->{ns_}, $cat->{name});
       $self->{ns_}->output(
         "CATEGORYNAME/" .  $cat->{name}, $name);
@@ -133,7 +133,7 @@ sub create_site_exclusion
     my $category = $self->{ns_}->create(
       CreativeCategory => {
         name => $args->{exclusion_category} });
-    
+
     $self->{ns_}->create(SiteCreativeCategoryExclusion => {
       site_id => $self->{publisher_}->{site_id},
       creative_category_id => $category });
@@ -157,7 +157,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;  }
   $self->{ns_} = $ns->sub_namespace($prefix);
@@ -190,21 +190,21 @@ sub create_creative_category
 {
   my ($self, $ns) = @_;
   CreativeCategoryGranularUpdateTest::TestCase->new(
-    $ns, 'CREATE', 
+    $ns, 'CREATE',
     { headline => 'Tags',
-      categories => 
+      categories =>
         [ { name => "Visual"},
           { name => "Content"},
-          { name => "Tags"} ]});  
+          { name => "Tags"} ]});
 }
 
 sub unlink_creative_category
 {
   my ($self, $ns) = @_;
   CreativeCategoryGranularUpdateTest::TestCase->new(
-    $ns, 'UNLINK', 
+    $ns, 'UNLINK',
     { headline => 'Tags',
-      categories => 
+      categories =>
         [ { name => "Tags", cct_id => 2} ]});
 }
 
@@ -212,7 +212,7 @@ sub site_exclision_add
 {
   my ($self, $ns) = @_;
   CreativeCategoryGranularUpdateTest::TestCase->new(
-    $ns, 'ADDEXCLUSION', 
+    $ns, 'ADDEXCLUSION',
     { categories =>
         [ { name => "Visual", cct_id => 0},
           { name => "Content", cct_id => 1} ],
@@ -223,8 +223,8 @@ sub site_exclision_del
 {
   my ($self, $ns) = @_;
   CreativeCategoryGranularUpdateTest::TestCase->new(
-    $ns, 'DELEXCLUSION', 
-    { categories => 
+    $ns, 'DELEXCLUSION',
+    { categories =>
         [ { name => "Visual", cct_id => 0},
           { name => "Content", cct_id => 1} ],
       link_exclusion => 1,

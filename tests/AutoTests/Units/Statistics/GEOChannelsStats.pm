@@ -9,9 +9,9 @@ use DB::Util;
 sub create_display_campaign
 {
   my ($self, $ns, $suffix, $params) = @_;
-  
-  my $publisher = 
-     $ns->create(Publisher => { 
+
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'DisplayPublisher-' . $suffix,
        pricedtag_adjustment => 1.0,
        pubaccount_country_code => 'GB' });
@@ -26,11 +26,11 @@ sub create_display_campaign
     campaigncreativegroup_cpa => $params->{cpa},
     campaigncreativegroup_ctr => 0.01,
     campaigncreativegroup_ar => 0.01,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
     campaigncreativegroup_geo_channels =>
       $params->{geo_channels},
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   $ns->output("DISPLAYTID-" . $suffix, $publisher->{tag_id});
@@ -39,7 +39,7 @@ sub create_display_campaign
 
 sub init {
   my ($self, $ns) = @_;
-  
+
   my $account = $ns->create(Account => {
     name => 'Advertiser',
     country_code => 'GB',
@@ -47,21 +47,21 @@ sub init {
 
   my $state1 = $ns->create(DB::GEOChannel->blank(
     name => 'London, City of',
-    parent_channel_id => 
+    parent_channel_id =>
        DB::Defaults::instance()->geo_gb_country->{channel_id},
     country_code => 'GB',
     geo_type => 'STATE'));
 
   my $state2 = $ns->create(DB::GEOChannel->blank(
     name => 'Middlesborough, City of',
-    parent_channel_id => 
+    parent_channel_id =>
        DB::Defaults::instance()->geo_gb_country->{channel_id},
     country_code => 'GB',
     geo_type => 'STATE'));
 
   my $state3 = $ns->create(DB::GEOChannel->blank(
     name => 'Stirling',
-    parent_channel_id => 
+    parent_channel_id =>
        DB::Defaults::instance()->geo_gb_country->{channel_id},
     country_code => 'GB',
     geo_type => 'STATE'));
@@ -131,8 +131,8 @@ sub init {
     name => "Text",
     max_text_creatives => 2 });
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'PublisherText',
        pubaccount_country_code => 'GB',
        pricedtag_adjustment => 1.0,
@@ -160,8 +160,8 @@ sub init {
         trigger_type => "P",
         time_to => 3*60*60 )] ));
 
-  my $text_campaign = 
-      $ns->create(TextAdvertisingCampaign => { 
+  my $text_campaign =
+      $ns->create(TextAdvertisingCampaign => {
         name => "TextCampaign",
         size_id => $size,
         template_id =>  DB::Defaults::instance()->text_template,
@@ -175,8 +175,8 @@ sub init {
         campaigncreativegroup_geo_channels =>  $city1,
         site_links => [{site_id => $publisher->{site_id} }] });
 
-  my $channel_campaign = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel_campaign =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "ChannelCampaign",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,

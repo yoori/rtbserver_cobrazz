@@ -9,9 +9,7 @@ namespace AdServer::Grpc
   BatchingQueue::BatchingQueue(BatchingOptions options)
     : options_(std::move(options))
   {
-    const auto hot_buckets_count = std::max<std::size_t>(
-      1,
-      options_.hot_buckets_count);
+    const auto hot_buckets_count = std::max<std::size_t>(1, options_.hot_buckets_count);
     hot_buckets_.reserve(hot_buckets_count);
     for (std::size_t i = 0; i < hot_buckets_count; ++i)
     {
@@ -22,9 +20,7 @@ namespace AdServer::Grpc
   BatchingQueue::~BatchingQueue() = default;
 
   BatchingQueue::EnqueueResult
-  BatchingQueue::enqueue(
-    PendingRequestPtr request,
-    const Generics::Time& enqueue_time)
+  BatchingQueue::enqueue(PendingRequestPtr request, const Generics::Time& enqueue_time)
   {
     EnqueueResult result;
     if (!request)
@@ -32,19 +28,14 @@ namespace AdServer::Grpc
       return result;
     }
 
-    const auto bucket_id = next_bucket_id_.fetch_add(
-      1,
-      std::memory_order_relaxed);
+    const auto bucket_id = next_bucket_id_.fetch_add(1, std::memory_order_relaxed);
     auto& bucket = *hot_buckets_[hot_bucket_index_(bucket_id)];
     {
       std::lock_guard<std::mutex> lock(bucket.lock);
-      bucket.queue.emplace_back(PendingOperation{
-        enqueue_time,
-        std::move(request)});
+      bucket.queue.emplace_back(PendingOperation{ enqueue_time, std::move(request)});
     }
 
-    const auto hot_size =
-      hot_size_.fetch_add(1, std::memory_order_acq_rel) + 1;
+    const auto hot_size = hot_size_.fetch_add(1, std::memory_order_acq_rel) + 1;
     result.was_empty_before_push = hot_size == 1;
     if (result.was_empty_before_push)
     {
@@ -55,8 +46,7 @@ namespace AdServer::Grpc
     {
       flush_hot_batch_if_full_(result.ready_batch);
     }
-    result.queue_empty_after_enqueue =
-      hot_size_.load(std::memory_order_acquire) == 0;
+    result.queue_empty_after_enqueue = hot_size_.load(std::memory_order_acquire) == 0;
 
     return result;
   }
@@ -86,8 +76,7 @@ namespace AdServer::Grpc
       }
 
       const auto enqueue_time = bucket.queue.front().enqueue_time;
-      if (!oldest_enqueue_time.has_value() ||
-        enqueue_time < *oldest_enqueue_time)
+      if (!oldest_enqueue_time.has_value() || enqueue_time < *oldest_enqueue_time)
       {
         oldest_enqueue_time = enqueue_time;
         oldest_bucket_index = i;
@@ -135,11 +124,8 @@ namespace AdServer::Grpc
       while (!bucket.queue.empty())
       {
         Batch hot_batch;
-        hot_batch.reserve(std::min(
-          bucket.queue.size(),
-          options_.max_batch_size));
-        while (!bucket.queue.empty() &&
-          hot_batch.size() < options_.max_batch_size)
+        hot_batch.reserve(std::min(bucket.queue.size(), options_.max_batch_size));
+        while (!bucket.queue.empty() && hot_batch.size() < options_.max_batch_size)
         {
           hot_batch.emplace_back(std::move(bucket.queue.front()));
           bucket.queue.pop_front();
@@ -184,12 +170,9 @@ namespace AdServer::Grpc
   {
     const auto old_batch_size = batch.size();
     batch.reserve(count);
-    for (std::size_t offset = 0;
-      offset < hot_buckets_.size() && batch.size() < count;
-      ++offset)
+    for (std::size_t offset = 0; offset < hot_buckets_.size() && batch.size() < count; ++offset)
     {
-      const auto bucket_index =
-        (start_bucket_index + offset) % hot_buckets_.size();
+      const auto bucket_index = (start_bucket_index + offset) % hot_buckets_.size();
       auto& bucket = *hot_buckets_[bucket_index];
       std::lock_guard<std::mutex> lock(bucket.lock);
       while (!bucket.queue.empty() && batch.size() < count)
@@ -219,8 +202,7 @@ namespace AdServer::Grpc
       }
 
       const auto enqueue_time = bucket.queue.front().enqueue_time;
-      if (!oldest_enqueue_time.has_value() ||
-        enqueue_time < *oldest_enqueue_time)
+      if (!oldest_enqueue_time.has_value() || enqueue_time < *oldest_enqueue_time)
       {
         oldest_enqueue_time = enqueue_time;
       }

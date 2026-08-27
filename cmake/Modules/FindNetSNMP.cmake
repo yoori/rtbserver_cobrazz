@@ -21,13 +21,13 @@ find_package_handle_standard_args(NetSNMP
 
 set(NETSNMP_FOUND ${NetSNMP_FOUND})
 
-if(NetSNMP_FOUND)
+if (NetSNMP_FOUND)
   set(NETSNMP_LIBRARIES
     ${NETSNMP_AGENT_LIBRARY}
     ${NETSNMP_LIBRARY}
   )
 
-  if(NOT TARGET NetSNMP::NetSNMP)
+  if (NOT TARGET NetSNMP::NetSNMP)
     add_library(NetSNMP::NetSNMP UNKNOWN IMPORTED)
     set_target_properties(NetSNMP::NetSNMP PROPERTIES
       IMPORTED_LOCATION "${NETSNMP_LIBRARY}"
@@ -35,7 +35,7 @@ if(NetSNMP_FOUND)
     )
   endif()
 
-  if(NOT TARGET NetSNMP::Agent)
+  if (NOT TARGET NetSNMP::Agent)
     add_library(NetSNMP::Agent UNKNOWN IMPORTED)
     set_target_properties(NetSNMP::Agent PROPERTIES
       IMPORTED_LOCATION "${NETSNMP_AGENT_LIBRARY}"

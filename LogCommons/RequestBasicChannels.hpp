@@ -37,9 +37,7 @@ namespace AdServer::LogProcessing
       {
         return true;
       }
-      return time_ == rhs.time_ &&
-        isp_time_ == rhs.isp_time_ &&
-        colo_id_ == rhs.colo_id_;
+      return time_ == rhs.time_ && isp_time_ == rhs.isp_time_ && colo_id_ == rhs.colo_id_;
     }
 
     bool operator<(const RequestBasicChannelsKey& rhs) const
@@ -95,8 +93,7 @@ namespace AdServer::LogProcessing
         {
           return true;
         }
-        return channel_id == match.channel_id &&
-          channel_trigger_id == match.channel_trigger_id;
+        return channel_id == match.channel_id && channel_trigger_id == match.channel_trigger_id;
       }
 
       std::uint32_t channel_id;
@@ -116,8 +113,7 @@ namespace AdServer::LogProcessing
         bool operator==(const Data& rhs) const
         {
           return &rhs == this ||
-            (revenue == rhs.revenue &&
-            impression_channels == rhs.impression_channels);
+            (revenue == rhs.revenue && impression_channels == rhs.impression_channels);
         }
 
         FixedNum revenue;
@@ -140,8 +136,7 @@ namespace AdServer::LogProcessing
         : data_(new Data)
       {
         data_->revenue = revenue;
-        data_->impression_channels.assign(impression_channels.begin(),
-          impression_channels.end());
+        data_->impression_channels.assign(impression_channels.begin(), impression_channels.end());
       }
 
       bool operator==(const AdSlotImpression& rhs) const
@@ -189,8 +184,7 @@ namespace AdServer::LogProcessing
         {
           return &rhs == this ||
             (revenue == rhs.revenue &&
-            revenue_bid == rhs.revenue_bid &&
-            impression_channels == rhs.impression_channels);
+            revenue_bid == rhs.revenue_bid && impression_channels == rhs.impression_channels);
         }
 
         FixedNum revenue;
@@ -216,8 +210,7 @@ namespace AdServer::LogProcessing
       {
         data_->revenue = revenue;
         data_->revenue_bid = revenue_bid;
-        data_->impression_channels.assign(impression_channels.begin(),
-          impression_channels.end());
+        data_->impression_channels.assign(impression_channels.begin(), impression_channels.end());
       }
 
       bool operator==(const AdBidSlotImpression& rhs) const
@@ -282,8 +275,7 @@ namespace AdServer::LogProcessing
             size == rhs.size &&
             format == rhs.format &&
             test_request == rhs.test_request &&
-            profiling_available == rhs.profiling_available &&
-            full_freq_caps == rhs.full_freq_caps);
+            profiling_available == rhs.profiling_available && full_freq_caps == rhs.full_freq_caps);
         }
 
         std::uint32_t tag_id;
@@ -405,8 +397,7 @@ namespace AdServer::LogProcessing
             text_ad_cost_threshold == rhs.text_ad_cost_threshold &&
             display_ad_shown == rhs.display_ad_shown &&
             text_ad_shown == rhs.text_ad_shown &&
-            ad_select == rhs.ad_select &&
-            auction_type == rhs.auction_type);
+            ad_select == rhs.ad_select && auction_type == rhs.auction_type);
         }
 
         bool empty() const
@@ -415,9 +406,7 @@ namespace AdServer::LogProcessing
             !country_code.present() &&
             !max_text_ads &&
             text_ad_cost_threshold == FixedNum::ZERO &&
-            !display_ad_shown.present() &&
-            text_ad_shown.empty() &&
-            !ad_select.present();
+            !display_ad_shown.present() && text_ad_shown.empty() && !ad_select.present();
         }
 
         SizeListT sizes;
@@ -576,8 +565,7 @@ namespace AdServer::LogProcessing
           return history_channels.empty() &&
             page_trigger_channels.empty() &&
             search_trigger_channels.empty() &&
-            url_trigger_channels.empty() &&
-            url_keyword_trigger_channels.empty();
+            url_trigger_channels.empty() && url_keyword_trigger_channels.empty();
         }
 
         NumberArray history_channels;

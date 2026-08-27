@@ -38,13 +38,10 @@ namespace AdServer::UserInfoSvcs
   public:
     using ControllerRefArray = UserBindControllerRefs;
     using ServerClient = UserBindServerGrpcAsyncBatchingClient;
-    using ControllerGrpc =
-      adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
+    using ControllerGrpc = adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
     struct ControllerClient
     {
-      explicit ControllerClient(
-        const std::string& endpoint,
-        const std::size_t partition_index)
+      explicit ControllerClient(const std::string& endpoint, const std::size_t partition_index)
         : endpoint(endpoint),
           name(endpoint),
           partition_index(partition_index),
@@ -56,9 +53,7 @@ namespace AdServer::UserInfoSvcs
 
       void reset()
       {
-        channel = AdServer::Grpc::create_channel(
-          endpoint,
-          grpc::InsecureChannelCredentials());
+        channel = AdServer::Grpc::create_channel(endpoint, grpc::InsecureChannelCredentials());
         stub = ControllerGrpc::NewStub(channel);
       }
 
@@ -68,10 +63,7 @@ namespace AdServer::UserInfoSvcs
       std::shared_ptr<grpc::Channel> channel;
       std::unique_ptr<ControllerGrpc::Stub> stub;
     };
-    using Pool =
-      AdServer::Grpc::BalancedDistributedPartitionPool<
-        ServerClient,
-        ControllerClient>;
+    using Pool = AdServer::Grpc::BalancedDistributedPartitionPool<ServerClient, ControllerClient>;
 
     Distributor(
       Logging::Logger* logger,
@@ -197,9 +189,7 @@ namespace AdServer::UserInfoSvcs
       auto ref = pool_->get_ref(key);
       if (!ref)
       {
-        finish_with_unavailable_<Response>(
-          std::move(callback),
-          pool_->chunk_index(key));
+        finish_with_unavailable_<Response>(std::move(callback), pool_->chunk_index(key));
         return;
       }
 
@@ -213,16 +203,12 @@ namespace AdServer::UserInfoSvcs
           pool_ref = std::move(pool_ref),
           endpoint,
           callback = std::move(callback)
-        ](
-          const grpc::Status& status,
-          AdServer::Grpc::ResponseHolder<Response>&& response_holder)
+        ](const grpc::Status& status, AdServer::Grpc::ResponseHolder<Response>&& response_holder)
         mutable
         {
-          if (!status.ok() &&
-            !AdServer::Grpc::is_request_specific_error(status))
+          if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
           {
-            pool_ref.mark_as_bad(
-              Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT);
+            pool_ref.mark_as_bad(Generics::Time::get_time_of_day() + DEFAULT_POOL_TIMEOUT);
           }
           callback(
             AdServer::Grpc::status_with_endpoint(status, endpoint),
@@ -243,14 +229,11 @@ namespace AdServer::UserInfoSvcs
       }
 
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          message.str()),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, message.str()),
         AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
     }
 
-    std::optional<Pool::EndpointChunksArray> resolve_partition_(
-      ControllerClient& controller_client)
+    std::optional<Pool::EndpointChunksArray> resolve_partition_(ControllerClient& controller_client)
     {
       grpc::ClientContext context;
       set_deadline_(context);
@@ -286,6 +269,7 @@ namespace AdServer::UserInfoSvcs
         }
         refs.emplace_back(std::move(endpoint_chunks));
       }
+
       if (refs.empty())
       {
         std::ostringstream ostr;
@@ -298,13 +282,10 @@ namespace AdServer::UserInfoSvcs
 
     static std::uint64_t partition_hash_(const std::string& user_id)
     {
-      return AdServer::Commons::external_id_distribution_hash(
-        String::SubString(user_id));
+      return AdServer::Commons::external_id_distribution_hash(String::SubString(user_id));
     }
 
-    static unsigned long chunk_index_(
-      const std::string& user_id,
-      unsigned long chunks_number)
+    static unsigned long chunk_index_(const std::string& user_id, unsigned long chunks_number)
     {
       return AdServer::Commons::external_id_distribution_hash(
         String::SubString(user_id)) % chunks_number;
@@ -332,8 +313,7 @@ namespace AdServer::UserInfoSvcs
     add_child_object(distributor);
   }
 
-  UserBindDistributedGrpcClient::~UserBindDistributedGrpcClient() noexcept =
-    default;
+  UserBindDistributedGrpcClient::~UserBindDistributedGrpcClient() noexcept = default;
 
   AdServer::Grpc::Stats
   UserBindDistributedGrpcClient::stats() const noexcept

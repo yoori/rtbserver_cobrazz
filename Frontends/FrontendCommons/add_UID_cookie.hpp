@@ -16,10 +16,10 @@ namespace FrontendCommons
     const std::string& signed_client_id)
     /*throw(eh::Exception)*/
   {
-    if(!signed_client_id.empty())
+    if (!signed_client_id.empty())
     {
       /* renew expiration time for uid cookie */
-      if(request.secure())
+      if (request.secure())
       {
         // don't set cookie on non secure connection - this can override
         // existing cookie and nullify it

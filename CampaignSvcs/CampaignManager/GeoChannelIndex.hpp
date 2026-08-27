@@ -18,10 +18,7 @@ namespace AdServer::CampaignSvcs
     struct Key
     {
     public:
-      Key(
-        std::string_view country,
-        std::string_view region,
-        std::string_view city)
+      Key(std::string_view country, std::string_view region, std::string_view city)
         noexcept;
 
       bool operator==(const Key& right) const noexcept;
@@ -47,8 +44,7 @@ namespace AdServer::CampaignSvcs
 
     struct NameHash
     {
-      size_t operator()(
-        const std::unique_ptr<std::string>& value) const noexcept;
+      size_t operator()(const std::unique_ptr<std::string>& value) const noexcept;
     };
 
     struct NameEqual
@@ -131,8 +127,7 @@ namespace AdServer::CampaignSvcs
       bool operator==(const Key& right) const
       {
         return longitude == right.longitude &&
-          latitude == right.latitude &&
-          accuracy == right.accuracy;
+          latitude == right.latitude && accuracy == right.accuracy;
       }
 
       size_t hash() const
@@ -170,8 +165,7 @@ namespace AdServer::CampaignSvcs
     GeoCoordChannelIndex() noexcept;
 
     void
-    add(const Key& key,
-      unsigned long channel_id)
+    add(const Key& key, unsigned long channel_id)
       noexcept;
 
     void
@@ -227,9 +221,7 @@ namespace AdServer::CampaignSvcs
   bool
   GeoChannelIndex::Key::operator==(const Key& right) const noexcept
   {
-    return country_ == right.country_ &&
-      region_ == right.region_ &&
-      city_ == right.city_;
+    return country_ == right.country_ && region_ == right.region_ && city_ == right.city_;
   }
 
   inline
@@ -262,8 +254,7 @@ namespace AdServer::CampaignSvcs
 
   inline
   size_t
-  GeoChannelIndex::NameHash::operator()(
-    const std::unique_ptr<std::string>& value) const noexcept
+  GeoChannelIndex::NameHash::operator()(const std::unique_ptr<std::string>& value) const noexcept
   {
     return std::hash<std::string_view>()(std::string_view(*value));
   }

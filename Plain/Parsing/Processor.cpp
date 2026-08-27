@@ -18,25 +18,19 @@ namespace Parsing
     Code::Declarator_var(new Code::Declarator(global_namespace_, current_namespace_->elements()));
   }
 
-  void Processor::error(
-    unsigned long line,
-    unsigned long column,
-    const char* message)
+  void Processor::error(unsigned long line, unsigned long column, const char* message)
     noexcept
   {
-    std::cerr << "line " << line << ", column " << column << ": " <<
-      message << std::endl;
+    std::cerr << "line " << line << ", column " << column << ": " << message << std::endl;
   }
 
   Declaration::BaseType_var
   Processor::find_type(const TypeSpecifier& type_specifier) const noexcept
   {
-    return current_namespace_->namespace_decl()->find_type(
-      type_specifier.full_name().c_str());
+    return current_namespace_->namespace_decl()->find_type(type_specifier.full_name().c_str());
   }
 
-  void Processor::open_namespace(
-    const char* name)
+  void Processor::open_namespace(const char* name)
   {
     Code::NamespaceElement_var new_namespace_elem = new Code::NamespaceElement(
       current_namespace_.in(),
@@ -55,7 +49,7 @@ namespace Parsing
   {
     Declaration::BaseType_var type_check =
       current_namespace_->namespace_decl()->find_local_type(name);
-    if(type_check.in())
+    if (type_check.in())
     {
       Stream::Error ostr;
       ostr << "can't declare descriptor with name '" << name << "', it already used";
@@ -67,27 +61,21 @@ namespace Parsing
   }
 
   void
-  Processor::add_descriptor_field(
-    const TypeSpecifier& field_type_specifier,
-    const char* name)
+  Processor::add_descriptor_field(const TypeSpecifier& field_type_specifier, const char* name)
     /*throw(IncorrectType)*/
   {
     descriptor_fields_->push_back(
       Declaration::StructDescriptor::Field_var(
-        new Declaration::StructDescriptor::Field(
-          resolve_descriptor_(field_type_specifier),
-          name)));
+        new Declaration::StructDescriptor::Field(resolve_descriptor_(field_type_specifier), name)));
   }
 
   void Processor::close_descriptor() noexcept
   {
     Declaration::StructDescriptor_var new_descriptor(
-      new Declaration::StructDescriptor(
-        descriptor_name_.c_str(), descriptor_fields_));
+      new Declaration::StructDescriptor(descriptor_name_.c_str(), descriptor_fields_));
 
     current_namespace_->namespace_decl()->add_type(new_descriptor);
-    current_namespace_->add_element(
-      Code::Element_var(new Code::TypeElement(new_descriptor)));
+    current_namespace_->add_element(Code::Element_var(new Code::TypeElement(new_descriptor)));
   }
 
   void Processor::open_reader(const char* name, const char* base_type_name)
@@ -96,14 +84,12 @@ namespace Parsing
     Declaration::BaseDescriptor_var base_descriptor =
       resolve_descriptor_(TypeSpecifier(base_type_name));
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
-      ostr << "reader base type '" << base_type_name <<
-        "' isn't struct descriptor";
+      ostr << "reader base type '" << base_type_name << "' isn't struct descriptor";
       throw IncorrectType(ostr);
     }
 
@@ -112,18 +98,15 @@ namespace Parsing
     reader_fields_ = new Declaration::StructReader::FieldReaderList();
   }
 
-  void Processor::add_reader_field(
-    const TypeSpecifier& field_type_specifier, const char* name)
+  void Processor::add_reader_field(const TypeSpecifier& field_type_specifier, const char* name)
     /*throw(IncorrectType)*/
   {
-    Declaration::StructDescriptor::Field_var base_field =
-      reader_descriptor_->find_field(name);
+    Declaration::StructDescriptor::Field_var base_field = reader_descriptor_->find_field(name);
 
-    if(!base_field.in())
+    if (!base_field.in())
     {
       Stream::Error ostr;
-      ostr << "field '" << name <<
-        "' is not declared in '" << reader_descriptor_->name() << "'";
+      ostr << "field '" << name << "' is not declared in '" << reader_descriptor_->name() << "'";
       throw IncorrectType(ostr);
     }
 
@@ -131,20 +114,16 @@ namespace Parsing
 
     const std::string& field_type_name = field_type_specifier.name;
 
-    if(!field_type_specifier.args.empty())
+    if (!field_type_specifier.args.empty())
     {
       // init template reader
-      reader = init_template_reader_(
-        field_type_specifier,
-        base_field->descriptor());
+      reader = init_template_reader_(field_type_specifier, base_field->descriptor());
     }
-    else if(!field_type_name.empty())
+    else if (!field_type_name.empty())
     {
-      reader = resolve_reader_(
-        TypeSpecifier(field_type_name.c_str()));
+      reader = resolve_reader_(TypeSpecifier(field_type_name.c_str()));
 
-      if(::strcmp(reader->descriptor()->name(),
-           base_field->descriptor()->name()) != 0)
+      if (::strcmp(reader->descriptor()->name(), base_field->descriptor()->name()) != 0)
       {
         Stream::Error ostr;
         ostr << "reader type '" << field_type_name << "' isn't reader of '" <<
@@ -155,8 +134,7 @@ namespace Parsing
     }
     else
     {
-      reader = resolve_auto_reader_(
-        base_field->descriptor()->name());
+      reader = resolve_auto_reader_(base_field->descriptor()->name());
     }
 
     assert(reader.in());
@@ -172,14 +150,10 @@ namespace Parsing
     assert(reader_fields_.in());
 
     Declaration::StructReader_var new_reader(
-      new Declaration::StructReader(
-        reader_name_.c_str(),
-        reader_descriptor_,
-        reader_fields_));
+      new Declaration::StructReader(reader_name_.c_str(), reader_descriptor_, reader_fields_));
 
     current_namespace_->namespace_decl()->add_type(new_reader);
-    current_namespace_->add_element(
-      Code::Element_var(new Code::TypeElement(new_reader)));
+    current_namespace_->add_element(Code::Element_var(new Code::TypeElement(new_reader)));
   }
 
   void Processor::create_auto_reader(const char* name, const char* base_type_name)
@@ -188,14 +162,12 @@ namespace Parsing
     Declaration::BaseDescriptor_var base_descriptor =
       resolve_descriptor_(TypeSpecifier(base_type_name));
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
-      ostr << "auto reader base type '" << base_type_name <<
-        "' isn't struct descriptor";
+      ostr << "auto reader base type '" << base_type_name << "' isn't struct descriptor";
       throw IncorrectType(ostr);
     }
 
@@ -203,10 +175,7 @@ namespace Parsing
       resolve_struct_auto_reader_(struct_descriptor);
 
     Declaration::StructReader_var result_named_auto_reader(
-      new Declaration::StructReader(
-        name,
-        struct_descriptor,
-        result_auto_reader->fields()));
+      new Declaration::StructReader(name, struct_descriptor, result_auto_reader->fields()));
 
     current_namespace_->namespace_decl()->add_type(result_named_auto_reader);
     current_namespace_->add_element(Code::Element_var(
@@ -219,14 +188,12 @@ namespace Parsing
     Declaration::BaseDescriptor_var base_descriptor =
       resolve_descriptor_(TypeSpecifier(base_type_name));
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
-      ostr << "reader base type '" << base_type_name <<
-        "' isn't struct descriptor";
+      ostr << "reader base type '" << base_type_name << "' isn't struct descriptor";
       throw IncorrectType(ostr);
     }
 
@@ -241,14 +208,12 @@ namespace Parsing
     const IdentifierList& mapping_specifiers_list)
     /*throw(IncorrectType)*/
   {
-    Declaration::StructDescriptor::Field_var base_field =
-      writer_descriptor_->find_field(name);
+    Declaration::StructDescriptor::Field_var base_field = writer_descriptor_->find_field(name);
 
-    if(!base_field.in())
+    if (!base_field.in())
     {
       Stream::Error ostr;
-      ostr << "field '" << name <<
-        "' is not declared in '" << writer_descriptor_->name() << "'";
+      ostr << "field '" << name << "' is not declared in '" << writer_descriptor_->name() << "'";
       throw IncorrectType(ostr);
     }
 
@@ -256,22 +221,17 @@ namespace Parsing
 
     const std::string& field_type_name = field_type_specifier.name;
 
-    if(!field_type_specifier.args.empty()) // template
+    if (!field_type_specifier.args.empty()) // template
     {
       // init template
-      writer = init_template_writer_(
-        field_type_specifier,
-        base_field->descriptor());
+      writer = init_template_writer_(field_type_specifier, base_field->descriptor());
     }
-    else if(!field_type_name.empty())
+    else if (!field_type_name.empty())
     {
-      writer = resolve_writer_(
-        TypeSpecifier(field_type_name.c_str()));
+      writer = resolve_writer_(TypeSpecifier(field_type_name.c_str()));
 
       // check that writer is writer of descriptor field type
-      if(::strcmp(
-           writer->descriptor()->name(),
-           base_field->descriptor()->name()) != 0)
+      if (::strcmp(writer->descriptor()->name(), base_field->descriptor()->name()) != 0)
       {
         Stream::Error ostr;
         ostr << "writer type '" << field_type_name << "' isn't writer of '" <<
@@ -282,8 +242,7 @@ namespace Parsing
     }
     else
     {
-      writer = resolve_auto_writer_(
-        base_field->descriptor()->name());
+      writer = resolve_auto_writer_(base_field->descriptor()->name());
     }
 
     Declaration::MappingSpecifierSet mapping_specifiers;
@@ -296,40 +255,30 @@ namespace Parsing
 
     writer_fields_->push_back(
       Declaration::StructWriter::FieldWriter_var(
-        new Declaration::StructWriter::FieldWriter(
-          base_field,
-          writer,
-          mapping_specifiers)));
+        new Declaration::StructWriter::FieldWriter(base_field, writer, mapping_specifiers)));
   }
 
   void Processor::close_writer() noexcept
   {
     Declaration::StructWriter_var new_writer(
-      new Declaration::StructWriter(
-        writer_name_.c_str(),
-        writer_descriptor_,
-        writer_fields_));
+      new Declaration::StructWriter(writer_name_.c_str(), writer_descriptor_, writer_fields_));
 
     current_namespace_->namespace_decl()->add_type(new_writer);
-    current_namespace_->add_element(
-      Code::Element_var(new Code::TypeElement(new_writer)));
+    current_namespace_->add_element(Code::Element_var(new Code::TypeElement(new_writer)));
   }
 
-  void Processor::create_auto_writer(
-    const char* name, const char* base_type_name)
+  void Processor::create_auto_writer(const char* name, const char* base_type_name)
     /*throw(IncorrectType)*/
   {
     Declaration::BaseDescriptor_var base_descriptor =
       resolve_descriptor_(TypeSpecifier(base_type_name));
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
-      ostr << "auto writer base type '" << base_type_name <<
-        "' isn't struct descriptor";
+      ostr << "auto writer base type '" << base_type_name << "' isn't struct descriptor";
       throw IncorrectType(ostr);
     }
 
@@ -337,10 +286,7 @@ namespace Parsing
       resolve_struct_auto_writer_(struct_descriptor);
 
     Declaration::StructWriter_var result_named_auto_writer(
-      new Declaration::StructWriter(
-        name,
-        struct_descriptor,
-        result_auto_writer->fields()));
+      new Declaration::StructWriter(name, struct_descriptor, result_auto_writer->fields()));
 
     current_namespace_->namespace_decl()->add_type(result_named_auto_writer);
     current_namespace_->add_element(Code::Element_var(
@@ -361,14 +307,14 @@ namespace Parsing
     Declaration::BaseType_var type = current_namespace_->namespace_decl()->find_type(
       type_specifier.name.c_str());
 
-    if(!type.in())
+    if (!type.in())
     {
       Stream::Error ostr;
       ostr << "can't find type '" << type_specifier.name << "'.";
       throw IncorrectType(ostr);
     }
 
-    if(!type_specifier.args.empty()) // template
+    if (!type_specifier.args.empty()) // template
     {
       // init template
       return init_template_descriptor_(type_specifier);
@@ -376,7 +322,7 @@ namespace Parsing
 
     Declaration::BaseDescriptor_var descriptor = type->as_descriptor();
 
-    if(!descriptor.in())
+    if (!descriptor.in())
     {
       Stream::Error ostr;
       ostr << "type '" << type_specifier.name << "' isn't descriptor.";
@@ -395,21 +341,21 @@ namespace Parsing
     Declaration::BaseType_var type = current_namespace_->namespace_decl()->find_type(
       type_specifier.name.c_str());
 
-    if(!type.in())
+    if (!type.in())
     {
       Stream::Error ostr;
       ostr << "can't find type '" << type_specifier.name << "'.";
       throw IncorrectType(ostr);
     }
 
-    if(!type_specifier.args.empty())
+    if (!type_specifier.args.empty())
     {
       return init_template_reader_(type_specifier, descriptor);
     }
 
     Declaration::BaseReader_var reader = type->as_reader();
 
-    if(!reader.in())
+    if (!reader.in())
     {
       Stream::Error ostr;
       ostr << "type '" << type_specifier.name << "' isn't reader";
@@ -428,14 +374,14 @@ namespace Parsing
     Declaration::BaseType_var type = current_namespace_->namespace_decl()->find_type(
       type_specifier.name.c_str());
 
-    if(!type.in())
+    if (!type.in())
     {
       Stream::Error ostr;
       ostr << "can't find type '" << type_specifier.name << "'.";
       throw IncorrectType(ostr);
     }
 
-    if(!type_specifier.args.empty())
+    if (!type_specifier.args.empty())
     {
       // init template reader
       return init_template_writer_(type_specifier, descriptor);
@@ -443,7 +389,7 @@ namespace Parsing
 
     Declaration::BaseWriter_var writer = type->as_writer();
 
-    if(!writer.in())
+    if (!writer.in())
     {
       Stream::Error ostr;
       ostr << "type '" << type_specifier.name << "' isn't reader";
@@ -457,10 +403,9 @@ namespace Parsing
   Processor::resolve_template_(const char* name)
     /*throw(IncorrectType)*/
   {
-    Declaration::BaseType_var template_type =
-      current_namespace_->namespace_decl()->find_type(name);
+    Declaration::BaseType_var template_type = current_namespace_->namespace_decl()->find_type(name);
 
-    if(!template_type.in())
+    if (!template_type.in())
     {
       std::ostringstream ostr;
       ostr << "type '" << name << "' isn't defined";
@@ -468,7 +413,7 @@ namespace Parsing
     }
 
     Declaration::BaseTemplate_var templ = template_type->as_template();
-    if(!templ.in())
+    if (!templ.in())
     {
       std::ostringstream ostr;
       ostr << "type '" << template_type->name() << "' isn't template";
@@ -479,8 +424,7 @@ namespace Parsing
   }
 
   Declaration::StructReader_var
-  Processor::resolve_struct_auto_reader_(
-    Declaration::StructDescriptor* struct_descriptor)
+  Processor::resolve_struct_auto_reader_(Declaration::StructDescriptor* struct_descriptor)
     /*throw(Exception)*/
   {
     const std::string auto_reader_name = std::string("<") +
@@ -489,28 +433,24 @@ namespace Parsing
     Declaration::BaseType_var auto_reader_type =
       current_namespace_->namespace_decl()->find_type(auto_reader_name.c_str());
 
-    if(auto_reader_type.in())
+    if (auto_reader_type.in())
     {
-      Declaration::BaseReader_var auto_reader =
-        auto_reader_type->as_reader();
+      Declaration::BaseReader_var auto_reader = auto_reader_type->as_reader();
 
       assert(auto_reader.in()); // user can't declare type with name '<...'
 
-      Declaration::StructReader_var struct_auto_reader =
-        auto_reader->as_struct_reader();
+      Declaration::StructReader_var struct_auto_reader = auto_reader->as_struct_reader();
 
       assert(struct_auto_reader.in());
 
       return struct_auto_reader;
     }
 
-    return generate_auto_reader_(
-      auto_reader_name.c_str(), struct_descriptor);
+    return generate_auto_reader_(auto_reader_name.c_str(), struct_descriptor);
   }
 
   Declaration::StructWriter_var
-  Processor::resolve_struct_auto_writer_(
-    Declaration::StructDescriptor* struct_descriptor)
+  Processor::resolve_struct_auto_writer_(Declaration::StructDescriptor* struct_descriptor)
     /*throw(IncorrectType)*/
   {
     const std::string auto_writer_name = std::string(">") +
@@ -519,48 +459,42 @@ namespace Parsing
     Declaration::BaseType_var auto_writer_type =
       current_namespace_->namespace_decl()->find_type(auto_writer_name.c_str());
 
-    if(auto_writer_type.in())
+    if (auto_writer_type.in())
     {
-      Declaration::BaseWriter_var auto_writer =
-        auto_writer_type->as_writer();
+      Declaration::BaseWriter_var auto_writer = auto_writer_type->as_writer();
 
       assert(auto_writer.in()); // user can't declare type with name '>...'
 
-      Declaration::StructWriter_var struct_auto_writer =
-        auto_writer->as_struct_writer();
+      Declaration::StructWriter_var struct_auto_writer = auto_writer->as_struct_writer();
 
       assert(struct_auto_writer.in());
 
       return struct_auto_writer;
     }
 
-    return generate_auto_writer_(
-      auto_writer_name.c_str(), struct_descriptor);
+    return generate_auto_writer_(auto_writer_name.c_str(), struct_descriptor);
   }
 
   Declaration::BaseReader_var
   Processor::resolve_auto_reader_(const char* name)
     /*throw(IncorrectType)*/
   {
-    Declaration::BaseType_var type =
-      current_namespace_->namespace_decl()->find_type(name);
+    Declaration::BaseType_var type = current_namespace_->namespace_decl()->find_type(name);
     assert(type.in());
 
     Declaration::BaseReader_var reader = type->as_reader();
-    if(reader.in())
+    if (reader.in())
     {
       return reader;
     }
 
-    Declaration::BaseDescriptor_var base_descriptor =
-      type->as_descriptor();
+    Declaration::BaseDescriptor_var base_descriptor = type->as_descriptor();
 
     assert(base_descriptor.in());
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
       ostr << "internal error: automatic reader for type '" << name <<
@@ -577,30 +511,26 @@ namespace Parsing
     /*throw(IncorrectType)*/
   {
     // try resolve base type as reader: simple types
-    Declaration::BaseType_var type =
-      current_namespace_->namespace_decl()->find_type(name);
+    Declaration::BaseType_var type = current_namespace_->namespace_decl()->find_type(name);
 
     assert(type.in()); // internal method, can be called only for registered types
 
     Declaration::BaseWriter_var writer = type->as_writer();
-    if(writer.in())
+    if (writer.in())
     {
       return writer;
     }
 
-    Declaration::BaseDescriptor_var base_descriptor =
-      type->as_descriptor();
+    Declaration::BaseDescriptor_var base_descriptor = type->as_descriptor();
 
     assert(base_descriptor.in());
 
-    Declaration::StructDescriptor_var struct_descriptor =
-      base_descriptor->as_struct();
+    Declaration::StructDescriptor_var struct_descriptor = base_descriptor->as_struct();
 
-    if(!struct_descriptor.in())
+    if (!struct_descriptor.in())
     {
       Stream::Error ostr;
-      ostr << "internal error: automatic reader for type '" << name <<
-        "' isn't defined";
+      ostr << "internal error: automatic reader for type '" << name << "' isn't defined";
       throw IncorrectType(ostr);
     }
 
@@ -619,24 +549,19 @@ namespace Parsing
     Declaration::StructDescriptor::PosedFieldList_var descriptor_fields =
       struct_descriptor->fields();
 
-    for(Declaration::StructDescriptor::PosedFieldList::const_iterator field_it =
+    for (Declaration::StructDescriptor::PosedFieldList::const_iterator field_it =
           descriptor_fields->begin();
         field_it != descriptor_fields->end(); ++field_it)
     {
-      Declaration::BaseReader_var reader =
-        resolve_auto_reader_((*field_it)->descriptor()->name());
+      Declaration::BaseReader_var reader = resolve_auto_reader_((*field_it)->descriptor()->name());
 
       reader_fields->push_back(
         Declaration::StructReader::FieldReader_var(
-          new Declaration::StructReader::FieldReader(
-            *field_it, reader)));
+          new Declaration::StructReader::FieldReader(*field_it, reader)));
     }
 
     Declaration::StructReader_var result_auto_reader(
-      new Declaration::StructReader(
-        name,
-        struct_descriptor,
-        reader_fields));
+      new Declaration::StructReader(name, struct_descriptor, reader_fields));
 
     current_namespace_->namespace_decl()->add_type(result_auto_reader);
 
@@ -655,12 +580,11 @@ namespace Parsing
     Declaration::StructDescriptor::PosedFieldList_var descriptor_fields =
       struct_descriptor->fields();
 
-    for(Declaration::StructDescriptor::PosedFieldList::const_iterator field_it =
+    for (Declaration::StructDescriptor::PosedFieldList::const_iterator field_it =
           descriptor_fields->begin();
         field_it != descriptor_fields->end(); ++field_it)
     {
-      Declaration::BaseWriter_var writer =
-        resolve_auto_writer_((*field_it)->descriptor()->name());
+      Declaration::BaseWriter_var writer = resolve_auto_writer_((*field_it)->descriptor()->name());
 
       writer_fields->push_back(
         Declaration::StructWriter::FieldWriter_var(
@@ -671,10 +595,7 @@ namespace Parsing
     }
 
     Declaration::StructWriter_var result_auto_writer(
-      new Declaration::StructWriter(
-        name,
-        struct_descriptor,
-        writer_fields));
+      new Declaration::StructWriter(name, struct_descriptor, writer_fields));
 
     current_namespace_->namespace_decl()->add_type(result_auto_writer);
 
@@ -695,7 +616,7 @@ namespace Parsing
       Declaration::CompleteTemplateDescriptor_var complete_template_descriptor =
         descriptor->as_complete_template();
 
-      if(complete_template_descriptor.in())
+      if (complete_template_descriptor.in())
       {
         return complete_template_descriptor;
       }
@@ -703,12 +624,10 @@ namespace Parsing
     catch(const IncorrectType&)
     {}
 
-    Declaration::BaseTemplate_var template_type =
-      resolve_template_(type_specifier.name.c_str());
+    Declaration::BaseTemplate_var template_type = resolve_template_(type_specifier.name.c_str());
 
     Declaration::BaseDescriptorList arg_descriptors;
-    for(TypeSpecifierList::const_iterator arg_it =
-          type_specifier.args.begin();
+    for (TypeSpecifierList::const_iterator arg_it = type_specifier.args.begin();
         arg_it != type_specifier.args.end(); ++arg_it)
     {
       try
@@ -764,11 +683,11 @@ namespace Parsing
 
     Declaration::CompleteTemplateDescriptor_var complete_template_descriptor;
 
-    if(descriptor)
+    if (descriptor)
     {
       complete_template_descriptor = descriptor->as_complete_template();
 
-      if(!complete_template_descriptor.in())
+      if (!complete_template_descriptor.in())
       {
         std::ostringstream ostr;
         ostr << "type '" << descriptor->name() << "' isn't template";
@@ -777,14 +696,11 @@ namespace Parsing
     }
     else
     {
-      complete_template_descriptor = init_template_descriptor_(
-        type_specifier,
-        DR_READER);
+      complete_template_descriptor = init_template_descriptor_(type_specifier, DR_READER);
     }
 
     Declaration::BaseReaderList arg_readers;
-    for(TypeSpecifierList::const_iterator arg_it =
-          type_specifier.args.begin();
+    for (TypeSpecifierList::const_iterator arg_it = type_specifier.args.begin();
         arg_it != type_specifier.args.end(); ++arg_it)
     {
       try
@@ -813,8 +729,7 @@ namespace Parsing
     catch(const Declaration::CompleteTemplateDescriptor::InvalidParam& ex)
     {
       std::ostringstream ostr;
-      ostr << "can't initialize template reader '" << descriptor->name() << "': " <<
-        ex.what();
+      ostr << "can't initialize template reader '" << descriptor->name() << "': " << ex.what();
       throw IncorrectType(ostr.str());
     }
   }
@@ -834,11 +749,11 @@ namespace Parsing
 
     Declaration::CompleteTemplateDescriptor_var complete_template_descriptor;
 
-    if(descriptor)
+    if (descriptor)
     {
       complete_template_descriptor = descriptor->as_complete_template();
 
-      if(!complete_template_descriptor.in())
+      if (!complete_template_descriptor.in())
       {
         std::ostringstream ostr;
         ostr << "type '" << descriptor->name() << "' isn't template";
@@ -847,14 +762,11 @@ namespace Parsing
     }
     else
     {
-      complete_template_descriptor = init_template_descriptor_(
-        type_specifier,
-        DR_WRITER);
+      complete_template_descriptor = init_template_descriptor_(type_specifier, DR_WRITER);
     }
 
     Declaration::BaseWriterList arg_writers;
-    for(TypeSpecifierList::const_iterator arg_it =
-          type_specifier.args.begin();
+    for (TypeSpecifierList::const_iterator arg_it = type_specifier.args.begin();
         arg_it != type_specifier.args.end(); ++arg_it)
     {
       try
@@ -882,8 +794,7 @@ namespace Parsing
     catch(const Declaration::CompleteTemplateDescriptor::InvalidParam& ex)
     {
       std::ostringstream ostr;
-      ostr << "can't initialize template writer '" << descriptor->name() << "': " <<
-        ex.what();
+      ostr << "can't initialize template writer '" << descriptor->name() << "': " << ex.what();
       throw IncorrectType(ostr.str());
     }
   }

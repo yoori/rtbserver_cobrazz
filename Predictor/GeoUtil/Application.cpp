@@ -26,9 +26,7 @@
 
 namespace
 {
-  const char USAGE[] =
-    "\nUsage: \n"
-    "GeoUtil add-geo\n";
+  const char USAGE[] = "\nUsage: \n" "GeoUtil add-geo\n";
 }
 
 // Application
@@ -40,17 +38,15 @@ Application_::~Application_() noexcept
 {}
 
 void
-Application_::add_geo_(
-  std::istream& in,
-  std::ostream& out)
+Application_::add_geo_(std::istream& in, std::ostream& out)
 {
   std::unique_ptr<GeoIPMapping::IPMapCity> ip_map(new GeoIPMapping::IPMapCity(0));
 
-  while(!in.eof())
+  while (!in.eof())
   {
     std::string line;
     std::getline(in, line);
-    if(!line.empty())
+    if (!line.empty())
     {
       std::string loc = "//";
 
@@ -81,17 +77,13 @@ Application_::main(int& argc, char** argv)
 
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -101,7 +93,7 @@ Application_::main(int& argc, char** argv)
   std::string command = *command_it;
   ++command_it;
 
-  if(command == "add-geo")
+  if (command == "add-geo")
   {
     add_geo_(std::cin, std::cout);
   }

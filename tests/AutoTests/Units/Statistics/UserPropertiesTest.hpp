@@ -61,10 +61,7 @@ public:
 
 public:
 
-  UserPropertiesTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  UserPropertiesTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -95,9 +92,7 @@ private:
 
   // Common function for all test cases
   template<unsigned long PropsSize>
-    void test_case(
-      const Property (&properties)[PropsSize],
-      const char* colo_name);
+    void test_case(const Property (&properties)[PropsSize], const char* colo_name);
 
   // Cases
 

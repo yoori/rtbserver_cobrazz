@@ -6,9 +6,7 @@
 
 #include <Commons/Postgres/ConnectionPool.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   struct ModifyConfig: public virtual ReferenceCounting::AtomicImpl
   {
@@ -58,9 +56,7 @@ namespace CampaignSvcs
   class ModifyConfigDBSource: public ModifyConfigSource
   {
   public:
-    ModifyConfigDBSource(
-      Logging::Logger* logger,
-      Commons::Postgres::ConnectionPool* pg_pool)
+    ModifyConfigDBSource(Logging::Logger* logger, Commons::Postgres::ConnectionPool* pg_pool)
       noexcept;
 
     ModifyConfig_var
@@ -72,14 +68,11 @@ namespace CampaignSvcs
     {}
 
     void
-    query_countries_(
-      Commons::Postgres::Connection* conn,
-      ModifyConfig& config)
+    query_countries_(Commons::Postgres::Connection* conn, ModifyConfig& config)
       /*throw(Exception)*/;
 
   private:
     Logging::Logger_var logger_;
     AdServer::Commons::Postgres::ConnectionPool_var pg_pool_;
   };
-}
 }

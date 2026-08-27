@@ -4,9 +4,7 @@
 #include <String/AsciiStringManip.hpp>
 #include <String/Tokenizer.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   class ChunkDirectoryAssigner
   {
@@ -31,10 +29,9 @@ namespace ProfilingCommons
       unsigned long chunk_index;
 
       String::StringManip::Splitter<
-        String::AsciiStringManip::SepUnderscore> tokenizer(
-          file_name_substr);
+        String::AsciiStringManip::SepUnderscore> tokenizer(file_name_substr);
 
-      if(tokenizer.get_token(prefix) &&
+      if (tokenizer.get_token(prefix) &&
          tokenizer.get_token(chunk_index_str) &&
          (prefix == chunks_prefix_) &&
          String::StringManip::str_to_int(chunk_index_str, chunk_index))
@@ -64,5 +61,4 @@ namespace ProfilingCommons
       chunks_root,
       Generics::DirSelect::wrap_functor(chunk_dir_assigner, true));
   }
-}
 }

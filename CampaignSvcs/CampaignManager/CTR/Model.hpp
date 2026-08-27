@@ -45,8 +45,7 @@ namespace AdServer::CampaignSvcs::CTR
     Model(unsigned long model_id) noexcept;
 
     void
-    load_feature_weights(
-      const String::SubString& file)
+    load_feature_weights(const String::SubString& file)
       /*throw(InvalidConfig)*/;
 
   public:

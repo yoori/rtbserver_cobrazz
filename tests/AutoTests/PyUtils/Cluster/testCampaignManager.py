@@ -56,7 +56,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                              "",                       # language
                                              "A",                      # status
                                              1,                        # behav_param_list_id
-                                             "",                       # str_behav_param_list_id 
+                                             "",                       # str_behav_param_list_id
                                              [],                       # categories
                                              1,                        # threshold
                                              0,                        # discover
@@ -114,8 +114,8 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                      ),
                                                       1                # threshold
                                                       )]
-                                                      
-    self.behav_params = [BehavParamInfo(1,                             # id             
+
+    self.behav_params = [BehavParamInfo(1,                             # id
                                         1,                             # threshold
                                         time2orb(now),                 # timestamp
                                         # bp_seq
@@ -139,7 +139,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                  0,                                   # internal_account_id
                                  0,                                   # role_id
                                  0,                                   # flags
-                                 0,                                   # at_flags  
+                                 0,                                   # at_flags
                                  'O',                                 # text_adserving
                                  1,                                   # currency_id
                                  "gb",                                # country
@@ -161,7 +161,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                  0,                                   # internal_account_id
                                  0,                                   # role_id
                                  1,                                   # flags
-                                 0,                                   # at_flags  
+                                 0,                                   # at_flags
                                  'O',                                 # text_adserving
                                  1,                                   # currency_id
                                  "gb",                                # country
@@ -183,7 +183,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                  0,                                   # internal_account_id
                                  0,                                   # role_id
                                  0,                                   # flags
-                                 0,                                   # at_flags  
+                                 0,                                   # at_flags
                                  'O',                                 # text_adserving
                                  1,                                   # currency_id
                                  "gb",                                # country
@@ -219,7 +219,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                   16,   # channel_id
                                                   [],   # sub_channels
                                                   ),
-                                   "gn",          # country   
+                                   "gn",          # country
                                    [1],           # sites
                                    'A',           # status
                                    'A',           # eval_status
@@ -227,7 +227,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                    # creatives
                                    [CreativeInfo(1,                              # cc id
                                                  1,                              # creative id
-                                                 0,                              # fc_id 
+                                                 0,                              # fc_id
                                                  1,                              # weight
                                                  [
                                                    CreativeSizeInfo(
@@ -248,12 +248,12 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                  ""                # value
                                                                  ),
                                                  0,                              # order_set_id
-                                                 [],                             # categories  
+                                                 [],                             # categories
                                                  [],                             # tokens
                                                  'A',                           # status
                                                  ''                               # version_id
                                                  )],
-                                   1,             # account_id 
+                                   1,             # account_id
                                    1,             # advertiser_id
                                    [],            # exclude_pub_accounts
                                    [],            # exclude_tags
@@ -307,7 +307,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                   16,   # channel_id
                                                   [],   # sub_channels
                                                   ),
-                                   "gn",          # country   
+                                   "gn",          # country
                                    [1],           # sites
                                    'A',           # status
                                    'A',           # eval_status
@@ -315,7 +315,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                    # creatives
                                    [CreativeInfo(2,                              # cc id
                                                  2,                              # creative id
-                                                 0,                              # fc_id 
+                                                 0,                              # fc_id
                                                  1,                              # weight
                                                  [
                                                    CreativeSizeInfo(
@@ -336,7 +336,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                  ""                # value
                                                                  ),
                                                  0,                              # order_set_id
-                                                 [],                             # categories  
+                                                 [],                             # categories
                                                  [OptionValueInfo(101, ""),
                                                   OptionValueInfo(102, "http://www.displayurl.com")], # tokens
                                                  'A',                            # status
@@ -344,7 +344,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                  ),
                                    CreativeInfo(3,                              # cc id
                                                 3,                              # creative id
-                                                0,                              # fc_id 
+                                                0,                              # fc_id
                                                 1,                              # weight
                                                 [
                                                   CreativeSizeInfo(
@@ -365,13 +365,13 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                 ""                # value
                                                                 ),
                                                 0,                              # order_set_id
-                                                [],                             # categories  
+                                                [],                             # categories
                                                 [OptionValueInfo(101, ""),
                                                  OptionValueInfo(102, "http://www.displayurl.com")], # tokens
                                                 'A',                            # status
                                                 ''                                # version_id
                                                 )],
-                                   1,             # account_id 
+                                   1,             # account_id
                                    1,             # advertiser_id
                                    [],            # exclude_pub_accounts
                                    [],            # exclude_tags
@@ -425,7 +425,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                   0,    # channel_id
                                                   [],   # sub_channels
                                                   ),
-                                   "gn",          # country   
+                                   "gn",          # country
                                    [1],           # sites
                                    'A',           # status
                                    'A',           # eval_status
@@ -433,7 +433,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                    # creatives
                                    [CreativeInfo(10336933,                       # cc id
                                                  12345,                          # creative id
-                                                 0,                              # fc_id 
+                                                 0,                              # fc_id
                                                  10000,                          # weight
                                                  [
                                                    CreativeSizeInfo(
@@ -454,12 +454,12 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                  ""                # value
                                                                  ),
                                                  1,                              # order_set_id
-                                                 [],                             # categories  
+                                                 [],                             # categories
                                                  [OptionValueInfo(102, "http://www.displayurl.com")], # tokens
                                                  'A',                            # status
                                                  ''                                # version_id
                                                  )],
-                                   1,             # account_id 
+                                   1,             # account_id
                                    1,             # advertiser_id
                                    [],            # exclude_pub_accounts
                                    [],            # exclude_tags
@@ -513,7 +513,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                   16,   # channel_id
                                                   [],   # sub_channels
                                                   ),
-                                   "gn",          # country   
+                                   "gn",          # country
                                    [1],           # sites
                                    'A',           # status
                                    'A',           # eval_status
@@ -521,7 +521,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                    # creatives
                                    [CreativeInfo(986887,                         # cc id
                                                  986887,                         # creative id
-                                                 0,                              # fc_id 
+                                                 0,                              # fc_id
                                                  1,                              # weight
                                                  [
                                                    CreativeSizeInfo(
@@ -542,12 +542,12 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                                                  ""                # value
                                                                  ),
                                                  0,                              # order_set_id
-                                                 [],                             # categories  
+                                                 [],                             # categories
                                                  [],                             # tokens
                                                  'W',                            # status
                                                  ''                               # version_id
                                                  )],
-                                   0,             # account_id 
+                                   0,             # account_id
                                    0,             # advertiser_id
                                    [],            # exclude_pub_accounts
                                    [],            # exclude_tags
@@ -581,8 +581,8 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                                    time2orb(0),             # min_uid_age
                                    [],                      # colocations
                                    time2orb(now)            # timestamp
-                                   )] 
-    self.ecpms = [CampaignEcpmInfo(1,                       # ccg_id 
+                                   )]
+    self.ecpms = [CampaignEcpmInfo(1,                       # ccg_id
                                    decimal2orb(20.0),       # ecpm
                                    decimal2orb(0.01),       # ctr
                                    time2orb(now)            # timestamp
@@ -793,7 +793,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
                         "text/javascript",    # mime_format
                         time2orb(0.0)   # timestamp
                         )]
-    
+
     self.sizes = [SizeInfo(
                     0,             # size_id
                     "468x60",      # protocol_name
@@ -1076,7 +1076,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
     FunTest.tlog(10, "Trace response: %s" % response)
     self.assertEqual(1, len(response.ad_slots),'ad slot size')
     self.assertEqual(1, len(response.ad_slots[0].selected_creatives),'selected creatives')
-    
+
     tokens = dict()
     for line in response.ad_slots[0].creative_body.split('\n'):
       matchObj = re.match(r"^(.+) = (.*)$", line)
@@ -1108,7 +1108,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
       "",  # referer
       True # log_click
       )
-    
+
     result = self.CampaignObject.get_click_url(click_info)
     self.assertEqual('http://www.clickurl.com/?cid=1000&cgid=10000', result[1].url)
 
@@ -1130,7 +1130,7 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
       tag_size_id = 1,
       creative_id = 0,
       creatives = [CampaignManagerUtils.InstantiateCreativeInfo(
-                     ccid = 986887, 
+                     ccid = 986887,
                      ccg_keyword_id = 0,
                      request_id = "")],
       user_id_hash_mod = CampaignManagerUtils.UserIdHashModInfo(False, 0),

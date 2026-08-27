@@ -703,7 +703,7 @@
 </xsl:template>
 
 <!-- Collect configuration from different virtual servers of frontend
-  Uses in genetaion for ad and content cluster 
+  Uses in genetaion for ad and content cluster
   @param virtual-servers list of virtual servers
   @param port-field-name name of port attribute in virtual server
   @param def-port default port
@@ -945,7 +945,7 @@
   </xsl:if>
 
   <xsl:if test="count($zmq-socket-config/cfg:clientSecurity) > 0">
-    <cfg:ClientSecurity 
+    <cfg:ClientSecurity
       server_public="{$zmq-socket-config/cfg:clientSecurity/@server_public}"
       client_secret="{$zmq-socket-config/cfg:clientSecurity/@client_secret}"
       client_public="{$zmq-socket-config/cfg:clientSecurity/@client_public}"
@@ -1026,14 +1026,14 @@
 
   <xsl:choose>
     <xsl:when test="count($socket-config/cfg:clientSecurity) > 0">
-      <cfg:ClientSecurity 
+      <cfg:ClientSecurity
         server_public="{$socket-config/cfg:clientSecurity/@server_public}"
         client_secret="{$socket-config/cfg:clientSecurity/@client_secret}"
         client_public="{$socket-config/cfg:clientSecurity/@client_public}"
       />
     </xsl:when>
     <xsl:when test="count($default-socket-config/clientSecurity) > 0">
-      <cfg:ClientSecurity 
+      <cfg:ClientSecurity
         server_public="{$default-socket-config/cfg:clientSecurity/@server_public}"
         client_secret="{$default-socket-config/cfg:clientSecurity/@client_secret}"
         client_public="{$default-socket-config/cfg:clientSecurity/@client_public}"
@@ -1062,27 +1062,27 @@
   <xsl:param name="kafka-config"/>
   <xsl:variable name="broker_str">
     <xsl:for-each select="$kafka-config/cfg:broker">
-      <xsl:value-of select="@host"/>:<xsl:value-of 
-        select="@port"/><xsl:if test="count(@port) = 0">9092</xsl:if><xsl:if 
+      <xsl:value-of select="@host"/>:<xsl:value-of
+        select="@port"/><xsl:if test="count(@port) = 0">9092</xsl:if><xsl:if
         test="position()!=last()">,</xsl:if>
     </xsl:for-each>
   </xsl:variable>
   <xsl:attribute name="brokers">
     <xsl:value-of select="$broker_str"/>
   </xsl:attribute>
-  <xsl:attribute name="topic"><xsl:value-of 
-    select="$topic-config/@topic"/><xsl:if  
-    test="count($topic-config/@topic) = 0"><xsl:value-of 
+  <xsl:attribute name="topic"><xsl:value-of
+    select="$topic-config/@topic"/><xsl:if
+    test="count($topic-config/@topic) = 0"><xsl:value-of
     select="$default-topic-name"/></xsl:if>
   </xsl:attribute>
-  <xsl:attribute name="threads"><xsl:value-of 
-    select="$topic-config/@threads"/><xsl:if 
-    test="count($topic-config/@threads) = 0"><xsl:value-of 
+  <xsl:attribute name="threads"><xsl:value-of
+    select="$topic-config/@threads"/><xsl:if
+    test="count($topic-config/@threads) = 0"><xsl:value-of
     select="$default-kafka-threads"/></xsl:if>
   </xsl:attribute>
-  <xsl:attribute name="message_queue_size"><xsl:value-of 
-    select="$topic-config/@message_queue_size"/><xsl:if 
-    test="count($topic-config/@message_queue_size) = 0"><xsl:value-of 
+  <xsl:attribute name="message_queue_size"><xsl:value-of
+    select="$topic-config/@message_queue_size"/><xsl:if
+    test="count($topic-config/@message_queue_size) = 0"><xsl:value-of
     select="$default-kafka-message-queue-size"/></xsl:if>
   </xsl:attribute>
 </xsl:template>

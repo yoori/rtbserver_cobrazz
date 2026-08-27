@@ -23,9 +23,9 @@ sub process
   my ($self, $row) = @_;
   my $value = $row->[$self->{field_}];
 
-  if(Scalar::Util::looks_like_number($value))
+  if (Scalar::Util::looks_like_number($value))
   {
-    if(defined($self->{min_}) && ($value < $self->{min_}))
+    if (defined($self->{min_}) && ($value < $self->{min_}))
     {
       return undef;
     }

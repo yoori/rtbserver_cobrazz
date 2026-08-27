@@ -23,9 +23,7 @@ void print_time(std::ostream& out, const Generics::Time& time)
   out << time_str.str();
  }
 
-void print_header(std::ostream& out,
-                  const char* header,
-                  unsigned short width)
+void print_header(std::ostream& out, const char* header, unsigned short width)
 {
   out.width((width + strlen(header))/2 );
   out << std::right << header << std::endl << std::endl;
@@ -92,8 +90,7 @@ std::ostream& DumpPercentageCounter::dump_body(std::ostream& out) const
 
 // Class DumpRangeStats
 
-DumpRangeStats::DumpRangeStats(const RangeStats& stats,
-                               bool short_form) :
+DumpRangeStats::DumpRangeStats(const RangeStats& stats, bool short_form) :
   stats_(stats),
   short_form_(short_form)
 { }
@@ -105,8 +102,7 @@ std::ostream& DumpRangeStats::dump_body(std::ostream& out) const
 {
   if (!short_form_)
     out << stats_.get() << "/";
-  out << stats_.min() << "/"
-      << stats_.max() << "/" << stats_.average().get();
+  out << stats_.min() << "/" << stats_.max() << "/" << stats_.average().get();
   return out;
 }
 

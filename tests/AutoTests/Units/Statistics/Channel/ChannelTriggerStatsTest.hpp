@@ -19,10 +19,7 @@ class ChannelTriggerStatsTest: public BaseDBUnit
   typedef std::list<Diff> Diffs;
 
 public:
-  ChannelTriggerStatsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var):
+  ChannelTriggerStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var),
     default_colo_(fetch_int("DefaultColo"))
   { }
@@ -71,12 +68,8 @@ private:
 
   // help funs
   template<size_t Count>
-  void add_stats_(
-    Stats& stats,
-    Diffs& diffs,
-    const ChannelTriggerStatsRow (&expected)[Count]);
+  void add_stats_(Stats& stats, Diffs& diffs, const ChannelTriggerStatsRow (&expected)[Count]);
 
   template<size_t Count>
-  void process_requests_(
-    const ChannelTriggerRequest (&requests)[Count]);
+  void process_requests_(const ChannelTriggerRequest (&requests)[Count]);
 };

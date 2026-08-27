@@ -149,8 +149,7 @@ frontend_group_logger_test() noexcept
   const timeval times[] = { {1, 0}, {2, 0}, {12, 0},
     {0, 999999}, {0, 500000}, {0, 10000}, {0, 9999}, {0, 9}, {0, 0}
   };
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
   GroupLogger_var gl(new GroupLogger(logger, "prefix", "aspect", "code"));
 
   std::streambuf* cout_buf = std::cout.rdbuf();
@@ -172,8 +171,7 @@ frontend_group_logger_test() noexcept
   gl->dump();
   std::cout.rdbuf(cout_buf);
   const std::string& result = my_buf.str();
-  for (std::size_t i = 0;
-    i < sizeof(FRONTEND_STANDARDS) / sizeof(FRONTEND_STANDARDS[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(FRONTEND_STANDARDS) / sizeof(FRONTEND_STANDARDS[0]); ++i)
   {
     std::string::size_type pos = result.find(FRONTEND_STANDARDS[i]);
     if (pos == std::string::npos)
@@ -204,24 +202,20 @@ main()
   std::cout.rdbuf(&my_buf);
 
   {
-    Logging::Logger_var logger(
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
     ErrorPool errors(128, logger);
     ErrorGenerator worker(errors);
-    TestCommons::MTTester<ErrorGenerator&> mt_tester(
-      worker, 10);
+    TestCommons::MTTester<ErrorGenerator&> mt_tester(worker, 10);
 
     mt_tester.run(100, 0, 100);
   }
   std::stringbuf my_buf2;
   std::cout.rdbuf(&my_buf2);
   {
-    Logging::Logger_var logger(
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
     ErrorPool errors(128, logger);
     LogGenerator worker(errors);
-    TestCommons::MTTester<LogGenerator&> mt_tester(
-      worker, 10);
+    TestCommons::MTTester<LogGenerator&> mt_tester(worker, 10);
 
     mt_tester.run(10, 0, 10);
   }
@@ -229,12 +223,10 @@ main()
   std::stringbuf my_buf3;
   std::cout.rdbuf(&my_buf3);
   {
-    Logging::Logger_var logger(
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
     ErrorPool errors(128, logger);
     CellsErrorGenerator worker(errors);
-    TestCommons::MTTester<CellsErrorGenerator&> mt_tester(
-      worker, 10);
+    TestCommons::MTTester<CellsErrorGenerator&> mt_tester(worker, 10);
 
     mt_tester.run(10000, 0, 10000);
   }
@@ -249,6 +241,7 @@ main()
   {
     pos = 0;
   }
+
   if (result.substr(pos) == STANDARD)
   {
     std::cout << my_buf.str() << std::endl;

@@ -61,8 +61,7 @@ namespace
     "http://us.yhs4.search.yahoo.com",
     "http://us.yhs4.search.yahoo.com",
   };
-  const std::size_t RE_SET_HOSTS_AMOUNT =
-    sizeof(RE_SET_HOSTNAMES) / sizeof(RE_SET_HOSTNAMES[0]);
+  const std::size_t RE_SET_HOSTS_AMOUNT = sizeof(RE_SET_HOSTNAMES) / sizeof(RE_SET_HOSTNAMES[0]);
 
   //
   // Hostname + suffix = test input data
@@ -122,8 +121,7 @@ namespace
     /// Fill hash table for exactly matched hostnames
     for (std::size_t i = 0; i < RE_SET_AMOUNT; ++i)
     {
-      HostnameRegexHashMap::iterator it =
-        hostname_regex.find(RE_SET_HOSTNAMES[i]);
+      HostnameRegexHashMap::iterator it = hostname_regex.find(RE_SET_HOSTNAMES[i]);
 
       if (it != hostname_regex.end())
       {
@@ -139,8 +137,7 @@ namespace
     }
     for (std::size_t i = 0; i < RE_OPT_SET_AMOUNT; ++i)
     {
-      HostnameRegexHashMap::iterator it =
-        hostname_opt_regex.find(RE_SET_HOSTNAMES[i]);
+      HostnameRegexHashMap::iterator it = hostname_opt_regex.find(RE_SET_HOSTNAMES[i]);
 
       if (it != hostname_opt_regex.end())
       {
@@ -185,16 +182,14 @@ namespace
         ostr
           << "load_urls(): processing regexp '"
           << regexp_it->regexp()
-          << "' String::RegEx::Exception caught: "
-          << e.what();
+          << "' String::RegEx::Exception caught: " << e.what();
 
         throw TestException(ostr);
       }
       catch (const eh::Exception& e)
       {
         Stream::Error ostr;
-        ostr << "load_urls(): In match element eh::Exception caught: "
-          << e.what();
+        ostr << "load_urls(): In match element eh::Exception caught: " << e.what();
 
         throw TestException(ostr);
       }
@@ -229,11 +224,11 @@ namespace
           try
           {
             std::string tmp;
-            if (!String::StringManip::flatten(tmp,
-              String::StringManip::trim_ret(sub_strs[1])))
+            if (!String::StringManip::flatten(tmp, String::StringManip::trim_ret(sub_strs[1])))
             {
               continue;
             }
+
             if (!String::case_change<String::Uniform>(tmp, match_result))
             {
               continue;
@@ -250,8 +245,7 @@ namespace
     catch(const String::RegEx::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught String::RegEx::Exception has been caught: "
-        << e.what();
+      ostr << FUN << ": caught String::RegEx::Exception has been caught: " << e.what();
       throw TestException(ostr);
     }
 
@@ -269,8 +263,7 @@ namespace
     {
       return false;
     }
-    HostnameRegexHashMap::iterator it =
-      hostname_opt_regex.find(url.substr(0, pos));
+    HostnameRegexHashMap::iterator it = hostname_opt_regex.find(url.substr(0, pos));
     if (it == hostname_opt_regex.end())
     {
       return false;
@@ -287,11 +280,11 @@ namespace
           try
           {
             std::string tmp;
-            if (!String::StringManip::flatten(tmp,
-              String::StringManip::trim_ret(sub_strs[1])))
+            if (!String::StringManip::flatten(tmp, String::StringManip::trim_ret(sub_strs[1])))
             {
               continue;
             }
+
             if (!String::case_change<String::Uniform>(tmp, match_result))
             {
               continue;
@@ -308,8 +301,7 @@ namespace
     catch(const String::RegEx::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught String::RegEx::Exception has been caught: "
-        << e.what();
+      ostr << FUN << ": caught String::RegEx::Exception has been caught: " << e.what();
       throw TestException(ostr);
     }
 
@@ -327,8 +319,7 @@ performance_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
 
   Generics::CPUTimer timer;
   timer.start();
-  for (TestUrlsList::const_iterator cit = urls.begin();
-    cit != urls.end(); ++cit)
+  for (TestUrlsList::const_iterator cit = urls.begin(); cit != urls.end(); ++cit)
   {
 //        bool result =
     matcher.match((*cit).c_str(), match_result, 0);
@@ -339,13 +330,10 @@ performance_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
   }
   timer.stop();
   std::cout << "Time need to match 10% RE_SET and 90% unmatchable url,"
-    " data set size="
-    <<  TEST_URLS_AMOUNT << " elements:\n" << timer.elapsed_time()
-    << std::endl;
+    " data set size=" <<  TEST_URLS_AMOUNT << " elements:\n" << timer.elapsed_time() << std::endl;
 
   timer.start();
-  for (TestUrlsList::const_iterator cit = urls.begin();
-    cit != urls.end(); ++cit)
+  for (TestUrlsList::const_iterator cit = urls.begin(); cit != urls.end(); ++cit)
   {
 //        bool result =
     special_matching((*cit), match_result);
@@ -357,12 +345,10 @@ performance_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
   timer.stop();
   std::cout << "Time need to match 10% RE_SET and 90% unmatchable url,"
     " data set size="
-    <<  TEST_URLS_AMOUNT << " elements, SPECIAL algo:\n"
-    << timer.elapsed_time() << std::endl;
+    <<  TEST_URLS_AMOUNT << " elements, SPECIAL algo:\n" << timer.elapsed_time() << std::endl;
 
   timer.start();
-  for (TestUrlsList::const_iterator cit = urls.begin();
-    cit != urls.end(); ++cit)
+  for (TestUrlsList::const_iterator cit = urls.begin(); cit != urls.end(); ++cit)
   {
 //        bool result =
     very_special_matching((*cit), match_result);
@@ -374,8 +360,7 @@ performance_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
   timer.stop();
   std::cout << "Time need to match 10% RE_SET and 90% unmatchable url,"
     " data set size="
-    <<  TEST_URLS_AMOUNT << " elements, VERY SPECIAL algo:\n"
-    << timer.elapsed_time() << std::endl;
+    <<  TEST_URLS_AMOUNT << " elements, VERY SPECIAL algo:\n" << timer.elapsed_time() << std::endl;
 
 }
 
@@ -384,8 +369,7 @@ main() noexcept
 {
   try
   {
-    FrontendCommons::UrlMatcher_var matcher(
-      new FrontendCommons::UrlMatcher());
+    FrontendCommons::UrlMatcher_var matcher(new FrontendCommons::UrlMatcher());
     load_url_matcher(*matcher, "PermanentFeConfig.xml");
     performance_test(*matcher);
   }

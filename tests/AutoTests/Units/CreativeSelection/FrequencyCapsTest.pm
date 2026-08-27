@@ -127,7 +127,7 @@ sub init_text_case
     account_id => $publisher,
     freq_cap_id => $freq_caps->{site} });
 
-  if(defined($freq_caps->{channel}) && $first_campaign_is_channel_targeted)
+  if (defined($freq_caps->{channel}) && $first_campaign_is_channel_targeted)
   {
     die "FrequencyCapsTest: incorrect combination: first campaign is channel targeted & " .
       "channel freq caps defined";
@@ -152,7 +152,7 @@ sub init_text_case
   for (my $i = 1; $i <= 4; ++$i)
   {
     my $campaign;
-    if($first_campaign_is_channel_targeted && $i == 1)
+    if ($first_campaign_is_channel_targeted && $i == 1)
     {
       my $channel = $ns->create(DB::BehavioralChannel->blank(
         name => $name,

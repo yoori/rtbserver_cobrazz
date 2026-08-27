@@ -15,7 +15,7 @@ our @ISA = qw(TextBiddingCommon);
 sub init {
   my ($self, $ns) = @_;
 
-  my $size = $ns->create(CreativeSize => { 
+  my $size = $ns->create(CreativeSize => {
     name => "Size",
     max_text_creatives => 3 });
 
@@ -38,7 +38,7 @@ sub init {
   my $channelkeyword5 = make_autotest_name($ns, "channel5");
 
   # Text CCGs
-  my$text1 = $ns->create(TextAdvertisingCampaign => { 
+  my$text1 = $ns->create(TextAdvertisingCampaign => {
     name => "Text1",
     size_id => $size,
     template_id => DB::Defaults::instance()->text_template,
@@ -68,7 +68,7 @@ sub init {
     max_cpc_bid => 0.2,
     ctr => 0.1 });
 
-  my$text2 = $ns->create(TextAdvertisingCampaign => { 
+  my$text2 = $ns->create(TextAdvertisingCampaign => {
     name => "Text2",
     size_id => $size,
     template_id => DB::Defaults::instance()->text_template,
@@ -92,8 +92,8 @@ sub init {
     ctr => 0.1 });
 
   # Channel targeted text CCGs
-  my $channel1 = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel1 =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel1",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -102,41 +102,41 @@ sub init {
       site_links => [
         {site_id => $publisher->{site_id}}]});
 
-   $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-     channel_id => $channel1->{channel_id},  
+   $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+     channel_id => $channel1->{channel_id},
      trigger_type => "P" ));
 
-  my $channel2 = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel2 =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel2",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
       behavioralchannel_keyword_list => $channelkeyword2,
       campaigncreativegroup_cpm => 8,
       site_links => [
-        {site_id => $publisher->{site_id}}]});  
+        {site_id => $publisher->{site_id}}]});
 
-  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-    channel_id => $channel2->{channel_id},  
+  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+    channel_id => $channel2->{channel_id},
     trigger_type => "P" ));
 
-  my $channel3 = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel3 =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel3",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
       behavioralchannel_keyword_list => $channelkeyword3,
       campaigncreativegroup_cpm => 20,
       site_links => [
-        {site_id => $publisher->{site_id} }]});    
+        {site_id => $publisher->{site_id} }]});
 
-  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-    channel_id => $channel3->{channel_id},  
+  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+    channel_id => $channel3->{channel_id},
     trigger_type => "P" ));
 
 
-  my $channel4 = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel4 =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel4",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -144,15 +144,15 @@ sub init {
       campaigncreativegroup_cpc => 2,
       campaigncreativegroup_ctr => 0.008,
       site_links => [
-        {site_id => $publisher->{site_id} }]});    
+        {site_id => $publisher->{site_id} }]});
 
-  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-    channel_id => $channel4->{channel_id},  
+  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+    channel_id => $channel4->{channel_id},
     trigger_type => "P" ));
 
 
-  my $channel5 = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $channel5 =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel5",
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -161,10 +161,10 @@ sub init {
       campaigncreativegroup_cpc => 2,
       campaigncreativegroup_ctr => 0.1,
       site_links => [
-        {site_id => $publisher->{site_id} }]});    
+        {site_id => $publisher->{site_id} }]});
 
-  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-    channel_id => $channel5->{channel_id},  
+  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+    channel_id => $channel5->{channel_id},
     trigger_type => "P" ));
 
 
@@ -214,15 +214,15 @@ sub init {
     $ns, 4,
     [0.2, 0],
     [0, 0.02]);
-  # Case5. Actual CPC persistence for Text(C) CCGs 
+  # Case5. Actual CPC persistence for Text(C) CCGs
   # (Text(C) CCG ecpm < ccg keyword ecpm).
   $self->expected_revenue_output(
     $ns, 5,
     [2       # channel ccg#4 cpc
-     * 0.008 # channel ccg#4 ctr 
+     * 0.008 # channel ccg#4 ctr
      / 0.1 + 0.01, 2],
     [0, 0]);
-  # Case6. Actual CPC persistence for Text(C) CCGs 
+  # Case6. Actual CPC persistence for Text(C) CCGs
   # (Text(C) CCG ecpm > ccg keyword ecpm).
   $self->expected_revenue_output(
     $ns, 6,

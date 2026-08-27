@@ -10,10 +10,7 @@ class MergingStatusTest: public BaseUnit
 {
 public:
 
-  MergingStatusTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  MergingStatusTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     client(AdClient::create_user(this))
   {};

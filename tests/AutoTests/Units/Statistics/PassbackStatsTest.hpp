@@ -4,7 +4,6 @@
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
-
 namespace DB = AutoTest::DBC;
 namespace ORM = AutoTest::ORM;
 
@@ -22,10 +21,7 @@ class PassbackStatsTest: public BaseUnit
 
 public:
 
-  PassbackStatsTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  PassbackStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq()),
     today(Generics::Time::get_time_of_day())
@@ -49,13 +45,9 @@ private:
   virtual bool run_test();
 
   void
-  log_pb_profile(
-    std::string request_id);
+  log_pb_profile(std::string request_id);
 
-  void scenario1(
-    bool same_id,
-    int tag,
-    const char* part);
+  void scenario1(bool same_id, int tag, const char* part);
   void scenario2();
   void scenario3();
   void scenario4();

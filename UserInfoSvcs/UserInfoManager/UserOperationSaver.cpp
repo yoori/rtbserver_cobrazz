@@ -9,9 +9,7 @@ namespace Aspect
   const char USER_OPERATION_SAVER[] = "UserOperationSaver";
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // UserOperationSaver::Dumper
   class UserOperationSaver::Dumper: public Generics::ActiveObjectCommonImpl
@@ -156,7 +154,7 @@ namespace UserInfoSvcs
       empty_queues.resize(chunks_count_);
 
       unsigned long chunk_id = 0;
-      for(SaveQueueArray::iterator it = empty_queues.begin();
+      for (SaveQueueArray::iterator it = empty_queues.begin();
         it != empty_queues.end(); ++it, ++chunk_id)
       {
         *it = new SaveQueue();
@@ -169,14 +167,12 @@ namespace UserInfoSvcs
       {
         Sync::ConditionalGuard guard(queue_holder_->cond);
 
-        if(!queue_holder_->non_empty_queues.empty())
+        if (!queue_holder_->non_empty_queues.empty())
         {
-          for(SaveQueueList::const_iterator it =
-                queue_holder_->non_empty_queues.begin();
+          for (SaveQueueList::const_iterator it = queue_holder_->non_empty_queues.begin();
               it != queue_holder_->non_empty_queues.end(); ++it)
           {
-            queue_holder_->queues[(*it)->chunk_id].swap(
-              empty_queues[(*it)->chunk_id]);
+            queue_holder_->queues[(*it)->chunk_id].swap(empty_queues[(*it)->chunk_id]);
           }
 
           dump_queues.splice(dump_queues.begin(), queue_holder_->non_empty_queues);
@@ -206,17 +202,15 @@ namespace UserInfoSvcs
   }
 
   void
-  UserOperationSaver::Dumper::Job::dump_queues_(
-    UserOperationSaver::SaveQueueList& dump_queues)
+  UserOperationSaver::Dumper::Job::dump_queues_(UserOperationSaver::SaveQueueList& dump_queues)
     noexcept
   {
-    for(UserOperationSaver::SaveQueueList::iterator it =
-          dump_queues.begin();
+    for (UserOperationSaver::SaveQueueList::iterator it = dump_queues.begin();
         it != dump_queues.end(); ++it)
     {
       assert(it->in());
 
-      if(!(*it)->bufs.empty())
+      if (!(*it)->bufs.empty())
       {
         dump_queue_((*it)->chunk_id, (*it)->bufs);
         (*it)->bufs.clear();
@@ -225,9 +219,7 @@ namespace UserInfoSvcs
   }
 
   void
-  UserOperationSaver::Dumper::Job::dump_queue_(
-    unsigned long chunk_i,
-    ConstSmartMemBufList& bufs)
+  UserOperationSaver::Dumper::Job::dump_queue_(unsigned long chunk_i, ConstSmartMemBufList& bufs)
     noexcept
   {
     static const char* FUN = "UserOperationSaver::Dumper::Job::dump_queue_()";
@@ -241,42 +233,35 @@ namespace UserInfoSvcs
       {
         SyncPolicy::WriteGuard lock(files_holder_->files_lock);
         FileMap::iterator it = files_holder_->files.find(chunk_i);
-        if(it != files_holder_->files.end())
+        if (it != files_holder_->files.end())
         {
           target_file = it->second;
         }
       }
 
-      if(!target_file.in())
+      if (!target_file.in())
       {
         LogProcessing::LogFileNameInfo file_name_info(output_file_prefix_);
         file_name_info.distrib_count = chunks_count_;
         file_name_info.distrib_index = chunk_i;
         LogProcessing::StringPair files =
           LogProcessing::make_log_file_name_pair(file_name_info, output_dir_);
-        target_file = new File(
-          files.first.c_str(),
-          files.second.c_str(),
-          file_controller_);
+        target_file = new File(files.first.c_str(), files.second.c_str(), file_controller_);
         file_created = true;
       }
 
-      if(file_created)
+      if (file_created)
       {
         SyncPolicy::WriteGuard lock(files_holder_->files_lock);
         files_holder_->files.insert(std::make_pair(chunk_i, target_file));
       }
 
-      while(!bufs.empty())
+      while (!bufs.empty())
       {
         const Generics::ConstSmartMemBuf_var& save_buf = bufs.front();
         uint32_t buf_size = save_buf->membuf().size();
-        target_file->write(
-          reinterpret_cast<const char*>(&buf_size),
-          sizeof(buf_size));
-        target_file->write(
-          save_buf->membuf().get<char>(),
-          buf_size);
+        target_file->write(reinterpret_cast<const char*>(&buf_size), sizeof(buf_size));
+        target_file->write(save_buf->membuf().get<char>(), buf_size);
         bufs.pop_front();
       }
     }
@@ -284,9 +269,7 @@ namespace UserInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": caught eh::Exception: " << ex.what();
-      logger_->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::USER_OPERATION_SAVER);
+      logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::USER_OPERATION_SAVER);
     }
   }
 
@@ -310,7 +293,7 @@ namespace UserInfoSvcs
     queue_holder_->queues.resize(chunks_number);
 
     unsigned long chunk_i = 0;
-    for(SaveQueueArray::iterator it = queue_holder_->queues.begin();
+    for (SaveQueueArray::iterator it = queue_holder_->queues.begin();
         it != queue_holder_->queues.end(); ++it, ++chunk_i)
     {
       SaveQueue_var new_queue = new SaveQueue();
@@ -332,17 +315,14 @@ namespace UserInfoSvcs
   }
 
   AdServer::Commons::StartableAwaitable<bool>
-  UserOperationSaver::co_remove_user_profile(
-    const UserId& user_id)
+  UserOperationSaver::co_remove_user_profile(const UserId& user_id)
     /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/
   {
     co_return co_await next_processor_->co_remove_user_profile(user_id);
   }
 
   AdServer::Commons::StartableAwaitable<bool>
-  UserOperationSaver::co_fraud_user(
-    const UserId& user_id,
-    const Generics::Time& now)
+  UserOperationSaver::co_fraud_user(const UserId& user_id, const Generics::Time& now)
     /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/
   {
     {
@@ -373,7 +353,7 @@ namespace UserInfoSvcs
     UniqueChannelsResult* pucr)
     /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/
   {
-    if(!channel_match_info.silent_match)
+    if (!channel_match_info.silent_match)
     {
       UserMatchOperationWriter match_operation_writer;
       match_operation_writer.operation_type() = UO_MATCH;
@@ -431,16 +411,13 @@ namespace UserInfoSvcs
       {
         CoordDataWriter cdw;
 
-        cdw.latitude().alloc(
-          AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
+        cdw.latitude().alloc(AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         channel_match_info.coord_data.latitude.pack(cdw.latitude().data());
 
-        cdw.longitude().alloc(
-          AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
+        cdw.longitude().alloc(AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         channel_match_info.coord_data.longitude.pack(cdw.longitude().data());
 
-        cdw.accuracy().alloc(
-          AdServer::CampaignSvcs::AccuracyDecimal::PACK_SIZE);
+        cdw.accuracy().alloc(AdServer::CampaignSvcs::AccuracyDecimal::PACK_SIZE);
         channel_match_info.coord_data.accuracy.pack(cdw.accuracy().data());
 
         match_operation_writer.coord_data().push_back(cdw);
@@ -584,9 +561,7 @@ namespace UserInfoSvcs
       profile_writer.user_id() = user_id.to_string();
       profile_writer.time() = now.tv_sec;
       profile_writer.request_id() = request_id.to_string();
-      std::copy(freq_caps.begin(),
-        freq_caps.end(),
-        std::back_inserter(profile_writer.freq_caps()));
+      std::copy(freq_caps.begin(), freq_caps.end(), std::back_inserter(profile_writer.freq_caps()));
       std::copy(uc_freq_caps.begin(),
         uc_freq_caps.end(),
         std::back_inserter(profile_writer.uc_freq_caps()));
@@ -658,9 +633,7 @@ namespace UserInfoSvcs
       exclude_pubpixel_accounts);
   }
 
-  void pack_freq_cap_info(
-    FreqCapInfoWriter& res,
-    const AdServer::Commons::FreqCap& fc)
+  void pack_freq_cap_info(FreqCapInfoWriter& res, const AdServer::Commons::FreqCap& fc)
   {
     res.fc_id() = fc.fc_id;
     res.lifelimit() = fc.lifelimit;
@@ -686,9 +659,7 @@ namespace UserInfoSvcs
 
   template<typename WriterType>
   void
-  UserOperationSaver::save_(
-    const AdServer::Commons::UserId& user_id,
-    const WriterType& writer)
+  UserOperationSaver::save_(const AdServer::Commons::UserId& user_id, const WriterType& writer)
     noexcept
   {
     Generics::SmartMemBuf_var new_membuf(new Generics::SmartMemBuf(writer.size()));
@@ -707,7 +678,7 @@ namespace UserInfoSvcs
 
       const SaveQueue_var& queue = queue_holder_->queues[chunk_i];
 
-      if((signal_queue = queue->bufs.empty()))
+      if ((signal_queue = queue->bufs.empty()))
       {
         queue_holder_->non_empty_queues.push_back(queue);
       }
@@ -715,7 +686,7 @@ namespace UserInfoSvcs
       queue->bufs.splice(queue->bufs.end(), new_mem_buf_list);
     }
 
-    if(signal_queue)
+    if (signal_queue)
     {
       queue_holder_->cond.signal();
     }
@@ -742,5 +713,4 @@ namespace UserInfoSvcs
 
     // dump files by destructors
   }
-}
 }

@@ -18,7 +18,7 @@ class MatrixReader:
     else :
       train_df = pd.read_csv(args.train_file[0], header=0)
       full_matrix = train_df.as_matrix()
-      labels = full_matrix[:, labelcol] 
+      labels = full_matrix[:, labelcol]
       data = np.delete(full_matrix, args.labelcol, 1)
     return data, labels
 

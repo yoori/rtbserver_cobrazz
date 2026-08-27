@@ -10,7 +10,7 @@ sub start
 {
   my ($host, $descr) = @_;
 
-  #  
+  #
   my $command =
        "mkdir -p \${log_root}/ChannelServer && " .
        "mkdir -p \${log_root}/ChannelServer/Out/ColoUpdateStat && " .

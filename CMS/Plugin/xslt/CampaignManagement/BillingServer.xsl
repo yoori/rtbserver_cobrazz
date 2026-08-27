@@ -52,8 +52,8 @@
       select="$def-config-root"/></xsl:if>
   </xsl:variable>
 
-  <xsl:variable name="cache-root"><xsl:value-of select="$env-config/@cache_root[1]"/>              
-    <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-cache-root"/></xsl:if>        
+  <xsl:variable name="cache-root"><xsl:value-of select="$env-config/@cache_root[1]"/>
+    <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-cache-root"/></xsl:if>
   </xsl:variable>
 
   <xsl:variable name="billing-server-port"><xsl:value-of select="$billing-server-config/cfg:networkParams/@port"/>

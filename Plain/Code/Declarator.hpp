@@ -26,9 +26,7 @@ namespace Code
     DECLARE_EXCEPTION(AlreadyDefined, eh::DescriptiveException);
 
   public:
-    Declarator(
-      Declaration::Namespace* root_namespace,
-      Code::ElementList* elements)
+    Declarator(Declaration::Namespace* root_namespace, Code::ElementList* elements)
       noexcept;
 
     void open_namespace(const char* name) noexcept;
@@ -44,9 +42,7 @@ namespace Code
     */
 
     Declaration::StructDescriptor_var
-    declare_struct(
-      const char* name,
-      Declaration::StructDescriptor::FieldList* fields)
+    declare_struct(const char* name, Declaration::StructDescriptor::FieldList* fields)
       noexcept;
 
     Declaration::StructReader_var

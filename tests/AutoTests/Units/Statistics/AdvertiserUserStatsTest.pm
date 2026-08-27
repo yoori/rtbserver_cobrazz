@@ -12,16 +12,16 @@ sub create_account_types
 
   foreach my $a (@$args)
   {
-    die $self->{ns_}->namespace . ".AccountType '$a->{name}' is redefined!" 
+    die $self->{ns_}->namespace . ".AccountType '$a->{name}' is redefined!"
       if exists $self->{accounts_}->{$a->{name}};
 
     my $account_type = $self->{ns_}->create(AccountType => {
       name => $a->{name},
-      account_role_id =>  
+      account_role_id =>
         defined $a->{role}?
            $a->{role}: DB::Defaults::instance()->advertiser_role,
       flags => defined $a->{flags}?
-        $a->{flags}: 0 });    
+        $a->{flags}: 0 });
     $self->{types_}->{$a->{name}} = $account_type;
   }
 }
@@ -32,39 +32,39 @@ sub create_accounts
 
   foreach my $a (@$args)
   {
-    die $self->{ns_}->namespace . ".Account '$a->{name}' is redefined!" 
+    die $self->{ns_}->namespace . ".Account '$a->{name}' is redefined!"
       if exists $self->{accounts_}->{$a->{name}};
 
-    die  $self->{ns_}->namespace . ".Account '$a->{agency}' is undefined!" 
+    die  $self->{ns_}->namespace . ".Account '$a->{agency}' is undefined!"
       if defined $a->{agency} and not exists $self->{accounts_}->{$a->{agency}};
 
-   die  $self->{ns_}->namespace . ".AccountType '$a->{type}' is undefined!" 
+   die  $self->{ns_}->namespace . ".AccountType '$a->{type}' is undefined!"
       if defined $a->{type} and not exists $self->{types_}->{$a->{type}};
 
     my %acc_args = %$a;
 
-    $acc_args{agency_account_id} = 
+    $acc_args{agency_account_id} =
       defined $a->{agency}?
         $self->{accounts_}->{$a->{agency}}: undef;
     delete $acc_args{agency};
 
-    $acc_args{role_id} = 
+    $acc_args{role_id} =
       defined $a->{role}?
         $a->{role}: DB::Defaults::instance()->advertiser_role;
     delete $acc_args{role};
 
-    $acc_args{timezone_id} = 
-      $self->{ns_}->create( 
+    $acc_args{timezone_id} =
+      $self->{ns_}->create(
         TimeZone => { tzname => $a->{timezone} })
           if defined $a->{timezone};
     delete $acc_args{timezone};
 
     $acc_args{account_type_id} =
       defined $a->{type}?
-        $self->{types_}->{$a->{type}}: defined $a->{agency}? 
+        $self->{types_}->{$a->{type}}: defined $a->{agency}?
           undef: DB::Defaults::instance()->advertiser_type;
     delete $acc_args{type};
-                                                   
+
     my $account = $self->{ns_}->create(Account => \%acc_args);
 
     $self->{ns_}->output("Account/" . $a->{name},  $account);
@@ -78,18 +78,18 @@ sub create_display_campaigns
 
   foreach my $c (@$args)
   {
-    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!" 
+    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!"
       if $c->{account_id} and not exists $self->{accounts_}->{$c->{account_id}};
 
     my $account = $self->{accounts_}->{$c->{account_id}};
     my $keyword = make_autotest_name($self->{ns_}, $c->{name});
-    
+
     my $campaign = $self->{ns_}->create(DisplayCampaign => {
       name => $c->{name},
       account_id => $self->{accounts_}->{$c->{account_id}},
       size_id => $self->{size_},
       cpm => $c->{cpm},
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           name => 'Channel-' . $c->{name},
           account_id => $account,
@@ -97,8 +97,8 @@ sub create_display_campaigns
           behavioral_parameters => [
             DB::BehavioralChannel::BehavioralParameter->blank(
               trigger_type => 'P',
-              time_to => 
-                defined $c->{channel_time_to}? 
+              time_to =>
+                defined $c->{channel_time_to}?
                   $c->{channel_time_to}: 0) ]),
       site_links => $self->{sites_} });
 
@@ -117,10 +117,10 @@ sub create_text_campaigns
 
   foreach my $c (@$args)
   {
-    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!" 
+    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!"
       if $c->{account_id} and not exists $self->{accounts_}->{$c->{account_id}};
 
-    die  $self->{ns_}->namespace . ".Campaign '$c->{campaign_id}' is undefined!" 
+    die  $self->{ns_}->namespace . ".Campaign '$c->{campaign_id}' is undefined!"
       if $c->{campaign_id} and not exists $self->{campaigns_}->{$c->{campaign_id}};
 
     my ($account, $head_campaign);
@@ -138,7 +138,7 @@ sub create_text_campaigns
           DB::BehavioralChannel::BehavioralParameter->blank(
             trigger_type => 'P',
             time_to =>
-              defined $c->{channel_time_to}? 
+              defined $c->{channel_time_to}?
                 $c->{channel_time_to}: 0)]));
 
     my @exclusion_options = ();
@@ -154,7 +154,7 @@ sub create_text_campaigns
     $cmp_args{max_cpc_bid} = $c->{cpc};
     $cmp_args{ccgkeyword_channel_id} = $channel->{channel_id};
     $cmp_args{site_links} = $self->{sites_};
-    $cmp_args{creative_description1_value} = 
+    $cmp_args{creative_description1_value} =
       $self->{exclusions_}->{$c->{category}} if defined $c->{category};
 
     my $campaign = $self->{ns_}->create(
@@ -163,7 +163,7 @@ sub create_text_campaigns
     if (defined $c->{exclusion})
     {
       $self->create_exclusion_cc(
-        $c->{name} . 'A' , $campaign->{ccg_id}, 
+        $c->{name} . 'A' , $campaign->{ccg_id},
         $account, DB::Defaults::instance()->text_template,
         $self->{exclusions_}->{$c->{exclusion}});
     }
@@ -184,7 +184,7 @@ sub create_keyword_campaigns
   foreach my $c (@$args)
   {
 
-    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!" 
+    die  $self->{ns_}->namespace . ".Account '$c->{account_id}' is undefined!"
       if $c->{account_id} and not exists $self->{accounts_}->{$c->{account_id}};
 
     my $account = $self->{accounts_}->{$c->{account_id}};
@@ -199,10 +199,10 @@ sub create_keyword_campaigns
           DB::BehavioralChannel::BehavioralParameter->blank(
             trigger_type => 'P',
             time_to =>
-              defined $c->{channel_time_to}? 
+              defined $c->{channel_time_to}?
                 $c->{channel_time_to}: 0)]));
 
-    my $campaign = $self->{ns_}->create(ChannelTargetedTACampaign => { 
+    my $campaign = $self->{ns_}->create(ChannelTargetedTACampaign => {
       name => $c->{name},
       size_id => $self->{size_},
       account_id => $account,
@@ -230,19 +230,19 @@ sub create_exclusion_tag
   foreach my $name (@$args)
   {
     my $excluded_tag = make_autotest_name($self->{ns_}, $name);
-    
+
     my $category = $self->{ns_}->create(CreativeCategory => {
       name => $excluded_tag,
       cct_id => 2 });
-  
+
     my $publisher =
-      $self->{ns_}->create(Publisher => { 
-        name => 'Publisher-' . $name, 
+      $self->{ns_}->create(Publisher => {
+        name => 'Publisher-' . $name,
         pubaccount_type_adv_exclusions => 'S',
         exclusions => [{ creative_category_id => $category }],
         size_id => $self->{size_}});
 
-    $self->{ns_}->output($name, $publisher->{tag_id});                
+    $self->{ns_}->output($name, $publisher->{tag_id});
     push @{$self->{sites_}}, { site_id => $publisher->{site_id} };
     $self->{exclusions_}->{$name} = $excluded_tag;
   }
@@ -262,7 +262,7 @@ sub create_exclusion_cc
   my $cc = $self->{ns_}->create(CampaignCreative => {
     ccg_id => $ccg,
     creative_id => $creative });
-    
+
   $self->{ns_}->output("CC/" . $name, $cc);
 }
 
@@ -271,12 +271,12 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
-  unless (ref $self) 
+
+  unless (ref $self)
   {
-    $self = bless {}, $self;  
+    $self = bless {}, $self;
   }
-  
+
   $self->{ns_} = $ns->sub_namespace($prefix);
 
   $self->{accounts_} = {};
@@ -292,13 +292,13 @@ sub new
 
   $self->{publisher_} =
     $self->{ns_}->create(Publisher =>
-      { name => 'Publisher', 
+      { name => 'Publisher',
         size_id => $self->{size_}});
 
-  push @{$self->{sites_}}, 
+  push @{$self->{sites_}},
     { site_id => $self->{publisher_}->{site_id} };
 
-  foreach my $template (DB::Defaults::instance()->display_template(), 
+  foreach my $template (DB::Defaults::instance()->display_template(),
                         DB::Defaults::instance()->text_template)
   {
     $self->{ns_}->create(TemplateFile => {
@@ -316,14 +316,14 @@ sub new
       template_type => 'X',
       app_format_id => DB::Defaults::instance()->app_format_no_track});
   }
-    
+
   $self->{ns_}->output("Tag", $self->{publisher_}->{tag_id});
 
   if (defined $args->{free_tag})
   {
     my $publisher =
       $self->{ns_}->create(Publisher =>
-        { name => $args->{free_tag}, 
+        { name => $args->{free_tag},
           size_id => $self->{size_}});
 
     $self->{ns_}->output(
@@ -380,8 +380,8 @@ sub unique_users
   my ($self, $ns) = @_;
     new AdvertiserUserStatsTest::Case(
     $ns, 'UNIQUE',
-    { 
-      account_types => [ 
+    {
+      account_types => [
        { name => 'Type1', flags => DB::AccountType::ADVERTISER, role => DB::Defaults::instance()->agency_role },
        { name => 'Type2', flags => 0, role => DB::Defaults::instance()->agency_role }],
       accounts => [
@@ -389,14 +389,14 @@ sub unique_users
           prepaid_amount => 0, not_invoiced => 0, total_adv_amount => 0,
           text_adserving => 'M',},
         { name => 'Agency2', role => DB::Defaults::instance()->agency_role, type => 'Type2',
-          prepaid_amount => 1000000, not_invoiced => 0.0002, 
+          prepaid_amount => 1000000, not_invoiced => 0.0002,
           total_adv_amount => 0.0002},
-        { name => 'Adv1', agency => 'Agency1', 
-          prepaid_amount => 1000000, not_invoiced => 0.00072, 
+        { name => 'Adv1', agency => 'Agency1',
+          prepaid_amount => 1000000, not_invoiced => 0.00072,
           total_adv_amount => 0.00072},
-        { name => 'Adv2', agency => 'Agency2', 
+        { name => 'Adv2', agency => 'Agency2',
           prepaid_amount => 0, not_invoiced => 0, total_adv_amount => 0},
-        { name => 'Adv3', agency => 'Agency2', 
+        { name => 'Adv3', agency => 'Agency2',
           prepaid_amount => 0, not_invoiced => 0, total_adv_amount => 0},
         { name => "Adv4" } ],
       exclusions => ["TagEx1", "TagEx2"],
@@ -407,9 +407,9 @@ sub unique_users
       keyword_campaigns => [
         { name => "Keyword1", account_id => "Adv1", cpm => 2000},
         { name => "Keyword4", account_id => "Adv4", cpm => 10} ],
-      text_campaigns => [ 
-        { name => "Text1", cpc => 0.1, campaign_id => "Keyword1", 
-          account_id => "Adv1", category => "TagEx1", 
+      text_campaigns => [
+        { name => "Text1", cpc => 0.1, campaign_id => "Keyword1",
+          account_id => "Adv1", category => "TagEx1",
           exclusion => "TagEx2" },
         { name => "Text3", cpc => 10, account_id => "Adv3" }] });
 }
@@ -417,7 +417,7 @@ sub unique_users
 sub last_usage
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'LASTUSAGE',
     { free_tag => "FreeTag",
@@ -436,7 +436,7 @@ sub last_usage
 sub timezone
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'TZ',
     { accounts => [
@@ -445,7 +445,7 @@ sub timezone
         { name => 'Adv1', agency => 'Agency1', timezone => 'Asia/Tokyo'},
         { name => "Adv2", agency => 'Agency2', timezone => 'America/Sao_Paulo' } ],
       keyword_campaigns => [
-        { name => "1", account_id => "Adv1", cpm => 10 } ], 
+        { name => "1", account_id => "Adv1", cpm => 10 } ],
       display_campaigns => [
         { name => "2", account_id => "Adv2", cpm => 10 } ] });
 }
@@ -453,7 +453,7 @@ sub timezone
 sub async
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'ASYNC',
     { accounts => [
@@ -471,7 +471,7 @@ sub async
 sub big_date_difference
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'BIGDIFF',
     { accounts => [
@@ -483,7 +483,7 @@ sub big_date_difference
 sub colo
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'COLO',
     { accounts => [
@@ -495,7 +495,7 @@ sub colo
 sub temporary_user
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'TEMP',
     { accounts => [
@@ -511,7 +511,7 @@ sub temporary_user
 sub optout_users
 {
   my ($self, $ns) = @_;
-  
+
   new AdvertiserUserStatsTest::Case(
     $ns, 'OPTOUT',
     { accounts => [

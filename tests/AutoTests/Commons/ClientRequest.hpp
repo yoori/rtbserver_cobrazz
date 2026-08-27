@@ -38,10 +38,7 @@ namespace AutoTest
 
       virtual
       void
-      decode(
-        std::ostream& out,
-        Types decode_type,
-        const std::string& data) const = 0;
+      decode(std::ostream& out, Types decode_type, const std::string& data) const = 0;
     };
 
   public:
@@ -76,9 +73,7 @@ namespace AutoTest
      * @param body type (request or response).
      */
     void
-    print(
-      std::ostream& out,
-      Decoder::Types data_type) const;
+    print(std::ostream& out, Decoder::Types data_type) const;
 
     /**
      * @brief Reset decoder.
@@ -303,8 +298,7 @@ namespace AutoTest
 
   template <class CustomDecoder>
   void
-  ClientRequest::set_decoder(
-    const CustomDecoder& decoder)
+  ClientRequest::set_decoder(const CustomDecoder& decoder)
   {
     decoder_ = std::unique_ptr<Decoder>(new CustomDecoder(decoder));
   }

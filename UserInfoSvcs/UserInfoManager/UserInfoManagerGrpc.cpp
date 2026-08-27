@@ -61,8 +61,7 @@ namespace AdServer::UserInfoSvcs
 
   namespace
   {
-    constexpr const char user_info_manager_grpc_aspect[] =
-      "UserInfoManagerGrpc";
+    constexpr const char user_info_manager_grpc_aspect[] = "UserInfoManagerGrpc";
     namespace pc = adserver::grpc::process_control;
 
     class InProgressGuard final
@@ -98,13 +97,13 @@ namespace AdServer::UserInfoSvcs
 
       ~InProgressGuard() noexcept
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         if (method_total_time_)
         {
           method_total_time_->fetch_add(elapsed_us, std::memory_order_relaxed);
         }
+
         if (method_in_progress_)
         {
           method_in_progress_->fetch_sub(1, std::memory_order_relaxed);
@@ -168,8 +167,7 @@ namespace AdServer::UserInfoSvcs
       return UserInfoManagerCore::ByteArray(src.begin(), src.end());
     }
 
-    std::string vector_to_bytes_(
-      const UserInfoManagerCore::ByteArray& src)
+    std::string vector_to_bytes_(const UserInfoManagerCore::ByteArray& src)
     {
       return std::string(src.begin(), src.end());
     }
@@ -199,8 +197,7 @@ namespace AdServer::UserInfoSvcs
     }
 
     UserInfoManagerCore::UserProfiles
-    unpack_user_profiles_(
-      const adserver::user_info_svcs::user_info_manager::UserProfiles& src)
+    unpack_user_profiles_(const adserver::user_info_svcs::user_info_manager::UserProfiles& src)
     {
       return {
         bytes_to_vector_(src.base_user_profile()),
@@ -226,7 +223,7 @@ namespace AdServer::UserInfoSvcs
     {
       std::vector<unsigned long> result;
       result.reserve(src.size());
-      for(int i = 0; i < src.size(); ++i)
+      for (int i = 0; i < src.size(); ++i)
       {
         result.push_back(src.Get(i));
       }
@@ -235,13 +232,11 @@ namespace AdServer::UserInfoSvcs
 
     template<typename Repeated>
     ChannelIdArray
-    unpack_channel_ids_(
-      const Repeated& src,
-      Generics::MonoAllocatorArena* resource)
+    unpack_channel_ids_(const Repeated& src, Generics::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
-      for(int i = 0; i < src.size(); ++i)
+      for (int i = 0; i < src.size(); ++i)
       {
         result.push_back(src.Get(i).channel_id());
       }
@@ -250,13 +245,11 @@ namespace AdServer::UserInfoSvcs
 
     template<typename Repeated>
     ChannelIdArray
-    unpack_channel_id_values_(
-      const Repeated& src,
-      Generics::MonoAllocatorArena* resource)
+    unpack_channel_id_values_(const Repeated& src, Generics::MonoAllocatorArena* resource)
     {
       ChannelIdArray result(resource);
       result.reserve(src.size());
-      for(int i = 0; i < src.size(); ++i)
+      for (int i = 0; i < src.size(); ++i)
       {
         result.push_back(src.Get(i));
       }
@@ -267,7 +260,7 @@ namespace AdServer::UserInfoSvcs
     std::set<unsigned long> unpack_id_set_(const Repeated& src)
     {
       std::set<unsigned long> result;
-      for(int i = 0; i < src.size(); ++i)
+      for (int i = 0; i < src.size(); ++i)
       {
         result.insert(src.Get(i));
       }
@@ -280,7 +273,7 @@ namespace AdServer::UserInfoSvcs
     {
       std::vector<UserInfoManagerCore::SeqOrder> result;
       result.reserve(src.size());
-      for(int i = 0; i < src.size(); ++i)
+      for (int i = 0; i < src.size(); ++i)
       {
         const auto& item = src.Get(i);
         result.push_back({item.ccg_id(), item.set_id(), item.imps()});
@@ -295,20 +288,16 @@ namespace AdServer::UserInfoSvcs
     {
       UserInfoManagerCore::MatchParams dst(resource);
       auto* const arena = resource.get();
-      dst.matched_channels.page_channels =
-        unpack_channel_ids_(src.page_channel_ids(), arena);
-      dst.matched_channels.search_channels =
-        unpack_channel_ids_(src.search_channel_ids(), arena);
-      dst.matched_channels.url_channels =
-        unpack_channel_ids_(src.url_channel_ids(), arena);
+      dst.matched_channels.page_channels = unpack_channel_ids_(src.page_channel_ids(), arena);
+      dst.matched_channels.search_channels = unpack_channel_ids_(src.search_channel_ids(), arena);
+      dst.matched_channels.url_channels = unpack_channel_ids_(src.url_channel_ids(), arena);
       dst.matched_channels.url_keyword_channels =
         unpack_channel_ids_(src.url_keyword_channel_ids(), arena);
       dst.matched_channels.persistent_channels =
         unpack_channel_id_values_(src.persistent_channel_ids(), arena);
       dst.cohort = src.cohort();
       dst.cohort2 = src.cohort2();
-      dst.publishers_optin_timeout =
-        unpack_time_(src.publishers_optin_timeout());
+      dst.publishers_optin_timeout = unpack_time_(src.publishers_optin_timeout());
       dst.use_empty_profile = src.use_empty_profile();
       dst.filter_contextual_triggers = src.filter_contextual_triggers();
       dst.silent_match = src.silent_match();
@@ -319,16 +308,13 @@ namespace AdServer::UserInfoSvcs
       dst.change_last_request = src.change_last_request();
       dst.ret_freq_caps = src.ret_freq_caps();
       dst.geo_data_seq.reserve(src.geo_data_seq_size());
-      for(int i = 0; i < src.geo_data_seq_size(); ++i)
+      for (int i = 0; i < src.geo_data_seq_size(); ++i)
       {
         const auto& geo_data = src.geo_data_seq(i);
         dst.geo_data_seq.push_back({
-          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
-            geo_data.latitude()),
-          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
-            geo_data.longitude()),
-          GrpcAlgs::unpack_decimal<CampaignSvcs::AccuracyDecimal>(
-            geo_data.accuracy())});
+          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(geo_data.latitude()),
+          GrpcAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(geo_data.longitude()),
+          GrpcAlgs::unpack_decimal<CampaignSvcs::AccuracyDecimal>(geo_data.accuracy())});
       }
       return dst;
     }
@@ -377,28 +363,26 @@ namespace AdServer::UserInfoSvcs
       dst.set_session_start(pack_time_(src.session_start));
       dst.set_colo_id(src.colo_id);
       dst.mutable_channels()->Reserve(src.channels.size());
-      for(const auto& channel : src.channels)
+      for (const auto& channel : src.channels)
       {
         convert_(channel, *dst.add_channels());
       }
       dst.mutable_hid_channels()->Reserve(src.hid_channels.size());
-      for(const auto& channel : src.hid_channels)
+      for (const auto& channel : src.hid_channels)
       {
         convert_(channel, *dst.add_hid_channels());
       }
-      dst.mutable_full_freq_caps()->Add(
-        src.full_freq_caps.begin(),
-        src.full_freq_caps.end());
+      dst.mutable_full_freq_caps()->Add(src.full_freq_caps.begin(), src.full_freq_caps.end());
       dst.mutable_full_virtual_freq_caps()->Add(
         src.full_virtual_freq_caps.begin(),
         src.full_virtual_freq_caps.end());
       dst.mutable_seq_orders()->Reserve(src.seq_orders.size());
-      for(const auto& seq_order : src.seq_orders)
+      for (const auto& seq_order : src.seq_orders)
       {
         convert_(seq_order, *dst.add_seq_orders());
       }
       dst.mutable_campaign_freqs()->Reserve(src.campaign_freqs.size());
-      for(const auto& campaign_freq : src.campaign_freqs)
+      for (const auto& campaign_freq : src.campaign_freqs)
       {
         convert_(campaign_freq, *dst.add_campaign_freqs());
       }
@@ -412,7 +396,7 @@ namespace AdServer::UserInfoSvcs
         src.exclude_pubpixel_accounts.begin(),
         src.exclude_pubpixel_accounts.end());
       dst.mutable_geo_data_seq()->Reserve(src.geo_data_seq.size());
-      for(const auto& geo_data : src.geo_data_seq)
+      for (const auto& geo_data : src.geo_data_seq)
       {
         convert_(geo_data, *dst.add_geo_data_seq());
       }
@@ -420,38 +404,28 @@ namespace AdServer::UserInfoSvcs
 
     grpc::Status to_status_(const UserInfoManagerCore::NotReady& ex)
     {
-      return AdServer::Grpc::error_status(
-        grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      return AdServer::Grpc::error_status(grpc::StatusCode::UNAVAILABLE, ex.what());
     }
 
     grpc::Status to_status_(const UserInfoManagerCore::ChunkNotFound& ex)
     {
-      return AdServer::Grpc::error_status(
-        grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      return AdServer::Grpc::error_status(grpc::StatusCode::NOT_FOUND, ex.what());
     }
 
     grpc::Status to_status_(const UserInfoManagerCore::Exception& ex)
     {
-      return AdServer::Grpc::error_status(
-        grpc::StatusCode::INTERNAL,
-        ex.what());
+      return AdServer::Grpc::error_status(grpc::StatusCode::INTERNAL, ex.what());
     }
 
     grpc::Status to_status_(const UserInfoManagerCore::ResourceExhausted& ex)
     {
-      return AdServer::Grpc::error_status(
-        grpc::StatusCode::RESOURCE_EXHAUSTED,
-        ex.what());
+      return AdServer::Grpc::error_status(grpc::StatusCode::RESOURCE_EXHAUSTED, ex.what());
     }
 
     std::size_t
     resolve_max_sequential_ops_(std::size_t configured)
     {
-      return std::max<std::size_t>(
-        1,
-        configured != 0 ? configured : 4);
+      return std::max<std::size_t>(1, configured != 0 ? configured : 4);
     }
   }
 
@@ -725,8 +699,7 @@ namespace AdServer::UserInfoSvcs
   }
 
   void
-  UserInfoManagerGrpc::ServiceImpl::get_status_(
-    pc::GetStatusResponse& response) const
+  UserInfoManagerGrpc::ServiceImpl::get_status_(pc::GetStatusResponse& response) const
   {
     InProgressGuard call_in_progress(
       stats_counters_->call_total,
@@ -771,9 +744,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(grpc::StatusCode::INTERNAL, ex.what());
       co_return;
     }
   }
@@ -867,13 +838,9 @@ namespace AdServer::UserInfoSvcs
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
       auto request_resource = std::make_shared<
-        Generics::MonoAllocatorArena>(
-        initial_buffer.data(),
-        initial_buffer.size());
+        Generics::MonoAllocatorArena>(initial_buffer.data(), initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());
-      const auto match_params = unpack_match_params_(
-        request.match_params(),
-        request_resource);
+      const auto match_params = unpack_match_params_(request.match_params(), request_resource);
       UserInfoManagerCore::MatchResult match_result(request_resource);
       const bool matched = co_await user_info_manager_->co_match(
         user_info,
@@ -1074,13 +1041,9 @@ namespace AdServer::UserInfoSvcs
     {
       std::array<std::byte, 8 * 1024> initial_buffer;
       auto request_resource = std::make_shared<
-        Generics::MonoAllocatorArena>(
-        initial_buffer.data(),
-        initial_buffer.size());
+        Generics::MonoAllocatorArena>(initial_buffer.data(), initial_buffer.size());
       const auto user_info = unpack_user_info_(request.user_info());
-      const auto match_params = unpack_match_params_(
-        request.match_params(),
-        request_resource);
+      const auto match_params = unpack_match_params_(request.match_params(), request_resource);
       bool merge_success = false;
       Generics::Time last_request;
       response.set_result(co_await user_info_manager_->co_merge(
@@ -1351,14 +1314,10 @@ namespace AdServer::UserInfoSvcs
     std::size_t cq_threads,
     std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      max_sequential_ops_(resolve_max_sequential_ops_(
-        max_sequential_ops)),
+      max_sequential_ops_(resolve_max_sequential_ops_(max_sequential_ops)),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
-          new Logging::ActiveObjectCallbackImpl(
-            logger,
-            "",
-            user_info_manager_grpc_aspect)),
+          new Logging::ActiveObjectCallbackImpl(logger, "", user_info_manager_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
         AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:uim-grpc-p")),

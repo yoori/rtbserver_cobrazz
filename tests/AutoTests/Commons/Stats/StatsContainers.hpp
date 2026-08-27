@@ -7,15 +7,14 @@
  * StatsArray : fixed size stats container
  * StatsList : non fixed size stats container
  */
-namespace AutoTest
-{
-namespace ORM
+
+namespace AutoTest::ORM
 {
   template<typename StatsContainerType>
   class StatsContainerWrapper: public StatsContainerType
   {
   public:
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(std::exception, eh::DescriptiveException);
 
     typedef StatsContainerWrapper<StatsContainerType> Self;
 
@@ -38,9 +37,7 @@ namespace ORM
     bool select(StatsDB::IConn& connection, bool initial = true);
 
     template<typename DiffType>
-    static void print_each_diff(
-      std::ostream& out,
-      const DiffType& diff);
+    static void print_each_diff(std::ostream& out, const DiffType& diff);
 
   protected:
     template<typename DiffIteratorType>
@@ -94,9 +91,7 @@ namespace ORM
 
     // print difference array
     template<typename DiffType>
-    static void print_diff(
-      std::ostream& out,
-      const DiffType (&diff)[SIZE]);
+    static void print_diff(std::ostream& out, const DiffType (&diff)[SIZE]);
 
     using StatsContainerWrapper<FixedArray<ValueType, SIZE> >::print_each_diff;
   };
@@ -115,16 +110,11 @@ namespace ORM
       const;
 
     template<typename StatsDiffContainerType>
-    static  void print_diff(
-      std::ostream& out,
-      const StatsDiffContainerType& diffs);
+    static  void print_diff(std::ostream& out, const StatsDiffContainerType& diffs);
 
 
     template<typename DiffType, typename StatsContainerType>
-    void print_each_diff(
-      std::ostream& out,
-      const DiffType& diff,
-      const StatsContainerType& real)
+    void print_each_diff(std::ostream& out, const DiffType& diff, const StatsContainerType& real)
       const;
 
     using StatsContainerWrapper<std::list<ValueType> >::print_each_diff;
@@ -136,6 +126,6 @@ namespace ORM
     const StatsContainerWrapper<StatsContainerType>& stats);
 
 }
-}
+
 
 #include "StatsContainers.tpp"

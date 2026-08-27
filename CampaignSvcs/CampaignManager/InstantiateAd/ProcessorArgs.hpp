@@ -35,8 +35,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   class ProcessorArgsManager
   {
   public:
-    using ArgFun = std::function<std::optional<std::string>(
-      const ProviderType&)>;
+    using ArgFun = std::function<std::optional<std::string>(const ProviderType&)>;
 
     void
     add_processor(std::string_view name, ArgFun&& fun)

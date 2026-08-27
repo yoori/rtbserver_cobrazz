@@ -54,7 +54,7 @@ sub basic_case
     name => 2,
     account_id => $advertiser,
     campaigncreativegroup_country_code => 'RU',
-    campaigncreativegroup_action_id => 
+    campaigncreativegroup_action_id =>
       [$action2, $action3],
     campaigncreativegroup_cpa => 1,
     campaigncreativegroup_ar => 0.01,
@@ -195,8 +195,8 @@ sub cross_action
         flags => 0 });
   }
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'Publisher',
        size_id => $size1 });
 
@@ -213,7 +213,7 @@ sub cross_action
  my $campaign1 = $ns->create(DisplayCampaign => {
     name => "Campaign1",
     account_id => $advertiser,
-    campaigncreativegroup_action_id => 
+    campaigncreativegroup_action_id =>
       [$action1, $action2],
     size_id => $size2,
     template_id => $template,
@@ -230,10 +230,10 @@ sub cross_action
           time_to => 3*60*60 )])
     });
 
-  my $creative = $ns->create(Creative => 
+  my $creative = $ns->create(Creative =>
     {  name => 'Creative1_2',
        account_id => $advertiser,
-       size_id => $size3,                   
+       size_id => $size3,
        template_id => $template });
 
   my $cc1_2 =  $ns->create(CampaignCreative =>
@@ -259,7 +259,7 @@ sub cross_action
           trigger_type => 'P',
           time_to => 3*60*60)])
     });
-  
+
   $ns->output("CCID/1_1", $campaign1->{cc_id});
   $ns->output("CCID/1_2", $cc1_2->{cc_id});
   $ns->output("CCID/2", $campaign2->{cc_id});
@@ -283,12 +283,12 @@ sub imp_update
 
   my $keyword = make_autotest_name($ns, "keyword");
 
-  my $publisher1 = 
-     $ns->create(Publisher => { 
+  my $publisher1 =
+     $ns->create(Publisher => {
        name => 'Publisher1' });
 
-  my $publisher2 = 
-     $ns->create(Publisher => { 
+  my $publisher2 =
+     $ns->create(Publisher => {
        name => 'Publisher2' });
 
   my $action = $ns->create(Action => {
@@ -300,10 +300,10 @@ sub imp_update
     account_id => $advertiser,
     campaigncreativegroup_action_id => $action,
     campaigncreativegroup_cpm => 10,
-    site_links => 
-      [ 
-        { site_id => $publisher1->{site_id} },  
-        { site_id => $publisher2->{site_id} },  
+    site_links =>
+      [
+        { site_id => $publisher1->{site_id} },
+        { site_id => $publisher2->{site_id} },
       ],
     channel_id => DB::BehavioralChannel->blank(
       name => 'Channel',
@@ -336,8 +336,8 @@ sub text_ads
     name => 'Size',
     max_text_creatives => 2});
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'Publisher',
        size_id => $size });
 
@@ -354,7 +354,7 @@ sub text_ads
     original_keyword => $keyword,
     max_cpc_bid => 20,
     campaigncreativegroup_action_id => $action,
-    site_links => [{ site_id => $publisher->{site_id} }]  
+    site_links => [{ site_id => $publisher->{site_id} }]
   });
 
   my $campaign2 = $ns->create(TextAdvertisingCampaign => {
@@ -364,14 +364,14 @@ sub text_ads
     original_keyword => $keyword,
     max_cpc_bid => 10,
     campaigncreativegroup_action_id => $action,
-    site_links => [{ site_id => $publisher->{site_id} }]  
+    site_links => [{ site_id => $publisher->{site_id} }]
   });
 
   $ns->output("CCID/1", $campaign1->{cc_id});
   $ns->output("CCID/2", $campaign2->{cc_id});
   $ns->output("TID", $publisher->{tag_id});
   $ns->output("KEYWORD", $keyword);
-  $ns->output("ACTION", $action);  
+  $ns->output("ACTION", $action);
 }
 
 sub deleted_action
@@ -390,8 +390,8 @@ sub deleted_action
     account_id => $advertiser,
     status => 'D'});
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'Publisher' });
 
   my $campaign = $ns->create(DisplayCampaign => {
@@ -407,7 +407,7 @@ sub deleted_action
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => 'P',
-          time_to => 3*60*60 )]) }); 
+          time_to => 3*60*60 )]) });
 
   $ns->output("CCID", $campaign->{cc_id});
   $ns->output("COLO", DB::Defaults::instance()->ads_isp->{colo_id});
@@ -432,12 +432,12 @@ sub expired_profile
     name => 'Action',
     account_id => $advertiser});
 
-  my $publisher1 = 
-     $ns->create(Publisher => { 
+  my $publisher1 =
+     $ns->create(Publisher => {
        name => 'Publisher1' });
 
-  my $publisher2 = 
-     $ns->create(Publisher => { 
+  my $publisher2 =
+     $ns->create(Publisher => {
        name => 'Publisher2' });
 
   my $campaign1 = $ns->create(DisplayCampaign => {
@@ -453,7 +453,7 @@ sub expired_profile
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => 'P',
-          time_to => 3*60*60 )]) }); 
+          time_to => 3*60*60 )]) });
 
   my $campaign2= $ns->create(DisplayCampaign => {
     name => "Campaign2",
@@ -468,7 +468,7 @@ sub expired_profile
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => 'P',
-          time_to => 3*60*60 )]) }); 
+          time_to => 3*60*60 )]) });
 
   $ns->output("CCID/1", $campaign1->{cc_id});
   $ns->output("CCID/2", $campaign2->{cc_id});
@@ -491,8 +491,8 @@ sub conversion_service
   my $advertiser = $ns->create(Advertiser => {
     name => 'Advertiser' });
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'Publisher' });
 
   my @actions = ();
@@ -505,7 +505,7 @@ sub conversion_service
       name => "Action" . ++$index,
       account_id => $advertiser,
       cur_value => $val});
-    
+
     $ns->output("ACTION/" . $index, $action);
     push @actions, $action;
   }
@@ -523,7 +523,7 @@ sub conversion_service
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => 'P',
-          time_to => 3*60*60 )]) }); 
+          time_to => 3*60*60 )]) });
 
   $ns->output("CCID", $campaign->{cc_id});
   $ns->output("TID", $publisher->{tag_id});

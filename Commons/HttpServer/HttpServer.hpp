@@ -35,16 +35,11 @@ namespace AdServer::Commons::HttpServer
 
     using Handler = std::function<Response(const Request&)>;
 
-    HttpServer(
-      std::string host,
-      unsigned short port,
-      unsigned long threads);
+    HttpServer(std::string host, unsigned short port, unsigned long threads);
 
     ~HttpServer() noexcept override;
 
-    void add_handler(
-      const std::string& path,
-      Handler handler);
+    void add_handler(const std::string& path, Handler handler);
 
   private:
     void activate_object_() override;

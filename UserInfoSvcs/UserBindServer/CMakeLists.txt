@@ -105,7 +105,7 @@ target_include_directories(UserBindServer PRIVATE
   ${Protobuf_INCLUDE_DIRS}
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(UserBindServer
     PRIVATE
       Protobuf::libprotobuf
@@ -153,7 +153,7 @@ target_compile_definitions(MockUserBindServer PRIVATE
   MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(MockUserBindServer
     PRIVATE
       Protobuf::libprotobuf

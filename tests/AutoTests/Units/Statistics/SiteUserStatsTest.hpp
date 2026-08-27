@@ -31,10 +31,7 @@ class SiteUserStatsTest : public BaseUnit
   typedef std::list<Diff> Diffs;
 
 public:
-  SiteUserStatsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  SiteUserStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   { }
@@ -48,15 +45,10 @@ private:
 
   // utils
   template <size_t Count>
-  void add_stats_(
-    const std::string& description,
-    const Expected (&expected)[Count]);
+  void add_stats_(const std::string& description, const Expected (&expected)[Count]);
 
   template <size_t Count>
-  void process_requests_(
-    AdClient& client,
-    const Request (&expected)[Count],
-    const char* colo = 0);
+  void process_requests_(AdClient& client, const Request (&expected)[Count], const char* colo = 0);
 
   void
   check_stats_();
@@ -78,12 +70,10 @@ private:
   async_part_1_();
 
   void
-  async_part_2_(
-    AdClient& client);
+  async_part_2_(AdClient& client);
 
   void
-  async_part_3_(
-    AdClient& client);
+  async_part_3_(AdClient& client);
 
   void
   temporary_user_();

@@ -105,8 +105,7 @@ public:
     virtual void
     operator ()() const // /*throw(PassbackProcessor::Exception)*/
     {
-      test_it_->passback_container->process_tag_request(
-        tag_request_info_);
+      test_it_->passback_container->process_tag_request(tag_request_info_);
     }
   };
 
@@ -136,15 +135,12 @@ public:
   bool
   check() noexcept
   {
-    const TestPassbackProcessorImpl& passback_processor =
-      *(test_it_->passback_processor);
-    const TestPassbackProcessorImpl::PassbackInfoList& res_list =
-      passback_processor.result();
+    const TestPassbackProcessorImpl& passback_processor = *(test_it_->passback_processor);
+    const TestPassbackProcessorImpl::PassbackInfoList& res_list = passback_processor.result();
 
     Ids results;
 
-    for (TestPassbackProcessorImpl::PassbackInfoList::
-           const_iterator cit = res_list.begin();
+    for (TestPassbackProcessorImpl::PassbackInfoList::const_iterator cit = res_list.begin();
          cit != res_list.end(); ++cit)
     {
       results.insert(cit->tag_id);
@@ -178,12 +174,9 @@ multi_thread_test(const TestIt* test_it)
   noexcept
 {
   MTPassbackProcessTester test_pb(test_it);
-  TestCommons::MTTester<MTPassbackProcessTester&> mt_tester_pb(
-    test_pb, 15);
+  TestCommons::MTTester<MTPassbackProcessTester&> mt_tester_pb(test_pb, 15);
 
-  mt_tester_pb.run(MT_OPERATIONS_AMOUNT,
-    0,
-    MT_OPERATIONS_AMOUNT);
+  mt_tester_pb.run(MT_OPERATIONS_AMOUNT, 0, MT_OPERATIONS_AMOUNT);
 
   if (test_pb.check())
   {

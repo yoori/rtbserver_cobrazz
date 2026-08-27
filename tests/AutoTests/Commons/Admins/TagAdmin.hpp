@@ -39,9 +39,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<TagAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* tag
-      )
+      void make_cmd (const char* address, const char* tag)
       {
         address_ = address;
         AdminParams params;
@@ -51,45 +49,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "tags", address, params, static_cast<size_t>(CampaignManager));
       }
-      TagAdmin(
-        const char* address,
-        const char* tag
-      )
+      TagAdmin(const char* address, const char* tag)
       {
         make_cmd(address, tag);
       }
-      TagAdmin(
-        const std::string& address,
-        const char* tag
-      )
+      TagAdmin(const std::string& address, const char* tag)
       {
         make_cmd(address.c_str(), tag);
       }
-      TagAdmin(
-        const char* address,
-        const std::string& tag
-      )
+      TagAdmin(const char* address, const std::string& tag)
       {
         make_cmd(address, tag.c_str());
       }
-      TagAdmin(
-        const std::string& address,
-        const std::string& tag
-      )
+      TagAdmin(const std::string& address, const std::string& tag)
       {
         make_cmd(address.c_str(), tag.c_str());
       }
-      TagAdmin(
-        const char* address,
-        unsigned long tag
-      )
+      TagAdmin(const char* address, unsigned long tag)
       {
         make_cmd(address, strof(tag).c_str());
       }
-      TagAdmin(
-        const std::string& address,
-        unsigned long tag
-      )
+      TagAdmin(const std::string& address, unsigned long tag)
       {
         make_cmd(address.c_str(), strof(tag).c_str());
       }

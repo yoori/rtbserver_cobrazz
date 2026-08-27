@@ -10,17 +10,9 @@ namespace AutoTest
   {
     AdminsArray<CreativeTemplatesAdmin, CT_ALL> admins;
 
-    admins.initialize(
-      test_,
-      CTE_ALL,
-      srv_type_by_index(
-        static_cast<size_t>(CampaignManager))
-    );
+    admins.initialize(test_, CTE_ALL, srv_type_by_index(static_cast<size_t>(CampaignManager)));
 
-    return admin_checker(
-      admins,
-      expected_,
-      exists_).check(throw_error);
+    return admin_checker(admins, expected_, exists_).check(throw_error);
 
   }
 }

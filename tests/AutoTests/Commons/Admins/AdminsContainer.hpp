@@ -55,10 +55,7 @@ namespace AutoTest
      * @param service defines type of checked services.
      */
     void
-    initialize(
-      BaseUnit* test,
-      ClusterTypeEnum cluster,
-      ServiceTypeEnum service);
+    initialize(BaseUnit* test, ClusterTypeEnum cluster, ServiceTypeEnum service);
 
     /**
      * @brief Initializer with one additional arg
@@ -68,11 +65,7 @@ namespace AutoTest
      */
     template<typename Arg>
     void
-    initialize(
-      BaseUnit* test,
-      ClusterTypeEnum cluster,
-      ServiceTypeEnum service,
-      Arg arg);
+    initialize(BaseUnit* test, ClusterTypeEnum cluster, ServiceTypeEnum service, Arg arg);
 
     /**
      * @brief Initializer with two additional args
@@ -139,9 +132,7 @@ namespace AutoTest
      * @brief Overload of 'check' BaseAdmin method
      */
     template<typename Expects>
-    bool check(
-      const Expects& expects,
-      bool exists = true);
+    bool check(const Expects& expects, bool exists = true);
 
     /**
      * @brief Fetch values from output
@@ -162,8 +153,7 @@ namespace AutoTest
      *
      * Executes every admin cmd of array and logs output.
      */
-    void log(Logger& logger,
-             unsigned long log_level = Logging::Logger::DEBUG);
+    void log(Logger& logger, unsigned long log_level = Logging::Logger::DEBUG);
 
     /**
      * @Test whether container is empty.

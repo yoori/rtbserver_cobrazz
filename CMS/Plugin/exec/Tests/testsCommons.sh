@@ -35,7 +35,7 @@ then
   echo "Processing test results $1..."
   test_date=`date "+%04Y-%02m-%02e-%02k-%02M"`
   report_name=$1
-  if [ "x$vg_report_suffix" != "x" ] 
+  if [ "x$vg_report_suffix" != "x" ]
   then
   report_name="$vg_report_suffix-$report_name"
   fi
@@ -63,7 +63,7 @@ test_result=$?
 echo "Run tests $run_name...status=$test_result"
 echo "Test logs stored in $auto_tests_log_path."
 # Result processing
-if [ $test_result == 0 ] || [ $test_result == 1 ] 
+if [ $test_result == 0 ] || [ $test_result == 1 ]
 then
  process_test_result $run_name
 fi

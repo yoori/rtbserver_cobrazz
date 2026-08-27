@@ -21,8 +21,7 @@ public:
    * @param _constraint constraint for request.
    * @param _url Base URL for request.
    */
-  OptOutRequestConfig(ConstraintConfig* _constraint,
-                      const char* _url);
+  OptOutRequestConfig(ConstraintConfig* _constraint, const char* _url);
 };
 
 /**
@@ -38,8 +37,7 @@ public:
    * @param client_config XML-presentation of client configuration.
    * @param request_lists XML-presentation of parameters/headers/cookies values.
    */
-  ClientConfig(const AdClientType& client_config,
-               const RequestLists& request_lists)
+  ClientConfig(const AdClientType& client_config, const RequestLists& request_lists)
     /*throw(SelectorPolicy::InvalidConfigRequestData)*/;
 
   const unsigned count;                         // requests per second

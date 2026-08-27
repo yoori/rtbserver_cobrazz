@@ -1,9 +1,6 @@
 #include "DynamicCreativeContentTest.hpp"
 
-REFLECT_UNIT(DynamicCreativeContentTest) (
-  "CreativeInstantiation",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(DynamicCreativeContentTest) ("CreativeInstantiation", AUTO_TEST_QUIET);
 
 
 namespace
@@ -73,10 +70,7 @@ namespace
      * @param request
      * @param expected body
      */
-    BodyChecker(
-      AdClient& client,
-      const NSLookupRequest& request,
-      const char* expected_body) :
+    BodyChecker(AdClient& client, const NSLookupRequest& request, const char* expected_body) :
       client_(client),
       request_(request),
       expected_body_(expected_body)
@@ -101,7 +95,7 @@ namespace
       char exp_line_raw[MAX_TOKEN_SIZE];
       char got_line[MAX_TOKEN_SIZE];
       unsigned long index = 0;
-      while( !(exp_in.eof() || got_in.eof()) )
+      while ( !(exp_in.eof() || got_in.eof()) )
       {
         exp_in.getline(exp_line_raw, MAX_TOKEN_SIZE);
         got_in.getline(got_line, MAX_TOKEN_SIZE);
@@ -112,19 +106,18 @@ namespace
           {
             Stream::Error ostr;
             ostr << "Unexpected line#" << index <<
-              " ('" << exp_line << "' != '" <<
-              got_line << "')";
+              " ('" << exp_line << "' != '" << got_line << "')";
             throw AutoTest::CheckFailed(ostr);
           }
           return false;
         }
       }
+
       if ( !(exp_in.eof() && got_in.eof()) )
       {
         if (throw_on_error)
         {
-          throw AutoTest::CheckFailed(
-            "Expected and got body is unequal");
+          throw AutoTest::CheckFailed("Expected and got body is unequal");
         }
         return false;
       }
@@ -133,9 +126,7 @@ namespace
 
   private:
 
-    bool compare_lines(
-      std::string& exp_line,
-      const std::string& got_line)
+    bool compare_lines(std::string& exp_line, const std::string& got_line)
     {
       for ( unsigned long i = 0; i < TOKEN_COUNT; ++i )
       {
@@ -184,8 +175,7 @@ bool
 DynamicCreativeContentTest::run_test()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_global_params().TemplatesIn()),
+    AutoTest::predicate_checker(get_global_params().TemplatesIn()),
     "Template destination path must defined in the config");
 
   std::string templatesin = get_global_params().TemplatesIn()->path();
@@ -217,8 +207,7 @@ DynamicCreativeContentTest::run_test()
 
     FAIL_CONTEXT(
       AutoTest::wait_checker(
-        AutoTest::EqualChecker<std::string, std::string>(
-          "0",client.debug_info.ccid)).check(),
+        AutoTest::EqualChecker<std::string, std::string>("0",client.debug_info.ccid)).check(),
       "Check ccid (initial)");
   }
 
@@ -234,10 +223,7 @@ DynamicCreativeContentTest::run_test()
     FAIL_CONTEXT(
       AutoTest::wait_checker(
         AutoTest::and_checker(
-          BodyChecker(
-            client,
-            request,
-            CREATIVE_FILES[i].expected_body),
+          BodyChecker(client, request, CREATIVE_FILES[i].expected_body),
         AutoTest::EqualChecker<std::string, SimpleValue&>(
           CREATIVE_FILES[i].no_ads? "0": ccid,
           client.debug_info.ccid))).check(),

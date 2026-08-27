@@ -18,8 +18,7 @@ namespace AutoTest
     void set()
       /*throw(eh::Exception)*/;
 
-    void wait(
-      const Time& timeout)
+    void wait(const Time& timeout)
       /*throw(ShutdownException, eh::Exception)*/;
 
     bool get();

@@ -6,10 +6,7 @@ class UidTest: public BaseUnit
 {
 public:
 
-  UidTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  UidTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

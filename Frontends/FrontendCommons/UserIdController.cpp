@@ -2,12 +2,10 @@
 
 namespace
 {
-  Generics::SignedUuidProbe probe_generator(
-    AdServer::Commons::PROBE_USER_ID);
+  Generics::SignedUuidProbe probe_generator(AdServer::Commons::PROBE_USER_ID);
   Generics::SignedUuidProbe null_generator{
     Generics::Uuid()};
-  const std::string PROBE_USER_ID_STR =
-    AdServer::Commons::PROBE_USER_ID.to_string();
+  const std::string PROBE_USER_ID_STR = AdServer::Commons::PROBE_USER_ID.to_string();
   const uint32_t CURRENT_SSP_USER_ID_MARKER = 1;
 }
 
@@ -34,34 +32,28 @@ namespace AdServer
   {
     user_id_black_list_.swap(user_id_black_list);
 
-    uid_verifier_.reset(
-      new Generics::SignedUuidVerifier(public_key));
+    uid_verifier_.reset(new Generics::SignedUuidVerifier(public_key));
 
-    temp_uid_verifier_.reset(
-      new Generics::SignedUuidVerifier(temp_public_key));
+    temp_uid_verifier_.reset(new Generics::SignedUuidVerifier(temp_public_key));
 
-    uid_generator_.reset(
-      new Generics::SignedUuidGenerator(private_key));
+    uid_generator_.reset(new Generics::SignedUuidGenerator(private_key));
 
     //ssp_uid_verifier_.reset(
     //  new Generics::SignedUuidVerifier(ssp_public_key));
 
-    ssp_uid_verifier_.reset(
-      new Generics::SignedUuidVerifier(public_key));
+    ssp_uid_verifier_.reset(new Generics::SignedUuidVerifier(public_key));
 
-    ssp_uid_generator_.reset(
-      new Generics::SignedUuidGenerator(ssp_private_key));
+    ssp_uid_generator_.reset(new Generics::SignedUuidGenerator(ssp_private_key));
 
     ssp_uid_encrypt_global_key_.reset(KEY_SIZE_);
 
     ::memset(ssp_uid_encrypt_global_key_.get(), 0, KEY_SIZE_);
 
-    if(!ssp_uid_key.empty())
+    if (!ssp_uid_key.empty())
     {
       Generics::ArrayByte ssp_uid_encrypt_global_key_buf;
       unsigned long ssp_uid_encrypt_global_key_size =
-        String::StringManip::hex_decode(ssp_uid_key,
-          ssp_uid_encrypt_global_key_buf);
+        String::StringManip::hex_decode(ssp_uid_key, ssp_uid_encrypt_global_key_buf);
 
       ::memcpy(
         ssp_uid_encrypt_global_key_.get(),
@@ -71,9 +63,7 @@ namespace AdServer
   }
 
   Generics::SignedUuid
-  UserIdController::verify(
-    std::string_view uid_str,
-    KeyType key_type) const
+  UserIdController::verify(std::string_view uid_str, KeyType key_type) const
     /*throw(eh::Exception)*/
   {
     CheckUserIdMap* cache = 0;
@@ -152,7 +142,7 @@ namespace AdServer
     const String::SubString uid_substr(uid_str.data(), uid_str.size());
     Generics::StringHashAdapter uid_str_hash(uid_substr);
     CheckUserIdMap::const_iterator it = cache.find(uid_str_hash);
-    if(it != cache.end())
+    if (it != cache.end())
     {
       return it->second;
     }
@@ -171,23 +161,18 @@ namespace AdServer
 
   template<typename SourceKeyType>
   SourceKeyType
-  UserIdController::init_source_key_(
-    const String::SubString& source_id)
+  UserIdController::init_source_key_(const String::SubString& source_id)
     noexcept
   {
-    uint32_t seed = Generics::CRC::quick(
-      0, source_id.data(), source_id.length());
+    uint32_t seed = Generics::CRC::quick(0, source_id.data(), source_id.length());
 
     Generics::ArrayAutoPtr<unsigned char> res_ssp_uid_encrypt_global_key;
     res_ssp_uid_encrypt_global_key.reset(KEY_SIZE_);
-    ::memcpy(res_ssp_uid_encrypt_global_key.get(),
-      ssp_uid_encrypt_global_key_.get(),
-      KEY_SIZE_);
+    ::memcpy(res_ssp_uid_encrypt_global_key.get(), ssp_uid_encrypt_global_key_.get(), KEY_SIZE_);
 
-    for(unsigned long i = 0; i < KEY_SIZE_ / 4; ++i)
+    for (unsigned long i = 0; i < KEY_SIZE_ / 4; ++i)
     {
-      *(reinterpret_cast<uint32_t*>(
-        res_ssp_uid_encrypt_global_key.get()) + i) ^= seed;
+      *(reinterpret_cast<uint32_t*>(res_ssp_uid_encrypt_global_key.get()) + i) ^= seed;
     }
 
     return SourceKeyType(res_ssp_uid_encrypt_global_key.get(), KEY_SIZE_);
@@ -204,7 +189,7 @@ namespace AdServer
       source_encrypt_key_cache_.find(source_id);
     AdServer::Commons::AesEncryptKey source_key;
 
-    if(it != source_encrypt_key_cache_.end())
+    if (it != source_encrypt_key_cache_.end())
     {
       source_key = it->second;
     }
@@ -253,17 +238,17 @@ namespace AdServer
     /*
     Generics::Uuid res;
 
-    if(data_marker == 0)
+    if (data_marker == 0)
     {
       // old format
       res = get_by_ssp_user_id_v0_(ssp_user_id, source_id);
     }
-    else if(data_marker == CURRENT_SSP_USER_ID_MARKER)
+    else if (data_marker == CURRENT_SSP_USER_ID_MARKER)
     {
       SourceDecryptKeyMap::const_iterator it = source_decrypt_key_cache_.find(source_id);
       AdServer::Commons::AesDecryptKey source_key;
 
-      if(it != source_decrypt_key_cache_.end())
+      if (it != source_decrypt_key_cache_.end())
       {
         source_key = it->second;
       }
@@ -293,13 +278,10 @@ namespace AdServer
   }
 
   Generics::Uuid
-  UserIdController::get_by_ssp_user_id_v0_(
-    const Generics::Uuid& uuid,
-    std::string_view source_id)
+  UserIdController::get_by_ssp_user_id_v0_(const Generics::Uuid& uuid, std::string_view source_id)
     /*throw(eh::Exception)*/
   {
-    uint32_t seed = Generics::CRC::quick(
-      0, source_id.data(), source_id.length());
+    uint32_t seed = Generics::CRC::quick(0, source_id.data(), source_id.length());
 
     Generics::Uuid ssp_uuid(uuid);
     uint32_t* as_words = reinterpret_cast<uint32_t*>(ssp_uuid.begin());
@@ -325,15 +307,15 @@ namespace AdServer
 
     const String::AsciiStringManip::Caseless set_uid_option(set_uid_flag);
 
-    if(set_uid_option == String::SubString("always"))
+    if (set_uid_option == String::SubString("always"))
     {
       allow_set_uid_flag_ = SUO_ALWAYS;
     }
-    else if(set_uid_option == String::SubString("parameter"))
+    else if (set_uid_option == String::SubString("parameter"))
     {
       allow_set_uid_flag_ = SUO_PARAM;
     }
-    else if(set_uid_option == String::SubString("never"))
+    else if (set_uid_option == String::SubString("never"))
     {
       allow_set_uid_flag_ = SUO_NEVER;
     }
@@ -354,17 +336,14 @@ namespace AdServer
   {
     SetUidPtr res;
 
-    if (curr_user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-        allow_set_uid_(set_uid_param))
+    if (curr_user_status != AdServer::CampaignSvcs::US_OPTOUT && allow_set_uid_(set_uid_param))
     {//need set cookie
-      if((curr_client_id.is_null() && !use_probe_uid_) ||
+      if ((curr_client_id.is_null() && !use_probe_uid_) ||
           curr_client_id == AdServer::Commons::PROBE_USER_ID)
       {
-        res.reset(new SetUid(
-          user_id_controller_->generate(),
-          AdServer::CampaignSvcs::US_OPTIN));
+        res.reset(new SetUid(user_id_controller_->generate(), AdServer::CampaignSvcs::US_OPTIN));
       }
-      else if(curr_client_id.is_null() && use_probe_uid_)
+      else if (curr_client_id.is_null() && use_probe_uid_)
       {
         /*
          * Client have no identifier. Need to generate it and drop through

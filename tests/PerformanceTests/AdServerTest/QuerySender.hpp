@@ -34,8 +34,7 @@ public:
    * @param owner pointer for main test class - QuerySender.
    * @param request pointer for request.
    */
-  QueryScheduledTask(QuerySender* owner,
-                     BaseRequest* request);
+  QueryScheduledTask(QuerySender* owner, BaseRequest* request);
 
   /**
    * @brief Destructor.
@@ -108,8 +107,7 @@ public:
         std::ostringstream ostr;
         ostr << "Constraint '" << name << "' (" << description <<
           ") failed, because size (" << current_value_ <<
-          ") more than allowable limit (" << threshold_value_ <<
-          ")";
+          ") more than allowable limit (" << threshold_value_ << ")";
         error_ = ostr.str();
         return false;
       }
@@ -226,11 +224,8 @@ private:
   void _send_main_request();
   void _process_request(BaseRequest* request);
   unsigned long _get_requests_increment();
-  void _log_response(const char* http_request,
-                     int response_code,
-                     const char* debug_info = 0);
-  void _schedule_request(BaseRequest* request,
-                         unsigned long request_delay);
+  void _log_response(const char* http_request, int response_code, const char* debug_info = 0);
+  void _schedule_request(BaseRequest* request, unsigned long request_delay);
   void _schedule_child_requests(unsigned long client_id,
                                 bool is_opted_out,
                                 const char* click_url,

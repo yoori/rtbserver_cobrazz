@@ -1,9 +1,7 @@
 
 #include "OptoutAdvertising.hpp"
 
-REFLECT_UNIT(OptoutAdvertising) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(OptoutAdvertising) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -752,13 +750,10 @@ namespace
      * @param client (user).
      * @param expected passback url.
      */
-    RedirectCheck(AdClient& client,
-                  const std::string& passback_url) :
+    RedirectCheck(AdClient& client, const std::string& passback_url) :
       client_(client)
     {
-      String::StringManip::mime_url_encode(
-        String::SubString(passback_url),
-        passback_url_);
+      String::StringManip::mime_url_encode(String::SubString(passback_url), passback_url_);
     }
 
     /**
@@ -798,10 +793,7 @@ OptoutAdvertising::run_test()
 {
 
   add_descr_phrase("Test 6.1. RON ads matching");
-  run_test_case(
-    RonAds,
-    NSLookupRequest().
-      tid(fetch_string("DisplayRONCPMTAG")));
+  run_test_case(RonAds, NSLookupRequest(). tid(fetch_string("DisplayRONCPMTAG")));
 
   add_descr_phrase("Test 6.2. Targeted ads matching on urls");
   run_test_case(
@@ -818,10 +810,7 @@ OptoutAdvertising::run_test()
       referer(fetch_string("URL")));
 
   add_descr_phrase("Test 6.6.1 Campaigns with action tracking (RON)");
-  run_test_case(
-    RONCPAAds,
-    NSLookupRequest().
-      tid(fetch_string("DisplayRONCPATAG")));
+  run_test_case(RONCPAAds, NSLookupRequest(). tid(fetch_string("DisplayRONCPATAG")));
 
   add_descr_phrase("Test 6.6.2 Campaigns with action tracking");
   run_test_case(
@@ -830,8 +819,7 @@ OptoutAdvertising::run_test()
       tid(fetch_string("DisplayCPATAG")).
       referer(fetch_string("URL")));
 
-  add_descr_phrase("Test 6.7. Campaigns with "
-                   "impression/click tracking");
+  add_descr_phrase("Test 6.7. Campaigns with " "impression/click tracking");
   run_test_case(
     CPCAds,
     NSLookupRequest().
@@ -840,10 +828,7 @@ OptoutAdvertising::run_test()
       format("unit-test-imp"));
 
   add_descr_phrase("Test 6.8. Text RON campaigns");
-  run_test_case(
-    TextRonAds,
-    NSLookupRequest().
-      tid(fetch_string("TEXTTAG")));
+  run_test_case(TextRonAds, NSLookupRequest(). tid(fetch_string("TEXTTAG")));
 
   add_descr_phrase("Test 6.9. Text(C) targeted campaigns");
   run_test_case(
@@ -993,9 +978,7 @@ void OptoutAdvertising::run_test_case(
         if (testcases[i].flags & TCB_Redirected)
         {
           FAIL_CONTEXT(
-            RedirectCheck(
-              checker.client(),
-              PASSBACK).check(),
+            RedirectCheck(checker.client(), PASSBACK).check(),
             std::string(clients[j].description) +
               ". " +  testcases[i].colo +
               ". Passback check#"  + strof(i));
@@ -1016,15 +999,13 @@ void OptoutAdvertising::optout_click_and_impression()
     tid(fetch_string("DisplayCPCTAG")));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "click_url empty check");
 
   std::string click_url(client.debug_info.click_url);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.track_pixel_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
     "track_pixel_url empty check");
 
   std::string track_pixel_url(client.debug_info.track_pixel_url);
@@ -1034,25 +1015,21 @@ void OptoutAdvertising::optout_click_and_impression()
   client.process_request(click_url.c_str());
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_host_cookies()),
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "Host cookies shouldn't return in optout mode");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")),
+    AutoTest::predicate_checker(client.has_domain_cookie("OPTED_OUT", "YES")),
     "OPTED_OUT=YES");
 
   client.process_request(track_pixel_url.c_str());
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_host_cookies()),
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "Host cookies shouldn't return in optout mode");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")),
+    AutoTest::predicate_checker(client.has_domain_cookie("OPTED_OUT", "YES")),
     "OPTED_OUT=YES");
 }
 

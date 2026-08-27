@@ -12,7 +12,7 @@ sub new
   exists($params{'value'}) ||
     die "CsvUtils::Process::NE: not defined 'value' argument";
 
-  if(!looks_like_number($params{'field'}))
+  if (!looks_like_number($params{'field'}))
   {
     die "CsvUtils::Process::Columns: incorrect column index: " . $params{'field'};
   }
@@ -29,7 +29,7 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if($row->[$self->{field_}] ne $self->{value_})
+  if ($row->[$self->{field_}] ne $self->{value_})
   {
     return $row;
   }

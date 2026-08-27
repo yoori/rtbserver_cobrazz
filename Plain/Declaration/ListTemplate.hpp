@@ -12,26 +12,20 @@ namespace Declaration
     public BaseTemplate
   {
   public:
-    BaseArrayTemplate(
-      const char* name,
-      unsigned long header_size) noexcept;
+    BaseArrayTemplate(const char* name, unsigned long header_size) noexcept;
 
   protected:
     virtual ~BaseArrayTemplate() noexcept {}
 
     virtual CompleteTemplateDescriptor_var
-    create_template_descriptor_(
-      const char* name,
-      const BaseDescriptorList& args) const
+    create_template_descriptor_(const char* name, const BaseDescriptorList& args) const
       /*throw(InvalidParam)*/;
 
   private:
-    CompleteTemplateDescriptor_var create_array_simple_type_(
-      BaseDescriptor* descriptor) const
+    CompleteTemplateDescriptor_var create_array_simple_type_(BaseDescriptor* descriptor) const
       noexcept;
 
-    CompleteTemplateDescriptor_var create_array_struct_type_(
-      BaseDescriptor* descriptor) const
+    CompleteTemplateDescriptor_var create_array_struct_type_(BaseDescriptor* descriptor) const
       noexcept;
 
   private:

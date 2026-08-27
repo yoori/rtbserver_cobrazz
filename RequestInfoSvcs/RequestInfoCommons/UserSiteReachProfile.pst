@@ -26,10 +26,10 @@ namespace RequestInfoSvcs
     UserSiteReachProfileDescriptor>
   {
     version;
-    
+
     list<SiteAppearanceReader> appearance_list;
   };
-  
+
   writer UserSiteReachProfileWriter<
     UserSiteReachProfileDescriptor>
   {

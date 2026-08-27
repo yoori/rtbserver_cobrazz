@@ -104,10 +104,7 @@ namespace Vanga
 
   protected:
     void
-    add_pred_(
-      PredBuffer& preds,
-      double pred,
-      unsigned long count);
+    add_pred_(PredBuffer& preds, double pred, unsigned long count);
 
   protected:
     PinaltyStrategyType pinalty_strategy_;
@@ -187,14 +184,14 @@ namespace Vanga
 
       {
         SyncPolicy::WriteGuard lock(lock_);
-        if(!pred_buffers_.empty())
+        if (!pred_buffers_.empty())
         {
           res.swap(pred_buffers_.back());
           pred_buffers_.pop_back();
         }
       }
 
-      if(!res)
+      if (!res)
       {
         res = new PredBuffer();
         res->reserve(1024*1024);
@@ -264,9 +261,9 @@ namespace Vanga
   inline void
   LogLossGain::add_count(const BoolLabel& label, bool featured, unsigned long count)
   {
-    if(!featured)
+    if (!featured)
     {
-      if(label.value)
+      if (label.value)
       {
         unfeatured_sum_ += count;
       }
@@ -275,7 +272,7 @@ namespace Vanga
     }
     else
     {
-      if(label.value)
+      if (label.value)
       {
         featured_sum_ += count;
       }
@@ -318,7 +315,7 @@ namespace Vanga
   inline void
   LogLossGain::add_eval(const BoolLabel& label, bool featured, unsigned long count)
   {
-    if(label.value)
+    if (label.value)
     {
       old_logloss_ -= log_full_p_ * count;
       new_logloss_ -= (featured ? log_featured_p_ : log_unfeatured_p_) * count;
@@ -383,9 +380,9 @@ namespace Vanga
   {
     assert(count != 0);
 
-    if(!label.orig())
+    if (!label.orig())
     {
-      if(featured)
+      if (featured)
       {
         featured_unlabeled_ += count;
       }
@@ -395,7 +392,7 @@ namespace Vanga
       }
     }
 
-    if(featured)
+    if (featured)
     {
       /*
       std::cout << "add_pred_(featured): label = " << label.orig() <<
@@ -436,12 +433,12 @@ namespace Vanga
       ", unfeatured_delta_x_ = " << unfeatured_delta_x_ <<
       ", unfeatured_unlabeled_ = " << unfeatured_unlabeled_ <<
       ", featured_preds_ = [";
-    for(auto it = featured_preds_.begin(); it != featured_preds_.end(); ++it)
+    for (auto it = featured_preds_.begin(); it != featured_preds_.end(); ++it)
     {
       std::cout << "{" << it->first << "," << it->second << "}";
     }
     std::cout << "], unfeatured_preds_ = [";
-    for(auto it = unfeatured_preds_.begin(); it != unfeatured_preds_.end(); ++it)
+    for (auto it = unfeatured_preds_.begin(); it != unfeatured_preds_.end(); ++it)
     {
       std::cout << "{" << it->first << "," << it->second << "}";
     }
@@ -468,18 +465,16 @@ namespace Vanga
     double pred = DOUBLE_ONE / (DOUBLE_ONE + std::exp(-(x + add_delta_)));
     double new_p;
 
-    if(featured)
+    if (featured)
     {
-      new_p = DOUBLE_ONE / (
-        DOUBLE_ONE + std::exp(-(x + featured_delta_x_)));
+      new_p = DOUBLE_ONE / (DOUBLE_ONE + std::exp(-(x + featured_delta_x_)));
     }
     else
     {
-      new_p = DOUBLE_ONE / (
-        DOUBLE_ONE + std::exp(-(x + unfeatured_delta_x_)));
+      new_p = DOUBLE_ONE / (DOUBLE_ONE + std::exp(-(x + unfeatured_delta_x_)));
     }
 
-    if(label.orig())
+    if (label.orig())
     {
       old_logloss_ -= std::log(pred) * count;
       new_logloss_ -= std::log(new_p) * count;

@@ -32,8 +32,7 @@ int check_blob(
   {
     std::ostringstream fun_str;
     fun_str << "check_blob(start size = " << size_start <<
-      ", size step = " << size_step <<
-      ", size iterations = " << size_iters << ")";
+      ", size step = " << size_step << ", size iterations = " << size_iters << ")";
     FUN = fun_str.str();
   }
 
@@ -46,13 +45,11 @@ int check_blob(
         Environment::EM_OBJECT /*|
         Environment::EM_EVENTS*/));
 
-    Connection_var conn = env->create_connection(
-      ConnectionDescription(user, pwd, db));
+    Connection_var conn = env->create_connection(ConnectionDescription(user, pwd, db));
 
     try
     {
-      Statement_var stmt = conn->create_statement(
-        "DROP TABLE ADSERVER_BLOB_TEST_TABLE");
+      Statement_var stmt = conn->create_statement("DROP TABLE ADSERVER_BLOB_TEST_TABLE");
 
       stmt->execute();
     }
@@ -76,7 +73,7 @@ int check_blob(
 
     {
       // insert set of blobs
-      for(unsigned long i = 0; i < size_iters; ++i)
+      for (unsigned long i = 0; i < size_iters; ++i)
       {
         Statement_var stmt = conn->create_statement(
           "INSERT INTO ADSERVER_BLOB_TEST_TABLE ("
@@ -109,24 +106,23 @@ int check_blob(
 
       unsigned long expected_size = size_start;
 
-      while(result_set->next())
+      while (result_set->next())
       {
         Lob lob = result_set->get_blob(2);
 
-        if(lob.length != expected_size)
+        if (lob.length != expected_size)
         {
           std::cerr << FUN << ": unexpected blob size selected: " << lob.length <<
             " instead " << expected_size << ", row = " << rownum <<
-            ", db blob size = " << result_set->get_uint(3) <<
-            std::endl;
+            ", db blob size = " << result_set->get_uint(3) << std::endl;
           return 1;
         }
 
 #       define CHECK_BLOB_CONTENT
 #       ifdef CHECK_BLOB_CONTENT
-        for(unsigned long t = 0; t < expected_size; ++t)
+        for (unsigned long t = 0; t < expected_size; ++t)
         {
-          if(static_cast<const char*>(lob.buffer)[t] != 'A')
+          if (static_cast<const char*>(lob.buffer)[t] != 'A')
           {
             std::cerr << FUN << ": incorrect lob content." << std::endl;
           }
@@ -168,8 +164,7 @@ main(int argc, char* argv[])
 {
   int res = 0;
 
-  Generics::AppUtils::StringOption opt_ora_server(
-    "//oraads/addbads.ocslab.com");
+  Generics::AppUtils::StringOption opt_ora_server("//oraads/addbads.ocslab.com");
   Generics::AppUtils::StringOption opt_ora_user("ads_3");
   Generics::AppUtils::StringOption opt_ora_pwd("adserver");
   Generics::AppUtils::StringOption opt_start;
@@ -178,30 +173,20 @@ main(int argc, char* argv[])
 
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("db"),
-    opt_ora_server);
+  args.add(Generics::AppUtils::equal_name("db"), opt_ora_server);
 
-  args.add(
-    Generics::AppUtils::equal_name("user"),
-    opt_ora_user);
+  args.add(Generics::AppUtils::equal_name("user"), opt_ora_user);
 
   args.add(
     Generics::AppUtils::equal_name("pwd") ||
     Generics::AppUtils::equal_name("password"),
     opt_ora_pwd);
 
-  args.add(
-    Generics::AppUtils::equal_name("start"),
-    opt_start);
+  args.add(Generics::AppUtils::equal_name("start"), opt_start);
 
-  args.add(
-    Generics::AppUtils::equal_name("step"),
-    opt_step);
+  args.add(Generics::AppUtils::equal_name("step"), opt_step);
 
-  args.add(
-    Generics::AppUtils::equal_name("iter"),
-    opt_iter);
+  args.add(Generics::AppUtils::equal_name("iter"), opt_iter);
 
   args.parse(argc - 1, argv + 1);
 
@@ -209,7 +194,7 @@ main(int argc, char* argv[])
     << "' as user '" << opt_ora_user->c_str()
     << "' with password '" <<  opt_ora_pwd->c_str() << "'." << std::endl;
 
-  if(opt_start.installed())
+  if (opt_start.installed())
   {
     unsigned long start, step, iteration;
     start = strtol(opt_start->c_str(), 0, 10);
@@ -262,4 +247,3 @@ main(int argc, char* argv[])
 
   return res;
 }
-

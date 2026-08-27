@@ -42,7 +42,7 @@ namespace AdServer::UserInfoSvcs
       set_cookie_flag);
 
     // don't mirror invalid operations (slave increase bad events only on mirrored operations)
-    if(!res.invalid_operation)
+    if (!res.invalid_operation)
     {
       // create add operation with low priority
       UserBindAddOperationWriter op_writer;
@@ -83,7 +83,7 @@ namespace AdServer::UserInfoSvcs
       for_set_cookie,
       generate_user_id);
 
-    if(res.created)
+    if (res.created)
     {
       UserBindGetOperationWriter op_writer;
       op_writer.version() = 0;
@@ -92,7 +92,7 @@ namespace AdServer::UserInfoSvcs
 
       // for create non bound record on other server will be used create_time
       // if defined
-      if(create_time == Generics::Time::ZERO)
+      if (create_time == Generics::Time::ZERO)
       {
         op_writer.time() = now.tv_sec;
       }
@@ -109,7 +109,7 @@ namespace AdServer::UserInfoSvcs
         std::move(op_mem_buf));
     }
 
-    if(res.user_id_generated)
+    if (res.user_id_generated)
     {
       // create add operation with low priority
       UserBindAddOperationWriter op_writer;
@@ -136,9 +136,7 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& bound_expire_time)
     /*throw(UserBindProcessor::Exception)*/
   {
-    next_processor_->clear_expired(
-      unbound_expire_time,
-      bound_expire_time);
+    next_processor_->clear_expired(unbound_expire_time, bound_expire_time);
   }
 
   void

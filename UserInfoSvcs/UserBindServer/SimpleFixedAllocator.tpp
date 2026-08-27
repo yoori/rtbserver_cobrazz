@@ -14,7 +14,7 @@ namespace AdServer::UserInfoSvcs
   {
     {
       ::std::lock_guard<::std::mutex> lock(lock_);
-      if(first_free_)
+      if (first_free_)
       {
         void* ret = first_free_;
         first_free_ = *static_cast<void**>(first_free_);
@@ -31,8 +31,7 @@ namespace AdServer::UserInfoSvcs
     ::std::lock_guard<::std::mutex> lock(lock_);
     buffers_.splice(buffers_.end(), ins_list);
     Buf& back_buf = buffers_.back();
-    *reinterpret_cast<void**>(&(back_buf[
-      last_element_offset_in_buf_])) = first_free_;
+    *reinterpret_cast<void**>(&(back_buf[ last_element_offset_in_buf_])) = first_free_;
     first_free_ = &(back_buf[alloc_size_]);
     return &(back_buf[0]);
   }
@@ -53,7 +52,7 @@ namespace AdServer::UserInfoSvcs
     //std::cerr << "alloc_new_buf_" << std::endl;
     new_buf.resize(buf_size_);
     void* next = 0;
-    for(long i = last_element_offset_in_buf_; i >= 0; i -= alloc_size_)
+    for (long i = last_element_offset_in_buf_; i >= 0; i -= alloc_size_)
     {
       *reinterpret_cast<void**>(&new_buf[i]) = next;
       next = &new_buf[i];
@@ -67,7 +66,7 @@ namespace AdServer::UserInfoSvcs
     : min_alloc_size_(min_alloc_size),
       max_alloc_size_(max_alloc_size)
   {
-    for(unsigned long i = min_alloc_size; i < max_alloc_size; ++i)
+    for (unsigned long i = min_alloc_size; i < max_alloc_size; ++i)
     {
       allocators_.emplace_back(new SimpleFixedAllocator(i));
     }
@@ -76,7 +75,7 @@ namespace AdServer::UserInfoSvcs
   void*
   SimpleDistribAllocator::alloc(unsigned long size) noexcept
   {
-    if(size < min_alloc_size_ || size >= max_alloc_size_)
+    if (size < min_alloc_size_ || size >= max_alloc_size_)
     {
       return ::malloc(size);
     }
@@ -87,7 +86,7 @@ namespace AdServer::UserInfoSvcs
   void
   SimpleDistribAllocator::dealloc(void* buf, unsigned long size) noexcept
   {
-    if(size < min_alloc_size_ || size >= max_alloc_size_)
+    if (size < min_alloc_size_ || size >= max_alloc_size_)
     {
       return ::free(buf);
     }

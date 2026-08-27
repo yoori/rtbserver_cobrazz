@@ -26,10 +26,7 @@ public:
   };
 
 public:
-  ChannelInventoryTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var);
+  ChannelInventoryTest(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   virtual ~ChannelInventoryTest() noexcept
   {};
@@ -61,8 +58,7 @@ private:
   void base_scenario_2(AdClient& client);
   void active_users_1(AdClient& user1, AdClient& /*user2*/,
     Stats& today_stats, Diffs& today_diffs);
-  void active_users_2(AdClient& user1, AdClient& user2,
-    Stats& today_stats, Diffs& today_diffs);
+  void active_users_2(AdClient& user1, AdClient& user2, Stats& today_stats, Diffs& today_diffs);
   void active_users_3(AdClient& user1, AdClient& /*user2*/);
 
   void daily_processing();
@@ -78,15 +74,11 @@ private:
   void late_request_1(AdClient& client);
   void late_request_2(AdClient& client);
 
-  void merging_1(const AutoTest::Time& now,
-    AdClient& persistent,
-    TemporaryAdClient& temporary);
+  void merging_1(const AutoTest::Time& now, AdClient& persistent, TemporaryAdClient& temporary);
   void merging_2(const AutoTest::Time& now,
     AdClient& persistent,
     TemporaryAdClient& /*temporary*/);
-  void merging_3(const AutoTest::Time& now,
-    AdClient& persistent,
-    TemporaryAdClient& temporary);
+  void merging_3(const AutoTest::Time& now, AdClient& persistent, TemporaryAdClient& temporary);
 
   // Utils
   template<size_t Count>
@@ -96,9 +88,7 @@ private:
     const AutoTest::Time& base_time,
     const UserRequest(&requests)[Count]);
 
-  void set_referer_kws(
-    NSLookupRequest& request,
-    const char* referer_kws);
+  void set_referer_kws(NSLookupRequest& request, const char* referer_kws);
 
 
 private:

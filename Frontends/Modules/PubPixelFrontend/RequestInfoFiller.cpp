@@ -10,18 +10,18 @@ namespace
 
   namespace Request::Parameters
   {
-      const String::SubString COUNTRY("country");
-      const String::SubString USER_STATUS("us");
-      const String::SubString IP_ADDRESS("debug.ip");
-      const String::SubString LOCATION_NAME("loc.name");
-      const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
-    }
+    const String::SubString COUNTRY("country");
+    const String::SubString USER_STATUS("us");
+    const String::SubString IP_ADDRESS("debug.ip");
+    const String::SubString LOCATION_NAME("loc.name");
+    const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
+  }
 
   namespace Request::Headers
-    {
-      const String::SubString IP_ADDRESS(".remotehost");
-      const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
-    }
+  {
+    const String::SubString IP_ADDRESS(".remotehost");
+    const String::SubString PUBLISHER_ACCOUNT_IDS("aid");
+  }
 }
 
 namespace AdServer::PubPixel
@@ -33,21 +33,17 @@ namespace AdServer::PubPixel
     {
     public:
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         // user id defined
-        if(value.compare("in") == 0)
+        if (value.compare("in") == 0)
         {
-          request_info.user_status =
-            AdServer::CampaignSvcs::US_OPTIN;
+          request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
         }
-        else if(value.compare("out") == 0)
+        else if (value.compare("out") == 0)
         {
-          request_info.user_status =
-            AdServer::CampaignSvcs::US_OPTOUT;
+          request_info.user_status = AdServer::CampaignSvcs::US_OPTOUT;
         }
         else
         {
@@ -63,11 +59,9 @@ namespace AdServer::PubPixel
   class CountryParamProcessor: public RequestParamProcessor
   {
   public:
-    virtual void process(
-      RequestInfo& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfo& request_info, const String::SubString& value) const
     {
-      if(value.size() == 2 || value.empty())
+      if (value.size() == 2 || value.empty())
       {
         request_info.country = value.str();
       }
@@ -92,28 +86,24 @@ namespace AdServer::PubPixel
     param_processors_.insert(std::make_pair(
       Request::Parameters::IP_ADDRESS,
       RequestParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::peer_ip))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::LOCATION_NAME,
       RequestParamProcessor_var(
         new FrontendCommons::LocationCountryParamProcessor<
-          RequestInfo, AdServer::Commons::Optional<std::string> >(
-            &RequestInfo::country))));
+          RequestInfo, AdServer::Commons::Optional<std::string> >(&RequestInfo::country))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::PUBLISHER_ACCOUNT_IDS,
       RequestParamProcessor_var(
         new FrontendCommons::NumberContainerParamProcessor<
           RequestInfo,
           RequestInfo::PublisherAccountIDs,
-          String::AsciiStringManip::SepComma>(
-            &RequestInfo::publisher_account_ids))));
+          String::AsciiStringManip::SepComma>(&RequestInfo::publisher_account_ids))));
 
     header_processors_.insert(std::make_pair(
       Request::Headers::IP_ADDRESS,
       RequestParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::peer_ip))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip))));
   }
 
   void
@@ -128,41 +118,37 @@ namespace AdServer::PubPixel
     try
     {
       // headers processing
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);
 
-        RequestParamProcessorMap::const_iterator param_it =
-          header_processors_.find(header_name);
+        RequestParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       }
 
       // url parameters processing
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        RequestParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        RequestParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       }
 
-      if(!request_info.country.present() && ip_map_.get())
+      if (!request_info.country.present() && ip_map_.get())
       {
         try
         {
           GeoIPMapping::IPMapCity2::CityLocation geo_location;
 
-          if(ip_map_->city_location_by_addr(
+          if (ip_map_->city_location_by_addr(
                request_info.peer_ip.c_str(),
                geo_location,
                false,
@@ -187,8 +173,7 @@ namespace AdServer::PubPixel
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }

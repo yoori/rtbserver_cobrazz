@@ -4,186 +4,156 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestActionProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::RequestInfoSvcs
 {
-  namespace RequestInfoSvcs
+  /**
+   * CompositeRequestActionProcessor
+   * delegate request processing to child processors
+   */
+  class CompositeRequestActionProcessor:
+    public virtual RequestActionProcessor,
+    public virtual ReferenceCounting::AtomicImpl
   {
-    /**
-     * CompositeRequestActionProcessor
-     * delegate request processing to child processors
-     */
-    class CompositeRequestActionProcessor:
-      public virtual RequestActionProcessor,
-      public virtual ReferenceCounting::AtomicImpl
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
+  public:
+    DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
 
-    public:
-      CompositeRequestActionProcessor(
-        RequestActionProcessor* child_processor = nullptr)
-        noexcept;
+  public:
+    CompositeRequestActionProcessor(RequestActionProcessor* child_processor = nullptr)
+      noexcept;
 
-      void
-      add_child_processor(RequestActionProcessor* child_processor)
-        noexcept;
+    void
+    add_child_processor(RequestActionProcessor* child_processor)
+      noexcept;
 
-      virtual void
-      process_request(
-        const RequestInfo&,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_request(const RequestInfo&, const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_request(
-        const RequestInfo&,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_request(const RequestInfo&, const ProcessingState& processing_state);
 
-      virtual void
-      process_impression(
-        const RequestInfo&,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_impression(
+      const RequestInfo&,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_impression(
-        const RequestInfo&,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(
+      const RequestInfo&,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state);
 
-      virtual void
-      process_click(
-        const RequestInfo&,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_click(const RequestInfo&, const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_click(
-        const RequestInfo&,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_click(const RequestInfo&, const ProcessingState& processing_state);
 
-      virtual void
-      process_action(const RequestInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_action(const RequestInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_action(const RequestInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_action(const RequestInfo&);
 
-      virtual void
-      process_custom_action(
-        const RequestInfo&, const AdvCustomActionInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_custom_action(const RequestInfo&, const AdvCustomActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_custom_action(
-        const RequestInfo&, const AdvCustomActionInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_custom_action(const RequestInfo&, const AdvCustomActionInfo&);
 
-      virtual void
-      process_request_post_action(
-        const RequestInfo&, const RequestPostActionInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_request_post_action(const RequestInfo&, const RequestPostActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_request_post_action(
-        const RequestInfo&, const RequestPostActionInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_request_post_action(const RequestInfo&, const RequestPostActionInfo&);
 
-    protected:
-      virtual ~CompositeRequestActionProcessor() noexcept {}
+  protected:
+    virtual ~CompositeRequestActionProcessor() noexcept {}
 
-    private:
-      typedef std::list<RequestActionProcessor_var> RequestActionProcessorList;
-      RequestActionProcessorList child_processors_;
-    };
+  private:
+    typedef std::list<RequestActionProcessor_var> RequestActionProcessorList;
+    RequestActionProcessorList child_processors_;
+  };
 
-    typedef ReferenceCounting::SmartPtr<CompositeRequestActionProcessor>
-      CompositeRequestActionProcessor_var;
+  typedef ReferenceCounting::SmartPtr<CompositeRequestActionProcessor>
+    CompositeRequestActionProcessor_var;
 
-    class FilterRequestActionProcessor:
-      public virtual RequestActionProcessor,
-      public virtual ReferenceCounting::AtomicImpl
-    {
-    public:
-      FilterRequestActionProcessor(
-        RequestActionProcessor* delegate_processor,
-        RequestInfo::RequestState min_request_state,
-        RequestInfo::RequestState max_request_state)
-        noexcept;
+  class FilterRequestActionProcessor:
+    public virtual RequestActionProcessor,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    FilterRequestActionProcessor(
+      RequestActionProcessor* delegate_processor,
+      RequestInfo::RequestState min_request_state,
+      RequestInfo::RequestState max_request_state)
+      noexcept;
 
-      virtual void
-      process_request(
-        const RequestInfo&,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_request(const RequestInfo&, const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_request(
-        const RequestInfo&,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_request(const RequestInfo&, const ProcessingState& processing_state);
 
-      virtual void
-      process_impression(
-        const RequestInfo&,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_impression(
+      const RequestInfo&,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_impression(
-        const RequestInfo&,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(
+      const RequestInfo&,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state);
 
-      virtual void
-      process_click(
-        const RequestInfo&,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_click(const RequestInfo&, const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_click(
-        const RequestInfo&,
-        const ProcessingState& processing_state);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_click(const RequestInfo&, const ProcessingState& processing_state);
 
-      virtual void
-      process_action(const RequestInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_action(const RequestInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_action(const RequestInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_action(const RequestInfo&);
 
-      virtual void
-      process_custom_action(
-        const RequestInfo&, const AdvCustomActionInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_custom_action(const RequestInfo&, const AdvCustomActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_custom_action(
-        const RequestInfo&, const AdvCustomActionInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_custom_action(const RequestInfo&, const AdvCustomActionInfo&);
 
-      virtual void
-      process_request_post_action(
-        const RequestInfo&, const RequestPostActionInfo&)
-        /*throw(RequestActionProcessor::Exception)*/;
+    virtual void
+    process_request_post_action(const RequestInfo&, const RequestPostActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_request_post_action(
-        const RequestInfo&, const RequestPostActionInfo&);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_request_post_action(const RequestInfo&, const RequestPostActionInfo&);
 
-    protected:
-      RequestActionProcessor_var delegate_processor_;
-      RequestInfo::RequestState min_request_state_;
-      RequestInfo::RequestState max_request_state_;
-    };
+  protected:
+    RequestActionProcessor_var delegate_processor_;
+    RequestInfo::RequestState min_request_state_;
+    RequestInfo::RequestState max_request_state_;
+  };
 
-    typedef ReferenceCounting::SmartPtr<FilterRequestActionProcessor>
-      FilterRequestActionProcessor_var;
-  }
+  typedef ReferenceCounting::SmartPtr<FilterRequestActionProcessor>
+    FilterRequestActionProcessor_var;
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   // CompositeRequestActionProcessor
   inline
@@ -191,7 +161,7 @@ namespace RequestInfoSvcs
     RequestActionProcessor* child_processor)
     noexcept
   {
-    if(child_processor)
+    if (child_processor)
     {
       add_child_processor(child_processor);
     }
@@ -199,12 +169,10 @@ namespace RequestInfoSvcs
 
   inline
   void
-  CompositeRequestActionProcessor::add_child_processor(
-    RequestActionProcessor* child_processor)
+  CompositeRequestActionProcessor::add_child_processor(RequestActionProcessor* child_processor)
     noexcept
   {
-    RequestActionProcessor_var add_processor(
-      ReferenceCounting::add_ref(child_processor));
+    RequestActionProcessor_var add_processor(ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
   }
 
@@ -214,7 +182,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -227,7 +195,7 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const ProcessingState& processing_state)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -242,7 +210,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -256,14 +224,11 @@ namespace RequestInfoSvcs
     const ImpressionInfo& imp_info,
     const ProcessingState& processing_state)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_process_impression(
-        request_info,
-        imp_info,
-        processing_state);
+      co_await (*it)->co_process_impression(request_info, imp_info, processing_state);
     }
   }
 
@@ -273,7 +238,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -286,7 +251,7 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const ProcessingState& processing_state)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -295,11 +260,10 @@ namespace RequestInfoSvcs
   }
 
   inline void
-  CompositeRequestActionProcessor::process_action(
-    const RequestInfo& request_info)
+  CompositeRequestActionProcessor::process_action(const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -308,10 +272,9 @@ namespace RequestInfoSvcs
   }
 
   inline AdServer::Commons::Awaitable<void>
-  CompositeRequestActionProcessor::co_process_action(
-    const RequestInfo& request_info)
+  CompositeRequestActionProcessor::co_process_action(const RequestInfo& request_info)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -325,7 +288,7 @@ namespace RequestInfoSvcs
     const AdvCustomActionInfo& adv_custom_action_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -338,13 +301,11 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const AdvCustomActionInfo& adv_custom_action_info)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_process_custom_action(
-        request_info,
-        adv_custom_action_info);
+      co_await (*it)->co_process_custom_action(request_info, adv_custom_action_info);
     }
   }
 
@@ -354,7 +315,7 @@ namespace RequestInfoSvcs
     const RequestPostActionInfo& request_post_action_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -367,13 +328,11 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const RequestPostActionInfo& request_post_action_info)
   {
-    for(RequestActionProcessorList::iterator it = child_processors_.begin();
+    for (RequestActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_process_request_post_action(
-        request_info,
-        request_post_action_info);
+      co_await (*it)->co_process_request_post_action(request_info, request_post_action_info);
     }
   }
 
@@ -395,7 +354,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
       delegate_processor_->process_request(request_info, processing_state);
@@ -407,12 +366,10 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const ProcessingState& processing_state)
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
-      co_await delegate_processor_->co_process_request(
-        request_info,
-        processing_state);
+      co_await delegate_processor_->co_process_request(request_info, processing_state);
     }
   }
 
@@ -423,7 +380,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
       delegate_processor_->process_impression(request_info, imp_info, processing_state);
@@ -436,13 +393,10 @@ namespace RequestInfoSvcs
     const ImpressionInfo& imp_info,
     const ProcessingState& processing_state)
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
-      co_await delegate_processor_->co_process_impression(
-        request_info,
-        imp_info,
-        processing_state);
+      co_await delegate_processor_->co_process_impression(request_info, imp_info, processing_state);
     }
   }
 
@@ -452,7 +406,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
       delegate_processor_->process_click(request_info, processing_state);
@@ -464,26 +418,22 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const ProcessingState& processing_state)
   {
-    if(processing_state.state >= min_request_state_ &&
+    if (processing_state.state >= min_request_state_ &&
       processing_state.state <= max_request_state_)
     {
-      co_await delegate_processor_->co_process_click(
-        request_info,
-        processing_state);
+      co_await delegate_processor_->co_process_click(request_info, processing_state);
     }
   }
 
   inline void
-  FilterRequestActionProcessor::process_action(
-    const RequestInfo& request_info)
+  FilterRequestActionProcessor::process_action(const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
     delegate_processor_->process_action(request_info);
   }
 
   inline AdServer::Commons::Awaitable<void>
-  FilterRequestActionProcessor::co_process_action(
-    const RequestInfo& request_info)
+  FilterRequestActionProcessor::co_process_action(const RequestInfo& request_info)
   {
     co_await delegate_processor_->co_process_action(request_info);
   }
@@ -502,9 +452,7 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const AdvCustomActionInfo& adv_custom_action_info)
   {
-    co_await delegate_processor_->co_process_custom_action(
-      request_info,
-      adv_custom_action_info);
+    co_await delegate_processor_->co_process_custom_action(request_info, adv_custom_action_info);
   }
 
   inline void
@@ -525,5 +473,4 @@ namespace RequestInfoSvcs
       request_info,
       request_post_action_info);
   }
-}
 }

@@ -5,17 +5,17 @@ use warnings;
 use DB::Defaults;
 use DB::Util;
 
-sub get_keyword 
+sub get_keyword
 {
   my ($self, $name, $args) = @_;
-  
-  return 
+
+  return
     defined $args->{keyword}?
       make_autotest_name(
-        $self->{ns_}, 
+        $self->{ns_},
         $args->{keyword}):
         defined $self->{keyword_}?
-          $self->{keyword_}: 
+          $self->{keyword_}:
             make_autotest_name(
               $self->{ns_}, $name);
 }
@@ -24,10 +24,10 @@ sub add_ext_channels
 {
   my ($self, $args) = @_;
 
-  while (my ($name, $channel) = each %$args) 
+  while (my ($name, $channel) = each %$args)
   {
     $self->{ns_}->output('Ext-' . $name, $channel );
-    $self->{channels_}->{$name} = $channel;  
+    $self->{channels_}->{$name} = $channel;
   }
 }
 
@@ -40,18 +40,18 @@ sub create_targeting_channel
   {
     my $c = $self->{channels_}->{$w};
     die "Channel '$w' is not defined " .
-        "in the case '$self->{ns_}->namespace'" 
+        "in the case '$self->{ns_}->namespace'"
        if not defined $c;
     $expression =~ s/$w/$c->{channel_id}/;
   }
- 
-  my $channel = 
+
+  my $channel =
     $self->{ns_}->create(DB::TargetingChannel->blank(
     name => 'Targeting-' . $name,
     expression => $expression));
 
   $self->{ns_}->output(
-    'Targeting-' . $name, 
+    'Targeting-' . $name,
      $channel->channel_id());
   $self->{channels_}->{$name} = $channel;
 }
@@ -63,32 +63,32 @@ sub create_behavioral_channel
   my $keyword = $self->get_keyword($name, $args);
 
   my $channel = $self->{ns_}->create(DB::BehavioralChannel->blank(
-    name => 
+    name =>
       'Channel-' . $name,
     account_id => $self->{account_},
     keyword_list => $keyword,
     behavioral_parameters => [
       DB::BehavioralChannel::BehavioralParameter->blank(
       trigger_type => 'P',
-      minimum_visits => 
+      minimum_visits =>
        defined $args->{min_visits}?
          $args->{min_visits}: 1,
       time_from =>
         defined $args->{time_from}?
           $args->{time_from}: 0,
-      time_to => 
+      time_to =>
        defined $args->{time_to}?
          $args->{time_to}: 3*24*60*60) ]
     ));
 
   $self->{ns_}->output(
-    'BP-'. $name, 
+    'BP-'. $name,
     $channel->page_key());
   $self->{ns_}->output(
-    'Channel-' . $name, 
+    'Channel-' . $name,
     $channel->channel_id());
   $self->{ns_}->output(
-    'Kwd-' . $name, 
+    'Kwd-' . $name,
     $keyword);
   $self->{channels_}->{$name} = $channel;
 }
@@ -101,20 +101,20 @@ sub create_expression
   {
     my $c = $self->{channels_}->{$w};
     die "Channel '$w' is not defined " .
-        "in the case '$self->{ns_}->namespace'" 
+        "in the case '$self->{ns_}->namespace'"
        if not defined $c;
     $expression =~ s/$w/$c->{channel_id}/;
   }
- 
-  my $channel = 
+
+  my $channel =
     $self->{ns_}->create(DB::ExpressionChannel->blank(
-    name => 
+    name =>
       'Expression-' . $name,
     account_id => $self->{account_},
     expression => $expression));
 
   $self->{ns_}->output(
-    'Expression-' . $name, 
+    'Expression-' . $name,
      $channel->channel_id());
   $self->{channels_}->{$name} = $channel;
 }
@@ -123,19 +123,19 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $keyword) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;
   }
   $self->{ns_} = $ns->sub_namespace($prefix);
   $self->{channels_} = ();
-  $self->{account_} = 
+  $self->{account_} =
     $self->{ns_}->create(Account => {
       name => 'Advertiser',
       role_id => DB::Defaults::instance()->advertiser_role });
   if (defined $keyword)
   {
-    $self->{keyword_} = 
+    $self->{keyword_} =
         make_autotest_name($self->{ns_}, $keyword);
     $self->{ns_}->output(
       'Kwd', $self->{keyword_});
@@ -155,7 +155,7 @@ use DB::Util;
 sub base_scenario
 {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'Base', 'Base');
   $case->add_ext_channels(
@@ -173,7 +173,7 @@ sub base_scenario
 sub active_users_scenario
 {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'ActiveUsers', 'ActiveUsers');
   $case->create_behavioral_channel('B1');
@@ -185,7 +185,7 @@ sub daily_proc_scenario
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'DailyProc');
 
@@ -211,21 +211,21 @@ sub daily_proc_scenario
     'HT', { time_to => 24*60*60,
             keyword => 'HT' });
   $case->create_behavioral_channel(
-    'S', { min_visits => 1, 
+    'S', { min_visits => 1,
            time_to => 10*60,
            keyword => 'S' });
   $case->create_behavioral_channel(
-    'H1', { min_visits => 1, 
+    'H1', { min_visits => 1,
             time_from => 24*60*60,
             time_to => 3*24*60*60,
             keyword => 'H1' });
   $case->create_behavioral_channel(
-    'H2', { min_visits => 1, 
+    'H2', { min_visits => 1,
             time_from => 24*60*60,
             time_to => 3*24*60*60,
             keyword => 'H2' });
   $case->create_behavioral_channel(
-    'H3', { min_visits => 1, 
+    'H3', { min_visits => 1,
             time_from => 24*60*60,
             time_to => 3*24*60*60,
             keyword => 'H3' });
@@ -237,7 +237,7 @@ sub daily_proc_scenario
 sub late_request_scenario
 {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'LateRequest', 'LateRequest');
   $case->create_behavioral_channel('B');
@@ -246,12 +246,12 @@ sub late_request_scenario
 sub delayed_logs
 {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'DelayedLogs', 'DelayedLogs');
   $case->create_behavioral_channel('C', { time_to => 60 });
   $case->create_behavioral_channel('HT', { time_to => 3*24*60*60 });
-  $case->create_behavioral_channel('S', 
+  $case->create_behavioral_channel('S',
     { time_to => 3*60*60,
       keyword => 'S' });
 }
@@ -259,16 +259,16 @@ sub delayed_logs
 sub merging
 {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelInventoryTest::Case->new(
        $ns, 'Merging');
-  $case->create_behavioral_channel('C', 
+  $case->create_behavioral_channel('C',
     { time_to => 60,
       keyword => 'C' });
-  $case->create_behavioral_channel('HT', 
+  $case->create_behavioral_channel('HT',
     { time_to => 5*24*60*60,
       keyword => 'HT' });
-  $case->create_behavioral_channel('S', 
+  $case->create_behavioral_channel('S',
     { time_to => 3*60*60,
       keyword => 'S' });
 }
@@ -280,7 +280,7 @@ sub init
   $ns->output("DefaultColo", DB::Defaults::instance()->isp->{colo_id});
   $ns->output("NonDefaultColo", DB::Defaults::instance()->ads_isp->{colo_id});
 
-  $ns->output("Location", 
+  $ns->output("Location",
      DB::Defaults::instance()->geo_location);
 
   $self->base_scenario($ns);

@@ -1,9 +1,6 @@
 #include "ActionRequestsTests.hpp"
 
-REFLECT_UNIT(ActionRequestsTests) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ActionRequestsTests) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -33,11 +30,9 @@ ActionRequestsTests::run_test()
 }
 
 
-void make_request_series (AdClient& client,
-                          ActionRequest request,
-                          int count)
+void make_request_series (AdClient& client, ActionRequest request, int count)
 {
-  for(int i = 0; i < count; ++i)
+  for (int i = 0; i < count; ++i)
   {
     client.process_request(request);
   }
@@ -74,7 +69,7 @@ void make_request_series (
   request.country   = country;
   request.debug_time = debug_time;
   request.referer = referer;
-  for(int i = 0; i < count; ++i)
+  for (int i = 0; i < count; ++i)
   {
     client.process_request(request);
   }
@@ -158,8 +153,7 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
 
   stats.select(conn);
   add_descr_phrase("Undefined user");
-  make_request_series(client,
-    1, action1, 0, base_time);
+  make_request_series(client, 1, action1, 0, base_time);
 
   add_descr_phrase("Probe user");
   client.set_probe_uid();
@@ -181,14 +175,11 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        client.debug_info.selected_creatives.size()).check(),
+      AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
       "response must have valid click_url debug info value");
   }
   make_request_series(client, 4, action1, LU, REFERER1, base_time);
@@ -226,8 +217,6 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn, diff, stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
     "ActionRequests check");
 }

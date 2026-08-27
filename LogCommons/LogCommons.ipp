@@ -5,108 +5,107 @@
 #include <LogCommons/LogCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
+namespace AdServer::LogProcessing::Aux_
+{
+  extern const String::AsciiStringManip::CharCategory VALID_USER_STATUSES;
+
+  inline std::size_t
+  sequence_size_hint(const String::SubString& token, char separator) noexcept
+  {
+    if (token.empty() || token == "-")
+    {
+      return 0;
+    }
+
+    return static_cast<std::size_t>(std::count(token.begin(), token.end(), separator)) + 1;
+  }
+
+  inline bool
+  check_null(std::istream& is, char null_marker) /*throw(eh::Exception)*/
+  {
+    if (is.peek() == null_marker)
+    {
+      is.get();
+      // look for is_space behind null marker
+      typedef std::ctype<char> CType;
+      const CType& ctype = std::use_facet<CType>(is.getloc());
+      if (ctype.is(std::ctype_base::space, is.peek()) || is.eof())
+      {
+        return true;
+      }
+      else
+      {
+        is.unget();
+      }
+    }
+    return false;
+  }
+
+  struct DefaultSequenceAdapter
+  {
+    template <class T>
+    const T
+    operator()(const T& value) const noexcept
+    {
+      return value;
+    }
+  };
+
+  struct FixedNumberSequenceAdapter
+  {
+    const std::string
+    operator()(const FixedNumber& value) const
+    {
+      return value.str();
+    }
+  };
+
+  struct CollectorBundleFileGuardSequenceAdapter
+  {
+    const std::string
+    operator()(const CollectorBundleFileGuard_var& value) const
+    {
+      return value->full_path();
+    }
+  };
+
+  template <class T>
+  struct SequenceAdapterSelector
+  {
+    typedef DefaultSequenceAdapter Type;
+  };
+
+  template <>
+  struct SequenceAdapterSelector<FixedNumber>
+  {
+    typedef FixedNumberSequenceAdapter Type;
+  };
+
+  template <>
+  struct SequenceAdapterSelector<CollectorBundleFileGuard_var>
+  {
+    typedef CollectorBundleFileGuardSequenceAdapter Type;
+  };
+
+  template <class SEQ_, class SequenceAdapter>
+  std::ostream&
+  output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep, SequenceAdapter sequence_adapter)
+  {
+    typename SEQ_::const_iterator cit(seq.begin());
+    if (cit != seq.end())
+    {
+      os << *cit;
+      for (++cit; cit != seq.end(); ++cit)
+      {
+        os << sep << sequence_adapter(*cit);
+      }
+    }
+    return os;
+  }
+} //namespace AdServer::LogProcessing::Aux_
+
 namespace AdServer::LogProcessing
 {
-  namespace Aux_
-  {
-    extern const String::AsciiStringManip::CharCategory VALID_USER_STATUSES;
-
-    inline std::size_t
-    sequence_size_hint(const String::SubString& token, char separator) noexcept
-    {
-      if (token.empty() || token == "-")
-      {
-        return 0;
-      }
-
-      return static_cast<std::size_t>(
-        std::count(token.begin(), token.end(), separator)) + 1;
-    }
-
-    inline bool
-    check_null(std::istream& is, char null_marker) /*throw(eh::Exception)*/
-    {
-      if (is.peek() == null_marker)
-      {
-        is.get();
-        // look for is_space behind null marker
-        typedef std::ctype<char> CType;
-        const CType& ctype = std::use_facet<CType>(is.getloc());
-        if (ctype.is(std::ctype_base::space, is.peek()) || is.eof())
-        {
-          return true;
-        }
-        else
-        {
-          is.unget();
-        }
-      }
-      return false;
-    }
-
-    struct DefaultSequenceAdapter
-    {
-      template <class T>
-      const T
-      operator()(const T& value) const noexcept
-      {
-        return value;
-      }
-    };
-
-    struct FixedNumberSequenceAdapter
-    {
-      const std::string
-      operator()(const FixedNumber& value) const
-      {
-        return value.str();
-      }
-    };
-
-    struct CollectorBundleFileGuardSequenceAdapter
-    {
-      const std::string
-      operator()(const CollectorBundleFileGuard_var& value) const
-      {
-        return value->full_path();
-      }
-    };
-
-    template <class T>
-    struct SequenceAdapterSelector
-    {
-      typedef DefaultSequenceAdapter Type;
-    };
-
-    template <>
-    struct SequenceAdapterSelector<FixedNumber>
-    {
-      typedef FixedNumberSequenceAdapter Type;
-    };
-
-    template <>
-    struct SequenceAdapterSelector<CollectorBundleFileGuard_var>
-    {
-      typedef CollectorBundleFileGuardSequenceAdapter Type;
-    };
-
-    template <class SEQ_, class SequenceAdapter>
-    std::ostream&
-    output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep, SequenceAdapter sequence_adapter)
-    {
-      typename SEQ_::const_iterator cit(seq.begin());
-      if (cit != seq.end())
-      {
-        os << *cit;
-        for (++cit; cit != seq.end(); ++cit)
-        {
-          os << sep << sequence_adapter(*cit);
-        }
-      }
-      return os;
-    }
-  } //namespace Aux_
-
   template <typename Convertor, const char SEPARATOR>
   inline std::istream&
   operator >>(std::istream& is, StringIO<Convertor, SEPARATOR>& str)
@@ -131,8 +130,7 @@ namespace AdServer::LogProcessing
 
         str.erase();
         const std::streamsize WIDTH = is.width();
-        const SizeType N = WIDTH > 0 ?
-          static_cast<SizeType>(WIDTH) : str.max_size();
+        const SizeType N = WIDTH > 0 ? static_cast<SizeType>(WIDTH) : str.max_size();
 
         const IntType eof = TraitsType::eof();
         std::basic_streambuf<char>* sb = is.rdbuf();
@@ -147,8 +145,8 @@ namespace AdServer::LogProcessing
             str.append(buf, sizeof(buf));
             len = 0;
           }
-          if (TraitsType::eq_int_type(ch,
-            TraitsType::to_int_type(Aux_::EscapeChar::ESC_CHAR)))
+
+          if (TraitsType::eq_int_type(ch, TraitsType::to_int_type(Aux_::EscapeChar::ESC_CHAR)))
           {
             unsigned result = 0;
             bool stop;
@@ -176,6 +174,7 @@ namespace AdServer::LogProcessing
               }
               result = result * 16 + digit;
             }
+
             if (stop)
             {
               break;
@@ -201,10 +200,12 @@ namespace AdServer::LogProcessing
           throw;
         }
       }
+
       if (!extracted && TraitsType::to_char_type(ch) != SEPARATOR)
       {
         iostate |= std::ios_base::failbit;
       }
+
       if (iostate)
       {
         is.setstate(iostate);
@@ -241,6 +242,7 @@ namespace AdServer::LogProcessing
               {
                 return os.setstate(ios_base::badbit), os;
               }
+
               if (os.rdbuf()->sputn(reserved, 2) != 2)
               {
                 return os.setstate(ios_base::badbit), os;
@@ -248,6 +250,7 @@ namespace AdServer::LogProcessing
               continue;
             }
           }
+
           if (ostream::traits_type::eq_int_type(os.rdbuf()->sputc(*ptr),
             ostream::traits_type::eof()))
           {
@@ -304,8 +307,7 @@ namespace AdServer::LogProcessing
   operator<<(std::ostream &os, const TimeFacet<PRECISION_TRAITS_> &time_facet)
     /*throw(eh::Exception)*/
   {
-    return os <<
-      time_facet.time().get_gm_time().format(PRECISION_TRAITS_::format());
+    return os << time_facet.time().get_gm_time().format(PRECISION_TRAITS_::format());
   }
 
   template <class PRECISION_TRAITS_>
@@ -349,8 +351,7 @@ namespace AdServer::LogProcessing
     const size_t LEN = 64;
     char buf[LEN];
     int wrote =
-      std::snprintf(buf, LEN,
-        FixedPrecisionDouble<PRECISION_>::PRINT_.format, value.value_);
+      std::snprintf(buf, LEN, FixedPrecisionDouble<PRECISION_>::PRINT_.format, value.value_);
     if (wrote < 0)
     {
       os.setstate(std::ios::failbit);
@@ -500,8 +501,7 @@ namespace AdServer::LogProcessing
     void
     take_fails(const FixedBufStream<SomeCategory>& stream) noexcept
     {
-      iostate_ |=
-        stream.rdstate() & (std::ios_base::badbit | std::ios_base::failbit);
+      iostate_ |= stream.rdstate() & (std::ios_base::badbit | std::ios_base::failbit);
     }
 
     template <typename Char, typename Traits>
@@ -860,9 +860,7 @@ namespace AdServer::LogProcessing
 
   template <typename Category, typename T, typename OptionalValueTraits>
   FixedBufStream<Category>&
-  operator >>(
-    FixedBufStream<Category>& is,
-    OptionalValue<T, OptionalValueTraits>& ov)
+  operator >>(FixedBufStream<Category>& is, OptionalValue<T, OptionalValueTraits>& ov)
     /*throw(eh::Exception)*/
   {
     if (is.good())
@@ -873,6 +871,7 @@ namespace AdServer::LogProcessing
         is.setstate(std::ios_base::badbit);
         return is;
       }
+
       if (token[0] == OptionalValueTraits::NULL_MARKER)
       {
         if (token.length() > 1)
@@ -886,6 +885,7 @@ namespace AdServer::LogProcessing
         }
         return is;
       }
+
       if (token[0] == OptionalValueTraits::PRESENT_MARKER)
       {
         is.push_back(token.substr(1)); // skip PRESENT_MARKER
@@ -894,6 +894,7 @@ namespace AdServer::LogProcessing
       {
         is.push_back(token);
       }
+
       if (is >> ov.get())
       {
         ov.present_(!OptionalValueTraits::is_empty(ov.get()));
@@ -1116,9 +1117,7 @@ namespace AdServer::LogProcessing
 
   template <typename Object>
   inline std::istream&
-  operator >>(
-    std::istream& is,
-    EmptyHolder<Object>& object)
+  operator >>(std::istream& is, EmptyHolder<Object>& object)
     /*throw(eh::Exception)*/
   {
     if (is.good())
@@ -1137,9 +1136,7 @@ namespace AdServer::LogProcessing
 
   template <typename Object>
   inline std::ostream&
-  operator <<(
-    std::ostream& os,
-    const EmptyHolder<Object>& object)
+  operator <<(std::ostream& os, const EmptyHolder<Object>& object)
     /*throw(eh::Exception)*/
   {
     if (object.get().empty())
@@ -1176,6 +1173,7 @@ namespace AdServer::LogProcessing
       {
         continue;
       }
+
       if (!check_end(ch))
       {
         is.setstate(std::ios_base::failbit);
@@ -1251,10 +1249,7 @@ namespace AdServer::LogProcessing
   template <class U_, class OPTIONAL_VALUE_TRAITS_>
   inline
   std::istream&
-  operator>>(
-    std::istream &is,
-    OptionalValue<U_, OPTIONAL_VALUE_TRAITS_> &ov
-  )
+  operator>>(std::istream &is, OptionalValue<U_, OPTIONAL_VALUE_TRAITS_> &ov)
     /*throw(eh::Exception)*/
   {
     if (is.peek() == OPTIONAL_VALUE_TRAITS_::NULL_MARKER)
@@ -1273,10 +1268,7 @@ namespace AdServer::LogProcessing
   template <class U_, class OPTIONAL_VALUE_TRAITS_>
   inline
   std::ostream&
-  operator<<(
-    std::ostream &os,
-    const OptionalValue<U_, OPTIONAL_VALUE_TRAITS_> &ov
-  )
+  operator<<(std::ostream &os, const OptionalValue<U_, OPTIONAL_VALUE_TRAITS_> &ov)
     /*throw(eh::Exception)*/
   {
     if (ov.present() && !OPTIONAL_VALUE_TRAITS_::is_empty(ov.get()))

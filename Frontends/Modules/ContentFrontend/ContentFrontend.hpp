@@ -32,13 +32,10 @@ namespace AdServer
     public ReferenceCounting::AtomicImpl
   {
   public:
-    using CommonFeConfiguration =
-      Configuration::FeConfig::CommonFeConfiguration_type;
-    using ContentFeConfiguration =
-      Configuration::FeConfig::ContentFeConfiguration_type;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
 
-    using ContentFrontend_var =
-      ReferenceCounting::SmartPtr<ContentFrontend>;
+    using ContentFrontend_var = ReferenceCounting::SmartPtr<ContentFrontend>;
 
   public:
     ContentFrontend(
@@ -52,17 +49,14 @@ namespace AdServer
     init() override /*throw(eh::Exception)*/;
 
     bool
-    will_handle(
-      const String::SubString& uri) noexcept override;
+    will_handle(const String::SubString& uri) noexcept override;
 
     FrontendCommons::RequestTask
-    co_handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs shutdown for the module child process. */
@@ -108,9 +102,7 @@ namespace AdServer
     ~ContentFrontend() noexcept override = default;
 
     FrontendCommons::RequestTask
-    process_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponse_var response)
+    process_request_(FCGI::HttpRequestHolder_var request_holder, FCGI::HttpResponse_var response)
       noexcept;
 
     int
@@ -125,20 +117,16 @@ namespace AdServer
       const /*throw(eh::Exception)*/;
 
     FrontendCommons::RequestTask
-    handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder)
+    handle_request_noparams_(FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     FrontendCommons::RequestTask
-    co_process_request_(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_process_request_(FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void parse_configs_() /*throw(Exception)*/;
 
-    void parse_headers_(
-      const FCGI::HttpRequest& request,
-      bool& secure) noexcept;
+    void parse_headers_(const FCGI::HttpRequest& request, bool& secure) noexcept;
 
   private:
     Configuration_var frontend_config_;

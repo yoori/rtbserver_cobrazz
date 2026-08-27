@@ -6,10 +6,7 @@ class TextAdAutoCategories: public BaseUnit
 {
 public:
 
-  TextAdAutoCategories(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  TextAdAutoCategories(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

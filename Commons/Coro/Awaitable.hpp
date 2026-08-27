@@ -25,8 +25,7 @@ namespace AdServer::Commons
     ~Awaitable();
 
     bool await_ready() const noexcept;
-    std::coroutine_handle<> await_suspend(
-      std::coroutine_handle<> continuation) noexcept;
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) noexcept;
     ResultType await_resume();
 
   private:
@@ -48,8 +47,7 @@ namespace AdServer::Commons
     ~Awaitable();
 
     bool await_ready() const noexcept;
-    std::coroutine_handle<> await_suspend(
-      std::coroutine_handle<> continuation) noexcept;
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) noexcept;
     void await_resume();
 
   private:
@@ -115,9 +113,9 @@ namespace AdServer::Commons
   inline Awaitable<ResultType>&
   Awaitable<ResultType>::operator=(Awaitable&& other) noexcept
   {
-    if(this != &other)
+    if (this != &other)
     {
-      if(handle_)
+      if (handle_)
       {
         handle_.destroy();
       }
@@ -130,7 +128,7 @@ namespace AdServer::Commons
   template<typename ResultType>
   inline Awaitable<ResultType>::~Awaitable()
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.destroy();
     }
@@ -145,8 +143,7 @@ namespace AdServer::Commons
 
   template<typename ResultType>
   inline std::coroutine_handle<>
-  Awaitable<ResultType>::await_suspend(
-    std::coroutine_handle<> continuation) noexcept
+  Awaitable<ResultType>::await_suspend(std::coroutine_handle<> continuation) noexcept
   {
     handle_.promise().continuation = continuation;
     return handle_;
@@ -156,12 +153,12 @@ namespace AdServer::Commons
   inline ResultType
   Awaitable<ResultType>::await_resume()
   {
-    if(handle_.promise().exception)
+    if (handle_.promise().exception)
     {
       std::rethrow_exception(std::move(*handle_.promise().exception));
     }
 
-    if(!handle_.promise().result)
+    if (!handle_.promise().result)
     {
       throw std::logic_error("Awaitable result is not initialized");
     }
@@ -192,10 +189,9 @@ namespace AdServer::Commons
 
   template<typename ResultType>
   inline std::coroutine_handle<>
-  Awaitable<ResultType>::promise_type::FinalAwaiter::await_suspend(
-    Handle handle) const noexcept
+  Awaitable<ResultType>::promise_type::FinalAwaiter::await_suspend(Handle handle) const noexcept
   {
-    if(handle.promise().continuation)
+    if (handle.promise().continuation)
     {
       return handle.promise().continuation;
     }
@@ -241,9 +237,9 @@ namespace AdServer::Commons
   inline Awaitable<void>&
   Awaitable<void>::operator=(Awaitable&& other) noexcept
   {
-    if(this != &other)
+    if (this != &other)
     {
-      if(handle_)
+      if (handle_)
       {
         handle_.destroy();
       }
@@ -255,7 +251,7 @@ namespace AdServer::Commons
 
   inline Awaitable<void>::~Awaitable()
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.destroy();
     }
@@ -277,7 +273,7 @@ namespace AdServer::Commons
   inline void
   Awaitable<void>::await_resume()
   {
-    if(handle_.promise().exception)
+    if (handle_.promise().exception)
     {
       std::rethrow_exception(std::move(*handle_.promise().exception));
     }
@@ -302,10 +298,9 @@ namespace AdServer::Commons
   }
 
   inline std::coroutine_handle<>
-  Awaitable<void>::promise_type::FinalAwaiter::await_suspend(
-    Handle handle) const noexcept
+  Awaitable<void>::promise_type::FinalAwaiter::await_suspend(Handle handle) const noexcept
   {
-    if(handle.promise().continuation)
+    if (handle.promise().continuation)
     {
       return handle.promise().continuation;
     }

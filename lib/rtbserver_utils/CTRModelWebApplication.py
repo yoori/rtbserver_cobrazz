@@ -204,7 +204,17 @@ def render_logloss_history(traits):
     except (KeyError, TypeError, ValueError, decimal.InvalidOperation):
       continue
     if train.is_finite() and test.is_finite():
-      history.append({'step': step, 'train': train, 'test': test})
+      entry = {'step': step, 'train': train, 'test': test}
+      for field in ('train_rows', 'train_clicks'):
+        try:
+          entry[field] = int(item[field])
+        except (KeyError, TypeError, ValueError):
+          pass
+      try:
+        entry['train_ctr'] = decimal.Decimal(str(item['train_ctr']))
+      except (KeyError, TypeError, ValueError, decimal.InvalidOperation):
+        pass
+      history.append(entry)
 
   if not history:
     return ''
@@ -253,8 +263,24 @@ def render_logloss_history(traits):
   rows = ''.join(
     '<tr><td>' + str(item['step']) + '</td>'
     '<td class="metric">' + html_text(format(item['train'], '.9f')) + '</td>'
-    '<td class="metric">' + html_text(format(item['test'], '.9f')) + '</td></tr>'
+    '<td class="metric">' + html_text(format(item['test'], '.9f')) + '</td>' +
+    (''.join(
+      '<td class="metric">' + html_text(str(item.get(field, '-'))) + '</td>'
+      for field in ('train_rows', 'train_clicks')) +
+     '<td class="metric">' + html_text(
+       metric_decimal_text(item['train_ctr'])
+       if 'train_ctr' in item else '-') + '</td>'
+     if any(field in item for field in ('train_rows', 'train_clicks', 'train_ctr'))
+     else '') +
+    '</tr>'
     for item in history)
+
+  has_dataset_stats = any(
+    field in item for item in history
+    for field in ('train_rows', 'train_clicks', 'train_ctr'))
+  dataset_headers = (
+    '<th>Train rows</th><th>Train clicks</th><th>Train CTR</th>'
+    if has_dataset_stats else '')
 
   return (
     '<section class="model-section logloss-section">'
@@ -273,7 +299,8 @@ def render_logloss_history(traits):
     '<polyline class="chart-line test" points="' + test_points + '" />'
     '</svg></div>'
     '<div class="table-scroll"><table class="logloss-table">'
-    '<thead><tr><th>Step</th><th>Train Logloss</th><th>Test Logloss</th></tr></thead>'
+    '<thead><tr><th>Step</th><th>Train Logloss</th><th>Test Logloss</th>' +
+    dataset_headers + '</tr></thead>'
     '<tbody>' + rows + '</tbody></table></div></section>')
 
 
@@ -1426,9 +1453,11 @@ def render_index_page(models, selected_properties=None):
       if (!article) {
         return;
       }
+
       if (article.dataset.loaded === 'loading') {
         return componentLoads.get(article);
       }
+
       if (article.dataset.loaded !== 'false') {
         await initializePostProcessing(root);
         return;
@@ -1499,6 +1528,7 @@ def render_index_page(models, selected_properties=None):
         for (const article of root.querySelectorAll('.model-component')) {
           article.hidden = '#' + article.id !== link.hash;
         }
+
         if (updateHash) {
           history.replaceState(null, '', link.hash);
         }
@@ -1639,6 +1669,7 @@ def render_index_page(models, selected_properties=None):
       if (componentFilter) {
         componentFilter.value = state.componentFilter;
       }
+
       if (statusFilter) {
         statusFilter.value = state.componentStatus;
       }
@@ -1707,6 +1738,7 @@ def render_index_page(models, selected_properties=None):
             response = publishedResponse;
           }
         }
+
         if (!response.ok) {
           throw new Error('Refresh failed with HTTP ' + response.status);
         }
@@ -1732,6 +1764,7 @@ def render_index_page(models, selected_properties=None):
           if (currentList && nextList) {
             currentList.innerHTML = nextList.innerHTML;
           }
+
           if (modelId !== currentMain.dataset.modelId) {
             history.replaceState(
               null,

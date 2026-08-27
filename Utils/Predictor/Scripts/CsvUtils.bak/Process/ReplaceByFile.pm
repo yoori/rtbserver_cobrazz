@@ -19,7 +19,7 @@ sub new
     my $file = $params{'file'};
     my $csv = Text::CSV->new({ binary => 1, eol => $/ });
     open FILE, $file or die "Can't open $file";
-    while(<FILE>)
+    while (<FILE>)
     {
       my $line = $_;
       chomp $line;
@@ -48,12 +48,12 @@ sub process
   my $value = $row->[$self->{field_}];
   my $replace = $self->{values_};
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)
     {
-      if(exists($replace->{$sub_val}))
+      if (exists($replace->{$sub_val}))
       {
         push(@res_arr, @{$replace->{$sub_val}});
       }
@@ -67,7 +67,7 @@ sub process
   }
   else
   {
-    if(exists($replace->{$value}))
+    if (exists($replace->{$value}))
     {
       $row->[$self->{field_}] = $replace->{$value};
     }

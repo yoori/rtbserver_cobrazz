@@ -56,9 +56,7 @@ namespace AdServer::RequestInfoSvcs
 
   /** profile help methods */
   void
-  convert_optional_uint(
-    AdServer::Commons::Optional<unsigned long>& result,
-    long source)
+  convert_optional_uint(AdServer::Commons::Optional<unsigned long>& result, long source)
   {
     result = source >= 0 ?
       AdServer::Commons::Optional<unsigned long>(source) :
@@ -66,9 +64,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  fill_optional_uint(
-    int32_t& result,
-    const AdServer::Commons::Optional<unsigned long>& source)
+  fill_optional_uint(int32_t& result, const AdServer::Commons::Optional<unsigned long>& source)
   {
     result = source.present() ? static_cast<long>(*source) : -1;
   }
@@ -82,8 +78,7 @@ namespace AdServer::RequestInfoSvcs
     revenue_writer.action() = "0";
   }
 
-  Generics::Time last_event_time(
-    const RequestInfoProfileReader& profile_reader)
+  Generics::Time last_event_time(const RequestInfoProfileReader& profile_reader)
   {
     uint32_t res = profile_reader.time();
 
@@ -108,22 +103,6 @@ namespace AdServer::RequestInfoSvcs
     }
 
     return Generics::Time(res);
-  }
-
-  RevenueDecimal
-  convert_rate(
-    const RevenueDecimal& value,
-    const RevenueDecimal& from_rate,
-    const RevenueDecimal& to_rate)
-  {
-    if (from_rate == to_rate)
-    {
-      return value;
-    }
-
-    const RevenueDecimal sys_value = RevenueDecimal::div(value, from_rate, Generics::DDR_CEIL);
-
-    return RevenueDecimal::mul(sys_value, to_rate, Generics::DMR_CEIL);
   }
 
   void
@@ -299,12 +278,9 @@ namespace AdServer::RequestInfoSvcs
     }
 
     request_info.viewability = request_reader.viewability();
-    request_info.self_service_commission = RevenueDecimal(
-      request_reader.self_service_commission());
-    request_info.adv_commission = RevenueDecimal(
-      request_reader.adv_commission());
-    request_info.pub_cost_coef = RevenueDecimal(
-      request_reader.pub_cost_coef());
+    request_info.self_service_commission = RevenueDecimal(request_reader.self_service_commission());
+    request_info.adv_commission = RevenueDecimal(request_reader.adv_commission());
+    request_info.pub_cost_coef = RevenueDecimal(request_reader.pub_cost_coef());
     request_info.at_flags = request_reader.at_flags();
     request_info.additional_info = request_reader.additional_info();
   }
@@ -465,8 +441,7 @@ namespace AdServer::RequestInfoSvcs
 
     request_writer.text_campaign() = request_info.text_campaign;
 
-    convert_revenue_to_revenue_writer(
-      request_info.adv_revenue, request_writer.adv_revenue());
+    convert_revenue_to_revenue_writer(request_info.adv_revenue, request_writer.adv_revenue());
 
     request_writer.adv_currency_rate() = request_info.adv_revenue.currency_rate.str();
     request_writer.pub_currency_rate() = request_info.pub_revenue.currency_rate.str();
@@ -478,8 +453,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.adv_comm_revenue, request_writer.orig_adv_comm_revenue());
     convert_revenue_to_revenue_writer(
       request_info.adv_payable_comm_amount, request_writer.orig_adv_payable_comm_amount());
-    convert_revenue_to_revenue_writer(
-      request_info.pub_revenue, request_writer.orig_pub_revenue());
+    convert_revenue_to_revenue_writer(request_info.pub_revenue, request_writer.orig_pub_revenue());
     convert_revenue_to_revenue_writer(
       request_info.pub_comm_revenue, request_writer.orig_pub_comm_revenue());
     convert_revenue_to_revenue_writer(request_info.isp_revenue, request_writer.orig_isp_revenue());
@@ -675,9 +649,7 @@ namespace AdServer::RequestInfoSvcs
 
       RequestInfo::Revenue publisher_amount = res_pub_revenue * (
         self_service_commission + AdServer::CampaignSvcs::REVENUE_ONE);
-      publisher_amount = publisher_amount.convert_currency(
-        pub_currency_rate,
-        adv_currency_rate);
+      publisher_amount = publisher_amount.convert_currency(pub_currency_rate, adv_currency_rate);
 
       const AdServer::CampaignSvcs::AdvBillingCalculationFlags billing_flags = {
         (request_writer.at_flags() &
@@ -975,8 +947,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  create_empty_stub(
-    RequestInfoProfileWriter& request_writer)
+  create_empty_stub(RequestInfoProfileWriter& request_writer)
   {
     request_writer.version() = CURRENT_REQUEST_PROFILE_VERSION;
     request_writer.request_done() = 0;
@@ -1368,9 +1339,7 @@ namespace AdServer::RequestInfoSvcs
 
     if (owner.in())
     {
-      co_await owner->co_process_impression_post_action(
-        request_id,
-        request_post_action_info);
+      co_await owner->co_process_impression_post_action(request_id, request_post_action_info);
     }
   }
 
@@ -1473,11 +1442,7 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        co_await owner->co_process_action_(
-          action_type,
-          time,
-          request_id,
-          false);
+        co_await owner->co_process_action_(action_type, time, request_id, false);
       }
       catch(const eh::Exception& ex)
       {
@@ -1500,10 +1465,7 @@ namespace AdServer::RequestInfoSvcs
       try
       {
         // already moved operation will disable second moving
-        owner->process_impression_post_action_(
-          request_id,
-          request_post_action_info,
-          false);
+        owner->process_impression_post_action_(request_id, request_post_action_info, false);
       }
       catch(const eh::Exception& ex)
       {
@@ -1549,10 +1511,7 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        owner->change_request_user_id_(
-          new_user_id,
-          request_id,
-          request_profile);
+        owner->change_request_user_id_(new_user_id, request_id, request_profile);
       }
       catch(const eh::Exception& ex)
       {
@@ -1573,10 +1532,7 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        co_await owner->co_change_request_user_id_(
-          new_user_id,
-          request_id,
-          request_profile);
+        co_await owner->co_change_request_user_id_(new_user_id, request_id, request_profile);
       }
       catch(const eh::Exception& ex)
       {
@@ -1650,16 +1606,10 @@ namespace AdServer::RequestInfoSvcs
             expire_time_,
             128,
             Generics::Time::ZERO) :
-          new RocksDBMap(
-            request_profile_path,
-            expire_time_,
-            2,
-            128,
-            Generics::Time::ZERO);
+          new RocksDBMap(request_profile_path, expire_time_, 2, 128, Generics::Time::ZERO);
 
       profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::RequestId>(
-          profile_map_impl.in());
+        AdServer::Commons::RequestId>(profile_map_impl.in());
       add_child_object(profile_map_impl.in());
     }
     catch(const eh::Exception& ex)
@@ -1674,6 +1624,7 @@ namespace AdServer::RequestInfoSvcs
   RequestInfoContainer::~RequestInfoContainer() noexcept
   {
     proxy_->detach();
+    request_operation_proxy_->detach();
   }
 
   RequestContainerProcessor_var
@@ -1689,8 +1640,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoContainer::co_get_profile(
-    const AdServer::Commons::RequestId& request_id)
+  RequestInfoContainer::co_get_profile(const AdServer::Commons::RequestId& request_id)
   {
     static const char* FUN = "RequestInfoContainer::co_get_profile()";
 
@@ -1707,8 +1657,7 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
-  void RequestInfoContainer::process_request(
-    const RequestInfo& request_info)
+  void RequestInfoContainer::process_request(const RequestInfo& request_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     static const char* FUN = "RequestInfoContainer::process_request()";
@@ -1717,10 +1666,8 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Transaction_var transaction =
-        get_transaction_(request_info.request_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        get_profile_(transaction);
+      Transaction_var transaction = get_transaction_(request_info.request_id);
+      Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
 
       Generics::Time last_event_time;
 
@@ -1731,10 +1678,7 @@ namespace AdServer::RequestInfoSvcs
            request_info,
            request_operation_processor_))
       {
-        save_profile_(
-          transaction,
-          mem_buf,
-          std::max(request_info.time, last_event_time));
+        save_profile_(transaction, mem_buf, std::max(request_info.time, last_event_time));
       }
     }
     catch(const eh::Exception& ex)
@@ -1746,8 +1690,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  RequestInfoContainer::co_process_request(
-    const RequestInfo& request_info)
+  RequestInfoContainer::co_process_request(const RequestInfo& request_info)
   {
     static const char* FUN = "RequestInfoContainer::co_process_request()";
 
@@ -1755,10 +1698,8 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Transaction_var transaction =
-        co_await co_get_transaction_(request_info.request_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await co_get_profile_(transaction);
+      Transaction_var transaction = co_await co_get_transaction_(request_info.request_id);
+      Generics::ConstSmartMemBuf_var mem_buf = co_await co_get_profile_(transaction);
 
       Generics::Time last_event_time;
 
@@ -1784,8 +1725,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  RequestInfoContainer::process_impression(
-    const ImpressionInfo& impression_info)
+  RequestInfoContainer::process_impression(const ImpressionInfo& impression_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     process_impression_(
@@ -1795,12 +1735,9 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  RequestInfoContainer::co_process_impression(
-    const ImpressionInfo& impression_info)
+  RequestInfoContainer::co_process_impression(const ImpressionInfo& impression_info)
   {
-    co_await co_process_impression_(
-      impression_info,
-      request_operation_processor_);
+    co_await co_process_impression_(impression_info, request_operation_processor_);
   }
 
   void
@@ -1824,11 +1761,7 @@ namespace AdServer::RequestInfoSvcs
     const Generics::Time& time,
     const AdServer::Commons::RequestId& request_id)
   {
-    co_await co_process_action_(
-      action_type,
-      time,
-      request_id,
-      request_operation_processor_);
+    co_await co_process_action_(action_type, time, request_id, request_operation_processor_);
   }
 
   void
@@ -1870,8 +1803,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await profile_map_->co_get_profile(request_id);
+      Generics::ConstSmartMemBuf_var mem_buf = co_await profile_map_->co_get_profile(request_id);
 
       if (mem_buf.in())
       {
@@ -1929,8 +1861,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Transaction_var transaction =
-        get_transaction_(impression_info.request_id);
+      Transaction_var transaction = get_transaction_(impression_info.request_id);
 
       Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
 
@@ -1945,10 +1876,7 @@ namespace AdServer::RequestInfoSvcs
              impression_info,
              move_enabled))
         {
-          save_profile_(
-            transaction,
-            mem_buf,
-            std::max(impression_info.time, last_event_time));
+          save_profile_(transaction, mem_buf, std::max(impression_info.time, last_event_time));
         }
       }
       else
@@ -1960,10 +1888,7 @@ namespace AdServer::RequestInfoSvcs
              impression_info,
              move_enabled))
         {
-          save_profile_(
-            transaction,
-            mem_buf,
-            std::max(impression_info.time, last_event_time));
+          save_profile_(transaction, mem_buf, std::max(impression_info.time, last_event_time));
         }
       }
     }
@@ -1994,11 +1919,9 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Transaction_var transaction =
-        co_await co_get_transaction_(impression_info.request_id);
+      Transaction_var transaction = co_await co_get_transaction_(impression_info.request_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await co_get_profile_(transaction);
+      Generics::ConstSmartMemBuf_var mem_buf = co_await co_get_profile_(transaction);
 
       Generics::Time last_event_time;
 
@@ -2057,8 +1980,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Transaction_var transaction = get_transaction_(request_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        get_profile_(transaction);
+      Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
 
       bool save_profile = false;
       Generics::Time last_event_time;
@@ -2121,8 +2043,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Transaction_var transaction = co_await co_get_transaction_(request_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await co_get_profile_(transaction);
+      Generics::ConstSmartMemBuf_var mem_buf = co_await co_get_profile_(transaction);
 
       bool save_profile = false;
       Generics::Time last_event_time;
@@ -2186,8 +2107,7 @@ namespace AdServer::RequestInfoSvcs
     try
     {
       Transaction_var transaction = get_transaction_(request_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        get_profile_(transaction);
+      Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
 
       save_profile = process_impression_post_action_buf_(
         mem_buf,
@@ -2219,8 +2139,7 @@ namespace AdServer::RequestInfoSvcs
     const RequestPostActionInfo& request_post_action_info,
     bool move_enabled)
   {
-    static const char* FUN =
-      "RequestInfoContainer::co_process_impression_post_action_()";
+    static const char* FUN = "RequestInfoContainer::co_process_impression_post_action_()";
 
     RequestProcessDelegate request_process_delegate;
     bool save_profile = false;
@@ -2229,8 +2148,7 @@ namespace AdServer::RequestInfoSvcs
     try
     {
       Transaction_var transaction = co_await co_get_transaction_(request_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await co_get_profile_(transaction);
+      Generics::ConstSmartMemBuf_var mem_buf = co_await co_get_profile_(transaction);
 
       save_profile = process_impression_post_action_buf_(
         mem_buf,
@@ -2271,8 +2189,7 @@ namespace AdServer::RequestInfoSvcs
     {
       RequestProfileAdapter request_profile_adapter;
       Generics::ConstSmartMemBuf_var request_profile =
-        request_profile_adapter(
-          external_request_profile);
+        request_profile_adapter(external_request_profile);
 
       ImpressionInfo notice_info;
 
@@ -2295,8 +2212,7 @@ namespace AdServer::RequestInfoSvcs
           request_profile->membuf().data(),
           request_profile->membuf().size());
 
-        request_processed_on_sender =
-          new_request_reader.fraud() != RequestInfo::RS_NORMAL;
+        request_processed_on_sender = new_request_reader.fraud() != RequestInfo::RS_NORMAL;
 
         // restart sub actions (notice/impression/click) processing by moving it to non considered state
         // processing will be activated in process_request_buf_
@@ -2334,8 +2250,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (request_writer.actions_done())
         {
-          request_writer.actions_non_considered() +=
-            request_writer.actions_done();
+          request_writer.actions_non_considered() += request_writer.actions_done();
           request_writer.actions_done() = 0;
         }
 
@@ -2409,8 +2324,7 @@ namespace AdServer::RequestInfoSvcs
         false // second move impossible
         );
 
-      if (request_processed_on_sender &&
-        request_process_delegate.process_request.present())
+      if (request_processed_on_sender && request_process_delegate.process_request.present())
       {
         request_process_delegate.process_request = RequestInfo::RS_RESAVE;
       }
@@ -2499,10 +2413,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (save_profile)
       {
-        save_profile_(
-          transaction,
-          mem_buf,
-          Generics::Time(request_reader.time()));
+        save_profile_(transaction, mem_buf, Generics::Time(request_reader.time()));
       }
     }
     catch(const eh::Exception& ex)
@@ -2519,8 +2430,7 @@ namespace AdServer::RequestInfoSvcs
     const AdServer::Commons::RequestId& request_id,
     const Generics::ConstSmartMemBuf* external_request_profile)
   {
-    static const char* FUN =
-      "RequestInfoContainer::co_change_request_user_id_()";
+    static const char* FUN = "RequestInfoContainer::co_change_request_user_id_()";
 
     RequestProcessDelegate request_process_delegate;
 
@@ -2547,16 +2457,14 @@ namespace AdServer::RequestInfoSvcs
           request_profile->membuf().data(),
           request_profile->membuf().size());
 
-        request_processed_on_sender =
-          new_request_reader.fraud() != RequestInfo::RS_NORMAL;
+        request_processed_on_sender = new_request_reader.fraud() != RequestInfo::RS_NORMAL;
 
         request_writer.request_done() = 0;
         request_writer.fraud() = RequestInfo::RS_NORMAL;
 
         if (request_writer.notice_received())
         {
-          request_writer.notice_non_considered() +=
-            request_writer.notice_received();
+          request_writer.notice_non_considered() += request_writer.notice_received();
           request_writer.notice_received() = 0;
 
           convert_request_reader_to_impression_info(
@@ -2576,13 +2484,11 @@ namespace AdServer::RequestInfoSvcs
 
         if (request_writer.actions_done())
         {
-          request_writer.actions_non_considered() +=
-            request_writer.actions_done();
+          request_writer.actions_non_considered() += request_writer.actions_done();
           request_writer.actions_done() = 0;
         }
 
-        Generics::ConstSmartMemBuf_var old_mem_buf =
-          co_await co_get_profile_(transaction);
+        Generics::ConstSmartMemBuf_var old_mem_buf = co_await co_get_profile_(transaction);
 
         if (old_mem_buf.in())
         {
@@ -2592,14 +2498,11 @@ namespace AdServer::RequestInfoSvcs
 
           if (old_request_reader.fraud() != RequestInfo::RS_MOVED)
           {
-            request_writer.notice_non_considered() +=
-              old_request_reader.notice_non_considered();
+            request_writer.notice_non_considered() += old_request_reader.notice_non_considered();
             request_writer.impression_non_considered() +=
               old_request_reader.impression_non_considered();
-            request_writer.click_non_considered() +=
-              old_request_reader.click_non_considered();
-            request_writer.actions_non_considered() +=
-              request_writer.actions_non_considered();
+            request_writer.click_non_considered() += old_request_reader.click_non_considered();
+            request_writer.actions_non_considered() += request_writer.actions_non_considered();
           }
         }
 
@@ -2625,8 +2528,7 @@ namespace AdServer::RequestInfoSvcs
         request_info,
         false);
 
-      if (request_processed_on_sender &&
-        request_process_delegate.process_request.present())
+      if (request_processed_on_sender && request_process_delegate.process_request.present())
       {
         request_process_delegate.process_request = RequestInfo::RS_RESAVE;
       }
@@ -2637,10 +2539,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (save_profile)
       {
-        co_await co_save_profile_(
-          transaction,
-          mem_buf,
-          Generics::Time(request_reader.time()));
+        co_await co_save_profile_(transaction, mem_buf, Generics::Time(request_reader.time()));
       }
     }
     catch(const eh::Exception& ex)
@@ -2680,8 +2579,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  RequestInfoContainer::delegate_processing_(
-    const RequestProcessDelegate& request_process_delegate)
+  RequestInfoContainer::delegate_processing_(const RequestProcessDelegate& request_process_delegate)
     /*throw(Exception)*/
   {
     static const char* FUN = "RequestInfoContainer::delegate_processing_()";
@@ -2733,10 +2631,7 @@ namespace AdServer::RequestInfoSvcs
         request_process_delegate.rollback_request_info->print(ostr, "  ");
       }
 
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::REQUEST_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::REQUEST_INFO_CONTAINER);
     }
 
     try
@@ -2747,8 +2642,7 @@ namespace AdServer::RequestInfoSvcs
 
         request_processor_->process_request(
           *request_process_delegate.request_info,
-          RequestActionProcessor::ProcessingState(
-            *request_process_delegate.process_request));
+          RequestActionProcessor::ProcessingState(*request_process_delegate.process_request));
       }
 
       if (request_process_delegate.process_impression)
@@ -2758,8 +2652,7 @@ namespace AdServer::RequestInfoSvcs
         request_processor_->process_impression(
           *request_process_delegate.request_info,
           *request_process_delegate.impression_info,
-          RequestActionProcessor::ProcessingState(
-            request_process_delegate.request_info->fraud));
+          RequestActionProcessor::ProcessingState(request_process_delegate.request_info->fraud));
       }
 
       if (request_process_delegate.process_click)
@@ -2768,16 +2661,14 @@ namespace AdServer::RequestInfoSvcs
 
         request_processor_->process_click(
           *request_process_delegate.request_info,
-          RequestActionProcessor::ProcessingState(
-            request_process_delegate.request_info->fraud));
+          RequestActionProcessor::ProcessingState(request_process_delegate.request_info->fraud));
       }
 
       for (unsigned long i = 0; i < request_process_delegate.process_actions; ++i)
       {
         assert(request_process_delegate.request_info.present());
 
-        request_processor_->process_action(
-          *request_process_delegate.request_info);
+        request_processor_->process_action(*request_process_delegate.request_info);
       }
 
       if (request_process_delegate.process_fraud_request.present() ||
@@ -2932,19 +2823,15 @@ namespace AdServer::RequestInfoSvcs
          (std::string(" ") + RequestInfo::request_state_string(*request_process_delegate.process_fraud_request)) :
          std::string());
 
-      for (auto rollback_imp_it =
-            request_process_delegate.process_rollback_impressions.begin();
-        rollback_imp_it !=
-            request_process_delegate.process_rollback_impressions.end();
+      for (auto rollback_imp_it = request_process_delegate.process_rollback_impressions.begin();
+        rollback_imp_it != request_process_delegate.process_rollback_impressions.end();
         ++rollback_imp_it)
       {
         ostr << " imp: " << RequestInfo::request_state_string(*rollback_imp_it);
       }
 
-      for (auto rollback_click_it =
-            request_process_delegate.process_rollback_clicks.begin();
-        rollback_click_it !=
-            request_process_delegate.process_rollback_clicks.end();
+      for (auto rollback_click_it = request_process_delegate.process_rollback_clicks.begin();
+        rollback_click_it != request_process_delegate.process_rollback_clicks.end();
         ++rollback_click_it)
       {
         ostr << " click: " <<
@@ -2963,10 +2850,7 @@ namespace AdServer::RequestInfoSvcs
         request_process_delegate.rollback_request_info->print(ostr, "  ");
       }
 
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::REQUEST_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::REQUEST_INFO_CONTAINER);
     }
 
     try
@@ -2977,8 +2861,7 @@ namespace AdServer::RequestInfoSvcs
 
         co_await request_processor_->co_process_request(
           *request_process_delegate.request_info,
-          RequestActionProcessor::ProcessingState(
-            *request_process_delegate.process_request));
+          RequestActionProcessor::ProcessingState(*request_process_delegate.process_request));
       }
 
       if (request_process_delegate.process_impression)
@@ -2988,8 +2871,7 @@ namespace AdServer::RequestInfoSvcs
         co_await request_processor_->co_process_impression(
           *request_process_delegate.request_info,
           *request_process_delegate.impression_info,
-          RequestActionProcessor::ProcessingState(
-            request_process_delegate.request_info->fraud));
+          RequestActionProcessor::ProcessingState(request_process_delegate.request_info->fraud));
       }
 
       if (request_process_delegate.process_click)
@@ -2998,18 +2880,14 @@ namespace AdServer::RequestInfoSvcs
 
         co_await request_processor_->co_process_click(
           *request_process_delegate.request_info,
-          RequestActionProcessor::ProcessingState(
-            request_process_delegate.request_info->fraud));
+          RequestActionProcessor::ProcessingState(request_process_delegate.request_info->fraud));
       }
 
-      for (unsigned long i = 0;
-          i < request_process_delegate.process_actions;
-          ++i)
+      for (unsigned long i = 0; i < request_process_delegate.process_actions; ++i)
       {
         assert(request_process_delegate.request_info.present());
 
-        co_await request_processor_->co_process_action(
-          *request_process_delegate.request_info);
+        co_await request_processor_->co_process_action(*request_process_delegate.request_info);
       }
 
       if (request_process_delegate.process_fraud_request.present() ||
@@ -3028,8 +2906,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (request_process_delegate.process_fraud_request.present())
         {
-          fraud_request_info.fraud =
-            *request_process_delegate.process_fraud_request;
+          fraud_request_info.fraud = *request_process_delegate.process_fraud_request;
 
           co_await request_processor_->co_process_request(
             fraud_request_info,
@@ -3037,10 +2914,8 @@ namespace AdServer::RequestInfoSvcs
               *request_process_delegate.process_fraud_request));
         }
 
-        for (auto rollback_imp_it =
-              request_process_delegate.process_rollback_impressions.begin();
-          rollback_imp_it !=
-              request_process_delegate.process_rollback_impressions.end();
+        for (auto rollback_imp_it = request_process_delegate.process_rollback_impressions.begin();
+          rollback_imp_it != request_process_delegate.process_rollback_impressions.end();
           ++rollback_imp_it)
         {
           co_await request_processor_->co_process_impression(
@@ -3049,10 +2924,8 @@ namespace AdServer::RequestInfoSvcs
             RequestActionProcessor::ProcessingState(*rollback_imp_it));
         }
 
-        for (auto rollback_click_it =
-              request_process_delegate.process_rollback_clicks.begin();
-          rollback_click_it !=
-              request_process_delegate.process_rollback_clicks.end();
+        for (auto rollback_click_it = request_process_delegate.process_rollback_clicks.begin();
+          rollback_click_it != request_process_delegate.process_rollback_clicks.end();
           ++rollback_click_it)
         {
           co_await request_processor_->co_process_click(
@@ -3075,8 +2948,7 @@ namespace AdServer::RequestInfoSvcs
 
       for (auto request_post_act_it =
             request_process_delegate.process_post_impression_actions.begin();
-        request_post_act_it !=
-            request_process_delegate.process_post_impression_actions.end();
+        request_post_act_it != request_process_delegate.process_post_impression_actions.end();
         ++request_post_act_it)
       {
         assert(request_process_delegate.request_info.present());
@@ -3103,17 +2975,14 @@ namespace AdServer::RequestInfoSvcs
           ImpressionInfo imp_info(*request_process_delegate.move_notice_info);
           assert(!imp_info.verify_impression);
           imp_info.user_id = request_process_delegate.move_request_user_id;
-          co_await request_operation_processor_->co_process_impression(
-            imp_info);
+          co_await request_operation_processor_->co_process_impression(imp_info);
         }
 
         if (request_process_delegate.move_impression_info.present())
         {
-          ImpressionInfo imp_info(
-            *request_process_delegate.move_impression_info);
+          ImpressionInfo imp_info(*request_process_delegate.move_impression_info);
           imp_info.user_id = request_process_delegate.move_request_user_id;
-          co_await request_operation_processor_->co_process_impression(
-            imp_info);
+          co_await request_operation_processor_->co_process_impression(imp_info);
         }
 
         for (auto it = request_process_delegate.move_actions.begin();
@@ -3126,10 +2995,8 @@ namespace AdServer::RequestInfoSvcs
             it->request_id);
         }
 
-        for (auto it =
-              request_process_delegate.move_impression_post_actions.begin();
-          it !=
-              request_process_delegate.move_impression_post_actions.end();
+        for (auto it = request_process_delegate.move_impression_post_actions.begin();
+          it != request_process_delegate.move_impression_post_actions.end();
           ++it)
         {
           co_await request_operation_processor_->
@@ -3149,8 +3016,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   Generics::ConstSmartMemBuf_var
-  RequestInfoContainer::get_profile_(
-    const AdServer::Commons::RequestId& request_id)
+  RequestInfoContainer::get_profile_(const AdServer::Commons::RequestId& request_id)
   {
     Generics::ConstSmartMemBuf_var res = profile_map_->get_profile(request_id);
 
@@ -3164,11 +3030,9 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoContainer::co_get_profile_(
-    const AdServer::Commons::RequestId& request_id)
+  RequestInfoContainer::co_get_profile_(const AdServer::Commons::RequestId& request_id)
   {
-    Generics::ConstSmartMemBuf_var res =
-      co_await profile_map_->co_get_profile(request_id);
+    Generics::ConstSmartMemBuf_var res = co_await profile_map_->co_get_profile(request_id);
 
     if (res.in())
     {
@@ -3180,8 +3044,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   Generics::ConstSmartMemBuf_var
-  RequestInfoContainer::get_profile_(
-    Transaction* transaction)
+  RequestInfoContainer::get_profile_(Transaction* transaction)
   {
     Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
     RequestProfileAdapter request_profile_adapter;
@@ -3199,11 +3062,9 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoContainer::co_get_profile_(
-    Transaction* transaction)
+  RequestInfoContainer::co_get_profile_(Transaction* transaction)
   {
-    Generics::ConstSmartMemBuf_var mem_buf =
-      co_await transaction->co_get_profile();
+    Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
     RequestProfileAdapter request_profile_adapter;
     if (mem_buf)
     {
@@ -3245,15 +3106,13 @@ namespace AdServer::RequestInfoSvcs
   }
 
   RequestInfoContainer::Transaction_var
-  RequestInfoContainer::get_transaction_(
-    const AdServer::Commons::RequestId& request_id)
+  RequestInfoContainer::get_transaction_(const AdServer::Commons::RequestId& request_id)
   {
     return new Transaction(profile_map_->get_transaction(request_id));
   }
 
   AdServer::Commons::Awaitable<RequestInfoContainer::Transaction_var>
-  RequestInfoContainer::co_get_transaction_(
-    const AdServer::Commons::RequestId& request_id)
+  RequestInfoContainer::co_get_transaction_(const AdServer::Commons::RequestId& request_id)
   {
     RequestProfileMap::Transaction_var transaction =
       co_await profile_map_->co_get_transaction(request_id);
@@ -3286,8 +3145,7 @@ namespace AdServer::RequestInfoSvcs
     std::cerr << "RequestInfoContainer::process_request_buf_(" <<
       request_info.request_id << "): this = " << this <<
       ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) <<
-      ", mem_buf.size = " << (mem_buf.in () ? mem_buf->membuf().size() : 0) <<
-      std::endl;
+      ", mem_buf.size = " << (mem_buf.in () ? mem_buf->membuf().size() : 0) << std::endl;
 #   endif
 
     try
@@ -3306,17 +3164,14 @@ namespace AdServer::RequestInfoSvcs
       else
       {
         // exist stub - check that notice done but not considered
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
 #       ifdef DEBUG_OUTPUT_
         std::cerr << "RequestInfoContainer::process_request_buf_(" <<
           request_info.request_id << "): exists stub, this = " << this <<
           ", request_reader.impression_non_considered() = " << request_reader.impression_non_considered() <<
           ", request_reader.click_non_considered() = " << request_reader.click_non_considered() <<
-          ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) <<
-          std::endl;
+          ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) << std::endl;
 #       endif
 
         if (last_event)
@@ -3324,8 +3179,7 @@ namespace AdServer::RequestInfoSvcs
           *last_event = last_event_time(request_reader);
         }
 
-        if (request_reader.request_done() == 0 &&
-          request_reader.fraud() != RequestInfo::RS_MOVED)
+        if (request_reader.request_done() == 0 && request_reader.fraud() != RequestInfo::RS_MOVED)
         {
           request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
@@ -3476,8 +3330,7 @@ namespace AdServer::RequestInfoSvcs
         request_info.request_id << "): finish, this = " << this <<
         ", request_writer.impression_non_considered() = " << request_writer.impression_non_considered() <<
         ", request_writer.click_non_considered() = " << request_writer.click_non_considered() <<
-        ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) <<
-        std::endl;
+        ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) << std::endl;
 #     endif
     }
     catch(const eh::Exception& ex)
@@ -3534,8 +3387,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (last_event)
         {
@@ -3546,8 +3398,7 @@ namespace AdServer::RequestInfoSvcs
         std::cerr << "RequestInfoContainer::process_notice_buf_(" <<
           impression_info.request_id << "), start : this = " << this <<
           ", rs_moved = " << (request_reader.fraud() == RequestInfo::RS_MOVED ? 1 : 0) <<
-          ", request_done = " << request_reader.request_done() <<
-          std::endl;
+          ", request_done = " << request_reader.request_done() << std::endl;
 #       endif
 
         if (request_reader.fraud() == RequestInfo::RS_MOVED)
@@ -3567,8 +3418,7 @@ namespace AdServer::RequestInfoSvcs
         {
           init_profile = false;
 
-          request_writer.init(
-            mem_buf->membuf().data(), mem_buf->membuf().size());
+          request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
 #         ifdef DEBUG_OUTPUT_
           std::cerr << "RequestInfoContainer::process_notice_buf_(" <<
@@ -3725,8 +3575,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
 #       ifdef DEBUG_OUTPUT_
         std::cerr << "RequestInfoContainer::process_impression_buf_(" <<
@@ -3737,8 +3586,7 @@ namespace AdServer::RequestInfoSvcs
           ", request_reader.notice_received = " << request_reader.notice_received() <<
           ", rs_moved = " << (request_reader.fraud() != RequestInfo::RS_MOVED ? 1 : 0) <<
           ", request_reader.user_id = " << request_reader.user_id() <<
-          ", impression_info.user_id = " << impression_info.user_id <<
-          std::endl;
+          ", impression_info.user_id = " << impression_info.user_id << std::endl;
 #       endif
 
         if (last_event)
@@ -3752,17 +3600,14 @@ namespace AdServer::RequestInfoSvcs
 #         ifdef DEBUG_OUTPUT_
           std::cerr << "RequestInfoContainer::process_impression_buf_(" <<
             impression_info.request_id << "): this = " << this <<
-            ", point #1, notice_received = " << request_reader.notice_received() <<
-            std::endl;
+            ", point #1, notice_received = " << request_reader.notice_received() << std::endl;
 #         endif
-          request_writer.init(
-            mem_buf->membuf().data(), mem_buf->membuf().size());
+          request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
           if (move_enabled &&
              request_reader.request_done() &&
              !impression_info.user_id.is_null() &&
-             !(impression_info.user_id ==
-               AdServer::Commons::UserId(request_reader.user_id())))
+             !(impression_info.user_id == AdServer::Commons::UserId(request_reader.user_id())))
           {
             /*
             // this event can't be part of chain
@@ -3779,19 +3624,13 @@ namespace AdServer::RequestInfoSvcs
               request_process_delegate.process_rollback_clicks.empty());
             */
 
-            request_process_delegate.request_info->request_id =
-              impression_info.request_id;
-            request_process_delegate.request_info->fraud =
-              RequestInfo::RS_RESAVE;
+            request_process_delegate.request_info->request_id = impression_info.request_id;
+            request_process_delegate.request_info->fraud = RequestInfo::RS_RESAVE;
 
             // change profile
             request_writer.fraud() = RequestInfo::RS_MOVED;
             request_writer.user_id() = impression_info.user_id.to_string();
-            convert_impression_info_to_request_writer(
-              impression_info,
-              request_writer,
-              0,
-              false);
+            convert_impression_info_to_request_writer(impression_info, request_writer, 0, false);
             request_writer.request_done() = 0;
             /*
             // disable notice/impression_pub_revenue_type - it already applied
@@ -3834,9 +3673,7 @@ namespace AdServer::RequestInfoSvcs
               act_it != request_writer.post_impression_actions().end(); ++act_it)
             {
               delegate_process_post_impression_actions.push_back(
-                RequestPostActionInfo(
-                  impression_info.time,
-                  *act_it));
+                RequestPostActionInfo(impression_info.time, *act_it));
             }
 
             request_writer.post_impression_actions().clear();
@@ -3927,8 +3764,7 @@ namespace AdServer::RequestInfoSvcs
             }
             else // increase impression non considered
             {
-              request_writer.init(
-                mem_buf->membuf().data(), mem_buf->membuf().size());
+              request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
               request_writer.impression_non_considered() += 1;
               save_profile = true;
             }
@@ -3939,11 +3775,7 @@ namespace AdServer::RequestInfoSvcs
       {
         create_empty_stub(request_writer);
 
-        convert_impression_info_to_request_writer(
-          impression_info,
-          request_writer,
-          0,
-          false);
+        convert_impression_info_to_request_writer(impression_info, request_writer, 0, false);
 
         request_writer.impression_non_considered() = 1;
         save_profile = true;
@@ -3963,8 +3795,7 @@ namespace AdServer::RequestInfoSvcs
         ", request_writer.notice_received() = " << request_writer.notice_received() <<
         ", request_writer.click_non_considered() = " << request_writer.click_non_considered() <<
         ", mem_buf = " << (mem_buf.in () ? mem_buf->membuf().data() : nullptr) <<
-        ", mem_buf.size = " << (mem_buf.in () ? mem_buf->membuf().size() : 0) <<
-        std::endl;
+        ", mem_buf.size = " << (mem_buf.in () ? mem_buf->membuf().size() : 0) << std::endl;
 #     endif
 
       if (move_request)
@@ -3986,19 +3817,16 @@ namespace AdServer::RequestInfoSvcs
       if (!request_process_delegate.rollback_request_info.present())
       {
         // use final profile state
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
         convert_request_reader_to_request_info(
           request_process_delegate.rollback_request_info.fill(),
           request_reader);
-        request_process_delegate.rollback_request_info->request_id =
-          impression_info.request_id;
+        request_process_delegate.rollback_request_info->request_id = impression_info.request_id;
       }
 
       for (unsigned long i = 0; i < delegate_duplicate_impressions; ++i)
       {
-        request_process_delegate.process_rollback_impressions.push_back(
-          RequestInfo::RS_DUPLICATE);
+        request_process_delegate.process_rollback_impressions.push_back(RequestInfo::RS_DUPLICATE);
       }
     }
 
@@ -4055,8 +3883,7 @@ namespace AdServer::RequestInfoSvcs
     unsigned long delegate_process_action = 0;
 
 #   ifdef DEBUG_OUTPUT_
-    std::cerr << "RequestInfoContainer::process_click_buf_(" <<
-      request_id << ")" << std::endl;
+    std::cerr << "RequestInfoContainer::process_click_buf_(" << request_id << ")" << std::endl;
 #   endif
 
     try
@@ -4067,8 +3894,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (last_event)
         {
@@ -4092,8 +3918,7 @@ namespace AdServer::RequestInfoSvcs
         {
           init_profile = false;
 
-          request_writer.init(
-            mem_buf->membuf().data(), mem_buf->membuf().size());
+          request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
           if (request_reader.impression_verified())
           {
@@ -4171,8 +3996,7 @@ namespace AdServer::RequestInfoSvcs
       if (!request_process_delegate.rollback_request_info.present())
       {
         // use final profile state
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
         convert_request_reader_to_request_info(
           request_process_delegate.rollback_request_info.fill(),
           request_reader);
@@ -4223,8 +4047,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (last_event)
         {
@@ -4319,8 +4142,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (mem_buf)
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (request_reader.request_done())
         {
@@ -4333,8 +4155,7 @@ namespace AdServer::RequestInfoSvcs
             request_process_delegate.request_info->request_id = request_id;
           }
 
-          request_process_delegate.custom_actions.push_back(
-            adv_custom_action_info);
+          request_process_delegate.custom_actions.push_back(adv_custom_action_info);
         }
       }
     }
@@ -4367,8 +4188,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (last_event)
         {
@@ -4393,8 +4213,7 @@ namespace AdServer::RequestInfoSvcs
         {
           init_profile = false;
 
-          request_writer.init(
-            mem_buf->membuf().data(), mem_buf->membuf().size());
+          request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
           auto ins_it = std::lower_bound(
             request_writer.post_impression_actions().begin(),
@@ -4475,8 +4294,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(
-          mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         if (last_event)
         {

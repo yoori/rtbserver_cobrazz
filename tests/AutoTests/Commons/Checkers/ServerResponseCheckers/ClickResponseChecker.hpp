@@ -51,8 +51,7 @@ namespace AutoTest
      * @param throw on error flag.
      */
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(eh::Exception)*/;
 
   private:

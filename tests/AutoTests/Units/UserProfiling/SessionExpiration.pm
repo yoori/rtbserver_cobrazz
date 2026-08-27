@@ -14,12 +14,12 @@ sub init {
   my $account = $ns->create(Account =>
     { name => 1,
       role_id => DB::Defaults::instance()->advertiser_role });
-  
+
   my $channel = $ns->create(DB::BehavioralChannel->blank(
       account_id => $account,
       name => 1,
       url_list => $url,
-      behavioral_parameters => 
+      behavioral_parameters =>
         [ DB::BehavioralChannel::BehavioralParameter->blank(
            trigger_type => "U",
            minimum_visits => 10,

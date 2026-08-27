@@ -8,7 +8,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   site_id => DB::Entity::Type::link('DB::Site', unique => 1),
   creative_category_id => DB::Entity::Type::link('DB::CreativeCategory', unique => 1),
@@ -26,7 +26,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   site_id => DB::Entity::Type::link('DB::Site', unique => 1),
   creative_id => DB::Entity::Type::link('DB::Creative', unique => 1),
@@ -48,20 +48,20 @@ use constant WALLED_GARDEN =>  0x002;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   site_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
   site_url => DB::Entity::Type::string(default => 'www.unittest.com'),
   notes =>  DB::Entity::Type::string(default => ''),
-  account_id => 
-    DB::Entity::Type::link( 
+  account_id =>
+    DB::Entity::Type::link(
       'DB::Account',
-      default => sub { DB::Defaults::instance()->publisher_account }), 
-  freq_cap_id => DB::Entity::Type::link('DB::FreqCap', nullable => 1), 
-  no_ads_timeout => DB::Entity::Type::int(default => 0), 
-  flags => DB::Entity::Type::int(default => 0), 
-  status => DB::Entity::Type::status(), 
+      default => sub { DB::Defaults::instance()->publisher_account }),
+  freq_cap_id => DB::Entity::Type::link('DB::FreqCap', nullable => 1),
+  no_ads_timeout => DB::Entity::Type::int(default => 0),
+  flags => DB::Entity::Type::int(default => 0),
+  status => DB::Entity::Type::status(),
   qa_status => DB::Entity::Type::qa_status(),
   display_status_id => DB::Entity::Type::display_status('Site')
 };

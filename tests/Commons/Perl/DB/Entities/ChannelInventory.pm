@@ -7,7 +7,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   sdate => DB::Entity::Type::pq_date("current_date", unique => 1, is_auto => 0),
   channel_id => DB::Entity::Type::link('DB::BehavioralChannel', unique => 1),

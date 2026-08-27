@@ -14,9 +14,9 @@ sub new
   exists($params{'field'}) ||
     die "CsvUtils::Process::GainFloatGroup: not defined 'field' argument";
 
-  if(exists($params{'cmp'}))
+  if (exists($params{'cmp'}))
   {
-    if($params{'cmp'} ne 'string' && $params{'cmp'} ne 'numeric')
+    if ($params{'cmp'} ne 'string' && $params{'cmp'} ne 'numeric')
     {
       die "incorrect cmp value '" . $params{'cmp'} . "'";
     }
@@ -41,7 +41,7 @@ sub process
 
   my $label;
   my $orig_label = $row->[$self->{label_}];
-  if($orig_label eq '0' || lc($orig_label) eq 'false')
+  if ($orig_label eq '0' || lc($orig_label) eq 'false')
   {
     $label = 0;
   }
@@ -54,9 +54,9 @@ sub process
     die "Invalid label value: $orig_label";
   }
 
-  if($value ne '')
+  if ($value ne '')
   {
-    if(!exists($self->{values_}->{$value}))
+    if (!exists($self->{values_}->{$value}))
     {
       $self->{values_}->{$value} = Value->new(labels => 0, total => 0);
     }
@@ -64,13 +64,13 @@ sub process
     my $val_ref = $self->{values_}->{$value};
     $val_ref->total($val_ref->total() + 1);
 
-    if($label)
+    if ($label)
     {
       $val_ref->labels($val_ref->labels() + 1);
     }
 
     $self->{total_}->total($self->{total_}->total() + 1);
-    if($label)
+    if ($label)
     {
       $self->{total_}->labels($self->{total_}->labels() + 1);
     }
@@ -88,7 +88,7 @@ sub flush
   my $full_total = $self->{total_}->total();
 
   my @keys;
-  if($self->{cmp_} eq 'numeric')
+  if ($self->{cmp_} eq 'numeric')
   {
     @keys = sort{$a <=> $b}(keys(%{$self->{values_}}));
   }
@@ -121,7 +121,7 @@ sub flush
     my $p1 = $s2 > 0 ? $s2 / ($s1 + $s2) : 0.0; # freq after point
     my $p2 = $s4 > 0 ? $s4 / ($s3 + $s4) : 0.0; # freq before point
 
-    if($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
+    if ($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
     {
       die "assert: s1=$s1,s2=$s2,s3=$s3,s4=$s4";
     }
@@ -136,11 +136,11 @@ sub flush
 
     my $logloss = - ($false_part + $true_part);
 
-    if(!defined($min_logloss) || $min_logloss > $logloss)
+    if (!defined($min_logloss) || $min_logloss > $logloss)
     {
       $min_value = $value;
       $min_logloss = $logloss;
-      $freq_before_point = $p2; 
+      $freq_before_point = $p2;
       $freq_after_point = $p1;
       $min_cur_total = $cur_total;
     }
@@ -149,7 +149,7 @@ sub flush
     $cur_total += $val_ref->total();
   }
 
-  if(defined($min_logloss))
+  if (defined($min_logloss))
   {
     my @res;
 

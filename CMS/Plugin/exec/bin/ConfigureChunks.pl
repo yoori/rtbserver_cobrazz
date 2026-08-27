@@ -51,7 +51,7 @@ sub new
   my ($class, $msg) = @_;
   my $self = { MSG_ => $msg };
   bless($self, $class);
-  return $self;  
+  return $self;
 }
 
 sub stringify
@@ -67,7 +67,7 @@ sub new
   my ($class, $out, $verbose) = @_;
   my $self = { verbose_ => $verbose, verbose_out_ => $out };
   bless($self, $class);
-  return $self;  
+  return $self;
 }
 
 sub log_prefix
@@ -82,7 +82,7 @@ sub log_prefix
 sub trace
 {
   my ($this, @messages) = @_;
-  if($this->{verbose_})
+  if ($this->{verbose_})
   {
     my $now = [ Time::HiRes::gettimeofday() ];
     print {$this->{verbose_out_}} Logger::log_prefix("TRACE");
@@ -129,9 +129,9 @@ sub new
     print_ => $print };
 
   bless($self, $class);
-  
+
   $self->collect_chunks_info_($host_array_ref);
-  
+
   return $self;
 }
 
@@ -143,7 +143,7 @@ sub add
 
   foreach my $chunk(@$chunks)
   {
-    if(exists($this->{chunks_}->{$chunk->index()}))
+    if (exists($this->{chunks_}->{$chunk->index()}))
     {
       $this->{modifier_}->move(
         $chunk,
@@ -168,12 +168,12 @@ sub use_hosts
   my %new_hosts = map { $_ => 1 } @$host_array_ref;
   my %host_chunks_copy = %{$this->{host_chunks_}};
 
-  while(my ($host, $chunks) = each(%host_chunks_copy))
+  while (my ($host, $chunks) = each(%host_chunks_copy))
   {
-    if(!exists($new_hosts{$host}))
+    if (!exists($new_hosts{$host}))
     {
       my %host_chunks = %{$this->{host_chunks_}->{$host}};
-      while(my ($chunk_index, $chunk) = each(%host_chunks))
+      while (my ($chunk_index, $chunk) = each(%host_chunks))
       {
         push(@res, $this->unref_($chunk));
       }
@@ -192,7 +192,7 @@ sub remove_all
 {
   my ($this) = @_;
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
     foreach my $chunk(@$chunks)
     {
@@ -200,7 +200,7 @@ sub remove_all
     }
   }
 
-  while(my ($host) = each(%{$this->{host_chunks_}}))
+  while (my ($host) = each(%{$this->{host_chunks_}}))
   {
     $this->{host_chunks_}->{$host} = {};
   }
@@ -214,9 +214,9 @@ sub missed_chunks
 
   my @res;
 
-  for(my $chunk_index = 0; $chunk_index < $this->{chunks_number_}; ++$chunk_index)
+  for (my $chunk_index = 0; $chunk_index < $this->{chunks_number_}; ++$chunk_index)
   {
-    if(!exists($this->{chunks_}->{$chunk_index}))
+    if (!exists($this->{chunks_}->{$chunk_index}))
     {
       push(@res, $chunk_index);
     }
@@ -231,17 +231,17 @@ sub duplicated_chunks
 
   my %res;
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
-    if(@$chunks > 1)
+    if (@$chunks > 1)
     {
       $res{$chunk_index} = $chunks;
     }
   }
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
   {
-    if(@$chunks > 1)
+    if (@$chunks > 1)
     {
       $res{$chunk_index} = $chunks;
     }
@@ -256,25 +256,25 @@ sub out_of_range_chunks
 
   my @res;
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
-    if($chunk_index >= $this->{chunks_number_})
+    if ($chunk_index >= $this->{chunks_number_})
     {
       push(@res, @$chunks);
     }
   }
 
-  while(my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
+  while (my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
   {
-    if($chunk_index >= $this->{chunks_number_})
+    if ($chunk_index >= $this->{chunks_number_})
     {
       push(@res, $unmerged_chunk);
     }
   }
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
   {
-    if($chunk_index >= $this->{chunks_number_})
+    if ($chunk_index >= $this->{chunks_number_})
     {
       push(@res, @$chunks);
     }
@@ -302,14 +302,14 @@ sub old_chunks_count
   {
     foreach my $chunk(@$chunks)
     {
-      if($chunk->index() > $max_chunk_index)
+      if ($chunk->index() > $max_chunk_index)
       {
         $max_chunk_index = $chunk->index();
       }
 
-      if(defined($chunk->total_chunks()))
+      if (defined($chunk->total_chunks()))
       {
-        if(!defined($old_chunks_count))
+        if (!defined($old_chunks_count))
         {
           $old_chunks_count = $chunk->total_chunks();
         }
@@ -331,9 +331,9 @@ sub supply
   my ($this) = @_;
 
   my $ret = 0;
-  for(my $chunk_index = 0; $chunk_index < $this->{chunks_number_}; ++$chunk_index)
+  for (my $chunk_index = 0; $chunk_index < $this->{chunks_number_}; ++$chunk_index)
   {
-    if(!exists($this->{chunks_}->{$chunk_index}))
+    if (!exists($this->{chunks_}->{$chunk_index}))
     {
       my $min_loaded_host = $this->find_min_loaded_host_();
       my $chunk = new ChunkDescription(index => $chunk_index, host => $min_loaded_host);
@@ -345,7 +345,7 @@ sub supply
     else
     {
       my $chunks_array = $this->{chunks_}->{$chunk_index};
-      if(@$chunks_array > 1)
+      if (@$chunks_array > 1)
       {
         die "UserChunkSet::supply: chunk #$chunk_index duplicated:\n" .
           $this->state_as_string("  ");
@@ -375,7 +375,7 @@ sub as_string
   my $res = '';
   my $offset = defined $offset_val ? $offset_val : '';
 
-  while(my ($host, $chunks) = each(%{$this->{host_chunks_}}))
+  while (my ($host, $chunks) = each(%{$this->{host_chunks_}}))
   {
     $res .= "$offset$host(" . keys(%$chunks) . "): \n";
 
@@ -389,21 +389,21 @@ sub as_string
   }
 
   $res .= $offset . "Unmerged chunks: \n";
-  while(my ($chunk_index, $chunk) = each(%{$this->{unmerged_chunks_}}))
+  while (my ($chunk_index, $chunk) = each(%{$this->{unmerged_chunks_}}))
   {
     $res .= "$offset  Chunk # " . $chunk_index . ": => " .
       join(", ", @{$chunk->hosts()}) . ":" . $chunk->path() . "\n";
   }
 
   $res .= $offset . "Unfinished chunks: \n";
-  while(my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{unfinished_chunks_}}))
   {
     foreach my $chunk(@$chunks)
     {
       $res .= "$offset  " . $chunk->index(). " (" . $chunk->version() . ") => " .
         $chunk->host() . ":" . $chunk->path() . "\n";
     }
-  }  
+  }
 
   return $res;
 }
@@ -421,7 +421,7 @@ sub as_xml
   <cfg:hosts index_limit="$this->{chunks_number_}">
 END
 
-  while(my ($host, $chunks) = each(%{$this->{host_chunks_}}))
+  while (my ($host, $chunks) = each(%{$this->{host_chunks_}}))
   {
     $res .= "    <cfg:host name=\"$host\">\n";
     foreach my $chunk_index(sort keys %$chunks)
@@ -445,13 +445,13 @@ sub distribute_full_hosts
   my $ret = 0;
   my %host_chunks_copy = %{$this->{host_chunks_}};
 
-  while(my ($host, $chunks) = each(%host_chunks_copy))
+  while (my ($host, $chunks) = each(%host_chunks_copy))
   {
-    if($this->host_is_full_($host, $chunks))
+    if ($this->host_is_full_($host, $chunks))
     {
       my $move_chunks_count = scalar(keys(%$chunks)) - $this->{max_chunks_per_host_};
 
-      while((my ($chunk_index, $chunk) = each(%$chunks)) &&
+      while ((my ($chunk_index, $chunk) = each(%$chunks)) &&
         $move_chunks_count > 0)
       {
         my $min_loaded_host = $this->find_min_loaded_host_();
@@ -472,17 +472,17 @@ sub fill_incomplete_hosts
   my $ret = 0;
   my %host_chunks_copy = %{$this->{host_chunks_}};
 
-  while(my ($host, $chunks) = each(%host_chunks_copy))
+  while (my ($host, $chunks) = each(%host_chunks_copy))
   {
-    if($this->host_is_incomplete_($host, $chunks))
+    if ($this->host_is_incomplete_($host, $chunks))
     {
       my $move_chunks_count = $this->{min_chunks_per_host_} - scalar(keys(%$chunks));
 
-      for(my $i = 0; $i < $move_chunks_count; ++$i)
+      for (my $i = 0; $i < $move_chunks_count; ++$i)
       {
         my $max_loaded_host = $this->find_max_loaded_host_();
         my $max_loaded_host_chunks = $this->{host_chunks_}->{$max_loaded_host};
-        if(scalar(keys(%$max_loaded_host_chunks)) <= scalar(keys(%$chunks)))
+        if (scalar(keys(%$max_loaded_host_chunks)) <= scalar(keys(%$chunks)))
         {
           last;
         }
@@ -501,7 +501,7 @@ sub pack_chunks
 {
   my ($this, $old_chunks_count, $host_array_ref) = @_;
 
-  if(!$this->{modifier_}->can('chunks_to_merge') ||
+  if (!$this->{modifier_}->can('chunks_to_merge') ||
      !$this->{modifier_}->can('pack_extra_chunk'))
   {
     die LegalException->new(
@@ -512,9 +512,9 @@ sub pack_chunks
   my %source_chunks;
   my @source_chunks_to_remove;
 
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
-    if(@$chunks > 1)
+    if (@$chunks > 1)
     {
       die "UserChunkSet::pack_chunks: chunk #$chunk_index duplicated:\n" .
         $this->state_as_string("  ");
@@ -523,7 +523,7 @@ sub pack_chunks
     my $chunk = $chunks->[0];
     $source_chunks{$chunk_index} = $chunk;
 
-    if((defined($chunk->total_chunks()) &&
+    if ((defined($chunk->total_chunks()) &&
         $chunk->total_chunks() != $this->{chunks_number_}) ||
        $chunk_index >= $this->{chunks_number_})
     {
@@ -553,11 +553,11 @@ sub pack_chunks
   my %target_hosts;
   my %packed_target_hosts;
   my %packed_target_paths;
-  for(my $chunk_index = 0;
+  for (my $chunk_index = 0;
       $chunk_index < $this->{chunks_number_};
       ++$chunk_index)
   {
-    if(exists($this->{chunks_}->{$chunk_index}))
+    if (exists($this->{chunks_}->{$chunk_index}))
     {
       $target_hosts{$chunk_index} = $this->{chunks_}->{$chunk_index}->[0]->host();
     }
@@ -570,7 +570,7 @@ sub pack_chunks
   }
 
   my %packed_source_chunks_to_remove;
-  for(my $target_chunk_index = 0;
+  for (my $target_chunk_index = 0;
       $target_chunk_index < $this->{chunks_number_};
       ++$target_chunk_index)
   {
@@ -581,7 +581,7 @@ sub pack_chunks
 
     foreach my $source_chunk_index(@$source_chunk_indexes)
     {
-      if(!exists($source_chunks{$source_chunk_index}))
+      if (!exists($source_chunks{$source_chunk_index}))
       {
         next;
       }
@@ -591,13 +591,13 @@ sub pack_chunks
         $target_chunk_index,
         $target_hosts{$target_chunk_index});
       $packed_target_hosts{$target_chunk_index} = $target_hosts{$target_chunk_index};
-      if(defined($packed_target_path))
+      if (defined($packed_target_path))
       {
         $packed_target_paths{$target_chunk_index} = $packed_target_path;
       }
       ++$ret;
 
-      if($source_chunk_index >= $this->{chunks_number_})
+      if ($source_chunk_index >= $this->{chunks_number_})
       {
         $packed_source_chunks_to_remove{$source_chunk_index} = 1;
       }
@@ -611,7 +611,7 @@ sub pack_chunks
 
   foreach my $chunk(@source_chunks_to_remove)
   {
-    if(!exists($packed_source_chunks_to_remove{$chunk->index()}))
+    if (!exists($packed_source_chunks_to_remove{$chunk->index()}))
     {
       die "UserChunkSet::pack_chunks: chunk #" . $chunk->index() .
         " wasn't packed into any target chunk";
@@ -621,9 +621,9 @@ sub pack_chunks
     ++$ret;
   }
 
-  while(my ($chunk_index, $host) = each(%packed_target_hosts))
+  while (my ($chunk_index, $host) = each(%packed_target_hosts))
   {
-    if(exists($this->{unmerged_chunks_}->{$chunk_index}))
+    if (exists($this->{unmerged_chunks_}->{$chunk_index}))
     {
       push(@{$this->{unmerged_chunks_}->{$chunk_index}->hosts()}, $host);
     }
@@ -650,28 +650,28 @@ sub is_redistribution_required
   my $redistribution_required = 0;
   my $wrong_chunks_number = 0;
   my $err = 'Different chunks distribution: ';
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
     foreach my $chunk(@$chunks)
     {
-      if(!defined($chunk->total_chunks()))
+      if (!defined($chunk->total_chunks()))
       {
         $redistribution_required = 1;
-        if($prev_chunks_number < 0)
+        if ($prev_chunks_number < 0)
         {
           $prev_chunks_number = 0;
         }
         next;
       }
 
-      if($chunk->total_chunks() == $this->{chunks_number_})
+      if ($chunk->total_chunks() == $this->{chunks_number_})
       {
         next;
       }
 
       $redistribution_required = 1;
 
-      if($prev_chunks_number < 0)
+      if ($prev_chunks_number < 0)
       {
         $prev_chunks_number = $chunk->total_chunks();
       }
@@ -684,14 +684,14 @@ sub is_redistribution_required
     }
   }
 
-  if(%{$this->{unfinished_chunks_}} || %{$this->{unmerged_chunks_}})
+  if (%{$this->{unfinished_chunks_}} || %{$this->{unmerged_chunks_}})
   {
     $redistribution_required = 1;
-    while(my ($chunk_index, $unfinished_chunks) = each(%{$this->{unfinished_chunks_}}))
+    while (my ($chunk_index, $unfinished_chunks) = each(%{$this->{unfinished_chunks_}}))
     {
       foreach my $unfinished_chunk(@$unfinished_chunks)
       {
-        if($unfinished_chunk->total_chunks() != $this->{chunks_number_})
+        if ($unfinished_chunk->total_chunks() != $this->{chunks_number_})
         {
           $err .= $unfinished_chunk->host() . ' - chunk# ' . $unfinished_chunk->index() .
             ', chunks num - ' . $unfinished_chunk->total_chunks() . '; ';
@@ -700,9 +700,9 @@ sub is_redistribution_required
       }
     }
 
-    while(my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
+    while (my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
     {
-      if($unmerged_chunk->total_chunks() != $this->{chunks_number_})
+      if ($unmerged_chunk->total_chunks() != $this->{chunks_number_})
       {
         $err .= 'unmerged chunk# ' . $unmerged_chunk->index() .
           ', chunks num - ' . $unmerged_chunk->total_chunks() . '; ';
@@ -711,7 +711,7 @@ sub is_redistribution_required
     }
   }
 
-  if($wrong_chunks_number)
+  if ($wrong_chunks_number)
   {
     die LegalException->new($err);
   }
@@ -724,11 +724,11 @@ sub divide_chunks
   my ($this) = @_;
 
   # process chunks that already divided
-  while(my ($chunk_index, $unfinished_chunks) = each(%{$this->{unfinished_chunks_}}))
+  while (my ($chunk_index, $unfinished_chunks) = each(%{$this->{unfinished_chunks_}}))
   {
     foreach my $unfinished_chunk(@$unfinished_chunks)
     {
-      if(exists($this->{chunks_}->{$unfinished_chunk->index()}))
+      if (exists($this->{chunks_}->{$unfinished_chunk->index()}))
       {
         my $chunk = @{$this->{chunks_}->{$unfinished_chunk->index()}}[0];
         $this->unref_($chunk);
@@ -739,11 +739,11 @@ sub divide_chunks
   }
 
   # divide chunks that have unexpected divider (total_chunks)
-  while(my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
+  while (my ($chunk_index, $chunks) = each(%{$this->{chunks_}}))
   {
     foreach my $chunk(@$chunks)
     {
-      if(!defined($chunk->total_chunks()) ||
+      if (!defined($chunk->total_chunks()) ||
          $chunk->total_chunks() != $this->{chunks_number_})
       {
         $this->{modifier_}->divide_chunk($chunk);
@@ -759,8 +759,8 @@ sub divide_chunks
 sub merge_chunks
 {
   my ($this, $host_array_ref) = @_;
-  
-  if(!%{$this->{unmerged_chunks_}})
+
+  if (!%{$this->{unmerged_chunks_}})
   {
     return 0;
   }
@@ -770,9 +770,9 @@ sub merge_chunks
   my %new_hosts = map { $_ => 1 } @$host_array_ref;
 
   my %unmerged_chunks = %{$this->{unmerged_chunks_}};
-  while(my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
+  while (my ($chunk_index, $unmerged_chunk) = each(%{$this->{unmerged_chunks_}}))
   {
-    if(exists($this->{chunks_}->{$chunk_index}))
+    if (exists($this->{chunks_}->{$chunk_index}))
     {
       my $new_chunk_ref = $this->{modifier_}->merge_chunk(
         $this->{chunks_}->{$chunk_index}->[0]->host(), $unmerged_chunk);
@@ -785,7 +785,7 @@ sub merge_chunks
 
   my @chunks_to_merge = sort {
       scalar(@{$b->hosts()}) <=> scalar(@{$a->hosts()}) ||
-      $b->index() <=> $a->index() 
+      $b->index() <=> $a->index()
     } values(%{$this->{unmerged_chunks_}});
 
   for (my $i = $#chunks_to_merge; $i > -1; $i--)
@@ -796,12 +796,12 @@ sub merge_chunks
     {
       $merged = 0;
 
-      if(!exists($new_hosts{$host}) ||
+      if (!exists($new_hosts{$host}) ||
          $this->host_is_full_($host))
       {
         next;
       }
-  
+
       my $new_chunk_ref = $this->{modifier_}->merge_chunk($host, $chunk_to_merge);
 
       push(@{$this->{chunks_}->{$new_chunk_ref->index()}}, $new_chunk_ref);
@@ -811,7 +811,7 @@ sub merge_chunks
       last;
     }
 
-    if($merged)
+    if ($merged)
     {
       splice(@chunks_to_merge, $i, 1);
       ++$ret;
@@ -831,7 +831,7 @@ sub merge_chunks
   }
 
   $this->{unmerged_chunks_} = {};
-  return $ret; 
+  return $ret;
 }
 
 sub unref_
@@ -842,14 +842,15 @@ sub unref_
   my $chunks_array = $this->{chunks_}->{$chunk->index()};
   foreach my $delete_chunk(@$chunks_array)
   {
-    if($delete_chunk->host() eq $chunk->host())
+    if ($delete_chunk->host() eq $chunk->host())
     {
       splice(@$chunks_array, $i, 1);
       last;
     }
     ++$i;
   }
-  if(scalar(@{$this->{chunks_}->{$chunk->index()}}) == 0)
+
+  if (scalar(@{$this->{chunks_}->{$chunk->index()}}) == 0)
   {
     delete $this->{chunks_}->{$chunk->index()};
   }
@@ -860,7 +861,7 @@ sub move_
 {
   my ($this, $chunk, $target_host) = @_;
 
-  if(exists($this->{host_chunks_}->{$chunk->host()}) &&
+  if (exists($this->{host_chunks_}->{$chunk->host()}) &&
      exists($this->{host_chunks_}->{$chunk->host()}->{$chunk->index()}))
   {
     # owned chunk
@@ -878,7 +879,7 @@ sub host_is_full_
 {
   my ($this, $host, $chunks) = @_;
 
-  if(!defined($chunks))
+  if (!defined($chunks))
   {
     return keys %{ $this->{host_chunks_}->{$host} } >= $this->{max_chunks_per_host_};
   }
@@ -890,7 +891,7 @@ sub host_is_incomplete_
 {
   my ($this, $host, $chunks) = @_;
 
-  if(!defined($chunks))
+  if (!defined($chunks))
   {
     return keys %{ $this->{host_chunks_}->{$host} } < $this->{min_chunks_per_host_};
   }
@@ -903,10 +904,10 @@ sub find_min_loaded_host_
   my ($this) = @_;
   my $min_chunks = undef;
   my $host_with_min_chunks = undef;
-  while(my ($host, $chunks) = each(%{$this->{host_chunks_}}))
+  while (my ($host, $chunks) = each(%{$this->{host_chunks_}}))
   {
     my $chunks_size = scalar(keys(%$chunks));
-    if(!defined($min_chunks) ||
+    if (!defined($min_chunks) ||
        $chunks_size < $min_chunks ||
        $chunks_size == $min_chunks && $host lt $host_with_min_chunks
          # select host with minimal host name (lexicaly) for determined behavior
@@ -924,10 +925,10 @@ sub find_max_loaded_host_
   my ($this) = @_;
   my $max_chunks = undef;
   my $host_with_max_chunks = undef;
-  while(my ($host, $chunks) = each(%{$this->{host_chunks_}}))
+  while (my ($host, $chunks) = each(%{$this->{host_chunks_}}))
   {
     my $chunks_size = scalar(keys(%$chunks));
-    if(!defined($max_chunks) ||
+    if (!defined($max_chunks) ||
        $chunks_size > $max_chunks ||
        $chunks_size == $max_chunks && $host lt $host_with_max_chunks)
     {
@@ -944,9 +945,9 @@ sub find_min_loaded_host_in_counts_
   my $min_chunks = undef;
   my $host_with_min_chunks = undef;
 
-  while(my ($host, $chunks_size) = each(%$host_chunks))
+  while (my ($host, $chunks_size) = each(%$host_chunks))
   {
-    if(!defined($min_chunks) ||
+    if (!defined($min_chunks) ||
        $chunks_size < $min_chunks ||
        $chunks_size == $min_chunks && $host lt $host_with_min_chunks)
     {
@@ -955,7 +956,7 @@ sub find_min_loaded_host_in_counts_
     }
   }
 
-  if(!defined($host_with_min_chunks))
+  if (!defined($host_with_min_chunks))
   {
     die "UserChunkSet::find_min_loaded_host_in_counts_: empty host set";
   }
@@ -974,15 +975,15 @@ sub collect_chunks_info_
 
   foreach my $host(@$host_array_ref)
   {
-    if(!exists($host_chunks{$host}))
+    if (!exists($host_chunks{$host}))
     {
       my ($host_chunks_ref, $host_unmerged_chunks_ref, $host_unfinished_chunks_ref) =
         $this->{modifier_}->exists_chunks($host);
 
       $host_chunks{$host} = $host_chunks_ref;
-      while(my ($chunk_index, $chunk) = each(%$host_chunks_ref))
+      while (my ($chunk_index, $chunk) = each(%$host_chunks_ref))
       {
-        if(exists($chunks{$chunk_index}))
+        if (exists($chunks{$chunk_index}))
         {
           push(@{$chunks{$chunk_index}}, $chunk);
         }
@@ -992,9 +993,9 @@ sub collect_chunks_info_
         }
       }
 
-      while(my ($chunk_index, $unmerged_chunk) = each(%$host_unmerged_chunks_ref))
+      while (my ($chunk_index, $unmerged_chunk) = each(%$host_unmerged_chunks_ref))
       {
-        if(exists($unmerged_chunks{$chunk_index}))
+        if (exists($unmerged_chunks{$chunk_index}))
         {
           push(@{$unmerged_chunks{$chunk_index}->hosts()}, @{$unmerged_chunk->hosts()}[0]);
         }
@@ -1004,9 +1005,9 @@ sub collect_chunks_info_
         }
       }
 
-      while(my ($chunk_index, $unfinished_chunk) = each(%$host_unfinished_chunks_ref))
+      while (my ($chunk_index, $unfinished_chunk) = each(%$host_unfinished_chunks_ref))
       {
-        if(exists($unfinished_chunks{$chunk_index}))
+        if (exists($unfinished_chunks{$chunk_index}))
         {
           push(@{$unfinished_chunks{$chunk_index}}, $unfinished_chunk);
         }
@@ -1032,7 +1033,7 @@ use Args;
 binmode(STDOUT, ":utf8");
 binmode(STDERR, ":utf8");
 
-if(@ARGV < 1)
+if (@ARGV < 1)
 {
   die $usage . "\nError: command not defined.";
 }
@@ -1059,17 +1060,17 @@ eval
 
   my $environment_cmd = (defined $args->{'environment'}) ? ". " . $args->{'environment'} . " && " : "";
 
-  if(!defined $args->{'modifier'})
+  if (!defined $args->{'modifier'})
   {
     die "modifier package is not specified";
   }
-  
+
   my $modifier_module = $args->{'modifier'};
-  
-  if(exists $args->{'transport'})
+
+  if (exists $args->{'transport'})
   {
     my $transport = $args->{'transport'};
-    if($transport =~ m/^test:(.*)$/)
+    if ($transport =~ m/^test:(.*)$/)
     {
       $test_mode = 1;
       $test_folder_path = $1;
@@ -1084,12 +1085,12 @@ eval
     }
   }
 
-  if(!defined($chunks_count) || $chunks_count eq 0)
+  if (!defined($chunks_count) || $chunks_count eq 0)
   {
     die "chunks_count defined as zero.";
   }
 
-  if(scalar @target_hosts eq 0)
+  if (scalar @target_hosts eq 0)
   {
     die "chunk hosts is empty.";
   }
@@ -1099,7 +1100,7 @@ eval
   {
     my $modifier_exec_impl;
 
-    if($test_mode)
+    if ($test_mode)
     {
       $modifier_exec_impl = new Common::ModifierExecTestImpl(
         $chunks_root,
@@ -1141,9 +1142,9 @@ eval
 
   my $xml = '';
 
-  if($command eq 'check')
+  if ($command eq 'check')
   {
-    if(reconfigure_chunks(
+    if (reconfigure_chunks(
       $logger,
       $chunks_count,
       [ @check_hosts, @target_hosts ],
@@ -1172,9 +1173,9 @@ eval
     die "Unknown command '$command'\n";
   }
 
-  if(defined($args->{'xml-out'}))
+  if (defined($args->{'xml-out'}))
   {
-    if($args->{'xml-out'} eq '-')
+    if ($args->{'xml-out'} eq '-')
     {
       print STDOUT $xml;
     }
@@ -1184,10 +1185,10 @@ eval
       print XML_FILE $xml;
       close XML_FILE;
     }
-  }    
+  }
 }; # eval
 
-if($@)
+if ($@)
 {
   if ($@->isa('LegalException'))
   {
@@ -1212,12 +1213,12 @@ sub packed_seq_string
   my $res = '';
   foreach my $i(@$seq)
   {
-    if(defined $seq_first_val)
+    if (defined $seq_first_val)
     {
-      if($i != $seq_last_val + 1)
+      if ($i != $seq_last_val + 1)
       {
         # close sequence
-        if($seq_first_val == $seq_last_val)
+        if ($seq_first_val == $seq_last_val)
         {
           $res = $res . (length($res) > 0 ? ',' : '') . $seq_first_val;
         }
@@ -1237,7 +1238,7 @@ sub packed_seq_string
     $seq_last_val = $i;
   }
 
-  if($seq_first_val == $seq_last_val)
+  if ($seq_first_val == $seq_last_val)
   {
     $res = $res . (length($res) > 0 ? ',' : '') . $seq_first_val;
   }
@@ -1290,14 +1291,14 @@ sub reconfigure_chunks
   # check chunks with indexes outside expected range
   {
     my @out_of_range_chunks = $chunk_set->out_of_range_chunks();
-    if(!$pack_chunks && scalar @out_of_range_chunks > 0)
+    if (!$pack_chunks && scalar @out_of_range_chunks > 0)
     {
       my $err = "Chunks with index >= chunks-count ($new_chunks_number): ";
       my $first = 1;
       foreach my $chunk(@out_of_range_chunks)
       {
         $err .= (defined($first) ? "" : ", ") . "chunk #" . $chunk->index();
-        if(defined($chunk->host()))
+        if (defined($chunk->host()))
         {
           $err .= " at " . $chunk->host();
         }
@@ -1305,7 +1306,8 @@ sub reconfigure_chunks
         {
           $err .= " at " . join(", ", @{$chunk->hosts()});
         }
-        if(defined($chunk->path()))
+
+        if (defined($chunk->path()))
         {
           $err .= " (" . $chunk->path() . ")";
         }
@@ -1318,7 +1320,7 @@ sub reconfigure_chunks
   # check missed chunks
   {
     my @missed_chunks = $chunk_set->missed_chunks();
-    if((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 &&
+    if ((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 &&
          scalar @missed_chunks > 0 && $force == 0)
     {
       die LegalException->new("Missed chunks: " . packed_seq_string(\@missed_chunks) .
@@ -1330,7 +1332,7 @@ sub reconfigure_chunks
   {
     my $dup_chunks = $chunk_set->duplicated_chunks();
 
-    if(scalar keys(%$dup_chunks) > 0)
+    if (scalar keys(%$dup_chunks) > 0)
     {
       my $err = 'Duplicated chunks: ';
       my $first = 1;
@@ -1350,9 +1352,9 @@ sub reconfigure_chunks
   }
 
   my $chunks_are_packed = 0;
-  if($pack_chunks)
+  if ($pack_chunks)
   {
-    if((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
+    if ((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
     {
       die LegalException->new("Number of chunks is changed. " .
         "Use 'force' option for create new chunks");
@@ -1370,7 +1372,7 @@ sub reconfigure_chunks
   }
   elsif($chunk_set->is_redistribution_required())
   {
-    if((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
+    if ((defined $dry_run && $dry_run > 0 ? 1 : 0) != 1 && $force == 0)
     {
       die LegalException->new("Number of chunks is changed. " .
         "Use 'force' option for create new chunks");
@@ -1382,7 +1384,7 @@ sub reconfigure_chunks
   }
 
   my $chunks_from_removed_hosts = [];
-  if(!$chunks_are_packed)
+  if (!$chunks_are_packed)
   {
     $logger->trace("To collect chunks at removed hosts...");
     $chunks_from_removed_hosts = $chunk_set->use_hosts($new_hosts_ref);
@@ -1396,7 +1398,7 @@ sub reconfigure_chunks
     "modified");
   $ret += $local_ret;
 
-  if(!$chunks_are_packed)
+  if (!$chunks_are_packed)
   {
     $logger->trace("To move chunks from removed hosts...");
     $local_ret = $chunk_set->add($chunks_from_removed_hosts);
@@ -1427,7 +1429,7 @@ sub reconfigure_chunks
     "modified");
   $ret += $local_ret;
 
-  if(defined($xml_out))
+  if (defined($xml_out))
   {
     $$xml_out = $chunk_set->as_xml();
   }

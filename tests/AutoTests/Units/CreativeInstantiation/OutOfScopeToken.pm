@@ -13,12 +13,12 @@ sub init
   my $size = $ns->create(CreativeSize => {
     name => 1 ,
     max_text_creatives => 2});
-  
+
   my $tag_cpm = 2.0;
- 
+
   # keywords
   my $keyword = make_autotest_name($ns, "keyword");
-  
+
   # text advertising creatives
   my $account = $ns->create(Account => {
     name => 1,
@@ -37,10 +37,10 @@ sub init
   $ns->create(
     DB::BehavioralChannel::BehavioralParameter->blank(
       channel_id => $campaign->{channel_id},
-      trigger_type => "P", 
+      trigger_type => "P",
       time_to => 3 * 60 * 60 ));
 
-  
+
   my $tag = $ns->create(PricedTag =>
                         { name => 1,
                           site_id => $campaign->{Site}[0]->{site_id},
@@ -48,9 +48,9 @@ sub init
                           cpm => $tag_cpm});
 
 
-  my $option = $ns->create(Options => { 
+  my $option = $ns->create(Options => {
     token => 'DESCRIPTION1',
-    option_group_id => 
+    option_group_id =>
       DB::Defaults::instance()->text_option_group,
     template_id => DB::Defaults::instance()->text_template,
     });
@@ -60,7 +60,7 @@ sub init
   $ns->output("TAG", $tag);
   $ns->output("CREATIVE", $campaign->{creative_id});
   $ns->output("OPTION", $option);
-   
+
 }
 
 1;

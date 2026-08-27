@@ -582,30 +582,21 @@ namespace AdServer::CampaignSvcs
       using CampaignFreqArray = Generics::MonoVector<CampaignFreqInfo>;
 
       GetAdRequest()
-        : GetAdRequest(
-            std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
+        : GetAdRequest(std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
       {}
 
       explicit GetAdRequest(std::shared_ptr<Generics::MonoAllocatorArena> arena)
         : arena_(arena ?
             std::move(arena) :
             std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
-          ad_slots(
-            Generics::mono_allocator<AdSlotRequestPtr>(arena_.get())),
-          publisher_account_ids(
-            Generics::mono_allocator<unsigned long>(arena_.get())),
-          channels(
-            Generics::mono_allocator<ChannelId>(arena_.get())),
-          seq_orders(
-            Generics::mono_allocator<SeqOrderInfo>(arena_.get())),
-          campaign_freqs(
-            Generics::mono_allocator<CampaignFreqInfo>(arena_.get())),
-          full_freq_caps(
-            Generics::mono_allocator<unsigned long>(arena_.get())),
-          ccg_keywords(
-            Generics::mono_allocator<CCGKeywordInfo>(arena_.get())),
-          exclude_pubpixel_accounts(
-            Generics::mono_allocator<unsigned long>(arena_.get()))
+          ad_slots(Generics::mono_allocator<AdSlotRequestPtr>(arena_.get())),
+          publisher_account_ids(Generics::mono_allocator<unsigned long>(arena_.get())),
+          channels(Generics::mono_allocator<ChannelId>(arena_.get())),
+          seq_orders(Generics::mono_allocator<SeqOrderInfo>(arena_.get())),
+          campaign_freqs(Generics::mono_allocator<CampaignFreqInfo>(arena_.get())),
+          full_freq_caps(Generics::mono_allocator<unsigned long>(arena_.get())),
+          ccg_keywords(Generics::mono_allocator<CCGKeywordInfo>(arena_.get())),
+          exclude_pubpixel_accounts(Generics::mono_allocator<unsigned long>(arena_.get()))
       {}
 
       GetAdRequest(const GetAdRequest&) = delete;
@@ -928,8 +919,7 @@ namespace AdServer::CampaignSvcs
 
       explicit RequestResultParams(std::shared_ptr<Generics::MonoAllocatorArena> arena)
         : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
-          hit_keywords(Generics::mono_allocator<
-            CampaignKeywordMap::value_type>(arena_.get())),
+          hit_keywords(Generics::mono_allocator<CampaignKeywordMap::value_type>(arena_.get())),
           overlay_width(0),
           overlay_height(0)
       {}
@@ -984,13 +974,10 @@ namespace AdServer::CampaignSvcs
       std::shared_ptr<Generics::MonoAllocatorArena> arena_;
 
     public:
-      explicit AdSlotContext(
-        std::shared_ptr<Generics::MonoAllocatorArena> arena =
-          nullptr)
+      explicit AdSlotContext(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
         : arena_(arena ?
             std::move(arena) :
-            std::make_shared<Generics::MonoAllocatorArena>(
-              ARENA_INITIAL_SIZE)),
+            std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE)),
           test_request(false),
           full_freq_caps(arena_.get()),
           result_full_freq_caps(arena_.get()),
@@ -1029,9 +1016,7 @@ namespace AdServer::CampaignSvcs
   public:
     struct InstantiateParams
     {
-      InstantiateParams(
-        const AdServer::Commons::Optional<unsigned long>&
-          user_id_hash_mod_val)
+      InstantiateParams(const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod_val)
         : user_id_hash_mod(user_id_hash_mod_val),
           generate_pubpixel_accounts(false),
           enabled_notice(false),
@@ -1042,9 +1027,7 @@ namespace AdServer::CampaignSvcs
           init_source_macroses(true)
       {}
 
-      InstantiateParams(
-        const AdServer::Commons::UserId& user_id,
-        bool enabled_notice_val)
+      InstantiateParams(const AdServer::Commons::UserId& user_id, bool enabled_notice_val)
         : generate_pubpixel_accounts(false),
           enabled_notice(enabled_notice_val),
           video_width(0),
@@ -1055,8 +1038,7 @@ namespace AdServer::CampaignSvcs
       {
         if (!user_id.is_null())
         {
-          user_id_hash_mod =
-            AdServer::LogProcessing::user_id_distribution_hash(user_id);
+          user_id_hash_mod = AdServer::LogProcessing::user_id_distribution_hash(user_id);
         }
       }
 
@@ -1093,9 +1075,7 @@ namespace AdServer::CampaignSvcs
 
     struct ConfirmCreativeAmount
     {
-      ConfirmCreativeAmount(
-        unsigned long cc_id_val,
-        const RevenueDecimal& ctr_val)
+      ConfirmCreativeAmount(unsigned long cc_id_val, const RevenueDecimal& ctr_val)
         noexcept;
 
       unsigned long cc_id;
@@ -1346,9 +1326,7 @@ namespace AdServer::CampaignSvcs
 
     static
     const Tag::Size*
-    match_creative_by_size_(
-      const Tag* tag,
-      const Creative* creative)
+    match_creative_by_size_(const Tag* tag, const Creative* creative)
       noexcept;
 
     void
@@ -1385,8 +1363,7 @@ namespace AdServer::CampaignSvcs
       noexcept;
 
     void
-    precalculate_pub_pixel_accounts_(
-      CampaignConfig* campaign_config)
+    precalculate_pub_pixel_accounts_(CampaignConfig* campaign_config)
       /*throw(eh::Exception)*/;
 
     template<typename PredProviderType>
@@ -1426,9 +1403,7 @@ namespace AdServer::CampaignSvcs
 
     // config manips
     static void
-    fill_contract_(
-      ::AdServer::CampaignSvcs::ContractInfo& contract_info,
-      const Contract& contract)
+    fill_contract_(::AdServer::CampaignSvcs::ContractInfo& contract_info, const Contract& contract)
       noexcept;
 
   protected:
@@ -1511,8 +1486,7 @@ namespace AdServer::CampaignSvcs
       ostr << "waiting configuration, ";
     }
     ostr << "campaigns " <<
-      indexing_progress_.loaded_campaign_count << "/" <<
-      indexing_progress_.common_campaign_count;
+      indexing_progress_.loaded_campaign_count << "/" << indexing_progress_.common_campaign_count;
     res = ostr.str();
   }
 
@@ -1524,8 +1498,7 @@ namespace AdServer::CampaignSvcs
   {
     for (const auto& triggered_channel : triggered_channels)
     {
-      res.insert(std::make_pair(
-        triggered_channel.channel_id, triggered_channel.weight));
+      res.insert(std::make_pair(triggered_channel.channel_id, triggered_channel.weight));
     }
   }
 

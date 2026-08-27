@@ -90,8 +90,7 @@ namespace
 
           const bool notify =
             state->failed.load(std::memory_order_acquire) ||
-            in_flight == 0 ||
-            completed_since_wait >= state->wake_threshold;
+            in_flight == 0 || completed_since_wait >= state->wake_threshold;
 
           if (notify)
           {
@@ -166,9 +165,7 @@ namespace
   private:
     std::size_t take_completed_i_()
     {
-      return state_->completed_since_wait.exchange(
-        0,
-        std::memory_order_acq_rel);
+      return state_->completed_since_wait.exchange(0, std::memory_order_acq_rel);
     }
 
   private:
@@ -414,8 +411,7 @@ namespace AdServer::RequestInfoSvcs
     static const char* FUN = "LogRecordFetcherBase::process()";
 
     // file guard must be destroyed after moving file into errors store
-    LogProcessing::FileReceiver::FileGuard_var file =
-      ReferenceCounting::add_ref(file_ptr);
+    LogProcessing::FileReceiver::FileGuard_var file = ReferenceCounting::add_ref(file_ptr);
     AdServer::LogProcessing::LogFileNameInfo name_info;
 
     try
@@ -438,8 +434,7 @@ namespace AdServer::RequestInfoSvcs
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't delete file '" << file->full_path() << "'";
-          log_errors_->report_error(
-            Generics::ActiveObjectCallback::ERROR, ostr.str());
+          log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
       }
     }
@@ -458,8 +453,7 @@ namespace AdServer::RequestInfoSvcs
         catch (const eh::Exception& store_ex)
         {
           ostr << FUN << store_ex.what() << " Can't copy the file '" <<
-            file->full_path() << "' to the error folder. Initial error: " <<
-            ex.what();
+            file->full_path() << "' to the error folder. Initial error: " << ex.what();
         }
 
         ostr << " exception on file '" << file->file_name() << "':" << ex.what();
@@ -499,8 +493,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught eh::Exception: " << ex.what();
-      log_errors_->report_error(
-        Generics::ActiveObjectCallback::ERROR, ostr.str());
+      log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
     }
 
     return Generics::Time::get_time_of_day() + check_period_;
@@ -521,20 +514,16 @@ namespace AdServer::RequestInfoSvcs
       path.assign(file_name, ptr + 1);
     }
 
-    const std::string new_file_name =
-      AdServer::LogProcessing::restore_log_file_name(info, path);
+    const std::string new_file_name = AdServer::LogProcessing::restore_log_file_name(info, path);
 
     if (new_file_name != file_name)
     {
       if (::rename(file_name, new_file_name.c_str()))
       {
         Stream::Error ostr;
-        ostr << FUN << ": Can't move '" << file_name <<
-          "' to '" << new_file_name << "'";
+        ostr << FUN << ": Can't move '" << file_name << "' to '" << new_file_name << "'";
 
-        log_errors_->report_error(
-          Generics::ActiveObjectCallback::ERROR,
-          ostr.str());
+        log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
       }
     }
   }
@@ -706,8 +695,7 @@ namespace AdServer::RequestInfoSvcs
       Generics::ActiveObjectCallback* callback,
       RequestContainerProcessor* request_container_processor)
       : callback_(ReferenceCounting::add_ref(callback)),
-        request_processor_(
-          ReferenceCounting::add_ref(request_container_processor))
+        request_processor_(ReferenceCounting::add_ref(request_container_processor))
     {}
 
     RequestRecordProcessor(const RequestRecordProcessor& r) noexcept
@@ -716,9 +704,7 @@ namespace AdServer::RequestInfoSvcs
         request_processor_(ReferenceCounting::add_ref(r.request_processor_))
     {}
 
-    void operator()(
-      const AdServer::LogProcessing::
-      RequestTraits::CollectorType::DataT& req) const
+    void operator()(const AdServer::LogProcessing::RequestTraits::CollectorType::DataT& req) const
     {
       RequestInfo request_info(req.request_id());
 
@@ -1073,9 +1059,7 @@ namespace AdServer::RequestInfoSvcs
       : request_processor_(ReferenceCounting::add_ref(request_container_processor))
     {}
 
-    void operator()(
-      const AdServer::LogProcessing::
-      ImpressionTraits::CollectorType::DataT& req)
+    void operator()(const AdServer::LogProcessing::ImpressionTraits::CollectorType::DataT& req)
       const
     {
       if (req.request_type() == 'C')

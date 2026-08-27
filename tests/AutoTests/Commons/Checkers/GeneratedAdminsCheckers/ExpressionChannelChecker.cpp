@@ -31,27 +31,20 @@ namespace AutoTest
     if (expected_.has_status())
     {
       // To calc new account display status
-      AutoTest::ORM::update_display_status(
-        test_, "CHANNEL", static_cast<int>(channel_id_));
+      AutoTest::ORM::update_display_status(test_, "CHANNEL", static_cast<int>(channel_id_));
     }
 
     AdminExistCheck remote_exists =
       !expected_.has_status() ||
-         expected_.status() == "A" ||
-           expected_.status() == "W"?
-        exists_: AEC_NOT_EXISTS;
+         expected_.status() == "A" || expected_.status() == "W"? exists_: AEC_NOT_EXISTS;
 
     AdminsArray<ExpressionChannelAdmin, CT_ALL> central_admins;
 
-    central_admins.initialize(test_,
-      CTE_CENTRAL, STE_CAMPAIGN_SERVER,
-      channel_id_);
+    central_admins.initialize(test_, CTE_CENTRAL, STE_CAMPAIGN_SERVER, channel_id_);
 
     AdminsArray<ExpressionChannelAdmin, CT_ALL> remote_admins;
 
-    remote_admins.initialize(test_,
-      CTE_ALL_REMOTE, STE_CAMPAIGN_SERVER,
-      channel_id_);
+    remote_admins.initialize(test_, CTE_ALL_REMOTE, STE_CAMPAIGN_SERVER, channel_id_);
 
     if (central_admins.empty() && remote_admins.empty())
     {
@@ -63,10 +56,7 @@ namespace AutoTest
 
     return
       (central_admins.empty() ||
-        admin_checker(
-          central_admins,
-          expected_,
-          exists_).
+        admin_checker(central_admins, expected_, exists_).
             check(throw_error)) &&
       (remote_admins.empty() ||
         admin_checker(

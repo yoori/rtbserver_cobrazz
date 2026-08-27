@@ -1,8 +1,6 @@
 #include "VISParamTest.hpp"
 
-REFLECT_UNIT(VISParamTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(VISParamTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 typedef AutoTest::AdClient AdClient;
 typedef AutoTest::NSLookupRequest NSLookupRequest;
@@ -33,47 +31,37 @@ VISParamTest::case01_vis_param_tests()
 
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case01 vis is absent");
 
   request.vis = "-1";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case01 vis = -1");
 
   request.vis = "0";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must select no creative case01 vis = 0");
 
   request.vis = "100";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case01 vis = 100");
 
   request.vis = "101";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case01 vis = 101");
 
   request.vis = "01";
   client.process_request(request);
   FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must select no creative case01 vis = 01");
 
 }
@@ -109,9 +97,7 @@ VISParamTest::case02_ad_selection_based_on_visibility_filter()
   request.vis = "0";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc1,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc1, client.debug_info.ccid).check(),
     "must select expected creative case02 vis = 0");
 
   request.tid = tag2;
@@ -121,16 +107,13 @@ VISParamTest::case02_ad_selection_based_on_visibility_filter()
   request.vis = "40";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must select no creative case02 vis = 40");
 
   request.vis = "60";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc2,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc2, client.debug_info.ccid).check(),
     "must select expected creative case02 vis = 60");
 
   request.tid = tag4;
@@ -139,9 +122,7 @@ VISParamTest::case02_ad_selection_based_on_visibility_filter()
   request.vis = "100";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc3,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc3, client.debug_info.ccid).check(),
     "must select expected creative case02 vis = 100");
 
   request.tid = tag3;
@@ -151,16 +132,12 @@ VISParamTest::case02_ad_selection_based_on_visibility_filter()
   request.vis = "49";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc2,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc2, client.debug_info.ccid).check(),
     "must select expected creative case02 vis = 49");
   request.vis = "50";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc2,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc2, client.debug_info.ccid).check(),
     "must select expected creative case02 vis = 50");
 
 }
@@ -188,33 +165,26 @@ VISParamTest::case03_publisher_inventory_mode()
   request.vis = "0";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must select expected creative case03 vis = 0");
 
   request.vis = "50";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case03 vis = 50");
 
   request.vis = "100";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case03 vis = 100");
 
   request.tid = tag2;
   request.vis = "0";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must select expected creative case03 vis = 0 ");
 
 }

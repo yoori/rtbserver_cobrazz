@@ -23,94 +23,94 @@ namespace Aspect
 
 namespace Request::Cookie
 {
-    const String::SubString OPT_IN_TRIAL("trialoptin");
-    const String::SubString LAST_COLOCATION_ID("lc");
-    const String::SubString COHORT("ct");
-    const String::SubString CCID("ccid");
-    const String::SubString TEST("test");
-  }
+  const String::SubString OPT_IN_TRIAL("trialoptin");
+  const String::SubString LAST_COLOCATION_ID("lc");
+  const String::SubString COHORT("ct");
+  const String::SubString CCID("ccid");
+  const String::SubString TEST("test");
+}
 
 namespace Request::Header
-  {
-    const String::SubString REM_HOST(".remotehost");
-    const String::SubString USER_AGENT("user-agent");
-    const String::SubString FCGI_USER_AGENT("user_agent");
-    const String::AsciiStringManip::Caseless REFERER("referer");
-  }
+{
+  const String::SubString REM_HOST(".remotehost");
+  const String::SubString USER_AGENT("user-agent");
+  const String::SubString FCGI_USER_AGENT("user_agent");
+  const String::AsciiStringManip::Caseless REFERER("referer");
+}
 
 namespace Request::Context
-  {
-    const String::SubString REFERER_TRIGGERS("referer-tr");
-    const String::SubString CLID_ID("clid");
-    const String::SubString MERGE_CLIENT_ID("muid");
-    const String::SubString TEMPORARY_CLIENT_ID("tuid");
-    const String::SubString REMOVE_MERGED_CLIENT_ID("rm-muid");
+{
+  const String::SubString REFERER_TRIGGERS("referer-tr");
+  const String::SubString CLID_ID("clid");
+  const String::SubString MERGE_CLIENT_ID("muid");
+  const String::SubString TEMPORARY_CLIENT_ID("tuid");
+  const String::SubString REMOVE_MERGED_CLIENT_ID("rm-muid");
 
-    const String::SubString TAG_ID("tid");
-    const String::SubString LOCATION_NAME("loc.name");
-    const String::SubString LOCATION_COORD("loc.coord");
-    const String::SubString CLIENT_VERSION("v");
-    const String::SubString RANDOM("random");
-    const String::SubString APPLICATION("app");
-    const String::SubString ORIGINAL_USER_AGENT("oua");
-    const String::SubString ORIGINAL_URL("orig");
-    const String::SubString PASSBACK_URL("pb");
-    const String::SubString PASSBACK_TYPE("pt");
-    const String::SubString COLOCATION_ID("colo");
-    const String::SubString LAST_COLOCATION_ID("last_colo");
-    const String::SubString FORMAT("format");
-    const String::SubString CCID("ccid");
+  const String::SubString TAG_ID("tid");
+  const String::SubString LOCATION_NAME("loc.name");
+  const String::SubString LOCATION_COORD("loc.coord");
+  const String::SubString CLIENT_VERSION("v");
+  const String::SubString RANDOM("random");
+  const String::SubString APPLICATION("app");
+  const String::SubString ORIGINAL_USER_AGENT("oua");
+  const String::SubString ORIGINAL_URL("orig");
+  const String::SubString PASSBACK_URL("pb");
+  const String::SubString PASSBACK_TYPE("pt");
+  const String::SubString COLOCATION_ID("colo");
+  const String::SubString LAST_COLOCATION_ID("last_colo");
+  const String::SubString FORMAT("format");
+  const String::SubString CCID("ccid");
 
-    const String::SubString TEST_REQUEST("testrequest");
-    const String::SubString TEST("test");
+  const String::SubString TEST_REQUEST("testrequest");
+  const String::SubString TEST("test");
 
-    const String::SubString PAGE_LOAD_ID("pl");
-    const String::SubString KEYWORDS_NORMALIZED("kn");
+  const String::SubString PAGE_LOAD_ID("pl");
+  const String::SubString KEYWORDS_NORMALIZED("kn");
 
-    const String::SubString UP_EXPAND_SPACE("spup");
-    const String::SubString RIGHT_EXPAND_SPACE("sprt");
-    const String::SubString LEFT_EXPAND_SPACE("splt");
-    const String::SubString TAG_VISIBILITY("vis");
-    const String::SubString REQUEST_TOKEN("tok");
-    const String::SubString PRECLICK_URL("preclick");
-    const String::SubString PUBLISHER_IMPRESSION_TRACKING_URL("imptrck");
-    const String::SubString EXT_TAG_ID("etid");
-    const String::SubString PUBLISHER_PARAMETER("pp");
+  const String::SubString UP_EXPAND_SPACE("spup");
+  const String::SubString RIGHT_EXPAND_SPACE("sprt");
+  const String::SubString LEFT_EXPAND_SPACE("splt");
+  const String::SubString TAG_VISIBILITY("vis");
+  const String::SubString REQUEST_TOKEN("tok");
+  const String::SubString PRECLICK_URL("preclick");
+  const String::SubString PUBLISHER_IMPRESSION_TRACKING_URL("imptrck");
+  const String::SubString EXT_TAG_ID("etid");
+  const String::SubString PUBLISHER_PARAMETER("pp");
 
-    /* debug params */
-    const String::SubString REQUIRE_DEBUG_INFO("require-debug-info");
-    const String::SubString NO_FRAUD("debug.nofraud");
-    const String::SubString DEBUG_EXPECTED_CCG("debug.ccg");
-    const String::SubString DEBUG_CURRENT_TIME("debug-time");
-    const String::SubString DEBUG_SILENT_MATCH("debug.silent-match");
-    const String::SubString SET_UID("setuid");
-    const String::SubString PARTLY_MATCH("debug.partly-match");
-    const String::SubString NO_MATCH("debug.no_match");
-    const String::SubString NO_RESULT("debug.no_result");
-    const String::SubString IP_ADDRESS("debug.ip");
+  /* debug params */
+  const String::SubString REQUIRE_DEBUG_INFO("require-debug-info");
+  const String::SubString NO_FRAUD("debug.nofraud");
+  const String::SubString DEBUG_EXPECTED_CCG("debug.ccg");
+  const String::SubString DEBUG_CURRENT_TIME("debug-time");
+  const String::SubString DEBUG_SILENT_MATCH("debug.silent-match");
+  const String::SubString SET_UID("setuid");
+  const String::SubString PARTLY_MATCH("debug.partly-match");
+  const String::SubString NO_MATCH("debug.no_match");
+  const String::SubString NO_RESULT("debug.no_result");
+  const String::SubString IP_ADDRESS("debug.ip");
 
-    const String::AsciiStringManip::Caseless REFERER("referer");
-    const String::AsciiStringManip::Caseless REFERER_WORDS("referer-kw");
-    const String::AsciiStringManip::Caseless FULL_TEXT_WORDS("ft");
-    const String::AsciiStringManip::Caseless DATA("d");
-    const String::AsciiStringManip::Caseless SECURE("secure");
+  const String::AsciiStringManip::Caseless REFERER("referer");
+  const String::AsciiStringManip::Caseless REFERER_WORDS("referer-kw");
+  const String::AsciiStringManip::Caseless FULL_TEXT_WORDS("ft");
+  const String::AsciiStringManip::Caseless DATA("d");
+  const String::AsciiStringManip::Caseless SECURE("secure");
 
-    const String::AsciiStringManip::CharCategory PP_CHARS(
-      String::AsciiStringManip::ALPHA_NUM,
-      String::AsciiStringManip::CharCategory("-_."));
+  const String::AsciiStringManip::CharCategory PP_CHARS(
+    String::AsciiStringManip::ALPHA_NUM,
+    String::AsciiStringManip::CharCategory("-_."));
 
-    /* ADSC-10677 aliases */
-    const String::SubString TAG_ID_ALIAS("t");
-    const String::SubString EXT_TAG_ID_ALIAS("et");
-    const String::SubString FORMAT_ALIAS("fm");
-    const String::SubString APPLICATION_ALIAS("a");
-    const String::SubString RANDOM_ALIAS("rnd");
-    const String::AsciiStringManip::Caseless REFERER_WORDS_ALIAS("kw");
-    const String::SubString COLOCATION_ID_ALIAS("c");
-    const String::SubString LOCATION_NAME_ALIAS("l.n");
-    const String::SubString LOCATION_COORD_ALIAS("l.c");
-    const String::SubString CHANNELS("ch");
-  }
+  /* ADSC-10677 aliases */
+  const String::SubString TAG_ID_ALIAS("t");
+  const String::SubString EXT_TAG_ID_ALIAS("et");
+  const String::SubString FORMAT_ALIAS("fm");
+  const String::SubString APPLICATION_ALIAS("a");
+  const String::SubString RANDOM_ALIAS("rnd");
+  const String::AsciiStringManip::Caseless REFERER_WORDS_ALIAS("kw");
+  const String::SubString COLOCATION_ID_ALIAS("c");
+  const String::SubString LOCATION_NAME_ALIAS("l.n");
+  const String::SubString LOCATION_COORD_ALIAS("l.c");
+  const String::SubString CHANNELS("ch");
+}
 
 namespace Request
 {
@@ -131,8 +131,7 @@ namespace AdServer
       if (param.name.size() > ConstrainTraits::MAX_LENGTH_PARAM_NAME)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Param name length(" << param.name.size() <<
-          ") exceed";
+        ostr << FUN << ": Param name length(" << param.name.size() << ") exceed";
 
         throw InvalidParamException(ostr);
       }
@@ -141,12 +140,10 @@ namespace AdServer
       {
         if (param.name == Request::Context::REFERER)
         {
-          if (param.value.size() >
-             ConstrainTraits::MAX_LENGTH_REFERER_PARAM_VALUE)
+          if (param.value.size() > ConstrainTraits::MAX_LENGTH_REFERER_PARAM_VALUE)
           {
             Stream::Error ostr;
-            ostr << FUN << ": Param 'referer' value length(" <<
-              param.value.size() << ") exceed";
+            ostr << FUN << ": Param 'referer' value length(" << param.value.size() << ") exceed";
 
             throw InvalidParamException(ostr);
           }
@@ -154,12 +151,10 @@ namespace AdServer
         else if (param.name == Request::Context::REFERER_WORDS ||
           param.name == Request::Context::REFERER_WORDS_ALIAS)
         {
-          if (param.value.size() >
-             ConstrainTraits::MAX_LENGTH_REFERER_KW_PARAM_VALUE)
+          if (param.value.size() > ConstrainTraits::MAX_LENGTH_REFERER_KW_PARAM_VALUE)
           {
             Stream::Error ostr;
-            ostr << FUN << ": Param 'referer-kw' value length(" <<
-              param.value.size() << ") exceed";
+            ostr << FUN << ": Param 'referer-kw' value length(" << param.value.size() << ") exceed";
 
             throw InvalidParamException(ostr);
           }
@@ -169,8 +164,7 @@ namespace AdServer
                  param.name != Request::Context::PRECLICK_URL)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Param value length(" << param.value.size() <<
-            ") exceed";
+          ostr << FUN << ": Param value length(" << param.value.size() << ") exceed";
 
           throw InvalidParamException(ostr);
         }
@@ -208,9 +202,7 @@ namespace AdServer
       {
       }
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         std::string decoded;
         try
@@ -224,23 +216,22 @@ namespace AdServer
         std::string::const_iterator start_name = decoded.begin();
         std::string::const_iterator end_name = decoded.begin();
         bool replace_double_amp = false, found_eq = false;
-        for(std::string::const_iterator it = decoded.begin();
-            it <= decoded.end(); ++it)
+        for (std::string::const_iterator it = decoded.begin(); it <= decoded.end(); ++it)
         {
-          if(it == decoded.end() || *it == AMP)
+          if (it == decoded.end() || *it == AMP)
           {
-            if(it + 1 < decoded.end() && *(it + 1) == AMP)
+            if (it + 1 < decoded.end() && *(it + 1) == AMP)
             {
               replace_double_amp = true;
               ++it;// skip next amp
             }
-            else if(start_name < end_name)
+            else if (start_name < end_name)
             {
               std::string purify_value;
               HTTP::SubParam param(
                 String::SubString(&*start_name, &*end_name),
                 String::SubString(&*(end_name + 1), it - end_name - 1));
-              if(replace_double_amp)
+              if (replace_double_amp)
               {
                 String::StringManip::replace(
                   param.value,
@@ -249,11 +240,10 @@ namespace AdServer
                   String::SubString("&", 1));
                 param.value = purify_value;
               }
-              AdFrontendParamConstrain::apply<RequestFrontendConstrainTraits>(
-                param);
+              AdFrontendParamConstrain::apply<RequestFrontendConstrainTraits>(param);
               RequestInfoFiller::ParamProcessorMap::const_iterator param_it =
                 proccessor_.find(param.name);
-              if(param_it != proccessor_.end())
+              if (param_it != proccessor_.end())
               {
                 param_it->second->process(request_info, param.value);
               }
@@ -263,7 +253,7 @@ namespace AdServer
               end_name = start_name;
             }
           }
-          else if(!found_eq && *it == EQ)
+          else if (!found_eq && *it == EQ)
           {
             end_name = it;
             found_eq = true;
@@ -278,18 +268,14 @@ namespace AdServer
     class StringEqualParamProcessor: public RequestInfoParamProcessor
     {
     public:
-      StringEqualParamProcessor(
-        bool RequestInfo::* field,
-        const String::SubString& true_value)
+      StringEqualParamProcessor(bool RequestInfo::* field, const String::SubString& true_value)
         : field_(field),
           true_value_(true_value)
       {}
 
       virtual ~StringEqualParamProcessor() noexcept {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         request_info.*field_ = (true_value_ == value);
       }
@@ -306,23 +292,19 @@ namespace AdServer
         unsigned long>
     {
     public:
-      ExpandSpaceParamProcessor(
-        Commons::Optional<unsigned long> RequestInfo::* field)
+      ExpandSpaceParamProcessor(Commons::Optional<unsigned long> RequestInfo::* field)
         : FrontendCommons::NumberParamProcessor<
             RequestInfo,
             Commons::Optional<unsigned long>,
             unsigned long>(field)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         FrontendCommons::NumberParamProcessor<
           RequestInfo,
           Commons::Optional<unsigned long>,
-          unsigned long>::process(
-            request_info, value);
+          unsigned long>::process(request_info, value);
         request_info.down_expand_space = 0x0FFFFFFF;
       }
     };
@@ -336,16 +318,13 @@ namespace AdServer
           min_(min)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         try
         {
           Generics::Time time(value,
-            value.size() > 2 && value[2] == '-' ?
-            "%d-%m-%Y:%H-%M-%S" : "%Y-%m-%d %H:%M:%S");
-          if(time >= min_ && time.tv_sec <= FrontendCommons::MAX_TIME_SEC)
+            value.size() > 2 && value[2] == '-' ? "%d-%m-%Y:%H-%M-%S" : "%Y-%m-%d %H:%M:%S");
+          if (time >= min_ && time.tv_sec <= FrontendCommons::MAX_TIME_SEC)
           {
             request_info.*field_ = time;
           }
@@ -373,9 +352,7 @@ namespace AdServer
           rewrite_persistent_(rewrite_persistent)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         try
@@ -389,7 +366,7 @@ namespace AdServer
         }
         catch(...)
         {
-          if(!persistent_ || merged_persistent_)
+          if (!persistent_ || merged_persistent_)
           {
             throw;
           }
@@ -406,9 +383,7 @@ namespace AdServer
     class TestRequestParamProcessor: public RequestInfoParamProcessor
     {
     public:
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         request_info.log_as_test = true;
         request_info.test_request = true;
@@ -456,11 +431,12 @@ namespace AdServer
       ip_map_(std::move(ip_map)),
       set_uid_controller_(ReferenceCounting::add_ref(set_uid_controller))
   {
-    if(user_agent_filter_path[0])
+    if (user_agent_filter_path[0])
     {
       user_agent_matcher_.init(user_agent_filter_path);
     }
-    if(ip_list)
+
+    if (ip_list)
     {
       use_ip_list_ = true;
       ip_list_ = *ip_list;
@@ -482,23 +458,19 @@ namespace AdServer
     cookie_processors_.insert(std::make_pair(
       Request::Cookie::LAST_COLOCATION_ID,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::NumberParamProcessor<RequestInfo, int>(
-          &RequestInfo::last_colo_id))));
+        new FrontendCommons::NumberParamProcessor<RequestInfo, int>(&RequestInfo::last_colo_id))));
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTOUT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::OptOutParamProcessor<RequestInfo>(
-          &RequestInfo::user_status))));
+        new FrontendCommons::OptOutParamProcessor<RequestInfo>(&RequestInfo::user_status))));
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTIN,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::NumberParamProcessor<RequestInfo, int>(
-          &RequestInfo::opt_in_cookie))));
+        new FrontendCommons::NumberParamProcessor<RequestInfo, int>(&RequestInfo::opt_in_cookie))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookie::COHORT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::curct, 50))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::curct, 50))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookie::CCID,
       RequestInfoParamProcessor_var(
@@ -506,8 +478,7 @@ namespace AdServer
           &RequestInfo::ccid))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookie::TEST,
-      RequestInfoParamProcessor_var(
-        new TestRequestParamProcessor())));
+      RequestInfoParamProcessor_var(new TestRequestParamProcessor())));
 
     add_processor_(true, true, FrontendCommons::Cookies::CLIENT_ID,
       new UuidParamProcessor(this, true, false, true));
@@ -519,30 +490,23 @@ namespace AdServer
       new UuidParamProcessor(this, true, true, false));
 
     add_processor_(true, true, Request::Context::ORIGINAL_USER_AGENT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::original_user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::original_user_agent));
     add_processors_(true, true,
       { Request::Context::REFERER_WORDS.str, Request::Context::REFERER_WORDS_ALIAS.str },
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::page_words));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
     add_processor_(true, true, Request::Context::REFERER_TRIGGERS,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::page_words));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
     add_processor_(true, true, Request::Context::FULL_TEXT_WORDS.str,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::full_text_words));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::full_text_words));
     add_processor_(false, true, Request::Context::DATA.str,
       new DataParamProcessor(param_processors_));
 
     add_processor_(true, false, Request::Header::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(true, false, Request::Header::USER_AGENT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, false, Request::Header::FCGI_USER_AGENT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, true, Request::Header::REFERER.str,
       new FrontendCommons::UrlParamProcessor<RequestInfo>(
         &RequestInfo::referer,
@@ -552,86 +516,65 @@ namespace AdServer
       { Request::Context::FORMAT, Request::Context::FORMAT_ALIAS },
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::format));
     add_processor_(true, true, Request::Context::PASSBACK_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::passback_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::passback_url));
     add_processor_(true, true, Request::Context::PASSBACK_TYPE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::passback_type));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::passback_type));
     add_processor_(true, true, Request::Context::ORIGINAL_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::original_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::original_url));
     add_processors_(true, true,
       { Request::Context::TAG_ID, Request::Context::TAG_ID_ALIAS },
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::tag_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::tag_id));
     add_processors_(true, true,
       { Request::Context::EXT_TAG_ID , Request::Context:: EXT_TAG_ID_ALIAS },
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::ext_tag_id, 50, false, true));
     add_processors_(true, true,
       { Request::Context::COLOCATION_ID, Request::Context::COLOCATION_ID_ALIAS },
-      new FrontendCommons::NumberParamProcessor<RequestInfo, int>(
-        &RequestInfo::colo_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, int>(&RequestInfo::colo_id));
     add_processors_(true, true,
       { Request::Context::LOCATION_NAME, Request::Context::LOCATION_NAME_ALIAS },
-      new FrontendCommons::LocationNameParamProcessor<RequestInfo>(
-        &RequestInfo::location));
+      new FrontendCommons::LocationNameParamProcessor<RequestInfo>(&RequestInfo::location));
     add_processors_(true, true,
       { Request::Context::LOCATION_COORD, Request::Context::LOCATION_COORD_ALIAS },
-      new FrontendCommons::LocationCoordParamProcessor<RequestInfo>(
-        &RequestInfo::coord_location));
+      new FrontendCommons::LocationCoordParamProcessor<RequestInfo>(&RequestInfo::coord_location));
     add_processor_(true, true, Request::Context::CLIENT_VERSION,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::client_app_version));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::client_app_version));
     add_processors_(true, true,
       { Request::Context::APPLICATION, Request::Context::APPLICATION_ALIAS },
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::client_app));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::client_app));
     add_processor_(true, true, Request::Context::REMOVE_MERGED_CLIENT_ID,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::remove_merged_uid));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::remove_merged_uid));
     add_processors_(true, true,
       { Request::Context::RANDOM, Request::Context::RANDOM_ALIAS },
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::random));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::random));
     add_processor_(true, true, Request::Context::SET_UID,
       new FrontendCommons::BoolParamProcessor<RequestInfo, Commons::Optional<bool> >(
         &RequestInfo::set_uid));
-    add_processor_(true, true, Request::Context::TEST_REQUEST,
-      new TestRequestParamProcessor());
-    add_processor_(true, true, Request::Context::TEST,
-      new TestRequestParamProcessor());
+    add_processor_(true, true, Request::Context::TEST_REQUEST, new TestRequestParamProcessor());
+    add_processor_(true, true, Request::Context::TEST, new TestRequestParamProcessor());
     add_processor_(true, true, Request::Context::PAGE_LOAD_ID,
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
         &RequestInfo::page_load_id));
     add_processor_(true, true, Request::Context::KEYWORDS_NORMALIZED,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::keywords_normalized));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::keywords_normalized));
     add_processor_(true, true, Request::Context::UP_EXPAND_SPACE,
-      new ExpandSpaceParamProcessor(
-        &RequestInfo::up_expand_space));
+      new ExpandSpaceParamProcessor(&RequestInfo::up_expand_space));
     add_processor_(true, true, Request::Context::RIGHT_EXPAND_SPACE,
-      new ExpandSpaceParamProcessor(
-        &RequestInfo::right_expand_space));
+      new ExpandSpaceParamProcessor(&RequestInfo::right_expand_space));
     add_processor_(true, true, Request::Context::LEFT_EXPAND_SPACE,
-      new ExpandSpaceParamProcessor(
-        &RequestInfo::left_expand_space));
+      new ExpandSpaceParamProcessor(&RequestInfo::left_expand_space));
     add_processor_(true, true, Request::Context::TAG_VISIBILITY,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
         Commons::Optional<unsigned long>,
-        unsigned long>(
-          &RequestInfo::tag_visibility));
+        unsigned long>(&RequestInfo::tag_visibility));
     add_processor_(true, true, Request::Context::REQUEST_TOKEN,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::request_token));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::request_token));
     add_processor_(false, true, Request::Context::PRECLICK_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::preclick_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::preclick_url));
     add_processor_(false, true,
       Request::Context::PUBLISHER_IMPRESSION_TRACKING_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::pub_impr_track_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::pub_impr_track_url));
 
     add_processor_(false, true,
       Request::Context::PUBLISHER_PARAMETER,
@@ -640,11 +583,9 @@ namespace AdServer
            &RequestInfo::pub_param, Request::Context::PP_CHARS, 50));
 
     add_processor_(true, false, Request::Context::SECURE.str,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::secure));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::secure));
     add_processor_(false, true, Request::Context::CCID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::ccid));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::ccid));
 
     add_processor_(false, true, Request::Context::CHANNELS,
       new FrontendCommons::NumberContainerParamProcessor<
@@ -660,29 +601,21 @@ namespace AdServer
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
         &RequestInfo::debug_ccg));
     add_processor_(false, true, Request::Context::DEBUG_SILENT_MATCH,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::silent_match));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::silent_match));
     add_processor_(false, true, Request::Context::NO_MATCH,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::no_match));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::no_match));
     add_processor_(false, true, Request::Context::NO_RESULT,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::no_result));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::no_result));
     add_processor_(false, true, Request::Context::PARTLY_MATCH,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::partly_match));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::partly_match));
     add_processor_(false, true, Request::Context::NO_FRAUD,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::disable_fraud_detection));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::disable_fraud_detection));
     add_processor_(false, true, Request::Context::LAST_COLOCATION_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, int>(
-        &RequestInfo::last_colo_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, int>(&RequestInfo::last_colo_id));
     add_processor_(false, true, Request::Context::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(false, true, Request::Context::REQUIRE_DEBUG_INFO,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::require_debug_info));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::require_debug_info));
   }
 
   void
@@ -693,16 +626,14 @@ namespace AdServer
     const RequestInfoParamProcessor_var& processor)
     noexcept
   {
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor));
+      header_processors_.insert(std::make_pair(name, processor));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor));
+      param_processors_.insert(std::make_pair(name, processor));
     }
   }
 
@@ -724,10 +655,7 @@ namespace AdServer
       _1,
       processor);
 
-    std::for_each(
-      names.begin(),
-      names.end(),
-      add);
+    std::for_each(names.begin(), names.end(), add);
   }
 
   void
@@ -763,34 +691,30 @@ namespace AdServer
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
 
         String::AsciiStringManip::to_lower(header_name);
 
-        ParamProcessorMap::const_iterator param_it =
-          header_processors_.find(header_name);
+        ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       } /* headers processing */
 
-      if(use_ip_list_)
+      if (use_ip_list_)
       {
         real_peer = request_info.peer_ip;
       }
 
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
@@ -798,7 +722,7 @@ namespace AdServer
 
       /* check for require-debug-info value */
       DebugInfo debug_info_status = DI_NONE;
-      if(!request_info.require_debug_info.empty())
+      if (!request_info.require_debug_info.empty())
       {
         String::AsciiStringManip::Caseless require_debug_info_val("");
 
@@ -813,16 +737,16 @@ namespace AdServer
         {
           debug_info_status = DI_HEADER_SHORT;
         }
-        else if(require_debug_info_val == String::SubString("body"))
+        else if (require_debug_info_val == String::SubString("body"))
         {
           debug_info_status = DI_BODY;
         }
 
-        if(debug_info_status != DI_NONE)
+        if (debug_info_status != DI_NONE)
         {
-          if(use_ip_list_)
+          if (use_ip_list_)
           {
-            if(ip_list_.find(real_peer) == ip_list_.end())
+            if (ip_list_.find(real_peer) == ip_list_.end())
             {
               debug_info->set(DI_NONE);
               throw FrontendCommons::HTTPExceptions::ForbiddenException(
@@ -830,9 +754,9 @@ namespace AdServer
             }
           }
 
-          if(!colo_list_.empty())
+          if (!colo_list_.empty())
           {
-            if(colo_list_.find(request_info.colo_id) == colo_list_.end())
+            if (colo_list_.find(request_info.colo_id) == colo_list_.end())
             {
               debug_info->set(DI_NONE);
               throw FrontendCommons::HTTPExceptions::ForbiddenException(
@@ -857,76 +781,64 @@ namespace AdServer
       Generics::Time opt_in_time;
       bool check_trial_oo = false;
 
-      for(HTTP::CookieList::const_iterator it = cookies.begin();
-          it != cookies.end(); ++it)
+      for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          cookie_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-        if(param_it != cookie_processors_.end())
+        if (param_it != cookie_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
-        else if(it->name == Request::Cookie::OPT_IN_TRIAL)
+        else if (it->name == Request::Cookie::OPT_IN_TRIAL)
         {
           try
           {
-            AdServer::OptInDays::load_opt_in_days(
-              it->value, opt_in_time);
+            AdServer::OptInDays::load_opt_in_days(it->value, opt_in_time);
             check_trial_oo = true;
           }
           catch(const AdServer::OptInDays::InvalidParam& ex)
           {
             Stream::Error ostr;
-            ostr << "Non correct format of optintrial '" <<
-              it->value << "': " << ex.what();
+            ostr << "Non correct format of optintrial '" << it->value << "': " << ex.what();
 
-            logger()->log(ostr.str(),
-              Logging::Logger::NOTICE,
-              Aspect::AD_FRONTEND);
+            logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_FRONTEND);
           }
         }
       } /* cookies processing */
 
-      if(request_info.tag_id)
+      if (request_info.tag_id)
       {
-        request_info.request_id =
-          AdServer::Commons::RequestId::create_random_based();
+        request_info.request_id = AdServer::Commons::RequestId::create_random_based();
       }
 
-      if(request_info.random >= CampaignSvcs::RANDOM_PARAM_MAX)
+      if (request_info.random >= CampaignSvcs::RANDOM_PARAM_MAX)
       {
-        request_info.random = Generics::unsafe_rand(
-          CampaignSvcs::RANDOM_PARAM_MAX);
+        request_info.random = Generics::unsafe_rand(CampaignSvcs::RANDOM_PARAM_MAX);
       }
 
-      if(!request_info.user_agent.empty() &&
+      if (!request_info.user_agent.empty() &&
          user_agent_matcher_.match(request_info.user_agent.c_str()))
       {
         Stream::Error ostr;
-        ostr << FUN << ": Request from robot, User-Agent: " <<
-          request_info.user_agent;
+        ostr << FUN << ": Request from robot, User-Agent: " << request_info.user_agent;
         logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::AD_FRONTEND);
 
         throw ForbiddenException(ostr);
       }
 
-      if (!request_info.location &&
-          !request_info.peer_ip.empty() &&
-          ip_map_.get())
+      if (!request_info.location && !request_info.peer_ip.empty() && ip_map_.get())
       {
         try
         {
           GeoIPMapping::IPMapCity2::CityLocation geo_location;
 
-          if(ip_map_->city_location_by_addr(
+          if (ip_map_->city_location_by_addr(
                request_info.peer_ip.c_str(),
                geo_location,
                false,
                true))
           {
-            request_info.location =
-              std::make_shared<FrontendCommons::Location>();
+            request_info.location = std::make_shared<FrontendCommons::Location>();
             request_info.location->country = geo_location.country_code.str();
             geo_location.region.assign_to(request_info.location->region);
             request_info.location->city = geo_location.city.str();
@@ -939,10 +851,9 @@ namespace AdServer
 
       bool filter_request_by_country = false;
 
-      FrontendCommons::CountryFilter_var country_filter =
-        common_module_->country_filter();
+      FrontendCommons::CountryFilter_var country_filter = common_module_->country_filter();
 
-      if(country_filter.in() && (
+      if (country_filter.in() && (
           !request_info.location ||
           !country_filter->enabled(request_info.location->country)))
       {
@@ -952,25 +863,24 @@ namespace AdServer
         request_info.temp_client_id = AdServer::Commons::UserId();
         request_info.signed_client_id.clear();
       }
-      else if(check_trial_oo &&
-         opt_in_time <= request_info.current_time)
+      else if (check_trial_oo && opt_in_time <= request_info.current_time)
       {
         request_info.do_opt_out = true;
         request_info.user_status = AdServer::CampaignSvcs::US_OPTOUT;
         request_info.signed_client_id.clear();
       }
-      else if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT)
+      else if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT)
       {
-        if(request_info.client_id.is_null() ||
+        if (request_info.client_id.is_null() ||
            request_info.client_id == AdServer::Commons::PROBE_USER_ID)
         {
-          if(!request_info.temp_client_id.is_null())
+          if (!request_info.temp_client_id.is_null())
           {
             request_info.user_status = AdServer::CampaignSvcs::US_TEMPORARY;
             request_info.client_id = request_info.temp_client_id;
             request_info.temp_client_id = AdServer::Commons::UserId();
           }
-          else if(request_info.client_id == AdServer::Commons::PROBE_USER_ID)
+          else if (request_info.client_id == AdServer::Commons::PROBE_USER_ID)
           {
             request_info.user_status = AdServer::CampaignSvcs::US_PROBE;
           }
@@ -995,28 +905,26 @@ namespace AdServer
         }
       }
 
-      if(filter_request_by_country)
+      if (filter_request_by_country)
       {
         request_info.passback_by_colocation = true;
       }
-      else if(ColoFlagsMap_var colocations = get_colocations_())
+      else if (ColoFlagsMap_var colocations = get_colocations_())
       {
-        ColoFlagsMap::const_iterator colo_it =
-          colocations->find(request_info.colo_id);
+        ColoFlagsMap::const_iterator colo_it = colocations->find(request_info.colo_id);
 
-        if(colo_it != colocations->end())
+        if (colo_it != colocations->end())
         {
-          request_info.passback_by_colocation = (
-            colo_it->second.flags == CampaignSvcs::CS_NONE);
+          request_info.passback_by_colocation = (colo_it->second.flags == CampaignSvcs::CS_NONE);
         }
       }
 
-      if(request_info.original_user_agent.empty())
+      if (request_info.original_user_agent.empty())
       {
         request_info.original_user_agent = request_info.user_agent;
       }
 
-      if((request_info.passback_type != "html" &&
+      if ((request_info.passback_type != "html" &&
           request_info.passback_type != "js" &&
           request_info.passback_type != "redir") ||
          request_info.passback_url.empty())
@@ -1027,30 +935,24 @@ namespace AdServer
       FrontendCommons::UrlMatcher_var url_matcher = common_module_->url_matcher();
       FrontendCommons::WebBrowserMatcher_var web_browser_matcher =
         common_module_->web_browser_matcher();
-      FrontendCommons::PlatformMatcher_var platform_matcher =
-        common_module_->platform_matcher();
-      Language::Segmentor::SegmentorInterface_var segmentor =
-        common_module_->segmentor();
+      FrontendCommons::PlatformMatcher_var platform_matcher = common_module_->platform_matcher();
+      Language::Segmentor::SegmentorInterface_var segmentor = common_module_->segmentor();
 
-      if(!request_info.referer.empty())
+      if (!request_info.referer.empty())
       {
         FrontendCommons::extract_url_keywords(
           request_info.referer_url_words,
           request_info.referer,
           common_module_->segmentor());
 
-        if(url_matcher.in())
+        if (url_matcher.in())
         {
           try
           {
             unsigned long search_engine_id;
             std::string search_words;
 
-            if(url_matcher->match(
-                 search_engine_id,
-                 search_words,
-                 request_info.referer,
-                 segmentor))
+            if (url_matcher->match(search_engine_id, search_words, request_info.referer, segmentor))
             {
               request_info.search_engine_id = search_engine_id;
               request_info.search_words.swap(search_words);
@@ -1068,21 +970,19 @@ namespace AdServer
           }
         }
 
-        request_info.full_referer_hash =
-          FrontendCommons::referer_hash(request_info.referer);
-        request_info.short_referer_hash =
-          FrontendCommons::short_referer_hash(request_info.referer);
+        request_info.full_referer_hash = FrontendCommons::referer_hash(request_info.referer);
+        request_info.short_referer_hash = FrontendCommons::short_referer_hash(request_info.referer);
 
         // send referer for ad requests and requests
         // with detected search engine
-        if((log_referrer_setting_ != Commons::LogReferrer::LR_EMPTY && request_info.tag_id != 0) ||
+        if ((log_referrer_setting_ != Commons::LogReferrer::LR_EMPTY && request_info.tag_id != 0) ||
            request_info.search_engine_id != 0)
         {
           try
           {
             HTTP::BrowserAddress addr(request_info.referer);
 
-            if(log_referrer_setting_ == Commons::LogReferrer::LR_PATH)
+            if (log_referrer_setting_ == Commons::LogReferrer::LR_PATH)
             {
               request_info.allowable_referer =
                 FrontendCommons::normalize_abs_url(
@@ -1092,7 +992,7 @@ namespace AdServer
                   HTTP::HTTPAddress::VW_NDEF_PORT |
                   HTTP::HTTPAddress::VW_PATH);
             }
-            else if(log_referrer_setting_ == Commons::LogReferrer::LR_HOST ||
+            else if (log_referrer_setting_ == Commons::LogReferrer::LR_HOST ||
               request_info.search_engine_id != 0)
             {
               request_info.allowable_referer =
@@ -1108,15 +1008,13 @@ namespace AdServer
         }
       }
 
-      if(!request_info.user_agent.empty())
+      if (!request_info.user_agent.empty())
       {
-        if(web_browser_matcher.in())
+        if (web_browser_matcher.in())
         {
           try
           {
-            web_browser_matcher->match(
-              request_info.web_browser,
-              request_info.user_agent);
+            web_browser_matcher->match(request_info.web_browser, request_info.user_agent);
           }
           catch(const eh::Exception& ex)
           {
@@ -1130,7 +1028,7 @@ namespace AdServer
           }
         }
 
-        if(!filter_request_by_country && platform_matcher.in())
+        if (!filter_request_by_country && platform_matcher.in())
         {
           try
           {
@@ -1165,12 +1063,11 @@ namespace AdServer
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(logger()->log_level() >= Logging::Logger::TRACE)
+    if (logger()->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Result: " << std::endl <<
@@ -1193,7 +1090,7 @@ namespace AdServer
   {
     try
     {
-      if(persistent)
+      if (persistent)
       {
         if (merged_persistent)
         {
@@ -1203,14 +1100,13 @@ namespace AdServer
             request_info.merge_persistent_client_id = uid.uuid();
           }
         }
-        else if(
-          in == AdServer::Commons::PROBE_USER_ID.to_string())
+        else if (in == AdServer::Commons::PROBE_USER_ID.to_string())
         {
           request_info.client_id = AdServer::Commons::PROBE_USER_ID;
           request_info.signed_client_id = AdServer::Commons::PROBE_USER_ID.to_string();
           request_info.have_uid_cookie = rewrite_persistent;
         }
-        else if(request_info.signed_client_id.empty() || rewrite_persistent)
+        else if (request_info.signed_client_id.empty() || rewrite_persistent)
         {
           Generics::SignedUuid uid = common_module_->user_id_controller()->verify(in);
           if (!uid.uuid().is_null())

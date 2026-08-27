@@ -247,7 +247,7 @@
     </xsd:attribute>
     <xsd:attribute name="instantiate_track_html_file" type="xsd:string" use="required">
       <xsd:annotation>
-        <xsd:documentation>File for instantiate body 
+        <xsd:documentation>File for instantiate body
         for instantiate jstracker HTML.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

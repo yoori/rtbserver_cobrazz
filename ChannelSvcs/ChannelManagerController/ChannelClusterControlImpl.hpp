@@ -13,8 +13,7 @@
       CORBA::ValueFactoryBase>
   {
   public:
-    ChannelClusterSessionFactoryImpl(
-      Generics::ActiveObjectCallback* callback = 0) noexcept;
+    ChannelClusterSessionFactoryImpl(Generics::ActiveObjectCallback* callback = 0) noexcept;
 
     virtual ~ChannelClusterSessionFactoryImpl() noexcept {};
 
@@ -30,9 +29,7 @@
 
   };
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   class ChannelClusterSessionImpl:
     public virtual OBV_AdServer::ChannelSvcs::ChannelClusterSession
@@ -41,8 +38,7 @@ namespace ChannelSvcs
     ChannelClusterSessionImpl(Generics::ActiveObjectCallback* callback)
       noexcept;
 
-    ChannelClusterSessionImpl(
-      const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& descr)
+    ChannelClusterSessionImpl(const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& descr)
       noexcept;
 
     virtual ~ChannelClusterSessionImpl() noexcept{};
@@ -74,5 +70,3 @@ namespace ChannelSvcs
       /*throw(eh::Exception)*/;
   };
 }
-}
-

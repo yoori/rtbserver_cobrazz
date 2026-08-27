@@ -1,9 +1,6 @@
 #include "ChannelTriggerImpStatsTest.hpp"
 
-REFLECT_UNIT(ChannelTriggerImpStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelTriggerImpStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -58,8 +55,7 @@ public:
     stats_value_type sum_imps_lapse = 0;
     stats_value_type sum_clicks_lapse = 0;
     ChannelTriggerStatsArray::iterator tr_it = initial_.begin();
-    for(ChannelTriggerStatsArray::iterator result_tr_it =
-          result_.begin();
+    for (ChannelTriggerStatsArray::iterator result_tr_it = result_.begin();
         result_tr_it != result_.end();
         ++result_tr_it, ++tr_it)
     {
@@ -67,26 +63,22 @@ public:
       stats_value_type clicks_done = 0;
       TriggerCounterMap::const_iterator imps_done_it = imps_done_map_.find(
         tr_it->key().channel_trigger_id());
-      if(imps_done_it != imps_done_map_.end())
+      if (imps_done_it != imps_done_map_.end())
       {
         imps_done = imps_done_it->second;
       }
 
       TriggerCounterMap::const_iterator clicks_done_it = clicks_done_map_.find(
         tr_it->key().channel_trigger_id());
-      if(clicks_done_it != clicks_done_map_.end())
+      if (clicks_done_it != clicks_done_map_.end())
       {
         clicks_done = clicks_done_it->second;
       }
 
-      stats_value_type imps_low_bound =
-        tr_it->imps() + imps_done - imps_lapse_;
-      stats_value_type imps_up_bound =
-        tr_it->imps() + imps_done + imps_lapse_;
-      stats_value_type click_low_bound =
-        tr_it->clicks() + clicks_done - clicks_lapse_;
-      stats_value_type click_up_bound =
-        tr_it->clicks() + clicks_done + clicks_lapse_;
+      stats_value_type imps_low_bound = tr_it->imps() + imps_done - imps_lapse_;
+      stats_value_type imps_up_bound = tr_it->imps() + imps_done + imps_lapse_;
+      stats_value_type click_low_bound = tr_it->clicks() + clicks_done - clicks_lapse_;
+      stats_value_type click_up_bound = tr_it->clicks() + clicks_done + clicks_lapse_;
 
       bool local_imps_error = (result_tr_it->imps() < imps_low_bound ||
         result_tr_it->imps() > imps_up_bound);
@@ -106,16 +98,11 @@ public:
         result_tr_it->clicks() << " + " << (clicks_done - clicks_lapse_) <<
         ", " <<
         result_tr_it->clicks() << " + " << (clicks_done + clicks_lapse_) <<
-        "], " <<
-        (local_imps_error || local_clicks_error ? " ***" : "");
+        "], " << (local_imps_error || local_clicks_error ? " ***" : "");
       error |= local_imps_error || local_clicks_error;
 
-      sum_imps_lapse += ::fabs(
-        result_tr_it->imps() -
-        tr_it->imps() - imps_done);
-      sum_clicks_lapse += ::fabs(
-        result_tr_it->clicks() -
-        tr_it->clicks() - clicks_done);
+      sum_imps_lapse += ::fabs(result_tr_it->imps() - tr_it->imps() - imps_done);
+      sum_clicks_lapse += ::fabs(result_tr_it->clicks() - tr_it->clicks() - clicks_done);
     }
 
     // check average lapses
@@ -167,26 +154,16 @@ ChannelTriggerImpStatsTest::set_up()
 bool
 ChannelTriggerImpStatsTest::run()
 {
-  AUTOTEST_CASE(
-    do_requests_for_one_trigger_case_(
-      "OnlyImpsCase",
-      1000,
-      0),
-    "OnlyImpsCase");
+  AUTOTEST_CASE(do_requests_for_one_trigger_case_("OnlyImpsCase", 1000, 0), "OnlyImpsCase");
 
   AUTOTEST_CASE(
-    do_requests_for_one_trigger_tempo_case_(
-      "OnlyImpsCaseTempo",
-      1000,
-      0),
+    do_requests_for_one_trigger_tempo_case_("OnlyImpsCaseTempo", 1000, 0),
     "OnlyImpsCaseTempo");
 
   // Known bugs:
   //   ADSC-8623 (K & D channels in the profile),
   //   ADSC-8826 (R-trigger isn't logged)
-  AUTOTEST_CASE(
-    channel_types(),
-    "Reason of impression (channel types logging)");
+  AUTOTEST_CASE(channel_types(), "Reason of impression (channel types logging)");
 
   return true;
 }
@@ -208,8 +185,7 @@ ChannelTriggerImpStatsTest::fetch_stats_(
   // collect current stats state
   //   sum stats
   sum_stats[0].key().
-    channel_id(
-      fetch_int(std::string("ChannelId/") + entity_suffix)).
+    channel_id(fetch_int(std::string("ChannelId/") + entity_suffix)).
     sdate(time_);
   sum_stats.select(pq_conn_);
 
@@ -225,8 +201,7 @@ ChannelTriggerImpStatsTest::fetch_stats_(
     std::string("NonMatchChannelTriggerIds/") + entity_suffix,
     ",");
 
-  for(ChannelTriggerIdSet::iterator tr_it =
-        match_triggers.begin();
+  for (ChannelTriggerIdSet::iterator tr_it = match_triggers.begin();
       tr_it != match_triggers.end(); ++tr_it)
   {
     ChannelTriggerStats one_trigger_stats;
@@ -237,8 +212,7 @@ ChannelTriggerImpStatsTest::fetch_stats_(
     imps_done[*tr_it] = impressions_count;
   }
 
-  for(ChannelTriggerIdSet::iterator tr_it =
-        non_match_triggers.begin();
+  for (ChannelTriggerIdSet::iterator tr_it = non_match_triggers.begin();
       tr_it != non_match_triggers.end(); ++tr_it)
   {
     ChannelTriggerStats one_trigger_stats;
@@ -263,15 +237,13 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_case_(
   TriggerCounterMap clicks_done;
   ChannelTriggerSumStats sum_stats;
 
-  fetch_stats_(
-    triggers_stats, imps_done, sum_stats,
-    entity_suffix, impressions_count);
+  fetch_stats_(triggers_stats, imps_done, sum_stats, entity_suffix, impressions_count);
 
   // prepare expected data
   std::list<std::string> exp_ccids;
   exp_ccids.push_back(fetch_string(std::string("CcId/") + entity_suffix));
 
-  for(unsigned long i = 0; i < impressions_count; ++i)
+  for (unsigned long i = 0; i < impressions_count; ++i)
   {
     AdClient client(AdClient::create_user(this));
 
@@ -291,12 +263,10 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_case_(
       client.process_request(ad_request);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          exp_ccids,
-          SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
         "unexpected creatives");
 
-      if(i < clicks_count)
+      if (i < clicks_count)
       {
         client.process_request(client.debug_info.click_url, "Click request");
       }
@@ -331,15 +301,13 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_tempo_case_(
   TriggerCounterMap clicks_done;
   ChannelTriggerSumStats sum_stats;
 
-  fetch_stats_(
-    triggers_stats, imps_done, sum_stats,
-    entity_suffix, impressions_count);
+  fetch_stats_(triggers_stats, imps_done, sum_stats, entity_suffix, impressions_count);
 
   // prepare expected data
   std::list<std::string> exp_ccids;
   exp_ccids.push_back(fetch_string(std::string("CcId/") + entity_suffix));
 
-  for(unsigned long i = 0; i < impressions_count; ++i)
+  for (unsigned long i = 0; i < impressions_count; ++i)
   {
     TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
     AdClient client(AdClient::create_user(this));
@@ -359,12 +327,10 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_tempo_case_(
       client.process_request(ad_request);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          exp_ccids,
-          SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
         "unexpected creatives");
 
-      if(i < clicks_count)
+      if (i < clicks_count)
       {
         client.process_request(client.debug_info.click_url, "Click request");
       }
@@ -446,10 +412,7 @@ ChannelTriggerImpStatsTest::channel_types()
     NSLookupRequest().
       debug_time(time_).
       referer_kw(fetch_string("Types/Keyword/6")).
-      search(
-        map_objects(
-          "Types/Keyword/7 Types/Keyword/8 "
-          "Types/Keyword/9", " ")));
+      search(map_objects("Types/Keyword/7 Types/Keyword/8 " "Types/Keyword/9", " ")));
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -459,15 +422,10 @@ ChannelTriggerImpStatsTest::channel_types()
       client.debug_info.trigger_channels).check(),
     "Expected trigger_channels#1 check");
 
-  client.process_request(
-    NSLookupRequest().
-      debug_time(time_).
-      tid(fetch_int("Types/TAG")));
+  client.process_request(NSLookupRequest(). debug_time(time_). tid(fetch_int("Types/TAG")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Types/CC/Text")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Types/CC/Text")), client.debug_info.ccid).check(),
     "Check text CC");
 
   client.process_request(
@@ -478,9 +436,7 @@ ChannelTriggerImpStatsTest::channel_types()
           "Types/Keyword/1,Types/Keyword/2,"
           "Types/Keyword/3,Types/Keyword/4,"
           "Types/Keyword/5")).
-      search(
-        map_objects(
-          "Types/Keyword/10,Types/Keyword/5")));
+      search(map_objects("Types/Keyword/10,Types/Keyword/5")));
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -492,28 +448,20 @@ ChannelTriggerImpStatsTest::channel_types()
       client.debug_info.trigger_channels).check(),
     "Expected trigger_channels#2 check");
 
-  client.process_request(
-    NSLookupRequest().
-      debug_time(time_).
-      tid(fetch_int("Types/TAG")));
+  client.process_request(NSLookupRequest(). debug_time(time_). tid(fetch_int("Types/TAG")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Types/CC/Display")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Types/CC/Display")), client.debug_info.ccid).check(),
     "Check display CC");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "Check display click");
 
-  client.process_request(
-    client.debug_info.click_url);
+  client.process_request(client.debug_info.click_url);
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-     AutoTest::stats_diff_checker(
-       pq_conn_, diffs, stats));
+     AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 

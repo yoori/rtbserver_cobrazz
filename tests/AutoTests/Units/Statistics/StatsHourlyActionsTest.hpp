@@ -9,15 +9,9 @@ class StatsHourlyActionsTest : public BaseDBUnit
   typedef ORM::HourlyStats HourlyStats;
 
 public:
-  StatsHourlyActionsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
-    BaseDBUnit(
-      stat_var, task_name, params_var),
-    target_request_time_(
-      AutoTest::Time().get_gm_time().
-        format("%d-%m-%Y:%H-00-00"))
+  StatsHourlyActionsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
+    BaseDBUnit(stat_var, task_name, params_var),
+    target_request_time_(AutoTest::Time().get_gm_time(). format("%d-%m-%Y:%H-00-00"))
   { }
 
   virtual ~StatsHourlyActionsTest() noexcept

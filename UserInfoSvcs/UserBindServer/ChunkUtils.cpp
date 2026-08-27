@@ -20,19 +20,17 @@ namespace AdServer::UserInfoSvcs
   }
 
   bool
-  BaseChunkSelector::match(std::string* date_str, const char* full_path)
-    const
+  BaseChunkSelector::match(std::string* date_str, const char* full_path) const
     noexcept
   {
     String::RegEx::Result sub_strs;
 
-    String::SubString file_name(
-      Generics::DirSelect::file_name(full_path));
+    String::SubString file_name(Generics::DirSelect::file_name(full_path));
 
-    if(reg_exp_.search(sub_strs, file_name) &&
+    if (reg_exp_.search(sub_strs, file_name) &&
       (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
     {
-      if(date_str)
+      if (date_str)
       {
         assert(sub_strs.size() >= 2);
         *date_str = sub_strs[1].str();
@@ -50,13 +48,12 @@ namespace AdServer::UserInfoSvcs
   {}
 
   bool
-  ChunkRemover::operator ()(const char* full_path, const struct stat&)
-    const
+  ChunkRemover::operator ()(const char* full_path, const struct stat&) const
     /*throw(BaseChunkSelector::Exception)*/
   {
-    if(match(0, full_path))
+    if (match(0, full_path))
     {
-      if(::unlink(full_path) == -1)
+      if (::unlink(full_path) == -1)
       {
         eh::throw_errno_exception<BaseChunkSelector::Exception>(
           "can't remove file '",
@@ -72,8 +69,7 @@ namespace AdServer::UserInfoSvcs
 
   // ChunkSelector
   ChunkSelector::ChunkSelector(
-    const String::SubString& prefix,
-    ChunkFileDescriptionMap& chunk_files)
+    const String::SubString& prefix, ChunkFileDescriptionMap& chunk_files)
     : BaseChunkSelector(prefix),
       chunk_files_(chunk_files)
   {}
@@ -84,21 +80,18 @@ namespace AdServer::UserInfoSvcs
   {
     std::string date_str;
 
-    if(match(&date_str, full_path))
+    if (match(&date_str, full_path))
     {
       try
       {
-        chunk_files_.insert(
-          std::make_pair(
-            full_path,
-            ChunkFileDescription(
-              Generics::Time(date_str, LOG_TIME_FORMAT))));
+        chunk_files_.emplace(
+          full_path,
+          ChunkFileDescription(Generics::Time(date_str, LOG_TIME_FORMAT)));
       }
       catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << "can't parse file name '" <<
-          full_path << "': " << ex.what();
+        ostr << "can't parse file name '" << full_path << "': " << ex.what();
         throw BaseChunkSelector::Exception(ostr);
       }
 

@@ -1,9 +1,6 @@
 #include "TextDisplayAdvertisingWatershedTest.hpp"
 
-REFLECT_UNIT(TextDisplayAdvertisingWatershedTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(TextDisplayAdvertisingWatershedTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace ORM = AutoTest::ORM;
 
@@ -20,13 +17,9 @@ namespace
 bool
 TextDisplayAdvertisingWatershedTest::run_test()
 {
-  AUTOTEST_CASE(
-    display_wins_(),
-    "Display ads wins");
+  AUTOTEST_CASE(display_wins_(), "Display ads wins");
 
-  AUTOTEST_CASE(
-    text_wins_(),
-    "TA ads win");
+  AUTOTEST_CASE(text_wins_(), "TA ads win");
 
   return true;
 }
@@ -50,15 +43,11 @@ TextDisplayAdvertisingWatershedTest::display_wins_()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "Display ccid check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_acpc,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_acpc, SelectedCreativesActualCPC(client)).check(),
     "Display revenue check");
 }
 
@@ -81,15 +70,11 @@ TextDisplayAdvertisingWatershedTest::text_wins_()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "TA ccid check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_acpc,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_acpc, SelectedCreativesActualCPC(client)).check(),
     "TA revenue check");
 }
 

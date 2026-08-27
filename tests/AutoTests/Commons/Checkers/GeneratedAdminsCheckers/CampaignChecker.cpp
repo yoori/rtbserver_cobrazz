@@ -22,10 +22,7 @@ namespace AutoTest
       exists_(AEC_EXISTS)
   {}
 
-  CampaignChecker::CampaignChecker(
-    BaseUnit* test,
-    unsigned long ccg_id,
-    NotPresentTag)
+  CampaignChecker::CampaignChecker(BaseUnit* test, unsigned long ccg_id, NotPresentTag)
     : test_(test),
       ccg_id_(ccg_id),
       expected_(ANY_EXPECTED_),
@@ -48,9 +45,7 @@ namespace AutoTest
 
     AdminsArray<CampaignAdmin, CT_ALL> central_admins;
 
-    central_admins.initialize(test_,
-      CTE_CENTRAL, STE_CAMPAIGN_MANAGER,
-      ccg_id_, expand_channels_);
+    central_admins.initialize(test_, CTE_CENTRAL, STE_CAMPAIGN_MANAGER, ccg_id_, expand_channels_);
 
     AdminsArray<CampaignAdmin, CT_ALL> remote_admins;
 
@@ -65,10 +60,7 @@ namespace AutoTest
 
     return
       (central_admins.empty() ||
-        admin_checker(
-          central_admins,
-          expected_,
-          exists_).
+        admin_checker(central_admins, expected_, exists_).
             check(throw_error)) &&
       (remote_admins.empty() ||
         admin_checker(

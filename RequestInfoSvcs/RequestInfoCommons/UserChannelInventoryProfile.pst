@@ -18,7 +18,7 @@ namespace RequestInfoSvcs
   struct ColoCreateTimeDescriptor
   {
     uint id;                        // colo id
-    uint create_time;               // ISP timezone 
+    uint create_time;               // ISP timezone
   }
 
   autoreader ColoCreateTimeReader<ColoCreateTimeDescriptor>;

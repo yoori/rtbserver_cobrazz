@@ -11,9 +11,7 @@
 
 #include "ProfileMap.hpp"
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   template<typename KeyType>
   class ProfileMapAsyncAdapter:
@@ -53,7 +51,7 @@ namespace ProfilingCommons
             error = "unknown check error";
           }
 
-          if(callback)
+          if (callback)
           {
             callback(result, std::move(error));
           }
@@ -78,9 +76,7 @@ namespace ProfilingCommons
           try
           {
             Generics::Time access_time;
-            result = profile_map->get_profile(
-              key,
-              last_access_time ? &access_time : nullptr);
+            result = profile_map->get_profile(key, last_access_time ? &access_time : nullptr);
           }
           catch(const std::exception& ex)
           {
@@ -91,7 +87,7 @@ namespace ProfilingCommons
             error = "unknown get error";
           }
 
-          if(callback)
+          if (callback)
           {
             callback(std::move(result), std::move(error));
           }
@@ -109,8 +105,7 @@ namespace ProfilingCommons
         typename AsyncProfileMap<KeyType>::SaveCallback()) override
     {
       const auto profile_map = profile_map_;
-      Generics::ConstSmartMemBuf_var profile_holder(
-        ReferenceCounting::add_ref(mem_buf));
+      Generics::ConstSmartMemBuf_var profile_holder(ReferenceCounting::add_ref(mem_buf));
       executor_pool_->post(
         [profile_map,
          key,
@@ -132,7 +127,7 @@ namespace ProfilingCommons
             error = "unknown save error";
           }
 
-          if(callback)
+          if (callback)
           {
             callback(std::move(error));
           }
@@ -168,7 +163,7 @@ namespace ProfilingCommons
             error = "unknown remove error";
           }
 
-          if(callback)
+          if (callback)
           {
             callback(result, std::move(error));
           }
@@ -194,7 +189,7 @@ namespace ProfilingCommons
           catch(...)
           {}
 
-          if(complete)
+          if (complete)
           {
             complete();
           }
@@ -210,5 +205,4 @@ namespace ProfilingCommons
       ReferenceCounting::PolicyNotNull> profile_map_;
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
   };
-}
 }

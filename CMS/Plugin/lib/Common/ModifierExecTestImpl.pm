@@ -45,7 +45,7 @@ sub list
   my ($this, $host, $path, $recursive) = @_;
 
   $path =~ s|/+$||;
-  if(defined($recursive) && $recursive > 0)
+  if (defined($recursive) && $recursive > 0)
   {
     my $out = $this->execute_command_for_output_(
       "cd " . $this->get_path_($host, $path) . " 2>/dev/null && " .
@@ -68,7 +68,7 @@ sub mkdir
 sub remove
 {
   my ($this, $host, $path, $force) = @_;
-  
+
   my $options = (defined($force) && $force eq 1) ? "-rf " : "-r ";
 
   return system("rm " . $options . $this->get_path_($host, $path));
@@ -114,7 +114,7 @@ sub execute_command
   my $command = '';
   foreach my $arg(@args)
   {
-    if(blessed($arg) && !exists($arg->{path}))
+    if (blessed($arg) && !exists($arg->{path}))
     {
       die "assert: execute_command: passed object that isn't result of path_wrapper";
     }
@@ -132,7 +132,7 @@ sub execute_command_for_output_
   print "DEBUG(execute_command_for_output_): $command\n";
 
   my $out = `$command`;
-  if($?)
+  if ($?)
   {
     die "Error: can't execute '$command': error code = $?";
   }

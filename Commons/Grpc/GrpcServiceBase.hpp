@@ -262,9 +262,7 @@ namespace AdServer::Grpc
     class InprogressStats final
     {
     public:
-      std::uint64_t add(
-        const std::uint64_t call_inflight,
-        const Generics::Time& read_time);
+      std::uint64_t add(const std::uint64_t call_inflight, const Generics::Time& read_time);
 
       void remove(const std::uint64_t receiver_id) noexcept;
 

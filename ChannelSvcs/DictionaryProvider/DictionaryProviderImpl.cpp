@@ -4,9 +4,7 @@
 #include "DictionaryContainer.hpp"
 #include "DictionaryProviderImpl.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   const char* DictionaryProviderImpl::ASPECT = " DictionaryProvider";
   const size_t DictionaryProviderImpl::MAX_LOAD_SIZE = 1024 * 128;
@@ -15,8 +13,7 @@ namespace ChannelSvcs
     Logging::Logger* logger,
     const DictionaryProviderConfig* config)
     /*throw(Exception, eh::Exception)*/
-    : callback_(new Logging::ActiveObjectCallbackImpl(
-        logger, "DictionaryProvider", ASPECT)),
+    : callback_(new Logging::ActiveObjectCallbackImpl(logger, "DictionaryProvider", ASPECT)),
       task_runner_(new Generics::TaskRunner(callback_, config->threads())),
       task_runned_(0)
   {
@@ -33,12 +30,11 @@ namespace ChannelSvcs
     }
     try
     {
-      for(xsd::AdServer::Configuration::DictionaryProviderConfigType::
+      for (xsd::AdServer::Configuration::DictionaryProviderConfigType::
           Dictionary_sequence::const_iterator it = config->Dictionary().begin();
           it != config->Dictionary().end(); ++it)
       {
-        Task_var msg = new LoadTask(
-          this, task_runner_, it->file().c_str(), it->lang().c_str());
+        Task_var msg = new LoadTask(this, task_runner_, it->file().c_str(), it->lang().c_str());
         task_runner_->enqueue_task(msg);
         task_runned_.fetch_add(1, std::memory_order_relaxed);
       }
@@ -51,9 +47,7 @@ namespace ChannelSvcs
     }
   }
 
-  void DictionaryProviderImpl::load_dictionary_(
-    const char* lang,
-    const char* file_name) noexcept
+  void DictionaryProviderImpl::load_dictionary_(const char* lang, const char* file_name) noexcept
   {
     static const char* FN = "DictionaryProviderImpl::load_dictionary_";
     try
@@ -85,7 +79,8 @@ namespace ChannelSvcs
       logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-1302")
         << FN << ": Exception: " << e.what();
     }
-    if(logger()->log_level() >= Logging::Logger::DEBUG &&
+
+    if (logger()->log_level() >= Logging::Logger::DEBUG &&
       task_runned_.load(std::memory_order_relaxed) == 0)
     {
       std::ostringstream ostr;
@@ -95,12 +90,11 @@ namespace ChannelSvcs
   }
 
   ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-  DictionaryProviderImpl::get_lexemes(
-    const char* language, const ::CORBACommons::StringSeq& words)
+  DictionaryProviderImpl::get_lexemes(const char* language, const ::CORBACommons::StringSeq& words)
   /*throw(ChannelSvcs::NotReady, ChannelSvcs::ImplementationException)*/
   {
     const long task_runned = task_runned_.load(std::memory_order_relaxed);
-    if(task_runned)
+    if (task_runned)
     {
       Stream::Error err;
       err << "Not ready :" << task_runned << " tasks remained";
@@ -109,7 +103,7 @@ namespace ChannelSvcs
     try
     {
       LexemeItemVector item_vector(words.length());
-      for(size_t i = 0; i < item_vector.size(); i++)
+      for (size_t i = 0; i < item_vector.size(); i++)
       {
         item_vector[i].word = words[i];
       }
@@ -123,15 +117,14 @@ namespace ChannelSvcs
         {
           (*ret_value)[i].forms.length( item_vector[i].forms.size() );
           size_t j = 0;
-	
-          for(Forms::const_iterator it =
-              item_vector[i].forms.begin();
+
+          for (Forms::const_iterator it = item_vector[i].forms.begin();
               it != item_vector[i].forms.end(); ++it, j++)
           {
             (*ret_value)[i].forms[j] << *it;
           }
-	
-          if(logger()->log_level() >= Logging::Logger::TRACE)
+
+          if (logger()->log_level() >= Logging::Logger::TRACE)
           {
             const Forms& forms = item_vector[i].forms;
             Algs::print(logger()->sstream(Logging::Logger::TRACE, ASPECT) << "Matched lexeme: ", forms.begin(), forms.end());
@@ -149,5 +142,4 @@ namespace ChannelSvcs
     }
   }
 
-}
 }

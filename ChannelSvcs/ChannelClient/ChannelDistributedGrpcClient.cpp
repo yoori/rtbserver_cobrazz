@@ -109,6 +109,7 @@ namespace AdServer::ChannelSvcs
           target.set_hostname(target.hostname() + "," + source.hostname());
         }
       }
+
       if (!source.match_time().empty())
       {
         if (target.match_time().empty())
@@ -162,23 +163,18 @@ namespace AdServer::ChannelSvcs
 
   struct ChannelDistributedGrpcClient::ControllerClient
   {
-    using ControllerGrpc =
-      adserver::channel_svcs::channel_controller::ChannelControllerGrpc;
+    using ControllerGrpc = adserver::channel_svcs::channel_controller::ChannelControllerGrpc;
 
     explicit ControllerClient(const std::string& endpoint)
       : endpoint(endpoint),
         name(endpoint),
-        channel(AdServer::Grpc::create_channel(
-          endpoint,
-          grpc::InsecureChannelCredentials())),
+        channel(AdServer::Grpc::create_channel(endpoint, grpc::InsecureChannelCredentials())),
         stub(ControllerGrpc::NewStub(channel))
     {}
 
     void reset()
     {
-      channel = AdServer::Grpc::create_channel(
-        endpoint,
-        grpc::InsecureChannelCredentials());
+      channel = AdServer::Grpc::create_channel(endpoint, grpc::InsecureChannelCredentials());
       stub = ControllerGrpc::NewStub(channel);
     }
 
@@ -247,13 +243,10 @@ namespace AdServer::ChannelSvcs
       if (client_holders.empty())
       {
         callback(
-          grpc::Status(
-            grpc::StatusCode::UNAVAILABLE,
-            "empty ChannelServer grpc group"),
+          grpc::Status(grpc::StatusCode::UNAVAILABLE, "empty ChannelServer grpc group"),
           AdServer::Grpc::ResponseHolder<
             adserver::channel_svcs::channel_server::MatchResponse>::
-              make_value(
-                adserver::channel_svcs::channel_server::MatchResponse()));
+              make_value(adserver::channel_svcs::channel_server::MatchResponse()));
         return;
       }
 
@@ -317,8 +310,7 @@ namespace AdServer::ChannelSvcs
               else
               {
                 ++state->errors;
-                state->last_error =
-                  AdServer::Grpc::status_with_endpoint(status, endpoint);
+                state->last_error = AdServer::Grpc::status_with_endpoint(status, endpoint);
               }
 
               if (--state->remaining != 0)
@@ -353,14 +345,10 @@ namespace AdServer::ChannelSvcs
       if (client_holders.empty())
       {
         callback(
-          grpc::Status(
-            grpc::StatusCode::UNAVAILABLE,
-            "empty ChannelServer grpc group"),
+          grpc::Status(grpc::StatusCode::UNAVAILABLE, "empty ChannelServer grpc group"),
           AdServer::Grpc::ResponseHolder<
             adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
-              make_value(
-                adserver::channel_svcs::channel_server::
-                  GetCcgTraitsResponse()));
+              make_value(adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
         return;
       }
 
@@ -407,8 +395,7 @@ namespace AdServer::ChannelSvcs
               else
               {
                 ++state->errors;
-                state->last_error =
-                  AdServer::Grpc::status_with_endpoint(status, endpoint);
+                state->last_error = AdServer::Grpc::status_with_endpoint(status, endpoint);
               }
 
               if (--state->remaining != 0)
@@ -441,9 +428,7 @@ namespace AdServer::ChannelSvcs
         request,
       CheckConfigurationCallback callback)
     {
-      client_holders.front()->client->check_configuration(
-        request,
-        std::move(callback));
+      client_holders.front()->client->check_configuration(request, std::move(callback));
     }
 
     void set_sources(
@@ -458,9 +443,7 @@ namespace AdServer::ChannelSvcs
         request,
       SetProxySourcesCallback callback)
     {
-      client_holders.front()->client->set_proxy_sources(
-        request,
-        std::move(callback));
+      client_holders.front()->client->set_proxy_sources(request, std::move(callback));
     }
 
     AdServer::Grpc::Stats stats() const noexcept
@@ -523,15 +506,13 @@ namespace AdServer::ChannelSvcs
   {
     if (channel_controller_refs_.empty())
     {
-      throw Exception(
-        "ChannelDistributedGrpcClient: empty ChannelController refs");
+      throw Exception("ChannelDistributedGrpcClient: empty ChannelController refs");
     }
     for (const auto& controller_group : channel_controller_refs_)
     {
       if (controller_group.empty())
       {
-        throw Exception(
-          "ChannelDistributedGrpcClient: empty ChannelController ref group");
+        throw Exception("ChannelDistributedGrpcClient: empty ChannelController ref group");
       }
     }
 
@@ -553,8 +534,7 @@ namespace AdServer::ChannelSvcs
       controller_clients.reserve(controller_group.size());
       for (const auto& endpoint : controller_group)
       {
-        controller_clients.emplace_back(
-          std::make_shared<ControllerClient>(endpoint));
+        controller_clients.emplace_back(std::make_shared<ControllerClient>(endpoint));
       }
       auto controller_pool = std::make_shared<ControllerPool>(
         std::move(controller_clients),
@@ -570,8 +550,7 @@ namespace AdServer::ChannelSvcs
     deactivated_.store(false, std::memory_order_release);
     Generics::CompositeActiveObject::activate_object_();
     resolve_refs_();
-    task_runner_->enqueue_task(
-      Generics::Task_var(new ResolveRefsTask(this)));
+    task_runner_->enqueue_task(Generics::Task_var(new ResolveRefsTask(this)));
   }
 
   void
@@ -639,8 +618,7 @@ namespace AdServer::ChannelSvcs
 
       merge_stats_(
         result,
-        static_cast<ChannelServerGrpcAsyncClient*>(
-          client_holder->client.get())->stats());
+        static_cast<ChannelServerGrpcAsyncClient*>(client_holder->client.get())->stats());
     }
     return result;
   }
@@ -651,8 +629,7 @@ namespace AdServer::ChannelSvcs
     std::vector<ClientHolderPtr> client_holders;
     {
       std::shared_lock<std::shared_mutex> lock(pool_lock_);
-      client_holders.reserve(
-        current_client_holders_.size() + shutdown_client_holders_.size());
+      client_holders.reserve(current_client_holders_.size() + shutdown_client_holders_.size());
       client_holders.insert(
         client_holders.end(),
         current_client_holders_.begin(),
@@ -675,8 +652,7 @@ namespace AdServer::ChannelSvcs
 
       result.emplace_back(
         client_holder->endpoint,
-        static_cast<ChannelServerGrpcAsyncClient*>(
-          client_holder->client.get())->stats());
+        static_cast<ChannelServerGrpcAsyncClient*>(client_holder->client.get())->stats());
     }
     return result;
   }
@@ -695,8 +671,7 @@ namespace AdServer::ChannelSvcs
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::MatchResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::MatchResponse()));
+            make_value(adserver::channel_svcs::channel_server::MatchResponse()));
       return;
     }
 
@@ -705,13 +680,10 @@ namespace AdServer::ChannelSvcs
     {
       add_completed_stats(true);
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          "no available ChannelServer grpc client"),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "no available ChannelServer grpc client"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::MatchResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::MatchResponse()));
+            make_value(adserver::channel_svcs::channel_server::MatchResponse()));
       return;
     }
 
@@ -732,13 +704,10 @@ namespace AdServer::ChannelSvcs
       {
         if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+          ref.mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout);
         }
         callback(
-          AdServer::Grpc::status_with_endpoint(
-            status,
-            ref->name()),
+          AdServer::Grpc::status_with_endpoint(status, ref->name()),
           std::move(response_holder));
       });
   }
@@ -757,8 +726,7 @@ namespace AdServer::ChannelSvcs
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
+            make_value(adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
       return;
     }
 
@@ -767,13 +735,10 @@ namespace AdServer::ChannelSvcs
     {
       add_completed_stats(true);
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          "no available ChannelServer grpc client"),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "no available ChannelServer grpc client"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::GetCcgTraitsResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
+            make_value(adserver::channel_svcs::channel_server::GetCcgTraitsResponse()));
       return;
     }
 
@@ -792,13 +757,10 @@ namespace AdServer::ChannelSvcs
       {
         if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+          ref.mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout);
         }
         callback(
-          AdServer::Grpc::status_with_endpoint(
-            status,
-            ref->name()),
+          AdServer::Grpc::status_with_endpoint(status, ref->name()),
           std::move(response_holder));
       });
   }
@@ -817,9 +779,7 @@ namespace AdServer::ChannelSvcs
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::CheckConfigurationResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::
-                CheckConfigurationResponse()));
+            make_value(adserver::channel_svcs::channel_server::CheckConfigurationResponse()));
       return;
     }
 
@@ -828,14 +788,10 @@ namespace AdServer::ChannelSvcs
     {
       add_completed_stats(true);
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          "no available ChannelServer grpc client"),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "no available ChannelServer grpc client"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::CheckConfigurationResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::
-                CheckConfigurationResponse()));
+            make_value(adserver::channel_svcs::channel_server::CheckConfigurationResponse()));
       return;
     }
 
@@ -854,8 +810,7 @@ namespace AdServer::ChannelSvcs
       {
         if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+          ref.mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout);
         }
         callback(status, std::move(response_holder));
       });
@@ -875,8 +830,7 @@ namespace AdServer::ChannelSvcs
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::SetSourcesResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::SetSourcesResponse()));
+            make_value(adserver::channel_svcs::channel_server::SetSourcesResponse()));
       return;
     }
 
@@ -885,13 +839,10 @@ namespace AdServer::ChannelSvcs
     {
       add_completed_stats(true);
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          "no available ChannelServer grpc client"),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "no available ChannelServer grpc client"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::SetSourcesResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::SetSourcesResponse()));
+            make_value(adserver::channel_svcs::channel_server::SetSourcesResponse()));
       return;
     }
 
@@ -910,8 +861,7 @@ namespace AdServer::ChannelSvcs
       {
         if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+          ref.mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout);
         }
         callback(status, std::move(response_holder));
       });
@@ -932,9 +882,7 @@ namespace AdServer::ChannelSvcs
         grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::SetProxySourcesResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::
-                SetProxySourcesResponse()));
+            make_value(adserver::channel_svcs::channel_server::SetProxySourcesResponse()));
       return;
     }
 
@@ -943,14 +891,10 @@ namespace AdServer::ChannelSvcs
     {
       add_completed_stats(true);
       callback(
-        grpc::Status(
-          grpc::StatusCode::UNAVAILABLE,
-          "no available ChannelServer grpc client"),
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "no available ChannelServer grpc client"),
         AdServer::Grpc::ResponseHolder<
           adserver::channel_svcs::channel_server::SetProxySourcesResponse>::
-            make_value(
-              adserver::channel_svcs::channel_server::
-                SetProxySourcesResponse()));
+            make_value(adserver::channel_svcs::channel_server::SetProxySourcesResponse()));
       return;
     }
 
@@ -969,8 +913,7 @@ namespace AdServer::ChannelSvcs
       {
         if (!status.ok() && !AdServer::Grpc::is_request_specific_error(status))
         {
-          ref.mark_as_bad(
-            Generics::Time::get_time_of_day() + pool_timeout);
+          ref.mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout);
         }
         callback(status, std::move(response_holder));
       });
@@ -999,11 +942,9 @@ namespace AdServer::ChannelSvcs
   }
 
   bool
-  ChannelDistributedGrpcClient::fill_refs_state_(
-    ControllerRefsState& refs_state) noexcept
+  ChannelDistributedGrpcClient::fill_refs_state_(ControllerRefsState& refs_state) noexcept
   {
-    namespace ControllerProto =
-      adserver::channel_svcs::channel_controller;
+    namespace ControllerProto = adserver::channel_svcs::channel_controller;
 
     refs_state.clear();
     refs_state.reserve(channel_controller_refs_.size());
@@ -1018,8 +959,7 @@ namespace AdServer::ChannelSvcs
           Stream::Error ostr;
           ostr << "ChannelController group '" <<
             group_name_(channel_controller_refs_[i]) <<
-            "': no available refs: " <<
-            controller_pools_[i]->unavailable_description();
+            "': no available refs: " << controller_pools_[i]->unavailable_description();
           callback_->report_error(
             Generics::ActiveObjectCallback::WARNING,
             ostr.str(),
@@ -1033,11 +973,7 @@ namespace AdServer::ChannelSvcs
         ControllerProto::GetSessionDescriptionRequest request;
         ControllerProto::GetSessionDescriptionResponse response;
 
-        const auto status =
-          ref->stub->get_session_description(
-            &context,
-            request,
-            &response);
+        const auto status = ref->stub->get_session_description(&context, request, &response);
         if (!status.ok())
         {
           ref->reset();
@@ -1064,12 +1000,14 @@ namespace AdServer::ChannelSvcs
           {
             server_refs.emplace_back(server.channel_server_endpoint());
           }
+
           if (!server_refs.empty())
           {
             std::sort(server_refs.begin(), server_refs.end());
             server_groups.emplace_back(std::move(server_refs));
           }
         }
+
         if (server_groups.empty())
         {
           ref.mark_as_bad(
@@ -1086,9 +1024,7 @@ namespace AdServer::ChannelSvcs
         }
 
         std::sort(server_groups.begin(), server_groups.end());
-        refs_state.emplace_back(
-          group_name_(channel_controller_refs_[i]),
-          std::move(server_groups));
+        refs_state.emplace_back(group_name_(channel_controller_refs_[i]), std::move(server_groups));
       }
       catch (const eh::Exception& ex)
       {
@@ -1118,8 +1054,7 @@ namespace AdServer::ChannelSvcs
   }
 
   bool
-  ChannelDistributedGrpcClient::update_pool_if_changed_(
-    ControllerRefsState refs_state) noexcept
+  ChannelDistributedGrpcClient::update_pool_if_changed_(ControllerRefsState refs_state) noexcept
   {
     try
     {
@@ -1143,8 +1078,7 @@ namespace AdServer::ChannelSvcs
             client_holders.emplace_back(std::move(client_holder));
           }
 
-          refs.emplace_back(
-            std::make_shared<RefHolder>(std::move(group_client_holders)));
+          refs.emplace_back(std::make_shared<RefHolder>(std::move(group_client_holders)));
         }
       }
 
@@ -1152,15 +1086,12 @@ namespace AdServer::ChannelSvcs
       PoolPtr old_pool;
       {
         std::unique_lock<std::shared_mutex> lock(pool_lock_);
-        if (deactivated_.load(std::memory_order_acquire) ||
-          refs_state_ == refs_state)
+        if (deactivated_.load(std::memory_order_acquire) || refs_state_ == refs_state)
         {
           return false;
         }
 
-        new_pool = std::make_shared<Pool>(
-          std::move(refs),
-          coalesce_runner_);
+        new_pool = std::make_shared<Pool>(std::move(refs), coalesce_runner_);
         new_pool->activate_object();
 
         old_pool = std::move(pool_);
@@ -1183,8 +1114,7 @@ namespace AdServer::ChannelSvcs
   }
 
   ChannelDistributedGrpcClient::ClientHolderPtr
-  ChannelDistributedGrpcClient::get_or_create_client_holder_(
-    const std::string& endpoint)
+  ChannelDistributedGrpcClient::get_or_create_client_holder_(const std::string& endpoint)
   {
     if (deactivated_.load(std::memory_order_acquire))
     {
@@ -1231,8 +1161,7 @@ namespace AdServer::ChannelSvcs
     result.completed_error_items += source.completed_error_items;
     result.queue_wait_count += source.queue_wait_count;
     result.queue_wait_sum_us += source.queue_wait_sum_us;
-    result.queue_wait_max_us =
-      std::max(result.queue_wait_max_us, source.queue_wait_max_us);
+    result.queue_wait_max_us = std::max(result.queue_wait_max_us, source.queue_wait_max_us);
     result.queue_timeout_count += source.queue_timeout_count;
     result.response_wait_count += source.response_wait_count;
     result.response_wait_sum_us += source.response_wait_sum_us;

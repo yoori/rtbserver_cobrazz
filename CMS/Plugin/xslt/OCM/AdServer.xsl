@@ -791,7 +791,7 @@
 
       <xsl:if test="count(exsl:node-set($user-bind-server-hosts)//host)> 0">
         <xsl:variable name="user-bind-chunks-count">
-          <xsl:value-of select="$colo-config/cfg:userProfiling/@bind_chunks_count"/>                         
+          <xsl:value-of select="$colo-config/cfg:userProfiling/@bind_chunks_count"/>
           <xsl:if test="count($colo-config/cfg:userProfiling/@bind_chunks_count)= 0">
             <xsl:value-of select="$user-bind-server-scale-chunks"/>
           </xsl:if>
@@ -1993,7 +1993,7 @@
           </xsl:call-template>
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoController
-              AdServer::UserInfoSvcs::UserBindController 
+              AdServer::UserInfoSvcs::UserBindController
               AdServer::LogProcessing::ExpressionMatcherChecker'"/>
             <xsl:with-param name="slaves" select= "concat('AdServer::LogProcessing::ExpressionMatcher
               AdServer::RequestInfoSvcs::RequestInfoManager ', $fe-services)"/>
@@ -2039,8 +2039,8 @@
         <xsl:call-template name="AddDependence">
           <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer'"/>
           <xsl:with-param name="slaves" select=
-            "concat($campaign-manager-dep, 'AdServer::CampaignSvcs::BillingServer 
-               AdServer::UserInfoSvcs::UserInfoManager 
+            "concat($campaign-manager-dep, 'AdServer::CampaignSvcs::BillingServer
+               AdServer::UserInfoSvcs::UserInfoManager
                AdServer::LogProcessing::ExpressionMatcher')"/>
         </xsl:call-template>
         <xsl:if test="count($adcluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $channel-search-service-descriptor]) > 0">
@@ -2054,7 +2054,7 @@
           <xsl:with-param name="slaves" select= "'AdServer::CampaignSvcs::CampaignServer'"/>
         </xsl:call-template>
         <xsl:call-template name="AddDependence">
-          <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer 
+          <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer
             AdServer::LogProcessing::LogGeneralizer'"/>
           <xsl:with-param name="slaves" select= "'AdServer::DBAccess'"/>
         </xsl:call-template>

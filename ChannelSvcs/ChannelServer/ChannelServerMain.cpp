@@ -32,12 +32,7 @@ namespace
   to_shared(ReferenceCounting::SmartPtr<T> ptr)
   {
     T* raw_ptr = ptr.in();
-    return std::shared_ptr<T>(
-      raw_ptr,
-      [ptr = std::move(ptr)](T*) mutable
-      {
-        ptr.reset();
-      });
+    return std::shared_ptr<T>(raw_ptr, [ptr = std::move(ptr)](T*) mutable { ptr.reset(); });
   }
 
   std::string
@@ -73,10 +68,7 @@ namespace
   }
 
   void
-  append_json_stat_(
-    std::string& body,
-    const char* name,
-    const std::uint64_t value)
+  append_json_stat_(std::string& body, const char* name, const std::uint64_t value)
   {
     body += ",\"";
     body += name;
@@ -89,14 +81,8 @@ namespace
     std::string& body,
     const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
   {
-    append_json_stat_(
-      body,
-      "grpc_unary_call_created_total",
-      stats.unary_call_created_total);
-    append_json_stat_(
-      body,
-      "grpc_unary_call_deleted_total",
-      stats.unary_call_deleted_total);
+    append_json_stat_(body, "grpc_unary_call_created_total", stats.unary_call_created_total);
+    append_json_stat_(body, "grpc_unary_call_deleted_total", stats.unary_call_deleted_total);
     append_json_stat_(body, "grpc_unary_call_live", stats.unary_call_live);
     append_json_stat_(
       body,
@@ -106,10 +92,7 @@ namespace
       body,
       "grpc_coro_unary_call_deleted_total",
       stats.coro_unary_call_deleted_total);
-    append_json_stat_(
-      body,
-      "grpc_coro_unary_call_live",
-      stats.coro_unary_call_live);
+    append_json_stat_(body, "grpc_coro_unary_call_live", stats.coro_unary_call_live);
     append_json_stat_(
       body,
       "grpc_batch_stream_call_created_total",
@@ -118,17 +101,13 @@ namespace
       body,
       "grpc_batch_stream_call_deleted_total",
       stats.batch_stream_call_deleted_total);
-    append_json_stat_(
-      body,
-      "grpc_batch_stream_call_live",
-      stats.batch_stream_call_live);
+    append_json_stat_(body, "grpc_batch_stream_call_live", stats.batch_stream_call_live);
   }
 }
 
 ChannelServerApp_::ChannelServerApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "ChannelServerApp_", ASPECT, 0)
 {
 }
@@ -146,26 +125,23 @@ void ChannelServerApp_::load_config_(const char* name) /*throw(Exception)*/
     std::unique_ptr<AdConfigurationType>
       ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       throw Exception(error_handler.text(error_string));
     }
 
     configuration_ =
-      ConfigPtr(new ChannelServerConfigType(
-        ad_configuration->ChannelServerConfig()));
+      ConfigPtr(new ChannelServerConfigType(ad_configuration->ChannelServerConfig()));
 
   }
   catch(const xml_schema::parsing& e)
   {
     Stream::Error ostr;
 
-    ostr << "Can't parse config file '"
-         << name << "'."
-         << ": ";
+    ostr << "Can't parse config file '" << name << "'." << ": ";
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       ostr << error_handler.text(error_string);
@@ -176,10 +152,7 @@ void ChannelServerApp_::load_config_(const char* name) /*throw(Exception)*/
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Can't parse config file '"
-         << name << "'."
-         << ": "
-         << e.what();
+    ostr << "Can't parse config file '" << name << "'." << ": " << e.what();
     throw Exception(ostr);
   }
   catch(...)
@@ -196,30 +169,25 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   try
   {
     corba_config_.custom_reactor = false;
-    Config::CorbaConfigReader::read_config(
-      configuration_->CorbaConfig(),
-      corba_config_);
+    Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
   }
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Can't read Corba Config. : "
-         << e.what();
+    ostr << "Can't read Corba Config. : " << e.what();
     throw Exception(ostr);
   }
 
   try
   {
     // init CORBA Server
-    corba_server_adapter_ =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
+    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
 
   }
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Can't init CorbaServerAdapter. : "
-         << e.what();
+    ostr << "Can't init CorbaServerAdapter. : " << e.what();
     throw Exception(ostr);
   }
 
@@ -227,8 +195,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   {
     server_core_ = std::make_shared<AdServer::ChannelSvcs::ChannelServerCore>(
       logger(), configuration_.get());
-    server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(
-      server_core_);
+    server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(server_core_);
 
     AdServer::ChannelSvcs::ChannelServerControlImpl_var server_control_impl(
       new AdServer::ChannelSvcs::ChannelServerControlImpl(server_core_));
@@ -236,16 +203,13 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     AdServer::ChannelSvcs::ChannelUpdateImpl_var update_impl(
       new AdServer::ChannelSvcs::ChannelUpdateImpl(server_core_));
 
-    corba_server_adapter_->add_binding(
-      CHANNEL_SERVER_OBJ_KEY, server_impl_.in());
+    corba_server_adapter_->add_binding(CHANNEL_SERVER_OBJ_KEY, server_impl_.in());
 
-    corba_server_adapter_->add_binding(
-      CHANNEL_UPDATE_OBJ_KEY, update_impl.in());
+    corba_server_adapter_->add_binding(CHANNEL_UPDATE_OBJ_KEY, update_impl.in());
 
-    corba_server_adapter_->add_binding(
-      CHANNEL_SERVER_CONTROL_OBJ_KEY, server_control_impl.in());
+    corba_server_adapter_->add_binding(CHANNEL_SERVER_CONTROL_OBJ_KEY, server_control_impl.in());
 
-    if(configuration_->GrpcConfig().present())
+    if (configuration_->GrpcConfig().present())
     {
       grpc_adapter_ = to_shared<AdServer::ChannelSvcs::ChannelServerGrpc>(
         new AdServer::ChannelSvcs::ChannelServerGrpc(
@@ -258,11 +222,10 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           configuration_->GrpcConfig()->Endpoint().port(),
           configuration_->GrpcConfig()->process_threads(),
           configuration_->GrpcConfig()->cq_threads(),
-          static_cast<std::size_t>(
-            configuration_->GrpcConfig()->max_sequential_ops())));
+          static_cast<std::size_t>(configuration_->GrpcConfig()->max_sequential_ops())));
     }
 
-    if(configuration_->HttpConfig().present())
+    if (configuration_->HttpConfig().present())
     {
       http_server_ = new AdServer::Commons::HttpServer::HttpServer(
         configuration_->HttpConfig()->Endpoint().host().present() &&
@@ -276,8 +239,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         [
           server_core = server_core_,
           grpc_adapter = grpc_adapter_
-        ](
-          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        ](const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           AdServer::ChannelSvcs::ChannelServerStats stats;
           server_core->get_stats(stats);
@@ -285,9 +247,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           std::string body = "{";
           body += "\"total_requests\":";
           body += std::to_string(stats.total_requests);
-          for (std::size_t i = 0;
-            i < AdServer::ChannelSvcs::ChannelServerStats::PARAMS_MAX;
-            ++i)
+          for (std::size_t i = 0; i < AdServer::ChannelSvcs::ChannelServerStats::PARAMS_MAX; ++i)
           {
             body += ",\"";
             body += AdServer::ChannelSvcs::ChannelServerStats::param_name[i];
@@ -319,9 +279,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             body += std::to_string(grpc_stats.batch_total_time);
             body += ",\"batch_in_progress\":";
             body += std::to_string(grpc_stats.batch_in_progress);
-            append_grpc_lifecycle_stats_(
-              body,
-              grpc_stats.grpc_lifecycle_stats);
+            append_grpc_lifecycle_stats_(body, grpc_stats.grpc_lifecycle_stats);
           }
           body += "}\n";
 
@@ -333,15 +291,15 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         });
     }
 
-    active_objects_ =
-      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_ = std::make_shared<Generics::CompositeActiveObject>(false, false);
     active_objects_->add_child_object(server_core_);
-    if(grpc_adapter_)
+    if (grpc_adapter_)
     {
       active_objects_->add_child_object(
         std::static_pointer_cast<Generics::ActiveObject>(grpc_adapter_));
     }
-    if(http_server_.in() != 0)
+
+    if (http_server_.in() != 0)
     {
       active_objects_->add_child_object(http_server_.in());
     }
@@ -387,14 +345,12 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     //Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        configuration_->Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(configuration_->Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << "got LoggerConfigReader::Exception: "
-        << e.what();
+      ostr << FUN << "got LoggerConfigReader::Exception: " << e.what();
       throw Exception(ostr);
     }
 
@@ -419,12 +375,8 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                        ASPECT,
-                        "ADS-IMPL-11")
-        << FUN
-        << "Got ChannelServerApp_::Exception. : \n"
-        << e.what();
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
+        << FUN << "Got ChannelServerApp_::Exception. : \n" << e.what();
     }
     catch (...)
     {
@@ -439,17 +391,12 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                        ASPECT,
-                        "ADS-IMPL-11")
-        << FUN
-        << "Got CORBA::SystemException. : \n"
-        << e;
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
+        << FUN << "Got CORBA::SystemException. : \n" << e;
     }
     catch (...)
     {
-      logger()->log(String::SubString("ChannelServerApp_::main(): "
-                    "Got unknown exception."),
+      logger()->log(String::SubString("ChannelServerApp_::main(): " "Got unknown exception."),
                     Logging::Logger::EMERGENCY,
                     ASPECT,
                     "ADS-IMPL-11");
@@ -459,17 +406,12 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                        ASPECT,
-                        "ADS-IMPL-11")
-       << FUN
-       << "Got eh::Exception. : \n"
-       << e.what();
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
+       << FUN << "Got eh::Exception. : \n" << e.what();
     }
     catch (...)
     {
-      logger()->log(String::SubString("ChannelServerApp_::main(): "
-                    "Got unknown exception."),
+      logger()->log(String::SubString("ChannelServerApp_::main(): " "Got unknown exception."),
                     Logging::Logger::EMERGENCY,
                     ASPECT,
                     "ADS-IMPL-11");
@@ -477,8 +419,7 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   }
   catch (...)
   {
-    logger()->log(String::SubString("ChannelServerApp_::main(): "
-                  "Got Unknown exception."),
+    logger()->log(String::SubString("ChannelServerApp_::main(): " "Got Unknown exception."),
                   Logging::Logger::EMERGENCY,
                   ASPECT,
                   "ADS-IMPL-11");
@@ -492,20 +433,13 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
   }
   catch(const CORBA::Exception& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-11")
-      << FUN
-      << "Got CORBA::Exception in destroy ORB. : \n"
-      << ex;
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
+      << FUN << "Got CORBA::Exception in destroy ORB. : \n" << ex;
   }
   catch(...)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-11")
-      << FUN
-      << "Got unknown exception in destroy ORB \n";
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
+      << FUN << "Got unknown exception in destroy ORB \n";
   }
 }
 

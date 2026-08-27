@@ -7,9 +7,7 @@
 #include <Commons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /** ChannelOverlapReachProcessor */
   struct ChannelOverlapReachProcessor:
@@ -39,19 +37,15 @@ namespace RequestInfoSvcs
     };
 
   public:
-    virtual void process_channel_overlap_reach(
-      const ChannelOverlapReachInfo& request_info)
+    virtual void process_channel_overlap_reach(const ChannelOverlapReachInfo& request_info)
       /*throw(Exception)*/ = 0;
   };
 
   typedef ReferenceCounting::SmartPtr<ChannelOverlapReachProcessor>
     ChannelOverlapReachProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   inline
   bool
@@ -72,9 +66,7 @@ namespace RequestInfoSvcs
       std::equal(appeared_channels.begin(),
         appeared_channels.end(),
         right.appeared_channels.begin()) &&
-      std::equal(overlap_channels.begin(),
-        overlap_channels.end(),
-        right.overlap_channels.begin());
+      std::equal(overlap_channels.begin(), overlap_channels.end(), right.overlap_channels.begin());
   }
 
   inline
@@ -83,10 +75,9 @@ namespace RequestInfoSvcs
     std::ostream& ostr, const char* offset) const
     noexcept
   {
-    ostr << offset << "time: " <<
-      time.get_gm_time() << std::endl;
+    ostr << offset << "time: " << time.get_gm_time() << std::endl;
     ostr << offset << "channel_groups: " << std::endl;
-    for(GroupMap::const_iterator group_it = channel_groups.begin();
+    for (GroupMap::const_iterator group_it = channel_groups.begin();
         group_it != channel_groups.end(); ++group_it)
     {
       ostr << offset << "  " << group_it->first << ": (";
@@ -100,5 +91,4 @@ namespace RequestInfoSvcs
       ostr << ")" << std::endl;
     }
   }
-}
 }

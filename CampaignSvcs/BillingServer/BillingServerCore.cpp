@@ -17,9 +17,7 @@ namespace Aspect
   const char BILLING_SERVER[] = "BillingServer";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace
   {
@@ -47,8 +45,7 @@ namespace CampaignSvcs
       new CORBACommons::CorbaClientAdapter();
 
     const CORBACommons::CorbaObjectRefList campaign_server_refs =
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        config.CampaignServerCorbaRef());
+      Config::CorbaConfigReader::read_multi_corba_ref(config.CampaignServerCorbaRef());
 
     campaign_servers_.reset(
       new AdServer::CampaignSvcs::CampaignServerPool(
@@ -80,13 +77,11 @@ namespace CampaignSvcs
   }
 
   BillingServerCore::BidResultInfo
-  BillingServerCore::check_available_bid(
-    const CheckBidInfo& request_info)
+  BillingServerCore::check_available_bid(const CheckBidInfo& request_info)
   {
     static const char* FUN = "BillingServerCore::check_available_bid()";
 
-    BillingProcessorHolder::Accessor billing_accessor =
-      get_accessor_();
+    BillingProcessorHolder::Accessor billing_accessor = get_accessor_();
 
     try
     {
@@ -109,19 +104,15 @@ namespace CampaignSvcs
   }
 
   bool
-  BillingServerCore::reserve_bid(
-    const ReserveBidInfo& request_info)
+  BillingServerCore::reserve_bid(const ReserveBidInfo& request_info)
   {
     static const char* FUN = "BillingServerCore::reserve_bid()";
 
-    BillingProcessorHolder::Accessor billing_accessor =
-      get_accessor_();
+    BillingProcessorHolder::Accessor billing_accessor = get_accessor_();
 
     try
     {
-      return billing_accessor->reserve_bid(
-        request_info.bid,
-        request_info.reserve_budget);
+      return billing_accessor->reserve_bid(request_info.bid, request_info.reserve_budget);
     }
     catch(const BillingProcessor::Exception& ex)
     {
@@ -134,13 +125,11 @@ namespace CampaignSvcs
   }
 
   BillingServerCore::BidResultInfo
-  BillingServerCore::confirm_bid(
-    ConfirmBidInfo& request_info)
+  BillingServerCore::confirm_bid(ConfirmBidInfo& request_info)
   {
     static const char* FUN = "BillingServerCore::confirm_bid()";
 
-    BillingProcessorHolder::Accessor billing_accessor =
-      get_accessor_();
+    BillingProcessorHolder::Accessor billing_accessor = get_accessor_();
 
     try
     {
@@ -180,13 +169,11 @@ namespace CampaignSvcs
   }
 
   BillingServerCore::ConfirmBidRefSeq
-  BillingServerCore::add_amount(
-    const ConfirmBidSeq& request_seq)
+  BillingServerCore::add_amount(const ConfirmBidSeq& request_seq)
   {
     static const char* FUN = "BillingServerCore::add_amount()";
 
-    BillingProcessorHolder::Accessor billing_accessor =
-      get_accessor_();
+    BillingProcessorHolder::Accessor billing_accessor = get_accessor_();
 
     try
     {
@@ -194,8 +181,7 @@ namespace CampaignSvcs
 
       for (std::size_t req_i = 0; req_i < request_seq.size(); ++req_i)
       {
-        const ConfirmBidInfo& request_info =
-          request_seq[req_i];
+        const ConfirmBidInfo& request_info = request_seq[req_i];
 
         RevenueDecimal account_spent_budget = request_info.account_spent_budget;
         RevenueDecimal spent_budget = request_info.spent_budget;
@@ -251,8 +237,7 @@ namespace CampaignSvcs
   BillingServerCore::BillingProcessorHolder::Accessor
   BillingServerCore::get_accessor_()
   {
-    BillingProcessorHolder::Accessor billing_accessor =
-      billing_processor_->get_accessor();
+    BillingProcessorHolder::Accessor billing_accessor = billing_processor_->get_accessor();
 
     if (!billing_accessor.get())
     {
@@ -287,10 +272,8 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_SERVER) << FUN <<
-        ": caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_SERVER) << FUN <<
+        ": caught eh::Exception: " << ex.what();
     }
 
     if (loaded)
@@ -346,14 +329,11 @@ namespace CampaignSvcs
         try
         {
           AdServer::CampaignSvcs::CampaignServer::DeliveryLimitConfigInfo_var
-            delivery_limitation_config =
-              campaign_server->get_delivery_limit_config();
+            delivery_limitation_config = campaign_server->get_delivery_limit_config();
 
           BillingContainer::Config_var new_config = new BillingContainer::Config;
 
-          apply_delivery_limitation_config_update_(
-            *new_config,
-            *delivery_limitation_config);
+          apply_delivery_limitation_config_update_(*new_config, *delivery_limitation_config);
 
           BillingContainer_var billing_container = billing_container_.get();
           // this task can be started only when container initialized
@@ -373,8 +353,7 @@ namespace CampaignSvcs
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't update config, "
-            "caught CampaignServer::ImplementationException: " <<
-            ex.description;
+            "caught CampaignServer::ImplementationException: " << ex.description;
           campaign_server.release_bad(ostr.str());
           logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
@@ -385,17 +364,13 @@ namespace CampaignSvcs
         {
           String::SubString descr("CampaignServer not ready.");
           campaign_server.release_bad(descr);
-          logger()->log(descr,
-            Logging::Logger::NOTICE,
-            Aspect::BILLING_SERVER,
-            "ADS-ICON-4001");
+          logger()->log(descr, Logging::Logger::NOTICE, Aspect::BILLING_SERVER, "ADS-ICON-4001");
         }
         catch(const CORBA::SystemException& ex)
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't update expression channels, "
-            "caught CORBA::SystemException: " <<
-            ex;
+            "caught CORBA::SystemException: " << ex;
           campaign_server.release_bad(ostr.str());
           logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
@@ -406,10 +381,8 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_SERVER) << FUN <<
-        ": Caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_SERVER) << FUN <<
+        ": Caught eh::Exception: " << ex.what();
     }
 
     return Generics::Time::get_time_of_day() + std::min(
@@ -437,10 +410,8 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_SERVER) << FUN <<
-        ": Caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_SERVER) << FUN <<
+        ": Caught eh::Exception: " << ex.what();
 
       return Generics::Time::get_time_of_day() + std::min(
         STAT_UPDATE_AFTER_FAIL_PERIOD, Generics::Time(config_.stat_update_period()));
@@ -456,56 +427,43 @@ namespace CampaignSvcs
       DeliveryLimitConfigInfo& config)
     /*throw(Exception)*/
   {
-    for (CORBA::ULong acc_i = 0; acc_i < config.accounts.length();
-        ++acc_i)
+    for (CORBA::ULong acc_i = 0; acc_i < config.accounts.length(); ++acc_i)
     {
       auto& acc_info = config.accounts[acc_i];
 
       BillingContainer::Config::Account res_account;
       res_account.active = acc_info.active;
-      res_account.time_offset = CorbaAlgs::unpack_time(
-        acc_info.time_offset);
-      res_account.budget = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        acc_info.budget);
+      res_account.time_offset = CorbaAlgs::unpack_time(acc_info.time_offset);
+      res_account.budget = CorbaAlgs::unpack_decimal<RevenueDecimal>(acc_info.budget);
 
-      res_config.accounts.insert(std::make_pair(
-        acc_info.account_id,
-        res_account));
+      res_config.accounts.insert(std::make_pair(acc_info.account_id, res_account));
     }
 
-    for (CORBA::ULong campaign_i = 0; campaign_i < config.campaigns.length();
-        ++campaign_i)
+    for (CORBA::ULong campaign_i = 0; campaign_i < config.campaigns.length(); ++campaign_i)
     {
       auto& campaign_info = config.campaigns[campaign_i];
 
       BillingContainer::Config::Campaign res_campaign;
       res_campaign.active = campaign_info.active;
-      res_campaign.time_offset = CorbaAlgs::unpack_time(
-        campaign_info.time_offset);
+      res_campaign.time_offset = CorbaAlgs::unpack_time(campaign_info.time_offset);
       unpack_delivery_limits(res_campaign, campaign_info.delivery_limits);
 
-      res_config.campaigns.insert(std::make_pair(
-        campaign_info.campaign_id,
-        res_campaign));
+      res_config.campaigns.insert(std::make_pair(campaign_info.campaign_id, res_campaign));
     }
 
-    for (CORBA::ULong ccg_i = 0; ccg_i < config.ccgs.length();
-        ++ccg_i)
+    for (CORBA::ULong ccg_i = 0; ccg_i < config.ccgs.length(); ++ccg_i)
     {
       auto& ccg_info = config.ccgs[ccg_i];
 
       BillingContainer::Config::CCG res_ccg;
       res_ccg.active = ccg_info.active;
-      res_ccg.time_offset = CorbaAlgs::unpack_time(
-        ccg_info.time_offset);
+      res_ccg.time_offset = CorbaAlgs::unpack_time(ccg_info.time_offset);
       unpack_delivery_limits(res_ccg, ccg_info.delivery_limits);
       res_ccg.campaign_id = ccg_info.campaign_id;
       res_ccg.imp_amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(ccg_info.imp_amount);
       res_ccg.click_amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(ccg_info.click_amount);
 
-      res_config.ccgs.insert(std::make_pair(
-        ccg_info.ccg_id,
-        res_ccg));
+      res_config.ccgs.insert(std::make_pair(ccg_info.ccg_id, res_ccg));
     }
   }
 
@@ -525,10 +483,8 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_SERVER) << FUN <<
-        ": Can't clear reservations. Caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_SERVER) << FUN <<
+        ": Can't clear reservations. Caught eh::Exception: " << ex.what();
     }
   }
 
@@ -546,11 +502,8 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_SERVER) << FUN <<
-        ": Can't dump storage. Caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_SERVER) << FUN <<
+        ": Can't dump storage. Caught eh::Exception: " << ex.what();
     }
   }
-} /*CampaignSvcs*/
-} /*AdServer*/
+} // namespace AdServer::CampaignSvcs

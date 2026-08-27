@@ -29,4 +29,4 @@ class ChannelManagerControllerTestMixin:
   def ChannelManagerController_get_channel_session( self ):
     raise AdServer__POA.ChannelSvcs.ChannelManagerController.ImplementationException("not implement yet")
 
-   
+

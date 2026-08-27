@@ -10,9 +10,7 @@
 
 #include "BillStatSource.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class BillStatDBSource:
     public BillStatSource,
@@ -21,14 +19,11 @@ namespace CampaignSvcs
   public:
     DECLARE_EXCEPTION(Exception, BillStatSource::Exception);
 
-    BillStatDBSource(
-      Logging::Logger* logger,
-      Commons::Postgres::Environment* pg_env)
+    BillStatDBSource(Logging::Logger* logger, Commons::Postgres::Environment* pg_env)
       /*throw(Exception)*/;
 
     virtual Stat_var
-    update(Stat* stat,
-      const Generics::Time& now)
+    update(Stat* stat, const Generics::Time& now)
       /*throw(Exception)*/;
 
   protected:
@@ -46,5 +41,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::QualPtr<BillStatDBSource>
     BillStatDBSource_var;
-}
 }

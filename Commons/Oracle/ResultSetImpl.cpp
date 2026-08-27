@@ -8,9 +8,7 @@ namespace
   const char GET_NUMBER_FORMAT[] = "FM9.99999999999999999999999999999999999999EEEE";
 }
 
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   namespace
   {
@@ -24,7 +22,7 @@ namespace Oracle
       ub4 buf_size = sizeof(buf);
 
       sword result;
-      if((result = OCINumberToText(
+      if ((result = OCINumberToText(
             error_handle,
             oci_number,
             reinterpret_cast<const text*>(GET_NUMBER_FORMAT),
@@ -43,9 +41,7 @@ namespace Oracle
     }
   }
 
-  ResultSet::ResultSet(
-    Statement* statement,
-    unsigned long fetch_size)
+  ResultSet::ResultSet(Statement* statement, unsigned long fetch_size)
     /*throw(SqlException)*/
     : statement_(ReferenceCounting::add_ref(statement)),
       fetch_count_(fetch_size),
@@ -58,7 +54,7 @@ namespace Oracle
     sword result;
 
     // allocate an error handle
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
           statement_->connection_->environment_->environment_handle_.get(),
           (void **) &error_handle_.fill(),
           OCI_HTYPE_ERROR,
@@ -73,14 +69,14 @@ namespace Oracle
 
     OCIStmt* rs_handle = statement_->stmt_handle_.get();
 
-    for(ub4 i = 0; i < count; ++i)
+    for (ub4 i = 0; i < count; ++i)
     {
       // get next column info
       OCIDescriptorPtr<OCIParam, OCI_DTYPE_PARAM> param_handle;
       ub2 oci_data_type = 0;
       ub4 size = 0;
 
-      if((result = OCIParamGet(
+      if ((result = OCIParamGet(
             rs_handle,
             OCI_HTYPE_STMT,
             error_handle_.get(),
@@ -91,7 +87,7 @@ namespace Oracle
       }
 
       // oci data type
-      if((result = OCIAttrGet(
+      if ((result = OCIAttrGet(
             param_handle.get(),
             OCI_DTYPE_PARAM,
             &oci_data_type,
@@ -102,7 +98,7 @@ namespace Oracle
         throw_oci_error(FUN, "OCIAttrGet", result, error_handle_.get());
       }
 
-      if((result = OCIAttrGet(
+      if ((result = OCIAttrGet(
             param_handle.get(),
             OCI_DTYPE_PARAM,
             &size,
@@ -113,7 +109,7 @@ namespace Oracle
         throw_oci_error(FUN, "OCIAttrGet", result, error_handle_.get());
       }
 
-      if(param_handle.get())
+      if (param_handle.get())
       {
         param_handle.reset(0);
 
@@ -164,8 +160,7 @@ namespace Oracle
           break;
         default:
           Stream::Error error;
-          error << FUN << ": unknown column type = " << oci_data_type
-            << " at column #" << i;
+          error << FUN << ": unknown column type = " << oci_data_type << " at column #" << i;
           throw SqlException(error);
 	};
 
@@ -182,14 +177,13 @@ namespace Oracle
     // define all columns
     ub4 position = 1;
 
-    for (ColumnArray::iterator it = columns_.begin();
-         it != columns_.end(); ++it)
+    for (ColumnArray::iterator it = columns_.begin(); it != columns_.end(); ++it)
     {
       sword result;
 
       OCIDefine* define_handle = 0;
 
-      if((result = OCIDefineByPos(
+      if ((result = OCIDefineByPos(
             rs_handle,
             &define_handle,
             error_handle_.get(),
@@ -215,7 +209,7 @@ namespace Oracle
     sword result;
     ub4 count = 0;
 
-    if((result = OCIAttrGet(
+    if ((result = OCIAttrGet(
           statement_->stmt_handle_.get(),
           OCI_HTYPE_STMT,
           &count,
@@ -239,7 +233,7 @@ namespace Oracle
     sword result;
     ub4 count = 0;
 
-    if((result = OCIAttrGet (
+    if ((result = OCIAttrGet (
           rs_handle,
           OCI_HTYPE_STMT,
           &count,
@@ -262,7 +256,7 @@ namespace Oracle
     OCIStmt* rs_handle = statement_->stmt_handle_.get();
 
     ++current_row_;
-    if(current_row_ > rows_fetched_)
+    if (current_row_ > rows_fetched_)
     {
       if (!is_eod_)
       {
@@ -276,7 +270,7 @@ namespace Oracle
         columns_[0]->clear_fetch_cells_();
         columns_[0]->init_fetch_cells_();
 
-        while((result = OCIStmtFetch2(
+        while ((result = OCIStmtFetch2(
           rs_handle,
           error_handle_.get(),
           fetch_count_,
@@ -284,7 +278,7 @@ namespace Oracle
           1,
           OCI_DEFAULT)) == OCI_STILL_EXECUTING)
         {
-          if(!timer.sleep_step())
+          if (!timer.sleep_step())
           {
             result = OCIStmtFetch2(
               rs_handle,
@@ -294,22 +288,19 @@ namespace Oracle
               1,
               OCI_DEFAULT);
 
-            if(result != OCI_SUCCESS &&
-              result != OCI_NO_DATA &&
-              result != OCI_SUCCESS_WITH_INFO)
+            if (result != OCI_SUCCESS && result != OCI_NO_DATA && result != OCI_SUCCESS_WITH_INFO)
             {
               throw_oci_error(FUN, "OCIStmtFetch2(cancel)", result);
             }
 
             statement_->handle_timeout_();
 
-            throw_timeout_error(FUN,
-              "OCIStmtFetch2", timer.passed_time(), timer.timeout());
+            throw_timeout_error(FUN, "OCIStmtFetch2", timer.passed_time(), timer.timeout());
           }
 
 /*
           std::cerr << "OCIStmtFetch2 recall:";
-          for(unsigned long i = 0; i < fetch_count_; ++i)
+          for (unsigned long i = 0; i < fetch_count_; ++i)
           {
             OCILobLocator* oci_lob =
               const_cast<OCILobLocator*>(
@@ -322,9 +313,7 @@ namespace Oracle
 */
         }
 
-        if (result == OCI_SUCCESS ||
-            result == OCI_NO_DATA ||
-            result == OCI_SUCCESS_WITH_INFO)
+        if (result == OCI_SUCCESS || result == OCI_NO_DATA || result == OCI_SUCCESS_WITH_INFO)
         {
           rows_fetched_ = rows_count();
           if (rows_fetched_ - old_rows_count != fetch_count_)
@@ -336,8 +325,7 @@ namespace Oracle
         {
           Stream::Error err;
           oci_error_text(err, FUN, "OCIStmtFetch", result, error_handle_.get());
-          err << ", rows fetched = " << rows_fetched_ <<
-            " current row = " << current_row_;
+          err << ", rows fetched = " << rows_fetched_ << " current row = " << current_row_;
           throw SqlException(err);
         }
       }
@@ -347,7 +335,7 @@ namespace Oracle
       }
     }
 
-    if(current_row_ > rows_fetched_)
+    if (current_row_ > rows_fetched_)
     {
       return false;
     }
@@ -395,19 +383,17 @@ namespace Oracle
   {
     static const char* FUN = "ResultSet::Column::init_fetch_cells_()";
 
-    if(oci_type == SQLT_TIME ||
-       oci_type == SQLT_TIMESTAMP)
+    if (oci_type == SQLT_TIME || oci_type == SQLT_TIMESTAMP)
     {
       ub4 dtype = (oci_type == SQLT_TIME ? OCI_DTYPE_TIME : OCI_DTYPE_TIMESTAMP);
 
-      for(unsigned long i = 0; i < fetch_size; ++i)
+      for (unsigned long i = 0; i < fetch_size; ++i)
       {
         sword result;
 
-        if((result = OCIDescriptorAlloc(
+        if ((result = OCIDescriptorAlloc(
               (dvoid*)environment->environment_handle_.get(),
-              (dvoid**)reinterpret_cast<OCIDateTime**>(
-                fetch_buffer.get() + size * i),
+              (dvoid**)reinterpret_cast<OCIDateTime**>(fetch_buffer.get() + size * i),
               dtype,
               (size_t)0,
               (dvoid**)0)) != OCI_SUCCESS)
@@ -416,16 +402,15 @@ namespace Oracle
         }
       }
     }
-    else if(oci_type == SQLT_BLOB)
+    else if (oci_type == SQLT_BLOB)
     {
-      for(unsigned long i = 0; i < fetch_size; ++i)
+      for (unsigned long i = 0; i < fetch_size; ++i)
       {
         sword result;
 
-        if((result = OCIDescriptorAlloc(
+        if ((result = OCIDescriptorAlloc(
               (dvoid*)environment->environment_handle_.get(),
-              (dvoid**)reinterpret_cast<OCILobLocator**>(
-                fetch_buffer.get() + size * i),
+              (dvoid**)reinterpret_cast<OCILobLocator**>(fetch_buffer.get() + size * i),
               (ub4)OCI_DTYPE_LOB,
               (size_t)0,
               (dvoid **)0)) != OCI_SUCCESS)
@@ -438,26 +423,21 @@ namespace Oracle
 
   void ResultSet::Column::clear_fetch_cells_() noexcept
   {
-    if(oci_type == SQLT_TIME || oci_type == SQLT_TIMESTAMP)
+    if (oci_type == SQLT_TIME || oci_type == SQLT_TIMESTAMP)
     {
-      ub4 dtype =
-        (oci_type == SQLT_TIME ? OCI_DTYPE_TIME : OCI_DTYPE_TIMESTAMP);
+      ub4 dtype = (oci_type == SQLT_TIME ? OCI_DTYPE_TIME : OCI_DTYPE_TIMESTAMP);
 
-      for(unsigned long i = 0; i < fetch_size; ++i)
+      for (unsigned long i = 0; i < fetch_size; ++i)
       {
-        OCIDescriptorFree(
-          *reinterpret_cast<OCIDateTime**>(
-            fetch_buffer.get() + size * i),
-          dtype);
+        OCIDescriptorFree(*reinterpret_cast<OCIDateTime**>(fetch_buffer.get() + size * i), dtype);
       }
     }
-    else if(oci_type == SQLT_BLOB)
+    else if (oci_type == SQLT_BLOB)
     {
-      for(unsigned long i = 0; i < fetch_size; ++i)
+      for (unsigned long i = 0; i < fetch_size; ++i)
       {
         OCIDescriptorFree(
-          *reinterpret_cast<OCILobLocator**>(
-            fetch_buffer.get() + size * i),
+          *reinterpret_cast<OCILobLocator**>(fetch_buffer.get() + size * i),
           (ub4)OCI_DTYPE_LOB);
       }
     }
@@ -471,26 +451,11 @@ namespace Oracle
     sb2 year;
     ub1 month, day, hour, min, sec;
 
-    OCIDateGetDate(
-      oci_date,
-      &year,
-      &month,
-      &day);
+    OCIDateGetDate(oci_date, &year, &month, &day);
 
-    OCIDateGetTime(
-      oci_date,
-      &hour,
-      &min,
-      &sec);
+    OCIDateGetTime(oci_date, &hour, &min, &sec);
 
-    return Generics::ExtendedTime(
-      year,
-      month,
-      day,
-      hour,
-      min,
-      sec,
-      0);
+    return Generics::ExtendedTime(year, month, day, hour, min, sec, 0);
   }
 
   Generics::Time
@@ -499,14 +464,13 @@ namespace Oracle
   {
     static const char* FUN = "ResultSet::get_datetime_()";
 
-    OCIDateTime* oci_date = reinterpret_cast<OCIDateTime*>(
-      const_cast<void*>(buf));
+    OCIDateTime* oci_date = reinterpret_cast<OCIDateTime*>(const_cast<void*>(buf));
     sb2 year;
     ub1 month, day, hour, min, sec;
     ub4 fsec;
     sword result;
 
-    if((result = OCIDateTimeGetDate(
+    if ((result = OCIDateTimeGetDate(
           statement_->connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           oci_date,
@@ -517,7 +481,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIDateTimeGetDate", result, error_handle_.get());
     }
 
-    if((result = OCIDateTimeGetTime(
+    if ((result = OCIDateTimeGetTime(
           statement_->connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           oci_date,
@@ -529,14 +493,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIDateTimeGetTime", result, error_handle_.get());
     }
 
-    return Generics::ExtendedTime(
-      year,
-      month,
-      day,
-      hour,
-      min,
-      sec,
-      fsec / 1000);
+    return Generics::ExtendedTime(year, month, day, hour, min, sec, fsec / 1000);
   }
 
   Generics::Time
@@ -549,28 +506,24 @@ namespace Oracle
 
     ub2 row_no = static_cast<ub2>((current_row_ - 1) % fetch_count_);
     const Column* column = columns_[ind - 1];
-    if(column->indicators[row_no] != -1)
+    if (column->indicators[row_no] != -1)
     {
-      if(column->oci_type == SQLT_ODT)
+      if (column->oci_type == SQLT_ODT)
       {
         const OCIDate* oci_date =
           reinterpret_cast<const OCIDate*>(
-            reinterpret_cast<const char*>(
-              column->fetch_buffer.get()) + row_no * column->size);
+            reinterpret_cast<const char*>(column->fetch_buffer.get()) + row_no * column->size);
         return get_date_(oci_date);
       }
-      else if(column->oci_type == SQLT_TIME ||
-        column->oci_type == SQLT_TIMESTAMP)
+      else if (column->oci_type == SQLT_TIME || column->oci_type == SQLT_TIMESTAMP)
       {
         const OCIDateTime** oci_date =
-          reinterpret_cast<const OCIDateTime**>(
-            column->fetch_buffer.get()) + row_no;
+          reinterpret_cast<const OCIDateTime**>(column->fetch_buffer.get()) + row_no;
         return get_datetime_(*oci_date);
       }
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return Generics::Time();
   }
@@ -587,9 +540,9 @@ namespace Oracle
     ub2 row_no = static_cast<ub2>((current_row_ - 1) % fetch_count_);
 
     const Column* column = columns_[ind - 1];
-    if(column->indicators[row_no] != -1)
+    if (column->indicators[row_no] != -1)
     {
-      if(column->oci_type == SQLT_VNU)
+      if (column->oci_type == SQLT_VNU)
       {
         const OCINumber* oci_num = reinterpret_cast<const OCINumber*>(
           column->fetch_buffer.get()) + row_no;
@@ -597,7 +550,7 @@ namespace Oracle
         IntType value;
         sword result;
 
-        if((result = OCINumberToInt(
+        if ((result = OCINumberToInt(
               error_handle_.get(),
               oci_num,
               sizeof(IntType),
@@ -614,7 +567,7 @@ namespace Oracle
 
         return value;
       }
-      else if(column->oci_type == SQLT_STR)
+      else if (column->oci_type == SQLT_STR)
       {
         /* make atoi */
         IntType value;
@@ -622,11 +575,10 @@ namespace Oracle
         Stream::Parser istr(str);
         istr >> value;
 
-        if(!istr.eof() || istr.fail())
+        if (!istr.eof() || istr.fail())
         {
           Stream::Error err;
-          err << FUN << ": can't convert string '" << str
-            << "' to number, pos = " << ind << ".";
+          err << FUN << ": can't convert string '" << str << "' to number, pos = " << ind << ".";
           throw InvalidValue(err);
         }
 
@@ -634,8 +586,7 @@ namespace Oracle
       }
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return IntType();
   }
@@ -676,15 +627,14 @@ namespace Oracle
     ub2 row_no = static_cast<ub2>((current_row_ - 1) % fetch_count_);
     const Column* column = columns_[ind - 1];
 
-    if(column->indicators[row_no] != -1 &&
-       column->oci_type == SQLT_VNU)
+    if (column->indicators[row_no] != -1 && column->oci_type == SQLT_VNU)
     {
       const OCINumber* oci_num = reinterpret_cast<const OCINumber*>(
         column->fetch_buffer.get()) + row_no;
       double value;
       sword result;
 
-      if((result = OCINumberToReal(
+      if ((result = OCINumberToReal(
             error_handle_.get(),
             oci_num,
             sizeof(double),
@@ -696,8 +646,7 @@ namespace Oracle
       return value;
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return 0;
   }
@@ -712,8 +661,7 @@ namespace Oracle
 
     ub2 row_no = static_cast<ub2>((current_row_ - 1) % fetch_count_);
     const Column* column = columns_[ind - 1];
-    if(column->indicators[row_no] != -1 &&
-       column->oci_type == SQLT_VNU)
+    if (column->indicators[row_no] != -1 && column->oci_type == SQLT_VNU)
     {
       const OCINumber* oci_num = reinterpret_cast<const OCINumber*>(
         column->fetch_buffer.get()) + row_no;
@@ -723,7 +671,7 @@ namespace Oracle
 
       sword result;
 
-      if((result = OCINumberToText(
+      if ((result = OCINumberToText(
             error_handle_.get(),
             oci_num,
             reinterpret_cast<const text*>(GET_NUMBER_FORMAT),
@@ -738,12 +686,10 @@ namespace Oracle
         throw Overflow(ostr);
       }
 
-      return String::StringManip::trim_ret(
-        String::SubString(buf, buf_size)).str();
+      return String::StringManip::trim_ret(String::SubString(buf, buf_size)).str();
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return "";
   }
@@ -760,26 +706,25 @@ namespace Oracle
 
     const Column* column = columns_[ind - 1];
 
-    if(column->indicators[row_no] == -1)
+    if (column->indicators[row_no] == -1)
     {
       /* specific for string null is equal empty string  */
       return "";
     }
 
-    if(column->oci_type == SQLT_STR)
+    if (column->oci_type == SQLT_STR)
     {
       const char* oci_str = reinterpret_cast<const char*>(
         column->fetch_buffer.get()) + column->size * row_no;
 
       return oci_str;
     }
-    else if(column->oci_type == SQLT_VNU)
+    else if (column->oci_type == SQLT_VNU)
     {
       return get_number_as_string(ind);
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return "";
   }
@@ -790,7 +735,7 @@ namespace Oracle
     static const char* FUN = "ResultSet::get_char()";
 
     std::string res = get_string(ind);
-    if(res.size() != 1)
+    if (res.size() != 1)
     {
       Stream::Error ostr;
       ostr << FUN << ": received string with length != 1";
@@ -812,13 +757,11 @@ namespace Oracle
     ub2 row_no = static_cast<ub2>((current_row_ - 1) % fetch_count_);
 
     Column* column = columns_[ind - 1];
-    if(column->indicators[row_no] != -1 &&
-       column->oci_type == SQLT_BLOB)
+    if (column->indicators[row_no] != -1 && column->oci_type == SQLT_BLOB)
     {
       OCILobLocator* oci_lob =
         const_cast<OCILobLocator*>(
-          *(reinterpret_cast<const OCILobLocator**>(
-            column->fetch_buffer.get()) + row_no));
+          *(reinterpret_cast<const OCILobLocator**>(column->fetch_buffer.get()) + row_no));
 
       assert(oci_lob);
 
@@ -827,22 +770,21 @@ namespace Oracle
       {
         TimeoutControl timer(statement_->use_timeout_(0));
 
-        while((result = OCILobGetLength(
+        while ((result = OCILobGetLength(
           statement_->connection_->svc_context_handle_.get(),
           error_handle_.get(),
           oci_lob,
           &lob_size)) == OCI_STILL_EXECUTING)
         {
-          if(!timer.sleep_step())
+          if (!timer.sleep_step())
           {
             statement_->handle_timeout_();
 
-            throw_timeout_error(FUN,
-              "OCILobGetLength", timer.passed_time(), timer.timeout());
+            throw_timeout_error(FUN, "OCILobGetLength", timer.passed_time(), timer.timeout());
           }
         }
 
-        if(result != OCI_SUCCESS)
+        if (result != OCI_SUCCESS)
         {
           throw_oci_error(FUN, "OCILobGetLength", result, error_handle_.get());
         }
@@ -854,9 +796,9 @@ namespace Oracle
 
       TimeoutControl timer(statement_->use_timeout_(0));
 
-      if(lob_size)
+      if (lob_size)
       {
-        while((result = OCILobRead(
+        while ((result = OCILobRead(
           statement_->connection_->svc_context_handle_.get(),
           error_handle_.get(),
           oci_lob,
@@ -869,17 +811,16 @@ namespace Oracle
           0,
           SQLCS_IMPLICIT)) == OCI_STILL_EXECUTING)
         {
-          if(!timer.sleep_step())
+          if (!timer.sleep_step())
           {
             statement_->handle_timeout_();
 
-            throw_timeout_error(FUN,
-              "OCILobRead", timer.passed_time(), timer.timeout());
+            throw_timeout_error(FUN, "OCILobRead", timer.passed_time(), timer.timeout());
           }
         }
       }
 
-      if(result != OCI_SUCCESS)
+      if (result != OCI_SUCCESS)
       {
         throw_oci_error(FUN, "OCILobRead", result, error_handle_.get());
       }
@@ -887,8 +828,7 @@ namespace Oracle
       return Lob(lob_buf.release(), lob_size, true);
     }
 
-    throw_type_error(
-      FUN, ind, column->oci_type, column->indicators[row_no] == -1);
+    throw_type_error(FUN, ind, column->oci_type, column->indicators[row_no] == -1);
 
     return Lob("", 0, false);
   }
@@ -896,21 +836,18 @@ namespace Oracle
   void ResultSet::check_column_index_(unsigned long ind) const
     /*throw(SqlException)*/
   {
-    if(ind == 0)
+    if (ind == 0)
     {
       Stream::Error ostr;
       ostr << "Column index = 0 can't be used, first index is 1";
       throw SqlException(ostr);
     }
 
-    if(ind > columns_.size())
+    if (ind > columns_.size())
     {
       Stream::Error ostr;
-      ostr << "Incorrect column index: " << ind << ", max allowed: " <<
-        columns_.size();
+      ostr << "Incorrect column index: " << ind << ", max allowed: " << columns_.size();
       throw SqlException(ostr);
     }
   }
-} /*Oracle*/
-} /*Commons*/
-} /*AdServer*/
+} // namespace AdServer::Commons::Oracle

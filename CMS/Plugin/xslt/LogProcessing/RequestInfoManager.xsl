@@ -338,7 +338,7 @@
           </xsl:if>
         </xsl:attribute>
 
-        <xsl:variable name="predictor-service" 
+        <xsl:variable name="predictor-service"
           select="$full-cluster-path//service[@descriptor = $clickhouse-uploader-descriptor]"/>
 
         <cfg:CreativeStat period="{$flush-logs-period}"/>

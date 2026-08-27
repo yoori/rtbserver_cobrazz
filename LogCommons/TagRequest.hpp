@@ -187,8 +187,7 @@ namespace AdServer::LogProcessing
         country_ == data.country_ &&
         passback_request_id_ == data.passback_request_id_ &&
         floor_cost_ == data.floor_cost_ &&
-        urls_ == data.urls_ &&
-        opt_in_section_ == data.opt_in_section_;
+        urls_ == data.urls_ && opt_in_section_ == data.opt_in_section_;
     }
 
     const SecondsTimestamp& time() const
@@ -303,12 +302,14 @@ namespace AdServer::LogProcessing
         es << "TagRequestData::invariant(): colo_id_ must be > 0";
         throw ConstraintViolation(es);
       }
+
       if (referer_.empty())
       {
         Stream::Error es;
         es << "TagRequestData::invariant(): referer_ must be non-empty";
         throw ConstraintViolation(es);
       }
+
       if (!is_valid_user_status(user_status_))
       {
         Stream::Error es;

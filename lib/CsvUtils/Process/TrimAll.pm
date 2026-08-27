@@ -10,12 +10,12 @@ sub process
 {
   my ($self, $row) = @_;
 
-  for(my $index = 0; $index < scalar(@$row); ++$index)
+  for (my $index = 0; $index < scalar(@$row); ++$index)
   {
     my $value = $row->[$index];
-    if(defined($value))
+    if (defined($value))
     {
-      if(ref($value) eq 'ARRAY')
+      if (ref($value) eq 'ARRAY')
       {
         my @res_arr;
         foreach my $sub_val(@$value)

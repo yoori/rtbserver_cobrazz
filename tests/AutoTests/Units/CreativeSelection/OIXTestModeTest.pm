@@ -59,14 +59,14 @@ sub create_overlap_channels
 
   my $internal_account = $ns->create(Account => {
     name => 'Internal-Overlap-Account1',
-      internal_account_id => undef, 
+      internal_account_id => undef,
       role_id => DB::Defaults::instance()->internal_role,
       account_type_id => DB::Defaults::instance()->internal_type });
 
   my $channel1 = $ns->create(DB::BehavioralChannel->blank(
     name => 'Overlap-Channel1',
     account_id => $internal_account,
-    flags => 
+    flags =>
       DB::CMPChannelBase::AUTO_QA | DB::CMPChannelBase::OVERLAP,
     keyword_list => $keyword1,
     behavioral_parameters => [
@@ -76,8 +76,8 @@ sub create_overlap_channels
 
   my $channel2 = $ns->create(DB::BehavioralChannel->blank(
     name => 'Overlap-Channel2',
-    account_id => DB::Defaults::instance()->internal_account,                                                         
-    flags => 
+    account_id => DB::Defaults::instance()->internal_account,
+    flags =>
       DB::CMPChannelBase::AUTO_QA | DB::CMPChannelBase::OVERLAP,
     keyword_list => $keyword1,
     behavioral_parameters => [
@@ -88,7 +88,7 @@ sub create_overlap_channels
   my $channel3 = $ns->create(DB::BehavioralChannel->blank(
     name => 'Overlap-Channel3',
     account_id => DB::Defaults::instance()->internal_account,
-    flags => 
+    flags =>
       DB::CMPChannelBase::AUTO_QA | DB::CMPChannelBase::OVERLAP,
     keyword_list => $keyword2,
     behavioral_parameters => [
@@ -99,7 +99,7 @@ sub create_overlap_channels
   my $channel4 = $ns->create(DB::BehavioralChannel->blank(
     name => 'Overlap-Channel4',
     account_id => DB::Defaults::instance()->internal_account,
-    flags => 
+    flags =>
       DB::CMPChannelBase::AUTO_QA | DB::CMPChannelBase::OVERLAP,
     keyword_list => $keyword2,
     behavioral_parameters => [
@@ -215,7 +215,7 @@ sub init
     flags => 0,
     colocation_revenue_share => 0.1 });
 
-  my $test_colo = $ns->create(Isp => { 
+  my $test_colo = $ns->create(Isp => {
       name => "test",
       account_flags => DB::Account::TEST,
       colocation_revenue_share => 0.1});
@@ -253,7 +253,7 @@ sub init
   $ns->output("PUBINV/TAG", $inv_test_tag, "test tag in inventory estimation mode");
   $ns->output("PUBINV/CC", $pub_inv_cmp->{cc_id});
   use POSIX qw(floor);
-  $ns->output("PUBINV/THRESHOLD_CPM", 
+  $ns->output("PUBINV/THRESHOLD_CPM",
     money_upscale($cpm * 100, 8));
 
   # ADSC-6708

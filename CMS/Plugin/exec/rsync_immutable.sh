@@ -6,8 +6,8 @@
 #
 # without unchangeable requirement here much inconsistent states for reader that fetch tree
 # atomic exchange of directories impossible (application can fetch it now)
-# 
-if [ $# -lt 2 ] 
+#
+if [ $# -lt 2 ]
 then
   echo "Not enough parameters."
   echo "USAGE: rsync_immutable.sh <SRC_FILE_PATH> <DST_FILE_PATH> <INTERMEDIATE_DST_PATH>"

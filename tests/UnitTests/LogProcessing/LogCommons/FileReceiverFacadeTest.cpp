@@ -18,10 +18,7 @@ class CerrCallback
 {
 public:
   virtual void
-  report_error(
-    Severity,
-    const String::SubString& description,
-    const char* = 0)
+  report_error(Severity, const String::SubString& description, const char* = 0)
     noexcept
   {
     std::cerr << description.str() << std::endl;
@@ -34,9 +31,7 @@ protected:
 };
 
 std::ostream&
-operator<< (
-  std::ostream& os,
-  LogType log_type)
+operator<< (std::ostream& os, LogType log_type)
 {
   os << "LogType(";
 
@@ -153,9 +148,7 @@ class GetEldestTask
   : public Generics::Task, public ReferenceCounting::AtomicImpl
 {
 public:
-  GetEldestTask(
-    FileReceiverFacade* file_receiver_facade,
-    FileEntityContainer& container)
+  GetEldestTask(FileReceiverFacade* file_receiver_facade, FileEntityContainer& container)
     noexcept
     : file_receiver_facade_(ReferenceCounting::add_ref(file_receiver_facade)),
       container_(container)
@@ -190,10 +183,8 @@ TEST_EX(Simple, setup, teardown)
 {
   FileEntityContainer container;
 
-  runner->enqueue_task(
-    Generics::Task_var(new GetEldestTask(file_receiver_facade, container)));
-  runner->enqueue_task(
-    Generics::Task_var(new GetEldestTask(file_receiver_facade, container)));
+  runner->enqueue_task(Generics::Task_var(new GetEldestTask(file_receiver_facade, container)));
+  runner->enqueue_task(Generics::Task_var(new GetEldestTask(file_receiver_facade, container)));
 
   fs::file_system.create(fetch_dir, "Action.20121030.105456.271081.67127731.10.0");
   fs::file_system.create(fetch_dir, "Action.20121030.105756.271081.67127731.10.3");

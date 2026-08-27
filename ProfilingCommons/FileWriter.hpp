@@ -5,9 +5,7 @@
 
 #include <ProfilingCommons/FileController.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   class FileWriter
   {
@@ -22,10 +20,7 @@ namespace ProfilingCommons
       FileController* file_controller = 0)
       /*throw(Exception)*/;
 
-    FileWriter(
-      int fd,
-      unsigned long buffer_size,
-      FileController* file_controller = 0)
+    FileWriter(int fd, unsigned long buffer_size, FileController* file_controller = 0)
       /*throw(Exception)*/;
 
     ~FileWriter() noexcept;
@@ -60,5 +55,4 @@ namespace ProfilingCommons
 
     Generics::SmartMemBuf_var mem_buf_;
   };
-}
 }

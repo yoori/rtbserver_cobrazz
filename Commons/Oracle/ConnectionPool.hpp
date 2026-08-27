@@ -7,11 +7,7 @@
 #include "OraException.hpp"
 #include "Connection.hpp"
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   class ConnectionPool;
 
@@ -81,9 +77,7 @@ namespace Oracle
     // will be called one of create_connection_i_,
     // create_connection_canceled_i_ methods
     virtual Connection_var
-    check_connection_i_(
-      bool& create_connection,
-      bool wait_free_connection)
+    check_connection_i_(bool& create_connection, bool wait_free_connection)
       /*throw(MaxConnectionsReached, NonActive)*/;
 
     virtual Connection_var
@@ -145,9 +139,7 @@ namespace Oracle
     connection_destroyed() noexcept;
 
     virtual Connection_var
-    check_connection_i_(
-      bool& create_connection,
-      bool wait_free_connection)
+    check_connection_i_(bool& create_connection, bool wait_free_connection)
       /*throw(MaxConnectionsReached, NonActive)*/;
 
     virtual Connection_var
@@ -201,9 +193,7 @@ namespace Oracle
     add_free_connection_i_(Connection* conn) noexcept;
 
     virtual Connection_var
-    check_connection_i_(
-      bool& create_connection,
-      bool wait_free_connection)
+    check_connection_i_(bool& create_connection, bool wait_free_connection)
       /*throw(MaxConnectionsReached, NonActive)*/;
 
     virtual Connection_var
@@ -221,14 +211,8 @@ namespace Oracle
   typedef ReferenceCounting::SmartPtr<SwitchableConnectionPool>
     SwitchableConnectionPool_var;
 }
-}
-}
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   //
   // ConnectionPool
@@ -272,6 +256,4 @@ namespace Oracle
   {
     return busy_connections_;
   }
-}
-}
 }

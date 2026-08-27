@@ -26,17 +26,17 @@ namespace AdServer::UserInfoSvcs
       size_t size,
       bool skip_leading_zeroes) /*throw(eh::Exception)*/
     {
-      if(!size)
+      if (!size)
       {
         return std::string();
       }
 
-      if(skip_leading_zeroes)
+      if (skip_leading_zeroes)
       {
-        while(!*data)
+        while (!*data)
         {
           data++;
-          if(!--size)
+          if (!--size)
           {
             return std::string(1, '0');
           }
@@ -46,14 +46,14 @@ namespace AdServer::UserInfoSvcs
       std::string result;
       result.reserve(size * 2);
 
-      if(skip_leading_zeroes && !((*data) & 0xF0))
+      if (skip_leading_zeroes && !((*data) & 0xF0))
       {
         result.push_back(HEX_LOW_DIGITS[*data]);
         data++;
         size--;
       }
 
-      for(; size--; data++)
+      for (; size--; data++)
       {
         char buf[2] =
           {
@@ -72,17 +72,17 @@ namespace AdServer::UserInfoSvcs
       size_t size,
       bool skip_leading_zeroes) /*throw(eh::Exception)*/
     {
-      if(!size)
+      if (!size)
       {
         return std::string();
       }
 
-      if(skip_leading_zeroes)
+      if (skip_leading_zeroes)
       {
-        while(!*data)
+        while (!*data)
         {
           data++;
-          if(!--size)
+          if (!--size)
           {
             return std::string(1, '0');
           }
@@ -92,14 +92,14 @@ namespace AdServer::UserInfoSvcs
       std::string result;
       result.reserve(size * 2);
 
-      if(skip_leading_zeroes && !((*data) & 0xF0))
+      if (skip_leading_zeroes && !((*data) & 0xF0))
       {
         result.push_back(HEX_UP_DIGITS[*data]);
         data++;
         size--;
       }
 
-      for(; size--; data++)
+      for (; size--; data++)
       {
         char buf[2] =
           {
@@ -119,17 +119,17 @@ namespace AdServer::UserInfoSvcs
       const String::SubString& src,
       bool padding = true)
     {
-      if(!size)
+      if (!size)
       {
         return std::string();
       }
 
-      if(skip_leading_zeroes)
+      if (skip_leading_zeroes)
       {
-        while(!*data)
+        while (!*data)
         {
           data++;
-          if(!--size)
+          if (!--size)
           {
             return std::string(1, '0');
           }
@@ -139,14 +139,14 @@ namespace AdServer::UserInfoSvcs
       std::string result;
       result.reserve(size * 2);
 
-      if(skip_leading_zeroes && !((*data) & 0xF0))
+      if (skip_leading_zeroes && !((*data) & 0xF0))
       {
         result.push_back(HEX_LOW_DIGITS[*data]);
         data++;
         size--;
       }
 
-      for(; size--; data++)
+      for (; size--; data++)
       {
         char buf[2] =
           {
@@ -272,16 +272,14 @@ namespace AdServer::UserInfoSvcs
     *static_cast<uint32_t*>(data_) = hash;
     *(static_cast<unsigned char*>(data_) + EXT_HASH_BUF_PRESPACE) = encoder->id();
 
-    encoder->encode(
-      static_cast<unsigned char*>(data_) + EXT_HASH_BUF_PRESPACE + 1,
-      text);
+    encoder->encode(static_cast<unsigned char*>(data_) + EXT_HASH_BUF_PRESPACE + 1, text);
   }
 
   ExternalIdHashAdapter::
   ExternalIdHashAdapter(const ExternalIdHashAdapter& init)
     noexcept
   {
-    if(init.data_)
+    if (init.data_)
     {
       const EncodingSelector::Encoder* encoder =
         EncodingSelectorSingleton::instance().get_encoder(
@@ -320,7 +318,7 @@ namespace AdServer::UserInfoSvcs
   void
   ExternalIdHashAdapter::free_buf_() noexcept
   {
-    if(data_)
+    if (data_)
     {
       const EncodingSelector::Encoder* encoder =
         EncodingSelectorSingleton::instance().get_encoder(
@@ -329,9 +327,7 @@ namespace AdServer::UserInfoSvcs
       int ssize = encoder->encoded_size_by_buf(
         static_cast<char*>(data_) + EXT_HASH_BUF_PRESPACE + 1);
 
-      ExternalIdKeyAllocator::instance().dealloc(
-        data_,
-        EXT_HASH_BUF_PRESPACE + 1 + ssize);
+      ExternalIdKeyAllocator::instance().dealloc(data_, EXT_HASH_BUF_PRESPACE + 1 + ssize);
 
       data_ = 0;
     }
@@ -342,7 +338,7 @@ namespace AdServer::UserInfoSvcs
   operator==(const ExternalIdHashAdapter& right) const
     noexcept
   {
-    if(::memcmp(data_, right.data_, EXT_HASH_BUF_PRESPACE + 1) != 0)
+    if (::memcmp(data_, right.data_, EXT_HASH_BUF_PRESPACE + 1) != 0)
     {
       return false;
     }
@@ -366,14 +362,13 @@ namespace AdServer::UserInfoSvcs
   ExternalIdHashAdapter::text() const
     noexcept
   {
-    if(data_)
+    if (data_)
     {
       const EncodingSelector::Encoder* encoder =
         EncodingSelectorSingleton::instance().get_encoder(
           *(static_cast<unsigned char*>(data_) + EXT_HASH_BUF_PRESPACE));
 
-      return encoder->decode(
-        static_cast<char*>(data_) + EXT_HASH_BUF_PRESPACE + 1);
+      return encoder->decode(static_cast<char*>(data_) + EXT_HASH_BUF_PRESPACE + 1);
     }
     else
     {
@@ -409,9 +404,7 @@ namespace AdServer::UserInfoSvcs
       encode(void* buf, const String::SubString& text) const
       {
         *static_cast<uint32_t*>(buf) = text.size();
-        ::memcpy(static_cast<unsigned char*>(buf) + 4,
-          text.data(),
-          text.size());
+        ::memcpy(static_cast<unsigned char*>(buf) + 4, text.data(), text.size());
       }
 
       virtual unsigned long
@@ -423,9 +416,7 @@ namespace AdServer::UserInfoSvcs
       virtual std::string
       decode(const void* buf) const
       {
-        return std::string(
-          static_cast<const char*>(buf) + 4,
-          *static_cast<const uint32_t*>(buf));
+        return std::string(static_cast<const char*>(buf) + 4, *static_cast<const uint32_t*>(buf));
       }
 
     protected:
@@ -454,9 +445,7 @@ namespace AdServer::UserInfoSvcs
       {
         assert(text.size() < 256);
         *static_cast<unsigned char*>(buf) = text.size();
-        ::memcpy(static_cast<unsigned char*>(buf) + 1,
-          text.data(),
-          text.size());
+        ::memcpy(static_cast<unsigned char*>(buf) + 1, text.data(), text.size());
       }
 
       virtual unsigned long
@@ -609,8 +598,7 @@ namespace AdServer::UserInfoSvcs
       {
         assert(text.size() == len_ + prefix_.size());
         char* cbuf = static_cast<char*>(buf);
-        String::AsciiStringManip::hex_to_buf(
-          text.substr(prefix_.size()), cbuf);
+        String::AsciiStringManip::hex_to_buf(text.substr(prefix_.size()), cbuf);
       }
 
       virtual unsigned long
@@ -660,8 +648,7 @@ namespace AdServer::UserInfoSvcs
       {
         assert(text.size() == len_ + prefix_.size());
         char* cbuf = static_cast<char*>(buf);
-        String::AsciiStringManip::hex_to_buf(
-          text.substr(prefix_.size()), cbuf);
+        String::AsciiStringManip::hex_to_buf(text.substr(prefix_.size()), cbuf);
       }
 
       virtual unsigned long
@@ -674,8 +661,7 @@ namespace AdServer::UserInfoSvcs
       decode(const void* buf) const
       {
         const unsigned char* cbuf = static_cast<const unsigned char*>(buf);
-        return prefix_ + String::StringManip::hex_encode(
-          cbuf, (len_ + 1) / 2, false);
+        return prefix_ + String::StringManip::hex_encode(cbuf, (len_ + 1) / 2, false);
       }
 
     protected:
@@ -811,7 +797,7 @@ namespace AdServer::UserInfoSvcs
       encode(void* buf, const String::SubString& text) const
       {
         uint32_t val;
-        if(!String::StringManip::str_to_int(text, val))
+        if (!String::StringManip::str_to_int(text, val))
         {
           assert(0);
         }
@@ -829,7 +815,7 @@ namespace AdServer::UserInfoSvcs
       decode(const void* buf) const
       {
         char res_str[std::numeric_limits<uint32_t>::digits10 + 3];
-        if(!String::StringManip::int_to_str(
+        if (!String::StringManip::int_to_str(
              *static_cast<const uint32_t*>(buf),
              res_str,
              sizeof(res_str)))
@@ -945,7 +931,7 @@ namespace AdServer::UserInfoSvcs
   ExternalIdHashAdapter::EncodingSelector::
   select_encoder(const String::SubString& text)
   {
-    if(!text.empty() &&
+    if (!text.empty() &&
       text.size() <= 9 &&
       *text.begin() != '0' && (
         DECIMAL_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
@@ -953,11 +939,10 @@ namespace AdServer::UserInfoSvcs
       return uint_encoder_;
     }
 
-    if(text.size() == 36 && text[8] == '-' && text[13] == '-' &&
+    if (text.size() == 36 && text[8] == '-' && text[13] == '-' &&
        text[18] == '-' && text[23] == '-')
     {
-      if((HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.begin() + 8) ==
-          text.begin() + 8) &&
+      if ((HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.begin() + 8) == text.begin() + 8) &&
         (HEX_LOWALPHA_NUMBER.find_nonowned(text.begin() + 9, text.begin() + 13) ==
           text.begin() + 13) &&
         (HEX_LOWALPHA_NUMBER.find_nonowned(text.begin() + 14, text.begin() + 18) ==
@@ -971,54 +956,53 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    if(text.size() == 24 && (
+    if (text.size() == 24 && (
          HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return h24_encoder_;
     }
 
-    if(text.size() == 32 && (
+    if (text.size() == 32 && (
          HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return h32_encoder_;
     }
 
-    if(text.size() == 40 && (
+    if (text.size() == 40 && (
          HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return h40_encoder_;
     }
 
-    if(text.size() == 64 && (
+    if (text.size() == 64 && (
          HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return h64_encoder_;
     }
 
-    if(text.size() == 32 && (
+    if (text.size() == 32 && (
          HEX_UPALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return H32_encoder_;
     }
 
-    if(text.size() == 96 && (
+    if (text.size() == 96 && (
          HEX_LOWALPHA_NUMBER.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return h96_encoder_;
     }
 
-    if(text.size() == 35 &&
+    if (text.size() == 35 &&
       text.compare(0, 3, "aid", 3) == 0 &&
       HEX_LOWALPHA_NUMBER.find_nonowned(text.begin() + 3, text.end()) == text.end())
     {
       return aid_h32_encoder_;
     }
 
-    if(text.size() == 36 && text[8] == '-' && text[13] == '-' &&
+    if (text.size() == 36 && text[8] == '-' && text[13] == '-' &&
        text[18] == '-' && text[23] == '-')
     {
-      if((HEX_UPALPHA_NUMBER.find_nonowned(text.begin(), text.begin() + 8) ==
-          text.begin() + 8) &&
+      if ((HEX_UPALPHA_NUMBER.find_nonowned(text.begin(), text.begin() + 8) == text.begin() + 8) &&
         (HEX_UPALPHA_NUMBER.find_nonowned(text.begin() + 9, text.begin() + 13) ==
           text.begin() + 13) &&
         (HEX_UPALPHA_NUMBER.find_nonowned(text.begin() + 14, text.begin() + 18) ==
@@ -1033,26 +1017,25 @@ namespace AdServer::UserInfoSvcs
     }
 
     // base64 encoders (placed after hex, because hex is subset of base64)
-    if(text.size() == 27 &&
+    if (text.size() == 27 &&
       text.compare(0, 5, "CAESE", 5) == 0 &&
       BASE64MOD_CHARS.find_nonowned(text.begin() + 5, text.end()) == text.end())
     {
       return caese_b22_encoder_;
     }
 
-    if(text.size() == 8 && (
-         BASE64MOD_CHARS.find_nonowned(text.begin(), text.end()) == text.end()))
+    if (text.size() == 8 && (BASE64MOD_CHARS.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return b8_encoder_;
     }
 
-    if(text.size() == 12 && (
+    if (text.size() == 12 && (
          BASE64MOD_CHARS.find_nonowned(text.begin(), text.end()) == text.end()))
     {
       return b12_encoder_;
     }
 
-    if(text.size() < 256)
+    if (text.size() < 256)
     {
       return size_less_256_encoder_;
     }
@@ -1064,8 +1047,7 @@ namespace AdServer::UserInfoSvcs
   ExternalIdHashAdapter::EncodingSelector::
   get_encoder(unsigned char index)
   {
-    const ExternalIdHashAdapter::EncodingSelector::Encoder* ret =
-      encoders_[index];
+    const ExternalIdHashAdapter::EncodingSelector::Encoder* ret = encoders_[index];
     assert(ret);
     return ret;
   }

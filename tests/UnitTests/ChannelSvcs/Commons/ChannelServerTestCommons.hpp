@@ -7,22 +7,16 @@
 #include <ChannelSvcs/ChannelServer/ChannelContainer.hpp>
 #include <ChannelSvcs/ChannelServer/UpdateContainer.hpp>
 
-namespace AdServer
-{
-namespace UnitTests
+namespace AdServer::UnitTests
 {
   template<class T>
-  void read_number(
-    const char* in,
-    T min_value,
-    T max_value,
-    T &value) noexcept
+  void read_number(const char* in, T min_value, T max_value, T &value) noexcept
   {
     T converted;
     std::stringstream convert;
     convert << in;
     convert >> converted;
-    if(converted >= min_value && converted <= max_value)
+    if (converted >= min_value && converted <= max_value)
     {
       value = converted;
     }
@@ -95,17 +89,13 @@ namespace UnitTests
      * @return true, if wrote whole word into word
      */
     static bool
-    generate_asc_word(
-      FixedBuf& word,
-      size_t length)
+    generate_asc_word(FixedBuf& word, size_t length)
       /*throw(eh::Exception)*/;
     static void generate_url(std::string& word, size_t domain_length, size_t path_length, size_t path_steps = 2)
       /*throw(eh::Exception)*/;
     static void generate_asc_word(std::string& word, size_t length = 10)
       /*throw(eh::Exception)*/;
-    static void print_result(
-      std::ostream& out,
-      const ChannelSvcs::TriggerMatchRes& res)
+    static void print_result(std::ostream& out, const ChannelSvcs::TriggerMatchRes& res)
       noexcept;
     static ChannelSvcs::MergeAtom& new_atom(
       unsigned long id,
@@ -160,5 +150,4 @@ namespace UnitTests
     Generics::Statistics::TimedStatSink_var time_stat_;
     Generics::Statistics::TimedStatSink_var cpu_time_stat_;
   };
-}
 }

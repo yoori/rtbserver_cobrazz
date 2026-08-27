@@ -48,7 +48,7 @@ sub chi_square
   exists($chitable{$degrees_of_freedom}) or
     carp("(Can't handle ",scalar(@data)," choices without a better table.)"),
     return undef;
-  scalar(@data) && scalar(@data) == scalar(@dist) or 
+  scalar(@data) && scalar(@data) == scalar(@dist) or
     carp("(Error: there should be as many data elements as distribution elements.)"), return undef;
 
   for ($i = 0; $i < @data; $i++)
@@ -77,6 +77,6 @@ sub chi_square
   }
 
   return (0, $chilevels[-1]);
-}    
+}
 
 1;

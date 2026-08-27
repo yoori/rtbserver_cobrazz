@@ -6,7 +6,6 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>
 
-#include "Compatibility/UserChannelInventoryProfileAdapter.hpp"
 
 #include "Algs.hpp"
 
@@ -26,8 +25,8 @@ namespace AdServer::RequestInfoSvcs
    */
   namespace
   {
-    const RevenueDecimal CPM_FACTOR = RevenueDecimal(
-      1000 * ChannelECPM::CPM_PRECISION, 0);
+    const unsigned long CURRENT_CHANNEL_INVENTORY_PROFILE_VERSION = 34;
+    const RevenueDecimal CPM_FACTOR = RevenueDecimal(1000 * ChannelECPM::CPM_PRECISION, 0);
   }
 
   struct DateCompare
@@ -48,8 +47,7 @@ namespace AdServer::RequestInfoSvcs
   };
 
   void
-  init_profile_writer(
-    UserChannelInventoryProfileWriter& profile_writer)
+  init_profile_writer(UserChannelInventoryProfileWriter& profile_writer)
     noexcept
   {
     profile_writer.version() = CURRENT_CHANNEL_INVENTORY_PROFILE_VERSION;
@@ -104,8 +102,7 @@ namespace AdServer::RequestInfoSvcs
     //   and inventory profile compatibility stub required
     //
     using MonoChannelIdSet = Generics::MonoSet<unsigned long>;
-    using SizeChannelSet =
-      Generics::MonoMap<Commons::ImmutableString, MonoChannelIdSet>;
+    using SizeChannelSet = Generics::MonoMap<Commons::ImmutableString, MonoChannelIdSet>;
 
     inv_info.impop_channels.insert(
       inv_info.impop_channels.end(),
@@ -174,8 +171,7 @@ namespace AdServer::RequestInfoSvcs
         if (size_it != size_channels.end())
         {
           // cell found
-          ChInvByCMPCellWriter::channel_list_Container& channels =
-            (*it).channel_list();
+          ChInvByCMPCellWriter::channel_list_Container& channels = (*it).channel_list();
 
           // remove_if semantics
           auto result_it = channels.begin();
@@ -236,11 +232,9 @@ namespace AdServer::RequestInfoSvcs
           size_it != size_channels.end();
           ++size_it)
       {
-        for (auto ch_it = size_it->second.begin();
-          ch_it != size_it->second.end(); ++ch_it)
+        for (auto ch_it = size_it->second.begin(); ch_it != size_it->second.end(); ++ch_it)
         {
-          inv_info.appear_channel_ecpms.push_back(
-            SizeChannel(size_it->first, *ch_it));
+          inv_info.appear_channel_ecpms.push_back(SizeChannel(size_it->first, *ch_it));
         }
       }
 
@@ -250,16 +244,14 @@ namespace AdServer::RequestInfoSvcs
           it != profile_writer.channel_price_ranges().end();
           ++it)
       {
-        if (inv_request_info.country_code.str() == (*it).country() &&
-           check_ecpm == (*it).ecpm())
+        if (inv_request_info.country_code.str() == (*it).country() && check_ecpm == (*it).ecpm())
         {
           SizeChannelSet::iterator size_it =
             size_channels.find(Commons::ImmutableString((*it).tag_size()));
 
           if (size_it != size_channels.end())
           {
-            (*it).channel_list().reserve(
-              (*it).channel_list().size() + size_it->second.size());
+            (*it).channel_list().reserve((*it).channel_list().size() + size_it->second.size());
             profile_changed = true;
             std::copy(
               size_it->second.begin(),
@@ -289,8 +281,7 @@ namespace AdServer::RequestInfoSvcs
           size_it->second.begin(),
           size_it->second.end(),
           std::back_inserter(inv_cell_writer.channel_list()));
-        profile_writer.channel_price_ranges().push_back(
-          std::move(inv_cell_writer));
+        profile_writer.channel_price_ranges().push_back(std::move(inv_cell_writer));
       }
     }
   }
@@ -325,8 +316,7 @@ namespace AdServer::RequestInfoSvcs
 
       for (auto ch_it = triggered_channels.begin(); ch_it != triggered_channels.end(); ++ch_it)
       {
-        while (imp_channel_list_it != res_imp_channel_list.end() &&
-          *imp_channel_list_it < *ch_it)
+        while (imp_channel_list_it != res_imp_channel_list.end() && *imp_channel_list_it < *ch_it)
         {
           ++imp_channel_list_it;
         }
@@ -343,8 +333,7 @@ namespace AdServer::RequestInfoSvcs
           ++impop_no_imp_channel_list_it;
         }
 
-        if ((imp_channel_list_it == res_imp_channel_list.end() ||
-            *imp_channel_list_it != *ch_it) &&
+        if ((imp_channel_list_it == res_imp_channel_list.end() || *imp_channel_list_it != *ch_it) &&
           (imp_other_channel_list_it == res_imp_other_channel_list.end() ||
             *imp_other_channel_list_it != *ch_it) &&
           (impop_no_imp_channel_list_it == res_impop_no_imp_channel_list.end() ||
@@ -685,19 +674,11 @@ namespace AdServer::RequestInfoSvcs
       ChannelInventoryDayWriter& new_writer = get_inv_day(
         profile_changed, profile_writer, request_date);
 
-      fill_inv_info_by_day(
-        profile_changed,
-        inv_request_info,
-        new_writer,
-        inv_info);
+      fill_inv_info_by_day(profile_changed, inv_request_info, new_writer, inv_info);
       delegate_inventory_processing = true;
     }
 
-    clear_expired_days(
-      profile_changed,
-      profile_writer,
-      request_date,
-      days_to_keep);
+    clear_expired_days(profile_changed, profile_writer, request_date, days_to_keep);
   }
 
   /* UserInventoryInfoContainer */
@@ -747,8 +728,7 @@ namespace AdServer::RequestInfoSvcs
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't init UserInventoryInfoMap. Caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't init UserInventoryInfoMap. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -757,8 +737,7 @@ namespace AdServer::RequestInfoSvcs
   {}
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserInventoryInfoContainer::co_get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserInventoryInfoContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserInventoryInfoContainer::co_get_profile()";
 
@@ -878,8 +857,7 @@ namespace AdServer::RequestInfoSvcs
           mem_buf->membuf().data(),
           mem_buf->membuf().size());
 
-        last_daily_processing_time =
-          Generics::Time(profile_reader.last_daily_processing_time());
+        last_daily_processing_time = Generics::Time(profile_reader.last_daily_processing_time());
 
         return last_daily_processing_time != Generics::Time::ZERO;
       }
@@ -1294,27 +1272,15 @@ namespace AdServer::RequestInfoSvcs
           BaseIdTimeLess(),
           BaseInsertIdTimeAdapter<ColoCreateTimeWriter>());
 
-        add_total_appearance(
-          gmt_colo_reach_info.colocations,
-          request_info.colo_id,
-          date);
+        add_total_appearance(gmt_colo_reach_info.colocations, request_info.colo_id, date);
 
-        add_total_appearance(
-          isp_colo_reach_info.colocations,
-          request_info.colo_id,
-          isp_date);
+        add_total_appearance(isp_colo_reach_info.colocations, request_info.colo_id, isp_date);
 
         if (request_info.ad_request)
         {
-          add_total_appearance(
-            gmt_colo_reach_info.ad_colocations,
-            request_info.colo_id,
-            date);
+          add_total_appearance(gmt_colo_reach_info.ad_colocations, request_info.colo_id, date);
 
-          add_total_appearance(
-            isp_colo_reach_info.ad_colocations,
-            request_info.colo_id,
-            isp_date);
+          add_total_appearance(isp_colo_reach_info.ad_colocations, request_info.colo_id, isp_date);
 
           colo_ad_appeared = true;
           isp_colo_ad_appeared = true;
@@ -1322,10 +1288,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (request_info.merge_request)
         {
-          add_total_appearance(
-            gmt_colo_reach_info.merge_colocations,
-            request_info.colo_id,
-            date);
+          add_total_appearance(gmt_colo_reach_info.merge_colocations, request_info.colo_id, date);
 
           add_total_appearance(
             isp_colo_reach_info.merge_colocations,
@@ -1453,11 +1416,9 @@ namespace AdServer::RequestInfoSvcs
       {
         try
         {
-          Generics::SmartMemBuf_var new_mem_buf(
-            new Generics::SmartMemBuf(profile_writer.size()));
+          Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(profile_writer.size()));
 
-          profile_writer.save(
-            new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
+          profile_writer.save(new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
 
           co_await transaction->co_save_profile(
             Generics::transfer_membuf(new_mem_buf),
@@ -1574,8 +1535,7 @@ namespace AdServer::RequestInfoSvcs
             inv_info.placement_colo_time = processing_date;
             inv_info.colo_id = inv_daily_match_info.colo_id;
 
-            inv_info.total_appear_channels.swap(
-              total_appear_expression_channels);
+            inv_info.total_appear_channels.swap(total_appear_expression_channels);
           }
 
           Generics::Time last_request_time =
@@ -1585,16 +1545,12 @@ namespace AdServer::RequestInfoSvcs
           try
           {
             /* save profile */
-            Generics::SmartMemBuf_var new_mem_buf(
-              new Generics::SmartMemBuf(profile_writer.size()));
+            Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(profile_writer.size()));
 
-            profile_writer.save(
-              new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
+            profile_writer.save(new_mem_buf->membuf().data(), new_mem_buf->membuf().size());
 
             // don't change profile saving time (last_request_time)
-            transaction->save_profile(
-              Generics::transfer_membuf(new_mem_buf),
-              last_request_time);
+            transaction->save_profile(Generics::transfer_membuf(new_mem_buf), last_request_time);
           }
           catch (const eh::Exception& ex)
           {
@@ -1691,8 +1647,7 @@ namespace AdServer::RequestInfoSvcs
           {
             inv_info.display_imps.imp_other_channels.emplace_back(
               *ch_it,
-              InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
-                 1, sum_request_revenue));
+              InventoryActionProcessor::InventoryInfo::ChannelImpCounter(1, sum_request_revenue));
           }
 
           if (request_info.max_text_ads != 0)
@@ -1716,14 +1671,11 @@ namespace AdServer::RequestInfoSvcs
         {
           inv_info.display_imps.imp_other_channels.emplace_back(
             *ch_it,
-            InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
-              1, sum_request_revenue));
+            InventoryActionProcessor::InventoryInfo::ChannelImpCounter(1, sum_request_revenue));
         }
 
-        using ChannelImpCounter =
-          InventoryActionProcessor::InventoryInfo::ChannelImpCounter;
-        using ChannelImpCounterMap =
-          Generics::MonoMap<unsigned long, ChannelImpCounter>;
+        using ChannelImpCounter = InventoryActionProcessor::InventoryInfo::ChannelImpCounter;
+        using ChannelImpCounterMap = Generics::MonoMap<unsigned long, ChannelImpCounter>;
 
         Generics::MonoAllocatorArena arena;
         ChannelImpCounterMap text_imp_channels(&arena);
@@ -1746,9 +1698,7 @@ namespace AdServer::RequestInfoSvcs
         for (auto ch_cnt_it = text_imp_channels.begin();
              ch_cnt_it != text_imp_channels.end(); ++ch_cnt_it)
         {
-          inv_info.text_imps.imp_channels.emplace_back(
-            ch_cnt_it->first,
-            ch_cnt_it->second.revenue);
+          inv_info.text_imps.imp_channels.emplace_back(ch_cnt_it->first, ch_cnt_it->second.revenue);
         }
 
         const unsigned long text_ads_imps = request_info.text_ads.size();
@@ -1796,8 +1746,7 @@ namespace AdServer::RequestInfoSvcs
 
               inv_info.text_imps.impop_no_imp_channels.emplace_back(
                 *ch_it,
-                InventoryActionProcessor::InventoryInfo::ChannelImpCounter(
-                  impops, impop_revenue));
+                InventoryActionProcessor::InventoryInfo::ChannelImpCounter(impops, impop_revenue));
             }
             catch (...)
             {

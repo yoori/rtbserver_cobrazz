@@ -17,9 +17,7 @@ namespace AutoTest
   // Utils
 
   long
-  find_local_params(
-    const LocalConfig& local,
-    const char *name);
+  find_local_params(const LocalConfig& local, const char *name);
 
   /**
    * @class GlobalSettings_
@@ -55,9 +53,7 @@ namespace AutoTest
      * @param units configuration (LocalParams.xml)
      * @param global config dir path
      */
-    void initialize(
-      const GlobalConfig& global,
-      const LocalConfig& local);
+    void initialize(const GlobalConfig& global, const LocalConfig& local);
 
     /**
      * @brief Get  timeout.

@@ -5,20 +5,14 @@
 #include <Commons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/PassbackProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void
-  print_passback_profile(std::ostream& out,
-    const PassbackInfoReader& reader)
+  print_passback_profile(std::ostream& out, const PassbackInfoReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -40,18 +34,14 @@ namespace RequestInfoSvcs
 
   inline
   void
-  print_passback_profile(
-    std::ostream& out,
-    const PassbackInfoReader& passback_reader)
+  print_passback_profile(std::ostream& out, const PassbackInfoReader& passback_reader)
     noexcept
   {
-    unsigned long columns =
-      sizeof(PASSBACK_TABLE_COLUMNS) /
-      sizeof(PASSBACK_TABLE_COLUMNS[0]);
+    unsigned long columns = sizeof(PASSBACK_TABLE_COLUMNS) / sizeof(PASSBACK_TABLE_COLUMNS[0]);
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, PASSBACK_TABLE_COLUMNS[i]);
     }
@@ -66,13 +56,11 @@ namespace RequestInfoSvcs
     row.add_field(passback_reader.country());
     row.add_field(passback_reader.user_status());
     row.add_field(passback_reader.referer());
-    row.add_field(
-      Generics::Time(passback_reader.time()).gm_ft());
+    row.add_field(Generics::Time(passback_reader.time()).gm_ft());
     row.add_field(passback_reader.done());
     row.add_field(passback_reader.verified());
 
     table.add_row(row);
     table.dump(out);
   }
-}
 }

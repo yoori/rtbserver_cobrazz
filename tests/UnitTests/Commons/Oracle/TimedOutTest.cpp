@@ -27,9 +27,8 @@ public:
     : debug_memory_(debug_memory)
   {
     Generics::Proc::memory_status(base_vsize_, base_rss_);
-    out << FUN << ": start with VSIZE = " << base_vsize_ <<
-      ", RSS = " << base_rss_;
-    if(debug_memory)
+    out << FUN << ": start with VSIZE = " << base_vsize_ << ", RSS = " << base_rss_;
+    if (debug_memory)
     {
       base_alloc_ = AllocController::instance().sum();
       out << ", ALLOC = " << base_alloc_;
@@ -43,9 +42,8 @@ public:
     unsigned long cur_vsize, cur_rss;
     Generics::Proc::memory_status(cur_vsize, cur_rss);
 
-    out << "(dVSIZE = " << (cur_vsize - base_vsize_) <<
-      ", dRSS = " << (cur_rss - base_rss_);
-    if(debug_memory_)
+    out << "(dVSIZE = " << (cur_vsize - base_vsize_) << ", dRSS = " << (cur_rss - base_rss_);
+    if (debug_memory_)
     {
       out << ", dALLOC = " << AllocController::instance().sum() - base_alloc_;
     }
@@ -76,7 +74,7 @@ plsql_timeout_test(
 
     {
       // PL/SQL block
-      for(unsigned long i = 0; i < loop_num; ++i)
+      for (unsigned long i = 0; i < loop_num; ++i)
       {
         bool timed_out = false;
 
@@ -99,19 +97,19 @@ plsql_timeout_test(
 
         Generics::Time fin_time(Generics::Time::get_time_of_day());
 
-        if(no_timeout)
+        if (no_timeout)
         {
           std::cout << FUN << ": " << (fin_time - start_time);
           mem_checker.print_diff(std::cout) << std::endl;
         }
         else
         {
-          if(!timed_out)
+          if (!timed_out)
           {
             std::cerr << FUN << ": isn't timed out" << std::endl;
             return 1;
           }
-          else if(((fin_time - start_time) - timeout) > Generics::Time(1))
+          else if (((fin_time - start_time) - timeout) > Generics::Time(1))
           {
             std::cerr << FUN << ": isn't timed out: exec time = " <<
               (fin_time - start_time) << " > 1 sec" << std::endl;
@@ -119,8 +117,7 @@ plsql_timeout_test(
           }
           else
           {
-            std::cout << FUN << ": timed out successfully: " <<
-              (fin_time - start_time);
+            std::cout << FUN << ": timed out successfully: " << (fin_time - start_time);
             mem_checker.print_diff(std::cout) << std::endl;
           }
 
@@ -136,7 +133,7 @@ plsql_timeout_test(
             conn_terminated = true;
           }
 
-          if(!conn_terminated)
+          if (!conn_terminated)
           {
             std::cerr << FUN << ": statement isn't terminated after timed out" << std::endl;
             return 1;
@@ -145,15 +142,14 @@ plsql_timeout_test(
       }
     }
 
-    if(!no_timeout)
+    if (!no_timeout)
     {
       // PL/SQL block no timeout
       Connection_var conn = env->create_connection(conn_descr);
 
-      for(unsigned long i = 0; i < 2; ++i)
+      for (unsigned long i = 0; i < 2; ++i)
       {
-        Statement_var stmt = conn->create_statement(
-          "BEGIN dbms_lock.sleep(10); END;");
+        Statement_var stmt = conn->create_statement("BEGIN dbms_lock.sleep(10); END;");
 
         bool timed_out = false;
 
@@ -167,7 +163,7 @@ plsql_timeout_test(
           timed_out = true;
         }
 
-        if(timed_out)
+        if (timed_out)
         {
           std::cerr << FUN << ": request(" << i << ") timed out, but must be executed." << std::endl;
           return 1;
@@ -218,17 +214,15 @@ select_plsql_sleep_timeout_test(
       }
     }
 
-    for(unsigned long i = 0; i < loop_num; ++i)
+    for (unsigned long i = 0; i < loop_num; ++i)
     {
       // SELECT WITH PL/SQL timeouts test
       Connection_var conn = env->create_connection(conn_descr);
 
       {
         std::ostringstream sql_str;
-        sql_str << "SELECT ADSERVER_ORACLE_TEST_SLEEP(" <<
-          (no_timeout ? 1 : 1000) << ") FROM DUAL";
-        Statement_var stmt = conn->create_statement(
-          sql_str.str().c_str());
+        sql_str << "SELECT ADSERVER_ORACLE_TEST_SLEEP(" << (no_timeout ? 1 : 1000) << ") FROM DUAL";
+        Statement_var stmt = conn->create_statement(sql_str.str().c_str());
 
         bool timed_out = false;
 
@@ -238,7 +232,7 @@ select_plsql_sleep_timeout_test(
         {
           Generics::Time timeout(no_timeout ? 1000 : 1);
           ResultSet_var rs = stmt->execute_query(&timeout);
-          while(rs->next()) {}
+          while (rs->next()) {}
         }
         catch(const TimedOut& ex)
         {
@@ -247,12 +241,12 @@ select_plsql_sleep_timeout_test(
 
         Generics::Time fin_time = Generics::Time::get_time_of_day();
 
-        if(no_timeout)
+        if (no_timeout)
         {
           std::cout << FUN << ": " << (fin_time - start_time);
           mem_checker.print_diff(std::cout) << std::endl;
         }
-        else if(timed_out)
+        else if (timed_out)
         {
           std::cout << FUN << ": 'select' request timed out successfully: " <<
             (fin_time - start_time);
@@ -275,8 +269,7 @@ select_plsql_sleep_timeout_test(
   try
   {
     Connection_var conn = env->create_connection(conn_descr);
-    Statement_var stmt = conn->create_statement(
-      "DROP FUNCTION ADSERVER_ORACLE_TEST_SLEEP");
+    Statement_var stmt = conn->create_statement("DROP FUNCTION ADSERVER_ORACLE_TEST_SLEEP");
     stmt->execute();
   }
   catch(const eh::Exception&)
@@ -300,7 +293,7 @@ select_timeout_test(
   {
     MemChecker mem_checker(std::cout, FUN, debug_memory);
 
-    for(unsigned long i = 0; i < loop_num; ++i)
+    for (unsigned long i = 0; i < loop_num; ++i)
     {
       Connection_var conn = env->create_connection(conn_descr);
 
@@ -315,7 +308,7 @@ select_timeout_test(
       {
         Generics::Time timeout(1);
         ResultSet_var rs = stmt->execute_query(&timeout);
-        while(rs->next()) {}
+        while (rs->next()) {}
       }
       catch(const TimedOut& ex)
       {
@@ -326,7 +319,7 @@ select_timeout_test(
       unsigned long cur_vsize, cur_rss;
       Generics::Proc::memory_status(cur_vsize, cur_rss);
 
-      if(timed_out)
+      if (timed_out)
       {
         std::cout << FUN << ": 'select' request timed out successfully: " <<
           (fin_time - start_time);
@@ -362,9 +355,7 @@ check_timeouts(
   try
   {
     env = Environment::create_environment(
-      (Environment::EnvironmentMode)(
-        Environment::EM_THREADED_MUTEXED |
-        Environment::EM_OBJECT),
+      (Environment::EnvironmentMode)(Environment::EM_THREADED_MUTEXED | Environment::EM_OBJECT),
       0,
       debug_memory);
   }
@@ -375,12 +366,10 @@ check_timeouts(
   }
 
   int res = 0;
-  res += plsql_timeout_test(
-    env, conn, loop_num, no_timeout, debug_memory);
-  res += select_plsql_sleep_timeout_test(
-    env, conn, loop_num, no_timeout, debug_memory);
+  res += plsql_timeout_test(env, conn, loop_num, no_timeout, debug_memory);
+  res += select_plsql_sleep_timeout_test(env, conn, loop_num, no_timeout, debug_memory);
 
-  if(!no_timeout)
+  if (!no_timeout)
   {
     res += select_timeout_test(env, conn, loop_num, debug_memory);
   }
@@ -393,8 +382,7 @@ main(int argc, char** argv)
 {
   int res = 0;
 
-  Generics::AppUtils::StringOption opt_ora_server(
-    "//oraads/addbads.ocslab.com");
+  Generics::AppUtils::StringOption opt_ora_server("//oraads/addbads.ocslab.com");
   Generics::AppUtils::StringOption opt_ora_user("ads_3");
   Generics::AppUtils::StringOption opt_ora_pwd("adserver");
   Generics::AppUtils::Option<unsigned long> opt_loop_num(10);
@@ -403,46 +391,31 @@ main(int argc, char** argv)
 
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("db"),
-    opt_ora_server);
+  args.add(Generics::AppUtils::equal_name("db"), opt_ora_server);
 
-  args.add(
-    Generics::AppUtils::equal_name("user"),
-    opt_ora_user);
+  args.add(Generics::AppUtils::equal_name("user"), opt_ora_user);
 
   args.add(
     Generics::AppUtils::equal_name("pwd") ||
     Generics::AppUtils::equal_name("password"),
     opt_ora_pwd);
 
-  args.add(
-    Generics::AppUtils::equal_name("num"),
-    opt_loop_num);
+  args.add(Generics::AppUtils::equal_name("num"), opt_loop_num);
 
-  args.add(
-    Generics::AppUtils::equal_name("no-timeout"),
-    opt_no_timeout);
+  args.add(Generics::AppUtils::equal_name("no-timeout"), opt_no_timeout);
 
-  args.add(
-    Generics::AppUtils::equal_name("debug-memory"),
-    opt_debug_memory);
+  args.add(Generics::AppUtils::equal_name("debug-memory"), opt_debug_memory);
 
   args.parse(argc - 1, argv + 1);
 
   std::cout << "use to connect '" << *opt_ora_server <<
-    "' as user '" << *opt_ora_user <<
-    "'." << std::endl;
+    "' as user '" << *opt_ora_user << "'." << std::endl;
 
   res += check_timeouts(
-    ConnectionDescription(
-      opt_ora_user->c_str(),
-      opt_ora_pwd->c_str(),
-      opt_ora_server->c_str()),
+    ConnectionDescription(opt_ora_user->c_str(), opt_ora_pwd->c_str(), opt_ora_server->c_str()),
     *opt_loop_num,
     opt_no_timeout.enabled(),
     opt_debug_memory.enabled());
 
   return res;
 }
-

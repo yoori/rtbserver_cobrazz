@@ -7,7 +7,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::UpdateMixin DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   country_code => DB::Entity::Type::string(unique => 1),
   clicks_interval1_days  => DB::Entity::Type::int(),
@@ -51,8 +51,8 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
-{ 
+use constant STRUCT =>
+{
   country_id => DB::Entity::Type::raw_sequence(),
   country_code => DB::Entity::Type::string(unique => 1),
   currency_id => DB::Entity::Type::link('DB::Currency'),
@@ -68,7 +68,7 @@ use constant STRUCT =>
   vat_enabled => 0,
   vat_number_input_enabled => 0,
   default_payment_terms => 30,
-  
+
   # Private
   # CTRAlgorithm
   clicks_interval1_days  => DB::Entity::Type::int(private => 1, default => 7),
@@ -128,12 +128,12 @@ sub preinit_
 sub postcreate_
 {
   my ($self, $ns) = @_;
-  
-  if (grep { defined $self->{$_} }  
+
+  if (grep { defined $self->{$_} }
     (qw(low_channel_threshold_ high_channel_threshold_ language_ timezone_id_ currency_id_)))
   {
-    $self->__update($ns, { 
-      currency_id => 
+    $self->__update($ns, {
+      currency_id =>
         defined $self->{currency_id_}?
           $self->{currency_id_}:
             $self->{currency_id},
@@ -141,7 +141,7 @@ sub postcreate_
         defined $self->{low_channel_threshold_}?
           $self->{low_channel_threshold_}:
             $self->{low_channel_threshold},
-      high_channel_threshold => 
+      high_channel_threshold =>
         defined $self->{high_channel_threshold_}?
           $self->{high_channel_threshold_}:
             $self->{high_channel_threshold},
@@ -149,7 +149,7 @@ sub postcreate_
         defined $self->{timezone_id_}?
           $self->{timezone_id_}:
             $self->{timezone_id},
-      language => 
+      language =>
         defined $self->{language_}?
           $self->{language_}:
             $self->{language} });

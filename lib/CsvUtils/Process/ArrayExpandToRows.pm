@@ -24,9 +24,9 @@ sub process
   my $row = [ @$row_param ];
   my @res_rows;
 
-  if(ref($row->[$self->{field_}]) eq 'ARRAY')
+  if (ref($row->[$self->{field_}]) eq 'ARRAY')
   {
-    if(scalar(@{$row->[$self->{field_}]}) > 0)
+    if (scalar(@{$row->[$self->{field_}]}) > 0)
     {
       foreach my $val(@{$row->[$self->{field_}]})
       {

@@ -6,7 +6,7 @@ namespace AutoTest
 
   void predicate_checker(bool predicate) /*throw(CheckFailed)*/
   {
-    if(!predicate)
+    if (!predicate)
     {
       throw CheckFailed("Fail");
     }
@@ -26,16 +26,15 @@ namespace AutoTest
     /*throw(TimeLessCheckFailed)*/
   {
     const Generics::Time now = Generics::Time::get_time_of_day();
-    if(now < now_less_then_)
+    if (now < now_less_then_)
     {
       return true;
     }
 
-    if(throw_error)
+    if (throw_error)
     {
       Stream::Error err;
-      err << "Deadline time has expired: " << now << " (now) > "
-          << now_less_then_ << " (deadline)";
+      err << "Deadline time has expired: " << now << " (now) > " << now_less_then_ << " (deadline)";
       throw TimeLessCheckFailed(err);
     }
 

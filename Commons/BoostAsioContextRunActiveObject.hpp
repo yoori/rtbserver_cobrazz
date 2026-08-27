@@ -34,9 +34,7 @@ namespace AdServer::Commons
     post(std::function<void()> task);
 
     void
-    schedule(
-      const Generics::Time& timeout,
-      std::function<void()> task);
+    schedule(const Generics::Time& timeout, std::function<void()> task);
 
   protected:
     void

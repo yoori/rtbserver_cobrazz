@@ -33,8 +33,7 @@ namespace AdServer
      * @param parameters Optional parameters for XSL stylesheet
      */
     virtual void
-    transform(std::istream& input, std::ostream& output,
-      const XslParameters* parameters = 0)
+    transform(std::istream& input, std::ostream& output, const XslParameters* parameters = 0)
       /*throw(Exception)*/ = 0;
 
     virtual void
@@ -100,8 +99,7 @@ namespace AdServer
       /*throw(FileNotExists, Exception)*/;
 
     void
-    transform(std::istream& input, std::ostream& output,
-      const XslParameters* parameters = 0)
+    transform(std::istream& input, std::ostream& output, const XslParameters* parameters = 0)
       /*throw(Exception)*/;
 
     void

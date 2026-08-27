@@ -24,10 +24,7 @@ public:
    * @param statistics reference
    * @param output stream
    */
-  Report(const char* description,
-         FrontendType frontend_type,
-         Statistics& stats,
-         std::ostream& out);
+  Report(const char* description, FrontendType frontend_type, Statistics& stats, std::ostream& out);
 
   /**
    * @brief Dump report to output stream

@@ -26,9 +26,7 @@ namespace AdServer::CampaignSvcs::CTR
     struct Predictor
     {
     public:
-      Predictor(
-        std::shared_ptr<XGBoostPredictorPool> pool,
-        PredictorWrapperPtr&& predictor_impl)
+      Predictor(std::shared_ptr<XGBoostPredictorPool> pool, PredictorWrapperPtr&& predictor_impl)
         noexcept;
 
       virtual

@@ -19,30 +19,30 @@ class ProcessControlObj(CORBATestObj):
                            test)
 
 class ProbeObjMixin(ComparisonMixin):
-  
+
   IProcessControl = IProcessControl
 
   def setUp( self ):
     self.status = AProcessControl.AS_READY
     self.probeObj = ProcessControlObj(self)
     self.bindObject(ObjectKey, self.probeObj)
-  
+
   def getProcessControl( self ):
     return self.getObject(ObjectKey, IProcessControl)
 
   def setReady( self ):
     self.status = AProcessControl.AS_READY
-  
+
   def setNotAlive( self ):
     self.status = AProcessControl.AS_NOT_ALIVE
-  
+
   def setAlive( self ):
     self.status = AProcessControl.AS_ALIVE
-  
+
   def ProcessControl_is_alive( self ):
     tlog(10, "ProcessControl.is_alive()")
     return self.status
-  
+
   def ProcessControl_shutdown( self, wait_for_completion ):
     tlog(10, "ProcessControl.shutdown(wait_for_completion=%d)" % \
          wait_for_completion)

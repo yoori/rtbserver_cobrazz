@@ -5,11 +5,11 @@ use warnings;
 use DB::Defaults;
 use DB::Util;
 
-sub normalize_url 
+sub normalize_url
 {
   my ($url) = @_;
   my $normalized_url = DB::BehavioralChannelBase::normalize_url_($url);
-  $normalized_url =  
+  $normalized_url =
     index($url, 'http://www.') == 0 && index($normalized_url, 'www.') == -1?
     'www.' . $normalized_url: $normalized_url;
   return $normalized_url;
@@ -27,11 +27,11 @@ sub create_trigger
 
   my $group = undef;
 
-  if($type eq 'U')
+  if ($type eq 'U')
   {
-    if($trigger !~ m|^(?:http://)?([^/?]*).*$|)
+    if ($trigger !~ m|^(?:http://)?([^/?]*).*$|)
     {
-      die "Incorrect trigger word '$trigger'";  
+      die "Incorrect trigger word '$trigger'";
     }
     $group = $1;
   }
@@ -40,7 +40,7 @@ sub create_trigger
     $ns->create(DB::BehavioralChannel::Trigger->blank(
       trigger_type => $type eq 'U'? $type: 'K',
       normalized_trigger => lc $trigger,
-      channel_type =>  
+      channel_type =>
         ($channel->channel_type() eq 'S'? 'S': 'A'),
       qa_status => 'A',
       country_code => defined $channel->{country_code}? $channel->{country_code}: ''));
@@ -84,7 +84,7 @@ sub change_trigger
   {
     my ($trigger, $channel_trigger) =
       $self->create_trigger(
-        $ns, $channel, $kwd, 'P', 
+        $ns, $channel, $kwd, 'P',
         $kwd eq $keyword_orig? 'A': 'D');
 
     $ns->output("ChannelTrigger/" . ++$i, $channel_trigger);
@@ -106,18 +106,18 @@ sub no_adv
   my $new_no_adv_url_words = "bannedAdvURLKeywordNew";
   my $new_no_adv_urls = "http://alcoholism.about.com";
 
-  $ns->output("ChannelTriggerKwd", 
+  $ns->output("ChannelTriggerKwd",
      DB::Defaults::instance()->no_adv_channel->keyword_channel_triggers()->[0]);
-  $ns->output("ChannelTriggerUrlKwd", 
+  $ns->output("ChannelTriggerUrlKwd",
      DB::Defaults::instance()->no_adv_channel->url_kwd_channel_triggers()->[0]);
-  $ns->output("ChannelTriggerUrl", 
+  $ns->output("ChannelTriggerUrl",
      DB::Defaults::instance()->no_adv_channel->url_channel_triggers()->[0]);
-  $ns->output("Channel", 
+  $ns->output("Channel",
      DB::Defaults::instance()->no_adv_channel->channel_id());
 
   my ($trigger, $channel_trigger) =
     $self->create_trigger(
-      $ns, DB::Defaults::instance()->no_adv_channel, 
+      $ns, DB::Defaults::instance()->no_adv_channel,
       $new_no_adv_urls, 'U', 'D');
 
   $ns->output("ChannelTriggerUrlNew", $channel_trigger);
@@ -130,19 +130,19 @@ sub no_adv
   $ns->output("ExpectedWords", $new_no_adv_words);
   $ns->output("ExpectedUrlWords", lc($new_no_adv_url_words));
 
-  $ns->output("Urls", 
+  $ns->output("Urls",
      prepare_triggers(
        DB::Defaults::instance()->no_adv_channel->
          url_channel_triggers()->[0]->{original_trigger},
        \&DynamicTriggerListUpdate::normalize_url));
 
-  $ns->output("Words", 
+  $ns->output("Words",
      prepare_triggers(
        DB::Defaults::instance()->no_adv_channel->
          keyword_channel_triggers()->[0]->{original_trigger},
        \&DB::BehavioralChannelBase::normalize_keyword_));
 
-  $ns->output("UrlWords", 
+  $ns->output("UrlWords",
      prepare_triggers(
        DB::Defaults::instance()->no_adv_channel->
          url_kwd_channel_triggers()->[0]->{original_trigger},
@@ -161,18 +161,18 @@ sub no_track
   my $new_no_track_words = "crime";
   my $new_no_track_url_words = "bannedTrackURLKeywordNew";
 
-  $ns->output("ChannelTriggerKwd", 
+  $ns->output("ChannelTriggerKwd",
      DB::Defaults::instance()->no_track_channel->keyword_channel_triggers()->[0]);
-  $ns->output("ChannelTriggerUrlKwd", 
+  $ns->output("ChannelTriggerUrlKwd",
      DB::Defaults::instance()->no_track_channel->url_kwd_channel_triggers()->[0]);
-  $ns->output("ChannelTriggerUrl", 
+  $ns->output("ChannelTriggerUrl",
      DB::Defaults::instance()->no_track_channel->url_channel_triggers()->[0]);
-  $ns->output("Channel", 
+  $ns->output("Channel",
     DB::Defaults::instance()->no_track_channel->channel_id());
 
   my ($trigger, $channel_trigger) =
     $self->create_trigger(
-      $ns, DB::Defaults::instance()->no_track_channel, 
+      $ns, DB::Defaults::instance()->no_track_channel,
       $new_no_track_words, 'P', 'D');
   $ns->output("ChannelTriggerKwdNew", $channel_trigger);
 
@@ -183,19 +183,19 @@ sub no_track
   $ns->output("ExpectedUrlWords", lc($new_no_track_url_words));
   $ns->output("ExpectedUrls", "");
 
-  $ns->output("Urls", 
+  $ns->output("Urls",
     prepare_triggers(
       DB::Defaults::instance()->no_track_channel->
         url_channel_triggers()->[0]->{original_trigger},
       \&DynamicTriggerListUpdate::normalize_url));
 
-  $ns->output("Words", 
+  $ns->output("Words",
     prepare_triggers(
       DB::Defaults::instance()->no_track_channel->
         keyword_channel_triggers()->[0]->{original_trigger},
      \&DB::BehavioralChannelBase::normalize_keyword_));
 
-  $ns->output("UrlWords", 
+  $ns->output("UrlWords",
     prepare_triggers(
       DB::Defaults::instance()->no_track_channel->
         url_kwd_channel_triggers()->[0]->{original_trigger},
@@ -204,7 +204,7 @@ sub no_track
   $ns->output("KWD1", "murder");
   $ns->output("KWD2", $new_no_track_words);
   $ns->output("SEARCH", $new_no_track_url_words);
-  $ns->output("REF", "google.com/search?hl=en&q=crime&btnG=Search");  
+  $ns->output("REF", "google.com/search?hl=en&q=crime&btnG=Search");
 }
 
 sub init
@@ -221,12 +221,12 @@ sub init
   my $channel = $ns->create(DB::BehavioralChannel->blank(
     name => 1,
     account_id => $advertiser,
-    keyword_list => 
-      "robbery\n" . 
-      "crime\n" . 
-      "murder\n" . 
+    keyword_list =>
+      "robbery\n" .
+      "crime\n" .
+      "murder\n" .
       "unbanned_2",
-    url_list => 
+    url_list =>
       "alcoholnews.org\n" .
       "alcoholism.about.com\n" .
       "www.tobacco.org/ads\n" .

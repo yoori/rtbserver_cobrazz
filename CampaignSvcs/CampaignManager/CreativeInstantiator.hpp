@@ -5,26 +5,23 @@
 #include "CampaignManagerCore.hpp"
 #include "CreativeInstantiatorTypes.hpp"
 
+namespace AdServer::CampaignSvcs::InstantiateAd
+{
+  class InstantiateAdCommonCreativeArgsManager;
+  class InstantiateAdCreativeArgsManager;
+  class InstantiateAdRequestArgsManager;
+}
+
 namespace AdServer::CampaignSvcs
 {
-  namespace InstantiateAd
-  {
-    class InstantiateAdCommonCreativeArgsManager;
-    class InstantiateAdCreativeArgsManager;
-    class InstantiateAdRequestArgsManager;
-  }
-
   class CreativeInstantiator:
     public CreativeInstantiatorTypes
   {
   public:
     using Exception = CampaignManagerCore::Exception;
-    using CreativeInstantiateProblem =
-      CampaignManagerCore::CreativeInstantiateProblem;
-    using CreativeTemplateProblem =
-      CampaignManagerCore::CreativeTemplateProblem;
-    using CreativeOptionsProblem =
-      CampaignManagerCore::CreativeOptionsProblem;
+    using CreativeInstantiateProblem = CampaignManagerCore::CreativeInstantiateProblem;
+    using CreativeTemplateProblem = CampaignManagerCore::CreativeTemplateProblem;
+    using CreativeOptionsProblem = CampaignManagerCore::CreativeOptionsProblem;
 
     using ClickParams = CampaignManagerCore::ClickParams;
     using AdSlotContext = CampaignManagerCore::AdSlotContext;
@@ -229,8 +226,7 @@ namespace AdServer::CampaignSvcs
       noexcept;
 
     TemplateParams_var
-    fill_creatives_json_(
-      const TemplateParamsList& creative_template_params) const;
+    fill_creatives_json_(const TemplateParamsList& creative_template_params) const;
 
     void
     instantiate_url_creative_(
@@ -299,9 +295,7 @@ namespace AdServer::CampaignSvcs
       noexcept;
 
     void
-    init_vast_tokens_(
-      RequestResultParams& request_result_params,
-      const Creative* creative)
+    init_vast_tokens_(RequestResultParams& request_result_params, const Creative* creative)
       /*throw(CreativeInstantiateProblem)*/;
 
     std::string

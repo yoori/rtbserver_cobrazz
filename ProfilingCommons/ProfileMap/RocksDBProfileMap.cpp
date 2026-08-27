@@ -30,7 +30,7 @@ namespace AdServer::ProfilingCommons
       &db_,
       expire_time.tv_sec);
 
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't open DB: " << path;
@@ -55,12 +55,12 @@ namespace AdServer::ProfilingCommons
     std::string value;
     rocksdb::Status status = db_->Get(rocksdb::ReadOptions(), key.c_str(), &value);
 
-    if(status.IsNotFound())
+    if (status.IsNotFound())
     {
       return false;
     }
 
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't read record from DB: " << path_;
@@ -73,7 +73,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapImpl::check_profile_async(const std::string& key, CheckCallback callback) const
   {
-    if(!callback)
+    if (!callback)
     {
       return;
     }
@@ -99,9 +99,7 @@ namespace AdServer::ProfilingCommons
   Generics::ConstSmartMemBuf_var
   RocksDBProfileMapImpl::get_profile(const std::string& key, Generics::Time* last_access_time)
   {
-    Generics::SmartMemBuf_var profile = get_own_profile(
-      key,
-      last_access_time);
+    Generics::SmartMemBuf_var profile = get_own_profile(key, last_access_time);
 
     return profile.in() ?
       Generics::transfer_membuf(profile) :
@@ -121,20 +119,19 @@ namespace AdServer::ProfilingCommons
     std::string value;
     rocksdb::Status status = db_->Get(rocksdb::ReadOptions(), key.c_str(), &value);
 
-    if(status.IsNotFound())
+    if (status.IsNotFound())
     {
       return Generics::SmartMemBuf_var();
     }
 
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't read record from DB: " << path_;
       throw Exception(ostr.str());
     }
 
-    return Generics::SmartMemBuf_var(
-      new Generics::SmartMemBuf(value.data(), value.size()));
+    return Generics::SmartMemBuf_var(new Generics::SmartMemBuf(value.data(), value.size()));
   }
 
   Generics::ConstSmartMemBuf_var
@@ -143,7 +140,7 @@ namespace AdServer::ProfilingCommons
     GetCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    if(!callback)
+    if (!callback)
     {
       return Generics::ConstSmartMemBuf_var();
     }
@@ -153,9 +150,7 @@ namespace AdServer::ProfilingCommons
     try
     {
       Generics::Time access_time;
-      profile = get_profile(
-        key,
-        last_access_time ? &access_time : nullptr);
+      profile = get_profile(key, last_access_time ? &access_time : nullptr);
     }
     catch(const std::exception& ex)
     {
@@ -177,7 +172,7 @@ namespace AdServer::ProfilingCommons
     GetOwnCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    if(!callback)
+    if (!callback)
     {
       return Generics::SmartMemBuf_var();
     }
@@ -187,9 +182,7 @@ namespace AdServer::ProfilingCommons
     try
     {
       Generics::Time access_time;
-      profile = get_own_profile(
-        key,
-        last_access_time ? &access_time : nullptr);
+      profile = get_own_profile(key, last_access_time ? &access_time : nullptr);
     }
     catch(const std::exception& ex)
     {
@@ -216,7 +209,7 @@ namespace AdServer::ProfilingCommons
 
     rocksdb::Status status = db_->Delete(write_options, key.c_str());
 
-    if(status.IsNotFound() || !status.ok())
+    if (status.IsNotFound() || !status.ok())
     {
       return false;
     }
@@ -245,7 +238,7 @@ namespace AdServer::ProfilingCommons
       error = "unknown remove error";
     }
 
-    if(callback)
+    if (callback)
     {
       callback(result, std::move(error));
     }
@@ -254,7 +247,7 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapImpl::clear_expired_async(const Generics::Time&, CompleteCallback complete)
   {
-    if(complete)
+    if (complete)
     {
       complete();
     }
@@ -268,23 +261,21 @@ namespace AdServer::ProfilingCommons
   {
     static const char* FUN = "RocksDBProfileMapImpl::process_keys()";
 
-    std::unique_ptr<rocksdb::Iterator> it(
-      db_->NewIterator(rocksdb::ReadOptions()));
-    for(it->SeekToFirst(); it->Valid(); it->Next())
+    std::unique_ptr<rocksdb::Iterator> it(db_->NewIterator(rocksdb::ReadOptions()));
+    for (it->SeekToFirst(); it->Valid(); it->Next())
     {
       process_key(it->key().ToString());
     }
 
     const auto status = it->status();
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't iterate DB '" << path_ << "': " <<
-        status.ToString();
+      ostr << FUN << ": can't iterate DB '" << path_ << "': " << status.ToString();
       throw Exception(ostr.str());
     }
 
-    if(process_complete)
+    if (process_complete)
     {
       process_complete();
     }
@@ -308,10 +299,8 @@ namespace AdServer::ProfilingCommons
     rocksdb::Status status = db_->Put(
       write_options,
       key.c_str(),
-      rocksdb::Slice(
-        static_cast<const char*>(profile->membuf().data()),
-        profile->membuf().size()));
-    if(!status.ok())
+      rocksdb::Slice(static_cast<const char*>(profile->membuf().data()), profile->membuf().size()));
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't save record to DB '" << path_ << "': " << status.ToString();
@@ -340,7 +329,7 @@ namespace AdServer::ProfilingCommons
       error = "unknown save error";
     }
 
-    if(callback)
+    if (callback)
     {
       callback(std::move(error));
     }
@@ -378,11 +367,10 @@ namespace AdServer::ProfilingCommons
     options.wait = true;
 
     const auto status = db_->Flush(options);
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't flush DB '" << path_ << "': " <<
-        status.ToString();
+      ostr << FUN << ": can't flush DB '" << path_ << "': " << status.ToString();
       throw Exception(ostr.str());
     }
   }

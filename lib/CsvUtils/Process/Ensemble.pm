@@ -27,7 +27,7 @@ sub new
   my %res_indexes_set;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes_set{$index - 1} = 1;
       push(@res_indexes, $index - 1);
@@ -74,7 +74,7 @@ sub process
 
   Encode::_utf8_on($group_key_str);
 
-  if(!exists($self->{rows_}->{$group_key_str}))
+  if (!exists($self->{rows_}->{$group_key_str}))
   {
     $self->{rows_}->{$group_key_str} = EnsembleValue->new(
       labels => $row->[$self->{label_}],
@@ -119,7 +119,7 @@ sub eval_
       predict_keys => \@group_fields, value => $self->{rows_}->{$group_key}));
   }
 
-  if(scalar(@groups) > 0)
+  if (scalar(@groups) > 0)
   {
     my $min_val;
     my $min_point;
@@ -136,7 +136,7 @@ sub eval_
     my $cur_corner1 = \@corner1_arr;
     my $cur_corner2 = \@corner2_arr;
 
-    for(my $step = 0; $step < $self->{depth_}; ++$step)
+    for (my $step = 0; $step < $self->{depth_}; ++$step)
     {
       ($min_val, $min_point) = $self->eval_for_rectangle_(
         \@groups,
@@ -147,7 +147,7 @@ sub eval_
       # reeval corners
       my @new_corner1;
       my @new_corner2;
-      for(my $i = 0; $i < @$min_point; ++$i)
+      for (my $i = 0; $i < @$min_point; ++$i)
       {
         #push(@new_corner1, $min_point->[$i] - ($cur_corner2->[$i] - $cur_corner1->[$i]) / 10);
         #push(@new_corner2, $min_point->[$i] + ($cur_corner2->[$i] - $cur_corner1->[$i]) / 10);
@@ -155,7 +155,7 @@ sub eval_
         push(@new_corner2, min($min_point->[$i] + ($cur_corner2->[$i] - $cur_corner1->[$i]) / 10, 1));
       }
 
-      if(TRACE)
+      if (TRACE)
       {
         print "TOPTOPEVAL [" . join(',', @$min_point) . "] = " . $min_val .
           ", c1 = [" . join(',', @new_corner1) . "]" .
@@ -187,14 +187,14 @@ sub eval_for_rectangle_
   my $eval_min;
   my $eval_min_point;
 
-  if(scalar(@$corner1) > 0)
+  if (scalar(@$corner1) > 0)
   {
     my @corner1_copy = @$corner1;
     shift(@corner1_copy);
     my @corner2_copy = @$corner2;
     shift(@corner2_copy);
 
-    if(TRACE)
+    if (TRACE)
     {
       print "EVAL_REC [" . join(',', @$fix_point) . "]" .
         ", c1 = [" . join(',', @$corner1) . "]" .
@@ -207,7 +207,7 @@ sub eval_for_rectangle_
     my $first_coord_step = ($corner2->[0] - $corner1->[0]) / $self->{div_};
     my @sub_arr = (@$fix_point, 0);
 
-    for(my $first_coord = $corner1->[0];
+    for (my $first_coord = $corner1->[0];
       $first_coord <= $corner2->[0] + 0.00001; $first_coord += $first_coord_step)
     {
       $sub_arr[$fetch_coord_i] = $first_coord;
@@ -218,7 +218,7 @@ sub eval_for_rectangle_
         \@corner1_copy,
         \@corner2_copy);
 
-      if(!defined($eval_min) || $local_min < $eval_min)
+      if (!defined($eval_min) || $local_min < $eval_min)
       {
         $eval_min = $local_min;
         $eval_min_point = $local_min_point;
@@ -232,12 +232,12 @@ sub eval_for_rectangle_
     $eval_min_point = [@$fix_point];
     my $ll = 0;
 
-    for(my $i = 0; $i < scalar(@$groups); ++$i)
+    for (my $i = 0; $i < scalar(@$groups); ++$i)
     {
       my $predict_keys = $groups->[$i]->predict_keys();
       my $value = 0;
 
-      for(my $j = 0; $j < scalar(@$predict_keys); ++$j)
+      for (my $j = 0; $j < scalar(@$predict_keys); ++$j)
       {
         $value += $predict_keys->[$j] * $fix_point->[$j];
       }
@@ -248,7 +248,7 @@ sub eval_for_rectangle_
       my $l0 = - log(1.0 - min($value, 1 - $eps));
       my $l1 = - log(max($value, $eps));
 
-      if($groups->[$i]->value()->total() < $groups->[$i]->value()->labels())
+      if ($groups->[$i]->value()->total() < $groups->[$i]->value()->labels())
       {
         die "assert";
       }
@@ -256,13 +256,13 @@ sub eval_for_rectangle_
       $ll += ($groups->[$i]->value()->total() - $groups->[$i]->value()->labels()) * $l0 +
         $groups->[$i]->value()->labels() * $l1;
 
-      #if($ll < 0)
+      #if ($ll < 0)
       #{
       #  die "assert: ll < 0, l0 = $l0, l1 = $l1";
       #}
     }
 
-    if(TRACE)
+    if (TRACE)
     {
       print "EVAL [" . join(',', @$fix_point) . "] = " . $ll .
         ", c1 = [" . join(',', @$corner1) . "]" .

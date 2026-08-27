@@ -5,10 +5,7 @@
 #include <functional>
 #include <Generics/Uuid.hpp>
 
-REFLECT_UNIT(ColoUsers) (
-  "Statistics",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE_PRE);
+REFLECT_UNIT(ColoUsers) ("Statistics", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE_PRE);
 
 namespace
 {
@@ -85,77 +82,46 @@ bool
 ColoUsers::run()
 {
 
-  AUTOTEST_CASE(
-    unique_users_stats_(),
-    "Unique users stats");
+  AUTOTEST_CASE(unique_users_stats_(), "Unique users stats");
 
-  AUTOTEST_CASE(
-    unique_hids_(),
-    "Unique HIDs stats");
+  AUTOTEST_CASE(unique_hids_(), "Unique HIDs stats");
 
-  AUTOTEST_CASE(
-    create_and_last_appearance_dates_(),
-    "Create and last appearance dates");
+  AUTOTEST_CASE(create_and_last_appearance_dates_(), "Create and last appearance dates");
 
   // known bug ADSC-8333
-  AUTOTEST_CASE(
-    non_gmt_timezone_(),
-    "Non-GMT timezone");
+  AUTOTEST_CASE(non_gmt_timezone_(), "Non-GMT timezone");
 
   AdClient assync_client(AdClient::create_undef_user(this));
 
-  TemporaryAdClient assync_temporary(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient assync_temporary(TemporaryAdClient::create_user(this));
 
   std::string assync_hid(AutoTest::generate_uid(false));
 
   AUTOTEST_CASE(
-    basic_async_part_1_(
-      assync_client,
-      assync_temporary,
-      assync_hid),
+    basic_async_part_1_(assync_client, assync_temporary, assync_hid),
     "Basic asynchronous logging");
 
   // known bug ADSC-8351
-  AUTOTEST_CASE(
-    big_date_difference_(),
-    "Asynchronous logging with big date difference");
+  AUTOTEST_CASE(big_date_difference_(), "Asynchronous logging with big date difference");
 
-  AUTOTEST_CASE(
-    merge_on_adrequest_(),
-    "Merging on adrequest");
+  AUTOTEST_CASE(merge_on_adrequest_(), "Merging on adrequest");
 
-  AUTOTEST_CASE(
-    create_date_after_merge_(),
-    "Create date after merging");
+  AUTOTEST_CASE(create_date_after_merge_(), "Create date after merging");
 
-  AUTOTEST_CASE(
-    invalid_merge_(),
-    "Merging with non-existing temporary user");
+  AUTOTEST_CASE(invalid_merge_(), "Merging with non-existing temporary user");
 
-  AUTOTEST_CASE(
-    optout_(),
-    "Non-opted-in users test");
+  AUTOTEST_CASE(optout_(), "Non-opted-in users test");
 
-  AUTOTEST_CASE(
-    non_serialized_(),
-    "Non serialized match/merge operations test");
+  AUTOTEST_CASE(non_serialized_(), "Non serialized match/merge operations test");
 
-  AUTOTEST_CASE(
-    pub_inventory_(),
-    "Publisher inventory mode test case");
+  AUTOTEST_CASE(pub_inventory_(), "Publisher inventory mode test case");
 
-  AUTOTEST_CASE(
-    oo_service_(),
-    "Logging on OO service");
+  AUTOTEST_CASE(oo_service_(), "Logging on OO service");
 
   check();
 
   AUTOTEST_CASE(
-    basic_async_part_2_(
-      assync_client,
-      assync_temporary,
-      assync_hid),
+    basic_async_part_2_(assync_client, assync_temporary, assync_hid),
     "Basic asynchronous logging");
 
   return true;
@@ -270,20 +236,11 @@ void ColoUsers::unique_users_stats_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-    colo_user_diffs,
-    CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   {
     AdClient client(AdClient::create_undef_user(this));
@@ -306,16 +263,11 @@ void ColoUsers::unique_users_stats_()
       { client, 3*DAY + 2*HOUR, "UNIQUE_USERS/COLO/OPTIN_ONLY", 0, 0, 0, &temporary3, 0 }
     };
 
-    process_requests_(
-      AutoTest::Time(
-        base_time_.get_gm_time().get_date()),
-      REQUESTS);
+    process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
   }
   {
     // to avoid platforms match
-    AdClient client(
-      AdClient::create_nonoptin_user(
-        this, AutoTest::UF_CENTRAL_FRONTEND));
+    AdClient client(AdClient::create_nonoptin_user(this, AutoTest::UF_CENTRAL_FRONTEND));
     client.set_probe_uid();
     client.process_request(
       NSLookupRequest(false).
@@ -333,31 +285,20 @@ void ColoUsers::unique_users_stats_()
       { client, 3*DAY, "UNIQUE_USERS/COLO/ALL", "Tags/DELETED", "Campaign/KEYWORD", 0, 0, TRF_CHECK_NO_TAG }
     };
 
-    process_requests_(
-      base_time_,
-      REQUESTS);
+    process_requests_(base_time_, REQUESTS);
   }
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::unique_hids_()
@@ -452,10 +393,7 @@ void ColoUsers::unique_hids_()
       }
     };
 
-    add_stats_(
-      colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+    add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
   }
 
   {
@@ -584,15 +522,9 @@ void ColoUsers::unique_hids_()
       }
     };
 
-    add_stats_(
-      created_user_stats,
-      created_user_diffs,
-      CASE_STATS);
+    add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-    add_stats_(
-      global_colo_user_stats,
-      global_colo_user_diffs,
-      CASE_STATS);
+    add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
   }
 
   AdClient client1(AdClient::create_undef_user(this));
@@ -614,31 +546,19 @@ void ColoUsers::unique_hids_()
     { client1, 3*DAY + 3*HOUR, "UNIQUE_HIDS/COLO/ALL", "Tags/DEFAULT", 0, hid1.c_str(), &temporary, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -700,10 +620,7 @@ ColoUsers::create_and_last_appearance_dates_()
       }
     };
 
-    add_stats_(
-      colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+    add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
   };
 
   {
@@ -769,39 +686,22 @@ ColoUsers::create_and_last_appearance_dates_()
       }
     };
 
-    add_stats_(
-      created_user_stats,
-      created_user_diffs,
-      CASE_STATS);
+    add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-    add_stats_(
-      global_colo_user_stats,
-      global_colo_user_diffs,
-      CASE_STATS);
+    add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
   };
 
-  Clients clients(
-    3,
-    AdClient::create_nonoptin_user(this));
+  Clients clients(3, AdClient::create_nonoptin_user(this));
 
   std::generate_n(
     clients.begin(),
     3,
-    std::bind(
-      std::bind1st(
-        std::ptr_fun(
-          &AdClient::create_undef_user), this), 0));
+    std::bind(std::bind1st(std::ptr_fun(&AdClient::create_undef_user), this), 0));
 
-  TemporaryAdClient temporary(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
 
   Hids hids(3);
-  std::generate_n(
-    hids.begin(),
-    3,
-    std::bind(
-      std::ptr_fun(
-        &AutoTest::generate_uid), false));
+  std::generate_n(hids.begin(), 3, std::bind(std::ptr_fun(&AutoTest::generate_uid), false));
 
   const TestRequest REQUESTS[] =
   {
@@ -814,30 +714,19 @@ ColoUsers::create_and_last_appearance_dates_()
     { clients[2], 0, "CREATE/COLO/ALL", "Tags/DEFAULT", 0, hids[2].c_str(), &temporary, 0 }
   };
 
-  process_requests_(
-    base_time_,
-    REQUESTS);
+  process_requests_(base_time_, REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check. Part#1",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check. Part#1",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check. Part#1",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
@@ -873,15 +762,9 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
       },
     };
 
-    add_stats_(
-      colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+    add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-    add_stats_(
-      created_user_stats,
-      created_user_diffs,
-      CASE_STATS);
+    add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
   }
 
   {
@@ -898,10 +781,7 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
       }
     };
 
-    add_stats_(
-      global_colo_user_stats,
-      global_colo_user_diffs,
-      CASE_STATS);
+    add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
   }
 
   AdClient client(AdClient::create_undef_user(this));
@@ -914,31 +794,19 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
     { client, 9*HOUR, "NON_GMT/COLO/ALL", 0, 0, hid.c_str(), 0, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -966,51 +834,30 @@ ColoUsers::basic_async_part_1_(
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   const TestRequest REQUESTS[] =
   {
     { client, HOUR, "BASE_ASSYNC/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -1054,20 +901,11 @@ ColoUsers::basic_async_part_2_(
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
 
   const TestRequest REQUESTS[] =
@@ -1076,31 +914,19 @@ ColoUsers::basic_async_part_2_(
     { client, 30, "BASE_ASSYNC/COLO/ALL",  "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 
@@ -1165,20 +991,11 @@ void ColoUsers::big_date_difference_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
 
   AdClient client(AdClient::create_undef_user(this));
@@ -1201,9 +1018,7 @@ void ColoUsers::big_date_difference_()
         this,
         "\\" + client.debug_info.uid.value(),
         AutoTest::InventoryProfileChecker::Expected().
-          last_request_time(
-            base_time_.get_gm_time().
-              format("%Y-%m-%d 00:00:00")))).check(),
+          last_request_time(base_time_.get_gm_time(). format("%Y-%m-%d 00:00:00")))).check(),
     "Check user inventory profile");
 
   {
@@ -1217,24 +1032,15 @@ void ColoUsers::big_date_difference_()
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -1267,20 +1073,11 @@ ColoUsers::merge_on_adrequest_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   AdClient client(AdClient::create_undef_user(this));
   TemporaryAdClient temporary1(TemporaryAdClient::create_user(this));
@@ -1300,24 +1097,15 @@ ColoUsers::merge_on_adrequest_()
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -1350,20 +1138,11 @@ ColoUsers::create_date_after_merge_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   // Empty persistent profile on merging
   {
@@ -1393,32 +1172,20 @@ ColoUsers::create_date_after_merge_()
       { client, 60, "CREATE_DATE/COLO/ALL2", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
     };
 
-    process_requests_(
-      AutoTest::Time(
-        base_time_.get_gm_time().get_date()),
-      REQUESTS);
+    process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
   }
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void
@@ -1451,20 +1218,11 @@ ColoUsers::invalid_merge_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   AdClient client(AdClient::create_undef_user(this));
   TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
@@ -1479,31 +1237,19 @@ ColoUsers::invalid_merge_()
     { client, DAY, "INVALID_MERGE/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::optout_()
@@ -1535,20 +1281,11 @@ void ColoUsers::optout_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   AdClient optin(AdClient::create_undef_user(this));
   AdClient optout(AdClient::create_optout_user(this));
@@ -1574,31 +1311,19 @@ void ColoUsers::optout_()
     { optin, DAY, "OPTOUT/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 },
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::non_serialized_()
@@ -1630,20 +1355,11 @@ void ColoUsers::non_serialized_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   AdClient client(AdClient::create_undef_user(this));
   TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
@@ -1657,31 +1373,19 @@ void ColoUsers::non_serialized_()
     { client, DAY + 1, "NOT_SERIALIZED/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), 0, 0 }
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::pub_inventory_()
@@ -1729,20 +1433,11 @@ void ColoUsers::pub_inventory_()
     }
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   AdClient client1(AdClient::create_undef_user(this));
   AdClient client2(AdClient::create_undef_user(this));
@@ -1760,31 +1455,19 @@ void ColoUsers::pub_inventory_()
     { client3, 2*DAY, "PUB_INV/COLO/ALL", "Tags/DEFAULT", 0, hid3.c_str(), 0, 0 },
   };
 
-  process_requests_(
-    AutoTest::Time(
-      base_time_.get_gm_time().get_date()),
-    REQUESTS);
+  process_requests_(AutoTest::Time(base_time_.get_gm_time().get_date()), REQUESTS);
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 }
 
 void ColoUsers::oo_service_()
@@ -1840,20 +1523,11 @@ void ColoUsers::oo_service_()
     },
   };
 
-  add_stats_(
-    colo_user_stats,
-      colo_user_diffs,
-      CASE_STATS);
+  add_stats_(colo_user_stats, colo_user_diffs, CASE_STATS);
 
-  add_stats_(
-    created_user_stats,
-    created_user_diffs,
-    CASE_STATS);
+  add_stats_(created_user_stats, created_user_diffs, CASE_STATS);
 
-  add_stats_(
-    global_colo_user_stats,
-    global_colo_user_diffs,
-    CASE_STATS);
+  add_stats_(global_colo_user_stats, global_colo_user_diffs, CASE_STATS);
 
   // Opt-in request
   {
@@ -1871,9 +1545,7 @@ void ColoUsers::oo_service_()
       { client, DAY, "OO/COLO/ALL1", "Tags/DEFAULT", 0, 0, &temporary, 0 }
     };
 
-    process_requests_(
-      base_time_,
-      REQUESTS);
+    process_requests_(base_time_, REQUESTS);
   }
 
   // Opt-out request
@@ -1918,24 +1590,15 @@ void ColoUsers::oo_service_()
 
   ADD_WAIT_CHECKER(
     "ColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      colo_user_diffs,
-      colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, colo_user_diffs, colo_user_stats));
 
   ADD_WAIT_CHECKER(
     "CreatedUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      created_user_diffs,
-      created_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, created_user_diffs, created_user_stats));
 
   ADD_WAIT_CHECKER(
     "GlobalColoUserStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      global_colo_user_diffs,
-      global_colo_user_stats));
+    AutoTest::stats_diff_checker(pq_conn_, global_colo_user_diffs, global_colo_user_stats));
 
 }
 
@@ -1953,9 +1616,7 @@ ColoUsers::add_stats_(
   {
     unsigned long colo = fetch_int(expected[i].colo);
     Stat stat;
-    init_stat_(
-      stat,
-      expected[i]);
+    init_stat_(stat, expected[i]);
     stat.description("#" + strof(i+1));
     stat.select(pq_conn_);
     stats.push_back(stat);
@@ -1963,9 +1624,7 @@ ColoUsers::add_stats_(
 
     Diff sum_diff;
 
-    init_sum_diff_(
-      sum_diff,
-      expected[i]);
+    init_sum_diff_(sum_diff, expected[i]);
 
     if (sum_diffs.find(colo) == sum_diffs.end())
     {
@@ -1993,9 +1652,7 @@ ColoUsers::add_stats_(
 
 template<class Expected>
 void
-ColoUsers::init_stat_(
- ColoUserStat& stat,
- const Expected& expected)
+ColoUsers::init_stat_(ColoUserStat& stat, const Expected& expected)
 {
   stat.key().
     colo_id(fetch_int(expected.colo)).
@@ -2009,9 +1666,7 @@ ColoUsers::init_stat_(
 
 template<class Expected>
 void
-ColoUsers::init_stat_(
-  GlobalColoUserStat& stat,
-  const Expected& expected)
+ColoUsers::init_stat_(GlobalColoUserStat& stat, const Expected& expected)
 {
   stat.key().
     colo_id(fetch_int(expected.colo)).
@@ -2021,6 +1676,7 @@ ColoUsers::init_stat_(
   {
     stat.key().last_appearance_date(expected.last_appearance_date);
   }
+
   if (expected.create_date != UNDEF_DATE)
   {
     stat.key().create_date(expected.create_date);
@@ -2030,9 +1686,7 @@ ColoUsers::init_stat_(
 
 template<class Expected>
 void
-ColoUsers::init_stat_(
-  CreatedUserStat& stat,
-  const Expected& expected)
+ColoUsers::init_stat_(CreatedUserStat& stat, const Expected& expected)
 {
   stat.key().
     colo_id(fetch_int(expected.colo)).
@@ -2041,6 +1695,7 @@ ColoUsers::init_stat_(
   {
     stat.key().last_appearance_date(expected.last_appearance_date);
   }
+
   if (expected.create_date != UNDEF_DATE)
   {
     stat.key().create_date(expected.create_date);
@@ -2050,9 +1705,7 @@ ColoUsers::init_stat_(
 
 template<class Diffs, class Expected>
 void
-ColoUsers::add_diff_(
-  std::list<Diffs>& diffs,
-  const Expected& expected)
+ColoUsers::add_diff_(std::list<Diffs>& diffs, const Expected& expected)
 {
   diffs.push_back(
     Diffs().
@@ -2064,9 +1717,7 @@ ColoUsers::add_diff_(
 
 template<class Diffs, class Expected>
 void
-ColoUsers::init_sum_diff_(
-  Diffs& diff,
-  const Expected& expected)
+ColoUsers::init_sum_diff_(Diffs& diff, const Expected& expected)
 {
   diff.
     unique_users(expected.unique_users).
@@ -2078,52 +1729,32 @@ ColoUsers::init_sum_diff_(
     neg_control_profiling_unique_users(0).
     neg_control_unique_hids(0).
     control_unique_users_1(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.unique_users)).
+      sum_change(expected.sdate, expected.last_appearance_date, expected.unique_users)).
     control_unique_users_2(
-      sum_change(
-        expected.create_date,
-        expected.last_appearance_date,
-        expected.unique_users)).
+      sum_change(expected.create_date, expected.last_appearance_date, expected.unique_users)).
     control_network_unique_users_1(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.network_unique_users)).
+      sum_change(expected.sdate, expected.last_appearance_date, expected.network_unique_users)).
     control_network_unique_users_2(
       sum_change(
         expected.create_date,
         expected.last_appearance_date,
         expected.network_unique_users)).
     control_profiling_unique_users_1(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.profiling_unique_users)).
+      sum_change(expected.sdate, expected.last_appearance_date, expected.profiling_unique_users)).
     control_profiling_unique_users_2(
       sum_change(
         expected.create_date,
         expected.last_appearance_date,
         expected.profiling_unique_users)).
     control_unique_hids_1(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.unique_hids)).
+      sum_change(expected.sdate, expected.last_appearance_date, expected.unique_hids)).
     control_unique_hids_2(
-      sum_change(
-        expected.create_date,
-        expected.last_appearance_date,
-        expected.unique_hids));
+      sum_change(expected.create_date, expected.last_appearance_date, expected.unique_hids));
 }
 
 template<class Expected>
 void
-ColoUsers::init_sum_diff_(
-  ColoUserDiff& diff,
-  const Expected& expected)
+ColoUsers::init_sum_diff_(ColoUserDiff& diff, const Expected& expected)
 {
   diff.
     unique_users(expected.unique_users).
@@ -2135,32 +1766,21 @@ ColoUsers::init_sum_diff_(
     neg_control_profiling_unique_users(0).
     neg_control_unique_hids(0).
     control_unique_users(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.unique_users)).
+      sum_change(expected.sdate, expected.last_appearance_date, expected.unique_users)).
     control_network_unique_users(
             sum_change  (
               expected.sdate,
               expected.last_appearance_date,
               expected.network_unique_users)).
     control_profiling_unique_users(
-      sum_change  (
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.profiling_unique_users)).
+      sum_change  (expected.sdate, expected.last_appearance_date, expected.profiling_unique_users)).
     control_unique_hids(
-      sum_change(
-        expected.sdate,
-        expected.last_appearance_date,
-        expected.unique_hids));
+      sum_change(expected.sdate, expected.last_appearance_date, expected.unique_hids));
 }
 
 template<size_t Count>
 void
-ColoUsers::process_requests_(
-  const AutoTest::Time& base_time,
-  const TestRequest(&requests)[Count])
+ColoUsers::process_requests_(const AutoTest::Time& base_time, const TestRequest(&requests)[Count])
 {
   for (size_t i = 0; i < Count; ++i)
   {
@@ -2172,18 +1792,22 @@ ColoUsers::process_requests_(
     {
       request.tid = fetch_int(requests[i].tid);
     }
+
     if (requests[i].referer_kw)
     {
       request.referer_kw = fetch_string(requests[i].referer_kw);
     }
+
     if (requests[i].hid)
     {
       request.hid = requests[i].hid;
     }
+
     if (requests[i].flags & TRF_SAFE_TUID)
     {
       request.rm_tuid = 0;
     }
+
     if (requests[i].flags & TRF_INVENTORY)
     {
       request.tag_inv = 1;
@@ -2210,9 +1834,7 @@ ColoUsers::process_requests_(
     if (requests[i].flags & TRF_CHECK_NO_TAG)
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "0",
-          requests[i].client.debug_info.tag_id).check(),
+        AutoTest::equal_checker("0", requests[i].client.debug_info.tag_id).check(),
         "Expected tag#" + strof(i+1));
     }
   }

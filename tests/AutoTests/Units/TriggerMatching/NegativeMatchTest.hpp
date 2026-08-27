@@ -29,9 +29,7 @@ public:
 
 public:
 
-  NegativeMatchTest(UnitStat& stat_var,
-                    const char* task_name,
-                    XsdParams params_var)
+  NegativeMatchTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       conn_(open_pq())
   { }
@@ -54,14 +52,9 @@ private:
 
   template<size_t Count>
   void
-  test_group(
-    const std::string& description,
-    const TestCase(&tests)[Count]);
+  test_group(const std::string& description, const TestCase(&tests)[Count]);
 
   void
-  test_case(
-    const std::string& description,
-    AdClient& client,
-    const TestCase& test);
+  test_case(const std::string& description, AdClient& client, const TestCase& test);
 
 };

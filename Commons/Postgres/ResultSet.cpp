@@ -1,14 +1,11 @@
 #include "ResultSet.hpp"
 #include "Lob.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   namespace
   {
-    const Generics::Time POSTGRES_EPOCH_DATE(
-      String::SubString("2000-01-01"), "%Y-%m-%d");
+    const Generics::Time POSTGRES_EPOCH_DATE(String::SubString("2000-01-01"), "%Y-%m-%d");
   }
 
   namespace Postgres
@@ -39,7 +36,7 @@ namespace Commons
         throw Exception(err);
       }
       Oid oid = PQftype(res_.get(), column_number - 1);
-      if(oid == InvalidOid)
+      if (oid == InvalidOid)
       {
         Stream::Error err;
         err << __func__ << ": invalid oid, most likely column number "
@@ -52,7 +49,7 @@ namespace Commons
     void
     ResultSet::clean_() noexcept
     {
-      if(res_.get())
+      if (res_.get())
       {
         res_ = nullptr;
       }
@@ -61,7 +58,7 @@ namespace Commons
     int
     ResultSet::rows() const noexcept
     {
-      if(res_.get())
+      if (res_.get())
       {
         return PQntuples(res_.get());
       }
@@ -74,7 +71,7 @@ namespace Commons
     int
     ResultSet::columns() const /*throw(NotSupported)*/
     {
-      if(res_.get())
+      if (res_.get())
       {
         return PQnfields(res_.get());
       }
@@ -87,7 +84,7 @@ namespace Commons
     const char*
     ResultSet::field_name(int column_number) const /*throw(NotSupported)*/
     {
-      if(res_.get())
+      if (res_.get())
       {
         return PQfname(res_.get(), column_number - 1);
       }
@@ -100,7 +97,7 @@ namespace Commons
     int
     ResultSet::field_name(const char* field_name) const /*throw(NotSupported)*/
     {
-      if(res_.get())
+      if (res_.get())
       {
         return PQfnumber(res_.get(), field_name);
       }
@@ -141,6 +138,7 @@ namespace Commons
       {
         throw NotSupported("Not supported in single row mode");
       }
+
       if (cur_row_number_ == 0)
       {
         return false;
@@ -173,7 +171,7 @@ namespace Commons
     {
       char* value = PQgetvalue(res_.get(), cur_row_number_, column_number - 1);
       int size = PQgetlength(res_.get(), cur_row_number_, column_number - 1);
-      if(size < 8)
+      if (size < 8)
       {
         Stream::Error err;
         err << __func__ << ": for numeric size of field '" <<
@@ -182,7 +180,7 @@ namespace Commons
       }
       uint16_t* src_ptr = reinterpret_cast<uint16_t*>(value);
       uint16_t len = ntohs(*src_ptr++);//len of number in words
-      if(size - 8 < static_cast<int>(len * sizeof(uint16_t)))
+      if (size - 8 < static_cast<int>(len * sizeof(uint16_t)))
       {
         Stream::Error err;
         err << __func__ << ": '" << field_name(column_number) <<
@@ -192,9 +190,7 @@ namespace Commons
       }
       short int weight = static_cast<short int>(ntohs(*src_ptr++));
       uint16_t sign_value = ntohs(*src_ptr++);
-      if (!(sign_value == NUMERIC_POS ||
-            sign_value == NUMERIC_NEG ||
-            sign_value == NUMERIC_NAN))
+      if (!(sign_value == NUMERIC_POS || sign_value == NUMERIC_NEG || sign_value == NUMERIC_NAN))
       {
         Stream::Error err;
         err << __func__ << ": '" << field_name(column_number) <<
@@ -217,7 +213,7 @@ namespace Commons
           throw Exception(err);
         }
 
-        if(weight >= 0)
+        if (weight >= 0)
         {
           integer *= NBASE;
           integer += d;
@@ -231,10 +227,9 @@ namespace Commons
         }
       }
 
-      if(weight >= 0)
+      if (weight >= 0)
       {
-        integer *= Generics::DecimalHelper::pow10<unsigned long>(
-          DEC_DIGITS * (weight + 1));
+        integer *= Generics::DecimalHelper::pow10<unsigned long>(DEC_DIGITS * (weight + 1));
         assert(fractional == 0 && fractional_power == 0);
       }
       else
@@ -258,7 +253,7 @@ namespace Commons
       int format = PQfformat(res_.get(), column_number - 1);
 
 #ifdef BINARY_RECIVING_DATA
-      if(format == 1)//binary;
+      if (format == 1)//binary;
       {
         Oid type = get_column_type_(column_number);
         switch(type)
@@ -279,8 +274,7 @@ namespace Commons
               unsigned long integer;
               unsigned long fractional;
               int16_t fractional_power;
-              parse_binary_numeric_(
-                column_number, negative, integer, fractional, fractional_power);
+              parse_binary_numeric_(column_number, negative, integer, fractional, fractional_power);
               std::ostringstream val;
               val << (negative ? '-' : ' ') << integer << "." << fractional; // INCORRECT !!!
               return val.str();
@@ -296,7 +290,7 @@ namespace Commons
       }
 #endif
 
-      if(format == 0)
+      if (format == 0)
       {
         return parse_string_(column_number);
       }
@@ -308,12 +302,11 @@ namespace Commons
     ResultSet::get_char(int column_number) const /*throw(Exception)*/
     {
       Oid type = get_column_type_(column_number);
-      if(type != CHAROID && type != BPCHAROID && type != VARCHAROID)
+      if (type != CHAROID && type != BPCHAROID && type != VARCHAROID)
       {
         Stream::Error err;
         err << __func__ << ": field '" <<
-          field_name(column_number) <<
-          "' has not character type " << type;
+          field_name(column_number) << "' has not character type " << type;
         throw Exception(err);
       }
       return *PQgetvalue(res_.get(), cur_row_number_, column_number - 1);
@@ -322,7 +315,7 @@ namespace Commons
     bool
     ResultSet::is_null(int columm_number) const noexcept
     {
-      if(PQgetisnull(res_.get(), cur_row_number_, columm_number - 1))
+      if (PQgetisnull(res_.get(), cur_row_number_, columm_number - 1))
       {
         return true;
       }
@@ -349,8 +342,7 @@ namespace Commons
           {
             Stream::Error err;
             err << __func__ << ": field '" <<
-              field_name(column_number) <<
-              "' has not date type " << type;
+              field_name(column_number) << "' has not date type " << type;
             throw Exception(err);
           }
           break;
@@ -366,7 +358,7 @@ namespace Commons
       char val_str[std::numeric_limits<NumberType>::digits10 + 3];
       NumberType val;
       parse_integer_(column_number, val);
-      if(!String::StringManip::int_to_str(val, val_str, sizeof(val_str)))
+      if (!String::StringManip::int_to_str(val, val_str, sizeof(val_str)))
       {
         Stream::Error ostr;
         ostr << FUN << ": internal error: can't do int_to_str";
@@ -383,10 +375,10 @@ namespace Commons
         int format = PQfformat(res_.get(), column_number - 1);
         char* db_str = PQgetvalue(res_.get(), cur_row_number_, column_number - 1);
 #ifdef BINARY_RECIVING_DATA
-        if(format == 1)//binary;
+        if (format == 1)//binary;
         {
           int size = PQgetlength(res_.get(), cur_row_number_, column_number - 1);
-          if(size != sizeof(uint32_t))
+          if (size != sizeof(uint32_t))
           {
             Stream::Error err;
             err << " wrong size of field '" << field_name(column_number) <<
@@ -400,7 +392,7 @@ namespace Commons
           return ret;
         }
 #endif
-        if(format == 0)//text
+        if (format == 0)//text
         {
           Generics::Time ret(String::SubString(db_str), "%Y-%m-%d");
           return ret;
@@ -427,16 +419,14 @@ namespace Commons
         case TIMESTAMPOID:
           {
             Generics::Time value = get_timestamp(column_number);
-            return Generics::Time(
-              value.tv_sec % 86400, value.tv_usec);
+            return Generics::Time(value.tv_sec % 86400, value.tv_usec);
           }
           break;
         default:
           {
             Stream::Error err;
             err << __func__ << ": field '" <<
-              field_name(column_number) <<
-              "' has not date type " << type;
+              field_name(column_number) << "' has not date type " << type;
             throw Exception(err);
           }
           break;
@@ -451,15 +441,14 @@ namespace Commons
         int format = PQfformat(res_.get(), column_number - 1);
         char* db_str = PQgetvalue(res_.get(), cur_row_number_, column_number - 1);
 #ifdef BINARY_RECIVING_DATA
-        if(format == 1)//binary;
+        if (format == 1)//binary;
         {
           int size = PQgetlength(res_.get(), cur_row_number_, column_number - 1);
-          if(size != sizeof(uint64_t))
+          if (size != sizeof(uint64_t))
           {
             Stream::Error err;
             err << __func__ << ": field '" << field_name(column_number) <<
-              "' has wrong size, expected " << sizeof(uint64_t) <<
-              ", got " << size;
+              "' has wrong size, expected " << sizeof(uint64_t) << ", got " << size;
             throw Exception(err);
           }
           uint64_t value;
@@ -471,7 +460,7 @@ namespace Commons
           return ret;
         }
 #endif
-        if(format == 0)//text;
+        if (format == 0)//text;
         {
           Generics::Time ret(String::SubString(db_str), "%H:%M:%S");
           return ret;
@@ -491,12 +480,11 @@ namespace Commons
       /*throw(Exception)*/
     {
       Oid type = get_column_type_(column_number);
-      if(type != TIMESTAMPOID)
+      if (type != TIMESTAMPOID)
       {
         Stream::Error err;
         err << __func__ << ": field '" <<
-          field_name(column_number) <<
-          "' has not timestamp type " << type;
+          field_name(column_number) << "' has not timestamp type " << type;
         throw Exception(err);
       }
       try
@@ -504,10 +492,10 @@ namespace Commons
         int format = PQfformat(res_.get(), column_number - 1);
         char* db_str = PQgetvalue(res_.get(), cur_row_number_, column_number - 1);
 #ifdef BINARY_RECIVING_DATA
-        if(format == 1)//binary;
+        if (format == 1)//binary;
         {
           int size = PQgetlength(res_.get(), cur_row_number_, column_number - 1);
-          if(size != sizeof(uint64_t))
+          if (size != sizeof(uint64_t))
           {
             Stream::Error err;
             err << " wrong size of field, expected 8, got " << size;
@@ -519,7 +507,7 @@ namespace Commons
           res[0] = ntohl(data[1]);
           res[1] = ntohl(data[0]);
           suseconds_t usec = mseconds % Generics::Time::USEC_MAX;
-          if(usec < 0)
+          if (usec < 0)
           {
             usec = Generics::Time::USEC_MAX + usec;
             mseconds -= Generics::Time::USEC_MAX;
@@ -529,7 +517,7 @@ namespace Commons
           return ret;
         }
 #endif
-        if(format == 0)//text;
+        if (format == 0)//text;
         {
           std::string temp_string;
           String::SubString sub_str(db_str);
@@ -539,7 +527,7 @@ namespace Commons
             temp_string.assign(sub_str.data(), sub_str.length());
             size_t count = 1;
             size_t i = 6;
-            while(i > 1 && sub_str.at(sub_str.length() - i) != '.')
+            while (i > 1 && sub_str.at(sub_str.length() - i) != '.')
             {
               count++;
               i--;
@@ -572,5 +560,4 @@ namespace Commons
       return LobHolder(std::move(array), len);
     }
   }
-}
 }

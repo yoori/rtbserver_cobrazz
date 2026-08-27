@@ -15,10 +15,7 @@ namespace Config
     decode_key(const std::string& encoded_key) /*throw(eh::Exception)*/
     {
       std::string decoded_key;
-      String::StringManip::base64mod_decode(
-        decoded_key,
-        encoded_key,
-        true);
+      String::StringManip::base64mod_decode(decoded_key, encoded_key, true);
       return decoded_key;
     }
   }
@@ -78,7 +75,7 @@ namespace Config
 #endif
     }
 
-    if(socket_config.linger().present())
+    if (socket_config.linger().present())
     {
       const int linger = *socket_config.linger();
       socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
@@ -94,8 +91,7 @@ namespace Config
     if (socket_config.reconnect_interval().present())
     {
       const int reconnect_interval = *socket_config.reconnect_interval();
-      socket.setsockopt(ZMQ_RECONNECT_IVL,
-        &reconnect_interval, sizeof(reconnect_interval));
+      socket.setsockopt(ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
     }
 
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 0, 0)
@@ -124,13 +120,12 @@ namespace Config
   }
 
   std::string
-  ZmqConfigReader::get_address(
-    const xsd::AdServer::Configuration::ZmqAddressType& address_config)
+  ZmqConfigReader::get_address(const xsd::AdServer::Configuration::ZmqAddressType& address_config)
     /*throw(eh::Exception)*/
   {
     std::string address = address_config.domain();
 
-    if(address.empty())
+    if (address.empty())
     {
       address = "*";
     }
@@ -142,11 +137,7 @@ namespace Config
 
       try
       {
-        Generics::Network::Resolver::get_host_by_name(
-          address.c_str(),
-          addresses,
-          buf,
-          sizeof(buf));
+        Generics::Network::Resolver::get_host_by_name(address.c_str(), addresses, buf, sizeof(buf));
       }
       catch(const Generics::Network::Resolver::Exception& e)
       {

@@ -14,8 +14,7 @@ namespace Code
     root_namespace_->add_type(Declaration::BaseType_var(
       new Declaration::CompatibilityListTemplate()));
 
-    root_namespace_->add_type(Declaration::BaseType_var(
-      new Declaration::ArrayTemplate()));
+    root_namespace_->add_type(Declaration::BaseType_var(new Declaration::ArrayTemplate()));
 
     root_namespace_->add_type(Declaration::BaseType_var(
       new Declaration::SimpleType(
@@ -167,16 +166,13 @@ namespace Code
   }
 
   Declaration::StructDescriptor_var
-  Declarator::declare_struct(
-    const char* name,
-    Declaration::StructDescriptor::FieldList* fields)
+  Declarator::declare_struct(const char* name, Declaration::StructDescriptor::FieldList* fields)
     noexcept
   {
     Declaration::StructDescriptor_var new_struct_descriptor(
       new Declaration::StructDescriptor(name, fields));
     current_namespace_->add_type(new_struct_descriptor);
-    elements_->push_back(
-      Code::Element_var(new Code::TypeElement(new_struct_descriptor)));
+    elements_->push_back(Code::Element_var(new Code::TypeElement(new_struct_descriptor)));
     return new_struct_descriptor;
   }
 
@@ -190,8 +186,7 @@ namespace Code
     Declaration::StructReader_var new_struct_reader(
       new Declaration::StructReader(name, struct_descriptor, fields));
     current_namespace_->add_type(new_struct_reader);
-    elements_->push_back(Code::Element_var(
-      new Code::TypeElement(new_struct_reader)));
+    elements_->push_back(Code::Element_var(new Code::TypeElement(new_struct_reader)));
     return new_struct_reader;
   }
 
@@ -205,8 +200,7 @@ namespace Code
     Declaration::StructWriter_var new_struct_writer(
       new Declaration::StructWriter(name, struct_descriptor, fields));
     current_namespace_->add_type(new_struct_writer);
-    elements_->push_back(Code::Element_var(
-      new Code::TypeElement(new_struct_writer)));
+    elements_->push_back(Code::Element_var(new Code::TypeElement(new_struct_writer)));
     return new_struct_writer;
   }
 }

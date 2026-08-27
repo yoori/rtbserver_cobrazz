@@ -26,7 +26,7 @@ class SrvApp(Singleton, Daemon):
     self.workDir  = None
     self.cfgFilePath = None
     # used by relativePath
-    self.workDir  = self.workDir or os.getcwd()  
+    self.workDir  = self.workDir or os.getcwd()
     self.appDir   = os.path.dirname(sys.argv[0])
     self.action   = self._parseArgs()            # what to do
     pidFilePath = '%s.pid' % self.relativePath(self.workDir, srvName)
@@ -78,7 +78,7 @@ class SrvApp(Singleton, Daemon):
 
   def srvDescription( self ):
     methodNotImplemented()
-    
+
   def showVersion( self ):
     print self.srvDescription()
 
@@ -128,10 +128,10 @@ class SrvApp(Singleton, Daemon):
     self.stop()
     log(2, 'Server is stopped.')
     self.removePid()
-    
+
   def main( self ):
     shutdown.wait()
-  
+
   def stop( self ):
     pass
 

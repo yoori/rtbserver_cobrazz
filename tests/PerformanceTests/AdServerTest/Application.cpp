@@ -51,8 +51,7 @@ int SignalHandler::handle_signal (int signum, siginfo_t *, ucontext_t * )
 
 // Application class
 
-Application::Application(unsigned long log_level,
-                         const char* cfg_file_path) :
+Application::Application(unsigned long log_level, const char* cfg_file_path) :
   log_level_(log_level),
   config_(cfg_file_path),
   logger_(),
@@ -86,13 +85,10 @@ void Application::init() /*throw(eh::Exception)*/
 
   logger_->log_level(log_level_);
 
-  task_runner_ =
-    Generics::TaskRunner_var(new Generics::TaskRunner(this, config_.threads_number()));
-  scheduler_   =
-    Generics::Planner_var(new Generics::Planner(this, 0, true));
+  task_runner_ = Generics::TaskRunner_var(new Generics::TaskRunner(this, config_.threads_number()));
+  scheduler_   = Generics::Planner_var(new Generics::Planner(this, 0, true));
   unsigned connections_per_server =
-      min(config_.client_config()->count,
-          PerformanceConst::MAX_CONNECTIONS_PER_SERVER);
+      min(config_.client_config()->count, PerformanceConst::MAX_CONNECTIONS_PER_SERVER);
   unsigned connections_per_thread =
       min(max(config_.client_config()->count / 10,
               PerformanceConst::DEFAULT_CONNECTIONS_PER_THREAD),
@@ -106,10 +102,7 @@ void Application::init() /*throw(eh::Exception)*/
       PerformanceConst::DEFAULT_TIMEOUT;
 
   HttpPoolPolicy* http_pool_policy =
-      new HttpPoolPolicy(logger_,
-                         connections_per_server,
-                         connections_per_thread,
-                         timeout);
+      new HttpPoolPolicy(logger_, connections_per_server, connections_per_thread, timeout);
   http_pool_policy_ = http_pool_policy;
   http_pool_ = CreatePool(http_pool_policy_.in(), task_runner_);
   sender_      = new QuerySender(config_, logger_, scheduler_, http_pool_, http_pool_policy);
@@ -140,8 +133,7 @@ void Application::run()
     }
   catch (...)
     {
-      logger_->stream(Logging::Logger::CRITICAL) <<
-        "Application stopping by unexpected exception";
+      logger_->stream(Logging::Logger::CRITICAL) << "Application stopping by unexpected exception";
       shutdown();
     }
 }

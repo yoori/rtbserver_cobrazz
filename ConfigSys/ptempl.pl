@@ -82,7 +82,7 @@ sub run
     }
   }
 
-  if(!defined($source) || !defined($destination))
+  if (!defined($source) || !defined($destination))
   {
     die "Not defined source or destination folder.\n$usage";
   }
@@ -132,11 +132,11 @@ sub process_template_files
 
   my $template = Text::Template->new(TYPE => 'STRING', SOURCE => $template_config);
 
-  if(! -d $source)
+  if (! -d $source)
   {
     my $tfile = $destination;
 
-    if(-d $destination)
+    if (-d $destination)
     {
       $tfile = $source;
       $tfile =~ s|(.*)\.t|$1|;
@@ -153,12 +153,12 @@ sub process_template_files
   }
   else
   {
-    if($source !~ m|^.*[/]$|)
+    if ($source !~ m|^.*[/]$|)
     {
       $source = $source . "/";
     }
 
-    if($destination !~ m|^.*[/]$|)
+    if ($destination !~ m|^.*[/]$|)
     {
       $destination = $destination . "/";
     }
@@ -217,7 +217,7 @@ sub process_template_files
 sub trace
 {
   my ($message, $log_level) = @_;
-  if($log_level <= $verbose_level)
+  if ($log_level <= $verbose_level)
   {
     print $message;
   }

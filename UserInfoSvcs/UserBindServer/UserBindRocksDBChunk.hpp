@@ -81,14 +81,11 @@ namespace AdServer::UserInfoSvcs
     serialize_bound_(const BoundRecord& record) const;
 
     bool
-    deserialize_bound_(
-      BoundRecord& record,
-      const Generics::ConstSmartMemBuf* profile)
+    deserialize_bound_(BoundRecord& record, const Generics::ConstSmartMemBuf* profile)
       const;
 
     AdServer::Commons::StartableAwaitable<std::optional<BoundRecord>>
-    co_load_bound_record_(
-      const String::SubString& external_id);
+    co_load_bound_record_(const String::SubString& external_id);
 
     AdServer::Commons::StartableAwaitable<bool>
     co_save_bound_record_(
@@ -114,10 +111,7 @@ namespace AdServer::UserInfoSvcs
       bool invalid_operation) const;
 
     UserInfo
-    adapt_unbound_record_(
-      const BoundRecord& record,
-      bool created,
-      const Generics::Time& now) const;
+    adapt_unbound_record_(const BoundRecord& record, bool created, const Generics::Time& now) const;
 
     void
     save_user_id_(
@@ -129,9 +123,7 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& now) const;
 
     void
-    rotate_bad_event_count_(
-      BoundRecord& record,
-      const Generics::Time& now) const noexcept;
+    rotate_bad_event_count_(BoundRecord& record, const Generics::Time& now) const noexcept;
 
   private:
     static constexpr unsigned char BF_SETCOOKIE_ = 1;
@@ -142,13 +134,11 @@ namespace AdServer::UserInfoSvcs
     const std::optional<Generics::Time> bind_min_age_;
     const unsigned long max_bad_event_;
 
-    using RocksDBMap =
-      AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+    using RocksDBMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
 
     std::unique_ptr<RocksDBMap> user_bind_map_;
     UserLockMap user_locks_;
   };
 
-  using UserBindRocksDBChunk_var =
-    ReferenceCounting::SmartPtr<UserBindRocksDBChunk>;
+  using UserBindRocksDBChunk_var = ReferenceCounting::SmartPtr<UserBindRocksDBChunk>;
 }

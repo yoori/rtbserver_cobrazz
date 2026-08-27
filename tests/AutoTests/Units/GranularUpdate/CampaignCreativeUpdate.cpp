@@ -1,9 +1,6 @@
 #include "CampaignCreativeUpdate.hpp"
 
-REFLECT_UNIT(CampaignCreativeUpdate) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CampaignCreativeUpdate) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -54,14 +51,10 @@ namespace
     {
       client_.process_request(request_);
 
-      if (throw_error &&
-        !AutoTest::equal(strof(ccid_), client_.debug_info.ccid))
+      if (throw_error && !AutoTest::equal(strof(ccid_), client_.debug_info.ccid))
       {
         Stream::Error ostr;
-        ostr << "'CCID' " <<
-          ccid_ <<
-          " != " <<  client_.debug_info.ccid <<
-          " (expected != got)" ;
+        ostr << "'CCID' " << ccid_ << " != " <<  client_.debug_info.ccid << " (expected != got)" ;
         throw AutoTest::CheckFailed(ostr);
       }
       return true;
@@ -73,14 +66,10 @@ namespace
     unsigned long ccid_;
   };
 
-  std::string size_regexp(
-    const std::string id,
-    const std::string name)
+  std::string size_regexp(const std::string id, const std::string name)
   {
     return
-      std::string(
-        "^\\[" + id + ",'" + name +
-          "',\\d+,\\d+,\\d+,\\d+\\]$");
+      std::string("^\\[" + id + ",'" + name + "',\\d+,\\d+,\\d+,\\d+\\]$");
   }
 }
 
@@ -88,8 +77,7 @@ void CampaignCreativeUpdate::set_up()
 {
   add_descr_phrase("Setup.");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must set in the XML configuration file");
 }
 
@@ -114,8 +102,7 @@ void CampaignCreativeUpdate::add_creative_()
 {
   std::string description("Add new creative.");
   add_descr_phrase(description);
-  ORM::ORMRestorer<ORM::PQ::Creative>* creative =
-    create<ORM::PQ::Creative>();
+  ORM::ORMRestorer<ORM::PQ::Creative>* creative = create<ORM::PQ::Creative>();
 
   creative->name = fetch_string("ADDCREATIVE/Name");
   creative->account = fetch_int("ADDCREATIVE/Account");
@@ -125,22 +112,16 @@ void CampaignCreativeUpdate::add_creative_()
   creative->qa_status = "A";
   creative->flags = 0;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative->insert()),
+    AutoTest::predicate_checker(creative->insert()),
     description +
       " Must insert creative");
 
-  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc =
-    create<ORM::PQ::CampaignCreative>();
+  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc = create<ORM::PQ::CampaignCreative>();
 
   cc->ccg = fetch_int("ADDCREATIVE/CCG");
   cc->creative = creative->id();
   cc->status = "A";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cc->insert()),
-    description +
-      " Must insert CC");
+  FAIL_CONTEXT(AutoTest::predicate_checker(cc->insert()), description + " Must insert CC");
 
   add_checker(
     description,
@@ -153,9 +134,7 @@ void CampaignCreativeUpdate::add_creative_()
           campaign_id(fetch_int("ADDCREATIVE/CCG")).
           creative_format(fetch_string("ADDCREATIVE/TemplateName")).
           sizes(
-            size_regexp(
-              fetch_string("ADDCREATIVE/Size"),
-              fetch_string("ADDCREATIVE/SizeName"))))));
+            size_regexp(fetch_string("ADDCREATIVE/Size"), fetch_string("ADDCREATIVE/SizeName"))))));
 }
 
 void CampaignCreativeUpdate::remove_creative_()
@@ -167,31 +146,18 @@ void CampaignCreativeUpdate::remove_creative_()
 
   FAIL_CONTEXT(
    AutoTest::wait_checker(
-     CreativeChecker(
-       this,
-       ccid,
-       CreativeChecker::Expected().
-         ccid(ccid))).check(),
+     CreativeChecker(this, ccid, CreativeChecker::Expected(). ccid(ccid))).check(),
    description + "Initial check");
 
-  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc =
-    create<ORM::PQ::CampaignCreative>(ccid);
+  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc = create<ORM::PQ::CampaignCreative>(ccid);
 
   cc->status = "D";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cc->update()),
-    description +
-     "must update CC");
+  FAIL_CONTEXT(AutoTest::predicate_checker(cc->update()), description + "must update CC");
 
   add_checker(
     description,
     CreativeWaitChecker(
-      CreativeChecker(
-        this,
-        ccid,
-        CreativeAdmin::Expected(),
-        AutoTest::AEC_NOT_EXISTS)));
+      CreativeChecker(this, ccid, CreativeAdmin::Expected(), AutoTest::AEC_NOT_EXISTS)));
 }
 
 void CampaignCreativeUpdate::update_creative_()
@@ -199,11 +165,9 @@ void CampaignCreativeUpdate::update_creative_()
   std::string description("Update creative.");
   add_descr_phrase(description);
 
-  unsigned long cc_id =
-    fetch_int("UPDATECREATIVE/CC");
+  unsigned long cc_id = fetch_int("UPDATECREATIVE/CC");
 
-  unsigned long creative_id =
-    fetch_int("UPDATECREATIVE/Creative");
+  unsigned long creative_id = fetch_int("UPDATECREATIVE/Creative");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -212,34 +176,26 @@ void CampaignCreativeUpdate::update_creative_()
         cc_id,
         CreativeChecker::Expected().
           ccid(cc_id).
-          creative_format(
-            fetch_string("UPDATECREATIVE/TemplateName")).
+          creative_format(fetch_string("UPDATECREATIVE/TemplateName")).
           sizes(
             size_regexp(
               fetch_string("UPDATECREATIVE/Size"),
               fetch_string("UPDATECREATIVE/SizeName"))))).check(),
     description + " Initial state");
 
-  ORM::ORMRestorer<ORM::PQ::Creative>* creative =
-    create<ORM::PQ::Creative>(creative_id);
+  ORM::ORMRestorer<ORM::PQ::Creative>* creative = create<ORM::PQ::Creative>(creative_id);
 
   creative->size = fetch_int("UPDATECREATIVE/NewSize");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative->update()),
+    AutoTest::predicate_checker(creative->update()),
     description +  " Must update creative");
 
   ORM::ORMRestorer<ORM::PQ::Creative_tagsize>* cr_size_link =
-    create(
-      ORM::PQ::Creative_tagsize(
-        pq_conn_,
-        creative_id,
-        fetch_int("UPDATECREATIVE/Size")));
+    create(ORM::PQ::Creative_tagsize(pq_conn_, creative_id, fetch_int("UPDATECREATIVE/Size")));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cr_size_link->delet()),
+    AutoTest::predicate_checker(cr_size_link->delet()),
     description +  " Creative tag size link delete");
 
   ORM::ORMRestorer<ORM::PQ::Template>* ctemplate =
@@ -247,8 +203,7 @@ void CampaignCreativeUpdate::update_creative_()
 
   ctemplate->name =  fetch_string("UPDATECREATIVE/NewTemplateName");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ctemplate->update()),
+    AutoTest::predicate_checker(ctemplate->update()),
     description + " Must update template");
 
   add_checker(
@@ -259,8 +214,7 @@ void CampaignCreativeUpdate::update_creative_()
         cc_id,
         CreativeAdmin::Expected().
           ccid(cc_id).
-          creative_format(
-            fetch_string("UPDATECREATIVE/NewTemplateName")).
+          creative_format(fetch_string("UPDATECREATIVE/NewTemplateName")).
           sizes(
             size_regexp(
               fetch_string("UPDATECREATIVE/NewSize"),
@@ -277,11 +231,7 @@ void CampaignCreativeUpdate::update_option_value_()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      CreativeChecker(
-        this,
-        ccid,
-        CreativeChecker::Expected().
-        ccid(ccid))).check(),
+      CreativeChecker(this, ccid, CreativeChecker::Expected(). ccid(ccid))).check(),
      description + " Initial check (CC present)");
 
   FAIL_CONTEXT(
@@ -290,9 +240,7 @@ void CampaignCreativeUpdate::update_option_value_()
         this,
         ccid,
         CreativeChecker::Expected().
-          categories(
-            "[0-9, ]*" + fetch_string("UPDATEOPTION/Category") +
-              "[0-9, ]*"),
+          categories("[0-9, ]*" + fetch_string("UPDATEOPTION/Category") + "[0-9, ]*"),
         AutoTest::AEC_NOT_EXISTS)).check(),
     description + " Initial check (exclusion tags category absent)");
 
@@ -305,9 +253,7 @@ void CampaignCreativeUpdate::update_option_value_()
   user.repeat_request();
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(ccid),
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(ccid), user.debug_info.ccid).check(),
     description +
       " Check creative");
 
@@ -320,8 +266,7 @@ void CampaignCreativeUpdate::update_option_value_()
 
   option->value = fetch_string("UPDATEOPTION/ExclusionTag");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      option->update()),
+    AutoTest::predicate_checker(option->update()),
     description +
       "Must update CreativeOptionValue");
 
@@ -333,14 +278,7 @@ void CampaignCreativeUpdate::update_option_value_()
         ccid,
         CreativeAdmin::Expected().
           ccid(ccid).
-          categories(
-            "[0-9, ]*"  +  fetch_string("UPDATEOPTION/Category") +
-              "[0-9, ]*"))));
+          categories("[0-9, ]*"  +  fetch_string("UPDATEOPTION/Category") + "[0-9, ]*"))));
 
-  add_checker(
-    description + " Client check",
-    ClientCreativeChecker(
-      user,
-      request,
-      0));
+  add_checker(description + " Client check", ClientCreativeChecker(user, request, 0));
 }

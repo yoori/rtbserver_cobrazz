@@ -44,8 +44,7 @@ namespace AdServer::Bidding
     interrupt() noexcept;
 
     void
-    write_interrupted_empty_response(
-      const String::SubString& interrupted_step) noexcept;
+    write_interrupted_empty_response(const String::SubString& interrupted_step) noexcept;
 
     void
     init_debug_info() noexcept;
@@ -65,8 +64,7 @@ namespace AdServer::Bidding
     const std::string&
     hostname() const noexcept;
 
-    void set_current_stage(
-      const Stage stage) noexcept;
+    void set_current_stage(const Stage stage) noexcept;
 
     Stage get_current_stage();
 
@@ -94,9 +92,7 @@ namespace AdServer::Bidding
       noexcept = 0;
 
     virtual void
-    write_empty_response(
-      unsigned int code,
-      bool response_claimed = false)
+    write_empty_response(unsigned int code, bool response_claimed = false)
       noexcept = 0;
 
     virtual void
@@ -138,18 +134,14 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    write_response_(
-      int code,
-      FCGI::HttpResponse_var response,
-      bool response_claimed = false)
+    write_response_(int code, FCGI::HttpResponse_var response, bool response_claimed = false)
       noexcept;
 
     bool
     claim_response_() noexcept;
 
     void
-    write_interrupted_empty_response_(
-      const String::SubString& interrupted_step) noexcept;
+    write_interrupted_empty_response_(const String::SubString& interrupted_step) noexcept;
 
     bool
     require_debug_info_() noexcept;
@@ -231,8 +223,7 @@ namespace AdServer::Bidding
   }
 
   inline
-  void BidRequestState::set_current_stage(
-    const Stage stage) noexcept
+  void BidRequestState::set_current_stage(const Stage stage) noexcept
   {
     try
     {
@@ -256,7 +247,6 @@ namespace AdServer::Bidding
   bool
   BidRequestState::interrupted() const noexcept
   {
-    return to_interrupt_ != 0 ||
-      timeout_interrupted_.load(std::memory_order_relaxed);
+    return to_interrupt_ != 0 || timeout_interrupted_.load(std::memory_order_relaxed);
   }
 }

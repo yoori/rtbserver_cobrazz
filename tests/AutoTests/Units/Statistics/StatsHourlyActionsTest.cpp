@@ -1,8 +1,6 @@
 #include "StatsHourlyActionsTest.hpp"
 
-REFLECT_UNIT(StatsHourlyActionsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(StatsHourlyActionsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -20,9 +18,7 @@ bool
 StatsHourlyActionsTest::run()
 {
   //2
-  AUTOTEST_CASE(
-    case_action_from_different_campaign(),
-    "Action from different campaign");
+  AUTOTEST_CASE(case_action_from_different_campaign(), "Action from different campaign");
   //5
   AUTOTEST_CASE(
     case_one_action_for_multiple_creatives_in_campaign(),
@@ -32,25 +28,17 @@ StatsHourlyActionsTest::run()
     case_action_for_display_creative_group_with_cpc_rate(),
     "Action for display creative group with cpc rate");
   //1
-  AUTOTEST_CASE(
-    case_base_functionality(),
-    "Base functionality (single action after click)");
+  AUTOTEST_CASE(case_base_functionality(), "Base functionality (single action after click)");
   //2.2
-  AUTOTEST_CASE(
-    case_triple_action(),
-    "Triple action");
+  AUTOTEST_CASE(case_triple_action(), "Triple action");
   //3
-  AUTOTEST_CASE(
-    case_action_before_click(),
-    "Action before click");
+  AUTOTEST_CASE(case_action_before_click(), "Action before click");
   //4
   AUTOTEST_CASE(
     case_action_before_impression_confirmation(),
     "Action before impression confirmation");
   //7
-  AUTOTEST_CASE(
-    case_actions_for_text_ad_group(),
-    "Actions for text ad group");
+  AUTOTEST_CASE(case_actions_for_text_ad_group(), "Actions for text ad group");
 
   return true;
 }
@@ -90,9 +78,7 @@ StatsHourlyActionsTest::case_base_functionality()
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
@@ -151,8 +137,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
     stat.select(pq_conn_);
 
     stats.push_back(stat);
-    diffs.push_back(
-      HourlyStats::Diffs(0) );
+    diffs.push_back(HourlyStats::Diffs(0));
   }
 
   AutoTest::NSLookupRequest request;
@@ -172,9 +157,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/2/1"));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ActionRequest action_request;
   action_request.cid = fetch_string("CCG Id/2/2");
@@ -182,11 +165,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats)));
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)));
 }
 
 void
@@ -220,9 +199,7 @@ StatsHourlyActionsTest::case_triple_action()
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
@@ -266,17 +243,13 @@ StatsHourlyActionsTest::case_action_before_click()
 
   AutoTest::ConsequenceActionArray actions;
   actions.push_back(AutoTest::TRACK);
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::ACTION, target_request_time_));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, target_request_time_));
   actions.push_back(AutoTest::WAIT);
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::CLICK, target_request_time_ + 1));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, target_request_time_ + 1));
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
@@ -319,20 +292,14 @@ StatsHourlyActionsTest::case_action_before_impression_confirmation()
   exp_ccids.push_back(fetch_string("CC Id/4"));
 
   AutoTest::ConsequenceActionArray actions;
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::ACTION, target_request_time_));
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::ACTION, target_request_time_));
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::TRACK, target_request_time_ + 1));
-  actions.push_back(AutoTest::ConsequenceAction(
-    AutoTest::CLICK, target_request_time_ + 2));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, target_request_time_));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, target_request_time_));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::TRACK, target_request_time_ + 1));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, target_request_time_ + 2));
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
@@ -381,9 +348,7 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
 
-      FAIL_CONTEXT(
-        client.do_ad_requests(
-          request, exp_ccids, actions));
+      FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
     }
     {
       request.tid(fetch_string("Tag Id/5/2"));
@@ -394,9 +359,7 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
 
-      FAIL_CONTEXT(
-        client.do_ad_requests(
-          request, exp_ccids, actions));
+      FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
     }
     ActionRequest action_request;
     action_request.cid = fetch_string("CCG Id/5");
@@ -450,9 +413,7 @@ StatsHourlyActionsTest::case_action_for_display_creative_group_with_cpc_rate()
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
@@ -528,17 +489,11 @@ StatsHourlyActionsTest::case_actions_for_text_ad_group()
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      request, exp_ccids, actions));
+  FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
 
 
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats)));
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)));
 }
 

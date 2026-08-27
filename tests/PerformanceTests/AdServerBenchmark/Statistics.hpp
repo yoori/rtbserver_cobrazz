@@ -35,8 +35,7 @@ public:
    * @param client UUID
    * @param advertising response
    */
-  void add_response(const char* uid,
-                    const AdvertiserResponse* ad_response);
+  void add_response(const char* uid, const AdvertiserResponse* ad_response);
 
   /**
    * @brief Get errors counter

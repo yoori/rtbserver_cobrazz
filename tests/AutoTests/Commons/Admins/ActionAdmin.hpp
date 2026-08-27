@@ -32,9 +32,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ActionAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* action
-      )
+      void make_cmd (const char* address, const char* action)
       {
         address_ = address;
         AdminParams params;
@@ -44,45 +42,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "adv_action", address, params, static_cast<size_t>(CampaignManager));
       }
-      ActionAdmin(
-        const char* address,
-        const char* action
-      )
+      ActionAdmin(const char* address, const char* action)
       {
         make_cmd(address, action);
       }
-      ActionAdmin(
-        const std::string& address,
-        const char* action
-      )
+      ActionAdmin(const std::string& address, const char* action)
       {
         make_cmd(address.c_str(), action);
       }
-      ActionAdmin(
-        const char* address,
-        const std::string& action
-      )
+      ActionAdmin(const char* address, const std::string& action)
       {
         make_cmd(address, action.c_str());
       }
-      ActionAdmin(
-        const std::string& address,
-        const std::string& action
-      )
+      ActionAdmin(const std::string& address, const std::string& action)
       {
         make_cmd(address.c_str(), action.c_str());
       }
-      ActionAdmin(
-        const char* address,
-        unsigned long action
-      )
+      ActionAdmin(const char* address, unsigned long action)
       {
         make_cmd(address, strof(action).c_str());
       }
-      ActionAdmin(
-        const std::string& address,
-        unsigned long action
-      )
+      ActionAdmin(const std::string& address, unsigned long action)
       {
         make_cmd(address.c_str(), strof(action).c_str());
       }

@@ -12,9 +12,7 @@ namespace AdServer::Grpc
     : queue(std::move(queue_val))
   {}
 
-  GrpcExecutor::GrpcExecutor(
-    std::size_t workers_number,
-    std::string thread_name)
+  GrpcExecutor::GrpcExecutor(std::size_t workers_number, std::string thread_name)
     : thread_name_(std::move(thread_name))
   {
     const auto safe_workers_number = std::max<std::size_t>(1, workers_number);
@@ -38,8 +36,7 @@ namespace AdServer::Grpc
     bool ok = false;
     while (completion_queue_.Next(&tag, &ok))
     {
-      std::unique_ptr<GrpcCompletionEvent> event(
-        static_cast<GrpcCompletionEvent*>(tag));
+      std::unique_ptr<GrpcCompletionEvent> event(static_cast<GrpcCompletionEvent*>(tag));
       event->proceed(ok);
     }
   }

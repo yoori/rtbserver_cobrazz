@@ -45,9 +45,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<MarginAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* margin
-      )
+      void make_cmd (const char* address, const char* margin)
       {
         address_ = address;
         AdminParams params;
@@ -57,45 +55,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "margin", address, params, static_cast<size_t>(CampaignManager));
       }
-      MarginAdmin(
-        const char* address,
-        const char* margin
-      )
+      MarginAdmin(const char* address, const char* margin)
       {
         make_cmd(address, margin);
       }
-      MarginAdmin(
-        const std::string& address,
-        const char* margin
-      )
+      MarginAdmin(const std::string& address, const char* margin)
       {
         make_cmd(address.c_str(), margin);
       }
-      MarginAdmin(
-        const char* address,
-        const std::string& margin
-      )
+      MarginAdmin(const char* address, const std::string& margin)
       {
         make_cmd(address, margin.c_str());
       }
-      MarginAdmin(
-        const std::string& address,
-        const std::string& margin
-      )
+      MarginAdmin(const std::string& address, const std::string& margin)
       {
         make_cmd(address.c_str(), margin.c_str());
       }
-      MarginAdmin(
-        const char* address,
-        unsigned long margin
-      )
+      MarginAdmin(const char* address, unsigned long margin)
       {
         make_cmd(address, strof(margin).c_str());
       }
-      MarginAdmin(
-        const std::string& address,
-        unsigned long margin
-      )
+      MarginAdmin(const std::string& address, unsigned long margin)
       {
         make_cmd(address.c_str(), strof(margin).c_str());
       }

@@ -9,12 +9,9 @@ namespace PlainTypes
   }
 
   template<typename ObjectType>
-  ObjectType ctor_with_bounds_read_cast(
-    const void* buf, const void* end_buf)
+  ObjectType ctor_with_bounds_read_cast(const void* buf, const void* end_buf)
   {
-    return ObjectType(
-      buf,
-      static_cast<const char*>(end_buf) - static_cast<const char*>(buf));
+    return ObjectType(buf, static_cast<const char*>(end_buf) - static_cast<const char*>(buf));
   }
 
   namespace ReadPolicy
@@ -157,10 +154,7 @@ namespace PlainTypes
 
     ConstVector();
 
-    ConstVector(
-      const void* first,
-      const void* last,
-      const ReadPolicyType& read_policy);
+    ConstVector(const void* first, const void* last, const ReadPolicyType& read_policy);
 
     const_iterator begin() const;
     const_iterator end() const;
@@ -180,9 +174,7 @@ namespace PlainTypes
   };
 
   template<typename ConstVectorType>
-  ConstVectorType init_const_vector(
-    const void* buf,
-    unsigned long size)
+  ConstVectorType init_const_vector(const void* buf, unsigned long size)
   {
     static const char* FUN = "PlainTypes::init_const_vector()";
 
@@ -190,13 +182,11 @@ namespace PlainTypes
     uint32_t begin_offset = *static_cast<const uint32_t*>(buf);
     uint32_t end_offset = static_cast<const uint32_t*>(buf)[1];
 
-    if(begin_offset > end_offset || end_offset > size)
+    if (begin_offset > end_offset || end_offset > size)
     {
       Stream::Error ostr;
       ostr << FUN << ": start or end position great than size: "
-        "start-offset = " << begin_offset <<
-        ", end-offset = " << end_offset <<
-        ", size = " << size;
+        "start-offset = " << begin_offset << ", end-offset = " << end_offset << ", size = " << size;
       throw CorruptedStruct(ostr);
     }
 
@@ -209,15 +199,11 @@ namespace PlainTypes
 
 template<typename ReadPolicyType, const unsigned long STEP>
 typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator
-operator+(
-  int n,
-  typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it);
+operator+(int n, typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it);
 
 template<typename ReadPolicyType, const unsigned long STEP>
 typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator
-operator-(
-  typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it,
-  int n);
+operator-(typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it, int n);
 
 namespace PlainTypes
 {
@@ -276,56 +262,49 @@ namespace PlainTypes
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator==(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator==(const const_iterator& right)
     const
   {
     return ptr_ == right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator!=(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator!=(const const_iterator& right)
     const
   {
     return ptr_ != right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator<(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator<(const const_iterator& right)
     const
   {
     return ptr_ < right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator<=(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator<=(const const_iterator& right)
     const
   {
     return ptr_ <= right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator>(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator>(const const_iterator& right)
     const
   {
     return ptr_ > right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator>=(
-    const const_iterator& right)
+  bool ConstVector<ReadPolicyType, STEP>::const_iterator::operator>=(const const_iterator& right)
     const
   {
     return ptr_ >= right.ptr_;
   }
 
   template<typename ReadPolicyType, const unsigned long STEP>
-  int ConstVector<ReadPolicyType, STEP>::const_iterator::operator-(
-    const const_iterator& right)
+  int ConstVector<ReadPolicyType, STEP>::const_iterator::operator-(const const_iterator& right)
     const
   {
     return (ptr_ - right.ptr_) / STEP;
@@ -587,9 +566,7 @@ namespace PlainTypes
 template<typename ReadPolicyType, const unsigned long STEP>
 inline
 typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator
-operator+(
-  int n,
-  typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it)
+operator+(int n, typename PlainTypes::ConstVector<ReadPolicyType, STEP>::const_iterator it)
 {
   return it.advance(n);
 }

@@ -8,9 +8,7 @@
 
 //#define REQUESTINFOCOMMONS_ALGS_DEBUG
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -100,27 +98,16 @@ namespace RequestInfoSvcs
     unsigned long appear_id,
     const Generics::Time& appearance_time)
   {
-    result.push_back(IdAppearance(
-      appear_id,
-      appearance_time,
-      Generics::Time::ZERO,
-      1));
+    result.push_back(IdAppearance(appear_id, appearance_time, Generics::Time::ZERO, 1));
   }
 
   inline
   void
-  invert_appearance_list(
-    IdAppearanceList& result,
-    const IdAppearanceList& source)
+  invert_appearance_list(IdAppearanceList& result, const IdAppearanceList& source)
   {
-    for(IdAppearanceList::const_iterator it = source.begin();
-        it != source.end(); ++it)
+    for (IdAppearanceList::const_iterator it = source.begin(); it != source.end(); ++it)
     {
-      result.push_back(IdAppearance(
-        it->id,
-        it->date,
-        it->last_appearance_date,
-        -it->counter));
+      result.push_back(IdAppearance(it->id, it->date, it->last_appearance_date, -it->counter));
     }
   }
 
@@ -133,7 +120,7 @@ namespace RequestInfoSvcs
     long count,
     const IdGetterType& id_getter)
   {
-    for(CheckIteratorType it = check_begin_it; it != check_end_it; ++it)
+    for (CheckIteratorType it = check_begin_it; it != check_end_it; ++it)
     {
       Generics::Time app_date = Generics::Time((*it).last_appearance_date());
       uint64_t prev_appearances_mask = (*it).prev_appearances_mask();
@@ -142,30 +129,20 @@ namespace RequestInfoSvcs
 
       int appearance_before_pos;
 
-      while(prev_appearances_mask && (
+      while (prev_appearances_mask && (
               appearance_before_pos = Generics::BitAlgs::lowest_bit_64(
                 prev_appearances_mask)) < MAX_DAY_BIT_POS)
       {
         Generics::Time prev_app_date =
           app_date - Generics::Time::ONE_DAY * (appearance_before_pos + 1);
-        add_normalized_appearance(
-          result,
-          id_getter(*it),
-          app_date,
-          prev_app_date,
-          count);
+        add_normalized_appearance(result, id_getter(*it), app_date, prev_app_date, count);
         app_date = prev_app_date;
-        prev_appearances_mask = (
-          prev_appearances_mask >> (appearance_before_pos + 1));
+        prev_appearances_mask = (prev_appearances_mask >> (appearance_before_pos + 1));
       }
 
-      if(contains_total_app)
+      if (contains_total_app)
       {
-        result.push_back(IdAppearance(
-          id_getter(*it),
-          app_date,
-          Generics::Time::ZERO,
-          count));
+        result.push_back(IdAppearance(id_getter(*it), app_date, Generics::Time::ZERO, count));
       }
     }
 
@@ -174,9 +151,7 @@ namespace RequestInfoSvcs
 
   template<typename Type>
   void
-  print_appearances(
-    std::ostream& out,
-    const Type& app_cell)
+  print_appearances(std::ostream& out, const Type& app_cell)
   {
     Generics::Time last_appearance_date(app_cell.last_appearance_date());
     unsigned long prev_appearances_mask = app_cell.prev_appearances_mask();
@@ -184,14 +159,12 @@ namespace RequestInfoSvcs
     out <<
       "[ id = " << app_cell.id() <<
       ", last_appearance_date = " << last_appearance_date.gm_f() <<
-      (prev_appearances_mask & TOTAL_APPEARANCE_MASK ? "(total)" : "") <<
-      ", prev_appearances = (";
+      (prev_appearances_mask & TOTAL_APPEARANCE_MASK ? "(total)" : "") << ", prev_appearances = (";
 
     bool one_found = false;
-    for(int i = 0; i < MAX_DAY_BIT_POS;
-        ++i, prev_appearances_mask >>= 1)
+    for (int i = 0; i < MAX_DAY_BIT_POS; ++i, prev_appearances_mask >>= 1)
     {
-      if(prev_appearances_mask & 1)
+      if (prev_appearances_mask & 1)
       {
         out << (one_found ? ", " : "") <<
           (last_appearance_date - Generics::Time::ONE_DAY * (i + 1)).
@@ -220,22 +193,17 @@ namespace RequestInfoSvcs
       appearance_time.gm_f() << "')" << std::endl;
 #   endif
 
-    CheckIteratorType pos_it = std::lower_bound(
-      check_begin_it, check_end_it, appear_id, id_less);
+    CheckIteratorType pos_it = std::lower_bound(check_begin_it, check_end_it, appear_id, id_less);
 
-    if(pos_it == check_end_it || id_less(appear_id, *pos_it))
+    if (pos_it == check_end_it || id_less(appear_id, *pos_it))
     {
-      result.push_back(IdAppearance(
-        appear_id,
-        appearance_time,
-        Generics::Time::ZERO,
-        1));
+      result.push_back(IdAppearance(appear_id, appearance_time, Generics::Time::ZERO, 1));
 
       return true;
     }
     else
     {
-      if(appearance_time.tv_sec > (*pos_it).last_appearance_date())
+      if (appearance_time.tv_sec > (*pos_it).last_appearance_date())
       {
         add_normalized_appearance(
           result,
@@ -246,7 +214,7 @@ namespace RequestInfoSvcs
 
         return true;
       }
-      else if(appearance_time.tv_sec < (*pos_it).last_appearance_date())
+      else if (appearance_time.tv_sec < (*pos_it).last_appearance_date())
       {
 #       ifdef REQUESTINFOCOMMONS_ALGS_DEBUG
         std::cerr << "collect_appearance(): reappear: ";
@@ -254,12 +222,11 @@ namespace RequestInfoSvcs
         std::cerr << std::endl;
 #       endif
         // reappear days ago :
-        int app_bit_pos = ((Generics::Time(
-          (*pos_it).last_appearance_date()) - appearance_time) /
+        int app_bit_pos = ((Generics::Time((*pos_it).last_appearance_date()) - appearance_time) /
           Generics::Time::ONE_DAY.tv_sec).tv_sec - 1;
 
         // appearing can be passed to mask and it not reported for this day
-        if(app_bit_pos < MAX_DAY_BIT_POS &&
+        if (app_bit_pos < MAX_DAY_BIT_POS &&
            (((*pos_it).prev_appearances_mask() >> app_bit_pos) & 1) == 0)
         {
           // appeared, find appearance before and after new appearance point
@@ -287,12 +254,11 @@ namespace RequestInfoSvcs
             std::endl;
 #         endif
 
-          if(appearance_before_pos <= MAX_DAY_BIT_POS)
+          if (appearance_before_pos <= MAX_DAY_BIT_POS)
           {
 #           ifdef REQUESTINFOCOMMONS_ALGS_DEBUG
             std::cerr << "collect_appearance(): surrounded reappear: " <<
-              "appearance_before_pos = " << appearance_before_pos <<
-              std::endl;
+              "appearance_before_pos = " << appearance_before_pos << std::endl;
 #           endif
 
             Generics::Time appearance_before_date =
@@ -313,14 +279,9 @@ namespace RequestInfoSvcs
               appearance_before_date,
               1);
 
-            add_normalized_appearance(
-              result,
-              appear_id,
-              appearance_after_date,
-              appearance_time,
-              1);
+            add_normalized_appearance(result, appear_id, appearance_after_date, appearance_time, 1);
           }
-          else if((*pos_it).prev_appearances_mask() & TOTAL_APPEARANCE_MASK)
+          else if ((*pos_it).prev_appearances_mask() & TOTAL_APPEARANCE_MASK)
           {
 #           ifdef REQUESTINFOCOMMONS_ALGS_DEBUG
             std::cerr << "collect_appearance(): total reappear" << std::endl;
@@ -333,20 +294,11 @@ namespace RequestInfoSvcs
               Generics::Time::ZERO,
               -1));
 
-            result.push_back(IdAppearance(
-              appear_id,
-              appearance_time,
-              Generics::Time::ZERO,
-              1));
+            result.push_back(IdAppearance(appear_id, appearance_time, Generics::Time::ZERO, 1));
 
-            add_normalized_appearance(
-              result,
-              appear_id,
-              appearance_after_date,
-              appearance_time,
-              1);
+            add_normalized_appearance(result, appear_id, appearance_after_date, appearance_time, 1);
           }
-          else if(app_bit_pos < MAX_DAY_BIT_POS - LAST_APPEARANCE_MAX_DIFF)
+          else if (app_bit_pos < MAX_DAY_BIT_POS - LAST_APPEARANCE_MAX_DIFF)
           {
 #           ifdef REQUESTINFOCOMMONS_ALGS_DEBUG
             std::cerr << "collect_appearance(): reappear with max diff" << std::endl;
@@ -397,27 +349,23 @@ namespace RequestInfoSvcs
   {
     typename ResultContainerType::iterator pos_it = result.begin();
 
-    while(pos_it != result.end() && id_less(*pos_it, appear_id))
+    while (pos_it != result.end() && id_less(*pos_it, appear_id))
     {
       ++pos_it;
     }
 
-    if(pos_it != result.end() && !id_less(appear_id, *pos_it))
+    if (pos_it != result.end() && !id_less(appear_id, *pos_it))
     {
       // update old record
-      long last_appearance_date_diff = (
-        appearance_time.tv_sec -
-        pos_it->last_appearance_date()) /
+      long last_appearance_date_diff = (appearance_time.tv_sec - pos_it->last_appearance_date()) /
         Generics::Time::ONE_DAY.tv_sec;
 
       // update mask
-      if(last_appearance_date_diff > 0)
+      if (last_appearance_date_diff > 0)
       {
-        uint64_t only_days_mask =
-          pos_it->prev_appearances_mask() & ~TOTAL_APPEARANCE_MASK;
+        uint64_t only_days_mask = pos_it->prev_appearances_mask() & ~TOTAL_APPEARANCE_MASK;
 
-        uint64_t total_appearance_mask =
-          pos_it->prev_appearances_mask() & TOTAL_APPEARANCE_MASK;
+        uint64_t total_appearance_mask = pos_it->prev_appearances_mask() & TOTAL_APPEARANCE_MASK;
 
         bool eldest_day_bit_lost =
           (((only_days_mask << last_appearance_date_diff) & ~TOTAL_APPEARANCE_MASK) >>
@@ -432,7 +380,7 @@ namespace RequestInfoSvcs
       else
       {
         int bit_pos = (-last_appearance_date_diff - 1);
-        if(bit_pos < MAX_DAY_BIT_POS)
+        if (bit_pos < MAX_DAY_BIT_POS)
         {
           pos_it->prev_appearances_mask() |= (uint64_t)1 << bit_pos;
         }
@@ -441,16 +389,13 @@ namespace RequestInfoSvcs
 #   ifdef REQUESTINFOCOMMONS_ALGS_DEBUG
       std::cerr << "update_appearance(" << appearance_time.gm_f() << "): ";
       print_appearances(std::cerr, *pos_it);
-      std::cerr << ", last_appearance_date_diff = " << last_appearance_date_diff <<
-        std::endl;
+      std::cerr << ", last_appearance_date_diff = " << last_appearance_date_diff << std::endl;
 #   endif
     }
     else
     {
       // insert new record
-      result.insert(
-        pos_it,
-        insert_adapter(appear_id, appearance_time));
+      result.insert(pos_it, insert_adapter(appear_id, appearance_time));
     }
   }
 
@@ -461,10 +406,10 @@ namespace RequestInfoSvcs
     const ContainerType& appears_list,
     const char* space_align)
   {
-    for(typename ContainerType::const_iterator it = appears_list.begin();
+    for (typename ContainerType::const_iterator it = appears_list.begin();
         it != appears_list.end(); ++it)
     {
-      if(it != appears_list.begin())
+      if (it != appears_list.begin())
       {
         out << std::endl;
       }
@@ -476,9 +421,7 @@ namespace RequestInfoSvcs
 
   template<typename ContainerType>
   std::string
-  stringify_appearance_list(
-    const ContainerType& appears_list,
-    const char* space_align)
+  stringify_appearance_list(const ContainerType& appears_list, const char* space_align)
   {
     std::ostringstream ostr;
     ostr << std::endl;
@@ -498,17 +441,13 @@ namespace RequestInfoSvcs
   struct BaseAppearanceLess
   {
     template<typename ReaderType>
-    bool operator()(
-      unsigned long id,
-      const ReaderType& reader) const
+    bool operator()(unsigned long id, const ReaderType& reader) const
     {
       return id < reader.id();
     }
 
     template<typename ReaderType>
-    bool operator()(
-      const ReaderType& reader,
-      unsigned long id) const
+    bool operator()(const ReaderType& reader, unsigned long id) const
     {
       return reader.id() < id;
     }
@@ -517,9 +456,7 @@ namespace RequestInfoSvcs
   template<typename RecordType>
   struct BaseInsertAppearanceAdapter
   {
-    RecordType operator()(
-      unsigned long id,
-      const Generics::Time& appearance_time) const
+    RecordType operator()(unsigned long id, const Generics::Time& appearance_time) const
     {
       RecordType res;
       res.id() = id;
@@ -535,9 +472,7 @@ namespace RequestInfoSvcs
   template<typename RecordType>
   struct BaseInsertIdTimeAdapter
   {
-    RecordType operator()(
-      unsigned long id,
-      const Generics::Time& time) const
+    RecordType operator()(unsigned long id, const Generics::Time& time) const
     {
       RecordType res;
       res.id() = id;
@@ -571,19 +506,18 @@ namespace RequestInfoSvcs
     // Update all list in case if changed gmt_create_time
     bool changed_gmt_create_time = new_gmt_time < old_gmt_time;
 
-    for(typename ResultContainerType::iterator pos_it = result.begin();
+    for (typename ResultContainerType::iterator pos_it = result.begin();
           pos_it != result.end(); ++pos_it)
     {
       // Search position for passed appear_id ().
-      if(id_less(*pos_it, appear_id))
+      if (id_less(*pos_it, appear_id))
       {
         ++pos_for_appear_id;
       }
 
       // Update all with delta_tz = pos_it->create_time() - old_gmt_time
       //   except current colo_id (possible TZ changed for current colo_id)
-      if(changed_gmt_create_time &&
-          (id_less(*pos_it, appear_id) || id_less(appear_id, *pos_it)))
+      if (changed_gmt_create_time && (id_less(*pos_it, appear_id) || id_less(appear_id, *pos_it)))
       {
         pos_it->create_time() =
           calculate_isp_time(
@@ -593,11 +527,10 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(pos_for_appear_id != result.end() &&
-       !id_less(appear_id, *pos_for_appear_id))
+    if (pos_for_appear_id != result.end() && !id_less(appear_id, *pos_for_appear_id))
     {
       // found appear_id in list
-      if(new_isp_time.tv_sec < pos_for_appear_id->create_time())
+      if (new_isp_time.tv_sec < pos_for_appear_id->create_time())
       {
         pos_for_appear_id->create_time() = new_isp_time.tv_sec;
       }
@@ -610,31 +543,23 @@ namespace RequestInfoSvcs
       Generics::Time isp_create_time_for_new_colo_id =
         (changed_gmt_create_time ?
           Generics::Time(new_isp_time.tv_sec) :
-           calculate_isp_time(
-            new_gmt_time,
-            new_isp_time,
-            old_gmt_time));
+           calculate_isp_time(new_gmt_time, new_isp_time, old_gmt_time));
 
-      result.insert(
-        pos_for_appear_id,
-        insert_adapter(
-          appear_id, isp_create_time_for_new_colo_id));
+      result.insert(pos_for_appear_id, insert_adapter(appear_id, isp_create_time_for_new_colo_id));
     }
   }
 
   template<typename ContainerType>
   std::string
-  stringify_id_date_list(
-    const ContainerType& appears_list,
-    const char* space_align)
+  stringify_id_date_list(const ContainerType& appears_list, const char* space_align)
   {
     std::ostringstream ostr;
     ostr << std::endl;
 
-    for(typename ContainerType::const_iterator it = appears_list.begin();
+    for (typename ContainerType::const_iterator it = appears_list.begin();
         it != appears_list.end(); ++it)
     {
-      if(it != appears_list.begin())
+      if (it != appears_list.begin())
       {
         ostr << std::endl;
       }
@@ -647,11 +572,8 @@ namespace RequestInfoSvcs
     return ostr.str();
   }
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   inline
   IdAppearance::IdAppearance(
@@ -671,12 +593,11 @@ namespace RequestInfoSvcs
   {
     return id == right.id &&
       date == right.date &&
-      last_appearance_date == right.last_appearance_date &&
-      counter == right.counter;
+      last_appearance_date == right.last_appearance_date && counter == right.counter;
   }
 
 }
-}
+
 
 inline
 std::ostream&

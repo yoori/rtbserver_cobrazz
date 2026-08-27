@@ -159,7 +159,7 @@ sub fetch_ctr {
 
     $stmt->execute(@args);
     my $row = $stmt->fetchrow_arrayref;
-    
+
     return ($row && defined $row->[0] ? @$row : 0);
 }
 
@@ -191,6 +191,7 @@ sub compute_ctr {
     unless (defined $$keyword_ctr_cache) {
         ($$keyword_ctr_cache) = fetch_ctr($keyword_ctr, $keyword_id);
     }
+
     if ($$keyword_ctr_cache) {
         print "yes\n";
         return $$keyword_ctr_cache + 0.0;
@@ -201,6 +202,7 @@ sub compute_ctr {
     unless (defined $global_ctr_cache) {
         $global_ctr_cache = [fetch_ctr($global_ctr)];
     }
+
     if ($global_ctr_cache->[0]) {
         print "yes, using max crt for keyword_id = $global_ctr_cache->[1]\n";
         return $global_ctr_cache->[0] + 0.0;

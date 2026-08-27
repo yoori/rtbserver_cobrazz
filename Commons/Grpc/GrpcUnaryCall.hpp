@@ -18,10 +18,7 @@ namespace AdServer::Grpc
       ::grpc::CompletionQueue*,
       ::grpc::ServerCompletionQueue*,
       void*);
-    using Handler = void (ServiceImplType::*)(
-      const Request&,
-      Response&,
-      ::grpc::Status&) const;
+    using Handler = void (ServiceImplType::*)(const Request&, Response&, ::grpc::Status&) const;
 
     GrpcUnaryCall(
       ServiceImplType* service_impl,

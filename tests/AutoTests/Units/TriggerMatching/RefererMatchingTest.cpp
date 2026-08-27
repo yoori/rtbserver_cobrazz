@@ -1,10 +1,7 @@
 #include "RefererMatchingTest.hpp"
 #include <String/InterConvertion.hpp>
 
-REFLECT_UNIT(RefererMatchingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(RefererMatchingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
 
@@ -81,9 +78,7 @@ RefererMatchingTest::run_test()
   add_descr_phrase("Initialization");
   AdClient client(AdClient::create_user(this));
   NSLookupRequest request;
-  for (unsigned int idx = 0;
-       idx < sizeof(appearances) / sizeof(*appearances);
-       idx++)
+  for (unsigned int idx = 0; idx < sizeof(appearances) / sizeof(*appearances); idx++)
 
   {
 

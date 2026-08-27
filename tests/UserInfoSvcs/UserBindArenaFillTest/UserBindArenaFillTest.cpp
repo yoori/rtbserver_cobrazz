@@ -17,8 +17,7 @@
 
 namespace
 {
-  using GetUserIdResponse =
-    adserver::user_info_svcs::user_bind::GetUserIdResponse;
+  using GetUserIdResponse = adserver::user_info_svcs::user_bind::GetUserIdResponse;
 
   constexpr unsigned long DEFAULT_COUNT = 1000000;
 
@@ -45,8 +44,7 @@ namespace
     std::cerr
       << "Usage: UserBindArenaFillTest [OPTIONS]\n"
       << "Options:\n"
-      << "  --count <N>  GetUserIdResponse fill count (default: "
-      << DEFAULT_COUNT << ")\n";
+      << "  --count <N>  GetUserIdResponse fill count (default: " << DEFAULT_COUNT << ")\n";
   }
 
   Options
@@ -63,7 +61,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -72,7 +70,7 @@ namespace
     Options options;
     options.count = *opt_count;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
@@ -84,7 +82,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -142,7 +140,7 @@ namespace
   run_without_arena(unsigned long count)
   {
     std::uint64_t checksum = 0;
-    for(unsigned long i = 0; i < count; ++i)
+    for (unsigned long i = 0; i < count; ++i)
     {
       auto response = std::make_unique<GetUserIdResponse>();
       fill_response(*response, i);
@@ -157,10 +155,9 @@ namespace
   {
     google::protobuf::Arena arena;
     std::uint64_t checksum = 0;
-    for(unsigned long i = 0; i < count; ++i)
+    for (unsigned long i = 0; i < count; ++i)
     {
-      auto* response =
-        google::protobuf::Arena::CreateMessage<GetUserIdResponse>(&arena);
+      auto* response = google::protobuf::Arena::CreateMessage<GetUserIdResponse>(&arena);
       fill_response(*response, i);
       checksum += response_checksum(*response);
     }
@@ -193,9 +190,7 @@ namespace
       << "_user_cpu_sec=" << format_float(result.cpu.user)
       << "\n" << name
       << "_sys_cpu_sec=" << format_float(result.cpu.sys)
-      << "\n" << name
-      << "_checksum=" << result.checksum
-      << '\n';
+      << "\n" << name << "_checksum=" << result.checksum << '\n';
   }
 }
 

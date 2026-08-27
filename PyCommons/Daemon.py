@@ -27,7 +27,7 @@ class Daemon:
     try:
       os.remove(self.pidFilePath)
     except OSError:
-      pass  # can already be removed by another instance 
+      pass  # can already be removed by another instance
 
   def daemonize( self ):
     if os.fork() != 0: sys.exit(0)

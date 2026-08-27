@@ -2,12 +2,9 @@
 
 #include <Commons/CorbaAlgs.hpp>
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
-  ChannelServerCustomImpl::ChannelServerCustomImpl(
-    ChannelServerCorePtr core) noexcept
+  ChannelServerCustomImpl::ChannelServerCustomImpl(ChannelServerCorePtr core) noexcept
     : core_(std::move(core))
   {}
 
@@ -50,7 +47,7 @@ namespace ChannelSvcs
           ChannelServerBase::ChannelAtomSeq& target)
         {
           target.length(source.size());
-          for(CORBA::ULong i = 0; i < source.size(); ++i)
+          for (CORBA::ULong i = 0; i < source.size(); ++i)
           {
             target[i].id = source[i].id;
             target[i].trigger_channel_id = source[i].trigger_channel_id;
@@ -72,20 +69,16 @@ namespace ChannelSvcs
 
       result->matched_channels.uid_channels.length(
         core_result.matched_channels.uid_channels.size());
-      for(CORBA::ULong i = 0;
-        i < core_result.matched_channels.uid_channels.size();
-        ++i)
+      for (CORBA::ULong i = 0; i < core_result.matched_channels.uid_channels.size(); ++i)
       {
-        result->matched_channels.uid_channels[i] =
-          core_result.matched_channels.uid_channels[i];
+        result->matched_channels.uid_channels[i] = core_result.matched_channels.uid_channels[i];
       }
 
       result->content_channels.length(core_result.content_channels.size());
-      for(CORBA::ULong i = 0; i < core_result.content_channels.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.content_channels.size(); ++i)
       {
         result->content_channels[i].id = core_result.content_channels[i].id;
-        result->content_channels[i].weight =
-          core_result.content_channels[i].weight;
+        result->content_channels[i].weight = core_result.content_channels[i].weight;
       }
     }
     catch(const ChannelServerCore::NotConfigured& ex)
@@ -108,7 +101,7 @@ namespace ChannelSvcs
     {
       std::vector<unsigned long> core_ids;
       core_ids.reserve(ids.length());
-      for(CORBA::ULong i = 0; i < ids.length(); ++i)
+      for (CORBA::ULong i = 0; i < ids.length(); ++i)
       {
         core_ids.push_back(ids[i]);
       }
@@ -118,23 +111,21 @@ namespace ChannelSvcs
 
       result = new AdServer::ChannelSvcs::ChannelServer::TraitsResult;
       result->ccg_keywords.length(core_result.ccg_keywords.size());
-      for(CORBA::ULong i = 0; i < core_result.ccg_keywords.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.ccg_keywords.size(); ++i)
       {
         const auto& source = core_result.ccg_keywords[i];
         result->ccg_keywords[i].ccg_keyword_id = source.ccg_keyword_id;
         result->ccg_keywords[i].ccg_id = source.ccg_id;
         result->ccg_keywords[i].channel_id = source.channel_id;
         result->ccg_keywords[i].max_cpc =
-          CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
-            source.max_cpc);
-        result->ccg_keywords[i].ctr =
-          CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(source.ctr);
+          CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(source.max_cpc);
+        result->ccg_keywords[i].ctr = CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(source.ctr);
         result->ccg_keywords[i].click_url << source.click_url;
         result->ccg_keywords[i].original_keyword << source.original_keyword;
       }
 
       result->neg_ccg.length(core_result.neg_ccg.size());
-      for(CORBA::ULong i = 0; i < core_result.neg_ccg.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.neg_ccg.size(); ++i)
       {
         result->neg_ccg[i] = core_result.neg_ccg[i];
       }
@@ -147,9 +138,7 @@ namespace ChannelSvcs
     {
       const String::SubString description(ex.what());
       CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(
-          description);
+        ChannelSvcs::ImplementationException>(description);
     }
   }
-}
 }

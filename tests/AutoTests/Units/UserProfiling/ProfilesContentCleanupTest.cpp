@@ -1,10 +1,7 @@
 
 #include "ProfilesContentCleanupTest.hpp"
 
-REFLECT_UNIT(ProfilesContentCleanupTest) (
-  "UserProfiling",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ProfilesContentCleanupTest) ("UserProfiling", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -80,9 +77,7 @@ ProfilesContentCleanupTest::cleanup_by_visits_count()
     request.debug_time = base_time_ + i * 60;
     user.process_request(request, ("advertising  request #" + strof(i)).c_str());
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc_id_,
-        user.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc_id_, user.debug_info.ccid).check(),
       "matching 'P' and 'S' channels");
   }
 
@@ -104,9 +99,7 @@ ProfilesContentCleanupTest::cleanup_by_visits_date()
 
   NSLRequest request;
 
-  for (size_t i = 0;
-       i < sizeof(REQUESTS_DEBUG_TIME)/sizeof(*REQUESTS_DEBUG_TIME);
-       ++i)
+  for (size_t i = 0; i < sizeof(REQUESTS_DEBUG_TIME)/sizeof(*REQUESTS_DEBUG_TIME); ++i)
   {
     request.tid.clear();
     request.referer_kw = fetch_string("KEYWORD");
@@ -129,9 +122,7 @@ ProfilesContentCleanupTest::cleanup_by_visits_date()
     request.referer.clear();
     user.process_request(request, ("Advertising request #" + strof(i)).c_str());
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc_id_,
-        user.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc_id_, user.debug_info.ccid).check(),
       "matching 'P' and 'S' channels");
     if (REQUESTS_DEBUG_TIME[i].stored_in_profile)
     {

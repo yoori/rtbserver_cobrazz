@@ -17,18 +17,13 @@
 
 #include "SyncLogsImpl.hpp"
 
-namespace AdServer
+namespace AdServer::LogProcessing::Aspect
 {
-namespace LogProcessing
-{
-  namespace Aspect
-  {
-    const char SYNC_LOGS[] = "SyncLogs";
-  }
+  const char SYNC_LOGS[] = "SyncLogs";
+}
 
-  /**
-   * AdServer::LogProcessing::SyncLogsImpl class
-   */
+namespace AdServer::LogProcessing
+{
   SyncLogsImpl::SyncLogsImpl(
     Generics::ActiveObjectCallback *callback,
     Logging::Logger* logger,
@@ -46,19 +41,17 @@ namespace LogProcessing
 
     if (callback == 0)
     {
-      throw Exception(
-        "AdServer::LogProcessing::SyncLogsImpl::SyncLogsImpl(): "
-        "callback == 0");
+      throw Exception("AdServer::LogProcessing::SyncLogsImpl::SyncLogsImpl(): " "callback == 0");
     }
 
     typedef xsd::AdServer::Configuration::ClusterConfigType ClusterConfig;
     const ClusterConfig& cluster_config = configuration_->ClusterConfig();
 
-    if(cluster_config.root_logs_dir().present())
+    if (cluster_config.root_logs_dir().present())
     {
       std::string root_dir = *(cluster_config.root_logs_dir());
 
-      if(root_dir.empty() || root_dir[0] != '/')
+      if (root_dir.empty() || root_dir[0] != '/')
       {
         Stream::Error ostr;
         ostr << FUN << ": "
@@ -98,24 +91,22 @@ namespace LogProcessing
 
       const FeedRouteGroups& feed_route_groups = cluster_config.FeedRouteGroup();
 
-      for(FeedRouteGroups::const_iterator feed_route_group_it =
-            feed_route_groups.begin();
+      for (FeedRouteGroups::const_iterator feed_route_group_it = feed_route_groups.begin();
           feed_route_group_it != feed_route_groups.end(); ++feed_route_group_it)
       {
         const Routes& routes = feed_route_group_it->Route();
         unsigned long pool_threads = feed_route_group_it->pool_threads();
         Generics::TaskRunner_var pool_task_runner;
         MoveTaskScheduler_var move_task_scheduler;
-        if(pool_threads)
+        if (pool_threads)
         {
           pool_task_runner = new Generics::TaskRunner(callback_, pool_threads, 1);
 
-          const bool soft_pool_threads_present =
-            feed_route_group_it->soft_pool_threads().present();
+          const bool soft_pool_threads_present = feed_route_group_it->soft_pool_threads().present();
           const bool soft_pool_max_file_age_present =
             feed_route_group_it->soft_pool_max_file_age().present();
 
-          if(soft_pool_threads_present != soft_pool_max_file_age_present)
+          if (soft_pool_threads_present != soft_pool_max_file_age_present)
           {
             throw Exception(
               "soft_pool_threads and soft_pool_max_file_age must be specified together");
@@ -123,10 +114,10 @@ namespace LogProcessing
 
           unsigned long soft_pool_threads = pool_threads;
           Generics::Time soft_pool_max_file_age;
-          if(soft_pool_threads_present)
+          if (soft_pool_threads_present)
           {
             soft_pool_threads = feed_route_group_it->soft_pool_threads().get();
-            if(soft_pool_threads > pool_threads)
+            if (soft_pool_threads > pool_threads)
             {
               throw Exception("soft_pool_threads must not exceed pool_threads");
             }
@@ -141,7 +132,7 @@ namespace LogProcessing
             soft_pool_threads,
             soft_pool_max_file_age);
         }
-        else if(feed_route_group_it->soft_pool_threads().present() ||
+        else if (feed_route_group_it->soft_pool_threads().present() ||
           feed_route_group_it->soft_pool_max_file_age().present())
         {
           throw Exception("soft pool settings require non-zero pool_threads");
@@ -151,7 +142,7 @@ namespace LogProcessing
           feed_route_group_it->check_logs_period().get() :
           configuration_->check_logs_period();
 
-        for(Routes::const_iterator it = routes.begin(); it != routes.end(); ++it)
+        for (Routes::const_iterator it = routes.begin(); it != routes.end(); ++it)
         {
           typedef xsd::AdServer::Configuration::SrcDestType HostsRoute;
           typedef xsd::AdServer::Configuration::RouteType::files_sequence Files;
@@ -176,21 +167,19 @@ namespace LogProcessing
             source_hosts,
             feed_type != ST_DEFINITEHASH ? &dest_hosts : 0);
 
-          StringList::const_iterator host_name_it =
-            check_hosts_(source_hosts);
-          if(host_name_it != source_hosts.end())
+          StringList::const_iterator host_name_it = check_hosts_(source_hosts);
+          if (host_name_it != source_hosts.end())
           {
             const Files& files = it->files();
 
-            for(Files::const_iterator file_it = files.begin();
-                file_it != files.end(); ++file_it)
+            for (Files::const_iterator file_it = files.begin(); file_it != files.end(); ++file_it)
             {
               std::string dst_dir;
               adapt_path_(file_it->destination().c_str(), dst_dir);
               std::string src_pattern;
               adapt_path_(file_it->source().c_str(), src_pattern);
 
-              if(logger_ && logger_->log_level() >= TraceLevel::MIDDLE)
+              if (logger_ && logger_->log_level() >= TraceLevel::MIDDLE)
               {
                 std::ostringstream oss;
                 oss << "To create FeedRouteProcessor: "
@@ -200,8 +189,7 @@ namespace LogProcessing
 
                 Algs::print(oss, dest_hosts.begin(), dest_hosts.end());
 
-                logger_->log(
-                  oss.str(), TraceLevel::MIDDLE, Aspect::SYNC_LOGS);
+                logger_->log(oss.str(), TraceLevel::MIDDLE, Aspect::SYNC_LOGS);
               }
 
               FeedRouteProcessor::CommandType local_copy_command_type =
@@ -226,11 +214,10 @@ namespace LogProcessing
                   configuration_->host_check_period());
                 break;
               case ST_BY_NUMBER:
-                destination_host_router = new RouteByNumberHelper(
-                  feed_type, dest_hosts);
+                destination_host_router = new RouteByNumberHelper(feed_type, dest_hosts);
                 break;
               case ST_HASH:
-                if(!file_it->pattern().present())
+                if (!file_it->pattern().present())
                 {
                   throw Exception("Not present pattern for Hash route");
                 }
@@ -240,7 +227,7 @@ namespace LogProcessing
                   file_it->pattern()->c_str());
                 break;
               case ST_DEFINITEHASH:
-                if(!file_it->pattern().present())
+                if (!file_it->pattern().present())
                 {
                   throw Exception("Not present pattern for DefiniteHash route");
                 }
@@ -252,7 +239,7 @@ namespace LogProcessing
                   Generics::Time(10));
                 break;
               case ST_FROM_FILE_NAME:
-                if(!it->pattern().present())
+                if (!it->pattern().present())
                 {
                   throw Exception("Not present pattern for HostName route");
                 }
@@ -263,13 +250,12 @@ namespace LogProcessing
               }
 
               const BasicFeedRouteProcessor::FetchType fetch_type =
-                BasicFeedRouteProcessor::get_fetch_type(
-                  it->fetch_type().c_str());
+                BasicFeedRouteProcessor::get_fetch_type(it->fetch_type().c_str());
 
               // init processor
               BasicFeedRouteProcessor_var route_processor;
 
-              if(pool_task_runner)
+              if (pool_task_runner)
               {
                 route_processor = new ThreadPoolFeedRouteProcessor(
                   &error_logger_,
@@ -328,7 +314,7 @@ namespace LogProcessing
           }
         }
 
-        if(pool_task_runner)
+        if (pool_task_runner)
         {
           add_child_object(pool_task_runner.in());
         }
@@ -342,7 +328,7 @@ namespace LogProcessing
 
       const FetchRoutes& fetch_routes = cluster_config.FetchRouteGroup();
 
-      for(FetchRoutes::const_iterator fetch_it = fetch_routes.begin();
+      for (FetchRoutes::const_iterator fetch_it = fetch_routes.begin();
           fetch_it != fetch_routes.end(); ++fetch_it)
       {
         const Routes& routes = fetch_it->Route();
@@ -351,7 +337,7 @@ namespace LogProcessing
           fetch_it->check_logs_period().get() :
           configuration_->check_logs_period();
 
-        for(Routes::const_iterator it = routes.begin(); it != routes.end(); ++it)
+        for (Routes::const_iterator it = routes.begin(); it != routes.end(); ++it)
         {
           typedef xsd::AdServer::Configuration::SrcDestType HostsRoute;
           typedef xsd::AdServer::Configuration::RouteType::files_sequence Files;
@@ -365,12 +351,11 @@ namespace LogProcessing
           parse_hosts_route_(hosts_route, src_hosts, &dst_hosts);
 
           StringList::const_iterator host_name_it;
-          if((host_name_it = check_hosts_(dst_hosts)) != dst_hosts.end())
+          if ((host_name_it = check_hosts_(dst_hosts)) != dst_hosts.end())
           {
             const Files& files = it->files();
 
-            for(Files::const_iterator file_it = files.begin();
-                file_it != files.end(); ++file_it)
+            for (Files::const_iterator file_it = files.begin(); file_it != files.end(); ++file_it)
             {
               std::string src, dst;
 
@@ -406,8 +391,7 @@ namespace LogProcessing
 
     // add error log flusher
     {
-      RouteProcessor* ptr =
-        new Utils::LogsRouteProcessorFlusher(&error_logger_);
+      RouteProcessor* ptr = new Utils::LogsRouteProcessorFlusher(&error_logger_);
       route_processors_.push_back(ptr);
       TaskMessage_var task(new ProcessRouteTask(route_processors_.back(),
         configuration_->check_logs_period(), 0, this));
@@ -422,8 +406,7 @@ namespace LogProcessing
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": CompositeActiveObject::Exception caught: " <<
-        ex.what();
+      ostr << FUN << ": CompositeActiveObject::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -432,17 +415,14 @@ namespace LogProcessing
   {}
 
   void
-  SyncLogsImpl::schedule_route_processing_task_(
-    RouteProcessor *processor,
-    unsigned long timeout)
+  SyncLogsImpl::schedule_route_processing_task_(RouteProcessor *processor, unsigned long timeout)
     noexcept
   {
     static const char* FUN = "SyncLogsImpl::schedule_route_processing_task_()";
 
     try
     {
-      TaskMessage_var task(
-        new ProcessRouteTask(processor, timeout, task_runner_, this));
+      TaskMessage_var task(new ProcessRouteTask(processor, timeout, task_runner_, this));
       Generics::Time tm = Generics::Time::get_time_of_day() + timeout;
       scheduler_->schedule(task, tm);
     }
@@ -465,34 +445,28 @@ namespace LogProcessing
     {
       std::stringstream is;
       is << hosts_route.source();
-      String::SequenceAnalyzer::interprete_base_sequence(
-        is,
-        src_hosts);
+      String::SequenceAnalyzer::interprete_base_sequence(is, src_hosts);
     }
     catch (const String::SequenceAnalyzer::BasicAnalyzerException &ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught Generics::BasicAnalyzerException: " <<
-        ex.what();
+      ostr << FUN << ": caught Generics::BasicAnalyzerException: " << ex.what();
       throw Exception(ostr);
     }
 
     try
     {
-      if(dst_hosts)
+      if (dst_hosts)
       {
         std::stringstream is;
         is << hosts_route.destination();
-        String::SequenceAnalyzer::interprete_base_sequence(
-          is,
-          *dst_hosts);
+        String::SequenceAnalyzer::interprete_base_sequence(is, *dst_hosts);
       }
     }
     catch (const String::SequenceAnalyzer::BasicAnalyzerException &ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught Generics::BasicAnalyzerException: " <<
-        ex.what();
+      ostr << FUN << ": caught Generics::BasicAnalyzerException: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -501,21 +475,21 @@ namespace LogProcessing
   SyncLogsImpl::adapt_path_(const char* dir, std::string& res) const
     /*throw(Exception)*/
   {
-    if(dir[0] == '\0')
+    if (dir[0] == '\0')
     {
       throw Exception("Non correct empty destination directory.");
     }
 
-    if(dir[0] == '/')
+    if (dir[0] == '/')
     {
       res = dir;
       return dir;
     }
 
-    if(configuration_->ClusterConfig().root_logs_dir().present())
+    if (configuration_->ClusterConfig().root_logs_dir().present())
     {
       res = *(configuration_->ClusterConfig().root_logs_dir());
-      if(*res.rbegin() != '/')
+      if (*res.rbegin() != '/')
       {
         res += "/";
       }
@@ -525,35 +499,33 @@ namespace LogProcessing
     return res.c_str();
   }
 
-  SchedType SyncLogsImpl::get_feed_type_(
-    const char* feed_type_name)
+  SchedType SyncLogsImpl::get_feed_type_(const char* feed_type_name)
     /*throw(Exception)*/
   {
     std::string ft_name(feed_type_name);
-    if(ft_name == "RoundRobin")
+    if (ft_name == "RoundRobin")
     {
       return ST_ROUND_ROBIN;
     }
-    else if(ft_name == "ByNumber")
+    else if (ft_name == "ByNumber")
     {
       return ST_BY_NUMBER;
     }
-    else if(ft_name == "Hash")
+    else if (ft_name == "Hash")
     {
       return ST_HASH;
     }
-    else if(ft_name == "DefiniteHash")
+    else if (ft_name == "DefiniteHash")
     {
       return ST_DEFINITEHASH;
     }
-    else if(ft_name == "HostName")
+    else if (ft_name == "HostName")
     {
       return ST_FROM_FILE_NAME;
     }
 
     Stream::Error ostr;
-    ostr << "SyncLogsImpl::get_feed_type_(): unknown feed type '" <<
-      feed_type_name << "'";
+    ostr << "SyncLogsImpl::get_feed_type_(): unknown feed type '" << feed_type_name << "'";
     throw Exception(ostr);
   }
 
@@ -563,8 +535,7 @@ namespace LogProcessing
   {
     try
     {
-      for (StringList::const_iterator it = hosts_list.begin();
-        it != hosts_list.end(); ++it)
+      for (StringList::const_iterator it = hosts_list.begin(); it != hosts_list.end(); ++it)
       {
         if (host_checker_.check_host_name(*it))
         {
@@ -583,5 +554,4 @@ namespace LogProcessing
       throw Exception(error);
     }
   }
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

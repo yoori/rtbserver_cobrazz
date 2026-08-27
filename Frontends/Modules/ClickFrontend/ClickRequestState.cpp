@@ -24,16 +24,13 @@ namespace
   {
     Stream::Error ostr;
     ostr << name << ": gRPC call failed: code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
+      static_cast<int>(status.error_code()) << ", message=" << status.error_message();
     throw GrpcCallException(ostr);
   }
 
   struct ChannelMatch
   {
-    ChannelMatch(
-      unsigned long channel_id_val,
-      unsigned long channel_trigger_id_val)
+    ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
       : channel_id(channel_id_val),
         channel_trigger_id(channel_trigger_id_val)
     {}
@@ -43,8 +40,7 @@ namespace
     {
       return
         channel_id < right.channel_id ||
-        (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id);
+        (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id);
     }
 
     unsigned long channel_id;
@@ -54,8 +50,7 @@ namespace
   struct GetChannelTriggerId
   {
     ChannelMatch
-    operator()(
-      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+    operator()(const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       const noexcept
     {
       return ChannelMatch(atom.id(), atom.trigger_channel_id());
@@ -104,14 +99,12 @@ namespace AdServer
     channel_request.set_statuses("A", 2);
 
     std::ostringstream keywords_ostr;
-    keywords_ostr << "poadclick poadclicka" << advertiser_id_ <<
-      " poadclickc" << campaign_id_;
-    for(const auto& marker : markers_)
+    keywords_ostr << "poadclick poadclicka" << advertiser_id_ << " poadclickc" << campaign_id_;
+    for (const auto& marker : markers_)
     {
       const std::string base_trigger = std::string("poad") + marker + "click";
       keywords_ostr << " " << base_trigger <<
-        " " << base_trigger << "a" << advertiser_id_ <<
-        " " << base_trigger << "c" << campaign_id_;
+        " " << base_trigger << "a" << advertiser_id_ << " " << base_trigger << "c" << campaign_id_;
     }
     channel_request.set_pwords(keywords_ostr.str());
 
@@ -140,7 +133,7 @@ namespace AdServer
   {
     try
     {
-      if(!status.ok())
+      if (!status.ok())
       {
         throw_grpc_exception_("ChannelServer::match()", status);
       }
@@ -165,7 +158,7 @@ namespace AdServer
   void
   ClickRequestState::resolve_cookie_stage_()
   {
-    if(cookie_user_id_.is_null() || user_id_ == cookie_user_id_)
+    if (cookie_user_id_.is_null() || user_id_ == cookie_user_id_)
     {
       match_history_user_stage_();
       return;
@@ -175,13 +168,13 @@ namespace AdServer
   void
   ClickRequestState::match_history_user_stage_()
   {
-    if(!trigger_match_result_present_ ||
+    if (!trigger_match_result_present_ ||
       trigger_match_result_.matched_channels().page_channels_size() == 0)
     {
       return;
     }
 
-    if(user_id_ == AdServer::Commons::PROBE_USER_ID)
+    if (user_id_ == AdServer::Commons::PROBE_USER_ID)
     {
       match_history_cookie_stage_();
       return;
@@ -213,7 +206,7 @@ namespace AdServer
   {
     try
     {
-      if(!status.ok())
+      if (!status.ok())
       {
         throw_grpc_exception_("UserInfoManager::match()", status);
       }
@@ -239,8 +232,7 @@ namespace AdServer
   void
   ClickRequestState::match_history_cookie_stage_()
   {
-    if(user_id_ == resolved_cookie_user_id_ ||
-      resolved_cookie_user_id_.is_null())
+    if (user_id_ == resolved_cookie_user_id_ || resolved_cookie_user_id_.is_null())
     {
       process_match_stage_();
       return;
@@ -261,10 +253,9 @@ namespace AdServer
   }
 
   void
-  ClickRequestState::match_history_cookie_done_stage_(
-    const grpc::Status& status)
+  ClickRequestState::match_history_cookie_done_stage_(const grpc::Status& status)
   {
-    if(!status.ok())
+    if (!status.ok())
     {
       try
       {
@@ -315,7 +306,7 @@ namespace AdServer
   void
   ClickRequestState::process_match_done_stage_(const grpc::Status& status)
   {
-    if(!status.ok())
+    if (!status.ok())
     {
       Stream::Error ostr;
       ostr << FUN << "::process_match_done_stage_(): "
@@ -345,8 +336,7 @@ namespace AdServer
     match_params->set_provide_persistent_channels(false);
     match_params->set_change_last_request(false);
     match_params->set_filter_contextual_triggers(false);
-    match_params->set_publishers_optin_timeout(
-      GrpcAlgs::pack_time(Generics::Time::ZERO));
+    match_params->set_publishers_optin_timeout(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
     auto* user_info = request.mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(match_user_id));
@@ -364,9 +354,8 @@ namespace AdServer
       std::inserter(page_channels, page_channels.end()),
       GetChannelTriggerId());
 
-    auto* page_channel_ids =
-      request.mutable_match_params()->mutable_page_channel_ids();
-    for(const auto& channel_match : page_channels)
+    auto* page_channel_ids = request.mutable_match_params()->mutable_page_channel_ids();
+    for (const auto& channel_match : page_channels)
     {
       auto* result = page_channel_ids->Add();
       result->set_channel_id(channel_match.channel_id);
@@ -377,8 +366,7 @@ namespace AdServer
   }
 
   void
-  ClickRequestState::log_user_bind_error_(
-    const eh::Exception& ex) const noexcept
+  ClickRequestState::log_user_bind_error_(const eh::Exception& ex) const noexcept
   {
     Stream::Error ostr;
     ostr << FUN << "::log_user_bind_error_(): "

@@ -3,1013 +3,1006 @@
 #include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-template <> const char* CreativeStatTraits::B::base_name_ =
-  "CreativeStat";
-template <> const char* CreativeStatTraits::B::signature_ =
-  "CreativeStat";
-template <> const char* CreativeStatTraits::B::current_version_ =
-  "3.5";
-
-const CreativeStatInnerKey::DeliveryThresholdT
-  CreativeStatInnerKey::max_delivery_threshold_value_("1.0");
-
-const CreativeStatInnerKey_V_3_3::DeliveryThresholdT
-  CreativeStatInnerKey_V_3_3::max_delivery_threshold_value_("1.0");
-
-CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3()
-  : colo_id_(),
-    publisher_account_id_(),
-    tag_id_(),
-    size_id_(),
-    country_code_(),
-    adv_account_id_(),
-    campaign_id_(),
-    ccg_id_(),
-    cc_id_(),
-    ccg_rate_id_(),
-    colo_rate_id_(),
-    site_rate_id_(),
-    currency_exchange_id_(),
-    delivery_threshold_(DeliveryThresholdT::ZERO),
-    num_shown_(),
-    position_(),
-    test_(),
-    fraud_(),
-    walled_garden_(),
-    user_status_(),
-    geo_channel_id_(),
-    device_channel_id_(),
-    ctr_reset_id_(),
-    hid_profile_(),
-    hash_()
-{}
-
-CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3(
-  std::uint32_t colo_id,
-  std::uint32_t publisher_account_id,
-  std::uint32_t tag_id,
-  const OptionalUInt32& size_id,
-  const std::string& country_code,
-  std::uint32_t adv_account_id,
-  std::uint32_t campaign_id,
-  std::uint32_t ccg_id,
-  std::uint32_t cc_id,
-  std::uint32_t ccg_rate_id,
-  std::uint32_t colo_rate_id,
-  std::uint32_t site_rate_id,
-  std::uint32_t currency_exchange_id,
-  const DeliveryThresholdT& delivery_threshold,
-  unsigned short num_shown,
-  unsigned short position,
-  bool test,
-  bool fraud,
-  bool walled_garden,
-  char user_status,
-  const GeoChannelIdOptional& geo_channel_id,
-  const DeviceChannelIdOptional& device_channel_id,
-  std::uint32_t ctr_reset_id,
-  bool hid_profile)
-  /*throw(eh::Exception)*/
-  : colo_id_(colo_id),
-    publisher_account_id_(publisher_account_id),
-    tag_id_(tag_id),
-    size_id_(size_id),
-    country_code_(country_code),
-    adv_account_id_(adv_account_id),
-    campaign_id_(campaign_id),
-    ccg_id_(ccg_id),
-    cc_id_(cc_id),
-    ccg_rate_id_(ccg_rate_id),
-    colo_rate_id_(colo_rate_id),
-    site_rate_id_(site_rate_id),
-    currency_exchange_id_(currency_exchange_id),
-    delivery_threshold_(delivery_threshold),
-    num_shown_(num_shown),
-    position_(position),
-    test_(test),
-    fraud_(fraud),
-    walled_garden_(walled_garden),
-    user_status_(user_status),
-    geo_channel_id_(geo_channel_id),
-    device_channel_id_(device_channel_id),
-    ctr_reset_id_(ctr_reset_id),
-    hid_profile_(hid_profile),
-    hash_()
+namespace AdServer::LogProcessing
 {
-  calc_hash_();
-}
 
-bool
-CreativeStatInnerKey_V_3_3::operator==(
-  const CreativeStatInnerKey_V_3_3& rhs) const
-{
-  return this == &rhs ||
-    (colo_id_ == rhs.colo_id_ &&
-      publisher_account_id_ == rhs.publisher_account_id_ &&
-      tag_id_ == rhs.tag_id_ &&
-      size_id_ == rhs.size_id_ &&
-      country_code_.get() == rhs.country_code_.get() &&
-      adv_account_id_ == rhs.adv_account_id_ &&
-      campaign_id_ == rhs.campaign_id_ &&
-      ccg_id_ == rhs.ccg_id_ &&
-      cc_id_ == rhs.cc_id_ &&
-      ccg_rate_id_ == rhs.ccg_rate_id_ &&
-      colo_rate_id_ == rhs.colo_rate_id_ &&
-      site_rate_id_ == rhs.site_rate_id_ &&
-      currency_exchange_id_ == rhs.currency_exchange_id_ &&
-      delivery_threshold_ == rhs.delivery_threshold_ &&
-      num_shown_ == rhs.num_shown_ &&
-      position_ == rhs.position_ &&
-      test_ == rhs.test_ &&
-      fraud_ == rhs.fraud_ &&
-      walled_garden_ == rhs.walled_garden_ &&
-      user_status_ == rhs.user_status_ &&
-      geo_channel_id_ == rhs.geo_channel_id_ &&
-      device_channel_id_ == rhs.device_channel_id_ &&
-      ctr_reset_id_ == rhs.ctr_reset_id_ &&
-      hid_profile_ == rhs.hid_profile_);
-}
+  template <> const char* CreativeStatTraits::B::base_name_ = "CreativeStat";
+  template <> const char* CreativeStatTraits::B::signature_ = "CreativeStat";
+  template <> const char* CreativeStatTraits::B::current_version_ = "3.5";
 
-std::uint32_t
-CreativeStatInnerKey_V_3_3::colo_id() const
-{
-  return colo_id_;
-}
+  const CreativeStatInnerKey::DeliveryThresholdT
+    CreativeStatInnerKey::max_delivery_threshold_value_("1.0");
 
-std::uint32_t
-CreativeStatInnerKey_V_3_3::publisher_account_id() const
-{
-  return publisher_account_id_;
-}
+  const CreativeStatInnerKey_V_3_3::DeliveryThresholdT
+    CreativeStatInnerKey_V_3_3::max_delivery_threshold_value_("1.0");
 
-std::uint32_t
-CreativeStatInnerKey_V_3_3::tag_id() const
-{
-  return tag_id_;
-}
+  CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3()
+    : colo_id_(),
+      publisher_account_id_(),
+      tag_id_(),
+      size_id_(),
+      country_code_(),
+      adv_account_id_(),
+      campaign_id_(),
+      ccg_id_(),
+      cc_id_(),
+      ccg_rate_id_(),
+      colo_rate_id_(),
+      site_rate_id_(),
+      currency_exchange_id_(),
+      delivery_threshold_(DeliveryThresholdT::ZERO),
+      num_shown_(),
+      position_(),
+      test_(),
+      fraud_(),
+      walled_garden_(),
+      user_status_(),
+      geo_channel_id_(),
+      device_channel_id_(),
+      ctr_reset_id_(),
+      hid_profile_(),
+      hash_()
+  {}
 
-const OptionalUInt32&
-CreativeStatInnerKey_V_3_3::size_id() const
-{
-  return size_id_;
-}
-
-const std::string&
-CreativeStatInnerKey_V_3_3::country_code() const
-{
-  return country_code_.get();
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::adv_account_id() const
-{
-  return adv_account_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::campaign_id() const
-{
-  return campaign_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::ccg_id() const
-{
-  return ccg_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::cc_id() const
-{
-  return cc_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::ccg_rate_id() const
-{
-  return ccg_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::colo_rate_id() const
-{
-  return colo_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::site_rate_id() const
-{
-  return site_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::currency_exchange_id() const
-{
-  return currency_exchange_id_;
-}
-
-const CreativeStatInnerKey_V_3_3::DeliveryThresholdT&
-CreativeStatInnerKey_V_3_3::delivery_threshold() const
-{
-  return delivery_threshold_;
-}
-
-unsigned short
-CreativeStatInnerKey_V_3_3::num_shown() const
-{
-  return num_shown_;
-}
-
-unsigned short
-CreativeStatInnerKey_V_3_3::position() const
-{
-  return position_;
-}
-
-bool
-CreativeStatInnerKey_V_3_3::test() const
-{
-  return test_;
-}
-
-bool
-CreativeStatInnerKey_V_3_3::fraud() const
-{
-  return fraud_;
-}
-
-bool
-CreativeStatInnerKey_V_3_3::walled_garden() const
-{
-  return walled_garden_;
-}
-
-char
-CreativeStatInnerKey_V_3_3::user_status() const
-{
-  return user_status_;
-}
-
-const CreativeStatInnerKey_V_3_3::GeoChannelIdOptional&
-CreativeStatInnerKey_V_3_3::geo_channel_id() const
-{
-  return geo_channel_id_;
-}
-
-const CreativeStatInnerKey_V_3_3::DeviceChannelIdOptional&
-CreativeStatInnerKey_V_3_3::device_channel_id() const
-{
-  return device_channel_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey_V_3_3::ctr_reset_id() const
-{
-  return ctr_reset_id_;
-}
-
-bool
-CreativeStatInnerKey_V_3_3::hid_profile() const
-{
-  return hid_profile_;
-}
-
-size_t
-CreativeStatInnerKey_V_3_3::hash() const
-{
-  return hash_;
-}
-
-void
-CreativeStatInnerKey_V_3_3::invariant() const
-  /*throw(eh::Exception)*/
-{
-  static const char FUNC[] = "CreativeStatInnerKey_V_3_3::invariant()";
-  if (!num_shown_)
+  CreativeStatInnerKey_V_3_3::CreativeStatInnerKey_V_3_3(
+    std::uint32_t colo_id,
+    std::uint32_t publisher_account_id,
+    std::uint32_t tag_id,
+    const OptionalUInt32& size_id,
+    const std::string& country_code,
+    std::uint32_t adv_account_id,
+    std::uint32_t campaign_id,
+    std::uint32_t ccg_id,
+    std::uint32_t cc_id,
+    std::uint32_t ccg_rate_id,
+    std::uint32_t colo_rate_id,
+    std::uint32_t site_rate_id,
+    std::uint32_t currency_exchange_id,
+    const DeliveryThresholdT& delivery_threshold,
+    unsigned short num_shown,
+    unsigned short position,
+    bool test,
+    bool fraud,
+    bool walled_garden,
+    char user_status,
+    const GeoChannelIdOptional& geo_channel_id,
+    const DeviceChannelIdOptional& device_channel_id,
+    std::uint32_t ctr_reset_id,
+    bool hid_profile)
+    /*throw(eh::Exception)*/
+    : colo_id_(colo_id),
+      publisher_account_id_(publisher_account_id),
+      tag_id_(tag_id),
+      size_id_(size_id),
+      country_code_(country_code),
+      adv_account_id_(adv_account_id),
+      campaign_id_(campaign_id),
+      ccg_id_(ccg_id),
+      cc_id_(cc_id),
+      ccg_rate_id_(ccg_rate_id),
+      colo_rate_id_(colo_rate_id),
+      site_rate_id_(site_rate_id),
+      currency_exchange_id_(currency_exchange_id),
+      delivery_threshold_(delivery_threshold),
+      num_shown_(num_shown),
+      position_(position),
+      test_(test),
+      fraud_(fraud),
+      walled_garden_(walled_garden),
+      user_status_(user_status),
+      geo_channel_id_(geo_channel_id),
+      device_channel_id_(device_channel_id),
+      ctr_reset_id_(ctr_reset_id),
+      hid_profile_(hid_profile),
+      hash_()
   {
-    Stream::Error es;
-    es << FUNC << ": num_shown must be > 0";
-    throw InvalidArgValue(es);
+    calc_hash_();
   }
-  if (!position_)
+
+  bool
+  CreativeStatInnerKey_V_3_3::operator==(const CreativeStatInnerKey_V_3_3& rhs) const
   {
-    Stream::Error es;
-    es << FUNC << ": position must be > 0";
-    throw InvalidArgValue(es);
+    return this == &rhs ||
+      (colo_id_ == rhs.colo_id_ &&
+        publisher_account_id_ == rhs.publisher_account_id_ &&
+        tag_id_ == rhs.tag_id_ &&
+        size_id_ == rhs.size_id_ &&
+        country_code_.get() == rhs.country_code_.get() &&
+        adv_account_id_ == rhs.adv_account_id_ &&
+        campaign_id_ == rhs.campaign_id_ &&
+        ccg_id_ == rhs.ccg_id_ &&
+        cc_id_ == rhs.cc_id_ &&
+        ccg_rate_id_ == rhs.ccg_rate_id_ &&
+        colo_rate_id_ == rhs.colo_rate_id_ &&
+        site_rate_id_ == rhs.site_rate_id_ &&
+        currency_exchange_id_ == rhs.currency_exchange_id_ &&
+        delivery_threshold_ == rhs.delivery_threshold_ &&
+        num_shown_ == rhs.num_shown_ &&
+        position_ == rhs.position_ &&
+        test_ == rhs.test_ &&
+        fraud_ == rhs.fraud_ &&
+        walled_garden_ == rhs.walled_garden_ &&
+        user_status_ == rhs.user_status_ &&
+        geo_channel_id_ == rhs.geo_channel_id_ &&
+        device_channel_id_ == rhs.device_channel_id_ &&
+        ctr_reset_id_ == rhs.ctr_reset_id_ && hid_profile_ == rhs.hid_profile_);
   }
-  if (!is_valid_user_status(user_status_))
+
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::colo_id() const
   {
-    Stream::Error es;
-    es << FUNC << ": user_status_ has invalid value '" << user_status_ << '\'';
-    throw ConstraintViolation(es);
+    return colo_id_;
   }
-  if (!delivery_threshold_is_valid_())
+
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::publisher_account_id() const
   {
-    Stream::Error es;
-    es << FUNC << ": delivery_threshold_ has invalid value '"
-      << delivery_threshold_ << '\'';
-    throw ConstraintViolation(es);
+    return publisher_account_id_;
   }
-}
 
-void
-CreativeStatInnerKey_V_3_3::calc_hash_()
-{
-  Generics::Murmur64Hash hasher(hash_);
-  hash_add(hasher, colo_id_);
-  hash_add(hasher, publisher_account_id_);
-  hash_add(hasher, tag_id_);
-  size_id_.hash_add(hasher);
-  hash_add(hasher, adv_account_id_);
-  hash_add(hasher, campaign_id_);
-  hash_add(hasher, ccg_id_);
-  hash_add(hasher, cc_id_);
-  hash_add(hasher, ccg_rate_id_);
-  hash_add(hasher, colo_rate_id_);
-  hash_add(hasher, site_rate_id_);
-  hash_add(hasher, currency_exchange_id_);
-  hash_add(hasher, delivery_threshold_);
-  hash_add(hasher, ctr_reset_id_);
-  geo_channel_id_.hash_add(hasher);
-  device_channel_id_.hash_add(hasher);
-  hash_add(hasher, country_code_.get());
-  hash_add(hasher, num_shown_);
-  hash_add(hasher, position_);
-  hash_add(hasher, test_);
-  hash_add(hasher, fraud_);
-  hash_add(hasher, walled_garden_);
-  hash_add(hasher, user_status_);
-  hash_add(hasher, hid_profile_);
-}
-
-bool
-CreativeStatInnerKey_V_3_3::delivery_threshold_is_valid_() const
-{
-  return delivery_threshold_ >= DeliveryThresholdT::ZERO &&
-    delivery_threshold_ <= max_delivery_threshold_value_;
-}
-
-CreativeStatInnerKey::CreativeStatInnerKey()
-  : colo_id_(),
-    publisher_account_id_(),
-    tag_id_(),
-    size_id_(),
-    country_code_(),
-    adv_account_id_(),
-    campaign_id_(),
-    ccg_id_(),
-    cc_id_(),
-    ccg_rate_id_(),
-    colo_rate_id_(),
-    site_rate_id_(),
-    currency_exchange_id_(),
-    delivery_threshold_(DeliveryThresholdT::ZERO),
-    num_shown_(),
-    position_(),
-    test_(),
-    fraud_(),
-    walled_garden_(),
-    user_status_(),
-    geo_channel_id_(),
-    device_channel_id_(),
-    ctr_reset_id_(),
-    hid_profile_(),
-    viewability_(),
-    hash_()
-{}
-
-CreativeStatInnerKey::CreativeStatInnerKey(
-  std::uint32_t colo_id,
-  std::uint32_t publisher_account_id,
-  std::uint32_t tag_id,
-  const OptionalUInt32& size_id,
-  const std::string& country_code,
-  std::uint32_t adv_account_id,
-  std::uint32_t campaign_id,
-  std::uint32_t ccg_id,
-  std::uint32_t cc_id,
-  std::uint32_t ccg_rate_id,
-  std::uint32_t colo_rate_id,
-  std::uint32_t site_rate_id,
-  std::uint32_t currency_exchange_id,
-  const DeliveryThresholdT& delivery_threshold,
-  unsigned short num_shown,
-  unsigned short position,
-  bool test,
-  bool fraud,
-  bool walled_garden,
-  char user_status,
-  const GeoChannelIdOptional& geo_channel_id,
-  const DeviceChannelIdOptional& device_channel_id,
-  std::uint32_t ctr_reset_id,
-  bool hid_profile,
-  long viewability)
-  /*throw(eh::Exception)*/
-  : colo_id_(colo_id),
-    publisher_account_id_(publisher_account_id),
-    tag_id_(tag_id),
-    size_id_(size_id),
-    country_code_(country_code),
-    adv_account_id_(adv_account_id),
-    campaign_id_(campaign_id),
-    ccg_id_(ccg_id),
-    cc_id_(cc_id),
-    ccg_rate_id_(ccg_rate_id),
-    colo_rate_id_(colo_rate_id),
-    site_rate_id_(site_rate_id),
-    currency_exchange_id_(currency_exchange_id),
-    delivery_threshold_(delivery_threshold),
-    num_shown_(num_shown),
-    position_(position),
-    test_(test),
-    fraud_(fraud),
-    walled_garden_(walled_garden),
-    user_status_(user_status),
-    geo_channel_id_(geo_channel_id),
-    device_channel_id_(device_channel_id),
-    ctr_reset_id_(ctr_reset_id),
-    hid_profile_(hid_profile),
-    viewability_(viewability),
-    hash_()
-{
-  calc_hash_();
-}
-
-CreativeStatInnerKey::CreativeStatInnerKey(
-  const CreativeStatInnerKey_V_3_3& key)
-  : colo_id_(key.colo_id()),
-    publisher_account_id_(key.publisher_account_id()),
-    tag_id_(key.tag_id()),
-    size_id_(key.size_id()),
-    country_code_(key.country_code()),
-    adv_account_id_(key.adv_account_id()),
-    campaign_id_(key.campaign_id()),
-    ccg_id_(key.ccg_id()),
-    cc_id_(key.cc_id()),
-    ccg_rate_id_(key.ccg_rate_id()),
-    colo_rate_id_(key.colo_rate_id()),
-    site_rate_id_(key.site_rate_id()),
-    currency_exchange_id_(key.currency_exchange_id()),
-    delivery_threshold_(key.delivery_threshold()),
-    num_shown_(key.num_shown()),
-    position_(key.position()),
-    test_(key.test()),
-    fraud_(key.fraud()),
-    walled_garden_(key.walled_garden()),
-    user_status_(key.user_status()),
-    geo_channel_id_(key.geo_channel_id()),
-    device_channel_id_(key.device_channel_id()),
-    ctr_reset_id_(key.ctr_reset_id()),
-    hid_profile_(key.hid_profile()),
-    viewability_(-1),
-    hash_()
-{
-  calc_hash_();
-}
-
-bool
-CreativeStatInnerKey::operator==(const CreativeStatInnerKey& rhs) const
-{
-  return this == &rhs ||
-    (colo_id_ == rhs.colo_id_ &&
-      publisher_account_id_ == rhs.publisher_account_id_ &&
-      tag_id_ == rhs.tag_id_ &&
-      size_id_ == rhs.size_id_ &&
-      country_code_.get() == rhs.country_code_.get() &&
-      adv_account_id_ == rhs.adv_account_id_ &&
-      campaign_id_ == rhs.campaign_id_ &&
-      ccg_id_ == rhs.ccg_id_ &&
-      cc_id_ == rhs.cc_id_ &&
-      ccg_rate_id_ == rhs.ccg_rate_id_ &&
-      colo_rate_id_ == rhs.colo_rate_id_ &&
-      site_rate_id_ == rhs.site_rate_id_ &&
-      currency_exchange_id_ == rhs.currency_exchange_id_ &&
-      delivery_threshold_ == rhs.delivery_threshold_ &&
-      num_shown_ == rhs.num_shown_ &&
-      position_ == rhs.position_ &&
-      test_ == rhs.test_ &&
-      fraud_ == rhs.fraud_ &&
-      walled_garden_ == rhs.walled_garden_ &&
-      user_status_ == rhs.user_status_ &&
-      geo_channel_id_ == rhs.geo_channel_id_ &&
-      device_channel_id_ == rhs.device_channel_id_ &&
-      ctr_reset_id_ == rhs.ctr_reset_id_ &&
-      hid_profile_ == rhs.hid_profile_ &&
-      viewability_ == rhs.viewability_);
-}
-
-std::uint32_t
-CreativeStatInnerKey::colo_id() const
-{
-  return colo_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::publisher_account_id() const
-{
-  return publisher_account_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::tag_id() const
-{
-  return tag_id_;
-}
-
-const OptionalUInt32&
-CreativeStatInnerKey::size_id() const
-{
-  return size_id_;
-}
-
-const std::string&
-CreativeStatInnerKey::country_code() const
-{
-  return country_code_.get();
-}
-
-std::uint32_t
-CreativeStatInnerKey::adv_account_id() const
-{
-  return adv_account_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::campaign_id() const
-{
-  return campaign_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::ccg_id() const
-{
-  return ccg_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::cc_id() const
-{
-  return cc_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::ccg_rate_id() const
-{
-  return ccg_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::colo_rate_id() const
-{
-  return colo_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::site_rate_id() const
-{
-  return site_rate_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::currency_exchange_id() const
-{
-  return currency_exchange_id_;
-}
-
-const CreativeStatInnerKey::DeliveryThresholdT&
-CreativeStatInnerKey::delivery_threshold() const
-{
-  return delivery_threshold_;
-}
-
-unsigned short
-CreativeStatInnerKey::num_shown() const
-{
-  return num_shown_;
-}
-
-unsigned short
-CreativeStatInnerKey::position() const
-{
-  return position_;
-}
-
-bool
-CreativeStatInnerKey::test() const
-{
-  return test_;
-}
-
-bool
-CreativeStatInnerKey::fraud() const
-{
-  return fraud_;
-}
-
-bool
-CreativeStatInnerKey::walled_garden() const
-{
-  return walled_garden_;
-}
-
-char
-CreativeStatInnerKey::user_status() const
-{
-  return user_status_;
-}
-
-const CreativeStatInnerKey::GeoChannelIdOptional&
-CreativeStatInnerKey::geo_channel_id() const
-{
-  return geo_channel_id_;
-}
-
-const CreativeStatInnerKey::DeviceChannelIdOptional&
-CreativeStatInnerKey::device_channel_id() const
-{
-  return device_channel_id_;
-}
-
-std::uint32_t
-CreativeStatInnerKey::ctr_reset_id() const
-{
-  return ctr_reset_id_;
-}
-
-bool
-CreativeStatInnerKey::hid_profile() const
-{
-  return hid_profile_;
-}
-
-long
-CreativeStatInnerKey::viewability() const
-{
-  return viewability_;
-}
-
-size_t
-CreativeStatInnerKey::hash() const
-{
-  return hash_;
-}
-
-void
-CreativeStatInnerKey::invariant() const
-  /*throw(eh::Exception)*/
-{
-  static const char FUNC[] = "CreativeStatInnerKey::invariant()";
-  if (!num_shown_)
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::tag_id() const
   {
-    Stream::Error es;
-    es << FUNC << ": num_shown must be > 0";
-    throw InvalidArgValue(es);
+    return tag_id_;
   }
-  if (!position_)
+
+  const OptionalUInt32&
+  CreativeStatInnerKey_V_3_3::size_id() const
   {
-    Stream::Error es;
-    es << FUNC << ": position must be > 0";
-    throw InvalidArgValue(es);
+    return size_id_;
   }
-  if (!is_valid_user_status(user_status_))
+
+  const std::string&
+  CreativeStatInnerKey_V_3_3::country_code() const
   {
-    Stream::Error es;
-    es << FUNC << ": user_status_ has invalid value '" << user_status_ << '\'';
-    throw ConstraintViolation(es);
+    return country_code_.get();
   }
-  if (!delivery_threshold_is_valid_())
+
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::adv_account_id() const
   {
-    Stream::Error es;
-    es << FUNC << ": delivery_threshold_ has invalid value '"
-      << delivery_threshold_ << '\'';
-    throw ConstraintViolation(es);
+    return adv_account_id_;
   }
-}
 
-void
-CreativeStatInnerKey::calc_hash_()
-{
-  Generics::Murmur64Hash hasher(hash_);
-  hash_add(hasher, colo_id_);
-  hash_add(hasher, publisher_account_id_);
-  hash_add(hasher, tag_id_);
-  size_id_.hash_add(hasher);
-  hash_add(hasher, adv_account_id_);
-  hash_add(hasher, campaign_id_);
-  hash_add(hasher, ccg_id_);
-  hash_add(hasher, cc_id_);
-  hash_add(hasher, ccg_rate_id_);
-  hash_add(hasher, colo_rate_id_);
-  hash_add(hasher, site_rate_id_);
-  hash_add(hasher, currency_exchange_id_);
-  hash_add(hasher, delivery_threshold_);
-  hash_add(hasher, ctr_reset_id_);
-  geo_channel_id_.hash_add(hasher);
-  device_channel_id_.hash_add(hasher);
-  hash_add(hasher, country_code_.get());
-  hash_add(hasher, num_shown_);
-  hash_add(hasher, position_);
-  hash_add(hasher, test_);
-  hash_add(hasher, fraud_);
-  hash_add(hasher, walled_garden_);
-  hash_add(hasher, user_status_);
-  hash_add(hasher, hid_profile_);
-  hash_add(hasher, viewability_);
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::campaign_id() const
+  {
+    return campaign_id_;
+  }
 
-bool
-CreativeStatInnerKey::delivery_threshold_is_valid_() const
-{
-  return delivery_threshold_ >= DeliveryThresholdT::ZERO &&
-    delivery_threshold_ <= max_delivery_threshold_value_;
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::ccg_id() const
+  {
+    return ccg_id_;
+  }
 
-CreativeStatInnerData::CreativeStatInnerData()
-  : unverified_imps_(),
-    imps_(),
-    clicks_(),
-    actions_(),
-    adv_amount_(FixedNum::ZERO),
-    pub_amount_(FixedNum::ZERO),
-    isp_amount_(FixedNum::ZERO),
-    adv_comm_amount_(FixedNum::ZERO),
-    pub_comm_amount_(FixedNum::ZERO),
-    adv_payable_comm_amount_(FixedNum::ZERO),
-    pub_advcurrency_amount_(FixedNum::ZERO),
-    isp_advcurrency_amount_(FixedNum::ZERO)
-{}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::cc_id() const
+  {
+    return cc_id_;
+  }
 
-CreativeStatInnerData::CreativeStatInnerData(
-  long unverified_imps,
-  long imps,
-  long clicks,
-  long actions,
-  const FixedNum& adv_amount,
-  const FixedNum& pub_amount,
-  const FixedNum& isp_amount,
-  const FixedNum& adv_comm_amount,
-  const FixedNum& pub_comm_amount,
-  const FixedNum& adv_payable_comm_amount,
-  const FixedNum& pub_advcurrency_amount,
-  const FixedNum& isp_advcurrency_amount)
-  : unverified_imps_(unverified_imps),
-    imps_(imps),
-    clicks_(clicks),
-    actions_(actions),
-    adv_amount_(adv_amount),
-    pub_amount_(pub_amount),
-    isp_amount_(isp_amount),
-    adv_comm_amount_(adv_comm_amount),
-    pub_comm_amount_(pub_comm_amount),
-    adv_payable_comm_amount_(adv_payable_comm_amount),
-    pub_advcurrency_amount_(pub_advcurrency_amount),
-    isp_advcurrency_amount_(isp_advcurrency_amount)
-{}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::ccg_rate_id() const
+  {
+    return ccg_rate_id_;
+  }
 
-bool
-CreativeStatInnerData::operator==(const CreativeStatInnerData& rhs) const
-{
-  return this == &rhs ||
-    (unverified_imps_ == rhs.unverified_imps_ &&
-      imps_ == rhs.imps_ &&
-      clicks_ == rhs.clicks_ &&
-      actions_ == rhs.actions_ &&
-      adv_amount_ == rhs.adv_amount_ &&
-      pub_amount_ == rhs.pub_amount_ &&
-      isp_amount_ == rhs.isp_amount_ &&
-      adv_comm_amount_ == rhs.adv_comm_amount_ &&
-      pub_comm_amount_ == rhs.pub_comm_amount_ &&
-      adv_payable_comm_amount_ == rhs.adv_payable_comm_amount_ &&
-      pub_advcurrency_amount_ == rhs.pub_advcurrency_amount_ &&
-      isp_advcurrency_amount_ == rhs.isp_advcurrency_amount_);
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::colo_rate_id() const
+  {
+    return colo_rate_id_;
+  }
 
-CreativeStatInnerData&
-CreativeStatInnerData::operator+=(const CreativeStatInnerData& rhs)
-{
-  unverified_imps_ += rhs.unverified_imps_;
-  imps_ += rhs.imps_;
-  clicks_ += rhs.clicks_;
-  actions_ += rhs.actions_;
-  adv_amount_ += rhs.adv_amount_;
-  pub_amount_ += rhs.pub_amount_;
-  isp_amount_ += rhs.isp_amount_;
-  adv_comm_amount_ += rhs.adv_comm_amount_;
-  pub_comm_amount_ += rhs.pub_comm_amount_;
-  adv_payable_comm_amount_ += rhs.adv_payable_comm_amount_;
-  pub_advcurrency_amount_ += rhs.pub_advcurrency_amount_;
-  isp_advcurrency_amount_ += rhs.isp_advcurrency_amount_;
-  return *this;
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::site_rate_id() const
+  {
+    return site_rate_id_;
+  }
 
-long
-CreativeStatInnerData::unverified_imps() const
-{
-  return unverified_imps_;
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::currency_exchange_id() const
+  {
+    return currency_exchange_id_;
+  }
 
-long
-CreativeStatInnerData::imps() const
-{
-  return imps_;
-}
+  const CreativeStatInnerKey_V_3_3::DeliveryThresholdT&
+  CreativeStatInnerKey_V_3_3::delivery_threshold() const
+  {
+    return delivery_threshold_;
+  }
 
-long
-CreativeStatInnerData::clicks() const
-{
-  return clicks_;
-}
+  unsigned short
+  CreativeStatInnerKey_V_3_3::num_shown() const
+  {
+    return num_shown_;
+  }
 
-long
-CreativeStatInnerData::actions() const
-{
-  return actions_;
-}
+  unsigned short
+  CreativeStatInnerKey_V_3_3::position() const
+  {
+    return position_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::adv_amount() const
-{
-  return adv_amount_;
-}
+  bool
+  CreativeStatInnerKey_V_3_3::test() const
+  {
+    return test_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::pub_amount() const
-{
-  return pub_amount_;
-}
+  bool
+  CreativeStatInnerKey_V_3_3::fraud() const
+  {
+    return fraud_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::isp_amount() const
-{
-  return isp_amount_;
-}
+  bool
+  CreativeStatInnerKey_V_3_3::walled_garden() const
+  {
+    return walled_garden_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::adv_comm_amount() const
-{
-  return adv_comm_amount_;
-}
+  char
+  CreativeStatInnerKey_V_3_3::user_status() const
+  {
+    return user_status_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::pub_comm_amount() const
-{
-  return pub_comm_amount_;
-}
+  const CreativeStatInnerKey_V_3_3::GeoChannelIdOptional&
+  CreativeStatInnerKey_V_3_3::geo_channel_id() const
+  {
+    return geo_channel_id_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::adv_payable_comm_amount() const
-{
-  return adv_payable_comm_amount_;
-}
+  const CreativeStatInnerKey_V_3_3::DeviceChannelIdOptional&
+  CreativeStatInnerKey_V_3_3::device_channel_id() const
+  {
+    return device_channel_id_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::pub_advcurrency_amount() const
-{
-  return pub_advcurrency_amount_;
-}
+  std::uint32_t
+  CreativeStatInnerKey_V_3_3::ctr_reset_id() const
+  {
+    return ctr_reset_id_;
+  }
 
-const CreativeStatInnerData::FixedNum&
-CreativeStatInnerData::isp_advcurrency_amount() const
-{
-  return isp_advcurrency_amount_;
-}
+  bool
+  CreativeStatInnerKey_V_3_3::hid_profile() const
+  {
+    return hid_profile_;
+  }
 
-CreativeStatKey::CreativeStatKey()
-{}
+  size_t
+  CreativeStatInnerKey_V_3_3::hash() const
+  {
+    return hash_;
+  }
 
-CreativeStatKey::CreativeStatKey(
-  const DayHourTimestamp& sdate,
-  const DayHourTimestamp& adv_sdate)
-  : sdate_(sdate),
-    adv_sdate_(adv_sdate),
-    hash_()
-{
-  calc_hash_();
-}
+  void
+  CreativeStatInnerKey_V_3_3::invariant() const
+    /*throw(eh::Exception)*/
+  {
+    static const char FUNC[] = "CreativeStatInnerKey_V_3_3::invariant()";
+    if (!num_shown_)
+    {
+      Stream::Error es;
+      es << FUNC << ": num_shown must be > 0";
+      throw InvalidArgValue(es);
+    }
 
-CreativeStatKey::CreativeStatKey(const DayHourTimestamp& timestamp)
-  : sdate_(timestamp),
-    adv_sdate_(sdate_),
-    hash_()
-{
-  calc_hash_();
-}
+    if (!position_)
+    {
+      Stream::Error es;
+      es << FUNC << ": position must be > 0";
+      throw InvalidArgValue(es);
+    }
 
-bool
-CreativeStatKey::operator==(const CreativeStatKey& rhs) const
-{
-  return this == &rhs ||
-    (sdate_ == rhs.sdate_ && adv_sdate_ == rhs.adv_sdate_);
-}
+    if (!is_valid_user_status(user_status_))
+    {
+      Stream::Error es;
+      es << FUNC << ": user_status_ has invalid value '" << user_status_ << '\'';
+      throw ConstraintViolation(es);
+    }
 
-const DayHourTimestamp&
-CreativeStatKey::sdate() const
-{
-  return sdate_;
-}
+    if (!delivery_threshold_is_valid_())
+    {
+      Stream::Error es;
+      es << FUNC << ": delivery_threshold_ has invalid value '" << delivery_threshold_ << '\'';
+      throw ConstraintViolation(es);
+    }
+  }
 
-const DayHourTimestamp&
-CreativeStatKey::adv_sdate() const
-{
-  return adv_sdate_;
-}
+  void
+  CreativeStatInnerKey_V_3_3::calc_hash_()
+  {
+    Generics::Murmur64Hash hasher(hash_);
+    hash_add(hasher, colo_id_);
+    hash_add(hasher, publisher_account_id_);
+    hash_add(hasher, tag_id_);
+    size_id_.hash_add(hasher);
+    hash_add(hasher, adv_account_id_);
+    hash_add(hasher, campaign_id_);
+    hash_add(hasher, ccg_id_);
+    hash_add(hasher, cc_id_);
+    hash_add(hasher, ccg_rate_id_);
+    hash_add(hasher, colo_rate_id_);
+    hash_add(hasher, site_rate_id_);
+    hash_add(hasher, currency_exchange_id_);
+    hash_add(hasher, delivery_threshold_);
+    hash_add(hasher, ctr_reset_id_);
+    geo_channel_id_.hash_add(hasher);
+    device_channel_id_.hash_add(hasher);
+    hash_add(hasher, country_code_.get());
+    hash_add(hasher, num_shown_);
+    hash_add(hasher, position_);
+    hash_add(hasher, test_);
+    hash_add(hasher, fraud_);
+    hash_add(hasher, walled_garden_);
+    hash_add(hasher, user_status_);
+    hash_add(hasher, hid_profile_);
+  }
 
-size_t
-CreativeStatKey::hash() const
-{
-  return hash_;
-}
+  bool
+  CreativeStatInnerKey_V_3_3::delivery_threshold_is_valid_() const
+  {
+    return delivery_threshold_ >= DeliveryThresholdT::ZERO &&
+      delivery_threshold_ <= max_delivery_threshold_value_;
+  }
 
-void
-CreativeStatKey::calc_hash_()
-{
-  Generics::Murmur64Hash hasher(hash_);
-  sdate_.hash_add(hasher);
-  adv_sdate_.hash_add(hasher);
-}
+  CreativeStatInnerKey::CreativeStatInnerKey()
+    : colo_id_(),
+      publisher_account_id_(),
+      tag_id_(),
+      size_id_(),
+      country_code_(),
+      adv_account_id_(),
+      campaign_id_(),
+      ccg_id_(),
+      cc_id_(),
+      ccg_rate_id_(),
+      colo_rate_id_(),
+      site_rate_id_(),
+      currency_exchange_id_(),
+      delivery_threshold_(DeliveryThresholdT::ZERO),
+      num_shown_(),
+      position_(),
+      test_(),
+      fraud_(),
+      walled_garden_(),
+      user_status_(),
+      geo_channel_id_(),
+      device_channel_id_(),
+      ctr_reset_id_(),
+      hid_profile_(),
+      viewability_(),
+      hash_()
+  {}
 
-std::istream&
-operator>>(std::istream& is, CreativeStatKey& key)
-{
-  is >> key.sdate_;
-  read_eol(is);
-  is >> key.adv_sdate_;
-  key.calc_hash_();
-  return is;
-}
+  CreativeStatInnerKey::CreativeStatInnerKey(
+    std::uint32_t colo_id,
+    std::uint32_t publisher_account_id,
+    std::uint32_t tag_id,
+    const OptionalUInt32& size_id,
+    const std::string& country_code,
+    std::uint32_t adv_account_id,
+    std::uint32_t campaign_id,
+    std::uint32_t ccg_id,
+    std::uint32_t cc_id,
+    std::uint32_t ccg_rate_id,
+    std::uint32_t colo_rate_id,
+    std::uint32_t site_rate_id,
+    std::uint32_t currency_exchange_id,
+    const DeliveryThresholdT& delivery_threshold,
+    unsigned short num_shown,
+    unsigned short position,
+    bool test,
+    bool fraud,
+    bool walled_garden,
+    char user_status,
+    const GeoChannelIdOptional& geo_channel_id,
+    const DeviceChannelIdOptional& device_channel_id,
+    std::uint32_t ctr_reset_id,
+    bool hid_profile,
+    long viewability)
+    /*throw(eh::Exception)*/
+    : colo_id_(colo_id),
+      publisher_account_id_(publisher_account_id),
+      tag_id_(tag_id),
+      size_id_(size_id),
+      country_code_(country_code),
+      adv_account_id_(adv_account_id),
+      campaign_id_(campaign_id),
+      ccg_id_(ccg_id),
+      cc_id_(cc_id),
+      ccg_rate_id_(ccg_rate_id),
+      colo_rate_id_(colo_rate_id),
+      site_rate_id_(site_rate_id),
+      currency_exchange_id_(currency_exchange_id),
+      delivery_threshold_(delivery_threshold),
+      num_shown_(num_shown),
+      position_(position),
+      test_(test),
+      fraud_(fraud),
+      walled_garden_(walled_garden),
+      user_status_(user_status),
+      geo_channel_id_(geo_channel_id),
+      device_channel_id_(device_channel_id),
+      ctr_reset_id_(ctr_reset_id),
+      hid_profile_(hid_profile),
+      viewability_(viewability),
+      hash_()
+  {
+    calc_hash_();
+  }
 
-std::ostream&
-operator<<(std::ostream& os, const CreativeStatKey& key)
-  /*throw(eh::Exception)*/
-{
-  os << key.sdate_ << '\n' << key.adv_sdate_;
-  return os;
-}
+  CreativeStatInnerKey::CreativeStatInnerKey(const CreativeStatInnerKey_V_3_3& key)
+    : colo_id_(key.colo_id()),
+      publisher_account_id_(key.publisher_account_id()),
+      tag_id_(key.tag_id()),
+      size_id_(key.size_id()),
+      country_code_(key.country_code()),
+      adv_account_id_(key.adv_account_id()),
+      campaign_id_(key.campaign_id()),
+      ccg_id_(key.ccg_id()),
+      cc_id_(key.cc_id()),
+      ccg_rate_id_(key.ccg_rate_id()),
+      colo_rate_id_(key.colo_rate_id()),
+      site_rate_id_(key.site_rate_id()),
+      currency_exchange_id_(key.currency_exchange_id()),
+      delivery_threshold_(key.delivery_threshold()),
+      num_shown_(key.num_shown()),
+      position_(key.position()),
+      test_(key.test()),
+      fraud_(key.fraud()),
+      walled_garden_(key.walled_garden()),
+      user_status_(key.user_status()),
+      geo_channel_id_(key.geo_channel_id()),
+      device_channel_id_(key.device_channel_id()),
+      ctr_reset_id_(key.ctr_reset_id()),
+      hid_profile_(key.hid_profile()),
+      viewability_(-1),
+      hash_()
+  {
+    calc_hash_();
+  }
 
-BufferWriter&
-operator<<(BufferWriter& out, const CreativeStatKey& key)
-  /*throw(eh::Exception)*/
-{
-  out << key.sdate_ << '\n' << key.adv_sdate_;
-  return out;
-}
+  bool
+  CreativeStatInnerKey::operator==(const CreativeStatInnerKey& rhs) const
+  {
+    return this == &rhs ||
+      (colo_id_ == rhs.colo_id_ &&
+        publisher_account_id_ == rhs.publisher_account_id_ &&
+        tag_id_ == rhs.tag_id_ &&
+        size_id_ == rhs.size_id_ &&
+        country_code_.get() == rhs.country_code_.get() &&
+        adv_account_id_ == rhs.adv_account_id_ &&
+        campaign_id_ == rhs.campaign_id_ &&
+        ccg_id_ == rhs.ccg_id_ &&
+        cc_id_ == rhs.cc_id_ &&
+        ccg_rate_id_ == rhs.ccg_rate_id_ &&
+        colo_rate_id_ == rhs.colo_rate_id_ &&
+        site_rate_id_ == rhs.site_rate_id_ &&
+        currency_exchange_id_ == rhs.currency_exchange_id_ &&
+        delivery_threshold_ == rhs.delivery_threshold_ &&
+        num_shown_ == rhs.num_shown_ &&
+        position_ == rhs.position_ &&
+        test_ == rhs.test_ &&
+        fraud_ == rhs.fraud_ &&
+        walled_garden_ == rhs.walled_garden_ &&
+        user_status_ == rhs.user_status_ &&
+        geo_channel_id_ == rhs.geo_channel_id_ &&
+        device_channel_id_ == rhs.device_channel_id_ &&
+        ctr_reset_id_ == rhs.ctr_reset_id_ &&
+        hid_profile_ == rhs.hid_profile_ && viewability_ == rhs.viewability_);
+  }
 
-FixedBufStream<TabCategory>&
-operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerKey& key)
-{
-  TokenizerInputArchive<> ia(is);
-  ia >> key;
-  key.calc_hash_();
-  return is;
-}
+  std::uint32_t
+  CreativeStatInnerKey::colo_id() const
+  {
+    return colo_id_;
+  }
 
-BufferWriter&
-operator<<(BufferWriter& out, const CreativeStatInnerKey& key)
-  /*throw(eh::Exception)*/
-{
-  BufferTabOutputArchive archive(out);
-  archive << key;
-  return out;
-}
+  std::uint32_t
+  CreativeStatInnerKey::publisher_account_id() const
+  {
+    return publisher_account_id_;
+  }
 
-FixedBufStream<TabCategory>&
-operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerData& data)
-  /*throw(eh::Exception)*/
-{
-  TokenizerInputArchive<Aux_::NoInvariants> ia(is);
-  ia >> data;
-  return is;
-}
+  std::uint32_t
+  CreativeStatInnerKey::tag_id() const
+  {
+    return tag_id_;
+  }
 
-std::ostream&
-operator<<(std::ostream& os, const CreativeStatInnerData& data)
-  /*throw(eh::Exception)*/
-{
-  SimpleTabOutputArchive oa(os);
-  oa << data;
-  return os;
-}
+  const OptionalUInt32&
+  CreativeStatInnerKey::size_id() const
+  {
+    return size_id_;
+  }
 
-BufferWriter&
-operator<<(BufferWriter& out, const CreativeStatInnerData& data)
-  /*throw(eh::Exception)*/
-{
-  SimpleBufferTabOutputArchive archive(out);
-  archive << data;
-  return out;
-}
+  const std::string&
+  CreativeStatInnerKey::country_code() const
+  {
+    return country_code_.get();
+  }
 
-FixedBufStream<TabCategory>&
-operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerKey_V_3_3& key)
-{
-  TokenizerInputArchive<> ia(is);
-  ia >> key;
-  key.calc_hash_();
-  return is;
-}
+  std::uint32_t
+  CreativeStatInnerKey::adv_account_id() const
+  {
+    return adv_account_id_;
+  }
 
-} // namespace LogProcessing
-} // namespace AdServer
+  std::uint32_t
+  CreativeStatInnerKey::campaign_id() const
+  {
+    return campaign_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::ccg_id() const
+  {
+    return ccg_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::cc_id() const
+  {
+    return cc_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::ccg_rate_id() const
+  {
+    return ccg_rate_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::colo_rate_id() const
+  {
+    return colo_rate_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::site_rate_id() const
+  {
+    return site_rate_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::currency_exchange_id() const
+  {
+    return currency_exchange_id_;
+  }
+
+  const CreativeStatInnerKey::DeliveryThresholdT&
+  CreativeStatInnerKey::delivery_threshold() const
+  {
+    return delivery_threshold_;
+  }
+
+  unsigned short
+  CreativeStatInnerKey::num_shown() const
+  {
+    return num_shown_;
+  }
+
+  unsigned short
+  CreativeStatInnerKey::position() const
+  {
+    return position_;
+  }
+
+  bool
+  CreativeStatInnerKey::test() const
+  {
+    return test_;
+  }
+
+  bool
+  CreativeStatInnerKey::fraud() const
+  {
+    return fraud_;
+  }
+
+  bool
+  CreativeStatInnerKey::walled_garden() const
+  {
+    return walled_garden_;
+  }
+
+  char
+  CreativeStatInnerKey::user_status() const
+  {
+    return user_status_;
+  }
+
+  const CreativeStatInnerKey::GeoChannelIdOptional&
+  CreativeStatInnerKey::geo_channel_id() const
+  {
+    return geo_channel_id_;
+  }
+
+  const CreativeStatInnerKey::DeviceChannelIdOptional&
+  CreativeStatInnerKey::device_channel_id() const
+  {
+    return device_channel_id_;
+  }
+
+  std::uint32_t
+  CreativeStatInnerKey::ctr_reset_id() const
+  {
+    return ctr_reset_id_;
+  }
+
+  bool
+  CreativeStatInnerKey::hid_profile() const
+  {
+    return hid_profile_;
+  }
+
+  long
+  CreativeStatInnerKey::viewability() const
+  {
+    return viewability_;
+  }
+
+  size_t
+  CreativeStatInnerKey::hash() const
+  {
+    return hash_;
+  }
+
+  void
+  CreativeStatInnerKey::invariant() const
+    /*throw(eh::Exception)*/
+  {
+    static const char FUNC[] = "CreativeStatInnerKey::invariant()";
+    if (!num_shown_)
+    {
+      Stream::Error es;
+      es << FUNC << ": num_shown must be > 0";
+      throw InvalidArgValue(es);
+    }
+
+    if (!position_)
+    {
+      Stream::Error es;
+      es << FUNC << ": position must be > 0";
+      throw InvalidArgValue(es);
+    }
+
+    if (!is_valid_user_status(user_status_))
+    {
+      Stream::Error es;
+      es << FUNC << ": user_status_ has invalid value '" << user_status_ << '\'';
+      throw ConstraintViolation(es);
+    }
+
+    if (!delivery_threshold_is_valid_())
+    {
+      Stream::Error es;
+      es << FUNC << ": delivery_threshold_ has invalid value '" << delivery_threshold_ << '\'';
+      throw ConstraintViolation(es);
+    }
+  }
+
+  void
+  CreativeStatInnerKey::calc_hash_()
+  {
+    Generics::Murmur64Hash hasher(hash_);
+    hash_add(hasher, colo_id_);
+    hash_add(hasher, publisher_account_id_);
+    hash_add(hasher, tag_id_);
+    size_id_.hash_add(hasher);
+    hash_add(hasher, adv_account_id_);
+    hash_add(hasher, campaign_id_);
+    hash_add(hasher, ccg_id_);
+    hash_add(hasher, cc_id_);
+    hash_add(hasher, ccg_rate_id_);
+    hash_add(hasher, colo_rate_id_);
+    hash_add(hasher, site_rate_id_);
+    hash_add(hasher, currency_exchange_id_);
+    hash_add(hasher, delivery_threshold_);
+    hash_add(hasher, ctr_reset_id_);
+    geo_channel_id_.hash_add(hasher);
+    device_channel_id_.hash_add(hasher);
+    hash_add(hasher, country_code_.get());
+    hash_add(hasher, num_shown_);
+    hash_add(hasher, position_);
+    hash_add(hasher, test_);
+    hash_add(hasher, fraud_);
+    hash_add(hasher, walled_garden_);
+    hash_add(hasher, user_status_);
+    hash_add(hasher, hid_profile_);
+    hash_add(hasher, viewability_);
+  }
+
+  bool
+  CreativeStatInnerKey::delivery_threshold_is_valid_() const
+  {
+    return delivery_threshold_ >= DeliveryThresholdT::ZERO &&
+      delivery_threshold_ <= max_delivery_threshold_value_;
+  }
+
+  CreativeStatInnerData::CreativeStatInnerData()
+    : unverified_imps_(),
+      imps_(),
+      clicks_(),
+      actions_(),
+      adv_amount_(FixedNum::ZERO),
+      pub_amount_(FixedNum::ZERO),
+      isp_amount_(FixedNum::ZERO),
+      adv_comm_amount_(FixedNum::ZERO),
+      pub_comm_amount_(FixedNum::ZERO),
+      adv_payable_comm_amount_(FixedNum::ZERO),
+      pub_advcurrency_amount_(FixedNum::ZERO),
+      isp_advcurrency_amount_(FixedNum::ZERO)
+  {}
+
+  CreativeStatInnerData::CreativeStatInnerData(
+    long unverified_imps,
+    long imps,
+    long clicks,
+    long actions,
+    const FixedNum& adv_amount,
+    const FixedNum& pub_amount,
+    const FixedNum& isp_amount,
+    const FixedNum& adv_comm_amount,
+    const FixedNum& pub_comm_amount,
+    const FixedNum& adv_payable_comm_amount,
+    const FixedNum& pub_advcurrency_amount,
+    const FixedNum& isp_advcurrency_amount)
+    : unverified_imps_(unverified_imps),
+      imps_(imps),
+      clicks_(clicks),
+      actions_(actions),
+      adv_amount_(adv_amount),
+      pub_amount_(pub_amount),
+      isp_amount_(isp_amount),
+      adv_comm_amount_(adv_comm_amount),
+      pub_comm_amount_(pub_comm_amount),
+      adv_payable_comm_amount_(adv_payable_comm_amount),
+      pub_advcurrency_amount_(pub_advcurrency_amount),
+      isp_advcurrency_amount_(isp_advcurrency_amount)
+  {}
+
+  bool
+  CreativeStatInnerData::operator==(const CreativeStatInnerData& rhs) const
+  {
+    return this == &rhs ||
+      (unverified_imps_ == rhs.unverified_imps_ &&
+        imps_ == rhs.imps_ &&
+        clicks_ == rhs.clicks_ &&
+        actions_ == rhs.actions_ &&
+        adv_amount_ == rhs.adv_amount_ &&
+        pub_amount_ == rhs.pub_amount_ &&
+        isp_amount_ == rhs.isp_amount_ &&
+        adv_comm_amount_ == rhs.adv_comm_amount_ &&
+        pub_comm_amount_ == rhs.pub_comm_amount_ &&
+        adv_payable_comm_amount_ == rhs.adv_payable_comm_amount_ &&
+        pub_advcurrency_amount_ == rhs.pub_advcurrency_amount_ &&
+        isp_advcurrency_amount_ == rhs.isp_advcurrency_amount_);
+  }
+
+  CreativeStatInnerData&
+  CreativeStatInnerData::operator+=(const CreativeStatInnerData& rhs)
+  {
+    unverified_imps_ += rhs.unverified_imps_;
+    imps_ += rhs.imps_;
+    clicks_ += rhs.clicks_;
+    actions_ += rhs.actions_;
+    adv_amount_ += rhs.adv_amount_;
+    pub_amount_ += rhs.pub_amount_;
+    isp_amount_ += rhs.isp_amount_;
+    adv_comm_amount_ += rhs.adv_comm_amount_;
+    pub_comm_amount_ += rhs.pub_comm_amount_;
+    adv_payable_comm_amount_ += rhs.adv_payable_comm_amount_;
+    pub_advcurrency_amount_ += rhs.pub_advcurrency_amount_;
+    isp_advcurrency_amount_ += rhs.isp_advcurrency_amount_;
+    return *this;
+  }
+
+  long
+  CreativeStatInnerData::unverified_imps() const
+  {
+    return unverified_imps_;
+  }
+
+  long
+  CreativeStatInnerData::imps() const
+  {
+    return imps_;
+  }
+
+  long
+  CreativeStatInnerData::clicks() const
+  {
+    return clicks_;
+  }
+
+  long
+  CreativeStatInnerData::actions() const
+  {
+    return actions_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::adv_amount() const
+  {
+    return adv_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::pub_amount() const
+  {
+    return pub_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::isp_amount() const
+  {
+    return isp_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::adv_comm_amount() const
+  {
+    return adv_comm_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::pub_comm_amount() const
+  {
+    return pub_comm_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::adv_payable_comm_amount() const
+  {
+    return adv_payable_comm_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::pub_advcurrency_amount() const
+  {
+    return pub_advcurrency_amount_;
+  }
+
+  const CreativeStatInnerData::FixedNum&
+  CreativeStatInnerData::isp_advcurrency_amount() const
+  {
+    return isp_advcurrency_amount_;
+  }
+
+  CreativeStatKey::CreativeStatKey()
+  {}
+
+  CreativeStatKey::CreativeStatKey(const DayHourTimestamp& sdate, const DayHourTimestamp& adv_sdate)
+    : sdate_(sdate),
+      adv_sdate_(adv_sdate),
+      hash_()
+  {
+    calc_hash_();
+  }
+
+  CreativeStatKey::CreativeStatKey(const DayHourTimestamp& timestamp)
+    : sdate_(timestamp),
+      adv_sdate_(sdate_),
+      hash_()
+  {
+    calc_hash_();
+  }
+
+  bool
+  CreativeStatKey::operator==(const CreativeStatKey& rhs) const
+  {
+    return this == &rhs || (sdate_ == rhs.sdate_ && adv_sdate_ == rhs.adv_sdate_);
+  }
+
+  const DayHourTimestamp&
+  CreativeStatKey::sdate() const
+  {
+    return sdate_;
+  }
+
+  const DayHourTimestamp&
+  CreativeStatKey::adv_sdate() const
+  {
+    return adv_sdate_;
+  }
+
+  size_t
+  CreativeStatKey::hash() const
+  {
+    return hash_;
+  }
+
+  void
+  CreativeStatKey::calc_hash_()
+  {
+    Generics::Murmur64Hash hasher(hash_);
+    sdate_.hash_add(hasher);
+    adv_sdate_.hash_add(hasher);
+  }
+
+  std::istream&
+  operator>>(std::istream& is, CreativeStatKey& key)
+  {
+    is >> key.sdate_;
+    read_eol(is);
+    is >> key.adv_sdate_;
+    key.calc_hash_();
+    return is;
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const CreativeStatKey& key)
+    /*throw(eh::Exception)*/
+  {
+    os << key.sdate_ << '\n' << key.adv_sdate_;
+    return os;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const CreativeStatKey& key)
+    /*throw(eh::Exception)*/
+  {
+    out << key.sdate_ << '\n' << key.adv_sdate_;
+    return out;
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerKey& key)
+  {
+    TokenizerInputArchive<> ia(is);
+    ia >> key;
+    key.calc_hash_();
+    return is;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const CreativeStatInnerKey& key)
+    /*throw(eh::Exception)*/
+  {
+    BufferTabOutputArchive archive(out);
+    archive << key;
+    return out;
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerData& data)
+    /*throw(eh::Exception)*/
+  {
+    TokenizerInputArchive<Aux_::NoInvariants> ia(is);
+    ia >> data;
+    return is;
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const CreativeStatInnerData& data)
+    /*throw(eh::Exception)*/
+  {
+    SimpleTabOutputArchive oa(os);
+    oa << data;
+    return os;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const CreativeStatInnerData& data)
+    /*throw(eh::Exception)*/
+  {
+    SimpleBufferTabOutputArchive archive(out);
+    archive << data;
+    return out;
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerKey_V_3_3& key)
+  {
+    TokenizerInputArchive<> ia(is);
+    ia >> key;
+    key.calc_hash_();
+    return is;
+  }
+
+} // namespace AdServer::LogProcessing

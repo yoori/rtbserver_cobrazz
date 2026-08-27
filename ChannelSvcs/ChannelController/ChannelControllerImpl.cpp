@@ -23,13 +23,10 @@ namespace
   const std::chrono::seconds CONFIG_RPC_TIMEOUT(60);
 
   std::string
-  endpoint_from_grpc_ref_(
-    const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
+  endpoint_from_grpc_ref_(const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
   {
     const std::string host =
-      endpoint.host().present() && *endpoint.host() != "*" ?
-      *endpoint.host() :
-      "127.0.0.1";
+      endpoint.host().present() && *endpoint.host() != "*" ? *endpoint.host() : "127.0.0.1";
 
     return host + ":" + std::to_string(endpoint.port());
   }
@@ -65,8 +62,7 @@ namespace AdServer::ChannelSvcs
       config_(config),
       control_sources_(config.Primary().control())
   {
-    static const char* FUN =
-      "ChannelControllerImpl::ChannelControllerImpl()";
+    static const char* FUN = "ChannelControllerImpl::ChannelControllerImpl()";
 
     try
     {
@@ -102,8 +98,7 @@ namespace AdServer::ChannelSvcs
   }
 
   void
-  ChannelControllerImpl::fill_session_description(
-    SessionDescription& response) const
+  ChannelControllerImpl::fill_session_description(SessionDescription& response) const
   {
     if (channel_server_groups_.empty())
     {
@@ -145,8 +140,7 @@ namespace AdServer::ChannelSvcs
       for (const auto& config_host : config_group.ChannelServerHost())
       {
         ChannelServerRef server;
-        server.endpoint = endpoint_from_grpc_ref_(
-          config_host.ChannelServerGrpcRef());
+        server.endpoint = endpoint_from_grpc_ref_(config_host.ChannelServerGrpcRef());
         if (config_host.ChannelUpdateRef().present())
         {
           CORBACommons::CorbaObjectRef update_ref;
@@ -165,9 +159,7 @@ namespace AdServer::ChannelSvcs
 
       auto server_it = group.begin();
       bool all_assign = false;
-      for (unsigned long chunk_id = 0;
-           chunk_id < config_.count_chunks();
-           ++chunk_id)
+      for (unsigned long chunk_id = 0; chunk_id < config_.count_chunks(); ++chunk_id)
       {
         server_it->chunks.push_back(chunk_id);
         if (++server_it == group.end())
@@ -205,18 +197,16 @@ namespace AdServer::ChannelSvcs
       campaign_refs);
 
     unsigned long check_sum = 0;
-    const std::string pg_connection =
-      regular_source.PGConnection().connection_string();
+    const std::string pg_connection = regular_source.PGConnection().connection_string();
     check_sum = add_to_check_sum_(check_sum, pg_connection);
     for (const auto& campaign_ref : campaign_refs)
     {
       check_sum = add_to_check_sum_(check_sum, campaign_ref.object_ref);
     }
+
     if (config_.ChannelSource().local_groups().present())
     {
-      check_sum = add_to_check_sum_(
-        check_sum,
-        config_.ChannelSource().local_groups().get());
+      check_sum = add_to_check_sum_(check_sum, config_.ChannelSource().local_groups().get());
     }
 
     grpc::ChannelArguments channel_args;
@@ -225,16 +215,13 @@ namespace AdServer::ChannelSvcs
     const bool use_local_group = channel_server_groups_.size() > 1;
     const auto& local_group = channel_server_groups_.front();
 
-    for (std::size_t group_index = 0;
-         group_index < channel_server_groups_.size();
-         ++group_index)
+    for (std::size_t group_index = 0; group_index < channel_server_groups_.size(); ++group_index)
     {
       const auto& group = channel_server_groups_[group_index];
       for (const auto& server : group)
       {
         grpc::ClientContext context;
-        context.set_deadline(
-          std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
+        context.set_deadline(std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
 
         auto channel = AdServer::Grpc::create_custom_channel(
           server.endpoint,
@@ -248,25 +235,18 @@ namespace AdServer::ChannelSvcs
 
         {
           grpc::ClientContext check_context;
-          check_context.set_deadline(
-            std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
+          check_context.set_deadline(std::chrono::system_clock::now() + CONFIG_RPC_TIMEOUT);
           pb::CheckConfigurationRequest check_request;
           pb::CheckConfigurationResponse check_response;
           const grpc::Status check_status =
-            stub->check_configuration(
-              &check_context,
-              check_request,
-              &check_response);
+            stub->check_configuration(&check_context, check_request, &check_response);
           if (check_status.ok() &&
               desired_check_sum != 0 &&
               check_response.check_sum() == desired_check_sum)
           {
-            logger_->sstream(
-              Logging::Logger::TRACE,
-              Aspect::CHANNEL_CONTROLLER) <<
+            logger_->sstream(Logging::Logger::TRACE, Aspect::CHANNEL_CONTROLLER) <<
               "skip sources for already configured ChannelServer " <<
-              server.endpoint <<
-              ", check_sum = " << desired_check_sum;
+              server.endpoint << ", check_sum = " << desired_check_sum;
             continue;
           }
         }
@@ -310,8 +290,7 @@ namespace AdServer::ChannelSvcs
           }
 
           pb::SetProxySourcesResponse response;
-          const grpc::Status status =
-            stub->set_proxy_sources(&context, request, &response);
+          const grpc::Status status = stub->set_proxy_sources(&context, request, &response);
           if (!status.ok())
           {
             Stream::Error ostr;
@@ -345,8 +324,7 @@ namespace AdServer::ChannelSvcs
           }
 
           pb::SetSourcesResponse response;
-          const grpc::Status status =
-            stub->set_sources(&context, request, &response);
+          const grpc::Status status = stub->set_sources(&context, request, &response);
           if (!status.ok())
           {
             Stream::Error ostr;
@@ -361,9 +339,7 @@ namespace AdServer::ChannelSvcs
           }
         }
 
-        logger_->sstream(
-          Logging::Logger::TRACE,
-          Aspect::CHANNEL_CONTROLLER) <<
+        logger_->sstream(Logging::Logger::TRACE, Aspect::CHANNEL_CONTROLLER) <<
           "set sources for ChannelServer " << server.endpoint <<
           ", chunks = " << server.chunks.size();
       }
@@ -371,24 +347,15 @@ namespace AdServer::ChannelSvcs
   }
 
   void
-  ChannelControllerImpl::schedule_set_sources_(
-    const Generics::Time& delay) noexcept
+  ChannelControllerImpl::schedule_set_sources_(const Generics::Time& delay) noexcept
   {
     try
     {
-      source_update_runner_->schedule(
-        delay,
-        [this]()
-        {
-          update_sources_();
-        });
+      source_update_runner_->schedule(delay, [this]() { update_sources_(); });
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ALERT,
-        Aspect::CHANNEL_CONTROLLER,
-        "ADS-IMPL-20") <<
+      logger_->sstream(Logging::Logger::ALERT, Aspect::CHANNEL_CONTROLLER, "ADS-IMPL-20") <<
         "ChannelControllerImpl::schedule_set_sources_(): "
         "can't schedule sources update: " << ex.what();
     }
@@ -408,10 +375,7 @@ namespace AdServer::ChannelSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::CHANNEL_CONTROLLER,
-        "ADS-IMPL-22") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::CHANNEL_CONTROLLER, "ADS-IMPL-22") <<
         "ChannelControllerImpl::update_sources_(): " << ex.what();
     }
 

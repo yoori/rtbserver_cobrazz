@@ -6,7 +6,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   feed_id => DB::Entity::Type::sequence(),
   url => DB::Entity::Type::string(unique => 1)
@@ -22,7 +22,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   feed_id => DB::Entity::Type::link('DB::Feed', unique => 1),
   wdtag_id => DB::Entity::Type::link('DB::WDTag', unique => 1)
@@ -38,7 +38,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   feed_id => DB::Entity::Type::link('DB::Feed', unique => 1),
   wdtag_id => DB::Entity::Type::link('DB::WDTag', unique => 1)
@@ -54,17 +54,17 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   wdtag_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
-  site_id => DB::Entity::Type::link('DB::Site'), 
+  site_id => DB::Entity::Type::link('DB::Site'),
   status =>  DB::Entity::Type::status(),
   width => DB::Entity::Type::int(default => 10),
   height => DB::Entity::Type::int(default => 10),
   opted_in_content =>  DB::Entity::Type::enum(['A', 'S']),
   opted_out_content => DB::Entity::Type::enum(['A', 'S', 'P']),
-  passback => DB::Entity::Type::string(nullable => 1), 
+  passback => DB::Entity::Type::string(nullable => 1),
   template_id =>
     DB::Entity::Type::link(
       "DB::Template",
@@ -78,7 +78,7 @@ use constant STRUCT =>
 sub postcreate_
 {
   my ($self, $ns) = @_;
-  
+
   $self->{opted_in_feeds} = [];
   $self->{opted_out_feeds} = [];
 

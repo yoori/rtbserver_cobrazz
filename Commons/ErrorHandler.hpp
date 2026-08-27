@@ -58,8 +58,7 @@ namespace Config
         << "File: " << id << std::endl
         << "Line: " << line << ", Column: " << column
         << ", Severity: " << (s == severity::error ? "error" : "fatal")
-        << std::endl
-        << ": \"" << message << "\"" << std::endl << std::endl;
+        << std::endl << ": \"" << message << "\"" << std::endl << std::endl;
     }
 
     return true;
@@ -102,7 +101,7 @@ namespace Config
     try
     {
       Ret ret = loader (file_name, error_handler, flags, properties);
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
 	std::string error_string;
 	throw LoadError(error_handler.text(error_string));
@@ -111,7 +110,7 @@ namespace Config
     }
     catch(const ::xsd::cxx::tree::exception< char >& e)
     {
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
 	std::string error_string;
 	throw LoadError(error_handler.text(error_string));

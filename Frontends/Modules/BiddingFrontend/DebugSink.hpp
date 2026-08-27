@@ -55,9 +55,7 @@ namespace AdServer::Bidding
     finish(const Generics::Time& request_started_at);
 
     void
-    set_grpc_error(
-      const grpc::Status& status,
-      std::string endpoint = {});
+    set_grpc_error(const grpc::Status& status, std::string endpoint = {});
 
     void
     set_exception_error(const eh::Exception& ex);
@@ -97,8 +95,7 @@ namespace AdServer::Bidding
     require_debug_info() const noexcept;
 
     static bool
-    require_debug_info(
-      const String::SubString& require_debug_info) noexcept;
+    require_debug_info(const String::SubString& require_debug_info) noexcept;
 
     void
     print_request_debug_info(
@@ -130,8 +127,7 @@ namespace AdServer::Bidding
       const StageResult* stage = nullptr) noexcept;
 
     void
-    print_time_metering_debug_info(
-      const RequestTimeMetering& time_metering) noexcept;
+    print_time_metering_debug_info(const RequestTimeMetering& time_metering) noexcept;
 
     void
     print_interrupt_debug_info(
@@ -156,12 +152,10 @@ namespace AdServer::Bidding
 
   private:
     std::string
-    make_debug_info_(
-      const AdServer::Commons::UserId& user_id) const;
+    make_debug_info_(const AdServer::Commons::UserId& user_id) const;
 
     void
-    print_empty_creative_selection_debug_info_(
-      const StageResult* stage) noexcept;
+    print_empty_creative_selection_debug_info_(const StageResult* stage) noexcept;
 
     void
     print_expected_debug_info_(
@@ -175,8 +169,7 @@ namespace AdServer::Bidding
       const StageResult* stage) noexcept;
 
     static DebugInfo
-    parse_require_debug_info_(
-      const String::SubString& require_debug_info) noexcept;
+    parse_require_debug_info_(const String::SubString& require_debug_info) noexcept;
 
   private:
     std::string server_id_;

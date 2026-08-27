@@ -1,16 +1,10 @@
 #include "DailyRunTest.hpp"
 
-REFLECT_UNIT(DailyRunTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(DailyRunTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 
 Generics::Time
-DailyRunTest::get_gmt(
-  DailyRunTest::WeekDays wday,
-  const char* local_tm,
-  const char* time_zone)
+DailyRunTest::get_gmt(DailyRunTest::WeekDays wday, const char* local_tm, const char* time_zone)
 {
   Generics::Time posed_time = Generics::Time::get_time_of_day();
   if (wday != DailyRunTest::WD_CURRENT)
@@ -19,8 +13,7 @@ DailyRunTest::get_gmt(
     posed_time += Generics::Time::ONE_DAY * wday;
   }
   Generics::Time time(
-    (posed_time.get_gm_time().format("%d-%m-%Y") +
-      ":" + local_tm), "%d-%m-%Y:%H-%M-%S");
+    (posed_time.get_gm_time().format("%d-%m-%Y") + ":" + local_tm), "%d-%m-%Y:%H-%M-%S");
   return time - AutoTest::ORM::get_tz_ofset(this, time_zone);
 }
 
@@ -43,11 +36,7 @@ DailyRunTest::process_testcase(
     request.tid(tid).referer_kw(keyword);
     if (expect[i].time)
     {
-      request.debug_time(
-        get_gmt(
-          expect[i].wday,
-          expect[i].time,
-          tz_name));
+      request.debug_time(get_gmt(expect[i].wday, expect[i].time, tz_name));
 
       add_descr_phrase(expect[i].time);
     }
@@ -56,17 +45,13 @@ DailyRunTest::process_testcase(
     if (expect[i].have_cc)
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          cc_id,
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(cc_id, client.debug_info.ccid).check(),
         std::string(tz_name) + " NO empty ccid check#" + strof(i));
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "0",
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker("0", client.debug_info.ccid).check(),
         std::string(tz_name) + " empty ccid check#" + strof(i));
     }
   }
@@ -116,9 +101,7 @@ DailyRunTest::run_test()
   };
 
   NOSTOP_FAIL_CONTEXT(
-    process_testcase(
-      "Asia/Tokyo", "Asia/Tokyo", tokyo,
-      sizeof(tokyo) / sizeof(*tokyo)));
+    process_testcase("Asia/Tokyo", "Asia/Tokyo", tokyo, sizeof(tokyo) / sizeof(*tokyo)));
 
 
   const RequestTimeResult any[] = {

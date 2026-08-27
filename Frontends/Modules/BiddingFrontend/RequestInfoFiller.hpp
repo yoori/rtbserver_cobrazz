@@ -173,8 +173,7 @@ namespace AdServer::Bidding
     {
       CampaignSvcs::CoordDecimal longitude = CampaignSvcs::CoordDecimal::ZERO;
       CampaignSvcs::CoordDecimal latitude = CampaignSvcs::CoordDecimal::ZERO;
-      CampaignSvcs::AccuracyDecimal accuracy =
-        CampaignSvcs::AccuracyDecimal::ZERO;
+      CampaignSvcs::AccuracyDecimal accuracy = CampaignSvcs::AccuracyDecimal::ZERO;
     };
 
     using GeoCoordInfoSeq = Generics::MonoVector<GeoCoordInfo>;
@@ -264,8 +263,7 @@ namespace AdServer::Bidding
 
   public:
     RequestInfo()
-      : RequestInfo(std::make_shared<Generics::MonoAllocatorArena>(
-          ARENA_INITIAL_SIZE))
+      : RequestInfo(std::make_shared<Generics::MonoAllocatorArena>(ARENA_INITIAL_SIZE))
     {}
 
     explicit RequestInfo(std::shared_ptr<Generics::MonoAllocatorArena> arena)
@@ -539,10 +537,8 @@ namespace AdServer::Bidding
     };
 
     typedef ReferenceCounting::SmartPtr<AccountTraits> AccountTraits_var;
-    using AccountTraitsById =
-      boost::unordered_flat_map<unsigned long, AccountTraits_var>;
-    using OpenRtbEnumNameMap =
-      boost::unordered_flat_map<unsigned int, std::string>;
+    using AccountTraitsById = boost::unordered_flat_map<unsigned long, AccountTraits_var>;
+    using OpenRtbEnumNameMap = boost::unordered_flat_map<unsigned int, std::string>;
 
   public:
     RequestInfoFiller(
@@ -588,13 +584,11 @@ namespace AdServer::Bidding
     fill_adid(std::string_view source_id) const noexcept;
 
     void
-    init_request_param(
-      RequestInfo& request_info) const
+    init_request_param(RequestInfo& request_info) const
       noexcept;
 
     static void
-    init_adslot(
-      RequestInfo::AdSlotInfo& adslot_info)
+    init_adslot(RequestInfo::AdSlotInfo& adslot_info)
       noexcept;
 
     template<typename StringType>
@@ -618,9 +612,7 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    fill_by_ip(
-      RequestInfo& request_info,
-      std::string_view ip)
+    fill_by_ip(RequestInfo& request_info, std::string_view ip)
       const
       noexcept;
 
@@ -635,8 +627,7 @@ namespace AdServer::Bidding
       RequestInfoParamProcessor;
     typedef ReferenceCounting::SmartPtr<RequestInfoParamProcessor>
       RequestInfoParamProcessor_var;
-    using ParamProcessorMap =
-      SubStringHashAdapterFlatMap<RequestInfoParamProcessor_var>;
+    using ParamProcessorMap = SubStringHashAdapterFlatMap<RequestInfoParamProcessor_var>;
 
   protected:
     bool
@@ -665,22 +656,16 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    fill_request_type_(
-      RequestInfo& request_info,
-      std::string_view source_id)
+    fill_request_type_(RequestInfo& request_info, std::string_view source_id)
       const
       noexcept;
 
     void
-    fill_vast_instantiate_type_(
-      RequestInfo& request_info,
-      std::string_view source_id) const
+    fill_vast_instantiate_type_(RequestInfo& request_info, std::string_view source_id) const
       noexcept;
 
     void
-    fill_native_instantiate_type_(
-      RequestInfo& request_info,
-      std::string_view source_id) const
+    fill_native_instantiate_type_(RequestInfo& request_info, std::string_view source_id) const
       noexcept;
 
     void
@@ -748,9 +733,7 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    add_param_processor_(
-      std::string_view name,
-      RequestInfoParamProcessor* processor)
+    add_param_processor_(std::string_view name, RequestInfoParamProcessor* processor)
       noexcept;
 
     void
@@ -774,16 +757,13 @@ namespace AdServer::Bidding
       /*throw(eh::Exception)*/;
 
     static std::string_view
-    norm_keyword_ext_(
-      RequestInfo& request_info,
-      std::string_view kw) noexcept;
+    norm_keyword_ext_(RequestInfo& request_info, std::string_view kw) noexcept;
 
     std::string_view
     openrtb_devicetype_to_string_(unsigned int devicetype) const;
 
     std::string_view
-    openrtb_video_placement_to_string_(
-      unsigned int video_placement_type) const;
+    openrtb_video_placement_to_string_(unsigned int video_placement_type) const;
 
   private:
     Logging::Logger_var logger_;
@@ -798,8 +778,7 @@ namespace AdServer::Bidding
     SourceNameMap source_mapping_;
 
     ParamProcessorMap param_processors_;
-    std::unique_ptr<AdServer::Commons::FastJsonParser<Generics::MonoString>>
-      fast_json_parser_;
+    std::unique_ptr<AdServer::Commons::FastJsonParser<Generics::MonoString>> fast_json_parser_;
     const SourceMap sources_;
     const bool enable_profile_referer_;
     const AccountTraitsById account_traits_;

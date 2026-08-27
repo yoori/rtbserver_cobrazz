@@ -17,7 +17,7 @@ sub init_case
   # GROSS campaign
   my $campaign1 = $ns->create(DisplayCampaign => {
     name => $name_prefix."_1",
-    advertiser_agency_account_id => 
+    advertiser_agency_account_id =>
        DB::Defaults::instance()->agency_gross(),
     currency_id => $tag_cur,
     campaign_commission => $perc1,
@@ -39,7 +39,7 @@ sub init_case
     campaigncreativegroup_flags => DB::Campaign::INCLUDE_SPECIFIC_SITES,
     site_links => [{site_id => $campaign1->{Site}[0]->{site_id}}],
     });
-  
+
   $ns->output("CC Id/$name_prefix/2", $campaign2->{cc_id}, "cc_id 2");
 
   my $bp = $ns->create(
@@ -72,7 +72,7 @@ sub init_site_case
 
   my $campaign1 = $ns->create(DisplayCampaign => {
     name => $name_prefix,
-    advertiser_agency_account_id => 
+    advertiser_agency_account_id =>
        DB::Defaults::instance()->agency_gross(),
     currency_id => $tag_cur,
     campaign_commission => $percx,

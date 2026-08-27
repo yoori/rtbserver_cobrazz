@@ -50,10 +50,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<TriggerAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* trigger,
-        ChannelSrv service
-      )
+      void make_cmd (const char* address, const char* trigger, ChannelSrv service)
       {
         address_ = address;
         AdminParams params;

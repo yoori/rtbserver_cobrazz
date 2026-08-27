@@ -12,9 +12,7 @@
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include "CampaignSelectParams.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class BidCostProvider: public ReferenceCounting::AtomicImpl
   {
@@ -115,9 +113,7 @@ namespace CampaignSvcs
 
     static
     Generics::Time
-    check_config_appearance(
-      std::string& config_root,
-      const String::SubString& check_root)
+    check_config_appearance(std::string& config_root, const String::SubString& check_root)
       /*throw(Exception)*/;
 
     void
@@ -133,9 +129,7 @@ namespace CampaignSvcs
     ~BidCostProvider() noexcept;
 
     void
-    load_(
-      const String::SubString& directory,
-      const String::SubString& file)
+    load_(const String::SubString& directory, const String::SubString& file)
       /*throw(InvalidConfig, Exception)*/;
 
     void
@@ -163,11 +157,8 @@ namespace CampaignSvcs
   typedef ReferenceCounting::SmartPtr<const BidCostProvider>
     ConstBidCostProvider_var;
 }
-}
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // BidCostProvider::CostMapping::Key
   inline
@@ -231,5 +222,4 @@ namespace CampaignSvcs
   inline
   BidCostProvider::CostMapping::CostMapping() noexcept
   {}
-}
 }

@@ -39,8 +39,7 @@ protected:
 
 private:
 
-  typedef std::unique_ptr<xsd::AdServer::Configuration::
-    ChannelControllerConfigType> ConfigPtr;
+  typedef std::unique_ptr<xsd::AdServer::Configuration::ChannelControllerConfigType> ConfigPtr;
 
 private:
   void load_config_(const char* name) /*throw(Exception)*/;

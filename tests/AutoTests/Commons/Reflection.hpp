@@ -51,9 +51,7 @@ template<UnitDescriptorD& d>
 struct UnitDescriptorT :
   public UnitDescriptor
 {
-  UnitDescriptorT (const char* c,
-                   const int g,
-                   AutoTestSerialize s = AUTO_TEST_RANDOM)
+  UnitDescriptorT (const char* c, const int g, AutoTestSerialize s = AUTO_TEST_RANDOM)
     : UnitDescriptor(c, g, s, d.name, d.constructor)
   {
   }

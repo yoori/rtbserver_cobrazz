@@ -60,21 +60,20 @@ namespace Vanga
     {
       Sync::ConditionalGuard guard(cond_);
 
-      if(gain < best_gain + EPS)
+      if (gain < best_gain + EPS)
       {
-        if(gain <= best_gain - EPS)
+        if (gain <= best_gain - EPS)
         {
           best_features.clear();
         }
 
-        best_features.push_back(
-          BestChoose(feature_id, no_delta, yes_delta, gain));
+        best_features.push_back(BestChoose(feature_id, no_delta, yes_delta, gain));
         best_gain = gain;
       }
 
       assert(tasks_in_progress > 0);
 
-      if(--tasks_in_progress == 0 || tasks_in_progress % 100 == 0)
+      if (--tasks_in_progress == 0 || tasks_in_progress % 100 == 0)
       {
         cond_.signal();
       }
@@ -85,11 +84,11 @@ namespace Vanga
     {
       unsigned long prev_tasks_in_progress = 0;
       Sync::ConditionalGuard guard(cond_);
-      while(tasks_in_progress > 0)
+      while (tasks_in_progress > 0)
       {
         guard.wait();
 
-        if(tasks_in_progress % 100 == 0 && tasks_in_progress != tasks_in_progress)
+        if (tasks_in_progress % 100 == 0 && tasks_in_progress != tasks_in_progress)
         {
           prev_tasks_in_progress = tasks_in_progress;
           std::cout << "processed " << (all_tasks - tasks_in_progress) << "/" << tasks_in_progress << " features" << std::endl;
@@ -100,11 +99,11 @@ namespace Vanga
     bool
     get_result(BestChoose& res) const
     {
-      if(!best_features.empty())
+      if (!best_features.empty())
       {
         /*
         std::cout << "select between features: ";
-        for(auto it = best_features.begin(); it != best_features.end(); ++it)
+        for (auto it = best_features.begin(); it != best_features.end(); ++it)
         {
           std::cout << "[#" << it->feature_id << ":" << it->gain << "]";
         }
@@ -304,15 +303,15 @@ namespace Vanga
       // fetch left with lookup to right
       unsigned long count = 0;
       auto right_begin_it = right.begin();
-      for(auto it = left.begin(); it != left.end(); ++it)
+      for (auto it = left.begin(); it != left.end(); ++it)
       {
         right_begin_it = std::lower_bound(right_begin_it, right.end(), *it);
 
-        if(right_begin_it == right.end())
+        if (right_begin_it == right.end())
         {
           break;
         }
-        else if(*right_begin_it == *it)
+        else if (*right_begin_it == *it)
         {
           ++count;
         }
@@ -329,12 +328,12 @@ namespace Vanga
       size_t left_size = left.size();
       size_t right_size = right.size();
 
-      if(right_size > left_size * 12)
+      if (right_size > left_size * 12)
       {
         // fetch left with lookup to right
         return binsearch_count_cross_rows(left, right);
       }
-      else if(left_size > right_size * 12)
+      else if (left_size > right_size * 12)
       {
         // fetch right with lookup to left
         return binsearch_count_cross_rows(right, left);
@@ -424,12 +423,12 @@ namespace Vanga
     AvgCoverMap& avg_covers_map,
     unsigned long all_rows) const
   {
-    if(!no_tree.in() && !yes_tree.in())
+    if (!no_tree.in() && !yes_tree.in())
     {
       // leaf
       double avg_val = avg();
       auto it = avg_covers_map.find(avg_val);
-      if(it != avg_covers_map.end())
+      if (it != avg_covers_map.end())
       {
         it->second += accurate_cover(all_rows);
       }
@@ -438,7 +437,7 @@ namespace Vanga
         avg_covers_map.insert(std::make_pair(avg_val, accurate_cover(all_rows)));
       }
     }
-    else if(!no_tree.in()) // !no_tree.in() && yes_tree.in()
+    else if (!no_tree.in()) // !no_tree.in() && yes_tree.in()
     {
       // pseudo no leaf
       double no_avg = labeled + unlabeled - (yes_tree->labeled + yes_tree->unlabeled) > 0 ?
@@ -448,7 +447,7 @@ namespace Vanga
       double no_cover = accurate_cover(all_rows) - yes_tree->accurate_cover(all_rows);
 
       auto it = avg_covers_map.find(no_avg);
-      if(it != avg_covers_map.end())
+      if (it != avg_covers_map.end())
       {
         it->second += no_cover;
       }
@@ -457,7 +456,7 @@ namespace Vanga
         avg_covers_map.insert(std::make_pair(no_avg, no_cover));
       }
     }
-    else if(!yes_tree.in()) // no_tree.in() && !yes_tree.in()
+    else if (!yes_tree.in()) // no_tree.in() && !yes_tree.in()
     {
       // pseudo yes leaf
       double yes_avg = labeled + unlabeled - (no_tree->labeled + no_tree->unlabeled) > 0 ?
@@ -467,7 +466,7 @@ namespace Vanga
       double yes_cover = accurate_cover(all_rows) - no_tree->accurate_cover(all_rows);
 
       auto it = avg_covers_map.find(yes_avg);
-      if(it != avg_covers_map.end())
+      if (it != avg_covers_map.end())
       {
         it->second += yes_cover;
       }
@@ -477,12 +476,12 @@ namespace Vanga
       }
     }
 
-    if(no_tree.in())
+    if (no_tree.in())
     {
       no_tree->collect_avg_covers_(avg_covers_map, all_rows);
     }
 
-    if(yes_tree.in())
+    if (yes_tree.in())
     {
       yes_tree->collect_avg_covers_(avg_covers_map, all_rows);
     }
@@ -497,7 +496,7 @@ namespace Vanga
     collect_avg_covers_(avg_covers_map, all_rows);
 
     double prev_sum = 0.0;
-    for(auto it = avg_covers_map.rbegin(); it != avg_covers_map.rend(); ++it)
+    for (auto it = avg_covers_map.rbegin(); it != avg_covers_map.rend(); ++it)
     {
       double cover = it->second;
       it->second += prev_sum;
@@ -507,14 +506,13 @@ namespace Vanga
   */
 
   void
-  TreeNodeDescr::collect_feature_gains_(
-    FeatureToGainMap& feature_to_gains)
+  TreeNodeDescr::collect_feature_gains_(FeatureToGainMap& feature_to_gains)
     const
   {
-    if(feature_id)
+    if (feature_id)
     {
       auto feature_it = feature_to_gains.find(feature_id);
-      if(feature_it != feature_to_gains.end())
+      if (feature_it != feature_to_gains.end())
       {
         feature_it->second += delta_gain;
       }
@@ -524,26 +522,25 @@ namespace Vanga
       }
     }
 
-    if(yes_tree)
+    if (yes_tree)
     {
       yes_tree->collect_feature_gains_(feature_to_gains);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       no_tree->collect_feature_gains_(feature_to_gains);
     }
   }
 
   void
-  TreeNodeDescr::gain_features(
-    GainToFeatureMap& gain_to_features)
+  TreeNodeDescr::gain_features(GainToFeatureMap& gain_to_features)
     const noexcept
   {
     FeatureToGainMap feature_to_gains;
     collect_feature_gains_(feature_to_gains);
 
-    for(auto it = feature_to_gains.begin(); it != feature_to_gains.end(); ++it)
+    for (auto it = feature_to_gains.begin(); it != feature_to_gains.end(); ++it)
     {
       gain_to_features.insert(std::make_pair(it->second, it->first));
     }
@@ -555,7 +552,7 @@ namespace Vanga
     double min_avg,
     unsigned long min_node_cover) const noexcept
   {
-    if(this->labeled + this->unlabeled < min_node_cover)
+    if (this->labeled + this->unlabeled < min_node_cover)
     {
       return nullptr;
     }
@@ -563,37 +560,37 @@ namespace Vanga
     TreeNodeDescr_var res_yes_tree;
     TreeNodeDescr_var res_no_tree;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       res_yes_tree = yes_tree->sub_tree(min_avg, min_node_cover);
-      if(res_yes_tree && res_yes_tree->labeled + res_yes_tree->unlabeled < min_node_cover)
+      if (res_yes_tree && res_yes_tree->labeled + res_yes_tree->unlabeled < min_node_cover)
       {
         res_yes_tree = nullptr;
       }
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       res_no_tree = no_tree->sub_tree(min_avg, min_node_cover);
-      if(res_no_tree && res_no_tree->labeled + res_no_tree->unlabeled < min_node_cover)
+      if (res_no_tree && res_no_tree->labeled + res_no_tree->unlabeled < min_node_cover)
       {
         res_no_tree = nullptr;
       }
     }
 
-    if(res_yes_tree.in() || res_no_tree.in() || this->avg() >= min_avg - 0.000001)
+    if (res_yes_tree.in() || res_no_tree.in() || this->avg() >= min_avg - 0.000001)
     {
       TreeNodeDescr_var res_tree = new TreeNodeDescr();
       res_tree->feature_id = feature_id;
       res_tree->delta_gain = delta_gain;
       res_tree->labeled = labeled;
       res_tree->unlabeled = unlabeled;
-      if(res_yes_tree)
+      if (res_yes_tree)
       {
         res_tree->yes_tree = res_yes_tree;
       }
 
-      if(res_no_tree)
+      if (res_no_tree)
       {
         res_tree->no_tree = res_no_tree;
       }
@@ -615,10 +612,10 @@ namespace Vanga
   {
     std::ostringstream ostr;
     ostr << prefix << feature_id;
-    if(dict)
+    if (dict)
     {
       auto dict_it = dict->find(feature_id);
-      if(dict_it != dict->end())
+      if (dict_it != dict->end())
       {
         ostr << " [" << dict_it->second << "]";
       }
@@ -627,17 +624,17 @@ namespace Vanga
     ostr << " (delta gain=" << delta_gain;
       //", avg=" << avg();
 
-    if(all_rows)
+    if (all_rows)
     {
       ostr << ", cover=" << cover(*all_rows);
     }
 
     ostr << ", l=" << this->labeled << ", t=" << (this->labeled + this->unlabeled) << ")" << std::endl;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       ostr << prefix << "  yes (avg=" << yes_tree->avg();
-      if(all_rows)
+      if (all_rows)
       {
         ostr << ", cover=" << yes_tree->cover(*all_rows);
       }
@@ -646,10 +643,10 @@ namespace Vanga
         yes_tree->to_string((std::string(prefix) + ">   ").c_str(), dict, all_rows);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       ostr << prefix << "  no (avg=" << no_tree->avg();
-      if(all_rows)
+      if (all_rows)
       {
         ostr << ", cover=" << no_tree->cover(*all_rows);
       }
@@ -670,10 +667,10 @@ namespace Vanga
   {
     std::ostringstream ostr;
     ostr << prefix << "<node hash=\"" << feature_id << "\"";
-    if(dict)
+    if (dict)
     {
       auto dict_it = dict->find(feature_id);
-      if(dict_it != dict->end())
+      if (dict_it != dict->end())
       {
         ostr << " id=\"" << dict_it->second << "\"";
       }
@@ -681,17 +678,17 @@ namespace Vanga
 
     ostr << " delta_gain=\"" << delta_gain << "\" avg=\"" << avg() << "\"";
 
-    if(all_rows)
+    if (all_rows)
     {
       ostr << " cover=\"" << cover(*all_rows) << "\"";
     }
 
     ostr << " labels=\"" << this->labeled << "\" rows=\"" << (this->labeled + this->unlabeled) << "\">" << std::endl;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       ostr << prefix << "  <yes avg=\"" << yes_tree->avg() << "\"";
-      if(all_rows)
+      if (all_rows)
       {
         ostr << " cover=\"" << yes_tree->cover(*all_rows) << "\"";
       }
@@ -701,10 +698,10 @@ namespace Vanga
       ostr << prefix << "  </yes>" << std::endl;
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       ostr << prefix << "  <no avg=\"" << no_tree->avg() << "\"";
-      if(all_rows)
+      if (all_rows)
       {
         ostr << " cover=\"" << no_tree->cover(*all_rows) << "\"";
       }
@@ -725,12 +722,12 @@ namespace Vanga
   {
     features.insert(feature_id);
 
-    if(yes_tree)
+    if (yes_tree)
     {
       yes_tree->features(features);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       no_tree->features(features);
     }
@@ -752,10 +749,7 @@ namespace Vanga
     const DTree* base_tree,
     Generics::TaskRunner* task_runner)
   {
-    return new LearnContext(
-      task_runner,
-      bag_parts_,
-      base_tree);
+    return new LearnContext(task_runner, bag_parts_, base_tree);
   }
 
   // TreeLearner::LearnContext
@@ -767,10 +761,7 @@ namespace Vanga
     : task_runner_(ReferenceCounting::add_ref(task_runner)),
       max_tree_id_(0)
   {
-    cur_tree_ = fill_learn_tree_(
-      max_tree_id_,
-      bags,
-      base_tree);
+    cur_tree_ = fill_learn_tree_(max_tree_id_, bags, base_tree);
   }
 
   template<typename LabelType, typename GainType>
@@ -787,16 +778,10 @@ namespace Vanga
     // collect stop nodes &
     std::multimap<double, TreeReplace> nodes;
 
-    fetch_nodes_(
-      nodes,
-      cur_tree_,
-      0.0,
-      max_add_depth,
-      check_depth,
-      feature_selection_strategy);
+    fetch_nodes_(nodes, cur_tree_, 0.0, max_add_depth, check_depth, feature_selection_strategy);
 
     // apply node change
-    if(!nodes.empty())
+    if (!nodes.empty())
     {
       const TreeReplace& tree_replace = nodes.begin()->second;
       LearnTreeHolder_var old_node = tree_replace.old_tree;
@@ -808,10 +793,7 @@ namespace Vanga
         ", no = " << new_node->no_tree <<
         ", yes = " << new_node->yes_tree << std::endl;
       */
-      convert_abs_prob_to_delta_(
-        new_node,
-        tree_replace.old_tree_prob_base,
-        old_node->bags);
+      convert_abs_prob_to_delta_(new_node, tree_replace.old_tree_prob_base, old_node->bags);
 
       // correct abs prob to delta prob
       old_node->tree_id = new_node->tree_id;
@@ -836,14 +818,14 @@ namespace Vanga
     tree->tree_id = ++max_tree_id_;
     //tree->delta_prob = tree->delta_prob - base_prob;
 
-    if(tree->yes_tree || tree->no_tree)
+    if (tree->yes_tree || tree->no_tree)
     {
       assert(tree->yes_tree && tree->no_tree);
 
       BagPartArray yes_bag_parts;
       BagPartArray no_bag_parts;
 
-      for(auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
+      for (auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
       {
         SVM_var yes_svm;
         SVM_var no_svm;
@@ -866,15 +848,9 @@ namespace Vanga
         no_bag_parts.push_back(no_bag_part);
       }
 
-      convert_abs_prob_to_delta_(
-        tree->yes_tree,
-        base_prob + tree->delta_prob,
-        yes_bag_parts);
+      convert_abs_prob_to_delta_(tree->yes_tree, base_prob + tree->delta_prob, yes_bag_parts);
 
-      convert_abs_prob_to_delta_(
-        tree->no_tree,
-        base_prob + tree->delta_prob,
-        no_bag_parts);
+      convert_abs_prob_to_delta_(tree->no_tree, base_prob + tree->delta_prob, no_bag_parts);
     }
     else
     {
@@ -886,19 +862,19 @@ namespace Vanga
   DTree_var
   TreeLearner<LabelType, GainType>::LearnContext::fill_dtree_(LearnTreeHolder* learn_tree_holder)
   {
-    if(learn_tree_holder)
+    if (learn_tree_holder)
     {
       DTree_var res = new DTree();
       res->tree_id = learn_tree_holder->tree_id;
       res->feature_id = learn_tree_holder->feature_id;
       res->delta_prob = learn_tree_holder->delta_prob;
 
-      if(learn_tree_holder->yes_tree)
+      if (learn_tree_holder->yes_tree)
       {
         res->yes_tree = fill_dtree_(learn_tree_holder->yes_tree);
       }
 
-      if(learn_tree_holder->no_tree)
+      if (learn_tree_holder->no_tree)
       {
         res->no_tree = fill_dtree_(learn_tree_holder->no_tree);
       }
@@ -920,7 +896,7 @@ namespace Vanga
     FeatureSelectionStrategy feature_selection_strategy
     )
   {
-    if(tree->yes_tree || tree->no_tree)
+    if (tree->yes_tree || tree->no_tree)
     {
       assert(tree->no_tree && tree->yes_tree);
 
@@ -968,7 +944,7 @@ namespace Vanga
         max_add_depth,
         check_depth);
 
-      if(delta_tree && delta_tree->delta_gain < -EPS)
+      if (delta_tree && delta_tree->delta_gain < -EPS)
       {
         //std::cout << "from best_dig_: delta_tree->delta_prob = " <<
         //  delta_tree->delta_prob << std::endl;
@@ -991,13 +967,13 @@ namespace Vanga
   {
     LearnTreeHolder_var res = new LearnTreeHolder();
 
-    if(tree)
+    if (tree)
     {
       res->tree_id = tree->tree_id;
       res->feature_id = tree->feature_id;
       res->delta_prob = tree->delta_prob;
 
-      if(tree->yes_tree || tree->no_tree)
+      if (tree->yes_tree || tree->no_tree)
       {
         assert(tree->yes_tree && tree->no_tree);
 
@@ -1006,15 +982,9 @@ namespace Vanga
 
         TreeLearner::div_bags_(yes_bag_parts, no_bag_parts, bags, tree->feature_id);
 
-        res->yes_tree = fill_learn_tree_(
-          max_tree_id,
-          yes_bag_parts,
-          tree->yes_tree);
+        res->yes_tree = fill_learn_tree_(max_tree_id, yes_bag_parts, tree->yes_tree);
 
-        res->no_tree = fill_learn_tree_(
-          max_tree_id,
-          no_bag_parts,
-          tree->no_tree);
+        res->no_tree = fill_learn_tree_(max_tree_id, no_bag_parts, tree->no_tree);
       }
       else
       {
@@ -1058,7 +1028,7 @@ namespace Vanga
   {
     gain_calc.start_count(top_pred);
 
-    for(auto node_group_it = node_svm->grouped_rows.begin();
+    for (auto node_group_it = node_svm->grouped_rows.begin();
       node_group_it != node_svm->grouped_rows.end(); ++node_group_it)
     {
       gain_calc.add_count((*node_group_it)->label, false, (*node_group_it)->rows.size());
@@ -1066,7 +1036,7 @@ namespace Vanga
 
     gain_calc.start_eval();
 
-    for(auto node_group_it = node_svm->grouped_rows.begin();
+    for (auto node_group_it = node_svm->grouped_rows.begin();
       node_group_it != node_svm->grouped_rows.end(); ++node_group_it)
     {
       gain_calc.add_eval((*node_group_it)->label, false, (*node_group_it)->rows.size());
@@ -1101,7 +1071,7 @@ namespace Vanga
     double best_no_delta = 0.0;
     double best_yes_delta = 0.0;
 
-    if(max_depth > 0 &&
+    if (max_depth > 0 &&
       get_best_feature_(
         best_feature_id,
         best_gain,
@@ -1159,13 +1129,7 @@ namespace Vanga
           check_depth) :
         processor.null_result(best_no_delta, no_bag_parts);
 
-      return processor.aggregate(
-        best_feature_id,
-        best_gain,
-        cur_delta,
-        bags,
-        yes_res,
-        no_res);
+      return processor.aggregate(best_feature_id, best_gain, cur_delta, bags, yes_res, no_res);
     }
 
     return processor.null_result(cur_delta, bags);
@@ -1195,7 +1159,7 @@ namespace Vanga
     best_gain = eval_init_delta_(best_no_delta, gain_calc, top_pred, node_svm);
     best_yes_delta = best_no_delta;
 
-    if(check_depth == 0)
+    if (check_depth == 0)
     {
       // stop tracing
       return false;
@@ -1204,8 +1168,7 @@ namespace Vanga
     // find best features (by gain)
     unsigned long feature_i = 1;
 
-    ReferenceCounting::SmartPtr<GetBestFeatureResult> result =
-      new GetBestFeatureResult();
+    ReferenceCounting::SmartPtr<GetBestFeatureResult> result = new GetBestFeatureResult();
 
     result->inc();
     result->set(0, best_gain, best_no_delta, best_yes_delta);
@@ -1220,24 +1183,24 @@ namespace Vanga
     params->top_eval = top_eval;
 
     /*
-    if(top_eval)
+    if (top_eval)
     {
       std::cout << "=============" << std::endl;
     }
     */
 
-    for(auto feature_it = feature_rows.begin();
+    for (auto feature_it = feature_rows.begin();
       feature_it != feature_rows.end();
       ++feature_it, ++feature_i)
     {
-      if(top_eval && !task_runner && feature_i % 100 == 0)
+      if (top_eval && !task_runner && feature_i % 100 == 0)
       {
         std::cout << "processed " << feature_i << "/" << feature_rows.size() << " features" << std::endl;
       }
 
-      if(skip_features.find(feature_it->first) == skip_features.end())
+      if (skip_features.find(feature_it->first) == skip_features.end())
       {
-        if(task_runner)
+        if (task_runner)
         {
           Generics::Task_var task = new GetBestFeatureTask<ThisType>(
             result,
@@ -1271,7 +1234,7 @@ namespace Vanga
           gain += (-gain * GAIN_SHARE_PENALTY) + GAIN_ABS_PENALTY;
 
           /*
-          if(top_eval)
+          if (top_eval)
           {
             Stream::Error ostr;
             ostr << "GAIN FOR #" << feature_it->first << ": " << gain << std::endl;
@@ -1293,7 +1256,7 @@ namespace Vanga
     result->wait(feature_rows.size());
 
     GetBestFeatureResult::BestChoose best_choose;
-    if(result->get_result(best_choose))
+    if (result->get_result(best_choose))
     {
       best_feature_id = best_choose.feature_id;
       best_gain = best_choose.gain;
@@ -1302,7 +1265,7 @@ namespace Vanga
     }
 
     /*
-    if(top_eval)
+    if (top_eval)
     {
       Stream::Error ostr;
       ostr << "BGAIN FOR #" << best_feature_id << ": " << best_gain << std::endl;
@@ -1316,9 +1279,9 @@ namespace Vanga
     }
     */
 
-    if(top_eval)
+    if (top_eval)
     {
-      if(best_feature_id)
+      if (best_feature_id)
       {
         auto best_feature_it = feature_rows.find(best_feature_id);
         assert(best_feature_it != feature_rows.end());
@@ -1334,7 +1297,7 @@ namespace Vanga
       }
     }
 
-    if(best_gain < NULL_GAIN && best_gain > -NULL_GAIN) // ~ 0
+    if (best_gain < NULL_GAIN && best_gain > -NULL_GAIN) // ~ 0
     {
       best_feature_id = 0;
       best_gain = 0.0;
@@ -1364,17 +1327,12 @@ namespace Vanga
     double sub_gain = 0.0;
 
     // precheck feature
-    if(check_depth - 1 > 0)
+    if (check_depth - 1 > 0)
     {
       SVM_var yes_svm;
       SVM_var no_svm;
 
-      div_rows_(
-        yes_svm,
-        no_svm,
-        feature_id,
-        node_svm,
-        feature_rows);
+      div_rows_(yes_svm, no_svm, feature_id, node_svm, feature_rows);
 
       unsigned long next_yes_best_feature_id = 0;
       double next_div_yes_best_gain = 0.0;
@@ -1399,7 +1357,7 @@ namespace Vanga
         top_pred,
         yes_svm);
 
-      if(next_yes_best_gain < next_div_yes_best_gain + GAIN_ABS_PENALTY)
+      if (next_yes_best_gain < next_div_yes_best_gain + GAIN_ABS_PENALTY)
       {
         next_yes_best_feature_id = 0;
         sub_gain += next_yes_best_gain;
@@ -1434,7 +1392,7 @@ namespace Vanga
         top_pred,
         no_svm);
 
-      if(next_no_best_gain < next_div_no_best_gain + GAIN_ABS_PENALTY)
+      if (next_no_best_gain < next_div_no_best_gain + GAIN_ABS_PENALTY)
       {
         next_no_best_feature_id = 0;
         sub_gain += next_no_best_gain;
@@ -1496,15 +1454,15 @@ namespace Vanga
 
     //std::cout << "> eval_feature_gain_" << std::endl;
 
-    while(feature_group_it != feature_svm->grouped_rows.end() &&
+    while (feature_group_it != feature_svm->grouped_rows.end() &&
       node_group_it != node_svm->grouped_rows.end())
     {
-      if((*feature_group_it)->label < (*node_group_it)->label)
+      if ((*feature_group_it)->label < (*node_group_it)->label)
       {
         // non cross rows
         ++feature_group_it;
       }
-      else if((*node_group_it)->label < (*feature_group_it)->label)
+      else if ((*node_group_it)->label < (*feature_group_it)->label)
       {
         // non cross rows
         //std::cout << "rows.size = " << (*node_group_it)->rows.size() << std::endl;
@@ -1527,12 +1485,12 @@ namespace Vanga
           ", cross_size = " << cross_size <<
           std::endl;
         */
-        if(cross_size != (*node_group_it)->rows.size())
+        if (cross_size != (*node_group_it)->rows.size())
         {
           gain_calc.add_count((*node_group_it)->label, false, (*node_group_it)->rows.size() - cross_size);
         }
 
-        if(cross_size > 0)
+        if (cross_size > 0)
         {
           gain_calc.add_count((*node_group_it)->label, true, cross_size);
         }
@@ -1548,7 +1506,7 @@ namespace Vanga
       }
     }
 
-    while(node_group_it != node_svm->grouped_rows.end())
+    while (node_group_it != node_svm->grouped_rows.end())
     {
       gain_calc.add_count((*node_group_it)->label, false, (*node_group_it)->rows.size());
       ++node_group_it;
@@ -1560,15 +1518,15 @@ namespace Vanga
     feature_group_it = feature_svm->grouped_rows.begin();
     node_group_it = node_svm->grouped_rows.begin();
 
-    while(feature_group_it != feature_svm->grouped_rows.end() &&
+    while (feature_group_it != feature_svm->grouped_rows.end() &&
       node_group_it != node_svm->grouped_rows.end())
     {
-      if((*feature_group_it)->label < (*node_group_it)->label)
+      if ((*feature_group_it)->label < (*node_group_it)->label)
       {
         // non cross rows
         ++feature_group_it;
       }
-      else if((*node_group_it)->label < (*feature_group_it)->label)
+      else if ((*node_group_it)->label < (*feature_group_it)->label)
       {
         // non cross rows
         gain_calc.add_eval((*node_group_it)->label, false, (*node_group_it)->rows.size());
@@ -1581,12 +1539,12 @@ namespace Vanga
         unsigned long cross_size = count_cross_rows(
           (*node_group_it)->rows, (*feature_group_it)->rows);
 
-        if(cross_size != (*node_group_it)->rows.size())
+        if (cross_size != (*node_group_it)->rows.size())
         {
           gain_calc.add_eval((*node_group_it)->label, false, (*node_group_it)->rows.size() - cross_size);
         }
 
-        if(cross_size > 0)
+        if (cross_size > 0)
         {
           gain_calc.add_eval((*node_group_it)->label, true, cross_size);
         }
@@ -1596,7 +1554,7 @@ namespace Vanga
       }
     }
 
-    while(node_group_it != node_svm->grouped_rows.end())
+    while (node_group_it != node_svm->grouped_rows.end())
     {
       gain_calc.add_eval((*node_group_it)->label, false, (*node_group_it)->rows.size());
       ++node_group_it;
@@ -1677,8 +1635,8 @@ namespace Vanga
       std::endl;
 #   endif
 
-    // new logloss += gain, new logloss = 
-    return new_logloss - old_logloss; // negative, new logloss = old logloss + gain 
+    // new logloss += gain, new logloss =
+    return new_logloss - old_logloss; // negative, new logloss = old logloss + gain
   }
   */
 
@@ -1693,16 +1651,16 @@ namespace Vanga
     std::deque<unsigned long> features_queue;
 
     unsigned long row_i = 0;
-    for(auto group_it = svm.grouped_rows.begin(); group_it != svm.grouped_rows.end(); ++group_it)
+    for (auto group_it = svm.grouped_rows.begin(); group_it != svm.grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin();
+      for (auto row_it = (*group_it)->rows.begin();
         row_it != (*group_it)->rows.end(); ++row_it, ++row_i)
       {
-        for(auto feature_it = (*row_it)->features.begin();
+        for (auto feature_it = (*row_it)->features.begin();
           feature_it != (*row_it)->features.end(); ++feature_it)
         {
           SVM_var& fr = feature_rows[feature_it->first];
-          if(!fr.in())
+          if (!fr.in())
           {
             fr = new SVM<LabelType>();
             features_queue.push_back(feature_it->first);
@@ -1711,7 +1669,7 @@ namespace Vanga
           fr->add_row(*row_it, (*group_it)->label);
         }
 
-        if(row_i > 0 && row_i % 100000 == 0)
+        if (row_i > 0 && row_i % 100000 == 0)
         {
           std::cerr << row_i << " rows processed" << std::endl;
         }
@@ -1727,7 +1685,7 @@ namespace Vanga
   TreeLearner<LabelType, GainType>::create_context(const SVMArray& svm_array)
   {
     BagPartArray bag_parts;
-    for(auto svm_it = svm_array.begin(); svm_it != svm_array.end(); ++svm_it)
+    for (auto svm_it = svm_array.begin(); svm_it != svm_array.end(); ++svm_it)
     {
       BagHolder_var new_bag_holder = new BagHolder();
       new_bag_holder->bag = *svm_it;
@@ -1753,17 +1711,12 @@ namespace Vanga
     const BagPartArray& bag_parts,
     unsigned long feature_id)
   {
-    for(auto bag_it = bag_parts.begin(); bag_it != bag_parts.end(); ++bag_it)
+    for (auto bag_it = bag_parts.begin(); bag_it != bag_parts.end(); ++bag_it)
     {
       SVM_var yes_svm;
       SVM_var no_svm;
-      
-      div_rows_(
-        yes_svm,
-        no_svm,
-        feature_id,
-        (*bag_it)->svm,
-        (*bag_it)->bag_holder->feature_rows);
+
+      div_rows_(yes_svm, no_svm, feature_id, (*bag_it)->svm, (*bag_it)->bag_holder->feature_rows);
 
       BagPart_var yes_bag_part = new BagPart();
       yes_bag_part->bag_holder = (*bag_it)->bag_holder;
@@ -1787,7 +1740,7 @@ namespace Vanga
     const FeatureRowsMap& feature_rows)
   {
     auto feature_it = feature_rows.find(feature_id);
-    if(feature_it != feature_rows.end())
+    if (feature_it != feature_rows.end())
     {
       const SVM<LabelType>* feature_svm = feature_it->second;
       SVM<LabelType>::cross(yes_svm, no_svm, div_svm, feature_svm);

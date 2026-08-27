@@ -17,7 +17,7 @@ unit.pl - prepare environment for the new AutoTest unit.
 =item C<--category, -c category name>
 
 B<Required.> Specifies category name for the new unit. If there isn't
-such category in the category list script creates new one. 
+such category in the category list script creates new one.
 
 =item C<--testname, -n unit name>
 
@@ -78,7 +78,7 @@ use Pod::Usage;
 use File::Spec;
 use File::Path;
 
-my @test_groups = ("fast", "quiet", "slow"); 
+my @test_groups = ("fast", "quiet", "slow");
 
 use constant UNITS_PATH               => "$FindBin::Dir/../Units";
 use constant MAX_TESTNAME_LENGTH      => 30;
@@ -113,13 +113,13 @@ my $makefile_tmp_path = File::Spec->join($test_path,"~Makefile.in");
 my $deffile_path = File::Spec->join($test_path,"$def_name.def");
 my $dirac_path = File::Spec->join($test_path,"dir.ac");
 
-if (! -d $test_path) 
+if (! -d $test_path)
 {
   File::Path::mkpath($test_path) || die "Cann't create directory $test_path";
 }
 
 my $makefile_exists = 1;
-unless (-e $makefile_path) 
+unless (-e $makefile_path)
 {
   $makefile_exists =  0;
   # add Makefile.in
@@ -160,7 +160,7 @@ OSBE_CXX_DEF([$def_name])
 EOF;
   close(TARGET);
 
-  
+
 }
 
 if (length($new_unit_name) > MAX_TESTNAME_LENGTH and $option{add})
@@ -182,9 +182,9 @@ if ( not $option{delete})
   print TARGET << "EOF;";
 #ifndef _AUTOTEST__$uc_unitname\_
 #define _AUTOTEST__$uc_unitname\_
-  
+
 #include $BASE_UNIT_INCLUDE_STRING
-  
+
 
 class $new_unit_name : public BaseUnit
 {
@@ -206,7 +206,7 @@ private:
 
 #endif // _AUTOTEST__$uc_unitname\_
 EOF;
- 
+
   close(TARGET);
 
   my $cpp_qroup="AUTO_TEST_FAST";
@@ -259,7 +259,7 @@ sub init {
 EOF;
 
 
-if ($makefile_exists) 
+if ($makefile_exists)
 {
   # Modify Makefile.in
   open(SOURCE, $makefile_path) || die "Cann't open file $makefile_path\n";
@@ -283,7 +283,7 @@ if ($makefile_exists)
       }
       print TARGET $string;
     }
-    else 
+    else
     {
       if (not $string =~ /cpp/o)
       {
@@ -346,7 +346,7 @@ else
       print TARGET $string;
     }
   }
-  
+
   close(TARGET);
 
   unlink $hpp_file_path                              || die "Error: can't remove file $hpp_file_path\n";

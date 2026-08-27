@@ -47,9 +47,7 @@ namespace AdServer::PubPixel
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    RequestInfoFiller(
-      Logging::Logger* logger,
-      std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
+    RequestInfoFiller(Logging::Logger* logger, std::shared_ptr<GeoIPMapping::IPMapCity2> ip_map)
       /*throw(eh::Exception)*/;
 
     void fill(RequestInfo& request_info,

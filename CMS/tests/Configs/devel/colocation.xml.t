@@ -226,30 +226,30 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
             <source id="body-openrtb-notice" instantiate_type="body" request_type="openrtb with click url" enable_notice="true"/>
             <source id="iframe-url-adriver" instantiate_type="iframe with url" request_type="adriver" enable_notice="true"/>
             <source id="anx" instantiate_type="url parameters"  request_type="appnexus" enable_notice="false" appnexus_member_id="1"/>
-            <source id="ipw" 
-                    instantiate_type="body" 
-                    request_type="openrtb" 
-                    seat="94" 
-                    enable_notice="true" 
-                    vast_instantiate_type="video url" 
-                    vast_enable_notice="false" 
+            <source id="ipw"
+                    instantiate_type="body"
+                    request_type="openrtb"
+                    seat="94"
+                    enable_notice="true"
+                    vast_instantiate_type="video url"
+                    vast_enable_notice="false"
                     ipw_extension="true"/>
             <source id="google" instantiate_type="iframe with url" request_type="google" vast_instantiate_type="video url" vast_enable_notice="false"/>
-            <source id="yandex" 
-                    instantiate_type="data parameter value" 
-                    request_type="yandex" 
-                    enable_notice="false" 
-                    truncate_domain="false" 
-                    vast_instantiate_type="data parameter value" 
-                    vast_enable_notice="false" 
+            <source id="yandex"
+                    instantiate_type="data parameter value"
+                    request_type="yandex"
+                    enable_notice="false"
+                    truncate_domain="false"
+                    vast_instantiate_type="data parameter value"
+                    vast_enable_notice="false"
                     ipw_extension="false">
-               <userBind redirect="//an.yandex.ru/setud/imarker2/##UNSIGNEDSSPUID=##?sign=##YANDEXSIGN##"  
+               <userBind redirect="//an.yandex.ru/setud/imarker2/##UNSIGNEDSSPUID=##?sign=##YANDEXSIGN##"
                          passback="true"/>
             </source>
-            <source id="native_js" 
-                    instantiate_type="body" 
-                    request_type="openrtb with click url" 
-                    enable_notice="false" 
+            <source id="native_js"
+                    instantiate_type="body"
+                    request_type="openrtb with click url"
+                    enable_notice="false"
                     fill_adid="true"
                     native_instantiate_type="adm"
                     native_impression_tracker_type="js"/>

@@ -74,8 +74,6 @@ CAMPAIGN_CORRECTION_FEATURE_CONFIG = {
     ['campaign', 'campaign_freq_log'],
     ['campaign', 'geoch'],
     ['campaign', 'userch'],
-    ['ssp_tag_id'],
-    ['ssp_ctr'],
     ['ssp_viewability'],
     ['ssp_vtr'],
   ],
@@ -927,6 +925,7 @@ def stream_libsvm_chunks(
     progress_section=None,
     progress_prefix=None,
     row_counter=None,
+    chunk_statistics=None,
 ):
   csv_iterator = iter(csv_chunks)
   svm_file = None
@@ -961,7 +960,7 @@ def stream_libsvm_chunks(
       if dictionary_lines is not None:
         dictionary_file = work_dir / (
           file_prefix + '-' + str(chunk_index).zfill(3) + '.features')
-      if feature_statistics is not None:
+      if feature_statistics is not None or chunk_statistics is not None:
         feature_stats_file = work_dir / (
           file_prefix + '-' + str(chunk_index).zfill(3) + '.stats')
       libsvm_step = (
@@ -984,7 +983,12 @@ def stream_libsvm_chunks(
         dictionary_file.unlink()
         dictionary_file = None
       if feature_stats_file is not None:
-        feature_statistics.add_file(feature_stats_file)
+        current_statistics = FeatureStatistics()
+        current_statistics.add_file(feature_stats_file)
+        if feature_statistics is not None:
+          feature_statistics.add_file(feature_stats_file)
+        if chunk_statistics is not None:
+          chunk_statistics.append(current_statistics)
         feature_stats_file.unlink()
         feature_stats_file = None
 
@@ -1243,6 +1247,8 @@ def stream_aligned_chunks(
     stable_statistics,
     correction_statistics,
     progress=None,
+    stable_chunk_statistics=None,
+    correction_chunk_statistics=None,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
@@ -1312,8 +1318,16 @@ def stream_aligned_chunks(
           stable_dictionary_lines.update(input_file)
         with correction_dictionary.open('rb') as input_file:
           correction_dictionary_lines.update(input_file)
+        stable_current_statistics = FeatureStatistics()
+        stable_current_statistics.add_file(stable_stats)
         stable_statistics.add_file(stable_stats)
+        if stable_chunk_statistics is not None:
+          stable_chunk_statistics.append(stable_current_statistics)
+        correction_current_statistics = FeatureStatistics()
+        correction_current_statistics.add_file(correction_stats)
         correction_statistics.add_file(correction_stats)
+        if correction_chunk_statistics is not None:
+          correction_chunk_statistics.append(correction_current_statistics)
         common_trainer.predict_raw_(
           common_model_file,
           stable_svm,
@@ -1460,6 +1474,7 @@ def stream_campaign_chunks(
     progress=None,
     campaign_feature_indexes_file=None,
     progress_prefix='campaign_training',
+    chunk_statistics=None,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
@@ -1497,7 +1512,8 @@ def stream_campaign_chunks(
         if dictionary_lines is not None else None)
       stats_file = (
         work_dir / (prefix + '.stats')
-        if feature_statistics is not None else None)
+        if (feature_statistics is not None or chunk_statistics is not None)
+        else None)
       current_files = [
         stable_svm,
         campaign_svm,
@@ -1529,7 +1545,13 @@ def stream_campaign_chunks(
           with dictionary_file.open('rb') as input_file:
             dictionary_lines.update(input_file)
         if stats_file is not None:
-          feature_statistics.add_file(stats_file)
+          current_statistics = FeatureStatistics()
+          current_statistics.add_file(stats_file)
+          if feature_statistics is not None:
+            feature_statistics.add_file(stats_file)
+          if chunk_statistics is not None:
+            chunk_statistics.append(current_statistics)
+          stats_file.unlink()
         stable_trainer.predict_raw_(
           stable_model_file,
           stable_svm,
@@ -1794,6 +1816,21 @@ def dataset_size(statistics):
   }
 
 
+def dataset_fit_size(statistics):
+  size = dataset_size(statistics)
+  size['ctr'] = (
+    size['clicks'] / size['rows'] if size['rows'] else 0.0)
+  return size
+
+
+def add_training_dataset_properties(history, chunk_statistics):
+  for item, statistics in zip(history, chunk_statistics):
+    size = dataset_fit_size([statistics])
+    item['train_rows'] = size['rows']
+    item['train_clicks'] = size['clicks']
+    item['train_ctr'] = size['ctr']
+
+
 def generate_model(config):
   with InProgressModel(
       config.model_root(),
@@ -1845,12 +1882,20 @@ def generate_model_(config, in_progress_model):
     date_from, date_to = exporter.find_date_range(
       source_rows,
       config.data_delay)
+  validation_window_rows = config.validation_set_rows * validation_sets
+  validation_cutoff = exporter.ordered_slice_min_timestamp(
+    date_from,
+    date_to,
+    validation_window_rows,
+    exporter.validation_condition())
+  training_time_condition = "timestamp < '" + validation_cutoff + "'"
   with in_progress_model.train_step('prepare', 'select_campaigns'):
     eligible_campaign_candidates = exporter.eligible_campaigns(
       date_from,
       date_to,
       config.campaign_model_activity_period,
-      config.min_campaign_model_imps)
+      config.min_campaign_model_imps,
+      training_extra_condition=training_time_condition)
   campaign_validation_sets = (
     config.selection_validation_sets +
     config.training_validation_sets +
@@ -1875,7 +1920,8 @@ def generate_model_(config, in_progress_model):
     available_training_rows = exporter.count_rows(
       date_from,
       date_to,
-      exporter.training_condition())
+      '(' + exporter.training_condition() + ') AND (' +
+      training_time_condition + ')')
     available_validation_rows = exporter.count_rows(
       date_from,
       date_to,
@@ -1884,7 +1930,7 @@ def generate_model_(config, in_progress_model):
       date_from,
       date_to,
       '(' + exporter.training_condition() + ') AND (' +
-      ssp_ctr_condition + ')')
+      ssp_ctr_condition + ') AND (' + training_time_condition + ')')
     available_ssp_ctr_validation_rows = exporter.count_rows(
       date_from,
       date_to,
@@ -1966,6 +2012,7 @@ def generate_model_(config, in_progress_model):
     eligible_campaigns=len(eligible_campaign_candidates),
     date_from=date_from,
     date_to=date_to,
+    training_cutoff=validation_cutoff,
     campaign_model_activity_period=config.campaign_model_activity_period,
     min_campaign_model_imps=config.min_campaign_model_imps,
     ssp_ctr_training_rows=available_ssp_ctr_training_rows,
@@ -2044,6 +2091,9 @@ def generate_model_(config, in_progress_model):
       date_to,
       validation_rows,
       config.selection_validation_sets,
+      validation_offset_rows=(
+        (config.training_validation_sets + config.final_test_sets) *
+        validation_rows),
       progress=in_progress_model,
       progress_section='prepare',
       progress_prefix='selection_validation')
@@ -2055,7 +2105,9 @@ def generate_model_(config, in_progress_model):
       config.selection_chunk_rows,
       config.selection_fit_steps,
       date_from,
-      date_to)
+      date_to,
+      training_time_condition,
+      order='ASC')
     selection_svm_chunks = stream_libsvm_chunks(
       selection_csv_chunks,
       cycle_dir,
@@ -2088,8 +2140,7 @@ def generate_model_(config, in_progress_model):
 
     core_validation_sets = (
       config.training_validation_sets + config.final_test_sets)
-    core_validation_offset_rows = (
-      config.selection_validation_sets * validation_rows)
+    core_validation_offset_rows = 0
     common_train_start = in_progress_model.start_models('common')
     common_validation_files, common_validation_statistics = (
       prepare_validation_libsvm_sets(
@@ -2107,9 +2158,12 @@ def generate_model_(config, in_progress_model):
         progress=in_progress_model,
         progress_section='common',
         progress_prefix='common_validation'))
-    training_validation_end = config.training_validation_sets
+    # Validation files are exported newest first: final_test is the newest
+    # holdout, test is the next newest holdout.  Training consumes older rows.
+    training_validation_end = config.final_test_sets
     dictionary_lines = set()
     feature_statistics = FeatureStatistics()
+    training_chunk_statistics = []
     training_csv_chunks = exporter.export_partitioned_chunks(
       cycle_dir,
       'training',
@@ -2117,7 +2171,9 @@ def generate_model_(config, in_progress_model):
       config.main_chunk_rows,
       config.training_fit_steps,
       date_from,
-      date_to)
+      date_to,
+      training_time_condition,
+      order='ASC')
     training_svm_chunks = stream_libsvm_chunks(
       training_csv_chunks,
       cycle_dir,
@@ -2128,7 +2184,8 @@ def generate_model_(config, in_progress_model):
       feature_statistics,
       progress=in_progress_model,
       progress_section='common',
-      progress_prefix='training')
+      progress_prefix='training',
+      chunk_statistics=training_chunk_statistics)
     common_fit_start, common_fit_end = fit_step_callbacks(
       in_progress_model,
       'common',
@@ -2136,20 +2193,23 @@ def generate_model_(config, in_progress_model):
     common_model, common_logloss_history, common_ctr_thresholds = (
       trainer.train_from_chunks(
         training_svm_chunks,
-        common_validation_files[:training_validation_end],
         common_validation_files[training_validation_end:],
+        common_validation_files[:training_validation_end],
         fit_iterations=config.fit_iterations,
         patience=config.training_patience,
         work_dir=cycle_dir,
         fit_steps=config.training_fit_steps,
         on_fit_start=common_fit_start,
         on_fit_end=common_fit_end))
+    add_training_dataset_properties(
+      common_logloss_history,
+      training_chunk_statistics)
     common_dataset_sizes = {
       'train': dataset_size([feature_statistics]),
       'test': dataset_size(
-        common_validation_statistics[:training_validation_end]),
-      'final_test': dataset_size(
         common_validation_statistics[training_validation_end:]),
+      'final_test': dataset_size(
+        common_validation_statistics[:training_validation_end]),
     }
 
     with in_progress_model.train_step('common', 'save_feature_dictionary'):
@@ -2181,6 +2241,8 @@ def generate_model_(config, in_progress_model):
     correction_dictionary_lines = set()
     stable_statistics = FeatureStatistics()
     correction_statistics = FeatureStatistics()
+    stable_chunk_statistics = []
+    correction_chunk_statistics = []
     aligned_train_start = in_progress_model.start_models(
       'common_denoise',
       'common_stable')
@@ -2199,9 +2261,9 @@ def generate_model_(config, in_progress_model):
         core_validation_offset_rows,
         in_progress_model))
     correction_training_inputs = correction_validation_inputs[
-      :training_validation_end]
-    correction_final_inputs = correction_validation_inputs[
       training_validation_end:]
+    correction_final_inputs = correction_validation_inputs[
+      :training_validation_end]
     aligned_csv_chunks = exporter.export_partitioned_chunks(
       cycle_dir,
       'aligned-training',
@@ -2209,7 +2271,9 @@ def generate_model_(config, in_progress_model):
       config.main_chunk_rows,
       config.training_fit_steps,
       date_from,
-      date_to)
+      date_to,
+      training_time_condition,
+      order='ASC')
     aligned_chunks = stream_aligned_chunks(
       aligned_csv_chunks,
       cycle_dir,
@@ -2222,7 +2286,9 @@ def generate_model_(config, in_progress_model):
       correction_dictionary_lines,
       stable_statistics,
       correction_statistics,
-      in_progress_model)
+      in_progress_model,
+      stable_chunk_statistics,
+      correction_chunk_statistics)
     aligned_fit_start, aligned_fit_end = fit_step_callbacks(
       in_progress_model,
       ('common_denoise', 'common_stable'),
@@ -2231,15 +2297,21 @@ def generate_model_(config, in_progress_model):
       aligned_chunks,
       correction_trainer,
       correction_training_inputs,
-      common_validation_files[:training_validation_end],
-      correction_final_inputs,
       common_validation_files[training_validation_end:],
+      correction_final_inputs,
+      common_validation_files[:training_validation_end],
       fit_iterations=config.fit_iterations,
       patience=config.training_patience,
       work_dir=cycle_dir,
       fit_steps=config.training_fit_steps,
       on_fit_start=aligned_fit_start,
       on_fit_end=aligned_fit_end)
+    add_training_dataset_properties(
+      aligned_models['stable_common']['logloss_history'],
+      stable_chunk_statistics)
+    add_training_dataset_properties(
+      aligned_models['campaign_correction']['logloss_history'],
+      correction_chunk_statistics)
 
     with in_progress_model.train_step(
         ('common_denoise', 'common_stable'),
@@ -2254,16 +2326,16 @@ def generate_model_(config, in_progress_model):
     stable_dataset_sizes = {
       'train': dataset_size([stable_statistics]),
       'test': dataset_size(
-        common_validation_statistics[:training_validation_end]),
-      'final_test': dataset_size(
         common_validation_statistics[training_validation_end:]),
+      'final_test': dataset_size(
+        common_validation_statistics[:training_validation_end]),
     }
     correction_dataset_sizes = {
       'train': dataset_size([correction_statistics]),
       'test': dataset_size(
-        correction_validation_statistics[:training_validation_end]),
-      'final_test': dataset_size(
         correction_validation_statistics[training_validation_end:]),
+      'final_test': dataset_size(
+        correction_validation_statistics[:training_validation_end]),
     }
 
     stable_model_file = cycle_dir / 'common-stable.cbm'
@@ -2330,6 +2402,9 @@ def generate_model_(config, in_progress_model):
       date_to,
       ssp_ctr_validation_rows,
       config.selection_validation_sets,
+      validation_offset_rows=(
+        (config.training_validation_sets + config.final_test_sets) *
+        ssp_ctr_validation_rows),
       progress=in_progress_model,
       progress_section='common_ssp_ctr',
       progress_prefix='ssp_selection_validation',
@@ -2343,8 +2418,9 @@ def generate_model_(config, in_progress_model):
       ssp_ctr_selection_fit_steps,
       date_from,
       date_to,
-      ssp_ctr_condition,
-      label='ssp_ctr')
+      '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
+      label='ssp_ctr',
+      order='ASC')
     ssp_ctr_selection_svm_chunks = stream_libsvm_chunks(
       ssp_ctr_selection_csv_chunks,
       cycle_dir,
@@ -2382,8 +2458,7 @@ def generate_model_(config, in_progress_model):
 
     ssp_ctr_core_validation_sets = (
       config.training_validation_sets + config.final_test_sets)
-    ssp_ctr_core_validation_offset_rows = (
-      config.selection_validation_sets * ssp_ctr_validation_rows)
+    ssp_ctr_core_validation_offset_rows = 0
     ssp_ctr_validation_files, _ = prepare_validation_libsvm_sets(
       exporter,
       cycle_dir,
@@ -2410,8 +2485,9 @@ def generate_model_(config, in_progress_model):
       ssp_ctr_training_fit_steps,
       date_from,
       date_to,
-      ssp_ctr_condition,
-      label='ssp_ctr')
+      '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
+      label='ssp_ctr',
+      order='ASC')
     ssp_ctr_training_svm_chunks = stream_libsvm_chunks(
       ssp_ctr_training_csv_chunks,
       cycle_dir,
@@ -2437,8 +2513,8 @@ def generate_model_(config, in_progress_model):
       ssp_ctr_thresholds,
     ) = ssp_ctr_trainer.train_from_chunks(
       ssp_ctr_training_svm_chunks,
-      ssp_ctr_validation_files[:config.training_validation_sets],
-      ssp_ctr_validation_files[config.training_validation_sets:],
+      ssp_ctr_validation_files[config.final_test_sets:],
+      ssp_ctr_validation_files[:config.final_test_sets],
       fit_iterations=ssp_ctr_training_fit_iterations,
       patience=config.training_patience,
       work_dir=cycle_dir,
@@ -2469,10 +2545,7 @@ def generate_model_(config, in_progress_model):
         date_to,
         ssp_ctr_validation_rows * config.final_test_sets,
         exporter.validation_condition(),
-        (
-          config.selection_validation_sets +
-          config.training_validation_sets
-        ) * ssp_ctr_validation_rows)
+        0)
       ssp_ctr_model_description = ssp_ctr_trainer.describe_model(
         ssp_ctr_model,
         ssp_ctr_dictionary_file,
@@ -2568,6 +2641,9 @@ def generate_model_(config, in_progress_model):
             campaign_validation_rows,
             config.selection_validation_sets,
             in_progress_model,
+            validation_offset_rows=(
+              (config.training_validation_sets + config.final_test_sets) *
+              campaign_validation_rows),
             progress_prefix='campaign_selection_validation'))
         campaign_selection_csv_chunks = exporter.export_partitioned_chunks(
           cycle_dir,
@@ -2577,7 +2653,8 @@ def generate_model_(config, in_progress_model):
           campaign_selection_fit_steps,
           date_from,
           date_to,
-          campaign_condition)
+          '(' + campaign_condition + ') AND (' + training_time_condition + ')',
+          order='ASC')
         campaign_selection_chunks = stream_campaign_chunks(
           campaign_selection_csv_chunks,
           cycle_dir,
@@ -2642,9 +2719,10 @@ def generate_model_(config, in_progress_model):
             in_progress_model,
             campaign_feature_indexes_file=campaign_feature_indexes_file,
             validation_offset_rows=(
-              config.selection_validation_sets * campaign_validation_rows)))
+              0)))
         campaign_dictionary_lines = set()
         campaign_statistics = FeatureStatistics()
+        campaign_chunk_statistics = []
         campaign_csv_chunks = exporter.export_partitioned_chunks(
           cycle_dir,
           'campaign-' + str(campaign_id) + '-training',
@@ -2653,7 +2731,8 @@ def generate_model_(config, in_progress_model):
           campaign_training_fit_steps,
           date_from,
           date_to,
-          campaign_condition)
+          '(' + campaign_condition + ') AND (' + training_time_condition + ')',
+          order='ASC')
         campaign_chunks = stream_campaign_chunks(
           campaign_csv_chunks,
           cycle_dir,
@@ -2666,8 +2745,9 @@ def generate_model_(config, in_progress_model):
           campaign_dictionary_lines,
           campaign_statistics,
           in_progress_model,
-          campaign_feature_indexes_file=campaign_feature_indexes_file)
-        campaign_training_validation_end = config.training_validation_sets
+          campaign_feature_indexes_file=campaign_feature_indexes_file,
+          chunk_statistics=campaign_chunk_statistics)
+        campaign_training_validation_end = config.final_test_sets
         campaign_fit_start, campaign_fit_end = fit_step_callbacks(
           in_progress_model,
           campaign_model_name,
@@ -2675,15 +2755,18 @@ def generate_model_(config, in_progress_model):
         campaign_result = campaign_model_trainer.train_residual_from_chunks(
           campaign_chunks,
           campaign_validation_inputs[
-            :campaign_training_validation_end],
-          campaign_validation_inputs[
             campaign_training_validation_end:],
+          campaign_validation_inputs[
+            :campaign_training_validation_end],
           fit_iterations=campaign_training_fit_iterations,
           patience=config.training_patience,
           work_dir=cycle_dir,
           fit_steps=campaign_training_fit_steps,
           on_fit_start=campaign_fit_start,
           on_fit_end=campaign_fit_end)
+        add_training_dataset_properties(
+          campaign_result['logloss_history'],
+          campaign_chunk_statistics)
 
         campaign_dictionary_file = cycle_dir / (
           'campaign-' + str(campaign_id) + '.features')
@@ -2704,10 +2787,10 @@ def generate_model_(config, in_progress_model):
           'train': dataset_size([campaign_statistics]),
           'test': dataset_size(
             campaign_validation_statistics[
-              :campaign_training_validation_end]),
+              campaign_training_validation_end:]),
           'final_test': dataset_size(
             campaign_validation_statistics[
-              campaign_training_validation_end:]),
+              :campaign_training_validation_end]),
         }
         with in_progress_model.train_step(
             campaign_model_name,

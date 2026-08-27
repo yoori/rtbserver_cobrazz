@@ -18,11 +18,7 @@ namespace AutoTest
 
   public:
     template<class T>
-    DebugSizeParam(
-      Request* request,
-      const char* name,
-      const T& defs,
-      bool set_defs = true);
+    DebugSizeParam(Request* request, const char* name, const T& defs, bool set_defs = true);
 
     DebugSizeParam(Request* request, const char* name);
 
@@ -32,10 +28,7 @@ namespace AutoTest
     DebugSizeParam& operator= (const T& val);
 
     virtual bool
-    print(
-      std::ostream& out,
-      const char* prefix,
-      const char* eql) const;
+    print(std::ostream& out, const char* prefix, const char* eql) const;
 
     virtual ~DebugSizeParam() noexcept;
   };

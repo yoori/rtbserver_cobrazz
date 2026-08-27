@@ -93,8 +93,7 @@ namespace AdServer::UserInfoSvcs
       ", min_age_reached: " << min_age_reached <<
       ", user_id_generated: " << user_id_generated <<
       ", created: " << created <<
-      ", invalid_operation: " << invalid_operation <<
-      ", user found: " << user_found;
+      ", invalid_operation: " << invalid_operation << ", user found: " << user_found;
     return out;
   }
 

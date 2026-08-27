@@ -9,8 +9,7 @@
 
 // Class Report
 
-Report::Report(Statistics& stats,
-               std::ostream& out) :
+Report::Report(Statistics& stats, std::ostream& out) :
   stats_(stats),
   out_(out)
 { }
@@ -40,8 +39,7 @@ std::ostream& DumpRequestContainerConfStats::dump_body(std::ostream& out) const
   out << DumpPercentageCounter(container_.total()) <<
       " \\\\  -- *OI*=" <<
       DumpPercentageCounter(container_.opted_in()) <<
-      " \\\\  -- *OO*=" <<
-      DumpPercentageCounter(container_.opted_out());
+      " \\\\  -- *OO*=" << DumpPercentageCounter(container_.opted_out());
   return out;
 }
 
@@ -75,8 +73,7 @@ std::ostream& DumpFrontendStats::dump_header(std::ostream& out) const
 
 std::ostream& DumpFrontendStats::dump_body(std::ostream& out) const
 {
-  for (FrontendStatList::const_iterator it = items_.begin();
-       it != items_.end(); ++it)
+  for (FrontendStatList::const_iterator it = items_.begin(); it != items_.end(); ++it)
   {
     const FrontendStatistics_var& item = it->second;
     out.fill (' ');
@@ -130,8 +127,7 @@ DumpAdvertisingStats::~DumpAdvertisingStats() noexcept
 
 std::ostream& DumpAdvertisingStats::dump_body(std::ostream& out) const
 {
-  for (AdvertisingStatList::const_iterator it = items_.begin();
-       it != items_.end(); ++it)
+  for (AdvertisingStatList::const_iterator it = items_.begin(); it != items_.end(); ++it)
   {
     print_line(out, LINE_LENGTH);
     std::string header("Advertising statistics ");
@@ -167,7 +163,7 @@ std::ostream& DumpAdvertisingStats::dump_ccid_body(std::ostream& out,
                                                    const AdvertisingStatistics_var& stats) const
 {
  out.flags(std::ios::right);
- for(AdvertisingStatistics::RequestCounterContainerList::const_iterator
+ for (AdvertisingStatistics::RequestCounterContainerList::const_iterator
        it=stats->ccid_stats().begin();
      it != stats->ccid_stats().end(); ++it)
     {
@@ -207,8 +203,7 @@ std::ostream& DumpAdvertisingStats::dump_ccid_body(std::ostream& out,
 
 // Class ShortDump
 
-ShortReport::ShortReport(Statistics& stats,
-                         std::ostream& out) :
+ShortReport::ShortReport(Statistics& stats, std::ostream& out) :
   Report(stats, out)
 { }
 
@@ -230,8 +225,7 @@ void ShortReport::dump()
 
 // Class ChannelsReport
 
-ChannelsReport::ChannelsReport(Statistics& stats,
-                               std::ostream& out) :
+ChannelsReport::ChannelsReport(Statistics& stats, std::ostream& out) :
   Report(stats, out)
 { }
 
@@ -251,8 +245,7 @@ void ChannelsReport::dump()
 
 // Class StandardReport
 
-StandardReport::StandardReport(Statistics& stats,
-                               std::ostream& out) :
+StandardReport::StandardReport(Statistics& stats, std::ostream& out) :
   Report(stats, out)
 { }
 
@@ -437,15 +430,13 @@ void ConfluenceReport::dump_body(std::ostream& out)
   // Common stats
   out << "*Total requests*=" <<
       DumpRequestContainerConfStats(stats_.total_requests()) <<
-      " \\\\  *Errors*=" <<
-      DumpRequestContainerConfStats(stats_.total_errors());
+      " \\\\  *Errors*=" << DumpRequestContainerConfStats(stats_.total_errors());
   // Frontend stats
   for (FrontendStatList::const_iterator it = stats_.frontend_stats().begin();
        it != stats_.frontend_stats().end(); ++it)
   {
     const FrontendStatistics_var& item = it->second;
-    out << " \\\\  *"<< it->first << "*=" <<
-        DumpRequestContainerConfStats(item->requests());
+    out << " \\\\  *"<< it->first << "*=" << DumpRequestContainerConfStats(item->requests());
   }
   // Creative stats
   AdvertisingStatistics* ns_stats = stats_.get_nslookup_stats();
@@ -454,8 +445,7 @@ void ConfluenceReport::dump_body(std::ostream& out)
     out << " \\\\  *Return creatives*=" <<
         DumpRequestContainerConfStats(ns_stats->creative_responses());
   }
-  out << " \\\\  *Profiling*=" <<
-      DumpRequestContainerConfStats(stats_.profiling_requests());
+  out << " \\\\  *Profiling*=" << DumpRequestContainerConfStats(stats_.profiling_requests());
   out << "\\\\  *Execution(secs)*=" << total_duration_ << " | ";
   // Performance stats
   out << DumpConfPerformanceStats(stats_.adv_performance_stats(), "Advertising") << " | ";

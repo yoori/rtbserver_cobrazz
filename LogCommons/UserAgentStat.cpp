@@ -14,8 +14,7 @@ namespace AdServer::LogProcessing
   {
     Aux_::StringIoWrapper user_agent_wrapper;
     is >> user_agent_wrapper;
-    key.user_agent_ =
-      new AdServer::Commons::StringHolder(std::move(user_agent_wrapper));
+    key.user_agent_ = new AdServer::Commons::StringHolder(std::move(user_agent_wrapper));
     key.invariant();
     key.calc_hash_();
     return is;
@@ -64,9 +63,7 @@ namespace AdServer::LogProcessing
   operator<<(BufferWriter& out, const UserAgentStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    out << data.requests_ << '\t'
-      << data.holder_->channels << '\t'
-      << data.holder_->platforms;
+    out << data.requests_ << '\t' << data.holder_->channels << '\t' << data.holder_->platforms;
     return out;
   }
 } // namespace AdServer::LogProcessing

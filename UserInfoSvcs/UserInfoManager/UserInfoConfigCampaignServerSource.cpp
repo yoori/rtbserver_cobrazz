@@ -42,8 +42,7 @@ namespace
 
   typedef std::list<
     SimpleChannelProperties,
-    Generics::TAlloc::ThreadPool<SimpleChannelProperties, 256>>
-    SimpleChannelPropertiesList;
+    Generics::TAlloc::ThreadPool<SimpleChannelProperties, 256>> SimpleChannelPropertiesList;
 
   struct BehavIdTypeKey
   {
@@ -89,28 +88,24 @@ namespace
     {
       cip->short_intervals.insert(ci);
     }
-    else if (ci.time_to >= Generics::Time::ONE_DAY &&
-      ci.time_from == Generics::Time::ZERO)
+    else if (ci.time_to >= Generics::Time::ONE_DAY && ci.time_from == Generics::Time::ZERO)
     {
       cip->today_long_intervals.insert(ci);
     }
-    else if (ci.time_to > ci.time_from &&
-      ci.time_from >= Generics::Time::ONE_DAY)
+    else if (ci.time_to > ci.time_from && ci.time_from >= Generics::Time::ONE_DAY)
     {
       cip->long_intervals.insert(ci);
     }
   }
 
   void
-  init_ht_candidate_templates_(
-    AdServer::UserInfoSvcs::ChannelIntervalsPack* cip)
+  init_ht_candidate_templates_(AdServer::UserInfoSvcs::ChannelIntervalsPack* cip)
     noexcept
   {
     cip->ht_candidate_templates.clear();
     cip->ht_candidate_templates.reserve(cip->today_long_intervals.size());
 
-    for (auto it = cip->today_long_intervals.begin();
-      it != cip->today_long_intervals.end(); ++it)
+    for (auto it = cip->today_long_intervals.begin(); it != cip->today_long_intervals.end(); ++it)
     {
       const unsigned long req_visits = it->min_visits - 1;
       cip->ht_candidate_templates.emplace_back(
@@ -240,9 +235,7 @@ namespace AdServer::UserInfoSvcs
     }
 
     state_->campaign_servers.reset(
-      new State::CampaignServerPool(
-        pool_config,
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+      new State::CampaignServerPool(pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
   }
 
   UserInfoConfigCampaignServerSource::~UserInfoConfigCampaignServerSource()
@@ -286,8 +279,7 @@ namespace AdServer::UserInfoSvcs
 
         unsigned long res_length = 0;
 
-        for (unsigned long portion = 0; portion < PORTIONS_NUMBER;
-          ++portion)
+        for (unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
         {
           settings.portion = portion;
           CampaignSvcs::BriefSimpleChannelAnswer_var channels_to_load =
@@ -321,8 +313,7 @@ namespace AdServer::UserInfoSvcs
 
           for (CORBA::ULong i = 0; i < channels_to_load->behav_params.length(); ++i)
           {
-            const CampaignSvcs::BriefBehavParamInfo& bpi =
-              channels_to_load->behav_params[i];
+            const CampaignSvcs::BriefBehavParamInfo& bpi = channels_to_load->behav_params[i];
 
             if (bpi.bp_seq.length() != 0)
             {
@@ -437,22 +428,16 @@ namespace AdServer::UserInfoSvcs
                 url_keyword_cip,
                 audience_cip);
 
-              behav_channel_interval_map[BehavIdTypeKey(
-                bpi.id, PAGE_CHANNEL)] = page_cip;
-              behav_channel_interval_map[BehavIdTypeKey(
-                bpi.id, URL_CHANNEL)] = url_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id, PAGE_CHANNEL)] = page_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id, URL_CHANNEL)] = url_cip;
               behav_channel_interval_map[BehavIdTypeKey(
                 bpi.id, URL_KEYWORD_CHANNEL)] = url_keyword_cip;
-              behav_channel_interval_map[BehavIdTypeKey(
-                bpi.id, SEARCH_CHANNEL)] = search_cip;
-              behav_channel_interval_map[BehavIdTypeKey(
-                bpi.id, AUDIENCE_CHANNEL)] = audience_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id, SEARCH_CHANNEL)] = search_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id, AUDIENCE_CHANNEL)] = audience_cip;
             }
           }
 
-          for (CORBA::ULong i = 0;
-            i < channels_to_load->key_behav_params.length();
-            ++i)
+          for (CORBA::ULong i = 0; i < channels_to_load->key_behav_params.length(); ++i)
           {
             const CampaignSvcs::BriefKeyBehavParamInfo& kbpi =
               channels_to_load->key_behav_params[i];
@@ -498,8 +483,7 @@ namespace AdServer::UserInfoSvcs
                 {
                   if (bp.trigger_type == AUDIENCE_CHANNEL)
                   {
-                    if (bp.time_from != 0 || bp.time_to == 0 ||
-                      bp.min_visits != 1)
+                    if (bp.time_from != 0 || bp.time_to == 0 || bp.min_visits != 1)
                     {
                       logger_->stream(
                         Logging::Logger::WARNING,
@@ -570,10 +554,8 @@ namespace AdServer::UserInfoSvcs
                 url_keyword_cip,
                 audience_cip);
 
-              str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id, PAGE_CHANNEL)] = page_cip;
-              str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id, URL_CHANNEL)] = url_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id, PAGE_CHANNEL)] = page_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id, URL_CHANNEL)] = url_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
                 kbpi.id, URL_KEYWORD_CHANNEL)] = url_keyword_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
@@ -694,17 +676,14 @@ namespace AdServer::UserInfoSvcs
       }
       catch (const CampaignSvcs::CampaignServer::NotReady& ex)
       {
-        campaign_server.release_bad(
-          String::SubString("Campaign Server is not ready"));
+        campaign_server.release_bad(String::SubString("Campaign Server is not ready"));
         logger_->sstream(
           Logging::Logger::NOTICE,
           Aspect::USER_INFO_MANAGER,
           "ADS-ICON-10") << FUN << ": Can't update channels configuration. "
-          "Campaign Server is not ready. Caught CampaignServer::NotReady: " <<
-          ex.description;
+          "Campaign Server is not ready. Caught CampaignServer::NotReady: " << ex.description;
       }
-      catch (const CampaignSvcs::CampaignServer::
-        ImplementationException& exc)
+      catch (const CampaignSvcs::CampaignServer::ImplementationException& exc)
       {
         Stream::Error ostr;
         ostr << FUN << ": Can't update channels configuration. "

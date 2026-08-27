@@ -31,8 +31,7 @@ namespace
 
   const char SECURE_PROTOCOL_NAME[] = "ssl/tls filter";
 
-  const char HANDLE_COMMAND_ERROR[] =
-    "ContentFrontend::handle_command: an error occurred";
+  const char HANDLE_COMMAND_ERROR[] = "ContentFrontend::handle_command: an error occurred";
 
   using TextTemplateCache = AdServer::Commons::TextTemplateCache;
 
@@ -53,14 +52,13 @@ namespace
     {
       adserver::campaign_svcs::campaign_manager::GetFileRequest request;
       request.set_file_name(key);
-      if(!service_index.empty())
+      if (!service_index.empty())
       {
         request.set_service_index(service_index);
       }
 
-      auto result = co_await campaign_manager_coro->co_get_file(
-        std::move(request));
-      if(!result.status.ok())
+      auto result = co_await campaign_manager_coro->co_get_file(std::move(request));
+      if (!result.status.ok())
       {
         callback(std::optional<std::string>());
         co_return FrontendCommons::RequestResult::written();
@@ -90,18 +88,18 @@ namespace Aspect
 
 namespace Request::Parameters
 {
-    const String::AsciiStringManip::Caseless FILE("file");
-    const String::AsciiStringManip::Caseless CLICK_URL("c");
-    const String::AsciiStringManip::Caseless PRECLICK_URL("prck");
-    const String::AsciiStringManip::Caseless RESOURCE_URL_SUFFIX("rs");
-    const String::AsciiStringManip::Caseless RANDOM("r");
-    const String::AsciiStringManip::Caseless CAMPAIGN_MANAGER_INDEX("cmi");
-  }
+  const String::AsciiStringManip::Caseless FILE("file");
+  const String::AsciiStringManip::Caseless CLICK_URL("c");
+  const String::AsciiStringManip::Caseless PRECLICK_URL("prck");
+  const String::AsciiStringManip::Caseless RESOURCE_URL_SUFFIX("rs");
+  const String::AsciiStringManip::Caseless RANDOM("r");
+  const String::AsciiStringManip::Caseless CAMPAIGN_MANAGER_INDEX("cmi");
+}
 
 namespace Request::Header
-  {
-    const String::AsciiStringManip::Caseless SECURE("secure");
-  }
+{
+  const String::AsciiStringManip::Caseless SECURE("secure");
+}
 
 namespace Request
 {
@@ -113,13 +111,13 @@ namespace Request
 
 namespace Response::Header
 {
-    const String::SubString CONTENT_TYPE("Content-Type");
-  }
+  const String::SubString CONTENT_TYPE("Content-Type");
+}
 
 namespace Response::Type
-  {
-    const String::SubString TEXT_HTML("text/html");
-  }
+{
+  const String::SubString TEXT_HTML("text/html");
+}
 
 namespace Tokens
 {
@@ -171,7 +169,7 @@ namespace AdServer
       using Config = Configuration::FeConfig;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.ContentFeConfiguration().present())
+      if (!fe_config.ContentFeConfiguration().present())
       {
         throw Exception("ContentFeConfiguration isn't present");
       }
@@ -179,8 +177,7 @@ namespace AdServer
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      config_ = ConfigPtr(
-        new ContentFeConfiguration(*fe_config.ContentFeConfiguration()));
+      config_ = ConfigPtr(new ContentFeConfiguration(*fe_config.ContentFeConfiguration()));
     }
     catch(const eh::Exception& e)
     {
@@ -201,9 +198,8 @@ namespace AdServer
 
       using CommonType = Configuration::FeConfig::CommonFeConfiguration_type;
 
-      for(CommonType::TemplateRule_sequence::
-            const_iterator rule_it =
-            common_config_->TemplateRule().begin();
+      for (CommonType::TemplateRule_sequence::
+            const_iterator rule_it = common_config_->TemplateRule().begin();
           rule_it != common_config_->TemplateRule().end();
           ++rule_it)
       {
@@ -212,13 +208,12 @@ namespace AdServer
         TemplateRule& template_rule = template_rules_[
           String::SubString(strings_.back())];
 
-        for(CommonType::TemplateRule_type::XsltToken_sequence::
-              const_iterator token_it =
-              rule_it->XsltToken().begin();
+        for (CommonType::TemplateRule_type::XsltToken_sequence::
+              const_iterator token_it = rule_it->XsltToken().begin();
             token_it != rule_it->XsltToken().end();
             ++token_it)
         {
-          if(Tokens::ADIMAGE_PATH_PREFIX == token_it->name())
+          if (Tokens::ADIMAGE_PATH_PREFIX == token_it->name())
           {
             template_rule.resource_url_prefix = token_it->value();
           }
@@ -233,18 +228,14 @@ namespace AdServer
       auto campaign_manager = std::make_shared<
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
           FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-          FrontendCommons::read_campaign_manager_grpc_batching_options(
-            *common_config_),
+          FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
           grpc_executor_,
           common_module_->grpc_coalesce_runner());
       campaign_manager_coro_ = std::make_shared<
-        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-          campaign_manager,
-          workers_);
+        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
       add_child_object(campaign_manager);
 
-      template_file_task_runner_ =
-        new Generics::TaskRunner(callback(), TEXT_TEMPLATE_LOAD_THREADS);
+      template_file_task_runner_ = new Generics::TaskRunner(callback(), TEXT_TEMPLATE_LOAD_THREADS);
       add_child_object(template_file_task_runner_.in());
 
       template_files_ = std::make_shared<Commons::TextTemplateCache>(
@@ -260,7 +251,7 @@ namespace AdServer
           TextTemplateCache::FarUpdateCallback callback) noexcept
         {
           const std::string::size_type slash_pos = key.rfind('/');
-          if(slash_pos != std::string::npos)
+          if (slash_pos != std::string::npos)
           {
             key.erase(0, slash_pos + 1);
           }
@@ -289,8 +280,7 @@ namespace AdServer
       wait_object();
       campaign_manager_coro_.reset();
 
-      log(String::SubString(
-          "ContentFrontend::shutdown: frontend terminated"),
+      log(String::SubString("ContentFrontend::shutdown: frontend terminated"),
         Logging::Logger::INFO,
         Aspect::CONTENT_FRONTEND);
     }
@@ -300,19 +290,17 @@ namespace AdServer
   }
 
   bool
-  ContentFrontend::will_handle(
-    const String::SubString& uri) noexcept
+  ContentFrontend::will_handle(const String::SubString& uri) noexcept
   {
     std::string found_uri;
 
     bool result = !uri.empty() && FrontendCommons::find_uri(
       config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
-      ostr << "ContentFrontend::will_handle(" <<
-        uri << "), result " << result;
+      ostr << "ContentFrontend::will_handle(" << uri << "), result " << result;
 
       logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::CONTENT_FRONTEND);
     }
@@ -320,20 +308,17 @@ namespace AdServer
     return result;
   }
 
-  void ContentFrontend::parse_headers_(
-    const FCGI::HttpRequest& request,
-    bool& secure) noexcept
+  void ContentFrontend::parse_headers_(const FCGI::HttpRequest& request, bool& secure) noexcept
   {
     secure = false;
     const HTTP::SubHeaderList& headers = request.headers();
-    for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-      it != headers.end(); ++it)
+    for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
     {
       const String::SubString& name = it->name;
-      if(name == Request::Header::SECURE)
+      if (name == Request::Header::SECURE)
       {
         const String::SubString& value = it->value;
-        if(value.size() == 1 && (*value.begin() == '1'))
+        if (value.size() == 1 && (*value.begin() == '1'))
         {
           secure = true;
         }
@@ -343,8 +328,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::co_handle_request_noparams(
-    FCGI::HttpRequestHolder_var request_holder)
+  ContentFrontend::co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -353,8 +337,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder)
+  ContentFrontend::handle_request_noparams_(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -422,8 +405,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  ContentFrontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -432,14 +414,11 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ContentFrontend::co_process_request_(
-    FCGI::HttpRequestHolder_var request_holder)
+  ContentFrontend::co_process_request_(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    auto result = co_await process_request_(
-      std::move(request_holder),
-      std::move(response_ptr));
+    auto result = co_await process_request_(std::move(request_holder), std::move(response_ptr));
     co_return std::move(result);
   }
 
@@ -472,8 +451,7 @@ namespace AdServer
       std::string random_str("0");
       std::string campaign_manager_index;
 
-      for(HTTP::ParamList::const_iterator it =
-            request.params().begin();
+      for (HTTP::ParamList::const_iterator it = request.params().begin();
           it != request.params().end(); ++it)
       {
         if (it->name == Request::Parameters::FILE)
@@ -506,9 +484,8 @@ namespace AdServer
         }
         else if (it->name == Request::Parameters::RESOURCE_URL_SUFFIX)
         {
-          const char* sym = Request::RESOURCE_URL_SUFFIX_CATEGORY.find_nonowned(
-            it->value.c_str());
-          if(sym && *sym)
+          const char* sym = Request::RESOURCE_URL_SUFFIX_CATEGORY.find_nonowned(it->value.c_str());
+          if (sym && *sym)
           {
             throw InvalidParamException("incorrect resource suffix parameter value");
           }
@@ -518,7 +495,7 @@ namespace AdServer
         else if (it->name == Request::Parameters::RANDOM)
         {
           unsigned long random;
-          if(!String::StringManip::str_to_int(it->value, random))
+          if (!String::StringManip::str_to_int(it->value, random))
           {
             throw InvalidParamException("incorrect random parameter value");
           }
@@ -530,13 +507,13 @@ namespace AdServer
         }
       }
 
-      if(click_url0.empty())
+      if (click_url0.empty())
       {
         throw InvalidParamException("click url isn't defined");
       }
 
       // check file
-      if(!AdServer::PathManip::normalize_path(file))
+      if (!AdServer::PathManip::normalize_path(file))
       {
         co_return FrontendCommons::RequestResult{
           403,
@@ -553,7 +530,7 @@ namespace AdServer
           std::move(file),
           std::move(campaign_manager_index));
 
-      if(!templ)
+      if (!templ)
       {
         http_status = 404;
       }
@@ -624,9 +601,9 @@ namespace AdServer
 
     TemplateRuleMap::const_iterator rule_it = template_rules_.find(instantiate_type);
 
-    if(rule_it != template_rules_.end())
+    if (rule_it != template_rules_.end())
     {
-      for(TokenValueMap::const_iterator it = rule_it->second.tokens.begin();
+      for (TokenValueMap::const_iterator it = rule_it->second.tokens.begin();
           it != rule_it->second.tokens.end(); ++it)
       {
         args_cont[it->first] = it->second;
@@ -637,18 +614,13 @@ namespace AdServer
     }
 
     std::string mime_pub_preclick_url;
-    String::StringManip::mime_url_encode(
-      pub_preclick_url,
-      mime_pub_preclick_url);
+    String::StringManip::mime_url_encode(pub_preclick_url, mime_pub_preclick_url);
 
-    const bool click_url0_contains_args =
-      click_url0.find('?') != std::string::npos;
+    const bool click_url0_contains_args = click_url0.find('?') != std::string::npos;
     const char* LOCAL_AMP = click_url0_contains_args ? "&" : "*amp*";
     const char* LOCAL_EQL = click_url0_contains_args ? "=" : "*eql*";
-    const std::string f_marker =
-      std::string(LOCAL_AMP) + "m" + LOCAL_EQL + "f";
-    const std::string relocate_suffix =
-      std::string(LOCAL_AMP) + "relocate" + LOCAL_EQL;
+    const std::string f_marker = std::string(LOCAL_AMP) + "m" + LOCAL_EQL + "f";
+    const std::string relocate_suffix = std::string(LOCAL_AMP) + "relocate" + LOCAL_EQL;
     const std::string pub_preclick_param = !pub_preclick_url.empty() ?
       std::string(LOCAL_AMP) + "preclick" + LOCAL_EQL + mime_pub_preclick_url :
       std::string();
@@ -674,9 +646,7 @@ namespace AdServer
 
     response.set_content_type_nocopy(Response::Type::TEXT_HTML);
 
-    response.get_output_stream().write(
-      response_content.data(),
-      response_content.size());
+    response.get_output_stream().write(response_content.data(), response_content.size());
 
     return 0;
   }

@@ -33,14 +33,12 @@ namespace AdServer::CampaignSvcs::CTR
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_publisher_id_)
     {
-      hash.add(
-        static_cast<uint32_t>(request_params.tag->site->account->account_id));
+      hash.add(static_cast<uint32_t>(request_params.tag->site->account->account_id));
     }
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_site_id_)
     {
-      hash.add(
-        static_cast<uint32_t>(request_params.tag->site->site_id));
+      hash.add(static_cast<uint32_t>(request_params.tag->site->site_id));
     }
 
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_tag_id_)
@@ -107,8 +105,7 @@ namespace AdServer::CampaignSvcs::CTR
       uint32_t imps = 0;
 
       CampaignSelectParams::CampaignImpsMap::const_iterator it =
-        request_params.campaign_imps.find(
-          creative->campaign->campaign_group_id);
+        request_params.campaign_imps.find(creative->campaign->campaign_group_id);
       if (it != request_params.campaign_imps.end())
       {
         imps = it->second;
@@ -122,8 +119,7 @@ namespace AdServer::CampaignSvcs::CTR
       uint32_t imps = 0;
 
       CampaignSelectParams::CampaignImpsMap::const_iterator it =
-        request_params.campaign_imps.find(
-          creative->campaign->campaign_group_id);
+        request_params.campaign_imps.find(creative->campaign->campaign_group_id);
       if (it != request_params.campaign_imps.end())
       {
         imps = it->second;
@@ -197,8 +193,7 @@ namespace AdServer::CampaignSvcs::CTR
       }
 
       virtual FeatureCalculator_var
-      create_delegate(
-        FeatureCalculator* next_calculator)
+      create_delegate(FeatureCalculator* next_calculator)
       {
         return new AfterHourFeatureCalculatorDelegateImpl(next_calculator);
       }
@@ -228,9 +223,7 @@ namespace AdServer::CampaignSvcs::CTR
             // need local hasher
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(time_hour_i);
-            result_hashes.emplace_back(
-              hash_index_(hash_mapping, hash_adapter_copy.finalize()),
-              1);
+            result_hashes.emplace_back(hash_index_(hash_mapping, hash_adapter_copy.finalize()), 1);
           }
         }
       };
@@ -358,8 +351,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   const FeatureDescriptor*
-  FeatureDescriptorResolver_::resolve_by_name(
-    std::string_view feature_name) const
+  FeatureDescriptorResolver_::resolve_by_name(std::string_view feature_name) const
   {
     if (!feature_name.empty())
     {

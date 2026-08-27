@@ -44,9 +44,7 @@
 #include <LogCommons/CsvUtils.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   struct ActionRequestCsvTraits: ActionRequestTraits
   {
@@ -72,18 +70,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.action_id() << ',';
       write_string_as_csv(os, ToUpper()(key.country_code())) << ',';
@@ -92,12 +86,9 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
-      return os << data.action_request_count() << ',' <<
-        data.cur_value();
+      return os << data.action_request_count() << ',' << data.cur_value();
     }
   };
 
@@ -126,31 +117,22 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
-      return os << key.action_request_id() << ',' <<
-        key.request_id() << ',' <<
-        key.cc_id();
+      return os << key.action_request_id() << ',' << key.request_id() << ',' << key.cc_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
-      os << data.action_id() << ',' <<
-        data.tag_id() << ',';
+      os << data.action_id() << ',' << data.tag_id() << ',';
       write_string_as_csv(os, MimeCoder<UTF8Encoder>()(data.order_id(), 100)) << ',';
       write_string_as_csv(os, ToUpper()(data.country_code().get()), "-") << ',';
       write_string_as_csv(os, data.referrer(), "-") << ',';
@@ -185,17 +167,13 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return write_date_as_csv(os, key);
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.adv_account_id() << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -203,9 +181,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users() << ',' << data.text_unique_users() << ',' <<
         data.display_unique_users();
@@ -235,18 +211,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.adv_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.cmp_id() << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -254,9 +226,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users();
     }
@@ -285,18 +255,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.adv_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.ccg_id() << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -304,10 +270,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data
-                            )
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users();
     }
@@ -341,9 +304,7 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::KeyT& key)
+    write_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::KeyT& key)
       /*throw(eh::Exception)*/
     {
       write_date_as_csv(os, key.sdate()) << ',';
@@ -351,18 +312,14 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::KeyT& key)
+    write_inner_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::KeyT& key)
       /*throw(eh::Exception)*/
     {
       return os << key.cc_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::DataT& data)
+    write_inner_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::DataT& data)
       /*throw(eh::Exception)*/
     {
       return os << data.auctions_lost();
@@ -397,9 +354,7 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::KeyT& key)
+    write_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::KeyT& key)
       /*throw(eh::Exception)*/
     {
       write_date_as_csv(os, key.sdate()) << ',';
@@ -407,18 +362,14 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::KeyT& key)
+    write_inner_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::KeyT& key)
       /*throw(eh::Exception)*/
     {
       return os << key.ccg_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::DataT& data)
+    write_inner_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::DataT& data)
       /*throw(eh::Exception)*/
     {
       return os << data.auctions_lost();
@@ -448,18 +399,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.adv_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.cc_id() << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -467,9 +414,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users();
     }
@@ -499,9 +444,7 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       write_optional_value_as_csv(os, key.colo_id(), "0");
@@ -509,25 +452,18 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
-      return os << key.ccg_keyword_id() << ',' <<
-        key.currency_exchange_id() << ',' <<
-        key.cc_id();
+      return os << key.ccg_keyword_id() << ',' << key.currency_exchange_id() << ',' << key.cc_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.imps() << ',' <<
         data.clicks() << ',' <<
         data.adv_revenue() << ',' <<
-        data.adv_comm_revenue() << ',' <<
-        data.pub_advcurrency_amount();
+        data.adv_comm_revenue() << ',' << data.pub_advcurrency_amount();
     }
   };
 
@@ -554,25 +490,19 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return write_date_as_csv(os, key);
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.ccg_id() << ',' << key.combination_mask();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.requests();
     }
@@ -603,26 +533,20 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.isp_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel_type() << ',' << key.channel_count();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.users_count();
     }
@@ -653,33 +577,25 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << "0,0,0," <<
         data.hits() << ',' <<
         data.hits_urls() << ',' <<
-        data.hits_kws() << ',' <<
-        data.hits_search_kws() << ',' <<
-        data.hits_url_kws();
+        data.hits_kws() << ',' << data.hits_search_kws() << ',' << data.hits_url_kws();
     }
   };
 
@@ -716,26 +632,20 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel_id() << ',' << key.ccg_type();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os <<
         data.clicks() << ',' <<
@@ -752,8 +662,7 @@ namespace LogProcessing
         data.imp_other_count().value << ',' <<
 
         data.no_impops_count().imps << ',' <<
-        data.no_impops_count().user_count << ',' <<
-        data.no_impops_count().value;
+        data.no_impops_count().user_count << ',' << data.no_impops_count().value;
     }
   };
 
@@ -782,30 +691,23 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.sum_user_ecpm() << ',' <<
-        data.active_user_count() << ',' <<
-        data.total_user_count() << ",0,0,0,0,0";
+        data.active_user_count() << ',' << data.total_user_count() << ",0,0,0,0,0";
     }
   };
 
@@ -832,26 +734,20 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel_id() << ',' << key.level();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.users_regular() << ',' << data.users_from_now();
     }
@@ -880,25 +776,19 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return write_date_as_csv(os, key);
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.channel1_id() << ',' << key.channel2_id();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users();
     }
@@ -928,18 +818,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.channel_id() << ',';
       os << key.ccg_id() << ',';
@@ -948,15 +834,10 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.requests() << ',' <<
-        data.imps() << ',' <<
-        data.clicks() << ',' <<
-        data.actions() << ',' <<
-        data.revenue();
+        data.imps() << ',' << data.clicks() << ',' << data.actions() << ',' << data.revenue();
     }
   };
 
@@ -984,17 +865,13 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return write_date_as_csv(os, key);
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       write_string_as_csv(os, key.creative_size()) << ',';
       write_string_as_csv(os, ToUpper()(key.country_code()), "-") << ',';
@@ -1002,9 +879,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users_count() << ',' << data.impops();
     }
@@ -1032,8 +907,7 @@ namespace LogProcessing
         inner_key.channel_trigger_id() << ',' <<
         inner_key.type() << ',' <<
         data.approximated_imps() << ',' <<
-        data.approximated_clicks() << ',' <<
-        inner_key.channel_id();
+        data.approximated_clicks() << ',' << inner_key.channel_id();
       return os;
     }
   };
@@ -1057,9 +931,7 @@ namespace LogProcessing
       write_date_as_csv(os, key.sdate()) << ',';
       os << key.colo_id() << ',' <<
         inner_key.channel_trigger_id() << ',' <<
-        inner_key.type() << ',' <<
-        data.hits() << ',' <<
-        inner_key.channel_id();
+        inner_key.type() << ',' << data.hits() << ',' << inner_key.channel_id();
 
       return os;
     }
@@ -1091,42 +963,32 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.cc_id() << ',' <<
         key.channel_rate_id() << ',' <<
-        key.channel_id() << ',' <<
-        key.currency_exchange_id() << ',';
+        key.channel_id() << ',' << key.currency_exchange_id() << ',';
       write_optional_string_upper_as_csv(os, key.country_code(), "-") << ',';
       os << bool_to_char(key.walled_garden()) << ',' <<
-        bool_to_char(key.fraud()) << ',' <<
-        key.tag_id() << ',';
+        bool_to_char(key.fraud()) << ',' << key.tag_id() << ',';
       write_optional_value_as_csv(os, key.size_id()) << ',';
       os << key.delivery_threshold();
       return os;
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.imps() << ',' <<
         data.clicks() << ',' <<
-        data.cmp_amount() << ',' <<
-        data.adv_amount_cmp() << ',' <<
-        data.cmp_sys_amount();
+        data.cmp_amount() << ',' << data.adv_amount_cmp() << ',' << data.cmp_sys_amount();
     }
   };
 
@@ -1154,14 +1016,11 @@ namespace LogProcessing
     {
       write_date_as_csv(os, key.sdate()) << ',';
 
-      os << inner_key.colo_id() << ',' <<
-        inner_key.cc_id() << ',' <<
-        inner_key.tag_id() << ',';
+      os << inner_key.colo_id() << ',' << inner_key.cc_id() << ',' << inner_key.tag_id() << ',';
       write_optional_value_as_csv(os, inner_key.size_id()) << ',';
       os << inner_key.colo_rate_id() << ',' <<
         inner_key.ccg_rate_id() << ',' <<
-        inner_key.site_rate_id() << ',' <<
-        inner_key.currency_exchange_id() << ',';
+        inner_key.site_rate_id() << ',' << inner_key.currency_exchange_id() << ',';
       write_string_as_csv(os, ToUpper()(inner_key.country_code()), "-") << ',';
       os << bool_to_char(inner_key.walled_garden()) << ',' <<
         bool_to_char(inner_key.fraud()) << ',' <<
@@ -1185,8 +1044,7 @@ namespace LogProcessing
         data.adv_comm_amount() << ',' <<
         data.pub_comm_amount() << ',' <<
         data.adv_payable_comm_amount() << ',' <<
-        data.pub_advcurrency_amount() << ',' <<
-        data.isp_advcurrency_amount();
+        data.pub_advcurrency_amount() << ',' << data.isp_advcurrency_amount();
 
       return os;
     }
@@ -1213,17 +1071,13 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT &data)
+    write_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT &data)
     {
       write_optional_date_as_csv(os, data.last_channels_update()) << ',';
       write_optional_date_as_csv(os, data.last_campaigns_update()) << ',';
@@ -1256,18 +1110,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       write_date_as_csv(os, key.create_date()) << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -1275,15 +1125,11 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data
-                            )
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users() << ',' <<
         data.network_unique_users() << ',' <<
-        data.profiling_unique_users() << ',' <<
-        data.unique_hids();
+        data.profiling_unique_users() << ',' << data.unique_hids();
     }
   };
 
@@ -1311,28 +1157,21 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.isp_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       return os << key.device_channel_id() << ',' << key.channel_type() << ',' <<
         key.channel_count();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data
-                            )
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.users_count();
     }
@@ -1361,18 +1200,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.cc_id() << ',';
       write_not_empty_string_as_csv(os, key.expression());
@@ -1380,13 +1215,9 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
-      return os << data.imps_verified() << ',' <<
-        data.clicks() << ',' <<
-        data.actions();
+      return os << data.imps_verified() << ',' << data.clicks() << ',' << data.actions();
     }
   };
 
@@ -1415,18 +1246,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       write_date_as_csv(os, key.create_date()) << ',';
       write_optional_or_null_date_as_csv_2(os, key.last_appearance_date());
@@ -1434,14 +1261,11 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users() << ',' <<
         data.network_unique_users() << ',' <<
-        data.profiling_unique_users() << ',' <<
-        data.unique_hids();
+        data.profiling_unique_users() << ',' << data.unique_hids();
     }
   };
 
@@ -1475,18 +1299,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::KeyT& key)
+    write_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::KeyT& key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::KeyT& key)
+    write_inner_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::KeyT& key)
     {
       os << key.site_id() << ',';
       write_string_as_csv(os, ToUpper()(key.country()), "-") << ',';
@@ -1494,9 +1314,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::DataT& data)
+    write_inner_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::DataT& data)
     {
       return os << data.page_loads() << ',' << data.utilized_page_loads();
     }
@@ -1527,18 +1345,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.user_status() << ',';
       write_string_as_csv(os, ToUpper()(key.country_code()), "-") << ',';
@@ -1548,9 +1362,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.requests();
     }
@@ -1579,18 +1391,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.search_engine_id() << ',';
       write_not_empty_string_as_csv(os, key.host_name());
@@ -1598,9 +1406,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.hits() << ',' << data.hits_empty_page();
     }
@@ -1629,28 +1435,21 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       write_not_empty_string_as_csv(os, key.search_term());
       return os;
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data
-                            )
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.hits();
     }
@@ -1683,18 +1482,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.tag_id() << ',';
       write_string_as_csv(os, MimeCoder<>()(key.ext_tag_id(), 50)) << ',';
@@ -1704,9 +1499,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.requests() << ',' <<
         data.imps() << ',' <<
@@ -1718,9 +1511,7 @@ namespace LogProcessing
         data.floor_won_cost() << ',' <<
         data.floor_lost_cost() << ',' <<
         data.floor_no_bid_cost() << ',' <<
-        data.bid_won_amount() << ',' <<
-        data.bid_lost_amount() << ',' <<
-        data.cost();
+        data.bid_won_amount() << ',' << data.bid_lost_amount() << ',' << data.cost();
     }
   };
 
@@ -1747,18 +1538,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.isp_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.site_id() << ',';
       write_date_as_csv_2(os, key.last_appearance_date());
@@ -1766,9 +1553,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.unique_users();
     }
@@ -1804,26 +1589,20 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::KeyT& key)
+    write_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::KeyT& key)
     {
       write_date_as_csv(os, key.pub_sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::KeyT& key)
+    write_inner_key_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::KeyT& key)
     {
       return os << key.tag_id() << ',' << key.auction_ccg_count();
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT::DataT& data)
+    write_inner_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT::DataT& data)
     {
       return os << data.requests();
     }
@@ -1853,18 +1632,14 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       return os << key.colo_id();
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       os << key.tag_id() << ',';
       write_optional_value_as_csv(os, key.top_offset()) << ',';
@@ -1875,12 +1650,9 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data)
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
-      return os << data.requests() << ',' << data.imps() << ',' <<
-        data.clicks();
+      return os << data.requests() << ',' << data.imps() << ',' << data.clicks();
     }
   };
 
@@ -1907,17 +1679,13 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key)
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       return write_date_as_csv(os, key);
     }
 
     static std::ostream&
-    write_inner_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::KeyT &key)
+    write_inner_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::KeyT &key)
     {
       std::string user_agent;
       undisplayable_mime_encode(user_agent, key.user_agent());
@@ -1926,10 +1694,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_inner_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT::DataT &data
-                            )
+    write_inner_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT::DataT &data)
     {
       os << data.requests() << ',';
       write_list_as_csv(os, data.channels()) << ',';
@@ -1960,10 +1725,7 @@ namespace LogProcessing
 
   private:
     static std::ostream&
-    write_key_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::KeyT &key
-                     )
+    write_key_as_csv(std::ostream &os, const BaseTraits::CollectorType::KeyT &key)
     {
       write_date_as_csv(os, key.sdate()) << ',';
       os << key.colo_id() << ',';
@@ -1974,16 +1736,12 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream &os,
-      const BaseTraits::CollectorType::DataT &data)
+    write_data_as_csv(std::ostream &os, const BaseTraits::CollectorType::DataT &data)
     {
       os << data.requests() << ',' <<
         data.imps_verified() << ',' <<
         data.clicks() << ',' <<
-        data.actions() << ',' <<
-        data.imps_unverified() << ',' <<
-        data.profiling_requests();
+        data.actions() << ',' << data.imps_unverified() << ',' << data.profiling_requests();
       return os;
     }
   };
@@ -2019,8 +1777,7 @@ namespace LogProcessing
       write_string_as_csv(os, inner_key.os()) << ',';
       os << inner_key.web_operation_id() << ','
          << inner_key.result() << ','
-         << inner_key.user_status() << ','
-         << bool_to_char(inner_key.test()) << ',';
+         << inner_key.user_status() << ',' << bool_to_char(inner_key.test()) << ',';
       write_optional_value_as_csv(os, inner_key.tag_id()) << ',';
       write_optional_value_as_csv(os, inner_key.cc_id()) << ',';
 
@@ -2053,9 +1810,7 @@ namespace LogProcessing
       const BaseTraits::CollectorType::DataT::DataT& data)
     {
       write_date_as_csv(os, key.adv_sdate()) << ',' <<
-        inner_key.ccg_id() << ',' <<
-        inner_key.cc_id() << ',' <<
-        inner_key.site_id() << ',';
+        inner_key.ccg_id() << ',' << inner_key.cc_id() << ',' << inner_key.site_id() << ',';
       write_string_as_csv(os, MimeCoder<>()(inner_key.ext_tag_id(), 50)) << ',';
       write_string_as_csv(os, inner_key.referer()) << ',';
       os << data.imps() << ',' <<
@@ -2077,11 +1832,9 @@ namespace LogProcessing
         data.adv_comm_amount() << ',' <<
         data.pub_amount_adv() << ',' <<
         data.pub_comm_amount_adv() << ',' <<
-        data.adv_payable_comm_amount() << ',' <<
-        data.isp_amount_adv();
+        data.adv_payable_comm_amount() << ',' << data.isp_amount_adv();
 
       return os;
     }
   };
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

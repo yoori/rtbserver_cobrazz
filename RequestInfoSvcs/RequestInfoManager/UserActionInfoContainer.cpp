@@ -23,9 +23,7 @@ namespace Aspect
   const char USER_ACTION_INFO_CONTAINER[] = "UserActionInfoContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   struct DoneActionReaderLessVal
   {
@@ -40,14 +38,11 @@ namespace RequestInfoSvcs
 
   struct DoneActionReaderLess
   {
-    bool operator()(
-      const DoneActionReader& left,
-      const DoneActionReaderLessVal& right)
+    bool operator()(const DoneActionReader& left, const DoneActionReaderLessVal& right)
       const
     {
       return left.action_id() < right.action_id ||
-        ( left.action_id() == right.action_id &&
-          left.time() < right.time);
+        (left.action_id() == right.action_id && left.time() < right.time);
     }
   };
 
@@ -63,17 +58,13 @@ namespace RequestInfoSvcs
       unsigned long cc_id;
     };
 
-    bool operator()(
-      const ActionMarkerReader& left,
-      unsigned long right)
+    bool operator()(const ActionMarkerReader& left, unsigned long right)
       const
     {
       return left.ccg_id() < right;
     }
 
-    bool operator()(
-      unsigned long left,
-      const ActionMarkerReader& right)
+    bool operator()(unsigned long left, const ActionMarkerReader& right)
       const
     {
       return left < right.ccg_id();
@@ -82,15 +73,13 @@ namespace RequestInfoSvcs
     bool operator()(const ActionMarkerReader& left, const Key& right) const
     {
       return left.ccg_id() < right.ccg_id ||
-        (left.ccg_id() == right.ccg_id &&
-        left.cc_id() < right.cc_id);
+        (left.ccg_id() == right.ccg_id && left.cc_id() < right.cc_id);
     }
 
     bool operator()(const Key& left, const ActionMarkerReader& right) const
     {
       return left.ccg_id < right.ccg_id() ||
-        (left.ccg_id == right.ccg_id() &&
-        left.cc_id < right.cc_id());
+        (left.ccg_id == right.ccg_id() && left.cc_id < right.cc_id());
     }
   };
 
@@ -111,15 +100,13 @@ namespace RequestInfoSvcs
     operator()(const CustomActionMarkerReader& left, const Key& right) const
     {
       return left.time() < right.time ||
-        (left.time() == right.time &&
-        left.action_id() < right.action_id);
+        (left.time() == right.time && left.action_id() < right.action_id);
     }
 
     bool operator()(const Key& left, const CustomActionMarkerReader& right) const
     {
       return left.time < right.time() ||
-        (left.time == right.time() &&
-        left.action_id < right.action_id());
+        (left.time == right.time() && left.action_id < right.action_id());
     }
   };
 
@@ -149,7 +136,7 @@ namespace RequestInfoSvcs
     unsigned long timeout = action_ignore_time.tv_sec;
     bool ignore_action = false;
 
-    if(!done_actions.empty())
+    if (!done_actions.empty())
     {
       unsigned long action_id = adv_action_info.action_id;
 
@@ -157,25 +144,22 @@ namespace RequestInfoSvcs
         act_it = std::lower_bound(
           done_actions.begin(),
           done_actions.end(),
-          DoneActionReaderLessVal(
-            action_id,
-            adv_action_info.time.tv_sec),
+          DoneActionReaderLessVal(action_id, adv_action_info.time.tv_sec),
           DoneActionReaderLess());
 
       UserActionProfileReader::custom_done_actions_Container::const_iterator
         prev_act_it = done_actions.end();
 
-      if(act_it != done_actions.end())
+      if (act_it != done_actions.end())
       {
-        if((*act_it).action_id() == action_id &&
-           (unsigned long)std::abs(
-             (long)(*act_it).time() - adv_action_info.time.tv_sec) <
+        if ((*act_it).action_id() == action_id &&
+           (unsigned long)std::abs((long)(*act_it).time() - adv_action_info.time.tv_sec) <
            timeout)
         {
           ignore_action = true;
         }
 
-        if(act_it != done_actions.begin())
+        if (act_it != done_actions.begin())
         {
           prev_act_it = act_it;
           --prev_act_it;
@@ -186,11 +170,10 @@ namespace RequestInfoSvcs
         prev_act_it = --done_actions.end();
       }
 
-      if(prev_act_it != done_actions.end())
+      if (prev_act_it != done_actions.end())
       {
-        if((*prev_act_it).action_id() == action_id &&
-           (unsigned long)std::abs(
-             (long)(*prev_act_it).time() - adv_action_info.time.tv_sec) <
+        if ((*prev_act_it).action_id() == action_id &&
+           (unsigned long)std::abs((long)(*prev_act_it).time() - adv_action_info.time.tv_sec) <
            timeout)
         {
           ignore_action = true;
@@ -211,12 +194,11 @@ namespace RequestInfoSvcs
     UserActionProfileWriter::custom_done_actions_Container::iterator
       ins_it = done_actions.begin();
 
-    for(; ins_it != done_actions.end(); ++ins_it)
+    for (; ins_it != done_actions.end(); ++ins_it)
     {
-      if(action_id < ins_it->action_id() ||
+      if (action_id < ins_it->action_id() ||
          (action_id == ins_it->action_id() &&
-         static_cast<unsigned long>(
-           adv_action_info.time.tv_sec) < ins_it->time()))
+         static_cast<unsigned long>(adv_action_info.time.tv_sec) < ins_it->time()))
       {
         break;
       }
@@ -239,7 +221,7 @@ namespace RequestInfoSvcs
   {
     size_t action_marker_pos = 0;
 
-    if(read_action_markers)
+    if (read_action_markers)
     {
       action_marker_pos = std::lower_bound(
         read_action_markers->begin(),
@@ -249,20 +231,19 @@ namespace RequestInfoSvcs
         read_action_markers->begin();
     }
 
-    std::list<ActionMarkerWriter>::iterator it =
-      action_markers.begin();
+    std::list<ActionMarkerWriter>::iterator it = action_markers.begin();
 
-    if(read_action_markers)
+    if (read_action_markers)
     {
       std::advance(it, action_marker_pos);
     }
 
-    if(it != action_markers.end() &&
+    if (it != action_markers.end() &&
        it->ccg_id() == request_info.ccg_id &&
        it->cc_id() == request_info.cc_id)
     {
       /* if exists - link marker to more fresh request */
-      if(request_info.time > Generics::Time(it->time()))
+      if (request_info.time > Generics::Time(it->time()))
       {
         it->request_id() = request_id;
       }
@@ -290,7 +271,7 @@ namespace RequestInfoSvcs
 
     UserActionProfileReader::action_markers_Container act_markers;
 
-    if(user_profile_reader)
+    if (user_profile_reader)
     {
       act_markers = user_profile_reader->action_markers();
     }
@@ -302,21 +283,18 @@ namespace RequestInfoSvcs
       user_profile_reader ? &act_markers : 0);
 
     /* search wait actions - action tracking I */
-    std::list<WaitActionWriter>::iterator wit =
-      user_profile_writer.wait_actions().begin();
+    std::list<WaitActionWriter>::iterator wit = user_profile_writer.wait_actions().begin();
 
-    while(wit != user_profile_writer.wait_actions().end() &&
-      wit->ccg_id() < request_info.ccg_id)
+    while (wit != user_profile_writer.wait_actions().end() && wit->ccg_id() < request_info.ccg_id)
     {
       ++wit;
     }
 
     delegate_process_actions = 0;
 
-    while(wit != user_profile_writer.wait_actions().end() &&
-       wit->ccg_id() == request_info.ccg_id)
+    while (wit != user_profile_writer.wait_actions().end() && wit->ccg_id() == request_info.ccg_id)
     {
-      if(Generics::Time(wit->time()) >= check_low_req_time)
+      if (Generics::Time(wit->time()) >= check_low_req_time)
       {
         delegate_process_actions += wit->count();
         wit = user_profile_writer.wait_actions().erase(wit);
@@ -338,7 +316,7 @@ namespace RequestInfoSvcs
     /*throw(eh::Exception)*/
   {
     // find actions that done after this impression and delegate it
-    if(user_profile_reader)
+    if (user_profile_reader)
     {
       Generics::Time check_req_time(request_info.imp_time - TIME_SYNC_PRECISION);
 
@@ -349,14 +327,14 @@ namespace RequestInfoSvcs
           CustomActionMarkerLess::Key(check_req_time, 0),
           CustomActionMarkerLess());
 
-      for(; wit != user_profile_reader->custom_action_markers().end(); ++wit)
+      for (; wit != user_profile_reader->custom_action_markers().end(); ++wit)
       {
         bool found = std::binary_search(
             (*wit).ccg_ids().begin(),
             (*wit).ccg_ids().end(),
             request_info.ccg_id);
 
-        if(found)
+        if (found)
         {
           AdvCustomActionInfo new_custom_action;
           new_custom_action.action_id = (*wit).action_id();
@@ -372,13 +350,13 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(insert_request)
+    if (insert_request)
     {
       // insert request and clean excess
       UserActionProfileWriter::done_impressions_Container::iterator
         imp_it = user_profile_writer.done_impressions().begin();
 
-      while(imp_it != user_profile_writer.done_impressions().end() &&
+      while (imp_it != user_profile_writer.done_impressions().end() &&
         imp_it->ccg_id() < request_info.ccg_id)
       {
         ++imp_it;
@@ -388,7 +366,7 @@ namespace RequestInfoSvcs
       UserActionProfileWriter::done_impressions_Container::iterator
         ccg_first_imp_it = imp_it;
 
-      while(imp_it != user_profile_writer.done_impressions().end() &&
+      while (imp_it != user_profile_writer.done_impressions().end() &&
         imp_it->ccg_id() == request_info.ccg_id &&
         imp_it->time() < request_info.imp_time.tv_sec)
       {
@@ -400,18 +378,17 @@ namespace RequestInfoSvcs
       done_impression_writer.ccg_id() = request_info.ccg_id;
       done_impression_writer.time() = request_info.imp_time.tv_sec;
       done_impression_writer.request_id() = request_info.request_id.to_string();
-      user_profile_writer.done_impressions().insert(
-        imp_it, done_impression_writer);
+      user_profile_writer.done_impressions().insert(imp_it, done_impression_writer);
       ++imp_count;
 
-      while(imp_it != user_profile_writer.done_impressions().end() &&
+      while (imp_it != user_profile_writer.done_impressions().end() &&
         imp_it->ccg_id() == request_info.ccg_id)
       {
         ++imp_it;
         ++imp_count;
       }
 
-      if(imp_count > MAX_DONE_IMPRESSIONS)
+      if (imp_count > MAX_DONE_IMPRESSIONS)
       {
         user_profile_writer.done_impressions().erase(ccg_first_imp_it);
       }
@@ -419,18 +396,15 @@ namespace RequestInfoSvcs
   }
 
   static void
-  clear_expired_at2(
-    UserActionProfileWriter& user_profile_writer,
-    const Generics::Time& now)
+  clear_expired_at2(UserActionProfileWriter& user_profile_writer, const Generics::Time& now)
   {
-    const unsigned long imp_expire_time = (
-      now - DONE_IMPRESSIONS_EXPIRE_TIME).tv_sec;
+    const unsigned long imp_expire_time = (now - DONE_IMPRESSIONS_EXPIRE_TIME).tv_sec;
 
-    for(UserActionProfileWriter::done_impressions_Container::iterator imp_it =
+    for (UserActionProfileWriter::done_impressions_Container::iterator imp_it =
           user_profile_writer.done_impressions().begin();
         imp_it != user_profile_writer.done_impressions().end();)
     {
-      if(imp_it->time() < imp_expire_time)
+      if (imp_it->time() < imp_expire_time)
       {
         user_profile_writer.done_impressions().erase(imp_it++);
       }
@@ -440,26 +414,22 @@ namespace RequestInfoSvcs
       }
     }
 
-    const unsigned long act_expire_time = (
-      now - CUSTOM_ACTION_MARKER_EXPIRE_TIME).tv_sec;
+    const unsigned long act_expire_time = (now - CUSTOM_ACTION_MARKER_EXPIRE_TIME).tv_sec;
 
     UserActionProfileWriter::custom_action_markers_Container::iterator
-      am_erase_begin_it =
-        user_profile_writer.custom_action_markers().begin();
+      am_erase_begin_it = user_profile_writer.custom_action_markers().begin();
     UserActionProfileWriter::custom_action_markers_Container::iterator
       am_erase_end_it = am_erase_begin_it;
 
-    for(; am_erase_end_it != user_profile_writer.custom_action_markers().end();
-        ++am_erase_end_it)
+    for (; am_erase_end_it != user_profile_writer.custom_action_markers().end(); ++am_erase_end_it)
     {
-      if(am_erase_end_it->time() >= act_expire_time)
+      if (am_erase_end_it->time() >= act_expire_time)
       {
         break;
       }
     }
 
-    user_profile_writer.custom_action_markers().erase(
-      am_erase_begin_it, am_erase_end_it);
+    user_profile_writer.custom_action_markers().erase(am_erase_begin_it, am_erase_end_it);
   }
 
   class UserActionInfoContainer::RequestActionProcessorImpl:
@@ -472,9 +442,7 @@ namespace RequestInfoSvcs
     {}
 
     virtual void
-    process_request(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_request(const RequestInfo&, const ProcessingState&)
       /*throw(Exception)*/
     {}
 
@@ -499,25 +467,18 @@ namespace RequestInfoSvcs
       const ImpressionInfo& imp_info,
       const ProcessingState& processing_state)
     {
-      co_await owner_->co_process_impression_(
-        ri,
-        imp_info,
-        processing_state);
+      co_await owner_->co_process_impression_(ri, imp_info, processing_state);
     }
 
     virtual void
-    process_click(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(Exception)*/
     {
       owner_->process_click_(ri, processing_state);
     }
 
     virtual AdServer::Commons::Awaitable<void>
-    co_process_click(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    co_process_click(const RequestInfo& ri, const ProcessingState& processing_state)
     {
       co_await owner_->co_process_click_(ri, processing_state);
     }
@@ -537,8 +498,7 @@ namespace RequestInfoSvcs
     : logger_(ReferenceCounting::add_ref(logger)),
       action_ignore_time_(action_ignore_time),
       expire_time_(expire_time),
-      request_container_processor_(
-        ReferenceCounting::add_ref(request_container_processor)),
+      request_container_processor_(ReferenceCounting::add_ref(request_container_processor)),
       request_processor_(new RequestActionProcessorImpl(this))
   {
     static const char* FUN = "UserActionInfoContainer::UserActionInfoContainer()";
@@ -547,10 +507,7 @@ namespace RequestInfoSvcs
     {
       auto user_map = open_rocksdb_transaction_profile_map<
         Commons::UserId,
-        UserIdToString>(
-          user_action_rocksdb_path,
-          expire_time_,
-          std::move(rocksdb_processor));
+        UserIdToString>(user_action_rocksdb_path, expire_time_, std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }
@@ -558,8 +515,7 @@ namespace RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init UserActionInfoMap at '" <<
-        user_action_rocksdb_path << "'. Caught eh::Exception: " <<
-        ex.what();
+        user_action_rocksdb_path << "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -574,8 +530,7 @@ namespace RequestInfoSvcs
   }
 
   Generics::ConstSmartMemBuf_var
-  UserActionInfoContainer::get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserActionInfoContainer::get_profile(const AdServer::Commons::UserId& user_id)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserActionInfoContainer::get_profile()";
@@ -593,8 +548,7 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserActionInfoContainer::co_get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserActionInfoContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserActionInfoContainer::co_get_profile()";
     try
@@ -619,7 +573,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserActionInfoContainer::process_impression_()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -630,38 +584,32 @@ namespace RequestInfoSvcs
 
     AdvCustomActionInfoList delegate_process_custom_actions;
 
-    process_impression_trans_(
-      delegate_process_custom_actions,
-      request_info);
+    process_impression_trans_(delegate_process_custom_actions, request_info);
 
     /* delegate processing of actions by action tracking II */
-    for(AdvCustomActionInfoList::const_iterator
+    for (AdvCustomActionInfoList::const_iterator
           it = delegate_process_custom_actions.begin();
         it != delegate_process_custom_actions.end(); ++it)
     {
       try
       {
-        request_container_processor_->process_custom_action(
-          request_info.request_id, *it);
+        request_container_processor_->process_custom_action(request_info.request_id, *it);
       }
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed action marker: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
@@ -671,10 +619,9 @@ namespace RequestInfoSvcs
     const ImpressionInfo&,
     const RequestActionProcessor::ProcessingState& processing_state)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_impression_()";
+    static const char* FUN = "UserActionInfoContainer::co_process_impression_()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -685,11 +632,9 @@ namespace RequestInfoSvcs
 
     AdvCustomActionInfoList delegate_process_custom_actions;
 
-    co_await co_process_impression_trans_(
-      delegate_process_custom_actions,
-      request_info);
+    co_await co_process_impression_trans_(delegate_process_custom_actions, request_info);
 
-    for(AdvCustomActionInfoList::const_iterator
+    for (AdvCustomActionInfoList::const_iterator
           it = delegate_process_custom_actions.begin();
         it != delegate_process_custom_actions.end(); ++it)
     {
@@ -701,21 +646,18 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed action marker: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
@@ -727,7 +669,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserActionInfoContainer::process_click_()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -739,13 +681,10 @@ namespace RequestInfoSvcs
     unsigned long delegate_process_actions;
     AdvCustomActionInfoList delegate_process_custom_actions;
 
-    process_click_trans_(
-      delegate_process_actions,
-      delegate_process_custom_actions,
-      request_info);
+    process_click_trans_(delegate_process_actions, delegate_process_custom_actions, request_info);
 
     /* delegate processing of actions by action tracking I */
-    for(unsigned long i = 0; i < delegate_process_actions; ++i)
+    for (unsigned long i = 0; i < delegate_process_actions; ++i)
     {
       try
       {
@@ -757,39 +696,34 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    for(AdvCustomActionInfoList::const_iterator
+    for (AdvCustomActionInfoList::const_iterator
           it = delegate_process_custom_actions.begin();
         it != delegate_process_custom_actions.end(); ++it)
     {
       try
       {
-        request_container_processor_->process_custom_action(
-          request_info.request_id, *it);
+        request_container_processor_->process_custom_action(request_info.request_id, *it);
       }
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed action marker: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
@@ -800,7 +734,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserActionInfoContainer::co_process_click_()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -817,7 +751,7 @@ namespace RequestInfoSvcs
       delegate_process_custom_actions,
       request_info);
 
-    for(unsigned long i = 0; i < delegate_process_actions; ++i)
+    for (unsigned long i = 0; i < delegate_process_actions; ++i)
     {
       try
       {
@@ -829,13 +763,12 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    for(AdvCustomActionInfoList::const_iterator
+    for (AdvCustomActionInfoList::const_iterator
           it = delegate_process_custom_actions.begin();
         it != delegate_process_custom_actions.end(); ++it)
     {
@@ -847,62 +780,50 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw RequestActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed action marker: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
   void
-  UserActionInfoContainer::process_adv_action(
-    const AdvActionInfo& adv_action_info)
+  UserActionInfoContainer::process_adv_action(const AdvActionInfo& adv_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
     static const char* FUN = "UserActionInfoContainer::process_adv_action()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": To process adv action: " << std::endl;
       adv_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
 
     RequestIdList delegate_process_actions;
 
-    process_adv_action_trans_(
-      delegate_process_actions,
-      adv_action_info);
+    process_adv_action_trans_(delegate_process_actions, adv_action_info);
 
-    for(RequestIdList::const_iterator req_it =
-          delegate_process_actions.begin();
+    for (RequestIdList::const_iterator req_it = delegate_process_actions.begin();
         req_it != delegate_process_actions.end(); ++req_it)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Action done: " << std::endl;
         adv_action_info.print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_ACTION_INFO_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
       }
 
       try
@@ -915,62 +836,49 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw AdvActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed adv action: " << std::endl;
       adv_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
   AdServer::Commons::Awaitable<void>
-  UserActionInfoContainer::co_process_adv_action(
-    const AdvActionInfo& adv_action_info)
+  UserActionInfoContainer::co_process_adv_action(const AdvActionInfo& adv_action_info)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_adv_action()";
+    static const char* FUN = "UserActionInfoContainer::co_process_adv_action()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": To process adv action: " << std::endl;
       adv_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
 
     RequestIdList delegate_process_actions;
 
-    co_await co_process_adv_action_trans_(
-      delegate_process_actions,
-      adv_action_info);
+    co_await co_process_adv_action_trans_(delegate_process_actions, adv_action_info);
 
-    for(RequestIdList::const_iterator req_it =
-          delegate_process_actions.begin();
+    for (RequestIdList::const_iterator req_it = delegate_process_actions.begin();
         req_it != delegate_process_actions.end(); ++req_it)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Action done: " << std::endl;
         adv_action_info.print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_ACTION_INFO_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
       }
 
       try
@@ -983,73 +891,60 @@ namespace RequestInfoSvcs
       catch(const RequestContainerProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught RequestContainerProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught RequestContainerProcessor::Exception: " << ex.what();
         throw AdvActionProcessor::Exception(ostr);
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed adv action: " << std::endl;
       adv_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
   void
-  UserActionInfoContainer::process_custom_action(
-    const AdvExActionInfo& adv_ex_action_info)
+  UserActionInfoContainer::process_custom_action(const AdvExActionInfo& adv_ex_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
     static const char* FUN = "UserActionInfoContainer::process_custom_action()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": To process adv custom action: " << std::endl;
       adv_ex_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
 
-    if(adv_ex_action_info.user_id.is_null())
+    if (adv_ex_action_info.user_id.is_null())
     {
       return;
     }
 
     DelegateCustomActionInfoList delegate_custom_actions;
 
-    process_custom_action_trans_(
-      delegate_custom_actions,
-      adv_ex_action_info);
+    process_custom_action_trans_(delegate_custom_actions, adv_ex_action_info);
 
-    for(DelegateCustomActionInfoList::const_iterator act_it =
-          delegate_custom_actions.begin();
+    for (DelegateCustomActionInfoList::const_iterator act_it = delegate_custom_actions.begin();
         act_it != delegate_custom_actions.end(); ++act_it)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Custom action done: " << std::endl;
         act_it->print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_ACTION_INFO_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
       }
 
       try
       {
-        request_container_processor_->process_custom_action(
-            act_it->request_id, *act_it);
+        request_container_processor_->process_custom_action(act_it->request_id, *act_it);
       }
       catch(const eh::Exception& ex)
       {
@@ -1059,61 +954,49 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed adv custom action: " << std::endl;
       adv_ex_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
   AdServer::Commons::Awaitable<void>
-  UserActionInfoContainer::co_process_custom_action(
-    const AdvExActionInfo& adv_ex_action_info)
+  UserActionInfoContainer::co_process_custom_action(const AdvExActionInfo& adv_ex_action_info)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_custom_action()";
+    static const char* FUN = "UserActionInfoContainer::co_process_custom_action()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": To process adv custom action: " << std::endl;
       adv_ex_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
 
-    if(adv_ex_action_info.user_id.is_null())
+    if (adv_ex_action_info.user_id.is_null())
     {
       co_return;
     }
 
     DelegateCustomActionInfoList delegate_custom_actions;
 
-    co_await co_process_custom_action_trans_(
-      delegate_custom_actions,
-      adv_ex_action_info);
+    co_await co_process_custom_action_trans_(delegate_custom_actions, adv_ex_action_info);
 
-    for(DelegateCustomActionInfoList::const_iterator act_it =
-          delegate_custom_actions.begin();
+    for (DelegateCustomActionInfoList::const_iterator act_it = delegate_custom_actions.begin();
         act_it != delegate_custom_actions.end(); ++act_it)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Custom action done: " << std::endl;
         act_it->print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_ACTION_INFO_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
       }
 
       try
@@ -1129,15 +1012,13 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed adv custom action: " << std::endl;
       adv_ex_action_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_ACTION_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_ACTION_INFO_CONTAINER);
     }
   }
 
@@ -1178,16 +1059,12 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserActionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserActionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
@@ -1210,9 +1087,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-      transaction->save_profile(
-        Generics::transfer_membuf(new_mem_buf),
-        request_info.imp_time);
+      transaction->save_profile(Generics::transfer_membuf(new_mem_buf), request_info.imp_time);
     }
     catch(const eh::Exception& ex)
     {
@@ -1227,8 +1102,7 @@ namespace RequestInfoSvcs
     AdvCustomActionInfoList& delegate_process_custom_actions,
     const RequestInfo& request_info)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_impression_trans_()";
+    static const char* FUN = "UserActionInfoContainer::co_process_impression_trans_()";
 
     try
     {
@@ -1238,19 +1112,14 @@ namespace RequestInfoSvcs
       UserActionInfoMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(request_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserActionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserActionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
@@ -1304,23 +1173,19 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserActionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserActionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
         user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
       }
 
-      if(request_info.enabled_action_tracking)
+      if (request_info.enabled_action_tracking)
       {
         process_click_for_at1(
           delegate_process_actions,
@@ -1329,7 +1194,7 @@ namespace RequestInfoSvcs
           user_profile_reader.get());
       }
 
-      if(request_info.has_custom_actions)
+      if (request_info.has_custom_actions)
       {
         process_request_for_at2(
           delegate_process_custom_actions,
@@ -1348,9 +1213,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-      transaction->save_profile(
-        Generics::transfer_membuf(new_mem_buf),
-        request_info.imp_time);
+      transaction->save_profile(Generics::transfer_membuf(new_mem_buf), request_info.imp_time);
     }
     catch(const eh::Exception& ex)
     {
@@ -1378,26 +1241,21 @@ namespace RequestInfoSvcs
       UserActionInfoMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(request_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserActionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserActionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
         user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
       }
 
-      if(request_info.enabled_action_tracking)
+      if (request_info.enabled_action_tracking)
       {
         process_click_for_at1(
           delegate_process_actions,
@@ -1406,7 +1264,7 @@ namespace RequestInfoSvcs
           user_profile_reader.get());
       }
 
-      if(request_info.has_custom_actions)
+      if (request_info.has_custom_actions)
       {
         process_request_for_at2(
           delegate_process_custom_actions,
@@ -1452,7 +1310,7 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         // try find marker
         UserActionProfileReader user_profile_reader(
@@ -1470,61 +1328,55 @@ namespace RequestInfoSvcs
         UserActionProfileReader::action_markers_Container::const_iterator max_it =
           user_profile_reader.action_markers().end();
 
-        for(; it != user_profile_reader.action_markers().end() &&
+        for (; it != user_profile_reader.action_markers().end() &&
               (*it).ccg_id() == adv_action_info.ccg_id; ++it)
         {
-          if(max_it == user_profile_reader.action_markers().end() ||
+          if (max_it == user_profile_reader.action_markers().end() ||
              (*it).time() > (*max_it).time())
           {
             max_it = it;
           }
         }
 
-        if(max_it != user_profile_reader.action_markers().end())
+        if (max_it != user_profile_reader.action_markers().end())
         {
-          delegate_process_actions.push_back(
-            AdServer::Commons::RequestId(
-              (*max_it).request_id()));
+          delegate_process_actions.push_back(AdServer::Commons::RequestId((*max_it).request_id()));
 
           found = true;
         }
       }
 
-      if(!found)
+      if (!found)
       {
         // add wait action and save profile
         UserActionProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
           user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
         }
 
-        std::list<WaitActionWriter>::iterator wit =
-          user_profile_writer.wait_actions().begin();
+        std::list<WaitActionWriter>::iterator wit = user_profile_writer.wait_actions().begin();
 
-        while(wit != user_profile_writer.wait_actions().end() &&
+        while (wit != user_profile_writer.wait_actions().end() &&
            wit->ccg_id() < adv_action_info.ccg_id)
         {
           ++wit;
         }
 
-        if(wit != user_profile_writer.wait_actions().end() &&
+        if (wit != user_profile_writer.wait_actions().end() &&
            wit->ccg_id() == adv_action_info.ccg_id)
         {
           /* clear excess wait actions (time < current action time - WAIT_ACTION_EXPIRE_TIME) */
-          const Generics::Time clear_actions_time =
-            adv_action_info.time - WAIT_ACTION_EXPIRE_TIME;
+          const Generics::Time clear_actions_time = adv_action_info.time - WAIT_ACTION_EXPIRE_TIME;
 
           std::list<WaitActionWriter>::iterator erase_begin = wit;
 
-          while(wit != user_profile_writer.wait_actions().end() &&
+          while (wit != user_profile_writer.wait_actions().end() &&
             wit->ccg_id() == adv_action_info.ccg_id &&
             wit->time() < clear_actions_time.tv_sec)
           {
@@ -1534,14 +1386,14 @@ namespace RequestInfoSvcs
           user_profile_writer.wait_actions().erase(erase_begin, wit);
         }
 
-        while(wit != user_profile_writer.wait_actions().end() &&
+        while (wit != user_profile_writer.wait_actions().end() &&
           wit->ccg_id() == adv_action_info.ccg_id &&
           wit->time() < adv_action_info.time.tv_sec)
         {
           ++wit;
         }
 
-        if(wit != user_profile_writer.wait_actions().end() &&
+        if (wit != user_profile_writer.wait_actions().end() &&
           wit->ccg_id() == adv_action_info.ccg_id &&
           wit->time() == adv_action_info.time.tv_sec)
         {
@@ -1561,9 +1413,7 @@ namespace RequestInfoSvcs
 
         user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-        transaction->save_profile(
-          Generics::transfer_membuf(new_mem_buf),
-          adv_action_info.time);
+        transaction->save_profile(Generics::transfer_membuf(new_mem_buf), adv_action_info.time);
       }
     }
     catch(const eh::Exception& ex)
@@ -1579,8 +1429,7 @@ namespace RequestInfoSvcs
     RequestIdList& delegate_process_actions,
     const AdvActionInfo& adv_action_info)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_adv_action_trans_()";
+    static const char* FUN = "UserActionInfoContainer::co_process_adv_action_trans_()";
 
     try
     {
@@ -1589,10 +1438,9 @@ namespace RequestInfoSvcs
       UserActionInfoMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(adv_action_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserActionProfileReader user_profile_reader(
           mem_buf->membuf().data(),
@@ -1608,58 +1456,53 @@ namespace RequestInfoSvcs
         UserActionProfileReader::action_markers_Container::const_iterator max_it =
           user_profile_reader.action_markers().end();
 
-        for(; it != user_profile_reader.action_markers().end() &&
+        for (; it != user_profile_reader.action_markers().end() &&
               (*it).ccg_id() == adv_action_info.ccg_id; ++it)
         {
-          if(max_it == user_profile_reader.action_markers().end() ||
+          if (max_it == user_profile_reader.action_markers().end() ||
              (*it).time() > (*max_it).time())
           {
             max_it = it;
           }
         }
 
-        if(max_it != user_profile_reader.action_markers().end())
+        if (max_it != user_profile_reader.action_markers().end())
         {
-          delegate_process_actions.push_back(
-            AdServer::Commons::RequestId((*max_it).request_id()));
+          delegate_process_actions.push_back(AdServer::Commons::RequestId((*max_it).request_id()));
 
           found = true;
         }
       }
 
-      if(!found)
+      if (!found)
       {
         UserActionProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
           user_profile_writer.version() = CURRENT_ACTION_INFO_PROFILE_VERSION;
         }
 
-        std::list<WaitActionWriter>::iterator wit =
-          user_profile_writer.wait_actions().begin();
+        std::list<WaitActionWriter>::iterator wit = user_profile_writer.wait_actions().begin();
 
-        while(wit != user_profile_writer.wait_actions().end() &&
+        while (wit != user_profile_writer.wait_actions().end() &&
            wit->ccg_id() < adv_action_info.ccg_id)
         {
           ++wit;
         }
 
-        if(wit != user_profile_writer.wait_actions().end() &&
+        if (wit != user_profile_writer.wait_actions().end() &&
            wit->ccg_id() == adv_action_info.ccg_id)
         {
-          const Generics::Time clear_actions_time =
-            adv_action_info.time - WAIT_ACTION_EXPIRE_TIME;
+          const Generics::Time clear_actions_time = adv_action_info.time - WAIT_ACTION_EXPIRE_TIME;
 
           std::list<WaitActionWriter>::iterator erase_begin = wit;
 
-          while(wit != user_profile_writer.wait_actions().end() &&
+          while (wit != user_profile_writer.wait_actions().end() &&
             wit->ccg_id() == adv_action_info.ccg_id &&
             wit->time() < clear_actions_time.tv_sec)
           {
@@ -1669,14 +1512,14 @@ namespace RequestInfoSvcs
           user_profile_writer.wait_actions().erase(erase_begin, wit);
         }
 
-        while(wit != user_profile_writer.wait_actions().end() &&
+        while (wit != user_profile_writer.wait_actions().end() &&
           wit->ccg_id() == adv_action_info.ccg_id &&
           wit->time() < adv_action_info.time.tv_sec)
         {
           ++wit;
         }
 
-        if(wit != user_profile_writer.wait_actions().end() &&
+        if (wit != user_profile_writer.wait_actions().end() &&
           wit->ccg_id() == adv_action_info.ccg_id &&
           wit->time() == adv_action_info.time.tv_sec)
         {
@@ -1715,8 +1558,7 @@ namespace RequestInfoSvcs
     const AdvExActionInfo& adv_ex_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
-    static const char* FUN =
-      "UserActionInfoContainer::process_custom_action_trans_()";
+    static const char* FUN = "UserActionInfoContainer::process_custom_action_trans_()";
 
     try
     {
@@ -1727,7 +1569,7 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserActionProfileReader user_profile_reader(
           mem_buf->membuf().data(),
@@ -1739,21 +1581,19 @@ namespace RequestInfoSvcs
           adv_ex_action_info,
           action_ignore_time_);
 
-        if(!ignore_action)
+        if (!ignore_action)
         {
-          Generics::Time check_low_req_time(
-            adv_ex_action_info.time + TIME_SYNC_PRECISION);
+          Generics::Time check_low_req_time(adv_ex_action_info.time + TIME_SYNC_PRECISION);
 
           DelegateCustomActionInfo base_adv_custom_action_info;
           base_adv_custom_action_info.time = adv_ex_action_info.time;
           base_adv_custom_action_info.action_id = adv_ex_action_info.action_id;
-          base_adv_custom_action_info.action_request_id =
-            adv_ex_action_info.action_request_id;
+          base_adv_custom_action_info.action_request_id = adv_ex_action_info.action_request_id;
           base_adv_custom_action_info.referer = adv_ex_action_info.referer;
           base_adv_custom_action_info.order_id = adv_ex_action_info.order_id;
           base_adv_custom_action_info.action_value = adv_ex_action_info.action_value;
 
-          for(AdvExActionInfo::CCGIdList::const_iterator ccg_it =
+          for (AdvExActionInfo::CCGIdList::const_iterator ccg_it =
                 adv_ex_action_info.ccg_ids.begin();
               ccg_it != adv_ex_action_info.ccg_ids.end(); ++ccg_it)
           {
@@ -1764,12 +1604,11 @@ namespace RequestInfoSvcs
                 *ccg_it,
                 DoneImpressionLess());
 
-            while(imp_it != user_profile_reader.done_impressions().end() &&
+            while (imp_it != user_profile_reader.done_impressions().end() &&
               (*imp_it).ccg_id() == *ccg_it &&
               (*imp_it).time() <= check_low_req_time.tv_sec)
             {
-              DelegateCustomActionInfo adv_custom_action_info(
-                base_adv_custom_action_info);
+              DelegateCustomActionInfo adv_custom_action_info(base_adv_custom_action_info);
               adv_custom_action_info.request_id =
                 AdServer::Commons::RequestId((*imp_it).request_id());
               delegate_custom_actions.push_back(adv_custom_action_info);
@@ -1779,15 +1618,13 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(!ignore_action)
+      if (!ignore_action)
       {
         UserActionProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
@@ -1799,13 +1636,13 @@ namespace RequestInfoSvcs
           UserActionProfileWriter::custom_action_markers_Container::iterator wit =
             user_profile_writer.custom_action_markers().begin();
 
-          while(wit != user_profile_writer.custom_action_markers().end() &&
+          while (wit != user_profile_writer.custom_action_markers().end() &&
             wit->time() < adv_ex_action_info.time.tv_sec)
           {
             ++wit;
           }
 
-          while(wit != user_profile_writer.custom_action_markers().end() &&
+          while (wit != user_profile_writer.custom_action_markers().end() &&
             wit->time() == adv_ex_action_info.time.tv_sec &&
             wit->action_id() < adv_ex_action_info.action_id)
           {
@@ -1830,14 +1667,13 @@ namespace RequestInfoSvcs
         {
           // clear excess action_id marker
           unsigned long am_count = 0;
-          for(UserActionProfileWriter::custom_action_markers_Container::
-                reverse_iterator wit =
-                  user_profile_writer.custom_action_markers().rbegin();
+          for (UserActionProfileWriter::custom_action_markers_Container::
+                reverse_iterator wit = user_profile_writer.custom_action_markers().rbegin();
               wit != user_profile_writer.custom_action_markers().rend(); )
           {
-            if(wit->action_id() == adv_ex_action_info.action_id)
+            if (wit->action_id() == adv_ex_action_info.action_id)
             {
-              if(am_count >= MAX_KEEP_CUSTOM_ACTION_MARKERS)
+              if (am_count >= MAX_KEEP_CUSTOM_ACTION_MARKERS)
               {
                 UserActionProfileWriter::custom_action_markers_Container::
                   reverse_iterator tmp = wit;
@@ -1856,9 +1692,7 @@ namespace RequestInfoSvcs
           }
         }
 
-        insert_done_action_(
-          user_profile_writer.custom_done_actions(),
-          adv_ex_action_info);
+        insert_done_action_(user_profile_writer.custom_done_actions(), adv_ex_action_info);
 
         clear_expired_at2(user_profile_writer, adv_ex_action_info.time);
 
@@ -1867,9 +1701,7 @@ namespace RequestInfoSvcs
 
         user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-        transaction->save_profile(
-          Generics::transfer_membuf(new_mem_buf),
-          adv_ex_action_info.time);
+        transaction->save_profile(Generics::transfer_membuf(new_mem_buf), adv_ex_action_info.time);
       }
     }
     catch(const eh::Exception& ex)
@@ -1885,8 +1717,7 @@ namespace RequestInfoSvcs
     DelegateCustomActionInfoList& delegate_custom_actions,
     const AdvExActionInfo& adv_ex_action_info)
   {
-    static const char* FUN =
-      "UserActionInfoContainer::co_process_custom_action_trans_()";
+    static const char* FUN = "UserActionInfoContainer::co_process_custom_action_trans_()";
 
     try
     {
@@ -1895,10 +1726,9 @@ namespace RequestInfoSvcs
       UserActionInfoMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(adv_ex_action_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserActionProfileReader user_profile_reader(
           mem_buf->membuf().data(),
@@ -1909,22 +1739,19 @@ namespace RequestInfoSvcs
           adv_ex_action_info,
           action_ignore_time_);
 
-        if(!ignore_action)
+        if (!ignore_action)
         {
-          Generics::Time check_low_req_time(
-            adv_ex_action_info.time + TIME_SYNC_PRECISION);
+          Generics::Time check_low_req_time(adv_ex_action_info.time + TIME_SYNC_PRECISION);
 
           DelegateCustomActionInfo base_adv_custom_action_info;
           base_adv_custom_action_info.time = adv_ex_action_info.time;
           base_adv_custom_action_info.action_id = adv_ex_action_info.action_id;
-          base_adv_custom_action_info.action_request_id =
-            adv_ex_action_info.action_request_id;
+          base_adv_custom_action_info.action_request_id = adv_ex_action_info.action_request_id;
           base_adv_custom_action_info.referer = adv_ex_action_info.referer;
           base_adv_custom_action_info.order_id = adv_ex_action_info.order_id;
-          base_adv_custom_action_info.action_value =
-            adv_ex_action_info.action_value;
+          base_adv_custom_action_info.action_value = adv_ex_action_info.action_value;
 
-          for(AdvExActionInfo::CCGIdList::const_iterator ccg_it =
+          for (AdvExActionInfo::CCGIdList::const_iterator ccg_it =
                 adv_ex_action_info.ccg_ids.begin();
               ccg_it != adv_ex_action_info.ccg_ids.end(); ++ccg_it)
           {
@@ -1935,12 +1762,11 @@ namespace RequestInfoSvcs
                 *ccg_it,
                 DoneImpressionLess());
 
-            while(imp_it != user_profile_reader.done_impressions().end() &&
+            while (imp_it != user_profile_reader.done_impressions().end() &&
               (*imp_it).ccg_id() == *ccg_it &&
               (*imp_it).time() <= check_low_req_time.tv_sec)
             {
-              DelegateCustomActionInfo adv_custom_action_info(
-                base_adv_custom_action_info);
+              DelegateCustomActionInfo adv_custom_action_info(base_adv_custom_action_info);
               adv_custom_action_info.request_id =
                 AdServer::Commons::RequestId((*imp_it).request_id());
               delegate_custom_actions.push_back(adv_custom_action_info);
@@ -1950,15 +1776,13 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(!ignore_action)
+      if (!ignore_action)
       {
         UserActionProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
@@ -1969,13 +1793,13 @@ namespace RequestInfoSvcs
           UserActionProfileWriter::custom_action_markers_Container::iterator wit =
             user_profile_writer.custom_action_markers().begin();
 
-          while(wit != user_profile_writer.custom_action_markers().end() &&
+          while (wit != user_profile_writer.custom_action_markers().end() &&
             wit->time() < adv_ex_action_info.time.tv_sec)
           {
             ++wit;
           }
 
-          while(wit != user_profile_writer.custom_action_markers().end() &&
+          while (wit != user_profile_writer.custom_action_markers().end() &&
             wit->time() == adv_ex_action_info.time.tv_sec &&
             wit->action_id() < adv_ex_action_info.action_id)
           {
@@ -1989,28 +1813,24 @@ namespace RequestInfoSvcs
           action_marker_writer.time() = adv_ex_action_info.time.tv_sec;
           action_marker_writer.referer() = adv_ex_action_info.referer;
           action_marker_writer.order_id() = adv_ex_action_info.order_id;
-          action_marker_writer.action_value() =
-            adv_ex_action_info.action_value.str();
+          action_marker_writer.action_value() = adv_ex_action_info.action_value.str();
           std::copy(
             adv_ex_action_info.ccg_ids.begin(),
             adv_ex_action_info.ccg_ids.end(),
             std::back_inserter(action_marker_writer.ccg_ids()));
 
-          user_profile_writer.custom_action_markers().insert(
-            wit,
-            action_marker_writer);
+          user_profile_writer.custom_action_markers().insert(wit, action_marker_writer);
         }
 
         {
           unsigned long am_count = 0;
-          for(UserActionProfileWriter::custom_action_markers_Container::
-                reverse_iterator wit =
-                  user_profile_writer.custom_action_markers().rbegin();
+          for (UserActionProfileWriter::custom_action_markers_Container::
+                reverse_iterator wit = user_profile_writer.custom_action_markers().rbegin();
               wit != user_profile_writer.custom_action_markers().rend(); )
           {
-            if(wit->action_id() == adv_ex_action_info.action_id)
+            if (wit->action_id() == adv_ex_action_info.action_id)
             {
-              if(am_count >= MAX_KEEP_CUSTOM_ACTION_MARKERS)
+              if (am_count >= MAX_KEEP_CUSTOM_ACTION_MARKERS)
               {
                 UserActionProfileWriter::custom_action_markers_Container::
                   reverse_iterator tmp = wit;
@@ -2029,9 +1849,7 @@ namespace RequestInfoSvcs
           }
         }
 
-        insert_done_action_(
-          user_profile_writer.custom_done_actions(),
-          adv_ex_action_info);
+        insert_done_action_(user_profile_writer.custom_done_actions(), adv_ex_action_info);
 
         clear_expired_at2(user_profile_writer, adv_ex_action_info.time);
 
@@ -2052,5 +1870,4 @@ namespace RequestInfoSvcs
       throw AdvActionProcessor::Exception(ostr);
     }
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+} // namespace AdServer::RequestInfoSvcs

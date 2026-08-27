@@ -10,7 +10,7 @@ namespace UserInfoSvcs_v320
 
   autoreader SessionMatchesReader<SessionMatches>;
   autowriter SessionMatchesWriter<SessionMatches>;
-    
+
   struct HistoryVisits
   {
     uint channel_id;
@@ -94,7 +94,7 @@ namespace UserInfoSvcs_v320
     list<PartlyVisitsSectionReader> unused_1;
     list<PartlyVisitsSectionReader> unused_2;
   };
-   
+
   writer ChannelsInfoWriter<ChannelsInfo>
   {
     list<HTCandidatesWriter> ht_candidates;
@@ -111,9 +111,9 @@ namespace UserInfoSvcs_v320
     uint version;
   };
 
-  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
-  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;    
-    
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;
+
   struct PersistentMatches
   {
     list<uint> channel_ids;
@@ -144,19 +144,19 @@ namespace UserInfoSvcs_v320
     uint first_colo_id;
     uint last_colo_id;
     string cohort;
-    
+
     PersistentMatches persistent_matches;
     ChannelsInfo page_channels;
     ChannelsInfo search_channels;
     ChannelsInfo url_channels;
     ChannelsInfo url_keyword_channels;
-    
+
     list<LastTrigger> last_page_triggers;
     list<LastTrigger> last_search_triggers;
     list<LastTrigger> last_url_triggers;
     list<LastTrigger> last_url_keyword_triggers;
   };
- 
+
   reader ChannelsProfileReader<ChannelsProfile>
   {
     version;
@@ -169,19 +169,19 @@ namespace UserInfoSvcs_v320
     first_colo_id;
     last_colo_id;
     cohort;
-    
+
     PersistentMatchesReader persistent_matches;
     ChannelsInfoReader page_channels;
     ChannelsInfoReader search_channels;
     ChannelsInfoReader url_channels;
     ChannelsInfoReader url_keyword_channels;
-    
+
     list<LastTriggerReader> last_page_triggers;
     list<LastTriggerReader> last_search_triggers;
     list<LastTriggerReader> last_url_triggers;
     list<LastTriggerReader> last_url_keyword_triggers;
   };
-   
+
   writer ChannelsProfileWriter<ChannelsProfile>
   {
     version;
@@ -194,13 +194,13 @@ namespace UserInfoSvcs_v320
     first_colo_id;
     last_colo_id;
     cohort;
-    
+
     PersistentMatchesWriter persistent_matches;
     ChannelsInfoWriter page_channels;
     ChannelsInfoWriter search_channels;
     ChannelsInfoWriter url_channels;
     ChannelsInfoWriter url_keyword_channels;
-    
+
     list<LastTriggerWriter> last_page_triggers;
     list<LastTriggerWriter> last_search_triggers;
     list<LastTriggerWriter> last_url_triggers;

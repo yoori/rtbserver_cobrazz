@@ -1,9 +1,6 @@
 #include "ChannelHitTest.hpp"
 
-REFLECT_UNIT(ChannelHitTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelHitTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -21,8 +18,7 @@ static const int hits_u = 7;
 static const int hits_ps = 11;
 
 void
-ChannelHitTest::run_case(const AutoTest::Time& date,
-  unsigned long colo)
+ChannelHitTest::run_case(const AutoTest::Time& date, unsigned long colo)
 {
   std::ostringstream description;
   description << "Run for '" << date << "' date and '"
@@ -77,8 +73,7 @@ ChannelHitTest::run_case(const AutoTest::Time& date,
   {
     AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
     AutoTest::NSLookupRequest request;
-    request.debug_time(date).referer(
-      std::string("http://www.google.ru/search?hl=ru&q=") + kw2);
+    request.debug_time(date).referer(std::string("http://www.google.ru/search?hl=ru&q=") + kw2);
     if (colo)
     { request.colo = colo; }
 
@@ -192,8 +187,7 @@ ChannelHitTest::run()
   run_case(base_time_ + DAY);
 
   FAIL_CONTEXT(AutoTest::wait_checker(
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs_, stats_)).check(),
+    AutoTest::stats_diff_checker(pq_conn_, diffs_, stats_)).check(),
     "ChannelInventory hits check");
 
   return true;

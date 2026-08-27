@@ -13,14 +13,14 @@ sub create_display_campaign
   $args_copy{site_links} = [{name=> $name}];
   $args_copy{name} = $name;
 
-  my $campaign = 
+  my $campaign =
    $ns->create(DisplayCampaign => \%args_copy);
 
-  my $tag = $ns->create(PricedTag => 
+  my $tag = $ns->create(PricedTag =>
     { name => $name,
       site_id => $campaign->{Site}[0]->{site_id},
       cpm => 0
-    });  
+    });
 
 
   $ns->output($name . "CC", $campaign->{cc_id});
@@ -31,12 +31,12 @@ sub create_optin_status_targeting_campaigns
 {
   my ($self, $ns) = @_;
 
-  my $publisher1 = 
-    $ns->create(Publisher => { 
+  my $publisher1 =
+    $ns->create(Publisher => {
       name => "Publisher-OST-1" });
 
-  my $publisher2 = 
-    $ns->create(Publisher => { 
+  my $publisher2 =
+    $ns->create(Publisher => {
       name => "Publisher-OST-2" });
 
   my @optin_statusses = (
@@ -47,7 +47,7 @@ sub create_optin_status_targeting_campaigns
     ['YNY', $publisher2 ],
     ['YYN', $publisher2 ],
     ['YYY', $publisher2 ]);
-  
+
   foreach my $s (@optin_statusses)
   {
     my ($status, $publisher)  = @$s;
@@ -63,7 +63,7 @@ sub create_optin_status_targeting_campaigns
       account_id => $advertiser,
       optin_status_targeting => $status,
       campaigncreativegroup_cpm => 100,
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           account_id => $advertiser,
           name => 'Channel-OST-' . $status,
@@ -80,26 +80,26 @@ sub create_optin_status_targeting_campaigns
     name => 'Campaign-OST-RON',
     channel_id => undef,
     campaigncreativegroup_cpm => 1,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES |
       DB::Campaign::RON,
-    site_links => [{site_id => $publisher1->{site_id}}]    
+    site_links => [{site_id => $publisher1->{site_id}}]
   });
 
   $ns->output("OSTTAG1", $publisher1->{tag_id});
   $ns->output("OSTTAG2", $publisher2->{tag_id});
   $ns->output("OSTCC/RON", $ron->{cc_id});
-   
+
 }
 
 sub init {
   my ($self, $ns) = @_;
 
   # Publisher
-  my $publisher = $ns->create(Publisher => { 
+  my $publisher = $ns->create(Publisher => {
     name => "Publisher" });
 
-  my $publisherTA = $ns->create(Publisher => { 
+  my $publisherTA = $ns->create(Publisher => {
     name => "PublisherTA" });
 
   # Advertisier
@@ -124,7 +124,7 @@ sub init {
     $ns, "DisplayRONCPM",
     { channel_id => undef,
       campaigncreativegroup_cpm => 2,
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES |
         DB::Campaign::RON
       });
@@ -134,7 +134,7 @@ sub init {
     $ns, "DisplayCPM",
     { channel_id => $channel,
       campaigncreativegroup_cpm => 20,
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES
       });
 
@@ -145,7 +145,7 @@ sub init {
       campaigncreativegroup_cpm => 0,
       campaigncreativegroup_cpa => 400,
       campaigncreativegroup_ar => 0.01,
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES |
         DB::Campaign::RON
       });
@@ -157,7 +157,7 @@ sub init {
       campaigncreativegroup_cpm => 0,
       campaigncreativegroup_cpa => 500,
       campaigncreativegroup_ar => 0.01,
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES,
       });
 
@@ -167,7 +167,7 @@ sub init {
     { channel_id => $channel,
       campaigncreativegroup_cpm => 0,
       campaigncreativegroup_cpc => 400,
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES,
       });
 
@@ -176,9 +176,9 @@ sub init {
     $ns, "DisplayFC",
     { channel_id => $channel,
       campaigncreativegroup_cpm => 60,
-      campaigncreativegroup_freq_cap_id => 
+      campaigncreativegroup_freq_cap_id =>
         DB::FreqCap->blank(period => 60),
-      campaigncreativegroup_flags => 
+      campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES,
       });
 
@@ -199,7 +199,7 @@ sub init {
     size_id => $size_id,
     template_id => DB::Defaults::instance()->text_template,
     channel_id => undef,
-     campaigncreativegroup_flags => 
+     campaigncreativegroup_flags =>
         DB::Campaign::INCLUDE_SPECIFIC_SITES |
         DB::Campaign::RON,
     campaigncreativegroup_cpm => 1,
@@ -214,15 +214,15 @@ sub init {
     campaigncreativegroup_cpm => 7,
     site_links => [{site_id => $publisher->{site_id}}] });
 
-  $ns->output("OPTINCOLO", 
+  $ns->output("OPTINCOLO",
     DB::Defaults::instance()->optin_only_isp->{colo_id});
-  $ns->output("ALLCOLO", 
+  $ns->output("ALLCOLO",
     DB::Defaults::instance()->ads_isp->{colo_id});
-  $ns->output("NONOPTOUTCOLO", 
+  $ns->output("NONOPTOUTCOLO",
     DB::Defaults::instance()->non_optout_isp->{colo_id});
-  $ns->output("NOADSCOLO", 
+  $ns->output("NOADSCOLO",
     DB::Defaults::instance()->no_ads_isp->{colo_id});
-  $ns->output("DELETEDCOLO", 
+  $ns->output("DELETEDCOLO",
     DB::Defaults::instance()->deleted_colo_isp->{colo_id});
 
   $ns->output("URL", $url);

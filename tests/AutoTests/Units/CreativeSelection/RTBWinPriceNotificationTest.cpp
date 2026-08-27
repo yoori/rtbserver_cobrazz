@@ -6,9 +6,7 @@
 
 #include <Commons/FastJsonParser.hpp>
 
-REFLECT_UNIT(RTBWinPriceNotificationTest) (
-  "CreativeSelection",
-  AUTO_TEST_SLOW );
+REFLECT_UNIT(RTBWinPriceNotificationTest) ("CreativeSelection", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -61,11 +59,8 @@ namespace
   {
     static const AdServer::Commons::FastJsonParser<>* parser = [] {
       AdServer::Commons::FastJsonParser<>::ProcessorSet processors;
-      processors.add_processor(
-        "CLICK",
-        std::make_shared<CreativeClickProcessor>());
-      return new AdServer::Commons::FastJsonParser<>(
-        std::move(processors));
+      processors.add_processor("CLICK", std::make_shared<CreativeClickProcessor>());
+      return new AdServer::Commons::FastJsonParser<>(std::move(processors));
     }();
 
     return *parser;
@@ -118,10 +113,8 @@ namespace
 
     // Response
     static const typename RTBTraits<RTB>::ExpectedAdSetter expected_ad_id;
-    static std::string get_ad_instance(
-      const typename RTBTraits<RTB>::ResponseChecker& checker);
-    static std::string get_nurl(
-      const typename RTBTraits<RTB>::ResponseChecker& checker);
+    static std::string get_ad_instance(const typename RTBTraits<RTB>::ResponseChecker& checker);
+    static std::string get_nurl(const typename RTBTraits<RTB>::ResponseChecker& checker);
   };
 
   template<typename RTB>
@@ -151,8 +144,7 @@ namespace
   RTBParamsMapping<RTB>::size = &RTBTraits<RTB>::Request::debug_size;
 
   template<typename RTB> std::string
-    RTBParamsMapping<RTB>::get_nurl(
-      const typename RTBTraits<RTB>::ResponseChecker& checker)
+    RTBParamsMapping<RTB>::get_nurl(const typename RTBTraits<RTB>::ResponseChecker& checker)
   {
     return checker.bids().nurl;
   }
@@ -165,8 +157,7 @@ namespace
   RTBParamsMapping<OpenRTB>::expected_ad_id = &RTBTraits<OpenRTB>::Expected::adid;
 
   template<> std::string
-    RTBParamsMapping<OpenRTB>::get_ad_instance(
-       const RTBTraits<OpenRTB>::ResponseChecker& checker)
+    RTBParamsMapping<OpenRTB>::get_ad_instance(const RTBTraits<OpenRTB>::ResponseChecker& checker)
   {
     return checker.bids().adm;
   };
@@ -309,8 +300,7 @@ namespace
 
 template<typename RTB, size_t Count>
 RTBWinPriceNotificationTest::StoredRequests
-RTBWinPriceNotificationTest::process_requests_(
-  const CaseRequest (&requests)[Count])
+RTBWinPriceNotificationTest::process_requests_(const CaseRequest (&requests)[Count])
 {
   StoredRequests stored_requests;
   for (size_t i = 0; i < Count; ++i)
@@ -325,8 +315,7 @@ RTBWinPriceNotificationTest::process_requests_(
     adexchange.process_request(user_bind);
 
     // to avoid min_RTB_user_age check
-    adexchange.process_post(
-      typename RTBTraits<RTB>::Request().debug_time(now_ - 24*60*60));
+    adexchange.process_post(typename RTBTraits<RTB>::Request().debug_time(now_ - 24*60*60));
 
     if (requests[i].referer_kw)
     {
@@ -382,8 +371,7 @@ RTBWinPriceNotificationTest::process_requests_(
       FAIL_CONTEXT(AutoTest::predicate_checker(re.search(result, ad_instance)),
         "Got unexpected ad markup");
 
-      FAIL_CONTEXT(AutoTest::equal_checker(3, result.size()).check(),
-        "got unexpected ad markup");
+      FAIL_CONTEXT(AutoTest::equal_checker(3, result.size()).check(), "got unexpected ad markup");
 
       HTTP::BrowserAddress inst_request(result[2]);
 
@@ -392,8 +380,7 @@ RTBWinPriceNotificationTest::process_requests_(
       FAIL_CONTEXT(AutoTest::equal_checker(200, client.req_status()).check(),
         "Inst request status check");
 
-      String::StringManip::mime_url_decode(
-        client.req_response_data(), ad_instance);
+      String::StringManip::mime_url_decode(client.req_response_data(), ad_instance);
     }
 
     if (requests[i].flags & (CF_NURL_REQ | CF_STORE_NURL))
@@ -439,8 +426,7 @@ RTBWinPriceNotificationTest::process_requests_(
     else
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          get_token_value(ad_instance, "TRACKPIXEL", imp_track_token)),
+        AutoTest::predicate_checker(get_token_value(ad_instance, "TRACKPIXEL", imp_track_token)),
           "Can't get TRACKPIXEL token value from response");
     }
 
@@ -468,7 +454,7 @@ RTBWinPriceNotificationTest::process_requests_(
           "ImpTrack request status check");
       }
 
-      if(requests[i].flags & CF_STORE_IMPTRACK)
+      if (requests[i].flags & CF_STORE_IMPTRACK)
       {
         stored_requests.push_back(imp_track_url);
       }
@@ -484,8 +470,7 @@ RTBWinPriceNotificationTest::process_requests_(
       std::string click_url,
                   encoded_click_url;
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          get_token_value(ad_instance, "CLICK", click_url)),
+        AutoTest::predicate_checker(get_token_value(ad_instance, "CLICK", click_url)),
         "Can't get CLICK token value from response");
 
       // Delete click macro
@@ -494,8 +479,7 @@ RTBWinPriceNotificationTest::process_requests_(
         String::SubString(RTBMacro<RTB>::click_macro),
         String::SubString());
 
-      String::StringManip::mime_url_decode(
-        encoded_click_url, click_url);
+      String::StringManip::mime_url_decode(encoded_click_url, click_url);
 
       client.process_request(click_url + "*amp*debug-time*eql*" + encoded_now_);
     }
@@ -716,8 +700,7 @@ RTBWinPriceNotificationTest::allyes_final_()
   select_current_stats_(EXPECTED_STATS, stats, diffs);
 
   AdClient client(AdClient::create_nonoptin_user(this));
-  for (auto it = allyes_stored_requests_.cbegin();
-       it != allyes_stored_requests_.cend(); ++it)
+  for (auto it = allyes_stored_requests_.cbegin(); it != allyes_stored_requests_.cend(); ++it)
   {
     client.process_request(*it);
   }

@@ -3,9 +3,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   typedef ::AdServer::ChannelSvcs::ChannelUpdateBase ChannelCurrent;
@@ -20,17 +18,13 @@ namespace ChannelSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    ChannelLoadSessionImpl(
-      Generics::ActiveObjectCallback* callback,
-      Generics::TaskRunner* runner)
+    ChannelLoadSessionImpl(Generics::ActiveObjectCallback* callback, Generics::TaskRunner* runner)
       noexcept;
 
     ChannelLoadSessionImpl(ChannelLoadSessionImpl& init)
       /*throw(eh::Exception, Exception)*/;
 
-    ChannelLoadSessionImpl(
-      const ChannelSvcs::GroupLoadDescriptionSeq& servers,
-      CORBA::ULong source)
+    ChannelLoadSessionImpl(const ChannelSvcs::GroupLoadDescriptionSeq& servers, CORBA::ULong source)
       /*throw(Exception)*/;
 
     virtual ~ChannelLoadSessionImpl() noexcept;
@@ -85,14 +79,12 @@ namespace ChannelSvcs
 
   template<class STREAM>
   STREAM&
-  describe_description(
-    STREAM& ostr,
-    const ChannelSvcs::GroupLoadDescriptionSeq& servers)
+  describe_description(STREAM& ostr, const ChannelSvcs::GroupLoadDescriptionSeq& servers)
   {
     ostr << "servers:";
-    for(size_t group_num = 0; group_num < servers.length(); group_num++)
+    for (size_t group_num = 0; group_num < servers.length(); group_num++)
     {
-      for(size_t i = 0; i < servers[group_num].length(); i++)
+      for (size_t i = 0; i < servers[group_num].length(); i++)
       {
         ostr << ' ' << group_num << '.' << i;
       }
@@ -100,5 +92,4 @@ namespace ChannelSvcs
     return ostr;
   }
 
-} /* ChannelSvcs */
-}
+} // namespace AdServer::ChannelSvcs

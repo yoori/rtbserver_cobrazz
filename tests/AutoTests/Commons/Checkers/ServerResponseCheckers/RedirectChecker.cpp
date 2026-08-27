@@ -6,20 +6,15 @@
 namespace AutoTest
 {
   // RedirectChecker class
-  RedirectChecker::RedirectChecker(
-    AdClient& client,
-    const std::string& location) :
+  RedirectChecker::RedirectChecker(AdClient& client, const std::string& location) :
     client_(client)
   {
     std::string regex;
-    String::StringManip::mark(location.c_str(), regex,
-      String::AsciiStringManip::REGEX_META, '\\');
+    String::StringManip::mark(location.c_str(), regex, String::AsciiStringManip::REGEX_META, '\\');
     regex_.set_expression("^" + regex + "$");
   }
 
-  RedirectChecker::RedirectChecker(
-    AdClient& client,
-    const String::RegEx& regex) :
+  RedirectChecker::RedirectChecker(AdClient& client, const String::RegEx& regex) :
     client_(client),
     regex_(regex)
   {}
@@ -38,6 +33,7 @@ namespace AutoTest
     {
       return true;
     }
+
     if (throw_error)
     {
       Stream::Error error;

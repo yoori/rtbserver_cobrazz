@@ -1,9 +1,6 @@
 #include "PublisherInventoryTest.hpp"
 
-REFLECT_UNIT(PublisherInventoryTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(PublisherInventoryTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -37,9 +34,7 @@ void PublisherInventoryTest::add_publisher_inventory_stat(
   publisher_inventory_diffs_.push_back(Diff().
     imps(imps).
     requests(requests).
-    revenue(
-      ORM::stats_diff_type(
-        revenue, 0.00001)));
+    revenue(ORM::stats_diff_type(revenue, 0.00001)));
 }
 
 void PublisherInventoryTest::add_hourly_stat(
@@ -82,9 +77,7 @@ void PublisherInventoryTest::add_channel_inv_stat_(
     int active_users,
     int total_users)
 {
-  ChannelInventoryStat stat(
-    ChannelInventoryStat::Key().
-    channel_id(channel_id));
+  ChannelInventoryStat stat(ChannelInventoryStat::Key(). channel_id(channel_id));
   stat.description(description);
   stat.select(pgconn_);
   channel_inventory_stats_.push_back(stat);
@@ -109,26 +102,18 @@ PublisherInventoryTest::base_scenario(AutoTest::AdClient& client,
   std::string keyword2 = fetch_string("BaseCase/Channel2/KEYWORD#1");
   std::string url2 = fetch_string("BaseCase/Channel2/URL#1");
 
-  double cpm1_threshold =
-    100 * fetch_float("BaseCase/NetCampaign1/CPM") / adv_rate_ ;
+  double cpm1_threshold = 100 * fetch_float("BaseCase/NetCampaign1/CPM") / adv_rate_ ;
   double cpm1 = cpm1_threshold * pub_rate / 100;
 
-  double cpm2_threshold =
-    100 * (fetch_float("BaseCase/NetCampaign2/CPM") / adv_rate_);
+  double cpm2_threshold = 100 * (fetch_float("BaseCase/NetCampaign2/CPM") / adv_rate_);
   double cpm2 = cpm2_threshold * pub_rate / 100;
 
   std::string cc1 = fetch_string("BaseCase/NetCampaign1/CCID");
   std::string cc2 = fetch_string("BaseCase/NetCampaign2/CCID");
 
-  AutoTest::Time moscow_today(
-    debug_time_.
-    get_gm_time().
-    format("%d-%m-%Y:12-00-00"));
+  AutoTest::Time moscow_today(debug_time_. get_gm_time(). format("%d-%m-%Y:12-00-00"));
 
-  AutoTest::Time moscow_tomorrow(
-    debug_time_.
-    get_gm_time().
-    format("%d-%m-%Y:23-00-00"));
+  AutoTest::Time moscow_tomorrow(debug_time_. get_gm_time(). format("%d-%m-%Y:23-00-00"));
 
   AutoTest::Time tomorrow(moscow_today + 24*60*60);
 
@@ -154,19 +139,13 @@ PublisherInventoryTest::base_scenario(AutoTest::AdClient& client,
 
     client.process_request(request, ("request for " + cc1 + " creative").c_str());
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc1,
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc1, client.debug_info.ccid).check(),
       "must got expected ccid");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        204,
-        client.req_status()).check(),
+      AutoTest::equal_checker(204, client.req_status()).check(),
       "Server must return 'no content' status");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        Money(cpm1_threshold),
-        client.debug_info.cpm_threshold_value).check(),
+      AutoTest::equal_checker(Money(cpm1_threshold), client.debug_info.cpm_threshold_value).check(),
       "must get expected cpm_threshold in debug-info");
 
     request.debug_time = moscow_today;
@@ -177,14 +156,10 @@ PublisherInventoryTest::base_scenario(AutoTest::AdClient& client,
       request.referer = keyword2 + ".com";
       client.process_request(request, ("request for " + cc2 + " creative").c_str());
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          cc2,
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(cc2, client.debug_info.ccid).check(),
         "must get expected ccid");
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          204,
-          client.req_status()).check(),
+        AutoTest::equal_checker(204, client.req_status()).check(),
         "Server must return 'no content' status");
       FAIL_CONTEXT(
         AutoTest::equal_checker(
@@ -198,8 +173,7 @@ PublisherInventoryTest::base_scenario(AutoTest::AdClient& client,
       request.referer.clear();
       client.process_request(request, "Request for null creative");
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.debug_info.selected_creatives.empty()),
+        AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
         "must get empty ccid");
     }
   }
@@ -223,13 +197,9 @@ PublisherInventoryTest::ta_campaigns_scenario()
 
   double cpm = cpm_threshold * pub_rate_ / 100;
 
-  add_publisher_inventory_stat(
-    description.c_str(), tag_id,
-    cpm, ITERS, 0, ITERS * cpm / 1000);
+  add_publisher_inventory_stat(description.c_str(), tag_id, cpm, ITERS, 0, ITERS * cpm / 1000);
 
-  add_publisher_inventory_stat(
-    description.c_str(), tag_id,
-    0, 0, ITERS, 0);
+  add_publisher_inventory_stat(description.c_str(), tag_id, 0, 0, ITERS, 0);
 
   AdClient client(AdClient::create_user(this));
 
@@ -243,11 +213,9 @@ PublisherInventoryTest::ta_campaigns_scenario()
     fetch_string("TACampaignsCase/TACampaign3/CCID")
   };
 
-  client.process_request(request,
-      "request for making keyword context");
+  client.process_request(request, "request for making keyword context");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must get empty cc ids");
 
   request.tid = tag_id;
@@ -255,22 +223,15 @@ PublisherInventoryTest::ta_campaigns_scenario()
 
   for (size_t i = 0 ; i < ITERS; ++i)
   {
-    client.process_request(request,
-      "request for text creatives");
+    client.process_request(request, "request for text creatives");
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "must get expected cc ids in expected order!");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        204,
-        client.req_status()).check(),
+      AutoTest::equal_checker(204, client.req_status()).check(),
       "Server must return 'no content' status");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        Money(cpm_threshold),
-        client.debug_info.cpm_threshold_value).check(),
+      AutoTest::equal_checker(Money(cpm_threshold), client.debug_info.cpm_threshold_value).check(),
       "must get expected cpm_threshold in debug-info");
   }
 }
@@ -302,27 +263,20 @@ PublisherInventoryTest::pub_adv_commission_scenario(unsigned int tag, double pub
 
   for (size_t i = 0; i < ITERS; ++i)
   {
-    client.process_request(request,
-      ("request for " + cc + " creative").c_str());
+    client.process_request(request, ("request for " + cc + " creative").c_str());
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc,
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
       "must get expected ccid");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        204,
-        client.req_status()).check(),
+      AutoTest::equal_checker(204, client.req_status()).check(),
       "Server must return 'no content' status");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        Money(cpm_threshold),
-        client.debug_info.cpm_threshold_value).check(),
+      AutoTest::equal_checker(Money(cpm_threshold), client.debug_info.cpm_threshold_value).check(),
       "must get expected cpm_threshold in debug-info");
   }
 }
 
-// Related to ADSC-5384 	
+// Related to ADSC-5384
 // For more details see
 // https://confluence.ocslab.com/display/TDOCDRAFT/REQ-131+Inventory+Estimation+for+Publishers
 // (Ad Server Request section)
@@ -338,8 +292,7 @@ PublisherInventoryTest::virtual_scenario()
   unsigned long tag1 = fetch_int("VirtualCampaignCase/VirtPublisher1/TAG_ID");
   unsigned long tag2 = fetch_int("VirtualCampaignCase/VirtPublisher2/TAG_ID");
 
-  double cpm_threshold =
-    100 * fetch_float("VirtualCampaignCase/VirtualCampaign/CPM");
+  double cpm_threshold = 100 * fetch_float("VirtualCampaignCase/VirtualCampaign/CPM");
 
   double cpm = cpm_threshold / 100;
 
@@ -358,66 +311,46 @@ PublisherInventoryTest::virtual_scenario()
 //  request.debug_time = debug_time_;
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must get expected ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      Money(cpm_threshold),
-      client.debug_info.cpm_threshold_value).check(),
+    AutoTest::equal_checker(Money(cpm_threshold), client.debug_info.cpm_threshold_value).check(),
     "must get expected cpm_threshold in debug-info");
 
   request.tid = tag1;
   request.tag_inv = 1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must get expected ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      Money(cpm_threshold),
-      client.debug_info.cpm_threshold_value).check(),
+    AutoTest::equal_checker(Money(cpm_threshold), client.debug_info.cpm_threshold_value).check(),
     "must get expected cpm_threshold in debug-info");
 
   client.repeat_request();
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "mustn't get expected ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      0,
-      client.debug_info.cpm_threshold_value).check(),
+    AutoTest::equal_checker(0, client.debug_info.cpm_threshold_value).check(),
     "must get zero cpm_threshold in debug-info");
 
   request.tid = tag2;
   request.tag_inv.clear();
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
     "must get expected ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cpm_threshold,
-      client.debug_info.cpm_threshold_value).check(),
+    AutoTest::equal_checker(cpm_threshold, client.debug_info.cpm_threshold_value).check(),
     "must get expected cpm_threshold in debug-info");
 
   client.repeat_request();
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "mustn't get expected ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      0,
-      client.debug_info.cpm_threshold_value).check(),
+    AutoTest::equal_checker(0, client.debug_info.cpm_threshold_value).check(),
     "must get zero cpm_threshold in debug-info");
 }
 
@@ -458,29 +391,22 @@ PublisherInventoryTest::billing_stats_logging()
   request.tag_inv = 0;
 
   request.tid = norate_tag;
-  client.process_request(request,
-    "Test 4.1 Inventory tag with undefined site rate (tag.inv = 0)");
+  client.process_request(request, "Test 4.1 Inventory tag with undefined site rate (tag.inv = 0)");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must get empty ccid");
 
   request.tid = rate_tag;
-  client.process_request(request,
-    "Test 4.2 Inventory tag with defined site rate (tag.inv = 0)");
+  client.process_request(request, "Test 4.2 Inventory tag with defined site rate (tag.inv = 0)");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
     "must get empty ccid");
 
   request.tid = adv_tag;
   request.tag_inv = 1;
-  client.process_request(request,
-    "Test 4.3. Adserving Tag and tag.inv = 1");
+  client.process_request(request, "Test 4.3. Adserving Tag and tag.inv = 1");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      204,
-      client.req_status()).check(),
+    AutoTest::equal_checker(204, client.req_status()).check(),
     "Server must return 'no content' status");
 }
 
@@ -529,29 +455,22 @@ void PublisherInventoryTest::non_billing_stats_logging()
     client.process_request(request, "tag_inv = 0 from inventory tag");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        strof(channel1),
-        client.debug_info.history_channels).check(),
+      AutoTest::entry_checker(strof(channel1), client.debug_info.history_channels).check(),
       "server must return expected history channels");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
       "mustn't get any creatives");
 
     request.tag_inv = 1;
     client.process_request(request, "tag_inv = 1 from inventory tag");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        strof(channel1),
-        client.debug_info.history_channels).check(),
+      AutoTest::entry_checker(strof(channel1), client.debug_info.history_channels).check(),
       "server must return expected history channels");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc1,
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc1, client.debug_info.ccid).check(),
       "must get expected ccid");
   }
   // Marker request to check 'no changes' stats for previous request
@@ -563,9 +482,7 @@ void PublisherInventoryTest::non_billing_stats_logging()
       tid(marker_tag), "marker request");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        strof(marker_ch),
-        client.debug_info.history_channels).check(),
+      AutoTest::entry_checker(strof(marker_ch), client.debug_info.history_channels).check(),
       "server must return expected history channels");
   }
 
@@ -578,14 +495,11 @@ void PublisherInventoryTest::non_billing_stats_logging()
     client.process_request(request, "tag_inv = 1 from advertising tag");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        strof(channel2),
-        client.debug_info.history_channels).check(),
+      AutoTest::entry_checker(strof(channel2), client.debug_info.history_channels).check(),
       "server must return expected history channels");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
       "mustn't get any creatives");
 
     request.tag_inv = 0;
@@ -593,15 +507,11 @@ void PublisherInventoryTest::non_billing_stats_logging()
     client.process_request(request, "tag_inv = 0 from advertising tag");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        strof(channel2),
-        client.debug_info.history_channels).check(),
+      AutoTest::entry_checker(strof(channel2), client.debug_info.history_channels).check(),
       "server must return expected history channels");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc2,
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc2, client.debug_info.ccid).check(),
       "must get expected ccid");
   }
 }
@@ -696,18 +606,12 @@ PublisherInventoryTest::run_test()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pgconn_,
-        hourly_diffs_,
-        hourly_stats_)).check(),
+      AutoTest::stats_diff_checker(pgconn_, hourly_diffs_, hourly_stats_)).check(),
     "must get expected changes in RequestStatsHourly table");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pgconn_,
-        site_user_diffs_,
-        site_user_stats_)).check(),
+      AutoTest::stats_diff_checker(pgconn_, site_user_diffs_, site_user_stats_)).check(),
     "must get expected changes in SiteUserStats table");
 
   FAIL_CONTEXT(

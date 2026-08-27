@@ -16,8 +16,7 @@ public:
   void main(int& argc, char** argv) noexcept;
 
 private:
-  using ConfigType =
-    AdServer::ChannelSvcs::ChannelControllerImpl::ChannelControllerConfig;
+  using ConfigType = AdServer::ChannelSvcs::ChannelControllerImpl::ChannelControllerConfig;
   using ConfigPtr = std::unique_ptr<ConfigType>;
 
   void stop_() noexcept;

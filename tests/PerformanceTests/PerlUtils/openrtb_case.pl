@@ -66,7 +66,7 @@ use Cwd;
 use Getopt::Long qw(:config gnu_getopt bundling);
 use Pod::Usage;
 use File::Spec;
-use File::Basename; 
+use File::Basename;
 use File::Path;
 
 use DB::Database;
@@ -135,7 +135,7 @@ my $namespace_name = "BT";
 
 my $database = new PerformanceDB::Database($options{host},
                                            $options{dbname},
-                                           $options{user}, 
+                                           $options{user},
                                            $options{password},
                                            $namespace_name,
                                            $options{prefix});
@@ -195,14 +195,14 @@ my $global_settings =
                                          XML::Encoder::PARAM_LIST({name=>"user_agent"}, "Set", "item", @useragents),
                                          XML::Encoder::NEW_LINE]);
 
-my $benchmark1 = 
+my $benchmark1 =
     XML::Encoder::GROUP_PARAM(
       { frontend => "userbind",
         initial => "true",
         size => $options{users_count},
         description => "Bind users",
         type => "openrtb" },
-      "Benchmark", 
+      "Benchmark",
       [ XML::Encoder::GROUP_PARAM(
         { url => "/userbind",
           method=>"get"},
@@ -226,14 +226,14 @@ my %bid_benchmark_params = (
 
 if ($options{rtb_server})
 {
-  $bid_benchmark_params{server_url} = 
+  $bid_benchmark_params{server_url} =
     Utils::make_server_url($options{rtb_server});
 }
 
-my $benchmark2 = 
+my $benchmark2 =
     XML::Encoder::GROUP_PARAM(
       \%bid_benchmark_params,
-      "Benchmark", 
+      "Benchmark",
       [ XML::Encoder::GROUP_PARAM(
          { url => "/bid",
            method=>"post" },
@@ -245,7 +245,7 @@ open(my $XML, ">$xml_config_path") || die "Cann't open file $xml_config_path for
 
 
 my $benchmarks =  XML::Encoder::GROUP_PARAM({},
-  "Benchmarks", 
+  "Benchmarks",
   [ $benchmark1, $benchmark2 ]);
 
 # Make XML document with header

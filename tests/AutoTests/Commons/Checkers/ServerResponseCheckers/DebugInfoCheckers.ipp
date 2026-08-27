@@ -37,19 +37,17 @@ namespace AutoTest
   {}
 
   template<typename ValueType>
-  bool 
+  bool
   DebugInfoChecker<ValueType>::check(bool throw_error)
     /*throw(CheckFailed, eh::Exception)*/
   {
     client_.process_request(request_);
 
-    if (throw_error &&
-      !equal(expected_value_, client_.debug_info.*member_))
+    if (throw_error && !equal(expected_value_, client_.debug_info.*member_))
     {
       Stream::Error ostr;
       ostr << member_name_ << " "
-           << expected_value_ << " != " << client_.debug_info.*member_
-           << " (expected != got)";
+           << expected_value_ << " != " << client_.debug_info.*member_ << " (expected != got)";
       throw AutoTest::CheckFailed(ostr);
     }
     return true;
@@ -67,8 +65,7 @@ namespace AutoTest
     const AdClient& client,
     const NSLookupRequest& request,
     const ExpectedValueType& expected_value)
-    : Base(client, request,  expected_value,
-           &DebugInfo::DebugInfo::ccid, "selected creative")
+    : Base(client, request,  expected_value, &DebugInfo::DebugInfo::ccid, "selected creative")
   {}
 
   // SpecialEffectsChecker
@@ -79,8 +76,6 @@ namespace AutoTest
     const ExpectedValueType& expected_value,
     unsigned long special_effects)
     : SelectedCreativeChecker(client, request, expected_value),
-      special_effects_(
-        special_effects?
-          special_effects: static_cast<unsigned long>(SE_DEFAULT))
+      special_effects_(special_effects? special_effects: static_cast<unsigned long>(SE_DEFAULT))
   {}
 }

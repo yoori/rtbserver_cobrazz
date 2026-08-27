@@ -72,10 +72,7 @@ void add_campaign_(
   c_templ.status = 'A';
 
   new_config.creative_templates.insert(
-    CreativeTemplateKey(
-      "test-format",
-      "test-size",
-      "test-appformat"),
+    CreativeTemplateKey("test-format", "test-size", "test-appformat"),
     c_templ);
 
   Creative_var creative(
@@ -144,18 +141,14 @@ void add_tag_(
   Tag::TagPricing tag_pricing;
   tag_pricing.site_rate_id = 0;
   tag_pricing.cpm = RevenueDecimal(false, cpm, 0);
-  p_tag->tag_pricings.insert(std::make_pair(
-    Tag::TagPricingKey("", CT_ALL, CR_ALL), tag_pricing));
+  p_tag->tag_pricings.insert(std::make_pair(Tag::TagPricingKey("", CT_ALL, CR_ALL), tag_pricing));
   p_tag->country_tag_pricings.insert(std::make_pair("", tag_pricing));
 
   new_config.tags[p_tag->tag_id] = p_tag;
 }
 
 Account_var
-add_account_(
-  CampaignConfig& new_config,
-  unsigned long account_id,
-  Currency* currency)
+add_account_(CampaignConfig& new_config, unsigned long account_id, Currency* currency)
 {
   Account_var acc = new AccountDef();
   acc->account_id = account_id;
@@ -230,9 +223,8 @@ namespace Test1
     UserStatus user_status,
     bool none_user_status)
   {
-    TagMap::const_iterator tag_it =
-      campaign_config->tags.find(tag_id);
-    if(tag_it == campaign_config->tags.end())
+    TagMap::const_iterator tag_it = campaign_config->tags.find(tag_id);
+    if (tag_it == campaign_config->tags.end())
     {
       return false;
     }
@@ -249,18 +241,11 @@ namespace Test1
     CampaignIndex::CampaignCellPtrArray text_cmps;
     CampaignIndex::CampaignCellPtrArray kw_cmps;
 
-    campaign_index->get_campaigns(
-      key,
-      wg_ch_cmps,
-      ch_cmps,
-      text_cmps,
-      kw_cmps,
-      0,
-      0);
+    campaign_index->get_campaigns(key, wg_ch_cmps, ch_cmps, text_cmps, kw_cmps, 0, 0);
 
     int res = 0;
 
-    if(ch_cmps.size() != expected_size)
+    if (ch_cmps.size() != expected_size)
     {
       std::cerr << TEST_NAME << ": " << check_name <<
         ": unexpected select size = " << ch_cmps.size() << " instead " <<
@@ -281,13 +266,10 @@ namespace Test1
 
     fill(*campaign_config);
 
-    Logging::Logger_var logger(
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
     AdServer::CampaignSvcs::CampaignIndexPtr campaign_index =
-      std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(
-        campaign_config,
-        logger);
+      std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(campaign_config, logger);
 
     campaign_index->index_campaigns();
 //  campaign_index->trace_tree(std::cout);
@@ -360,7 +342,7 @@ namespace Test1
     std::cout << "<<<<<<<<<<<" << std::endl;
     */
 
-    if(ret == 0)
+    if (ret == 0)
     {
       std::cout << TEST_NAME << ": success." << std::endl;
     }
@@ -390,14 +372,14 @@ void fill_test_campaign_config(
   Account_var p_acc = add_account_(new_config, 1, p_currency);
 
   {
-    for(unsigned long i = 1; i <= colocation_count; ++i)
+    for (unsigned long i = 1; i <= colocation_count; ++i)
     {
       Colocation_var colo = create_simple_colocation(i, p_acc);
       new_config.colocations.insert(std::make_pair(i, colo));
     }
   }
 
-  for(unsigned long i = 1; i <= campaign_count; ++i)
+  for (unsigned long i = 1; i <= campaign_count; ++i)
   {
     Campaign_var campaign = new Campaign();
 
@@ -441,10 +423,7 @@ void fill_test_campaign_config(
     c_templ.status = 'A';
 
     new_config.creative_templates.insert(
-      CreativeTemplateKey(
-        "test-format",
-        "test-size",
-        "test-appformat"),
+      CreativeTemplateKey("test-format", "test-size", "test-appformat"),
       c_templ);
 
     Creative_var creative(
@@ -478,7 +457,7 @@ void fill_test_campaign_config(
     new_config.campaigns.insert(std::make_pair(i, campaign));
   }
 
-  for(unsigned long i = 1; i <= tag_count; ++i)
+  for (unsigned long i = 1; i <= tag_count; ++i)
   {
     Site_var p_site = new Site();
 
@@ -508,8 +487,7 @@ void fill_test_campaign_config(
     Tag::TagPricing tag_pricing;
     tag_pricing.site_rate_id = 0;
     tag_pricing.cpm = RevenueDecimal::ZERO;
-    p_tag->tag_pricings.insert(std::make_pair(
-      Tag::TagPricingKey("", CT_ALL, CR_ALL), tag_pricing));
+    p_tag->tag_pricings.insert(std::make_pair(Tag::TagPricingKey("", CT_ALL, CR_ALL), tag_pricing));
     p_tag->country_tag_pricings.insert(std::make_pair("", tag_pricing));
 
     new_config.tags[p_tag->tag_id] = p_tag;
@@ -566,13 +544,10 @@ using namespace AdServer::CampaignSvcs;
 
 void index_(const char* name, CampaignConfigPtr campaign_config)
 {
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
   CampaignIndexPtr config_index =
-    std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(
-      campaign_config,
-      logger);
+    std::make_shared<AdServer::CampaignSvcs::CampaignIndex>(campaign_config, logger);
 
 #ifdef _MEMUSAGE_TRACE_
   std::cerr << name << " : start heap state: " << std::endl;

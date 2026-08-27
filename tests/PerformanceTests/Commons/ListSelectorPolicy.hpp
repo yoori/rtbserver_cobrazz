@@ -184,8 +184,7 @@ public:
    * @param entity_name_ parameter name.
    * @param empty_prc request with absent parameter percentage.
    */
-  SelectorPolicy(const String::SubString& entity_name,
-                 unsigned long empty_prc);
+  SelectorPolicy(const String::SubString& entity_name, unsigned long empty_prc);
 
   /**
    * @brief Get parameter value interface.
@@ -193,8 +192,7 @@ public:
    * @param value [out] parameter value.
    * @param flags [in] parameter flags.
    */
-  void get(std::string& value,
-           unsigned short flags = 0);
+  void get(std::string& value, unsigned short flags = 0);
 
 
   /**

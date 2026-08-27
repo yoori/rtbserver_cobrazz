@@ -15,8 +15,7 @@ namespace AutoTest
     referer(this, "Referer", 0, false)
   { }
 
-  ConversationRequest::ConversationRequest(
-    const ConversationRequest& other) :
+  ConversationRequest::ConversationRequest(const ConversationRequest& other) :
     BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     convid(this, other.convid),
     value(this, other.value),

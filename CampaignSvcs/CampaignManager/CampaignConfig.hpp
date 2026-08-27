@@ -55,9 +55,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     AppFormatDef() noexcept
     {}
 
-    AppFormatDef(
-      const char* mime_format_val,
-      const Timestamp& timestamp_val) noexcept
+    AppFormatDef(const char* mime_format_val, const Timestamp& timestamp_val) noexcept
       : mime_format(mime_format_val),
         timestamp(timestamp_val)
     {}
@@ -147,14 +145,11 @@ namespace AdServer::CampaignSvcs::AdInstances
       return RevenueDecimal::mul(value, rate, Generics::DMR_FLOOR);
     }
 
-    RevenueDecimal convert(
-      const Currency* from_currency,
-      const RevenueDecimal& value) const
+    RevenueDecimal convert(const Currency* from_currency, const RevenueDecimal& value) const
     {
       if (rate != from_currency->rate)
       {
-        return from_system_currency(
-          from_currency->to_system_currency(value));
+        return from_system_currency(from_currency->to_system_currency(value));
       }
 
       return value;
@@ -236,8 +231,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
     bool use_self_budget() const noexcept
     {
-      return !agency_account.in() ||
-        (at_flags & AccountTypeFlags::USE_SELF_BUDGET);
+      return !agency_account.in() || (at_flags & AccountTypeFlags::USE_SELF_BUDGET);
     }
 
     bool agency_profit_by_pub_amount() const noexcept
@@ -249,15 +243,13 @@ namespace AdServer::CampaignSvcs::AdInstances
     {
       return status == 'A' && eval_status == 'A' &&
         (!agency_account.in() ||
-         (agency_account->status == 'A' &&
-         agency_account->eval_status == 'A'));
+         (agency_account->status == 'A' && agency_account->eval_status == 'A'));
     }
 
     RevenueDecimal
     get_self_service_commission() const noexcept
     {
-      const AccountDef* commision_account =
-        agency_account ? agency_account.in() : this;
+      const AccountDef* commision_account = agency_account ? agency_account.in() : this;
 
       return commision_account->self_service_commission;
     }
@@ -270,9 +262,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
     // adapt bid cost
     RevenueDecimal
-    adapt_cost(
-      const RevenueDecimal& cost,
-      const RevenueDecimal& ccg_commision) const noexcept
+    adapt_cost(const RevenueDecimal& cost, const RevenueDecimal& ccg_commision) const noexcept
     {
       RevenueDecimal res_cost = cost;
 
@@ -309,10 +299,7 @@ namespace AdServer::CampaignSvcs::AdInstances
       }
 
       // apply ccg level commission
-      res_cost = RevenueDecimal::mul(
-        cost,
-        REVENUE_ONE - ccg_commision,
-        Generics::DMR_FLOOR);
+      res_cost = RevenueDecimal::mul(cost, REVENUE_ONE - ccg_commision, Generics::DMR_FLOOR);
 
       RevenueDecimal adv_commission = commision; // get from advertiser
 
@@ -320,16 +307,11 @@ namespace AdServer::CampaignSvcs::AdInstances
       if (!commision_account->agency_profit_by_pub_amount())
       {
         // schema #1 (fix price)
-        res_cost = RevenueDecimal::mul(
-          res_cost,
-          REVENUE_ONE - adv_commission,
-          Generics::DMR_FLOOR);
+        res_cost = RevenueDecimal::mul(res_cost, REVENUE_ONE - adv_commission, Generics::DMR_FLOOR);
       }
       else
       {
-        res_cost = RevenueDecimal::div(
-          res_cost,
-          REVENUE_ONE + adv_commission);
+        res_cost = RevenueDecimal::div(res_cost, REVENUE_ONE + adv_commission);
       }
 
       res_cost = RevenueDecimal::div(
@@ -351,29 +333,19 @@ namespace AdServer::CampaignSvcs::AdInstances
       {
         assert(media_handling_fee != REVENUE_ONE);
 
-        res_cost = RevenueDecimal::div(
-          res_cost,
-          REVENUE_ONE - media_handling_fee);
+        res_cost = RevenueDecimal::div(res_cost, REVENUE_ONE - media_handling_fee);
       }
 
-      const AccountDef* commision_account =
-        agency_account ? agency_account.in() : this;
+      const AccountDef* commision_account = agency_account ? agency_account.in() : this;
 
-      if (!commision_account->cost_is_gross() &&
-        commision_account->auction_rate == AR_GROSS)
+      if (!commision_account->cost_is_gross() && commision_account->auction_rate == AR_GROSS)
       {
-        return RevenueDecimal::mul(
-          res_cost,
-          REVENUE_ONE - commision,
-          Generics::DMR_FLOOR);
+        return RevenueDecimal::mul(res_cost, REVENUE_ONE - commision, Generics::DMR_FLOOR);
       }
 
-      if (commision_account->cost_is_gross() &&
-        commision_account->auction_rate == AR_NET)
+      if (commision_account->cost_is_gross() && commision_account->auction_rate == AR_NET)
       {
-        return RevenueDecimal::div(
-          res_cost,
-          REVENUE_ONE - commision);
+        return RevenueDecimal::div(res_cost, REVENUE_ONE - commision);
       }
 
       return res_cost;
@@ -548,8 +520,7 @@ namespace AdServer::CampaignSvcs::AdInstances
         return country_code < right.country_code ||
           (country_code == right.country_code && (
             ccg_type < right.ccg_type ||
-            (ccg_type == right.ccg_type &&
-              ccg_rate_type < right.ccg_rate_type)));
+            (ccg_type == right.ccg_type && ccg_rate_type < right.ccg_rate_type)));
       }
 
       const std::string country_code;
@@ -589,12 +560,10 @@ namespace AdServer::CampaignSvcs::AdInstances
 
     // select max cpm linked to country
     const TagPricing*
-    select_country_tag_pricing(
-      const char* country_code) const noexcept;
+    select_country_tag_pricing(const char* country_code) const noexcept;
 
     const TagPricing*
-    select_no_impression_tag_pricing(
-      const char* country_code) const noexcept;
+    select_no_impression_tag_pricing(const char* country_code) const noexcept;
 
     bool is_test() const noexcept
     {
@@ -899,8 +868,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     bool is_active() const noexcept
     {
       return (status == 'A' || status == 'V') &&
-        eval_status == 'A' &&
-        account->is_active() && advertiser->is_active();
+        eval_status == 'A' && account->is_active() && advertiser->is_active();
     }
 
     bool
@@ -1120,8 +1088,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     bool
     operator==(const PubPixelAccountKey& right) const noexcept
     {
-      return country == right.country &&
-        user_status == right.user_status;
+      return country == right.country && user_status == right.user_status;
     }
 
     const std::string country;
@@ -1170,10 +1137,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   {
     WebOperationKey() noexcept{};
 
-    WebOperationKey(
-      const char* app_val,
-      const char* source_val,
-      const char* operation_val) noexcept
+    WebOperationKey(const char* app_val, const char* source_val, const char* operation_val) noexcept
       : app(app_val),
         source(source_val),
         operation(operation_val)
@@ -1184,9 +1148,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     bool
     operator==(const WebOperationKey& right) const noexcept
     {
-      return app == right.app &&
-        source == right.source &&
-        operation == right.operation;
+      return app == right.app && source == right.source && operation == right.operation;
     }
 
     unsigned long
@@ -1216,9 +1178,7 @@ namespace AdServer::CampaignSvcs::AdInstances
 
   struct IdTagKey
   {
-    IdTagKey(
-      unsigned long id_val,
-      const char* size_val)
+    IdTagKey(unsigned long id_val, const char* size_val)
       : id(id_val),
         size(size_val)
     {
@@ -1257,9 +1217,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   public:
     struct PlatformChannelHolder
     {
-      PlatformChannelHolder(
-        unsigned long priority_val,
-        const String::SubString& norm_name_val)
+      PlatformChannelHolder(unsigned long priority_val, const String::SubString& norm_name_val)
         noexcept;
 
       unsigned long priority;
@@ -1479,8 +1437,7 @@ namespace AdServer::CampaignSvcs::AdInstances
     if (new_creative->status == 'A' || new_creative->status == 'W')
     {
       opt_order_sets.insert(new_creative->order_set_id);
-      for (Creative::SizeMap::const_iterator size_it =
-            new_creative->sizes.begin();
+      for (Creative::SizeMap::const_iterator size_it = new_creative->sizes.begin();
           size_it != new_creative->sizes.end(); ++size_it)
       {
         opt_available_sizes.insert(size_it->first);
@@ -1497,9 +1454,7 @@ namespace AdServer::CampaignSvcs::AdInstances
   {
     opt_creatives_by_size.clear();
 
-    for (CreativeList::const_iterator cr_it = creatives.begin();
-        cr_it != creatives.end();
-        ++cr_it)
+    for (CreativeList::const_iterator cr_it = creatives.begin(); cr_it != creatives.end(); ++cr_it)
     {
       const Creative* creative = *cr_it;
       if (creative->status != 'A')
@@ -1508,13 +1463,11 @@ namespace AdServer::CampaignSvcs::AdInstances
       }
 
       StringSet creative_appformats;
-      for (Creative::SizeMap::const_iterator size_it =
-            creative->sizes.begin();
+      for (Creative::SizeMap::const_iterator size_it = creative->sizes.begin();
           size_it != creative->sizes.end();
           ++size_it)
       {
-        for (StringSet::const_iterator app_format_it =
-              all_template_appformats.begin();
+        for (StringSet::const_iterator app_format_it = all_template_appformats.begin();
             app_format_it != all_template_appformats.end();
             ++app_format_it)
         {
@@ -1532,13 +1485,11 @@ namespace AdServer::CampaignSvcs::AdInstances
         }
       }
 
-      for (Creative::SizeMap::const_iterator size_it =
-            creative->sizes.begin();
+      for (Creative::SizeMap::const_iterator size_it = creative->sizes.begin();
           size_it != creative->sizes.end();
           ++size_it)
       {
-        for (StringSet::const_iterator app_format_it =
-              creative_appformats.begin();
+        for (StringSet::const_iterator app_format_it = creative_appformats.begin();
             app_format_it != creative_appformats.end();
             ++app_format_it)
         {

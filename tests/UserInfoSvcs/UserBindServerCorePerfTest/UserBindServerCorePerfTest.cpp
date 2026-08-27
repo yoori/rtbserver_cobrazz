@@ -72,7 +72,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -86,22 +86,22 @@ namespace
     options.bind_min_age = Generics::Time(*opt_min_age);
     options.generate_user_id = opt_generate_user_id.enabled();
 
-    if(options.cache_root.empty())
+    if (options.cache_root.empty())
     {
       throw std::runtime_error("--cache-root is required");
     }
 
-    if(options.chunk_count == 0)
+    if (options.chunk_count == 0)
     {
       throw std::runtime_error("--chunk-count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
@@ -113,7 +113,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -133,13 +133,11 @@ namespace
   }
 
   void
-  prepare_cache_root(
-    const std::filesystem::path& cache_root,
-    const std::size_t chunk_count)
+  prepare_cache_root(const std::filesystem::path& cache_root, const std::size_t chunk_count)
   {
     std::filesystem::create_directories(cache_root);
 
-    for(std::size_t i = 0; i < chunk_count; ++i)
+    for (std::size_t i = 0; i < chunk_count; ++i)
     {
       std::ostringstream name;
       name << "Chunk_" << i << '_' << chunk_count;
@@ -181,11 +179,11 @@ namespace
   {
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
 
-    while(std::chrono::steady_clock::now() < deadline)
+    while (std::chrono::steady_clock::now() < deadline)
     {
       const auto user_bind_processor = core->user_bind_container()->get_object();
       const auto bind_request_processor = core->bind_request_container()->get_object();
-      if(user_bind_processor.in() && bind_request_processor.in())
+      if (user_bind_processor.in() && bind_request_processor.in())
       {
         return;
       }
@@ -206,10 +204,7 @@ main(int argc, char** argv)
     const auto cache_root = std::filesystem::absolute(options.cache_root);
 
     prepare_cache_root(cache_root, options.chunk_count);
-    const auto config = make_config(
-      cache_root,
-      options.chunk_count,
-      options.bind_min_age);
+    const auto config = make_config(cache_root, options.chunk_count, options.bind_min_age);
 
     Logging::Logger_var logger(
       new Logging::OStream::Logger(Logging::OStream::Config(std::cerr, 3)));
@@ -231,16 +226,16 @@ main(int argc, char** argv)
     std::vector<std::thread> workers;
     workers.reserve(options.threads);
 
-    for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
       workers.emplace_back(
         [&, thread_index]()
         {
           const auto timestamp = Generics::Time::get_time_of_day();
-          while(true)
+          while (true)
           {
             const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
-            if(operation_index >= options.count)
+            if (operation_index >= options.count)
             {
               break;
             }
@@ -253,26 +248,24 @@ main(int argc, char** argv)
               request.create_timestamp = Generics::Time::ZERO;
               request.generate_user_id = options.generate_user_id;
 
-              const auto response = AdServer::Commons::sync_wait(
-                core->co_get_user_id(request));
-              if(response.created)
+              const auto response = AdServer::Commons::sync_wait(core->co_get_user_id(request));
+              if (response.created)
               {
                 created.fetch_add(1, std::memory_order_relaxed);
               }
 
-              if(response.user_found)
+              if (response.user_found)
               {
                 found.fetch_add(1, std::memory_order_relaxed);
               }
             }
             catch(const std::exception& ex)
             {
-              if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+              if (errors.fetch_add(1, std::memory_order_relaxed) < 10)
               {
                 std::cerr
                   << "worker #" << thread_index
-                  << " operation #" << operation_index
-                  << " failed: " << ex.what() << std::endl;
+                  << " operation #" << operation_index << " failed: " << ex.what() << std::endl;
               }
             }
           }
@@ -280,7 +273,7 @@ main(int argc, char** argv)
       );
     }
 
-    for(auto& worker : workers)
+    for (auto& worker : workers)
     {
       worker.join();
     }

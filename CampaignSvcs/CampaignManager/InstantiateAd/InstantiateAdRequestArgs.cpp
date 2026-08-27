@@ -28,8 +28,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     const char*
     instantiate_user_status(UserStatus user_status) noexcept
     {
-      if (user_status == US_OPTIN ||
-        user_status == US_TEMPORARY)
+      if (user_status == US_OPTIN || user_status == US_TEMPORARY)
       {
         return "1";
       }
@@ -57,8 +56,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
       try
       {
-        HTTP::BrowserAddress referer_url =
-          HTTP::BrowserAddress(std::string_view(referer));
+        HTTP::BrowserAddress referer_url = HTTP::BrowserAddress(std::string_view(referer));
         return referer_url.host().str();
       }
       catch(const eh::Exception&)
@@ -70,8 +68,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     std::optional<std::string>
     get_pub_pixels_optin(InstantiateAdContext& data)
     {
-      const AccountIdList& pubpixel_accounts =
-        data.consider_pub_pixel_accounts();
+      const AccountIdList& pubpixel_accounts = data.consider_pub_pixel_accounts();
       if (pubpixel_accounts.empty())
       {
         return std::optional<std::string>(std::string());
@@ -104,8 +101,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
       if (!request_params.user_id.is_null())
       {
-        user_ids.push_back(
-          std::string("/") + request_params.user_id.to_string());
+        user_ids.push_back(std::string("/") + request_params.user_id.to_string());
       }
 
       if (user_ids.empty())
@@ -157,8 +153,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider) {
         InstantiateAdContext& data = provider.context();
         return std::optional<std::string>(
-          data.pub_pixels_optout() ?
-            data.instantiate_info->pub_pixels_optout : std::string());
+          data.pub_pixels_optout() ? data.instantiate_info->pub_pixels_optout : std::string());
       });
 
     add_processor(
@@ -170,43 +165,37 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     add_processor(
       CreativeTokens::CRVSERVER,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().instantiate_info->ad_image_server);
+        return std::optional<std::string>(provider.context().instantiate_info->ad_image_server);
       });
 
     add_processor(
       CreativeTokens::ADIMAGE_SERVER,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().instantiate_info->ad_image_server);
+        return std::optional<std::string>(provider.context().instantiate_info->ad_image_server);
       });
 
     add_processor(
       CreativeTokens::AD_SERVER,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().instantiate_info->ad_server);
+        return std::optional<std::string>(provider.context().instantiate_info->ad_server);
       });
 
     add_processor(
       CreativeTokens::PP,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().request_params->pub_param);
+        return std::optional<std::string>(provider.context().request_params->pub_param);
       });
 
     add_processor(
       CreativeTokens::ORIGLINK,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().request_params->original_url);
+        return std::optional<std::string>(provider.context().request_params->original_url);
       });
 
     add_processor(
       CreativeTokens::COHORT,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().request_params->cohort);
+        return std::optional<std::string>(provider.context().request_params->cohort);
       });
 
     add_processor(
@@ -228,15 +217,13 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider) {
         const InstantiateAdContext& data = provider.context();
         return std::optional<std::string>(
-          data.signed_request_id_provider ?
-            data.signed_request_id_provider() : std::string());
+          data.signed_request_id_provider ? data.signed_request_id_provider() : std::string());
       });
 
     add_processor(
       CreativeTokens::RANDOM,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          to_string(provider.context().request_params->random));
+        return std::optional<std::string>(to_string(provider.context().request_params->random));
       });
 
     add_processor(
@@ -264,10 +251,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::nullopt;
         }
 
-        return std::to_string(Generics::CRC::quick(
-          0,
-          domain->data(),
-          domain->size()));
+        return std::to_string(Generics::CRC::quick(0, domain->data(), domain->size()));
       });
 
     add_processor(
@@ -275,9 +259,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider) {
         std::string result;
         const InstantiateAdContext& data = provider.context();
-        AdServer::LogProcessing::undisplayable_mime_encode(
-          result,
-          data.inst_params->ext_tag_id);
+        AdServer::LogProcessing::undisplayable_mime_encode(result, data.inst_params->ext_tag_id);
         return std::optional<std::string>(std::move(result));
       });
 
@@ -294,8 +276,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       CreativeTokens::EXTERNAL_USER_ID,
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
-        const auto& value =
-          provider.context().request_params->external_user_id;
+        const auto& value = provider.context().request_params->external_user_id;
         return value.empty() ? std::nullopt :
           std::optional<std::string>(value);
       });
@@ -310,8 +291,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::nullopt;
         }
 
-        return std::optional<std::string>(
-          request_params.track_user_id.to_string());
+        return std::optional<std::string>(request_params.track_user_id.to_string());
       });
 
     add_processor(
@@ -319,32 +299,28 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider) {
         return std::optional<std::string>(
           instantiate_user_status(
-            static_cast<UserStatus>(
-              provider.context().request_params->user_status)));
+            static_cast<UserStatus>(provider.context().request_params->user_status)));
       });
 
     add_processor(
       CreativeTokens::COLOCATION,
       [](const InstantiateAdRequestArgsProvider& provider) {
         const Colocation* colocation = provider.context().colocation;
-        return std::optional<std::string>(
-          to_string(colocation ? colocation->colo_id : 0));
+        return std::optional<std::string>(to_string(colocation ? colocation->colo_id : 0));
       });
 
     add_processor(
       CreativeTokens::TEST_REQUEST,
       [](const InstantiateAdRequestArgsProvider& provider) {
         return std::optional<std::string>(
-          to_string(
-            provider.context().ad_slot_context->test_request ? 1 : 0));
+          to_string(provider.context().ad_slot_context->test_request ? 1 : 0));
       });
 
     add_processor(
       CreativeTokens::EXT_TRACK_PARAMS,
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
-        const auto& value =
-          provider.context().request_params->ext_track_params;
+        const auto& value = provider.context().request_params->ext_track_params;
         return value.empty() ? std::nullopt :
           std::optional<std::string>(value);
       });
@@ -429,9 +405,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
         const Tag::Size* tag_size = provider.context().tag_size;
-        return tag_size ?
-          std::optional<std::string>(tag_size->size->protocol_name) :
-          std::nullopt;
+        return tag_size ? std::optional<std::string>(tag_size->size->protocol_name) : std::nullopt;
       });
 
     add_processor(
@@ -460,8 +434,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::optional<std::string>(std::string());
         }
 
-        const AccountIdList& consider_pub_pixel_accounts =
-          data.consider_pub_pixel_accounts();
+        const AccountIdList& consider_pub_pixel_accounts = data.consider_pub_pixel_accounts();
         std::string ext_data;
         data.creative_instantiator->fill_instantiate_url_(
           ext_data,
@@ -492,50 +465,42 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     add_processor(
       CreativeTokens::TRACKHTMLURL,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().request_result_params->track_html_url);
+        return std::optional<std::string>(provider.context().request_result_params->track_html_url);
       });
 
     add_processor(
       CreativeTokens::VIDEOW,
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
-        const unsigned long video_width =
-          provider.context().inst_params->video_width;
-        return video_width ?
-          std::optional<std::string>(to_string(video_width)) : std::nullopt;
+        const unsigned long video_width = provider.context().inst_params->video_width;
+        return video_width ? std::optional<std::string>(to_string(video_width)) : std::nullopt;
       });
 
     add_processor(
       CreativeTokens::VIDEOH,
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
-        const unsigned long video_height =
-          provider.context().inst_params->video_height;
-        return video_height ?
-          std::optional<std::string>(to_string(video_height)) : std::nullopt;
+        const unsigned long video_height = provider.context().inst_params->video_height;
+        return video_height ? std::optional<std::string>(to_string(video_height)) : std::nullopt;
       });
 
     add_processor(
       CreativeTokens::IP,
       [](const InstantiateAdRequestArgsProvider& provider) {
-        return std::optional<std::string>(
-          provider.context().request_params->peer_ip);
+        return std::optional<std::string>(provider.context().request_params->peer_ip);
       });
 
     add_processor(
       CreativeTokens::UA,
       [](const InstantiateAdRequestArgsProvider& provider)
         -> std::optional<std::string> {
-        const auto& user_agent =
-          provider.context().request_params->user_agent;
+        const auto& user_agent = provider.context().request_params->user_agent;
         if (user_agent.empty())
         {
           return std::nullopt;
         }
 
-        return std::optional<std::string>(
-          user_agent.substr(0, MAX_UA_TOKEN_SIZE));
+        return std::optional<std::string>(user_agent.substr(0, MAX_UA_TOKEN_SIZE));
       });
 
     add_processor(
@@ -545,13 +510,11 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         const auto& request_params = *data.request_params;
         if (!request_params.pub_impr_track_url.empty())
         {
-          return std::optional<std::string>(
-            request_params.pub_impr_track_url);
+          return std::optional<std::string>(request_params.pub_impr_track_url);
         }
         else if (request_params.log_as_test)
         {
-          return std::optional<std::string>(
-            data.instantiate_info->track_pixel_url);
+          return std::optional<std::string>(data.instantiate_info->track_pixel_url);
         }
 
         return std::optional<std::string>(std::string());

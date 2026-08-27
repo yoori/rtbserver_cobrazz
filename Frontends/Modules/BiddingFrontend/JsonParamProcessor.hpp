@@ -45,8 +45,7 @@ namespace AdServer::Bidding
 
     struct BannerFormat
     {
-      explicit BannerFormat(
-        Generics::MonoAllocatorArena* resource)
+      explicit BannerFormat(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           width(),
           height(),
@@ -74,8 +73,7 @@ namespace AdServer::Bidding
 
     struct Banner
     {
-      explicit Banner(
-        Generics::MonoAllocatorArena* resource)
+      explicit Banner(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           formats(resource),
           default_format(resource),
@@ -113,9 +111,7 @@ namespace AdServer::Bidding
         : banner(nullptr)
       {}
 
-      BannerFormatHolder(
-        const Banner* banner_val,
-        const BannerFormat* banner_format_val)
+      BannerFormatHolder(const Banner* banner_val, const BannerFormat* banner_format_val)
         : banner(banner_val),
           banner_format(banner_format_val)
       {}
@@ -131,8 +127,7 @@ namespace AdServer::Bidding
 
     struct Deal
     {
-      explicit Deal(
-        Generics::MonoAllocatorArena* resource) :
+      explicit Deal(Generics::MonoAllocatorArena* resource) :
         resource_(resource),
         id(),
         cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
@@ -156,8 +151,7 @@ namespace AdServer::Bidding
 
     struct Metric
     {
-      explicit Metric(
-        Generics::MonoAllocatorArena* resource)
+      explicit Metric(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           type(),
           value()
@@ -216,8 +210,7 @@ namespace AdServer::Bidding
 
       struct Data: Asset
       {
-        explicit Data(
-          Generics::MonoAllocatorArena* resource)
+        explicit Data(Generics::MonoAllocatorArena* resource)
           : Asset(resource),
             data_type(NDTE_TITLE),
             len(0)
@@ -240,8 +233,7 @@ namespace AdServer::Bidding
 
       struct Image : Asset
       {
-        explicit Image(
-          Generics::MonoAllocatorArena* resource) :
+        explicit Image(Generics::MonoAllocatorArena* resource) :
           Asset(resource),
           image_type(NITE_MAIN),
           height(0),
@@ -273,13 +265,9 @@ namespace AdServer::Bidding
 
       struct Video: Asset
       {
-        explicit Video(
-          Generics::MonoAllocatorArena* resource)
+        explicit Video(Generics::MonoAllocatorArena* resource)
           : Asset(resource),
-            protocols(
-              ULSetStateHolder::S_NOT_INITED,
-              std::less<unsigned long>(),
-              resource),
+            protocols(ULSetStateHolder::S_NOT_INITED, std::less<unsigned long>(), resource),
             mimes(resource)
         {}
 
@@ -291,8 +279,7 @@ namespace AdServer::Bidding
         virtual ~Video() noexcept = default;
       };
 
-      explicit Native(
-        Generics::MonoAllocatorArena* resource)
+      explicit Native(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           version("1.1"),
           data_assets(resource),
@@ -320,8 +307,7 @@ namespace AdServer::Bidding
     typedef ReferenceCounting::SmartPtr<Native> Native_var;
 
 
-    explicit JsonAdSlotProcessingContext(
-      Generics::MonoAllocatorArena* resource)
+    explicit JsonAdSlotProcessingContext(Generics::MonoAllocatorArena* resource)
       : resource_(resource),
         id(),
         min_cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
@@ -336,18 +322,9 @@ namespace AdServer::Bidding
         video(false),
         video_pos(),
         video_mimes(resource),
-        video_protocols(
-          ULSetStateHolder::S_NOT_INITED,
-          std::less<unsigned long>(),
-          resource),
-        video_playbackmethods(
-          ULSetStateHolder::S_NOT_INITED,
-          std::less<unsigned long>(),
-          resource),
-        video_api(
-          ULSetStateHolder::S_NOT_INITED,
-          std::less<unsigned long>(),
-          resource),
+        video_protocols(ULSetStateHolder::S_NOT_INITED, std::less<unsigned long>(), resource),
+        video_playbackmethods(ULSetStateHolder::S_NOT_INITED, std::less<unsigned long>(), resource),
+        video_api(ULSetStateHolder::S_NOT_INITED, std::less<unsigned long>(), resource),
         video_exclude_categories(resource),
         imp_ext_type()
     {}
@@ -410,8 +387,7 @@ namespace AdServer::Bidding
   {
     struct Segment
     {
-      explicit Segment(
-        Generics::MonoAllocatorArena* resource)
+      explicit Segment(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           id(),
           name(),
@@ -437,8 +413,7 @@ namespace AdServer::Bidding
 
     struct UserEidUid
     {
-      explicit UserEidUid(
-        Generics::MonoAllocatorArena* resource)
+      explicit UserEidUid(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           id(),
           stable_id()
@@ -462,8 +437,7 @@ namespace AdServer::Bidding
 
     struct UserEid
     {
-      explicit UserEid(
-        Generics::MonoAllocatorArena* resource)
+      explicit UserEid(Generics::MonoAllocatorArena* resource)
         : resource_(resource),
           source(),
           uids(resource)
@@ -485,8 +459,7 @@ namespace AdServer::Bidding
 
     typedef Generics::MonoList<UserEid> UserEidList;
 
-    explicit JsonProcessingContext(
-      Generics::MonoAllocatorArena& resource)
+    explicit JsonProcessingContext(Generics::MonoAllocatorArena& resource)
       : resource_(&resource),
         external_user_id(),
         user_id(),
@@ -578,8 +551,7 @@ namespace AdServer::Bidding
     std::string_view
     hold_string(std::string&& value)
     {
-      Generics::MonoString& held_value =
-        string_holders_.emplace_back(resource_);
+      Generics::MonoString& held_value = string_holders_.emplace_back(resource_);
       held_value.assign(value.data(), value.size());
       return std::string_view(held_value.data(), held_value.size());
     }
@@ -697,7 +669,7 @@ namespace AdServer::Bidding
     print(std::ostream& out, const ContType& sl, const char* sl_name) const
     {
       out << sl_name << "[";
-      for(typename ContType::const_iterator iter = sl.begin(); iter != sl.end(); ++iter)
+      for (typename ContType::const_iterator iter = sl.begin(); iter != sl.end(); ++iter)
       {
         out << *iter << ",";
       }
@@ -725,8 +697,7 @@ namespace AdServer::Bidding
         "content_series = " << content_series << std::endl <<
         "content_season = " << content_season << std::endl <<
         "publisher_name = " << publisher_name << std::endl <<
-        "allyessitetype = " << allyessitetype << std::endl <<
-        "user = " << user << std::endl;
+        "allyessitetype = " << allyessitetype << std::endl << "user = " << user << std::endl;
 
       print(out, content_producer_name, "content_producer_names");
       print(out, publisher_cat, "publisher_cat");
@@ -738,31 +709,26 @@ namespace AdServer::Bidding
       print(out, site_sectioncat, "site_sectioncat");
       print(out, site_cat, "site_cat");
 
-      for(Generics::MonoList<JsonAdSlotProcessingContext>::const_iterator slot_it =
+      for (Generics::MonoList<JsonAdSlotProcessingContext>::const_iterator slot_it =
             ad_slots.begin();
           slot_it != ad_slots.end(); ++slot_it)
       {
-        out << "{ id = " << slot_it->id <<
-          ": banners = [";
+        out << "{ id = " << slot_it->id << ": banners = [";
 
-        for(auto banner_it = slot_it->banners.begin();
+        for (auto banner_it = slot_it->banners.begin();
             banner_it != slot_it->banners.end(); ++banner_it)
         {
           out << "{ formats = [";
-          for(auto format_it = banner_it->formats.begin();
+          for (auto format_it = banner_it->formats.begin();
               format_it != banner_it->formats.end(); ++format_it)
           {
-            out << "{ width = " << format_it->width <<
-              ", height = " << format_it->height <<
-              " }";
+            out << "{ width = " << format_it->width << ", height = " << format_it->height << " }";
           }
-          out << "], pos = " << banner_it->pos <<
-            ", hpos = " << banner_it->ext_hpos <<
-            "}";
+          out << "], pos = " << banner_it->pos << ", hpos = " << banner_it->ext_hpos << "}";
         }
 
         out << "], min_cpm_price = " << slot_it->min_cpm_price;
-        if(slot_it->private_auction)
+        if (slot_it->private_auction)
         {
           out << "private_auction = " << *(slot_it->private_auction) << ",";
         }
@@ -771,8 +737,7 @@ namespace AdServer::Bidding
 
         out << " deals = [";
 
-        for(JsonAdSlotProcessingContext::DealList::const_iterator deal_it =
-              slot_it->deals.begin();
+        for (JsonAdSlotProcessingContext::DealList::const_iterator deal_it = slot_it->deals.begin();
             deal_it != slot_it->deals.end(); ++deal_it)
         {
           out << "{ id = " << deal_it->id <<
@@ -789,43 +754,37 @@ namespace AdServer::Bidding
   };
 
   inline std::string
-  decode_json_url_if_possible(
-    std::string_view url)
+  decode_json_url_if_possible(std::string_view url)
     noexcept
   {
     const String::AsciiStringManip::Caseless MIME_PREFIX("%3a%2f%2f");
-    const String::AsciiStringManip::Caseless JS_PREFIX(
-      "\\u00253a\\u00252f\\u00252f");
-    const size_t MIN_LEN =
-      HTTP::HTTP_BEGIN.str.size() + MIME_PREFIX.str.size();
-    if(url.size() > MIN_LEN)
+    const String::AsciiStringManip::Caseless JS_PREFIX("\\u00253a\\u00252f\\u00252f");
+    const size_t MIN_LEN = HTTP::HTTP_BEGIN.str.size() + MIME_PREFIX.str.size();
+    if (url.size() > MIN_LEN)
     {
       size_t offset = HTTP::HTTP_SCHEME.str.size();
       const String::SubString http_scheme(url.data(), offset);
-      if(http_scheme == HTTP::HTTP_SCHEME)
+      if (http_scheme == HTTP::HTTP_SCHEME)
       {
-        if(url[offset] == 's' || url[offset] == 'S')
+        if (url[offset] == 's' || url[offset] == 'S')
         {
           ++offset;
         }
 
-        if(url.size() > offset + MIME_PREFIX.str.size())
+        if (url.size() > offset + MIME_PREFIX.str.size())
         {
-          if(String::SubString(url.data() + offset, MIME_PREFIX.str.size()) ==
-            MIME_PREFIX)
+          if (String::SubString(url.data() + offset, MIME_PREFIX.str.size()) == MIME_PREFIX)
           {
             try
             {
               std::string res;
-              String::StringManip::mime_url_decode(
-                String::SubString(url.data(), url.size()),
-                res);
+              String::StringManip::mime_url_decode(String::SubString(url.data(), url.size()), res);
               return res;
             }
             catch(const eh::Exception&)
             {}
           }
-          else if(url.size() > offset + JS_PREFIX.str.size() &&
+          else if (url.size() > offset + JS_PREFIX.str.size() &&
             String::SubString(url.data() + offset, JS_PREFIX.str.size()) ==
             JS_PREFIX)
           {
@@ -848,9 +807,7 @@ namespace AdServer::Bidding
   }
 
   inline void
-  fill_json_url(
-    std::string_view url_value,
-    HTTP::HTTPAddress& url)
+  fill_json_url(std::string_view url_value, HTTP::HTTPAddress& url)
     noexcept
   {
     try

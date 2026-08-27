@@ -100,7 +100,7 @@ sub exists_chunks
   #   <root>/(<CHUNK_PREFIX>_\d_\d)
   foreach my $folder(@chunk_folders)
   {
-    if($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)$|)
+    if ($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)$|)
     {
       $chunks{$1} = new ChunkDescription(
         index => $1,
@@ -112,7 +112,7 @@ sub exists_chunks
     elsif($folder =~ m|^@{[TO_MERGE_CHUNK_PREFIX]}_(\d+)_(\d+)$| ||
       $folder =~ m|^@{[MERGED_CHUNK_PREFIX]}_(\d+)_(\d+)$|)
     {
-      if(!exists($unmerged_chunks{$1}))
+      if (!exists($unmerged_chunks{$1}))
       {
         $unmerged_chunks{$1} = new ChunkDescription(
           index => $1,
@@ -145,7 +145,7 @@ sub create
   my $dst_host = $chunk->host();
 
   # create required dirs
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: creating chunk #" . $chunk->index() . " at '$dst_host'");
@@ -154,16 +154,17 @@ sub create
   # convert old chunk if required
   my $res = $this->adapt_chunk_($chunk);
 
-  if(!defined($chunk->total_chunks()))
+  if (!defined($chunk->total_chunks()))
   {
     $chunk->total_chunks($this->{chunks_number_});
   }
-  if(!defined($chunk->path()))
+
+  if (!defined($chunk->path()))
   {
     $chunk->path($this->get_chunk_path_($chunk->index()));
   }
 
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->mkdir(
       $dst_host,
@@ -187,14 +188,14 @@ sub move
   my $src_host = $chunk->host();
   my $chunk_root = $chunk->path();
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: to move chunk #" .
       $chunk->index() . " from '$src_host' to '$dst_host': " . $chunk_root);
   }
 
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->move(
       $src_host,
@@ -206,7 +207,7 @@ sub move
 
   $chunk->host($dst_host);
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: chunk #" . $chunk->index() .
@@ -224,7 +225,7 @@ sub remove
 
   my $dst_host = $chunk->host();
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: to remove chunk #" .
@@ -232,7 +233,7 @@ sub remove
   }
 
   my $chunk_root = $chunk->path();
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->move(
       $dst_host,
@@ -243,12 +244,12 @@ sub remove
   }
 }
 
-# divides chunk due to new distribution 
+# divides chunk due to new distribution
 sub divide_chunk
 {
   my ($this, $chunk) = @_;
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Redistribution: dividing chunk #" . $chunk->index() .
@@ -256,7 +257,7 @@ sub divide_chunk
       $this->{chunks_number_} . " chunks");
   }
 
-  if(defined $this->{dry_run_})
+  if (defined $this->{dry_run_})
   {
     return;
   }
@@ -265,7 +266,7 @@ sub divide_chunk
     $chunk->index() . "_" . $this->{chunks_number_} . "/";
 
   # dividing chunk into temp directory
-  if(!defined($chunk->divided()))
+  if (!defined($chunk->divided()))
   {
     $this->adapt_chunk_($chunk);
 
@@ -281,20 +282,20 @@ sub divide_chunk
     {
       #print "divide_chunk: file '$file'\n";
 
-      if($file !~ m|^([^.]*)[.].*$|)
+      if ($file !~ m|^([^.]*)[.].*$|)
       {
         die "Can't parse file name for prefix : '$file'";
       }
 
       my $prefix = $1;
 
-      if(exists($processed_prefixes{$prefix}))
+      if (exists($processed_prefixes{$prefix}))
       {
         next;
       }
 
       my $opt_hash_type;
-      if($prefix eq 'UserSeen')
+      if ($prefix eq 'UserSeen')
       {
         $opt_hash_type = '--hash-type=value ';
       }
@@ -340,7 +341,7 @@ sub divide_chunk
 
   foreach my $dir(@new_chunks_dirs)
   {
-    if($dir !~ m|^\d*$|) # divided chunks have empty folder prefix
+    if ($dir !~ m|^\d*$|) # divided chunks have empty folder prefix
     {
       die "Unexpected directory name '$dir' after dividing";
     }
@@ -362,7 +363,7 @@ sub divide_chunk
         "/" . $dir . " to " . $chunk->host() . ":" . $new_chunk_dir;
   }
 
-  # remove 
+  # remove
   $this->{exec_impl_}->remove($chunk->host(), $divided_chunk_root, 1);
 }
 
@@ -371,13 +372,13 @@ sub merge_chunk
 {
   my ($this, $new_chunk_host, $chunk) = @_;
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Redistribution: merging chunk #" . $chunk->index() . " on the host $new_chunk_host");
   }
 
-  my $new_chunk_path = $this->get_chunk_path_($chunk->index()); 
+  my $new_chunk_path = $this->get_chunk_path_($chunk->index());
   my $chunk_desc = new ChunkDescription(
     index => $chunk->index(),
     total_chunks => $this->{chunks_number_},
@@ -386,9 +387,9 @@ sub merge_chunk
     version => '3.4');
 
   # chunk is merged but not renamed - just rename it
-  if($chunk->path() =~ m|^@{[MERGED_CHUNK_PREFIX]}_(\d+)_(\d+)$|)
+  if ($chunk->path() =~ m|^@{[MERGED_CHUNK_PREFIX]}_(\d+)_(\d+)$|)
   {
-    if(!defined $this->{dry_run_})
+    if (!defined $this->{dry_run_})
     {
       $this->{exec_impl_}->move(
         $new_chunk_host,
@@ -409,12 +410,12 @@ sub merge_chunk
       next;
     }
 
-    if($this->{verbose_} && defined $this->{logger_})
+    if ($this->{verbose_} && defined $this->{logger_})
     {
       $this->{logger_}->trace("Moving chunk data from host $host");
     }
 
-    if(defined $this->{dry_run_})
+    if (defined $this->{dry_run_})
     {
       next;
     }
@@ -427,7 +428,7 @@ sub merge_chunk
     my @chunk_dirs = $this->{exec_impl_}->list($host, $chunk->path());
     foreach my $dir(@chunk_dirs)
     {
-      if($dir !~ m|^\d*$|)
+      if ($dir !~ m|^\d*$|)
       {
         die "Unexpected directory name '#dir' in '" . $chunk->path();
       }
@@ -445,7 +446,7 @@ sub merge_chunk
     $this->{exec_impl_}->remove($host, $chunk->path(), 1);
   }
 
-  if(defined $this->{dry_run_})
+  if (defined $this->{dry_run_})
   {
     return $chunk_desc;
   }
@@ -480,7 +481,7 @@ sub merge_chunk
     my @chunks_files = $this->{exec_impl_}->list($new_chunk_host, $chunk_path);
     foreach my $file(@chunks_files)
     {
-      if($file =~ m|^(.*?)[.]rocksdb$|)
+      if ($file =~ m|^(.*?)[.]rocksdb$|)
       {
         push(@{$merge_paths{$1}}, $chunk_path . "/" . $file);
       }
@@ -488,18 +489,18 @@ sub merge_chunk
   }
 
   # merging chunk
-  while(my ($prefix, $chunk_dirs) = each(%merge_paths))
+  while (my ($prefix, $chunk_dirs) = each(%merge_paths))
   {
     my @merge_input_paths = @$chunk_dirs;
     my $merge_output_path = $merged_chunk_dir . "/" . $prefix . ".rocksdb";
     my $final_output_path = $merge_output_path;
 
-    if($this->{exec_impl_}->dir_exists($new_chunk_host, $final_output_path))
+    if ($this->{exec_impl_}->dir_exists($new_chunk_host, $final_output_path))
     {
       my @output_files = $this->{exec_impl_}->list(
         $new_chunk_host,
         $final_output_path);
-      if(@output_files)
+      if (@output_files)
       {
         push(@merge_input_paths, $final_output_path);
         $merge_output_path = $final_output_path . ".merge_tmp_" .
@@ -519,7 +520,7 @@ sub merge_chunk
       die "Modifier: Can't merge RocksDB chunk: " . $merged_chunk_dir .
         "/" . $prefix . ".rocksdb at host " . $new_chunk_host;
 
-    if($merge_output_path ne $final_output_path)
+    if ($merge_output_path ne $final_output_path)
     {
       $this->{exec_impl_}->remove($new_chunk_host, $final_output_path, 1);
       $this->{exec_impl_}->move(
@@ -551,19 +552,19 @@ sub chunks_to_merge
 {
   my ($this, $chunk_index, $old_chunk_count, $new_chunk_count) = @_;
 
-  if(!defined($chunk_index) ||
+  if (!defined($chunk_index) ||
      !defined($old_chunk_count) ||
      !defined($new_chunk_count))
   {
     die "Modifier: chunks_to_merge: undefined argument";
   }
 
-  if($old_chunk_count <= 0 || $new_chunk_count <= 0)
+  if ($old_chunk_count <= 0 || $new_chunk_count <= 0)
   {
     die "Modifier: chunks_to_merge: chunks count must be positive";
   }
 
-  if($chunk_index < 0 || $chunk_index >= $new_chunk_count)
+  if ($chunk_index < 0 || $chunk_index >= $new_chunk_count)
   {
     die "Modifier: chunks_to_merge: chunk index $chunk_index is out of " .
       "new chunks range [0, $new_chunk_count)";
@@ -573,11 +574,11 @@ sub chunks_to_merge
   my $chunk_remainder = $chunk_index % $common_divisor;
   my @chunks;
 
-  for(my $old_chunk_index = 0;
+  for (my $old_chunk_index = 0;
       $old_chunk_index < $old_chunk_count;
       ++$old_chunk_index)
   {
-    if($old_chunk_index % $common_divisor == $chunk_remainder)
+    if ($old_chunk_index % $common_divisor == $chunk_remainder)
     {
       push(@chunks, $old_chunk_index);
     }
@@ -590,21 +591,21 @@ sub pack_extra_chunk
 {
   my ($this, $source_chunk, $target_chunk_index, $target_host) = @_;
 
-  if(!defined($source_chunk) ||
+  if (!defined($source_chunk) ||
      !defined($target_chunk_index) ||
      !defined($target_host))
   {
     die "Modifier: pack_extra_chunk: undefined argument";
   }
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Redistribution: packing chunk #" . $source_chunk->index() .
       " into chunk #" . $target_chunk_index . " on the host " . $target_host);
   }
 
-  if(defined $this->{dry_run_})
+  if (defined $this->{dry_run_})
   {
     return TO_MERGE_CHUNK_PREFIX . "_" . $target_chunk_index .
       "_" . $this->{chunks_number_};
@@ -653,14 +654,14 @@ sub random_number_
   {
     $random_number .= int(rand(10));
   }
-  return $random_number; 
+  return $random_number;
 }
 
 sub gcd_
 {
   my ($left, $right) = @_;
 
-  while($right != 0)
+  while ($right != 0)
   {
     my $tmp = $left % $right;
     $left = $right;

@@ -114,7 +114,7 @@ namespace AdServer::ImprTrack
         return false;
       }
 
-      if(encrypted_value.size() < ALL_LENGTH)
+      if (encrypted_value.size() < ALL_LENGTH)
       {
         return false;
       }
@@ -133,16 +133,12 @@ namespace AdServer::ImprTrack
 
       unsigned char unciphered_iv[CIPHERTEXT_SIZE + IV_SIZE];
 
-      for(unsigned int i = 0; i < CIPHERTEXT_SIZE; ++i)
+      for (unsigned int i = 0; i < CIPHERTEXT_SIZE; ++i)
       {
-        unciphered_iv[i] = pad[i] ^ static_cast<unsigned char>(
-          encrypted_value[IV_SIZE + i]);
+        unciphered_iv[i] = pad[i] ^ static_cast<unsigned char>(encrypted_value[IV_SIZE + i]);
       }
 
-      ::memcpy(
-        unciphered_iv + CIPHERTEXT_SIZE,
-        encrypted_value.data(),
-        IV_SIZE);
+      ::memcpy(unciphered_iv + CIPHERTEXT_SIZE, encrypted_value.data(), IV_SIZE);
 
       unsigned char signature[HMAC_SHA1_HASH_SIZE];
       unsigned int signature_size;
@@ -156,7 +152,7 @@ namespace AdServer::ImprTrack
         &signature_size);
 
       // check signature
-      if(::memcmp(
+      if (::memcmp(
            signature,
            encrypted_value.data() + IV_SIZE + CIPHERTEXT_SIZE,
            INTEGRITY_SIZE) != 0)
@@ -166,10 +162,8 @@ namespace AdServer::ImprTrack
       }
 
       real_price =
-        (static_cast<uint64_t>(
-          htonl(*reinterpret_cast<const uint32_t*>(unciphered_iv))) << 32) |
-        static_cast<uint64_t>(
-          htonl(*(reinterpret_cast<const uint32_t*>(unciphered_iv) + 1)));
+        (static_cast<uint64_t>(htonl(*reinterpret_cast<const uint32_t*>(unciphered_iv))) << 32) |
+        static_cast<uint64_t>(htonl(*(reinterpret_cast<const uint32_t*>(unciphered_iv) + 1)));
 
       return true;
     }
@@ -205,7 +199,7 @@ namespace AdServer::ImprTrack
         return false;
       }
 
-      if(encrypted_value.size() < ALL_LENGTH)
+      if (encrypted_value.size() < ALL_LENGTH)
       {
         return false;
       }
@@ -214,8 +208,7 @@ namespace AdServer::ImprTrack
       const uint8_t* initialization_vector = reinterpret_cast<const uint8_t*>(
         encrypted_value.data());
       // len(ciphertext_bytes) = 8 bytes
-      const uint8_t* ciphertext_bytes =
-        initialization_vector + INITIALIZATION_VECTOR_SIZE;
+      const uint8_t* ciphertext_bytes = initialization_vector + INITIALIZATION_VECTOR_SIZE;
       // signature = initialization_vector + INITIALIZATION_VECTOR_SIZE(16) + CIPHER_TEXT_SIZE(8)
       // len(signature) = 4 bytes
       const uint8_t* signature = ciphertext_bytes + CIPHER_TEXT_SIZE;
@@ -237,7 +230,7 @@ namespace AdServer::ImprTrack
       }
 
       uint8_t plaintext_bytes[CIPHER_TEXT_SIZE];
-      for(int32_t i = 0; i < CIPHER_TEXT_SIZE; ++i)
+      for (int32_t i = 0; i < CIPHER_TEXT_SIZE; ++i)
       {
         plaintext_bytes[i] = price_pad[i] ^ ciphertext_bytes[i];
       }
@@ -253,11 +246,9 @@ namespace AdServer::ImprTrack
       uint8_t input_message[INPUT_MESSAGE_SIZE];
 
       ::memcpy(input_message, plaintext_bytes, CIPHER_TEXT_SIZE);
-      ::memcpy(input_message + CIPHER_TEXT_SIZE,
-        initialization_vector,
-        INITIALIZATION_VECTOR_SIZE);
+      ::memcpy(input_message + CIPHER_TEXT_SIZE, initialization_vector, INITIALIZATION_VECTOR_SIZE);
 
-      if(!HMAC(
+      if (!HMAC(
            EVP_sha1(),
            integrity_key,
            integrity_key_size,
@@ -280,20 +271,20 @@ namespace AdServer::ImprTrack
       process(RequestInfo& request_info, const String::SubString& value)
         const
       {
-        if(value == "i")
+        if (value == "i")
         {
           request_info.verify_type = AdServer::CampaignSvcs::RVT_IMPRESSION;
         }
-        else if(value == "b")
+        else if (value == "b")
         {
           request_info.verify_type = AdServer::CampaignSvcs::RVT_IMPRESSION;
           request_info.use_template_file = true;
         }
-        else if(value == "n")
+        else if (value == "n")
         {
           request_info.verify_type = AdServer::CampaignSvcs::RVT_NOTICE;
         }
-        else if(value == "c")
+        else if (value == "c")
         {
           request_info.verify_type = AdServer::CampaignSvcs::RVT_CUSTOM;
         }
@@ -304,9 +295,7 @@ namespace AdServer::ImprTrack
       public FrontendCommons::RequestParamProcessor<RequestInfo>
     {
     public:
-      OpenPriceProcessor(
-        Logging::Logger* logger,
-        uint64_t divider)
+      OpenPriceProcessor(Logging::Logger* logger, uint64_t divider)
         : logger_(ReferenceCounting::add_ref(logger)),
           divider_(divider)
       {}
@@ -340,8 +329,7 @@ namespace AdServer::ImprTrack
 
           ex_pub_imp_revenue.ceil(CampaignSvcs::RevenueDecimal::FRACTION_RANK);
 
-          request_info.pub_imp_revenue = CampaignSvcs::RevenueDecimal(
-            ex_pub_imp_revenue.str());
+          request_info.pub_imp_revenue = CampaignSvcs::RevenueDecimal(ex_pub_imp_revenue.str());
 
           request_info.pub_imp_revenue_type = CampaignSvcs::RT_ABSOLUTE;
           request_info.request_type = CampaignSvcs::AR_OPENRTB;
@@ -367,8 +355,7 @@ namespace AdServer::ImprTrack
       public FrontendCommons::RequestParamProcessor<RequestInfo>
     {
     public:
-      LiveRailPriceProcessor(
-        Logging::Logger* logger)
+      LiveRailPriceProcessor(Logging::Logger* logger)
         : logger_(ReferenceCounting::add_ref(logger))
       {}
 
@@ -378,8 +365,7 @@ namespace AdServer::ImprTrack
       {
         try
         {
-          request_info.pub_imp_revenue =
-            CampaignSvcs::RevenueDecimal(value);
+          request_info.pub_imp_revenue = CampaignSvcs::RevenueDecimal(value);
 
           static const CampaignSvcs::RevenueDecimal MAX_LRP(false, 1, 0);
 
@@ -419,15 +405,12 @@ namespace AdServer::ImprTrack
       public RequestInfoParamProcessor
     {
     public:
-      UuidParamProcessor(
-        Generics::Uuid RequestInfo::* field)
+      UuidParamProcessor(Generics::Uuid RequestInfo::* field)
         noexcept
         : field_(field)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
         try
         {
@@ -447,23 +430,20 @@ namespace AdServer::ImprTrack
   class CreativeListParamProcessor: public RequestInfoParamProcessor
   {
   public:
-    virtual void process(
-      RequestInfo& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfo& request_info, const String::SubString& value) const
     {
       String::StringManip::Splitter<ListParameterSepCategory> tokenizer(value);
       String::SubString cur;
-      while(tokenizer.get_token(cur))
+      while (tokenizer.get_token(cur))
       {
         RequestInfo::CreativeInfo creative_info;
         creative_info.ctr = CampaignSvcs::RevenueDecimal::ZERO;
 
         String::SubString::SizeType sep_pos = cur.find(':');
 
-        if(sep_pos != String::SubString::NPOS)
+        if (sep_pos != String::SubString::NPOS)
         {
-          if(!String::StringManip::str_to_int(
-               cur.substr(0, sep_pos), creative_info.ccid))
+          if (!String::StringManip::str_to_int(cur.substr(0, sep_pos), creative_info.ccid))
           {
             throw RequestInfoFiller::InvalidParamException("");
           }
@@ -478,7 +458,7 @@ namespace AdServer::ImprTrack
             throw RequestInfoFiller::InvalidParamException("");
           }
 
-          if(creative_info.ctr < AdServer::CampaignSvcs::RevenueDecimal::ZERO ||
+          if (creative_info.ctr < AdServer::CampaignSvcs::RevenueDecimal::ZERO ||
             creative_info.ctr > AdServer::CampaignSvcs::REVENUE_ONE)
           {
             creative_info.ctr = AdServer::CampaignSvcs::RevenueDecimal::ZERO;
@@ -486,7 +466,7 @@ namespace AdServer::ImprTrack
         }
         else
         {
-          if(!String::StringManip::str_to_int(cur, creative_info.ccid))
+          if (!String::StringManip::str_to_int(cur, creative_info.ccid))
           {
             throw RequestInfoFiller::InvalidParamException("");
           }
@@ -515,30 +495,26 @@ namespace AdServer::ImprTrack
       site_keys_(site_keys)
   {
     add_processor_(false, true, Param::GLOBAL_REQUEST_ID,
-      new FrontendCommons::UuidParamProcessor<RequestInfo>(
-        &RequestInfo::common_request_id));
+      new FrontendCommons::UuidParamProcessor<RequestInfo>(&RequestInfo::common_request_id));
 
     RequestInfoParamProcessor_var request_id_processor =
       new FrontendCommons::ContainerParamProcessor<
         RequestInfo,
         RequestIdList,
         ListParameterSepCategory,
-        FrontendCommons::RequestIdConverter>(
-          &RequestInfo::request_ids);
+        FrontendCommons::RequestIdConverter>(&RequestInfo::request_ids);
 
     add_processor_(false, true, Param::REQUEST_ID,
       ReferenceCounting::add_ref(request_id_processor));
     add_processor_(false, true, Param::OLD_REQUEST_ID,
       ReferenceCounting::add_ref(request_id_processor));
-    add_processor_(false, true, Param::CREATIVE_LIST,
-      new CreativeListParamProcessor());
+    add_processor_(false, true, Param::CREATIVE_LIST, new CreativeListParamProcessor());
 
     add_processor_(false, true, Param::USER_ID_DISTRIBUTION_HASH,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
         AdServer::Commons::Optional<unsigned long>,
-        unsigned long>(
-        &RequestInfo::user_id_hash_mod));
+        unsigned long>(&RequestInfo::user_id_hash_mod));
     add_processor_(false, true, Param::PUBLISHER_ACCOUNT_ID,
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
         &RequestInfo::publisher_account_id));
@@ -546,61 +522,43 @@ namespace AdServer::ImprTrack
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
         &RequestInfo::publisher_site_id));
     add_processor_(false, true, Param::USER_ID,
-      new UuidParamProcessor(
-        &RequestInfo::current_user_id));
+      new UuidParamProcessor(&RequestInfo::current_user_id));
     add_processor_(false, true, Param::SOURCE_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::source_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::source_id));
     add_processor_(false, true, Param::CUSTOM_ACTION_NAME,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::action_name));
-    add_processor_(false, true, Param::REQUEST_TYPE,
-      new VerifyTypeParamProcessor());
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::action_name));
+    add_processor_(false, true, Param::REQUEST_TYPE, new VerifyTypeParamProcessor());
     add_processor_(false, true, Param::COLOCATION_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::colo_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::colo_id));
     add_processor_(false, true, Param::VIEWABILITY,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, long>(
-        &RequestInfo::viewability));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, long>(&RequestInfo::viewability));
     add_processor_(false, true, Param::SET_COOKIE,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::set_cookie));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::set_cookie));
     add_processor_(false, true, Param::PUBLISHER_PIXEL_ACCOUNT_IDS,
       new FrontendCommons::NumberContainerParamProcessor<
         RequestInfo,
         RequestInfo::AccountIdList,
-        String::AsciiStringManip::SepComma>(
-          &RequestInfo::pubpixel_accounts));
+        String::AsciiStringManip::SepComma>(&RequestInfo::pubpixel_accounts));
 
     add_processor_(false, true, Param::EXTERNAL_USER_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::external_user_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::external_user_id));
 
-    add_processor_(false, true, Param::OPEN_SETTLE_PRICE,
-      new OpenPriceProcessor(logger, 1000));
-    add_processor_(false, true, Param::OPEN_SETTLE_PRICE2,
-      new OpenPriceProcessor(logger, 1000000));
-    add_processor_(false, true, Param::LIVERAIL_SETTLE_PRICE,
-      new LiveRailPriceProcessor(logger));
+    add_processor_(false, true, Param::OPEN_SETTLE_PRICE, new OpenPriceProcessor(logger, 1000));
+    add_processor_(false, true, Param::OPEN_SETTLE_PRICE2, new OpenPriceProcessor(logger, 1000000));
+    add_processor_(false, true, Param::LIVERAIL_SETTLE_PRICE, new LiveRailPriceProcessor(logger));
     add_processor_(false, true, Param::GOOGLE_SETTLE_PRICE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::google_encoded_price));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::google_encoded_price));
     add_processor_(false, true, Param::OPENX_SETTLE_PRICE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::openx_encoded_price));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::openx_encoded_price));
     add_processor_(false, true, Param::BID_TIME,
-      new FrontendCommons::TimeParamProcessor<RequestInfo>(
-        &RequestInfo::bid_time));
+      new FrontendCommons::TimeParamProcessor<RequestInfo>(&RequestInfo::bid_time));
 
     add_processor_(false, true, Param::DEBUG_CURRENT_TIME,
-      new FrontendCommons::TimeParamProcessor<RequestInfo>(
-        &RequestInfo::time));
+      new FrontendCommons::TimeParamProcessor<RequestInfo>(&RequestInfo::time));
     add_processor_(false, true, Param::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(false, true, Param::REDIRECT_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::redirect_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::redirect_url));
 
     add_processor_(false, true, Param::DATA,
       new FrontendCommons::DataParamProcessor<RequestInfo>(param_processors_));
@@ -624,28 +582,21 @@ namespace AdServer::ImprTrack
     cookie_processors_.insert(std::make_pair(
       Cookie::COHORT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::cohort))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::cohort))));
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTOUT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::OptOutParamProcessor<RequestInfo>(
-          &RequestInfo::user_status))));
+        new FrontendCommons::OptOutParamProcessor<RequestInfo>(&RequestInfo::user_status))));
     add_processor_(true, false, Header::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(true, false, Header::REFERER,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::referer));
     add_processor_(true, false, Header::SECURE,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::secure));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::secure));
   }
 
   void
-  RequestInfoFiller::fill(
-    RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+  RequestInfoFiller::fill(RequestInfo& request_info, const FCGI::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     request_info.time = Generics::Time::get_time_of_day();
@@ -655,20 +606,18 @@ namespace AdServer::ImprTrack
     headers_processing_(request_info, request);
     params_processing_(request_info, request);
 
-    if(request_info.viewability > 1 || request_info.viewability < -1)
+    if (request_info.viewability > 1 || request_info.viewability < -1)
     {
       request_info.viewability = -1;
     }
 
-    if (!request_info.openx_encoded_price.empty() ||
-      !request_info.google_encoded_price.empty())
+    if (!request_info.openx_encoded_price.empty() || !request_info.google_encoded_price.empty())
     {
       const EncryptionKeys* keys = 0;
 
       if (request_info.publisher_site_id)
       {
-        EncryptionKeysMap::const_iterator site_it =
-          site_keys_.find(request_info.publisher_site_id);
+        EncryptionKeysMap::const_iterator site_it = site_keys_.find(request_info.publisher_site_id);
 
         if (site_it != site_keys_.end())
         {
@@ -676,34 +625,30 @@ namespace AdServer::ImprTrack
         }
       }
 
-      if(!keys)
+      if (!keys)
       {
         EncryptionKeysMap::const_iterator acc_it =
           account_keys_.find(request_info.publisher_account_id);
 
-        if(acc_it != account_keys_.end())
+        if (acc_it != account_keys_.end())
         {
           keys = acc_it->second;
         }
       }
 
-      if(!keys)
+      if (!keys)
       {
         keys = default_keys_;
       }
 
       // decode prices with using account_id
-      if(!request_info.openx_encoded_price.empty())
+      if (!request_info.openx_encoded_price.empty())
       {
-        if(keys->openx_encryption_key_size > 0 &&
-          keys->openx_integrity_key_size > 0)
+        if (keys->openx_encryption_key_size > 0 && keys->openx_integrity_key_size > 0)
         {
           uint64_t settle_price = 0;
 
-          if(decode_openx_price(
-            settle_price,
-            request_info.openx_encoded_price,
-            *keys))
+          if (decode_openx_price(settle_price, request_info.openx_encoded_price, *keys))
           {
             request_info.request_type = CampaignSvcs::AR_OPENX;
             request_info.pub_imp_revenue_type = CampaignSvcs::RT_ABSOLUTE;
@@ -714,8 +659,7 @@ namespace AdServer::ImprTrack
           else
           {
             Stream::Error ostr;
-            ostr << "Non correct OpenX price '" <<
-              request_info.openx_encoded_price << "'";
+            ostr << "Non correct OpenX price '" << request_info.openx_encoded_price << "'";
 
             logger()->log(ostr.str(),
               Logging::Logger::NOTICE,
@@ -725,21 +669,19 @@ namespace AdServer::ImprTrack
         }
         else
         {
-          logger()->log(String::SubString(
-            "Request type/account_id mismatch, openx keys not found"),
+          logger()->log(String::SubString("Request type/account_id mismatch, openx keys not found"),
             Logging::Logger::NOTICE,
             Aspect::IMPR_TRACK_FRONTEND);
         }
       }
 
-      if(!request_info.google_encoded_price.empty())
+      if (!request_info.google_encoded_price.empty())
       {
-        if(keys->google_encryption_key_size > 0 &&
-          keys->google_integrity_key_size > 0)
+        if (keys->google_encryption_key_size > 0 && keys->google_integrity_key_size > 0)
         {
           int64_t settle_price = 0;
 
-          if(decode_winning_price(
+          if (decode_winning_price(
             settle_price,
             request_info.google_encoded_price,
             keys->google_encryption_key.get(),
@@ -771,12 +713,9 @@ namespace AdServer::ImprTrack
         {
           Stream::Error ostr;
           ostr << "Request type/account_id mismatch, " <<
-            "google keys not found for account '" <<
-            request_info.publisher_account_id << "'";
+            "google keys not found for account '" << request_info.publisher_account_id << "'";
 
-          logger()->log(ostr.str(),
-            Logging::Logger::NOTICE,
-            Aspect::IMPR_TRACK_FRONTEND);
+          logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::IMPR_TRACK_FRONTEND);
         }
       }
     }
@@ -793,7 +732,7 @@ namespace AdServer::ImprTrack
       request_info.request_type = CampaignSvcs::AR_NORMAL;
     }
 
-    if(request_info.colo_id == 0)
+    if (request_info.colo_id == 0)
     {
       // resolve colo by IP + cohort
       FrontendCommons::IPMatcher_var ip_matcher = common_module_->ip_matcher();
@@ -801,11 +740,8 @@ namespace AdServer::ImprTrack
       try
       {
         FrontendCommons::IPMatcher::MatchResult ip_match_result;
-        if(ip_matcher.in() && !request_info.peer_ip.empty() &&
-          ip_matcher->match(
-            ip_match_result,
-            request_info.peer_ip,
-            request_info.cohort))
+        if (ip_matcher.in() && !request_info.peer_ip.empty() &&
+          ip_matcher->match(ip_match_result, request_info.peer_ip, request_info.cohort))
         {
           request_info.colo_id = ip_match_result.colo_id;
         }
@@ -814,33 +750,28 @@ namespace AdServer::ImprTrack
       {}
     }
 
-    if(request_info.colo_id == 0)
+    if (request_info.colo_id == 0)
     {
       request_info.colo_id = colo_id_;
     }
 
-    if (request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT ||
-      !request_info.set_cookie)
+    if (request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT || !request_info.set_cookie)
     {
       request_info.actual_user_id = AdServer::Commons::UserId();
     }
   }
 
   void
-  RequestInfoFiller::params_processing_(
-    RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+  RequestInfoFiller::params_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     const HTTP::ParamList& params = request.params();
 
-    for(HTTP::ParamList::const_iterator it = params.begin();
-        it != params.end(); ++it)
+    for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        param_processors_.find(it->name);
+      ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-      if(param_it != param_processors_.end())
+      if (param_it != param_processors_.end())
       {
         try
         {
@@ -864,16 +795,14 @@ namespace AdServer::ImprTrack
   {
     RequestInfoParamProcessor_var processor_ptr(processor);
 
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      header_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      param_processors_.insert(std::make_pair(name, processor_ptr));
     }
   }
 
@@ -885,16 +814,14 @@ namespace AdServer::ImprTrack
   {
     const HTTP::SubHeaderList& headers = request.headers();
 
-    for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-      it != headers.end(); ++it)
+    for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
     {
       std::string header_name = it->name.str();
       String::AsciiStringManip::to_lower(header_name);
 
-      ParamProcessorMap::const_iterator param_it =
-        header_processors_.find(header_name);
+      ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-      if(param_it != header_processors_.end())
+      if (param_it != header_processors_.end())
       {
         param_it->second->process(request_info, it->value);
       }
@@ -917,26 +844,21 @@ namespace AdServer::ImprTrack
     }
     catch(HTTP::CookieList::InvalidArgument& ex)
     {
-      if(logger()->log_level() >= Logging::Logger::TRACE)
+      if (logger()->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " <<
-          ex.what();
-        logger()->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::IMPR_TRACK_FRONTEND);
+        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " << ex.what();
+        logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::IMPR_TRACK_FRONTEND);
       }
 
       throw InvalidParamException("");
     }
 
-    for(HTTP::CookieList::const_iterator it = cookies.begin();
-        it != cookies.end(); ++it)
+    for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        cookie_processors_.find(it->name);
+      ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-      if(param_it != cookie_processors_.end())
+      if (param_it != cookie_processors_.end())
       {
         param_it->second->process(request_info, it->value);
       }

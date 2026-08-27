@@ -84,9 +84,7 @@ namespace AdServer::UserInfoSvcs
     core_->dump_user_bind_();
   }
 
-  UserBindServerCore::UserBindServerCore(
-    const Config& config,
-    Logging::Logger* logger)
+  UserBindServerCore::UserBindServerCore(const Config& config, Logging::Logger* logger)
     : logger_(ReferenceCounting::add_ref(logger)),
       config_(config),
       scheduler_(new Generics::Planner(
@@ -131,8 +129,7 @@ namespace AdServer::UserInfoSvcs
     catch(const eh::Exception& ex)
     {
       logger_->sstream(Logging::Logger::ERROR, "UserBindServer") <<
-        "UserBindServerCore::~UserBindServerCore(): Can't dump user binds: " <<
-        ex.what();
+        "UserBindServerCore::~UserBindServerCore(): Can't dump user binds: " << ex.what();
     }
     catch(...)
     {
@@ -146,10 +143,9 @@ namespace AdServer::UserInfoSvcs
   {
     get_user_id_total_requests_.fetch_add(1, std::memory_order_relaxed);
 
-    UserBindProcessorHolder::Accessor user_bind_accessor =
-      user_bind_container_->get_accessor();
+    UserBindProcessorHolder::Accessor user_bind_accessor = user_bind_container_->get_accessor();
 
-    if(!user_bind_accessor.get())
+    if (!user_bind_accessor.get())
     {
       throw NotReady("user bind container is not ready");
     }
@@ -168,10 +164,9 @@ namespace AdServer::UserInfoSvcs
 
       GetUserResponseInfo res;
 
-      if(!user_info.user_id.is_null())
+      if (!user_info.user_id.is_null())
       {
-        if(!user_info.user_id_generated &&
-          user_id_black_list_.is_blacklisted(user_info.user_id))
+        if (!user_info.user_id_generated && user_id_black_list_.is_blacklisted(user_info.user_id))
         {
           const Commons::UserId new_user_id = Commons::UserId::create_random_based();
 
@@ -219,10 +214,9 @@ namespace AdServer::UserInfoSvcs
   {
     add_user_id_requests_.fetch_add(1, std::memory_order_relaxed);
 
-    UserBindProcessorHolder::Accessor user_bind_accessor =
-      user_bind_container_->get_accessor();
+    UserBindProcessorHolder::Accessor user_bind_accessor = user_bind_container_->get_accessor();
 
-    if(!user_bind_accessor.get())
+    if (!user_bind_accessor.get())
     {
       throw NotReady("user bind container is not ready");
     }
@@ -250,14 +244,12 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Commons::StartableAwaitable<UserBindServerCore::BindRequestInfo>
-  UserBindServerCore::co_get_bind_request(
-    const std::string& id,
-    const Generics::Time& timestamp)
+  UserBindServerCore::co_get_bind_request(const std::string& id, const Generics::Time& timestamp)
   {
     BindRequestProcessorHolder::Accessor bind_request_accessor =
       bind_request_container_->get_accessor();
 
-    if(!bind_request_accessor.get())
+    if (!bind_request_accessor.get())
     {
       throw NotReady("bind request container is not ready");
     }
@@ -265,9 +257,7 @@ namespace AdServer::UserInfoSvcs
     try
     {
       BindRequestProcessor::BindRequest bind_request =
-        co_await bind_request_accessor->co_get_bind_request(
-          String::SubString(id),
-          timestamp);
+        co_await bind_request_accessor->co_get_bind_request(String::SubString(id), timestamp);
 
       BindRequestInfo res;
       res.bind_user_ids.swap(bind_request.bind_user_ids);
@@ -280,12 +270,9 @@ namespace AdServer::UserInfoSvcs
   }
 
   UserBindServerCore::BindRequestInfo
-  UserBindServerCore::get_bind_request(
-    const std::string& id,
-    const Generics::Time& timestamp)
+  UserBindServerCore::get_bind_request(const std::string& id, const Generics::Time& timestamp)
   {
-    return AdServer::Commons::sync_wait(
-      co_get_bind_request(id, timestamp));
+    return AdServer::Commons::sync_wait(co_get_bind_request(id, timestamp));
   }
 
   void
@@ -297,7 +284,7 @@ namespace AdServer::UserInfoSvcs
     BindRequestProcessorHolder::Accessor bind_request_accessor =
       bind_request_container_->get_accessor();
 
-    if(!bind_request_accessor.get())
+    if (!bind_request_accessor.get())
     {
       throw NotReady("bind request container is not ready");
     }
@@ -307,10 +294,7 @@ namespace AdServer::UserInfoSvcs
       BindRequestContainer::BindRequest bind_request;
       bind_request.bind_user_ids = bind_request_info.bind_user_ids;
 
-      bind_request_accessor->add_bind_request(
-        String::SubString(id),
-        bind_request,
-        timestamp);
+      bind_request_accessor->add_bind_request(String::SubString(id), bind_request, timestamp);
     }
     catch(const BindRequestProcessor::ChunkNotFound& ex)
     {
@@ -321,7 +305,7 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::Source
   UserBindServerCore::get_source() const
   {
-    if(!active())
+    if (!active())
     {
       throw NotReady("core isn't active");
     }
@@ -329,7 +313,7 @@ namespace AdServer::UserInfoSvcs
     Source res;
     res.chunks.reserve(chunks_.size());
 
-    for(UserBindContainer::ChunkPathMap::const_iterator it = chunks_.begin();
+    for (UserBindContainer::ChunkPathMap::const_iterator it = chunks_.begin();
         it != chunks_.end(); ++it)
     {
       res.chunks.push_back(it->first);
@@ -351,8 +335,7 @@ namespace AdServer::UserInfoSvcs
   AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
   UserBindServerCore::rocksdb_stats() const noexcept
   {
-    UserBindContainerHolder::Accessor container =
-      rocksdb_stats_container_->get_accessor();
+    UserBindContainerHolder::Accessor container = rocksdb_stats_container_->get_accessor();
     return container.get() ?
       container->rocksdb_stats() :
       AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats{};
@@ -386,13 +369,13 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::dump() const
   {
     const UserBindProcessor_var user_bind_processor = user_bind_container_->get_object();
-    if(user_bind_processor.in())
+    if (user_bind_processor.in())
     {
       user_bind_processor->dump();
     }
 
     const BindRequestProcessor_var bind_request_processor = bind_request_container_->get_object();
-    if(bind_request_processor.in())
+    if (bind_request_processor.in())
     {
       bind_request_processor->dump();
     }
@@ -426,7 +409,7 @@ namespace AdServer::UserInfoSvcs
 
       UserBindProcessor_var result_user_bind_processor;
 
-      if(config_.operation_backup.has_value())
+      if (config_.operation_backup.has_value())
       {
         const auto& operation_backup = *config_.operation_backup;
         UserBindOperationSaver_var user_bind_operation_saver =
@@ -447,11 +430,11 @@ namespace AdServer::UserInfoSvcs
         result_user_bind_processor = user_bind_processor;
       }
 
-      if(config_.operation_load.has_value())
+      if (config_.operation_load.has_value())
       {
         const auto& operation_load = *config_.operation_load;
         UserBindOperationLoader::ChunkIdSet chunk_ids;
-        for(UserBindContainer::ChunkPathMap::const_iterator chunk_it = chunks_.begin();
+        for (UserBindContainer::ChunkPathMap::const_iterator chunk_it = chunks_.begin();
             chunk_it != chunks_.end(); ++chunk_it)
         {
           chunk_ids.insert(chunk_it->first);
@@ -460,10 +443,7 @@ namespace AdServer::UserInfoSvcs
         Generics::ActiveObject_var user_bind_operation_loader =
           new UserBindOperationLoader(
             Generics::ActiveObjectCallback_var(
-              new Logging::ActiveObjectCallbackImpl(
-                logger_,
-                "",
-                "UserBindOperationLoader")),
+              new Logging::ActiveObjectCallbackImpl(logger_, "", "UserBindOperationLoader")),
             user_bind_processor,
             operation_load.dir.c_str(),
             operation_load.unprocessed_dir.c_str(),
@@ -485,7 +465,7 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": caught eh::Exception: " << ex.what();
     }
 
-    if(reschedule)
+    if (reschedule)
     {
       try
       {
@@ -501,7 +481,7 @@ namespace AdServer::UserInfoSvcs
       return;
     }
 
-    if(config_.storage.dump_period.has_value() &&
+    if (config_.storage.dump_period.has_value() &&
       *config_.storage.dump_period > Generics::Time::ZERO)
     {
       try
@@ -542,7 +522,7 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": caught eh::Exception: " << ex.what();
     }
 
-    if(reschedule)
+    if (reschedule)
     {
       try
       {
@@ -563,12 +543,11 @@ namespace AdServer::UserInfoSvcs
   {
     static const char* FUN = "UserBindServerCore::clear_user_bind_expired_()";
 
-    UserBindProcessorHolder::Accessor user_bind_accessor =
-      user_bind_container_->get_accessor();
+    UserBindProcessorHolder::Accessor user_bind_accessor = user_bind_container_->get_accessor();
 
     try
     {
-      if(user_bind_accessor.get())
+      if (user_bind_accessor.get())
       {
         Generics::Time now = Generics::Time::get_time_of_day();
         user_bind_accessor->clear_expired(
@@ -582,7 +561,7 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": Can't delete old user binds: " << ex.what();
     }
 
-    if(reschedule)
+    if (reschedule)
     {
       scheduler_->schedule(
         Generics::Goal_var(new ClearUserBindExpiredTask(task_runner_, this, true)),
@@ -600,11 +579,10 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      if(bind_request_accessor.get())
+      if (bind_request_accessor.get())
       {
         Generics::Time now = Generics::Time::get_time_of_day();
-        bind_request_accessor->clear_expired(
-          now - config_.bind_request_storage.expire_time);
+        bind_request_accessor->clear_expired(now - config_.bind_request_storage.expire_time);
       }
     }
     catch(const eh::Exception& ex)
@@ -613,7 +591,7 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": Can't delete old bind requests: " << ex.what();
     }
 
-    if(reschedule)
+    if (reschedule)
     {
       scheduler_->schedule(
         Generics::Goal_var(new ClearBindRequestExpiredTask(task_runner_, this, true)),
@@ -636,7 +614,7 @@ namespace AdServer::UserInfoSvcs
         "UserBindServer") << FUN << ": Can't dump user binds: " << ex.what();
     }
 
-    if(config_.storage.dump_period.has_value() &&
+    if (config_.storage.dump_period.has_value() &&
       *config_.storage.dump_period > Generics::Time::ZERO)
     {
       scheduler_->schedule(

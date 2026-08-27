@@ -52,9 +52,7 @@ namespace AdServer::WebStat
     {
       std::array<unsigned char, Generics::Time::TIME_PACK_LEN> packed_time;
       time.pack(packed_time.data());
-      return std::string(
-        reinterpret_cast<const char*>(packed_time.data()),
-        packed_time.size());
+      return std::string(reinterpret_cast<const char*>(packed_time.data()), packed_time.size());
     }
   }
 
@@ -88,21 +86,19 @@ namespace AdServer::WebStat
 
     const auto& fe_config = frontend_config_->get();
 
-    if(!fe_config.CommonFeConfiguration().present())
+    if (!fe_config.CommonFeConfiguration().present())
     {
       throw Exception("CommonFeConfiguration isn't present");
     }
 
-    common_config_ = CommonConfigPtr(
-      new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
+    common_config_ = CommonConfigPtr(new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-    if(!fe_config.WebStatFeConfiguration().present())
+    if (!fe_config.WebStatFeConfiguration().present())
     {
       throw Exception("WebStatFeConfiguration isn't present");
     }
 
-    config_ = ConfigPtr(
-      new WebStatFeConfiguration(*fe_config.WebStatFeConfiguration()));
+    config_ = ConfigPtr(new WebStatFeConfiguration(*fe_config.WebStatFeConfiguration()));
   }
 
   bool
@@ -114,30 +110,25 @@ namespace AdServer::WebStat
       FrontendCommons::find_uri(config_->YandexNotificationUriList().Uri(), uri, found_uri)
       ;
 
-    if(logger()->log_level() >= Logging::Logger::TRACE)
+    if (logger()->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << "WebStat::Frontend::will_handle(" << uri << "), result " << result;
 
-      logger()->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::WEBSTAT_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::WEBSTAT_FRONTEND);
     }
 
     return result;
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    auto result = co_await process_request_(
-      std::move(request_holder),
-      std::move(response_ptr));
+    auto result = co_await process_request_(std::move(request_holder), std::move(response_ptr));
     co_return std::move(result);
   }
 
@@ -159,19 +150,18 @@ namespace AdServer::WebStat
 
       std::string found_uri;
 
-      if(FrontendCommons::find_uri(
-        config_->UriList().Uri(), request.uri(), found_uri))
+      if (FrontendCommons::find_uri(config_->UriList().Uri(), request.uri(), found_uri))
       {
         RequestInfo request_info;
         request_info_filler_->fill(request_info, request.headers(), request.params());
         request_info_list.emplace_back(std::move(request_info));
       }
-      else if(FrontendCommons::find_uri(
+      else if (FrontendCommons::find_uri(
         config_->YandexNotificationUriList().Uri(), request.uri(), found_uri))
       {
         std::string bid_request;
         const std::string_view body = request.body();
-        if(!body.empty())
+        if (!body.empty())
         {
           bid_request.assign(body.data(), body.size());
         }
@@ -184,14 +174,12 @@ namespace AdServer::WebStat
       }
 
       std::vector<std::shared_ptr<
-        adserver::campaign_svcs::campaign_manager::
-          ConsiderWebOperationRequest>> requests;
+        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest>> requests;
 
-      for(const auto& request_info : request_info_list)
+      for (const auto& request_info : request_info_list)
       {
         auto web_op_info = std::make_shared<
-          adserver::campaign_svcs::campaign_manager::
-            ConsiderWebOperationRequest>();
+          adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest>();
         web_op_info->set_time(pack_time(request_info.time));
         web_op_info->set_colo_id(request_info.colo_id);
         web_op_info->set_tag_id(request_info.tag_id);
@@ -210,36 +198,32 @@ namespace AdServer::WebStat
         web_op_info->set_ip_address(request_info.peer_ip);
         web_op_info->set_external_user_id(request_info.external_user_id);
         web_op_info->set_user_agent(request_info.user_agent);
-        for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
+        for (RequestIdSet::const_iterator rit = request_info.request_ids.begin();
           rit != request_info.request_ids.end(); ++rit)
         {
-          web_op_info->add_request_ids(
-            rit->is_null() ? std::string() : pack_request_id(*rit));
+          web_op_info->add_request_ids(rit->is_null() ? std::string() : pack_request_id(*rit));
         }
-        if(!request_info.global_request_id.is_null())
+
+        if (!request_info.global_request_id.is_null())
         {
-          web_op_info->set_global_request_id(
-            pack_request_id(request_info.global_request_id));
+          web_op_info->set_global_request_id(pack_request_id(request_info.global_request_id));
         }
         requests.emplace_back(std::move(web_op_info));
       }
 
-      for(auto& web_op_info : requests)
+      for (auto& web_op_info : requests)
       {
         auto result = co_await campaign_manager_coro_->co_consider_web_operation(
           std::move(*web_op_info));
-        if(!result.status.ok())
+        if (!result.status.ok())
         {
-          if(result.status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
+          if (result.status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
           {
             http_result = 400;
             break;
           }
 
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::WEBSTAT_FRONTEND,
-            "ADS-IMPL-139") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::WEBSTAT_FRONTEND, "ADS-IMPL-139") <<
             "CampaignManager::consider_web_operation(): "
             "gRPC call failed: code=" <<
             static_cast<int>(result.status.error_code()) <<
@@ -271,9 +255,7 @@ namespace AdServer::WebStat
     http_result = finish_request_(
       *response,
       request.method(),
-      !request_info_list.empty() ?
-        request_info_list.begin()->origin : std::string(),
-      http_result);
+      !request_info_list.empty() ? request_info_list.begin()->origin : std::string(), http_result);
     co_return FrontendCommons::RequestResult{
       http_result,
       response,
@@ -290,45 +272,35 @@ namespace AdServer::WebStat
   {
     try
     {
-      if(http_result == 0)
+      if (http_result == 0)
       {
-        if(!origin.empty())
+        if (!origin.empty())
         {
-          response.add_header_nocopy_name(
-            String::SubString("Access-Control-Allow-Origin"),
-            origin);
+          response.add_header_nocopy_name(String::SubString("Access-Control-Allow-Origin"), origin);
 
           response.add_header_nocopy(
             String::SubString("Access-Control-Allow-Credentials"),
             String::SubString("true"));
         }
 
-        if(common_config_->ResponseHeaders().present())
+        if (common_config_->ResponseHeaders().present())
         {
-          FrontendCommons::add_headers(
-            *(common_config_->ResponseHeaders()),
-            response);
+          FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
         }
 
-        if(request_method == FCGI::HttpRequest::RM_GET)
+        if (request_method == FCGI::HttpRequest::RM_GET)
         {
-          response.set_content_type_nocopy(
-            String::SubString("image/gif"));
+          response.set_content_type_nocopy(String::SubString("image/gif"));
 
           FileCache::BufferHolder_var buffer = pixel_->get();
-          response.get_output_stream().write(
-            (*buffer)->data(),
-            (*buffer)->size());
+          response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
         }
       }
     }
     catch(const eh::Exception& e)
     {
       http_result = 500;
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::WEBSTAT_FRONTEND,
-        "ADS-IMPL-139") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::WEBSTAT_FRONTEND, "ADS-IMPL-139") <<
         "WebStat::Frontend::finish_request_(): "
         "eh::Exception has been caught: " << e.what();
     }
@@ -341,27 +313,23 @@ namespace AdServer::WebStat
   {
     static const char* FUN = "WebStat::Frontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
         parse_config_();
 
-        pixel_ = FileCachePtr(
-          new FileCache(config_->pixel_path().c_str()));
+        pixel_ = FileCachePtr(new FileCache(config_->pixel_path().c_str()));
         grpc_executor_ = common_module_->grpc_executor();
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
         add_child_object(campaign_manager);
 
         request_info_filler_.reset(new RequestInfoFiller(
@@ -375,8 +343,7 @@ namespace AdServer::WebStat
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "WebStat::Frontend::init(): frontend is running ..."),
+      logger()->log(String::SubString("WebStat::Frontend::init(): frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::WEBSTAT_FRONTEND);
     }
@@ -388,8 +355,7 @@ namespace AdServer::WebStat
     deactivate_object();
     wait_object();
 
-    logger()->log(String::SubString(
-      "WebStat::Frontend::shutdown(): frontend terminated"),
+    logger()->log(String::SubString("WebStat::Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO,
       Aspect::WEBSTAT_FRONTEND);
   }

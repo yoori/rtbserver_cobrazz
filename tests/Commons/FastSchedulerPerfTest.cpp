@@ -262,8 +262,7 @@ namespace
 
     const auto percentile = [&](const std::size_t value) noexcept
     {
-      return static_cast<double>(
-        values[(values.size() - 1) * value / 100]) / 1000.0;
+      return static_cast<double>(values[(values.size() - 1) * value / 100]) / 1000.0;
     };
     return {
       static_cast<double>(total / values.size()) / 1000.0,
@@ -276,9 +275,7 @@ namespace
 
   template<typename State, typename Getter>
   LatenessStats
-  calculate_lateness_stats(
-    const std::vector<std::shared_ptr<State>>& states,
-    Getter getter)
+  calculate_lateness_stats(const std::vector<std::shared_ptr<State>>& states, Getter getter)
   {
     std::vector<std::int64_t> values;
     values.reserve(states.size());
@@ -326,9 +323,7 @@ namespace
 
     {
       std::unique_lock<std::mutex> lock(start_lock);
-      ready_condition.wait(
-        lock,
-        [&]() noexcept { return ready == threads; });
+      ready_condition.wait(lock, [&]() noexcept { return ready == threads; });
     }
 
     const auto cpu_started = current_cpu_times();
@@ -402,8 +397,7 @@ namespace
   };
 
   BucketStats
-  calculate_bucket_stats(
-    const std::vector<std::shared_ptr<SchedulerState>>& states)
+  calculate_bucket_stats(const std::vector<std::shared_ptr<SchedulerState>>& states)
   {
     struct Record
     {
@@ -421,10 +415,7 @@ namespace
       {
         ++deadline_ms;
       }
-      records.emplace_back(Record{
-        deadline_ms,
-        state->first_callback_at.microseconds() * 1000
-      });
+      records.emplace_back(Record{ deadline_ms, state->first_callback_at.microseconds() * 1000 });
     }
     std::sort(
       records.begin(),
@@ -478,9 +469,7 @@ namespace
   }
 
   MeasureResult
-  run_scheduler(
-    const Options& options,
-    const std::size_t scheduler_threads)
+  run_scheduler(const Options& options, const std::size_t scheduler_threads)
   {
     AdServer::Commons::FastScheduler scheduler(scheduler_threads);
     const auto active_threads = std::min(options.count, scheduler_threads);
@@ -745,14 +734,10 @@ namespace
   }
 
   void
-  print_result(
-    const char* name,
-    const MeasureResult& result,
-    const std::size_t callbacks)
+  print_result(const char* name, const MeasureResult& result, const std::size_t callbacks)
   {
     const double setup_cpu = result.setup_user_cpu + result.setup_system_cpu;
-    const double enqueue_cpu =
-      result.enqueue_user_cpu + result.enqueue_system_cpu;
+    const double enqueue_cpu = result.enqueue_user_cpu + result.enqueue_system_cpu;
     const double total_cpu = result.total_user_cpu + result.total_system_cpu;
     const double run_cpu = total_cpu - setup_cpu;
 
@@ -777,8 +762,7 @@ namespace
       << "avg:" << result.final_lateness.average_us
       << " p50:" << result.final_lateness.p50_us
       << " p90:" << result.final_lateness.p90_us
-      << " p99:" << result.final_lateness.p99_us
-      << " max:" << result.final_lateness.max_us << '\n';
+      << " p99:" << result.final_lateness.p99_us << " max:" << result.final_lateness.max_us << '\n';
     if (result.bucket_stats.count)
     {
       std::cout
@@ -824,10 +808,7 @@ main(int argc, char** argv)
     const auto asio_result = run_asio(options);
     const auto callbacks = options.count * options.steps;
     print_result("fast_scheduler", scheduler_result, callbacks);
-    print_result(
-      "worker_custom_scheduler",
-      scheduler_pool_result,
-      callbacks);
+    print_result("worker_custom_scheduler", scheduler_pool_result, callbacks);
     print_result("asio_steady_timer", asio_result, callbacks);
 
     const double scheduler_run_cpu =

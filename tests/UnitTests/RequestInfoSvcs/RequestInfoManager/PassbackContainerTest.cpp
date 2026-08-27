@@ -61,8 +61,7 @@ struct TestBase: public virtual ReferenceCounting::DefaultImpl<>
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/ = 0;
 
-  virtual void fill_etalon(
-    PassbackInfoList& passback_info_list) noexcept = 0;
+  virtual void fill_etalon(PassbackInfoList& passback_info_list) noexcept = 0;
 
   static void print_passback_list(
     std::ostream& out,
@@ -70,8 +69,7 @@ struct TestBase: public virtual ReferenceCounting::DefaultImpl<>
     const char* offset) noexcept
   {
     unsigned long i = 0;
-    for(PassbackInfoList::const_iterator pit = lst.begin();
-        pit != lst.end(); ++pit, ++i)
+    for (PassbackInfoList::const_iterator pit = lst.begin(); pit != lst.end(); ++pit, ++i)
     {
       out << offset << "#" << i << std::endl;
       pit->print(out, (std::string(offset) + "  ").c_str());
@@ -91,8 +89,7 @@ struct VerificationOfNonExistsPassbackTest: public TestBase
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/
   {
-    TagRequestInfo tag_request_info =
-      create_simple_tag_request(Generics::Time(10));
+    TagRequestInfo tag_request_info = create_simple_tag_request(Generics::Time(10));
 
     passback_container->process_tag_request(tag_request_info);
   }
@@ -112,8 +109,7 @@ struct UnverifiedPassbackTest: public TestBase
   {
     RequestId req_id = create_request_id();
 
-    passback_container->process_passback_request(
-      req_id, Generics::Time(10));
+    passback_container->process_passback_request(req_id, Generics::Time(10));
   }
 
   virtual void fill_etalon(PassbackInfoList& /*etalon*/) noexcept
@@ -129,14 +125,11 @@ struct VerifiedPassbackTest: public TestBase
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/
   {
-    TagRequestInfo tag_request_info =
-      create_simple_tag_request(Generics::Time(10));
+    TagRequestInfo tag_request_info = create_simple_tag_request(Generics::Time(10));
 
     passback_container->process_tag_request(tag_request_info);
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(10));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(10));
   }
 
   virtual void fill_etalon(PassbackInfoList& etalon) noexcept
@@ -154,12 +147,9 @@ struct VerifiedPassbackReverseOrderTest: public TestBase
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/
   {
-    TagRequestInfo tag_request_info =
-      create_simple_tag_request(Generics::Time(9));
+    TagRequestInfo tag_request_info = create_simple_tag_request(Generics::Time(9));
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(10));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(10));
 
     passback_container->process_tag_request(tag_request_info);
   }
@@ -179,18 +169,13 @@ struct DoublePassbackVerificationTest: public TestBase
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/
   {
-    TagRequestInfo tag_request_info =
-      create_simple_tag_request(Generics::Time(9));
+    TagRequestInfo tag_request_info = create_simple_tag_request(Generics::Time(9));
 
     passback_container->process_tag_request(tag_request_info);
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(10));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(10));
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(20));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(20));
   }
 
   virtual void fill_etalon(PassbackInfoList& etalon) noexcept
@@ -208,20 +193,15 @@ struct DoublePassbackTest: public TestBase
 
   virtual void run(PassbackContainer* passback_container) /*throw(eh::Exception)*/
   {
-    TagRequestInfo tag_request_info =
-      create_simple_tag_request(Generics::Time(9));
+    TagRequestInfo tag_request_info = create_simple_tag_request(Generics::Time(9));
 
     passback_container->process_tag_request(tag_request_info);
 
     passback_container->process_tag_request(tag_request_info);
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(10));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(10));
 
-    passback_container->process_passback_request(
-      tag_request_info.request_id,
-      Generics::Time(20));
+    passback_container->process_passback_request(tag_request_info.request_id, Generics::Time(20));
   }
 
   virtual void fill_etalon(PassbackInfoList& etalon) noexcept
@@ -242,8 +222,7 @@ passback_container_test(const char* test_folder) noexcept
 
     Logging::Logger_var logger(new Logging::Null::Logger);
 
-    TestPassbackProcessorImpl_var passback_processor(
-      new TestPassbackProcessorImpl());
+    TestPassbackProcessorImpl_var passback_processor(new TestPassbackProcessorImpl());
 
     PassbackContainer_var passback_container(
       new PassbackContainer(
@@ -259,8 +238,7 @@ passback_container_test(const char* test_folder) noexcept
     tests.push_back(TestBase_var(new VerifiedPassbackReverseOrderTest()));
     tests.push_back(TestBase_var(new DoublePassbackVerificationTest()));
 
-    for(TestBaseList::iterator test_it = tests.begin();
-        test_it != tests.end(); ++test_it)
+    for (TestBaseList::iterator test_it = tests.begin(); test_it != tests.end(); ++test_it)
     {
       try
       {
@@ -271,17 +249,13 @@ passback_container_test(const char* test_folder) noexcept
         TestBase::PassbackInfoList etalon;
         (*test_it)->fill_etalon(etalon);
 
-        if(passback_processor->result().size() !=
+        if (passback_processor->result().size() !=
              etalon.size() ||
-           !std::equal(
-             etalon.begin(),
-             etalon.end(),
-             passback_processor->result().begin()))
+           !std::equal(etalon.begin(), etalon.end(), passback_processor->result().begin()))
         {
           std::cerr << (*test_it)->name() << ": unexpected result" <<
             (passback_processor->result().size() != etalon.size() ?
-              "(incorrect passback number)" : "") << ": " << std::endl <<
-            "  result:" << std::endl;
+              "(incorrect passback number)" : "") << ": " << std::endl << "  result:" << std::endl;
           TestBase::print_passback_list(std::cerr, passback_processor->result(), "    ");
           std::cerr << "  etalon: " << std::endl;
           TestBase::print_passback_list(std::cerr, etalon, "    ");
@@ -291,8 +265,7 @@ passback_container_test(const char* test_folder) noexcept
       }
       catch(const eh::Exception& ex)
       {
-        std::cerr << (*test_it)->name() << ": caught eh::Exception: " <<
-          ex.what() << std::endl;
+        std::cerr << (*test_it)->name() << ": caught eh::Exception: " << ex.what() << std::endl;
         ++result;
       }
     }
@@ -332,8 +305,7 @@ main(int argc, char* argv[]) noexcept
       return false;
     }
 
-    return passback_container_test(
-      (*root_path + "/PassbackContainerTestDir/").c_str());
+    return passback_container_test((*root_path + "/PassbackContainerTestDir/").c_str());
   }
   catch (const eh::Exception& ex)
   {

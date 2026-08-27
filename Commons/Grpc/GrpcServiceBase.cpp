@@ -609,11 +609,7 @@ namespace AdServer::Grpc
     BatchCompletion completion) const
   {
     batch_response.set_batch_id(batch_request.batch_id());
-    dispatch_batch_request_(
-      handle,
-      batch_request,
-      batch_response,
-      std::move(completion));
+    dispatch_batch_request_(handle, batch_request, batch_response, std::move(completion));
   }
 
   void

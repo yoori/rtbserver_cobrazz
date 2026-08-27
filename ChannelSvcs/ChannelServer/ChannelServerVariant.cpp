@@ -60,7 +60,8 @@ namespace AdServer::ChannelSvcs
       ostr << __func__ << ": eh:Exception: " << e.what();
       throw ChannelServerException::Exception(ostr);
     }
-    if(campaign_pool_config.iors_list.empty())
+
+    if (campaign_pool_config.iors_list.empty())
     {
       Stream::Error ostr;
       ostr << __func__ << ": empty list of CampaignServer references";
@@ -77,8 +78,7 @@ namespace AdServer::ChannelSvcs
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << __func__ << ": eh:Exception: "
-        << e.what();
+      ostr << __func__ << ": eh:Exception: " << e.what();
       throw ChannelServerException::Exception(ostr);
     }
   }
@@ -95,8 +95,7 @@ namespace AdServer::ChannelSvcs
     throw NotSupported("");
   }
 
-  const std::vector<unsigned int>& ChannelServerVariantBase::get_sources(
-    unsigned int& count)
+  const std::vector<unsigned int>& ChannelServerVariantBase::get_sources(unsigned int& count)
     noexcept
   {
     count = count_chunks_;
@@ -126,16 +125,14 @@ namespace AdServer::ChannelSvcs
         service_index,
         logger,
         check_sum),
-      callback_(
-        new Logging::ActiveObjectCallbackImpl(logger)),
+      callback_(new Logging::ActiveObjectCallbackImpl(logger)),
       segmentors_(segmentors),
       db_info_(db_info),
       update_size_(1024)
   {
     try
     {
-      pg_env_ =
-        new Commons::Postgres::Environment(db_info.pg_connection.c_str());
+      pg_env_ = new Commons::Postgres::Environment(db_info.pg_connection.c_str());
       pg_pool_ = pg_env_->create_connection_pool();
 
       add_child_object(pg_env_);
@@ -161,12 +158,10 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  void ChannelServerVariantBase::add_special_(
-    unsigned long id,
-    ChannelIdToMatchInfo& match_info)
+  void ChannelServerVariantBase::add_special_(unsigned long id, ChannelIdToMatchInfo& match_info)
     /*throw(eh::Exception)*/
   {
-    if(is_my_id_(id))
+    if (is_my_id_(id))
     {
       MatchInfo& info = match_info[id];
       Channel& ch = info.channel;
@@ -181,13 +176,12 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  void ChannelServerVariantBase::update_actual_channels(
-    UpdateData* update_data)
+  void ChannelServerVariantBase::update_actual_channels(UpdateData* update_data)
   {
     const char* FUN = "ChannelServerVariantBase::update_actual_channels";
     try
     {
-      if(sources_.empty())
+      if (sources_.empty())
       {
         throw ChannelServerException::NotReady("Empty sources");
       }
@@ -212,7 +206,7 @@ namespace AdServer::ChannelSvcs
 
         try
         {
-          for(; portion < COUNT_PORTIONS; ++portion)
+          for (; portion < COUNT_PORTIONS; ++portion)
           {
             settings.portion = portion;
             res = campaign_server->chsv_simple_channels(settings);
@@ -220,40 +214,28 @@ namespace AdServer::ChannelSvcs
           }
           break;
         }
-        catch(
-          const AdServer::CampaignSvcs::CampaignServer::ImplementationException& e)
+        catch(const AdServer::CampaignSvcs::CampaignServer::ImplementationException& e)
         {
           Stream::Error ostr;
-          ostr << FUN << ": CampaignServer::ImplementationException: "
-            << e.description;
+          ostr << FUN << ": CampaignServer::ImplementationException: " << e.description;
           campaign_server.release_bad(ostr.str());
-          logger_->log(
-            ostr.str(),
-            Logging::Logger::CRITICAL,
-            ASPECT);
+          logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT);
         }
         catch(const AdServer::CampaignSvcs::CampaignServer::NotReady& e)
         {
-          campaign_server.release_bad(
-            String::SubString("CampaignServer is not ready"));
+          campaign_server.release_bad(String::SubString("CampaignServer is not ready"));
         }
         catch (const CORBA::SystemException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": caught CORBA::SystemException at get_channels(): "
-            << ex;
+          ostr << FUN << ": caught CORBA::SystemException at get_channels(): " << ex;
           campaign_server.release_bad(ostr.str());
-          logger_->log(
-            ostr.str(),
-            Logging::Logger::CRITICAL,
-            ASPECT,
-            "ADS-ICON-1");
+          logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-ICON-1");
         }
       }
 
       update_data->cost_limit =
-        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-          res->cost_limit);
+        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(res->cost_limit);
       add_special_(c_special_track, *info_ptr);
       add_special_(c_special_adv, *info_ptr);
       update_data->info_ptr = info_ptr;
@@ -275,7 +257,7 @@ namespace AdServer::ChannelSvcs
     ChannelIdToMatchInfo& info)
     /*throw(eh::Exception)*/
   {
-    for(CORBA::ULong i = 0; i < channels.length(); ++i)
+    for (CORBA::ULong i = 0; i < channels.length(); ++i)
     {
       if ((channels[i].channel_type == 'A' && channels[i].status != 'A') ||
           channels[i].channel_type == 'W' ||
@@ -294,7 +276,7 @@ namespace AdServer::ChannelSvcs
       {
         ch.mark_type(Channel::CT_BLACK_LIST);
       }
-      for(CORBA::ULong j = 0; j < channels[i].behave_info.length(); ++j)
+      for (CORBA::ULong j = 0; j < channels[i].behave_info.length(); ++j)
       {
         size_t index_type;
         bool ignore = false;
@@ -324,6 +306,7 @@ namespace AdServer::ChannelSvcs
             ignore = true;
             break;
         }
+
         if (ignore)
         {
           break;
@@ -340,8 +323,7 @@ namespace AdServer::ChannelSvcs
   struct FillChannelIdAdapter
   {
     FillChannelIdAdapter(std::vector<unsigned int>& out) noexcept : out_(out){};
-    void operator()(
-      const MatchInfoContainerType::value_type& in)
+    void operator()(const MatchInfoContainerType::value_type& in)
       noexcept
     {
       out_.push_back(in.second.channel.get_id());
@@ -361,24 +343,23 @@ namespace AdServer::ChannelSvcs
   {
     ChannelIdToMatchInfo::iterator info_it;
     info_it = info.find(id);
-    if(info_it == info.end())
+    if (info_it == info.end())
     {
       Stream::Error err;
       err << "unexpected channel id = " << id;
       throw ChannelServerException::Exception(err);
     }
-    else if(updated.find(id) == updated.end() &&
-            info_it->second.db_stamp == new_db_stamp)
+    else if (updated.find(id) == updated.end() && info_it->second.db_stamp == new_db_stamp)
     {
       return;
     }
     info_it->second.db_stamp = new_db_stamp;
     info_it->second.stamp = new_master;
-    if(!info_it->second.channel.match_mask(Channel::CH_UIDS))
+    if (!info_it->second.channel.match_mask(Channel::CH_UIDS))
     {
       check_ids.insert(check_ids.end(), id);
     }
-    else if(info_it->second.channel.match_mask(Channel::CH_ACTIVE))
+    else if (info_it->second.channel.match_mask(Channel::CH_ACTIVE))
     {
       uid_check_ids.insert(uid_check_ids.end(), id);
     }
@@ -389,7 +370,7 @@ namespace AdServer::ChannelSvcs
     /*throw(ChannelServerException::Exception,
       ChannelServerException::TemporyUnavailable)*/
   {
-    if(!data->container_ptr->ready())
+    if (!data->container_ptr->ready())
     {
       Stream::Error err;
       err << __func__ << ": container not ready to parse";
@@ -401,7 +382,7 @@ namespace AdServer::ChannelSvcs
       conn = pg_pool_->get_connection();
 
       size_t update_size = data->info_ptr->size();
-      if(!update_size)
+      if (!update_size)
       {
         return;
       }
@@ -437,23 +418,23 @@ namespace AdServer::ChannelSvcs
 
       check_ids.clear();
       uid_check_ids.clear();
-      if(rs->next() && rs->get_number<long>(FP_CHANNEL_ID) == 0)
+      if (rs->next() && rs->get_number<long>(FP_CHANNEL_ID) == 0)
       {
         data->new_master = rs->get_timestamp(FP_VERSION);
         unsigned long id;
         bool have_special_adv = false;
         bool have_special_track = false;
         Generics::Time new_db_stamp;
-        const ExcludeContainerType& updated =
-          data->container_ptr->get_updated();
-        while(rs->next())
+        const ExcludeContainerType& updated = data->container_ptr->get_updated();
+        while (rs->next())
         {
           id = rs->get_number<long>(FP_CHANNEL_ID);
-          if(id == c_special_adv)
+          if (id == c_special_adv)
           {
             have_special_adv = true;
           }
-          if(id == c_special_track)
+
+          if (id == c_special_track)
           {
             have_special_track = true;
           }
@@ -467,16 +448,18 @@ namespace AdServer::ChannelSvcs
             uid_check_ids,
             *data->info_ptr);
         }
-        if(!have_special_adv)
+
+        if (!have_special_adv)
         {
           data->info_ptr->erase(c_special_adv);
         }
-        if(!have_special_track)
+
+        if (!have_special_track)
         {
           data->info_ptr->erase(c_special_track);
         }
         /*
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           trace_sequence(
             "New channels", update_data->container_ptr->get_new(), ostr);
@@ -498,11 +481,7 @@ namespace AdServer::ChannelSvcs
       pg_pool_->bad_connection(conn);
       Stream::Error ostr;
       ostr << __func__ << ": Postgres::Exception : " << ex.what();
-      logger_->log(
-          ostr.str(),
-          Logging::Logger::CRITICAL,
-          ASPECT,
-          "ADS-DB-0");
+      logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-DB-0");
       throw ChannelServerException::Exception(ostr);
     }
     catch(const eh::Exception& ex)
@@ -516,20 +495,19 @@ namespace AdServer::ChannelSvcs
   size_t ChannelServerDB::get_update_size_(unsigned long merge_limit) const
     noexcept
   {
-    if(update_history_.empty())
+    if (update_history_.empty())
     {
       return update_size_;
     }
     unsigned long channel_size = update_history_.back();
     unsigned long count = update_history_.size();
-    std::list<unsigned long>::const_reverse_iterator it =
-      update_history_.rbegin();
+    std::list<unsigned long>::const_reverse_iterator it = update_history_.rbegin();
     size_t max_size =  *it;
     ++it;//skip last size
-    for(unsigned long i = 1; i < count; i++, ++it)
+    for (unsigned long i = 1; i < count; i++, ++it)
     {
       max_size = std::max(*it, max_size);
-      if(*it < channel_size)
+      if (*it < channel_size)
       {
         channel_size -= (channel_size - *it) * (count - i) / count;
       }
@@ -538,7 +516,8 @@ namespace AdServer::ChannelSvcs
         channel_size += (*it - channel_size) * (count - i) / count;
       }
     }
-    if(max_size / 3 > channel_size)
+
+    if (max_size / 3 > channel_size)
     {
       channel_size = max_size / 3;
     }
@@ -548,7 +527,7 @@ namespace AdServer::ChannelSvcs
   void ChannelServerDB::save_channel_size_(unsigned long channel_size) noexcept
   {
     update_history_.push_back(channel_size);
-    if(update_history_.size() > 8)
+    if (update_history_.size() > 8)
     {
       update_history_.pop_front();
     }
@@ -582,13 +561,12 @@ namespace AdServer::ChannelSvcs
     UpdateData::CheckContainerType& check_ids = data->uid_check_data;
 
     std::set<unsigned int> check_values;
-    if(check_ids.size() > 16)//magic number, no more lobs for one query
+    if (check_ids.size() > 16)//magic number, no more lobs for one query
     {
       std::copy_n(
         check_ids.begin(),
         16,
-        std::insert_iterator<std::set<unsigned int> >(
-          check_values, check_values.begin()));
+        std::insert_iterator<std::set<unsigned int> >(check_values, check_values.begin()));
     }
     else
     {
@@ -607,10 +585,10 @@ namespace AdServer::ChannelSvcs
 
     ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
 
-    while(rs->next())
+    while (rs->next())
     {
       long channel_id = rs->get_number<long>(FT_CHANNEL_ID);
-      if(rs->is_null(2))
+      if (rs->is_null(2))
       {
         continue;
       }
@@ -619,7 +597,7 @@ namespace AdServer::ChannelSvcs
       pg_int64 length = lob.length();
       MatchInfo &s_info = (*a_info_ptr)[channel_id];
       s_info.channel_size = length;
-      if(!data->merge_size || data->merge_size + length < merge_limit)
+      if (!data->merge_size || data->merge_size + length < merge_limit)
       {
         logger_->sstream(Logging::Logger::TRACE, ASPECT)
           << "Load lob for channel = " << channel_id << " length = " << length;
@@ -652,9 +630,10 @@ namespace AdServer::ChannelSvcs
         return;
       }
     }
-    if(!check_values.empty())
+
+    if (!check_values.empty())
     {//there isn't data in database
-      for(auto it = check_values.begin(); it != check_values.end(); ++it)
+      for (auto it = check_values.begin(); it != check_values.end(); ++it)
       {
         check_ids.erase(*it);
         data->progress->set_progess(1);
@@ -672,7 +651,7 @@ namespace AdServer::ChannelSvcs
       TriggerParser::Exception,
       eh::Exception)*/
   {
-    if(data->check_data.empty())
+    if (data->check_data.empty())
     {
       return true;
     }
@@ -709,15 +688,14 @@ namespace AdServer::ChannelSvcs
       size_t update_size = get_update_size_(merge_limit);
       check_values.reserve(update_size);
       UpdateData::CheckContainerType::const_iterator it = check_ids.begin();
-      for(; it != check_ids.end() && count < update_size; ++it, count++)
+      for (; it != check_ids.end() && count < update_size; ++it, count++)
       {
         check_values.push_back(*it);
         stop_id = std::max(stop_id, *it);
       }
       all_loaded = (it == check_ids.end());
       logger_->sstream(Logging::Logger::DEBUG, ASPECT)
-        << "Use update size: " << update_size
-        << " count id: " << count;
+        << "Use update size: " << update_size << " count id: " << count;
       stmt->set_array(1, check_values);
     }
 
@@ -748,16 +726,15 @@ namespace AdServer::ChannelSvcs
     ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
     Generics::Time parse_time;
     all_timer.start();
-    while(check_it != check_ids.end())
+    while (check_it != check_ids.end())
     {
-      if(!rs_next || *check_it < cur_channel_id)
+      if (!rs_next || *check_it < cur_channel_id)
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           Stream::Error trace;
-          trace << "For channnel_id = " << *check_it
-            << " loadded from DB channeltrigger ids (";
-          for(TriggerList::const_iterator tr_it = cur_triggers.begin();
+          trace << "For channnel_id = " << *check_it << " loadded from DB channeltrigger ids (";
+          for (TriggerList::const_iterator tr_it = cur_triggers.begin();
               tr_it != cur_triggers.end(); ++tr_it)
           {
             trace << tr_it->channel_trigger_id << ",";
@@ -771,7 +748,7 @@ namespace AdServer::ChannelSvcs
         s_info.channel_size = channel_size;
         timer.start();
         SegmMap::const_iterator segm_it = segmentors_.find(s_info.country);
-        if(segm_it == segmentors_.end())
+        if (segm_it == segmentors_.end())
         {
           segm_it = segmentors_.find("");
         }
@@ -787,14 +764,12 @@ namespace AdServer::ChannelSvcs
         timer.stop_add(parse_time);
         //Use WORSE_MULT for compatibility to previous versions
         //don't try to count real channel size in contaier
-        data_channels_size +=
-          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
-        data->merge_size +=
-          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        data_channels_size += channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        data->merge_size += channel_size * TriggerParser::TriggerParser::WORSE_MULT;
 
         data->progress->set_progess(1);
         ++check_it; // current check_it already processed (found or not)
-        if(merge_limit < channel_size)
+        if (merge_limit < channel_size)
         {
           merge_limit = 0;
           all_loaded = false;
@@ -803,18 +778,16 @@ namespace AdServer::ChannelSvcs
         }
         else
         {
-          merge_limit -=
-            channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+          merge_limit -= channel_size * TriggerParser::TriggerParser::WORSE_MULT;
         }
         cur_triggers.clear();
         channel_size = 0;
 
-        if(!rs_next)
+        if (!rs_next)
         {
-          while(check_it != check_ids.end() && *check_it <= stop_id)
+          while (check_it != check_ids.end() && *check_it <= stop_id)
           {//skip all id, which is absent in database
-            data->container_ptr->select_parsed_triggers(
-              *check_it, cur_triggers, false);
+            data->container_ptr->select_parsed_triggers(*check_it, cur_triggers, false);
             //marks triggers on remove if they exists in Contailer
             data->progress->set_progess(1);
             ++check_it;
@@ -824,7 +797,7 @@ namespace AdServer::ChannelSvcs
       }
       else
       {
-        if(*check_it == cur_channel_id)
+        if (*check_it == cur_channel_id)
         {
           cur_triggers.push_back(Trigger());
           Trigger& trigger = cur_triggers.back();
@@ -833,7 +806,7 @@ namespace AdServer::ChannelSvcs
           rs->get_string(FT_TRIGGER).swap(trigger.trigger);
           trigger.type = rs->get_char(FT_TYPE);
           channel_size += trigger.trigger.size();
-          if(data->progress->get_progress() - progress != 0 &&
+          if (data->progress->get_progress() - progress != 0 &&
              channel_size * TriggerParser::TriggerParser::WORSE_MULT > merge_limit)
           {
             data->need_merge = true;
@@ -847,7 +820,7 @@ namespace AdServer::ChannelSvcs
       }
     }
     auto load_progress = data->progress->get_progress() - progress;
-    if(load_progress)
+    if (load_progress)
     {
       save_channel_size_(data_channels_size / load_progress + 1);
     }
@@ -856,8 +829,7 @@ namespace AdServer::ChannelSvcs
 
     all_timer.stop();
     logger_->sstream(Logging::Logger::DEBUG, ASPECT) << "Parsed: " << load_progress
-      << " Parse time: " << parse_time
-      << " Load time: " << all_timer.elapsed_time();
+      << " Parse time: " << parse_time << " Load time: " << all_timer.elapsed_time();
     logger_->sstream(Logging::Logger::DEBUG, ASPECT) << "Finish query: " <<
       (all_loaded ? "all loaded" : "partly loaded");
 
@@ -870,7 +842,7 @@ namespace AdServer::ChannelSvcs
     /*throw(ChannelServerException::Exception,
       ChannelServerException::TemporyUnavailable)*/
   {
-    if(!data->container_ptr->ready())
+    if (!data->container_ptr->ready())
     {
       Stream::Error err;
       err << __func__ << ": container not ready to parse";
@@ -880,7 +852,7 @@ namespace AdServer::ChannelSvcs
     try
     {
       conn = pg_pool_->get_connection();
-      if(load_triggers_(conn, merge_limit, data))
+      if (load_triggers_(conn, merge_limit, data))
       {
         load_uids_(conn, merge_limit, data);
       }
@@ -894,11 +866,7 @@ namespace AdServer::ChannelSvcs
       pg_pool_->bad_connection(conn);
       Stream::Error ostr;
       ostr << __func__ << ": Postgres::Exception : " << ex.what();
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::CRITICAL,
-        ASPECT,
-        "ADS-DB-0");
+      logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-DB-0");
       throw ChannelServerException::Exception(ostr);
     }
     catch(const TriggerParser::Exception& e)
@@ -934,11 +902,10 @@ namespace AdServer::ChannelSvcs
       unsigned int mask_act = (Channel::CH_ACTIVE | Channel::CH_WAIT);
       unsigned int mask_type = (Channel::CH_PAGE | Channel::CH_SEARCH);
       size_t j = 0;
-      for(ChannelIdToMatchInfo::const_iterator it = info.begin();
-          it != info.end(); ++it)
+      for (ChannelIdToMatchInfo::const_iterator it = info.begin(); it != info.end(); ++it)
       {
         const Channel& ch = it->second.channel;
-        if(ch.match_mask(mask_act) && ch.match_mask(mask_type))
+        if (ch.match_mask(mask_act) && ch.match_mask(mask_type))
         {
           ccg_keyword_ids[j++] = ch.get_id();
         }
@@ -978,14 +945,14 @@ namespace AdServer::ChannelSvcs
       unsigned char status;
       unsigned int ccg_keyword_id = data->start_ccg_id + 1;
 
-      while(rs->next())
+      while (rs->next())
       {
         unsigned int channel_id = rs->get_number<unsigned int>(CHANNEL_ID);
-        if(is_my_id_(channel_id))
+        if (is_my_id_(channel_id))
         {
           status = rs->get_char(CCG_STATUS);
           ccg_keyword_id = rs->get_number<unsigned int>(CCG_KEYWORD_ID);
-          if(status == 'A')
+          if (status == 'A')
           {
             ccg_ptr = new CCGKeyword;
             ccg_ptr->ccg_keyword_id = ccg_keyword_id;
@@ -994,15 +961,15 @@ namespace AdServer::ChannelSvcs
             bool incorrect_cpc = false;
             try
             {
-              ccg_ptr->max_cpc =
-                rs->get_decimal<CampaignSvcs::RevenueDecimal>(MAX_CPC);
+              ccg_ptr->max_cpc = rs->get_decimal<CampaignSvcs::RevenueDecimal>(MAX_CPC);
               ccg_ptr->ctr = rs->get_decimal<CampaignSvcs::CTRDecimal>(CTR);
             }
             catch(const CampaignSvcs::RevenueDecimal::Overflow&)
             {
               incorrect_cpc = true;
             }
-            if(incorrect_cpc || ccg_ptr->max_cpc >= data->cost_limit)
+
+            if (incorrect_cpc || ccg_ptr->max_cpc >= data->cost_limit)
             {
               Stream::Error err;
               err << __func__ << ": ccg keywrod with id = " << ccg_keyword_id
@@ -1016,13 +983,10 @@ namespace AdServer::ChannelSvcs
                 Logging::Logger::WARNING,
                 ChannelServerCore::TRAFFICKING_PROBLEM,
                 "ADS-TF-8001");
-              data->new_ccg_map->deactivate(
-                ccg_keyword_id,
-                data->new_master,
-                data->old_ccg_map);
+              data->new_ccg_map->deactivate(ccg_keyword_id, data->new_master, data->old_ccg_map);
               continue;
             }
-            else if(ccg_ptr->ctr < CampaignSvcs::CTRDecimal::ZERO)
+            else if (ccg_ptr->ctr < CampaignSvcs::CTRDecimal::ZERO)
             {
               Stream::Error err;
               err << __func__ << ": ccg keywrod with id = " << ccg_keyword_id
@@ -1031,11 +995,7 @@ namespace AdServer::ChannelSvcs
 
               ccg_ptr->ctr = CampaignSvcs::CTRDecimal::ZERO;
 
-              logger_->log(
-                err.str(),
-                Logging::Logger::ERROR,
-                ASPECT,
-                "ADS-IMPL-160");
+              logger_->log(err.str(), Logging::Logger::ERROR, ASPECT, "ADS-IMPL-160");
             }
             ccg_ptr->click_url = rs->get_string(CLICK_URL);
             ccg_ptr->original_keyword = rs->get_string(ORIGINAL_KEYWORD);
@@ -1049,14 +1009,12 @@ namespace AdServer::ChannelSvcs
           }
           else
           {
-            data->new_ccg_map->deactivate(
-              ccg_keyword_id,
-              data->new_master,
-              data->old_ccg_map);
+            data->new_ccg_map->deactivate(ccg_keyword_id, data->new_master, data->old_ccg_map);
           }
         }
       }
-      if(data->old_ccg_map)
+
+      if (data->old_ccg_map)
       {
         data->new_ccg_map->deactivate_nonactive(*data->old_ccg_map, data->new_master);
       }
@@ -1072,11 +1030,7 @@ namespace AdServer::ChannelSvcs
       pg_pool_->bad_connection(conn);
       Stream::Error ostr;
       ostr << __func__ << ": Postgres::Exception : " << ex.what();
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::CRITICAL,
-        ASPECT,
-        "ADS-DB-0");
+      logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-DB-0");
       throw ChannelServerException::Exception(ostr);
     }
     catch(const eh::Exception& ex)
@@ -1092,29 +1046,19 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
-      if(activation)
+      if (activation)
       {
-        logger_->log(
-          String::SubString("Begin activation db"),
-          Logging::Logger::NOTICE, ASPECT);
+        logger_->log(String::SubString("Begin activation db"), Logging::Logger::NOTICE, ASPECT);
         pg_env_->activate_object();
-        logger_->log(
-          String::SubString("End activation db"),
-          Logging::Logger::NOTICE, ASPECT);
+        logger_->log(String::SubString("End activation db"), Logging::Logger::NOTICE, ASPECT);
       }
       else
       {
-        logger_->log(
-          String::SubString("Begin deactivation db"),
-          Logging::Logger::NOTICE, ASPECT);
+        logger_->log(String::SubString("Begin deactivation db"), Logging::Logger::NOTICE, ASPECT);
         pg_env_->deactivate_object();
-        logger_->log(
-          String::SubString("End deactivation db"),
-          Logging::Logger::NOTICE, ASPECT);
+        logger_->log(String::SubString("End deactivation db"), Logging::Logger::NOTICE, ASPECT);
         pg_env_->wait_object();
-        logger_->log(
-          String::SubString("Wait deactivation db"),
-          Logging::Logger::NOTICE, ASPECT);
+        logger_->log(String::SubString("Wait deactivation db"), Logging::Logger::NOTICE, ASPECT);
       }
     }
     catch(const Generics::ActiveObject::AlreadyActive& e)
@@ -1163,27 +1107,24 @@ namespace AdServer::ChannelSvcs
       proxy_pool_(),
       load_session_()
   {
-    if(proxy_pool_config.iors_list.empty() && !servers.length())
+    if (proxy_pool_config.iors_list.empty() && !servers.length())
     {
       Stream::Error ostr;
       ostr << __func__ << ": empty list of ChannelProxy references";
       throw ChannelServerException::Exception(ostr);
     }
 
-    if(servers.length())
+    if (servers.length())
     {
-      load_session_.reset(
-        new ChannelLoadSessionImpl(servers, get_source_id()));
+      load_session_.reset(new ChannelLoadSessionImpl(servers, get_source_id()));
     }
 
-    if(!proxy_pool_config.iors_list.empty())
+    if (!proxy_pool_config.iors_list.empty())
     {
       try
       {
         proxy_pool_.reset(
-          new ChannelProxyPool(
-            proxy_pool_config,
-            CORBACommons::ChoosePolicyType::PT_BAD_SWITCH));
+          new ChannelProxyPool(proxy_pool_config, CORBACommons::ChoosePolicyType::PT_BAD_SWITCH));
       }
       catch(const eh::Exception& e)
       {
@@ -1200,13 +1141,11 @@ namespace AdServer::ChannelSvcs
   {
   }
 
-  void ChannelServerProxy::update(
-    unsigned long merge_limit,
-    UpdateData* data)
+  void ChannelServerProxy::update(unsigned long merge_limit, UpdateData* data)
     /*throw(ChannelServerException::Exception,
       ChannelServerException::TemporyUnavailable)*/
   {
-    if(!data->container_ptr->ready())
+    if (!data->container_ptr->ready())
     {
       Stream::Error err;
       err << __func__ << ": container not ready to parse";
@@ -1215,8 +1154,7 @@ namespace AdServer::ChannelSvcs
 
     Generics::Timer timer, all_timer;
     ChannelCurrent::UpdateData_var result;
-    const UpdateData::CheckContainerType& new_ids =
-      data->container_ptr->get_new();
+    const UpdateData::CheckContainerType& new_ids = data->container_ptr->get_new();
     UpdateData::CheckContainerType& check_ids = data->check_data;
     ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
     all_timer.start();
@@ -1225,15 +1163,14 @@ namespace AdServer::ChannelSvcs
     size_t calc_channel_size = 0;
     ChannelIdSeq in;
 
-    if(data->unmerged_data.empty())
+    if (data->unmerged_data.empty())
     {
-      size_t channels_size =
-        merge_limit / TriggerParser::TriggerParser::WORSE_MULT;
+      size_t channels_size = merge_limit / TriggerParser::TriggerParser::WORSE_MULT;
       UpdateData::CheckContainerType::iterator it = check_ids.begin();
-      for(; it != check_ids.end(); ++it, ++count)
+      for (; it != check_ids.end(); ++it, ++count)
       {
         const MatchInfo& s_info = (*a_info_ptr)[*it];
-        if(calc_channel_size + s_info.channel_size < channels_size || count == 0)
+        if (calc_channel_size + s_info.channel_size < channels_size || count == 0)
         {
           calc_channel_size += s_info.channel_size;
         }
@@ -1253,7 +1190,7 @@ namespace AdServer::ChannelSvcs
       FuncType func_ptr = &ChannelUpdateBase::update_triggers;
       do_query_(__func__, func_ptr, in, result);
 
-      if(result->source_id != get_source_id())
+      if (result->source_id != get_source_id())
       {
         data->new_master = data->old_master;
       }
@@ -1266,14 +1203,14 @@ namespace AdServer::ChannelSvcs
     ChannelCurrent::ChannelByIdSeq& channels = result->channels;
     unsigned long progress = data->progress->get_progress();
     Generics::Time parse_time;
-    if(channels.length())
+    if (channels.length())
     {
       TriggerList triggers;
-      for(; i < channels.length(); ++i)
+      for (; i < channels.length(); ++i)
       {
         size_t channel_size = 0;
         ChannelCurrent::ChannelById& value = channels[i];
-        if(check_ids.find(value.channel_id) == check_ids.end())
+        if (check_ids.find(value.channel_id) == check_ids.end())
         {
           Stream::Error oerr;
           oerr << __func__ << ": implementation error trigger with id = "
@@ -1281,7 +1218,7 @@ namespace AdServer::ChannelSvcs
           throw ChannelServerException::Exception(oerr);
         }
 
-        for(size_t j = 0; j < value.words.length(); ++j)
+        for (size_t j = 0; j < value.words.length(); ++j)
         {
           triggers.push_back(Trigger());
           Trigger& trigger = triggers.back();
@@ -1290,10 +1227,8 @@ namespace AdServer::ChannelSvcs
             value.words[j].trigger.get_buffer(),
             value.words[j].trigger.length(),
             trigger.trigger);
-          trigger.type =
-            Serialization::trigger_type(value.words[j].trigger.get_buffer());
-          trigger.negative =
-            Serialization::negative(value.words[j].trigger.get_buffer());
+          trigger.type = Serialization::trigger_type(value.words[j].trigger.get_buffer());
+          trigger.negative = Serialization::negative(value.words[j].trigger.get_buffer());
           channel_size += trigger.trigger.size();
         }
 
@@ -1301,7 +1236,7 @@ namespace AdServer::ChannelSvcs
         s_info.db_stamp = CorbaAlgs::unpack_time(value.stamp);
         s_info.stamp = s_info.db_stamp;
 
-        if(data->merge_size != 0 &&
+        if (data->merge_size != 0 &&
            channel_size * TriggerParser::TriggerParser::WORSE_MULT > merge_limit)
         {
           data->need_merge = true;
@@ -1331,9 +1266,8 @@ namespace AdServer::ChannelSvcs
           Commons::DEFAULT_MAX_HARD_WORD_SEQ,
           logger_);
         timer.stop_add(parse_time);
-        data->merge_size +=
-          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
-        if(merge_limit < channel_size)
+        data->merge_size += channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        if (merge_limit < channel_size)
         {
           merge_limit = 0;
           data->need_merge = true;
@@ -1341,27 +1275,25 @@ namespace AdServer::ChannelSvcs
           break;
         }
 
-        merge_limit -=
-          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        merge_limit -= channel_size * TriggerParser::TriggerParser::WORSE_MULT;
         triggers.clear();
       }
     }
 
-    if(i < channels.length())
+    if (i < channels.length())
     {
       logger_->sstream(Logging::Logger::NOTICE, ASPECT, "ADS-IMPL-47")
         << "Save unparsed data " << i << "/" << channels.length()
-        << ", merge size = " << data->merge_size
-        << ", first id = " << channels[i].channel_id;
+        << ", merge size = " << data->merge_size << ", first id = " << channels[i].channel_id;
       data->unmerged_data.set_unmered_data(result, i);
     }
-    else if(i != in.length())
+    else if (i != in.length())
     {
-      for(count = 0; count < in.length(); ++count)
+      for (count = 0; count < in.length(); ++count)
       {
-        if(check_ids.find(in[count]) != check_ids.end())
+        if (check_ids.find(in[count]) != check_ids.end())
         {
-          if(new_ids.find(in[count]) != new_ids.end())
+          if (new_ids.find(in[count]) != new_ids.end())
           {
             a_info_ptr->erase(in[count]);
           }
@@ -1374,8 +1306,7 @@ namespace AdServer::ChannelSvcs
     auto load_progress = data->progress->get_progress() - progress;
     logger_->sstream(Logging::Logger::DEBUG, ASPECT)
       << "Parsed: " << load_progress
-      << " Parse time: " << parse_time
-      << " Load time: " << all_timer.elapsed_time();
+      << " Parse time: " << parse_time << " Load time: " << all_timer.elapsed_time();
     logger_->sstream(Logging::Logger::DEBUG, ASPECT)
       << "Finish query: " << (check_ids.empty() ? "all loaded" : "partly loaded");
   }
@@ -1384,7 +1315,7 @@ namespace AdServer::ChannelSvcs
     /*throw(ChannelServerException::Exception)*/
   {
     ChannelIdToMatchInfo& info = *data->info_ptr;
-    if(data->start_ccg_id == 0)
+    if (data->start_ccg_id == 0)
     {
       data->new_ccg_map = new CCGMap;
     }
@@ -1398,10 +1329,9 @@ namespace AdServer::ChannelSvcs
     query.use_only_list = data->old_ccg_map ? false : true;
 
     std::set<unsigned long> old_active;
-    if(data->old_ccg_map)
+    if (data->old_ccg_map)
     {
-      for(CCGMap::ActiveMap::const_iterator it =
-          data->old_ccg_map->active().begin();
+      for (CCGMap::ActiveMap::const_iterator it = data->old_ccg_map->active().begin();
           it != data->old_ccg_map->active().end();
           ++it)
       {
@@ -1411,14 +1341,12 @@ namespace AdServer::ChannelSvcs
 
     size_t j = 0;
     const unsigned int mask_type = Channel::CH_PAGE | Channel::CH_SEARCH;
-    for(ChannelIdToMatchInfo::const_iterator it =
-          info.lower_bound(data->start_ccg_id);
+    for (ChannelIdToMatchInfo::const_iterator it = info.lower_bound(data->start_ccg_id);
         it != info.end() && j < query.channel_ids.length();
         ++it)
     {
       const Channel& ch = it->second.channel;
-      if(ch.match_mask(mask_type) &&
-         old_active.find(ch.get_id()) == old_active.end())
+      if (ch.match_mask(mask_type) && old_active.find(ch.get_id()) == old_active.end())
       {
         query.channel_ids[j++] = ch.get_id();
       }
@@ -1429,30 +1357,27 @@ namespace AdServer::ChannelSvcs
     FuncType func_ptr = &ChannelUpdateBase::update_all_ccg;
     do_query_(__func__, func_ptr, query, result);
 
-    if(result->source_id != get_source_id())
+    if (result->source_id != get_source_id())
     {
       data->new_master = data->old_master;
     }
 
     data->ccg_loaded = false;
-    if(result->keywords.length())
+    if (result->keywords.length())
     {
       CCGKeyword_var ccg_ptr;
-      for(size_t i = 0; i < result->keywords.length(); ++i)
+      for (size_t i = 0; i < result->keywords.length(); ++i)
       {
         ChannelCurrent::CCGKeyword& keyword = result->keywords[i];
-        if(is_my_id_(keyword.channel_id) &&
-           info.find(keyword.channel_id) != info.end())
+        if (is_my_id_(keyword.channel_id) && info.find(keyword.channel_id) != info.end())
         {
           ccg_ptr = new CCGKeyword;
           ccg_ptr->ccg_keyword_id = keyword.ccg_keyword_id;
           ccg_ptr->ccg_id = keyword.ccg_id;
           ccg_ptr->channel_id = keyword.channel_id;
           ccg_ptr->max_cpc =
-            CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-              keyword.max_cpc);
-          ccg_ptr->ctr =
-            CorbaAlgs::unpack_decimal<CampaignSvcs::CTRDecimal>(keyword.ctr);
+            CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(keyword.max_cpc);
+          ccg_ptr->ctr = CorbaAlgs::unpack_decimal<CampaignSvcs::CTRDecimal>(keyword.ctr);
           ccg_ptr->click_url = keyword.click_url;
           ccg_ptr->original_keyword = keyword.original_keyword;
           data->new_ccg_map->activate(
@@ -1467,7 +1392,7 @@ namespace AdServer::ChannelSvcs
     }
     else
     {
-      for(size_t i = 0; i < result->deleted.length(); ++i)
+      for (size_t i = 0; i < result->deleted.length(); ++i)
       {
         data->new_ccg_map->deactivate(
           result->deleted[i].id,
@@ -1476,22 +1401,20 @@ namespace AdServer::ChannelSvcs
       }
 
       data->ccg_loaded = true;
-      if(data->old_ccg_map)
+      if (data->old_ccg_map)
       {
-        for(CCGMap::ActiveMap::const_iterator old_iter =
-              data->old_ccg_map->active().begin();
+        for (CCGMap::ActiveMap::const_iterator old_iter = data->old_ccg_map->active().begin();
             old_iter != data->old_ccg_map->active().end();
             ++old_iter)
         {
-          if(info.find(old_iter->second->channel_id) != info.end())
+          if (info.find(old_iter->second->channel_id) != info.end())
           {
-            if(data->new_ccg_map->active().find(old_iter->first) ==
+            if (data->new_ccg_map->active().find(old_iter->first) ==
                  data->new_ccg_map->active().end() &&
                data->new_ccg_map->inactive().find(old_iter->first) ==
                  data->new_ccg_map->inactive().end())
             {
-              info[old_iter->second->channel_id].channel.ccg_keywords.push_back(
-                old_iter->second);
+              info[old_iter->second->channel_id].channel.ccg_keywords.push_back(old_iter->second);
               data->new_ccg_map->activate(
                 old_iter->first,
                 old_iter->second,
@@ -1522,27 +1445,27 @@ namespace AdServer::ChannelSvcs
     noexcept
   {
     int old_source_id = get_source_id();
-    if(old_source_id == -1)
+    if (old_source_id == -1)
     {
       set_sources_id_(new_source_id);
-      if(first_load_stamp != Generics::Time::ZERO)
+      if (first_load_stamp != Generics::Time::ZERO)
       {
         set_first_load_stamp_(first_load_stamp);
       }
     }
-    else if(new_source_id != old_source_id)
+    else if (new_source_id != old_source_id)
     {
       data->old_master -= longest_update;
       set_sources_id_(new_source_id);
-      if(first_load_stamp != Generics::Time::ZERO)
+      if (first_load_stamp != Generics::Time::ZERO)
       {
         set_first_load_stamp_(first_load_stamp);
       }
       return false;
     }
-    else if(get_first_load_stamp() != first_load_stamp)
+    else if (get_first_load_stamp() != first_load_stamp)
     {
-      if(first_load_stamp == Generics::Time::ZERO)
+      if (first_load_stamp == Generics::Time::ZERO)
       {
         data->new_master = data->old_master;
         return true;
@@ -1560,7 +1483,7 @@ namespace AdServer::ChannelSvcs
     /*throw(ChannelServerException::Exception,
       ChannelServerException::TemporyUnavailable)*/
   {
-    if(!data->container_ptr->ready())
+    if (!data->container_ptr->ready())
     {
       Stream::Error err;
       err << __func__ << ": container not ready to parse";
@@ -1569,20 +1492,15 @@ namespace AdServer::ChannelSvcs
 
     Generics::Timer all_timer;
     ChannelCurrent::CheckData_var res;
-    const UpdateData::CheckContainerType& new_ids =
-      data->container_ptr->get_new();
-    const UpdateData::CheckContainerType& up_ids =
-      data->container_ptr->get_updated();
+    const UpdateData::CheckContainerType& new_ids = data->container_ptr->get_new();
+    const UpdateData::CheckContainerType& up_ids = data->container_ptr->get_updated();
     ChannelCurrent::CheckQuery query;
     all_timer.start();
     query.colo_id = colo_;
     query.version << version_;
     query.new_ids.length(new_ids.size() + up_ids.size());
     std::copy(new_ids.begin(), new_ids.end(), query.new_ids.get_buffer());
-    std::copy(
-      up_ids.begin(),
-      up_ids.end(),
-      query.new_ids.get_buffer() + new_ids.size());
+    std::copy(up_ids.begin(), up_ids.end(), query.new_ids.get_buffer() + new_ids.size());
     query.use_only_list = data->old_master == Generics::Time::ZERO;
 
     do
@@ -1592,7 +1510,7 @@ namespace AdServer::ChannelSvcs
       FuncType func_ptr = &ChannelUpdateBase::check;
       do_query_(__func__, func_ptr, query, res);
     }
-    while(!check_source_(
+    while (!check_source_(
       data,
       res->source_id,
       CorbaAlgs::unpack_time(res->max_time),
@@ -1607,31 +1525,31 @@ namespace AdServer::ChannelSvcs
     ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
 
     check_ids = new_ids;
-    if(!res->special_adv)
+    if (!res->special_adv)
     {
       a_info_ptr->erase(c_special_adv);
       check_ids.erase(c_special_adv);
     }
-    if(!res->special_track)
+
+    if (!res->special_track)
     {
       a_info_ptr->erase(c_special_track);
       check_ids.erase(c_special_track);
     }
 
-    for(size_t i = 0; i < res->versions.length(); ++i)
+    for (size_t i = 0; i < res->versions.length(); ++i)
     {
       id = res->versions[i].id;
       time_value = CorbaAlgs::unpack_time(res->versions[i].stamp);
       fnd = a_info_ptr->find(id);
-      if(fnd == a_info_ptr->end())
+      if (fnd == a_info_ptr->end())
       {
-        ostr << "id = " << id << " was gotten, but it is not actual"
-          << std::endl;
+        ostr << "id = " << id << " was gotten, but it is not actual" << std::endl;
         continue;
       }
 
       MatchInfo& m_info = fnd->second;
-      if(time_value != m_info.db_stamp || up_ids.find(id) != up_ids.end())
+      if (time_value != m_info.db_stamp || up_ids.find(id) != up_ids.end())
       {
         m_info.channel_size = res->versions[i].size;
         check_ids.insert(check_ids.end(), id);
@@ -1639,34 +1557,27 @@ namespace AdServer::ChannelSvcs
     }
 
     all_timer.stop();
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      if(ostr.str().size())
+      if (ostr.str().size())
       {
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          ASPECT);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, ASPECT);
       }
 
       std::ostringstream need_load;
       need_load << "Need to load: ";
-      for(UpdateData::CheckContainerType::const_iterator it =
-            check_ids.begin();
+      for (UpdateData::CheckContainerType::const_iterator it = check_ids.begin();
           it != check_ids.end();
           ++it)
       {
-        if(it != check_ids.begin())
+        if (it != check_ids.begin())
         {
           need_load << ", ";
         }
         need_load << *it;
       }
       need_load << ". Load time: " << all_timer.elapsed_time();
-      logger_->log(
-        need_load.str(),
-        Logging::Logger::TRACE,
-        ASPECT);
+      logger_->log(need_load.str(), Logging::Logger::TRACE, ASPECT);
     }
   }
 
@@ -1698,46 +1609,42 @@ namespace AdServer::ChannelSvcs
     check_data.clear();
   }
 
-  Stream::Error& UpdateData::trace_ccg_info_changing(
-    Stream::Error& trace_out) const
+  Stream::Error& UpdateData::trace_ccg_info_changing(Stream::Error& trace_out) const
     noexcept
   {
     {
-      CCGMap::ActiveMap::const_iterator new_iter =
-        new_ccg_map->active().begin();
-      CCGMap::ActiveMap::const_iterator old_iter =
-        old_ccg_map->active().begin();
+      CCGMap::ActiveMap::const_iterator new_iter = new_ccg_map->active().begin();
+      CCGMap::ActiveMap::const_iterator old_iter = old_ccg_map->active().begin();
       std::list<unsigned long> added, removed, changed;
-      while(old_iter != old_ccg_map->active().end() ||
-            new_iter != new_ccg_map->active().end())
+      while (old_iter != old_ccg_map->active().end() || new_iter != new_ccg_map->active().end())
       {
-        if(new_iter == new_ccg_map->active().end())
+        if (new_iter == new_ccg_map->active().end())
         {
-          for(;old_iter != old_ccg_map->active().end(); ++old_iter)
+          for (;old_iter != old_ccg_map->active().end(); ++old_iter)
           {
             removed.push_back(old_iter->first);
           }
         }
         else if (old_iter == old_ccg_map->active().end())
         {
-          for(; new_iter != new_ccg_map->active().end(); ++new_iter)
+          for (; new_iter != new_ccg_map->active().end(); ++new_iter)
           {
             added.push_back(new_iter->first);
           }
         }
-        else if(old_iter->first < new_iter->first)
+        else if (old_iter->first < new_iter->first)
         {
           removed.push_back(old_iter->first);
           ++old_iter;
         }
-        else if(old_iter->first > new_iter->first)
+        else if (old_iter->first > new_iter->first)
         {
           added.push_back(new_iter->first);
           ++new_iter;
         }
         else
         {
-          if(old_iter->second->timestamp != new_iter->second->timestamp)
+          if (old_iter->second->timestamp != new_iter->second->timestamp)
           {
             changed.push_back(old_iter->first);
           }
@@ -1750,41 +1657,38 @@ namespace AdServer::ChannelSvcs
       trace_sequence("Added ccg to active", added, trace_out);
     }
     {
-      CCGMap::InactiveMap::const_iterator new_iter =
-        new_ccg_map->inactive().begin();
-      CCGMap::InactiveMap::const_iterator old_iter =
-        old_ccg_map->inactive().begin();
+      CCGMap::InactiveMap::const_iterator new_iter = new_ccg_map->inactive().begin();
+      CCGMap::InactiveMap::const_iterator old_iter = old_ccg_map->inactive().begin();
       std::list<unsigned long> added, removed, changed;
-      while(old_iter != old_ccg_map->inactive().end() ||
-            new_iter != new_ccg_map->inactive().end())
+      while (old_iter != old_ccg_map->inactive().end() || new_iter != new_ccg_map->inactive().end())
       {
-        if(new_iter == new_ccg_map->inactive().end())
+        if (new_iter == new_ccg_map->inactive().end())
         {
-          for(;old_iter != old_ccg_map->inactive().end(); ++old_iter)
+          for (;old_iter != old_ccg_map->inactive().end(); ++old_iter)
           {
             removed.push_back(old_iter->first);
           }
         }
         else if (old_iter == old_ccg_map->inactive().end())
         {
-          for(; new_iter != new_ccg_map->inactive().end(); ++new_iter)
+          for (; new_iter != new_ccg_map->inactive().end(); ++new_iter)
           {
             added.push_back(new_iter->first);
           }
         }
-        else if(old_iter->first < new_iter->first)
+        else if (old_iter->first < new_iter->first)
         {
           removed.push_back(old_iter->first);
           ++old_iter;
         }
-        else if(old_iter->first > new_iter->first)
+        else if (old_iter->first > new_iter->first)
         {
           added.push_back(new_iter->first);
           ++new_iter;
         }
         else
         {
-          if(old_iter->second.timestamp != new_iter->second.timestamp)
+          if (old_iter->second.timestamp != new_iter->second.timestamp)
           {
             changed.push_back(old_iter->first);
           }
@@ -1807,7 +1711,7 @@ namespace AdServer::ChannelSvcs
   {
     index_ = ind;
     data_ = result;
-    for(CORBA::ULong i = 0; i < index_; ++i)
+    for (CORBA::ULong i = 0; i < index_; ++i)
     {//try to free memory
       AdServer::ChannelSvcs::ChannelCurrent::TriggerInfoSeq words;
       (*data_).channels[i].words.swap(words);

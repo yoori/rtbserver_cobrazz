@@ -28,7 +28,7 @@ function(add_grpc_sources target proto_file output_dir)
     DEPENDS ${proto_abs}
   )
 
-  if(TARGET ${target})
+  if (TARGET ${target})
     target_sources(${target} PRIVATE ${pb_cc} ${grpc_cc})
   else()
     add_library(${target} STATIC ${pb_cc} ${grpc_cc})
@@ -45,7 +45,7 @@ function(add_adserver_grpc_client_sources target proto_file output_dir namespace
     OUTPUT_QUIET
     ERROR_QUIET
   )
-  if(NOT adserver_grpc_client_protobuf_result EQUAL 0)
+  if (NOT adserver_grpc_client_protobuf_result EQUAL 0)
     message(FATAL_ERROR
       "adserver grpc client generator requires python3.8 with google.protobuf "
       "(for example package python38-protobuf or python3-protobuf)")

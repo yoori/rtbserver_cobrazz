@@ -27,15 +27,13 @@ namespace
     void
     object_started(std::string_view path, void* context) const override
     {
-      static_cast<Context*>(context)->calls.emplace_back(
-        "object:" + std::string(path));
+      static_cast<Context*>(context)->calls.emplace_back("object:" + std::string(path));
     }
 
     void
     array_started(std::string_view path, void* context) const override
     {
-      static_cast<Context*>(context)->calls.emplace_back(
-        "array:" + std::string(path));
+      static_cast<Context*>(context)->calls.emplace_back("array:" + std::string(path));
     }
   };
 
@@ -47,10 +45,7 @@ namespace
     {}
 
     void
-    process_string(
-      std::string_view value,
-      std::string_view path,
-      void* context) const override
+    process_string(std::string_view value, std::string_view path, void* context) const override
     {
       auto* actual_context = static_cast<Context*>(context);
       actual_context->calls.emplace_back("view:" + std::string(path));
@@ -59,10 +54,7 @@ namespace
     }
 
     void
-    process_string(
-      std::string&& value,
-      std::string_view path,
-      void* context) const override
+    process_string(std::string&& value, std::string_view path, void* context) const override
     {
       auto* actual_context = static_cast<Context*>(context);
       actual_context->calls.emplace_back("move:" + std::string(path));
@@ -75,10 +67,7 @@ namespace
     public AdServer::Commons::FastJsonParser<>::ValueProcessor
   {
     void
-    process_string(
-      std::string&& value,
-      std::string_view path,
-      void* context) const override
+    process_string(std::string&& value, std::string_view path, void* context) const override
     {
       auto* actual_context = static_cast<Context*>(context);
       actual_context->calls.emplace_back("default:" + std::string(path));

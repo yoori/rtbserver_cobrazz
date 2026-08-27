@@ -25,7 +25,7 @@ use TestHTML;
 
 my %options = ();
 
-if ( !GetOptions(\%options, qw(path|p=s)) 
+if ( !GetOptions(\%options, qw(path|p=s))
     || (not defined $options{path}))
 {
   pod2usage(1);

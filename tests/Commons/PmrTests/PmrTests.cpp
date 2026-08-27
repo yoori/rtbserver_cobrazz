@@ -67,7 +67,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -78,17 +78,17 @@ namespace
     options.items = *opt_items;
     options.arena_initial_size = *opt_arena_initial_size;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.items == 0)
+    if (options.items == 0)
     {
       throw std::runtime_error("--items must be > 0");
     }
 
-    if(options.arena_initial_size == 0)
+    if (options.arena_initial_size == 0)
     {
       throw std::runtime_error("--arena-initial-size must be > 0");
     }
@@ -100,7 +100,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -124,7 +124,7 @@ namespace
   {
     std::vector<unsigned long> ids;
     ids.reserve(count);
-    for(std::size_t i = 0; i < count; ++i)
+    for (std::size_t i = 0; i < count; ++i)
     {
       ids.push_back(static_cast<unsigned long>(i * 2654435761UL + 17));
     }
@@ -158,12 +158,12 @@ namespace
     return measure([&]() {
       std::size_t checksum = 0;
 
-      for(unsigned long i = 0; i < count; ++i)
+      for (unsigned long i = 0; i < count; ++i)
       {
         std::pmr::monotonic_buffer_resource arena(arena_initial_size);
         std::pmr::unordered_set<unsigned long> values(&arena);
         values.reserve(ids.size());
-        for(const auto id : ids)
+        for (const auto id : ids)
         {
           values.emplace(id);
         }
@@ -183,12 +183,12 @@ namespace
     return measure([&]() {
       std::size_t checksum = 0;
 
-      for(unsigned long i = 0; i < count; ++i)
+      for (unsigned long i = 0; i < count; ++i)
       {
         Generics::MonoAllocatorArena arena(arena_initial_size);
         Generics::MonoUnorderedSet<unsigned long> values(&arena);
         values.reserve(ids.size());
-        for(const auto id : ids)
+        for (const auto id : ids)
         {
           values.emplace(id);
         }
@@ -200,18 +200,16 @@ namespace
   }
 
   MeasureResult
-  measure_std_unordered_set(
-    const std::vector<unsigned long>& ids,
-    unsigned long count)
+  measure_std_unordered_set(const std::vector<unsigned long>& ids, unsigned long count)
   {
     return measure([&]() {
       std::size_t checksum = 0;
 
-      for(unsigned long i = 0; i < count; ++i)
+      for (unsigned long i = 0; i < count; ++i)
       {
         std::unordered_set<unsigned long> values;
         values.reserve(ids.size());
-        for(const auto id : ids)
+        for (const auto id : ids)
         {
           values.emplace(id);
         }

@@ -28,7 +28,7 @@ namespace AdServer::UserInfoSvcs
     void
     make_dir_if_required(const std::string& path)
     {
-      if(::mkdir(path.c_str(), 0755) == -1 && errno != EEXIST)
+      if (::mkdir(path.c_str(), 0755) == -1 && errno != EEXIST)
       {
         eh::throw_errno_exception<UserBindProcessor::Exception>(
           "can't create directory '",
@@ -68,7 +68,7 @@ namespace AdServer::UserInfoSvcs
 
       // load chunks
       // TODO : concurrent loading - local taskrunner with destroy
-      for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
+      for (ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
           chunk_it != chunk_folders.end(); ++chunk_it)
       {
         const std::string user_bind_path = chunk_it->second + "/UserBind.rocksdb";
@@ -152,10 +152,10 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& bound_expire_time)
     /*throw(Exception)*/
   {
-    for(UserBindProcessorArray::iterator chunk_it = chunks_.begin();
+    for (UserBindProcessorArray::iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end(); ++chunk_it)
     {
-      if(*chunk_it)
+      if (*chunk_it)
       {
         (*chunk_it)->clear_expired(unbound_expire_time, bound_expire_time);
       }
@@ -165,10 +165,10 @@ namespace AdServer::UserInfoSvcs
   void
   UserBindContainer::dump() /*throw(Exception)*/
   {
-    for(UserBindProcessorArray::iterator chunk_it = chunks_.begin();
+    for (UserBindProcessorArray::iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end(); ++chunk_it)
     {
-      if(*chunk_it)
+      if (*chunk_it)
       {
         (*chunk_it)->dump();
       }
@@ -176,15 +176,13 @@ namespace AdServer::UserInfoSvcs
   }
 
   UserBindProcessor_var
-  UserBindContainer::get_chunk_(
-    const String::SubString& external_id) const
+  UserBindContainer::get_chunk_(const String::SubString& external_id) const
     /*throw(ChunkNotFound)*/
   {
     UserBindProcessor_var res = chunks_[
-      AdServer::Commons::external_id_distribution_hash(
-        external_id) % common_chunks_number_];
+      AdServer::Commons::external_id_distribution_hash(external_id) % common_chunks_number_];
 
-    if(!res)
+    if (!res)
     {
       throw ChunkNotFound("");
     }

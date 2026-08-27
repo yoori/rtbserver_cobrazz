@@ -40,16 +40,10 @@ namespace AdServer::Commons
       array_started(std::string_view path, void* context) const;
 
       virtual void
-      process_integer(
-        int64_t value,
-        std::string_view path,
-        void* context) const;
+      process_integer(int64_t value, std::string_view path, void* context) const;
 
       virtual void
-      process_float(
-        double value,
-        std::string_view path,
-        void* context) const;
+      process_float(double value, std::string_view path, void* context) const;
 
       virtual void
       process_number(
@@ -59,22 +53,13 @@ namespace AdServer::Commons
         void* context) const;
 
       virtual void
-      process_string(
-        std::string_view value,
-        std::string_view path,
-        void* context) const;
+      process_string(std::string_view value, std::string_view path, void* context) const;
 
       virtual void
-      process_string(
-        StringType&& value,
-        std::string_view path,
-        void* context) const;
+      process_string(StringType&& value, std::string_view path, void* context) const;
 
       virtual void
-      process_bool(
-        bool value,
-        std::string_view path,
-        void* context) const;
+      process_bool(bool value, std::string_view path, void* context) const;
 
       virtual void
       process_null(std::string_view path, void* context) const;
@@ -137,10 +122,7 @@ namespace AdServer::Commons
 
     template<typename StringCreatorType>
     void
-    parse(
-      std::string_view json,
-      void* context,
-      StringCreatorType&& string_creator) const;
+    parse(std::string_view json, void* context, StringCreatorType&& string_creator) const;
 
   private:
     struct Impl;
@@ -169,11 +151,7 @@ namespace AdServer::Commons
     StringCreatorType&& string_creator) const
   {
     using Creator = std::remove_reference_t<StringCreatorType>;
-    parse_(
-      json,
-      context,
-      &create_string_<Creator>,
-      &string_creator);
+    parse_(json, context, &create_string_<Creator>, &string_creator);
   }
 
   template<typename StringType>

@@ -39,10 +39,7 @@ public:
   };
 
 public:
-  CCGBudgetTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  CCGBudgetTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   {}
 
@@ -53,9 +50,7 @@ protected:
 
   virtual
   bool
-  checker_call(
-    const std::string& description,
-    AutoTest::Checker* checker)
+  checker_call(const std::string& description, AutoTest::Checker* checker)
     /*throw(eh::Exception)*/;
 
   virtual void tear_down();
@@ -69,25 +64,17 @@ private:
   static const TestCase GMT_MINUS_3_CASES[];
 
   template<size_t SIZE>
-  void process_cases(
-    const TestCase (&cases)[SIZE],
-    bool initial);
+  void process_cases(const TestCase (&cases)[SIZE], bool initial);
 
   template<size_t SIZE>
-  void process_dynamic_cases(
-    const TestCase (&cases)[SIZE]);
+  void process_dynamic_cases(const TestCase (&cases)[SIZE]);
 
-  void process_case(
-    const TestCase& test,
-    double& realized_budget,
-    bool initial);
+  void process_case(const TestCase& test, double& realized_budget, bool initial);
 
   std::map<std::string, double> budget_reached;
   std::map<std::string, Generics::Time> campaign_last_request;
 
-  Generics::Time get_switch_date_time(
-    const Generics::Time& time,
-    const char* tzname);
+  Generics::Time get_switch_date_time(const Generics::Time& time, const char* tzname);
   Generics::Time get_time_in_tz(const char* tzname);
 
   void spend_rest_budget(const std::string& prefix);

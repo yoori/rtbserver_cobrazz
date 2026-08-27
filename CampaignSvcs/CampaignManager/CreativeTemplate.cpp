@@ -10,9 +10,7 @@ namespace
   const Generics::Time UPDATE_PERIOD(60); // 1 min
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class KeyArgsCallback: public String::TextTemplate::ArgsCallback
   {
@@ -29,19 +27,14 @@ namespace CampaignSvcs
   class TemplateArgsCallback: public String::TextTemplate::ArgsCallback
   {
   public:
-    TemplateArgsCallback(
-      const TokenValueMap& request_args,
-      const TokenValueMap* creative_args)
+    TemplateArgsCallback(const TokenValueMap& request_args, const TokenValueMap* creative_args)
       : request_args_(request_args),
         creative_args_(creative_args)
     {}
 
   private:
     bool
-    get_argument(
-      const String::SubString& key,
-      std::string& result,
-      bool value) const override
+    get_argument(const String::SubString& key, std::string& result, bool value) const override
       /*throw(eh::Exception)*/
     {
       if (!value)
@@ -78,8 +71,7 @@ namespace CampaignSvcs
     TextTemplate(const char* file)
       /*throw(Template::FileNotExists, Exception)*/;
 
-    virtual std::string instantiate(
-      const String::TextTemplate::ArgsCallback& args)
+    virtual std::string instantiate(const String::TextTemplate::ArgsCallback& args)
       /*throw(InvalidParams,
             InvalidTemplate,
             ImplementationException)*/;
@@ -131,17 +123,13 @@ namespace CampaignSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't init template, caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't init template, caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
 
   std::string
-  Template::instantiate(
-    const TemplateParams* request_params,
-    const TemplateParamsList& params)
+  Template::instantiate(const TemplateParams* request_params, const TemplateParamsList& params)
     /*throw(InvalidParams,
       InvalidTemplate,
       ImplementationException)*/
@@ -163,8 +151,7 @@ namespace CampaignSvcs
   }
 
   std::string
-  TextTemplate::instantiate(
-    const String::TextTemplate::ArgsCallback& args)
+  TextTemplate::instantiate(const String::TextTemplate::ArgsCallback& args)
     /*throw(InvalidParams,
       InvalidTemplate,
       ImplementationException)*/
@@ -178,15 +165,13 @@ namespace CampaignSvcs
     catch(const String::TextTemplate::UnknownName& ex)
     {
       Stream::Error ostr;
-      ostr << "Can't instantiate creative. Caught UnknownName: " <<
-        ex.what();
+      ostr << "Can't instantiate creative. Caught UnknownName: " << ex.what();
       throw InvalidParams(ostr);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "Can't instantiate creative. Caught eh::Exception: " <<
-        ex.what();
+      ostr << "Can't instantiate creative. Caught eh::Exception: " << ex.what();
       throw ImplementationException(ostr);
     }
   }
@@ -199,9 +184,7 @@ namespace CampaignSvcs
   }
 
   void
-  Template::get_keys(
-    String::TextTemplate::Keys& keys,
-    const String::SubString& text)
+  Template::get_keys(String::TextTemplate::Keys& keys, const String::SubString& text)
     noexcept
   {
     std::stringstream ostr;
@@ -238,15 +221,13 @@ namespace CampaignSvcs
     {
       try
       {
-        return new TextTemplate(
-          creative_template_handler.file.c_str());
+        return new TextTemplate(creative_template_handler.file.c_str());
       }
       catch (const TextTemplate::Exception& ex)
       {
         Stream::Error ostr;
         ostr << "CreativeTemplateFactory:create(): "
-                "Can't init text template. Caught Exception: "
-             << ex.what();
+                "Can't init text template. Caught Exception: " << ex.what();
         throw Template::InvalidTemplate(ostr);
       }
     }
@@ -263,10 +244,7 @@ namespace CampaignSvcs
   }
 
   Template*
-  CreativeTemplateFactory::update(
-    Template* templ,
-    const Handler& handler,
-    State& state) const
+  CreativeTemplateFactory::update(Template* templ, const Handler& handler, State& state) const
   {
     state = Generics::Time::get_time_of_day();
 
@@ -281,5 +259,4 @@ namespace CampaignSvcs
     }
   }
 
-} /* CampaignSvcs */
-} /* AdServer */
+} // namespace AdServer::CampaignSvcs

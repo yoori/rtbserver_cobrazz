@@ -16,19 +16,19 @@ sub create_text_campaigns
     name => "Size-" .  $name,
     max_text_creatives => $max_creative_size });
 
-  my $publisher = 
+  my $publisher =
    $ns->create(Publisher => {
      name => "Publisher-" . $name,
      size_id => $size });
 
   my $keyword = make_autotest_name($ns, $name);
 
-  my $account = 
+  my $account =
     $ns->create(Account => {
       name => 'Advertiser-' . $name . '-Channel',
       role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $channel = 
+  my $channel =
       $ns->create(DB::BehavioralChannel->blank(
         name => 'Channel-' . $name,
         account_id => $account,
@@ -39,10 +39,10 @@ sub create_text_campaigns
             trigger_type => 'P') ]));
 
   my $idx = 0;
-  foreach my $cpc_bid (@{$args->{cpc_bids}}) 
+  foreach my $cpc_bid (@{$args->{cpc_bids}})
   {
-    my $campaign = 
-      $ns->create(TextAdvertisingCampaign => { 
+    my $campaign =
+      $ns->create(TextAdvertisingCampaign => {
         name => 'Campaign-' . $name . "-" . ++$idx,
         size_id => $size,
         template_id =>  DB::Defaults::instance()->text_template,
@@ -73,7 +73,7 @@ sub create_channel_campaigns
     name => "Size-" .  $name,
     max_text_creatives => $max_creative_size });
 
-  my $publisher = 
+  my $publisher =
    $ns->create(Publisher => {
      name => "Publisher-" . $name,
      size_id => $size });
@@ -84,12 +84,12 @@ sub create_channel_campaigns
   {
     my $keyword = make_autotest_name($ns, $name);
 
-    my $account = 
+    my $account =
         $ns->create(Account => {
           name => 'Advertiser-' . $name . '-Channel',
           role_id => DB::Defaults::instance()->cmp_role });
 
-    $channel = 
+    $channel =
       $ns->create(DB::BehavioralChannel->blank(
         name => 'Channel-' . $name,
         account_id => $account,
@@ -105,9 +105,9 @@ sub create_channel_campaigns
   }
 
   my $idx = 0;
-  foreach my $revenues (@{$args->{revenues}}) 
+  foreach my $revenues (@{$args->{revenues}})
   {
-    my $account = 
+    my $account =
         $ns->create(Account => {
           name => 'Advertiser-' . $name  . "-" . ++$idx ,
           role_id => DB::Defaults::instance()->advertiser_role });
@@ -117,13 +117,13 @@ sub create_channel_campaigns
     {
 
       my $keyword = make_autotest_name($ns, $name . "-" . $idx );
-      
-      my $cmp = 
+
+      my $cmp =
          $ns->create(Account => {
             name => 'CMP-' . $name  . "-" . $idx ,
             role_id => DB::Defaults::instance()->cmp_role });
 
-      $cmp_channel = 
+      $cmp_channel =
         $ns->create(DB::BehavioralChannel->blank(
           name => 'Channel-' . $name . "-" . $idx ,
           account_id => $cmp,
@@ -158,6 +158,7 @@ sub create_channel_campaigns
     {
       $ns->output($name . "/CCCPM"  . $idx, $revenues->{cpm} / 1000);
     }
+
     if (defined $revenues->{cpc})
     {
       $ns->output($name . "/CCCPC"  . $idx, $revenues->{cpc});
@@ -165,7 +166,7 @@ sub create_channel_campaigns
   }
 
   $ns->output($name . "/TID", $publisher->{tag_id});
-  
+
 }
 
 sub create_display_campaign
@@ -174,20 +175,20 @@ sub create_display_campaign
 
   my $keyword = make_autotest_name($ns, $name);
 
-  my $publisher = 
+  my $publisher =
    $ns->create(Publisher => {
      name => "Publisher-" . $name });
 
-  my $account = 
+  my $account =
     $ns->create(Account => {
       name => 'Advertiser-' . $name,
       role_id => DB::Defaults::instance()->advertiser_role });
 
   my $channel = undef;
-  if (not (defined $args->{flags} && 
+  if (not (defined $args->{flags} &&
            ($args->{flags} & DB::Campaign::RON)))
   {
-    my $account = 
+    my $account =
       $ns->create(Account => {
          name => 'CMP-' . $name,
          role_id => DB::Defaults::instance()->cmp_role });
@@ -211,7 +212,7 @@ sub create_display_campaign
     campaigncreativegroup_cpm => $args->{cpm},
     campaigncreativegroup_cpc => $args->{cpc},
     campaigncreativegroup_cpa => $args->{cpa},
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       defined $args->{flags}? $args->{flags}:
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
     site_links => [{ site_id => $publisher->{site_id} }]});
@@ -220,19 +221,22 @@ sub create_display_campaign
   $ns->output($name . "/KWD", $keyword);
   $ns->output($name . "/CC", $campaign->{cc_id});
   $ns->output($name . "/CCG", $campaign->{ccg_id});
-  if (defined  $args->{channel_rate}) 
+  if (defined  $args->{channel_rate})
   {
     $ns->output($name . "/CHANNELCPM", $args->{channel_rate} / 1000);
   }
-  if (defined $args->{cpm}) 
+
+  if (defined $args->{cpm})
   {
     $ns->output($name . "/CCCPM", $args->{cpm} / 1000);
   }
-  if (defined $args->{cpc}) 
+
+  if (defined $args->{cpc})
   {
     $ns->output($name . "/CCCPC", $args->{cpc});
   }
-  if (defined $args->{cpa}) 
+
+  if (defined $args->{cpa})
   {
     $ns->output($name . "/CCCPA", $args->{cpa});
   }
@@ -242,7 +246,7 @@ sub init
 {
   my ($self, $ns) = @_;
 
-  my $inactive_period = 
+  my $inactive_period =
     get_config($ns->pq_dbh, 'USER_INACTIVITY_TIMEOUT');
 
 
@@ -270,61 +274,61 @@ sub init
 
   # Campaigns
   $self->create_display_campaign(
-    $ns, 'CLICKFRAUD', 
+    $ns, 'CLICKFRAUD',
     {cpm => 20, channel_rate => 20 });
 
   $self->create_display_campaign(
-    $ns, 'GENUINE', 
+    $ns, 'GENUINE',
     {cpm => 20, channel_rate => 20 });
 
   $self->create_display_campaign(
-    $ns, 'CPA', 
+    $ns, 'CPA',
     {cpa => 1, channel_rate => 20 });
 
   $self->create_display_campaign(
-   $ns, 'CPM', 
+   $ns, 'CPM',
    {cpm => 2, channel_rate => 20 });
 
   $self->create_channel_campaigns(
-    $ns, 'CHANNELTEXT', 
-    {revenues => [ { cpm => 31, channel_rate => 25 }, 
+    $ns, 'CHANNELTEXT',
+    {revenues => [ { cpm => 31, channel_rate => 25 },
                    { cpm => 29, channel_rate => 30 } ] });
 
   $self->create_display_campaign(
-   $ns, 'UNCONFIRMEDIMPS', 
+   $ns, 'UNCONFIRMEDIMPS',
    {cpm => 2, channel_rate => 20 });
 
   $self->create_display_campaign(
-    $ns, 'NOFRAUD', 
+    $ns, 'NOFRAUD',
     {cpa => 15, channel_rate => 20 });
 
   $self->create_channel_campaigns(
-    $ns, 'TANOFRAUD', 
-    {revenues => [ { cpm => 31, channel_rate => 25 }, 
+    $ns, 'TANOFRAUD',
+    {revenues => [ { cpm => 31, channel_rate => 25 },
                    { cpm => 29, channel_rate => 30 } ] });
 
   $self->create_channel_campaigns(
-    $ns, 'TAFRAUD', 
+    $ns, 'TAFRAUD',
     {revenues => [ {cpc => 4 },
                    {cpc => 3 },
                    {cpc => 2 },
-                   {cpc => 1 } ], 
+                   {cpc => 1 } ],
      channel_rate => 15  });
 
   $self->create_display_campaign(
-    $ns, 'IMPFRAUD', 
+    $ns, 'IMPFRAUD',
     {cpm => 20, channel_rate => 20 });
 
   $self->create_display_campaign(
-    $ns, 'IMPWAITFRAUD', 
+    $ns, 'IMPWAITFRAUD',
     {cpm => 20, channel_rate => 20 });
 
   $self->create_display_campaign(
-    $ns, 'FRAUDOVERRIDE', 
+    $ns, 'FRAUDOVERRIDE',
     {cpm => 10, channel_rate => 10 });
 
   $self->create_text_campaigns(
-    $ns, 'FRAUDTEXT', 
+    $ns, 'FRAUDTEXT',
     { cpc_bids => [40, 30] });
 
   $self->create_display_campaign(

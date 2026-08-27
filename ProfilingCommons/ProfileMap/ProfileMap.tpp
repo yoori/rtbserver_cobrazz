@@ -1,44 +1,35 @@
 #pragma once
 
-namespace AdServer
+namespace AdServer::ProfilingCommons::ProfileMapDetail
 {
-namespace ProfilingCommons
-{
-  namespace ProfileMapDetail
+  inline Generics::SmartMemBuf_var
+  copy_own_profile_(const Generics::ConstSmartMemBuf* profile)
   {
-    inline Generics::SmartMemBuf_var
-    copy_own_profile_(const Generics::ConstSmartMemBuf* profile)
+    if(profile)
     {
-      if(profile)
-      {
-        Generics::SmartMemBuf_var result(new Generics::SmartMemBuf());
-        result->membuf().assign(
-          profile->membuf().data(),
-          profile->membuf().size());
-        return result;
-      }
-
-      return Generics::SmartMemBuf_var();
+      Generics::SmartMemBuf_var result(new Generics::SmartMemBuf());
+      result->membuf().assign(profile->membuf().data(), profile->membuf().size());
+      return result;
     }
-  }
 
+    return Generics::SmartMemBuf_var();
+  }
+}
+
+namespace AdServer::ProfilingCommons
+{
   template<typename KeyType>
   void
-  ProfileMap<KeyType>::wait_preconditions(
-    const KeyType&,
-    OperationPriority) const
+  ProfileMap<KeyType>::wait_preconditions(const KeyType&, OperationPriority) const
     /*throw(Exception)*/
   {}
 
   template<typename KeyType>
   Generics::SmartMemBuf_var
-  ProfileMap<KeyType>::get_own_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  ProfileMap<KeyType>::get_own_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(Exception)*/
   {
-    return ProfileMapDetail::copy_own_profile_(
-      get_profile(key, last_access_time));
+    return ProfileMapDetail::copy_own_profile_(get_profile(key, last_access_time));
   }
 
   template<typename KeyType>
@@ -51,9 +42,7 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   void
-  ProfileMap<KeyType>::process_keys(
-    std::function<void(const KeyType&)>,
-    std::function<void(void)>)
+  ProfileMap<KeyType>::process_keys(std::function<void(const KeyType&)>, std::function<void(void)>)
     /*throw(Exception)*/
   {
     throw Exception("process_keys isn't supported");
@@ -113,9 +102,7 @@ namespace ProfilingCommons
       key,
       [
         callback = std::move(callback)
-      ](
-        Generics::ConstSmartMemBuf_var profile,
-        std::optional<std::string> error) mutable
+      ](Generics::ConstSmartMemBuf_var profile, std::optional<std::string> error) mutable
       {
         Generics::SmartMemBuf_var own_profile;
         if(!error)
@@ -147,10 +134,7 @@ namespace ProfilingCommons
           std::optional<Generics::Time> last_access_time,
           GetCallback callback)
         {
-          get_profile_async(
-            key,
-            std::move(callback),
-            last_access_time);
+          get_profile_async(key, std::move(callback), last_access_time);
         },
         key,
         last_access_time);
@@ -177,10 +161,7 @@ namespace ProfilingCommons
           std::optional<Generics::Time> last_access_time,
           typename AsyncProfileMap<KeyType>::GetOwnCallback callback)
         {
-          get_own_profile_async(
-            key,
-            std::move(callback),
-            last_access_time);
+          get_own_profile_async(key, std::move(callback), last_access_time);
         },
         key,
         last_access_time);
@@ -200,8 +181,7 @@ namespace ProfilingCommons
     const Generics::ConstSmartMemBuf* mem_buf,
     const Generics::Time& now)
   {
-    Generics::ConstSmartMemBuf_var profile_holder(
-      ReferenceCounting::add_ref(mem_buf));
+    Generics::ConstSmartMemBuf_var profile_holder(ReferenceCounting::add_ref(mem_buf));
     auto error = co_await AdServer::Commons::async_callback<
       std::optional<std::string> >(
         [this](
@@ -210,11 +190,7 @@ namespace ProfilingCommons
           const Generics::Time& now,
           SaveCallback callback)
         {
-          save_profile_async(
-            key,
-            profile_holder,
-            now,
-            std::move(callback));
+          save_profile_async(key, profile_holder, now, std::move(callback));
         },
         key,
         profile_holder,
@@ -230,22 +206,14 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   AdServer::Commons::Awaitable<bool>
-  AsyncProfileMap<KeyType>::co_remove_profile(
-    const KeyType& key,
-    OperationPriority op_priority)
+  AsyncProfileMap<KeyType>::co_remove_profile(const KeyType& key, OperationPriority op_priority)
   {
     auto [result, error] = co_await AdServer::Commons::async_callback<
       bool,
       std::optional<std::string> >(
-        [this](
-          const KeyType& key,
-          OperationPriority op_priority,
-          RemoveCallback callback)
+        [this](const KeyType& key, OperationPriority op_priority, RemoveCallback callback)
         {
-          remove_profile_async(
-            key,
-            op_priority,
-            std::move(callback));
+          remove_profile_async(key, op_priority, std::move(callback));
         },
         key,
         op_priority);
@@ -260,17 +228,12 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   AdServer::Commons::Awaitable<void>
-  AsyncProfileMap<KeyType>::co_clear_expired(
-    const Generics::Time& expire_time)
+  AsyncProfileMap<KeyType>::co_clear_expired(const Generics::Time& expire_time)
   {
     co_await AdServer::Commons::async_callback<>(
-      [this](
-        const Generics::Time& expire_time,
-        CompleteCallback complete)
+      [this](const Generics::Time& expire_time, CompleteCallback complete)
       {
-        clear_expired_async(
-          expire_time,
-          std::move(complete));
+        clear_expired_async(expire_time, std::move(complete));
       },
       expire_time);
 
@@ -293,8 +256,7 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   bool
-  AsyncProfileMapToProfileMap<KeyType>::check_profile(
-    const KeyType& key) const
+  AsyncProfileMapToProfileMap<KeyType>::check_profile(const KeyType& key) const
   {
     using Result = std::pair<bool, std::optional<std::string>>;
     std::promise<Result> promise;
@@ -330,15 +292,11 @@ namespace ProfilingCommons
 
     async_profile_map_->get_profile_async(
       key,
-      [&promise](
-        Generics::ConstSmartMemBuf_var profile,
-        std::optional<std::string> error)
+      [&promise](Generics::ConstSmartMemBuf_var profile, std::optional<std::string> error)
       {
         promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },
-      last_access_time ?
-        std::optional<Generics::Time>(*last_access_time) :
-        std::nullopt);
+      last_access_time ? std::optional<Generics::Time>(*last_access_time) : std::nullopt);
 
     const auto result = future.get();
     if(result.second)
@@ -363,17 +321,11 @@ namespace ProfilingCommons
 
     async_profile_map_->get_own_profile_async(
       key,
-      [&promise](
-        Generics::SmartMemBuf_var profile,
-        std::optional<std::string> error)
+      [&promise](Generics::SmartMemBuf_var profile, std::optional<std::string> error)
       {
-        promise.set_value(std::make_pair(
-          std::move(profile),
-          std::move(error)));
+        promise.set_value(std::make_pair(std::move(profile), std::move(error)));
       },
-      last_access_time ?
-        std::optional<Generics::Time>(*last_access_time) :
-        std::nullopt);
+      last_access_time ? std::optional<Generics::Time>(*last_access_time) : std::nullopt);
 
     auto result = future.get();
     if(result.second)
@@ -442,20 +394,13 @@ namespace ProfilingCommons
 
   template<typename KeyType>
   void
-  AsyncProfileMapToProfileMap<KeyType>::clear_expired(
-    const Generics::Time& expire_time)
+  AsyncProfileMapToProfileMap<KeyType>::clear_expired(const Generics::Time& expire_time)
   {
     std::promise<void> promise;
     std::future<void> future = promise.get_future();
 
-    async_profile_map_->clear_expired_async(
-      expire_time,
-      [&promise]()
-      {
-        promise.set_value();
-      });
+    async_profile_map_->clear_expired_async(expire_time, [&promise]() { promise.set_value(); });
 
     future.get();
   }
-}
 }

@@ -1,8 +1,6 @@
 #pragma once
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /** ChunkedProfileMap */
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
@@ -18,11 +16,10 @@ namespace ProfilingCommons
   {
     chunks_.resize(common_chunks_number);
 
-    for(typename ChunkIdToProfileMap::const_iterator chunk_it =
-          chunks.begin();
+    for (typename ChunkIdToProfileMap::const_iterator chunk_it = chunks.begin();
         chunk_it != chunks.end(); ++chunk_it)
     {
-      if(chunk_it->first >= common_chunks_number)
+      if (chunk_it->first >= common_chunks_number)
       {
         throw Exception("incorrect chunk number");
       }
@@ -37,9 +34,7 @@ namespace ProfilingCommons
   wait_preconditions(const KeyType& key, OperationPriority priority) const
     /*throw(ChunkNotFound, Exception)*/
   {
-    return get_chunk_(key_hash_(key) % common_chunks_number_)->wait_preconditions(
-      key,
-      priority);
+    return get_chunk_(key_hash_(key) % common_chunks_number_)->wait_preconditions(key, priority);
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
@@ -59,8 +54,7 @@ namespace ProfilingCommons
   {
     try
     {
-      return get_chunk(key_hash_(key) % common_chunks_number_)->check_profile(
-        key);
+      return get_chunk(key_hash_(key) % common_chunks_number_)->check_profile(key);
     }
     catch(const ChunkNotFound&)
     {
@@ -71,7 +65,7 @@ namespace ProfilingCommons
       throw Exception(ex.what());
     }
   }
-  
+
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   void
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
@@ -87,26 +81,23 @@ namespace ProfilingCommons
     }
     catch(const ChunkNotFound& ex)
     {
-      if(callback) callback(false, ex.what());
+      if (callback) callback(false, ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      if(callback) callback(false, ex.what());
+      if (callback) callback(false, ex.what());
     }
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   Generics::ConstSmartMemBuf_var
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  get_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  get_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(ChunkNotFound, Exception)*/
   {
     try
     {
-      return get_chunk(key_hash_(key) % common_chunks_number_)->get_profile(
-        key, last_access_time);
+      return get_chunk(key_hash_(key) % common_chunks_number_)->get_profile(key, last_access_time);
     }
     catch(const ChunkNotFound&)
     {
@@ -121,9 +112,7 @@ namespace ProfilingCommons
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   Generics::SmartMemBuf_var
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  get_own_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  get_own_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(ChunkNotFound, Exception)*/
   {
     try
@@ -158,11 +147,11 @@ namespace ProfilingCommons
     }
     catch(const ChunkNotFound& ex)
     {
-      if(callback) callback(Generics::ConstSmartMemBuf_var(), ex.what());
+      if (callback) callback(Generics::ConstSmartMemBuf_var(), ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      if(callback) callback(Generics::ConstSmartMemBuf_var(), ex.what());
+      if (callback) callback(Generics::ConstSmartMemBuf_var(), ex.what());
     }
 
     return Generics::ConstSmartMemBuf_var();
@@ -179,18 +168,15 @@ namespace ProfilingCommons
     try
     {
       return get_chunk(key_hash_(key) % common_chunks_number_)->
-        get_own_profile_async(
-          key,
-          std::move(callback),
-          last_access_time);
+        get_own_profile_async(key, std::move(callback), last_access_time);
     }
     catch(const ChunkNotFound& ex)
     {
-      if(callback) callback(Generics::SmartMemBuf_var(), ex.what());
+      if (callback) callback(Generics::SmartMemBuf_var(), ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      if(callback) callback(Generics::SmartMemBuf_var(), ex.what());
+      if (callback) callback(Generics::SmartMemBuf_var(), ex.what());
     }
 
     return Generics::SmartMemBuf_var();
@@ -240,11 +226,11 @@ namespace ProfilingCommons
     }
     catch(const ChunkNotFound& ex)
     {
-      if(callback) callback(ex.what());
+      if (callback) callback(ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      if(callback) callback(ex.what());
+      if (callback) callback(ex.what());
     }
   }
 
@@ -256,8 +242,7 @@ namespace ProfilingCommons
   {
     try
     {
-      return get_chunk(key_hash_(key) % common_chunks_number_)->remove_profile(
-        key, priority);
+      return get_chunk(key_hash_(key) % common_chunks_number_)->remove_profile(key, priority);
     }
     catch(const ChunkNotFound&)
     {
@@ -286,21 +271,18 @@ namespace ProfilingCommons
     }
     catch(const ChunkNotFound& ex)
     {
-      if(callback) callback(false, ex.what());
+      if (callback) callback(false, ex.what());
     }
     catch(const eh::Exception& ex)
     {
-      if(callback) callback(false, ex.what());
+      if (callback) callback(false, ex.what());
     }
   }
 
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   typename ProfileMapType::Transaction_var
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  get_transaction(
-    const KeyType& key,
-    bool check_max_waiters,
-    OperationPriority op_priority)
+  get_transaction(const KeyType& key, bool check_max_waiters, OperationPriority op_priority)
     /*throw(ChunkNotFound,
       typename BaseProfileMap::MaxWaitersReached,
       typename BaseProfileMap::Exception)*/
@@ -312,13 +294,9 @@ namespace ProfilingCommons
   template<typename KeyType, typename ProfileMapType, typename KeyHashType>
   AdServer::Commons::StartableAwaitable<typename ProfileMapType::Transaction_var>
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
-  co_get_transaction(
-    const KeyType& key,
-    bool check_max_waiters,
-    OperationPriority op_priority)
+  co_get_transaction(const KeyType& key, bool check_max_waiters, OperationPriority op_priority)
   {
-    co_return co_await get_chunk(
-      key_hash_(key) % common_chunks_number_)->co_get_transaction(
+    co_return co_await get_chunk(key_hash_(key) % common_chunks_number_)->co_get_transaction(
         key, check_max_waiters, op_priority);
   }
 
@@ -331,38 +309,36 @@ namespace ProfilingCommons
   {
     try
     {
-      std::shared_ptr<std::atomic_size_t> remaining =
-        std::make_shared<std::atomic_size_t>(0);
-      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+      std::shared_ptr<std::atomic_size_t> remaining = std::make_shared<std::atomic_size_t>(0);
+      for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
-        if(chunk_it->in())
+        if (chunk_it->in())
         {
           remaining->fetch_add(1, std::memory_order_relaxed);
         }
       }
 
-      if(remaining->load(std::memory_order_relaxed) == 0)
+      if (remaining->load(std::memory_order_relaxed) == 0)
       {
-        if(complete) complete();
+        if (complete) complete();
         return;
       }
 
       auto shared_complete = std::make_shared<typename AsyncProfileMap<KeyType>::CompleteCallback>(
         std::move(complete));
-      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+      for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
-        if(chunk_it->in())
+        if (chunk_it->in())
         {
           (*chunk_it)->clear_expired_async(
             expire_time,
             [remaining, shared_complete]() mutable
             {
-              if(remaining->fetch_sub(1, std::memory_order_acq_rel) == 1 &&
-                *shared_complete)
+              if (remaining->fetch_sub(1, std::memory_order_acq_rel) == 1 && *shared_complete)
               {
                 (*shared_complete)();
               }
@@ -372,7 +348,7 @@ namespace ProfilingCommons
     }
     catch(...)
     {
-      if(complete) complete();
+      if (complete) complete();
     }
   }
 
@@ -386,17 +362,17 @@ namespace ProfilingCommons
   {
     try
     {
-      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+      for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
-        if(chunk_it->in())
+        if (chunk_it->in())
         {
           (*chunk_it)->process_keys(process_key, std::function<void(void)>());
         }
       }
 
-      if(process_complete)
+      if (process_complete)
       {
         process_complete();
       }
@@ -415,11 +391,11 @@ namespace ProfilingCommons
   {
     try
     {
-      for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+      for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
           chunk_it != chunks_.end();
           ++chunk_it)
       {
-        if(chunk_it->in())
+        if (chunk_it->in())
         {
           (*chunk_it)->clear_expired(expire_time);
         }
@@ -437,12 +413,12 @@ namespace ProfilingCommons
   size() const noexcept
   {
     unsigned long res = 0;
-      
-    for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+
+    for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end();
         ++chunk_it)
     {
-      if(chunk_it->in())
+      if (chunk_it->in())
       {
         res += (*chunk_it)->size();
       }
@@ -457,12 +433,12 @@ namespace ProfilingCommons
   area_size() const noexcept
   {
     unsigned long res = 0;
-      
-    for(typename ChunkArray::const_iterator chunk_it = chunks_.begin();
+
+    for (typename ChunkArray::const_iterator chunk_it = chunks_.begin();
         chunk_it != chunks_.end();
         ++chunk_it)
     {
-      if(chunk_it->in())
+      if (chunk_it->in())
       {
         res += (*chunk_it)->area_size();
       }
@@ -488,7 +464,7 @@ namespace ProfilingCommons
   {
     BaseProfileMap_var res = get_chunk_(chunk_id);
 
-    if(!res.in())
+    if (!res.in())
     {
       Stream::Error ostr;
       ostr << "chunk #" << chunk_id << " isn't defined in container";
@@ -512,12 +488,11 @@ namespace ProfilingCommons
   ChunkedProfileMap<KeyType, ProfileMapType, KeyHashType>::
   get_chunk_(unsigned long chunk_id) const noexcept
   {
-    if(chunk_id > common_chunks_number_ || !chunks_[chunk_id].in())
+    if (chunk_id > common_chunks_number_ || !chunks_[chunk_id].in())
     {
       return BaseProfileMap_var();
     }
 
     return chunks_[chunk_id];
   }
-}
 }

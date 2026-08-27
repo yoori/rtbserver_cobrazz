@@ -27,11 +27,10 @@ namespace Declaration
   }
 
   BaseReader_var
-  CompleteTemplateDescriptor::complete_template_reader(
-    const BaseReaderList& args)
+  CompleteTemplateDescriptor::complete_template_reader(const BaseReaderList& args)
     /*throw(InvalidParam)*/
   {
-    if(args.size() != args_.size())
+    if (args.size() != args_.size())
     {
       std::ostringstream ostr;
       ostr << "can't init template reader - incorrect number of arguments: " <<
@@ -41,16 +40,15 @@ namespace Declaration
 
     int arg_i = 0;
     BaseDescriptorList::const_iterator dit = args_.begin();
-    for(BaseReaderList::const_iterator rit = args.begin();
+    for (BaseReaderList::const_iterator rit = args.begin();
         rit != args.end(); ++rit, ++dit, ++arg_i)
     {
-      if(::strcmp((*rit)->descriptor()->name(), (*dit)->name()) != 0)
+      if (::strcmp((*rit)->descriptor()->name(), (*dit)->name()) != 0)
       {
         std::ostringstream ostr;
         ostr << "can't init template reader - argument #" << arg_i <<
           ": type '" << (*rit)->name() << "' isn't reader of '" <<
-          (*dit)->name() << "', it is reader of '" <<
-          (*rit)->descriptor()->name() << "'";
+          (*dit)->name() << "', it is reader of '" << (*rit)->descriptor()->name() << "'";
         throw InvalidParam(ostr.str());
       }
     }
@@ -59,11 +57,10 @@ namespace Declaration
   }
 
   BaseWriter_var
-  CompleteTemplateDescriptor::complete_template_writer(
-    const BaseWriterList& args)
+  CompleteTemplateDescriptor::complete_template_writer(const BaseWriterList& args)
     /*throw(InvalidParam)*/
   {
-    if(args.size() != args_.size())
+    if (args.size() != args_.size())
     {
       std::ostringstream ostr;
       ostr << "can't init template writer - incorrect number of arguments: " <<
@@ -73,16 +70,15 @@ namespace Declaration
 
     int arg_i = 0;
     BaseDescriptorList::const_iterator dit = args_.begin();
-    for(BaseWriterList::const_iterator rit = args.begin();
+    for (BaseWriterList::const_iterator rit = args.begin();
         rit != args.end(); ++rit, ++dit, ++arg_i)
     {
-      if(::strcmp((*rit)->descriptor()->name(), (*dit)->name()) != 0)
+      if (::strcmp((*rit)->descriptor()->name(), (*dit)->name()) != 0)
       {
         std::ostringstream ostr;
         ostr << "can't init template writer - argument #" << arg_i <<
           ": type '" << (*rit)->name() << "' isn't writer of '" <<
-          (*dit)->name() << "', it is reader of '" <<
-          (*rit)->descriptor()->name() << "'";
+          (*dit)->name() << "', it is reader of '" << (*rit)->descriptor()->name() << "'";
         throw InvalidParam(ostr.str());
       }
     }

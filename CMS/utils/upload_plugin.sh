@@ -77,7 +77,7 @@ echo "Archiving plugin..."
 cd $plugin_root && zip -qr $plugin_root/AdServer-$plugin_version.zip * -x *svn*
 if [ $? -ne 0 ]
 then
-  echo -e "\033[31mERROR: failed to archive plugin!\033[0m" 
+  echo -e "\033[31mERROR: failed to archive plugin!\033[0m"
   rm -rf $cms_root/temp-AdServer-plugin-$VERSION.$TIMESTAMP
   exit 1
 fi

@@ -13,9 +13,7 @@
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
 
-namespace AdServer
-{
-namespace ChannelSearchSvcs
+namespace AdServer::ChannelSearchSvcs
 {
   class ChannelMatcher:
     public virtual ReferenceCounting::AtomicImpl
@@ -66,14 +64,10 @@ namespace ChannelSearchSvcs
 
     void config(Config* config) /*throw(Exception)*/;
 
-    void match(
-      ChannelMatchResultMap& result,
-      const ChannelIdSet& history_channels)
+    void match(ChannelMatchResultMap& result, const ChannelIdSet& history_channels)
       /*throw(Exception)*/;
 
-    void search(
-      ChannelIdSet& result_channels,
-      const ChannelIdSet& history_channels)
+    void search(ChannelIdSet& result_channels, const ChannelIdSet& history_channels)
       /*throw(Exception)*/;
 
   private:
@@ -110,5 +104,4 @@ namespace ChannelSearchSvcs
 
   typedef ReferenceCounting::SmartPtr<ChannelMatcher>
     ChannelMatcher_var;
-}
 }

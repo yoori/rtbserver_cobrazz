@@ -48,9 +48,7 @@ class ColoUsers: public BaseDBUnit
 
 public:
 
-  ColoUsers(UnitStat& stat_var,
-            const char* task_name,
-            XsdParams params_var):
+  ColoUsers(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -78,45 +76,31 @@ private:
 
   template<class Expected>
   void
-  init_stat_(
-    ColoUserStat& stat,
-    const Expected& expected);
+  init_stat_(ColoUserStat& stat, const Expected& expected);
 
   template<class Expected>
   void
-  init_stat_(
-    GlobalColoUserStat& stat,
-    const Expected& expected);
+  init_stat_(GlobalColoUserStat& stat, const Expected& expected);
 
   template<class Expected>
   void
-  init_stat_(
-    CreatedUserStat& stat,
-    const Expected& expected);
+  init_stat_(CreatedUserStat& stat, const Expected& expected);
 
   template<class Diffs, class Expected>
   void
-  add_diff_(
-    std::list<Diffs>& diffs,
-    const Expected& expected);
+  add_diff_(std::list<Diffs>& diffs, const Expected& expected);
 
   template<class Diffs, class Expected>
   void
-  init_sum_diff_(
-    Diffs& diff,
-    const Expected& expected);
+  init_sum_diff_(Diffs& diff, const Expected& expected);
 
   template<class Expected>
   void
-  init_sum_diff_(
-    ColoUserDiff& diff,
-    const Expected& expected);
+  init_sum_diff_(ColoUserDiff& diff, const Expected& expected);
 
   template<size_t Count>
   void
-  process_requests_(
-    const AutoTest::Time& base_time,
-    const TestRequest(&requests)[Count]);
+  process_requests_(const AutoTest::Time& base_time, const TestRequest(&requests)[Count]);
 
   void
   unique_users_stats_();
@@ -131,16 +115,10 @@ private:
   non_gmt_timezone_();
 
   void
-  basic_async_part_1_(
-    AdClient& client,
-    TemporaryAdClient& temporary,
-    const std::string& hid);
+  basic_async_part_1_(AdClient& client, TemporaryAdClient& temporary, const std::string& hid);
 
   void
-  basic_async_part_2_(
-    AdClient& client,
-    TemporaryAdClient& temporary,
-    const std::string& hid);
+  basic_async_part_2_(AdClient& client, TemporaryAdClient& temporary, const std::string& hid);
 
   void
   big_date_difference_();

@@ -2,9 +2,7 @@
 #include "Common.hpp"
 #include "AdRequestsProfiling.hpp"
 
-REFLECT_UNIT(AdRequestsProfiling) (
-  "UserProfiling",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(AdRequestsProfiling) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace
 {
@@ -18,13 +16,11 @@ bool
 AdRequestsProfiling::run_test()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
     "Remote#1.AdFrontend need for this test");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
     "Remote#2.AdFrontend need for this test");
 
   NOSTOP_FAIL_CONTEXT(basic_case());
@@ -57,17 +53,12 @@ void AdRequestsProfiling::basic_case()
     client.process_request(match_request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1",
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, "Channel1", client.debug_info.history_channels).check(),
       description +
         " Expected history (ad_request_profiling=true)#1");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
       description +
         " Expected ccid (ad_request_profiling=true)#1");
 
@@ -79,25 +70,18 @@ void AdRequestsProfiling::basic_case()
     client.process_request(ad_request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1,Channel3",
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, "Channel1,Channel3", client.debug_info.history_channels).check(),
       description +
         " Expected history (ad_request_profiling=true)#2");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
       description +
         " Expected ccid (ad_request_profiling=true)#2");
   }
 
   {
-    AdClient client(
-      AdClient::create_user(
-        this, AutoTest::UF_FRONTEND_MINOR));
+    AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
     NSLookupRequest match_request;
     match_request.tid = fetch_string("Tag");
@@ -106,17 +90,12 @@ void AdRequestsProfiling::basic_case()
     client.process_request(match_request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1",
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, "Channel1", client.debug_info.history_channels).check(),
       description +
         " Expected history (ad_request_profiling=false)#1");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
       description +
         " Expected ccid (ad_request_profiling=false)#1");
 
@@ -134,9 +113,7 @@ void AdRequestsProfiling::basic_case()
         " Expected history (ad_request_profiling=false)#2");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       description +
         " Expected ccid (ad_request_profiling=false)#2");
   }
@@ -146,10 +123,7 @@ void AdRequestsProfiling::history_optimization()
 {
   std::string description("History optimization.");
   add_descr_phrase(description);
-  AdClient client(
-    AdClient::create_user(
-      this,
-      AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
   AutoTest::Time base_time;
 
@@ -159,31 +133,20 @@ void AdRequestsProfiling::history_optimization()
     debug_time(base_time - 24*60*60));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "BP2P",
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, "BP2P", client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger channels");
 
 
-  client.process_request(
-    NSLookupRequest().
-    tid(fetch_string("Tag")).
-    debug_time(base_time));
+  client.process_request(NSLookupRequest(). tid(fetch_string("Tag")). debug_time(base_time));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Channel2",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Channel2", client.debug_info.history_channels).check(),
     description +
       " Expected history");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
     description +
       " Expected ccid");
 }
@@ -195,29 +158,19 @@ void AdRequestsProfiling::visit_on_adrequest()
     "Channel in profile not fully matched, channel "
     "in request fully matches.");
   add_descr_phrase(description);
-  AdClient client(AdClient::create_user(this,
-      AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
-  client.process_request(
-    NSLookupRequest().
-    referer_kw(fetch_string("Keyword1")));
+  client.process_request(NSLookupRequest(). referer_kw(fetch_string("Keyword1")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "BP1P",
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, "BP1P", client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger channels");
 
-  client.process_request(
-    NSLookupRequest().
-    tid(fetch_string("Tag")));
+  client.process_request(NSLookupRequest(). tid(fetch_string("Tag")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     description +
       " Expected ccid#1");
 
@@ -227,17 +180,12 @@ void AdRequestsProfiling::visit_on_adrequest()
     referer(fetch_string("Ref1")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Channel1",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Channel1", client.debug_info.history_channels).check(),
     description +
       " Expected history");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
       description +
         " Expected ccid#2");
 }
@@ -250,20 +198,14 @@ void AdRequestsProfiling::no_visit_on_adrequest()
     "request not fully matched.");
   add_descr_phrase(description);
 
-  AdClient client(AdClient::create_user(this,
-      AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
-  client.process_request(
-    NSLookupRequest().
-    referer(fetch_string("Ref2")));
+  client.process_request(NSLookupRequest(). referer(fetch_string("Ref2")));
   client.repeat_request();
   client.repeat_request();
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Channel2",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Channel2", client.debug_info.history_channels).check(),
     description +
       " Expected history#1");
 
@@ -273,39 +215,27 @@ void AdRequestsProfiling::no_visit_on_adrequest()
     referer_kw(fetch_string("Keyword2")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Channel2",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Channel2", client.debug_info.history_channels).check(),
     description +
       " Expected history#2");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
     description +
       " Expected ccid");
 }
 
 void AdRequestsProfiling::full_text_mode()
 {
-  std::string description(
-    "Full text mode with disabled Tag profiling.");
+  std::string description("Full text mode with disabled Tag profiling.");
   add_descr_phrase(description);
 
-  AdClient client(AdClient::create_user(this,
-      AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
-  client.process_request(
-    NSLookupRequest().
-    referer_kw(fetch_string("Keyword1")));
+  client.process_request(NSLookupRequest(). referer_kw(fetch_string("Keyword1")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "BP1P",
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, "BP1P", client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger channels");
 
@@ -314,10 +244,7 @@ void AdRequestsProfiling::full_text_mode()
     fetch_string("Keyword2")  << std::endl <<
     fetch_string("Keyword3");
 
-  client.process_request(
-    NSLookupRequest().
-    ft(ft.str()).
-    tid(fetch_string("Tag")));
+  client.process_request(NSLookupRequest(). ft(ft.str()). tid(fetch_string("Tag")));
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -329,40 +256,29 @@ void AdRequestsProfiling::full_text_mode()
       " Expected history#1");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Channel3",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Channel3", client.debug_info.history_channels).check(),
     description +
       " Expected history#2");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC"), client.debug_info.ccid).check(),
     description +
       " Expected ccid");
 }
 
 void AdRequestsProfiling::merging()
 {
-  std::string description(
-    "Merging on tad requests with enabled Tag profiling.");
+  std::string description("Merging on tad requests with enabled Tag profiling.");
   add_descr_phrase(description);
 
   {
 
     TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
 
-    tclient.process_request(
-      NSLookupRequest().
-      referer_kw(fetch_string("Keyword4")));
+    tclient.process_request(NSLookupRequest(). referer_kw(fetch_string("Keyword4")));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "BP4P,BP5P",
-        tclient.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "BP4P,BP5P", tclient.debug_info.trigger_channels).check(),
       description +
         " Expected trigger channels#1")
 
@@ -374,20 +290,14 @@ void AdRequestsProfiling::merging()
         tid(fetch_string("Tag")));
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "BP4P",
-          client.debug_info.trigger_channels).check(),
+        ChannelsCheck(this, "BP4P", client.debug_info.trigger_channels).check(),
         description +
           " Expected trigger channels#2");
 
       client.merge(tclient);
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "Channel4,Channel5",
-          client.debug_info.history_channels).check(),
+        ChannelsCheck(this, "Channel4,Channel5", client.debug_info.history_channels).check(),
         description +
           " Expected history#1");
   }
@@ -395,15 +305,10 @@ void AdRequestsProfiling::merging()
   {
     TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
 
-    tclient.process_request(
-      NSLookupRequest().
-      referer_kw(fetch_string("Keyword4")));
+    tclient.process_request(NSLookupRequest(). referer_kw(fetch_string("Keyword4")));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "BP4P,BP5P",
-        tclient.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "BP4P,BP5P", tclient.debug_info.trigger_channels).check(),
       description +
         " Expected trigger channels#3");
 
@@ -416,10 +321,7 @@ void AdRequestsProfiling::merging()
         tid(fetch_string("Tag")));
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "Channel4,Channel5",
-          client.debug_info.history_channels).check(),
+        ChannelsCheck(this, "Channel4,Channel5", client.debug_info.history_channels).check(),
         description +
           " Expected history#2");
   }

@@ -10,10 +10,7 @@ namespace AutoTest
   // class ChannelMatchLog
 
   void
-  ChannelMatchLog::make_cmd (
-    const char* address,
-    const char* trigger,
-    ChannelSrv service)
+  ChannelMatchLog::make_cmd (const char* address, const char* trigger, ChannelSrv service)
   {
     AdminParams params;
     if (trigger)
@@ -28,10 +25,7 @@ namespace AutoTest
     add_cmd_i("-l");
   }
 
-  ChannelMatchLog::ChannelMatchLog(
-    const char* address,
-    const char* trigger,
-    ChannelSrv service)
+  ChannelMatchLog::ChannelMatchLog(const char* address, const char* trigger, ChannelSrv service)
   {
     make_cmd(address, trigger, service);
   }
@@ -63,11 +57,7 @@ namespace AutoTest
   // class UserInfoAdminLog
 
   void
-  UserInfoAdminLog::make_cmd(
-    const char* address,
-    const char* uuid,
-    UserInfoSrv service,
-    bool temp)
+  UserInfoAdminLog::make_cmd(const char* address, const char* uuid, UserInfoSrv service, bool temp)
   {
     AdminParams params;
     if (uuid)
@@ -96,8 +86,7 @@ namespace AutoTest
   // class DeleteOldUserProfiles
 
   void
-  DeleteOldUserProfiles::make_cmd(
-    const char* address)
+  DeleteOldUserProfiles::make_cmd(const char* address)
   {
 
     AdminParams params;
@@ -121,8 +110,7 @@ namespace AutoTest
     admins.exec();
   }
 
-  DeleteOldUserProfiles::DeleteOldUserProfiles(
-    const char* address)
+  DeleteOldUserProfiles::DeleteOldUserProfiles(const char* address)
   {
     make_cmd(address);
   }
@@ -131,8 +119,7 @@ namespace AutoTest
   // class ClearExpiredProfiles
 
   void
-  ClearExpiredProfiles::make_cmd(
-    const char* address)
+  ClearExpiredProfiles::make_cmd(const char* address)
   {
     AdminParams params;
 
@@ -155,8 +142,7 @@ namespace AutoTest
     admins.exec();
   }
 
-  ClearExpiredProfiles::ClearExpiredProfiles(
-    const char* address)
+  ClearExpiredProfiles::ClearExpiredProfiles(const char* address)
   {
     make_cmd(address);
   }
@@ -164,17 +150,11 @@ namespace AutoTest
   // class UpdateStats
 
   void
-  UpdateStats::make_cmd(
-    const char* address)
+  UpdateStats::make_cmd(const char* address)
   {
     AdminParams params;
 
-    make_admin_cmd(
-      *this,
-      "update_stat",
-      address,
-      params,
-      static_cast<size_t>(CampaignServer));
+    make_admin_cmd(*this, "update_stat", address, params, static_cast<size_t>(CampaignServer));
   }
 
   void
@@ -186,8 +166,7 @@ namespace AutoTest
     admins.exec();
   }
 
-  UpdateStats::UpdateStats(
-    const char* address)
+  UpdateStats::UpdateStats(const char* address)
   {
     make_cmd(address);
   }
@@ -204,22 +183,15 @@ namespace AutoTest
   }
 
   void
-  DailyProcess::make_cmd(
-    const char* address)
+  DailyProcess::make_cmd(const char* address)
   {
     AdminParams params;
     params.push_back(AdminParamPair("-s", std::string()));
 
-    make_admin_cmd(
-      *this,
-      "daily-process",
-      address,
-      params,
-      static_cast<size_t>(ExpressionMatcher));
+    make_admin_cmd(*this, "daily-process", address, params, static_cast<size_t>(ExpressionMatcher));
   }
 
-  DailyProcess::DailyProcess(
-    const char* address)
+  DailyProcess::DailyProcess(const char* address)
   {
     make_cmd(address);
   }
@@ -228,9 +200,7 @@ namespace AutoTest
 
   const char* CopyCmd::DEFAULT_EXECUTOR_ = "/usr/bin/rsync";
 
-  CopyCmd::CopyCmd(
-    const std::string& from,
-    const std::string& to)
+  CopyCmd::CopyCmd(const std::string& from, const std::string& to)
   {
     std::string cmd =
       GlobalSettings::instance().initialized() &&
@@ -241,7 +211,7 @@ namespace AutoTest
     String::StringManip::SplitSpace tokenizer(cmd);
 
     String::SubString arg;
-    while(tokenizer.get_token(arg))
+    while (tokenizer.get_token(arg))
     {
       add_cmd_i(arg.str());
     }
@@ -259,9 +229,7 @@ namespace AutoTest
 
   const char* MoveCmd::DEFAULT_EXECUTOR_ = "/usr/bin/rsync --remove-source-files";
 
-  MoveCmd::MoveCmd(
-    const std::string& from,
-    const std::string& to)
+  MoveCmd::MoveCmd(const std::string& from, const std::string& to)
   {
     std::string cmd =
       GlobalSettings::instance().initialized() &&
@@ -272,7 +240,7 @@ namespace AutoTest
     String::StringManip::SplitSpace tokenizer(cmd);
 
     String::SubString arg;
-    while(tokenizer.get_token(arg))
+    while (tokenizer.get_token(arg))
     {
       add_cmd_i(arg.str());
     }

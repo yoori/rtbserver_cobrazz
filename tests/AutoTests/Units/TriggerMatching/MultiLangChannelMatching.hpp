@@ -31,10 +31,7 @@ public:
   typedef AutoTest::AdClient AdClient;
 
 
-  MultiLangChannelMatching(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  MultiLangChannelMatching(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     test_client_(AutoTest::AdClient::create_user(this))
   {};

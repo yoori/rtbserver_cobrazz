@@ -38,10 +38,10 @@ def getDayOfMonth(days,ofset):
       if i == 2: ofs = 0
       return (i,days-daysMonth[i-1]-ofs+1)
 
-#sec -> gmtime struct 
+#sec -> gmtime struct
 def pygmtime(sec):
   days = int(sec / (24 * 60 * 60)) # Days from 01 Jan 1970
-  dayOfWeek = (days+3) % 7 #days+3 because 01 Jan 1970 is Wednesday 
+  dayOfWeek = (days+3) % 7 #days+3 because 01 Jan 1970 is Wednesday
   sec  = sec % (24 * 60 * 60)
   year = 1970
   while True:
@@ -58,7 +58,7 @@ def pygmtime(sec):
   sec  = int((sec % 60))
   return year, mon, day, hour, min, sec, dayOfWeek , days+1, 0
 
-      
+
 def time2float( time ):
   if time is None: return None
   sec, mcs = time
@@ -284,7 +284,7 @@ def relativePath(path1, path2):
   result = map(parent_path, dirs2[unEqualIndex:])
   result += dirs1[unEqualIndex:]
   return string.join(result, '/')
-  
+
 
 # sort a list in functional style
 def sort( list ):

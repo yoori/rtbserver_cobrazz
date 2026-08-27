@@ -1,9 +1,7 @@
 
 #include "TagsAndCreativesSizeMatching.hpp"
 
-REFLECT_UNIT(TagsAndCreativesSizeMatching) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(TagsAndCreativesSizeMatching) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -41,11 +39,7 @@ void TagsAndCreativesSizeMatching::same_type_diff_sizes()
       referer_kw(fetch_string("SAMETYPE/KWD")).
       tid(fetch_int("SAMETYPE/Tag")));
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check CC");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check CC");
 }
 
 
@@ -66,9 +60,7 @@ void TagsAndCreativesSizeMatching::actual_size()
 
     FAIL_CONTEXT(
       AutoTest::and_checker(
-        AutoTest::equal_checker(
-          fetch_string("ACTUALSIZE/CC"),
-          client.debug_info.ccid),
+        AutoTest::equal_checker(fetch_string("ACTUALSIZE/CC"), client.debug_info.ccid),
         AutoTest::or_count_checker(
           &counter,
           AutoTest::equal_checker(
@@ -80,9 +72,7 @@ void TagsAndCreativesSizeMatching::actual_size()
       "Check#" + strof(i+1));
   }
 
-  FAIL_CONTEXT(
-    counter.check(),
-    "Events count checker");
+  FAIL_CONTEXT(counter.check(), "Events count checker");
 
 }
 
@@ -124,12 +114,8 @@ void TagsAndCreativesSizeMatching::max_ads()
     FAIL_CONTEXT(
       AutoTest::or_count_checker(
         &counter,
-        AutoTest::equal_checker(
-          fetch_string("MAXADS/CC/1"),
-          client.debug_info.ccid),
-        AutoTest::equal_checker(
-          fetch_string("MAXADS/CC/2"),
-          client.debug_info.ccid),
+        AutoTest::equal_checker(fetch_string("MAXADS/CC/1"), client.debug_info.ccid),
+        AutoTest::equal_checker(fetch_string("MAXADS/CC/2"), client.debug_info.ccid),
         AutoTest::or_checker(
           AutoTest::sequence_checker(
             {
@@ -146,9 +132,7 @@ void TagsAndCreativesSizeMatching::max_ads()
       "Check CC#" + strof(i+1));
   }
 
-  FAIL_CONTEXT(
-    counter.check(),
-    "Events count checker");
+  FAIL_CONTEXT(counter.check(), "Events count checker");
 }
 
 void
@@ -162,9 +146,7 @@ TagsAndCreativesSizeMatching::zero_max_ads()
       tid(fetch_int("ZEROMAXADS/Tag")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("ZEROMAXADS/CC/2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("ZEROMAXADS/CC/2"), client.debug_info.ccid).check(),
     "Check CC");
 }
 
@@ -187,22 +169,15 @@ TagsAndCreativesSizeMatching::multi_creatives_ccg()
     FAIL_CONTEXT(
       AutoTest::or_count_checker(
         &counter,
-        AutoTest::equal_checker(
-          fetch_string("MULTICC/CC/1/2"),
-          client.debug_info.ccid),
-        AutoTest::equal_checker(
-          fetch_string("MULTICC/CC/1/3"),
-          client.debug_info.ccid)).check(),
+        AutoTest::equal_checker(fetch_string("MULTICC/CC/1/2"), client.debug_info.ccid),
+        AutoTest::equal_checker(fetch_string("MULTICC/CC/1/3"), client.debug_info.ccid)).check(),
       "Check#" + strof(i+1));
   }
 
-  FAIL_CONTEXT(
-    counter.check(),
-    "Events count checker");
+  FAIL_CONTEXT(counter.check(), "Events count checker");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      counter.counts()[0] > 3 * counter.counts()[1]),
+    AutoTest::predicate_checker(counter.counts()[0] > 3 * counter.counts()[1]),
     "Frequency of the condition#1 should be "
     "higher tnen the frequency of the condition#2");
 }
@@ -228,9 +203,7 @@ TagsAndCreativesSizeMatching::display_vs_text()
       tid(fetch_int(CASES[i].tag)));
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string(CASES[i].cc),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string(CASES[i].cc), client.debug_info.ccid).check(),
       "Check CC#" + strof(i+1));
   }
 }
@@ -272,8 +245,7 @@ TagsAndCreativesSizeMatching::size_type_level()
 void
 TagsAndCreativesSizeMatching::rtb()
 {
-  AdClient client(
-    AdClient::create_nonoptin_user(this));
+  AdClient client(AdClient::create_nonoptin_user(this));
 
   const RTBCase CASES[] =
   {
@@ -300,9 +272,7 @@ TagsAndCreativesSizeMatching::rtb()
         OpenRTBResponseChecker::Expected().
           adid(fetch_int("RTB/CREATIVE/1")));
 
-      FAIL_CONTEXT(
-        ad_checker.check(),
-        "Check bid.adid");
+      FAIL_CONTEXT(ad_checker.check(), "Check bid.adid");
 
       std::string body;
 
@@ -312,9 +282,7 @@ TagsAndCreativesSizeMatching::rtb()
       }
 
       std::list<std::string> expected_sizes;
-      fetch_objects(
-        std::inserter(expected_sizes, expected_sizes.begin()),
-        CASES[i].sizes);
+      fetch_objects(std::inserter(expected_sizes, expected_sizes.begin()), CASES[i].sizes);
 
       if (CASES[i].nurl)
       {
@@ -323,14 +291,11 @@ TagsAndCreativesSizeMatching::rtb()
           OpenRTBResponseChecker::Expected().
              nurl(".*&ad=" + map_objects(CASES[i].ccs) + ".*"));
 
-        FAIL_CONTEXT(
-          cc_checker.check(),
-          "Check bid.nurl.ccids");
+        FAIL_CONTEXT(cc_checker.check(), "Check bid.nurl.ccids");
 
         OrChecker tsid_checker;
 
-        for (
-          auto it = expected_sizes.begin(); it != expected_sizes.end(); ++it)
+        for (auto it = expected_sizes.begin(); it != expected_sizes.end(); ++it)
         {
           tsid_checker.or_if(
             OpenRTBResponseChecker(
@@ -340,9 +305,7 @@ TagsAndCreativesSizeMatching::rtb()
         }
 
 
-        FAIL_CONTEXT(
-          tsid_checker.check(),
-          "Check bid.nurl.tsid");
+        FAIL_CONTEXT(tsid_checker.check(), "Check bid.nurl.tsid");
 
         client.process_request(cc_checker.bids().nurl);
 
@@ -352,12 +315,10 @@ TagsAndCreativesSizeMatching::rtb()
       FAIL_CONTEXT(
         AutoTest::and_checker(
           equal_checker(
-            AutoTest::ComparableRegExp(
-              ".*\"CCID\":\"" + fetch_string("RTB/CC/1") + "\".*"),
+            AutoTest::ComparableRegExp(".*\"CCID\":\"" + fetch_string("RTB/CC/1") + "\".*"),
             body),
           equal_checker(
-            AutoTest::ComparableRegExp(
-              ".*\"CCID\":\"" + fetch_string("RTB/CC/2") + "\".*"),
+            AutoTest::ComparableRegExp(".*\"CCID\":\"" + fetch_string("RTB/CC/2") + "\".*"),
             body)).check(),
         "CCIDs check");
 
@@ -380,41 +341,23 @@ bool
 TagsAndCreativesSizeMatching::run_test()
 {
 
-  AUTOTEST_CASE(
-    same_type_diff_sizes(),
-    "Same type and different sizes");
+  AUTOTEST_CASE(same_type_diff_sizes(), "Same type and different sizes");
 
-  AUTOTEST_CASE(
-    actual_size(),
-    "Actual tag size");
+  AUTOTEST_CASE(actual_size(), "Actual tag size");
 
-  AUTOTEST_CASE(
-    diff_sizes(),
-    "Creatives with different sizes");
+  AUTOTEST_CASE(diff_sizes(), "Creatives with different sizes");
 
-  AUTOTEST_CASE(
-    max_ads(),
-    "Different max ads for creative sizes");
+  AUTOTEST_CASE(max_ads(), "Different max ads for creative sizes");
 
-  AUTOTEST_CASE(
-    zero_max_ads(),
-    "Zero max text ads");
+  AUTOTEST_CASE(zero_max_ads(), "Zero max text ads");
 
-  AUTOTEST_CASE(
-    multi_creatives_ccg(),
-    "Several creatives in one CCG");
+  AUTOTEST_CASE(multi_creatives_ccg(), "Several creatives in one CCG");
 
-  AUTOTEST_CASE(
-    display_vs_text(),
-    "Display and Text Creative with same size");
+  AUTOTEST_CASE(display_vs_text(), "Display and Text Creative with same size");
 
-  AUTOTEST_CASE(
-    size_type_level(),
-    "Size Type Level");
+  AUTOTEST_CASE(size_type_level(), "Size Type Level");
 
-  AUTOTEST_CASE(
-    rtb(),
-    "RTB request");
+  AUTOTEST_CASE(rtb(), "RTB request");
 
   return true;
 }

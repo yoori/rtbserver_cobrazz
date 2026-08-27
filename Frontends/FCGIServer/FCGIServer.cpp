@@ -33,9 +33,7 @@ namespace
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - STARTUP_STARTED_AT);
     std::cerr << "FCGI_STARTUP "
-      << (elapsed.count() / 1000) << "."
-      << (elapsed.count() % 1000) << " "
-      << label << std::endl;
+      << (elapsed.count() / 1000) << "." << (elapsed.count() % 1000) << " " << label << std::endl;
   }
 
   std::string
@@ -85,9 +83,7 @@ namespace
 
     template<typename Type>
     void
-    operator()(
-      const Generics::Values::Key& key,
-      const Type& value)
+    operator()(const Generics::Values::Key& key, const Type& value)
     {
       append_key_(key);
       if constexpr (std::is_arithmetic_v<Type>)
@@ -105,9 +101,7 @@ namespace
     }
 
     void
-    operator()(
-      const Generics::Values::Key& key,
-      const std::string& value)
+    operator()(const Generics::Values::Key& key, const std::string& value)
     {
       append_key_(key);
       out << '"' << escape_json_string(value) << '"';
@@ -172,10 +166,7 @@ namespace
   };
 
   bool
-  parse_last_error_metric(
-    const std::string& name,
-    std::string& client_name,
-    std::string& field)
+  parse_last_error_metric(const std::string& name, std::string& client_name, std::string& field)
   {
     static const std::string suffix = "_last_error_";
     const auto pos = name.find(suffix);
@@ -191,10 +182,7 @@ namespace
 
   template<typename Value>
   void
-  set_error_field(
-    GrpcErrorStat& error,
-    const std::string& field,
-    const Value& value)
+  set_error_field(GrpcErrorStat& error, const std::string& field, const Value& value)
   {
     (void)error;
     (void)field;
@@ -228,10 +216,7 @@ namespace
 
   template<>
   void
-  set_error_field<long>(
-    GrpcErrorStat& error,
-    const std::string& field,
-    const long& value)
+  set_error_field<long>(GrpcErrorStat& error, const std::string& field, const long& value)
   {
     if (field == "code")
     {
@@ -257,8 +242,7 @@ namespace
   };
 
   std::string
-  dump_stats_json(
-    const Generics::CompositeMetricsProvider_var& metrics)
+  dump_stats_json(const Generics::CompositeMetricsProvider_var& metrics)
   {
     std::map<std::string, GrpcErrorStat> errors;
 
@@ -274,9 +258,7 @@ namespace
         if (parse_last_error_metric(metric.first, client_name, field))
         {
           auto& error = errors[client_name];
-          boost::apply_visitor(
-            GrpcErrorFieldVisitor(error, field),
-            metric.second);
+          boost::apply_visitor(GrpcErrorFieldVisitor(error, field), metric.second);
           continue;
         }
 
@@ -315,18 +297,15 @@ namespace AdServer::Frontends
 {
   FCGIServer::FCGIServer() /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
-        Logging::Logger_var(new Logging::OStream::Logger(
-          Logging::OStream::Config(std::cerr))),
+        Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
         "FCGIServer", ASPECT, 0),
       fcgi_stats_(new FCGIAcceptorStatHolder()),
       stats_(new StatHolder()), // to remove ?
       composite_metrics_provider_(new Generics::CompositeMetricsProvider())
   {
     ReferenceCounting::SmartPtr<Generics::MetricsProvider>
-      fcgi_acceptor_metrics_provider(
-        new FCGIAcceptorMetricsProvider(fcgi_stats_.in()));
-    composite_metrics_provider_->add_provider(
-      fcgi_acceptor_metrics_provider.in());
+      fcgi_acceptor_metrics_provider(new FCGIAcceptorMetricsProvider(fcgi_stats_.in()));
+    composite_metrics_provider_->add_provider(fcgi_acceptor_metrics_provider.in());
 
     ReferenceCounting::SmartPtr<Generics::MetricsProvider>
       stat_holder_metrics_provider(new StatHolderMetricsProvider(stats_.in()));
@@ -334,9 +313,7 @@ namespace AdServer::Frontends
   }
 
   void
-  FCGIServer::read_config_(
-    const char *filename,
-    const char* argv0)
+  FCGIServer::read_config_(const char *filename, const char* argv0)
     /*throw(Exception, eh::Exception)*/
   {
     static const char* FUN = "FCGIServer::read_config()";
@@ -358,8 +335,7 @@ namespace AdServer::Frontends
           throw Exception(error_handler.text(error_string));
         }
 
-        config_.reset(
-          new FCGIServerConfig(ad_configuration->FCGIServerConfig()));
+        config_.reset(new FCGIServerConfig(ad_configuration->FCGIServerConfig()));
 
         if (error_handler.has_errors())
         {
@@ -381,8 +357,7 @@ namespace AdServer::Frontends
 
       try
       {
-        logger(Config::LoggerConfigReader::create(
-                 config_->Logger(), argv0));
+        logger(Config::LoggerConfigReader::create(config_->Logger(), argv0));
       }
       catch (const Config::LoggerConfigReader::Exception &ex)
       {
@@ -391,19 +366,17 @@ namespace AdServer::Frontends
         throw Exception(ostr);
       }
 
-      if(config_->Monitoring().present())
+      if (config_->Monitoring().present())
       {
         http_server_ = new AdServer::Commons::HttpServer::HttpServer(
           "0.0.0.0",
           config_->Monitoring()->port(),
           4);
 
-        Generics::CompositeMetricsProvider_var metrics =
-          composite_metrics_provider_;
+        Generics::CompositeMetricsProvider_var metrics = composite_metrics_provider_;
         http_server_->add_handler(
           "/stats",
-          [metrics](
-            const AdServer::Commons::HttpServer::HttpServer::Request&)
+          [metrics](const AdServer::Commons::HttpServer::HttpServer::Request&)
           {
             return AdServer::Commons::HttpServer::HttpServer::Response{
               200,
@@ -418,8 +391,7 @@ namespace AdServer::Frontends
     catch (const Exception &ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": got Exception. Invalid configuration: " <<
-        ex.what();
+      ostr << FUN << ": got Exception. Invalid configuration: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -434,66 +406,66 @@ namespace AdServer::Frontends
     {
       FrontendsPool::ModuleIdArray modules;
 
-      for(auto module_it = config_->Module().begin();
+      for (auto module_it = config_->Module().begin();
         module_it != config_->Module().end(); ++module_it)
       {
-        if(module_it->name() == "bidding")
+        if (module_it->name() == "bidding")
         {
           modules.push_back(FrontendsPool::M_BIDDING);
         }
-        else if(module_it->name() == "pubpixel")
+        else if (module_it->name() == "pubpixel")
         {
           modules.push_back(FrontendsPool::M_PUBPIXEL);
         }
-        else if(module_it->name() == "content")
+        else if (module_it->name() == "content")
         {
           modules.push_back(FrontendsPool::M_CONTENT);
         }
-        else if(module_it->name() == "directory")
+        else if (module_it->name() == "directory")
         {
           modules.push_back(FrontendsPool::M_DIRECTORY);
         }
-        else if(module_it->name() == "webstat")
+        else if (module_it->name() == "webstat")
         {
           modules.push_back(FrontendsPool::M_WEBSTAT);
         }
-        else if(module_it->name() == "action")
+        else if (module_it->name() == "action")
         {
           modules.push_back(FrontendsPool::M_ACTION);
         }
-        else if(module_it->name() == "userbind")
+        else if (module_it->name() == "userbind")
         {
           modules.push_back(FrontendsPool::M_USERBIND);
         }
-        else if(module_it->name() == "passback")
+        else if (module_it->name() == "passback")
         {
           modules.push_back(FrontendsPool::M_PASSBACK);
         }
-        else if(module_it->name() == "passbackpixel")
+        else if (module_it->name() == "passbackpixel")
         {
           modules.push_back(FrontendsPool::M_PASSBACKPIXEL);
         }
-        else if(module_it->name() == "optout")
+        else if (module_it->name() == "optout")
         {
           modules.push_back(FrontendsPool::M_OPTOUT);
         }
-        else if(module_it->name() == "nullad")
+        else if (module_it->name() == "nullad")
         {
           modules.push_back(FrontendsPool::M_NULLAD);
         }
-        else if(module_it->name() == "adinst")
+        else if (module_it->name() == "adinst")
         {
           modules.push_back(FrontendsPool::M_ADINST);
         }
-        else if(module_it->name() == "click")
+        else if (module_it->name() == "click")
         {
           modules.push_back(FrontendsPool::M_CLICK);
         }
-        else if(module_it->name() == "imprtrack")
+        else if (module_it->name() == "imprtrack")
         {
           modules.push_back(FrontendsPool::M_IMPRTRACK);
         }
-        else if(module_it->name() == "ad")
+        else if (module_it->name() == "ad")
         {
           modules.push_back(FrontendsPool::M_AD);
         }
@@ -524,7 +496,7 @@ namespace AdServer::Frontends
       frontend_pool_ = frontend_pool;
       add_child_object(frontend_pool.in());
 
-      for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
+      for (auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)
       {
         trace_startup("create FCGIAcceptor begin");
@@ -541,7 +513,7 @@ namespace AdServer::Frontends
         trace_startup("create FCGIAcceptor end");
       }
 
-      if(config_->Http2Endpoint().present())
+      if (config_->Http2Endpoint().present())
       {
         const auto& http2_endpoint = config_->Http2Endpoint().get();
 
@@ -610,8 +582,7 @@ namespace AdServer::Frontends
       catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << "Can't parse config file '" << argv[1] << "': " <<
-          ex.what();
+        ostr << "Can't parse config file '" << argv[1] << "': " << ex.what();
         throw Exception(ostr);
       }
       catch(...)
@@ -640,31 +611,20 @@ namespace AdServer::Frontends
     catch (const Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Got BiddingFCGIServerApp_::Exception: " <<
-        e.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::CRITICAL,
-        ASPECT,
-        "ADS-IMPL-150");
+      ostr << FUN << ": Got BiddingFCGIServerApp_::Exception: " << e.what();
+      logger()->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-150");
     }
     catch (const eh::Exception& e)
     {
       Stream::Error ostr;
       ostr << FUN << ": Got eh::Exception: " << e.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        ASPECT,
-        "ADS-IMPL-150");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-150");
     }
     catch (...)
     {
       Stream::Error ostr;
       ostr << FUN << ": Got unknown exception";
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        ASPECT,
-        "ADS-IMPL-150");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-150");
     }
   }
 } // namespace AdServer::Frontends

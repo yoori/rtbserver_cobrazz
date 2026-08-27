@@ -33,10 +33,7 @@ namespace AutoTest
     }
 
     return
-      sequence_checker(
-        exp_channels,
-        got_channels_,
-        check_type_).check(throw_error);
+      sequence_checker(exp_channels, got_channels_, check_type_).check(throw_error);
   }
 
   // class ChannelSequenceChecker
@@ -104,24 +101,21 @@ namespace AutoTest
   {}
 
   // class SelectedCreativesCCID
-  SelectedCreativesCCID::SelectedCreativesCCID(
-    AdClient& client)
+  SelectedCreativesCCID::SelectedCreativesCCID(AdClient& client)
     : SelectedCreativesSimpleSlice(
         client.debug_info.selected_creatives,
         &DebugInfo::SelectedCreative::ccid)
   {}
 
   // class SelectedCreativesActualCPC
-  SelectedCreativesActualCPC::SelectedCreativesActualCPC(
-    AdClient& client)
+  SelectedCreativesActualCPC::SelectedCreativesActualCPC(AdClient& client)
     : SelectedCreativesMoneySlice(
         client.debug_info.selected_creatives,
         &DebugInfo::SelectedCreative::actual_cpc)
   {}
 
   // class SelectedCreativesImpRevenue
-  SelectedCreativesImpRevenue::SelectedCreativesImpRevenue(
-    AdClient& client)
+  SelectedCreativesImpRevenue::SelectedCreativesImpRevenue(AdClient& client)
     : SelectedCreativesMoneySlice(
         client.debug_info.selected_creatives,
         &DebugInfo::SelectedCreative::imp_revenue_value)
@@ -138,11 +132,7 @@ namespace AutoTest
   {
     if (expected_ccids)
     {
-      test->fetch_objects(
-        std::inserter(
-          expected_ccids_,
-          expected_ccids_.begin()),
-        expected_ccids);
+      test->fetch_objects(std::inserter(expected_ccids_, expected_ccids_.begin()), expected_ccids);
     }
   }
 
@@ -151,16 +141,12 @@ namespace AutoTest
   {}
 
   bool
-  SelectedCreativesChecker::check(
-    bool throw_error)
+  SelectedCreativesChecker::check(bool throw_error)
     /*throw(eh::Exception)*/
   {
     client_.process_request(request_);
 
-    bool check =
-      AutoTest::equal_seq(
-        expected_ccids_,
-        SelectedCreativesCCID(client_));
+    bool check = AutoTest::equal_seq(expected_ccids_, SelectedCreativesCCID(client_));
 
     if (!check && throw_error)
     {
@@ -223,8 +209,7 @@ namespace AutoTest
   }
 
   std::string
-  SpecialEffectsChecker::effects_to_str(
-    unsigned long special_effects)
+  SpecialEffectsChecker::effects_to_str(unsigned long special_effects)
   {
     std::string effects;
     for (size_t i = 0; i < S_E_SIZE; ++i)

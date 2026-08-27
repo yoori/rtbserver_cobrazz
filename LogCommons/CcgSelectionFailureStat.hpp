@@ -7,145 +7,136 @@
 #include "LogCommons.hpp"
 #include "StatCollector.hpp"
 
-namespace AdServer {
-namespace LogProcessing {
-
-class CcgSelectionFailureStatInnerKey
+namespace AdServer::LogProcessing
 {
-public:
-  CcgSelectionFailureStatInnerKey()
-  :
-    ccg_id_(),
-    combination_mask_(),
-    hash_()
-  {
-  }
 
-  CcgSelectionFailureStatInnerKey(
-    std::uint32_t ccg_id,
-    unsigned long combination_mask
-  )
-  :
-    ccg_id_(ccg_id),
-    combination_mask_(combination_mask),
-    hash_()
+  class CcgSelectionFailureStatInnerKey
   {
-    calc_hash_();
-  }
-
-  bool operator==(const CcgSelectionFailureStatInnerKey& rhs) const
-  {
-    if (&rhs == this)
+  public:
+    CcgSelectionFailureStatInnerKey()
+    :
+      ccg_id_(),
+      combination_mask_(),
+      hash_()
     {
-      return true;
     }
-    return ccg_id_ == rhs.ccg_id_ &&
-      combination_mask_ == rhs.combination_mask_;
-  }
 
-  std::uint32_t ccg_id() const
-  {
-    return ccg_id_;
-  }
-
-  unsigned long combination_mask() const
-  {
-    return combination_mask_;
-  }
-
-  size_t hash() const
-  {
-    return hash_;
-  }
-
-  friend FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is,
-    CcgSelectionFailureStatInnerKey& key)
-    /*throw(eh::Exception)*/;
-
-  friend std::ostream&
-  operator<<(std::ostream& os, const CcgSelectionFailureStatInnerKey& key)
-    /*throw(eh::Exception)*/;
-
-private:
-  void calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    hash_add(hasher, ccg_id_);
-    hash_add(hasher, combination_mask_);
-  }
-
-  std::uint32_t ccg_id_;
-  unsigned long combination_mask_;
-  size_t hash_;
-};
-
-class CcgSelectionFailureStatInnerData
-{
-public:
-  CcgSelectionFailureStatInnerData()
-  :
-    requests_()
-  {
-  }
-
-  CcgSelectionFailureStatInnerData(
-    unsigned long requests
-  )
-  :
-    requests_(requests)
-  {
-  }
-
-  bool operator==(const CcgSelectionFailureStatInnerData& rhs) const
-  {
-    if (&rhs == this)
+    CcgSelectionFailureStatInnerKey(std::uint32_t ccg_id, unsigned long combination_mask)
+    :
+      ccg_id_(ccg_id),
+      combination_mask_(combination_mask),
+      hash_()
     {
-      return true;
+      calc_hash_();
     }
-    return requests_ == rhs.requests_;
-  }
 
-  CcgSelectionFailureStatInnerData&
-  operator+=(const CcgSelectionFailureStatInnerData& rhs)
+    bool operator==(const CcgSelectionFailureStatInnerKey& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return ccg_id_ == rhs.ccg_id_ && combination_mask_ == rhs.combination_mask_;
+    }
+
+    std::uint32_t ccg_id() const
+    {
+      return ccg_id_;
+    }
+
+    unsigned long combination_mask() const
+    {
+      return combination_mask_;
+    }
+
+    size_t hash() const
+    {
+      return hash_;
+    }
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, CcgSelectionFailureStatInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+    friend std::ostream&
+    operator<<(std::ostream& os, const CcgSelectionFailureStatInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+  private:
+    void calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      hash_add(hasher, ccg_id_);
+      hash_add(hasher, combination_mask_);
+    }
+
+    std::uint32_t ccg_id_;
+    unsigned long combination_mask_;
+    size_t hash_;
+  };
+
+  class CcgSelectionFailureStatInnerData
   {
-    requests_ += rhs.requests_;
-    return *this;
-  }
+  public:
+    CcgSelectionFailureStatInnerData()
+    :
+      requests_()
+    {
+    }
 
-  unsigned long requests() const
-  {
-    return requests_;
-  }
+    CcgSelectionFailureStatInnerData(unsigned long requests)
+    :
+      requests_(requests)
+    {
+    }
 
-  friend FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is,
-    CcgSelectionFailureStatInnerData& data)
-    /*throw(eh::Exception)*/;
+    bool operator==(const CcgSelectionFailureStatInnerData& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return requests_ == rhs.requests_;
+    }
 
-  friend std::ostream&
-  operator<<(std::ostream& os, const CcgSelectionFailureStatInnerData& data)
-    /*throw(eh::Exception)*/;
+    CcgSelectionFailureStatInnerData&
+    operator+=(const CcgSelectionFailureStatInnerData& rhs)
+    {
+      requests_ += rhs.requests_;
+      return *this;
+    }
 
-private:
-  unsigned long requests_;
-};
+    unsigned long requests() const
+    {
+      return requests_;
+    }
 
-typedef StatCollector<
-          CcgSelectionFailureStatInnerKey,
-          CcgSelectionFailureStatInnerData,
-          false,
-          true
-        > CcgSelectionFailureStatInnerCollector;
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, CcgSelectionFailureStatInnerData& data)
+      /*throw(eh::Exception)*/;
 
-typedef DayTimestamp CcgSelectionFailureStatKey;
-typedef CcgSelectionFailureStatInnerCollector CcgSelectionFailureStatData;
+    friend std::ostream&
+    operator<<(std::ostream& os, const CcgSelectionFailureStatInnerData& data)
+      /*throw(eh::Exception)*/;
 
-typedef StatCollector<CcgSelectionFailureStatKey, CcgSelectionFailureStatData>
-  CcgSelectionFailureStatCollector;
+  private:
+    unsigned long requests_;
+  };
 
-typedef LogDefaultTraits<CcgSelectionFailureStatCollector>
-  CcgSelectionFailureStatTraits;
+  typedef StatCollector<
+            CcgSelectionFailureStatInnerKey,
+            CcgSelectionFailureStatInnerData,
+            false,
+            true
+          > CcgSelectionFailureStatInnerCollector;
 
-} // namespace LogProcessing
-} // namespace AdServer
+  typedef DayTimestamp CcgSelectionFailureStatKey;
+  typedef CcgSelectionFailureStatInnerCollector CcgSelectionFailureStatData;
+
+  typedef StatCollector<CcgSelectionFailureStatKey, CcgSelectionFailureStatData>
+    CcgSelectionFailureStatCollector;
+
+  typedef LogDefaultTraits<CcgSelectionFailureStatCollector>
+    CcgSelectionFailureStatTraits;
+
+} // namespace AdServer::LogProcessing

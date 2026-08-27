@@ -8,10 +8,7 @@ namespace Declaration
   class SimpleDescriptor: public virtual BaseDescriptor
   {
   public:
-    SimpleDescriptor(
-      const char* name,
-      bool is_fixed_val,
-      SizeType fixed_size_val)
+    SimpleDescriptor(const char* name, bool is_fixed_val, SizeType fixed_size_val)
       noexcept;
 
     virtual bool is_fixed() const noexcept;

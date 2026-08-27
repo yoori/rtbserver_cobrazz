@@ -30,9 +30,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<CreativeCategoryAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* category
-      )
+      void make_cmd (const char* address, const char* category)
       {
         address_ = address;
         AdminParams params;
@@ -42,45 +40,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "creative_categories", address, params, static_cast<size_t>(CampaignManager));
       }
-      CreativeCategoryAdmin(
-        const char* address,
-        const char* category
-      )
+      CreativeCategoryAdmin(const char* address, const char* category)
       {
         make_cmd(address, category);
       }
-      CreativeCategoryAdmin(
-        const std::string& address,
-        const char* category
-      )
+      CreativeCategoryAdmin(const std::string& address, const char* category)
       {
         make_cmd(address.c_str(), category);
       }
-      CreativeCategoryAdmin(
-        const char* address,
-        const std::string& category
-      )
+      CreativeCategoryAdmin(const char* address, const std::string& category)
       {
         make_cmd(address, category.c_str());
       }
-      CreativeCategoryAdmin(
-        const std::string& address,
-        const std::string& category
-      )
+      CreativeCategoryAdmin(const std::string& address, const std::string& category)
       {
         make_cmd(address.c_str(), category.c_str());
       }
-      CreativeCategoryAdmin(
-        const char* address,
-        unsigned long category
-      )
+      CreativeCategoryAdmin(const char* address, unsigned long category)
       {
         make_cmd(address, strof(category).c_str());
       }
-      CreativeCategoryAdmin(
-        const std::string& address,
-        unsigned long category
-      )
+      CreativeCategoryAdmin(const std::string& address, unsigned long category)
       {
         make_cmd(address.c_str(), strof(category).c_str());
       }

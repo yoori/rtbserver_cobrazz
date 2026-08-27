@@ -50,10 +50,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::CheckOption opt_no_check_features;
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
 
   args.add(
     Generics::AppUtils::equal_name("dictionary") ||
@@ -61,20 +58,15 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::short_name("d"),
     opt_dictionary);
 
-  args.add(
-    Generics::AppUtils::equal_name("hashes"),
-    opt_out_hashes);
+  args.add(Generics::AppUtils::equal_name("hashes"), opt_out_hashes);
 
-  args.add(
-    Generics::AppUtils::equal_name("no-check-features"),
-    opt_no_check_features);
+  args.add(Generics::AppUtils::equal_name("no-check-features"), opt_no_check_features);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -82,12 +74,11 @@ Application_::main(int& argc, char** argv)
 
   std::string command = *commands.begin();
 
-  if(command == "generate-svm")
+  if (command == "generate-svm")
   {
-    Generics::AppUtils::Args::CommandList::const_iterator cmd_it =
-      ++commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator cmd_it = ++commands.begin();
 
-    if(cmd_it == args.commands().end())
+    if (cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-svm: config data file not defined";
@@ -96,7 +87,7 @@ Application_::main(int& argc, char** argv)
 
     const std::string config_data_file = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-svm: feature columns not defined";
@@ -123,12 +114,10 @@ Application_::main(int& argc, char** argv)
 }
 
 void
-Application_::load_dictionary_(
-  std::map<std::string, std::string>& dict,
-  const char* file)
+Application_::load_dictionary_(std::map<std::string, std::string>& dict, const char* file)
 {
   std::ifstream in(file);
-  if(!in.is_open())
+  if (!in.is_open())
   {
     Stream::Error ostr;
     ostr << "can't open '" << file << "'";
@@ -137,12 +126,12 @@ Application_::load_dictionary_(
 
   std::vector<std::string> values;
 
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -150,7 +139,7 @@ Application_::load_dictionary_(
     values.resize(0);
     Commons::CsvReader::parse_line(values, line);
 
-    if(values.size() != 2)
+    if (values.size() != 2)
     {
       Stream::Error ostr;
       ostr << "invalid dictionary line '" << line << "'";
@@ -189,7 +178,7 @@ Application_::generate_svm_(
   {
     Stream::Error ostr;
     ostr << "Can't parse config file '" << config_file << "': ";
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       ostr << error_handler.text(error_string);
@@ -208,16 +197,14 @@ Application_::generate_svm_(
 
   {
     std::vector<std::string> feature_column_names;
-    Commons::CsvReader::parse_line(
-      feature_column_names,
-      String::SubString(feature_columns_str));
+    Commons::CsvReader::parse_line(feature_column_names, String::SubString(feature_columns_str));
 
     unsigned long column_i = 0;
-    for(auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
+    for (auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
     {
       String::AsciiStringManip::to_lower(*it);
 
-      if(!it->empty() && (*it)[0] == '+')
+      if (!it->empty() && (*it)[0] == '+')
       {
         key_columns.insert(column_i);
         *it = std::string(*it, 1);
@@ -231,7 +218,7 @@ Application_::generate_svm_(
   // configure model
   std::vector<HashCalculatorHolder> hash_calculators;
 
-  for(Configuration::ModelType::Feature_sequence::const_iterator feature_it =
+  for (Configuration::ModelType::Feature_sequence::const_iterator feature_it =
         config->Model().Feature().begin();
       feature_it != config->Model().Feature().end(); ++feature_it)
   {
@@ -241,9 +228,8 @@ Application_::generate_svm_(
 
     {
       Generics::Murmur32v3Hash hash(hash_calculator_holder.seed);
-      for(Configuration::FeatureType::BasicFeature_sequence::
-            const_iterator basic_feature_it =
-              feature_it->BasicFeature().begin();
+      for (Configuration::FeatureType::BasicFeature_sequence::
+            const_iterator basic_feature_it = feature_it->BasicFeature().begin();
           basic_feature_it != feature_it->BasicFeature().end();
           ++basic_feature_it)
       {
@@ -251,7 +237,7 @@ Application_::generate_svm_(
         String::AsciiStringManip::to_lower(name);
         hash.add(name.data(), name.size());
 
-        if(basic_feature_it != feature_it->BasicFeature().begin())
+        if (basic_feature_it != feature_it->BasicFeature().begin())
         {
           hc_name += '/';
         }
@@ -260,28 +246,27 @@ Application_::generate_svm_(
       }
     }
 
-    for(Configuration::FeatureType::BasicFeature_sequence::
-          const_iterator basic_feature_it =
-            feature_it->BasicFeature().begin();
+    for (Configuration::FeatureType::BasicFeature_sequence::
+          const_iterator basic_feature_it = feature_it->BasicFeature().begin();
         basic_feature_it != feature_it->BasicFeature().end();
         ++basic_feature_it)
     {
       auto column_it = feature_columns.find(basic_feature_it->name());
       unsigned long feature_col = 0xFFFFFFFF;
 
-      if(!no_check_features && column_it == feature_columns.end())
+      if (!no_check_features && column_it == feature_columns.end())
       {
         Stream::Error ostr;
         ostr << "Invalid basic feature name: '" << basic_feature_it->name() << "'";
         throw Exception(ostr);
       }
-      else if(column_it != feature_columns.end())
+      else if (column_it != feature_columns.end())
       {
         feature_col = column_it->second;
       }
 
       HashCalculator_var prev_hash_calculator = hash_calculator_holder.hash_calculator;
-      if(prev_hash_calculator)
+      if (prev_hash_calculator)
       {
         hash_calculator_holder.hash_calculator = new HashCalculatorDelegateImpl(
           features_size,
@@ -290,7 +275,7 @@ Application_::generate_svm_(
       }
       else
       {
-        if(feature_it->is_float())
+        if (feature_it->is_float())
         {
           hash_calculator_holder.hash_calculator = new HashCalculatorFloatFinalImpl(
             features_size,
@@ -311,7 +296,7 @@ Application_::generate_svm_(
   }
 
   std::unique_ptr<HashDictionary> dict_table;
-  if(dictionary_file_path[0])
+  if (dictionary_file_path[0])
   {
     dict_table.reset(new HashDictionary());
   }
@@ -321,12 +306,12 @@ Application_::generate_svm_(
   HashCalculateParams params;
   params.values.reserve(feature_columns.size());
 
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -341,7 +326,7 @@ Application_::generate_svm_(
     {
       Commons::CsvReader::parse_line(column_values, line);
 
-      for(auto column_value_it = column_values.begin();
+      for (auto column_value_it = column_values.begin();
         column_value_it != column_values.end();
         ++column_value_it)
       {
@@ -350,7 +335,7 @@ Application_::generate_svm_(
         String::StringManip::Splitter<
           String::AsciiStringManip::SepBar> tokenizer(*column_value_it);
         String::SubString token;
-        while(tokenizer.get_token(token))
+        while (tokenizer.get_token(token))
         {
           params.values.back().push_back(token.str());
         }
@@ -365,7 +350,7 @@ Application_::generate_svm_(
       skip_line = true;
     }
 
-    if(skip_line)
+    if (skip_line)
     {
       continue;
     }
@@ -374,17 +359,14 @@ Application_::generate_svm_(
     HashArray hashes;
     unsigned long hash_i = 0;
 
-    for(auto hash_calc_it = hash_calculators.begin();
+    for (auto hash_calc_it = hash_calculators.begin();
       hash_calc_it != hash_calculators.end();
       ++hash_calc_it, ++hash_i)
     {
       try
       {
         Murmur32v3Adapter hash_adapter(hash_calc_it->seed);
-        hash_calc_it->hash_calculator->eval_hashes(
-          hashes,
-          hash_adapter,
-          params);
+        hash_calc_it->hash_calculator->eval_hashes(hashes, hash_adapter, params);
       }
       catch(const eh::Exception& ex)
       {
@@ -396,39 +378,37 @@ Application_::generate_svm_(
     // output hashes
     std::ostringstream res_line_ostr;
 
-    for(auto key_it = key_columns.begin(); key_it != key_columns.end(); ++key_it)
+    for (auto key_it = key_columns.begin(); key_it != key_columns.end(); ++key_it)
     {
       res_line_ostr << column_values[*key_it] << ',';
     }
 
     std::map<unsigned long, double> ordered_hashes;
 
-    for(auto hash_it = hashes.begin();
-      hash_it != hashes.end(); ++hash_it)
+    for (auto hash_it = hashes.begin(); hash_it != hashes.end(); ++hash_it)
     {
       ordered_hashes.insert(*hash_it);
     }
 
-    for(auto hash_it = ordered_hashes.begin();
-      hash_it != ordered_hashes.end(); ++hash_it)
+    for (auto hash_it = ordered_hashes.begin(); hash_it != ordered_hashes.end(); ++hash_it)
     {
-      if(hash_it != ordered_hashes.begin())
+      if (hash_it != ordered_hashes.begin())
       {
         res_line_ostr << ' ';
       }
       res_line_ostr << hash_it->first << ":";
-      if(std::abs(hash_it->second - 1.0) > 0.0000001)
+      if (std::abs(hash_it->second - 1.0) > 0.0000001)
       {
         res_line_ostr << std::fixed << std::setprecision(8);
       }
       res_line_ostr << hash_it->second;
     }
 
-    if(dict_table.get())
+    if (dict_table.get())
     {
       // fill dict
       std::vector<String::SubString> value_path;
-      for(auto hash_calc_it = hash_calculators.begin();
+      for (auto hash_calc_it = hash_calculators.begin();
         hash_calc_it != hash_calculators.end(); ++hash_calc_it)
       {
         Murmur32v3Adapter hash_adapter(hash_calc_it->seed);
@@ -446,19 +426,17 @@ Application_::generate_svm_(
   }
 
   // dump dictionaries
-  if(dict_table.get())
+  if (dict_table.get())
   {
     std::ofstream dictionary_file(dictionary_file_path, std::ios_base::out);
-    for(auto it = dict_table->begin(); it != dict_table->end(); ++it)
+    for (auto it = dict_table->begin(); it != dict_table->end(); ++it)
     {
       dictionary_file << it->first << ",";
-      if(!it->second.empty())
+      if (!it->second.empty())
       {
         std::string res = it->second;
 
-        AdServer::LogProcessing::write_not_empty_string_as_csv(
-          dictionary_file,
-          res);
+        AdServer::LogProcessing::write_not_empty_string_as_csv(dictionary_file, res);
       }
       dictionary_file << std::endl;
     }

@@ -9,10 +9,7 @@ class InactiveCCGTest: public BaseUnit
 {
 public:
 
-  InactiveCCGTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  InactiveCCGTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

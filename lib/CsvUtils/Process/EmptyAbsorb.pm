@@ -19,7 +19,7 @@ sub new
   my %res_indexes_set;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes_set{$index - 1} = 1;
       push(@res_indexes, $index - 1);
@@ -52,7 +52,7 @@ sub process
 
   foreach my $field_index(@{$self->{field_}})
   {
-    if($row->[$field_index] ne '')
+    if ($row->[$field_index] ne '')
     {
       $all_empty = 0;
     }
@@ -67,7 +67,7 @@ sub process
 
   Encode::_utf8_on($group_key_str);
 
-  if($all_empty != 0 && $self->{group_empty_} == 0)
+  if ($all_empty != 0 && $self->{group_empty_} == 0)
   {
     return $row;
   }
@@ -102,16 +102,16 @@ sub flush
 
     my $save_absorb;
 
-    if(exists($absorb_keys{''}))
+    if (exists($absorb_keys{''}))
     {
-      if(scalar(keys(%absorb_keys)) == 2)
+      if (scalar(keys(%absorb_keys)) == 2)
       {
         my @keys = keys(%absorb_keys);
         $save_absorb = $keys[1];
       }
     }
 
-    if(defined($save_absorb))
+    if (defined($save_absorb))
     {
       my $group_rows = $self->{rows_}->{$group_key};
 
@@ -121,15 +121,15 @@ sub flush
         my @first_row = @{$group_rows->[0]};
         $first_row[$self->{absorb_field_}] = $save_absorb;
 
-        for(my $i = 0; $i < scalar(@first_row); ++$i)
+        for (my $i = 0; $i < scalar(@first_row); ++$i)
         {
-          if($i != $self->{absorb_field_})
+          if ($i != $self->{absorb_field_})
           {
-            if(exists($self->{field_set_}->{$i}))
+            if (exists($self->{field_set_}->{$i}))
             {
               push(@res_row, $first_row[$i]);
             }
-            elsif(ref($first_row[$i]) eq 'ARRAY')                                                                                        
+            elsif(ref($first_row[$i]) eq 'ARRAY')
             {
               push(@res_row, $first_row[$i]);
             }
@@ -145,17 +145,17 @@ sub flush
         }
       }
 
-      for(my $i = 1; $i < scalar(@$group_rows); ++$i)
+      for (my $i = 1; $i < scalar(@$group_rows); ++$i)
       {
         my $row = $group_rows->[$i];
 
-        for(my $field_i = 1; $field_i < scalar(@res_row); ++$field_i)
+        for (my $field_i = 1; $field_i < scalar(@res_row); ++$field_i)
         {
-          if($field_i != $self->{absorb_field_})
+          if ($field_i != $self->{absorb_field_})
           {
-            if(exists($self->{field_set_}->{$field_i}))
+            if (exists($self->{field_set_}->{$field_i}))
             {}
-            elsif(ref($row->[$field_i]) eq 'ARRAY')                                                                                 
+            elsif(ref($row->[$field_i]) eq 'ARRAY')
             {
               push(@{$res_row[$field_i]}, @{$row->[$field_i]});
             }

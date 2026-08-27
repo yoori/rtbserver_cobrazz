@@ -1,9 +1,6 @@
 #include "InvalidCookiesTest.hpp"
 
-REFLECT_UNIT(InvalidCookiesTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(InvalidCookiesTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -78,16 +75,13 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
   //NSLookup request
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      client.debug_info.ccid,
-      fetch_string("CCID/01")).check(),
+    AutoTest::equal_checker(client.debug_info.ccid, fetch_string("CCID/01")).check(),
     "unexpected ccid");
 
   if (check_host_cookie_presents)
   {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.has_cookie(cookie_name)),
+      AutoTest::predicate_checker(client.has_cookie(cookie_name)),
       std::string("must has") + cookie_name +
       "host cookie");
   }
@@ -97,8 +91,7 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
     "must have debug_info.track_pixel_url");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
   //save URLs
@@ -112,20 +105,15 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
   //track.gif? request
   client.process_request(track_pixel_url);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      200,
-      client.req_status()).check(),
+    AutoTest::equal_checker(200, client.req_status()).check(),
     "must got expected request status");
   std::string header_value;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("Content-Type", header_value)),
+    AutoTest::predicate_checker(client.find_header_value("Content-Type", header_value)),
     "Content-Type not found");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "image/gif",
-      header_value).check(),
+    AutoTest::equal_checker("image/gif", header_value).check(),
     "Content-Type must be 'image/gif'");
   header_value.clear();
 
@@ -133,34 +121,25 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
   client.process_request(click_url);
 
   FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      "http://www.autotest.com/").check(),
+    ClickResponseChecker(client, "", "http://www.autotest.com/").check(),
     "Check click response");
 
   //ActionServer request
   client.process_request(action_url);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      200,
-      client.req_status()).check(),
+    AutoTest::equal_checker(200, client.req_status()).check(),
     "must got expected request status");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("Content-Type", header_value)),
+    AutoTest::predicate_checker(client.find_header_value("Content-Type", header_value)),
     "Content-Type not found");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "image/gif",
-      header_value).check(),
+    AutoTest::equal_checker("image/gif", header_value).check(),
     "Content-Type must be 'image/gif'");
 
   if (check_host_cookie_presents)
   {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.has_host_cookie(cookie_name)),
+      AutoTest::predicate_checker(client.has_host_cookie(cookie_name)),
       std::string("must has") + cookie_name +
       "host cookie");
   }
@@ -180,15 +159,10 @@ void InvalidCookiesTest::invalid_base64_uid_test_case()
   std::string old_uid_value, got_uid_value;
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      client.debug_info.ccid,
-      fetch_string("CCID/01")).check(),
+    AutoTest::equal_checker(client.debug_info.ccid, fetch_string("CCID/01")).check(),
     "unexpected ccid");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_cookie("uid")),
-    "must has uid cookie ");
+  FAIL_CONTEXT(AutoTest::predicate_checker(client.has_cookie("uid")), "must has uid cookie ");
   //crack cookie
   client.get_cookie_value("uid", old_uid_value);
   std::string new_uid_value = crack_cookie( "uid", 0, "*");  // bad string for base64 decoder
@@ -196,24 +170,13 @@ void InvalidCookiesTest::invalid_base64_uid_test_case()
   //sending request with cracked uid cookie
   ns_request.tid = fetch_string("PassbackTag");
   client.process_request(ns_request);
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_cookie("uid")),
-    "must has uid cookie");
+  FAIL_CONTEXT(AutoTest::predicate_checker(client.has_cookie("uid")), "must has uid cookie");
 
   client.get_cookie_value("uid", got_uid_value);
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      new_uid_value,
-      got_uid_value).check(),
-    "unexpected uid");
+  FAIL_CONTEXT(AutoTest::equal_checker(new_uid_value, got_uid_value).check(), "unexpected uid");
 
   // CPA creatives doesn't show for unknow user
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check ccid");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check ccid");
 
   // restore uid
   client.set_cookie_value("uid", old_uid_value.c_str());
@@ -225,28 +188,19 @@ void InvalidCookiesTest::invalid_uid_test_case()
 {
   add_descr_phrase("'InvalidCookies' send invalid uid (changed)");
   std::string old_uid_value, got_uid_value;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_cookie("uid")),
-    "must has uid cookie");
+  FAIL_CONTEXT(AutoTest::predicate_checker(client.has_cookie("uid")), "must has uid cookie");
   client.get_cookie_value("uid", old_uid_value);
   std::string new_uid_value = crack_cookie( "uid", 0, "TTTT");  //it is crete correct other uid
   client.process_request(ns_request);
   client.get_cookie_value("uid", got_uid_value);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      new_uid_value,
-      got_uid_value).check(),
+    AutoTest::equal_checker(new_uid_value, got_uid_value).check(),
     std::string("must has new uid!='") + new_uid_value +
       "' cookie");
 
   // CPA creatives doesn't show for unknow user
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check ccid");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check ccid");
 
   // ADSC-3949
   ns_request.tid = fetch_string("PassbackTag");
@@ -254,36 +208,26 @@ void InvalidCookiesTest::invalid_uid_test_case()
   client.get_cookie_value("uid", got_uid_value);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      new_uid_value,
-      got_uid_value).check(),
+    AutoTest::equal_checker(new_uid_value, got_uid_value).check(),
     std::string("must has new uid!='") + new_uid_value +
       "' cookie");
 
   // CPA creatives doesn't show for unknow user
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check ccid");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check ccid");
 
   // restore uid
   client.set_cookie_value("uid", old_uid_value.c_str());
 
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CCID/01"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CCID/01"), client.debug_info.ccid).check(),
     "Check ccid");
 
   ns_request.tid = fetch_string("Tag/01");
 
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CCID/01"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CCID/01"), client.debug_info.ccid).check(),
     "Check ccid");
 }
 
@@ -294,9 +238,7 @@ void InvalidCookiesTest::invalid_last_colo_id_test_case()
   client.set_cookie_value("lc", "1", false);
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      client.debug_info.ccid,
-      fetch_string("CCID/01")).check(),
+    AutoTest::equal_checker(client.debug_info.ccid, fetch_string("CCID/01")).check(),
     "unexpected ccid");
   crack_cookie_and_check_serv_behaviour("lc", 0, "A", true, false);
   crack_cookie_and_check_serv_behaviour("lc", 0, "-1", true, false);
@@ -307,13 +249,9 @@ void InvalidCookiesTest::opt_out_test_case()
  add_descr_phrase("'InvalidCookies' send opt-out");
  client.process_request(optout_request.op("out"));
  // check clearing cookie for adFrontend domain
- FAIL_CONTEXT(
-   AutoTest::predicate_checker(
-     !client.has_host_cookies()),
-   "must not has host cookies");
+ FAIL_CONTEXT(AutoTest::predicate_checker(!client.has_host_cookies()), "must not has host cookies");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")),
+    AutoTest::predicate_checker(client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
 }
 
@@ -327,8 +265,7 @@ void InvalidCookiesTest::invalid_opt_out_status_test_case()
   client.set_cookie_value("OPTED_OUT", "UNKNOWN");
   client.process_request(AutoTest::OptOutRequest().op("in"));
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_cookie("uid")),
+    AutoTest::predicate_checker(client.has_cookie("uid")),
     "must has uid cookie in opted-out mode");
 
   std::string uid_value;
@@ -336,10 +273,7 @@ void InvalidCookiesTest::invalid_opt_out_status_test_case()
   client.get_cookie_value("uid", uid_value);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      AutoTest::PROBE_UID,
-      uid_value,
-      AutoTest::CT_NOT_EQUAL).check(),
+    AutoTest::equal_checker(AutoTest::PROBE_UID, uid_value, AutoTest::CT_NOT_EQUAL).check(),
     "unexpected uid after");
 }
 
@@ -352,19 +286,14 @@ void InvalidCookiesTest::opt_out_after_crack_test_case()
     AutoTest::predicate_checker(!client.has_host_cookies()),
     "must not has host cookies");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")),
+    AutoTest::predicate_checker(client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
   client.process_request(ns_request);
   FAIL_CONTEXT(
     AutoTest::predicate_checker(!client.has_host_cookies()),
     "must not has host cookies");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")),
+    AutoTest::predicate_checker(client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_cookie("uid")),
-    "must not has uid");
+  FAIL_CONTEXT(AutoTest::predicate_checker(!client.has_cookie("uid")), "must not has uid");
 }

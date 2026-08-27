@@ -4,58 +4,49 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestActionProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::RequestInfoSvcs
 {
-  namespace RequestInfoSvcs
+  /**
+   * CompositeAdvActionProcessor
+   * delegate request processing to child processors
+   */
+  class CompositeAdvActionProcessor:
+    public virtual AdvActionProcessor,
+    public virtual ReferenceCounting::AtomicImpl
   {
-    /**
-     * CompositeAdvActionProcessor
-     * delegate request processing to child processors
-     */
-    class CompositeAdvActionProcessor:
-      public virtual AdvActionProcessor,
-      public virtual ReferenceCounting::AtomicImpl
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, AdvActionProcessor::Exception);
+  public:
+    DECLARE_EXCEPTION(Exception, AdvActionProcessor::Exception);
 
-      void add_child_processor(AdvActionProcessor* child_processor)
-        /*throw(Exception)*/;
+    void add_child_processor(AdvActionProcessor* child_processor)
+      /*throw(Exception)*/;
 
-      /** AdvActionProcessor interface */
-      virtual void process_adv_action(
-        const AdvActionInfo& adv_action_info)
-        /*throw(AdvActionProcessor::Exception)*/;
+    /** AdvActionProcessor interface */
+    virtual void process_adv_action(const AdvActionInfo& adv_action_info)
+      /*throw(AdvActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_adv_action(
-        const AdvActionInfo& adv_action_info);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_adv_action(const AdvActionInfo& adv_action_info);
 
-      virtual void process_custom_action(
-        const AdvExActionInfo& adv_custom_action_info)
-        /*throw(AdvActionProcessor::Exception)*/;
+    virtual void process_custom_action(const AdvExActionInfo& adv_custom_action_info)
+      /*throw(AdvActionProcessor::Exception)*/;
 
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_custom_action(
-        const AdvExActionInfo& adv_custom_action_info);
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_custom_action(const AdvExActionInfo& adv_custom_action_info);
 
-    protected:
-      virtual ~CompositeAdvActionProcessor() noexcept {}
+  protected:
+    virtual ~CompositeAdvActionProcessor() noexcept {}
 
-    private:
-      typedef std::list<AdvActionProcessor_var> AdvActionProcessorList;
-      AdvActionProcessorList child_processors_;
-    };
+  private:
+    typedef std::list<AdvActionProcessor_var> AdvActionProcessorList;
+    AdvActionProcessorList child_processors_;
+  };
 
-    typedef
-      ReferenceCounting::SmartPtr<CompositeAdvActionProcessor>
-      CompositeAdvActionProcessor_var;
-  }
+  typedef
+    ReferenceCounting::SmartPtr<CompositeAdvActionProcessor>
+    CompositeAdvActionProcessor_var;
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /* CompositeAdvActionProcessor */
   inline
@@ -63,17 +54,15 @@ namespace RequestInfoSvcs
   CompositeAdvActionProcessor::add_child_processor(
     AdvActionProcessor* child_processor) /*throw(Exception)*/
   {
-    AdvActionProcessor_var add_processor(
-      ReferenceCounting::add_ref(child_processor));
+    AdvActionProcessor_var add_processor(ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
   }
 
   inline
-  void CompositeAdvActionProcessor::process_adv_action(
-    const AdvActionInfo& adv_action_info)
+  void CompositeAdvActionProcessor::process_adv_action(const AdvActionInfo& adv_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
-    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+    for (AdvActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -82,10 +71,9 @@ namespace RequestInfoSvcs
   }
 
   inline AdServer::Commons::Awaitable<void>
-  CompositeAdvActionProcessor::co_process_adv_action(
-    const AdvActionInfo& adv_action_info)
+  CompositeAdvActionProcessor::co_process_adv_action(const AdvActionInfo& adv_action_info)
   {
-    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+    for (AdvActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -98,7 +86,7 @@ namespace RequestInfoSvcs
     const AdvExActionInfo& adv_custom_action_info)
     /*throw(AdvActionProcessor::Exception)*/
   {
-    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+    for (AdvActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -110,12 +98,11 @@ namespace RequestInfoSvcs
   CompositeAdvActionProcessor::co_process_custom_action(
     const AdvExActionInfo& adv_custom_action_info)
   {
-    for(AdvActionProcessorList::iterator it = child_processors_.begin();
+    for (AdvActionProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
       co_await (*it)->co_process_custom_action(adv_custom_action_info);
     }
   }
-}
 }

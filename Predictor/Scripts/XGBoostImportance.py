@@ -42,7 +42,7 @@ parser.add_argument(
   help='How many top features are shown')
 
 parser.add_argument(
-  '--csv-path', 
+  '--csv-path',
   help='Result importance csv file')
 
 args = parser.parse_args()
@@ -82,7 +82,7 @@ features = map(lambda x: x[0], importance)
 
 df = pd.DataFrame(
   {'feature': range(len(importance)),
-   'fscore': map(lambda x: float(x[1]) / sum, importance) } ) 
+   'fscore': map(lambda x: float(x[1]) / sum, importance) } )
 
 df = df.set_index('feature')
 

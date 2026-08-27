@@ -18,8 +18,7 @@ public:
    * @param statistics ref
    * @param output stream
    */
-  Report(Statistics& stats,
-         std::ostream& out);
+  Report(Statistics& stats, std::ostream& out);
 
   /**
    * @brief Destructor
@@ -154,8 +153,7 @@ private:
 private:
   std::ostream& dump_ccid_header(std::ostream& out) const;
 
-  std::ostream& dump_ccid_body(std::ostream& out,
-                               const AdvertisingStatistics_var& stats) const;
+  std::ostream& dump_ccid_body(std::ostream& out, const AdvertisingStatistics_var& stats) const;
 
 };
 
@@ -171,8 +169,7 @@ public:
    * @param statistics ref
    * @param output stream
    */
-  ShortReport(Statistics& stats,
-              std::ostream& out);
+  ShortReport(Statistics& stats, std::ostream& out);
 
   /**
    * @brief Destructor
@@ -203,8 +200,7 @@ public:
    * @param statistics ref
    * @param output stream
    */
-  ChannelsReport(Statistics& stats,
-                 std::ostream& out);
+  ChannelsReport(Statistics& stats, std::ostream& out);
 
   /**
    * @brief Destructor
@@ -237,8 +233,7 @@ public:
    * @param statistics ref
    * @param output stream
    */
-  DiscoverReport(Statistics& stats,
-                 std::ostream& out);
+  DiscoverReport(Statistics& stats, std::ostream& out);
 
   /**
    * @brief Destructor
@@ -271,8 +266,7 @@ public:
    * @param statistics ref
    * @param output stream
    */
-  StandardReport(Statistics& stats,
-                 std::ostream& out);
+  StandardReport(Statistics& stats, std::ostream& out);
 
   /**
    * @brief Destructor
@@ -304,8 +298,7 @@ public:
    * @param statistics ref
    * @param performance statistics header
    */
-  DumpConfPerformanceStats(const PerformanceStatisticsBase& stats,
-                           const char* header);
+  DumpConfPerformanceStats(const PerformanceStatisticsBase& stats, const char* header);
 
   /**
    * @brief Destructor

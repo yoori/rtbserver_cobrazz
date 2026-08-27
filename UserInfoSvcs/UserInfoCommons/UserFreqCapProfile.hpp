@@ -22,10 +22,7 @@ namespace AdServer::UserInfoSvcs
       SeqOrder()
       {}
 
-      SeqOrder(
-        unsigned long ccg_id_val,
-        unsigned long set_id_val,
-        unsigned long imps_val)
+      SeqOrder(unsigned long ccg_id_val, unsigned long set_id_val, unsigned long imps_val)
         :
         ccg_id(ccg_id_val),
         set_id(set_id_val),
@@ -54,9 +51,7 @@ namespace AdServer::UserInfoSvcs
     UserFreqCapProfile(ConstSmartMemBufPtr plain_profile)
       /*throw(Invalid)*/;
 
-    UserFreqCapProfile(
-      SmartMemBufPtr plain_profile,
-      bool own = false)
+    UserFreqCapProfile(SmartMemBufPtr plain_profile, bool own = false)
       /*throw(Invalid)*/;
 
     bool
@@ -98,15 +93,11 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& timestamp) noexcept;
 
       void
-    get_optin_publishers(
-      std::vector<unsigned long>& optin_publishers,
-      const Generics::Time& time)
+    get_optin_publishers(std::vector<unsigned long>& optin_publishers, const Generics::Time& time)
       /*throw(eh::Exception)*/;
 
     void
-    print(
-      std::ostream& out,
-      const FreqCapConfig* fc_config) const
+    print(std::ostream& out, const FreqCapConfig* fc_config) const
       /*throw(eh::Exception)*/;
 
     ConstSmartMemBuf_var

@@ -8,9 +8,7 @@
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class CampaignServerPool: public CORBACommons::ObjectPool<
     AdServer::CampaignSvcs::CampaignServer,
@@ -38,11 +36,8 @@ namespace CampaignSvcs
 
   typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
 }
-}
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   inline
   CampaignServerPool::CampaignServerPool(
@@ -55,9 +50,7 @@ namespace CampaignSvcs
     : CORBACommons::ObjectPool<
         AdServer::CampaignSvcs::CampaignServer,
         CORBACommons::ObjectPoolRefConfiguration>(
-          generate_config_(campaign_server_refs,
-            corba_client_adapter,
-            bad_period),
+          generate_config_(campaign_server_refs, corba_client_adapter, bad_period),
           policy)
   {}
   catch(const eh::Exception& ex)
@@ -87,5 +80,4 @@ namespace CampaignSvcs
 
     return pool_config;
   }
-}
 }

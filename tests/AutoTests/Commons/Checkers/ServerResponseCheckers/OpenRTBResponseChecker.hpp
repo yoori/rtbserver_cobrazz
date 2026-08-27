@@ -65,8 +65,7 @@ namespace AutoTest
      *
      * @param ad client.
      */
-    OpenRTBResponse(
-      const std::string& body);
+    OpenRTBResponse(const std::string& body);
 
     /**
      * @brief Destructor.
@@ -355,9 +354,7 @@ namespace AutoTest
      * @param ad client.
      * @param first expected.
      */
-    OpenRTBResponseChecker(
-      const AdClient& client,
-      const Expected& expected);
+    OpenRTBResponseChecker(const AdClient& client, const Expected& expected);
 
     /**
      * @brief Constructor.
@@ -365,17 +362,14 @@ namespace AutoTest
      * @param ad client.
      * @param expected list.
      */
-    OpenRTBResponseChecker(
-      const AdClient& client,
-      const ExpectedList& expected);
+    OpenRTBResponseChecker(const AdClient& client, const ExpectedList& expected);
 
     /**
      * @brief Add expected to list.
      *
      * @param expected.
      */
-    void add_expected(
-      const Expected& expected);
+    void add_expected(const Expected& expected);
 
     /**
      * @brief Get response bid
@@ -392,8 +386,7 @@ namespace AutoTest
      * @param throw on error flag.
      */
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(eh::Exception)*/;
 
   private:

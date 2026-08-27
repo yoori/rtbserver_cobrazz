@@ -1,10 +1,7 @@
 
 #include "InactiveCCGTest.hpp"
 
-REFLECT_UNIT(InactiveCCGTest) (
-  "NoDBUpdate",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(InactiveCCGTest) ("NoDBUpdate", AUTO_TEST_QUIET);
 
 namespace
 {
@@ -32,9 +29,7 @@ InactiveCCGTest::run_test()
     debug_time(Generics::Time::get_time_of_day()));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "mustn't return ccid for inactive CCG");
 
   return true;

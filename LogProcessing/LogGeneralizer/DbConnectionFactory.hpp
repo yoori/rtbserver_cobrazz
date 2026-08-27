@@ -12,53 +12,52 @@
 #include <Commons/Postgres/Connection.hpp>
 #include <Commons/Postgres/ConnectionPool.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-class DbConnectionFactory: public ReferenceCounting::AtomicImpl
+namespace AdServer::LogProcessing
 {
-public:
-  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-  DECLARE_EXCEPTION(NotActive, Exception);
 
-protected:
-  virtual ~DbConnectionFactory() noexcept {}
-};
+  class DbConnectionFactory: public ReferenceCounting::AtomicImpl
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(NotActive, Exception);
 
-typedef ReferenceCounting::SmartPtr<DbConnectionFactory>
-  DbConnectionFactory_var;
+  protected:
+    virtual ~DbConnectionFactory() noexcept {}
+  };
 
-class PostgresConnectionFactoryImpl:
-  public virtual Generics::RefCountableActiveObject,
-  public DbConnectionFactory
-{
-public:
-  PostgresConnectionFactoryImpl(): initialized_() {}
+  typedef ReferenceCounting::SmartPtr<DbConnectionFactory>
+    DbConnectionFactory_var;
 
-  void
-  initialize(const char* conn);
+  class PostgresConnectionFactoryImpl:
+    public virtual Generics::RefCountableActiveObject,
+    public DbConnectionFactory
+  {
+  public:
+    PostgresConnectionFactoryImpl(): initialized_() {}
 
-  Commons::Postgres::Connection_var get_connection();
+    void
+    initialize(const char* conn);
 
-  void activate_object() /*throw(ActiveObject::AlreadyActive)*/;
+    Commons::Postgres::Connection_var get_connection();
 
-  void deactivate_object() noexcept;
+    void activate_object() /*throw(ActiveObject::AlreadyActive)*/;
 
-  void wait_object() noexcept;
+    void deactivate_object() noexcept;
 
-  bool active() const noexcept;
+    void wait_object() noexcept;
 
-private:
-  virtual
-  ~PostgresConnectionFactoryImpl() noexcept {}
+    bool active() const noexcept;
 
-  Commons::Postgres::Environment_var env_;
-  Commons::Postgres::ConnectionPool_var conn_pool_;
-  bool initialized_;
-};
+  private:
+    virtual
+    ~PostgresConnectionFactoryImpl() noexcept {}
 
-typedef ReferenceCounting::SmartPtr<PostgresConnectionFactoryImpl>
-  PostgresConnectionFactoryImpl_var;
+    Commons::Postgres::Environment_var env_;
+    Commons::Postgres::ConnectionPool_var conn_pool_;
+    bool initialized_;
+  };
 
-} // namespace LogProcessing
-} // namespace AdServer
+  typedef ReferenceCounting::SmartPtr<PostgresConnectionFactoryImpl>
+    PostgresConnectionFactoryImpl_var;
+
+} // namespace AdServer::LogProcessing

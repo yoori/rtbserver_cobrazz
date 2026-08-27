@@ -513,8 +513,7 @@ namespace AutoTest
      * @brief Constructor.
      * @param value
      */
-    ComparableString(
-      const char* v) :
+    ComparableString(const char* v) :
       value_(v)
     { }
 
@@ -522,8 +521,7 @@ namespace AutoTest
      * @brief Constructor.
      * @param value
      */
-    ComparableString(
-      const std::string& v) :
+    ComparableString(const std::string& v) :
       value_(v)
     { }
 
@@ -539,8 +537,7 @@ namespace AutoTest
      */
     virtual
     bool
-    compare(
-      const char* other) const
+    compare(const char* other) const
     {
       return String::SubString(value_) == String::SubString(other);
     }
@@ -615,9 +612,7 @@ namespace AutoTest
      * @param sequence
      * @param entry or full compare, flag
      */
-    ComparableSeq(
-      const List& v,
-      bool check_is_entry = false) :
+    ComparableSeq(const List& v, bool check_is_entry = false) :
       value_(v),
       check_is_entry_(check_is_entry)
     { }
@@ -628,9 +623,7 @@ namespace AutoTest
      * @param equal or not, flag
      */
     template <typename T>
-    ComparableSeq(
-      const std::initializer_list<T>& v,
-      bool check_is_entry = false) :
+    ComparableSeq(const std::initializer_list<T>& v, bool check_is_entry = false) :
       value_(v.begin(), v.end()),
       check_is_entry_(check_is_entry)
     { }
@@ -641,8 +634,7 @@ namespace AutoTest
      * @param equal or not, flag
      */
     template<typename Sequence>
-    ComparableSeq(Sequence v,
-      bool check_is_entry = false) :
+    ComparableSeq(Sequence v, bool check_is_entry = false) :
       value_(beginof(v), endof(v)),
       check_is_entry_(check_is_entry)
     { }
@@ -659,8 +651,7 @@ namespace AutoTest
      */
     virtual
     bool
-    compare(
-      const char* other) const
+    compare(const char* other) const
     {
       if (check_is_entry_)
       {

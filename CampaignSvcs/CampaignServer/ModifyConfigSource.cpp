@@ -5,9 +5,7 @@ namespace Aspect
   const char MODIFY_CONFIG_DB_SOURCE[] = "ModifyConfigDBSource";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   ModifyConfigDBSource::ModifyConfigDBSource(
     Logging::Logger* logger,
@@ -52,17 +50,14 @@ namespace CampaignSvcs
       logger_->sstream(
         Logging::Logger::ERROR,
         Aspect::MODIFY_CONFIG_DB_SOURCE,
-        "ADS-DB-6000") << FUN <<
-        ": can't receive stats from DB: " << ex.what();
+        "ADS-DB-6000") << FUN << ": can't receive stats from DB: " << ex.what();
     }
 
     return ModifyConfig_var();
   }
 
   void
-  ModifyConfigDBSource::query_countries_(
-    Commons::Postgres::Connection* conn,
-    ModifyConfig& config)
+  ModifyConfigDBSource::query_countries_(Commons::Postgres::Connection* conn, ModifyConfig& config)
     /*throw(Exception)*/
   {
     static const char* FUN = "ModifyConfigDBSource::query_countries_()";
@@ -92,8 +87,7 @@ namespace CampaignSvcs
         ModifyConfig::CountryDef country;
         country.cpc_random_imps = rs->get_number<unsigned long>(POS_CPC_RANDOM_IMPS);
         country.cpa_random_imps = rs->get_number<unsigned long>(POS_CPA_RANDOM_IMPS);
-        config.countries.insert(std::make_pair(
-          country_code, country));
+        config.countries.insert(std::make_pair(country_code, country));
       }
     }
     catch(const eh::Exception& ex)
@@ -103,5 +97,4 @@ namespace CampaignSvcs
       throw Exception(ostr);
     }
   }
-}
 }

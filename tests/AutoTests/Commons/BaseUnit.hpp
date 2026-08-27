@@ -165,10 +165,7 @@ public:
    * @param test name.
    * @param test config.
    */
-  BaseUnit(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var);
+  BaseUnit(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   /**
    * @brief Destructor.
@@ -199,8 +196,7 @@ public:
    * @param element name.
    * @return local test config element.
    */
-  DataElemObjectRef get_object_by_name(
-    const std::string& obj_name)
+  DataElemObjectRef get_object_by_name(const std::string& obj_name)
     /*throw(Exception, InvalidArgument)*/;
 
   /**
@@ -256,9 +252,7 @@ public:
    * @return object values as separated string.
    */
   std::string
-  map_objects(
-    const char* obj_names,
-    const char* separator = ",")
+  map_objects(const char* obj_names, const char* separator = ",")
     /*throw(Exception)*/;
 
   /**
@@ -340,9 +334,7 @@ public:
    */
   template<typename CheckerType>
   void
-  add_checker(
-    const std::string& description,
-    const CheckerType& checker)
+  add_checker(const std::string& description, const CheckerType& checker)
     /*throw(eh::Exception)*/;
 
   template<class T>
@@ -366,17 +358,14 @@ protected:
    * @return exists or new logger with name.
    */
   AutoTest::Logger&
-  add_logger(
-    const std::string& log_name);
+  add_logger(const std::string& log_name);
 
   /**
    * @brief Get element as float.
    * @param [out] element float value.
    * @param element name.
    */
-  void fetch(
-    long double& v,
-    const std::string& obj_name)
+  void fetch(long double& v, const std::string& obj_name)
     /*throw(Exception)*/;
 
   /**
@@ -384,9 +373,7 @@ protected:
    * @param [out] element integer value.
    * @param element name.
    */
-  void fetch(
-    unsigned long& v,
-    const std::string& obj_name)
+  void fetch(unsigned long& v, const std::string& obj_name)
     /*throw(Exception)*/;
 
   /**
@@ -394,9 +381,7 @@ protected:
    * @param [out] element string value.
    * @param element name.
    */
-  void fetch(
-    std::string& v,
-    const std::string& obj_name)
+  void fetch(std::string& v, const std::string& obj_name)
     /*throw(Exception)*/;
 
   /**

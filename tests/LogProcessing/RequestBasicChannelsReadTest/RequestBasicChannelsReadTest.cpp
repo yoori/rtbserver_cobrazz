@@ -40,14 +40,10 @@ namespace
   parse_size(std::string_view value, std::string_view option)
   {
     std::size_t result = 0;
-    const auto [ptr, error] = std::from_chars(
-      value.data(),
-      value.data() + value.size(),
-      result);
+    const auto [ptr, error] = std::from_chars(value.data(), value.data() + value.size(), result);
     if (error != std::errc() || ptr != value.data() + value.size() || result == 0)
     {
-      throw std::invalid_argument(
-        std::string(option) + " requires a positive integer");
+      throw std::invalid_argument(std::string(option) + " requires a positive integer");
     }
     return result;
   }
@@ -133,9 +129,7 @@ namespace
     using Record = LP::RequestBasicChannelsInnerData;
 
     LP::NumberArray impression_channels = {300, 301, 302};
-    Record::AdSlotImpression display_ad(
-      Record::FixedNum("100.25"),
-      impression_channels);
+    Record::AdSlotImpression display_ad(Record::FixedNum("100.25"), impression_channels);
     Record::AdSlotImpressionOptional display_ad_optional(display_ad);
 
     Record::AdBidSlotImpressionList text_ads;
@@ -194,10 +188,7 @@ namespace
   }
 
   std::string
-  replace_field(
-    std::string record,
-    std::size_t field_index,
-    std::string_view value)
+  replace_field(std::string record, std::size_t field_index, std::string_view value)
   {
     std::size_t begin = 0;
     for (std::size_t index = 0; index < field_index; ++index)
@@ -227,8 +218,7 @@ namespace
   {
     constexpr std::size_t HISTORY_CHANNELS_FIELD = 3;
 
-    std::istringstream input(
-      replace_field(record, HISTORY_CHANNELS_FIELD, value));
+    std::istringstream input(replace_field(record, HISTORY_CHANNELS_FIELD, value));
     LP::RequestBasicChannelsInnerData data;
     if (!(input >> data))
     {
@@ -255,8 +245,7 @@ namespace
       throw std::runtime_error("history channel boundary parsing failed");
     }
 
-    if (parse_history_channels(record, max_string + '0') ||
-      parse_history_channels(record, "-1"))
+    if (parse_history_channels(record, max_string + '0') || parse_history_channels(record, "-1"))
     {
       throw std::runtime_error("invalid history channel value was accepted");
     }
@@ -272,8 +261,7 @@ namespace
     // page_trigger_channels
     constexpr std::size_t PAGE_TRIGGER_CHANNELS_FIELD = 4;
 
-    std::istringstream input(
-      replace_field(record, PAGE_TRIGGER_CHANNELS_FIELD, value));
+    std::istringstream input(replace_field(record, PAGE_TRIGGER_CHANNELS_FIELD, value));
     LP::RequestBasicChannelsInnerData data;
     if (!(input >> data))
     {
@@ -294,10 +282,7 @@ namespace
     const std::string max_string = std::to_string(max_value);
 
     LP::RequestBasicChannelsInnerData::TriggerMatchArray matches;
-    if (!parse_page_trigger_matches(
-        record,
-        "+1:+2," + max_string + ':' + max_string,
-        &matches) ||
+    if (!parse_page_trigger_matches(record, "+1:+2," + max_string + ':' + max_string, &matches) ||
       matches.size() != 2 ||
       matches[0] != LP::RequestBasicChannelsInnerData::TriggerMatch(1, 2) ||
       matches[1] !=
@@ -326,8 +311,7 @@ namespace
     {
       if (parse_page_trigger_matches(record, value))
       {
-        throw std::runtime_error(
-          "invalid TriggerMatch value was accepted: " + value);
+        throw std::runtime_error("invalid TriggerMatch value was accepted: " + value);
       }
     }
   }
@@ -358,12 +342,9 @@ namespace
     constexpr std::size_t DISPLAY_AD_FIELD = 8;
     constexpr std::size_t TEXT_ADS_FIELD = 9;
     constexpr std::size_t AD_SELECT_FIELD = 10;
-    if (parse_record(replace_field(
-        serialized, DISPLAY_AD_FIELD, "@100:")) ||
-      parse_record(replace_field(
-        serialized, TEXT_ADS_FIELD, "100:200:300/")) ||
-      parse_record(replace_field(
-        serialized, AD_SELECT_FIELD, "@1:size:format:1:1:")))
+    if (parse_record(replace_field(serialized, DISPLAY_AD_FIELD, "@100:")) ||
+      parse_record(replace_field(serialized, TEXT_ADS_FIELD, "100:200:300/")) ||
+      parse_record(replace_field(serialized, AD_SELECT_FIELD, "@1:size:format:1:1:")))
     {
       throw std::runtime_error("invalid RBC compound field was accepted");
     }
@@ -417,8 +398,7 @@ namespace
       << "iterations: " << options.iterations << '\n'
       << "elapsed: " << std::fixed << std::setprecision(6) << seconds << " sec\n"
       << "records/sec: " << options.iterations / seconds << '\n'
-      << "MiB/sec: " << mib / seconds << '\n'
-      << "checksum: " << checksum << '\n';
+      << "MiB/sec: " << mib / seconds << '\n' << "checksum: " << checksum << '\n';
   }
 
   std::size_t

@@ -16,9 +16,7 @@ namespace
 
 // Exchange wrapper implementation
 
-GlobalParamsGranularUpdateTest::Exchange::Exchange(
-  DB::IConn& connection,
-  unsigned int id)
+GlobalParamsGranularUpdateTest::Exchange::Exchange(DB::IConn& connection, unsigned int id)
   : connection_(connection),
     currency_exchange_(connection_)
 {
@@ -34,8 +32,7 @@ GlobalParamsGranularUpdateTest::Exchange::Exchange(
   currency_exchange_.effective_date = effective_date;
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      currency_exchange_.insert()),
+    AutoTest::predicate_checker(currency_exchange_.insert()),
     "Cann't insert currency exchange");
 
   add_currencies_();
@@ -86,8 +83,7 @@ GlobalParamsGranularUpdateTest::set_up()
 {
   add_descr_phrase("SetUp");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must set in the XML configuration file");
   frontend_ = get_config().get_service(CTE_ALL, STE_CAMPAIGN_MANAGER).address;
 
@@ -96,8 +92,7 @@ GlobalParamsGranularUpdateTest::set_up()
       GlobalsChecker(
         this,
         GlobalsChecker::Expected().
-          currency_exchange_id(
-            fetch_int("CurrencyExchange")))).check(),
+          currency_exchange_id(fetch_int("CurrencyExchange")))).check(),
     "Globals initial");
 }
 
@@ -130,8 +125,7 @@ void GlobalParamsGranularUpdateTest::check_currency_exchange_()
       GlobalsChecker(
         this,
         GlobalsChecker::Expected().
-          currency_exchange_id(
-            exchange.id()))).check(),
+          currency_exchange_id(exchange.id()))).check(),
     "Currency exchange changed");
 
 }
@@ -143,8 +137,7 @@ void GlobalParamsGranularUpdateTest::restore_default_values_()
   {
     if (currency_exchange_id_ != fetch_int("CurrencyExchange"))
     {
-      GlobalParamsGranularUpdateTest::Exchange exchange(
-        pq_conn_, currency_exchange_id_);
+      GlobalParamsGranularUpdateTest::Exchange exchange(pq_conn_, currency_exchange_id_);
       exchange.del();
       currency_exchange_id_ = fetch_int("CurrencyExchange");
     }
@@ -161,7 +154,6 @@ void GlobalParamsGranularUpdateTest::restore_default_values_()
       GlobalsChecker(
         this,
         GlobalsChecker::Expected().
-          currency_exchange_id(
-            fetch_int("CurrencyExchange")))).check(),
+          currency_exchange_id(fetch_int("CurrencyExchange")))).check(),
     "Restore currency exchange");
 }

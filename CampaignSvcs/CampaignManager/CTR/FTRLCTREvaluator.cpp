@@ -13,9 +13,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     try
     {
-      AdServer::ProfilingCommons::FileReader reader(
-        file.str().c_str(),
-        1024 * 1024);
+      AdServer::ProfilingCommons::FileReader reader(file.str().c_str(), 1024 * 1024);
 
       if (reader.file_size() % sizeof(float) != 0)
       {
@@ -78,9 +76,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     for (const auto& [hash_index, _]: auction_hashes)
     {
-      const uint32_t index = feature_hash_index(
-        hash_index,
-        feature_weights_.size());
+      const uint32_t index = feature_hash_index(hash_index, feature_weights_.size());
       res_weight += feature_weights_[index];
     }
 

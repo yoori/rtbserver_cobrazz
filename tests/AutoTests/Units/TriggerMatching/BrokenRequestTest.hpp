@@ -10,10 +10,7 @@ class BrokenRequestTest: public BaseUnit
   typedef AutoTest::NSLookupRequest NSLookupRequest;
 public:
 
-  BrokenRequestTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  BrokenRequestTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   { }
 

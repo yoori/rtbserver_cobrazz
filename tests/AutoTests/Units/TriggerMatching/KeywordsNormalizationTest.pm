@@ -194,8 +194,8 @@ sub init
 
     # Referer keywords
     $ns->output("KW1", " " . $keyword3_1 . " " . $keyword3_2 . " " . $keyword3_3);
-    $ns->output("KW2", $keyword4_1 . " " . $keyword4_2 . "  " . $keyword4_3 . " ");    
-    $ns->output("KW3", $keyword5_1 . "," . $keyword5_2 . "," . $keyword5_3);    
+    $ns->output("KW2", $keyword4_1 . " " . $keyword4_2 . "  " . $keyword4_3 . " ");
+    $ns->output("KW3", $keyword5_1 . "," . $keyword5_2 . "," . $keyword5_3);
     $ns->output("KW4", "\"$keyword6_3 $keyword6_4\"" );
     $ns->output("SEARCH4", "\"$keyword6_3 $keyword6_4\"" );
     $ns->output("KWW5", $keyword7_1 . " \" " . $keyword7_2 );
@@ -218,7 +218,7 @@ sub init
     $ns->output("KW22", $keyword25_3);
     $ns->output("KW23", $keyword25_1 . " -" . $keyword25_2 . "," . $keyword25_3);
     $ns->output("KW24", "\\-" . $keyword24_1 . " -" . $keyword24_2);
-    $ns->output("SEARCH25", 
+    $ns->output("SEARCH25",
       " \"exactmatchnormal1\",exactMatchnormal2+exactmatchnormal3 exactmatchnormal4");
     $ns->output("SEARCH26", "exactmatchnotnegative1 exactmatchnotnegative2");
 

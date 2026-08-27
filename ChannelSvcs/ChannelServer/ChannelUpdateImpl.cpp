@@ -13,9 +13,7 @@
 #include "ChannelServerCore.hpp"
 #include "ChannelUpdateImpl.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   namespace
   {
@@ -27,11 +25,8 @@ namespace ChannelSvcs
       target.ccg_keyword_id = source.ccg_keyword_id;
       target.ccg_id = source.ccg_id;
       target.channel_id = source.channel_id;
-      target.max_cpc =
-        CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
-          source.max_cpc);
-      target.ctr = CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(
-        source.ctr);
+      target.max_cpc = CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(source.max_cpc);
+      target.ctr = CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(source.ctr);
       target.click_url << source.click_url;
       target.original_keyword << source.original_keyword;
     }
@@ -72,12 +67,11 @@ namespace ChannelSvcs
       data->first_stamp = CorbaAlgs::pack_time(core_data.first_stamp);
       data->master_stamp = CorbaAlgs::pack_time(core_data.master_stamp);
       data->versions.length(core_data.versions.size());
-      for(CORBA::ULong i = 0; i < core_data.versions.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_data.versions.size(); ++i)
       {
         data->versions[i].id = core_data.versions[i].id;
         data->versions[i].size = core_data.versions[i].size;
-        data->versions[i].stamp =
-          CorbaAlgs::pack_time(core_data.versions[i].stamp);
+        data->versions[i].stamp = CorbaAlgs::pack_time(core_data.versions[i].stamp);
       }
       data->special_track = core_data.special_track;
       data->special_adv = core_data.special_adv;
@@ -90,8 +84,7 @@ namespace ChannelSvcs
     }
     catch(const ChannelServerCore::Exception& ex)
     {
-      CORBACommons::throw_desc<ImplementationException>(
-        String::SubString(ex.what()));
+      CORBACommons::throw_desc<ImplementationException>(String::SubString(ex.what()));
     }
   }
 
@@ -106,26 +99,23 @@ namespace ChannelSvcs
   {
     try
     {
-      std::vector<unsigned long> core_ids(
-        ids.get_buffer(),
-        ids.get_buffer() + ids.length());
+      std::vector<unsigned long> core_ids(ids.get_buffer(), ids.get_buffer() + ids.length());
       ChannelServerCore::UpdateDataResult core_result;
       server_->update_triggers(core_ids, core_result);
 
       result = new ChannelCurrent::UpdateData;
       result->source_id = core_result.source_id;
       result->channels.length(core_result.channels.size());
-      for(CORBA::ULong i = 0; i < core_result.channels.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.channels.size(); ++i)
       {
         const auto& core_channel = core_result.channels[i];
         auto& target_channel = result->channels[i];
         target_channel.channel_id = core_channel.channel_id;
         target_channel.words.length(core_channel.words.size());
-        for(CORBA::ULong j = 0; j < core_channel.words.size(); ++j)
+        for (CORBA::ULong j = 0; j < core_channel.words.size(); ++j)
         {
           const auto& core_word = core_channel.words[j];
-          target_channel.words[j].channel_trigger_id =
-            core_word.channel_trigger_id;
+          target_channel.words[j].channel_trigger_id = core_word.channel_trigger_id;
           target_channel.words[j].trigger.length(core_word.trigger.size());
           memcpy(
             target_channel.words[j].trigger.get_buffer(),
@@ -141,8 +131,7 @@ namespace ChannelSvcs
     }
     catch(const ChannelServerCore::Exception& ex)
     {
-      CORBACommons::throw_desc<ImplementationException>(
-        String::SubString(ex.what()));
+      CORBACommons::throw_desc<ImplementationException>(String::SubString(ex.what()));
     }
   }
 
@@ -172,16 +161,15 @@ namespace ChannelSvcs
       result = new ChannelCurrent::PosCCGResult;
       result->start_id = core_result.start_id;
       result->keywords.length(core_result.keywords.size());
-      for(CORBA::ULong i = 0; i < core_result.keywords.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.keywords.size(); ++i)
       {
         pack_ccg_keyword(core_result.keywords[i], result->keywords[i]);
       }
       result->deleted.length(core_result.deleted.size());
-      for(CORBA::ULong i = 0; i < core_result.deleted.size(); ++i)
+      for (CORBA::ULong i = 0; i < core_result.deleted.size(); ++i)
       {
         result->deleted[i].id = core_result.deleted[i].id;
-        result->deleted[i].stamp =
-          CorbaAlgs::pack_time(core_result.deleted[i].stamp);
+        result->deleted[i].stamp = CorbaAlgs::pack_time(core_result.deleted[i].stamp);
       }
       result->source_id = core_result.source_id;
     }
@@ -191,8 +179,7 @@ namespace ChannelSvcs
     }
     catch(const ChannelServerCore::Exception& ex)
     {
-      CORBACommons::throw_desc<ImplementationException>(
-        String::SubString(ex.what()));
+      CORBACommons::throw_desc<ImplementationException>(String::SubString(ex.what()));
     }
   }
 
@@ -201,5 +188,4 @@ namespace ChannelSvcs
   {
     return server_->get_count_chunks();
   }
-}
 }

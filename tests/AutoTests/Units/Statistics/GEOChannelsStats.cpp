@@ -1,9 +1,7 @@
 
 #include "GEOChannelsStats.hpp"
 
-REFLECT_UNIT(GEOChannelsStats) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(GEOChannelsStats) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -55,23 +53,19 @@ GEOChannelsStats::run_test()
   inventory[0].key().
     channel_id(fetch_int("STATE1CH")).
     sdate(testtime);
-  inventory[0].description(
-    "ChannelInventory. State 'London, City of'");
+  inventory[0].description("ChannelInventory. State 'London, City of'");
   inventory[1].key().
     channel_id(fetch_int("CITY1CH")).
     sdate(testtime);
-  inventory[1].description(
-    "ChannelInventory. City 'London'");
+  inventory[1].description("ChannelInventory. City 'London'");
   inventory[2].key().
     channel_id(fetch_int("CITY2CH")).
     sdate(testtime);
-  inventory[2].description(
-    "ChannelInventory. City 'Middlesborough'");
+  inventory[2].description("ChannelInventory. City 'Middlesborough'");
   inventory[3].key().
     channel_id(fetch_int("CITY3CH")).
     sdate(testtime);
-  inventory[3].description(
-    "ChannelInventory. City 'Aberfoyle'");
+  inventory[3].description("ChannelInventory. City 'Aberfoyle'");
   inventory.select(pq_conn_);
 
   // ChannelImpInventory
@@ -81,49 +75,37 @@ GEOChannelsStats::run_test()
     ccg_type("D").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[0].description(
-    "ChannelImpInventory. "
-    "State 'London, City of', Display.");
+  imp_inventory[0].description("ChannelImpInventory. " "State 'London, City of', Display.");
   imp_inventory[1].key().
     channel_id(fetch_int("STATE1CH")).
     ccg_type("T").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[1].description(
-    "ChannelImpInventory. "
-    "State 'London, City of', Text.");
+  imp_inventory[1].description("ChannelImpInventory. " "State 'London, City of', Text.");
   imp_inventory[2].key().
     channel_id(fetch_int("CITY1CH")).
     ccg_type("D").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[2].description(
-    "ChannelImpInventory. "
-    "City 'London', Display.");
+  imp_inventory[2].description("ChannelImpInventory. " "City 'London', Display.");
   imp_inventory[3].key().
     channel_id(fetch_int("CITY1CH")).
     ccg_type("T").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[3].description(
-    "ChannelImpInventory. "
-    "City 'London', Text.");
+  imp_inventory[3].description("ChannelImpInventory. " "City 'London', Text.");
   imp_inventory[4].key().
     channel_id(fetch_int("CITY3CH")).
     ccg_type("D").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[4].description(
-    "ChannelImpInventory. "
-    "City 'Aberfoyle', Display.");
+  imp_inventory[4].description("ChannelImpInventory. " "City 'Aberfoyle', Display.");
   imp_inventory[5].key().
     channel_id(fetch_int("CITY3CH")).
     ccg_type("T").
     colo_id(1).
     sdate(testtime);
-  imp_inventory[5].description(
-    "ChannelImpInventory. "
-    "City 'Aberfoyle', Text.");
+  imp_inventory[5].description("ChannelImpInventory. " "City 'Aberfoyle', Text.");
   imp_inventory.select(pq_conn_);
 
 
@@ -132,21 +114,15 @@ GEOChannelsStats::run_test()
   performance[0].key().
     channel_id(fetch_int("STATE1CH")).
     last_use(testtime);
-  performance[0].description(
-    "ChannelPerformance. "
-    "State 'London, City of'.");
+  performance[0].description("ChannelPerformance. " "State 'London, City of'.");
   performance[1].key().
     channel_id(fetch_int("CITY1CH")).
     last_use(testtime);
-  performance[1].description(
-    "ChannelPerformance. "
-    "City 'London '.");
+  performance[1].description("ChannelPerformance. " "City 'London '.");
   performance[2].key().
     channel_id(fetch_int("CITY3CH")).
     last_use(testtime);
-  performance[2].description(
-    "ChannelPerformance. "
-    "City 'Aberfoyle'.");
+  performance[2].description("ChannelPerformance. " "City 'Aberfoyle'.");
   performance.select(pq_conn_);
 
   // ChannelUsage
@@ -155,51 +131,39 @@ GEOChannelsStats::run_test()
     channel_id(fetch_int("STATE1CH")).
     colo_id(1).
     sdate(testtime);
-  channel_usage[0].description(
-    "ChannelUsage. "
-    "State 'London, City of'.");
+  channel_usage[0].description("ChannelUsage. " "State 'London, City of'.");
   channel_usage[1].key().
     channel_id(fetch_int("CITY1CH")).
     colo_id(1).
     sdate(testtime);
-  channel_usage[1].description(
-    "ChannelUsage. "
-    "City 'London '.");
+  channel_usage[1].description("ChannelUsage. " "City 'London '.");
   channel_usage[2].key().
     channel_id(fetch_int("CITY3CH")).
     colo_id(1).
     sdate(testtime);
-  channel_usage[2].description(
-    "ChannelUsage. "
-    "City 'Aberfoyle'.");
+  channel_usage[2].description("ChannelUsage. " "City 'Aberfoyle'.");
   channel_usage.select(pq_conn_);
 
   // ChannelInventoryByCpm
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats,  6> inventory_by_cpm;
   inventory_by_cpm[0].key().
     channel_id(fetch_int("STATE1CH"));
-  inventory_by_cpm[0].description("ChannelInventoryByCpm. "
-    "State 'London, City of', Display.");
+  inventory_by_cpm[0].description("ChannelInventoryByCpm. " "State 'London, City of', Display.");
   inventory_by_cpm[1].key().
     channel_id(fetch_int("STATE1CH"));
-  inventory_by_cpm[1].description("ChannelInventoryByCpm. "
-    "State 'London, City of', Text.");
+  inventory_by_cpm[1].description("ChannelInventoryByCpm. " "State 'London, City of', Text.");
   inventory_by_cpm[2].key().
     channel_id(fetch_int("CITY1CH"));
-  inventory_by_cpm[2].description("ChannelInventoryByCpm. "
-    "City 'London', Display.");
+  inventory_by_cpm[2].description("ChannelInventoryByCpm. " "City 'London', Display.");
   inventory_by_cpm[3].key().
     channel_id(fetch_int("CITY1CH"));
-  inventory_by_cpm[3].description("ChannelInventoryByCpm. "
-    "City 'London', Text.");
+  inventory_by_cpm[3].description("ChannelInventoryByCpm. " "City 'London', Text.");
   inventory_by_cpm[4].key().
     channel_id(fetch_int("CITY2CH"));
-  inventory_by_cpm[4].description("ChannelInventoryByCpm. "
-    "City 'Middlesborough', Display.");
+  inventory_by_cpm[4].description("ChannelInventoryByCpm. " "City 'Middlesborough', Display.");
   inventory_by_cpm[5].key().
     channel_id(fetch_int("CITY3CH"));
-  inventory_by_cpm[5].description("ChannelInventoryByCpm. "
-    "City 'Aberfoyle', Display.");
+  inventory_by_cpm[5].description("ChannelInventoryByCpm. " "City 'Aberfoyle', Display.");
   inventory_by_cpm.select(pq_conn_);
 
   // ExpressionPerformance
@@ -221,9 +185,7 @@ GEOChannelsStats::run_test()
   expr_perf[2].key().
     cc_id(fetch_int("DISPLAYCC-CPC")).
     expression(fetch_string("DISPLAYCHANNEL"));
-  expr_perf[2].description(
-    "ExpressionPerformance. "
-    "CPC CC, Only display channel expression.");
+  expr_perf[2].description("ExpressionPerformance. " "CPC CC, Only display channel expression.");
 
   expr_perf.select(pq_conn_);
 
@@ -233,23 +195,17 @@ GEOChannelsStats::run_test()
     tag_id(fetch_int("DISPLAYTID-CPM")).
     channel_id(fetch_int("CITY1CH")).
     sdate(testtime);
-  sitechannel[0].description(
-    "SiteChannelStats. "
-    "City 'London', Display CPM tag.");
+  sitechannel[0].description("SiteChannelStats. " "City 'London', Display CPM tag.");
   sitechannel[1].key().
     tag_id(fetch_int("TEXTTID")).
     channel_id(fetch_int("CITY1CH")).
     sdate(testtime);
-  sitechannel[1].description(
-    "SiteChannelStats. "
-    "City 'London', Text tag.");
+  sitechannel[1].description("SiteChannelStats. " "City 'London', Text tag.");
   sitechannel[2].key().
     tag_id(fetch_int("DISPLAYTID-CPA")).
     channel_id(fetch_int("STATE1CH")).
     sdate(testtime);
-  sitechannel[2].description(
-    "SiteChannelStats. "
-    "State 'London, City of', Display CPA tag.");
+  sitechannel[2].description("SiteChannelStats. " "State 'London, City of', Display CPA tag.");
   sitechannel.select(pq_conn_);
 
   make_requests();
@@ -293,8 +249,7 @@ GEOChannelsStats::run_test()
         imps_user_count(1).
         imps_other(2).
         imps_other_user_count(2).
-        imps_other_value((text_cpc1 + text_cpc2) * TEXT_CTR +
-          display_cpm / 1000).
+        imps_other_value((text_cpc1 + text_cpc2) * TEXT_CTR + display_cpm / 1000).
         impops_no_imp(0).
         impops_no_imp_user_count(0).
         impops_no_imp_value(0),
@@ -323,8 +278,7 @@ GEOChannelsStats::run_test()
         imps_value(display_cpm / 1000).
         imps_other(1).
         imps_other_user_count(1).
-        imps_other_value(
-          (text_cpc1 + text_cpc2) * TEXT_CTR).
+        imps_other_value((text_cpc1 + text_cpc2) * TEXT_CTR).
         impops_no_imp(0).
         impops_no_imp_user_count(0).
         impops_no_imp_value(0),
@@ -376,8 +330,7 @@ GEOChannelsStats::run_test()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(pq_conn_, diffs, imp_inventory)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, imp_inventory)).check(),
       "ChannelImpInventory check");
   }
 
@@ -392,25 +345,19 @@ GEOChannelsStats::run_test()
         imps(1).
         clicks(1).
         actions(1).
-        revenue(
-          ORM::stats_diff_type(
-            display_cpa, 0.001)),
+        revenue(ORM::stats_diff_type(display_cpa, 0.001)),
       // 'London' city
       Diffs().
         imps(3).
         clicks(3).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            display_cpm / 1000 +
-            text_cpc1 + text_cpc2, 0.001)),
+        revenue(ORM::stats_diff_type(display_cpm / 1000 + text_cpc1 + text_cpc2, 0.001)),
       // 'Aberfoyle' city
       Diffs(0)
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(pq_conn_, diffs, performance)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, performance)).check(),
       "ChannelPerformance check");
   }
 
@@ -425,18 +372,13 @@ GEOChannelsStats::run_test()
           imps(1).
           clicks(1).
           actions(1).
-          revenue(
-            ORM::stats_diff_type(
-              display_cpa, 0.001)),
+          revenue(ORM::stats_diff_type(display_cpa, 0.001)),
         // 'London' city
         Diffs().
           imps(3).
           clicks(3).
           actions(0).
-          revenue(
-            ORM::stats_diff_type(
-              display_cpm / 1000 +
-              text_cpc1 + text_cpc2, 0.001)),
+          revenue(ORM::stats_diff_type(display_cpm / 1000 + text_cpc1 + text_cpc2, 0.001)),
         // 'Aberfoyle' city
         Diffs(0)
       };
@@ -474,8 +416,7 @@ GEOChannelsStats::run_test()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(pq_conn_, diffs, expr_perf)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, expr_perf)).check(),
       "ExpressionPerformance check");
   }
 
@@ -487,38 +428,27 @@ GEOChannelsStats::run_test()
       // 'London' city, display tag
       Diffs().
         imps(1).
-        adv_revenue(
-          ORM::stats_diff_type(
-            display_cpm / 1000, 0.001)).
+        adv_revenue(ORM::stats_diff_type(display_cpm / 1000, 0.001)).
         pub_revenue(0),
       // 'London' city, text tag
       Diffs().
         imps(2).
-        adv_revenue(
-          ORM::stats_diff_type(
-            text_cpc1 + text_cpc2, 0.001)).
+        adv_revenue(ORM::stats_diff_type(text_cpc1 + text_cpc2, 0.001)).
         pub_revenue(0),
       // 'London, City of' state, display tag
       Diffs().
         imps(1).
-        adv_revenue(
-          ORM::stats_diff_type(
-            display_cpa, 0.001)).
+        adv_revenue(ORM::stats_diff_type(display_cpa, 0.001)).
         pub_revenue(0)
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_, diffs, sitechannel)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, sitechannel)).check(),
       "SiteChannelStats check");
   }
 
   FAIL_CONTEXT(
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      0,
-      inventory_estim).check(),
+    AutoTest::stats_each_diff_checker(pq_conn_, 0, inventory_estim).check(),
     "ChannelInventoryEstimStats check");
 
   return true;
@@ -540,10 +470,7 @@ GEOChannelsStats::make_requests()
 
     client.process_request(request);
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "DISPLAYCH",
-        client.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "DISPLAYCH", client.debug_info.trigger_channels).check(),
       "Display part. Expected trigger_channels");
 
     // City GEO channel
@@ -582,17 +509,12 @@ GEOChannelsStats::make_requests()
     // Match text channels
     NSLookupRequest request;
     request.loc_name.clear();
-    request.referer_kw =
-      fetch_string("TEXTKWD") + "," +
-      fetch_string("CHANNELKWD");
+    request.referer_kw = fetch_string("TEXTKWD") + "," + fetch_string("CHANNELKWD");
     request.debug_time = testtime;
 
     client.process_request(request);
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "TEXTCH,CHANNELCH",
-        client.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "TEXTCH,CHANNELCH", client.debug_info.trigger_channels).check(),
       "Text part. Expected trigger_channels");
 
     // GEO text creative selection
@@ -641,20 +563,14 @@ void GEOChannelsStats::make_location_request(
       exp_ccids.push_back(fetch_string(token.str()));
     }
 
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        request,
-        exp_ccids,
-        actions));
+    FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions));
   }
   else
   {
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "No creative expected");
   }
 

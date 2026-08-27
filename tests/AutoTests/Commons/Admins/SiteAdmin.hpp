@@ -40,9 +40,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<SiteAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* site
-      )
+      void make_cmd (const char* address, const char* site)
       {
         address_ = address;
         AdminParams params;
@@ -52,45 +50,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "sites", address, params, static_cast<size_t>(CampaignManager));
       }
-      SiteAdmin(
-        const char* address,
-        const char* site
-      )
+      SiteAdmin(const char* address, const char* site)
       {
         make_cmd(address, site);
       }
-      SiteAdmin(
-        const std::string& address,
-        const char* site
-      )
+      SiteAdmin(const std::string& address, const char* site)
       {
         make_cmd(address.c_str(), site);
       }
-      SiteAdmin(
-        const char* address,
-        const std::string& site
-      )
+      SiteAdmin(const char* address, const std::string& site)
       {
         make_cmd(address, site.c_str());
       }
-      SiteAdmin(
-        const std::string& address,
-        const std::string& site
-      )
+      SiteAdmin(const std::string& address, const std::string& site)
       {
         make_cmd(address.c_str(), site.c_str());
       }
-      SiteAdmin(
-        const char* address,
-        unsigned long site
-      )
+      SiteAdmin(const char* address, unsigned long site)
       {
         make_cmd(address, strof(site).c_str());
       }
-      SiteAdmin(
-        const std::string& address,
-        unsigned long site
-      )
+      SiteAdmin(const std::string& address, unsigned long site)
       {
         make_cmd(address.c_str(), strof(site).c_str());
       }

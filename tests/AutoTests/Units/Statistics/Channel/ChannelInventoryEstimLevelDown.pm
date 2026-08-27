@@ -19,14 +19,14 @@ sub init {
     role_id => DB::Defaults::instance()->advertiser_role });
 
   # Session channels
-  $self->create_channel($ns, "S1", $account, 
+  $self->create_channel($ns, "S1", $account,
     [  DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 0,
          time_to => 3600,
          minimum_visits => 4)]);
 
-  $self->create_channel($ns, "S2", $account, 
+  $self->create_channel($ns, "S2", $account,
     [ DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 0,

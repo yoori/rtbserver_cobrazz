@@ -209,8 +209,7 @@ Tester::operator ()() /*throw(eh::Exception)*/
   }
 
   {
-    Transactions::Transaction_var transaction =
-      transactions.get_transaction(key);
+    Transactions::Transaction_var transaction = transactions.get_transaction(key);
     long content = transaction->get();
 
   //  sleep(.1);
@@ -233,12 +232,9 @@ main(int /*argc*/, char** /*argv*/) noexcept
 
     TestResult shared_memory;
     Tester test;
-    TestCommons::MTTester<Tester&> mt_tester(
-      test, 15);
+    TestCommons::MTTester<Tester&> mt_tester(test, 15);
 
-    mt_tester.run(TASKS_FOR_KEY * KEYS_AMOUNT,
-      0,
-      TASKS_FOR_KEY * KEYS_AMOUNT);
+    mt_tester.run(TASKS_FOR_KEY * KEYS_AMOUNT, 0, TASKS_FOR_KEY * KEYS_AMOUNT);
 
     if (SimpleTransaction::shared_memory.check())
     {

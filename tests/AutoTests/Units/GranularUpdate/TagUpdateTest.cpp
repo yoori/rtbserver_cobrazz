@@ -1,9 +1,6 @@
 #include "TagUpdateTest.hpp"
 
-REFLECT_UNIT(TagUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(TagUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -15,13 +12,10 @@ namespace
   typedef AutoTest::WaitChecker<TagChecker> TagWaitChecker;
   typedef AutoTest::SelectedCreativeChecker SelectedCreativeChecker;
 
-  std::string size_regexp(
-    const std::string id,
-    const std::string name)
+  std::string size_regexp(const std::string id, const std::string name)
   {
     return
-      std::string(
-        "^\\[" + id + ",'" + name + "',\\d+\\]$");
+      std::string("^\\[" + id + ",'" + name + "',\\d+\\]$");
   }
 }
 
@@ -30,8 +24,7 @@ void TagUpdateTest::set_up()
   add_descr_phrase("Setup");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must set in the configuration file");
 
   other_size_type_ = fetch_int("SizeType");
@@ -43,39 +36,27 @@ void TagUpdateTest::set_up()
 void TagUpdateTest::tag_create_case()
 {
   // Create tag
-  ORM::ORMRestorer<ORM::PQ::Tags>* tag =
-    create<ORM::PQ::Tags>();
+  ORM::ORMRestorer<ORM::PQ::Tags>* tag = create<ORM::PQ::Tags>();
   tag->name = fetch_string("InsertTag/Tag1/NAME");
   tag->flags = 0;
   tag->size_type_id = other_size_type_;
   tag->site = site_id_;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tag->insert()),
-    "inserting tag");
+  FAIL_CONTEXT(AutoTest::predicate_checker(tag->insert()), "inserting tag");
 
   // Create tag pricing
-  ORM::ORMRestorer<ORM::RatedTagPricing>* tag_pricing =
-    create<ORM::RatedTagPricing>();
+  ORM::ORMRestorer<ORM::RatedTagPricing>* tag_pricing = create<ORM::RatedTagPricing>();
   tag_pricing->status = "A";
   tag_pricing->tag = tag->id();
   tag_pricing->rate.rate_type = "CPM";
   tag_pricing->rate.rate = 10;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tag_pricing->insert()),
-    "inserting tag_pricing");
+  FAIL_CONTEXT(AutoTest::predicate_checker(tag_pricing->insert()), "inserting tag_pricing");
 
-  ORM::ORMRestorer<ORM::PQ::Tag_tagsize>* tag_size =
-    create<ORM::PQ::Tag_tagsize>();
+  ORM::ORMRestorer<ORM::PQ::Tag_tagsize>* tag_size = create<ORM::PQ::Tag_tagsize>();
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tag_size->insert(
-        size_468x60_id_,
-        tag->id())),
+    AutoTest::predicate_checker(tag_size->insert(size_468x60_id_, tag->id())),
     "inserting tag_tagsize");
 
   ADD_WAIT_CHECKER(
@@ -86,10 +67,7 @@ void TagUpdateTest::tag_create_case()
       TagChecker::Expected().
         tag_id(tag->id()).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories("").
         rejected_categories("")));
 }
@@ -116,10 +94,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
         TagChecker::Expected().
           tag_id(tag1).
           site_id(site_id_).
-          sizes(
-            size_regexp(
-              strof(size_468x60_id_),
-              size_468x60_name_)).
+          sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
           accepted_categories("").
           rejected_categories(""))).check(),
     "Initial for tag#1");
@@ -131,10 +106,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       TagChecker::Expected().
         tag_id(tag2).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories(strof(cat_id)).
         rejected_categories("")).check(),
     "Initial for tag#2");
@@ -146,10 +118,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       TagChecker::Expected().
         tag_id(tag3).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories("").
         rejected_categories(strof(cat_id))).check(),
     "Initial for tag#3");
@@ -157,23 +126,18 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
   request.tid = tag1;
 
   FAIL_CONTEXT(
-    SelectedCreativeChecker(
-      client, request, cc_id).check(),
+    SelectedCreativeChecker(client, request, cc_id).check(),
     "Initial request from tag#1");
 
   request.tid = tag2;
 
   FAIL_CONTEXT(
-    SelectedCreativeChecker(
-      client, request, cc_id).check(),
+    SelectedCreativeChecker(client, request, cc_id).check(),
     "Initial request from tag#2");
 
   request.tid = tag3;
 
-  FAIL_CONTEXT(
-    SelectedCreativeChecker(
-      client, request, 0).check(),
-    "Initial request from tag#3");
+  FAIL_CONTEXT(SelectedCreativeChecker(client, request, 0).check(), "Initial request from tag#3");
 
   // Insert new category
   ORM::ORMRestorer<ORM::PQ::Tagscreativecategoryexclusion>* exclusion1 =
@@ -181,8 +145,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
   exclusion1->approval = "A";
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      exclusion1->insert(cat_id, tag1)),
+    AutoTest::predicate_checker(exclusion1->insert(cat_id, tag1)),
     "inserting creative category exclusion on tag level");
 
   ADD_WAIT_CHECKER(
@@ -193,17 +156,12 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       TagChecker::Expected().
         tag_id(tag1).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories(strof(cat_id)).
         rejected_categories("")));
 
   request.tid = tag1;
-  add_checker(
-    "Request for creative from tag#1",
-    SelectedCreativeChecker(client, request, cc_id));
+  add_checker("Request for creative from tag#1", SelectedCreativeChecker(client, request, cc_id));
 
   // Update category approval
   ORM::ORMRestorer<ORM::PQ::Tagscreativecategoryexclusion>* exclusion2 =
@@ -212,8 +170,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
   exclusion2->approval = "R";
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      exclusion2->update()),
+    AutoTest::predicate_checker(exclusion2->update()),
     "updating creative category exclusion approval for tag#2");
 
   ADD_WAIT_CHECKER(
@@ -224,17 +181,12 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       TagChecker::Expected().
         tag_id(tag2).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories("").
         rejected_categories(strof(cat_id))));
 
   request.tid = tag2;
-  add_checker(
-    "Request for no creative from tag#2",
-    SelectedCreativeChecker(client, request, 0));
+  add_checker("Request for no creative from tag#2", SelectedCreativeChecker(client, request, 0));
 
   // Delete category exclusion
   ORM::ORMRestorer<ORM::PQ::Tagscreativecategoryexclusion>* exclusion3 =
@@ -242,8 +194,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       ORM::PQ::Tagscreativecategoryexclusion(pq_conn_, cat_id, tag3));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      exclusion3->delet()),
+    AutoTest::predicate_checker(exclusion3->delet()),
     "deleting creative category exclusion for tag#3");
 
   ADD_WAIT_CHECKER(
@@ -254,17 +205,12 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
       TagChecker::Expected().
         tag_id(tag3).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            strof(size_468x60_id_),
-            size_468x60_name_)).
+        sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
         accepted_categories("").
         rejected_categories("")));
 
   request.tid = tag3;
-  add_checker(
-    "Request for creative from tag#3",
-    SelectedCreativeChecker(client, request, cc_id));
+  add_checker("Request for creative from tag#3", SelectedCreativeChecker(client, request, cc_id));
 }
 
 void TagUpdateTest::tag_update_size_case()
@@ -274,8 +220,7 @@ void TagUpdateTest::tag_update_size_case()
   int size = fetch_int("Size2");
   std::string size_name = fetch_string("Size2Name");
 
-  ORM::ORMRestorer<ORM::PQ::Tags>* tag =
-    create<ORM::PQ::Tags>(fetch_int("UpdateSize/Tag1/ID"));
+  ORM::ORMRestorer<ORM::PQ::Tags>* tag = create<ORM::PQ::Tags>(fetch_int("UpdateSize/Tag1/ID"));
 
   FAIL_CONTEXT(
     TagWaitChecker(
@@ -285,39 +230,26 @@ void TagUpdateTest::tag_update_size_case()
         TagChecker::Expected().
           tag_id(tag->id()).
           site_id(site_id_).
-          sizes(
-            size_regexp(
-              strof(size_468x60_id_),
-              size_468x60_name_)).
+          sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
           accepted_categories("").
           rejected_categories(""))).check(),
     "Initial");
 
   tag->size_type_id = size_type;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tag->update()),
-    "updating tag size");
+  FAIL_CONTEXT(AutoTest::predicate_checker(tag->update()), "updating tag size");
 
   {
     ORM::ORMRestorer<ORM::PQ::Tag_tagsize>* tag_size =
-      create(
-        ORM::PQ::Tag_tagsize(
-          pq_conn_, size_468x60_id_, tag->id()));
+      create(ORM::PQ::Tag_tagsize(pq_conn_, size_468x60_id_, tag->id()));
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        tag_size->delet()),
-    "delete old tag_tagsize");
+    FAIL_CONTEXT(AutoTest::predicate_checker(tag_size->delet()), "delete old tag_tagsize");
   }
 
   {
-    ORM::ORMRestorer<ORM::PQ::Tag_tagsize>* tag_size =
-      create<ORM::PQ::Tag_tagsize>();
+    ORM::ORMRestorer<ORM::PQ::Tag_tagsize>* tag_size = create<ORM::PQ::Tag_tagsize>();
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        tag_size->insert(size, tag->id())),
+      AutoTest::predicate_checker(tag_size->insert(size, tag->id())),
     "insert new tag_tagsize");
   }
 
@@ -329,42 +261,29 @@ void TagUpdateTest::tag_update_size_case()
       TagChecker::Expected().
         tag_id(tag->id()).
         site_id(site_id_).
-        sizes(
-          size_regexp(
-            fetch_string("Size2"),
-            size_name)).
+        sizes(size_regexp(fetch_string("Size2"), size_name)).
         accepted_categories("").
         rejected_categories("")));
 }
 
 void TagUpdateTest::tag_remove_case()
 {
-  ORM::ORMRestorer<ORM::PQ::Tags>* tag =
-    create<ORM::PQ::Tags>(fetch_int("DeleteTag/Tag1/ID"));
+  ORM::ORMRestorer<ORM::PQ::Tags>* tag = create<ORM::PQ::Tags>(fetch_int("DeleteTag/Tag1/ID"));
 
   FAIL_CONTEXT(TagWaitChecker(TagChecker(this, tag->id(),
         TagChecker::Expected().
           tag_id(tag->id()).
           site_id(site_id_).
-          sizes(
-            size_regexp(
-              strof(size_468x60_id_),
-              size_468x60_name_)).
+          sizes(size_regexp(strof(size_468x60_id_), size_468x60_name_)).
           accepted_categories("").
           rejected_categories(""))).check(),
     "Initial");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tag->del()),
-    "deleting tag");
+  FAIL_CONTEXT(AutoTest::predicate_checker(tag->del()), "deleting tag");
 
   ADD_WAIT_CHECKER(
     "Check changes",
-    TagChecker(
-      this, tag->id(),
-      TagChecker::Expected(),
-      AutoTest::AEC_NOT_EXISTS));
+    TagChecker(this, tag->id(), TagChecker::Expected(), AutoTest::AEC_NOT_EXISTS));
 }
 
 void TagUpdateTest::tear_down()
@@ -375,21 +294,13 @@ void TagUpdateTest::tear_down()
 bool
 TagUpdateTest::run()
 {
-  AUTOTEST_CASE(
-    tag_create_case(),
-    "Tag create case");
+  AUTOTEST_CASE(tag_create_case(), "Tag create case");
 
-  AUTOTEST_CASE(
-    tag_update_creative_category_exclusion_case(),
-    "Update category case");
+  AUTOTEST_CASE(tag_update_creative_category_exclusion_case(), "Update category case");
 
-  AUTOTEST_CASE(
-    tag_update_size_case(),
-    "Update size case");
+  AUTOTEST_CASE(tag_update_size_case(), "Update size case");
 
-  AUTOTEST_CASE(
-    tag_remove_case(),
-    "Tag delete case");
+  AUTOTEST_CASE(tag_remove_case(), "Tag delete case");
 
   return true;
 }

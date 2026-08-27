@@ -1,9 +1,7 @@
 #include <Stream/MemoryStream.hpp>
 #include "ZmqSocketHolder.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   // ZmqSocketHolder::SendGuard
   ZmqSocketHolder::SendGuard::SendGuard(ZmqSocketHolder& holder)
@@ -18,10 +16,7 @@ namespace Commons
   }
 
   bool
-  ZmqSocketHolder::SendGuard::send(
-    zmq::message_t& msg,
-    int flags,
-    const char* part_name)
+  ZmqSocketHolder::SendGuard::send(zmq::message_t& msg, int flags, const char* part_name)
     /*throw(eh::Exception)*/
   {
     bool send_res;
@@ -38,9 +33,9 @@ namespace Commons
       throw Exception(ostr);
     }
 
-    if(!send_res)
+    if (!send_res)
     {
-      if(errno != EAGAIN)
+      if (errno != EAGAIN)
       {
         Stream::Error ostr;
         ostr << "Can't send '" << part_name << "' part, errno: " <<
@@ -55,9 +50,7 @@ namespace Commons
   }
 
   // ZmqSocketHolder
-  ZmqSocketHolder::ZmqSocketHolder(
-    zmq::context_t& zmq_context,
-    const char* address)
+  ZmqSocketHolder::ZmqSocketHolder(zmq::context_t& zmq_context, const char* address)
     /*throw(eh::Exception)*/
     : sock_(zmq_context, ZMQ_PUSH)
   {
@@ -65,9 +58,7 @@ namespace Commons
     sock_.connect(address);
   }
 
-  ZmqSocketHolder::ZmqSocketHolder(
-    zmq::context_t& zmq_context,
-    int type)
+  ZmqSocketHolder::ZmqSocketHolder(zmq::context_t& zmq_context, int type)
     /*throw(eh::Exception)*/
     : sock_(zmq_context, type)
   {
@@ -93,8 +84,6 @@ namespace Commons
     sock_.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
 
     const int reconnect_interval = 100; // 100 ms
-    sock_.setsockopt(ZMQ_RECONNECT_IVL,
-      &reconnect_interval, sizeof(reconnect_interval));
+    sock_.setsockopt(ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
   }
-}
 }

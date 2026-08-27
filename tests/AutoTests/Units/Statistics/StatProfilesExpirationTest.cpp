@@ -1,11 +1,7 @@
 
 #include "StatProfilesExpirationTest.hpp"
 
-REFLECT_UNIT(StatProfilesExpirationTest) (
-  "Statistics",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE
-);
+REFLECT_UNIT(StatProfilesExpirationTest) ("Statistics", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE);
 
 namespace
 {
@@ -93,9 +89,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   base_user1.process_request(request, "base profiles gen for user 1");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      base_user1.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, base_user1.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.debug_time = //earlier_179
@@ -104,9 +98,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   base_user2.process_request(request, "base profiles gen for user 2");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      base_user2.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, base_user2.debug_info.ccid).check(),
                        "must got expected ccid");
 
   // RequestTriggerMatch profiles generation
@@ -116,9 +108,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   rtmp_user1.process_request(request, "RequestTriggerMatch profiles gen for user 1");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      rtmp_user1.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, rtmp_user1.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.debug_time =
@@ -127,9 +117,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   rtmp_user2.process_request(request, "RequestTriggerMatch profiles gen for user 2");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      rtmp_user2.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, rtmp_user2.debug_info.ccid).check(),
                        "must got expected ccid");
 
   // Request info and UserKeyword profiles generation
@@ -139,18 +127,14 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   request_user1.process_request(request, "request profile gen for user 1");
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc_disp,
-        request_user1.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc_disp, request_user1.debug_info.ccid).check(),
       "must got expected ccid");
 
   request.referer_kw = kw_text;
   ukeyword_user1.process_request(request, "user keyword profile gen for user 1");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      k_channel,
-      ukeyword_user1.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(k_channel, ukeyword_user1.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
 
   request.referer_kw = kw_disp;
@@ -161,18 +145,14 @@ StatProfilesExpirationTest::run()
   request_user2.process_request(request, "request profile gen for user 2");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      request_user2.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, request_user2.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.referer_kw = kw_text;
   ukeyword_user2.process_request(request, "user keyword profile gen for user 2");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      k_channel,
-      ukeyword_user2.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(k_channel, ukeyword_user2.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
 
   request.referer_kw = kw_disp;
@@ -198,24 +178,18 @@ StatProfilesExpirationTest::run()
     (Generics::Time::get_time_of_day() - 30*HOUR - 1).
     get_gm_time().
     format(AutoTest::DEBUG_TIME_FORMAT);
-  tag_groups_user1.process_request(request,
-    "tag request groups profile gen for user 1");
+  tag_groups_user1.process_request(request, "tag request groups profile gen for user 1");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      tag_groups_user1.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, tag_groups_user1.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.referer.clear();
   request.pl.clear();
   request.referer_kw = kw_text;
-  rkeyword_user1.process_request(request,
-    "request keyword profile gen for user 1");
+  rkeyword_user1.process_request(request, "request keyword profile gen for user 1");
   rkeyword_user1.repeat_request();
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_text,
-      rkeyword_user1.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_text, rkeyword_user1.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.referer_kw.clear();
@@ -225,24 +199,18 @@ StatProfilesExpirationTest::run()
     (Generics::Time::get_time_of_day() - DAY + TIME_SHIFT).
     get_gm_time().
     format(AutoTest::DEBUG_TIME_FORMAT);
-  tag_groups_user2.process_request(request,
-    "tag request groups profile gen for user 2");
+  tag_groups_user2.process_request(request, "tag request groups profile gen for user 2");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_disp,
-      tag_groups_user2.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_disp, tag_groups_user2.debug_info.ccid).check(),
     "must got expected ccid");
 
   request.referer.clear();
   request.pl.clear();
   request.referer_kw = kw_text;
-  rkeyword_user2.process_request(request,
-    "request keyword profile gen for user 2");
+  rkeyword_user2.process_request(request, "request keyword profile gen for user 2");
   rkeyword_user2.repeat_request();
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_text,
-      rkeyword_user2.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_text, rkeyword_user2.debug_info.ccid).check(),
     "must got expected ccid");
 
   // Inventory and UserTriggerMatch profiles generation
@@ -257,9 +225,7 @@ StatProfilesExpirationTest::run()
     "inventory, estimation and user trigger match profiles gen for user 1");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      channel_id,
-      em_user1.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(channel_id, em_user1.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
 
   request.debug_time =
@@ -270,24 +236,20 @@ StatProfilesExpirationTest::run()
     "inventory, estimation and user trigger match profiles gen for user 2");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      channel_id,
-      em_user2.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(channel_id, em_user2.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
 
   request.debug_time =
     (Generics::Time::get_time_of_day() - HOUR - 15*MINUTE - 1).
     get_gm_time().
     format(AutoTest::DEBUG_TIME_FORMAT);
-  temp_user1.process_request(request,
-    "UserTriggerMatch profile gen for temp user 1");
+  temp_user1.process_request(request, "UserTriggerMatch profile gen for temp user 1");
 
   request.debug_time =
     (Generics::Time::get_time_of_day() - HOUR + TIME_SHIFT).
     get_gm_time().
     format(AutoTest::DEBUG_TIME_FORMAT);
-  temp_user2.process_request(request,
-    "UserTriggerMatch profile gen for temp user 2");
+  temp_user2.process_request(request, "UserTriggerMatch profile gen for temp user 2");
 
   std::string uid1 = base_user1.debug_info.uid.value().c_str();
   std::string uid2 = base_user2.debug_info.uid.value().c_str();
@@ -412,35 +374,19 @@ StatProfilesExpirationTest::run()
   // need add profiles checkers for user 1
   add_wait_checker(
     "RIM must not contain ccg reach profile for user 1",
-    ReachProfileChecker(
-      this,
-      "\\" + uid1,
-      AutoTest::RequestInfoManager,
-      PROFILE_NOT_FOUND));
+    ReachProfileChecker(this, "\\" + uid1, AutoTest::RequestInfoManager, PROFILE_NOT_FOUND));
 
   add_wait_checker(
     "RIM must not contain action profile for user 1",
-    ActionProfileChecker(
-      this,
-      "\\" + uid1,
-      AutoTest::RequestInfoManager,
-      PROFILE_NOT_FOUND));
+    ActionProfileChecker(this, "\\" + uid1, AutoTest::RequestInfoManager, PROFILE_NOT_FOUND));
 
   add_wait_checker(
     "RIM must not contain fraud profile for user 1",
-    FraudProfileChecker(
-      this,
-      "\\" + uid1,
-      AutoTest::RequestInfoManager,
-      PROFILE_NOT_FOUND));
+    FraudProfileChecker(this, "\\" + uid1, AutoTest::RequestInfoManager, PROFILE_NOT_FOUND));
 
   add_wait_checker(
     "RIM must not contain site reach profile for user 1",
-    SiteReachProfileChecker(
-      this,
-      "\\" + uid1,
-      AutoTest::RequestInfoManager,
-      PROFILE_NOT_FOUND));
+    SiteReachProfileChecker(this, "\\" + uid1, AutoTest::RequestInfoManager, PROFILE_NOT_FOUND));
 
   add_wait_checker(
     "RIM must not contain request profile for user 1",
@@ -468,10 +414,7 @@ StatProfilesExpirationTest::run()
 
   add_wait_checker(
     "EM must not contain inventory profile for user 1",
-    InventoryProfileChecker(
-      this,
-      "\\" + em_user1.debug_info.uid.value(),
-      PROFILE_NOT_FOUND));
+    InventoryProfileChecker(this, "\\" + em_user1.debug_info.uid.value(), PROFILE_NOT_FOUND));
 
   add_wait_checker(
     "EM must not contain request trigger match profile for user 1",

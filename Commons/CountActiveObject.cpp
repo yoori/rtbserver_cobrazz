@@ -3,9 +3,7 @@
 
 #include "CountActiveObject.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   /** CountActiveObject */
   CountActiveObject::CountActiveObject() noexcept
@@ -43,5 +41,4 @@ namespace Commons
 
     return false;
   }
-}
 }

@@ -46,22 +46,17 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<GlobalsAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address
-      )
+      void make_cmd (const char* address)
       {
         address_ = address;
         AdminParams params;
         make_admin_cmd(*this, "globals", address, params, static_cast<size_t>(CampaignManager));
       }
-      GlobalsAdmin(
-        const char* address
-      )
+      GlobalsAdmin(const char* address)
       {
         make_cmd(address);
       }
-      GlobalsAdmin(
-        const std::string& address
-      )
+      GlobalsAdmin(const std::string& address)
       {
         make_cmd(address.c_str());
       }

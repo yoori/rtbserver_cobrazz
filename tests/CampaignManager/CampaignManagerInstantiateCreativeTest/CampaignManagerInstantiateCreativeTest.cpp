@@ -47,26 +47,26 @@ namespace
     R"bsfm(c,e,g){var h=this;return''!==c&&null!=c||h.k&e?(c=g?c.substr(0,g):c,h.i[)bsfm"
     R"bsfm(b]=h.j&e?h.p(c,g):c,h):h},q:function(b,c){var e=this;b=b||'';var g=e.s(b)bsfm"
     R"bsfm(),h=g.length-e.m;return h>0&&c&&(e.u(c,h),g=e.s(b)),g},s:function(b){var)bsfm"
-    R"bsfm( c=this.i,e=this.h+'?';for(var g in c)c.hasOwnProperty(g)&&(e+=this.C(g))bsfm"
+    R"bsfm( c=this.i,e=this.h+'?';for (var g in c)c.hasOwnProperty(g)&&(e+=this.C(g))bsfm"
     R"bsfm();return e=e.slice(0,-1),b&&(e+=('&'==b.charAt(0)?'':'&')+b),e},C:functi)bsfm"
     R"bsfm(on(b){return b+'='+this.i[b]+'&'},u:function(b,c){var e=this.i[b];this.i)bsfm"
     R"bsfm([b]=escape_(decodeURIComponent(e),e.length-c)},p:function(b,c){do var e=)bsfm"
-    R"bsfm(encodeURIComponent(b);while(c&&e.length>c&&(b=b.slice(0,-1)));return e}})bsfm"
+    R"bsfm(encodeURIComponent(b);while (c&&e.length>c&&(b=b.slice(0,-1)));return e}})bsfm"
     R"bsfm(,b.D=function(){},b.D.prototype={F:function(b,c){var e=this;return c=nul)bsfm"
     R"bsfm(l==window.PSprp_rate?c:PSprp_rate,!b||c&&!e.G(c)||(e.H=e.J(),e.H.src=b),)bsfm"
     R"bsfm(e},J:function(){var b=this;return b.H||b.K().appendChild(b.L(document.cr)bsfm"
     R"bsfm(eateElement('IFRAME')))},K:function(){var b='svc'+parseInt((new Date).ge)bsfm"
-    R"bsfm(tTime()/1e6),c=document.getElementById(b);if(!c){var e=document.body||do)bsfm"
+    R"bsfm(tTime()/1e6),c=document.getElementById(b);if (!c){var e=document.body||do)bsfm"
     R"bsfm(cument.documentElement;c=e.insertBefore(document.createElement('DIV'),e.)bsfm"
     R"bsfm(firstChild),c.id=b}return c},L:function(b){return b.width=1,b.height=1,b)bsfm"
     R"bsfm(.frameBorder=0,b.scrolling='no',b.style.position='absolute',b},G:functio)bsfm"
-    R"bsfm(n(b){return 0==parseInt(Math.random()*b)}},b.M=function(b,c){for(var e i)bsfm"
+    R"bsfm(n(b){return 0==parseInt(Math.random()*b)}},b.M=function(b,c){for (var e i)bsfm"
     R"bsfm(n c)b[e]=c[e];return b},b.M(b,{N:function(c,e,g){var h=b.O(),i=c+': '+(e)bsfm"
     R"bsfm(.message||e);h!=top?window.console&&console.log(i):(h.PSerr||(h.PSerr=[])bsfm"
     R"bsfm()).push(i),g=g||{},'object'==typeof e&&b.R([b.T({app:'adclient',op:'view)bsfm"
-    R"bsfm(',res:'F',tid:g.tid||'',ccid:g.ccid||''},g.host)])},R:function(c,e){if(!)bsfm"
-    R"bsfm(e)var g=b.V(),e=g.W=g.W||[];for(var h,i=0;c&&i<c.length;i++)c[i]&&(h=new)bsfm"
-    R"bsfm( Image,h.src=c[i],e.push(h))},X:function(c){for(var e=0;c&&e<c.length;e+)bsfm"
+    R"bsfm(',res:'F',tid:g.tid||'',ccid:g.ccid||''},g.host)])},R:function(c,e){if (!)bsfm"
+    R"bsfm(e)var g=b.V(),e=g.W=g.W||[];for (var h,i=0;c&&i<c.length;i++)c[i]&&(h=new)bsfm"
+    R"bsfm( Image,h.src=c[i],e.push(h))},X:function(c){for (var e=0;c&&e<c.length;e+)bsfm"
     R"bsfm(+)c[e]&&(new b.D).F(c[e])},T:function(c,e){e=e||'##ADSERVER=##';var g=c.)bsfm"
     R"bsfm(tid||'##TAGID=##',h=c.ccid||'##CCID=##';return new b.g(e+"/sl.gif",c).o()bsfm"
     R"bsfm('app',c.app||"adtempl").o('src',c.src||"creative").o('tid',g).o('ccid',h)bsfm"
@@ -98,7 +98,7 @@ namespace
     R"bsfm(_a(),b=b&&e.ab?c.bb(b):b,Number(e.eb)&&c.Va&&((new Image).src=c.Va,setTi)bsfm"
     R"bsfm(meout(function(){c.fb()},1e3*e.eb)),b&&c.gb(b)},fa:function(c,e,g){try{v)bsfm"
     R"bsfm(ar h=this,i=h.$a(),j=c.contentWindow;j.document.write(i),j.setTimeout('d)bsfm"
-    R"bsfm(ocument.close()',2e3),e&&e()}catch(k){if(c.src)if(c.parentNode.removeChi)bsfm"
+    R"bsfm(ocument.close()',2e3),e&&e()}catch(k){if (c.src)if (c.parentNode.removeChi)bsfm"
     R"bsfm(ld(c),!g||3>g)try{g=g+1||1,h.fa(b.Ka(this.i).ca().Oa(),e,g)}catch(k){b.N)bsfm"
     R"bsfm((204,k)}else b.N(205,k);else c.src='javascript:"<script>try{document.dom)bsfm"
     R"bsfm(ain=\''+document.domain+'\';}catch(e){}</'+'script>"',i='<script>documen)bsfm"
@@ -118,7 +118,7 @@ namespace
     R"bsfm(.Ya+'img/'+c+'" alt="AdChoices" style="border:0 none; padding:0; margin:)bsfm"
     R"bsfm(0;"/></a>'},mb:function(b,c){var e=/<\/body>|<\/html>/i;return e.test(b))bsfm"
     R"bsfm(?b.replace(e,c+'$&'):''},hb:function(){var b=this.i,c=document,e=c.getEl)bsfm"
-    R"bsfm(ementById(b.Za);if(e)return e;var g=c.getElementById(b.Qa),h='IFRAME'==g)bsfm"
+    R"bsfm(ementById(b.Za);if (e)return e;var g=c.getElementById(b.Qa),h='IFRAME'==g)bsfm"
     R"bsfm(.tagName?g:g.getElementsByTagName('IFRAME')[0];return h.contentWindow.do)bsfm"
     R"bsfm(cument.getElementById(b.Za)},nb:function(b){return!/^(https?\:)?\/\/\w+/)bsfm"
     R"bsfm(.test(b)},ib:function(b){var c=this.i,e=c.ob?' alt="'+c.ob+'" title="'+c)bsfm"
@@ -143,7 +143,7 @@ namespace
     R"bsfm(cb.run('+(c&&'"'+c+'"'||'event')+', '+(b||'{}')+');').replace(/"/g,'&quo)bsfm"
     R"bsfm(t;')},b.Rb=function(c){var e=b.V(c);return e.cb?e.cb:(e.cb=this,this.ba=)bsfm"
     R"bsfm(c,void(this.Sb={}))},b.Rb.prototype={run:function(b,c){var e=this.Sb[b.t)bsfm"
-    R"bsfm(ype||b],g=!0;if(e){c=c||{},c.Tb=b;for(var h=0;h<e.length;h++)'function'=)bsfm"
+    R"bsfm(ype||b],g=!0;if (e){c=c||{},c.Tb=b;for (var h=0;h<e.length;h++)'function'=)bsfm"
     R"bsfm(=typeof e[h]&&(g=e[h].call(this,c,h)&&g)}return g},Ub:function(b,c){retu)bsfm"
     R"bsfm(rn(this.Sb[b]||(this.Sb[b]=[])).push(c),this}},function(){var c='click';)bsfm"
     R"bsfm(new b.Rb('##mime-url:RANDOM##').Ub(c,function(b){var c=b.clk,e=/\*amp\*m)bsfm"
@@ -151,21 +151,21 @@ namespace
     R"bsfm(rc='##ADVCLICKTRACKING=##';var sfm787=new Image().src='##ADVCLICKTRACKIN)bsfm"
     R"bsfm(G2=##';var sfm789=new Image().src='##ADVCLICKTRACKING3=##'}; pix677_land)bsfm"
     R"bsfm((); return c=1==this._b?c.replace(e,''):c,b.win=open(c,'_blank'),!0}).Ub)bsfm"
-    R"bsfm((c,function(c){return b.R(c.px),!0}).Ub(c,function(c){try{var e=c.Tb;if()bsfm"
-    R"bsfm(e.offsetX>0&&e.offsetY>0||e.pageX>0&&e.pageY>0){var g=function(){for(var)bsfm"
+    R"bsfm((c,function(c){return b.R(c.px),!0}).Ub(c,function(c){try{var e=c.Tb;if ()bsfm"
+    R"bsfm(e.offsetX>0&&e.offsetY>0||e.pageX>0&&e.pageY>0){var g=function(){for (var)bsfm"
     R"bsfm( b={IMG:1,A:1,VIDEO:1,BODY:1},c=e.target||e.srcElement;c;c=c.parentNode))bsfm"
-    R"bsfm(if(b[c.tagName]||c.className&&(c.className.indexOf('text')>-1||c.classNa)bsfm"
+    R"bsfm(if (b[c.tagName]||c.className&&(c.className.indexOf('text')>-1||c.classNa)bsfm"
     R"bsfm(me.indexOf('creative')>-1))return c}(),h=function(){return document.crea)bsfm"
     R"bsfm(teTouch?Math.min(window.innerHeight/document.documentElement.clientHeigh)bsfm"
     R"bsfm(t,window.innerWidth/document.documentElement.clientWidth):1}(),i=functio)bsfm"
     R"bsfm(n(){return'IMG'==(e.target||e.srcElement).tagName?'cli':'cl'},j=function)bsfm"
-    R"bsfm((){if('LI'==g.parentNode.tagName)throw'NOT SUP';return e.offsetX?Math.ce)bsfm"
+    R"bsfm((){if ('LI'==g.parentNode.tagName)throw'NOT SUP';return e.offsetX?Math.ce)bsfm"
     R"bsfm(il(e.offsetX/h/g.offsetWidth*5):Math.ceil((e.pageX/h-m('offsetLeft'))/g.)bsfm"
     R"bsfm(offsetWidth*5)},k=function(){return e.offsetY?Math.ceil(e.offsetY/h/g.of)bsfm"
     R"bsfm(fsetHeight*5):Math.ceil((e.pageY/h-m('offsetTop'))/g.offsetHeight*5)},m=)bsfm"
-    R"bsfm(function(b){for(var c=0,e=g;e;e=e.offsetParent)c+=e[b]||0;return c};b.R()bsfm"
+    R"bsfm(function(b){for (var c=0,e=g;e;e=e.offsetParent)c+=e[b]||0;return c};b.R()bsfm"
     R"bsfm([b.T({op:i()+j()+'-'+k(),res:'S',ccid:c.ccid})])}}catch(n){b.N(213,n.mes)bsfm"
-    R"bsfm(sage)}return!0}).Ub(c,function(c){try{var e=c.win;if(!e)return!0;for(var)bsfm"
+    R"bsfm(sage)}return!0}).Ub(c,function(c){try{var e=c.win;if (!e)return!0;for (var)bsfm"
     R"bsfm( g=[3,5,10,20,30,60,120],h=function(g){setTimeout(function(){e&&!e.close)bsfm"
     R"bsfm(d&&b.R([b.T({op:'click-'+g,res:'S',ccid:c.ccid})])},1e3*g)};g.length;)h()bsfm"
     R"bsfm(g.shift());return!1}catch(i){return b.N(214,i.message),!0}})}();var e=fu)bsfm"
@@ -183,7 +183,7 @@ namespace
     R"bsfm(js:OGG_LOW43=##','##js:OGG_ST43=##','##js:WEBM_LOW43=##','##js:WEBM_ST43)bsfm"
     R"bsfm(=##'],e=['video/mp4','video/mp4','video/ogg','video/ogg','video/webm','v)bsfm"
     R"bsfm(ideo/webm','video/mp4','video/mp4','video/ogg','video/ogg','video/webm',)bsfm"
-    R"bsfm('video/webm'],g=function(b){src_='';for(var c=0;c<b.length;c++)b[c]&&(sr)bsfm"
+    R"bsfm('video/webm'],g=function(b){src_='';for (var c=0;c<b.length;c++)b[c]&&(sr)bsfm"
     R"bsfm(c_+='<source src="'+b[c]+'" type="'+e[c]+'" onerror="onError(event)"/>'))bsfm"
     R"bsfm(;return src_};return g(Number('##WIDTH##')/Number('##HEIGHT##')>1.5?b.co)bsfm"
     R"bsfm(ncat(c):c.concat(b))},j={lc:'video.css',nc:'video.js',mc:e(),oc:g()};b.I)bsfm"
@@ -193,7 +193,7 @@ namespace
     R"bsfm(TOUT=##';1==c?(new b.D).F(e):1==g&&(new b.D).F(h)}catch(i){b.N(232,i.mes)bsfm"
     R"bsfm(sage)}}(),function(){try{b.Ob=function(){return[]};var c='##ADSERVER##',)bsfm"
     R"bsfm(e=new RegExp('(https?:)?\\/\\/'+"media.targetrtb.com".replace(/\W/g,'\\$)bsfm"
-    R"bsfm(&'),'i');if(e.test(c)){var g=b.Ob();g&&g.length||(g.length=1);for(var h=)bsfm"
+    R"bsfm(&'),'i');if (e.test(c)){var g=b.Ob();g&&g.length||(g.length=1);for (var h=)bsfm"
     R"bsfm(0;h<g.length;h++)(new b.D).F(c+"/tag/"+'container.html')}}catch(i){b.N(2)bsfm"
     R"bsfm(27,i.message)}}(),b.Fa=function(c){var e=c.getBoundingClientRect(),g=e.w)bsfm"
     R"bsfm(idth||c.offsetWidth,h=e.height||c.offsetHeight,i=b.Z(),j=Math.max(0,Math)bsfm"
@@ -201,7 +201,7 @@ namespace
     R"bsfm(t+i.clientWidth-e.left)))),k=Math.max(0,Math.min(i.clientHeight,Math.min)bsfm"
     R"bsfm((h,Math.min(e.top+h-i.scrollTop,i.scrollTop+i.clientHeight-e.top))));ret)bsfm"
     R"bsfm(urn Math.round(j*k/(g*h)*100)||0},function(){try{var c=b.O(),e=c.documen)bsfm"
-    R"bsfm(t.getElementById('p##mime-url:RANDOM##'),g='##js:TRACKHTMLURL=##';if(e&&)bsfm"
+    R"bsfm(t.getElementById('p##mime-url:RANDOM##'),g='##js:TRACKHTMLURL=##';if (e&&)bsfm"
     R"bsfm(top==c){var h=function(b,c){return b?b+(b.indexOf('?')<0?'?v='+c:'&v='+c)bsfm"
     R"bsfm():''},i=function(){try{var c=Number(e.getAttribute('data-vis')),j=b.Fa(e)bsfm"
     R"bsfm();c>=50&&j>=50?b.X([h(g,1)]):(e.setAttribute('data-vis',j),setTimeout(i,)bsfm"
@@ -309,7 +309,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -321,12 +321,12 @@ namespace
     options.rid_private_key = *opt_rid_private_key;
     options.template_root = *opt_template_root;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
@@ -338,7 +338,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -397,13 +397,13 @@ namespace
     std::filesystem::create_directories(path.parent_path());
 
     std::ofstream out(path, std::ios::binary);
-    if(!out)
+    if (!out)
     {
       throw std::runtime_error("can't create template file: " + path.string());
     }
 
     out.write(TEMPLATE_BODY, sizeof(TEMPLATE_BODY) - 1);
-    if(!out)
+    if (!out)
     {
       throw std::runtime_error("can't write template file: " + path.string());
     }
@@ -446,8 +446,7 @@ namespace
 
     fixture.campaign_config = new CampaignConfig();
     fixture.campaign_config->default_click_token_processor =
-      BaseTokenProcessor::default_token_processor(
-        CreativeTokens::ADV_CLICK_URL.c_str());
+      BaseTokenProcessor::default_token_processor(CreativeTokens::ADV_CLICK_URL.c_str());
 
     Currency_var currency(new Currency());
     currency->currency_id = 1;
@@ -576,16 +575,11 @@ namespace
     fixture.creative->sizes[size->size_id] = creative_size;
 
     fixture.campaign->add_creative(fixture.creative);
-    fixture.campaign_config->campaigns[fixture.campaign->campaign_id] =
-      fixture.campaign;
-    fixture.campaign_config->creatives[fixture.creative->creative_id] =
-      fixture.creative;
-    fixture.campaign_config->campaign_creatives.emplace(
-      fixture.creative->ccid,
-      fixture.creative);
+    fixture.campaign_config->campaigns[fixture.campaign->campaign_id] = fixture.campaign;
+    fixture.campaign_config->creatives[fixture.creative->creative_id] = fixture.creative;
+    fixture.campaign_config->campaign_creatives.emplace(fixture.creative->ccid, fixture.creative);
 
-    ReferenceCounting::SmartPtr<RCOptionTokenValueMap> template_tokens(
-      new RCOptionTokenValueMap());
+    ReferenceCounting::SmartPtr<RCOptionTokenValueMap> template_tokens(new RCOptionTokenValueMap());
     ReferenceCounting::SmartPtr<RCOptionTokenValueMap> template_hidden_tokens(
       new RCOptionTokenValueMap());
 
@@ -602,8 +596,7 @@ namespace
       creative_template);
 
     fixture.request_info.time = Generics::Time::get_time_of_day();
-    fixture.request_info.request_id =
-      AdServer::Commons::RequestId::create_random_based();
+    fixture.request_info.request_id = AdServer::Commons::RequestId::create_random_based();
     fixture.request_info.creative_instantiate_type = "secure";
     fixture.request_info.request_type = AR_OPENRTB_WITH_CLICKURL;
     fixture.request_info.random = 3311422;
@@ -677,10 +670,9 @@ namespace
     const std::string expected_tag_token =
       std::string("tid: \"") + String::StringManip::IntToStr(
         fixture.tag->tag_id).str().str() + "\"";
-    if(creative_body.find(expected_tag_token) == std::string::npos)
+    if (creative_body.find(expected_tag_token) == std::string::npos)
     {
-      throw std::runtime_error(
-        "system TAGID token was not instantiated");
+      throw std::runtime_error("system TAGID token was not instantiated");
     }
 
     checksum.fetch_add(
@@ -721,9 +713,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   Generics::Time
-  CTRProviderImpl::check_config_appearance(
-    std::string&,
-    const String::SubString&)
+  CTRProviderImpl::check_config_appearance(std::string&, const String::SubString&)
   {
     return Generics::Time::ZERO;
   }
@@ -762,12 +752,12 @@ namespace AdServer::CampaignSvcs::CTR
     RevenueDecimal* rate,
     bool* creative_dependent) const
   {
-    if(rate)
+    if (rate)
     {
       *rate = RevenueDecimal::ZERO;
     }
 
-    if(creative_dependent)
+    if (creative_dependent)
     {
       *creative_dependent = false;
     }
@@ -776,9 +766,7 @@ namespace AdServer::CampaignSvcs::CTR
   }
 
   void
-  CTRProviderImpl::CalculationContext::get_ctr_details(
-    CTRList& ctrs,
-    const Creative*) const
+  CTRProviderImpl::CalculationContext::get_ctr_details(CTRList& ctrs, const Creative*) const
   {
     ctrs.clear();
   }
@@ -795,8 +783,7 @@ main(int argc, char** argv)
       std::filesystem::path(options.template_root) / "instantiate-template.txt";
     write_template_file(template_path);
 
-    CreativeInstantiator::CreativeInstantiate creative_instantiate =
-      make_creative_instantiate();
+    CreativeInstantiator::CreativeInstantiate creative_instantiate = make_creative_instantiate();
 
     Logging::Logger_var logger(new Logging::Null::Logger);
     CampaignManagerCore::CountryList country_whitelist;
@@ -825,10 +812,9 @@ main(int argc, char** argv)
     const unsigned long per_thread = options.count / options.threads;
     const unsigned long remainder = options.count % options.threads;
 
-    for(unsigned long thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (unsigned long thread_index = 0; thread_index < options.threads; ++thread_index)
     {
-      const unsigned long items =
-        per_thread + (thread_index < remainder ? 1 : 0);
+      const unsigned long items = per_thread + (thread_index < remainder ? 1 : 0);
 
       workers.emplace_back(
         [
@@ -838,14 +824,14 @@ main(int argc, char** argv)
           &checksum
         ]()
         {
-          for(unsigned long i = 0; i < items; ++i)
+          for (unsigned long i = 0; i < items; ++i)
           {
             instantiate_once(creative_instantiator, fixture, checksum);
           }
         });
     }
 
-    for(auto& worker : workers)
+    for (auto& worker : workers)
     {
       worker.join();
     }
@@ -860,8 +846,7 @@ main(int argc, char** argv)
       << ", checksum: " << checksum.load()
       << ", cpu_time: " << format_float(user_cpu + sys_cpu) << "s"
       << ", user_cpu_time: " << format_float(user_cpu) << "s"
-      << ", sys_cpu_time: " << format_float(sys_cpu) << "s"
-      << std::endl;
+      << ", sys_cpu_time: " << format_float(sys_cpu) << "s" << std::endl;
 
     return 0;
   }

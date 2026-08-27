@@ -20,7 +20,7 @@ use Common;
 
   # Log processor
   package TestResultProcessor;
-  
+
   sub new {
     my $class             = shift;
     my $self              = {};
@@ -43,7 +43,7 @@ use Common;
     my $self      = shift;
     return ($self->{ERROR_IDX} == 0);
   }
-  
+
   # get workspace name by workspace path
   sub get_workspace_name {
     my $self       = shift;
@@ -55,7 +55,7 @@ use Common;
     }
     return $relative_path;
   }
-  
+
   # get HTML relative or absolute path for file
   sub get_file_path {
     my $self          = shift;
@@ -67,10 +67,12 @@ use Common;
     {
       @path_parts = ($self->{HTML_TR_PATH}, @path_parts);
     }
+
     if ($is_abs)
     {
       @path_parts = ($self->{HTML_PATH}, @path_parts);
     }
+
     if ($ext eq TestCommon::ERROR_EXT)
     {
       @path_parts = (@path_parts, TestCommon::ERROR_PATH_SUFFIX);
@@ -99,25 +101,25 @@ use Common;
     opendir(DIR, $self->{LOG_PATH});
     my $htmlpath = $self->get_file_path(::TEST_SUBDIR_NAME, TestCommon::HTML_EXT, 1);
     my $html_header = sprintf("Log processing result");
-    my $html = HTMLTestsResults->new($html_header,  
+    my $html = HTMLTestsResults->new($html_header,
                                      File::Spec->join($self->{HTML_PATH}, $self->{HTML_TR_PATH}),
                                      $self->get_workspace_name(0),
                                      $self->{DST_PATH},
-                                     $self->{LOG_PATH}, 
+                                     $self->{LOG_PATH},
                                      $self->{TEST_TIME},
                                      $self->{HISTORY_PATH},
                                      \@{ $self->{add_paths} });
     $html->prepare($self->{HTML_TR_PATH});
     my $filename;
     my $have_logs = 0;
-    
+
     foreach $filename (readdir(DIR))
     {
       my $filepath = File::Spec->join($self->{LOG_PATH}, $filename);
       if ( -f $filepath )
       {
-        my ($file, $dir, $ext) = File::Basename::fileparse($filename, 
-                                                           (TestCommon::ERROR_EXT, 
+        my ($file, $dir, $ext) = File::Basename::fileparse($filename,
+                                                           (TestCommon::ERROR_EXT,
                                                             TestCommon::OUT_EXT));
         if ($ext eq TestCommon::ERROR_EXT || $ext eq TestCommon::OUT_EXT)
         {

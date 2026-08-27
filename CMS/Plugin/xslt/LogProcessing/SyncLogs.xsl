@@ -354,7 +354,7 @@
             <xsl:if test="count($colo-config/cfg:predictorConfig/cfg:ref/@port) = 0">
               <xsl:value-of select="$def-predictor-sync-logs-server-port"/>
             </xsl:if>
-          </xsl:otherwise>           
+          </xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
 
@@ -404,7 +404,7 @@
           </xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
-    
+
       <xsl:variable name="user-bind-server-hosts">
         <xsl:call-template name="HostsStringGenerator">
           <xsl:with-param name="service-path"
@@ -1168,23 +1168,23 @@
           </xsl:if>
         </cfg:FeedRouteGroup>
       </xsl:if>
-    
+
     <xsl:variable name="research-command-prefix"><xsl:choose>
         <xsl:when test="count($logs-backup) > 0 and
           ($logs-backup = '1' or $logs-backup = 'true')">
           <xsl:value-of select="$colo-config-root"/><![CDATA[/copy_and_backup.sh ']]></xsl:when>
-        <xsl:when 
+        <xsl:when
           test="count($colo-config/cfg:predictorConfig/cfg:auxiliaryRef) > 0 or
-                $predictor-path//cfg:syncServer/@enable_backup = 'true' or 
+                $predictor-path//cfg:syncServer/@enable_backup = 'true' or
                 $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[/bin/sh -c ']]></xsl:when>
       </xsl:choose>
     </xsl:variable>
     <xsl:variable name="research-command-postfix"><xsl:choose>
         <xsl:when test="count($logs-backup) > 0 and
           ($logs-backup = '1' or $logs-backup = 'true')"><![CDATA[' '##SRC_PATH##']]></xsl:when>
-        <xsl:when 
+        <xsl:when
            test="count($colo-config/cfg:predictorConfig/cfg:auxiliaryRef) > 0 or
-                 $predictor-path//cfg:syncServer/@enable_backup = 'true' or 
+                 $predictor-path//cfg:syncServer/@enable_backup = 'true' or
                  $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[']]></xsl:when>
       </xsl:choose>
     </xsl:variable>
@@ -1196,13 +1196,13 @@
         remote_copy_command_type="rsync"
         tries_per_file="2">
         <xsl:attribute name="remote_copy_command"><xsl:value-of
-          select="$research-command-prefix"/><xsl:for-each 
+          select="$research-command-prefix"/><xsl:for-each
           select="$colo-config/cfg:predictorConfig/cfg:auxiliaryRef"><![CDATA[(/usr/bin/rsync -av]]><xsl:if
           test="not($is-frontend-service-host)">z</xsl:if><xsl:value-of
           select="$rsync-no-checksum-option"/><![CDATA[ -t --log-format=%f ##SRC_PATH## rsync://]]><xsl:value-of
           select="@host"/>:<xsl:value-of select="@port"/><xsl:if
-          test="count(@port) = 0"><xsl:value-of 
-          select="$def-research-stat-receiver-port"/></xsl:if><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/><![CDATA[##DST_PATH## || true) && ]]></xsl:for-each><xsl:if test="$predictor-path//cfg:syncServer/@enable_backup = 'true' or 
+          test="count(@port) = 0"><xsl:value-of
+          select="$def-research-stat-receiver-port"/></xsl:if><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/><![CDATA[##DST_PATH## || true) && ]]></xsl:for-each><xsl:if test="$predictor-path//cfg:syncServer/@enable_backup = 'true' or
         $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -a]]><xsl:if
             test="not($is-frontend-service-host)">z</xsl:if><xsl:value-of
             select="$rsync-no-checksum-option"/><![CDATA[ -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of

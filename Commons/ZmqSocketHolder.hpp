@@ -5,9 +5,7 @@
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/zmq.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   struct ZmqSocketHolder: public ReferenceCounting::AtomicImpl
   {
@@ -25,10 +23,7 @@ namespace Commons
       ~SendGuard() noexcept;
 
       bool
-      send(
-        zmq::message_t& msg,
-        int flags,
-        const char* part_name)
+      send(zmq::message_t& msg, int flags, const char* part_name)
         /*throw(eh::Exception)*/;
 
     protected:
@@ -62,5 +57,4 @@ namespace Commons
 
   typedef ReferenceCounting::SmartPtr<ZmqSocketHolder>
     ZmqSocketHolder_var;
-}
 }

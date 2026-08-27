@@ -63,7 +63,7 @@ namespace PlainTypes
     uint32_t buf_offset = *static_cast<const uint32_t*>(buf);
     uint32_t buf_size = *(static_cast<const uint32_t*>(buf) + 1);
 
-    if(buf_offset + buf_size > size)
+    if (buf_offset + buf_size > size)
     {
       Stream::Error ostr;
       ostr << FUN << ": buffer end position great than size: " <<

@@ -11,9 +11,7 @@
 #include "StatSource.hpp"
 #include "ModifyConfigSource.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   /**/
   class CampaignConfigModifier:
@@ -66,14 +64,10 @@ namespace CampaignSvcs
       bool enable_delivery_thresholds)
       noexcept;
 
-    void update(
-      CampaignConfig* campaign_config,
-      const Generics::Time& now)
+    void update(CampaignConfig* campaign_config, const Generics::Time& now)
       /*throw(Exception)*/;
 
-    void update_stat(
-      CampaignConfig* campaign_config,
-      const Generics::Time& now)
+    void update_stat(CampaignConfig* campaign_config, const Generics::Time& now)
       /*throw(Exception)*/;
 
     StatSource::CStat_var stat() const /*throw(NotReady)*/;
@@ -103,10 +97,7 @@ namespace CampaignSvcs
 
   private:
     StatSource::Stat_var
-    update_stat_i_(
-      StatSource::Stat* campaign_stat,
-      const Generics::Time& now,
-      bool full_update)
+    update_stat_i_(StatSource::Stat* campaign_stat, const Generics::Time& now, bool full_update)
       /*throw(Exception)*/;
 
     void update_config_(
@@ -155,9 +146,7 @@ namespace CampaignSvcs
       noexcept;
 
     static Generics::Time
-    campaign_open_time_(
-      const CampaignDef* campaign,
-      const Generics::Time& now)
+    campaign_open_time_(const CampaignDef* campaign, const Generics::Time& now)
       noexcept;
 
     static bool
@@ -231,15 +220,11 @@ namespace CampaignSvcs
       const noexcept;
 
     static StatSource::Stat::CampaignStat*
-    find_campaign_stat_(
-      StatSource::Stat& stats,
-      CampaignDef* campaign)
+    find_campaign_stat_(StatSource::Stat& stats, CampaignDef* campaign)
       noexcept;
 
     static StatSource::Stat::CCGStat*
-    find_ccg_stat_(
-      StatSource::Stat::CampaignStat& stats,
-      unsigned long ccg_id)
+    find_ccg_stat_(StatSource::Stat::CampaignStat& stats, unsigned long ccg_id)
       noexcept;
 
   private:
@@ -269,5 +254,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::SmartPtr<CampaignConfigModifier>
     CampaignConfigModifier_var;
-}
 }

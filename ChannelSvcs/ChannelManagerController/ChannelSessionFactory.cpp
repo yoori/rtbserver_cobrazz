@@ -21,180 +21,165 @@
 #include "ChannelLoadSessionFactory.hpp"
 #include "ThreadHandlerTemplate.hpp"
 
-
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
-const char* TimedQueryStat::ASPECT =
-  "TimedQueryStatistics";
+  const char* TimedQueryStat::ASPECT = "TimedQueryStatistics";
 
-NullStat* TimedQueryStat::CreateStatistic(
-    Logging::Logger* logger,
-    Generics::TaskRunner* task_runner,
-    unsigned long dump_margin,
-    const std::vector<size_t>& lengths)
-    /*throw(eh::Exception)*/
-{
-  if(logger)
+  NullStat* TimedQueryStat::CreateStatistic(
+      Logging::Logger* logger,
+      Generics::TaskRunner* task_runner,
+      unsigned long dump_margin,
+      const std::vector<size_t>& lengths)
+      /*throw(eh::Exception)*/
   {
-    return new TimedQueryStat(logger, task_runner, dump_margin, lengths);
-  }
-  else
-  {
-    return new NullStat();
-  }
-}
-
-TimedQueryStat::TimedQueryStat(
-    Logging::Logger* logger,
-    Generics::TaskRunner* task_runner,
-    unsigned long dump_margin,
-    const std::vector<size_t>& lengths)
-    /*throw(InvalidArgument, eh::Exception)*/
-  : logger_(ReferenceCounting::add_ref(logger)),
-    task_runner_(task_runner),
-    counter_(0),
-    dump_margin_(dump_margin)
-{
-  if(!logger_)
-  {
-    throw InvalidArgument("TimedQueryStat::TimedQueryStat: logger is null");
-  }
-  Generics::Statistics::DumpRunner_var stat_runner;
-  stat_runner = new Generics::Statistics::NullDumpRunner;
-  policy_ = new Generics::Statistics::NullDumpPolicy;
-  collection_ = new Generics::Statistics::Collection(stat_runner.in());
-  for(std::vector<size_t>::const_iterator it = lengths.begin();
-      it != lengths.end(); ++it)
-  {
-    for(unsigned long i = 0; i < *it; i++)
+    if (logger)
     {
-      char name[64];
-      collection_->add(
-        generate_name(*it, i, name),
-        new Generics::Statistics::TimedStatSink(),
-        policy_.in());
+      return new TimedQueryStat(logger, task_runner, dump_margin, lengths);
+    }
+    else
+    {
+      return new NullStat();
     }
   }
-}
 
-const char* TimedQueryStat::generate_name(
-  size_t index,
-  size_t num,
-  char name[64])
-  noexcept
-{
-  Stream::Buffer<64/*sizeof(name)=8*/> ostr(name);
-  ostr << index << ". " << num;
-  return name;
-}
-
-void TimedQueryStat::prepare(Generics::Timer& timer)
-{
-  try
+  TimedQueryStat::TimedQueryStat(
+      Logging::Logger* logger,
+      Generics::TaskRunner* task_runner,
+      unsigned long dump_margin,
+      const std::vector<size_t>& lengths)
+      /*throw(InvalidArgument, eh::Exception)*/
+    : logger_(ReferenceCounting::add_ref(logger)),
+      task_runner_(task_runner),
+      counter_(0),
+      dump_margin_(dump_margin)
   {
-    timer.start();
-  }
-  catch(...)
-  {
-  }
-}
-
-void TimedQueryStat::consider(size_t index, size_t num, Generics::Timer& timer)
-  noexcept
-{
-  try
-  {
-    timer.stop();
-    Generics::Time time = timer.elapsed_time();
-    char name[64];
-    try
+    if (!logger_)
     {
-      Generics::Statistics::StatSink_var stat(
-        collection_->get(generate_name(index, num, name)));
-      stat->consider(Generics::Statistics::TimedSubject(time));
+      throw InvalidArgument("TimedQueryStat::TimedQueryStat: logger is null");
     }
-    catch(const Generics::Statistics::Collection::StatItemNotFound& e)
+    Generics::Statistics::DumpRunner_var stat_runner;
+    stat_runner = new Generics::Statistics::NullDumpRunner;
+    policy_ = new Generics::Statistics::NullDumpPolicy;
+    collection_ = new Generics::Statistics::Collection(stat_runner.in());
+    for (std::vector<size_t>::const_iterator it = lengths.begin(); it != lengths.end(); ++it)
     {
-      //std::cout << "not found exception" <<std::endl;
+      for (unsigned long i = 0; i < *it; i++)
+      {
+        char name[64];
+        collection_->add(
+          generate_name(*it, i, name),
+          new Generics::Statistics::TimedStatSink(),
+          policy_.in());
+      }
     }
   }
-  catch(...)
-  {
-  }
-}
 
-void TimedQueryStat::check() noexcept
-{
-  static const char* FN="TimedQueryStat::check";
-  try
+  const char* TimedQueryStat::generate_name(size_t index, size_t num, char name[64])
+    noexcept
   {
-    if(need_dump_())
-    {
-      Protected::Task_var task = new StatisticTask(this);
-      task_runner_->enqueue_task(task);
-    }
+    Stream::Buffer<64/*sizeof(name)=8*/> ostr(name);
+    ostr << index << ". " << num;
+    return name;
   }
-  catch(...)
+
+  void TimedQueryStat::prepare(Generics::Timer& timer)
   {
     try
     {
-      logger_->sstream(Logging::Logger::ERROR,
-                       ASPECT)
-        << FN << ": caught exception on checking statistic";
+      timer.start();
     }
     catch(...)
     {
     }
   }
-}
 
-void TimedQueryStat::dump() noexcept
-{
-  try
+  void TimedQueryStat::consider(size_t index, size_t num, Generics::Timer& timer)
+    noexcept
   {
-    const char* header = "Match performance: ";
-    std::ostringstream ostr;
-    ostr << header;
-    collection_->dump(ostr);
-    const std::string& str = ostr.str();
-    if (str.size() > strlen(header))
+    try
     {
-      logger_->log(str, Logging::Logger::INFO, ASPECT);
+      timer.stop();
+      Generics::Time time = timer.elapsed_time();
+      char name[64];
+      try
+      {
+        Generics::Statistics::StatSink_var stat(collection_->get(generate_name(index, num, name)));
+        stat->consider(Generics::Statistics::TimedSubject(time));
+      }
+      catch(const Generics::Statistics::Collection::StatItemNotFound& e)
+      {
+        //std::cout << "not found exception" <<std::endl;
+      }
+    }
+    catch(...)
+    {
     }
   }
-  catch(...)
+
+  void TimedQueryStat::check() noexcept
   {
+    static const char* FN="TimedQueryStat::check";
+    try
+    {
+      if (need_dump_())
+      {
+        Protected::Task_var task = new StatisticTask(this);
+        task_runner_->enqueue_task(task);
+      }
+    }
+    catch(...)
+    {
+      try
+      {
+        logger_->sstream(Logging::Logger::ERROR, ASPECT)
+          << FN << ": caught exception on checking statistic";
+      }
+      catch(...)
+      {
+      }
+    }
   }
-}
 
-bool TimedQueryStat::need_dump_() noexcept
-{
-  WriteGuard_ lock(lock_);
-  if(counter_++ > dump_margin_)
+  void TimedQueryStat::dump() noexcept
   {
-    counter_ = 0;
-    return true;
+    try
+    {
+      const char* header = "Match performance: ";
+      std::ostringstream ostr;
+      ostr << header;
+      collection_->dump(ostr);
+      const std::string& str = ostr.str();
+      if (str.size() > strlen(header))
+      {
+        logger_->log(str, Logging::Logger::INFO, ASPECT);
+      }
+    }
+    catch(...)
+    {
+    }
   }
-  return false;
-}
+
+  bool TimedQueryStat::need_dump_() noexcept
+  {
+    WriteGuard_ lock(lock_);
+    if (counter_++ > dump_margin_)
+    {
+      counter_ = 0;
+      return true;
+    }
+    return false;
+  }
 
 }
-}
-
-const char* ChannelServerSessionFactoryImpl::ASPECT =
-  "ChannelServerSessionFactoryImpl";
 
 
-namespace AdServer
+const char* ChannelServerSessionFactoryImpl::ASPECT = "ChannelServerSessionFactoryImpl";
+
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
 
-  TimedQueryStat::StatisticTask::StatisticTask(
-    TimedQueryStat* callback) noexcept
+  TimedQueryStat::StatisticTask::StatisticTask(TimedQueryStat* callback) noexcept
     : callback_(callback)
   {
   }
@@ -204,8 +189,8 @@ namespace ChannelSvcs
     callback_->dump();
   }
 
-} /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs
+
 
 
 ChannelServerSessionFactoryImpl::ChannelServerSessionFactoryImpl(
@@ -225,7 +210,7 @@ ChannelServerSessionFactoryImpl::ChannelServerSessionFactoryImpl(
   }
   catch(const eh::Exception& e)
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
       ostr << "ChannelServerSessionFactoryImpl::"
@@ -237,7 +222,7 @@ ChannelServerSessionFactoryImpl::ChannelServerSessionFactoryImpl(
   }
   catch(...)
   {
-    if(callback_)
+    if (callback_)
     {
       callback_->critical(
         String::SubString(
@@ -264,7 +249,7 @@ CORBA::ValueBase* ChannelServerSessionFactoryImpl::create_for_unmarshal()
   }
   catch(const eh::Exception& e)
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
       ostr << "ChannelServerSessionFactoryImpl::create_for_unmarshal: "
@@ -276,10 +261,7 @@ CORBA::ValueBase* ChannelServerSessionFactoryImpl::create_for_unmarshal()
   }
 }
 
-
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   const char* ChannelServerSessionImpl::ASPECT = "ChannelServerSessionImpl";
@@ -302,8 +284,7 @@ namespace ChannelSvcs
   {
   }
 
-  ChannelServerSessionImpl::ChannelServerSessionImpl(
-      ChannelServerSessionImpl& init)
+  ChannelServerSessionImpl::ChannelServerSessionImpl(ChannelServerSessionImpl& init)
       /*throw(Exception)*/:
       CORBA::ValueBase(),
       CORBA::AbstractBase(),
@@ -325,8 +306,7 @@ namespace ChannelSvcs
     catch(...)
     {
       Stream::Error ostr;
-      ostr << FN <<
-        ": Catch exception on initialization session";
+      ostr << FN << ": Catch exception on initialization session";
       throw Exception(ostr);
     }
   }
@@ -361,18 +341,17 @@ namespace ChannelSvcs
     }
     catch(const Exception& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << "ChannelServerSessionImpl::_copy_value: "
-          "Catch Exception on creating ChannelServerSessionImp. : "
-          << e.what();
+          "Catch Exception on creating ChannelServerSessionImp. : " << e.what();
         callback_->critical(ostr.str());
       }
     }
     catch(const eh::Exception& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << "ChannelServerSessionImpl::_copy_value: "
@@ -424,17 +403,17 @@ namespace ChannelSvcs
   void ChannelServerSessionImpl::init_stat_() noexcept
   {
     static const char* FN = "ChannelServerSessionImpl::init_stat_";
-    if(!stat_.get())
+    if (!stat_.get())
     {
       WriteGuard_ lock(init_lock_);
-      if(stat_.get())
+      if (stat_.get())
       {
         return;
       }
       try
       {
         std::vector<size_t> lengths(channel_servers().length());
-        for(size_t i = 0; i < channel_servers().length(); i++)
+        for (size_t i = 0; i < channel_servers().length(); i++)
         {
           lengths[i] = channel_servers()[i].length();
         }
@@ -447,7 +426,7 @@ namespace ChannelSvcs
         Stream::Error ostr;
         ostr << FN << ": Caught eh::Exception on init statistic. "
           ": " << e.what();
-        if(callback_)
+        if (callback_)
         {
           callback_->error(ostr.str());
         }
@@ -458,16 +437,13 @@ namespace ChannelSvcs
   ChannelServerSessionImpl::GroupPool::ObjectHandlerType
   ChannelServerSessionImpl::get_item_() /*throw(GroupPool::Exception)*/
   {
-    if(!pool_.get())
+    if (!pool_.get())
     {
       WriteGuard_ lock(init_lock_);
-      if(!pool_.get())
+      if (!pool_.get())
       {
-        GroupPoolConfiguration conf(
-          channel_servers(), Generics::Time(check_period_));
-        pool_.reset(
-          new GroupPool(conf,
-          CORBACommons::ChoosePolicyType::PT_LOOP));
+        GroupPoolConfiguration conf(channel_servers(), Generics::Time(check_period_));
+        pool_.reset(new GroupPool(conf, CORBACommons::ChoosePolicyType::PT_LOOP));
       }
     }
     return pool_->get_object();
@@ -483,7 +459,7 @@ namespace ChannelSvcs
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
-    if(!channel_servers().length())
+    if (!channel_servers().length())
     {
       throw AdServer::ChannelSvcs::NotConfigured();
     }
@@ -501,12 +477,12 @@ namespace ChannelSvcs
         mquery.in_ = &query;
         mquery.stat_ = stat_.get();
         Generics::Task_var task;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
           mquery.id_ = i;
           mquery.ref_ = channel_servers()[index][i].channel_server;
           task = new Protected::CallTask<Match>(mquery);
-          if(i != len - 1)
+          if (i != len - 1)
           {
             task_runner_->enqueue_task(task);
           }
@@ -516,14 +492,13 @@ namespace ChannelSvcs
         result->no_adv = result->no_track = 0;
         result->match_time.length(len);
 
-        Match::Handler::ResultsVector& results =
-          mquery.callback_->get_result();
-        for(size_t i = 0; i < len; i++)
+        Match::Handler::ResultsVector& results = mquery.callback_->get_result();
+        for (size_t i = 0; i < len; i++)
         {
           try
           {
             ChannelSvcs::ChannelServer::MatchResult_var& value = results[i];
-            if(value)
+            if (value)
             {
               result->no_adv |= value->no_adv;
               result->no_track |= value->no_track;
@@ -532,15 +507,14 @@ namespace ChannelSvcs
             else
             {
               value = new ChannelSvcs::ChannelServer::MatchResult;
-              result->match_time[i] =
-                CorbaAlgs::pack_time(Generics::Time::ZERO);
+              result->match_time[i] = CorbaAlgs::pack_time(Generics::Time::ZERO);
             }
           }
           catch(const Match::Handler::Exception& e)
           {
             Stream::Error ostr;
             ostr << __func__ << "Internal error in Match::Handler: " << e.what();
-            if(callback_)
+            if (callback_)
             {
               callback_->error(ostr.str());
             }
@@ -548,15 +522,14 @@ namespace ChannelSvcs
           }
         }
 
-        if(callback_ && mquery.callback_->count_exception() > 0)
+        if (callback_ && mquery.callback_->count_exception() > 0)
         {
           Stream::Error ostr;
           handler.release_bad();
-          if(mquery.callback_->count_exception() == len)
+          if (mquery.callback_->count_exception() == len)
           {
             // throw it farther, all servers are failed
-            ostr << "All ChannelServers are failed: "
-              << mquery.callback_->get_exception().str();
+            ostr << "All ChannelServers are failed: " << mquery.callback_->get_exception().str();
             CORBACommons::throw_desc<ImplementationException>(ostr.str());
           }
           ostr << __func__ << ": "
@@ -585,8 +558,7 @@ namespace ChannelSvcs
       {
         Stream::Error ostr;
         handler.release_bad();
-        ostr << __func__ << ": ChannelSvcs::ImplementationException: " <<
-          e.description;
+        ostr << __func__ << ": ChannelSvcs::ImplementationException: " << e.description;
         CORBACommons::throw_desc<ImplementationException>(ostr.str());
       }
       catch(const CORBA::SystemException& e)
@@ -640,11 +612,11 @@ namespace ChannelSvcs
   bool GetCCGTraits::operator()(const ChannelServerBase::CCGKeyword& kw) noexcept
   {
     GetCCGTraits::Handler::ResultsVector& results = callback_->results();
-    for(size_t i = 0; i < results.size(); i++)
+    for (size_t i = 0; i < results.size(); i++)
     {
-      if(results[i])
+      if (results[i])
       {
-        if(std::find(
+        if (std::find(
             results[i]->neg_ccg.get_buffer(),
             results[i]->neg_ccg.get_buffer() + results[i]->neg_ccg.length(),
             kw.ccg_id) !=
@@ -658,12 +630,11 @@ namespace ChannelSvcs
   }
 
   ChannelServerBase::CCGKeywordSeq*
-  ChannelServerSessionImpl::get_ccg_traits(
-    const ::AdServer::ChannelSvcs::ChannelIdSeq& ids)
+  ChannelServerSessionImpl::get_ccg_traits(const ::AdServer::ChannelSvcs::ChannelIdSeq& ids)
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
-    if(channel_servers().length() == 0)
+    if (channel_servers().length() == 0)
     {
       throw AdServer::ChannelSvcs::NotConfigured();
     }
@@ -678,12 +649,12 @@ namespace ChannelSvcs
         GetCCGTraits query(__func__, len);
         query.ids = &ids;
         Generics::Task_var task;
-        for(size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
           query.id_ = i;
           query.ref_ = channel_servers()[index][i].channel_server;
           task = new Protected::CallTask<GetCCGTraits>(query);
-          if(i != len - 1)
+          if (i != len - 1)
           {
             task_runner_->enqueue_task(task);
           }
@@ -691,17 +662,17 @@ namespace ChannelSvcs
         task->execute();
         ChannelServerBase::CCGKeywordSeq_var result =
           new AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq;
-        if(query.callback_->count_exception() > 0)
+        if (query.callback_->count_exception() > 0)
         {
           Stream::Error ostr;
           handler.release_bad();
-          if(query.callback_->count_exception() == len)
+          if (query.callback_->count_exception() == len)
           {//throw it farther, all servers are failed
-            ostr << "All ChannelServers are failed. : "
-              << query.callback_->get_exception().str();
+            ostr << "All ChannelServers are failed. : " << query.callback_->get_exception().str();
             CORBACommons::throw_desc<ImplementationException>(ostr.str());
           }
-          if(callback_)
+
+          if (callback_)
           {
             ostr << __func__ << "Communication is failed with some channel servers. "
               ": " << query.callback_->get_exception().str();
@@ -709,21 +680,20 @@ namespace ChannelSvcs
           }
         }
         size_t count = 0;
-        GetCCGTraits::Handler::ResultsVector& results =
-          query.callback_->get_result();
-        for(size_t i = 0; i < len; i++)
+        GetCCGTraits::Handler::ResultsVector& results = query.callback_->get_result();
+        for (size_t i = 0; i < len; i++)
         {
           ChannelServer::TraitsResult_var& value = results[i];
-          if(value)
+          if (value)
           {
             count += value->ccg_keywords.length();
           }
         }
         result->length(count);
         CCGKeyword* last = result->get_buffer();
-        for(size_t i = 0; i < results.size(); i++)
+        for (size_t i = 0; i < results.size(); i++)
         {
-          if(results[i])
+          if (results[i])
           {
             last = std::remove_copy_if(
               results[i]->ccg_keywords.get_buffer(),
@@ -783,7 +753,7 @@ namespace ChannelSvcs
     size_t url_channels_length = 0;
     size_t url_keywords_channels_length = 0;
     size_t uid_channels_length = 0;
-    for(size_t i = 0; i < results.size(); i++)
+    for (size_t i = 0; i < results.size(); i++)
     {
       const ChannelSvcs::ChannelServerBase::TriggerMatchResult& cur_value =
         results[i]->matched_channels;
@@ -803,7 +773,7 @@ namespace ChannelSvcs
     url_channels_length = 0;
     url_keywords_channels_length = 0;
     uid_channels_length = 0;
-    for(size_t i = 0; i < results.size(); i++)
+    for (size_t i = 0; i < results.size(); i++)
     {
       const ChannelSvcs::ChannelServerBase::TriggerMatchResult& cur_value =
         results[i]->matched_channels;
@@ -846,8 +816,7 @@ namespace ChannelSvcs
   }
 
   template<class INDEX, typename ELEM >
-  ChannelServerSessionImpl::ResultsAdapter<INDEX, ELEM>::ResultsAdapter(
-    ResultsVector& results)
+  ChannelServerSessionImpl::ResultsAdapter<INDEX, ELEM>::ResultsAdapter(ResultsVector& results)
     /*throw(eh::Exception)*/
     : results_(results),
       sort_off_(results.size(), 0),
@@ -868,15 +837,14 @@ namespace ChannelSvcs
     /*throw(eh::Exception)*/
   {
     ListIndex::iterator li;
-    for(size_t i = 0; i < results_.size(); i++)
+    for (size_t i = 0; i < results_.size(); i++)
     {
       size_t length = index_.size(results_[i]);
-      if(length)
+      if (length)
       {
         all_length_ += length;
         li = sort_index_.begin();
-        while(li != sort_index_.end() &&
-              index_.id(*results_[i]) > index_.id(*results_[*li]))
+        while (li != sort_index_.end() && index_.id(*results_[i]) > index_.id(*results_[*li]))
         {
           ++li;
         }
@@ -890,7 +858,7 @@ namespace ChannelSvcs
   ChannelServerSessionImpl::ResultsAdapter<INDEX, ELEM>::elem() const
     /*throw(BadParameter)*/
   {
-    if(empty())
+    if (empty())
     {
       throw BadParameter("list is empty");
     }
@@ -904,26 +872,27 @@ namespace ChannelSvcs
   {
     ListIndex::iterator sli, tli, li = sort_index_.begin();
     sort_off_[*li]++;
-    if(sort_off_[*li] >= index_.size(results_[*li]))
+    if (sort_off_[*li] >= index_.size(results_[*li]))
     {
       sort_index_.erase(li);
       return;
     }
     sli = li;
     ++sli;
-    if(sli == sort_index_.end())
+    if (sli == sort_index_.end())
     {
       return;
     }
     unsigned long id = index_.id(results_[*li], sort_off_[*li]);
-    for(tli = sli; tli != sort_index_.end(); ++tli)
+    for (tli = sli; tli != sort_index_.end(); ++tli)
     {
-      if(id <= index_.id(results_[*tli], sort_off_[*tli]))
+      if (id <= index_.id(results_[*tli], sort_off_[*tli]))
       {
         break;
       }
     }
-    if(tli != sli)
+
+    if (tli != sli)
     {
       sort_index_.splice(tli, sort_index_, li);
     }
@@ -934,7 +903,7 @@ namespace ChannelSvcs
     ::AdServer::ChannelSvcs::ChannelServerBase::MatchResult* out)
     /*throw(eh::Exception)*/
   {
-    if(results.empty())
+    if (results.empty())
     {
       return;
     }
@@ -944,16 +913,16 @@ namespace ChannelSvcs
       ContentIndex,
       ChannelSvcs::ChannelServerBase::ContentChannelAtom> cont_adapter(results);
     out->content_channels.length(cont_adapter.size());
-    if(!out->content_channels.length())
+    if (!out->content_channels.length())
     {
       return;
     }
     //
     out->content_channels[0].id = cont_adapter.elem().id - 1;
-    while(!cont_adapter.empty())
+    while (!cont_adapter.empty())
     {
       CORBA::ULong id =  cont_adapter.elem().id;
-      if(id == out->content_channels[out_index].id)
+      if (id == out->content_channels[out_index].id)
       {
         out->content_channels[out_index].weight += cont_adapter.elem().weight;
       }
@@ -971,11 +940,10 @@ namespace ChannelSvcs
       Generics::ActiveObjectCallback::Severity severity,
       const char* description, const char* error_code) noexcept
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
-      ostr << "ChannelServerSessionImpl::report_error: : "
-           << description;
+      ostr << "ChannelServerSessionImpl::report_error: : " << description;
 
       callback_->report_error(severity, ostr.str(), error_code);
     }
@@ -988,25 +956,24 @@ namespace ChannelSvcs
   {
     timeout = period;
     all_bad_no_wait = true;
-    for(CORBA::ULong i = 0; i < groups.length(); i++)
+    for (CORBA::ULong i = 0; i < groups.length(); i++)
     {
       iors_list.push_back(RefAndNumber(i + 1));
     }
   }
 
-}// namespace ChannelSvcs
-}// namespace AdServer
+} // namespace AdServer::ChannelSvcs
+
 
 void ChannelServerSessionFactoryImpl::report_error(
     Generics::ActiveObjectCallback::Severity severity,
     const char* description,
     const char* error_code) noexcept
 {
-  if(callback_)
+  if (callback_)
   {
     Stream::Error ostr;
-    ostr << "ChannelServerSessionFactoryImpl::report_error: : "
-         << description;
+    ostr << "ChannelServerSessionFactoryImpl::report_error: : " << description;
 
     callback_->report_error(severity, ostr.str(), error_code);
   }

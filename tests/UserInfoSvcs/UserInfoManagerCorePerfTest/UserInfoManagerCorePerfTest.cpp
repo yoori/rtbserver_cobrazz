@@ -78,7 +78,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -90,22 +90,22 @@ namespace
     options.threads = *opt_threads;
     options.count = *opt_count;
 
-    if(options.cache_root.empty())
+    if (options.cache_root.empty())
     {
       throw std::runtime_error("--cache-root is required");
     }
 
-    if(options.chunk_count == 0)
+    if (options.chunk_count == 0)
     {
       throw std::runtime_error("--chunk-count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
@@ -117,7 +117,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -137,13 +137,11 @@ namespace
   }
 
   void
-  prepare_cache_root(
-    const std::filesystem::path& cache_root,
-    const std::size_t chunk_count)
+  prepare_cache_root(const std::filesystem::path& cache_root, const std::size_t chunk_count)
   {
     std::filesystem::create_directories(cache_root);
 
-    for(std::size_t i = 0; i < chunk_count; ++i)
+    for (std::size_t i = 0; i < chunk_count; ++i)
     {
       std::ostringstream name;
       name << "UserChunk_" << i;
@@ -161,15 +159,13 @@ namespace
   }
 
   std::filesystem::path
-  write_config(
-    const std::filesystem::path& cache_root,
-    const std::size_t chunk_count)
+  write_config(const std::filesystem::path& cache_root, const std::size_t chunk_count)
   {
     const auto config_path = cache_root / "UserInfoManagerCorePerfTest.xml";
     const auto log_path = cache_root / "UserInfoManagerCorePerfTest";
     const auto pid_path = cache_root / "UserInfoManagerCorePerfTest.pid";
     std::ofstream out(config_path);
-    if(!out)
+    if (!out)
     {
       throw std::runtime_error("can't create config file: " + config_path.string());
     }
@@ -206,8 +202,7 @@ namespace
       << "      <cfg:Ref ref=\"corbaloc:iiop:localhost:1/CampaignServer\"/>\n"
       << "    </cfg:CampaignServerCorbaRef>\n"
       << "    <cfg:FreqCaps confirm_timeout=\"1\"/>\n"
-      << "  </cfg:UserInfoManagerConfig>\n"
-      << "</cfg:AdConfiguration>\n";
+      << "  </cfg:UserInfoManagerConfig>\n" << "</cfg:AdConfiguration>\n";
 
     return config_path;
   }
@@ -221,7 +216,7 @@ namespace
     std::unique_ptr<AdConfigurationType> ad_configuration =
       AdConfiguration(config_path.c_str(), error_handler);
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       throw std::runtime_error(error_handler.text(error_string));
@@ -235,10 +230,10 @@ namespace
   {
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
 
-    while(std::chrono::steady_clock::now() < deadline)
+    while (std::chrono::steady_clock::now() < deadline)
     {
       auto accessor = core->user_info_container_->get_accessor();
-      if(accessor.get().in())
+      if (accessor.get().in())
       {
         return;
       }
@@ -260,7 +255,7 @@ namespace
       config.freq_cap_config = new AdServer::UserInfoSvcs::FreqCapConfig();
       config.freq_cap_config->confirm_timeout = Generics::Time(1);
 
-      for(unsigned long channel_id = 1; channel_id <= 1000; ++channel_id)
+      for (unsigned long channel_id = 1; channel_id <= 1000; ++channel_id)
       {
         AdServer::UserInfoSvcs::ChannelIntervalsPack_var intervals =
           new AdServer::UserInfoSvcs::ChannelIntervalsPack();
@@ -268,7 +263,7 @@ namespace
         intervals->zero_channel = true;
         intervals->weight = 1;
 
-        if(channel_id <= 100)
+        if (channel_id <= 100)
         {
           intervals->today_long_intervals.insert(
             AdServer::UserInfoSvcs::ChannelInterval(
@@ -292,10 +287,9 @@ namespace
   make_user_id(std::uint64_t index)
   {
     std::vector<unsigned char> bytes(AdServer::Commons::UserId::size());
-    for(std::size_t i = 0; i < sizeof(index); ++i)
+    for (std::size_t i = 0; i < sizeof(index); ++i)
     {
-      bytes[bytes.size() - 1 - i] =
-        static_cast<unsigned char>((index >> (i * 8)) & 0xff);
+      bytes[bytes.size() - 1 - i] = static_cast<unsigned char>((index >> (i * 8)) & 0xff);
     }
 
     return AdServer::Commons::UserId(bytes.begin(), bytes.end());
@@ -342,15 +336,15 @@ main(int argc, char** argv)
     std::vector<std::thread> workers;
     workers.reserve(options.threads);
 
-    for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
       workers.emplace_back(
         [&, thread_index]()
         {
-          while(true)
+          while (true)
           {
             const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
-            if(operation_index >= options.count)
+            if (operation_index >= options.count)
             {
               break;
             }
@@ -363,18 +357,17 @@ main(int argc, char** argv)
               user_info.request_colo_id = 1;
               user_info.current_colo_id = 1;
 
-              auto arena =
-                std::make_shared<Generics::MonoAllocatorArena>(8 * 1024);
+              auto arena = std::make_shared<Generics::MonoAllocatorArena>(8 * 1024);
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchParams match_params(arena);
               match_params.no_result = false;
               match_params.matched_channels.page_channels.reserve(100);
-              for(unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
+              for (unsigned long channel_id = 1; channel_id <= 100; ++channel_id)
               {
                 match_params.matched_channels.page_channels.push_back(channel_id);
               }
 
               AdServer::UserInfoSvcs::UserInfoManagerCore::MatchResult match_result(arena);
-              if(AdServer::Commons::sync_wait(
+              if (AdServer::Commons::sync_wait(
                 core->co_match(user_info, match_params, match_result)))
               {
                 matched.fetch_add(1, std::memory_order_relaxed);
@@ -382,12 +375,11 @@ main(int argc, char** argv)
             }
             catch(const std::exception& ex)
             {
-              if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+              if (errors.fetch_add(1, std::memory_order_relaxed) < 10)
               {
                 std::cerr
                   << "worker #" << thread_index
-                  << " operation #" << operation_index
-                  << " failed: " << ex.what() << std::endl;
+                  << " operation #" << operation_index << " failed: " << ex.what() << std::endl;
               }
             }
           }
@@ -395,7 +387,7 @@ main(int argc, char** argv)
       );
     }
 
-    for(auto& worker : workers)
+    for (auto& worker : workers)
     {
       worker.join();
     }

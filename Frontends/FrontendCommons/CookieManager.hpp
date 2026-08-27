@@ -34,8 +34,7 @@ namespace FrontendCommons
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
   public:
-    CookieManager(
-      const xsd::AdServer::Configuration::CookiesType& cookies_config)
+    CookieManager(const xsd::AdServer::Configuration::CookiesType& cookies_config)
       noexcept;
 
     void
@@ -123,9 +122,7 @@ namespace FrontendCommons
   class CookieManager<HttpRequestType, HttpResponseType>::CookieHeadersWriter
   {
   public:
-    CookieHeadersWriter(
-      HttpResponseType& response,
-      const ResponseHeaderMap& response_headers)
+    CookieHeadersWriter(HttpResponseType& response, const ResponseHeaderMap& response_headers)
       noexcept;
 
     ~CookieHeadersWriter() noexcept;
@@ -154,11 +151,11 @@ namespace FrontendCommons
   CookieManager<HttpRequestType, HttpResponseType>::
   CookieHeadersWriter::~CookieHeadersWriter() noexcept
   {
-    if(response_.cookie_installed() != old_cookie_installed_)
+    if (response_.cookie_installed() != old_cookie_installed_)
     {
       try
       {
-        for(ResponseHeaderMap::const_iterator it = response_headers_.begin();
+        for (ResponseHeaderMap::const_iterator it = response_headers_.begin();
           it != response_headers_.end(); ++it)
         {
           response_.add_header(it->first.text(), it->second);
@@ -177,8 +174,7 @@ namespace FrontendCommons
   {
     default_cookies_.domain = cookies_config.domain();
     default_cookies_.path = cookies_config.path();
-    default_cookies_.expires =
-      Generics::Time(cookies_config.expires());
+    default_cookies_.expires = Generics::Time(cookies_config.expires());
 
     for (xsd::AdServer::Configuration::CookiesType::
       ResponseHeader_sequence::const_iterator
@@ -188,7 +184,7 @@ namespace FrontendCommons
       response_headers_.insert(std::make_pair(it->name(), it->value()));
     }
 
-    for(xsd::AdServer::Configuration::CookiesType::Cookie_sequence::const_iterator
+    for (xsd::AdServer::Configuration::CookiesType::Cookie_sequence::const_iterator
           cookie_it = cookies_config.Cookie().begin();
         cookie_it != cookies_config.Cookie().end(); ++cookie_it)
     {
@@ -207,7 +203,7 @@ namespace FrontendCommons
         cookie_params);
     }
 
-    for(xsd::AdServer::Configuration::CookiesType::RemoveCookie_sequence::const_iterator
+    for (xsd::AdServer::Configuration::CookiesType::RemoveCookie_sequence::const_iterator
           cookie_it = cookies_config.RemoveCookie().begin();
         cookie_it != cookies_config.RemoveCookie().end(); ++cookie_it)
     {
@@ -232,13 +228,7 @@ namespace FrontendCommons
     const Generics::Time& expire) const
     /*throw(Exception)*/
   {
-    set(
-      response,
-      request,
-      FrontendCommons::Cookies::CLIENT_ID,
-      value,
-      expire,
-      false);
+    set(response, request, FrontendCommons::Cookies::CLIENT_ID, value, expire, false);
 
     /*
     set(
@@ -285,7 +275,7 @@ namespace FrontendCommons
 
       std::string header;
       HTTP::cookie_header_plain(cookie, header);
-      if(request.secure() && same_site_none)
+      if (request.secure() && same_site_none)
       {
         header += SAME_SITE_NONE;
       }
@@ -295,8 +285,7 @@ namespace FrontendCommons
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't set cookie value. Caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't set cookie value. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -328,11 +317,11 @@ namespace FrontendCommons
     {
       CookieHeadersWriter guard(response, response_headers_);
 
-      for(HTTP::CookieList::const_iterator it = input_cookies.begin();
+      for (HTTP::CookieList::const_iterator it = input_cookies.begin();
           it != input_cookies.end(); ++it)
       {
         CookieNameSet::const_iterator rm_it = names.find(it->name);
-        if(rm_it != names.end())
+        if (rm_it != names.end())
         {
           remove_(response, request, *rm_it);
         }
@@ -361,12 +350,11 @@ namespace FrontendCommons
       Generics::Time expired_time =
         Generics::Time::get_time_of_day() - Generics::Time::ONE_DAY * 365;
 
-      typename RemoveCookieMap::const_iterator rm_cookies_it =
-        remove_cookies_.find(name);
+      typename RemoveCookieMap::const_iterator rm_cookies_it = remove_cookies_.find(name);
 
-      if(rm_cookies_it != remove_cookies_.end())
+      if (rm_cookies_it != remove_cookies_.end())
       {
-        for(auto rem_it = rm_cookies_it->second.begin();
+        for (auto rem_it = rm_cookies_it->second.begin();
           rem_it != rm_cookies_it->second.end(); ++rem_it)
         {
           std::string res_domain;
@@ -388,8 +376,7 @@ namespace FrontendCommons
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't do clearing. Caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't do clearing. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -401,23 +388,23 @@ namespace FrontendCommons
     const CookiePath& cookie_params,
     std::string& res_domain) const
   {
-    if(cookie_params.domain.empty())
+    if (cookie_params.domain.empty())
     {
       res_domain = request.server_name().str();
     }
-    else if(cookie_params.domain == "2")
+    else if (cookie_params.domain == "2")
     {
       // find second level domain
       String::SubString server_name(request.server_name());
       String::SubString::SizeType pos = server_name.rfind('.');
-      if(pos == String::SubString::NPOS || pos == 0)
+      if (pos == String::SubString::NPOS || pos == 0)
       {
         res_domain = server_name.str();
       }
       else
       {
         pos = server_name.rfind('.', pos - 1);
-        if(pos == String::SubString::NPOS)
+        if (pos == String::SubString::NPOS)
         {
           res_domain = server_name.str();
         }

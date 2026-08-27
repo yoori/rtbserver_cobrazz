@@ -99,15 +99,11 @@ namespace AdServer::Grpc
             auto refs = resolve_partition(controller_client);
             if (refs)
             {
-              set_partition_weight_(
-                controller_client.partition_index,
-                refs->size());
+              set_partition_weight_(controller_client.partition_index, refs->size());
             }
             return refs;
           },
-          [this](
-            const std::string& key,
-            unsigned long partitions_number)
+          [this](const std::string& key, unsigned long partitions_number)
           {
             return partition_index_(key, partitions_number);
           },
@@ -128,8 +124,7 @@ namespace AdServer::Grpc
         partition_index < partition_weights_.size();
         ++partition_index)
       {
-        const auto weight =
-          std::max<std::size_t>(1, partition_weights_[partition_index]);
+        const auto weight = std::max<std::size_t>(1, partition_weights_[partition_index]);
         routing_table.insert(
           routing_table.end(),
           weight,
@@ -144,9 +139,7 @@ namespace AdServer::Grpc
       partition_routing_table_.swap(routing_table);
     }
 
-    void set_partition_weight_(
-      const std::size_t partition_index,
-      const std::size_t weight) noexcept
+    void set_partition_weight_(const std::size_t partition_index, const std::size_t weight) noexcept
     {
       const auto normalized_weight = std::max<std::size_t>(1, weight);
       {
@@ -173,9 +166,7 @@ namespace AdServer::Grpc
       rebuild_partition_routing_table_i_();
     }
 
-    unsigned long partition_index_(
-      const std::string& key,
-      unsigned long partitions_number) const
+    unsigned long partition_index_(const std::string& key, unsigned long partitions_number) const
     {
       if (!partitions_number)
       {

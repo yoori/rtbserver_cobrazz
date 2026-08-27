@@ -53,8 +53,8 @@ sub check
     return 1;
   }
 
-  return 
-   defined($value) && (reftype(\$value) eq "SCALAR")? 
+  return
+   defined($value) && (reftype(\$value) eq "SCALAR")?
      $code? $code->($value): 1: undef;
 }
 
@@ -96,7 +96,7 @@ sub check
   my ($self, $value) = @_;
 
   $self->SUPER::check(
-    $value, 
+    $value,
     sub { $_[0] =~ /^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/ } );
 }
 
@@ -132,7 +132,7 @@ sub new
   my $self = $class->SUPER::new(@_);
 
   $self->{is_name} = 1;
- 
+
   $self;
 }
 
@@ -160,7 +160,7 @@ sub new
 
   $self->{sequence} = $sequence;
   $self->{is_auto} = 1;
- 
+
   $self;
 }
 
@@ -184,12 +184,12 @@ sub __options
 sub new
 {
   my $class =  shift;
- 
+
   my $self = $class->SUPER::new(@_);
 
   $self->{sequence} = undef;
   $self->{is_auto} = 1;
- 
+
   $self;
 }
 
@@ -198,7 +198,7 @@ sub get
   my ($self, $ns, $entity, $name) = @_;
 
   my $table = $entity->_table;
-  
+
   $entity->dbh($ns)->selectrow_array(
     qq[SELECT coalesce(max($name)+1, 1) FROM $table])
 }
@@ -206,7 +206,7 @@ sub get
 1;
 
 # Postgres sequence
-# Solution for postgres sequence having 
+# Solution for postgres sequence having
 # 'INSERT RETURNING' issue
 package DB::Entity::Type::NextSequence;
 
@@ -223,12 +223,12 @@ sub __options
 sub new
 {
   my $class =  shift;
- 
+
   my $self = $class->SUPER::new(@_);
 
   $self->{sequence} = undef;
   $self->{is_auto} = 0;
- 
+
   $self;
 }
 
@@ -258,7 +258,7 @@ sub new
   my $entity = shift;
 
   my $self = $class->SUPER::new(@_);
-  
+
   $self->{__entity} = $entity;
 
   $self;
@@ -361,7 +361,7 @@ sub new
   my $self = $class->SUPER::new(@_);
 
   $self->{__enum} = $enum;
-  $self->{default} = $enum->[0] 
+  $self->{default} = $enum->[0]
     if !($self->{nullable} || $self->{private});
 
   $self;
@@ -381,7 +381,7 @@ sub check
   {
     return undef;
   }
-  
+
   if ( !($self->{nullable} || $self->{private}) )
   {
     my @check = grep { $_ eq $value } (@{ $self->{__enum} });
@@ -445,9 +445,9 @@ sub new
   my $entity = shift;
 
   my $self = $class->SUPER::new(@_);
-  
-  $self->{default} = 
-    sub { DB::Defaults::instance()->live_display_status($entity) } 
+
+  $self->{default} =
+    sub { DB::Defaults::instance()->live_display_status($entity) }
       if not defined $self->{default};
 
   $self;
@@ -469,10 +469,10 @@ sub new
 
   my $self = $class->SUPER::new(@_);
 
-  $self->{default} = 
-    sub {  DB::Defaults::instance()->country()->{country_code} } 
+  $self->{default} =
+    sub {  DB::Defaults::instance()->country()->{country_code} }
       if !($self->{nullable} || $self->{private} || defined $self->{default});
- 
+
   $self;
 }
 
@@ -481,7 +481,7 @@ sub check
   my ($self, $value) = @_;
 
   $self->SUPER::check(
-    $value, 
+    $value,
     sub { length($_[0]) == 2 && $_[0]eq uc($_[0]) })
 }
 
@@ -500,14 +500,14 @@ sub new
   my $class = shift;
   my $entity = shift;
   my $default = shift;
-  
+
   my $self = $class->SUPER::new(@_);
 
   $self->{default} = $entity->sql($default)
       if defined $default;
 
   $self->{is_auto} = 1 if not exists $self->{is_auto};
- 
+
   $self;
 }
 

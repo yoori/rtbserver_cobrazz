@@ -8,9 +8,7 @@ namespace Code
   class TypeDefElement: public Element
   {
   public:
-    TypeDefElement(
-      const char* type_name_val,
-      Declaration::BaseType* base_type_val)
+    TypeDefElement(const char* type_name_val, Declaration::BaseType* base_type_val)
       noexcept;
 
     const char* type_name() const noexcept;
@@ -31,9 +29,7 @@ namespace Code
 namespace Code
 {
   inline
-  TypeDefElement::TypeDefElement(
-    const char* type_name_val,
-    Declaration::BaseType* base_type_val)
+  TypeDefElement::TypeDefElement(const char* type_name_val, Declaration::BaseType* base_type_val)
     noexcept
     : type_name_(type_name_val),
       base_type_(ReferenceCounting::add_ref(base_type_val))

@@ -40,9 +40,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<StatAccountAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* id
-      )
+      void make_cmd (const char* address, const char* id)
       {
         address_ = address;
         AdminParams params;
@@ -52,45 +50,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "stat_account", address, params, static_cast<size_t>(CampaignServer));
       }
-      StatAccountAdmin(
-        const char* address,
-        const char* id
-      )
+      StatAccountAdmin(const char* address, const char* id)
       {
         make_cmd(address, id);
       }
-      StatAccountAdmin(
-        const std::string& address,
-        const char* id
-      )
+      StatAccountAdmin(const std::string& address, const char* id)
       {
         make_cmd(address.c_str(), id);
       }
-      StatAccountAdmin(
-        const char* address,
-        const std::string& id
-      )
+      StatAccountAdmin(const char* address, const std::string& id)
       {
         make_cmd(address, id.c_str());
       }
-      StatAccountAdmin(
-        const std::string& address,
-        const std::string& id
-      )
+      StatAccountAdmin(const std::string& address, const std::string& id)
       {
         make_cmd(address.c_str(), id.c_str());
       }
-      StatAccountAdmin(
-        const char* address,
-        unsigned long id
-      )
+      StatAccountAdmin(const char* address, unsigned long id)
       {
         make_cmd(address, strof(id).c_str());
       }
-      StatAccountAdmin(
-        const std::string& address,
-        unsigned long id
-      )
+      StatAccountAdmin(const std::string& address, unsigned long id)
       {
         make_cmd(address.c_str(), strof(id).c_str());
       }

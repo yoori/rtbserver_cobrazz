@@ -42,9 +42,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<SimpleChannelAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* id
-      )
+      void make_cmd (const char* address, const char* id)
       {
         address_ = address;
         AdminParams params;
@@ -54,45 +52,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "simple_channel", address, params, static_cast<size_t>(CampaignServer));
       }
-      SimpleChannelAdmin(
-        const char* address,
-        const char* id
-      )
+      SimpleChannelAdmin(const char* address, const char* id)
       {
         make_cmd(address, id);
       }
-      SimpleChannelAdmin(
-        const std::string& address,
-        const char* id
-      )
+      SimpleChannelAdmin(const std::string& address, const char* id)
       {
         make_cmd(address.c_str(), id);
       }
-      SimpleChannelAdmin(
-        const char* address,
-        const std::string& id
-      )
+      SimpleChannelAdmin(const char* address, const std::string& id)
       {
         make_cmd(address, id.c_str());
       }
-      SimpleChannelAdmin(
-        const std::string& address,
-        const std::string& id
-      )
+      SimpleChannelAdmin(const std::string& address, const std::string& id)
       {
         make_cmd(address.c_str(), id.c_str());
       }
-      SimpleChannelAdmin(
-        const char* address,
-        unsigned long id
-      )
+      SimpleChannelAdmin(const char* address, unsigned long id)
       {
         make_cmd(address, strof(id).c_str());
       }
-      SimpleChannelAdmin(
-        const std::string& address,
-        unsigned long id
-      )
+      SimpleChannelAdmin(const std::string& address, unsigned long id)
       {
         make_cmd(address.c_str(), strof(id).c_str());
       }

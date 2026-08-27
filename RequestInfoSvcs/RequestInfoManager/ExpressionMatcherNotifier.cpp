@@ -6,9 +6,7 @@ namespace Aspect
   const char EXPRESSION_MATCHER_NOTIFIER[] = "ExpressionMatcherNotifier";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   ExpressionMatcherNotifier::ExpressionMatcherNotifier(
     Logging::Logger* logger,
@@ -70,7 +68,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherNotifier::process_impression()";
 
-    if(!need_process_(ri, processing_state) || !notify_impressions_)
+    if (!need_process_(ri, processing_state) || !notify_impressions_)
     {
       return;
     }
@@ -84,9 +82,7 @@ namespace RequestInfoSvcs
       writer.time() = ri.time.tv_sec;
       writer.revenue() = ri.adv_revenue.sys_impression().str();
 
-      std::copy (
-        ri.channels.begin(), ri.channels.end(),
-        std::back_inserter(writer.channels()));
+      std::copy (ri.channels.begin(), ri.channels.end(), std::back_inserter(writer.channels()));
 
       Generics::SmartMemBuf_var op_mem_buf(new Generics::SmartMemBuf(writer.size()));
       writer.save(op_mem_buf->membuf().data(), op_mem_buf->membuf().size());
@@ -99,8 +95,7 @@ namespace RequestInfoSvcs
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_NOTIFIER,
-        "ADS-IMPL-3023") << FUN <<
-        ": Exception caught: " << ex.what();
+        "ADS-IMPL-3023") << FUN << ": Exception caught: " << ex.what();
     }
   }
 
@@ -112,7 +107,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherNotifier::process_click()";
 
-    if(!need_process_(ri, processing_state) || !notify_revenue_)
+    if (!need_process_(ri, processing_state) || !notify_revenue_)
     {
       return;
     }
@@ -137,8 +132,7 @@ namespace RequestInfoSvcs
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_NOTIFIER,
-        "ADS-IMPL-3023") << FUN <<
-        ": Exception caught: " << ex.what();
+        "ADS-IMPL-3023") << FUN << ": Exception caught: " << ex.what();
     }
   }
 
@@ -148,7 +142,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherNotifier::process_action()";
 
-    if(!need_process_(ri, ProcessingState(RequestInfo::RS_NORMAL)) || !notify_revenue_)
+    if (!need_process_(ri, ProcessingState(RequestInfo::RS_NORMAL)) || !notify_revenue_)
     {
       return;
     }
@@ -172,8 +166,7 @@ namespace RequestInfoSvcs
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_NOTIFIER,
-        "ADS-IMPL-3023") << FUN <<
-        ": Exception caught: " << ex.what();
+        "ADS-IMPL-3023") << FUN << ": Exception caught: " << ex.what();
     }
   }
 
@@ -183,8 +176,6 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state) noexcept
   {
     // currently we increment user cost by test requests (ri.test_request)
-    return !ri.user_id.is_null() &&
-      processing_state.state == RequestInfo::RS_NORMAL;
+    return !ri.user_id.is_null() && processing_state.state == RequestInfo::RS_NORMAL;
   }
-}
 }

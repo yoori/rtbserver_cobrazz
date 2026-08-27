@@ -32,17 +32,13 @@ namespace
     using EndpointChunksArray = AdServer::Grpc::DistributedPartitionPool<
       class TestRef>::EndpointChunksArray;
 
-    void set_partition(
-      std::string controller_url,
-      EndpointChunksArray refs)
+    void set_partition(std::string controller_url, EndpointChunksArray refs)
     {
       std::lock_guard<std::mutex> lock(lock_);
       partitions_[std::move(controller_url)] = std::move(refs);
     }
 
-    std::shared_ptr<TestObj> add_object(
-      const std::string& endpoint,
-      const int id)
+    std::shared_ptr<TestObj> add_object(const std::string& endpoint, const int id)
     {
       auto object = std::make_shared<TestObj>(id);
       std::lock_guard<std::mutex> lock(lock_);
@@ -123,9 +119,7 @@ namespace
   using Pool = AdServer::Grpc::DistributedPartitionPool<TestRef>;
 
   Pool::EndpointChunks
-  endpoint_chunks(
-    std::string endpoint,
-    std::vector<unsigned long> chunks)
+  endpoint_chunks(std::string endpoint, std::vector<unsigned long> chunks)
   {
     Pool::EndpointChunks result;
     result.endpoint = std::move(endpoint);
@@ -195,10 +189,7 @@ namespace
   void test_resolve_is_not_more_frequent_than_period()
   {
     auto controller = make_controller();
-    auto pool = make_pool(
-      controller,
-      Generics::Time(0, 50 * 1000),
-      Generics::Time(0, 250 * 1000));
+    auto pool = make_pool(controller, Generics::Time(0, 50 * 1000), Generics::Time(0, 250 * 1000));
     pool->activate_object();
 
     assert(controller->resolve_count("controller-0") == 1);
@@ -248,10 +239,7 @@ namespace
     auto primary = controller->object("ref-0");
     assert(primary);
 
-    auto pool = make_pool(
-      controller,
-      Generics::Time(0, 50 * 1000),
-      Generics::Time(0, 500 * 1000));
+    auto pool = make_pool(controller, Generics::Time(0, 50 * 1000), Generics::Time(0, 500 * 1000));
     pool->activate_object();
 
     primary->enabled = false;
@@ -260,8 +248,7 @@ namespace
       assert(ref.has_value());
       assert(ref_id(*ref) == 0);
       assert(!ref_enabled(*ref));
-      ref->mark_as_bad(
-        Generics::Time::get_time_of_day() + Generics::Time(0, 50 * 1000));
+      ref->mark_as_bad(Generics::Time::get_time_of_day() + Generics::Time(0, 50 * 1000));
     }
 
     {

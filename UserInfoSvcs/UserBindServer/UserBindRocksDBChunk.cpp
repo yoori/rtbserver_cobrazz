@@ -62,12 +62,12 @@ namespace AdServer::UserInfoSvcs
 
   UserBindRocksDBChunk::~UserBindRocksDBChunk() noexcept
   {
-    if(user_bind_map_)
+    if (user_bind_map_)
     {
       user_bind_map_->deactivate_object();
     }
 
-    if(user_bind_map_)
+    if (user_bind_map_)
     {
       user_bind_map_->wait_object();
     }
@@ -127,21 +127,16 @@ namespace AdServer::UserInfoSvcs
           bound_record->first_seen_time = use_create_time;
           changed = true;
         }
-        else if (
-          create_time != Generics::Time::ZERO &&
-          create_time < bound_record->first_seen_time)
+        else if (create_time != Generics::Time::ZERO && create_time < bound_record->first_seen_time)
         {
           bound_record->first_seen_time = create_time;
           changed = true;
         }
 
         UserInfo result = adapt_unbound_record_(*bound_record, false, now);
-        if (
-          generate_user_id &&
-          result.min_age_reached)
+        if (generate_user_id && result.min_age_reached)
         {
-          const Commons::UserId new_user_id =
-            Commons::UserId::create_random_based();
+          const Commons::UserId new_user_id = Commons::UserId::create_random_based();
           result = co_await co_add_user_id_i_(
             external_id,
             new_user_id,
@@ -206,8 +201,7 @@ namespace AdServer::UserInfoSvcs
       result.user_found = false;
       if (generate_user_id && !silent)
       {
-        const Commons::UserId new_user_id =
-          Commons::UserId::create_random_based();
+        const Commons::UserId new_user_id = Commons::UserId::create_random_based();
         result = co_await co_add_user_id_i_(
           external_id,
           new_user_id,
@@ -241,8 +235,7 @@ namespace AdServer::UserInfoSvcs
     UserInfo result = adapt_unbound_record_(bound_record, true, now);
     if (generate_user_id && result.min_age_reached)
     {
-      const Commons::UserId new_user_id =
-        Commons::UserId::create_random_based();
+      const Commons::UserId new_user_id = Commons::UserId::create_random_based();
       result = co_await co_add_user_id_i_(
         external_id,
         new_user_id,
@@ -286,21 +279,11 @@ namespace AdServer::UserInfoSvcs
     }
 
     const bool found_bound_user = found_record && !record.user_id.is_null();
-    UserInfo result = adapt_bound_record_(
-      record,
-      false,
-      found_bound_user,
-      false);
+    UserInfo result = adapt_bound_record_(record, false, found_bound_user, false);
 
     if (resave_if_exists || !result.user_found)
     {
-      save_user_id_(
-        record,
-        result,
-        user_id,
-        ignore_bad_event,
-        set_cookie_flag,
-        now);
+      save_user_id_(record, result, user_id, ignore_bad_event, set_cookie_flag, now);
       co_await co_save_bound_record_(external_id, record, now);
     }
 
@@ -381,15 +364,14 @@ namespace AdServer::UserInfoSvcs
 
   AdServer::Commons::StartableAwaitable<
     std::optional<UserBindRocksDBChunk::BoundRecord>>
-  UserBindRocksDBChunk::co_load_bound_record_(
-    const String::SubString& external_id)
+  UserBindRocksDBChunk::co_load_bound_record_(const String::SubString& external_id)
   {
     const std::string key = external_id.str();
 
     const auto bound_profile = co_await user_bind_map_->co_get_profile(key);
 
     BoundRecord record;
-    if(bound_profile.in() && deserialize_bound_(record, bound_profile.in()))
+    if (bound_profile.in() && deserialize_bound_(record, bound_profile.in()))
     {
       co_return record;
     }
@@ -493,8 +475,7 @@ namespace AdServer::UserInfoSvcs
     BoundRecord& record,
     const Generics::Time& now) const noexcept
   {
-    const unsigned long cur_day =
-      Algs::round_to_day(now).tv_sec / Generics::Time::ONE_DAY.tv_sec;
+    const unsigned long cur_day = Algs::round_to_day(now).tv_sec / Generics::Time::ONE_DAY.tv_sec;
 
     if (cur_day != record.last_bad_event_day)
     {

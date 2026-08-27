@@ -15,13 +15,13 @@ sub create_text_tgt_test_tuple
    my $keyword = make_autotest_name($ns, "keyword_". $index);
    $ns->output("Keyword_". $index, $keyword);
 
-   my $display_campaign = $ns->create(DisplayCampaign => { 
+   my $display_campaign = $ns->create(DisplayCampaign => {
      name => "Display-" . $index,
      campaigncreativegroup_cpm => $params->{cpm},
      campaigncreativegroup_cpc => $params->{cpc},
      campaigncreativegroup_cpa => $params->{cpa},
      behavioralchannel_keyword_list => $keyword,
-     campaigncreativegroup_flags => 
+     campaigncreativegroup_flags =>
          DB::Campaign::INCLUDE_SPECIFIC_SITES,
      creative_size_id => $params->{size_id},
      creative_template_id =>  DB::Defaults::instance()->text_template,
@@ -29,13 +29,13 @@ sub create_text_tgt_test_tuple
 
    $ns->create(
      DB::BehavioralChannel::BehavioralParameter->blank(
-       channel_id => $display_campaign->{channel_id},  
+       channel_id => $display_campaign->{channel_id},
        trigger_type => "P" ));
 
    my $text_idx = 0;
    foreach my $cpc_bid (@{$params->{cpc_bids}}) {
-     my $text_campaign = 
-         $ns->create(TextAdvertisingCampaign => { 
+     my $text_campaign =
+         $ns->create(TextAdvertisingCampaign => {
            name => "TA-".$index . "-" . ++$text_idx,
         size_id => $params->{size_id},
         template_id =>  DB::Defaults::instance()->text_template,
@@ -44,10 +44,10 @@ sub create_text_tgt_test_tuple
         site_links => [
           {site_id => $params->{site_id} }] });
      $ns->output(
-       "TEXTCC".$index . "_" . $text_idx, 
+       "TEXTCC".$index . "_" . $text_idx,
        $text_campaign->{cc_id});
    }
-   
+
    $ns->output("KEYWORD_" . $index,  $keyword);
    $ns->output("DISPLAYCC_" . $index, $display_campaign->{cc_id});
 }
@@ -58,13 +58,13 @@ sub create_channel_tgt_test_tuple
    my $keyword = make_autotest_name($ns, "keyword_". $index);
    $ns->output("Keyword_". $index, $keyword);
 
-   my $display_campaign = $ns->create(DisplayCampaign => { 
+   my $display_campaign = $ns->create(DisplayCampaign => {
      name => "Display-" . $index,
      campaigncreativegroup_cpm => $params->{cpm},
      campaigncreativegroup_cpc => $params->{cpc},
      campaigncreativegroup_cpa => $params->{cpa},
      behavioralchannel_keyword_list => $keyword,
-     campaigncreativegroup_flags => 
+     campaigncreativegroup_flags =>
          DB::Campaign::INCLUDE_SPECIFIC_SITES,
      creative_size_id => $params->{size_id},
      creative_template_id =>  DB::Defaults::instance()->text_template,
@@ -72,13 +72,13 @@ sub create_channel_tgt_test_tuple
 
    $ns->create(
      DB::BehavioralChannel::BehavioralParameter->blank(
-       channel_id => $display_campaign->{channel_id},  
+       channel_id => $display_campaign->{channel_id},
        trigger_type => "P" ));
 
    my $text_idx = 0;
    foreach my $cpm (@{$params->{cpms}}) {
-     my $text_campaign = 
-         $ns->create(ChannelTargetedTACampaign => { 
+     my $text_campaign =
+         $ns->create(ChannelTargetedTACampaign => {
            name => "ChannelTargeted-".$index . "-" . ++$text_idx,
         size_id => $params->{size_id},
         template_id =>  DB::Defaults::instance()->text_template,
@@ -87,10 +87,10 @@ sub create_channel_tgt_test_tuple
         site_links => [
           {site_id => $params->{site_id} }] });
      $ns->output(
-       "CHANNELTGTCC".$index . "_" . $text_idx, 
+       "CHANNELTGTCC".$index . "_" . $text_idx,
        $text_campaign->{cc_id});
    }
-    
+
    $ns->output("KEYWORD_" . $index,  $keyword);
    $ns->output("DISPLAYCC_" . $index, $display_campaign->{cc_id});
 }
@@ -100,7 +100,7 @@ sub init
 {
     my ($self, $ns) = @_;
 
-    my $size = $ns->create(CreativeSize => { 
+    my $size = $ns->create(CreativeSize => {
       name => "Size",
       max_text_creatives => 3 });
 
@@ -117,45 +117,45 @@ sub init
     pricedtag_cpm => $tag_cpm });
 
     $self->create_text_tgt_test_tuple(
-      $ns, 1, 
+      $ns, 1,
       { cpm => $display_cpm,
         size_id =>  $size,
         site_id => $publisher->{site_id},
-        cpc_bids => 
+        cpc_bids =>
           [money_upscale(0.001 * $tag_cpm, 3),
            money_upscale(0.0014 * $tag_cpm, 3)] });
 
     $self->create_text_tgt_test_tuple(
-      $ns, 2, 
+      $ns, 2,
       { cpm => $display_cpm,
         size_id =>  $size,
         site_id => $publisher->{site_id},
-        cpc_bids => 
+        cpc_bids =>
           [money_upscale(16 * $tag_cpm, 3),
            money_upscale(0.0017 * $tag_cpm, 3)] });
 
     $self->create_channel_tgt_test_tuple(
-      $ns, 3, 
+      $ns, 3,
       { cpm => 10,
         size_id =>  $size,
         site_id => $publisher->{site_id},
         cpms => [10] });
 
     $self->create_channel_tgt_test_tuple(
-      $ns, 4, 
+      $ns, 4,
       { cpm => 24,
         size_id =>  $size,
         site_id => $publisher->{site_id},
         cpms => [10, 9, 8, 7] });
 
     $self->create_channel_tgt_test_tuple(
-      $ns, 5, 
+      $ns, 5,
       { cpm => 30,
         size_id =>  $size,
         site_id => $publisher->{site_id},
         cpms => [10, 9, 8, 7] });
 
-  # Expected click & impressions revenue   
+  # Expected click & impressions revenue
   # Case3. Text(C) CCG ecpm = Display CCG ecpm.
   $self->expected_revenue_output(
     $ns, 3,
@@ -175,7 +175,7 @@ sub init
     [0.03]);
 
 
-   $ns->output("TAG", $publisher->{tag_id});  
+   $ns->output("TAG", $publisher->{tag_id});
 }
 
 1;

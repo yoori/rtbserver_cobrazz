@@ -117,7 +117,7 @@
     </xsl:for-each>
   </xsl:variable>
 
-  <xsl:variable name="secure-virtual-servers" 
+  <xsl:variable name="secure-virtual-servers"
      select="exsl:node-set($secure-virtual-servers-raw)/cfg:secureVirtualServer"/>
 
   <xsl:variable name="ps-res-data-root" select="concat($data-root, '/PageSense')"/>
@@ -312,7 +312,7 @@ http {
          gzip_types text/plain text/xml application/x-javascript;
          expires +4h;
          etag on;
-         try_files $uri $uri; 
+         try_files $uri $uri;
          location /log/ {
            rewrite /log/([^/]+)/([^?]+) /log/$2 last;
          }
@@ -337,13 +337,13 @@ http {
         <xsl:value-of select="$cors"/>
       }
 
-      # Templates   
+      # Templates
       location /templates/ {
         alias  <xsl:value-of select="$data-root"/>/Templates/;
         <xsl:value-of select="$cors"/>
       }
 
-      location /publ/ {     
+      location /publ/ {
          alias <xsl:value-of select="$data-root"/>/Publ/;
          <xsl:value-of select="$cors"/>
       }
@@ -353,7 +353,7 @@ http {
     <xsl:for-each select="$virtual-servers">
       <xsl:variable name="port"><xsl:value-of select="@internal_port"/><xsl:if
         test="count(@internal_port) = 0"><xsl:value-of select="$def-frontend-port"/></xsl:if></xsl:variable>
- 
+
       <xsl:variable name="max-keep-alive-requests"><xsl:choose><xsl:when test="count(@keep_alive)= 0 or @keep_alive = '1'
         or @keep_alive = 'true'"><xsl:value-of select="@max_keep_alive_requests"/><xsl:if
         test="count(@max_keep_alive_requests) = 0">100</xsl:if></xsl:when><xsl:otherwise>0</xsl:otherwise></xsl:choose></xsl:variable>
@@ -417,7 +417,7 @@ http {
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when test="@proxy_protocol=
           'true' or @proxy_protocol = '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
           >$remote_addr;</xsl:otherwise></xsl:choose>
-        include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;        
+        include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
 
       <xsl:value-of select="$locations"/>
@@ -430,7 +430,7 @@ http {
          expires +4h;
          etag on;
          <xsl:value-of select="$cors"/>
-      }     
+      }
 
       location /tag/ {
          alias <xsl:value-of select="$ps-res-data-root"/>/http/tag/;
@@ -524,16 +524,16 @@ http {
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
-        test="@proxy_protocol=                                                                                              
+        test="@proxy_protocol=
           'true' or @proxy_protocol =
           '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
-          >$remote_addr;</xsl:otherwise></xsl:choose>                                                                                                                       
+          >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of
-          select="$config-root"/>/conf/fastcgi_params;                                                                                                  
+          select="$config-root"/>/conf/fastcgi_params;
 
-        proxy_connect_timeout 40ms;                                                                                                                                         
-        proxy_send_timeout 50ms;                                                                                                                                            
-        proxy_read_timeout 140ms;                                                                                                                                           
+        proxy_connect_timeout 40ms;
+        proxy_send_timeout 50ms;
+        proxy_read_timeout 140ms;
         send_timeout 50ms;
 
         error_page 400 404 405 408 500 502 503 504 = @return_204;
@@ -549,7 +549,7 @@ http {
           >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
       }
-     
+
       error_page   500 502 503 504  /50x.html;
       location = /50x.html {
         root   /usr/share/nginx/html;
@@ -561,7 +561,7 @@ http {
 
     <xsl:variable name="port"><xsl:value-of select="@internal_port"/><xsl:if
       test="count(@internal_port) = 0"><xsl:value-of select="$def-secure-frontend-port"/></xsl:if></xsl:variable>
- 
+
     <xsl:variable name="max-keep-alive-requests"><xsl:choose><xsl:when test="count(@keep_alive)= 0 or @keep_alive = '1'
         or @keep_alive = 'true'"><xsl:value-of select="@max_keep_alive_requests"/><xsl:if
         test="count(@max_keep_alive_requests) = 0">100</xsl:if></xsl:when><xsl:otherwise>0</xsl:otherwise></xsl:choose></xsl:variable>
@@ -647,7 +647,7 @@ http {
          expires +4h;
          etag on;
          <xsl:value-of select="$cors"/>
-      }     
+      }
 
       location /tag/ {
          alias <xsl:value-of select="$ps-res-data-root"/>/https/tag/;
@@ -716,7 +716,7 @@ http {
           'true' or @proxy_protocol = '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
           >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of select="$config-root"/>/conf/fastcgi_params;
-      }      
+      }
       location ~ ^/(services/ActionServer/|action/) {
         fastcgi_pass fastcgi_actionbackend;
         fastcgi_keep_conn on;
@@ -742,16 +742,16 @@ http {
         fastcgi_keep_conn on;
 
         fastcgi_param REMOTE_ADDR <xsl:choose><xsl:when
-        test="@proxy_protocol=                                                                                              
+        test="@proxy_protocol=
           'true' or @proxy_protocol =
           '1'">$proxy_protocol_addr;</xsl:when><xsl:otherwise
-          >$remote_addr;</xsl:otherwise></xsl:choose>                                                                                                                       
+          >$remote_addr;</xsl:otherwise></xsl:choose>
         include <xsl:value-of
-          select="$config-root"/>/conf/fastcgi_params;                                                                                                  
+          select="$config-root"/>/conf/fastcgi_params;
 
-        proxy_connect_timeout 40ms;                                                                                                                                         
-        proxy_send_timeout 50ms;                                                                                                                                            
-        proxy_read_timeout 140ms;                                                                                                                                           
+        proxy_connect_timeout 40ms;
+        proxy_send_timeout 50ms;
+        proxy_read_timeout 140ms;
         send_timeout 50ms;
 
         error_page 400 404 405 408 500 502 503 504 = @return_204;

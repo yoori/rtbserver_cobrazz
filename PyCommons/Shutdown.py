@@ -93,7 +93,7 @@ class Sleeper:
     finally:
       shutdown.unregCondition(self.cond)
 
-    
+
 # global shutdown flag
 shutdown = Shutdown()
 sleeper = Sleeper()

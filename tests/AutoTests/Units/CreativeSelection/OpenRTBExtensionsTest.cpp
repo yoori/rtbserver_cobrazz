@@ -1,9 +1,7 @@
 
 #include "OpenRTBExtensionsTest.hpp"
 
-REFLECT_UNIT(OpenRTBExtensionsTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW );
+REFLECT_UNIT(OpenRTBExtensionsTest) ("CreativeSelection", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -99,9 +97,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::OPENX_REQUESTS[]
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTP_URL#3",
-    RequestParams({
-      {&RTBRequest::ssl_enabled, "false"},
-      {&RTBRequest::secure, "1"}}),
+    RequestParams({ {&RTBRequest::ssl_enabled, "false"}, {&RTBRequest::secure, "1"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) }
 };
 
@@ -145,8 +141,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::VAST_REQUESTS[] 
     nullptr, ExpectedValues() },
   //Test 1.7
   { "Vast/ACCOUNT", "body", nullptr, "Vast/URL#1",
-    RequestParams( { {&RTBRequest::minduration, "16"},
-                     {&RTBRequest::maxduration, "29"} } ),
+    RequestParams({ {&RTBRequest::minduration, "16"}, {&RTBRequest::maxduration, "29"} }),
     nullptr, ExpectedValues() },
   //Test 1.8
   { "Vast/ACCOUNT", "body", nullptr, "Vast/URL#1",
@@ -385,13 +380,11 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::ALLYES_REQUESTS[
 
   { "Allyes/ACCOUNT", "body-openrtb-notice", "728x90", "Allyes/URL", RequestParams(),
     "Allyes/CREATIVEIDS/default",
-    ExpectedValues({
-      {&Expected::nurl, ALLYES_NURL, 0}}) },
+    ExpectedValues({ {&Expected::nurl, ALLYES_NURL, 0}}) },
 
   { "Allyes/ACCOUNT", "iframe-url-adriver", "728x90", "Allyes/URL", RequestParams(),
     "Allyes/CREATIVEIDS/default",
-    ExpectedValues({
-      {&Expected::nurl, ALLYES_NURL, 0}}) }
+    ExpectedValues({ {&Expected::nurl, ALLYES_NURL, 0}}) }
 };
 
 template<size_t COUNT>
@@ -403,9 +396,7 @@ OpenRTBExtensionsTest::process_requests_(
   {
     AdClient client(AdClient::create_user(this));
 
-    client.process_request(UserBindRequest().
-      ssp_user_id(client.get_uid()).
-      src(requests[i].src));
+    client.process_request(UserBindRequest(). ssp_user_id(client.get_uid()). src(requests[i].src));
 
     RTBRequest request(AutoTest::OpenRtb::RF_SET_DEFS | (send_banner ? AutoTest::OpenRtb::RF_SEND_BANNER : 0));
     request.
@@ -442,8 +433,7 @@ OpenRTBExtensionsTest::process_requests_(
 
       for (auto it = requests[i].expected_values.begin(); it != requests[i].expected_values.end(); ++it)
       {
-        it->setter(expected,
-          it->need_fetch ? fetch_string(it->value) : std::string(it->value));
+        it->setter(expected, it->need_fetch ? fetch_string(it->value) : std::string(it->value));
       }
 
       NOSTOP_FAIL_CONTEXT(
@@ -464,9 +454,7 @@ void OpenRTBExtensionsTest::process_multislotcase_requests_(const OpenRTBExtensi
   {
     AdClient client(AdClient::create_user(this));
 
-    client.process_request(UserBindRequest().
-        ssp_user_id(client.get_uid()).
-        src(requests[i].src));
+    client.process_request(UserBindRequest(). ssp_user_id(client.get_uid()). src(requests[i].src));
 
     RTBRequest request(AutoTest::OpenRtb::RF_SET_DEFS);
     request.

@@ -33,9 +33,9 @@ use constant DISPLAY_STATUS_NOT_ENOUGH_USERS =>
 sub country
 {
   # GUINEA - is a default country
-  $_[0]->{__default_country} ||= 
+  $_[0]->{__default_country} ||=
      $_[0]->{namespace}->create(
-       Country => { 
+       Country => {
          country_code => 'GN',
          currency_id => $_[0]->currency,
          low_channel_threshold => 0,
@@ -50,9 +50,9 @@ sub ip_address
 
 sub test_country_1
 {
-  # LUXEMBOURG 
-  $_[0]->{__test_country_1} ||= 
-    $_[0]->{namespace}->create(Country => { 
+  # LUXEMBOURG
+  $_[0]->{__test_country_1} ||=
+    $_[0]->{namespace}->create(Country => {
       country_code => "LU",
       low_channel_threshold => 0,
       high_channel_threshold => 0 })
@@ -60,9 +60,9 @@ sub test_country_1
 
 sub test_country_2
 {
-  # UGANDA 
-  $_[0]->{__test_country_2} ||= 
-    $_[0]->{namespace}->create(Country => { 
+  # UGANDA
+  $_[0]->{__test_country_2} ||=
+    $_[0]->{namespace}->create(Country => {
       country_code => "UG",
       low_channel_threshold => 0,
       high_channel_threshold => 0 })
@@ -75,7 +75,7 @@ sub cpm
 
 sub advertiser_role
 {
-  $_[0]->{__advertiser_role} ||= 
+  $_[0]->{__advertiser_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'Advertiser' })
 }
@@ -83,7 +83,7 @@ sub advertiser_role
 sub advertiser_type
 {
   my $self = shift;
-  $self->{__advertiser_type} ||= 
+  $self->{__advertiser_type} ||=
     $self->{namespace}->create(AccountType => {
       name => 'Advertiser',
       account_role_id => $self->advertiser_role,
@@ -92,7 +92,7 @@ sub advertiser_type
 
 sub publisher_role
 {
-  $_[0]->{__publisher_role} ||= 
+  $_[0]->{__publisher_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'Publisher' })
 }
@@ -100,7 +100,7 @@ sub publisher_role
 sub publisher_type
 {
   my $self = shift;
-  $self->{__publisher_type} ||= 
+  $self->{__publisher_type} ||=
     $self->{namespace}->create(AccountType => {
       name => 'Publisher',
       account_role_id => $self->publisher_role,
@@ -109,7 +109,7 @@ sub publisher_type
 
 sub isp_role
 {
-  $_[0]->{__isp_role} ||= 
+  $_[0]->{__isp_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'ISP' })
 }
@@ -117,7 +117,7 @@ sub isp_role
 sub isp_type
 {
   my $self = shift;
-  $self->{__isp_type} ||= 
+  $self->{__isp_type} ||=
     $self->{namespace}->create(AccountType => {
       name => 'ISP',
       account_role_id => $self->isp_role,
@@ -126,7 +126,7 @@ sub isp_type
 
 sub cmp_role
 {
-  $_[0]->{__cmp_role} ||= 
+  $_[0]->{__cmp_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'CMP' })
 }
@@ -134,7 +134,7 @@ sub cmp_role
 sub cmp_type
 {
   my $self = shift;
-  $self->{__cmp_type} ||= 
+  $self->{__cmp_type} ||=
     $self->{namespace}->create(AccountType => {
       name => 'CMP',
       account_role_id => $self->cmp_role,
@@ -143,7 +143,7 @@ sub cmp_type
 
 sub agency_role
 {
-  $_[0]->{__agency_role} ||= 
+  $_[0]->{__agency_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'Agency' })
 }
@@ -151,7 +151,7 @@ sub agency_role
 sub agency_type
 {
   my $self = shift;
-  $self->{__agency_type} ||= 
+  $self->{__agency_type} ||=
     $self->{namespace}->create(AccountType => {
       name => 'Agency',
       account_role_id => $self->agency_role,
@@ -163,13 +163,13 @@ sub agency_gross
   my $self = shift;
   if ( not defined $self->{__agency_gross})
   {
-    my $acc_type = 
+    my $acc_type =
         $self->{namespace}->create(AccountType => {
           name => 'AgencyGross',
           account_role_id => $self->agency_role,
           flags => DB::AccountType::GROSS });
 
-    $self->{__agency_gross} = 
+    $self->{__agency_gross} =
         $self->{namespace}->create(Account => {
           name => 'DefaultAgencyGross',
           role_id => DB::Defaults::instance()->advertiser_role,
@@ -180,7 +180,7 @@ sub agency_gross
 
 sub internal_role
 {
-  $_[0]->{__internal_role} ||= 
+  $_[0]->{__internal_role} ||=
     $_[0]->{namespace}->create(
        AccountRole => { name => 'Internal' })
 }
@@ -188,7 +188,7 @@ sub internal_role
 sub internal_type
 {
   my $self = shift;
-  $self->{__internal_type} ||= 
+  $self->{__internal_type} ||=
     $self->{namespace}->create(
       AccountType => {
         name => 'Internal',
@@ -209,8 +209,8 @@ sub text_template
 {
   my $self = shift;
   local *get_ta_template = sub {
-    
-  my $stmt = $self->{namespace}->pq_dbh->prepare(q{ 
+
+  my $stmt = $self->{namespace}->pq_dbh->prepare(q{
       SELECT TEMPLATE_ID from TEMPLATE WHERE NAME='Text' });
 
     $stmt->execute;
@@ -222,25 +222,25 @@ sub text_template
   $self->{__default_text_template} ||= get_ta_template()
 }
 
-sub tag 
+sub tag
 {
   my $self = shift;
   local *create_default_tag = sub {
 
-    my $size = 
-      $self->{namespace}->create(CreativeSize => { 
+    my $size =
+      $self->{namespace}->create(CreativeSize => {
         name => "popup",
         width => 1,
         height => 1});
 
     my $publisher =
-      $self->{namespace}->create(Publisher => { 
+      $self->{namespace}->create(Publisher => {
         name => "DefaultTag",
         pricedtag_size_id => $size,
         pricedtag_passback => 'http://www.unittest.com' });
-    
-    my $advertiser = 
-      $self->{namespace}->create(Advertiser => { 
+
+    my $advertiser =
+      $self->{namespace}->create(Advertiser => {
         name => "DefaultTag-Adv" });
 
     my $channel = $self->{namespace}->create(
@@ -252,7 +252,7 @@ sub tag
          DB::BehavioralChannel::BehavioralParameter->blank(
            trigger_type => 'U')]));
 
-    $self->{namespace}->create(DisplayCampaign => { 
+    $self->{namespace}->create(DisplayCampaign => {
       name => "DefaultTag",
       account_id => $advertiser,
       size_id => $size,
@@ -263,7 +263,7 @@ sub tag
         DB::Campaign::INCLUDE_SPECIFIC_SITES |
           DB::Campaign::EXCLUDE_CLICK_URL,
       site_links => [ { site_id => $publisher->{site_id} } ]});
-   
+
     $publisher->{tag_id}
   };
   $self->{__default_tag} ||= create_default_tag()
@@ -286,13 +286,13 @@ sub isp
     }
     else
     {
-      $isp->{account_id} = 
-        $self->{namespace}->create(Account => { 
+      $isp->{account_id} =
+        $self->{namespace}->create(Account => {
           name => "Default-Colo-Account-$colo_id",
           role_id => $self->isp_role });
 
-      $isp->{colo_id} = 
-         $self->{namespace}->create(Colocation => { 
+      $isp->{colo_id} =
+         $self->{namespace}->create(Colocation => {
            name => "Default-$colo_id",
            colo_id => $colo_id,
            account_id => $isp->{account_id},
@@ -311,8 +311,8 @@ sub isp
 sub internal_account
 {
   my $self = shift;
-  $self->{__internal_account} ||= 
-    $self->{namespace}->create(Account => { 
+  $self->{__internal_account} ||=
+    $self->{namespace}->create(Account => {
       name => "Internal",
       legal_name => "Internal",
       country_code => $self->country()->{country_code},
@@ -330,15 +330,15 @@ sub internal_account
 
 sub publisher_account
 {
-  $_[0]->{__publisher_account} ||= 
-    $_[0]->{namespace}->create(PubAccount => { 
+  $_[0]->{__publisher_account} ||=
+    $_[0]->{namespace}->create(PubAccount => {
       name => "Default-Publisher"});
 }
 
 sub advertiser
 {
-  $_[0]->{__advertiser} ||= 
-    $_[0]->{namespace}->create(Advertiser => { 
+  $_[0]->{__advertiser} ||=
+    $_[0]->{namespace}->create(Advertiser => {
       name => "Default-Advertiser"});
 }
 
@@ -347,8 +347,8 @@ sub user
   my $self = shift;
   if ( not defined $self->{__default_user})
   {
-    my $acc = 
-      $self->{namespace}->create(Account => { 
+    my $acc =
+      $self->{namespace}->create(Account => {
         internal_account_id => $self->internal_account,
         name => "Default-User",
         legal_name => "Default-User",
@@ -367,13 +367,13 @@ sub user
         display_status_id =>
           $self->live_display_status("Account")});
 
-    my $user_role = 
-      $self->{namespace}->create(UserRole => { 
+    my $user_role =
+      $self->{namespace}->create(UserRole => {
         name => "Advertiser Account Administrator",
         account_role_id => $self->advertiser_role });
 
-    $self->{__default_user} = 
-      $self->{namespace}->create(Users => { 
+    $self->{__default_user} =
+      $self->{namespace}->create(Users => {
         ldap_dn => 'Default',
         first_name => 'AutoTest',
         last_name => 'AutoTest',
@@ -394,7 +394,7 @@ sub remote_isp
   $_[0]->{__remote_isp} ||=
     $_[0]->{namespace}->create(Isp => {
       name => "RemoteISPColo",
-      account_timezone_id => 
+      account_timezone_id =>
         DB::TimeZone->blank(tzname => 'Europe/Moscow') })
 }
 
@@ -423,7 +423,7 @@ sub non_optout_isp
 }
 
 sub no_ads_isp
-{  
+{
   $_[0]->{__no_ads_isp} ||=
     $_[0]->{namespace}->create(Isp => {
       name => "NONE",
@@ -441,7 +441,7 @@ sub deleted_colo_isp
 sub test_isp
 {
   $_[0]->{__test_isp} ||=
-    $_[0]->{namespace}->create(Isp => { 
+    $_[0]->{namespace}->create(Isp => {
       name => "Test-Colo",
       account_flags => DB::Account::TEST,
       colocation_revenue_share => 0.1})
@@ -450,7 +450,7 @@ sub test_isp
 sub openrtb_isp
 {
   $_[0]->{__openrtb_isp} ||=
-    $_[0]->{namespace}->create(Isp => { 
+    $_[0]->{namespace}->create(Isp => {
       name => "OpenRtb-Colo",
       colocation_optout_serving => 'ALL',
       colocation_revenue_share => 0.5})
@@ -460,7 +460,7 @@ sub no_margin_internal_account
 {
   my $self = shift;
   $self->{__no_margin_internal_account} ||=
-    $self->{namespace}->create(Account => { 
+    $self->{namespace}->create(Account => {
       name => "NoMarginInternal",
       account_type_id => $self->internal_type,
       role_id => $self->internal_role,
@@ -470,23 +470,23 @@ sub no_margin_internal_account
 sub no_margin_isp
 {
   my $self = shift;
-  $self->{__no_margin_isp} ||= 
+  $self->{__no_margin_isp} ||=
     $self->{namespace}->create(Isp => {
       name => "NO_MARGIN",
-      account_internal_account_id => 
+      account_internal_account_id =>
         $self->no_margin_internal_account })
 }
 
 sub currency
 {
- $_[0]->{__default_currency} ||= 
+ $_[0]->{__default_currency} ||=
      $_[0]->{namespace}->create(
         Currency => { rate => 1 })
 }
 
 sub timezone
 {
-  $_[0]->{__default_timezone} ||= 
+  $_[0]->{__default_timezone} ||=
     $_[0]->{namespace}->create(
       TimeZone => { tzname => 'GMT' })
 }
@@ -500,7 +500,7 @@ sub other_size_type
 
 sub size
 {
-  $_[0]->{__size_468x60d} ||= 
+  $_[0]->{__size_468x60d} ||=
     $_[0]->{namespace}->create(CreativeSize => {
       name => "468x60",
       max_text_creatives => 2 })
@@ -508,7 +508,7 @@ sub size
 
 sub size_300x250
 {
-  $_[0]->{__size_300x250} ||= 
+  $_[0]->{__size_300x250} ||=
     $_[0]->{namespace}->create(CreativeSize => {
       name => "300x250",
       width => 300,
@@ -630,10 +630,10 @@ sub no_adv_channel
   $_[0]->{__no_adv_channel} ||=
     $_[0]->{namespace}->create(
       DB::NoAdvChannel->blank(
-        keyword_list => 
+        keyword_list =>
          "drugs\n" .
          "sport box banned channel",
-        url_list => 
+        url_list =>
           "http://alcoholnews.org\n" .
           "opt-out-guns.com",
        url_kwd_list => "bannedAdvURLKeyword"))
@@ -644,7 +644,7 @@ sub no_track_channel
   $_[0]->{__no_track_channel} ||=
     $_[0]->{namespace}->create(
       DB::NoTrackChannel->blank(
-        keyword_list => 
+        keyword_list =>
          "murder\n" .
          "sport box banned channel",
         url_list => "http://www.tobacco.org",
@@ -749,7 +749,7 @@ sub live_display_status
 sub wdtag_mapping_optin
 {
   $_[0]->{__wdtag_mapping_optin} ||=
-    $_[0]->{namespace}->create(WDRequestMapping => { 
+    $_[0]->{namespace}->create(WDRequestMapping => {
       name => 'autotest-WDTag-optin',
       description => 'WDTag mapping recommendations',
       request => 'g1.r=1'})
@@ -758,7 +758,7 @@ sub wdtag_mapping_optin
 sub wdtag_mapping_optout
 {
   $_[0]->{__wdtag_mapping_optout} ||=
-    $_[0]->{namespace}->create(WDRequestMapping => { 
+    $_[0]->{namespace}->create(WDRequestMapping => {
       name => 'autotest-WDTag-optout',
       description => 'WDTag mapping random',
       request => 'g1.r=0'})
@@ -768,7 +768,7 @@ sub wdtag_mapping_optout
 sub rnd_xy_lang_mapping
 {
  $_[0]->{__rnd_xy_lang_mapping} ||=
-    $_[0]->{namespace}->create(WDRequestMapping => { 
+    $_[0]->{namespace}->create(WDRequestMapping => {
       name => 'autotest-rnd-news-with-xy-lang',
       description => 'request for random news with xy language',
       request => 'g1.l=xy&g1.r=0'})
@@ -788,11 +788,11 @@ sub global_fcap
   my $self = shift;
   if (not defined $self->{__global_fcap})
   {
-    my $fc = 
-      $self->{namespace}->create(FreqCap => { 
+    my $fc =
+      $self->{namespace}->create(FreqCap => {
         period => 30 } );
 
-    $self->{__global_fcap} = 
+    $self->{__global_fcap} =
       $self->{namespace}->create(AdsConfig => {
         param_name => 'GLOBAL_FCAP_ID',
         param_value => $fc->freq_cap_id });
@@ -810,13 +810,13 @@ sub tanx_account
       $self->{namespace}->create(AccountType => {
         name => 'Company-Web-Publisher-Banners',
         account_role_id => $self->publisher_role,
-        flags => 
+        flags =>
             DB::AccountType::WD_TAGS |
             DB::AccountType::FREQ_CAPS |
             DB::AccountType::PUBLISHER_INVENTORY_ESTIMATION });
 
     $self->{__tanx_account} =
-        $self->{namespace}->create(Account => { 
+        $self->{namespace}->create(Account => {
           name => 'Tanx-Publisher',
           account_type_id => $type,
           role_id => $self->publisher_role,
@@ -840,7 +840,7 @@ sub openrtb_account
   if (not defined $self->{__openrtb_account})
   {
     $self->{__openrtb_account} =
-        $self->{namespace}->create(Account => { 
+        $self->{namespace}->create(Account => {
           name => 'RTB-Publisher',
           account_type_id => $self->tanx_account->{account_type_id},
           role_id => $self->publisher_role,
@@ -853,8 +853,8 @@ sub openrtb_account
 
 sub baidu_account
 {
-  $_[0]->{__baidu_account} ||= 
-    $_[0]->{namespace}->create(PubAccount => { 
+  $_[0]->{__baidu_account} ||=
+    $_[0]->{namespace}->create(PubAccount => {
       name => 'Baidu-Publisher',
       country_code => 'GN',
       internal_account_id => $_[0]->internal_account,
@@ -891,20 +891,20 @@ sub initialize
   $self->{namespace} = $self->{database}->namespace('Global');
 
   # Create countries, using in the tests with default settings
-  $self->{namespace}->create(Country => { 
+  $self->{namespace}->create(Country => {
     country_code => 'US',
-    language => 'en', 
+    language => 'en',
     low_channel_threshold => 0,
     high_channel_threshold => 0 });
   $self->{namespace}->create(Country => { country_code => 'RU' });
   $self->{namespace}->create(Country => { country_code => 'KR' });
-  $self->{namespace}->create(Country => 
+  $self->{namespace}->create(Country =>
     { country_code => 'GB',
       language => 'en',
       low_channel_threshold => 10,
       high_channel_threshold => 20 });
 
- $self->{namespace}->create(Country => 
+ $self->{namespace}->create(Country =>
     { country_code => 'CN',
       language => 'zn',
       low_channel_threshold => 0,
@@ -915,42 +915,42 @@ sub initialize
   $self->{namespace}->create(Country => { country_code => 'TF' });
 
   my @template_files = (
-    [ 
-      $self->text_template, $self->size(), 'UnitTests/textad.xsl', 
-      $self->app_format_no_track(), 'X' 
+    [
+      $self->text_template, $self->size(), 'UnitTests/textad.xsl',
+      $self->app_format_no_track(), 'X'
     ],
-    [ 
-      $self->text_template, $self->size(), 'UnitTests/textad.xsl', 
-      $self->app_format_track(), 'X' 
+    [
+      $self->text_template, $self->size(), 'UnitTests/textad.xsl',
+      $self->app_format_track(), 'X'
     ],
-    [ 
-      $self->text_template, $self->text_size, 'UnitTests/textad.xsl', 
-      $self->app_format_no_track(), 'X' 
+    [
+      $self->text_template, $self->text_size, 'UnitTests/textad.xsl',
+      $self->app_format_no_track(), 'X'
     ],
-    [ 
-      $self->text_template, $self->text_size, 'UnitTests/textad.xsl', 
-      $self->app_format_track(), 'X' 
+    [
+      $self->text_template, $self->text_size, 'UnitTests/textad.xsl',
+      $self->app_format_track(), 'X'
     ],
-    [ 
-      $self->text_template, $self->text_size, 'UnitTests/textad.xsl', 
-      $self->html_format(), 'X' 
+    [
+      $self->text_template, $self->text_size, 'UnitTests/textad.xsl',
+      $self->html_format(), 'X'
     ],
-    [ 
-      $self->display_template, $self->size_300x250, 'UnitTests/banner_img_clk.html', 
-      $self->app_format_no_track(), 'T' 
+    [
+      $self->display_template, $self->size_300x250, 'UnitTests/banner_img_clk.html',
+      $self->app_format_no_track(), 'T'
     ],
-    [ 
-      $self->display_template, $self->size, 'UnitTests/img_clk.foros-ui', 
-      $self->app_format_no_track(), 'T' 
+    [
+      $self->display_template, $self->size, 'UnitTests/img_clk.foros-ui',
+      $self->app_format_no_track(), 'T'
     ],
-    [ 
-      $self->display_template, $self->size, 'UnitTests/img_clk.foros-ui', 
-      $self->app_format_track(), 'T' 
+    [
+      $self->display_template, $self->size, 'UnitTests/img_clk.foros-ui',
+      $self->app_format_track(), 'T'
     ],
     # for RTB's
-    [ 
+    [
       $self->display_template, $self->size, 'UnitTests/banner_img_clk.html',
-      $self->html_format(), 'T' 
+      $self->html_format(), 'T'
     ],
 );
 
@@ -961,23 +961,23 @@ sub initialize
       template_id => $template,
       size_id => $size,
       template_file => $filename,
-      flags => $format == $self->app_format_track()?  
+      flags => $format == $self->app_format_track()?
         DB::TemplateFile::PIXEL_TRACKING: 0,
       app_format_id => $format,
       template_type => $type});
   }
 
-  $self->{namespace}->create(WDRequestMapping => { 
+  $self->{namespace}->create(WDRequestMapping => {
     name => 'autotest-global-1',
     description => 'autotests mapping 1',
     request => 'g1.r=1&g1.s=e'});
 
-  $self->{namespace}->create(WDRequestMapping => { 
+  $self->{namespace}->create(WDRequestMapping => {
     name => 'autotest-global-2',
     description => 'autotests mapping 2',
     request => 'g1.r=1&g1.s=r'});
 
-  $self->{namespace}->create(WDRequestMapping => { 
+  $self->{namespace}->create(WDRequestMapping => {
     name => 'autotest-global-3',
     description => 'autotests mapping 3',
     request => 'g1.r=1&g1.s=t'});

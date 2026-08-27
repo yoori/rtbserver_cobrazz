@@ -12,22 +12,17 @@ namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
-    constexpr char request_info_manager_grpc_aspect[] =
-      "RequestInfoManagerGrpc";
+    constexpr char request_info_manager_grpc_aspect[] = "RequestInfoManagerGrpc";
 
     namespace Proto = adserver::request_info_svcs::request_info_manager;
 
     void
-    pack_profile(
-      const Generics::ConstSmartMemBuf* profile,
-      Proto::ProfileResponse& response)
+    pack_profile(const Generics::ConstSmartMemBuf* profile, Proto::ProfileResponse& response)
     {
       response.set_found(profile != nullptr);
-      if(profile)
+      if (profile)
       {
-        response.set_profile(
-          profile->membuf().data(),
-          profile->membuf().size());
+        response.set_profile(profile->membuf().data(), profile->membuf().size());
       }
     }
   }
@@ -97,8 +92,7 @@ namespace AdServer::RequestInfoSvcs
       grpc::Status& status) const
     {
       co_await co_execute_profile_request_(
-        request_info_manager_->co_get_profile(
-          AdServer::Commons::RequestId(request.id())),
+        request_info_manager_->co_get_profile(AdServer::Commons::RequestId(request.id())),
         response,
         status);
     }
@@ -123,8 +117,7 @@ namespace AdServer::RequestInfoSvcs
       grpc::Status& status) const
     {
       co_await co_execute_profile_request_(
-        request_info_manager_->co_get_user_action_profile(
-          AdServer::Commons::UserId(request.id())),
+        request_info_manager_->co_get_user_action_profile(AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
@@ -136,8 +129,7 @@ namespace AdServer::RequestInfoSvcs
       grpc::Status& status) const
     {
       co_await co_execute_profile_request_(
-        request_info_manager_->co_get_passback_profile(
-          AdServer::Commons::RequestId(request.id())),
+        request_info_manager_->co_get_passback_profile(AdServer::Commons::RequestId(request.id())),
         response,
         status);
     }
@@ -207,8 +199,7 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        const Generics::ConstSmartMemBuf_var profile =
-          co_await std::move(operation);
+        const Generics::ConstSmartMemBuf_var profile = co_await std::move(operation);
         pack_profile(profile.in(), response);
         status = grpc::Status::OK;
       }

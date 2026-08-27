@@ -1,9 +1,6 @@
 #include "ChannelsGrannularUpdateTest.hpp"
 
-REFLECT_UNIT(ChannelsGrannularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelsGrannularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -20,27 +17,22 @@ ChannelsGrannularUpdateTest::set_up()
   add_descr_phrase("Setup");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
     "ChannelSearchServer must set in the XML configuration file");
 }
 
 void
-ChannelsGrannularUpdateTest::create_trigger(ORM::BehavioralChannel* channel,
-                                            const char* kwd_name)
+ChannelsGrannularUpdateTest::create_trigger(ORM::BehavioralChannel* channel, const char* kwd_name)
 {
 
   std::string keyword(fetch_string(kwd_name));
   std::string n_keyword(tolower(keyword));
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->select()),
-    "Can't select channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->select()), "Can't select channel");
 
   // Trigger
   ORM::PQ::Triggers trigger(pq_conn_);
-  if(channel->params.trigger_type.value().compare("U") == 0)
+  if (channel->params.trigger_type.value().compare("U") == 0)
   {
     trigger.trigger_type = "U";
   }
@@ -50,38 +42,24 @@ ChannelsGrannularUpdateTest::create_trigger(ORM::BehavioralChannel* channel,
   }
   trigger.normalized_trigger = n_keyword;
   trigger.qa_status = "A";
-  trigger.channel_type =
-    channel->type.value() == "D"? "D": "A";
-  trigger.country_code =
-   channel->country_code.is_null()? "GB":
-     channel->country_code.value();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      trigger.insert()),
-    "Can't insert trigger");
+  trigger.channel_type = channel->type.value() == "D"? "D": "A";
+  trigger.country_code = channel->country_code.is_null()? "GB": channel->country_code.value();
+  FAIL_CONTEXT(AutoTest::predicate_checker(trigger.insert()), "Can't insert trigger");
   triggers.push_back(trigger);
 
   // ChannelTrigger
   ORM::PQ::Channeltrigger ch_trigger(pq_conn_);
   ch_trigger.channel_id = channel->id();
   ch_trigger.trigger_id = trigger.trigger_id();
-  ch_trigger.trigger_type =
-    channel->params.trigger_type.value();
-  ch_trigger.channel_type =
-    channel->type.value() == "D"? "D": "A";
+  ch_trigger.trigger_type = channel->params.trigger_type.value();
+  ch_trigger.channel_type = channel->type.value() == "D"? "D": "A";
   ch_trigger.original_trigger = keyword;
   ch_trigger.qa_status = "A";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ch_trigger.insert()),
-    "Can't insert channel trigger");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ch_trigger.insert()), "Can't insert channel trigger");
   channeltriggers.push_back(ch_trigger);
 
   channel->triggers_version.set_now();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->update()),
-    "Can't update channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->update()), "Can't update channel");
 }
 
 void
@@ -94,10 +72,7 @@ ChannelsGrannularUpdateTest::page_channel()
   chp.triggers_status       = "A";
   chp.distinct_url_triggers_count = 0;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      chp.insert()),
-    "Must insert page channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(chp.insert()), "Must insert page channel");
 
   create_trigger(&chp, "Keyword1");
 
@@ -132,10 +107,7 @@ ChannelsGrannularUpdateTest::search_channel()
   chs.params.minimum_visits = 1;
   chs.triggers_status       = "A";
   chs.distinct_url_triggers_count = 0;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      chs.insert()),
-    "Must create search channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(chs.insert()), "Must create search channel");
 
   create_trigger(&chs, "Keyword3");
 
@@ -152,10 +124,7 @@ ChannelsGrannularUpdateTest::search_channel()
 
   ADD_WAIT_CHECKER(
     "Match check",
-    MatchChecker(this,
-      NSLookupRequest().
-        search(fetch_string("Keyword3")),
-      chs.id_with_suffix()));
+    MatchChecker(this, NSLookupRequest(). search(fetch_string("Keyword3")), chs.id_with_suffix()));
 }
 
 void
@@ -167,10 +136,7 @@ ChannelsGrannularUpdateTest::expression_channel()
   che.account    = fetch_int("Account");
   che.language.null();
   che.expression = strof(chp.id()) + "&" + strof(chs.id());
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      che.insert()),
-    "Must create expression channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(che.insert()), "Must create expression channel");
 
   std::string expr_id(strof(che.id()));
 
@@ -183,9 +149,7 @@ ChannelsGrannularUpdateTest::expression_channel()
       AutoTest::ChannelSearchAdmin::Expected().
         channel_id(expr_id)));
 
-  std::string regexp =
-    "\\(\\[" + strof(chp.id()) + "\\] & "  +
-    "\\[" + strof(chs.id()) + "\\]\\)";
+  std::string regexp = "\\(\\[" + strof(chp.id()) + "\\] & "  + "\\[" + strof(chs.id()) + "\\]\\)";
 
   ADD_WAIT_CHECKER(
     "Expression admin check",
@@ -219,16 +183,12 @@ ChannelsGrannularUpdateTest::delete_channel_expression()
        "Initial check");
   }
 
-  ORM::ORMRestorer<ORM::PQ::Channel>* channel =
-    create<ORM::PQ::Channel>(fetch_int("Channel3"));
+  ORM::ORMRestorer<ORM::PQ::Channel>* channel = create<ORM::PQ::Channel>(fetch_int("Channel3"));
 
   channel->status = "D";
   channel->display_status_id = 5; // 5 = Deleted
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->update()),
-    "Must update channel state");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->update()), "Must update channel state");
 
   ADD_WAIT_CHECKER(
     "Search channel deleted",
@@ -241,8 +201,7 @@ ChannelsGrannularUpdateTest::delete_channel_expression()
 
  // Check that expression changed
  {
-   std::string regexp =
-     "\\(\\[" + fetch_string("Channel2") + "\\] \\| NULL\\)";
+   std::string regexp = "\\(\\[" + fetch_string("Channel2") + "\\] \\| NULL\\)";
 
   ADD_WAIT_CHECKER(
     "Expression changed",
@@ -275,10 +234,7 @@ ChannelsGrannularUpdateTest::channel_rate_change()
 
   rate->cpm = 5;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      rate->update()),
-    "Must update channel rate");
+  FAIL_CONTEXT(AutoTest::predicate_checker(rate->update()), "Must update channel rate");
 
   ADD_WAIT_CHECKER(
     "Rate changed",
@@ -294,25 +250,15 @@ ChannelsGrannularUpdateTest::channel_rate_change()
 bool
 ChannelsGrannularUpdateTest::run()
 {
-  AUTOTEST_CASE(
-    page_channel(),
-    "Page channel");
+  AUTOTEST_CASE(page_channel(), "Page channel");
 
-  AUTOTEST_CASE(
-    search_channel(),
-    "Search channel");
+  AUTOTEST_CASE(search_channel(), "Search channel");
 
-  AUTOTEST_CASE(
-    expression_channel(),
-    "Expression channel");
+  AUTOTEST_CASE(expression_channel(), "Expression channel");
 
-  AUTOTEST_CASE(
-    delete_channel_expression(),
-    "Delete channel of expression");
+  AUTOTEST_CASE(delete_channel_expression(), "Delete channel of expression");
 
-  AUTOTEST_CASE(
-    channel_rate_change(),
-    "Channel rate change");
+  AUTOTEST_CASE(channel_rate_change(), "Channel rate change");
 
   return true;
 }
@@ -333,8 +279,7 @@ ChannelsGrannularUpdateTest::tear_down()
   {
     NOSTOP_FAIL_CONTEXT(it->delet());
   }
-  for (std::list<ORM::PQ::Triggers>::iterator it = triggers.begin();
-       it != triggers.end(); ++it)
+  for (std::list<ORM::PQ::Triggers>::iterator it = triggers.begin(); it != triggers.end(); ++it)
   {
     NOSTOP_FAIL_CONTEXT(it->delet());
   }

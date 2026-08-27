@@ -1,9 +1,7 @@
 
 #include "URLKeywordsDecoding.hpp"
 
-REFLECT_UNIT(URLKeywordsDecoding) (
-  "TriggerMatching",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(URLKeywordsDecoding) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -80,24 +78,16 @@ URLKeywordsDecoding::run_test()
 
   for (size_t i = 0; i < countof(TEST); ++i)
   {
-    client.process_request(
-      NSLookupRequest().
-      referer(fetch_string(TEST[i].referer)));
+    client.process_request(NSLookupRequest(). referer(fetch_string(TEST[i].referer)));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        TEST[i].expected,
-        client.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, TEST[i].expected, client.debug_info.trigger_channels).check(),
       TEST[i].description +
         " Expected trigger_channels check");
 
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        TEST[i].triggers,
-        client.debug_info.triggers.list()).check(),
+      ChannelsCheck(this, TEST[i].triggers, client.debug_info.triggers.list()).check(),
       TEST[i].description +
         " Expected triggers check");
 

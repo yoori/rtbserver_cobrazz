@@ -38,6 +38,5 @@ namespace AdServer::RequestInfoSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using ExpressionMatcherGrpc_var =
-    ReferenceCounting::SmartPtr<ExpressionMatcherGrpc>;
+  using ExpressionMatcherGrpc_var = ReferenceCounting::SmartPtr<ExpressionMatcherGrpc>;
 }

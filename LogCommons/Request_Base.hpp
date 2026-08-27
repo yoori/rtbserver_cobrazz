@@ -8,8 +8,8 @@
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
+namespace AdServer::LogProcessing
+{
 
   typedef std::pair<StringIO<Aux_::ConvertSpacesSeparators, '='>,
     StringIO<Aux_::ConvertSpacesSeparators, ','> > UserProperty;
@@ -101,8 +101,7 @@ namespace LogProcessing {
         return rate_id == revenue.rate_id &&
           request_revenue == revenue.request_revenue &&
           imp_revenue == revenue.imp_revenue &&
-          click_revenue == revenue.click_revenue &&
-          action_revenue == revenue.action_revenue;
+          click_revenue == revenue.click_revenue && action_revenue == revenue.action_revenue;
       }
 
       template <class ARCHIVE_>
@@ -128,7 +127,7 @@ namespace LogProcessing {
   operator>>(FixedBufStream<CommaCategory>& is, RequestData_V_3_4::CmpChannel& cmp_channel)
   {
     String::SubString token = is.read_token();
-    if(is.good())
+    if (is.good())
     {
       FixedBufStream<SemiCategory> fbs(token);
       TokenizerInputArchive<Aux_::NoInvariants, SemiCategory> ia(fbs);
@@ -176,5 +175,4 @@ namespace LogProcessing {
     return os;
   }
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

@@ -49,9 +49,7 @@ namespace AdServer::Grpc
     public ReferenceCounting::AtomicImpl
   {
   public:
-    ResolvePartitionTask(
-      DistributedPartitionPool* owner,
-      unsigned long partition_index) noexcept
+    ResolvePartitionTask(DistributedPartitionPool* owner, unsigned long partition_index) noexcept
       : owner_(owner),
         partition_index_(partition_index)
     {}
@@ -108,22 +106,15 @@ namespace AdServer::Grpc
       name_(std::move(name)),
       pool_timeout_(pool_timeout),
       resolve_period_(resolve_period),
-      controller_refs_(validate_controller_refs_(
-        std::move(controller_refs),
-        name_)),
+      controller_refs_(validate_controller_refs_(std::move(controller_refs), name_)),
       batching_options_(std::move(batching_options)),
       grpc_executor_(std::move(grpc_executor)),
       coalesce_runner_(std::move(coalesce_runner)),
       resolver_(std::move(resolve_partition)),
       partition_index_(std::move(partition_index)),
       chunk_index_(std::move(chunk_index)),
-      callback_(new Logging::ActiveObjectCallbackImpl(
-        logger,
-        name_.c_str(),
-        log_aspect.c_str())),
-      task_runner_(new Generics::TaskRunner(
-        callback_,
-        controller_refs_.size() + 1)),
+      callback_(new Logging::ActiveObjectCallbackImpl(logger, name_.c_str(), log_aspect.c_str())),
+      task_runner_(new Generics::TaskRunner(callback_, controller_refs_.size() + 1)),
       logger_(ReferenceCounting::add_ref(logger))
   {
     if (!coalesce_runner_)
@@ -148,9 +139,7 @@ namespace AdServer::Grpc
       {
         refs.emplace_back(std::make_shared<ControllerClient>(controller_ref, i));
       }
-      auto controller_pool = std::make_shared<ControllerPool>(
-        std::move(refs),
-        coalesce_runner_);
+      auto controller_pool = std::make_shared<ControllerPool>(std::move(refs), coalesce_runner_);
       add_child_object(controller_pool);
       controller_pools_.emplace_back(std::move(controller_pool));
     }
@@ -167,8 +156,7 @@ namespace AdServer::Grpc
     deactivated_.store(false, std::memory_order_release);
     Generics::CompositeActiveObject::activate_object_();
     resolve_all_partitions_();
-    task_runner_->enqueue_task(
-      Generics::Task_var(new PeriodicResolveTask(this)));
+    task_runner_->enqueue_task(Generics::Task_var(new PeriodicResolveTask(this)));
   }
 
   template<typename ClientType, typename ControllerClientType>
@@ -463,13 +451,9 @@ namespace AdServer::Grpc
       refs = std::move(*resolved_refs);
       for (auto& endpoint_chunks : refs)
       {
-        std::sort(
-          endpoint_chunks.chunk_ids.begin(),
-          endpoint_chunks.chunk_ids.end());
+        std::sort(endpoint_chunks.chunk_ids.begin(), endpoint_chunks.chunk_ids.end());
         endpoint_chunks.chunk_ids.erase(
-          std::unique(
-            endpoint_chunks.chunk_ids.begin(),
-            endpoint_chunks.chunk_ids.end()),
+          std::unique(endpoint_chunks.chunk_ids.begin(), endpoint_chunks.chunk_ids.end()),
           endpoint_chunks.chunk_ids.end());
       }
       std::sort(
@@ -486,9 +470,7 @@ namespace AdServer::Grpc
     {
       if (controller_ref)
       {
-        controller_ref->mark_as_bad(
-          Generics::Time::get_time_of_day() + pool_timeout_,
-          ex.what());
+        controller_ref->mark_as_bad(Generics::Time::get_time_of_day() + pool_timeout_, ex.what());
       }
       record_resolve_error_(
         partition_index,
@@ -497,13 +479,9 @@ namespace AdServer::Grpc
         controller_ref ? (*controller_ref)->endpoint : std::string());
       if (logger_)
       {
-        logger_->sstream(
-          Logging::Logger::ERROR,
-          name_.c_str(),
-          "ADS-IMPL-72") <<
+        logger_->sstream(Logging::Logger::ERROR, name_.c_str(), "ADS-IMPL-72") <<
           "Can't resolve controller '" <<
-          controller_pools_[partition_index]->unavailable_description() <<
-          "': " << ex.what();
+          controller_pools_[partition_index]->unavailable_description() << "': " << ex.what();
       }
       finish_resolve_partition_(partition_index, false);
       return;
@@ -538,8 +516,7 @@ namespace AdServer::Grpc
 
     bool state_unchanged = false;
     {
-      std::shared_lock<std::shared_mutex> lock(
-        partition_holders_[partition_index]->lock);
+      std::shared_lock<std::shared_mutex> lock(partition_holders_[partition_index]->lock);
       state_unchanged =
         partition_holders_[partition_index]->partition &&
         partition_holders_[partition_index]->partition->state == refs;
@@ -578,9 +555,7 @@ namespace AdServer::Grpc
       for (const auto chunk_id : endpoint_chunks.chunk_ids)
       {
         chunk_refs[chunk_id].emplace_back(ref_holder);
-        max_chunk_number = std::max<unsigned long>(
-          max_chunk_number,
-          chunk_id + 1);
+        max_chunk_number = std::max<unsigned long>(max_chunk_number, chunk_id + 1);
       }
     }
 
@@ -601,9 +576,7 @@ namespace AdServer::Grpc
     new_partition->ref_holders = std::move(ref_holders);
     for (auto& chunk_ref : chunk_refs)
     {
-      auto pool = std::make_shared<Pool>(
-        std::move(chunk_ref.second),
-        coalesce_runner_);
+      auto pool = std::make_shared<Pool>(std::move(chunk_ref.second), coalesce_runner_);
       pool->activate_object();
       new_partition->chunk_pools.emplace(chunk_ref.first, std::move(pool));
     }
@@ -611,8 +584,7 @@ namespace AdServer::Grpc
     PartitionPtr old_partition;
     bool installed = false;
     {
-      std::unique_lock<std::shared_mutex> lock(
-        partition_holders_[partition_index]->lock);
+      std::unique_lock<std::shared_mutex> lock(partition_holders_[partition_index]->lock);
       if (!deactivated_.load(std::memory_order_acquire))
       {
         old_partition = std::move(partition_holders_[partition_index]->partition);
@@ -653,11 +625,7 @@ namespace AdServer::Grpc
         endpoint += controller_ref;
       }
     }
-    set_last_error(
-      endpoint,
-      grpc::StatusCode::UNAVAILABLE,
-      message,
-      source);
+    set_last_error(endpoint, grpc::StatusCode::UNAVAILABLE, message, source);
   }
 
   template<typename ClientType, typename ControllerClientType>
@@ -672,16 +640,13 @@ namespace AdServer::Grpc
     }
 
     const auto now = Generics::Time::get_time_of_day();
-    std::unique_lock<std::shared_mutex> lock(
-      partition_holders_[partition_index]->lock);
+    std::unique_lock<std::shared_mutex> lock(partition_holders_[partition_index]->lock);
     if (partition_holders_[partition_index]->resolve_in_progress)
     {
       return false;
     }
 
-    if (!force &&
-      now < partition_holders_[partition_index]->last_try_to_resolve +
-        pool_timeout_)
+    if (!force && now < partition_holders_[partition_index]->last_try_to_resolve + pool_timeout_)
     {
       return false;
     }
@@ -701,12 +666,10 @@ namespace AdServer::Grpc
       return;
     }
 
-    std::unique_lock<std::shared_mutex> lock(
-      partition_holders_[partition_index]->lock);
+    std::unique_lock<std::shared_mutex> lock(partition_holders_[partition_index]->lock);
     if (!installed)
     {
-      partition_holders_[partition_index]->last_try_to_resolve =
-        Generics::Time::get_time_of_day();
+      partition_holders_[partition_index]->last_try_to_resolve = Generics::Time::get_time_of_day();
     }
     partition_holders_[partition_index]->resolve_in_progress = false;
   }
@@ -891,8 +854,7 @@ namespace AdServer::Grpc
     result.completed_error_items += source.completed_error_items;
     result.queue_wait_count += source.queue_wait_count;
     result.queue_wait_sum_us += source.queue_wait_sum_us;
-    result.queue_wait_max_us =
-      std::max(result.queue_wait_max_us, source.queue_wait_max_us);
+    result.queue_wait_max_us = std::max(result.queue_wait_max_us, source.queue_wait_max_us);
     result.queue_timeout_count += source.queue_timeout_count;
     result.response_wait_count += source.response_wait_count;
     result.response_wait_sum_us += source.response_wait_sum_us;
@@ -914,8 +876,7 @@ namespace AdServer::Grpc
     {
       if (!result.consumer_stream_write.has_value())
       {
-        result.consumer_stream_write =
-          AdServer::Grpc::Stats::ConsumerStreamWrite();
+        result.consumer_stream_write = AdServer::Grpc::Stats::ConsumerStreamWrite();
       }
       result.consumer_stream_write->count += source.consumer_stream_write->count;
       result.consumer_stream_write->sum_us += source.consumer_stream_write->sum_us;

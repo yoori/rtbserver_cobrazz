@@ -41,8 +41,7 @@ namespace AdServer::ChannelSvcs
   struct ChannelServerCoreState;
   class UpdateData;
 
-  using ChannelServerVariantBasePtr =
-    std::shared_ptr<ChannelServerVariantBase>;
+  using ChannelServerVariantBasePtr = std::shared_ptr<ChannelServerVariantBase>;
   using UpdateDataPtr = std::shared_ptr<UpdateData>;
 
   typedef std::map<
@@ -214,9 +213,7 @@ namespace AdServer::ChannelSvcs
 
     void check(const CheckQuery& query, CheckData& data);
 
-    void set_sources(
-      const DBSourceInfo& db_info,
-      const std::vector<unsigned long>& sources);
+    void set_sources(const DBSourceInfo& db_info, const std::vector<unsigned long>& sources);
 
     void set_proxy_sources(
       const ProxySourceInfo& proxy_info,
@@ -226,13 +223,9 @@ namespace AdServer::ChannelSvcs
 
     unsigned long get_count_chunks() noexcept;
 
-    void update_triggers(
-      const std::vector<unsigned long>& ids,
-      UpdateDataResult& result);
+    void update_triggers(const std::vector<unsigned long>& ids, UpdateDataResult& result);
 
-    void update_all_ccg(
-      const CCGQuery& query,
-      PosCCGResult& result);
+    void update_all_ccg(const CCGQuery& query, PosCCGResult& result);
 
     typedef xsd::AdServer::Configuration::ChannelServerConfigType
       ChannelServerConfig;
@@ -252,9 +245,7 @@ namespace AdServer::ChannelSvcs
 
     void get_stats(ChannelServerStats& stats) noexcept;
 
-    void match(
-      const ChannelServerCore::MatchQuery& query,
-      ChannelServerCore::MatchResult& result);
+    void match(const ChannelServerCore::MatchQuery& query, ChannelServerCore::MatchResult& result);
 
     void get_ccg_traits(
       const std::vector<unsigned long>& ids,
@@ -287,9 +278,7 @@ namespace AdServer::ChannelSvcs
       UpdateDataPtr update_data_;
     };
 
-    void schedule_update_task_(
-      unsigned long period,
-      UpdateDataPtr update_data) noexcept;
+    void schedule_update_task_(unsigned long period, UpdateDataPtr update_data) noexcept;
 
     void update_task(UpdateDataPtr update_data) noexcept;
 
@@ -313,9 +302,7 @@ namespace AdServer::ChannelSvcs
 
     void log_update_() noexcept;
 
-    void init_update_(
-      UpdateData* update_data,
-      ChannelServerVariantBase* variant_server)
+    void init_update_(UpdateData* update_data, ChannelServerVariantBase* variant_server)
       /*throw(
         ChannelServerException::TemporyUnavailable,
         ChannelServerException::NotReady,
@@ -398,48 +385,48 @@ namespace AdServer::ChannelSvcs
 
 namespace AdServer::ChannelSvcs
 {
-    inline
-    Logging::Logger*
-    ChannelServerCore::logger ()
-      noexcept
-    {
-      return callback_->logger();
-    }
-
-    /* ChannelServerCore */
-    inline
-    bool ChannelServerCore::ready() noexcept
-    {
-      return ready_;
-    }
-
-    inline
-    ChannelServerVariantBasePtr ChannelServerCore::get_source_of_data_()
+  inline
+  Logging::Logger*
+  ChannelServerCore::logger ()
     noexcept
-    {
-      ReadGuard_ lock(lock_set_sources_);
-      return variant_server_;
-    }
+  {
+    return callback_->logger();
+  }
 
-    inline
-    UpdateContainer* ChannelServerCore::get_update_container()
-      noexcept
-    {
-      return update_cont_.get();
-    }
+  /* ChannelServerCore */
+  inline
+  bool ChannelServerCore::ready() noexcept
+  {
+    return ready_;
+  }
 
-    inline
-    ChannelServerCore::UpdateTask::UpdateTask(
-      ChannelServerCore* server_impl,
-      UpdateDataPtr data,
-      Generics::TaskRunner* task_runner) noexcept
-      : TaskBase(task_runner), server_impl_(server_impl),
-        update_data_(std::move(data))
-    {}
+  inline
+  ChannelServerVariantBasePtr ChannelServerCore::get_source_of_data_()
+  noexcept
+  {
+    ReadGuard_ lock(lock_set_sources_);
+    return variant_server_;
+  }
 
-    inline
-    ChannelServerCore::UpdateTask::~UpdateTask() noexcept
-    {
-    }
+  inline
+  UpdateContainer* ChannelServerCore::get_update_container()
+    noexcept
+  {
+    return update_cont_.get();
+  }
+
+  inline
+  ChannelServerCore::UpdateTask::UpdateTask(
+    ChannelServerCore* server_impl,
+    UpdateDataPtr data,
+    Generics::TaskRunner* task_runner) noexcept
+    : TaskBase(task_runner), server_impl_(server_impl),
+      update_data_(std::move(data))
+  {}
+
+  inline
+  ChannelServerCore::UpdateTask::~UpdateTask() noexcept
+  {
+  }
 
 } /* AdServer::ChannelSvcs */

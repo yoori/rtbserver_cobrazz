@@ -11,8 +11,8 @@ sub init {
 
   my $passback = "http://minuidage.test.com/";
 
-  my $publisher = 
-    $ns->create(Publisher => { 
+  my $publisher =
+    $ns->create(Publisher => {
       name => "Publisher",
       pricedtag_passback => $passback });
 
@@ -38,14 +38,14 @@ sub init {
       optin_status_targeting => $v->{optin_status_targeting},
       min_uid_age => $v->{min_uid_age},
       campaigncreativegroup_cpm => $v->{cpm}? $v->{cpm}: 100,
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           account_id => $advertiser,
           name => 'Channel-' . $k,
           keyword_list => $keyword,
           behavioral_parameters => [
             DB::BehavioralChannel::BehavioralParameter->blank(
-              trigger_type => 'P', 
+              trigger_type => 'P',
               time_to => 3*24*60*60) ]),
       site_links => [{site_id => $publisher->{site_id}}] });
 

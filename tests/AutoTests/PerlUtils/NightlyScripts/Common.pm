@@ -30,14 +30,14 @@ sub get_host_name {
 # get formatted local time
 sub get_local_time {
   my ($second, $minute, $hour, $dayOfMonth,
-      $month, $yearOfset, $dayOfWeek, $dayOfYear, 
+      $month, $yearOfset, $dayOfWeek, $dayOfYear,
       $dayLightSavings) = localtime();
   my $year = $yearOfset + 1900;
-  return sprintf("%02d-%02d-%04d-%02d-%02d", 
+  return sprintf("%02d-%02d-%04d-%02d-%02d",
                  $dayOfMonth, $month, $year, $hour, $minute);
 }
 
-# getting name of last subdirectory in 
+# getting name of last subdirectory in
 sub get_last_dir_name {
   my $path = shift;
   my $dir  = File::Basename::dirname($path);

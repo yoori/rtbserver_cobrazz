@@ -1,8 +1,6 @@
 #include "PageLoadsDailyStats.hpp"
 
-REFLECT_UNIT(PageLoadsDailyStats) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(PageLoadsDailyStats) ("Statistics", AUTO_TEST_SLOW);
 
 
 namespace
@@ -31,33 +29,23 @@ PageLoadsDailyStats::run()
   NOSTOP_FAIL_CONTEXT(case12_different_countries());
   NOSTOP_FAIL_CONTEXT(case13_inventory_mode_tags());
   AdClient client(AdClient::create_user(this));
-  NOSTOP_FAIL_CONTEXT(
-    case14_reverse_logs_delivery_order_part_1(client));
+  NOSTOP_FAIL_CONTEXT(case14_reverse_logs_delivery_order_part_1(client));
 
   add_descr_phrase("PageLoadsDaily check#1.");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)).check(),
     "PageLoadsDailyStats: check stats");
 
   stats.clear();
   diffs.clear();
 
-  NOSTOP_FAIL_CONTEXT(
-    case14_reverse_logs_delivery_order_part_2(client));
+  NOSTOP_FAIL_CONTEXT(case14_reverse_logs_delivery_order_part_2(client));
 
   add_descr_phrase("PageLoadsDaily check#2.");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)).check(),
     "PageLoadsDailyStats: check stats");
 
 
@@ -65,11 +53,9 @@ PageLoadsDailyStats::run()
 }
 
 std::string
-PageLoadsDailyStats::fetch_tag_group(
-  const char* tags)
+PageLoadsDailyStats::fetch_tag_group(const char* tags)
 {
-  return
-    "|" + map_objects(tags, "|") + "|";
+  return "|" + map_objects(tags, "|") + "|";
 }
 
 template <size_t Count>
@@ -90,8 +76,7 @@ PageLoadsDailyStats::initialize_stats(
     if (expected[i].tag_group)
     {
       key.
-        tag_group(
-          fetch_tag_group(expected[i].tag_group));
+        tag_group(fetch_tag_group(expected[i].tag_group));
     }
 
     ORM::PageLoadsDaily stat(key);
@@ -103,8 +88,7 @@ PageLoadsDailyStats::initialize_stats(
     diffs.push_back(
       ORM::PageLoadsDaily::Diffs().
         page_loads(expected[i].page_loads).
-        utilized_page_loads(
-          expected[i].utilized_page_loads));
+        utilized_page_loads(expected[i].utilized_page_loads));
   }
 }
 
@@ -133,10 +117,7 @@ PageLoadsDailyStats::case01_multiple_tags_in_one_domain()
   stat.description(description);
   stats.push_back(stat);
 
-  diffs.push_back(
-    ORM::PageLoadsDaily::Diffs().
-      page_loads(1).
-      utilized_page_loads(0));
+  diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(0));
 
   NSLookupRequest request;
   request.debug_time = debug_time;
@@ -147,18 +128,14 @@ PageLoadsDailyStats::case01_multiple_tags_in_one_domain()
   request.tid = tag1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case01 1");
 
   request.referer_kw = keyword2;
   request.tid = tag2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case01 2");
 }
 
@@ -183,18 +160,13 @@ PageLoadsDailyStats::case02_multiple_tags_iframe_eq_page()
       site_id(fetch_int("SITE02")).
       country_code("GN").
       colo_id(1).
-      tag_group(
-        fetch_tag_group(
-          "TAG02_1|TAG02_2|TAG02_3")).
+      tag_group(fetch_tag_group("TAG02_1|TAG02_2|TAG02_3")).
       country_sdate(debug_time));
   stat.select(pq_conn_);
   stat.description(description);
   stats.push_back(stat);
 
-  diffs.push_back(
-    ORM::PageLoadsDaily::Diffs().
-      page_loads(1).
-      utilized_page_loads(1));
+  diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(1));
 
   NSLookupRequest request;
   request.debug_time = debug_time;
@@ -205,27 +177,21 @@ PageLoadsDailyStats::case02_multiple_tags_iframe_eq_page()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC02_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC02_1"), client.debug_info.ccid).check(),
     "must select expected creative case02 1");
 
   request.tid = tag2;
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case02 2");
 
   request.tid = tag3;
   request.referer_kw = keyword3;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case02 3");
 }
 
@@ -261,9 +227,7 @@ PageLoadsDailyStats::case03_multiple_tags_iframe_noteq_page()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC03_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC03_1"), client.debug_info.ccid).check(),
     "must select expected creative case03 1");
 
   request.referer = "www.pageloadsdailystats3_2.com";
@@ -271,9 +235,7 @@ PageLoadsDailyStats::case03_multiple_tags_iframe_noteq_page()
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case03 2");
 
   request.referer = "www.pageloadsdailystats3_3.com";
@@ -282,9 +244,7 @@ PageLoadsDailyStats::case03_multiple_tags_iframe_noteq_page()
   request.pl = "1384247382";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case03 3");
 }
 
@@ -321,9 +281,7 @@ PageLoadsDailyStats::case04_multiple_tags_iframes()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC04_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC04_1"), client.debug_info.ccid).check(),
     "must select expected creative case04 1");
 
   request.referer = "www.pageloadsdailystats4_2.com";
@@ -331,9 +289,7 @@ PageLoadsDailyStats::case04_multiple_tags_iframes()
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case04 2");
 
   request.pl = pl3;
@@ -342,9 +298,7 @@ PageLoadsDailyStats::case04_multiple_tags_iframes()
   request.referer_kw = keyword3;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case04 3");
 }
 
@@ -388,9 +342,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC05_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC05_1"), client.debug_info.ccid).check(),
     "must select expected creative case05 1");
 
   request.referer = "www.pageloadsdailystats5.com";
@@ -398,9 +350,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case05 2");
 
   request.referer = "www.pageloadsdailystats5.com/path1";
@@ -408,9 +358,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword3;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC05_3"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC05_3"), client.debug_info.ccid).check(),
     "must select expected creative case05 3");
 
   request.referer = "www.pageloadsdailystats5.com/path2";
@@ -418,9 +366,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword4;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC05_4"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC05_4"), client.debug_info.ccid).check(),
     "must select expected creative case05 4");
 
   request.referer = "www.pageloadsdailystats5.com/path3?query1";
@@ -428,9 +374,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword5;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC05_5"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC05_5"), client.debug_info.ccid).check(),
     "must select expected creative case05 5");
 
   request.referer = "www.pageloadsdailystats5.com/path3?query2";
@@ -438,9 +382,7 @@ PageLoadsDailyStats::case05_merging_without_page_id()
   request.referer_kw = keyword6;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case05 6");
 }
 
@@ -479,16 +421,12 @@ PageLoadsDailyStats::case06_merging_on_the_same_tag()
 
   client.process_request(request1);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case06 1");
 
   client.process_request(request2);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case06 2");
 
   request1.referer_kw = keyword1;
@@ -496,16 +434,12 @@ PageLoadsDailyStats::case06_merging_on_the_same_tag()
 
   client.process_request(request1);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC06_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC06_1"), client.debug_info.ccid).check(),
     "must select expected creative case06 3");
 
   client.process_request(request2);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC06_2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC06_2"), client.debug_info.ccid).check(),
     "must select expected creative case06 4");
 }
 
@@ -540,9 +474,7 @@ PageLoadsDailyStats::case07_different_page_id_equal_referrer_time()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC07_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC07_1"), client.debug_info.ccid).check(),
     "must select expected creative case07 1");
 
   request.pl = pl2;
@@ -550,9 +482,7 @@ PageLoadsDailyStats::case07_different_page_id_equal_referrer_time()
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case07 2");
 }
 
@@ -589,9 +519,7 @@ PageLoadsDailyStats::case08_equal_referrers_time_exceeds_2seconds()
   request.referer_kw = keyword1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC08_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC08_1"), client.debug_info.ccid).check(),
     "must select expected creative case08 1");
 
   request.debug_time = next;
@@ -599,9 +527,7 @@ PageLoadsDailyStats::case08_equal_referrers_time_exceeds_2seconds()
   request.referer_kw = keyword2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case08 2");
 }
 
@@ -630,17 +556,13 @@ PageLoadsDailyStats::case09_no_referrer_and_page_id()
   request.tid = tag1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case09 1");
 
   request.tid = tag2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case09 2");
 }
 
@@ -666,10 +588,7 @@ PageLoadsDailyStats::case10_unconfirmed_impressions()
   stat.description(description);
   stats.push_back(stat);
 
-  diffs.push_back(
-    ORM::PageLoadsDaily::Diffs().
-      page_loads(1).
-      utilized_page_loads(1));
+  diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(1));
 
   NSLookupRequest request;
   request.debug_time = debug_time;
@@ -678,13 +597,10 @@ PageLoadsDailyStats::case10_unconfirmed_impressions()
   request.format = "unit-test-imp";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC10_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC10_1"), client.debug_info.ccid).check(),
     "must select expected creative case10 1");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.track_pixel_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
     "must have track pixel url");
 }
 
@@ -724,36 +640,28 @@ PageLoadsDailyStats::case11_different_sites()
   request.tid = tag1;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case11a 1");
 
   request.referer_kw = keyword2;
   request.tid = tag2;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case11a 2");
 
   request.referer_kw = keyword3;
   request.tid = tag3;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case11b 1");
 
   request.referer_kw = keyword4;
   request.tid = tag4;
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC11b_2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC11b_2"), client.debug_info.ccid).check(),
     "must select expected creative case11b 2");
 }
 
@@ -782,10 +690,7 @@ PageLoadsDailyStats::case12_different_countries()
     stat.description(description + " #1");
     stats.push_back(stat);
 
-    diffs.push_back(
-      ORM::PageLoadsDaily::Diffs().
-        page_loads(1).
-        utilized_page_loads(0));
+    diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(0));
   }
 
   {
@@ -800,10 +705,7 @@ PageLoadsDailyStats::case12_different_countries()
     stat.description(description + " #2");
     stats.push_back(stat);
 
-    diffs.push_back(
-      ORM::PageLoadsDaily::Diffs().
-        page_loads(1).
-        utilized_page_loads(1));
+    diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(1));
   }
 
 
@@ -816,9 +718,7 @@ PageLoadsDailyStats::case12_different_countries()
   request.loc_name = "gb";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must select expected creative case12 1");
 
   request.referer_kw = keyword2;
@@ -826,9 +726,7 @@ PageLoadsDailyStats::case12_different_countries()
   request.loc_name = "lu";
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC12_2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC12_2"), client.debug_info.ccid).check(),
     "must select expected creative case12 2");
 }
 
@@ -850,18 +748,13 @@ PageLoadsDailyStats::case13_inventory_mode_tags()
       site_id(fetch_int("SITE13")).
       country_code("GN").
       colo_id(1).
-      tag_group(
-        fetch_tag_group(
-          "TAG13_1|TAG13_2")).
+      tag_group(fetch_tag_group("TAG13_1|TAG13_2")).
       country_sdate(debug_time));
   stat.select(pq_conn_);
   stat.description(description);
   stats.push_back(stat);
 
-  diffs.push_back(
-    ORM::PageLoadsDaily::Diffs().
-      page_loads(1).
-      utilized_page_loads(0));
+  diffs.push_back(ORM::PageLoadsDaily::Diffs(). page_loads(1). utilized_page_loads(0));
 
 
   NSLookupRequest request;
@@ -871,33 +764,20 @@ PageLoadsDailyStats::case13_inventory_mode_tags()
 
   request.tid = tag1;
   client.process_request(request);
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check empty cc#1");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check empty cc#1");
 
   request.tid = tag2;
   client.process_request(request);
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check empty cc#2");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check empty cc#2");
 
   request.tid = tag3;
   request.tag_inv = 1;
   client.process_request(request);
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check empty cc#3");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check empty cc#3");
 }
 
 void
-PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_1(
-  AdClient& client)
+PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_1(AdClient& client)
 {
   std::string description("Reverse logs delivery order (part#1).");
   add_descr_phrase(description);
@@ -930,9 +810,7 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_1(
     request.debug_time = now;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC14a_1"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC14a_1"), client.debug_info.ccid).check(),
       "must select expected creative case14a 1");
   }
   {
@@ -943,16 +821,13 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_1(
     request.debug_time = now;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case14b 1");
   }
 }
 
 void
-PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_2(
-  AdClient& client)
+PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_2(AdClient& client)
 {
   std::string description("Reverse logs delivery order (part#2).");
   add_descr_phrase(description);
@@ -990,9 +865,7 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_2(
     request.debug_time = prev;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case14a 2");
   }
   {
@@ -1003,9 +876,7 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_2(
     request.debug_time = prev;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case14b 2");
   }
 
@@ -1040,9 +911,7 @@ PageLoadsDailyStats::case15_user_statuses()
     request.tid = tag1;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC15_1"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC15_1"), client.debug_info.ccid).check(),
       "must select expected creative case15 1");
 
   }
@@ -1054,17 +923,13 @@ PageLoadsDailyStats::case15_user_statuses()
     request.tid = tag2;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case15 3");
 
     request.tid = tag3;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case15 4");
   }
   {
@@ -1076,9 +941,7 @@ PageLoadsDailyStats::case15_user_statuses()
     request.tid = tag2;
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must select expected creative case15 3");
 
   }

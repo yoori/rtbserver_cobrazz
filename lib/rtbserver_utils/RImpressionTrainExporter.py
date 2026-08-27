@@ -84,6 +84,30 @@ class RImpressionTrainExporter(object):
       text=True)
     return int(result.stdout.strip())
 
+  def ordered_slice_min_timestamp(
+      self, date_from, date_to, rows, condition=None):
+    if rows <= 0:
+      raise ValueError('rows must be positive')
+    query = (
+      'SELECT min(timestamp) FROM ('
+      'SELECT timestamp FROM RImpression '
+      "WHERE timestamp >= '" + date_from + "' "
+      "AND timestamp < '" + date_to + "' ")
+    if condition is not None:
+      query += 'AND (' + condition + ') '
+    query += (
+      'ORDER BY timestamp DESC, request_id DESC '
+      'LIMIT ' + str(rows) + ')')
+    result = subprocess.run(
+      self._command + ['--query', query],
+      check=True,
+      capture_output=True,
+      text=True)
+    value = result.stdout.strip()
+    if not value:
+      raise RuntimeError('Ordered slice contains no rows')
+    return value
+
   def ssp_ctr_logloss(
       self,
       date_from,
@@ -120,12 +144,17 @@ class RImpressionTrainExporter(object):
       date_to,
       activity_period,
       min_impressions,
+      training_extra_condition=None,
   ):
     if activity_period <= 0:
       raise ValueError('activity_period must be positive')
     if min_impressions <= 0:
       raise ValueError('min_impressions must be positive')
     training_condition = self.training_condition()
+    if training_extra_condition is not None:
+      training_condition = (
+        '(' + training_condition + ') AND (' +
+        training_extra_condition + ')')
     validation_condition = self.validation_condition()
     query = (
       'SELECT campaign_id, '
@@ -172,6 +201,7 @@ class RImpressionTrainExporter(object):
       condition=None,
       offset_rows=0,
       label='click',
+      order='DESC',
   ):
     if max_rows <= 0:
       raise ValueError('max_rows must be positive')
@@ -191,7 +221,8 @@ class RImpressionTrainExporter(object):
           max_rows,
           condition,
           offset_rows,
-          label),
+          label,
+          order),
       ],
       stdout=subprocess.PIPE)
     current_path = None
@@ -345,6 +376,7 @@ class RImpressionTrainExporter(object):
       date_to,
       condition=None,
       label='click',
+      order='DESC',
   ):
     remaining_rows = max_rows
     for partition_index in range(partition_count):
@@ -365,7 +397,8 @@ class RImpressionTrainExporter(object):
         date_from,
         date_to,
         partition_condition,
-        label=label)
+        label=label,
+        order=order)
       try:
         for output_path, row_count in chunks:
           remaining_rows -= row_count
@@ -426,7 +459,10 @@ class RImpressionTrainExporter(object):
       condition=None,
       offset_rows=0,
       label='click',
+      order='DESC',
   ):
+    if order not in ('ASC', 'DESC'):
+      raise ValueError("Unsupported export order: '" + str(order) + "'")
     if label == 'click':
       label_expression = 'If(click_timestamp IS NOT NULL, 1, 0)'
     elif label == 'ssp_ctr':
@@ -461,7 +497,7 @@ class RImpressionTrainExporter(object):
       query += 'AND (' + condition + ') '
     return (
       query +
-      'ORDER BY timestamp DESC, request_id DESC '
+      'ORDER BY timestamp ' + order + ', request_id ' + order + ' '
       'LIMIT ' + str(train_rows) +
       ((' OFFSET ' + str(offset_rows)) if offset_rows else '') +
       ' FORMAT CSVWithNames')
@@ -481,7 +517,7 @@ class RImpressionTrainExporter(object):
       where_condition = (
         '(' + where_condition + ') AND (' + condition + ')')
     return (
-      'SELECT avg(if(clicked, -log(' + score + '), '
+      'SELECT avg(if (clicked, -log(' + score + '), '
         '-log1p(-' + score + '))) FROM ('
         'SELECT click_timestamp IS NOT NULL AS clicked, '
           'assumeNotNull(ssp_ctr) AS score '

@@ -38,10 +38,7 @@ public:
     unsigned short flags;
   };
 
-  RandomAuctionTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  RandomAuctionTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -78,10 +75,7 @@ private:
 
   template <typename Expected, size_t COUNT>
   void
-  test_case(
-    const Expected(&expected)[COUNT],
-    size_t sample_size,
-    const NSLookupRequest& request);
+  test_case(const Expected(&expected)[COUNT], size_t sample_size, const NSLookupRequest& request);
 
   template <typename Traits, typename CaseType, size_t COUNT>
   void
@@ -96,8 +90,6 @@ private:
   void creative_size_1();
   void proportional_1();
   void proportional_2();
-  void open_rtb_random(
-    AdClient& client);
-  void open_rtb_secondary(
-    AdClient& client);
+  void open_rtb_random(AdClient& client);
+  void open_rtb_secondary(AdClient& client);
 };

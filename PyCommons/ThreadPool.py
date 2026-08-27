@@ -8,19 +8,19 @@ from threading import Thread
 
 
 class Task:
-  
+
   def execute( self ):
     methodNotImplemented()
 
 
 class FnTask(Task):
-  
+
   def __init__( self, target, args = (), kwargs = {} ):
     self.target = target
     self.args   = args
     self.kwargs = kwargs
 
- 
+
   def execute( self ):
     apply(self.target, self.args, self.kwargs)
 
@@ -47,11 +47,11 @@ class ThreadPool:
   def close( self ):
     """
       Wait for all threads to exit.
-      
-      Note! 
+
+      Note!
         You must send *stop signal* manually, using SShutdown.shutdown.set(), so the
         usage pattern looks like:
-        - - - 
+        - - -
         SShutdown.shutdown.set()
         my-thread-pool.close()
     """

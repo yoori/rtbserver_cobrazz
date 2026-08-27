@@ -18,9 +18,7 @@ namespace AdServer::CampaignSvcs::CTR
     {
     public:
       virtual double
-      predict(
-        const HashArray* candidate_hashes,
-        const HashArray* opt_hashes) = 0;
+      predict(const HashArray* candidate_hashes, const HashArray* opt_hashes) = 0;
 
       virtual ~PredictionContext() noexcept = default;
     };

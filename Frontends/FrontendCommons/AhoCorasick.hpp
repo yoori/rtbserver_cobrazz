@@ -126,18 +126,15 @@ namespace FrontendCommons
   template<typename PatternTag>
   template<typename OnMatch>
   void
-  AhoCorasik<PatternTag>::match(
-    const String::SubString& str, OnMatch& on_match) const
+  AhoCorasik<PatternTag>::match(const String::SubString& str, OnMatch& on_match) const
     noexcept
   {
     const State* state = &begin_state_;
-    for (const char* curr_pos = str.begin(); curr_pos != str.end();
-      curr_pos++)
+    for (const char* curr_pos = str.begin(); curr_pos != str.end(); curr_pos++)
     {
       state = state->transitions[encode_(*curr_pos)];
 
-      for (typename Tags::const_iterator ci = state->tags.begin();
-          ci != state->tags.end(); ++ci)
+      for (typename Tags::const_iterator ci = state->tags.begin(); ci != state->tags.end(); ++ci)
       {
         MatchDetails details = {str, *ci};
 
@@ -169,11 +166,9 @@ namespace FrontendCommons
     encode_table_.resize(MAX_ALPHABET_SIZE, 0);
     size_t alphabet_size = 1;
 
-    for (typename Patterns::const_iterator pi = patterns_.begin();
-        pi != patterns_.end(); ++pi)
+    for (typename Patterns::const_iterator pi = patterns_.begin(); pi != patterns_.end(); ++pi)
     {
-      for (std::string::const_iterator ci = pi->text.begin();
-          ci != pi->text.end(); ++ci)
+      for (std::string::const_iterator ci = pi->text.begin(); ci != pi->text.end(); ++ci)
       {
         const size_t inx = static_cast<unsigned char>(*ci);
 
@@ -215,8 +210,7 @@ namespace FrontendCommons
     begin_state_.transitions.clear();
     begin_state_.transitions.resize(alphabet_size, 0);
 
-    for (typename Patterns::const_iterator pi = patterns_.begin();
-        pi != patterns_.end(); ++pi)
+    for (typename Patterns::const_iterator pi = patterns_.begin(); pi != patterns_.end(); ++pi)
     {
       State* state = &begin_state_;
 
@@ -260,8 +254,7 @@ namespace FrontendCommons
       for (size_t i = 0; i < curr_state->transitions.size(); ++i)
       {
         State* next_prev_state =
-          curr_tag.prev_state ?
-          curr_tag.prev_state->transitions[i] : &begin_state_;
+          curr_tag.prev_state ? curr_tag.prev_state->transitions[i] : &begin_state_;
 
         if (curr_state->transitions[i])
         {

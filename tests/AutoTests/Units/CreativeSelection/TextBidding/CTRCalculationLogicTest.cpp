@@ -1,11 +1,7 @@
 
 #include "CTRCalculationLogicTest.hpp"
 
-REFLECT_UNIT(CTRCalculationLogicTest) (
-  "CreativeSelection",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE
-);
+REFLECT_UNIT(CTRCalculationLogicTest) ("CreativeSelection", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE);
 
 namespace DB  = ::AutoTest::DBC;
 namespace ORM = ::AutoTest::ORM;
@@ -31,11 +27,9 @@ namespace
     return (clicks + (2000 * ctr)) / (2000 + imps);
   }
 
-  double calc_kwd_ctr(double clicks, double imps,
-                      double ccg_ctr, double kwd_ctr)
+  double calc_kwd_ctr(double clicks, double imps, double ccg_ctr, double kwd_ctr)
   {
-    return (clicks + (ccg_ctr * 1000) +
-            (kwd_ctr * 1000)) / (2000 + imps);
+    return (clicks + (ccg_ctr * 1000) + (kwd_ctr * 1000)) / (2000 + imps);
   }
 
   /**
@@ -107,8 +101,7 @@ CTRCalculationLogicTest::set_up()
 {
   add_descr_phrase("Setup");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CHANNEL_CONTROLLER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CHANNEL_CONTROLLER)),
     "ChannelManagerController need for this test");
 }
 
@@ -164,10 +157,7 @@ CTRCalculationLogicTest::initial_case()
 
     FAIL_CONTEXT(
       AutoTest::wait_checker(
-        CheckCTR(
-          this, pq_conn_, pq_conn_,
-          fetch_int(keyword_name),
-          DEFAULT_CTR)).check(),
+        CheckCTR(this, pq_conn_, pq_conn_, fetch_int(keyword_name), DEFAULT_CTR)).check(),
       keyword_name + " initial check");
   }
 
@@ -206,9 +196,7 @@ CTRCalculationLogicTest::base_case()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        fetch_string("CC1"),
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(fetch_string("CC1"), SelectedCreativesCCID(client)).check(),
       "selected_creatives");
   }
 
@@ -226,9 +214,7 @@ CTRCalculationLogicTest::base_case()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        fetch_string("CC2"),
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(fetch_string("CC2"), SelectedCreativesCCID(client)).check(),
       "selected_creatives");
 
     if (i % 4 == 0)
@@ -258,9 +244,7 @@ CTRCalculationLogicTest::base_case()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        fetch_string("CC2"),
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(fetch_string("CC2"), SelectedCreativesCCID(client)).check(),
       "selected_creatives");
 
     if (i % 2 == 0)
@@ -332,10 +316,7 @@ CTRCalculationLogicTest::base_case()
 
     FAIL_CONTEXT(
       AutoTest::wait_checker(
-        CheckCTR(
-          this, pq_conn_, pq_conn_,
-          fetch_int(keyword_name),
-          expected_ctr[i])).check(),
+        CheckCTR(this, pq_conn_, pq_conn_, fetch_int(keyword_name), expected_ctr[i])).check(),
       keyword_name + " check chanded CTR#" + strof(i+1));
   }
 

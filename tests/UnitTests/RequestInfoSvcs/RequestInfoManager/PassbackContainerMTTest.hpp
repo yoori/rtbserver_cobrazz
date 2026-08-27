@@ -16,8 +16,7 @@ public:
 
 public:
   virtual void
-  process_passback(
-    const AdServer::RequestInfoSvcs::PassbackProcessor::PassbackInfo& pi)
+  process_passback(const AdServer::RequestInfoSvcs::PassbackProcessor::PassbackInfo& pi)
     /*throw(AdServer::RequestInfoSvcs::PassbackProcessor::Exception)*/
   {
     Sync::PosixGuard lock(map_lock_);

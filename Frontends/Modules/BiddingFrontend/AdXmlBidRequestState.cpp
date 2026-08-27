@@ -66,8 +66,7 @@ namespace AdServer::Bidding
     {
       Stream::Error ostr;
       ostr << FUN << ": bad request, " << ex.what() <<
-        ", request: '" << bid_request << "'" <<
-        ", uri: '" << uri_ << "'";
+        ", request: '" << bid_request << "'" << ", uri: '" << uri_ << "'";
 
       bid_frontend_->logger()->log(
         ostr.str(),
@@ -89,15 +88,12 @@ namespace AdServer::Bidding
 
     std::ostringstream response_ostr;
 
-    fill_response_(
-      response_ostr,
-      request_info_,
-      campaign_match_result);
+    fill_response_(response_ostr, request_info_, campaign_match_result);
 
     // write response
     const std::string bid_response = response_ostr.str();
 
-    if(!bid_response.empty())
+    if (!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       response->set_content_type_nocopy(Response::Type::TEXT_XML);
@@ -120,7 +116,7 @@ namespace AdServer::Bidding
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
 
-    if(code < 300)
+    if (code < 300)
     {
       // no-bid is No content
       write_response_(204, response, response_claimed);
@@ -162,12 +158,9 @@ namespace AdServer::Bidding
         "<result requesttime=\"" <<
         (now - start_processing_time()).get_gm_time().format("%s.%q") << "\">\n";
 
-      for(std::size_t slot_i = 0;
-        slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
+      for (std::size_t slot_i = 0; slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
       {
-        fill_response_adslot_(
-          response_ostr,
-          campaign_match_result.ad_slots[slot_i]);
+        fill_response_adslot_(response_ostr, campaign_match_result.ad_slots[slot_i]);
       }
 
       response_ostr << "</result>\n"
@@ -191,7 +184,7 @@ namespace AdServer::Bidding
     // find title & image
     response_ostr << "<ad>\n";
     response_ostr << "<title>";
-    if(ad_slot_result.native_data_tokens.size() >= 1)
+    if (ad_slot_result.native_data_tokens.size() >= 1)
     {
       // NDTE_TITLE
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
@@ -200,7 +193,7 @@ namespace AdServer::Bidding
     }
     response_ostr << "</title>\n";
     response_ostr << "<desc>";
-    if(ad_slot_result.native_data_tokens.size() >= 2)
+    if (ad_slot_result.native_data_tokens.size() >= 2)
     {
       // NDTE_DESC
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
@@ -221,7 +214,7 @@ namespace AdServer::Bidding
 
     response_ostr << "<bid>" << adxml_price.str() << "</bid>\n";
     response_ostr << "<image>";
-    if(ad_slot_result.native_image_tokens.size() > 0)
+    if (ad_slot_result.native_image_tokens.size() > 0)
     {
       // NITE_MAIN
       const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
@@ -235,9 +228,7 @@ namespace AdServer::Bidding
   }
 
   void
-  AdXmlBidRequestState::add_xml_escaped_string_(
-    std::ostream& response_ostr,
-    const char* str)
+  AdXmlBidRequestState::add_xml_escaped_string_(std::ostream& response_ostr, const char* str)
     noexcept
   {
     std::string escaped_str;

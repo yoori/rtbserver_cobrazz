@@ -1,9 +1,7 @@
 
 #include "GEOChannelsMatching.hpp"
 
-REFLECT_UNIT(GEOChannelsMatching) (
-  "TriggerMatching",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(GEOChannelsMatching) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -94,18 +92,14 @@ GEOChannelsMatching::run_test()
 {
   for (unsigned long i = 0; i < countof(LOCREQUESTS); ++i)
   {
-    AUTOTEST_CASE(
-      location_name_case(LOCREQUESTS[i]),
-      LOCREQUESTS[i].description);
+    AUTOTEST_CASE(location_name_case(LOCREQUESTS[i]), LOCREQUESTS[i].description);
   }
 
   if (get_config().check_service(CTE_CENTRAL, STE_FRONTEND))
   {
     for (unsigned long i = 0; i < countof(IPREQUESTS); ++i)
     {
-      AUTOTEST_CASE(
-        ip_case(IPREQUESTS[i]),
-        IPREQUESTS[i].description);
+      AUTOTEST_CASE(ip_case(IPREQUESTS[i]), IPREQUESTS[i].description);
     }
   }
   else
@@ -118,16 +112,13 @@ GEOChannelsMatching::run_test()
   return true;
 }
 
-void GEOChannelsMatching::location_name_case(
-  const LocTestRequest& testcase)
+void GEOChannelsMatching::location_name_case(const LocTestRequest& testcase)
 {
     AdClient client(AdClient::create_user(this));
 
     NSLookupRequest request;
 
-    testcase.param(
-      request,
-      map_objects(testcase.location, "/"));
+    testcase.param(request, map_objects(testcase.location, "/"));
 
     client.process_request(request);
 
@@ -136,9 +127,7 @@ void GEOChannelsMatching::location_name_case(
       if (!testcase.expected)
       {
         FAIL_CONTEXT(
-          AutoTest::equal_checker(
-            0,
-            client.debug_info.geo_channels.size()).check(),
+          AutoTest::equal_checker(0, client.debug_info.geo_channels.size()).check(),
           "Expect empty geo_channels");
       }
       else
@@ -154,9 +143,7 @@ void GEOChannelsMatching::location_name_case(
     else
     {
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this, testcase.expected,
-          client.debug_info.geo_channels).check(),
+        ChannelsCheck(this, testcase.expected, client.debug_info.geo_channels).check(),
         "Expected geo_channels");
 
       FAIL_CONTEXT(
@@ -168,18 +155,12 @@ void GEOChannelsMatching::location_name_case(
     }
 }
 
-void GEOChannelsMatching::ip_case(
-  const IPTestRequest& testcase)
+void GEOChannelsMatching::ip_case(const IPTestRequest& testcase)
 {
 
-  AdClient client(
-    AdClient::create_user(
-        this, AutoTest::UF_CENTRAL_FRONTEND));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_CENTRAL_FRONTEND));
 
-  client.process_request(
-    NSLookupRequest().
-      debug_ip(testcase.ip).
-      loc_name(0));
+  client.process_request(NSLookupRequest(). debug_ip(testcase.ip). loc_name(0));
 
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -190,10 +171,7 @@ void GEOChannelsMatching::ip_case(
   if (testcase.expected_channels)
   {
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        testcase.expected_channels,
-        client.debug_info.geo_channels).check(),
+      ChannelsCheck(this, testcase.expected_channels, client.debug_info.geo_channels).check(),
       "Expected geo_channels");
   }
 

@@ -39,7 +39,7 @@ sub init
   # Url with russian 'A' + 'b' letters
   my $russian_url2_1 =  $domain3 . "/path1?" . qq[\xd0\x90] . "+" . qq[\xd0\xb1] . "=";
   # Url with russian 'anchor' word
-  my $russian_url3 = $domain7 . "/path?p2=a#" . 
+  my $russian_url3 = $domain7 . "/path?p2=a#" .
     qq[\xd1\x8f\xd0\xba\xd0\xbe\xd1\x80\xd1\x8c];
   # Url with russian 'main page' phrase
   my $russian_url4 = $domain8 . "/wiki/" .
@@ -96,7 +96,7 @@ sub init
     "$domain9/oiinternet/staticContent.do?path=/html/torpedo-cobrar" => 1,
     "$ipv4_address" => 1,
     "http://-$domain13" => 0,
-    "http://--$domain13" => 0 
+    "http://--$domain13" => 0
   },
   # channel#2
   {
@@ -137,7 +137,7 @@ sub init
       my $encoded_trigger = $original_trigger;
       Encode::_utf8_on($encoded_trigger);
       $ns->output(
-        $original_trigger, $trigger->channel_trigger_id(), 
+        $original_trigger, $trigger->channel_trigger_id(),
            $urls[$i]->{$original_trigger}? $urls[$i]->{$original_trigger}: $urls[$i]->{$encoded_trigger});
     }
   }

@@ -2,10 +2,7 @@
 #include "CreativeCategoryGranularUpdateTest.hpp"
 #include <iterator>
 
-REFLECT_UNIT(CreativeCategoryGranularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CreativeCategoryGranularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace {
   enum CategoryType
@@ -31,8 +28,7 @@ CreativeCategoryGranularUpdateTest::set_up()
   add_descr_phrase("SetUp");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must prisent in the configuration file");
 
 }
@@ -85,14 +81,12 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
 
   for (size_t i = 0; i < countof(CATEGORY_NAMES); ++i)
   {
-    ORM::ORMRestorer<ORM::PQ::CreativeCategory>* category =
-      create<ORM::PQ::CreativeCategory>();
+    ORM::ORMRestorer<ORM::PQ::CreativeCategory>* category = create<ORM::PQ::CreativeCategory>();
     CategoryType category_type = static_cast<CategoryType>(i);
     category->type = category_type;
     category->name = fetch_string(CATEGORY_NAMES[i]);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      category->insert()),
+    AutoTest::predicate_checker(category->insert()),
     description +
       " Cann't insert visual category#" + strof(i+1));
 
@@ -104,9 +98,7 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
         create<ORM::PQ::CreativeCategory_Creative>();
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
-          cc_category->insert(
-            category->id(),
-            fetch_int("CREATE/CREATIVE"))),
+          cc_category->insert(category->id(), fetch_int("CREATE/CREATIVE"))),
         description +
           "Cann't create link to category#" + strof(i+1));
     }
@@ -119,8 +111,7 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
           this,
           category->id(),
           CreativeCategoryChecker::Expected().
-          creative_category_id(
-            category->id()))));
+          creative_category_id(category->id()))));
   }
 
   // Initialize checker for creative categories
@@ -128,9 +119,7 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
 
   std::list<unsigned long>::iterator last = --cat_ids.end();
 
-  std::copy(cat_ids.begin(), last,
-    std::ostream_iterator<unsigned long>(
-      expected_categories, ","));
+  std::copy(cat_ids.begin(), last, std::ostream_iterator<unsigned long>(expected_categories, ","));
 
   expected_categories << *last;
 
@@ -175,8 +164,7 @@ void CreativeCategoryGranularUpdateTest::unlink_category_()
     create<ORM::PQ::CreativeCategory>(tag_category);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      category->delet()),
+    AutoTest::predicate_checker(category->delet()),
     description +
       " Cann't delete tags category");
 
@@ -191,11 +179,7 @@ void CreativeCategoryGranularUpdateTest::unlink_category_()
 
   add_checker(
     description + " Creative categories",
-    CreativeWaitChecker(
-      CreativeChecker(
-        this,
-        cc,
-        CreativeChecker::Expected().categories(""))));
+    CreativeWaitChecker(CreativeChecker(this, cc, CreativeChecker::Expected().categories(""))));
 }
 
 void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
@@ -208,9 +192,7 @@ void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
 
   {
     std::string expected_categories =
-      map_objects(
-        "ADDEXCLUSION/CATEGORY/Visual,"
-        "ADDEXCLUSION/CATEGORY/Content");
+      map_objects("ADDEXCLUSION/CATEGORY/Visual," "ADDEXCLUSION/CATEGORY/Content");
 
     FAIL_CONTEXT(
       CreativeWaitChecker(
@@ -230,18 +212,14 @@ void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
   AdClient client(AdClient::create_user(this));
 
   FAIL_CONTEXT(
-    SelectedCreativeChecker(
-      client, request, cc).check(),
+    SelectedCreativeChecker(client, request, cc).check(),
     description + " Initial request for CC");
 
   ORM::ORMRestorer<ORM::PQ::CreativeCategory_Creative>* cc_category =
     create<ORM::PQ::CreativeCategory_Creative>();
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cc_category->insert(
-        category,
-        fetch_int("ADDEXCLUSION/CREATIVE"))),
+    AutoTest::predicate_checker(cc_category->insert(category, fetch_int("ADDEXCLUSION/CREATIVE"))),
     description +
       "Cann't create link to exclusion category");
 
@@ -256,16 +234,10 @@ void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
     add_checker(
       description + " Creative creative",
       CreativeWaitChecker(
-        CreativeChecker(
-          this,
-          cc,
-          CreativeChecker::Expected().
-            categories(expected_categories))));
+        CreativeChecker(this, cc, CreativeChecker::Expected(). categories(expected_categories))));
   }
 
-  add_checker(
-    description + " Request for CC",
-    SelectedCreativeChecker(client, request, 0));
+  add_checker(description + " Request for CC", SelectedCreativeChecker(client, request, 0));
 }
 
 void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
@@ -301,8 +273,7 @@ void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
   AdClient client(AdClient::create_user(this));
 
   FAIL_CONTEXT(
-    SelectedCreativeChecker(
-      client, request, 0).check(),
+    SelectedCreativeChecker(client, request, 0).check(),
     description + " Initial request for CC");
 
   ORM::PQ::CreativeCategory_Creative cc_category_(
@@ -312,36 +283,24 @@ void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
 
   ORM::ORMRestorer<ORM::PQ::CreativeCategory_Creative>* cc_category =
     create(
-      ORM::PQ::CreativeCategory_Creative(
-        pq_conn_,
-        category,
-        fetch_int("DELEXCLUSION/CREATIVE")));
+      ORM::PQ::CreativeCategory_Creative(pq_conn_, category, fetch_int("DELEXCLUSION/CREATIVE")));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cc_category->delet()),
+    AutoTest::predicate_checker(cc_category->delet()),
     description +
       "Cann't unlink from exclusion category");
 
   {
     std::string expected_categories =
-      map_objects(
-        "DELEXCLUSION/CATEGORY/Visual,"
-        "DELEXCLUSION/CATEGORY/Content");
+      map_objects("DELEXCLUSION/CATEGORY/Visual," "DELEXCLUSION/CATEGORY/Content");
 
     add_checker(
       description + " Creative creative",
       CreativeWaitChecker(
-        CreativeChecker(
-          this,
-          cc,
-          CreativeChecker::Expected().
-            categories(expected_categories))));
+        CreativeChecker(this, cc, CreativeChecker::Expected(). categories(expected_categories))));
   }
 
-  add_checker(
-    description + " Request for CC",
-    SelectedCreativeChecker(client, request, cc));
+  add_checker(description + " Request for CC", SelectedCreativeChecker(client, request, cc));
 }
 
 

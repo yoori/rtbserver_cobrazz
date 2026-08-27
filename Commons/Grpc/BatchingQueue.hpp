@@ -36,9 +36,7 @@ namespace AdServer::Grpc
 
     ~BatchingQueue();
 
-    EnqueueResult enqueue(
-      PendingRequestPtr request,
-      const Generics::Time& enqueue_time);
+    EnqueueResult enqueue(PendingRequestPtr request, const Generics::Time& enqueue_time);
 
     bool try_pop_due_batch(
       Batch& batch,

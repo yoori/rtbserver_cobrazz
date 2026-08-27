@@ -5,9 +5,7 @@
 #include<ReferenceCounting/AtomicImpl.hpp>
 #include<ReferenceCounting/SmartPtr.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   struct LexemeData
   {
@@ -29,11 +27,8 @@ namespace ChannelSvcs
 
   typedef ReferenceCounting::SmartPtr<Lexeme> Lexeme_var;
 }
-}
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   inline
   size_t Lexeme::memory_size() const noexcept
@@ -41,5 +36,4 @@ namespace ChannelSvcs
     return sizeof(Lexeme) + data.capacity() +
       forms.capacity() * sizeof(String::SubString);
   }
-}
 }

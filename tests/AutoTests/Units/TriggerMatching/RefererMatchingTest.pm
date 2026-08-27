@@ -40,7 +40,7 @@ sub init
   $bp = $ns->create(
     DB::BehavioralChannel->blank(
       name => 3,
-      url_list => 
+      url_list =>
         "http://andrey.gusev.com:80/good/specialist/",
       account_id => $acc,
       behavioral_parameters => [
@@ -52,7 +52,7 @@ sub init
   $bp = $ns->create(
     DB::BehavioralChannel->blank(
       name => 4,
-      url_list => 
+      url_list =>
         "http://andrey.gusev.com:80/good/specialist?wants=1&cool=1",
       account_id => $acc,
       behavioral_parameters => [

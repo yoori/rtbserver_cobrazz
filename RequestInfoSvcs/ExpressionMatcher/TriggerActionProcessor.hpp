@@ -6,9 +6,7 @@
 
 #include "InventoryActionProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   class TriggerActionProcessor:
     public virtual ReferenceCounting::Interface
@@ -32,9 +30,7 @@ namespace RequestInfoSvcs
         : channel_trigger_id(0), channel_id(0)
       {}
 
-      MatchCounterKey(
-        unsigned long channel_trigger_id_val,
-        unsigned long channel_id_val)
+      MatchCounterKey(unsigned long channel_trigger_id_val, unsigned long channel_id_val)
         noexcept
         : channel_trigger_id(channel_trigger_id_val), channel_id(channel_id_val)
       {}
@@ -60,9 +56,7 @@ namespace RequestInfoSvcs
       negate();
 
       void
-      print(
-        std::ostream& out,
-        const char* offset = "") const;
+      print(std::ostream& out, const char* offset = "") const;
     };
 
     struct TriggersMatchInfo
@@ -75,18 +69,14 @@ namespace RequestInfoSvcs
       MatchCountMap url_keyword_matches;
 
       void
-      print(
-        std::ostream& out,
-        const char* offset = "") const;
+      print(std::ostream& out, const char* offset = "") const;
     };
 
   public:
-    virtual void process_triggers_impression(
-      const TriggersMatchInfo& match_info)
+    virtual void process_triggers_impression(const TriggersMatchInfo& match_info)
       /*throw(Exception)*/ = 0;
 
-    virtual void process_triggers_click(
-      const TriggersMatchInfo& match_info)
+    virtual void process_triggers_click(const TriggersMatchInfo& match_info)
       /*throw(Exception)*/ = 0;
 
   protected:
@@ -97,18 +87,15 @@ namespace RequestInfoSvcs
   typedef ReferenceCounting::SmartPtr<TriggerActionProcessor>
     TriggerActionProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   inline
   void
   TriggerActionProcessor::
   MatchCountMap::add(const MatchCountMap& right)
   {
-    for(const_iterator it = right.begin(); it != right.end(); ++it)
+    for (const_iterator it = right.begin(); it != right.end(); ++it)
     {
       (*this)[it->first] += it->second;
     }
@@ -119,7 +106,7 @@ namespace RequestInfoSvcs
   TriggerActionProcessor::
   MatchCountMap::negate()
   {
-    for(iterator it = begin(); it != end(); ++it)
+    for (iterator it = begin(); it != end(); ++it)
     {
       it->second.negate();
     }
@@ -130,7 +117,7 @@ namespace RequestInfoSvcs
   TriggerActionProcessor::
   MatchCountMap::print(std::ostream& out, const char* offset) const
   {
-    for(const_iterator it = begin(); it != end(); ++it)
+    for (const_iterator it = begin(); it != end(); ++it)
     {
       out << offset << '(' << it->first.channel_trigger_id << ':' << it->first.channel_id <<
         "): " << it->second << std::endl;
@@ -140,8 +127,7 @@ namespace RequestInfoSvcs
   inline
   void
   TriggerActionProcessor::
-  TriggersMatchInfo::print(
-    std::ostream& out, const char* offset) const
+  TriggersMatchInfo::print(std::ostream& out, const char* offset) const
   {
     out << offset << "time: " << time.get_gm_time() << std::endl <<
       offset << "page_matches: " << std::endl;
@@ -153,5 +139,4 @@ namespace RequestInfoSvcs
     out << offset << "url_keyword_matches: " << std::endl;
     url_keyword_matches.print(out, (std::string(offset) + "  ").c_str());
   }
-}
 }

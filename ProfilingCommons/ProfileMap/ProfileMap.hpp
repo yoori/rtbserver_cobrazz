@@ -17,9 +17,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   enum OperationPriority
   {
@@ -52,15 +50,11 @@ namespace ProfilingCommons
     check_profile(const KeyType& key) const /*throw(Exception)*/ = 0;
 
     virtual Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(Exception)*/ = 0;
 
     virtual Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(Exception)*/;
 
     virtual void
@@ -72,9 +66,7 @@ namespace ProfilingCommons
       /*throw(Exception)*/ = 0;
 
     virtual bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME)
+    remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME)
       /*throw(Exception)*/ = 0;
 
     virtual void
@@ -115,15 +107,11 @@ namespace ProfilingCommons
       Generics::SmartMemBuf_var,
       std::optional<std::string> error)>;
     using SaveCallback = std::function<void(std::optional<std::string> error)>;
-    using RemoveCallback = std::function<void(
-      bool,
-      std::optional<std::string> error)>;
+    using RemoveCallback = std::function<void(bool, std::optional<std::string> error)>;
     using CompleteCallback = std::function<void()>;
 
     virtual void
-    check_profile_async(
-      const KeyType& key,
-      CheckCallback callback) const
+    check_profile_async(const KeyType& key, CheckCallback callback) const
       /*throw(Exception)*/ = 0;
 
     virtual Generics::ConstSmartMemBuf_var
@@ -181,9 +169,7 @@ namespace ProfilingCommons
       const Generics::Time& now = Generics::Time::get_time_of_day());
 
     AdServer::Commons::Awaitable<bool>
-    co_remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME);
+    co_remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME);
 
     AdServer::Commons::Awaitable<void>
     co_clear_expired(const Generics::Time& expire_time);
@@ -205,14 +191,10 @@ namespace ProfilingCommons
     check_profile(const KeyType& key) const override;
 
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0) override;
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0) override;
 
     Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0) override;
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0) override;
 
     void
     save_profile(
@@ -222,9 +204,7 @@ namespace ProfilingCommons
       OperationPriority op_priority = OP_RUNTIME) override;
 
     bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME) override;
+    remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME) override;
 
     void
     clear_expired(const Generics::Time& expire_time) override;
@@ -240,6 +220,6 @@ namespace ProfilingCommons
   };
 
 }
-}
+
 
 #include "ProfileMap.tpp"

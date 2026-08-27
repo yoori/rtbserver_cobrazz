@@ -77,14 +77,11 @@ namespace AdServer::RequestInfoSvcs
     co_process_match_request(const MatchInfo& request_info);
 
     bool
-    get_last_daily_processing_time(
-      const AdServer::Commons::UserId& user_id,
-      Generics::Time& time)
+    get_last_daily_processing_time(const AdServer::Commons::UserId& user_id, Generics::Time& time)
       /*throw(Exception)*/;
 
     void
-    process_user(
-      const InventoryDailyMatchInfo& inv_daily_match_info)
+    process_user(const InventoryDailyMatchInfo& inv_daily_match_info)
       /*throw(Exception)*/;
 
     void
@@ -122,9 +119,7 @@ namespace AdServer::RequestInfoSvcs
       /*throw(Exception)*/;
 
     static bool
-    init_inv_info_(
-      InventoryActionProcessor::InventoryInfo& inv_info,
-      const MatchInfo& request_info)
+    init_inv_info_(InventoryActionProcessor::InventoryInfo& inv_info, const MatchInfo& request_info)
       noexcept;
 
   private:
@@ -151,10 +146,8 @@ namespace AdServer::RequestInfoSvcs
     noexcept
   {
     ostr << offset << "user_id: '" << user_id << "'" << std::endl <<
-      offset << "time: " << time.get_gm_time() << std::endl <<
-      offset << "channels: ";
-    Algs::print(ostr,
-      triggered_expression_channels.begin(), triggered_expression_channels.end());
+      offset << "time: " << time.get_gm_time() << std::endl << offset << "channels: ";
+    Algs::print(ostr, triggered_expression_channels.begin(), triggered_expression_channels.end());
     ostr << std::endl;
   }
 }

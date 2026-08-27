@@ -44,10 +44,9 @@ TEST(RegExPerformanceTest)
     Generics::CPUTimer timer;
     timer.start();
 
-    for(int i = 0; i < ITERS; ++i)
+    for (int i = 0; i < ITERS; ++i)
     {
-      for(std::list<String::RegEx>::const_iterator it = regexps.begin();
-          it != regexps.end(); ++it)
+      for (std::list<String::RegEx>::const_iterator it = regexps.begin(); it != regexps.end(); ++it)
       {
         String::RegEx::Result res;
         if (it->search(res, str))
@@ -78,15 +77,14 @@ TEST(RegExPerformanceTest)
     Generics::CPUTimer timer;
     timer.start();
 
-    for(int i = 0; i < ITERS; ++i)
+    for (int i = 0; i < ITERS; ++i)
     {
-      for(std::list<MarkedRegExp>::const_iterator it = regexps.begin();
-          it != regexps.end(); ++it)
+      for (std::list<MarkedRegExp>::const_iterator it = regexps.begin(); it != regexps.end(); ++it)
       {
-        if(str.find(it->marker) != std::string::npos)
+        if (str.find(it->marker) != std::string::npos)
         {
           String::RegEx::Result res;
-          if(it->re.search(res, str))
+          if (it->re.search(res, str))
           {
             break;
           }
@@ -104,37 +102,13 @@ TEST(MatchTest)
 {
   UrlMatcher_var url_matcher(new UrlMatcher());
 
-  url_matcher->add_rule(
-    10U,
-    "test.com",
-    "q=(.*)",
-    0U,
-    0,
-    0);
+  url_matcher->add_rule(10U, "test.com", "q=(.*)", 0U, 0, 0);
 
-  url_matcher->add_rule(
-    20U,
-    "test2.*",
-    "q=(.*)",
-    0U,
-    0,
-    0);
+  url_matcher->add_rule(20U, "test2.*", "q=(.*)", 0U, 0, 0);
 
-  url_matcher->add_rule(
-    30U,
-    "test2.*.*",
-    "q2=(.*)",
-    0U,
-    0,
-    0);
+  url_matcher->add_rule(30U, "test2.*.*", "q2=(.*)", 0U, 0, 0);
 
-  url_matcher->add_rule(
-    40U,
-    "ask.com",
-    ".*[?&]q=([^&]+).*",
-    1U,
-    0,
-    0);
+  url_matcher->add_rule(40U, "ask.com", ".*[?&]q=([^&]+).*", 1U, 0, 0);
 
   url_matcher->add_rule(
     38U,
@@ -147,26 +121,12 @@ TEST(MatchTest)
   std::string res;
   unsigned long search_engine_id = 0;
 
-  ASSERT_TRUE(
-    url_matcher->match(
-      search_engine_id,
-      res,
-      String::SubString("test.com/q=test"),
-      0));
+  ASSERT_TRUE(url_matcher->match(search_engine_id, res, String::SubString("test.com/q=test"), 0));
+
+  ASSERT_TRUE(url_matcher->match(search_engine_id, res, String::SubString("test2.com/q=test"), 0));
 
   ASSERT_TRUE(
-    url_matcher->match(
-      search_engine_id,
-      res,
-      String::SubString("test2.com/q=test"),
-      0));
-
-  ASSERT_TRUE(
-    url_matcher->match(
-      search_engine_id,
-      res,
-      String::SubString("test2.co.uk/q2=test"),
-      0));
+    url_matcher->match(search_engine_id, res, String::SubString("test2.co.uk/q2=test"), 0));
 
   ASSERT_TRUE(
     url_matcher->match(

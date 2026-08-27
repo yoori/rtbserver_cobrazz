@@ -33,17 +33,13 @@ namespace AutoTest
   };
 
 
-  TagPassbackChecker::TagPassbackChecker(
-    const AdClient& client,
-    const std::string& url) :
+  TagPassbackChecker::TagPassbackChecker(const AdClient& client, const std::string& url) :
     client_(client)
   {
     expected_.url(url);
   }
 
-  TagPassbackChecker::TagPassbackChecker(
-    const AdClient& client,
-    const Tokens& expected) :
+  TagPassbackChecker::TagPassbackChecker(const AdClient& client, const Tokens& expected) :
     client_(client),
     expected_(expected)
   {}
@@ -59,7 +55,7 @@ namespace AutoTest
     size_t i = 0;
     bool result = true;
     Stream::Error error;
-    while( !body.eof())
+    while ( !body.eof())
     {
       char got[MAX_TOKEN_SIZE];
       body.getline(got, MAX_TOKEN_SIZE);
@@ -70,8 +66,7 @@ namespace AutoTest
       {
         std::string exp((expected_.*(TOKENS[i].get))());
 
-        result = exp.empty() ||
-          equal(exp, (got_.*(TOKENS[i].get))());
+        result = exp.empty() || equal(exp, (got_.*(TOKENS[i].get))());
 
         if (!result)
         {
@@ -82,13 +77,14 @@ namespace AutoTest
       }
       i++;
     }
+
     if (result && i != TOKEN_COUNT)
     {
       error << "Invalid passback body format '" <<
-        client_.req_response_data() << "': expected " <<
-        TOKEN_COUNT << " lines, got " << i;
+        client_.req_response_data() << "': expected " << TOKEN_COUNT << " lines, got " << i;
       result = false;
     }
+
     if (!result && throw_error)
     {
       throw AutoTest::CheckFailed(error);

@@ -13,7 +13,7 @@ sub create_keywords
   if (defined $args)
   {
     my @keywords = ();
-    
+
     foreach my $k (split(/\W+/, $args))
     {
       my $keyword;
@@ -23,9 +23,9 @@ sub create_keywords
       }
       else
       {
-        $keyword = 
+        $keyword =
           make_autotest_name($self->{ns_}, $k);
-        $self->{ns_}->output("KWD/" . $k , $keyword);       
+        $self->{ns_}->output("KWD/" . $k , $keyword);
         $self->{keywords_}->{$k} = $keyword;
       }
       push @keywords, $keyword;
@@ -34,7 +34,7 @@ sub create_keywords
   }
   else
   {
-    my $keyword = 
+    my $keyword =
       make_autotest_name($self->{ns_}, $name);
     $self->{ns_}->output("KWD/" . $name, $keyword);
     return $keyword;
@@ -44,22 +44,22 @@ sub create_keywords
 sub create_accounts
 {
   my ($self, $args) = @_;
-  
+
   foreach my $a (@$args)
   {
-    die $self->{prefix_} . ".Account '$a->{name}' is redefined!" 
+    die $self->{prefix_} . ".Account '$a->{name}' is redefined!"
       if exists $self->{accounts_}->{$a->{name}};
 
-    die $self->{prefix_} . ".Account '$a->{internal}' is undefined!" 
+    die $self->{prefix_} . ".Account '$a->{internal}' is undefined!"
       if defined $a->{internal} and not exists $self->{accounts_}->{$a->{internal}};
 
     my $account = $self->{ns_}->create(Account => {
       name => $a->{name},
-      internal_account_id => 
+      internal_account_id =>
         exists $a->{internal}?
           defined $a->{internal}?
             $self->{accounts_}->{$a->{internal}}:
-              $a->{internal}: DB::Defaults::instance()->internal_account, 
+              $a->{internal}: DB::Defaults::instance()->internal_account,
       role_id => defined $a->{role}?
         $a->{role}: DB::Defaults::instance()->advertiser_role });
 
@@ -71,11 +71,11 @@ sub create_accounts
 sub make_expression_
 {
   my ($self, $expression) = @_;
-  
+
   foreach my $w ( split(/\W+/, $expression) )
   {
     my $c = $self->{channels_}->{$w};
-    die $self->{prefix_} . ".Channel '$w' is not defined!" 
+    die $self->{prefix_} . ".Channel '$w' is not defined!"
         if not defined $c;
     $expression =~ s/$w/$c->{channel_id}/;
   }
@@ -86,32 +86,32 @@ sub make_expression_
 sub create_expressions
 {
   my ($self, $args) = @_;
-  
+
   foreach my $e (@$args)
   {
 
-    die $self->{prefix_} . ".Channel '$e->{name}' is redefined!" 
+    die $self->{prefix_} . ".Channel '$e->{name}' is redefined!"
        if exists $self->{channels_}->{$e->{name}};
 
-    my $expression = 
+    my $expression =
       $self->make_expression_($e->{expression});
 
-    die $self->{prefix_} . ".Account '$e->{account}' is not defined!" 
+    die $self->{prefix_} . ".Account '$e->{account}' is not defined!"
       if defined $e->{account} and not exists $self->{accounts_}->{$e->{account}};
- 
-    my $channel = 
+
+    my $channel =
       $self->{ns_}->create(DB::ExpressionChannel->blank(
          name => $e->{name},
          account_id => defined $e->{account}?
-           $self->{accounts_}->{$e->{account}}:  
+           $self->{accounts_}->{$e->{account}}:
              $self->{ns_}->create(Account => {
                name => 'Advertiser-' .  $e->{name},
                role_id => DB::Defaults::instance()->advertiser_role }),
-         visibility => 
+         visibility =>
            defined $e->{visibility}?
              $e->{visibility}: 'PUB',
          flags => $e->{overlap}?
-           DB::CMPChannelBase::OVERLAP: 0,                                             
+           DB::CMPChannelBase::OVERLAP: 0,
          expression => $expression ));
 
     $self->{ns_}->output("Expr/" . $e->{name},  $channel->channel_id());
@@ -122,30 +122,30 @@ sub create_expressions
 sub create_channels
 {
   my ($self, $args) = @_;
-  
+
   foreach my $c (@$args)
   {
-    die $self->{prefix_} . ".Channel '$c->{name}' is redefined!" 
+    die $self->{prefix_} . ".Channel '$c->{name}' is redefined!"
       if exists $self->{channels_}->{$c->{name}};
 
-    die $self->{prefix_} . ".Account '$c->{account}' is not defined!" 
+    die $self->{prefix_} . ".Account '$c->{account}' is not defined!"
       if defined $c->{account} and not exists $self->{accounts_}->{$c->{account}};
 
     my ($keyword, $url);
-    
+
     my @behavs = ();
-    
+
     sub create_params
     {
       my ($type, $args, $behavs) = @_;
       my %behav_params = (
         trigger_type => $type);
-      
+
       $behav_params{time_to} = $args->{to} || 3*60*60;
       $behav_params{time_from} = $args->{from} || 0;
       $behav_params{minimum_visits} = $args->{visits} || 1;
 
-      push @$behavs, 
+      push @$behavs,
          DB::BehavioralChannel::BehavioralParameter->blank(
            %behav_params);
     }
@@ -153,7 +153,7 @@ sub create_channels
 
     if (defined $c->{keyword})
     {
-      $keyword = 
+      $keyword =
           $self->create_keywords($c->{name}, $c->{keyword});
 
       create_params('P', $c, \@behavs);
@@ -161,7 +161,7 @@ sub create_channels
 
     if (defined $c->{url})
     {
-      $url = "www." . 
+      $url = "www." .
         make_autotest_name(
          $self->{ns_}, $c->{url}) . ".com";
 
@@ -173,7 +173,7 @@ sub create_channels
     my %params = (
       name => $c->{name},
       account_id => defined $c->{account}?
-        $self->{accounts_}->{$c->{account}}: 
+        $self->{accounts_}->{$c->{account}}:
           $self->{ns_}->create(Account => {
             name => 'Advertiser-CH-' .  $c->{name},
             role_id => DB::Defaults::instance()->advertiser_role }),
@@ -185,7 +185,7 @@ sub create_channels
     {
       $params{channel_type} = $c->{channel_type};
     }
-    
+
     if (defined $c->{visibility})
     {
       $params{visibility} = $c->{visibility};
@@ -193,7 +193,7 @@ sub create_channels
 
     if ($c->{overlap})
     {
-      $params{flags} = 
+      $params{flags} =
         DB::CMPChannelBase::AUTO_QA | DB::CMPChannelBase::OVERLAP;
     }
 
@@ -217,25 +217,25 @@ sub create_geo_channels
 
   foreach my $c (@$args)
   {
-   die $self->{prefix_} . ".Channel '$c->{name}' is redefined!" 
+   die $self->{prefix_} . ".Channel '$c->{name}' is redefined!"
       if exists $self->{channels_}->{$c->{name}};
 
-   die $self->{prefix_} . ".Account '$c->{account}' is not defined!" 
+   die $self->{prefix_} . ".Account '$c->{account}' is not defined!"
       if defined $c->{account} and not exists $self->{accounts_}->{$c->{account}};
 
-   die $self->{prefix_} . ".Parent channel '$c->{name}' is undefined!" 
+   die $self->{prefix_} . ".Parent channel '$c->{name}' is undefined!"
       if defined $c->{parent} and not exists $self->{channels_}->{$c->{parent}};
 
    my $channel = $self->{ns_}->create(DB::GEOChannel->blank(
     name => $c->{name},
-    country_code => 
+    country_code =>
       defined $c->{country}? $c->{country}: 'GN',
     geo_type => $c->{type},
-    parent_channel_id =>  
+    parent_channel_id =>
       defined $c->{parent}?
-        $self->{channels_}->{$c->{parent}}->{channel_id}: 
+        $self->{channels_}->{$c->{parent}}->{channel_id}:
           DB::Defaults::instance()->geo_country->{channel_id},
-    city_list => 
+    city_list =>
       $c->{type} eq 'CITY'?
         $self->{ns_}->namespace . "-"  . $c->{name}: undef,
     latitude => $c->{latitude},
@@ -253,13 +253,13 @@ sub create_targeting
 
   foreach my $c (@$args)
   {
-    die $self->{prefix_} . ".Channel '$c->{name}' is redefined!" 
+    die $self->{prefix_} . ".Channel '$c->{name}' is redefined!"
        if exists $self->{channels_}->{$c->{name}};
 
-    my $expression = 
+    my $expression =
       $self->make_expression_($c->{expression});
 
-    my $channel = 
+    my $channel =
       $self->{ns_}->create(DB::TargetingChannel->blank(
         name => $c->{name},
         expression => $expression));
@@ -273,7 +273,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;  }
   $self->{ns_} = $ns->sub_namespace($prefix);
@@ -282,17 +282,17 @@ sub new
   $self->{channels_} = ();
   $self->{keywords_} = ();
 
-  $self->{channels_}->{'Device'} = 
+  $self->{channels_}->{'Device'} =
     DB::Defaults::instance()->device_channel;
 
   $self->{ns_}->output("Device",
-    DB::Defaults::instance()->device_channel);                       
+    DB::Defaults::instance()->device_channel);
 
   my @creators = (
     [ "accounts", \&create_accounts ],
     [ "channels", \&create_channels ],
     [ "geo_channels", \&create_geo_channels ],
-    [ "expressions", \&create_expressions ], 
+    [ "expressions", \&create_expressions ],
     [ "targeting", \&create_targeting ]);
 
   foreach my $creator (@creators)
@@ -323,22 +323,22 @@ sub flags_case
   my ($self, $ns) = @_;
 
   ChannelOverlapStats::TestCase->new(
-    $ns, 'Flags', 
-      { accounts => [ 
+    $ns, 'Flags',
+      { accounts => [
         { name => 'Agency', role => DB::Defaults::instance()->agency_role},
         { name => 'Advertiser' }],
-       channels => [ 
-        { name => "B1", account => 'Advertiser', 
+       channels => [
+        { name => "B1", account => 'Advertiser',
           visibility => 'PRI', keyword => 'Kwd1', overlap => 1 },
-        { name => "B2", account => 'Advertiser', 
+        { name => "B2", account => 'Advertiser',
           visibility => 'PRI', keyword => 'Kwd1' },
-        { name => "B3", account => 'Agency', 
+        { name => "B3", account => 'Agency',
           visibility => 'PRI', keyword => 'Kwd2', overlap => 1 } ] ,
        expressions => [
-        { name => "E1", expression => "B1", 
+        { name => "E1", expression => "B1",
           account => 'Advertiser', visibility => 'PRI' },
-        { name => "E2", expression => "B2", 
-          account => 'Advertiser', visibility => 'PRI', overlap => 1 } ]}); 
+        { name => "E2", expression => "B2",
+          account => 'Advertiser', visibility => 'PRI', overlap => 1 } ]});
 }
 
 sub country_case
@@ -347,17 +347,17 @@ sub country_case
   my ($self, $ns) = @_;
 
   ChannelOverlapStats::TestCase->new(
-    $ns, 'Country', 
-      { accounts => [ 
+    $ns, 'Country',
+      { accounts => [
         { name => 'Internal', role => DB::Defaults::instance()->internal_role,
           internal => undef}],
-       channels => [ 
-        { name => "B1", account => 'Internal', country => 'GN', 
+       channels => [
+        { name => "B1", account => 'Internal', country => 'GN',
           visibility => 'PRI', keyword => 'Kwd', overlap => 1 },
         { name => "B2", account => 'Internal',  country => 'LU',
           visibility => 'PRI', keyword => 'Kwd', overlap => 1 },
         { name => "B3", account => 'Internal', country => 'GN',
-          visibility => 'PRI', keyword => 'Kwd', overlap => 1 } ]}); 
+          visibility => 'PRI', keyword => 'Kwd', overlap => 1 } ]});
 }
 
 sub channel_type_case
@@ -365,23 +365,23 @@ sub channel_type_case
   my ($self, $ns) = @_;
 
   ChannelOverlapStats::TestCase->new(
-    $ns, 'ChannelType', 
-      { accounts => [ 
+    $ns, 'ChannelType',
+      { accounts => [
         { name => 'Internal', role => DB::Defaults::instance()->internal_role,
           internal => undef}],
-       channels => [ 
-        { name => "Keyword", account => 'Internal', 
+       channels => [
+        { name => "Keyword", account => 'Internal',
           visibility => 'PRI', channel_type => 'K', keyword => 'Kwd' },
-        { name => "Behavioral1", account => 'Internal', 
+        { name => "Behavioral1", account => 'Internal',
           keyword => 'Kwd', overlap => 1 },
-        { name => "Behavioral2", account => 'Internal', 
+        { name => "Behavioral2", account => 'Internal',
           keyword => 'Kwd', overlap => 1 } ],
        geo_channels => [
         { name => 'Guinea', type => 'STATE' },
         { name => 'Mamou', type => 'CITY', parent => 'Guinea',
           latitude => -12.09159, longitude => 10.37396 }],
        expressions => [
-        { name => "EXPR", account => 'Internal', 
+        { name => "EXPR", account => 'Internal',
           expression => "Behavioral2", overlap => 1 }],
        targeting => [
         { name => "A1", expression => 'EXPR&Guinea&Device', visibility => 'PRI'},
@@ -393,14 +393,14 @@ sub non_optin_case
   my ($self, $ns) = @_;
 
   ChannelOverlapStats::TestCase->new(
-    $ns, 'NonOptin', 
-    { accounts => [ 
+    $ns, 'NonOptin',
+    { accounts => [
         { name => 'Internal', role => DB::Defaults::instance()->internal_role, internal => undef}],
-      channels => [ 
-        { name => "B1", account => 'Internal', 
+      channels => [
+        { name => "B1", account => 'Internal',
           visibility => 'PRI', url => 'Url', overlap => 1 },
         { name => "B2", account => 'Internal',
-          visibility => 'PRI', url => 'Url', overlap => 1 } ]}); 
+          visibility => 'PRI', url => 'Url', overlap => 1 } ]});
 }
 
 sub config_case
@@ -408,14 +408,14 @@ sub config_case
   my ($self, $ns) = @_;
 
   ChannelOverlapStats::TestCase->new(
-    $ns, 'Config', 
-    { accounts => [ 
+    $ns, 'Config',
+    { accounts => [
         { name => 'Internal', role => DB::Defaults::instance()->internal_role, internal => undef}],
-      channels => [ 
-        { name => "B1", account => 'Internal', 
+      channels => [
+        { name => "B1", account => 'Internal',
           visibility => 'PRI', keyword => 'Kwd', overlap => 1 },
         { name => "B2", account => 'Internal',
-          visibility => 'PRI', keyword => 'Kwd', overlap => 1 } ]}); 
+          visibility => 'PRI', keyword => 'Kwd', overlap => 1 } ]});
 }
 
 sub expression_case
@@ -424,8 +424,8 @@ sub expression_case
 
   ChannelOverlapStats::TestCase->new(
     $ns, 'Expression',
-    { 
-    channels => [ 
+    {
+    channels => [
       { name => "Channel1", keyword => 'Kwd1', overlap => 1 },
       { name => "Channel2", keyword => 'Kwd2', overlap => 1 } ],
     expressions => [
@@ -442,10 +442,10 @@ sub history_case
 
   ChannelOverlapStats::TestCase->new(
     $ns, 'History',
-    { channels => [ 
+    { channels => [
       { name => "Session1", keyword => 'Kwd1', to => 60, overlap => 1 },
       { name => "HT", keyword => 'Kwd2', to => 3*24*60*60, overlap => 1 },
-      { name => "Session2", keyword => 'Kwd3', visits => 2, 
+      { name => "Session2", keyword => 'Kwd3', visits => 2,
         to => 23*60*60 + 59*60 + 59, overlap => 1},
       { name => "History", keyword => 'Kwd4',
         from => 24*60*60, to => 3*24*60*60, overlap => 1 } ] });
@@ -457,10 +457,10 @@ sub daily_proc_case
 
   ChannelOverlapStats::TestCase->new(
     $ns, 'DailyProc',
-    { channels => [ 
+    { channels => [
       { name => "History1", keyword => 'Kwd',
         from => 24*60*60, to => 4*24*60*60, overlap => 1 },
-      { name => "History2", keyword => 'Kwd',  
+      { name => "History2", keyword => 'Kwd',
         from => 24*60*60, to => 4*24*60*60, overlap => 1 } ] });
 }
 
@@ -470,12 +470,12 @@ sub status_case
 
   my $case =   ChannelOverlapStats::TestCase->new(
     $ns, 'Status',
-    { 
-     accounts => [ 
+    {
+     accounts => [
         { name => 'CMP', role => DB::Defaults::instance()->cmp_role},
         { name => 'Advertiser' }],
-    channels => [ 
-      { name => "Channel1", keyword => 'Kwd', 
+    channels => [
+      { name => "Channel1", keyword => 'Kwd',
         account => 'CMP',  overlap => 1, country => 'GB' },
       { name => "Channel2", keyword => 'Kwd',
         account => 'Advertiser', overlap => 1, country => 'GB' },

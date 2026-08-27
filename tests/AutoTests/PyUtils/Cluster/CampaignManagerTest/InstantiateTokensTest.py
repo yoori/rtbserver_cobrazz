@@ -55,7 +55,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         101,                            # cc id
         101,                            # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           1,  # size_id
@@ -69,7 +69,7 @@ def prepareConfig(config):
         OptionValueInfo(0, ""),         # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [OptionValueInfo(102, "http://www.displayurl.com")], # tokens
         'A',                            # status
         ''                              # version_id

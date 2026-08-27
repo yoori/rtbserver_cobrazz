@@ -12,14 +12,14 @@ sub init
   my ($self, $ns) = @_;
   $ns->output("Colo/2", DB::Defaults::instance()->remote_isp->{colo_id});
   $ns->output("Colo/1", DB::Defaults::instance()->isp->{colo_id});
-  
+
   $ns->output("COLO_EXCHANGE_TIMEOUT", 300);
-  
+
   my $account = $ns->create(Account =>
                             { name => 1,
                               role_id => DB::Defaults::instance()->advertiser_role });
-  
-  
+
+
   my $kwdS1 = make_autotest_name($ns, "S1");
   my $kwdS2 = make_autotest_name($ns, "S2");
   my $kwdHT1 = make_autotest_name($ns, "HT1");

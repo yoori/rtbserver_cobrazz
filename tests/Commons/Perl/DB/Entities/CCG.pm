@@ -8,7 +8,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   schedule_id => DB::Entity::Type::sequence(),
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup'),
@@ -26,7 +26,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1),
   site_id => DB::Entity::Type::link('DB::Site', unique => 1)
@@ -34,7 +34,7 @@ use constant STRUCT =>
 
 1;
 
-# CCG colocation 
+# CCG colocation
 package DB::CCGColocation;
 
 use warnings;
@@ -43,7 +43,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   colo_id => DB::Entity::Type::link('DB:Colocation', unique => 1 ),
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1 )
@@ -51,7 +51,7 @@ use constant STRUCT =>
 
 1;
 
-# CCG CTR colocation 
+# CCG CTR colocation
 package DB::CCGCTROverride;
 
 use warnings;
@@ -60,7 +60,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1 ),
   ctr => DB::Entity::Type::float()
@@ -68,7 +68,7 @@ use constant STRUCT =>
 
 1;
 
-# CCG AR colocation 
+# CCG AR colocation
 package DB::CCGAROverride;
 
 use warnings;
@@ -77,7 +77,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1 ),
   ar => DB::Entity::Type::float()
@@ -85,7 +85,7 @@ use constant STRUCT =>
 
 1;
 
-# CCG rate       
+# CCG rate
 package DB::CCGRate;
 
 use warnings;
@@ -96,7 +96,7 @@ our @ISA = qw(DB::Entity::PQ);
 
 use constant DEFAULT_CPM => 50;
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_rate_id => DB::Entity::Type::sequence(),
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup'),
@@ -111,12 +111,12 @@ sub preinit_
 {
   my ($self, $ns, $args) = @_;
 
-  if(!exists($args->{rate_type}))
+  if (!exists($args->{rate_type}))
   {
     my $inited_cost_num = (defined $args->{cpm}? 1 : 0) +
       (defined $args->{cpc}? 1 : 0) +
       (defined $args->{cpa}? 1 : 0);
-    if($inited_cost_num)
+    if ($inited_cost_num)
     {
       $args->{rate_type} =
         ($args->{cpm}? 'CPM' :
@@ -133,7 +133,7 @@ sub preinit_
   $args->{cpm} = $args->{cpm} ? $args->{cpm} : 0;
   $args->{cpc} = $args->{cpc} ? $args->{cpc} : 0;
   $args->{cpa} = $args->{cpa} ? $args->{cpa} : 0;
- 
+
 }
 
 1;
@@ -147,7 +147,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup number', unique => 1),
   geo_channel_id => DB::Entity::Type::link('DB::GEOChannel number', unique => 1)
@@ -164,7 +164,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1),
   action_id => DB::Entity::Type::link('DB::Action', unique => 1 )
@@ -190,7 +190,7 @@ use constant DISPLAY_STATUS_CHANNEL_NEED_ATTENTION =>
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -207,22 +207,22 @@ use constant STRUCT =>
   ccg_type => DB::Entity::Type::enum(['D', 'T']),
   budget =>  DB::Entity::Type::float(nullable => 1, default => DEFAULT_BUDGET),
   tgt_type =>  DB::Entity::Type::enum(['C', 'K']),
-  display_status_id => 
+  display_status_id =>
     DB::Entity::Type::display_status('CampaignCreativeGroup'),
   country_code => DB::Entity::Type::country(),
   channel_target => DB::Entity::Type::enum(['N', 'U', 'T']),
-  delivery_pacing =>  DB::Entity::Type::enum(['D', 'F', 'U']), 
-  daily_budget => DB::Entity::Type::float(nullable => 1), 
-  optin_status_targeting => 
+  delivery_pacing =>  DB::Entity::Type::enum(['D', 'F', 'U']),
+  daily_budget => DB::Entity::Type::float(nullable => 1),
+  optin_status_targeting =>
     DB::Entity::Type::enum(
-      ['YYY', 'YYN', 'YNY', 'YNN', 'NYY', 'NYN', 'NNY'], 
+      ['YYY', 'YYN', 'YNY', 'YNN', 'NYY', 'NYN', 'NNY'],
       nullable => 1),
   targeting_channel_id => DB::Entity::Type::link('DB::TargetingChannel', nullable => 1),
   min_uid_age =>  DB::Entity::Type::int(default => 0),
   ctr_reset_id => 0,
 
   # Private fields
-  
+
   # CCGRate
   cpm => DB::Entity::Type::float(private => 1),
   cpc => DB::Entity::Type::float(private => 1),
@@ -249,27 +249,27 @@ sub preinit_
 {
   my ($self, $ns, $args) = @_;
 
-  if (!defined $args->{tgt_type} && 
-      (defined $args->{ccg_type} && 
+  if (!defined $args->{tgt_type} &&
+      (defined $args->{ccg_type} &&
         $args->{ccg_type} ne 'D'))
   {
     print $args->{name} . " " .  $args->{ccg_type} . "\n";
   }
 
-  $args->{tgt_type} = 'K' 
-    if !defined $args->{tgt_type} && 
-      defined $args->{ccg_type} && 
+  $args->{tgt_type} = 'K'
+    if !defined $args->{tgt_type} &&
+      defined $args->{ccg_type} &&
         $args->{ccg_type} ne 'D';
 
   unless (defined $args->{channel_target})
   {
     if (exists $args->{channel_id} and defined $args->{channel_id})
     {
-      $args->{channel_target} = 'T'; 
+      $args->{channel_target} = 'T';
     }
     else
     {
-      $args->{channel_target} = 'U'; 
+      $args->{channel_target} = 'U';
     }
   }
 }
@@ -306,6 +306,7 @@ sub precreate_
               ? $self->{country_code}->{country_code}
               : $self->{country_code});
     }
+
     if (@geo_channels)
     {
       my $geo_expression = join('|',  map(ref $_? $_->{channel_id}: $_, @geo_channels));
@@ -325,7 +326,7 @@ sub precreate_
 
     if ($expression)
     {
-      my $targeting = 
+      my $targeting =
         $ns->create(
           DB::TargetingChannel->blank(
             name => $self->{__name} . '-T-' . $expression,
@@ -359,9 +360,9 @@ sub postcreate_
       cpm => $self->{cpm},
       cpc => $self->{cpc},
       cpa => $self->{cpa} );
-    
+
     $rate{rate_type} = $self->{rate_type} if
-      defined $self->{rate_type};  
+      defined $self->{rate_type};
 
     $self->__update($ns, {
       ccg_rate_id => DB::CCGRate->blank(%rate) });
@@ -389,7 +390,7 @@ sub postcreate_
     {
       $ns->create(DB::CCGGEOChannel->blank(
          ccg_id  => $self->{ccg_id},
-         geo_channel_id => 
+         geo_channel_id =>
             ref $channel? $channel->{channel_id}: $channel));
     }
   }
@@ -421,11 +422,11 @@ sub _table {
     'CampaignCreativeGroup'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   %{ DB::CampaignCreativeGroup->STRUCT },
 
-  channel_id => undef,    
+  channel_id => undef,
   ccg_type => 'T',
   tgt_type => 'K'
 };
@@ -444,10 +445,10 @@ sub _table {
     'CampaignCreativeGroup'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
  %{ DB::CampaignCreativeGroup->STRUCT },
-    
+
  ccg_type => 'T',
  tgt_type => 'C'
 };
@@ -466,10 +467,10 @@ sub _table {
     'CampaignCreativeGroup'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
  %{ DB::CampaignCreativeGroup->STRUCT },
-    
+
  ccg_type => 'D',
  tgt_type => 'C'
 };
@@ -485,7 +486,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_keyword_id => DB::Entity::Type::link('DB::CCGKeyword', unique => 1),
   ctr => DB::Entity::Type::float(),
@@ -506,7 +507,7 @@ our @ISA = qw(DB::Entity::PQ);
 use constant DEFAULT_TOW => '1';
 use constant DEFAULT_CTR => 0.01;
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   ccg_keyword_id => DB::Entity::Type::sequence(),
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1),
@@ -516,7 +517,7 @@ use constant STRUCT =>
   click_url => DB::Entity::Type::string(nullable => 1),
   status => DB::Entity::Type::status(),
   trigger_type => DB::Entity::Type::enum(['S', 'P']),
-    
+
   # Private
   # CCGKeywordCTROverride
   ctr => DB::Entity::Type::float(private => 1, default => DEFAULT_CTR),
@@ -532,13 +533,13 @@ sub preinit_
 
   unless (defined $args->{channel_id})
   {
-    my ($account) = 
+    my ($account) =
       $ns->pq_dbh->selectrow_array(
-        qq[SELECT account_id FROM Campaign where campaign_id in 
-           (SELECT campaign_id FROM CampaignCreativeGroup 
+        qq[SELECT account_id FROM Campaign where campaign_id in
+           (SELECT campaign_id FROM CampaignCreativeGroup
             WHERE ccg_id = ?)], undef, $args->{ccg_id});
 
-    $args->{channel_id} =  
+    $args->{channel_id} =
       $ns->create(
         DB::BehavioralChannel->blank(
           name => $args->{name},
@@ -557,7 +558,7 @@ sub preinit_
 sub postcreate_
 {
   my ($self, $ns) = @_;
-  
+
   if (defined $self->{ctr} || defined $self->{tow})
   {
     $ns->create(DB::CCGKeywordCTROverride->blank(
@@ -576,7 +577,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   cc_id => DB::Entity::Type::sequence(),
   ccg_id => DB::Entity::Type::link('DB::CampaignCreativeGroup', unique => 1),

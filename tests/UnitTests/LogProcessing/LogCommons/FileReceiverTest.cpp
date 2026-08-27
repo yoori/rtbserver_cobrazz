@@ -35,9 +35,7 @@ public:
 
 protected:
   virtual void
-  rename_(
-    const char* old_name,
-    const char* new_name)
+  rename_(const char* old_name, const char* new_name)
     /*throw(eh::Exception)*/;
 
   virtual void
@@ -48,9 +46,7 @@ protected:
   access_(const char* name) noexcept;
 
   virtual void
-  dir_select_external_(
-    const char* input_dir,
-    const char* prefix)
+  dir_select_external_(const char* input_dir, const char* prefix)
     /*throw(eh::Exception, Interrupted)*/;
 
   virtual void
@@ -63,17 +59,12 @@ OverridedFileReceiver::OverridedFileReceiver(
   Generics::ActiveObject* interrupter,
   Logging::Logger* logger)
   /*throw(eh::Exception)*/
-  :  FileReceiver(
-      intermediate_dir,
-      max_files_to_store,
-      interrupter,
-      logger),
+  :  FileReceiver(intermediate_dir, max_files_to_store, interrupter, logger),
      read_internal_hook(0)
 {}
 
 void
-OverridedFileReceiver::rename_(
-  const char* old_name, const char* new_name)
+OverridedFileReceiver::rename_(const char* old_name, const char* new_name)
   /*throw(eh::Exception)*/
 {
   fs::file_system.rename(old_name, new_name);
@@ -93,9 +84,7 @@ OverridedFileReceiver::access_(const char* name) noexcept
 }
 
 void
-OverridedFileReceiver::dir_select_external_(
-  const char* input_dir,
-  const char* prefix)
+OverridedFileReceiver::dir_select_external_(const char* input_dir, const char* prefix)
   /*throw(eh::Exception, Interrupted)*/
 {
   fs::FileSystem::iterator i = fs::file_system.find(input_dir);
@@ -109,8 +98,7 @@ OverridedFileReceiver::dir_select_external_(
       files = (**i);
     }
 
-    for (std::set<std::string>::iterator fi = files.begin();
-         fi != files.end(); ++fi)
+    for (std::set<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi)
     {
       const std::string full_path = std::string(input_dir) + "/" + *fi;
       fetch_files_handler_(full_path.c_str(), prefix);
@@ -131,8 +119,7 @@ OverridedFileReceiver::dir_select_internal_(const char* dir)
     {
       ::SyncPolicy::WriteGuard lock((*i)->mutex);
 
-      for (std::set<std::string>::const_iterator it = (*i)->begin();
-           it != (*i)->end(); ++it)
+      for (std::set<std::string>::const_iterator it = (*i)->begin(); it != (*i)->end(); ++it)
       {
         if (::fnmatch("[A-Z]*", it->c_str(), FNM_PATHNAME) == 0)
         {
@@ -141,8 +128,7 @@ OverridedFileReceiver::dir_select_internal_(const char* dir)
       }
     }
 
-    for (std::set<std::string>::iterator fi = files.begin();
-         fi != files.end(); ++fi)
+    for (std::set<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi)
     {
       const std::string full_path = std::string(dir) + "/" + *fi;
 
@@ -161,23 +147,12 @@ std::string in_dir;
 std::string fe_dir;
 
 FileReceiver_var
-make_receiver(
-  size_t max_files_to_store) noexcept
+make_receiver(size_t max_files_to_store) noexcept
 {
 #ifdef EMULATE_FILES
-  return FileReceiver_var(
-    new OverridedFileReceiver(
-      in_dir.c_str(),
-      max_files_to_store,
-      0,
-      0));
+  return FileReceiver_var(new OverridedFileReceiver(in_dir.c_str(), max_files_to_store, 0, 0));
 #else
-  return FileReceiver_var(
-    new FileReceiver(
-      in_dir.c_str(),
-      max_files_to_store,
-      0,
-      0));
+  return FileReceiver_var(new FileReceiver(in_dir.c_str(), max_files_to_store, 0, 0));
 #endif
 }
 
@@ -342,9 +317,7 @@ class GetEldestTask
   : public Generics::Task, public ReferenceCounting::AtomicImpl
 {
 public:
-  GetEldestTask(
-    FileReceiver_var file_receiver,
-    bool revert = false)
+  GetEldestTask(FileReceiver_var file_receiver, bool revert = false)
     noexcept
     : file_receiver_(file_receiver), revert_(revert)
   {}
@@ -412,8 +385,7 @@ protected:
 };
 
 void
-ThrowCallback::report_error(Severity, const String::SubString& description,
-  const char*) noexcept
+ThrowCallback::report_error(Severity, const String::SubString& description, const char*) noexcept
 {
   std::cerr << description.str() << std::endl;
 }
@@ -464,8 +436,7 @@ TEST_EX(ConcurrentTest, setup, teardown)
 
   for (int i = 0; i < GET_COUNT; ++i)
   {
-    get_runner->enqueue_task(Generics::Task_var(
-      new GetEldestTask(file_receiver, (i % 10 == 0))));
+    get_runner->enqueue_task(Generics::Task_var(new GetEldestTask(file_receiver, (i % 10 == 0))));
   }
 
   get_runner->activate_object();
@@ -611,8 +582,7 @@ TEST_EX(FileReceiverActiveObject, setup, teardown)
   ASSERT_TRUE (file_receiver->empty());
 
   Generics::ActiveObjectCallback_var callback = new ThrowCallback();
-  ReferenceCounting::AssertPtr<TestFileProcessor>::Ptr file_processor =
-    new TestFileProcessor();
+  ReferenceCounting::AssertPtr<TestFileProcessor>::Ptr file_processor = new TestFileProcessor();
 
   Generics::ActiveObject_var active_file_receiver =
     new FileThreadProcessor(

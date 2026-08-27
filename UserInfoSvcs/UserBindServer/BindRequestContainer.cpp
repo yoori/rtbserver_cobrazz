@@ -43,13 +43,12 @@ namespace AdServer::UserInfoSvcs
     {
       String::RegEx::Result sub_strs;
 
-      String::SubString file_name(
-        Generics::DirSelect::file_name(full_path));
+      String::SubString file_name(Generics::DirSelect::file_name(full_path));
 
-      if(reg_exp_.search(sub_strs, file_name) &&
+      if (reg_exp_.search(sub_strs, file_name) &&
          (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
       {
-        if(date_str)
+        if (date_str)
         {
           assert(sub_strs.size() == 2);
           *date_str = sub_strs[1].str();
@@ -76,9 +75,9 @@ namespace AdServer::UserInfoSvcs
       const
       noexcept
     {
-      if(match(0, full_path))
+      if (match(0, full_path))
       {
-        if(::unlink(full_path) == -1)
+        if (::unlink(full_path) == -1)
         {
           eh::throw_errno_exception<BindRequestContainer::Exception>(
             "can't remove file '",
@@ -97,8 +96,7 @@ namespace AdServer::UserInfoSvcs
   {
     struct ChunkFileDescription
     {
-      ChunkFileDescription(
-        const Generics::Time& max_keep_time)
+      ChunkFileDescription(const Generics::Time& max_keep_time)
         : max_time(max_keep_time)
       {}
 
@@ -109,9 +107,7 @@ namespace AdServer::UserInfoSvcs
     typedef std::map<std::string, ChunkFileDescription>
       ChunkFileDescriptionMap;
 
-    ChunkSelector(
-      const char* prefix,
-      ChunkFileDescriptionMap& chunk_files)
+    ChunkSelector(const char* prefix, ChunkFileDescriptionMap& chunk_files)
       : BaseChunkSelector(prefix),
         chunk_files_(chunk_files)
     {}
@@ -122,21 +118,19 @@ namespace AdServer::UserInfoSvcs
     {
       std::string date_str;
 
-      if(match(&date_str, full_path))
+      if (match(&date_str, full_path))
       {
         try
         {
           chunk_files_.insert(
             std::make_pair(
               full_path,
-              ChunkFileDescription(
-                Generics::Time(date_str, LOG_TIME_FORMAT))));
+              ChunkFileDescription(Generics::Time(date_str, LOG_TIME_FORMAT))));
         }
         catch(const eh::Exception& ex)
         {
           Stream::Error ostr;
-          ostr << "can't parse file name '" <<
-            full_path << "': " << ex.what();
+          ostr << "can't parse file name '" << full_path << "': " << ex.what();
           throw BindRequestContainer::Exception(ostr);
         }
 
@@ -167,7 +161,7 @@ namespace AdServer::UserInfoSvcs
 
     // load chunks
     // TODO : concurrent loading - local taskrunner with destroy
-    for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
+    for (ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
       chunks_[chunk_it->first] = new BindRequestChunk(
@@ -183,20 +177,14 @@ namespace AdServer::UserInfoSvcs
   {}
 
   AdServer::Commons::StartableAwaitable<BindRequestContainer::BindRequest>
-  BindRequestContainer::co_get_bind_request(
-    const String::SubString& id,
-    const Generics::Time& now)
+  BindRequestContainer::co_get_bind_request(const String::SubString& id, const Generics::Time& now)
     /*throw(ChunkNotFound, Exception)*/
   {
-    co_return co_await get_chunk_(id)->co_get_bind_request(
-      id,
-      now);
+    co_return co_await get_chunk_(id)->co_get_bind_request(id, now);
   }
 
   BindRequestContainer::BindRequest
-  BindRequestContainer::get_bind_request(
-    const String::SubString& id,
-    const Generics::Time& now)
+  BindRequestContainer::get_bind_request(const String::SubString& id, const Generics::Time& now)
     /*throw(ChunkNotFound, Exception)*/
   {
     return AdServer::Commons::sync_wait(co_get_bind_request(id, now));
@@ -209,20 +197,16 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now)
     /*throw(ChunkNotFound, Exception)*/
   {
-    return get_chunk_(id)->add_bind_request(
-      id,
-      bind_request,
-      now);
+    return get_chunk_(id)->add_bind_request(id, bind_request, now);
   }
 
   void
   BindRequestContainer::clear_expired(const Generics::Time& expire_time)
     /*throw(Exception)*/
   {
-    for(ChunkArray::iterator chunk_it = chunks_.begin();
-        chunk_it != chunks_.end(); ++chunk_it)
+    for (ChunkArray::iterator chunk_it = chunks_.begin(); chunk_it != chunks_.end(); ++chunk_it)
     {
-      if(*chunk_it)
+      if (*chunk_it)
       {
         (*chunk_it)->clear_expired(expire_time);
       }
@@ -232,10 +216,9 @@ namespace AdServer::UserInfoSvcs
   void
   BindRequestContainer::dump() /*throw(Exception)*/
   {
-    for(ChunkArray::iterator chunk_it = chunks_.begin();
-        chunk_it != chunks_.end(); ++chunk_it)
+    for (ChunkArray::iterator chunk_it = chunks_.begin(); chunk_it != chunks_.end(); ++chunk_it)
     {
-      if(*chunk_it)
+      if (*chunk_it)
       {
         (*chunk_it)->dump();
       }
@@ -243,15 +226,13 @@ namespace AdServer::UserInfoSvcs
   }
 
   BindRequestChunk_var
-  BindRequestContainer::get_chunk_(
-    const String::SubString& external_id) const
+  BindRequestContainer::get_chunk_(const String::SubString& external_id) const
     /*throw(ChunkNotFound)*/
   {
     BindRequestChunk_var res = chunks_[
-      AdServer::Commons::external_id_distribution_hash(
-        external_id) % common_chunks_number_];
+      AdServer::Commons::external_id_distribution_hash(external_id) % common_chunks_number_];
 
-    if(!res)
+    if (!res)
     {
       throw ChunkNotFound("");
     }

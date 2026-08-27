@@ -106,7 +106,7 @@ sub init
     tag_id => undef });
 
   my $openx = $ns->create(Publisher => {
-    name => 'openx', 
+    name => 'openx',
     account_type_id => DB::Defaults::instance()->openrtb_account->{account_type_id},
     currency_id => $currency1,
     tag_id => undef });
@@ -116,7 +116,7 @@ sub init
 
   my @sizes = ( "120x240", "120x600", "160x600",
                 "240x400", "250x250", "300x250",
-                "728x90", "468x61", "350x180", 
+                "728x90", "468x61", "350x180",
                 "336x280" );
 
   # Create sizes
@@ -137,7 +137,7 @@ sub init
     $ns->create(TemplateFile => {
       template_id => DB::Defaults::instance()->text_template(),
       size_id => $self->{sizes}->{$_},
-      app_format_id => 
+      app_format_id =>
         DB::Defaults::instance()->html_format,
       template_file => 'UnitTests/textad.xsl',
       template_type => 'X' });
@@ -252,7 +252,7 @@ sub init
     name => "TEXT",
     creative_tag_sizes => [$self->{sizes}->{'468x61'}],
     template_id =>  DB::Defaults::instance()->text_template,
-    app_format_id => 
+    app_format_id =>
       DB::Defaults::instance()->html_format,
     channel_id => undef,
     advertiser_currency_id => $currency1,

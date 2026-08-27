@@ -4,10 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-REFLECT_UNIT(LongHeaderApacheStabilityTest) (
-  "Frontend",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(LongHeaderApacheStabilityTest) ("Frontend", AUTO_TEST_QUIET);
 
 typedef AutoTest::NSLookupRequest NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
@@ -171,17 +168,14 @@ scenario(AdClient &probe_client, AdClient &client, int expected_status)
 {
   client.process(NSLookupRequest(), true);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      expected_status,
-      client.req_status()).check(),
+    AutoTest::equal_checker(expected_status, client.req_status()).check(),
     "got unexpected status on request");
 
   if (client.req_time().tv_sec > CLIENT_TIMEOUT)
   {
     Stream::Error ostr;
     ostr << "request with long headers timeout="
-      << CLIENT_TIMEOUT << ", actual request duration="
-      << client.req_time();
+      << CLIENT_TIMEOUT << ", actual request duration=" << client.req_time();
     throw AutoTest::Exception(ostr.str());
   }
 
@@ -191,8 +185,7 @@ scenario(AdClient &probe_client, AdClient &client, int expected_status)
   {
     Stream::Error ostr;
     ostr << "request after request with long headers timeout="
-      << PROBE_CLIENT_TIMEOUT << ", actual request duration="
-      << probe_client.req_time();
+      << PROBE_CLIENT_TIMEOUT << ", actual request duration=" << probe_client.req_time();
     throw AutoTest::Exception(ostr.str());
   }
 }
@@ -229,7 +222,7 @@ LongHeaderApacheStabilityTest::run_test()
 
       RandomHeader header(NAME_SIZE, VALUE_SIZE);
 
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         for (int j = 0; j < i; ++j)
         {
@@ -247,7 +240,7 @@ LongHeaderApacheStabilityTest::run_test()
       AdClient client(AdClient::create_user(this));
 
       SameNameHeader header(VALUE_SIZE);
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         for (int j = 0; j < i; ++j)
         {
@@ -265,7 +258,7 @@ LongHeaderApacheStabilityTest::run_test()
       AdClient client(AdClient::create_user(this));
 
       CookieHeader header(NAME_SIZE, VALUE_SIZE);
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         for (int j = 0; j < i; ++j)
         {
@@ -283,7 +276,7 @@ LongHeaderApacheStabilityTest::run_test()
       AdClient client(AdClient::create_user(this));
 
       PatternHeader header("X-Header", " ::");
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         client.add_http_header(header.name(), header.value());
       }
@@ -299,7 +292,7 @@ LongHeaderApacheStabilityTest::run_test()
       AdClient client(AdClient::create_user(this));
 
       PatternHeader header("Referer-KW", " a");
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         client.add_http_header(header.name(), header.value());
       }
@@ -314,7 +307,7 @@ LongHeaderApacheStabilityTest::run_test()
       AdClient client(AdClient::create_user(this));
 
       PatternHeader header("Context-KW", " a");
-      for(int i = 1; i <= HEADER_COUNT; ++i)
+      for (int i = 1; i <= HEADER_COUNT; ++i)
       {
         client.add_http_header(header.name(), header.value());
       }

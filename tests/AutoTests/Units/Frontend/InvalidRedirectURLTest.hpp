@@ -7,10 +7,7 @@ class InvalidRedirectURLTest: public BaseUnit
 {
 public:
 
-  InvalidRedirectURLTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  InvalidRedirectURLTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

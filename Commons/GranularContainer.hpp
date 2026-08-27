@@ -4,19 +4,15 @@
 #include <algorithm>
 #include <Generics/Time.hpp>
 
-namespace AdServer
+namespace AdServer::Commons
 {
-namespace Commons
-{
-  typedef Generics::Time TimestampValue;
+  typedef ::Generics::Time TimestampValue;
 
   struct DeletedIdDef
   {
     DeletedIdDef(): timestamp(0), db_version(0) {}
 
-    DeletedIdDef(
-      const TimestampValue& ts,
-      const TimestampValue& db_ver = Generics::Time::ZERO)
+    DeletedIdDef(const TimestampValue& ts, const TimestampValue& db_ver = ::Generics::Time::ZERO)
       : timestamp(ts),
         db_version(db_ver)
     {}
@@ -79,7 +75,7 @@ namespace Commons
     {
       bool appear = true;
       typename InactiveMap::iterator it = inactive_instances_.find(id);
-      if(it != inactive_instances_.end())
+      if (it != inactive_instances_.end())
       {
         appear = false;
         inactive_instances_.erase(it);
@@ -87,7 +83,7 @@ namespace Commons
 
       std::pair<typename ActiveMap::iterator, bool> act_ins =
         active_instances_.insert(typename ActiveMap::value_type(id, val));
-      if(!act_ins.second)
+      if (!act_ins.second)
       {
         appear = false;
         act_ins.first->second = val;
@@ -100,7 +96,7 @@ namespace Commons
       inactive_instances_[id].timestamp = val;
 
       typename ActiveMap::iterator it = active_instances_.find(id);
-      if(it != active_instances_.end())
+      if (it != active_instances_.end())
       {
         active_instances_.erase(it);
       }
@@ -204,7 +200,7 @@ namespace Commons
     {
       active_instances_[id] = val;
       typename InactiveMap::iterator it = inactive_instances_.find(id);
-      if(it != inactive_instances_.end())
+      if (it != inactive_instances_.end())
       {
         inactive_instances_.erase(it);
       }
@@ -221,13 +217,12 @@ namespace Commons
 
       if (old_container != 0)
       {
-        typename ActiveMap::const_iterator a_it =
-          old_container->active().find(id);
+        typename ActiveMap::const_iterator a_it = old_container->active().find(id);
         if (a_it != old_container->active().end())
         {
           if (ts_ops.db_version(val) ==
               ts_ops.db_version(a_it->second) && (
-                ts_ops.timestamp(val) == Generics::Time::ZERO ||
+                ts_ops.timestamp(val) == ::Generics::Time::ZERO ||
                 ts_ops.timestamp(val) == ts_ops.timestamp(a_it->second)))
           {
             active_instances_[id] = a_it->second;
@@ -236,7 +231,7 @@ namespace Commons
         }
       }
 
-      if(changed)
+      if (changed)
       {
         TimestampValue timestamp = sysdate;
         ElementType& el = active_instances_[id];
@@ -245,7 +240,7 @@ namespace Commons
       }
 
       typename InactiveMap::iterator it = inactive_instances_.find(id);
-      if(it != inactive_instances_.end())
+      if (it != inactive_instances_.end())
       {
         inactive_instances_.erase(it);
       }
@@ -258,7 +253,7 @@ namespace Commons
       del_el.db_version = 0;
 
       typename ActiveMap::iterator it = active_instances_.find(id);
-      if(it != active_instances_.end())
+      if (it != active_instances_.end())
       {
         active_instances_.erase(it);
       }
@@ -275,8 +270,7 @@ namespace Commons
 
       if (old_container != 0)
       {
-        typename InactiveMap::const_iterator i_it =
-          old_container->inactive().find(id);
+        typename InactiveMap::const_iterator i_it = old_container->inactive().find(id);
         if (i_it != old_container->inactive().end())
         {
           timestamp = i_it->second.timestamp;
@@ -289,7 +283,7 @@ namespace Commons
       del_el.db_version = db_vers;
 
       typename ActiveMap::iterator it = active_instances_.find(id);
-      if(it != active_instances_.end())
+      if (it != active_instances_.end())
       {
         active_instances_.erase(it);
       }
@@ -420,23 +414,19 @@ namespace Commons
     InactiveMap inactive_instances_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename KeyType, typename ElementType, typename ElementTimestampOpsType,
     typename ActiveContainerType, typename InactiveContainerType>
   void
   NoCopyGranularContainer<KeyType, ElementType, ElementTimestampOpsType,
     ActiveContainerType, InactiveContainerType>::
-  activate(
-    const KeyType& id, ElementType& val)
+  activate(const KeyType& id, ElementType& val)
   {
     active_instances_[id] = val;
     typename InactiveMap::iterator it = inactive_instances_.find(id);
-    if(it != inactive_instances_.end())
+    if (it != inactive_instances_.end())
     {
       inactive_instances_.erase(it);
     }
@@ -459,8 +449,7 @@ namespace Commons
 
     if (old_container != 0)
     {
-      typename ActiveMap::iterator a_it =
-        old_container->active().find(id);
+      typename ActiveMap::iterator a_it = old_container->active().find(id);
       if (a_it != old_container->active().end())
       {
         if (*val == *a_it->second)
@@ -473,13 +462,11 @@ namespace Commons
 
     bool result = false;
 
-    if(changed)
+    if (changed)
     {
-      typename ActiveMap::const_iterator a_it =
-        active_instances_.find(id);
+      typename ActiveMap::const_iterator a_it = active_instances_.find(id);
 
-      if(a_it == active_instances_.end() ||
-         !(*val == *a_it->second))
+      if (a_it == active_instances_.end() || !(*val == *a_it->second))
       {
         ElementType& el = active_instances_[id];
         el = val;
@@ -489,7 +476,7 @@ namespace Commons
     }
 
     typename InactiveMap::iterator it = inactive_instances_.find(id);
-    if(it != inactive_instances_.end())
+    if (it != inactive_instances_.end())
     {
       inactive_instances_.erase(it);
     }
@@ -514,8 +501,7 @@ namespace Commons
 
     if (old_container != 0)
     {
-      typename ActiveMap::const_iterator a_it =
-        old_container->active().find(id);
+      typename ActiveMap::const_iterator a_it = old_container->active().find(id);
       if (a_it != old_container->active().end())
       {
         if (*val == *a_it->second)
@@ -528,13 +514,11 @@ namespace Commons
 
     bool result = false;
 
-    if(changed)
+    if (changed)
     {
-      typename ActiveMap::const_iterator a_it =
-        active_instances_.find(id);
+      typename ActiveMap::const_iterator a_it = active_instances_.find(id);
 
-      if(a_it == active_instances_.end() ||
-         !(*val == *a_it->second))
+      if (a_it == active_instances_.end() || !(*val == *a_it->second))
       {
         ElementType& el = active_instances_[id];
         el = val;
@@ -544,7 +528,7 @@ namespace Commons
     }
 
     typename InactiveMap::iterator it = inactive_instances_.find(id);
-    if(it != inactive_instances_.end())
+    if (it != inactive_instances_.end())
     {
       inactive_instances_.erase(it);
     }
@@ -567,8 +551,7 @@ namespace Commons
 
     if (old_container != 0)
     {
-      typename InactiveMap::const_iterator i_it =
-        old_container->inactive().find(id);
+      typename InactiveMap::const_iterator i_it = old_container->inactive().find(id);
       if (i_it != old_container->inactive().end())
       {
         timestamp = i_it->second.timestamp;
@@ -578,7 +561,7 @@ namespace Commons
     inactive_instances_[id] = timestamp;
 
     typename ActiveMap::iterator it = active_instances_.find(id);
-    if(it != active_instances_.end())
+    if (it != active_instances_.end())
     {
       active_instances_.erase(it);
     }
@@ -597,14 +580,13 @@ namespace Commons
   {
     unsigned long deactivated_count = 0;
 
-    for(typename ActiveMap::const_iterator oit = old_container.active().begin();
+    for (typename ActiveMap::const_iterator oit = old_container.active().begin();
         oit != old_container.active().end(); ++oit)
     {
       typename ActiveMap::iterator it = active_instances_.find(oit->first);
-      if(it == active_instances_.end())
+      if (it == active_instances_.end())
       {
-        typename InactiveMap::const_iterator i_it =
-          inactive_instances_.find(oit->first);
+        typename InactiveMap::const_iterator i_it = inactive_instances_.find(oit->first);
         if (i_it == inactive_instances_.end())
         {
           inactive_instances_.insert(std::make_pair(oit->first, sysdate));
@@ -613,14 +595,13 @@ namespace Commons
       }
     }
 
-    for(typename InactiveMap::const_iterator oit = old_container.inactive().begin();
+    for (typename InactiveMap::const_iterator oit = old_container.inactive().begin();
         oit != old_container.inactive().end(); ++oit)
     {
       typename ActiveMap::iterator it = active_instances_.find(oit->first);
-      if(it == active_instances_.end())
+      if (it == active_instances_.end())
       {
-        typename InactiveMap::const_iterator i_it =
-          inactive_instances_.find(oit->first);
+        typename InactiveMap::const_iterator i_it = inactive_instances_.find(oit->first);
         if (i_it == inactive_instances_.end())
         {
           inactive_instances_.insert(*oit);
@@ -643,15 +624,14 @@ namespace Commons
     bool erase_found = false;
     InactiveMap new_inactive_map;
 
-    typename InactiveMap::const_iterator inactive_begin_it =
-      inactive_instances_.begin();
+    typename InactiveMap::const_iterator inactive_begin_it = inactive_instances_.begin();
 
-    for(typename InactiveMap::const_iterator oit = inactive_begin_it;
+    for (typename InactiveMap::const_iterator oit = inactive_begin_it;
         oit != inactive_instances_.end(); ++oit)
     {
-      if(oit->second.timestamp < timestamp)
+      if (oit->second.timestamp < timestamp)
       {
-        if(!erase_found)
+        if (!erase_found)
         {
           std::copy(
             inactive_begin_it,
@@ -663,14 +643,14 @@ namespace Commons
       }
       else
       {
-        if(erase_found)
+        if (erase_found)
         {
           new_inactive_map.insert(*oit);
         }
       }
     }
 
-    if(erase_found)
+    if (erase_found)
     {
       new_inactive_map.swap(inactive_instances_);
     }
@@ -748,5 +728,4 @@ namespace Commons
 
     return stamp;
   }
-}
 }

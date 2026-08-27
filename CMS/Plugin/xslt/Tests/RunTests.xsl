@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:exsl="http://exslt.org/common"
   xmlns:colo="http://www.foros.com/cms/colocation"
@@ -29,13 +29,13 @@ if [ ! -e $config_root/TestConfig/AutoTests/AutoTestsConfig.xml ]
 then
   echo "$config_root/TestConfig/AutoTests/AutoTestsConfig.xml is not exists." \
       " Need run confgen.sh &amp; prepareDB.sh before!" &amp;&amp; exit 1
-fi 
+fi
 
 if [ ! -e $auto_tests_config_root/LocalParams.xml ]
 then
   echo "$auto_tests_config_root/LocalParams.xml is not exists." \
       " Need run prepareDB.sh before!" &amp;&amp; exit 1
-fi 
+fi
 
 
 run_name=${1:-"${colocation_name}-simple"}

@@ -29,9 +29,7 @@ namespace AdServer::ChannelSvcs
     std::size_t
     resolve_max_sequential_ops(std::size_t configured)
     {
-      return std::max<std::size_t>(
-        1,
-        configured != 0 ? configured : 4);
+      return std::max<std::size_t>(1, configured != 0 ? configured : 4);
     }
 
     class InProgressGuard final
@@ -78,8 +76,7 @@ namespace AdServer::ChannelSvcs
 
       ~BatchStatsGuard() noexcept
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
@@ -167,24 +164,19 @@ namespace AdServer::ChannelSvcs
         keyword->set_ccg_id(source_keyword.ccg_id);
         keyword->set_channel_id(source_keyword.channel_id);
         keyword->set_max_cpc(pack_oct_seq(
-          CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
-            source_keyword.max_cpc)));
+          CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(source_keyword.max_cpc)));
         keyword->set_ctr(pack_oct_seq(
-          CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(
-            source_keyword.ctr)));
+          CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(source_keyword.ctr)));
         keyword->set_click_url(source_keyword.click_url);
         keyword->set_original_keyword(source_keyword.original_keyword);
       }
 
       target.mutable_neg_ccg()->Reserve(source.neg_ccg.size());
-      target.mutable_neg_ccg()->Add(
-        source.neg_ccg.begin(),
-        source.neg_ccg.end());
+      target.mutable_neg_ccg()->Add(source.neg_ccg.begin(), source.neg_ccg.end());
     }
 
     std::vector<unsigned long>
-    unpack_sources(
-      const google::protobuf::RepeatedField<::google::protobuf::uint64>& source)
+    unpack_sources(const google::protobuf::RepeatedField<::google::protobuf::uint64>& source)
     {
       std::vector<unsigned long> result;
       result.reserve(source.size());
@@ -201,8 +193,7 @@ namespace AdServer::ChannelSvcs
         adserver::channel_svcs::channel_server::LocalLoadGroup>& groups,
       ChannelSvcs::GroupLoadDescriptionSeq& result)
     {
-      CORBACommons::CorbaClientAdapter_var adapter =
-        new CORBACommons::CorbaClientAdapter();
+      CORBACommons::CorbaClientAdapter_var adapter = new CORBACommons::CorbaClientAdapter();
       result.length(groups.size());
 
       CORBA::ULong group_index = 0;
@@ -212,30 +203,25 @@ namespace AdServer::ChannelSvcs
         CORBA::ULong server_index = 0;
         for (const auto& server : group.servers())
         {
-          CORBACommons::CorbaObjectRef ref(
-            server.channel_update_ref().c_str());
+          CORBACommons::CorbaObjectRef ref(server.channel_update_ref().c_str());
           CORBA::Object_var obj = adapter->resolve_object(ref);
-          ChannelSvcs::ChannelUpdate_var update =
-            ChannelSvcs::ChannelUpdate::_narrow(obj.in());
+          ChannelSvcs::ChannelUpdate_var update = ChannelSvcs::ChannelUpdate::_narrow(obj.in());
           result[group_index][server_index].load_server =
             ChannelSvcs::ChannelUpdateBase::_duplicate(update.in());
           if (CORBA::is_nil(result[group_index][server_index].load_server.in()))
           {
             Stream::Error ostr;
-            ostr << "can't narrow ChannelUpdateBase reference: " <<
-              server.channel_update_ref();
+            ostr << "can't narrow ChannelUpdateBase reference: " << server.channel_update_ref();
             throw ChannelServerCore::Exception(ostr);
           }
 
-          result[group_index][server_index].chunks.length(
-            server.sources_size());
+          result[group_index][server_index].chunks.length(server.sources_size());
           CORBA::ULong source_index = 0;
           for (const auto source : server.sources())
           {
             result[group_index][server_index].chunks[source_index++] = source;
           }
-          result[group_index][server_index].count_chunks =
-            server.count_chunks();
+          result[group_index][server_index].count_chunks = server.count_chunks();
 
           ++server_index;
         }
@@ -263,8 +249,7 @@ namespace AdServer::ChannelSvcs
       adserver::channel_svcs::channel_server::ChannelServerGrpc,
       adserver::channel_svcs::channel_server::ChannelServerGrpc::AsyncService>
   {
-    using AsyncService =
-      adserver::channel_svcs::channel_server::ChannelServerGrpc::AsyncService;
+    using AsyncService = adserver::channel_svcs::channel_server::ChannelServerGrpc::AsyncService;
 
   public:
     ServiceImpl(
@@ -525,8 +510,7 @@ namespace AdServer::ChannelSvcs
   }
 
   void
-  ChannelServerGrpc::ServiceImpl::get_status_(
-    pc::GetStatusResponse& response) const
+  ChannelServerGrpc::ServiceImpl::get_status_(pc::GetStatusResponse& response) const
   {
     try
     {
@@ -545,8 +529,7 @@ namespace AdServer::ChannelSvcs
   }
 
   ::grpc::Status
-  ChannelServerGrpc::ServiceImpl::get_db_state_(
-    pc::GetDbStateResponse& response) const
+  ChannelServerGrpc::ServiceImpl::get_db_state_(pc::GetDbStateResponse& response) const
   {
     try
     {
@@ -555,27 +538,20 @@ namespace AdServer::ChannelSvcs
     }
     catch (const Commons::DbStateChanger::NotSupported& ex)
     {
-      return AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNIMPLEMENTED,
-        ex.what());
+      return AdServer::Grpc::error_status(::grpc::StatusCode::UNIMPLEMENTED, ex.what());
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      return AdServer::Grpc::error_status(
-        ::grpc::StatusCode::FAILED_PRECONDITION,
-        ex.what());
+      return AdServer::Grpc::error_status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      return AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      return AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
   ::grpc::Status
-  ChannelServerGrpc::ServiceImpl::set_db_state_(
-    const pc::SetDbStateRequest& request) const
+  ChannelServerGrpc::ServiceImpl::set_db_state_(const pc::SetDbStateRequest& request) const
   {
     try
     {
@@ -584,15 +560,11 @@ namespace AdServer::ChannelSvcs
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      return AdServer::Grpc::error_status(
-        ::grpc::StatusCode::FAILED_PRECONDITION,
-        ex.what());
+      return AdServer::Grpc::error_status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      return AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      return AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -603,9 +575,7 @@ namespace AdServer::ChannelSvcs
     ::grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard in_progress(
-      stats_->call_in_progress,
-      stats_->match_in_progress);
+    InProgressGuard in_progress(stats_->call_in_progress, stats_->match_in_progress);
 
     response.set_hostname(AdServer::Commons::hostname());
 
@@ -620,10 +590,8 @@ namespace AdServer::ChannelSvcs
       query.pwords = request.pwords();
       query.swords = request.swords();
       query.uid = GrpcAlgs::unpack_user_id(request.uid());
-      query.statuses[0] = request.statuses().empty() ?
-        '\0' : request.statuses()[0];
-      query.statuses[1] = request.statuses().size() > 1 ?
-        request.statuses()[1] : '\0';
+      query.statuses[0] = request.statuses().empty() ? '\0' : request.statuses()[0];
+      query.statuses[1] = request.statuses().size() > 1 ? request.statuses()[1] : '\0';
       query.non_strict_word_match = request.non_strict_word_match();
       query.non_strict_url_match = request.non_strict_url_match();
       query.return_negative = request.return_negative();
@@ -638,21 +606,15 @@ namespace AdServer::ChannelSvcs
     }
     catch (const ChannelServerCore::NotConfigured& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     co_return;
   }
@@ -664,9 +626,7 @@ namespace AdServer::ChannelSvcs
     ::grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard in_progress(
-      stats_->call_in_progress,
-      stats_->get_ccg_traits_in_progress);
+    InProgressGuard in_progress(stats_->call_in_progress, stats_->get_ccg_traits_in_progress);
 
     response.set_hostname(AdServer::Commons::hostname());
 
@@ -687,21 +647,15 @@ namespace AdServer::ChannelSvcs
     }
     catch (const ChannelServerCore::NotConfigured& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     co_return;
   }
@@ -713,9 +667,7 @@ namespace AdServer::ChannelSvcs
     ::grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard in_progress(
-      stats_->call_in_progress,
-      stats_->check_configuration_in_progress);
+    InProgressGuard in_progress(stats_->call_in_progress, stats_->check_configuration_in_progress);
 
     response.set_check_sum(core_->check_configuration());
     result_status = ::grpc::Status::OK;
@@ -729,12 +681,9 @@ namespace AdServer::ChannelSvcs
     ::grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard in_progress(
-      stats_->call_in_progress,
-      stats_->set_sources_in_progress);
+    InProgressGuard in_progress(stats_->call_in_progress, stats_->set_sources_in_progress);
 
-    if (request.check_sum() != 0 &&
-        core_->check_configuration() == request.check_sum())
+    if (request.check_sum() != 0 && core_->check_configuration() == request.check_sum())
     {
       result_status = ::grpc::Status::OK;
       co_return;
@@ -760,15 +709,11 @@ namespace AdServer::ChannelSvcs
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     co_return;
   }
@@ -780,12 +725,9 @@ namespace AdServer::ChannelSvcs
     ::grpc::Status& result_status) const
   {
     co_await AdServer::Commons::ExecutorPool::yield(executor_pool_);
-    InProgressGuard in_progress(
-      stats_->call_in_progress,
-      stats_->set_proxy_sources_in_progress);
+    InProgressGuard in_progress(stats_->call_in_progress, stats_->set_proxy_sources_in_progress);
 
-    if (request.check_sum() != 0 &&
-        core_->check_configuration() == request.check_sum())
+    if (request.check_sum() != 0 && core_->check_configuration() == request.check_sum())
     {
       result_status = ::grpc::Status::OK;
       co_return;
@@ -798,9 +740,7 @@ namespace AdServer::ChannelSvcs
       proxy_info.colo = request.colo();
       proxy_info.version = request.version();
       proxy_info.check_sum = request.check_sum();
-      unpack_local_groups(
-        request.local_groups(),
-        proxy_info.local_descriptor);
+      unpack_local_groups(request.local_groups(), proxy_info.local_descriptor);
 
       proxy_info.campaign_refs.reserve(request.campaign_refs_size());
       for (const auto& ref : request.campaign_refs())
@@ -819,15 +759,11 @@ namespace AdServer::ChannelSvcs
     }
     catch (const ChannelServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     catch (const eh::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     catch (const CORBA::SystemException& ex)
     {
@@ -835,9 +771,7 @@ namespace AdServer::ChannelSvcs
       ostr << ex;
       const String::SubString error_substr = ostr.str();
       const std::string error(error_substr.data(), error_substr.size());
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        error.c_str());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, error.c_str());
     }
     co_return;
   }
@@ -854,10 +788,7 @@ namespace AdServer::ChannelSvcs
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
-          new Logging::ActiveObjectCallbackImpl(
-            logger,
-            "",
-            channel_server_grpc_aspect)),
+          new Logging::ActiveObjectCallbackImpl(logger, "", channel_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
         AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:cs-grpc-p")),

@@ -35,9 +35,7 @@ namespace AdServer::LogProcessing
         return true;
       }
       return sdate_ == rhs.sdate_ &&
-        isp_sdate_ == rhs.isp_sdate_ &&
-        colo_id_ == rhs.colo_id_ &&
-        created_ == rhs.created_;
+        isp_sdate_ == rhs.isp_sdate_ && colo_id_ == rhs.colo_id_ && created_ == rhs.created_;
     }
 
     const OptionalDayTimestamp& sdate() const

@@ -19,7 +19,7 @@ sub __get_col_sql
   }
   elsif (ref $self->{$col} eq 'DB::Entity::SQL')
   {
-    return "(\"$col\"=" . $self->{$col}->sql . ")"; 
+    return "(\"$col\"=" . $self->{$col}->sql . ")";
   }
   elsif ($struct{$col}->{is_name})
   {
@@ -52,7 +52,7 @@ sub __get_where
   # (not defined $_ or $_ eq ''? '': $_)
   my @values = map {  $_ eq ''? '': $_ } (
     $self->__get_db_values(
-      grep {defined $self->{$_} and ref $self->{$_} ne 'DB::Entity::SQL'} 
+      grep {defined $self->{$_} and ref $self->{$_} ne 'DB::Entity::SQL'}
         (@unique)));
 
   return ($where, \@values);
@@ -72,7 +72,7 @@ sub __insert
 
   my @auto = ($self->_auto());
 
-  my @auto_columns = grep { defined($_) && exists $self->{$_} } 
+  my @auto_columns = grep { defined($_) && exists $self->{$_} }
     ($self->_auto());
 
   my $sql = qq|
@@ -141,7 +141,7 @@ sub __get_select_cause
 
   qq|
     SELECT @{[ join(', ', map qq{"$_"}, @$result_columns) or 1 ]}
-      FROM $table 
+      FROM $table
       $where|
 }
 
@@ -151,7 +151,7 @@ sub __set_sequence
 
   if ($self->_sequence and not exists $self->{ $self->_sequence })
   {
-    $self->{ $self->_sequence } = 
+    $self->{ $self->_sequence } =
       $self->sql("nextval('" . $self->_sequence_name . "')");
   }
 }
@@ -164,9 +164,9 @@ sub _sequence_name
     ref($struct{$_}) eq 'DB::Entity::Type::Sequence' or
       ref($struct{$_}) eq 'DB::Entity::Type::NextSequence'} (keys %struct);
 
-  @seq? 
+  @seq?
     $struct{$seq[0]}{sequence}?
-       $struct{$seq[0]}{sequence}: 
+       $struct{$seq[0]}{sequence}:
          lc $class->_table . "_" . $seq[0] . "_seq":
           lc $class->_table ."_seq" ;
 }
@@ -179,10 +179,10 @@ sub get_display_status
   my $object = $self->_table;
 
   my $stmt = $ns->pq_dbh->prepare_cached(q[
-    SELECT display_status_id 
+    SELECT display_status_id
     FROM DisplayStatus ds
     JOIN ObjectType ot
-    ON (ds.object_type_id = ot.object_type_id) 
+    ON (ds.object_type_id = ot.object_type_id)
     WHERE replace(upper(ot.name), ' ', '') = upper(?) and ds.description = ?]);
 
   $stmt->execute($object, $status);

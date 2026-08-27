@@ -32,8 +32,7 @@ namespace TestFactory
       noexcept;
 
     void
-    filter(
-      const StringArray& tests)
+    filter(const StringArray& tests)
       noexcept;
 
     const UnitsList&

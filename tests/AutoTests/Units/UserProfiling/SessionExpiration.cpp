@@ -54,8 +54,7 @@ namespace
       /*throw(eh::Exception)*/
     {
       std::ostringstream expected_session;
-      expected_session << "\\[ channel_id = " <<
-        test_->fetch_string(channel_) << ", timestamps = ";
+      expected_session << "\\[ channel_id = " << test_->fetch_string(channel_) << ", timestamps = ";
 
       TimeStamps::const_iterator it = timestamps_.begin();
       while (it != timestamps_.end())
@@ -72,9 +71,7 @@ namespace
       return
         BaseProfileChecker(
           test_,
-          AutoTest::prepare_uid(
-            client_.get_uid(),
-            AutoTest::UUE_ADMIN_PARAMVALUE),
+          AutoTest::prepare_uid(client_.get_uid(), AutoTest::UUE_ADMIN_PARAMVALUE),
           false,
           AutoTest::UserInfoManagerController,
           BaseProfileChecker::Expected().
@@ -90,9 +87,7 @@ namespace
   };
 }
 
-REFLECT_UNIT(SessionExpiration) (
-  "UserProfiling",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(SessionExpiration) ("UserProfiling", AUTO_TEST_FAST);
 
 bool
 SessionExpiration::run_test()
@@ -110,15 +105,11 @@ SessionExpiration::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("BP"),
-      client.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(fetch_string("BP"), client.debug_info.trigger_channels).check(),
     "Trigger channels check");
 
   FAIL_CONTEXT(
-    SessionMatchesCheck(
-      this, client, "Channel",
-      timestamps, "After 1st request.").check());
+    SessionMatchesCheck(this, client, "Channel", timestamps, "After 1st request.").check());
 
   // 5 minutes later
   time+=5*60;
@@ -127,9 +118,7 @@ SessionExpiration::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    SessionMatchesCheck(
-      this, client, "Channel",
-      timestamps, "After 2nd request.").check());
+    SessionMatchesCheck(this, client, "Channel", timestamps, "After 2nd request.").check());
 
   // 10 minutes later
   // 1st timestamp should be removed from url_session_matches
@@ -140,21 +129,16 @@ SessionExpiration::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    SessionMatchesCheck(
-      this, client, "Channel",
-      timestamps, "After 3d request.").check());
+    SessionMatchesCheck(this, client, "Channel", timestamps, "After 3d request.").check());
 
   // 15 minutes later
   // 2nd timestamp should be removed from url_session_matches
   time+=5*60;
   timestamps.pop_front();
-  client.process_request(
-    NSLookupRequest().debug_time(time));
+  client.process_request(NSLookupRequest().debug_time(time));
 
   FAIL_CONTEXT(
-    SessionMatchesCheck(
-      this, client, "Channel",
-      timestamps, "After 4th request.").check());
+    SessionMatchesCheck(this, client, "Channel", timestamps, "After 4th request.").check());
 
   return true;
 }

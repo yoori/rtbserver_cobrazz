@@ -17,8 +17,7 @@ void Statistics::incr_errors()
   errors_++;
 }
 
-void Statistics::add_response(const char* uid,
-                              const AdvertiserResponse* ad_response)
+void Statistics::add_response(const char* uid, const AdvertiserResponse* ad_response)
 {
   WriteGuard_ guard(lock_);
   uids_.insert(uid);

@@ -25,9 +25,7 @@ namespace FrontendCommons
   class PassbackTemplateKey
   {
   public:
-    PassbackTemplateKey(
-      const char* request_app_format,
-      const char* passback_app_format)
+    PassbackTemplateKey(const char* request_app_format, const char* passback_app_format)
       noexcept
       : request_app_format_(request_app_format),
         passback_app_format_(passback_app_format),
@@ -59,9 +57,7 @@ namespace FrontendCommons
   {
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    PassbackProcessingTemplate(
-      const char* file,
-      const char* content_type_val)
+    PassbackProcessingTemplate(const char* file, const char* content_type_val)
       /*throw(Exception)*/;
 
     int

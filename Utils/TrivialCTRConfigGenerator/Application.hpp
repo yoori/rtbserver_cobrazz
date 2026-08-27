@@ -21,9 +21,7 @@ public:
 
 protected:
   void
-  generate_(
-    const String::SubString& input_folder,
-    const String::SubString& output_folder);
+  generate_(const String::SubString& input_folder, const String::SubString& output_folder);
 };
 
 typedef Generics::Singleton<Application_> Application;

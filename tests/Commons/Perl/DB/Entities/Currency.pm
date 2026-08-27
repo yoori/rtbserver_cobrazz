@@ -7,7 +7,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   currency_exchange_id =>  DB::Entity::Type::int(unique => 1),
   currency_id => DB::Entity::Type::link('DB::Currency', unique => 1),
@@ -27,13 +27,13 @@ use constant DEFAULT_FRACTION_DIGITS => 2;
 our @ISA = qw(DB::Entity::PQ);
 
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   currency_id => DB::Entity::Type::sequence(),
   currency_code =>  DB::Entity::Type::string(unique => 1),
   fraction_digits => DB::Entity::Type::int(default => DEFAULT_FRACTION_DIGITS),
   source => 'M',
-  
+
   # Private
   rate => DB::Entity::Type::float(private => 1)
 };
@@ -47,9 +47,9 @@ sub precreate_
 sub postcreate_
 {
   my ($self, $ns) = @_;
-  
+
   my $stmt = $ns->pq_dbh->prepare_cached(
-    q|SELECT currency_exchange_id FROM CurrencyExchange|, 
+    q|SELECT currency_exchange_id FROM CurrencyExchange|,
     undef, 1);
   $stmt->execute;
   while (my $res = $stmt->fetchrow_arrayref)
@@ -70,11 +70,11 @@ sub select_currency_code_ {
     my $rate = $args_copy{rate};
     if (defined $fraction_digits && defined $rate)
     {
-      my $stmt = 
+      my $stmt =
           $ns->pq_dbh->prepare_cached(q|
                                    SELECT a.currency_code FROM Currency a
                                    LEFT JOIN CurrencyExchangeRate b USING(currency_id)
-                                   LEFT JOIN (SELECT currency_id, 
+                                   LEFT JOIN (SELECT currency_id,
                                               MAX(currency_exchange_id) as max_exchange_id
                                               FROM CurrencyExchangeRate
                                               GROUP BY currency_id) c USING(currency_id)
@@ -119,7 +119,7 @@ sub select_currency_code_ {
   my $stmt = $ns->pq_dbh->prepare_cached("SELECT currency_code FROM Currency "
                                       . "WHERE currency_code IN ($codes_string)");
 
-  
+
   $stmt->execute();
   my @result_row;
   while (@result_row = $stmt->fetchrow_array())

@@ -8,9 +8,7 @@
 
 #include <Commons/AtomicInt.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   /* CountActiveObject
    *   ActiveObject implementation
@@ -41,5 +39,4 @@ namespace Commons
   };
   typedef ReferenceCounting::QualPtr<CountActiveObject>
     CountActiveObject_var;
-}
 }

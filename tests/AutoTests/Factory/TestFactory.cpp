@@ -9,9 +9,7 @@ namespace TestFactory
   // Check group predicate
   struct IsGroup : public std::binary_function<AutoTestSpeedGroup, int, bool>
   {
-    bool operator() (
-      AutoTestSpeedGroup g1,
-      int g2) const
+    bool operator() (AutoTestSpeedGroup g1, int g2) const
     {
       return g2 & g1;
     }
@@ -19,8 +17,7 @@ namespace TestFactory
 
   struct IsTrue : public std::unary_function<bool,bool>
   {
-    bool operator() (
-      bool v) const
+    bool operator() (bool v) const
     {
       return v;
     }
@@ -35,8 +32,7 @@ namespace TestFactory
       serialized_mode_(serialized_mode)
     { }
 
-    bool operator() (
-      const UnitDescriptor* u) const
+    bool operator() (const UnitDescriptor* u) const
     {
       return !(serialized_mode_ && u->serialize);
     }
@@ -53,27 +49,18 @@ namespace TestFactory
     typedef typename std::set<MemberType> List;
 
   public:
-    IsPred(
-      const List& list,
-      MemberType UnitDescriptor::* member,
-      UnaryPredicate pred) :
+    IsPred(const List& list, MemberType UnitDescriptor::* member, UnaryPredicate pred) :
       list_(list),
       member_(member),
       pred_(pred)
     { }
 
-    bool operator() (
-      const UnitDescriptor* u) const
+    bool operator() (const UnitDescriptor* u) const
     {
       return
         !list_.empty() &&
           pred_(
-            std::count_if(
-              list_.begin(),
-              list_.end(),
-              std::bind1st(
-                EqualTo(),
-                u->*(member_))) != 0);
+            std::count_if(list_.begin(), list_.end(), std::bind1st(EqualTo(), u->*(member_))) != 0);
     }
 
   private:
@@ -86,32 +73,21 @@ namespace TestFactory
   class GroupUnaryPred
   {
   public:
-    GroupUnaryPred(
-      const GroupList& list,
-      bool mode) :
+    GroupUnaryPred(const GroupList& list, bool mode) :
       list_(list),
       mode_(mode)
     { }
 
-    bool operator() (
-      const UnitDescriptor* u) const
+    bool operator() (const UnitDescriptor* u) const
     {
-      bool check =
-        std::count_if(
-          list_.begin(),
-          list_.end(),
-          std::bind2nd(
-            IsGroup(),
-            u->group));
+      bool check = std::count_if(list_.begin(), list_.end(), std::bind2nd(IsGroup(), u->group));
 
       if (check)
       {
         return false;
       }
 
-      bool is_dual =
-        (u->group & AUTO_TEST_SLOW) &&
-        (u->group & AUTO_TEST_FAST);
+      bool is_dual = (u->group & AUTO_TEST_SLOW) && (u->group & AUTO_TEST_FAST);
 
       return !list_.empty() && !(is_dual && mode_);
     }
@@ -124,9 +100,7 @@ namespace TestFactory
   // Check entry to run list
   template<typename MemberType>
   IsPred<MemberType, IsTrue>
-  is_entry(
-    const typename std::set<MemberType>& list,
-    MemberType UnitDescriptor::* member)
+  is_entry(const typename std::set<MemberType>& list, MemberType UnitDescriptor::* member)
   {
     return IsPred<MemberType, IsTrue>(list, member, IsTrue());
   }
@@ -134,9 +108,7 @@ namespace TestFactory
   // Check not entry to run list
   template<typename MemberType>
   IsPred<MemberType, IsFalse>
-  is_not_entry(
-    const typename std::set<MemberType>& list,
-    MemberType UnitDescriptor::* member)
+  is_not_entry(const typename std::set<MemberType>& list, MemberType UnitDescriptor::* member)
   {
     return IsPred<MemberType, IsFalse>(list, member, IsFalse());
   }
@@ -160,8 +132,7 @@ namespace TestFactory
       select_serialized_(select_serialized)
     {  }
 
-    bool operator() (
-      const UnitDescriptor* u) const
+    bool operator() (const UnitDescriptor* u) const
     {
       if (is_entry(tests_, &UnitDescriptor::name)(u))
       {
@@ -174,10 +145,7 @@ namespace TestFactory
       }
 
       return
-        (GroupUnaryPred(
-           groups_,
-           (groups_.size() == 1 &&
-             *groups_.begin() == AUTO_TEST_SLOW))(u) ||
+        (GroupUnaryPred(groups_, (groups_.size() == 1 && *groups_.begin() == AUTO_TEST_SLOW))(u) ||
           is_not_entry(categories_, &UnitDescriptor::category)(u) ||
           is_entry(exclude_tests_, &UnitDescriptor::name)(u) ||
           is_entry(exclude_categories_, &UnitDescriptor::category)(u));
@@ -226,12 +194,10 @@ namespace TestFactory
   }
 
   void
-  TestFactory::filter(
-    const StringList& tests)
+  TestFactory::filter(const StringList& tests)
     noexcept
   {
-    units_.remove_if(
-      is_not_entry(tests, &UnitDescriptor::name));
+    units_.remove_if(is_not_entry(tests, &UnitDescriptor::name));
   }
 
   const UnitsList&

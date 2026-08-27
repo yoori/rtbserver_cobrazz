@@ -2,24 +2,19 @@
 
 #include <set>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename ValueType>
   struct Interval
   {
-    Interval(
-      const ValueType& min_val,
-      const ValueType& max_val)
+    Interval(const ValueType& min_val, const ValueType& max_val)
       : min(min_val), max(max_val)
     {}
 
     bool
     operator<(const Interval& right) const
     {
-      return min < right.min || (min == right.min &&
-        max < right.max);
+      return min < right.min || (min == right.min && max < right.max);
     }
 
     bool
@@ -48,10 +43,7 @@ namespace Commons
     minimize(const ValueType& min) noexcept;
 
     void
-    cross(
-      IntervalSet<ValueType>& res,
-      const ValueType& min,
-      const ValueType& max)
+    cross(IntervalSet<ValueType>& res, const ValueType& min, const ValueType& max)
       const
       noexcept;
 
@@ -60,29 +52,25 @@ namespace Commons
       noexcept;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename ValueType>
   void
-  IntervalSet<ValueType>::normalize(const ValueType& min,
-    const ValueType& max)
+  IntervalSet<ValueType>::normalize(const ValueType& min, const ValueType& max)
     noexcept
   {
     std::set<Interval<ValueType> > ints;
 
     ValueType pmax = min;
-    for(typename std::set<Interval<ValueType> >::iterator it =
+    for (typename std::set<Interval<ValueType> >::iterator it =
           this->begin(); it != this->end(); ++it)
     {
       ValueType rmin = std::max(pmax, it->min);
       ValueType rmax = std::min(it->max, max);
-      if(rmin <= rmax)
+      if (rmin <= rmax)
       {
-        if(rmin == pmax && !ints.empty())
+        if (rmin == pmax && !ints.empty())
         {
           // union intervals
           ValueType pmin = ints.rbegin()->min;
@@ -122,32 +110,28 @@ namespace Commons
     typedef typename std::set<Interval<ValueType> >::const_iterator
       ConstIterator;
 
-    if(min < max || min == max)
+    if (min < max || min == max)
     {
       ConstIterator min_it = this->lower_bound(Interval<ValueType>(min, 0));
       ConstIterator max_it = this->upper_bound(Interval<ValueType>(max, 0));
       ConstIterator copy_begin_it = min_it;
 
-      if(min_it != this->begin() && min < (--min_it)->max)
+      if (min_it != this->begin() && min < (--min_it)->max)
       {
-        res.insert(Interval<ValueType>(
-          min,
-          std::min(min_it->max, max)));
+        res.insert(Interval<ValueType>(min, std::min(min_it->max, max)));
       }
 
-      if(copy_begin_it != max_it)
+      if (copy_begin_it != max_it)
       {
         ConstIterator copy_end_it = max_it;
 
-        if(max < (--max_it)->max)
+        if (max < (--max_it)->max)
         {
           res.insert(Interval<ValueType>(max_it->min, max));
           copy_end_it = max_it;
         }
 
-        std::copy(copy_begin_it,
-          copy_end_it,
-          std::inserter(res, res.begin()));
+        std::copy(copy_begin_it, copy_end_it, std::inserter(res, res.begin()));
       }
     }
   }
@@ -158,13 +142,11 @@ namespace Commons
     noexcept
   {
     IntervalSet<ValueType> res;
-    for(typename IntervalSet<ValueType>::const_iterator rit =
-          right.begin();
+    for (typename IntervalSet<ValueType>::const_iterator rit = right.begin();
         rit != right.end(); ++rit)
     {
       cross(res, rit->min, rit->max);
     }
     this->swap(res);
   }
-}
 }

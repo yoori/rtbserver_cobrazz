@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
   exclude-result-prefixes="dyn"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:colo="http://www.foros.com/cms/colocation">
 
@@ -72,7 +72,7 @@ connect = <xsl:value-of select="@host"/>:<xsl:value-of select="@port"/>
     <xsl:when test="count($full-cluster-path) = 0">
        <xsl:message terminate="yes"> STunnelClient: Can't find full cluster group </xsl:message>
     </xsl:when>
-    
+
     <xsl:when test="count($fe-cluster-path) = 0">
        <xsl:message terminate="yes"> STunnelClient: Can't find fe-cluster group </xsl:message>
     </xsl:when>
@@ -90,11 +90,11 @@ connect = <xsl:value-of select="@host"/>:<xsl:value-of select="@port"/>
   <xsl:variable
     name="fe-cluster-config"
     select="$fe-cluster-path/configuration/cfg:frontendCluster"/>
-    
+
   <xsl:variable
     name="env-config"
     select="$fe-cluster-config/cfg:environment | $colo-config/cfg:environment"/>
-    
+
   <xsl:variable
     name="stunnel-config"
     select="$stunnel-client-path/configuration/cfg:sTunnelClient"/>

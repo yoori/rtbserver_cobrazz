@@ -8,9 +8,7 @@
 #include <ReferenceCounting/HashTable.hpp>
 #include <Sync/SyncPolicy.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename KeyType, typename ValueType>
   class Map2Args: public std::map<KeyType, ValueType>
@@ -90,7 +88,7 @@ namespace Commons
         SyncPolicy::WriteGuard guard(map_lock_);
 
         typename LockHolderMap::const_iterator it = map_.find(key);
-        if(it != map_.end())
+        if (it != map_.end())
         {
           holder = ReferenceCounting::add_ref(it->second);
         }
@@ -183,11 +181,8 @@ namespace Commons
     {}
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   // StrictStrictLockMap
   template<typename KeyType, typename SyncPolicyType,
@@ -204,7 +199,7 @@ namespace Commons
   StrictLockMap<KeyType, SyncPolicyType, ContainerType>::LockHolder::remove_ref_no_delete_() const noexcept
   {
     SyncPolicy::WriteGuard guard(map.map_lock_);
-    if(ReferenceCounting::AtomicImpl::remove_ref_no_delete_())
+    if (ReferenceCounting::AtomicImpl::remove_ref_no_delete_())
     {
       map.close_i_(key);
       return true;
@@ -218,8 +213,7 @@ namespace Commons
   StrictLockMap<KeyType, SyncPolicyType, ContainerType>::read_lock(const KeyType& key)
     noexcept
   {
-    return ReadGuard(get_<
-      GuardHolder<typename SyncPolicyType::ReadGuard> >(key));
+    return ReadGuard(get_<GuardHolder<typename SyncPolicyType::ReadGuard> >(key));
   }
 
   template<typename KeyType, typename SyncPolicyType,
@@ -228,8 +222,7 @@ namespace Commons
   StrictLockMap<KeyType, SyncPolicyType, ContainerType>::write_lock(const KeyType& key)
     noexcept
   {
-    return WriteGuard(get_<
-      GuardHolder<typename SyncPolicyType::WriteGuard> >(key));
+    return WriteGuard(get_<GuardHolder<typename SyncPolicyType::WriteGuard> >(key));
   }
 
   template<typename KeyType, typename SyncPolicyType,
@@ -244,8 +237,7 @@ namespace Commons
 
   // NoAllocLockMap
   template<typename KeyType, typename SyncPolicyType>
-  NoAllocLockMap<KeyType, SyncPolicyType>::NoAllocLockMap(
-    unsigned long size)
+  NoAllocLockMap<KeyType, SyncPolicyType>::NoAllocLockMap(unsigned long size)
     noexcept
   {
     locks_.resize(size);
@@ -253,22 +245,17 @@ namespace Commons
 
   template<typename KeyType, typename SyncPolicyType>
   typename NoAllocLockMap<KeyType, SyncPolicyType>::ReadGuard
-  NoAllocLockMap<KeyType, SyncPolicyType>::read_lock(
-    const KeyType& key)
+  NoAllocLockMap<KeyType, SyncPolicyType>::read_lock(const KeyType& key)
     noexcept
   {
-    return ReadGuard(get_<
-      GuardHolder<typename SyncPolicyType::ReadGuard> >(key));
+    return ReadGuard(get_<GuardHolder<typename SyncPolicyType::ReadGuard> >(key));
   }
 
   template<typename KeyType, typename SyncPolicyType>
   typename NoAllocLockMap<KeyType, SyncPolicyType>::WriteGuard
-  NoAllocLockMap<KeyType, SyncPolicyType>::write_lock(
-    const KeyType& key)
+  NoAllocLockMap<KeyType, SyncPolicyType>::write_lock(const KeyType& key)
     noexcept
   {
-    return WriteGuard(get_<
-      GuardHolder<typename SyncPolicyType::WriteGuard> >(key));
+    return WriteGuard(get_<GuardHolder<typename SyncPolicyType::WriteGuard> >(key));
   }
-}
 }

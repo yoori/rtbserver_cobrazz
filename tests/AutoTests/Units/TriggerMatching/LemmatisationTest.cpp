@@ -1,9 +1,7 @@
 
 #include "LemmatisationTest.hpp"
 
-REFLECT_UNIT(LemmatisationTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(LemmatisationTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -194,11 +192,7 @@ LemmatisationTest::run_test()
     if (special_effects)
     {
       FAIL_CONTEXT(
-        SpecialEffectsChecker(
-          client,
-          request,
-          "0",
-          special_effects).check(),
+        SpecialEffectsChecker(client, request, "0", special_effects).check(),
         TEST_CASES[i].description +
         " Check special effects");
     }
@@ -225,10 +219,7 @@ LemmatisationTest::run_test()
 
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          TEST_CASES[i].expected_channels,
-          got_channels).check(),
+        ChannelsCheck(this, TEST_CASES[i].expected_channels, got_channels).check(),
         TEST_CASES[i].description +
           " Expected channels check");
 

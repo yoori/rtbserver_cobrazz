@@ -83,9 +83,7 @@ namespace AutoTest
      * @param client.
      * @param expected PASSBACK_URL.
      */
-    TagPassbackChecker(
-      const AdClient& client,
-      const std::string& url);
+    TagPassbackChecker(const AdClient& client, const std::string& url);
 
     /**
      * @brief Constructor.
@@ -93,9 +91,7 @@ namespace AutoTest
      * @param client.
      * @param expected.
      */
-    TagPassbackChecker(
-      const AdClient& client,
-      const Tokens& expected);
+    TagPassbackChecker(const AdClient& client, const Tokens& expected);
 
     /**
      * @brief Destructor.
@@ -151,8 +147,7 @@ namespace AutoTest
 
   inline
   TagPassbackChecker::Tokens&
-  TagPassbackChecker::Tokens::type(
-    const std::string& t)
+  TagPassbackChecker::Tokens::type(const std::string& t)
   {
     type_ = t;
     return *this;
@@ -160,8 +155,7 @@ namespace AutoTest
 
   inline
   TagPassbackChecker::Tokens&
-  TagPassbackChecker::Tokens::url(
-    const std::string& url)
+  TagPassbackChecker::Tokens::url(const std::string& url)
   {
     url_ = url;
     return *this;
@@ -169,8 +163,7 @@ namespace AutoTest
 
   inline
   TagPassbackChecker::Tokens&
-  TagPassbackChecker::Tokens::pixel(
-    const std::string& pixel)
+  TagPassbackChecker::Tokens::pixel(const std::string& pixel)
   {
     pixel_ = pixel;
     return *this;

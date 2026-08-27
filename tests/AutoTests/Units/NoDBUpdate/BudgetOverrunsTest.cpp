@@ -1,10 +1,7 @@
 
 #include "BudgetOverrunsTest.hpp"
 
-REFLECT_UNIT(BudgetOverrunsTest) (
-  "NoDBUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(BudgetOverrunsTest) ("NoDBUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -136,27 +133,20 @@ void BudgetOverrunsTest::process_case(size_t i)
     client.process_request(request, "request for creative");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc,
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc, client.debug_info.ccid).check(),
       "server must return expected creative");
 
     if (TEST_CASES[i].flags & TCF_CPC_RATE)
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !client.debug_info.click_url.empty()),
+        AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
         "server must return non empty click url");
       client.process_request(client.debug_info.click_url, "click on creative");
     }
   }
 
   add_checker("Check budget",
-    SpentBudgetChecker(
-      this,
-      request,
-      ccg,
-      TEST_CASES[i].flags & TCF_NOT_SPENT ? cc : "0"));
+    SpentBudgetChecker(this, request, ccg, TEST_CASES[i].flags & TCF_NOT_SPENT ? cc : "0"));
 }
 
 void
@@ -194,8 +184,7 @@ BudgetOverrunsTest::increase_budget_of_ccg(const std::string& prefix)
   add_descr_phrase(description);
 
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-    create<ORM::PQ::CampaignCreativeGroup>(
-      fetch_int(prefix + "/CCG"));
+    create<ORM::PQ::CampaignCreativeGroup>(fetch_int(prefix + "/CCG"));
 
   // Initial check
   FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
@@ -203,10 +192,7 @@ BudgetOverrunsTest::increase_budget_of_ccg(const std::string& prefix)
     description + " Initial check");
 
   ccg->budget = ccg->budget.value() + fetch_float(prefix + "/Budget");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg->update()),
-    description + " Updating ccg.budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), description + " Updating ccg.budget");
 
   add_checker(description,
     SpentBudgetChecker(
@@ -225,8 +211,7 @@ BudgetOverrunsTest::decrease_budget_of_ccg(const std::string& prefix)
   add_descr_phrase(description);
 
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-    create<ORM::PQ::CampaignCreativeGroup>(
-      fetch_int(prefix + "/CCG"));
+    create<ORM::PQ::CampaignCreativeGroup>(fetch_int(prefix + "/CCG"));
 
   // Initial check
   FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
@@ -234,10 +219,7 @@ BudgetOverrunsTest::decrease_budget_of_ccg(const std::string& prefix)
     description + "Initial check");
 
   ccg->budget = 1;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg->update()),
-    description + "updating ccg.budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), description + "updating ccg.budget");
 
   add_checker(
     description,
@@ -259,18 +241,15 @@ BudgetOverrunsTest::increase_budget_of_campaign(const std::string& prefix)
   unsigned long ccg = fetch_int(prefix + "/CCG");
 
   // Initial check
-  FAIL_CONTEXT(CampaignChecker(this, ccg,
-      CampaignChecker::Expected().eval_status("I")).check(),
+  FAIL_CONTEXT(CampaignChecker(this, ccg, CampaignChecker::Expected().eval_status("I")).check(),
     description + "Initial check");
 
   ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-    create<ORM::PQ::Campaign>(
-      fetch_int(prefix + "/Campaign"));
+    create<ORM::PQ::Campaign>(fetch_int(prefix + "/Campaign"));
 
   campaign->budget = campaign->budget.value() + fetch_float(prefix + "/Budget");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->update()),
+    AutoTest::predicate_checker(campaign->update()),
     description + "updating campaign.budget");
 
   add_checker(
@@ -293,18 +272,15 @@ BudgetOverrunsTest::decrease_budget_of_campaign(const std::string& prefix)
   unsigned long ccg = fetch_int(prefix + "/CCG");
 
   // Initial check
-  FAIL_CONTEXT(CampaignChecker(this, ccg,
-      CampaignChecker::Expected().eval_status("A")).check(),
+  FAIL_CONTEXT(CampaignChecker(this, ccg, CampaignChecker::Expected().eval_status("A")).check(),
     description + "Initial check");
 
   ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-    create<ORM::PQ::Campaign>(
-      fetch_int(prefix + "/Campaign"));
+    create<ORM::PQ::Campaign>(fetch_int(prefix + "/Campaign"));
 
   campaign->budget = 1;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->update()),
+    AutoTest::predicate_checker(campaign->update()),
     description + "updating campaign.budget");
 
   add_checker(
@@ -327,18 +303,15 @@ BudgetOverrunsTest::set_unlim_budget_for_campaign(const std::string& prefix)
   unsigned long ccg = fetch_int(prefix + "/CCG");
 
   // Initial check
-  FAIL_CONTEXT(CampaignChecker(this, ccg,
-      CampaignChecker::Expected().eval_status("I")).check(),
+  FAIL_CONTEXT(CampaignChecker(this, ccg, CampaignChecker::Expected().eval_status("I")).check(),
     description + "Initial check");
 
   ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-    create<ORM::PQ::Campaign>(
-      fetch_int(prefix + "/Campaign"));
+    create<ORM::PQ::Campaign>(fetch_int(prefix + "/Campaign"));
 
   campaign->budget.null();
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->update()),
+    AutoTest::predicate_checker(campaign->update()),
     description + "updating campaign.budget");
 
   add_checker(
@@ -359,8 +332,7 @@ BudgetOverrunsTest::set_unlim_budget_for_ccg(const std::string& prefix)
   add_descr_phrase(description);
 
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-    create<ORM::PQ::CampaignCreativeGroup>(
-      fetch_int(prefix + "/CCG"));
+    create<ORM::PQ::CampaignCreativeGroup>(fetch_int(prefix + "/CCG"));
 
   // Initial check
   FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
@@ -368,10 +340,7 @@ BudgetOverrunsTest::set_unlim_budget_for_ccg(const std::string& prefix)
     description + "Initial check");
 
   ccg->budget.null();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg->update()),
-    description + "updating ccg.budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), description + "updating ccg.budget");
 
   add_checker(
     description,
@@ -411,9 +380,7 @@ BudgetOverrunsTest::post_condition()
   {
     if (TEST_CASES[i].dynamic_part)
     {
-      AUTOTEST_CASE(
-        (this->*(TEST_CASES[i].dynamic_part))(TEST_CASES[i].prefix),
-        case_name(i));
+      AUTOTEST_CASE((this->*(TEST_CASES[i].dynamic_part))(TEST_CASES[i].prefix), case_name(i));
     }
   }
 

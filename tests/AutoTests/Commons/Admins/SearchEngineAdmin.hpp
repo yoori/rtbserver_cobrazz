@@ -35,9 +35,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<SearchEngineAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* id
-      )
+      void make_cmd (const char* address, const char* id)
       {
         address_ = address;
         AdminParams params;
@@ -47,45 +45,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "search_engines", address, params, static_cast<size_t>(CampaignServer));
       }
-      SearchEngineAdmin(
-        const char* address,
-        const char* id
-      )
+      SearchEngineAdmin(const char* address, const char* id)
       {
         make_cmd(address, id);
       }
-      SearchEngineAdmin(
-        const std::string& address,
-        const char* id
-      )
+      SearchEngineAdmin(const std::string& address, const char* id)
       {
         make_cmd(address.c_str(), id);
       }
-      SearchEngineAdmin(
-        const char* address,
-        const std::string& id
-      )
+      SearchEngineAdmin(const char* address, const std::string& id)
       {
         make_cmd(address, id.c_str());
       }
-      SearchEngineAdmin(
-        const std::string& address,
-        const std::string& id
-      )
+      SearchEngineAdmin(const std::string& address, const std::string& id)
       {
         make_cmd(address.c_str(), id.c_str());
       }
-      SearchEngineAdmin(
-        const char* address,
-        unsigned long id
-      )
+      SearchEngineAdmin(const char* address, unsigned long id)
       {
         make_cmd(address, strof(id).c_str());
       }
-      SearchEngineAdmin(
-        const std::string& address,
-        unsigned long id
-      )
+      SearchEngineAdmin(const std::string& address, unsigned long id)
       {
         make_cmd(address.c_str(), strof(id).c_str());
       }

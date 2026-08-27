@@ -21,17 +21,17 @@ sub new
     my $file = $params{'file'};
     my $csv = Text::CSV_XS->new({ binary => 1, eol => $/ });
     open(FILE, '<', $file) or die "Can't open $file";
-    while(<FILE>)
+    while (<FILE>)
     {
       my $line = $_;
       Encode::_utf8_on($line);
       chomp $line;
       $csv->parse($line);
       my @arr = $csv->fields();
-      if(scalar(@arr) > 0)
+      if (scalar(@arr) > 0)
       {
         my @replace_arr; # = $arr[1 .. -1];
-        for(my $index = 1; $index < scalar(@arr); ++$index)
+        for (my $index = 1; $index < scalar(@arr); ++$index)
         {
           push(@replace_arr, $arr[$index]);
           Encode::_utf8_on($replace_arr[$index]);
@@ -62,14 +62,14 @@ sub process
   my $value = $row->[$self->{field_}];
   my $replace = $self->{values_};
 
-  if(!defined($value))
+  if (!defined($value))
   {}
   elsif(ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)
     {
-      if(exists($replace->{$sub_val}))
+      if (exists($replace->{$sub_val}))
       {
         push(@res_arr, @{$replace->{$sub_val}});
       }
@@ -91,9 +91,9 @@ sub process
   else
   {
     #print "CHECK '$value'\n";
-    if(exists($replace->{$value}))
+    if (exists($replace->{$value}))
     {
-      if(scalar(@{$replace->{$value}}) == 1)
+      if (scalar(@{$replace->{$value}}) == 1)
       {
         $row->[$self->{field_}] = $replace->{$value}->[0];
       }

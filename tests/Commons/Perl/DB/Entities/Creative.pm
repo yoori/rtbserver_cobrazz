@@ -1,5 +1,5 @@
 
-# RTBConnector 
+# RTBConnector
 package DB::RTBConnector;
 
 use warnings;
@@ -8,7 +8,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::DictionaryMixin DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   rtb_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::string(unique => 1)
@@ -24,7 +24,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   rtb_category_id => DB::Entity::Type::sequence(),
   creative_category_id => DB::Entity::Type::link('DB::CreativeCategory', unique => 1),
@@ -46,7 +46,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_category_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::string(unique => 1),
@@ -80,7 +80,7 @@ sub postcreate_
     'allyes_key' => DB::Defaults::instance()->allyes_connector,
     'baidu_key' => DB::Defaults::instance()->baidu_connector);
 
-  while(my ($key, $connector) = each(%rtbs))
+  while (my ($key, $connector) = each(%rtbs))
   {
     if (defined($self->{$key}))
     {
@@ -107,7 +107,7 @@ our @ISA = qw(DB::Entity::PQ);
 use constant MULTIPLE_SIZES => 0x01;       # allow multiple sizes for the tag with this type
 use constant SIZE_LEVEL_SELECTION => 0x02; # allow selection at size level (for advertisers)
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
     size_type_id => DB::Entity::Type::sequence(),
     name => DB::Entity::Type::string(unique => 1),
@@ -126,7 +126,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   size_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(),
@@ -162,21 +162,21 @@ sub postcreate_
 
   if (defined($self->{max_text_creatives}))
   {
-    $self->{option_id} = 
+    $self->{option_id} =
       $ns->create(
          Options => {
            name => 'Maximum Number of Text Ads',
            token => 'MAX_ADS_PER_TAG',
            type => 'Integer',
            option_group_id => $self->{option_group_id},
-           default_value => 
+           default_value =>
              $self->{max_text_creatives},
            min_value => 1,
            required => 'Y',
            sort_order => 0,
            template_id => undef,
            size_id => $self->{size_id},
-           max_value => 
+           max_value =>
              $self->{max_text_creatives} });
   }
 }
@@ -193,11 +193,11 @@ our @ISA = qw(DB::Entity::PQ);
 
 use constant PIXEL_TRACKING => 1;
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   template_file_id => DB::Entity::Type::sequence(),
   template_id => DB::Entity::Type::link('DB::Template', unique => 1),
-  size_id => 
+  size_id =>
     DB::Entity::Type::link(
       'DB::CreativeSize',
       unique => 1,
@@ -222,13 +222,13 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant OPTIONS => 
+use constant OPTIONS =>
   qw(WIDTH HEIGHT ALTTEXT WNDTITLE ADIMAGE CRHTML
      CRSCRIPT CRADVTRACKPIXEL CRHPOS CRVPOS CRCSS
      CRDURATION CRCLICK IMAGETITLE DESCRIPTION1
      HEADLINE DESCRIPTION2 ADHTML PUBL_TAG_TRACK_PIXEL);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   template_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -285,7 +285,7 @@ sub postcreate_
     if exists $args{template_file_type};
   delete($args{template_file_type});
   $args{template_id} = $self->{template_id};
-  $self->{template_file_id} = 
+  $self->{template_file_id} =
     $ns->create(DB::TemplateFile->blank(%args));
 
   $self->{option_group_id} =
@@ -297,10 +297,10 @@ sub postcreate_
   foreach my $opt (OPTIONS)
   {
     my $value_name = lc($opt) . "_value";
-    if (exists $self->{$value_name}) 
+    if (exists $self->{$value_name})
     {
       my $value = $self->{$value_name};
-      my $option = 
+      my $option =
         ref($value) eq 'DB::Entity::Base::Blank'? $value:
           DB::Options->blank(value => $value);
       $option->{token} = $opt;
@@ -336,7 +336,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   option_id => DB::Entity::Type::link('DB::Options', unique => 1),
   creative_id => DB::Entity::Type::link('DB::Creative', unique => 1),
@@ -354,15 +354,15 @@ sub preinit_
 
   if (not exists $args->{option_id} and defined $args->{token})
   {
-    my $option_group_id = 
-      ref($args->{template_id})? 
+    my $option_group_id =
+      ref($args->{template_id})?
         $args->{template_id}->{option_group_id}:
-        $ns->create(DB::OptionGroup->blank( 
+        $ns->create(DB::OptionGroup->blank(
           name => "Template-" . $args->{template_id},
           type =>  'Advertiser',
           template_id => $args->{template_id} ));
 
-    $args->{option_id} = 
+    $args->{option_id} =
         $ns->create(
           DB::Options->blank(
            option_group_id => $option_group_id,
@@ -377,7 +377,7 @@ sub postcreate_
 
   {
     no warnings 'uninitialized';
-    $self->__update($ns, 
+    $self->__update($ns,
       { value => $self->{args__}->{value} })
       if ($self->{args__}->{value} ne $self->{value});
   }
@@ -393,7 +393,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_category_id => DB::Entity::Type::link('DB::CreativeCategory', unique => 1),
   creative_id => DB::Entity::Type::link('DB::Creative', unique => 1)
@@ -409,7 +409,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_category_id => DB::Entity::Type::link('DB::CreativeCategory'),
   template_id => DB::Entity::Type::link('DB::Template', unique => 1)
@@ -425,7 +425,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -434,13 +434,13 @@ use constant STRUCT =>
    DB::Entity::Type::link(
      'DB::CreativeSize',
      default => sub { DB::Defaults::instance()->size }),
-  template_id => 
+  template_id =>
     DB::Entity::Type::link(
      'DB::Template',
      default => sub { DB::Defaults::instance()->display_template }),
   flags => DB::Entity::Type::int(default => 0),
   status => DB::Entity::Type::status(),
-  qa_status => DB::Entity::Type::qa_status(), 
+  qa_status => DB::Entity::Type::qa_status(),
   display_status_id => DB::Entity::Type::display_status('Creative'),
   version => DB::Entity::Type::pq_timestamp("timestamp 'now'"),
   expandable => 'N',
@@ -479,7 +479,7 @@ use constant STRUCT =>
 sub preinit_
 {
   my ($self, $ns, $args) = @_;
-  $args->{size_id} = $args->{tag_sizes}->[0] 
+  $args->{size_id} = $args->{tag_sizes}->[0]
     if not defined $args->{size_id} and $args->{tag_sizes};
 }
 
@@ -487,7 +487,7 @@ sub postcreate_
 {
   my ($self, $ns) = @_;
 
-  my @sizes = $self->{tag_sizes}? 
+  my @sizes = $self->{tag_sizes}?
     @{$self->{tag_sizes}}: ($self->{size_id});
 
   for my $size (@sizes)
@@ -523,10 +523,10 @@ sub postcreate_
   foreach my $opt (DB::Template::OPTIONS)
   {
     my $value_name = lc($opt) . "_value";
-    if (exists $self->{$value_name}) 
+    if (exists $self->{$value_name})
     {
       my $value = $self->{$value_name};
-      my $option = 
+      my $option =
         ref($value) eq 'DB::Entity::Base::Blank'? $value:
           DB::CreativeOptionValue->blank(value => $value);
       $option->{creative_id} = $self->{creative_id};
@@ -535,11 +535,12 @@ sub postcreate_
       $ns->create($option);
     }
   }
+
   if (exists $self->{creative_category_id})
   {
-    my @categories = 
+    my @categories =
       ref($self->{creative_category_id}) eq 'ARRAY'?
-        @{$self->{creative_category_id}}: 
+        @{$self->{creative_category_id}}:
           ($self->{creative_category_id});
 
     foreach my $category (@categories)
@@ -563,7 +564,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::DictionaryMixin DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   name => DB::Entity::Type::string(unique => 1),
   cct_id => DB::Entity::Type::int()
@@ -579,7 +580,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_id => DB::Entity::Type::link('DB::Creative', unique => 1),
   size_type_id => DB::Entity::Type::link('DB::SizeType', unique => 1)
@@ -595,7 +596,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   creative_id => DB::Entity::Type::link('DB::Creative', unique => 1),
   size_id => DB::Entity::Type::link('DB::CreativeSize', unique => 1)

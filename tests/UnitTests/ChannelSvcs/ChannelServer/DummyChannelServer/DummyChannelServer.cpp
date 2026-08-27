@@ -15,203 +15,196 @@
 
 const char CHANNEL_SERVER_OBJ_KEY[] = "ChannelServer";
 
-namespace AdServer
+namespace AdServer::UnitTests
 {
-  namespace UnitTests
+  DummyChannelServer::DummyChannelServer(
+    CORBACommons::OrbShutdowner* shutdowner,
+    unsigned long time,
+    unsigned long count_matching,
+    bool verbose)
+    noexcept
+    : verbose_(verbose),
+      count_matching_(count_matching),
+      shutdowner_(ReferenceCounting::add_ref(shutdowner))
   {
-    DummyChannelServer::DummyChannelServer(
-      CORBACommons::OrbShutdowner* shutdowner,
-      unsigned long time,
-      unsigned long count_matching,
-      bool verbose)
-      noexcept
-      : verbose_(verbose),
-        count_matching_(count_matching),
-        shutdowner_(ReferenceCounting::add_ref(shutdowner))
+    if (time)
     {
-      if(time)
-      {
-        scheduler_ = new Generics::Planner(this);
-        task_runner_ = new Generics::TaskRunner(this, 1);
-        Task_var msg = new FinishTask(this, task_runner_);
-        Generics::Time tm = Generics::Time::get_time_of_day() + time;
-        scheduler_->schedule(msg, tm);
-      }
-      while(response_info_.size() < count_matching_)
-      {
-        response_info_.insert(Generics::safe_rand());
-      }
+      scheduler_ = new Generics::Planner(this);
+      task_runner_ = new Generics::TaskRunner(this, 1);
+      Task_var msg = new FinishTask(this, task_runner_);
+      Generics::Time tm = Generics::Time::get_time_of_day() + time;
+      scheduler_->schedule(msg, tm);
     }
-
-    void DummyChannelServer::set_sources(
-        const ::AdServer::ChannelSvcs::
-          ChannelServerControl::DBSourceInfo& /*db_info*/,
-        const ::AdServer::ChannelSvcs::ChunkKeySeq& /*sources*/)
-      noexcept
+    while (response_info_.size() < count_matching_)
     {
-      return;
+      response_info_.insert(Generics::safe_rand());
     }
+  }
 
-    void DummyChannelServer::set_proxy_sources(
+  void DummyChannelServer::set_sources(
       const ::AdServer::ChannelSvcs::
-        ChannelServerControl::ProxySourceInfo& /*proxy_info*/,
+        ChannelServerControl::DBSourceInfo& /*db_info*/,
       const ::AdServer::ChannelSvcs::ChunkKeySeq& /*sources*/)
-      noexcept
-    {
-      return;
-    }
+    noexcept
+  {
+    return;
+  }
 
-    ::CORBA::ULong DummyChannelServer::get_queries_counter() noexcept
-    {
-      return 12;
-    }
+  void DummyChannelServer::set_proxy_sources(
+    const ::AdServer::ChannelSvcs::
+      ChannelServerControl::ProxySourceInfo& /*proxy_info*/,
+    const ::AdServer::ChannelSvcs::ChunkKeySeq& /*sources*/)
+    noexcept
+  {
+    return;
+  }
 
-    ::CORBA::ULong get_count_chunks()
-      /*throw(AdServer::ChannelSvcs::ImplementationException)*/
-    {
-      throw AdServer::ChannelSvcs::ImplementationException(
-        "DummyChannelServer doesn't support this");
-    }
+  ::CORBA::ULong DummyChannelServer::get_queries_counter() noexcept
+  {
+    return 12;
+  }
 
-    void DummyChannelServer::update_triggers(
-      const ::AdServer::ChannelSvcs::ChannelIdSeq& /*ids*/,
-      ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_out /*result*/)
-      /*throw(AdServer::ChannelSvcs::ImplementationException)*/
-    {
-      throw AdServer::ChannelSvcs::ImplementationException(
-        "DummyChannelServer doesn't support this");
-    }
+  ::CORBA::ULong get_count_chunks()
+    /*throw(AdServer::ChannelSvcs::ImplementationException)*/
+  {
+    throw AdServer::ChannelSvcs::ImplementationException("DummyChannelServer doesn't support this");
+  }
 
-    void DummyChannelServer::match(
-        const ::AdServer::ChannelSvcs::ChannelServerBase::MatchQuery& /*query*/,
-      ::AdServer::ChannelSvcs::ChannelServer::MatchResult_out result)
-      /*throw(AdServer::ChannelSvcs::ImplementationException)*/
+  void DummyChannelServer::update_triggers(
+    const ::AdServer::ChannelSvcs::ChannelIdSeq& /*ids*/,
+    OBV_AdServer::ChannelSvcs::ChannelLoadSession::UpdateData_out /*result*/)
+    /*throw(AdServer::ChannelSvcs::ImplementationException)*/
+  {
+    throw AdServer::ChannelSvcs::ImplementationException("DummyChannelServer doesn't support this");
+  }
+
+  void DummyChannelServer::match(
+      const ::AdServer::ChannelSvcs::ChannelServerBase::MatchQuery& /*query*/,
+    ::AdServer::ChannelSvcs::ChannelServer::MatchResult_out result)
+    /*throw(AdServer::ChannelSvcs::ImplementationException)*/
+  {
+    try
     {
-      try
+      Generics::Timer timer;
+      timer.start();
+      result = new ::AdServer::ChannelSvcs::ChannelServer::MatchResult;
+
+      result->no_adv = 0;
+      result->no_track = 0;
+      TriggerSet::const_iterator word = response_info_.begin();
+      result->matched_channels.page_channels.length(count_matching_);
+      for (size_t i = 0; i < count_matching_; i++, word++)
       {
-        Generics::Timer timer;
-        timer.start();
-        result = new ::AdServer::ChannelSvcs::ChannelServer::MatchResult;
+        ::AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& out =
+          result->matched_channels.page_channels[i];
 
-        result->no_adv = 0;
-        result->no_track = 0;
-        TriggerSet::const_iterator word = response_info_.begin();
-        result->matched_channels.page_channels.length(count_matching_);
-        for(size_t i = 0; i < count_matching_; i++, word++)
-        {
-          ::AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& out =
-            result->matched_channels.page_channels[i];
-
-          out.id = i + 10;
-          out.trigger_channel_id = *word;
-        }
-        timer.stop();
-        if(verbose_)
-        {
-          std::cout << "Match takes " << timer.elapsed_time() << std::endl;
-        }
+        out.id = i + 10;
+        out.trigger_channel_id = *word;
       }
-      catch(const eh::Exception& e)
+      timer.stop();
+      if (verbose_)
       {
-        throw AdServer::ChannelSvcs::ImplementationException(
-          e.what());
+        std::cout << "Match takes " << timer.elapsed_time() << std::endl;
       }
     }
-
-    void DummyChannelServer::get_ccg_traits(
-      const ::AdServer::ChannelSvcs::ChannelIdSeq& /*query*/,
-      ::AdServer::ChannelSvcs::ChannelServer::TraitsResult_out /*result*/)
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-          AdServer::ChannelSvcs::NotConfigured)*/
+    catch(const eh::Exception& e)
     {
-      throw AdServer::ChannelSvcs::ImplementationException(
-        "Not implemented");
+      throw AdServer::ChannelSvcs::ImplementationException(e.what());
     }
+  }
 
-    void DummyChannelServer::activate_object()
-      /*throw(
-        Generics::ActiveObject::AlreadyActive,
-        Generics::ActiveObject::Exception,
-        eh::Exception)*/
+  void DummyChannelServer::get_ccg_traits(
+    const ::AdServer::ChannelSvcs::ChannelIdSeq& /*query*/,
+    ::AdServer::ChannelSvcs::ChannelServer::TraitsResult_out /*result*/)
+  /*throw(AdServer::ChannelSvcs::ImplementationException,
+        AdServer::ChannelSvcs::NotConfigured)*/
+  {
+    throw AdServer::ChannelSvcs::ImplementationException("Not implemented");
+  }
+
+  void DummyChannelServer::activate_object()
+    /*throw(
+      Generics::ActiveObject::AlreadyActive,
+      Generics::ActiveObject::Exception,
+      eh::Exception)*/
+  {
+    try
     {
-      try
-      {
-        if(task_runner_) task_runner_->activate_object();
-        if(scheduler_) scheduler_->activate_object();
-      }
-      catch(...)
-      {
-        if(scheduler_ && scheduler_->active())
-        {
-          scheduler_->deactivate_object();
-        }
-        if(task_runner_ && task_runner_->active())
-        {
-          task_runner_->deactivate_object();
-        }
-        throw;
-      }
-      active_ = true;
+      if (task_runner_) task_runner_->activate_object();
+      if (scheduler_) scheduler_->activate_object();
     }
-
-    void DummyChannelServer::deactivate_object()
-      /*throw(Generics::ActiveObject::Exception, eh::Exception)*/
+    catch(...)
     {
-      if(scheduler_ && scheduler_->active())
+      if (scheduler_ && scheduler_->active())
       {
         scheduler_->deactivate_object();
       }
-      if(task_runner_ && task_runner_->active())
+
+      if (task_runner_ && task_runner_->active())
       {
         task_runner_->deactivate_object();
       }
-      active_ = false;
+      throw;
     }
-
-    void DummyChannelServer::wait_object()
-      /*throw(Generics::ActiveObject::Exception, eh::Exception)*/
-    {
-      if(scheduler_)
-      {
-        scheduler_->wait_object();
-        scheduler_.reset();
-      }
-      if(task_runner_)
-      {
-        task_runner_->wait_object();
-        task_runner_.reset();
-      }
-    }
-
-    void DummyChannelServer::report_error(
-      Generics::ActiveObjectCallback::Severity /*severity*/,
-      const String::SubString& description,
-      const char* /*error_code*/) noexcept
-    {
-      std::cerr << description << std::endl;
-    }
-
-    void DummyChannelServer::finish() noexcept
-    {
-      shutdowner_->shutdown(true);
-      shutdowner_.reset();
-    }
-
+    active_ = true;
   }
+
+  void DummyChannelServer::deactivate_object()
+    /*throw(Generics::ActiveObject::Exception, eh::Exception)*/
+  {
+    if (scheduler_ && scheduler_->active())
+    {
+      scheduler_->deactivate_object();
+    }
+
+    if (task_runner_ && task_runner_->active())
+    {
+      task_runner_->deactivate_object();
+    }
+    active_ = false;
+  }
+
+  void DummyChannelServer::wait_object()
+    /*throw(Generics::ActiveObject::Exception, eh::Exception)*/
+  {
+    if (scheduler_)
+    {
+      scheduler_->wait_object();
+      scheduler_.reset();
+    }
+
+    if (task_runner_)
+    {
+      task_runner_->wait_object();
+      task_runner_.reset();
+    }
+  }
+
+  void DummyChannelServer::report_error(
+    Generics::ActiveObjectCallback::Severity /*severity*/,
+    const String::SubString& description,
+    const char* /*error_code*/) noexcept
+  {
+    std::cerr << description << std::endl;
+  }
+
+  void DummyChannelServer::finish() noexcept
+  {
+    shutdowner_->shutdown(true);
+    shutdowner_.reset();
+  }
+
 }
 
+
 template<class T>
-void read_number_(
-  const char* in,
-  const T& min_value,
-  const T& max_value,
-  T &value) noexcept
+void read_number_(const char* in, const T& min_value, const T& max_value, T &value) noexcept
 {
   T converted;
   std::stringstream convert;
   convert << in;
   convert >> converted;
-  if(converted>=min_value && converted<=max_value)
+  if (converted>=min_value && converted<=max_value)
   {
     value = converted;
   }
@@ -234,8 +227,7 @@ int main(int argc, char* argv[])
   bool verbose = false;
   do
   {
-    opt = getopt_long(argc, argv, "p:t:h:m:v",
-      long_options, &index);
+    opt = getopt_long(argc, argv, "p:t:h:m:v", long_options, &index);
     switch(opt)
     {
       case 'p':
@@ -254,7 +246,7 @@ int main(int argc, char* argv[])
         verbose = true;
         break;
     }
-  } while(opt!=-1);
+  } while (opt!=-1);
   try
   {
     CORBACommons::CorbaConfig config;
@@ -270,8 +262,7 @@ int main(int argc, char* argv[])
     CORBACommons::CorbaServerAdapter_var corba_server_adapter(
       new CORBACommons::CorbaServerAdapter(config));
 
-    CORBACommons::OrbShutdowner_var shutdowner =
-      corba_server_adapter->shutdowner();
+    CORBACommons::OrbShutdowner_var shutdowner = corba_server_adapter->shutdowner();
 
     AdServer::UnitTests::DummyChannelServer_var server =
       new AdServer::UnitTests::DummyChannelServer(
@@ -280,8 +271,7 @@ int main(int argc, char* argv[])
         count_matching,
         verbose);
 
-    corba_server_adapter->add_binding(
-      CHANNEL_SERVER_OBJ_KEY, server.in());
+    corba_server_adapter->add_binding(CHANNEL_SERVER_OBJ_KEY, server.in());
 
     server->activate_object();
 
@@ -304,4 +294,3 @@ int main(int argc, char* argv[])
   }
   return 0;
 }
-

@@ -7,9 +7,7 @@
 
 #include "UserOperationProcessor.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class UserOperationSaver:
     public UserOperationProcessor,
@@ -41,15 +39,12 @@ namespace UserInfoSvcs
 
     // UserOperationProcessor interface
     virtual AdServer::Commons::StartableAwaitable<bool>
-    co_remove_user_profile(
-      const UserId& user_id)
+    co_remove_user_profile(const UserId& user_id)
       override
       /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
 
     virtual AdServer::Commons::StartableAwaitable<bool>
-    co_fraud_user(
-      const UserId& user_id,
-      const Generics::Time& now)
+    co_fraud_user(const UserId& user_id, const Generics::Time& now)
       override
       /*throw(NotReady, ChunkNotFound, UserOperationProcessor::Exception)*/;
 
@@ -214,9 +209,7 @@ namespace UserInfoSvcs
 
     template<typename WriterType>
     void
-    save_(
-      const AdServer::Commons::UserId& user_id,
-      const WriterType& writer)
+    save_(const AdServer::Commons::UserId& user_id, const WriterType& writer)
       noexcept;
 
   private:
@@ -230,5 +223,4 @@ namespace UserInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<UserOperationSaver>
     UserOperationSaver_var;
-}
 }

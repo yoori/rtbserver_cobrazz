@@ -138,9 +138,7 @@ namespace AdServer::UserBind
       noexcept;
 
     void
-    cookies_processing_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    cookies_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
@@ -151,9 +149,7 @@ namespace AdServer::UserBind
       /*throw(InvalidParamException, Exception)*/;
 
     void
-    headers_processing_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    headers_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
   };
 }

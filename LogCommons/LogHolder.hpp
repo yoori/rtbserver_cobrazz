@@ -47,10 +47,7 @@ namespace AdServer::LogProcessing
 
   template<typename SavePolicy, typename Collector>
   void
-  save_log(
-    const LogFlushTraits& flush_traits,
-    SavePolicy& save_policy,
-    Collector& collector)
+  save_log(const LogFlushTraits& flush_traits, SavePolicy& save_policy, Collector& collector)
     /*throw(eh::Exception)*/;
 
   template<typename LogTraitsType>
@@ -58,9 +55,7 @@ namespace AdServer::LogProcessing
   {
     using IoHelperT = AdServer::LogProcessing::GenericLogIoHelperImpl<LogTraitsType>;
 
-    void save(
-      typename LogTraitsType::CollectorType& collector,
-      const char* out_dir)
+    void save(typename LogTraitsType::CollectorType& collector, const char* out_dir)
       /*throw(eh::Exception)*/;
   };
 
@@ -70,9 +65,7 @@ namespace AdServer::LogProcessing
   public:
     DistributionSavePolicy(unsigned long distrib_count = 24);
 
-    void save(
-      typename LogTraitsType::CollectorType& collector,
-      const char* out_dir)
+    void save(typename LogTraitsType::CollectorType& collector, const char* out_dir)
       /*throw(eh::Exception)*/;
 
   private:
@@ -84,9 +77,7 @@ namespace AdServer::LogProcessing
   {
     using CsvSaverT = AdServer::LogProcessing::SimpleLogCsvSaverImpl<LogTraitsType>;
 
-    void save(
-      typename LogTraitsType::CollectorType& collector,
-      const char* out_dir)
+    void save(typename LogTraitsType::CollectorType& collector, const char* out_dir)
       /*throw(eh::Exception)*/;
   };
 
@@ -105,9 +96,7 @@ namespace AdServer::LogProcessing
     typedef Sync::Policy::PosixThread SyncPolicy;
 
   public:
-    LogHolderImpl(
-      const LogFlushTraits& flush_traits,
-      const SavePolicy& save_policy = SavePolicy())
+    LogHolderImpl(const LogFlushTraits& flush_traits, const SavePolicy& save_policy = SavePolicy())
       /*throw(eh::Exception)*/;
 
     Generics::Time flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
@@ -267,9 +256,7 @@ namespace AdServer::LogProcessing
       ~PoolObject() noexcept;
     };
 
-    LogHolderPool(
-      const LogFlushTraits& flush_traits,
-      const SavePolicy& save_policy = SavePolicy())
+    LogHolderPool(const LogFlushTraits& flush_traits, const SavePolicy& save_policy = SavePolicy())
       /*throw(eh::Exception)*/;
 
     template<typename... Args>

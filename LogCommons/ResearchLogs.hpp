@@ -17,9 +17,7 @@
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/Request.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   // ResearchBid
   struct ResearchBidData
@@ -80,9 +78,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT& data)
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       write_date_as_csv(os, data.time) << ',';
       os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
@@ -179,9 +175,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT& data)
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       write_date_as_csv(os, data.time) << ',';
       os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
@@ -238,9 +232,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT& data)
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       write_date_as_csv(os, data.time) << ',';
       os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
@@ -264,9 +256,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT& data)
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       write_date_as_csv(os, data.time()) << ',';
       write_optional_value_as_csv(os, data.device_channel_id()) << ',';
@@ -279,5 +269,4 @@ namespace LogProcessing
       return os;
     }
   };
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

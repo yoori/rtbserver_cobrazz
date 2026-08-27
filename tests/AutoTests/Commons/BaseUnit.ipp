@@ -39,13 +39,11 @@ inline
 std::string
 BaseUnit::fetch_string(const char* obj_name)
 {
-  ::xsd::tests::AutoTests::ValueType v =
-    get_object_by_name(obj_name).Value();
+  ::xsd::tests::AutoTests::ValueType v = get_object_by_name(obj_name).Value();
   if (v.base64())
   {
     std::string ret;
-    String::StringManip::base64mod_decode(
-      ret, v, false);
+    String::StringManip::base64mod_decode(ret, v, false);
     return ret;
   }
   return v;
@@ -76,9 +74,7 @@ BaseUnit::fetch_float(const std::string& obj_name)
 
 inline
 void
-BaseUnit::fetch(
-  long double& v,
-  const std::string& obj_name)
+BaseUnit::fetch(long double& v, const std::string& obj_name)
   /*throw(Exception)*/
 {
   v = fetch_float(obj_name);
@@ -86,9 +82,7 @@ BaseUnit::fetch(
 
 inline
 void
-BaseUnit::fetch(
-  unsigned long& v,
-  const std::string& obj_name)
+BaseUnit::fetch(unsigned long& v, const std::string& obj_name)
   /*throw(Exception)*/
 {
   v = fetch_int(obj_name);
@@ -96,10 +90,8 @@ BaseUnit::fetch(
 
 inline
 void
-BaseUnit::fetch(
-  std::string& v,
-  const std::string& obj_name)
+BaseUnit::fetch(std::string& v, const std::string& obj_name)
   /*throw(Exception)*/
 {
-  v = fetch_string(obj_name);  
+  v = fetch_string(obj_name);
 }

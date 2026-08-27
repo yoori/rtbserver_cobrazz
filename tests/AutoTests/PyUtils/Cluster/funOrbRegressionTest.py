@@ -7,7 +7,7 @@ import os, os.path, sys, re
 
 def loadModules( files ):
   test = re.compile(r'^test.+\.py$')
-  files = filter(test.search, files)                     
+  files = filter(test.search, files)
   def fileNameToModuleName( fname ):
     return os.path.splitext(fname)[0]
   moduleNames = map(fileNameToModuleName, files)

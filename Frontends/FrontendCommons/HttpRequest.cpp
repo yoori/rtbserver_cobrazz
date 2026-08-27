@@ -7,12 +7,10 @@ namespace
 namespace FCGI
 {
 void
-HttpRequest::parse_params(
-  std::string_view str,
-  HTTP::ParamList& params)
+HttpRequest::parse_params(std::string_view str, HTTP::ParamList& params)
   /*throw(String::StringManip::InvalidFormatException, eh::Exception)*/
 {
-  if(str.empty())
+  if (str.empty())
   {
     return;
   }

@@ -17,13 +17,13 @@ sub new
 
   my $csv = Text::CSV_XS->new({ binary => 1, eol => $/ });
   open FILE, $file or die "Can't open $file";
-  while(<FILE>)
+  while (<FILE>)
   {
     my $line = $_;
     chomp $line;
     $csv->parse($line);
     my @arr = $csv->fields();
-    if(scalar(@arr) > 0)
+    if (scalar(@arr) > 0)
     {
       #print "A: $line => <" . join(',', @arr) . ">\n";
       $values{$arr[0]} = 1;
@@ -39,7 +39,7 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(CsvUtils::Utils::find_value_in_row($row->[$self->{field_}], $self->{values_}))
+  if (CsvUtils::Utils::find_value_in_row($row->[$self->{field_}], $self->{values_}))
   {
     return undef;
   }

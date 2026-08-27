@@ -9,7 +9,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   param_name => DB::Entity::Type::string(unique => 1),
   param_value => DB::Entity::Type::string()
@@ -26,7 +26,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   app_format_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::string(unique => 1),
@@ -44,7 +44,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::DictionaryMixin DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tzname => DB::Entity::Type::string(unique => 1),
   timezone_id => DB::Entity::Type::int(),
@@ -65,12 +65,12 @@ sub _table {
   'DynamicResources'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   key => DB::Entity::Type::string(unique => 1),
   lang => DB::Entity::Type::string(unique => 1),
   value => DB::Entity::Type::string(),
-  
+
   # Private
   channel_category_id => DB::Entity::Type::int(private => 1)
 };
@@ -81,8 +81,8 @@ sub preinit_
 
   if (defined $args->{channel_category_id} && !exists $args->{key})
   {
-    $args->{key} = 
-      "CategoryChannel." . $args->{channel_category_id};    
+    $args->{key} =
+      "CategoryChannel." . $args->{channel_category_id};
   }
 }
 
@@ -97,7 +97,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   wd_req_mapping_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::string(unique => 1),
@@ -108,7 +108,7 @@ use constant STRUCT =>
 sub preinit_
 {
   my ($self, $ns, $args) = @_;
-  
+
   $args->{description} =  $args->{name}
     if !exists $args->{description};
 }
@@ -125,8 +125,8 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
-{ 
+use constant STRUCT =>
+{
   fraud_condition_id => DB::Entity::Type::sequence(),
   type => DB::Entity::Type::enum(['IMP', 'CLK']),
   period => DB::Entity::Type::int(),
@@ -144,7 +144,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   search_engine_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -157,7 +157,7 @@ use constant STRUCT =>
 1;
 
 
-# Dictionaries, used by web statistics 
+# Dictionaries, used by web statistics
 
 # Web application
 package DB::WebOperation;
@@ -168,7 +168,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::UpdateMixin DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   web_operation_id => DB::Entity::Type::raw_sequence(),
   app => DB::Entity::Type::string(unique => 1),

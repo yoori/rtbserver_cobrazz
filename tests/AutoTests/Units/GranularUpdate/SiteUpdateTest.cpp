@@ -5,10 +5,7 @@
 */
 #include "SiteUpdateTest.hpp"
 
-REFLECT_UNIT(SiteUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(SiteUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -28,8 +25,7 @@ void SiteUpdateTest::set_up()
   add_descr_phrase("Setup");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+      AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
       "CampaignManager must set in the XML configuration file");
 }
 
@@ -48,8 +44,7 @@ void SiteUpdateTest::create_site_()
 
   unsigned int account_id = fetch_int("Global/ACCOUNT");
 
-  ORM::ORMRestorer<ORM::PQ::Site>* site =
-    create<ORM::PQ::Site>();
+  ORM::ORMRestorer<ORM::PQ::Site>* site = create<ORM::PQ::Site>();
   site->name = fetch_string("InsertSite/Site/NAME");
   site->account = account_id;
   site->qa_status = "A";
@@ -57,10 +52,7 @@ void SiteUpdateTest::create_site_()
   site->status = "A";
   site->freq_cap = freq_cap_id;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      site->insert()),
-    "inserting site");
+  FAIL_CONTEXT(AutoTest::predicate_checker(site->insert()), "inserting site");
 
   ADD_WAIT_CHECKER(
     "Site check",
@@ -83,8 +75,7 @@ void SiteUpdateTest::create_site_()
         this,
         freq_cap_id,
         FreqCapChecker::Expected().
-          window_time(
-            fetch_string("InsertSite/FC/WindowLength")) )));
+          window_time(fetch_string("InsertSite/FC/WindowLength")))));
 }
 
 void SiteUpdateTest::update_site_campaign_approval_()
@@ -115,9 +106,7 @@ void SiteUpdateTest::update_site_campaign_approval_()
   client.process_request(request, "request for creative");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Global/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Global/CCID"), client.debug_info.ccid).check(),
     "server must return expected creative");
 
   ORM::ORMRestorer<ORM::PQ::SiteCreativeApproval>* sca =
@@ -125,10 +114,7 @@ void SiteUpdateTest::update_site_campaign_approval_()
       ORM::PQ::SiteCreativeApproval(pq_conn_, fetch_int("Global/CREATIVEID"), site_id));
   sca->approval = "R";
   sca->approval_date.set_now();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      sca->update()),
-    "updating SiteCreativeApproval");
+  FAIL_CONTEXT(AutoTest::predicate_checker(sca->update()), "updating SiteCreativeApproval");
 
   ADD_WAIT_CHECKER(
     "Site check",
@@ -142,9 +128,7 @@ void SiteUpdateTest::update_site_campaign_approval_()
         rejected_creative_categories("").
         approved_creatives("") ));
 
-  ADD_WAIT_CHECKER(
-      "Request for no creative",
-      SelectedCreativeChecker(client, request, 0));
+  ADD_WAIT_CHECKER("Request for no creative", SelectedCreativeChecker(client, request, 0));
 }
 
 void SiteUpdateTest::update_noads_timeout_()
@@ -172,32 +156,24 @@ void SiteUpdateTest::update_noads_timeout_()
 
   client.process_request(request, "request for no creative");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "server must return expected creative");
 
   request.debug_time = base_time_ + 20;
   client.process_request(request, "request for no creative");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "server must return expected creative");
 
   request.debug_time = base_time_ + 40;
   client.process_request(request, "request for creative");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id, client.debug_info.ccid).check(),
     "server must return expected creative");
 
   ORM::ORMRestorer<ORM::PQ::Site>* site = create<ORM::PQ::Site>(site_id);
   site->no_ads_timeout = 50;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(site->update()),
-    "updatind no_ads_timeout");
+  FAIL_CONTEXT(AutoTest::predicate_checker(site->update()), "updatind no_ads_timeout");
 
   ADD_WAIT_CHECKER(
     "Site check",
@@ -260,19 +236,14 @@ void SiteUpdateTest::update_creative_exclusion_()
 
   client.process_request(request, "request for creative");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Global/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Global/CCID"), client.debug_info.ccid).check(),
     "musr return expected ccid");
 
   ORM::ORMRestorer<ORM::PQ::SiteCreativeCategoryExclusion>* scce =
     create<ORM::PQ::SiteCreativeCategoryExclusion>(
       ORM::PQ::SiteCreativeCategoryExclusion(pq_conn_, creative_category, site_id));
   scce->approval = "R";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      scce->update()),
-    "updating creative category exclusion");
+  FAIL_CONTEXT(AutoTest::predicate_checker(scce->update()), "updating creative category exclusion");
 
   ADD_WAIT_CHECKER(
     "Site checker",
@@ -286,10 +257,7 @@ void SiteUpdateTest::update_creative_exclusion_()
         rejected_creative_categories(strof(creative_category)).
         approved_creatives(creative_id) ));
 
-  ADD_WAIT_CHECKER(
-    "CCID checker",
-    SelectedCreativeChecker(
-      client, request, 0));
+  ADD_WAIT_CHECKER("CCID checker", SelectedCreativeChecker(client, request, 0));
 }
 
 void SiteUpdateTest::delete_site_()
@@ -303,9 +271,7 @@ void SiteUpdateTest::delete_site_()
         this,
         freq_cap_id,
         FreqCapChecker::Expected().
-          window_time(
-            fetch_string(
-              "DeleteSite/FC/WindowLength")) )).check(),
+          window_time(fetch_string("DeleteSite/FC/WindowLength")))).check(),
     "FreqCap initial");
 
   // Initial
@@ -317,21 +283,14 @@ void SiteUpdateTest::delete_site_()
           status("A") )).check(),
     "Site initial");
 
-  ORM::ORMRestorer<ORM::PQ::Site>* site =
-    create<ORM::PQ::Site>(site_id);
+  ORM::ORMRestorer<ORM::PQ::Site>* site = create<ORM::PQ::Site>(site_id);
 
   //TODO: remove after ADSC-6857 resolving
   site->display_status_id = 6;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      site->update()),
-    "updating site display status");
+  FAIL_CONTEXT(AutoTest::predicate_checker(site->update()), "updating site display status");
   // end of TODO
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      site->del()),
-    "deleting site");
+  FAIL_CONTEXT(AutoTest::predicate_checker(site->del()), "deleting site");
 
   ADD_WAIT_CHECKER(
     "Site check",
@@ -344,22 +303,16 @@ void SiteUpdateTest::delete_site_()
 
   ADD_WAIT_CHECKER(
     "FreqCap check",
-    FreqCapChecker(
-      this,
-      freq_cap_id,
-      FreqCapChecker::Expected(),
-      AutoTest::AEC_NOT_EXISTS ));
+    FreqCapChecker(this, freq_cap_id, FreqCapChecker::Expected(), AutoTest::AEC_NOT_EXISTS));
 
 }
 
 void SiteUpdateTest::update_site_freq_caps_()
 {
-  unsigned long windows_length =
-    fetch_int("UpdateFC/FC/WindowLength");
+  unsigned long windows_length = fetch_int("UpdateFC/FC/WindowLength");
 
   ORM::ORMRestorer<ORM::PQ::FreqCap>* freq_cap =
-    create<ORM::PQ::FreqCap>(
-      fetch_int("UpdateFC/Publisher/FC"));
+    create<ORM::PQ::FreqCap>(fetch_int("UpdateFC/Publisher/FC"));
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -372,9 +325,7 @@ void SiteUpdateTest::update_site_freq_caps_()
 
   freq_cap->window_length = windows_length + 100;
 
-  FAIL_CONTEXT(
-    freq_cap->update(),
-    "Can't update fcap");
+  FAIL_CONTEXT(freq_cap->update(), "Can't update fcap");
 
   ADD_WAIT_CHECKER(
     "FreqCap check",
@@ -394,29 +345,17 @@ void SiteUpdateTest::tear_down()
 bool
 SiteUpdateTest::run()
 {
-  AUTOTEST_CASE(
-    create_site_(),
-    "Create site");
+  AUTOTEST_CASE(create_site_(), "Create site");
 
-  AUTOTEST_CASE(
-    update_site_campaign_approval_(),
-    "Update SiteCreativeApproval");
+  AUTOTEST_CASE(update_site_campaign_approval_(), "Update SiteCreativeApproval");
 
- AUTOTEST_CASE(
-   update_noads_timeout_(),
-   "Update noads timeout");
+ AUTOTEST_CASE(update_noads_timeout_(), "Update noads timeout");
 
-  AUTOTEST_CASE(
-    update_creative_exclusion_(),
-    "Update creative exclusion");
+  AUTOTEST_CASE(update_creative_exclusion_(), "Update creative exclusion");
 
-  AUTOTEST_CASE(
-    delete_site_(),
-    "Delete site");
+  AUTOTEST_CASE(delete_site_(), "Delete site");
 
-  AUTOTEST_CASE(
-    update_site_freq_caps_(),
-    "Update site freq caps");
+  AUTOTEST_CASE(update_site_freq_caps_(), "Update site freq caps");
 
   return true;
 }

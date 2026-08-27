@@ -74,4 +74,3 @@ namespace AdServer::LogProcessing
     return os;
   }
 } // namespace AdServer::LogProcessing
-

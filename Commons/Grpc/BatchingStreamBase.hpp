@@ -34,8 +34,7 @@ namespace AdServer::Grpc
     {
       if (stats_owner)
       {
-        stats_owner->add_completed_stats(
-          item.status_code() != grpc::StatusCode::OK);
+        stats_owner->add_completed_stats(item.status_code() != grpc::StatusCode::OK);
       }
 
       if (callback)

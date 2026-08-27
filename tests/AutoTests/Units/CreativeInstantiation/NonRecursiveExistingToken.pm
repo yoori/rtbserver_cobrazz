@@ -19,7 +19,7 @@ sub init
     name => 'Template',
     template_file => 'UnitTests/banner_img_clk.html',
     flags => 0 });
-  
+
   my $keyword = make_autotest_name($ns, "keyword");
 
   my $channel = $ns->create(DB::BehavioralChannel->blank(

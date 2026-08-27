@@ -40,9 +40,7 @@ namespace
   {
     std::array<unsigned char, Generics::Time::TIME_PACK_LEN> packed_time;
     time.pack(packed_time.data());
-    return std::string(
-      reinterpret_cast<const char*>(packed_time.data()),
-      packed_time.size());
+    return std::string(reinterpret_cast<const char*>(packed_time.data()), packed_time.size());
   }
 }
 
@@ -81,7 +79,7 @@ namespace AdServer::PassbackPixel
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration isn't present");
       }
@@ -89,21 +87,19 @@ namespace AdServer::PassbackPixel
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.PassPixelFeConfiguration().present())
+      if (!fe_config.PassPixelFeConfiguration().present())
       {
         throw Exception("PassPixelFeConfiguration isn't present");
       }
 
-      config_ = ConfigPtr(new PassPixelFeConfiguration(
-        *fe_config.PassPixelFeConfiguration()));
+      config_ = ConfigPtr(new PassPixelFeConfiguration(*fe_config.PassPixelFeConfiguration()));
 
       request_info_filler_.reset(new RequestInfoFiller(
         logger(),
         common_config_->colo_id(),
         common_module_->ip_mapper()));
 
-      track_pixel_ = FileCachePtr(
-        new FileCache(config_->track_pixel_path().c_str()));
+      track_pixel_ = FileCachePtr(new FileCache(config_->track_pixel_path().c_str()));
     }
     catch(const eh::Exception& e)
     {
@@ -118,10 +114,9 @@ namespace AdServer::PassbackPixel
   {
     std::string found_uri;
 
-    bool result = FrontendCommons::find_uri(
-      config_->UriList().Uri(), uri, found_uri);
+    bool result = FrontendCommons::find_uri(config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "Frontend::will_handle(" << uri << "), result " << result;
@@ -133,8 +128,7 @@ namespace AdServer::PassbackPixel
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -190,9 +184,7 @@ namespace AdServer::PassbackPixel
   }
 
   int
-  Frontend::handle_track_request(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+  Frontend::handle_track_request(const FCGI::HttpRequest& request, FCGI::HttpResponse& response)
     /*throw(ForbiddenException, InvalidParamException, eh::Exception)*/
   {
     static const char* FUN = "Frontend::handle_track_request()";
@@ -201,12 +193,9 @@ namespace AdServer::PassbackPixel
 
     PassbackTrackInfo passback_track_info;
 
-    request_info_filler_->fill_track(
-      passback_track_info,
-      request.headers(),
-      request.params());
+    request_info_filler_->fill_track(passback_track_info, request.headers(), request.params());
 
-    if(!passback_track_info.tag_id)
+    if (!passback_track_info.tag_id)
     {
       Stream::Error ostr;
       ostr << "Not correct tag_id";
@@ -215,11 +204,9 @@ namespace AdServer::PassbackPixel
 
     try
     {
-      if(common_config_->ResponseHeaders().present())
+      if (common_config_->ResponseHeaders().present())
       {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
+        FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
       }
 
       response.set_content_type_nocopy(String::SubString("image/gif"));
@@ -258,14 +245,10 @@ namespace AdServer::PassbackPixel
 
     try
     {
-      auto result = co_await campaign_manager_coro_->co_consider_passback_track(
-        std::move(request));
-      if(!result.status.ok())
+      auto result = co_await campaign_manager_coro_->co_consider_passback_track(std::move(request));
+      if (!result.status.ok())
       {
-        logger()->sstream(
-          Logging::Logger::ERROR,
-          Aspect::PASS_PIXEL_FRONTEND,
-          "ADS-IMPL-194") <<
+        logger()->sstream(Logging::Logger::ERROR, Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194") <<
           FUN << ": CampaignManager::consider_passback_track(): "
           "gRPC call failed: code=" <<
           static_cast<int>(result.status.error_code()) <<
@@ -274,12 +257,8 @@ namespace AdServer::PassbackPixel
     }
     catch(const eh::Exception& e)
     {
-      logger()->sstream(
-        Logging::Logger::ERROR,
-        Aspect::PASS_PIXEL_FRONTEND,
-        "ADS-IMPL-194") <<
-        FUN << ": CampaignManager::consider_passback_track(): " <<
-        e.what();
+      logger()->sstream(Logging::Logger::ERROR, Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194") <<
+        FUN << ": CampaignManager::consider_passback_track(): " << e.what();
     }
 
     co_return FrontendCommons::RequestResult::written();
@@ -290,7 +269,7 @@ namespace AdServer::PassbackPixel
   {
     static const char* FUN = "Frontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
@@ -300,14 +279,11 @@ namespace AdServer::PassbackPixel
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
         add_child_object(campaign_manager);
       }
       catch(const eh::Exception& ex)
@@ -317,8 +293,7 @@ namespace AdServer::PassbackPixel
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-        "Frontend::init(): frontend is running ..."),
+      logger()->log(String::SubString("Frontend::init(): frontend is running ..."),
       Logging::Logger::INFO, Aspect::PASS_PIXEL_FRONTEND);
     }
   }
@@ -330,8 +305,7 @@ namespace AdServer::PassbackPixel
     wait_object();
     campaign_manager_coro_.reset();
 
-    logger()->log(String::SubString(
-        "Frontend::shutdown(): frontend terminated"),
+    logger()->log(String::SubString("Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO, Aspect::PASS_PIXEL_FRONTEND);
   }
 } /*PassbackPixel*/

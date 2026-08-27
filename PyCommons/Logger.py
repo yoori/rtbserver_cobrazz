@@ -6,7 +6,7 @@ from threading import Lock, currentThread
 
 if sys.platform != 'win32':
   import syslog
-  
+
 
 defLogLevel = 5
 normalLevel = 20  # level num for massive messages must be greater than this
@@ -29,7 +29,7 @@ class Logger:
   def __init__( self, logLevel ):
     self._logLevel = logLevel
     self.mutex = Lock()
-  
+
   def logLogLevel( self ):
     self.log(0, 'Log level set to %d' % self.logLevel())
 
@@ -65,10 +65,10 @@ class Logger:
 
   def _reopen( self ):
     pass
-    
+
 
 class FileLogger(Logger):
-  
+
   def __init__( self, logLevel, fileName = None, alwaysSync = False ):
     Logger.__init__(self, logLevel)
     self._fileName = fileName
@@ -90,7 +90,7 @@ class FileLogger(Logger):
     self._file.close()
     self._file = file(self._fileName, 'a+')
     self._log(0, 'Reopened. Log level = %d' % self._logLevel)
-    
+
 
 class SysLogger(Logger):
 
@@ -173,7 +173,7 @@ def logLevel():
 
 def setLogLevel( level ):
   logger.setLogLevel(level)
-  
+
 def log( level, msg ):
   if logger:
     logger.log(level, msg)

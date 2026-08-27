@@ -44,7 +44,7 @@ class DTree :
       if root_tree_id == 0 :
         root_tree_id = tree_id
       delta = float(delta_str)
-      #print '<' + branches_str + '>' 
+      #print '<' + branches_str + '>'
       branches = list()
       if branches_str :
         branche_strs = branches_str.split("|")

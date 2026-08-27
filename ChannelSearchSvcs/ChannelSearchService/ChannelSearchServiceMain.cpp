@@ -21,8 +21,7 @@ namespace
 
 ChannelSearchServiceApp_::ChannelSearchServiceApp_()
   /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "ChannelSearchApp_", ASPECT)
+  : AdServer::Commons::ProcessControlVarsLoggerImpl("ChannelSearchApp_", ASPECT)
 {}
 
 void
@@ -31,7 +30,7 @@ ChannelSearchServiceApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownGuard guard(shutdown_lock_);
 
-  if(service_impl_.in())
+  if (service_impl_.in())
   {
     service_impl_->deactivate_object();
     service_impl_->wait_object();
@@ -81,8 +80,7 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
 
       configuration_ =
         ConfigPtr(
-          new ChannelSearchServiceConfigType(
-            ad_configuration->ChannelSearchServiceConfig()));
+          new ChannelSearchServiceConfigType(ad_configuration->ChannelSearchServiceConfig()));
     }
     catch (const xml_schema::parsing& ex)
     {
@@ -117,8 +115,7 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
     {
       if (!config().Logger().filename().empty())
       {
-        logger(Config::LoggerConfigReader::create(
-          config().Logger(), argv[0]));
+        logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
       }
     }
     catch (const Logging::LoggerException& ex)
@@ -131,9 +128,7 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
     // fill corba_config
     try
     {
-      Config::CorbaConfigReader::read_config(
-        configuration_->CorbaConfig(),
-        corba_config_);
+      Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
     }
     catch (const eh::Exception& ex)
     {
@@ -145,8 +140,7 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
     try
     {
       // init CORBA Server
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
+      corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
 
       shutdowner_ = corba_server_adapter_->shutdowner();
     }
@@ -158,15 +152,11 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
     }
 
     service_impl_ =
-      new AdServer::ChannelSearchSvcs::ChannelSearchServiceImpl(
-        callback(),
-        logger(),
-        config());
+      new AdServer::ChannelSearchSvcs::ChannelSearchServiceImpl(callback(), logger(), config());
     register_vars_controller();
 
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-    corba_server_adapter_->add_binding(
-      CHANNEL_SEARCH_OBJ_KEY, service_impl_.in());
+    corba_server_adapter_->add_binding(CHANNEL_SEARCH_OBJ_KEY, service_impl_.in());
 
     service_impl_->activate_object();
 
@@ -183,28 +173,23 @@ ChannelSearchServiceApp_::main(int argc, char** argv)
   }
   catch (const Exception& ex)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-      ASPECT) <<
+    logger()->sstream(Logging::Logger::CRITICAL, ASPECT) <<
       "ChannelSearchServiceApp_::main(): "
-      "Got ChannelSearchServiceApp_::Exception: " <<
-      ex.what();
+      "Got ChannelSearchServiceApp_::Exception: " << ex.what();
   }
   catch (const CORBA::SystemException& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT) << "ChannelSearchServiceApp_::main(): "
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT) << "ChannelSearchServiceApp_::main(): "
       "Got CORBA::SystemException: " << ex;
   }
   catch (const eh::Exception& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT) << "ChannelSearchServiceApp_::main(): "
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT) << "ChannelSearchServiceApp_::main(): "
       "Got eh::Exception: " << ex.what();
   }
   catch (...)
   {
-    logger()->log(String::SubString("ChannelSearchServiceApp_::main(): "
-      "Got Unknown exception."),
+    logger()->log(String::SubString("ChannelSearchServiceApp_::main(): " "Got Unknown exception."),
       Logging::Logger::EMERGENCY,
       ASPECT);
   }
@@ -241,5 +226,3 @@ main(int argc, char** argv)
 
   return 0;
 }
-
-

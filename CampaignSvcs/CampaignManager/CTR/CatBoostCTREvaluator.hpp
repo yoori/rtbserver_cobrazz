@@ -11,9 +11,7 @@ namespace AdServer::CampaignSvcs::CTR
   class CatBoostCTREvaluator: public CTREvaluator
   {
   public:
-    CatBoostCTREvaluator(
-      const String::SubString& model_file,
-      unsigned int features_size);
+    CatBoostCTREvaluator(const String::SubString& model_file, unsigned int features_size);
 
     virtual ~CatBoostCTREvaluator();
 

@@ -6,9 +6,7 @@
 #include "ProfileMap.hpp"
 #include "DelegateProfileMap.hpp"
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /* wrapper for change MemBuf content stored in ProfileMap at profile read */
   template<typename KeyType, typename ProfileAdapterType>
@@ -26,9 +24,7 @@ namespace ProfilingCommons
 
     virtual
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time)
+    get_profile(const KeyType& key, Generics::Time* last_access_time)
       /*throw(Exception)*/;
 
   private:
@@ -36,18 +32,13 @@ namespace ProfilingCommons
     ProfileAdapterType profile_adapter_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /** AdaptProfileMap */
   template<typename KeyType, typename ProfileAdapterType>
   AdaptProfileMap<KeyType, ProfileAdapterType>::
-  AdaptProfileMap(
-    ProfileMap<KeyType>* profile_map,
-    const ProfileAdapterType& profile_adapter)
+  AdaptProfileMap(ProfileMap<KeyType>* profile_map, const ProfileAdapterType& profile_adapter)
     noexcept
     : DelegateProfileMap<KeyType>(profile_map),
       profile_adapter_(profile_adapter)
@@ -56,9 +47,7 @@ namespace ProfilingCommons
   template<typename KeyType, typename ProfileAdapterType>
   Generics::ConstSmartMemBuf_var
   AdaptProfileMap<KeyType, ProfileAdapterType>::
-  get_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  get_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(Exception)*/
   {
     static const char* FUN = "AdaptProfileMap<>::get_profile()";
@@ -66,7 +55,7 @@ namespace ProfilingCommons
     Generics::ConstSmartMemBuf_var res =
       this->no_add_ref_delegate_map_()->get_profile(key, last_access_time);
 
-    if(res.in())
+    if (res.in())
     {
       try
       {
@@ -82,5 +71,4 @@ namespace ProfilingCommons
 
     return Generics::ConstSmartMemBuf_var();
   }
-}
 }

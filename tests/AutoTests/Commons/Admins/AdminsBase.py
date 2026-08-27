@@ -62,7 +62,7 @@ class Field:
 
   def var_value(self):
     return self.var
-  
+
   def process_method(self, strm):
     pass
 
@@ -73,7 +73,7 @@ class Cmd:
     fields = parameters to construct admin command
     modificators = additional aspects to construct with
     skip = how many lines skip from admin output
-    options = additional options (aspects) 
+    options = additional options (aspects)
     """
     self.aspect = aspect
     self.fields = []
@@ -88,18 +88,18 @@ class Cmd:
     self.modificators = []
     for modificator in modificators:
       self.modificators.append(Field(modificator))
-    self.skip_lines = skip      
+    self.skip_lines = skip
     self.base = 'BaseAdminCmd'
     self.options = options
     self.no_expected = False
-  
+
   #modificators is enum for command not valued parameters
-  
+
   def modificator_arg(self, scope = ''):
     if self.modificators:
       return ", %sModificator mod = %s%s" % (scope, scope, self.modificators[0].enum)
     return ''
-  
+
   def modificator_set(self):
     if self.modificators:
       return " modificator_ = mod;"
@@ -127,7 +127,7 @@ class Cmd:
       self.process_modificators(strm)
       strm.delLevel()
       print >>strm, "};"
-  
+
   def modificators_field(self, strm):
     if self.modificators:
       print >>strm, "protected:"
@@ -157,14 +157,14 @@ class Cmd:
       print >>strm, "params.push_back(AdminParamPair(\"%s\", %s));" % (
         getter, var)
     strm.delLevel()
-      
+
   def make(self, strm):
     print >>strm, "void make_cmd (const char* address%s" % \
        (len(self.params) != 0 and "," or "")
     for i in range(len(self.params)):
       param = self.params[i]
       print >>strm, "  %s %s%s" % \
-            (param.type, param.var, i != len(self.params) - 1 and "," or "") 
+            (param.type, param.var, i != len(self.params) - 1 and "," or "")
     print >>strm, ")"
     print >>strm, "{"
     strm.addLevel()
@@ -222,7 +222,7 @@ class Cmd:
              (i != len(self.params) - 1 or modificator_arg) and "," or "")
     if modificator_arg:
       print >>strm, "  %s" % modificator_arg[2:]
-    
+
   def constructors(self, name, strm, redirect = None, scope = ''):
     """name = name of class to construct,
     strm = output stream,
@@ -290,10 +290,10 @@ class Admin:
     self.fields = fields
     if not self.enumfields:
       self.cmd.no_expected = True
-  
+
   def template_name(self):
     return "%s<%s, %s>" % (self.cmd.base, self.name, len(self.enumfields))
-  
+
   def template_name2(self):
     return "%s<%s, FIELDS_COUNT>" % (self.cmd.base, self.name)
 
@@ -309,7 +309,7 @@ class Admin:
       print >>strm, self.enumfields[last].enum
     else:
       print >>strm, self.enumfields[0].enum + " = 0"
-  
+
   def process_name_array(self, strm):
     if not self.enumfields:
       return
@@ -445,7 +445,7 @@ class Admin:
       strm.addLevel()
       self.process_expected(strm)
       strm.delLevel()
-      print >>strm, ""      
+      print >>strm, ""
       print >>strm, "public:"
       print >>strm, "  typedef %s Base;" % self.template_name2()
       print >>strm, ""
@@ -457,9 +457,9 @@ class Admin:
     self.cmd.make(strm)
     self.cmd.constructors(self.name, strm)
     self.process_accessors(strm)
-    if self.enumfields:      
+    if self.enumfields:
       print >>strm, "bool check(const Expected& expected, bool exist = true)"
-      print >>strm, "  throw(eh::Exception);"    
+      print >>strm, "  throw(eh::Exception);"
       print >>strm, "bool check(const std::string& expected, bool exist = true)"
       print >>strm, "  throw(eh::Exception);"
     strm.delLevel()
@@ -530,7 +530,7 @@ class Admin:
       strm.newline()
       strm.delLevel()
       print >>strm, "}"
-                  
+
 
 class StrField(Field):
   def __init__(self, name, getter = False, default = None, switch = None, may_empty = False):
@@ -540,7 +540,7 @@ class StrField(Field):
 
   def base_type(self):
     return Type('std::string', 'const std::string&')
-  
+
   def process_method(self, strm):
     print >>strm, "Expected& %s (const std::string& val);" % self.var
     if self.getter:
@@ -574,14 +574,14 @@ class StrField(Field):
       print >>strm, "  FieldIndexMap::const_iterator it = values_.find(%s);" % self.enum
       print >>strm, "  return it->second->str();"
       print >>strm, "}"
-    print >>strm, "inline"       
+    print >>strm, "inline"
     print >>strm, "const char*"
     print >>strm, "%s::%s (unsigned int i)" % (klass, self.var)
     print >>strm, "{"
     print >>strm, "  if (empty() || values_[0].size() != FIELDS_COUNT) return 0;"
     print >>strm, "  return values_[i][Expected::%s].c_str();" % self.enum
     print >>strm, "}"
-    
+
 class IntField(StrField):
   def __init__(self, name, getter = False, default = None, switch = None):
     StrField.__init__(self, name, getter, default, switch)
@@ -594,7 +594,7 @@ class IntField(StrField):
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s(unsigned long val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -617,7 +617,7 @@ class MoneyField(StrField):
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s (const Money& val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -641,7 +641,7 @@ class PrecisionField(StrField):
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s (const precisely_number& val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -665,7 +665,7 @@ class StringListField(StrField):
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s (const ComparableStringList& val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -685,11 +685,11 @@ class UIntField(StrField):
 
   def base_type(self):
     return Type('unsigned int')
-    
+
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s(unsigned int val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -716,7 +716,7 @@ class BoolField(Field):
   def process_method(self, strm):
     StrField.process_method(self, strm)
     print >>strm, "Expected& %s(bool val);" % self.var
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
     print >>strm, "inline"
@@ -731,7 +731,7 @@ class SomeField:
   def __init__(self, name, type, default, switch = None):
     self.var = name
     self.enum = None
-    self.getter = None    
+    self.getter = None
     self.type = type
     self.types = [type]
     self.default = default
@@ -739,11 +739,11 @@ class SomeField:
 
   def base_type(self):
     return Type('std::string', 'const char*')
-    
+
   def process_method(self, strm):
     print >>strm, "Expected& %s(%s val);" % (self.var, self.type)
     print >>strm, "%s %s() const;" % (self.type, self.var)
-  
+
   def process_implementation(self, strm, klass):
     print >>strm, "inline"
     print >>strm, "%s::Expected&" % klass
@@ -790,21 +790,21 @@ class IndentStream:
 
   def close(self):
     self.stream.close()
-    
+
   def addLevel (self):
     self.level = self.level + 2
-    
+
   def delLevel (self):
     self.level = self.level - 2
 
   def newline (self):
     self.stream.write('\n')
-    
+
   def write (self, string):
     """method need implemented"""
     self.stream.write(' '*self.level)
     self.stream.write(string)
-    
+
   def rawwrite (self, string):
     self.stream.write(string)
 
@@ -902,14 +902,14 @@ def process_headers():
                     "<tests/AutoTests/Commons/Checkers/Checker.hpp>",
                     "<tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>"],
         tpp_includes = ["%s.tpp" % admin.checker_name],
-        path = checkers_dir_path)      
+        path = checkers_dir_path)
   print >>collector, ""
   print >>checkers_collector, ""
   process_header_footer(collector, collector_name)
   process_header_footer(checkers_collector, collector_name)
   collector.close()
   checkers_collector.close()
-    
+
 def process_source_header(source, name, includes = []):
   print >>source, "/** $" + "Id" + "$"
   print >>source, "* @file %s" % name

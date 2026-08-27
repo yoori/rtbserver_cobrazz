@@ -16,6 +16,5 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& goal_ctr) const noexcept = 0;
   };
 
-  using CAvailableAndMinCTRSetter_var =
-    ReferenceCounting::ConstPtr<AvailableAndMinCTRSetter>;
+  using CAvailableAndMinCTRSetter_var = ReferenceCounting::ConstPtr<AvailableAndMinCTRSetter>;
 }

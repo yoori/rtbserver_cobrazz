@@ -58,7 +58,7 @@ use Cwd;
 use Getopt::Long qw(:config gnu_getopt bundling);
 use Pod::Usage;
 use File::Spec;
-use File::Basename; 
+use File::Basename;
 use File::Path;
 
 use DB::Database;
@@ -86,9 +86,9 @@ my %options = (
   prefix => '',
   threads => DEFAULT_THREAD_NUMBER );
 
-if (! GetOptions(\%options, 
+if (! GetOptions(\%options,
                  qw(connection-string=s host|h=s dbname|d=s user|u=s
-                    password|p=s server|s=s 
+                    password|p=s server|s=s
                     xsd|x=s prefix=s source|f=s threads=i )))
 {
   pod2usage(1);
@@ -127,7 +127,7 @@ my $namespace_name = "BT-FullText";
 
 my $database = new PerformanceDB::Database($options{host},
                                            $options{dbname},
-                                           $options{user}, 
+                                           $options{user},
                                            $options{password},
                                            $namespace_name,
                                            $options{prefix});
@@ -161,7 +161,7 @@ my $server = "http://" . $options{server};
 
 my $global =
   XML::Encoder::GROUP_PARAM({},
-    "GlobalSettings", 
+    "GlobalSettings",
      [ XML::Encoder::PARAM("ThreadsNumber", $options{threads}),
        XML::Encoder::PARAM("URLsFile", ""),
        XML::Encoder::NEW_LINE,
@@ -181,13 +181,13 @@ my @params_create_user = [
   XML::Encoder::PARAM("body")];
 
 push(
-  @benchmarks, 
+  @benchmarks,
   XML::Encoder::GROUP_PARAM(
     {  frontend => "nslookup",
        initial => "true",
        size => CLIENTS_COUNT,
        description => "Create users" },
-    "Benchmark", 
+    "Benchmark",
      [ XML::Encoder::GROUP_PARAM(
        { url => "/services/OO",
          method => "get"},
@@ -207,12 +207,12 @@ my @params_full_text = [
   XML::Encoder::PARAM("body")];
 
 push(
-  @benchmarks, 
+  @benchmarks,
   XML::Encoder::GROUP_PARAM(
     {  frontend => "nslookup",
        size => CLIENTS_COUNT * 10,
        description => "Full text" },
-    "Benchmark", 
+    "Benchmark",
      [ XML::Encoder::GROUP_PARAM(
        { url => "/services/nslookup",
          method => "get"},
@@ -220,10 +220,10 @@ push(
 
 open(my $XML, ">$xml_config_path") || die "Cann't open file $xml_config_path for write.\n";
 
-my $benchmarks =  
+my $benchmarks =
   XML::Encoder::GROUP_PARAM(
     {}, "Benchmarks", \@benchmarks);
-  
+
 print $XML XML::Encoder::GROUP_PARAM(
   { "xmlns:test"=> XML_CONFIG_HTML_PATH,
     "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",

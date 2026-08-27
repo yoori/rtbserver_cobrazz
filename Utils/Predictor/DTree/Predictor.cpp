@@ -11,7 +11,7 @@ namespace Vanga
     res->values.resize(rows.size());
 
     unsigned long i = 0;
-    for(auto it = rows.begin(); it != rows.end(); ++it, ++i)
+    for (auto it = rows.begin(); it != rows.end(); ++it, ++i)
     {
       res->values[i] = predict((*it)->features);
     }
@@ -50,10 +50,7 @@ namespace Vanga
   }
 
   std::string
-  LogRegPredictor::to_string(
-    const char* prefix,
-    const FeatureDictionary* dict,
-    double base)
+  LogRegPredictor::to_string(const char* prefix, const FeatureDictionary* dict, double base)
     const noexcept
   {
     return predictor_->to_string(prefix, dict, base);

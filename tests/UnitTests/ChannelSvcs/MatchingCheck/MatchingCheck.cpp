@@ -7,33 +7,29 @@
 #include<ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include"MatchingCheck.hpp"
 
-namespace AdServer
-{
-namespace UnitTests
+namespace AdServer::UnitTests
 {
   void MatchingCheckTest::prepare_data_(SaveType& atom_save)
     /*throw(eh::Exception)*/
   {
     ChannelSvcs::UpdateContainer update_container(&container_, 0);
-    ChannelSvcs::ChannelIdToMatchInfo_var info =
-      new ChannelSvcs::ChannelIdToMatchInfo;
+    ChannelSvcs::ChannelIdToMatchInfo_var info = new ChannelSvcs::ChannelIdToMatchInfo;
     std::string base_word, ending;
     unsigned long channel_trigger_id = 10;
     unsigned long atom_id = 10;
     //complex hard words with one same word
-    for(size_t j = 0; j < 4; j++)
+    for (size_t j = 0; j < 4; j++)
     {
       ChannelSvcs::MergeAtom atom;
-      ChannelServerTestCommons::new_atom(
-        atom_id++, ChannelSvcs::CT_PAGE, atom, info);
+      ChannelServerTestCommons::new_atom(atom_id++, ChannelSvcs::CT_PAGE, atom, info);
       ChannelServerTestCommons::generate_word(base_word, hard_length_);
-      for(size_t i_hard = 0; i_hard < count_hards_; i_hard++)
+      for (size_t i_hard = 0; i_hard < count_hards_; i_hard++)
       {
         std::string trigger_str;
         trigger_str.reserve(base_word.size() + (2 + hard_length_) * j);
         trigger_str.push_back('"');
         trigger_str.append(base_word);
-        for(size_t k = 0; k < j; k++)
+        for (size_t k = 0; k < j; k++)
         {
           ChannelServerTestCommons::generate_word(ending, hard_length_);
           trigger_str.push_back(' ');
@@ -51,15 +47,14 @@ namespace UnitTests
     //soft words
     {
       ChannelSvcs::MergeAtom atom;
-      ChannelServerTestCommons::new_atom(
-        atom_id++, ChannelSvcs::CT_PAGE, atom, info);
-      for(size_t i_soft = 0; i_soft < count_soft_; i_soft++)
+      ChannelServerTestCommons::new_atom(atom_id++, ChannelSvcs::CT_PAGE, atom, info);
+      for (size_t i_soft = 0; i_soft < count_soft_; i_soft++)
       {
         std::string word, trigger_str;
         trigger_str.reserve(2 + soft_length_ * 20);
-        for(size_t k = 0; k < soft_length_; k++)
+        for (size_t k = 0; k < soft_length_; k++)
         {
-          if(k != 0)
+          if (k != 0)
           {
             trigger_str.push_back(' ');
           }
@@ -76,13 +71,12 @@ namespace UnitTests
     //soft words with one same word
     {
       ChannelSvcs::MergeAtom atom;
-      ChannelServerTestCommons::new_atom(
-        atom_id++, ChannelSvcs::CT_PAGE, atom, info);
-      for(size_t i_soft = 0; i_soft < count_soft_; i_soft++)
+      ChannelServerTestCommons::new_atom(atom_id++, ChannelSvcs::CT_PAGE, atom, info);
+      for (size_t i_soft = 0; i_soft < count_soft_; i_soft++)
       {
         std::string word, trigger_str;
         trigger_str.reserve(2 + soft_length_ * 21 + base_word.size());
-        for(size_t k = 0; k < soft_length_; k++)
+        for (size_t k = 0; k < soft_length_; k++)
         {
           trigger_str.push_back(' ');
           ChannelServerTestCommons::generate_word(word);
@@ -106,17 +100,15 @@ namespace UnitTests
     {
       ChannelSvcs::MergeAtom atom;
       std::vector<std::string> words(101);
-      for(std::vector<std::string>::iterator it = words.begin();
-          it != words.end(); ++it)
+      for (std::vector<std::string>::iterator it = words.begin(); it != words.end(); ++it)
       {
         ChannelServerTestCommons::generate_asc_word(*it, 10);
       }
-      ChannelServerTestCommons::new_atom(
-        atom_id++, ChannelSvcs::CT_PAGE, atom, info);
-      for(size_t step = 1; step < words.size(); step++)
+      ChannelServerTestCommons::new_atom(atom_id++, ChannelSvcs::CT_PAGE, atom, info);
+      for (size_t step = 1; step < words.size(); step++)
       {
         std::string trigger_str;
-        for(size_t i = step + 1; i < words.size(); i++)
+        for (size_t i = step + 1; i < words.size(); i++)
         {
           trigger_str += words[step];
           trigger_str.push_back(' ');
@@ -127,13 +119,13 @@ namespace UnitTests
           false, 0, atom.soft_words, Commons::DEFAULT_MAX_HARD_WORD_SEQ, 0);
         trigger_str.clear();
       }
-      for(size_t i = 0; i < 1000; i++)
+      for (size_t i = 0; i < 1000; i++)
       {
         std::string trigger_str;
         size_t num = 0;
-        for(size_t j = 0; j < 3; j++)
+        for (size_t j = 0; j < 3; j++)
         {
-          if(j != 0)
+          if (j != 0)
           {
             trigger_str.push_back(' ');
           }
@@ -167,7 +159,7 @@ namespace UnitTests
       Generics::ScopedCPUTimer timer2(t2);
 
       AdServer::ChannelSvcs::MatchWords phrases[ChannelSvcs::CT_MAX];
-      for(size_t match_counter = 0; match_counter < 100; match_counter++)
+      for (size_t match_counter = 0; match_counter < 100; match_counter++)
       {
         ChannelSvcs::parse_keywords<ChannelSvcs::MatchBreakSeparators>(
           in, phrases[ChannelSvcs::CT_PAGE], ChannelSvcs::PM_SIMPLIFY);
@@ -183,11 +175,10 @@ namespace UnitTests
     /*throw(eh::Exception)*/
   {
     //stat_->consider(Generics::Statistics::TimedSubject( Generics::Time(0)));
-    for(SaveType::const_iterator i = atoms.begin(); i != atoms.end(); ++i)
+    for (SaveType::const_iterator i = atoms.begin(); i != atoms.end(); ++i)
     {
       const std::vector<std::string>& strings = i->second;
-      for(std::vector<std::string>::const_iterator it = strings.begin();
-          it != strings.end(); ++it)
+      for (std::vector<std::string>::const_iterator it = strings.begin(); it != strings.end(); ++it)
       {
         match_i_(*it);
       }
@@ -220,7 +211,7 @@ namespace UnitTests
     return 0;
   }
 }
-}
+
 
 int main(int argc, char* argv[])
 {
@@ -228,4 +219,3 @@ int main(int argc, char* argv[])
   test.parse_arguments(argc, argv);
   return test.run();
 }
-

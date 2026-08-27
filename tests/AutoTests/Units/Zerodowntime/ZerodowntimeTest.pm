@@ -80,7 +80,7 @@ sub init {
   my $isp_cpa = $ns->create(Isp => {
       name => 'Isp',
       colocation_revenue_share => 0.5,
-      account_currency_id => 
+      account_currency_id =>
         DB::Currency->blank( rate => 0.51 ),
       account_internal_account_id =>
         DB::Defaults::instance()->no_margin_internal_account->{account_id} });
@@ -123,7 +123,7 @@ sub init {
 
     $ns->output("URL/" . $i, $url);
     $ns->output("KEYWORD/" . $i, $keyword);
-    $ns->output("TRIGGER/" . $i, 
+    $ns->output("TRIGGER/" . $i,
       $channel->keyword_channel_triggers_->[0]->channel_trigger_id());
     $ns->output("CHANNEL/" . $i, $channel);
     $ns->output("CPA/CC/" . $i, $c->{cc_id});

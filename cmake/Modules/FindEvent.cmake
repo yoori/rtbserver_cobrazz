@@ -16,11 +16,11 @@ find_package_handle_standard_args(Event
 
 set(EVENT_FOUND ${Event_FOUND})
 
-if(Event_FOUND)
+if (Event_FOUND)
   set(EVENT_INCLUDE_DIRS ${EVENT_INCLUDE_DIR})
   set(EVENT_LIBRARIES ${EVENT_LIBRARY})
 
-  if(NOT TARGET Event::Event)
+  if (NOT TARGET Event::Event)
     add_library(Event::Event UNKNOWN IMPORTED)
     set_target_properties(Event::Event PROPERTIES
       IMPORTED_LOCATION "${EVENT_LIBRARY}"

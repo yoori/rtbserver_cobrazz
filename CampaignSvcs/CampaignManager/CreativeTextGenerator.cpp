@@ -1,9 +1,7 @@
 #include <iostream>
 #include "CreativeTextGenerator.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   void
   CreativeTextGenerator::init_creative_tokens(
@@ -40,12 +38,10 @@ namespace CampaignSvcs
       it != creative_args.end(); ++it)
     {
       BaseTokenProcessor_var token_processor;
-      TokenProcessorMap::const_iterator proc_it = token_processors.find(
-        it->second.option_id);
+      TokenProcessorMap::const_iterator proc_it = token_processors.find(it->second.option_id);
       if (proc_it == token_processors.end())
       {
-        token_processor =
-          BaseTokenProcessor::default_token_processor(it->first.c_str());
+        token_processor = BaseTokenProcessor::default_token_processor(it->first.c_str());
       }
       else
       {
@@ -62,5 +58,4 @@ namespace CampaignSvcs
       result_creative_args.set_value(it->first, std::move(res));
     }
   }
-}
 }

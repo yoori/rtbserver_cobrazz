@@ -5,9 +5,7 @@
 #include <Commons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestTriggerMatchProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void
   print_request_trigger_match_profile(
@@ -16,11 +14,8 @@ namespace RequestInfoSvcs
     const RequestTriggerMatchReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -37,12 +32,11 @@ namespace RequestInfoSvcs
 
     template<typename IteratorType>
     std::string
-    print_match_count_list(
-      const IteratorType& begin, const IteratorType& end, const char* offset)
+    print_match_count_list(const IteratorType& begin, const IteratorType& end, const char* offset)
     {
       std::ostringstream ostr;
       ostr << std::endl;
-      for(IteratorType it = begin; it != end; ++it)
+      for (IteratorType it = begin; it != end; ++it)
       {
         ostr << offset << "[" << (*it).channel_trigger_id() << " : " <<
           (*it).counter() << "]" << std::endl;
@@ -64,7 +58,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, REQUEST_TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[i]);
     }
@@ -72,9 +66,7 @@ namespace RequestInfoSvcs
     std::string::size_type max_len = 0;
     for (unsigned long ind = 0; ind < table.columns(); ++ind)
     {
-      max_len = std::max(
-        max_len,
-        REQUEST_TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[ind].name.length());
+      max_len = std::max(max_len, REQUEST_TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[ind].name.length());
     }
 
     std::string prefix(max_len + 3, ' ');
@@ -105,5 +97,4 @@ namespace RequestInfoSvcs
     table.dump(out);
     out << std::endl;
   }
-}
 }

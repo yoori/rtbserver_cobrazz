@@ -61,11 +61,11 @@ target_link_libraries(CORBAConfig
 )
 
 set(fast_json_parser_x86 OFF)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|i[3-6]86)$")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|i[3-6]86)$")
   set(fast_json_parser_x86 ON)
 endif()
 
-if(fast_json_parser_x86)
+if (fast_json_parser_x86)
   check_cxx_compiler_flag(
     "-msse2"
     FAST_JSON_PARSER_CAN_COMPILE_SSE2)
@@ -79,7 +79,7 @@ if(fast_json_parser_x86)
     "-mavx512bw"
     FAST_JSON_PARSER_CAN_COMPILE_AVX512BW)
 
-  if(FAST_JSON_PARSER_CAN_COMPILE_SSE2)
+  if (FAST_JSON_PARSER_CAN_COMPILE_SSE2)
     target_sources(Commons PRIVATE
       FastJsonParserSimdSse2.cpp
     )
@@ -90,7 +90,7 @@ if(fast_json_parser_x86)
       AD_FAST_JSON_PARSER_HAS_SSE2)
   endif()
 
-  if(FAST_JSON_PARSER_CAN_COMPILE_SSE2 AND
+  if (FAST_JSON_PARSER_CAN_COMPILE_SSE2 AND
     FAST_JSON_PARSER_CAN_COMPILE_AVX2)
     target_sources(Commons PRIVATE
       FastJsonParserSimdAvx2.cpp
@@ -102,7 +102,7 @@ if(fast_json_parser_x86)
       AD_FAST_JSON_PARSER_HAS_AVX2)
   endif()
 
-  if(FAST_JSON_PARSER_CAN_COMPILE_SSE2 AND
+  if (FAST_JSON_PARSER_CAN_COMPILE_SSE2 AND
     FAST_JSON_PARSER_CAN_COMPILE_AVX2 AND
     FAST_JSON_PARSER_CAN_COMPILE_AVX512F AND
     FAST_JSON_PARSER_CAN_COMPILE_AVX512BW)

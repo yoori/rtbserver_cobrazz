@@ -101,7 +101,7 @@
     <xsl:with-param name="env-config" select="$env-config"/>
     <xsl:with-param name="predictor-config" select="$bidcost-predictor-config"/>
   </xsl:call-template>
-  
+
 </xsl:template>
 
 </xsl:stylesheet>

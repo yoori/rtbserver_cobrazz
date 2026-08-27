@@ -1,9 +1,6 @@
 #include "KeywordClickUrlTest.hpp"
 
-REFLECT_UNIT(KeywordClickUrlTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(KeywordClickUrlTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -50,18 +47,11 @@ KeywordClickUrlTest::part1()
   client.process_request(request);
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   client.process_request(client.debug_info.selected_creatives.first().click_url, "click on keyword click_url");
 
-  FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      click_url1).check(),
-    "Click response check");
+  FAIL_CONTEXT(ClickResponseChecker(client, "", click_url1).check(), "Click response check");
 }
 
 void
@@ -83,18 +73,11 @@ KeywordClickUrlTest::part2()
   client.process_request(request);
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   client.process_request(client.debug_info.selected_creatives.first().click_url, "click on creative click_url");
 
-  FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      click_url2).check(),
-    "Click response check");
+  FAIL_CONTEXT(ClickResponseChecker(client, "", click_url2).check(), "Click response check");
 }
 
 void
@@ -116,18 +99,11 @@ KeywordClickUrlTest::part3()
   client.process_request(request);
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   client.process_request(client.debug_info.selected_creatives.first().click_url, "click on creative click_url");
 
-  FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      click_url+keyword).check(),
-    "Click response check");
+  FAIL_CONTEXT(ClickResponseChecker(client, "", click_url+keyword).check(), "Click response check");
 }
 
 void

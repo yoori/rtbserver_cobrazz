@@ -40,7 +40,7 @@ my $single_check = 0;
     }
   }
 
-  if(!defined($config_file))
+  if (!defined($config_file))
   {
     die "error: -conf parameter is not defined.";
   }

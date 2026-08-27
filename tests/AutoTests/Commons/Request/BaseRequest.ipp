@@ -3,9 +3,7 @@ namespace AutoTest
   // BaseParam
 
   inline
-  BaseParam::BaseParam(
-    BaseParamsContainer* request,
-    const char* name) :
+  BaseParam::BaseParam(BaseParamsContainer* request, const char* name) :
     request_(request),
     name_(name)
   {
@@ -13,36 +11,30 @@ namespace AutoTest
   }
 
   inline
-  BaseParam::BaseParam(
-    BaseParamsContainer* request,
-    const BaseParam& other):
+  BaseParam::BaseParam(BaseParamsContainer* request, const BaseParam& other):
     request_(request),
     name_(other.name_)
   {
     request_->add_param(this);
   }
-  
+
   // StringParam
-  
+
   inline
-  StringParam::StringParam(
-    BaseParamsContainer* request,
-    const char* name):
+  StringParam::StringParam(BaseParamsContainer* request, const char* name):
     BaseParam(request, name),
     empty_(true),
     need_encode_(true)
   { }
 
   inline
-  StringParam::StringParam(
-    BaseParamsContainer* request,
-    const StringParam& other) :
+  StringParam::StringParam(BaseParamsContainer* request, const StringParam& other) :
     BaseParam(request, other),
     empty_(other.empty_),
     need_encode_(other.need_encode_)
   {
     if (!empty_)
-    {       
+    {
       set_param_val(other.raw_str());
     }
   }
@@ -64,23 +56,19 @@ namespace AutoTest
   }
 
   // SearchParam
-  
+
   inline
-  SearchParam::SearchParam(
-    BaseParamsContainer* request,
-    const char* name)
+  SearchParam::SearchParam(BaseParamsContainer* request, const char* name)
     : StringParam(request, name)
   { }
 
   inline
-  SearchParam::SearchParam(
-    BaseParamsContainer* request,
-    const SearchParam& other)
+  SearchParam::SearchParam(BaseParamsContainer* request, const SearchParam& other)
     : StringParam(request, other)
   {
     set_param_val(other.raw_str());
   }
-  
+
   template <class T>
   void SearchParam::set_param_val(const T& val)
   {
@@ -92,17 +80,13 @@ namespace AutoTest
   // TimeParamBase
 
   template<typename TimeType>
-  TimeParamBase<TimeType>::TimeParamBase(
-    BaseParamsContainer* request,
-    const char* name)
+  TimeParamBase<TimeType>::TimeParamBase(BaseParamsContainer* request, const char* name)
     : BaseParam(request, name), empty_(true)
   {
   }
 
   template<typename TimeType>
-  TimeParamBase<TimeType>::TimeParamBase(
-    BaseParamsContainer* request,
-    const TimeParamBase& other)
+  TimeParamBase<TimeType>::TimeParamBase(BaseParamsContainer* request, const TimeParamBase& other)
     : BaseParam(request, other), empty_(other.empty_)
   {
     if (!empty_)
@@ -136,8 +120,7 @@ namespace AutoTest
     if (request_->need_encode())
     {
       std::string ret;
-      String::StringManip::mime_url_encode(
-        get_gm_time().format(TimeType::format()), ret);
+      String::StringManip::mime_url_encode(get_gm_time().format(TimeType::format()), ret);
       return ret;
     }
     return get_gm_time().format(TimeType::format());
@@ -153,8 +136,7 @@ namespace AutoTest
 
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const String::SubString& val)
+  TimeParamBase<TimeType>::set_param_val(const String::SubString& val)
   {
     static_cast<Time&>(*this) = Time(val);
     empty_ = false;
@@ -162,8 +144,7 @@ namespace AutoTest
 
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const std::string& val)
+  TimeParamBase<TimeType>::set_param_val(const std::string& val)
   {
     empty_ = val.empty();
     if (!val.empty())
@@ -174,27 +155,24 @@ namespace AutoTest
 
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const char* val)
+  TimeParamBase<TimeType>::set_param_val(const char* val)
   {
     if (val)
     {
       set_param_val(Time(val));
     }
   }
-  
+
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const time_t& val)
+  TimeParamBase<TimeType>::set_param_val(const time_t& val)
   {
     set_param_val(Time(val));
   }
 
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const Generics::Time& val)
+  TimeParamBase<TimeType>::set_param_val(const Generics::Time& val)
   {
     static_cast<Time&>(*this) = val;
     empty_ = false;
@@ -202,13 +180,12 @@ namespace AutoTest
 
   template<typename TimeType>
   void
-  TimeParamBase<TimeType>::set_param_val(
-    const Time& val)
+  TimeParamBase<TimeType>::set_param_val(const Time& val)
   {
     static_cast<Time&>(*this) = val;
     empty_ = false;
   }
-  
+
   template<typename TimeType>
   TimeParamBase<TimeType>&
   TimeParamBase<TimeType>::operator++ ()
@@ -264,8 +241,7 @@ namespace AutoTest
 
   template <class Request, class Base>
   template<typename... Args>
-  RequestParam<Request, Base>::RequestParam(
-    Args&&... args):
+  RequestParam<Request, Base>::RequestParam(Args&&... args):
     Base(std::forward<Args>(args)...)
   { }
 
@@ -276,8 +252,7 @@ namespace AutoTest
   template <class Request, class Base>
   template <class T>
   RequestParam<Request, Base>&
-  RequestParam<Request, Base>::operator= (
-    const T& val)
+  RequestParam<Request, Base>::operator= (const T& val)
   {
     Base::set_param_val(val);
     return *this;
@@ -286,8 +261,7 @@ namespace AutoTest
   template <class Request, class Base>
   template <class T>
   Request&
-  RequestParam<Request, Base>::operator() (
-    const T& val)
+  RequestParam<Request, Base>::operator() (const T& val)
   {
     Base::set_param_val(val);
     return static_cast<Request&>(*Base::request_);
@@ -325,51 +299,41 @@ namespace AutoTest
   }
 
   template <class Request, class Base>
-  HeaderParam<Request, Base>::HeaderParam(
-    Request* request,
-    const HeaderParam& other)
+  HeaderParam<Request, Base>::HeaderParam(Request* request, const HeaderParam& other)
     : Base(request, other)
   {
     set_param_val(other.raw_str());
   }
 
   template <class Request, class Base>
-  HeaderParam<Request, Base>::HeaderParam(
-    Request* request,
-    const char* name)
+  HeaderParam<Request, Base>::HeaderParam(Request* request, const char* name)
     : Base(request, name)
   { }
- 
+
   template <class Request, class Base>
   HeaderParam<Request, Base>::~HeaderParam() noexcept
   { }
 
   template <class Request, class Base>
   void
-  HeaderParam<Request, Base>::set_param_val(
-    const String::SubString& val)
+  HeaderParam<Request, Base>::set_param_val(const String::SubString& val)
   {
     Base::set_param_val(val);
     if (!val.empty())
     {
       static_cast<Request*>(Base::request_)->
         headers().
-          remove_if(
-            std::bind2nd(
-              EqualHeaderName(), Base::name_));
+          remove_if(std::bind2nd(EqualHeaderName(), Base::name_));
 
       static_cast<Request*>(Base::request_)->
         headers().
-          push_back(
-            HTTP::Header(
-              Base::name_, Base::param_value_));
+          push_back(HTTP::Header(Base::name_, Base::param_value_));
     }
   }
 
   template <class Request, class Base>
   bool
-  HeaderParam<Request, Base>::print(
-    std::ostream&, const char*, const char*) const
+  HeaderParam<Request, Base>::print(std::ostream&, const char*, const char*) const
   {
     return false;
   }
@@ -382,16 +346,13 @@ namespace AutoTest
 
     static_cast<Request*>(Base::request_)->
       headers().
-        remove_if(
-          std::bind2nd(
-            EqualHeaderName(), Base::name_));
+        remove_if(std::bind2nd(EqualHeaderName(), Base::name_));
   }
 
   template <class Request, class Base>
   template <class T>
   HeaderParam<Request, Base>&
-  HeaderParam<Request, Base>::operator= (
-    const T& val)
+  HeaderParam<Request, Base>::operator= (const T& val)
   {
     Base::set_param_val(val);
     return *this;
@@ -400,8 +361,7 @@ namespace AutoTest
   template <class Request, class Base>
   template <class T>
   Request&
-  HeaderParam<Request, Base>::operator() (
-    const T& val)
+  HeaderParam<Request, Base>::operator() (const T& val)
   {
     Base::set_param_val(val);
     return static_cast<Request&>(*Base::request_);
@@ -409,8 +369,7 @@ namespace AutoTest
 
   template <class Request, class Base>
   HeaderParam<Request, Base>&
-  HeaderParam<Request, Base>::operator= (
-    const String::SubString& val)
+  HeaderParam<Request, Base>::operator= (const String::SubString& val)
   {
     Base::set_param_val(val);
     return *this;
@@ -418,8 +377,7 @@ namespace AutoTest
 
   template <class Request, class Base>
   Request&
-  HeaderParam<Request, Base>::operator() (
-    const String::SubString& val)
+  HeaderParam<Request, Base>::operator() (const String::SubString& val)
   {
     Base::set_param_val(val);
     return static_cast<Request&>(*Base::request_);
@@ -427,23 +385,20 @@ namespace AutoTest
 
 
   // ParamsGenerator
-  
+
   template <class Param>
   template<typename... Args>
-  Param* 
-  ParamsGenerator<Param>::operator() (
-    BaseParamsContainer*,
-    Args&&... args)
+  Param*
+  ParamsGenerator<Param>::operator() (BaseParamsContainer*, Args&&... args)
   {
     return new Param(std::forward<Args>(args)...);
   }
 
   // ComplexParam
-  
+
   template<typename Request, typename TKey, typename TValue, typename Generator>
   template<typename... Args>
-  ComplexParam<Request, TKey, TValue, Generator>::ComplexParam(
-    Args&&... args) :
+  ComplexParam<Request, TKey, TValue, Generator>::ComplexParam(Args&&... args) :
     Base(std::forward<Args>(args)...)
   { }
 
@@ -453,19 +408,16 @@ namespace AutoTest
     const ComplexParam& other)
     : Base(request, other)
   {
-    for (auto it = other.parameters_.begin();
-         it != other.parameters_.end(); ++it)
+    for (auto it = other.parameters_.begin(); it != other.parameters_.end(); ++it)
     {
-      parameters_[it->first] =
-        Generator()(
-          request, this, *it->second);
+      parameters_[it->first] = Generator()(request, this, *it->second);
     }
   }
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   ComplexParam<Request, TKey, TValue, Generator>::~ComplexParam() noexcept
   { }
-  
+
   template<typename Request, typename TKey, typename TValue, typename Generator>
   void
   ComplexParam<Request, TKey, TValue, Generator>::clear_all()
@@ -475,8 +427,7 @@ namespace AutoTest
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   bool
-  ComplexParam<Request, TKey, TValue, Generator>::clear(
-    const TKey& key)
+  ComplexParam<Request, TKey, TValue, Generator>::clear(const TKey& key)
   {
     auto pos = parameters_.find(key);
     if (pos != parameters_.end())
@@ -507,8 +458,7 @@ namespace AutoTest
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   bool
-  ComplexParam<Request, TKey, TValue, Generator>::empty (
-    const TKey& key) const
+  ComplexParam<Request, TKey, TValue, Generator>::empty (const TKey& key) const
   {
     auto pos = parameters_.find(key);
     if (pos != parameters_.end())
@@ -530,15 +480,12 @@ namespace AutoTest
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   TValue&
-  ComplexParam<Request, TKey, TValue, Generator>::operator[] (
-    TKey key)
+  ComplexParam<Request, TKey, TValue, Generator>::operator[] (TKey key)
   {
     auto pos = parameters_.find(key);
     if (pos == parameters_.end())
     {
-      parameters_[key] =
-        Generator()(
-          this->request_, this, strof(key).c_str());
+      parameters_[key] = Generator()(this->request_, this, strof(key).c_str());
     }
     return *parameters_[key];
   }
@@ -546,9 +493,7 @@ namespace AutoTest
   template<typename Request, typename TKey, typename TValue, typename Generator>
   template <class T>
   Request&
-  ComplexParam<Request, TKey, TValue, Generator>::operator() (
-    const T& val,
-    TKey  key)
+  ComplexParam<Request, TKey, TValue, Generator>::operator() (const T& val, TKey  key)
   {
     set_param_val(val, key);
     return static_cast<Request&>(*this->request_);
@@ -557,8 +502,7 @@ namespace AutoTest
   template<typename Request, typename TKey, typename TValue, typename Generator>
   template <class T>
   Request&
-  ComplexParam<Request, TKey, TValue, Generator>::operator() (
-    const T& val)
+  ComplexParam<Request, TKey, TValue, Generator>::operator() (const T& val)
   {
     Base::set_param_val(val);
     return static_cast<Request&>(*this->request_);
@@ -576,9 +520,7 @@ namespace AutoTest
   template<typename Request, typename TKey, typename TValue, typename Generator>
   template <class T>
   void
-  ComplexParam<Request, TKey, TValue, Generator>::set_param_val(
-    const T& val,
-    TKey key)
+  ComplexParam<Request, TKey, TValue, Generator>::set_param_val(const T& val, TKey key)
   {
     std::stringstream ostr;
     ostr << val;
@@ -587,13 +529,9 @@ namespace AutoTest
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   void
-  ComplexParam<Request, TKey, TValue, Generator>::set_param_val(
-    const std::string& val,
-    TKey key)
+  ComplexParam<Request, TKey, TValue, Generator>::set_param_val(const std::string& val, TKey key)
   {
-    TValue* param =
-      Generator()(
-        this->request_, this, strof(key).c_str());
+    TValue* param = Generator()(this->request_, this, strof(key).c_str());
     param->set_param_val(val);
     parameters_[key] = param;
   }
@@ -607,17 +545,15 @@ namespace AutoTest
 
   template<typename Request, typename TKey, typename TValue, typename Generator>
   void
-  ComplexParam<Request, TKey, TValue, Generator>::add_param(
-    BaseParam*)
+  ComplexParam<Request, TKey, TValue, Generator>::add_param(BaseParam*)
   {
     // Do nothing
   }
 
   // RequestMember
-  
+
   template <typename Request, typename Param>
-  RequestMember<Request, Param>::RequestMember(
-    Param Request::* member) :
+  RequestMember<Request, Param>::RequestMember(Param Request::* member) :
     member_(member)
   { }
 
@@ -627,9 +563,7 @@ namespace AutoTest
 
   template <typename Request, typename Param>
   void
-  RequestMember<Request, Param>::set_param_val(
-    BaseRequest& request,
-    const std::string& val)
+  RequestMember<Request, Param>::set_param_val(BaseRequest& request, const std::string& val)
   {
     (static_cast<Request&>(request).*(member_)).
       operator()(val);
@@ -637,9 +571,7 @@ namespace AutoTest
 
   template <typename Request, typename Param>
   void
-  RequestMember<Request, Param>::set_param_val(
-    BaseRequest& request,
-    unsigned long val)
+  RequestMember<Request, Param>::set_param_val(BaseRequest& request, unsigned long val)
   {
     std::ostringstream s_val;
     s_val << val;
@@ -649,8 +581,7 @@ namespace AutoTest
 
   template <typename Request, typename Param>
   void
-  RequestMember<Request, Param>::clear_param(
-    BaseRequest& request)
+  RequestMember<Request, Param>::clear_param(BaseRequest& request)
   {
     (static_cast<Request&>(request).*(member_)).
       clear();
@@ -666,21 +597,18 @@ namespace AutoTest
   // RequestParamSetter
 
   template <typename Request>
-  RequestParamSetter<Request>::RequestParamSetter(
-    std::nullptr_t member) :
+  RequestParamSetter<Request>::RequestParamSetter(std::nullptr_t member) :
     param_(member)
   { }
-  
+
   template <typename Request>
   template <typename Param>
-  RequestParamSetter<Request>::RequestParamSetter(
-    Param Request::* member) :
+  RequestParamSetter<Request>::RequestParamSetter(Param Request::* member) :
     param_(new RequestMember<Request, Param>(member))
   { }
 
   template <typename Request>
-  RequestParamSetter<Request>::RequestParamSetter(
-    const RequestParamSetter& other) :
+  RequestParamSetter<Request>::RequestParamSetter(const RequestParamSetter& other) :
     param_(other.param_? other.param_->clone(): nullptr)
   { }
 
@@ -696,9 +624,7 @@ namespace AutoTest
   template <typename Request>
   template <typename T>
   void
-  RequestParamSetter<Request>::operator() (
-    Request& request,
-    const T& val) const
+  RequestParamSetter<Request>::operator() (Request& request, const T& val) const
     /*throw(eh::Exception)*/
   {
     if (param_)
@@ -710,8 +636,7 @@ namespace AutoTest
 
   template <typename Request>
   void
-  RequestParamSetter<Request>::clear (
-    Request& request)  const
+  RequestParamSetter<Request>::clear (Request& request)  const
   {
     if (param_)
     {

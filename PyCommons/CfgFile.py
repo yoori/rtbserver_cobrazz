@@ -9,7 +9,7 @@ noDefVal = NoDefVal()
 
 
 class CfgGrp:
-  
+
   def __init__( self, defVal = noDefVal ):
     self._defVal = defVal
 
@@ -45,14 +45,14 @@ class CfgQuotedStr(CfgStr):
 
   def write( self, f, val, ofs ):
     f.write('"%s"' % val)
-  
+
 
 # expand env vars in readed str, such as $HOME
 class CfgEnvStr(CfgStr):
 
   def read( self, lex ):
     return os.path.expandvars(CfgStr.read(self, lex))
-    
+
 
 class CfgInt(CfgGrp):
 
@@ -268,7 +268,7 @@ class CfgSet(CfgMultiSet):
   def __init__( self, keyName, keyT, fields, defVal = {} ):
     CfgMultiSet.__init__( self, [(keyName, keyT)], fields, defVal)
 
-                
+
 class CfgFile:
 
   # params must be list of tuple (name, type) where type is CfgGrp subclass instance
@@ -284,11 +284,11 @@ class CfgFile:
 
   def get( self, name ):
     return getattr(self._value, name)
-    
+
   def set( self, name, val ):
     assert name in self._rec._fields
     setattr(self._value, name, val)
-    
+
   def __getattr__( self, name ):
     return self.get(name)
 

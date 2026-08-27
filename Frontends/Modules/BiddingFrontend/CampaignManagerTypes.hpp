@@ -71,8 +71,7 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdSlotDebugInfo
   {
-    explicit AdSlotDebugInfo(
-      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+    explicit AdSlotDebugInfo(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
       : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         selected_creatives(arena_.get())
     {}
@@ -132,8 +131,7 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdSlotResult
   {
-    explicit AdSlotResult(
-      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+    explicit AdSlotResult(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
       : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         track_pixel_urls(arena_.get()),
         selected_creatives(arena_.get()),
@@ -191,8 +189,7 @@ namespace AdServer::Bidding::CampaignManager
 
   struct AdRequestDebugInfo
   {
-    explicit AdRequestDebugInfo(
-      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+    explicit AdRequestDebugInfo(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
       : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         geo_channels(arena_.get()),
         platform_channels(arena_.get())
@@ -211,8 +208,7 @@ namespace AdServer::Bidding::CampaignManager
 
   struct RequestCreativeResult
   {
-    explicit RequestCreativeResult(
-      std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+    explicit RequestCreativeResult(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
       : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
         ad_slots(arena_.get()),
         debug_info(arena_)
@@ -236,29 +232,27 @@ namespace AdServer::Bidding::CampaignManager
     TargetSeq& target,
     bool add = false)
   {
-    if(!add)
+    if (!add)
     {
       target.clear();
     }
 
     using IteratorCategory = typename std::iterator_traits<
       SourceIteratorType>::iterator_category;
-    if constexpr(std::is_base_of_v<
-      std::random_access_iterator_tag,
-      IteratorCategory>)
+    if constexpr(std::is_base_of_v<std::random_access_iterator_tag, IteratorCategory>)
     {
       const auto old_size = target.size();
       target.resize(old_size + (end - begin));
 
       std::size_t pos = old_size;
-      for(auto it = begin; it != end; ++it, ++pos)
+      for (auto it = begin; it != end; ++it, ++pos)
       {
         target[pos] = *it;
       }
     }
     else
     {
-      for(auto it = begin; it != end; ++it)
+      for (auto it = begin; it != end; ++it)
       {
         target.emplace_back();
         target.back() = *it;
@@ -270,7 +264,7 @@ namespace AdServer::Bidding::CampaignManager
   void copy_sequence(const SourceSeq& source, TargetSeq& target)
   {
     target.resize(source.size());
-    for(std::size_t i = 0; i < source.size(); ++i)
+    for (std::size_t i = 0; i < source.size(); ++i)
     {
       target[i] = source[i];
     }

@@ -38,8 +38,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollReachTestProcessor_var reach_processor(
-        new CollReachTestProcessor());
+      CollReachTestProcessor_var reach_processor(new CollReachTestProcessor());
 
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
@@ -63,15 +62,13 @@ struct TestBase: public ReferenceCounting::AtomicImpl
 
       int i = 0;
 
-      for (; et_it != etalon.end() && res_it != result.end();
-          ++et_it, ++res_it, ++i)
+      for (; et_it != etalon.end() && res_it != result.end(); ++et_it, ++res_it, ++i)
       {
         if (!(*et_it == *res_it))
         {
           Stream::Error ostr;
           ostr << "result non equal standard - element #" << i << ": "
-            << std::endl
-            << ">>> standard >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+            << std::endl << ">>> standard >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
           et_it->print(ostr, "  ");
           ostr << "=== result =======================" << std::endl;
           res_it->print(ostr, "  ");
@@ -176,16 +173,14 @@ public:
       return id < right.id ||
         (id == right.id && (
            date < right.date ||
-           (date == right.date &&
-             last_appearance_date < right.last_appearance_date)));
+           (date == right.date && last_appearance_date < right.last_appearance_date)));
     }
 
     bool
     operator==(const Key& right) const
     {
       return id == right.id &&
-        date == right.date &&
-        last_appearance_date == right.last_appearance_date;
+        date == right.date && last_appearance_date == right.last_appearance_date;
     }
 
     const unsigned long id;
@@ -220,13 +215,10 @@ public:
   typedef std::map<Key, Counter> ReachMap;
 
   void
-  process_reach(
-    const AdServer::RequestInfoSvcs::CampaignReachProcessor::ReachInfo&
-      reach_info)
+  process_reach(const AdServer::RequestInfoSvcs::CampaignReachProcessor::ReachInfo& reach_info)
     /*throw(Exception)*/
   {
-    for(IdAppearanceList::const_iterator cmp_it =
-          reach_info.campaigns.begin();
+    for (IdAppearanceList::const_iterator cmp_it = reach_info.campaigns.begin();
         cmp_it != reach_info.campaigns.end(); ++cmp_it)
     {
       /*
@@ -236,7 +228,7 @@ public:
       */
 
       Key key(cmp_it->id, cmp_it->date, cmp_it->last_appearance_date);
-      if((result_[key] += Counter(cmp_it->counter)) == Counter(0))
+      if ((result_[key] += Counter(cmp_it->counter)) == Counter(0))
       {
         result_.erase(key);
       }
@@ -277,9 +269,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
 
   struct RequestInfoWrap: public RequestInfo
   {
-    RequestInfoWrap(
-      const RequestInfo& request_info,
-      unsigned long i)
+    RequestInfoWrap(const RequestInfo& request_info, unsigned long i)
       : RequestInfo(request_info),
         index(i)
     {}
@@ -298,25 +288,18 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
   static void
   print_reach_map(std::ostream& out, const ReachMap& reach_map, const char* prefix)
   {
-    for(ReachMap::const_iterator it = reach_map.begin();
-        it != reach_map.end(); ++it)
+    for (ReachMap::const_iterator it = reach_map.begin(); it != reach_map.end(); ++it)
     {
       out << prefix <<
         "[ " << it->first.id << ", " << it->first.date.gm_f() << ", " <<
-          it->first.last_appearance_date.gm_f() <<
-        " : " <<
-        it->second.value << " ]" << std::endl;
+          it->first.last_appearance_date.gm_f() << " : " << it->second.value << " ]" << std::endl;
     }
   }
 
   static void
-  print_requests(
-    std::ostream& out,
-    const RequestInfoWrapArray& requests,
-    const char* prefix)
+  print_requests(std::ostream& out, const RequestInfoWrapArray& requests, const char* prefix)
   {
-    for(RequestInfoWrapArray::const_iterator req_it =
-          requests.begin();
+    for (RequestInfoWrapArray::const_iterator req_it = requests.begin();
         req_it != requests.end(); ++req_it)
     {
       out << prefix << "[ " << req_it->request_id << ", " <<
@@ -331,8 +314,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollReachSumTestProcessor_var reach_processor(
-        new CollReachSumTestProcessor());
+      CollReachSumTestProcessor_var reach_processor(new CollReachSumTestProcessor());
 
       RequestInfoList requests;
       ReachMap etalon;
@@ -341,14 +323,13 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
       RequestInfoWrapArray requests_array;
       requests_array.reserve(requests.size());
       unsigned long cur_index = 0;
-      for(RequestInfoList::const_iterator rit = requests.begin();
-          rit != requests.end(); ++rit)
+      for (RequestInfoList::const_iterator rit = requests.begin(); rit != requests.end(); ++rit)
       {
         requests_array.push_back(RequestInfoWrap(*rit, cur_index++));
       }
 
       std::sort(requests_array.begin(), requests_array.end());
-      while(std::next_permutation(requests_array.begin(), requests_array.end()))
+      while (std::next_permutation(requests_array.begin(), requests_array.end()))
       {
         system(("rm -r " + *root_path + TEST_FOLDER +
           " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
@@ -362,8 +343,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
         reach_processor->clear();
 
         // run scenario
-        for(RequestInfoWrapArray::const_iterator req_it =
-              requests_array.begin();
+        for (RequestInfoWrapArray::const_iterator req_it = requests_array.begin();
             req_it != requests_array.end(); ++req_it)
         {
           reach_container->process_impression(
@@ -374,7 +354,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
 
         // check output
         const ReachMap& result = reach_processor->result();
-        if(result.size() != etalon.size())
+        if (result.size() != etalon.size())
         {
           std::cerr << "Test '" << name() << "': incorrect result size: " <<
             result.size() << " instead " << etalon.size() << ", result: " << std::endl;
@@ -386,7 +366,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
 
           return 1;
         }
-        else if(!std::equal(result.begin(), result.end(), etalon.begin()))
+        else if (!std::equal(result.begin(), result.end(), etalon.begin()))
         {
           std::cerr << "Test '" << name() << "': incorrect result: " << std::endl;
           print_reach_map(std::cerr, result, "    ");
@@ -430,9 +410,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
   virtual const char* name() = 0;
 
   virtual void
-  fill(
-    RequestInfoList& requests,
-    ReachMap& etalon) = 0;
+  fill(RequestInfoList& requests, ReachMap& etalon) = 0;
 };
 
 typedef ReferenceCounting::SmartPtr<TestSumBase> TestSumBase_var;
@@ -615,26 +593,22 @@ struct TestAdStorm: public TestBase
 
       if (i && i % 8 == 0)
       {
-        reach_info.advertisers.push_back(
-          IdAppearance(i / 8, TIME, Generics::Time::ZERO, 1));
+        reach_info.advertisers.push_back(IdAppearance(i / 8, TIME, Generics::Time::ZERO, 1));
         reach_info.display_advertisers.push_back(
           IdAppearance(i / 8, TIME, Generics::Time::ZERO, 1));
       }
 
       if (i % 4 == 0)
       {
-        reach_info.campaigns.push_back(
-          IdAppearance(i / 4, TIME, Generics::Time::ZERO, 1));
+        reach_info.campaigns.push_back(IdAppearance(i / 4, TIME, Generics::Time::ZERO, 1));
       }
 
       if (i % 2 == 0)
       {
-        reach_info.ccgs.push_back(
-          IdAppearance(i / 2, TIME, Generics::Time::ZERO, 1));
+        reach_info.ccgs.push_back(IdAppearance(i / 2, TIME, Generics::Time::ZERO, 1));
       }
 
-      reach_info.creatives.push_back(
-        IdAppearance(i, TIME, Generics::Time::ZERO, 1));
+      reach_info.creatives.push_back(IdAppearance(i, TIME, Generics::Time::ZERO, 1));
 
       reach_info_list.push_back(reach_info);
     }
@@ -821,8 +795,7 @@ main(int argc, char* argv[]) noexcept
     tests.push_back(new TestReverseAppearance());
     tests.push_back(new TestAdStorm());
 
-    for (TestList::iterator it = tests.begin();
-      it != tests.end(); ++it)
+    for (TestList::iterator it = tests.begin(); it != tests.end(); ++it)
     {
       result += (*it)->run();
     }
@@ -831,8 +804,7 @@ main(int argc, char* argv[]) noexcept
 
     TestSumList sum_tests;
     sum_tests.push_back(new TestSumAppearance());
-    for (TestSumList::iterator it = sum_tests.begin();
-      it != sum_tests.end(); ++it)
+    for (TestSumList::iterator it = sum_tests.begin(); it != sum_tests.end(); ++it)
     {
       result += (*it)->run();
     }
@@ -842,8 +814,7 @@ main(int argc, char* argv[]) noexcept
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollReachTestProcessor_var reach_processor(
-        new CollReachTestProcessor());
+      CollReachTestProcessor_var reach_processor(new CollReachTestProcessor());
 
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());

@@ -2,9 +2,7 @@
 #include <algorithm>
 #include "AdvertiserUserStatsTest.hpp"
 
-REFLECT_UNIT(AdvertiserUserStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(AdvertiserUserStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -42,17 +40,12 @@ AdvertiserUserStatsTest::initialize_stat_(
   unsigned long entity,
   unsigned long colo)
 {
-  stat.key(
-    entity,
-    colo? colo: fetch_int("DEFAULT_COLO"),
-    expected.last_appearance,
-    expected.sdate);
+  stat.key(entity, colo? colo: fetch_int("DEFAULT_COLO"), expected.last_appearance, expected.sdate);
   diff.
     unique_users(
       expected.unique_users?
         expected.unique_users:
-          expected.text_unique_users?
-             expected.text_unique_users:expected.display_unique_users);
+          expected.text_unique_users? expected.text_unique_users:expected.display_unique_users);
 }
 
 void
@@ -63,10 +56,7 @@ AdvertiserUserStatsTest::initialize_stat_(
   unsigned long entity,
   unsigned long)
 {
-  stat.key(
-    entity,
-    expected.last_appearance,
-    expected.sdate);
+  stat.key(entity, expected.last_appearance, expected.sdate);
   diff.
     unique_users(expected.unique_users).
     display_unique_users(expected.display_unique_users).
@@ -89,13 +79,9 @@ AdvertiserUserStatsTest::initialize_stats_(
     if (expected[i].*(entity))
     {
       std::list<unsigned long> entities;
-      fetch_objects(
-        std::inserter(entities, entities.begin()),
-        expected[i].*(entity));
+      fetch_objects(std::inserter(entities, entities.begin()), expected[i].*(entity));
 
-      for (
-        std::list<unsigned long>::iterator it = entities.begin();
-        it !=  entities.end(); ++it)
+      for (std::list<unsigned long>::iterator it = entities.begin(); it !=  entities.end(); ++it)
       {
         Stats stat;
         typename Stats::Diffs diff;
@@ -116,36 +102,13 @@ AdvertiserUserStatsTest::initialize_all_stats_(
   const Expected (&expected) [Count],
   unsigned long colo)
 {
-  initialize_stats_(
-    description,
-    adv_stats_,
-    adv_diffs_, expected,
-    &Expected::advertisers,
-    colo);
+  initialize_stats_(description, adv_stats_, adv_diffs_, expected, &Expected::advertisers, colo);
 
-  initialize_stats_(
-    description,
-    cmp_stats_,
-    cmp_diffs_,
-    expected,
-    &Expected::campaigns,
-    colo);
+  initialize_stats_(description, cmp_stats_, cmp_diffs_, expected, &Expected::campaigns, colo);
 
-  initialize_stats_(
-    description,
-    ccg_stats_,
-    ccg_diffs_,
-    expected,
-    &Expected::ccgs,
-    colo);
+  initialize_stats_(description, ccg_stats_, ccg_diffs_, expected, &Expected::ccgs, colo);
 
-  initialize_stats_(
-    description,
-    cc_stats_,
-    cc_diffs_,
-    expected,
-    &Expected::ccs,
-    colo);
+  initialize_stats_(description, cc_stats_, cc_diffs_, expected, &Expected::ccs, colo);
 }
 
 
@@ -163,8 +126,7 @@ AdvertiserUserStatsTest::initialize_sum_stats_(
   for (size_t i = 0; i < Count; i++)
   {
     Key key;
-    ((key).*(Func))(
-      fetch_int(entity_name + strof(i+1)));
+    ((key).*(Func))(fetch_int(entity_name + strof(i+1)));
     Stats stat(key);
     stat.description(description + "#" + strof(i+1));
     stat.select(conn_);
@@ -177,16 +139,11 @@ AdvertiserUserStatsTest::initialize_sum_stats_(
 }
 
 void
-AdvertiserUserStatsTest::log_request_(
-  std::string request_id)
+AdvertiserUserStatsTest::log_request_(std::string request_id)
 {
   AutoTest::AdminsArray<AutoTest::RequestProfileAdmin> admins;
 
-  admins.initialize(
-    this,
-    CTE_ALL,
-    STE_REQUEST_INFO_MANAGER,
-    "\\" + request_id);
+  admins.initialize(this, CTE_ALL, STE_REQUEST_INFO_MANAGER, "\\" + request_id);
 
   admins.log(AutoTest::Logger::thlog());
 }
@@ -222,34 +179,27 @@ AdvertiserUserStatsTest::process_requests_(
     {
       std::list<std::string> expected_ccs;
 
-      fetch_objects(
-        std::inserter(expected_ccs, expected_ccs.begin()),
-        requests[i].expected_ccs);
+      fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), requests[i].expected_ccs);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          expected_ccs,
-          AutoTest::SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(expected_ccs, AutoTest::SelectedCreativesCCID(client)).check(),
         description +
           " Check creatives#" + strof(i+1));
 
-      requests_.push_back(
-        client.debug_info.creative_request_id.value());
+      requests_.push_back(client.debug_info.creative_request_id.value());
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "0",
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker("0", client.debug_info.ccid).check(),
         description +
           " Check creatives#" + strof(i+1));
     }
+
     if (strcmp(requests[i].format, "unit-test-imp") == 0)
     {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
       description +
         " Check traclk pixel url# " + strof(i+1));
     }
@@ -260,35 +210,19 @@ void
 AdvertiserUserStatsTest::check_stats_()
 {
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        adv_diffs_,
-        adv_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, adv_diffs_, adv_stats_)).check(),
     "AdvertiserUserStats test");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        cmp_diffs_,
-        cmp_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, cmp_diffs_, cmp_stats_)).check(),
     "CampaignUserStats test");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        ccg_diffs_,
-        ccg_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, ccg_diffs_, ccg_stats_)).check(),
     "CCGUserStats test");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        cc_diffs_,
-        cc_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, cc_diffs_, cc_stats_)).check(),
     "CCUserStats test");
 
   adv_stats_.clear();
@@ -304,34 +238,22 @@ AdvertiserUserStatsTest::check_stats_()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        adv_sum_diffs_,
-        adv_sum_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, adv_sum_diffs_, adv_sum_stats_)).check(),
     "AdvertiserUserStats aggregation test");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        cmp_sum_diffs_,
-        cmp_sum_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, cmp_sum_diffs_, cmp_sum_stats_)).check(),
     "CampaignUserStats aggregation test");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        ccg_sum_diffs_,
-        ccg_sum_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, ccg_sum_diffs_, ccg_sum_stats_)).check(),
     "CCGUserStats aggregation test");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        cc_sum_diffs_,
-        cc_sum_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, cc_sum_diffs_, cc_sum_stats_)).check(),
     "CCUserStats aggregation test");
 
   adv_sum_stats_.clear();
@@ -381,9 +303,7 @@ AdvertiserUserStatsTest::run_test()
     std::for_each(
       requests_.begin(),
       requests_.end(),
-      std::bind1st(
-        std::mem_fun(
-          &AdvertiserUserStatsTest::log_request_), this));
+      std::bind1st(std::mem_fun(&AdvertiserUserStatsTest::log_request_), this));
     throw;
 
   }
@@ -537,8 +457,7 @@ AdvertiserUserStatsTest::unique_users_()
   std::string description("Unique users.");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    today_.get_gm_time().format("%d-%m-%Y:%H-00-00"));
+  AutoTest::Time base_time(today_.get_gm_time().format("%d-%m-%Y:%H-00-00"));
 
   const Expected EXPECTED[] =
   {
@@ -867,27 +786,15 @@ AdvertiserUserStatsTest::last_usage_()
 
   {
     AdClient client(AdClient::create_user(this));
-    process_requests_(
-      client,
-      description + " User#1.",
-      LAST_USAGE_REQUESTS_USER_1,
-      today_);
+    process_requests_(client, description + " User#1.", LAST_USAGE_REQUESTS_USER_1, today_);
   }
   {
     AdClient client(AdClient::create_user(this));
-    process_requests_(
-      client,
-      description + " User#2.",
-      LAST_USAGE_REQUESTS_USER_2,
-      today_);
+    process_requests_(client, description + " User#2.", LAST_USAGE_REQUESTS_USER_2, today_);
   }
   {
     AdClient client(AdClient::create_user(this));
-    process_requests_(
-      client,
-      description + " User#3.",
-      LAST_USAGE_REQUESTS_USER_3,
-      today_);
+    process_requests_(client, description + " User#3.", LAST_USAGE_REQUESTS_USER_3, today_);
   }
 }
 
@@ -897,8 +804,7 @@ AdvertiserUserStatsTest::timezones_()
   std::string description("Non-GMT timezone.");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    today_.get_gm_time().get_date());
+  AutoTest::Time base_time(today_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -968,8 +874,7 @@ AdvertiserUserStatsTest::async_part_1_()
   std::string description("Asynchronous logging#1.");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    today_.get_gm_time().get_date());
+  AutoTest::Time base_time(today_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -1015,23 +920,19 @@ AdvertiserUserStatsTest::async_part_1_()
   };
 
   AdClient client(AdClient::create_user(this));
-  process_requests_(
-    client, description,
-    ASYNC_REQUESTS, base_time);
+  process_requests_(client, description, ASYNC_REQUESTS, base_time);
 
   return client;
 }
 
 
 void
-AdvertiserUserStatsTest::async_part_2_(
-  AdClient& client)
+AdvertiserUserStatsTest::async_part_2_(AdClient& client)
 {
   std::string description("Asynchronous logging#2.");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    today_.get_gm_time().get_date());
+  AutoTest::Time base_time(today_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -1114,20 +1015,16 @@ AdvertiserUserStatsTest::async_part_2_(
     {"ASYNC/KWD/2", "ASYNC/Tag", -25, "unit-test", "ASYNC/CC/2"},
   };
 
-  process_requests_(
-    client, description,
-    ASYNC_REQUESTS, base_time);
+  process_requests_(client, description, ASYNC_REQUESTS, base_time);
 }
 
 void
-AdvertiserUserStatsTest::async_part_3_(
-  AdClient& client)
+AdvertiserUserStatsTest::async_part_3_(AdClient& client)
 {
   std::string description("Asynchronous logging#3.");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    today_.get_gm_time().get_date());
+  AutoTest::Time base_time(today_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -1193,9 +1090,7 @@ AdvertiserUserStatsTest::async_part_3_(
     {"ASYNC/KWD/3", "ASYNC/Tag", 30, "unit-test", "ASYNC/CC/3"}
   };
 
-  process_requests_(
-    client, description,
-    REQUESTS, base_time);
+  process_requests_(client, description, REQUESTS, base_time);
 
 }
 
@@ -1253,8 +1148,7 @@ AdvertiserUserStatsTest::big_date_diff_part_1_()
 }
 
 void
-AdvertiserUserStatsTest::big_date_diff_part_2_(
-  AdClient& client)
+AdvertiserUserStatsTest::big_date_diff_part_2_(AdClient& client)
 {
   std::string description("Big date difference#2.");
   add_descr_phrase(description);
@@ -1307,11 +1201,9 @@ AdvertiserUserStatsTest::colo_()
   std::string description("Colo logging test.");
   add_descr_phrase(description);
 
-  bool remote_2 =
-    get_config().check_service(CTE_REMOTE2, STE_FRONTEND);
+  bool remote_2 = get_config().check_service(CTE_REMOTE2, STE_FRONTEND);
 
-  AutoTest::Time base_time(
-   today_.get_gm_time().get_date());
+  AutoTest::Time base_time(today_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -1371,17 +1263,9 @@ AdvertiserUserStatsTest::colo_()
   };
 
 
-  AdClient client(
-    AdClient::create_user(
-      this,
-      remote_2? AutoTest::UF_FRONTEND_MINOR: 0));
+  AdClient client(AdClient::create_user(this, remote_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
-  process_requests_(
-    client,
-    description,
-    REQUESTS,
-    base_time,
-    fetch_int("ADS_COLO"));
+  process_requests_(client, description, REQUESTS, base_time, fetch_int("ADS_COLO"));
 }
 
 void
@@ -1436,10 +1320,7 @@ AdvertiserUserStatsTest::temporary_user_()
       debug_time(today_));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "TEMP/Channel/1",
-      temporary.debug_info.history_channels).check(),
+    ChannelsCheck(this, "TEMP/Channel/1", temporary.debug_info.history_channels).check(),
     description +
         " history_channels check");
 
@@ -1454,13 +1335,9 @@ AdvertiserUserStatsTest::temporary_user_()
   };
 
   AdClient persistent(AdClient::create_user(this));
-  process_requests_(
-    persistent, description + " Before merging.",
-    BEFORE_MERGING, today_ + DAY);
+  process_requests_(persistent, description + " Before merging.", BEFORE_MERGING, today_ + DAY);
   persistent.merge(temporary);
-  process_requests_(
-    persistent, description + " After merging",
-    AFTER_MERGING, today_ + DAY);
+  process_requests_(persistent, description + " After merging", AFTER_MERGING, today_ + DAY);
 }
 
 void
@@ -1540,8 +1417,7 @@ AdvertiserUserStatsTest::optout_users_()
       get_config().check_service(CTE_CENTRAL, STE_FRONTEND) &&
       get_config().check_service(CTE_ALL_REMOTE, STE_FRONTEND))
     {
-      users[i].change_base_url(
-        get_config().get_service(CTE_CENTRAL, STE_FRONTEND).address.c_str());
+      users[i].change_base_url(get_config().get_service(CTE_CENTRAL, STE_FRONTEND).address.c_str());
       process_requests_(
         users[i], description + "#" + strof(i+1),
         OPTOUT_REQUEST, today_, fetch_int("ADS_COLO"));

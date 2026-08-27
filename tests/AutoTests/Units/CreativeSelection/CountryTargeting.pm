@@ -50,7 +50,7 @@ sub init {
   my $adv_acc_ug1 = $ns->create(Account => {
     name => "ag-ug-1",
     country_code => DB::Defaults::instance()->test_country_1->country_code,
-    agency_account_id => $adv_acc_agency_ug, 
+    agency_account_id => $adv_acc_agency_ug,
     text_adserving => undef,
     role_id => DB::Defaults::instance()->advertiser_role });
 

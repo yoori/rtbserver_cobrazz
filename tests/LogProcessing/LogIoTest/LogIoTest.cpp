@@ -84,8 +84,7 @@ namespace
   const NumberList PAGE_CHANNELS(
     std::reverse_iterator<const unsigned long*>(endof(NUMBERS_ARRAY)),
     std::reverse_iterator<const unsigned long*>(&NUMBERS_ARRAY[0]));
-  const NumberList URL_CHANNELS(
-    &NUMBERS_MIXED_ARRAY[0], endof(NUMBERS_MIXED_ARRAY));
+  const NumberList URL_CHANNELS(&NUMBERS_MIXED_ARRAY[0], endof(NUMBERS_MIXED_ARRAY));
   bool file_generator_mode = false;
 }
 
@@ -130,8 +129,7 @@ struct EqualityTester<TRAITS_, false, false>
     {
       return false;
     }
-    for (typename CollectorT::const_iterator it = collector1.begin();
-      it != collector1.end(); ++it)
+    for (typename CollectorT::const_iterator it = collector1.begin(); it != collector1.end(); ++it)
     {
       typename CollectorT::const_iterator find_it =
         std::find(collector2.begin(), collector2.end(), *it);
@@ -158,8 +156,7 @@ struct EqualityTester<TRAITS_, false, true>
     {
       return false;
     }
-    for (typename CollectorT::const_iterator it = collector1.begin();
-      it != collector1.end(); ++it)
+    for (typename CollectorT::const_iterator it = collector1.begin(); it != collector1.end(); ++it)
     {
       typename CollectorT::const_iterator find_it =
         std::find(collector2.begin(), collector2.end(), *it);
@@ -186,14 +183,14 @@ struct EqualityTester<TRAITS_, true, false>
     {
       return false;
     }
-    for (typename CollectorT::const_iterator it = collector1.begin();
-      it != collector1.end(); ++it)
+    for (typename CollectorT::const_iterator it = collector1.begin(); it != collector1.end(); ++it)
     {
       typename CollectorT::const_iterator fit = collector2.find(it->first);
       if (fit == collector2.end())
       {
         return false;
       }
+
       if (it->second.size() != fit->second.size())
       {
         return false;
@@ -227,14 +224,14 @@ struct EqualityTester<TRAITS_, true, true>
     {
       return false;
     }
-    for (typename CollectorT::const_iterator it = collector1.begin();
-      it != collector1.end(); ++it)
+    for (typename CollectorT::const_iterator it = collector1.begin(); it != collector1.end(); ++it)
     {
       typename CollectorT::const_iterator fit = collector2.find(it->first);
       if (fit == collector2.end())
       {
         return false;
       }
+
       if (it->second.size() != fit->second.size())
       {
         return false;
@@ -242,8 +239,7 @@ struct EqualityTester<TRAITS_, true, true>
       for (typename CollectorT::DataT::const_iterator iit = it->second.begin();
         iit != it->second.end(); ++iit)
       {
-        typename CollectorT::DataT::const_iterator fiit =
-          fit->second.find(iit->first);
+        typename CollectorT::DataT::const_iterator fiit = fit->second.find(iit->first);
         if (fiit == fit->second.end() || !(fiit->second == iit->second))
         {
           return false;
@@ -301,8 +297,7 @@ public:
 
     LogSortingMap log_sorting_map;
     Logging::Logger_var logger(new Logging::Null::Logger);
-    search_for_files(dir_name, Traits::log_base_name(),
-      log_sorting_map, -1, logger);
+    search_for_files(dir_name, Traits::log_base_name(), log_sorting_map, -1, logger);
 
     CollectorT restored_collector;
 
@@ -318,12 +313,12 @@ public:
            << ">: Failed to read log header";
         throw Exception(es);
       }
+
       if (log_header.version() != Traits::current_version())
       {
         Stream::Error es;
         es << "LogIoTester<" << Traits::log_base_name()
-           << ">: Invalid log header version: "
-           << log_header.version();
+           << ">: Invalid log header version: " << log_header.version();
         throw Exception(es);
       }
       LogIoProxy<Traits>::load(restored_collector, ifs);
@@ -339,16 +334,14 @@ public:
     {
       if (dump_on_fail_)
       {
-        const std::string orig_dir_name =
-          std::string(Traits::log_base_name()) + "_Original";
+        const std::string orig_dir_name = std::string(Traits::log_base_name()) + "_Original";
         system((std::string("mkdir -p ") + orig_dir_name).c_str());
         std::ostringstream mv_orig_dir_cmd_oss;
         mv_orig_dir_cmd_oss << "mv " << dir_name << "/* " <<
           orig_dir_name << "; rmdir " << dir_name << std::endl;
         system(mv_orig_dir_cmd_oss.str().c_str());
 
-        const std::string dump_dir_name =
-          std::string(Traits::log_base_name()) + "_Restored";
+        const std::string dump_dir_name = std::string(Traits::log_base_name()) + "_Restored";
         system((std::string("mkdir -p ") + dump_dir_name).c_str());
 
         LogIoProxy<Traits>::save(restored_collector, dump_dir_name);
@@ -362,8 +355,7 @@ public:
 
       Stream::Error es;
       es << "LogIoTester<" << Traits::log_base_name()
-         << ">: Restored collector is not equal "
-         << "to the original collector";
+         << ">: Restored collector is not equal " << "to the original collector";
       throw Exception(es);
     }
   }
@@ -422,8 +414,7 @@ int main(int argc, char **argv)
     CcgKeywordStatCollector::DataT data;
     typedef CcgKeywordStatCollector::DataT::DataT::FixedNum FixedNum;
     CcgKeywordStatCollector::DataT::DataT
-      inner_data(111, 222, FixedNum("200.98765"),
-        FixedNum("300.98765"), FixedNum("400.98765"));
+      inner_data(111, 222, FixedNum("200.98765"), FixedNum("300.98765"), FixedNum("400.98765"));
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     typedef CcgKeywordStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
@@ -704,8 +695,7 @@ int main(int argc, char **argv)
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      data.add(KeyType("popup", "ru", i + 1, KeyType::EcpmT(8.342), 999),
-        inner_data);
+      data.add(KeyType("popup", "ru", i + 1, KeyType::EcpmT(8.342), 999), inner_data);
     }
 #else
     ChannelPriceRangeCollector::DataT::KeyT
@@ -825,8 +815,7 @@ int main(int argc, char **argv)
     typedef ColoUsersKey KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      collector.add(KeyType(
-        TEST_TIME, OptionalDayTimestamp(), i + 1, max_iterations - i - 1),
+      collector.add(KeyType(TEST_TIME, OptionalDayTimestamp(), i + 1, max_iterations - i - 1),
         data);
     }
 #else
@@ -901,26 +890,20 @@ int main(int argc, char **argv)
     RequestBasicChannelsCollector collector;
     RequestBasicChannelsCollector::KeyT
       key1(
-        Generics::Time(String::SubString("2007-11-28 12:13:14"),
-          "%Y-%m-%d %H:%M:%S"),
-        Generics::Time(String::SubString("2007-11-28 11:13:14"),
-          "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2007-11-28 12:13:14"), "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2007-11-28 11:13:14"), "%Y-%m-%d %H:%M:%S"),
         21
       );
     RequestBasicChannelsCollector::KeyT
       key2(
-        Generics::Time(String::SubString("2007-11-29 14:13:12"),
-          "%Y-%m-%d %H:%M:%S"),
-        Generics::Time(String::SubString("2007-11-29 13:13:12"),
-          "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2007-11-29 14:13:12"), "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2007-11-29 13:13:12"), "%Y-%m-%d %H:%M:%S"),
         22
       );
     RequestBasicChannelsCollector::KeyT
       key3(
-        Generics::Time(String::SubString("2006-11-29 14:13:12"),
-          "%Y-%m-%d %H:%M:%S"),
-        Generics::Time(String::SubString("2006-11-29 13:13:12"),
-          "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2006-11-29 14:13:12"), "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2006-11-29 13:13:12"), "%Y-%m-%d %H:%M:%S"),
         22
       );
     RequestBasicChannelsCollector::DataT data;
@@ -1105,8 +1088,7 @@ int main(int argc, char **argv)
     else
     {
       LogIoHelperT io_helper(collector1);
-      for (LogSortingMap::const_iterator it = lsm.begin();
-        it != lsm.end(); ++it)
+      for (LogSortingMap::const_iterator it = lsm.begin(); it != lsm.end(); ++it)
       {
         std::cerr << "$$ it->second = " << it->second << std::endl;
         std::cerr << "$$ " << __LINE__ << std::endl;
@@ -1140,8 +1122,7 @@ int main(int argc, char **argv)
     }
 #else
     SiteReferrerStatCollector::DataT::KeyT
-      inner_key('U', 567, String::SubString("EXT_TAG_ID 1"),
-        String::SubString("www.testhost.com"));
+      inner_key('U', 567, String::SubString("EXT_TAG_ID 1"), String::SubString("www.testhost.com"));
     data.add(inner_key, inner_data);
 #endif
     collector.add(key1, data);
@@ -1158,8 +1139,7 @@ int main(int argc, char **argv)
     typedef UserPropertiesKey KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      collector.add(KeyType(TEST_TIME, TEST_TIME, i + 1,
-        'U', "prop_name", ""), data);
+      collector.add(KeyType(TEST_TIME, TEST_TIME, i + 1, 'U', "prop_name", ""), data);
     }
 #else
     UserPropertiesKey
@@ -1224,16 +1204,11 @@ int main(int argc, char **argv)
     history_channel_list.push_back(505);
 
     UserPropertyList user_properties;
-    user_properties.push_back(UserProperty("Property Name 1",
-        "Property Value 1"));
-    user_properties.push_back(UserProperty("Property Name 2",
-        "Property Value 2"));
-    user_properties.push_back(UserProperty("Property Name 3",
-        "Property Value 3"));
-    user_properties.push_back(UserProperty("Property Name 4",
-        "Property Value 4"));
-    user_properties.push_back(UserProperty("Property Name 5",
-        "Property Value 5"));
+    user_properties.push_back(UserProperty("Property Name 1", "Property Value 1"));
+    user_properties.push_back(UserProperty("Property Name 2", "Property Value 2"));
+    user_properties.push_back(UserProperty("Property Name 3", "Property Value 3"));
+    user_properties.push_back(UserProperty("Property Name 4", "Property Value 4"));
+    user_properties.push_back(UserProperty("Property Name 5", "Property Value 5"));
     // Added in ADSC-9944. Check read write empty string
     //   (StringIoTest: empty_separated_string() replace)
     user_properties.push_back(UserProperty("OsVersion", ""));
@@ -1500,8 +1475,7 @@ int main(int argc, char **argv)
     else
     {
       LogIoHelperT io_helper(collector1);
-      for (LogSortingMap::const_iterator it = lsm.begin();
-        it != lsm.end(); ++it)
+      for (LogSortingMap::const_iterator it = lsm.begin(); it != lsm.end(); ++it)
       {
         std::cerr << "$$ it->second = " << it->second << std::endl;
         std::cerr << "$$ " << __LINE__ << std::endl;
@@ -1527,8 +1501,7 @@ int main(int argc, char **argv)
     typedef TagAuctionStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      data.add(KeyType(i + 1, 988),
-        inner_data);
+      data.add(KeyType(i + 1, 988), inner_data);
     }
 #else
     TagAuctionStatCollector::DataT::KeyT
@@ -1672,8 +1645,7 @@ int main(int argc, char **argv)
     ActionStatCollector::KeyT key2(TEST_TIME, 321);
     ActionStatCollector::DataT data;
     ActionStatCollector::DataT::DataT
-      inner_data1(88, 77, "", "", "  www.google.com/\t", TEST_TIME,
-        FixedNumber("11.11"), 10001);
+      inner_data1(88, 77, "", "", "  www.google.com/\t", TEST_TIME, FixedNumber("11.11"), 10001);
     ActionStatCollector::DataT::DataT
       inner_data2(88, 77, "ORDER_ID 1", "", "  www.google.com/\t", TEST_TIME,
         TEST_TIME, FixedNumber("22.22"), 10002);
@@ -1690,8 +1662,7 @@ int main(int argc, char **argv)
     collector.add(key2, data);
 #else
     ActionStatCollector::DataT::KeyT
-      inner_key(RequestId("1OOydKMMTs2X0nelpQ2eHg.."),
-        RequestId("PPPPPPPPPPPPPPPPPPPPPA.."), 99);
+      inner_key(RequestId("1OOydKMMTs2X0nelpQ2eHg.."), RequestId("PPPPPPPPPPPPPPPPPPPPPA.."), 99);
     data.add(inner_key, inner_data1);
     collector.add(key1, data);
     data.add(inner_key, inner_data2);
@@ -1717,12 +1688,7 @@ int main(int argc, char **argv)
     }
 #else
     ActionRequestCollector::DataT::KeyT
-      inner_key(
-        567,
-        "",
-        "  www.google.com/\t",
-        'I'
-      );
+      inner_key(567, "", "  www.google.com/\t", 'I');
     data.add(inner_key, inner_data);
 #endif
     collector.add(key1, data);
@@ -1735,13 +1701,9 @@ int main(int argc, char **argv)
   {
     ColoUpdateStatCollector collector;
     Generics::Time time1(String::SubString("2009-03-17"), "%Y-%d-%d");
-    ColoUpdateStatData data1(time1, time1,
-      OptionalString("1.0"));
-    ColoUpdateStatData data2(Generics::Time::get_time_of_day(),
-      time1, OptionalString("1.1"));
-    ColoUpdateStatData data3(time1,
-      Generics::Time::get_time_of_day(),
-        OptionalString("1.0"));
+    ColoUpdateStatData data1(time1, time1, OptionalString("1.0"));
+    ColoUpdateStatData data2(Generics::Time::get_time_of_day(), time1, OptionalString("1.1"));
+    ColoUpdateStatData data3(time1, Generics::Time::get_time_of_day(), OptionalString("1.0"));
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     for (unsigned i = 0; i < max_iterations; ++i)
     {
@@ -1814,9 +1776,7 @@ int main(int argc, char **argv)
 #endif
     collector.add(key1, data);
     collector.add(key2, data);
-    LogIoTester<ChannelInventoryEstimationStatTraits>(dump_on_fail).test(
-      collector
-    );
+    LogIoTester<ChannelInventoryEstimationStatTraits>(dump_on_fail).test(collector);
   }
   HANDLE_EXCEPTIONS(exitcode, 1);
 
@@ -1858,8 +1818,7 @@ int main(int argc, char **argv)
   try
   {
     PassbackOpportunityCollector collector;
-    PassbackOpportunityData data(TEST_TIME, 321, 123, TEST_USER_ID, 'U',
-      TEST_USER_ID);
+    PassbackOpportunityData data(TEST_TIME, 321, 123, TEST_USER_ID, 'U', TEST_USER_ID);
     collector.add(data);
     LogIoTester<PassbackOpportunityTraits>(dump_on_fail).test(collector);
   }
@@ -1916,8 +1875,7 @@ int main(int argc, char **argv)
     else
     {
       LogIoHelperT io_helper(collector1);
-      for (LogSortingMap::const_iterator it = lsm.begin();
-        it != lsm.end(); ++it)
+      for (LogSortingMap::const_iterator it = lsm.begin(); it != lsm.end(); ++it)
       {
         std::cerr << "$$ it->second = " << it->second << std::endl;
         std::cerr << "$$ " << __LINE__ << std::endl;
@@ -1952,8 +1910,7 @@ int main(int argc, char **argv)
     typedef CmpStatCollector::DataT::KeyT::DeliveryThresholdT
       DeliveryThresholdT;
     CmpStatCollector::DataT::DataT
-      inner_data(111, 222, FixedNum("400.12345"),
-        FixedNum("200.98765"), FixedNum("1.0912"));
+      inner_data(111, 222, FixedNum("400.12345"), FixedNum("200.98765"), FixedNum("1.0912"));
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     typedef CmpStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
@@ -2184,22 +2141,19 @@ int main(int argc, char **argv)
     channels.push_back(103);
     NumberList platforms;
     UserAgentStatCollector::DataT::DataT
-      inner_data1(1, channels.begin(), channels.end(),
-        platforms.begin(), platforms.end());
+      inner_data1(1, channels.begin(), channels.end(), platforms.begin(), platforms.end());
     platforms.push_back(201);
     platforms.push_back(202);
     platforms.push_back(203);
     UserAgentStatCollector::DataT::DataT
-      inner_data2(111, channels.begin(), channels.end(),
-        platforms.begin(), platforms.end());
+      inner_data2(111, channels.begin(), channels.end(), platforms.begin(), platforms.end());
 #if LOGIOTEST_PRODUCE_LARGER_FILES
     typedef UserAgentStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
       std::ostringstream oss;
       oss << "User Agent #" << (i + 1);
-      data.add(KeyType(new AdServer::Commons::StringHolder(oss.str())),
-        inner_data1);
+      data.add(KeyType(new AdServer::Commons::StringHolder(oss.str())), inner_data1);
     }
 #else
     UserAgentStatCollector::DataT::KeyT
@@ -2326,8 +2280,7 @@ int main(int argc, char **argv)
   {
     RequestStatsHourlyExtStatCollector collector;
     RequestStatsHourlyExtStatCollector::KeyT key1(TEST_TIME, TEST_TIME);
-    RequestStatsHourlyExtStatCollector::KeyT key2(
-      TEST_TIME - Generics::Time::ONE_HOUR, TEST_TIME);
+    RequestStatsHourlyExtStatCollector::KeyT key2(TEST_TIME - Generics::Time::ONE_HOUR, TEST_TIME);
     RequestStatsHourlyExtStatCollector::DataT data;
     typedef RequestStatsHourlyExtStatCollector::DataT::DataT::FixedNum
       FixedNum;
@@ -2420,9 +2373,7 @@ int main(int argc, char **argv)
            "where sdate='" << TEST_TIME.gm_f() << "';\n"
            "select to_char(sdate, 'YYYY-MM-DD'), colo_id,"
            "  channel_id, trigger_type, trigger_word, hits "
-           "from channeltriggerstats where sdate='" <<
-           TEST_TIME.gm_f() << "';\n"
-           "EOF\n";
+           "from channeltriggerstats where sdate='" << TEST_TIME.gm_f() << "';\n" "EOF\n";
     const std::string shcmd = oss.str();
 
     system((mkdircmd + tmpdir).c_str());
@@ -2502,8 +2453,7 @@ int main(int argc, char **argv)
         collector1->add(key, data);
       }
     }
-    for (Traits::CollectorType::iterator it = collector1->begin();
-      it != collector1->end(); ++it)
+    for (Traits::CollectorType::iterator it = collector1->begin(); it != collector1->end(); ++it)
     {
       for (Traits::CollectorType::DataT::iterator iit = it->second.begin();
         iit != it->second.end(); ++iit)
@@ -2513,6 +2463,7 @@ int main(int argc, char **argv)
         iit->second = Traits::CollectorType::DataT::DataT(hits);
       }
     }
+
     if (EqualityTester<Traits>()(*collector, *collector1))
     {
       std::cout << "CSV loading test: PASSED" << std::endl;

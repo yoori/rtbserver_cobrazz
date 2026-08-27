@@ -55,7 +55,7 @@ importance = bst.get_fscore()
 if not importance:
   print >> sys.stderr, 'Got invalid model (empty features)!'
   exit(1)
-  
+
 importance = sorted(importance.items(), key=operator.itemgetter(1),
                     reverse=True)
 sum = sum(map(lambda x: x[1], importance))
@@ -84,20 +84,20 @@ else:
   importance.reverse()
 
   features = map(lambda x: x[0], importance)
-  
+
   df = pd.DataFrame(
     {'feature': range(len(importance)),
-     'fscore': map(lambda x: float(x[1]) / sum, importance) } ) 
-  
+     'fscore': map(lambda x: float(x[1]) / sum, importance) } )
+
   df = df.set_index('feature')
-  
+
   ax =df.plot(
     kind='barh',
     legend = False,
     color='#edd77e',
     title='XGBoost Feature Importance',
     figsize=(20,10))
-  
+
   ax.set_alpha(0.8)
   ax.set_xlabel('relative importance', fontsize=16)
 

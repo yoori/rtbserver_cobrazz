@@ -29,7 +29,7 @@ sub load_target_action_config
   my $csv = Text::CSV->new({ sep_char => ',', eol => $/ });
 
   open AC_FILE, $target_action_config_file || die "Can't open '$target_action_config_file'";
-  while(<AC_FILE>)
+  while (<AC_FILE>)
   {
     my $line = $_;
     chomp $line;
@@ -54,7 +54,7 @@ sub to_ts
 {
   my ($ft) = @_;
 
-  if($ft =~ m|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$|)
+  if ($ft =~ m|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$|)
   {
     return DateTime->new(
       year => $1,
@@ -78,7 +78,7 @@ sub get_file_dt
 {
   my ($file) = @_;
 
-  if($file =~ m|^.*/?[^/]+_(\d{4})(\d{2})(\d{2})(\d{2})(\d{4}-\d{6}-\d{6})?[.]csv$|)
+  if ($file =~ m|^.*/?[^/]+_(\d{4})(\d{2})(\d{2})(\d{2})(\d{4}-\d{6}-\d{6})?[.]csv$|)
   {
     return DateTime->new(
       year => $1,
@@ -100,16 +100,16 @@ sub find_files
   $rule->name($prefix . "_*.csv");
 
   my $it = $rule->iter($dir);
-  while(my $file = $it->())
+  while (my $file = $it->())
   {
-#   if($prefix eq 'RImpression')
+#   if ($prefix eq 'RImpression')
 #   {
 #     print "DC: $file\n";
 #   }
 
     my $dt = get_file_dt($file);
 
-    if(defined($dt) &&
+    if (defined($dt) &&
       (!defined($dt_from) || DateTime->compare($dt_from, $dt) < 0) &&
       DateTime->compare($dt, $dt_to) <= 0)
     {
@@ -127,10 +127,10 @@ sub find_grouped_files
   my %res_grouped_files;
   foreach my $file(@res_files)
   {
-    if($file =~ m|^.*/?[^/]+_(\d{4}\d{2}\d{2}\d{2})(\d{4}-\d{6}-\d{6})?[.]csv([.]unlink)?$|)
+    if ($file =~ m|^.*/?[^/]+_(\d{4}\d{2}\d{2}\d{2})(\d{4}-\d{6}-\d{6})?[.]csv([.]unlink)?$|)
     {
       my $group_name = $1;
-      if(!exists($res_grouped_files{$group_name}))
+      if (!exists($res_grouped_files{$group_name}))
       {
         my @new_arr;
         $res_grouped_files{$group_name} = \@new_arr;
@@ -154,15 +154,15 @@ sub link_bid_files
   # Timestamp,Request ID,UID,Win Price
   foreach my $imp_file(@imp_files)
   {
-    if(length($imp_file) > 0 && open RIMP_FILE, $imp_file)
+    if (length($imp_file) > 0 && open RIMP_FILE, $imp_file)
     {
       my $head = <RIMP_FILE>;
 
-      while(<RIMP_FILE>)
+      while (<RIMP_FILE>)
       {
         my $line = $_;
         chomp $line;
-        if($csv->parse($line))
+        if ($csv->parse($line))
         {
           my @arr = $csv->fields();
           my $time = shift @arr;
@@ -171,14 +171,14 @@ sub link_bid_files
           my $win_price = shift @arr;
 
           my $rewrite = 1;
-          if(exists($imps{$reqid}))
+          if (exists($imps{$reqid}))
           {
             $csv->parse($imps{$reqid});
             my @old_arr = $csv->fields();
             my $old_time = shift @old_arr;
             my $old_reqid = shift @old_arr;
             my $old_uid = shift @old_arr;
-            if(defined($old_uid) && length($old_uid) > 0 &&
+            if (defined($old_uid) && length($old_uid) > 0 &&
               !(defined($uid) && length($uid) > 0))
             {
               $rewrite = undef;
@@ -189,7 +189,7 @@ sub link_bid_files
             }
           }
 
-          if($rewrite)
+          if ($rewrite)
           {
             $imps{$reqid} = $line;
           }
@@ -245,7 +245,7 @@ sub link_bid_files
 
     my $head = <RBID_FILE>;
 
-    while(<RBID_FILE>)
+    while (<RBID_FILE>)
     {
       my $line = $_;
       chomp $line;
@@ -264,7 +264,7 @@ sub link_bid_files
 
       my $skip = 1;
 
-      if(exists($imps{$reqid}))
+      if (exists($imps{$reqid}))
       {
         # Timestamp,Request ID,UID,Win Price,Clicked,ClickTimestamp
         $csv->parse($imps{$reqid});
@@ -280,7 +280,7 @@ sub link_bid_files
 
       $other_bid_fields[4] = $imp_uid;
 
-      if(!defined($skip))
+      if (!defined($skip))
       {
         # print
         my $res_bid_file = "RImp/RImpression.csv";
@@ -288,7 +288,7 @@ sub link_bid_files
 
         open(my $res_fh, '>>', $res_bid_file) or die "Can't open '$res_bid_file': $!";
 
-        if($write_head)
+        if ($write_head)
         {
           print $res_fh "Timestamp,#RequestID,#GlobalRequestID,Device,#IPAddress,#HID,#UID," .
             "URL,Publisher,Tag,ETag,Campaign,Group,CCID,GeoCh," .
@@ -325,12 +325,12 @@ sub process_bid_file_group
   {
     my $cur_dt = get_file_dt($bid_file);
 
-    if(!defined($cur_dt))
+    if (!defined($cur_dt))
     {
       die "Can't determine DateTime for '" . $bid_file . "'";
     }
 
-    if(!defined($min_bid_dt))
+    if (!defined($min_bid_dt))
     {
       $min_bid_dt = $cur_dt;
       $max_bid_dt = $min_bid_dt;
@@ -365,7 +365,7 @@ sub main
 
   my $folder = '.';
 
-  if(exists($args{"folder"}))
+  if (exists($args{"folder"}))
   {
     $folder = $args{"folder"};
   }
@@ -373,7 +373,7 @@ sub main
   $bid_folder = exists($args{"bid-folder"}) ? $args{"bid-folder"} : $folder;
   $imp_folder = exists($args{"imp-folder"}) ? $args{"imp-folder"} : $folder;
 
-  while(1)
+  while (1)
   {
     # eval max timeout
     my $max_timeout = 360000000;

@@ -4,7 +4,6 @@
 
 #include <Commons/GrpcAlgs.hpp>
 
-
 namespace AdServer::Bidding
 {
   namespace
@@ -95,9 +94,7 @@ namespace AdServer::Bidding
     }
 
     template <typename T, size_t Size, typename Function>
-    void for_range(
-      const T(&range) [Size],
-      Function fn)
+    void for_range(const T(&range) [Size], Function fn)
     {
       std::for_each (range, range + Size, fn);
     }
@@ -107,12 +104,10 @@ namespace AdServer::Bidding
       const Generics::MonoVector<std::string>& categories,
       AddRepeatedFn fn)
     {
-      for(std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
+      for (std::size_t cat_i = 0; cat_i < categories.size(); ++cat_i)
       {
         int32_t cat_id = 0;
-        if(String::StringManip::str_to_int(
-             String::SubString(categories[cat_i]),
-             cat_id))
+        if (String::StringManip::str_to_int(String::SubString(categories[cat_i]), cat_id))
         {
           fn(cat_id);
         }
@@ -121,9 +116,7 @@ namespace AdServer::Bidding
 
     // Google add expanding attributes util
     void
-    fill_google_expanding_attributes(
-      Google::BidResponse_Ad* ad,
-      unsigned char expanding)
+    fill_google_expanding_attributes(Google::BidResponse_Ad* ad, unsigned char expanding)
     {
       if (expanding > 15)
       {
@@ -132,17 +125,16 @@ namespace AdServer::Bidding
         // No, we just see empty expanding
         return;
       }
+
       if (expanding == 0)
       {
-        ad->add_attribute(
-          Response::Google::CREATIVE_EXPAND_MAP[expanding]);
+        ad->add_attribute(Response::Google::CREATIVE_EXPAND_MAP[expanding]);
       }
       else
       {
         for (short i = 1; i <= expanding; ++i)
         {
-          ::google::protobuf::int32 current =
-            Response::Google::CREATIVE_EXPAND_MAP[i];
+          ::google::protobuf::int32 current = Response::Google::CREATIVE_EXPAND_MAP[i];
 
           if ((i & expanding) == i && current != -1)
           {
@@ -177,7 +169,7 @@ namespace AdServer::Bidding
       bid_request_.ParseFromArray(body.data(), static_cast<int>(body.size()));
 
       /*
-      if(bid_frontend_->logger()->log_level() >= Logging::Logger::TRACE)
+      if (bid_frontend_->logger()->log_level() >= Logging::Logger::TRACE)
       {
         Generics::Time end_process_time = Generics::Time::get_time_of_day();
         Stream::Error ostr;
@@ -195,7 +187,7 @@ namespace AdServer::Bidding
         ad_slots_context_,
         bid_request_);
 
-      if(bid_request_.has_is_ping() && bid_request_.is_ping())
+      if (bid_request_.has_is_ping() && bid_request_.is_ping())
       {
         return false;
       }
@@ -234,15 +226,13 @@ namespace AdServer::Bidding
   {
     try
     {
-      const RequestInfo& request_info =
-        request_info_;
+      const RequestInfo& request_info = request_info_;
 
       Google::BidResponse bid_response;
 
-      assert(
-        campaign_match_result.ad_slots.size() == ad_slots_context_.size());
+      assert(campaign_match_result.ad_slots.size() == ad_slots_context_.size());
 
-      for(std::size_t ad_slot_i = 0;
+      for (std::size_t ad_slot_i = 0;
           ad_slot_i < campaign_match_result.ad_slots.size();
           ++ad_slot_i)
       {
@@ -251,14 +241,14 @@ namespace AdServer::Bidding
 
         const Google::BidRequest_AdSlot& adslot = bid_request_.adslot(ad_slot_i);
 
-        if(ad_slot_result.selected_creatives.size() > 0)
+        if (ad_slot_result.selected_creatives.size() > 0)
         {
           // campaigns selected
           CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
 
           Google::BidResponse_Ad* ad = bid_response.add_ad();
 
-          for(std::size_t creative_i = 0;
+          for (std::size_t creative_i = 0;
               creative_i < ad_slot_result.selected_creatives.size();
               ++creative_i)
           {
@@ -271,8 +261,7 @@ namespace AdServer::Bidding
 
           categories_to_repeated(
             ad_slot_result.external_content_categories,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_category), ad));
+            std::bind1st(std::mem_fun(&Google::BidResponse_Ad::add_category), ad));
 
           bid_frontend_->limit_max_cpm_(sum_pub_ecpm, request_info.publisher_account_ids);
 
@@ -286,8 +275,7 @@ namespace AdServer::Bidding
           Google::BidResponse_Ad_AdSlot* r_adslot = ad->add_adslot();
           const GoogleAdSlotContext& ad_slot_context = ad_slots_context_[ad_slot_i];
 
-          if (ad_slot_context.direct_deal_id &&
-              max_cpm_micros >= ad_slot_context.fixed_cpm_micros)
+          if (ad_slot_context.direct_deal_id && max_cpm_micros >= ad_slot_context.fixed_cpm_micros)
           {
             r_adslot->set_max_cpm_micros(ad_slot_context.fixed_cpm_micros);
             r_adslot->set_deal_id(ad_slot_context.direct_deal_id);
@@ -299,7 +287,7 @@ namespace AdServer::Bidding
 
           r_adslot->set_id(adslot.id());
 
-          if(ad_slot_context.width && ad_slot_context.height)
+          if (ad_slot_context.width && ad_slot_context.height)
           {
             ad->set_width(ad_slot_context.width);
             ad->set_height(ad_slot_context.height);
@@ -307,14 +295,14 @@ namespace AdServer::Bidding
 
           // choose billing_id
           int64_t billing_id = 0;
-          for(auto publisher_account_it = request_info_.publisher_account_ids.begin();
+          for (auto publisher_account_it = request_info_.publisher_account_ids.begin();
               publisher_account_it != request_info_.publisher_account_ids.end();
               ++publisher_account_it)
           {
             auto account_it = bid_frontend_->account_traits().find(*publisher_account_it);
-            if(account_it != bid_frontend_->account_traits().end())
+            if (account_it != bid_frontend_->account_traits().end())
             {
-              if(bid_request_.has_video())
+              if (bid_request_.has_video())
               {
                 billing_id = account_it->second->video_billing_id;
               }
@@ -327,12 +315,12 @@ namespace AdServer::Bidding
             }
           }
 
-          if(billing_id != 0 &&
+          if (billing_id != 0 &&
              ad_slot_context.billing_ids.find(billing_id) != ad_slot_context.billing_ids.end())
           {
             r_adslot->set_billing_id(billing_id);
           }
-          else if(!ad_slot_context.billing_ids.empty())
+          else if (!ad_slot_context.billing_ids.empty())
           {
             r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());
           }
@@ -340,14 +328,12 @@ namespace AdServer::Bidding
           // Fill attributes
           for_range(
             Response::Google::CREATIVE_ATTR,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
+            std::bind1st(std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
 
           // Fill external attributes
           categories_to_repeated(
             ad_slot_result.external_visual_categories,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
+            std::bind1st(std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
 
           {
             // buyer_creative_id
@@ -362,9 +348,7 @@ namespace AdServer::Bidding
             ad->set_buyer_creative_id(creative_version_ostr.str());
 
             // Expanding attributes
-            fill_google_expanding_attributes(
-              ad,
-              creative.expanding);
+            fill_google_expanding_attributes(ad, creative.expanding);
 
             // Secure attribute
             if (creative.https_safe_flag)
@@ -374,7 +358,7 @@ namespace AdServer::Bidding
           }
 
           // Video
-          if(request_info.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
+          if (request_info.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
              !ad_slot_result.creative_url.empty())
           {
             ad->set_video_url(ad_slot_result.creative_url);
@@ -410,7 +394,7 @@ namespace AdServer::Bidding
     noexcept
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-    if(code < 300)
+    if (code < 300)
     {
       response->set_content_type_nocopy(Response::Type::OCTET_STREAM);
 

@@ -62,14 +62,14 @@ function(add_idl target idl_file output_dir)
       TAO::AnyTypeCode
   )
 
-  if(NOT ADD_IDL_NO_SERVANT)
+  if (NOT ADD_IDL_NO_SERVANT)
     target_link_libraries(${target}
       PUBLIC
         TAO::PortableServer
     )
   endif()
 
-  if(ADD_IDL_VALUETYPE)
+  if (ADD_IDL_VALUETYPE)
     target_link_libraries(${target}
       PUBLIC
         TAO::Valuetype

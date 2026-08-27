@@ -48,9 +48,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<CampaignAdminStatCcg, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* id
-      )
+      void make_cmd (const char* address, const char* id)
       {
         address_ = address;
         AdminParams params;
@@ -60,45 +58,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "stat_ccg", address, params, static_cast<size_t>(CampaignServer));
       }
-      CampaignAdminStatCcg(
-        const char* address,
-        const char* id
-      )
+      CampaignAdminStatCcg(const char* address, const char* id)
       {
         make_cmd(address, id);
       }
-      CampaignAdminStatCcg(
-        const std::string& address,
-        const char* id
-      )
+      CampaignAdminStatCcg(const std::string& address, const char* id)
       {
         make_cmd(address.c_str(), id);
       }
-      CampaignAdminStatCcg(
-        const char* address,
-        const std::string& id
-      )
+      CampaignAdminStatCcg(const char* address, const std::string& id)
       {
         make_cmd(address, id.c_str());
       }
-      CampaignAdminStatCcg(
-        const std::string& address,
-        const std::string& id
-      )
+      CampaignAdminStatCcg(const std::string& address, const std::string& id)
       {
         make_cmd(address.c_str(), id.c_str());
       }
-      CampaignAdminStatCcg(
-        const char* address,
-        unsigned long id
-      )
+      CampaignAdminStatCcg(const char* address, unsigned long id)
       {
         make_cmd(address, strof(id).c_str());
       }
-      CampaignAdminStatCcg(
-        const std::string& address,
-        unsigned long id
-      )
+      CampaignAdminStatCcg(const std::string& address, unsigned long id)
       {
         make_cmd(address.c_str(), strof(id).c_str());
       }

@@ -19,7 +19,7 @@ namespace UserInfoSvcs_v26
 
   autoreader HistoryVisitsReader<HistoryVisits>;
   autowriter HistoryVisitsWriter<HistoryVisits>;
-  
+
   struct HistoryMatches
   {
     uint channel_id;
@@ -28,7 +28,7 @@ namespace UserInfoSvcs_v26
 
   autoreader HistoryMatchesReader<HistoryMatches>;
   autowriter HistoryMatchesWriter<HistoryMatches>;
-  
+
   struct HTCandidates
   {
     uint channel_id;
@@ -39,7 +39,7 @@ namespace UserInfoSvcs_v26
 
   autoreader HTCandidatesReader<HTCandidates>;
   autowriter HTCandidatesWriter<HTCandidates>;
-  
+
   struct PartlyVisits
   {
     uint visits;
@@ -64,7 +64,7 @@ namespace UserInfoSvcs_v26
     list<PartlyVisitsReader> all_ht_visits;
     list<PartlyVisitsReader> all_history_visits;
   };
-  
+
   writer PartlyVisitsSectionWriter<PartlyVisitsSection>
   {
     channel_id;
@@ -94,7 +94,7 @@ namespace UserInfoSvcs_v26
     list<PartlyVisitsSectionReader> hpm;
     list<PartlyVisitsSectionReader> hpm_from_now;
   };
-   
+
   writer ChannelsInfoWriter<ChannelsInfo>
   {
     list<HTCandidatesWriter> ht_candidates;
@@ -111,9 +111,9 @@ namespace UserInfoSvcs_v26
     uint version;
   };
 
-  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
-  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;    
-    
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;
+
   struct PersistentMatches
   {
     list<uint> channel_ids;
@@ -136,7 +136,7 @@ namespace UserInfoSvcs_v26
     ChannelsInfo search_channels;
     ChannelsInfo url_channels;
   };
- 
+
   reader ChannelsProfileReader<ChannelsProfile>
   {
     version;
@@ -151,7 +151,7 @@ namespace UserInfoSvcs_v26
     ChannelsInfoReader search_channels;
     ChannelsInfoReader url_channels;
   };
-   
+
   writer ChannelsProfileWriter<ChannelsProfile>
   {
     version;

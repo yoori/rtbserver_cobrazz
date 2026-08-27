@@ -18,7 +18,7 @@ namespace AutoTest
 
     ostr << description << std::endl <<
       "  " << file_name << ":" << line << ": " << function_name << "()";
-    if(notes[0])
+    if (notes[0])
     {
       ostr << ": " << notes;
     }

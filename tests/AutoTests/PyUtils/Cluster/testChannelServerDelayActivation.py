@@ -31,7 +31,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
     ChannelProxyTestMixin.setUp( self )
     self.__prepareConfig()
 
-    self.setUpServers(ChannelServer, 
+    self.setUpServers(ChannelServer,
                       ChannelController)
     self.startProc()
     self.channelServerObj = self.ChannelServer.getObject("ChannelUpdate",
@@ -45,7 +45,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
                                              "",                       # language
                                              "A",                      # status
                                              1,                        # behav_param_list_id
-                                             "",                       # str_behav_param_list_id 
+                                             "",                       # str_behav_param_list_id
                                              [],                       # categories
                                              1,                        # threshold
                                              0,                        # discover
@@ -70,7 +70,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
                                     self.__generateHardWord(0x04), # PAGE TYPE
                                     time2orb(now)                  # stamp
                                     )]
-    
+
 
   def __prepareDelay( self ):
     now       = currentTime()
@@ -81,7 +81,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
 
     # ChannelProxy.check wrapper
     self.checkWrapper = DelayCallWrapper(self, 'ChannelProxy_check')
-    
+
     # ChannelProxy.update_triggers wrapper
     self.updateTriggersWrapper = DelayCallWrapper(self, 'ChannelProxy_update_triggers', 2)
 
@@ -91,7 +91,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
                                              "",                       # language
                                              "A",                      # status
                                              1,                        # behav_param_list_id
-                                             "",                       # str_behav_param_list_id 
+                                             "",                       # str_behav_param_list_id
                                              [],                       # categories
                                              1,                        # threshold
                                              0,                        # discover
@@ -106,7 +106,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
                                              "",                       # language
                                              "A",                      # status
                                              1,                        # behav_param_list_id
-                                             "",                       # str_behav_param_list_id 
+                                             "",                       # str_behav_param_list_id
                                              [],                       # categories
                                              1,                        # threshold
                                              0,                        # discover
@@ -138,7 +138,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
       triggers.append(trigger)
       self.startTriggerId += 1
     return triggers
-    
+
 
   def __channelServerSafeCall( self, method, *args, **kw ):
     fn = getattr(self.channelServerObj, method)
@@ -185,7 +185,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
     self.assertNotEqual(1, len(result.channels[0].words), 'channel#1.triggers')
     self.__prepareDelay()
     tlog(10, "Calls: %s" % self.calls.queue)
-        
+
   def testDelayedSimpleChannels( self ):
     'CampaignServer simple_channels delayed'
     tlog(10, "Calls: %s" % self.calls.queue)
@@ -215,7 +215,7 @@ class ChannelServersDelayActivation(CORBAFunTest,
     self.checkCallSequence(expCalls = [CallSequence('CampaignServer_chsv_simple_channels', 19),
                                        'ChannelProxy_check',
                                        'ChannelProxy_update_all_ccg'])
-    tlog(10, "Calls: %s" % self.calls.queue) 
+    tlog(10, "Calls: %s" % self.calls.queue)
 
   def testDelayedUpdate( self ):
     'ChannelProxy update delayed'
@@ -267,6 +267,6 @@ if __name__ == '__main__':
 
 
 
-  
+
 
 

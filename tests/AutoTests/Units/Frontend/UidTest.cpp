@@ -1,9 +1,6 @@
 #include "UidTest.hpp"
 
-REFLECT_UNIT(UidTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(UidTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -17,14 +14,10 @@ UidTest::uid_installing()
   add_descr_phrase("UID installing");
   AdClient client(AdClient::create_nonoptin_user(this));
 
-  client.process_request(
-    NSLookupRequest().setuid(1));
+  client.process_request(NSLookupRequest().setuid(1));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      AutoTest::PROBE_UID,
-      client.get_uid(),
-      AutoTest::CT_NOT_EQUAL).check(),
+    AutoTest::equal_checker(AutoTest::PROBE_UID, client.get_uid(), AutoTest::CT_NOT_EQUAL).check(),
     "Got unexpected PROBE uid");
 }
 
@@ -38,8 +31,7 @@ UidTest::probe_uid()
 
     client.set_probe_uid();
 
-    client.process_request(
-      NSLookupRequest().setuid(1));
+    client.process_request(NSLookupRequest().setuid(1));
 
     FAIL_CONTEXT(
       AutoTest::equal_checker(
@@ -54,23 +46,13 @@ UidTest::probe_uid()
 
     std::string uid = client.get_uid();
 
-    client.process_request(
-      NSLookupRequest());
+    client.process_request(NSLookupRequest());
 
-    FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        uid,
-        client.get_uid()).check(),
-      "Got unexpected uid");
+    FAIL_CONTEXT(AutoTest::equal_checker(uid, client.get_uid()).check(), "Got unexpected uid");
 
-    client.process_request(
-      NSLookupRequest().setuid(1));
+    client.process_request(NSLookupRequest().setuid(1));
 
-    FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        uid,
-        client.get_uid()).check(),
-      "Got unexpected uid");
+    FAIL_CONTEXT(AutoTest::equal_checker(uid, client.get_uid()).check(), "Got unexpected uid");
   }
 }
 

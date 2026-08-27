@@ -35,10 +35,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<UserTriggerMatchProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uid,
-        bool temp
-      )
+      void make_cmd (const char* address, const char* uid, bool temp)
       {
         address_ = address;
         AdminParams params;
@@ -46,33 +43,22 @@ namespace AutoTest
         {
           params.push_back(AdminParamPair("--user_id=", uid));
         }
+
         if (temp)
         {
           params.push_back(AdminParamPair("--temporary", ""));
         }
         make_admin_cmd(*this, "print-user-trigger-match", address, params, static_cast<size_t>(ExpressionMatcher));
       }
-      UserTriggerMatchProfileAdmin(
-        const char* address,
-        const char* uid,
-        bool temp = false
-      )
+      UserTriggerMatchProfileAdmin(const char* address, const char* uid, bool temp = false)
       {
         make_cmd(address, uid, temp);
       }
-      UserTriggerMatchProfileAdmin(
-        const std::string& address,
-        const char* uid,
-        bool temp = false
-      )
+      UserTriggerMatchProfileAdmin(const std::string& address, const char* uid, bool temp = false)
       {
         make_cmd(address.c_str(), uid, temp);
       }
-      UserTriggerMatchProfileAdmin(
-        const char* address,
-        const std::string& uid,
-        bool temp = false
-      )
+      UserTriggerMatchProfileAdmin(const char* address, const std::string& uid, bool temp = false)
       {
         make_cmd(address, uid.c_str(), temp);
       }

@@ -24,8 +24,7 @@ bool AutoTest::ORM::clear_stats(StatsDB::IConn& connection,
       table_name << " WHERE " << column_name << " in (";
     for (size_t i = 0; i < Count; ++i)
     {
-      query_str << ":i" << i <<
-        (i == Count - 1? ")": ", ");
+      query_str << ":i" << i << (i == Count - 1? ")": ", ");
     }
     StatsDB::Query delete_query(connection.get_query(query_str.str()));
     for (size_t i = 0; i < Count; ++i)

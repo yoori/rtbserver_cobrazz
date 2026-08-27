@@ -7,7 +7,7 @@ import types
 class ComparisonMixin:
 
   class XInvAttr(Exception): pass
-  
+
 
   def __v2str( self, v ):
     return struct2str(v, deep=True)
@@ -26,7 +26,7 @@ class ComparisonMixin:
     if got != expect:
       self.fail('%s mismatch: expected %s, but got %s' % \
                 (desc, self.__v2str(expect), self.__v2str(got)))
-    
+
   def compareRec( self, expect, got, desc = 'item' ):
     if expect is None:
       if got is None: return

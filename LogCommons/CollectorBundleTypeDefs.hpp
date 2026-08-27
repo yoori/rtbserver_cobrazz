@@ -3,8 +3,8 @@
 #include <list>
 #include <LogCommons/FileReceiver.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
+namespace AdServer::LogProcessing
+{
 
   typedef FileReceiver::FileGuard_var CollectorBundleFileGuard_var;
   typedef std::list<CollectorBundleFileGuard_var> CollectorBundleFileList;
@@ -14,5 +14,4 @@ namespace LogProcessing {
     const std::size_t MAX_SIZE;
   };
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

@@ -22,13 +22,13 @@ namespace
   const char HANDLE_COMMAND_ERROR[] = "handle command error";
 }
 
+namespace AdServer::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+};
+
 namespace AdServer
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  };
-
   namespace
   {
     class UpdateTask: public Generics::GoalTask
@@ -60,8 +60,7 @@ namespace AdServer
         }
         catch (const eh::Exception& ex)
         {
-          logger_->sstream(Logging::Logger::EMERGENCY,
-            Aspect::COMMON_MODULE) <<
+          logger_->sstream(Logging::Logger::EMERGENCY, Aspect::COMMON_MODULE) <<
             "UpdateTask::execute(): schedule failed: " << ex.what();
         }
       }
@@ -90,9 +89,7 @@ namespace AdServer
   }
 
   void
-  CommonModule::parse_config_(
-    CommonConfigPtr& common_config,
-    DomainConfigPtr& domain_config)
+  CommonModule::parse_config_(CommonConfigPtr& common_config, DomainConfigPtr& domain_config)
     /*throw(Exception)*/
   {
     Config::ErrorHandler error_handler;
@@ -102,13 +99,13 @@ namespace AdServer
         fe_config(xsd::AdServer::Configuration::FeConfiguration(
           config_file_.c_str(), error_handler).release());
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
 
-      if(!fe_config->CommonFeConfiguration().present())
+      if (!fe_config->CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration not presented.");
       }
@@ -118,7 +115,7 @@ namespace AdServer
       domain_config.reset(xsd::AdServer::Configuration::DomainConfiguration(
         common_config->domain_config_path(), error_handler).release());
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -129,8 +126,7 @@ namespace AdServer
     {
       std::string str;
       Stream::Error ostr;
-      ostr << "Can't parse config file '" << config_file_ << "': " <<
-        error_handler.text(str);
+      ostr << "Can't parse config file '" << config_file_ << "': " << error_handler.text(str);
       throw Exception(ostr);
     }
   }
@@ -208,29 +204,26 @@ namespace AdServer
       msg->execute(); // Complete task before init done and
 
       // init IPMatcher
-      if(common_config->IPMapping().present())
+      if (common_config->IPMapping().present())
       {
         ip_matcher_ = new FrontendCommons::IPMatcher();
 
-        for(Configuration::IPMappingType::Rule_sequence::const_iterator
+        for (Configuration::IPMappingType::Rule_sequence::const_iterator
               it = common_config->IPMapping()->Rule().begin();
             it != common_config->IPMapping()->Rule().end(); ++it)
         {
           FrontendCommons::IPMatcher::MatchResult match_result;
           match_result.colo_id = it->colo_id();
           match_result.profile_referer = it->profile_referer();
-          ip_matcher_->add_rule(
-            it->ip_range(),
-            it->cohorts(),
-            match_result);
+          ip_matcher_->add_rule(it->ip_range(), it->cohorts(), match_result);
         }
       }
 
-      if(common_config->CountryFiltering().present())
+      if (common_config->CountryFiltering().present())
       {
         country_filter_ = new FrontendCommons::CountryFilter();
 
-        for(Configuration::CountryFilteringType::Country_sequence::const_iterator
+        for (Configuration::CountryFilteringType::Country_sequence::const_iterator
               it = common_config->CountryFiltering()->Country().begin();
             it != common_config->CountryFiltering()->Country().end(); ++it)
         {
@@ -238,13 +231,13 @@ namespace AdServer
         }
       }
       /*
-      if(common_config->Chinese().present())
+      if (common_config->Chinese().present())
       {
         segmentor_ = new Language::Segmentor::Chineese::NlpirSegmentor(
           common_config->Chinese().get().base().c_str());
       }
       */
-      else if(common_config->Polyglot().present())
+      else if (common_config->Polyglot().present())
       {
         segmentor_ = new Language::Segmentor::NormalizePolyglotSegmentor(
             common_config->Polyglot().get().base().c_str());
@@ -254,10 +247,7 @@ namespace AdServer
     {
       Stream::Error ostr;
       ostr << __func__ << ": eh::Exception: " << ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::COMMON_MODULE,
-        "ADS-IMPL-133");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::COMMON_MODULE, "ADS-IMPL-133");
 
       ::kill(::getppid(), SIGTERM);
     }
@@ -311,21 +301,17 @@ namespace AdServer
         try
         {
           AdServer::CampaignSvcs::DetectorsConfig_var detectors =
-            campaign_server->detectors(
-              CorbaAlgs::pack_time(matchers_timestamp_));
+            campaign_server->detectors(CorbaAlgs::pack_time(matchers_timestamp_));
 
-          if(CorbaAlgs::unpack_time(detectors->timestamp) >
-             matchers_timestamp_)
+          if (CorbaAlgs::unpack_time(detectors->timestamp) > matchers_timestamp_)
           {
-            FrontendCommons::UrlMatcher_var new_url_matcher(
-              new FrontendCommons::UrlMatcher());
+            FrontendCommons::UrlMatcher_var new_url_matcher(new FrontendCommons::UrlMatcher());
 
-            for(CORBA::ULong i = 0; i < detectors->engines.length(); ++i)
+            for (CORBA::ULong i = 0; i < detectors->engines.length(); ++i)
             {
-              const AdServer::CampaignSvcs::SearchEngineInfo& se =
-                detectors->engines[i];
+              const AdServer::CampaignSvcs::SearchEngineInfo& se = detectors->engines[i];
 
-              for(CORBA::ULong re_i = 0; re_i < se.regexps.length(); ++re_i)
+              for (CORBA::ULong re_i = 0; re_i < se.regexps.length(); ++re_i)
               {
                 new_url_matcher->add_rule(
                   se.id,
@@ -340,12 +326,11 @@ namespace AdServer
             FrontendCommons::WebBrowserMatcher_var new_web_browser_matcher(
               new FrontendCommons::WebBrowserMatcher());
 
-            for(CORBA::ULong i = 0; i < detectors->web_browsers.length(); ++i)
+            for (CORBA::ULong i = 0; i < detectors->web_browsers.length(); ++i)
             {
-              const AdServer::CampaignSvcs::WebBrowserInfo& info =
-                detectors->web_browsers[i];
+              const AdServer::CampaignSvcs::WebBrowserInfo& info = detectors->web_browsers[i];
 
-              for(CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
+              for (CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
               {
                 new_web_browser_matcher->add_rule(
                   String::SubString(info.name),
@@ -359,12 +344,11 @@ namespace AdServer
             FrontendCommons::PlatformMatcher_var new_platform_matcher(
               new FrontendCommons::PlatformMatcher());
 
-            for(CORBA::ULong i = 0; i < detectors->platforms.length(); ++i)
+            for (CORBA::ULong i = 0; i < detectors->platforms.length(); ++i)
             {
-              const AdServer::CampaignSvcs::PlatformInfo& info =
-                detectors->platforms[i];
+              const AdServer::CampaignSvcs::PlatformInfo& info = detectors->platforms[i];
 
-              for(CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
+              for (CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
               {
                 new_platform_matcher->add_rule(
                   info.platform_id,
@@ -379,8 +363,7 @@ namespace AdServer
             }
 
             // create new search engine matcher for received rules
-            matchers_timestamp_ = CorbaAlgs::unpack_time(
-              detectors->timestamp);
+            matchers_timestamp_ = CorbaAlgs::unpack_time(detectors->timestamp);
 
             SyncPolicy::WriteGuard lock(matchers_lock_);
             url_matcher_.swap(new_url_matcher);
@@ -394,30 +377,21 @@ namespace AdServer
           Stream::Error ostr;
           ostr << FUN << ": caught CORBA::SystemException: " << e;
           campaign_server.release_bad(ostr.str());
-          logger()->log(ostr.str(),
-            Logging::Logger::CRITICAL,
-            Aspect::COMMON_MODULE,
-            "ADS-ICON-6");
+          logger()->log(ostr.str(), Logging::Logger::CRITICAL, Aspect::COMMON_MODULE, "ADS-ICON-6");
         }
         catch (const AdServer::CampaignSvcs::CampaignServer::NotReady& )
         {
           logger()->sstream(Logging::Logger::NOTICE,
             Aspect::COMMON_MODULE,
             "ADS-IMPL-121") << FUN << ": Caught CampaignServer::NotReady";
-          campaign_server.release_bad(
-            String::SubString("CampaignServer is not ready"));
+          campaign_server.release_bad(String::SubString("CampaignServer is not ready"));
         }
-        catch (const AdServer::CampaignSvcs::CampaignServer::
-          ImplementationException& ex)
+        catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Caught CampaignServer::ImplementationException: "
-            << ex.description;
+          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.description;
           campaign_server.release_bad(ostr.str());
-          logger()->log(ostr.str(),
-            Logging::Logger::ERROR,
-            Aspect::COMMON_MODULE,
-            "ADS-IMPL-121");
+          logger()->log(ostr.str(), Logging::Logger::ERROR, Aspect::COMMON_MODULE, "ADS-IMPL-121");
         }
       }
     }
@@ -464,12 +438,10 @@ namespace AdServer
         {
           campaign_server.release_bad(String::SubString("CampaignServer is not ready"));
         }
-        catch (const AdServer::CampaignSvcs::CampaignServer::
-          ImplementationException& ex)
+        catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Caught CampaignServer::ImplementationException: "
-            << ex.description;
+          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.description;
           campaign_server.release_bad(ostr.str());
         }
       }
@@ -523,7 +495,7 @@ namespace AdServer
   CommonModule::ip_mapper() noexcept
   {
     Sync::PosixGuard lock(ip_mapper_lock_);
-    if(ip_mapper_)
+    if (ip_mapper_)
     {
       return ip_mapper_;
     }
@@ -534,7 +506,7 @@ namespace AdServer
       DomainConfigPtr domain_config;
       parse_config_(common_config, domain_config);
 
-      if(common_config->GeoIP().present())
+      if (common_config->GeoIP().present())
       {
         ip_mapper_ = std::make_shared<GeoIPMapping::IPMapCity2>(
           common_config->GeoIP()->path().c_str());
@@ -542,12 +514,8 @@ namespace AdServer
     }
     catch(const eh::Exception& ex)
     {
-      logger()->sstream(
-        Logging::Logger::CRITICAL,
-        Aspect::COMMON_MODULE,
-        "ADS-IMPL-102") <<
-        "CommonModule::ip_mapper(): can't initialize GeoIP mapping: " <<
-        ex.what();
+      logger()->sstream(Logging::Logger::CRITICAL, Aspect::COMMON_MODULE, "ADS-IMPL-102") <<
+        "CommonModule::ip_mapper(): can't initialize GeoIP mapping: " << ex.what();
     }
 
     return ip_mapper_;

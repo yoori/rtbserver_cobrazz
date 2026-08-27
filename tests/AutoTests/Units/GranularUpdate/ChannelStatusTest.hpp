@@ -16,10 +16,7 @@ class ChannelStatusTest
 
 public:
 
-  ChannelStatusTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ChannelStatusTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   {};
 

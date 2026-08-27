@@ -10,9 +10,7 @@
 #include <Commons/HostDistribution.hpp>
 #include "Utils.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   /** Information about host availability */
   struct DestHost
@@ -105,9 +103,7 @@ namespace LogProcessing
     public ReferenceCounting::AtomicImpl
   {
   public:
-    RouteByNumberHelper(
-      SchedType feed_type,
-      const StringList& dst_hosts)
+    RouteByNumberHelper(SchedType feed_type, const StringList& dst_hosts)
       /*throw(Exception)*/;
 
     virtual std::string
@@ -203,9 +199,7 @@ namespace LogProcessing
     public ReferenceCounting::AtomicImpl
   {
   public:
-    RouteHostFromFileNameHelper(
-      SchedType feed_type,
-      const char* src_file_name_regexp) noexcept;
+    RouteHostFromFileNameHelper(SchedType feed_type, const char* src_file_name_regexp) noexcept;
 
     virtual std::string
     get_dest_host(const char* src_file) noexcept;
@@ -217,11 +211,8 @@ namespace LogProcessing
     const String::RegEx src_file_name_regexp_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   inline
   RouteBasicHelper::RouteBasicHelper(SchedType feed_type)
@@ -236,5 +227,4 @@ namespace LogProcessing
     return feed_type_;
   }
 
-}
 }

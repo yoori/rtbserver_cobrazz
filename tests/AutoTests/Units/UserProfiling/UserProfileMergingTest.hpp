@@ -34,10 +34,7 @@ public:
   };
 
 public:
-  UserProfileMergingTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  UserProfileMergingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -50,10 +47,7 @@ public:
     size_t requests_size,
     const AutoTest::Time& base_time = Generics::Time::ZERO);
 
-  void log_admin_output(
-    AdClient& pclient,
-    TemporaryAdClient& tclient,
-    RequestEnum request_type);
+  void log_admin_output(AdClient& pclient, TemporaryAdClient& tclient, RequestEnum request_type);
 
 private:
   virtual bool run_test();

@@ -1,9 +1,6 @@
 #include "AccountCurrencyTest.hpp"
 
-REFLECT_UNIT(AccountCurrencyTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(AccountCurrencyTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -50,14 +47,10 @@ AccountCurrencyTest::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      ccid_exp,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
     "selected_creatives cc_id");
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      actual_cpc_exp,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(actual_cpc_exp, SelectedCreativesActualCPC(client)).check(),
     "selected_creatives actual_cpc");
 
   add_descr_phrase("Done");

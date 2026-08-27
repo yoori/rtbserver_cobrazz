@@ -1,9 +1,7 @@
 
 #include "RTBCategoriesMappingTest.hpp"
 
-REFLECT_UNIT(RTBCategoriesMappingTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST );
+REFLECT_UNIT(RTBCategoriesMappingTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -304,10 +302,7 @@ RTBCategoriesMappingTest::set_category(
 }
 
 template<typename Object, typename Setter>
-void RTBCategoriesMappingTest::set_categories(
-  const char* cat_list,
-  Object& obj,
-  Setter setter)
+void RTBCategoriesMappingTest::set_categories(const char* cat_list, Object& obj, Setter setter)
 {
   if (cat_list)
   {
@@ -345,9 +340,7 @@ RTBCategoriesMappingTest::set_expected_categories(
 
 template<typename TestCase>
 void
-RTBCategoriesMappingTest::prepare_request(
-  OpenRTBRequest& request,
-  const TestCase& test_case)
+RTBCategoriesMappingTest::prepare_request(OpenRTBRequest& request, const TestCase& test_case)
 {
   request.
     referer(fetch_string("SEARCH")).
@@ -361,10 +354,7 @@ RTBCategoriesMappingTest::prepare_request(
 
   if (test_case.bcat)
   {
-    set_categories(
-      test_case.bcat,
-      request,
-      &OpenRTBRequest::bcat);
+    set_categories(test_case.bcat, request, &OpenRTBRequest::bcat);
   }
 
   for (size_t slot = 0; slot < countof(test_case.banners); ++slot)
@@ -388,10 +378,10 @@ RTBCategoriesMappingTest::prepare_checker(
     OpenRTBResponseChecker::Expected e;
     if (test_case.bids[slot].cc_id)
     {
-      unsigned long cc_id = fetch_int(
-        std::string("CREATIVEIDS/") + test_case.bids[slot].cc_id);
+      unsigned long cc_id = fetch_int(std::string("CREATIVEIDS/") + test_case.bids[slot].cc_id);
       e.adid(cc_id);
     }
+
     if (test_case.bids[slot].visual_categories)
     {
       set_expected_categories(
@@ -404,8 +394,8 @@ RTBCategoriesMappingTest::prepare_checker(
     {
        e.attr_exist(false);
     }
-    if (test_case.bids[slot].content_categories &&
-      (strcmp(test_case.source, BODY_OPENX) == 0))
+
+    if (test_case.bids[slot].content_categories && (strcmp(test_case.source, BODY_OPENX) == 0))
     {
       set_expected_categories(
         test_case.bids[slot].content_categories,
@@ -432,10 +422,10 @@ RTBCategoriesMappingTest::prepare_checker(
     OpenRTBResponseChecker::Expected e;
     if (test_case.bids[slot].cc_id)
     {
-      unsigned long cc_id = fetch_int(
-        std::string("CREATIVEIDS/") + test_case.bids[slot].cc_id);
+      unsigned long cc_id = fetch_int(std::string("CREATIVEIDS/") + test_case.bids[slot].cc_id);
       e.adid(cc_id);
     }
+
     if (test_case.bids[slot].cat)
     {
       set_expected_categories(
@@ -448,6 +438,7 @@ RTBCategoriesMappingTest::prepare_checker(
     {
       e.cat_exist(false);
     }
+
     if (test_case.bids[slot].fmt != FIELD_NOT_EXIST)
     {
       e.fmt(test_case.bids[slot].fmt);
@@ -461,8 +452,7 @@ RTBCategoriesMappingTest::prepare_checker(
 }
 
 template<typename Traits, typename CaseType, size_t Cases>
-void RTBCategoriesMappingTest::perform_case_(
-  const CaseType (&cases)[Cases])
+void RTBCategoriesMappingTest::perform_case_(const CaseType (&cases)[Cases])
 {
   AdClient client(AdClient::create_nonoptin_user(this));
 
@@ -481,8 +471,7 @@ void RTBCategoriesMappingTest::perform_case_(
     prepare_checker(expected, cases[i]);
 
     NOSTOP_FAIL_CONTEXT(
-      typename Traits::Checker(
-        client, expected).check(),
+      typename Traits::Checker(client, expected).check(),
       strof(i+1) + ". " + cases[i].description);
   }
 }
@@ -490,25 +479,15 @@ void RTBCategoriesMappingTest::perform_case_(
 bool
 RTBCategoriesMappingTest::run_test()
 {
-  AUTOTEST_CASE(
-    perform_case_<RTBTraits>(TEST1),
-    "OpenRTB single slot requests");
+  AUTOTEST_CASE(perform_case_<RTBTraits>(TEST1), "OpenRTB single slot requests");
 
-  AUTOTEST_CASE(
-    perform_case_<RTBTraits>(ALLYES_TEST1),
-    "OpenRTB single slot requests");
+  AUTOTEST_CASE(perform_case_<RTBTraits>(ALLYES_TEST1), "OpenRTB single slot requests");
 
-  AUTOTEST_CASE(
-    perform_case_<RTBTraits>(TEST2),
-    "OpenRTB multi-slot requests");
+  AUTOTEST_CASE(perform_case_<RTBTraits>(TEST2), "OpenRTB multi-slot requests");
 
-  AUTOTEST_CASE(
-    perform_case_<RTBTraits>(ALLYES_TEST2),
-    "OpenRTB multi-slot requests");
+  AUTOTEST_CASE(perform_case_<RTBTraits>(ALLYES_TEST2), "OpenRTB multi-slot requests");
 
-  AUTOTEST_CASE(
-    perform_case_<RTBTraits>(TEST2_4),
-    "OpenRTB multi-slot requests");
+  AUTOTEST_CASE(perform_case_<RTBTraits>(TEST2_4), "OpenRTB multi-slot requests");
 
   return true;
 }

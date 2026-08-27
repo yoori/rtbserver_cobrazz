@@ -56,9 +56,7 @@ namespace AdServer::Passback
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    RequestInfoFiller(
-      Logging::Logger* logger,
-      CommonModule* common_module)
+    RequestInfoFiller(Logging::Logger* logger, CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     void
@@ -89,9 +87,7 @@ namespace AdServer::Passback
 
   private:
     void
-    cookies_processing_(
-      PassbackInfo& passback_info,
-      const HTTP::SubHeaderList& headers) const
+    cookies_processing_(PassbackInfo& passback_info, const HTTP::SubHeaderList& headers) const
       /*throw(InvalidParamException, Exception)*/;
   };
 } /*Passback*/

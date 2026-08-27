@@ -88,14 +88,15 @@ sub _parse_line {
         die "Invalid line $self->{line_count} field name $1";
       }
     }
-    else 
+    else
     {
       die "Invalid line $self->{line_count} of the config file $self->{file_path}";
     }
   }
+
   if (!defined($count))
   {
-    die "Invalid line $self->{line_count} count field absent";    
+    die "Invalid line $self->{line_count} count field absent";
   }
   return ($time_from, $time_to, $minimum_visits, $count, $channel_type);
 }

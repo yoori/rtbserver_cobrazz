@@ -54,7 +54,7 @@ namespace FrontendCommons
       scheduler_(new Generics::Planner(active_object_callback_)),
       task_runner_(ReferenceCounting::add_ref(task_runner))
   {
-    if(task_runner_.in() == 0)
+    if (task_runner_.in() == 0)
     {
       try
       {
@@ -64,8 +64,7 @@ namespace FrontendCommons
       {
         Stream::Error ostr;
         ostr << "TaskScheduler::TaskScheduler(): "
-          << "Can't create TaskRunner. eh::Exception caught. "
-          << ": " << ex.what() << ".";
+          << "Can't create TaskRunner. eh::Exception caught. " << ": " << ex.what() << ".";
         throw Exception(ostr);
       }
     }
@@ -79,8 +78,7 @@ namespace FrontendCommons
     {
       Stream::Error ostr;
       ostr << "TaskScheduler::TaskScheduler(): "
-        << "CompositeActiveObject::Exception caught. "
-        << ": " << ex.what() << ".";
+        << "CompositeActiveObject::Exception caught. " << ": " << ex.what() << ".";
       throw Exception(ostr);
     }
   }
@@ -101,8 +99,7 @@ namespace FrontendCommons
 
   inline
   void
-  TaskScheduler::schedule(
-    Generics::Goal* task, const Generics::Time& time)
+  TaskScheduler::schedule(Generics::Goal* task, const Generics::Time& time)
     /*throw(Exception)*/
   {
     try
@@ -112,9 +109,7 @@ namespace FrontendCommons
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "TaskScheduler::schedule(): "
-        << "eh::Exception caught. "
-        << ": " << ex.what() << ".";
+      ostr << "TaskScheduler::schedule(): " << "eh::Exception caught. " << ": " << ex.what() << ".";
       throw Exception(ostr);
     }
   }

@@ -1,10 +1,7 @@
 
 #include "ChannelInventoryEstimLevelDown.hpp"
 
-REFLECT_UNIT(ChannelInventoryEstimLevelDown) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelInventoryEstimLevelDown) ("Statistics", AUTO_TEST_SLOW);
 
 namespace {
   typedef AutoTest::NSLookupRequest NSLookupRequest;
@@ -67,14 +64,9 @@ ChannelInventoryEstimLevelDown::run_test()
         AutoTest::SCE_ENTRY).check(),
       "trigger_channels");
 
-    user.process_request(NSLookupRequest().
-                         debug_time(base_time + 61*60));
+    user.process_request(NSLookupRequest(). debug_time(base_time + 61*60));
 
-    FAIL_CONTEXT(AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn,
-          1,
-          stats)).check(),
+    FAIL_CONTEXT(AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, 1, stats)).check(),
       "1 hour 1 munute check");
   }
 
@@ -120,9 +112,7 @@ ChannelInventoryEstimLevelDown::run_test()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "1 hour 2 munutes check");
   }
 
@@ -190,9 +180,7 @@ ChannelInventoryEstimLevelDown::run_test()
 
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "1 hour 2 munutes check");
   }
 

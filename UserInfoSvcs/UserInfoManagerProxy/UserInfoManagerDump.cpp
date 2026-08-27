@@ -13,9 +13,7 @@ namespace AdServer::UserInfoSvcs::UserInfoManagerDump
     template<typename Integer>
     void write_integer(std::ostream& out, Integer value)
     {
-      out.write(
-        reinterpret_cast<const char*>(&value),
-        static_cast<std::streamsize>(sizeof(value)));
+      out.write(reinterpret_cast<const char*>(&value), static_cast<std::streamsize>(sizeof(value)));
       if (!out)
       {
         throw std::runtime_error("failed to write dump file");
@@ -25,9 +23,7 @@ namespace AdServer::UserInfoSvcs::UserInfoManagerDump
     template<typename Integer>
     bool read_integer(std::istream& in, Integer& value)
     {
-      in.read(
-        reinterpret_cast<char*>(&value),
-        static_cast<std::streamsize>(sizeof(value)));
+      in.read(reinterpret_cast<char*>(&value), static_cast<std::streamsize>(sizeof(value)));
       return static_cast<bool>(in);
     }
 

@@ -75,8 +75,7 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
       }
 
       configuration_.reset(
-        new UserInfoControllerConfigType(
-          ad_configuration->UserInfoControllerConfig()));
+        new UserInfoControllerConfigType(ad_configuration->UserInfoControllerConfig()));
     }
     catch (const xml_schema::parsing& ex)
     {
@@ -105,15 +104,9 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
       std::string(config().pid_file()));
 
     Logging::ActiveObjectCallbackImpl_var callback(
-      new Logging::ActiveObjectCallbackImpl(
-        logger(),
-        "UserInfoControllerApp",
-        ASPECT));
+      new Logging::ActiveObjectCallbackImpl(logger(), "UserInfoControllerApp", ASPECT));
 
-    controller_ = new AdServer::UserInfoSvcs::UserInfoControllerImpl(
-      callback,
-      logger(),
-      config());
+    controller_ = new AdServer::UserInfoSvcs::UserInfoControllerImpl(callback, logger(), config());
 
     grpc_adapter_ = new AdServer::UserInfoSvcs::UserInfoControllerGrpc(
       controller_,
@@ -144,8 +137,7 @@ UserInfoControllerApp_::main(int& argc, char** argv) noexcept
     }
     else
     {
-      std::cerr << FUN << ": caught UserInfoControllerApp_::Exception: " <<
-        ex.what() << '\n';
+      std::cerr << FUN << ": caught UserInfoControllerApp_::Exception: " << ex.what() << '\n';
     }
   }
   catch (const eh::Exception& ex)

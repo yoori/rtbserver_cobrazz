@@ -4,9 +4,7 @@
 
 namespace Declaration
 {
-  BaseTemplate::BaseTemplate(
-    const char* name,
-    unsigned long args_count_val)
+  BaseTemplate::BaseTemplate(const char* name, unsigned long args_count_val)
     noexcept
     : BaseType(name),
       args_count_(args_count_val)
@@ -25,11 +23,10 @@ namespace Declaration
   }
 
   CompleteTemplateDescriptor_var
-  BaseTemplate::complete_template_descriptor(
-    const BaseDescriptorList& args) const
+  BaseTemplate::complete_template_descriptor(const BaseDescriptorList& args) const
     /*throw(InvalidParam)*/
   {
-    if(args.size() != args_count_)
+    if (args.size() != args_count_)
     {
       std::ostringstream ostr;
       ostr << "can't init template descriptor - incorrect number of arguments: " <<
@@ -39,11 +36,9 @@ namespace Declaration
 
     std::ostringstream name_ostr;
     name_ostr << name() << "<";
-    for(BaseDescriptorList::const_iterator dit =
-          args.begin();
-        dit != args.end(); ++dit)
+    for (BaseDescriptorList::const_iterator dit = args.begin(); dit != args.end(); ++dit)
     {
-      if(dit != args.begin())
+      if (dit != args.begin())
       {
         name_ostr << ",";
       }

@@ -6,21 +6,14 @@
 #include <Commons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserActionProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void
-  print_user_action_profile(
-    std::ostream& out,
-    const UserActionProfileReader& reader)
+  print_user_action_profile(std::ostream& out, const UserActionProfileReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -47,7 +40,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, USER_ACTION_TABLE_COLUMNS[i]);
     }
@@ -57,7 +50,7 @@ namespace RequestInfoSvcs
     std::string prefix;
     std::string records_separator;
 
-    if(align)
+    if (align)
     {
       records_separator = " ";
     }
@@ -69,7 +62,7 @@ namespace RequestInfoSvcs
 
     std::ostringstream action_markers_str;
 
-    for(UserActionProfileReader::action_markers_Container::const_iterator it =
+    for (UserActionProfileReader::action_markers_Container::const_iterator it =
           user_action_reader.action_markers().begin();
         it != user_action_reader.action_markers().end(); ++it)
     {
@@ -84,7 +77,7 @@ namespace RequestInfoSvcs
 
     std::ostringstream wait_actions_str;
 
-    for(UserActionProfileReader::wait_actions_Container::const_iterator it =
+    for (UserActionProfileReader::wait_actions_Container::const_iterator it =
           user_action_reader.wait_actions().begin();
         it != user_action_reader.wait_actions().end(); ++it)
     {
@@ -100,7 +93,7 @@ namespace RequestInfoSvcs
     std::ostringstream custom_wait_actions_str;
     std::ostringstream custom_done_actions_str;
 
-    for(UserActionProfileReader::custom_action_markers_Container::const_iterator it =
+    for (UserActionProfileReader::custom_action_markers_Container::const_iterator it =
           user_action_reader.custom_action_markers().begin();
         it != user_action_reader.custom_action_markers().end(); ++it)
     {
@@ -112,14 +105,12 @@ namespace RequestInfoSvcs
         ", referer = '" << (*it).referer() << "'"
         ", order_id = " << (*it).order_id() <<
         ", action_value = " << (*it).action_value() <<
-        ", time = " << Generics::Time((*it).time()).gm_ft() <<
-        ", ccg_ids = ";
-      Algs::print(custom_action_markers_str,
-       (*it).ccg_ids().begin(), (*it).ccg_ids().end(), ",");
+        ", time = " << Generics::Time((*it).time()).gm_ft() << ", ccg_ids = ";
+      Algs::print(custom_action_markers_str, (*it).ccg_ids().begin(), (*it).ccg_ids().end(), ",");
       custom_action_markers_str << " ]";
     }
 
-    for(UserActionProfileReader::done_impressions_Container::const_iterator
+    for (UserActionProfileReader::done_impressions_Container::const_iterator
           it = user_action_reader.done_impressions().begin();
         it != user_action_reader.done_impressions().end(); ++it)
     {
@@ -131,7 +122,7 @@ namespace RequestInfoSvcs
         ", request_id = " << (*it).request_id() << " ]";
     }
 
-    for(UserActionProfileReader::custom_done_actions_Container::const_iterator
+    for (UserActionProfileReader::custom_done_actions_Container::const_iterator
           it = user_action_reader.custom_done_actions().begin();
         it != user_action_reader.custom_done_actions().end(); ++it)
     {
@@ -151,5 +142,4 @@ namespace RequestInfoSvcs
     table.add_row(row);
     table.dump(out);
   }
-}
 }

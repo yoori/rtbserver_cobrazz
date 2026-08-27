@@ -86,8 +86,7 @@ namespace AdServer::CampaignSvcs
 
       ~BatchStatsGuard() noexcept
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
@@ -173,9 +172,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    pack_revenue_decimal(
-      const RevenueDecimal& source,
-      pb::DecimalInfo& target)
+    pack_revenue_decimal(const RevenueDecimal& source, pb::DecimalInfo& target)
     {
       target.set_value(pack_oct_seq(CorbaAlgs::pack_decimal<RevenueDecimal>(source)));
     }
@@ -515,14 +512,17 @@ namespace AdServer::CampaignSvcs
       {
         assign_string(target.ssp_tag_id, source.ssp_tag_id());
       }
+
       if (source.has_ssp_ctr())
       {
         target.ssp_ctr = source.ssp_ctr();
       }
+
       if (source.has_ssp_viewability())
       {
         target.ssp_viewability = source.ssp_viewability();
       }
+
       if (source.has_ssp_vtr())
       {
         target.ssp_vtr = source.ssp_vtr();
@@ -756,15 +756,13 @@ namespace AdServer::CampaignSvcs
         target_contract->set_date(contract.contract_info.date);
         target_contract->set_type(contract.contract_info.type);
         target_contract->set_vat_included(contract.contract_info.vat_included);
-        target_contract->set_ord_contract_id(
-          contract.contract_info.ord_contract_id);
+        target_contract->set_ord_contract_id(contract.contract_info.ord_contract_id);
         target_contract->set_ord_ado_id(contract.contract_info.ord_ado_id);
         target_contract->set_subject_type(contract.contract_info.subject_type);
         target_contract->set_action_type(contract.contract_info.action_type);
         target_contract->set_agent_acting_for_publisher(
           contract.contract_info.agent_acting_for_publisher);
-        target_contract->set_contract_parent_contract_id(
-          contract.contract_info.parent_contract_id);
+        target_contract->set_contract_parent_contract_id(contract.contract_info.parent_contract_id);
         target_contract->set_client_id(contract.contract_info.client_id);
         target_contract->set_client_name(contract.contract_info.client_name);
         target_contract->set_client_legal_form(contract.contract_info.client_legal_form);
@@ -1025,9 +1023,7 @@ namespace AdServer::CampaignSvcs
       pack_revenue_decimal(
         source.auction_prop_probability_share,
         *target.mutable_auction_prop_probability_share());
-      pack_revenue_decimal(
-        source.auction_random_share,
-        *target.mutable_auction_random_share());
+      pack_revenue_decimal(source.auction_random_share, *target.mutable_auction_random_share());
       pack_revenue_decimal(source.cost_coef, *target.mutable_cost_coef());
       target.set_tag_pricings_timestamp(pack_time(source.tag_pricings_timestamp));
       target.set_timestamp(pack_time(source.timestamp));
@@ -1128,10 +1124,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    pack_config(
-      const CampaignConfig& source,
-      bool geo_channels,
-      pb::CampaignConfig& target)
+    pack_config(const CampaignConfig& source, bool geo_channels, pb::CampaignConfig& target)
     {
       for (const auto& src : source.app_formats)
       {
@@ -1170,9 +1163,7 @@ namespace AdServer::CampaignSvcs
         pack_revenue_decimal(account.commision, *item->mutable_commision());
         pack_revenue_decimal(account.budget, *item->mutable_budget());
         pack_revenue_decimal(account.paid_amount, *item->mutable_paid_amount());
-        pack_config_ids(
-          account.walled_garden_accounts,
-          item->mutable_walled_garden_accounts());
+        pack_config_ids(account.walled_garden_accounts, item->mutable_walled_garden_accounts());
         item->set_auction_rate(static_cast<unsigned long>(account.auction_rate));
         item->set_use_pub_pixels(account.use_pub_pixels);
         item->set_pub_pixel_optin(account.pub_pixel_optin);
@@ -1518,12 +1509,7 @@ namespace AdServer::CampaignSvcs
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::ReadyRequest,
-          pb::ReadyResponse,
-          ready,
-          co_ready,
-          true),
+        MAKE_DISTRIBUTED_GRPC_CORO_CALL(pb::ReadyRequest, pb::ReadyResponse, ready, co_ready, true),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::ProgressCommentRequest,
           pb::ProgressCommentResponse,
@@ -2009,10 +1995,7 @@ namespace AdServer::CampaignSvcs
     co_return; \
   }
 
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    ready,
-    pb::ReadyRequest,
-    pb::ReadyResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(ready, pb::ReadyRequest, pb::ReadyResponse)
   DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
     progress_comment,
     pb::ProgressCommentRequest,
@@ -2065,10 +2048,7 @@ namespace AdServer::CampaignSvcs
     consider_web_operation,
     pb::ConsiderWebOperationRequest,
     pb::ConsiderWebOperationResponse)
-  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(
-    get_config,
-    pb::GetConfigRequest,
-    pb::GetConfigResponse)
+  DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER(get_config, pb::GetConfigRequest, pb::GetConfigResponse)
 
 #undef DEFINE_CAMPAIGN_MANAGER_GRPC_CORO_WRAPPER
 
@@ -2532,8 +2512,7 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      CampaignManagerCore::OptOperation operation =
-        CampaignManagerCore::OptOperation::STATUS;
+      CampaignManagerCore::OptOperation operation = CampaignManagerCore::OptOperation::STATUS;
       switch(request.operation())
       {
       case pb::OPT_OPERATION_IN:

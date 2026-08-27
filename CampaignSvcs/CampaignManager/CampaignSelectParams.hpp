@@ -11,14 +11,11 @@
 
 #include "CampaignConfig.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   using namespace AdInstances;
 
-  using FreqCapIdSet =
-    Generics::MonoUnorderedSet<unsigned long>;
+  using FreqCapIdSet = Generics::MonoUnorderedSet<unsigned long>;
 
   struct SeqOrder
   {
@@ -26,13 +23,11 @@ namespace CampaignSvcs
     unsigned long imps;
   };
 
-  using SeqOrderMap =
-    Generics::MonoMap<unsigned long, SeqOrder>;
+  using SeqOrderMap = Generics::MonoMap<unsigned long, SeqOrder>;
 
   struct CampaignSelectParams: public ReferenceCounting::DefaultImpl<>
   {
-    using CampaignImpsMap =
-      Generics::MonoMap<unsigned long, unsigned long>;
+    using CampaignImpsMap = Generics::MonoMap<unsigned long, unsigned long>;
 
     CampaignSelectParams(
       bool profiling_available_val,
@@ -149,5 +144,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::SmartPtr<CampaignSelectParams> CampaignSelectParams_var;
   typedef ReferenceCounting::ConstPtr<CampaignSelectParams> CCampaignSelectParams_var;
-}
 }

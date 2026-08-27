@@ -1,10 +1,7 @@
 
 #include "UrlTriggerTypeTest.hpp"
 
-REFLECT_UNIT(UrlTriggerTypeTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(UrlTriggerTypeTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::AdClient AdClient;

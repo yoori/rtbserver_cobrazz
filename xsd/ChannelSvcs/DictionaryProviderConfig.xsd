@@ -1,8 +1,8 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -52,7 +52,7 @@
     </xsd:sequence>
     <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="threads" type="xsd:positiveInteger" default="1"/>
-    
+
   </xsd:complexType>
 
   <xsd:complexType name="DictionaryType">

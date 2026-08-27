@@ -8,8 +8,8 @@ use DB::Util;
 sub get_site_links_
 {
   my ($self) = @_;
-  my @links = map 
-    { site_id => $_->{site_id} }, 
+  my @links = map
+    { site_id => $_->{site_id} },
       values %{$self->{publishers_}};
   return \@links;
 }
@@ -17,7 +17,7 @@ sub get_site_links_
 sub create_publishers_
 {
   my ($self, $args) = @_;
-  
+
   foreach my $p (@$args)
   {
     my %pub_args;
@@ -27,19 +27,19 @@ sub create_publishers_
 
     if (defined $p->{site})
     {
-      $pub_args{account_id} = 
+      $pub_args{account_id} =
           $self->{publishers_}{$p->{site}}->{account_id};
-      $pub_args{site_id} = 
+      $pub_args{site_id} =
           $self->{publishers_}{$p->{site}}->{site_id};
     }
     elsif (defined $p->{account})
     {
-      $pub_args{account_id} = 
+      $pub_args{account_id} =
         $self->{publishers_}{$p->{account}}->{account_id};
     }
     $pub_args{size_id} = $self->{size_} if defined $self->{size_};
 
-    my $publisher = $self->{ns_}->create(Publisher => \%pub_args);    
+    my $publisher = $self->{ns_}->create(Publisher => \%pub_args);
     $self->{publishers_}->{$p->{name}} = $publisher;
     $self->{ns_}->output("CPM/" . $p->{name}, $p->{cpm});
     $self->{ns_}->output("PUBLISHER/" . $p->{name}, $publisher->{account_id});
@@ -61,7 +61,7 @@ sub create_display_campaign_
   my $campaign = $self->{ns_}->create(DisplayCampaign => {
     name => 'Campaign',
     account_id => $advertiser,
-    channel_id => 
+    channel_id =>
       DB::BehavioralChannel->blank(
         account_id => $advertiser,
         name => 'Channel',
@@ -88,13 +88,13 @@ sub create_text_
   my %campaigns;
   foreach my $c (@$args)
   {
-    die  $self->{ns_}->namespace . ". Campaign '$c->{campaign}' is undefined!" 
+    die  $self->{ns_}->namespace . ". Campaign '$c->{campaign}' is undefined!"
       if defined $c->{campaign} and not exists $campaigns{$c->{campaign}};
 
     my $head_campaign;
     $head_campaign = $campaigns{$c->{campaign}} if defined $c->{campaign};
-    my $advertiser = defined $head_campaign? 
-      $head_campaign->{account_id}: 
+    my $advertiser = defined $head_campaign?
+      $head_campaign->{account_id}:
          $self->{ns_}->create(Account => {
            name => 'Advertiser',
            role_id => DB::Defaults::instance()->advertiser_role,
@@ -107,11 +107,11 @@ sub create_text_
       name => 'Channel-' . $c->{name},
       account_id => $advertiser,
       keyword_list => $keyword,
-      channel_type => 
+      channel_type =>
         defined $c->{type} && $c->{type} eq 'K'? 'K': 'B',
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(
-          trigger_type => 'P', 
+          trigger_type => 'P',
           time_to => 0)]));
 
     my $campaign;
@@ -123,7 +123,7 @@ sub create_text_
     $cmp_args{template_id} = DB::Defaults::instance()->text_template;
     $cmp_args{site_links} = $self->get_site_links_();
     $cmp_args{campaigncreativegroup_budget} = $c->{budget};
-    $cmp_args{campaigncreativegroup_daily_budget}= $c->{daily_budget} 
+    $cmp_args{campaigncreativegroup_daily_budget}= $c->{daily_budget}
       if defined $c->{daily_budget};
     $cmp_args{campaign_max_pub_share} = $c->{share}
       if not defined $head_campaign;
@@ -167,11 +167,11 @@ sub new
   $self->{publishers_} = {};
   $self->{size_} = $ns->create(CreativeSize => {
     name => "Text",
-    max_text_creatives => $args->{max_text_creatives}}) 
+    max_text_creatives => $args->{max_text_creatives}})
       if defined $args->{max_text_creatives};
 
   $self->create_publishers_($args->{publishers});
-  $self->create_display_campaign_($args->{display}) 
+  $self->create_display_campaign_($args->{display})
      if (defined $args->{display});
   $self->create_text_($args->{text})
      if (defined $args->{text});
@@ -195,7 +195,7 @@ sub share_expiring
   my $case = new MaxPublisherShareTest::TestCase(
     $ns, "EXPIRE",
     { publishers => [{name => '1', cpm => 0}],
-      display => 
+      display =>
         { cpm => 1000, budget => 10, share => 0.1}});
 }
 
@@ -204,13 +204,13 @@ sub three_sites_daily_budget
   my ($self, $ns) = @_;
   my $case = new MaxPublisherShareTest::TestCase(
     $ns, "3SITES",
-    { publishers => 
+    { publishers =>
         [ { name => '1', cpm => 0 },
           { name => '2', cpm => 0 },
           { name => '3', cpm => 0, account => '1' } ],
-      display => 
+      display =>
         { cpm => 1000, budget => 10000,
-          daily_budget => 10, share => 0.1}});  
+          daily_budget => 10, share => 0.1}});
 }
 
 sub text
@@ -220,9 +220,9 @@ sub text
   my $case = new MaxPublisherShareTest::TestCase(
     $ns, "TEXT",
     { max_text_creatives => 3,
-      publishers => 
+      publishers =>
         [ { name => '1', cpm => 0 } ],
-      text => 
+      text =>
         [ { name => '1', budget => 0.22, share => 0.3, cpc => 0.06, type => 'K' },
           { name => '2', budget => 0.19, share => 0.3, cpc => 0.059, campaign => '1' },
           { name => '3', budget => 0.10, share => 0.6, cpc => 0.058, type => 'K' } ]});
@@ -235,10 +235,10 @@ sub text_daily
   my $case = new MaxPublisherShareTest::TestCase(
     $ns, "TEXTDAILY",
     { max_text_creatives => 1,
-      publishers => 
-        [ { name => '1', cpm => 0 }, 
+      publishers =>
+        [ { name => '1', cpm => 0 },
           { name => '2', cpm => 0 } ],
-      text => 
+      text =>
         [ { name => '1', budget => undef, daily_budget => 1.0,
             share => 0.1, cpm => 110 } ]});
 }
@@ -246,7 +246,7 @@ sub text_daily
 sub init
 {
   my ($self, $ns) = @_;
-  
+
   $self->share_expiring($ns);
   $self->three_sites_daily_budget($ns);
   $self->text($ns);

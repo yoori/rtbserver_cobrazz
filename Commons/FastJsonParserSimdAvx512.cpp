@@ -14,7 +14,7 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m512i form_feed = _mm512_set1_epi8('\f');
     const __m512i carriage_return = _mm512_set1_epi8('\r');
 
-    while(static_cast<std::size_t>(end - pos) >= 64)
+    while (static_cast<std::size_t>(end - pos) >= 64)
     {
       const __m512i bytes = _mm512_loadu_si512(pos);
       const std::uint64_t space_mask =
@@ -25,7 +25,7 @@ namespace AdServer::Commons::FastJsonParserSimd
         _mm512_cmpeq_epi8_mask(bytes, form_feed) |
         _mm512_cmpeq_epi8_mask(bytes, carriage_return);
 
-      if(space_mask != ~std::uint64_t(0))
+      if (space_mask != ~std::uint64_t(0))
       {
         return pos + __builtin_ctzll(~space_mask);
       }
@@ -42,13 +42,13 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m512i quote = _mm512_set1_epi8('"');
     const __m512i backslash = _mm512_set1_epi8('\\');
 
-    while(static_cast<std::size_t>(end - pos) >= 64)
+    while (static_cast<std::size_t>(end - pos) >= 64)
     {
       const __m512i bytes = _mm512_loadu_si512(pos);
       const std::uint64_t mask =
         _mm512_cmpeq_epi8_mask(bytes, quote) |
         _mm512_cmpeq_epi8_mask(bytes, backslash);
-      if(mask != 0)
+      if (mask != 0)
       {
         return pos + __builtin_ctzll(mask);
       }
@@ -64,11 +64,11 @@ namespace AdServer::Commons::FastJsonParserSimd
   {
     const __m512i quote = _mm512_set1_epi8('"');
 
-    while(static_cast<std::size_t>(end - pos) >= 64)
+    while (static_cast<std::size_t>(end - pos) >= 64)
     {
       const __m512i bytes = _mm512_loadu_si512(pos);
       const std::uint64_t mask = _mm512_cmpeq_epi8_mask(bytes, quote);
-      if(mask != 0)
+      if (mask != 0)
       {
         return pos + __builtin_ctzll(mask);
       }
@@ -88,7 +88,7 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m512i array_open = _mm512_set1_epi8('[');
     const __m512i array_close = _mm512_set1_epi8(']');
 
-    while(static_cast<std::size_t>(end - pos) >= 64)
+    while (static_cast<std::size_t>(end - pos) >= 64)
     {
       const __m512i bytes = _mm512_loadu_si512(pos);
       const std::uint64_t mask =
@@ -97,7 +97,7 @@ namespace AdServer::Commons::FastJsonParserSimd
         _mm512_cmpeq_epi8_mask(bytes, object_close) |
         _mm512_cmpeq_epi8_mask(bytes, array_open) |
         _mm512_cmpeq_epi8_mask(bytes, array_close);
-      if(mask != 0)
+      if (mask != 0)
       {
         return pos + __builtin_ctzll(mask);
       }
@@ -115,14 +115,14 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m512i array_close = _mm512_set1_epi8(']');
     const __m512i object_close = _mm512_set1_epi8('}');
 
-    while(static_cast<std::size_t>(end - pos) >= 64)
+    while (static_cast<std::size_t>(end - pos) >= 64)
     {
       const __m512i bytes = _mm512_loadu_si512(pos);
       const std::uint64_t mask =
         _mm512_cmpeq_epi8_mask(bytes, comma) |
         _mm512_cmpeq_epi8_mask(bytes, array_close) |
         _mm512_cmpeq_epi8_mask(bytes, object_close);
-      if(mask != 0)
+      if (mask != 0)
       {
         return pos + __builtin_ctzll(mask);
       }

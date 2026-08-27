@@ -1900,9 +1900,20 @@ class CatBoostTrainer(object):
           output.write(
             '      "train": ' +
             format(decimal.Decimal(str(item['train'])), 'f') + ',\n')
-          output.write(
-            '      "test": ' +
-            format(decimal.Decimal(str(item['test'])), 'f') + '\n')
+          history_fields = [
+            ('test', format(decimal.Decimal(str(item['test'])), 'f'))]
+          for field in ('train_rows', 'train_clicks', 'train_ctr'):
+            if field in item:
+              value = item[field]
+              history_fields.append((
+                field,
+                str(int(value)) if field != 'train_ctr' else
+                format(decimal.Decimal(str(value)), 'f')))
+          for field_index, (field, value) in enumerate(history_fields):
+            output.write(
+              ('      "' + field + '": ' + value +
+               (',' if field_index + 1 < len(history_fields) else '') +
+               '\n'))
           output.write('    }')
         output.write('\n  ]' if logloss_history else ']')
 

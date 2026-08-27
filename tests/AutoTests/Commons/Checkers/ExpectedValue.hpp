@@ -44,8 +44,7 @@ namespace AutoTest
     /**
      * @brief Assignment operator.
      */
-    ExpValue& operator=(
-      const T& value);
+    ExpValue& operator=(const T& value);
 
     /**
      * @brief Check value set.
@@ -55,8 +54,7 @@ namespace AutoTest
     /**
      * @brief Mark value set.
      */
-    void is_set(
-      bool is_set);
+    void is_set(bool is_set);
 
   private:
     T value_;

@@ -15,7 +15,7 @@ namespace RequestInfoSvcs
     array<uint> tags;
     uint ad_shown;
   };
-  
+
   autoreader TagGroupReader<TagGroupDescriptor>;
 
   autowriter TagGroupWriter<TagGroupDescriptor>;
@@ -35,7 +35,7 @@ namespace RequestInfoSvcs
 
     array<TagGroupReader> tag_groups;
   };
-  
+
   writer UserTagRequestMergeProfileWriter<
     UserTagRequestMergeProfileDescriptor>
   {

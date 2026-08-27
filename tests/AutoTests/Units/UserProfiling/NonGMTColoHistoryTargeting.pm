@@ -11,12 +11,12 @@ sub make_channel
   my ($self, $ns, $prefix, $account, $params) = @_;
 
   my $url = "http://" . make_autotest_name($ns, $prefix) . ".com";
-  
+
   my $channel = $ns->create(DB::BehavioralChannel->blank(
       account_id => $account,
       name => $prefix,
       url_list => $url,
-      behavioral_parameters => 
+      behavioral_parameters =>
         [ DB::BehavioralChannel::BehavioralParameter->blank(%$params) ] ));
 
   $ns->output($prefix . "Ref", $url);
@@ -29,7 +29,7 @@ sub init {
 
   $ns->output("TZColo", DB::Defaults::instance()->remote_isp->{colo_id});
 
-  $ns->output("TZName", 
+  $ns->output("TZName",
     DB::Defaults::instance()->remote_isp->{Account}->{timezone_id}->{tzname});
 
   my $account = $ns->create(Account =>

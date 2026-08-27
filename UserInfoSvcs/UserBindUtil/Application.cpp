@@ -63,19 +63,18 @@ divide_file_to_chunks(
     std::map<unsigned long, ResultChunkFile_var> destination_chunks;
 
     std::string source_file_name;
-    AdServer::PathManip::split_path(
-      source_file_path, 0, &source_file_name, false);
+    AdServer::PathManip::split_path(source_file_path, 0, &source_file_name, false);
 
     std::ifstream source_file(source_file_path, std::ios_base::in);
 
-    if(!source_file.is_open())
+    if (!source_file.is_open())
     {
       Stream::Error ostr;
       ostr << "Can't open source file '" << source_file_path << "'";
       throw Exception(ostr);
     }
 
-    while(!source_file.eof())
+    while (!source_file.eof())
     {
       AdServer::LogProcessing::SpacesString external_id;
       source_file >> external_id;
@@ -84,9 +83,9 @@ divide_file_to_chunks(
 
       size_t distrib_hash;
 
-      if(hash_type == HT_VALUE)
+      if (hash_type == HT_VALUE)
       {
-        if(!String::StringManip::str_to_int(
+        if (!String::StringManip::str_to_int(
           std::string_view(external_id.data(), external_id.size()),
           distrib_hash))
         {
@@ -98,13 +97,12 @@ divide_file_to_chunks(
       else
       {
         // determine result chunk
-        distrib_hash =
-          AdServer::Commons::external_id_distribution_hash(external_id);
+        distrib_hash = AdServer::Commons::external_id_distribution_hash(external_id);
       }
 
       unsigned long chunk_id = distrib_hash % result_chunks_number;
       ResultChunkFile_var& dest_file = destination_chunks[chunk_id];
-      if(!dest_file.in())
+      if (!dest_file.in())
       {
         std::ostringstream dest_dir;
         dest_dir << dst_path_prefix << chunk_id;
@@ -112,10 +110,8 @@ divide_file_to_chunks(
         dest_file = new ResultChunkFile();
         std::string target_file_path = dest_dir.str() + "/" + source_file_name;
         dest_file->file_path = target_file_path;
-        dest_file->file.open(
-          target_file_path.c_str(),
-          std::ios_base::out | std::ios_base::app);
-        if(!dest_file->file.is_open())
+        dest_file->file.open(target_file_path.c_str(), std::ios_base::out | std::ios_base::app);
+        if (!dest_file->file.is_open())
         {
           Stream::Error ostr;
           ostr << "Can't open target file '" << target_file_path << "'";
@@ -128,7 +124,7 @@ divide_file_to_chunks(
       }
 
       dest_file->file << external_id << res_line;
-      if(dest_file->file.fail())
+      if (dest_file->file.fail())
       {
         Stream::Error ostr;
         ostr << "Can't write data to target file '" << dest_file->file_path << "'";
@@ -136,16 +132,15 @@ divide_file_to_chunks(
       }
     }
 
-    for(std::map<unsigned long, ResultChunkFile_var>::iterator chunk_it =
+    for (std::map<unsigned long, ResultChunkFile_var>::iterator chunk_it =
           destination_chunks.begin();
         chunk_it != destination_chunks.end(); ++chunk_it)
     {
       chunk_it->second->file.close();
-      if(chunk_it->second->file.fail())
+      if (chunk_it->second->file.fail())
       {
         Stream::Error ostr;
-        ostr << "Can't write data to target file '" <<
-          chunk_it->second->file_path << "'";
+        ostr << "Can't write data to target file '" << chunk_it->second->file_path << "'";
         throw Exception(ostr);
       }
     }
@@ -174,15 +169,10 @@ public:
   bool
   operator ()(const char* full_path, const struct stat&)
   {
-    String::SubString file_name(
-      Generics::DirSelect::file_name(full_path));
-    if(file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
+    String::SubString file_name(Generics::DirSelect::file_name(full_path));
+    if (file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
     {
-      divide_file_to_chunks(
-        hash_type_,
-        full_path,
-        dst_path_prefix_.c_str(),
-        result_chunks_number_);
+      divide_file_to_chunks(hash_type_, full_path, dst_path_prefix_.c_str(), result_chunks_number_);
       divided_ = true;
     }
 
@@ -214,8 +204,7 @@ divide_to_chunks(
 
   std::string source_file_dir;
   std::string source_file_prefix;
-  AdServer::PathManip::split_path(
-    source_file_path, &source_file_dir, &source_file_prefix, false);
+  AdServer::PathManip::split_path(source_file_path, &source_file_dir, &source_file_prefix, false);
 
   DivideFileFetcher file_fetcher(
     hash_type,
@@ -230,7 +219,7 @@ divide_to_chunks(
     Generics::DirSelect::DSF_NON_RECURSIVE |
       Generics::DirSelect::DSF_REGULAR_ONLY);
 
-  if(!file_fetcher.divided())
+  if (!file_fetcher.divided())
   {
     Stream::Error ostr;
     ostr << "No files with by mask: '" << source_file_path << "'";
@@ -249,15 +238,12 @@ public:
   operator ()(const char* full_path, const struct stat&)
     noexcept
   {
-    String::SubString file_name(
-      Generics::DirSelect::file_name(full_path));
-    if(file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
+    String::SubString file_name(Generics::DirSelect::file_name(full_path));
+    if (file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
     {
       try
       {
-        Generics::Time time(
-          file_name.substr(file_prefix_.length()),
-          USER_BIND_SUFFIX_TIME_FORMAT);
+        Generics::Time time(file_name.substr(file_prefix_.length()), USER_BIND_SUFFIX_TIME_FORMAT);
         max_time_ = std::max(max_time_, time);
       }
       catch(const eh::Exception& ex)
@@ -281,9 +267,7 @@ private:
 class MergeSelector
 {
 public:
-  MergeSelector(
-    const char* result_dir,
-    const char* file_prefix)
+  MergeSelector(const char* result_dir, const char* file_prefix)
     : result_dir_(result_dir),
       file_prefix_(std::string(file_prefix) + "."),
       merged_(false)
@@ -293,9 +277,8 @@ public:
   operator ()(const char* full_path, const struct stat&)
   {
     unsigned long BUF_SIZE = 10*1024*1024;
-    String::SubString file_name(
-      Generics::DirSelect::file_name(full_path));
-    if(file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
+    String::SubString file_name(Generics::DirSelect::file_name(full_path));
+    if (file_name.compare(0, file_prefix_.length(), file_prefix_) == 0)
     {
       merged_ = true;
 
@@ -304,9 +287,9 @@ public:
       Generics::ArrayAutoPtr<unsigned char> buf(BUF_SIZE);
       AdServer::ProfilingCommons::FileReader file_reader(full_path, 1024*1024);
       bool write_eol = false;
-      if(::access(result_file.c_str(), F_OK) != 0)
+      if (::access(result_file.c_str(), F_OK) != 0)
       {
-        if(errno != ENOENT)
+        if (errno != ENOENT)
         {
           Stream::Error ostr;
           ostr << "No access to result file '" << result_file << "'";
@@ -318,14 +301,13 @@ public:
         write_eol = true;
       }
 
-      AdServer::ProfilingCommons::FileWriter file_writer(
-        result_file.c_str(), 1024*1024, true);
-      while(!file_reader.eof())
+      AdServer::ProfilingCommons::FileWriter file_writer(result_file.c_str(), 1024*1024, true);
+      while (!file_reader.eof())
       {
         unsigned long read_size = file_reader.read(buf.get(), BUF_SIZE);
-        if(read_size)
+        if (read_size)
         {
-          if(write_eol)
+          if (write_eol)
           {
             file_writer.write("\n", 1);
             write_eol = false;
@@ -354,7 +336,7 @@ private:
 void
 merge(const char* destination_dir, const StringList& src_files)
 {
-  for(StringList::const_iterator src_file_it = src_files.begin();
+  for (StringList::const_iterator src_file_it = src_files.begin();
       src_file_it != src_files.end(); ++src_file_it)
   {
     std::string source_file_dir;
@@ -365,8 +347,7 @@ merge(const char* destination_dir, const StringList& src_files)
       &source_file_prefix,
       false);
 
-    MergeSelector merge_selector(
-      destination_dir, source_file_prefix.c_str());
+    MergeSelector merge_selector(destination_dir, source_file_prefix.c_str());
 
     Generics::DirSelect::directory_selector(
       source_file_dir.c_str(),
@@ -375,7 +356,7 @@ merge(const char* destination_dir, const StringList& src_files)
       Generics::DirSelect::DSF_NON_RECURSIVE |
         Generics::DirSelect::DSF_REGULAR_ONLY);
 
-    if(!merge_selector.merged())
+    if (!merge_selector.merged())
     {
       Stream::Error ostr;
       ostr << "No files with by mask: '" << *src_file_it << "'";
@@ -401,98 +382,83 @@ main(int argc, char* argv[])
       Generics::AppUtils::equal_name("help") ||
       Generics::AppUtils::short_name("h"),
       opt_help);
-    args.add(
-      Generics::AppUtils::equal_name("chunks-number"),
-      opt_chunks_number);
-    args.add(
-      Generics::AppUtils::equal_name("hash-type"),
-      opt_hash_type);
+    args.add(Generics::AppUtils::equal_name("chunks-number"), opt_chunks_number);
+    args.add(Generics::AppUtils::equal_name("hash-type"), opt_hash_type);
 
     args.parse(argc - 1, argv + 1);
 
     const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-    if(commands.empty() || opt_help.enabled())
+    if (commands.empty() || opt_help.enabled())
     {
       std::cout << USAGE << std::endl;
       return 1;
     }
 
-    Generics::AppUtils::Args::CommandList::const_iterator command_it =
-      commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator command_it = commands.begin();
 
     std::string command = *command_it++;
 
-    if(command == "divide-to-chunks")
+    if (command == "divide-to-chunks")
     {
-      if(command_it == commands.end())
+      if (command_it == commands.end())
       {
-        std::cout << "source file not defined. See usage: " << std::endl <<
-          USAGE << std::endl;
+        std::cout << "source file not defined. See usage: " << std::endl << USAGE << std::endl;
       }
 
       std::string source_file = *command_it++;
 
-      if(command_it == commands.end())
+      if (command_it == commands.end())
       {
-        std::cout << "destination file not defined. See usage: " << std::endl <<
-          USAGE << std::endl;
+        std::cout << "destination file not defined. See usage: " << std::endl << USAGE << std::endl;
       }
 
       std::string dest_file = *command_it++;
 
-      if(!opt_chunks_number.installed())
+      if (!opt_chunks_number.installed())
       {
-        std::cout << "chunks-number is required for divide-to-chunks" <<
-          std::endl;
+        std::cout << "chunks-number is required for divide-to-chunks" << std::endl;
       }
 
       HashType hash_type = HT_STRING;
-      if(opt_hash_type.installed())
+      if (opt_hash_type.installed())
       {
-        if(*opt_hash_type == "string")
+        if (*opt_hash_type == "string")
         {
           hash_type = HT_STRING;
         }
-        else if(*opt_hash_type == "value")
+        else if (*opt_hash_type == "value")
         {
           hash_type = HT_VALUE;
         }
       }
 
-      divide_to_chunks(
-        hash_type,
-        source_file.c_str(),
-        dest_file.c_str(),
-        *opt_chunks_number);
+      divide_to_chunks(hash_type, source_file.c_str(), dest_file.c_str(), *opt_chunks_number);
     }
-    else if(command == "merge")
+    else if (command == "merge")
     {
-      if(command_it == commands.end())
+      if (command_it == commands.end())
       {
-        std::cout << "source file not defined. See usage: " << std::endl <<
-          USAGE << std::endl;
+        std::cout << "source file not defined. See usage: " << std::endl << USAGE << std::endl;
       }
 
       std::string destination_dir = *command_it++;
 
-      if(command_it == commands.end())
+      if (command_it == commands.end())
       {
-        std::cout << "destination file not defined. See usage: " << std::endl <<
-          USAGE << std::endl;
+        std::cout << "destination file not defined. See usage: " << std::endl << USAGE << std::endl;
       }
 
       StringList src_files;
-      while(command_it != commands.end())
+      while (command_it != commands.end())
       {
         src_files.push_back(*command_it);
         ++command_it;
       }
 
-      if(src_files.empty())
+      if (src_files.empty())
       {
-        std::cout << "source file not defined. See usage: " << std::endl <<
-          USAGE << std::endl;
+        std::cout << "source file not defined. See usage: " << std::endl << USAGE << std::endl;
       }
 
       merge(destination_dir.c_str(), src_files);

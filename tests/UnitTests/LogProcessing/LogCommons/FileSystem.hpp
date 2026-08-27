@@ -12,8 +12,7 @@ namespace fs
   public:
 
     void
-    rename(
-      const std::string& old_full_name, const std::string& new_full_name)
+    rename(const std::string& old_full_name, const std::string& new_full_name)
       /*throw(std::exception)*/;
 
     void
@@ -46,16 +45,14 @@ namespace fs
   }
 
   void
-  FileSystem::rename(
-    const std::string& old_full_name, const std::string& new_full_name)
+  FileSystem::rename(const std::string& old_full_name, const std::string& new_full_name)
     /*throw(std::exception)*/
   {
     std::rename(old_full_name.c_str(), new_full_name.c_str());
   }
 
   void
-  FileSystem::create(
-    const std::string& path, const std::string& file_name)
+  FileSystem::create(const std::string& path, const std::string& file_name)
     /*throw(std::exception)*/
   {
     const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;

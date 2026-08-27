@@ -7,10 +7,8 @@ BaseDBUnit::create(unsigned long id)
   typedef AutoTest::ORM::ORMRestorer<Entity> ORMEntity;
   typedef typename Entity::Connection ConnectionType;
 
-  ORMEntity* entity =
-    new ORMEntity(
-      get_conn(ConnectionType()), id);
-  
+  ORMEntity* entity = new ORMEntity(get_conn(ConnectionType()), id);
+
   restorers_.push_front(entity);
 
   return entity;
@@ -23,8 +21,7 @@ BaseDBUnit::create(const Entity& e)
 {
   typedef AutoTest::ORM::ORMRestorer<Entity> ORMEntity;
 
-  ORMEntity* entity =
-    new ORMEntity(e);
+  ORMEntity* entity = new ORMEntity(e);
 
   restorers_.push_front(entity);
 
@@ -39,10 +36,8 @@ BaseDBUnit::create()
   typedef AutoTest::ORM::ORMRestorer<Entity> ORMEntity;
   typedef typename Entity::Connection ConnectionType;
 
-  ORMEntity* entity =
-    new ORMEntity(
-      get_conn(ConnectionType()));
-  
+  ORMEntity* entity = new ORMEntity(get_conn(ConnectionType()));
+
   restorers_.push_front(entity);
 
   return entity;
@@ -50,8 +45,7 @@ BaseDBUnit::create()
 
 inline
 AutoTest::DBC::Conn&
-BaseDBUnit::get_conn(
-  AutoTest::ORM::postgres_connection)
+BaseDBUnit::get_conn(AutoTest::ORM::postgres_connection)
 {
   return pq_conn_;
 }

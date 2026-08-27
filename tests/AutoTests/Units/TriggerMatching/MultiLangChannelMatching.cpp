@@ -1,9 +1,6 @@
 #include "MultiLangChannelMatching.hpp"
 
-REFLECT_UNIT(MultiLangChannelMatching) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(MultiLangChannelMatching) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -406,9 +403,7 @@ MultiLangChannelMatching::run_test()
   {
     AdClient client(AdClient::create_user(this));
 
-    AUTOTEST_CASE(
-      keyword_channels(client, SIMPLE_CASES),
-      "Simple cases");
+    AUTOTEST_CASE(keyword_channels(client, SIMPLE_CASES), "Simple cases");
 
     AUTOTEST_CASE(
       keyword_channels(client, KWD_UNIFICATION),
@@ -418,16 +413,13 @@ MultiLangChannelMatching::run_test()
       keyword_channels(client, NORMALIZATION),
       "Normalization of full and half width characters");
 
-    AUTOTEST_CASE(
-      keyword_channels(client, SEGMENTATION),
-      "Segmentation");
+    AUTOTEST_CASE(keyword_channels(client, SEGMENTATION), "Segmentation");
   }
 
   if (get_config().check_service(CTE_CENTRAL, STE_FRONTEND))
   {
     AdClient client(AdClient::create_user(this));
-    client.change_base_url(
-      get_config().get_service(CTE_CENTRAL, STE_FRONTEND).address.c_str());
+    client.change_base_url(get_config().get_service(CTE_CENTRAL, STE_FRONTEND).address.c_str());
 
     AUTOTEST_CASE(
       keyword_channels(
@@ -440,18 +432,12 @@ MultiLangChannelMatching::run_test()
 
   if (get_config().check_service(CTE_REMOTE2, STE_FRONTEND))
   {
-    AdClient client(
-      AdClient::create_user(
-        this, AutoTest::UF_FRONTEND_MINOR));
+    AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
-    AUTOTEST_CASE(
-      keyword_channels(client, LINGJOIN_REMOTE),
-      "Lingjoin remote");
+    AUTOTEST_CASE(keyword_channels(client, LINGJOIN_REMOTE), "Lingjoin remote");
   }
 
-  AUTOTEST_CASE(
-    url_channels(),
-    "URL cases");
+  AUTOTEST_CASE(url_channels(), "URL cases");
   return true;
 }
 
@@ -470,6 +456,7 @@ MultiLangChannelMatching::keyword_channels(
     {
       request.colo = colo;
     }
+
     if (tests[i].referer_kw)
     {
       if (tests[i].flags & KCE_USE_FT)
@@ -481,10 +468,12 @@ MultiLangChannelMatching::keyword_channels(
         request.referer_kw = fetch_string(tests[i].referer_kw);
       }
     }
+
     if (tests[i].search_kw)
     {
       request.search = fetch_string(tests[i].search_kw);
     }
+
     if (tests[i].flags & KCE_USE_KN)
     {
       request.kn = 1;
@@ -492,10 +481,7 @@ MultiLangChannelMatching::keyword_channels(
     client.process_request(request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        tests[i].expected_channels,
-        client.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, tests[i].expected_channels, client.debug_info.trigger_channels).check(),
       tests[i].description +
         " Expected trigger_channels check");
 

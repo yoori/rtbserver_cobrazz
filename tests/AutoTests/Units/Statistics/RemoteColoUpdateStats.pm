@@ -11,7 +11,7 @@ use File::Spec;
 sub init {
   my ($self, $ns) = @_;
 
-  my $path = 
+  my $path =
      File::Spec->join(dirname($ns->options()->{'local_params_scheme'}),
       '../../../CMS/tests/Configs/devel/envdev.sh');
 
@@ -20,7 +20,7 @@ sub init {
   close(FILE);
 
   my $version = '2.0.0.0';
-  foreach my $row (@array) 
+  foreach my $row (@array)
   {
     if ($row =~ /export VERSION='(\S+)'/)
     {
@@ -29,12 +29,12 @@ sub init {
     }
   }
 
-  my $advertiser = 
-    $ns->create(Advertiser => { 
+  my $advertiser =
+    $ns->create(Advertiser => {
       name => "Advertiser" });
 
-  my $publisher = 
-    $ns->create(Publisher => { 
+  my $publisher =
+    $ns->create(Publisher => {
       name => "Publisher" });
 
   my $keyword = make_autotest_name($ns, "KWD");

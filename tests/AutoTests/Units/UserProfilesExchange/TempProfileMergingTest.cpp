@@ -2,10 +2,7 @@
 #include "TempProfileMergingTest.hpp"
 #include "UserProfilesExchangeCommon.hpp"
 
-REFLECT_UNIT(TempProfileMergingTest) (
-  "UserProfilesExchange",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(TempProfileMergingTest) ("UserProfilesExchange", AUTO_TEST_SLOW);
 
 
 namespace
@@ -20,21 +17,17 @@ bool
 TempProfileMergingTest::run_test()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
     "Remote#1.AdFrontend must set in the XML configuration file");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
     "Remote#1.AdFrontend must set in the XML configuration file");
 
   colo_req_timeout = fetch_int("COLO_EXCHANGE_TIMEOUT") + 1;
 
-  remote1 =
-    get_config().get_service(CTE_REMOTE1, STE_FRONTEND).address;
-  remote2 =
-    get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
+  remote1 = get_config().get_service(CTE_REMOTE1, STE_FRONTEND).address;
+  remote2 = get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
 
   colo1_id = fetch_string("Colo/1");
   colo2_id = fetch_string("Colo/2");
@@ -53,8 +46,7 @@ TempProfileMergingTest::run_test()
 // 6. Wait for S2, H2 appear in Remote#1 history
 void TempProfileMergingTest::merge_on_colo_change()
 {
-  add_descr_phrase("Test 6.1. Merging with tuid on "
-                   "colo change request");
+  add_descr_phrase("Test 6.1. Merging with tuid on " "colo change request");
 
   // Create temporary user
   TemporaryAdClient

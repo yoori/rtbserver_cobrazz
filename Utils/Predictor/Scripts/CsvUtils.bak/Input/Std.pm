@@ -14,7 +14,7 @@ sub get
   my ($self) = @_;
 
   my $line = <STDIN>;
-  if(defined($line))
+  if (defined($line))
   {
     chomp $line;
     $self->{csv_}->parse($line);

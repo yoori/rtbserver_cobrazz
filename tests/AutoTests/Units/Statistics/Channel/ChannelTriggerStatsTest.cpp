@@ -1,10 +1,7 @@
 #include <Generics/Rand.hpp>
 #include "ChannelTriggerStatsTest.hpp"
 
-REFLECT_UNIT(ChannelTriggerStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelTriggerStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -26,15 +23,12 @@ void ChannelTriggerStatsTest::add_stats_(
     {
       key.colo_id(expected[i].colo_id);
     }
+
     if (expected[i].trigger_type)
     {
       key.trigger_type(expected[i].trigger_type);
     }
-    Stat stat(
-      key.
-        channel_trigger_id(
-          fetch_int(expected[i].channel_trigger_id)).
-        sdate(now_));
+    Stat stat(key. channel_trigger_id(fetch_int(expected[i].channel_trigger_id)). sdate(now_));
 
     stat.description("#" + strof(i+1));
     stat.select(pq_conn_);
@@ -46,8 +40,7 @@ void ChannelTriggerStatsTest::add_stats_(
 }
 
 template<size_t Count>
-void ChannelTriggerStatsTest::process_requests_(
-  const ChannelTriggerRequest (&requests)[Count])
+void ChannelTriggerStatsTest::process_requests_(const ChannelTriggerRequest (&requests)[Count])
 {
   for (size_t i = 0; i < Count; ++i)
   {
@@ -57,22 +50,27 @@ void ChannelTriggerStatsTest::process_requests_(
     {
       request.colo = requests[i].colo;
     }
+
     if (requests[i].tid)
     {
       request.tid = requests[i].tid;
     }
+
     if (requests[i].referer_kw)
     {
       request.referer_kw = map_objects(requests[i].referer_kw);
     }
+
     if (requests[i].referer)
     {
       request.referer = map_objects(requests[i].referer);
     }
+
     if (requests[i].search)
     {
       request.search = map_objects(requests[i].search, " ");
     }
+
     if (requests[i].ft)
     {
       request.ft = map_objects(requests[i].ft, "\n");
@@ -99,25 +97,15 @@ bool
 ChannelTriggerStatsTest::run()
 {
 
-  AUTOTEST_CASE(
-    no_tid_case_(),
-    "Requests without tid param");
+  AUTOTEST_CASE(no_tid_case_(), "Requests without tid param");
 
-  AUTOTEST_CASE(
-    with_ad_case_(),
-    "Requests with tid param");
+  AUTOTEST_CASE(with_ad_case_(), "Requests with tid param");
 
-  AUTOTEST_CASE(
-    url_kwd_(),
-    "Separate Page, Search and URL keyword lists");
+  AUTOTEST_CASE(url_kwd_(), "Separate Page, Search and URL keyword lists");
 
-  AUTOTEST_CASE(
-    adsc_6348_(),
-    "ADSC-6348");
+  AUTOTEST_CASE(adsc_6348_(), "ADSC-6348");
 
-  AUTOTEST_CASE(
-    adsc_7962_(),
-    "ADSC-7962");
+  AUTOTEST_CASE(adsc_7962_(), "ADSC-7962");
 
   return true;
 }
@@ -152,8 +140,7 @@ void ChannelTriggerStatsTest::no_tid_case_()
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-    AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
@@ -187,8 +174,7 @@ void ChannelTriggerStatsTest::with_ad_case_()
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-    AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void ChannelTriggerStatsTest::url_kwd_()
@@ -214,17 +200,9 @@ void ChannelTriggerStatsTest::url_kwd_()
   client.process_request(
     NSLookupRequest().
       debug_time(now_).
-      referer_kw(
-        map_objects(
-          "URLKWD/PageTrigger,"
-          "URLKWD/SearchTrigger,"
-          "URLKWD/UrlKwdTrigger")).
+      referer_kw(map_objects("URLKWD/PageTrigger," "URLKWD/SearchTrigger," "URLKWD/UrlKwdTrigger")).
       search(
-        map_objects(
-          "URLKWD/PageTrigger "
-          "URLKWD/SearchTrigger "
-          "URLKWD/UrlKwdTrigger",
-          " ")));
+        map_objects("URLKWD/PageTrigger " "URLKWD/SearchTrigger " "URLKWD/UrlKwdTrigger", " ")));
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -235,8 +213,7 @@ void ChannelTriggerStatsTest::url_kwd_()
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-    AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void ChannelTriggerStatsTest::adsc_6348_()
@@ -262,8 +239,7 @@ void ChannelTriggerStatsTest::adsc_6348_()
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-    AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void ChannelTriggerStatsTest::adsc_7962_()
@@ -301,6 +277,5 @@ void ChannelTriggerStatsTest::adsc_7962_()
 
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
-    AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }

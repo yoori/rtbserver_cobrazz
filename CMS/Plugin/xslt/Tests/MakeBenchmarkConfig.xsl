@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:exsl="http://exslt.org/common"
   xmlns:colo="http://www.foros.com/cms/colocation"
@@ -26,8 +26,8 @@
 </xsl:variable>
 
 
-<xsl:variable name="btest-conf" 
-   select="$xpath/.."/>      
+<xsl:variable name="btest-conf"
+   select="$xpath/.."/>
 
 <xsl:variable name="frontends"
     select="//serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $http-frontend-descriptor]"/>
@@ -82,7 +82,7 @@
               <xsl:with-param name="hosts" select="@host"/>
             </xsl:call-template>
           </xsl:variable>
-          <xsl:for-each select="exsl:node-set($hosts)//host">     
+          <xsl:for-each select="exsl:node-set($hosts)//host">
             <frontend><xsl:value-of select="."/>:<xsl:value-of select="$frontend-port"/></frontend>
           </xsl:for-each>
         </xsl:for-each>

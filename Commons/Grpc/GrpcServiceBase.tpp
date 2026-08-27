@@ -143,9 +143,7 @@ namespace AdServer::Grpc
 
   template<typename Request, typename Response, typename Handler>
   void
-  GrpcServiceBase::register_batch_method(
-    std::string full_method,
-    Handler&& handler)
+  GrpcServiceBase::register_batch_method(std::string full_method, Handler&& handler)
   {
     batch_methods_.emplace(
       std::move(full_method),
@@ -202,8 +200,7 @@ namespace AdServer::Grpc
           auto* request = google::protobuf::Arena::CreateMessage<Request>(&request_arena);
           if (!request->ParseFromString(batch_request.payload()))
           {
-            batch_response.set_status_code(
-              ::grpc::StatusCode::INVALID_ARGUMENT);
+            batch_response.set_status_code(::grpc::StatusCode::INVALID_ARGUMENT);
             batch_response.set_status_message("Unable to parse payload");
             return false;
           }
@@ -229,8 +226,7 @@ namespace AdServer::Grpc
           ::grpc::Status status;
           if (use_arena_for_response)
           {
-            auto* response =
-              google::protobuf::Arena::CreateMessage<Response>(&response_arena);
+            auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
             co_await handler(std::move(request), *response, status);
 
             batch_response.set_status_code(status.error_code());
@@ -335,8 +331,7 @@ namespace AdServer::Grpc
   GrpcAsyncServiceBase<
     ServiceImplType,
     ServiceType,
-    AsyncServiceType>::GrpcAsyncServiceBase(
-      BatchStreamReadOptions batch_stream_read_options)
+    AsyncServiceType>::GrpcAsyncServiceBase(BatchStreamReadOptions batch_stream_read_options)
     : GrpcServiceBase(batch_stream_read_options)
   {
     add_grpc_service(&async_service_);
@@ -496,9 +491,7 @@ namespace AdServer::Grpc
   GrpcAsyncServiceBase<ServiceImplType, ServiceType, AsyncServiceType>::
     register_batch_methods(const Calls& calls)
   {
-    GrpcServiceBase::register_batch_methods(
-      static_cast<ServiceImplType*>(this),
-      calls);
+    GrpcServiceBase::register_batch_methods(static_cast<ServiceImplType*>(this), calls);
   }
 
   template<
@@ -513,11 +506,7 @@ namespace AdServer::Grpc
     std::apply(
       [this, service_impl, completion_queue](const auto&... call)
       {
-        (register_grpc_unary_call(
-          service_impl,
-          &async_service_,
-          call,
-          completion_queue), ...);
+        (register_grpc_unary_call(service_impl, &async_service_, call, completion_queue), ...);
       },
       ServiceImplType::grpc_calls());
 

@@ -6,9 +6,7 @@
 #include "FileRouter.hpp"
 #include "RouteHelpers.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   namespace
   {
@@ -28,12 +26,11 @@ namespace LogProcessing
   RouteRoundRobinHelper::fill_dst_hosts_(const StringList& dest_hosts)
     /*throw(Exception)*/
   {
-    if(dest_hosts.empty())
+    if (dest_hosts.empty())
     {
       throw Exception("List of destination hosts is empty.");
     }
-    for(StringList::const_iterator it = dest_hosts.begin();
-        it != dest_hosts.end(); ++it)
+    for (StringList::const_iterator it = dest_hosts.begin(); it != dest_hosts.end(); ++it)
     {
       dst_map_.insert(std::make_pair(*it, DestHost()));
     }
@@ -43,7 +40,7 @@ namespace LogProcessing
   RouteRoundRobinHelper::bad_host(const std::string& host) noexcept
   {
     DestMap::iterator fnd = dst_map_.find(host);
-    if(fnd != dst_map_.end())
+    if (fnd != dst_map_.end())
     {
       Generics::Time now = Generics::Time::get_time_of_day();
 
@@ -66,8 +63,7 @@ namespace LogProcessing
   }
 
   std::string
-  RouteRoundRobinHelper::get_dest_host(
-    const char* src_file)
+  RouteRoundRobinHelper::get_dest_host(const char* src_file)
     /*throw(NotAvailable)*/
   {
     Generics::Time cur_time;
@@ -75,28 +71,28 @@ namespace LogProcessing
     {
       SyncPolicy::WriteGuard guard(lock_);
 
-      for(size_t i = 0; i < dst_map_.size(); i++)
+      for (size_t i = 0; i < dst_map_.size(); i++)
       {
-        if(!dst_it_->second.available)
+        if (!dst_it_->second.available)
         {
-          if(i == 0)
+          if (i == 0)
           {
             cur_time = Generics::Time::get_time_of_day();
           }
 
-          if(dst_it_->second.last_check_time + host_check_period_ <= cur_time)
+          if (dst_it_->second.last_check_time + host_check_period_ <= cur_time)
           {
             dst_it_->second.available = true;
           }
         }
 
         DestMap::const_iterator res = dst_it_;
-        if(++dst_it_ == dst_map_.end())
+        if (++dst_it_ == dst_map_.end())
         {
           dst_it_ = dst_map_.begin();
         }
 
-        if(res->second.available)
+        if (res->second.available)
         {
           return res->first;
         }
@@ -111,16 +107,11 @@ namespace LogProcessing
   //
   // RouteByNumberHelper
   //
-  RouteByNumberHelper::RouteByNumberHelper(
-    SchedType feed_type,
-    const StringList& dst_hosts)
+  RouteByNumberHelper::RouteByNumberHelper(SchedType feed_type, const StringList& dst_hosts)
     /*throw(Exception)*/
     : RouteBasicHelper(feed_type)
   {
-    std::copy(
-      dst_hosts.begin(),
-      dst_hosts.end(),
-      std::back_insert_iterator<DestHosts>(dst_hosts_));
+    std::copy(dst_hosts.begin(), dst_hosts.end(), std::back_insert_iterator<DestHosts>(dst_hosts_));
   }
 
   std::string
@@ -141,16 +132,13 @@ namespace LogProcessing
   //
   // FileHashDeterminer
   //
-  FileHashDeterminer::FileHashDeterminer(
-    const char* file_name_regexp)
+  FileHashDeterminer::FileHashDeterminer(const char* file_name_regexp)
     /*throw(eh::Exception)*/
     : src_file_name_regexp_(init_hash_regexp_(file_name_regexp))
   {}
 
   bool
-  FileHashDeterminer::get_hash(
-    unsigned long& hash,
-    const char* src_file) const
+  FileHashDeterminer::get_hash(unsigned long& hash, const char* src_file) const
     /*throw(RouteBasicHelper::Exception)*/
   {
     static const char* FUN = "FileHashDeterminer::get_hash()";
@@ -160,7 +148,7 @@ namespace LogProcessing
       const char* file_name = Generics::DirSelect::file_name(src_file);
 
       String::RegEx::Result match_result;
-      if(src_file_name_regexp_.search(match_result, String::SubString(file_name)) &&
+      if (src_file_name_regexp_.search(match_result, String::SubString(file_name)) &&
         match_result.size() > 1)
       {
         return String::StringManip::str_to_int(match_result[1], hash);
@@ -187,10 +175,7 @@ namespace LogProcessing
       String::TextTemplate::Args templ_args;
       templ_args[TemplateParams::HASH] = "(\\d*)";
       Stream::Parser istr(hash_pattern);
-      String::TextTemplate::IStream templ(
-        istr,
-        TemplateParams::MARKER,
-        TemplateParams::MARKER);
+      String::TextTemplate::IStream templ(istr, TemplateParams::MARKER, TemplateParams::MARKER);
 
       return templ.instantiate(templ_args);
     }
@@ -221,7 +206,7 @@ namespace LogProcessing
     try
     {
       unsigned long hash = 0;
-      if(get_hash(hash, src_file))
+      if (get_hash(hash, src_file))
       {
         return dst_hosts_[hash % dst_hosts_.size()];
       }
@@ -264,7 +249,7 @@ namespace LogProcessing
 
     {
       SyncPolicy::WriteGuard lock(host_distr_lock_);
-      if(now > host_distr_load_time_ + distr_reload_period_)
+      if (now > host_distr_load_time_ + distr_reload_period_)
       {
         reload_host_distr = true;
         host_distr_load_time_ = now;
@@ -275,7 +260,7 @@ namespace LogProcessing
       }
     }
 
-    if(reload_host_distr)
+    if (reload_host_distr)
     {
       try
       {
@@ -286,20 +271,19 @@ namespace LogProcessing
       catch(...)
       {}
 
-      if(host_distr.in())
+      if (host_distr.in())
       {
         SyncPolicy::WriteGuard lock(host_distr_lock_);
         host_distr_ = host_distr;
       }
     }
 
-    if(host_distr.in())
+    if (host_distr.in())
     {
       unsigned long hash;
-      if(get_hash(hash, src_file))
+      if (get_hash(hash, src_file))
       {
-        return host_distr->get_host_by_index(
-          hash % host_distr->get_index_limit());
+        return host_distr->get_host_by_index(hash % host_distr->get_index_limit());
       }
       else
       {
@@ -322,8 +306,7 @@ namespace LogProcessing
   {}
 
   std::string
-  RouteHostFromFileNameHelper::get_dest_host(
-    const char* src_file)
+  RouteHostFromFileNameHelper::get_dest_host(const char* src_file)
     noexcept
   {
     try
@@ -331,8 +314,7 @@ namespace LogProcessing
       const char* file_name = Generics::DirSelect::file_name(src_file);
       String::RegEx::Result match_result;
 
-      if(src_file_name_regexp_.search(
-          match_result, String::SubString(file_name)) &&
+      if (src_file_name_regexp_.search(match_result, String::SubString(file_name)) &&
          match_result.size() > 1)
       {
         return std::string(match_result[1].data(), match_result[1].length());
@@ -344,5 +326,3 @@ namespace LogProcessing
     return EMPTY_STRING;
   }
 }
-}
-

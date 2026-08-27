@@ -1,10 +1,7 @@
 
 #include "ProfilesExpirationTest.hpp"
 
-REFLECT_UNIT(ProfilesExpirationTest) (
-  "UserProfiling",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ProfilesExpirationTest) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace
 {
@@ -25,12 +22,10 @@ void ProfilesExpirationTest::check_profiles_exist(
   bool exists,
   bool temp_user)
 {
-  std::string dsc1 =
-    std::string("UIM must ") + (exists ? "" : "not ") + "contain ";
+  std::string dsc1 = std::string("UIM must ") + (exists ? "" : "not ") + "contain ";
   std::string dsc2 = std::string("profile for user '") + uid + "'";
 
-  AutoTest::AdminExistCheck check_empty =
-    exists? AutoTest::AEC_NOT_EXISTS: AutoTest::AEC_EXISTS;
+  AutoTest::AdminExistCheck check_empty = exists? AutoTest::AEC_NOT_EXISTS: AutoTest::AEC_EXISTS;
 
   FAIL_CONTEXT(
     AutoTest::BaseProfileEmptyChecker(
@@ -81,8 +76,7 @@ ProfilesExpirationTest::expired_visits_removal_()
 
   user.process_request(
     NSLRequest().
-      referer_kw(fetch_string("HT/Keyword") + "," +
-        fetch_string("H/Keyword")).
+      referer_kw(fetch_string("HT/Keyword") + "," + fetch_string("H/Keyword")).
       debug_time(two_days_earlier));
 
   {
@@ -116,9 +110,7 @@ ProfilesExpirationTest::expired_visits_removal_()
       debug_time(one_day_earlier));
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      s_ch1 + "P",
-      user.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(s_ch1 + "P", user.debug_info.trigger_channels).check(),
     "match 'S' channel");
 
   std::string uid = user.debug_info.uid.value();
@@ -138,10 +130,7 @@ ProfilesExpirationTest::expired_visits_removal_()
           "\\[ channel_id = " +
           ht_ch1 +
           ", req_visits = 0, visits = 1, weight = 1 \\]").
-        page_history_matches(
-          "\\[ channel_id = " +
-          h_ch2 +
-          ", weight = 1 \\]").
+        page_history_matches("\\[ channel_id = " + h_ch2 + ", weight = 1 \\]").
         page_history_visits("").
         page_session_matches("")).check(),
     "Check base user profile for expected channels");
@@ -184,26 +173,20 @@ ProfilesExpirationTest::user_profiles_removal_(
   Generics::Timer timer;
   timer.start();
 
-  request.debug_time =
-    (debug_time1 - 24*60*60).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
+  request.debug_time = (debug_time1 - 24*60*60).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user1.process_request(request);
 
-  request.debug_time =
-    debug_time1.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
+  request.debug_time = debug_time1.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user1.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      channel_id,
-      user1.debug_info.history_channels).check(),
+    AutoTest::entry_checker(channel_id, user1.debug_info.history_channels).check(),
     "must get expected channel in history_channels debug_info header");
 
   if (!temp_user)
   {
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc_id,
-        user1.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc_id, user1.debug_info.ccid).check(),
       "must got expected ccid");
   }
 
@@ -213,8 +196,7 @@ ProfilesExpirationTest::user_profiles_removal_(
     user1.repeat_request();
   }
 
-  AutoTest::Time debug_time2 =
-    AutoTest::Time() - time2 + TIME_SHIFT;
+  AutoTest::Time debug_time2 = AutoTest::Time() - time2 + TIME_SHIFT;
 
   request.debug_time = (debug_time2 - 24*60*60).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user2.process_request(request, "default colo");
@@ -222,19 +204,16 @@ ProfilesExpirationTest::user_profiles_removal_(
   user2.process_request(request, "default colo");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      channel_id,
-      user2.debug_info.history_channels).check(),
+    AutoTest::entry_checker(channel_id, user2.debug_info.history_channels).check(),
     "must get expected channel in history_channels debug_info header");
 
   if (!temp_user)
   {
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc_id,
-        user2.debug_info.ccid).check(),
+      AutoTest::equal_checker(cc_id, user2.debug_info.ccid).check(),
       "must got expected ccid");
   }
+
   if (remote_case_ && !temp_user)
   {
       user2.set_cookie_value("lc", absent_colo.c_str());
@@ -246,9 +225,7 @@ ProfilesExpirationTest::user_profiles_removal_(
 
   add_descr_phrase("Check profiles exists");
 
-  FAIL_CONTEXT(
-    check_profiles_exist(uid2, true, temp_user),
-    "Check profile#1");
+  FAIL_CONTEXT(check_profiles_exist(uid2, true, temp_user), "Check profile#1");
 
   if (!temp_user)
   {
@@ -276,13 +253,9 @@ ProfilesExpirationTest::user_profiles_removal_(
       "and its deletion greater than expected.", Logging::Logger::WARNING);
   }
 
-  FAIL_CONTEXT(
-    check_profiles_exist(uid1, false, temp_user),
-    "Check profile#2");
+  FAIL_CONTEXT(check_profiles_exist(uid1, false, temp_user), "Check profile#2");
 
-  FAIL_CONTEXT(
-    check_profiles_exist(uid2, true, temp_user),
-    "Check profile#3");
+  FAIL_CONTEXT(check_profiles_exist(uid2, true, temp_user), "Check profile#3");
 
   if (!temp_user)
   {
@@ -311,9 +284,7 @@ ProfilesExpirationTest::run_test()
 {
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_ALL,
-        STE_USER_INFO_MANAGER_CONTROLLER)),
+      get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER_CONTROLLER)),
     "UserInfoManagerController need for this test");
 
   AdClient
@@ -324,9 +295,7 @@ ProfilesExpirationTest::run_test()
     tuser1(TemporaryAdClient::create_user(this)),
     tuser2(TemporaryAdClient::create_user(this));
 
-  AUTOTEST_CASE(
-    expired_visits_removal_(),
-    "Expired visits removal");
+  AUTOTEST_CASE(expired_visits_removal_(), "Expired visits removal");
 
   AUTOTEST_CASE(
     user_profiles_removal_(

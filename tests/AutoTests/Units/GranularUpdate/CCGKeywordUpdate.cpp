@@ -1,9 +1,7 @@
 
 #include "CCGKeywordUpdate.hpp"
 
-REFLECT_UNIT(CCGKeywordUpdate) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(CCGKeywordUpdate) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -26,25 +24,15 @@ CCGKeywordUpdate::tear_down()
 bool
 CCGKeywordUpdate::run()
 {
-  AUTOTEST_CASE(
-    add_ccgkeyword_(),
-    "Add CCGKeyword");
+  AUTOTEST_CASE(add_ccgkeyword_(), "Add CCGKeyword");
 
-  AUTOTEST_CASE(
-    activate_ccgkeyword_(),
-    "Activate CCGKeyword");
+  AUTOTEST_CASE(activate_ccgkeyword_(), "Activate CCGKeyword");
 
-  AUTOTEST_CASE(
-    deactivate_ccgkeyword_(),
-    "Deactivate CCGKeyword");
+  AUTOTEST_CASE(deactivate_ccgkeyword_(), "Deactivate CCGKeyword");
 
-  AUTOTEST_CASE(
-    deactivate_channel_(),
-    "Deactivate keyword channel");
+  AUTOTEST_CASE(deactivate_channel_(), "Deactivate keyword channel");
 
-  AUTOTEST_CASE(
-    change_ccgkeyword_(),
-    "Change CCGKeyword");
+  AUTOTEST_CASE(change_ccgkeyword_(), "Change CCGKeyword");
 
   return true;
 }
@@ -53,8 +41,7 @@ void
 CCGKeywordUpdate::add_ccgkeyword_()
 {
   // Create channel
-  ORM::ORMRestorer<ORM::BehavioralChannel>* channel =
-    create<ORM::BehavioralChannel>();
+  ORM::ORMRestorer<ORM::BehavioralChannel>* channel = create<ORM::BehavioralChannel>();
 
   channel->type = "K";
   channel->visibility = "PRI";
@@ -71,14 +58,10 @@ CCGKeywordUpdate::add_ccgkeyword_()
   channel->params.time_from = 0;
   channel->params.time_to = 3600;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->insert()),
-    "Create channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->insert()), "Create channel");
 
   // CCGKeyword
-  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword =
-    create<ORM::PQ::CCGKeyword>();
+  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword = create<ORM::PQ::CCGKeyword>();
   ccgkeyword->ccg = fetch_int("ADD/CCG");;
   ccgkeyword->original_keyword = fetch_string("ADD/KWD");
   ccgkeyword->status = "A";
@@ -87,10 +70,7 @@ CCGKeywordUpdate::add_ccgkeyword_()
   ccgkeyword->click_url = "http://test.com";
   ccgkeyword->trigger_type = "S";
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccgkeyword->insert()),
-    "Create CCGKeyword");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccgkeyword->insert()), "Create CCGKeyword");
 
   ADD_WAIT_CHECKER(
     "Check changes",
@@ -107,8 +87,7 @@ CCGKeywordUpdate::add_ccgkeyword_()
 void
 CCGKeywordUpdate::activate_ccgkeyword_()
 {
-  unsigned long ccgkeyword_id =
-    fetch_int("ACTIVATE/CCGKeyword");
+  unsigned long ccgkeyword_id = fetch_int("ACTIVATE/CCGKeyword");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -120,15 +99,11 @@ CCGKeywordUpdate::activate_ccgkeyword_()
         AutoTest::AEC_NOT_EXISTS)).check(),
     "Initial check");
 
-  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword =
-    create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
+  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword = create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
 
   ccgkeyword->status = "A";
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccgkeyword->update()),
-    "Update CCGKeyword");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccgkeyword->update()), "Update CCGKeyword");
 
   ADD_WAIT_CHECKER(
     "Chack changes",
@@ -143,8 +118,7 @@ CCGKeywordUpdate::activate_ccgkeyword_()
 void
 CCGKeywordUpdate::deactivate_ccgkeyword_()
 {
-  unsigned long ccgkeyword_id =
-    fetch_int("DEACTIVATE/CCGKeyword");
+  unsigned long ccgkeyword_id = fetch_int("DEACTIVATE/CCGKeyword");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -156,15 +130,11 @@ CCGKeywordUpdate::deactivate_ccgkeyword_()
           ccg_id(fetch_string("DEACTIVATE/CCG")))).check(),
     "Initial check");
 
-  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword =
-    create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
+  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword = create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
 
   ccgkeyword->status = "D";
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccgkeyword->update()),
-    "Update CCGKeyword");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccgkeyword->update()), "Update CCGKeyword");
 
   ADD_WAIT_CHECKER(
     "Check changes",
@@ -179,8 +149,7 @@ CCGKeywordUpdate::deactivate_ccgkeyword_()
 void
 CCGKeywordUpdate::deactivate_channel_()
 {
-  unsigned long ccgkeyword_id =
-    fetch_int("DEACTIVATECHANNEL/CCGKeyword");
+  unsigned long ccgkeyword_id = fetch_int("DEACTIVATECHANNEL/CCGKeyword");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -193,13 +162,10 @@ CCGKeywordUpdate::deactivate_channel_()
     "Initial check");
 
   ORM::ORMRestorer<ORM::PQ::Channel>* channel =
-    create<ORM::PQ::Channel>(
-      fetch_int("DEACTIVATECHANNEL/Channel"));
+    create<ORM::PQ::Channel>(fetch_int("DEACTIVATECHANNEL/Channel"));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->set_display_status(
-        ORM::DS_NOT_LIVE_BY_OIX)),
+    AutoTest::predicate_checker(channel->set_display_status(ORM::DS_NOT_LIVE_BY_OIX)),
     "Deactivate channel");
 
   ADD_WAIT_CHECKER(
@@ -215,8 +181,7 @@ CCGKeywordUpdate::deactivate_channel_()
 void
 CCGKeywordUpdate::change_ccgkeyword_()
 {
-  unsigned long ccgkeyword_id =
-    fetch_int("CHANGE/CCGKeyword");
+  unsigned long ccgkeyword_id = fetch_int("CHANGE/CCGKeyword");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -230,17 +195,13 @@ CCGKeywordUpdate::change_ccgkeyword_()
           original_keyword(fetch_string("CHANGE/KWD")))).check(),
     "Initial check");
 
-  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword =
-    create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
+  ORM::ORMRestorer<ORM::PQ::CCGKeyword>* ccgkeyword = create<ORM::PQ::CCGKeyword>(ccgkeyword_id);
 
   ccgkeyword->max_cpc_bid = fetch_float("CHANGE/NEW_MAXCPC");
   ccgkeyword->click_url = fetch_string("CHANGE/NEW_CLICK");
   ccgkeyword->original_keyword = fetch_string("CHANGE/NEW_KWD");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccgkeyword->update()),
-    "Update CCGKeyword");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccgkeyword->update()), "Update CCGKeyword");
 
   ADD_WAIT_CHECKER(
     "Check changes",

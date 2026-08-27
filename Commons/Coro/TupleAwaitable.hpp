@@ -70,11 +70,10 @@ namespace AdServer::Commons
 
   template<typename... CoroutineTypes>
   bool
-  TupleAwaitable<CoroutineTypes...>::await_suspend(
-    std::coroutine_handle<> continuation)
+  TupleAwaitable<CoroutineTypes...>::await_suspend(std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
-    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    if (const auto* scheduler = current_coroutine_resume_scheduler())
     {
       state_->resume_scheduler = *scheduler;
     }
@@ -85,7 +84,7 @@ namespace AdServer::Commons
     }(std::index_sequence_for<CoroutineTypes...>{});
 
     std::lock_guard<std::mutex> guard(state_->lock);
-    if(state_->remaining == 0)
+    if (state_->remaining == 0)
     {
       return false;
     }
@@ -98,15 +97,14 @@ namespace AdServer::Commons
   auto
   TupleAwaitable<CoroutineTypes...>::await_resume()
   {
-    if(state_->exception)
+    if (state_->exception)
     {
       std::rethrow_exception(std::move(*state_->exception));
     }
 
     return [&]<std::size_t... Indexes>(std::index_sequence<Indexes...>)
     {
-      return std::make_tuple(
-        std::move(*std::get<Indexes>(results_))...);
+      return std::make_tuple(std::move(*std::get<Indexes>(results_))...);
     }(std::index_sequence_for<CoroutineTypes...>{});
   }
 
@@ -119,7 +117,7 @@ namespace AdServer::Commons
     operation.start(
       [this, &operation](std::optional<std::exception_ptr> exception) mutable
     {
-      if(!exception)
+      if (!exception)
       {
         try
         {
@@ -137,26 +135,25 @@ namespace AdServer::Commons
 
   template<typename... CoroutineTypes>
   void
-  TupleAwaitable<CoroutineTypes...>::complete_(
-    std::optional<std::exception_ptr> exception)
+  TupleAwaitable<CoroutineTypes...>::complete_(std::optional<std::exception_ptr> exception)
   {
     bool resume = false;
     {
       std::lock_guard<std::mutex> guard(state_->lock);
-      if(exception && !state_->exception)
+      if (exception && !state_->exception)
       {
         state_->exception = std::move(exception);
       }
 
-      if(--state_->remaining == 0)
+      if (--state_->remaining == 0)
       {
         resume = state_->suspended;
       }
     }
 
-    if(resume)
+    if (resume)
     {
-      if(state_->resume_scheduler)
+      if (state_->resume_scheduler)
       {
         state_->resume_scheduler(state_->continuation);
       }

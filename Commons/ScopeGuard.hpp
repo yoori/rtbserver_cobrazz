@@ -14,8 +14,7 @@ namespace AdServer::Commons
         active_(true)
     {}
 
-    ScopeGuard(ScopeGuard&& other) noexcept(
-      noexcept(Functor(std::move(other.functor_))))
+    ScopeGuard(ScopeGuard&& other) noexcept(noexcept(Functor(std::move(other.functor_))))
       : functor_(std::move(other.functor_)),
         active_(other.active_)
     {
@@ -24,7 +23,7 @@ namespace AdServer::Commons
 
     ~ScopeGuard() noexcept
     {
-      if(active_)
+      if (active_)
       {
         functor_();
       }
@@ -49,7 +48,6 @@ namespace AdServer::Commons
   make_scope_guard(Functor&& functor) noexcept(
     noexcept(ScopeGuard<std::decay_t<Functor>>(std::forward<Functor>(functor))))
   {
-    return ScopeGuard<std::decay_t<Functor>>(
-      std::forward<Functor>(functor));
+    return ScopeGuard<std::decay_t<Functor>>(std::forward<Functor>(functor));
   }
 }

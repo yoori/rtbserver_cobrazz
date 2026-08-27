@@ -18,14 +18,14 @@ namespace AdServer::UserInfoSvcs
 
     unsigned long version_head_size = HistoryUserProfileVersionReader::FIXED_SIZE;
 
-    if(mem_buf->membuf().size() < version_head_size)
+    if (mem_buf->membuf().size() < version_head_size)
     {
       throw Exception("Corrupt header");
     }
 
     HistoryUserProfileVersionReader version_reader(mem_buf->membuf().data(), version_head_size);
 
-    if(version_reader.major_version() != CURRENT_HISTORY_MAJOR_PROFILE_VERSION ||
+    if (version_reader.major_version() != CURRENT_HISTORY_MAJOR_PROFILE_VERSION ||
       version_reader.minor_version() != CURRENT_HISTORY_MINOR_PROFILE_VERSION)
     {
       Generics::SmartMemBuf_var result_mem_buf = Algs::copy_membuf(mem_buf);
@@ -35,7 +35,7 @@ namespace AdServer::UserInfoSvcs
       profile_writer.major_version() = CURRENT_HISTORY_MAJOR_PROFILE_VERSION;
       profile_writer.minor_version() = CURRENT_HISTORY_MINOR_PROFILE_VERSION;
 
-      if(version_reader.major_version() == 1 && version_reader.minor_version() == 0)
+      if (version_reader.major_version() == 1 && version_reader.minor_version() == 0)
       {
         AdServer::UserInfoSvcs_v1::HistoryUserProfileReader profile_reader(
           membuf.data(), membuf.size());
@@ -52,7 +52,7 @@ namespace AdServer::UserInfoSvcs
           profile_writer.url_channels(),
           profile_reader.url_channels());
       }
-      else if(version_reader.major_version() == 2 && version_reader.minor_version() == 0)
+      else if (version_reader.major_version() == 2 && version_reader.minor_version() == 0)
       {
         AdServer::UserInfoSvcs_v320::HistoryUserProfileReader profile_reader(
           membuf.data(), membuf.size());

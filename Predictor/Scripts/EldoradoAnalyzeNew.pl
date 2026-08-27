@@ -57,13 +57,13 @@ sub apply_
   my @act_poses;
   my $count_i = 0;
 
-  while(1)
+  while (1)
   {
     my $next = undef;
     my $cur_rule = $self->sub_rules()->[$rule_i];
     my $rule_check = undef;
 
-    if(DEBUG_APPLY)
+    if (DEBUG_APPLY)
     {
       print STDERR "rule_i = " . $rule_i .
         ", act_i = $act_i" .
@@ -72,19 +72,19 @@ sub apply_
         ", act poses = " . (scalar @act_poses). "\n";
     }
 
-    if(defined($ts_check) &&
+    if (defined($ts_check) &&
       $act_i >= 0 &&
       $acts->[$act_i]->time() < $ts_check)
     {
       my $local_act_i = $act_i - 1;
 
-      while(scalar(@act_poses) > 0)
+      while (scalar(@act_poses) > 0)
       {
         my $rev_rule_act_pos = pop @act_poses;
         $local_act_i = $rev_rule_act_pos->act_i() - 1;
         $rule_i = $rev_rule_act_pos->rule_i();
         $ts_check = $rev_rule_act_pos->ts_check();
-        if($local_act_i >= 0)
+        if ($local_act_i >= 0)
         {
           last;
         }
@@ -92,7 +92,7 @@ sub apply_
 
       $act_i = $local_act_i;
 
-      if($act_i < 0)
+      if ($act_i < 0)
       {
         #print "RET1\n";
         return undef;
@@ -102,7 +102,7 @@ sub apply_
         $next = 1;
       }
 
-      if(DEBUG_APPLY)
+      if (DEBUG_APPLY)
       {
         print STDERR "revert 1: rule_i = " . $rule_i .
           ", act_i = $act_i" .
@@ -115,25 +115,25 @@ sub apply_
       #return undef;
     }
 
-    if(!defined($next))
+    if (!defined($next))
     {
-      if(defined($cur_rule->action_name()))
+      if (defined($cur_rule->action_name()))
       {
         #print '$cur_rule->source(): ' . (defined($cur_rule->source()) ? $cur_rule->source() : 'undef') . "\n";
         #print '$cur_act->source(): ' . (defined($cur_act->source()) ? $cur_act->source() : 'undef') . "\n";
         #print '$cur_act->source(): ' . (defined($cur_act->source()) ? $cur_act->source() : 'undef') . "\n";
 
-        if($act_i >= 0)
+        if ($act_i >= 0)
         {
           my $cur_act = $acts->[$act_i];
 
-          if(($cur_rule->action_prefix() eq '*' ||
+          if (($cur_rule->action_prefix() eq '*' ||
               $cur_rule->action_prefix() eq $cur_act->action_prefix()) &&
             ($cur_rule->action_name() eq '*' ||
               $cur_rule->action_name() eq $cur_act->action_name()) &&
             ($cur_rule->source() eq "*" || $cur_rule->source() eq $cur_act->source()))
           {
-            if(!defined($cur_rule->not()))
+            if (!defined($cur_rule->not()))
             {
               $rule_check = 1;
             }
@@ -142,13 +142,13 @@ sub apply_
               # repeat match from this point
               my $local_act_i = $act_i - 1;
 
-              while(scalar(@act_poses) > 0)
+              while (scalar(@act_poses) > 0)
               {
                 my $rev_rule_act_pos = pop @act_poses;
                 $local_act_i = $rev_rule_act_pos->act_i() - 1;
                 $rule_i = $rev_rule_act_pos->rule_i();
                 $ts_check = $rev_rule_act_pos->ts_check();
-                if($local_act_i >= 0)
+                if ($local_act_i >= 0)
                 {
                   last;
                 }
@@ -156,7 +156,7 @@ sub apply_
 
               $act_i = $local_act_i;
 
-              if($act_i < 0)
+              if ($act_i < 0)
               {
                 #print "RET1\n";
                 return undef;
@@ -173,7 +173,7 @@ sub apply_
         }
         else
         {
-          if(defined($cur_rule->not()))
+          if (defined($cur_rule->not()))
           {
             $rule_check = 1;
             ++$act_i; # don't move action pos
@@ -183,11 +183,11 @@ sub apply_
       else
       {
         # time check
-        if($act_i >= 0 && $act_i < scalar(@$acts) - 1)
+        if ($act_i >= 0 && $act_i < scalar(@$acts) - 1)
         {
           my $cur_act = $acts->[$act_i + 1];
 
-          if(defined($ts_check) && $ts_check > $cur_act->time() - $cur_rule->time_less())
+          if (defined($ts_check) && $ts_check > $cur_act->time() - $cur_rule->time_less())
           {}
           else
           {
@@ -199,22 +199,22 @@ sub apply_
         ++$act_i; # don't move action pos
       }
 
-      if(defined($rule_check))
+      if (defined($rule_check))
       {
-        if($rule_i == 0)
+        if ($rule_i == 0)
         {
           return 1;
         }
         else
         {
-          if(DEBUG_APPLY)
+          if (DEBUG_APPLY)
           {
             print STDERR "push: rule_i = " . $rule_i .
               ", act_i = $act_i" .
               ", ts_check = " . (defined($ts_check) ? $ts_check : 'undef') . "\n";
           }
 
-          if(defined($cur_rule->action_name()))
+          if (defined($cur_rule->action_name()))
           {
             # push only non time rules
             push(@act_poses, new RuleActPos(act_i => $act_i, rule_i => $rule_i, ts_check => $ts_check));
@@ -227,17 +227,17 @@ sub apply_
       }
       else
       {
-        if($act_i <= 0)
+        if ($act_i <= 0)
         {
           my $local_act_i = $act_i - 1;
 
-          while(scalar(@act_poses) > 0)
+          while (scalar(@act_poses) > 0)
           {
             my $rev_rule_act_pos = pop @act_poses;
             $local_act_i = $rev_rule_act_pos->act_i() - 1;
             $rule_i = $rev_rule_act_pos->rule_i();
             $ts_check = $rev_rule_act_pos->ts_check();
-            if($local_act_i >= 0)
+            if ($local_act_i >= 0)
             {
               last;
             }
@@ -245,9 +245,9 @@ sub apply_
 
           $act_i = $local_act_i;
 
-          if($act_i < 0)
+          if ($act_i < 0)
           {
-            if(DEBUG_APPLY)
+            if (DEBUG_APPLY)
             {
               print STDERR "return false: rule_i = " . $rule_i .
                 ", act_i = $act_i" .
@@ -259,7 +259,7 @@ sub apply_
             return undef;
           }
 
-          if(DEBUG_APPLY)
+          if (DEBUG_APPLY)
           {
             print STDERR "revert 2: rule_i = " . $rule_i .
               ", act_i = $act_i" .
@@ -277,7 +277,7 @@ sub apply_
     }
 
     ++$count_i;
-    if($count_i > 10000000)
+    if ($count_i > 10000000)
     {
       die "much check interations";
     }
@@ -291,7 +291,7 @@ sub to_ts
 {
   my ($ft) = @_;
 
-  if($ft =~ m|^(\d{4})-(\d{2})-(\d{2})_(\d{2}):(\d{2}):(\d{2})$|)
+  if ($ft =~ m|^(\d{4})-(\d{2})-(\d{2})_(\d{2}):(\d{2}):(\d{2})$|)
   {
     return timelocal($6, $5, $4, $3, $2-1, $1);
 
@@ -312,7 +312,7 @@ sub parse_rule
   my ($rule_str) = @_;
 
   my $rule_name = '';
-  if($rule_str =~ m/^([^=]+)=(.*)$/)
+  if ($rule_str =~ m/^([^=]+)=(.*)$/)
   {
     $rule_name = $1;
     $rule_str = $2;
@@ -322,7 +322,7 @@ sub parse_rule
   my @sub_rules;
   foreach my $sub_rule_str(@sub_rule_strs)
   {
-    if($sub_rule_str =~ m|^\s*(~)?(?:(.*)/)?(.*)[(]\s*(.*)\s*[)]\s*$|)
+    if ($sub_rule_str =~ m|^\s*(~)?(?:(.*)/)?(.*)[(]\s*(.*)\s*[)]\s*$|)
     {
       push(@sub_rules, new SubRule(
         not => (defined($1) && length($1) > 0 ? 1 : undef),
@@ -353,12 +353,12 @@ sub parse_actions
 
   my @res_actions;
 
-  for(my $act_i = 0; $act_i < scalar(@actions); ++$act_i)
+  for (my $act_i = 0; $act_i < scalar(@actions); ++$act_i)
   {
     my $act = $actions[$act_i];
     #print STDERR "act($act_i): $act\n";
 
-    if($act =~ m|^(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}):(?:([^:/]*)/)?([^:]*)(?::([^)]*))?(?:[(]([^)]*)[)])?$|)
+    if ($act =~ m|^(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}):(?:([^:/]*)/)?([^:]*)(?::([^)]*))?(?:[(]([^)]*)[)])?$|)
     {
       my $time_str = $1;
       my $action_prefix = defined($2) ? $2 : '*';
@@ -367,7 +367,7 @@ sub parse_actions
       my $source = defined($5) ? $5 : '';
       #print STDERR "parsed full action: action_prefix=$action_prefix,action=$action,item=$item,source=$source\n";
 
-      #if($action =~ m/^(.*)[(](.*)[)]$/)
+      #if ($action =~ m/^(.*)[(](.*)[)]$/)
       #{
       #  $action = $1;
       #  $source = $2;
@@ -407,7 +407,7 @@ sub main
   my $csv = Text::CSV_XS->new({ binary => 1, eol => undef });
 
   my $line_i = 0;
-  while(my $rows = $csv->getline(*STDIN))
+  while (my $rows = $csv->getline(*STDIN))
   {
     my $geo = $rows->[1];
     my $actions = parse_actions($rows->[2]);
@@ -419,11 +419,11 @@ sub main
     {
       eval
       {
-        if(!exists($true_rules{$rule->name()}) && $rule->apply($actions))
+        if (!exists($true_rules{$rule->name()}) && $rule->apply($actions))
         {
-          if($command eq 'count')
+          if ($command eq 'count')
           {
-            if(!exists($rule_stats{$rule->name()}))
+            if (!exists($rule_stats{$rule->name()}))
             {
               $rule_stats{$rule->name()} = 0;
             }
@@ -445,14 +445,14 @@ sub main
         }
       };
 
-      if($@)
+      if ($@)
       {
         die "At line #" . $line_i . " with rule " . $rule->name() . ": $@";
       }
     }
 
     ++$line_i;
-    if($line_i % 10000 == 0)
+    if ($line_i % 10000 == 0)
     {
       #print STDERR "processed $line_i records\n";
     }

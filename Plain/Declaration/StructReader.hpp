@@ -14,9 +14,7 @@ namespace Declaration
     class FieldReader: public ReferenceCounting::AtomicImpl
     {
     public:
-      FieldReader(
-        StructDescriptor::Field* field_val,
-        BaseReader* reader_val)
+      FieldReader(StructDescriptor::Field* field_val, BaseReader* reader_val)
         noexcept;
 
       const char* name() const noexcept;
@@ -45,10 +43,7 @@ namespace Declaration
       FieldReaderList_var;
 
   public:
-    StructReader(
-      const char* name_val,
-      BaseDescriptor* descriptor_val,
-      FieldReaderList* fields_val);
+    StructReader(const char* name_val, BaseDescriptor* descriptor_val, FieldReaderList* fields_val);
 
     FieldReaderList_var fields() const;
 
@@ -68,9 +63,7 @@ namespace Declaration
 namespace Declaration
 {
   inline
-  StructReader::FieldReader::FieldReader(
-    StructDescriptor::Field* field_val,
-    BaseReader* reader_val)
+  StructReader::FieldReader::FieldReader(StructDescriptor::Field* field_val, BaseReader* reader_val)
     noexcept
     : field_(ReferenceCounting::add_ref(field_val)),
       reader_(ReferenceCounting::add_ref(reader_val))

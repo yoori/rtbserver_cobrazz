@@ -51,8 +51,8 @@ find_package_handle_standard_args(Vanga
     VANGA_GEARS_THREADING_LIBRARY
 )
 
-if(Vanga_FOUND)
-  if(NOT TARGET Vanga::Headers)
+if (Vanga_FOUND)
+  if (NOT TARGET Vanga::Headers)
     add_library(Vanga::Headers INTERFACE IMPORTED)
     set_target_properties(Vanga::Headers PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES "${VANGA_INCLUDE_DIR}"
@@ -60,7 +60,7 @@ if(Vanga_FOUND)
   endif()
 
   function(_vanga_import_library target library)
-    if(NOT TARGET Vanga::${target})
+    if (NOT TARGET Vanga::${target})
       add_library(Vanga::${target} UNKNOWN IMPORTED)
       set_target_properties(Vanga::${target} PROPERTIES
         IMPORTED_LOCATION "${library}"

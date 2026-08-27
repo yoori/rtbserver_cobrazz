@@ -26,19 +26,13 @@ namespace
   to_shared(ReferenceCounting::SmartPtr<T> ptr)
   {
     T* raw_ptr = ptr.in();
-    return std::shared_ptr<T>(
-      raw_ptr,
-      [ptr = std::move(ptr)](T*) mutable
-      {
-        ptr.reset();
-      });
+    return std::shared_ptr<T>(raw_ptr, [ptr = std::move(ptr)](T*) mutable { ptr.reset(); });
   }
 }
 
 DictionaryProviderApp_::DictionaryProviderApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "DictionaryProviderApp_", ASPECT, 0),
     server_impl_()
 {
@@ -57,26 +51,23 @@ void DictionaryProviderApp_::load_config_(const char* name) /*throw(Exception)*/
     std::unique_ptr<AdConfigurationType>
       ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       throw Exception(error_handler.text(error_string));
     }
 
     configuration_ =
-      ConfigPtr(new DictionaryProviderConfigType(
-        ad_configuration->DictionaryProviderConfig()));
+      ConfigPtr(new DictionaryProviderConfigType(ad_configuration->DictionaryProviderConfig()));
 
   }
   catch(const xml_schema::parsing& e)
   {
     Stream::Error ostr;
 
-    ostr << "Can't parse config file '"
-         << name << "'."
-         << ": ";
+    ostr << "Can't parse config file '" << name << "'." << ": ";
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       ostr << error_handler.text(error_string);
@@ -87,10 +78,7 @@ void DictionaryProviderApp_::load_config_(const char* name) /*throw(Exception)*/
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Can't parse config file '"
-         << name << "'."
-         << ": "
-         << e.what();
+    ostr << "Can't parse config file '" << name << "'." << ": " << e.what();
     throw Exception(ostr);
   }
   catch(...)
@@ -107,33 +95,25 @@ void DictionaryProviderApp_::init_corba_() /*throw(Exception, CORBA::SystemExcep
   //Fill corba_config
   try
   {
-    Config::CorbaConfigReader::read_config(
-      configuration_->CorbaConfig(),
-      corba_config_);
+    Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
   }
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Can't read Corba Config. : "
-         << e.what();
+    ostr << "Can't read Corba Config. : " << e.what();
     throw Exception(ostr);
   }
 
   try
   {
-    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(
-      corba_config_);
+    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
 
     server_impl_ = to_shared<AdServer::ChannelSvcs::DictionaryProviderImpl>(
-      new AdServer::ChannelSvcs::DictionaryProviderImpl(
-        logger(), configuration_.get()));
+      new AdServer::ChannelSvcs::DictionaryProviderImpl(logger(), configuration_.get()));
 
-    corba_server_adapter_->add_binding(
-        DICTIONARY_PROVIDER,
-        server_impl_.get());
+    corba_server_adapter_->add_binding(DICTIONARY_PROVIDER, server_impl_.get());
 
-    active_objects_ =
-      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_ = std::make_shared<Generics::CompositeActiveObject>(false, false);
     active_objects_->add_child_object(
       std::static_pointer_cast<Generics::ActiveObject>(server_impl_));
     active_objects_->add_child_object(corba_server_adapter_.in());
@@ -142,8 +122,7 @@ void DictionaryProviderApp_::init_corba_() /*throw(Exception, CORBA::SystemExcep
   {
     Stream::Error ostr;
     ostr << "DictionaryProviderApp::init_corba_"
-      << "Catch exception on creating ChannelServer servants. "
-      << ":" << e.what();
+      << "Catch exception on creating ChannelServer servants. " << ":" << e.what();
     throw Exception(ostr);
   }
 
@@ -160,8 +139,7 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
     if (argc < 2)
     {
       Stream::Error ostr;
-      ostr << "config file is not specified\n"
-        <<  "usage:" << ASPECT <<" <config_file>";
+      ostr << "config file is not specified\n" <<  "usage:" << ASPECT <<" <config_file>";
       throw InvalidArgument(ostr);
     }
 
@@ -171,14 +149,12 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
     //Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        configuration_->Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(configuration_->Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
       std::ostringstream ostr;
-      ostr << FUN << ": got LoggerConfigReader::Exception: "
-           << e.what();
+      ostr << FUN << ": got LoggerConfigReader::Exception: " << e.what();
       throw Exception(ostr.str());
     }
 
@@ -203,12 +179,9 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                       ASPECT,
-                       "ADS-IMPL-33")
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-33")
         << "DictionaryProviderApp_::main(): "
-        << "Got DictionaryProviderApp_::Exception. : "
-        << e.what();
+        << "Got DictionaryProviderApp_::Exception. : " << e.what();
     }
     catch (...)
     {
@@ -223,12 +196,8 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                       ASPECT,
-                       "ADS-IMPL-33")
-        << "DictionaryProviderApp_::main(): "
-        << "Got CORBA::SystemException. : \n"
-        << e;
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-33")
+        << "DictionaryProviderApp_::main(): " << "Got CORBA::SystemException. : \n" << e;
     }
     catch (...)
     {
@@ -243,17 +212,12 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                       ASPECT,
-                       "ADS-IMPL-33")
-        << "DictionaryProviderApp_::main(): "
-        << "Got eh::Exception. : \n"
-        << e.what();
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-33")
+        << "DictionaryProviderApp_::main(): " << "Got eh::Exception. : \n" << e.what();
     }
     catch (...)
     {
-      logger()->log(String::SubString("DictionaryProviderApp_::main(): "
-                    "Got eh::Exception."),
+      logger()->log(String::SubString("DictionaryProviderApp_::main(): " "Got eh::Exception."),
                     Logging::Logger::EMERGENCY,
                     ASPECT,
                     "ADS-IMPL-33");
@@ -261,8 +225,7 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   }
   catch (...)
   {
-    logger()->log(String::SubString("DictionaryProviderApp_::main(): "
-                  "Got Unknown exception."),
+    logger()->log(String::SubString("DictionaryProviderApp_::main(): " "Got Unknown exception."),
                   Logging::Logger::EMERGENCY,
                   ASPECT,
                   "ADS-IMPL-33");
@@ -276,18 +239,13 @@ void DictionaryProviderApp_::main(int& argc, char** argv) noexcept
   }
   catch(const CORBA::Exception& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                     ASPECT)
-      << "DictionaryProviderApp_::main(): "
-      << "Got CORBA::Exception in destroy ORB. : \n"
-      << ex;
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT)
+      << "DictionaryProviderApp_::main(): " << "Got CORBA::Exception in destroy ORB. : \n" << ex;
   }
   catch(...)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                     ASPECT)
-      << "DictionaryProviderApp_::main(): "
-      << "Got unknown exception in destroy ORB \n";
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT)
+      << "DictionaryProviderApp_::main(): " << "Got unknown exception in destroy ORB \n";
   }
 }
 

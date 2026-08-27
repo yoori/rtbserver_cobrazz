@@ -1,10 +1,7 @@
 
 #include "TextAdNetAndGrossTest.hpp"
 
-REFLECT_UNIT(TextAdNetAndGrossTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(TextAdNetAndGrossTest) ("CreativeSelection", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 
 namespace
@@ -45,9 +42,7 @@ TextAdNetAndGrossTest::case_tag_with_and_without_commission()
     client.process_request(request);
     client.process_request(request.tid(fetch_string("TAG/TWAWC/1")));
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "cc_ids tag without commision");
   }
   // tag with commision
@@ -62,9 +57,7 @@ TextAdNetAndGrossTest::case_tag_with_and_without_commission()
     client.process_request(request);
     client.process_request(request.tid(fetch_string("TAG/TWAWC/2")));
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "cc_ids with commision");
   }
 }
@@ -87,9 +80,7 @@ TextAdNetAndGrossTest::case_competition()
     client.process_request(request);
     client.process_request(request.tid(fetch_string("TAG/COMPETITION/1")));
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "cc_ids 2,1 for tag 1");
   }
   //competition 1 = 3, not ordered
@@ -108,9 +99,7 @@ TextAdNetAndGrossTest::case_competition()
     client.process_request(request.tid(fetch_string("TAG/COMPETITION/1")));
     // may be in different orders
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        2,
-        SelectedCreativesCCID(client).size()).check(),
+      AutoTest::equal_checker(2, SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
 
     FAIL_CONTEXT(
@@ -135,9 +124,7 @@ TextAdNetAndGrossTest::case_competition()
     client.process_request(request);
     client.process_request(request.tid(fetch_string("TAG/COMPETITION/2")));
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "cc_ids 2,1 for tag 2");
   }
   //competition 1 = 3, not ordered
@@ -156,8 +143,7 @@ TextAdNetAndGrossTest::case_competition()
     client.process_request(request.tid(fetch_string("TAG/COMPETITION/2")));
     // may be in different orders
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      2, SelectedCreativesCCID(client).size()).check(),
+    AutoTest::equal_checker(2, SelectedCreativesCCID(client).size()).check(),
     "selected_creatives size");
 
   FAIL_CONTEXT(
@@ -186,15 +172,11 @@ TextAdNetAndGrossTest::case_publisher_commission()
     request.tid(fetch_string("TAG/PUBLISHER-COMMISSION/1"));
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        SelectedCreativesCCID(client).size()).check(),
+      AutoTest::equal_checker(1, SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        ccid1,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(ccid1, SelectedCreativesCCID(client)).check(),
       "cc_ids 1 for tag 1");
   }
   {
@@ -207,9 +189,7 @@ TextAdNetAndGrossTest::case_publisher_commission()
     request.tid(fetch_string("TAG/PUBLISHER-COMMISSION/2"));
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        0,
-        SelectedCreativesCCID(client).size()).check(),
+      AutoTest::equal_checker(0, SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
   }
   // sub case 2 without commision - show in tag1 and show in tag2
@@ -227,15 +207,11 @@ TextAdNetAndGrossTest::case_publisher_commission()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        SelectedCreativesCCID(client).size()).check(),
+      AutoTest::equal_checker(1, SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        ccid2,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(ccid2, SelectedCreativesCCID(client)).check(),
       "cc_ids 2 for tag 1");
   }
   {
@@ -249,15 +225,11 @@ TextAdNetAndGrossTest::case_publisher_commission()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        SelectedCreativesCCID(client).size()).check(),
+      AutoTest::equal_checker(1, SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
 
     FAIL_CONTEXT(
-      AutoTest::entry_checker(
-        ccid2,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::entry_checker(ccid2, SelectedCreativesCCID(client)).check(),
       "cc_ids 2 for tag 2");
   }
 }
@@ -367,9 +339,7 @@ TextAdNetAndGrossTest::post_condition()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats_)).check(),
   "RequestStatsHourly check");
 }
 

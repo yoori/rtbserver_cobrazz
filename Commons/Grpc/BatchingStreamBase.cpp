@@ -336,17 +336,13 @@ namespace AdServer::Grpc
     const auto id = next_id_.fetch_add(1, std::memory_order_relaxed);
     auto batch_guard = std::make_shared<BatchGuard>(id, std::move(batch));
     batches_.emplace(id, batch_guard);
-    batch_records_.emplace(batch_id, BatchRecord{
-      batch_id,
-      write_time,
-      batch_guard});
+    batch_records_.emplace(batch_id, BatchRecord{ batch_id, write_time, batch_guard});
 
     return batch_guard;
   }
 
   std::optional<BatchingStreamBase::Impl::DetachedBatchStorage::BatchRecord>
-  BatchingStreamBase::Impl::DetachedBatchStorage::find_batch(
-    const std::uint64_t batch_id) const
+  BatchingStreamBase::Impl::DetachedBatchStorage::find_batch(const std::uint64_t batch_id) const
   {
     std::lock_guard<std::mutex> lock(lock_);
     const auto it = batch_records_.find(batch_id);
@@ -359,8 +355,7 @@ namespace AdServer::Grpc
   }
 
   std::optional<BatchingStreamBase::Impl::DetachedBatchStorage::BatchRecord>
-  BatchingStreamBase::Impl::DetachedBatchStorage::take_batch(
-    std::uint64_t batch_id)
+  BatchingStreamBase::Impl::DetachedBatchStorage::take_batch(std::uint64_t batch_id)
   {
     std::lock_guard<std::mutex> lock(lock_);
     auto it = batch_records_.find(batch_id);
@@ -474,9 +469,7 @@ namespace AdServer::Grpc
     void
     proceed(bool ok) override
     {
-      with_impl_([ok](auto& impl) {
-        impl.process_start_completion_cq_(ok);
-      });
+      with_impl_([ok](auto& impl) { impl.process_start_completion_cq_(ok); });
     }
   };
 
@@ -495,10 +488,7 @@ namespace AdServer::Grpc
     proceed(bool ok) override
     {
       with_impl_([this, ok](auto& impl) {
-        impl.process_read_completion_cq_(
-          ok,
-          std::move(response_arena_),
-          response_);
+        impl.process_read_completion_cq_(ok, std::move(response_arena_), response_);
       });
     }
 
@@ -509,9 +499,7 @@ namespace AdServer::Grpc
 
   struct BatchingStreamBase::Impl::WriteTag final : CompletionTag
   {
-    WriteTag(
-      std::shared_ptr<Impl> impl,
-      std::uint64_t batch_id)
+    WriteTag(std::shared_ptr<Impl> impl, std::uint64_t batch_id)
       : CompletionTag(std::move(impl)),
         batch_id_(batch_id)
     {}
@@ -519,9 +507,7 @@ namespace AdServer::Grpc
     void
     proceed(bool ok) override
     {
-      with_impl_([this, ok](auto& impl) {
-        impl.process_write_completion_cq_(ok, batch_id_);
-      });
+      with_impl_([this, ok](auto& impl) { impl.process_write_completion_cq_(ok, batch_id_); });
     }
 
   private:
@@ -537,9 +523,7 @@ namespace AdServer::Grpc
     void
     proceed(bool ok) override
     {
-      with_impl_([ok](auto& impl) {
-        impl.process_writes_done_completion_cq_(ok);
-      });
+      with_impl_([ok](auto& impl) { impl.process_writes_done_completion_cq_(ok); });
     }
   };
 
@@ -552,9 +536,7 @@ namespace AdServer::Grpc
     void
     proceed(bool ok) override
     {
-      with_impl_([ok](auto& impl) {
-        impl.process_finish_completion_cq_(ok);
-      });
+      with_impl_([ok](auto& impl) { impl.process_finish_completion_cq_(ok); });
     }
   };
 
@@ -606,8 +588,7 @@ namespace AdServer::Grpc
       std::adjacent_find(
         options_.response_time_steps_us.begin(),
         options_.response_time_steps_us.end()) != options_.response_time_steps_us.end() ||
-      (!options_.response_time_steps_us.empty() &&
-        options_.response_time_steps_us.front() == 0))
+      (!options_.response_time_steps_us.empty() && options_.response_time_steps_us.front() == 0))
     {
       throw std::invalid_argument(
         "BatchingStreamBase response time steps must be positive and "
@@ -707,17 +688,13 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::add_write_stats(
-    std::uint64_t batches,
-    std::uint64_t items) noexcept
+  BatchingStreamBase::Impl::add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept
   {
     owner_.add_write_stats(batches, items);
   }
 
   void
-  BatchingStreamBase::Impl::add_read_stats(
-    std::uint64_t batches,
-    std::uint64_t items) noexcept
+  BatchingStreamBase::Impl::add_read_stats(std::uint64_t batches, std::uint64_t items) noexcept
   {
     owner_.add_read_stats(batches, items);
   }
@@ -1120,9 +1097,7 @@ namespace AdServer::Grpc
         batch_id,
         measure_consumer_stream_write
       ]() mutable {
-        auto write_tag = std::make_unique<WriteTag>(
-          shared_from_this(),
-          batch_id);
+        auto write_tag = std::make_unique<WriteTag>(shared_from_this(), batch_id);
         if (!write_tag->active())
         {
           return false;
@@ -1252,8 +1227,7 @@ namespace AdServer::Grpc
   {
     const auto operation_start = grpc_queue_->execute_result([this]() mutable {
       auto response_arena = std::make_unique<google::protobuf::Arena>();
-      auto* response = google::protobuf::Arena::CreateMessage<BatchResponse>(
-        response_arena.get());
+      auto* response = google::protobuf::Arena::CreateMessage<BatchResponse>(response_arena.get());
       auto read_tag = std::make_unique<ReadTag>(
         shared_from_this(),
         std::move(response_arena),
@@ -1333,8 +1307,7 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::start_writes_done_() noexcept
   {
     const auto operation_start = grpc_queue_->execute_result([this]() mutable {
-      auto writes_done_tag =
-        std::make_unique<WritesDoneTag>(shared_from_this());
+      auto writes_done_tag = std::make_unique<WritesDoneTag>(shared_from_this());
       if (!writes_done_tag->active())
       {
         return false;
@@ -1426,8 +1399,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::execute_stream_action_(
-    StreamAction action) noexcept
+  BatchingStreamBase::Impl::execute_stream_action_(StreamAction action) noexcept
   {
     switch (action)
     {
@@ -1446,8 +1418,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::Impl::execute_stream_action_cq_(
-    StreamAction action) noexcept
+  BatchingStreamBase::Impl::execute_stream_action_cq_(StreamAction action) noexcept
   {
     switch (action)
     {
@@ -1478,10 +1449,7 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
-      record_last_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "stream start failed",
-        "stream_start");
+      record_last_error_(grpc::StatusCode::UNAVAILABLE, "stream start failed", "stream_start");
       finish_with_error_(grpc::StatusCode::UNAVAILABLE, "stream start failed");
     }
     else if (transition.ready && ready_callback_)
@@ -1520,9 +1488,7 @@ namespace AdServer::Grpc
           batch_id = response->items(0).request_id();
           for (int i = 1; i < response->items_size(); ++i)
           {
-            batch_id = std::min<std::uint64_t>(
-              batch_id,
-              response->items(i).request_id());
+            batch_id = std::min<std::uint64_t>(batch_id, response->items(i).request_id());
           }
         }
 
@@ -1661,10 +1627,7 @@ namespace AdServer::Grpc
     {
       auto failed_batch = detached_batch_storage_.take_batch(batch_id);
 
-      record_last_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "stream write failed",
-        "stream_write");
+      record_last_error_(grpc::StatusCode::UNAVAILABLE, "stream write failed", "stream_write");
 
       if (failed_batch && failed_batch->guard)
       {
@@ -1742,9 +1705,7 @@ namespace AdServer::Grpc
     grpc::StatusCode status_code,
     const char* status_message)
   {
-    const auto message = message_with_endpoint(
-      status_message ? status_message : "",
-      endpoint_);
+    const auto message = message_with_endpoint(status_message ? status_message : "", endpoint_);
 
     for (auto& request : requests)
     {
@@ -1778,11 +1739,7 @@ namespace AdServer::Grpc
     const char* status_message,
     const char* source) noexcept
   {
-    owner_.set_last_error(
-      endpoint_,
-      status_code,
-      status_message ? status_message : "",
-      source);
+    owner_.set_last_error(endpoint_, status_code, status_message ? status_message : "", source);
   }
 
   void

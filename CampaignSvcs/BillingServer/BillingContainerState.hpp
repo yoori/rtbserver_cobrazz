@@ -9,9 +9,7 @@
 
 #include "CTROptimizer.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // BillingContainerState
   struct BillingContainerState: public ReferenceCounting::AtomicImpl
@@ -41,14 +39,11 @@ namespace CampaignSvcs
         noexcept;
 
       void
-      add_prev_days_amount(
-        const RevenueDecimal& amount)
+      add_prev_days_amount(const RevenueDecimal& amount)
         noexcept;
 
       bool
-      add_amount(
-        const Generics::Time& date,
-        const RevenueDecimal& amount)
+      add_amount(const Generics::Time& date, const RevenueDecimal& amount)
         noexcept;
 
       RevenueDecimal
@@ -215,9 +210,7 @@ namespace CampaignSvcs
     {
       CampaignCCGId() noexcept;
 
-      CampaignCCGId(
-        unsigned long campaign_id_val,
-        unsigned long ccg_id_val)
+      CampaignCCGId(unsigned long campaign_id_val, unsigned long ccg_id_val)
         noexcept;
 
       bool
@@ -341,5 +334,4 @@ namespace CampaignSvcs
   protected:
     virtual ~BillingContainerState() noexcept = default;
   };
-}
 }

@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   inline
   LogHolder::~LogHolder() noexcept = default;
@@ -14,19 +12,14 @@ namespace LogProcessing
   {}
 
   inline
-  LogFlushTraits::LogFlushTraits(
-    const Generics::Time& period_val,
-    const char* out_dir_val)
+  LogFlushTraits::LogFlushTraits(const Generics::Time& period_val, const char* out_dir_val)
     : period(period_val),
       out_dir(out_dir_val)
   {}
 
   template<typename SavePolicy, typename Collector>
   void
-  save_log(
-    const LogFlushTraits& flush_traits,
-    SavePolicy& save_policy,
-    Collector& collector)
+  save_log(const LogFlushTraits& flush_traits, SavePolicy& save_policy, Collector& collector)
     /*throw(eh::Exception)*/
   {
     if (flush_traits.primary_dump && flush_traits.primary_dump->available())
@@ -94,7 +87,7 @@ namespace LogProcessing
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderImpl<LogTraitsType, SavePolicy>::~LogHolderImpl() noexcept
   {
-    if(!collector_.empty())
+    if (!collector_.empty())
     {
       try
       {
@@ -151,16 +144,14 @@ namespace LogProcessing
       Stream::Error ostr;
       ostr << "LogHolderImpl::flush_if_required<'" <<
         LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << "LogHolderImpl::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what();
+        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -189,12 +180,11 @@ namespace LogProcessing
     Mediator data)
   {
     // Implemented only for two-level collectors: key -> (inner_key -> value).
-    for(auto inner_it = data.begin(); inner_it != data.end(); ++inner_it)
+    for (auto inner_it = data.begin(); inner_it != data.end(); ++inner_it)
     {
       typename CollectorT::DataT inner_data;
       inner_data.add(inner_it->first, inner_it->second);
-      const unsigned long portion_i =
-        inner_it->first.hash() % portions_num_;
+      const unsigned long portion_i = inner_it->first.hash() % portions_num_;
 
       SyncPolicy::WriteGuard guard(portions_[portion_i]->lock);
       portions_[portion_i]->collector.add(key, std::move(inner_data));
@@ -202,16 +192,14 @@ namespace LogProcessing
   }
 
   template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPortioned<LogTraitsType, SavePolicy>::~LogHolderPortioned() noexcept =
-    default;
+  LogHolderPortioned<LogTraitsType, SavePolicy>::~LogHolderPortioned() noexcept = default;
 
   template<typename LogTraitsType, typename SavePolicy>
   void
-  LogHolderPortioned<LogTraitsType, SavePolicy>::init_portions_(
-    PortionArray& portions) noexcept
+  LogHolderPortioned<LogTraitsType, SavePolicy>::init_portions_(PortionArray& portions) noexcept
   {
     portions.resize(portions_num_);
-    for(auto it = portions.begin(); it != portions.end(); ++it)
+    for (auto it = portions.begin(); it != portions.end(); ++it)
     {
       *it = new Portion();
     }
@@ -230,7 +218,7 @@ namespace LogProcessing
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderPortioned<LogTraitsType, SavePolicy>::DumpTask::~DumpTask() noexcept
   {
-    if(portion_)
+    if (portion_)
     {
       sema_.release();
     }
@@ -240,12 +228,9 @@ namespace LogProcessing
   void
   LogHolderPortioned<LogTraitsType, SavePolicy>::DumpTask::execute() noexcept
   {
-    if(!portion_->collector.empty())
+    if (!portion_->collector.empty())
     {
-      save_log(
-        log_holder_->flush_traits_,
-        log_holder_->save_policy_,
-        portion_->collector);
+      save_log(log_holder_->flush_traits_, log_holder_->save_policy_, portion_->collector);
     }
 
     portion_ = Portion_var();
@@ -270,7 +255,7 @@ namespace LogProcessing
         {
           flush_time_ = now;
 
-          for(unsigned long portion_i = 0; portion_i < portions_num_; ++portion_i)
+          for (unsigned long portion_i = 0; portion_i < portions_num_; ++portion_i)
           {
             SyncPolicy::WriteGuard guard(portions_[portion_i]->lock);
             portions_[portion_i]->collector.swap(dump_portions[portion_i]->collector);
@@ -284,23 +269,22 @@ namespace LogProcessing
         return Generics::Time::ZERO; // ???
       }
 
-      if(task_runner_)
+      if (task_runner_)
       {
         int dump_portions_num = 0;
         Sync::Semaphore sema(0);
 
         for (auto portion_it = dump_portions.begin(); portion_it != dump_portions.end(); ++portion_it)
         {
-          if(!(*portion_it)->collector.empty())
+          if (!(*portion_it)->collector.empty())
           {
             ++dump_portions_num;
-            task_runner_->enqueue_task(
-              Generics::Task_var(new DumpTask(this, *portion_it, sema)));
+            task_runner_->enqueue_task(Generics::Task_var(new DumpTask(this, *portion_it, sema)));
           }
         }
 
         // wait all dump tasks (task runner can't be deactivated
-        for(int i = 0; i < dump_portions_num; ++i)
+        for (int i = 0; i < dump_portions_num; ++i)
         {
           sema.acquire();
         }
@@ -309,11 +293,11 @@ namespace LogProcessing
       {
         for (auto portion_it = dump_portions.begin(); portion_it != dump_portions.end(); ++portion_it)
         {
-          if(!(*portion_it)->collector.empty())
+          if (!(*portion_it)->collector.empty())
           {
             save_log(flush_traits_, save_policy_, (*portion_it)->collector);
           }
-        }        
+        }
       }
 
       return now + flush_traits_.period;
@@ -323,16 +307,14 @@ namespace LogProcessing
       Stream::Error ostr;
       ostr << "LogHolderPortioned::flush_if_required<'" <<
         LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << "LogHolderPortioned::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what();
+        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -345,8 +327,7 @@ namespace LogProcessing
     const LogFlushTraits& flush_traits,
     const SavePolicy& save_policy)
     /*throw(eh::Exception)*/
-    : LogHolderImpl<LogTraitsType, SavePolicy>(
-        flush_traits, save_policy),
+    : LogHolderImpl<LogTraitsType, SavePolicy>(flush_traits, save_policy),
       logger_(ReferenceCounting::add_ref(logger)),
       limit_(limit),
       count_(0),
@@ -356,12 +337,10 @@ namespace LogProcessing
   template<typename LogTraitsType, typename SavePolicy>
   template<typename... Args>
   void
-  LogHolderLimitedDataAdd<LogTraitsType, SavePolicy>::add_record(
-    Args&&... args)
+  LogHolderLimitedDataAdd<LogTraitsType, SavePolicy>::add_record(Args&&... args)
     /*throw(eh::Exception)*/
   {
-    typename LogHolderImpl<LogTraitsType, SavePolicy>::
-      SyncPolicy::WriteGuard lock(this->mutex_());
+    typename LogHolderImpl<LogTraitsType, SavePolicy>::SyncPolicy::WriteGuard lock(this->mutex_());
     if (count_ < limit_)
     {
       this->collector_.add(std::forward<Args>(args)...);
@@ -380,8 +359,7 @@ namespace LogProcessing
     static const char* FUN = "LogHolderLimitedDataAdd::~LogHolderLimitedDataAdd():";
 
     // No catch mutex. Only message before shutdown. Saving will be done in ~LogHolderImpl()
-    if (skipped_ &&
-        logger_ && logger_->log_level() >= Logging::Logger::WARNING)
+    if (skipped_ && logger_ && logger_->log_level() >= Logging::Logger::WARNING)
     {
       logger_->stream(Logging::Logger::WARNING, "LogHolderLimitedDataAddAspect", "ADS-IMPL-187")
         << FUN << " skipped \'" << skipped_ << "\' data records";
@@ -435,8 +413,7 @@ namespace LogProcessing
       {
         save_log(Base::flush_traits_, Base::save_policy_, tmp_collector);
 
-        if (skipped_val &&
-            logger_ && logger_->log_level() >= Logging::Logger::WARNING)
+        if (skipped_val && logger_ && logger_->log_level() >= Logging::Logger::WARNING)
         {
           logger_->stream(Logging::Logger::WARNING, "LogHolderLimitedDataAddAspect", "ADS-IMPL-187")
             << FUN << " skipped \'" << skipped_val << "\' data records";
@@ -456,16 +433,14 @@ namespace LogProcessing
       Stream::Error ostr;
       ostr << "LogHolderLimitedDataAdd::flush_if_required<'" <<
         LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << "LogHolderLimitedDataAdd::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what();
+        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -489,7 +464,7 @@ namespace LogProcessing
   {
     Generics::Time next_flush_time;
     SyncPolicy::ReadGuard guard(lock_);
-    for(LogHolderList::iterator it = child_log_holders_.begin();
+    for (LogHolderList::iterator it = child_log_holders_.begin();
       it != child_log_holders_.end(); ++it)
     {
       Generics::Time local_next_flush_time = (*it)->flush_if_required(now);
@@ -734,16 +709,14 @@ namespace LogProcessing
       Stream::Error ostr;
       ostr << "LogHolderPoolBase::flush_if_required<'" <<
         LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << "LogHolderPoolBase::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what();
+        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -760,8 +733,7 @@ namespace LogProcessing
   template<typename LogTraitsType, typename SavePolicy>
   template<typename... Args>
   void
-  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::add_record(
-    Args&&... args)
+  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::add_record(Args&&... args)
   {
     (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
   }
@@ -773,8 +745,7 @@ namespace LogProcessing
   {}
 
   template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::~PoolObject() noexcept =
-    default;
+  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::~PoolObject() noexcept = default;
 
   template<typename LogTraitsType, typename SavePolicy>
   LogHolderPool<LogTraitsType, SavePolicy>::LogHolderPool(
@@ -887,8 +858,7 @@ namespace LogProcessing
 
   template<typename LogTraitsType, typename SavePolicy>
   Generics::Time
-  LogHolderSharded<LogTraitsType, SavePolicy>::flush_if_required(
-    const Generics::Time& now)
+  LogHolderSharded<LogTraitsType, SavePolicy>::flush_if_required(const Generics::Time& now)
     /*throw(eh::Exception)*/
   {
     try
@@ -949,18 +919,15 @@ namespace LogProcessing
       Stream::Error ostr;
       ostr << "LogHolderSharded::flush_if_required<'" <<
         LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << "LogHolderSharded::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what();
+        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
   }
-}
 }

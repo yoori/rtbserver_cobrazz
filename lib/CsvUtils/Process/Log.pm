@@ -20,7 +20,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)
@@ -40,7 +40,7 @@ sub process
 sub get_log_
 {
   my ($val) = @_;
-  if(Scalar::Util::looks_like_number($val))
+  if (Scalar::Util::looks_like_number($val))
   {
     return $val > 0 ? int(log($val) / log(2)) : 0;
   }

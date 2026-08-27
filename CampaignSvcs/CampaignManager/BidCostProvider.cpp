@@ -7,9 +7,7 @@
 
 #include "BidCostProvider.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace
   {
@@ -38,9 +36,7 @@ namespace CampaignSvcs
     typedef std::list<std::string> FileList;
 
   public:
-    RemoveConfigTask(
-      const FileList& config_files,
-      const FileList& config_directories)
+    RemoveConfigTask(const FileList& config_files, const FileList& config_directories)
       /*throw(eh::Exception)*/;
 
     virtual void
@@ -67,9 +63,7 @@ namespace CampaignSvcs
   void
   RemoveConfigTask::execute() noexcept
   {
-    for (FileList::const_iterator fit = config_files_.begin();
-      fit != config_files_.end();
-      ++fit)
+    for (FileList::const_iterator fit = config_files_.begin(); fit != config_files_.end(); ++fit)
     {
       ::unlink(fit->c_str());
     }
@@ -96,8 +90,7 @@ namespace CampaignSvcs
       {
         String::RegEx::Result sub_strs;
 
-        String::SubString file_name(
-          Generics::DirSelect::file_name(full_path));
+        String::SubString file_name(Generics::DirSelect::file_name(full_path));
 
         if (reg_exp_.search(sub_strs, file_name) &&
           (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
@@ -322,15 +315,12 @@ namespace CampaignSvcs
     if (remove_config_files_at_destroy && task_runner_)
     {
       task_runner_->enqueue_task(Generics::Task_var(
-        new RemoveConfigTask(
-          config_files_, config_directories_)));
+        new RemoveConfigTask(config_files_, config_directories_)));
     }
   }
 
   void
-  BidCostProvider::load_(
-    const String::SubString& directory,
-    const String::SubString& file)
+  BidCostProvider::load_(const String::SubString& directory, const String::SubString& file)
   {
     // parse config files
     config_files_.clear();
@@ -351,5 +341,4 @@ namespace CampaignSvcs
     cost_mapping_ = cost_mapping;
   }
 
-}
 }

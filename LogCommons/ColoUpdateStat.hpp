@@ -7,174 +7,168 @@
 #include "LogCommons.hpp"
 #include "StatCollector.hpp"
 
-
-namespace AdServer {
-namespace LogProcessing {
-
-class ColoUpdateStatKey
+namespace AdServer::LogProcessing
 {
-public:
-  explicit
-  ColoUpdateStatKey(std::uint32_t colo_id = 0) noexcept
-  :
-    colo_id_(colo_id)
-  {
-  }
 
-  bool operator==(const ColoUpdateStatKey& rhs) const noexcept
-  {
-    return colo_id_ == rhs.colo_id_;
-  }
-
-  std::uint32_t colo_id() const noexcept
-  {
-    return colo_id_;
-  }
-
-  size_t hash() const noexcept
-  {
-    return colo_id_;
-  }
-
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatKey& key);
-
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUpdateStatKey& key)
-    /*throw(eh::Exception)*/;
-
-private:
-  std::uint32_t colo_id_;
-};
-
-class ColoUpdateStatData
-{
-public:
-
-  class Version: public StringIoWrapperOptional
+  class ColoUpdateStatKey
   {
   public:
-    Version() noexcept
-    {
-      memset(subversions_, 0, sizeof(subversions_));
-    }
-
-    Version(const OptionalString& version) /*throw(eh::Exception)*/
+    explicit
+    ColoUpdateStatKey(std::uint32_t colo_id = 0) noexcept
     :
-      StringIoWrapperOptional(version)
+      colo_id_(colo_id)
     {
-      parse_();
     }
 
-    bool
-    operator<(const Version& other) const noexcept
+    bool operator==(const ColoUpdateStatKey& rhs) const noexcept
     {
-      return std::lexicographical_compare(
-        subversions_,
-        subversions_ + sizeof(subversions_) / sizeof(subversions_[0]),
-        other.subversions_,
-        other.subversions_ + sizeof(subversions_) / sizeof(subversions_[0])
-      );
+      return colo_id_ == rhs.colo_id_;
     }
 
-    friend FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is, Version& version)
+    std::uint32_t colo_id() const noexcept
+    {
+      return colo_id_;
+    }
+
+    size_t hash() const noexcept
+    {
+      return colo_id_;
+    }
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatKey& key);
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const ColoUpdateStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:
-    void
-    parse_() /*throw(eh::Exception)*/
-    {
-      memset(subversions_, 0, sizeof(subversions_));
-      Stream::Parser parser(get());
-      parser >> subversions_[0];
-      for (std::size_t i = 1;
-        i < sizeof(subversions_) / sizeof(subversions_[0]); ++i)
-      {
-        parser.get(); //Skip period
-        parser >> subversions_[i];
-      }
-    }
-    unsigned subversions_[4]; // major,minor,revision,build
+    std::uint32_t colo_id_;
   };
 
-  ColoUpdateStatData() noexcept
-  :
-    last_channels_update_(),
-    last_campaigns_update_(),
-    version_()
+  class ColoUpdateStatData
   {
-  }
+  public:
 
-  ColoUpdateStatData(
-    const OptionalSecondsTimestamp& last_channels_update,
-    const OptionalSecondsTimestamp& last_campaigns_update,
-    const OptionalString& version
-  )
-  :
-    last_channels_update_(last_channels_update),
-    last_campaigns_update_(last_campaigns_update),
-    version_(version)
-  {
-  }
-
-  bool operator==(const ColoUpdateStatData& rhs) const noexcept
-  {
-    if (&rhs == this)
+    class Version: public StringIoWrapperOptional
     {
-      return true;
+    public:
+      Version() noexcept
+      {
+        memset(subversions_, 0, sizeof(subversions_));
+      }
+
+      Version(const OptionalString& version) /*throw(eh::Exception)*/
+      :
+        StringIoWrapperOptional(version)
+      {
+        parse_();
+      }
+
+      bool
+      operator<(const Version& other) const noexcept
+      {
+        return std::lexicographical_compare(
+          subversions_,
+          subversions_ + sizeof(subversions_) / sizeof(subversions_[0]),
+          other.subversions_,
+          other.subversions_ + sizeof(subversions_) / sizeof(subversions_[0])
+        );
+      }
+
+      friend FixedBufStream<TabCategory>&
+      operator>>(FixedBufStream<TabCategory>& is, Version& version)
+        /*throw(eh::Exception)*/;
+
+    private:
+      void
+      parse_() /*throw(eh::Exception)*/
+      {
+        memset(subversions_, 0, sizeof(subversions_));
+        Stream::Parser parser(get());
+        parser >> subversions_[0];
+        for (std::size_t i = 1; i < sizeof(subversions_) / sizeof(subversions_[0]); ++i)
+        {
+          parser.get(); //Skip period
+          parser >> subversions_[i];
+        }
+      }
+      unsigned subversions_[4]; // major,minor,revision,build
+    };
+
+    ColoUpdateStatData() noexcept
+    :
+      last_channels_update_(),
+      last_campaigns_update_(),
+      version_()
+    {
     }
-    return last_channels_update_ == rhs.last_channels_update_ &&
-      last_campaigns_update_ == rhs.last_campaigns_update_ &&
-      version_ == rhs.version_;
-  }
 
-  ColoUpdateStatData& operator+=(const ColoUpdateStatData& rhs)
-  {
-    last_channels_update_ =
-      std::max(last_channels_update_, rhs.last_channels_update_);
-    last_campaigns_update_ =
-      std::max(last_campaigns_update_, rhs.last_campaigns_update_);
-    version_ = std::max(version_, rhs.version_);
-    return *this;
-  }
+    ColoUpdateStatData(
+      const OptionalSecondsTimestamp& last_channels_update,
+      const OptionalSecondsTimestamp& last_campaigns_update,
+      const OptionalString& version
+    )
+    :
+      last_channels_update_(last_channels_update),
+      last_campaigns_update_(last_campaigns_update),
+      version_(version)
+    {
+    }
 
-  const OptionalSecondsTimestamp& last_channels_update() const noexcept
-  {
-    return last_channels_update_;
-  }
+    bool operator==(const ColoUpdateStatData& rhs) const noexcept
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return last_channels_update_ == rhs.last_channels_update_ &&
+        last_campaigns_update_ == rhs.last_campaigns_update_ && version_ == rhs.version_;
+    }
 
-  const OptionalSecondsTimestamp& last_campaigns_update() const noexcept
-  {
-    return last_campaigns_update_;
-  }
+    ColoUpdateStatData& operator+=(const ColoUpdateStatData& rhs)
+    {
+      last_channels_update_ = std::max(last_channels_update_, rhs.last_channels_update_);
+      last_campaigns_update_ = std::max(last_campaigns_update_, rhs.last_campaigns_update_);
+      version_ = std::max(version_, rhs.version_);
+      return *this;
+    }
 
-  const StringIoWrapperOptional&
-  version() const noexcept
-  {
-    return version_;
-  }
+    const OptionalSecondsTimestamp& last_channels_update() const noexcept
+    {
+      return last_channels_update_;
+    }
 
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatData& data);
+    const OptionalSecondsTimestamp& last_campaigns_update() const noexcept
+    {
+      return last_campaigns_update_;
+    }
 
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUpdateStatData& data);
+    const StringIoWrapperOptional&
+    version() const noexcept
+    {
+      return version_;
+    }
 
-private:
-  OptionalSecondsTimestamp last_channels_update_;
-  OptionalSecondsTimestamp last_campaigns_update_;
-  Version version_;
-};
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatData& data);
 
-typedef StatCollector<ColoUpdateStatKey, ColoUpdateStatData, false, true>
-  ColoUpdateStatCollector;
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const ColoUpdateStatData& data);
 
-typedef LogDefaultTraits<ColoUpdateStatCollector, false> ColoUpdateStatTraits;
+  private:
+    OptionalSecondsTimestamp last_channels_update_;
+    OptionalSecondsTimestamp last_campaigns_update_;
+    Version version_;
+  };
 
-} // namespace LogProcessing
-} // namespace AdServer
+  typedef StatCollector<ColoUpdateStatKey, ColoUpdateStatData, false, true>
+    ColoUpdateStatCollector;
+
+  typedef LogDefaultTraits<ColoUpdateStatCollector, false> ColoUpdateStatTraits;
+
+} // namespace AdServer::LogProcessing

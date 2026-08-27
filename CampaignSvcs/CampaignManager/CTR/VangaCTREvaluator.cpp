@@ -76,15 +76,13 @@ namespace AdServer::CampaignSvcs::CTR
       FeatureSetProvider;
   }
 
-  VangaCTREvaluator::VangaCTREvaluator(
-    const String::SubString& model_file)
+  VangaCTREvaluator::VangaCTREvaluator(const String::SubString& model_file)
   {
     try
     {
       std::ifstream model_file_istr(model_file.str().c_str());
       Vanga::DTree_var regression_predictor = Vanga::DTree::load(model_file_istr);
-      vanga_predictor_ =
-        new Vanga::LogRegPredictor<Vanga::DTree>(regression_predictor);
+      vanga_predictor_ = new Vanga::LogRegPredictor<Vanga::DTree>(regression_predictor);
     }
     catch(const eh::Exception& ex)
     {

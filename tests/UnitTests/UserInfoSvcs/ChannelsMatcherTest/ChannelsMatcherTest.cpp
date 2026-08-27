@@ -38,13 +38,11 @@ struct ChannelMatchEq
     const std::pair<unsigned long, unsigned long>& left,
     const std::pair<unsigned long, unsigned long>& right) const
   {
-    return left.first == right.first &&
-      left.second == right.second;
+    return left.first == right.first && left.second == right.second;
   }
 };
 
-bool compare_channel_match_maps(
-  const ChannelMatchMap& left, const ChannelMatchMap& right)
+bool compare_channel_match_maps(const ChannelMatchMap& left, const ChannelMatchMap& right)
 {
   return left.size() == right.size() &&
     std::equal(left.begin(), left.end(), right.begin(), ChannelMatchEq());
@@ -52,8 +50,7 @@ bool compare_channel_match_maps(
 
 void print_match_result(std::ostream& out, const ChannelMatchMap& result)
 {
-  for(ChannelMatchMap::const_iterator res_it = result.begin();
-      res_it != result.end(); ++res_it)
+  for (ChannelMatchMap::const_iterator res_it = result.begin(); res_it != result.end(); ++res_it)
   {
     out << "  " << res_it->first << " : " << res_it->second << std::endl;
   }
@@ -64,7 +61,7 @@ void print_partly_match_result(
   std::ostream& out, const PartlyMatchResult& result)
 {
   out << "  from-to:" << std::endl;
-  for(PartlyMatchMap::const_iterator res_it = result.from_to_matches.begin();
+  for (PartlyMatchMap::const_iterator res_it = result.from_to_matches.begin();
       res_it != result.from_to_matches.end(); ++res_it)
   {
     out << "    " << res_it->first << " : " << res_it->second.visits << "/" <<
@@ -72,7 +69,7 @@ void print_partly_match_result(
   }
 
   out << "  now-to:" << std::endl;
-  for(PartlyMatchMap::const_iterator res_it = result.now_to_matches.begin();
+  for (PartlyMatchMap::const_iterator res_it = result.now_to_matches.begin();
       res_it != result.now_to_matches.end(); ++res_it)
   {
     out << "    " << res_it->first << " : " << res_it->second.visits << "/" <<
@@ -93,13 +90,9 @@ struct MatchWrapper
       match_ind(0)
   {}
 
-  int match(
-    const Generics::Time& time,
-    const ChannelMatchPack& cid,
-    const ChannelMatchMap& etalon)
+  int match(const Generics::Time& time, const ChannelMatchPack& cid, const ChannelMatchMap& etalon)
   {
-    if (cm.need_history_optimization(time, history_period,
-      Generics::Time::ZERO))
+    if (cm.need_history_optimization(time, history_period, Generics::Time::ZERO))
     {
       /*
       std::cout << "===>" << std::endl;
@@ -107,8 +100,7 @@ struct MatchWrapper
       std::cout << ">>>>" << std::endl;
       cm.print(base_profile->membuf(), std::cout, "");
       */
-      cm.history_optimize(history_profile.in(), time,
-        Generics::Time::ZERO, dict);
+      cm.history_optimize(history_profile.in(), time, Generics::Time::ZERO, dict);
       /*
       std::cout << "<===" << std::endl;
       cm.history_print(history_profile->membuf(), std::cout, "");
@@ -127,11 +119,11 @@ struct MatchWrapper
 */
     ++match_ind;
 
-    if(!compare_channel_match_maps(result, etalon))
+    if (!compare_channel_match_maps(result, etalon))
     {
       std::cerr << test_name << ": incorrect match result(" << match_ind << "): " << std::endl;
       print_match_result(std::cerr, result);
-      if(etalon.empty())
+      if (etalon.empty())
       {
         std::cerr << "Instead empty" << std::endl;
       }
@@ -169,8 +161,7 @@ int reverse_order_match_test()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 2, 2));
     channel_rules->page_channels[1] = page;
   }
 
@@ -197,14 +188,12 @@ int reverse_order_match_test()
     MatchWrapper matcher(*channel_rules, FUN);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-11 00:00:30"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-11 00:00:30"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
@@ -212,8 +201,7 @@ int reverse_order_match_test()
     //etalon[2] = 2;
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 10:00:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 10:00:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
   }
@@ -225,14 +213,12 @@ int reverse_order_match_test()
     MatchWrapper matcher(*channel_rules, FUN);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-09 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-09 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
@@ -240,8 +226,7 @@ int reverse_order_match_test()
     etalon[2] = 2;
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-11 10:00:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-11 10:00:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
   }
@@ -253,8 +238,7 @@ int reverse_order_match_test()
     MatchWrapper matcher(*channel_rules, FUN);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
@@ -262,8 +246,7 @@ int reverse_order_match_test()
     etalon[1] = 2;
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-09 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-09 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
   }
@@ -275,14 +258,12 @@ int reverse_order_match_test()
     MatchWrapper matcher(*channel_rules, FUN);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 00:00:30"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 00:00:30"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
@@ -290,14 +271,12 @@ int reverse_order_match_test()
     etalon[3] = 2;
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-11 10:00:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-11 10:00:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-05 23:59:40"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-05 23:59:40"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
   }
@@ -430,8 +409,7 @@ int session_match_test()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
     channel_rules->page_channels[2] = page;
   }
 
@@ -446,10 +424,7 @@ int session_match_test()
     TestChannelMatchMap etalon;
     etalon[1] = 2;
 
-    res += matcher.match(
-      Generics::Time::get_time_of_day(),
-      cid,
-      etalon);
+    res += matcher.match(Generics::Time::get_time_of_day(), cid, etalon);
   }
 
   {
@@ -459,14 +434,12 @@ int session_match_test()
     MatchWrapper matcher(*channel_rules, FUN);
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 10:12:50"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 10:12:50"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 10:13:20"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 10:13:20"), "%Y-%m-%d %H:%M:%S"),
       cid,
       TestChannelMatchMap());
 
@@ -474,8 +447,7 @@ int session_match_test()
     etalon[2] = 2;
 
     res += matcher.match(
-      Generics::Time(String::SubString("2006-10-10 10:14:00"),
-        "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2006-10-10 10:14:00"), "%Y-%m-%d %H:%M:%S"),
       cid,
       etalon);
   }
@@ -488,8 +460,7 @@ int session_match_test_2()
   static const char* FUN = "session_match_test_2()";
 
   ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-  page->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(7200), 2, 1));
+  page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(7200), 2, 1));
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
   channel_rules->page_channels[1] = page;
@@ -502,8 +473,7 @@ int session_match_test_2()
   MatchWrapper matcher(*channel_rules, FUN);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-01-01 12:12:12"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-01-01 12:12:12"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
@@ -511,8 +481,7 @@ int session_match_test_2()
   etalon[1] = 1;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-01-01 14:12:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-01-01 14:12:10"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
@@ -527,8 +496,7 @@ int session_match_test_3()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
     channel_rules->page_channels[1] = page;
   }
 
@@ -540,26 +508,22 @@ int session_match_test_3()
   int res = 0;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:10"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:20"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:30"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:30"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:40"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:40"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
@@ -567,26 +531,22 @@ int session_match_test_3()
   etalon[1] = 2;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:50"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:50"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:12:50"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:12:50"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:13:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:13:20"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:14:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:14:00"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
@@ -601,8 +561,7 @@ int session_match_test_4()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(300), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(300), 2, 2));
     channel_rules->page_channels[1] = page;
   }
 
@@ -614,8 +573,7 @@ int session_match_test_4()
   MatchWrapper matcher(*channel_rules, FUN);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 23:59:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 23:59:10"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
@@ -623,8 +581,7 @@ int session_match_test_4()
   etalon[1] = 2;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 23:59:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 23:59:10"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
@@ -639,10 +596,8 @@ int session_few_intervals_test()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time(60), Generics::Time(180), 1, 5));
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time(120), Generics::Time(180), 2, 6));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(60), Generics::Time(180), 1, 5));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(120), Generics::Time(180), 2, 6));
     channel_rules->page_channels[1] = page;
   }
 
@@ -653,14 +608,12 @@ int session_few_intervals_test()
   MatchWrapper matcher(*channel_rules, FUN);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:00:01"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:00:01"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:00:59"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:00:59"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
@@ -668,8 +621,7 @@ int session_few_intervals_test()
   etalon1[1] = 5;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:02:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:02:00"), "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
     etalon1);
 
@@ -677,14 +629,12 @@ int session_few_intervals_test()
   etalon2[1] = 11;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:03:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:03:00"), "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
     etalon2);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:04:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:04:00"), "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
     TestChannelMatchMap());
 
@@ -699,8 +649,7 @@ int session_delete_excess_test()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
     channel_rules->page_channels[1] = page;
   }
 
@@ -716,38 +665,30 @@ int session_delete_excess_test()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:10"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:11"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:11"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:12"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:12"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:13"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:13"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:14"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:14"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:50"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:50"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
 
-    if(result.size() != 1 || !(
-         result.begin()->first == 1 &&
-         result.begin()->second == 2))
+    if (result.size() != 1 || !(result.begin()->first == 1 && result.begin()->second == 2))
     {
       std::cerr << FUN << ": (1) incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -764,7 +705,7 @@ int session_delete_excess_test()
         "%Y-%m-%d %H:%M:%S"),
       *channel_rules);
 
-    if(partly_result.from_to_matches.size() != 1 || !(
+    if (partly_result.from_to_matches.size() != 1 || !(
          partly_result.from_to_matches.begin()->first == 1 &&
          partly_result.from_to_matches.begin()->second.visits == 4 &&
          partly_result.from_to_matches.begin()->second.minimum_visits == 2))
@@ -802,20 +743,17 @@ int history_today_match_test()
   int res = 0;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:20"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 10:10:20"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-11 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-11 10:10:20"), "%Y-%m-%d %H:%M:%S"),
     ChannelMatchPack(),
     TestChannelMatchMap());
 
@@ -824,8 +762,7 @@ int history_today_match_test()
   etalon[2] = 2;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-11 10:10:30"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-11 10:10:30"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
@@ -859,8 +796,7 @@ int history_today_few_intervals_test()
   etalon1[1] = 1;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-10 00:00:01"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-10 00:00:01"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon1);
 
@@ -868,14 +804,12 @@ int history_today_few_intervals_test()
   etalon2[1] = 3;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-11 00:00:59"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-11 00:00:59"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon2);
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-11 00:00:59"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-11 00:00:59"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon2);
 
@@ -883,8 +817,7 @@ int history_today_few_intervals_test()
   etalon3[1] = 7;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-11 00:00:59"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-11 00:00:59"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon3);
 
@@ -892,8 +825,7 @@ int history_today_few_intervals_test()
   etalon4[1] = 1 + 4;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2006-10-14 00:00:59"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2006-10-14 00:00:59"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon4);
 
@@ -925,8 +857,7 @@ int history_match_test()
   int res = 0;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2010-05-20 04:01:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2010-05-20 04:01:00"), "%Y-%m-%d %H:%M:%S"),
     cid,
     TestChannelMatchMap());
 
@@ -934,8 +865,7 @@ int history_match_test()
   etalon[1] = 1;
 
   res += matcher.match(
-    Generics::Time(String::SubString("2010-05-22 04:01:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    Generics::Time(String::SubString("2010-05-22 04:01:00"), "%Y-%m-%d %H:%M:%S"),
     cid,
     etalon);
 
@@ -967,25 +897,21 @@ int history_match_test_2()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
     {
       Generics::Time now(String::SubString("2010-05-21 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
-      if (cm.need_history_optimization(now, history_period,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
 //    cm.history_print(history_profile->membuf(), std::cout, "");
 
-      cm.match(result, now, cid, *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, now, cid, *channel_rules, pmp, pps, session_timeout, false);
 
       result.clear();
     }
@@ -993,22 +919,17 @@ int history_match_test_2()
     {
       Generics::Time now(String::SubString("2010-05-22 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
-      if (cm.need_history_optimization(now, history_period,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
 //    cm.history_print(history_profile->membuf(), std::cout, "");
 
-      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps, session_timeout, false);
     }
 
-    if(result.size() != 1 || !(
-         result.begin()->first == 1 &&
-         result.begin()->second == 1))
+    if (result.size() != 1 || !(result.begin()->first == 1 && result.begin()->second == 1))
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -1045,8 +966,7 @@ int history_match_test_3()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps,
              session_timeout, false);
     result.clear();
@@ -1054,33 +974,27 @@ int history_match_test_3()
     {
       Generics::Time now(String::SubString("2010-05-21 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
-      if (cm.need_history_optimization(now, history_period,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
       //cm.history_print(history_profile->membuf(), std::cout, "");
 
-      cm.match(result, now, cid, *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, now, cid, *channel_rules, pmp, pps, session_timeout, false);
     }
 
     {
       Generics::Time now(String::SubString("2010-05-23 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
-      if (cm.need_history_optimization(now, history_period,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
       //cm.history_print(history_profile->membuf(), std::cout, "");
 
-      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps, session_timeout, false);
 
       result.clear();
     }
@@ -1095,20 +1009,17 @@ int history_match_test_3()
 
       Generics::Time now(String::SubString("2010-05-23 05:02:00"), "%Y-%m-%d %H:%M:%S");
 
-      if (cm.need_history_optimization(now, history_period,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
       //cm.history_print(history_profile->membuf(), std::cout, "");
 
-      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps, session_timeout, false);
     }
 
-    if(result.size() != 0)
+    if (result.size() != 0)
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -1151,20 +1062,16 @@ int merge_test()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 00:00:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 00:00:10"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps,
              session_timeout, false);
     result.clear();
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 00:00:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 00:00:10"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps,
              session_timeout, false);
 
-    if(result.size() != 1 &&
-       !(result.begin()->first == 1 &&
-         result.begin()->second == 1))
+    if (result.size() != 1 && !(result.begin()->first == 1 && result.begin()->second == 1))
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -1181,12 +1088,11 @@ int merge_test()
 
     TestChannelMatchMap result;
 
-    cm2.match(result, Generics::Time(String::SubString("2006-10-11 00:00:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm2.match(result, Generics::Time(String::SubString("2006-10-11 00:00:10"), "%Y-%m-%d %H:%M:%S"),
               cid, *channel_rules, pmp, pps,
               session_timeout, false);
 
-    if(!result.empty())
+    if (!result.empty())
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -1201,17 +1107,14 @@ int merge_test()
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
     ChannelsMatcher cm2(base_profile2.in(), add_profile2.in());
 
-    if (cm.need_history_optimization(now, history_period,
-      Generics::Time::ZERO))
+    if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
     {
-      cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-        *channel_rules);
+      cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
     }
 
-    if(cm2.need_history_optimization(now, history_period, Generics::Time::ZERO))
+    if (cm2.need_history_optimization(now, history_period, Generics::Time::ZERO))
     {
-      cm2.history_optimize(history_profile2.in(), now, Generics::Time::ZERO,
-        *channel_rules);
+      cm2.history_optimize(history_profile2.in(), now, Generics::Time::ZERO, *channel_rules);
     }
 
     /*
@@ -1230,12 +1133,9 @@ int merge_test()
 
     TestChannelMatchMap result;
 
-    cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps,
-      session_timeout, false);
+    cm.match(result, now, ChannelMatchPack(), *channel_rules, pmp, pps, session_timeout, false);
 
-    if(result.size() != 1 &&
-       !(result.begin()->first == 1 &&
-         result.begin()->second == 1))
+    if (result.size() != 1 && !(result.begin()->first == 1 && result.begin()->second == 1))
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_match_result(std::cerr, result);
@@ -1268,11 +1168,10 @@ int session_match_performance_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 1, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 1, 2));
     channel_rules->page_channels[channel_i] = page;
   }
 
@@ -1284,7 +1183,7 @@ int session_match_performance_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
@@ -1294,12 +1193,11 @@ int session_match_performance_test()
     timer.start();
     cpu_timer.start();
 
-    for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+    for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       TestChannelMatchMap result;
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
-      cm.match(result, tm, cid, *channel_rules, pmp, pps,
-        session_timeout, false);
+      cm.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
     }
 
     cpu_timer.stop();
@@ -1321,59 +1219,51 @@ int unique_channels_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long i = 1; i < 11; ++i)
+  for (unsigned long i = 1; i < 11; ++i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 1, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 1, 2));
    ChannelFeatures cf(i%2 == 0, 0);
     channel_rules->page_channels[i] = page;
-    channel_rules->channel_features.insert(
-      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
+    channel_rules->channel_features.insert(std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
-  for(unsigned long i = 11; i < 21; ++i)
+  for (unsigned long i = 11; i < 21; ++i)
   {
     ChannelIntervalsPack_var search = new ChannelIntervalsPack();
-    search->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 2, 2));
+    search->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 2, 2));
 
     channel_rules->search_channels[i] = search;
-     channel_rules->channel_features.insert(
-       std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
+     channel_rules->channel_features.insert(std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
-  for(unsigned long i = 15; i < 25; ++i)
+  for (unsigned long i = 15; i < 25; ++i)
   {
     ChannelIntervalsPack_var url = new ChannelIntervalsPack();
-    url->short_intervals.insert(
-      ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 3, 2));
+    url->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 3, 2));
 
     channel_rules->url_channels[i] = url;
-    channel_rules->channel_features.insert(
-      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
+    channel_rules->channel_features.insert(std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
-  for(unsigned long i = 5; i < 15; ++i)
+  for (unsigned long i = 5; i < 15; ++i)
   {
     ChannelIntervalsPack_var search = new ChannelIntervalsPack();
     search->today_long_intervals.insert(
       ChannelInterval(Generics::Time::ZERO, Generics::Time(86400), 3, 2));
 
     channel_rules->search_channels[i] = search;
-    channel_rules->channel_features.insert(
-      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
+    channel_rules->channel_features.insert(std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
-  for(unsigned long i = 8; i < 28; ++i)
+  for (unsigned long i = 8; i < 28; ++i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
     page->long_intervals.insert(
       ChannelInterval(Generics::Time(86400), Generics::Time(3*86400), 3, 2));
 
     channel_rules->page_channels[i] = page;
-    channel_rules->channel_features.insert(
-      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
+    channel_rules->channel_features.insert(std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
   SmartMemBuf_var base_profile(new SmartMemBuf);
@@ -1381,7 +1271,7 @@ int unique_channels_test()
   SmartMemBuf_var history_profile(new SmartMemBuf);
 
   ChannelMatchPack cid;
-  for(unsigned long channel_i = 0; channel_i < 30; ++channel_i)
+  for (unsigned long channel_i = 0; channel_i < 30; ++channel_i)
   {
     cid.page_channels.push_back(channel_i);
     cid.search_channels.push_back(channel_i);
@@ -1393,36 +1283,28 @@ int unique_channels_test()
   ChannelsMatcher cm(base_profile.in(), add_profile.in());
   TestChannelMatchMap result;
 
-  cm.match(result, now, cid, *channel_rules, pmp, pps,
-    session_timeout, false);
+  cm.match(result, now, cid, *channel_rules, pmp, pps, session_timeout, false);
   result.clear();
 
   now += 86400;
 
   ChannelMatchPack tcid;
-  for(unsigned long channel_i = 0; channel_i < 30; ++channel_i)
+  for (unsigned long channel_i = 0; channel_i < 30; ++channel_i)
   {
     tcid.page_channels.push_back(3*channel_i);
     tcid.search_channels.push_back(3*channel_i);
     tcid.url_channels.push_back(3*channel_i);
   }
 
-  if (cm.need_history_optimization(now, history_period,
-    Generics::Time::ZERO))
+  if (cm.need_history_optimization(now, history_period, Generics::Time::ZERO))
   {
-    cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-      *channel_rules);
+    cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
   }
 
-  cm.match(result, now, tcid, *channel_rules, pmp, pps,
-    session_timeout, false);
+  cm.match(result, now, tcid, *channel_rules, pmp, pps, session_timeout, false);
 
   UniqueChannelsResult ucr;
-  cm.unique_channels(
-    base_profile->membuf(),
-    &history_profile->membuf(),
-    *channel_rules,
-    ucr);
+  cm.unique_channels(base_profile->membuf(), &history_profile->membuf(), *channel_rules, ucr);
 /*
   cm.history_print(history_profile->membuf(), std::cout, "");
   cm.print(base_profile->membuf(), std::cout, "");

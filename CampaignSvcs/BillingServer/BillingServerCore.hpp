@@ -28,9 +28,7 @@
 
 #include "BillingContainer.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   /**
    * Implementation of BillingServer.
@@ -95,20 +93,16 @@ namespace CampaignSvcs
       /*throw(Exception)*/;
 
     BidResultInfo
-    check_available_bid(
-      const CheckBidInfo& request_info);
+    check_available_bid(const CheckBidInfo& request_info);
 
     BidResultInfo
-    confirm_bid(
-      ConfirmBidInfo& request_info);
+    confirm_bid(ConfirmBidInfo& request_info);
 
     bool
-    reserve_bid(
-      const ReserveBidInfo& request_info);
+    reserve_bid(const ReserveBidInfo& request_info);
 
     ConfirmBidRefSeq
-    add_amount(
-      const ConfirmBidSeq& request_seq);
+    add_amount(const ConfirmBidSeq& request_seq);
 
     virtual void
     wait_object()
@@ -175,12 +169,9 @@ namespace CampaignSvcs
   typedef ReferenceCounting::SmartPtr<BillingServerCore>
     BillingServerCore_var;
 
-} /* CampaignSvcs */
-} /* AdServer */
+} // namespace AdServer::CampaignSvcs
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   inline
   Logging::Logger*
@@ -188,5 +179,4 @@ namespace CampaignSvcs
   {
     return logger_;
   }
-}
 }

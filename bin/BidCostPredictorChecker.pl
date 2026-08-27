@@ -33,7 +33,7 @@ sub agg_apply_model
   {
     # read aggregate
     open(my $fh, '<', $file_path) or die "Could not open '$file_path' $!\n";
-    while(my $line = <$fh>)
+    while (my $line = <$fh>)
     {
       chomp $line;
       my @fields = split('\t', $line);
@@ -65,7 +65,7 @@ sub main
     "agg-dir|a=s" => \$agg_folder,
   );
 
-  if(!GetOptions(%options))
+  if (!GetOptions(%options))
   {
     pod2usage(1);
   }

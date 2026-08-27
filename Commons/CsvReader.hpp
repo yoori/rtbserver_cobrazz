@@ -36,16 +36,16 @@ namespace Commons
     String::SubString::ConstPointer pre_end = line.end();
     --pre_end;
 
-    while(pos != line.end())
+    while (pos != line.end())
     {
       // process value
       bool quota_opened = false;
 
-      if(pos != pre_end && *pos == '"')
+      if (pos != pre_end && *pos == '"')
       {
         quota_opened = true;
         ++pos;
-        if(pos == line.end())
+        if (pos == line.end())
         {
           Stream::Error ostr;
           ostr << "unexpected end of line";
@@ -53,20 +53,20 @@ namespace Commons
         }
       }
 
-      if(quota_opened)
+      if (quota_opened)
       {
         // find quota end
         std::string res_value;
         String::SubString::ConstPointer block_begin_pos = pos;
-        while(true)
+        while (true)
         {
           pos = Q_CHARS_.find_owned(block_begin_pos, line.end());
           res_value += String::SubString(block_begin_pos, pos).str();
-          if(pos == line.end())
+          if (pos == line.end())
           {
             break;
           }
-          else if(*(pos + 1) != '"')
+          else if (*(pos + 1) != '"')
           {
             pos += 1;
             break;
@@ -76,7 +76,7 @@ namespace Commons
           block_begin_pos = pos + 2;
         }
 
-        if(pos != line.end() && *pos != ',')
+        if (pos != line.end() && *pos != ',')
         {
           Stream::Error ostr;
           ostr << "expected field separator after value close";
@@ -92,10 +92,10 @@ namespace Commons
         pos = end_pos;
       }
 
-      if(pos != line.end())
+      if (pos != line.end())
       {
         ++pos;
-        if(pos == line.end())
+        if (pos == line.end())
         {
           container.insert(container.end(), std::string());
         }

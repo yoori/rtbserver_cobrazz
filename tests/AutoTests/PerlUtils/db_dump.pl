@@ -131,7 +131,7 @@ sub valid_condition {
 sub check_key_value
 {
   my ($values, $keys) = @_;
-  
+
   return (grep {defined $_} @$values) == @$keys;
 }
 
@@ -139,14 +139,14 @@ my %tables;
 my %references;
 my %links;
 
-sub get_references 
+sub get_references
 {
   my ($table) = @_;
   unless (defined $references{$table})
   {
     $reference->execute($table);
     @{$references{$table}} = ();
-    while (my $row = $reference->fetchrow_hashref) 
+    while (my $row = $reference->fetchrow_hashref)
     {
       push @{$references{$table}}, $row;
     }
@@ -154,14 +154,14 @@ sub get_references
   return $references{$table};
 }
 
-sub get_links 
+sub get_links
 {
   my ($table) = @_;
   unless (defined $links{$table})
   {
     $links->execute($table);
     @{$links{$table}} = ();
-    while (my $row = $links->fetchrow_hashref) 
+    while (my $row = $links->fetchrow_hashref)
     {
       push @{$links{$table}}, $row;
     }
@@ -172,16 +172,16 @@ sub get_links
 sub table_columns
 {
   my ($table) = @_;
-  unless ($tables{$table}{columns}) 
+  unless ($tables{$table}{columns})
   {
     my $class = $classes{$table};
     if (defined $class)
     {
-      @{$tables{$table}{columns}} = 
-        sort map {lc $_ } 
-           (grep {defined $_ and $_ ne ""} 
-              ($class->_sequence, 
-               $class->_unique, 
+      @{$tables{$table}{columns}} =
+        sort map {lc $_ }
+           (grep {defined $_ and $_ ne ""}
+              ($class->_sequence,
+               $class->_unique,
                $class->_fields));
     }
     else
@@ -191,7 +191,7 @@ sub table_columns
        SELECT column_name FROM information_schema.columns WHERE
        table_name=lower($1) and table_schema = 'public']);
       $select->execute($table);
-      while (my $row = $select->fetchrow_hashref) 
+      while (my $row = $select->fetchrow_hashref)
       {
         push @columns, $row->{column_name};
       }
@@ -209,7 +209,7 @@ sub get_key_values
   {
     my %cols;
     @cols{ map {lc $_} @table_columns} = (0 .. $#table_columns);
-    my @key_values =  map {$row->[$_]} (grep {defined $_} map { $cols{$_} } @$columns); 
+    my @key_values =  map {$row->[$_]} (grep {defined $_} map { $cols{$_} } @$columns);
     if (check_key_value(\@key_values, $columns))
     {
       return @key_values;
@@ -257,7 +257,7 @@ sub is_stat
 
 my %condition_cache;
 
-sub do_select 
+sub do_select
 {
   my ($d) = @_;
 
@@ -273,23 +273,23 @@ sub do_select
   {
     @{ $condition_cache{$table}{$d->{condition}} } = ();
   }
-  
+
   table_columns($d->{table});
 
-  my $columns = 
+  my $columns =
     join(", ", grep {defined $_ and $_ ne ""} (@{$tables{$table}{columns}}));
 
   my $select = $dbh->prepare(qq[
     SELECT cast(ctid AS varchar), $columns FROM $table WHERE $d->{condition}]);
   $select->execute;
 
-  while (my @row = $select->fetchrow_array) 
+  while (my @row = $select->fetchrow_array)
   {
     my $rowid = shift @row;
 
     push @{ $condition_cache{$table}{$d->{condition}} }, $rowid;
 
-    unless ($tables{$table}{rows}{$rowid}) 
+    unless ($tables{$table}{rows}{$rowid})
     {
       @{$tables{$table}{rows}{$rowid}} = @row;
     }
@@ -300,47 +300,47 @@ sub do_select
     }
 
     # Select childs
-    
+
     foreach my $ref (@{get_references($table)})
     {
-      my $is_leaf = 
+      my $is_leaf =
           grep( /^$ref->{fk_table}$/, @leaf_tables);
 
       if (not defined $d->{not_select_child} or $is_leaf == 1)
       {
-        my @key_values = 
+        my @key_values =
           get_key_values($table, $ref->{pk_cols}, \@row);
-        
+
 
         if (@key_values != 0)
         {
-         
-          my $c = 
-              qq[ @{[ valid_condition($ref->{fk_table}, 
+
+          my $c =
+              qq[ @{[ valid_condition($ref->{fk_table},
                                       $ref->{fk_cols}, \@key_values) ]} ];
-          
-          do_select( 
+
+          do_select(
                      { table => $ref->{fk_table}, condition => $c,
                        parent_id => $rowid, key => $ref->{fk_cols} } );
         }
       }
     }
-    
+
     # Select parents
     foreach my $link (@{get_links($table)})
     {
 
-      my @key_values = 
+      my @key_values =
         get_key_values($table, $link->{fk_cols}, \@row);
 
       if (@key_values  != 0)
       {
-        my $c = 
-          qq[ @{[ valid_condition($link->{pk_table}, 
+        my $c =
+          qq[ @{[ valid_condition($link->{pk_table},
                                   $link->{pk_cols}, \@key_values) ]} ];
 
-        my ($parent_id) = 
-          do_select( 
+        my ($parent_id) =
+          do_select(
             { table => $link->{pk_table}, condition => $c,
               not_select_child => 1 } );
 
@@ -351,26 +351,26 @@ sub do_select
       }
     }
   }
-  
+
   return @{ $condition_cache{$table}{$d->{condition}} };
 }
 
-foreach my $class (keys %{DB::}) 
+foreach my $class (keys %{DB::})
 {
   $class =~ s/::$//;
   $classes{lc $class} = "DB::$class";
 }
 
 
-while (my ($table, $class) = each %classes) 
+while (my ($table, $class) = each %classes)
 {
-  if ($class->isa('DB::Entity::Base')) 
+  if ($class->isa('DB::Entity::Base'))
   {
     my ($unique) = ($class->_unique);
     $table = lc($class->_table) if $class->_table;
-    my $name = 
+    my $name =
       $unique && $unique eq 'name'? 'name': undef;
-    if ($name) 
+    if ($name)
     {
       do_select( {table => $table, condition => "$name LIKE $prefix"} );
     }
@@ -398,7 +398,7 @@ foreach my $t (sort keys %tables)
   <table id="$t">
   EOF;
 
-  while (my ($id, $r) = each %{ $v->{rows} }) 
+  while (my ($id, $r) = each %{ $v->{rows} })
   {
 
     print <<"    EOF;";
@@ -410,7 +410,7 @@ foreach my $t (sort keys %tables)
       <anchor>$id</anchor>
       EOF;
     }
-    
+
     my @row = @$r;
 
     for (my $i =0; $i < @{$v->{columns}}; ++$i)
@@ -418,7 +418,7 @@ foreach my $t (sort keys %tables)
       my $column = $v->{columns}->[$i];
       my $value = $row[$i];
       $value = "(null)" unless defined $value;
-      
+
       $value =~ s/&/&amp;/g;
       $value =~ s/</&lt;/g;
       $value =~ s/>/&gt;/g;

@@ -13,7 +13,7 @@ sub init {
   my $isp = $ns->create(Isp => {
     name => "WebStatFrontendProtocol"});
 
-  my $publisher = 
+  my $publisher =
    $ns->create(Publisher => {
      name => "Publisher" });
 
@@ -32,10 +32,10 @@ sub init {
     my $campaign = $ns->create(DisplayCampaign => {
       name => 'Campaign-' . $k,
       campaigncreativegroup_status => $v->{ccg_status},
-      campaigncreativegroup_display_status_id => 
+      campaigncreativegroup_display_status_id =>
          $v->{ccg_status} ne 'A'? DISPLAY_STATUS_INACTIVE: DISPLAY_STATUS_LIVE,
       campaigncreative_status => $v->{cc_status},
-      campaigncreative_display_status_id => 
+      campaigncreative_display_status_id =>
          $v->{cc_status} eq 'D'?  DISPLAY_STATUS_INACTIVE: DISPLAY_STATUS_LIVE,
     });
 
@@ -73,7 +73,7 @@ sub init {
    ['wstest_app_22', 'wstest_src_22', 'wstest_op_22', 'A', 125]);
 
   my $i = 0;
-      
+
   for my $web (@web_operations)
   {
     my ($app, $source, $operation, $status, $flags) = @$web;
@@ -89,7 +89,7 @@ sub init {
     $ns->output("Source/$i", $source);
     $ns->output("Operation/$i", $operation);
     $ns->output("WebOpId/$i", $wo);
-    
+
   }
 
   my @oo_operations = (
@@ -103,7 +103,7 @@ sub init {
     my ($id, $app, $source, $operation, $status, $flags) = @$web;
 
     my $wo = $ns->create(WebOperation => {
-      web_operation_id => $id,      
+      web_operation_id => $id,
       app => $app,
       source => $source,
       operation => $operation,
@@ -112,7 +112,7 @@ sub init {
 
     $ns->output("OO/" . $operation, $wo);
   }
-  
+
   # CT cookies & params
   $ns->output('CT/1', "%D0%94b");
   $ns->output('CURCT/1', qq[\xd0\x94b]);

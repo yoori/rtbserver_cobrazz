@@ -51,10 +51,7 @@ class AdvertiserUserStatsTest : public BaseUnit
   typedef std::list<std::string> RequestList;
 
 public:
-  AdvertiserUserStatsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  AdvertiserUserStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq()),
     today_()
@@ -167,20 +164,17 @@ private:
   async_part_1_();
 
   void
-  async_part_2_(
-    AdClient& client);
+  async_part_2_(AdClient& client);
 
   void
-  async_part_3_(
-    AdClient& client);
+  async_part_3_(AdClient& client);
 
 
   AdClient
   big_date_diff_part_1_();
 
   void
-  big_date_diff_part_2_(
-    AdClient& client);
+  big_date_diff_part_2_(AdClient& client);
 
   void
   colo_();

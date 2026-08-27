@@ -3,10 +3,7 @@
 #include <functional>
 #include "CCGKeywordStatsTest.hpp"
 
-REFLECT_UNIT(CCGKeywordStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CCGKeywordStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -39,9 +36,7 @@ CCGKeywordStatsTest::run()
 
   // Check stats
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_, diffs_, hourly_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs_, hourly_)).check(),
     "Check CCGKeywordStatsHourly");
 
   {
@@ -53,9 +48,7 @@ CCGKeywordStatsTest::run()
       ConvertDiff<ORM::CCGKeywordStatsDaily::Diffs>());
     */
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_, diffs, daily_)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, daily_)).check(),
       "Check CCGKeywordStatsDaily");
   }
 
@@ -68,16 +61,12 @@ CCGKeywordStatsTest::run()
       ConvertDiff<ORM::CCGKeywordStatsToW::Diffs>());
     */
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_, diffs, week_)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, week_)).check(),
       "Check CCGKeywordStatsToW");
   }
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_, total_diffs_, total_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, total_diffs_, total_)).check(),
     "Check CCGKeywordStatsTotal");
 
   return true;
@@ -108,8 +97,7 @@ CCGKeywordStatsTest::add_stats_(
     ORM::CCGKeywordStatsDaily stat;
     stat.key().
       ccg_keyword_id(key.ccg_keyword_id()).
-      adv_sdate(
-        key.adv_sdate_used()? key.adv_sdate(): key.sdate());
+      adv_sdate(key.adv_sdate_used()? key.adv_sdate(): key.sdate());
     stat.description(description);
     stat.select(pq_conn_);
     daily_.push_back(stat);
@@ -159,8 +147,7 @@ CCGKeywordStatsTest::system_currency_case_()
   add_stats_(
     description,
     ORM::CCGKeywordStatsHourly::Key().
-      ccg_keyword_id(
-        fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
+      ccg_keyword_id(fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
       sdate(now),
     ORM::CCGKeywordStatsHourly::Diffs().
       imps(REPEAT_COUNT).
@@ -180,16 +167,13 @@ CCGKeywordStatsTest::system_currency_case_()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        ccid_exp,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
       description + " Check CC");
 
     // Send click request after every second impression
     if (i % 2 == 1)
     {
-      client.process_request(
-        client.debug_info.selected_creatives.begin()->click_url);
+      client.process_request(client.debug_info.selected_creatives.begin()->click_url);
     }
   }
 }
@@ -215,8 +199,7 @@ CCGKeywordStatsTest::advertiser_currency_case_()
   add_stats_(
     description,
     ORM::CCGKeywordStatsHourly::Key().
-      ccg_keyword_id(
-        fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
+      ccg_keyword_id(fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
       sdate(now),
     ORM::CCGKeywordStatsHourly::Diffs().
       imps(REPEAT_COUNT).
@@ -236,16 +219,13 @@ CCGKeywordStatsTest::advertiser_currency_case_()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        ccid_exp,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
       description + " Check CC");
 
     // Send click request after every second impression
     if (i % 2 == 1)
     {
-      client.process_request(
-        client.debug_info.selected_creatives.begin()->click_url);
+      client.process_request(client.debug_info.selected_creatives.begin()->click_url);
     }
   }
 }
@@ -272,8 +252,7 @@ CCGKeywordStatsTest::mixed_currency_case_()
   add_stats_(
     description,
     ORM::CCGKeywordStatsHourly::Key().
-      ccg_keyword_id(
-        fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
+      ccg_keyword_id(fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX)).
       sdate(now),
     ORM::CCGKeywordStatsHourly::Diffs().
       imps(REPEAT_COUNT).
@@ -283,8 +262,7 @@ CCGKeywordStatsTest::mixed_currency_case_()
   add_stats_(
     description,
     ORM::CCGKeywordStatsHourly::Key().
-      ccg_keyword_id(
-        fetch_int(std::string("CCGKeywordId2/") + ENTITY_SUFFIX)).
+      ccg_keyword_id(fetch_int(std::string("CCGKeywordId2/") + ENTITY_SUFFIX)).
       sdate(now),
     ORM::CCGKeywordStatsHourly::Diffs().
       imps(REPEAT_COUNT).
@@ -308,9 +286,7 @@ CCGKeywordStatsTest::mixed_currency_case_()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        ccid_exp,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
       description + " Check CC");
 
     AutoTest::DebugInfo::DebugInfo debug_info = client.debug_info;
@@ -338,10 +314,8 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
   std::string description("Advertiser timezone.");
   add_descr_phrase(description);
 
-  const Generics::Time ADV1_TZ_OFFSET =
-    AutoTest::ORM::get_tz_ofset(this, "Europe/Copenhagen");
-  const Generics::Time ADV2_TZ_OFFSET =
-    AutoTest::ORM::get_tz_ofset(this, "America/Sao_Paulo");
+  const Generics::Time ADV1_TZ_OFFSET = AutoTest::ORM::get_tz_ofset(this, "Europe/Copenhagen");
+  const Generics::Time ADV2_TZ_OFFSET = AutoTest::ORM::get_tz_ofset(this, "America/Sao_Paulo");
 
   AutoTest::Time now;
   AutoTest::Time now_date(now.get_gm_time().get_date());
@@ -353,10 +327,8 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
   AutoTest::Time adv2_time2 = now_date - ADV2_TZ_OFFSET + 60;
 
   // check dates in advertiser timezones (adv_sdate):
-  unsigned long adv1_ccg_keyword_id = fetch_int(
-    std::string("CCGKeywordId1/") + ENTITY_SUFFIX);
-  unsigned long adv2_ccg_keyword_id = fetch_int(
-    std::string("CCGKeywordId2/") + ENTITY_SUFFIX);
+  unsigned long adv1_ccg_keyword_id = fetch_int(std::string("CCGKeywordId1/") + ENTITY_SUFFIX);
+  unsigned long adv2_ccg_keyword_id = fetch_int(std::string("CCGKeywordId2/") + ENTITY_SUFFIX);
 
   const ExpectedStat STATS[] =
   {
@@ -418,9 +390,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
     ccid_exp.push_back(fetch_string(std::string("CC1/") + ENTITY_SUFFIX));
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        ccid_exp,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
       description + " Check CC#1");
   }
   {
@@ -440,9 +410,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
     ccid_exp.push_back(fetch_string(std::string("CC2/") + ENTITY_SUFFIX));
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        ccid_exp,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(ccid_exp, SelectedCreativesCCID(client)).check(),
       description + " Check CC#2");
   }
 

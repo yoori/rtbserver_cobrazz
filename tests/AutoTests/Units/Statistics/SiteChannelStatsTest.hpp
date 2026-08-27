@@ -7,10 +7,7 @@ class SiteChannelStatsTest: public BaseUnit
 {
 public:
 
-  SiteChannelStatsTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  SiteChannelStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

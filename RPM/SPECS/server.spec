@@ -89,7 +89,7 @@ Conflicts: foros-server-central-debuginfo
 Conflicts: foros-server-remote-debuginfo < %{version}
 Conflicts: foros-server-remote-debuginfo > %{version}
 %endif
-%if "%{?buildType}" == "nb" 
+%if "%{?buildType}" == "nb"
 BuildRequires: valgrind-devel
 %endif
 BuildRequires: pcre2-devel >= 10.32
@@ -207,7 +207,7 @@ this package is for %{__type} colocations
 Summary:  Test programs
 Group:    System Environment/Daemons
 Requires: libpq >= %{__libpq_ver_req}
-Requires(pre): %{name} 
+Requires(pre): %{name}
 Provides: perl(ChannelConfig)
 
 %if "%{?__type:%{__type}}%{!?__type:0}" == "central"

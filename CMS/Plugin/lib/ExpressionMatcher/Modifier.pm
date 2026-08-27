@@ -97,9 +97,9 @@ sub exists_chunks
   {
     foreach my $folder(keys %{LEGACY_PROFILE_FOLDERS()})
     {
-      if($chunk_folder =~ m|^$folder(/.*)?$|)
+      if ($chunk_folder =~ m|^$folder(/.*)?$|)
       {
-        my $chunk_index = $this->random_number_(); 
+        my $chunk_index = $this->random_number_();
         $chunks{$chunk_index} = new ChunkDescription(
           index => $chunk_index,
           total_chunks => 0,
@@ -124,7 +124,7 @@ sub exists_chunks
   @chunk_folders = $this->{exec_impl_}->list($host, "/");
   foreach my $folder(@chunk_folders)
   {
-    if($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)(/.*)?$|)
+    if ($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)(/.*)?$|)
     {
       $chunks{$1} = new ChunkDescription(
         index => $1,
@@ -141,7 +141,7 @@ sub exists_chunks
   #   /(Chunk_\d_\d_merged)/...
   foreach my $folder(@chunk_folders)
   {
-    if($folder =~ m|^to_merge_(\d+)_(\d+)(/.*)?$|)
+    if ($folder =~ m|^to_merge_(\d+)_(\d+)(/.*)?$|)
     {
       $unmerged_chunks{$1} = new ChunkDescription(
         index => $1,
@@ -151,12 +151,12 @@ sub exists_chunks
         version => '3.5');
     }
   }
-  
+
   foreach my $folder(@chunk_folders)
   {
-    if($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)_merged(/.*)?$|)
+    if ($folder =~ m|^@{[CHUNK_PREFIX]}_(\d+)_(\d+)_merged(/.*)?$|)
     {
-      if(!exists($unmerged_chunks{$1}))
+      if (!exists($unmerged_chunks{$1}))
       {
         $unmerged_chunks{$1} = new ChunkDescription(
           index => $1,
@@ -167,7 +167,7 @@ sub exists_chunks
       }
     }
 
-    if($folder =~ m|^divided_(\d+)_(\d+)(/.*)?$|)
+    if ($folder =~ m|^divided_(\d+)_(\d+)(/.*)?$|)
     {
       $unfinished_chunks{$1} = new ChunkDescription(
         index => $1,
@@ -190,7 +190,7 @@ sub create
   my $dst_host = $chunk->host();
 
   # create required dirs
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: creating chunk #" . $chunk->index() . " at '$dst_host'");
@@ -199,16 +199,17 @@ sub create
   # convert old chunk if required
   my $res = $this->adapt_chunk_($chunk);
 
-  if(!defined($chunk->total_chunks()))
+  if (!defined($chunk->total_chunks()))
   {
     $chunk->total_chunks($this->{chunks_number_});
   }
-  if(!defined($chunk->path()))
+
+  if (!defined($chunk->path()))
   {
     $chunk->path($this->get_chunk_path_($chunk->index()));
   }
 
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->mkdir(
       $dst_host,
@@ -240,14 +241,14 @@ sub move
   my $src_host = $chunk->host();
   my $chunk_root = $chunk->path();
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: to move chunk #" .
       $chunk->index() . " from '$src_host' to '$dst_host': " . $chunk_root);
   }
 
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->move(
       $src_host,
@@ -259,7 +260,7 @@ sub move
 
   $chunk->host($dst_host);
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: chunk #" . $chunk->index() .
@@ -277,7 +278,7 @@ sub remove
 
   my $dst_host = $chunk->host();
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: to remove chunk #" .
@@ -285,7 +286,7 @@ sub remove
   }
 
   my $chunk_root = $chunk->path();
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->move(
       $dst_host,
@@ -296,19 +297,19 @@ sub remove
   }
 }
 
-# divides chunk due to new distribution 
+# divides chunk due to new distribution
 sub divide_chunk
 {
   my ($this, $chunk) = @_;
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Redistribution: dividing chunk #" . $chunk->index() .
       " on the host " . $chunk->host() . " to " . $this->{chunks_number_} . " chunks");
   }
 
-  if(defined $this->{dry_run_})
+  if (defined $this->{dry_run_})
   {
     return;
   }
@@ -316,7 +317,7 @@ sub divide_chunk
   my $divided_chunk_root = "divided_" . $chunk->index() . "_" . $this->{chunks_number_} . "/";
 
   # dividing chunk into temp directory
-  if(!defined($chunk->divided()))
+  if (!defined($chunk->divided()))
   {
     die "Modifier: dividing ExpressionMatcher legacy chunk " .
       $chunk->path() . " is unsupported";
@@ -332,10 +333,10 @@ sub divide_chunk
     }
 
     my @new_chunks_dirs = $this->{exec_impl_}->list($chunk->host(), $divided_chunk_folder);
-    
+
     foreach my $dir(@new_chunks_dirs)
     {
-      if($dir !~ m|^\d+$|)
+      if ($dir !~ m|^\d+$|)
       {
         next;
       }
@@ -366,7 +367,7 @@ sub merge_chunk
 {
   my ($this, $new_chunk_host, $chunk) = @_;
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Redistribution: merging chunk #" . $chunk->index() . " on the host $new_chunk_host");
@@ -381,9 +382,9 @@ sub merge_chunk
     version => '3.5');
 
   # chunk is merged but not renamed - just rename it
-  if($chunk->path() =~ m|^.*_merged$|)
+  if ($chunk->path() =~ m|^.*_merged$|)
   {
-    if(!defined $this->{dry_run_})
+    if (!defined $this->{dry_run_})
     {
       $this->{exec_impl_}->move(
         $new_chunk_host,
@@ -403,11 +404,13 @@ sub merge_chunk
     {
       next;
     }
-    if($this->{verbose_} && defined $this->{logger_})
+
+    if ($this->{verbose_} && defined $this->{logger_})
     {
       $this->{logger_}->trace("Moving chunk data from host $host");
     }
-    if(defined $this->{dry_run_})
+
+    if (defined $this->{dry_run_})
     {
       next;
     }
@@ -415,7 +418,7 @@ sub merge_chunk
     foreach my $chunk_folder(keys %{PROFILE_FOLDERS_PREFIXES()})
     {
       my $chunk_root = $chunk->path() . "/" . $chunk_folder . "/";
-      
+
       if (!$this->{exec_impl_}->dir_exists($host, $chunk_root))
       {
         next;
@@ -429,7 +432,7 @@ sub merge_chunk
       my @chunk_folders = $this->{exec_impl_}->list($host, $chunk_root);
       foreach my $folder(@chunk_folders)
       {
-        if($folder !~ m|^\d+$|)
+        if ($folder !~ m|^\d+$|)
         {
           next;
         }
@@ -448,7 +451,7 @@ sub merge_chunk
     $this->{exec_impl_}->remove($host, $chunk->path(), 1);
   }
 
-  if(defined $this->{dry_run_})
+  if (defined $this->{dry_run_})
   {
     return $chunk_desc;
   }
@@ -488,14 +491,14 @@ sub merge_chunk
       {
         foreach my $file(@chunks_files)
         {
-          if($file =~ m|^$prefix.*\.index$|)
+          if ($file =~ m|^$prefix.*\.index$|)
           {
             push(@{$merge_paths{$prefix}}, $chunk_root . "/" . $folder);
             last;
           }
         }
       }
-    } 
+    }
 
     # merging chunk
     $this->{exec_impl_}->mkdir(
@@ -503,7 +506,7 @@ sub merge_chunk
       $merged_chunk_folder . "/" . $chunk_folder) &&
       die "Can't create directory $new_chunk_host:$merged_chunk_folder/$chunk_folder";
 
-    while(my ($prefix, $chunk_dirs) = each(%merge_paths))
+    while (my ($prefix, $chunk_dirs) = each(%merge_paths))
     {
       die "Modifier: merging ExpressionMatcher legacy chunk " .
         $chunk->path() . " is unsupported";
@@ -531,9 +534,9 @@ sub adapt_chunk_
   my ($this, $chunk) = @_;
   my $res = 0;
 
-  if(defined($chunk->version()))
+  if (defined($chunk->version()))
   {
-    if($chunk->version() eq '3.4')
+    if ($chunk->version() eq '3.4')
     {
       $this->migrate_3_5_($chunk);
       $res = 1;
@@ -550,14 +553,14 @@ sub migrate_3_5_
   my $dst_host = $chunk->host();
   my $new_chunk_root = CHUNK_PREFIX . '_' . $chunk->index() . '_0';
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: to migrate chunk #" .
       $chunk->index() . ": 3.4 => 3.5 at '$dst_host'");
   }
 
-  if(!defined $this->{dry_run_})
+  if (!defined $this->{dry_run_})
   {
     $this->{exec_impl_}->mkdir(
       $dst_host,
@@ -568,7 +571,7 @@ sub migrate_3_5_
     {
       foreach my $prefix(keys %{LEGACY_PROFILE_FOLDERS()})
       {
-        if($folder =~ m|^$prefix(/)?$|)
+        if ($folder =~ m|^$prefix(/)?$|)
         {
           $this->{exec_impl_}->move(
             $dst_host,
@@ -577,11 +580,11 @@ sub migrate_3_5_
             $new_chunk_root) &&
           die "Modifier: Can't move $dst_host:$folder to $dst_host:$new_chunk_root";
         }
-      }        
+      }
     }
   }
 
-  if($this->{verbose_} && defined $this->{logger_})
+  if ($this->{verbose_} && defined $this->{logger_})
   {
     $this->{logger_}->trace(
       "Modifier: migrated chunk #" .
@@ -605,7 +608,7 @@ sub random_number_
   {
     $random_number .= int(rand(10));
   }
-  return $random_number; 
+  return $random_number;
 }
 
 1;

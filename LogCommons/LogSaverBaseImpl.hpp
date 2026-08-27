@@ -2,8 +2,8 @@
 
 #include <LogCommons/LogCommons.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
+namespace AdServer::LogProcessing
+{
 
   template <typename CollectorType>
   class SpilloverImpl : public ReferenceCounting::AtomicImpl
@@ -86,8 +86,7 @@ namespace LogProcessing {
     typedef CollectorFilter<typename CollectorBundleType::CollectorT>
       CollectorFilterType;
 
-    LogSaverBaseImpl(
-      CollectorFilterType* collector_filter)
+    LogSaverBaseImpl(CollectorFilterType* collector_filter)
       : collector_filter_(ReferenceCounting::add_ref(collector_filter))
     {}
 
@@ -105,5 +104,4 @@ namespace LogProcessing {
 
   };
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

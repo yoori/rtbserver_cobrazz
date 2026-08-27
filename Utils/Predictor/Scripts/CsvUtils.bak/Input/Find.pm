@@ -34,7 +34,7 @@ sub find_files
   $rule->name($mask);
 
   my $it = $rule->iter($dir);
-  while(my $file = $it->())
+  while (my $file = $it->())
   {
     push(@res_files, $file);
   }
@@ -46,12 +46,12 @@ sub get
 {
   my ($self) = @_;
 
-  while(1)
+  while (1)
   {
-    if(!defined($self->{cur_file_}))
+    if (!defined($self->{cur_file_}))
     {
       my $file = shift @{$self->{files_}};
-      if(defined($file))
+      if (defined($file))
       {
         open my $fh, $file;
         $self->{cur_file_} = $fh;
@@ -62,7 +62,7 @@ sub get
       }
     }
 
-    if(< $self->{cur_file_} >)
+    if (< $self->{cur_file_} >)
     {
       my $line = $_;
       chomp $line;

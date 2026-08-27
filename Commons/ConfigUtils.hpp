@@ -33,8 +33,7 @@ namespace Config
     noexcept;
 
   AdServer::Grpc::BatchingOptions
-  read_xsd_grpc_options(
-    const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config);
+  read_xsd_grpc_options(const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config);
 }
 
 namespace Config
@@ -87,8 +86,7 @@ namespace Config
         if (it->min_log_level().present())
         {
           loggers.push_back(Logging::QLogger_var(
-            new Logging::SeveritySelectorLogger(file_logger,
-              it->min_log_level().get())));
+            new Logging::SeveritySelectorLogger(file_logger, it->min_log_level().get())));
         }
         else
         {

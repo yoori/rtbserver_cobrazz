@@ -63,16 +63,16 @@ sub init {
   $ns->output("URLBP", $channelURL->url_key());
   $ns->output("URLTRIGGER", $channelURL->url_channel_triggers_->[0]->channel_trigger_id());
 
-  $ns->output("OPTINCOLO", 
+  $ns->output("OPTINCOLO",
     DB::Defaults::instance()->optin_only_isp->{colo_id});
-  $ns->output("ALLCOLO", 
+  $ns->output("ALLCOLO",
     DB::Defaults::instance()->ads_isp->{colo_id});
-  $ns->output("NONOPTOUTCOLO", 
+  $ns->output("NONOPTOUTCOLO",
     DB::Defaults::instance()->non_optout_isp->{colo_id});
-  $ns->output("NOADSCOLO", 
+  $ns->output("NOADSCOLO",
     DB::Defaults::instance()->no_ads_isp->{colo_id});
-  $ns->output("DELETEDCOLO", 
-    DB::Defaults::instance()->deleted_colo_isp->{colo_id}); 
+  $ns->output("DELETEDCOLO",
+    DB::Defaults::instance()->deleted_colo_isp->{colo_id});
 }
 
 1;

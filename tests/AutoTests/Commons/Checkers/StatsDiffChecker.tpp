@@ -15,12 +15,12 @@ namespace AutoTest
       initial_(initial),
       real_(initial)
   {}
-  
+
   template<typename StatsType, typename StatsDiffType>
   StatsDiffChecker<StatsType, StatsDiffType>::~StatsDiffChecker()
     noexcept
   {}
-  
+
   template<typename StatsType, typename StatsDiffType>
   bool
   StatsDiffChecker<StatsType, StatsDiffType>::check(
@@ -41,12 +41,12 @@ namespace AutoTest
 
     Logger::thlog().debug_trace(out.str());
 
-    if(at == -1)
+    if (at == -1)
     {
       return true;
     }
 
-    if(throw_error)
+    if (throw_error)
     {
       Stream::Error error;
       error << "can't get expected changes: at(" << at << ") ";
@@ -63,13 +63,9 @@ namespace AutoTest
 
   template<typename StatsType, typename StatsDiffType>
   StatsDiffChecker<StatsType, StatsDiffType>
-  stats_diff_checker(
-    DBC::IConn& connection,
-    const StatsDiffType& diff,
-    const StatsType& initial)
+  stats_diff_checker(DBC::IConn& connection, const StatsDiffType& diff, const StatsType& initial)
   {
-    return StatsDiffChecker<StatsType, StatsDiffType>(
-      connection, diff, initial);
+    return StatsDiffChecker<StatsType, StatsDiffType>(connection, diff, initial);
   }
 
   template<typename StatsType, typename Diff>
@@ -80,14 +76,12 @@ namespace AutoTest
     const StatsType& initial)
   {
     std::list<Diff> diff_(diff);
-    
-    return
-      StatsDiffChecker<StatsType, std::list<Diff> >(
-        connection, diff_, initial);
+
+    return StatsDiffChecker<StatsType, std::list<Diff> >(connection, diff_, initial);
   }
 
   // StatsEachDiffChecker
-  
+
   template<typename StatsType, typename StatsDiffType>
   StatsEachDiffChecker<StatsType, StatsDiffType>::StatsEachDiffChecker(
     DBC::IConn& connection,
@@ -98,11 +92,11 @@ namespace AutoTest
       initial_(initial),
       real_(initial)
   { }
-  
+
   template<typename StatsType, typename StatsDiffType>
   StatsEachDiffChecker<StatsType, StatsDiffType>::~StatsEachDiffChecker() noexcept
   { }
-   
+
   template<typename StatsType, typename StatsDiffType>
   bool
   StatsEachDiffChecker<StatsType, StatsDiffType>::check(
@@ -123,12 +117,12 @@ namespace AutoTest
 
     Logger::thlog().debug_trace(out.str());
 
-    if(at == -1)
+    if (at == -1)
     {
       return true;
     }
 
-    if(throw_error)
+    if (throw_error)
     {
       Stream::Error error;
       error << "can't get expected changes: at(" << at << ") ";
@@ -150,7 +144,6 @@ namespace AutoTest
     const StatsDiffType& diff,
     const StatsType& initial)
   {
-    return StatsEachDiffChecker<StatsType, StatsDiffType>(
-      connection, diff, initial);
+    return StatsEachDiffChecker<StatsType, StatsDiffType>(connection, diff, initial);
   }
 }

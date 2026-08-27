@@ -7,9 +7,7 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   struct StatSource: public virtual ReferenceCounting::Interface
   {
@@ -163,10 +161,7 @@ namespace CampaignSvcs
       CStat_var;
 
     virtual Stat_var
-    update(
-      Stat* stat,
-      bool& full_synch_required,
-      const Generics::Time& now)
+    update(Stat* stat, bool& full_synch_required, const Generics::Time& now)
       /*throw(Exception)*/ = 0;
 
   protected:
@@ -181,19 +176,13 @@ namespace CampaignSvcs
   typedef ReferenceCounting::FixedPtr<StatSource>
     FStatSource_var;
 }
-}
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   template<typename CollectionType>
-  void sum_collections(
-    CollectionType& target_coll,
-    const CollectionType& source_coll)
+  void sum_collections(CollectionType& target_coll, const CollectionType& source_coll)
   {
-    for (typename CollectionType::const_iterator sit =
-          source_coll.begin();
+    for (typename CollectionType::const_iterator sit = source_coll.begin();
         sit != source_coll.end(); ++sit)
     {
       typename CollectionType::iterator tit = target_coll.find(sit->first);
@@ -218,8 +207,7 @@ namespace CampaignSvcs
 
   inline
   StatSource::Stat::CreativeStat&
-  StatSource::Stat::CreativeStat::operator+=(
-    const CreativeStat& right) noexcept
+  StatSource::Stat::CreativeStat::operator+=(const CreativeStat& right) noexcept
   {
     impressions += right.impressions;
     clicks += right.clicks;
@@ -237,8 +225,7 @@ namespace CampaignSvcs
 
   inline
   StatSource::Stat::CCGStat::PublisherStat&
-  StatSource::Stat::CCGStat::PublisherStat::operator+=(
-    const PublisherStat& right) noexcept
+  StatSource::Stat::CCGStat::PublisherStat::operator+=(const PublisherStat& right) noexcept
   {
     amount += right.amount;
     daily_amount += right.daily_amount;
@@ -290,8 +277,7 @@ namespace CampaignSvcs
 
   inline
   StatSource::Stat::CCGStat::TagHourStat&
-  StatSource::Stat::CCGStat::TagHourStat::operator+=(
-    const TagHourStat& right) noexcept
+  StatSource::Stat::CCGStat::TagHourStat::operator+=(const TagHourStat& right) noexcept
   {
     isp_pub_amount += right.isp_pub_amount;
     adv_amount += right.adv_amount;
@@ -302,8 +288,7 @@ namespace CampaignSvcs
   // StatSource::Stat::CCGStat::TagStat
   inline
   StatSource::Stat::CCGStat::TagStat&
-  StatSource::Stat::CCGStat::TagStat::operator+=(
-    const TagStat& stat) noexcept
+  StatSource::Stat::CCGStat::TagStat::operator+=(const TagStat& stat) noexcept
   {
     prev_hour_stat += stat.prev_hour_stat;
     current_hour_stat += stat.current_hour_stat;
@@ -319,8 +304,7 @@ namespace CampaignSvcs
 
   inline
   StatSource::Stat::CCGStat::CtrResetStat&
-  StatSource::Stat::CCGStat::CtrResetStat::operator+=(
-    const CtrResetStat& stat) noexcept
+  StatSource::Stat::CCGStat::CtrResetStat::operator+=(const CtrResetStat& stat) noexcept
   {
     impressions += stat.impressions;
     return *this;
@@ -340,8 +324,7 @@ namespace CampaignSvcs
 
   inline
   StatSource::Stat::CCGStat&
-  StatSource::Stat::CCGStat::operator+=(
-    const CCGStat& right)
+  StatSource::Stat::CCGStat::operator+=(const CCGStat& right)
     noexcept
   {
     this->AmountStat::operator+=(right);
@@ -382,8 +365,7 @@ namespace CampaignSvcs
   // StatSource::Stat::CampaignStat
   inline
   StatSource::Stat::CampaignStat&
-  StatSource::Stat::CampaignStat::operator+=(
-    const CampaignStat& right)
+  StatSource::Stat::CampaignStat::operator+=(const CampaignStat& right)
     noexcept
   {
     AmountStat::operator+=(right);
@@ -394,19 +376,16 @@ namespace CampaignSvcs
 
   inline
   void
-  StatSource::Stat::CampaignStat::print(
-    std::ostream& out, const char* offset) const noexcept
+  StatSource::Stat::CampaignStat::print(std::ostream& out, const char* offset) const noexcept
   {
     out << offset <<
       "am = " << amount <<
       ", c_am = " << comm_amount <<
-      ", d_am = " << daily_amount <<
-      ", dc_am = " << daily_comm_amount << std::endl;
+      ", d_am = " << daily_amount << ", dc_am = " << daily_comm_amount << std::endl;
 
     out << offset << "ccgs: " << std::endl;
 
-    for (CCGStatMap::const_iterator cs_it = ccgs.begin();
-        cs_it != ccgs.end(); ++cs_it)
+    for (CCGStatMap::const_iterator cs_it = ccgs.begin(); cs_it != ccgs.end(); ++cs_it)
     {
       out << offset << cs_it->first <<
         ": imps = " << cs_it->second.impressions.str() <<
@@ -421,8 +400,7 @@ namespace CampaignSvcs
         ", ch_am = " << cs_it->second.cur_hour_amount <<
         ", chc_am = " << cs_it->second.cur_hour_comm_amount << std::endl <<
         offset << "    creatives:" << std::endl;
-      for (CCGStat::CreativeStatMap::const_iterator cr_it =
-            cs_it->second.creatives.begin();
+      for (CCGStat::CreativeStatMap::const_iterator cr_it = cs_it->second.creatives.begin();
           cr_it != cs_it->second.creatives.end(); ++cr_it)
       {
         out << offset << "      " << cr_it->first <<
@@ -431,18 +409,15 @@ namespace CampaignSvcs
           ", actions = " << cr_it->second.actions.str() << std::endl;
       }
       out << offset << "    publisher_amounts:" << std::endl;
-      for (CCGStat::PublisherStatMap::const_iterator p_it =
-            cs_it->second.publisher_amounts.begin();
+      for (CCGStat::PublisherStatMap::const_iterator p_it = cs_it->second.publisher_amounts.begin();
           p_it != cs_it->second.publisher_amounts.end(); ++p_it)
       {
         out << offset << "      " << p_it->first <<
           ": amount = " << p_it->second.amount <<
-          ", daily_amount = " << p_it->second.daily_amount <<
-          std::endl;
+          ", daily_amount = " << p_it->second.daily_amount << std::endl;
       }
       out << offset << "    tag_stats:" << std::endl;
-      for (CCGStat::TagStatMap::const_iterator t_it =
-            cs_it->second.tag_stats.begin();
+      for (CCGStat::TagStatMap::const_iterator t_it = cs_it->second.tag_stats.begin();
           t_it != cs_it->second.tag_stats.end(); ++t_it)
       {
         out << offset << "      " << t_it->first <<
@@ -451,8 +426,7 @@ namespace CampaignSvcs
           ", c_am = " << t_it->second.current_hour_stat.adv_comm_amount <<
           " ) ( ip_am = " << t_it->second.prev_hour_stat.isp_pub_amount <<
           ", am = " << t_it->second.prev_hour_stat.adv_amount <<
-          ", c_am = " << t_it->second.prev_hour_stat.adv_comm_amount <<
-          " )" << std::endl;
+          ", c_am = " << t_it->second.prev_hour_stat.adv_comm_amount << ")" << std::endl;
       }
     }
   }
@@ -463,10 +437,8 @@ namespace CampaignSvcs
   StatSource::Stat::add(const Stat& stat) noexcept
   {
     {
-      Generics::ExtendedTime left_check_time =
-        check_time.get_gm_time();
-      Generics::ExtendedTime right_check_time =
-        stat.check_time.get_gm_time();
+      Generics::ExtendedTime left_check_time = check_time.get_gm_time();
+      Generics::ExtendedTime right_check_time = stat.check_time.get_gm_time();
 
       assert(Generics::ExtendedTime(
         right_check_time.tm_year + 1900,
@@ -522,5 +494,4 @@ namespace CampaignSvcs
       cmp_it->second.print(out, (std::string(offset) + "  ").c_str());
     }
   }
-}
 }

@@ -3,9 +3,7 @@
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class ExecutionTimeTracer
   {
@@ -16,8 +14,7 @@ namespace CampaignSvcs
       const char* operation = "")
       : fun_(fun),
         aspect_(aspect),
-        operation_(operation[0] ? (std::string(operation) + " ") :
-          std::string()),
+        operation_(operation[0] ? (std::string(operation) + " ") : std::string()),
         logger_(ReferenceCounting::add_ref(logger))
     {
       timer.start();
@@ -27,8 +24,7 @@ namespace CampaignSvcs
     {
       timer.stop();
 
-      logger_->sstream(Logging::Logger::DEBUG,
-        aspect_.c_str()) << fun_ <<
+      logger_->sstream(Logging::Logger::DEBUG, aspect_.c_str()) << fun_ <<
         ": " << operation_ << "execution time: " << timer.elapsed_time();
     }
 
@@ -39,5 +35,4 @@ namespace CampaignSvcs
     Logging::Logger_var logger_;
     Generics::Timer timer;
   };
-}
 }

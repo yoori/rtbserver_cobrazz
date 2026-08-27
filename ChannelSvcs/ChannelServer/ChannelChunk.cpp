@@ -38,8 +38,7 @@ namespace AdServer::ChannelSvcs
       unsigned int right_lang) const
     {
       int trigger_compare = left_trigger.compare(right_trigger);
-      return trigger_compare < 0 ||
-        (trigger_compare == 0 && left_lang < right_lang);
+      return trigger_compare < 0 || (trigger_compare == 0 && left_lang < right_lang);
     }
 
     template<typename LeftType, typename RightType>
@@ -89,9 +88,9 @@ namespace AdServer::ChannelSvcs
       {
         ostr << ": '" << static_cast<String::SubString>(i->first).str() << "' "
           << soft_it->matcher << " ";
-        for(auto it = soft_it->begin(); it != soft_it->end(); ++it)
+        for (auto it = soft_it->begin(); it != soft_it->end(); ++it)
         {
-          if(it != soft_it->begin())
+          if (it != soft_it->begin())
           {
             ostr << ", ";
           }
@@ -176,30 +175,25 @@ namespace AdServer::ChannelSvcs
     return res;
   }
 
-  void ChannelChunk::match_url(
-    const MatchUrl& url,
-    unsigned int flags,
-    TriggerMatchRes& res) const
+  void ChannelChunk::match_url(const MatchUrl& url, unsigned int flags, TriggerMatchRes& res) const
     /*throw(eh::Exception)*/
   {
     //dump_map(std::cout, *url_map_var_);
     TriggerMap::const_iterator fnd = url_map_var_->find(url.prefix);
-    if(fnd != url_map_var_->end())
+    if (fnd != url_map_var_->end())
     {
       const SoftVector& vector = *fnd->second;
       bool match_exact = (*url.postfix.rbegin() == '"');
       size_t length = url.postfix.length() - (match_exact ? 1 : 0);
       size_t comp_length;
-      for(SoftVector::const_iterator it = vector.begin();
-          it != vector.end(); ++it)
+      for (SoftVector::const_iterator it = vector.begin(); it != vector.end(); ++it)
       {
         const String::SubString postfix = it->matcher->get_url_postfix();
-        if(flags & MF_NONSTRICTURL)
+        if (flags & MF_NONSTRICTURL)
         {
           comp_length = std::min(length, postfix.length());
         }
-        else if((it->matcher->exact() &&
-          (!match_exact || length != postfix.length())) ||
+        else if ((it->matcher->exact() && (!match_exact || length != postfix.length())) ||
           length < postfix.length())
         {//doesn't match
           continue;
@@ -209,8 +203,7 @@ namespace AdServer::ChannelSvcs
           comp_length = postfix.length();
         }
 
-        if(postfix.compare(
-            0, comp_length, url.postfix, 0, comp_length) == 0)
+        if (postfix.compare(0, comp_length, url.postfix, 0, comp_length) == 0)
         {
           res.count_channels[CT_URL] += match_cell_(
             *match_info_ptr_,
@@ -224,15 +217,13 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  void ChannelChunk::match_uid(
-    const Generics::Uuid& uid,
-    TriggerMatchRes& res) const
+  void ChannelChunk::match_uid(const Generics::Uuid& uid, TriggerMatchRes& res) const
     /*throw(eh::Exception)*/
   {
     UidMap::const_iterator fnd = uid_map_var_->find(uid);
-    if(fnd != uid_map_var_->end())
+    if (fnd != uid_map_var_->end())
     {
-      for(auto it = fnd->second->begin(); it != fnd->second->end(); ++it)
+      for (auto it = fnd->second->begin(); it != fnd->second->end(); ++it)
       {
         res[*it].flags |= TriggerMatchItem::TMI_UID;
       }
@@ -250,27 +241,27 @@ namespace AdServer::ChannelSvcs
   {
     size_t count_new_ids = 0;
     unsigned int mask = ChannelChunk::get_active_options(flags);
-    for(auto match_it = atom.begin(); match_it != atom.end(); ++match_it)
+    for (auto match_it = atom.begin(); match_it != atom.end(); ++match_it)
     {
       const Channel* channel = cinfo.find(match_it->channel_id);
-      if(channel)
+      if (channel)
       {
         //check active mask, existing BH for channel and BL flag
-        if((channel->match_mask(mask) && channel->match(type) &&
+        if ((channel->match_mask(mask) && channel->match(type) &&
              (flags & MF_BLACK_LIST || !channel->match_mask(MF_BLACK_LIST))) ||
            (flags & MF_NONSTRICTKW))
         {
           TriggerMatchItem& item = res[match_it->channel_id];
 
-          if(negative)
+          if (negative)
           {
             item.flags |= TriggerMatchItem::TMI_NEGATIVE;
           }
-          else if(!(item.flags & TriggerMatchItem::TMI_NEGATIVE))
+          else if (!(item.flags & TriggerMatchItem::TMI_NEGATIVE))
           {
             item.trigger_ids[type].push_back(match_it->channel_trigger_id);
             ++count_new_ids;
-            if(channel->match(Channel::CT_WEIGHT) && channel->weight_[type] > 0)
+            if (channel->match(Channel::CT_WEIGHT) && channel->weight_[type] > 0)
             {
               item.weight += channel->weight_[type];
             }
@@ -295,7 +286,7 @@ namespace AdServer::ChannelSvcs
     const TriggerMap& check_trigger_map = get_trigger_map_(type);
     TriggerMap::const_iterator fnd = check_trigger_map.find(phrase);
 
-    if(fnd != check_trigger_map.end()) // find one word
+    if (fnd != check_trigger_map.end()) // find one word
     {
       const TriggerAtom& atom = *fnd->second;
       const SoftVector& soft_vector = atom;
@@ -317,7 +308,7 @@ namespace AdServer::ChannelSvcs
       {
         const SoftMatcher* matcher = i->matcher.in();
 
-        if(matcher->trigger_type() != sym_type)
+        if (matcher->trigger_type() != sym_type)
         {
           continue;
         }
@@ -332,7 +323,7 @@ namespace AdServer::ChannelSvcs
         if (must_match)
         {
           // additional soft matching
-          if(must_match->erase(i->matcher) > 0)
+          if (must_match->erase(i->matcher) > 0)
           {
             match = true;
           }
@@ -365,7 +356,7 @@ namespace AdServer::ChannelSvcs
     const TriggerMap& check_trigger_map = get_trigger_map_(trigger_type);
     TriggerMap::const_iterator fnd = check_trigger_map.find(phrase);
 
-    if(fnd != check_trigger_map.end())
+    if (fnd != check_trigger_map.end())
     {
       const SoftVector& soft_vector = *fnd->second;
       SoftVector::const_iterator it = std::lower_bound(
@@ -374,7 +365,7 @@ namespace AdServer::ChannelSvcs
         MatchingEntityLess::Holder(trigger, lang),
         MatchingEntityLess());
 
-      if(it != soft_vector.end() &&
+      if (it != soft_vector.end() &&
          it->matcher->get_trigger() == trigger &&
          it->matcher->get_lang() == lang)
       {
@@ -386,9 +377,7 @@ namespace AdServer::ChannelSvcs
     return 0;
   }
 
-  void ChannelChunk::update_uid(
-    const Generics::Uuid& uuid,
-    IdType channel_id) noexcept
+  void ChannelChunk::update_uid(const Generics::Uuid& uuid, IdType channel_id) noexcept
   {
     IdSet& ids = add_item_uid_map_[uuid];
     if (channel_id)
@@ -405,10 +394,10 @@ namespace AdServer::ChannelSvcs
   {
     //check only existing of key, it is cheap
     char trigger_type = matcher->trigger_type();
-    if(trigger_type == 'U')
+    if (trigger_type == 'U')
     {
       auto change_it = url_map_var_->find(key);
-      if(change_it == url_map_var_->end())
+      if (change_it == url_map_var_->end())
       {
         return false;
       }
@@ -420,17 +409,16 @@ namespace AdServer::ChannelSvcs
     {
       TriggerMap& trigger_map = get_trigger_map_(trigger_type);
       auto change_it = trigger_map.find(key);
-      if(change_it == trigger_map.end())
+      if (change_it == trigger_map.end())
       {
         return false;
       }
 
       RemovedType& removed_ids = get_removed_ids_(trigger_type);
       AddItemMap& add_map = get_add_map_(trigger_type);
-      for(auto it_rm = change_it->second->begin();
-          it_rm != change_it->second->end(); ++it_rm)
+      for (auto it_rm = change_it->second->begin(); it_rm != change_it->second->end(); ++it_rm)
       {
-        if(it_rm->matcher == matcher)
+        if (it_rm->matcher == matcher)
         {
           // create key in update map for applying remove list
           removed_ids.insert(channel_trigger_id);
@@ -503,7 +491,7 @@ namespace AdServer::ChannelSvcs
         return std::copy(first1, last1, result);
       }
 
-      if(pred_comp(*first2, *first1))
+      if (pred_comp(*first2, *first1))
       {
         if (pred(*first2))
         {
@@ -549,14 +537,14 @@ namespace AdServer::ChannelSvcs
     auto old_it = old_vec.begin();
     auto new_it = new_vec.begin();
     auto res_it = res_vec.begin();
-    while(old_it != old_vec.end() && new_it != new_vec.end())
+    while (old_it != old_vec.end() && new_it != new_vec.end())
     {
-      if(old_it->matcher == new_it->matcher)
+      if (old_it->matcher == new_it->matcher)
       {
         // same matcher, just merge ids
         PositiveContainerType::iterator vec_it;
         res_it->resize(new_it->size() + old_it->size());
-        if(removed_ids.empty())
+        if (removed_ids.empty())
         {
           vec_it = std::merge(
             new_it->begin(),
@@ -577,12 +565,12 @@ namespace AdServer::ChannelSvcs
             rem_pred);
         }
         res_it->resize(vec_it - res_it->begin());
-        if(!res_it->empty())
+        if (!res_it->empty())
         {
           res_it->matcher = old_it->matcher;
           ++res_it;
         }
-        else if(removed_matchers)
+        else if (removed_matchers)
         {
           removed_matchers->insert(old_it->matcher);
         }
@@ -592,10 +580,10 @@ namespace AdServer::ChannelSvcs
       }
       else
       {
-        if(entity_less(*old_it, *new_it))
+        if (entity_less(*old_it, *new_it))
         {
           // old less copy it with removing ids
-          if(removed_ids.empty())
+          if (removed_ids.empty())
           {
             *res_it++ = *old_it;
           }
@@ -604,12 +592,12 @@ namespace AdServer::ChannelSvcs
             res_it->resize(old_it->size());
             auto vec_it = copy_if(old_it->begin(), old_it->end(), res_it->begin(), rem_pred);
             res_it->resize(vec_it - res_it->begin());
-            if(!res_it->empty())
+            if (!res_it->empty())
             {
               res_it->matcher = old_it->matcher;
               ++res_it;
             }
-            else if(removed_matchers)
+            else if (removed_matchers)
             {
               removed_matchers->insert(old_it->matcher);
             }
@@ -623,33 +611,33 @@ namespace AdServer::ChannelSvcs
         }
       }
     }
-    if(old_it == old_vec.end())
+
+    if (old_it == old_vec.end())
     {
-      while(new_it != new_vec.end())
+      while (new_it != new_vec.end())
       {
         *res_it++ = (*new_it++);
       }
     }
-    else if(new_it == new_vec.end())
+    else if (new_it == new_vec.end())
     {
-      if(removed_ids.empty())
+      if (removed_ids.empty())
       {
         res_it = std::copy(old_it, old_vec.end(), res_it);
       }
       else
       {
-        while(old_it != old_vec.end())
+        while (old_it != old_vec.end())
         {
           res_it->resize(old_it->size());
-          auto vec_it = copy_if(
-            old_it->begin(), old_it->end(), res_it->begin(), rem_pred);
+          auto vec_it = copy_if(old_it->begin(), old_it->end(), res_it->begin(), rem_pred);
           res_it->resize(vec_it - res_it->begin());
-          if(!res_it->empty())
+          if (!res_it->empty())
           {
             res_it->matcher = old_it->matcher;
             ++res_it;
           }
-          else if(removed_matchers)
+          else if (removed_matchers)
           {
             removed_matchers->insert(old_it->matcher);
           }
@@ -667,7 +655,7 @@ namespace AdServer::ChannelSvcs
     MatcherVarsSet* removed_matchers)
     noexcept
   {
-    while(!added.empty())
+    while (!added.empty())
     {
       auto it = added.begin();
       const String::SubString& key = it->first;
@@ -726,7 +714,7 @@ namespace AdServer::ChannelSvcs
       }
       else
       {
-        while(*last_it_ < id)
+        while (*last_it_ < id)
         {
           last_it_++;
           if (last_it_ == removed_.end())
@@ -735,6 +723,7 @@ namespace AdServer::ChannelSvcs
           }
         }
       }
+
       if (id < *last_it_)
       {
         return true;
@@ -753,7 +742,7 @@ namespace AdServer::ChannelSvcs
     const IdSet& removed_uid_channels)
     noexcept
   {
-    while(!added.empty())
+    while (!added.empty())
     {
       auto it = added.begin();
       const AddUidMap::key_type& uid = it->first;
@@ -791,6 +780,7 @@ namespace AdServer::ChannelSvcs
             RemoveSortedPred(removed_uid_channels));
           uid_atom->resize(std::distance(uid_atom->begin(), end_it));
         }
+
         if (uid_atom->empty())
         {
           res.erase(change_it);
@@ -833,7 +823,7 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
-      if(add_item_url_keyword_map_.empty() &&
+      if (add_item_url_keyword_map_.empty() &&
         add_item_page_keyword_map_.empty() &&
         add_item_search_keyword_map_.empty() &&
         add_item_url_map_.empty() &&
@@ -885,8 +875,7 @@ namespace AdServer::ChannelSvcs
   void ChannelChunk::accamulate_statistic(ChannelServerStats& stats)
     noexcept
   {
-    if(!params_[ChannelServerStats::KW_COUNT] &&
-       !params_[ChannelServerStats::URL_COUNT])
+    if (!params_[ChannelServerStats::KW_COUNT] && !params_[ChannelServerStats::URL_COUNT])
     {//assume statistic wasn't accumulate yet
       params_[ChannelServerStats::KW_COUNT] =
         page_keyword_map_->size() +
@@ -895,37 +884,35 @@ namespace AdServer::ChannelSvcs
       params_[ChannelServerStats::URL_COUNT] = url_map_var_->size();
       params_[ChannelServerStats::UID_COUNT] = uid_map_var_->size();
 
-      for(TriggerMap::const_iterator i(page_keyword_map_->begin());
+      for (TriggerMap::const_iterator i(page_keyword_map_->begin());
         i != page_keyword_map_->end(); ++i)
       {
         params_[ChannelServerStats::KW_ID_COUNT] += i->second->size();
       }
 
-      for(TriggerMap::const_iterator i(url_keyword_map_->begin());
+      for (TriggerMap::const_iterator i(url_keyword_map_->begin());
         i != url_keyword_map_->end(); ++i)
       {
         params_[ChannelServerStats::KW_ID_COUNT] += i->second->size();
       }
 
-      for(TriggerMap::const_iterator i(search_keyword_map_->begin());
+      for (TriggerMap::const_iterator i(search_keyword_map_->begin());
         i != search_keyword_map_->end(); ++i)
       {
         params_[ChannelServerStats::KW_ID_COUNT] += i->second->size();
       }
 
-      for(TriggerMap::const_iterator i(url_map_var_->begin());
-        i != url_map_var_->end(); ++i)
+      for (TriggerMap::const_iterator i(url_map_var_->begin()); i != url_map_var_->end(); ++i)
       {
         params_[ChannelServerStats::URL_ID_COUNT] += i->second->size();
       }
 
-      for(UidMap::const_iterator i(uid_map_var_->begin());
-        i != uid_map_var_->end(); ++i)
+      for (UidMap::const_iterator i(uid_map_var_->begin()); i != uid_map_var_->end(); ++i)
       {
         params_[ChannelServerStats::UID_ID_COUNT] += i->second->size();
       }
     }
-    for(size_t i = 0; i <= ChannelServerStats::UID_ID_COUNT; ++i)
+    for (size_t i = 0; i <= ChannelServerStats::UID_ID_COUNT; ++i)
     {
       stats.params[i] += params_[i];
     }

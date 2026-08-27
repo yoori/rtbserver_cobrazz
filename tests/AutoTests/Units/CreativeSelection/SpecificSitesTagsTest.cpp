@@ -1,9 +1,6 @@
 #include "SpecificSitesTagsTest.hpp"
 
-REFLECT_UNIT(SpecificSitesTagsTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(SpecificSitesTagsTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
 
@@ -30,9 +27,7 @@ SpecificSitesTagsTest::case1()
   test_client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      cc_id1,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::entry_checker(cc_id1, SelectedCreativesCCID(test_client)).check(),
     "must got expected ccid 1 - KEYWORD1 - Tag 1");
 }
 
@@ -69,9 +64,7 @@ SpecificSitesTagsTest::case3()
   test_client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      cc_id2,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::entry_checker(cc_id2, SelectedCreativesCCID(test_client)).check(),
     "must got expected ccid 2 - KEYWORD 2 - Tag 1");
 }
 
@@ -87,8 +80,6 @@ SpecificSitesTagsTest::case4()
   AdClient test_client = AdClient::create_user(this);
   test_client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      cc_id2,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::entry_checker(cc_id2, SelectedCreativesCCID(test_client)).check(),
     "must got expected ccid 2 - KEYWORD 2 - Tag 2");
 }

@@ -13,8 +13,7 @@ namespace AutoTest
    * @param description
    */
   std::string
-  get_logger_name(
-    const std::string& description);
+  get_logger_name(const std::string& description);
 
   /**
    * @class Logger
@@ -96,8 +95,7 @@ namespace AutoTest
      */
     template <typename Text>
     bool
-    log(Text text,
-      unsigned long severity = Logging::Logger::INFO)
+    log(Text text, unsigned long severity = Logging::Logger::INFO)
       noexcept;
 
     /**
@@ -239,8 +237,7 @@ namespace AutoTest
      * Switch to new & store old logger.
      * @param new logger
      */
-    LoggerSwitcher(
-      Logger& new_logger);
+    LoggerSwitcher(Logger& new_logger);
 
     /**
      * @brief Destructor.

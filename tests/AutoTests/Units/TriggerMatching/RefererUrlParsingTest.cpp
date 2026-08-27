@@ -1,9 +1,6 @@
 #include "RefererUrlParsingTest.hpp"
 
-REFLECT_UNIT(RefererUrlParsingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(RefererUrlParsingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 bool
 RefererUrlParsingTest::run_test()

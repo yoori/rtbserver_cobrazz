@@ -1,8 +1,8 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -64,7 +64,7 @@
   </xsd:complexType>
 
 <xsd:complexType name="AdServiceListType">
-  <xsd:sequence>      
+  <xsd:sequence>
     <xsd:element name="AdService" type="ServiceType" minOccurs="0" maxOccurs="unbounded">
       <xsd:annotation>
         <xsd:documentation>
@@ -76,7 +76,7 @@
 </xsd:complexType>
 
 <xsd:complexType name="GroupListType">
-  <xsd:sequence>      
+  <xsd:sequence>
     <xsd:element name="Group" type="GroupEnumType" minOccurs="1" maxOccurs="3">
       <xsd:annotation>
         <xsd:documentation>
@@ -88,7 +88,7 @@
  </xsd:complexType>
 
 <xsd:complexType name="CategoryListType">
-  <xsd:sequence>      
+  <xsd:sequence>
     <xsd:element name="Category" type="NoLeadingTrailingSpaces" minOccurs="1" maxOccurs="unbounded">
       <xsd:annotation>
         <xsd:documentation>
@@ -100,7 +100,7 @@
  </xsd:complexType>
 
 <xsd:complexType name="TestListType">
-  <xsd:sequence>      
+  <xsd:sequence>
     <xsd:element name="Test" type="NoLeadingTrailingSpaces" minOccurs="1" maxOccurs="unbounded">
       <xsd:annotation>
         <xsd:documentation>

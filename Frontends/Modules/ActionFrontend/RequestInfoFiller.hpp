@@ -90,10 +90,7 @@ namespace AdServer::Action
     logger() const noexcept;
 
     void
-    adapt_client_id_(
-      const String::SubString& in,
-      RequestInfo& request_info,
-      bool allow_rewrite)
+    adapt_client_id_(const String::SubString& in, RequestInfo& request_info, bool allow_rewrite)
       const
       /*throw(InvalidParamException)*/;
 
@@ -114,9 +111,7 @@ namespace AdServer::Action
       noexcept;
 
     static bool
-    parse_utm_term_(
-      RequestInfo& request_info,
-      const String::SubString& utm_term)
+    parse_utm_term_(RequestInfo& request_info, const String::SubString& utm_term)
       noexcept;
 
   private:

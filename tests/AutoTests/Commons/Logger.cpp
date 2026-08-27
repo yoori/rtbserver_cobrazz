@@ -10,20 +10,15 @@ namespace AutoTest
 {
 
   std::string
-  get_logger_name(
-    const std::string& description)
+  get_logger_name(const std::string& description)
   {
     std::string temp, result;
-    for(std::string::const_iterator i =  description.begin();
-      i != description.end(); ++i)
+    for (std::string::const_iterator i =  description.begin(); i != description.end(); ++i)
     {
       char c = String::AsciiStringManip::ALPHA_NUM.is_owned(*i)? *i: '_';
       temp.push_back(c);
     }
-    String::StringManip::trim(
-      temp,
-      result,
-      String::AsciiStringManip::CharCategory("_"));
+    String::StringManip::trim(temp, result, String::AsciiStringManip::CharCategory("_"));
     return result;
   }
 
@@ -38,8 +33,7 @@ namespace AutoTest
 
   Logger::~Logger() noexcept
   {
-    for (LogStreamsCont::iterator it = log_streams_.begin();
-         it != log_streams_.end(); ++it)
+    for (LogStreamsCont::iterator it = log_streams_.begin(); it != log_streams_.end(); ++it)
     {
       delete (*it);
     }
@@ -56,8 +50,7 @@ namespace AutoTest
         mkdir(params.LoggerGroup().path().c_str(), 0755);
       }
     }////////////
-    std::string filename_base =
-      params.LoggerGroup().path() + "/" + log_name_ + ".";
+    std::string filename_base = params.LoggerGroup().path() + "/" + log_name_ + ".";
 
     ReferenceCounting::Deque<Logging::QLogger_var> loggers;
 
@@ -77,8 +70,7 @@ namespace AutoTest
       Logging::Logger_var stream_logger;
       if (it->extension().empty())
       {
-        stream_logger = new Logging::OStream::Logger(
-          Logging::OStream::Config(std::cerr, to));
+        stream_logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr, to));
       }
       else
       {
@@ -93,15 +85,13 @@ namespace AutoTest
           throw Exception(error);
         }
         log_streams_.push_back(stream);
-        stream_logger = new Logging::OStream::Logger(
-          Logging::OStream::Config(*stream, to));
+        stream_logger = new Logging::OStream::Logger(Logging::OStream::Config(*stream, to));
       }
 
       loggers.push_back(Logging::FLogger_var(
         new Logging::SeveritySelectorLogger(stream_logger, from, to)));
     }
-    Base::logger_ = new Logging::DistributorLogger(
-      loggers.begin(), loggers.end());
+    Base::logger_ = new Logging::DistributorLogger(loggers.begin(), loggers.end());
   }
 
   void
@@ -170,8 +160,7 @@ namespace AutoTest
 
   // LoggerSwitcher
 
-  LoggerSwitcher::LoggerSwitcher(
-    Logger& new_logger) :
+  LoggerSwitcher::LoggerSwitcher(Logger& new_logger) :
     old_logger_(Logger::thlog())
   {
     if (&new_logger != &old_logger_)

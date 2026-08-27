@@ -1,9 +1,7 @@
 
 #include "ExactKeywordMatching.hpp"
 
-REFLECT_UNIT(ExactKeywordMatching) (
-  "TriggerMatching",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(ExactKeywordMatching) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -39,11 +37,9 @@ ExactKeywordMatching::run_test()
 {
   AdClient client(AdClient::create_user(this));
 
-  NOSTOP_FAIL_CONTEXT(
-    test_group_(client, TEST_1));
+  NOSTOP_FAIL_CONTEXT(test_group_(client, TEST_1));
 
-  NOSTOP_FAIL_CONTEXT(
-    test_group_(client, TEST_2, TF_CHECK_TRIGGERS));
+  NOSTOP_FAIL_CONTEXT(test_group_(client, TEST_2, TF_CHECK_TRIGGERS));
 
   return true;
 }
@@ -57,21 +53,15 @@ ExactKeywordMatching::test_group_(
 {
   for (size_t i = 0; i < Count; ++i)
   {
-    NOSTOP_FAIL_CONTEXT(
-      test_case_(client, tests[i], flags));
+    NOSTOP_FAIL_CONTEXT(test_case_(client, tests[i], flags));
   }
 }
 
 void
-ExactKeywordMatching::test_case_(
-  AdClient& client,
-  const TestCase& test,
-  unsigned long flags)
+ExactKeywordMatching::test_case_(AdClient& client, const TestCase& test, unsigned long flags)
 {
     ++case_idx_;
-    client.process_request(
-      NSLookupRequest().
-        search(fetch_string(test.search)));
+    client.process_request(NSLookupRequest(). search(fetch_string(test.search)));
 
     std::list<std::string> got_channels;
     if (flags & TF_CHECK_TRIGGERS)
@@ -86,18 +76,11 @@ ExactKeywordMatching::test_case_(
     }
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        test.matched,
-        got_channels).check(),
+      ChannelsCheck(this, test.matched, got_channels).check(),
       "Expected trigger_channels#"  + strof(case_idx_));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        test.unmatched,
-        got_channels,
-        AutoTest::SCE_NOT_ENTRY).check(),
+      ChannelsCheck(this, test.unmatched, got_channels, AutoTest::SCE_NOT_ENTRY).check(),
       "Unexpected trigger_channels#" + strof(case_idx_));
 }
 

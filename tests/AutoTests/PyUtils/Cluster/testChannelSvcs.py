@@ -12,7 +12,7 @@ from MockChannelProxy import ChannelProxyTestMixin, TriggerVersion, ChannelById,
 from SingleThread import SingleThread
 import AdServer.ChannelSvcs, ChannelServerUtils
 from AdServer.ChannelSvcs import ChannelServerBase
-                         
+
 
 class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
   'ChannelSvcs'
@@ -25,7 +25,7 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
     CampaignServerTestMixin.setUp( self )
     ChannelProxyTestMixin.setUp( self )
     self.__prepareConfig()
-    self.setUpServers(ChannelServer, 
+    self.setUpServers(ChannelServer,
                       ChannelController)
     self.startProc()
 
@@ -56,7 +56,7 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
                                              "A",                      # status
                                              11,                       # behav_param_list_id
                                              "",                       # str_behav_param_list_id
-                                             [],                       # categories 
+                                             [],                       # categories
                                              0,                        # threshold
                                              0,                        # discover
                                              [1],                      # page_triggers
@@ -70,12 +70,12 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
     self.channelById = [ChannelById(10,                    # channel_id
                                     # hard_words
                                     [TriggerInfo(1, ChannelServerUtils.createChannelTriggerWord('P', "word"))],
-                                    time2orb(currentTime()) # stamp        
+                                    time2orb(currentTime()) # stamp
                                     ),
                         ChannelById(12,                    # channel_id
                                     # hard_words
                                     [TriggerInfo(1, ChannelServerUtils.createChannelTriggerWord('P', "word"))],
-                                    time2orb(currentTime()) # stamp        
+                                    time2orb(currentTime()) # stamp
                                     )]
 
   def __checkMatchingResult(self, matchResult,
@@ -100,7 +100,7 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
   def run( self ):
     res = self.test(1, self.testConnect)
     res = self.test(1, self.testMatch, res)
-  
+
   def testConnect( self ):
     "connect"
     self.checkCallSequence(expCalls = [CallSequence('CampaignServer_chsv_simple_channels', 20),

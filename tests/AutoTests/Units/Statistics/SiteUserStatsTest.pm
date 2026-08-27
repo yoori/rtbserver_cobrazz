@@ -8,7 +8,7 @@ use DB::Util;
 sub create_publishers_
 {
   my ($self, $args) = @_;
-  
+
   foreach my $p (@$args)
   {
     my %pub_args;
@@ -17,19 +17,19 @@ sub create_publishers_
 
     if (defined $p->{site})
     {
-      $pub_args{account_id} = 
+      $pub_args{account_id} =
           $self->{publishers_}{$p->{site}}->{account_id};
-      $pub_args{site_id} = 
+      $pub_args{site_id} =
           $self->{publishers_}{$p->{site}}->{site_id};
     }
     elsif (defined $p->{account})
     {
-      $pub_args{account_id} = 
+      $pub_args{account_id} =
         $self->{publishers_}{$p->{account}}->{account_id};
     }
     $pub_args{size_id} = $self->{size_} if defined $self->{size_};
 
-    my $publisher = $self->{ns_}->create(Publisher => \%pub_args);    
+    my $publisher = $self->{ns_}->create(Publisher => \%pub_args);
     $self->{publishers_}->{$p->{name}} = $publisher;
     $self->{ns_}->output("PUBLISHER/" . $p->{name}, $publisher->{account_id});
     $self->{ns_}->output("SITE/" . $p->{name}, $publisher->{site_id});
@@ -64,7 +64,7 @@ use DB::Util;
 sub unique_users
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, "UNIQUE",
     [{name => '1'},
@@ -75,7 +75,7 @@ sub unique_users
 sub last_usage
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, "LASTUSAGE",
     [{name => '1'},
@@ -85,7 +85,7 @@ sub last_usage
 sub timezone
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, "TZ",
     [{name => '1'}]);
@@ -94,7 +94,7 @@ sub timezone
 sub colo
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, "COLO",
     [{name => '1'}]);
@@ -103,7 +103,7 @@ sub colo
 sub async
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, "ASYNC",
     [{name => '1'},
@@ -113,7 +113,7 @@ sub async
 sub temporary_user
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, 'TEMP',
     [{name => '1'}]);
@@ -122,7 +122,7 @@ sub temporary_user
 sub optout_users
 {
   my ($self, $ns) = @_;
-  
+
   new SiteUserStatsTest::TestCase(
     $ns, 'OPTOUT',
     [{name => '1'}]);
@@ -133,7 +133,7 @@ sub init {
 
   my $keyword = make_autotest_name($ns, "kwd");
 
-  my $advertiser = 
+  my $advertiser =
     $ns->create(Account => {
       name => 'Advertiser',
       role_id => DB::Defaults::instance()->advertiser_role });
@@ -151,7 +151,7 @@ sub init {
   $ns->output("COLO", DB::Defaults::instance()->isp->{colo_id});
   $ns->output("ADS_COLO", DB::Defaults::instance()->ads_isp->{colo_id});
   $ns->output("TZ_COLO", DB::Defaults::instance()->remote_isp->{colo_id});
-  $ns->output("TZ", 
+  $ns->output("TZ",
     DB::Defaults::instance()->remote_isp->{Account}->{timezone_id}->{tzname});
   $ns->output("CHANNEL", $channel);
   $ns->output("KWD", $keyword);

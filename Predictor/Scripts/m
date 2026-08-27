@@ -13,7 +13,7 @@
                     "method" : "xgboost",
                     "features_dimension" : 24,
                     "weight" : 1.0,
-                    "features" : [ 
+                    "features" : [
                         ["publisher"],
                         ["tag"],
                         ["sizeid"],
@@ -28,7 +28,7 @@
                         ["geoch"],
                         ["userch"],
                     ],
-                    "file" : "global.xgb" 
+                    "file" : "global.xgb"
                 },
             ],
         },

@@ -95,8 +95,7 @@ public:
    * @param client ID
    * @param request URL
    */
-  void push_request(unsigned long client_id,
-                    const char* request);
+  void push_request(unsigned long client_id, const char* request);
 
   /**
    * @brief Get total request containers size
@@ -178,8 +177,7 @@ public:
    * @param [out] request
    * @return client
    */
-  AdServerClientBase* get_request_pair(FrontendType frontend_type,
-                                       std::string& request);
+  AdServerClientBase* get_request_pair(FrontendType frontend_type, std::string& request);
 
   /**
    * @brief Get next client from storage

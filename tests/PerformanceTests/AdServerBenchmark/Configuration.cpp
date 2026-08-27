@@ -61,7 +61,7 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
   {
     configuration = Test(config_path_, error_handler);
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       throw InvalidConfiguration(error_handler.text(error_string));
@@ -101,8 +101,7 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
     GlobalSettingsType::Set_const_iterator send = global_config.Set().end();
     for (; sit != send; ++sit)
     {
-      request_params_[sit->name()] =
-        ConfigList_var(new ConfigXmlList(sit->item()));
+      request_params_[sit->name()] = ConfigList_var(new ConfigXmlList(sit->item()));
     }
 
     BenchmarksType::Benchmark_const_iterator
@@ -126,9 +125,7 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
                                 bit->initial(),
                                 bit->description().c_str(),
                                 bit->frontend(),
-                                new ParamsRequestConfig(0,
-                                                        bit->request(),
-                                                        request_params_)
+                                new ParamsRequestConfig(0, bit->request(), request_params_)
                                 )));
     }
 
@@ -148,10 +145,8 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
   catch (const xml_schema::parsing& e)
   {
     Stream::Error ostr;
-    ostr << "Can't parse config file '"
-         << config_path_ << "'."
-         << ": ";
-    if(error_handler.has_errors())
+    ostr << "Can't parse config file '" << config_path_ << "'." << ": ";
+    if (error_handler.has_errors())
     {
       std::string error_string;
       ostr << error_handler.text(error_string);

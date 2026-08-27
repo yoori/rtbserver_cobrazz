@@ -4,9 +4,7 @@
 
 #include <eh/Exception.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   struct ChannelServerStats
   {
@@ -38,5 +36,4 @@ namespace ChannelSvcs
     DECLARE_EXCEPTION(TemporyUnavailable, eh::DescriptiveException);
   }
 
-}
 }

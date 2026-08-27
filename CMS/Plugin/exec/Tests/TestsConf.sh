@@ -189,7 +189,7 @@ BENCHMARK_CONFIGS_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$BENCHMA
 
   let "EXIT_CODE |= $?"
 
-  
+
 fi
 
 cp -r $PLUGIN_ROOT/data/Tests/tests.css $OUT_DIR/tests.css
@@ -212,4 +212,4 @@ else
   echo config for Tests contains errors >2
 fi
 
-exit $EXIT_CODE  
+exit $EXIT_CODE

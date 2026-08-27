@@ -92,7 +92,7 @@ target_include_directories(ChannelServer PRIVATE
   ${Protobuf_INCLUDE_DIRS}
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(ChannelServer
     PRIVATE
       Protobuf::libprotobuf

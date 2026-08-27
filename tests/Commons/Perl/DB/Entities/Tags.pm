@@ -8,7 +8,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   site_rate_id => DB::Entity::Type::sequence(),
   rate_type => DB::Entity::Type::enum(['CPM', 'RS']),
@@ -28,7 +28,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
   adjustment => DB::Entity::Type::float()
@@ -45,7 +45,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
   max_ecpm_share => DB::Entity::Type::float(default => 0),
@@ -65,7 +65,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
   creative_category_id => DB::Entity::Type::link('DB::CreativeCategory', unique => 1),
@@ -83,7 +83,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_pricing_id => DB::Entity::Type::sequence(),
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
@@ -102,15 +102,16 @@ sub precreate
 {
   my ($self, $ns) = @_;
 
-  if (defined $self->{country_code}) 
+  if (defined $self->{country_code})
   {
     my %country_args = ();
     $country_args{country_code} = $self->{country_code};
-    if (defined $self->{low_channel_threshold}) 
+    if (defined $self->{low_channel_threshold})
     {
       $country_args{low_channel_threshold} = $self->{low_channel_threshold};
     }
-    if (defined $self->{high_channel_threshold}) 
+
+    if (defined $self->{high_channel_threshold})
     {
       $country_args{high_channel_threshold} = $self->{high_channel_threshold};
     }
@@ -146,7 +147,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   option_id => DB::Entity::Type::link('DB::Option', unique => 1),
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
@@ -165,7 +166,7 @@ use DB::Entity::PQ;
 our @ISA = qw(DB::Entity::PQ);
 
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -179,7 +180,7 @@ use constant STRUCT =>
   marketplace => DB::Entity::Type::enum(['WG', 'OIX', 'ALL'], nullable => 1),
   allow_expandable => 'Y',
   status => DB::Entity::Type::status(),
-  
+
   # Private fields
   ## TagPricing
   country_code => DB::Entity::Type::country(private => 1),
@@ -197,7 +198,7 @@ use constant STRUCT =>
   cradvtrackpixel_value => DB::Entity::Type::string(private => 1),
   publ_tag_track_pixel_value => DB::Entity::Type::string(private => 1),
   max_ads_per_tag_value => DB::Entity::Type::int(private => 1),
-  ## TagAuctionSettings 
+  ## TagAuctionSettings
   max_ecpm_share => DB::Entity::Type::float(private => 1),
   prop_probability_share => DB::Entity::Type::float(private => 1),
   random_share => DB::Entity::Type::float(private => 1)
@@ -225,22 +226,22 @@ sub preinit_
   $args->{passback_type} = 'HTML_CODE'
     if !$args->{passback_type} && $args->{passback};
 
-  my ($pub_marketplace) = 
+  my ($pub_marketplace) =
     $ns->pq_dbh->selectrow_array(qq[
       SELECT w.pub_marketplace
       FROM walledgarden w RIGHT JOIN site s on w.pub_account_id = s.account_id
       WHERE site_id = $site ]);
 
-  $args->{marketplace} = $pub_marketplace 
+  $args->{marketplace} = $pub_marketplace
     if $pub_marketplace;
 
   $self->{options_} = ();
 
-  foreach my $opt (qw(CRADVTRACKPIXEL PUBL_TAG_TRACK_PIXEL 
-                      MAX_ADS_PER_TAG)) 
+  foreach my $opt (qw(CRADVTRACKPIXEL PUBL_TAG_TRACK_PIXEL
+                      MAX_ADS_PER_TAG))
   {
     my $value_name = lc($opt) . "_value";
-    if (exists $args->{$value_name} or $opt eq 'MAX_ADS_PER_TAG') 
+    if (exists $args->{$value_name} or $opt eq 'MAX_ADS_PER_TAG')
     {
       push @{$self->{options_}},
         DB::Options->blank(
@@ -285,8 +286,8 @@ sub postcreate_
 
   $size = DB::Defaults::instance()->size->{size_id} unless defined $size;
 
-  my $option_group_id = 
-    $ns->create(DB::OptionGroup->blank( 
+  my $option_group_id =
+    $ns->create(DB::OptionGroup->blank(
       name => "Size-" . $size,
       type => "Publisher",
       size_id => $size ));
@@ -337,7 +338,7 @@ sub postcreate_
   my ($self, $ns) = @_;
 
   $self->SUPER::postcreate_($ns);
-  
+
   my %args = ();
   $args{tag_id} = $self->{tag_id};
   $args{country_code} = $self->{country_code};
@@ -349,10 +350,10 @@ sub postcreate_
   $args{rate_type} = $self->{rate_type} if defined $self->{rate_type};
   $self->{tag_pricing_id} = $ns->create(
     DB::TagPricing->blank(%args));
-  if (defined $self->{country_code}) 
+  if (defined $self->{country_code})
   {
     my %args_copy = %args;
-    $args_copy{country_code} = undef;    
+    $args_copy{country_code} = undef;
     $args_copy{cpm} = 0;
     $self->{tag_pricing_def_id} = $ns->create(
       DB::TagPricing->blank(%args_copy));
@@ -380,7 +381,7 @@ use DB::Entity::PQ;
 our @ISA = qw(DB::Entity::PQ);
 
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   tag_id => DB::Entity::Type::link('DB::Tags', unique => 1),
   size_id => DB::Entity::Type::link('DB::CreativeSize', unique => 1)

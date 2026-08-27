@@ -8,9 +8,7 @@ namespace Code
   class NamespaceElement: public Element
   {
   public:
-    NamespaceElement(
-      NamespaceElement* owner,
-      Declaration::Namespace* namespace_decl) noexcept;
+    NamespaceElement(NamespaceElement* owner, Declaration::Namespace* namespace_decl) noexcept;
 
     Declaration::Namespace_var namespace_decl() const noexcept;
 

@@ -189,15 +189,11 @@ namespace AdServer::LogProcessing
 
   template <typename Base, const unsigned TOTAL, const unsigned FRACTION>
   BufferWriter&
-  operator<<(
-    BufferWriter& out,
-    const Generics::SimpleDecimal<Base, TOTAL, FRACTION>& value);
+  operator<<(BufferWriter& out, const Generics::SimpleDecimal<Base, TOTAL, FRACTION>& value);
 
   template <typename Value, typename OptionalValueTraits>
   BufferWriter&
-  operator<<(
-    BufferWriter& out,
-    const OptionalValue<Value, OptionalValueTraits>& value);
+  operator<<(BufferWriter& out, const OptionalValue<Value, OptionalValueTraits>& value);
 
   template <typename Value>
   BufferWriter&

@@ -20,8 +20,7 @@ void print_time(std::ostream& out, const Generics::Time& time)
   out << time_str.str();
 }
 
-Application::Application(unsigned long log_level,
-                         const char* cfg_file_path) :
+Application::Application(unsigned long log_level, const char* cfg_file_path) :
   config_(cfg_file_path),
   log_level_(log_level),
   logger_(),
@@ -50,8 +49,7 @@ void Application::init() /*throw(eh::Exception)*/
 
   logger_->log_level(log_level_);
 
-  task_runner_ =
-    Generics::TaskRunner_var(new Generics::TaskRunner(this, config_.threads_number()));
+  task_runner_ = Generics::TaskRunner_var(new Generics::TaskRunner(this, config_.threads_number()));
   http_pool_policy_ =
       new HttpPoolPolicy(
         logger_,
@@ -66,8 +64,7 @@ void Application::run()
 
   _start();
 
-  const Configuration::BenchmarkList& benchmark_configs =
-      config_.benchmarks();
+  const Configuration::BenchmarkList& benchmark_configs = config_.benchmarks();
   Configuration::BenchmarkList::const_iterator
       bcfg_it(benchmark_configs.begin());
   Configuration::BenchmarkList::const_iterator
@@ -82,28 +79,19 @@ void Application::run()
     BenchmarkBase* benchmark(0);
     std::ostringstream dsc;
     dsc << "Benchmark#" << benchmark_idx <<
-      " '" << (*bcfg_it)->description <<
-      "' (" << (*bcfg_it)->frontend_type << ")";
+      " '" << (*bcfg_it)->description << "' (" << (*bcfg_it)->frontend_type << ")";
 
     switch ((*bcfg_it)->frontend_type)
     {
     case FrontendType::nslookup:
     case FrontendType::userbind:
     case FrontendType::openrtb:
-      logger_->stream(Logging::Logger::INFO) <<
-        "Start " << dsc.str() << "...";
-      benchmark = new Benchmark(*bcfg_it,
-                                &storage,
-                                http_pool_.in(),
-                                logger_);
+      logger_->stream(Logging::Logger::INFO) << "Start " << dsc.str() << "...";
+      benchmark = new Benchmark(*bcfg_it, &storage, http_pool_.in(), logger_);
       break;
     default:
-      logger_->stream(Logging::Logger::INFO) <<
-        "Start generated " << dsc.str() << "...";
-      benchmark = new GeneratedBenchmark(*bcfg_it,
-                                         &storage,
-                                         http_pool_.in(),
-                                         logger_);
+      logger_->stream(Logging::Logger::INFO) << "Start generated " << dsc.str() << "...";
+      benchmark = new GeneratedBenchmark(*bcfg_it, &storage, http_pool_.in(), logger_);
       break;
     }
     Benchmark_var benchmark_var(benchmark);
@@ -111,14 +99,9 @@ void Application::run()
     http_pool_policy_->wait_empty();
 
     std::ostringstream ostr;
-    Report(
-      dsc.str().c_str(),
-      (*bcfg_it)->frontend_type,
-      stats,
-      ostr).dump();
+    Report(dsc.str().c_str(), (*bcfg_it)->frontend_type, stats, ostr).dump();
     logger_->log(ostr.str(), Logging::Logger::INFO);
-    logger_->stream(Logging::Logger::INFO) <<
-        dsc.str() + " finished.";
+    logger_->stream(Logging::Logger::INFO) << dsc.str() + " finished.";
     benchmark_idx++;
     stats.reset();
   }

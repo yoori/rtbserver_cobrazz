@@ -27,10 +27,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ChannelSearchAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* phrase,
-        ChannelSrv service
-      )
+      void make_cmd (const char* address, const char* phrase, ChannelSrv service)
       {
         address_ = address;
         AdminParams params;

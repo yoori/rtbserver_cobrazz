@@ -15,7 +15,7 @@ void
 Table::column(unsigned long i, const Column& column)
   /*throw(OutOfRange, Exception, eh::Exception)*/
 {
-  if(i >= columns())
+  if (i >= columns())
   {
     Stream::Error ostr;
     ostr << "Table::header: failed to set '" << column.name
@@ -32,7 +32,7 @@ void
 Table::add_row(const Row& row, const Filters& filters, const Sorter& sorter)
   /*throw(InvalidArgument, eh::Exception)*/
 {
-  if(row.size() != columns())
+  if (row.size() != columns())
   {
     Stream::Error ostr;
     ostr << "Table::add_row: row contain " << row.size()
@@ -41,12 +41,11 @@ Table::add_row(const Row& row, const Filters& filters, const Sorter& sorter)
     throw InvalidArgument(ostr);
   }
 
-  for(unsigned long i = 0; i < columns(); i++)
+  for (unsigned long i = 0; i < columns(); i++)
   {
-    for(Filters::const_iterator it = filters.begin();
-        it != filters.end(); ++it)
+    for (Filters::const_iterator it = filters.begin(); it != filters.end(); ++it)
     {
-      if(!strcasecmp(columns_[i].name.c_str(), it->column_name.c_str())
+      if (!strcasecmp(columns_[i].name.c_str(), it->column_name.c_str())
          && !it->fulfill(row[i], columns_[i].type))
       {
         return;
@@ -54,13 +53,13 @@ Table::add_row(const Row& row, const Filters& filters, const Sorter& sorter)
     }
   }
 
-  for(unsigned long i = 0; i < columns(); i++)
+  for (unsigned long i = 0; i < columns(); i++)
   {
-    if(columns_[i].name == sorter.column_name)
+    if (columns_[i].name == sorter.column_name)
     {
-      for(Rows::iterator it = rows_.begin(); it != rows_.end(); ++it)
+      for (Rows::iterator it = rows_.begin(); it != rows_.end(); ++it)
       {
-        if(sorter.insert_before(row[i], (*it)[i], columns_[i].type))
+        if (sorter.insert_before(row[i], (*it)[i], columns_[i].type))
         {
           rows_.insert(it, row);
           return;
@@ -77,9 +76,9 @@ Table::value_align() const noexcept
 {
   unsigned long max_len = 0;
 
-  for(unsigned long i = 0; i < columns(); i++)
+  for (unsigned long i = 0; i < columns(); i++)
   {
-    if(max_len < columns_[i].name.length())
+    if (max_len < columns_[i].name.length())
     {
       max_len = columns_[i].name.length();
     }
@@ -93,11 +92,11 @@ Table::dump(std::ostream& ostr, const char* prefix) const /*throw(Exception, eh:
 {
   unsigned long max_len = value_align();
 
-  for(Rows::const_iterator it = rows_.begin(); it != rows_.end(); ++it)
+  for (Rows::const_iterator it = rows_.begin(); it != rows_.end(); ++it)
   {
-    for(unsigned long i = 0; i < columns(); i++)
+    for (unsigned long i = 0; i < columns(); i++)
     {
-      if(prefix)
+      if (prefix)
       {
         ostr << prefix;
       }
@@ -133,9 +132,7 @@ Table::FilterPrivate::fulfill(const String::SubString& field, const char* typena
   {
     Stream::Error ostr;
     ostr << "Table::Filter::fulfill(): Column type = "
-      << typenam << ". Caught "
-      << "ColumnOperationHandler::Exception. "
-      << ": " << ex.what();
+      << typenam << ". Caught " << "ColumnOperationHandler::Exception. " << ": " << ex.what();
     throw Exception(ostr);
   }
 }
@@ -172,10 +169,8 @@ bool
 Table::Filter::fulfill(const String::SubString& field, Column::Type type) const
   /*throw(eh::Exception)*/
 {
-  ColumnTypeHandlerMap::const_iterator handler_it =
-    column_type_handlers_.find(type);
-  ColumnTypeNameMap::const_iterator name_it =
-    column_type_names_.find(type);
+  ColumnTypeHandlerMap::const_iterator handler_it = column_type_handlers_.find(type);
+  ColumnTypeNameMap::const_iterator name_it = column_type_names_.find(type);
 
   if (handler_it == column_type_handlers_.end() || name_it == column_type_names_.end())
   {
@@ -185,10 +180,10 @@ Table::Filter::fulfill(const String::SubString& field, Column::Type type) const
   std::string text_field;
   String::case_change<String::Uniform>(field, text_field);
 
-  if(relation < RL_NE)
+  if (relation < RL_NE)
   {
     bool ret = false;
-    for(Filters::const_iterator it = filters_.begin(); it != filters_.end(); ++it)
+    for (Filters::const_iterator it = filters_.begin(); it != filters_.end(); ++it)
     {
       ret = ret || it->fulfill(text_field, name_it->second, handler_it->second);
     }
@@ -197,7 +192,7 @@ Table::Filter::fulfill(const String::SubString& field, Column::Type type) const
   else
   {
     bool ret = true;
-    for(Filters::const_iterator it = filters_.begin(); it != filters_.end(); ++it)
+    for (Filters::const_iterator it = filters_.begin(); it != filters_.end(); ++it)
     {
       ret = ret && it->fulfill(text_field, name_it->second, handler_it->second);
     }
@@ -224,7 +219,7 @@ Table::Sorter::insert_before(const String::SubString& new_field,
   double real_new_field = 0.;
   double real_existing_field = 0.;
 
-  if(field_type == Column::NUMBER)
+  if (field_type == Column::NUMBER)
   {
     Stream::Parser istr_new_field(new_field);
     istr_new_field >> num_new_field;
@@ -246,9 +241,9 @@ Table::Sorter::insert_before(const String::SubString& new_field,
     String::case_change<String::Uniform>(existing_field, text_existing_field);
   }
 
-  if(descending)
+  if (descending)
   {
-    if(field_type == Column::NUMBER)
+    if (field_type == Column::NUMBER)
     {
       return num_new_field >= num_existing_field;
     }
@@ -258,13 +253,12 @@ Table::Sorter::insert_before(const String::SubString& new_field,
     }
     else
     {
-      return strcmp(text_new_field.c_str(),
-                            text_existing_field.c_str()) >= 0;
+      return strcmp(text_new_field.c_str(), text_existing_field.c_str()) >= 0;
     }
   }
   else
   {
-    if(field_type == Column::NUMBER)
+    if (field_type == Column::NUMBER)
     {
       return num_new_field <= num_existing_field;
     }
@@ -274,8 +268,7 @@ Table::Sorter::insert_before(const String::SubString& new_field,
     }
     else
     {
-      return strcmp(text_new_field.c_str(),
-                            text_existing_field.c_str()) <= 0;
+      return strcmp(text_new_field.c_str(), text_existing_field.c_str()) <= 0;
     }
   }
 }

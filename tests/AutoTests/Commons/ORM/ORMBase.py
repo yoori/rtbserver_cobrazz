@@ -12,39 +12,39 @@ class IndentStream:
 
     def addLevel (self):
         self.level = self.level + 2
-    
+
     def delLevel (self):
         self.level = self.level - 2
 
     def newline (self):
         self.stream.write('\n')
-    
+
     def write (self, string):
         """method need implemented"""
         self.stream.write(' '*self.level)
         self.stream.write(string)
-    
+
     def rawwrite (self, string):
         self.stream.write(string)
 
     def writelines (self, string, indent = 0):
         for s in string.split('\n'):
-            self.stream.write(' '*indent)            
+            self.stream.write(' '*indent)
             self.stream.write(s)
             self.newline()
 
 class Index:
 
     name = 'Index'
-    
+
     def __init__(self, fields, seqName = None):
         self.fields     = fields
         self.seqName    = seqName
         self.suffix     = indexSuffix
-    
+
     def __copy__(self):
         return Index(copy.copy(self.fields), self.seqName)
-    
+
     def getMakeStr (self):
         seq = ''
         if self.seqName:
@@ -59,7 +59,7 @@ class Index:
         init = out.getvalue()
         out.close()
         return "%s(%s)" % (self.name, init)
-    
+
     def merge (self, fromObject):
         my_fields = {}
         for field in self.fields:
@@ -69,8 +69,8 @@ class Index:
                 my_fields[from_field.dbName].merge(from_field)
         if self.seqName is None:
           self.seqName = fromObject.seqName
-          
-        
+
+
     def indexesCount (self):
         return len(self.fields)
 
@@ -79,7 +79,7 @@ class Index:
         fields = self.fields[start:]
         return reduce(lambda x, y: '%s, %s' % (x, y.name),
                       fields[1:], '%s' % (fields[0].name))
-    
+
     def dbVarsList (self):
         """list of db vars"""
         return reduce(lambda x, y: '%s, %s ' % (x, y.dbName), self.fields[1:],
@@ -134,7 +134,7 @@ class Index:
                       self.fields[1:],
                       '%s%s(%s)' % (self.fields[0].name, self.suffix,
                                     prefix+'.'+self.fields[0].name+'_'))
-        
+
     def varsDeclList(self, indent = '', start = 0):
         """declaration of self fields as args list"""
         fields = self.fields[start:]
@@ -150,7 +150,7 @@ class Index:
         if defaults:
             print >>strm, 'Unused(set_defaults);'
         strm.delLevel()
-    
+
     def printVarsDeclList(self, strm):
         """print declaration of self fields as args list"""
         strm.addLevel()
@@ -158,8 +158,8 @@ class Index:
             print >>strm, 'const %s::value_type& %s,' % (field.type, field.name)
         field = self.fields[len(self.fields)-1]
         print >>strm,  'const %s::value_type& %s' % (field.type, field.name)
-        strm.delLevel()            
-    
+        strm.delLevel()
+
     def printVarsAssignList(self, strm, start = 0, prefix = ''):
         """print assigment of self protected fields from args list declared above"""
         strm.addLevel()
@@ -187,7 +187,7 @@ class Index:
     def printIndexAccess (self, strm):
         """print read access methods to self fields"""
         for field in self.fields:
-            field.printReadAccess(strm)    
+            field.printReadAccess(strm)
 
     def printKeyIndexAssignment (self, strm):
         """print in assignment operator"""
@@ -206,7 +206,7 @@ class Index:
             print >>strm, '{'
             print >>strm, '  DB::Query  query(conn.get_query("%s"));' % self.select_index(self.seqName)
             print >>strm, '  DB::Result result(query.ask());'
-            print >>strm, '  if(!result.next())'
+            print >>strm, '  if (!result.next())'
             print >>strm, '    return false;'
             print >>strm, '  result >> %s%s;' % (self.fields[0].name, self.suffix)
             print >>strm, '}'
@@ -218,7 +218,7 @@ class Index:
             print >>strm, '  DB::Query  query(conn.get_query("SELECT Max(%s) + 1 FROM %s"));' % \
                   (self.fields[0].dbName, table)
             print >>strm, '  DB::Result result(query.ask());'
-            print >>strm, '  if(!result.next())'
+            print >>strm, '  if (!result.next())'
             print >>strm, '    return false;'
             print >>strm, '  result >> %s%s;' % (self.fields[0].name, self.suffix)
             print >>strm, '}'
@@ -230,7 +230,7 @@ class Index:
             print >>strm, 'bool %s (%s)' % (name, self.varsDeclList(' ' * (strm.level+2)))
         else:
             print >>strm, 'bool %s (%s);' % (name, self.varsDeclList(' ' * (strm.level+2)))
-    
+
     def printIdSelect (self, strm, name = 'select'):
         """print select with indexes"""
         strm.addLevel()
@@ -356,7 +356,7 @@ class Index:
         print >>strm, '}'
         print >>strm, 'bool del  (%s)' % self.varsDeclList(' ' * (strm.level+2))
         print >>strm, '{'
-        self.printVarsAssignList(strm, 0, 'this->')        
+        self.printVarsAssignList(strm, 0, 'this->')
         self.printFreeVarsAssignList(strm, 0, 'this->')
         print >>strm, '  return del ();'
         print >>strm, '}'
@@ -381,12 +381,12 @@ class Field:
         self.link = link
         self.typeIndent = ' '*(typeIndent - len(self.type))
         self.default = default
-    
+
     def __copy__ (self):
         ret = self.__class__(self.dbName, self.name, self.link)
         ret.index = self.index
         return ret
-        
+
     def getMakeStr (self):
         link = ''
         if self.link:
@@ -400,7 +400,7 @@ class Field:
                                         ' '*(30-len(self.dbName)),
                                         self.name,
                                         link, default)
-    
+
     def getRawMakeStr (self):
         """makeStr without additional formating"""
         return "%s('%s', '%s')"%(self.type,
@@ -412,7 +412,7 @@ class Field:
         self.default = fromObject.default
         if not self.link:
             self.link = fromObject.link
-    
+
     def printDeclaration (self, strm):
         """print declaration of self as class member"""
         strm.addLevel()
@@ -428,17 +428,17 @@ class Field:
             print >>strm, '{'
             print >>strm, '  return %s(conn, %s.value());' % (self.link, self.name)
             print >>strm, '}'
-    
+
     def printImplementation (self, strm, table, id, klass):
         """implementation of self, if need"""
         pass
-    
+
     def printIDeclaration (self, strm):
-        """print declaration of self as class member, but protected member"""        
+        """print declaration of self as class member, but protected member"""
         strm.addLevel()
         print >>strm, '%s %s %s_;'%(self.type, self.typeIndent, self.name)
         strm.delLevel()
-    
+
     def printReadAccess (self, strm):
         """print read accessor to protected self member"""
         strm.addLevel()
@@ -459,11 +459,11 @@ class Field:
                                                              self.name, suffix,
                                                              default)
         strm.delLevel()
-    
+
     def getInit(self, conn, fromName):
         """copy from _initialization_ list"""
         return fromName
-    
+
     def printInit (self, strm):
         """print init of self in 'simple' constructor (only connection)"""
         pass
@@ -473,7 +473,7 @@ class ORMString(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
         self.type = 'ORMString'
         Field.__init__(self, dbName, name, link, default)
-        
+
 class ORMInt(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
         self.type = 'ORMInt'
@@ -486,13 +486,13 @@ class ORMBool(Field):
 
 class ORMFloat(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
-        self.type = 'ORMFloat'        
+        self.type = 'ORMFloat'
         Field.__init__(self, dbName, name, link, default)
 
 class FieldWithInit(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
         Field.__init__(self, dbName, name, link, default)
-    
+
     def printInit (self, strm):
         strm.rawwrite(',\n')
         strm.addLevel()
@@ -503,12 +503,12 @@ class ORMDate(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
         self.type = 'ORMDate'
         Field.__init__(self, dbName, name, link, default)
-    
+
 class ORMTimestamp(Field):
     def __init__(self, dbName, name = None, link = None, default = None):
         self.type = 'ORMTimestamp'
         Field.__init__(self, dbName, name, link, default)
-    
+
 
 class ORMBlob(Field):
     def __init__(self, dbName, name = None):
@@ -520,7 +520,7 @@ class ORMClob(Field):
     def __init__(self, dbName, name = None):
         self.type = 'ORMText'
         Field.__init__(self, dbName, name)
-    
+
 class AskSingle:
     def __init__(self, name, query, type):
         self.name      = name
@@ -554,15 +554,15 @@ class Select:
         self.names = names
         self.fields = []
         self.id = None
-    
+
     def __copy__(self):
         return Select(self.name, self.names)
-    
+
     def getMakeStr (self):
         return "Select('%s', [%s])" % (self.name,
                                        reduce(lambda x, y: "%s, '%s' " % (x, y), self.names[1:],
                                               "'%s'"%self.names[0]))
-    
+
     def __makeSelf (self, klass):
         index  = []
         fields_from = {}
@@ -583,7 +583,7 @@ class Select:
         self.id.suffix = ''
         self.fields = fields_from.values()
         self.fields.sort(lambda x, y: cmp(x.index, y.index))
-    
+
     def printDeclaration (self, strm, klass):
         self.__makeSelf(klass)
         strm.addLevel()
@@ -613,7 +613,7 @@ class Select:
         for field in self.id.fields:
             print >>strm, '  query.set(%s);' % field.name
         print >>strm, '  DB::Result result(query.ask());'
-        print >>strm, '  if(result.next())'
+        print >>strm, '  if (result.next())'
         print >>strm, '  {'
         if len(klass.id.fields) > 1:
             print >>strm, '    result >> this->%s' %  (klass.id.fields[0].name + indexSuffix)
@@ -641,7 +641,7 @@ class Select:
         for field in self.id.fields:
             print >>strm, '  query.set(%s);' % field.name
         print >>strm, '  DB::Result result(query.ask());'
-        print >>strm, '  if(result.next())'
+        print >>strm, '  if (result.next())'
         print >>strm, '  {'
         if len(self.fields) > 1:
             print >>strm, '    result >> %s' %  self.fields[0].name
@@ -666,7 +666,7 @@ class Select:
         for field in self.fields:
             if field.index < klass.fieldsCount():
                 print >>strm, '    counter = update_(strm, counter, this, members_[%i], set_defaults);'%field.index
-        print >>strm, '  if(counter > 1)'
+        print >>strm, '  if (counter > 1)'
         print >>strm, '  {'
         print >>strm, '    strm << " WHERE %s";' % self.id.dbVarsAssignDeclList()
         print >>strm, '    DB::Query  query(conn.get_query(strm.str()));'
@@ -689,7 +689,7 @@ class Select:
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def __printDelImplementation(self, strm, klass):
         self.id.printIdSelectDecl(strm, "%s::del_%s" % (klass.name, self.name), True)
         print >>strm, '{'
@@ -728,14 +728,14 @@ class Select:
             print >>strm, '  pgsync_();'
         print >>strm, '  return ret;'
         print >>strm, '}\n'
-    
+
     def printImplementation(self, strm, klass):
         self.__printHasImplementation(strm, klass)
         self.__printSelectImplementation(strm, klass)
         self.__printUpdateImplementation(strm, klass)
         self.__printDeleteImplementation(strm, klass)
         self.__printDelImplementation(strm, klass)
-        
+
 
 class Object:
     def __init__(self, dbName, name = None, used = False):
@@ -751,7 +751,7 @@ class Object:
         self.fmap      = {}
         self.used      = used
         self.pgsync    = False
-    
+
     def __copy__(self):
         ret = Object(self.dbName, self.name)
         ret.id     = copy.copy(self.id)
@@ -765,7 +765,7 @@ class Object:
             for field in self.fields:
                 self.fmap[field.dbName.upper()] = field
         return self.fmap.has_key(dbName)
-    
+
     def uniqueName (self):
         return self.dbName.lower()
 
@@ -776,8 +776,8 @@ class Object:
         return len(filter(
             lambda x: isinstance(x, ORMBlob),
             self.fields)) != 0
-    
-    
+
+
     def getMakeStr (self):
         out = StringIO.StringIO()
         varname = self.uniqueName()
@@ -799,7 +799,7 @@ class Object:
         ret = out.getvalue()
         out.close()
         return ret
-    
+
     def merge (self, fromObject):
         self.name = fromObject.name
         self.id.merge(fromObject.id)
@@ -812,7 +812,7 @@ class Object:
         self.asks = copy.copy(fromObject.asks)
         self.used = fromObject.used
         self.pgsync = fromObject.pgsync
-    
+
     def constructorName (self):
         ret = "%s::%s"%(self.name, self.name)
         return ret
@@ -842,9 +842,9 @@ class Object:
         print >>strm, '    "WHERE %s"));' % self.id.dbVarsAssignDeclList()
         print >>strm, '  query %s;' % self.id.varsLShiftList()
         print >>strm, '  DB::Result result(query.ask());'
-        print >>strm, '  if(result.next())'
+        print >>strm, '  if (result.next())'
         print >>strm, '  {'
-        print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+        print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
         print >>strm, '    {'
         print >>strm, '      result >> members_[i].value(this);'
         print >>strm, '    }'
@@ -864,7 +864,7 @@ class Object:
         print >>strm, '    "WHERE %s"));' % self.id.dbVarsAssignDeclList()
         print >>strm, '  query %s;' % self.id.varsLShiftList()
         print >>strm, '  DB::Result result(query.ask());'
-        print >>strm, '  if(result.next())'
+        print >>strm, '  if (result.next())'
         print >>strm, '  {'
         print >>strm, '    return true;'
         print >>strm, '  }'
@@ -874,14 +874,14 @@ class Object:
     def printLogImplementation(self, strm):
         print >>strm, 'void %s::log_in (Logger& log, unsigned long severity)' % self.name
         print >>strm, '{'
-        print >>strm, '  if(select())'
+        print >>strm, '  if (select())'
         print >>strm, '  {'
         print >>strm, '    std::ostringstream out;'
         print >>strm, '    out << "Data record: %s" << std::endl;' % self.name
         print >>strm, '    out << "{" << std::endl;'
         for i in xrange(0, self.id.indexesCount()):
             print >>strm, '    out << "* %s = " << strof(%s%s) << ";" << std::endl;'%(self.id.fields[i].name,
-                                                                                      self.id.fields[i].name, self.id.suffix)        
+                                                                                      self.id.fields[i].name, self.id.suffix)
         for i in xrange(0, self.fieldsCount()-1):
             print >>strm, '    out << "  %s = " << strof(%s) << ";" << std::endl;'%(self.fields[i].name, self.fields[i].name)
         print >>strm, '    out << "}" << std::endl;'
@@ -892,7 +892,7 @@ class Object:
         print >>strm, '    throw Exception("error to log %s because not select");' % self.name
         print >>strm, '  }'
         print >>strm, '}\n'
-    
+
     def printUpdateImplementation(self, strm):
         print >>strm, 'bool %s::update (bool set_defaults)' % self.name
         print >>strm, '{'
@@ -900,15 +900,15 @@ class Object:
         print >>strm, '  std::ostringstream strm;'
         print >>strm, '  strm << "UPDATE %s SET ";' % self.dbName
         print >>strm, '  int counter = 1;'
-        print >>strm, '  for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+        print >>strm, '  for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
         print >>strm, '  {'
         print >>strm, '    counter = update_(strm, counter, this, members_[i], set_defaults);'
         print >>strm, '  }'
-        print >>strm, '  if(counter > 1)'
+        print >>strm, '  if (counter > 1)'
         print >>strm, '  {'
         print >>strm, '    strm << " WHERE %s";' % self.id.dbVarsAssignDeclList()
         print >>strm, '    DB::Query  query(conn.get_query(strm.str()));'
-        print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+        print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
         print >>strm, '    {'
         print >>strm, '      setin_(query, members_[i].value(this));'
         print >>strm, '    }'
@@ -929,7 +929,7 @@ class Object:
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printInsertImplementation(self, strm):
         print >>strm, 'bool %s::insert (bool set_defaults)' % self.name
         print >>strm, '{'
@@ -939,21 +939,21 @@ class Object:
             print >>strm, '  std::ostringstream strm;'
             print >>strm, '  strm << "INSERT INTO %s (";' % self.dbName
             print >>strm, '  int counter = 1;'
-            print >>strm, '  for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '  for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '  {'
             print >>strm, '    counter = insert_(strm, counter, this, members_[i], set_defaults);'
             print >>strm, '  }'
-            print >>strm, '  if(counter >= 1)'
+            print >>strm, '  if (counter >= 1)'
             print >>strm, '  {'
             print >>strm, '    strm << ((counter > 1)? ",": " ") << "%s)";' % self.id.dbVarsList()
             print >>strm, '    strm <<" VALUES (";'
-            print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '    {'
             print >>strm, '      put_var_ (strm, i,  this, members_[i], set_defaults);'
             print >>strm, '    }'
             print >>strm, '    strm << "%s)";' % self.id.dbVarsIndexList()
             print >>strm, '    DB::Query  query(conn.get_query(strm.str()));'
-            print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '    {'
             print >>strm, '      insertin_(query, members_[i].value(this));'
             print >>strm, '    }'
@@ -978,7 +978,7 @@ class Object:
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printDelImplementation(self, strm):
         print >>strm, 'bool %s::del ()' % self.name
         print >>strm, '{'
@@ -1007,7 +1007,7 @@ class Object:
         else:
             print >>strm, '  return delet();'
         print >>strm, '}\n'
-    
+
     def printDeleteImplementation(self, strm):
         print >>strm, 'bool %s::delet ()' % self.name
         print >>strm, '{'
@@ -1054,7 +1054,7 @@ class Object:
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printConstructDeclaration (self, strm, name, end = True):
         def printme (sep):
             print >>strm, '%s (DB::IConn& connection,' % name
@@ -1066,7 +1066,7 @@ class Object:
             strm.delLevel()
         else:
             printme('')
-    
+
     def printConstructImplementation (self, strm, connection_type):
         #constructor
         self.printConstructDeclaration(strm, self.constructorName(), False)
@@ -1100,7 +1100,7 @@ class Object:
              print >>strm, '  %s = from.%s;' % (field.name, field.name)
         print >>strm, '  return *this;'
         print >>strm, '}\n'
-    
+
     def printImplementation(self, strm, connection_type):
         if not self.used:
             return
@@ -1218,11 +1218,11 @@ class Object:
         if self.pgsync:
             print >>strm, 'void pgsync_();'
         print >>strm, '};'
-        print >>strm, 'std::ostream& operator<< (std::ostream& out, const %s& val);\n' % self.name        
-    
+        print >>strm, 'std::ostream& operator<< (std::ostream& out, const %s& val);\n' % self.name
+
     def printSelf (self, strm):
         if not self.used:
-            return        
+            return
         print >>strm, 'class %s;' % self.name
 
     def printLinks (self, strm):
@@ -1230,12 +1230,12 @@ class Object:
             return
         for field in self.fields:
             field.printLink(strm, self.name)
-                        
+
 
 class DualObject(Object):
     def __init__(self, dbName, name = None, used = False):
         Object.__init__(self, dbName, name, used)
-    
+
     def getMakeStr (self):
         out = StringIO.StringIO()
         varname = self.uniqueName()
@@ -1255,7 +1255,7 @@ class DualObject(Object):
         ret = out.getvalue()
         out.close()
         return ret
-    
+
     def printSelectImplementation(self, strm):
         print >>strm, 'bool %s::select ()' % self.name
         print >>strm, '{'
@@ -1267,9 +1267,9 @@ class DualObject(Object):
         print >>strm, '    "WHERE %s"));' % self.id.dbVarsAssignDeclList()
         print >>strm, '  query %s;' % self.id.varsLShiftList()
         print >>strm, '  DB::Result result(query.ask());'
-        print >>strm, '  if(result.next())'
+        print >>strm, '  if (result.next())'
         print >>strm, '  {'
-        print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+        print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
         print >>strm, '    {'
         print >>strm, '      result >> members_[i].value(this);'
         print >>strm, '    }'
@@ -1277,7 +1277,7 @@ class DualObject(Object):
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printUpdateImplementation(self, strm):
         print >>strm, 'bool %s::update (bool set_defaults)' % self.name
         print >>strm, '{'
@@ -1285,22 +1285,22 @@ class DualObject(Object):
         print >>strm, '  std::ostringstream strm;'
         print >>strm, '  strm << "UPDATE %s SET ";' % self.dbName
         print >>strm, '  int counter = 1;'
-        print >>strm, '  for(unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
+        print >>strm, '  for (unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
         print >>strm, '  {'
         print >>strm, '    counter = update_(strm, counter, this, members_[i], set_defaults);'
         print >>strm, '  }'
-        print >>strm, '  if(counter > 1)'
+        print >>strm, '  if (counter > 1)'
         print >>strm, '  {'
         print >>strm, '    strm << " WHERE %s";' % self.id.dbVarsAssignDeclList()
         print >>strm, '    DB::Query  query(conn.get_query(strm.str()));'
-        print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
+        print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
         print >>strm, '    {'
         print >>strm, '      setin_(query, members_[i].value(this));'
         print >>strm, '    }'
         print >>strm, '    query %s;' % self.id.varsLShiftList()
         print >>strm, '    bool ret = query.update() > 0;'
         print >>strm, '    conn.commit();'
-        print >>strm, '    if(ret)'
+        print >>strm, '    if (ret)'
         print >>strm, '    {'
         for field in self.id.fields:
             print >>strm, '      %s%s = %s;' % (field.name, indexSuffix, field.name)
@@ -1318,29 +1318,29 @@ class DualObject(Object):
         for field in self.id.fields:
             print >>strm, '  %s%s = %s;' % (field.name, indexSuffix, field.name)
         print >>strm, '  int counter = 1;'
-        print >>strm, '  for(unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
+        print >>strm, '  for (unsigned int i = 0; i < %i; ++i)' % (self.fieldsCount() + self.id.indexesCount())
         print >>strm, '  {'
         print >>strm, '    counter = count_(counter, this, members_[i], set_defaults);'
-        print >>strm, '  }'            
-        print >>strm, '  if(counter >= 1)'
+        print >>strm, '  }'
+        print >>strm, '  if (counter >= 1)'
         print >>strm, '  {'
         if self.fieldsCount() > 0:
-            print >>strm, '    counter = 1;'            
+            print >>strm, '    counter = 1;'
             print >>strm, '    std::ostringstream strm;'
             print >>strm, '    strm << "INSERT INTO %s (";' % self.dbName
-            print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '    {'
             print >>strm, '      counter = insert_(strm, counter, this, members_[i], set_defaults);'
-            print >>strm, '    }'            
+            print >>strm, '    }'
             print >>strm, '    strm << ((counter > 1)? ",": " ") << "%s)";' % self.id.dbVarsList()
             print >>strm, '    strm <<" VALUES ( ";'
-            print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '    {'
             print >>strm, '      put_var_ (strm, i,  this, members_[i], set_defaults);'
             print >>strm, '    }'
             print >>strm, '    strm << "%s )";' % self.id.dbVarsIndexList()
             print >>strm, '    DB::Query  query(conn.get_query(strm.str()));'
-            print >>strm, '    for(unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
+            print >>strm, '    for (unsigned int i = 0; i < %i; ++i)' % self.fieldsCount()
             print >>strm, '    {'
             print >>strm, '      insertin_(query, members_[i].value(this));'
             print >>strm, '    }'
@@ -1360,7 +1360,7 @@ class DualObject(Object):
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printDelImplementation(self, strm):
         print >>strm, 'bool %s::del ()' % self.name
         print >>strm, '{'
@@ -1380,7 +1380,7 @@ class DualObject(Object):
         else:
             print >>strm, '  return delet();'
         print >>strm, '}\n'
-    
+
     def printDeleteImplementation(self, strm):
         print >>strm, 'bool %s::delet ()' % self.name
         print >>strm, '{'
@@ -1390,7 +1390,7 @@ class DualObject(Object):
         print >>strm, '  conn.commit();'
         print >>strm, '  return ret;'
         print >>strm, '}\n'
-    
+
     def printTouchImplementation(self, strm):
         print >>strm, 'bool %s::touch ()' % self.name
         print >>strm, '{'
@@ -1406,7 +1406,7 @@ class DualObject(Object):
         print >>strm, '  }'
         print >>strm, '  return false;'
         print >>strm, '}\n'
-    
+
     def printConstructDeclaration (self, strm, name, end = True):
         def printme (sep):
             print >>strm, '%s (DB::IConn& connection,' % name
@@ -1418,7 +1418,7 @@ class DualObject(Object):
             strm.delLevel()
         else:
             printme('')
-    
+
     def printConstructImplementation (self, strm, connection_type):
         #constructor
         self.printConstructDeclaration(strm, self.constructorName(), False)
@@ -1466,10 +1466,10 @@ class DualObject(Object):
             print >>strm, '  %s = from.%s;' % (field.name, field.name)
         print >>strm, '  return *this;'
         print >>strm, '}\n'
-    
+
     def printImplementation(self, strm, connection_type):
         if not self.used:
-            return        
+            return
         # print fields map
         print >>strm, 'ORMObjectMember %s::members_[%i] = {' % (self.name, self.fieldsCount() + 2*self.id.indexesCount())
         # print fields definitions for map and mumerate them
@@ -1508,7 +1508,7 @@ class DualObject(Object):
         #print asks
         for ask in self.asks:
             ask.printImplementation(strm, self)
-    
+
     def __makeSelf (self):
         index = 0
         for field in self.fields:
@@ -1517,11 +1517,11 @@ class DualObject(Object):
         for field in self.id.fields:
             field.index = index
             index = index +1
-    
+
     def printDeclaration (self, strm, connection_type):
         self.__makeSelf()
         if not self.used:
-            return        
+            return
         print >>strm, 'class %s:' % self.name
         print >>strm, '  public ORMObject<%s>' % connection_type
         print >>strm, '{'

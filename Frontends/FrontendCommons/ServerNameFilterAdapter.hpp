@@ -81,8 +81,7 @@ namespace Apache
       return DECLINED;
     }
 
-    if(hosts_.find(r->server) == hosts_.end() ||
-       !will_handle(r->uri))
+    if (hosts_.find(r->server) == hosts_.end() || !will_handle(r->uri))
     {
       return DECLINED;
     }

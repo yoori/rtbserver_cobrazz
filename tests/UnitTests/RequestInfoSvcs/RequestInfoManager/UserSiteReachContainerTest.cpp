@@ -65,17 +65,13 @@ struct TestBase: public ReferenceCounting::AtomicImpl
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollSiteReachTestProcessor_var reach_processor(
-        new CollSiteReachTestProcessor());
+      CollSiteReachTestProcessor_var reach_processor(new CollSiteReachTestProcessor());
 
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 
       UserSiteReachContainer_var reach_container(
-        new UserSiteReachContainer(
-          logger,
-          reach_processor,
-          (*root_path + TEST_FOLDER).c_str()));
+        new UserSiteReachContainer(logger, reach_processor, (*root_path + TEST_FOLDER).c_str()));
 
       run_impl(reach_container);
 
@@ -90,15 +86,13 @@ struct TestBase: public ReferenceCounting::AtomicImpl
 
       int i = 0;
 
-      for (; et_it != etalon.end() && res_it != result.end();
-          ++et_it, ++res_it, ++i)
+      for (; et_it != etalon.end() && res_it != result.end(); ++et_it, ++res_it, ++i)
       {
         if (!(*et_it == *res_it))
         {
           Stream::Error ostr;
           ostr << "result non equal standard - element #" << i << ": "
-            << std::endl
-            << ">>> standard >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+            << std::endl << ">>> standard >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
           et_it->print(ostr, "  ");
           ostr << "=== result =======================" << std::endl;
           res_it->print(ostr, "  ");
@@ -562,8 +556,7 @@ main(int argc, char* argv[]) noexcept
     tests.push_back(new TestUnorderedAppearance());
     tests.push_back(new TestReverseAppearance());
 
-    for (TestList::iterator it = tests.begin();
-      it != tests.end(); ++it)
+    for (TestList::iterator it = tests.begin(); it != tests.end(); ++it)
     {
       result += (*it)->run();
     }

@@ -19,10 +19,7 @@ public:
   };
 
 public:
-  ExactKeywordMatching(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ExactKeywordMatching(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     case_idx_(0)
   { }
@@ -38,15 +35,9 @@ private:
 
   template<size_t Count>
   void
-  test_group_(
-    AdClient& client,
-    const TestCase(&tests)[Count],
-    unsigned long flags = 0);
+  test_group_(AdClient& client, const TestCase(&tests)[Count], unsigned long flags = 0);
 
   void
-  test_case_(
-    AdClient& client,
-    const TestCase&test,
-    unsigned long flags);
+  test_case_(AdClient& client, const TestCase&test, unsigned long flags);
 
 };

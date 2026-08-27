@@ -31,9 +31,7 @@ namespace AutoTest
   }
 
   bool
-  EqualHeaderName::operator() (
-    const HTTP::Header& header,
-    const std::string& name) const
+  EqualHeaderName::operator() (const HTTP::Header& header, const std::string& name) const
   {
     return header.name == name;
   }
@@ -47,51 +45,42 @@ namespace AutoTest
     Generics::Time(time)
   { }
 
-  Time::Time(
-    time_t time_sec,
-    suseconds_t usec) noexcept :
+  Time::Time(time_t time_sec, suseconds_t usec) noexcept :
     Generics::Time(time_sec, usec)
   { }
 
-  Time::Time(
-    const std::string& value)
+  Time::Time(const std::string& value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(String::SubString(value), DEBUG_TIME_FORMAT)
   { }
 
-  Time::Time(
-    const char* value)
+  Time::Time(const char* value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(String::SubString(value), DEBUG_TIME_FORMAT)
   { }
 
-  Time::Time(
-    const String::SubString& value)
+  Time::Time(const String::SubString& value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(value, DEBUG_TIME_FORMAT)
   { }
 
-  Time::Time(
-    const Time& t) noexcept :
+  Time::Time(const Time& t) noexcept :
     Generics::Time(t)
   { }
 
-  Time::Time(
-    const Generics::Time& t) noexcept :
+  Time::Time(const Generics::Time& t) noexcept :
     Generics::Time(t)
   { }
 
   Time&
-  Time::operator= (
-    const Generics::Time& t)
+  Time::operator= (const Generics::Time& t)
   {
     Generics::Time::operator=(t);
     return *this;
   }
 
   Time&
-  Time::operator= (
-    const Time& t)
+  Time::operator= (const Time& t)
   {
     Generics::Time::operator=(t);
     return *this;
@@ -126,9 +115,7 @@ namespace AutoTest
   }
 
   std::ostream&
-  operator <<(
-    std::ostream& ostr,
-    const Time& time)
+  operator <<(std::ostream& ostr, const Time& time)
     /*throw(eh::Exception)*/
   {
     ostr << time.get_gm_time().format(DEBUG_TIME_FORMAT);
@@ -151,9 +138,7 @@ namespace AutoTest
 
   // class BaseRequest
 
-  BaseRequest::BaseRequest(
-    const char* base_url,
-    RequestType req_type) :
+  BaseRequest::BaseRequest(const char* base_url, RequestType req_type) :
     url_(base_url),
     req_type_(req_type)
   { }
@@ -188,7 +173,7 @@ namespace AutoTest
             << path << "', expected path '" << url_ << "'";
       throw HTTP::URLAddress::InvalidURL(error);
     }
-    for(auto i = params_.begin(); i != params_.end(); i++)
+    for (auto i = params_.begin(); i != params_.end(); i++)
     {
       std::size_t pos = query.find((*i)->name_ + eql());
       if (pos != std::string::npos)
@@ -205,10 +190,9 @@ namespace AutoTest
   std::ostream& BaseRequest::print_params_(std::ostream& out) const
   {
     const char *param_prefix = params_prefix(true);
-    for(auto i = params_.begin(); i != params_.end(); i++)
+    for (auto i = params_.begin(); i != params_.end(); i++)
     {
-      if (!(*i)->empty() &&
-        (*i)->print(out, param_prefix, eql()))
+      if (!(*i)->empty() && (*i)->print(out, param_prefix, eql()))
       {
         param_prefix = params_prefix();
       }
@@ -239,18 +223,15 @@ namespace AutoTest
   {
     if (req_type_ == BaseRequest::RT_NOT_ENCODED)
     {
-      return is_first?
-        NOT_ENCODED_SEPARATOR: NOT_ENCODED_PREFIX;
+      return is_first? NOT_ENCODED_SEPARATOR: NOT_ENCODED_PREFIX;
     }
-    return is_first?
-      ENCODED_SEPARATOR: ENCODED_PREFIX;
+    return is_first? ENCODED_SEPARATOR: ENCODED_PREFIX;
   }
 
 
   const char* BaseRequest::eql() const
   {
-    return req_type_ == BaseRequest::RT_NOT_ENCODED?
-      NOT_ENCODED_EQUAL: ENCODED_EQUAL;
+    return req_type_ == BaseRequest::RT_NOT_ENCODED? NOT_ENCODED_EQUAL: ENCODED_EQUAL;
   }
 
   bool
@@ -260,8 +241,7 @@ namespace AutoTest
   }
 
   void
-  BaseRequest::set_decoder(
-    ClientRequest* request) const
+  BaseRequest::set_decoder(ClientRequest* request) const
   {
     request->reset_decoder();
   }
@@ -272,10 +252,7 @@ namespace AutoTest
   { }
 
   bool
-  BaseParam::print(
-    std::ostream& out,
-    const char* prefix,
-    const char* eql) const
+  BaseParam::print(std::ostream& out, const char* prefix, const char* eql) const
   {
     out << prefix << name_  << eql << str();
     return true;
@@ -323,23 +300,20 @@ namespace AutoTest
   }
 
   void
-  StringParam::set_param_val(
-    const String::SubString& val)
+  StringParam::set_param_val(const String::SubString& val)
   {
     param_value_ = val.str();
     empty_ = false;
   }
 
   void
-  StringParam::set_param_val(
-    const std::string& val)
+  StringParam::set_param_val(const std::string& val)
   {
     set_param_val(String::SubString(val));
   }
 
   void
-  StringParam::set_param_val(
-    const char* val)
+  StringParam::set_param_val(const char* val)
   {
     if (val)
     {
@@ -359,8 +333,7 @@ namespace AutoTest
   { }
 
   void
-  SearchParam::set_param_val(
-    const String::SubString& val)
+  SearchParam::set_param_val(const String::SubString& val)
   {
     if (!val.empty())
     {

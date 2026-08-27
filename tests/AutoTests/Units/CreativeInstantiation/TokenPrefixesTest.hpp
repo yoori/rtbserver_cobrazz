@@ -8,10 +8,7 @@ class TokenPrefixesTest: public BaseUnit
 
 public:
 
-  TokenPrefixesTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  TokenPrefixesTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -21,9 +18,7 @@ public:
 private:
 
   virtual bool run_test();
-  void checkBody(
-    const AdClient& client,
-    const char* exp_body_tag);
+  void checkBody(const AdClient& client, const char* exp_body_tag);
   void tokenPrefixesSimpleFileCase();
 
 };

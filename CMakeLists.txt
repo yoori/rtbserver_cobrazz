@@ -15,7 +15,7 @@ set(CMAKE_MODULE_PATH
 )
 
 set(FOROS_BOOST_ROOT "/opt/foros/boost185" CACHE PATH "Boost installation root")
-if(NOT EXISTS "${FOROS_BOOST_ROOT}/include/boost/version.hpp")
+if (NOT EXISTS "${FOROS_BOOST_ROOT}/include/boost/version.hpp")
   message(FATAL_ERROR "Boost headers not found in ${FOROS_BOOST_ROOT}")
 endif()
 
@@ -26,7 +26,7 @@ set(Boost_DIR
 
 find_package(Boost 1.85.0 CONFIG REQUIRED COMPONENTS system thread)
 
-if(NOT TARGET Boost::headers)
+if (NOT TARGET Boost::headers)
   message(FATAL_ERROR "Boost::headers target not found")
 endif()
 
@@ -34,10 +34,10 @@ get_target_property(
   BOOST_HEADERS_COMPILE_OPTIONS
   Boost::headers
   INTERFACE_COMPILE_OPTIONS)
-if(NOT BOOST_HEADERS_COMPILE_OPTIONS)
+if (NOT BOOST_HEADERS_COMPILE_OPTIONS)
   set(BOOST_HEADERS_COMPILE_OPTIONS)
 endif()
-if(NOT "-msse2" IN_LIST BOOST_HEADERS_COMPILE_OPTIONS)
+if (NOT "-msse2" IN_LIST BOOST_HEADERS_COMPILE_OPTIONS)
   set_property(TARGET Boost::headers APPEND PROPERTY INTERFACE_COMPILE_OPTIONS -msse2)
 endif()
 unset(BOOST_HEADERS_COMPILE_OPTIONS)
@@ -70,7 +70,7 @@ pkg_check_modules(Jemalloc REQUIRED IMPORTED_TARGET jemalloc)
 pkg_check_modules(RdKafka REQUIRED IMPORTED_TARGET rdkafka++)
 pkg_check_modules(ZeroMQ REQUIRED IMPORTED_TARGET libzmq)
 
-if(NOT DEFINED UNIXCOMMONS)
+if (NOT DEFINED UNIXCOMMONS)
   message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
   set(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
 endif()

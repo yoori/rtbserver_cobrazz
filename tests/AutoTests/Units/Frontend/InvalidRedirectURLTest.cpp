@@ -1,9 +1,6 @@
 #include "InvalidRedirectURLTest.hpp"
 
-REFLECT_UNIT(InvalidRedirectURLTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(InvalidRedirectURLTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -18,21 +15,16 @@ namespace
 
 static
 void
-test_request(AutoTest::AdClient &client,
-             AutoTest::BaseRequest &request,
-             int status)
+test_request(AutoTest::AdClient &client, AutoTest::BaseRequest &request, int status)
 {
   client.process(request, true);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_cookie("test")),
+    AutoTest::predicate_checker(!client.has_cookie("test")),
     "cookie has been erroneously set");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      status,
-      client.req_status()).check(),
+    AutoTest::equal_checker(status, client.req_status()).check(),
     "must got expected status");
 }
 

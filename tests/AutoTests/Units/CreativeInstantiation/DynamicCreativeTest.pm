@@ -13,11 +13,11 @@ sub create_campaign
   my $kwd = make_autotest_name($ns, $name);
 
   my $size = $ns->create(CreativeSize => {
-      name => 'Size-'  . $name 
+      name => 'Size-'  . $name
      });
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'Publisher-' . $name,
        size_id => $size });
 
@@ -34,14 +34,14 @@ sub create_campaign
     imagetitle_value => 'Image',
     crhtml_value => $creative_path,
     template_id => $template });
-    
+
   my $campaign = $ns->create(DisplayCampaign => {
     name => "Campaign-" . $name,
     account_id => $account,
     behavioralchannel_keyword_list => $kwd,
     campaigncreativegroup_cpm => 300,
     creative_id => $creative,
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   $ns->create(
@@ -62,41 +62,41 @@ sub init {
       text_adserving => 'M',
       role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $single_advertiser = 
-     $ns->create(Account => { 
+  my $single_advertiser =
+     $ns->create(Account => {
        name => 'Advertiser-single',
        role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $agency_advertiser = 
-     $ns->create(Account => { 
+  my $agency_advertiser =
+     $ns->create(Account => {
        name => 'Advertiser-Agency',
        agency_account_id => $agency,
        text_adserving => undef,
        role_id => DB::Defaults::instance()->advertiser_role });
 
   $self->create_campaign(
-    $ns, 'Unexisting', 
+    $ns, 'Unexisting',
     '/DynamicCreative/unexistingtoken.html',
     $single_advertiser);
 
   $self->create_campaign(
-    $ns, 'Incomplete', 
+    $ns, 'Incomplete',
     '/DynamicCreative/incompletetoken.html',
     $single_advertiser);
 
   $self->create_campaign(
-    $ns, 'NoTokens', 
-    '/DynamicCreative/random.html', 
+    $ns, 'NoTokens',
+    '/DynamicCreative/random.html',
      $single_advertiser);
 
   $self->create_campaign(
-    $ns, 'SingleAdvertisier', 
-    '/DynamicCreative/simple.html', 
+    $ns, 'SingleAdvertisier',
+    '/DynamicCreative/simple.html',
      $single_advertiser);
 
   $self->create_campaign(
-    $ns, 'AgencyAccount', 
-    '/DynamicCreative/simple.html', 
+    $ns, 'AgencyAccount',
+    '/DynamicCreative/simple.html',
     $agency_advertiser);
 
   $ns->output("Agency", $agency);

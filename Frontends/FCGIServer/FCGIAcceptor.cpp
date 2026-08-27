@@ -106,7 +106,7 @@ namespace FCGI
     auto stdin_i = m.end();
 
     HTTP::SubHeaderList headers;
-    for(auto i = m.begin(); i != m.end(); ++i)
+    for (auto i = m.begin(); i != m.end(); ++i)
     {
       const tinyfcgi::header& h = *i;
 
@@ -147,8 +147,7 @@ namespace FCGI
 
         auto next_i = i;
         ++next_i;
-        if (next_i.valid() && next_i->valid() &&
-          next_i->type == FCGI_STDIN && next_i->size() > 0)
+        if (next_i.valid() && next_i->valid() && next_i->type == FCGI_STDIN && next_i->size() > 0)
         {
           tinyfcgi::header* mh = (tinyfcgi::header*)&h;
           mh->merge_next();
@@ -157,7 +156,7 @@ namespace FCGI
       }
     }
 
-    if(need_more)
+    if (need_more)
     {
       return PARSE_NEED_MORE;
     }
@@ -167,51 +166,51 @@ namespace FCGI
       request.set_body(stdin_i->str());
     }
 
-    for(auto i = m.begin(); i != m.end(); ++i)
+    for (auto i = m.begin(); i != m.end(); ++i)
     {
       const tinyfcgi::header& h = *i;
       if (h.type == FCGI_PARAMS)
       {
         tinyfcgi::const_params params(h.str());
-        for(auto i = params.begin(); i != params.end(); ++i)
+        for (auto i = params.begin(); i != params.end(); ++i)
         {
           String::SubString name, value;
           i->read(name, value);
 
-          if(name == QUERY_STRING)
+          if (name == QUERY_STRING)
           {
             request.set_args(value);
           }
-          else if(name == REQUEST_URI)
+          else if (name == REQUEST_URI)
           {
             request.set_uri(value);
           }
-          else if(name == REQUEST_METHOD)
+          else if (name == REQUEST_METHOD)
           {
-            if(value == GET)
+            if (value == GET)
             {
               request.set_method(HttpRequest::RM_GET);
             }
-            else if(value == HEAD)
+            else if (value == HEAD)
             {
               request.set_method(HttpRequest::RM_GET);
               request.set_header_only(true);
             }
-            else if(value == POST)
+            else if (value == POST)
             {
               request.set_method(HttpRequest::RM_POST);
             }
           }
-          else if(name == HTTPS)
+          else if (name == HTTPS)
           {
             request.set_secure(true);
             headers.push_back(HTTP::SubHeader(PASS_SECURE, PASS_SECURE_VALUE));
           }
-          else if(name == REMOTE_ADDR)
+          else if (name == REMOTE_ADDR)
           {
             headers.push_back(HTTP::SubHeader(PASS_REMOTE_ADDR, value));
           }
-          else if(name.size() > 5 && name.compare(0, 5, "HTTP_") == 0)
+          else if (name.size() > 5 && name.compare(0, 5, "HTTP_") == 0)
           {
             headers.push_back(HTTP::SubHeader(name.substr(5), value));
           }
@@ -223,16 +222,13 @@ namespace FCGI
   }
 }
 
-namespace AdServer
+namespace AdServer::Frontends::Aspect
 {
-namespace Frontends
+  const char WORKER[] = "FCGI::Worker";
+}
+
+namespace AdServer::Frontends
 {
-  namespace Aspect
-  {
-    const char WORKER[] = "FCGI::Worker";
-  }
-  
-  // State
   struct FCGIAcceptor::State: public ReferenceCounting::AtomicImpl
   {
     State(
@@ -283,9 +279,7 @@ namespace Frontends
     deactivate_i_();
 
     void
-    handle_read_(
-      const boost::system::error_code& error,
-      size_t bytes_transferred);
+    handle_read_(const boost::system::error_code& error, size_t bytes_transferred);
 
     void
     handle_write_(const boost::system::error_code& error);
@@ -368,7 +362,7 @@ namespace Frontends
     virtual void
     write(FCGI::HttpResponse_var response_ptr)
     {
-      if(sent_response_.exchange_and_add(1) == 0)
+      if (sent_response_.exchange_and_add(1) == 0)
       {
         auto prepared_response = make_fcgi_response_(response_ptr);
         conn_->send_response(
@@ -406,8 +400,7 @@ namespace Frontends
       status_line = std::string_view(status_line_buf, status_line.size() + 1);
 
       const std::string_view status_text = status_text_ref(status);
-      const std::string_view status_text_out =
-        status_text.empty() ? status_line : status_text;
+      const std::string_view status_text_out = status_text.empty() ? status_line : status_text;
 
       std::size_t status_payload_size =
         STATUS_HEADER.size() +
@@ -416,7 +409,7 @@ namespace Frontends
         CRLF.size();
 
       std::size_t headers_payload_size = 0;
-      for(const auto& header : response->headers())
+      for (const auto& header : response->headers())
       {
         headers_payload_size +=
           header.name.size() +
@@ -425,12 +418,9 @@ namespace Frontends
           CRLF.size();
       }
 
-      for(const auto& cookie : response->cookies())
+      for (const auto& cookie : response->cookies())
       {
-        headers_payload_size +=
-          SET_COOKIE_HEADER.size() +
-          cookie.size() +
-          CRLF.size();
+        headers_payload_size += SET_COOKIE_HEADER.size() + cookie.size() + CRLF.size();
       }
       char content_length_buf[std::numeric_limits<std::size_t>::digits10 + 2];
       const std::string_view content_length = to_chars_ref(
@@ -450,7 +440,7 @@ namespace Frontends
         fcgi_record_size_(0) +
         fcgi_record_size_(sizeof(FCGI_EndRequestBody));
 
-      for(std::size_t body_offset = 0; body_offset < body.size();)
+      for (std::size_t body_offset = 0; body_offset < body.size();)
       {
         const std::size_t chunk_size = std::min<std::size_t>(
           body.size() - body_offset,
@@ -483,14 +473,14 @@ namespace Frontends
           1,
           result.response_buf.get() + offset,
           response_buf_size - offset);
-        for(const auto& header : response->headers())
+        for (const auto& header : response->headers())
         {
           headers_msg.append(FCGI_STDOUT, header.name)
             .append(FCGI_STDOUT, HEADER_SEPARATOR)
             .append(FCGI_STDOUT, header.value)
             .append(FCGI_STDOUT, CRLF);
         }
-        for(const auto& cookie : response->cookies())
+        for (const auto& cookie : response->cookies())
         {
           headers_msg.append(FCGI_STDOUT, SET_COOKIE_HEADER)
             .append(FCGI_STDOUT, std::string_view(cookie))
@@ -504,7 +494,7 @@ namespace Frontends
         offset += headers_msg.size();
       }
 
-      for(std::size_t body_offset = 0; body_offset < body.size();)
+      for (std::size_t body_offset = 0; body_offset < body.size();)
       {
         tinyfcgi::message body_msg(
           1,
@@ -513,9 +503,7 @@ namespace Frontends
         const std::size_t chunk_size = std::min<std::size_t>(
           body.size() - body_offset,
           std::numeric_limits<std::uint16_t>::max());
-        body_msg.append(
-          FCGI_STDOUT,
-          String::SubString(body.data() + body_offset, chunk_size))
+        body_msg.append(FCGI_STDOUT, String::SubString(body.data() + body_offset, chunk_size))
           .clear_padding();
         offset += body_msg.size();
         body_offset += chunk_size;
@@ -590,11 +578,11 @@ namespace Frontends
 
   FCGIAcceptor::Connection::~Connection() noexcept
   {
-    if(active_.exchange(0) != 0)
+    if (active_.exchange(0) != 0)
     {
       boost::system::error_code ignored_error;
       socket_.close(ignored_error);
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->complete_fcgi_connection();
       }
@@ -615,7 +603,7 @@ namespace Frontends
     strand_.post(
       [self]()
       {
-        if(self->active_.exchange(1) == 0 && self->stats_.in())
+        if (self->active_.exchange(1) == 0 && self->stats_.in())
         {
           self->stats_->add_fcgi_connection();
         }
@@ -628,18 +616,13 @@ namespace Frontends
   FCGIAcceptor::Connection::deactivate()
   {
     auto self = shared_from_this();
-    strand_.post(
-      [self]()
-      {
-        self->deactivate_i_();
-      }
-    );
+    strand_.post([self]() { self->deactivate_i_(); });
   }
 
   void
   FCGIAcceptor::Connection::deactivate_i_()
   {
-    if(active_.exchange(0) != 0)
+    if (active_.exchange(0) != 0)
     {
       boost::system::error_code ignored_error;
       socket_.close(ignored_error);
@@ -647,7 +630,8 @@ namespace Frontends
         WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
         SendBufPtrArray().swap(send_bufs_);
       }
-      if(stats_.in())
+
+      if (stats_.in())
       {
         stats_->complete_fcgi_connection();
       }
@@ -661,10 +645,10 @@ namespace Frontends
   {
     --read_ordered_;
 
-    if(!error)
+    if (!error)
     {
       // process got buffer
-      if(!process_read_data_(bytes_transferred))
+      if (!process_read_data_(bytes_transferred))
       {
         deactivate_i_();
         return;
@@ -685,7 +669,7 @@ namespace Frontends
   {
     --write_ordered_;
 
-    if(!error)
+    if (!error)
     {
       // writing done
       order_write_();
@@ -700,9 +684,9 @@ namespace Frontends
   void
   FCGIAcceptor::Connection::order_read_()
   {
-    if(++read_ordered_ == 1)
+    if (++read_ordered_ == 1)
     {
-      if(active_.load(std::memory_order_acquire) == 0)
+      if (active_.load(std::memory_order_acquire) == 0)
       {
         --read_ordered_;
         return;
@@ -713,9 +697,7 @@ namespace Frontends
         boost::asio::buffer(&rbuf_[0], READ_BUF_SIZE_),
         boost::asio::bind_executor(
           strand_,
-          [self](
-            const boost::system::error_code& error,
-            size_t bytes_transferred)
+          [self](const boost::system::error_code& error, size_t bytes_transferred)
           {
             self->handle_read_(error, bytes_transferred);
           }));
@@ -731,9 +713,9 @@ namespace Frontends
   {
     SendBufPtrArray destroy_bufs_;
 
-    if(++write_ordered_ == 1)
+    if (++write_ordered_ == 1)
     {
-      if(active_.load(std::memory_order_acquire) == 0)
+      if (active_.load(std::memory_order_acquire) == 0)
       {
         {
           WriteBufSyncPolicy::WriteGuard lock(send_bufs_lock_);
@@ -750,19 +732,16 @@ namespace Frontends
         send_bufs_.swap(ordered_send_bufs_);
       }
 
-      if(!ordered_send_bufs_.empty())
+      if (!ordered_send_bufs_.empty())
       {
 	auto self = shared_from_this();
 
-        if(ordered_send_bufs_.size() > 1)
+        if (ordered_send_bufs_.size() > 1)
         {
           std::vector<boost::asio::const_buffer> buffer_seq;
-          for(auto buf_it = ordered_send_bufs_.begin(); buf_it != ordered_send_bufs_.end(); ++buf_it)
+          for (auto buf_it = ordered_send_bufs_.begin(); buf_it != ordered_send_bufs_.end(); ++buf_it)
           {
-            buffer_seq.insert(
-              buffer_seq.end(),
-              (*buf_it)->bufs.begin(),
-              (*buf_it)->bufs.end());
+            buffer_seq.insert(buffer_seq.end(), (*buf_it)->bufs.begin(), (*buf_it)->bufs.end());
           }
 
           boost::asio::async_write(
@@ -790,7 +769,7 @@ namespace Frontends
               {
                 self->handle_write_(error);
               }));
-          
+
         }
       }
       else
@@ -810,7 +789,7 @@ namespace Frontends
     const unsigned char* data_start;
     const unsigned char* data_end;
 
-    if(!full_rbuf_.empty())
+    if (!full_rbuf_.empty())
     {
       // previous read didn't give full request
       full_rbuf_.insert(full_rbuf_.end(), &*rbuf_.begin(), &*(rbuf_.begin() + bytes_transferred));
@@ -828,15 +807,12 @@ namespace Frontends
 
     int parse_res = request_holder->parse(data_start, data_end - data_start);
 
-    if(parse_res == FCGI::PARSE_OK)
+    if (parse_res == FCGI::PARSE_OK)
     {
-      FCGI::BaseHttpResponseWriter_var response_writer(
-        new FCGIResponseWriter(shared_from_this()));
+      FCGI::BaseHttpResponseWriter_var response_writer(new FCGIResponseWriter(shared_from_this()));
 
       // process
-      frontend_->handle_request_noparams(
-        std::move(request_holder),
-        std::move(response_writer));
+      frontend_->handle_request_noparams(std::move(request_holder), std::move(response_writer));
     }
 
     switch(parse_res)
@@ -877,12 +853,7 @@ namespace Frontends
     }
 
     auto self = shared_from_this();
-    strand_.post(
-      [self]()
-      {
-        self->order_write_();
-      }
-    );
+    strand_.post([self]() { self->order_write_(); });
   }
 
   Logging::Logger*
@@ -904,9 +875,7 @@ namespace Frontends
     : logger_(ReferenceCounting::add_ref(logger)),
       frontend_(ReferenceCounting::add_ref(frontend)),
       stats_(ReferenceCounting::add_ref(stats)),
-      worker_stats_object_(new WorkerStatsObject(
-        logger,
-        callback)),
+      worker_stats_object_(new WorkerStatsObject(logger, callback)),
       state_(new FCGIAcceptor::State(logger, frontend, worker_stats_object_.in())),
       io_service_(std::make_shared<boost::asio::io_service>()),
       bind_address_(bind_address.str()),
@@ -929,14 +898,7 @@ namespace Frontends
     unsigned long backlog,
     unsigned long process_threads)
     /*throw(eh::Exception)*/
-    : FCGIAcceptor(
-        logger,
-        frontend,
-        callback,
-        nullptr,
-        bind_address,
-        backlog,
-        process_threads)
+    : FCGIAcceptor(logger, frontend, callback, nullptr, bind_address, backlog, process_threads)
   {
   }
 
@@ -966,7 +928,7 @@ namespace Frontends
   FCGIAcceptor::deactivate_object()
     /*throw(Exception, eh::Exception)*/
   {
-    if(acceptor_)
+    if (acceptor_)
     {
       boost::system::error_code ec;
       acceptor_->cancel(ec);
@@ -990,14 +952,13 @@ namespace Frontends
   void
   FCGIAcceptor::create_accept_stub_()
   {
-    if(!acceptor_ || !acceptor_->is_open())
+    if (!acceptor_ || !acceptor_->is_open())
     {
       return;
     }
 
     // create stub for new connection
-    Connection_var new_connection(
-      new Connection(*io_service_, logger_, frontend_, state_, stats_));
+    Connection_var new_connection(new Connection(*io_service_, logger_, frontend_, state_, stats_));
     acceptor_->async_accept(
       new_connection->socket(),
       [this, new_connection](const boost::system::error_code& error)
@@ -1011,9 +972,9 @@ namespace Frontends
     const Connection_var& accepted_connection,
     const boost::system::error_code& error)
   {
-    if(!error)
+    if (!error)
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->add_fcgi_accept();
       }
@@ -1027,7 +988,7 @@ namespace Frontends
       std::cerr << "Can't accept connection: " << error << std::endl;
     }
 
-    if(acceptor_ && acceptor_->is_open())
+    if (acceptor_ && acceptor_->is_open())
     {
       create_accept_stub_();
     }
@@ -1044,5 +1005,4 @@ namespace Frontends
   {
     return logger_.in();
   }
-}
 }

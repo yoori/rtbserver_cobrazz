@@ -71,8 +71,7 @@ namespace AdServer::LogProcessing
         isp_sdate_ == rhs.isp_sdate_ &&
         colo_id_ == rhs.colo_id_ &&
         user_status_ == rhs.user_status_ &&
-        property_name_ == rhs.property_name_ &&
-        property_value_ == rhs.property_value_;
+        property_name_ == rhs.property_name_ && property_value_ == rhs.property_value_;
     }
 
     const DayHourTimestamp& sdate() const
@@ -192,9 +191,7 @@ namespace AdServer::LogProcessing
       return profiling_requests_ == rhs.profiling_requests_ &&
         requests_ == rhs.requests_ &&
         imps_unverified_ == rhs.imps_unverified_ &&
-        imps_verified_ == rhs.imps_verified_ &&
-        clicks_ == rhs.clicks_ &&
-        actions_ == rhs.actions_;
+        imps_verified_ == rhs.imps_verified_ && clicks_ == rhs.clicks_ && actions_ == rhs.actions_;
     }
 
     UserPropertiesData& operator+=(const UserPropertiesData& rhs)

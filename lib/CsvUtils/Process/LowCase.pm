@@ -13,7 +13,7 @@ sub new
 
   my $fields = {};
 
-  if($params{'field'} eq '*')
+  if ($params{'field'} eq '*')
   {
     $fields->{field_} = undef;
   }
@@ -23,7 +23,7 @@ sub new
     my @res_indexes;
     foreach my $index(@indexes)
     {
-      if(looks_like_number($index))
+      if (looks_like_number($index))
       {
         push(@res_indexes, $index - 1);
       }
@@ -45,7 +45,7 @@ sub process
 
   my @res_row = @$row;
 
-  if(defined($self->{field_}))
+  if (defined($self->{field_}))
   {
     foreach my $field_index(@{$self->{field_}})
     {
@@ -56,7 +56,7 @@ sub process
   }
   else
   {
-    for(my $index = 0; $index < scalar(@res_row); ++$index)
+    for (my $index = 0; $index < scalar(@res_row); ++$index)
     {
       my $value = $res_row[$index];
       my $res_value = lc($value);

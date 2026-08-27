@@ -1,9 +1,6 @@
 #include "CreativeFilesPresenceTest.hpp"
 
-REFLECT_UNIT(CreativeFilesPresenceTest) (
-  "CreativeInstantiation",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CreativeFilesPresenceTest) ("CreativeInstantiation", AUTO_TEST_FAST);
 
 typedef AutoTest::CreativeChecker CreativeChecker;
 typedef AutoTest::CreativeTemplatesChecker TemplateChecker;
@@ -34,10 +31,7 @@ CreativeFilesPresenceTest::file_not_present_case()
   unsigned long cc_id = fetch_int("CCID1");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-      status("W")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("W")).check(),
     description +
       " Check creative status");
 
@@ -67,10 +61,7 @@ CreativeFilesPresenceTest::normal_case()
   unsigned long cc_id = fetch_int("CCID2");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative status");
 
@@ -83,9 +74,7 @@ CreativeFilesPresenceTest::normal_case()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid");
 }
@@ -99,10 +88,7 @@ CreativeFilesPresenceTest::url_not_present_case()
   unsigned long cc_id = fetch_int("CCID3");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-        status("W")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("W")).check(),
     description +
       " Check creative status");
 
@@ -132,10 +118,7 @@ CreativeFilesPresenceTest::file_url_present_case()
   unsigned long cc_id = fetch_int("CCID4");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative status");
 
@@ -147,9 +130,7 @@ CreativeFilesPresenceTest::file_url_present_case()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid");
 }
@@ -170,10 +151,7 @@ CreativeFilesPresenceTest::template_file_not_present_case()
       " Check creative template");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative status");
 
@@ -232,9 +210,7 @@ CreativeFilesPresenceTest::w_notblock_a_case()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id_a),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id_a), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid#1");
 
@@ -277,10 +253,7 @@ CreativeFilesPresenceTest::w_notblock_a_size_format_case()
       " Check creative template#2");
 
     FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative status");
 
@@ -293,9 +266,7 @@ CreativeFilesPresenceTest::w_notblock_a_size_format_case()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid size#1");
 
@@ -321,35 +292,26 @@ CreativeFilesPresenceTest::text_2campaign_case()
   unsigned long cc_id2 = fetch_int("CCID8_2");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id1,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id1, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative#1 status");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id2,
-      CreativeChecker::Expected().
-        status("W")).check(),
+    CreativeChecker(this, cc_id2, CreativeChecker::Expected(). status("W")).check(),
     description +
       " Check creative#2 status");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
 
   AutoTest::NSLookupRequest request;
-  request.referer_kw =
-    fetch_string("KEYWORD8_1") + "," + fetch_string("KEYWORD8_2");
+  request.referer_kw = fetch_string("KEYWORD8_1") + "," + fetch_string("KEYWORD8_2");
   request.tid = fetch_string("TID8");
   request.format = "unit-test";
   client.process_request(request);
   client.repeat_request ();
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id1),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id1), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid#1");
 
@@ -372,18 +334,12 @@ CreativeFilesPresenceTest::text_campaign_case()
   unsigned long cc_id2 = fetch_int("CCID9_2");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id1,
-      CreativeChecker::Expected().
-        status("W")).check(),
+    CreativeChecker(this, cc_id1, CreativeChecker::Expected(). status("W")).check(),
     description +
       " Check creative#1 status");
 
   FAIL_CONTEXT(
-    CreativeChecker(
-      this, cc_id2,
-      CreativeChecker::Expected().
-        status("A")).check(),
+    CreativeChecker(this, cc_id2, CreativeChecker::Expected(). status("A")).check(),
     description +
       " Check creative#2 status");
 
@@ -406,9 +362,7 @@ CreativeFilesPresenceTest::text_campaign_case()
       " Check ccid#1");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_id2),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_id2), SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid#2");
 }
@@ -423,13 +377,11 @@ void CreativeFilesPresenceTest::ADSC_8367()
   unsigned long cc_W = fetch_int("ADSC-8367/CCID/W");
 
   FAIL_CONTEXT(
-    CreativeChecker(this, cc_A,
-      CreativeChecker::Expected().status("A")).check(),
+    CreativeChecker(this, cc_A, CreativeChecker::Expected().status("A")).check(),
     description + " Check creative#1 (A) status");
 
   FAIL_CONTEXT(
-    CreativeChecker(this, cc_W,
-      CreativeChecker::Expected().status("W")).check(),
+    CreativeChecker(this, cc_W, CreativeChecker::Expected().status("W")).check(),
     description +  " Check creative#2 (W) status");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
@@ -440,9 +392,7 @@ void CreativeFilesPresenceTest::ADSC_8367()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(cc_A),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(strof(cc_A), SelectedCreativesCCID(client)).check(),
     description + " Check ccid#1 (with status A) appearance");
 
   FAIL_CONTEXT(

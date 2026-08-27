@@ -46,11 +46,9 @@ TEST(get_text_token)
   config.aes_keys.push_back("K2UPkfYBFNA+MxHKkV5OUA==");
   config.aes_keys.push_back("emcqWycuiztgJVng4az0Xw==");
 
-  DependencyContainerMock_var dependency_container =
-    new DependencyContainerMock();
+  DependencyContainerMock_var dependency_container = new DependencyContainerMock();
   config.custom_dependency_container = dependency_container;
-  dependency_container->now =
-    Generics::ExtendedTime(2014, 1, 27, 13, 55, 58, 0);
+  dependency_container->now = Generics::ExtendedTime(2014, 1, 27, 13, 55, 58, 0);
   dependency_container->random_value = 16395523;
 
   SecTokenGenerator_var token_generator = new SecTokenGenerator(config, 0);

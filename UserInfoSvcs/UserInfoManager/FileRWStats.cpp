@@ -1,12 +1,8 @@
 #include "FileRWStats.hpp"
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-namespace UserInfoSvcs
-{
-  FileRWStats::FileRWStats(
-    const Generics::Time interval,
-    const std::size_t times)
+  FileRWStats::FileRWStats(const Generics::Time interval, const std::size_t times)
     noexcept
     : interval_(interval), times_(times)
   {
@@ -49,8 +45,7 @@ namespace UserInfoSvcs
   void
   FileRWStats::check_for_new_interval_i_(const Generics::Time& stop) noexcept
   {
-    if (stop > stats_.back().timestamp &&
-        (stop - stats_.back().timestamp) > interval_)
+    if (stop > stats_.back().timestamp && (stop - stats_.back().timestamp) > interval_)
     {
       IntervalStat stat;
       stat.timestamp = stop;
@@ -77,5 +72,4 @@ namespace UserInfoSvcs
     counters.sum_size += size;
     ++counters.count;
   }
-}
 }

@@ -7,9 +7,7 @@
 #include "ChannelContainer.hpp"
 #include "UpdateContainer.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   const char* ChannelContainer::ASPECT = "ChannelContainer";
@@ -40,16 +38,14 @@ namespace ChannelSvcs
     info.master = master_;
     info.first_master = first_master_;
     info.longest_update = max_update_;
-    info.special_track =
-      (channel_ids_.find(c_special_track) != channel_ids_.end());
-    info.special_adv =
-      (channel_ids_.find(c_special_adv) != channel_ids_.end());
-    if(use_only_list)
+    info.special_track = (channel_ids_.find(c_special_track) != channel_ids_.end());
+    info.special_adv = (channel_ids_.find(c_special_adv) != channel_ids_.end());
+    if (use_only_list)
     {
-      for(auto id_it = ids.begin(); id_it != ids.end(); id_it++)
+      for (auto id_it = ids.begin(); id_it != ids.end(); id_it++)
       {
         auto it = channel_ids_.find(*id_it);
-        if(it != channel_ids_.end())
+        if (it != channel_ids_.end())
         {
           CheckInformation::CheckData& value = info.data[*id_it];
           value.stamp = it->second->stamp;
@@ -59,10 +55,9 @@ namespace ChannelSvcs
     }
     else
     {
-      for (ChannelMap::const_iterator it = channel_ids_.begin();
-        it != channel_ids_.end(); ++it)
+      for (ChannelMap::const_iterator it = channel_ids_.begin(); it != channel_ids_.end(); ++it)
       {
-        if(it->second->stamp > master || ids.find(it->first) != ids.end())
+        if (it->second->stamp > master || ids.find(it->first) != ids.end())
         {
           CheckInformation::CheckData& value = info.data[it->first];
           value.stamp = it->second->stamp;
@@ -77,8 +72,7 @@ namespace ChannelSvcs
    * ChannelContainer implementation
    *
    * */
-  ChannelContainer::ChannelContainer(
-    unsigned long count_chunks, bool nonstrict)
+  ChannelContainer::ChannelContainer(unsigned long count_chunks, bool nonstrict)
     /*throw(Exception)*/
     : ChannelContainerBase(),
       count_chunks_(count_chunks),
@@ -97,7 +91,7 @@ namespace ChannelSvcs
       memset(stats_.params, 0, sizeof(stats_.params));
       chunks_->resize(count_chunks_);
       ChannelMatchInfo_var info = new ChannelMatchInfo;
-      for(unsigned int i = 0; i < count_chunks_; i++)
+      for (unsigned int i = 0; i < count_chunks_; i++)
       {
         (*chunks_)[i] = new ChannelChunk(info);
       }
@@ -125,7 +119,7 @@ namespace ChannelSvcs
       SubStringVector parts;
       Serialization::get_parts(trigger, parts);
       char trigger_type = Serialization::trigger_type(trigger.data());
-      if(trigger_type == 'U')
+      if (trigger_type == 'U')
       {
         assert(parts.size() == 2);
         parts.resize(1);
@@ -139,8 +133,7 @@ namespace ChannelSvcs
         array = ReferenceCounting::add_ref(chunks_);
       }
 
-      for(SubStringVector::const_iterator it = parts.begin();
-          it != parts.end(); ++it)
+      for (SubStringVector::const_iterator it = parts.begin(); it != parts.end(); ++it)
       {
         const ChannelChunk* chunk = (*array)[calc_chunk_num_i_(*it)];
         ret = chunk->get_matcher(*it, trigger, lang, trigger_type, part);
@@ -167,11 +160,11 @@ namespace ChannelSvcs
     NSTriggerAtom& search_keywords)
     noexcept
   {
-    for(auto it = urls.begin(); it != urls.end(); it++)
+    for (auto it = urls.begin(); it != urls.end(); it++)
     {
       const String::SubString url_prefix = (*it)->get_url_postfix();
       size_t path_pos = url_prefix.find('/');
-      if(path_pos != std::string::npos)
+      if (path_pos != std::string::npos)
       {
         // this url should be in non strict map
         String::SubString key = url_prefix.substr(0, path_pos);
@@ -180,7 +173,7 @@ namespace ChannelSvcs
     }
     urls.clear();
 
-    for(auto it = page_keywords.begin(); it != page_keywords.end(); ++it)
+    for (auto it = page_keywords.begin(); it != page_keywords.end(); ++it)
     {
       SubStringVector parts;
       (*it)->get_tokens(parts);
@@ -188,7 +181,7 @@ namespace ChannelSvcs
     }
     page_keywords.clear();
 
-    for(auto it = url_keywords.begin(); it != url_keywords.end(); ++it)
+    for (auto it = url_keywords.begin(); it != url_keywords.end(); ++it)
     {
       SubStringVector parts;
       (*it)->get_tokens(parts);
@@ -196,7 +189,7 @@ namespace ChannelSvcs
     }
     url_keywords.clear();
 
-    for(auto it = search_keywords.begin(); it != search_keywords.end(); it++)
+    for (auto it = search_keywords.begin(); it != search_keywords.end(); it++)
     {
       SubStringVector parts;
       (*it)->get_tokens(parts);
@@ -211,8 +204,7 @@ namespace ChannelSvcs
     noexcept
   {
     WriteGuard_ lock(lock_ns_map_);
-    for(SubStringVector::const_iterator key_it = keys.begin();
-        key_it != keys.end(); ++key_it)
+    for (SubStringVector::const_iterator key_it = keys.begin(); key_it != keys.end(); ++key_it)
     {
       NSTriggerMapType::iterator it = ns_trigger_map_.find(*key_it);
       if (it != ns_trigger_map_.end())
@@ -227,8 +219,7 @@ namespace ChannelSvcs
           {//set substring from first matcher
             if ((*temp.begin())->find_token(*key_it, m_key))
             {
-              it = ns_trigger_map_.insert(
-                it, std::make_pair(m_key, NSTriggerAtom()));
+              it = ns_trigger_map_.insert(it, std::make_pair(m_key, NSTriggerAtom()));
               it->second.swap(temp);
             }
           }
@@ -244,8 +235,7 @@ namespace ChannelSvcs
     noexcept
   {
     WriteGuard_ lock(lock_ns_map_);
-    for(SubStringVector::const_iterator key_it = keys.begin();
-        key_it != keys.end(); ++key_it)
+    for (SubStringVector::const_iterator key_it = keys.begin(); key_it != keys.end(); ++key_it)
     {
       if (*key_it != key_word)
       {
@@ -262,10 +252,11 @@ namespace ChannelSvcs
   {
     WriteGuard_ lock(lock_ns_map_);
     NSUrlMapType::iterator it = ns_url_map_.find(url);
-    if(it == ns_url_map_.end())
+    if (it == ns_url_map_.end())
     {
       return;
     }
+
     if (it->second.erase(matcher) > 0)
     {
       NSTriggerAtom temp;
@@ -273,18 +264,14 @@ namespace ChannelSvcs
       ns_url_map_.erase(it++);
       if (!temp.empty())
       {//update url in map
-        String::SubString key(
-          (*temp.begin())->get_url_prefix().text().data(),
-          url.length());
+        String::SubString key((*temp.begin())->get_url_prefix().text().data(), url.length());
         it = ns_url_map_.insert(it, std::make_pair(key, NSTriggerAtom()));
         it->second.swap(temp);
       }
     }
   }
 
-  void ChannelContainer::add_ns_urls_(
-    const String::SubString& url,
-    SoftMatcher* matcher)
+  void ChannelContainer::add_ns_urls_(const String::SubString& url, SoftMatcher* matcher)
     noexcept
   {
     WriteGuard_ lock(lock_ns_map_);
@@ -292,25 +279,24 @@ namespace ChannelSvcs
     atom.insert(ReferenceCounting::add_ref(matcher));
   }
 
-  void ChannelContainer::add_ns_(
-    SoftMatcher* matcher,
-    const String::SubString& key_word)
+  void ChannelContainer::add_ns_(SoftMatcher* matcher, const String::SubString& key_word)
     noexcept
   {
-    if(!non_strict_)
+    if (!non_strict_)
     {
       return;
     }
     char trigger_type = matcher->trigger_type();
-    if(trigger_type == 'D')
+    if (trigger_type == 'D')
     {
       return;
     }
-    if(trigger_type == 'U')
+
+    if (trigger_type == 'U')
     {
       const String::SubString url_prefix = matcher->get_url_prefix();
       size_t path_pos = url_prefix.find('/');
-      if(path_pos != std::string::npos)
+      if (path_pos != std::string::npos)
       {//this url should be in  non strict map
         String::SubString key = url_prefix.substr(0, path_pos);
         add_ns_urls_(key, matcher);
@@ -332,7 +318,7 @@ namespace ChannelSvcs
     std::cerr << "INVALID DEBUG: TO FETCH add_item_url_map_ ON STEP '" << step << "'" << std::endl;
 
     bool c = false;
-    for(auto tr_it = channel_chunk.add_item_url_map_.begin();
+    for (auto tr_it = channel_chunk.add_item_url_map_.begin();
       tr_it != channel_chunk.add_item_url_map_.end(); ++tr_it)
     {
       c = c || (tr_it->first < PART_CHECK);
@@ -351,16 +337,16 @@ namespace ChannelSvcs
   {
     MatchingEntity entity(matcher);
     entity.reserve(items.size());
-    for(auto it = items.begin(); it != items.end(); ++it)
+    for (auto it = items.begin(); it != items.end(); ++it)
     {
       entity.emplace_back(it->channel_id, it->word.channel_trigger_id);
     }
     std::sort(entity.begin(), entity.end());
     unsigned long num;
     const Lexeme_var& lexeme = matcher->matched_lexeme();
-    if(lexeme.in())
+    if (lexeme.in())
     {
-      for(LexemeData::Forms::const_iterator sub_it = lexeme->forms.begin();
+      for (LexemeData::Forms::const_iterator sub_it = lexeme->forms.begin();
         sub_it !=  lexeme->forms.end(); ++sub_it)
       {
         num = calc_chunk_num_i_(*sub_it);
@@ -389,11 +375,10 @@ namespace ChannelSvcs
     const std::string& trigger = uid_matcher->get_trigger();
     SubStringVector words;
     Serialization::get_parts(trigger, words);
-    for(auto it = words.begin(); it != words.end(); ++it)
+    for (auto it = words.begin(); it != words.end(); ++it)
     {
       Generics::Uuid uuid(*it, false);
-      array[calc_chunk_num_(uuid.hash(), array.size())]->update_uid(
-        uuid, channel_id);
+      array[calc_chunk_num_(uuid.hash(), array.size())]->update_uid(uuid, channel_id);
     }
   }
 
@@ -407,11 +392,10 @@ namespace ChannelSvcs
   {
     unsigned long num;
     bool found = false;
-    for(auto sub_it = words.begin(); sub_it != words.end(); ++sub_it)
+    for (auto sub_it = words.begin(); sub_it != words.end(); ++sub_it)
     {
       num = calc_chunk_num_i_(*sub_it);
-      found |= array[num]->remove_action(
-        *sub_it, channel_trigger_id, matcher);
+      found |= array[num]->remove_action(*sub_it, channel_trigger_id, matcher);
     }
     return found;
   }
@@ -426,33 +410,29 @@ namespace ChannelSvcs
     unsigned int raiting = UINT_MAX;
     unsigned int i = 0;
 
-    for(auto word_it = parts.begin();
-        word_it != parts.end(); ++word_it, i++)
+    for (auto word_it = parts.begin(); word_it != parts.end(); ++word_it, i++)
     {
       long word_raiting;
-      if(lexemes.size() > i && lexemes[i])
+      if (lexemes.size() > i && lexemes[i])
       {
         word_raiting = 0;
-        for(LexemeData::Forms::const_iterator sub_it =
-              lexemes[i]->forms.begin();
+        for (LexemeData::Forms::const_iterator sub_it = lexemes[i]->forms.begin();
             sub_it != lexemes[i]->forms.end(); ++sub_it)
         {
           unsigned long num = calc_chunk_num_i_(*sub_it);
-          word_raiting +=
-            array[num]->get_raiting(*sub_it);
+          word_raiting += array[num]->get_raiting(*sub_it);
         }
       }
       else
       {
-        unsigned long num =
-          calc_chunk_num_i_(*word_it);
-        word_raiting =
-          array[num]->get_raiting(*word_it);
+        unsigned long num = calc_chunk_num_i_(*word_it);
+        word_raiting = array[num]->get_raiting(*word_it);
       }
-      if(word_raiting < raiting)
+
+      if (word_raiting < raiting)
       {
         word_num = i;
-        if(word_raiting == 1)
+        if (word_raiting == 1)
         {
           break;
         }
@@ -475,24 +455,24 @@ namespace ChannelSvcs
     new_ids.clear();
     up_ids.clear();
     rm_ids.clear();
-    while(it_i != info_old.end() || it_j != info_new.end())
+    while (it_i != info_old.end() || it_j != info_new.end())
     {
-      if(it_j == info_new.end())
+      if (it_j == info_new.end())
       {
         rm_ids.insert(it_i->first);//remove this id
         ++it_i;
       }
-      else if(it_i == info_old.end())//add this id
+      else if (it_i == info_old.end())//add this id
       {
         new_ids.insert(it_j->first);
         ++it_j;
       }
-      else if(it_i->first < it_j->first)//remove this id
+      else if (it_i->first < it_j->first)//remove this id
       {
         rm_ids.insert(it_i->first);//remove this id
         ++it_i;
       }
-      else if(it_i->first > it_j->first)//add this id
+      else if (it_i->first > it_j->first)//add this id
       {
         new_ids.insert(it_j->first);
         ++it_j;
@@ -520,21 +500,14 @@ namespace ChannelSvcs
     noexcept
   {
     ReadGuard_ lock(lock_update_data_);
-    check_actual_(
-      channel_ids_,
-      info,
-      new_channels,
-      updated_channels,
-      removed_channels);
+    check_actual_(channel_ids_, info, new_channels, updated_channels, removed_channels);
   }
 
-  void ChannelContainer::trace_update_data_(
-    const UpdateContainer& add,
-    std::ostream& debug)
+  void ChannelContainer::trace_update_data_(const UpdateContainer& add, std::ostream& debug)
     noexcept
   {
     const UpdateContainer::Matters& matters_cont = add.get_matters();
-    for(auto matters_it = matters_cont.begin();
+    for (auto matters_it = matters_cont.begin();
         !terminated_ && matters_it != matters_cont.end(); ++matters_it)
     {
       auto channel_id = matters_it->first;
@@ -543,10 +516,9 @@ namespace ChannelSvcs
       debug << ' ' << channel_id << " : " << item.lang << " : ";
       trace_sequence("removed", item.removed, debug);
       debug << " added:";
-      for(SoftTriggerList::const_iterator it = matters.begin();
-          it != matters.end(); ++it)
+      for (SoftTriggerList::const_iterator it = matters.begin(); it != matters.end(); ++it)
       {
-        if(it != matters.begin())
+        if (it != matters.begin())
         {
           debug << ",";
         }
@@ -573,13 +545,13 @@ namespace ChannelSvcs
       }
       UpdateContainer::Matters& matters_cont = add.get_matters();
       auto matters_it = matters_cont.begin();
-      while(!terminated_ && matters_it != matters_cont.end())
+      while (!terminated_ && matters_it != matters_cont.end())
       {
         // group all unmerged triggers by trigger + lang index
         channel_id = matters_it->first;
         UpdateContainer::MatterItem& item = matters_it->second;
         SoftTriggerList& matters = item.added;
-        while(!matters.empty())
+        while (!matters.empty())
         {
           SoftTriggerList::iterator it = matters.begin();
           SoftTriggerWord& word = *it;
@@ -606,9 +578,7 @@ namespace ChannelSvcs
         if (!item.uids.empty())
         {
           // add uids here
-          SoftMatcher_var uid_matcher = new SoftMatcher(
-            item.lang,
-            item.uids);
+          SoftMatcher_var uid_matcher = new SoftMatcher(item.lang, item.uids);
           added[channel_id][0] = uid_matcher;
           add_uids_(*match_chunks, uid_matcher, channel_id);
         }
@@ -618,7 +588,7 @@ namespace ChannelSvcs
 
       String::SubString match_word;
       auto it = unmerged.begin();
-      while(!terminated_ && it != unmerged.end())
+      while (!terminated_ && it != unmerged.end())
       {
         // find existing matcher from container
         assert(it->first.trigger == it->second.begin()->word.trigger &&
@@ -630,10 +600,9 @@ namespace ChannelSvcs
 
         if (matcher)
         {
-          add_with_existing_matcher_(
-            *match_chunks, it->second, matcher, match_word);
+          add_with_existing_matcher_(*match_chunks, it->second, matcher, match_word);
 
-          for(auto it_un = it->second.begin(); it_un != it->second.end(); ++it_un)
+          for (auto it_un = it->second.begin(); it_un != it->second.end(); ++it_un)
           {
             added[it_un->channel_id][it_un->word.channel_trigger_id] =
               ReferenceCounting::add_ref(matcher);
@@ -673,7 +642,7 @@ namespace ChannelSvcs
       match_chunks = ReferenceCounting::add_ref(chunks_);
     }
 
-    while(!unmerged.empty())
+    while (!unmerged.empty())
     {
       unsigned short lang;
       UnmergedValue remove_unmerged_value;
@@ -702,9 +671,9 @@ namespace ChannelSvcs
         // parts will be used as key in lexemes_ (it should be cleared at update start)
         add.fill_lexemes(lang, parts, lexemes);
         auto num = 0;
-        if(!lexemes.empty())
+        if (!lexemes.empty())
         {
-          for(auto part_it = parts.begin(); part_it != parts.end(); ++part_it, ++num)
+          for (auto part_it = parts.begin(); part_it != parts.end(); ++part_it, ++num)
           {
             if (Serialization::quoted(trigger.c_str(), num))
             {
@@ -720,9 +689,9 @@ namespace ChannelSvcs
         const char* key_start = &it->first.trigger[0];
         const char* key_end = &it->first.trigger[it->first.trigger.size()];
         bool assert_tr_found = false;
-        for(auto sit = it->second.begin(); sit != it->second.end(); ++sit)
+        for (auto sit = it->second.begin(); sit != it->second.end(); ++sit)
         {
-          if(&sit->word.trigger[0] <= key_start && key_end <= &sit->word.trigger[sit->word.trigger.size()])
+          if (&sit->word.trigger[0] <= key_start && key_end <= &sit->word.trigger[sit->word.trigger.size()])
           {
             assert_tr_found = true;
           }
@@ -768,7 +737,7 @@ namespace ChannelSvcs
           parts[word_num + i]);
       }
 
-      for(auto it_un = remove_unmerged_value.begin(); it_un != remove_unmerged_value.end(); ++it_un)
+      for (auto it_un = remove_unmerged_value.begin(); it_un != remove_unmerged_value.end(); ++it_un)
       {
         added[it_un->channel_id][it_un->word.channel_trigger_id] = new_matcher;
       }
@@ -802,7 +771,7 @@ namespace ChannelSvcs
       ChannelIdToTrigers added;
       IdSet updated_uid_channels;
 
-      if(debug)
+      if (debug)
       {
         trace_update_data_(add, *debug);
       }
@@ -850,7 +819,7 @@ namespace ChannelSvcs
       bool reset_stat = false;
       UpdateContainer::Matters& matters_cont = add.get_matters();
       auto matters_it = matters_cont.begin();
-      while(!terminated_ && matters_it != matters_cont.end())
+      while (!terminated_ && matters_it != matters_cont.end())
       {
         reset_stat = true;
         channel_id = matters_it->first;
@@ -859,7 +828,7 @@ namespace ChannelSvcs
         {//find information about triggers from exising container
           ReadGuard_ lock(lock_update_data_);
           ChannelMap::const_iterator old_it = channel_ids_.find(channel_id);
-          if(old_it != channel_ids_.end())
+          if (old_it != channel_ids_.end())
           {
             old_data = old_it->second;
           }
@@ -875,12 +844,11 @@ namespace ChannelSvcs
               old_data->triggers.begin(),
               old_data->triggers.end(),
               *it_rm);
-            for(; old_item_it != old_data->triggers.end() &&
+            for (; old_item_it != old_data->triggers.end() &&
                 old_item_it->channel_trigger_id == *it_rm;
                 ++old_item_it)
             {
-              SoftMatcher_var matcher =
-                ReferenceCounting::add_ref(old_item_it->matcher);
+              SoftMatcher_var matcher = ReferenceCounting::add_ref(old_item_it->matcher);
               char trigger_type = matcher->trigger_type();
               if (trigger_type == 'U')
               {
@@ -893,13 +861,9 @@ namespace ChannelSvcs
               else
               {
                 const Lexeme_var& lexem = matcher->matched_lexeme();
-                if(lexem.in())
+                if (lexem.in())
                 {
-                  remove_action_(
-                    *match_chunks,
-                    *it_rm,
-                    matcher,
-                    lexem->forms);
+                  remove_action_(*match_chunks, *it_rm, matcher, lexem->forms);
                 }
                 else
                 {
@@ -908,8 +872,7 @@ namespace ChannelSvcs
                     *match_chunks,
                     *it_rm,
                     matcher,
-                    Serialization::get_parts(
-                      matcher->get_trigger(), data));
+                    Serialization::get_parts(matcher->get_trigger(), data));
                 }
               }
             }
@@ -924,14 +887,13 @@ namespace ChannelSvcs
           }
         }
 
-        bool remove_channel =
-          removed_channels.find(channel_id) != removed_channels.end();
-        if(!remove_channel)
+        bool remove_channel = removed_channels.find(channel_id) != removed_channels.end();
+        if (!remove_channel)
         {
           IdMatchers& added_ids = added[channel_id];
           new_data = new ChannelUpdateData;
           ChannelIdToMatchInfo::const_iterator it_info = info.find(channel_id);
-          if(it_info != info.end())
+          if (it_info != info.end())
           {
             new_data->lang = it_info->second.lang;
             new_data->country = it_info->second.country;
@@ -940,16 +902,15 @@ namespace ChannelSvcs
             new_data->db_stamp = it_info->second.db_stamp;
           }
           auto add_it = added_ids.begin();
-          if(old_data)
+          if (old_data)
           {
             assert(old_data->triggers.size() + added_ids.size() >= item.removed.size());
             new_data->triggers.reserve(
               old_data->triggers.size() - item.removed.size() + added_ids.size());
             old_item_it = old_data->triggers.begin();
-            while(old_item_it != old_data->triggers.end())
+            while (old_item_it != old_data->triggers.end())
             {
-              if(add_it != added_ids.end() &&
-                 add_it->first <= old_item_it->channel_trigger_id)
+              if (add_it != added_ids.end() && add_it->first <= old_item_it->channel_trigger_id)
               {
                 new_data->triggers.push_back(ChannelUpdateData::TriggerItem(
                   add_it->first, add_it->second));
@@ -957,7 +918,7 @@ namespace ChannelSvcs
               }
               else
               {
-                if(!std::binary_search(
+                if (!std::binary_search(
                     item.removed.begin(),
                     item.removed.end(),
                     old_item_it->channel_trigger_id))
@@ -972,7 +933,7 @@ namespace ChannelSvcs
           {
             new_data->triggers.reserve(added_ids.size());
           }
-          for(; add_it != added_ids.end(); ++add_it)
+          for (; add_it != added_ids.end(); ++add_it)
           {
             new_data->triggers.push_back(ChannelUpdateData::TriggerItem(
               add_it->first, add_it->second));
@@ -981,7 +942,7 @@ namespace ChannelSvcs
         }
         {
           WriteGuard_ lock(lock_update_data_);
-          if(remove_channel)
+          if (remove_channel)
           {
             channel_ids_.erase(channel_id);
           }
@@ -997,6 +958,7 @@ namespace ChannelSvcs
         }
         //new_data = 0;
       }
+
       if (progress)
       {
         progress->change_stage(PROGRESS_APPLY_UPDATE);
@@ -1004,7 +966,7 @@ namespace ChannelSvcs
       }
 
       ChannelMatchInfo_var info_res;
-      if(update_finished)
+      if (update_finished)
       {
         info_res = new ChannelMatchInfo(info);
       }
@@ -1013,13 +975,13 @@ namespace ChannelSvcs
         info_res = ReferenceCounting::add_ref(get_rules_());
       }
 
-      for(unsigned int i = 0; i < count_chunks_; i++)
+      for (unsigned int i = 0; i < count_chunks_; i++)
       {
         chunks_array = new ChannelChunkArray;
         chunks_array->resize(count_chunks_);
-        for(unsigned int j = 0; j < count_chunks_; j++)
+        for (unsigned int j = 0; j < count_chunks_; j++)
         {
-          if(i == j)
+          if (i == j)
           {
             (*chunks_array)[j] = new ChannelChunk(info_res);
             (*match_chunks)[i]->apply_update(
@@ -1040,11 +1002,13 @@ namespace ChannelSvcs
           WriteGuard_ lock(lock_configuration_);
           chunks_.swap(chunks_array); // destroy chunk outside lock
         }
+
         if (progress)
         {
           progress->set_progess(1);
         }
       }
+
       if (progress)
       {
         progress->change_stage(PROGRESS_REMOVE_NON_STRICT);
@@ -1060,33 +1024,34 @@ namespace ChannelSvcs
           removed_search_keywords);
       }
 
-      if(reset_stat)
+      if (reset_stat)
       {
         Sync::PosixGuard lock(lock_statistic_);
         stats_.params[ChannelServerStats::KW_COUNT] = 0;
         stats_.params[ChannelServerStats::URL_COUNT] = 0;
         stats_.params[ChannelServerStats::UID_COUNT] = 0;
       }
-      if(update_finished)
+
+      if (update_finished)
       {
         WriteGuard_ lock(lock_update_data_);
-        if(master_ != master)
+        if (master_ != master)
         {
           master_ = master;
           Generics::Time cur_date = Generics::Time::get_time_of_day();
-          if(first_master_ != Generics::Time::ZERO)
+          if (first_master_ != Generics::Time::ZERO)
           {
-            max_update_ = std::max(
-              max_update_,
-              cur_date - start_update_);
+            max_update_ = std::max(max_update_, cur_date - start_update_);
           }
-          if(first_master_ != first_load_stamp)
+
+          if (first_master_ != first_load_stamp)
           {
             first_master_ = first_load_stamp;
           }
           start_update_ = cur_date;
         }
       }
+
       if (progress)
       {
         progress->set_progess(count_channels);
@@ -1116,7 +1081,7 @@ namespace ChannelSvcs
       ReadGuard_ lock(lock_configuration_);
       match_chunks = ReferenceCounting::add_ref(chunks_);
     }
-    for(unsigned int i = 0; i < count_chunks_; i++)
+    for (unsigned int i = 0; i < count_chunks_; i++)
     {
       (*match_chunks)[i]->cancel_update();
     }
@@ -1135,7 +1100,7 @@ namespace ChannelSvcs
     TriggerMatchRes& res)
     /*throw(Exception)*/
   {
-    if(!uid.is_null())
+    if (!uid.is_null())
     {
       ChannelChunk* chunk = array[calc_chunk_num_(uid.hash(), array.size())];
       chunk->match_uid(uid, res);
@@ -1152,19 +1117,16 @@ namespace ChannelSvcs
   {
     try
     {
-      for (MatchUrls::const_iterator i = urls.begin();
-           i != urls.end(); ++i)
+      for (MatchUrls::const_iterator i = urls.begin(); i != urls.end(); ++i)
       {
-        ChannelChunk* chunk =
-          array[calc_chunk_num_i_(String::SubString(i->prefix))];
+        ChannelChunk* chunk = array[calc_chunk_num_i_(String::SubString(i->prefix))];
         chunk->match_url(*i, flags, res);
       }
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << " ChannelContainer::match_urls_: Caught eh::Exception: " <<
-        e.what();
+      ostr << " ChannelContainer::match_urls_: Caught eh::Exception: " << e.what();
       throw Exception(ostr);
     }
   }
@@ -1182,19 +1144,18 @@ namespace ChannelSvcs
       MatchUrls additional_urls;
       {
         ReadGuard_ lock(lock_ns_map_);
-        for (MatchUrls::const_reverse_iterator i(urls.rbegin());
-             i < urls.rend(); ++i)
+        for (MatchUrls::const_reverse_iterator i(urls.rbegin()); i < urls.rend(); ++i)
         {//
           NSUrlMapType::const_iterator it = ns_url_map_.find(i->prefix);
-          if(it != ns_url_map_.end())
+          if (it != ns_url_map_.end())
           {
-            for(NSTriggerAtom::const_iterator it_ns = it->second.begin();
+            for (NSTriggerAtom::const_iterator it_ns = it->second.begin();
                 it_ns != it->second.end(); ++it_ns)
             {
               const String::SubString url_prefix = (*it_ns)->get_url_prefix();
-              if(i->prefix.length() + i->postfix.length() < url_prefix.length())
+              if (i->prefix.length() + i->postfix.length() < url_prefix.length())
               {
-                if(url_prefix.compare(
+                if (url_prefix.compare(
                     i->prefix.length(),
                     i->postfix.length(),
                     i->postfix, 0, i->postfix.length()) == 0)
@@ -1212,10 +1173,7 @@ namespace ChannelSvcs
                 url.prefix.reserve(url_prefix.length());
                 url.postfix.reserve(i->postfix.length());
                 url.prefix.append(i->prefix);
-                url.prefix.append(
-                  i->postfix,
-                  0,
-                  url_prefix.length() - i->prefix.size());
+                url.prefix.append(i->postfix, 0, url_prefix.length() - i->prefix.size());
                 url.postfix.append(
                   i->postfix,
                   url_prefix.length() - i->prefix.size(),
@@ -1231,8 +1189,7 @@ namespace ChannelSvcs
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << " ChannelContainer::match_ns_urls_: Caught eh::Exception: " <<
-        e.what();
+      ostr << " ChannelContainer::match_ns_urls_: Caught eh::Exception: " << e.what();
       throw Exception(ostr);
     }
   }
@@ -1252,15 +1209,11 @@ namespace ChannelSvcs
     static const char* FN = "ChannelContainer::match_words_";
     try
     {
-      for (MatchWords::const_iterator i(key_words.begin());
-           i != key_words.end(); ++i)
+      for (MatchWords::const_iterator i(key_words.begin()); i != key_words.end(); ++i)
       {
         const MatchWords::key_type& current = *i;
-        const ChannelChunk* chunk =
-          array[calc_chunk_num_(i->hash(), array.size())];
-        chunk->match_words(
-          current,
-          words, exact_words, type, flags, res, already_matched);
+        const ChannelChunk* chunk = array[calc_chunk_num_(i->hash(), array.size())];
+        chunk->match_words(current, words, exact_words, type, flags, res, already_matched);
       }
     }
     catch(eh::Exception& e)
@@ -1285,20 +1238,18 @@ namespace ChannelSvcs
     {
       MatchWords key_words = words;
       MatcherVarsSet matched;
-      for (MatchWords::const_iterator it(words.begin());
-        it != words.end(); ++it)
+      for (MatchWords::const_iterator it(words.begin()); it != words.end(); ++it)
       {
         ReadGuard_ lock(lock_ns_map_);
-        NSTriggerMapType::const_iterator ns_it =
-          ns_trigger_map_.find(it->text());
-        if(ns_it != ns_trigger_map_.end())
+        NSTriggerMapType::const_iterator ns_it = ns_trigger_map_.find(it->text());
+        if (ns_it != ns_trigger_map_.end())
         {
-          for(NSTriggerAtom::const_iterator m_it = ns_it->second.begin();
+          for (NSTriggerAtom::const_iterator m_it = ns_it->second.begin();
               m_it != ns_it->second.end(); ++m_it)
           {
             matched.insert(*m_it);
             const Lexeme_var& lexeme = (*m_it)->matched_lexeme();
-            if(lexeme.in())
+            if (lexeme.in())
             {//any form from matched lexem is siutable
               key_words.insert(lexeme->forms[0]);
             }
@@ -1341,45 +1292,24 @@ namespace ChannelSvcs
         chunk_array = ReferenceCounting::add_ref(chunks_);
       }
 
-      if(flags & MF_NONSTRICTURL)
+      if (flags & MF_NONSTRICTURL)
       {
-        match_ns_urls_(
-          url_words,
-          *chunk_array,
-          flags | MF_BLACK_LIST,
-          res);
+        match_ns_urls_(url_words, *chunk_array, flags | MF_BLACK_LIST, res);
 
-        match_ns_urls_(
-          additional_url_words,
-          *chunk_array,
-          flags | MF_BLACK_LIST,
-          res);
+        match_ns_urls_(additional_url_words, *chunk_array, flags | MF_BLACK_LIST, res);
       }
       else
       {
-        match_urls_(
-          url_words,
-          *chunk_array,
-          flags | MF_BLACK_LIST,
-          res);
+        match_urls_(url_words, *chunk_array, flags | MF_BLACK_LIST, res);
 
-        match_urls_(
-          additional_url_words,
-          *chunk_array,
-          flags,
-          res);
+        match_urls_(additional_url_words, *chunk_array, flags, res);
 
         match_uid_(uid, *chunk_array, res);
       }
 
-      if(flags & MF_NONSTRICTKW)
+      if (flags & MF_NONSTRICTKW)
       {
-        match_ns_words_(
-          match_words[CT_PAGE],
-          *chunk_array,
-          CT_PAGE,
-          flags | MF_BLACK_LIST,
-          res);
+        match_ns_words_(match_words[CT_PAGE], *chunk_array, CT_PAGE, flags | MF_BLACK_LIST, res);
 
         match_ns_words_(
           match_words[CT_URL_KEYWORDS],
@@ -1446,16 +1376,14 @@ namespace ChannelSvcs
     catch(const Exception& e)
     {
       Stream::Error ostr;
-      ostr << "ChannelContainer::match: Caught Exception: " <<
-        e.what();
+      ostr << "ChannelContainer::match: Caught Exception: " << e.what();
       exceptions_.fetch_add(1, std::memory_order_relaxed);
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "ChannelContainer::match: Caught eh::Exception: " <<
-        e.what();
+      ostr << "ChannelContainer::match: Caught eh::Exception: " << e.what();
       exceptions_.fetch_add(1, std::memory_order_relaxed);
       throw Exception(ostr);
     }
@@ -1469,8 +1397,7 @@ namespace ChannelSvcs
     try
     {
       ReadGuard_ lock(lock_update_data_);
-      for(ChannelMap::iterator it = buffer.begin();
-          it != buffer.end(); ++it)
+      for (ChannelMap::iterator it = buffer.begin(); it != buffer.end(); ++it)
       {
         ChannelMap::const_iterator it2 = channel_ids_.find(it->first);
         if (it2 != channel_ids_.end())
@@ -1502,16 +1429,15 @@ namespace ChannelSvcs
     {
       ChannelMatchInfo_var info_ptr = get_active();
       CCGMap_var ccg_info_ptr = get_ccg();
-      if(use_only_list)
+      if (use_only_list)
       {
         ChannelMatchInfo::const_iterator ch_iter = info_ptr->lower_bound(start);
         auto id_it = get_id.begin();
-        while(id_it != get_id.end() && ch_iter != info_ptr->end()
-              && buffer.size() < limit)
+        while (id_it != get_id.end() && ch_iter != info_ptr->end() && buffer.size() < limit)
         {
-          if(*id_it == ch_iter->first)
+          if (*id_it == ch_iter->first)
           {
-            for(std::vector<CCGKeyword_var>::const_iterator it =
+            for (std::vector<CCGKeyword_var>::const_iterator it =
                 ch_iter->second.ccg_keywords.begin();
                 it != ch_iter->second.ccg_keywords.end(); ++it)
             {
@@ -1520,7 +1446,7 @@ namespace ChannelSvcs
             ++id_it;
             ++ch_iter;
           }
-          else if(*id_it < ch_iter->first)
+          else if (*id_it < ch_iter->first)
           {
             ++id_it;
           }
@@ -1536,18 +1462,19 @@ namespace ChannelSvcs
           ch_iter != info_ptr->end() && buffer.size() < limit; ++ch_iter)
         {
           bool push = (get_id.find(ch_iter->first) != get_id.end());
-          for(std::vector<CCGKeyword_var>::const_iterator it =
+          for (std::vector<CCGKeyword_var>::const_iterator it =
               ch_iter->second.ccg_keywords.begin();
               it != ch_iter->second.ccg_keywords.end(); ++it)
           {
-            if(push || (*it)->timestamp > old_master)
+            if (push || (*it)->timestamp > old_master)
             {
               buffer.push_back(*it);
             }
           }
         }
       }
-      if(buffer.empty())
+
+      if (buffer.empty())
       {
         fill_deleted(*ccg_info_ptr, old_master, deleted);
       }
@@ -1555,8 +1482,7 @@ namespace ChannelSvcs
     catch(const ChannelChunk::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FN << ": caught ChannelChunk::Exception: " <<
-        e.what();
+      ostr << FN << ": caught ChannelChunk::Exception: " << e.what();
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
@@ -1571,7 +1497,7 @@ namespace ChannelSvcs
     noexcept
   {
     Sync::PosixGuard lock(lock_statistic_);
-    if(!stats_.params[ChannelServerStats::KW_COUNT] &&
+    if (!stats_.params[ChannelServerStats::KW_COUNT] &&
        !stats_.params[ChannelServerStats::URL_COUNT])
     {
       stats_.params[ChannelServerStats::KW_ID_COUNT] = 0;
@@ -1582,7 +1508,7 @@ namespace ChannelSvcs
         ReadGuard_ lock(lock_configuration_);
         chunk_array = ReferenceCounting::add_ref(chunks_);
       }
-      for(unsigned int j = 0; j < count_chunks_; j++)
+      for (unsigned int j = 0; j < count_chunks_; j++)
       {
         (*chunk_array)[j]->accamulate_statistic(stats_);
       }
@@ -1592,8 +1518,7 @@ namespace ChannelSvcs
         stats_.params[ChannelServerStats::NS_KW_COUNT] = ns_trigger_map_.size();
         stats_.params[ChannelServerStats::NS_URL_COUNT] = ns_url_map_.size();
       }
-      stats_.params[ChannelServerStats::MATCHINGS_COUNT] =
-        queries_.load(std::memory_order_relaxed);
+      stats_.params[ChannelServerStats::MATCHINGS_COUNT] = queries_.load(std::memory_order_relaxed);
       stats_.params[ChannelServerStats::EXCEPTIONS_COUNT] =
         exceptions_.load(std::memory_order_relaxed);
     }
@@ -1617,18 +1542,13 @@ namespace ChannelSvcs
       String::SubString referer(refer);
       String::StringManip::trim(referer);
 
-      if(!referer.empty())
+      if (!referer.empty())
       {
         String::StringManip::Splitter<decltype(sep_nl)> splitter(referer);
         String::SubString ref;
-        while(splitter.get_token(ref))
+        while (splitter.get_token(ref))
         {
-          ChannelContainer::match_parse_refer(
-            ref,
-            allow_ports,
-            soft_matching,
-            url_words,
-            logger);
+          ChannelContainer::match_parse_refer(ref, allow_ports, soft_matching, url_words, logger);
         }
 
         parse_keywords(
@@ -1645,10 +1565,7 @@ namespace ChannelSvcs
     {
       Stream::Error ostr;
       ostr << __func__ << ": eh::Exception: " << e.what();
-      logger->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          ASPECT);
+      logger->log(ostr.str(), Logging::Logger::TRACE, ASPECT);
       url_words.clear();
     }
 
@@ -1671,7 +1588,7 @@ namespace ChannelSvcs
       unsigned long host_len;
       HTTP::HTTPAddress url(lower_refer);//validation should be made by Frontend
       /*
-      if(!url.is_default_port() &&
+      if (!url.is_default_port() &&
          allow_ports.find(url.port_number()) == allow_ports.end())
       {
         return;
@@ -1698,9 +1615,9 @@ namespace ChannelSvcs
       const char* query = lower_query.c_str();
       unsigned long path_len = lower_path.size();
       unsigned long query_len = lower_query.size();
-      while(host_len && *(host + host_len - 1) == '.') host_len--;
+      while (host_len && *(host + host_len - 1) == '.') host_len--;
 
-      if(host_len == 0)
+      if (host_len == 0)
       {
         return;
       }
@@ -1715,8 +1632,7 @@ namespace ChannelSvcs
       count = std::count(host, host + host_len, '.');
       reserve = count + 2;
       count = std::min(
-        static_cast<unsigned long>(
-          std::count(path, path + path_len, '/')),
+        static_cast<unsigned long>(std::count(path, path + path_len, '/')),
         PATH_DEPTH);
       reserve += count * 2 - 1;
       match_words.reserve(reserve);
@@ -1724,7 +1640,7 @@ namespace ChannelSvcs
       do
       {
         pos = (const char*)memrchr(host, '.', current_sub_pos);
-        if(!pos)
+        if (!pos)
         {
           current_sub_pos = -1;
         }
@@ -1734,14 +1650,13 @@ namespace ChannelSvcs
         }
         match_words.resize(match_words.size() + 1);
         rcurrent = match_words.rbegin();
-        rcurrent->prefix.assign(
-          host + current_sub_pos + 1, host_len - current_sub_pos - 1);
+        rcurrent->prefix.assign(host + current_sub_pos + 1, host_len - current_sub_pos - 1);
         rcurrent->postfix.reserve(path_len + query_len + 1);
         rcurrent->postfix.push_back('/');
       }
-      while(pos);
+      while (pos);
 
-      if(host_len < 5 || memcmp(host, "www.", 4) != 0)
+      if (host_len < 5 || memcmp(host, "www.", 4) != 0)
       {
         added_www = true;
         //add www.
@@ -1756,11 +1671,10 @@ namespace ChannelSvcs
 
       current_sub_pos = 0;
 
-      if(soft_matching)
+      if (soft_matching)
       {
         count_rep = match_words.size();//add path to all domains
-        for (current = match_words.begin();
-          current != match_words.end(); ++current)
+        for (current = match_words.begin(); current != match_words.end(); ++current)
         {
           current->postfix.reserve(path_len + query_len + 1);
           current->postfix.assign(path, path_len);
@@ -1778,16 +1692,13 @@ namespace ChannelSvcs
         prev_sub_pos = 0;
         do
         {
-          pos = (const char*)memchr(
-            path + prev_sub_pos + 1, '/', path_len - prev_sub_pos - 1);
-          if(!pos || path_depth >= PATH_DEPTH)
+          pos = (const char*)memchr(path + prev_sub_pos + 1, '/', path_len - prev_sub_pos - 1);
+          if (!pos || path_depth >= PATH_DEPTH)
           {
             current = match_words.begin() + start_index;
-            while(current != match_words.end())
+            while (current != match_words.end())
             {
-              current->postfix.append(
-                path + prev_sub_pos,
-                path_len - prev_sub_pos);
+              current->postfix.append(path + prev_sub_pos, path_len - prev_sub_pos);
               ++current;
             }
           }
@@ -1797,17 +1708,12 @@ namespace ChannelSvcs
             from = match_words.begin() + start_index;
             current = from + count_rep;
             current_sub_pos = pos - path;
-            while(current != match_words.end())
+            while (current != match_words.end())
             {
-              from->postfix.append(
-                path + prev_sub_pos,
-                current_sub_pos - prev_sub_pos);
-              current->prefix.reserve(
-                from->prefix.size() + current_sub_pos - prev_sub_pos);
+              from->postfix.append(path + prev_sub_pos, current_sub_pos - prev_sub_pos);
+              current->prefix.reserve(from->prefix.size() + current_sub_pos - prev_sub_pos);
               current->prefix.append(from->prefix);
-              current->prefix.append(
-                path + prev_sub_pos,
-                current_sub_pos - prev_sub_pos);
+              current->prefix.append(path + prev_sub_pos, current_sub_pos - prev_sub_pos);
               ++from;
               ++current;
             }
@@ -1816,13 +1722,13 @@ namespace ChannelSvcs
           }
           path_depth++;
         }
-        while(pos && path_depth <= PATH_DEPTH);
+        while (pos && path_depth <= PATH_DEPTH);
       }
 
-      if(query_len)
+      if (query_len)
       {
         rcurrent = match_words.rbegin();
-        for(size_t i_cur = 0; i_cur < count_rep; i_cur++)
+        for (size_t i_cur = 0; i_cur < count_rep; i_cur++)
         {
           rcurrent->postfix.push_back('?');
           rcurrent->postfix.append(query, query_len);
@@ -1831,10 +1737,10 @@ namespace ChannelSvcs
       }
 
       //hard matching of urls
-      if(!soft_matching)
+      if (!soft_matching)
       {
         rcurrent = match_words.rbegin();
-        if(added_www)
+        if (added_www)
         {
           ++rcurrent;
         }
@@ -1901,9 +1807,7 @@ namespace ChannelSvcs
     }
   }
 
-  void ProgressCounter::set_relative_progress(
-    size_t absolute_value,
-    size_t div)
+  void ProgressCounter::set_relative_progress(size_t absolute_value, size_t div)
     noexcept
   {
     WriteGuard_ guard(lock_progress_);
@@ -1935,7 +1839,7 @@ namespace ChannelSvcs
   {
     ReadGuard_ guard(lock_progress_);
     size_t res = 0;
-    for(size_t i = 0; i < count_stages_; ++i)
+    for (size_t i = 0; i < count_stages_; ++i)
     {
       size_t cur = progress_[i];
       if (i == stage_ && relative_div_)
@@ -1960,5 +1864,4 @@ namespace ChannelSvcs
     total_ = total;
   }
 
-}// namespace ChannelSvcs
-}
+} // namespace AdServer::ChannelSvcs

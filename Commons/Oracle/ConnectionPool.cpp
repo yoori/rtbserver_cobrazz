@@ -1,11 +1,7 @@
 #include "Environment.hpp"
 #include "ConnectionPool.hpp"
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   //
   // PooledConnection
@@ -37,7 +33,7 @@ namespace Oracle
       conn_descr_(conn),
       max_connections_(max_connections)
   {
-    if(max_connections_ > 0)
+    if (max_connections_ > 0)
     {
       free_connections_.reserve(max_connections_);
     }
@@ -54,7 +50,7 @@ namespace Oracle
     {
       Sync::ConditionalGuard guard(free_connection_cond_);
 
-      while((result_connection = check_connection_i_(
+      while ((result_connection = check_connection_i_(
           create_connection,
           wait_free_connection)).in() == 0 &&
         !create_connection)
@@ -63,7 +59,7 @@ namespace Oracle
       }
     }
 
-    if(create_connection)
+    if (create_connection)
     {
       Sync::PosixGuard create_connection_guard(create_lock_);
 
@@ -82,26 +78,23 @@ namespace Oracle
   }
 
   Connection_var
-  ConnectionPool::check_connection_i_(
-    bool& create_connection,
-    bool wait_free_connection)
+  ConnectionPool::check_connection_i_(bool& create_connection, bool wait_free_connection)
     /*throw(MaxConnectionsReached, NonActive)*/
   {
     create_connection = false;
 
-    if(!free_connections_.empty())
+    if (!free_connections_.empty())
     {
       Connection_var result_connection = free_connections_.back();
       free_connections_.pop_back();
       return result_connection;
     }
 
-    if(max_connections_ == 0 ||
-       open_connections_i_() < max_connections_)
+    if (max_connections_ == 0 || open_connections_i_() < max_connections_)
     {
       create_connection = true;
     }
-    else if(!wait_free_connection)
+    else if (!wait_free_connection)
     {
       throw MaxConnectionsReached("");
     }
@@ -114,8 +107,7 @@ namespace Oracle
   {
     Sync::PosixGuard guard(free_connection_cond_);
 
-    if(open_connections_i_() < max_connections() &&
-       add_free_connection_i_(conn))
+    if (open_connections_i_() < max_connections() && add_free_connection_i_(conn))
     {
       free_connection_cond_.broadcast();
       return true;
@@ -140,10 +132,7 @@ namespace Oracle
     const ConnectionDescription& conn,
     unsigned long max_connections = 0)
     /*throw(SqlException, ConnectionError)*/
-    : ConnectionPool(
-        environment,
-        conn,
-        max_connections),
+    : ConnectionPool(environment, conn, max_connections),
       busy_connections_(0)
   {}
 
@@ -168,16 +157,13 @@ namespace Oracle
   }
 
   Connection_var
-  StandartConnectionPool::check_connection_i_(
-    bool& create_connection,
-    bool wait_free_connection)
+  StandartConnectionPool::check_connection_i_(bool& create_connection, bool wait_free_connection)
     /*throw(MaxConnectionsReached, NonActive)*/
   {
     Connection_var result_connection =
-      ConnectionPool::check_connection_i_(
-        create_connection, wait_free_connection);
+      ConnectionPool::check_connection_i_(create_connection, wait_free_connection);
 
-    if(create_connection)
+    if (create_connection)
     {
       busy_connections_ += 1;
     }
@@ -189,10 +175,7 @@ namespace Oracle
   StandartConnectionPool::create_connection_i_()
     /*throw(ConnectionError, NonActive)*/
   {
-    return new PooledConnection(
-      environment_,
-      environment_->connection_owner_(),
-      conn_descr_);
+    return new PooledConnection(environment_, environment_->connection_owner_(), conn_descr_);
   }
 
   void
@@ -233,7 +216,7 @@ namespace Oracle
       free_connections_.swap(free_connections);
     }
 
-    for(ConnectionArray::iterator it = free_connections.begin();
+    for (ConnectionArray::iterator it = free_connections.begin();
         it != free_connections.end(); ++it)
     {
       (*it)->owner_(0);
@@ -273,12 +256,11 @@ namespace Oracle
   }
 
   bool
-  SwitchableConnectionPool::add_free_connection_i_(
-    Connection* conn) noexcept
+  SwitchableConnectionPool::add_free_connection_i_(Connection* conn) noexcept
   {
     // destroy connection (don't push to free connections) if
     // pool deactivated (wait connection destroy)
-    if(active())
+    if (active())
     {
       conn->owner_(0);
       ConnectionPool::add_free_connection_i_(conn);
@@ -289,22 +271,18 @@ namespace Oracle
   }
 
   Connection_var
-  SwitchableConnectionPool::check_connection_i_(
-    bool& create_connection,
-    bool wait_free_connection)
+  SwitchableConnectionPool::check_connection_i_(bool& create_connection, bool wait_free_connection)
     /*throw(MaxConnectionsReached, NonActive)*/
   {
-    if(!active())
+    if (!active())
     {
       throw NonActive("");
     }
 
     Connection_var result_connection =
-      ConnectionPool::check_connection_i_(
-        create_connection,
-        wait_free_connection);
+      ConnectionPool::check_connection_i_(create_connection, wait_free_connection);
 
-    if(create_connection)
+    if (create_connection)
     {
       // deactivation can't finished until new connection not released or cancelled
       add_active_count(1);
@@ -317,12 +295,9 @@ namespace Oracle
   SwitchableConnectionPool::create_connection_i_()
     /*throw(ConnectionError, NonActive)*/
   {
-    if(active())
+    if (active())
     {
-      return new PooledConnection(
-        environment_,
-        this,
-        conn_descr_);
+      return new PooledConnection(environment_, this, conn_descr_);
     }
     else
     {
@@ -342,6 +317,4 @@ namespace Oracle
   {
     free_connections_.clear(); // unpooled connections
   }
-}
-}
 }

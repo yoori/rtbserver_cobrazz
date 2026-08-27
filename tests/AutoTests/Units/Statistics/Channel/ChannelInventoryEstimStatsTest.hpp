@@ -34,10 +34,7 @@ public:
 
 public:
 
-  ChannelInventoryEstimStatsTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ChannelInventoryEstimStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn(open_pq())
   {};
@@ -50,8 +47,7 @@ private:
   virtual bool run_test();
 
   // Helper functions
-  void send_request(const UserRequestType& request,
-                    unsigned int time_ofset = 0);
+  void send_request(const UserRequestType& request, unsigned int time_ofset = 0);
 
   // Test cases
 

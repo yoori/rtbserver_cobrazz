@@ -52,15 +52,15 @@ sub create_cities {
   foreach my $city (@$cities)
   {
     my $state_id;
-    
+
     if (defined $city->{state})
     {
       my $state = $city->{state};
-      
-      die "State '$state' is not defined" 
+
+      die "State '$state' is not defined"
         if not defined $self->{states}->{$state};
 
-      $state_id = 
+      $state_id =
         $self->{states}->{$state}->{channel_id};
     }
 
@@ -70,8 +70,8 @@ sub create_cities {
         $city->{country_code}: DEFAULT_COUNTRY,
       geo_type => 'CITY',
       parent_channel_id => $state_id,
-      city_list => 
-        defined $city->{city_list}? 
+      city_list =>
+        defined $city->{city_list}?
           $city->{city_list}: $ns->namespace . "-" . $city->{name},
       latitude => $city->{latitude},
       longitude => $city->{longitude}));
@@ -89,20 +89,20 @@ sub create_global_cities {
   foreach my $city (@$cities)
   {
     my $state_id;
-    
+
     if (defined $city->{state})
     {
       my $state = $city->{state};
-      
-      die "State '$state' is not defined" 
+
+      die "State '$state' is not defined"
         if not defined $self->{states}->{$state};
 
-      $state_id = 
+      $state_id =
         $self->{states}->{$state}->{channel_id};
     }
     elsif ($city->{country_code} eq 'HK')
     {
-      $state_id = 
+      $state_id =
         DB::Defaults::instance()->geo_hk_country->{channel_id};
     }
 
@@ -111,8 +111,8 @@ sub create_global_cities {
       country_code => defined $city->{country_code}?
         $city->{country_code}: DEFAULT_COUNTRY,
       parent_channel_id => $state_id,
-      city_list => 
-        defined $city->{city_list}? 
+      city_list =>
+        defined $city->{city_list}?
           $city->{city_list}: $ns->namespace . "-" . $city->{name},
       latitude => $city->{latitude},
       longitude => $city->{longitude}));
@@ -137,28 +137,28 @@ sub init {
     role_id => DB::Defaults::instance()->advertiser_role });
 
   $ns->output(
-    "GB/CntryCH", 
+    "GB/CntryCH",
      DB::Defaults::instance()->geo_gb_country);
   $ns->output(
-    "FR/CntryCH", 
+    "FR/CntryCH",
      DB::Defaults::instance()->geo_fr_country);
   $ns->output(
-    "US/CntryCH", 
+    "US/CntryCH",
      DB::Defaults::instance()->geo_us_country);
   $ns->output(
-    "HK/CntryCH", 
+    "HK/CntryCH",
      DB::Defaults::instance()->geo_hk_country);
 
   $self->create_states($ns,
-    [ 
-      { 
-        name => "Herefordshire", 
-        country_channel => 
+    [
+      {
+        name => "Herefordshire",
+        country_channel =>
           DB::Defaults::instance()->geo_gb_country->{channel_id}
       },
-      { 
-        name => "London, City of", 
-        country_channel => 
+      {
+        name => "London, City of",
+        country_channel =>
           DB::Defaults::instance()->geo_gb_country->{channel_id}
       }
      ]);
@@ -166,62 +166,62 @@ sub init {
   # Channels for 'debug.ip' cases
   $self->create_global_states($ns,
     [
-      { 
-        name => "Bretagne", 
-        country_code => "FR", 
-        country_channel => 
-          DB::Defaults::instance()->geo_fr_country->{channel_id} 
+      {
+        name => "Bretagne",
+        country_code => "FR",
+        country_channel =>
+          DB::Defaults::instance()->geo_fr_country->{channel_id}
       },
-      { 
-        name => "Pennsylvania", 
-        country_code => "US", 
-        country_channel => 
+      {
+        name => "Pennsylvania",
+        country_code => "US",
+        country_channel =>
           DB::Defaults::instance()->geo_us_country->{channel_id}
       },
-      { 
-        name => "Indiana", 
-        country_code => "US", 
-        country_channel => 
+      {
+        name => "Indiana",
+        country_code => "US",
+        country_channel =>
           DB::Defaults::instance()->geo_us_country->{channel_id}
-      } 
+      }
     ]);
 
   $self->create_cities($ns,
-    [ 
-      { 
-        name => "London", state => "London, City of", 
-        latitude => 51.5002, longitude => -0.1262 
+    [
+      {
+        name => "London", state => "London, City of",
+        latitude => 51.5002, longitude => -0.1262
       }
      ]);
 
   # Channels for 'debug.ip' cases
   $self->create_global_cities($ns,
     [
-      { 
-        name => qq[Foug\xc3\xa8res], state => "Bretagne", 
-        country_code => "FR", latitude => 48.35, 
+      {
+        name => qq[Foug\xc3\xa8res], state => "Bretagne",
+        country_code => "FR", latitude => 48.35,
         longitude => -1.2, city_list => qq[Foug\xc3\xa8res]
       },
-      { 
-        name => "Central District", country_code => "HK", 
+      {
+        name => "Central District", country_code => "HK",
         latitude => 22.2833, longitude => 114.15,
-        city_list => 
+        city_list =>
           "Central District\n" .
           "Mid Levels\n" .
           "Sheung Wan\n" .
           "Hong Kong\n" .
           "Tai Ping Shan"
       },
-      { 
-        name => qq[port-aux-fran\xc3\xa7ais], country_code => "TF", 
+      {
+        name => qq[port-aux-fran\xc3\xa7ais], country_code => "TF",
         latitude => -49.35, longitude => 70.2167,
         city_list => qq[port-aux-fran\xc3\xa7ais]
       },
-      { 
+      {
         name => "Pittsburgh", country_code => "US",
-        state => "Pennsylvania", 
+        state => "Pennsylvania",
         latitude => 40.4495, longitude => -79.988,
-        city_list => 
+        city_list =>
           "Pittsburgh\n" .
           "Warrendale\n" .
           "Mckeesport\n" .
@@ -232,12 +232,12 @@ sub init {
           "Wildwood\n" .
           "Mc Keesport"
       },
-      { 
+      {
         name => "Indianapolis", country_code => "US",
-        state => "Indiana", 
+        state => "Indiana",
         latitude => 39.793, longitude => -86.2853,
         city_list => "Indianapolis"
-      } 
+      }
     ]);
 
   my @locations = (
@@ -250,7 +250,7 @@ sub init {
   foreach my $location (@locations)
   {
     Encode::_utf8_on($location);
-    $ns->output("Location" . ++$index, $location);    
+    $ns->output("Location" . ++$index, $location);
   }
 }
 

@@ -3,18 +3,15 @@
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-  namespace UserInfoSvcs
+  struct UserFreqCapProfileAdapter
   {
-    struct UserFreqCapProfileAdapter
-    {
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      Generics::SmartMemBuf_var
-      operator()(Generics::SmartMemBuf* mem_buf)
-        /*throw(eh::Exception)*/;
-    };
+    Generics::SmartMemBuf_var
+    operator()(Generics::SmartMemBuf* mem_buf)
+      /*throw(eh::Exception)*/;
+  };
 
-  }
 }

@@ -1,9 +1,6 @@
 #include "BadReferersProcessingTest.hpp"
 
-REFLECT_UNIT(BadReferersProcessingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(BadReferersProcessingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 bool
 BadReferersProcessingTest::run_test()
@@ -40,8 +37,7 @@ BadReferersProcessingTest::run_test()
     "both channels");
 
 #if 0 // The following tests do not pass in permissive mode.
-  add_descr_phrase("Sending request with wrong referer (invalid port) and"
-                   " right referer-kw");
+  add_descr_phrase("Sending request with wrong referer (invalid port) and" " right referer-kw");
   request.referer("http://U01:4x8z");
   client.process_request(request);
 
@@ -52,8 +48,7 @@ BadReferersProcessingTest::run_test()
       AutoTest::SCE_ENTRY).check(),
     "first channel");
 
-  add_descr_phrase("Sending request with wrong referer (too big port num) and"
-                   " right referer-kw");
+  add_descr_phrase("Sending request with wrong referer (too big port num) and" " right referer-kw");
   request.referer("http://U01:65536");
   client.process_request(request);
 
@@ -77,8 +72,7 @@ BadReferersProcessingTest::run_test()
       AutoTest::SCE_ENTRY).check(),
     "first channel");
 
-  add_descr_phrase("Sending request with wrong referer (colon is missing)"
-                   " and right referer-kw");
+  add_descr_phrase("Sending request with wrong referer (colon is missing)" " and right referer-kw");
   request.referer("http//U01:80");
   client.process_request(request);
 

@@ -43,9 +43,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<CreativeAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* ccid
-      )
+      void make_cmd (const char* address, const char* ccid)
       {
         address_ = address;
         AdminParams params;
@@ -55,45 +53,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "creative", address, params, static_cast<size_t>(CampaignManager));
       }
-      CreativeAdmin(
-        const char* address,
-        const char* ccid
-      )
+      CreativeAdmin(const char* address, const char* ccid)
       {
         make_cmd(address, ccid);
       }
-      CreativeAdmin(
-        const std::string& address,
-        const char* ccid
-      )
+      CreativeAdmin(const std::string& address, const char* ccid)
       {
         make_cmd(address.c_str(), ccid);
       }
-      CreativeAdmin(
-        const char* address,
-        const std::string& ccid
-      )
+      CreativeAdmin(const char* address, const std::string& ccid)
       {
         make_cmd(address, ccid.c_str());
       }
-      CreativeAdmin(
-        const std::string& address,
-        const std::string& ccid
-      )
+      CreativeAdmin(const std::string& address, const std::string& ccid)
       {
         make_cmd(address.c_str(), ccid.c_str());
       }
-      CreativeAdmin(
-        const char* address,
-        unsigned long ccid
-      )
+      CreativeAdmin(const char* address, unsigned long ccid)
       {
         make_cmd(address, strof(ccid).c_str());
       }
-      CreativeAdmin(
-        const std::string& address,
-        unsigned long ccid
-      )
+      CreativeAdmin(const std::string& address, unsigned long ccid)
       {
         make_cmd(address.c_str(), strof(ccid).c_str());
       }

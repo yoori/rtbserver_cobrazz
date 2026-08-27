@@ -1,8 +1,8 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -53,7 +53,7 @@
 
       <xsd:element name="ChannelSource" type="ChannelSourceType"/>
 
-      <xsd:element name="ControlGroup" 
+      <xsd:element name="ControlGroup"
                    type="ControlGroupType"
                    minOccurs="1"
                    maxOccurs="unbounded">
@@ -73,7 +73,7 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
-    
+
     <xsd:attribute name="count_chunks" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="source_id" type="xsd:integer" use="required"/>
 
@@ -81,7 +81,7 @@
 
   <xsd:complexType name="ControlGroupType">
     <xsd:sequence>
-      <xsd:element name="ChannelHost" 
+      <xsd:element name="ChannelHost"
                    type="ChannelHostType"
                    minOccurs="1"
                    maxOccurs="unbounded">
@@ -128,7 +128,7 @@
 
   <xsd:complexType name="ChannelHostType">
     <xsd:sequence>
-      <xsd:element name="ChannelServerControlRef" 
+      <xsd:element name="ChannelServerControlRef"
                    type="CorbaObjectRefType"
                    minOccurs="1"
                    maxOccurs="1">
@@ -139,7 +139,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChannelServerProcRef" 
+      <xsd:element name="ChannelServerProcRef"
                    type="CorbaObjectRefType"
                    minOccurs="1"
                    maxOccurs="1">
@@ -150,7 +150,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChannelServerRef" 
+      <xsd:element name="ChannelServerRef"
                    type="CorbaObjectRefType"
                    minOccurs="1"
                    maxOccurs="1">
@@ -161,7 +161,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChannelUpdateRef" 
+      <xsd:element name="ChannelUpdateRef"
                    type="CorbaObjectRefType"
                    minOccurs="1"
                    maxOccurs="1">
@@ -172,7 +172,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChannelStatRef" 
+      <xsd:element name="ChannelStatRef"
                    type="CorbaObjectRefType"
                    minOccurs="0"
                    maxOccurs="1">

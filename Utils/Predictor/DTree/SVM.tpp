@@ -78,9 +78,9 @@ namespace Vanga
   void
   SVM<LabelType>::dump() const
   {
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
+      for (auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
       {
         std::cout << "ROW(" << (*group_it)->label.to_float() << ")" << std::endl;
       }
@@ -89,13 +89,10 @@ namespace Vanga
 
   template<typename LabelType>
   void
-  SVM<LabelType>::save_line(
-    std::ostream& out,
-    const Row* row,
-    const LabelType& label_value)
+  SVM<LabelType>::save_line(std::ostream& out, const Row* row, const LabelType& label_value)
   {
     label_value.save(out);
-    for(auto feature_it = row->features.begin(); feature_it != row->features.end(); ++feature_it)
+    for (auto feature_it = row->features.begin(); feature_it != row->features.end(); ++feature_it)
     {
       out << " " << feature_it->first << ":" << feature_it->second;
     }
@@ -104,9 +101,7 @@ namespace Vanga
 
   template<typename LabelType>
   Row_var
-  SVM<LabelType>::load_line(
-    std::istream& in,
-    LabelType& label_value)
+  SVM<LabelType>::load_line(std::istream& in, LabelType& label_value)
   {
     FeatureArray features;
     return load_line_(in, label_value, features);
@@ -118,7 +113,7 @@ namespace Vanga
   {
     ReferenceCounting::SmartPtr<SVM<LabelType> > res = new SVM<LabelType>();
 
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
       res->grouped_rows.push_back(new PredictGroup<LabelType>(**group_it));
     }
@@ -134,9 +129,9 @@ namespace Vanga
     ReferenceCounting::SmartPtr<SVM<typename LabelAdapterType::ResultType> > res =
       new SVM<typename LabelAdapterType::ResultType>();
 
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
+      for (auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
       {
         res->add_row(*row_it, label_adapter(*row_it, (*group_it)->label));
       }
@@ -162,15 +157,15 @@ namespace Vanga
     auto left_group_it = left_svm->grouped_rows.begin();
     auto right_group_it = right_svm->grouped_rows.begin();
 
-    while(left_group_it != left_svm->grouped_rows.end() &&
+    while (left_group_it != left_svm->grouped_rows.end() &&
       right_group_it != right_svm->grouped_rows.end())
     {
-      if((*right_group_it)->label < (*left_group_it)->label)
+      if ((*right_group_it)->label < (*left_group_it)->label)
       {
         // non cross rows
         ++right_group_it;
       }
-      else if((*left_group_it)->label < (*right_group_it)->label)
+      else if ((*left_group_it)->label < (*right_group_it)->label)
       {
         diff_svm->grouped_rows.push_back(new PredictGroup<LabelType>(**left_group_it));
 
@@ -198,12 +193,12 @@ namespace Vanga
           (*right_group_it)->rows.end(),
           std::back_inserter(diff_group->rows));
 
-        if(!cross_group->rows.empty())
+        if (!cross_group->rows.empty())
         {
           cross_svm->grouped_rows.push_back(cross_group);
         }
 
-        if(!diff_group->rows.empty())
+        if (!diff_group->rows.empty())
         {
           diff_svm->grouped_rows.push_back(diff_group);
         }
@@ -214,7 +209,7 @@ namespace Vanga
     }
 
     // process tail
-    while(left_group_it != left_svm->grouped_rows.end())
+    while (left_group_it != left_svm->grouped_rows.end())
     {
       diff_svm->grouped_rows.push_back(new PredictGroup<LabelType>(**left_group_it));
       ++left_group_it;
@@ -229,9 +224,9 @@ namespace Vanga
     ReferenceCounting::SmartPtr<SVM<LabelType> > res = new SVM<LabelType>();
     const unsigned long cur_size = size();
 
-    if(cur_size > 0)
+    if (cur_size > 0)
     {
-      for(unsigned long i = 0; i < res_size; ++i)
+      for (unsigned long i = 0; i < res_size; ++i)
       {
         unsigned long pos = Generics::safe_rand(cur_size);
         LabelType label_value;
@@ -255,12 +250,12 @@ namespace Vanga
 
     unsigned long cur_size = this->size();
 
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
+      for (auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
       {
         unsigned long pos = Generics::safe_rand(cur_size);
-        if(pos < res_size)
+        if (pos < res_size)
         {
           res_first->add_row(*row_it, (*group_it)->label);
         }
@@ -284,9 +279,9 @@ namespace Vanga
   {
     ReferenceCounting::SmartPtr<SVM<LabelType> > res = new SVM<LabelType>();
 
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
+      for (auto row_it = (*group_it)->rows.begin(); row_it != (*group_it)->rows.end(); ++row_it)
       {
         bool found = std::binary_search(
           (*row_it)->features.begin(),
@@ -294,11 +289,11 @@ namespace Vanga
           std::pair<uint32_t, uint32_t>(feature_id, 0),
           FirstLess());
 
-        if(yes && found)
+        if (yes && found)
         {
           res->add_row(*row_it, (*group_it)->label);
         }
-        else if(!yes && !found)
+        else if (!yes && !found)
         {
           res->add_row(*row_it, (*group_it)->label);
         }
@@ -307,7 +302,7 @@ namespace Vanga
 
     res->sort_();
 
-    return res;    
+    return res;
   }
 
   template<typename LabelType>
@@ -315,8 +310,8 @@ namespace Vanga
   SVM<LabelType>::label_float_sum() const noexcept
   {
     double res = 0.0;
-    
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
       res += (*group_it)->label.to_float() * (*group_it)->rows.size();
     }
@@ -329,7 +324,7 @@ namespace Vanga
   SVM<LabelType>::size() const noexcept
   {
     unsigned long res_size = 0;
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
       res_size += (*group_it)->rows.size();
     }
@@ -346,19 +341,19 @@ namespace Vanga
     FeatureArray features;
     features.reserve(10240);
 
-    while(!in.eof())
+    while (!in.eof())
     {
       LabelType label;
       Row_var new_row = load_line_(in, label, features);
 
-      if(new_row)
+      if (new_row)
       {
         svm->add_row(new_row, label);
       }
 
       ++line_i;
 
-      if(line_i % 100000 == 0)
+      if (line_i % 100000 == 0)
       {
         std::cerr << "loaded " << line_i << " lines" << std::endl;
       }
@@ -389,7 +384,7 @@ namespace Vanga
       label,
       PredictGroupLess());
 
-    if(found_it == grouped_rows.end() || label < (*found_it)->label)
+    if (found_it == grouped_rows.end() || label < (*found_it)->label)
     {
       PredictGroup_var new_group = new PredictGroup<LabelType>();
       new_group->label = label;
@@ -404,7 +399,7 @@ namespace Vanga
   SVM<LabelType>::print_labels(std::ostream& ostr)
     noexcept
   {
-    for(auto row_it = grouped_rows.begin(); row_it != grouped_rows.end(); ++row_it)
+    for (auto row_it = grouped_rows.begin(); row_it != grouped_rows.end(); ++row_it)
     {
       ostr << "label = ";
       (*row_it)->label.print(ostr);
@@ -414,16 +409,13 @@ namespace Vanga
 
   template<typename LabelType>
   Row_var
-  SVM<LabelType>::load_line_(
-    std::istream& in,
-    LabelType& label_value,
-    FeatureArray& features)
+  SVM<LabelType>::load_line_(std::istream& in, LabelType& label_value, FeatureArray& features)
   {
     features.clear();
 
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       return nullptr;
     }
@@ -433,16 +425,16 @@ namespace Vanga
     String::SubString token;
     bool label = true;
 
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
-      if(label)
+      if (label)
       {
         label = false;
         label_value.load(token.str());
         //std::cerr << "label_value = " << label_value << std::endl;
 
         /*
-        if(!String::StringManip::str_to_int(token, label_value))
+        if (!String::StringManip::str_to_int(token, label_value))
         {
           Stream::Error ostr;
           ostr << "can't parse label '" << token << "'";
@@ -455,7 +447,7 @@ namespace Vanga
         String::SubString::SizeType pos = token.find(':');
         String::SubString feature_value_str = token.substr(0, pos);
         unsigned long feature_value = 0;
-        if(!String::StringManip::str_to_int(feature_value_str, feature_value))
+        if (!String::StringManip::str_to_int(feature_value_str, feature_value))
         {
           Stream::Error ostr;
           ostr << "can't parse feature '" << feature_value_str << "'";
@@ -463,10 +455,10 @@ namespace Vanga
         }
 
         unsigned long value = 1;
-        if(pos != String::SubString::NPOS)
+        if (pos != String::SubString::NPOS)
         {
           String::SubString value_str = token.substr(pos + 1);
-          if(!String::StringManip::str_to_int(value_str, value))
+          if (!String::StringManip::str_to_int(value_str, value))
           {
             Stream::Error ostr;
             ostr << "can't parse feature value '" << value_str << "'";
@@ -493,10 +485,9 @@ namespace Vanga
   SVM<LabelType>::get_row_(LabelType& label, unsigned long pos)
     const noexcept
   {
-    for(auto group_it = grouped_rows.begin();
-      group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
-      if(pos < (*group_it)->rows.size())
+      if (pos < (*group_it)->rows.size())
       {
         label = (*group_it)->label;
         return (*group_it)->rows[pos];
@@ -512,7 +503,7 @@ namespace Vanga
   void
   SVM<LabelType>::sort_() noexcept
   {
-    for(auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
+    for (auto group_it = grouped_rows.begin(); group_it != grouped_rows.end(); ++group_it)
     {
       std::sort((*group_it)->rows.begin(), (*group_it)->rows.end());
     }

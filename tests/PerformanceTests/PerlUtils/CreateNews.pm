@@ -18,7 +18,7 @@ use constant NEWS_IN_EVENT  => 4;
 my @lang = ("eng", "rus", "kor");
 my @country = ("USA", "GBR", "KOR");
 
-sub create_news 
+sub create_news
 {
   my ($news_path, $query_count, $news_count, $urls) = @_;
   my @queries = ();
@@ -32,19 +32,19 @@ sub create_news
   return @queries
 }
 
-sub create_news_file 
+sub create_news_file
 {
   my ($filepath, $news_count, $urls) = @_;
   open(my $XML, ">$filepath") || die "Cann't open file $filepath for write.\n";
 
 
   my $items_count = $news_count;
-  
+
   my @news = create_items($items_count, $urls);
 
   print $XML XML::Encoder::GROUP_PARAM({"xmlns"=> "http://www.newsgate.com/XSearch/1.0",
                                         "version" => "1.0"},
-                                        "result", [XML::Encoder::PARAM("ttl", DEFAULT_TTL), 
+                                        "result", [XML::Encoder::PARAM("ttl", DEFAULT_TTL),
                                                    XML::Encoder::PARAM("reqDate", get_current_date()),
                                                    XML::Encoder::PARAM("total", $items_count),
                                                    XML::Encoder::GROUP_PARAM("items", \@news)]);
@@ -78,13 +78,13 @@ sub create_item
                                             XML::Encoder::GROUP_PARAM("guid", [XML::Encoder::PARAM("language", get_language())]),
                                             XML::Encoder::GROUP_PARAM("event", [XML::Encoder::PARAM("id", $event_id),
                                                                                XML::Encoder::PARAM("capacity", int(rand(100)))]),
-                                            XML::Encoder::GROUP_PARAM("images", 
+                                            XML::Encoder::GROUP_PARAM("images",
                                                                       [XML::Encoder::PARAM({src => RandWords::rand_url("performance"),
                                                                                             width => int(rand(799) + 1),
                                                                                             height => int(rand(599) + 1),
                                                                                             alt    => RandWords::rand_string(DEFAULT_TITLE_SIZE)}
                                                                                            , "image")]),
-                                            XML::Encoder::GROUP_PARAM("source",  
+                                            XML::Encoder::GROUP_PARAM("source",
                                                                       [XML::Encoder::PARAM("title", RandWords::rand_string(DEFAULT_TITLE_SIZE)),
                                                                        XML::Encoder::PARAM("link", RandWords::rand_url("performance")),
                                                                        XML::Encoder::PARAM("country" , get_country())])]);

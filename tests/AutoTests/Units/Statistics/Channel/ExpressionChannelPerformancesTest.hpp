@@ -50,9 +50,7 @@ private:
   void test_case(const TestDescription& test);
 
   template <class ParamType>
-  void set_request_param(
-    ParamType& request_param,
-    const char* param_name);
+  void set_request_param(ParamType& request_param, const char* param_name);
 
   // Test parts
   void base_scenario();

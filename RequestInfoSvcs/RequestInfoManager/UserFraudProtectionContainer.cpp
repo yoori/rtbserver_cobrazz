@@ -18,9 +18,7 @@ namespace
   const unsigned long CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION = 1;
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -47,12 +45,11 @@ namespace RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const Generics::Time& time)
     {
-      UserFraudProtectionProfileWriter::requests_Container::reverse_iterator mit =
-        motions.rbegin();
+      UserFraudProtectionProfileWriter::requests_Container::reverse_iterator mit = motions.rbegin();
 
-      for(; mit != motions.rend(); ++mit)
+      for (; mit != motions.rend(); ++mit)
       {
-        if(mit->time() <= time.tv_sec)
+        if (mit->time() <= time.tv_sec)
         {
           break;
         }
@@ -71,12 +68,11 @@ namespace RequestInfoSvcs
       UserFraudProtectionProfileWriter::requests_Container& motions,
       const Generics::Time& max_time)
     {
-      UserFraudProtectionProfileWriter::requests_Container::iterator mit =
-        motions.begin();
+      UserFraudProtectionProfileWriter::requests_Container::iterator mit = motions.begin();
 
-      for(; mit != motions.end(); ++mit)
+      for (; mit != motions.end(); ++mit)
       {
-        if(mit->time() >= max_time.tv_sec)
+        if (mit->time() >= max_time.tv_sec)
         {
           break;
         }
@@ -92,29 +88,27 @@ namespace RequestInfoSvcs
       const Generics::Time& min_time,
       const Generics::Time& max_time)
     {
-      UserFraudProtectionProfileWriter::requests_Container::
-        reverse_iterator end_it = motions.rbegin();
+      UserFraudProtectionProfileWriter::requests_Container::reverse_iterator end_it =
+        motions.rbegin();
 
-      for(; end_it != motions.rend(); ++end_it)
+      for (; end_it != motions.rend(); ++end_it)
       {
-        if(Generics::Time(end_it->time()) <= max_time)
+        if (Generics::Time(end_it->time()) <= max_time)
         {
           break;
         }
       }
 
-      UserFraudProtectionProfileWriter::requests_Container::
-        reverse_iterator rit = end_it;
+      UserFraudProtectionProfileWriter::requests_Container::reverse_iterator rit = end_it;
 
-      for(; rit != motions.rend(); ++rit)
+      for (; rit != motions.rend(); ++rit)
       {
-        if(Generics::Time(rit->time()) < min_time)
+        if (Generics::Time(rit->time()) < min_time)
         {
           break;
         }
 
-        rollback_requests.push_back(
-          AdServer::Commons::RequestId(rit->request_id().c_str()));
+        rollback_requests.push_back(AdServer::Commons::RequestId(rit->request_id().c_str()));
       }
 
       motions.erase(rit.base(), end_it.base());
@@ -162,9 +156,9 @@ namespace RequestInfoSvcs
           now,
           UserMotionReaderTimeLess());
 
-      for(UserFraudProtectionContainer::Config::FraudRuleList::const_iterator
-            rule_it = fraud_rules.rules().begin();
-          rule_it != fraud_rules.rules().end(); ++rule_it)
+      for (UserFraudProtectionContainer::Config::FraudRuleList::const_iterator
+          rule_it = fraud_rules.rules().begin();
+        rule_it != fraud_rules.rules().end(); ++rule_it)
       {
         bool local_is_fraud = false;
 
@@ -185,18 +179,16 @@ namespace RequestInfoSvcs
         // optimization precheck:
         // if number of actions inside [now - period, now + period]
         // less then limit fraud rule can't work
-        if(check_end_it - check_start_it + now_motions >= rule_it->limit)
+        if (check_end_it - check_start_it + now_motions >= rule_it->limit)
         {
           // point inside fraud interval
           // truncate points that need to check by limit
-          if(static_cast<unsigned long>(now_low_it - check_start_it) + 1 >
-               rule_it->limit)
+          if (static_cast<unsigned long>(now_low_it - check_start_it) + 1 > rule_it->limit)
           {
             check_start_it = now_low_it + (1 - rule_it->limit);
           }
 
-          if(static_cast<unsigned long>(check_end_it - now_up_it) >
-             rule_it->limit)
+          if (static_cast<unsigned long>(check_end_it - now_up_it) > rule_it->limit)
           {
             check_end_it = now_up_it + rule_it->limit;
           }
@@ -204,19 +196,17 @@ namespace RequestInfoSvcs
           // search minimum(with maximal start point) fraud interval
           // by moving period interval [check_start_it, right_it]
           // from past to future
-          for(UserFraudProtectionProfileReader::requests_Container::const_iterator
-                right_it = check_start_it;
-              check_start_it != check_end_it && right_it != check_end_it; )
+          for (UserFraudProtectionProfileReader::requests_Container::const_iterator
+              right_it = check_start_it;
+            check_start_it != check_end_it && right_it != check_end_it; )
           {
-            if(rule_it->period + (*check_start_it).time() <
-               Generics::Time((*right_it).time()))
+            if (rule_it->period + (*check_start_it).time() < Generics::Time((*right_it).time()))
             {
               ++check_start_it;
             }
-            else if(right_it - check_start_it + 1 + now_motions >= rule_it->limit)
+            else if (right_it - check_start_it + 1 + now_motions >= rule_it->limit)
             {
-              const Generics::Time check_start_it_time(
-                (*check_start_it).time());
+              const Generics::Time check_start_it_time((*check_start_it).time());
               const Generics::Time fraud_min_time(
                 now < check_start_it_time ? now : check_start_it_time);
 
@@ -225,9 +215,7 @@ namespace RequestInfoSvcs
                 fraud_min_time :
                 std::min(fraud_start_time, fraud_min_time));
 
-              fraud_end_time = std::max(
-                fraud_end_time,
-                fraud_min_time + rule_it->period);
+              fraud_end_time = std::max(fraud_end_time, fraud_min_time + rule_it->period);
 
               local_is_fraud = true;
 
@@ -242,22 +230,19 @@ namespace RequestInfoSvcs
           // search maximum fraud interval
           // by moving period interval [left_it, check_end_it]
           // from future to past
-          if(local_is_fraud && check_start_it != check_end_it)
+          if (local_is_fraud && check_start_it != check_end_it)
           {
             --check_end_it;
 
-            for(UserFraudProtectionProfileReader::requests_Container::
-                  const_iterator left_it = check_end_it;
-                check_end_it != check_start_it &&
-                  left_it != check_start_it; )
+            for (UserFraudProtectionProfileReader::requests_Container::const_iterator left_it =
+                check_end_it;
+              check_end_it != check_start_it && left_it != check_start_it; )
             {
-              if(rule_it->period + (*left_it).time() <
-                   Generics::Time((*check_end_it).time()))
+              if (rule_it->period + (*left_it).time() < Generics::Time((*check_end_it).time()))
               {
                 --check_end_it;
               }
-              else if(check_end_it - left_it + 1 + now_motions >=
-                rule_it->limit)
+              else if (check_end_it - left_it + 1 + now_motions >= rule_it->limit)
               {
                 Generics::Time left_it_time((*left_it).time());
 
@@ -304,11 +289,8 @@ namespace RequestInfoSvcs
     try
     {
       auto user_map = open_rocksdb_transaction_profile_map<
-        AdServer::Commons::UserId,
-        UserIdToString>(
-          rocksdb_path,
-          expire_time_,
-          std::move(rocksdb_processor));
+        AdServer::Commons::UserId, UserIdToString>(
+          rocksdb_path, expire_time_, std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }
@@ -316,8 +298,7 @@ namespace RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init ProfileMap at '" << rocksdb_path <<
-        "'. Caught eh::Exception: " <<
-        ex.what();
+        "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -326,8 +307,7 @@ namespace RequestInfoSvcs
   {}
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserFraudProtectionContainer::co_get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserFraudProtectionContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserFraudProtectionContainer::co_get_profile()";
     try
@@ -351,7 +331,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserFraudProtectionContainer::process_impression()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -363,15 +343,12 @@ namespace RequestInfoSvcs
     RequestIdList fraud_impressions;
     Generics::Time user_deactivate_time;
 
-    process_impression_trans_(
-      fraud_impressions,
-      user_deactivate_time,
-      request_info);
+    process_impression_trans_(fraud_impressions, user_deactivate_time, request_info);
 
     try
     {
-      for(RequestIdList::const_iterator it = fraud_impressions.begin();
-          it != fraud_impressions.end(); ++it)
+      for (RequestIdList::const_iterator it = fraud_impressions.begin();
+        it != fraud_impressions.end(); ++it)
       {
         request_container_processor_->process_action(
           RequestContainerProcessor::AT_FRAUD_ROLLBACK,
@@ -386,21 +363,18 @@ namespace RequestInfoSvcs
       throw RequestActionProcessor::Exception(ostr);
     }
 
-    if(user_deactivate_time != Generics::Time::ZERO &&
-       callback_.in())
+    if (user_deactivate_time != Generics::Time::ZERO && callback_.in())
     {
       callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed impression: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_FRAUD_PROTECTION_CONTAINER);
     }
   }
 
@@ -410,10 +384,9 @@ namespace RequestInfoSvcs
     const ImpressionInfo&,
     const ProcessingState& processing_state)
   {
-    static const char* FUN =
-      "UserFraudProtectionContainer::co_process_impression()";
+    static const char* FUN = "UserFraudProtectionContainer::co_process_impression()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -425,15 +398,12 @@ namespace RequestInfoSvcs
     RequestIdList fraud_impressions;
     Generics::Time user_deactivate_time;
 
-    co_await co_process_impression_trans_(
-      fraud_impressions,
-      user_deactivate_time,
-      request_info);
+    co_await co_process_impression_trans_(fraud_impressions, user_deactivate_time, request_info);
 
     try
     {
-      for(RequestIdList::const_iterator it = fraud_impressions.begin();
-          it != fraud_impressions.end(); ++it)
+      for (RequestIdList::const_iterator it = fraud_impressions.begin();
+        it != fraud_impressions.end(); ++it)
       {
         co_await request_container_processor_->co_process_action(
           RequestContainerProcessor::AT_FRAUD_ROLLBACK,
@@ -448,21 +418,18 @@ namespace RequestInfoSvcs
       throw RequestActionProcessor::Exception(ostr);
     }
 
-    if(user_deactivate_time != Generics::Time::ZERO &&
-       callback_.in())
+    if (user_deactivate_time != Generics::Time::ZERO && callback_.in())
     {
       callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed impression: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_FRAUD_PROTECTION_CONTAINER);
     }
   }
 
@@ -474,7 +441,7 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "UserFraudProtectionContainer::process_click_()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -483,29 +450,16 @@ namespace RequestInfoSvcs
       return;
     }
 
-    /*
-      ", state = ";
-    RequestInfo::print_request_state(std::cerr, processing_state.state);
-    std::cerr << std::endl;
-    */
-    /*
-      ", state = ";
-    RequestInfo::print_request_state(std::cerr, processing_state.state);
-    std::cerr << std::endl;
-    */
     RequestIdList fraud_impressions;
     RequestIdList fraud_clicks;
     Generics::Time user_deactivate_time;
 
-    process_click_trans_(
-      fraud_impressions,
-      user_deactivate_time,
-      request_info);
+    process_click_trans_(fraud_impressions, user_deactivate_time, request_info);
 
     try
     {
-      for(RequestIdList::const_iterator it = fraud_impressions.begin();
-          it != fraud_impressions.end(); ++it)
+      for (RequestIdList::const_iterator it = fraud_impressions.begin();
+        it != fraud_impressions.end(); ++it)
       {
         request_container_processor_->process_action(
           RequestContainerProcessor::AT_FRAUD_ROLLBACK,
@@ -520,21 +474,18 @@ namespace RequestInfoSvcs
       throw RequestActionProcessor::Exception(ostr);
     }
 
-    if(user_deactivate_time != Generics::Time::ZERO &&
-       callback_.in())
+    if (user_deactivate_time != Generics::Time::ZERO && callback_.in())
     {
       callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed click: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_FRAUD_PROTECTION_CONTAINER);
     }
   }
 
@@ -543,10 +494,9 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info,
     const ProcessingState& processing_state)
   {
-    static const char* FUN =
-      "UserFraudProtectionContainer::co_process_click()";
+    static const char* FUN = "UserFraudProtectionContainer::co_process_click()";
 
-    if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL ||
@@ -558,15 +508,12 @@ namespace RequestInfoSvcs
     RequestIdList fraud_impressions;
     Generics::Time user_deactivate_time;
 
-    co_await co_process_click_trans_(
-      fraud_impressions,
-      user_deactivate_time,
-      request_info);
+    co_await co_process_click_trans_(fraud_impressions, user_deactivate_time, request_info);
 
     try
     {
-      for(RequestIdList::const_iterator it = fraud_impressions.begin();
-          it != fraud_impressions.end(); ++it)
+      for (RequestIdList::const_iterator it = fraud_impressions.begin();
+        it != fraud_impressions.end(); ++it)
       {
         co_await request_container_processor_->co_process_action(
           RequestContainerProcessor::AT_FRAUD_ROLLBACK,
@@ -581,21 +528,18 @@ namespace RequestInfoSvcs
       throw RequestActionProcessor::Exception(ostr);
     }
 
-    if(user_deactivate_time != Generics::Time::ZERO &&
-       callback_.in())
+    if (user_deactivate_time != Generics::Time::ZERO && callback_.in())
     {
       callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed click: " << std::endl;
       request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_FRAUD_PROTECTION_CONTAINER);
     }
   }
 
@@ -617,20 +561,15 @@ namespace RequestInfoSvcs
       UserFraudProtectionProfileWriter user_profile_writer;
       std::unique_ptr<UserFraudProtectionProfileReader> user_profile_reader;
 
-      ProfileMap::Transaction_var transaction =
-        user_map_->get_transaction(request_info.user_id);
+      ProfileMap::Transaction_var transaction = user_map_->get_transaction(request_info.user_id);
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserFraudProtectionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserFraudProtectionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
@@ -641,13 +580,11 @@ namespace RequestInfoSvcs
       Generics::Time fraud_start_time;
       Generics::Time fraud_end_time;
 
-      bool fraud = request_info.time <
-        Generics::Time(user_profile_writer.fraud_time());
+      bool fraud = request_info.time < Generics::Time(user_profile_writer.fraud_time());
 
-      if(config.in())
+      if (config.in())
       {
-        if(user_profile_reader.get() &&
-           request_info.position == 1)
+        if (user_profile_reader.get() && request_info.position == 1)
         {
           fraud |= user_motions_is_fraud(
             fraud_start_time,
@@ -670,30 +607,30 @@ namespace RequestInfoSvcs
           request_info.time - config->click_rules.max_period());
       }
 
-      if(request_info.position == 1)
+      if (request_info.position == 1)
       {
-        add_user_motion(user_profile_writer.requests(),
-          request_info.request_id, request_info.time);
+        add_user_motion(user_profile_writer.requests(), request_info.request_id, request_info.time);
       }
 
-      if(!fraud)
+      if (!fraud)
       {
-        add_user_motion(user_profile_writer.rollback_requests(),
-          request_info.request_id, request_info.time);
+        add_user_motion(
+          user_profile_writer.rollback_requests(),
+          request_info.request_id,
+          request_info.time);
       }
       else
       {
         fraud_impressions.push_back(request_info.request_id);
 
-        if(fraud_end_time != Generics::Time::ZERO)
+        if (fraud_end_time != Generics::Time::ZERO)
         {
-          user_deactivate_time = fraud_end_time +
-            config->deactivate_period;
-          user_profile_writer.fraud_time() =
-            user_deactivate_time.tv_sec;
+          user_deactivate_time = fraud_end_time + config->deactivate_period;
+          user_profile_writer.fraud_time() = user_deactivate_time.tv_sec;
         }
 
-        pop_rollback_requests(fraud_impressions,
+        pop_rollback_requests(
+          fraud_impressions,
           user_profile_writer.rollback_requests(),
           fraud_start_time,
           user_deactivate_time);
@@ -705,9 +642,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-      transaction->save_profile(
-        Generics::transfer_membuf(new_mem_buf),
-        request_info.time);
+      transaction->save_profile(Generics::transfer_membuf(new_mem_buf), request_info.time);
     }
     catch(const eh::Exception& ex)
     {
@@ -724,8 +659,7 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    static const char* FUN =
-      "UserFraudProtectionContainer::co_process_impression_trans_()";
+    static const char* FUN = "UserFraudProtectionContainer::co_process_impression_trans_()";
 
     user_deactivate_time = Generics::Time::ZERO;
 
@@ -738,37 +672,29 @@ namespace RequestInfoSvcs
 
       ProfileMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(request_info.user_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserFraudProtectionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserFraudProtectionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
-        user_profile_writer.version() =
-          CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
+        user_profile_writer.version() = CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
         user_profile_writer.fraud_time() = 0;
       }
 
       Generics::Time fraud_start_time;
       Generics::Time fraud_end_time;
 
-      bool fraud = request_info.time <
-        Generics::Time(user_profile_writer.fraud_time());
+      bool fraud = request_info.time < Generics::Time(user_profile_writer.fraud_time());
 
-      if(config.in())
+      if (config.in())
       {
-        if(user_profile_reader.get() &&
-           request_info.position == 1)
+        if (user_profile_reader.get() && request_info.position == 1)
         {
           fraud |= user_motions_is_fraud(
             fraud_start_time,
@@ -791,27 +717,26 @@ namespace RequestInfoSvcs
           request_info.time - config->click_rules.max_period());
       }
 
-      if(request_info.position == 1)
+      if (request_info.position == 1)
       {
-        add_user_motion(user_profile_writer.requests(),
-          request_info.request_id, request_info.time);
+        add_user_motion(user_profile_writer.requests(), request_info.request_id, request_info.time);
       }
 
-      if(!fraud)
+      if (!fraud)
       {
-        add_user_motion(user_profile_writer.rollback_requests(),
-          request_info.request_id, request_info.time);
+        add_user_motion(
+          user_profile_writer.rollback_requests(),
+          request_info.request_id,
+          request_info.time);
       }
       else
       {
         fraud_impressions.push_back(request_info.request_id);
 
-        if(fraud_end_time != Generics::Time::ZERO)
+        if (fraud_end_time != Generics::Time::ZERO)
         {
-          user_deactivate_time = fraud_end_time +
-            config->deactivate_period;
-          user_profile_writer.fraud_time() =
-            user_deactivate_time.tv_sec;
+          user_deactivate_time = fraud_end_time + config->deactivate_period;
+          user_profile_writer.fraud_time() = user_deactivate_time.tv_sec;
         }
 
         pop_rollback_requests(fraud_impressions,
@@ -855,20 +780,15 @@ namespace RequestInfoSvcs
       UserFraudProtectionProfileWriter user_profile_writer;
       std::unique_ptr<UserFraudProtectionProfileReader> user_profile_reader;
 
-      ProfileMap::Transaction_var transaction =
-        user_map_->get_transaction(request_info.user_id);
+      ProfileMap::Transaction_var transaction = user_map_->get_transaction(request_info.user_id);
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserFraudProtectionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserFraudProtectionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
@@ -878,12 +798,11 @@ namespace RequestInfoSvcs
 
       Generics::Time fraud_start_time;
       Generics::Time fraud_end_time;
-      bool fraud = request_info.click_time <
-        Generics::Time(user_profile_writer.fraud_time());
+      bool fraud = request_info.click_time < Generics::Time(user_profile_writer.fraud_time());
 
-      if(config.in())
+      if (config.in())
       {
-        if(user_profile_reader.get() && !fraud)
+        if (user_profile_reader.get() && !fraud)
         {
           fraud |= user_motions_is_fraud(
             fraud_start_time,
@@ -906,14 +825,12 @@ namespace RequestInfoSvcs
           request_info.time - config->click_rules.max_period());
       }
 
-      if(fraud)
+      if (fraud)
       {
-        if(fraud_end_time != Generics::Time::ZERO)
+        if (fraud_end_time != Generics::Time::ZERO)
         {
-          user_deactivate_time = fraud_end_time +
-            config->deactivate_period;
-          user_profile_writer.fraud_time() =
-            user_deactivate_time.tv_sec;
+          user_deactivate_time = fraud_end_time + config->deactivate_period;
+          user_profile_writer.fraud_time() = user_deactivate_time.tv_sec;
         }
 
         pop_rollback_requests(
@@ -923,8 +840,7 @@ namespace RequestInfoSvcs
           user_deactivate_time);
       }
 
-      add_user_motion(user_profile_writer.clicks(),
-        request_info.request_id, request_info.time);
+      add_user_motion(user_profile_writer.clicks(), request_info.request_id, request_info.time);
 
       /* save profile */
       unsigned long sz = user_profile_writer.size();
@@ -932,9 +848,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-      transaction->save_profile(
-        Generics::transfer_membuf(new_mem_buf),
-        request_info.time);
+      transaction->save_profile(Generics::transfer_membuf(new_mem_buf), request_info.time);
     }
     catch(const eh::Exception& ex)
     {
@@ -951,8 +865,7 @@ namespace RequestInfoSvcs
     const RequestInfo& request_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    static const char* FUN =
-      "UserFraudProtectionContainer::co_process_click_trans_()";
+    static const char* FUN = "UserFraudProtectionContainer::co_process_click_trans_()";
 
     user_deactivate_time = Generics::Time::ZERO;
 
@@ -965,35 +878,28 @@ namespace RequestInfoSvcs
 
       ProfileMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(request_info.user_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
         user_profile_reader.reset(
-          new UserFraudProtectionProfileReader(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size()));
+          new UserFraudProtectionProfileReader(mem_buf->membuf().data(), mem_buf->membuf().size()));
       }
       else
       {
-        user_profile_writer.version() =
-          CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
+        user_profile_writer.version() = CURRENT_USER_FRAUD_PROTECTION_PROFILE_VERSION;
         user_profile_writer.fraud_time() = 0;
       }
 
       Generics::Time fraud_start_time;
       Generics::Time fraud_end_time;
-      bool fraud = request_info.click_time <
-        Generics::Time(user_profile_writer.fraud_time());
+      bool fraud = request_info.click_time < Generics::Time(user_profile_writer.fraud_time());
 
-      if(config.in())
+      if (config.in())
       {
-        if(user_profile_reader.get() && !fraud)
+        if (user_profile_reader.get() && !fraud)
         {
           fraud |= user_motions_is_fraud(
             fraud_start_time,
@@ -1016,14 +922,12 @@ namespace RequestInfoSvcs
           request_info.time - config->click_rules.max_period());
       }
 
-      if(fraud)
+      if (fraud)
       {
-        if(fraud_end_time != Generics::Time::ZERO)
+        if (fraud_end_time != Generics::Time::ZERO)
         {
-          user_deactivate_time = fraud_end_time +
-            config->deactivate_period;
-          user_profile_writer.fraud_time() =
-            user_deactivate_time.tv_sec;
+          user_deactivate_time = fraud_end_time + config->deactivate_period;
+          user_profile_writer.fraud_time() = user_deactivate_time.tv_sec;
         }
 
         pop_rollback_requests(
@@ -1033,8 +937,7 @@ namespace RequestInfoSvcs
           user_deactivate_time);
       }
 
-      add_user_motion(user_profile_writer.clicks(),
-        request_info.request_id, request_info.time);
+      add_user_motion(user_profile_writer.clicks(), request_info.request_id, request_info.time);
 
       unsigned long sz = user_profile_writer.size();
       Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
@@ -1066,5 +969,4 @@ namespace RequestInfoSvcs
     const Generics::Time now = Generics::Time::get_time_of_day();
     co_await user_map_->co_clear_expired(now - expire_time_);
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+} // namespace AdServer::RequestInfoSvcs

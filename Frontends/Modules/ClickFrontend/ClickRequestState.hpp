@@ -71,8 +71,7 @@ namespace AdServer
     process_match_done_stage_(const grpc::Status& status);
 
     adserver::user_info_svcs::user_info_manager::MatchRequest
-    make_history_match_request_(
-      const AdServer::Commons::UserId& match_user_id) const;
+    make_history_match_request_(const AdServer::Commons::UserId& match_user_id) const;
 
     void
     log_user_bind_error_(const eh::Exception& ex) const noexcept;

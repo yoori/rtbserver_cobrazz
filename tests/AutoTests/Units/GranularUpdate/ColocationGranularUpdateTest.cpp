@@ -1,10 +1,7 @@
 
 #include "ColocationGranularUpdateTest.hpp"
 
-REFLECT_UNIT(ColocationGranularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ColocationGranularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -17,8 +14,7 @@ ColocationGranularUpdateTest::set_up()
   add_descr_phrase("SetUp");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must set in the XML configuration file");
 }
 
@@ -47,8 +43,7 @@ void ColocationGranularUpdateTest::add_colocation()
   colo_->name = fetch_string("ColocationName");
   colo_->status = "A";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      colo_->insert()),
+    AutoTest::predicate_checker(colo_->insert()),
     description +
       " Cann't insert colocation");
 
@@ -73,8 +68,7 @@ void ColocationGranularUpdateTest::add_colo_rate()
   colo_->rate.revenue_share = 0.75;
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      colo_->insert_rate()),
+    AutoTest::predicate_checker(colo_->insert_rate()),
     description +
       " Cann't insert colocation rate");
 
@@ -95,8 +89,7 @@ void ColocationGranularUpdateTest::update_colo_account()
   add_descr_phrase(description);
   colo_->account =  fetch_int("Account2");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      colo_->update()),
+    AutoTest::predicate_checker(colo_->update()),
     description +
       " Cann't update colocation");
 
@@ -116,8 +109,7 @@ void ColocationGranularUpdateTest::deactivate_colo()
    add_descr_phrase(description);
    colo_->status = "D";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      colo_->update()),
+    AutoTest::predicate_checker(colo_->update()),
      description +
        " Cann't update colocation");
 

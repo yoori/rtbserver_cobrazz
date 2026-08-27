@@ -28,10 +28,7 @@ namespace
     "  -h, --help : show this message.\n";
 
   void
-  read_dir(
-    const std::string& path,
-    std::set<std::string>& entries,
-    bool regular = true)
+  read_dir(const std::string& path, std::set<std::string>& entries, bool regular = true)
     /*throw(std::exception)*/
   {
     DIR *dir = opendir(path.c_str());
@@ -48,8 +45,7 @@ namespace
       const std::string full_path = path + '/' + ent->d_name;
       struct stat st;
 
-      if (ent->d_name[0] != '.' &&
-          stat(full_path.c_str(), &st) == 0)
+      if (ent->d_name[0] != '.' && stat(full_path.c_str(), &st) == 0)
       {
         if (S_ISREG(st.st_mode) || !regular)
         {
@@ -62,16 +58,13 @@ namespace
   }
 
   std::string
-  find_log_file(
-    const std::string& path,
-    const std::string& base_name)
+  find_log_file(const std::string& path, const std::string& base_name)
     /*throw(std::exception)*/
   {
     std::set<std::string> entries;
     read_dir(path, entries);
 
-    for (std::set<std::string>::const_iterator ci = entries.begin();
-         ci != entries.end(); ++ci)
+    for (std::set<std::string>::const_iterator ci = entries.begin(); ci != entries.end(); ++ci)
     {
       if (!ci->compare(0, base_name.size(), base_name))
       {
@@ -83,18 +76,14 @@ namespace
   }
 
   void
-  make_commit_file(
-    const std::string& path,
-    const std::string& file_name)
+  make_commit_file(const std::string& path, const std::string& file_name)
     /*throw(eh::Exception)*/
   {
     std::ofstream ofs((path + "/~" + file_name + ".commit").c_str());
   }
 
   void
-  generate_log_files(
-    const char* type,
-    std::size_t records_count)
+  generate_log_files(const char* type, std::size_t records_count)
     /*throw(eh::Exception)*/
   {
     std::ostringstream ost;
@@ -443,8 +432,7 @@ struct Tester
     file_generator();
     std::ostringstream ostr;
 
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(ostr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(ostr));
 
     Logging::ActiveObjectCallbackImpl_var callback(
       new Logging::ActiveObjectCallbackImpl(
@@ -585,8 +573,7 @@ struct AllFilesGood : public ProcessHook
   {
     if (!ostr.str().empty())
     {
-      std::cerr << "FAIL: logged troubles while processing files:\n"
-         << ostr.str() << std::endl;
+      std::cerr << "FAIL: logged troubles while processing files:\n" << ostr.str() << std::endl;
     }
   }
 
@@ -638,8 +625,7 @@ struct AllFilesGood : public ProcessHook
       if (TESTS[i].standard != TESTS[i].result)
       {
         std::cerr << "FAIL: " << TESTS[i].NAME
-          << ": result=" << TESTS[i].result
-          << ", standard=" << TESTS[i].standard << std::endl;
+          << ": result=" << TESTS[i].result << ", standard=" << TESTS[i].standard << std::endl;
         ++fails;
       }
     }
@@ -675,14 +661,11 @@ struct FilesGoodAndBad : AllFilesGood
       for (std::size_t i = 0; i < 10; ++i)
       {
         AdServer::LogProcessing::LogFileNameInfo name_info(PREFIXES[j]);
-        const std::string file_name =
-          AdServer::LogProcessing::make_log_file_name(name_info, path);
+        const std::string file_name = AdServer::LogProcessing::make_log_file_name(name_info, path);
         std::ofstream file(file_name.c_str());
         file << file_name;
 
-        make_commit_file(
-          path,
-          Generics::DirSelect::file_name(file_name.c_str()));
+        make_commit_file(path, Generics::DirSelect::file_name(file_name.c_str()));
       }
     }
   }
@@ -692,8 +675,7 @@ struct FilesGoodAndBad : AllFilesGood
   {
     if (ostr.str().empty())
     {
-      std::cerr << "FAIL: do not logged troubles while processing bad files."
-        << std::endl;
+      std::cerr << "FAIL: do not logged troubles while processing bad files." << std::endl;
     }
   }
 
@@ -760,8 +742,7 @@ struct InterruptFileProcess : public ProcessHook
   {
     if (!ostr.str().empty())
     {
-      std::cerr << "FAIL: logged troubles while processing files:\n"
-         << ostr.str() << std::endl;
+      std::cerr << "FAIL: logged troubles while processing files:\n" << ostr.str() << std::endl;
     }
   }
 
@@ -858,8 +839,7 @@ struct ProcessedRowNumberInErrorFileName : public ProcessHook
   {
     if (ostr.str().empty())
     {
-      std::cerr << "FAIL: do not logged troubles while processing bad files."
-        << std::endl;
+      std::cerr << "FAIL: do not logged troubles while processing bad files." << std::endl;
     }
   }
 
@@ -916,15 +896,9 @@ init(int& argc, char**& argv) /*throw(eh::Exception)*/
   Args args;
   CheckOption opt_help;
 
-  args.add(
-    equal_name("path") ||
-    short_name("p"),
-    root_path);
+  args.add(equal_name("path") || short_name("p"), root_path);
 
-  args.add(
-    equal_name("help") ||
-    short_name("h"),
-    opt_help);
+  args.add(equal_name("help") || short_name("h"), opt_help);
 
   args.parse(argc - 1, argv + 1);
 
@@ -944,13 +918,12 @@ int execute_test(const char* TEST_NAME, unsigned long threads_count)
 
   try
   {
-    system(("rm -r " + *root_path +
-      " 2>/dev/null ; mkdir -p " + *root_path).c_str());
+    system(("rm -r " + *root_path + " 2>/dev/null ; mkdir -p " + *root_path).c_str());
 
     Tester test_one_thread(threads_count);
     TestType test_type(test_one_thread);
     local_result = test_one_thread.do_test(test_type);
-    if(local_result)
+    if (local_result)
     {
       std::cerr << TEST_NAME << ": fail" << std::endl;
     }
@@ -961,8 +934,7 @@ int execute_test(const char* TEST_NAME, unsigned long threads_count)
   }
   catch(const eh::Exception& ex)
   {
-    std::cerr << TEST_NAME << ": fail, caught eh::Exception: " <<
-      ex.what() << std::endl;
+    std::cerr << TEST_NAME << ": fail, caught eh::Exception: " << ex.what() << std::endl;
   }
 
   return local_result;

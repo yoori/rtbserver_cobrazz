@@ -1,10 +1,7 @@
 
 #include "ChannelPriceRangeLogging.hpp"
 
-REFLECT_UNIT(ChannelPriceRangeLogging) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelPriceRangeLogging) ("Statistics", AUTO_TEST_SLOW);
 
 //ATTENTION! inventory_users_percentage must be 100 for this test
 //Before running test modify files ExpressionMatcherConfig.xml &
@@ -77,15 +74,12 @@ namespace
     bool check(bool = true) /*throw(eh::Exception)*/
     {
       std::list<std::string> exp_ccids;
-      test_->fetch_objects(
-        std::inserter(exp_ccids, exp_ccids.begin()),
-        exp_ccids_.c_str());
+      test_->fetch_objects(std::inserter(exp_ccids, exp_ccids.begin()), exp_ccids_.c_str());
 
       for (unsigned int i = std::min(start_index_, stop_index_);
            i < std::max(start_index_, stop_index_); ++i)
       {
-        if (!AutoTest::equal_seq(exp_ccids,
-            SelectedCreativesCCID(users_[i])))
+        if (!AutoTest::equal_seq(exp_ccids, SelectedCreativesCCID(users_[i])))
         {
           Stream::Error ostr;
           ostr << description_ << ". User#" << i <<
@@ -122,40 +116,26 @@ ChannelPriceRangeLogging::run()
   creative_size_id = fetch_int("CreativeSize/Common");
   default_colo_ = fetch_int("DefaultColo");
 
-  AUTOTEST_CASE(
-    one_ecpm_group(),
-    "One ECPM group");
+  AUTOTEST_CASE(one_ecpm_group(), "One ECPM group");
 
   AdClient tag_cpm_client(AdClient::create_user(this));
 
-  AUTOTEST_CASE(
-    tag_cpm_part_1(tag_cpm_client),
-    "Tag CPM");
+  AUTOTEST_CASE(tag_cpm_part_1(tag_cpm_client), "Tag CPM");
 
   AutoTest::Statistics::UserSet groups_clients;
   groups_clients.initialize(this, 3*REPEAT_COUNT);
 
-  AUTOTEST_CASE(
-    competitive_ecpm_groups(groups_clients),
-    "Competitive ECPM groups");
+  AUTOTEST_CASE(competitive_ecpm_groups(groups_clients), "Competitive ECPM groups");
 
   AdClient day_switch_client(AdClient::create_user(this));
 
-  AUTOTEST_CASE(
-    day_switching_part_1(day_switch_client),
-    "Expression matcher day switching");
+  AUTOTEST_CASE(day_switching_part_1(day_switch_client), "Expression matcher day switching");
 
-  AUTOTEST_CASE(
-    key_variation(),
-    "Key variation");
+  AUTOTEST_CASE(key_variation(), "Key variation");
 
-  AUTOTEST_CASE(
-    no_impression(),
-    "No impression");
+  AUTOTEST_CASE(no_impression(), "No impression");
 
-  AUTOTEST_CASE(
-    currency(),
-    "Currency");
+  AUTOTEST_CASE(currency(), "Currency");
 
 //   AUTOTEST_CASE(
 //     text_advertising(),
@@ -167,35 +147,25 @@ ChannelPriceRangeLogging::run()
 
   check();
 
-  AUTOTEST_CASE(
-    one_ecpm_group(),
-    "One ECPM group");
+  AUTOTEST_CASE(one_ecpm_group(), "One ECPM group");
 
-  AUTOTEST_CASE(
-    tag_cpm_part_2(tag_cpm_client),
-    "Tag CPM");
+  AUTOTEST_CASE(tag_cpm_part_2(tag_cpm_client), "Tag CPM");
 
 //   AUTOTEST_CASE(
 //     move_between_ecpm_groups(0, groups_clients),
 //     "Competitive ECPM groups");
 
-  AUTOTEST_CASE(
-    day_switching_part_2(day_switch_client),
-    "Expression matcher day switching");
+  AUTOTEST_CASE(day_switching_part_2(day_switch_client), "Expression matcher day switching");
 
   check();
 
-  AUTOTEST_CASE(
-    one_ecpm_group(),
-    "One ECPM group");
+  AUTOTEST_CASE(one_ecpm_group(), "One ECPM group");
 
 //   AUTOTEST_CASE(
 //     move_between_ecpm_groups(1, groups_clients),
 //     "Competitive ECPM groups");
 
-  AUTOTEST_CASE(
-    day_switching_part_3(day_switch_client),
-    "Expression matcher day switching");
+  AUTOTEST_CASE(day_switching_part_3(day_switch_client), "Expression matcher day switching");
 
 //   check();
 
@@ -257,10 +227,7 @@ void ChannelPriceRangeLogging::one_ecpm_group()
       referer_kw(fetch_string("ONE_GROUP/Kwd/B1")).
       debug_time(today));
 
-  FAIL_CONTEXT(
-    SelectedCreativesCheck(
-      this, clients,"ONE_GROUP/CC/Display1",
-      "Check CC#1").check());
+  FAIL_CONTEXT(SelectedCreativesCheck(this, clients,"ONE_GROUP/CC/Display1", "Check CC#1").check());
 
   clients.process_request(
     NSLookupRequest().
@@ -283,14 +250,10 @@ void ChannelPriceRangeLogging::one_ecpm_group()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      diffs,
-      stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
-void ChannelPriceRangeLogging::tag_cpm_part_1(
-  AdClient& client)
+void ChannelPriceRangeLogging::tag_cpm_part_1(AdClient& client)
 {
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats,  5> stats;
   stats[0].key().
@@ -333,11 +296,7 @@ void ChannelPriceRangeLogging::tag_cpm_part_1(
       referer_kw(map_objects("TAG_CPM/Kwd/B2")).
       debug_time(today));
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Request#1");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Request#1");
 
 
   client.process_request (
@@ -348,9 +307,7 @@ void ChannelPriceRangeLogging::tag_cpm_part_1(
       debug_time(today));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("TAG_CPM/CC/Display2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("TAG_CPM/CC/Display2"), client.debug_info.ccid).check(),
     "Request#2");
 
   const Diff diffs[] =
@@ -375,12 +332,10 @@ void ChannelPriceRangeLogging::tag_cpm_part_1(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
-void ChannelPriceRangeLogging::tag_cpm_part_2(
-  AdClient& client)
+void ChannelPriceRangeLogging::tag_cpm_part_2(AdClient& client)
 {
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats,  5> stats;
   stats[0].key().
@@ -424,9 +379,7 @@ void ChannelPriceRangeLogging::tag_cpm_part_2(
       debug_time(today));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("TAG_CPM/CC/Display1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("TAG_CPM/CC/Display1"), client.debug_info.ccid).check(),
     "Check CC");
 
   const Diff diffs[] =
@@ -453,13 +406,11 @@ void ChannelPriceRangeLogging::tag_cpm_part_2(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
-ChannelPriceRangeLogging::competitive_ecpm_groups(
-  AutoTest::Statistics::UserSet& clients)
+ChannelPriceRangeLogging::competitive_ecpm_groups(AutoTest::Statistics::UserSet& clients)
 {
   std::string tid1     = fetch_string("GROUPS/TAG/Display3");
   std::string tid2     = fetch_string("GROUPS/TAG/Display4");
@@ -496,10 +447,7 @@ ChannelPriceRangeLogging::competitive_ecpm_groups(
       referer_kw(keyword).
       debug_time(today));
 
-  FAIL_CONTEXT(
-      SelectedCreativesCheck(
-        this, clients, "GROUPS/CC/Display3",
-        "Check CC#1").check());
+  FAIL_CONTEXT(SelectedCreativesCheck(this, clients, "GROUPS/CC/Display3", "Check CC#1").check());
 
   clients.process_request(NSLookupRequest().
     loc_name(COUNTRY).
@@ -507,10 +455,7 @@ ChannelPriceRangeLogging::competitive_ecpm_groups(
     referer_kw(keyword).
     debug_time(today));
 
-  FAIL_CONTEXT(
-    SelectedCreativesCheck(
-      this, clients,"GROUPS/CC/Display4",
-      "Check CC#2").check());
+  FAIL_CONTEXT(SelectedCreativesCheck(this, clients,"GROUPS/CC/Display4", "Check CC#2").check());
 
   clients.process_request(NSLookupRequest().
     loc_name(LU).
@@ -519,17 +464,11 @@ ChannelPriceRangeLogging::competitive_ecpm_groups(
     colo(colo1).
     debug_time(today));
 
-  FAIL_CONTEXT(
-    SelectedCreativesCheck(
-      this, clients,"GROUPS/CC/Display7",
-      "Check cc#3").check());
+  FAIL_CONTEXT(SelectedCreativesCheck(this, clients,"GROUPS/CC/Display7", "Check cc#3").check());
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      diffs,
-      stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -628,13 +567,11 @@ ChannelPriceRangeLogging::move_between_ecpm_groups(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
-ChannelPriceRangeLogging::new_day(
-  AutoTest::Statistics::UserSet& clients)
+ChannelPriceRangeLogging::new_day(AutoTest::Statistics::UserSet& clients)
 {
   std::string tid     = fetch_string("GROUPS/TAG/Display4");
   std::string keyword = fetch_string("GROUPS/Kwd/B1");
@@ -672,10 +609,7 @@ ChannelPriceRangeLogging::new_day(
       referer_kw(keyword).
       debug_time(tomorrow));
 
-  FAIL_CONTEXT(
-      SelectedCreativesCheck(
-        this, clients, "GROUPS/CC/Display4",
-        "Check CC").check());
+  FAIL_CONTEXT(SelectedCreativesCheck(this, clients, "GROUPS/CC/Display4", "Check CC").check());
 
   const Diff diffs[] =
   {
@@ -695,12 +629,10 @@ ChannelPriceRangeLogging::new_day(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
-void ChannelPriceRangeLogging::day_switching_part_1(
-  AdClient& client)
+void ChannelPriceRangeLogging::day_switching_part_1(AdClient& client)
 {
   std::string tid1    = fetch_string("DAY_SWITCH/TAG/Display1");
   std::string keyword = fetch_string("DAY_SWITCH/Kwd/B1");
@@ -730,9 +662,7 @@ void ChannelPriceRangeLogging::day_switching_part_1(
       debug_time(yesterday));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("DAY_SWITCH/CC/Display1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("DAY_SWITCH/CC/Display1"), client.debug_info.ccid).check(),
     "Check CC");
 
   const Diff diffs[] =
@@ -743,13 +673,11 @@ void ChannelPriceRangeLogging::day_switching_part_1(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
-void ChannelPriceRangeLogging::day_switching_part_2(
-  AdClient& client)
+void ChannelPriceRangeLogging::day_switching_part_2(AdClient& client)
 {
   std::string tid1    = fetch_string("DAY_SWITCH/TAG/Display1");
   std::string keyword = fetch_string("DAY_SWITCH/Kwd/B1");
@@ -777,9 +705,7 @@ void ChannelPriceRangeLogging::day_switching_part_2(
       debug_time(today));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("DAY_SWITCH/CC/Display1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("DAY_SWITCH/CC/Display1"), client.debug_info.ccid).check(),
     "Check CC");
 
   const Diff diffs[] =
@@ -790,12 +716,10 @@ void ChannelPriceRangeLogging::day_switching_part_2(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
-void ChannelPriceRangeLogging::day_switching_part_3(
-  AdClient& client)
+void ChannelPriceRangeLogging::day_switching_part_3(AdClient& client)
 {
   std::string tid2    = fetch_string("DAY_SWITCH/TAG/Display2");
   std::string keyword = fetch_string("DAY_SWITCH/Kwd/B1");
@@ -837,9 +761,7 @@ void ChannelPriceRangeLogging::day_switching_part_3(
       debug_time(yesterday));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("DAY_SWITCH/CC/Display2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("DAY_SWITCH/CC/Display2"), client.debug_info.ccid).check(),
     "Check CC");
 
   const Diff diffs[] =
@@ -856,8 +778,7 @@ void ChannelPriceRangeLogging::day_switching_part_3(
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void ChannelPriceRangeLogging::key_variation()
@@ -899,8 +820,7 @@ void ChannelPriceRangeLogging::key_variation()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -934,8 +854,7 @@ ChannelPriceRangeLogging::no_impression()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void ChannelPriceRangeLogging::currency()
@@ -943,10 +862,8 @@ void ChannelPriceRangeLogging::currency()
   Stats stats;
   Diffs diffs;
 
-  double ecpm =
-    fetch_float("Currency/CPM/Display1") / fetch_float("Currency/Adv/Rate");
-  double min_ecpm =
-    fetch_float("Currency/MINECPM/2") / fetch_float("Currency/Pub/Rate");
+  double ecpm = fetch_float("Currency/CPM/Display1") / fetch_float("Currency/Adv/Rate");
+  double min_ecpm = fetch_float("Currency/MINECPM/2") / fetch_float("Currency/Pub/Rate");
   unsigned long b_channel1 = fetch_int("Currency/B1");
   unsigned long b_channel2 = fetch_int("Currency/B2");
   unsigned long e_channel1 = fetch_int("Currency/Expr1");
@@ -979,8 +896,7 @@ void ChannelPriceRangeLogging::currency()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
@@ -1042,8 +958,7 @@ void ChannelPriceRangeLogging::text_advertising()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
@@ -1080,14 +995,12 @@ void ChannelPriceRangeLogging::tag_adjustment()
 
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 template<size_t Count>
 void
-ChannelPriceRangeLogging::process_requests(
-  const UserRequest(&requests)[Count])
+ChannelPriceRangeLogging::process_requests(const UserRequest(&requests)[Count])
 {
 
   AdClient client(AdClient::create_user(this));
@@ -1100,6 +1013,7 @@ ChannelPriceRangeLogging::process_requests(
     {
       request.tid = fetch_string(requests[i].tid);
     }
+
     if (requests[i].colo)
     {
       request.colo = fetch_string(requests[i].colo);
@@ -1119,23 +1033,17 @@ ChannelPriceRangeLogging::process_requests(
     if (requests[i].expected_ccids)
     {
       std::list<std::string> expected;
-      fetch_objects(
-        std::inserter(expected, expected.begin()),
-        requests[i].expected_ccids);
+      fetch_objects(std::inserter(expected, expected.begin()), requests[i].expected_ccids);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          expected,
-          AutoTest::SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(expected, AutoTest::SelectedCreativesCCID(client)).check(),
         "Check CC#"  + strof(i));
 
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "0",
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker("0", client.debug_info.ccid).check(),
         "Check CC#"  + strof(i));
     }
   }
@@ -1174,8 +1082,7 @@ ChannelPriceRangeLogging::add_stats(
     stat.select(pq_conn_);
     stats_container.push_back(stat);
 
-    diffs_container.push_back(
-      Diff().user_count(stats[i].user_count).impops(stats[i].impops));
+    diffs_container.push_back(Diff().user_count(stats[i].user_count).impops(stats[i].impops));
   }
 }
 

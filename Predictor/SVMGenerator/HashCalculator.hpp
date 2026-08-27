@@ -78,9 +78,7 @@ protected:
   bool
   hash_index_(uint32_t& index, uint32_t hash) const
   {
-    index = AdServer::CampaignSvcs::CTR::feature_hash_index(
-      hash,
-      features_size_) + 1;
+    index = AdServer::CampaignSvcs::CTR::feature_hash_index(hash, features_size_) + 1;
     return true;
   }
 
@@ -92,12 +90,12 @@ protected:
     const String::SubString* add_value)
   {
     auto dict_it = dictionary.find(index);
-    if(dict_it == dictionary.end())
+    if (dict_it == dictionary.end())
     {
       std::string key;
-      for(auto path_it = value_path.begin(); path_it != value_path.end(); ++path_it)
+      for (auto path_it = value_path.begin(); path_it != value_path.end(); ++path_it)
       {
-        if(path_it != value_path.begin())
+        if (path_it != value_path.begin())
         {
           key += '/';
         }
@@ -105,9 +103,9 @@ protected:
         key += path_it->str();
       }
 
-      if(add_value)
+      if (add_value)
       {
-        if(!value_path.empty())
+        if (!value_path.empty())
         {
           key += '/';
         }
@@ -148,21 +146,21 @@ public:
     /*throw(eh::Exception)*/
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         // need local hasher
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
         hash_adapter_copy.add(*it);
 
         uint32_t index;
-        if(hash_index_(index, hash_adapter_copy.finalize()))
+        if (hash_index_(index, hash_adapter_copy.finalize()))
         {
           result_hashes.push_back(std::make_pair(index, 1));
         }
@@ -173,7 +171,7 @@ public:
       hash_adapter.add(static_cast<uint32_t>(0));
 
       uint32_t index;
-      if(hash_index_(index, hash_adapter.finalize()))
+      if (hash_index_(index, hash_adapter.finalize()))
       {
         result_hashes.push_back(std::make_pair(index, 1));
       }
@@ -189,29 +187,25 @@ public:
     noexcept
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         // need local hasher
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
         hash_adapter_copy.add(*it);
 
         uint32_t index;
-        if(hash_index_(index, hash_adapter_copy.finalize()))
+        if (hash_index_(index, hash_adapter_copy.finalize()))
         {
           String::SubString val(*it);
 
-          add_dictionary_value_(
-            dictionary,
-            index,
-            value_path,
-            &val);
+          add_dictionary_value_(dictionary, index, value_path, &val);
         }
       }
     }
@@ -220,14 +214,10 @@ public:
       hash_adapter.add(static_cast<uint32_t>(0));
 
       uint32_t index;
-      if(hash_index_(index, hash_adapter.finalize()))
+      if (hash_index_(index, hash_adapter.finalize()))
       {
         String::SubString empty_ss;
-        add_dictionary_value_(
-          dictionary,
-          index,
-          value_path,
-          &empty_ss);
+        add_dictionary_value_(dictionary, index, value_path, &empty_ss);
       }
     }
   }
@@ -261,25 +251,25 @@ public:
     /*throw(eh::Exception)*/
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         // need local hasher
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
 
         uint32_t index;
-        if(hash_index_(index, hash_adapter_copy.finalize()))
+        if (hash_index_(index, hash_adapter_copy.finalize()))
         {
           std::istringstream istr(it->c_str());
           double value;
           istr >> value;
-          if(istr.fail() || !istr.eof())
+          if (istr.fail() || !istr.eof())
           {
             //return; // temporary
 
@@ -308,28 +298,24 @@ public:
     noexcept
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         // need local hasher
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
 
         uint32_t index;
-        if(hash_index_(index, hash_adapter_copy.finalize()))
+        if (hash_index_(index, hash_adapter_copy.finalize()))
         {
           String::SubString val;
 
-          add_dictionary_value_(
-            dictionary,
-            index,
-            value_path,
-            &val);
+          add_dictionary_value_(dictionary, index, value_path, &val);
         }
       }
     }
@@ -339,7 +325,7 @@ public:
       hash_adapter.add(static_cast<uint32_t>(0));
 
       uint32_t index;
-      if(hash_index_(index, hash_adapter.finalize()))
+      if (hash_index_(index, hash_adapter.finalize()))
       {
         String::SubString empty_ss;
         add_dictionary_value_(
@@ -382,30 +368,24 @@ public:
     /*throw(eh::Exception)*/
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
         hash_adapter_copy.add(*it);
-        next_calculator_->eval_hashes(
-          result_hashes,
-          hash_adapter_copy,
-          params);
+        next_calculator_->eval_hashes(result_hashes, hash_adapter_copy, params);
       }
     }
     else
     {
       hash_adapter.add(static_cast<uint32_t>(0));
-      next_calculator_->eval_hashes(
-        result_hashes,
-        hash_adapter,
-        params);
+      next_calculator_->eval_hashes(result_hashes, hash_adapter, params);
     }
   }
 
@@ -418,23 +398,19 @@ public:
     noexcept
   {
     HashCalculateParams::Value value;
-    if(feature_index_ != 0xFFFFFFFF)
+    if (feature_index_ != 0xFFFFFFFF)
     {
       value = params.values[feature_index_];
     }
 
-    if(!value.empty())
+    if (!value.empty())
     {
-      for(auto it = value.begin(); it != value.end(); ++it)
+      for (auto it = value.begin(); it != value.end(); ++it)
       {
         Murmur32v3Adapter hash_adapter_copy(hash_adapter);
         hash_adapter_copy.add(*it);
         value_path.push_back(*it);
-        next_calculator_->fill_dictionary(
-          dictionary,
-          hash_adapter_copy,
-          params,
-          value_path);
+        next_calculator_->fill_dictionary(dictionary, hash_adapter_copy, params, value_path);
         value_path.pop_back();
       }
     }
@@ -442,11 +418,7 @@ public:
     {
       hash_adapter.add(static_cast<uint32_t>(0));
       value_path.push_back(String::SubString());
-      next_calculator_->fill_dictionary(
-        dictionary,
-        hash_adapter,
-        params,
-        value_path);
+      next_calculator_->fill_dictionary(dictionary, hash_adapter, params, value_path);
       value_path.pop_back();
     }
   }

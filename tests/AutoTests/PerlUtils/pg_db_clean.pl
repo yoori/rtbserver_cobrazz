@@ -119,7 +119,7 @@ my $stmt = $dbh->prepare_cached(qq[
 $stmt->execute();
 
 my $table = $stmt->fetchall_arrayref;
-my $ids_string = join(", ", map {@$_[0]} @$table); 
+my $ids_string = join(", ", map {@$_[0]} @$table);
 
 my $feed_stmt = $dbh->prepare_cached(qq[
   SELECT feed_id
@@ -143,7 +143,7 @@ my $feed_stmt = $dbh->prepare_cached(qq[
 $feed_stmt->execute();
 
 my $feed_table = $feed_stmt->fetchall_arrayref;
-my $feed_ids_string = join(", ", map {@$_[0]} @$feed_table); 
+my $feed_ids_string = join(", ", map {@$_[0]} @$feed_table);
 
 my $used_feed_stmt = $dbh->prepare_cached(qq[
   SELECT feed_id
@@ -167,7 +167,7 @@ my $used_feed_stmt = $dbh->prepare_cached(qq[
 $used_feed_stmt->execute();
 
 my $used_feed_table = $used_feed_stmt->fetchall_arrayref;
-my $used_feed_ids_string = join(", ", map {@$_[0]} @$used_feed_table); 
+my $used_feed_ids_string = join(", ", map {@$_[0]} @$used_feed_table);
 
 my $feed_id_cond = $feed_ids_string ne ''? "feed_id IN ($feed_ids_string)": '';
 if ($used_feed_ids_string ne '')
@@ -247,17 +247,17 @@ use DB::Database;
 use DB::EntitiesImpl;
 
 my %delete;
-foreach my $class (keys %{DB::}) 
+foreach my $class (keys %{DB::})
 {
   $class =~ s/::$//;
   my $table = lc $class;
   $class = "DB::$class";
-  
+
   if (exists $special{$table})
   {
     $delete{$table} = $special{$table}
       if defined $special{$table};
-  } 
+  }
   elsif ($class->isa('DB::Entity::Base'))
   {
     my ($unique) = ($class->_unique);

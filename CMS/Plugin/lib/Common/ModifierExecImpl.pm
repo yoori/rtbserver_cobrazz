@@ -47,7 +47,7 @@ sub list
 {
   my ($this, $host, $path, $recursive) = @_;
 
-  if(defined($recursive) && $recursive > 0)
+  if (defined($recursive) && $recursive > 0)
   {
     return split(/\n/, $this->execute_host_command_for_output_(
       $host,
@@ -73,7 +73,7 @@ sub mkdir
 sub remove
 {
   my ($this, $host, $path, $force) = @_;
-  
+
   my $options = (defined($force) && $force eq 1) ? "-rf " : "-r ";
 
   return $this->execute_host_command_(
@@ -86,16 +86,16 @@ sub move
 
   my $res = $this->mkdir($tgt_host, '');
 
-  if($res != 0)
+  if ($res != 0)
   {
     return $res;
   }
 
-  if($src_host ne $tgt_host)
+  if ($src_host ne $tgt_host)
   {
     $res = $this->copy($src_host, $src_path, $tgt_host, $tgt_path);
 
-    if($res == 0)
+    if ($res == 0)
     {
       $res = $this->execute_host_command_(
         $src_host,
@@ -118,17 +118,17 @@ sub copy
 
   my $res = $this->mkdir($tgt_host, '');
 
-  if($res != 0)
+  if ($res != 0)
   {
     return $res;
   }
 
-  if($src_host ne $tgt_host)
+  if ($src_host ne $tgt_host)
   {
     my ($src_folder, $src_file) = split_path_($this->get_path_($src_path));
     my ($tgt_folder, $tgt_file) = split_path_($this->get_path_($tgt_path));
 
-    if(!defined($src_folder) || !defined($src_file) || !defined($tgt_folder))
+    if (!defined($src_folder) || !defined($src_file) || !defined($tgt_folder))
     {
       die "Error: ModifierExecImpl::copy: undefined src_folder or src_file or tgt_folder";
     }
@@ -180,12 +180,12 @@ sub execute_command
   my $arg_i = 0;
   foreach my $arg(@args)
   {
-    if(!defined($arg))
+    if (!defined($arg))
     {
       die "assert: execute_command: passed undefined object($arg_i)";
     }
 
-    if(blessed($arg) && !exists($arg->{path}))
+    if (blessed($arg) && !exists($arg->{path}))
     {
       die "assert: execute_command: passed object($arg_i) that isn't result of path_wrapper";
     }
@@ -206,12 +206,12 @@ sub execute_command_for_output
   my $arg_i = 0;
   foreach my $arg(@args)
   {
-    if(!defined($arg))
+    if (!defined($arg))
     {
       die "assert: execute_command: passed undefined object($arg_i)";
     }
 
-    if(blessed($arg) && !exists($arg->{path}))
+    if (blessed($arg) && !exists($arg->{path}))
     {
       die "assert: execute_command: passed object($arg_i) that isn't result of path_wrapper";
     }
@@ -237,7 +237,7 @@ sub execute_host_command_for_output_
   #print STDERR "TO EXEC '" . $command . "' FOR OUTPUT\n";
   my $ssh_command = "ssh -i " . $this->{ssh_identity_} . " $host \"$command\"";
   my $out = `$ssh_command`;
-  if($?)
+  if ($?)
   {
     die "Error: can't execute '$ssh_command': error code = $?";
   }
@@ -258,7 +258,7 @@ sub split_path_
 {
   my ($path) = @_;
 
-  if($path =~ m|(.*/)([^/]+)/?|)
+  if ($path =~ m|(.*/)([^/]+)/?|)
   {
     return ($1, $2);
   }

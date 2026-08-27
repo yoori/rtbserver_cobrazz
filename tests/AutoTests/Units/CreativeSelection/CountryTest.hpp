@@ -8,10 +8,7 @@ class CountryTest: public BaseUnit
 {
 public:
 
-  CountryTest(
-              UnitStat& stat_var,
-              const char* task_name,
-              XsdParams params_var):
+  CountryTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -24,6 +21,5 @@ private:
 
   AutoTest::NSLookupRequest request;
 
-  void process_testcase(AdClient& test_client,
-                        const char *cc_id);
+  void process_testcase(AdClient& test_client, const char *cc_id);
 };

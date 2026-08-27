@@ -12,10 +12,7 @@ namespace Apache
   {
   public:
     virtual int
-    execute(
-      const HttpRequest& request,
-      HttpResponse& response,
-      int status) const noexcept = 0;
+    execute(const HttpRequest& request, HttpResponse& response, int status) const noexcept = 0;
 
   protected:
     virtual
@@ -72,10 +69,7 @@ namespace Apache
     {}
 
     int
-    handle_request_noparams_(
-      const ServerRec& server,
-      HttpRequest& request,
-      HttpResponse& response)
+    handle_request_noparams_(const ServerRec& server, HttpRequest& request, HttpResponse& response)
       /*throw(eh::Exception)*/;
 
   private:
@@ -159,8 +153,7 @@ namespace Apache
 
     const typename Servers::const_iterator ci = hosts_.find(r->server);
 
-    if (ci == hosts_.end() ||
-       !will_handle(r->uri))
+    if (ci == hosts_.end() || !will_handle(r->uri))
     {
       return DECLINED;
     }
@@ -188,10 +181,7 @@ namespace Apache
   template<typename ModuleType, typename HttpResponse>
   int
   ServerNameFilterAdapterEx<ModuleType, HttpResponse>::
-    handle_request_noparams_(
-      const ServerRec& server,
-      HttpRequest& request,
-      HttpResponse& response)
+    handle_request_noparams_(const ServerRec& server, HttpRequest& request, HttpResponse& response)
       /*throw(eh::Exception)*/
   {
     HTTP::ParamList params;
@@ -208,8 +198,7 @@ namespace Apache
 
     request.set_params(std::move(params));
 
-    for (ServerActions::const_iterator ci = server.prev.begin();
-         ci != server.prev.end(); ++ci)
+    for (ServerActions::const_iterator ci = server.prev.begin(); ci != server.prev.end(); ++ci)
     {
       const int status = (*ci)->execute(request, response, OK);
 
@@ -221,8 +210,7 @@ namespace Apache
 
     const int status = handle_request(request, response);
 
-    for (ServerActions::const_iterator ci = server.post.begin();
-         ci != server.post.end(); ++ci)
+    for (ServerActions::const_iterator ci = server.post.begin(); ci != server.post.end(); ++ci)
     {
       (*ci)->execute(request, response, status);
     }

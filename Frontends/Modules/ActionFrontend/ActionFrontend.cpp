@@ -32,8 +32,7 @@ namespace
 
   struct ChannelMatch
   {
-    ChannelMatch(unsigned long channel_id_val,
-                 unsigned long channel_trigger_id_val)
+    ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
       :
       channel_id(channel_id_val),
       channel_trigger_id(channel_trigger_id_val)
@@ -43,8 +42,7 @@ namespace
     {
       return
         (channel_id < right.channel_id ||
-         (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id));
+         (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id));
     }
 
     unsigned long channel_id;
@@ -54,8 +52,7 @@ namespace
   struct GetChannelTriggerId
   {
     ChannelMatch
-    operator() (
-      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+    operator() (const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       noexcept
     {
       return ChannelMatch(atom.id(), atom.trigger_channel_id());
@@ -91,26 +88,26 @@ namespace Aspect
 
 namespace Request::Cookie
 {
-    const String::AsciiStringManip::Caseless OPTOUT("OPTED_OUT");
-    const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
-    const String::AsciiStringManip::Caseless USER_ID("uid");
-  }
+  const String::AsciiStringManip::Caseless OPTOUT("OPTED_OUT");
+  const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
+  const String::AsciiStringManip::Caseless USER_ID("uid");
+}
 
 namespace Request::Param
-  {
-    const char CAMPAIGN_ID[] = "cid";
-    const char CONVERSION_ID_OLD[] = "actionid";
-    const char CONVERSION_ID[] = "convid";
-    const char COUNTRY[] = "country";
-    const char TEST_REQUEST[] = "testrequest";
-    const char DEBUG_CURRENT_TIME[] = "debug-time";
-  }
+{
+  const char CAMPAIGN_ID[] = "cid";
+  const char CONVERSION_ID_OLD[] = "actionid";
+  const char CONVERSION_ID[] = "convid";
+  const char COUNTRY[] = "country";
+  const char TEST_REQUEST[] = "testrequest";
+  const char DEBUG_CURRENT_TIME[] = "debug-time";
+}
 
 namespace Request::Header
-  {
-    const String::AsciiStringManip::Caseless REM_HOST(".RemoteHost");
-    const String::AsciiStringManip::Caseless REFERER("Referer");
-  }
+{
+  const String::AsciiStringManip::Caseless REM_HOST(".RemoteHost");
+  const String::AsciiStringManip::Caseless REFERER("Referer");
+}
 
 namespace AdServer::Action
 {
@@ -158,8 +155,7 @@ namespace AdServer::Action
         throw Exception("ActionFeConfiguration not presented.");
       }
 
-      config_ = ConfigPtr(
-        new ActionFeConfiguration(*fe_config.ActionFeConfiguration()));
+      config_ = ConfigPtr(new ActionFeConfiguration(*fe_config.ActionFeConfiguration()));
     }
     catch(const eh::Exception& e)
     {
@@ -175,20 +171,16 @@ namespace AdServer::Action
     std::string found_uri;
 
     bool result =
-      FrontendCommons::find_uri(
-        derived_config_.advertiser_service_uri, uri, found_uri, 0, false) ||
+      FrontendCommons::find_uri(derived_config_.advertiser_service_uri, uri, found_uri, 0, false) ||
       (config_->PixelUriList().present() &&
-        FrontendCommons::find_uri(
-          config_->PixelUriList()->Uri(), uri, found_uri)) ||
+        FrontendCommons::find_uri(config_->PixelUriList()->Uri(), uri, found_uri)) ||
       (config_->UriList().present() &&
-        FrontendCommons::find_uri(
-          config_->UriList()->Uri(), uri, found_uri));
+        FrontendCommons::find_uri(config_->UriList()->Uri(), uri, found_uri));
 
     if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
-      ostr << "Frontend::will_handle(" << uri <<
-        "), service: '" << found_uri << "'";
+      ostr << "Frontend::will_handle(" << uri << "), service: '" << found_uri << "'";
 
       logger()->log(ostr.str());
     }
@@ -209,7 +201,7 @@ namespace AdServer::Action
 
         if (config_->PathUriList().present())
         {
-          for(xsd::AdServer::Configuration::UriListType::Uri_sequence::const_iterator
+          for (xsd::AdServer::Configuration::UriListType::Uri_sequence::const_iterator
                 it = config_->PathUriList()->Uri().begin();
               it != config_->PathUriList()->Uri().end(); ++it)
           {
@@ -231,23 +223,18 @@ namespace AdServer::Action
         if (user_bind_client)
         {
           user_bind_client_coro_ = std::make_shared<
-            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
-              user_bind_client,
-              workers_);
+            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(user_bind_client, workers_);
           add_child_object(user_bind_client);
         }
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
         add_child_object(campaign_manager);
 
         auto user_info_client =
@@ -257,9 +244,7 @@ namespace AdServer::Action
             common_module_->grpc_coalesce_runner(),
             logger());
         user_info_client_coro_ = std::make_shared<
-          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
-            user_info_client,
-            workers_);
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(user_info_client, workers_);
         add_child_object(user_info_client);
 
         auto channel_client =
@@ -269,9 +254,7 @@ namespace AdServer::Action
             common_module_->grpc_coalesce_runner(),
             logger());
         channel_client_coro_ = std::make_shared<
-          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
-            channel_client,
-            workers_);
+          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(channel_client, workers_);
         add_child_object(channel_client);
 
         request_info_filler_.reset(
@@ -279,20 +262,16 @@ namespace AdServer::Action
             logger(),
             common_module_.in(),
             common_module_->ip_mapper(),
-            Commons::LogReferrer::read_log_referrer_settings(
-            config_->use_referrer_action_stats()),
+            Commons::LogReferrer::read_log_referrer_settings(config_->use_referrer_action_stats()),
             config_->set_uid()));
 
-        track_pixel_ = FileCachePtr(
-          new FileCache(config_->track_pixel_path().c_str()));
+        track_pixel_ = FileCachePtr(new FileCache(config_->track_pixel_path().c_str()));
 
-        track_html_ = FileCachePtr(
-          new FileCache(config_->track_html_path().c_str()));
+        track_html_ = FileCachePtr(new FileCache(config_->track_html_path().c_str()));
 
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
-            FCGI::HttpRequest, FCGI::HttpResponse>(
-              common_config_->Cookies()));
+            FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
 
         stats_ = new AcFrontendStat();
 
@@ -302,7 +281,7 @@ namespace AdServer::Action
           config_->use_referrer_action_stats());
 
         // init redirect rules
-        for(auto redirect_it = config_->Redirect().begin();
+        for (auto redirect_it = config_->Redirect().begin();
           redirect_it != config_->Redirect().end(); ++redirect_it)
         {
           RedirectRule_var redirect_rule = new RedirectRule();
@@ -317,7 +296,7 @@ namespace AdServer::Action
             String::StringManip::Splitter<String::AsciiStringManip::SepNL> splitter(
               redirect_it->keywords());
             String::SubString token;
-            while(splitter.get_token(token))
+            while (splitter.get_token(token))
             {
               String::StringManip::trim(token);
               if (!token.empty())
@@ -337,8 +316,7 @@ namespace AdServer::Action
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "Frontend::init(): frontend is running ..."),
+      logger()->log(String::SubString("Frontend::init(): frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::ACTION_FRONTEND);
     }
@@ -353,12 +331,9 @@ namespace AdServer::Action
       wait_object();
 
       Stream::Error ostr;
-      ostr << "Frontend::shutdown(): frontend terminated (pid = " <<
-        ::getpid() << ").";
+      ostr << "Frontend::shutdown(): frontend terminated (pid = " << ::getpid() << ").";
 
-      logger()->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::ACTION_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::INFO, Aspect::ACTION_FRONTEND);
     }
     catch(...)
     {}
@@ -436,14 +411,10 @@ namespace AdServer::Action
     //   request_info.utm_resolved_user_id
     //   utm_cookie_resolved_user_id
     //
-    action_taken_all_(
-      request_info,
-      utm_cookie_resolved_user_id);
+    action_taken_all_(request_info, utm_cookie_resolved_user_id);
 
     // enqueue match channels
-    trigger_match_all_(
-      request_info,
-      utm_cookie_resolved_user_id);
+    trigger_match_all_(request_info, utm_cookie_resolved_user_id);
 
     // choose user id, that will be used for set into cookie and relink other ids
     Commons::UserId result_user_id;
@@ -472,13 +443,9 @@ namespace AdServer::Action
     // result user id = <utm user id> (set into cookie), that garantee that
     // all actions will be linked to user for that done bid request
     //
-    if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT &&
-      !result_user_id.is_null())
+    if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT && !result_user_id.is_null())
     {
-      relink_user_id_all_(
-        request_info,
-        utm_cookie_resolved_user_id,
-        result_user_id);
+      relink_user_id_all_(request_info, utm_cookie_resolved_user_id, result_user_id);
     }
 
     // fill response
@@ -489,21 +456,14 @@ namespace AdServer::Action
     {
       const Generics::SignedUuid signed_uid =
         common_module_->user_id_controller()->sign(
-          !result_user_id.is_null() ?
-          result_user_id : Generics::Uuid::create_random_based());
+          !result_user_id.is_null() ? result_user_id : Generics::Uuid::create_random_based());
 
-      FrontendCommons::add_UID_cookie(
-        response,
-        request,
-        *cookie_manager_,
-        signed_uid.str());
+      FrontendCommons::add_UID_cookie(response, request, *cookie_manager_, signed_uid.str());
     }
 
     if (common_config_->ResponseHeaders().present())
     {
-      FrontendCommons::add_headers(
-        *(common_config_->ResponseHeaders()),
-        response);
+      FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
     }
 
     // do redirect by rules
@@ -520,12 +480,12 @@ namespace AdServer::Action
         std::vector<std::string> keywords;
         FrontendCommons::get_ip_keywords(keywords, request_info.peer_ip);
 
-        for(auto redirect_rule_it = redirect_rules_.begin();
+        for (auto redirect_rule_it = redirect_rules_.begin();
           redirect_rule_it != redirect_rules_.end(); ++redirect_rule_it)
         {
           if ((*redirect_rule_it)->use_keywords)
           {
-            for(auto keyword_it = keywords.begin(); keyword_it != keywords.end(); ++keyword_it)
+            for (auto keyword_it = keywords.begin(); keyword_it != keywords.end(); ++keyword_it)
             {
               if ((*redirect_rule_it)->keywords.find(*keyword_it) != (*redirect_rule_it)->keywords.end())
               {
@@ -561,13 +521,11 @@ namespace AdServer::Action
           String::TextTemplate::Args templ_args;
 
           templ_args[TemplateParams::RANDOM] =
-            String::StringManip::IntToStr(
-              Generics::unsafe_rand()).str().str();
+            String::StringManip::IntToStr(Generics::unsafe_rand()).str().str();
 
           // instantiate redirect template
           String::TextTemplate::DefaultValue args_with_default(&templ_args);
-          String::TextTemplate::ArgsEncoder args_with_encoding(
-            &args_with_default);
+          String::TextTemplate::ArgsEncoder args_with_encoding(&args_with_default);
 
           std::string redirect =
             result_redirect_rule->url_template->instantiate(args_with_encoding);
@@ -580,19 +538,14 @@ namespace AdServer::Action
               FrontendCommons::is_secure_request(request) || request_info.secure ?
                 HTTPS_PREFIX : HTTP_PREFIX);
 
-            http_status = FrontendCommons::redirect(
-              redirect,
-              response);
+            http_status = FrontendCommons::redirect(redirect, response);
 
             redirected = true;
           }
         }
         catch(const eh::Exception& ex)
         {
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::ACTION_FRONTEND,
-            "ADS-IMPL-?") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::ACTION_FRONTEND, "ADS-IMPL-?") <<
             FUN << ": eh::Exception has been caught: " << ex.what();
         }
       } // result_redirect_rule.in()
@@ -633,10 +586,9 @@ namespace AdServer::Action
     match_info->set_colo_id(common_config_->colo_id());
     mri.set_user_id(GrpcAlgs::pack_user_id(user_id));
     mri.set_request_time(GrpcAlgs::pack_time(now));
-    const auto& page_channels =
-      trigger_match_result.matched_channels().page_channels();
+    const auto& page_channels = trigger_match_result.matched_channels().page_channels();
     const int result_len = page_channels.size();
-    for(int i = 0; i < result_len; ++i)
+    for (int i = 0; i < result_len; ++i)
     {
       auto* pkw_channel = match_info->add_pkw_channels();
       pkw_channel->set_channel_id(page_channels[i].id());
@@ -652,11 +604,7 @@ namespace AdServer::Action
     const String::SubString& referer)
     noexcept
   {
-    co_trigger_match_(
-      conv_id,
-      now,
-      user_id,
-      referer.str()).start_detached(nullptr);
+    co_trigger_match_(conv_id, now, user_id, referer.str()).start_detached(nullptr);
   }
 
   FrontendCommons::RequestTask
@@ -686,8 +634,7 @@ namespace AdServer::Action
       channel_request.set_pwords(keywords_ostr.str());
       channel_request.set_first_url(referer);
 
-      auto channel_result = co_await channel_client_coro_->co_match(
-        std::move(channel_request));
+      auto channel_result = co_await channel_client_coro_->co_match(std::move(channel_request));
       if (!channel_result.status.ok())
       {
         Stream::Error ostr;
@@ -723,20 +670,16 @@ namespace AdServer::Action
       match_params->set_provide_persistent_channels(false);
       match_params->set_change_last_request(false);
       match_params->set_filter_contextual_triggers(false);
-      match_params->set_publishers_optin_timeout(
-        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      match_params->set_publishers_optin_timeout(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
       const auto fill_channel_matches =
-        [](
-          auto* out,
-          const auto& in)
+        [](auto* out, const auto& in)
       {
-        for(const auto& channel_match : in)
+        for (const auto& channel_match : in)
         {
           auto* result = out->Add();
           result->set_channel_id(channel_match.channel_id);
-          result->set_channel_trigger_id(
-            channel_match.channel_trigger_id);
+          result->set_channel_trigger_id(channel_match.channel_trigger_id);
         }
       };
 
@@ -749,9 +692,7 @@ namespace AdServer::Action
         std::inserter(page_channels, page_channels.end()),
         GetChannelTriggerId());
 
-      fill_channel_matches(
-        match_params->mutable_page_channel_ids(),
-        page_channels);
+      fill_channel_matches(match_params->mutable_page_channel_ids(), page_channels);
 
       ChannelMatchSet url_channels;
 
@@ -761,9 +702,7 @@ namespace AdServer::Action
         std::inserter(url_channels, url_channels.end()),
         GetChannelTriggerId());
 
-      fill_channel_matches(
-        match_params->mutable_url_channel_ids(),
-        url_channels);
+      fill_channel_matches(match_params->mutable_url_channel_ids(), url_channels);
 
       ChannelMatchSet url_keyword_channels;
 
@@ -773,9 +712,7 @@ namespace AdServer::Action
         std::inserter(url_keyword_channels, url_keyword_channels.end()),
         GetChannelTriggerId());
 
-      fill_channel_matches(
-        match_params->mutable_url_keyword_channel_ids(),
-        url_keyword_channels);
+      fill_channel_matches(match_params->mutable_url_keyword_channel_ids(), url_keyword_channels);
 
       auto* user_info = history_match_request.mutable_user_info();
       user_info->set_user_id(GrpcAlgs::pack_user_id(user_id));
@@ -815,8 +752,7 @@ namespace AdServer::Action
         trigger_match_result);
 
       auto process_result =
-        co_await campaign_manager_coro_->co_process_match_request(
-          std::move(process_match_request));
+        co_await campaign_manager_coro_->co_process_match_request(std::move(process_match_request));
       if (!process_result.status.ok())
       {
         Stream::Error ostr;
@@ -834,8 +770,7 @@ namespace AdServer::Action
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << __func__ <<
-        ":  ChannelServerGrpcAsyncClient error: " << ex.what();
+      ostr << __func__ << ":  ChannelServerGrpcAsyncClient error: " << ex.what();
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,
         Aspect::ACTION_FRONTEND,
@@ -846,8 +781,7 @@ namespace AdServer::Action
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "Action::Frontend::handle_request()";
@@ -858,8 +792,7 @@ namespace AdServer::Action
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
 
-    logger()->log(String::SubString(
-        "Action::Frontend::handle_request(): entered"),
+    logger()->log(String::SubString("Action::Frontend::handle_request(): entered"),
       TraceLevel::MIDDLE,
     Aspect::ACTION_FRONTEND);
     int http_status = 500;
@@ -878,8 +811,7 @@ namespace AdServer::Action
 
       return_html =
         config_->UriList().present() &&
-        FrontendCommons::find_uri(
-          config_->UriList()->Uri(), request.uri(), found_uri);
+        FrontendCommons::find_uri(config_->UriList()->Uri(), request.uri(), found_uri);
 
       ActionFrontendHTTPConstrain::apply(request);
 
@@ -889,9 +821,7 @@ namespace AdServer::Action
         ostr << FUN << ":" << std::endl;
         FrontendCommons::print_request(ostr, request);
 
-        logger()->log(ostr.str(),
-          TraceLevel::MIDDLE,
-          Aspect::ACTION_FRONTEND);
+        logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::ACTION_FRONTEND);
       }
 
       RequestInfo request_info;
@@ -956,7 +886,7 @@ namespace AdServer::Action
 
     std::set<Commons::UserId> processed_user_ids;
 
-    for(unsigned long user_i = 0;
+    for (unsigned long user_i = 0;
       user_i < sizeof(relink_user_ids) / sizeof(relink_user_ids[0]);
       ++user_i)
     {
@@ -996,7 +926,7 @@ namespace AdServer::Action
 
     std::set<Commons::UserId> processed_user_ids;
 
-    for(unsigned long user_i = 0;
+    for (unsigned long user_i = 0;
       user_i < sizeof(match_user_ids) / sizeof(match_user_ids[0]);
       ++user_i)
     {
@@ -1006,8 +936,7 @@ namespace AdServer::Action
         match_user_id != AdServer::Commons::PROBE_USER_ID &&
         processed_user_ids.find(match_user_id) == processed_user_ids.end())
       {
-        const unsigned long current_task_count =
-          match_task_count_.exchange_and_add(1) + 1;
+        const unsigned long current_task_count = match_task_count_.exchange_and_add(1) + 1;
 
         if (config_->match_task_limit() == 0 ||
           current_task_count <= config_->match_task_limit() + config_->threads())
@@ -1111,7 +1040,7 @@ namespace AdServer::Action
 
       std::set<Commons::UserId> processed_user_ids;
 
-      for(unsigned long user_i = 0;
+      for (unsigned long user_i = 0;
           user_i < sizeof(verify_user_ids) / sizeof(verify_user_ids[0]);
           ++user_i)
       {
@@ -1154,10 +1083,7 @@ namespace AdServer::Action
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't process request: " << ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::ACTION_FRONTEND,
-        "ADS-ICON-4");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::ACTION_FRONTEND, "ADS-ICON-4");
     }
   }
 
@@ -1183,10 +1109,8 @@ namespace AdServer::Action
         get_request_info.set_silent(true);
         get_request_info.set_generate_user_id(false);
         get_request_info.set_for_set_cookie(false);
-        get_request_info.set_create_timestamp(
-          GrpcAlgs::pack_time(Generics::Time::ZERO));
-        get_request_info.set_current_user_id(
-          GrpcAlgs::pack_user_id(current_user_id));
+        get_request_info.set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+        get_request_info.set_current_user_id(GrpcAlgs::pack_user_id(current_user_id));
 
         auto get_result = co_await user_bind_client_coro_->co_get_user_id(
           std::move(get_request_info));
@@ -1212,12 +1136,8 @@ namespace AdServer::Action
       catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": UserBindServer::get_user_id() scheduling failed: " <<
-          ex.what();
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
+        ostr << FUN << ": UserBindServer::get_user_id() scheduling failed: " << ex.what();
+        logger()->log(ostr.str(), Logging::Logger::ERROR, Aspect::ACTION_FRONTEND, "ADS-IMPL-109");
       }
       catch(...)
       {
@@ -1244,8 +1164,7 @@ namespace AdServer::Action
       add_request.set_user_id(GrpcAlgs::pack_user_id(user_id));
       add_request.set_timestamp(GrpcAlgs::pack_time(time));
 
-      auto add_result = co_await user_bind_client_coro_->co_add_user_id(
-        std::move(add_request));
+      auto add_result = co_await user_bind_client_coro_->co_add_user_id(std::move(add_request));
       if (!add_result.status.ok())
       {
         Stream::Error ostr;
@@ -1253,38 +1172,28 @@ namespace AdServer::Action
           "gRPC call failed: code=" <<
           static_cast<int>(add_result.status.error_code()) <<
           ", message=" << add_result.status.error_message();
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
+        logger()->log(ostr.str(), Logging::Logger::ERROR, Aspect::ACTION_FRONTEND, "ADS-IMPL-109");
       }
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": UserBindServer::add_user_id() scheduling failed: " << ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::ACTION_FRONTEND,
-        "ADS-IMPL-109");
+      logger()->log(ostr.str(), Logging::Logger::ERROR, Aspect::ACTION_FRONTEND, "ADS-IMPL-109");
     }
 
     co_return FrontendCommons::RequestResult{};
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_action_taken_(
-    adserver::campaign_svcs::campaign_manager::ActionTakenRequest request)
+  Frontend::co_action_taken_(adserver::campaign_svcs::campaign_manager::ActionTakenRequest request)
     noexcept
   {
     try
     {
       const bool test_request = request.action_info().test_request();
       const auto user_status = request.action_info().user_status();
-      auto action_result = co_await campaign_manager_coro_->co_action_taken(
-        std::move(request));
+      auto action_result = co_await campaign_manager_coro_->co_action_taken(std::move(request));
       if (!action_result.status.ok())
       {
         Stream::Error ostr;
@@ -1310,11 +1219,7 @@ namespace AdServer::Action
       Stream::Error ostr;
       ostr << "Action::Frontend::co_action_taken_(): "
         "CampaignManager::action_taken() scheduling failed: " << ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::ACTION_FRONTEND,
-        "ADS-ICON-4");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::ACTION_FRONTEND, "ADS-ICON-4");
     }
 
     co_return FrontendCommons::RequestResult{};

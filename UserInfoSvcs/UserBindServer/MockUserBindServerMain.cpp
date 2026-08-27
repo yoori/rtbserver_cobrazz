@@ -83,8 +83,7 @@ main(int argc, char** argv)
     sigaddset(&signals, SIGUSR1);
     pthread_sigmask(SIG_BLOCK, &signals, nullptr);
 
-    auto response_sleep_ms =
-      std::make_shared<std::atomic_uint>(*opt_response_sleep_ms);
+    auto response_sleep_ms = std::make_shared<std::atomic_uint>(*opt_response_sleep_ms);
     AdServer::UserInfoSvcs::UserBindServerGrpc_var server =
       new AdServer::UserInfoSvcs::UserBindServerGrpc(
         nullptr,
@@ -108,12 +107,10 @@ main(int argc, char** argv)
       sigwait(&signals, &signal);
       if (signal == SIGUSR1)
       {
-        const auto current =
-          response_sleep_ms->load(std::memory_order_acquire);
+        const auto current = response_sleep_ms->load(std::memory_order_acquire);
         const auto next = current == 0 ? *opt_response_sleep_ms : 0;
           response_sleep_ms->store(next, std::memory_order_release);
-        std::cout << "MockUserBindServer response_sleep_ms=" <<
-        next << std::endl;
+        std::cout << "MockUserBindServer response_sleep_ms=" << next << std::endl;
         continue;
       }
       break;

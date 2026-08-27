@@ -40,7 +40,7 @@ class PQTable:
       # Process reference
       object.fields.append(field)
     return object
-  
+
 class PQField:
 
   def __init__(self, table, name, type, link = None):
@@ -105,7 +105,7 @@ class PQSchema:
                                     "FROM pg_constraint cnst "
                                     "WHERE cnst.conrelid = %s::regclass and condeferrable = true",
                                     (table, ))))
-      
+
   def __get_columns(self, table, pkey, refs):
     keys = map(lambda x: x.name, pkey)
     def ref_check(r):
@@ -114,7 +114,7 @@ class PQSchema:
                         self.unimportant)) == 0
     references = dict(
       filter(ref_check, map(lambda x: (x.name, x.table), refs)))
-    
+
     return map(lambda x: PQField(table, x[0], x[1], references.get(x[0])),
                filter(lambda x: x[2] in SCHEMAS_SQL and x[0] not in keys,
                       self.__select(
@@ -207,7 +207,7 @@ def process_schema( schema, objects, unimportant, toFile ):
   for table in unimportant:
     print >>out, "    '%s'," % table.upper()
   print >>out, "]"
-  
+
   out.close()
 
 if __name__ == '__main__':
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     "-p", "--password", dest="password", help="Postgres password", default=DEFAULT_PSWD)
   parser.add_option(
     "--port", dest="port", help="Postgres port", type="int", default=DEFAULT_PORT)
-  
+
   (options, args) = parser.parse_args()
 
   check_defined(parser, options)
@@ -236,4 +236,4 @@ if __name__ == '__main__':
   shutil.copyfile(DATA_FILE, DATA_FILE + ".tmp")
   process_schema(schema, objects, unimportant, DATA_FILE)
   os.remove(DATA_FILE  + ".tmp")
-  
+

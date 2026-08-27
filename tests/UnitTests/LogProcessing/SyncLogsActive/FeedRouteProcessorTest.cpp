@@ -25,15 +25,10 @@ namespace
   const StringList dst_hosts{"-"};
 
   RouteBasicHelper_var destination_host_router =
-    new RouteRoundRobinHelper(
-      ST_ROUND_ROBIN,
-      dst_hosts,
-      10);
+    new RouteRoundRobinHelper(ST_ROUND_ROBIN, dst_hosts, 10);
 
   void
-  read_dir(
-    const std::string& path,
-    std::set<std::string>& entries)
+  read_dir(const std::string& path, std::set<std::string>& entries)
     /*throw(std::exception)*/
   {
     DIR *dir = opendir(path.c_str());
@@ -50,8 +45,7 @@ namespace
       const std::string full_path = path + '/' + ent->d_name;
       struct stat st;
 
-      if (ent->d_name[0] != '.' &&
-          stat(full_path.c_str(), &st) == 0)
+      if (ent->d_name[0] != '.' && stat(full_path.c_str(), &st) == 0)
       {
         if (S_ISREG(st.st_mode))
         {
@@ -68,10 +62,7 @@ namespace
   {
   public:
     virtual void
-    report_error(
-      Severity,
-      const String::SubString& description,
-      const char* = 0) noexcept
+    report_error(Severity, const String::SubString& description, const char* = 0) noexcept
     {
       std::cerr << description.str() << std::endl;
     }
@@ -84,8 +75,7 @@ namespace
 
   Generics::ActiveObjectCallback_var callback = new ThrowCallback();
 
-  Generics::TaskRunner_var pool_task_runner =
-    new Generics::TaskRunner(callback, 1, 1);
+  Generics::TaskRunner_var pool_task_runner = new Generics::TaskRunner(callback, 1, 1);
   MoveTaskScheduler_var move_task_scheduler =
     new MoveTaskScheduler(pool_task_runner, 1, 1, Generics::Time());
 }
@@ -317,8 +307,7 @@ TEST_EX(commited_fetch_first_attempt_failed, setup, teardown)
   route_processor->wait_object();
 }
 
-void commited_fetch_first_process_failed_(
-  BasicFeedRouteProcessor_var route_processor)
+void commited_fetch_first_process_failed_(BasicFeedRouteProcessor_var route_processor)
 {
   std::ostringstream ost;
   ost << "LogGenerator -g \"Request\" "

@@ -34,18 +34,18 @@ sub process
   my $value = $row->[$self->{field_}];
   my $label = ($row->[$self->{label_}] ne '0' ? 1 : undef);
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     foreach my $sub_val(@$value)
     {
-      if(!exists($self->{values_}->{$sub_val}))
+      if (!exists($self->{values_}->{$sub_val}))
       {
         $self->{values_}->{$sub_val} = Value->new(labels => 0, total => 0);
       }
 
       my $val_ref = $self->{values_}->{$sub_val};
       $val_ref->total($val_ref->total() + 1);
-      if($label)
+      if ($label)
       {
         $val_ref->labels($val_ref->labels() + 1);
       }
@@ -53,21 +53,21 @@ sub process
   }
   else
   {
-    if(!exists($self->{values_}->{$value}))
+    if (!exists($self->{values_}->{$value}))
     {
       $self->{values_}->{$value} = Value->new(labels => 0, total => 0);
     }
 
     my $val_ref = $self->{values_}->{$value};
     $val_ref->total($val_ref->total() + 1);
-    if($label)
+    if ($label)
     {
       $val_ref->labels($val_ref->labels() + 1);
     }
   }
 
   $self->{total_}->total($self->{total_}->total() + 1);
-  if($label)
+  if ($label)
   {
     $self->{total_}->labels($self->{total_}->labels() + 1);
   }
@@ -86,7 +86,7 @@ sub flush
   {
     my $val_ref = $self->{values_}->{$value};
     my $logloss = 0;
-    if($self->{print_value_logloss_} > 0)
+    if ($self->{print_value_logloss_} > 0)
     {
       my $s1 = 1.0 * $self->{total_}->total() - $val_ref->total() - ($self->{total_}->labels() - $val_ref->labels());
       my $s2 = 1.0 * $self->{total_}->labels() - $val_ref->labels();
@@ -94,7 +94,7 @@ sub flush
       my $s4 = 1.0 * $val_ref->labels();
       my $p1 = $s2 > 0 ? $s2 / ($s1 + $s2) : 0.0;
       my $p2 = $s4 > 0 ? $s4 / ($s3 + $s4) : 0.0;
-      if($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
+      if ($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
       {
         die "assert: s1=$s1,s2=$s2,s3=$s3,s4=$s4";
       }

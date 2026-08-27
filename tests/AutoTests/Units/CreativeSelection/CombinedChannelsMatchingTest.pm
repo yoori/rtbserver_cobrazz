@@ -154,24 +154,24 @@ sub init
   my $expr_channel4 = $ns->create(DB::ExpressionChannel->blank(
     name => "Expr4",
     account_id => $account,
-    expression => $channel7->channel_id . "|" . $channel8->channel_id . "^" . 
+    expression => $channel7->channel_id . "|" . $channel8->channel_id . "^" .
       $channel9->channel_id));
 
   my $expr_channel5 = $ns->create(DB::ExpressionChannel->blank(
     name => "Expr5",
     account_id => $account,
-    expression => "(" . $channel7->channel_id . "|" . 
-      $channel8->channel_id . ")^" . 
+    expression => "(" . $channel7->channel_id . "|" .
+      $channel8->channel_id . ")^" .
       $channel9->channel_id));
 
   my $expr_channel6 = $ns->create(DB::ExpressionChannel->blank(
     name => "Expr6",
     account_id => $account,
-    expression => "(" . $channel3->channel_id . "|" . 
-      $channel4->channel_id . ")^(" . 
+    expression => "(" . $channel3->channel_id . "|" .
+      $channel4->channel_id . ")^(" .
       $channel9->channel_id  . "|" .
-      $channel10->channel_id . ")&(" . 
-      $channel4->channel_id . "&" . 
+      $channel10->channel_id . ")&(" .
+      $channel4->channel_id . "&" .
       $channel3->channel_id  . "|" .
       $channel9->channel_id . ")"));
 
@@ -179,15 +179,15 @@ sub init
   my $expr_ccg = $ns->create(DB::ExpressionChannel->blank(
     name => "ExprCCG",
     account_id => $account,
-    expression => $expr_channel1->channel_id . "|" . 
-      $expr_channel2->channel_id . "|" . 
+    expression => $expr_channel1->channel_id . "|" .
+      $expr_channel2->channel_id . "|" .
       $expr_channel3->channel_id  . "|" .
-      $expr_channel4->channel_id . "|" . 
-      $expr_channel5->channel_id . "|" . 
+      $expr_channel4->channel_id . "|" .
+      $expr_channel5->channel_id . "|" .
       $expr_channel6->channel_id));
 
   my $publisher = $ns->create(Publisher => { name => "Publisher" });
-  
+
   my $campaign  = $ns->create(DisplayCampaign => {
     name => 'Campaign',
     channel_id =>  $expr_ccg->{channel_id},
@@ -219,6 +219,6 @@ sub init
   $ns->output("Channel6", $expr_channel6->channel_id);
   $ns->output("Tag", $publisher->{tag_id});
   $ns->output("CC", $campaign->{cc_id});
-} 
+}
 
 1;

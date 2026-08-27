@@ -93,7 +93,7 @@ $prefix = $dbh->quote($prefix);
 
 # Make special condition for currency & currency_excange
 
-my $stmt =  
+my $stmt =
     $dbh->prepare_cached("SELECT A.currency_id FROM Currency A "
                          ."LEFT JOIN Account B ON ((B.currency_id = A.currency_id "
                          ."OR A.currency_id = (Select currency_id From Country "
@@ -105,7 +105,7 @@ my $stmt =
 $stmt->execute();
 
 my $table = $stmt->fetchall_arrayref;
-my $ids_string = join(", ", map {@$_[0]} @$table); 
+my $ids_string = join(", ", map {@$_[0]} @$table);
 
 my $feed_stmt = $dbh->prepare_cached("SELECT feed_id FROM FEED "
                              ."WHERE feed_id in (SELECT feed_id FROM WDTAGFEED_OPTEDIN WHERE "
@@ -116,7 +116,7 @@ my $feed_stmt = $dbh->prepare_cached("SELECT feed_id FROM FEED "
 $feed_stmt->execute();
 
 my $feed_table = $feed_stmt->fetchall_arrayref;
-my $feed_ids_string = join(", ", map {@$_[0]} @$feed_table); 
+my $feed_ids_string = join(", ", map {@$_[0]} @$feed_table);
 
 my $used_feed_stmt = $dbh->prepare_cached("SELECT feed_id FROM FEED "
                                           ."WHERE feed_id in (SELECT feed_id FROM WDTAGFEED_OPTEDIN WHERE "
@@ -127,7 +127,7 @@ my $used_feed_stmt = $dbh->prepare_cached("SELECT feed_id FROM FEED "
 $used_feed_stmt->execute();
 
 my $used_feed_table = $used_feed_stmt->fetchall_arrayref;
-my $used_feed_ids_string = join(", ", map {@$_[0]} @$used_feed_table); 
+my $used_feed_ids_string = join(", ", map {@$_[0]} @$used_feed_table);
 
 my $feed_id_cond = $feed_ids_string ne ''? "feed_id IN ($feed_ids_string)": '';
 if ($used_feed_ids_string ne '') {
@@ -153,7 +153,7 @@ my %special = (
   FEED => ($feed_ids_string ? "$feed_id_cond" : undef),
   WDREQUESTMAPPING => "description LIKE $prefix",
   DYNAMICRESOURCES => "INSTR(key, 'CategoryChannel.', 1, 1) != 0 AND "
-                      . "SUBSTR(key, INSTR(key, 'CategoryChannel.', 1, 1) + LENGTH('CategoryChannel.')) NOT IN" 
+                      . "SUBSTR(key, INSTR(key, 'CategoryChannel.', 1, 1) + LENGTH('CategoryChannel.')) NOT IN"
                       . " (SELECT TO_CHAR(channel_id) FROM Channel)",
   BEHAVIORALPARAMETERS => "channel_id is null AND (behav_params_list_id NOT IN " .
                "(SELECT behav_params_list_id from Channel where behav_params_list_id is not null) " .
@@ -174,23 +174,23 @@ use DB::Database;
 use DB::EntitiesImpl;
 
 my %delete;
-foreach my $class (keys %{DB::}) 
+foreach my $class (keys %{DB::})
 {
   $class =~ s/::$//;
   my $table = uc $class;
   $class = "DB::$class";
-  
+
   if (exists $special{$table}) {
     $delete{$table} = $special{$table}
       if defined $special{$table};
-  } 
+  }
   elsif ($class->isa('DB::Entity::Base'))
   {
     my ($unique) = ($class->_unique);
     my ($name) = ($class->_name);
     $table = uc($class->_table) if $class->_table;
-    $name = 
-      $unique && $unique eq 'name'? 'name': 
+    $name =
+      $unique && $unique eq 'name'? 'name':
         $name? $name: undef;
     $delete{$table} = "$name LIKE $prefix" if ($name);
   }

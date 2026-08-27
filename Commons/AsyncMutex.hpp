@@ -78,9 +78,7 @@ namespace AdServer::Commons
     friend class Guard;
     friend class ScopedLockAwaiter;
 
-    bool try_lock_or_enqueue_(
-      ScopedLockAwaiter::Waiter& waiter,
-      std::coroutine_handle<> handle);
+    bool try_lock_or_enqueue_(ScopedLockAwaiter::Waiter& waiter, std::coroutine_handle<> handle);
     void cancel_(ScopedLockAwaiter::Waiter& waiter) noexcept;
     void unlock_() noexcept;
     static void update_max_waiters_(std::uint64_t value) noexcept;

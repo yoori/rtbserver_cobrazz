@@ -35,12 +35,12 @@ sub process
 
   #print "ROW KEY: '$row_key'\n";
 
-  while(!defined($self->{cur_key_}) || ($self->{cur_key_} lt $row_key))
+  while (!defined($self->{cur_key_}) || ($self->{cur_key_} lt $row_key))
   {
     my $line = readline($self->{file_});
     #print "READ RES '$line'\n";
 
-    if(!defined($line))
+    if (!defined($line))
     {
       $self->{cur_row_} = undef;
       $self->{cur_key_} = undef;
@@ -61,18 +61,18 @@ sub process
   #print "DEB: " . (defined($self->{merge_fields_}) ? $self->{merge_fields_} : "undef") . "\n";
 
   my @join_row;
-  for(my $i = 0; $i < $self->{merge_fields_}; ++$i)
+  for (my $i = 0; $i < $self->{merge_fields_}; ++$i)
   {
     my @arr;
     push(@join_row, \@arr);
   }
 
-  while(defined($self->{cur_key_}) && ($self->{cur_key_} eq $row_key))
+  while (defined($self->{cur_key_}) && ($self->{cur_key_} eq $row_key))
   {
     my $target_i = 0;
-    for(my $i = 0; $i < scalar(@{$self->{cur_row_}}); ++$i)
+    for (my $i = 0; $i < scalar(@{$self->{cur_row_}}); ++$i)
     {
-      if($i != $self->{merge_key_field_})
+      if ($i != $self->{merge_key_field_})
       {
         push(@{$join_row[$target_i]}, $self->{cur_row_}->[$i]);
         ++$target_i;
@@ -82,7 +82,7 @@ sub process
     my $line = readline($self->{file_});
 
     #print "READ RES2 '$line'\n";
-    if(!defined($line))
+    if (!defined($line))
     {
       $self->{cur_row_} = undef;
       $self->{cur_key_} = undef;

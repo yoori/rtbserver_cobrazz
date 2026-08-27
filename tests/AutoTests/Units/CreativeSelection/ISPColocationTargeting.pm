@@ -22,7 +22,7 @@ sub init {
     colocation_optout_serving => 'ALL',
     account_internal_account_id =>
       DB::Defaults::instance()->no_margin_internal_account->{account_id} });
-  
+
   my $isp_colo_deleted =  $ns->create(Isp => {
     name => "Deleted",
     colocation_optout_serving => 'ALL',
@@ -34,8 +34,8 @@ sub init {
     name => 'Size',
     max_text_creatives => 2 });
 
-  my $publisher = 
-    $ns->create(Publisher => { 
+  my $publisher =
+    $ns->create(Publisher => {
       name => "Publisher",
       size_id => $size });
 
@@ -45,7 +45,7 @@ sub init {
     'SEVERALCOLOS1' => { cpm => 20, isps => [$isp1, $isp2], channel => 'SEVERALCOLOS' },
     'SEVERALCOLOS2' => { cpm => 10, isps => [], channel => 'SEVERALCOLOS' },
     'DELETEDCOLO' => { cpm => 10, isps => [$isp_colo_deleted] } );
-  
+
   while (my ($k, $v) = each %display_campaign )
   {
     my $channel_name = $v->{channel}? $v->{channel}: $k;
@@ -55,7 +55,7 @@ sub init {
       name => 'Advertiser-' . $k,
       role_id => DB::Defaults::instance()->advertiser_role,
       account_type_id => DB::Defaults::instance()->advertiser_type });
-    
+
     my @colos = map {$_->{colo_id}} (@{$v->{isps}});
 
     my $campaign = $ns->create(DisplayCampaign => {
@@ -64,7 +64,7 @@ sub init {
       size_id => $size,
       campaigncreativegroup_cpm => $v->{cpm},
       colocations => \@colos,
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           account_id => $advertiser,
           name => 'Channel-' . $channel_name,
@@ -97,7 +97,7 @@ sub init {
       campaigncreativegroup_cpm => 200,
       campaigncreativegroup_ctr => 0.01,
       colocations => $isp1->{colo_id},
-      channel_id =>  
+      channel_id =>
          DB::BehavioralChannel->blank(
            name => 'Channel-TEXT-1',
            account_id => $ch_advertiser,
@@ -106,7 +106,7 @@ sub init {
              DB::BehavioralChannel::BehavioralParameter->blank(
                trigger_type => 'P')]),
       site_links => [{site_id => $publisher->{site_id} }] });
-                                 
+
   my $ta_advertiser = $ns->create(Account => {
       name => 'Advertiser-TEXT-2',
       role_id => DB::Defaults::instance()->advertiser_role,
@@ -138,7 +138,7 @@ sub init {
       site_links => [{site_id => $publisher->{site_id} }] });
 
 
-  foreach my $template (DB::Defaults::instance()->display_template(), 
+  foreach my $template (DB::Defaults::instance()->display_template(),
                         DB::Defaults::instance()->text_template)
   {
     $ns->create(TemplateFile => {

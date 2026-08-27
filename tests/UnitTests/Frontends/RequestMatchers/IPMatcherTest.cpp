@@ -71,7 +71,7 @@ int check_cases(
 
   IPMatcher_var ip_matcher = new IPMatcher();
 
-  for(unsigned long i = 0; i < rules_count; ++i)
+  for (unsigned long i = 0; i < rules_count; ++i)
   {
     IPMatcher::MatchResult match_result;
     match_result.colo_id = MASKS[i].colo_id;
@@ -81,7 +81,7 @@ int check_cases(
       match_result);
   }
 
-  for(unsigned long i = 0; i < cases_count; ++i)
+  for (unsigned long i = 0; i < cases_count; ++i)
   {
     IPMatcher::MatchResult match_result;
     bool matched = ip_matcher->match(
@@ -93,13 +93,12 @@ int check_cases(
       (matched && cases[i].matched && match_result.colo_id == cases[i].colo_id) ||
       (!matched && !cases[i].matched));
 
-    if(!success)
+    if (!success)
     {
       std::cerr << "case #" << i << " failed: "
         "ip = " << cases[i].ip <<
         ", cohort = " << cases[i].cohort <<
-        "; result matched = " << matched <<
-        ", colo_id = " << match_result.colo_id << std::endl;
+        "; result matched = " << matched << ", colo_id = " << match_result.colo_id << std::endl;
       res = 1;
     }
   }

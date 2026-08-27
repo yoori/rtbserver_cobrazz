@@ -14,14 +14,12 @@
 #include "TagRequestProcessor.hpp"
 #include "TagRequestGroupProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::ProfilingCommons
 {
-  namespace ProfilingCommons
-  {
-    class RocksDBProfileMapProcessor;
-  }
+  class RocksDBProfileMapProcessor;
+}
 
-  namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /** UserTagRequestMergeContainer
    * merge input tag requests into groups
@@ -93,5 +91,4 @@ namespace AdServer
 
   using UserTagRequestMergeContainer_var =
     ReferenceCounting::SmartPtr<UserTagRequestMergeContainer>;
-}
 }

@@ -45,24 +45,19 @@ public:
     noexcept;
 
   void
-  operator() (
-    const char* file_name,
-    const struct stat&);
+  operator() (const char* file_name, const struct stat&);
 
 private:
   std::set<std::string>& files_;
 };
 
-DirSelectAdapter::DirSelectAdapter(
-  std::set<std::string>& files)
+DirSelectAdapter::DirSelectAdapter(std::set<std::string>& files)
   noexcept
   : files_(files)
 {}
 
 void
-DirSelectAdapter::operator()(
-  const char* file_name,
-  const struct stat&)
+DirSelectAdapter::operator()(const char* file_name, const struct stat&)
 {
   files_.insert(file_name);
 }
@@ -83,20 +78,14 @@ Application_::main(int& argc, char** argv)
 
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
-  args.add(
-    Generics::AppUtils::equal_name("output"),
-    opt_output);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
+  args.add(Generics::AppUtils::equal_name("output"), opt_output);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return 0;
@@ -105,10 +94,10 @@ Application_::main(int& argc, char** argv)
   auto cmd_it = commands.begin();
   std::string command = *cmd_it;
 
-  if(command == "generate")
+  if (command == "generate")
   {
     ++cmd_it;
-    if(cmd_it == commands.end())
+    if (cmd_it == commands.end())
     {
       Stream::Error ostr;
       ostr << "generate: input folder isn't defined";
@@ -117,7 +106,7 @@ Application_::main(int& argc, char** argv)
     auto input_folder = *cmd_it;
 
     ++cmd_it;
-    if(cmd_it == commands.end())
+    if (cmd_it == commands.end())
     {
       Stream::Error ostr;
       ostr << "generate: output folder isn't defined";
@@ -127,7 +116,7 @@ Application_::main(int& argc, char** argv)
 
     generate_(input_folder, output_file);
   }
-  else if(command == "help")
+  else if (command == "help")
   {
     std::cout << USAGE << std::endl;
     return 0;
@@ -154,8 +143,7 @@ public:
 
   bool operator==(const Key& rhs) const
   {
-    return tag_id == rhs.tag_id &&
-      domain == rhs.domain;
+    return tag_id == rhs.tag_id && domain == rhs.domain;
   }
 
   size_t hash() const
@@ -200,9 +188,7 @@ struct Value
 };
 
 void
-Application_::generate_(
-  const String::SubString& input_folder,
-  const String::SubString& result_file)
+Application_::generate_(const String::SubString& input_folder, const String::SubString& result_file)
 {
   typedef AdServer::CampaignSvcs::RevenueDecimal RevenueDecimal;
 
@@ -222,18 +208,17 @@ Application_::generate_(
   unsigned long records_reached_1000_imps = 0;
   unsigned long records_reached_10000_imps = 0;
 
-  for(auto file_it = files.rbegin(); file_it != files.rend(); ++file_it)
+  for (auto file_it = files.rbegin(); file_it != files.rend(); ++file_it)
   {
     // read file
     std::cout << "Processing " << *file_it << ": " << res.size() << " records"
       ", imps = " << sum_imps <<
       ", clicks = " << sum_clicks <<
       ", 1000 imp records = " << records_reached_1000_imps <<
-      ", 10k imp records = " << records_reached_10000_imps <<
-      std::endl;
+      ", 10k imp records = " << records_reached_10000_imps << std::endl;
 
     std::ifstream istr(file_it->c_str());
-    while(!istr.eof())
+    while (!istr.eof())
     {
       std::string line;
       std::getline(istr, line);
@@ -260,13 +245,13 @@ Application_::generate_(
 
       sum_imps += imps;
       sum_clicks += clicks;
-      if(domain == EMPTY_DOMAIN_MARKER)
+      if (domain == EMPTY_DOMAIN_MARKER)
       {
         domain = String::SubString();
       }
 
       Value& res_value = res[Key(tag_id, domain.str())];
-      if(res_value.imps > 100000)
+      if (res_value.imps > 100000)
       {
         // stop collecting for old data
       }
@@ -274,12 +259,12 @@ Application_::generate_(
       {
         res_value += Value(imps, clicks);
 
-        if(res_value.imps - imps < 1000 && res_value.imps >= 1000)
+        if (res_value.imps - imps < 1000 && res_value.imps >= 1000)
         {
           ++records_reached_1000_imps;
         }
 
-        if(res_value.imps - imps < 10000 && res_value.imps >= 10000)
+        if (res_value.imps - imps < 10000 && res_value.imps >= 10000)
         {
           ++records_reached_10000_imps;
         }
@@ -298,11 +283,11 @@ Application_::generate_(
   const RevenueDecimal C = RevenueDecimal("0.5");
   const RevenueDecimal ONE = RevenueDecimal(false, 1, 0);
 
-  for(auto it = res.begin(); it != res.end(); ++it)
+  for (auto it = res.begin(); it != res.end(); ++it)
   {
     AdServer::Commons::Optional<RevenueDecimal> ctr;
 
-    if(it->second.imps >= TRUST_IMPS)
+    if (it->second.imps >= TRUST_IMPS)
     {
       ++gt10000_records;
 
@@ -310,7 +295,7 @@ Application_::generate_(
         RevenueDecimal(false, it->second.clicks, 0),
         RevenueDecimal(false, it->second.imps, 0));
     }
-    else if(it->second.imps > 0)
+    else if (it->second.imps > 0)
     {
       // generate without single click
       ++gt1000_records;
@@ -326,7 +311,7 @@ Application_::generate_(
       ctr = RevenueDecimal::mul(base_ctr, CORR_COEF, Generics::DMR_CEIL);
     }
 
-    if(it->second.imps > 0 && it->second.imps < 100)
+    if (it->second.imps > 0 && it->second.imps < 100)
     {
       //++no_data_records;
       tag_res[it->first.tag_id] += it->second;
@@ -344,7 +329,7 @@ Application_::generate_(
     }
     */
 
-    if(ctr.has_value())
+    if (ctr.has_value())
     {
       result_ostr << it->first.tag_id << "," << (
         !it->first.domain.empty() ? it->first.domain : EMPTY_DOMAIN_MARKER) <<
@@ -357,9 +342,9 @@ Application_::generate_(
   unsigned long tag_sum_imps = 0;
   unsigned long tag_sum_clicks = 0;
 
-  for(auto it = tag_res.begin(); it != tag_res.end(); ++it)
+  for (auto it = tag_res.begin(); it != tag_res.end(); ++it)
   {
-    if(it->first > 0 && it->second.imps > 0)
+    if (it->first > 0 && it->second.imps > 0)
     {
       RevenueDecimal ctr = RevenueDecimal::mul(
         RevenueDecimal::div(
@@ -377,9 +362,7 @@ Application_::generate_(
 
   // save global ctr
   std::cout << "Global CTR: "
-    " imps = " << tag_sum_imps <<
-    ", clicks = " << tag_sum_clicks <<
-    std::endl;
+    " imps = " << tag_sum_imps << ", clicks = " << tag_sum_clicks << std::endl;
 
   const RevenueDecimal DEFAULT_CTR = RevenueDecimal::mul(
     RevenueDecimal::div(

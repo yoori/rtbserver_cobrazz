@@ -1,10 +1,7 @@
 
 #include "CreativeTemplateGranularUpdateTest.hpp"
 
-REFLECT_UNIT(CreativeTemplateGranularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CreativeTemplateGranularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -31,8 +28,7 @@ void CreativeTemplateGranularUpdateTest::set_up()
   size_468x60_name_    = fetch_string("Size/468x60/NAME");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager need for this test");
 }
 
@@ -43,18 +39,13 @@ void CreativeTemplateGranularUpdateTest::testcase_add_template()
 
   std::string template_name = fetch_string("InsertedTemplate/Template1/NAME");
 
-  ORM::ORMRestorer<ORM::PQ::Template>* creative_template =
-    create<ORM::PQ::Template>();
+  ORM::ORMRestorer<ORM::PQ::Template>* creative_template = create<ORM::PQ::Template>();
 
   creative_template->name   = template_name;
   creative_template->status = "A";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative_template->insert()),
-    "inserting new template");
+  FAIL_CONTEXT(AutoTest::predicate_checker(creative_template->insert()), "inserting new template");
 
-  ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file1 =
-    create<ORM::PQ::Templatefile>();
+  ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file1 = create<ORM::PQ::Templatefile>();
 
   template_file1->app_format_id = app_format_id_;
   template_file1->template_id = creative_template->template_id();
@@ -63,27 +54,17 @@ void CreativeTemplateGranularUpdateTest::testcase_add_template()
   template_file1->template_file = file1_;
   template_file1->template_type = "T";
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file1->insert()),
-    "inserting template file #1");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file1->insert()), "inserting template file #1");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative_template->select()),
-    "selecting template");
+  FAIL_CONTEXT(AutoTest::predicate_checker(creative_template->select()), "selecting template");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file1->select()),
-    "selecting template file #1");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file1->select()), "selecting template file #1");
 
   AutoTest::Logger::thlog().stream(INFO, ASPECT)
     << "\ntemplate db version before insertion template file #2: " << creative_template->version
     << "\ntemplate file #1 db version before insertion template file #2: " << template_file1->version;
 
-  ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file2 =
-    create<ORM::PQ::Templatefile>();
+  ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file2 = create<ORM::PQ::Templatefile>();
 
   template_file2->app_format_id = app_format_id_;
   template_file2->template_id = creative_template->template_id();
@@ -92,24 +73,12 @@ void CreativeTemplateGranularUpdateTest::testcase_add_template()
   template_file2->template_file = file2_;
   template_file2->template_type = "T";
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file2->insert()),
-    "inserting template file #2");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file2->insert()), "inserting template file #2");
 
   // Select DB version
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative_template->select()),
-    "selecting template");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file1->select()),
-    "selecting template file #1");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file2->select()),
-    "selecting template file #2");
+  FAIL_CONTEXT(AutoTest::predicate_checker(creative_template->select()), "selecting template");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file1->select()), "selecting template file #1");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file2->select()), "selecting template file #2");
 
   AutoTest::Logger::thlog().stream(INFO, ASPECT)
     << "\ntemplate file #2 db version: " << template_file2->version
@@ -149,12 +118,10 @@ void CreativeTemplateGranularUpdateTest::testcase_change_template()
   std::string template_name = fetch_string("ChangedTemplate/Template1/NAME");
 
   ORM::ORMRestorer<ORM::PQ::Template>* creative_template =
-    create<ORM::PQ::Template>(
-      fetch_int("ChangedTemplate/Template1/TEMPLATE_ID"));
+    create<ORM::PQ::Template>(fetch_int("ChangedTemplate/Template1/TEMPLATE_ID"));
 
   ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file =
-    create<ORM::PQ::Templatefile>(
-      fetch_int("ChangedTemplate/Template1/TEMPLATE_FILE_ID"));
+    create<ORM::PQ::Templatefile>(fetch_int("ChangedTemplate/Template1/TEMPLATE_FILE_ID"));
 
   FAIL_CONTEXT(
     CreativeTemplatesWaitChecker(
@@ -170,16 +137,10 @@ void CreativeTemplateGranularUpdateTest::testcase_change_template()
 
   std::string template_name_new = template_name + "-new";
   creative_template->name = template_name_new;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative_template->update()),
-    "updating template name");
+  FAIL_CONTEXT(AutoTest::predicate_checker(creative_template->update()), "updating template name");
 
   template_file->template_file = file3_;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file->update()),
-    "updating template file");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file->update()), "updating template file");
 
   add_checker(
     description,
@@ -202,8 +163,7 @@ void CreativeTemplateGranularUpdateTest::testcase_delete_template()
   std::string template_name = fetch_string("DeletedTemplateFile/Template1/NAME");
 
   ORM::ORMRestorer<ORM::PQ::Templatefile>* template_file =
-    create<ORM::PQ::Templatefile>(
-      fetch_int("DeletedTemplateFile/Template1/TEMPLATE_FILE_ID"));
+    create<ORM::PQ::Templatefile>(fetch_int("DeletedTemplateFile/Template1/TEMPLATE_FILE_ID"));
 
   FAIL_CONTEXT(
     CreativeTemplatesWaitChecker(
@@ -217,9 +177,7 @@ void CreativeTemplateGranularUpdateTest::testcase_delete_template()
           type(template_type_name))).check(),
     description + " - initial");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      template_file->delet()), "deleting template file");
+  FAIL_CONTEXT(AutoTest::predicate_checker(template_file->delet()), "deleting template file");
 
   add_checker(
     description,
@@ -240,8 +198,7 @@ void CreativeTemplateGranularUpdateTest::testcase_del_status_template()
   std::string template_name = fetch_string("DeletedTemplate/Template1/NAME");
 
   ORM::ORMRestorer<ORM::PQ::Template>* creative_template =
-    create<ORM::PQ::Template>(
-      fetch_int("DeletedTemplate/Template1/TEMPLATE_ID"));
+    create<ORM::PQ::Template>(fetch_int("DeletedTemplate/Template1/TEMPLATE_ID"));
 
   FAIL_CONTEXT(
     CreativeTemplatesWaitChecker(

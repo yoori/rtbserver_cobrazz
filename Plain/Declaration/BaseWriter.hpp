@@ -28,8 +28,7 @@ namespace Declaration
     virtual BaseDescriptor_var descriptor() noexcept = 0;
 
     virtual void
-    check_mapping_specifiers(
-      const MappingSpecifierSet& mapping_specifiers)
+    check_mapping_specifiers(const MappingSpecifierSet& mapping_specifiers)
       /*throw(InvalidMappingSpecifier)*/ = 0;
 
     /* non fixed field */

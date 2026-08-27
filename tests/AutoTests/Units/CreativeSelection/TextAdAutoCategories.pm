@@ -101,7 +101,7 @@ sub init
     {
       ++$total_creatives;
       $ns->output("CC$total_creatives", $campaign->{cc_id});
-      if($i != 0)
+      if ($i != 0)
       {
         $ns->output("ActualCPC$total_creatives", $cpm);
       }

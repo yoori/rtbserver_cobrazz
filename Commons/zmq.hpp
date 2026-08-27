@@ -152,8 +152,7 @@ namespace zmq
                 throw error_t ();
         }
 
-        inline message_t (void *data_, size_t size_, free_fn *ffn_,
-            void *hint_ = NULL)
+        inline message_t (void *data_, size_t size_, free_fn *ffn_, void *hint_ = NULL)
         {
             int rc = zmq_msg_init_data (&msg, data_, size_, ffn_, hint_);
             if (rc != 0)
@@ -201,8 +200,7 @@ namespace zmq
                 throw error_t ();
         }
 
-        inline void rebuild (void *data_, size_t size_, free_fn *ffn_,
-            void *hint_ = NULL)
+        inline void rebuild (void *data_, size_t size_, free_fn *ffn_, void *hint_ = NULL)
         {
             int rc = zmq_msg_close (&msg);
             if (rc != 0)
@@ -363,7 +361,7 @@ namespace zmq
 
         inline void close()
         {
-            if(ptr == NULL)
+            if (ptr == NULL)
                 // already closed
                 return ;
             int rc = zmq_close (ptr);
@@ -371,16 +369,14 @@ namespace zmq
             ptr = 0 ;
         }
 
-        inline void setsockopt (int option_, const void *optval_,
-            size_t optvallen_)
+        inline void setsockopt (int option_, const void *optval_, size_t optvallen_)
         {
             int rc = zmq_setsockopt (ptr, option_, optval_, optvallen_);
             if (rc != 0)
                 throw error_t ();
         }
 
-        inline void getsockopt (int option_, void *optval_,
-            size_t *optvallen_)
+        inline void getsockopt (int option_, void *optval_, size_t *optvallen_)
         {
             int rc = zmq_getsockopt (ptr, option_, optval_, optvallen_);
             if (rc != 0)

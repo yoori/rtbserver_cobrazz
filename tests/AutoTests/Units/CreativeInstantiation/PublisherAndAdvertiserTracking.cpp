@@ -1,9 +1,7 @@
 
 #include "PublisherAndAdvertiserTracking.hpp"
 
-REFLECT_UNIT(PublisherAndAdvertiserTracking) (
-  "CreativeInstantiation",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(PublisherAndAdvertiserTracking) ("CreativeInstantiation", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -123,23 +121,16 @@ PublisherAndAdvertiserTracking::run_test()
 
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string(TestCases[i].ccid),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string(TestCases[i].ccid), client.debug_info.ccid).check(),
       "ccid check#" + strof(i+1));
 
     // Test creative
     std::ostringstream exp_body;
 
-    prepare_expected_body(
-      exp_body,
-      client.debug_info.track_pixel_url,
-      TestCases[i]);
+    prepare_expected_body(exp_body, client.debug_info.track_pixel_url, TestCases[i]);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        exp_body.str(),
-        client.req_response_data()).check(),
+      AutoTest::equal_checker(exp_body.str(), client.req_response_data()).check(),
       "creative check#" + strof(i+1));
   }
 

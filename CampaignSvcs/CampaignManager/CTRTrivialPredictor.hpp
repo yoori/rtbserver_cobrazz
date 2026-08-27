@@ -8,11 +8,7 @@
 
 #include "CTRFeatureCalculators.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
-{
-namespace CTR
+namespace AdServer::CampaignSvcs::CTR
 {
   struct TrivialPredictor;
 
@@ -62,6 +58,4 @@ namespace CTR
     CTRMap ctr_map_;
     static const TrivialPredictor::KeyHashAdapter DEFAULT_KEY_;
   };
-}
-}
 }

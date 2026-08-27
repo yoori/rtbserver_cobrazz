@@ -9,18 +9,14 @@ namespace
   const char ADSERVER_NAMESPACE[] = "http://www.adintelligence.net/xsd/AdServer/Configuration";
 }
 
-namespace AdServer
+namespace AdServer::Commons
 {
-namespace Commons
-{
-  HostDistributionFile::HostDistributionFile(
-    const char* file,
-    const char* schema_file)
+  HostDistributionFile::HostDistributionFile(const char* file, const char* schema_file)
     /*throw(FileNotFound, InvalidFile)*/
   {
     static const char* FUN = "HostDistributionFile::HostDistributionFile()";
 
-    if(!file)
+    if (!file)
     {
       throw InvalidFile("name file is null");
     }
@@ -35,33 +31,31 @@ namespace Commons
       props.schema_location(ADSERVER_NAMESPACE, schema_file);
 
       std::ifstream ifile(file);
-      if(!ifile.is_open())
+      if (!ifile.is_open())
       {
         throw FileNotFound("");
       }
 
       std::unique_ptr<DistributionIndexFileType> config =
-        DistributionIndexFile(
-          ifile, error_handler, xml_schema::flags::dont_initialize, props);
+        DistributionIndexFile(ifile, error_handler, xml_schema::flags::dont_initialize, props);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw InvalidFile(error_handler.text(error_string));
       }
       unsigned long limit = config->hosts().index_limit();
       IndexToHostMap::const_iterator fnd;
-      for(DistributionHostsType::host_sequence::const_iterator host_it =
+      for (DistributionHostsType::host_sequence::const_iterator host_it =
           config->hosts().host().begin();
           host_it != config->hosts().host().end(); ++host_it)
       {
         const std::string& host = host_it->name();
-        for(DistributionHostType::index_sequence::const_iterator ind_it =
-            host_it->index().begin();
+        for (DistributionHostType::index_sequence::const_iterator ind_it = host_it->index().begin();
             ind_it != host_it->index().end(); ++ind_it)
         {
           unsigned long index = ind_it->value();
-          if(index >= limit)
+          if (index >= limit)
           {
             Stream::Error err;
             err << FUN << ": index = " << index << " more than limit " << limit <<
@@ -69,7 +63,7 @@ namespace Commons
             throw InvalidFile(err);
           }
           fnd = host_map_.find(index);
-          if(fnd != host_map_.end())
+          if (fnd != host_map_.end())
           {
             Stream::Error err;
             err << FUN << ": index = " << index << " is cross between hosts '" <<
@@ -79,15 +73,16 @@ namespace Commons
           host_map_[index] = host;
         }
       }
-      if(host_map_.size() != limit)
+
+      if (host_map_.size() != limit)
       {
         Stream::Error err;
         err << FUN  << ":";
         unsigned long index = 0;
         bool coma = false;
-        for(fnd = host_map_.begin(); fnd != host_map_.end(); ++fnd, index++)
+        for (fnd = host_map_.begin(); fnd != host_map_.end(); ++fnd, index++)
         {
-          while(index < fnd->first)
+          while (index < fnd->first)
           {
             err << (coma ? ',' : ' ') << "host for index = " << index << " doesn't set in config";
             coma = true;
@@ -102,7 +97,7 @@ namespace Commons
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << file << "': ";
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -121,5 +116,3 @@ namespace Commons
     }
   }
 }
-}
-

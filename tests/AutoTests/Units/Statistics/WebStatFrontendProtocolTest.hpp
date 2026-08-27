@@ -155,10 +155,7 @@ public:
   };
 
 public:
-  WebStatFrontendProtocolTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  WebStatFrontendProtocolTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -201,53 +198,41 @@ private:
   probe_uid();
 
   void
-  res_param(
-    AdClient& client);
+  res_param(AdClient& client);
 
   void
-  testrequest_param(
-    AdClient& client);
+  testrequest_param(AdClient& client);
 
   void
-  post_cors(
-    AdClient& client);
+  post_cors(AdClient& client);
 
   void
-  app_param(
-    AdClient& client);
+  app_param(AdClient& client);
 
   void
-  app_webapp_deleted(
-    AdClient& client);
+  app_webapp_deleted(AdClient& client);
 
   void
-  op_param(
-    AdClient& client);
+  op_param(AdClient& client);
 
   void
-  src_missed(
-    AdClient& client);
+  src_missed(AdClient& client);
 
   void
-  src_param(
-    AdClient& client);
+  src_param(AdClient& client);
 
   void
   ct_param();
 
   void
-  ua_case(
-    AdClient& client);
+  ua_case(AdClient& client);
 
   void
-  not_exists_triplet(
-    AdClient& client);
+  not_exists_triplet(AdClient& client);
 
   void
   oo_cases_();
 
   void
-  cc_tag_cases_(
-    unsigned short client_flags,
-    CCTagCaseEnum ccid_log_mask = CCTCE_LOG_CCID_CENTRAL);
+  cc_tag_cases_(unsigned short client_flags, CCTagCaseEnum ccid_log_mask = CCTCE_LOG_CCID_CENTRAL);
 };

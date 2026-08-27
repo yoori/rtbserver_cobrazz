@@ -4,10 +4,7 @@
 #include <climits>
 #include <stdlib.h>
 
-REFLECT_UNIT(OptOutTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(OptOutTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -25,42 +22,34 @@ namespace
       const String::SubString& pth,
       const Generics::Time& exp,
       bool sec) :
-      HTTP::CookieDef(
-        nam, val, dmn,
-        pth, exp, sec)
+      HTTP::CookieDef(nam, val, dmn, pth, exp, sec)
     { }
 
-    TestCookie(
-      const HTTP::CookieDef& cookie)
+    TestCookie(const HTTP::CookieDef& cookie)
       :
       HTTP::CookieDef(cookie)
     { }
 
     bool
-    operator==(
-      const TestCookie& other) const
+    operator==(const TestCookie& other) const
     {
       return name.equal(other.name) &&
         value.equal(other.value) &&
         domain.equal(other.domain) &&
         path.equal(other.path) &&
-        abs(expires.tv_sec - other.expires.tv_sec) < EXPIRE_LIMIT &&
-        secure == other.secure;
+        abs(expires.tv_sec - other.expires.tv_sec) < EXPIRE_LIMIT && secure == other.secure;
     }
   };
 
   std::ostream&
-  operator<<(
-    std::ostream& out,
-    const TestCookie& c)
+  operator<<(std::ostream& out, const TestCookie& c)
   {
     out << "name: " << c.name <<
       ", value: " << c.value <<
       ", domain:"  << c.domain <<
       ", path:"  << c.path <<
       ", expires:" << c.expires.
-      get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT) <<
-      ", secure: " << (c.secure? "yes": "no");
+      get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT) << ", secure: " << (c.secure? "yes": "no");
     return out;
   }
 
@@ -71,9 +60,7 @@ namespace
   {
     typedef AutoTest::OptOutRequest Base;
   public:
-    OptOutRequest(
-      const std::string& _op_kwd,
-      const std::string& _debug_time = std::string())
+    OptOutRequest(const std::string& _op_kwd, const std::string& _debug_time = std::string())
       : Base(true)
     {
       op = _op_kwd;
@@ -186,8 +173,7 @@ namespace
         case CBE_CookieNotEmpty:
         {
           result =
-            client_.has_host_cookie(cookie_.c_str()) ||
-              client_.has_domain_cookie(cookie_.c_str());
+            client_.has_host_cookie(cookie_.c_str()) || client_.has_domain_cookie(cookie_.c_str());
           error << "Cookie '" << cookie_ << "' is empty";
           break;
         }
@@ -200,8 +186,7 @@ namespace
           }
           else
           {
-            result = result &&
-                client_.has_domain_cookie(cookie_.c_str(), value_);
+            result = result && client_.has_domain_cookie(cookie_.c_str(), value_);
             error << "Unexpected domain cookie '" << cookie_ <<
               "' value, expected='" << value_ << "'";
           }
@@ -238,25 +223,15 @@ namespace
 bool
 OptOutTest::run_test()
 {
-  AUTOTEST_CASE(
-    base_scenario(),
-    "Base scenario");
+  AUTOTEST_CASE(base_scenario(), "Base scenario");
 
-  AUTOTEST_CASE(
-    optout_status_redirect_scenario(),
-    "Redirect on optout requests");
+  AUTOTEST_CASE(optout_status_redirect_scenario(), "Redirect on optout requests");
 
-  AUTOTEST_CASE(
-    incorrect_uid_opt_out_scenario(),
-    "Redirect to 'opt_undef_url'");
+  AUTOTEST_CASE(incorrect_uid_opt_out_scenario(), "Redirect to 'opt_undef_url'");
 
-  AUTOTEST_CASE(
-    client_without_cookes_scenario(),
-    "Client without cookies");
+  AUTOTEST_CASE(client_without_cookes_scenario(), "Client without cookies");
 
-  AUTOTEST_CASE(
-    cookie_expiration(),
-    "Opt-out cookie expiration");
+  AUTOTEST_CASE(cookie_expiration(), "Opt-out cookie expiration");
 
   return true;
 }
@@ -269,35 +244,20 @@ OptOutTest::base_scenario ()
   // Based on Test 2.1. Opt-in on the first navigation of
   // https://confluence.ocslab.com/display/QA/Opt-out+Test+Plan+%28ADSC%29
   {
-    client.process_request(
-      OptOutRequest("in", "01-01-2006:10-12-12"),
-      "first opt-in");
+    client.process_request(OptOutRequest("in", "01-01-2006:10-12-12"), "first opt-in");
 
-    FAIL_CONTEXT(
-      CookieCheck(
-        client,
-        "uid",
-        CBE_CookieNotEmpty).check(),
-      "uid isn't empty");
+    FAIL_CONTEXT(CookieCheck(client, "uid", CBE_CookieNotEmpty).check(), "uid isn't empty");
   }
 
-  client.process_request(OptOutRequest("out", "02-01-2006:15-12-12"),
-                         "opt-out request");
+  client.process_request(OptOutRequest("out", "02-01-2006:15-12-12"), "opt-out request");
 
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_host_cookies()),
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "OPTED_OUT",
-      CBE_DomainCookie,
-      "YES").check(),
-    "OPTED_OUT=YES");
+  FAIL_CONTEXT(CookieCheck(client, "OPTED_OUT", CBE_DomainCookie, "YES").check(), "OPTED_OUT=YES");
 
 
   // Second opt-out with redirect
@@ -309,41 +269,21 @@ OptOutTest::base_scenario ()
     "opt-out request" );
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test33.com/").check(),
+    RedirectChecker(client, "http://test33.com/").check(),
     "must redirected to 'already_url'");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_host_cookies()),
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "OPTED_OUT",
-      CBE_DomainCookie,
-      "YES").check(),
-    "OPTED_OUT=YES");
+  FAIL_CONTEXT(CookieCheck(client, "OPTED_OUT", CBE_DomainCookie, "YES").check(), "OPTED_OUT=YES");
 
-  client.process_request(OptOutRequest("in", "02-01-2006:15-12-12"),
-                         "opt_in_request");
+  client.process_request(OptOutRequest("in", "02-01-2006:15-12-12"), "opt_in_request");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "OPTED_OUT",
-      CBE_CookieEmpty).check(),
-    "OPTED_OUT is empty");
+  FAIL_CONTEXT(CookieCheck(client, "OPTED_OUT", CBE_CookieEmpty).check(), "OPTED_OUT is empty");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "uid",
-      CBE_CookieNotEmpty).check(),
-    "uid isn't empty");
+  FAIL_CONTEXT(CookieCheck(client, "uid", CBE_CookieNotEmpty).check(), "uid isn't empty");
 
 
   // Based on Test 2.3. Opting-in second time
@@ -357,17 +297,10 @@ OptOutTest::base_scenario ()
       "already opt-in");
 
     FAIL_CONTEXT(
-      RedirectChecker(
-        client,
-        "http://test33.com/").check(),
+      RedirectChecker(client, "http://test33.com/").check(),
       "must redirected to 'already_url'");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "uid",
-      CBE_CookieNotEmpty).check(),
-      "uid isn't empty");
+  FAIL_CONTEXT(CookieCheck(client, "uid", CBE_CookieNotEmpty).check(), "uid isn't empty");
   }
 
 }
@@ -385,9 +318,7 @@ OptOutTest::optout_status_redirect_scenario()
                          opt_undef_url("test3.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test3.com/").check(),
+    RedirectChecker(client, "http://test3.com/").check(),
     "must be redirected to opt_undef_url on undef");
 
   // "Forged" user send request for optout status
@@ -398,9 +329,7 @@ OptOutTest::optout_status_redirect_scenario()
                          opt_undef_url("test3.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test3.com/").check(),
+    RedirectChecker(client, "http://test3.com/").check(),
     "must be redirected to opt_undef_url on undef");
 
   // "Known" user with probe uid request for optout status
@@ -412,9 +341,7 @@ OptOutTest::optout_status_redirect_scenario()
                          opt_undef_url("testZ.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://testz.com/").check(),
+    RedirectChecker(client, "http://testz.com/").check(),
     "must be redirected to opted_in_url on in");
 
   // User with persistent uid request for optout status
@@ -426,9 +353,7 @@ OptOutTest::optout_status_redirect_scenario()
                          opt_undef_url("testC.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://testa.com/").check(),
+    RedirectChecker(client, "http://testa.com/").check(),
     "must be redirected to opted_in_url on in" );
 
   // Optout request
@@ -438,9 +363,7 @@ OptOutTest::optout_status_redirect_scenario()
                          already_url("test33.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test11.com/").check(),
+    RedirectChecker(client, "http://test11.com/").check(),
     "must be redirected to success_url on success");
 
   client.process_request(OptOutRequest("status").
@@ -449,9 +372,7 @@ OptOutTest::optout_status_redirect_scenario()
                          opt_undef_url("testC.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://testb.com/").check(),
+    RedirectChecker(client, "http://testb.com/").check(),
     "must be redirected to opted_out_url on out");
 
 }
@@ -469,9 +390,7 @@ OptOutTest::incorrect_uid_opt_out_scenario ()
                          .opt_undef_url("test_invalid_uid_undef.com"));
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test_invalid_uid_undef.com/").check(),
+    RedirectChecker(client, "http://test_invalid_uid_undef.com/").check(),
     "opt_undef_url redirection check");
 
 }
@@ -489,24 +408,15 @@ OptOutTest::client_without_cookes_scenario()
                          already_url("test33.com"), "opt-out request" );
 
   FAIL_CONTEXT(
-    RedirectChecker(
-      client,
-      "http://test11.com/").check(),
+    RedirectChecker(client, "http://test11.com/").check(),
     "must be redirected to success_url on success");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.has_host_cookies()),
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
 
-  FAIL_CONTEXT(
-    CookieCheck(
-      client,
-      "OPTED_OUT",
-      CBE_DomainCookie,
-      "YES").check(),
-    "OPTED_OUT=YES");
+  FAIL_CONTEXT(CookieCheck(client, "OPTED_OUT", CBE_DomainCookie, "YES").check(), "OPTED_OUT=YES");
 
 }
 
@@ -541,9 +451,7 @@ OptOutTest::cookie_expiration()
           ce(REQUESTS[i].ce), true);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        REQUESTS[i].status == OS_INVALID? 400: 200,
-        status).check(),
+      AutoTest::equal_checker(REQUESTS[i].status == OS_INVALID? 400: 200, status).check(),
       "Unexpected response status");
 
     if (REQUESTS[i].status == OS_INVALID)
@@ -562,18 +470,14 @@ OptOutTest::cookie_expiration()
     HTTP::HTTPAddress address(client.get_stored_url());
     HTTP::CookieDefList client_cookies;
 
-    client_cookies.load_from_headers(
-      client.get_response_headers(),
-      address);
+    client_cookies.load_from_headers(client.get_response_headers(), address);
 
     std::string domain(client.get_domain());
 
     if (REQUESTS[i].status != OS_FAIL)
     {
 
-      std::list<TestCookie> got_cookies(
-        client_cookies.begin(),
-        client_cookies.end());
+      std::list<TestCookie> got_cookies(client_cookies.begin(), client_cookies.end());
       std::list<TestCookie> exp_cookies;
       if (strcmp(REQUESTS[i].op, "out") == 0)
       {
@@ -601,16 +505,13 @@ OptOutTest::cookie_expiration()
       }
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          exp_cookies,
-          got_cookies).check(),
+        AutoTest::sequence_checker(exp_cookies, got_cookies).check(),
         "Check cookies#" + strof(i+1));
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client_cookies.empty()),
+        AutoTest::predicate_checker(client_cookies.empty()),
         "Check empty cookies#" + strof(i+1));
     }
 
@@ -620,14 +521,9 @@ OptOutTest::cookie_expiration()
 
       HTTP::CookieDefList cookies(false);
 
-      cookies.load_from_headers(
-        client.get_response_headers(),
-        address);
+      cookies.load_from_headers(client.get_response_headers(), address);
 
-      FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          cookies.empty()),
-       "Check cookies#" + strof(i+1));
+      FAIL_CONTEXT(AutoTest::predicate_checker(cookies.empty()), "Check cookies#" + strof(i+1));
     }
   }
 }

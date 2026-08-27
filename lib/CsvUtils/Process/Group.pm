@@ -18,7 +18,7 @@ sub new
   my %res_indexes_set;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes_set{$index - 1} = 1;
       push(@res_indexes, $index - 1);
@@ -53,7 +53,7 @@ sub process
 
   foreach my $field_index(@{$self->{field_}})
   {
-    if($row->[$field_index] ne '')
+    if ($row->[$field_index] ne '')
     {
       $all_empty = 0;
     }
@@ -70,13 +70,13 @@ sub process
 
   my $ret = undef;
 
-  if($self->{ordered_} > 0)
+  if ($self->{ordered_} > 0)
   {
-    if($group_key_str ne $self->{prev_group_key_str_})
+    if ($group_key_str ne $self->{prev_group_key_str_})
     {
       my $flush_rows = $self->flush();
 
-      if(scalar(@$flush_rows) > 1)
+      if (scalar(@$flush_rows) > 1)
       {
         die "Group: assert, flush rows > 1";
       }
@@ -91,16 +91,16 @@ sub process
     $self->{prev_group_key_str_} = $group_key_str;
   }
 
-  if($all_empty != 0 && $self->{group_empty_} == 0)
+  if ($all_empty != 0 && $self->{group_empty_} == 0)
   {
     return $row;
   }
   elsif(!exists($self->{rows_}->{$group_key_str}))
   {
     my @res;
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {
         push(@res, $row->[$i]);
       }
@@ -121,9 +121,9 @@ sub process
   {
     my $res = $self->{rows_}->{$group_key_str};
 
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {}
       elsif(ref($row->[$i]) eq 'ARRAY')
       {
@@ -147,7 +147,7 @@ sub key_empty_
 
   foreach my $field_val(@$key)
   {
-    if($field_val ne '')
+    if ($field_val ne '')
     {
       return 0;
     }
@@ -161,22 +161,22 @@ sub flush
   my ($self) = @_;
 
 =begin comment
-  if($self->{empty_absorb_} != 0)
+  if ($self->{empty_absorb_} != 0)
   {
     my @keys = keys %{$self->{rows_}};
 
     my @empty_key_rows;
     my %non_empty_key_rows;
-    for(my $i = 0; $i < scalar(@keys); ++$i)
+    for (my $i = 0; $i < scalar(@keys); ++$i)
     {
       my $key_empty = key_empty_($key);
-      if($key_empty > 0)
+      if ($key_empty > 0)
       {
         push(@empty_key_rows, @{$self->{rows_}});
       }
       else
       {
-        $non_empty_key_rows{$key} 
+        $non_empty_key_rows{$key}
       }
     }
 
@@ -185,26 +185,26 @@ sub flush
 
     my %key_to_save_key;
 
-    for(my $i = 0; $i < scalar(@keys); ++$i)
+    for (my $i = 0; $i < scalar(@keys); ++$i)
     {
       my @save_key;
 
       my $key1 = $keys->[$i];
       my $key_empty = key_empty_($key1);
 
-      if($key_empty == 0)
+      if ($key_empty == 0)
       {
-        for(my $j = $i + 1; $j < scalar(@keys); ++$i)
+        for (my $j = $i + 1; $j < scalar(@keys); ++$i)
         {
           my $key2 = $keys->[$j];
           $key_empty = key_empty_($key2);
 
-          if($key_empty == 0)
+          if ($key_empty == 0)
           {
             my @res_key;
-            for(my $field_i = 0; $field_i < scalar(@$key1); ++$field_i)
+            for (my $field_i = 0; $field_i < scalar(@$key1); ++$field_i)
             {
-              if($key1->[$field_i] eq $key2->[$field_i] || $key1->[$field_i] eq '' || $key1->[$field_i] eq '')
+              if ($key1->[$field_i] eq $key2->[$field_i] || $key1->[$field_i] eq '' || $key1->[$field_i] eq '')
               {
               }
             }

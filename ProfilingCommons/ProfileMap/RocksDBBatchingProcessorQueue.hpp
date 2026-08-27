@@ -273,13 +273,9 @@ namespace AdServer::ProfilingCommons
 
     void enqueue_operations_i_(OperationQueue& target, Operations& source);
 
-    void insert_operation_group_i_(
-      OperationQueue& target,
-      OperationGroup& group) noexcept;
+    void insert_operation_group_i_(OperationQueue& target, OperationGroup& group) noexcept;
 
-    ReadyState request_ready_i_(
-      bool has_pending_operations,
-      bool force_update = false) noexcept;
+    ReadyState request_ready_i_(bool has_pending_operations, bool force_update = false) noexcept;
 
     ReadyState make_ready_state_i_() const noexcept;
 
@@ -291,9 +287,7 @@ namespace AdServer::ProfilingCommons
 
     static Generics::Time time_from_microseconds_(std::int64_t microseconds) noexcept;
 
-    CollectResult collect_batch_i_(
-      Operations& batch,
-      SelectedKeys& selected_keys) noexcept;
+    CollectResult collect_batch_i_(Operations& batch, SelectedKeys& selected_keys) noexcept;
 
     unsigned long collect_from_queue_i_(
       OperationQueue& source,

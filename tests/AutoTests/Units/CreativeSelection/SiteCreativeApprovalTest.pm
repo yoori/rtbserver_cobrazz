@@ -26,8 +26,8 @@ sub create_publishers {
   my $i = 0;
   my @publishers = ();
 
-  my $account_type = 
-    $ns->create( AccountType => { 
+  my $account_type =
+    $ns->create( AccountType => {
       name => "ExclAccType",
       account_role_id => DB::Defaults::instance()->publisher_role,
       adv_exclusion_approval => 'A',
@@ -37,7 +37,7 @@ sub create_publishers {
   {
     my ($site_approval, $site_categories, $tag_categories) = @$app_ex;
 
-    my $publisher = 
+    my $publisher =
       $ns->create(Publisher => {
         name => "Publisher" . ++$i,
         pubaccount_account_type_id => $account_type,
@@ -58,21 +58,21 @@ sub init {
 
   my $keyword = make_autotest_name($ns, "KWD");
 
-  my $advertiser = 
+  my $advertiser =
     $ns->create(Advertiser => {
       name => "Advertiser"});
 
-  my $visual = 
+  my $visual =
     $ns->create(CreativeCategory => {
        name => "Visual",
        cct_id => 0 });
 
-  my $content = 
+  my $content =
     $ns->create(CreativeCategory => {
        name => "Content",
        cct_id => 1 });
 
-  my $template = 
+  my $template =
    $ns->create( Template => {
       name => "Template",
       creative_category_id => $visual });
@@ -83,7 +83,7 @@ sub init {
     template_type => 'X',
     flags => 0});
 
-  my $creative = 
+  my $creative =
     $ns->create(Creative =>{
       name => "Creative",
       account_id => $advertiser,

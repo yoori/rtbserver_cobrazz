@@ -5,10 +5,7 @@
 class AverageUsersCost : public BaseUnit
 {
 public:
-  AverageUsersCost(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  AverageUsersCost(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     pq_conn_(open_pq())
   {};
@@ -38,8 +35,7 @@ private:
   std::list<std::string> uids_;
 
   void
-  log_profile(
-    std::string uid);
+  log_profile(std::string uid);
 
   template<size_t RequestsCount>
   double

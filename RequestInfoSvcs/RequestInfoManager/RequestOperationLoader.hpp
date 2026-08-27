@@ -8,9 +8,7 @@
 
 #include "RequestOperationProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   class RequestOperationLoader:
     public virtual ReferenceCounting::AtomicImpl
@@ -26,8 +24,7 @@ namespace RequestInfoSvcs
       OP_REQUEST_ACTION
     };
 
-    RequestOperationLoader(
-      RequestOperationProcessor* request_operation_processor)
+    RequestOperationLoader(RequestOperationProcessor* request_operation_processor)
       noexcept;
 
     Commons::StartableAwaitable<bool>
@@ -49,34 +46,24 @@ namespace RequestInfoSvcs
       Generics::MemBuf& membuf);
 
     void
-    skip_change_request_user_id_(
-      ProfilingCommons::FileReader& file_reader)
+    skip_change_request_user_id_(ProfilingCommons::FileReader& file_reader)
       /*throw(Exception)*/;
 
     Commons::Awaitable<void>
-    co_read_impression_(
-      ProfilingCommons::FileReader& file_reader,
-      Generics::MemBuf& membuf);
+    co_read_impression_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
 
     Commons::Awaitable<void>
-    co_read_action_(
-      ProfilingCommons::FileReader& file_reader,
-      Generics::MemBuf& membuf);
+    co_read_action_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
 
     Commons::Awaitable<void>
-    co_read_request_action_(
-      ProfilingCommons::FileReader& file_reader,
-      Generics::MemBuf& membuf);
+    co_read_request_action_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
 
     void
-    skip_single_buffer_operation_(
-      ProfilingCommons::FileReader& file_reader)
+    skip_single_buffer_operation_(ProfilingCommons::FileReader& file_reader)
       /*throw(Exception)*/;
 
     void
-    prepare_mem_buf_(
-      Generics::MemBuf& membuf,
-      unsigned long size)
+    prepare_mem_buf_(Generics::MemBuf& membuf, unsigned long size)
       noexcept;
 
   private:
@@ -85,5 +72,4 @@ namespace RequestInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<RequestOperationLoader>
     RequestOperationLoader_var;
-}
 }

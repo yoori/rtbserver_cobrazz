@@ -76,8 +76,7 @@ namespace AdServer::Bidding
       if (logger_)
       {
         Stream::Error ostr;
-        ostr << "BiddingFrontendLogger::process_geo(): eh::Exception caught: " <<
-          ex.what();
+        ostr << "BiddingFrontendLogger::process_geo(): eh::Exception caught: " << ex.what();
         logger_->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
       }
     }
@@ -96,8 +95,7 @@ namespace AdServer::Bidding
       if (logger_)
       {
         Stream::Error ostr;
-        ostr << "BiddingFrontendLogger::flush_logs_(): eh::Exception caught: " <<
-          ex.what();
+        ostr << "BiddingFrontendLogger::flush_logs_(): eh::Exception caught: " << ex.what();
         logger_->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
       }
 

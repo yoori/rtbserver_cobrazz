@@ -12,8 +12,7 @@ namespace AdServer::ChannelSvcs
 {
   namespace
   {
-    constexpr const char channel_controller_grpc_aspect[] =
-      "ChannelController";
+    constexpr const char channel_controller_grpc_aspect[] = "ChannelController";
 
     namespace pb = adserver::channel_svcs::channel_controller;
   }
@@ -53,13 +52,11 @@ namespace AdServer::ChannelSvcs
       }
       catch (const ChannelControllerImpl::NotReady& ex)
       {
-        result_status =
-          ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
+        result_status = ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
       }
       catch (const eh::Exception& ex)
       {
-        result_status =
-          ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+        result_status = ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
       }
     }
 

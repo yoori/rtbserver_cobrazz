@@ -4,9 +4,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "TagRequestProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /**
    * CompositeTagRequestProcessor
@@ -40,11 +38,8 @@ namespace RequestInfoSvcs
     ReferenceCounting::SmartPtr<CompositeTagRequestProcessor>
     CompositeTagRequestProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /* CompositeTagRequestProcessor */
   inline
@@ -52,18 +47,16 @@ namespace RequestInfoSvcs
   CompositeTagRequestProcessor::add_child_processor(
     TagRequestProcessor* child_processor) /*throw(Exception)*/
   {
-    TagRequestProcessor_var add_processor(
-      ReferenceCounting::add_ref(child_processor));
+    TagRequestProcessor_var add_processor(ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
   }
 
   inline
   void
-  CompositeTagRequestProcessor::process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  CompositeTagRequestProcessor::process_tag_request(const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
   {
-    for(TagRequestProcessorList::iterator it = child_processors_.begin();
+    for (TagRequestProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -72,15 +65,13 @@ namespace RequestInfoSvcs
   }
 
   inline AdServer::Commons::Awaitable<void>
-  CompositeTagRequestProcessor::co_process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  CompositeTagRequestProcessor::co_process_tag_request(const TagRequestInfo& tag_request_info)
   {
-    for(TagRequestProcessorList::iterator it = child_processors_.begin();
+    for (TagRequestProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
       co_await (*it)->co_process_tag_request(tag_request_info);
     }
   }
-}
 }

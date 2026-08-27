@@ -55,11 +55,7 @@ struct StartContext
   void* arg;
 };
 
-typedef int (*PthreadCreate)(
-  pthread_t*,
-  const pthread_attr_t*,
-  void* (*)(void*),
-  void*);
+typedef int (*PthreadCreate)(pthread_t*, const pthread_attr_t*, void* (*)(void*), void*);
 
 typedef int (*PthreadSetname)(pthread_t, const char*);
 
@@ -80,8 +76,7 @@ is_enabled_value(const char* value)
       strcmp(value, "yes") == 0 ||
       strcmp(value, "true") == 0 ||
       strcmp(value, "on") == 0 ||
-      strcmp(value, "round_robin") == 0 ||
-      strcmp(value, "round_robin_by_name") == 0);
+      strcmp(value, "round_robin") == 0 || strcmp(value, "round_robin_by_name") == 0);
 }
 
 static void
@@ -255,10 +250,7 @@ init_auto_cpus()
 }
 
 static int
-parse_cpu_list_into(
-  const char* value,
-  int* cpus,
-  unsigned int* cpu_count)
+parse_cpu_list_into(const char* value, int* cpus, unsigned int* cpu_count)
 {
   if (!value || *skip_spaces(value) == '\0' || strcmp(skip_spaces(value), "auto") == 0)
   {
@@ -296,6 +288,7 @@ parse_cpu_list_into(
           break;
         }
       }
+
       if (!already_added)
       {
         if (*cpu_count >= CPU_SETSIZE)
@@ -480,8 +473,7 @@ parse_affinity_cpus(const char* value)
   {
     int nodes[CPU_SETSIZE];
     unsigned int node_count = 0;
-    if (*skip_spaces(node_spec) != '\0' &&
-      !parse_cpu_list_into(node_spec, nodes, &node_count))
+    if (*skip_spaces(node_spec) != '\0' && !parse_cpu_list_into(node_spec, nodes, &node_count))
     {
       return 0;
     }
@@ -500,8 +492,7 @@ parse_affinity_cpus(const char* value)
           sizeof(path),
           "/sys/devices/system/node/node%d/cpulist",
           node);
-        if (path_size > 0 && (size_t)path_size < sizeof(path) &&
-          access(path, R_OK) == 0)
+        if (path_size > 0 && (size_t)path_size < sizeof(path) && access(path, R_OK) == 0)
         {
           if (!load_numa_cpus(node, cpu_spec))
           {
@@ -789,11 +780,7 @@ pthread_create(
   context->start_routine = start_routine;
   context->arg = arg;
 
-  const int result = real_pthread_create(
-    thread,
-    attr,
-    thread_start_wrapper,
-    context);
+  const int result = real_pthread_create(thread, attr, thread_start_wrapper, context);
   if (result != 0)
   {
     free(context);
@@ -820,20 +807,16 @@ pthread_setname_np(pthread_t thread, const char* name)
   const int no_affinity = strncmp(name, "na:", 3) == 0;
   const int apply_affinity = strncmp(name, "ca:", 3) == 0;
   const int affinity_by_default =
-    config.mode == MODE_ROUND_ROBIN_ALL ||
-    config.mode == MODE_ROUND_ROBIN_BY_NAME;
+    config.mode == MODE_ROUND_ROBIN_ALL || config.mode == MODE_ROUND_ROBIN_BY_NAME;
   const char* effective_name = no_affinity || apply_affinity ? name + 3 : name;
 
-  if (no_affinity &&
-    config.mode != MODE_DISABLED &&
-    pthread_equal(thread, pthread_self()))
+  if (no_affinity && config.mode != MODE_DISABLED && pthread_equal(thread, pthread_self()))
   {
     release_current_thread_affinity();
     return real_pthread_setname(thread, effective_name);
   }
 
-  if ((apply_affinity || affinity_by_default) &&
-    pthread_equal(thread, pthread_self()))
+  if ((apply_affinity || affinity_by_default) && pthread_equal(thread, pthread_self()))
   {
     apply_current_thread_affinity(effective_name);
   }

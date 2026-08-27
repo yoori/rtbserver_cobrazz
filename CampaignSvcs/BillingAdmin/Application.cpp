@@ -76,9 +76,7 @@ namespace
   }
 
   void
-  require_option(
-    bool installed,
-    const char* option_name)
+  require_option(bool installed, const char* option_name)
     /*throw(InvalidArgument)*/
   {
     if (!installed)
@@ -117,9 +115,7 @@ namespace
     args.add(Generics::AppUtils::equal_name("campaign-id"), opt_campaign_id);
     args.add(Generics::AppUtils::equal_name("ccg-id"), opt_ccg_id);
     args.add(Generics::AppUtils::equal_name("ctr"), opt_ctr);
-    args.add(
-      Generics::AppUtils::equal_name("optimize-campaign-ctr"),
-      opt_optimize_campaign_ctr);
+    args.add(Generics::AppUtils::equal_name("optimize-campaign-ctr"), opt_optimize_campaign_ctr);
 
     args.parse(argc - 1, argv + 1);
 
@@ -148,14 +144,11 @@ namespace
     require_option(opt_ccg_id.installed(), "ccg-id");
     require_option(opt_ctr.installed(), "ctr");
 
-    Logging::Logger_var logger(new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
     Generics::ActiveObjectCallback_var callback(
       new Logging::ActiveObjectCallbackImpl(logger, "BillingAdmin"));
 
-    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-      1,
-      "bsa-grpc");
+    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1, "bsa-grpc");
     auto coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         callback,
@@ -212,8 +205,7 @@ namespace
     if (!result.available())
     {
       std::cout << "\n"
-        "unavailable_reason: " << unavailable_reason_name(
-          result.unavailable_reason());
+        "unavailable_reason: " << unavailable_reason_name(result.unavailable_reason());
     }
     std::cout << std::endl;
 

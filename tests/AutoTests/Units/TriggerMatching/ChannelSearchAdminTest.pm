@@ -54,7 +54,7 @@ sub init
   # CombinedHardSoftMatchingTest
   create_expression_channel_(
     $ns, $acc, "CHSMT-%02d", {},
-    P => "\"". $test_name . "Test3 ". $test_name . 
+    P => "\"". $test_name . "Test3 ". $test_name .
       "Test4\" ". $test_name . "Test5");
 
   # HardTriggerMatchingTest
@@ -83,9 +83,9 @@ sub init
   create_expression_channel_(
     $ns, $acc, "STMT-%02d", {},
     P => $test_name . "Test1 ". $test_name . "Test2",
-    P => $test_name . "Test15 ". $test_name . "Test16 ". 
+    P => $test_name . "Test15 ". $test_name . "Test16 ".
       $test_name . "Test17 ". $test_name . "Test18",
-    P => $test_name . "Test17 ". $test_name . "Test19 ". $test_name . 
+    P => $test_name . "Test17 ". $test_name . "Test19 ". $test_name .
       "Test20 ". $test_name . "Test16 ". $test_name . "Test21");
 }
 

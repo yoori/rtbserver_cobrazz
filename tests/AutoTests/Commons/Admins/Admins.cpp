@@ -15,7 +15,7 @@ namespace AutoTest
       return false;
     }
     int efile = fileno(tmp_file);
-    if(efile < 0)
+    if (efile < 0)
     {
       int error = errno;
       Logger::thlog().error("fileno(): failed to get fileno of tmp file: " + strof(error));
@@ -28,10 +28,11 @@ namespace AutoTest
       Logger::thlog().error("pipe(): failed to create pipe: " + strof(error));
       return false;//throw
     }
-    if(!cmd_.empty())
+
+    if (!cmd_.empty())
     {
       std::string cmd_string("ShellCmd: going to exec:");
-      for(cmdliter i = cmd_.begin(); i != cmd_.end(); ++i)
+      for (cmdliter i = cmd_.begin(); i != cmd_.end(); ++i)
       {
         cmd_string += " " + *i;
       }
@@ -54,7 +55,7 @@ namespace AutoTest
       fclose(tmp_file);
       char* argv[100];
       int i = 0;
-      for(cmdliter j = cmd_.begin(); j != cmd_.end(); ++i, ++j)
+      for (cmdliter j = cmd_.begin(); j != cmd_.end(); ++i, ++j)
       {
         argv[i] = const_cast<char*>(j->c_str()); //allow for execvp
       }
@@ -71,7 +72,7 @@ namespace AutoTest
         __gnu_cxx::stdio_filebuf<char> buffer(output_[0], std::ios_base::in, 4096);
         std::istream stream(&buffer);
         result = examiner.examine(stream);
-        while(!stream.eof()) stream.get();
+        while (!stream.eof()) stream.get();
         buffer.close();
       }
       int status;
@@ -80,24 +81,21 @@ namespace AutoTest
         lseek(efile, 0, SEEK_SET);
         __gnu_cxx::stdio_filebuf<char> ebuffer(efile,  std::ios_base::in, 4096);
         std::istream estream(&ebuffer);
-        if(status)
+        if (status)
         {
           Stream::Error ostr;
           std::string line;
           ostr << "'";
           print_idname(ostr);
-          ostr << "' status: "
-               << WEXITSTATUS(status) << std::endl
-               << " stderr: "
-               << std::endl;
-          while(!estream.eof())
+          ostr << "' status: " << WEXITSTATUS(status) << std::endl << " stderr: " << std::endl;
+          while (!estream.eof())
           {
             getline(estream, line);
             ostr << "  " << line << std::endl;
           }
           throw CmdStatusFailed(ostr);
         }
-        while(!estream.eof()) estream.get();
+        while (!estream.eof()) estream.get();
         ebuffer.close();
       }
       return result;
@@ -138,7 +136,7 @@ namespace AutoTest
 
   std::ostream& ShellCmd::print_idname (std::ostream& out) const
   {
-    for(cmdliter j = cmd_.begin(); j != cmd_.end(); ++j)
+    for (cmdliter j = cmd_.begin(); j != cmd_.end(); ++j)
     {
       if (j != cmd_.begin()) out << ' ';
       out << *j;
@@ -166,13 +164,13 @@ namespace AutoTest
     }
 
   begin:
-    while(!in.eof())
+    while (!in.eof())
     {
-      while(isspace(name[0] = in.get()))
+      while (isspace(name[0] = in.get()))
       {
-        if(name[0] == '\n')
+        if (name[0] == '\n')
         {
-          if(check() && !result)
+          if (check() && !result)
           {
             if (fetch_all_)
             {
@@ -187,42 +185,40 @@ namespace AutoTest
         }
       }
 
-      if(in.eof())
+      if (in.eof())
       {
         break;
       }
 
       in.getline(name+1, sizeof(name)-1, ' ');
-      while((isspace(value[0] = in.get()) || value[0] == ':') && value[0] != '\n')
+      while ((isspace(value[0] = in.get()) || value[0] == ':') && value[0] != '\n')
       {};
 
-      if(value[0] != '\n')
+      if (value[0] != '\n')
       {
-        if(isspace(value[0]))
+        if (isspace(value[0]))
         {
-          while(isspace(value[0] = in.get()))
+          while (isspace(value[0] = in.get()))
           {};
         }
         unsigned int i = 1;
-        while(i < countof(value) && !in.eof() && ((value[i] = in.get()) != '\n'))
+        while (i < countof(value) && !in.eof() && ((value[i] = in.get()) != '\n'))
         {
           ++i;
         }
 
-        if(i == countof(value))
+        if (i == countof(value))
         {
-          Logger::thlog().error(std::string("AdminCmd: name='") +
-            name + "' value is too long;");
+          Logger::thlog().error(std::string("AdminCmd: name='") + name + "' value is too long;");
           i = i - 1;
-          if(value[i] != '\n')
+          if (value[i] != '\n')
           {
-            while(!in.eof() && in.get() != '\n');
+            while (!in.eof() && in.get() != '\n');
           }
         }
 
         value[i] = 0;
-        while(i != 0 && ((value[i] == 0) || isspace(value[i]) ||
-          (value[i] == '\n')))
+        while (i != 0 && ((value[i] == 0) || isspace(value[i]) || (value[i] == '\n')))
         {
           value[i--] = 0;
         }
@@ -249,9 +245,7 @@ namespace AutoTest
     return admin_.check();
   }
 
-  ShellCmd::DumpExaminer::DumpExaminer(
-    Logger& logger_,
-    unsigned long log_level_)
+  ShellCmd::DumpExaminer::DumpExaminer(Logger& logger_, unsigned long log_level_)
     : logger(logger_),
       log_level(log_level_)
   {}
@@ -261,7 +255,7 @@ namespace AutoTest
     char line[4096];
     std::ostringstream ostr;
     ostr << std::endl;
-    while(!in.eof())
+    while (!in.eof())
     {
       in.getline(line, sizeof(line));
       ostr << "  " << line << std::endl;
@@ -270,10 +264,7 @@ namespace AutoTest
     return true;
   }
 
-  void ShellCmd::log(
-    Logger& logger,
-    unsigned long log_level,
-    bool rethrow)
+  void ShellCmd::log(Logger& logger, unsigned long log_level, bool rethrow)
   {
     DumpExaminer examiner (logger, log_level);
     std::ostringstream ostr;
@@ -286,8 +277,7 @@ namespace AutoTest
     catch (CmdStatusFailed& exc)
     {
       Stream::Error ostr;
-      ostr << "Admin execution error: " << std::endl <<
-        exc.what();
+      ostr << "Admin execution error: " << std::endl << exc.what();
       logger.log(ostr.str(), log_level);
       if (rethrow)
         throw;
@@ -303,7 +293,7 @@ namespace AutoTest
   void AdminCmd::setup (size_t count, const char* const* names)
   {
     names_.resize(count);
-    for(size_t i = 0; i < count; ++i)
+    for (size_t i = 0; i < count; ++i)
     {
       if ( !names[i] )
       {
@@ -318,9 +308,9 @@ namespace AutoTest
     Logger::thlog().debug_trace(
       std::string("AdminCmd: try to handle: name = ") +
         name + "; value = " + value + ";");
-    for(size_t i =0; i < admin_.slice_size(); ++i)
+    for (size_t i =0; i < admin_.slice_size(); ++i)
     {
-      if(admin_.names_[i] == name)
+      if (admin_.names_[i] == name)
       {
         values_[i] = value;
         return;
@@ -333,7 +323,7 @@ namespace AutoTest
 
   void AdminCmd::add (const values_type& values)
   {
-    if(slice_size() == values.size())
+    if (slice_size() == values.size())
     {
       values_.push_back(values);
     }
@@ -341,21 +331,20 @@ namespace AutoTest
 
   bool AdminCmd::Examiner::check ()
   {
-    Logger::thlog().debug_trace(
-      String::SubString("AdminCmd: going to check fetched values"));
+    Logger::thlog().debug_trace(String::SubString("AdminCmd: going to check fetched values"));
     bool no_values = true;
-    for(size_t i =0; i < admin_.slice_size(); ++i)
+    for (size_t i =0; i < admin_.slice_size(); ++i)
     {
-      if(!values_[i].empty())
+      if (!values_[i].empty())
       {
         no_values = false;
         break;
       }
     }
-    if(no_values)
+
+    if (no_values)
     {
-      Logger::thlog().debug_trace(
-        String::SubString("AdminCmd: try to check with empty values"));
+      Logger::thlog().debug_trace(String::SubString("AdminCmd: try to check with empty values"));
       return false;
     }
     admin_.add(values_);
@@ -366,21 +355,21 @@ namespace AutoTest
 
   bool AdminCmd::check (const Comparable* expects, size_t i)
   {
-    if(empty()) return false;
+    if (empty()) return false;
     return expects->compare(values_.back()[i].c_str());
   }
 
   bool AdminCmd::check ()
   {
     bool all_found = true;
-    for(size_t j =0; j < expects_.size(); ++j)
+    for (size_t j =0; j < expects_.size(); ++j)
     {
       bool item_found = true;
-      if(!finds_[j])
+      if (!finds_[j])
       {
-        for(size_t i =0; i < slice_size(); ++i)
+        for (size_t i =0; i < slice_size(); ++i)
         {
-          if(!check(expects_[j][i], i))
+          if (!check(expects_[j][i], i))
           {
             item_found = false;
             break;
@@ -393,13 +382,10 @@ namespace AutoTest
     return all_found;
   }
 
-  bool AdminCmd::setup_examine(
-    BasicExaminer& examiner,
-    size_t size,
-    const std::string* nvpair)
+  bool AdminCmd::setup_examine(BasicExaminer& examiner, size_t size, const std::string* nvpair)
   {
     names_.resize(size/2);
-    for(size_t i = 0; i < size; i += 2)
+    for (size_t i = 0; i < size; i += 2)
     {
       names_[i/2] = nvpair[i];
     }
@@ -407,7 +393,7 @@ namespace AutoTest
     finds_[0] = false;
     expects_.resize(1);
     expects_[0].resize(size/2);
-    for(size_t i = 1; i < size; i += 2)
+    for (size_t i = 1; i < size; i += 2)
     {
       expects_[0][(i-1)/2].set(ComparableRegExp(nvpair[i]));
     }
@@ -427,32 +413,26 @@ namespace AutoTest
     return examine(examiner);
   }
 
-  bool AdminCmd::examine(
-    BasicExaminer& examiner,
-    size_t size,
-    const char* const* expects)
+  bool AdminCmd::examine(BasicExaminer& examiner, size_t size, const char* const* expects)
   {
     finds_.resize(1);
     finds_[0] = false;
     expects_.resize(1);
     expects_[0].resize(size);
-    for(size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
     {
       expects_[0][i].set(ComparableRegExp(expects[i]));
     }
     return examine(examiner);
   }
 
-  bool AdminCmd::examine(
-    BasicExaminer& examiner,
-    size_t size,
-    const std::string expects[])
+  bool AdminCmd::examine(BasicExaminer& examiner, size_t size, const std::string expects[])
   {
     finds_.resize(1);
     finds_[0] = false;
     expects_.resize(1);
     expects_[0].resize(size);
-    for(size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
     {
       expects_[0][i].set(ComparableRegExp(expects[i]));
     }
@@ -467,11 +447,11 @@ namespace AutoTest
   {
     finds_.resize(sizex);
     expects_.resize(sizex);
-    for(size_t j = 0; j < sizex; ++j)
+    for (size_t j = 0; j < sizex; ++j)
     {
       finds_[j] = false;
       expects_[j].resize(size);
-      for(size_t i = 0; i < size; ++i)
+      for (size_t i = 0; i < size; ++i)
       {
         expects_[j][i].set(ComparableRegExp(expects[j*size + i]));
       }
@@ -487,11 +467,11 @@ namespace AutoTest
   {
     finds_.resize(sizex);
     expects_.resize(sizex);
-    for(size_t j = 0; j < sizex; ++j)
+    for (size_t j = 0; j < sizex; ++j)
     {
       finds_[j] = false;
       expects_[j].resize(size);
-      for(size_t i = 0; i < size; ++i)
+      for (size_t i = 0; i < size; ++i)
       {
         expects_[j][i].set(ComparableRegExp(expects[j*size + i]));
       }
@@ -499,15 +479,13 @@ namespace AutoTest
     return examine(examiner);
   }
 
-  std::ostream& AdminCmd::dumpout (
-    std::ostream& out,
-    const values_list_type& values) const
+  std::ostream& AdminCmd::dumpout (std::ostream& out, const values_list_type& values) const
   {
     out << '{' << std::endl;
-    for(size_t j = 0; j < values.size(); ++j)
+    for (size_t j = 0; j < values.size(); ++j)
     {
       out << "  {" << std::endl;
-      for(size_t i = 0; i < slice_size(); ++i)
+      for (size_t i = 0; i < slice_size(); ++i)
       {
         out << "    " << names_[i] << " = " << values[j][i] << ';' << std::endl;
       }
@@ -517,15 +495,13 @@ namespace AutoTest
     return out;
   }
 
-  std::ostream& AdminCmd::dumpout (
-    std::ostream& out,
-    const expects_list_type& values) const
+  std::ostream& AdminCmd::dumpout (std::ostream& out, const expects_list_type& values) const
   {
     out << '{' << std::endl;
-    for(size_t j = 0; j < values.size(); ++j)
+    for (size_t j = 0; j < values.size(); ++j)
     {
       out << "  {" << std::endl;
-      for(size_t i = 0; i < slice_size(); ++i)
+      for (size_t i = 0; i < slice_size(); ++i)
       {
         out << "    " << names_[i] << " = " << values[j][i]->str() << ';' << std::endl;
       }
@@ -546,27 +522,24 @@ namespace AutoTest
     return dumpout(out, values_);
   }
 
-  bool AdminCmd::check_(
-    size_t size,
-    const char* const* names,
-    const FieldIndexMap& expected_values)
+  bool AdminCmd::check_(size_t size, const char* const* names, const FieldIndexMap& expected_values)
     /*throw(eh::Exception)*/
   {
     finds_.resize(1);
     finds_[0] = false;
     // pack names
     names_.resize(size);
-    for(size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
     {
       names_[i] = names[i];
     }
     // pack values
     expects_.resize(1);
     expects_[0].resize(size);
-    for(size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
     {
       FieldIndexMap::const_iterator val_it = expected_values.find(i);
-      if(val_it != expected_values.end())
+      if (val_it != expected_values.end())
       {
         expects_[0][i] = val_it->second;
       }

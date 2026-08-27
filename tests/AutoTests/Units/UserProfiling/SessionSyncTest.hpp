@@ -12,17 +12,13 @@ class SessionSyncTest:
 {
 public:
 
-  SessionSyncTest(UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var);
+  SessionSyncTest(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   virtual ~SessionSyncTest() noexcept
   {};
 
 private:
-  bool run_test_element(int count,
-                        unsigned int minimum_visits,
-                        const std::string& keyword);
+  bool run_test_element(int count, unsigned int minimum_visits, const std::string& keyword);
   virtual bool run_test();
   //
   Generics::ActiveObjectCallback_var callback_;

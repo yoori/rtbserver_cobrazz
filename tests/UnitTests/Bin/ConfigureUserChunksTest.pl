@@ -61,23 +61,23 @@ sub check_test_case
     my $ret_code = $? >> 8;
 #   print $ret;
 
-    if($ret_code < 0)
+    if ($ret_code < 0)
     {
       print STDERR "Error($test_name): configure script exit code = $?: '$command'.\n";
       return 1;
     }
 
-    if($ret_code != $test_case->{check_result})
+    if ($ret_code != $test_case->{check_result})
     {
       print STDERR "Error($test_name): incorrect check result: $ret_code instead " .
         $test_case->{check_result} . ": command = '$command'\n";
       return 0;
-    } 
+    }
 
     # check that 'check' has no affect to source folder
     my $diff_command = "diff -qr -x distribution.xml $base_folder $process_folder 2>&1";
     my $diff_ret = system($diff_command);
-    if($diff_ret)
+    if ($diff_ret)
     {
       print STDERR "Error($test_name): found changes after check command: " .
         "diff command = '$diff_command'\n";
@@ -97,7 +97,7 @@ sub check_test_case
       $test_case->{args} . " 2>&1";
 
     my $ret = system($command);
-    if($ret && $expected_error == 0)
+    if ($ret && $expected_error == 0)
     {
       print STDERR "Error($test_name): configure script exit code = $ret: '$command'.\n";
       return 0;
@@ -108,11 +108,11 @@ sub check_test_case
       return 0;
     }
 
-    if(exists $test_case->{compare_file_structure} && $test_case->{compare_file_structure} > 0)
+    if (exists $test_case->{compare_file_structure} && $test_case->{compare_file_structure} > 0)
     {
       my @list_src = get_file_structure($process_folder);
       my @list_dst = get_file_structure($test_case->{folder} . "/Tgt");
-      
+
       my $not_equal = 0;
       if ($#list_src != $#list_dst)
       {
@@ -141,7 +141,7 @@ sub check_test_case
     {
       my $diff_command = "diff -x distribution.xml -qr $process_folder $test_case->{folder}/Tgt 2>&1";
       $ret = system($diff_command);
-      if($ret)
+      if ($ret)
       {
         print STDERR "Error($test_name): found difference, '$diff_command'\n";
         return 0;
@@ -149,7 +149,7 @@ sub check_test_case
     }
   }
 
-  if($expected_error == 0)
+  if ($expected_error == 0)
   {
     # check that result isn't require redistribution
     my $command = "$user_info_configurator check " .
@@ -164,19 +164,19 @@ sub check_test_case
     my $ret_code = $? >> 8;
 #   print $ret;
 
-    if($ret_code < 0)
+    if ($ret_code < 0)
     {
       print STDERR "Error($test_name): configure script exit code = $?: '$command'.\n";
       return 1;
     }
 
-    if($ret_code != 0)
+    if ($ret_code != 0)
     {
       print STDERR "Error($test_name): incorrect check result after redistribution " .
         "(redistribution required): " .
         "command = '$command'\n";
       return 0;
-    } 
+    }
   }
 
   system($clean_command);
@@ -230,7 +230,7 @@ sub check_test_case
     $ret = $ret && check_test_case(\%$test_case);
   }
 
-  if($ret)
+  if ($ret)
   {
     print "Test Success.\n";
   }

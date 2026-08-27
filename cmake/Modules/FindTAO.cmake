@@ -1,6 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
-if(NOT TARGET ACE::ACE)
+if (NOT TARGET ACE::ACE)
   find_package(ACE REQUIRED)
 endif()
 
@@ -31,8 +31,8 @@ find_package_handle_standard_args(TAO
     TAO_VALUETYPE_LIBRARY
 )
 
-if(TAO_FOUND)
-  if(NOT TARGET TAO::TAO)
+if (TAO_FOUND)
+  if (NOT TARGET TAO::TAO)
     add_library(TAO::TAO UNKNOWN IMPORTED)
     set_target_properties(TAO::TAO PROPERTIES
       IMPORTED_LOCATION "${TAO_LIBRARY}"
@@ -41,7 +41,7 @@ if(TAO_FOUND)
     )
   endif()
 
-  if(NOT TARGET TAO::AnyTypeCode)
+  if (NOT TARGET TAO::AnyTypeCode)
     add_library(TAO::AnyTypeCode UNKNOWN IMPORTED)
     set_target_properties(TAO::AnyTypeCode PROPERTIES
       IMPORTED_LOCATION "${TAO_ANY_TYPE_CODE_LIBRARY}"
@@ -50,7 +50,7 @@ if(TAO_FOUND)
     )
   endif()
 
-  if(NOT TARGET TAO::PortableServer)
+  if (NOT TARGET TAO::PortableServer)
     add_library(TAO::PortableServer UNKNOWN IMPORTED)
     set_target_properties(TAO::PortableServer PROPERTIES
       IMPORTED_LOCATION "${TAO_PORTABLE_SERVER_LIBRARY}"
@@ -59,7 +59,7 @@ if(TAO_FOUND)
     )
   endif()
 
-  if(NOT TARGET TAO::Valuetype)
+  if (NOT TARGET TAO::Valuetype)
     add_library(TAO::Valuetype UNKNOWN IMPORTED)
     set_target_properties(TAO::Valuetype PROPERTIES
       IMPORTED_LOCATION "${TAO_VALUETYPE_LIBRARY}"
@@ -69,7 +69,7 @@ if(TAO_FOUND)
   endif()
 
   function(_tao_import_component _component _library)
-    if(NOT TARGET TAO::${_component})
+    if (NOT TARGET TAO::${_component})
       add_library(TAO::${_component} UNKNOWN IMPORTED)
       set_target_properties(TAO::${_component} PROPERTIES
         IMPORTED_LOCATION "${_library}"

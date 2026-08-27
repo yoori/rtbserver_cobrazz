@@ -1,9 +1,7 @@
 
 #include "DynamicCreativeTest.hpp"
 
-REFLECT_UNIT(DynamicCreativeTest) (
-  "CreativeInstantiation",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(DynamicCreativeTest) ("CreativeInstantiation", AUTO_TEST_FAST);
 
 namespace
 {
@@ -164,9 +162,7 @@ namespace
      * @param creative body
      * @param expected creative
      */
-    CheckCreative(
-      const std::string& body,
-      const Creative& expected) :
+    CheckCreative(const std::string& body, const Creative& expected) :
       body_(body),
       expected_(expected)
     { }
@@ -187,7 +183,7 @@ namespace
       unsigned long index = 0;
       Stream::Parser in(body_);
       char line[MAX_TOKEN_SIZE];
-      while(!in.eof())
+      while (!in.eof())
       {
         in.getline(line, MAX_TOKEN_SIZE);
         std::string got_token(line);
@@ -195,22 +191,19 @@ namespace
         if (index >= TOKEN_COUNT)
         {
           Stream::Error ostr;
-          ostr << "Unexpected token#" << index <<
-            " ('" << got_token << "')";;
+          ostr << "Unexpected token#" << index << " ('" << got_token << "')";;
           throw AutoTest::CheckFailed(ostr);
         }
 
         std::string expected_token = TOKENS[index].token +
-          " = " + (TOKENS[index].content?
-            (expected_.*(TOKENS[index].content))(): "") +
+          " = " + (TOKENS[index].content? (expected_.*(TOKENS[index].content))(): "") +
           (TOKENS[index].suffix? TOKENS[index].suffix: "");
 
         if (!AutoTest::equal(expected_token, got_token))
         {
           Stream::Error ostr;
           ostr << "Unexpected token#" << index <<
-             " ('" << expected_token << "' != '" <<
-            got_token << "')";
+             " ('" << expected_token << "' != '" << got_token << "')";
           throw AutoTest::CheckFailed(ostr);
         }
         index++;
@@ -316,9 +309,7 @@ void DynamicCreativeTest::dcreatives_frontend()
     url+=FRONTEND_TESTS[i].params;
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        FRONTEND_TESTS[i].expected_status,
-        client.process(url, true)).check(),
+      AutoTest::equal_checker(FRONTEND_TESTS[i].expected_status, client.process(url, true)).check(),
       FRONTEND_TESTS[i].description +
         " Unexpected response status.");
 
@@ -326,10 +317,7 @@ void DynamicCreativeTest::dcreatives_frontend()
     {
       Creative creative(frontend, "http://ya.ru");
 
-      FAIL_CONTEXT(
-        CheckCreative(
-          client.req_response_data(),
-          creative).check());
+      FAIL_CONTEXT(CheckCreative(client.req_response_data(), creative).check());
 
     }
   }
@@ -349,36 +337,28 @@ void DynamicCreativeTest::token_substitution()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string(TOKEN_TESTS[i].ccid),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string(TOKEN_TESTS[i].ccid), client.debug_info.ccid).check(),
       TOKEN_TESTS[i].description +
         " Unexpected ccid.");
 
-    std::string html_url(
-      client.req_response_data());
+    std::string html_url(client.req_response_data());
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !html_url.empty()),
+      AutoTest::predicate_checker(!html_url.empty()),
       TOKEN_TESTS[i].description +
       " Unexpected htm_url.");
 
     std::string click(client.debug_info.click_url);
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !click.empty()),
+      AutoTest::predicate_checker(!click.empty()),
       TOKEN_TESTS[i].description +
       " Unexpected click_url.");
 
-    unsigned long got_status =
-      client.process(html_url, true);
+    unsigned long got_status = client.process(html_url, true);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        TOKEN_TESTS[i].status,
-        got_status).check(),
+      AutoTest::equal_checker(TOKEN_TESTS[i].status, got_status).check(),
       TOKEN_TESTS[i].description +
         " Unexpected response status.");
 
@@ -388,9 +368,7 @@ void DynamicCreativeTest::token_substitution()
       if (TOKEN_TESTS[i].body)
       {
         FAIL_CONTEXT(
-          AutoTest::equal_checker(
-            TOKEN_TESTS[i].body,
-            client.req_response_data()).check(),
+          AutoTest::equal_checker(TOKEN_TESTS[i].body, client.req_response_data()).check(),
           TOKEN_TESTS[i].description +
             " Unexpected dcreative response body.");
       }
@@ -406,9 +384,7 @@ void DynamicCreativeTest::token_substitution()
           );
 
         FAIL_CONTEXT(
-          CheckCreative(
-            client.req_response_data(),
-            creative).check(),
+          CheckCreative(client.req_response_data(), creative).check(),
           TOKEN_TESTS[i].description +
           " Unexpected creative content.");
       }

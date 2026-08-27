@@ -56,8 +56,7 @@ ClientStorage::~ClientStorage()  noexcept
 {
 }
 
-void ClientStorage::push_request(unsigned long client_id,
-                                 const char* request)
+void ClientStorage::push_request(unsigned long client_id, const char* request)
 {
   ClientIterator client = requests_.find(client_id);
   size_++;
@@ -83,6 +82,7 @@ unsigned long ClientStorage::get_request(std::string& request)
   {
     ++current_client_;
   }
+
   if ( current_client_ == requests_.end())
   {
     current_client_ = requests_.begin();
@@ -136,8 +136,7 @@ void BenchmarkStorage::push_client(AdServerClientBase* client)
 }
 
 AdServerClientBase*
-BenchmarkStorage::get_request_pair(FrontendType frontend_type,
-                                   std::string& request)
+BenchmarkStorage::get_request_pair(FrontendType frontend_type, std::string& request)
 {
   assert(frontend_type < REQUEST_TYPE_SIZE && frontend_type >= 0);
   WriteGuard_ guard(lock_);

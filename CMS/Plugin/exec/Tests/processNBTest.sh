@@ -19,19 +19,19 @@ OPTIONS=""
 ./getlogs.sh $2
 
 # URL
-if [ "x$url" != "x" ] 
+if [ "x$url" != "x" ]
 then
 OPTIONS+=" --url $url"
 fi
 
 # HTTP root
-if [ "x$http_root" != "x" ] 
+if [ "x$http_root" != "x" ]
 then
 OPTIONS+=" --http_root $http_root"
 fi
 
 # HTTP test result path
-if [ "x$http_test_path" != "x" ] 
+if [ "x$http_test_path" != "x" ]
 then
 OPTIONS+=" --http_test_path $http_test_path/$3"
 else
@@ -39,18 +39,18 @@ OPTIONS+=" --http_test_path $3"
 fi
 
 # mail list
-if [ "x$mail_list" != "x" ] 
+if [ "x$mail_list" != "x" ]
 then
 OPTIONS+=" --maillist $mail_list"
 fi
 
 # history path
-if [ "x$history_path" != "x" ] 
+if [ "x$history_path" != "x" ]
 then
 OPTIONS+=" --history_path $history_path"
 fi
 
-if [ "x$dst_sub_path" != "x" ] 
+if [ "x$dst_sub_path" != "x" ]
 then
 OPTIONS+=" --dst_sub_path $dst_sub_path"
 fi

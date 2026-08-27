@@ -10,7 +10,7 @@ no_plugin=no
 user=andrey.gusev
 colo=test
 while getopts junphv:s:c: OPT; do
-  case "$OPT" in 
+  case "$OPT" in
     v) version=$OPTARG
       ;;
     s) source_version=branches/$OPTARG
@@ -79,12 +79,12 @@ if [ ! -d $local_rep_path ]; then
     echo "can't find project directory"
   fi
 fi
-local_branch_place=$local_rep_path$major 
+local_branch_place=$local_rep_path$major
 if [ ! -d $local_branch_place ]; then
   mkdir $local_branch_place
 fi
 cd $local_branch_place
-if [ ! -d server ]; then 
+if [ ! -d server ]; then
   svn co $branch server
 fi
 cd server
@@ -111,7 +111,7 @@ if [ $no_plugin = "no" ]; then
   sed -i s/version=\"$old_version\"/version=\"$version\"/ CMS/Plugin/AdServerAppDescriptor.xml
   sed -i s/VERSION=\'$old_envdev_version\'/VERSION=\'$version\'/ CMS/tests/Configs/devel/envdev.sh
   echo "change plugin version. from $old_version to $version"
-  sed -i s/$old_version/$version/ `find CMS/tests/Configs -name "*xml"` 
+  sed -i s/$old_version/$version/ `find CMS/tests/Configs -name "*xml"`
   echo "up versions in configuration files from $old_version to $version"
   svn update
   svn commit -m "up plugin version to $version"
@@ -136,19 +136,19 @@ if [ $? -eq 0 ]; then
     exit 1
   fi
   if [ $no_jira = "no" ]; then
-    jira --login-name=$user addVersion ADSC $major.$((minor+1)) $version 
+    jira --login-name=$user addVersion ADSC $major.$((minor+1)) $version
     jira --login-name=$user releaseVersion ADSC $version
     if [ $minor -ne 0 ] && [ $no_task = "no" ]; then
       assign='assignee=andrey.azeev'
       if [ "$colo" = "test" ];
       then
-        if [ $branch_minor -eq 0 ]; then 
+        if [ $branch_minor -eq 0 ]; then
           colo="test colocations"
         else
           colo="test2 colocations"
         fi
       fi
-      task_text="build foros-server $version and upgrade $colo" 
+      task_text="build foros-server $version and upgrade $colo"
       jira --login-name=$user createIssue ENVDEV Task summary="${task_text}" components=Deployment priority=Major description="${task_text}" ${assign}
     fi
   fi

@@ -8,55 +8,47 @@
 #include <String/SubString.hpp>
 #include <xsd/CampaignSvcs/DomainConfig.hpp>
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  class DomainParser: public virtual ReferenceCounting::AtomicImpl
   {
-    class DomainParser: public virtual ReferenceCounting::AtomicImpl
-    {
-    public:
-      typedef xsd::AdServer::Configuration::DomainConfigurationType
-        DomainConfig;
+  public:
+    typedef xsd::AdServer::Configuration::DomainConfigurationType
+      DomainConfig;
 
-      /**
-       * @param domain_config Load list of Top Level Domains from XML file
-       */
-      DomainParser(const DomainConfig& domain_config) noexcept;
+    /**
+     * @param domain_config Load list of Top Level Domains from XML file
+     */
+    DomainParser(const DomainConfig& domain_config) noexcept;
 
-      /**
-       * @param domain Must be in lower case
-       * @param specific_domain The return value
-       */
-      void
-      specific_domain(
-        const String::SubString& domain,
-        std::string& specific_domain)
-        const
-        noexcept;
+    /**
+     * @param domain Must be in lower case
+     * @param specific_domain The return value
+     */
+    void
+    specific_domain(const String::SubString& domain, std::string& specific_domain)
+      const
+      noexcept;
 
-    protected:
-      virtual
-      ~DomainParser() noexcept;
-    private:
-      typedef std::set<std::string> ThirdsDomainSet;
-      typedef std::map<std::string, ThirdsDomainSet> SecondsDomainMap;
-      typedef std::map<std::string, SecondsDomainMap> FirstDomainMap;
+  protected:
+    virtual
+    ~DomainParser() noexcept;
+  private:
+    typedef std::set<std::string> ThirdsDomainSet;
+    typedef std::map<std::string, ThirdsDomainSet> SecondsDomainMap;
+    typedef std::map<std::string, SecondsDomainMap> FirstDomainMap;
 
-      /// Prefix tree - Radix Trie used for data lookup.
-      FirstDomainMap domains_trie_;
-    };
+    /// Prefix tree - Radix Trie used for data lookup.
+    FirstDomainMap domains_trie_;
+  };
 
-    typedef ReferenceCounting::SmartPtr<DomainParser> DomainParser_var;
-  }
+  typedef ReferenceCounting::SmartPtr<DomainParser> DomainParser_var;
 }
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  inline
+  DomainParser::~DomainParser() noexcept
   {
-    inline
-    DomainParser::~DomainParser() noexcept
-    {
-    }
   }
 }

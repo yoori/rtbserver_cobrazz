@@ -171,21 +171,17 @@ int do_relative_path_test() noexcept
   int result_code = 0;
 
   // positive tests
-  for (std::size_t i = 0;
-    i < sizeof(TEST_CASES) / sizeof(TEST_CASES[0]);
-    ++i)
+  for (std::size_t i = 0; i < sizeof(TEST_CASES) / sizeof(TEST_CASES[0]); ++i)
   {
     std::string result;
     const TestCase& test_case = TEST_CASES[i];
-    if (!relative_path(test_case.FROM, test_case.TO, result) ||
-      result != test_case.RESULT)
+    if (!relative_path(test_case.FROM, test_case.TO, result) || result != test_case.RESULT)
     {
       ++result_code;
 
       std::cerr << "Test case " << i << " failed. FROM: " <<
         test_case.FROM << " ---> " << test_case.TO <<
-        "\nCorrect result:\n" <<
-        test_case.RESULT << "\nReal result:\n" << result << std::endl;
+        "\nCorrect result:\n" << test_case.RESULT << "\nReal result:\n" << result << std::endl;
     }
     else
     {
@@ -194,20 +190,16 @@ int do_relative_path_test() noexcept
   }
 
   // negative tests
-  for (std::size_t i = 0;
-    i < sizeof(NEGATIVE_TEST_CASES) / sizeof(NEGATIVE_TEST_CASES[0]);
-    ++i)
+  for (std::size_t i = 0; i < sizeof(NEGATIVE_TEST_CASES) / sizeof(NEGATIVE_TEST_CASES[0]); ++i)
   {
     std::string result;
     const TestCase& test_case = NEGATIVE_TEST_CASES[i];
-    if (relative_path(test_case.FROM, test_case.TO, result) ||
-        !result.empty())
+    if (relative_path(test_case.FROM, test_case.TO, result) || !result.empty())
     {
       ++result_code;
 
       std::cerr << "Negative test case " << i << " successful. FROM: " <<
-        test_case.FROM << " ---> " << test_case.TO <<
-        "Result:\n" << result << std::endl;
+        test_case.FROM << " ---> " << test_case.TO << "Result:\n" << result << std::endl;
     }
   }
 
@@ -219,9 +211,7 @@ int do_normalize_path_test() noexcept
   int result_code = 0;
 
   // positive tests
-  for (std::size_t i = 0;
-    i < sizeof(NORMALIZE_TEST_CASES) / sizeof(NORMALIZE_TEST_CASES[0]);
-    ++i)
+  for (std::size_t i = 0; i < sizeof(NORMALIZE_TEST_CASES) / sizeof(NORMALIZE_TEST_CASES[0]); ++i)
   {
     const NormalizeTestCase& test_case = NORMALIZE_TEST_CASES[i];
     std::string result = test_case.FROM;
@@ -231,13 +221,11 @@ int do_normalize_path_test() noexcept
 
       std::cerr << "Normalize test case " << i << " failed: " <<
         test_case.FROM << " ---> " << result <<
-        ", correct result: " <<
-        test_case.RESULT << std::endl;
+        ", correct result: " << test_case.RESULT << std::endl;
     }
     else
     {
-      std::cout << "Success normalized: " <<
-        test_case.FROM << " ---> " << result << std::endl;
+      std::cout << "Success normalized: " << test_case.FROM << " ---> " << result << std::endl;
     }
   }
 
@@ -248,17 +236,15 @@ int do_normalize_path_test() noexcept
   {
     const NormalizeTestCase& test_case = NEGATIVE_NORMALIZE_TEST_CASES[i];
     std::string result = test_case.FROM;
-    if(normalize_path(result))
+    if (normalize_path(result))
     {
       ++result_code;
 
-      std::cerr << "Negative normalize test case failed: " <<
-        test_case.FROM << std::endl;
+      std::cerr << "Negative normalize test case failed: " << test_case.FROM << std::endl;
     }
     else
     {
-      std::cout << "Negative normalize test success: " <<
-        test_case.FROM << std::endl;
+      std::cout << "Negative normalize test success: " << test_case.FROM << std::endl;
     }
   }
 

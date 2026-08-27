@@ -1,9 +1,6 @@
 #include "ActionGranularUpdateTest.hpp"
 
-REFLECT_UNIT(ActionGranularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ActionGranularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -23,17 +20,11 @@ ActionGranularUpdateTest::set_up()
 bool
 ActionGranularUpdateTest::run()
 {
-  AUTOTEST_CASE(
-    add_action(),
-    "Add action");
+  AUTOTEST_CASE(add_action(), "Add action");
 
-  AUTOTEST_CASE(
-    unlink_action(),
-    "Unlink action");
+  AUTOTEST_CASE(unlink_action(), "Unlink action");
 
-  AUTOTEST_CASE(
-    action_for_inactive_ccg(),
-    "Inactive CCG");
+  AUTOTEST_CASE(action_for_inactive_ccg(), "Inactive CCG");
 
   return true;
 }
@@ -43,8 +34,7 @@ ActionGranularUpdateTest::add_action()
 {
   unsigned long ccg = fetch_int("ADDACTION/CCG");
 
-  ORM::ORMRestorer<ORM::PQ::Action>* action =
-    create<ORM::PQ::Action>();
+  ORM::ORMRestorer<ORM::PQ::Action>* action = create<ORM::PQ::Action>();
 
   action->account_id = fetch_int("ADDACTION/ACCOUNT");
   action->name = fetch_string("ADDACTION/ACTIONNAME");
@@ -52,27 +42,17 @@ ActionGranularUpdateTest::add_action()
   action->status = "A";
   action->display_status_id = 1;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      action->insert()),
-    "Create new action");
+  FAIL_CONTEXT(AutoTest::predicate_checker(action->insert()), "Create new action");
 
-  ORM::ORMRestorer<ORM::PQ::Ccgaction>* ccg_action =
-    create<ORM::PQ::Ccgaction>();
+  ORM::ORMRestorer<ORM::PQ::Ccgaction>* ccg_action = create<ORM::PQ::Ccgaction>();
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg_action->insert(
-        action->action_id(), ccg)),
+    AutoTest::predicate_checker(ccg_action->insert(action->action_id(), ccg)),
     "Link action to CCG");
 
   ADD_WAIT_CHECKER(
     "Check action",
-    ActionChecker(
-      this,
-      action->action_id(),
-      ActionChecker::Expected().
-        ccg_ids(strof(ccg))));
+    ActionChecker(this, action->action_id(), ActionChecker::Expected(). ccg_ids(strof(ccg))));
 }
 
 void
@@ -102,22 +82,13 @@ ActionGranularUpdateTest::unlink_action()
    "Initial check action#2");
 
   ORM::ORMRestorer<ORM::PQ::Ccgaction>* ccg_action =
-    create(
-      ORM::PQ::Ccgaction(
-        pq_conn_, action1, ccg1));
+    create(ORM::PQ::Ccgaction(pq_conn_, action1, ccg1));
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg_action->delet()),
-    "Unlink action#1 from CCG#1");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg_action->delet()), "Unlink action#1 from CCG#1");
 
   ADD_WAIT_CHECKER(
     "Check action#1",
-    ActionChecker(
-      this,
-      action1,
-      ActionChecker::Expected().
-        ccg_ids(strof(ccg2))));
+    ActionChecker(this, action1, ActionChecker::Expected(). ccg_ids(strof(ccg2))));
 
   ADD_WAIT_CHECKER(
     "Check action#2",
@@ -140,8 +111,7 @@ ActionGranularUpdateTest::action_for_inactive_ccg()
 
   client.process_request(NSLookupRequest());
 
-  std::string uid =
-    "\\" + client.debug_info.uid.value();
+  std::string uid = "\\" + client.debug_info.uid.value();
 
   client.process_request(ActionRequest().actionid(action));
 

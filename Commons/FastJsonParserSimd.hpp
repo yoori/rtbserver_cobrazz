@@ -40,7 +40,7 @@ namespace AdServer::Commons::FastJsonParserSimd
   inline const char*
   find_non_space_scalar(const char* pos, const char* end) noexcept
   {
-    while(pos != end && is_space(*pos))
+    while (pos != end && is_space(*pos))
     {
       ++pos;
     }
@@ -51,7 +51,7 @@ namespace AdServer::Commons::FastJsonParserSimd
   inline const char*
   find_string_special_scalar(const char* pos, const char* end) noexcept
   {
-    while(pos != end && !is_string_special(*pos))
+    while (pos != end && !is_string_special(*pos))
     {
       ++pos;
     }
@@ -62,7 +62,7 @@ namespace AdServer::Commons::FastJsonParserSimd
   inline const char*
   find_quote_scalar(const char* pos, const char* end) noexcept
   {
-    while(pos != end && *pos != '"')
+    while (pos != end && *pos != '"')
     {
       ++pos;
     }
@@ -73,7 +73,7 @@ namespace AdServer::Commons::FastJsonParserSimd
   inline const char*
   find_compound_special_scalar(const char* pos, const char* end) noexcept
   {
-    while(pos != end && !is_compound_special(*pos))
+    while (pos != end && !is_compound_special(*pos))
     {
       ++pos;
     }
@@ -84,7 +84,7 @@ namespace AdServer::Commons::FastJsonParserSimd
   inline const char*
   find_unquoted_delimiter_scalar(const char* pos, const char* end) noexcept
   {
-    while(pos != end && !is_unquoted_delimiter(*pos))
+    while (pos != end && !is_unquoted_delimiter(*pos))
     {
       ++pos;
     }

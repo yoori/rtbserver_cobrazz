@@ -21,8 +21,7 @@ void Report::dump()
   out_.precision(2);
   out_.fill (' ');
   out_.flags(std::ios::left);
-  out_ << std::endl << description_ <<
-      " results:  " << std::endl;
+  out_ << std::endl << description_ << " results:  " << std::endl;
   out_.width (INDENTION);
   out_ << "  Total requests: ";
   out_ << stats_.responses() << std::endl;
@@ -38,15 +37,14 @@ void Report::dump()
   out_.width (INDENTION);
   out_ << "  Clients: ";
   out_ << stats_.uids_size() << std::endl;
-  if (frontend_type_ == FrontendType::nslookup &&
-    stats_.history_channels_stats().get())
+  if (frontend_type_ == FrontendType::nslookup && stats_.history_channels_stats().get())
   {
     out_.width (INDENTION);
     out_ << "  History channels: ";
     out_ << DumpRangeStats(stats_.history_channels_stats()) << std::endl;
   }
-  if (frontend_type_ == FrontendType::nslookup &&
-    stats_.trigger_channels_stats().get())
+
+  if (frontend_type_ == FrontendType::nslookup && stats_.trigger_channels_stats().get())
   {
     out_.width (INDENTION);
     out_ << "  Trigger channels: ";
@@ -72,6 +70,5 @@ void Report::dump()
   out_ << " (sec)" << std::endl;
   out_.width (INDENTION);
   out_ << "  Requests per second: ";
-  out_  << std::fixed <<
-      static_cast<double>(stats_.responses()) / seconds << std::endl;
+  out_  << std::fixed << static_cast<double>(stats_.responses()) / seconds << std::endl;
 }

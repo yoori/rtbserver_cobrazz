@@ -24,8 +24,8 @@ sub create_campaigns
         template_id => DB::Defaults::instance()->text_template,
         original_keyword => $keyword,
         max_cpc_bid => $cpc_bid,
-        campaigncreativegroup_cpm => 
-          defined $args->{ccg_cpm}? 
+        campaigncreativegroup_cpm =>
+          defined $args->{ccg_cpm}?
             $args->{ccg_cpm}: 0.0001,
         ccgkeyword_ctr => DB::Defaults::default_ctr(),
         ccgkeyword_tow => 1,
@@ -41,7 +41,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;  }
   $self->{ns_} = $ns->sub_namespace($prefix);
@@ -95,7 +95,7 @@ sub init
     pricedtag_adjustment => 1 });
 
   my $exchange_rate = 20;
-  my $currency = $ns->create(Currency => 
+  my $currency = $ns->create(Currency =>
     { rate => $exchange_rate });
 
   my $publisher_non_sys_currency = $ns->create( Publisher => {
@@ -116,7 +116,7 @@ sub init
     $ns, 'TwoShown',
     { size_id => $size,
       site_id => $publisher->{site_id},
-      cpc_bids => [ 
+      cpc_bids => [
         0.21 * $tag_cpm,
         0.19 * $tag_cpm ] });
 
@@ -124,7 +124,7 @@ sub init
     $ns, 'NonSystemCurrency',
     { size_id => $size,
       site_id => $publisher_non_sys_currency->{site_id},
-      cpc_bids => [ 
+      cpc_bids => [
         0.21 * $tag_cpm,
         0.19 * $tag_cpm ] });
 
@@ -133,7 +133,7 @@ sub init
     { size_id => $size,
       site_id => $publisher->{site_id},
       ccg_cpm => 40,
-      cpc_bids => [ 
+      cpc_bids => [
         0.19 * $tag_cpm,
         0.17 * $tag_cpm ] });
 

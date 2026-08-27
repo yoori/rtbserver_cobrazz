@@ -7,25 +7,21 @@ namespace FrontendCommons
 {
   namespace
   {
-    const String::AsciiStringManip::CharCategory NONTOKEN(
-      "\x01-\x31()<>@,;:\\\"/[]?={} \t", true);
+    const String::AsciiStringManip::CharCategory NONTOKEN("\x01-\x31()<>@,;:\\\"/[]?={} \t", true);
 
-    const String::AsciiStringManip::Caseless FORMURL(
-      "application/x-www-form-urlencoded");
+    const String::AsciiStringManip::Caseless FORMURL("application/x-www-form-urlencoded");
 
     RequestTask
-    write_response_task(
-      RequestTask request_task,
-      FCGI::BaseHttpResponseWriter_var response_writer)
+    write_response_task(RequestTask request_task, FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept
     {
       try
       {
         auto result = co_await std::move(request_task);
-        if(!result.already_written && response_writer)
+        if (!result.already_written && response_writer)
         {
           FCGI::HttpResponse_var response = result.response;
-          if(!response)
+          if (!response)
           {
             response = new FCGI::HttpResponse();
           }
@@ -37,7 +33,7 @@ namespace FrontendCommons
       {
         try
         {
-          if(response_writer)
+          if (response_writer)
           {
             FCGI::HttpResponse_var response(new FCGI::HttpResponse());
             response_writer->write(500, response);
@@ -53,8 +49,7 @@ namespace FrontendCommons
 
   // FrontendInterface::Configuration
 
-  FrontendInterface::Configuration::Configuration(
-    const char* config_path) :
+  FrontendInterface::Configuration::Configuration(const char* config_path) :
     config_path_(config_path)
   { }
 
@@ -66,11 +61,9 @@ namespace FrontendCommons
 
     try
     {
-      config_ =
-        xsd::AdServer::Configuration::FeConfiguration(
-          config_path_.c_str(), error_handler);
+      config_ = xsd::AdServer::Configuration::FeConfiguration(config_path_.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw InvalidConfiguration(error_handler.text(error_string));
@@ -79,10 +72,8 @@ namespace FrontendCommons
     catch (const xml_schema::parsing& e)
     {
       Stream::Error err;
-      err << "Can't parse config file '"
-          << config_path_ << "'."
-          << ": ";
-      if(error_handler.has_errors())
+      err << "Can't parse config file '" << config_path_ << "'." << ": ";
+      if (error_handler.has_errors())
       {
         std::string error_string;
         err << error_handler.text(error_string);
@@ -93,8 +84,7 @@ namespace FrontendCommons
 
   // FrontendInterface
   bool
-  FrontendInterface::parse_args_(
-    FCGI::HttpRequestHolder_var request_holder)
+  FrontendInterface::parse_args_(FCGI::HttpRequestHolder_var request_holder)
     /*throw(eh::Exception)*/
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -104,19 +94,19 @@ namespace FrontendCommons
     try
     {
       // read parameters
-      if(!request.args().empty())
+      if (!request.args().empty())
       {
         FCGI::HttpRequest::parse_params(request.args(), params);
       }
 
-      if(request.method() == FCGI::HttpRequest::RM_POST)
+      if (request.method() == FCGI::HttpRequest::RM_POST)
       {
         bool params_in_body = false;
 
-        for(auto header_it = request.headers().begin();
+        for (auto header_it = request.headers().begin();
           header_it != request.headers().end(); ++header_it)
         {
-          if(header_it->name == String::AsciiStringManip::Caseless("content-type") &&
+          if (header_it->name == String::AsciiStringManip::Caseless("content-type") &&
             FORMURL.start(header_it->value) &&
             NONTOKEN(header_it->value[FORMURL.str.length()]))
           {
@@ -125,7 +115,7 @@ namespace FrontendCommons
           }
         }
 
-        if(params_in_body)
+        if (params_in_body)
         {
           FCGI::HttpRequest::parse_params(request.body(), params);
         }
@@ -147,7 +137,7 @@ namespace FrontendCommons
     FCGI::BaseHttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
-    if(parse_args_(request_holder))
+    if (parse_args_(request_holder))
     {
       handle_request(std::move(request_holder), std::move(response_writer));
     }
@@ -159,11 +149,10 @@ namespace FrontendCommons
   }
 
   RequestTask
-  CoroFrontendInterface::co_handle_request_noparams(
-    FCGI::HttpRequestHolder_var request_holder)
+  CoroFrontendInterface::co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
-    if(parse_args_(request_holder))
+    if (parse_args_(request_holder))
     {
       auto result = co_await co_handle_request(std::move(request_holder));
       co_return std::move(result);
@@ -190,7 +179,7 @@ namespace FrontendCommons
     FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
-    if(parse_args_(request_holder))
+    if (parse_args_(request_holder))
     {
       write_response_task(
         co_handle_request(std::move(request_holder)),

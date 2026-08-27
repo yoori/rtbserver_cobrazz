@@ -8,9 +8,7 @@
 #include "StatCollector.hpp"
 #include <Commons/StringHolder.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   class KeywordHitStatInnerKey
   {
@@ -20,8 +18,7 @@ namespace LogProcessing
     {}
 
     explicit
-    KeywordHitStatInnerKey(
-      AdServer::Commons::StringHolder* keyword)
+    KeywordHitStatInnerKey(AdServer::Commons::StringHolder* keyword)
       : keyword_(ReferenceCounting::add_ref(keyword))
     {
       calc_hash_();
@@ -71,15 +68,14 @@ namespace LogProcessing
       : hits_()
     {}
 
-    KeywordHitStatInnerData(
-      unsigned long hits)
+    KeywordHitStatInnerData(unsigned long hits)
       : hits_(hits)
     {}
 
     bool
     operator==(const KeywordHitStatInnerData& rhs) const
     {
-      if(&rhs == this)
+      if (&rhs == this)
       {
         return true;
       }
@@ -182,5 +178,4 @@ namespace LogProcessing
     {}
   };
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

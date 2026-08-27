@@ -20,13 +20,10 @@ namespace
   }
 
   std::string
-  endpoint_from_grpc_ref_(
-    const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
+  endpoint_from_grpc_ref_(const xsd::AdServer::Configuration::GrpcEndpointConfigType& endpoint)
   {
     const std::string host =
-      endpoint.host().present() && *endpoint.host() != "*" ?
-      *endpoint.host() :
-      "127.0.0.1";
+      endpoint.host().present() && *endpoint.host() != "*" ? *endpoint.host() : "127.0.0.1";
 
     return host + ":" + std::to_string(endpoint.port());
   }
@@ -45,8 +42,7 @@ namespace AdServer::UserInfoSvcs
       task_runner_(new Generics::TaskRunner(callback_, 1)),
       config_(config)
   {
-    static const char* FUN =
-      "UserBindControllerImpl::UserBindControllerImpl()";
+    static const char* FUN = "UserBindControllerImpl::UserBindControllerImpl()";
 
     try
     {
@@ -66,8 +62,7 @@ namespace AdServer::UserInfoSvcs
   UserBindControllerImpl::~UserBindControllerImpl() noexcept = default;
 
   void
-  UserBindControllerImpl::fill_session_description(
-    SessionDescription& response) const
+  UserBindControllerImpl::fill_session_description(SessionDescription& response) const
   {
     UserBindConfig_var user_bind_config;
     {
@@ -109,8 +104,7 @@ namespace AdServer::UserInfoSvcs
   }
 
   bool
-  UserBindControllerImpl::get_user_bind_server_sources_(
-    UserBindConfig* user_bind_config)
+  UserBindControllerImpl::get_user_bind_server_sources_(UserBindConfig* user_bind_config)
   {
     std::ostringstream tracing;
     std::ostringstream errors;
@@ -124,12 +118,10 @@ namespace AdServer::UserInfoSvcs
         auto channel = AdServer::Grpc::create_channel(
           server.endpoint,
           grpc::InsecureChannelCredentials());
-        auto stub = adserver::user_info_svcs::user_bind::
-          UserBindServerGrpc::NewStub(channel);
+        auto stub = adserver::user_info_svcs::user_bind::UserBindServerGrpc::NewStub(channel);
 
         grpc::ClientContext context;
-        context.set_deadline(
-          std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
+        context.set_deadline(std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
         adserver::user_info_svcs::user_bind::GetSourceRequest request;
         adserver::user_info_svcs::user_bind::GetSourceResponse response;
         const auto status = stub->get_source(&context, request, &response);
@@ -181,10 +173,7 @@ namespace AdServer::UserInfoSvcs
 
     if (has_errors)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_BIND_CONTROLLER,
-        "ADS-IMPL-72") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_BIND_CONTROLLER, "ADS-IMPL-72") <<
         "Errors of getting UserBindServer gRPC sources:" << errors.str();
     }
 
@@ -194,9 +183,7 @@ namespace AdServer::UserInfoSvcs
     }
     else if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(
-        Logging::Logger::TRACE,
-        Aspect::USER_BIND_CONTROLLER) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::USER_BIND_CONTROLLER) <<
         "Not ready UserBindServers: " << tracing.str();
     }
 
@@ -226,8 +213,7 @@ namespace AdServer::UserInfoSvcs
           user_bind_config_.swap(user_bind_config);
         }
 
-        task_runner_->enqueue_task(
-          Task_var(new CheckUserBindServerStateTask(this, 0)));
+        task_runner_->enqueue_task(Task_var(new CheckUserBindServerStateTask(this, 0)));
       }
       else
       {
@@ -238,10 +224,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_BIND_CONTROLLER,
-        "ADS-IMPL-72") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_BIND_CONTROLLER, "ADS-IMPL-72") <<
         "Can't get UserBindServer gRPC sources: " << ex.what();
     }
   }
@@ -286,17 +269,13 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_BIND_CONTROLLER,
-        "ADS-IMPL-52") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_BIND_CONTROLLER, "ADS-IMPL-52") <<
         "check_user_bind_state_ failed: " << ex.what();
     }
   }
 
   void
-  UserBindControllerImpl::check_source_consistency_(
-    UserBindConfig* user_bind_config) const
+  UserBindControllerImpl::check_source_consistency_(UserBindConfig* user_bind_config) const
   {
     std::vector<long> chunk_refs(user_bind_config->common_chunks_number, -1);
     std::ostringstream errors;
@@ -311,8 +290,7 @@ namespace AdServer::UserInfoSvcs
         {
           has_errors = true;
           errors << "Server '" << server.endpoint << "' has chunk " << chunk_id <<
-            " >= common_chunks_number(" <<
-            user_bind_config->common_chunks_number << "). ";
+            " >= common_chunks_number(" << user_bind_config->common_chunks_number << "). ";
         }
         else if (chunk_refs[chunk_id] != -1)
         {

@@ -5,9 +5,7 @@
 
 #include "IPCrypter.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   //
   // AesEncryptKey
@@ -30,10 +28,7 @@ namespace Commons
   AesEncryptKey::encrypt(void* out, const void* in) const
     noexcept
   {
-    AES_encrypt(
-      static_cast<const unsigned char*>(in),
-      static_cast<unsigned char*>(out),
-      &key_);
+    AES_encrypt(static_cast<const unsigned char*>(in), static_cast<unsigned char*>(out), &key_);
   }
 
   //
@@ -57,10 +52,7 @@ namespace Commons
   AesDecryptKey::decrypt(void* out, const void* in) const
     noexcept
   {
-    AES_decrypt(
-      static_cast<const unsigned char*>(in),
-      static_cast<unsigned char*>(out),
-      &key_);
+    AES_decrypt(static_cast<const unsigned char*>(in), static_cast<unsigned char*>(out), &key_);
   }
 
   // IPCrypter
@@ -71,9 +63,7 @@ namespace Commons
   {}
 
   void
-  IPCrypter::encrypt(
-    std::string& encrypted_ip,
-    const char* ip)
+  IPCrypter::encrypt(std::string& encrypted_ip, const char* ip)
     /*throw(InvalidParams)*/
   {
     static const char* FUN = "IPCrypter::encrypt()";
@@ -84,7 +74,7 @@ namespace Commons
     {
       ip_address = ip_address_buf[0];
     }
-    else if(inet_pton(AF_INET6, ip, ip_address_buf) != 0)
+    else if (inet_pton(AF_INET6, ip, ip_address_buf) != 0)
     {
       ip_address = ip_address_buf[3];
     }
@@ -98,24 +88,19 @@ namespace Commons
     uint32_t encrypted_buf[AES_BLOCK_SIZE / 4 + 1];
     uint32_t buf[AES_BLOCK_SIZE / 4 + 1];
     *buf = ip_address;
-    for(uint32_t* salt = buf + 1;
-        salt < buf + AES_BLOCK_SIZE / 4 - 1; ++salt)
+    for (uint32_t* salt = buf + 1; salt < buf + AES_BLOCK_SIZE / 4 - 1; ++salt)
     {
       *salt = Generics::safe_rand();
     }
-    *(buf + AES_BLOCK_SIZE / 4 - 1) = Generics::CRC::quick(
-      0, buf, (AES_BLOCK_SIZE / 4 - 1) * 4);
+    *(buf + AES_BLOCK_SIZE / 4 - 1) = Generics::CRC::quick(0, buf, (AES_BLOCK_SIZE / 4 - 1) * 4);
 
     encrypt_key_.encrypt(encrypted_buf, buf);
 
-    String::StringManip::base64mod_encode(encrypted_ip,
-      encrypted_buf, AES_BLOCK_SIZE, false);
+    String::StringManip::base64mod_encode(encrypted_ip, encrypted_buf, AES_BLOCK_SIZE, false);
   }
 
   void
-  IPCrypter::decrypt(
-    std::string& ip,
-    const String::SubString& encrypted_ip)
+  IPCrypter::decrypt(std::string& ip, const String::SubString& encrypted_ip)
     /*throw(InvalidParams)*/
   {
     static const char* FUN = "IPCrypter::decrypt()";
@@ -124,8 +109,7 @@ namespace Commons
 
     try
     {
-      String::StringManip::base64mod_decode(
-        encrypted_buf, encrypted_ip, false);
+      String::StringManip::base64mod_decode(encrypted_buf, encrypted_ip, false);
     }
     catch(const eh::Exception& ex)
     {
@@ -134,7 +118,7 @@ namespace Commons
       throw InvalidParams(ostr);
     }
 
-    if(encrypted_buf.size() < AES_BLOCK_SIZE)
+    if (encrypted_buf.size() < AES_BLOCK_SIZE)
     {
       Stream::Error ostr;
       ostr << FUN << ": incorrect size of encrypted buffer " <<
@@ -146,8 +130,7 @@ namespace Commons
     decrypt_key_.decrypt(buf, encrypted_buf.data());
 
     // check CRC
-    if(Generics::CRC::quick(0, buf, (AES_BLOCK_SIZE / 4 - 1) * 4) !=
-       *(buf + 3))
+    if (Generics::CRC::quick(0, buf, (AES_BLOCK_SIZE / 4 - 1) * 4) != *(buf + 3))
     {
       Stream::Error ostr;
       ostr << FUN << ": incorrect CRC sum";
@@ -155,7 +138,7 @@ namespace Commons
     }
 
     char str_ip_holder[INET_ADDRSTRLEN];
-    if(inet_ntop(AF_INET, buf, str_ip_holder, sizeof(str_ip_holder)))
+    if (inet_ntop(AF_INET, buf, str_ip_holder, sizeof(str_ip_holder)))
     {
       ip = str_ip_holder;
     }
@@ -176,18 +159,16 @@ namespace Commons
     std::string key;
     try
     {
-      String::StringManip::base64mod_decode(
-        key, base64_key, false);
+      String::StringManip::base64mod_decode(key, base64_key, false);
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": invalid key '" << base64_key <<
-        "', base64 decode failed: " << ex.what();
+      ostr << FUN << ": invalid key '" << base64_key << "', base64 decode failed: " << ex.what();
       throw InvalidKey(ostr);
     }
 
-    if(key.size() < AES_BLOCK_SIZE)
+    if (key.size() < AES_BLOCK_SIZE)
     {
       Stream::Error ostr;
       ostr << FUN << ": invalid key '" << base64_key <<
@@ -195,8 +176,6 @@ namespace Commons
       throw InvalidKey(ostr);
     }
 
-    return KeyType(
-      reinterpret_cast<const unsigned char*>(key.c_str()), AES_BLOCK_SIZE);
+    return KeyType(reinterpret_cast<const unsigned char*>(key.c_str()), AES_BLOCK_SIZE);
   }
-}
 }

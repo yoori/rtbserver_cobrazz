@@ -8,9 +8,7 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Stream/MemoryStream.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
 
   /**
@@ -62,19 +60,15 @@ namespace Commons
   typedef ReferenceCounting::SmartPtr<HostDistributionFile>
     HostDistributionFile_var;
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   inline
-  const std::string& HostDistributionFile::get_host_by_index(
-    unsigned long index) const
+  const std::string& HostDistributionFile::get_host_by_index(unsigned long index) const
     /*throw(InvalidIndex)*/
   {
     IndexToHostMap::const_iterator fnd = host_map_.find(index);
-    if(fnd == host_map_.end())
+    if (fnd == host_map_.end())
     {
       Stream::Error err;
       err << "Invalid index " << index;
@@ -96,5 +90,4 @@ namespace Commons
     return host_map_;
   }
 
-}
 }

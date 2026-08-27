@@ -1,9 +1,6 @@
 #include "XsltCreativeTemplateValidation.hpp"
 
-REFLECT_UNIT(XsltCreativeTemplateValidation) (
-  "CreativeInstantiation",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(XsltCreativeTemplateValidation) ("CreativeInstantiation", AUTO_TEST_FAST);
 
 namespace
 {
@@ -57,7 +54,7 @@ XsltCreativeTemplateValidation::run_test()
 {
   AdClient client(AdClient::create_user(this));
 
-  for(size_t i = 0; i < countof(TEST_CASES); ++i)
+  for (size_t i = 0; i < countof(TEST_CASES); ++i)
   {
 
     SelectedCreativeChecker checker(
@@ -67,15 +64,10 @@ XsltCreativeTemplateValidation::run_test()
       referer_kw(fetch_string(TEST_CASES[i].keyword)),
       TEST_CASES[i].ccid? fetch_int(TEST_CASES[i].ccid): 0);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      TEST_CASES[i].description +
-        ". Check ccid");
+    FAIL_CONTEXT(checker.check(), TEST_CASES[i].description + ". Check ccid");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        TEST_CASES[i].status,
-        checker.client().req_status()).check(),
+      AutoTest::equal_checker(TEST_CASES[i].status, checker.client().req_status()).check(),
       TEST_CASES[i].description +
         ". Check status");
   }

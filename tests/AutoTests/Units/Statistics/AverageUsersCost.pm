@@ -160,7 +160,7 @@ sub init {
   $revenue += 0.01;
   $ns->output("TEXT/REVENUE",
               money_upscale($revenue));
-  
+
 
   # Test channels
   foreach my $channel (qw(TEST1 TEST2 TEST3 TEST4 TEST5))

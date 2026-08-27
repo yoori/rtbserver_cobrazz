@@ -81,7 +81,7 @@ sub create_sentence_delimiter
 
 sub store_ft {
   my ($path, $text) = @_;
-  open(my $FILE, ">$path") || die "Cann't open file $path for write.\n";  
+  open(my $FILE, ">$path") || die "Cann't open file $path for write.\n";
   print $FILE $text;
   close($FILE);
 }

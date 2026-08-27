@@ -11,7 +11,6 @@
 #include <Generics/Values.hpp>
 #include "CampaignManagerTypes.hpp"
 
-
 namespace AdServer
 {
   class BiddingStatInfo;
@@ -88,8 +87,7 @@ namespace AdServer
     void
     add_selected_bid(unsigned long ccg_id) noexcept;
 
-    using SelectedBidsMap =
-      boost::unordered_flat_map<unsigned long, unsigned long>;
+    using SelectedBidsMap = boost::unordered_flat_map<unsigned long, unsigned long>;
 
     SelectedBidsMap
     selected_bids() noexcept;

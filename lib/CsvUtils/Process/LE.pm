@@ -12,7 +12,7 @@ sub new
   exists($params{'max'}) ||
     die "CsvUtils::Process::LE: not defined 'max' argument";
 
-  if(!looks_like_number($params{'field'}))
+  if (!looks_like_number($params{'field'}))
   {
     die "CsvUtils::Process::Columns: incorrect column index: " . $params{'field'};
   }
@@ -30,16 +30,16 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(defined($self->{num_}) && $self->{num_} > 0)
+  if (defined($self->{num_}) && $self->{num_} > 0)
   {
-    if($row->[$self->{field_}] <= $self->{max_})
+    if ($row->[$self->{field_}] <= $self->{max_})
     {
       return $row;
     }
   }
   else
   {
-    if($row->[$self->{field_}] le $self->{max_})
+    if ($row->[$self->{field_}] le $self->{max_})
     {
       return $row;
     }

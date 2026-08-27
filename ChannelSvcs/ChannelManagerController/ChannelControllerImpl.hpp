@@ -28,10 +28,7 @@
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/ChannelSvcs/ChannelManagerControllerConfig.hpp>
 
-
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   /**
@@ -91,8 +88,7 @@ namespace ChannelSvcs
     {
     public:
 
-      ControlTask(ChannelControllerImpl* impl,
-        Generics::TaskRunner* task_runner) noexcept;
+      ControlTask(ChannelControllerImpl* impl, Generics::TaskRunner* task_runner) noexcept;
       virtual ~ControlTask() noexcept;
       virtual void execute() noexcept;
 
@@ -143,8 +139,7 @@ namespace ChannelSvcs
       const xsd::AdServer::Configuration::RegularSourceType& regular_config)
       /*throw(Exception)*/;
 
-    void read_proxy_connection_(
-      const xsd::AdServer::Configuration::ProxySourceType& config)
+    void read_proxy_connection_(const xsd::AdServer::Configuration::ProxySourceType& config)
       /*throw(Exception)*/;
 
     void read_list_refs_(
@@ -159,9 +154,7 @@ namespace ChannelSvcs
       bool use_local_on_first_load)
       noexcept;
 
-    void parse_groups_(
-      const String::SubString& groups_str,
-      std::vector<unsigned long>& groups)
+    void parse_groups_(const String::SubString& groups_str, std::vector<unsigned long>& groups)
       /*throw(Exception)*/;
 
     static void pack_ref_list_(
@@ -222,39 +215,35 @@ namespace ChannelSvcs
   typedef ReferenceCounting::SmartPtr<ChannelClusterControlImpl>
       ChannelClusterControlImpl_var;
 
-} /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
+  inline Logging::Logger*
+  ChannelControllerImpl::logger ()
+    noexcept
   {
-    inline Logging::Logger*
-    ChannelControllerImpl::logger ()
-      noexcept
-    {
-      return callback_->logger();
-    }
+    return callback_->logger();
+  }
 
-    /* ChannelControllerImpl */
-    inline
-    ChannelControllerImpl::ControlTask::ControlTask(
-      ChannelControllerImpl* impl, Generics::TaskRunner* task_runner)
-      noexcept
-      : TaskBase(task_runner), controller_impl_(impl)
-    {
-    }
+  /* ChannelControllerImpl */
+  inline
+  ChannelControllerImpl::ControlTask::ControlTask(
+    ChannelControllerImpl* impl, Generics::TaskRunner* task_runner)
+    noexcept
+    : TaskBase(task_runner), controller_impl_(impl)
+  {
+  }
 
-    inline
-    ChannelControllerImpl::ControlTask::~ControlTask() noexcept
-    {
-    }
+  inline
+  ChannelControllerImpl::ControlTask::~ControlTask() noexcept
+  {
+  }
 
-    inline void
-    ChannelControllerImpl::ControlTask::execute() noexcept
-    {
-      controller_impl_->check_();
-    }
+  inline void
+  ChannelControllerImpl::ControlTask::execute() noexcept
+  {
+    controller_impl_->check_();
+  }
 
-  } /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs

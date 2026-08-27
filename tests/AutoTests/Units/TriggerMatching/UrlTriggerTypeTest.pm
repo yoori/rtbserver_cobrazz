@@ -16,7 +16,7 @@ sub init
                         "www.internet.cnews.fr/internet-reclama/index.shtml",
                         "www.internet.cnews.ru/internet-reclama/index.shtml?1\n" .
                         "www.internet.cnews.fr/internet-reclama/index.shtml?1",
-                        "cnews.ru\n" . 
+                        "cnews.ru\n" .
                         "cnews.fr",
                         "internet.cnews.ru/internet-reclama\n" .
                         "internet.cnews.fr/internet-reclama",

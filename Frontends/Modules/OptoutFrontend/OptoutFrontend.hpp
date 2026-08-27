@@ -62,8 +62,7 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -108,9 +107,7 @@ namespace AdServer
     parse_config_() /*throw(Exception)*/;
 
     int
-    process_request_(
-      const FCGI::HttpRequest& request,
-      HttpResponse& response)
+    process_request_(const FCGI::HttpRequest& request, HttpResponse& response)
       noexcept;
 
     void
@@ -121,9 +118,7 @@ namespace AdServer
       const Generics::Time& cookie_expire_time)
       /*throw(eh::Exception)*/;
 
-    unsigned long calculate_status_(
-      OptOperation operation,
-      OptOperation old_operation) noexcept;
+    unsigned long calculate_status_(OptOperation operation, OptOperation old_operation) noexcept;
 
     int handle_status_operation_(
       const OptOperation old_oo_type,

@@ -1,10 +1,7 @@
 #include "Common.hpp"
 #include "HistorySessionTargettingTest.hpp"
 
-REFLECT_UNIT(HistorySessionTargettingTest) (
-  "UserProfiling",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(HistorySessionTargettingTest) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::NSLookupRequest  NSLookupRequest;
@@ -809,148 +806,73 @@ HistorySessionTargettingTest::run_test()
 {
 
   AutoTest::Time today_base(
-    (base_time.get_gm_time().format("%d-%m-%Y") +
-       ":" + "00-00-00").c_str());
+    (base_time.get_gm_time().format("%d-%m-%Y") + ":" + "00-00-00").c_str());
+
+  AUTOTEST_CASE(check(SESSION_1, countof(SESSION_1), base_time), "Session channel#1");
+
+  AUTOTEST_CASE(check(SESSION_2, countof(SESSION_2), base_time), "Session channel#2");
 
   AUTOTEST_CASE(
-    check(
-      SESSION_1,
-      countof(SESSION_1),
-      base_time),
-    "Session channel#1");
-
-  AUTOTEST_CASE(
-    check(
-      SESSION_2,
-      countof(SESSION_2),
-      base_time),
-    "Session channel#2");
-
-  AUTOTEST_CASE(
-    check(
-      CONTEXT_SESSION,
-      countof(CONTEXT_SESSION),
-      base_time),
+    check(CONTEXT_SESSION, countof(CONTEXT_SESSION), base_time),
     "Context session channel");
 
   AUTOTEST_CASE(
-    check(
-      SESSION_VISITS_2,
-      countof(SESSION_VISITS_2),
-      base_time),
+    check(SESSION_VISITS_2, countof(SESSION_VISITS_2), base_time),
     "Session channel with 2 visits count");
 
   AUTOTEST_CASE(
-    check(
-      SESSION_TIME_FROM,
-      countof(SESSION_TIME_FROM),
-      base_time),
+    check(SESSION_TIME_FROM, countof(SESSION_TIME_FROM), base_time),
     "Session channel with non-zero from time");
 
   AUTOTEST_CASE(
-    check(
-      SESSION_OPTIMIZING,
-      countof(SESSION_OPTIMIZING),
-      today_base),
+    check(SESSION_OPTIMIZING, countof(SESSION_OPTIMIZING), today_base),
     "Session optimizing");
 
   AUTOTEST_CASE(
-    check(
-      SESSION_BOUNDARY,
-      countof(SESSION_BOUNDARY),
-      today_base),
+    check(SESSION_BOUNDARY, countof(SESSION_BOUNDARY), today_base),
     "Boundary time range");
 
-  AUTOTEST_CASE(
-    check(
-      REGULAR_HT,
-      countof(REGULAR_HT),
-      base_time),
-    "Regular H+T channel");
+  AUTOTEST_CASE(check(REGULAR_HT, countof(REGULAR_HT), base_time), "Regular H+T channel");
+
+  AUTOTEST_CASE(check(HT_2, countof(HT_2), base_time), "H+T channel#2");
+
+  AUTOTEST_CASE(check(HISTORY, countof(HISTORY), base_time), "History channel");
+
+  AUTOTEST_CASE(check(COMBINED, countof(COMBINED), base_time), "Combined case");
+
+  AUTOTEST_CASE(check(CONTEXT_HT, countof(CONTEXT_HT), base_time), "Context H+T channel");
 
   AUTOTEST_CASE(
-    check(
-      HT_2,
-      countof(HT_2),
-      base_time),
-    "H+T channel#2");
-
-  AUTOTEST_CASE(
-    check(
-      HISTORY,
-      countof(HISTORY),
-      base_time),
-    "History channel");
-
-  AUTOTEST_CASE(
-    check(
-      COMBINED,
-      countof(COMBINED),
-      base_time),
-    "Combined case");
-
-  AUTOTEST_CASE(
-    check(
-      CONTEXT_HT,
-      countof(CONTEXT_HT),
-      base_time),
-    "Context H+T channel");
-
-  AUTOTEST_CASE(
-    check(
-      HT_OPTIMIZE,
-      countof(HT_OPTIMIZE),
-      base_time),
+    check(HT_OPTIMIZE, countof(HT_OPTIMIZE), base_time),
     "History+Today. Visits in base and history profile");
 
   AUTOTEST_CASE(
-    check(
-      HT_HISTORY,
-      countof(HT_HISTORY),
-      base_time),
+    check(HT_HISTORY, countof(HT_HISTORY), base_time),
     "History+Today. Visits only in history profile");
 
   AUTOTEST_CASE(
-    check(
-       HISTORY_MATCHING,
-      countof(HISTORY_MATCHING),
-       base_time),
+    check(HISTORY_MATCHING, countof(HISTORY_MATCHING), base_time),
     "History channels matching");
 
   AUTOTEST_CASE(
-    check(
-      HISTORY_PERSISTENCE,
-      countof(HISTORY_PERSISTENCE),
-      base_time),
+    check(HISTORY_PERSISTENCE, countof(HISTORY_PERSISTENCE), base_time),
     "Navigation history persistence");
 
   AUTOTEST_CASE(
-    check(
-      HISTORY_FILTRATION,
-      countof(HISTORY_FILTRATION),
-      base_time),
+    check(HISTORY_FILTRATION, countof(HISTORY_FILTRATION), base_time),
     "History channel with time_from > 1 day, "
     "history profile record filtration");
 
   AUTOTEST_CASE(
-    check(
-      HISTORY_VISITS,
-      countof(HISTORY_VISITS),
-      base_time),
+    check(HISTORY_VISITS, countof(HISTORY_VISITS), base_time),
     "Minimum visits condition for history channels");
 
   AUTOTEST_CASE(
-    check(
-      DOUBLE_OPTIMIZATION,
-      countof(DOUBLE_OPTIMIZATION),
-      base_time),
+    check(DOUBLE_OPTIMIZATION, countof(DOUBLE_OPTIMIZATION), base_time),
     "Double optimization");
 
   AUTOTEST_CASE(
-    check(
-      PERIODIC_OPTIMIZATION,
-      countof(PERIODIC_OPTIMIZATION),
-      today_base),
+    check(PERIODIC_OPTIMIZATION, countof(PERIODIC_OPTIMIZATION), today_base),
     "Periodic history optimization");
 
   return true;
@@ -968,18 +890,12 @@ void HistorySessionTargettingTest::check(
   for (size_t i = 0; i < requests_size; ++i)
   {
     NSLookupRequest request;
-    AutoTest::UserProfiling::make_request(
-      this,
-      request,
-      requests[i],
-      base_time);
+    AutoTest::UserProfiling::make_request(this, request, requests[i], base_time);
 
     client.process_request(request);
 
     if (requests[i].log_request &&
-        get_config().check_service(
-          CTE_ALL,
-          STE_USER_INFO_MANAGER_CONTROLLER))
+        get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER_CONTROLLER))
     {
       AutoTest::Logger::thlog().log("Persistent user profile:");
 
@@ -988,9 +904,7 @@ void HistorySessionTargettingTest::check(
       admin.initialize(
         this, CTE_ALL,
         STE_USER_INFO_MANAGER_CONTROLLER,
-        AutoTest::prepare_uid(
-          client.get_uid(),
-          AutoTest::UUE_ADMIN_PARAMVALUE).c_str(),
+        AutoTest::prepare_uid(client.get_uid(), AutoTest::UUE_ADMIN_PARAMVALUE).c_str(),
         AutoTest::UserInfoManagerController);
 
       admin.log(AutoTest::Logger::thlog());

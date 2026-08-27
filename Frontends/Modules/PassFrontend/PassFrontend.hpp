@@ -23,13 +23,13 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Passback::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer::Passback
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -51,14 +51,11 @@ namespace AdServer::Passback
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     virtual int
-    handle_redirect_request(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    handle_redirect_request(const FCGI::HttpRequest& request, FCGI::HttpResponse& response)
       /*throw(ForbiddenException, InvalidParamException, eh::Exception)*/;
 
     /** Performs initialization for the module child process. */
@@ -95,9 +92,7 @@ namespace AdServer::Passback
     void parse_config_() /*throw(Exception)*/;
 
     virtual int
-    process_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    process_request_(const FCGI::HttpRequest& request, FCGI::HttpResponse& response)
       noexcept;
 
     FrontendCommons::RequestTask

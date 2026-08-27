@@ -43,10 +43,7 @@ namespace Vanga
     predict(const FeatureArray& features) const noexcept;
 
     std::string
-    to_string(
-      const char* prefix,
-      const FeatureDictionary* dict = nullptr,
-      double base = 0.0)
+    to_string(const char* prefix, const FeatureDictionary* dict = nullptr, double base = 0.0)
       const noexcept;
 
     template<typename LabelType>
@@ -118,10 +115,7 @@ namespace Vanga
     save(std::ostream& ostr) const;
 
     std::string
-    to_string(
-      const char* prefix,
-      const FeatureDictionary* dict = nullptr,
-      double base = 0.0)
+    to_string(const char* prefix, const FeatureDictionary* dict = nullptr, double base = 0.0)
       const noexcept;
 
     static ReferenceCounting::SmartPtr<PredictorSet>
@@ -154,7 +148,7 @@ namespace Vanga
   PredictorSet::PredictorSet(IteratorType begin, IteratorType end, Type type)
     : type_(type)
   {
-    for(; begin != end; ++begin)
+    for (; begin != end; ++begin)
     {
       add(*begin);
     }

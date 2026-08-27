@@ -25,210 +25,193 @@
 
 #include "RequestActionProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::ProfilingCommons
 {
-  namespace ProfilingCommons
-  {
-    class RocksDBProfileMapProcessor;
-  }
+  class RocksDBProfileMapProcessor;
+}
 
-  namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
+{
+  struct CampaignReachProcessor: public virtual ReferenceCounting::Interface
   {
-    struct CampaignReachProcessor: public virtual ReferenceCounting::Interface
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    struct ReachInfo
     {
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+      IdAppearanceList campaigns;
+      IdAppearanceList ccgs;
+      IdAppearanceList creatives;
+      IdAppearanceList advertisers;
+      IdAppearanceList display_advertisers;
+      IdAppearanceList text_advertisers;
 
-      struct ReachInfo
-      {
-        IdAppearanceList campaigns;
-        IdAppearanceList ccgs;
-        IdAppearanceList creatives;
-        IdAppearanceList advertisers;
-        IdAppearanceList display_advertisers;
-        IdAppearanceList text_advertisers;
+      bool operator==(const ReachInfo& right) const;
 
-        bool operator==(const ReachInfo& right) const;
+      std::ostream& print(std::ostream& ostr, const char* offset) const;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* offset) const;
-
-      private:
-        template<typename ContainerType>
-        static
-        bool compare_seq_(const ContainerType& left, const ContainerType& right);
+    private:
+      template<typename ContainerType>
+      static
+      bool compare_seq_(const ContainerType& left, const ContainerType& right);
 
 /*        template<typename ContainerType>
-        static
-        std::ostream& print_seq_(
-          std::ostream& ostr, const ContainerType& lst);*/
-      };
-
-      virtual void process_reach(const ReachInfo& reach_info)
-        /*throw(Exception)*/ = 0;
-
-    protected:
-      virtual ~CampaignReachProcessor() noexcept {}
+      static
+      std::ostream& print_seq_(
+        std::ostream& ostr, const ContainerType& lst);*/
     };
 
-    using CampaignReachProcessor_var =
-      ReferenceCounting::SmartPtr<CampaignReachProcessor>;
+    virtual void process_reach(const ReachInfo& reach_info)
+      /*throw(Exception)*/ = 0;
 
-    const Generics::Time USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME =
-      Generics::Time::ONE_DAY * 180; // 180 days
+  protected:
+    virtual ~CampaignReachProcessor() noexcept {}
+  };
 
-    /**
-     * UserCampaignReachContainer
-     * contains logic of campaign reach match processing
-     * check appearing of cc_id, ccg_id, campaign_id
-     *   delegate appear processing to CampaignReachProcessor
-     * delegate request processing to request_processor
-     */
-    class UserCampaignReachContainer:
-      public virtual Generics::RefCountableCompositeActiveObject,
-      public virtual RequestActionProcessor
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
+  using CampaignReachProcessor_var = ReferenceCounting::SmartPtr<CampaignReachProcessor>;
 
-      UserCampaignReachContainer(
-        Logging::Logger* logger,
-        CampaignReachProcessor* campaign_reach_processor,
-        const char* rocksdb_path,
-        const Generics::Time& expire_time =
-          Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME),
-        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
-          rocksdb_processor = {})
-        /*throw(Exception)*/;
+  const Generics::Time USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME =
+    Generics::Time::ONE_DAY * 180; // 180 days
 
-      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-      co_get_profile(const AdServer::Commons::UserId& user_id);
-
-      void clear_expired_users() /*throw(Exception)*/;
-
-      AdServer::Commons::Awaitable<void>
-      co_clear_expired_users();
-
-      /** overlap CompositeRequestActionProcessor::process_impression */
-      virtual void
-      process_impression(
-        const RequestInfo& request_info,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state)
-        /*throw(RequestActionProcessor::Exception)*/;
-
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_impression(
-        const RequestInfo& request_info,
-        const ImpressionInfo& imp_info,
-        const ProcessingState& processing_state);
-
-      virtual void
-      process_request(
-        const RequestInfo&,
-        const ProcessingState&)
-        /*throw(RequestActionProcessor::Exception)*/
-      {};
-
-      virtual void
-      process_click(
-        const RequestInfo&,
-        const ProcessingState&)
-        /*throw(RequestActionProcessor::Exception)*/
-      {};
-
-      virtual void
-      process_action(const RequestInfo&)
-        /*throw(RequestActionProcessor::Exception)*/
-      {};
-
-    protected:
-      virtual ~UserCampaignReachContainer() noexcept;
-
-    private:
-      using UserCampaignReachMap = ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>;
-
-      using UserCampaignReachMap_var =
-        ReferenceCounting::SmartPtr<UserCampaignReachMap>;
-
-    private:
-      void process_ad_impression_(
-        const RequestInfo& request_info) /*throw(Exception)*/;
-
-      AdServer::Commons::Awaitable<void>
-      co_process_ad_impression_(
-        const RequestInfo& request_info);
-
-    private:
-      Logging::Logger_var logger_;
-      Generics::Time expire_time_;
-      UserCampaignReachMap_var user_map_;
-      CampaignReachProcessor_var campaign_reach_processor_;
-    };
-
-    using UserCampaignReachContainer_var =
-      ReferenceCounting::SmartPtr<UserCampaignReachContainer>;
-
-  } /* RequestInfoSvcs */
-} /* AdServer */
-
-namespace AdServer
-{
-  namespace RequestInfoSvcs
+  /**
+   * UserCampaignReachContainer
+   * contains logic of campaign reach match processing
+   * check appearing of cc_id, ccg_id, campaign_id
+   *   delegate appear processing to CampaignReachProcessor
+   * delegate request processing to request_processor
+   */
+  class UserCampaignReachContainer:
+    public virtual Generics::RefCountableCompositeActiveObject,
+    public virtual RequestActionProcessor
   {
-    template<typename ContainerType>
-    inline
-    bool
-    CampaignReachProcessor::ReachInfo::compare_seq_(
-      const ContainerType& left, const ContainerType& right)
-    {
-      return left.size() == right.size() &&
-        std::equal(left.begin(), left.end(), right.begin());
-    }
+  public:
+    DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
+
+    UserCampaignReachContainer(
+      Logging::Logger* logger,
+      CampaignReachProcessor* campaign_reach_processor,
+      const char* rocksdb_path,
+      const Generics::Time& expire_time =
+        Generics::Time(USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME),
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor = {})
+      /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_profile(const AdServer::Commons::UserId& user_id);
+
+    void clear_expired_users() /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_clear_expired_users();
+
+    /** overlap CompositeRequestActionProcessor::process_impression */
+    virtual void
+    process_impression(
+      const RequestInfo& request_info,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(
+      const RequestInfo& request_info,
+      const ImpressionInfo& imp_info,
+      const ProcessingState& processing_state);
+
+    virtual void
+    process_request(const RequestInfo&, const ProcessingState&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {};
+
+    virtual void
+    process_click(const RequestInfo&, const ProcessingState&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {};
+
+    virtual void
+    process_action(const RequestInfo&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {};
+
+  protected:
+    virtual ~UserCampaignReachContainer() noexcept;
+
+  private:
+    using UserCampaignReachMap = ProfilingCommons::TransactionProfileMap<
+      AdServer::Commons::UserId>;
+
+    using UserCampaignReachMap_var = ReferenceCounting::SmartPtr<UserCampaignReachMap>;
+
+  private:
+    void process_ad_impression_(
+      const RequestInfo& request_info) /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_ad_impression_(const RequestInfo& request_info);
+
+  private:
+    Logging::Logger_var logger_;
+    Generics::Time expire_time_;
+    UserCampaignReachMap_var user_map_;
+    CampaignReachProcessor_var campaign_reach_processor_;
+  };
+
+  using UserCampaignReachContainer_var = ReferenceCounting::SmartPtr<UserCampaignReachContainer>;
+
+} // namespace AdServer::RequestInfoSvcs
+
+namespace AdServer::RequestInfoSvcs
+{
+  template<typename ContainerType>
+  inline
+  bool
+  CampaignReachProcessor::ReachInfo::compare_seq_(
+    const ContainerType& left, const ContainerType& right)
+  {
+    return left.size() == right.size() && std::equal(left.begin(), left.end(), right.begin());
+  }
 
 /*    template<typename ContainerType>
-    inline
-    std::ostream&
-    CampaignReachProcessor::ReachInfo::print_seq_(
-      std::ostream& ostr, const ContainerType& lst)
-    {
-      Algs::print(ostr, lst.begin(), lst.end());
-      return ostr;
-    }*/
+  inline
+  std::ostream&
+  CampaignReachProcessor::ReachInfo::print_seq_(
+    std::ostream& ostr, const ContainerType& lst)
+  {
+    Algs::print(ostr, lst.begin(), lst.end());
+    return ostr;
+  }*/
 
-    inline
-    bool
-    CampaignReachProcessor::ReachInfo::operator==(
-      const CampaignReachProcessor::ReachInfo& right) const
-    {
-      return
-        compare_seq_(campaigns, right.campaigns) &&
-        compare_seq_(ccgs, right.ccgs) &&
-        compare_seq_(creatives, right.creatives) &&
-        compare_seq_(advertisers, right.advertisers) &&
-        compare_seq_(display_advertisers, right.display_advertisers) &&
-        compare_seq_(text_advertisers, right.text_advertisers);
-    }
+  inline
+  bool
+  CampaignReachProcessor::ReachInfo::operator==(
+    const CampaignReachProcessor::ReachInfo& right) const
+  {
+    return
+      compare_seq_(campaigns, right.campaigns) &&
+      compare_seq_(ccgs, right.ccgs) &&
+      compare_seq_(creatives, right.creatives) &&
+      compare_seq_(advertisers, right.advertisers) &&
+      compare_seq_(display_advertisers, right.display_advertisers) &&
+      compare_seq_(text_advertisers, right.text_advertisers);
+  }
 
-    inline
-    std::ostream&
-    CampaignReachProcessor::ReachInfo::print(
-      std::ostream& ostr, const char* offset) const
-    {
-      ostr << offset << "campaigns: ";
-      Algs::print(ostr, campaigns.begin(), campaigns.end());
-      ostr << std::endl << offset << "ccgs: ";
-      Algs::print(ostr, ccgs.begin(), ccgs.end());
-      ostr << std::endl << offset << "creatives: ";
-      Algs::print(ostr, creatives.begin(), creatives.end());
-      ostr << std::endl << offset << "advertisers: ";
-      Algs::print(ostr, advertisers.begin(), advertisers.end());
-      ostr << std::endl << offset << "display_advertisers: " << std::endl;
-      Algs::print(ostr, display_advertisers.begin(), display_advertisers.end());
-      ostr << std::endl << offset << "text_advertisers: " << std::endl;
-      Algs::print(ostr, text_advertisers.begin(), text_advertisers.end());
+  inline
+  std::ostream&
+  CampaignReachProcessor::ReachInfo::print(std::ostream& ostr, const char* offset) const
+  {
+    ostr << offset << "campaigns: ";
+    Algs::print(ostr, campaigns.begin(), campaigns.end());
+    ostr << std::endl << offset << "ccgs: ";
+    Algs::print(ostr, ccgs.begin(), ccgs.end());
+    ostr << std::endl << offset << "creatives: ";
+    Algs::print(ostr, creatives.begin(), creatives.end());
+    ostr << std::endl << offset << "advertisers: ";
+    Algs::print(ostr, advertisers.begin(), advertisers.end());
+    ostr << std::endl << offset << "display_advertisers: " << std::endl;
+    Algs::print(ostr, display_advertisers.begin(), display_advertisers.end());
+    ostr << std::endl << offset << "text_advertisers: " << std::endl;
+    Algs::print(ostr, text_advertisers.begin(), text_advertisers.end());
 
-      return ostr;
-    }
+    return ostr;
   }
 }

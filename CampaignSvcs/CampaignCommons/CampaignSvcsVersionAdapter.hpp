@@ -1,27 +1,17 @@
 #pragma once
 
-namespace AdServer
+namespace AdServer::CampaignSvcs_v360
+{}
+
+namespace POA_AdServer::CampaignSvcs_v360
+{}
+
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs_v360 {}
+  using namespace AdServer::CampaignSvcs_v360;
 }
 
-namespace POA_AdServer
+namespace POA_AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs_v360 {}
-}
-
-namespace AdServer
-{
-  namespace CampaignSvcs
-  {
-    using namespace AdServer::CampaignSvcs_v360;
-  }
-}
-
-namespace POA_AdServer
-{
-  namespace CampaignSvcs
-  {
-    using namespace POA_AdServer::CampaignSvcs_v360;
-  }
+  using namespace POA_AdServer::CampaignSvcs_v360;
 }

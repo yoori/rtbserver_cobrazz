@@ -48,9 +48,7 @@ namespace AdServer::LogProcessing
     class ScheduledTask final: public Generics::TaskImpl
     {
     public:
-      ScheduledTask(
-        std::shared_ptr<MoveTaskScheduler> scheduler,
-        Generics::Task* task);
+      ScheduledTask(std::shared_ptr<MoveTaskScheduler> scheduler, Generics::Task* task);
 
       void
       execute() noexcept override;
@@ -139,10 +137,7 @@ namespace AdServer::LogProcessing
 
   protected:
     virtual void
-    process_files_(
-      StringList& unlink_files,
-      const FileEntries& files,
-      const char* src_dir)
+    process_files_(StringList& unlink_files, const FileEntries& files, const char* src_dir)
       noexcept = 0;
 
   private:

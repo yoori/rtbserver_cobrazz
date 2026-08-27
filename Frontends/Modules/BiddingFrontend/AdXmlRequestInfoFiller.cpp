@@ -45,39 +45,32 @@ namespace AdServer::Bidding
     std::string categories; // TODO: process
   };
 
-  AdXmlRequestInfoFiller::AdXmlRequestInfoFiller(
-    RequestInfoFiller* request_info_filler)
+  AdXmlRequestInfoFiller::AdXmlRequestInfoFiller(RequestInfoFiller* request_info_filler)
     : request_info_filler_(request_info_filler)
   {
     add_param_processor_(
       Params::USER_ID,
-      new FrontendCommons::StringParamProcessor<Context>(
-        &Context::external_user_id));
+      new FrontendCommons::StringParamProcessor<Context>(&Context::external_user_id));
 
     add_param_processor_(
       Params::USER_ID2,
-      new FrontendCommons::StringParamProcessor<Context>(
-        &Context::external_user_id));
+      new FrontendCommons::StringParamProcessor<Context>(&Context::external_user_id));
 
     add_param_processor_(
       Params::USER_IP,
-      new FrontendCommons::StringParamProcessor<Context>(
-        &Context::ip));
+      new FrontendCommons::StringParamProcessor<Context>(&Context::ip));
 
     add_param_processor_(
       Params::USER_AGENT,
-      new FrontendCommons::StringParamProcessor<Context>(
-        &Context::user_agent));
+      new FrontendCommons::StringParamProcessor<Context>(&Context::user_agent));
 
     add_param_processor_(
       Params::USER_AGENT2,
-      new FrontendCommons::StringParamProcessor<Context>(
-        &Context::user_agent));
+      new FrontendCommons::StringParamProcessor<Context>(&Context::user_agent));
 
     add_param_processor_(
       Params::REFERER,
-      new FrontendCommons::HTTPAddressParamProcessor<Context>(
-        &Context::referer));
+      new FrontendCommons::HTTPAddressParamProcessor<Context>(&Context::referer));
   }
 
   void
@@ -92,28 +85,23 @@ namespace AdServer::Bidding
 
     const HTTP::ParamList& params = request.params();
 
-    for(HTTP::ParamList::const_iterator it = params.begin();
-      it != params.end(); ++it)
+    for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        param_processors_.find(it->name);
+      ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-      if(param_it != param_processors_.end())
+      if (param_it != param_processors_.end())
       {
         param_it->second->process(context, it->value);
       }
     }
 
     //
-    request_info.keywords.assign(
-      context.keywords.data(),
-      context.keywords.size());
+    request_info.keywords.assign(context.keywords.data(), context.keywords.size());
 
     request_info.client = request_info.hold_string(client.str());
     //request_info.client_version;
     request_info.request_type = AdServer::CampaignSvcs::AR_OPENRTB;
-    request_info.user_status = static_cast<std::size_t>(
-      AdServer::CampaignSvcs::US_UNDEFINED);
+    request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_UNDEFINED);
     request_info.hpos = 0;
 
     request_info_filler_->init_request_param(request_info);
@@ -121,7 +109,7 @@ namespace AdServer::Bidding
     request_info.enabled_notice = false;
     request_info.fill_track_pixel = false;
 
-    if(!context.external_user_id.empty())
+    if (!context.external_user_id.empty())
     {
       request_info.external_user_id = (
         !request_info.source_id.empty() ?
@@ -132,30 +120,25 @@ namespace AdServer::Bidding
 
     KeywordFormatter kw_fmt(request_info.source_id);
 
-    if(request_info.external_user_id.empty())
+    if (request_info.external_user_id.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
 
-      if(!request_info.source_id.empty())
+      if (!request_info.source_id.empty())
       {
         kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, std::string_view());
       }
     }
 
-    if(!context.ip.empty())
+    if (!context.ip.empty())
     {
-      const std::string_view ip = request_info.hold_string(
-        std::move(context.ip));
-      request_info_filler_->fill_by_ip(
-        request_info,
-        ip);
+      const std::string_view ip = request_info.hold_string(std::move(context.ip));
+      request_info_filler_->fill_by_ip(request_info, ip);
       kw_fmt.add_ip(ip);
     }
     else
     {
-      request_info_filler_->fill_by_ip(
-        request_info,
-        std::string_view());
+      request_info_filler_->fill_by_ip(request_info, std::string_view());
     }
 
     request_info_filler_->fill_by_user_agent(
@@ -176,7 +159,7 @@ namespace AdServer::Bidding
 
     request_info.profile_referer = true;
 
-    if(request_info.referer.empty())
+    if (request_info.referer.empty())
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NOREF);
     }
@@ -185,8 +168,7 @@ namespace AdServer::Bidding
     request_info.ad_slots.reserve(1);
     request_info.ad_slots.emplace_back(request_info.arena());
 
-    AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request =
-      request_info.ad_slots[0];
+    AdServer::Bidding::RequestInfo::AdSlotInfo& ad_slot_request = request_info.ad_slots[0];
 
     RequestInfoFiller::init_adslot(ad_slot_request);
     ad_slot_request.format = NATIVE_APP_FORMAT;
@@ -206,8 +188,7 @@ namespace AdServer::Bidding
     ad_slot_request.min_ecpm = AdServer::CampaignSvcs::RevenueDecimal::ZERO;
     ad_slot_request.currency_codes.resize(1);
     ad_slot_request.currency_codes[0] = DEFAULT_BIDFLOORCUR_CURRENCY;
-    ad_slot_request.min_ecpm_currency_code =
-      DEFAULT_BIDFLOORCUR_CURRENCY;
+    ad_slot_request.min_ecpm_currency_code = DEFAULT_BIDFLOORCUR_CURRENCY;
 
     ad_slot_request.up_expand_space = -1;
     ad_slot_request.right_expand_space = -1;
@@ -227,7 +208,7 @@ namespace AdServer::Bidding
     ad_slot_request.native_image_tokens.resize(require_icon ? 2 : 1);
     ad_slot_request.native_image_tokens[0].name = Tokens::IMAGE;
     ad_slot_request.native_image_tokens[0].required = true;
-    if(require_icon)
+    if (require_icon)
     {
       ad_slot_request.native_image_tokens[1].name = Tokens::ICON;
       ad_slot_request.native_image_tokens[1].required = true;
@@ -243,8 +224,6 @@ namespace AdServer::Bidding
     RequestParamProcessor* processor)
     noexcept
   {
-    param_processors_.insert(std::make_pair(
-      name,
-      RequestParamProcessor_var(processor)));
+    param_processors_.insert(std::make_pair(name, RequestParamProcessor_var(processor)));
   }
 }

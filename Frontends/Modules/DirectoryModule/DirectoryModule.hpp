@@ -49,8 +49,7 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -82,10 +81,7 @@ namespace AdServer
     class FileContent
     {
     public:
-      FileContent(
-        const char* file_name,
-        const void* buf,
-        unsigned long buf_len)
+      FileContent(const char* file_name, const void* buf, unsigned long buf_len)
         /*throw(eh::Exception)*/
         : file_name_(file_name),
           buf_(buf_len),
@@ -121,8 +117,7 @@ namespace AdServer
 
     DECLARE_EXCEPTION(VersionedFileCacheException, eh::DescriptiveException);
 
-    using VersionedFileCache =
-      AdServer::Commons::AsyncCache<std::string, FileContentPtr>;
+    using VersionedFileCache = AdServer::Commons::AsyncCache<std::string, FileContentPtr>;
     using VersionedFileCachePtr = std::shared_ptr<VersionedFileCache>;
 
     struct Directory: public ReferenceCounting::AtomicImpl
@@ -138,8 +133,7 @@ namespace AdServer
 
     using DirAliasMap = std::map<std::string, Directory_var>;
 
-    using ContentFeConfiguration =
-      Configuration::FeConfig::ContentFeConfiguration_type;
+    using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
 
     using ConfigPtr = std::unique_ptr<ContentFeConfiguration>;
 
@@ -155,9 +149,7 @@ namespace AdServer
       noexcept;
 
     FrontendCommons::RequestTask
-    process_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponse_var response)
+    process_request_(FCGI::HttpRequestHolder_var request_holder, FCGI::HttpResponse_var response)
       noexcept;
 
     static VersionedFileCache::HolderPtr
@@ -169,8 +161,7 @@ namespace AdServer
     make_versioned_file_sync_update_();
 
     static VersionedFileCache::AsyncUpdate
-    make_versioned_file_async_update_(
-      Generics::TaskRunner* task_runner);
+    make_versioned_file_async_update_(Generics::TaskRunner* task_runner);
 
   private:
     Generics::TaskRunner_var versioned_file_task_runner_;

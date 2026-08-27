@@ -8,8 +8,8 @@ sub create_diff
   my ($diff) = @_;
 
   my $value = sub { defined $_[0]? $_[0]: 0; };
- 
-  return 
+
+  return
     [ $value->($diff->{imps}),
       $value->($diff->{clicks}),
       $value->($diff->{actions}),
@@ -58,19 +58,19 @@ sub output_hash
 {
   my ($self, $name, $hash) = @_;
   $self->{ns_}->output(
-     $self->{prefix_} . "/" . $name, 
+     $self->{prefix_} . "/" . $name,
      scalar keys(%$hash));
   foreach my $k (sort keys(%$hash))
   {
-    my $v =  join(",", 
+    my $v =  join(",",
       map(
-        $self->entity($_), 
+        $self->entity($_),
         split(/,/, $hash->{$k})));
     $self->{ns_}->output(
       $self->{prefix_} . "/" . $k, $v);
   }
   $self->{ns_}->output(
-    $self->{prefix_} . "/" . $name . "End", 
+    $self->{prefix_} . "/" . $name . "End",
      scalar keys(%$hash));
 }
 
@@ -83,7 +83,7 @@ sub store
 sub entity
 {
   my ($self, $name) = @_;
-  die "'$name' not defined in the case '$self->{prefix_}'" 
+  die "'$name' not defined in the case '$self->{prefix_}'"
        if not defined $self->{entities_}->{$name};
   return $self->{entities_}->{$name};
 }
@@ -91,10 +91,10 @@ sub entity
 sub calc_text_keyword_revenue
 {
   my ($cpc_bids, $index, $ctr) = @_;
-  die "Invalid creative index: $index" 
+  die "Invalid creative index: $index"
     if $index >= @$cpc_bids;
   my @cpcs = grep {defined $_} @$cpc_bids;
-  if ($index || @cpcs == 1) 
+  if ($index || @cpcs == 1)
   {
     return $cpcs[$index] * 1000 * 100 * $ctr;
   }
@@ -110,10 +110,10 @@ sub create_publisher
     return $params->{publisher};
   }
 
-  my $publisher = 
+  my $publisher =
       $self->{ns_}->create(Publisher => {
         name => $self->{prefix_} . "-" . $prefix . "-Publisher",
-        pubaccount_currency_id => 
+        pubaccount_currency_id =>
           defined $params->{currency}?
             $params->{currency}: DB::Defaults::instance()->currency(),
         pricedtag_size_id => $params->{size},
@@ -131,7 +131,7 @@ sub create_targeting_channel
 {
   my ($self, $prefix, $name, $ch) = @_;
 
-  my $channel = 
+  my $channel =
     $self->{ns_}->create(DB::TargetingChannel->blank(
     $self->{prefix_} . "-" . $name,
     expression => $ch));
@@ -161,7 +161,7 @@ sub create_expchannel
       expression => $ch));
 
   $self->store($pname, $channel->{channel_id});
-  
+
   return $channel;
 }
 
@@ -181,9 +181,9 @@ sub create_channel
       role_id => DB::Defaults::instance()->advertiser_role });
 
   my $keyword = defined $params->{keyword}?
-   $params->{keyword}: 
+   $params->{keyword}:
       make_autotest_name(
-        $self->{ns_},  
+        $self->{ns_},
         $self->{prefix_} . "-" . $prefix);
 
   $self->store($prefix . "/KWD", $keyword);
@@ -243,12 +243,12 @@ sub create_display_campaign
     size_id => $params->{size},
     account_id => $account,
     template_id => DB::Defaults::instance()->display_template(),
-    channel_id => 
+    channel_id =>
       $self->create_channel(
         $prefix, 'B', \%channel_args)->{channel_id},
     campaigncreativegroup_cpm => $params->{cpm},
     site_links => [
-      {site_id => $publisher->{site_id}} ] });  
+      {site_id => $publisher->{site_id}} ] });
     $self->store($prefix . "/ACCOUNT", $account->{account_id});
     $self->store($prefix . "/CC", $campaign->{cc_id});
     $self->store($prefix . "/CPM", $params->{cpm});
@@ -281,7 +281,7 @@ sub create_display_track_campaign
     campaigncreativegroup_cpm => $params->{cpm},
     campaigncreativegroup_flags => DB::Campaign::INCLUDE_SPECIFIC_SITES,
     site_links => [
-      {site_id => $publisher->{site_id}} ] });  
+      {site_id => $publisher->{site_id}} ] });
     $self->store($prefix . "/CC", $campaign->{cc_id});
     $self->store($prefix . "/CPM", $params->{cpm});
 }
@@ -290,7 +290,7 @@ sub create_text_keyword_campaigns
 {
   my ($self, $prefix, $params) = @_;
 
-  my $ctr = defined $params->{ctr}? 
+  my $ctr = defined $params->{ctr}?
     $params->{ctr}: DEFAULT_CTR;
 
   my $publisher = $self->create_publisher(
@@ -299,14 +299,14 @@ sub create_text_keyword_campaigns
   my %channel_args = %$params;
   if (defined $params->{keyword})
   {
-    $channel_args{channel} = 
+    $channel_args{channel} =
       $self->create_channel(
         $prefix, 'K', $params)
   }
 
   my $idx = 0;
 
-  foreach my $cpc_bid (@{$params->{cpc_bids}}) 
+  foreach my $cpc_bid (@{$params->{cpc_bids}})
   {
     my $revenue =
      defined $cpc_bid ?
@@ -315,11 +315,11 @@ sub create_text_keyword_campaigns
     my $channel = $self->create_channel(
       $prefix, 'K', \%channel_args, ++$idx);
 
-    my @sites = defined $cpc_bid? 
+    my @sites = defined $cpc_bid?
        ({ site_id => $publisher->{site_id} }): ();
 
-    my $campaign = 
-      $self->{ns_}->create(TextAdvertisingCampaign => { 
+    my $campaign =
+      $self->{ns_}->create(TextAdvertisingCampaign => {
         name => $self->{prefix_} . "-" . $prefix . "-" . $idx,
         size_id => $params->{size},
         template_id =>  DB::Defaults::instance()->text_template,
@@ -340,7 +340,7 @@ sub create_text_channel_campaigns
 {
   my ($self, $prefix, $params) = @_;
 
-  my $ctr = defined $params->{ctr}? 
+  my $ctr = defined $params->{ctr}?
     $params->{ctr}: DEFAULT_CTR;
 
   my $publisher = $self->create_publisher(
@@ -349,13 +349,13 @@ sub create_text_channel_campaigns
   my %channel_args = %$params;
   if (defined $params->{keyword})
   {
-    $channel_args{channel} = 
+    $channel_args{channel} =
       $self->create_channel(
         $prefix, 'B', $params)
   }
 
   my $idx = 0;
-  foreach my $cpm (@{$params->{cpms}}) 
+  foreach my $cpm (@{$params->{cpms}})
   {
 
     my $channel = $self->create_channel(
@@ -375,22 +375,22 @@ sub create_text_channel_campaigns
    }
 }
 
-sub create_case_data 
+sub create_case_data
 {
   my ($self, $args) = @_;
 
   my $size = $self->{ns_}->create(CreativeSize => {
     name => $self->{prefix_},
-    max_text_creatives => 
+    max_text_creatives =>
       $args->{max_text_creatives} });
   $self->store("SIZE", $size);
   # Create publisher
-  my $publisher; 
+  my $publisher;
   if (defined $args->{publisher})
   {
     my %pub_args = %{$args->{publisher}};
     $pub_args{size} = $size;
-    $publisher = 
+    $publisher =
       $self->create_publisher("COMMON", \%pub_args);
   }
 
@@ -459,7 +459,7 @@ sub output
   $self->output_hash("Tags", $args->{cpp_tags});
   $self->output_hash("Keywords", $args->{cpp_keywords});
   $self->output_hash("Channels", $args->{cpp_channels});
-  
+
   my $index=0;
   foreach my $channel (@{ $args->{cpp_checks}->{channels} })
   {
@@ -482,7 +482,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;
   }
@@ -545,8 +545,8 @@ sub ipms_scenario
   my $expression = $ns->create(DB::ExpressionChannel->blank(
     name => 'IMPS-EXPR',
     account_id => $acc,
-    expression => 
-      join('|', $channel1->channel_id, 
+    expression =>
+      join('|', $channel1->channel_id,
            $channel2->channel_id)));
 
   my $campaign1 = $ns->create(DisplayCampaign => {
@@ -600,13 +600,13 @@ sub ipms_scenario
   $ns->output("ImpsScenario/ReqCreatives-1", 1, "list of creatives of 2");
   $ns->output("ImpsScenario/CC2", $campaign2->{cc_id});
   $ns->output("ImpsScenario/ReqCreatives-1End", 1, "list of creatives of 2");
-  
+
   $ns->output("ImpsScenario/Channels", 3, "list of channels");
   $ns->output("ImpsScenario/CH1", $channel1->channel_id);
   $ns->output("ImpsScenario/CH2", $channel2->channel_id);
   $ns->output("ImpsScenario/CHE", $expression->channel_id());
   $ns->output("ImpsScenario/ChannelsEnd", 3, "list of channels");
-  
+
   my $ch2_imps = floor(COUNT / 2);
   my $ch2_clicks = floor(COUNT / 2 / 3);
   my $ch2_actions = floor(COUNT / 2 / 3 / 5);
@@ -651,15 +651,15 @@ sub imps_other_scenario_channel
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
    ChannelImpInventoryTest::Case->new(
      $ns, "ImpsOtherChannel",
      { max_text_creatives => 3,
        keyword => "ImpsOtherChannel",
-       display => { 
+       display => {
          tag_cpm => 1,
          cpm => 50 },
-       channels => { 
+       channels => {
          tag_cpm => 1,
          cpms => [20, 10] } });
 
@@ -682,9 +682,9 @@ sub imps_other_scenario_channel
      { impops_user_count => COUNT,
        imps_other => 5 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
+       imps_other_value =>
         COUNT * ($revenue1 + $revenue2) +
-        COUNT * $cpmD, 
+        COUNT * $cpmD,
       impops_no_imp => COUNT,
       impops_no_imp_user_count => COUNT,
       impops_no_imp_value => COUNT * $min_ecpm / 3  }),
@@ -692,7 +692,7 @@ sub imps_other_scenario_channel
      { impops_user_count => COUNT,
        imps_other => 2 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
+       imps_other_value =>
         COUNT * ($revenue1 + $revenue2) +
         COUNT * $cpmD }),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -719,10 +719,10 @@ sub imps_other_scenario_channel
        "CH1" => "DISPLAY/CH",
        "CH2" => "CHANNEL/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "CHANNEL/CH" },
          { "CH" => "DISPLAY/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC" => "DISPLAY/CC" },
          { "CC1" => "CHANNEL/CC1",
            "CC2" => "CHANNEL/CC2" } ] },
@@ -734,7 +734,7 @@ sub imps_other_scenario_keyword
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
      $ns, "ImpsOtherKeyword",
      { max_text_creatives => 4,
@@ -742,7 +742,7 @@ sub imps_other_scenario_keyword
        display =>  { cpm => 1 },
        keywords => { cpc_bids => [20, 10, 5, 2] } });
 
-  # +0.01 top eCPM correction (REQ-2849) 
+  # +0.01 top eCPM correction (REQ-2849)
   my $ctr = ChannelImpInventoryTest::Case::DEFAULT_CTR;
   my $revenue1 = ($case->entity("KEYWORD/REVENUE1") + 0.01 / $ctr) / 1000;
   my $revenue1_cpc = $case->entity("KEYWORD/REVENUE1") / 1000 + 0.01;
@@ -758,95 +758,95 @@ sub imps_other_scenario_keyword
   my @diffs = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        clicks => COUNT,
        revenue => COUNT * $revenue1_cpc,
        imps_user_count => COUNT,
        imps_value => COUNT * $imp_revenue1,
        impops_user_count => COUNT,
-       imps_other => 3 * COUNT, 
+       imps_other => 3 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-          COUNT * ($imp_revenue2 + 
+       imps_other_value =>
+          COUNT * ($imp_revenue2 +
                    $imp_revenue3 + $imp_revenue4) }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        clicks => COUNT,
        revenue => COUNT * $revenue2,
        imps_user_count => COUNT,
        imps_value => COUNT * $imp_revenue2,
        impops_user_count => COUNT,
-       imps_other => 3 * COUNT, 
+       imps_other => 3 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-          COUNT * ($imp_revenue1 + 
+       imps_other_value =>
+          COUNT * ($imp_revenue1 +
                    $imp_revenue3 + $imp_revenue4) }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        clicks => COUNT,
        revenue => COUNT * $revenue3,
        imps_user_count => COUNT,
        imps_value => COUNT * $imp_revenue3,
        impops_user_count => COUNT,
-       imps_other => 3 * COUNT, 
+       imps_other => 3 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-          COUNT * ($imp_revenue1 + 
+       imps_other_value =>
+          COUNT * ($imp_revenue1 +
                    $imp_revenue2 + $imp_revenue4) }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        clicks => COUNT,
        revenue => COUNT * $revenue4,
        imps_user_count => COUNT,
        imps_value => COUNT * $imp_revenue4,
        impops_user_count => COUNT,
-       imps_other => 3 * COUNT, 
+       imps_other => 3 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 +
                   $imp_revenue2 + $imp_revenue3) }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value => 
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 4 * COUNT, 
+       imps_other => 4 * COUNT,
        imps_other_user_count => COUNT,
-       imps_other_value =>          
-         COUNT * ($imp_revenue1 + $imp_revenue2 + 
+       imps_other_value =>
+         COUNT * ($imp_revenue1 + $imp_revenue2 +
                   $imp_revenue3 + $imp_revenue4)}) );
- 
+
   $case->output(
    { cpp_tags => {
        "TAG" => "COMMON/TAG" },
@@ -859,13 +859,13 @@ sub imps_other_scenario_keyword
        "CH4" => "KEYWORD/CH4",
        "CH5" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2",
            "CH3" => "KEYWORD/CH3",
            "CH4" => "KEYWORD/CH4",
            "CH5" => "DISPLAY/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "KEYWORD/CC1",
            "CC2" => "KEYWORD/CC2",
            "CC3" => "KEYWORD/CC3",
@@ -878,7 +878,7 @@ sub imps_other_scenario_display
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
      $ns, "ImpsOtherDisplay",
      { max_text_creatives => 2,
@@ -891,33 +891,33 @@ sub imps_other_scenario_display
   my @diffs = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        revenue => COUNT * $cpmD,
        imps_user_count => COUNT,
        imps_value => COUNT * $cpmD,
        impops_user_count => COUNT }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}) );
 
@@ -931,11 +931,11 @@ sub imps_other_scenario_display
        "CH2" => "KEYWORD/CH2",
        "CH3" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2",
            "CH3" => "DISPLAY/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC" => "DISPLAY/CC" } ] },
      cpp_diffs => \@diffs });
 }
@@ -946,7 +946,7 @@ sub nocookies
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
      $ns, "NoCookies",
      { max_text_creatives => 2,
@@ -965,13 +965,13 @@ sub nocookies
        impops_user_count => 0,
        imps_user_count => 0,
        imps_value => COUNT * $cpmD,
-       imps_other => 0, 
+       imps_other => 0,
        imps_other_user_count => 0,
        imps_other_value => 0}),
    ChannelImpInventoryTest::Diffs::create_diff(
      {
        impops_user_count => 0,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => 0,
        imps_other_value => COUNT * $cpmD}) );
 
@@ -984,9 +984,9 @@ sub nocookies
        "CH" => "DISPLAY/CH"
        },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY/CH"} ],
-       creatives => [ 
+       creatives => [
          { "CC" => "DISPLAY/CC"} ] },
      cpp_diffs => \@diffs });
 }
@@ -997,7 +997,7 @@ sub oouser
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
      $ns, "OOUser",
      { max_text_creatives => 2,
@@ -1016,14 +1016,14 @@ sub oouser
        impops_user_count => 0,
        imps_user_count => 0,
        imps_value => COUNT * $cpmD,
-       imps_other => 0, 
+       imps_other => 0,
        imps_other_user_count => 0,
        imps_other_value => 0
      }),
    ChannelImpInventoryTest::Diffs::create_diff(
      {
        impops_user_count => 0,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => 0,
        imps_other_value => COUNT * $cpmD
      }) );
@@ -1037,9 +1037,9 @@ sub oouser
        "CH" => "DISPLAY/CH"
        },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY/CH"} ],
-       creatives => [ 
+       creatives => [
          { "CC" => "DISPLAY/CC"} ] },
      cpp_diffs => \@diffs });
   $ns->output("OOUser/COLO", DB::Defaults::instance()->ads_isp->{colo_id});
@@ -1050,7 +1050,7 @@ sub not_verified_impressions
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
      $ns, "NotVerifiedImpressions",
      { max_text_creatives => 2,
@@ -1067,13 +1067,13 @@ sub not_verified_impressions
        imps_user_count => COUNT,
        impops_user_count => COUNT,
        imps_value => COUNT * $cpmD,
-       imps_other => 0, 
+       imps_other => 0,
        imps_other_user_count => 0,
        imps_other_value => 0}),
    ChannelImpInventoryTest::Diffs::create_diff(
      {
        impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1082,13 +1082,13 @@ sub not_verified_impressions
        imps_user_count => COUNT,
        impops_user_count => COUNT,
        imps_value => COUNT * $cpmD,
-       imps_other => 0, 
+       imps_other => 0,
        imps_other_user_count => 0,
        imps_other_value => 0}),
    ChannelImpInventoryTest::Diffs::create_diff(
      {
        impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $cpmD}) );
 
@@ -1102,9 +1102,9 @@ sub not_verified_impressions
        "CH2" => "DISPLAY_TRACK/CHE"
        },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY_TRACK/CHH"} ],
-       creatives => [ 
+       creatives => [
          { "CC" => "DISPLAY_TRACK/CC"} ] },
      cpp_diffs => \@diffs });
 }
@@ -1112,7 +1112,7 @@ sub not_verified_impressions
 sub no_imps_scenario {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "NoImps",
       { max_text_creatives => 2,
@@ -1129,26 +1129,26 @@ sub no_imps_scenario {
      cpp_channels => {
        "CH1" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY/CH" } ],
        creatives => [ {} ] },
      cpp_diffs => [
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
        impops_no_imp => COUNT,
-       impops_no_imp_user_count => COUNT, 
+       impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
        impops_no_imp => 2 * COUNT,
-       impops_no_imp_user_count => COUNT, 
+       impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm})] });
 }
 
 sub no_imps_opportunity_scenario {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "NoImpsOpportunity",
       { max_text_creatives => 2,
@@ -1163,7 +1163,7 @@ sub no_imps_opportunity_scenario {
      cpp_channels => {
        "CH1" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY/CH" } ],
        creatives => [ {} ] },
      cpp_diffs => [
@@ -1179,7 +1179,7 @@ sub no_imps_opportunity_scenario {
 # 1 Text Creative Served in 4-slot banner
 sub simple_1keywords {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "1Keyword",
       { max_text_creatives => 4,
@@ -1193,7 +1193,7 @@ sub simple_1keywords {
   my @diff = (
     ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue}),
     ChannelImpInventoryTest::Diffs::create_diff(
@@ -1201,12 +1201,12 @@ sub simple_1keywords {
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue,
-       impops_no_imp => 3 * COUNT, 
+       impops_no_imp => 3 * COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => 3 * COUNT * $min_ecpm / 4}),
     ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue}),
     ChannelImpInventoryTest::Diffs::create_diff(
@@ -1214,7 +1214,7 @@ sub simple_1keywords {
        imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue,
-       impops_no_imp => 3 * COUNT, 
+       impops_no_imp => 3 * COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => 3 * COUNT * $min_ecpm / 4 } ));
 
@@ -1228,10 +1228,10 @@ sub simple_1keywords {
        "CH1" => "KEYWORD/CH1",
        "CH2" => "KEYWORD/CH2" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2" } ],
-       creatives => [ 
+       creatives => [
          { "CC" => "KEYWORD/CC1" } ] },
      cpp_diffs => \@diff });
 }
@@ -1241,7 +1241,7 @@ sub simple_1keywords {
 # Tag cpm + margin taken as impression opportunity value
 sub simple_2keywords_opportunity {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "2KeywordsOpportunity",
       { max_text_creatives => 4,
@@ -1252,8 +1252,8 @@ sub simple_2keywords_opportunity {
   # revenue1 == revenue2. Winner pay looser price !!
   my $ctr = ChannelImpInventoryTest::Case::DEFAULT_CTR;
   my $revenue2 = $case->entity("KEYWORD/REVENUE2") / 1000 / 100;
-  # +0.01 top eCPM correction (REQ-2849) 
-  my $revenue1 = $revenue2  + 0.01 / 1000; 
+  # +0.01 top eCPM correction (REQ-2849)
+  my $revenue1 = $revenue2  + 0.01 / 1000;
 
   my @diff = (
     ChannelImpInventoryTest::Diffs::create_diff({
@@ -1263,15 +1263,15 @@ sub simple_2keywords_opportunity {
         imps_other_value => COUNT * ($revenue1 + $revenue2) }),
 
     ChannelImpInventoryTest::Diffs::create_diff({
-        imps => COUNT, 
+        imps => COUNT,
         impops_user_count => COUNT,
         imps_user_count => COUNT,
-        imps_value => COUNT * $revenue1, 
+        imps_value => COUNT * $revenue1,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * $revenue2,
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
     #2
     ChannelImpInventoryTest::Diffs::create_diff({
@@ -1284,12 +1284,12 @@ sub simple_2keywords_opportunity {
         imps => COUNT,
         impops_user_count => COUNT,
         imps_user_count => COUNT,
-        imps_value =>  COUNT * $revenue2, 
+        imps_value =>  COUNT * $revenue2,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * $revenue1,
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
     #3
     ChannelImpInventoryTest::Diffs::create_diff({
@@ -1304,7 +1304,7 @@ sub simple_2keywords_opportunity {
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp =>  2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
      #4
     ChannelImpInventoryTest::Diffs::create_diff({
@@ -1319,7 +1319,7 @@ sub simple_2keywords_opportunity {
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2})
   );
 
@@ -1334,12 +1334,12 @@ sub simple_2keywords_opportunity {
          "CH3" => "KEYWORD/CH3",
          "CH4" => "KEYWORD/CH4" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2",
            "CH3" => "KEYWORD/CH3",
            "CH4" => "KEYWORD/CH4" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "KEYWORD/CC1",
            "CC2" => "KEYWORD/CC2"} ] },
      cpp_diffs => \@diff });
@@ -1349,7 +1349,7 @@ sub simple_2keywords_opportunity {
 sub simple_2keywords_display {
   my ($self, $ns) = @_;
   my $ctr = 0.1;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "2KeywordsDisplay",
       { max_text_creatives => 4,
@@ -1360,21 +1360,21 @@ sub simple_2keywords_display {
 
   my $min_ecpm = $case->entity("DISPLAY/CPM") / 1000;
   my $revenue2 = $case->entity("KEYWORD/REVENUE1") / 1000 / 100;
-  # +0.01 top eCPM correction (REQ-2849) 
-  my $revenue1 = $revenue2  + 0.01 / 1000; 
+  # +0.01 top eCPM correction (REQ-2849)
+  my $revenue1 = $revenue2  + 0.01 / 1000;
 
   my @diff = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($revenue2 + $revenue1)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue1,
        impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue2,
        impops_no_imp => 2 * COUNT,
@@ -1382,15 +1382,15 @@ sub simple_2keywords_display {
        impops_no_imp_value => COUNT * $min_ecpm / 2}),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($revenue2 + $revenue1)}),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
+     { imps => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue2,
        impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1,
        impops_no_imp => 2 * COUNT,
@@ -1407,11 +1407,11 @@ sub simple_2keywords_display {
        "CH1" => "KEYWORD/CH1",
        "CH2" => "KEYWORD/CH2" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2",
            "CH3" => "DISPLAY/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "KEYWORD/CC1",
            "CC2" => "KEYWORD/CC2" } ] },
      cpp_diffs => \@diff });
@@ -1421,12 +1421,12 @@ sub simple_2keywords_display {
 sub simple_2keywords_difference {
   my ($self, $ns) = @_;
   my $ctr = 0.1;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "2KeywordsDifference",
       { max_text_creatives => 4,
         keywords => { tag_cpm => 145,
-                      ctr => $ctr, 
+                      ctr => $ctr,
                       cpc_bids => [1, 0.7, undef, undef] } });
 
   my $min_ecpm = $case->entity("KEYWORD/MIN_ECPM") / 1000;
@@ -1439,96 +1439,96 @@ sub simple_2keywords_difference {
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 0,
-        impops_no_imp_user_count => 0, 
+        impops_no_imp_user_count => 0,
         impops_no_imp_value => 0}),
 
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => COUNT, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => COUNT,
-        imps_value => COUNT * $revenue1, 
+        imps_value => COUNT * $revenue1,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * $revenue2,
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
     #2
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 0,
-        impops_no_imp_user_count => 0, 
+        impops_no_imp_user_count => 0,
         impops_no_imp_value => 0}),
 
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => COUNT, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => COUNT,
-        imps_value =>  COUNT * $revenue2, 
+        imps_value =>  COUNT * $revenue2,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * $revenue1,
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
     #3
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 0,
-        impops_no_imp_user_count => 0, 
+        impops_no_imp_user_count => 0,
         impops_no_imp_value => 0}),
 
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => 2 * COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp =>  2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2}),
      #4
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 0,
-        impops_no_imp_user_count => 0, 
+        impops_no_imp_user_count => 0,
         impops_no_imp_value => 0}),
 
     ChannelImpInventoryTest::Diffs::create_diff({
         imps => 0, clicks => 0, actions => 0, revenue => 0,
         impops_user_count => COUNT,
         imps_user_count => 0,
-        imps_value => 0, 
+        imps_value => 0,
         imps_other => 2 * COUNT,
         imps_other_user_count => COUNT,
         imps_other_value => COUNT * ($revenue1 + $revenue2),
         impops_no_imp => 2 * COUNT,
-        impops_no_imp_user_count => COUNT, 
+        impops_no_imp_user_count => COUNT,
         impops_no_imp_value => COUNT * $min_ecpm / 2})
   );
 
@@ -1544,12 +1544,12 @@ sub simple_2keywords_difference {
          "CH3" => "KEYWORD/CH3",
          "CH4" => "KEYWORD/CH4" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2",
            "CH3" => "KEYWORD/CH3",
            "CH4" => "KEYWORD/CH4" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "KEYWORD/CC1",
            "CC2" => "KEYWORD/CC2"} ] },
      cpp_diffs => \@diff });
@@ -1558,7 +1558,7 @@ sub simple_2keywords_difference {
 # No Ad Served in 4-slot banner
 sub no_ad_keyword {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "NoAdKeyword",
       { max_text_creatives => 4,
@@ -1570,22 +1570,22 @@ sub no_ad_keyword {
   my @diff = (
   ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       impops_no_imp => COUNT, 
+       impops_no_imp => COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm }),
   ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       impops_no_imp => 4*COUNT, 
+       impops_no_imp => 4*COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm }),
   ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       impops_no_imp => COUNT, 
+       impops_no_imp => COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm }),
   ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       impops_no_imp => 4*COUNT, 
+       impops_no_imp => 4*COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm }) );
 
@@ -1598,7 +1598,7 @@ sub no_ad_keyword {
        "CH1" => "KEYWORD/CH1",
        "CH2" => "KEYWORD/CH2" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1",
            "CH2" => "KEYWORD/CH2" } ],
        creatives => [{}] },
@@ -1613,7 +1613,7 @@ sub case_1channel_2keywords {
     name => '1Channel2KeywordsCommon',
     role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $keyword = 
+  my $keyword =
     make_autotest_name($ns, "1ChannelTextDisplay-Common");
 
   my $channel = $ns->create(DB::BehavioralChannel->blank(
@@ -1624,8 +1624,8 @@ sub case_1channel_2keywords {
     behavioral_parameters => [
       DB::BehavioralChannel::BehavioralParameter->blank(
       trigger_type => "P")] ));
-  
-  my $case = 
+
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "1Channel2Keywords",
       { max_text_creatives => 4,
@@ -1636,7 +1636,7 @@ sub case_1channel_2keywords {
 
   $case->store("COMMON/KWD", $keyword);
   $case->store("COMMON/CH", $channel->{channel_id});
-  
+
   my $min_ecpm = $case->entity("COMMON/MIN_ECPM") / 1000;
 
   # +0.01 top eCPM correction (REQ-2849)
@@ -1647,7 +1647,7 @@ sub case_1channel_2keywords {
   my @diff = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($revenue1 + $revenue2)} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1662,7 +1662,7 @@ sub case_1channel_2keywords {
        impops_no_imp_value => COUNT * $min_ecpm / 2 } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($revenue1 + $revenue2)} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1675,7 +1675,7 @@ sub case_1channel_2keywords {
        impops_no_imp_value => COUNT * $min_ecpm / 2 } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($revenue1 + $revenue2)} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1698,11 +1698,11 @@ sub case_1channel_2keywords {
        "CH3" => "KEYWORD1/CH2",
        "CH1" => "COMMON/CH"},
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH2" => "KEYWORD1/CH1",
            "CH3" => "KEYWORD1/CH2",
            "CH1" => "COMMON/CH"} ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "KEYWORD2/CC1",
            "CC2" => "KEYWORD2/CC2"} ] },
      cpp_diffs => \@diff });
@@ -1711,7 +1711,7 @@ sub case_1channel_2keywords {
 # Channel Targeted Text CCGs
 sub channel_targeted {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "ChannelTargeted",
       { max_text_creatives => 4,
@@ -1722,13 +1722,13 @@ sub channel_targeted {
   my $revenue1 = $case->entity("CHANNEL/REVENUE1") / 1000;
   my $revenue2 = $case->entity("CHANNEL/REVENUE2") / 1000;
 
-  $case->create_channel('NOAD', 'B', 
+  $case->create_channel('NOAD', 'B',
                         { keyword => 'NOAD'});
 
   my @diff = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1 + COUNT * $revenue2} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1737,7 +1737,7 @@ sub channel_targeted {
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue1,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue2,
        impops_no_imp => 2 * COUNT,
@@ -1745,7 +1745,7 @@ sub channel_targeted {
        impops_no_imp_value => COUNT * $min_ecpm / 2 } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1 + COUNT * $revenue2} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1754,7 +1754,7 @@ sub channel_targeted {
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue2,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1,
        impops_no_imp => 2 * COUNT,
@@ -1762,12 +1762,12 @@ sub channel_targeted {
        impops_no_imp_value => COUNT * $min_ecpm / 2 } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1 + COUNT * $revenue2} ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 2*COUNT, 
+       imps_other => 2*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue1 + COUNT * $revenue2,
        impops_no_imp => 2 * COUNT,
@@ -1785,11 +1785,11 @@ sub channel_targeted {
        "CH2" => "CHANNEL/CH2",
        "CH3" => "NOAD/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "CHANNEL/CH1" },
          { "CH2" => "CHANNEL/CH2" },
          { "CH2" => "NOAD/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "CHANNEL/CC1" },
          { "CC2" => "CHANNEL/CC1" }]},
      cpp_diffs => \@diff });
@@ -1798,13 +1798,13 @@ sub channel_targeted {
 # Keyword & Channel Targeted Text CCGs
 sub keyword_vs_channel_targeted {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "KeywordvsChannelTargeted",
       { max_text_creatives => 4,
         publisher => { tag_cpm => 0},
-        keywords => { 
-          ctr => 0.1, 
+        keywords => {
+          ctr => 0.1,
           cpc_bids => [1]},
         channels => { cpms => [5]} });
 
@@ -1812,12 +1812,12 @@ sub keyword_vs_channel_targeted {
   my $revenue2 = $case->entity("CHANNEL/REVENUE1") / 1000;
   # Winner pay looser price (see case data)
   # +0.01 top eCPM correction (REQ-2849)
-  my $imp_revenue1 = $revenue2 + 0.01 / 1000; 
+  my $imp_revenue1 = $revenue2 + 0.01 / 1000;
 
   my @diff = (
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $imp_revenue1 + COUNT * $revenue2} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1825,7 +1825,7 @@ sub keyword_vs_channel_targeted {
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $imp_revenue1,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue2,
        impops_no_imp => 2 * COUNT,
@@ -1833,7 +1833,7 @@ sub keyword_vs_channel_targeted {
        impops_no_imp_value => COUNT * $min_ecpm / 2 } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $imp_revenue1  + COUNT * $revenue2} ),
    ChannelImpInventoryTest::Diffs::create_diff(
@@ -1842,7 +1842,7 @@ sub keyword_vs_channel_targeted {
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue2,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $imp_revenue1,
        impops_no_imp => 2 * COUNT,
@@ -1859,10 +1859,10 @@ sub keyword_vs_channel_targeted {
        "CH1" => "KEYWORD/CH1",
        "CH2" => "CHANNEL/CH1" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "KEYWORD/CH1" },
          { "CH2" => "CHANNEL/CH1" } ],
-       creatives => [ 
+       creatives => [
          { "CC" => "KEYWORD/CC1" },
          { "CC" => "CHANNEL/CC1" } ] },
      cpp_diffs => \@diff });
@@ -1870,7 +1870,7 @@ sub keyword_vs_channel_targeted {
 
 sub case_1channel_text_display {
   my ($self, $ns) = @_;
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "1ChannelTextDisplay",
       { max_text_creatives => 4,
@@ -1883,7 +1883,7 @@ sub case_1channel_text_display {
     name => '1ChannelTextDisplay',
     role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $keyword = 
+  my $keyword =
     make_autotest_name($ns, "1ChannelTextDisplay-Display");
 
   my $channel = $ns->create(
@@ -1898,8 +1898,8 @@ sub case_1channel_text_display {
   my $expression = $ns->create(DB::ExpressionChannel->blank(
     name => "1ChannelTextDisplay-Expr",
     account_id => $account,
-    expression => 
-      join('&', $channel->channel_id, 
+    expression =>
+      join('&', $channel->channel_id,
            $case->entity("CHANNEL/CH"))));
 
   $case->create_display_campaign('DISPLAY',
@@ -1918,35 +1918,35 @@ sub case_1channel_text_display {
 
   my @diff = (
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
-       revenue => COUNT * $disp_revenue, 
+     { imps => COUNT,
+       revenue => COUNT * $disp_revenue,
        imps_user_count => COUNT,
        imps_value => COUNT * $disp_revenue,
        impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * ($ch_revenue1 + $ch_revenue2) } ),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => 2*COUNT, 
+     { imps => 2*COUNT,
        revenue => COUNT * ($ch_revenue1 + $ch_revenue2),
        impops_user_count => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * ($ch_revenue1 + $ch_revenue2),,
-       imps_other => 4*COUNT, 
+       imps_other => 4*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $disp_revenue,
        impops_no_imp => 2 * COUNT,
        impops_no_imp_user_count => COUNT,
        impops_no_imp_value => COUNT * $min_ecpm / 2  } ),
    ChannelImpInventoryTest::Diffs::create_diff(
-     { imps => COUNT, 
-       revenue => COUNT * $disp_revenue, 
+     { imps => COUNT,
+       revenue => COUNT * $disp_revenue,
        imps_user_count => COUNT,
        imps_value => COUNT * $disp_revenue,
        impops_user_count => COUNT } ),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 4*COUNT, 
+       imps_other => 4*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $disp_revenue } ));
 
@@ -1962,14 +1962,14 @@ sub case_1channel_text_display {
        "CH1" => "CHANNEL/CH",
        "CH2" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "CHANNEL/CH" },
          { "CH1" => "CHANNEL/CH",
            "CH2" => "DISPLAY/CH" } ],
-       creatives => [ 
+       creatives => [
          { "CC1" => "CHANNEL/CC1",
            "CC2" => "CHANNEL/CC2" },
-         { "CC"  => "DISPLAY/CC" } ] 
+         { "CC"  => "DISPLAY/CC" } ]
     },
     cpp_diffs => \@diff });
 }
@@ -1983,7 +1983,7 @@ sub tag_not_serve_text_ads
 {
   my ($self, $ns) = @_;
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "NotServeTextAds",
       { max_text_creatives => 4,
@@ -2007,13 +2007,13 @@ sub tag_not_serve_text_ads
    ChannelImpInventoryTest::Diffs::create_diff(
      { revenue => COUNT * $revenue,
        impops_user_count => COUNT,
-       imps => COUNT, 
+       imps => COUNT,
        imps_user_count => COUNT,
-       imps_value => COUNT * $revenue     
+       imps_value => COUNT * $revenue
      }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 4*COUNT, 
+       imps_other => 4*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue
      }));
@@ -2026,12 +2026,12 @@ sub tag_not_serve_text_ads
      cpp_channels => {
        "CH" => "DISPLAY/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH" => "DISPLAY/CH" } ],
-       creatives => [ 
-         { "CC"  => "DISPLAY/CC" } ] 
+       creatives => [
+         { "CC"  => "DISPLAY/CC" } ]
    },
-   cpp_diffs => \@diff });  
+   cpp_diffs => \@diff });
 
 }
 
@@ -2043,25 +2043,25 @@ sub non_default_currency
   my $pub_rate = 5;
   my $adv_rate = 10;
 
-  my $pub_currency = 
+  my $pub_currency =
     $ns->create(
       Currency => { rate => $pub_rate });
 
-  my $adv_currency = 
+  my $adv_currency =
     $ns->create(
       Currency => { rate => $adv_rate });
 
-  my $case = 
+  my $case =
     ChannelImpInventoryTest::Case->new(
       $ns, "NonDefaultCurrency",
       { max_text_creatives => 4,
-        publisher => 
+        publisher =>
           { tag_cpm => 0,
             currency => $pub_currency->{currency_id} },
-        display => 
+        display =>
           { cpm => 300,
-            currency => $adv_currency->{currency_id} 
-          } 
+            currency => $adv_currency->{currency_id}
+          }
       });
 
   $case->create_channel(
@@ -2079,7 +2079,7 @@ sub non_default_currency
     name => 'NonDefaultCurrency-BIGCPM-Tag',
     site_id => $case->entity("COMMON/SITE"),
     size_id => $size,
-    cpm => 100 });  
+    cpm => 100 });
 
   $case->store("BIGCPM/TAG", $tag->{tag_id});
 
@@ -2090,39 +2090,39 @@ sub non_default_currency
    ChannelImpInventoryTest::Diffs::create_diff(
      { revenue => COUNT * $revenue,
        impops_user_count => COUNT,
-       imps => COUNT, 
+       imps => COUNT,
        imps_user_count => COUNT,
        imps_value => COUNT * $revenue,
        impops_no_imp => COUNT,
        impops_no_imp_user_count => COUNT,
-       impops_no_imp_value => COUNT * $min_ecpm 
+       impops_no_imp_value => COUNT * $min_ecpm
      }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 4*COUNT, 
+       imps_other => 4*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue,
        impops_no_imp => 2*COUNT,
        impops_no_imp_user_count => COUNT,
-       impops_no_imp_value => COUNT * $min_ecpm 
+       impops_no_imp_value => COUNT * $min_ecpm
      }),
    ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => COUNT, 
+       imps_other => COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue,
        impops_no_imp => COUNT,
        impops_no_imp_user_count => COUNT,
-       impops_no_imp_value => COUNT * $min_ecpm 
+       impops_no_imp_value => COUNT * $min_ecpm
      }),
       ChannelImpInventoryTest::Diffs::create_diff(
      { impops_user_count => COUNT,
-       imps_other => 4*COUNT, 
+       imps_other => 4*COUNT,
        imps_other_user_count => COUNT,
        imps_other_value => COUNT * $revenue,
        impops_no_imp => 2*COUNT,
        impops_no_imp_user_count => COUNT,
-       impops_no_imp_value => COUNT * $min_ecpm 
+       impops_no_imp_value => COUNT * $min_ecpm
      }));
 
   $case->output(
@@ -2136,15 +2136,15 @@ sub non_default_currency
        "CH1" => "DISPLAY/CH",
        "CH2" => "UNLINKED/CH" },
      cpp_checks => {
-       channels => [ 
+       channels => [
          { "CH1" => "DISPLAY/CH",
            "CH2" => "UNLINKED/CH" },
          { "CH1" => "DISPLAY/CH",
            "CH2" => "UNLINKED/CH" }],
-       creatives => [ 
+       creatives => [
          { "CC"  => "DISPLAY/CC" }, {} ]
    },
-   cpp_diffs => \@diff });  
+   cpp_diffs => \@diff });
 }
 
 sub tag_with_adjustment
@@ -2439,9 +2439,9 @@ sub init
   $self->simple_2keywords_difference($ns);
   $self->no_ad_keyword($ns);
   $self->case_1channel_2keywords($ns);
-  $self->channel_targeted($ns); 
+  $self->channel_targeted($ns);
   $self->keyword_vs_channel_targeted($ns);
-  $self->case_1channel_text_display($ns); 
+  $self->case_1channel_text_display($ns);
   $self->tag_not_serve_text_ads($ns);
   $self->non_default_currency($ns);
   $self->tag_with_adjustment($ns);

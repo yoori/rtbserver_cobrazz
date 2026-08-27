@@ -3,10 +3,7 @@
 #include "PassbackStatsTest.hpp"
 #include <Generics/Time.hpp>
 
-REFLECT_UNIT(PassbackStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(PassbackStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -23,8 +20,7 @@ PassbackStatsTest::process_and_check_passback(
   if (passback_request.empty())
   {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.find_header_value("Location", passback_request)),
+      AutoTest::predicate_checker(client.find_header_value("Location", passback_request)),
       "Client must be redirected to passback frontend");
   }
 
@@ -39,14 +35,11 @@ PassbackStatsTest::process_and_check_passback(
     client.process_request(passback_request);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("Location", passback_request)),
+    AutoTest::predicate_checker(client.find_header_value("Location", passback_request)),
     "Client must be redirected to original passback URL");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("REDIRECT_URL"),
-      passback_request).check(),
+    AutoTest::equal_checker(fetch_string("REDIRECT_URL"), passback_request).check(),
     "Client must be redirected to original passback URL");
 }
 
@@ -69,16 +62,8 @@ PassbackStatsTest::run_test()
   request.format = "unit-test-imp";
   request.debug_time = today;
 
-  FAIL_CONTEXT(
-    scenario1(
-      false,
-      fetch_int("TAG_0"),
-      "Simple passback requests"));
-  FAIL_CONTEXT(
-    scenario1(
-      true,
-      fetch_int("TAG_1"),
-      "Passback requests with same request_ids"));
+  FAIL_CONTEXT(scenario1(false, fetch_int("TAG_0"), "Simple passback requests"));
+  FAIL_CONTEXT(scenario1(true, fetch_int("TAG_1"), "Passback requests with same request_ids"));
   FAIL_CONTEXT(scenario2());
   FAIL_CONTEXT(scenario3());
   FAIL_CONTEXT(scenario4());
@@ -92,11 +77,7 @@ PassbackStatsTest::run_test()
   try
   {
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn_,
-          diffs_,
-          stats_)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
       "PassbackStats: check stats");
   }
   catch(const eh::Exception&)
@@ -104,9 +85,7 @@ PassbackStatsTest::run_test()
     std::for_each(
       requests_.begin(),
       requests_.end(),
-      std::bind1st(
-        std::mem_fun(
-          &PassbackStatsTest::log_pb_profile), this));
+      std::bind1st(std::mem_fun(&PassbackStatsTest::log_pb_profile), this));
     throw;
   }
 
@@ -114,30 +93,20 @@ PassbackStatsTest::run_test()
 }
 
 void
-PassbackStatsTest::log_pb_profile(
-  std::string request_id)
+PassbackStatsTest::log_pb_profile(std::string request_id)
 {
-  if (
-    get_config().check_service(
-      CTE_ALL, STE_EXPRESSION_MATCHER))
+  if (get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER))
   {
     AutoTest::AdminsArray<AutoTest::PassbackProfileAdmin>
       admins;
 
-    admins.initialize(
-      this,
-      CTE_ALL,
-      STE_REQUEST_INFO_MANAGER,
-      request_id);
+    admins.initialize(this, CTE_ALL, STE_REQUEST_INFO_MANAGER, request_id);
 
     admins.log(AutoTest::Logger::thlog());
   }
 }
 
-void PassbackStatsTest::scenario1(
-  bool same_id,
-  int tag,
-  const char* part)
+void PassbackStatsTest::scenario1(bool same_id, int tag, const char* part)
 {
   add_descr_phrase(part);
 
@@ -154,8 +123,7 @@ void PassbackStatsTest::scenario1(
     AdClient client(AdClient::create_user(this));
     client.process_request(request);
 
-    requests_.push_back(
-      client.debug_info.request_id.value().c_str());
+    requests_.push_back(client.debug_info.request_id.value().c_str());
 
     process_and_check_passback(client, std::string(), same_id ? 2 : 1);
   }
@@ -185,14 +153,11 @@ PassbackStatsTest::scenario2()
     AdClient client(AdClient::create_user(this));
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.empty()),
       "Server must return any creative.");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        200,
-        client.req_status()).check(),
+      AutoTest::equal_checker(200, client.req_status()).check(),
       "Client must not be redirected.");
   }
 
@@ -307,8 +272,7 @@ PassbackStatsTest::scenario5()
     std::string redirect_url;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client2.find_header_value("Location", redirect_url)),
+      AutoTest::predicate_checker(client2.find_header_value("Location", redirect_url)),
       "Client must be redirected to passback frontend");
 
     process_and_check_passback(client1, redirect_url);
@@ -348,8 +312,7 @@ PassbackStatsTest::scenario6()
     std::string redirect_url;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.find_header_value("Location", redirect_url)),
+      AutoTest::predicate_checker(client.find_header_value("Location", redirect_url)),
       "Client must be redirected to passback frontend");
 
     if (i % 3 == 2)
@@ -359,10 +322,8 @@ PassbackStatsTest::scenario6()
     process_and_check_passback(client, redirect_url);
   }
 
-  diffs_.push_back(PassbackStats::Diffs()
-    .requests(REQUESTCOUNT - REQUESTCOUNT / 3));
-  diffs_.push_back(PassbackStats::Diffs()
-    .requests(REQUESTCOUNT / 3));
+  diffs_.push_back(PassbackStats::Diffs() .requests(REQUESTCOUNT - REQUESTCOUNT / 3));
+  diffs_.push_back(PassbackStats::Diffs() .requests(REQUESTCOUNT / 3));
 }
 
 void

@@ -16,7 +16,7 @@ sub process
   my ($self, $row) = @_;
 
   my $value = $row->[$self->{field_}];
-  if(defined($value))
+  if (defined($value))
   {
     my @arr = split('\|', $value);
     @arr = grep { $_ ne '' } @arr;

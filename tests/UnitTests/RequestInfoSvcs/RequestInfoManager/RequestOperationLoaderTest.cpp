@@ -57,8 +57,7 @@ public:
       return errors == right.errors &&
         impressions == right.impressions &&
         clicks == right.clicks &&
-        actions == right.actions &&
-        change_requests == right.change_requests;
+        actions == right.actions && change_requests == right.change_requests;
     }
 
     std::ostream&
@@ -66,10 +65,7 @@ public:
     {
       out << "(err=" << errors <<
         ",imp=" << impressions <<
-        ",clk=" << clicks <<
-        ",act=" << actions <<
-        ",change-req=" << change_requests <<
-        ")";
+        ",clk=" << clicks << ",act=" << actions << ",change-req=" << change_requests << ")";
       return out;
     }
 
@@ -91,14 +87,12 @@ public:
   }
 
   virtual void
-  process_impression(
-    const ImpressionInfo& impression_info)
+  process_impression(const ImpressionInfo& impression_info)
     /*throw(Exception)*/
   {
-    const ImpressionInfo check_impession_info =
-      etalon_impression_info();
+    const ImpressionInfo check_impession_info = etalon_impression_info();
 
-    if(!(impression_info.request_id == check_impession_info.request_id) ||
+    if (!(impression_info.request_id == check_impession_info.request_id) ||
        impression_info.time != check_impession_info.time ||
        impression_info.verify_impression != check_impession_info.verify_impression ||
        !(impression_info.user_id == check_impession_info.user_id) ||
@@ -123,32 +117,32 @@ public:
     const AdServer::Commons::RequestId& request_id)
     /*throw(Exception)*/
   {
-    if(!(new_user_id == user_id_))
+    if (!(new_user_id == user_id_))
     {
       counter_.errors += 1;
       std::cerr << "process_action: user_id is incorrect: " << new_user_id <<
         " instead " << user_id_ << std::endl;
     }
 
-    if(!(request_id == request_id_))
+    if (!(request_id == request_id_))
     {
       counter_.errors += 1;
       std::cerr << "process_action: request_id is incorrect: " << request_id <<
         " instead " << request_id_ << std::endl;
     }
 
-    if(time != time_)
+    if (time != time_)
     {
       counter_.errors += 1;
       std::cerr << "process_action: time is incorrect: " << time.gm_ft() <<
         " instead " << time_.gm_ft() << std::endl;
     }
 
-    if(action_type == RequestContainerProcessor::AT_CLICK)
+    if (action_type == RequestContainerProcessor::AT_CLICK)
     {
       counter_.clicks += 1;
     }
-    else if(action_type == RequestContainerProcessor::AT_ACTION)
+    else if (action_type == RequestContainerProcessor::AT_ACTION)
     {
       counter_.actions += 1;
     }
@@ -174,33 +168,32 @@ public:
     const Generics::ConstSmartMemBuf* request_profile)
     /*throw(Exception)*/
   {
-    if(!(new_user_id == user_id_))
+    if (!(new_user_id == user_id_))
     {
       counter_.errors += 1;
       std::cerr << "change_request_user_id: user_id is incorrect: " << new_user_id <<
         " instead " << user_id_ << std::endl;
     }
 
-    if(!(request_id == request_id_))
+    if (!(request_id == request_id_))
     {
       counter_.errors += 1;
       std::cerr << "change_request_user_id: request_id is incorrect: " << request_id <<
         " instead " << request_id_ << std::endl;
     }
 
-    if(!request_profile || request_profile->membuf().size() != 1)
+    if (!request_profile || request_profile->membuf().size() != 1)
     {
       std::cerr << "change_request_user_id: incorrect request_profile: size = " <<
         request_profile->membuf().size() <<
         " instead " << etalon_request_profile_->membuf().size() << std::endl;
     }
-    else if(::memcmp(
+    else if (::memcmp(
       request_profile->membuf().data(),
       etalon_request_profile_->membuf().data(),
       etalon_request_profile_->membuf().size()) != 0)
     {
-      std::cerr << "change_request_user_id: incorrect request_profile content" <<
-        std::endl;
+      std::cerr << "change_request_user_id: incorrect request_profile content" << std::endl;
     }
 
     counter_.change_requests += 1;
@@ -277,14 +270,11 @@ save_load_test()
 
   try
   {
-    system(("rm -r " + *root_path +
-      " 2>/dev/null ; mkdir -p " + *root_path).c_str());
+    system(("rm -r " + *root_path + " 2>/dev/null ; mkdir -p " + *root_path).c_str());
 
-    RequestOperationProcessorImpl_var test_processor =
-      new RequestOperationProcessorImpl();
+    RequestOperationProcessorImpl_var test_processor = new RequestOperationProcessorImpl();
 
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
 
     RequestOperationSaver_var saver = new RequestOperationSaver(
       logger,
@@ -294,12 +284,12 @@ save_load_test()
       Generics::Time(100000),
       1);
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       saver->process_impression(test_processor->etalon_impression_info());
     }
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       saver->process_action(
         test_processor->etalon_user_id(),
@@ -308,7 +298,7 @@ save_load_test()
         test_processor->etalon_request_id());
     }
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       saver->process_action(
         test_processor->etalon_user_id(),
@@ -317,7 +307,7 @@ save_load_test()
         test_processor->etalon_request_id());
     }
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       saver->change_request_user_id(
         test_processor->etalon_user_id(),
@@ -328,24 +318,19 @@ save_load_test()
     RequestOperationSaver::FileNameList files;
     saver->flush(&files);
 
-    RequestOperationLoader_var loader = new RequestOperationLoader(
-      test_processor);
+    RequestOperationLoader_var loader = new RequestOperationLoader(test_processor);
 
-    for(RequestOperationSaver::FileNameList::const_iterator fit =
-          files.begin();
+    for (RequestOperationSaver::FileNameList::const_iterator fit = files.begin();
         fit != files.end(); ++fit)
     {
       unsigned long lines = 0;
-      AdServer::Commons::sync_wait(loader->co_process_file(
-        lines,
-        fit->c_str(),
-        nullptr));
+      AdServer::Commons::sync_wait(loader->co_process_file(lines, fit->c_str(), nullptr));
     }
 
     // check counter
     RequestOperationProcessorImpl::Counter etalon_counter(0, 10, 10, 10, 10);
 
-    if(!(test_processor->counter() == etalon_counter))
+    if (!(test_processor->counter() == etalon_counter))
     {
       std::cerr << TEST_NAME << ": Incorrect result counter: ";
       test_processor->counter().print(std::cerr);
@@ -358,8 +343,7 @@ save_load_test()
   catch(const eh::Exception& ex)
   {
     local_result = 1;
-    std::cerr << TEST_NAME << ": fail, caught eh::Exception: " <<
-      ex.what() << std::endl;
+    std::cerr << TEST_NAME << ": fail, caught eh::Exception: " << ex.what() << std::endl;
   }
 
   return local_result;
@@ -379,11 +363,9 @@ main(int argc, char* argv[]) noexcept
     root_path.set_value(std::string(tmp_dir));
   }
 
-  args.add(equal_name("path") || short_name("p"),
-    root_path);
+  args.add(equal_name("path") || short_name("p"), root_path);
 
-  args.add(equal_name("help") || short_name("h"),
-    opt_help);
+  args.add(equal_name("help") || short_name("h"), opt_help);
 
   args.parse(argc - 1, argv + 1);
 

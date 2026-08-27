@@ -1,10 +1,7 @@
 
 #include "ChannelInventoryEstimStatsTest.hpp"
 
-REFLECT_UNIT(ChannelInventoryEstimStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelInventoryEstimStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace {
 
@@ -85,10 +82,7 @@ namespace {
      * @param test.
      * @param expected trigger channel names.
      */
-    TriggerChannelsCheck(
-      AutoTest::AdClient& user,
-      BaseUnit* test,
-      const char* exp_channels)
+    TriggerChannelsCheck(AutoTest::AdClient& user, BaseUnit* test, const char* exp_channels)
       : user_(user),
         test_(test),
         exp_channels_(exp_channels)
@@ -171,51 +165,39 @@ ChannelInventoryEstimStatsTest::test_1st_request()
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[0].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.2");
+  stats[0].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.2");
   stats[1].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[1].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.2");
+  stats[1].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.2");
   //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[2].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.5");
+  stats[2].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.5");
   stats[3].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[3].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.5");
+  stats[3].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.5");
   //     level = 1.0
   stats[4].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[4].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 1.0");
+  stats[4].description("ChannelInventoryEstimStats.Session channel#1 - " "level 1.0");
   stats[5].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[5].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 1.0");
+  stats[5].description("ChannelInventoryEstimStats.Session channel#1 - " "level 1.0");
   //  History & History+today
   //     HT
   stats[6].key().
@@ -223,23 +205,20 @@ ChannelInventoryEstimStatsTest::test_1st_request()
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[6].description(
-    "ChannelInventoryEstimStats.History+today channel");
+  stats[6].description("ChannelInventoryEstimStats.History+today channel");
   //     H1 & H2
   stats[7].key().
     channel_id(fetch_int("AdvChannelH1")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[7].description(
-    "ChannelInventoryEstimStats.History channel#1");
+  stats[7].description("ChannelInventoryEstimStats.History channel#1");
   stats[8].key().
     channel_id(fetch_int("AdvChannelH2")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[8].description(
-    "ChannelInventoryEstimStats.History channel#2");
+  stats[8].description("ChannelInventoryEstimStats.History channel#2");
 
   stats.select(conn);
 
@@ -289,9 +268,7 @@ ChannelInventoryEstimStatsTest::test_1st_request()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "initial");
 
   }
@@ -311,51 +288,39 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[0].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.2");
+  stats[0].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.2");
   stats[1].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[1].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.2");
+  stats[1].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.2");
   //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[2].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.5");
+  stats[2].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.5");
   stats[3].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[3].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.5");
+  stats[3].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.5");
   //     level = 1.0
   stats[4].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[4].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 1.0");
+  stats[4].description("ChannelInventoryEstimStats.Session channel#1 - " "level 1.0");
   stats[5].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[5].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 1.0");
+  stats[5].description("ChannelInventoryEstimStats.Session channel#2 - " "level 1.0");
 
   stats.select(conn);
 
@@ -426,9 +391,7 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "70 seconds later");
 
   }
@@ -448,51 +411,39 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[0].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.2");
+  stats[0].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.2");
   stats[1].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[1].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.2");
+  stats[1].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.2");
   //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[2].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.5");
+  stats[2].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.5");
   stats[3].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.5).
     sdate(base_time);
-  stats[3].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.5");
+  stats[3].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.5");
   //     level = 1.0
   stats[4].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[4].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 1.0");
+  stats[4].description("ChannelInventoryEstimStats.Session channel#1 - " "level 1.0");
   stats[5].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(1.0).
     sdate(base_time);
-  stats[5].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 1.0");
+  stats[5].description("ChannelInventoryEstimStats.Session channel#2 - " "level 1.0");
   stats.select(conn);
 
   const UserRequestType requests_130[] =
@@ -548,9 +499,7 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "130 seconds later");
 
   }
@@ -573,51 +522,39 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
     colo_id(1).
     match_level(0.2).
     sdate(next_day);
-  stats[0].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.2, tomorrow");
+  stats[0].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.2, tomorrow");
   stats[1].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.2).
     sdate(next_day);
-  stats[1].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.2, tomorrow");
+  stats[1].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.2, tomorrow");
   //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(0.5).
     sdate(next_day);
-  stats[2].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 0.5, tomorrow");
+  stats[2].description("ChannelInventoryEstimStats.Session channel#1 - " "level 0.5, tomorrow");
   stats[3].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(0.5).
     sdate(next_day);
-  stats[3].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 0.5, tomorrow");
+  stats[3].description("ChannelInventoryEstimStats.Session channel#2 - " "level 0.5, tomorrow");
   //     level = 1.0
   stats[4].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
     match_level(1.0).
     sdate(next_day);
-  stats[4].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "level 1.0, tomorrow");
+  stats[4].description("ChannelInventoryEstimStats.Session channel#1 - " "level 1.0, tomorrow");
   stats[5].key().
     channel_id(fetch_int("AdvChannel1")).
     colo_id(1).
     match_level(1.0).
     sdate(next_day);
-  stats[5].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "level 1.0, tomorrow");
+  stats[5].description("ChannelInventoryEstimStats.Session channel#2 - " "level 1.0, tomorrow");
   //  History & History+today
   //   HT
   //     level = 1.0
@@ -626,9 +563,7 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
     colo_id(1).
     match_level(1.0).
     sdate(next_day);
-  stats[6].description(
-    "ChannelInventoryEstimStats.History+today channel - "
-    "level 1.0, tomorrow");
+  stats[6].description("ChannelInventoryEstimStats.History+today channel - " "level 1.0, tomorrow");
   //   H1
   //     level = 1.0
   stats[7].key().
@@ -636,18 +571,14 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
     colo_id(1).
     match_level(1.0).
     sdate(next_day);
-  stats[7].description(
-    "ChannelInventoryEstimStats.History channel#1 - "
-    "level 1,0, tomorrow");
+  stats[7].description("ChannelInventoryEstimStats.History channel#1 - " "level 1,0, tomorrow");
   //     level = 2.0
   stats[8].key().
     channel_id(fetch_int("AdvChannelH1")).
     colo_id(1).
     match_level(2.0).
     sdate(next_day);
-  stats[8].description(
-    "ChannelInventoryEstimStats.History channel#1 - "
-    "level 2,0, tomorrow");
+  stats[8].description("ChannelInventoryEstimStats.History channel#1 - " "level 2,0, tomorrow");
   //   H2
   //     level = 2.0
   stats[9].key().
@@ -655,43 +586,31 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
     colo_id(1).
     match_level(2.0).
     sdate(next_day);
-  stats[9].description(
-    "ChannelInventoryEstimStats.History channel#2 - "
-    "level 2,0, tomorrow");
+  stats[9].description("ChannelInventoryEstimStats.History channel#2 - " "level 2,0, tomorrow");
   // Today not changed
   //   Session
   stats[10].key().
     channel_id(fetch_int("AdvChannel0")).
     sdate(base_time);
-  stats[10].description(
-    "ChannelInventoryEstimStats.Session channel#1 - "
-    "today not changed");
+  stats[10].description("ChannelInventoryEstimStats.Session channel#1 - " "today not changed");
   stats[11].key().
     channel_id(fetch_int("AdvChannel1")).
     sdate(base_time);
-  stats[11].description(
-    "ChannelInventoryEstimStats.Session channel#2 - "
-    "today not changed");
+  stats[11].description("ChannelInventoryEstimStats.Session channel#2 - " "today not changed");
   //   HT
   stats[12].key().
     channel_id(fetch_int("AdvChannelHT")).
     sdate(base_time);
-  stats[12].description(
-    "ChannelInventoryEstimStats.History+today channel - "
-    "today not changed");
+  stats[12].description("ChannelInventoryEstimStats.History+today channel - " "today not changed");
   //   H1 & H2
   stats[13].key().
     channel_id(fetch_int("AdvChannelH1")).
     sdate(base_time);
-  stats[13].description(
-    "ChannelInventoryEstimStats.History channel#1 - "
-    "today not changed");
+  stats[13].description("ChannelInventoryEstimStats.History channel#1 - " "today not changed");
   stats[14].key().
     channel_id(fetch_int("AdvChannelH2")).
     sdate(base_time);
-  stats[14].description(
-    "ChannelInventoryEstimStats.History channel#2 - "
-    "today not changed");
+  stats[14].description("ChannelInventoryEstimStats.History channel#2 - " "today not changed");
   stats.select(conn);
 
   for (unsigned int i=0; i < countof(requests); ++i)
@@ -754,9 +673,7 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "tomorrow");
 
   }
@@ -791,16 +708,12 @@ void ChannelInventoryEstimStatsTest::test_5th_request_after_tomorrow()
   stats[2].key().
     channel_id(fetch_int("AdvChannelH2")).
     sdate(base_time + 25*60*60);
-  stats[2].description(
-    "ChannelInventoryEstimStats.History channel#2 - "
-    "tomorrow not changed");
+  stats[2].description("ChannelInventoryEstimStats.History channel#2 - " "tomorrow not changed");
   // Today
   stats[3].key().
     channel_id(fetch_int("AdvChannelH2")).
     sdate(base_time);
-  stats[3].description(
-    "ChannelInventoryEstimStats.History channel#2 - "
-    "today not changed");
+  stats[3].description("ChannelInventoryEstimStats.History channel#2 - " "today not changed");
   stats.select(conn);
 
   const UserRequestType requests_after_tomorrow[] =
@@ -841,9 +754,7 @@ void ChannelInventoryEstimStatsTest::test_5th_request_after_tomorrow()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "after tomorrow");
   }
 }
@@ -881,10 +792,7 @@ void ChannelInventoryEstimStatsTest::test_different_colo_()
   user.process_request(request, "requesting colo1");
 
   FAIL_CONTEXT(
-    TriggerChannelsCheck(
-      user,
-      this,
-      "AdvBPPCOLO").check(),
+    TriggerChannelsCheck(user, this, "AdvBPPCOLO").check(),
     "Check matching expected channel");
 
   request.colo = colo2;
@@ -892,10 +800,7 @@ void ChannelInventoryEstimStatsTest::test_different_colo_()
   user.process_request(request, "requesting colo2");
 
   FAIL_CONTEXT(
-    TriggerChannelsCheck(
-      user,
-      this,
-      "AdvBPPCOLO").check(),
+    TriggerChannelsCheck(user, this, "AdvBPPCOLO").check(),
     "Check matching expected channel");
 
   const Diffs diffs[3] =
@@ -906,8 +811,7 @@ void ChannelInventoryEstimStatsTest::test_different_colo_()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(conn, diffs, stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diffs, stats)).check(),
     "Checking expected stats in ChannelInventoryEstimStats table");
 }
 

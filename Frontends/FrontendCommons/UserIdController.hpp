@@ -32,14 +32,10 @@ namespace AdServer
     };
 
     virtual Generics::SignedUuid
-    verify(
-      std::string_view uid_str,
-      KeyType key_type = PERSISTENT) const = 0;
+    verify(std::string_view uid_str, KeyType key_type = PERSISTENT) const = 0;
 
     Generics::SignedUuid
-    verify(
-      const String::SubString& uid_str,
-      KeyType key_type = PERSISTENT) const
+    verify(const String::SubString& uid_str, KeyType key_type = PERSISTENT) const
     {
       return verify(std::string_view(uid_str.data(), uid_str.size()), key_type);
     }
@@ -49,9 +45,7 @@ namespace AdServer
       noexcept = 0;
 
     virtual Generics::Uuid
-    ssp_uuid(
-      const Generics::Uuid& uuid,
-      const String::SubString& source_id) = 0;
+    ssp_uuid(const Generics::Uuid& uuid, const String::SubString& source_id) = 0;
 
   protected:
     virtual
@@ -83,9 +77,7 @@ namespace AdServer
       /*throw(eh::Exception)*/;
 
     Generics::SignedUuid
-    verify(
-      std::string_view uid_str,
-      KeyType key_type = PERSISTENT) const
+    verify(std::string_view uid_str, KeyType key_type = PERSISTENT) const
       override
       /*throw(eh::Exception)*/;
 
@@ -101,16 +93,12 @@ namespace AdServer
       noexcept override;
 
     Generics::SignedUuid
-    sign(
-      const AdServer::Commons::UserId& uid,
-      KeyType key_type = PERSISTENT) const
+    sign(const AdServer::Commons::UserId& uid, KeyType key_type = PERSISTENT) const
       /*throw(eh::Exception)*/;
 
     // convert user id(persistent) to ssp user id
     Generics::Uuid
-    ssp_uuid(
-      const Generics::Uuid& uuid,
-      const String::SubString& source_id)
+    ssp_uuid(const Generics::Uuid& uuid, const String::SubString& source_id)
       override
       /*throw(eh::Exception)*/;
 
@@ -120,10 +108,7 @@ namespace AdServer
 
     // convert ssp user id to user id(persistent)
     static Generics::Uuid
-    get_by_ssp_user_id(
-      const Generics::Uuid& uuid,
-      std::string_view source_id,
-      uint8_t data_marker)
+    get_by_ssp_user_id(const Generics::Uuid& uuid, std::string_view source_id, uint8_t data_marker)
       /*throw(eh::Exception)*/;
 
   protected:
@@ -159,14 +144,11 @@ namespace AdServer
 
     template<typename KeyType>
     KeyType
-    init_source_key_(
-      const String::SubString& src)
+    init_source_key_(const String::SubString& src)
       noexcept;
 
     Generics::Uuid
-    get_by_ssp_user_id_v0_(
-      const Generics::Uuid& uuid,
-      std::string_view source_id)
+    get_by_ssp_user_id_v0_(const Generics::Uuid& uuid, std::string_view source_id)
       /*throw(eh::Exception)*/;
 
   private:
@@ -202,9 +184,7 @@ namespace AdServer
       Generics::SignedUuid client_id;
       AdServer::CampaignSvcs::UserStatus user_status;
 
-      SetUid(
-        Generics::SignedUuid&& id,
-        AdServer::CampaignSvcs::UserStatus status)
+      SetUid(Generics::SignedUuid&& id, AdServer::CampaignSvcs::UserStatus status)
         noexcept;
     };
 

@@ -9,10 +9,7 @@ public:
 
 public:
 
-  SessSiteTimeoutsTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  SessSiteTimeoutsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)  {};
 
   virtual ~SessSiteTimeoutsTest() noexcept
@@ -26,8 +23,7 @@ private:
   AutoTest::Time now;
 
   template <size_t COUNT>
-  void testcase(
-    const Request (&requests)[COUNT]);
+  void testcase(const Request (&requests)[COUNT]);
   void merge_users();
 
   std::string no_track;

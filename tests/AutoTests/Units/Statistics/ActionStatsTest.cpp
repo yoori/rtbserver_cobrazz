@@ -4,11 +4,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/Rand.hpp>
 
-REFLECT_UNIT(ActionStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE
-);
+REFLECT_UNIT(ActionStatsTest) ("Statistics", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE);
 
 namespace
 {
@@ -64,65 +60,40 @@ bool
 ActionStatsTest::run()
 {
 
-  AutoTest::AdClient client(
-    AutoTest::AdClient::create_user(this));
+  AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
 
-  AUTOTEST_CASE(
-    referrer_test_(client),
-    "Referrer test");
+  AUTOTEST_CASE(referrer_test_(client), "Referrer test");
 
   std::list<std::string> imps;
   std::list<std::string> clicks;
 
-  AUTOTEST_CASE(
-    base_case_part_1_(client, imps, clicks),
-    "Base case");
-  AUTOTEST_CASE(
-    cross_action_(),
-    "Cross action");
+  AUTOTEST_CASE(base_case_part_1_(client, imps, clicks), "Base case");
+  AUTOTEST_CASE(cross_action_(), "Cross action");
 
-  AUTOTEST_CASE(
-    imp_update_(),
-    "Last impression update");
+  AUTOTEST_CASE(imp_update_(), "Last impression update");
 
-  AUTOTEST_CASE(
-    text_ads_(),
-    "Text advertising");
+  AUTOTEST_CASE(text_ads_(), "Text advertising");
 
-  AUTOTEST_CASE(
-    expired_profile_(),
-    "Expired profile");
+  AUTOTEST_CASE(expired_profile_(), "Expired profile");
 
-  AUTOTEST_CASE(
-    conversation_value_(client),
-     "Conversation value");
+  AUTOTEST_CASE(conversation_value_(client), "Conversation value");
 
-  AUTOTEST_CASE(
-    deleted_action_(),
-    "Deleted action");
+  AUTOTEST_CASE(deleted_action_(), "Deleted action");
 
   check();
 
-  AUTOTEST_CASE(
-    base_case_part_2_(client, imps),
-    "Base case");
+  AUTOTEST_CASE(base_case_part_2_(client, imps), "Base case");
 
   check();
 
-  AUTOTEST_CASE(
-    base_case_part_3_(client, clicks),
-    "Base case");
+  AUTOTEST_CASE(base_case_part_3_(client, clicks), "Base case");
 
   check();
 
-  AUTOTEST_CASE(
-    base_case_part_4_(client),
-    "Base case");
+  AUTOTEST_CASE(base_case_part_4_(client), "Base case");
 
   // Must be last, because change test time
-  AUTOTEST_CASE(
-    conversation_orderid_(client),
-    "Conversation order_id");
+  AUTOTEST_CASE(conversation_orderid_(client), "Conversation order_id");
 
   return true;
 }
@@ -133,26 +104,18 @@ ActionStatsTest::tear_down()
 { }
 
 void
-ActionStatsTest::initialize_stat_(
-  ORM::ActionRequests& stat,
-  const CaseStat& expected)
+ActionStatsTest::initialize_stat_(ORM::ActionRequests& stat, const CaseStat& expected)
 {
   stat.key().
     action_id(fetch_int(expected.action)).
     action_date(base_time + expected.time_ofset).
-    colo_id(
-      expected.colo?
-      fetch_int(expected.colo): 1).
-    country_code(
-      expected.country?
-      expected.country: GN).
+    colo_id(expected.colo? fetch_int(expected.colo): 1).
+    country_code(expected.country? expected.country: GN).
     user_status("I");
 }
 
 void
-ActionStatsTest::initialize_stat_(
-  ORM::ActionStats& stat,
-  const CaseStat& expected)
+ActionStatsTest::initialize_stat_(ORM::ActionStats& stat, const CaseStat& expected)
 {
   stat.key().
     action_id(fetch_int(expected.action)).
@@ -163,19 +126,14 @@ ActionStatsTest::initialize_stat_(
     stat.key().
       cc_id(fetch_int(expected.cc)).
       tag_id(fetch_int(expected.tid)).
-      colo_id(
-        expected.colo?
-        fetch_int(expected.colo): 1).
-      country_code(
-        expected.country?
-        expected.country: GN).
+      colo_id(expected.colo? fetch_int(expected.colo): 1).
+      country_code(expected.country? expected.country: GN).
       imp_date(base_time + expected.imp_ofset);
 
     if (expected.click_ofset != NULL_DATE)
     {
       stat.key().
-        click_date(
-          base_time + expected.click_ofset);
+        click_date(base_time + expected.click_ofset);
     }
     else
     {
@@ -185,9 +143,7 @@ ActionStatsTest::initialize_stat_(
 }
 
 void
-ActionStatsTest::initialize_stat_(
-  ORM::ActionStats& stat,
-  const ConversationStat& expected)
+ActionStatsTest::initialize_stat_(ORM::ActionStats& stat, const ConversationStat& expected)
 {
 
   stat.key().
@@ -199,6 +155,7 @@ ActionStatsTest::initialize_stat_(
   {
     stat.key().cc_id(fetch_int(expected.cc));
   }
+
   if (expected.tid)
   {
     stat.key().tag_id(fetch_int(expected.tid));
@@ -211,9 +168,7 @@ ActionStatsTest::initialize_stat_(
 }
 
 void
-ActionStatsTest::initialize_stat_(
-  ORM::ActionRequests& stat,
-  const char* action)
+ActionStatsTest::initialize_stat_(ORM::ActionRequests& stat, const char* action)
 {
   stat.key().
     action_id(fetch_int(action)).
@@ -348,19 +303,15 @@ ActionStatsTest::base_case_part_1_(
       debug_time(base_time + 5));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Base/CCID/1")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Base/CCID/1")), client.debug_info.ccid).check(),
     "must got expected ccid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.track_pixel_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
     "must got track_pixel_url");
 
   // Save URLs
@@ -377,14 +328,11 @@ ActionStatsTest::base_case_part_1_(
       debug_time(base_time + 6));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Base/CCID/2")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Base/CCID/2")), client.debug_info.ccid).check(),
     "must got expected ccid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
   // Save URLs
@@ -400,19 +348,15 @@ ActionStatsTest::base_case_part_1_(
       debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Base/CCID/3")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Base/CCID/3")), client.debug_info.ccid).check(),
     "must got expected ccid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.debug_info.track_pixel_url.empty()),
+    AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
     "must got track_pixel_url");
 
   // Save URLs
@@ -443,31 +387,21 @@ ActionStatsTest::base_case_part_1_(
       actionid(fetch_int("Base/ACTION/2")).
       country(RU));
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, 1, stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_diff_checker(pq_conn_, 1, stats));
 
   ADD_WAIT_CHECKER(
     "ActionStats check (unexpected)",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 0, unexpected));
+    AutoTest::stats_each_diff_checker(pq_conn_, 0, unexpected));
 
   ADD_WAIT_CHECKER(
     "ActionRequests check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      ORM::ActionRequests::Diffs().
-        count(1),
-      ar_stats));
+    AutoTest::stats_each_diff_checker(pq_conn_, ORM::ActionRequests::Diffs(). count(1), ar_stats));
 
 };
 
 
 void
-ActionStatsTest::base_case_part_2_(
-  AdClient& client,
-  std::list<std::string>& imps)
+ActionStatsTest::base_case_part_2_(AdClient& client, std::list<std::string>& imps)
 {
   ORM::StatsArray<ActionStats, 2> stats;
   stats[0].key().
@@ -526,14 +460,10 @@ ActionStatsTest::base_case_part_2_(
     std::string debug_time;
 
     String::StringManip::mime_url_encode(
-      (base_time + 7).get_gm_time().format(
-        AutoTest::DEBUG_TIME_FORMAT),
+      (base_time + 7).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT),
       debug_time);
 
-    client.process_request(
-      imps.front() +
-      "&debug-time=" +
-      debug_time);
+    client.process_request(imps.front() + "&debug-time=" + debug_time);
 
     imps.pop_front();
   }
@@ -553,23 +483,17 @@ ActionStatsTest::base_case_part_2_(
       debug_time(base_time-1));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      strof(fetch_int("Base/CCID/4")),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(strof(fetch_int("Base/CCID/4")), client.debug_info.ccid).check(),
     "must got expected ccid");
 
   {
     std::string debug_time;
 
     String::StringManip::mime_url_encode(
-      (base_time + 61).get_gm_time().format(
-        AutoTest::DEBUG_TIME_FORMAT),
+      (base_time + 61).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT),
       debug_time);
 
-    client.process_request(
-      imps.front() +
-      "&debug-time=" +
-      debug_time);
+    client.process_request(imps.front() + "&debug-time=" + debug_time);
 
     imps.pop_front();
   }
@@ -581,17 +505,13 @@ ActionStatsTest::base_case_part_2_(
       ActionStats::Diffs(1)
     };
 
-    ADD_WAIT_CHECKER(
-      "ActionStats check",
-      AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));
+    ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
   }
 
   ADD_WAIT_CHECKER(
     "ActionStats check (unexpected)",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 0, unexpected));
+    AutoTest::stats_each_diff_checker(pq_conn_, 0, unexpected));
 
   {
     const ORM::ActionRequests::Diffs diffs[] =
@@ -604,19 +524,14 @@ ActionStatsTest::base_case_part_2_(
 
     ADD_WAIT_CHECKER(
       "ActionRequests check",
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        ar_stats));
+      AutoTest::stats_diff_checker(pq_conn_, diffs, ar_stats));
   }
 
 }
 
 
 void
-ActionStatsTest::base_case_part_3_(
-  AdClient& client,
-  std::list<std::string>& clicks)
+ActionStatsTest::base_case_part_3_(AdClient& client, std::list<std::string>& clicks)
 {
   // Navigate to click_url form 1st and 2nd ad-requests
   client.process_request(clicks.front() +
@@ -684,15 +599,11 @@ ActionStatsTest::base_case_part_3_(
     ActionStats::Diffs(1),
   };
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
-ActionStatsTest::base_case_part_4_(
-  AdClient& client)
+ActionStatsTest::base_case_part_4_(AdClient& client)
 {
   ActionStats stats;
   stats.key().
@@ -726,10 +637,7 @@ ActionStatsTest::base_case_part_4_(
 
   // two new records for action#2
   // see https://jira.ocslab.com/browse/ADSC-2063
- ADD_WAIT_CHECKER(
-   "ActionStats check",
-   AutoTest::stats_diff_checker(
-     pq_conn_, 2, stats));
+ ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_diff_checker(pq_conn_, 2, stats));
 };
 
 void
@@ -758,63 +666,47 @@ ActionStatsTest::cross_action_()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("CrossAction/KEYWORD/2")).
+    NSLookupRequest().referer_kw(fetch_string("CrossAction/KEYWORD/2")).
       debug_time(base_time));
 
   client.process_request(
-    NSLookupRequest().tid(
-      fetch_int("CrossAction/TID/1")).
+    NSLookupRequest().tid(fetch_int("CrossAction/TID/1")).
     debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CrossAction/CCID/2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CrossAction/CCID/2"), client.debug_info.ccid).check(),
     "Check CC2");
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("CrossAction/KEYWORD/1")).
+    NSLookupRequest().referer_kw(fetch_string("CrossAction/KEYWORD/1")).
     debug_time(base_time));
 
   client.process_request(
-    NSLookupRequest().tid(
-      fetch_int("CrossAction/TID/2")).
+    NSLookupRequest().tid(fetch_int("CrossAction/TID/2")).
     debug_time(base_time+20));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CrossAction/CCID/1_1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CrossAction/CCID/1_1"), client.debug_info.ccid).check(),
     "Check CC1_1");
 
   client.process_request(
-    NSLookupRequest().tid(
-      fetch_int("CrossAction/TID/3")).
+    NSLookupRequest().tid(fetch_int("CrossAction/TID/3")).
     debug_time(base_time+40));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CrossAction/CCID/1_2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CrossAction/CCID/1_2"), client.debug_info.ccid).check(),
     "Check CC1_2");
 
   client.process_request(
-    ActionRequest().actionid(
-      fetch_int("CrossAction/ACTION/2")).
+    ActionRequest().actionid(fetch_int("CrossAction/ACTION/2")).
     debug_time(base_time+60));
 
   client.process_request(
-    ActionRequest().actionid(
-      fetch_int("CrossAction/ACTION/1")).
+    ActionRequest().actionid(fetch_int("CrossAction/ACTION/1")).
     debug_time(base_time+60));
 
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, stats));
 
 }
 
@@ -841,52 +733,37 @@ ActionStatsTest::imp_update_()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("ImpUpdate/KEYWORD")).
+    NSLookupRequest().referer_kw(fetch_string("ImpUpdate/KEYWORD")).
       debug_time(base_time));
 
   client.process_request(
-    NSLookupRequest().tid(
-      fetch_int("ImpUpdate/TID/1")).
+    NSLookupRequest().tid(fetch_int("ImpUpdate/TID/1")).
     debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("ImpUpdate/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("ImpUpdate/CCID"), client.debug_info.ccid).check(),
     "Check CC#1");
 
-  std::string click_url(
-    client.debug_info.click_url);
+  std::string click_url(client.debug_info.click_url);
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !click_url.empty()),
-    "must have debug_info.click_url");
+  FAIL_CONTEXT(AutoTest::predicate_checker(!click_url.empty()), "must have debug_info.click_url");
 
   client.process_request(click_url);
 
   client.process_request(
-    NSLookupRequest().tid(
-      fetch_int("ImpUpdate/TID/2")).
+    NSLookupRequest().tid(fetch_int("ImpUpdate/TID/2")).
     debug_time(base_time+30).
     colo(fetch_int("ImpUpdate/COLO")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("ImpUpdate/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("ImpUpdate/CCID"), client.debug_info.ccid).check(),
     "Check CC#2");
 
   client.process_request(
-    ActionRequest().actionid(
-      fetch_int("ImpUpdate/ACTION")).
+    ActionRequest().actionid(fetch_int("ImpUpdate/ACTION")).
     debug_time(base_time+60));
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, stats));
 }
 
 void
@@ -911,8 +788,7 @@ ActionStatsTest::text_ads_()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("TextAds/KEYWORD")).
+    NSLookupRequest().referer_kw(fetch_string("TextAds/KEYWORD")).
     tid(fetch_int("TextAds/TID")).
     debug_time(base_time));
 
@@ -926,20 +802,14 @@ ActionStatsTest::text_ads_()
 
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "Check CCs");
 
   client.process_request(
-    ActionRequest().actionid(
-      fetch_int("TextAds/ACTION")).
+    ActionRequest().actionid(fetch_int("TextAds/ACTION")).
     debug_time(base_time));
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, stats));
 }
 
 void
@@ -959,35 +829,25 @@ ActionStatsTest::deleted_action_()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("Deleted/KEYWORD")).
+    NSLookupRequest().referer_kw(fetch_string("Deleted/KEYWORD")).
     tid(fetch_int("Deleted/TID")).
     debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Deleted/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Deleted/CCID"), client.debug_info.ccid).check(),
     "Check CC#2");
 
   client.process_request(
     ActionRequest().
-      actionid(
-        fetch_int("Deleted/ACTION")).
+      actionid(fetch_int("Deleted/ACTION")).
       debug_time(base_time));
 
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 0, a_stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 0, a_stats));
 
   ADD_WAIT_CHECKER(
     "ActionRequest check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      ORM::ActionRequests::Diffs(0),
-      ar_stats));
+    AutoTest::stats_each_diff_checker(pq_conn_, ORM::ActionRequests::Diffs(0), ar_stats));
 }
 
 void
@@ -1021,13 +881,11 @@ ActionStatsTest::expired_profile_()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("Expired/KEYWORD/1")).
+    NSLookupRequest().referer_kw(fetch_string("Expired/KEYWORD/1")).
     tid(fetch_int("Expired/TID/1")).
     debug_time(base_time - (8*24*60*60 + 18*60*60 + 60*60) ));
 
-  std::string request_id(
-    client.debug_info.creative_request_id.value());
+  std::string request_id(client.debug_info.creative_request_id.value());
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -1041,30 +899,21 @@ ActionStatsTest::expired_profile_()
 
   AutoTest::AdminsArray<AutoTest::RequestProfileAdmin> admins;
 
-  admins.initialize(
-    this,
-    CTE_ALL,
-    STE_REQUEST_INFO_MANAGER,
-    "\\" + request_id);
+  admins.initialize(this, CTE_ALL, STE_REQUEST_INFO_MANAGER, "\\" + request_id);
 
   admins.log(AutoTest::Logger::thlog());
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Expired/CCID/1"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Expired/CCID/1"), client.debug_info.ccid).check(),
     "Check CC#1");
 
   client.process_request(
-    NSLookupRequest().referer_kw(
-      fetch_string("Expired/KEYWORD/2")).
+    NSLookupRequest().referer_kw(fetch_string("Expired/KEYWORD/2")).
     tid(fetch_int("Expired/TID/2")).
     debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Expired/CCID/2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Expired/CCID/2"), client.debug_info.ccid).check(),
     "Check CC#2");
 
   AutoTest::ClearExpiredProfiles::execute(this);
@@ -1073,28 +922,19 @@ ActionStatsTest::expired_profile_()
 
   client.process_request(
     ActionRequest().
-      actionid(
-        fetch_int("Expired/ACTION")).
+      actionid(fetch_int("Expired/ACTION")).
       country(GN).
       debug_time(base_time));
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, a_stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, a_stats));
 
   ADD_WAIT_CHECKER(
     "ActionRequests check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      ORM::ActionRequests::Diffs().
-        count(1),
-      ar_stats));
+    AutoTest::stats_each_diff_checker(pq_conn_, ORM::ActionRequests::Diffs(). count(1), ar_stats));
 }
 
 void
-ActionStatsTest::conversation_value_(
-  AdClient& client)
+ActionStatsTest::conversation_value_(AdClient& client)
 {
 
   ORM::StatsList<ORM::ActionStats> a_stats;
@@ -1132,15 +972,12 @@ ActionStatsTest::conversation_value_(
 
   client.process_request(
     NSLookupRequest().
-      referer_kw(
-        fetch_string("Conversation/KEYWORD")).
+      referer_kw(fetch_string("Conversation/KEYWORD")).
       tid(fetch_int("Conversation/TID")).
       debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Conversation/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Conversation/CCID"), client.debug_info.ccid).check(),
     "Check CC");
 
   const ConversationAction REQUESTS[] =
@@ -1158,10 +995,7 @@ ActionStatsTest::conversation_value_(
   process_conversations_(client, &ConversationRequest::value, REQUESTS);
 
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, a_stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, a_stats));
 
   {
     typedef ORM::ActionRequests::Diffs Diff;
@@ -1200,8 +1034,7 @@ ActionStatsTest::conversation_value_(
 }
 
 void
-ActionStatsTest::conversation_orderid_(
- AdClient& client)
+ActionStatsTest::conversation_orderid_(AdClient& client)
 {
   ORM::StatsList<ORM::ActionStats> a_stats;
   ORM::StatsList<ORM::ActionRequests> ar_stats;
@@ -1281,10 +1114,7 @@ ActionStatsTest::conversation_orderid_(
       value(2).
       debug_time(base_time));
 
-  ADD_WAIT_CHECKER(
-    "ActionStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_, 1, a_stats));
+  ADD_WAIT_CHECKER("ActionStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, a_stats));
 
   {
     typedef ORM::ActionRequests::Diffs Diff;
@@ -1355,8 +1185,7 @@ ActionStatsTest::conversation_orderid_(
 }
 
 void
-ActionStatsTest::referrer_test_(
- AdClient& client)
+ActionStatsTest::referrer_test_(AdClient& client)
 {
   const std::string base_url1 = "http://a.com/";
   const std::string base_url2 = "http://c.co.uk/€";
@@ -1395,15 +1224,12 @@ ActionStatsTest::referrer_test_(
 
   client.process_request(
     NSLookupRequest().
-      referer_kw(
-        fetch_string("Referrer/KEYWORD")).
+      referer_kw(fetch_string("Referrer/KEYWORD")).
       tid(fetch_int("Referrer/TID")).
       debug_time(base_time));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Referrer/CCID"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Referrer/CCID"), client.debug_info.ccid).check(),
     "Check CC");
 
   const ConversationAction REQUESTS[] =
@@ -1418,17 +1244,9 @@ ActionStatsTest::referrer_test_(
 
   process_conversations_(client, &ConversationRequest::referer, REQUESTS);
 
-  ADD_WAIT_CHECKER(
-    "ActionRequests check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      stats));
+  ADD_WAIT_CHECKER("ActionRequests check", AutoTest::stats_each_diff_checker(pq_conn_, 1, stats));
 
   ADD_WAIT_CHECKER(
     "ActionRequests check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      ORM::ActionRequests::Diffs().count(1),
-      ar_stats));
+    AutoTest::stats_each_diff_checker(pq_conn_, ORM::ActionRequests::Diffs().count(1), ar_stats));
 }

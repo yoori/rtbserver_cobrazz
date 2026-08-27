@@ -25,9 +25,7 @@ namespace Vanga
     labels(const SVM<LabelType>* svm);
 
     double
-    avg_logloss(
-      const std::vector<PredArrayHolder_var>& preds,
-      const PredArrayHolder* labels);
+    avg_logloss(const std::vector<PredArrayHolder_var>& preds, const PredArrayHolder* labels);
 
     void
     fill_logloss(
@@ -39,15 +37,11 @@ namespace Vanga
     // unlabeled_sum = SUM(1 - yi)
     template<typename ContainerType>
     double
-    solve_grouped_logloss_min(
-      const ContainerType& exp_array,
-      unsigned long unlabeled_sum);
+    solve_grouped_logloss_min(const ContainerType& exp_array, unsigned long unlabeled_sum);
   }
 }
 
-namespace Vanga
-{
-namespace Utils
+namespace Vanga::Utils
 {
   template<typename LabelType>
   double
@@ -56,13 +50,13 @@ namespace Utils
     double loss = 0;
     unsigned long rows = 0;
 
-    for(auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
+    for (auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
     {
-      for(auto row_it = (*it)->rows.begin(); row_it != (*it)->rows.end(); ++row_it)
+      for (auto row_it = (*it)->rows.begin(); row_it != (*it)->rows.end(); ++row_it)
       {
         double pred = predictor->predict((*row_it)->features);
 
-        if((*it)->label.orig())
+        if ((*it)->label.orig())
         {
           loss -= ::log(std::max(pred, LOGLOSS_EPS));
         }
@@ -87,11 +81,11 @@ namespace Utils
     double loss = 0;
     unsigned long rows = 0;
 
-    for(auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
+    for (auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
     {
       const double pred = DOUBLE_ONE / (DOUBLE_ONE + std::exp(-(*it)->label.pred));
 
-      if((*it)->label.orig())
+      if ((*it)->label.orig())
       {
         loss -= ::log(std::max(pred, LOGLOSS_EPS)) * (*it)->rows.size();
       }
@@ -113,9 +107,9 @@ namespace Utils
     double loss = 0;
     unsigned long rows = 0;
 
-    for(auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
+    for (auto it = svm->grouped_rows.begin(); it != svm->grouped_rows.end(); ++it)
     {
-      for(auto row_it = (*it)->rows.begin(); row_it != (*it)->rows.end(); ++row_it)
+      for (auto row_it = (*it)->rows.begin(); row_it != (*it)->rows.end(); ++row_it)
       {
         double pred = predictor->predict((*row_it)->features);
         loss += std::abs((*it)->label.to_float() - pred);
@@ -134,10 +128,9 @@ namespace Utils
     res->values.resize(svm->size());
 
     unsigned long row_i = 0;
-    for(auto group_it = svm->grouped_rows.begin();
-      group_it != svm->grouped_rows.end(); ++group_it)
+    for (auto group_it = svm->grouped_rows.begin(); group_it != svm->grouped_rows.end(); ++group_it)
     {
-      for(auto row_it = (*group_it)->rows.begin();
+      for (auto row_it = (*group_it)->rows.begin();
         row_it != (*group_it)->rows.end(); ++row_it, ++row_i)
       {
         res->values[row_i] = (*group_it)->label.orig() ? 1.0 : 0.0;
@@ -152,14 +145,14 @@ namespace Utils
     std::vector<std::pair<PredArrayHolder_var, PredArrayHolder_var> >& res_preds,
     const std::vector<std::pair<PredArrayHolder_var, PredArrayHolder_var> >& preds)
   {
-    for(auto pred_it = preds.begin(); pred_it != preds.end(); ++pred_it)
+    for (auto pred_it = preds.begin(); pred_it != preds.end(); ++pred_it)
     {
       PredArrayHolder_var res_first = new PredArrayHolder();
       res_first->values.resize(pred_it->first->values.size());
 
       auto res_it = res_first->values.begin();
 
-      for(auto labeled_it = pred_it->first->values.begin();
+      for (auto labeled_it = pred_it->first->values.begin();
         labeled_it != pred_it->first->values.end();
         ++labeled_it, ++res_it)
       {
@@ -171,7 +164,7 @@ namespace Utils
 
       res_it = res_second->values.begin();
 
-      for(auto unlabeled_it = pred_it->second->values.begin();
+      for (auto unlabeled_it = pred_it->second->values.begin();
         unlabeled_it != pred_it->second->values.end();
         ++unlabeled_it, ++res_it)
       {
@@ -183,16 +176,14 @@ namespace Utils
   }
 
   inline double
-  avg_logloss(
-    const std::vector<PredArrayHolder_var>& preds,
-    const PredArrayHolder* labels)
+  avg_logloss(const std::vector<PredArrayHolder_var>& preds, const PredArrayHolder* labels)
   {
     double loss = 0;
 
-    for(size_t i = 0; i < labels->values.size(); ++i)
+    for (size_t i = 0; i < labels->values.size(); ++i)
     {
       double pred = 0.0;
-      for(auto pred_it = preds.begin(); pred_it != preds.end(); ++pred_it)
+      for (auto pred_it = preds.begin(); pred_it != preds.end(); ++pred_it)
       {
         pred += (*pred_it)->values[i];
       }
@@ -207,14 +198,11 @@ namespace Utils
 
   template<typename ContainerType>
   double
-  eval_r(
-    const ContainerType& exp_array,
-    unsigned long unlabeled_sum,
-    double point)
+  eval_r(const ContainerType& exp_array, unsigned long unlabeled_sum, double point)
   {
     double f_val = -static_cast<double>(unlabeled_sum);
 
-    for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+    for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
     {
       double r = exp_it->first * std::exp(point);
       double divider = 1.0 + r;
@@ -226,14 +214,11 @@ namespace Utils
 
   template<typename ContainerType>
   double
-  eval_r_derivative(
-    const ContainerType& exp_array,
-    unsigned long unlabeled_sum,
-    double point)
+  eval_r_derivative(const ContainerType& exp_array, unsigned long unlabeled_sum, double point)
   {
     double f_val = static_cast<double>(unlabeled_sum);
 
-    for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+    for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
     {
       double r = std::exp(exp_it->first + point);
       double divider = 1.0 + r;
@@ -256,12 +241,12 @@ namespace Utils
     const double X_MAX = 100;
     const unsigned long MAX_ITERATIONS = 1000;
 
-    if(unlabeled_sum == 0)
+    if (unlabeled_sum == 0)
     {
       return X_MAX; // ?
     }
 
-    if(exp_array.empty())
+    if (exp_array.empty())
     {
       return 0.0;
     }
@@ -276,7 +261,7 @@ namespace Utils
 
       double f_val = -static_cast<double>(unlabeled_sum);
       double f_derivative = 0;
-      for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+      for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
       {
         double divider = 1.0 + exp_it->first * cur_y * cur_y;
         f_val += static_cast<double>(exp_it->second) / divider;
@@ -286,7 +271,7 @@ namespace Utils
 
       next_y = cur_y - f_val / f_derivative;
 
-      while(next_y <= 0.00001)
+      while (next_y <= 0.00001)
       {
         next_y = (cur_y + next_y) / 2;
       }
@@ -295,7 +280,7 @@ namespace Utils
 
       assert(i < MAX_ITERATIONS);
     }
-    while(std::abs(next_y - cur_y) > Y_PRECISION && next_y < Y_MAX);
+    while (std::abs(next_y - cur_y) > Y_PRECISION && next_y < Y_MAX);
 
     const double base_x = 2.0 * std::log(std::min(std::max(next_y, 0.00001), Y_MAX));
 
@@ -310,7 +295,7 @@ namespace Utils
 
       double f_val = -static_cast<double>(unlabeled_sum);
       double f_derivative = 0;
-      for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+      for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
       {
         double r = exp_it->first * std::exp(cur_x);
         double divider = 1.0 + r;
@@ -325,7 +310,7 @@ namespace Utils
 
       assert(i < MAX_ITERATIONS);
     }
-    while(std::abs(next_x - cur_x) > PRECISION && next_x > X_MIN && next_x < X_MAX);
+    while (std::abs(next_x - cur_x) > PRECISION && next_x > X_MIN && next_x < X_MAX);
 
     double res = std::min(std::max(next_x, X_MIN), X_MAX);
 
@@ -334,7 +319,7 @@ namespace Utils
       ", next_x = " << next_x <<
       ", exp_array.size = " << exp_array.size() <<
       ", exp_array: [";
-    for(auto it = exp_array.begin(); it != exp_array.end(); ++it)
+    for (auto it = exp_array.begin(); it != exp_array.end(); ++it)
     {
       std::cout << "{" << it->first << "," << it->second << "}";
     }
@@ -346,32 +331,30 @@ namespace Utils
 
   template<typename ContainerType>
   double
-  solve_grouped_logloss_min(
-    const ContainerType& exp_array,
-    unsigned long unlabeled_sum)
+  solve_grouped_logloss_min(const ContainerType& exp_array, unsigned long unlabeled_sum)
   {
     const double PRECISION = 0.00001;
     const double X_MIN = -100;
     const double X_MAX = 100;
     const unsigned long MAX_ITERATIONS = 1000;
 
-    if(exp_array.empty())
+    if (exp_array.empty())
     {
       return 0.0;
     }
 
-    if(unlabeled_sum == 0)
+    if (unlabeled_sum == 0)
     {
       return X_MAX; // ?
     }
 
     unsigned long count_sum = 0;
-    for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+    for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
     {
       count_sum += exp_it->second;
     }
 
-    if(unlabeled_sum == count_sum)
+    if (unlabeled_sum == count_sum)
     {
       return X_MIN;
     }
@@ -379,14 +362,14 @@ namespace Utils
     double left_x = X_MIN;
     double right_x = X_MAX;
     double left_f = eval_r_derivative(exp_array, unlabeled_sum, left_x);  // unlabeled - 1/(1+k*exp(-100)) < 0
-    while(left_f > 0.0)
+    while (left_f > 0.0)
     {
       left_x *= 10.0;
       left_f = eval_r_derivative(exp_array, unlabeled_sum, left_x);
     }
 
     double right_f = eval_r_derivative(exp_array, unlabeled_sum, right_x); // unlabeled - 1/(1+k*exp(+100)) > 0
-    while(right_f < 0.0)
+    while (right_f < 0.0)
     {
       right_x *= 10.0;
       right_f = eval_r_derivative(exp_array, unlabeled_sum, right_x);
@@ -394,14 +377,13 @@ namespace Utils
 
     unsigned long i = 0;
 
-    if(!(left_f <= 0.0 && right_f >= 0.0))
+    if (!(left_f <= 0.0 && right_f >= 0.0))
     {
       std::cerr << "unlabeled_sum = " << unlabeled_sum <<
         ", exp_array.size = " << exp_array.size() <<
         ", left_x = " << left_x <<
         ", left_f = " << left_f <<
-        ", right_x = " << right_x <<
-        ", right_f = " << right_f << std::endl;
+        ", right_x = " << right_x << ", right_f = " << right_f << std::endl;
       assert(0);
     }
 
@@ -412,7 +394,7 @@ namespace Utils
       double div_x = (left_x + right_x) / 2;
       double div_f = eval_r_derivative(exp_array, unlabeled_sum, div_x);
 
-      if(div_f <= 0)
+      if (div_f <= 0)
       {
         left_x = div_x;
       }
@@ -425,7 +407,7 @@ namespace Utils
 
       assert(i < MAX_ITERATIONS);
     }
-    while(right_x - left_x > PRECISION);
+    while (right_x - left_x > PRECISION);
 
     double res = (right_x + left_x) / 2;
 
@@ -434,7 +416,7 @@ namespace Utils
       ", res = " << res <<
       ", exp_array.size = " << exp_array.size() <<
       ", exp_array: [";
-    for(auto it = exp_array.begin(); it != exp_array.end(); ++it)
+    for (auto it = exp_array.begin(); it != exp_array.end(); ++it)
     {
       std::cout << "{" << it->first << "," << it->second << "}";
     }
@@ -443,5 +425,4 @@ namespace Utils
     //std::cout << "res = " << res << std::endl;
     return res;
   }
-}
 }

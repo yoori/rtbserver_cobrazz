@@ -9,10 +9,7 @@ class MaxPublisherShareTest: public BaseDBUnit
 {
 public:
 
-  MaxPublisherShareTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  MaxPublisherShareTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       check_count_(0)
   { }
@@ -39,9 +36,7 @@ private:
 
   virtual
   bool
-  checker_call(
-    const std::string& description,
-    AutoTest::Checker* checker)
+  checker_call(const std::string& description, AutoTest::Checker* checker)
     /*throw(eh::Exception)*/;
 
   // Cases
@@ -55,12 +50,10 @@ private:
   increase_share_();
 
   void
-  three_sites_part_1_(
-    const AutoTest::Time& new_day);
+  three_sites_part_1_(const AutoTest::Time& new_day);
 
   void
-  three_sites_part_2_(
-    const AutoTest::Time& new_day);
+  three_sites_part_2_(const AutoTest::Time& new_day);
 
   void
   text_static_();
@@ -69,15 +62,12 @@ private:
   text_dynamic_();
 
   void
-  text_daily_part_1_(
-    const AutoTest::Time& new_day);
+  text_daily_part_1_(const AutoTest::Time& new_day);
 
   void
-  text_daily_part_2_(
-    const AutoTest::Time& new_day);
+  text_daily_part_2_(const AutoTest::Time& new_day);
 
   void
-  text_daily_part_3_(
-    const AutoTest::Time& new_day);
+  text_daily_part_3_(const AutoTest::Time& new_day);
 
 };

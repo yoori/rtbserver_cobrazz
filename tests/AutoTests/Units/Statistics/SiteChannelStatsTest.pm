@@ -44,7 +44,7 @@ sub init
     behavioral_parameters => [
       DB::BehavioralChannel::BehavioralParameter->blank(
         trigger_type => "U")]));
-    
+
   my $campaign2 = $ns->create(DisplayCampaign => {
     name => 2,
     account_id => $advertiser,

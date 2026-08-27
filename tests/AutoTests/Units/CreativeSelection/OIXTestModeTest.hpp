@@ -11,10 +11,7 @@ namespace ORM = AutoTest::ORM;
 class OIXTestModeTest: public BaseDBUnit
 {
 public:
-  OIXTestModeTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  OIXTestModeTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       now_((Generics::Time::get_time_of_day().
         get_gm_time().format("%d-%m-%Y:%H-") +

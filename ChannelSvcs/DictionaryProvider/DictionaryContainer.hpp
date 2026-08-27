@@ -10,117 +10,112 @@
 #include <Sync/PosixLock.hpp>
 #include <String/SubString.hpp>
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
+
+  typedef std::set<String::SubString> Forms;
+
+  class Dictionary : public ReferenceCounting::AtomicImpl
   {
+  public:
+    Dictionary() /*throw(eh::Exception)*/;
 
-    typedef std::set<String::SubString> Forms;
+    void
+    add_lexeme(const Forms& forms) /*throw(eh::Exception)*/;
 
-    class Dictionary : public ReferenceCounting::AtomicImpl
-    {
-    public:
-      Dictionary() /*throw(eh::Exception)*/;
+    void
+    get_forms(const char* word, Forms& forms) const /*throw(eh::Exception)*/;
 
-      void
-      add_lexeme(const Forms& forms) /*throw(eh::Exception)*/;
+    void
+    get_statistic(std::ostream& ostr) const /*throw(eh::Exception)*/;
 
-      void
-      get_forms(const char* word, Forms& forms) const /*throw(eh::Exception)*/;
+    void
+    append(const Dictionary& dict) /*throw(eh::Exception)*/;
 
-      void
-      get_statistic(std::ostream& ostr) const /*throw(eh::Exception)*/;
+    void
+    clear() noexcept;
 
-      void
-      append(const Dictionary& dict) /*throw(eh::Exception)*/;
+    /**
+     * MUST be called before using.
+     */
+    void
+    finalize() /*throw(eh::Exception)*/;
 
-      void
-      clear() noexcept;
+    size_t
+    get_words_count() const noexcept;
 
-      /**
-       * MUST be called before using.
-       */
-      void
-      finalize() /*throw(eh::Exception)*/;
+    size_t
+    get_lexems_count() const noexcept;
 
-      size_t
-      get_words_count() const noexcept;
+    size_t
+    get_buffer_size() const noexcept;
 
-      size_t
-      get_lexems_count() const noexcept;
+  private:
+    static const char LEXEME_SEPARATOR;
+    static const char FORM_SEPARATOR;
 
-      size_t
-      get_buffer_size() const noexcept;
+    typedef std::vector<char> Buffer;
+    Buffer buffer_;
 
-    private:
-      static const char LEXEME_SEPARATOR;
-      static const char FORM_SEPARATOR;
+    typedef const char* Index;
+    typedef std::vector<Index> Indexes;
+    Indexes word_indexes_;
 
-      typedef std::vector<char> Buffer;
-      Buffer buffer_;
+    size_t lexems_count_;
 
-      typedef const char* Index;
-      typedef std::vector<Index> Indexes;
-      Indexes word_indexes_;
+  private:
+    virtual
+    ~Dictionary() noexcept { };
 
-      size_t lexems_count_;
+    void
+    make_lexeme_(const char* begin, Forms& forms) const /*throw(eh::Exception)*/;
 
-    private:
-      virtual
-      ~Dictionary() noexcept { };
+    void
+    build_index_() /*throw(eh::Exception)*/;
+  };
 
-      void
-      make_lexeme_(const char* begin, Forms& forms) const /*throw(eh::Exception)*/;
+  typedef ReferenceCounting::QualPtr<Dictionary> Dictionary_var;
 
-      void
-      build_index_() /*throw(eh::Exception)*/;
-    };
+  struct LexemeItem
+  {
+    const char* word;
+    Forms forms;
+  };
 
-    typedef ReferenceCounting::QualPtr<Dictionary> Dictionary_var;
+  typedef std::vector<LexemeItem> LexemeItemVector;
 
-    struct LexemeItem
-    {
-      const char* word;
-      Forms forms;
-    };
+  class DictionaryContainer
+  {
+  public:
+    typedef ReferenceCounting::Map<std::string, Dictionary_var>
+      Dictionaries;
 
-    typedef std::vector<LexemeItem> LexemeItemVector;
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    class DictionaryContainer
-    {
-    public:
-      typedef ReferenceCounting::Map<std::string, Dictionary_var>
-        Dictionaries;
+    void
+    load_dictionary(const char* lang, std::istream& is) /*throw(eh::Exception)*/;
 
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    void
+    find_lexemes(const char* lang, LexemeItemVector& res) const /*throw(eh::Exception)*/;
 
-      void
-      load_dictionary(const char* lang, std::istream& is) /*throw(eh::Exception)*/;
+    void
+    get_statistic(std::ostream& ostr) const /*throw(eh::Exception)*/;
 
-      void
-      find_lexemes(const char* lang, LexemeItemVector& res) const /*throw(eh::Exception)*/;
+    typedef Sync::PosixMutex Mutex_;
+    typedef Sync::PosixGuard ReadGuard_;
+    typedef Sync::PosixGuard WriteGuard_;
 
-      void
-      get_statistic(std::ostream& ostr) const /*throw(eh::Exception)*/;
+  private:
+    void
+    fill_lexemes_(const Dictionary& dict,
+        LexemeItemVector& res) const /*throw(eh::Exception)*/;
 
-      typedef Sync::PosixMutex Mutex_;
-      typedef Sync::PosixGuard ReadGuard_;
-      typedef Sync::PosixGuard WriteGuard_;
+    void
+    add_dictionary_(const char* lang) /*throw(eh::Exception)*/;
 
-    private:
-      void
-      fill_lexemes_(const Dictionary& dict,
-          LexemeItemVector& res) const /*throw(eh::Exception)*/;
-
-      void
-      add_dictionary_(const char* lang) /*throw(eh::Exception)*/;
-
-    private:
-      mutable Mutex_ lock_;
-      Dictionaries dictionaries_;
-    };
-
-  }
+  private:
+    mutable Mutex_ lock_;
+    Dictionaries dictionaries_;
+  };
 
 }
-

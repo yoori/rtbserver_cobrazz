@@ -9,15 +9,15 @@ sub add_ext_channels
 {
   my ($self, $args) = @_;
 
-  while (my ($name, $channel) = each %$args) 
+  while (my ($name, $channel) = each %$args)
   {
     die "$self->{case_name}: Channel '$name' already exists!"
       if exists $self->{channels}->{$name};
-   
+
     $self->{ns}->output("$name/ID", $channel );
     $self->{ns}->output("$name/EXP", $channel->{expression})
       if defined $channel->{expression};
-    $self->{channels}->{$name} = $channel;  
+    $self->{channels}->{$name} = $channel;
   }
 }
 
@@ -46,8 +46,8 @@ sub create_channels
         my $channel_id = $self->{channels}->{$channel}->channel_id();
         $arg->{expression} =~ s/$channel/$channel_id/;
       }
-      
-      $channel_obj =  
+
+      $channel_obj =
         defined $arg->{account_id}?
           $self->{ns}->create(DB::ExpressionChannel->blank(%$arg)):
             $self->{ns}->create(DB::TargetingChannel->blank(%$arg));
@@ -91,7 +91,7 @@ sub create_campaigns
         die "$self->{case_name}: Link campaign with channel fails: " .
             "'$arg->{targeting_channel}' is not defined!"
             unless exists $self->{channels}->{$arg->{targeting_channel}};
-        $arg->{targeting_channel_id} = 
+        $arg->{targeting_channel_id} =
            $self->{channels}->{$arg->{targeting_channel}}->channel_id();
       }
     }

@@ -6,283 +6,254 @@
 #include <tests/AutoTests/Commons/ORM/PQORMObjects.hpp>
 #include <tests/AutoTests/Commons/Connection.hpp>
 
-namespace AutoTest
+namespace AutoTest::ORM
 {
-  namespace ORM
+  namespace DB = ::AutoTest::DBC;
+
+  const unsigned long DEFAULT_TIME_TO = 3*60*60; // 3 hours
+
+  /**
+   * @class ExpressionChannel
+   * @brief Alias for adserver expression channel.
+   */
+  class ExpressionChannel: public PQ::Channel
   {
-    namespace DB = ::AutoTest::DBC;
+  public:
 
-    const unsigned long DEFAULT_TIME_TO = 3*60*60; // 3 hours
+    ExpressionChannel (DB::IConn& connection);
 
-    /**
-     * @class ExpressionChannel
-     * @brief Alias for adserver expression channel.
-     */
-    class ExpressionChannel: public PQ::Channel
-    {
-    public:
+    ExpressionChannel (DB::IConn& connection, int account_id, const std::string& name);
 
-      ExpressionChannel (DB::IConn& connection);
+    ExpressionChannel (DB::IConn& connection, const ORMInt::value_type& id);
+  };
 
-      ExpressionChannel (
-        DB::IConn& connection,
-        int account_id,
-        const std::string& name);
+  /**
+   * @class CategoryChannel
+   * @brief Alias for adserver channels category.
+   */
+  class CategoryChannel: public PQ::Channel
+  {
+  public:
+    CategoryChannel (DB::IConn& connection);
 
-      ExpressionChannel (
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
-    };
+    CategoryChannel (DB::IConn& connection, int account_id, const std::string& name);
 
-    /**
-     * @class CategoryChannel
-     * @brief Alias for adserver channels category.
-     */
-    class CategoryChannel: public PQ::Channel
-    {
-    public:
-      CategoryChannel (DB::IConn& connection);
+    CategoryChannel (DB::IConn& connection, const ORMInt::value_type& id);
+  };
 
-      CategoryChannel (
-        DB::IConn& connection,
-        int account_id,
-        const std::string& name);
+  /**
+   * @class TriggerChannel
+   * @brief Alias for adserver ChannelTrigger.
+   */
+  class TriggerChannel: public PQ::Channeltrigger
+  {
+  public:
+    TriggerChannel(DB::IConn& connection);
 
-      CategoryChannel (
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
-    };
+    TriggerChannel(DB::IConn& connection, const ORMInt::value_type& id);
 
-    /**
-     * @class TriggerChannel
-     * @brief Alias for adserver ChannelTrigger.
-     */
-    class TriggerChannel: public PQ::Channeltrigger
-    {
-    public:
-      TriggerChannel(DB::IConn& connection);
+    TriggerChannel(const TriggerChannel& from);
 
-      TriggerChannel(
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
+    TriggerChannel&
+    operator=(const TriggerChannel& from);
 
-      TriggerChannel(
-        const TriggerChannel& from);
+    bool select();
+    bool select (const ORMInt::value_type& id);
+    bool update(bool set_defaults = true);
+    bool insert (bool set_defaults = true);
+    bool del ();
+    bool del (const ORMInt::value_type& id);
+    bool delet ();
+    bool delet (const ORMInt::value_type& id);
 
-      TriggerChannel&
-      operator=(
-        const TriggerChannel& from);
+  private:
+    PQ::Channel channel_;
+  };
 
-      bool select();
-      bool select (const ORMInt::value_type& id);
-      bool update(bool set_defaults = true);
-      bool insert (bool set_defaults = true);
-      bool del ();
-      bool del (const ORMInt::value_type& id);
-      bool delet ();
-      bool delet (const ORMInt::value_type& id);
+  /**
+   * @class BehavioralChannel
+   * @brief Alias for adserver behavioral channel.
+   */
+  class BehavioralChannel: public PQ::Channel
+  {
+  public:
+    PQ::BehavioralParameters params;
 
-    private:
-      PQ::Channel channel_;
-    };
+    BehavioralChannel (DB::IConn& connection);
 
-    /**
-     * @class BehavioralChannel
-     * @brief Alias for adserver behavioral channel.
-     */
-    class BehavioralChannel: public PQ::Channel
-    {
-    public:
-      PQ::BehavioralParameters params;
+    BehavioralChannel (DB::IConn& connection, const ORMInt::value_type& id);
 
-      BehavioralChannel (DB::IConn& connection);
+    BehavioralChannel (const BehavioralChannel& from);
 
-      BehavioralChannel (DB::IConn& connection, const ORMInt::value_type& id);
+    BehavioralChannel& operator= (const BehavioralChannel& from);
 
-      BehavioralChannel (const BehavioralChannel& from);
+    std::string id_with_suffix ();
 
-      BehavioralChannel& operator= (const BehavioralChannel& from);
+    bool select ();
 
-      std::string id_with_suffix ();
+    bool select (const ORMInt::value_type& id);
 
-      bool select ();
+    bool update (bool set_defaults = true);
 
-      bool select (const ORMInt::value_type& id);
+    bool update (const ORMInt::value_type& id, bool set_defaults = true);
 
-      bool update (bool set_defaults = true);
+    bool insert (bool set_defaults = true);
 
-      bool update (
-        const ORMInt::value_type& id,
-        bool set_defaults = true);
+    bool delet ();
 
-      bool insert (bool set_defaults = true);
+    bool del ();
 
-      bool delet ();
+    bool delet (const ORMInt::value_type& id);
 
-      bool del ();
+    bool del (const ORMInt::value_type& id);
 
-      bool delet (const ORMInt::value_type& id);
+    bool has_name (const ORMString::value_type& name);
 
-      bool del (const ORMInt::value_type& id);
+    bool select_name (const ORMString::value_type& name);
 
-      bool has_name (const ORMString::value_type& name);
+    bool insert_name (const std::string& name, bool set_defaults = true);
 
-      bool select_name (const ORMString::value_type& name);
+  };
 
-      bool insert_name (
-        const std::string& name,
-        bool set_defaults = true);
+  /**
+   * @class DiscoverChannel
+   * @brief Alias for adserver discover channel.
+   */
+  class DiscoverChannel:
+    public BehavioralChannel
+  {
+  public:
+    DiscoverChannel (DB::IConn& connection);
 
-    };
+    DiscoverChannel (DB::IConn& connection, const ORMInt::value_type& id);
 
-    /**
-     * @class DiscoverChannel
-     * @brief Alias for adserver discover channel.
-     */
-    class DiscoverChannel:
-      public BehavioralChannel
-    {
-    public:
-      DiscoverChannel (DB::IConn& connection);
+    bool delet ();
 
-      DiscoverChannel (
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
+    bool delet (const ORMInt::value_type& id);
 
-      bool delet ();
-
-      bool delet (const ORMInt::value_type& id);
-
-    private:
-      void delet_stats_();
-    };
+  private:
+    void delet_stats_();
+  };
 
 
-    /**
-     * @class SearchChannel
-     * @brief Alias for adserver search channel
-     * (include "search" behavioral parameter).
-     */
-    class SearchChannel:
-      public BehavioralChannel
-    {
-    public:
-      SearchChannel (DB::IConn& connection);
+  /**
+   * @class SearchChannel
+   * @brief Alias for adserver search channel
+   * (include "search" behavioral parameter).
+   */
+  class SearchChannel:
+    public BehavioralChannel
+  {
+  public:
+    SearchChannel (DB::IConn& connection);
 
-      SearchChannel (
-        DB::IConn& connection,
-        int account_id,
-        const std::string& _name,
-        int minimum_visits,
-        int time_from,
-        int tme_to);
+    SearchChannel (
+      DB::IConn& connection,
+      int account_id,
+      const std::string& _name,
+      int minimum_visits,
+      int time_from,
+      int tme_to);
 
 
-      SearchChannel (
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
-    };
+    SearchChannel (DB::IConn& connection, const ORMInt::value_type& id);
+  };
 
-    // class PageChannel
-    /**
-     * @class SearchChannel
-     * @brief Alias for adserver search channel
-     * (include "page" behavioral parameter).
-     */
-    class PageChannel:
-      public BehavioralChannel
-    {
-    public:
-      PageChannel (DB::IConn& connection);
+  // class PageChannel
+  /**
+   * @class SearchChannel
+   * @brief Alias for adserver search channel
+   * (include "page" behavioral parameter).
+   */
+  class PageChannel:
+    public BehavioralChannel
+  {
+  public:
+    PageChannel (DB::IConn& connection);
 
-      PageChannel (
-        DB::IConn& connection,
-        int account_id,
-        const std::string& _name,
-        int minimum_visits,
-        int time_from,
-        int tme_to);
+    PageChannel (
+      DB::IConn& connection,
+      int account_id,
+      const std::string& _name,
+      int minimum_visits,
+      int time_from,
+      int tme_to);
 
-      PageChannel (
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
-    };
+    PageChannel (DB::IConn& connection, const ORMInt::value_type& id);
+  };
+
+  /**
+   * @class RatedTagPricing
+   * @brief Composite entity that represents pair TagPricing and SiteRate.
+   */
+  class RatedTagPricing:
+    public PQ::TagPricing
+  {
+  public:
+    PQ::SiteRate rate;
 
     /**
-     * @class RatedTagPricing
-     * @brief Composite entity that represents pair TagPricing and SiteRate.
+     * @brief Constructors
      */
-    class RatedTagPricing:
-      public PQ::TagPricing
-    {
-    public:
-      PQ::SiteRate rate;
+    RatedTagPricing(DB::IConn& connection);
+    RatedTagPricing(const RatedTagPricing& from);
+    RatedTagPricing& operator=(const RatedTagPricing& from);
+    RatedTagPricing(DB::IConn& connection,const ORMInt::value_type& id);
 
-      /**
-       * @brief Constructors
-       */
-      RatedTagPricing(DB::IConn& connection);
-      RatedTagPricing(const RatedTagPricing& from);
-      RatedTagPricing& operator=(const RatedTagPricing& from);
-      RatedTagPricing(DB::IConn& connection,const ORMInt::value_type& id);
+    bool select (); //!< get exists
+    bool update (bool set_defaults = true); //!< update exists
+    bool insert (bool set_defaults = true); //!< create new
+    bool delet  (); //!< delete exists
+    void log_in  (Logger&, unsigned long severity = Logging::Logger::INFO); //!< log record
+  };
 
-      bool select (); //!< get exists
-      bool update (bool set_defaults = true); //!< update exists
-      bool insert (bool set_defaults = true); //!< create new
-      bool delet  (); //!< delete exists
-      void log_in  (Logger&, unsigned long severity = Logging::Logger::INFO); //!< log record
-    };
+  /**
+   * @class RatedColocation
+   * @brief Composite entity that represents pair Colocation and ColocationRate.
+   */
+  class RatedColocation:
+    public PQ::Colocation
+  {
+  public:
+    PQ::ColocationRate rate;
 
     /**
-     * @class RatedColocation
-     * @brief Composite entity that represents pair Colocation and ColocationRate.
+     * @brief Constructors
      */
-    class RatedColocation:
-      public PQ::Colocation
-    {
-    public:
-      PQ::ColocationRate rate;
+    RatedColocation(DB::IConn& connection);
+    RatedColocation(const RatedColocation& from);
+    RatedColocation& operator=(const RatedColocation& from);
+    RatedColocation(DB::IConn& connection, const ORMInt::value_type& id);
 
-      /**
-       * @brief Constructors
-       */
-      RatedColocation(DB::IConn& connection);
-      RatedColocation(const RatedColocation& from);
-      RatedColocation& operator=(const RatedColocation& from);
-      RatedColocation(
-        DB::IConn& connection,
-        const ORMInt::value_type& id);
+    bool select (); //!< get exists
+    bool update (bool set_defaults = true); //!< update exists
+    bool insert (bool set_defaults = true); //!< create new
+    bool insert_rate(bool set_defaults  = true); //!< create new rate
+    bool delet  (); //!< delete exists
+  };
 
-      bool select (); //!< get exists
-      bool update (bool set_defaults = true); //!< update exists
-      bool insert (bool set_defaults = true); //!< create new
-      bool insert_rate(bool set_defaults  = true); //!< create new rate
-      bool delet  (); //!< delete exists
-    };
+  /**
+   * @class RatedCampaignCreativeGroup
+   * @brief Composite entity that represents pair CampaignCreativeGroup and CCGRate.
+   */
+  class RatedCampaignCreativeGroup:
+    public PQ::CampaignCreativeGroup
+  {
+  public:
+    PQ::CCGRate rate;
 
     /**
-     * @class RatedCampaignCreativeGroup
-     * @brief Composite entity that represents pair CampaignCreativeGroup and CCGRate.
+     * @brief Constructors
      */
-    class RatedCampaignCreativeGroup:
-      public PQ::CampaignCreativeGroup
-    {
-    public:
-      PQ::CCGRate rate;
+    RatedCampaignCreativeGroup(DB::IConn& connection);
+    RatedCampaignCreativeGroup(const RatedCampaignCreativeGroup& from);
+    RatedCampaignCreativeGroup& operator=(const RatedCampaignCreativeGroup& from);
+    RatedCampaignCreativeGroup(DB::IConn& connection,const ORMInt::value_type& id);
 
-      /**
-       * @brief Constructors
-       */
-      RatedCampaignCreativeGroup(DB::IConn& connection);
-      RatedCampaignCreativeGroup(const RatedCampaignCreativeGroup& from);
-      RatedCampaignCreativeGroup& operator=(const RatedCampaignCreativeGroup& from);
-      RatedCampaignCreativeGroup(DB::IConn& connection,const ORMInt::value_type& id);
-
-      bool select (); //!< get exists
-      bool update (bool set_defaults = true); //!< update exists
-      bool insert (bool set_defaults = true); //!< create new
-      bool delet  (); //!< delete exists
-      void log_in  (Logger&, unsigned long severity = Logging::Logger::INFO); //!< log record
-    };
-  }//namespace ORM
-}//namespace AutoTest
+    bool select (); //!< get exists
+    bool update (bool set_defaults = true); //!< update exists
+    bool insert (bool set_defaults = true); //!< create new
+    bool delet  (); //!< delete exists
+    void log_in  (Logger&, unsigned long severity = Logging::Logger::INFO); //!< log record
+  };
+} // namespace AutoTest::ORM

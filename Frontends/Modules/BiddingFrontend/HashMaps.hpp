@@ -9,41 +9,41 @@
 #include <Generics/HashTableAdapters.hpp>
 #include <String/SubString.hpp>
 
-namespace AdServer::Bidding
+namespace AdServer::Bidding::HashMapDetail
 {
-  namespace HashMapDetail
+  inline std::string_view
+  to_string_view(const std::string& value) noexcept
   {
-    inline std::string_view
-    to_string_view(const std::string& value) noexcept
-    {
-      return value;
-    }
-
-    inline std::string_view
-    to_string_view(std::string_view value) noexcept
-    {
-      return value;
-    }
-
-    inline std::string_view
-    to_string_view(const char* value) noexcept
-    {
-      return value ? std::string_view(value) : std::string_view();
-    }
-
-    inline std::string_view
-    to_string_view(const String::SubString& value) noexcept
-    {
-      return std::string_view(value.data(), value.size());
-    }
-
-    inline std::string_view
-    to_string_view(const Generics::SubStringHashAdapter& value) noexcept
-    {
-      return std::string_view(value);
-    }
+    return value;
   }
 
+  inline std::string_view
+  to_string_view(std::string_view value) noexcept
+  {
+    return value;
+  }
+
+  inline std::string_view
+  to_string_view(const char* value) noexcept
+  {
+    return value ? std::string_view(value) : std::string_view();
+  }
+
+  inline std::string_view
+  to_string_view(const String::SubString& value) noexcept
+  {
+    return std::string_view(value.data(), value.size());
+  }
+
+  inline std::string_view
+  to_string_view(const Generics::SubStringHashAdapter& value) noexcept
+  {
+    return std::string_view(value);
+  }
+}
+
+namespace AdServer::Bidding
+{
   struct TransparentStringHash
   {
     using is_transparent = void;
@@ -52,8 +52,7 @@ namespace AdServer::Bidding
     std::size_t
     operator()(const Value& value) const noexcept
     {
-      return std::hash<std::string_view>()(
-        HashMapDetail::to_string_view(value));
+      return std::hash<std::string_view>()(HashMapDetail::to_string_view(value));
     }
   };
 
@@ -65,8 +64,7 @@ namespace AdServer::Bidding
     bool
     operator()(const Left& left, const Right& right) const noexcept
     {
-      return HashMapDetail::to_string_view(left) ==
-        HashMapDetail::to_string_view(right);
+      return HashMapDetail::to_string_view(left) == HashMapDetail::to_string_view(right);
     }
   };
 

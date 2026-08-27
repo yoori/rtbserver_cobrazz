@@ -43,8 +43,7 @@ namespace AdServer::UserInfoSvcs
   {
     struct ChunkFileDescription
     {
-      ChunkFileDescription(
-        const Generics::Time& max_keep_time)
+      ChunkFileDescription(const Generics::Time& max_keep_time)
         : max_time(max_keep_time)
       {}
 
@@ -55,9 +54,7 @@ namespace AdServer::UserInfoSvcs
     typedef std::map<std::string, ChunkFileDescription>
       ChunkFileDescriptionMap;
 
-    ChunkSelector(
-      const String::SubString& prefix,
-      ChunkFileDescriptionMap& chunk_files);
+    ChunkSelector(const String::SubString& prefix, ChunkFileDescriptionMap& chunk_files);
 
     bool
     operator ()(const char* full_path, const struct stat&)

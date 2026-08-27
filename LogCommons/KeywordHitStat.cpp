@@ -2,9 +2,7 @@
 #include "KeywordHitStat.hpp"
 #include <LogCommons/LogCommons.ipp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   template <> const char*
   KeywordHitStatTraits::B::base_name_ = "KeywordHitStat";
@@ -36,8 +34,7 @@ namespace LogProcessing
   {
     Aux_::StringIoWrapper keyword_wrapper;
     is >> keyword_wrapper;
-    key.keyword_ = new AdServer::Commons::StringHolder(
-      std::move(keyword_wrapper));
+    key.keyword_ = new AdServer::Commons::StringHolder(std::move(keyword_wrapper));
     key.calc_hash_();
     return is;
   }
@@ -62,6 +59,4 @@ namespace LogProcessing
     os << data.hits_;
     return os;
   }
-} // namespace LogProcessing
-} // namespace AdServer
-
+} // namespace AdServer::LogProcessing

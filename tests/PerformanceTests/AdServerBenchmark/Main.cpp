@@ -12,7 +12,7 @@ namespace
 
 int main (int argc, char** argv)
 {
-  if(argc != 3)
+  if (argc != 3)
   {
     std::cerr << "error: test configuration file path not specified" << std::endl <<
       usage << std::endl;

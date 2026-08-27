@@ -6,9 +6,7 @@
 
 #include "CountActiveObject.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   // AccessActiveObject: wrapper around _var that allow to
   // stop ptr resolve(Accessor providing) after deactivation
@@ -103,11 +101,8 @@ namespace Commons
     ControlSmartPtrType obj_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename SmartPtrType, typename ControlSmartPtrType>
   AccessActiveObject<SmartPtrType, ControlSmartPtrType>::
@@ -134,7 +129,7 @@ namespace Commons
   AccessActiveObject<SmartPtrType, ControlSmartPtrType>::
   GuardHolder::~GuardHolder() noexcept
   {
-    if(object_holder_->obj)
+    if (object_holder_->obj)
     {
       object_holder_->usage_counter->add_active_count(-1);
     }
@@ -200,7 +195,7 @@ namespace Commons
       Sync::PosixGuard guard(cond_);
       current_object_holder = ptr_holder_.get(); // save for destroy outside lock
       obj_.swap(new_obj);
-      if(active())
+      if (active())
       {
         activate_object_();
       }
@@ -211,7 +206,7 @@ namespace Commons
     }
 
     // destroy current_object_holder
-    if(current_object_holder)
+    if (current_object_holder)
     {
       try
       {
@@ -230,7 +225,7 @@ namespace Commons
   AccessActiveObject<SmartPtrType, ControlSmartPtrType>::get_accessor() noexcept
   {
     ObjectHolder_var cur_holder = ptr_holder_.get();
-    if(cur_holder.in() && cur_holder->usage_counter->add_active_count(1))
+    if (cur_holder.in() && cur_holder->usage_counter->add_active_count(1))
     {
       return GuardHolder(cur_holder);
     }
@@ -251,7 +246,7 @@ namespace Commons
     /*throw(Exception, eh::Exception)*/
   {
     // assert(!ptr_holder_.get().in());
-    if(obj_)
+    if (obj_)
     {
       ObjectHolder_var new_holder = new ObjectHolder(obj_);
       new_holder->usage_counter->activate_object();
@@ -265,7 +260,7 @@ namespace Commons
     /*throw(Exception, eh::Exception)*/
   {
     ObjectHolder_var cur_holder = ptr_holder_.get();
-    if(cur_holder.in())
+    if (cur_holder.in())
     {
       cur_holder->usage_counter->deactivate_object();
     }
@@ -277,12 +272,11 @@ namespace Commons
     /*throw(Exception, eh::Exception)*/
   {
     ObjectHolder_var cur_holder = ptr_holder_.get();
-    if(cur_holder.in())
+    if (cur_holder.in())
     {
       cur_holder->usage_counter->wait_object();
     }
 
     ptr_holder_ = ObjectHolder_var();
   }
-}
 }

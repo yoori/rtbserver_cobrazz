@@ -11,9 +11,7 @@
 #include "ChannelContainer.hpp"
 #include "DictionaryMatcher.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
 
   class ChannelContainerBase;
@@ -23,9 +21,7 @@ namespace ChannelSvcs
     public ChannelContainerBase
   {
   public:
-    UpdateContainer(
-      ChannelContainer* cont,
-      DictionaryMatcher* dict)
+    UpdateContainer(ChannelContainer* cont, DictionaryMatcher* dict)
       noexcept;
 
     ~UpdateContainer() noexcept {};
@@ -55,10 +51,7 @@ namespace ChannelSvcs
      * @load_once - this channel can't be updated
      * just loaded for one time
      */
-    size_t select_parsed_triggers(
-      unsigned long channel_id,
-      TriggerList& triggers,
-      bool load_once)
+    size_t select_parsed_triggers(unsigned long channel_id, TriggerList& triggers, bool load_once)
       noexcept;
 
     virtual bool ready() const noexcept;
@@ -108,12 +101,9 @@ namespace ChannelSvcs
   };
 
 }
-}
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
-  {
 
   inline
   UpdateContainer::Matters& UpdateContainer::get_matters() noexcept
@@ -131,7 +121,7 @@ namespace AdServer
   inline
   bool UpdateContainer::ready() const noexcept
   {
-    if(!dict_matcher_)
+    if (!dict_matcher_)
     {
       return true;
     }
@@ -162,6 +152,4 @@ namespace AdServer
     return new_channels_;
   }
 
-  }//namespace ChannelSvcs
-}
-
+} // namespace AdServer::ChannelSvcs

@@ -9,18 +9,14 @@
 
 #include <Commons/DelegateActiveObject.hpp>
 
-namespace AdServer
-{
-namespace Frontends
+namespace AdServer::Frontends
 {
   class WorkerStatsObject: public Commons::DelegateActiveObject
   {
     static const Generics::Time STATS_TIMEOUT;
 
   public:
-    WorkerStatsObject(
-      Logging::Logger* logger,
-      Generics::ActiveObjectCallback* callback)
+    WorkerStatsObject(Logging::Logger* logger, Generics::ActiveObjectCallback* callback)
       /*throw(eh::Exception)*/;
 
     void
@@ -66,5 +62,4 @@ namespace Frontends
 
   typedef ReferenceCounting::SmartPtr<WorkerStatsObject>
     WorkerStatsObject_var;
-}
 }

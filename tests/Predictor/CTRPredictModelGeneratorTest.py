@@ -28,6 +28,22 @@ TRAINER_SPEC.loader.exec_module(TRAINER_MODULE)
 
 
 class CTRPredictModelGeneratorTest(unittest.TestCase):
+  def test_ssp_identity_and_ctr_are_not_common_denoise_features(self):
+    self.assertIn(['ssp_tag_id'], TRAINER_MODULE.FEATURE_CONFIG['features'])
+    self.assertIn(['ssp_ctr'], TRAINER_MODULE.FEATURE_CONFIG['features'])
+    self.assertNotIn(
+      ['ssp_tag_id'],
+      TRAINER_MODULE.CAMPAIGN_CORRECTION_FEATURE_CONFIG['features'])
+    self.assertNotIn(
+      ['ssp_ctr'],
+      TRAINER_MODULE.CAMPAIGN_CORRECTION_FEATURE_CONFIG['features'])
+    self.assertIn(
+      ['ssp_tag_id'],
+      TRAINER_MODULE.CAMPAIGN_MODEL_FEATURE_CONFIG['features'])
+    self.assertIn(
+      ['ssp_ctr'],
+      TRAINER_MODULE.CAMPAIGN_MODEL_FEATURE_CONFIG['features'])
+
   def test_training_defaults_cover_multiple_chunks(self):
     config = MODULE.Config()
 

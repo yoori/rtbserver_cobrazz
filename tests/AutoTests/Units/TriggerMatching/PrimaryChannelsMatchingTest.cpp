@@ -1,10 +1,7 @@
 
 #include "PrimaryChannelsMatchingTest.hpp"
 
-REFLECT_UNIT(PrimaryChannelsMatchingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(PrimaryChannelsMatchingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -113,10 +110,7 @@ bool
 PrimaryChannelsMatchingTest::run_test()
 {
   AUTOTEST_CASE(
-    test_group(
-      SIMPLE_CASES,
-      &NSLookupRequest::search,
-      &NSLookupRequest::referer_kw),
+    test_group(SIMPLE_CASES, &NSLookupRequest::search, &NSLookupRequest::referer_kw),
     "Simple cases");
 
  AUTOTEST_CASE(
@@ -128,17 +122,11 @@ PrimaryChannelsMatchingTest::run_test()
     "Split page & search");
 
   AUTOTEST_CASE(
-    test_group(
-      FT_CASES,
-      &NSLookupRequest::ft,
-      &NSLookupRequest::referer_kw),
+    test_group(FT_CASES, &NSLookupRequest::ft, &NSLookupRequest::referer_kw),
     "Full text cases");
 
   AUTOTEST_CASE(
-    test_group(
-      URL_KWD_CASES,
-      &NSLookupRequest::referer,
-      &NSLookupRequest::referer_kw),
+    test_group(URL_KWD_CASES, &NSLookupRequest::referer, &NSLookupRequest::referer_kw),
     "Url keyword case");
 
   return true;
@@ -155,8 +143,7 @@ PrimaryChannelsMatchingTest::test_group(
   AdClient client(AdClient::create_user(this));
   for (size_t i = 0; i < Count; ++i)
   {
-    NOSTOP_FAIL_CONTEXT(
-      test_case(client, tests[i], member1, member2, flags));
+    NOSTOP_FAIL_CONTEXT(test_case(client, tests[i], member1, member2, flags));
   }
 }
 
@@ -174,6 +161,7 @@ PrimaryChannelsMatchingTest::test_case(
   {
     member1(request, fetch_string(test.param1));
   }
+
   if (test.param2)
   {
     member2(request, fetch_string(test.param2));
@@ -193,19 +181,12 @@ PrimaryChannelsMatchingTest::test_case(
   }
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      test.matched,
-      got_channels).check(),
+    ChannelsCheck(this, test.matched, got_channels).check(),
     test.description +
       " Expected trigger_channels");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      test.unmatched,
-      got_channels,
-      AutoTest::SCE_NOT_ENTRY).check(),
+    ChannelsCheck(this, test.unmatched, got_channels, AutoTest::SCE_NOT_ENTRY).check(),
     test.description +
       " Unexpected trigger_channels");
 

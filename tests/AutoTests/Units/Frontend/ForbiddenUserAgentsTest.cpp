@@ -1,9 +1,6 @@
 #include "ForbiddenUserAgentsTest.hpp"
 
-REFLECT_UNIT(ForbiddenUserAgentsTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ForbiddenUserAgentsTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -22,9 +19,7 @@ ForbiddenUserAgentsTest::run_test()
   {
     request.user_agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1;)";
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        204,
-        client.process(request, true)).check(),
+      AutoTest::equal_checker(204, client.process(request, true)).check(),
       "must process valid user agent: "
       "Mozilla/5.0 (Windows; U; Windows NT 5.1;)");
   }
@@ -37,9 +32,7 @@ ForbiddenUserAgentsTest::run_test()
     {
       request.user_agent = value;
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        403,
-        client.process(request, true)).check(),
+      AutoTest::equal_checker(403, client.process(request, true)).check(),
       "must got forbidden status for agent: " + value);
     }
   }

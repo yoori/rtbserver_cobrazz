@@ -14,32 +14,25 @@ namespace
   const Generics::Values::Key BF_TIMEOUTS         = "rtb_request_timeout_total";
   const Generics::Values::Key BF_TIME_COUNTER     = "rtb_request_time_counter";
   const Generics::Values::Key BF_REQ_IN_PROGRESS  = "rtb_request_in_progress";
-  const Generics::Values::Key BF_USER_RESOLVING_TOTAL =
-    "rtb_request_user_resolving_total";
+  const Generics::Values::Key BF_USER_RESOLVING_TOTAL = "rtb_request_user_resolving_total";
   const Generics::Values::Key BF_USER_RESOLVING_TOTAL_TIME =
     "rtb_request_user_resolving_total_time";
   const Generics::Values::Key BF_USER_RESOLVING_IN_PROGRESS =
     "rtb_request_user_resolving_in_progress";
-  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL =
-    "rtb_request_trigger_match_total";
-  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL_TIME =
-    "rtb_request_trigger_match_total_time";
+  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL = "rtb_request_trigger_match_total";
+  const Generics::Values::Key BF_TRIGGER_MATCH_TOTAL_TIME = "rtb_request_trigger_match_total_time";
   const Generics::Values::Key BF_TRIGGER_MATCH_IN_PROGRESS =
     "rtb_request_trigger_match_in_progress";
-  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL =
-    "rtb_request_history_match_total";
-  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL_TIME =
-    "rtb_request_history_match_total_time";
+  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL = "rtb_request_history_match_total";
+  const Generics::Values::Key BF_HISTORY_MATCH_TOTAL_TIME = "rtb_request_history_match_total_time";
   const Generics::Values::Key BF_HISTORY_MATCH_IN_PROGRESS =
     "rtb_request_history_match_in_progress";
-  const Generics::Values::Key BF_CAMPAIGN_SELECTION_TOTAL =
-    "rtb_request_campaign_selection_total";
+  const Generics::Values::Key BF_CAMPAIGN_SELECTION_TOTAL = "rtb_request_campaign_selection_total";
   const Generics::Values::Key BF_CAMPAIGN_SELECTION_TOTAL_TIME =
     "rtb_request_campaign_selection_total_time";
   const Generics::Values::Key BF_CAMPAIGN_SELECTION_IN_PROGRESS =
     "rtb_request_campaign_selection_in_progress";
-  const Generics::Values::Key BF_HISTORY_POST_MATCH_TOTAL =
-    "rtb_request_history_post_match_total";
+  const Generics::Values::Key BF_HISTORY_POST_MATCH_TOTAL = "rtb_request_history_post_match_total";
   const Generics::Values::Key BF_HISTORY_POST_MATCH_TOTAL_TIME =
     "rtb_request_history_post_match_total_time";
   const Generics::Values::Key BF_HISTORY_POST_MATCH_IN_PROGRESS =
@@ -102,19 +95,16 @@ namespace
   std::size_t
   timeout_counter_index(const Generics::Time& value) noexcept
   {
-    const GapKey* gap =
-      std::lower_bound(GAPS,
-        GAPS + sizeof(GAPS)/sizeof(GAPS[0]), value);
+    const GapKey* gap = std::lower_bound(GAPS, GAPS + sizeof(GAPS)/sizeof(GAPS[0]), value);
     std::size_t index = gap - GAPS;
-    return index < sizeof(GAPS)/sizeof(GAPS[0]) ?
-      index : sizeof(GAPS)/sizeof(GAPS[0]) - 1;
+    return index < sizeof(GAPS)/sizeof(GAPS[0]) ? index : sizeof(GAPS)/sizeof(GAPS[0]) - 1;
   }
 
   void
   decrement_if_positive(std::atomic<unsigned long>& counter) noexcept
   {
     unsigned long value = counter.load(std::memory_order_relaxed);
-    while(value != 0 && !counter.compare_exchange_weak(
+    while (value != 0 && !counter.compare_exchange_weak(
       value,
       value - 1,
       std::memory_order_relaxed,
@@ -125,9 +115,7 @@ namespace
   Generics::Time
   time_from_microseconds(long long microseconds) noexcept
   {
-    return Generics::Time(
-      microseconds / 1000000,
-      microseconds % 1000000);
+    return Generics::Time(microseconds / 1000000, microseconds % 1000000);
   }
 }
 
@@ -155,9 +143,7 @@ namespace AdServer
 
       template<typename Type>
       void
-      operator()(
-        const Generics::Values::Key& key,
-        const Type& value)
+      operator()(const Generics::Values::Key& key, const Type& value)
       {
         if constexpr(std::is_integral_v<Type>)
         {
@@ -227,13 +213,11 @@ namespace AdServer
     (void)request_info;
 
     request_finished_total_.fetch_add(1, std::memory_order_relaxed);
-    if(bid)
+    if (bid)
     {
       request_total_bid_.fetch_add(1, std::memory_order_relaxed);
     }
-    processing_time_us_.fetch_add(
-      processing_time.microseconds(),
-      std::memory_order_relaxed);
+    processing_time_us_.fetch_add(processing_time.microseconds(), std::memory_order_relaxed);
   }
 
   void
@@ -245,8 +229,7 @@ namespace AdServer
   void
   StatHolder::add_timeout(const Generics::Time& timeout) noexcept
   {
-    timeout_counters_[timeout_counter_index(
-      Bidding::CellsKey::round_timeout(timeout))].fetch_add(
+    timeout_counters_[timeout_counter_index(Bidding::CellsKey::round_timeout(timeout))].fetch_add(
         1,
         std::memory_order_relaxed);
   }
@@ -268,11 +251,11 @@ namespace AdServer
   StatHolder::selected_bids() noexcept
   {
     SelectedBidsMap result;
-    for(auto& shard : selected_bids_shards_)
+    for (auto& shard : selected_bids_shards_)
     {
       std::lock_guard lock(shard.lock);
       result.reserve(result.size() + shard.bids.size());
-      for(const auto& [ccg_id, count] : shard.bids)
+      for (const auto& [ccg_id, count] : shard.bids)
       {
         result[ccg_id] += count;
       }
@@ -357,44 +340,32 @@ namespace AdServer
     add_rtb_request_user_resolving,
     user_resolving_total,
     user_resolving_in_progress)
-  ADD_ATOMIC_TIME_COUNTER(
-    add_rtb_request_user_resolving_time,
-    user_resolving_total_time)
+  ADD_ATOMIC_TIME_COUNTER(add_rtb_request_user_resolving_time, user_resolving_total_time)
   COMPLETE_ATOMIC_COUNTER(complete_rtb_request_user_resolving, user_resolving_in_progress)
   ADD_ATOMIC_IN_PROGRESS_COUNTER(
     add_rtb_request_trigger_match,
     trigger_match_total,
     trigger_match_in_progress)
-  ADD_ATOMIC_TIME_COUNTER(
-    add_rtb_request_trigger_match_time,
-    trigger_match_total_time)
+  ADD_ATOMIC_TIME_COUNTER(add_rtb_request_trigger_match_time, trigger_match_total_time)
   COMPLETE_ATOMIC_COUNTER(complete_rtb_request_trigger_match, trigger_match_in_progress)
   ADD_ATOMIC_IN_PROGRESS_COUNTER(
     add_rtb_request_history_match,
     history_match_total,
     history_match_in_progress)
-  ADD_ATOMIC_TIME_COUNTER(
-    add_rtb_request_history_match_time,
-    history_match_total_time)
+  ADD_ATOMIC_TIME_COUNTER(add_rtb_request_history_match_time, history_match_total_time)
   COMPLETE_ATOMIC_COUNTER(complete_rtb_request_history_match, history_match_in_progress)
   ADD_ATOMIC_IN_PROGRESS_COUNTER(
     add_rtb_request_campaign_selection,
     campaign_selection_total,
     campaign_selection_in_progress)
-  ADD_ATOMIC_TIME_COUNTER(
-    add_rtb_request_campaign_selection_time,
-    campaign_selection_total_time)
+  ADD_ATOMIC_TIME_COUNTER(add_rtb_request_campaign_selection_time, campaign_selection_total_time)
   COMPLETE_ATOMIC_COUNTER(complete_rtb_request_campaign_selection, campaign_selection_in_progress)
   ADD_ATOMIC_IN_PROGRESS_COUNTER(
     add_rtb_request_history_post_match,
     history_post_match_total,
     history_post_match_in_progress)
-  ADD_ATOMIC_TIME_COUNTER(
-    add_rtb_request_history_post_match_time,
-    history_post_match_total_time)
-  COMPLETE_ATOMIC_COUNTER(
-    complete_rtb_request_history_post_match,
-    history_post_match_in_progress)
+  ADD_ATOMIC_TIME_COUNTER(add_rtb_request_history_post_match_time, history_post_match_total_time)
+  COMPLETE_ATOMIC_COUNTER(complete_rtb_request_history_post_match, history_post_match_in_progress)
 
 #undef ADD_COUNTER
 #undef COMPLETE_COUNTER
@@ -420,49 +391,37 @@ namespace AdServer
     StatData d;
 
     d.request_total = request_total_.load(std::memory_order_relaxed);
-    d.request_finished_total =
-      request_finished_total_.load(std::memory_order_relaxed);
+    d.request_finished_total = request_finished_total_.load(std::memory_order_relaxed);
     d.request_total_bid = request_total_bid_.load(std::memory_order_relaxed);
     d.skipped = skipped_.load(std::memory_order_relaxed);
     d.request_in_progress = request_in_progress_.load(std::memory_order_relaxed);
-    d.user_resolving_total =
-      user_resolving_total_.load(std::memory_order_relaxed);
+    d.user_resolving_total = user_resolving_total_.load(std::memory_order_relaxed);
     d.user_resolving_total_time = time_from_microseconds(
       user_resolving_total_time_us_.load(std::memory_order_relaxed));
-    d.user_resolving_in_progress =
-      user_resolving_in_progress_.load(std::memory_order_relaxed);
+    d.user_resolving_in_progress = user_resolving_in_progress_.load(std::memory_order_relaxed);
     d.trigger_match_total = trigger_match_total_.load(std::memory_order_relaxed);
     d.trigger_match_total_time = time_from_microseconds(
       trigger_match_total_time_us_.load(std::memory_order_relaxed));
-    d.trigger_match_in_progress =
-      trigger_match_in_progress_.load(std::memory_order_relaxed);
+    d.trigger_match_in_progress = trigger_match_in_progress_.load(std::memory_order_relaxed);
     d.history_match_total = history_match_total_.load(std::memory_order_relaxed);
     d.history_match_total_time = time_from_microseconds(
       history_match_total_time_us_.load(std::memory_order_relaxed));
-    d.history_match_in_progress =
-      history_match_in_progress_.load(std::memory_order_relaxed);
-    d.campaign_selection_total =
-      campaign_selection_total_.load(std::memory_order_relaxed);
+    d.history_match_in_progress = history_match_in_progress_.load(std::memory_order_relaxed);
+    d.campaign_selection_total = campaign_selection_total_.load(std::memory_order_relaxed);
     d.campaign_selection_total_time = time_from_microseconds(
       campaign_selection_total_time_us_.load(std::memory_order_relaxed));
     d.campaign_selection_in_progress =
       campaign_selection_in_progress_.load(std::memory_order_relaxed);
-    d.history_post_match_total =
-      history_post_match_total_.load(std::memory_order_relaxed);
+    d.history_post_match_total = history_post_match_total_.load(std::memory_order_relaxed);
     d.history_post_match_total_time = time_from_microseconds(
       history_post_match_total_time_us_.load(std::memory_order_relaxed));
     d.history_post_match_in_progress =
       history_post_match_in_progress_.load(std::memory_order_relaxed);
-    d.processing_time = time_from_microseconds(
-      processing_time_us_.load(std::memory_order_relaxed));
-    d.user_bind_request_count =
-      user_bind_request_count_.load(std::memory_order_relaxed);
-    d.user_bind_requests =
-      user_bind_requests_.load(std::memory_order_relaxed);
-    d.user_bind_rejected_requests =
-      user_bind_rejected_requests_.load(std::memory_order_relaxed);
-    d.user_bind_match_requests =
-      user_bind_match_requests_.load(std::memory_order_relaxed);
+    d.processing_time = time_from_microseconds(processing_time_us_.load(std::memory_order_relaxed));
+    d.user_bind_request_count = user_bind_request_count_.load(std::memory_order_relaxed);
+    d.user_bind_requests = user_bind_requests_.load(std::memory_order_relaxed);
+    d.user_bind_rejected_requests = user_bind_rejected_requests_.load(std::memory_order_relaxed);
+    d.user_bind_match_requests = user_bind_match_requests_.load(std::memory_order_relaxed);
     d.user_bind_match_rejected_requests =
       user_bind_match_rejected_requests_.load(std::memory_order_relaxed);
     d.user_bind_match_channel_requests =
@@ -513,24 +472,20 @@ namespace AdServer
     v->set(UB_MATCH_HISTORY, d.user_bind_match_history_requests);
     v->set(UB_MATCH_CAMPAIGN, d.user_bind_match_campaign_requests);
     std::size_t timeout_counter = 0;
-    for (std::size_t index = 0;
-      index < sizeof(GAPS)/sizeof(GAPS[0]); ++index)
+    for (std::size_t index = 0; index < sizeof(GAPS)/sizeof(GAPS[0]); ++index)
     {
       const auto value = timeout_counters_[index].load(std::memory_order_relaxed);
       timeout_counter += value;
-      if(value)
+      if (value)
       {
         v->set(GAPS[index].key, value);
       }
     }
     v->set(BF_TIMEOUTS, timeout_counter);
     v->set(BF_TIME_COUNTER, static_cast<unsigned long>(d.processing_time.microseconds()));
-    for(const auto& [ccg_id, count] : selected_bids())
+    for (const auto& [ccg_id, count] : selected_bids())
     {
-      v->set(
-        Generics::Values::Key(
-          std::string("bids_ccg_") + std::to_string(ccg_id)),
-        count);
+      v->set(Generics::Values::Key(std::string("bids_ccg_") + std::to_string(ccg_id)), count);
     }
 
     return v;
@@ -544,7 +499,7 @@ namespace AdServer
   StatHolderMetricsProvider::get_values()
   {
     MetricArray result;
-    if(stats_.in())
+    if (stats_.in())
     {
       Generics::Values_var values = stats_->dump_stats();
       ValuesMetricWriter writer(result);

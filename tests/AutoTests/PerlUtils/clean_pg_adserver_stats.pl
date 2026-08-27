@@ -79,8 +79,8 @@ sub get_stat_tables ($)
   my $dbh = shift;
   my $tables_ref = $dbh->selectall_arrayref(qq[
     SELECT nspname, relname FROM pg_class
-    JOIN pg_namespace ON pg_namespace.oid = relnamespace 
-    WHERE relkind = 'r' AND nspname IN ('stat', 'ctr') AND 
+    JOIN pg_namespace ON pg_namespace.oid = relnamespace
+    WHERE relkind = 'r' AND nspname IN ('stat', 'ctr') AND
     pg_class.oid NOT IN (select inhrelid from pg_inherits)], undef);
   return map {$_->[0] . "." . $_->[1]} @$tables_ref;
 }
@@ -138,7 +138,7 @@ if (@TO_CLEAR)
     print " |    ".int($deleted_rows_count);
     print " " x (12 - length(qq[$deleted_rows_count]));
     print "|\n";
-    
+
     push @need_to_clear, $stats if ($deleted_rows_count);
   }
   print "+" . "-" x ($max_length + 2) . "-" x 17 . "+\n\n";

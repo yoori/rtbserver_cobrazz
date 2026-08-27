@@ -10,12 +10,12 @@ sub make_channel
   my ($self, $ns, $prefix, $account, $params) = @_;
 
   my $keyword = make_autotest_name($ns, $prefix);
-  
+
   my $channel = $ns->create(DB::BehavioralChannel->blank(
       account_id => $account,
       name => $prefix,
       keyword_list => $keyword,
-      behavioral_parameters => 
+      behavioral_parameters =>
         [ DB::BehavioralChannel::BehavioralParameter->blank(%$params) ] ));
 
   $ns->output($prefix . "Keyword", $keyword);

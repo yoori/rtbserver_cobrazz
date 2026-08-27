@@ -1,8 +1,6 @@
 #include "ExpressionChannel.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   const ExpressionChannel::Expression ExpressionChannel::Expression::EMPTY;
 
@@ -30,11 +28,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels) const
     /*throw(Exception)*/
   {
-    return channel.in() && channel->use(
-      uc_tbl,
-      triggered_channels,
-      status_set,
-      matched_channels);
+    return channel.in() && channel->use(uc_tbl, triggered_channels, status_set, matched_channels);
   }
 
   void ExpressionChannelHolder::triggered_named_channels(
@@ -44,9 +38,7 @@ namespace CampaignSvcs
   {
     if (channel.in())
     {
-      channel->triggered_named_channels(
-        responded_channels,
-        triggered_channels);
+      channel->triggered_named_channels(responded_channels, triggered_channels);
     }
   }
 
@@ -57,9 +49,7 @@ namespace CampaignSvcs
     const
     /*throw(Exception, eh::Exception)*/
   {
-    return channel.in() && channel->triggered_expression(
-      responded_expr,
-      triggered_channels);
+    return channel.in() && channel->triggered_expression(responded_expr, triggered_channels);
   }
 
   void ExpressionChannelHolder::get_cmp_channels(
@@ -73,8 +63,7 @@ namespace CampaignSvcs
     }
   }
 
-  void ExpressionChannelHolder::get_all_cmp_channels(
-    ExpressionChannelList& cmp_channels)
+  void ExpressionChannelHolder::get_all_cmp_channels(ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
     if (channel.in())
@@ -83,8 +72,7 @@ namespace CampaignSvcs
     }
   }
 
-  void ExpressionChannelHolder::get_all_channels(
-    ChannelIdSet& channels)
+  void ExpressionChannelHolder::get_all_channels(ChannelIdSet& channels)
     noexcept
   {
     if (channel.in())
@@ -126,8 +114,7 @@ namespace CampaignSvcs
       {
         if (uc_tbl)
         {
-          (*uc_tbl)[channel_params_.channel_id].channel_ids.insert(
-            channel_params_.channel_id);
+          (*uc_tbl)[channel_params_.channel_id].channel_ids.insert(channel_params_.channel_id);
         }
 
         if (matched_channels)
@@ -148,8 +135,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels)
     /*throw(Exception)*/
   {
-    if (triggered_channels.find(channel_id) ==
-       triggered_channels.end())
+    if (triggered_channels.find(channel_id) == triggered_channels.end())
     {
       return false;
     }
@@ -176,11 +162,7 @@ namespace CampaignSvcs
     ChannelIdSet* matched_channels) const
     /*throw(Exception)*/
   {
-    return use(
-      channel_params_.channel_id,
-      uc_tbl,
-      triggered_channels,
-      matched_channels);
+    return use(channel_params_.channel_id, uc_tbl, triggered_channels, matched_channels);
   }
 
   void SimpleChannel::triggered_named_channels(
@@ -221,8 +203,7 @@ namespace CampaignSvcs
     }
   }
 
-  void SimpleChannel::get_all_cmp_channels(
-    ExpressionChannelList& cmp_channels)
+  void SimpleChannel::get_all_cmp_channels(ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
     if (channel_params_.cmp_params.in())
@@ -231,8 +212,7 @@ namespace CampaignSvcs
     }
   }
 
-  void SimpleChannel::get_all_channels(
-    ChannelIdSet& channels)
+  void SimpleChannel::get_all_channels(ChannelIdSet& channels)
     noexcept
   {
     channels.insert(channel_params_.channel_id);
@@ -247,8 +227,7 @@ namespace CampaignSvcs
   {
     if (channel)
     {
-      ChannelUseCountMap::iterator it = uc_tbl->find(
-        channel->params().channel_id);
+      ChannelUseCountMap::iterator it = uc_tbl->find(channel->params().channel_id);
       if (it != uc_tbl->end())
       {
         ++it->second.count;
@@ -260,9 +239,7 @@ namespace CampaignSvcs
         std::copy(
           local_matched_channels.begin(),
           local_matched_channels.end(),
-          std::inserter(
-            res_uc_rec.channel_ids,
-            res_uc_rec.channel_ids.begin()));
+          std::inserter(res_uc_rec.channel_ids, res_uc_rec.channel_ids.begin()));
       }
     }
   }
@@ -297,8 +274,7 @@ namespace CampaignSvcs
     case AND:
       {
         result = true;
-        for (Expression::ExpressionArray::const_iterator ch_it =
-              expr.sub_channels.begin();
+        for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
           if (!triggered_(*ch_it,
@@ -313,8 +289,7 @@ namespace CampaignSvcs
       break;
     case OR:
       {
-        for (Expression::ExpressionArray::const_iterator ch_it =
-              expr.sub_channels.begin();
+        for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
             ch_it != expr.sub_channels.end(); ++ch_it)
         {
           if (triggered_(*ch_it,
@@ -445,25 +420,15 @@ namespace CampaignSvcs
 
     if (!expr.channel.in())
     {
-      for (Expression::ExpressionArray::const_iterator ch_it =
-            expr.sub_channels.begin();
+      for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
         ch_it != expr.sub_channels.end(); ++ch_it)
       {
-        result |= use_(
-          uc_tbl,
-          *ch_it,
-          triggered_channels,
-          status_set,
-          matched_channels);
+        result |= use_(uc_tbl, *ch_it, triggered_channels, status_set, matched_channels);
       }
     }
     else
     {
-      result |= expr.channel->use(
-        uc_tbl,
-        triggered_channels,
-        status_set,
-        matched_channels);
+      result |= expr.channel->use(uc_tbl, triggered_channels, status_set, matched_channels);
     }
 
     return result;
@@ -478,8 +443,7 @@ namespace CampaignSvcs
   {
     bool result = false;
 
-    ChannelUseCountMap::iterator it = uc_tbl.find(
-      params().channel_id);
+    ChannelUseCountMap::iterator it = uc_tbl.find(params().channel_id);
 
     if (it != uc_tbl.end())
     {
@@ -498,8 +462,7 @@ namespace CampaignSvcs
     {
       ChannelIdSet local_matched_channels;
 
-      result = use_(
-        uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
+      result = use_(uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
 
       if (result)
       {
@@ -531,22 +494,16 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels)
     /*throw(Exception)*/
   {
-    if (expr.channel.in() &&
-       expr.channel->has_params())
+    if (expr.channel.in() && expr.channel->has_params())
     {
-      expr.channel->triggered_named_channels(
-        triggered_named_channels, triggered_channels);
+      expr.channel->triggered_named_channels(triggered_named_channels, triggered_channels);
     }
 
     /* trace childs */
-    for (Expression::ExpressionArray::const_iterator ch_it =
-           expr.sub_channels.begin();
+    for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
          ch_it != expr.sub_channels.end(); ++ch_it)
     {
-      triggered_named_channels_(
-        triggered_named_channels,
-        *ch_it,
-        triggered_channels);
+      triggered_named_channels_(triggered_named_channels, *ch_it, triggered_channels);
     }
   }
 
@@ -556,16 +513,12 @@ namespace CampaignSvcs
     const ChannelIdHashSet& triggered_channels) const
     /*throw(Exception)*/
   {
-    if (triggered(&triggered_channels, 0, "AW") &&
-       params().channel_id)
+    if (triggered(&triggered_channels, 0, "AW") && params().channel_id)
     {
       triggered_named_channels.insert(params().channel_id);
     }
 
-    triggered_named_channels_(
-      triggered_named_channels,
-      expr_,
-      triggered_channels);
+    triggered_named_channels_(triggered_named_channels, expr_, triggered_channels);
   }
 
   bool
@@ -688,8 +641,7 @@ namespace CampaignSvcs
   }
 
   bool
-  ExpressionChannel::optimize_expr_(
-    Expression& expr)
+  ExpressionChannel::optimize_expr_(Expression& expr)
   {
     if (expr.op == NOP)
     {
@@ -711,8 +663,7 @@ namespace CampaignSvcs
         return false;
       }
 
-      for (Expression::ExpressionArray::iterator sit =
-            ++expr.sub_channels.begin();
+      for (Expression::ExpressionArray::iterator sit = ++expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
         if (!optimize_expr_(*sit))
@@ -733,8 +684,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for (Expression::ExpressionArray::iterator sit =
-            expr.sub_channels.begin();
+      for (Expression::ExpressionArray::iterator sit = expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
       {
         if (!optimize_expr_(*sit))
@@ -771,8 +721,7 @@ namespace CampaignSvcs
     {
       Expression::ExpressionArray new_sub_channels;
 
-      for (Expression::ExpressionArray::const_iterator sit =
-            expr.sub_channels.begin();
+      for (Expression::ExpressionArray::const_iterator sit = expr.sub_channels.begin();
           sit != expr.sub_channels.end(); ++sit)
       {
         if (sit->op == expr.op || (
@@ -834,8 +783,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for (Expression::ExpressionArray::const_iterator ch_it =
-             expr.sub_channels.begin();
+      for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
            ch_it != expr.sub_channels.end(); ++ch_it)
       {
         get_all_cmp_channels_(cmp_channels, *ch_it);
@@ -855,8 +803,7 @@ namespace CampaignSvcs
     }
     else
     {
-      Expression::ExpressionArray::const_iterator last_it =
-        expr.sub_channels.end();
+      Expression::ExpressionArray::const_iterator last_it = expr.sub_channels.end();
 
       if (expr.op == AND_NOT)
       {
@@ -864,8 +811,7 @@ namespace CampaignSvcs
         --last_it;
       }
 
-      for (Expression::ExpressionArray::const_iterator ch_it =
-             expr.sub_channels.begin();
+      for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
            ch_it != last_it; ++ch_it)
       {
         get_cmp_channels_(cmp_channels, simple_channels, *ch_it);
@@ -873,9 +819,7 @@ namespace CampaignSvcs
     }
   }
 
-  void ExpressionChannel::get_all_channels_(
-    ChannelIdSet& channels,
-    const Expression& expr)
+  void ExpressionChannel::get_all_channels_(ChannelIdSet& channels, const Expression& expr)
     noexcept
   {
     if (expr.channel.in())
@@ -884,8 +828,7 @@ namespace CampaignSvcs
     }
     else
     {
-      for (Expression::ExpressionArray::const_iterator ch_it =
-             expr.sub_channels.begin();
+      for (Expression::ExpressionArray::const_iterator ch_it = expr.sub_channels.begin();
            ch_it != expr.sub_channels.end(); ++ch_it)
       {
         get_all_channels_(channels, *ch_it);
@@ -899,8 +842,7 @@ namespace CampaignSvcs
     /*throw(Exception)*/
   {
     if ((channel_params_.channel_id == 0 ||
-        (channel_params_.common_params.in() &&
-          !channel_params_.common_params->is_public)) &&
+        (channel_params_.common_params.in() && !channel_params_.common_params->is_public)) &&
        triggered(&simple_channels, 0))
     {
       if (channel_params_.cmp_params.in())
@@ -914,13 +856,11 @@ namespace CampaignSvcs
     }
   }
 
-  void ExpressionChannel::get_all_cmp_channels(
-    ExpressionChannelList& cmp_channels)
+  void ExpressionChannel::get_all_cmp_channels(ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
   {
     if (channel_params_.channel_id == 0 ||
-       (channel_params_.common_params.in() &&
-         !channel_params_.common_params->is_public))
+       (channel_params_.common_params.in() && !channel_params_.common_params->is_public))
     {
       if (channel_params_.cmp_params.in())
       {
@@ -933,8 +873,7 @@ namespace CampaignSvcs
     }
   }
 
-  void ExpressionChannel::get_all_channels(
-    ChannelIdSet& channels)
+  void ExpressionChannel::get_all_channels(ChannelIdSet& channels)
     noexcept
   {
     get_all_channels_(channels, expr_);
@@ -948,8 +887,7 @@ namespace CampaignSvcs
     ChannelParams EMPTY_CHANNEL_PARAMS;
   }
 
-  FastExpressionChannel::FastExpressionChannel(
-    const ExpressionChannelBase* channel)
+  FastExpressionChannel::FastExpressionChannel(const ExpressionChannelBase* channel)
     /*throw(eh::Exception)*/
   {
     if (channel->expression_channel())
@@ -1007,8 +945,7 @@ namespace CampaignSvcs
   {
     bool result = false;
 
-    ChannelUseCountMap::iterator it = uc_tbl.find(
-      params().channel_id);
+    ChannelUseCountMap::iterator it = uc_tbl.find(params().channel_id);
 
     if (it != uc_tbl.end())
     {
@@ -1027,23 +964,18 @@ namespace CampaignSvcs
     {
       ChannelIdSet local_matched_channels;
 
-      result = use_(
-        uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
+      result = use_(uc_tbl, expr_, triggered_channels, status_set, &local_matched_channels);
 
       if (result)
       {
         ChannelUseCount& use_count = uc_tbl[params().channel_id];
         use_count.count = 1;
 
-        use_count.channel_ids.insert(
-          local_matched_channels.begin(),
-          local_matched_channels.end());
+        use_count.channel_ids.insert(local_matched_channels.begin(), local_matched_channels.end());
 
         if (matched_channels)
         {
-          matched_channels->insert(
-            local_matched_channels.begin(),
-            local_matched_channels.end());
+          matched_channels->insert(local_matched_channels.begin(), local_matched_channels.end());
         }
       }
     }
@@ -1052,17 +984,14 @@ namespace CampaignSvcs
   }
 
   void
-  FastExpressionChannel::get_all_channels(
-    ChannelIdSet& channels)
+  FastExpressionChannel::get_all_channels(ChannelIdSet& channels)
     noexcept
   {
     get_all_channels_(channels, expr_);
   }
 
   std::string&
-  FastExpressionChannel::print_(
-    std::string& out,
-    const Expression& expr)
+  FastExpressionChannel::print_(std::string& out, const Expression& expr)
     /*throw(eh::Exception)*/
   {
     if (expr.op == ExpressionChannel::NOP)
@@ -1117,9 +1046,7 @@ namespace CampaignSvcs
   }
 
   bool
-  FastExpressionChannel::match_cell_(
-    const Expression& expr,
-    const ChannelIdHashSet& channels)
+  FastExpressionChannel::match_cell_(const Expression& expr, const ChannelIdHashSet& channels)
   {
     bool result = false;
 
@@ -1204,9 +1131,7 @@ namespace CampaignSvcs
   }
 
   void
-  FastExpressionChannel::get_all_channels_(
-    ChannelIdSet& channels,
-    const Expression& expr)
+  FastExpressionChannel::get_all_channels_(ChannelIdSet& channels, const Expression& expr)
     /*throw(eh::Exception)*/
   {
     if (expr.op == ExpressionChannel::NOP)
@@ -1217,8 +1142,7 @@ namespace CampaignSvcs
     {
       channels.insert(expr.simple.begin(), expr.simple.end());
 
-      for (auto it = expr.sub_channels.begin();
-           it != expr.sub_channels.end(); ++it)
+      for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
       {
         get_all_channels_(channels, *it);
       }
@@ -1238,23 +1162,13 @@ namespace CampaignSvcs
 
     if (expr.op == ExpressionChannel::NOP)
     {
-      result |= SimpleChannel::use(
-        expr.channel_id,
-        uc_tbl,
-        triggered_channels,
-        matched_channels);
+      result |= SimpleChannel::use(expr.channel_id, uc_tbl, triggered_channels, matched_channels);
     }
     else
     {
-      for (auto it = expr.sub_channels.begin();
-           it != expr.sub_channels.end(); ++it)
+      for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
       {
-        result |= use_(
-          uc_tbl,
-          *it,
-          triggered_channels,
-          status_set,
-          matched_channels);
+        result |= use_(uc_tbl, *it, triggered_channels, status_set, matched_channels);
       }
     }
 
@@ -1281,8 +1195,7 @@ namespace CampaignSvcs
         }
         else
         {
-          const ConstExpressionChannel_var expression_channel =
-            expr.channel->expression_channel();
+          const ConstExpressionChannel_var expression_channel = expr.channel->expression_channel();
 
           if (expression_channel.in())
           {
@@ -1342,8 +1255,7 @@ namespace CampaignSvcs
 
     case ExpressionChannel::AND_NOT:
       {
-        for (auto it = expr.sub_channels.begin();
-             it != expr.sub_channels.end(); ++it)
+        for (auto it = expr.sub_channels.begin(); it != expr.sub_channels.end(); ++it)
         {
           cell.sub_channels.emplace_back(make_cell_(*it));
         }
@@ -1361,9 +1273,7 @@ namespace CampaignSvcs
   }
 
   void
-  FastExpressionChannel::reordering_(
-    Expression& expr,
-    ChannelIdSet& basis)
+  FastExpressionChannel::reordering_(Expression& expr, ChannelIdSet& basis)
     /*throw(eh::Exception)*/
   {
     switch (expr.op)
@@ -1467,5 +1377,4 @@ namespace CampaignSvcs
       assert(0);
     }
   }
-}
 }

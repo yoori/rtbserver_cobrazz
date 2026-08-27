@@ -234,7 +234,7 @@ my ($self, $namespace) = @_;
     text2 => {
       campaigncreativegroup_cpm => 2050,
       campaigncreativegroup_flags =>
-        DB::Campaign::RON | DB::Campaign::INCLUDE_SPECIFIC_SITES, 
+        DB::Campaign::RON | DB::Campaign::INCLUDE_SPECIFIC_SITES,
       channel_id => undef } );
 
   while (my ($name, $args) = each %text_campaigns)

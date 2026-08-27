@@ -693,7 +693,7 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
                 custom_click="false"
                 skip_ext_category="false"
                 native_instantiate_type="native_as_element-1.2"
-                native_notice="nurl and burl" 
+                native_notice="nurl and burl"
                 native_impression_tracker_type="resources"
                 >
                 <configuration:userBind passback="true" redirect="https://an.yandex.ru/mapuid/targetrtbis/##UNSIGNEDSSPUID=##"/>
@@ -813,7 +813,7 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
               <configuration:source id="gpm" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
                 <configuration:userBind redirect="https://tms.dmp.wi-fi.ru/?dmpkit_cid=81460eb5-647b-4d9b-a3e3-7863f294c3da&amp;dmpkit_evid=71dee32b-4150-4012-9a7e-631445c66051&amp;g_adv=gen&amp;g_cp1=##UNSIGNEDSSPUID=##" passback="false"/>
               </configuration:source>
-              <configuration:source id="bgn" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"> 
+              <configuration:source id="bgn" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
                 <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
               </configuration:source>
               <configuration:source id="google" instantiate_type="iframe with url" request_type="google" notice="disabled" truncate_domain="false" vast_instantiate_type="video url" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" preclick="%%CLICK_URL_UNESC%%" mime_encoded_preclick="%%CLICK_URL_ESC%%" vast_preclick="%%CLICK_URL_UNESC%%" mime_encoded_vast_preclick="%%CLICK_URL_ESC%%" skip_ext_category="false">

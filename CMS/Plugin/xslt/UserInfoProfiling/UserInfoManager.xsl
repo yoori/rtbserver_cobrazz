@@ -31,7 +31,7 @@
   <xsl:attribute name="rw_buffer_size">
     <xsl:value-of select="$rw-buffer-size"/>
   </xsl:attribute>
-  
+
   <xsl:variable name="max-undumped-size">
     <xsl:choose>
       <xsl:when test="count($max-undumped-size-attr) > 0">

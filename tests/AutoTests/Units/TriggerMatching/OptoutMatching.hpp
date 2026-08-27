@@ -18,10 +18,7 @@ class OptoutMatching : public BaseDBUnit
   typedef ChannelStat::Diffs ChannelDiff;
 
 public:
-  OptoutMatching(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  OptoutMatching(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   {};
@@ -43,10 +40,7 @@ private:
   void tear_down();
 
   // Helpers
-  void run_case(unsigned int i, unsigned int user,
-    AdClient& client, NSLookupRequest& request);
+  void run_case(unsigned int i, unsigned int user, AdClient& client, NSLookupRequest& request);
 
-  void fill_expected(std::list<std::string>& list,
-                     const char* namesuffix,
-                     const char* names = 0);
+  void fill_expected(std::list<std::string>& list, const char* namesuffix, const char* names = 0);
 };

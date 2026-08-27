@@ -7,7 +7,7 @@ namespace AdServer
     {
       uint operation_type;
       uint version;
-      
+
       string user_id;
       uint temporary;
       uint time;

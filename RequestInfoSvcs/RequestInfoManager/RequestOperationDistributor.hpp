@@ -2,9 +2,7 @@
 
 #include "RequestOperationProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   class RequestOperationDistributor:
     public ReferenceCounting::AtomicImpl,
@@ -20,13 +18,11 @@ namespace RequestInfoSvcs
       noexcept;
 
     virtual void
-    process_impression(
-      const ImpressionInfo& impression_info)
+    process_impression(const ImpressionInfo& impression_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
-    co_process_impression(
-      const ImpressionInfo& impression_info);
+    co_process_impression(const ImpressionInfo& impression_info);
 
     virtual void
     process_action(
@@ -70,14 +66,12 @@ namespace RequestInfoSvcs
       const Generics::ConstSmartMemBuf* request_profile);
 
     void
-    request_operation_processor(
-      RequestOperationProcessor* request_operation_processor)
+    request_operation_processor(RequestOperationProcessor* request_operation_processor)
       noexcept;
 
   protected:
     RequestOperationProcessor_var
-    get_request_operation_processor_(
-      const AdServer::Commons::UserId& user_id)
+    get_request_operation_processor_(const AdServer::Commons::UserId& user_id)
       noexcept;
 
   private:
@@ -90,5 +84,4 @@ namespace RequestInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<RequestOperationDistributor>
     RequestOperationDistributor_var;
-}
 }

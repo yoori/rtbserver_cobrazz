@@ -29,26 +29,13 @@ class ZerodowntimeTest : public BaseDBUnit
 
 
 public:
-  ZerodowntimeTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ZerodowntimeTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var),
-    campaign_managers_(
-      get_config().get_services(
-        CTE_CENTRAL, STE_CAMPAIGN_MANAGER)),
-    channel_controllers_(
-      get_config().get_services(
-        CTE_CENTRAL, STE_CHANNEL_CONTROLLER)),
-    channel_search_servers_(
-      get_config().get_services(
-        CTE_CENTRAL, STE_CHANNEL_SEARCH_SERVER)),
-    user_info_managers_(
-      get_config().get_services(
-        CTE_CENTRAL, STE_USER_INFO_MANAGER)),
-    expression_matchers_(
-      get_config().get_services(
-        CTE_CENTRAL, STE_EXPRESSION_MATCHER)),
+    campaign_managers_(get_config().get_services(CTE_CENTRAL, STE_CAMPAIGN_MANAGER)),
+    channel_controllers_(get_config().get_services(CTE_CENTRAL, STE_CHANNEL_CONTROLLER)),
+    channel_search_servers_(get_config().get_services(CTE_CENTRAL, STE_CHANNEL_SEARCH_SERVER)),
+    user_info_managers_(get_config().get_services(CTE_CENTRAL, STE_USER_INFO_MANAGER)),
+    expression_matchers_(get_config().get_services(CTE_CENTRAL, STE_EXPRESSION_MATCHER)),
     no_db_(!stat_var.db_active())
   { }
 
@@ -94,29 +81,18 @@ private:
   ORM::StatsList<ORM::ActionRequests> action_requests_;
 
   // Utils
-  void exec_cluster_command_(
-    ClusterGroup group,
-    ClusterCommand command);
+  void exec_cluster_command_(ClusterGroup group, ClusterCommand command);
 
-  void check_click_and_actions_(
-    unsigned long index,
-    ClusterGroup group);
+  void check_click_and_actions_(unsigned long index, ClusterGroup group);
 
   void
-  check_balancing_(
-    ClusterGroup group,
-    const char* cc_name);
+  check_balancing_(ClusterGroup group, const char* cc_name);
 
   void
-  check_user_profiling_(
-    ClusterGroup group,
-    const char* cc_name);
+  check_user_profiling_(ClusterGroup group, const char* cc_name);
 
   void
-  check_channels_(
-    ClusterGroup group,
-    const char* cc_name,
-    bool no_db = false);
+  check_channels_(ClusterGroup group, const char* cc_name, bool no_db = false);
 
   CCGSite*
   campaign_update_(
@@ -126,18 +102,14 @@ private:
     bool no_db = false);
 
   void
-  check_channel_search_(
-    ClusterGroup group);
+  check_channel_search_(ClusterGroup group);
 
   void
   init_stats_();
 
   // Test cases
   void
-  precondition_(
-    std::string& uid,
-    std::ostream& user_profile,
-    std::ostream& inventory_profile);
+  precondition_(std::string& uid, std::ostream& user_profile, std::ostream& inventory_profile);
 
   void
   fe1_stop_();

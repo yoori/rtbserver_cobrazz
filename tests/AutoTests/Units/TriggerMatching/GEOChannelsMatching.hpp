@@ -27,10 +27,7 @@ public:
 
 
 public:
-  GEOChannelsMatching(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  GEOChannelsMatching(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -43,11 +40,9 @@ private:
   run_test();
 
   void
-  location_name_case(
-    const LocTestRequest& testcase);
+  location_name_case(const LocTestRequest& testcase);
 
   void
-  ip_case(
-    const IPTestRequest& testcase);
+  ip_case(const IPTestRequest& testcase);
 
 };

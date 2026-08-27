@@ -38,18 +38,13 @@ namespace
   is_channel_controller(const std::string& reference)
   {
     auto stub = Controller::ChannelControllerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        reference,
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(reference, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
     Controller::GetSessionDescriptionRequest request;
     Controller::GetSessionDescriptionResponse response;
-    const auto status = stub->get_session_description(
-      &context,
-      request,
-      &response);
+    const auto status = stub->get_session_description(&context, request, &response);
 
     return status.ok() && !response.channel_server_groups().empty();
   }
@@ -87,8 +82,7 @@ namespace
     ClientHolder result;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         new Logging::ActiveObjectCallbackImpl(logger, "ChannelAdmin", "gRPC"),
@@ -133,11 +127,13 @@ namespace
         holder.active_object->deactivate_object();
         holder.active_object->wait_object();
       }
+
       if (holder.grpc_executor)
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
       }
+
       if (holder.coalesce_runner)
       {
         holder.coalesce_runner->deactivate_object();
@@ -149,28 +145,21 @@ namespace
   }
 
   void
-  print_session_description(
-    const Controller::GetSessionDescriptionResponse& response)
+  print_session_description(const Controller::GetSessionDescriptionResponse& response)
   {
     std::cout << "chunks_number=" << response.chunks_number() << '\n';
-    std::cout << "channel_server_groups=" <<
-      response.channel_server_groups_size() << '\n';
-    for (int group_i = 0;
-      group_i < response.channel_server_groups_size();
-      ++group_i)
+    std::cout << "channel_server_groups=" << response.channel_server_groups_size() << '\n';
+    for (int group_i = 0; group_i < response.channel_server_groups_size(); ++group_i)
     {
       const auto& group = response.channel_server_groups(group_i);
       std::cout << "group[" << group_i << "].channel_servers=" <<
         group.channel_servers_size() << '\n';
-      for (int server_i = 0;
-        server_i < group.channel_servers_size();
-        ++server_i)
+      for (int server_i = 0; server_i < group.channel_servers_size(); ++server_i)
       {
         const auto& server = group.channel_servers(server_i);
         std::cout << "group[" << group_i << "].server[" << server_i <<
           "].endpoint=" << server.channel_server_endpoint() << '\n';
-        std::cout << "group[" << group_i << "].server[" << server_i <<
-          "].chunk_ids=";
+        std::cout << "group[" << group_i << "].server[" << server_i << "].chunk_ids=";
         for (const auto chunk_id : server.chunk_ids())
         {
           std::cout << ' ' << chunk_id;
@@ -190,18 +179,13 @@ namespace
     }
 
     auto stub = Controller::ChannelControllerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        endpoints.front(),
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(endpoints.front(), grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
     Controller::GetSessionDescriptionRequest request;
     Controller::GetSessionDescriptionResponse response;
-    const auto status = stub->get_session_description(
-      &context,
-      request,
-      &response);
+    const auto status = stub->get_session_description(&context, request, &response);
     if (!status.ok())
     {
       Stream::Error ostr;
@@ -247,24 +231,16 @@ namespace
   {
     const auto& matched_channels = result.matched_channels();
     std::cout << "hostname=" << result.hostname() << '\n';
-    std::cout << "page_channels=" <<
-      matched_channels.page_channels_size() << '\n';
-    std::cout << "search_channels=" <<
-      matched_channels.search_channels_size() << '\n';
-    std::cout << "url_channels=" <<
-      matched_channels.url_channels_size() << '\n';
-    std::cout << "url_keyword_channels=" <<
-      matched_channels.url_keyword_channels_size() << '\n';
-    std::cout << "uid_channels=" <<
-      matched_channels.uid_channels_size() << '\n';
-    std::cout << "content_channels=" <<
-      result.content_channels_size() << '\n';
+    std::cout << "page_channels=" << matched_channels.page_channels_size() << '\n';
+    std::cout << "search_channels=" << matched_channels.search_channels_size() << '\n';
+    std::cout << "url_channels=" << matched_channels.url_channels_size() << '\n';
+    std::cout << "url_keyword_channels=" << matched_channels.url_keyword_channels_size() << '\n';
+    std::cout << "uid_channels=" << matched_channels.uid_channels_size() << '\n';
+    std::cout << "content_channels=" << result.content_channels_size() << '\n';
     print_channel_atoms("page_channel_ids", matched_channels.page_channels());
     print_channel_atoms("search_channel_ids", matched_channels.search_channels());
     print_channel_atoms("url_channel_ids", matched_channels.url_channels());
-    print_channel_atoms(
-      "url_keyword_channel_ids",
-      matched_channels.url_keyword_channels());
+    print_channel_atoms("url_keyword_channel_ids", matched_channels.url_keyword_channels());
     print_content_channels(result.content_channels());
     std::cout << "no_adv=" << result.no_adv() << '\n';
     std::cout << "no_track=" << result.no_track() << '\n';
@@ -290,8 +266,7 @@ namespace
         result[i].ccg_keyword_id << '\t' <<
         result[i].ccg_id << '\t' <<
         result[i].channel_id << '\t' <<
-        result[i].click_url.in() << '\t' <<
-        result[i].original_keyword.in() << '\n';
+        result[i].click_url.in() << '\t' << result[i].original_keyword.in() << '\n';
     }
   }
 }
@@ -326,9 +301,7 @@ main(int argc, char** argv)
     args.add(Generics::AppUtils::equal_name("status"), status);
     args.add(Generics::AppUtils::equal_name("ids"), ids);
     args.add(Generics::AppUtils::equal_name("normalize-url"), normalize_url);
-    args.add(
-      Generics::AppUtils::equal_name("normalize-url-words"),
-      normalize_url_words);
+    args.add(Generics::AppUtils::equal_name("normalize-url-words"), normalize_url_words);
     args.add(Generics::AppUtils::equal_name("show-request"), show_request);
     args.parse(argc - 1, argv + 1);
 
@@ -394,8 +367,7 @@ main(int argc, char** argv)
       {
         print_match_request(request);
       }
-      const auto result =
-        AdServer::ChannelSvcs::GrpcAlgs::channel_match(*client, request);
+      const auto result = AdServer::ChannelSvcs::GrpcAlgs::channel_match(*client, request);
       print_match_result(result);
     }
     else if (commands.front() == "ccg_traits")

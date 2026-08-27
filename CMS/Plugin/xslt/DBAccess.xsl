@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -78,7 +78,7 @@
       </xsl:if>
     </xsl:for-each>
   </xsl:for-each>
-  
+
   1;
 
   <!--
@@ -120,7 +120,7 @@
     required => 0},
 );
 -->
-  
+
 </xsl:template>
 
 <xsl:template match="/">
@@ -131,7 +131,7 @@
   <xsl:variable
     name="backend-cluster-path"
     select="$full-cluster-path/serviceGroup[@descriptor = $be-cluster-descriptor]"/>
-  
+
   <xsl:variable
     name="frontend-cluster-path"
     select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]"/>

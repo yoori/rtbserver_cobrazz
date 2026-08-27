@@ -1,10 +1,7 @@
 
 #include "CombinedChannelsMatchingTest.hpp"
 
-REFLECT_UNIT(CombinedChannelsMatchingTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CombinedChannelsMatchingTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 bool
 CombinedChannelsMatchingTest::run_test()

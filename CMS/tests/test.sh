@@ -178,10 +178,10 @@ do
   for COLO in $(find $TEST_CONFIGS_ROOT/$COLOPATH -name $SEARCH_COLO_NAME -type f)
   do
     case "$COMMAND" in
-      build|build-rpm) configure_test $COLO 
+      build|build-rpm) configure_test $COLO
       let "EXIT_CODE|=$?"
       ;;
-      reviewed) reviewed $COLO 
+      reviewed) reviewed $COLO
       ;;
       diff) config_diff $COLO
       ;;

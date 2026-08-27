@@ -35,13 +35,13 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Instantiate::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer::Instantiate
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -83,13 +83,11 @@ namespace AdServer::Instantiate
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     FrontendCommons::RequestTask
-    co_handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -122,13 +120,11 @@ namespace AdServer::Instantiate
 
   private:
     FrontendCommons::RequestTask
-    co_process_request_(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_process_request_(FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     FrontendCommons::RequestTask
-    handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder)
+    handle_request_noparams_(FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void
@@ -144,8 +140,7 @@ namespace AdServer::Instantiate
     using InstantiateTask = AdServer::Commons::Awaitable<int>;
 
     MergeUsersTask
-    co_merge_users_(
-      const RequestInfo& request_info)
+    co_merge_users_(const RequestInfo& request_info)
       noexcept;
 
     InstantiateTask

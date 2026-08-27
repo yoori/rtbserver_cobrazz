@@ -7,14 +7,9 @@
 
 #include <ProfilingCommons/FileWriter.hpp>
 
-namespace AdServer
+namespace AdServer::ProfilingCommons
 {
-namespace ProfilingCommons
-{
-  FileWriter::FileWriter(
-    int fd,
-    unsigned long buffer_size,
-    FileController* file_controller)
+  FileWriter::FileWriter(int fd, unsigned long buffer_size, FileController* file_controller)
     /*throw(Exception)*/
     : buffer_size_(buffer_size),
       direct_write_min_size_(std::max(buffer_size_ / 4, 1ul)),
@@ -85,7 +80,7 @@ namespace ProfilingCommons
   {
     flush();
 
-    if(fd_own_ && fd_ >= 0)
+    if (fd_own_ && fd_ >= 0)
     {
       ::close(fd_);
       fd_ = -1;
@@ -97,29 +92,28 @@ namespace ProfilingCommons
     /*throw(Exception)*/
   {
     unsigned long cur_write_size = write_size;
-    const unsigned char* cur_write_buf =
-      static_cast<const unsigned char*>(write_buf);
+    const unsigned char* cur_write_buf = static_cast<const unsigned char*>(write_buf);
 
-    if(buffer_size_ == 0)
+    if (buffer_size_ == 0)
     {
       write_(write_buf, write_size);
     }
     else
     {
-      if(mem_buf_->membuf().capacity() == 0)
+      if (mem_buf_->membuf().capacity() == 0)
       {
         mem_buf_->membuf().alloc(buffer_size_);
         mem_buf_->membuf().resize(0);
       }
 
-      while(cur_write_size)
+      while (cur_write_size)
       {
         // push into buffer
         unsigned long fill_size = std::min(
           mem_buf_->membuf().capacity() - mem_buf_->membuf().size(),
           cur_write_size);
 
-        if(fill_size != 0)
+        if (fill_size != 0)
         {
           unsigned long old_mem_buf_size = mem_buf_->membuf().size();
           mem_buf_->membuf().resize(old_mem_buf_size + fill_size);
@@ -133,7 +127,7 @@ namespace ProfilingCommons
         }
 
         // flush mem buf
-        if(mem_buf_->membuf().size() == mem_buf_->membuf().capacity())
+        if (mem_buf_->membuf().size() == mem_buf_->membuf().capacity())
         {
           flush();
         }
@@ -145,7 +139,7 @@ namespace ProfilingCommons
   FileWriter::flush()
     /*throw(Exception)*/
   {
-    if(mem_buf_->membuf().size() > 0)
+    if (mem_buf_->membuf().size() > 0)
     {
       write_(mem_buf_->membuf().data(), mem_buf_->membuf().size());
       mem_buf_->membuf().resize(0);
@@ -178,5 +172,4 @@ namespace ProfilingCommons
 
     fd_pos_ += res;
   }
-}
 }

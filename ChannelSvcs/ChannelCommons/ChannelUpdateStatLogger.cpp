@@ -1,9 +1,7 @@
 #include "ChannelUpdateStatLogger.hpp"
 #include <LogCommons/GenericLogIoImpl.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   ChannelUpdateStatLogger::ChannelUpdateStatLogger(
     unsigned long size,
@@ -52,8 +50,7 @@ namespace ChannelSvcs
     catch (const AdServer::LogProcessing::LogSaver::Exception &ex)
     {
       Stream::Error oss;
-      oss << FUN << ": AdServer::LogProcessing::LogSaver::Exception caught: "
-          << ex.what();
+      oss << FUN << ": AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(oss);
     }
     catch (const eh::Exception &ex)
@@ -68,8 +65,7 @@ namespace ChannelSvcs
   {
     return
       (size_ && colo_update_collector_.size() >= size_) ||
-      (colo_update_collector_.size() &&
-        flush_time_ + period_ < Generics::Time::get_time_of_day());
+      (colo_update_collector_.size() && flush_time_ + period_ < Generics::Time::get_time_of_day());
   }
 
   void ChannelUpdateStatLogger::process_config_update(
@@ -103,5 +99,4 @@ namespace ChannelSvcs
       }
     }
   }
-}
 }

@@ -7,14 +7,9 @@ class ProfilesContentCleanupTest: public BaseUnit
 {
 public:
 
-  ProfilesContentCleanupTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ProfilesContentCleanupTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
-    base_time_(
-      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
-        ":" + "00-01-00").c_str())
+    base_time_((AutoTest::Time().get_gm_time().format("%d-%m-%Y") + ":" + "00-01-00").c_str())
   {};
 
   virtual ~ProfilesContentCleanupTest() noexcept

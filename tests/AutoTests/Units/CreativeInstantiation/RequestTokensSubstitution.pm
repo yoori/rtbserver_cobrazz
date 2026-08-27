@@ -13,7 +13,7 @@ sub create_campaign
 
   my $kwd = make_autotest_name($ns, $name);
 
-  my $publisher = $ns->create(Publisher => { 
+  my $publisher = $ns->create(Publisher => {
     name => "Publisher-$name",
     size_id => $self->{size} });
 
@@ -24,7 +24,7 @@ sub create_campaign
     size_id => $self->{size},
     behavioralchannel_keyword_list => $kwd,
     campaigncreativegroup_cpm => 300,
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   $ns->create(
@@ -39,7 +39,7 @@ sub create_campaign
 
   $ns->create(CreativeOptionValue => {
     creative_id => $campaign->{creative_id},
-    option_id => $self->{size_option}, 
+    option_id => $self->{size_option},
     value => $size_option_value }) if $size_option_value;
 
   $ns->output($name . "/CC", $campaign->{cc_id});
@@ -55,13 +55,13 @@ sub init {
       text_adserving => 'M',
       role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $single_advertiser = 
-     $ns->create(Account => { 
+  my $single_advertiser =
+     $ns->create(Account => {
        name => 'Advertiser-single',
        role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $agency_advertiser = 
-     $ns->create(Account => { 
+  my $agency_advertiser =
+     $ns->create(Account => {
        name => 'Advertiser-Agency',
        agency_account_id => $agency,
        text_adserving => undef,
@@ -95,7 +95,7 @@ sub init {
     option_group_id =>
       $ns->create(DB::OptionGroup->blank(
         name => "Size-" . $self->{size}->{size_id} . "-h",
-        size_id => $self->{size}, 
+        size_id => $self->{size},
         type => 'Hidden' )) });
 
   $self->create_campaign(
@@ -108,11 +108,11 @@ sub init {
   my $dfile2 = '/DynamicCreative/random.html';
 
   $self->create_campaign(
-    $ns, $single_advertiser, 'SingleAdvertisier-DefaultTokens', 
+    $ns, $single_advertiser, 'SingleAdvertisier-DefaultTokens',
     $dfile1, $dfile2);
 
   $self->create_campaign(
-    $ns, $agency_advertiser, 'AgencyAccount-DefaultTokens', 
+    $ns, $agency_advertiser, 'AgencyAccount-DefaultTokens',
     $dfile1, $dfile2);
 
   $ns->output("Agency", $agency);

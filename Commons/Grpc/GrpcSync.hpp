@@ -78,9 +78,7 @@ namespace AdServer::Grpc
     std::promise<std::pair<grpc::Status, Response>> promise;
     auto future = promise.get_future();
 
-    start([&](
-      const grpc::Status& status,
-      ResponseHolder<Response>&& response_holder)
+    start([&](const grpc::Status& status, ResponseHolder<Response>&& response_holder)
     {
       promise.set_value(std::make_pair(status, response_holder.get()));
     });

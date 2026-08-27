@@ -25,7 +25,7 @@ def main():
       try:
         unpacked = msgpack.unpackb(msg)
         Logger.log(4, "Session#%d '%s': %s" % (gotSession, unpacked.get('url', None), unpacked))
-        gotSession += 1        
+        gotSession += 1
       except:
         # skip other formats
         pass
@@ -34,6 +34,6 @@ def main():
       Logger.logException(1)
       exit(1)
 main()
-  
-  
+
+
 

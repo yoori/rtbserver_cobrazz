@@ -4,9 +4,7 @@
 #include <vector>
 #include <String/SubString.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   /*
   struct ExternalUserId
@@ -29,15 +27,10 @@ namespace Commons
   typedef std::vector<std::string> ExternalUserIdArray;
 
   void
-  dns_encode_external_user_ids(
-    std::string& res,
-    const ExternalUserIdArray& user_ids)
+  dns_encode_external_user_ids(std::string& res, const ExternalUserIdArray& user_ids)
     noexcept;
 
   void
-  dns_decode_external_user_ids(
-    ExternalUserIdArray& user_ids,
-    const String::SubString& hostname)
+  dns_decode_external_user_ids(ExternalUserIdArray& user_ids, const String::SubString& hostname)
     noexcept;
-}
 }

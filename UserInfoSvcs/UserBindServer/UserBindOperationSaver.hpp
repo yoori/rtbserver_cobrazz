@@ -67,6 +67,5 @@ namespace AdServer::UserInfoSvcs
     UserBindProcessor_var next_processor_;
   };
 
-  using UserBindOperationSaver_var =
-    ReferenceCounting::SmartPtr<UserBindOperationSaver>;
+  using UserBindOperationSaver_var = ReferenceCounting::SmartPtr<UserBindOperationSaver>;
 }

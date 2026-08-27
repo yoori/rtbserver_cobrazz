@@ -1,10 +1,7 @@
 
 #include "ApplyDeliveryThresholdTest.hpp"
 
-REFLECT_UNIT(ApplyDeliveryThresholdTest) (
-  "NoDBUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ApplyDeliveryThresholdTest) ("NoDBUpdate", AUTO_TEST_SLOW);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -41,7 +38,7 @@ ApplyDeliveryThresholdTest::run_test()
     // where prev [cur hour amount] = 0 (always clean run)
     static_cast<int>(ceil((0.5 / (static_cast<double>(gmt.tm_min) / 60.0)) / 0.1));
 
-  for(unsigned int i = 0; i < req_count; ++i)
+  for (unsigned int i = 0; i < req_count; ++i)
   {
     AdClient client = AdClient::create_user(this);
     client.process_request(NSLookupRequest().
@@ -49,9 +46,7 @@ ApplyDeliveryThresholdTest::run_test()
       tid(fetch_int("ATR_TID")).
       debug_time(today));
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("ATR_CCID"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("ATR_CCID"), client.debug_info.ccid).check(),
       "must return test CG ccid");
   }
 
@@ -71,7 +66,7 @@ ApplyDeliveryThresholdTest::run_test()
   add_descr_phrase("Make check requests");
   unsigned int total_requests = 50;
   unsigned int creative_requests = 0;
-  for(unsigned int i = 0; i < total_requests; ++i)
+  for (unsigned int i = 0; i < total_requests; ++i)
   {
     AdClient client = AdClient::create_user(this);
     client.process_request(NSLookupRequest().
@@ -83,15 +78,12 @@ ApplyDeliveryThresholdTest::run_test()
     }
   }
 
-  double creative_prc =
-    (static_cast<double>(creative_requests) / total_requests) * 100;
+  double creative_prc = (static_cast<double>(creative_requests) / total_requests) * 100;
 
-  AutoTest::Logger::thlog().stream(INFO, ASPECT) << "Creative cases: " <<
-    creative_prc << "%";
+  AutoTest::Logger::thlog().stream(INFO, ASPECT) << "Creative cases: " << creative_prc << "%";
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      creative_prc > 1 && creative_prc < 99),
+    AutoTest::predicate_checker(creative_prc > 1 && creative_prc < 99),
     "Must return creative in ~50% cases");
 
   return true;

@@ -2,7 +2,7 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
-  /* item appear list for specific date interval */                                                                                        
+  /* item appear list for specific date interval */
   struct IdAppearanceDescriptor
   {
     uint id;
@@ -30,7 +30,7 @@ namespace RequestInfoSvcs
   reader UserCampaignReachProfileReader<UserCampaignReachProfileDescriptor>
   {
     version;
-    
+
     list<IdAppearanceReader> campaign_appears;
     list<IdAppearanceReader> ccg_appears;
     list<IdAppearanceReader> cc_appears;
@@ -38,7 +38,7 @@ namespace RequestInfoSvcs
     list<IdAppearanceReader> adv_display_appears;
     list<IdAppearanceReader> adv_text_appears;
   };
-  
+
   writer UserCampaignReachProfileWriter<UserCampaignReachProfileDescriptor>
   {
     version;
@@ -55,7 +55,7 @@ namespace RequestInfoSvcs
   {
     uint version;
   };
-  
+
   autoreader UserCampaignReachProfileVersionReader<
     UserCampaignReachProfileVersionDescriptor>;
 }

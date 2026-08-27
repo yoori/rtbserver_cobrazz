@@ -4,8 +4,7 @@
 
 namespace AdServer::CampaignSvcs::CTR
 {
-  XGBoostCTREvaluator::XGBoostCTREvaluator(
-    const String::SubString& model_file)
+  XGBoostCTREvaluator::XGBoostCTREvaluator(const String::SubString& model_file)
     : xgboost_predictor_pool_(new XGBoostPredictorPool(model_file))
   {}
 
@@ -26,10 +25,7 @@ namespace AdServer::CampaignSvcs::CTR
 
     if (request_hashes)
     {
-      ctr = xgboost_predictor->predict(
-        *request_hashes,
-        auction_hashes,
-        candidate_hashes);
+      ctr = xgboost_predictor->predict(*request_hashes, auction_hashes, candidate_hashes);
 
       if (ctr < DBL_MIN) // prevent sub normal states (FP_ZERO, FP_SUBNORMAL)
       {

@@ -23,7 +23,7 @@ sub convert_to_bool {
 
 sub get_full_name {
   my $name= shift;
-  if (defined($NAMESPACE)) 
+  if (defined($NAMESPACE))
   {
     return  $NAMESPACE . ":" . $name;
   }
@@ -33,7 +33,7 @@ sub get_full_name {
 sub make_ofset {
   my $ofset  = shift;
   my $buffer = "";
-  for( my $ind = 0; $ind < $ofset; ++$ind )
+  for ( my $ind = 0; $ind < $ofset; ++$ind )
   {
     $buffer .= " ";
   }
@@ -46,7 +46,7 @@ sub set_defaults {
   {
     return @_;
   }
-  else 
+  else
   {
     unshift(@_, {});
   }
@@ -97,16 +97,16 @@ sub PARAM {
   $name = get_full_name($name);
   if (defined($value))
   {
-    return "<$name" . make_attributes(\%$attributes, length($name)) . 
+    return "<$name" . make_attributes(\%$attributes, length($name)) .
         ">" . $value . "</$name>\n";
   }
 
   return "<$name" . make_attributes(\%$attributes, length($name)) . "/>";
-  
+
 }
 
 sub GROUP_PARAM {
-  my ($attributes, $name, $childs, $value) = set_defaults(@_); 
+  my ($attributes, $name, $childs, $value) = set_defaults(@_);
   $name = get_full_name($name);
   my $buffer = "<$name" . make_attributes(\%$attributes, length($name)) . ">";
   if (defined($value))
@@ -123,13 +123,13 @@ sub GROUP_PARAM {
 }
 
 sub PARAM_LIST {
-  my ($attributes, $name, $listname, $values) = set_defaults(@_); 
+  my ($attributes, $name, $listname, $values) = set_defaults(@_);
   $name     = get_full_name($name);
   $listname = get_full_name($listname);
   my $buffer = "<$name" . make_attributes(\%$attributes, length($name)) . ">\n";
   foreach my $value (@{$values})
   {
-    $buffer .= make_ofset(DEFAULT_OFSET) . "<$listname>"; 
+    $buffer .= make_ofset(DEFAULT_OFSET) . "<$listname>";
     $buffer .= $value;
     $buffer .= "</$listname>\n";
   }

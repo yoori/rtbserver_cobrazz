@@ -86,8 +86,7 @@ AdvertisingStatistics::AdvertisingStatistics(const char* frontend_name) :
 AdvertisingStatistics::~AdvertisingStatistics() noexcept
 {}
 
-void AdvertisingStatistics::push_response(unsigned long ccid,
-                                          bool optout)
+void AdvertisingStatistics::push_response(unsigned long ccid, bool optout)
 {
   total_responses_.incr(optout);
   if (ccid)
@@ -205,18 +204,22 @@ FrontendStatistics::_get_constraint_by_name(const ClientConfig_var& config,
   {
     return config->ns_request()->constraint;
   }
+
   if (strcmp(frontend_name, CLICK_ALIAS) == 0 )
   {
     return config->click_request()->constraint;
   }
+
   if (strcmp(frontend_name, ACTION_ALIAS) == 0 )
   {
     return config->action_request()->constraint;
   }
+
   if (strcmp(frontend_name, OPTOUT_ALIAS) == 0 )
   {
     return config->optout_request()->constraint;
   }
+
   if (strcmp(frontend_name, PASSBACK_ALIAS) == 0 )
   {
     return config->passback_request()->constraint;
@@ -227,8 +230,7 @@ FrontendStatistics::_get_constraint_by_name(const ClientConfig_var& config,
 
 // Statistics class
 
-Statistics::Statistics(ConstraintsContainer& constraints,
-                       const ClientConfig_var& config) :
+Statistics::Statistics(ConstraintsContainer& constraints, const ClientConfig_var& config) :
   constraints_(constraints),
   config_(config),
   total_requests_(0),
@@ -262,8 +264,7 @@ void Statistics::push_response(const char* url,
   _get_advertising_stat_by_name(frontend_name.c_str())->push_response(ccid, is_opted_out);
 }
 
-void Statistics::refresh(Report* report,
-                         Statistics::ResetEnum reset)
+void Statistics::refresh(Report* report, Statistics::ResetEnum reset)
 {
   ReadGuard_ guard(lock_);
   report->publish();
@@ -333,8 +334,7 @@ AdvertisingStatistics* Statistics::get_nslookup_stats()
   return it->second;
 }
 
-void Statistics::push_error(const char* url,
-                            bool is_opted_out)
+void Statistics::push_error(const char* url, bool is_opted_out)
 {
   WriteGuard_ guard(lock_);
   total_requests_.incr(is_opted_out);
@@ -350,7 +350,7 @@ void Statistics::_get_frontend_name(const char* url, std::string& frontend_name)
   frontend_name = _url;
   for (unsigned int i = 0; i < FRONTEND_ARRAY_SIZE; i++)
     {
-      if(_url.find(FRONTEND_NAMES[i]) != std::string::npos)
+      if (_url.find(FRONTEND_NAMES[i]) != std::string::npos)
         {
           frontend_name = FRONTEND_ALIASES[i];
           return;

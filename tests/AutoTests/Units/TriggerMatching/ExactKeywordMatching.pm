@@ -25,7 +25,7 @@ sub init {
   my $channel2 = $ns->create(DB::BehavioralChannel->blank(
     name => 2,
     account_id => $account,
-    search_list => 
+    search_list =>
      "[exactmatch2 exactmatch1]\n" .
      "[exactmatch3]\n" .
      "[exactmatch4]\n" .

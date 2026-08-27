@@ -13,10 +13,7 @@ class StatsHourlyLoggingTest: public BaseDBUnit
   typedef std::list<RequestPair> RequestList;
 
 public:
-  StatsHourlyLoggingTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  StatsHourlyLoggingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -45,8 +42,7 @@ private:
     RequestList& req_list);
 
   void
-  case_ammounts(
-    const std::string& name_prefix);
+  case_ammounts(const std::string& name_prefix);
 
   void
   case_with_sdate_tinkling();

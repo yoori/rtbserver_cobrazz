@@ -12,9 +12,7 @@ namespace Aspect
   const char USER_SITE_REACH_CONTAINER[] = "UserSiteReachContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -33,8 +31,7 @@ namespace RequestInfoSvcs
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
-      site_reach_processor_(
-        ReferenceCounting::add_ref(site_reach_processor))
+      site_reach_processor_(ReferenceCounting::add_ref(site_reach_processor))
   {
     static const char* FUN = "UserSiteReachContainer::UserSiteReachContainer()";
 
@@ -42,10 +39,7 @@ namespace RequestInfoSvcs
     {
       auto user_map = open_rocksdb_transaction_profile_map<
         Commons::UserId,
-        UserIdToString>(
-          user_site_reach_rocksdb_path,
-          expire_time_,
-          std::move(rocksdb_processor));
+        UserIdToString>(user_site_reach_rocksdb_path, expire_time_, std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }
@@ -53,8 +47,7 @@ namespace RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init UserSiteReachMap at '" <<
-        user_site_reach_rocksdb_path << "'. Caught eh::Exception: " <<
-        ex.what();
+        user_site_reach_rocksdb_path << "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -63,8 +56,7 @@ namespace RequestInfoSvcs
   {}
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserSiteReachContainer::co_get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserSiteReachContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserSiteReachContainer::co_get_profile()";
     try
@@ -80,8 +72,7 @@ namespace RequestInfoSvcs
     }
   }
 
-  void UserSiteReachContainer::process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  void UserSiteReachContainer::process_tag_request(const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
   {
     try
@@ -95,8 +86,7 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  UserSiteReachContainer::co_process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  UserSiteReachContainer::co_process_tag_request(const TagRequestInfo& tag_request_info)
   {
     try
     {
@@ -109,16 +99,12 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  UserSiteReachContainer::co_process_tag_request_(
-    const TagRequestInfo& tag_request_info)
+  UserSiteReachContainer::co_process_tag_request_(const TagRequestInfo& tag_request_info)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "UserSiteReachContainer::co_process_tag_request_()";
+    static const char* FUN = "UserSiteReachContainer::co_process_tag_request_()";
 
-    if(tag_request_info.user_id.is_null() ||
-       !tag_request_info.site_id ||
-       !tag_request_info.tag_id)
+    if (tag_request_info.user_id.is_null() || !tag_request_info.site_id || !tag_request_info.tag_id)
     {
       co_return;
     }
@@ -133,25 +119,21 @@ namespace RequestInfoSvcs
       UserSiteReachMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(tag_request_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
       {
-        user_profile_writer.version() =
-          CURRENT_USER_SITE_REACH_PROFILE_VERSION;
+        user_profile_writer.version() = CURRENT_USER_SITE_REACH_PROFILE_VERSION;
         need_save = true;
       }
 
       Generics::Time date(Algs::round_to_day(tag_request_info.isp_time));
 
-      if(collect_appearance(
+      if (collect_appearance(
         reach_info.appearance_list,
         user_profile_writer.appearance_list().begin(),
         user_profile_writer.appearance_list().end(),
@@ -169,13 +151,12 @@ namespace RequestInfoSvcs
         need_save = true;
       }
 
-      if(need_save)
+      if (need_save)
       {
         try
         {
           unsigned long sz = user_profile_writer.size();
-          Generics::SmartMemBuf_var new_mem_buf(
-            new Generics::SmartMemBuf(sz));
+          Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
           user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
           co_await transaction->co_save_profile(
@@ -185,8 +166,7 @@ namespace RequestInfoSvcs
         catch(const eh::Exception& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Can't save profile - caught eh::Exception: " <<
-            ex.what();
+          ostr << FUN << ": Can't save profile - caught eh::Exception: " << ex.what();
           throw Exception(ostr);
         }
       }
@@ -194,14 +174,13 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't process request - caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't process request - caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(!reach_info.appearance_list.empty())
+    if (!reach_info.appearance_list.empty())
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Process request: " << std::endl;
@@ -209,9 +188,7 @@ namespace RequestInfoSvcs
         ostr << std::endl << "Result reach: " << std::endl;
         reach_info.print(ostr, "  ");
 
-        logger_->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_SITE_REACH_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_SITE_REACH_CONTAINER);
       }
 
       try
@@ -227,15 +204,12 @@ namespace RequestInfoSvcs
     }
   }
 
-  void UserSiteReachContainer::process_tag_request_(
-    const TagRequestInfo& tag_request_info)
+  void UserSiteReachContainer::process_tag_request_(const TagRequestInfo& tag_request_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserSiteReachContainer::process_tag_request_()";
 
-    if(tag_request_info.user_id.is_null() ||
-       !tag_request_info.site_id ||
-       !tag_request_info.tag_id)
+    if (tag_request_info.user_id.is_null() || !tag_request_info.site_id || !tag_request_info.tag_id)
     {
       return;
     }
@@ -252,11 +226,9 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
       {
@@ -266,7 +238,7 @@ namespace RequestInfoSvcs
 
       Generics::Time date(Algs::round_to_day(tag_request_info.isp_time));
 
-      if(collect_appearance(
+      if (collect_appearance(
         reach_info.appearance_list,
         user_profile_writer.appearance_list().begin(),
         user_profile_writer.appearance_list().end(),
@@ -284,7 +256,7 @@ namespace RequestInfoSvcs
         need_save = true;
       }
 
-      if(need_save)
+      if (need_save)
       {
         /* save profile */
         try
@@ -293,15 +265,12 @@ namespace RequestInfoSvcs
           Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
           user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-          transaction->save_profile(
-            Generics::transfer_membuf(new_mem_buf),
-            tag_request_info.time);
+          transaction->save_profile(Generics::transfer_membuf(new_mem_buf), tag_request_info.time);
         }
         catch(const eh::Exception& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Can't save profile - caught eh::Exception: " <<
-            ex.what();
+          ostr << FUN << ": Can't save profile - caught eh::Exception: " << ex.what();
           throw Exception(ostr);
         }
       }
@@ -309,14 +278,13 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't process request - caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't process request - caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(!reach_info.appearance_list.empty())
+    if (!reach_info.appearance_list.empty())
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Process request: " << std::endl;
@@ -324,9 +292,7 @@ namespace RequestInfoSvcs
         ostr << std::endl << "Result reach: " << std::endl;
         reach_info.print(ostr, "  ");
 
-        logger_->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_SITE_REACH_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_SITE_REACH_CONTAINER);
       }
 
       try
@@ -355,5 +321,4 @@ namespace RequestInfoSvcs
     const Generics::Time now = Generics::Time::get_time_of_day();
     co_await user_map_->co_clear_expired(now - expire_time_);
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+} // namespace AdServer::RequestInfoSvcs

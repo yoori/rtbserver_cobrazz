@@ -58,9 +58,7 @@ namespace AdServer::RequestInfoSvcs
       }
 
       void
-      start(
-        std::size_t sequence,
-        AdServer::Commons::StartableAwaitable<void> operation)
+      start(std::size_t sequence, AdServer::Commons::StartableAwaitable<void> operation)
       {
         {
           std::lock_guard<std::mutex> guard(state_->lock);
@@ -69,8 +67,7 @@ namespace AdServer::RequestInfoSvcs
         }
 
         operation.start_detached(
-          [state = state_, sequence](
-            std::optional<std::exception_ptr> exception) mutable noexcept
+          [state = state_, sequence](std::optional<std::exception_ptr> exception) mutable noexcept
           {
             std::lock_guard<std::mutex> guard(state->lock);
             if (exception)
@@ -84,8 +81,7 @@ namespace AdServer::RequestInfoSvcs
             else
             {
               state->completed[sequence % state->completed.size()] = 1;
-              while (state->completed[
-                state->committed % state->completed.size()] != 0)
+              while (state->completed[ state->committed % state->completed.size()] != 0)
               {
                 state->completed[state->committed % state->completed.size()] = 0;
                 ++state->committed;
@@ -270,15 +266,12 @@ namespace AdServer::RequestInfoSvcs
     {
       if (logger_->log_level() >= Logging::Logger::TRACE)
       {
-        logger_->stream(Logging::Logger::TRACE,
-          Aspect::EXPRESSION_MATCHER_LOG_LOADER) << FUN <<
+        logger_->stream(Logging::Logger::TRACE, Aspect::EXPRESSION_MATCHER_LOG_LOADER) << FUN <<
           ": To check input logs in '" <<
           log_traits.in_path << "' for prefix '" << log_traits.prefix << "'";
       }
 
-      file_receiver->fetch_files(
-        log_traits.in_path.c_str(),
-        log_traits.prefix.c_str());
+      file_receiver->fetch_files(log_traits.in_path.c_str(), log_traits.prefix.c_str());
     }
     catch(LogProcessing::FileReceiver::Interrupted&)
     {}
@@ -286,8 +279,7 @@ namespace AdServer::RequestInfoSvcs
     {
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_LOG_LOADER,
-        "ADS-IMPL-4014") << FUN <<
-        "Can't process log files. Caught eh::Exception: " << ex.what();
+        "ADS-IMPL-4014") << FUN << "Can't process log files. Caught eh::Exception: " << ex.what();
     }
 
     try
@@ -310,8 +302,7 @@ namespace AdServer::RequestInfoSvcs
     {
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::EXPRESSION_MATCHER_LOG_LOADER,
-        "ADS-IMPL-4015") << FUN <<
-        "Can't set processing task. Caught eh::Exception: " << ex.what();
+        "ADS-IMPL-4015") << FUN << "Can't set processing task. Caught eh::Exception: " << ex.what();
     }
 
     logger_->log(String::SubString("Logs processed."),
@@ -338,23 +329,15 @@ namespace AdServer::RequestInfoSvcs
         switch (file.type)
         {
         case LogType::RequestBasicChannels:
-          terminated = process_request_basic_channels_file_(
-            file.file_guard,
-            processed_lines_count);
+          terminated = process_request_basic_channels_file_(file.file_guard, processed_lines_count);
           break;
 
         case LogType::ConsiderClick:
-          terminated = process_binary_file_(
-            file.file_guard,
-            file.type,
-            processed_lines_count);
+          terminated = process_binary_file_(file.file_guard, file.type, processed_lines_count);
           break;
 
         case LogType::ConsiderImpression:
-          terminated = process_binary_file_(
-            file.file_guard,
-            file.type,
-            processed_lines_count);
+          terminated = process_binary_file_(file.file_guard, file.type, processed_lines_count);
           break;
         }
 
@@ -397,16 +380,14 @@ namespace AdServer::RequestInfoSvcs
         {
           const LogReadTraits& log_read_traits = find_log_read_traits_(file.type);
 
-          AdServer::LogProcessing::FileStore(
-            log_read_traits.in_path, DEFAULT_ERROR_DIR).store(
+          AdServer::LogProcessing::FileStore(log_read_traits.in_path, DEFAULT_ERROR_DIR).store(
               file.file_guard->full_path(), processed_lines_count);
         }
         catch (const eh::Exception &ex)
         {
           logger_->sstream(Logging::Logger::EMERGENCY,
             Aspect::EXPRESSION_MATCHER_LOG_LOADER,
-            "ADS-IMPL-4012") << FUN <<
-            ": Can't save files. eh::Exception: " << ex.what();
+            "ADS-IMPL-4012") << FUN << ": Can't save files. eh::Exception: " << ex.what();
         }
       }
     }
@@ -428,9 +409,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  ExpressionMatcherLogLoader::prepare_mem_buf_(
-    Generics::MemBuf& membuf,
-    unsigned long size)
+  ExpressionMatcherLogLoader::prepare_mem_buf_(Generics::MemBuf& membuf, unsigned long size)
     noexcept
   {
     if (size > membuf.capacity())
@@ -449,8 +428,7 @@ namespace AdServer::RequestInfoSvcs
     std::size_t& processed_lines_count)
     /*throw(eh::Exception)*/
   {
-    LogProcessing::FileReceiver::FileGuard_var file(
-      ReferenceCounting::add_ref(file_ptr));
+    LogProcessing::FileReceiver::FileGuard_var file(ReferenceCounting::add_ref(file_ptr));
 
     LogProcessing::LogFileNameInfo name_info;
     LogProcessing::parse_log_file_name(file->file_name().c_str(), name_info);
@@ -506,8 +484,7 @@ namespace AdServer::RequestInfoSvcs
 
     if (!terminated)
     {
-      request_basic_channels_processor_->request_basic_channels_file_processed(
-        name_info.timestamp);
+      request_basic_channels_processor_->request_basic_channels_file_processed(name_info.timestamp);
     }
 
     return terminated;
@@ -600,8 +577,7 @@ namespace AdServer::RequestInfoSvcs
     const AdServer::LogProcessing::LogFileNameInfo& info,
     const char* file_name) /*throw(eh::Exception)*/
   {
-    static const char* FUN =
-      "ExpressionMatcherLogLoader::file_move_back_to_input_dir_()";
+    static const char* FUN = "ExpressionMatcherLogLoader::file_move_back_to_input_dir_()";
 
     std::string path;
     const char* ptr = strrchr(file_name, '/');
@@ -611,8 +587,7 @@ namespace AdServer::RequestInfoSvcs
       path.assign(file_name, ptr + 1);
     }
 
-    const std::string new_file_name =
-      AdServer::LogProcessing::restore_log_file_name(info, path);
+    const std::string new_file_name = AdServer::LogProcessing::restore_log_file_name(info, path);
 
     if (::rename(file_name, new_file_name.c_str()))
     {
@@ -620,9 +595,7 @@ namespace AdServer::RequestInfoSvcs
         "Can't move '", file_name, "' to '", new_file_name.c_str(), "'");
     }
 
-    logger_->sstream(Logging::Logger::INFO,
-      Aspect::EXPRESSION_MATCHER_LOG_LOADER) << FUN <<
-      ": service was stopped, move " <<
-      file_name << " to " << new_file_name;
+    logger_->sstream(Logging::Logger::INFO, Aspect::EXPRESSION_MATCHER_LOG_LOADER) << FUN <<
+      ": service was stopped, move " << file_name << " to " << new_file_name;
   }
 }

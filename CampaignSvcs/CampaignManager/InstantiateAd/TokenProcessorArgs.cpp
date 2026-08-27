@@ -49,8 +49,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     }
     else
     {
-      token_processor = BaseTokenProcessor::default_token_processor(
-        std::string(name).c_str());
+      token_processor = BaseTokenProcessor::default_token_processor(std::string(name).c_str());
     }
 
     const TokenOptionValueProvider token_value_provider(source_args_.get(), *token_values_);

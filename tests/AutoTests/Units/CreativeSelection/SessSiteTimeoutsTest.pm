@@ -19,7 +19,7 @@ sub create_data
   if (!$ron_flag)
   {
     my $keyword = make_autotest_name($ns, $suffix);
-    
+
     $channel = $ns->create(DB::BehavioralChannel->blank(
     name => 'Channel' . $suffix,
     keyword_list => $keyword,
@@ -39,7 +39,7 @@ sub create_data
     name => 'Campaign' . $suffix,
     account_id => $advertiser,
     channel_id => $channel,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       $ron_flag? DB::Campaign::INCLUDE_SPECIFIC_SITES:
         DB::Campaign::INCLUDE_SPECIFIC_SITES | DB::Campaign::RON,
     site_links => [
@@ -54,7 +54,7 @@ sub create_text_data
   my ($self, $ns) = @_;
 
   my $keyword = make_autotest_name($ns, 'Text');
-  
+
   my $size = $ns->create(CreativeSize =>
                             { name => 'SizeText',
                               max_text_creatives => 1 });

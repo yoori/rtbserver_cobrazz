@@ -34,12 +34,12 @@ sub new
   my %tokens;
   my @rules;
 
-  while($file_path_templ =~ m|{(\d+)(?:\%(\d+))?}|g)
+  while ($file_path_templ =~ m|{(\d+)(?:\%(\d+))?}|g)
   {
     my $token = $&;
     my $column_index = $1;
     my $chunks = $2;
-    if(!exists($tokens{$token}))
+    if (!exists($tokens{$token}))
     {
       $tokens{$token} = 1;
       my $new_rule = new Rule(token => $token, column => $column_index - 1, chunks => $chunks);
@@ -49,7 +49,7 @@ sub new
 
   my $single_rule = scalar(@rules) <= 1 ? 1 : undef;
   my %files;
-  if(!defined($single_rule))
+  if (!defined($single_rule))
   {
     tie(%files, 'Hash::MultiKey');
   }
@@ -72,12 +72,12 @@ sub process
   # eval hash
   my $key;
 
-  if(defined($self->{single_rule_}))
+  if (defined($self->{single_rule_}))
   {
-    if(scalar(@{$self->{rules_}}) > 0)
+    if (scalar(@{$self->{rules_}}) > 0)
     {
       my $rule = $self->{rules_}->[0];
-      if(defined($rule->chunks()))
+      if (defined($rule->chunks()))
       {
         my $crc = crc32($row->[$rule->column()]);
         $key = $crc % $rule->chunks();
@@ -97,7 +97,7 @@ sub process
     my @vals;
     foreach my $rule(@{$self->{rules_}})
     {
-      if(defined($rule->chunks()))
+      if (defined($rule->chunks()))
       {
         my $crc = crc32($row->[$rule->column()]);
         push(@vals, $crc % $rule->chunks());
@@ -111,7 +111,7 @@ sub process
     $key = \@vals;
   }
 
-  if(!exists($self->{files_}->{$key}))
+  if (!exists($self->{files_}->{$key}))
   {
     my $file_path = $self->{file_};
     my $rules = $self->{rules_};
@@ -119,7 +119,7 @@ sub process
     {
       my $token = $rules->[$i]->token();
       my $value;
-      if(defined($self->{single_rule_}))
+      if (defined($self->{single_rule_}))
       {
         $value = $key;
       }

@@ -20,12 +20,10 @@ namespace AdServer::Commons
   {
     const auto context_count = threads ? threads : 1;
     contexts_.reserve(context_count);
-    for(unsigned long i = 0; i < context_count; ++i)
+    for (unsigned long i = 0; i < context_count; ++i)
     {
       auto io_service = std::make_shared<IoService>();
-      contexts_.emplace_back(Context{
-        io_service,
-        std::make_unique<Work>(*io_service)});
+      contexts_.emplace_back(Context{ io_service, std::make_unique<Work>(*io_service)});
     }
   }
 
@@ -36,17 +34,13 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::dispatch(
-    std::function<void()> task,
-    std::optional<ContextIndex> context_index)
+  ExecutorPool::dispatch(std::function<void()> task, std::optional<ContextIndex> context_index)
   {
-    if(context_index)
+    if (context_index)
     {
-      boost::asio::dispatch(
-        io_service(*context_index),
-        std::move(task));
+      boost::asio::dispatch(io_service(*context_index), std::move(task));
     }
-    else if(current_executor_pool_ == this && current_io_service_)
+    else if (current_executor_pool_ == this && current_io_service_)
     {
       boost::asio::dispatch(*current_io_service_, std::move(task));
     }
@@ -65,9 +59,7 @@ namespace AdServer::Commons
   ExecutorPool::ContextIndex
   ExecutorPool::get_next_context_index() noexcept
   {
-    return post_index_.fetch_add(
-      1,
-      std::memory_order_relaxed) % contexts_.size();
+    return post_index_.fetch_add(1, std::memory_order_relaxed) % contexts_.size();
   }
 
   void
@@ -79,15 +71,14 @@ namespace AdServer::Commons
     timer->async_wait(
       [timer, task = std::move(task)](const boost::system::error_code& error)
       {
-        if(!error)
+        if (!error)
         {
           task();
         }
       });
   }
 
-  ExecutorPool::YieldAwaiter::YieldAwaiter(
-    std::shared_ptr<ExecutorPool> executor_pool)
+  ExecutorPool::YieldAwaiter::YieldAwaiter(std::shared_ptr<ExecutorPool> executor_pool)
     : executor_pool_(std::move(executor_pool))
   {}
 
@@ -101,12 +92,7 @@ namespace AdServer::Commons
   ExecutorPool::YieldAwaiter::await_suspend(std::coroutine_handle<> handle) noexcept
   {
     const auto context_index = executor_pool_->get_next_context_index();
-    executor_pool_->dispatch(
-      [handle]() mutable
-      {
-        resume_coroutine(handle);
-      },
-      context_index);
+    executor_pool_->dispatch([handle]() mutable { resume_coroutine(handle); }, context_index);
   }
 
   void
@@ -119,8 +105,7 @@ namespace AdServer::Commons
     return YieldAwaiter(std::move(executor_pool));
   }
 
-  ExecutorPool::RescheduleAwaiter::RescheduleAwaiter(
-    std::shared_ptr<ExecutorPool> executor_pool)
+  ExecutorPool::RescheduleAwaiter::RescheduleAwaiter(std::shared_ptr<ExecutorPool> executor_pool)
     : executor_pool_(std::move(executor_pool))
   {}
 
@@ -131,8 +116,7 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::RescheduleAwaiter::await_suspend(
-    std::coroutine_handle<> handle) noexcept
+  ExecutorPool::RescheduleAwaiter::await_suspend(std::coroutine_handle<> handle) noexcept
   {
     const auto context_index = executor_pool_->get_next_context_index();
     executor_pool_->io_service(context_index).post(
@@ -165,17 +149,12 @@ namespace AdServer::Commons
     current_io_service_ = &io_service;
 
     CoroutineResumeScheduler resume_scheduler;
-    if(resume_strategy_ == ResumeStrategy::CurrentContext)
+    if (resume_strategy_ == ResumeStrategy::CurrentContext)
     {
       resume_scheduler =
         [this, context_index](std::coroutine_handle<> handle)
         {
-          dispatch(
-            [handle]() mutable
-            {
-              resume_coroutine(handle);
-            },
-            context_index);
+          dispatch([handle]() mutable { resume_coroutine(handle); }, context_index);
         };
     }
     else
@@ -183,17 +162,13 @@ namespace AdServer::Commons
       resume_scheduler =
         [this](std::coroutine_handle<> handle)
         {
-          dispatch(
-            [handle]() mutable
-            {
-              resume_coroutine(handle);
-            });
+          dispatch([handle]() mutable { resume_coroutine(handle); });
         };
     }
 
     ScopedCoroutineResumeScheduler scheduler_scope(resume_scheduler);
 
-    while(active())
+    while (active())
     {
       try
       {
@@ -210,7 +185,7 @@ namespace AdServer::Commons
   void
   ExecutorPool::terminate_() noexcept
   {
-    for(auto& context : contexts_)
+    for (auto& context : contexts_)
     {
       context.io_work.reset();
       context.io_service->stop();

@@ -12,9 +12,7 @@
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   template<typename KeyAccessorType>
   struct KeyAccessorStringAdapter
@@ -25,7 +23,7 @@ namespace ProfilingCommons
     {
       const unsigned long size = KeyAccessorType::size(key);
       std::string result(size, '\0');
-      if(size)
+      if (size)
       {
         KeyAccessorType::save(key, result.data(), size);
       }
@@ -97,18 +95,17 @@ namespace ProfilingCommons
       Generics::CompositeActiveObject_var composite_active_object =
         new Generics::RefCountableCompositeActiveObject(false, false);
 
-      if(!processor)
+      if (!processor)
       {
         processor = std::make_shared<RocksDBProfileMapProcessor>(workers_count);
         composite_active_object->add_child_object(processor);
       }
 
-      for(ChunkPathMap::const_iterator chunk_folder_it =
-            chunk_folders.begin();
+      for (ChunkPathMap::const_iterator chunk_folder_it = chunk_folders.begin();
           chunk_folder_it != chunk_folders.end(); ++chunk_folder_it)
       {
         std::string rocksdb_path = chunk_folder_it->second + "/" + chunk_prefix;
-        if(rocksdb_path_suffix)
+        if (rocksdb_path_suffix)
         {
           rocksdb_path += rocksdb_path_suffix;
         }
@@ -123,9 +120,7 @@ namespace ProfilingCommons
 
         ReferenceCounting::SmartPtr<
           AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =
-            new TransactionProfileMap<KeyType>(
-              rocksdb_map.in(),
-              max_waiters);
+            new TransactionProfileMap<KeyType>(rocksdb_map.in(), max_waiters);
 
         composite_active_object->add_child_object(rocksdb_map.in());
         chunks.insert(std::make_pair(chunk_folder_it->first, base_map));
@@ -134,13 +129,9 @@ namespace ProfilingCommons
       Generics::ActiveObject_var active_object = composite_active_object;
 
       ReferenceCounting::SmartPtr<ProfileMapType> profile_map =
-        new ProfileMapType(
-        common_chunks_number,
-        chunks,
-        key_hash);
+        new ProfileMapType(common_chunks_number, chunks, key_hash);
       return std::make_pair(profile_map, active_object);
     }
 
   };
-}
 }

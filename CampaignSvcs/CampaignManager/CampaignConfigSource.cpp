@@ -55,14 +55,11 @@ namespace
       name == CreativeTokens::CGID ||
       name == CreativeTokens::CID ||
       name == CreativeTokens::CREATIVE_SIZE ||
-      name == CreativeTokens::TEMPLATE_FORMAT ||
-      name == CreativeTokens::ACTIONPIXEL;
+      name == CreativeTokens::TEMPLATE_FORMAT || name == CreativeTokens::ACTIONPIXEL;
   }
 
   void
-  remove_system_creative_tokens(
-    AdServer::CampaignSvcs::Creative& creative,
-    Logging::Logger* logger)
+  remove_system_creative_tokens(AdServer::CampaignSvcs::Creative& creative, Logging::Logger* logger)
     noexcept
   {
     for (auto token_it = creative.tokens.begin(); token_it != creative.tokens.end();)
@@ -71,12 +68,9 @@ namespace
       {
         if (logger)
         {
-          logger->sstream(
-            Logging::Logger::WARNING,
-            Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+          logger->sstream(Logging::Logger::WARNING, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
             "CampaignConfigSource: system creative token '" <<
-            token_it->first <<
-            "' is ignored for ccid=" << creative.ccid;
+            token_it->first << "' is ignored for ccid=" << creative.ccid;
         }
 
         token_it = creative.tokens.erase(token_it);
@@ -110,8 +104,7 @@ namespace
     while ((pos = phrase_s.find(pattern_s, pos + 1)) != std::string::npos)
     {
       if ((!pos || phrase_s[pos - 1] == ' ') &&
-        (pos + pattern_s.size() == phrase_s.size() ||
-          phrase_s[pos + pattern_s.size()] == ' '))
+        (pos + pattern_s.size() == phrase_s.size() || phrase_s[pos + pattern_s.size()] == ' '))
       {
         return true;
       }
@@ -132,9 +125,7 @@ namespace
           AdServer::CampaignSvcs::CreativeTokens::ADV_TRACK_PIXEL.size(),
           AdServer::CampaignSvcs::CreativeTokens::ADV_TRACK_PIXEL) == 0)
       {
-        creative.adv_track_pixel_tokens.push_back({
-          token.first,
-          token.second.option_id});
+        creative.adv_track_pixel_tokens.push_back({ token.first, token.second.option_id});
       }
     }
   }
@@ -177,28 +168,22 @@ namespace AdServer::CampaignSvcs
     void
     rebuild_creative_appformat_index_(CampaignConfig& config) noexcept
     {
-      for (CampaignConfig::CampaignMap::iterator cmp_it =
-            config.campaigns.begin();
+      for (CampaignConfig::CampaignMap::iterator cmp_it = config.campaigns.begin();
           cmp_it != config.campaigns.end();
           ++cmp_it)
       {
         CreativeList& creatives = cmp_it->second->creatives;
-        for (CreativeList::iterator cr_it = creatives.begin();
-            cr_it != creatives.end();
-            ++cr_it)
+        for (CreativeList::iterator cr_it = creatives.begin(); cr_it != creatives.end(); ++cr_it)
         {
           Creative* creative = *cr_it;
-          for (Creative::SizeMap::iterator size_it =
-                creative->sizes.begin();
+          for (Creative::SizeMap::iterator size_it = creative->sizes.begin();
               size_it != creative->sizes.end();
               ++size_it)
           {
-            StringSet& available_appformats =
-              size_it->second.available_appformats;
+            StringSet& available_appformats = size_it->second.available_appformats;
             available_appformats.clear();
 
-            for (StringSet::const_iterator app_format_it =
-                  config.all_template_appformats.begin();
+            for (StringSet::const_iterator app_format_it = config.all_template_appformats.begin();
                 app_format_it != config.all_template_appformats.end();
                 ++app_format_it)
             {
@@ -261,9 +246,7 @@ namespace AdServer::CampaignSvcs
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": Caught eh::Exception on campaign server pool initialization: " <<
-        e.what();
+      ostr << FUN << ": Caught eh::Exception on campaign server pool initialization: " << e.what();
       throw Exception(ostr);
     }
   }
@@ -281,9 +264,7 @@ namespace AdServer::CampaignSvcs
   }
 
   const char*
-  CampaignConfigSource::adopt_template_path(
-    const char* path,
-    std::string& result_template_path)
+  CampaignConfigSource::adopt_template_path(const char* path, std::string& result_template_path)
     noexcept
   {
     result_template_path = template_file_dir_;
@@ -308,8 +289,7 @@ namespace AdServer::CampaignSvcs
     {
       try
       {
-        HTTP::BrowserAddress http_url(
-          String::SubString(creative_info.click_url.value));
+        HTTP::BrowserAddress http_url(String::SubString(creative_info.click_url.value));
         http_url.get_view(
           HTTP::HTTPAddress::VW_PROTOCOL |
           HTTP::HTTPAddress::VW_HOSTNAME |
@@ -348,8 +328,7 @@ namespace AdServer::CampaignSvcs
       res_size.expandable = (
         res_size.up_expand_space > 0 ||
         res_size.right_expand_space > 0 ||
-        res_size.down_expand_space > 0 ||
-        res_size.left_expand_space > 0);
+        res_size.down_expand_space > 0 || res_size.left_expand_space > 0);
     }
 
     return result;
@@ -379,8 +358,7 @@ namespace AdServer::CampaignSvcs
         {
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": Reloading config ...";
           }
 
@@ -396,8 +374,7 @@ namespace AdServer::CampaignSvcs
             }
 
             CampaignGetConfigSettings get_config_settings;
-            get_config_settings.timestamp =
-              CorbaAlgs::pack_time(Generics::Time::ZERO);
+            get_config_settings.timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
             get_config_settings.server_id = 0;
             get_config_settings.portion = portion;
             get_config_settings.portions_number = PORTIONS_NUMBER;
@@ -412,8 +389,7 @@ namespace AdServer::CampaignSvcs
             get_config_settings.provide_channel_triggers = false;
 
             get_config_settings.geo_channels_timestamp = CorbaAlgs::pack_time(
-              old_config ?
-              old_config->geo_channels_timestamp : Generics::Time::ZERO);
+              old_config ? old_config->geo_channels_timestamp : Generics::Time::ZERO);
 
             CampaignConfigUpdateInfo_var update_info;
 
@@ -421,8 +397,7 @@ namespace AdServer::CampaignSvcs
 
             if (logger_->log_level() >= Logging::Logger::TRACE)
             {
-              logger_->stream(Logging::Logger::TRACE,
-                Aspect::CAMPAIGN_CONFIG_SOURCE) << FUN <<
+              logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) << FUN <<
                 ": config update contains (portion = " << portion << "): " <<
                 update_info->countries.length() << " updated countries," <<
                 update_info->colocations.length() << " updated colocations," <<
@@ -442,17 +417,12 @@ namespace AdServer::CampaignSvcs
                   CorbaAlgs::unpack_time(update_info->geo_channels_timestamp).get_gm_time() << ")";
             }
 
-            apply_config_update_(
-              *new_config,
-              config_update_links,
-              *update_info,
-              old_config);
+            apply_config_update_(*new_config, config_update_links, *update_info, old_config);
           }
 
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": link config entities.";
           }
 
@@ -460,8 +430,7 @@ namespace AdServer::CampaignSvcs
 
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": apply campaign limitations.";
           }
 
@@ -469,8 +438,7 @@ namespace AdServer::CampaignSvcs
 
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": check creative file references.";
           }
 
@@ -478,8 +446,7 @@ namespace AdServer::CampaignSvcs
 
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": check creative template files.";
           }
 
@@ -487,19 +454,16 @@ namespace AdServer::CampaignSvcs
 
           rebuild_creative_appformat_index_(*new_config);
 
-          if (!old_config ||
-             old_config->geo_channels.in() != new_config->geo_channels.in())
+          if (!old_config || old_config->geo_channels.in() != new_config->geo_channels.in())
           {
             new_config->geo_channels->close();
           }
 
           if (logger_->log_level() >= Logging::Logger::TRACE)
           {
-            logger_->stream(Logging::Logger::TRACE,
-              Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+            logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
               FUN << ": To construct campaign index for " <<
-              new_config->campaigns.size() << " campaigns, " <<
-              new_config->tags.size() << " tags.";
+              new_config->campaigns.size() << " campaigns, " << new_config->tags.size() << " tags.";
           }
 
           return new_config;
@@ -515,8 +479,7 @@ namespace AdServer::CampaignSvcs
         catch(const CampaignServer::ImplementationException& e)
         {
           Stream::Error ostr;
-          ostr << FUN << ": CampaignServer::ImplementationException caught: "
-            << e.description;
+          ostr << FUN << ": CampaignServer::ImplementationException caught: " << e.description;
           campaign_server.release_bad(ostr.str());
           logger_->log(ostr.str(), Logging::Logger::EMERGENCY,
             Aspect::CAMPAIGN_CONFIG_SOURCE, "ADS-IMPL-5091");
@@ -544,8 +507,7 @@ namespace AdServer::CampaignSvcs
   }
 
   unsigned long
-  CampaignConfigSource::filter_not_exist_fc_(
-    unsigned long fc_id, const FreqCapMap& freq_caps_map)
+  CampaignConfigSource::filter_not_exist_fc_(unsigned long fc_id, const FreqCapMap& freq_caps_map)
     noexcept
   {
     return freq_caps_map.find(fc_id) == freq_caps_map.end() ? 0 : fc_id;
@@ -566,20 +528,16 @@ namespace AdServer::CampaignSvcs
       new_config.master_stamp = CorbaAlgs::unpack_time(update_info.master_stamp);
     }
 
-    new_config.first_load_stamp = CorbaAlgs::unpack_time(
-      update_info.first_load_stamp);
-    new_config.finish_load_stamp = CorbaAlgs::unpack_time(
-      update_info.finish_load_stamp);
+    new_config.first_load_stamp = CorbaAlgs::unpack_time(update_info.first_load_stamp);
+    new_config.finish_load_stamp = CorbaAlgs::unpack_time(update_info.finish_load_stamp);
     new_config.global_params_timestamp =
       CorbaAlgs::unpack_time(update_info.global_params_timestamp);
 
     new_config.currency_exchange_id = update_info.currency_exchange_id;
     new_config.fraud_user_deactivate_period = CorbaAlgs::unpack_time(
       update_info.fraud_user_deactivate_period);
-    new_config.cost_limit = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-      update_info.cost_limit);
-    new_config.google_publisher_account_id =
-      update_info.google_publisher_account_id;
+    new_config.cost_limit = CorbaAlgs::unpack_decimal<RevenueDecimal>(update_info.cost_limit);
+    new_config.google_publisher_account_id = update_info.google_publisher_account_id;
 
     apply_sizes_update_(update_info, new_config);
     apply_app_formats_update_(update_info, new_config);
@@ -589,15 +547,10 @@ namespace AdServer::CampaignSvcs
     for (CORBA::ULong i = 0; i < update_info.ecpms.length(); ++i)
     {
       ConfigUpdateLinks::EcpmHolder ecpm;
-      ecpm.ecpm = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        update_info.ecpms[i].ecpm);
-      ecpm.ctr = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        update_info.ecpms[i].ctr);
+      ecpm.ecpm = CorbaAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms[i].ecpm);
+      ecpm.ctr = CorbaAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms[i].ctr);
 
-      config_update_links.campaign_ecpms.insert(
-        std::make_pair(
-          update_info.ecpms[i].ccg_id,
-          ecpm));
+      config_update_links.campaign_ecpms.insert(std::make_pair(update_info.ecpms[i].ccg_id, ecpm));
     }
 
     for (CORBA::ULong i = 0; i < update_info.adv_actions.length(); i++)
@@ -615,8 +568,7 @@ namespace AdServer::CampaignSvcs
 
       if (j < ai_info.ccg_ids.length())
       {
-        CorbaAlgs::unpack_decimal_from_seq(
-          ai.cur_value, ai_info.ccg_ids, j + 1);
+        CorbaAlgs::unpack_decimal_from_seq(ai.cur_value, ai_info.ccg_ids, j + 1);
       }
     }
 
@@ -711,8 +663,7 @@ namespace AdServer::CampaignSvcs
       {
         std::copy(domain_categories_it->second.begin(),
          domain_categories_it->second.end(),
-         std::inserter(target_creative_categories,
-           target_creative_categories.begin()));
+         std::inserter(target_creative_categories, target_creative_categories.begin()));
       }
     }
     catch(...)
@@ -729,10 +680,7 @@ namespace AdServer::CampaignSvcs
           config_update_links.template_option_values.begin();
         it != config_update_links.template_option_values.end(); ++it)
     {
-      link_option_values_(
-        *(it->second.tokens_ref),
-        new_config,
-        it->second.unlinked_tokens);
+      link_option_values_(*(it->second.tokens_ref), new_config, it->second.unlinked_tokens);
 
       link_option_values_(
         *(it->second.hidden_tokens_ref),
@@ -772,12 +720,10 @@ namespace AdServer::CampaignSvcs
   {
     static const char* FUN = "CampaignConfigSource::link_campaign_update_()";
 
-    for (CampaignConfig::CampaignMap::iterator cmp_it =
-           new_config.campaigns.begin();
+    for (CampaignConfig::CampaignMap::iterator cmp_it = new_config.campaigns.begin();
          cmp_it != new_config.campaigns.end(); )
     {
-      cmp_it->second->fc_id =
-        filter_not_exist_fc_(cmp_it->second->fc_id, new_config.freq_caps);
+      cmp_it->second->fc_id = filter_not_exist_fc_(cmp_it->second->fc_id, new_config.freq_caps);
       cmp_it->second->group_fc_id =
         filter_not_exist_fc_(cmp_it->second->group_fc_id, new_config.freq_caps);
 
@@ -793,14 +739,12 @@ namespace AdServer::CampaignSvcs
       assert(account_link_it != config_update_links.campaign_accounts.end());
       assert(advertiser_link_it != config_update_links.campaign_advertisers.end());
 
-      AccountMap::const_iterator account_it =
-        new_config.accounts.find(account_link_it->second);
+      AccountMap::const_iterator account_it = new_config.accounts.find(account_link_it->second);
 
       AccountMap::const_iterator advertiser_it =
         new_config.accounts.find(advertiser_link_it->second);
 
-      if (account_it != new_config.accounts.end() &&
-         advertiser_it != new_config.accounts.end())
+      if (account_it != new_config.accounts.end() && advertiser_it != new_config.accounts.end())
       {
         assert(account_it->second.in() && advertiser_it->second.in());
 
@@ -848,8 +792,7 @@ namespace AdServer::CampaignSvcs
             }
           }
 
-          for (Creative::CategorySet::const_iterator cr_cat_it =
-                (*cr_it)->categories.begin();
+          for (Creative::CategorySet::const_iterator cr_cat_it = (*cr_it)->categories.begin();
               cr_cat_it != (*cr_it)->categories.end(); ++cr_cat_it)
           {
             CampaignConfig::CreativeCategoryMap::const_iterator cat_it =
@@ -891,8 +834,7 @@ namespace AdServer::CampaignSvcs
             }
             else
             {
-              for (Creative::SizeMap::iterator cr_size_it =
-                    (*cr_it)->sizes.begin();
+              for (Creative::SizeMap::iterator cr_size_it = (*cr_it)->sizes.begin();
                   cr_size_it != (*cr_it)->sizes.end(); ++cr_size_it)
               {
                 ConfigUpdateLinks::CreativeSizeOptionValueMap::
@@ -977,8 +919,7 @@ namespace AdServer::CampaignSvcs
                 (*cr_it)->tokens.find(CreativeTokens::DESTURL);
               std::string destination_url;
 
-              if (tok_it != (*cr_it)->tokens.end() &&
-                  !tok_it->second.value.empty())
+              if (tok_it != (*cr_it)->tokens.end() && !tok_it->second.value.empty())
               {
                 destination_url = tok_it->second.value;
               }
@@ -986,8 +927,7 @@ namespace AdServer::CampaignSvcs
               {
                 tok_it = (*cr_it)->tokens.find(CreativeTokens::DISPLAY_URL);
 
-                if (tok_it != (*cr_it)->tokens.end() &&
-                    !tok_it->second.value.empty())
+                if (tok_it != (*cr_it)->tokens.end() && !tok_it->second.value.empty())
                 {
                   destination_url = tok_it->second.value;
                 }
@@ -1008,8 +948,7 @@ namespace AdServer::CampaignSvcs
               {
                 Stream::Error ostr;
                 ostr << FUN << ": ccid = " << (*cr_it)->ccid <<
-                  ", invalid destination url '" <<
-                  destination_url << "', " << ex.what();
+                  ", invalid destination url '" << destination_url << "', " << ex.what();
 
                 logger_->log(
                   ostr.str(),
@@ -1024,8 +963,7 @@ namespace AdServer::CampaignSvcs
               OptionTokenValueMap::const_iterator tok_it =
                 (*cr_it)->tokens.find(CreativeTokens::ERID);
 
-              if (tok_it != (*cr_it)->tokens.end() &&
-                  !tok_it->second.value.empty())
+              if (tok_it != (*cr_it)->tokens.end() && !tok_it->second.value.empty())
               {
                 (*cr_it)->erid = tok_it->second.value;
               }
@@ -1072,8 +1010,7 @@ namespace AdServer::CampaignSvcs
 
               if (https_safe_tok_it != creative.tokens.end())
               {
-                creative.https_safe_flag =
-                  (https_safe_tok_it->second.value == "HTTPS-Safe");
+                creative.https_safe_flag = (https_safe_tok_it->second.value == "HTTPS-Safe");
               }
             }
             else
@@ -1176,17 +1113,14 @@ namespace AdServer::CampaignSvcs
           config_update_links.block_channels.begin();
         bch_it != config_update_links.block_channels.end(); ++bch_it)
     {
-      for (ConfigUpdateLinks::IdList::const_iterator ch_id_it =
-            bch_it->second.begin();
+      for (ConfigUpdateLinks::IdList::const_iterator ch_id_it = bch_it->second.begin();
           ch_id_it != bch_it->second.end(); ++ch_id_it)
       {
         CampaignConfig::ChannelMap::const_iterator ch_it =
           new_config.expression_channels.find(*ch_id_it);
-        if (ch_it != new_config.expression_channels.end() &&
-           ch_it->second->has_params())
+        if (ch_it != new_config.expression_channels.end() && ch_it->second->has_params())
         {
-          new_config.block_channels[bch_it->first].push_back(
-            ch_it->second);
+          new_config.block_channels[bch_it->first].push_back(ch_it->second);
         }
       }
     }
@@ -1208,8 +1142,7 @@ namespace AdServer::CampaignSvcs
       if (cat_ch_it->second->parent_channel_id)
       {
         CampaignConfig::CategoryChannelMap::iterator parent_cat_ch_it =
-          new_config.category_channels.find(
-            cat_ch_it->second->parent_channel_id);
+          new_config.category_channels.find(cat_ch_it->second->parent_channel_id);
 
         if (parent_cat_ch_it != new_config.category_channels.end())
         {
@@ -1219,14 +1152,12 @@ namespace AdServer::CampaignSvcs
 
           const CategoryChannel* cur_cat_ch = parent_cat_ch_it->second;
 
-          while (cur_cat_ch &&
-            used_channels.find(cur_cat_ch->channel_id) == used_channels.end())
+          while (cur_cat_ch && used_channels.find(cur_cat_ch->channel_id) == used_channels.end())
           {
             if (cur_cat_ch->parent_channel_id)
             {
               CampaignConfig::CategoryChannelMap::iterator lp_ch_it =
-                new_config.category_channels.find(
-                  cur_cat_ch->parent_channel_id);
+                new_config.category_channels.find(cur_cat_ch->parent_channel_id);
               if (lp_ch_it != new_config.category_channels.end())
               {
                 used_channels.insert(cur_cat_ch->channel_id);
@@ -1252,8 +1183,7 @@ namespace AdServer::CampaignSvcs
               Aspect::CAMPAIGN_CONFIG_SOURCE,
               "ADS-IMPL-60") << FUN <<
               ": Found recursion in category channel: '" <<
-              cat_ch_it->second->name <<
-              "' - it will be ignored";
+              cat_ch_it->second->name << "' - it will be ignored";
           }
         }
         else
@@ -1280,12 +1210,10 @@ namespace AdServer::CampaignSvcs
     for (AdvActionMap::const_iterator act_it = new_config.adv_actions.begin();
         act_it != new_config.adv_actions.end(); ++act_it)
     {
-      for (AdvActionDef::CCGIdList::const_iterator act_ccg_it =
-            act_it->second.ccg_ids.begin();
+      for (AdvActionDef::CCGIdList::const_iterator act_ccg_it = act_it->second.ccg_ids.begin();
           act_ccg_it != act_it->second.ccg_ids.end(); ++act_ccg_it)
       {
-        CampaignConfig::CampaignMap::iterator ccg_it =
-          new_config.campaigns.find(*act_ccg_it);
+        CampaignConfig::CampaignMap::iterator ccg_it = new_config.campaigns.find(*act_ccg_it);
         if (ccg_it != new_config.campaigns.end())
         {
           ccg_it->second->has_custom_actions = true;
@@ -1294,11 +1222,9 @@ namespace AdServer::CampaignSvcs
     }
   }
 
-  void CampaignConfigSource::enrich_channels_by_geo_channels_(
-    CampaignConfig& new_config) noexcept
+  void CampaignConfigSource::enrich_channels_by_geo_channels_(CampaignConfig& new_config) noexcept
   {
-    for (CampaignConfig::ChannelMap::iterator ch_it =
-          new_config.expression_channels.begin();
+    for (CampaignConfig::ChannelMap::iterator ch_it = new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
       if (!ch_it->second->channel.in() &&
@@ -1316,14 +1242,11 @@ namespace AdServer::CampaignSvcs
   }
 
   void
-  CampaignConfigSource::enrich_channels_by_geo_coord_channels_(
-    CampaignConfig& new_config) noexcept
+  CampaignConfigSource::enrich_channels_by_geo_coord_channels_(CampaignConfig& new_config) noexcept
   {
-    const ChannelIdSet& geo_coord_channel_ids =
-      new_config.geo_coord_channels->channel_ids();
+    const ChannelIdSet& geo_coord_channel_ids = new_config.geo_coord_channels->channel_ids();
 
-    for (CampaignConfig::ChannelMap::iterator ch_it =
-          new_config.expression_channels.begin();
+    for (CampaignConfig::ChannelMap::iterator ch_it = new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
       if (!ch_it->second->channel.in() &&
@@ -1343,8 +1266,7 @@ namespace AdServer::CampaignSvcs
   void CampaignConfigSource::enrich_channels_by_platform_channels_(
     CampaignConfig& new_config) noexcept
   {
-    for (CampaignConfig::ChannelMap::iterator ch_it =
-          new_config.expression_channels.begin();
+    for (CampaignConfig::ChannelMap::iterator ch_it = new_config.expression_channels.begin();
         ch_it != new_config.expression_channels.end(); ++ch_it)
     {
       if (!ch_it->second->channel.in() &&
@@ -1373,8 +1295,7 @@ namespace AdServer::CampaignSvcs
     for (Tag::TagPricings::const_iterator tp_it = tag->tag_pricings.begin();
         tp_it != tag->tag_pricings.end(); ++tp_it)
     {
-      if (prev_country_code == 0 ||
-         tp_it->first.country_code != *prev_country_code)
+      if (prev_country_code == 0 || tp_it->first.country_code != *prev_country_code)
       {
         const std::string& cur_country_code = tp_it->first.country_code;
         prev_country_code = &cur_country_code;
@@ -1387,9 +1308,7 @@ namespace AdServer::CampaignSvcs
            tp_it->first.ccg_rate_type == CR_ALL &&
            tp_it->first.ccg_type == CT_ALL)
         {
-          tag->no_imp_tag_pricings.insert(std::make_pair(
-            cur_country_code,
-            &tp_it->second));
+          tag->no_imp_tag_pricings.insert(std::make_pair(cur_country_code, &tp_it->second));
         }
         else
         {
@@ -1453,10 +1372,7 @@ namespace AdServer::CampaignSvcs
         if (tag_size_it != tag.sizes.end())
         {
           Tag::Size_var new_tag_size = new Tag::Size(*tag_size_it->second);
-          link_option_values_(
-            (*new_tag_size).*tokens_field,
-            new_config,
-            topt_it->second);
+          link_option_values_((*new_tag_size).*tokens_field, new_config, topt_it->second);
           tag_size_it->second = new_tag_size;
         }
       }
@@ -1472,44 +1388,33 @@ namespace AdServer::CampaignSvcs
 
     CreativeFormatTemplateMap_ creative_format_template_map;
 
-    for (CreativeTemplateMap::KeyMap::const_iterator ct_it =
-          new_config.creative_templates.begin();
+    for (CreativeTemplateMap::KeyMap::const_iterator ct_it = new_config.creative_templates.begin();
         ct_it != new_config.creative_templates.end(); ++ct_it)
     {
       creative_format_template_map[ct_it->first.creative_format][
         ct_it->first.creative_size].insert(ct_it->first.app_format);
     }
 
-    link_template_update_(
-      new_config,
-      config_update_links);
+    link_template_update_(new_config, config_update_links);
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
         FUN << ": link accounts ...";
     }
 
-    link_account_update_(
-      new_config,
-      config_update_links);
+    link_account_update_(new_config, config_update_links);
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
         FUN << ": link campaigns (number of creative categories = " <<
         new_config.creative_categories.size() << ") ...";
     }
 
-    link_campaign_update_(
-      new_config,
-      config_update_links,
-      creative_format_template_map);
+    link_campaign_update_(new_config, config_update_links, creative_format_template_map);
 
-    for (SiteMap::iterator site_it = new_config.sites.begin();
-         site_it != new_config.sites.end(); )
+    for (SiteMap::iterator site_it = new_config.sites.begin(); site_it != new_config.sites.end();)
     {
       site_it->second->freq_cap_id =
         filter_not_exist_fc_(site_it->second->freq_cap_id, new_config.freq_caps);
@@ -1519,8 +1424,7 @@ namespace AdServer::CampaignSvcs
 
       assert(account_link_it != config_update_links.site_accounts.end());
 
-      AccountMap::const_iterator account_it =
-        new_config.accounts.find(account_link_it->second);
+      AccountMap::const_iterator account_it = new_config.accounts.find(account_link_it->second);
 
       if (account_it != new_config.accounts.end())
       {
@@ -1535,13 +1439,11 @@ namespace AdServer::CampaignSvcs
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
         FUN << ": link tags ...";
     }
 
-    for (TagMap::iterator tag_it = new_config.tags.begin();
-         tag_it != new_config.tags.end(); )
+    for (TagMap::iterator tag_it = new_config.tags.begin(); tag_it != new_config.tags.end();)
     {
       for (Tag::SizeMap::iterator size_it = tag_it->second->sizes.begin();
           size_it != tag_it->second->sizes.end(); )
@@ -1614,8 +1516,7 @@ namespace AdServer::CampaignSvcs
 
       assert(site_link_it != config_update_links.tag_sites.end());
 
-      SiteMap::const_iterator site_it =
-        new_config.sites.find(site_link_it->second);
+      SiteMap::const_iterator site_it = new_config.sites.find(site_link_it->second);
 
       if (site_it != new_config.sites.end())
       {
@@ -1626,16 +1527,14 @@ namespace AdServer::CampaignSvcs
           site_it->second->account->currency->to_system_currency(
             tag_it->second->pub_max_random_cpm);
 
-        for (Tag::TagPricings::iterator tp_it =
-               tag_it->second->tag_pricings.begin();
+        for (Tag::TagPricings::iterator tp_it = tag_it->second->tag_pricings.begin();
              tp_it != tag_it->second->tag_pricings.end(); ++tp_it)
         {
           ExtRevenueDecimal ext_imp_revenue;
           narrow_decimal(ext_imp_revenue, tp_it->second.imp_revenue);
 
           ExtRevenueDecimal ext_tag_sys_imp_revenue =
-            site_it->second->account->currency->to_system_currency(
-              ext_imp_revenue);
+            site_it->second->account->currency->to_system_currency(ext_imp_revenue);
 
           ExtRevenueDecimal ext_commision;
           narrow_decimal(ext_commision, site_it->second->account->commision);
@@ -1666,8 +1565,7 @@ namespace AdServer::CampaignSvcs
           if (cat_it != new_config.creative_categories.end() &&
              !cat_it->second.exclude_domain.empty())
           {
-            tag_it->second->exclude_creative_domains.insert(
-              cat_it->second.exclude_domain);
+            tag_it->second->exclude_creative_domains.insert(cat_it->second.exclude_domain);
           }
         }
 
@@ -1686,14 +1584,12 @@ namespace AdServer::CampaignSvcs
             if (cat_it != new_config.creative_categories.end() &&
                !cat_it->second.exclude_domain.empty())
             {
-              tag_it->second->exclude_creative_domains.insert(
-                cat_it->second.exclude_domain);
+              tag_it->second->exclude_creative_domains.insert(cat_it->second.exclude_domain);
             }
           }
         }
 
-        for (Tag::SizeMap::const_iterator tag_size_it =
-              tag_it->second->sizes.begin();
+        for (Tag::SizeMap::const_iterator tag_size_it = tag_it->second->sizes.begin();
             tag_size_it != tag_it->second->sizes.end();
             ++tag_size_it)
         {
@@ -1712,37 +1608,26 @@ namespace AdServer::CampaignSvcs
             if (protocol_name)
             {
               new_config.site_tags[
-                IdTagKey(
-                  tag_it->second->site->site_id,
-                  protocol_name)].push_back(
-                tag_it->second);
+                IdTagKey(tag_it->second->site->site_id, protocol_name)].push_back(tag_it->second);
               new_config.account_tags[
-                IdTagKey(
-                  tag_it->second->site->account->account_id,
-                  protocol_name)].push_back(
+                IdTagKey(tag_it->second->site->account->account_id, protocol_name)].push_back(
                   tag_it->second);
             }
             new_config.site_tags[
-              IdTagKey(
-                tag_it->second->site->site_id,
-                "rm")].push_back(tag_it->second);
+              IdTagKey(tag_it->second->site->site_id, "rm")].push_back(tag_it->second);
             new_config.account_tags[
-              IdTagKey(
-                tag_it->second->site->account->account_id,
-                "rm")].push_back(tag_it->second);
+              IdTagKey(tag_it->second->site->account->account_id, "rm")].push_back(tag_it->second);
           }
           else
           {
             new_config.site_tags[
               IdTagKey(
                 tag_it->second->site->site_id,
-                tag_size_it->second->size->protocol_name.c_str())].push_back(
-               tag_it->second);
+                tag_size_it->second->size->protocol_name.c_str())].push_back(tag_it->second);
             new_config.account_tags[
               IdTagKey(
                 tag_it->second->site->account->account_id,
-                tag_size_it->second->size->protocol_name.c_str())].push_back(
-              tag_it->second);
+                tag_size_it->second->size->protocol_name.c_str())].push_back(tag_it->second);
           }
         }
 
@@ -1756,8 +1641,7 @@ namespace AdServer::CampaignSvcs
 
     std::vector<unsigned long> del_colocations;
 
-    for (CampaignConfig::ColocationMap::iterator colo_it =
-           new_config.colocations.begin();
+    for (CampaignConfig::ColocationMap::iterator colo_it = new_config.colocations.begin();
          colo_it != new_config.colocations.end(); ++colo_it)
     {
       link_option_values_(
@@ -1783,8 +1667,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    for (auto colo_it = del_colocations.begin(); colo_it != del_colocations.end();
-      ++colo_it)
+    for (auto colo_it = del_colocations.begin(); colo_it != del_colocations.end(); ++colo_it)
     {
       new_config.colocations.erase(*colo_it);
     }
@@ -1797,18 +1680,14 @@ namespace AdServer::CampaignSvcs
 
       if (options_it != config_update_links.country_option_values.end())
       {
-        link_option_values_(
-          country_it->second->tokens,
-          new_config,
-          options_it->second);
+        link_option_values_(country_it->second->tokens, new_config, options_it->second);
       }
     }
 
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
         FUN << ": link category channels ...";
     }
 
@@ -1859,8 +1738,7 @@ namespace AdServer::CampaignSvcs
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::CAMPAIGN_CONFIG_SOURCE) <<
+      logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
         FUN << ": enrich channels by geo channels ...";
     }
 
@@ -1909,8 +1787,7 @@ namespace AdServer::CampaignSvcs
         CorbaAlgs::convert_sequence(
           ccat_info.external_categories[ec_i].names,
           ccat.external_categories[
-            static_cast<AdRequestType>(
-              ccat_info.external_categories[ec_i].ad_request_type)]);
+            static_cast<AdRequestType>(ccat_info.external_categories[ec_i].ad_request_type)]);
       }
 
       // ADSC-9551
@@ -1928,13 +1805,11 @@ namespace AdServer::CampaignSvcs
           ccat.external_categories.begin();
         ext_ccat_it != ccat.external_categories.end(); ++ext_ccat_it)
       {
-        for (StringSet::const_iterator ext_ccat_name_it =
-            ext_ccat_it->second.begin();
+        for (StringSet::const_iterator ext_ccat_name_it = ext_ccat_it->second.begin();
           ext_ccat_name_it != ext_ccat_it->second.end(); ++ext_ccat_name_it)
         {
           new_config.external_creative_categories[
-            ext_ccat_it->first][*ext_ccat_name_it].insert(
-              ccat_info.creative_category_id);
+            ext_ccat_it->first][*ext_ccat_name_it].insert(ccat_info.creative_category_id);
         }
       }
 
@@ -1995,9 +1870,7 @@ namespace AdServer::CampaignSvcs
       const AdServer::CampaignSvcs::FreqCapInfo& freq_cap_info = update_info.frequency_caps[i];
 
       /* filter non active freq caps */
-      if (freq_cap_info.lifelimit ||
-        freq_cap_info.period ||
-        freq_cap_info.window_limit)
+      if (freq_cap_info.lifelimit || freq_cap_info.period || freq_cap_info.window_limit)
       {
         new_config.freq_caps.emplace(
           freq_cap_info.fc_id,
@@ -2026,14 +1899,11 @@ namespace AdServer::CampaignSvcs
       ConfigUpdateLinks::TemplateOptionsLink& template_options_link =
         config_update_links.template_option_values[cr_templ_info.id];
 
-      ConfigUpdateLinks::OptionTokenValueMap_var tokens =
-        new RCOptionTokenValueMap();
-      unpack_option_value_map(
-        template_options_link.unlinked_tokens, cr_templ_info.tokens);
+      ConfigUpdateLinks::OptionTokenValueMap_var tokens = new RCOptionTokenValueMap();
+      unpack_option_value_map(template_options_link.unlinked_tokens, cr_templ_info.tokens);
       template_options_link.tokens_ref = tokens;
 
-      ConfigUpdateLinks::OptionTokenValueMap_var hidden_tokens =
-        new RCOptionTokenValueMap();
+      ConfigUpdateLinks::OptionTokenValueMap_var hidden_tokens = new RCOptionTokenValueMap();
       unpack_option_value_map(
         template_options_link.unlinked_hidden_tokens, cr_templ_info.hidden_tokens);
       template_options_link.hidden_tokens_ref = hidden_tokens;
@@ -2164,9 +2034,7 @@ namespace AdServer::CampaignSvcs
     default_click_token_relations.insert(CreativeTokens::CID);
 
     new_config.default_click_token_processor =
-      new BaseTokenProcessor(
-        CreativeTokens::ADV_CLICK_URL.c_str(),
-        default_click_token_relations);
+      new BaseTokenProcessor(CreativeTokens::ADV_CLICK_URL.c_str(), default_click_token_relations);
 
     // add rule tokens processors
     for (auto inst_rule_it = creative_rules_.begin();
@@ -2185,9 +2053,7 @@ namespace AdServer::CampaignSvcs
         }
 
         new_config.token_processors[token_it->second.option_id] =
-          new BaseTokenProcessor(
-            token_it->first.c_str(),
-            token_relations);
+          new BaseTokenProcessor(token_it->first.c_str(), token_relations);
       }
     }
   }
@@ -2229,8 +2095,7 @@ namespace AdServer::CampaignSvcs
       p_acc->status = acc_info.status;
       p_acc->eval_status = acc_info.eval_status;
       p_acc->timestamp = CorbaAlgs::unpack_time(acc_info.timestamp);
-      CorbaAlgs::convert_sequence(acc_info.walled_garden_accounts,
-        p_acc->walled_garden_accounts);
+      CorbaAlgs::convert_sequence(acc_info.walled_garden_accounts, p_acc->walled_garden_accounts);
       p_acc->auction_rate = static_cast<AuctionRateType>(acc_info.auction_rate);
       p_acc->use_pub_pixels = acc_info.use_pub_pixels;
       p_acc->pub_pixel_optin = acc_info.pub_pixel_optin.in();
@@ -2248,15 +2113,13 @@ namespace AdServer::CampaignSvcs
         if (!p_acc->pub_pixel_optin.empty())
         {
           new_config.pub_pixel_accounts[
-            PubPixelAccountKey(p_acc->country.c_str(), US_OPTIN)].insert(
-              p_acc);
+            PubPixelAccountKey(p_acc->country.c_str(), US_OPTIN)].insert(p_acc);
         }
 
         if (!p_acc->pub_pixel_optout.empty())
         {
           new_config.pub_pixel_accounts[
-            PubPixelAccountKey(p_acc->country.c_str(), US_OPTOUT)].insert(
-              p_acc);
+            PubPixelAccountKey(p_acc->country.c_str(), US_OPTOUT)].insert(p_acc);
         }
       }
 
@@ -2296,14 +2159,12 @@ namespace AdServer::CampaignSvcs
       campaign->group_fc_id = campaign_info.group_fc_id;
       campaign->flags = campaign_info.flags;
       campaign->marketplace = campaign_info.marketplace;
-      campaign->imp_revenue = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        campaign_info.imp_revenue);
+      campaign->imp_revenue = CorbaAlgs::unpack_decimal<RevenueDecimal>(campaign_info.imp_revenue);
       campaign->click_revenue = CorbaAlgs::unpack_decimal<RevenueDecimal>(
         campaign_info.click_revenue);
       campaign->action_revenue = CorbaAlgs::unpack_decimal<RevenueDecimal>(
         campaign_info.action_revenue);
-      campaign->commision = CorbaAlgs::unpack_decimal<RevenueDecimal>(
-        campaign_info.commision);
+      campaign->commision = CorbaAlgs::unpack_decimal<RevenueDecimal>(campaign_info.commision);
 
       ExpressionChannel::Expression expr;
       unpack_expression(expr, campaign_info.expression, new_config.expression_channels);
@@ -2315,9 +2176,7 @@ namespace AdServer::CampaignSvcs
       }
 
       ExpressionChannel::Expression stat_expr;
-      unpack_expression(stat_expr,
-        campaign_info.stat_expression,
-        new_config.expression_channels);
+      unpack_expression(stat_expr, campaign_info.stat_expression, new_config.expression_channels);
 
       if (!(stat_expr == ExpressionChannel::Expression::EMPTY))
       {
@@ -2325,8 +2184,7 @@ namespace AdServer::CampaignSvcs
       }
 
       campaign->ccg_rate_id = campaign_info.ccg_rate_id;
-      campaign->ccg_rate_type = static_cast<CCGRateType>(
-        campaign_info.ccg_rate_type);
+      campaign->ccg_rate_type = static_cast<CCGRateType>(campaign_info.ccg_rate_type);
 
       campaign->status = campaign_info.status;
       campaign->eval_status = campaign_info.eval_status;
@@ -2343,9 +2201,7 @@ namespace AdServer::CampaignSvcs
       unpack_delivery_limits(
         campaign->campaign_delivery_limits,
         campaign_info.campaign_delivery_limits);
-      unpack_delivery_limits(
-        campaign->ccg_delivery_limits,
-        campaign_info.ccg_delivery_limits);
+      unpack_delivery_limits(campaign->ccg_delivery_limits, campaign_info.ccg_delivery_limits);
       campaign->max_pub_share = CorbaAlgs::unpack_decimal<RevenueDecimal>(
         campaign_info.max_pub_share);
       campaign->has_custom_actions = false;
@@ -2372,8 +2228,7 @@ namespace AdServer::CampaignSvcs
         campaign_info.exclude_pub_accounts,
         campaign->exclude_pub_accounts);
 
-      for (CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length();
-          ++tag_i)
+      for (CORBA::ULong tag_i = 0; tag_i < campaign_info.exclude_tags.length(); ++tag_i)
       {
         campaign->exclude_tags.insert(std::make_pair(
           campaign_info.exclude_tags[tag_i].tag_id,
@@ -2502,8 +2357,7 @@ namespace AdServer::CampaignSvcs
         channel_holder = new ExpressionChannelHolder(new_channel);
 
         new_config.expression_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id,
-            channel_holder));
+          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
       }
       else
       {
@@ -2514,15 +2368,13 @@ namespace AdServer::CampaignSvcs
       if (new_channel->params().type == 'V')
       {
         config_update_links.platform_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id,
-            channel_holder));
+          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
       }
 
       if (new_channel->params().discover_params.in())
       {
         new_config.discover_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id,
-            channel_holder));
+          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
       }
     }
   }
@@ -2620,8 +2472,7 @@ namespace AdServer::CampaignSvcs
         tag_pricing.revenue_share = CorbaAlgs::unpack_decimal<RevenueDecimal>(
           tag_pricing_ref.revenue_share);
         tag_pricing.imp_revenue = RevenueDecimal::div(
-          CorbaAlgs::unpack_decimal<RevenueDecimal>(
-            tag_pricing_ref.imp_revenue),
+          CorbaAlgs::unpack_decimal<RevenueDecimal>(tag_pricing_ref.imp_revenue),
           REVENUE_ONE + p_tag->cost_coef,
           Generics::DDR_CEIL);
 
@@ -2642,8 +2493,7 @@ namespace AdServer::CampaignSvcs
       if (!p_tag->tag_pricings.empty() && !default_tag_pricing_found)
       {
         p_tag->tag_pricings.insert(
-          std::make_pair(
-            Tag::TagPricingKey("", CT_ALL, CR_ALL), Tag::TagPricing()));
+          std::make_pair(Tag::TagPricingKey("", CT_ALL, CR_ALL), Tag::TagPricing()));
       }
 
       p_tag->accepted_categories.insert(
@@ -2681,9 +2531,7 @@ namespace AdServer::CampaignSvcs
         option_values.find(TAG_MIN_VISIBILITY_OPTION_ID);
       if (min_visibility_option_it != option_values.end())
       {
-        String::StringManip::str_to_int(
-          min_visibility_option_it->second,
-          p_tag->min_visibility);
+        String::StringManip::str_to_int(min_visibility_option_it->second, p_tag->min_visibility);
       }
 
       // fill max_random_cpm by specific option (3.1)
@@ -2715,8 +2563,7 @@ namespace AdServer::CampaignSvcs
       p_tag->max_random_cpm = RevenueDecimal::ZERO;
 
       ConfigUpdateLinks::TemplateOptionValueMap template_option_values;
-      for (CORBA::ULong templ_i = 0;
-        templ_i < tag_info.template_tokens.length(); ++templ_i)
+      for (CORBA::ULong templ_i = 0; templ_i < tag_info.template_tokens.length(); ++templ_i)
       {
         unpack_option_value_map(
           template_option_values[tag_info.template_tokens[templ_i].template_name.in()],
@@ -2859,8 +2706,7 @@ namespace AdServer::CampaignSvcs
     const Generics::Time geo_channels_timestamp = CorbaAlgs::unpack_time(
       update_info.geo_channels_timestamp);
 
-    if (!old_config ||
-       geo_channels_timestamp > old_config->geo_channels_timestamp)
+    if (!old_config || geo_channels_timestamp > old_config->geo_channels_timestamp)
     {
       if (!new_config.geo_channels.in())
       {
@@ -2944,9 +2790,7 @@ namespace AdServer::CampaignSvcs
       std::string platform_name = update_info.platforms[i].name.in();
       String::AsciiStringManip::to_lower(platform_name);
       new_config.platforms.insert(
-        std::make_pair(
-          update_info.platforms[i].platform_id,
-          platform_name));
+        std::make_pair(update_info.platforms[i].platform_id, platform_name));
     }
   }
 
@@ -2966,8 +2810,7 @@ namespace AdServer::CampaignSvcs
       opval->operation = op.operation;
       opval->flags = op.flags;
       new_config.web_operations[WebOperationKey(
-        opval->app.c_str(), opval->source.c_str(), opval->operation.c_str())] =
-        opval;
+        opval->app.c_str(), opval->source.c_str(), opval->operation.c_str())] = opval;
     }
   }
 
@@ -3078,8 +2921,7 @@ namespace AdServer::CampaignSvcs
 
           if (!token_it->second.value.empty() &&
             (creat_opt_it->second.type == 'F' ||
-             ((creat_opt_it->second.type == 'D' ||
-               creat_opt_it->second.type == 'U') &&
+             ((creat_opt_it->second.type == 'D' || creat_opt_it->second.type == 'U') &&
               token_it->second.value.compare(0, 7, "http://") &&
               token_it->second.value.compare(0, 8, "https://") &&
               token_it->second.value.compare(0, 2, "//"))))

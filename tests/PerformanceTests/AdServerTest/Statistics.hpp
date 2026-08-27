@@ -108,8 +108,7 @@ public:
    * @param CCID from response
    * @param request opted out flag
    */
-  void push_response(unsigned long ccid,
-                     bool optout);
+  void push_response(unsigned long ccid, bool optout);
 
   /**
    * @brief Get frontend name.
@@ -255,8 +254,7 @@ public:
    * @param constraints container.
    * @param test configuration.
    */
-  Statistics(ConstraintsContainer& constraints,
-             const ClientConfig_var& config);
+  Statistics(ConstraintsContainer& constraints, const ClientConfig_var& config);
 
   /**
    * @brief Push response.
@@ -275,8 +273,7 @@ public:
    * @param URL.
    * @param request opted out flag
    */
-  void push_error(const char* url,
-                  bool is_opted_out);
+  void push_error(const char* url, bool is_opted_out);
 
   /**
    * @brief Publish & refresh statistic.

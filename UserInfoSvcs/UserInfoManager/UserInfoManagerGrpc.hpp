@@ -87,6 +87,5 @@ namespace AdServer::UserInfoSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using UserInfoManagerGrpc_var =
-    ReferenceCounting::SmartPtr<UserInfoManagerGrpc>;
+  using UserInfoManagerGrpc_var = ReferenceCounting::SmartPtr<UserInfoManagerGrpc>;
 }

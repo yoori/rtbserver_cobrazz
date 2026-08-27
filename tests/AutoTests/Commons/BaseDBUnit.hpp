@@ -19,10 +19,7 @@ public:
    * @param test name.
    * @param test config.
    */
-  BaseDBUnit(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var);
+  BaseDBUnit(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   /**
    * @brief Destructor.
@@ -100,8 +97,7 @@ private:
   void safe_tear_down();
 
   AutoTest::DBC::Conn&
-  get_conn(
-    AutoTest::ORM::postgres_connection conn_type);
+  get_conn(AutoTest::ORM::postgres_connection conn_type);
 };
 
 #include "BaseDBUnit.ipp"

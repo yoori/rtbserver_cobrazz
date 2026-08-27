@@ -44,10 +44,7 @@ public:
 
 public:
 
-  ChannelPriceRangeLogging(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var);
+  ChannelPriceRangeLogging(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   virtual ~ChannelPriceRangeLogging() noexcept
   { }
@@ -67,37 +64,28 @@ private:
   one_ecpm_group();
 
   void
-  tag_cpm_part_1(
-    AdClient& client);
+  tag_cpm_part_1(AdClient& client);
 
   void
-  tag_cpm_part_2(
-    AdClient& client);
+  tag_cpm_part_2(AdClient& client);
 
   void
-  competitive_ecpm_groups(
-    AutoTest::Statistics::UserSet& clients);
+  competitive_ecpm_groups(AutoTest::Statistics::UserSet& clients);
 
   void
-  move_between_ecpm_groups(
-    unsigned int index,
-    AutoTest::Statistics::UserSet& clients);
+  move_between_ecpm_groups(unsigned int index, AutoTest::Statistics::UserSet& clients);
 
   void
-  new_day(
-    AutoTest::Statistics::UserSet& clients);
+  new_day(AutoTest::Statistics::UserSet& clients);
 
   void
-  day_switching_part_1(
-    AdClient& client);
+  day_switching_part_1(AdClient& client);
 
   void
-  day_switching_part_2(
-    AdClient& client);
+  day_switching_part_2(AdClient& client);
 
   void
-  day_switching_part_3(
-    AdClient& client);
+  day_switching_part_3(AdClient& client);
 
   void key_variation();
 
@@ -117,14 +105,10 @@ private:
   // utils
   template<size_t Count>
   void
-  process_requests(
-    const UserRequest(&requests)[Count]);
+  process_requests(const UserRequest(&requests)[Count]);
 
   template<size_t Count>
   void
-  add_stats(
-    const StatKey(&stats)[Count],
-    Stats& stats_container,
-    Diffs& diffs_container);
+  add_stats(const StatKey(&stats)[Count], Stats& stats_container, Diffs& diffs_container);
 
 };

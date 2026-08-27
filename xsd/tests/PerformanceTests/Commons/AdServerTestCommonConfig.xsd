@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema 
+<xsd:schema
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
-  targetNamespace="http://www.peopleonpage.com/xsd/tests/PerformanceTests" 
-  xmlns="http://www.peopleonpage.com/xsd/tests/PerformanceTests" 
+  targetNamespace="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
+  xmlns="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
   elementFormDefault="qualified" xml:lang="en" version="1.0">
 
   <xsd:annotation>
@@ -31,7 +31,7 @@
     </xsd:sequence>
     <xsd:attribute name="period" type="xsd:nonNegativeInteger">
       <xsd:annotation>
-	<xsd:documentation>Sets the frequency for channel ad requests, 
+	<xsd:documentation>Sets the frequency for channel ad requests,
 	  in seconds.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -181,7 +181,7 @@
 
   <xsd:complexType name="HTTPEntityType" mixed="true">
     <xsd:simpleContent>
-      <xsd:extension base="xsd:string"> 
+      <xsd:extension base="xsd:string">
         <xsd:attribute name="name" type="xsd:string" use="required">
           <xsd:annotation>
 	    <xsd:documentation>Sets the HTTP entity name.</xsd:documentation>
@@ -189,11 +189,11 @@
         </xsd:attribute>
         <xsd:attribute name="empty_prc" type="xsd:nonNegativeInteger" use="optional" default="0">
           <xsd:annotation>
-            <xsd:documentation>Using for request parameters/headers. Define percentage of requests, 
+            <xsd:documentation>Using for request parameters/headers. Define percentage of requests,
                                which shouldn't use this parameter/header</xsd:documentation>
           </xsd:annotation>
         </xsd:attribute>
-      </xsd:extension> 
+      </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
 
@@ -227,7 +227,7 @@
  <xsd:simpleType name="PercentageType">
    <xsd:restriction base="xsd:decimal">
      <xsd:fractionDigits value="2"/>
-     <xsd:minInclusive value="0.00"/>                                  
+     <xsd:minInclusive value="0.00"/>
      <xsd:maxInclusive value="100.00"/>
    </xsd:restriction>
  </xsd:simpleType>

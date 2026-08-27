@@ -64,8 +64,7 @@ public:
    * @param headers [out] list of HTTP headers.
    */
   virtual void
-  headers(
-    HeaderList& headers) const;
+  headers(HeaderList& headers) const;
 
   /**
    * @brief response callback
@@ -74,8 +73,7 @@ public:
    * @param data response
    */
   virtual void
-  on_response(
-    const ResponseInformation& data) noexcept;
+  on_response(const ResponseInformation& data) noexcept;
 
   /**
    * @brief error callback
@@ -85,9 +83,7 @@ public:
    * @param data request
    */
   virtual void
-  on_error(
-    const String::SubString& description,
-    const RequestInformation& data) noexcept;
+  on_error(const String::SubString& description, const RequestInformation& data) noexcept;
 
   /**
    * @brief Is HTTP method GET.
@@ -115,8 +111,7 @@ public:
    * @param output stream
    */
   virtual std::ostream&
-  dump(
-    std::ostream& out) const;
+  dump(std::ostream& out) const;
 
 protected:
   /**
@@ -144,8 +139,7 @@ protected:
    * @param response data
    */
   virtual void
-  _on_response(
-    const ResponseInformation& data) = 0;
+  _on_response(const ResponseInformation& data) = 0;
 
   /**
    * @brief Check response code
@@ -154,8 +148,7 @@ protected:
    * @return true - got valid response, false - invalid response
    */
   virtual bool
-  _check_response_code(
-    unsigned long response_code);
+  _check_response_code(unsigned long response_code);
 
 private:
 
@@ -404,8 +397,7 @@ protected:
    * @return true - got valid response, false - invalid response
    */
   virtual bool
-  _check_response_code(
-    unsigned long response_code);
+  _check_response_code(unsigned long response_code);
 
 };
 
@@ -445,8 +437,7 @@ protected:
    * @return true - got valid response, false - invalid response
    */
   virtual bool
-  _check_response_code(
-    unsigned long response_code);
+  _check_response_code(unsigned long response_code);
 
 };
 
@@ -486,8 +477,7 @@ protected:
    * @return true - got valid response, false - invalid response
    */
   virtual bool
-  _check_response_code(
-    unsigned long response_code);
+  _check_response_code(unsigned long response_code);
 
 };
 
@@ -530,8 +520,7 @@ protected:
    * @return request url string.
    */
   virtual const std::string&
-  _url(
-    bool generate = true);
+  _url(bool generate = true);
 
   /**
    * @brief response processing
@@ -539,8 +528,7 @@ protected:
    * @param response data
    */
   virtual void
-  _on_response(
-    const ResponseInformation& data);
+  _on_response(const ResponseInformation& data);
 
 private:
   // AdServer address
@@ -599,8 +587,7 @@ protected:
    * @return request url string.
    */
   virtual const std::string&
-  _url(
-    bool generate = true);
+  _url(bool generate = true);
 
   /**
    * @brief Get request BODY.
@@ -618,15 +605,13 @@ protected:
    * @param response data
    */
   virtual void
-  _on_response(
-    const ResponseInformation& data);
+  _on_response(const ResponseInformation& data);
 
 private:
   void _init();
 
   int
-  _get_param_idx(
-    const std::string& name);
+  _get_param_idx(const std::string& name);
 
   // AdServer address
   std::string server_;

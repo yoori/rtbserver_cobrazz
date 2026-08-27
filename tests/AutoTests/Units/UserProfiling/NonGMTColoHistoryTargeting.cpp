@@ -2,9 +2,7 @@
 #include "Common.hpp"
 #include "NonGMTColoHistoryTargeting.hpp"
 
-REFLECT_UNIT(NonGMTColoHistoryTargeting) (
-  "UserProfiling",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(NonGMTColoHistoryTargeting) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace
 {
@@ -131,16 +129,13 @@ bool
 NonGMTColoHistoryTargeting::run_test()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
     "Remote#2.AdFrontend need for this test");
 
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       1,
-      AutoTest::ORM::get_tz_ofset(
-        this,
-        fetch_string("TZName")) > Generics::Time::ZERO).check(),
+      AutoTest::ORM::get_tz_ofset(this, fetch_string("TZName")) > Generics::Time::ZERO).check(),
     "Remote#2.colo must have positive timezone ofset");
 
   NOSTOP_FAIL_CONTEXT(
@@ -151,18 +146,9 @@ NonGMTColoHistoryTargeting::run_test()
       countof(OPTIMIZATION_AFTER)));
 
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "Ad matching on history optimization",
-      "H1",
-      OPTIMIZATION,
-      countof(OPTIMIZATION)));
+    check("Ad matching on history optimization", "H1", OPTIMIZATION, countof(OPTIMIZATION)));
 
-  NOSTOP_FAIL_CONTEXT(
-    check(
-      "Clearing old records",
-      "H2",
-      CLEARING,
-      countof(CLEARING)));
+  NOSTOP_FAIL_CONTEXT(check("Clearing old records", "H2", CLEARING, countof(CLEARING)));
 
   return true;
 }
@@ -175,19 +161,14 @@ NonGMTColoHistoryTargeting::check(
   size_t requests_size)
 {
   add_descr_phrase(description);
-  AdClient client(
-    AdClient::create_user(
-      this, AutoTest::UF_FRONTEND_MINOR));
+  AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
   for (unsigned long i = 0; i < requests_size; ++i)
   {
     NSLookupRequest request;
     if (requests[i].need_referer)
       request.referer = fetch_string(prefix+"Ref");
-    request.debug_time =
-      get_time(
-        requests[i].date_type,
-        base_time + requests[i].time_ofset);
+    request.debug_time = get_time(requests[i].date_type, base_time + requests[i].time_ofset);
 
     client.process_request(request);
 
@@ -209,15 +190,10 @@ NonGMTColoHistoryTargeting::check(
 }
 
 Generics::Time
-NonGMTColoHistoryTargeting::get_time(
-  GMTvsTZEnum date_type,
-  const AutoTest::Time& time)
+NonGMTColoHistoryTargeting::get_time(GMTvsTZEnum date_type, const AutoTest::Time& time)
 {
   Generics::Time midnight(time.get_gm_time().get_date());
-  Generics::Time tz_ofset =
-    AutoTest::ORM::get_tz_ofset(
-      this,
-      fetch_string("TZName"));
+  Generics::Time tz_ofset = AutoTest::ORM::get_tz_ofset(this, fetch_string("TZName"));
   switch (date_type)
   {
   case GTE_TZ_MIDNIGHT:

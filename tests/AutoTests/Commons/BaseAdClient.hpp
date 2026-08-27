@@ -150,9 +150,7 @@ namespace AutoTest
      * @param header_val value of added header.
      */
     void
-    add_http_header(
-      const std::string& header_name,
-      const std::string& header_val)
+    add_http_header(const std::string& header_name, const std::string& header_val)
       /*throw(Exception)*/;
 
     /**
@@ -277,9 +275,7 @@ namespace AutoTest
      * @param base_url base url for created object.
      * @param logger logger for created object.
      */
-    BaseAdClient(
-      const char* base_url,
-      LoggerType log_type)
+    BaseAdClient(const char* base_url, LoggerType log_type)
       /*throw(Exception, eh::Exception)*/;
 
     /**
@@ -323,7 +319,7 @@ namespace AutoTest
     HTTP::HTTP_Connection::HTTP_Method method)
     /*throw(Exception, InvalidArgument)*/
   {
-    if(!body.empty())
+    if (!body.empty())
     {
       request_->request_data().assign(body);
     }
@@ -387,9 +383,7 @@ namespace AutoTest
 
   inline std::string BaseAdClient::get_stored_url() const
   {
-    return
-      stored_request_->
-        address().url();
+    return stored_request_-> address().url();
   }
 
 } //namespace AutoTest

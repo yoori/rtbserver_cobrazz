@@ -7,7 +7,7 @@ namespace AdServer
       uint colo_id;
       uint timestamp;
     };
-    
+
     autoreader ColoTimestampReader<ColoTimestamp>;
 
     struct SessionMatches
@@ -15,7 +15,7 @@ namespace AdServer
       uint channel_id;
       list<uint> timestamps;
     };
-    
+
     autoreader SessionMatchesReader<SessionMatches>;
 
     struct HistoryVisits
@@ -23,7 +23,7 @@ namespace AdServer
       uint channel_id;
       uint visits;
     };
-    
+
     autoreader HistoryVisitsReader<HistoryVisits>;
 
     struct HistoryMatches
@@ -31,7 +31,7 @@ namespace AdServer
       uint channel_id;
       uint weight;
     };
-    
+
     autoreader HistoryMatchesReader<HistoryMatches>;
 
     struct HTCandidates
@@ -41,7 +41,7 @@ namespace AdServer
       uint visits;
       uint weight;
     };
-    
+
     autoreader HTCandidatesReader<HTCandidates>;
 
     struct ChannelsInfo
@@ -51,7 +51,7 @@ namespace AdServer
       list<HistoryVisits> history_visits;
       list<SessionMatches> session_matches;
     };
-    
+
     reader ChannelsInfoReader<ChannelsInfo>
     {
       list<HTCandidatesReader> ht_candidates;
@@ -64,9 +64,9 @@ namespace AdServer
     {
       uint version;
     };
-    
+
     autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
-    
+
     struct ChannelsProfile
     {
       uint version;
@@ -75,16 +75,16 @@ namespace AdServer
       uint ignore_fraud_time;
       uint last_request_time;
       uint session_start;
-      
+
       list<ColoTimestamp> colo_ts_list;
-      
+
       ChannelsInfo context_channels;
       ChannelsInfo page_channels;
       ChannelsInfo search_channels;
       ChannelsInfo url_channels;
     };
-    
- 
+
+
     reader ChannelsProfileReader<ChannelsProfile>
     {
       version;
@@ -93,14 +93,14 @@ namespace AdServer
       ignore_fraud_time;
       last_request_time;
       session_start;
-      
+
       list<ColoTimestampReader> colo_ts_list;
-      
+
       ChannelsInfoReader context_channels;
       ChannelsInfoReader page_channels;
       ChannelsInfoReader search_channels;
       ChannelsInfoReader url_channels;
     };
-    
+
   }
 }

@@ -19,212 +19,193 @@
 
 #include "CompositeRequestContainerProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::ProfilingCommons
 {
-  namespace ProfilingCommons
-  {
-    class RocksDBProfileMapProcessor;
-  }
+  class RocksDBProfileMapProcessor;
+}
 
-  namespace RequestInfoSvcs
-  {
-    const Generics::Time DEFAULT_FRAUD_PROFILE_EXPIRE_TIME =
-      Generics::Time::ONE_DAY * 180; // 180 days
+namespace AdServer::RequestInfoSvcs
+{
+  const Generics::Time DEFAULT_FRAUD_PROFILE_EXPIRE_TIME =
+    Generics::Time::ONE_DAY * 180; // 180 days
 
-    /**
-     * UserFraudProtectionContainer
-     */
-    class UserFraudProtectionContainer:
-      public virtual Generics::RefCountableCompositeActiveObject,
-      public virtual RequestActionProcessor
+  /**
+   * UserFraudProtectionContainer
+   */
+  class UserFraudProtectionContainer:
+    public virtual Generics::RefCountableCompositeActiveObject,
+    public virtual RequestActionProcessor
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
+
+    struct Callback: public virtual ReferenceCounting::Interface
     {
-    public:
-      DECLARE_EXCEPTION(Exception, RequestActionProcessor::Exception);
-
-      struct Callback: public virtual ReferenceCounting::Interface
-      {
-        virtual void
-        detected_fraud_user(
-          const AdServer::Commons::UserId& user_id,
-          const Generics::Time& deactivate_time)
-          noexcept = 0;
-      };
-
-      using Callback_var = ReferenceCounting::SmartPtr<Callback>;
-
-      struct Config: public ReferenceCounting::AtomicImpl
-      {
-        struct FraudRule
-        {
-          unsigned long limit;
-          Generics::Time period;
-        };
-
-        using FraudRuleList = std::list<FraudRule>;
-
-        class FraudRuleSet
-        {
-        public:
-          void add_rule(const FraudRule& rule) noexcept;
-
-          const FraudRuleList& rules() const noexcept;
-
-          const Generics::Time& max_period() const noexcept;
-
-        private:
-          Generics::Time max_period_;
-          // FraudRuleList sorted in period descending order
-          FraudRuleList fraud_rules_;
-        };
-
-        Generics::Time deactivate_period;
-        FraudRuleSet imp_rules;
-        FraudRuleSet click_rules;
-
-      protected:
-        virtual ~Config() noexcept
-        {}
-      };
-
-      using Config_var = ReferenceCounting::SmartPtr<Config>;
-
-      using RequestIdList = std::list<AdServer::Commons::RequestId>;
-
-    public:
-      UserFraudProtectionContainer(
-        Logging::Logger* logger,
-        RequestContainerProcessor* request_container_processor,
-        Callback* callback,
-        const char* rocksdb_path,
-        const Generics::Time& expire_time =
-          Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME),
-        std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
-          rocksdb_processor = {})
-        /*throw(Exception)*/;
-
-      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-      co_get_profile(const AdServer::Commons::UserId& user_id);
-
-      void clear_expired() /*throw(Exception)*/;
-
-      AdServer::Commons::Awaitable<void>
-      co_clear_expired();
-
-      bool config_initialized() const noexcept;
-
-      void config(Config* new_config) noexcept;
-
-      void request_container_processor(
-        RequestContainerProcessor* request_container_processor)
-        noexcept;
-
-      /** RequestActionProcessor interface */
       virtual void
-      process_request(
-        const RequestInfo&,
-        const ProcessingState&)
-        /*throw(RequestActionProcessor::Exception)*/
-      {};
-
-      virtual void
-      process_impression(
-        const RequestInfo&,
-        const ImpressionInfo&,
-        const ProcessingState&)
-        /*throw(RequestActionProcessor::Exception)*/;
-
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_impression(
-        const RequestInfo&,
-        const ImpressionInfo&,
-        const ProcessingState&);
-
-      virtual void
-      process_click(
-        const RequestInfo&,
-        const ProcessingState&)
-        /*throw(RequestActionProcessor::Exception)*/;
-
-      virtual AdServer::Commons::Awaitable<void>
-      co_process_click(
-        const RequestInfo&,
-        const ProcessingState&);
-
-      virtual void
-      process_action(const RequestInfo&)
-        /*throw(RequestActionProcessor::Exception)*/
-      {};
-
-    private:
-      using ProfileMap = ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::UserId>;
-
-      using ProfileMap_var = ReferenceCounting::SmartPtr<ProfileMap>;
-
-      using SyncPolicy = Sync::Policy::PosixThread;
-
-    protected:
-      virtual ~UserFraudProtectionContainer() noexcept;
-
-    private:
-      void
-      process_click_trans_(
-        RequestIdList& fraud_impressions,
-        Generics::Time& user_deactivate_time,
-        const RequestInfo& request_info)
-        /*throw(RequestActionProcessor::Exception)*/;
-
-      AdServer::Commons::Awaitable<void>
-      co_process_click_trans_(
-        RequestIdList& fraud_impressions,
-        Generics::Time& user_deactivate_time,
-        const RequestInfo& request_info);
-
-      void
-      process_impression_trans_(
-        RequestIdList& fraud_impressions,
-        Generics::Time& user_deactivate_time,
-        const RequestInfo& request_info)
-        /*throw(RequestActionProcessor::Exception)*/;
-
-      AdServer::Commons::Awaitable<void>
-      co_process_impression_trans_(
-        RequestIdList& fraud_impressions,
-        Generics::Time& user_deactivate_time,
-        const RequestInfo& request_info);
-
-      void
-      process_click_(
-        const RequestInfo& request_id)
-        /*throw(AdvActionProcessor::Exception)*/;
-
-      void
-      process_impression_(
-        const RequestInfo& request_id)
-        /*throw(AdvActionProcessor::Exception)*/;
-
-      Config_var
-      get_config_() const noexcept;
-
-    private:
-      Logging::Logger_var logger_;
-      Generics::Time expire_time_;
-      ProfileMap_var user_map_;
-      RequestContainerProcessor_var request_container_processor_;
-      Callback_var callback_;
-
-      ReferenceCounting::PtrHolder<Config_var> config_;
+      detected_fraud_user(
+        const AdServer::Commons::UserId& user_id,
+        const Generics::Time& deactivate_time)
+        noexcept = 0;
     };
 
-    using UserFraudProtectionContainer_var =
-      ReferenceCounting::SmartPtr<UserFraudProtectionContainer>;
+    using Callback_var = ReferenceCounting::SmartPtr<Callback>;
 
-  } // RequestInfoSvcs
-} // AdServer
+    struct Config: public ReferenceCounting::AtomicImpl
+    {
+      struct FraudRule
+      {
+        unsigned long limit;
+        Generics::Time period;
+      };
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+      using FraudRuleList = std::list<FraudRule>;
+
+      class FraudRuleSet
+      {
+      public:
+        void add_rule(const FraudRule& rule) noexcept;
+
+        const FraudRuleList& rules() const noexcept;
+
+        const Generics::Time& max_period() const noexcept;
+
+      private:
+        Generics::Time max_period_;
+        // FraudRuleList sorted in period descending order
+        FraudRuleList fraud_rules_;
+      };
+
+      Generics::Time deactivate_period;
+      FraudRuleSet imp_rules;
+      FraudRuleSet click_rules;
+
+    protected:
+      virtual ~Config() noexcept
+      {}
+    };
+
+    using Config_var = ReferenceCounting::SmartPtr<Config>;
+
+    using RequestIdList = std::list<AdServer::Commons::RequestId>;
+
+  public:
+    UserFraudProtectionContainer(
+      Logging::Logger* logger,
+      RequestContainerProcessor* request_container_processor,
+      Callback* callback,
+      const char* rocksdb_path,
+      const Generics::Time& expire_time =
+        Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME),
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor>
+        rocksdb_processor = {})
+      /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_profile(const AdServer::Commons::UserId& user_id);
+
+    void clear_expired() /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_clear_expired();
+
+    bool config_initialized() const noexcept;
+
+    void config(Config* new_config) noexcept;
+
+    void request_container_processor(RequestContainerProcessor* request_container_processor)
+      noexcept;
+
+    /** RequestActionProcessor interface */
+    virtual void
+    process_request(const RequestInfo&, const ProcessingState&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {};
+
+    virtual void
+    process_impression(const RequestInfo&, const ImpressionInfo&, const ProcessingState&)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_impression(const RequestInfo&, const ImpressionInfo&, const ProcessingState&);
+
+    virtual void
+    process_click(const RequestInfo&, const ProcessingState&)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_click(const RequestInfo&, const ProcessingState&);
+
+    virtual void
+    process_action(const RequestInfo&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {};
+
+  private:
+    using ProfileMap = ProfilingCommons::TransactionProfileMap<
+      AdServer::Commons::UserId>;
+
+    using ProfileMap_var = ReferenceCounting::SmartPtr<ProfileMap>;
+
+    using SyncPolicy = Sync::Policy::PosixThread;
+
+  protected:
+    virtual ~UserFraudProtectionContainer() noexcept;
+
+  private:
+    void
+    process_click_trans_(
+      RequestIdList& fraud_impressions,
+      Generics::Time& user_deactivate_time,
+      const RequestInfo& request_info)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_trans_(
+      RequestIdList& fraud_impressions,
+      Generics::Time& user_deactivate_time,
+      const RequestInfo& request_info);
+
+    void
+    process_impression_trans_(
+      RequestIdList& fraud_impressions,
+      Generics::Time& user_deactivate_time,
+      const RequestInfo& request_info)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_impression_trans_(
+      RequestIdList& fraud_impressions,
+      Generics::Time& user_deactivate_time,
+      const RequestInfo& request_info);
+
+    void
+    process_click_(const RequestInfo& request_id)
+      /*throw(AdvActionProcessor::Exception)*/;
+
+    void
+    process_impression_(const RequestInfo& request_id)
+      /*throw(AdvActionProcessor::Exception)*/;
+
+    Config_var
+    get_config_() const noexcept;
+
+  private:
+    Logging::Logger_var logger_;
+    Generics::Time expire_time_;
+    ProfileMap_var user_map_;
+    RequestContainerProcessor_var request_container_processor_;
+    Callback_var callback_;
+
+    ReferenceCounting::PtrHolder<Config_var> config_;
+  };
+
+  using UserFraudProtectionContainer_var =
+    ReferenceCounting::SmartPtr<UserFraudProtectionContainer>;
+
+} // RequestInfoSvcs
+// AdServer
+
+namespace AdServer::RequestInfoSvcs
 {
   inline
   bool
@@ -235,8 +216,7 @@ namespace RequestInfoSvcs
 
   inline
   void
-  UserFraudProtectionContainer::config(
-    UserFraudProtectionContainer::Config* new_config)
+  UserFraudProtectionContainer::config(UserFraudProtectionContainer::Config* new_config)
     noexcept
   {
     config_ = ReferenceCounting::add_ref(new_config);
@@ -248,8 +228,7 @@ namespace RequestInfoSvcs
     RequestContainerProcessor* request_container_processor)
     noexcept
   {
-    request_container_processor_ = ReferenceCounting::add_ref(
-      request_container_processor);
+    request_container_processor_ = ReferenceCounting::add_ref(request_container_processor);
   }
 
   inline
@@ -262,15 +241,14 @@ namespace RequestInfoSvcs
 
   inline
   void
-  UserFraudProtectionContainer::Config::FraudRuleSet::add_rule(
-    const FraudRule& rule)
+  UserFraudProtectionContainer::Config::FraudRuleSet::add_rule(const FraudRule& rule)
     noexcept
   {
     FraudRuleList::iterator rit = fraud_rules_.begin();
 
-    for(; rit != fraud_rules_.end(); ++rit)
+    for (; rit != fraud_rules_.end(); ++rit)
     {
-      if(rule.period > rit->period)
+      if (rule.period > rit->period)
       {
         break;
       }
@@ -293,5 +271,4 @@ namespace RequestInfoSvcs
   {
     return max_period_;
   }
-}
 }

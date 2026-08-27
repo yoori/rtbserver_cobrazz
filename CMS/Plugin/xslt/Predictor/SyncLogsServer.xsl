@@ -62,7 +62,7 @@
          <xsl:if test="count($colo-config/cfg:predictorConfig/cfg:ref/@port) = 0">
            <xsl:value-of select="$def-predictor-sync-logs-server-port"/>
          </xsl:if>
-       </xsl:otherwise>           
+       </xsl:otherwise>
      </xsl:choose>
    </xsl:variable>
 
@@ -96,7 +96,7 @@ path = <xsl:value-of select="$workspace-root"/>/log/Predictor/ResearchLogs
 use chroot = false
 read only = false
 
-<xsl:if test="$service-config/cfg:syncServer/@enable_backup = 'true' or 
+<xsl:if test="$service-config/cfg:syncServer/@enable_backup = 'true' or
   $service-config/cfg:syncServer/@enable_backup = '1'">
 [backup]
 comment = server for backup research logs of AdServer

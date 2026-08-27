@@ -1,10 +1,7 @@
 #include "MultiLangSearchRefererParsingTest.hpp"
 #include <String/InterConvertion.hpp>
 
-REFLECT_UNIT(MultiLangSearchRefererParsingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(MultiLangSearchRefererParsingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -30,14 +27,11 @@ namespace
   };
 
   bool
-  valid_converting(
-    const std::string& channel,
-    const std::string& encoding)
+  valid_converting(const std::string& channel, const std::string& encoding)
   {
     for (size_t i = 0; i < countof(INVALID_CONVERTINGS); ++i)
     {
-      if (channel == INVALID_CONVERTINGS[i].channel &&
-        encoding == INVALID_CONVERTINGS[i].encoding)
+      if (channel == INVALID_CONVERTINGS[i].channel && encoding == INVALID_CONVERTINGS[i].encoding)
       {
         return false;
       }
@@ -75,15 +69,13 @@ MultiLangSearchRefererParsingTest::run_test()
         {
           converter.set_encodings(search_engine->Description().c_str(), "utf-8");
 
-          converter.encode(channel->Description().c_str(),
-                           channel->Description().length(), sbuf);
+          converter.encode(channel->Description().c_str(), channel->Description().length(), sbuf);
         }
         catch (eh::Exception& e)
         {
           Stream::Error error;
           error << "Can't convert characters utf8 char sequence '" <<
-            channel->Description() << "' to " + search_engine->Description() <<
-            ": " << e.what();
+            channel->Description() << "' to " + search_engine->Description() << ": " << e.what();
           throw Exception(error);
         }
         pass = true;
@@ -116,6 +108,7 @@ MultiLangSearchRefererParsingTest::run_test()
         full_url.replace(start, sizeof(query_marker) - 1, sbuf.c_str());
         replaced = true;
       }
+
       if (!replaced)
       {
         full_url += sbuf;

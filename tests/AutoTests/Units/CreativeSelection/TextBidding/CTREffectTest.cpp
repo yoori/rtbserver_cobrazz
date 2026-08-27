@@ -1,10 +1,7 @@
 
 #include "CTREffectTest.hpp"
 
-REFLECT_UNIT(CTREffectTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CTREffectTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -58,9 +55,7 @@ void CTREffectTest::process_requests(
             exp_ccids.push_back(fetch_string(prefix + token.str()));
           }
           FAIL_CONTEXT(
-            AutoTest::sequence_checker(
-              exp_ccids,
-              SelectedCreativesCCID(client)).check(),
+            AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
             "expected ccids check#" + strof(i+1));
         }
 
@@ -72,8 +67,7 @@ void CTREffectTest::process_requests(
           while (tokenizer.get_token(token))
           {
             String::StringManip::trim(token);
-            exp_click_revenue.push_back(
-              precisely_number(fetch_float(prefix + token.str())));
+            exp_click_revenue.push_back(precisely_number(fetch_float(prefix + token.str())));
           }
           FAIL_CONTEXT(
             AutoTest::sequence_checker(
@@ -85,8 +79,7 @@ void CTREffectTest::process_requests(
       else
       {
         FAIL_CONTEXT(
-          AutoTest::predicate_checker(
-            client.debug_info.selected_creatives.empty()),
+          AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
           "empty ccid check#" + strof(i+1));
       }
     }
@@ -94,11 +87,7 @@ void CTREffectTest::process_requests(
     {
       AutoTest::AdminsArray<AutoTest::TagAdmin> admins;
 
-      admins.initialize(
-        this,
-        CTE_ALL,
-        STE_CAMPAIGN_MANAGER,
-        fetch_int(prefix + requests[i].tag));
+      admins.initialize(this, CTE_ALL, STE_CAMPAIGN_MANAGER, fetch_int(prefix + requests[i].tag));
 
       admins.log(AutoTest::Logger::thlog());
       throw;
@@ -296,25 +285,15 @@ void CTREffectTest::time_of_week_()
 bool
 CTREffectTest::run_test()
 {
-  AUTOTEST_CASE(
-    regular_adjustment_(),
-    "Regular Tag adjustment");
+  AUTOTEST_CASE(regular_adjustment_(), "Regular Tag adjustment");
 
-  AUTOTEST_CASE(
-    invalid_ctr_(),
-    "Tag adjustment with CTR > 1 and CTR = 0");
+  AUTOTEST_CASE(invalid_ctr_(), "Tag adjustment with CTR > 1 and CTR = 0");
 
-  AUTOTEST_CASE(
-    ccg_concurrence_(),
-    "CCG concurrence with tag adjustment");
+  AUTOTEST_CASE(ccg_concurrence_(), "CCG concurrence with tag adjustment");
 
-  AUTOTEST_CASE(
-    negative_ctr_(),
-    "Negative CTR/AR");
+  AUTOTEST_CASE(negative_ctr_(), "Negative CTR/AR");
 
-  AUTOTEST_CASE(
-    time_of_week_(),
-    "Time of week");
+  AUTOTEST_CASE(time_of_week_(), "Time of week");
 
   return true;
 }

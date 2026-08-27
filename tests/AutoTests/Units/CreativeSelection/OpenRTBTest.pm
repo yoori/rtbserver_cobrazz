@@ -8,7 +8,7 @@ use DB::Util;
 
 sub simple_case
 {
-  my ($self, $namespace) = @_;  
+  my ($self, $namespace) = @_;
 
   my $ns = $namespace->sub_namespace('SIMPLE');
 
@@ -16,8 +16,8 @@ sub simple_case
 
   my $keyword = make_autotest_name($ns, "KWD");
 
-  my $advertiser = 
-    $ns->create(Advertiser => { 
+  my $advertiser =
+    $ns->create(Advertiser => {
       name => "Advertiser"});
 
   my $channel = $ns->create(DB::BehavioralChannel->blank(
@@ -37,8 +37,8 @@ sub simple_case
     campaigncreativegroup_cpm => $cpm,
     site_links => [
       { site_id => $self->{publisher}->{site_id} }] });
- 
-  $ns->output("KWD", $keyword); 
+
+  $ns->output("KWD", $keyword);
   $ns->output("CCG", $campaign->{ccg_id});
   $ns->output("CAMPAIGN", $campaign->{campaign_id});
   $ns->output("CC", $campaign->{cc_id});
@@ -48,12 +48,12 @@ sub simple_case
 
 sub auctions_lost
 {
-  my ($self, $namespace) = @_;  
+  my ($self, $namespace) = @_;
 
   my $ns = $namespace->sub_namespace('AUCTIONSLOST');
 
-  my $advertiser = 
-    $ns->create(Advertiser => { 
+  my $advertiser =
+    $ns->create(Advertiser => {
       name => "Advertiser",
       currency_id => DB::Defaults::instance()->openrtb_account()->currency_id });
 
@@ -88,7 +88,7 @@ sub auctions_lost
     site_links => [
       { site_id => $self->{publisher}->{site_id} }] });
 
-  $ns->output("KWD", $keyword); 
+  $ns->output("KWD", $keyword);
   $ns->output("CCG1", $campaign1->{ccg_id});
   $ns->output("CC1", $campaign1->{cc_id});
   $ns->output("CCG2", $campaign2->{ccg_id});
@@ -100,8 +100,8 @@ sub init {
 
   $self->{size} = DB::Defaults::instance()->size;
 
-  $self->{publisher} = 
-    $ns->create(Publisher => { 
+  $self->{publisher} =
+    $ns->create(Publisher => {
       name => "Publisher",
       account_id => DB::Defaults::instance()->openrtb_account,
       pricedtag_size_id => $self->{size} });
@@ -114,7 +114,7 @@ sub init {
   $ns->output("SIZE", $self->{size}->{protocol_name});
   $ns->output("CURRENCY", DB::Defaults::instance()->openrtb_currency()->currency_code);
   $ns->output("RATE", DB::Defaults::instance()->openrtb_currency()->rate);
-  
+
 }
 
 1;

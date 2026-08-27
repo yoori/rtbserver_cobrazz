@@ -45,10 +45,7 @@ namespace Parsing
   public:
     Processor(Code::ElementList* elements_val) noexcept;
 
-    void error(
-      unsigned long line,
-      unsigned long column,
-      const char* message) noexcept;
+    void error(unsigned long line, unsigned long column, const char* message) noexcept;
 
     Declaration::Namespace_var
     root_namespace() const noexcept;
@@ -65,8 +62,7 @@ namespace Parsing
     void open_descriptor(const char* name)
       /*throw(AlreadyDeclared)*/;
 
-    void add_descriptor_field(
-      const TypeSpecifier& field_type, const char* name)
+    void add_descriptor_field(const TypeSpecifier& field_type, const char* name)
       /*throw(IncorrectType)*/;
 
     void close_descriptor() noexcept;
@@ -75,8 +71,7 @@ namespace Parsing
     void open_reader(const char* name, const char* base_type_name)
       /*throw(IncorrectType)*/;
 
-    void add_reader_field(
-      const TypeSpecifier& field_type, const char* name)
+    void add_reader_field(const TypeSpecifier& field_type, const char* name)
       /*throw(IncorrectType)*/;
 
     void close_reader() noexcept;
@@ -136,13 +131,11 @@ namespace Parsing
 
     // auto types manipulations
     Declaration::StructReader_var
-    resolve_struct_auto_reader_(
-      Declaration::StructDescriptor* struct_descriptor)
+    resolve_struct_auto_reader_(Declaration::StructDescriptor* struct_descriptor)
       /*throw(Exception)*/;
 
     Declaration::StructWriter_var
-    resolve_struct_auto_writer_(
-      Declaration::StructDescriptor* struct_descriptor)
+    resolve_struct_auto_writer_(Declaration::StructDescriptor* struct_descriptor)
       /*throw(IncorrectType)*/;
 
     Declaration::BaseReader_var
@@ -152,15 +145,11 @@ namespace Parsing
     resolve_auto_writer_(const char* name) /*throw(IncorrectType)*/;
 
     Declaration::StructReader_var
-    generate_auto_reader_(
-      const char* name,
-      Declaration::StructDescriptor* struct_descriptor)
+    generate_auto_reader_(const char* name, Declaration::StructDescriptor* struct_descriptor)
       /*throw(Exception)*/;
 
     Declaration::StructWriter_var
-    generate_auto_writer_(
-      const char* name,
-      Declaration::StructDescriptor* struct_descriptor)
+    generate_auto_writer_(const char* name, Declaration::StructDescriptor* struct_descriptor)
       /*throw(IncorrectType)*/;
 
     // template manipulations
@@ -217,8 +206,7 @@ TypeSpecifier::TypeSpecifier(const char* name_val) noexcept
 {}
 
 inline
-TypeSpecifier::TypeSpecifier(
-  const char* name_val, const std::list<TypeSpecifier>& args_val)
+TypeSpecifier::TypeSpecifier(const char* name_val, const std::list<TypeSpecifier>& args_val)
   noexcept
   : name(name_val), args(args_val)
 {}
@@ -227,14 +215,13 @@ inline
 std::string
 TypeSpecifier::full_name() const noexcept
 {
-  if(!args.empty())
+  if (!args.empty())
   {
     std::ostringstream name_ostr;
     name_ostr << name << "<";
-    for(std::list<TypeSpecifier>::const_iterator ait = args.begin();
-        ait != args.end(); ++ait)
+    for (std::list<TypeSpecifier>::const_iterator ait = args.begin(); ait != args.end(); ++ait)
     {
-      if(ait != args.begin())
+      if (ait != args.begin())
       {
         name_ostr << ",";
       }

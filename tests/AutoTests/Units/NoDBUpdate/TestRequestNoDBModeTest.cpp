@@ -1,10 +1,7 @@
 
 #include "TestRequestNoDBModeTest.hpp"
 
-REFLECT_UNIT(TestRequestNoDBModeTest) (
-  "NoDBUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(TestRequestNoDBModeTest) ("NoDBUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -22,8 +19,7 @@ const TestRequestNoDBModeTest::TestCase
   };
 
 void
-TestRequestNoDBModeTest::process_case(
-  const TestRequestNoDBModeTest::TestCase& testcase)
+TestRequestNoDBModeTest::process_case(const TestRequestNoDBModeTest::TestCase& testcase)
 {
   add_descr_phrase("Start '" + testcase.description + "' case.");
 
@@ -41,8 +37,7 @@ TestRequestNoDBModeTest::process_case(
   add_descr_phrase("Check initial state");
   FAIL_CONTEXT(
     AutoTest::and_checker(
-      CampaignChecker(this, ccg,
-        CampaignChecker::Expected().eval_status("A").status("A")),
+      CampaignChecker(this, ccg, CampaignChecker::Expected().eval_status("A").status("A")),
       CampaignChecker(this, test_ccg,
         CampaignChecker::Expected().eval_status("A").status("A"))).check(),
     testcase.description + " - initial state check");
@@ -59,17 +54,11 @@ TestRequestNoDBModeTest::process_case(
     AdClient client = AdClient::create_user(this);
 
     FAIL_CONTEXT(
-      SelectedCreativeChecker(
-        client,
-        request.tid(test_tag).testrequest(1),
-        test_cc).check(),
+      SelectedCreativeChecker(client, request.tid(test_tag).testrequest(1), test_cc).check(),
       "check serer returns test creative");
 
     FAIL_CONTEXT(
-      SelectedCreativeChecker(
-        client,
-        request.tid(tag).testrequest(0),
-        cc).check(),
+      SelectedCreativeChecker(client, request.tid(tag).testrequest(0), cc).check(),
       "check serer returns real creative");
   }
 
@@ -78,8 +67,7 @@ TestRequestNoDBModeTest::process_case(
   add_checker(testcase.description + " - check changed statuses",
     AutoTest::wait_checker(
       AutoTest::and_checker(
-        CampaignChecker(this, ccg,
-          CampaignChecker::Expected().eval_status("I")),
+        CampaignChecker(this, ccg, CampaignChecker::Expected().eval_status("I")),
         CampaignChecker(this, test_ccg,
           CampaignChecker::Expected().eval_status("A").status("A")))));
 
@@ -87,21 +75,15 @@ TestRequestNoDBModeTest::process_case(
     AdClient client = AdClient::create_user(this);
     add_checker(testcase.description + " - check creative appearance",
       AutoTest::and_checker(
-        SelectedCreativeChecker(
-          client,
-          request.tid(test_tag).testrequest(1),
-          test_cc),
-        SelectedCreativeChecker(
-          client,
-          request.tid(fetch_int("TID")).testrequest(0),
-          "0")));
+        SelectedCreativeChecker(client, request.tid(test_tag).testrequest(1), test_cc),
+        SelectedCreativeChecker(client, request.tid(fetch_int("TID")).testrequest(0), "0")));
   }
 }
 
 bool
 TestRequestNoDBModeTest::run()
 {
-  for(size_t i = 0; i < countof(CASES); ++i)
+  for (size_t i = 0; i < countof(CASES); ++i)
   {
     AUTOTEST_CASE(process_case(CASES[i]), CASES[i].description);
   }

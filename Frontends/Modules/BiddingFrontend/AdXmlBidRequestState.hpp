@@ -37,9 +37,7 @@ namespace AdServer::Bidding
       noexcept;
 
     virtual void
-    write_empty_response(
-      unsigned int code,
-      bool response_claimed = false)
+    write_empty_response(unsigned int code, bool response_claimed = false)
       noexcept;
 
     virtual void
@@ -57,9 +55,7 @@ namespace AdServer::Bidding
 
   protected:
     void
-    fill_by_adxml_request_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    fill_by_adxml_request_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       noexcept;
 
     void
@@ -77,9 +73,7 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    add_xml_escaped_string_(
-      std::ostream& response_ostr,
-      const char* str)
+    add_xml_escaped_string_(std::ostream& response_ostr, const char* str)
       noexcept;
 
   private:

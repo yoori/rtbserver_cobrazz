@@ -1,7 +1,4 @@
-
-namespace AdServer
-{
-namespace UnitTests
+namespace AdServer::UnitTests
 {
   class TriggerSerializationTest
   {
@@ -48,5 +45,3 @@ namespace UnitTests
 
   };
 }
-}
-

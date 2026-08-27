@@ -192,12 +192,10 @@ namespace AdServer::UserInfoSvcs
 
     void flush_slow_transactions() noexcept;
 
-    void delete_old_profiles(
-      const Generics::Time& persistent_lifetime)
+    void delete_old_profiles(const Generics::Time& persistent_lifetime)
       /*throw(NotReady, Exception)*/;
 
-    void delete_old_temporary_profiles(
-      const Generics::Time& temp_lifetime)
+    void delete_old_temporary_profiles(const Generics::Time& temp_lifetime)
       /*throw(NotReady, Exception)*/;
 
   protected:
@@ -371,10 +369,8 @@ namespace AdServer::UserInfoSvcs
     FreqCapConfig* freq_cap_config)
     noexcept
   {
-    ChannelDictionary_var new_channels_config =
-      ReferenceCounting::add_ref(channels_config);
-    FreqCapConfig_var new_freq_cap_config =
-      ReferenceCounting::add_ref(freq_cap_config);
+    ChannelDictionary_var new_channels_config = ReferenceCounting::add_ref(channels_config);
+    FreqCapConfig_var new_freq_cap_config = ReferenceCounting::add_ref(freq_cap_config);
 
     {
       SyncPolicy::WriteGuard lock(config_lock_);
@@ -401,7 +397,7 @@ namespace AdServer::UserInfoSvcs
     SyncPolicy::ReadGuard lock(config_lock_);
     FreqCapConfig_var freq_cap_config = freq_cap_config_;
 
-    if(freq_cap_config.in() == 0)
+    if (freq_cap_config.in() == 0)
     {
       throw NotReady("Unable to get freq caps configuration.");
     }

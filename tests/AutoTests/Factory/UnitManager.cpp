@@ -20,9 +20,7 @@ namespace
   static const char* default_config   = "./Config/Config.xml";
   static const char* default_params   = "./Config/LocalParams.xml";
 
-  void from_str(
-    const std::string& str,
-    AutoTestSpeedGroup& val)
+  void from_str(const std::string& str, AutoTestSpeedGroup& val)
   {
     if (str == "slow")
     {
@@ -38,18 +36,14 @@ namespace
     }
   }
 
-  void from_str(
-    const std::string& str,
-    std::string& val)
+  void from_str(const std::string& str, std::string& val)
   {
     val = str;
   }
 
   template <typename Type>
   void
-  parse_string_list(
-    const char* str,
-    std::set<Type>& seq)
+  parse_string_list(const char* str, std::set<Type>& seq)
   {
     String::SubString s(str);
     String::StringManip::SplitComma tok(s);
@@ -111,12 +105,12 @@ public:
     {
       bool is_active = manager_.active();
 
-      if(severity != ActiveObjectCallback::WARNING)
+      if (severity != ActiveObjectCallback::WARNING)
       {
         manager_.stop(false);
       }
 
-      if(is_active)
+      if (is_active)
       {
         try
         {
@@ -138,8 +132,7 @@ public:
           AutoTest::Logger::thlog().
             stream(log_level, "UnitManager") <<
             "UnitManager::report_error: severity " <<
-            severity << ", description: '" <<
-            description << "'";
+            severity << ", description: '" << description << "'";
         }
         catch(const eh::Exception& e)
         {
@@ -147,9 +140,7 @@ public:
           error << "UnitManager::report_error: " <<
             "eh::Exception caught. :" << std::endl << e.what();
 
-          AutoTest::Logger::thlog().log(
-            error.str(),
-            Logging::Logger::EMERGENCY);
+          AutoTest::Logger::thlog().log(error.str(), Logging::Logger::EMERGENCY);
         }
       }
     }
@@ -197,10 +188,7 @@ UnitManager::TaskTest::execute() /*throw(eh::Exception)*/
     std::ostringstream full_name;
     full_name << *descriptor_;
 
-    long local_idx =
-      AutoTest::find_local_params(
-        locals_,
-        descriptor_->name.c_str());
+    long local_idx = AutoTest::find_local_params(locals_, descriptor_->name.c_str());
 
     stat->unit_name = full_name.str().c_str();
 
@@ -214,30 +202,19 @@ UnitManager::TaskTest::execute() /*throw(eh::Exception)*/
         throw InvalidArgument(error);
       }
 
-      XsdParams params(
-        config_,
-        locals_.UnitLocalData()[local_idx]);
+      XsdParams params(config_, locals_.UnitLocalData()[local_idx]);
 
-      BaseUnit_var(
-        descriptor_->constructor(
-          *stat,
-          stat->unit_name.c_str(),
-          params))->execute();
+      BaseUnit_var(descriptor_->constructor(*stat, stat->unit_name.c_str(), params))->execute();
     }
     catch (const eh::Exception& e)
     {
       std::ostringstream error;
-      error << "BaseUnit::execute() eh::Exception exception caught. : " <<
-        e.what() << std::endl;
+      error << "BaseUnit::execute() eh::Exception exception caught. : " << e.what() << std::endl;
       stat->error += error.str();
 
-      AutoTest::Logger_var log(
-        new AutoTest::Logger(
-          full_name.str().c_str()));
+      AutoTest::Logger_var log(new AutoTest::Logger(full_name.str().c_str()));
 
-      log->log(
-        stat->error,
-        Logging::Logger::ERROR);
+      log->log(stat->error, Logging::Logger::ERROR);
       stat->mark_error();
     }
 
@@ -280,8 +257,7 @@ UnitManager::~UnitManager()
 void
 UnitManager::run_serialized_(const TestFactory::UnitsList& serialized)
 {
-  for (TestFactory::UnitsList::const_iterator i = serialized.begin();
-       i != serialized.end(); ++i)
+  for (TestFactory::UnitsList::const_iterator i = serialized.begin(); i != serialized.end(); ++i)
   {
 
     if (AutoTest::Shutdown::instance().get())
@@ -291,12 +267,7 @@ UnitManager::run_serialized_(const TestFactory::UnitsList& serialized)
 
     UnitDescriptor* descriptor = *i;
 
-    Generics::Task_var(
-      new TaskTest(
-        this,
-        descriptor,
-        *config_,
-        *locals_))->execute();
+    Generics::Task_var(new TaskTest(this, descriptor, *config_, *locals_))->execute();
   }
 }
 
@@ -316,13 +287,11 @@ UnitManager::run(int argc, const char* argv[])
     logger_->log(String::SubString("UnitManager started"));
     if (no_db_)
     {
-      logger_->log(
-        String::SubString("WARNING: post_condition tests parts will not run"));
+      logger_->log(String::SubString("WARNING: post_condition tests parts will not run"));
     }
     else
     {
-      logger_->log(
-        String::SubString("ATTENTION: post_condition tests parts will run"));
+      logger_->log(String::SubString("ATTENTION: post_condition tests parts will run"));
     }
 
     TestFactory::UnitsList serialized_after;
@@ -331,12 +300,9 @@ UnitManager::run(int argc, const char* argv[])
 
     {
       AutoTest::Logger::thlog(*logger_);
-      TestFactory::UnitsSeq units(
-        test_factory_.units().begin(),
-        test_factory_.units().end());
+      TestFactory::UnitsSeq units(test_factory_.units().begin(), test_factory_.units().end());
       std::sort(units.begin(), units.end(), basic_ud_sort);
-      for (TestFactory::UnitsSeq::const_iterator i = units.begin();
-           i != units.end(); ++i)
+      for (TestFactory::UnitsSeq::const_iterator i = units.begin(); i != units.end(); ++i)
       {
         UnitDescriptor* descriptor = *i;
         if (descriptor->serialize)
@@ -349,12 +315,7 @@ UnitManager::run(int argc, const char* argv[])
         else
         {
           task_runner_->enqueue_task(
-            Generics::Task_var(
-              new TaskTest(
-                this,
-                descriptor,
-                *config_,
-                *locals_)));
+            Generics::Task_var(new TaskTest(this, descriptor, *config_, *locals_)));
         }
       }
     }
@@ -368,7 +329,7 @@ UnitManager::run(int argc, const char* argv[])
     {
       task_runner_->activate_object();
       task_runner_->wait_for_queue_exhausting();
-      if(task_runner_.in() && task_runner_->active())
+      if (task_runner_.in() && task_runner_->active())
       {
         task_runner_->deactivate_object();
         task_runner_->wait_object();
@@ -409,10 +370,10 @@ UnitManager::init_()
   ostr << "Initializing UnitManager.\n";
 
   rlimit limit;
-  if(getrlimit(RLIMIT_NOFILE, &limit) == 0)
+  if (getrlimit(RLIMIT_NOFILE, &limit) == 0)
   {
     limit.rlim_cur = limit.rlim_max;
-    if(setrlimit(RLIMIT_NOFILE, &limit) == 0)
+    if (setrlimit(RLIMIT_NOFILE, &limit) == 0)
     {
       ostr << "    Setting file descriptors number limit to maximum (" <<
         limit.rlim_max << ")" << std::endl;
@@ -426,20 +387,16 @@ UnitManager::init_()
     {
 
       AutoTest::GlobalSettings::instance().
-        initialize(
-          *config_,
-          *locals_);
+        initialize(*config_, *locals_);
 
-      logger_ =
-        new AutoTest::Logger("UnitManager");
+      logger_ = new AutoTest::Logger("UnitManager");
       AutoTest::Logger::thlog(*logger_);
 
       const unsigned long threads_num = config_->get_params().ThreadsNum().value();
       unit_config.verbose_start = unit_config.verbose_start || threads_num > 1;
 
       task_runner_ = new Generics::TaskRunner(
-        UnitManagerCallback_var(
-          new UnitManagerCallback(*this)),
+        UnitManagerCallback_var(new UnitManagerCallback(*this)),
         threads_num,
         TASK_RUNNER_STACK_SIZE_);
     }
@@ -457,7 +414,7 @@ UnitManager::init_()
   {
     stop(true);
 
-    if(task_runner_.in())
+    if (task_runner_.in())
     {
       task_runner_->wait_object();
     }
@@ -467,8 +424,7 @@ UnitManager::init_()
 }
 
 bool
-UnitManager::read_parameters_(int argc,
-                              const char* argv[])
+UnitManager::read_parameters_(int argc, const char* argv[])
   /*throw(InvalidArgument, Exception, eh::Exception)*/
 {
   std::ostringstream usage;
@@ -514,30 +470,21 @@ UnitManager::read_parameters_(int argc,
   Generics::AppUtils::StringOption params;
   Generics::AppUtils::Args args;
 
-  args.add(
-    Generics::AppUtils::short_name("h") ||
-    Generics::AppUtils::equal_name("help"),
-    help);
+  args.add(Generics::AppUtils::short_name("h") || Generics::AppUtils::equal_name("help"), help);
 
   args.add(
     Generics::AppUtils::short_name("C") ||
     Generics::AppUtils::equal_name("categories"),
     categories);
 
-  args.add(
-    Generics::AppUtils::short_name("G") ||
-    Generics::AppUtils::equal_name("groups"),
-    groups);
+  args.add(Generics::AppUtils::short_name("G") || Generics::AppUtils::equal_name("groups"), groups);
 
   args.add(
     Generics::AppUtils::short_name("S") ||
     Generics::AppUtils::equal_name("serialized"),
     serialized);
 
-  args.add(
-    Generics::AppUtils::short_name("t") ||
-    Generics::AppUtils::equal_name("tests"),
-    tests);
+  args.add(Generics::AppUtils::short_name("t") || Generics::AppUtils::equal_name("tests"), tests);
 
   args.add(
     Generics::AppUtils::short_name("e") ||
@@ -549,9 +496,7 @@ UnitManager::read_parameters_(int argc,
     Generics::AppUtils::equal_name("exclude-categories"),
     caexclude);
 
-  args.add(
-    Generics::AppUtils::equal_name("nodb"),
-    nodb);
+  args.add(Generics::AppUtils::equal_name("nodb"), nodb);
 
   args.add(
     Generics::AppUtils::short_name("v") ||
@@ -573,15 +518,9 @@ UnitManager::read_parameters_(int argc,
     Generics::AppUtils::equal_name("list"),
     list_tests);
 
-  args.add(
-    Generics::AppUtils::short_name("c") ||
-    Generics::AppUtils::equal_name("config"),
-    config);
+  args.add(Generics::AppUtils::short_name("c") || Generics::AppUtils::equal_name("config"), config);
 
-  args.add(
-    Generics::AppUtils::short_name("p") ||
-    Generics::AppUtils::equal_name("params"),
-    params);
+  args.add(Generics::AppUtils::short_name("p") || Generics::AppUtils::equal_name("params"), params);
 
   try
   {
@@ -589,10 +528,10 @@ UnitManager::read_parameters_(int argc,
   }
   catch (const eh::Exception& exc)
   {
-    std::cerr << "error: " << exc.what() << std::endl
-              << usage.str();
+    std::cerr << "error: " << exc.what() << std::endl << usage.str();
     return false;
   }
+
   if (help.enabled())
   {
     std::cout << usage.str();
@@ -603,10 +542,12 @@ UnitManager::read_parameters_(int argc,
   {
     parse_string_list(categories->c_str(), categories_);
   }
+
   if (groups.installed())
   {
     parse_string_list(groups->c_str(), groups_);
   }
+
   if (tests.installed())
   {
     parse_string_list(tests->c_str(), tests_);
@@ -650,8 +591,7 @@ UnitManager::read_parameters_(int argc,
   const TestFactory::UnitsList& units = test_factory_.units();
   if (list_tests.enabled())
   {
-    for (TestFactory::UnitsList::const_iterator i = units.begin();
-         i != units.end(); ++i)
+    for (TestFactory::UnitsList::const_iterator i = units.begin(); i != units.end(); ++i)
     {
       UnitDescriptor* descriptor = *i;
       std::cout << *descriptor << std::endl;
@@ -661,19 +601,23 @@ UnitManager::read_parameters_(int argc,
     std::cout << "--------------------------" << std::endl;
     return false;
   }
+
   if (verbose.enabled())
   {
     unit_config.verbose = true;
   }
+
   if (verbose_start.enabled())
   {
     unit_config.verbose = true;
     unit_config.verbose_start = true;
   }
+
   if (performance.enabled())
   {
     sort_performance_ = true;
   }
+
   if (params.installed())
   {
     locals_ = Config::load_helper<LocalsPtr>(
@@ -694,12 +638,12 @@ UnitManager::read_parameters_(int argc,
     else
     {
       Stream::Error ostr;
-      ostr << "Error: params file not specified" << std::endl <<
-        usage.str().c_str();
+      ostr << "Error: params file not specified" << std::endl << usage.str().c_str();
 
       throw InvalidArgument(ostr);
     }
   }
+
   if (config.installed())
   {
     config_ = GlobalConfigPtr(new GlobalConfig(config->c_str()));
@@ -720,8 +664,7 @@ UnitManager::read_parameters_(int argc,
     else
     {
       Stream::Error ostr;
-      ostr << "Error: configuration file not specified" << std::endl <<
-        usage.str().c_str();
+      ostr << "Error: configuration file not specified" << std::endl << usage.str().c_str();
 
       throw InvalidArgument(ostr);
     }
@@ -735,13 +678,13 @@ UnitManager::stop(bool result)
 {
   SyncPolicy::ReadGuard lock(lock_);
 
-  if(!active_) return;
+  if (!active_) return;
 
   active_ = false;
 
   try
   {
-    if(task_runner_.in() && task_runner_->active())
+    if (task_runner_.in() && task_runner_->active())
     {
       task_runner_->deactivate_object();
     }
@@ -762,10 +705,7 @@ UnitStat*
 UnitManager::add_stat() /*throw(eh::Exception)*/
 {
   SyncPolicy::ReadGuard lock(stat_lock_);
-  UnitStat* stat(
-    new UnitStat(
-      lock_, unit_config,
-        no_db_? UnitStat::UM_NO_DB: 0));
+  UnitStat* stat(new UnitStat(lock_, unit_config, no_db_? UnitStat::UM_NO_DB: 0));
   test_stats_.push_back(stat);
   return stat;
 }
@@ -793,7 +733,7 @@ UnitManager::print_results() /*throw(eh::Exception)*/
     result_ = result_ && test_stats_[i]->succeed;
 
     total_duration +=  test_stats_[i]->duration();
-    if(test_stats_[i]->succeed)
+    if (test_stats_[i]->succeed)
       ++passed;
     else
       ++failed;
@@ -808,16 +748,15 @@ UnitManager::print_results() /*throw(eh::Exception)*/
     ostr << /*".*/"\n";
   }
 
-  ostr << "\nExecution time: " << stop_time_ - start_time_ <<
-    std::endl;
+  ostr << "\nExecution time: " << stop_time_ - start_time_ << std::endl;
 
-  if(unit_config.verbose && failed > 0)
+  if (unit_config.verbose && failed > 0)
   {
     std::cout << "==========================" << std::endl;
     std::cout << "Errors" << std::endl;
     for (unsigned long i = 0; i < test_units_count; ++i)
     {
-      if(!test_stats_[i]->succeed)
+      if (!test_stats_[i]->succeed)
       {
         std::cout << "--------------------------" << std::endl;
         test_stats_[i]->dump_error ();

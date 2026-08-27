@@ -8,17 +8,13 @@
 
 #include <Commons/FreqCap.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct FreqCapConfig: public virtual ReferenceCounting::AtomicImpl
   {
-    using FreqCapMap =
-      boost::unordered_flat_map<unsigned long, Commons::FreqCap>;
+    using FreqCapMap = boost::unordered_flat_map<unsigned long, Commons::FreqCap>;
 
-    using CampaignIds =
-      boost::unordered_flat_set<unsigned long>;
+    using CampaignIds = boost::unordered_flat_set<unsigned long>;
 
     Generics::Time confirm_timeout;
     FreqCapMap freq_caps;
@@ -31,5 +27,4 @@ namespace UserInfoSvcs
   };
 
   typedef ReferenceCounting::SmartPtr<FreqCapConfig> FreqCapConfig_var;
-}
 }

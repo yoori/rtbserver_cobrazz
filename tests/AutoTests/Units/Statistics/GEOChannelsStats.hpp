@@ -10,10 +10,7 @@ public:
   typedef AutoTest::AdClient AdClient;
 
 public:
-  GEOChannelsStats(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  GEOChannelsStats(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     pq_conn_(open_pq())
   { }

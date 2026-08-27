@@ -25,13 +25,13 @@
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/UserIdController.hpp>
 
+namespace AdServer::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class CommonModule:
     private Logging::LoggerCallbackHolder,
     public virtual Generics::RefCountableCompositeActiveObject
@@ -130,9 +130,7 @@ namespace AdServer
     deactivate_object_() override;
 
   private:
-    void parse_config_(
-      CommonConfigPtr& common_config,
-      DomainConfigPtr& domain_config)
+    void parse_config_(CommonConfigPtr& common_config, DomainConfigPtr& domain_config)
       /*throw(Exception)*/;
 
   private:

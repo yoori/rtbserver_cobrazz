@@ -13,7 +13,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::Tailor: incorrect column index: $index";
     }
@@ -23,7 +23,7 @@ sub new
   my $exp = exists($params{'exp'}) ? $params{'exp'} : 2;
 
   my @res;
-  for(my $i = 2; $i <= $exp; ++$i)
+  for (my $i = 2; $i <= $exp; ++$i)
   {
     my @local_res = generate_combinations_(\@res_indexes, $i);
 
@@ -53,7 +53,7 @@ sub process
   # check
   foreach my $index(@{$self->{fields_}})
   {
-    if(!Scalar::Util::looks_like_number($row->[$index]))
+    if (!Scalar::Util::looks_like_number($row->[$index]))
     {
       die "CsvUtils::Process::Tailor: '" . $row->[$index] . "' isn't number";
     }
@@ -82,9 +82,9 @@ sub generate_combinations_
   my ($indexes, $size) = @_;
   my @res;
 
-  if($size > 1)
+  if ($size > 1)
   {
-    for(my $i = 0; $i < scalar(@$indexes); ++$i)
+    for (my $i = 0; $i < scalar(@$indexes); ++$i)
     {
       my @sub_indexes = @{$indexes}[$i .. (scalar(@$indexes) - 1) ];
       my @local_res = generate_combinations_(\@sub_indexes, $size - 1);

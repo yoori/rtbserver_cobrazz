@@ -10,193 +10,186 @@
 #include <Commons/StringHolder.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-typedef DayTimestamp ChannelPriceRangeKey;
-
-class ChannelPriceRangeInnerKey
+namespace AdServer::LogProcessing
 {
-public:
-  typedef Generics::SimpleDecimal<uint64_t, 11, 1> EcpmT;
 
-  ChannelPriceRangeInnerKey()
-  :
-    creative_size_(),
-    country_code_(),
-    channel_id_(),
-    ecpm_(),
-    colo_id_(),
-    hash_()
-  {
-  }
+  typedef DayTimestamp ChannelPriceRangeKey;
 
-  ChannelPriceRangeInnerKey(
-    const Commons::ImmutableString& creative_size,
-    const Commons::ImmutableString& country_code,
-    std::uint32_t channel_id,
-    const EcpmT& ecpm,
-    std::uint32_t colo_id
-  )
-  :
-    creative_size_(creative_size),
-    country_code_(country_code),
-    channel_id_(channel_id),
-    ecpm_(ecpm),
-    colo_id_(colo_id),
-    hash_()
+  class ChannelPriceRangeInnerKey
   {
-    calc_hash_();
-  }
+  public:
+    typedef Generics::SimpleDecimal<uint64_t, 11, 1> EcpmT;
 
-  bool operator==(const ChannelPriceRangeInnerKey& rhs) const
-  {
-    if (&rhs == this)
+    ChannelPriceRangeInnerKey()
+    :
+      creative_size_(),
+      country_code_(),
+      channel_id_(),
+      ecpm_(),
+      colo_id_(),
+      hash_()
     {
-      return true;
     }
-    return creative_size_ == rhs.creative_size_ &&
-      country_code_ == rhs.country_code_ &&
-      channel_id_ == rhs.channel_id_ &&
-      ecpm_ == rhs.ecpm_ &&
-      colo_id_ == rhs.colo_id_;
-  }
 
-  const std::string& creative_size() const
+    ChannelPriceRangeInnerKey(
+      const Commons::ImmutableString& creative_size,
+      const Commons::ImmutableString& country_code,
+      std::uint32_t channel_id,
+      const EcpmT& ecpm,
+      std::uint32_t colo_id
+    )
+    :
+      creative_size_(creative_size),
+      country_code_(country_code),
+      channel_id_(channel_id),
+      ecpm_(ecpm),
+      colo_id_(colo_id),
+      hash_()
+    {
+      calc_hash_();
+    }
+
+    bool operator==(const ChannelPriceRangeInnerKey& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return creative_size_ == rhs.creative_size_ &&
+        country_code_ == rhs.country_code_ &&
+        channel_id_ == rhs.channel_id_ && ecpm_ == rhs.ecpm_ && colo_id_ == rhs.colo_id_;
+    }
+
+    const std::string& creative_size() const
+    {
+      return creative_size_.str();
+    }
+
+    const std::string& country_code() const
+    {
+      return country_code_.str();
+    }
+
+    std::uint32_t channel_id() const
+    {
+      return channel_id_;
+    }
+
+    const EcpmT& ecpm() const
+    {
+      return ecpm_;
+    }
+
+    std::uint32_t colo_id() const
+    {
+      return colo_id_;
+    }
+
+    size_t hash() const
+    {
+      return hash_;
+    }
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ChannelPriceRangeInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const ChannelPriceRangeInnerKey& key)
+      /*throw(eh::Exception)*/;
+
+  private:
+    void calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      hash_add(hasher, channel_id_);
+      hash_add(hasher, colo_id_);
+      hash_add(hasher, ecpm_);
+      hash_add(hasher, creative_size_.str());
+      hash_add(hasher, country_code_.str());
+    }
+
+    Commons::ImmutableString creative_size_;
+    Commons::ImmutableString country_code_;
+    std::uint32_t channel_id_;
+    EcpmT ecpm_;
+    std::uint32_t colo_id_;
+    size_t hash_;
+  };
+
+  class ChannelPriceRangeInnerData
   {
-    return creative_size_.str();
-  }
+  public:
+    typedef FixedPrecisionDouble<5> Double;
 
-  const std::string& country_code() const
-  {
-    return country_code_.str();
-  }
+    ChannelPriceRangeInnerData() noexcept
+    :
+      unique_users_count_(),
+      impops_()
+    {
+    }
 
-  std::uint32_t channel_id() const
-  {
-    return channel_id_;
-  }
+    ChannelPriceRangeInnerData(Double unique_users_count, unsigned long impops)
+      noexcept
+    :
+      unique_users_count_(unique_users_count),
+      impops_(impops)
+    {
+    }
 
-  const EcpmT& ecpm() const
-  {
-    return ecpm_;
-  }
+    bool
+    operator==(const ChannelPriceRangeInnerData& rhs) const noexcept
+    {
+      return unique_users_count_ == rhs.unique_users_count_ && impops_ == rhs.impops_;
+    }
 
-  std::uint32_t colo_id() const
-  {
-    return colo_id_;
-  }
+    ChannelPriceRangeInnerData&
+    operator+=(const ChannelPriceRangeInnerData& rhs) noexcept
+    {
+      unique_users_count_ += rhs.unique_users_count_;
+      impops_ += rhs.impops_;
+      return *this;
+    }
 
-  size_t hash() const
-  {
-    return hash_;
-  }
+    Double
+    unique_users_count() const noexcept
+    {
+      return unique_users_count_;
+    }
 
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ChannelPriceRangeInnerKey& key)
-    /*throw(eh::Exception)*/;
+    unsigned long
+    impops() const noexcept
+    {
+      return impops_;
+    }
 
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPriceRangeInnerKey& key)
-    /*throw(eh::Exception)*/;
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ChannelPriceRangeInnerData& data)
+      /*throw(eh::Exception)*/;
 
-private:
-  void calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    hash_add(hasher, channel_id_);
-    hash_add(hasher, colo_id_);
-    hash_add(hasher, ecpm_);
-    hash_add(hasher, creative_size_.str());
-    hash_add(hasher, country_code_.str());
-  }
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const ChannelPriceRangeInnerData& data)
+      /*throw(eh::Exception)*/;
 
-  Commons::ImmutableString creative_size_;
-  Commons::ImmutableString country_code_;
-  std::uint32_t channel_id_;
-  EcpmT ecpm_;
-  std::uint32_t colo_id_;
-  size_t hash_;
-};
+  private:
+    Double unique_users_count_;
+    unsigned long impops_;
+  };
 
-class ChannelPriceRangeInnerData
-{
-public:
-  typedef FixedPrecisionDouble<5> Double;
+  typedef StatCollector<
+            ChannelPriceRangeKey,
+            StatCollector<
+              ChannelPriceRangeInnerKey,
+              ChannelPriceRangeInnerData,
+              false, // Don't exclude null values
+              true
+            >
+          > ChannelPriceRangeCollector;
 
-  ChannelPriceRangeInnerData() noexcept
-  :
-    unique_users_count_(),
-    impops_()
-  {
-  }
+  typedef LogDefaultTraits<ChannelPriceRangeCollector> ChannelPriceRangeTraits;
 
-  ChannelPriceRangeInnerData(
-    Double unique_users_count,
-    unsigned long impops
-  )
-    noexcept
-  :
-    unique_users_count_(unique_users_count),
-    impops_(impops)
-  {
-  }
-
-  bool
-  operator==(const ChannelPriceRangeInnerData& rhs) const noexcept
-  {
-    return unique_users_count_ == rhs.unique_users_count_ &&
-      impops_ == rhs.impops_;
-  }
-
-  ChannelPriceRangeInnerData&
-  operator+=(const ChannelPriceRangeInnerData& rhs) noexcept
-  {
-    unique_users_count_ += rhs.unique_users_count_;
-    impops_ += rhs.impops_;
-    return *this;
-  }
-
-  Double
-  unique_users_count() const noexcept
-  {
-    return unique_users_count_;
-  }
-
-  unsigned long
-  impops() const noexcept
-  {
-    return impops_;
-  }
-
-  friend
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ChannelPriceRangeInnerData& data)
-    /*throw(eh::Exception)*/;
-
-  friend
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPriceRangeInnerData& data)
-    /*throw(eh::Exception)*/;
-
-private:
-  Double unique_users_count_;
-  unsigned long impops_;
-};
-
-typedef StatCollector<
-          ChannelPriceRangeKey,
-          StatCollector<
-            ChannelPriceRangeInnerKey,
-            ChannelPriceRangeInnerData,
-            false, // Don't exclude null values
-            true
-          >
-        > ChannelPriceRangeCollector;
-
-typedef LogDefaultTraits<ChannelPriceRangeCollector> ChannelPriceRangeTraits;
-
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

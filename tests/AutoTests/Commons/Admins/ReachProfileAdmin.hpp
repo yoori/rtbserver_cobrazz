@@ -37,10 +37,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ReachProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uuid,
-        RequestInfoSrv service
-      )
+      void make_cmd (const char* address, const char* uuid, RequestInfoSrv service)
       {
         address_ = address;
         AdminParams params;

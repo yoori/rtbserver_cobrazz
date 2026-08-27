@@ -52,23 +52,23 @@ S<Count of test threads>
 
 S<Count of requests in each benchmark part>
 
-=item C<--channels_count> 
+=item C<--channels_count>
 
 S<total channels count, not used if channel_config_file set>
 
-=item C<--campaign_channels_count> 
+=item C<--campaign_channels_count>
 
 S<count of channels linked to the one campaign, must be less then channels_count>
 
-=item C<--campaign_config_file> 
+=item C<--campaign_config_file>
 
 S<config file path, file contain information for creating campaigns>
 
-=item C<--channel_config_file> 
+=item C<--channel_config_file>
 
 S<config file path, file contain information for creating channels>
 
-=item C<--free_tags_size> 
+=item C<--free_tags_size>
 
 S<Count of "free" tags>
 
@@ -80,7 +80,7 @@ use Cwd;
 use Getopt::Long qw(:config gnu_getopt bundling);
 use Pod::Usage;
 use File::Spec;
-use File::Basename; 
+use File::Basename;
 use File::Path;
 
 use DB::Database;
@@ -174,7 +174,7 @@ my $namespace_name = "BT";
 
 my $database = new PerformanceDB::Database($options{host},
                                            $options{dbname},
-                                           $options{user}, 
+                                           $options{user},
                                            $options{password},
                                            $namespace_name,
                                            $options{prefix});
@@ -182,7 +182,7 @@ my $database = new PerformanceDB::Database($options{host},
 # Advertising channels
 if (defined $options{channel_config_file})
 {
-  foreach my $channel (@channels_info)  
+  foreach my $channel (@channels_info)
   {
     my ($time_from, $time_to, $minimum_visits, $count, $channel_type) = @$channel;
     if (!defined $channel_type or $channel_type ne 'D') {
@@ -209,7 +209,7 @@ if (defined $options{campaign_config_file})
 }
 else
 {
-  $database->create_campaigns($options{campaigns_count}, 
+  $database->create_campaigns($options{campaigns_count},
                               $options{campaign_channels_count}, 0);
 }
 
@@ -225,7 +225,7 @@ if ($options{free_tags_size})
 # Discover channels
 if (defined $options{channel_config_file})
 {
-  foreach my $channel (@channels_info)  
+  foreach my $channel (@channels_info)
   {
     my ($time_from, $time_to, $minimum_visits, $count, $channel_type) = @$channel;
     if (defined $channel_type and $channel_type eq 'D') {
@@ -283,7 +283,7 @@ my @formats  = ['unit-test'];
 
 my @bool = [0,1];
 
-my $urls_file_path =  join("/", $config_path, URLS_FILE_NAME . $options{prefix}); 
+my $urls_file_path =  join("/", $config_path, URLS_FILE_NAME . $options{prefix});
 my $keywords_file_path = join("/", $config_path, KWS_FILE_NAME . $options{prefix});
 
 my $section1 =
@@ -304,9 +304,9 @@ my $section1 =
                                          XML::Encoder::NEW_LINE,
                                          XML::Encoder::PARAM_LIST({name=>"os"}, "Set", "item", @OS),
                                          XML::Encoder::NEW_LINE,
-                                         XML::Encoder::PARAM_LIST({name=>"tid"}, "Set", "item", 
+                                         XML::Encoder::PARAM_LIST({name=>"tid"}, "Set", "item",
                                                                   \@{$database->tids(PerformanceDB::Database::TAGS_USED)}),
-                                         XML::Encoder::PARAM_LIST({name=>"tid_free"}, "Set", "item", 
+                                         XML::Encoder::PARAM_LIST({name=>"tid_free"}, "Set", "item",
                                                                   \@{$database->tids(PerformanceDB::Database::TAGS_FREE)}),
                                          XML::Encoder::NEW_LINE,
                                          XML::Encoder::PARAM_LIST({name=>"country"}, "Set", "item", @countries),
@@ -324,12 +324,12 @@ my $section1 =
   my @params1 = [XML::Encoder::PARAM({name=>"op"}, "parameter", "in"),
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
-  my $benchmark1 = 
+  my $benchmark1 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  initial=>"true",
                                  size=>$options{benchmark_size},
                                  description=>"Create users"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/OO",
                                                            method=>"get"},
                                                           "request", @params1)]);
@@ -349,11 +349,11 @@ my $section1 =
                   XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                   XML::Encoder::PARAM("body")];
 
-  my $benchmark2 = 
+  my $benchmark2 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Advertising profiling"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params2)]);
@@ -373,11 +373,11 @@ my $section1 =
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
 
-  my $benchmark3 = 
+  my $benchmark3 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Discover profiling"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params3)]);
@@ -396,11 +396,11 @@ my $section1 =
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
 
-  my $benchmark5 = 
+  my $benchmark5 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Advertising"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params5)]);
@@ -421,38 +421,38 @@ my $section1 =
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
 
-  my $benchmark6 = 
+  my $benchmark6 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Advertising passback"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params6)]);
 
   # 7th case "Passback"
-  my $benchmark7 = 
+  my $benchmark7 =
       XML::Encoder::GROUP_PARAM({frontend=>"passback",
                                  size=>$options{benchmark_size},
                                  description=>"Passback"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/passback",
                                                            method=>"get"},
                                                           "request", [])]);
 
 
   my $xml_config_path = join("/", $config_path, "Benchmark-optin.xml");
-  
+
   open(my $XML, ">$xml_config_path") || die "Cann't open file $xml_config_path for write.\n";
-  
+
 
   my $benchmarks =  XML::Encoder::GROUP_PARAM({},
-                                              "Benchmarks", 
-                                              [$benchmark1, $benchmark2, 
+                                              "Benchmarks",
+                                              [$benchmark1, $benchmark2,
                                                $benchmark3, $benchmark4,
                                                $benchmark5, $benchmark6,
                                                $benchmark7]);
-  
+
   # Make XML document with header
   print $XML XML::Encoder::GROUP_PARAM({"xmlns:test"=> XML_CONFIG_HTML_PATH,
                                         "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
@@ -479,11 +479,11 @@ my $section1 =
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
 
-  my $benchmark2 = 
+  my $benchmark2 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Advertising"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params2)]);
@@ -504,43 +504,43 @@ my $section1 =
                  XML::Encoder::PARAM({name=>"User-Agent"}, "header", "#random:user_agent#"),
                  XML::Encoder::PARAM("body")];
 
-  my $benchmark3 = 
+  my $benchmark3 =
       XML::Encoder::GROUP_PARAM({frontend=>"nslookup",
                                  size=>$options{benchmark_size},
                                  description=>"Advertising passback"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/nslookup",
                                                            method=>"get"},
                                                           "request", @params3)]);
 
   # 4th case "Passback"
-  my $benchmark4 = 
+  my $benchmark4 =
       XML::Encoder::GROUP_PARAM({frontend=>"passback",
                                  size=>$options{benchmark_size},
                                  description=>"Passback"},
-                                "Benchmark", 
+                                "Benchmark",
                                 [XML::Encoder::GROUP_PARAM({url=>"/services/passback",
                                                            method=>"get"},
                                                           "request", [])]);
 
 
   my $xml_config_path = join("/", $config_path, "Benchmark-optout.xml");
-  
+
   open(my $XML, ">$xml_config_path") || die "Cann't open file $xml_config_path for write.\n";
-  
+
 
   my $benchmarks =  XML::Encoder::GROUP_PARAM({},
-                                "Benchmarks", 
-                                [$benchmark1, $benchmark2, 
+                                "Benchmarks",
+                                [$benchmark1, $benchmark2,
                                  $benchmark3, $benchmark4]);
 
-  
+
   # Make XML document with header
   print $XML XML::Encoder::GROUP_PARAM({"xmlns:test"=> XML_CONFIG_HTML_PATH,
                                         "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
                                         "xsi:schemaLocation"=>  XML_CONFIG_HTML_PATH . "  " . $options{xsd}},
                                        "Test", [$section1, $benchmarks]);
-  
+
   close($XML);
 }
 

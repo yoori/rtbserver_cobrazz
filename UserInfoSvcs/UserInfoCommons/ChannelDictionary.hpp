@@ -145,8 +145,7 @@ namespace AdServer::UserInfoSvcs
     {
       iterator it = BaseChannelIntervalList::begin();
 
-      while (it != BaseChannelIntervalList::end() &&
-        it->time_from < val.time_from)
+      while (it != BaseChannelIntervalList::end() && it->time_from < val.time_from)
       {
         ++it;
       }
@@ -163,8 +162,7 @@ namespace AdServer::UserInfoSvcs
       if (static_cast<unsigned long>(val.time_to.tv_sec - val.time_from.tv_sec) <
         pref_channel_interval_.min_window_size)
       {
-        pref_channel_interval_.min_window_size =
-          val.time_to.tv_sec - val.time_from.tv_sec;
+        pref_channel_interval_.min_window_size = val.time_to.tv_sec - val.time_from.tv_sec;
       }
 
       if (val.min_visits > pref_channel_interval_.max_visits)
@@ -217,9 +215,7 @@ namespace AdServer::UserInfoSvcs
 
   struct ChannelFeatures
   {
-    ChannelFeatures(
-      bool discover_val,
-      unsigned long threshold_val)
+    ChannelFeatures(bool discover_val, unsigned long threshold_val)
       : discover(discover_val),
         threshold(threshold_val)
     {}
@@ -239,8 +235,7 @@ namespace AdServer::UserInfoSvcs
       Generics::GnuHashTable<ChannelIdHash, ChannelIntervalsPack_var>::value_type, 256, true> >
     ChannelsHashMap;
 
-  using ChannelFeaturesMap =
-    boost::unordered_flat_map<unsigned long, ChannelFeatures>;
+  using ChannelFeaturesMap = boost::unordered_flat_map<unsigned long, ChannelFeatures>;
 
   struct ChannelDictionary: public ReferenceCounting::AtomicImpl
   {

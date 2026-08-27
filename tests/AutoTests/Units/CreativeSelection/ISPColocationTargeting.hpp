@@ -15,10 +15,7 @@ class ISPColocationTargeting : public BaseUnit
   };
 
 public:
-  ISPColocationTargeting(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ISPColocationTargeting(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   { }
 
@@ -31,8 +28,6 @@ private:
 
   template <size_t Count>
   void
-  process_case(
-    const std::string& description,
-    const TestCase(&testcases)[Count]);
+  process_case(const std::string& description, const TestCase(&testcases)[Count]);
 
 };

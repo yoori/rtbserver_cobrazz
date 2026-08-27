@@ -96,6 +96,7 @@ sub decode
     $sign =~ s/\.//g;
     push @signed_uids, "  '$got_uid$sign',\n";
   }
+
   if (open OUT_FILE, ">$ARGV[0]/SignedUids.pm")
   {
     print OUT_FILE "package signed_uids;\n";

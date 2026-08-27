@@ -15,10 +15,7 @@ namespace AdServer::Commons
     unsigned long stack_size,
     std::string thread_name)
     /*throw(Gears::Exception)*/
-    : AdServer::Commons::DelegateActiveObject(
-        callback,
-        threads,
-        stack_size),
+    : AdServer::Commons::DelegateActiveObject(callback, threads, stack_size),
       io_service_(std::move(io_service)),
       io_work_(std::make_unique<Work>(*io_service_)),
       thread_name_(std::move(thread_name))
@@ -46,11 +43,9 @@ namespace AdServer::Commons
   {
     const auto timeout_us = timeout.microseconds();
     auto timer = std::make_shared<SteadyTimer>(*io_service_);
-    timer->expires_after(
-      std::chrono::microseconds(std::max<long long>(0, timeout_us)));
+    timer->expires_after(std::chrono::microseconds(std::max<long long>(0, timeout_us)));
     timer->async_wait(
-      [timer, task = std::move(task)](
-        const boost::system::error_code& error) mutable
+      [timer, task = std::move(task)](const boost::system::error_code& error) mutable
       {
         if (!error)
         {

@@ -23,7 +23,7 @@ sub init {
   my $campaign = $ns->create(DisplayCampaign => {
     name => 'Campaign',
     account_id => $advertiser,
-    channel_id => 
+    channel_id =>
       DB::BehavioralChannel->blank(
         account_id => $advertiser,
         name => 'Channel',

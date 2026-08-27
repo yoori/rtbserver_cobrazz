@@ -28,8 +28,7 @@ namespace Config
 
     corba_config.thread_pool = xml_corba_config.threading_pool();
 
-    for(EndpointSeq::const_iterator it = endpoints.begin();
-        it != endpoints.end(); ++it)
+    for (EndpointSeq::const_iterator it = endpoints.begin(); it != endpoints.end(); ++it)
     {
       CORBACommons::EndpointConfig endpoint_config;
       read_endpoint(*it, endpoint_config);
@@ -44,7 +43,7 @@ namespace Config
     /*throw(Exception)*/
   {
     {
-      if(!xml_endpoint_config.host().present())
+      if (!xml_endpoint_config.host().present())
       {
         // default: use canonical host name
         endpoint_config.host = AdServer::Commons::hostname();
@@ -54,7 +53,7 @@ namespace Config
         endpoint_config.host = xml_endpoint_config.host().get();
       }
 
-      if(xml_endpoint_config.ior_names().present())
+      if (xml_endpoint_config.ior_names().present())
       {
         endpoint_config.ior_names = xml_endpoint_config.ior_names().get();
       }
@@ -71,13 +70,12 @@ namespace Config
 
     const ObjectSeq& corba_objects = xml_endpoint_config.Object();
 
-    for(ObjectSeq::const_iterator it = corba_objects.begin();
-        it != corba_objects.end(); ++it)
+    for (ObjectSeq::const_iterator it = corba_objects.begin(); it != corba_objects.end(); ++it)
     {
       endpoint_config.objects[it->servant()].insert(it->name());
     }
 
-    if(xml_endpoint_config.Secure().present())
+    if (xml_endpoint_config.Secure().present())
     {
       read_secure_params(
         xml_endpoint_config.Secure().get(),
@@ -94,8 +92,7 @@ namespace Config
     const std::string& key_file = xml_secure_params.key();
     const std::string& pass_phrase = xml_secure_params.key_word();
     const std::string& certificate = xml_secure_params.certificate();
-    const std::string& certificate_authority =
-      xml_secure_params.certificate_authority();
+    const std::string& certificate_authority = xml_secure_params.certificate_authority();
 
     try
     {
@@ -138,7 +135,7 @@ namespace Config
     CORBACommons::CorbaObjectRefList& corba_object_refs)
     /*throw(CorbaConfigReader::Exception)*/
   {
-    for(xsd::AdServer::Configuration::MultiCorbaObjectRefType::Ref_sequence::const_iterator
+    for (xsd::AdServer::Configuration::MultiCorbaObjectRefType::Ref_sequence::const_iterator
           it = xml_corba_object_refs.Ref().begin();
         it != xml_corba_object_refs.Ref().end(); ++it)
     {
@@ -157,7 +154,7 @@ namespace Config
   {
     CORBACommons::CorbaObjectRefList refs;
     read_multi_corba_ref(xml_corba_object_refs, refs);
-    for(const auto& ref : refs)
+    for (const auto& ref : refs)
     {
       corba_object_refs.emplace_back(ref.object_ref);
     }

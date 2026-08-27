@@ -12,11 +12,11 @@ sub _table
   'Channel'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   name => DB::Entity::Type::name(),
   channel_id => DB::Entity::Type::sequence(),
-  account_id => undef, 
+  account_id => undef,
   status => DB::Entity::Type::status(),
   qa_status => DB::Entity::Type::qa_status(),
   display_status_id => DB::Entity::Type::display_status('TargetingChannel'),

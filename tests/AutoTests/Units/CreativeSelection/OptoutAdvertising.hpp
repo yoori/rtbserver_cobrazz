@@ -19,10 +19,7 @@ public:
   typedef AutoTest::NSLookupRequest NSLookupRequest;
 
 public:
-  OptoutAdvertising(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  OptoutAdvertising(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -35,9 +32,7 @@ private:
 
   template <size_t Count>
   void
-  run_test_case(
-    const TestCase(&testcases)[Count],
-    const NSLookupRequest& base_request);
+  run_test_case(const TestCase(&testcases)[Count], const NSLookupRequest& base_request);
 
   void optout_click_and_impression();
 

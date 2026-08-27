@@ -2,9 +2,7 @@
 #include <sstream>
 #include "CTRGenerator.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // Index calculations implementation
   // for independence in impl errors,
@@ -17,9 +15,9 @@ namespace CampaignSvcs
     int
     feature_level(const CTR::BasicFeatureSet& basic_features) noexcept
     {
-      for(const auto basic_feature : basic_features)
+      for (const auto basic_feature : basic_features)
       {
-        if(basic_feature >= CTR::BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID ||
+        if (basic_feature >= CTR::BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID ||
            (basic_feature >= CTR::BF_CANDIDATE_LEVEL_FIRST_ID &&
             basic_feature < CTR::BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
         {
@@ -27,9 +25,9 @@ namespace CampaignSvcs
         }
       }
 
-      for(const auto basic_feature : basic_features)
+      for (const auto basic_feature : basic_features)
       {
-        if(basic_feature >= CTR::BF_ARRAY_AUCTION_LEVEL_FIRST_ID ||
+        if (basic_feature >= CTR::BF_ARRAY_AUCTION_LEVEL_FIRST_ID ||
            (basic_feature >= CTR::BF_AUCTION_LEVEL_FIRST_ID &&
             basic_feature < CTR::BF_ARRAY_REQUEST_LEVEL_FIRST_ID))
         {
@@ -186,9 +184,7 @@ namespace CampaignSvcs
 
     DEFINE_FEATURE_HASH_FUN(add_hash_ssp_viewability_)
     {
-      hash.add(
-        calc_params.ssp_viewability.value_or(
-          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+      hash.add(calc_params.ssp_viewability.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_HASH_FUN(add_hash_ssp_vtr_)
@@ -317,21 +313,18 @@ namespace CampaignSvcs
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_ctr_)
     {
-      return value_to_string(
-        calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+      return value_to_string(calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_viewability_)
     {
       return value_to_string(
-        calc_params.ssp_viewability.value_or(
-          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+        calc_params.ssp_viewability.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     DEFINE_FEATURE_VALUE_FUN(get_value_ssp_vtr_)
     {
-      return value_to_string(
-        calc_params.ssp_vtr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+      return value_to_string(calc_params.ssp_vtr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
     //
@@ -372,10 +365,9 @@ namespace CampaignSvcs
       {
         add_hash_fun(hash_adapter, calc_params);
         unsigned long hash_val = hash_adapter.finalize();
-        if(global_dictionary.find(hash_val) == global_dictionary.end())
+        if (global_dictionary.find(hash_val) == global_dictionary.end())
         {
-          dictionary.insert(
-            std::make_pair(hash_val, name_ + ":" + get_value_fun(calc_params)));
+          dictionary.insert(std::make_pair(hash_val, name_ + ":" + get_value_fun(calc_params)));
         }
       }
 
@@ -396,9 +388,7 @@ namespace CampaignSvcs
       public CTRGenerator::FeatureHashCalculator
     {
     public:
-      FeatureHashCalculatorDelegateImpl(
-        FeatureHashCalculator* next_calculator,
-        const char* name)
+      FeatureHashCalculatorDelegateImpl(FeatureHashCalculator* next_calculator, const char* name)
         noexcept
         : next_calculator_(ReferenceCounting::add_ref(next_calculator)),
           name_(name)
@@ -412,10 +402,7 @@ namespace CampaignSvcs
         noexcept
       {
         add_hash_fun(hash_adapter, calc_params);
-        next_calculator_->eval(
-          hash_adapter,
-          index_calculation,
-          calc_params);
+        next_calculator_->eval(hash_adapter, index_calculation, calc_params);
       }
 
       virtual void
@@ -434,9 +421,9 @@ namespace CampaignSvcs
           global_dictionary,
           calc_params);
 
-        if(!local_dictionary.empty())
+        if (!local_dictionary.empty())
         {
-          for(auto dict_it = local_dictionary.begin();
+          for (auto dict_it = local_dictionary.begin();
             dict_it != local_dictionary.end(); ++dict_it)
           {
             dictionary.insert(
@@ -476,9 +463,9 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        if(!(calc_params.*field_).empty())
+        if (!(calc_params.*field_).empty())
         {
-          for(CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
+          for (CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
               it != (calc_params.*field_).end(); ++it)
           {
             // need local hasher
@@ -508,19 +495,18 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        if(!(calc_params.*field_).empty())
+        if (!(calc_params.*field_).empty())
         {
-          for(CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
+          for (CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
               it != (calc_params.*field_).end(); ++it)
           {
             // need local hasher
             CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(static_cast<uint32_t>(*it));
             unsigned long hash_val = hash_adapter_copy.finalize();
-            if(global_dictionary.find(hash_val) == global_dictionary.end())
+            if (global_dictionary.find(hash_val) == global_dictionary.end())
             {
-              dictionary.insert(
-                std::make_pair(hash_val, name_ + ":" + value_to_string(*it)));
+              dictionary.insert(std::make_pair(hash_val, name_ + ":" + value_to_string(*it)));
             }
           }
         }
@@ -528,7 +514,7 @@ namespace CampaignSvcs
         {
           hash_adapter.add(static_cast<uint32_t>(0));
           unsigned long hash_val = hash_adapter.finalize();
-          if(global_dictionary.find(hash_val) == global_dictionary.end())
+          if (global_dictionary.find(hash_val) == global_dictionary.end())
           {
             dictionary.insert(std::make_pair(hash_val, name_ + ":"));
           }
@@ -566,27 +552,20 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        if(!(calc_params.*field_).empty())
+        if (!(calc_params.*field_).empty())
         {
-          for(CTRGenerator::IdSet::const_iterator it =
-                (calc_params.*field_).begin();
+          for (CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
               it != (calc_params.*field_).end(); ++it)
           {
             CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(static_cast<uint32_t>(*it));
-            next_calculator_->eval(
-              hash_adapter_copy,
-              index_calculation,
-              calc_params);
+            next_calculator_->eval(hash_adapter_copy, index_calculation, calc_params);
           }
         }
         else
         {
           hash_adapter.add(static_cast<uint32_t>(0));
-          next_calculator_->eval(
-            hash_adapter,
-            index_calculation,
-            calc_params);
+          next_calculator_->eval(hash_adapter, index_calculation, calc_params);
         }
       }
 
@@ -598,10 +577,9 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        if(!(calc_params.*field_).empty())
+        if (!(calc_params.*field_).empty())
         {
-          for(CTRGenerator::IdSet::const_iterator it =
-                (calc_params.*field_).begin();
+          for (CTRGenerator::IdSet::const_iterator it = (calc_params.*field_).begin();
               it != (calc_params.*field_).end(); ++it)
           {
             CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
@@ -615,9 +593,9 @@ namespace CampaignSvcs
               global_dictionary,
               calc_params);
 
-            if(!local_dictionary.empty())
+            if (!local_dictionary.empty())
             {
-              for(auto dict_it = local_dictionary.begin();
+              for (auto dict_it = local_dictionary.begin();
                 dict_it != local_dictionary.end(); ++dict_it)
               {
                 dictionary.insert(
@@ -640,9 +618,9 @@ namespace CampaignSvcs
             global_dictionary,
             calc_params);
 
-          if(!local_dictionary.empty())
+          if (!local_dictionary.empty())
           {
-            for(auto dict_it = local_dictionary.begin();
+            for (auto dict_it = local_dictionary.begin();
               dict_it != local_dictionary.end(); ++dict_it)
             {
               dictionary.insert(
@@ -685,7 +663,7 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        for(uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
+        for (uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
         {
           // need local hasher
           CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
@@ -705,16 +683,15 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        for(uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
+        for (uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
         {
           // need local hasher
           CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
           hash_adapter_copy.add(hour_i);
           unsigned long hash_val = hash_adapter_copy.finalize();
-          if(global_dictionary.find(hash_val) == global_dictionary.end())
+          if (global_dictionary.find(hash_val) == global_dictionary.end())
           {
-            dictionary.insert(
-              std::make_pair(hash_val, name_ + ":" + value_to_string(hour_i)));
+            dictionary.insert(std::make_pair(hash_val, name_ + ":" + value_to_string(hour_i)));
           }
         }
       }
@@ -751,14 +728,11 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        for(uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
+        for (uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
         {
           CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
           hash_adapter_copy.add(hour_i);
-          next_calculator_->eval(
-            hash_adapter_copy,
-            index_calculation,
-            calc_params);
+          next_calculator_->eval(hash_adapter_copy, index_calculation, calc_params);
         }
       }
 
@@ -770,7 +744,7 @@ namespace CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
-        for(uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
+        for (uint32_t hour_i = 0; hour_i < calc_params.*field_; ++hour_i)
         {
           CTR::Murmur32v3Adapter hash_adapter_copy(hash_adapter);
           hash_adapter_copy.add(hour_i);
@@ -783,9 +757,9 @@ namespace CampaignSvcs
             global_dictionary,
             calc_params);
 
-          if(!local_dictionary.empty())
+          if (!local_dictionary.empty())
           {
-            for(auto dict_it = local_dictionary.begin();
+            for (auto dict_it = local_dictionary.begin();
               dict_it != local_dictionary.end(); ++dict_it)
             {
               dictionary.insert(
@@ -841,21 +815,20 @@ namespace CampaignSvcs
       push_ssp_vtr_(false)
   {
     // create calculator
-    for(FeatureList::const_iterator fit = features.begin();
-        fit != features.end(); ++fit)
+    for (FeatureList::const_iterator fit = features.begin(); fit != features.end(); ++fit)
     {
-      if(!fit->basic_features.empty())
+      if (!fit->basic_features.empty())
       {
-        if(!xgb_model && fit->basic_features.size() == 1)
+        if (!xgb_model && fit->basic_features.size() == 1)
         {
           const auto feature_id = *fit->basic_features.begin();
-          if(CTR::is_direct_ssp_float_feature(feature_id))
+          if (CTR::is_direct_ssp_float_feature(feature_id))
           {
-            if(feature_id == CTR::BF_SSP_CTR)
+            if (feature_id == CTR::BF_SSP_CTR)
             {
               push_ssp_ctr_ = true;
             }
-            else if(feature_id == CTR::BF_SSP_VIEWABILITY)
+            else if (feature_id == CTR::BF_SSP_VIEWABILITY)
             {
               push_ssp_viewability_ = true;
             }
@@ -867,26 +840,26 @@ namespace CampaignSvcs
           }
         }
 
-        if(xgb_model && fit->basic_features.size() == 1)
+        if (xgb_model && fit->basic_features.size() == 1)
         {
           auto feature_id = *fit->basic_features.begin();
 
-          if(feature_id == CTR::BF_HOUR)
+          if (feature_id == CTR::BF_HOUR)
           {
             push_hour_ = true;
           }
 
-          if(feature_id == CTR::BF_WEEK_DAY)
+          if (feature_id == CTR::BF_WEEK_DAY)
           {
             push_week_day_ = true;
           }
 
-          if(feature_id == CTR::BF_CAMPAIGN_FREQ_ID)
+          if (feature_id == CTR::BF_CAMPAIGN_FREQ_ID)
           {
             push_campaign_freq_ = true;
           }
 
-          if(feature_id == CTR::BF_CAMPAIGN_FREQ_LOG_ID)
+          if (feature_id == CTR::BF_CAMPAIGN_FREQ_LOG_ID)
           {
             push_campaign_freq_log_ = true;
           }
@@ -897,10 +870,9 @@ namespace CampaignSvcs
         feature_holder.basic_features = fit->basic_features;
 
         FeatureHashCalculator_var feature_hash_calculator =
-          create_final_feature_hash_calculator_(
-            *(fit->basic_features.rbegin()));
+          create_final_feature_hash_calculator_(*(fit->basic_features.rbegin()));
 
-        for(CTR::BasicFeatureSet::const_reverse_iterator basic_fit =
+        for (CTR::BasicFeatureSet::const_reverse_iterator basic_fit =
               ++(fit->basic_features.rbegin());
             basic_fit != fit->basic_features.rend(); ++basic_fit)
         {
@@ -920,7 +892,7 @@ namespace CampaignSvcs
       {
         const int left_level = feature_level(left.basic_features);
         const int right_level = feature_level(right.basic_features);
-        if(left_level != right_level)
+        if (left_level != right_level)
         {
           return left_level < right_level;
         }
@@ -934,63 +906,52 @@ namespace CampaignSvcs
   };
 
   void
-  CTRGenerator::calculate(
-    Calculation& calculation,
-    const CalculateParams& calc_params) const
+  CTRGenerator::calculate(Calculation& calculation, const CalculateParams& calc_params) const
   {
-    for(FeatureHolderList::const_iterator feature_holder_it =
-          feature_holders_.begin();
+    for (FeatureHolderList::const_iterator feature_holder_it = feature_holders_.begin();
         feature_holder_it != feature_holders_.end();
         ++feature_holder_it)
     {
       CTR::Murmur32v3Adapter hash_adapter(feature_holder_it->hash_seed);
 
-      feature_holder_it->feature_calculator->eval(
-        hash_adapter,
-        calculation,
-        calc_params);
+      feature_holder_it->feature_calculator->eval(hash_adapter, calculation, calc_params);
     }
 
-    if(push_hour_)
+    if (push_hour_)
     {
       calculation.hashes.emplace_back(CTR::BF_HOUR, calc_params.hour);
     }
 
-    if(push_week_day_)
+    if (push_week_day_)
     {
       calculation.hashes.emplace_back(CTR::BF_WEEK_DAY, calc_params.wd);
     }
 
-    if(push_campaign_freq_)
+    if (push_campaign_freq_)
     {
-      calculation.hashes.emplace_back(
-        CTR::BF_CAMPAIGN_FREQ_ID,
-        calc_params.campaign_freq);
+      calculation.hashes.emplace_back(CTR::BF_CAMPAIGN_FREQ_ID, calc_params.campaign_freq);
     }
 
-    if(push_campaign_freq_log_)
+    if (push_campaign_freq_log_)
     {
-      calculation.hashes.emplace_back(
-        CTR::BF_CAMPAIGN_FREQ_LOG_ID,
-        calc_params.campaign_freq_log);
+      calculation.hashes.emplace_back(CTR::BF_CAMPAIGN_FREQ_LOG_ID, calc_params.campaign_freq_log);
     }
 
-    if(push_ssp_ctr_)
+    if (push_ssp_ctr_)
     {
       calculation.hashes.emplace_back(
         CTR::BF_SSP_CTR,
         calc_params.ssp_ctr.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
-    if(push_ssp_viewability_)
+    if (push_ssp_viewability_)
     {
       calculation.hashes.emplace_back(
         CTR::BF_SSP_VIEWABILITY,
-        calc_params.ssp_viewability.value_or(
-          CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
+        calc_params.ssp_viewability.value_or(CTR::SSP_FLOAT_UNSPECIFIED_VALUE));
     }
 
-    if(push_ssp_vtr_)
+    if (push_ssp_vtr_)
     {
       calculation.hashes.emplace_back(
         CTR::BF_SSP_VTR,
@@ -1003,8 +964,7 @@ namespace CampaignSvcs
     FeatureDictionary& global_dictionary,
     const CalculateParams& calc_params)
   {
-    for(FeatureHolderList::const_iterator feature_holder_it =
-          feature_holders_.begin();
+    for (FeatureHolderList::const_iterator feature_holder_it = feature_holders_.begin();
         feature_holder_it != feature_holders_.end();
         ++feature_holder_it)
     {
@@ -1017,25 +977,24 @@ namespace CampaignSvcs
         calc_params);
     }
 
-    if(push_ssp_ctr_)
+    if (push_ssp_ctr_)
     {
       global_dictionary[CTR::BF_SSP_CTR] = "ssp_ctr:";
     }
 
-    if(push_ssp_viewability_)
+    if (push_ssp_viewability_)
     {
       global_dictionary[CTR::BF_SSP_VIEWABILITY] = "ssp_viewability:";
     }
 
-    if(push_ssp_vtr_)
+    if (push_ssp_vtr_)
     {
       global_dictionary[CTR::BF_SSP_VTR] = "ssp_vtr:";
     }
   }
 
   CTRGenerator::FeatureHashCalculator_var
-  CTRGenerator::create_final_feature_hash_calculator_(
-    CTR::BasicFeature basic_feature)
+  CTRGenerator::create_final_feature_hash_calculator_(CTR::BasicFeature basic_feature)
   {
     switch(basic_feature)
     {
@@ -1103,17 +1062,14 @@ namespace CampaignSvcs
         add_hash_ssp_vtr_,
         get_value_ssp_vtr_>("ssp_vtr");
     case CTR::BF_HISTORY_CHANNELS:
-      return new FeatureHashCalculatorIdSetFinalImpl(
-        &CalculateParams::channels, "channel");
+      return new FeatureHashCalculatorIdSetFinalImpl(&CalculateParams::channels, "channel");
     case CTR::BF_GEO_CHANNELS:
-      return new FeatureHashCalculatorIdSetFinalImpl(
-        &CalculateParams::geo_channels, "geochannel");
+      return new FeatureHashCalculatorIdSetFinalImpl(&CalculateParams::geo_channels, "geochannel");
     case CTR::BF_CONTENT_CATEGORIES:
       return new FeatureHashCalculatorIdSetFinalImpl(
         &CalculateParams::content_categories, "contcat");
     case CTR::BF_VISUAL_CATEGORIES:
-      return new FeatureHashCalculatorIdSetFinalImpl(
-        &CalculateParams::visual_categories, "viscat");
+      return new FeatureHashCalculatorIdSetFinalImpl(&CalculateParams::visual_categories, "viscat");
     };
 
     Stream::Error ostr;
@@ -1205,23 +1161,19 @@ namespace CampaignSvcs
     case CTR::BF_SSP_TAG_ID:
       return new FeatureHashCalculatorDelegateImpl<
         add_hash_ssp_tag_id_,
-        get_value_ssp_tag_id_>(
-        next_calculator, "ssp_tag_id");
+        get_value_ssp_tag_id_>(next_calculator, "ssp_tag_id");
     case CTR::BF_SSP_CTR:
       return new FeatureHashCalculatorDelegateImpl<
         add_hash_ssp_ctr_,
-        get_value_ssp_ctr_>(
-        next_calculator, "ssp_ctr");
+        get_value_ssp_ctr_>(next_calculator, "ssp_ctr");
     case CTR::BF_SSP_VIEWABILITY:
       return new FeatureHashCalculatorDelegateImpl<
         add_hash_ssp_viewability_,
-        get_value_ssp_viewability_>(
-        next_calculator, "ssp_viewability");
+        get_value_ssp_viewability_>(next_calculator, "ssp_viewability");
     case CTR::BF_SSP_VTR:
       return new FeatureHashCalculatorDelegateImpl<
         add_hash_ssp_vtr_,
-        get_value_ssp_vtr_>(
-        next_calculator, "ssp_vtr");
+        get_value_ssp_vtr_>(next_calculator, "ssp_vtr");
     case CTR::BF_HISTORY_CHANNELS:
       return new FeatureHashCalculatorIdSetDelegateImpl(
         next_calculator, &CalculateParams::channels, "channel");
@@ -1242,15 +1194,13 @@ namespace CampaignSvcs
   }
 
   std::size_t
-  CTRGenerator::eval_feature_hash_seed_(
-    const Feature& feature) noexcept
+  CTRGenerator::eval_feature_hash_seed_(const Feature& feature) noexcept
   {
     std::size_t res_hash;
 
     {
       Generics::Murmur32v3Hash hash(res_hash);
-      for(CTR::BasicFeatureSet::const_iterator fit =
-            feature.basic_features.begin();
+      for (CTR::BasicFeatureSet::const_iterator fit = feature.basic_features.begin();
           fit != feature.basic_features.end(); ++fit)
       {
         hash_add(hash, static_cast<unsigned char>(*fit));
@@ -1259,5 +1209,4 @@ namespace CampaignSvcs
 
     return res_hash;
   }
-}
 }

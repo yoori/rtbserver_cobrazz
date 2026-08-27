@@ -1,9 +1,7 @@
 
 #include "GeoDataMergingTest.hpp"
 
-REFLECT_UNIT(GeoDataMergingTest) (
-  "UserProfiling",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(GeoDataMergingTest) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace
 {
@@ -15,21 +13,13 @@ namespace
 bool
 GeoDataMergingTest::run_test()
 {
-  AUTOTEST_CASE(
-    empty_muid_(),
-    "Merging empty muid with non-empty profile");
+  AUTOTEST_CASE(empty_muid_(), "Merging empty muid with non-empty profile");
 
-  AUTOTEST_CASE(
-    empty_profile_(),
-    "Merging non-empty muid with empty profile");
+  AUTOTEST_CASE(empty_profile_(), "Merging non-empty muid with empty profile");
 
-  AUTOTEST_CASE(
-    merge_with_cleanup_(),
-    "Merging two non-empty profiles with cleanup");
+  AUTOTEST_CASE(merge_with_cleanup_(), "Merging two non-empty profiles with cleanup");
 
-  AUTOTEST_CASE(
-    same_geodata_(),
-    "Merging two non-emty profiles with the same geo_data");
+  AUTOTEST_CASE(same_geodata_(), "Merging two non-emty profiles with the same geo_data");
 
   return true;
 }
@@ -39,16 +29,11 @@ GeoDataMergingTest::empty_muid_()
 {
   AdClient client1(AdClient::create_user(this));
   AdClient client2(AdClient::create_user(this));
-  client2.process_request(
-    NSLookupRequest().loc_coord(fetch_string("Location/L1")));
-  client2.process_request(
-    NSLookupRequest().muid(client1.get_uid()));
+  client2.process_request(NSLookupRequest().loc_coord(fetch_string("Location/L1")));
+  client2.process_request(NSLookupRequest().muid(client1.get_uid()));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Address/L1",
-      client2.debug_info.geo_channels).check(),
+    ChannelsCheck(this, "Address/L1", client2.debug_info.geo_channels).check(),
     "Geo channels check");
 }
 
@@ -56,16 +41,11 @@ void GeoDataMergingTest::empty_profile_()
 {
   AdClient client1(AdClient::create_user(this));
   AdClient client2(AdClient::create_user(this));
-  client1.process_request(
-    NSLookupRequest().loc_coord(fetch_string("Location/L2")));
-  client2.process_request(
-    NSLookupRequest().muid(client1.get_uid()));
+  client1.process_request(NSLookupRequest().loc_coord(fetch_string("Location/L2")));
+  client2.process_request(NSLookupRequest().muid(client1.get_uid()));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Address/L2",
-      client2.debug_info.geo_channels).check(),
+    ChannelsCheck(this, "Address/L2", client2.debug_info.geo_channels).check(),
     "Geo channels check");
 }
 
@@ -75,8 +55,7 @@ void GeoDataMergingTest::merge_with_cleanup_()
   AdClient client2(AdClient::create_undef_user(this));
 
   AutoTest::Time time(
-      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
-        ":" + "00-00-01").c_str());
+      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") + ":" + "00-00-01").c_str());
 
   client1.process_request(
     NSLookupRequest().
@@ -111,10 +90,7 @@ void GeoDataMergingTest::merge_with_cleanup_()
         debug_time(time));
   }
 
-  client2.process_request(
-    NSLookupRequest().
-      muid(client1.get_uid()).
-      debug_time(time));
+  client2.process_request(NSLookupRequest(). muid(client1.get_uid()). debug_time(time));
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -138,8 +114,7 @@ void GeoDataMergingTest::same_geodata_()
   AdClient client2(AdClient::create_user(this));
 
   AutoTest::Time time(
-      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
-        ":" + "00-00-01").c_str());
+      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") + ":" + "00-00-01").c_str());
 
   client1.process_request(
     NSLookupRequest().
@@ -173,15 +148,9 @@ void GeoDataMergingTest::same_geodata_()
       loc_coord(fetch_string("Location/L4")).
       debug_time(time - 24*60*60));
 
-  client2.process_request(
-    NSLookupRequest().
-      muid(client1.get_uid()).
-      debug_time(time));
+  client2.process_request(NSLookupRequest(). muid(client1.get_uid()). debug_time(time));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      exp_channels.c_str(),
-      client2.debug_info.geo_channels).check(),
+    ChannelsCheck(this, exp_channels.c_str(), client2.debug_info.geo_channels).check(),
     "Geo channels check");
 }

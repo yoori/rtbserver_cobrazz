@@ -80,9 +80,7 @@ public:
   {}
 
   virtual void
-  send_requests(
-    BillingProcessor::RequestArray& requests,
-    unsigned long service_index)
+  send_requests(BillingProcessor::RequestArray& requests, unsigned long service_index)
     /*throw(BillingProcessor::RequestSender::ServerUnreachable,
       BillingProcessor::RequestSender::Exception)*/
   {
@@ -92,8 +90,7 @@ public:
 
     std::ostringstream ostr;
     ostr << "Server #" << service_index << (invalid ? "(invalid):" : ":") << std::endl;
-    for(auto req_it = requests.begin();
-      req_it != requests.end(); ++req_it)
+    for (auto req_it = requests.begin(); req_it != requests.end(); ++req_it)
     {
       (*req_it)->print(ostr, "  ");
     }
@@ -101,7 +98,7 @@ public:
     std::cout << ostr.str();
     std::cout.flush();
 
-    if(service_index < invalid_index_)
+    if (service_index < invalid_index_)
     {
       throw BillingProcessor::RequestSender::ServerUnreachable("");
     }
@@ -140,8 +137,7 @@ main(int argc, char* argv[]) noexcept
       return 0;
     }
 
-    Logging::Logger_var logger = new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
 
     Logging::ActiveObjectCallbackImpl_var callback(
       new Logging::ActiveObjectCallbackImpl(

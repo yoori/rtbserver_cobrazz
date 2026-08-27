@@ -25,10 +25,7 @@ namespace AutoTest
      * @param service.
      */
     void
-    make_cmd(
-      const char* address,
-      const char* trigger,
-      ChannelSrv service);
+    make_cmd(const char* address, const char* trigger, ChannelSrv service);
 
     /**
      * @brief Constructors.
@@ -76,11 +73,7 @@ namespace AutoTest
      * @param UUID.
      */
     void
-    make_cmd (
-      const char* address,
-      const char* uuid,
-      UserInfoSrv service,
-      bool temp);
+    make_cmd (const char* address, const char* uuid, UserInfoSrv service, bool temp);
 
   public:
 
@@ -114,8 +107,7 @@ namespace AutoTest
      * @brief Makes UserInfoAdmin call string.
      * @param address manager object address.
      */
-    void make_cmd(
-      const char* address);
+    void make_cmd(const char* address);
 
   public:
 
@@ -146,8 +138,7 @@ namespace AutoTest
      * @brief Makes RequestInfoAdmin call string.
      * @param RequestInfoManager address.
      */
-    void make_cmd(
-      const char* address);
+    void make_cmd(const char* address);
 
   public:
 
@@ -178,8 +169,7 @@ namespace AutoTest
      * @brief Makes CampaignAdmin call string.
      * @param CampaignServer address.
      */
-    void make_cmd(
-      const char* address);
+    void make_cmd(const char* address);
 
   public:
 
@@ -210,8 +200,7 @@ namespace AutoTest
      * @brief Makes ExpressionMatchAdmin call string.
      * @param ExpressionMatcher address.
      */
-    void make_cmd(
-      const char* address);
+    void make_cmd(const char* address);
 
   public:
 
@@ -223,8 +212,7 @@ namespace AutoTest
      * @brief Constructor.
      * @param ExpressionMatcher address.
      */
-    DailyProcess(
-      const char* address);
+    DailyProcess(const char* address);
 
   };
 
@@ -243,9 +231,7 @@ namespace AutoTest
      * @param from source to copy
      * @param to distancion to copy
      */
-    CopyCmd(
-      const std::string& from,
-      const std::string& to);
+    CopyCmd(const std::string& from, const std::string& to);
 
     /**
      * @brief Executes command
@@ -264,9 +250,7 @@ namespace AutoTest
      * @param from source to move
      * @param to distancion to move
      */
-    MoveCmd(
-      const std::string& from,
-      const std::string& to);
+    MoveCmd(const std::string& from, const std::string& to);
 
     /**
      * @brief Executes command

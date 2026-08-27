@@ -9,10 +9,7 @@ class NoAdvNoTrackTest: public BaseUnit
 
 public:
 
-  NoAdvNoTrackTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var);
+  NoAdvNoTrackTest(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   virtual ~NoAdvNoTrackTest() noexcept;
 
@@ -29,16 +26,13 @@ private:
 
   // Test cases
   void
-  no_adv_case_(
-    AdClient& client);
+  no_adv_case_(AdClient& client);
 
   void
-  no_track_case_(
-    AdClient& client);
+  no_track_case_(AdClient& client);
 
   void
-  no_adv_and_no_track_case_(
-    AdClient& client);
+  no_adv_and_no_track_case_(AdClient& client);
 
   void
   session_info_case_();

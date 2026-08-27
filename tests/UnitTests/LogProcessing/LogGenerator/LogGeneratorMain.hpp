@@ -49,8 +49,7 @@
     bool
     operator >(const TimingResult& right) const
     {
-      return time > right.time ||
-        (time == right.time && strcmp(log_name, right.log_name) > 0);
+      return time > right.time || (time == right.time && strcmp(log_name, right.log_name) > 0);
     }
     void
     operator ()(const TimingResult& item)

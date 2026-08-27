@@ -61,14 +61,10 @@ namespace AdServer::Grpc
     void handle_batch_processed_(
       BatchContextPtr context,
       std::optional<std::exception_ptr> exception) noexcept;
-    void publish_batch_response_(
-      BatchContextPtr context,
-      Response* response) noexcept;
+    void publish_batch_response_(BatchContextPtr context, Response* response) noexcept;
     void try_start_write_() noexcept;
     bool start_write_i_(ReadyResponse ready_response) noexcept;
-    void handle_write_completion_(
-      bool ok,
-      BatchContextPtr context) noexcept;
+    void handle_write_completion_(bool ok, BatchContextPtr context) noexcept;
     void handle_finish_completion_(bool ok) noexcept;
     void finish_or_delete_() noexcept;
     void start_inprogress_stats_(BatchContext& context);

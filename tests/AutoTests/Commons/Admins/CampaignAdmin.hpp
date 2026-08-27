@@ -87,9 +87,7 @@ namespace AutoTest
       {
         EXPAND = 0
       };
-      void make_cmd (const char* address,
-        const char* campaign
-      )
+      void make_cmd (const char* address, const char* campaign)
       {
         address_ = address;
         AdminParams params;
@@ -100,29 +98,17 @@ namespace AutoTest
         make_admin_cmd(*this, "campaign", address, params, static_cast<size_t>(CampaignManager));
         add_cmd_i(modificator_names_[modificator_]);
       }
-      CampaignAdmin(
-        const char* address,
-        const char* campaign,
-        Modificator mod = EXPAND
-      )
+      CampaignAdmin(const char* address, const char* campaign, Modificator mod = EXPAND)
       {
         modificator_ = mod;
         make_cmd(address, campaign);
       }
-      CampaignAdmin(
-        const std::string& address,
-        const char* campaign,
-        Modificator mod = EXPAND
-      )
+      CampaignAdmin(const std::string& address, const char* campaign, Modificator mod = EXPAND)
       {
         modificator_ = mod;
         make_cmd(address.c_str(), campaign);
       }
-      CampaignAdmin(
-        const char* address,
-        const std::string& campaign,
-        Modificator mod = EXPAND
-      )
+      CampaignAdmin(const char* address, const std::string& campaign, Modificator mod = EXPAND)
       {
         modificator_ = mod;
         make_cmd(address, campaign.c_str());
@@ -136,20 +122,12 @@ namespace AutoTest
         modificator_ = mod;
         make_cmd(address.c_str(), campaign.c_str());
       }
-      CampaignAdmin(
-        const char* address,
-        unsigned long campaign,
-        Modificator mod = EXPAND
-      )
+      CampaignAdmin(const char* address, unsigned long campaign, Modificator mod = EXPAND)
       {
         modificator_ = mod;
         make_cmd(address, strof(campaign).c_str());
       }
-      CampaignAdmin(
-        const std::string& address,
-        unsigned long campaign,
-        Modificator mod = EXPAND
-      )
+      CampaignAdmin(const std::string& address, unsigned long campaign, Modificator mod = EXPAND)
       {
         modificator_ = mod;
         make_cmd(address.c_str(), strof(campaign).c_str());

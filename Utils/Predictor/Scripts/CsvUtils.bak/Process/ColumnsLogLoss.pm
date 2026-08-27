@@ -31,7 +31,7 @@ sub process
   my $label = $row->[$self->{label_}];
   my $eps = 0.00001;
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     die "LogLoss can't be applied to array row";
   }
@@ -39,7 +39,7 @@ sub process
   {
     my $logloss;
 
-    if($label == 0)
+    if ($label == 0)
     {
       $logloss = - log(1.0 - min($value, 1 - $eps));
     }

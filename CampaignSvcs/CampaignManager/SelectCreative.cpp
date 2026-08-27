@@ -23,8 +23,7 @@ namespace
       config.Creative().post_instantiate_script_template_file();
     result.post_instantiate_iframe_template_file =
       config.Creative().post_instantiate_iframe_template_file();
-    result.instantiate_track_html_file =
-      config.Creative().instantiate_track_html_file();
+    result.instantiate_track_html_file = config.Creative().instantiate_track_html_file();
     return result;
   }
 }
@@ -131,21 +130,15 @@ namespace AdServer::CampaignSvcs
     }
     catch(const CreativeTemplateProblem& ex)
     {
-      logger_->sstream(Logging::Logger::ERROR,
-        Aspect::TRAFFICKING_PROBLEM,
-        "ADS-TF-7") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::TRAFFICKING_PROBLEM, "ADS-TF-7") <<
         FUN << ": Can't instantiate creative ccid: " <<
-        creative_candidate->ccid << ". Caught CreativeTemplateProblem: " <<
-        ex.what();
+        creative_candidate->ccid << ". Caught CreativeTemplateProblem: " << ex.what();
     }
     catch(const CreativeInstantiateProblem& ex)
     {
-      logger_->sstream(Logging::Logger::ERROR,
-        Aspect::TRAFFICKING_PROBLEM,
-        "ADS-TF-1000") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::TRAFFICKING_PROBLEM, "ADS-TF-1000") <<
         FUN << ": Can't instantiate creative ccid: " <<
-        creative_candidate->ccid << ". Caught CreativeInstantiateProblem: " <<
-        ex.what();
+        creative_candidate->ccid << ". Caught CreativeInstantiateProblem: " << ex.what();
     }
 
     return false;
@@ -256,12 +249,9 @@ namespace AdServer::CampaignSvcs
     }
     catch(const CreativeInstantiateProblem& ex)
     {
-      logger_->sstream(Logging::Logger::WARNING,
-        Aspect::TRAFFICKING_PROBLEM,
-        "ADS-TF-1001") <<
+      logger_->sstream(Logging::Logger::WARNING, Aspect::TRAFFICKING_PROBLEM, "ADS-TF-1001") <<
         FUN << ": Can't instantiate text creative. "
-        "Caught CreativeInstantiateProblem: " <<
-        ex.what();
+        "Caught CreativeInstantiateProblem: " << ex.what();
     }
 
     return false;

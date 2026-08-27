@@ -39,10 +39,7 @@ namespace AdServer::LogProcessing
     const char *const FILE_STORE_CUR_DIR = "Current";
 
     void
-    make_log_file_name_V_2_6(
-      std::ostream& os,
-      const LogFileNameInfo &info,
-      long int rand_value)
+    make_log_file_name_V_2_6(std::ostream& os, const LogFileNameInfo &info, long int rand_value)
     {
       static const char DATE_FMT[] = "%Y%m%d.%H%M%S.%q";
       const std::string& date = info.timestamp.get_gm_time().format(DATE_FMT);
@@ -101,11 +98,7 @@ namespace AdServer::LogProcessing
 
   // FIXME: check
   void
-  parse_string_list(
-    const String::SubString& str,
-    StringArray& list,
-    char sep,
-    const char* empty)
+  parse_string_list(const String::SubString& str, StringArray& list, char sep, const char* empty)
   {
     list.clear();
     if (str != empty)
@@ -207,8 +200,7 @@ namespace AdServer::LogProcessing
         }
         break;
       default:
-        throw InvalidArgValue(
-          "generate_log_file_name: Unsupported log file name format requested");
+        throw InvalidArgValue("generate_log_file_name: Unsupported log file name format requested");
     }
 
     oss.str().swap(file_name);
@@ -233,8 +225,7 @@ namespace AdServer::LogProcessing
     }
     else
     {
-      throw InvalidArgValue(
-        "restore_log_file_name: Unsupported log file name format requested");
+      throw InvalidArgValue("restore_log_file_name: Unsupported log file name format requested");
     }
 
     return oss.str();
@@ -323,8 +314,7 @@ namespace AdServer::LogProcessing
 #if __i386__ || __x86_64__ // Little-endian
     static const uint32_t u32_csv = 0x7673632e; // ".csv" (little-endian)
     static const uint32_t u32_log = 0x676f6c2e; // ".log" (little-endian)
-    const uint32_t u32_cond =
-      *reinterpret_cast<const uint32_t*>(&fname[f_d_pos]);
+    const uint32_t u32_cond = *reinterpret_cast<const uint32_t*>(&fname[f_d_pos]);
     if (u32_cond == u32_csv) // CSV
 #else // Byte order is unknown
     SubString str_cond = fname.substr(f_d_pos + 1, 3);
@@ -433,8 +423,7 @@ namespace AdServer::LogProcessing
         }
         info.timestamp.set(unixtime);
         tmp_substr = tmp_substr.substr(d_pos + 1, tmp_substr.size() - d_pos);
-        if (tmp_substr.size() != 8 ||
-          !str_to_int(tmp_substr, info.random))
+        if (tmp_substr.size() != 8 || !str_to_int(tmp_substr, info.random))
         {
           info = LogFileNameInfo();
           throw InvalidLogFileNameFormat(log_file_name);
@@ -456,8 +445,7 @@ namespace AdServer::LogProcessing
           throw InvalidLogFileNameFormat(log_file_name);
         }
         tmp_substr = tmp_substr.substr(23, tmp_substr.size() - 22);
-        if (tmp_substr.size() != 8 ||
-          !str_to_int(tmp_substr, info.random))
+        if (tmp_substr.size() != 8 || !str_to_int(tmp_substr, info.random))
         {
           info = LogFileNameInfo();
           throw InvalidLogFileNameFormat(log_file_name);
@@ -486,8 +474,7 @@ namespace AdServer::LogProcessing
         throw InvalidLogFileNameFormat(log_file_name);
       }
       SubString rand_str = tmp_substr.substr(23, 8);
-      if (rand_str.size() != 8 ||
-        !str_to_int(rand_str, info.random))
+      if (rand_str.size() != 8 || !str_to_int(rand_str, info.random))
       {
         info = LogFileNameInfo();
         throw InvalidLogFileNameFormat(log_file_name);
@@ -598,8 +585,7 @@ namespace AdServer::LogProcessing
       {
         if (logger_ && logger_->log_level() >= TraceLevel::LOW)
         {
-          logger_->sstream(TraceLevel::MIDDLE, log_type_.c_str()) <<
-            FUN << ex.what();
+          logger_->sstream(TraceLevel::MIDDLE, log_type_.c_str()) << FUN << ex.what();
         }
         return;
       }
@@ -621,8 +607,7 @@ namespace AdServer::LogProcessing
         {
           logger_->sstream(TraceLevel::MIDDLE, log_type_.c_str()) <<
             FUN << "File " << name << " has base name '" <<
-            name_info.base_name << "' (must be '" <<
-            log_type_ << "'). Skipping...";
+            name_info.base_name << "' (must be '" << log_type_ << "'). Skipping...";
         }
         return;
       }
@@ -630,17 +615,12 @@ namespace AdServer::LogProcessing
       if (container_inc_size_limit_ == static_cast<std::size_t>(-1) ||
         container_.size() < container_original_size_ + container_inc_size_limit_)
       {
-        container_.insert(
-          LogSortingMap::value_type(name_info.timestamp, full_path)
-        );
+        container_.insert(LogSortingMap::value_type(name_info.timestamp, full_path));
       }
-      else if (!container_.empty() &&
-        name_info.timestamp < container_.rbegin()->first)
+      else if (!container_.empty() && name_info.timestamp < container_.rbegin()->first)
       {
         container_.erase(--container_.end());
-        container_.insert(
-          LogSortingMap::value_type(name_info.timestamp, full_path)
-        );
+        container_.insert(LogSortingMap::value_type(name_info.timestamp, full_path));
       }
     }
 
@@ -661,8 +641,7 @@ namespace AdServer::LogProcessing
     Logging::Logger *logger
   )
   {
-    MapCreator creator(log_sorting_map, log_type,
-      log_map_inc_size_limit, logger);
+    MapCreator creator(log_sorting_map, log_type, log_map_inc_size_limit, logger);
 
     Generics::DirSelect::directory_selector(
       dir_name.c_str(),
@@ -698,6 +677,7 @@ namespace AdServer::LogProcessing
       }
       make_dir_(dir_name_.substr(0, pos));
     }
+
     if (use_session_name_)
     {
       std::string cur_dir_name = dir_name_;
@@ -722,10 +702,7 @@ namespace AdServer::LogProcessing
     catch (const eh::Exception&)
     {}
 
-    store_(
-      file_path,
-      use_session_name_ ? new_session_name_() : "",
-      new_file_name);
+    store_(file_path, use_session_name_ ? new_session_name_() : "", new_file_name);
   }
 
   void
@@ -800,6 +777,7 @@ namespace AdServer::LogProcessing
           make_dir_layout_(dir_name_, cur_dir_name);
           return store_(file_path, session_name);
         }
+
         if (errno != EEXIST)
         {
           eh::throw_errno_exception<Exception>(__PRETTY_FUNCTION__,
@@ -1010,6 +988,7 @@ namespace AdServer::LogProcessing
           es << FNS << "Failed to read file version from file '" << *it << "'";
           throw Exception(es);
         }
+
         if (std::memcmp(file_ver, CURRENT_FILE_VERSION_, sizeof(file_ver)))
         {
           Stream::Error es;
@@ -1025,6 +1004,7 @@ namespace AdServer::LogProcessing
           es << FNS << "Failed to read table size from file '" << *it << "'";
           throw Exception(es);
         }
+
         if (!table_size)
         {
           Stream::Error es;
@@ -1049,6 +1029,7 @@ namespace AdServer::LogProcessing
           es << FNS << "Failed to read EOF marker from file '" << *it << "'";
           throw Exception(es);
         }
+
         if (std::memcmp(eof_marker, EOF_MARKER_, sizeof(eof_marker)))
         {
           Stream::Error es;
@@ -1077,8 +1058,7 @@ namespace AdServer::LogProcessing
   {
     std::string file_name;
 
-    for (CounterMap_::const_iterator it = counters_.begin();
-      it != counters_.end(); ++it)
+    for (CounterMap_::const_iterator it = counters_.begin(); it != counters_.end(); ++it)
     {
       make_file_name_(it->first, file_name);
 
@@ -1097,8 +1077,7 @@ namespace AdServer::LogProcessing
 
       if (!ofs)
       {
-        std::cerr << FNS << "Failed to write data to file '" <<
-          file_name << "'" << std::endl;
+        std::cerr << FNS << "Failed to write data to file '" << file_name << "'" << std::endl;
       }
     }
   }

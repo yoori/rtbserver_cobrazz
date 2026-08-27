@@ -7,7 +7,7 @@ namespace RequestInfoSvcs
     uint time;
     string request_id;
   };
-  
+
   autoreader UserMotionReader<UserMotionDescriptor>;
 
   autowriter UserMotionWriter<UserMotionDescriptor>;
@@ -33,7 +33,7 @@ namespace RequestInfoSvcs
     list<UserMotionReader> rollback_requests;
     list<UserMotionReader> clicks;
   };
-  
+
   writer UserFraudProtectionProfileWriter<UserFraudProtectionProfileDescriptor>
   {
     version;

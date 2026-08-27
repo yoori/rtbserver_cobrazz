@@ -1,9 +1,6 @@
 #include "CreativeExclusionTest.hpp"
 
-REFLECT_UNIT(CreativeExclusionTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CreativeExclusionTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -196,12 +193,9 @@ CreativeExclusionTest::exclusion(const TestCaseType* test_cases,
       std::string exp_ccid =
           test_cases[testcase_id].ccid_appearances[ind]?
           get_object_by_name(ccid_name).Value(): "0";
-      std::string exp_tid  = exp_ccid == "0"?
-          "0" : get_object_by_name(tag_name).Value();
+      std::string exp_tid  = exp_ccid == "0"? "0" : get_object_by_name(tag_name).Value();
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          exp_ccid,
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(exp_ccid, client.debug_info.ccid).check(),
         test_cases[testcase_id].description +
           ". Unexpected ccid#" + strof(ind));
     }
@@ -227,9 +221,7 @@ CreativeExclusionTest::excluding_higher_weight_creative_()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      ccid,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(ccid, client.debug_info.ccid).check(),
     description + ". Expected ccid");
 }
 
@@ -246,21 +238,15 @@ CreativeExclusionTest::excluding_by_creative_template_and_tag_()
   NSLookupRequest request;
   request.referer_kw = fetch_string("ADSC-5543-5/KWD");
   request.tid = fetch_string("ADSC-5543-5/TAG2");
-  user.process_request(
-    request,
-    "request for no creative (rejected template)");
+  user.process_request(request, "request for no creative (rejected template)");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      user.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(user.debug_info.selected_creatives.empty()),
     "server must return empty cc_id (rejected template)");
 
   request.tid = fetch_string("ADSC-5543-5/TAG3");
-  user.process_request(
-    request,
-    "request for no creative (rejected tag)");
+  user.process_request(request, "request for no creative (rejected tag)");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      user.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(user.debug_info.selected_creatives.empty()),
     "server must return empty cc_id (rejected tag)");
 
   std::string ccid = fetch_string("ADSC-5543-5/CCID");
@@ -268,9 +254,7 @@ CreativeExclusionTest::excluding_by_creative_template_and_tag_()
   user.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      ccid,
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(ccid, user.debug_info.ccid).check(),
     description + ". Expected ccid");
 }
 
@@ -373,13 +357,9 @@ bool
 CreativeExclusionTest::run_test()
 {
   add_descr_phrase("Site exclusion test cases started.");
-  NOSTOP_FAIL_CONTEXT(exclusion(site_excl_test_cases,
-                          site_excl_cases_count,
-                          TAGS_COUNT_1));
+  NOSTOP_FAIL_CONTEXT(exclusion(site_excl_test_cases, site_excl_cases_count, TAGS_COUNT_1));
   add_descr_phrase("Tags exclusion test cases started.");
-  NOSTOP_FAIL_CONTEXT(exclusion(tags_excl_test_cases,
-                          tags_excl_cases_count,
-                          TAGS_COUNT_2));
+  NOSTOP_FAIL_CONTEXT(exclusion(tags_excl_test_cases, tags_excl_cases_count, TAGS_COUNT_2));
 
   NOSTOP_FAIL_CONTEXT(excluding_higher_weight_creative_());
   NOSTOP_FAIL_CONTEXT(excluding_by_creative_template_and_tag_());

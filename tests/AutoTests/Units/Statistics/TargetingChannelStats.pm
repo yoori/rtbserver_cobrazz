@@ -47,7 +47,7 @@ sub create_geo_channel
 
   $self->{ns_}->output('GEO', $geo_channel );
   $self->{ns_}->output('Location', lc($location) );
-  $self->{channels_}->{'GEO'} = $geo_channel;  
+  $self->{channels_}->{'GEO'} = $geo_channel;
 }
 
 sub create_device_channel
@@ -97,7 +97,7 @@ sub create_behavioral_channel
 
   $suffix = "" if not defined $suffix;
 
-  my $keyword = 
+  my $keyword =
     make_autotest_name($self->{ns_}, 'KWD' . $suffix);
 
   my $channel = $self->{ns_}->create(DB::BehavioralChannel->blank(
@@ -139,7 +139,7 @@ sub create_expression_channel
     }
   }
 
-  my $channel = 
+  my $channel =
     $self->{ns_}->create(DB::ExpressionChannel->blank(
       name => $name,
       account_id => $self->{account_},
@@ -164,7 +164,7 @@ sub create_targeting_channel
 
     my $c = $self->{channels_}->{$w};
     die "Channel '$w' is not defined " .
-        "in the case '$self->{ns_}->namespace'" 
+        "in the case '$self->{ns_}->namespace'"
        if not defined $c;
     $expression =~ s/$w/$c->{channel_id}/;
     if (( $c->{channel_type} eq 'E' ||
@@ -173,11 +173,11 @@ sub create_targeting_channel
         ( not grep {$_->{channel_id} eq $c->{channel_id}}
             @{$self->{channels_}->{'Excluded'}} ))
     {
-      $stat_expression =~ s/$w/$c->{channel_id}/ 
+      $stat_expression =~ s/$w/$c->{channel_id}/
           if $c->{channel_type} eq 'B' ||
-             $c->{channel_type} eq 'A'; 
-      $stat_expression =~ s/$w/$c->{expression}/ 
-          if $c->{channel_type} eq 'E'; 
+             $c->{channel_type} eq 'A';
+      $stat_expression =~ s/$w/$c->{expression}/
+          if $c->{channel_type} eq 'E';
     }
     else
     {
@@ -188,8 +188,8 @@ sub create_targeting_channel
   $stat_expression =~ s/^\s*[\|&^]?//;
 
   my $channels_count=(grep {m/.+/} split(/\W+/, $stat_expression));
- 
-  my $channel = 
+
+  my $channel =
     $self->{ns_}->create(DB::TargetingChannel->blank(
     name => 'Targeting' . $suffix,
     expression => $expression));
@@ -265,20 +265,20 @@ sub create_text
   my ($self, $args) = @_;
 
   my $idx = 0;
-  
+
   foreach my $t (@$args)
   {
 
     ++$idx;
 
-    my $expression = 
+    my $expression =
       defined $t->{expression}?
         $self->create_expression_channel($t->{expression}, $idx):
           $self->create_behavioral_channel($t->{channel});
 
-    my $targeting = 
+    my $targeting =
       $self->create_targeting_channel($t->{targeting_expression}, $idx);
-    
+
     my $campaign =  $self->{ns_}->create(
       ChannelTargetedTACampaign => {
       name => "TextCampaign-" . $idx,
@@ -294,12 +294,12 @@ sub create_text
         {site_id => $self->{publisher_}->{site_id} }] });
 
     $self->{ns_}->output('CC/' . $idx, $campaign->{cc_id});
-    $self->{ns_}->output('CPA/' . $idx, $t->{cpa}) 
+    $self->{ns_}->output('CPA/' . $idx, $t->{cpa})
        if defined $t->{cpa};
     $self->{ns_}->output('CPM/' . $idx, $t->{cpm})
        if defined $t->{cpm};
   }
-} 
+}
 
 sub create_no_imp_publisher
 {
@@ -308,15 +308,15 @@ sub create_no_imp_publisher
     $self->{ns_}->create(Publisher =>
       { name => 'Publisher-no-imp',
         size_id =>  $self->{size_} });
-  
+
   $self->{ns_}->output("NoImp/Tag", $publisher->{tag_id});
-} 
+}
 
 sub create_other
 {
   my $self = shift;
   my ($cpm) = @_;
-  my $advertiser = 
+  my $advertiser =
     $self->{ns_}->create(Account => {
       name => 'Advertiser-Other',
       role_id => DB::Defaults::instance()->advertiser_role });
@@ -329,13 +329,13 @@ sub create_other
         size_id =>  $self->{size_} });
 
   my $campaign = $self->{ns_}->create(
-    DisplayCampaign => { 
+    DisplayCampaign => {
       name => 'Campaign-Other',
       account_id => $advertiser,
       campaigncreativegroup_cpm => $cpm,
       creative_template_id =>  DB::Defaults::instance()->text_template,
       creative_size_id =>  $self->{size_},
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           name => 'Channel-Other',
           account_id => $advertiser,
@@ -355,28 +355,28 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
-  unless (ref $self) 
+
+  unless (ref $self)
   {
-    $self = bless {}, $self;  
+    $self = bless {}, $self;
   }
-  
+
   $self->{ns_} = $ns->sub_namespace($prefix);
   $self->{channels_} = ();
-  $self->{account_} = 
+  $self->{account_} =
     $self->{ns_}->create(Account => {
       name => 'Advertiser',
       role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $creative_size = 
+  my $creative_size =
      defined $args->{text}?
         @{$args->{text}}: 1;
-  $self->{size_} = 
+  $self->{size_} =
     defined $args->{text}?
       $self->{ns_}->create(
         CreativeSize => {
           name => 'Size',
-          max_text_creatives => $creative_size}): 
+          max_text_creatives => $creative_size}):
       DB::Defaults::instance()->size();
 
   $self->{publisher_} =
@@ -431,18 +431,18 @@ sub all
   my $case =
     new TargetingChannelStats::Case(
       $ns, 'ALL',
-      { geo => 'Boke', 
+      { geo => 'Boke',
         device => {
           platform => "Android",
           user_agent => 'Mozilla/5.0 (Linux; U; Android 2.2; '.
-            'en-sa; HTC_DesireHD_A9191 Build/FRF91) AppleWebKit/533.1 ' . 
+            'en-sa; HTC_DesireHD_A9191 Build/FRF91) AppleWebKit/533.1 ' .
             '(KHTML, like Gecko) Version/4.0 Mobile Safari/533.1'},
-        text => 
+        text =>
           [ { cpa => 0.01, channel => "B1",
               targeting_expression=> "B1&GEO&Device" },
-            { cpm => 2, expression => "B2|B3", 
+            { cpm => 2, expression => "B2|B3",
               targeting_expression=> "Expr2&GEO&Device" },
-            { cpm => 1, expression => "((B2&B4)|B5)", 
+            { cpm => 1, expression => "((B2&B4)|B5)",
               targeting_expression=> "Expr3&GEO&Device" } ] });
 
   $case->create_no_imp_publisher();
@@ -465,7 +465,7 @@ sub geo_only
 
   new TargetingChannelStats::Case(
     $ns, 'GEO-ONLY',
-    { geo => 'Macenta', 
+    { geo => 'Macenta',
       targeting => 'GEO' } );
 }
 
@@ -515,7 +515,7 @@ sub init {
     $ns->create(Publisher =>
       { name => 'Publisher-no-imp' });
 
-  my $advertiser_other = 
+  my $advertiser_other =
     $ns->create(Account => {
       name => 'Advertiser',
       role_id => DB::Defaults::instance()->advertiser_role });
@@ -527,11 +527,11 @@ sub init {
       { name => 'Publisher-other' });
 
   my $campaign_other = $ns->create(
-    DisplayCampaign => { 
+    DisplayCampaign => {
       name => 'Campaign-Other',
       account_id => $advertiser_other,
       campaigncreativegroup_cpm => 20,
-      channel_id => 
+      channel_id =>
         DB::BehavioralChannel->blank(
           name => 'Channel',
           account_id => $advertiser_other,

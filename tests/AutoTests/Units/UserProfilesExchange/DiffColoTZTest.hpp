@@ -8,10 +8,7 @@ class DiffColoTZTest: public BaseUnit
 {
 public:
 
-  DiffColoTZTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  DiffColoTZTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

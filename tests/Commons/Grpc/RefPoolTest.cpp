@@ -15,10 +15,7 @@ namespace
   {
   public:
     void
-    report_error(
-      Severity,
-      const String::SubString&,
-      const char* = nullptr) throw () override
+    report_error(Severity, const String::SubString&, const char* = nullptr) throw () override
     {}
 
   protected:
@@ -55,9 +52,7 @@ namespace
   }
 
   std::optional<Pool::Ref>
-  wait_for_ref(
-    const std::shared_ptr<Pool>& pool,
-    const std::chrono::milliseconds timeout)
+  wait_for_ref(const std::shared_ptr<Pool>& pool, const std::chrono::milliseconds timeout)
   {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (std::chrono::steady_clock::now() < deadline)

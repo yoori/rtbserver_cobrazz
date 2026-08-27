@@ -1,8 +1,6 @@
 #include "SiteUserStatsTest.hpp"
 
-REFLECT_UNIT(SiteUserStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(SiteUserStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -37,8 +35,7 @@ void SiteUserStatsTest::add_stats_(
   std::map<unsigned long, Diff> sum_diffs;
   for (size_t i = 0; i < Count; ++i)
   {
-    unsigned long site_id =
-      fetch_int(expected[i].site);
+    unsigned long site_id = fetch_int(expected[i].site);
     SiteUserStat stat;
     stat.key().
       site_id(site_id).
@@ -48,24 +45,17 @@ void SiteUserStatsTest::add_stats_(
     stat.description(description + "#" + strof(i+1));
     stat.select(conn_);
     stats_.push_back(stat);
-    diffs_.push_back(
-      Diff().
-        unique_users(expected[i].count));
+    diffs_.push_back(Diff(). unique_users(expected[i].count));
     Diff& sum_diff =  sum_diffs[site_id];
     sum_diff.unique_users(
       (sum_diff.unique_users() == ORM::any_stats_diff?
         0: sum_diff.unique_users()) + expected[i].count);
     sum_diff.control_sum(
-      (sum_diff.control_sum() == ORM::any_stats_diff?
-        0: sum_diff.control_sum()) +
-        sum_change(
-          expected[i].isp_sdate,
-          expected[i].last_appearance,
-          expected[i].count));
+      (sum_diff.control_sum() == ORM::any_stats_diff? 0: sum_diff.control_sum()) +
+        sum_change(expected[i].isp_sdate, expected[i].last_appearance, expected[i].count));
   }
 
-  std::map<unsigned long, Diff>::const_iterator it =
-    sum_diffs.begin();
+  std::map<unsigned long, Diff>::const_iterator it = sum_diffs.begin();
 
   for (size_t i = 0; it != sum_diffs.end(); ++it, ++i)
   {
@@ -100,15 +90,11 @@ SiteUserStatsTest::check_stats_()
 {
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, diffs_, stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
     "SiteUserStats check");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, sum_diffs_, sum_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, sum_diffs_, sum_stats_)).check(),
     "SiteUserStats sum and control check");
 
   diffs_.clear();
@@ -264,13 +250,9 @@ SiteUserStatsTest::non_gmt_timezone_()
     std::string description("Non-GMT timezone test.");
     add_descr_phrase(description);
 
-    AutoTest::Time base_time(
-      base_time_.get_gm_time().get_date());
+    AutoTest::Time base_time(base_time_.get_gm_time().get_date());
 
-    Generics::Time tz_ofset(
-      AutoTest::ORM::get_tz_ofset(
-        this,
-        fetch_string("TZ")));
+    Generics::Time tz_ofset(AutoTest::ORM::get_tz_ofset(this, fetch_string("TZ")));
 
     const Expected EXPECTED[] =
       {
@@ -299,9 +281,7 @@ SiteUserStatsTest::non_gmt_timezone_()
 
     add_stats_(description, EXPECTED);
 
-    AdClient client(
-      AdClient::create_user(
-        this, AutoTest::UF_FRONTEND_MINOR));
+    AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
     const Request REQUESTS[] =
     {
@@ -320,11 +300,9 @@ SiteUserStatsTest::colo_logging_()
   std::string description("Colo logging test.");
   add_descr_phrase(description);
 
-  bool remote_2 =
-    get_config().check_service(CTE_REMOTE2, STE_FRONTEND);
+  bool remote_2 = get_config().check_service(CTE_REMOTE2, STE_FRONTEND);
 
-  AutoTest::Time base_time(
-    base_time_.get_gm_time().get_date());
+  AutoTest::Time base_time(base_time_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -339,10 +317,7 @@ SiteUserStatsTest::colo_logging_()
 
   add_stats_(description, EXPECTED);
 
-  AdClient client(
-    AdClient::create_user(
-      this,
-      remote_2? AutoTest::UF_FRONTEND_MINOR: 0));
+  AdClient client(AdClient::create_user(this, remote_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
   const Request REQUESTS_1[] =
   {
@@ -359,8 +334,7 @@ SiteUserStatsTest::async_part_1_()
   std::string description("Asynchronous logging (part#1).");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    base_time_.get_gm_time().get_date());
+  AutoTest::Time base_time(base_time_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -388,14 +362,12 @@ SiteUserStatsTest::async_part_1_()
 }
 
 void
-SiteUserStatsTest::async_part_2_(
-  AdClient& client)
+SiteUserStatsTest::async_part_2_(AdClient& client)
 {
   std::string description("Asynchronous logging (part#2).");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    base_time_.get_gm_time().get_date());
+  AutoTest::Time base_time(base_time_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -433,14 +405,12 @@ SiteUserStatsTest::async_part_2_(
 }
 
 void
-SiteUserStatsTest::async_part_3_(
-  AdClient& client)
+SiteUserStatsTest::async_part_3_(AdClient& client)
 {
   std::string description("Asynchronous logging (part#3).");
   add_descr_phrase(description);
 
-  AutoTest::Time base_time(
-    base_time_.get_gm_time().get_date());
+  AutoTest::Time base_time(base_time_.get_gm_time().get_date());
 
   const Expected EXPECTED[] =
   {
@@ -490,10 +460,8 @@ SiteUserStatsTest::temporary_user_()
 
   add_stats_(description, EXPECTED);
 
-  TemporaryAdClient temporary(
-    TemporaryAdClient::create_user(this));
-  AdClient persistent(
-    AdClient::create_user(this));
+  TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
+  AdClient persistent(AdClient::create_user(this));
 
   temporary.process_request(
     NSLookupRequest().
@@ -501,10 +469,7 @@ SiteUserStatsTest::temporary_user_()
       debug_time(base_time_));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "CHANNEL",
-      temporary.debug_info.history_channels).check(),
+    ChannelsCheck(this, "CHANNEL", temporary.debug_info.history_channels).check(),
     description +
       " history_channels check (before merging)");
 
@@ -515,10 +480,7 @@ SiteUserStatsTest::temporary_user_()
       tid(fetch_int("TEMP/TID/1")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "CHANNEL",
-      persistent.debug_info.history_channels).check(),
+    ChannelsCheck(this, "CHANNEL", persistent.debug_info.history_channels).check(),
     description +
       " history_channels check (after merging)");
 

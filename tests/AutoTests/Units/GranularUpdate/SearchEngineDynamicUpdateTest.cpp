@@ -1,9 +1,6 @@
 #include "SearchEngineDynamicUpdateTest.hpp"
 
-REFLECT_UNIT(SearchEngineDynamicUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(SearchEngineDynamicUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -18,8 +15,7 @@ SearchEngineDynamicUpdateTest::add_scenario()
   std::string description("New engine.");
   add_descr_phrase(description);
 
-  ORM::ORMRestorer<SearchEngine>* engine =
-    create<SearchEngine>();
+  ORM::ORMRestorer<SearchEngine>* engine = create<SearchEngine>();
 
   engine->decoding_depth = fetch_int("ADDENGINE/DEC_DEPTH");
   engine->encoding = fetch_string("ADDENGINE/ENCODING");
@@ -28,10 +24,7 @@ SearchEngineDynamicUpdateTest::add_scenario()
   engine->post_encoding =  fetch_string("ADDENGINE/POST_ENCODING");
   engine->regexp = fetch_string("ADDENGINE/REGEXP");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      engine->insert()),
-    "must insert new search engine");
+  FAIL_CONTEXT(AutoTest::predicate_checker(engine->insert()), "must insert new search engine");
 
   add_checker(
     description,
@@ -42,11 +35,8 @@ SearchEngineDynamicUpdateTest::add_scenario()
         SearchEngineChecker::Expected().
           id(strof(engine->search_engine_id())).
           encoding(fetch_string("ADDENGINE/ENCODING")).
-          decoding_depth(
-            fetch_string("ADDENGINE/DEC_DEPTH")).
-          regexp("\\Q" +
-            fetch_string("ADDENGINE/REGEXP") +
-              "\\E"))));
+          decoding_depth(fetch_string("ADDENGINE/DEC_DEPTH")).
+          regexp("\\Q" + fetch_string("ADDENGINE/REGEXP") + "\\E"))));
 }
 
 template<typename AdminField, typename ValueType>
@@ -61,45 +51,31 @@ SearchEngineDynamicUpdateTest::update_scenario(
  {
    add_descr_phrase(description);
 
-   ORM::ORMRestorer<SearchEngine>* engine =
-     create<SearchEngine>(engine_id);
+   ORM::ORMRestorer<SearchEngine>* engine = create<SearchEngine>(engine_id);
 
    {
      SearchEngineChecker::Expected expected;
 
-     (expected.*(diff_setter))(
-       "\\Q" + strof(old_value) + "\\E");
+     (expected.*(diff_setter))("\\Q" + strof(old_value) + "\\E");
 
      FAIL_CONTEXT(
-       SearchEngineWaitChecker(
-         SearchEngineChecker(
-           this,
-           engine_id,
-           expected)).check(),
+       SearchEngineWaitChecker(SearchEngineChecker(this, engine_id, expected)).check(),
        description + " Initial");
 
    }
 
    engine->*(admin_field) = new_value;
 
-   FAIL_CONTEXT(
-     AutoTest::predicate_checker(
-       engine->update()),
-     "must update search engine");
+   FAIL_CONTEXT(AutoTest::predicate_checker(engine->update()), "must update search engine");
 
    {
      SearchEngineChecker::Expected expected;
 
-     (expected.*(diff_setter))(
-       "\\Q" + strof(new_value) + "\\E");
+     (expected.*(diff_setter))("\\Q" + strof(new_value) + "\\E");
 
      add_checker(
        description,
-       SearchEngineWaitChecker(
-         SearchEngineChecker(
-           this,
-           engine_id,
-           expected)));
+       SearchEngineWaitChecker(SearchEngineChecker(this, engine_id, expected)));
    }
  }
 
@@ -118,13 +94,9 @@ SearchEngineDynamicUpdateTest::delete_scenario()
           id(fetch_string("DELENGINE/ENGINE")))).check(),
     description + " Initial");
 
-  ORM::ORMRestorer<SearchEngine>* engine =
-    create<SearchEngine>(fetch_int("DELENGINE/ENGINE"));
+  ORM::ORMRestorer<SearchEngine>* engine = create<SearchEngine>(fetch_int("DELENGINE/ENGINE"));
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      engine->delet()),
-    "must delete search engine");
+  FAIL_CONTEXT(AutoTest::predicate_checker(engine->delet()), "must delete search engine");
 
   add_checker(
     description,

@@ -24,8 +24,7 @@ namespace AdServer::ChannelSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
 
-    using ChannelControllerConfig =
-      xsd::AdServer::Configuration::ChannelControllerConfigType;
+    using ChannelControllerConfig = xsd::AdServer::Configuration::ChannelControllerConfigType;
     using SessionDescription =
       adserver::channel_svcs::channel_controller::GetSessionDescriptionResponse;
 
@@ -69,6 +68,5 @@ namespace AdServer::ChannelSvcs
     std::shared_ptr<AdServer::Commons::ExecutorPool> source_update_runner_;
   };
 
-  using ChannelControllerImpl_var =
-    ReferenceCounting::SmartPtr<ChannelControllerImpl>;
+  using ChannelControllerImpl_var = ReferenceCounting::SmartPtr<ChannelControllerImpl>;
 }

@@ -2,10 +2,7 @@
 
 #include "ExpressionChannelPerformancesTest.hpp"
 
-REFLECT_UNIT(ExpressionChannelPerformancesTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ExpressionChannelPerformancesTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -189,9 +186,7 @@ namespace
      * @param test.
      * @param expected ccid names.
      */
-    SelectedCreativesCheck(AutoTest::AdClient& user,
-                           BaseUnit* test,
-                           const char* exp_ccids) :
+    SelectedCreativesCheck(AutoTest::AdClient& user, BaseUnit* test, const char* exp_ccids) :
       user_(user),
       test_(test),
       exp_ccids_(exp_ccids)
@@ -218,9 +213,7 @@ namespace
         ccids.push_back(test_->fetch_string(token.str()));
       }
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          ccids,
-          AutoTest::SelectedCreativesCCID(user_)).check(),
+        AutoTest::sequence_checker(ccids, AutoTest::SelectedCreativesCCID(user_)).check(),
         "selected creatives");
       return true;
     }
@@ -231,16 +224,12 @@ namespace
     std::string exp_ccids_;    // expected ccid names
   };
 
-  double calc_cpm_revenue(double cpm,
-                          double impressions,
-                          double exchange_rate = 1.0)
+  double calc_cpm_revenue(double cpm, double impressions, double exchange_rate = 1.0)
   {
     return (cpm * impressions) / 1000.0 / exchange_rate;
   }
 
-  double calc_cpa_revenue(double cpa,
-                          double actions,
-                          double exchange_rate = 1.0)
+  double calc_cpa_revenue(double cpa, double actions, double exchange_rate = 1.0)
   {
     return cpa * actions / exchange_rate;
   }
@@ -339,15 +328,13 @@ ExpressionChannelPerformancesTest::base_scenario()
     colo_id(1).
     cc_id(tacc1).
     sdate(currentDate + 72*60*60);
-  exprs[6].description("ExpressionPerformance. Expression#2. "
-    "Text CCG. Composite expressions.");
+  exprs[6].description("ExpressionPerformance. Expression#2. " "Text CCG. Composite expressions.");
   exprs[7].key().
     expression("((" + ch1 + " & " + ch3 + ") | " + ch4 + ")").
     colo_id(1).
     cc_id(tacc2).
     sdate(currentDate + 72*60*60);
-  exprs[7].description("ExpressionPerformance. Expression#3. "
-    "Text CCG. Composite expressions.");
+  exprs[7].description("ExpressionPerformance. Expression#3. " "Text CCG. Composite expressions.");
   exprs.select(conn);
 
 
@@ -397,15 +384,13 @@ ExpressionChannelPerformancesTest::base_scenario()
     ccg_id(displayccg1).
     colo_id(1).
     sdate(currentDate);
-  usage[0].description("ChannelUsageStatsHourly. Channel#1. "
-    "Display CCG with default currency.");
+  usage[0].description("ChannelUsageStatsHourly. Channel#1. " "Display CCG with default currency.");
   usage[1].key().
     channel_id(fetch_int("ChannelId/02")).
     ccg_id(displayccg1).
     colo_id(1).
     sdate(currentDate);
-  usage[1].description("ChannelUsageStatsHourly. Channel#2. "
-    "Display CCG with default currency.");
+  usage[1].description("ChannelUsageStatsHourly. Channel#2. " "Display CCG with default currency.");
   usage[2].key().
     channel_id(fetch_int("ExpressionId/01")).
     ccg_id(displayccg1).
@@ -455,15 +440,13 @@ ExpressionChannelPerformancesTest::base_scenario()
     ccg_id(taccg1).
     colo_id(1).
     sdate(currentDate + 24*60*60);
-  usage[8].description("ChannelUsageStatsHourly. Channel#1. "
-    "Text CCG. One triggers for 2 CCGs.");
+  usage[8].description("ChannelUsageStatsHourly. Channel#1. " "Text CCG. One triggers for 2 CCGs.");
   usage[9].key().
     channel_id(fetch_int("ChannelId/01")).
     ccg_id(taccg2).
     colo_id(1).
     sdate(currentDate + 24*60*60);
-  usage[9].description("ChannelUsageStatsHourly. Channel#1. "
-    "Text CCG. One triggers for 2 CCGs.");
+  usage[9].description("ChannelUsageStatsHourly. Channel#1. " "Text CCG. One triggers for 2 CCGs.");
   usage[10].key().
     channel_id(fetch_int("ChannelId/03")).
     ccg_id(taccg2).
@@ -520,36 +503,31 @@ ExpressionChannelPerformancesTest::base_scenario()
     ccg_id(taccg1).
     colo_id(1).
     sdate(currentDate + 72*60*60);
-  usage[17].description("ChannelUsageStatsHourly. Channel#1. "
-    "Text CCG. Composite expressions.");
+  usage[17].description("ChannelUsageStatsHourly. Channel#1. " "Text CCG. Composite expressions.");
   usage[18].key().
     channel_id(fetch_int("ChannelId/01")).
     ccg_id(taccg2).
     colo_id(1).
     sdate(currentDate + 72*60*60);
-  usage[18].description("ChannelUsageStatsHourly. Channel#1. "
-    "Text CCG. Composite expressions.");
+  usage[18].description("ChannelUsageStatsHourly. Channel#1. " "Text CCG. Composite expressions.");
   usage[19].key().
     channel_id(fetch_int("ChannelId/02")).
     ccg_id(taccg1).
     colo_id(1).
     sdate(currentDate + 72*60*60);
-  usage[19].description("ChannelUsageStatsHourly. Channel#2. "
-    "Text CCG. Composite expressions.");
+  usage[19].description("ChannelUsageStatsHourly. Channel#2. " "Text CCG. Composite expressions.");
   usage[20].key().
     channel_id(fetch_int("ChannelId/03")).
     ccg_id(taccg2).
     colo_id(1).
     sdate(currentDate + 72*60*60);
-  usage[20].description("ChannelUsageStatsHourly. Channel#3. "
-    "Text CCG. Composite expressions.");
+  usage[20].description("ChannelUsageStatsHourly. Channel#3. " "Text CCG. Composite expressions.");
   usage[21].key().
     channel_id(fetch_int("ChannelId/04")).
     ccg_id(taccg2).
     colo_id(1).
     sdate(currentDate + 72*60*60);
-  usage[21].description("ChannelUsageStatsHourly. Channel#4. "
-    "Text CCG. Composite expressions.");
+  usage[21].description("ChannelUsageStatsHourly. Channel#4. " "Text CCG. Composite expressions.");
   usage[22].key().
     channel_id(fetch_int("ExpressionId/02")).
     ccg_id(taccg1).
@@ -616,8 +594,7 @@ ExpressionChannelPerformancesTest::base_scenario()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(conn, diffs, exprs)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diffs, exprs)).check(),
       "ExpressionPerformance check");
 
   }
@@ -630,25 +607,14 @@ ExpressionChannelPerformancesTest::base_scenario()
     {
       // Channel#1
       ORM::ChannelPerformance::Diffs().
-        imps(
-          TestData[0].iter_count / 2 +
-          2*TestData[2].iter_count +
-          2*TestData[4].iter_count).
+        imps(TestData[0].iter_count / 2 + 2*TestData[2].iter_count + 2*TestData[4].iter_count).
         clicks(TestData[0].iter_count / 2 / 3).
         actions(TestData[0].iter_count / 2 / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5) +
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[2].iter_count +
-              TestData[4].iter_count) +
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[2].iter_count +
-              TestData[4].iter_count),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5) +
+            calc_cpm_revenue(tacpm1, TestData[2].iter_count + TestData[4].iter_count) +
+            calc_cpm_revenue(tacpm2, TestData[2].iter_count + TestData[4].iter_count),
             0.1)),
 
       // Channel#2
@@ -658,60 +624,34 @@ ExpressionChannelPerformancesTest::base_scenario()
           TestData[1].iter_count +
           TestData[3].iter_count +
           TestData[4].iter_count).
-        clicks(
-          TestData[0].iter_count / 2 / 3 +
-          TestData[1].iter_count / 3).
-        actions(
-          TestData[0].iter_count / 2 / 3 / 5 +
-          TestData[1].iter_count / 3 / 5).
+        clicks(TestData[0].iter_count / 2 / 3 + TestData[1].iter_count / 3).
+        actions(TestData[0].iter_count / 2 / 3 / 5 + TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5) +
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate) +
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[3].iter_count +
-              TestData[4].iter_count),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5) +
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate) +
+            calc_cpm_revenue(tacpm1, TestData[3].iter_count + TestData[4].iter_count),
             0.1)),
 
       // Channel#3
       ORM::ChannelPerformance::Diffs().
-        imps(
-          TestData[2].iter_count +
-          TestData[1].iter_count +
-          TestData[4].iter_count).
+        imps(TestData[2].iter_count + TestData[1].iter_count + TestData[4].iter_count).
         clicks(TestData[1].iter_count / 3).
         actions(TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate) +
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[2].iter_count +
-              TestData[4].iter_count),
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate) +
+            calc_cpm_revenue(tacpm2, TestData[2].iter_count + TestData[4].iter_count),
             0.1)),
 
       // Channel#4
       ORM::ChannelPerformance::Diffs().
-        imps(
-          TestData[3].iter_count +
-          TestData[4].iter_count).
+        imps(TestData[3].iter_count + TestData[4].iter_count).
         clicks(0).
         actions(0).
         revenue(
           ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[3].iter_count +
-              TestData[4].iter_count),
+            calc_cpm_revenue(tacpm2, TestData[3].iter_count + TestData[4].iter_count),
             0.1)),
 
       // Channel#5
@@ -719,24 +659,13 @@ ExpressionChannelPerformancesTest::base_scenario()
 
       // Expression#1
       ORM::ChannelPerformance::Diffs().
-        imps(
-          TestData[0].iter_count / 2 +
-          TestData[1].iter_count).
-        clicks(
-          TestData[0].iter_count / 2 / 3 +
-          TestData[1].iter_count / 3).
-        actions(
-          TestData[0].iter_count / 2 / 3 / 5 +
-          TestData[1].iter_count / 3 / 5).
+        imps(TestData[0].iter_count / 2 + TestData[1].iter_count).
+        clicks(TestData[0].iter_count / 2 / 3 + TestData[1].iter_count / 3).
+        actions(TestData[0].iter_count / 2 / 3 / 5 + TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5) +
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5) +
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate),
             0.1)),
 
       // Expression#2
@@ -747,21 +676,12 @@ ExpressionChannelPerformancesTest::base_scenario()
           TestData[2].iter_count +
           TestData[3].iter_count +
           TestData[4].iter_count).
-        clicks(
-          TestData[0].iter_count / 2 / 3 +
-          TestData[1].iter_count / 3).
-        actions(
-          TestData[0].iter_count / 2 / 3 / 5 +
-          TestData[1].iter_count / 3 / 5).
+        clicks(TestData[0].iter_count / 2 / 3 + TestData[1].iter_count / 3).
+        actions(TestData[0].iter_count / 2 / 3 / 5 + TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5) +
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate) +
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5) +
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate) +
             calc_cpm_revenue(
               tacpm1,
               TestData[2].iter_count +
@@ -771,10 +691,7 @@ ExpressionChannelPerformancesTest::base_scenario()
 
       // Expression#3
       ORM::ChannelPerformance::Diffs().
-        imps(
-          TestData[2].iter_count +
-          TestData[3].iter_count +
-          TestData[4].iter_count).
+        imps(TestData[2].iter_count + TestData[3].iter_count + TestData[4].iter_count).
         clicks(0).
         actions(0).
         revenue(
@@ -788,9 +705,7 @@ ExpressionChannelPerformancesTest::base_scenario()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diffs, channels)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diffs, channels)).check(),
         "ChannelUsageStatsTotal check");
 
   }
@@ -806,9 +721,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[0].iter_count / 2 / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[0].iter_count / 2).
@@ -816,9 +729,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[0].iter_count / 2 / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[0].iter_count / 2).
@@ -826,9 +737,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[0].iter_count / 2 / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[0].iter_count / 2).
@@ -836,9 +745,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[0].iter_count / 2 / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa1,
-              TestData[0].iter_count / 2 / 3 / 5),
+            calc_cpa_revenue(displaycpa1, TestData[0].iter_count / 2 / 3 / 5),
             0.1)),
       // Display CCG with NOT default currency
       ORM::ChannelUsageStats::Diffs().
@@ -847,10 +754,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate),
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[1].iter_count).
@@ -858,10 +762,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate),
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[1].iter_count).
@@ -869,10 +770,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate),
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate),
             0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[1].iter_count).
@@ -880,10 +778,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         actions(TestData[1].iter_count / 3 / 5).
         revenue(
           ORM::stats_diff_type(
-            calc_cpa_revenue(
-              displaycpa2,
-              TestData[1].iter_count / 3 / 5,
-              rate),
+            calc_cpa_revenue(displaycpa2, TestData[1].iter_count / 3 / 5, rate),
             0.1)),
       // Text CCG. One triggers for 2 CCGs.
       //  Channel#1
@@ -891,183 +786,101 @@ ExpressionChannelPerformancesTest::base_scenario()
         imps(TestData[2].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[2].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[2].iter_count), 0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[2].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[2].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[2].iter_count), 0.1)),
       //  Channel#3
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[2].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[2].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[2].iter_count), 0.1)),
       //  Expression#2
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[2].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[2].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[2].iter_count), 0.1)),
       //  Expression#3
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[2].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[2].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[2].iter_count), 0.1)),
       // Text CCG. One triggers for each CCGs.
       //  Channel#2
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[3].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[3].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[3].iter_count), 0.1)),
       //  Channel#4
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[3].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[3].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[3].iter_count), 0.1)),
       //  Expression#2
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[3].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm1,
-              TestData[3].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[3].iter_count), 0.1)),
       //  Expression#3
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[3].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-              tacpm2,
-              TestData[3].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[3].iter_count), 0.1)),
       // Text CCG. Composite expressions.
       //  Channel#1
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm1,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[4].iter_count), 0.1)),
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm2,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[4].iter_count), 0.1)),
       //  Channel#2
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm1,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[4].iter_count), 0.1)),
       //  Channel#3
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm2,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[4].iter_count), 0.1)),
       //  Channel#4
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm2,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[4].iter_count), 0.1)),
       //  Expression#2
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm1,
-            TestData[4].iter_count),
-            0.1)),
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm1, TestData[4].iter_count), 0.1)),
       //  Expression#3
       ORM::ChannelUsageStats::Diffs().
         imps(TestData[4].iter_count).
         clicks(0).
         actions(0).
-        revenue(
-          ORM::stats_diff_type(
-            calc_cpm_revenue(
-            tacpm2,
-            TestData[4].iter_count),
-            0.1))
+        revenue(ORM::stats_diff_type(calc_cpm_revenue(tacpm2, TestData[4].iter_count), 0.1))
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diffs, usage)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diffs, usage)).check(),
         "ChannelUsageStatsHourly check");
   }
 }
@@ -1080,9 +893,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
   add_descr_phrase("Latecomer impressions");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      TestData[0].iter_count / 2,
-      impressions.size()).check(),
+    AutoTest::equal_checker(TestData[0].iter_count / 2, impressions.size()).check(),
     "latecomer impressions count");
 
   FAIL_CONTEXT(
@@ -1173,11 +984,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
           clicks(impressions.size() / 3).
           actions(impressions.size() / 3 / 5).
           revenue(
-            ORM::stats_diff_type(
-              calc_cpa_revenue(
-                displaycpa1,
-                impressions.size() / 3 / 5),
-              0.1)),
+            ORM::stats_diff_type(calc_cpa_revenue(displaycpa1, impressions.size() / 3 / 5), 0.1)),
         channels)).check(),
     "ChannelUsageStatsTotal latecomer impressions check");
 
@@ -1190,11 +997,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
           clicks(impressions.size() / 3).
           actions(impressions.size() / 3 / 5).
           revenue(
-            ORM::stats_diff_type(
-              calc_cpa_revenue(
-                displaycpa1,
-                impressions.size() / 3 / 5),
-              0.1)),
+            ORM::stats_diff_type(calc_cpa_revenue(displaycpa1, impressions.size() / 3 / 5), 0.1)),
         usage)).check(),
     "ChannelUsageStatsHourly latecomer impressions check");
 
@@ -1206,15 +1009,13 @@ ExpressionChannelPerformancesTest::latecomer_requests()
   usage.select(conn);
 
   // Send latecomer clicks
-  for (RequestList::iterator req_pair =
-        clicks.begin(); req_pair != clicks.end(); ++req_pair)
+  for (RequestList::iterator req_pair = clicks.begin(); req_pair != clicks.end(); ++req_pair)
   {
     req_pair->first.process_request(req_pair->second, "Click request");
   }
 
   // Send latecomer actions
-  for (RequestList::iterator req_pair =
-        actions.begin(); req_pair != actions.end(); ++req_pair)
+  for (RequestList::iterator req_pair = actions.begin(); req_pair != actions.end(); ++req_pair)
   {
     req_pair->first.process_request(req_pair->second, "Action request");
   }
@@ -1246,10 +1047,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
             clicks.size() / 5).
           revenue(
             ORM::stats_diff_type(
-              calc_cpa_revenue(
-                displaycpa1,
-                actions.size() +
-                clicks.size() / 5),
+              calc_cpa_revenue(displaycpa1, actions.size() + clicks.size() / 5),
               0.1)),
         channels)).check(),
     "ChannelUsageStatsTotal latecomer clicks & actions check");
@@ -1267,10 +1065,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
             clicks.size() / 5).
           revenue(
             ORM::stats_diff_type(
-              calc_cpa_revenue(
-                displaycpa1,
-                actions.size() +
-                clicks.size() / 5),
+              calc_cpa_revenue(displaycpa1, actions.size() + clicks.size() / 5),
               0.1)),
         usage)).check(),
     "ChannelUsageStatsHourlyn latecomer clicks & actions check");
@@ -1303,18 +1098,14 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
       url();
 
     FAIL_CONTEXT(
-      SelectedCreativesCheck(
-        client,
-        this,
-        test.ccids).check(),
+      SelectedCreativesCheck(client, this, test.ccids).check(),
       "Check creative selection#" + strof(i));
 
 
     if (test.check_url & CUE_Impression)
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !imp_url.empty()),
+        AutoTest::predicate_checker(!imp_url.empty()),
         "must have valid track_pixel_url");
       if ( !test.store_urls || i % 2 == 0)
       {
@@ -1338,10 +1129,7 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
 
     if (test.check_url & CUE_Click)
     {
-      FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !click_url.empty()),
-        "must have valid click_url");
+      FAIL_CONTEXT(AutoTest::predicate_checker(!click_url.empty()), "must have valid click_url");
 
       if (i % 3 == 2)
       {

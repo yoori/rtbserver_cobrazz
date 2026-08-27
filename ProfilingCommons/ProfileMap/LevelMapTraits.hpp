@@ -5,9 +5,7 @@
 #include <Generics/Time.hpp>
 #include <ProfilingCommons/FileController.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   struct LevelMapTraits
   {
@@ -43,5 +41,4 @@ namespace ProfilingCommons
     Generics::Time expire_time;
     FileController_var file_controller;
   };
-}
 }

@@ -67,7 +67,7 @@ namespace Declaration
       {
         MappingSpecifierSet::const_iterator specifier_it =
           mapping_specifiers.find(VECTOR_SPECIFIER);
-        if(specifier_it != mapping_specifiers.end())
+        if (specifier_it != mapping_specifiers.end())
         {
           return cpp_vector_write_traits_;
         }
@@ -92,9 +92,7 @@ namespace Declaration
         std::ostringstream cpp_write_type_name;
         cpp_write_type_name << "PlainTypes::" << base_type << "<" <<
           holder_type << ", " <<
-          read_type_cast << ", " <<
-          write_type_cast << ", " <<
-          fixed_size << ">";
+          read_type_cast << ", " << write_type_cast << ", " << fixed_size << ">";
 
         return new SimpleWriter::CppWriteTraits(
           (cpp_write_type_name.str() + "&").c_str(),
@@ -116,10 +114,8 @@ namespace Declaration
     {
     public:
       CppWriteTraitsGeneratorArrayImpl(const char* holder_type)
-        : cpp_list_write_traits_(
-            generate_cpp_write_traits_("List", holder_type)),
-          cpp_vector_write_traits_(
-            generate_cpp_write_traits_("Vector", holder_type))
+        : cpp_list_write_traits_(generate_cpp_write_traits_("List", holder_type)),
+          cpp_vector_write_traits_(generate_cpp_write_traits_("Vector", holder_type))
       {}
 
       virtual bool
@@ -135,7 +131,7 @@ namespace Declaration
       {
         MappingSpecifierSet::const_iterator specifier_it =
           mapping_specifiers.find(VECTOR_SPECIFIER);
-        if(specifier_it != mapping_specifiers.end())
+        if (specifier_it != mapping_specifiers.end())
         {
           return cpp_vector_write_traits_;
         }
@@ -149,14 +145,11 @@ namespace Declaration
 
       static
       SimpleWriter::CppWriteTraits_var
-      generate_cpp_write_traits_(
-        const char* base_type,
-        const char* holder_type)
+      generate_cpp_write_traits_(const char* base_type, const char* holder_type)
         noexcept
       {
         std::ostringstream cpp_write_type_name;
-        cpp_write_type_name << "PlainTypes::" << base_type <<
-          "<" << holder_type << ">";
+        cpp_write_type_name << "PlainTypes::" << base_type << "<" << holder_type << ">";
 
         return new SimpleWriter::CppWriteTraits(
           (cpp_write_type_name.str() + "&").c_str(),
@@ -337,9 +330,7 @@ namespace Declaration
     read_type_name = read_type_name_ostr.str();
 
     std::ostringstream init_read_type_fun_ostr;
-    init_read_type_fun_ostr <<
-      "PlainTypes::init_const_vector<" <<
-      read_type_name << " >";
+    init_read_type_fun_ostr << "PlainTypes::init_const_vector<" << read_type_name << " >";
 
     result_init_read_type_fun = init_read_type_fun_ostr.str();
   }
@@ -370,24 +361,21 @@ namespace Declaration
   }
 
   BaseReader_var
-  ArrayCompleteTemplateDescriptor::create_template_reader_(
-    const BaseReaderList& args)
+  ArrayCompleteTemplateDescriptor::create_template_reader_(const BaseReaderList& args)
     /*throw(InvalidParam)*/
   {
     return create_array_reader_(*args.begin());
   }
 
   BaseWriter_var
-  ArrayCompleteTemplateDescriptor::create_template_writer_(
-    const BaseWriterList& args)
+  ArrayCompleteTemplateDescriptor::create_template_writer_(const BaseWriterList& args)
     /*throw(InvalidParam)*/
   {
     return create_array_writer_(*args.begin());
   }
 
   BaseReader_var
-  ArrayCompleteTemplateDescriptor::create_array_reader_(
-    BaseReader* arg_reader)
+  ArrayCompleteTemplateDescriptor::create_array_reader_(BaseReader* arg_reader)
     /*throw(InvalidParam)*/
   {
     std::string cpp_read_type_name;
@@ -416,8 +404,7 @@ namespace Declaration
   }
 
   BaseWriter_var
-  ArrayCompleteTemplateDescriptor::create_array_writer_(
-    BaseWriter* arg_writer)
+  ArrayCompleteTemplateDescriptor::create_array_writer_(BaseWriter* arg_writer)
     /*throw(InvalidParam)*/
   {
     return new ArrayWriter(
@@ -461,15 +448,13 @@ namespace Declaration
   }
 
   void
-  ArrayWriter::check_mapping_specifiers(
-    const Declaration::MappingSpecifierSet& mapping_specifiers)
+  ArrayWriter::check_mapping_specifiers(const Declaration::MappingSpecifierSet& mapping_specifiers)
     /*throw(InvalidMappingSpecifier)*/
   {
-    for(Declaration::MappingSpecifierSet::const_iterator it =
-          mapping_specifiers.begin();
+    for (Declaration::MappingSpecifierSet::const_iterator it = mapping_specifiers.begin();
         it != mapping_specifiers.end(); ++it)
     {
-      if(!cpp_write_traits_generator()->check_mapping_specifier(it->c_str()))
+      if (!cpp_write_traits_generator()->check_mapping_specifier(it->c_str()))
       {
         Stream::Error ostr;
         ostr << "Incorrect specifier: " << *it;
@@ -490,12 +475,7 @@ namespace Declaration
     : BaseType(name),
       BaseDescriptor(name),
       BaseReader(name),
-      SimpleType(
-        name,
-        is_fixed_val,
-        fixed_size_val,
-        cpp_read_traits,
-        cpp_write_traits_generator),
+      SimpleType(name, is_fixed_val, fixed_size_val, cpp_read_traits, cpp_write_traits_generator),
       ArrayCompleteTemplateDescriptor(name, args, fixed_size_val)
   {}
 
@@ -546,9 +526,7 @@ namespace Declaration
   }
 
   /* BaseArrayTemplate */
-  BaseArrayTemplate::BaseArrayTemplate(
-    const char* name,
-    unsigned long header_size) noexcept
+  BaseArrayTemplate::BaseArrayTemplate(const char* name, unsigned long header_size) noexcept
     : BaseTemplate(name, 1),
       header_size_(header_size)
   {}
@@ -559,23 +537,19 @@ namespace Declaration
     const BaseDescriptorList& args) const
     /*throw(InvalidParam)*/
   {
-    Declaration::SimpleDescriptor_var arg_simple_descriptor =
-      (*args.begin())->as_simple();
+    Declaration::SimpleDescriptor_var arg_simple_descriptor = (*args.begin())->as_simple();
 
-    if(arg_simple_descriptor.in())
+    if (arg_simple_descriptor.in())
     {
       // if type is simple create BaseType with reader/writer
-      return create_array_simple_type_(
-        arg_simple_descriptor);
+      return create_array_simple_type_(arg_simple_descriptor);
     }
 
-    return create_array_struct_type_(
-      *args.begin());
+    return create_array_struct_type_(*args.begin());
   }
 
   CompleteTemplateDescriptor_var
-  BaseArrayTemplate::create_array_simple_type_(
-    BaseDescriptor* descriptor) const
+  BaseArrayTemplate::create_array_simple_type_(BaseDescriptor* descriptor) const
     noexcept
   {
     BaseReader_var reader = descriptor->as_reader();
@@ -606,7 +580,7 @@ namespace Declaration
     std::string cpp_base_write_type_name_suffix = "List";
 
     /*
-    if(mapping_specifiers.find(CPP_VECTOR) != mapping_specifiers.end())
+    if (mapping_specifiers.find(CPP_VECTOR) != mapping_specifiers.end())
     {
       cpp_base_write_type_name_suffix = "Vector";
     }
@@ -617,31 +591,27 @@ namespace Declaration
     */
 
     SimpleWriter::CppWriteTraits_var cpp_write_traits =
-      simple_writer->cpp_write_traits_generator()->generate(
-        MappingSpecifierSet());
+      simple_writer->cpp_write_traits_generator()->generate(MappingSpecifierSet());
 
-    if(descriptor->is_fixed())
+    if (descriptor->is_fixed())
     {
       cpp_write_type_name << "PlainTypes::Simple" <<
         cpp_base_write_type_name_suffix << "<" <<
         cpp_write_traits->holder_type_name << ", " <<
         simple_reader->cpp_read_traits().read_type_cast << ", " <<
-        cpp_write_traits->write_type_cast << ", " <<
-        descriptor->fixed_size() << ">";
+        cpp_write_traits->write_type_cast << ", " << descriptor->fixed_size() << ">";
     }
     else
     {
       cpp_write_type_name << "PlainTypes::" <<
-        cpp_base_write_type_name_suffix << "<" <<
-        cpp_write_traits->holder_type_name << ">";
+        cpp_base_write_type_name_suffix << "<" << cpp_write_traits->holder_type_name << ">";
     }
 
     BaseDescriptorList args;
     args.push_back(ReferenceCounting::add_ref(descriptor));
 
     SimpleWriter::CppWriteTraits_var arg_cpp_write_traits =
-      simple_writer->cpp_write_traits_generator()->generate(
-        MappingSpecifierSet());
+      simple_writer->cpp_write_traits_generator()->generate(MappingSpecifierSet());
 
     return new SimpleArrayType(
       (std::string(name()) + "<" + descriptor->name() + ">").c_str(),
@@ -661,22 +631,19 @@ namespace Declaration
             arg_cpp_write_traits->write_type_cast.c_str(),
             descriptor->fixed_size())) :
       SimpleWriter::CppWriteTraitsGenerator_var(
-        new CppWriteTraitsGeneratorArrayImpl(
-          arg_cpp_write_traits->holder_type_name.c_str())),
+        new CppWriteTraitsGeneratorArrayImpl(arg_cpp_write_traits->holder_type_name.c_str())),
       args);
   }
 
   CompleteTemplateDescriptor_var
-  BaseArrayTemplate::create_array_struct_type_(
-    BaseDescriptor* descriptor) const
+  BaseArrayTemplate::create_array_struct_type_(BaseDescriptor* descriptor) const
     noexcept
   {
     StructDescriptor_var struct_descriptor = descriptor->as_struct();
     assert(struct_descriptor.in());
 
     std::ostringstream cpp_holder_type_name_str;
-    cpp_holder_type_name_str <<
-      struct_descriptor->name() << Cpp::PROTECTED_WRITER_SUFFIX;
+    cpp_holder_type_name_str << struct_descriptor->name() << Cpp::PROTECTED_WRITER_SUFFIX;
     std::string cpp_holder_type_name = cpp_holder_type_name_str.str();
 
     BaseDescriptorList args;
@@ -685,8 +652,7 @@ namespace Declaration
     return new StructArrayType(
       (std::string(name()) + "<" + descriptor->name() + ">").c_str(),
       SimpleWriter::CppWriteTraitsGenerator_var(
-        new CppWriteTraitsGeneratorArrayImpl(
-          cpp_holder_type_name.c_str())),
+        new CppWriteTraitsGeneratorArrayImpl(cpp_holder_type_name.c_str())),
       args,
       header_size_);
   }

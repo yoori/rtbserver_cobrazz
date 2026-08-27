@@ -20,7 +20,7 @@ sub new
   my %res_indexes;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes{$index - 1} = 1;
     }
@@ -32,7 +32,7 @@ sub new
 
   $fields->{field_} = \%res_indexes;
 
-  if(exists($params{'split'}) && $params{'split'} > 0)
+  if (exists($params{'split'}) && $params{'split'} > 0)
   {
     $fields->{split_} = 1;
   }
@@ -47,13 +47,13 @@ sub process
   my @res_row;
   my @ntypes;
 
-  for(my $field_index = 0; $field_index < scalar(@$row); ++$field_index)
+  for (my $field_index = 0; $field_index < scalar(@$row); ++$field_index)
   {
-    if(exists($self->{field_}->{$field_index}))
+    if (exists($self->{field_}->{$field_index}))
     {
       my $value = $row->[$field_index];
       my ($ntype, $nname) = norm_name_($value);
-      if(defined($self->{split_}))
+      if (defined($self->{split_}))
       {
         push(@ntypes, $ntype);
         push(@res_row, $nname);

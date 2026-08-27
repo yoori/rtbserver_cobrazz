@@ -15,16 +15,16 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::PrevRow: incorrect column index: $index";
     }
     push(@res_indexes, $index - 1);
   }
 
-  if(defined($params{'key_field'}))
+  if (defined($params{'key_field'}))
   {
-    if(!looks_like_number($params{'key_field'}))
+    if (!looks_like_number($params{'key_field'}))
     {
       die "CsvUtils::Process::PrevRow: incorrect key_field index: " . $params{'key_field'};
     }
@@ -44,13 +44,13 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(defined($self->{key_field_}))
+  if (defined($self->{key_field_}))
   {
     my $cur_key = $row->[$self->{key_field_}];
 
-    if(defined($self->{prev_row_}))
+    if (defined($self->{prev_row_}))
     {
-      if($self->{prev_row_}->[$self->{key_field_}] ne $cur_key)
+      if ($self->{prev_row_}->[$self->{key_field_}] ne $cur_key)
       {
         $self->{prev_row_} = undef;
       }
@@ -61,7 +61,7 @@ sub process
 
   foreach my $index(@{$self->{fields_}})
   {
-    if(defined($self->{prev_row_}))
+    if (defined($self->{prev_row_}))
     {
       push(@res_row, $self->{prev_row_}->[$index]);
     }

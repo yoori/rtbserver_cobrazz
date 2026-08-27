@@ -50,7 +50,7 @@ sub main
 
     Encode::_utf8_on($arg);
 
-    if($arg =~ m/^--([^=]*)=(.*)$/)
+    if ($arg =~ m/^--([^=]*)=(.*)$/)
     {
       $command = $1;
       $value = $2;
@@ -65,17 +65,17 @@ sub main
       die "Can't parse argument: $arg";
     }
 
-    if($command eq "input" || $command eq "process")
+    if ($command eq "input" || $command eq "process")
     {
       # parse hook arguments
       my $module_name;
       my %args;
-      if($value =~ m/^([^(]+)[(](.*)[)]$/)
+      if ($value =~ m/^([^(]+)[(](.*)[)]$/)
       {
         $module_name = $1;
         my $args_str = "(" . $2 . ")";
         eval qq{ \%args = $args_str; };
-        if($@)
+        if ($@)
         {
           die "Can't parse arguments: $args_str"
         }
@@ -86,7 +86,7 @@ sub main
       }
 
       my $hook = init_hook($module_name, \%args);
-      if($command eq "input")
+      if ($command eq "input")
       {
         push(@inputs, $hook);
       }
@@ -104,13 +104,13 @@ sub main
   # fetch & process inputs
   foreach my $input(@inputs)
   {
-    while(my $row = $input->get())
+    while (my $row = $input->get())
     {
       my @cur_rows = ($row);
 
       foreach my $processor(@processors)
       {
-        if(scalar(@cur_rows) == 0)
+        if (scalar(@cur_rows) == 0)
         {
           last;
         }
@@ -123,7 +123,7 @@ sub main
 
           foreach my $check_row(@sarr)
           {
-            if(defined($check_row))
+            if (defined($check_row))
             {
               push(@new_rows, $check_row);
             }
@@ -135,19 +135,19 @@ sub main
     }
   }
 
-  for(my $i = 0; $i < scalar @processors; ++$i)
+  for (my $i = 0; $i < scalar @processors; ++$i)
   {
     my $processor = $processors[$i];
     my $rows = $processor->flush();
 
     # process flush result
-    if(defined($rows) && $i < scalar @processors - 1)
+    if (defined($rows) && $i < scalar @processors - 1)
     {
       my @cur_rows = @$rows;
 
-      for(my $next_i = $i + 1; $next_i < scalar @processors; ++$next_i)
+      for (my $next_i = $i + 1; $next_i < scalar @processors; ++$next_i)
       {
-        if(scalar(@cur_rows) == 0)
+        if (scalar(@cur_rows) == 0)
         {
           last;
         }
@@ -160,7 +160,7 @@ sub main
 
           foreach my $check_row(@sarr)
           {
-            if(defined($check_row))
+            if (defined($check_row))
             {
               push(@new_rows, $check_row);
             }

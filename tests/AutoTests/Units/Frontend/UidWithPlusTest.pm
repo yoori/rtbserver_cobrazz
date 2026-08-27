@@ -9,7 +9,7 @@ sub init
 {
   my ($self, $ns) = @_;
 
-  $ns->output("UidWithPlusTest/Colo", 
+  $ns->output("UidWithPlusTest/Colo",
     DB::Defaults::instance()->ads_isp->{colo_id});
 
   my $keyword = make_autotest_name($ns, "keyword");

@@ -4,9 +4,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestOperationProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /**
    * CompositeRequestOperationProcessor
@@ -23,13 +21,11 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/;
 
     virtual void
-    process_impression(
-      const ImpressionInfo& impression_info)
+    process_impression(const ImpressionInfo& impression_info)
       /*throw(Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
-    co_process_impression(
-      const ImpressionInfo& impression_info);
+    co_process_impression(const ImpressionInfo& impression_info);
 
     virtual void
     process_action(
@@ -85,11 +81,8 @@ namespace RequestInfoSvcs
     ReferenceCounting::SmartPtr<CompositeRequestOperationProcessor>
     CompositeRequestOperationProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   // CompositeRequestOperationProcessor
   inline
@@ -97,17 +90,15 @@ namespace RequestInfoSvcs
   CompositeRequestOperationProcessor::add_child_processor(
     RequestOperationProcessor* child_processor) /*throw(Exception)*/
   {
-    RequestOperationProcessor_var add_processor(
-      ReferenceCounting::add_ref(child_processor));
+    RequestOperationProcessor_var add_processor(ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
   }
 
   void
-  CompositeRequestOperationProcessor::process_impression(
-    const ImpressionInfo& impression_info)
+  CompositeRequestOperationProcessor::process_impression(const ImpressionInfo& impression_info)
     /*throw(Exception)*/
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -116,10 +107,9 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  CompositeRequestOperationProcessor::co_process_impression(
-    const ImpressionInfo& impression_info)
+  CompositeRequestOperationProcessor::co_process_impression(const ImpressionInfo& impression_info)
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -134,14 +124,11 @@ namespace RequestInfoSvcs
     const AdServer::RequestInfoSvcs::RequestPostActionInfo& request_post_action_info)
     /*throw(Exception)*/
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      (*it)->process_impression_post_action(
-        new_user_id,
-        request_id,
-        request_post_action_info);
+      (*it)->process_impression_post_action(new_user_id, request_id, request_post_action_info);
     }
   }
 
@@ -152,7 +139,7 @@ namespace RequestInfoSvcs
     const AdServer::RequestInfoSvcs::RequestPostActionInfo&
       request_post_action_info)
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
@@ -171,12 +158,11 @@ namespace RequestInfoSvcs
     const AdServer::Commons::RequestId& request_id)
     /*throw(Exception)*/
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      (*it)->process_action(
-        new_user_id, action_type, time, request_id);
+      (*it)->process_action(new_user_id, action_type, time, request_id);
     }
   }
 
@@ -187,15 +173,11 @@ namespace RequestInfoSvcs
     const Generics::Time& time,
     const AdServer::Commons::RequestId& request_id)
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_process_action(
-        new_user_id,
-        action_type,
-        time,
-        request_id);
+      co_await (*it)->co_process_action(new_user_id, action_type, time, request_id);
     }
   }
 
@@ -206,12 +188,11 @@ namespace RequestInfoSvcs
     const Generics::ConstSmartMemBuf* request_profile)
     /*throw(Exception)*/
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      (*it)->change_request_user_id(
-        new_user_id, request_id, request_profile);
+      (*it)->change_request_user_id(new_user_id, request_id, request_profile);
     }
   }
 
@@ -221,15 +202,11 @@ namespace RequestInfoSvcs
     const AdServer::Commons::RequestId& request_id,
     const Generics::ConstSmartMemBuf* request_profile)
   {
-    for(RequestOperationProcessorList::iterator it = child_processors_.begin();
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_change_request_user_id(
-        new_user_id,
-        request_id,
-        request_profile);
+      co_await (*it)->co_change_request_user_id(new_user_id, request_id, request_profile);
     }
   }
-}
 }

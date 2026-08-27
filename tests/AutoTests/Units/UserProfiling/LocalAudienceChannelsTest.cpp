@@ -2,9 +2,7 @@
 #include "Common.hpp"
 #include "LocalAudienceChannelsTest.hpp"
 
-REFLECT_UNIT(LocalAudienceChannelsTest) (
-  "UserProfiling",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(LocalAudienceChannelsTest) ("UserProfiling", AUTO_TEST_SLOW);
 
 namespace
 {

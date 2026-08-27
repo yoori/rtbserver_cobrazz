@@ -25,10 +25,7 @@ public:
   };
 
 public:
-  PublisherAndAdvertiserTracking(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  PublisherAndAdvertiserTracking(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -40,9 +37,7 @@ private:
   virtual bool run_test();
 
   // Utils
-  void set_request_param(
-    NSLookupParam& request_param,
-    const char* param_name);
+  void set_request_param(NSLookupParam& request_param, const char* param_name);
 
   void prepare_expected_body(
     std::ostringstream& body,

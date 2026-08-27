@@ -117,7 +117,7 @@ namespace AdServer
       void
       operator ()(const xmlDocPtr doc) noexcept
       {
-        if(doc)
+        if (doc)
         {
           doc->URL = 0;
           xmlFreeDoc(doc);
@@ -271,12 +271,10 @@ namespace AdServer
       Guard lock(ext_functions_lock_);
 
       XslFunctionMap::const_iterator fun_it = ext_functions_.find(full_name);
-      if(fun_it == ext_functions_.end())
+      if (fun_it == ext_functions_.end())
       {
         fun->registrate(fun_namespace, fun_name);
-        ext_functions_.insert(std::make_pair(
-          full_name,
-          ReferenceCounting::add_ref(fun)));
+        ext_functions_.insert(std::make_pair(full_name, ReferenceCounting::add_ref(fun)));
       }
     }
     catch (const eh::Exception& ex)
@@ -332,16 +330,14 @@ namespace AdServer
   {
   }
 
-  LibxslTransformer::LibxslTransformer(std::istream& xslt_istr,
-    const char* base_path)
+  LibxslTransformer::LibxslTransformer(std::istream& xslt_istr, const char* base_path)
     /*throw(Exception)*/
     : base_path_(base_path)
   {
     init_(xslt_istr);
   }
 
-  LibxslTransformer::LibxslTransformer(const char* xsl_file,
-    const char* base_path)
+  LibxslTransformer::LibxslTransformer(const char* xsl_file, const char* base_path)
     /*throw(FileNotExists, Exception)*/
   {
     open(xsl_file, base_path);
@@ -373,8 +369,7 @@ namespace AdServer
    * @param istr The stream on XML or XSLT file
    */
   LibxslTransformer::ParserContextPtr
-  LibxslTransformer::parse_xml_stream_(
-    std::istream& istr)
+  LibxslTransformer::parse_xml_stream_(std::istream& istr)
     /*throw(Exception)*/
   {
     static const char* FUN = "LibxslTransformer::parse_xml_stream_()";
@@ -391,14 +386,10 @@ namespace AdServer
     /// Auto pointer to standard libxslt context
     // Parser context using one-time!
     ParserContextPtr parser_context_ptr(
-      xmlCreatePushParserCtxt(0, 0,
-        encoding_detection_chunk,
-        sizeof(encoding_detection_chunk), 0));
+      xmlCreatePushParserCtxt(0, 0, encoding_detection_chunk, sizeof(encoding_detection_chunk), 0));
 
     // set options used in xsltproc tool (XML_PARSE_NOCDATA in particular)
-    xmlCtxtUseOptions(
-      parser_context_ptr.get(),
-      XSLT_PARSE_OPTIONS);
+    xmlCtxtUseOptions(parser_context_ptr.get(), XSLT_PARSE_OPTIONS);
 
     // For some reason this seems to completely break if node names
     // are interned.
@@ -407,8 +398,7 @@ namespace AdServer
     const std::size_t XML_PARSER_CHUNK_SIZE = 4096;
     char buffer[XML_PARSER_CHUNK_SIZE];
 
-    if (!istr || istr.eof() ||
-      istr.peek() == std::istream::traits_type::eof())
+    if (!istr || istr.eof() || istr.peek() == std::istream::traits_type::eof())
     {
       Stream::Error ostr;
       ostr << FUN << ": cannot read xml file";
@@ -419,15 +409,12 @@ namespace AdServer
     while (istr.read(buffer, XML_PARSER_CHUNK_SIZE) || istr.gcount())
     {
       buffer[istr.gcount()] = 0;
-      ret_val = xmlParseChunk(parser_context_ptr.get(),
-        buffer, istr.gcount(), 0);
+      ret_val = xmlParseChunk(parser_context_ptr.get(), buffer, istr.gcount(), 0);
       if (ret_val != XML_ERR_OK)
       {
         xmlFreeDoc(parser_context_ptr->myDoc);
         Stream::Error ostr;
-        ostr << FUN <<
-          ": fail parsing xml file, parser error code=" <<
-          ret_val;
+        ostr << FUN << ": fail parsing xml file, parser error code=" << ret_val;
         if (const char* error = error_listener.get_last_error())
         {
           ostr << ", parser last error=" << error;
@@ -439,9 +426,7 @@ namespace AdServer
     // Finalize parsing
     ret_val = xmlParseChunk(parser_context_ptr.get(), NULL, 0, 1);
 
-    if (ret_val != XML_ERR_OK ||
-        !parser_context_ptr->myDoc ||
-        (!istr && !istr.eof()))
+    if (ret_val != XML_ERR_OK || !parser_context_ptr->myDoc || (!istr && !istr.eof()))
     {
       xmlFreeDoc(parser_context_ptr->myDoc);
       Stream::Error ostr;
@@ -450,10 +435,12 @@ namespace AdServer
       {
         ostr << ", error code=" << ret_val;
       }
+
       if (!parser_context_ptr->myDoc)
       {
         ostr << ", document is not created";
       }
+
       if (const char* error = error_listener.get_last_error())
       {
         ostr << ", parser last error=" << error;
@@ -467,8 +454,7 @@ namespace AdServer
     // before xmlDocFree call.
     if (!base_path_.empty())
     {
-      parser_context_ptr->myDoc->URL =
-        reinterpret_cast<const xmlChar*>(base_path_.c_str());
+      parser_context_ptr->myDoc->URL = reinterpret_cast<const xmlChar*>(base_path_.c_str());
     }
 
     return parser_context_ptr;
@@ -495,12 +481,10 @@ namespace AdServer
 
     // Parse stream and put context in smart pointer
 
-    ParserContextPtr xslt_parser_context(
-      parse_xml_stream_(xslt_istr));
+    ParserContextPtr xslt_parser_context(parse_xml_stream_(xslt_istr));
     // make available compiled stylesheet for object lifetime
     // parser context will be freed here by auto pointer.
-    stylesheet_.reset(
-        xsltParseStylesheetDoc(xslt_parser_context->myDoc));
+    stylesheet_.reset(xsltParseStylesheetDoc(xslt_parser_context->myDoc));
 
     const char* error = error_listener.get_last_error();
     if (error || !stylesheet_.get())
@@ -537,9 +521,7 @@ namespace AdServer
    * Returns the number of bytes written or -1 in case of error
    */
   int
-  transform_result_write_callback(void* context,
-    const char* buffer,
-    int len) noexcept
+  transform_result_write_callback(void* context, const char* buffer, int len) noexcept
   {
     std::ostream& output = *static_cast<std::ostream*>(context);
     output.write(buffer, len);
@@ -618,8 +600,7 @@ namespace AdServer
       result.reset(xsltApplyStylesheetUser(stylesheet_.get(),
         xml_parser_context->myDoc, params.get(), 0, 0, ctxt.get()));
 
-      if (ctxt->state == XSLT_STATE_ERROR ||
-        ctxt->state == XSLT_STATE_STOPPED || !result.get())
+      if (ctxt->state == XSLT_STATE_ERROR || ctxt->state == XSLT_STATE_STOPPED || !result.get())
       {
         Stream::Error ostr;
         ostr << FUN << ": XSL transformation failed";
@@ -627,6 +608,7 @@ namespace AdServer
         {
           ostr << ", XSLT parser last error=" << error;
         }
+
         if (ctxt->state == XSLT_STATE_STOPPED)
         {
           ostr << " XSLT transformation was stopped";
@@ -636,8 +618,7 @@ namespace AdServer
     }
 
     xmlCharEncodingHandlerPtr handler(stylesheet_->encoding ?
-      xmlFindCharEncodingHandler(
-        reinterpret_cast<char*>(stylesheet_->encoding)) : 0);
+      xmlFindCharEncodingHandler(reinterpret_cast<char*>(stylesheet_->encoding)) : 0);
 
     // To avoid double copying we will write result transformation
     // through callbacks directly to stream, without useless temporary
@@ -679,15 +660,11 @@ namespace AdServer
     const char* fun_name,
     XslFunction* fun) /*throw(Exception)*/
   {
-    libxslt_holder_->register_external_fun(
-      fun_namespace,
-      fun_name,
-      fun);
+    libxslt_holder_->register_external_fun(fun_namespace, fun_name, fun);
   }
 
   inline void
-  LibxsltTransformContextDestroyer::operator ()(
-    const xsltTransformContextPtr context)
+  LibxsltTransformContextDestroyer::operator ()(const xsltTransformContextPtr context)
     noexcept
   {
     xsltFreeTransformContext(context);

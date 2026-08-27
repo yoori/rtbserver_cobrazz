@@ -65,11 +65,10 @@ namespace PlainTypes
 
     uint32_t offset = *static_cast<const uint32_t*>(buf);
 
-    if(offset > size)
+    if (offset > size)
     {
       Stream::Error ostr;
-      ostr << FUN << ": string position great than size: " <<
-        offset << " > " << size;
+      ostr << FUN << ": string position great than size: " << offset << " > " << size;
       throw CorruptedStruct(ostr);
     }
 
@@ -83,7 +82,7 @@ namespace PlainTypes
   {
     static const char* FUN = "String::init()";
 
-    if(size < 4)
+    if (size < 4)
     {
       Stream::Error ostr;
       ostr << FUN << ": buffer size = " << size << " is less then string header size";

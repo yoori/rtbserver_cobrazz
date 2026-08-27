@@ -47,10 +47,7 @@ private:
   typedef std::list<ExpectedDiff> CMPDiffs;
 
 public:
-  CMPStatTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  CMPStatTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -67,16 +64,11 @@ private:
 
   template<size_t Count>
   void
-  initialize_stats(
-    CMPStats& stats,
-    CMPDiffs& diffs,
-    const CaseStat(&case_stats) [Count]);
+  initialize_stats(CMPStats& stats, CMPDiffs& diffs, const CaseStat(&case_stats) [Count]);
 
   template<size_t Count>
   void
-  send_requests(
-    const AutoTest::Time& debug_time,
-    const Request(&requests) [Count]);
+  send_requests(const AutoTest::Time& debug_time, const Request(&requests) [Count]);
 
   void
   pub_exp_ch_scenario();

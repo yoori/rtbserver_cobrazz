@@ -414,7 +414,7 @@
             </xsd:annotation>
           </xsd:element>
         </xsd:sequence>
-      </xsd:extension>       
+      </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
   <xsd:complexType name="ModuleLoggingParamsType">
@@ -654,7 +654,7 @@
     <xsd:attribute name="set_uid" type="xsd:boolean" default="true">
       <xsd:annotation>
         <xsd:documentation>
-          Set uid cookie on action request, default value is true 
+          Set uid cookie on action request, default value is true
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

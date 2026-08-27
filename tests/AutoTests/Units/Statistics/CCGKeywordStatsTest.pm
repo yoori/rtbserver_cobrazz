@@ -11,7 +11,7 @@ use constant AMERICA_SAO_PAULO_TIMEZONE_ID => 24; # GMT - 02:00
 use constant ADV_EXCHANGE_RATE => 23.41;
 use constant TAG_CPM => 10;
 
-# use specific country code for 
+# use specific country code for
 sub init_case
 {
   my ($ns, $case_name, $size, $advertisers_properties, $calc_amounts) = @_;
@@ -35,7 +35,7 @@ sub init_case
   my $sum_ecpm = 0; # without ctr & 1000 multiply (see calc_ta_top_acpc)
   my $i = 1;
 
-  for(my $i = scalar(@$advertisers_properties); $i > 0; --$i)
+  for (my $i = scalar(@$advertisers_properties); $i > 0; --$i)
   {
     my $adv_props = $advertisers_properties->[$i - 1];
 
@@ -58,7 +58,7 @@ sub init_case
       currency_id => $currency,
       timezone_id => defined($adv_props->{timezone}) ?
         $adv_props->{timezone} : DB::Defaults::instance()->timezone() });
-      
+
     my $campaign = $ns->create(TextAdvertisingCampaign => {
       name => $case_name . $i,
       account_id => $advertiser,
@@ -75,7 +75,7 @@ sub init_case
     $ns->output("CCGKeywordId$i/${case_name}",
       $campaign->{ccg_keyword_id}, "ccg_keyword_id");
 
-    if($calc_amounts > 0)
+    if ($calc_amounts > 0)
     {
       my $click_amount = (
         ($i eq 1) && scalar(@$advertisers_properties) > 1 ?

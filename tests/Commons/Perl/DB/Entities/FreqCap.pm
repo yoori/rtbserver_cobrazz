@@ -6,13 +6,13 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   freq_cap_id => DB::Entity::Type::sequence(),
   period => DB::Entity::Type::int(nullable => 1),
   window_length => DB::Entity::Type::int(nullable => 1),
   window_count => DB::Entity::Type::int(nullable => 1),
-  life_count => DB::Entity::Type::int(nullable => 1) 
+  life_count => DB::Entity::Type::int(nullable => 1)
 };
 
 sub _output

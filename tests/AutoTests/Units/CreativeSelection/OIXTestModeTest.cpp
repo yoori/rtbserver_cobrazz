@@ -1,9 +1,6 @@
 #include "OIXTestModeTest.hpp"
 
-REFLECT_UNIT(OIXTestModeTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(OIXTestModeTest) ("CreativeSelection", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -235,8 +232,7 @@ OIXTestModeTest::process_test_case_(size_t index)
 
   if (test_cases[index].referer_kw)
   {
-    request.referer_kw = keyword.replace(keyword.end() - 1,
-                                         keyword.end(), "t");
+    request.referer_kw = keyword.replace(keyword.end() - 1, keyword.end(), "t");
   }
   AdClient user_t(AdClient::create_user(this));
   user_t.process_request(request, "text");
@@ -252,8 +248,7 @@ OIXTestModeTest::process_test_case_(size_t index)
 void
 OIXTestModeTest::both_campaigns_can_match_()
 {
-  add_descr_phrase("Test request for test and non test campaigns: "
-    "test campaign wins by ecpm");
+  add_descr_phrase("Test request for test and non test campaigns: " "test campaign wins by ecpm");
 
   NSLookupRequest request;
   request.debug_time(now_);
@@ -265,9 +260,7 @@ OIXTestModeTest::both_campaigns_can_match_()
   AdClient user(AdClient::create_user(this));
   user.process_request(request, "request for test campaign");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("DISP/CC-TEST"),
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("DISP/CC-TEST"), user.debug_info.ccid).check(),
     "must select expected creative");
 
   add_descr_phrase("Regular request for test and non test campaigns: "
@@ -276,9 +269,7 @@ OIXTestModeTest::both_campaigns_can_match_()
   request.colo.clear();
   user.process_request(request, "request for non test campaign");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("DISP/CC-NON-TEST"),
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("DISP/CC-NON-TEST"), user.debug_info.ccid).check(),
     "must select expected creative");
 }
 
@@ -296,26 +287,18 @@ OIXTestModeTest::inventory_mode_tag_()
                                          testrequest(1));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("PUBINV/CC"),
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("PUBINV/CC"), user.debug_info.ccid).check(),
     "must select expected creative");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      204,
-      user.req_status()).check(),
+    AutoTest::equal_checker(204, user.req_status()).check(),
     "Server must return 'no content' status");
 
-  precisely_number expected_cpm_threshold(
-    fetch_float("PUBINV/THRESHOLD_CPM"), 0.00000001);
+  precisely_number expected_cpm_threshold(fetch_float("PUBINV/THRESHOLD_CPM"), 0.00000001);
 
-  precisely_number got_cpm_threshold(
-    user.debug_info.cpm_threshold, 0.00000001);
+  precisely_number got_cpm_threshold(user.debug_info.cpm_threshold, 0.00000001);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      expected_cpm_threshold,
-      got_cpm_threshold).check(),
+    AutoTest::equal_checker(expected_cpm_threshold, got_cpm_threshold).check(),
     "must get expected cpm_threshold in debug-info");
 }
 
@@ -379,8 +362,7 @@ OIXTestModeTest::run()
 void
 OIXTestModeTest::post_condition()
 {
-  add_descr_phrase("Post condition: check there are no new statistic "
-                   "for test requests");
+  add_descr_phrase("Post condition: check there are no new statistic " "for test requests");
   // There are no diffs for test request (only for regular)
   ORM::ChannelIdBasedStats::Diffs non_test_ch_diff[4] = {
     ORM::ChannelIdBasedStats::Diffs()
@@ -523,8 +505,7 @@ OIXTestModeTest::post_condition()
     .publisherinventory_imps(1)
     .publisherinventory_requests(1)
     .publisherinventory_revenue(ORM::stats_diff_type(
-       static_cast<double>(
-         fetch_float("PUBINV/THRESHOLD_CPM") / 100 / 1000),
+       static_cast<double>(fetch_float("PUBINV/THRESHOLD_CPM") / 100 / 1000),
        0.000001))
   };
 
@@ -538,58 +519,33 @@ OIXTestModeTest::post_condition()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        non_test_ch_diff,
-        non_test_ch_stats_)).check(),
+      AutoTest::stats_diff_checker(pq_conn_, non_test_ch_diff, non_test_ch_stats_)).check(),
     "channel id based stats check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        test_ch_diff,
-        test_ch_stats_)).check(),
+      AutoTest::stats_diff_checker(pq_conn_, test_ch_diff, test_ch_stats_)).check(),
     "channel id based stats check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        ctx_ch_diff,
-        ctx_ch_stats_)).check(),
+      AutoTest::stats_diff_checker(pq_conn_, ctx_ch_diff, ctx_ch_stats_)).check(),
     "channel id based stats check");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        colo_diff,
-        colo_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, colo_diff, colo_stats_)).check(),
     "colo id based stats tables stored statistic for test requests");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        site_diff,
-        site_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, site_diff, site_stats_)).check(),
     "site id based stats tables stored statistic for test requests");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        tag_diff,
-        tag_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, tag_diff, tag_stats_)).check(),
     "tag id based stats tables stored statistic for test requests");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        test_diff,
-        test_stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, test_diff, test_stats_)).check(),
     "wait expected test stats");
 
   FAIL_CONTEXT(
@@ -621,17 +577,12 @@ void OIXTestModeTest::make_derivative_requests_(
   if (exp_ccid.empty())
   {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
       "Server must return empty creative");
 
-    TagPassbackChecker checker(
-      client,
-      fetch_string("ORIGINAL_URL"));
+    TagPassbackChecker checker(client, fetch_string("ORIGINAL_URL"));
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "Passback check");
+    FAIL_CONTEXT(checker.check(), "Passback check");
 
     client.process_request(checker.tokens().pixel());
 
@@ -643,25 +594,16 @@ void OIXTestModeTest::make_derivative_requests_(
 
     AutoTest::ConsequenceActionArray actions;
 
-    actions.push_back(
-      AutoTest::ConsequenceAction(
-        AutoTest::TRACK, now_));
+    actions.push_back(AutoTest::ConsequenceAction(AutoTest::TRACK, now_));
 
-    actions.push_back(
-      AutoTest::ConsequenceAction(
-        AutoTest::CLICK, now_));
+    actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, now_));
 
-    if(expected_adv_action_url)
+    if (expected_adv_action_url)
     {
-      actions.push_back(
-        AutoTest::ConsequenceAction(
-          AutoTest::ACTION, now_));
+      actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, now_));
     }
 
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        expected_ccs, actions),
-      "Unexpected ad sequence");
+    FAIL_CONTEXT(client.do_ad_requests(expected_ccs, actions), "Unexpected ad sequence");
 
     ActionRequest custom_action_req;
     custom_action_req.actionid = fetch_string("CustomAction");

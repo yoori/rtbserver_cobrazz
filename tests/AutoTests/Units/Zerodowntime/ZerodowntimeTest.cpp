@@ -1,9 +1,7 @@
 
 #include "ZerodowntimeTest.hpp"
 
-REFLECT_UNIT(ZerodowntimeTest) (
-  "Zerodowntime",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(ZerodowntimeTest) ("Zerodowntime", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -58,9 +56,7 @@ namespace
 }
 
 
-void ZerodowntimeTest::exec_cluster_command_(
-  ClusterGroup group,
-  ClusterCommand command)
+void ZerodowntimeTest::exec_cluster_command_(ClusterGroup group, ClusterCommand command)
 {
   if (get_global_params().ClusterConfigPath())
   {
@@ -75,10 +71,7 @@ void ZerodowntimeTest::exec_cluster_command_(
       }
       cmd.add_cmd_i(COMMANDS[command]);
 
-      cmd.log(
-        AutoTest::Logger::thlog(),
-        Logging::Logger::DEBUG,
-        true);
+      cmd.log(AutoTest::Logger::thlog(), Logging::Logger::DEBUG, true);
     }
 
     // Run prestart
@@ -90,10 +83,7 @@ void ZerodowntimeTest::exec_cluster_command_(
       cmd.add_cmd_i(get_global_params().ClusterConfigPath()->path());
       cmd.add_cmd_i(PRESTARTS[group]);
       cmd.add_cmd_i(COMMANDS[command]);
-      cmd.log(
-        AutoTest::Logger::thlog(),
-        Logging::Logger::DEBUG,
-        true);
+      cmd.log(AutoTest::Logger::thlog(), Logging::Logger::DEBUG, true);
     }
   }
 }
@@ -102,38 +92,27 @@ void
 ZerodowntimeTest::set_up()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_global_params().ClusterConfigPath()),
+    AutoTest::predicate_checker(get_global_params().ClusterConfigPath()),
     "Test should have cluster config path");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      campaign_managers_.size(),
-      2).check(),
+    AutoTest::equal_checker(campaign_managers_.size(), 2).check(),
     "The cluster should have 2 CampaignManagers");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      channel_controllers_.size(),
-      2).check(),
+    AutoTest::equal_checker(channel_controllers_.size(), 2).check(),
     "The cluster should have 2 ChannelServerControllers");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      channel_search_servers_.size(),
-      2).check(),
+    AutoTest::equal_checker(channel_search_servers_.size(), 2).check(),
     "The cluster should have 2 ChannelSearchServers");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      user_info_managers_.size(),
-      2).check(),
+    AutoTest::equal_checker(user_info_managers_.size(), 2).check(),
     "The cluster should have 2 UserInfoManagers");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      expression_matchers_.size(),
-      1).check(),
+    AutoTest::equal_checker(expression_matchers_.size(), 1).check(),
     "The cluster should have 1 ExpressionMatcher");
 
 
@@ -153,8 +132,7 @@ ZerodowntimeTest::set_up()
         fetch_string("CHANNEL/CTX"),
         AutoTest::ChannelManagerController,
         AutoTest::TriggerChecker::Expected().
-          page_word(
-            fetch_string("KWD/CTX/NORM") ))).check(),
+          page_word(fetch_string("KWD/CTX/NORM")))).check(),
     "Initial. Check channel");
 }
 
@@ -284,76 +262,41 @@ ZerodowntimeTest::run()
   std::ostringstream user_profile;
   std::ostringstream inventory_profile;
 
-  FAIL_CONTEXT(
-    precondition_(
-      uid,
-      user_profile,
-      inventory_profile),
-    "Precondition");
+  FAIL_CONTEXT(precondition_(uid, user_profile, inventory_profile), "Precondition");
 
-  AUTOTEST_CASE(
-    fe1_stop_(),
-    "Stop fe1");
+  AUTOTEST_CASE(fe1_stop_(), "Stop fe1");
 
-  AUTOTEST_CASE(
-    lp_stop_(),
-    "Stop lp");
+  AUTOTEST_CASE(lp_stop_(), "Stop lp");
 
-  AUTOTEST_CASE(
-    be_stop_(),
-    "Stop be");
+  AUTOTEST_CASE(be_stop_(), "Stop be");
 
-  AUTOTEST_CASE(
-    be_start_(),
-    "Start be");
+  AUTOTEST_CASE(be_start_(), "Start be");
 
-  AUTOTEST_CASE(
-    fe1_start_(),
-    "Start fe1");
+  AUTOTEST_CASE(fe1_start_(), "Start fe1");
 
-  AUTOTEST_CASE(
-    fe2_stop_(),
-    "Stop fe2");
+  AUTOTEST_CASE(fe2_stop_(), "Stop fe2");
 
-  AUTOTEST_CASE(
-    lp_start_(
-      uid,
-      user_profile.str(),
-      inventory_profile.str()),
-    "Start lp");
+  AUTOTEST_CASE(lp_start_(uid, user_profile.str(), inventory_profile.str()), "Start lp");
 
-  AUTOTEST_CASE(
-    fe2_start_(),
-    "Start fe2");
+  AUTOTEST_CASE(fe2_start_(), "Start fe2");
 
-  AUTOTEST_CASE(
-    check_stats_(),
-    "Check statistics");
+  AUTOTEST_CASE(check_stats_(), "Check statistics");
 
   return true;
 }
 
 void
-ZerodowntimeTest::check_click_and_actions_(
-  unsigned long index,
-  ClusterGroup group)
+ZerodowntimeTest::check_click_and_actions_(unsigned long index, ClusterGroup group)
 {
   // Click & action
-  AdClient client(
-    AdClient::create_user(
-      this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
+  AdClient client(AdClient::create_user(this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
   AutoTest::ConsequenceActionArray actions;
-  actions.push_back(
-    AutoTest::ConsequenceAction(
-      AutoTest::CLICK, time_));
-  actions.push_back(
-    AutoTest::ConsequenceAction(
-      AutoTest::ACTION, time_));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, time_));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, time_));
 
   std::list<std::string> expected_ccs;
-  expected_ccs.push_back(
-    fetch_string("CPA/CC/" + strof(index)));
+  expected_ccs.push_back(fetch_string("CPA/CC/" + strof(index)));
 
   FAIL_CONTEXT(
     client.do_ad_requests(
@@ -373,13 +316,9 @@ ZerodowntimeTest::check_click_and_actions_(
 }
 
 void
-ZerodowntimeTest::check_balancing_(
-  ClusterGroup group,
-  const char* cc_name)
+ZerodowntimeTest::check_balancing_(ClusterGroup group, const char* cc_name)
 {
-  AdClient client(
-    AdClient::create_user(
-      this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
+  AdClient client(AdClient::create_user(this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
   FAIL_CONTEXT(
     SelectedCreativesChecker(
@@ -393,13 +332,9 @@ ZerodowntimeTest::check_balancing_(
 }
 
 void
-ZerodowntimeTest::check_user_profiling_(
-  ClusterGroup group,
-  const char* cc_name)
+ZerodowntimeTest::check_user_profiling_(ClusterGroup group, const char* cc_name)
 {
-  AdClient client(
-    AdClient::create_user(
-      this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
+  AdClient client(AdClient::create_user(this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
     FAIL_CONTEXT(
       SelectedCreativesChecker(
@@ -424,14 +359,10 @@ ZerodowntimeTest::check_user_profiling_(
 }
 
 void
-ZerodowntimeTest::check_channels_(
-  ClusterGroup group,
-  const char* cc_name,
-  bool no_db)
+ZerodowntimeTest::check_channels_(ClusterGroup group, const char* cc_name, bool no_db)
 {
   AdClient client(
-    AdClient::create_nonoptin_user(
-      this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
+    AdClient::create_nonoptin_user(this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
   FAIL_CONTEXT(
     AutoTest::admin_checker(
@@ -441,8 +372,7 @@ ZerodowntimeTest::check_channels_(
         AutoTest::ChannelManagerController),
       no_db?
       AutoTest::TriggerAdmin::Expected().
-        page_word(
-          fetch_string("KWD/CTX/NORM") ):
+        page_word(fetch_string("KWD/CTX/NORM")):
         AutoTest::TriggerAdmin::Expected().
           page_word(
             AutoTest::ComparableStringList(
@@ -479,17 +409,12 @@ ZerodowntimeTest::campaign_update_(
   bool no_db)
 {
   AdClient client(
-    AdClient::create_nonoptin_user(
-      this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
+    AdClient::create_nonoptin_user(this, group == CG_FE_2? AutoTest::UF_FRONTEND_MINOR: 0));
 
-  CCGSite* ccgsite =
-    create<AutoTest::ORM::PQ::CCGSite>();
+  CCGSite* ccgsite = create<AutoTest::ORM::PQ::CCGSite>();
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccgsite->insert(
-        fetch_int(ccg_name),
-        fetch_int("SITE/2"))),
+    AutoTest::predicate_checker(ccgsite->insert(fetch_int(ccg_name), fetch_int("SITE/2"))),
     "insert CCGSite link");
 
   if (!no_db)
@@ -503,9 +428,7 @@ ZerodowntimeTest::campaign_update_(
             fetch_int(ccg_name)),
           AutoTest::CampaignAdmin::Expected().
             sites(
-              AutoTest::ComparableStringList(
-                { fetch_string("SITE/1"),
-                  fetch_string("SITE/2")}) )),
+              AutoTest::ComparableStringList({ fetch_string("SITE/1"), fetch_string("SITE/2")}))),
         SelectedCreativesChecker(
           this,
           client,
@@ -520,8 +443,7 @@ ZerodowntimeTest::campaign_update_(
 }
 
 void
-ZerodowntimeTest::check_channel_search_(
-  ClusterGroup group)
+ZerodowntimeTest::check_channel_search_(ClusterGroup group)
 {
   FAIL_CONTEXT(
       AutoTest::admin_checker(
@@ -542,8 +464,7 @@ ZerodowntimeTest::precondition_(
 {
   init_stats_();
 
-  AdClient client(
-    AdClient::create_user(this));
+  AdClient client(AdClient::create_user(this));
 
   for (int i = 1; i <= 2; ++i)
   {
@@ -561,17 +482,13 @@ ZerodowntimeTest::precondition_(
       "Trigger channels");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC/PRE/" + strof(i)),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC/PRE/" + strof(i)), client.debug_info.ccid).check(),
       "Check creative");
   }
 
   uid = client.debug_info.uid.value();
 
-  AutoTest::InventoryProfileAdmin inventory_adm(
-    expression_matchers_[0].address,
-    uid);
+  AutoTest::InventoryProfileAdmin inventory_adm(expression_matchers_[0].address, uid);
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -603,10 +520,7 @@ ZerodowntimeTest::precondition_(
 
     admin.log(AutoTest::Logger::thlog());
 
-    if (
-      !AutoTest::admin_checker(
-        admin,
-        EMPTY_PROFILE).check(false) )
+    if (!AutoTest::admin_checker(admin, EMPTY_PROFILE).check(false))
     {
       admin.dump_native_out(user_profile);
       break;
@@ -616,11 +530,7 @@ ZerodowntimeTest::precondition_(
   {
     AutoTest::AdminsArray<AutoTest::InventoryProfileAdmin> admins;
 
-    admins.initialize(
-      this,
-      CTE_ALL,
-      STE_EXPRESSION_MATCHER,
-      uid);
+    admins.initialize(this, CTE_ALL, STE_EXPRESSION_MATCHER, uid);
 
     admins.log(AutoTest::Logger::thlog());
   }
@@ -648,10 +558,7 @@ ZerodowntimeTest::fe1_stop_()
       create<AutoTest::ORM::TriggerChannel>(fetch_int("CHANNELTRIGGER/CTX_NEW"));
 
     trigger->qa_status = "A";
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        trigger->update(false)),
-      "activate trigger");
+    FAIL_CONTEXT(AutoTest::predicate_checker(trigger->update(false)), "activate trigger");
 
     if (!no_db_)
     {
@@ -729,28 +636,20 @@ void
 ZerodowntimeTest::be_start_()
 {
   {
-    AdClient client(
-      AdClient::create_nonoptin_user(
-        this, AutoTest::UF_FRONTEND_MINOR));
+    AdClient client(AdClient::create_nonoptin_user(this, AutoTest::UF_FRONTEND_MINOR));
 
     AutoTest::ORM::ORMRestorer<AutoTest::ORM::PQ::Campaign>* campaign =
-      create<AutoTest::ORM::PQ::Campaign>(
-        fetch_int("CAMPAIGN/D"));
+      create<AutoTest::ORM::PQ::Campaign>(fetch_int("CAMPAIGN/D"));
 
     campaign->status = "A";
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        campaign->update(false)),
-      "activate campaign");
+    FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update(false)), "activate campaign");
 
     ADD_WAIT_CHECKER(
       "Check CCG loaded",
       AutoTest::and_checker(
         AutoTest::admin_checker(
-          AutoTest::CampaignAdmin(
-            campaign_managers_[1].address,
-            fetch_int("CCG/D")),
+          AutoTest::CampaignAdmin(campaign_managers_[1].address, fetch_int("CCG/D")),
           AutoTest::CampaignAdmin::Expected().
             sites( fetch_string("SITE/1") ) ),
         SelectedCreativesChecker(
@@ -794,8 +693,7 @@ ZerodowntimeTest::fe1_start_()
     check_channel_search_(CG_FE_2);
 
     // Campaign update
-    DeleteGuard<CCGSite> guard(
-      campaign_update_(CG_FE_1, "CCG/D", "CC/D"));
+    DeleteGuard<CCGSite> guard(campaign_update_(CG_FE_1, "CCG/D", "CC/D"));
 
     // Check channels loaded
     check_channels_(CG_FE_1, "CC/D");
@@ -841,9 +739,7 @@ ZerodowntimeTest::lp_start_(
 
   FAIL_CONTEXT(
     AutoTest::admin_checker(
-      AutoTest::InventoryProfileAdmin(
-        expression_matchers_[0].address,
-        uid),
+      AutoTest::InventoryProfileAdmin(expression_matchers_[0].address, uid),
       inventory_profile).check(),
     "Check inventory profile");
 
@@ -959,12 +855,7 @@ ZerodowntimeTest::check_stats_()
       ORM::CCGUserStats::Diffs().unique_users(1),
       ccg_reach_));
 
-  ADD_WAIT_CHECKER(
-    "Custom action",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      action_stats_));
+  ADD_WAIT_CHECKER("Custom action", AutoTest::stats_each_diff_checker(pq_conn_, 1, action_stats_));
 
   ADD_WAIT_CHECKER(
     "Custom action",

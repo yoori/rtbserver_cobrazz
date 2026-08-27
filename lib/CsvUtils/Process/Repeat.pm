@@ -11,7 +11,7 @@ sub new
     die "CsvUtils::Process::Repeat: not defined 'field' argument";
 
   my $index = $params{'field'};
-  if(!looks_like_number($index))
+  if (!looks_like_number($index))
   {
     die "CsvUtils::Process::Repeat: incorrect column index: $index";
   }
@@ -27,13 +27,13 @@ sub process
   my ($self, $row) = @_;
 
   my $repeat = $row->[$self->{field_}];
-  if(!looks_like_number($repeat))
+  if (!looks_like_number($repeat))
   {
     die "CsvUtils::Process::Repeat: incorrect repeat number: $repeat";
   }
 
   my @res_rows;
-  for(my $i = 0; $i < $repeat; ++$i)
+  for (my $i = 0; $i < $repeat; ++$i)
   {
     push(@res_rows, dclone($row));
   }

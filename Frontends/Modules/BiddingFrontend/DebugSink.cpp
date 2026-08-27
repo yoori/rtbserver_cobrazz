@@ -87,8 +87,7 @@ namespace AdServer::Bidding
           stats.connecting_streams << sep <<
         prefix << "_draining_streams = " <<
           stats.draining_streams << sep <<
-        prefix << "_deferred_streams = " <<
-          stats.deferred_streams << sep;
+        prefix << "_deferred_streams = " << stats.deferred_streams << sep;
       if (stats.last_error.has_value())
       {
         out <<
@@ -100,16 +99,14 @@ namespace AdServer::Bidding
             stats.last_error->code << sep <<
           prefix << "_last_error_message = " <<
             stats.last_error->message << sep <<
-          prefix << "_last_error_source = " <<
-            stats.last_error->source << sep;
+          prefix << "_last_error_source = " << stats.last_error->source << sep;
       }
     }
 
     struct GetChannelId
     {
       unsigned long
-      operator()(
-        const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+      operator()(const adserver::channel_svcs::channel_server::ChannelAtom& atom)
         const noexcept
       {
         return atom.id();
@@ -133,15 +130,11 @@ namespace AdServer::Bidding
 
     template<typename Writer>
     void
-    print_channel_ids_(
-      Writer& out,
-      const ChannelIdSet& ids,
-      char type,
-      bool& print_delimiter)
+    print_channel_ids_(Writer& out, const ChannelIdSet& ids, char type, bool& print_delimiter)
     {
-      for(const auto id : ids)
+      for (const auto id : ids)
       {
-        if(print_delimiter)
+        if (print_delimiter)
         {
           out << ", ";
         }
@@ -159,32 +152,28 @@ namespace AdServer::Bidding
       char type,
       bool& print_delimiter)
     {
-      for(const auto& channel : channels)
+      for (const auto& channel : channels)
       {
-        if(print_delimiter)
+        if (print_delimiter)
         {
           out << ", ";
         }
-        out << channel.id() << type << " :: " <<
-          channel.trigger_channel_id();
+        out << channel.id() << type << " ::" << channel.trigger_channel_id();
         print_delimiter = true;
       }
     }
 
     template<typename Writer, typename Iterator>
     void
-    print_sequence_(
-      Writer& out,
-      Iterator begin,
-      Iterator end)
+    print_sequence_(Writer& out, Iterator begin, Iterator end)
     {
-      if(begin == end)
+      if (begin == end)
       {
         return;
       }
 
       out << *begin;
-      for(++begin; begin != end; ++begin)
+      for (++begin; begin != end; ++begin)
       {
         out << "," << *begin;
       }
@@ -213,15 +202,15 @@ namespace AdServer::Bidding
     const char*
     auction_type_to_string(std::size_t auction_type) noexcept
     {
-      if(auction_type == CampaignSvcs::AT_RANDOM)
+      if (auction_type == CampaignSvcs::AT_RANDOM)
       {
         return "random";
       }
-      else if(auction_type == CampaignSvcs::AT_MAX_ECPM)
+      else if (auction_type == CampaignSvcs::AT_MAX_ECPM)
       {
         return "max ecpm";
       }
-      else if(auction_type == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
+      else if (auction_type == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
       {
         return "proportional probability";
       }
@@ -274,14 +263,14 @@ namespace AdServer::Bidding
       static const std::string marker = "[grpc_endpoint=";
 
       const auto begin = message.rfind(marker);
-      if(begin == std::string::npos)
+      if (begin == std::string::npos)
       {
         return {};
       }
 
       const auto endpoint_begin = begin + marker.size();
       const auto endpoint_end = message.find(']', endpoint_begin);
-      if(endpoint_end == std::string::npos)
+      if (endpoint_end == std::string::npos)
       {
         return {};
       }
@@ -291,13 +280,9 @@ namespace AdServer::Bidding
 
     template<typename Writer>
     void
-    print_stage_server_id_(
-      Writer& out,
-      const char* name,
-      const StageResult* stage,
-      const char* sep)
+    print_stage_server_id_(Writer& out, const char* name, const StageResult* stage, const char* sep)
     {
-      if(stage && !stage->server_id.empty())
+      if (stage && !stage->server_id.empty())
       {
         out << name << "_server_id = " << stage->server_id << sep;
       }
@@ -312,16 +297,14 @@ namespace AdServer::Bidding
       const char* sep)
     {
       out << name << "_started_at = ";
-      if(!stage)
+      if (!stage)
       {
-        out << "not started" << sep <<
-          name << "_time = not started" << sep;
+        out << "not started" << sep << name << "_time = not started" << sep;
         return;
       }
 
-      out << stage->started_at.float_str() << sep <<
-        name << "_time = ";
-      if(stage->finished_at)
+      out << stage->started_at.float_str() << sep << name << "_time = ";
+      if (stage->finished_at)
       {
         out << (*stage->finished_at - stage->started_at).float_str();
       }
@@ -330,39 +313,36 @@ namespace AdServer::Bidding
         out << "incomplete";
       }
 
-      if(stage->call_time)
+      if (stage->call_time)
       {
         out << " : " << stage->call_time->float_str() << " (call)";
       }
 
-      if(stage->local_time)
+      if (stage->local_time)
       {
         out << " : " << stage->local_time->float_str();
-        if(stage->call_time)
+        if (stage->call_time)
         {
           out << " (server)";
         }
       }
 
-      if(stage->error)
+      if (stage->error)
       {
         out << " => error";
       }
       out << sep;
 
-      if(stage->error)
+      if (stage->error)
       {
         out << name << "_error_source = " <<
           stage_error_source_to_string_(stage->error->source) << sep <<
           name << "_error_code = " << stage->error->code << sep;
-        if(!stage->error->endpoint.empty())
+        if (!stage->error->endpoint.empty())
         {
-          out << name << "_error_endpoint = " <<
-            stage->error->endpoint << sep;
+          out << name << "_error_endpoint = " << stage->error->endpoint << sep;
         }
-        out <<
-          name << "_error_message = " <<
-            normalize_debug_field_(stage->error->message) << sep;
+        out << name << "_error_message = " << normalize_debug_field_(stage->error->message) << sep;
       }
     }
   }
@@ -378,11 +358,9 @@ namespace AdServer::Bidding
   }
 
   void
-  StageResult::set_grpc_error(
-    const grpc::Status& status,
-    std::string endpoint)
+  StageResult::set_grpc_error(const grpc::Status& status, std::string endpoint)
   {
-    if(endpoint.empty())
+    if (endpoint.empty())
     {
       endpoint = extract_grpc_endpoint_(status.error_message());
     }
@@ -428,8 +406,7 @@ namespace AdServer::Bidding
   }
 
   bool
-  DebugSink::require_debug_info(
-    const String::SubString& require_debug_info) noexcept
+  DebugSink::require_debug_info(const String::SubString& require_debug_info) noexcept
   {
     return parse_require_debug_info_(require_debug_info) != DI_NONE;
   }
@@ -440,12 +417,12 @@ namespace AdServer::Bidding
     const AdServer::Commons::UserId& user_id,
     std::string_view channel_keywords) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::REQUEST_INFO_HEAD << "\n";
     }
@@ -460,8 +437,7 @@ namespace AdServer::Bidding
       debug_info_str_ << "invalid";
     }
 
-    const std::string normalized_channel_keywords =
-      normalize_debug_field_(channel_keywords);
+    const std::string normalized_channel_keywords = normalize_debug_field_(channel_keywords);
 
     debug_info_str_ << sep_ <<
       "user_status = " <<
@@ -480,14 +456,12 @@ namespace AdServer::Bidding
 
     debug_info_str_ << sep_ <<
       "test_request = " << request_info.test_request << sep_ <<
-      "log_as_test = " << request_info.log_as_test << sep_ <<
-      "location = ";
+      "log_as_test = " << request_info.log_as_test << sep_ << "location = ";
 
-    if(request_info.location)
+    if (request_info.location)
     {
       debug_info_str_ << request_info.location->country << "/" <<
-        request_info.location->region << "/" <<
-        request_info.location->city;
+        request_info.location->region << "/" << request_info.location->city;
     }
 
     debug_info_str_ << sep_ <<
@@ -513,14 +487,12 @@ namespace AdServer::Bidding
         request_info.ssp_video_placementtype_str << sep_ <<
       "browser = " << request_info.web_browser << sep_ <<
       "platform = " << request_info.platform << sep_ <<
-      "full_platform = " << request_info.full_platform << sep_ <<
-      "platform_ids = ";
+      "full_platform = " << request_info.full_platform << sep_ << "platform_ids = ";
     print_sequence_(
       debug_info_str_,
       request_info.platform_ids.begin(),
       request_info.platform_ids.end());
-    debug_info_str_ << sep_ << "ad_slots = " <<
-      request_info.ad_slots.size() << sep_;
+    debug_info_str_ << sep_ << "ad_slots = " << request_info.ad_slots.size() << sep_;
   }
 
   void
@@ -528,12 +500,12 @@ namespace AdServer::Bidding
     const UserResolvingDebugInfo& user_resolving_debug_info,
     const StageResult* stage) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::USER_RESOLVING_HEAD << "\n";
     }
@@ -542,44 +514,36 @@ namespace AdServer::Bidding
       debug_info_str_ << Debug::USER_RESOLVING_HEAD << sep_;
     }
 
-    print_stage_server_id_(
-      debug_info_str_,
-      "user_resolving",
-      stage,
-      sep_);
+    print_stage_server_id_(debug_info_str_, "user_resolving", stage, sep_);
 
     debug_info_str_ << "user_id = ";
-    if(user_resolving_debug_info.response_present)
+    if (user_resolving_debug_info.response_present)
     {
       debug_info_str_ << user_resolving_debug_info.user_id;
     }
 
     debug_info_str_ << sep_ << "min_age_reached = ";
-    if(user_resolving_debug_info.response_present)
+    if (user_resolving_debug_info.response_present)
     {
-      debug_info_str_ <<
-        (user_resolving_debug_info.min_age_reached ? "true" : "false");
+      debug_info_str_ << (user_resolving_debug_info.min_age_reached ? "true" : "false");
     }
 
     debug_info_str_ << sep_ << "created = ";
-    if(user_resolving_debug_info.response_present)
+    if (user_resolving_debug_info.response_present)
     {
-      debug_info_str_ <<
-        (user_resolving_debug_info.created ? "true" : "false");
+      debug_info_str_ << (user_resolving_debug_info.created ? "true" : "false");
     }
 
     debug_info_str_ << sep_ << "invalid_operation = ";
-    if(user_resolving_debug_info.response_present)
+    if (user_resolving_debug_info.response_present)
     {
-      debug_info_str_ <<
-        (user_resolving_debug_info.invalid_operation ? "true" : "false");
+      debug_info_str_ << (user_resolving_debug_info.invalid_operation ? "true" : "false");
     }
 
     debug_info_str_ << sep_ << "user_found = ";
-    if(user_resolving_debug_info.response_present)
+    if (user_resolving_debug_info.response_present)
     {
-      debug_info_str_ <<
-        (user_resolving_debug_info.user_found ? "true" : "false");
+      debug_info_str_ << (user_resolving_debug_info.user_found ? "true" : "false");
     }
 
     debug_info_str_ << sep_;
@@ -591,7 +555,7 @@ namespace AdServer::Bidding
       campaign_match_result,
     const StageResult* stage) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
@@ -599,27 +563,27 @@ namespace AdServer::Bidding
     bool ad_selected = false;
     const AdServer::Bidding::CampaignManager::AdSlotDebugInfo*
       expected_debug_info = nullptr;
-    for(std::size_t i = 0; i < campaign_match_result.ad_slots.size(); ++i)
+    for (std::size_t i = 0; i < campaign_match_result.ad_slots.size(); ++i)
     {
       const auto& ad_slot_result = campaign_match_result.ad_slots[i];
-      if(!expected_debug_info && ad_slot_result.debug_info.trace_ccg[0] != 0)
+      if (!expected_debug_info && ad_slot_result.debug_info.trace_ccg[0] != 0)
       {
         expected_debug_info = &ad_slot_result.debug_info;
       }
 
-      if(ad_slot_result.selected_creatives.size() > 0)
+      if (ad_slot_result.selected_creatives.size() > 0)
       {
         ad_selected = true;
         print_creative_selection_debug_info_(ad_slot_result, stage);
       }
     }
 
-    if(!ad_selected)
+    if (!ad_selected)
     {
       print_empty_creative_selection_debug_info_(stage);
     }
 
-    if(expected_debug_info)
+    if (expected_debug_info)
     {
       print_expected_debug_info_(*expected_debug_info);
     }
@@ -631,12 +595,12 @@ namespace AdServer::Bidding
       response,
     const StageResult* stage) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::CHANNEL_MATCHING_HEAD << "\n";
     }
@@ -645,11 +609,7 @@ namespace AdServer::Bidding
       debug_info_str_ << Debug::CHANNEL_MATCHING_HEAD << sep_;
     }
 
-    print_stage_server_id_(
-      debug_info_str_,
-      "trigger_match",
-      stage,
-      sep_);
+    print_stage_server_id_(debug_info_str_, "trigger_match", stage, sep_);
 
     ChannelIdSet ids;
     const auto& match_result = response.matched_channels();
@@ -665,25 +625,12 @@ namespace AdServer::Bidding
         sep_ <<
       "special_channels_effects = " <<
         (response.no_track() ? "NO TRACK" : "TRACK") << ", " <<
-        (response.no_adv() ? "NO ADV" : "ADV") << sep_ <<
-      "triggers = ";
+        (response.no_adv() ? "NO ADV" : "ADV") << sep_ << "triggers = ";
 
     bool print_delimiter = false;
-    print_channel_atom_seq_(
-      debug_info_str_,
-      match_result.page_channels(),
-      'P',
-      print_delimiter);
-    print_channel_atom_seq_(
-      debug_info_str_,
-      match_result.search_channels(),
-      'S',
-      print_delimiter);
-    print_channel_atom_seq_(
-      debug_info_str_,
-      match_result.url_channels(),
-      'U',
-      print_delimiter);
+    print_channel_atom_seq_(debug_info_str_, match_result.page_channels(), 'P', print_delimiter);
+    print_channel_atom_seq_(debug_info_str_, match_result.search_channels(), 'S', print_delimiter);
+    print_channel_atom_seq_(debug_info_str_, match_result.url_channels(), 'U', print_delimiter);
     print_channel_atom_seq_(
       debug_info_str_,
       match_result.url_keyword_channels(),
@@ -713,9 +660,9 @@ namespace AdServer::Bidding
     print_channel_ids_(debug_info_str_, ids, 'A', print_delimiter);
 
     debug_info_str_ << sep_ << "content_channels = ";
-    for(int i = 0; i < response.content_channels_size(); ++i)
+    for (int i = 0; i < response.content_channels_size(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         debug_info_str_ << ", ";
       }
@@ -732,12 +679,12 @@ namespace AdServer::Bidding
       match_result,
     const StageResult* stage) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::HISTORY_MATCHING_HEAD << "\n";
     }
@@ -746,33 +693,25 @@ namespace AdServer::Bidding
       debug_info_str_ << Debug::HISTORY_MATCHING_HEAD << sep_;
     }
 
-    print_stage_server_id_(
-      debug_info_str_,
-      "history_match",
-      stage,
-      sep_);
+    print_stage_server_id_(debug_info_str_, "history_match", stage, sep_);
 
     debug_info_str_ << "last_request_time = ";
     try
     {
-      debug_info_str_ << GrpcAlgs::unpack_time(
-        match_result.last_request_time()).gm_ft() << sep_ <<
-        "create_time = " << GrpcAlgs::unpack_time(
-          match_result.create_time()).gm_ft() << sep_ <<
-        "session_start = " << GrpcAlgs::unpack_time(
-          match_result.session_start()).gm_ft();
+      debug_info_str_ << GrpcAlgs::unpack_time(match_result.last_request_time()).gm_ft() << sep_ <<
+        "create_time = " << GrpcAlgs::unpack_time(match_result.create_time()).gm_ft() << sep_ <<
+        "session_start = " << GrpcAlgs::unpack_time(match_result.session_start()).gm_ft();
     }
     catch(...)
     {
       debug_info_str_ << "invalid time";
     }
 
-    debug_info_str_ << sep_ <<
-      "history_channels = ";
+    debug_info_str_ << sep_ << "history_channels = ";
 
-    for(int i = 0; i < match_result.channels_size(); ++i)
+    for (int i = 0; i < match_result.channels_size(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         debug_info_str_ << ",";
       }
@@ -783,15 +722,14 @@ namespace AdServer::Bidding
   }
 
   void
-  DebugSink::print_time_metering_debug_info(
-    const RequestTimeMetering& time_metering) noexcept
+  DebugSink::print_time_metering_debug_info(const RequestTimeMetering& time_metering) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::TIME_METERING_HEAD << "\n";
     }
@@ -800,24 +738,10 @@ namespace AdServer::Bidding
       debug_info_str_ << Debug::TIME_METERING_HEAD << sep_;
     }
 
-    debug_info_str_ <<
-      "total_time = " <<
-        time_metering.total_time.float_str() << sep_;
-    print_stage_time_(
-      debug_info_str_,
-      "user_resolving",
-      time_metering.user_resolving,
-      sep_);
-    print_stage_time_(
-      debug_info_str_,
-      "trigger_match",
-      time_metering.trigger_match,
-      sep_);
-    print_stage_time_(
-      debug_info_str_,
-      "history_match",
-      time_metering.history_match,
-      sep_);
+    debug_info_str_ << "total_time = " << time_metering.total_time.float_str() << sep_;
+    print_stage_time_(debug_info_str_, "user_resolving", time_metering.user_resolving, sep_);
+    print_stage_time_(debug_info_str_, "trigger_match", time_metering.trigger_match, sep_);
+    print_stage_time_(debug_info_str_, "history_match", time_metering.history_match, sep_);
     print_stage_time_(
       debug_info_str_,
       "creative_selection",
@@ -840,12 +764,12 @@ namespace AdServer::Bidding
     const AdServer::Grpc::Stats& channel_client_stats,
     const AdServer::Grpc::Stats& campaign_client_stats) noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::INTERRUPT_HEAD << "\n";
     }
@@ -867,45 +791,27 @@ namespace AdServer::Bidding
         history_match_in_progress << sep_ <<
       "rtb_request_campaign_selection_in_progress = " <<
         campaign_selection_in_progress << sep_ <<
-      "rtb_request_history_post_match_in_progress = " <<
-        history_post_match_in_progress << sep_;
+      "rtb_request_history_post_match_in_progress = " << history_post_match_in_progress << sep_;
 
-    print_client_stats_(
-      debug_info_str_,
-      "user_bind_client",
-      user_bind_client_stats,
-      sep_);
-    print_client_stats_(
-      debug_info_str_,
-      "user_info_client",
-      user_info_client_stats,
-      sep_);
-    print_client_stats_(
-      debug_info_str_,
-      "channel_client",
-      channel_client_stats,
-      sep_);
-    print_client_stats_(
-      debug_info_str_,
-      "campaign_client",
-      campaign_client_stats,
-      sep_);
+    print_client_stats_(debug_info_str_, "user_bind_client", user_bind_client_stats, sep_);
+    print_client_stats_(debug_info_str_, "user_info_client", user_info_client_stats, sep_);
+    print_client_stats_(debug_info_str_, "channel_client", channel_client_stats, sep_);
+    print_client_stats_(debug_info_str_, "campaign_client", campaign_client_stats, sep_);
 
     debug_info_str_ << "interrupted_step = " << interrupted_step << sep_;
   }
 
   DebugInfo
-  DebugSink::parse_require_debug_info_(
-    const String::SubString& require_debug_info) noexcept
+  DebugSink::parse_require_debug_info_(const String::SubString& require_debug_info) noexcept
   {
     String::AsciiStringManip::Caseless value("");
     value.str.assign(require_debug_info.data(), require_debug_info.size());
 
-    if(value == String::SubString("header"))
+    if (value == String::SubString("header"))
     {
       return DI_HEADER;
     }
-    else if(value == String::SubString("body"))
+    else if (value == String::SubString("body"))
     {
       return DI_BODY;
     }
@@ -921,7 +827,7 @@ namespace AdServer::Bidding
     int& http_status,
     const AdServer::Commons::UserId& user_id) const noexcept
   {
-    if(!require_debug_info())
+    if (!require_debug_info())
     {
       return;
     }
@@ -930,13 +836,11 @@ namespace AdServer::Bidding
 
     try
     {
-      if(require_debug_info_ == DI_HEADER)
+      if (require_debug_info_ == DI_HEADER)
       {
-        response->add_header_nocopy_name(
-          Response::Header::DEBUG_INFO,
-          debug_info);
+        response->add_header_nocopy_name(Response::Header::DEBUG_INFO, debug_info);
       }
-      else if(require_debug_info_ == DI_BODY)
+      else if (require_debug_info_ == DI_BODY)
       {
         FCGI::HttpResponse_var debug_response(new FCGI::HttpResponse());
         debug_response->set_content_type_nocopy(Response::Type::TEXT_PLAIN);
@@ -952,10 +856,9 @@ namespace AdServer::Bidding
   }
 
   std::string
-  DebugSink::make_debug_info_(
-    const AdServer::Commons::UserId& user_id) const
+  DebugSink::make_debug_info_(const AdServer::Commons::UserId& user_id) const
   {
-    if(!debug_info_str_.empty())
+    if (!debug_info_str_.empty())
     {
       return debug_info_str_.str();
     }
@@ -967,29 +870,22 @@ namespace AdServer::Bidding
   }
 
   void
-  DebugSink::print_empty_creative_selection_debug_info_(
-    const StageResult* stage) noexcept
+  DebugSink::print_empty_creative_selection_debug_info_(const StageResult* stage) noexcept
   {
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
 
-    print_stage_server_id_(
-      debug_info_str_,
-      "creative_selection",
-      stage,
-      sep_);
+    print_stage_server_id_(debug_info_str_, "creative_selection", stage, sep_);
 
     debug_info_str_ <<
       "ccid = 0" << sep_ <<
       "cmpid = 0" << sep_ <<
       "creative_size_id = 0" << sep_ <<
       "mime_format = " << sep_ <<
-      "tag_id = 0" << sep_ <<
-      "site_id = 0" << sep_ <<
-      "site_rate_id = 0" << sep_;
+      "tag_id = 0" << sep_ << "site_id = 0" << sep_ << "site_rate_id = 0" << sep_;
   }
 
   void
@@ -998,10 +894,9 @@ namespace AdServer::Bidding
       debug_info) noexcept
   {
 
-    if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
+    if (require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
     {
-      debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" <<
-        debug_info.trace_ccg << "\n";
+      debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" << debug_info.trace_ccg << "\n";
     }
   }
 
@@ -1016,43 +911,33 @@ namespace AdServer::Bidding
     const auto& debug_info = ad_slot_result.debug_info;
     const auto& debug_selected_creatives = debug_info.selected_creatives;
 
-    if(require_debug_info_ == DI_BODY)
+    if (require_debug_info_ == DI_BODY)
     {
       debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
 
-    print_stage_server_id_(
-      debug_info_str_,
-      "creative_selection",
-      stage,
-      sep_);
+    print_stage_server_id_(debug_info_str_, "creative_selection", stage, sep_);
 
     unsigned long first_ccid = 0;
     unsigned long first_cmp_id = 0;
-    if(selected_creatives.size() != 0)
+    if (selected_creatives.size() != 0)
     {
       first_ccid = selected_creatives[0].ccid;
       first_cmp_id = selected_creatives[0].cmp_id;
     }
 
-    CampaignSvcs::RevenueDecimal imp_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
-    CampaignSvcs::RevenueDecimal click_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
-    CampaignSvcs::RevenueDecimal action_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal imp_revenue(CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal click_revenue(CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal action_revenue(CampaignSvcs::RevenueDecimal::ZERO);
 
-    for(std::size_t i = 0; i < debug_selected_creatives.size(); ++i)
+    for (std::size_t i = 0; i < debug_selected_creatives.size(); ++i)
     {
       imp_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].imp_revenue);
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives[i].imp_revenue);
       click_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].click_revenue);
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives[i].click_revenue);
       action_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].action_revenue);
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives[i].action_revenue);
     }
 
     debug_info_str_ <<
@@ -1075,26 +960,22 @@ namespace AdServer::Bidding
       "notice_url = " << ad_slot_result.notice_url << sep_ <<
       "track_pixel_url = " << debug_info.track_pixel_url << sep_ <<
       "cpm_threshold = " <<
-        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-          debug_info.cpm_threshold) << sep_ <<
+        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(debug_info.cpm_threshold) << sep_ <<
       "walled_garden = " << debug_info.walled_garden << sep_ <<
       "auction_type = " << auction_type_to_string(debug_info.auction_type) <<
       sep_ << "selected_creatives = ";
 
     const std::size_t debug_count = debug_selected_creatives.size();
-    for(std::size_t i = 0; i < selected_creatives.size(); ++i)
+    for (std::size_t i = 0; i < selected_creatives.size(); ++i)
     {
       const auto& creative = selected_creatives[i];
-      const auto* debug_creative = i < debug_count ?
-        &debug_selected_creatives[i] : nullptr;
+      const auto* debug_creative = i < debug_count ? &debug_selected_creatives[i] : nullptr;
       const std::string offset(require_debug_info_ == DI_BODY ? "  " : "");
-      const std::string creative_start_sep(
-        require_debug_info_ == DI_BODY ? "\n------\n" : "( ");
+      const std::string creative_start_sep(require_debug_info_ == DI_BODY ? "\n------\n" : "(");
       const char* creative_end_sep = require_debug_info_ == DI_BODY ? "" : ") ";
 
       debug_info_str_ << creative_start_sep <<
-        offset << "request_id = " << GrpcAlgs::unpack_request_id(
-          creative.request_id) << sep_ <<
+        offset << "request_id = " << GrpcAlgs::unpack_request_id(creative.request_id) << sep_ <<
         offset << "ccid = " << creative.ccid << sep_ <<
         offset << "cmp_id = " << creative.cmp_id << sep_ <<
         offset << "campaign_group_id = " << creative.campaign_group_id << sep_ <<
@@ -1121,8 +1002,7 @@ namespace AdServer::Bidding
         offset << "html_url = " <<
           (debug_creative ? debug_creative->html_url : "") << sep_ <<
         offset << "revenue = " <<
-          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-            creative.revenue) << sep_ <<
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(creative.revenue) << sep_ <<
         offset << "imp_revenue = " <<
           (debug_creative ? GrpcAlgs::unpack_decimal<
             CampaignSvcs::RevenueDecimal>(debug_creative->imp_revenue).str() : "") << sep_ <<

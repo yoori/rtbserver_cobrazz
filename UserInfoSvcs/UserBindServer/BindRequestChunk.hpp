@@ -45,15 +45,11 @@ namespace AdServer::UserInfoSvcs
       noexcept;
 
     AdServer::Commons::StartableAwaitable<BindRequest>
-    co_get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    co_get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       noexcept override;
 
     BindRequest
-    get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       noexcept override;
 
     void
@@ -130,9 +126,7 @@ namespace AdServer::UserInfoSvcs
 
       struct TimePeriodHolder: public ReferenceCounting::AtomicImpl
       {
-        TimePeriodHolder(
-          const Generics::Time& min_time_val,
-          const Generics::Time& max_time_val)
+        TimePeriodHolder(const Generics::Time& min_time_val, const Generics::Time& max_time_val)
           noexcept;
 
         const Generics::Time min_time;
@@ -146,11 +140,9 @@ namespace AdServer::UserInfoSvcs
         {}
       };
 
-      using TimePeriodHolder_var =
-        ReferenceCounting::SmartPtr<TimePeriodHolder>;
+      using TimePeriodHolder_var = ReferenceCounting::SmartPtr<TimePeriodHolder>;
 
-      using TimePeriodHolderArray =
-        std::vector<TimePeriodHolder_var>;
+      using TimePeriodHolderArray = std::vector<TimePeriodHolder_var>;
 
       // sorted in max_time descending order
       TimePeriodHolderArray time_holders;
@@ -164,8 +156,7 @@ namespace AdServer::UserInfoSvcs
     class HolderContainerGuard
     {
     public:
-      using HolderContainer_var =
-        ReferenceCounting::SmartPtr<HolderContainerType>;
+      using HolderContainer_var = ReferenceCounting::SmartPtr<HolderContainerType>;
 
     public:
       mutable ExtendMutex extend_lock;
@@ -186,11 +177,9 @@ namespace AdServer::UserInfoSvcs
     };
 
     //
-    using BindRequestHolderContainer =
-      HolderContainer<HashHashAdapter, BindRequestHolder>;
+    using BindRequestHolderContainer = HolderContainer<HashHashAdapter, BindRequestHolder>;
 
-    using BindRequestHolderContainer_var =
-      ReferenceCounting::SmartPtr<BindRequestHolderContainer>;
+    using BindRequestHolderContainer_var = ReferenceCounting::SmartPtr<BindRequestHolderContainer>;
 
     using UserLockMap = AdServer::Commons::NoAllocLockMap<
       HashHashAdapter,
@@ -286,10 +275,7 @@ namespace AdServer::UserInfoSvcs
     save_key_(std::ostream& out, const HashHashAdapter& key);
 
     void
-    load_key_(
-      HashHashAdapter& res,
-      unsigned long& portion,
-      std::istream& in) const
+    load_key_(HashHashAdapter& res, unsigned long& portion, std::istream& in) const
       noexcept;
 
     void
@@ -313,8 +299,7 @@ namespace AdServer::UserInfoSvcs
     mutable FlushMutex flush_lock_;
   };
 
-  using BindRequestChunk_var =
-    ReferenceCounting::SmartPtr<BindRequestChunk>;
+  using BindRequestChunk_var = ReferenceCounting::SmartPtr<BindRequestChunk>;
 
 } /* AdServer::UserInfoSvcs */
 
@@ -322,21 +307,18 @@ namespace AdServer::UserInfoSvcs
 {
   // HashHashAdapter
   inline
-  BindRequestChunk::HashHashAdapter::HashHashAdapter(
-    size_t hash_val) noexcept
+  BindRequestChunk::HashHashAdapter::HashHashAdapter(size_t hash_val) noexcept
     : hash_(hash_val)
   {}
 
   template<typename HashAdapterType>
-  BindRequestChunk::HashHashAdapter::HashHashAdapter(
-    const HashAdapterType& init)
+  BindRequestChunk::HashHashAdapter::HashHashAdapter(const HashAdapterType& init)
     : hash_(init.hash())
   {}
 
   inline
   bool
-  BindRequestChunk::HashHashAdapter::operator==(
-    const HashHashAdapter& right) const noexcept
+  BindRequestChunk::HashHashAdapter::operator==(const HashHashAdapter& right) const noexcept
   {
     return hash_ == right.hash_;
   }

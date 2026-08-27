@@ -16,7 +16,7 @@ sub init
     name => 'Template',
     template_file => 'UnitTests/test.html',
     flags => 0 });
-  
+
   my $keyword = make_autotest_name($ns, "keyword");
 
   my $campaign1  = $ns->create(DisplayCampaign => {
@@ -42,9 +42,9 @@ sub init
     campaigncreative_weight => 1,
     site_links => [{ site_id =>  $publisher->{site_id} }] });
 
-  my $option = $ns->create(Options => { 
+  my $option = $ns->create(Options => {
      token => 'IMAGETITLE',
-     option_group_id => 
+     option_group_id =>
          $template->{option_group_id},
      template_id => $template });
 

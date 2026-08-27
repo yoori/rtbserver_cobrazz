@@ -87,8 +87,7 @@ public:
       op_fns_[RL_NL] = &ColumnOperationHandler::nl;
     }
 
-    virtual void init(const String::SubString &value1,
-      const String::SubString &value2)
+    virtual void init(const String::SubString &value1, const String::SubString &value2)
       /*throw(Exception)*/ = 0;
 
     virtual bool operator()(Relation op) /*throw(Exception)*/
@@ -96,8 +95,7 @@ public:
       if (!op_fns_[op])
       {
         Stream::Error ostr;
-        ostr << "ColumnOperationHandler::operator()(): "
-          << "Unsupported operation requested!";
+        ostr << "ColumnOperationHandler::operator()(): " << "Unsupported operation requested!";
         throw UnsupportedOperation(ostr);
       }
       return (this->*op_fns_[op])();
@@ -127,8 +125,7 @@ public:
     {
     }
 
-    virtual void init(const String::SubString &value1,
-      const String::SubString &value2)
+    virtual void init(const String::SubString &value1, const String::SubString &value2)
       /*throw(Exception)*/
     {
       value1.assign_to(value1_);
@@ -180,8 +177,7 @@ public:
       op_fns_[RL_NC] = 0; // Unsupported operation
     }
 
-    virtual void init(const String::SubString &value1,
-      const String::SubString &value2)
+    virtual void init(const String::SubString &value1, const String::SubString &value2)
       /*throw(Exception)*/
     {
       Stream::Parser iss1(value1);
@@ -189,8 +185,7 @@ public:
       if (!iss1.eof())
       {
         Stream::Error ostr;
-        ostr << "NumericTypeOperationHandler<>::init(): "
-          << "Invalid value(1): " << value1;
+        ostr << "NumericTypeOperationHandler<>::init(): " << "Invalid value(1): " << value1;
         throw InvalidValue(ostr);
       }
       Stream::Parser iss2(value2);
@@ -198,8 +193,7 @@ public:
       if (!iss2.eof())
       {
         Stream::Error ostr;
-        ostr << "NumericTypeOperationHandler<>::init(): "
-          << "Invalid value(2): " << value2;
+        ostr << "NumericTypeOperationHandler<>::init(): " << "Invalid value(2): " << value2;
         throw InvalidValue(ostr);
       }
     }
@@ -289,15 +283,12 @@ public:
       /*throw(eh::Exception)*/;
   };
 
-  void column(unsigned long i,
-              const Column& column)
+  void column(unsigned long i, const Column& column)
     /*throw(OutOfRange, Exception, eh::Exception)*/;
 
   unsigned long columns() const /*throw(eh::Exception)*/;
 
-  void add_row(const Row& row,
-               const Filters& filters = Filters(),
-               const Sorter& sorter = Sorter())
+  void add_row(const Row& row, const Filters& filters = Filters(), const Sorter& sorter = Sorter())
     /*throw(InvalidArgument, eh::Exception)*/;
 
   bool empty() const noexcept;
@@ -373,8 +364,7 @@ Table::Row::add_field(const std::string& value)
   if (size() >= columns_)
   {
     Stream::Error ostr;
-    ostr << "Table::Row::add_field: number of fields (" << columns_
-         << ") can't be exceeded";
+    ostr << "Table::Row::add_field: number of fields (" << columns_ << ") can't be exceeded";
 
     throw OutOfRange(ostr);
   }

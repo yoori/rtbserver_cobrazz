@@ -1,10 +1,7 @@
 #include "MultipleChannelsMatchingTest.hpp"
 #include <String/InterConvertion.hpp>
 
-REFLECT_UNIT(MultipleChannelsMatchingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(MultipleChannelsMatchingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
@@ -42,20 +39,17 @@ MultipleChannelsMatchingTest::run_test()
   /////
   client.process_request(request.referer_kw("Test11 Test10"));
   TEST_APPEARENCES2(required_channel1, required_channel2,
-                    (client.debug_info.trigger_channels
-                     + client.debug_info.trigger_channels),
+                    (client.debug_info.trigger_channels + client.debug_info.trigger_channels),
                     "first part 1");
 
   client.process_request(request.referer_kw("Test10 Test45 Test11"));
   TEST_APPEARENCES2(required_channel1, required_channel2,
-                    (client.debug_info.trigger_channels
-                     + client.debug_info.trigger_channels),
+                    (client.debug_info.trigger_channels + client.debug_info.trigger_channels),
                     "first part 2");
 
   client.process_request(request.referer_kw("Test12").referer("Test12"));
   TEST_APPEARENCES2(required_channel3, required_channel4,
-                    (client.debug_info.trigger_channels
-                     + client.debug_info.trigger_channels),
+                    (client.debug_info.trigger_channels + client.debug_info.trigger_channels),
                     "second part");
 
   client.process_request(request.referer_kw("Test13"));

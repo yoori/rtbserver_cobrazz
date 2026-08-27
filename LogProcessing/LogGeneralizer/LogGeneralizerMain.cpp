@@ -21,8 +21,7 @@ namespace
 
 LogGeneralizerApp_::LogGeneralizerApp_() /*throw(eh::Exception)*/
 :
-  AdServer::Commons::ProcessControlVarsLoggerImpl(
-    "LogGeneralizerApp_", ASPECT)
+  AdServer::Commons::ProcessControlVarsLoggerImpl("LogGeneralizerApp_", ASPECT)
 {
 }
 
@@ -81,18 +80,13 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       }
 
       configuration_ =
-        ConfigPtr(
-          new LogGeneralizerConfigType(
-            ad_configuration->LogGeneralizerConfig()
-          )
-        );
+        ConfigPtr(new LogGeneralizerConfigType(ad_configuration->LogGeneralizerConfig()));
     }
     catch (const xml_schema::parsing &ex)
     {
       Stream::Error es;
 
-      es << "Can't parse config file '"
-         << argv[1] << "'. : ";
+      es << "Can't parse config file '" << argv[1] << "'. : ";
 
       if (error_handler.has_errors())
       {
@@ -105,8 +99,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
     catch (const eh::Exception &ex)
     {
       Stream::Error es;
-      es << "Can't parse config file '"
-         << argv[1] << "'. : " << ex.what();
+      es << "Can't parse config file '" << argv[1] << "'. : " << ex.what();
       throw Exception(es);
     }
 
@@ -125,8 +118,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
     // fill corba_config
     try
     {
-      Config::CorbaConfigReader::read_config(config().CorbaConfig(),
-        corba_config_);
+      Config::CorbaConfigReader::read_config(config().CorbaConfig(), corba_config_);
     }
     catch (const eh::Exception &ex)
     {
@@ -138,8 +130,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
     try
     {
       // init CORBA Server
-      corba_server_adapter_ =
-        new CORBACommons::CorbaServerAdapter(corba_config_);
+      corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
 
       shutdowner_ = corba_server_adapter_->shutdowner();
     }
@@ -152,8 +143,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
 
     proc_stat_impl_ = new AdServer::LogProcessing::ProcStatImpl;
 
-    proc_stat_ctrl_ =
-      new CORBACommons::ProcessStatsImpl(proc_stat_impl_);
+    proc_stat_ctrl_ = new CORBACommons::ProcessStatsImpl(proc_stat_impl_);
 
     log_generalizer_impl_ =
       new AdServer::LogProcessing::LogGeneralizerImpl(callback(), logger(),
@@ -164,9 +154,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       register_vars_controller();
       add_var_processor(
         DbStateProcessor::VAR_NAME,
-        new DbStateProcessor(
-          new_simple_db_state_changer(log_generalizer_impl_)
-        )
+        new DbStateProcessor(new_simple_db_state_changer(log_generalizer_impl_))
       );
     }
 
@@ -183,8 +171,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
         snmp_stat_impl_ =
           new SNMPAgentX::SNMPStatsImpl(
             proc_stat_impl_, snmp_index,
-            Logging::Logger_var(new Logging::LoggerDefaultHolder(
-              logger(), 0, "ADS-IMPL-1012")),
+            Logging::Logger_var(new Logging::LoggerDefaultHolder(logger(), 0, "ADS-IMPL-1012")),
             "",
             "LogGeneralizer-MIB:logGeneralizer",
             config().SNMPConfig().get().mib_dirs().c_str()
@@ -205,11 +192,9 @@ LogGeneralizerApp_::main(int &argc, char **argv)
 
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
 
-    corba_server_adapter_->add_binding(PROCESS_STATS_CONTROL_OBJ_KEY,
-      proc_stat_ctrl_.in());
+    corba_server_adapter_->add_binding(PROCESS_STATS_CONTROL_OBJ_KEY, proc_stat_ctrl_.in());
 
-    corba_server_adapter_->add_binding(LOG_GENERALIZER_OBJ_KEY,
-      log_generalizer_impl_.in());
+    corba_server_adapter_->add_binding(LOG_GENERALIZER_OBJ_KEY, log_generalizer_impl_.in());
 
     log_generalizer_impl_->activate_object();
 
@@ -227,8 +212,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       Logging::Logger::CRITICAL,
       ASPECT,
       AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_0
-    ) << "LogGeneralizerApp_::main(): Got LogGeneralizerApp_::Exception: "
-      << ex.what();
+) << "LogGeneralizerApp_::main(): Got LogGeneralizerApp_::Exception: " << ex.what();
   }
   catch (const CORBA::SystemException &ex)
   {
@@ -236,8 +220,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       Logging::Logger::EMERGENCY,
       ASPECT,
       AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_0
-    ) << "LogGeneralizerApp_::main(): Got CORBA::SystemException: "
-      << ex;
+) << "LogGeneralizerApp_::main(): Got CORBA::SystemException: " << ex;
   }
   catch (const eh::Exception &ex)
   {
@@ -245,8 +228,7 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       Logging::Logger::EMERGENCY,
       ASPECT,
       AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_0
-    ) << "LogGeneralizerApp_::main(): Got eh::Exception: "
-      << ex.what();
+) << "LogGeneralizerApp_::main(): Got eh::Exception: " << ex.what();
   }
 
   /* references to servants in ORB must be destroyed before
@@ -278,8 +260,7 @@ main(int argc, char **argv) noexcept
   }
   catch (...)
   {
-    std::cerr
-      << "main(): Critical: Got exception while creating application object.\n";
+    std::cerr << "main(): Critical: Got exception while creating application object.\n";
     return -1;
   }
 
@@ -291,4 +272,3 @@ main(int argc, char **argv) noexcept
 
   app->main(argc, argv);
 }
-

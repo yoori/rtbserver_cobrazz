@@ -12,43 +12,40 @@
 
 #include <Generics/MonoAllocator.hpp>
 
+namespace AdServer::Bidding::MatchKeywords
+{
+  inline constexpr std::string_view PLAYBACKMETHOD = "playbackmethod";
+  inline constexpr std::string_view PLACEMENT = "placement";
+  inline constexpr std::string_view AGE = "age";
+  inline constexpr std::string_view YOB = "yob";
+  inline constexpr std::string_view IP = "ip";
+  inline constexpr std::string_view REQ = "req";
+  inline constexpr std::string_view RTBREQ = "rtbreq";
+  inline constexpr std::string_view VT = "vt";
+  inline constexpr std::string_view DCL = "dcl";
+  inline constexpr std::string_view NO_ID = "noid";
+  inline constexpr std::string_view NATIVE_PLACEMENT = "nativeplacement";
+  inline constexpr std::string_view DEAL_ID = "dealid";
+  inline constexpr std::string_view SSP_TAG_ID = "ssptagid";
+
+  inline constexpr std::string_view FULL_NOREF = "poadnoref";
+  inline constexpr std::string_view FULL_IDFA = "rtbidfa";
+  inline constexpr std::string_view FULL_IDFA_KNOWN = "rtbidfaknown";
+  inline constexpr std::string_view FULL_REQ = "rtbreq";
+  inline constexpr std::string_view FULL_NO_ID = "rtbnoid";
+  inline constexpr std::string_view FULL_COPPA = "rtbcoppa";
+  inline constexpr std::string_view VIEWABILITY = "viewability";
+};
+
 namespace AdServer::Bidding
 {
-  namespace MatchKeywords
-  {
-    inline constexpr std::string_view PLAYBACKMETHOD = "playbackmethod";
-    inline constexpr std::string_view PLACEMENT = "placement";
-    inline constexpr std::string_view AGE = "age";
-    inline constexpr std::string_view YOB = "yob";
-    inline constexpr std::string_view IP = "ip";
-    inline constexpr std::string_view REQ = "req";
-    inline constexpr std::string_view RTBREQ = "rtbreq";
-    inline constexpr std::string_view VT = "vt";
-    inline constexpr std::string_view DCL = "dcl";
-    inline constexpr std::string_view NO_ID = "noid";
-    inline constexpr std::string_view NATIVE_PLACEMENT = "nativeplacement";
-    inline constexpr std::string_view DEAL_ID = "dealid";
-    inline constexpr std::string_view SSP_TAG_ID = "ssptagid";
-
-    inline constexpr std::string_view FULL_NOREF = "poadnoref";
-    inline constexpr std::string_view FULL_IDFA = "rtbidfa";
-    inline constexpr std::string_view FULL_IDFA_KNOWN = "rtbidfaknown";
-    inline constexpr std::string_view FULL_REQ = "rtbreq";
-    inline constexpr std::string_view FULL_NO_ID = "rtbnoid";
-    inline constexpr std::string_view FULL_COPPA = "rtbcoppa";
-    inline constexpr std::string_view VIEWABILITY = "viewability";
-  };
-
   template<typename StringType = std::string>
   class BasicKeywordFormatter
   {
   public:
     // short_rtb_name == source_id
-    explicit BasicKeywordFormatter(
-      std::string_view source_id)
-      : BasicKeywordFormatter(
-          source_id,
-          std::shared_ptr<Generics::MonoAllocatorArena>())
+    explicit BasicKeywordFormatter(std::string_view source_id)
+      : BasicKeywordFormatter(source_id, std::shared_ptr<Generics::MonoAllocatorArena>())
     {}
 
     BasicKeywordFormatter(
@@ -64,8 +61,7 @@ namespace AdServer::Bidding
     }
 
     template<std::size_t Size>
-    explicit BasicKeywordFormatter(
-      const char (&source_id)[Size])
+    explicit BasicKeywordFormatter(const char (&source_id)[Size])
       : BasicKeywordFormatter(std::string_view(source_id, Size - 1))
     {}
 
@@ -73,16 +69,12 @@ namespace AdServer::Bidding
     BasicKeywordFormatter(
       const char (&source_id)[Size],
       std::shared_ptr<Generics::MonoAllocatorArena> arena)
-      : BasicKeywordFormatter(
-          std::string_view(source_id, Size - 1),
-          std::move(arena))
+      : BasicKeywordFormatter(std::string_view(source_id, Size - 1), std::move(arena))
     {}
 
     template<typename SourceIdType>
-    explicit BasicKeywordFormatter(
-      const SourceIdType& source_id)
-      : BasicKeywordFormatter(
-          std::string_view(source_id.data(), source_id.size()))
+    explicit BasicKeywordFormatter(const SourceIdType& source_id)
+      : BasicKeywordFormatter(std::string_view(source_id.data(), source_id.size()))
     {}
 
     template<typename SourceIdType>
@@ -98,15 +90,15 @@ namespace AdServer::Bidding
     void
     assign_to(std::basic_string<char, Traits, Allocator>& kw) const
     {
-      if(empty())
+      if (empty())
       {
         return;
       }
 
-      if(kw.empty())
+      if (kw.empty())
       {
         kw.reserve(kw.size() + total_size_);
-        for(const std::string_view part : parts_)
+        for (const std::string_view part : parts_)
         {
           kw.append(part.data(), part.size());
         }
@@ -115,7 +107,7 @@ namespace AdServer::Bidding
       {
         kw += '\n';
         kw.reserve(kw.size() + total_size_);
-        for(const std::string_view part : parts_)
+        for (const std::string_view part : parts_)
         {
           kw.append(part.data(), part.size());
         }
@@ -131,7 +123,7 @@ namespace AdServer::Bidding
     void
     add_cat(std::string_view cat, bool open_rtb = false)
     {
-      if(cat.empty())
+      if (cat.empty())
       {
         return;
       }
@@ -162,11 +154,9 @@ namespace AdServer::Bidding
 
     template <typename CategoryStringContainerType>
     void
-    add_cat_list(
-      const CategoryStringContainerType& cat_list,
-      bool open_rtb = false)
+    add_cat_list(const CategoryStringContainerType& cat_list, bool open_rtb = false)
     {
-      for(typename CategoryStringContainerType::const_iterator l_iter = cat_list.begin();
+      for (typename CategoryStringContainerType::const_iterator l_iter = cat_list.begin();
           l_iter != cat_list.end(); ++l_iter)
       {
         add_cat(*l_iter, open_rtb);
@@ -180,21 +170,20 @@ namespace AdServer::Bidding
       std::string norm_gender_holder = gender;
       String::AsciiStringManip::to_lower(norm_gender_holder);
 
-      if(norm_gender_holder == "m")
+      if (norm_gender_holder == "m")
       {
         norm_gender_holder = "male";
       }
-      else if(norm_gender_holder == "f")
+      else if (norm_gender_holder == "f")
       {
         norm_gender_holder = "female";
       }
 
-      if(norm_gender_holder == "male" || norm_gender_holder == "female")
+      if (norm_gender_holder == "male" || norm_gender_holder == "female")
       {
-        const auto norm_gender =
-          store_owned_(make_string_(norm_gender_holder, arena_.get()));
+        const auto norm_gender = store_owned_(make_string_(norm_gender_holder, arena_.get()));
         add_(std::string_view(), std::string_view(), norm_gender);
-        if(!short_rtb_name_.empty())
+        if (!short_rtb_name_.empty())
         {
           add_(std::string_view(), short_rtb_name_, norm_gender);
         }
@@ -206,7 +195,7 @@ namespace AdServer::Bidding
     add_yob(const ValueType& yob)
     {
       add_(MatchKeywords::YOB, std::string_view(), yob);
-      if(!short_rtb_name_.empty())
+      if (!short_rtb_name_.empty())
       {
         add_(MatchKeywords::YOB, short_rtb_name_, yob);
       }
@@ -217,7 +206,7 @@ namespace AdServer::Bidding
     add_age(const ValueType& age)
     {
       add_(MatchKeywords::AGE, std::string_view(), age);
-      if(!short_rtb_name_.empty())
+      if (!short_rtb_name_.empty())
       {
         add_(MatchKeywords::AGE, short_rtb_name_, age);
       }
@@ -227,19 +216,19 @@ namespace AdServer::Bidding
     add_ip(std::string_view addr_value)
     {
       const auto dot1 = addr_value.find('.');
-      if(dot1 == std::string_view::npos)
+      if (dot1 == std::string_view::npos)
       {
         return;
       }
 
       const auto dot2 = addr_value.find('.', dot1 + 1);
-      if(dot2 == std::string_view::npos)
+      if (dot2 == std::string_view::npos)
       {
         return;
       }
 
       const auto dot3 = addr_value.find('.', dot2 + 1);
-      if(dot3 == std::string_view::npos)
+      if (dot3 == std::string_view::npos)
       {
         return;
       }
@@ -254,16 +243,14 @@ namespace AdServer::Bidding
 
       StringType res_keyword_ip4(res_keyword_ip3);
       res_keyword_ip4 += 'x';
-      res_keyword_ip4.append(
-        addr_value.data() + dot3 + 1,
-        addr_value.size() - dot3 - 1);
+      res_keyword_ip4.append(addr_value.data() + dot3 + 1, addr_value.size() - dot3 - 1);
 
       const auto res_keyword_ip3_view = store_owned_(std::move(res_keyword_ip3));
       const auto res_keyword_ip4_view = store_owned_(std::move(res_keyword_ip4));
 
       add_(MatchKeywords::IP, std::string_view(), res_keyword_ip3_view);
       add_(MatchKeywords::IP, std::string_view(), res_keyword_ip4_view);
-      if(!short_rtb_name_.empty())
+      if (!short_rtb_name_.empty())
       {
         add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip3_view);
         add_(MatchKeywords::IP, short_rtb_name_, res_keyword_ip4_view);
@@ -328,11 +315,9 @@ namespace AdServer::Bidding
 
     template <typename ValueType>
     void
-    add_rtb_keyword(
-      std::string_view dict_name,
-      const ValueType& keyword)
+    add_rtb_keyword(std::string_view dict_name, const ValueType& keyword)
     {
-      if(!short_rtb_name_.empty())
+      if (!short_rtb_name_.empty())
       {
         add_(dict_name, short_rtb_name_, keyword, true);
       }
@@ -363,9 +348,7 @@ namespace AdServer::Bidding
     void
     add_keyword_owned(OtherString&& kw)
     {
-      add_keyword_owned(make_string_(
-        std::string_view(kw.data(), kw.size()),
-        arena_.get()));
+      add_keyword_owned(make_string_(std::string_view(kw.data(), kw.size()), arena_.get()));
     }
 
     void
@@ -381,10 +364,8 @@ namespace AdServer::Bidding
       if (!short_rtb_name_.empty())
       {
         StringType source_keyword = make_string_(RTB_PREFIX, arena_.get());
-        source_keyword.append(
-          short_rtb_name_.data(),
-          short_rtb_name_.size());
-        if(keyword.compare(0, RTB_PREFIX.size(), RTB_PREFIX) == 0)
+        source_keyword.append(short_rtb_name_.data(), short_rtb_name_.size());
+        if (keyword.compare(0, RTB_PREFIX.size(), RTB_PREFIX) == 0)
         {
           source_keyword.append(
             keyword.data() + RTB_PREFIX.size(),
@@ -402,10 +383,10 @@ namespace AdServer::Bidding
     void
     add_keyword_list(const ValueStringContainerType& kwl)
     {
-      for(typename ValueStringContainerType::const_iterator l_iter = kwl.begin();
+      for (typename ValueStringContainerType::const_iterator l_iter = kwl.begin();
           l_iter != kwl.end(); ++l_iter)
       {
-        if(!l_iter->empty())
+        if (!l_iter->empty())
         {
           add_keyword(std::string_view(l_iter->data(), l_iter->size()));
         }
@@ -421,14 +402,9 @@ namespace AdServer::Bidding
       bool add_rtb_prefix = true)
     {
       char value_str[40];
-      size_t value_str_size = String::StringManip::int_to_str(
-        value, value_str, sizeof(value_str));
+      size_t value_str_size = String::StringManip::int_to_str(value, value_str, sizeof(value_str));
 
-      add_(
-        param_name,
-        short_rtb_name,
-        std::string_view(value_str, value_str_size),
-        add_rtb_prefix);
+      add_(param_name, short_rtb_name, std::string_view(value_str, value_str_size), add_rtb_prefix);
     }
 
     template<
@@ -455,17 +431,17 @@ namespace AdServer::Bidding
       std::string_view value,
       bool add_rtb_prefix = true)
     {
-      if(param_name.empty() && value.empty())
+      if (param_name.empty() && value.empty())
       {
         return;
       }
 
-      if(keywords_non_empty_)
+      if (keywords_non_empty_)
       {
         add_part_view_(CUSTOM_KEYWORD_SEPARATOR);
       }
 
-      if(add_rtb_prefix)
+      if (add_rtb_prefix)
       {
         add_part_view_(RTB_PREFIX);
       }
@@ -484,17 +460,17 @@ namespace AdServer::Bidding
       std::string_view value,
       bool add_rtb_prefix = true)
     {
-      if(param_name.empty() && value.empty())
+      if (param_name.empty() && value.empty())
       {
         return;
       }
 
-      if(keywords_non_empty_)
+      if (keywords_non_empty_)
       {
         add_part_view_(CUSTOM_KEYWORD_SEPARATOR);
       }
 
-      if(add_rtb_prefix)
+      if (add_rtb_prefix)
       {
         add_part_view_(RTB_PREFIX);
       }
@@ -503,19 +479,19 @@ namespace AdServer::Bidding
       add_part_view_(param_name);
       StringType normalized = make_string_(std::string_view(), arena_.get());
       normalized.reserve(value.size());
-      for(std::string_view::const_iterator value_it = value.begin();
+      for (std::string_view::const_iterator value_it = value.begin();
           value_it != value.end(); ++value_it)
       {
         const unsigned char ch = *value_it;
-        if(ch >= 0x80)
+        if (ch >= 0x80)
         {
           normalized += *value_it;
         }
-        else if((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
+        else if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z'))
         {
           normalized += *value_it;
         }
-        else if(ch >= 'A' && ch <= 'Z')
+        else if (ch >= 'A' && ch <= 'Z')
         {
           normalized += static_cast<char>(ch - 'A' + 'a');
         }
@@ -530,9 +506,7 @@ namespace AdServer::Bidding
     }
 
     static StringType
-    make_string_(
-      std::string_view value,
-      Generics::MonoAllocatorArena* resource)
+    make_string_(std::string_view value, Generics::MonoAllocatorArena* resource)
     {
       if constexpr (std::is_same_v<StringType, Generics::MonoString>)
       {
@@ -609,7 +583,7 @@ namespace AdServer::Bidding
     void
     add_part_view_(std::string_view value)
     {
-      if(value.empty())
+      if (value.empty())
       {
         return;
       }

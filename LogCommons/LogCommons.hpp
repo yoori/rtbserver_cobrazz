@@ -80,8 +80,7 @@ namespace AdServer::LogProcessing
         "LFNF_INVALID", "LFNF_CSV", "LFNF_BASIC", "LFNF_EXTENDED", "LFNF_V_2_6"
       };
       return static_cast<std::size_t>(int(format)) <
-        sizeof(CONV_TABLE) / sizeof(CONV_TABLE[0]) ?
-          CONV_TABLE[format] : "<OUT OF RANGE>";
+        sizeof(CONV_TABLE) / sizeof(CONV_TABLE[0]) ? CONV_TABLE[format] : "<OUT OF RANGE>";
     }
 
     LOG_FILE_NAME_FORMAT format;
@@ -1028,15 +1027,10 @@ namespace AdServer::LogProcessing
   };
 
   std::string
-  make_log_file_name(
-    const LogFileNameInfo &info,
-    const std::string &out_dir_name
-  );
+  make_log_file_name(const LogFileNameInfo &info, const std::string &out_dir_name);
 
   std::string
-  restore_log_file_name(
-    const LogFileNameInfo& info,
-    const std::string& out_dir_name)
+  restore_log_file_name(const LogFileNameInfo& info, const std::string& out_dir_name)
     /*throw(InvalidArgValue, eh::Exception)*/;
 
   /*
@@ -1045,10 +1039,7 @@ namespace AdServer::LogProcessing
    *   second elem - its temporary counterpart
    */
   StringPair
-  make_log_file_name_pair(
-    const LogFileNameInfo &info,
-    const std::string &out_dir_name
-  );
+  make_log_file_name_pair(const LogFileNameInfo &info, const std::string &out_dir_name);
 
   void
   parse_log_file_name(const std::string& log_file_name, LogFileNameInfo& info)
@@ -1105,10 +1096,8 @@ namespace AdServer::LogProcessing
     void
     store(const FILE_SEQ_ &files) /*throw(Exception, eh::Exception)*/
     {
-      const std::string& session_name =
-        use_session_name_ ? new_session_name_() : "";
-      for (typename FILE_SEQ_::const_iterator it = files.begin();
-        it != files.end(); ++it)
+      const std::string& session_name = use_session_name_ ? new_session_name_() : "";
+      for (typename FILE_SEQ_::const_iterator it = files.begin(); it != files.end(); ++it)
       {
         store_((*it)->full_path(), session_name);
       }
@@ -1116,22 +1105,17 @@ namespace AdServer::LogProcessing
 
     template <class FILE_SEQ_>
     void
-    store(
-      const FILE_SEQ_ &files,
-      const Generics::Time &timestamp)
+    store(const FILE_SEQ_ &files, const Generics::Time &timestamp)
       /*throw(Exception, eh::Exception)*/
     {
-      for (typename FILE_SEQ_::const_iterator it = files.begin();
-        it != files.end(); ++it)
+      for (typename FILE_SEQ_::const_iterator it = files.begin(); it != files.end(); ++it)
       {
         store_((*it)->full_path(), timestamp);
       }
     }
 
     void
-    store(
-      const std::string& file_path,
-      std::size_t processed_lines_count)
+    store(const std::string& file_path, std::size_t processed_lines_count)
       /*throw(Exception, eh::Exception)*/;
 
   private:
@@ -1143,10 +1127,7 @@ namespace AdServer::LogProcessing
       /*throw(Exception, eh::Exception)*/;
 
     static void
-    make_dir_layout_(
-      const std::string& store_dir,
-      const std::string& store_sub_dir
-    )
+    make_dir_layout_(const std::string& store_dir, const std::string& store_sub_dir)
       /*throw(Exception, eh::Exception)*/;
 
     static std::string
@@ -1161,10 +1142,7 @@ namespace AdServer::LogProcessing
       /*throw(Exception, eh::Exception)*/;
 
     void
-    store_(
-      const std::string& file_path,
-      const Generics::Time& timestamp
-    )
+    store_(const std::string& file_path, const Generics::Time& timestamp)
       /*throw(Exception, eh::Exception)*/;
 
     std::string
@@ -1236,11 +1214,7 @@ namespace AdServer::LogProcessing
     }
 
     static void
-    save(
-      CollectorT &collector,
-      const std::string &path,
-      unsigned long distrib_count
-    )
+    save(CollectorT &collector, const std::string &path, unsigned long distrib_count)
       /*throw(eh::Exception)*/
     {
       typedef typename Detail::DistribSaverImplSelector<LOG_TYPE_TRAITS_, false>::Type SaverT;
@@ -1279,8 +1253,7 @@ namespace AdServer::LogProcessing
     const OptionalValue<T_, OPTIONAL_VALUE_TRAITS_> &ov2
   )
   {
-    return ov2.present() ?
-      (ov1.present() ? ov1.get() < ov2.get() : true) : false;
+    return ov2.present() ? (ov1.present() ? ov1.get() < ov2.get() : true) : false;
   }
 
   class HitsFilter: public ReferenceCounting::AtomicImpl
@@ -1288,20 +1261,12 @@ namespace AdServer::LogProcessing
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    HitsFilter(
-      unsigned char min_count,
-      const char* storage_file_prefix,
-      unsigned long table_size
-    )
+    HitsFilter(unsigned char min_count, const char* storage_file_prefix, unsigned long table_size)
       /*throw(Exception, eh::Exception)*/;
 
     // Not thread-safe, needs external sync using Locker
     unsigned long
-    check(
-      const DayTimestamp& date,
-      unsigned long hash,
-      unsigned long add_count
-    )
+    check(const DayTimestamp& date, unsigned long hash, unsigned long add_count)
       /*throw(Exception, eh::Exception)*/;
 
     // Thread-safe
@@ -1400,8 +1365,7 @@ namespace AdServer::LogProcessing
     virtual void
     filter(CollectorType& collector)
     {
-      for (typename CollectorType::iterator it = collector.begin();
-        it != collector.end(); )
+      for (typename CollectorType::iterator it = collector.begin(); it != collector.end();)
       {
         {
           HitsFilter::Locker_var locker = hits_filter_->create_locker();
@@ -1420,6 +1384,7 @@ namespace AdServer::LogProcessing
             }
           }
         }
+
         if (it->second.empty())
         {
           collector.erase(it++);

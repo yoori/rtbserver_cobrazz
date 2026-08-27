@@ -11,10 +11,10 @@ BaseUnit::fetch_int_sequence(
   const String::AsciiStringManip::CharCategory SEP(separators);
   String::StringManip::CharSplitter tokenizer(sval, SEP);
   String::SubString token;
-  while(tokenizer.get_token(token))
+  while (tokenizer.get_token(token))
   {
     unsigned long val;
-    if(String::StringManip::str_to_int(token, val))
+    if (String::StringManip::str_to_int(token, val))
     {
       *ins_it++ = val;
     }
@@ -23,7 +23,7 @@ BaseUnit::fetch_int_sequence(
   return ins_it;
 }
 
-template < 
+template <
   template <class T, class A> class container,
   template <class T> class allocator,
   class Value>
@@ -40,17 +40,13 @@ BaseUnit::fetch(
 
 template<typename InsertIterator>
 InsertIterator
-BaseUnit::fetch_objects(
-  InsertIterator iterator,
-  const char* obj_names,
-  const char* separator)
+BaseUnit::fetch_objects(InsertIterator iterator, const char* obj_names, const char* separator)
   /*throw(Exception)*/
 {
   const String::AsciiStringManip::CharCategory SEP(separator);
-  String::StringManip::CharSplitter tokenizer(
-    String::SubString(obj_names), SEP);
+  String::StringManip::CharSplitter tokenizer(String::SubString(obj_names), SEP);
   String::SubString token;
-  while(tokenizer.get_token(token))
+  while (tokenizer.get_token(token))
   {
     fetch(*iterator++, token.str());
   }
@@ -64,8 +60,7 @@ BaseUnit::add_wait_checker(
   const std::string& description,
   const T& checker) /*throw(eh::Exception)*/
 {
-  add_checker(description,
-    AutoTest::WaitChecker<T>(checker));
+  add_checker(description, AutoTest::WaitChecker<T>(checker));
 }
 
 template<typename CheckerType>

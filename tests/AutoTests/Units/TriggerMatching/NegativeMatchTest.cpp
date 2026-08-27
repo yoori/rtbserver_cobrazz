@@ -1,9 +1,7 @@
 
 #include "NegativeMatchTest.hpp"
 
-REFLECT_UNIT(NegativeMatchTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW);
+REFLECT_UNIT(NegativeMatchTest) ("TriggerMatching", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace {
   typedef AutoTest::NSLookupRequest NSLookupRequest;
@@ -150,8 +148,7 @@ void NegativeMatchTest::pre_condition()
     istr >> channel_trigger_id;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !istr.bad() && !istr.fail()),
+      AutoTest::predicate_checker(!istr.bad() && !istr.fail()),
       "Can't fetch channel_trigger_id to int variable from LocalParams.xml");
 
     Stat stat(Stat::Key().channel_trigger_id(channel_trigger_id));
@@ -175,46 +172,24 @@ bool
 NegativeMatchTest::run()
 {
 
-  AUTOTEST_CASE(
-    test_group(
-      "Simple case#1.",
-      TEST_CASES_1),
-    "Simple cases");
+  AUTOTEST_CASE(test_group("Simple case#1.", TEST_CASES_1), "Simple cases");
+
+  AUTOTEST_CASE(test_group("Simple case#2.", TEST_CASES_2), "Simple cases");
+
+  AUTOTEST_CASE(test_group("Exact triggers#1.", EXACT_TRIGGERS_1), "Exact triggers");
+
+  AUTOTEST_CASE(test_group("Exact triggers#2.", EXACT_TRIGGERS_2), "Exact triggers");
 
   AUTOTEST_CASE(
-    test_group(
-      "Simple case#2.",
-      TEST_CASES_2),
-    "Simple cases");
-
-  AUTOTEST_CASE(
-    test_group(
-      "Exact triggers#1.",
-      EXACT_TRIGGERS_1),
-    "Exact triggers");
-
-  AUTOTEST_CASE(
-    test_group(
-      "Exact triggers#2.",
-      EXACT_TRIGGERS_2),
-    "Exact triggers");
-
-  AUTOTEST_CASE(
-    test_group(
-      "Split page & search#1.",
-      SPLIT_1),
+    test_group("Split page & search#1.", SPLIT_1),
     "Separate page and search negative lists");
 
   AUTOTEST_CASE(
-    test_group(
-      "Split page & search#2.",
-      SPLIT_2),
+    test_group("Split page & search#2.", SPLIT_2),
     "Separate page and search negative lists");
 
   AUTOTEST_CASE(
-    test_group(
-      "Split page & search#3.",
-      SPLIT_3),
+    test_group("Split page & search#3.", SPLIT_3),
     "Separate page and search negative lists");
 
   return true;
@@ -225,9 +200,7 @@ void NegativeMatchTest::post_condition()
   add_descr_phrase("Check ChannelTriggerStats table");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, diffs_, stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
     "ChannelTriggerStats check");
 }
 
@@ -238,31 +211,25 @@ void NegativeMatchTest::tear_down()
 
 template<size_t Count>
 void
-NegativeMatchTest::test_group(
-  const std::string& description,
-  const TestCase(&tests)[Count])
+NegativeMatchTest::test_group(const std::string& description, const TestCase(&tests)[Count])
 {
   add_descr_phrase(description);
   AdClient client(AdClient::create_user(this));
   for (size_t i = 0; i < Count; ++i)
   {
-    NOSTOP_FAIL_CONTEXT(
-      test_case(description + "#" + strof(i+1),
-        client, tests[i]));
+    NOSTOP_FAIL_CONTEXT(test_case(description + "#" + strof(i+1), client, tests[i]));
   }
 }
 
 void
-NegativeMatchTest::test_case(
-  const std::string& description,
-  AdClient& client,
-  const TestCase& test)
+NegativeMatchTest::test_case(const std::string& description, AdClient& client, const TestCase& test)
 {
   NSLookupRequest request;
   if (!client.uses_profiling_cluster())
   {
     request.tid = fetch_string("Tag");
   }
+
   if (test.referer)
   {
     if (strstr(test.referer, "SEARCH"))
@@ -274,6 +241,7 @@ NegativeMatchTest::test_case(
       request.referer = fetch_string(test.referer);
     }
   }
+
   if (test.referer_kw)
   {
     if (strstr(test.referer_kw, "FT"))
@@ -288,9 +256,7 @@ NegativeMatchTest::test_case(
   client.process_request(request);
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this, test.matched,
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, test.matched, client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger_channels");
 

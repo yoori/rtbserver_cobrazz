@@ -117,9 +117,7 @@ namespace AdServer::CampaignSvcs
         noexcept
       {
         add_hash_fun(hash_adapter, request_params, tag_size, creative);
-        result_hashes.emplace_back(
-          hash_index_(hash_mapping, hash_adapter.finalize()),
-          1);
+        result_hashes.emplace_back(hash_index_(hash_mapping, hash_adapter.finalize()), 1);
       }
     };
 
@@ -190,17 +188,13 @@ namespace AdServer::CampaignSvcs
             // need local hasher
             Murmur32v3Adapter hash_adapter_copy(hash_adapter);
             hash_adapter_copy.add(static_cast<uint32_t>(*it));
-            result_hashes.emplace_back(
-              hash_index_(hash_mapping, hash_adapter_copy.finalize()),
-              1);
+            result_hashes.emplace_back(hash_index_(hash_mapping, hash_adapter_copy.finalize()), 1);
           }
         }
         else
         {
           hash_adapter.add(static_cast<uint32_t>(0));
-          result_hashes.emplace_back(
-            hash_index_(hash_mapping, hash_adapter.finalize()),
-            1);
+          result_hashes.emplace_back(hash_index_(hash_mapping, hash_adapter.finalize()), 1);
         }
       }
     };
@@ -283,11 +277,7 @@ namespace AdServer::CampaignSvcs
         const Creative*)
         noexcept
       {
-        this->eval_hashes_final_(
-          result_hashes,
-          hash_adapter,
-          hash_mapping,
-          request_params.*field_);
+        this->eval_hashes_final_(result_hashes, hash_adapter, hash_mapping, request_params.*field_);
       }
 
     protected:
@@ -436,8 +426,7 @@ namespace AdServer::CampaignSvcs
       FeatureCalculator_var
       create_delegate(FeatureCalculator* next_calculator)
       {
-        return new FeatureCalculatorDelegateImpl<add_hash_fun>(
-          next_calculator);
+        return new FeatureCalculatorDelegateImpl<add_hash_fun>(next_calculator);
       }
     };
 

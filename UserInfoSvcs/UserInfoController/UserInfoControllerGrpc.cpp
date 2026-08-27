@@ -12,8 +12,7 @@ namespace AdServer::UserInfoSvcs
 {
   namespace
   {
-    constexpr const char user_info_controller2_grpc_aspect[] =
-      "UserInfoController";
+    constexpr const char user_info_controller2_grpc_aspect[] = "UserInfoController";
 
     namespace pb = adserver::user_info_svcs::user_info_controller;
   }
@@ -53,13 +52,11 @@ namespace AdServer::UserInfoSvcs
       }
       catch (const UserInfoControllerImpl::NotReady& ex)
       {
-        result_status =
-          ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
+        result_status = ::grpc::Status(::grpc::StatusCode::UNAVAILABLE, ex.what());
       }
       catch (const eh::Exception& ex)
       {
-        result_status =
-          ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+        result_status = ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
       }
     }
 

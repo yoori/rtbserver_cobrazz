@@ -75,8 +75,7 @@ ChannelControllerApp_::main(int& argc, char** argv) noexcept
       }
 
       configuration_.reset(
-        new ChannelControllerConfigType(
-          ad_configuration->ChannelControllerConfig()));
+        new ChannelControllerConfigType(ad_configuration->ChannelControllerConfig()));
     }
     catch (const xml_schema::parsing& ex)
     {
@@ -105,15 +104,9 @@ ChannelControllerApp_::main(int& argc, char** argv) noexcept
       std::string(config().pid_file()));
 
     Logging::ActiveObjectCallbackImpl_var callback(
-      new Logging::ActiveObjectCallbackImpl(
-        logger(),
-        "ChannelControllerApp",
-        ASPECT));
+      new Logging::ActiveObjectCallbackImpl(logger(), "ChannelControllerApp", ASPECT));
 
-    controller_ = new AdServer::ChannelSvcs::ChannelControllerImpl(
-      callback,
-      logger(),
-      config());
+    controller_ = new AdServer::ChannelSvcs::ChannelControllerImpl(callback, logger(), config());
 
     grpc_adapter_ = new AdServer::ChannelSvcs::ChannelControllerGrpc(
       controller_,
@@ -144,8 +137,7 @@ ChannelControllerApp_::main(int& argc, char** argv) noexcept
     }
     else
     {
-      std::cerr << FUN << ": caught ChannelControllerApp_::Exception: " <<
-        ex.what() << '\n';
+      std::cerr << FUN << ": caught ChannelControllerApp_::Exception: " << ex.what() << '\n';
     }
   }
   catch (const eh::Exception& ex)

@@ -7,7 +7,7 @@ namespace AdServer
     {
       uint operation_type;
       uint version;
-      
+
       string user_id;
       uint temporary;
       uint time;
@@ -20,7 +20,7 @@ namespace AdServer
       list<uint> persistent_channels;
       char change_last_request;
     };
-    
+
     autoreader UserMatchOperationReader<UserMatchOperationDescriptor>;
 
     /* merge operation */
@@ -28,7 +28,7 @@ namespace AdServer
     {
       uint operation_type;
       uint version;
-      
+
       string user_id;
       uint time;
       uint exchange_merge;

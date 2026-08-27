@@ -44,9 +44,7 @@
 #include "LogTypeCsvTraits.hpp"
 #include "ThreadLogSaverImpl.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   enum LOG_CONV_RESULT { LCR_NIL = -1, LCR_OK, LCR_PARTIAL };
 
@@ -138,10 +136,7 @@ namespace LogProcessing
 
       static
       LOG_CONV_RESULT
-      make_conversions(
-        std::istream&,
-        const CollectorBundleFileGuard_var&,
-        const std::string&)
+      make_conversions(std::istream&, const CollectorBundleFileGuard_var&, const std::string&)
         noexcept
       {
         return LCR_NIL;
@@ -159,9 +154,7 @@ namespace LogProcessing
 
       static
       void
-      search_files(
-        const std::string& in_dir,
-        const FileReceiver_var& file_receiver)
+      search_files(const std::string& in_dir, const FileReceiver_var& file_receiver)
       {
         file_receiver->fetch_files(in_dir.c_str(), LogTraits::log_base_name());
       }
@@ -206,10 +199,7 @@ namespace LogProcessing
     {
       static
       LOG_CONV_RESULT
-      make_conversions(
-        std::istream&,
-        const CollectorBundleFileGuard_var&,
-        const std::string&)
+      make_conversions(std::istream&, const CollectorBundleFileGuard_var&, const std::string&)
         /*throw(eh::Exception)*/;
     };
 
@@ -296,21 +286,15 @@ namespace LogProcessing
   {
     static
     void
-    search_files(
-      const std::string& in_dir,
-      const FileReceiver_var& file_receiver)
+    search_files(const std::string& in_dir, const FileReceiver_var& file_receiver)
     {
       static std::string conv_dir =
         in_dir.substr(0, in_dir.size() - strlen(log_base_name())) +
         CampaignStatTraits::log_base_name();
 
-      file_receiver->fetch_files(
-        in_dir.c_str(),
-        CampaignUserStatTraits::log_base_name());
+      file_receiver->fetch_files(in_dir.c_str(), CampaignUserStatTraits::log_base_name());
 
-      file_receiver->fetch_files(
-        conv_dir.c_str(),
-        CampaignStatTraits::log_base_name());
+      file_receiver->fetch_files(conv_dir.c_str(), CampaignStatTraits::log_base_name());
     }
 
     template <typename Collector>
@@ -388,10 +372,7 @@ namespace LogProcessing
   {
     static
     LOG_CONV_RESULT
-    make_conversions(
-      std::istream&,
-      const CollectorBundleFileGuard_var&,
-      const std::string&)
+    make_conversions(std::istream&, const CollectorBundleFileGuard_var&, const std::string&)
       /*throw(eh::Exception)*/;
   };
 
@@ -479,21 +460,15 @@ namespace LogProcessing
   {
     static
     void
-    search_files(
-      const std::string& in_dir,
-      const FileReceiver_var& file_receiver)
+    search_files(const std::string& in_dir, const FileReceiver_var& file_receiver)
     {
       static std::string conv_dir =
         in_dir.substr(0, in_dir.size() - strlen(log_base_name())) +
         SiteStatTraits::log_base_name();
 
-      file_receiver->fetch_files(
-        in_dir.c_str(),
-        SiteUserStatTraits::log_base_name());
+      file_receiver->fetch_files(in_dir.c_str(), SiteUserStatTraits::log_base_name());
 
-      file_receiver->fetch_files(
-        conv_dir.c_str(),
-        SiteStatTraits::log_base_name());
+      file_receiver->fetch_files(conv_dir.c_str(), SiteStatTraits::log_base_name());
     }
 
     template <typename LogVersionManager>
@@ -524,5 +499,4 @@ namespace LogProcessing
 
   typedef Aux_::BaseLogTraitsHelper<CampaignReferrerStatCsvTraits>
     CampaignReferrerStatExtTraits;
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

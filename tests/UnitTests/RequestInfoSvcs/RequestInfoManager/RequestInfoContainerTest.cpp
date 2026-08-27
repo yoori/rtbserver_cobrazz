@@ -114,8 +114,7 @@ namespace
         (action_id < right.action_id ||
           (action_id == right.action_id &&
           (action_request_id < right.action_request_id ||
-           (action_request_id == right.action_request_id &&
-             referer < right.referer))));
+           (action_request_id == right.action_request_id && referer < right.referer))));
     }
 
     bool
@@ -123,8 +122,7 @@ namespace
     {
       return
         action_id == right.action_id &&
-        action_request_id == right.action_request_id &&
-        referer == right.referer;
+        action_request_id == right.action_request_id && referer == right.referer;
     }
 
     bool
@@ -192,11 +190,9 @@ namespace
         return false;
       }
 
-      CustomActionSet::const_iterator right_ca_it =
-        right.custom_actions.begin();
+      CustomActionSet::const_iterator right_ca_it = right.custom_actions.begin();
 
-      for (CustomActionSet::const_iterator left_ca_it =
-            custom_actions.begin();
+      for (CustomActionSet::const_iterator left_ca_it = custom_actions.begin();
           left_ca_it != custom_actions.end();
           ++left_ca_it, ++right_ca_it)
       {
@@ -212,8 +208,7 @@ namespace
         clicks == right.clicks &&
         actions == right.actions &&
         prime_requests == right.prime_requests &&
-        double_impressions == right.double_impressions &&
-        double_clicks == right.double_clicks;
+        double_impressions == right.double_impressions && double_clicks == right.double_clicks;
     }
 
     bool
@@ -242,16 +237,13 @@ namespace
       ", actions = " << counter.actions <<
       ", prime_requests = " << counter.prime_requests <<
       ", double_impressions = " << counter.double_impressions <<
-      ", double_clicks = " << counter.double_clicks <<
-      ", custom_actions = ";
+      ", double_clicks = " << counter.double_clicks << ", custom_actions = ";
 
-    for (CustomActionSet::const_iterator ca_it =
-      counter.custom_actions.begin();
+    for (CustomActionSet::const_iterator ca_it = counter.custom_actions.begin();
         ca_it != counter.custom_actions.end(); ++ca_it)
     {
       ostr << "[" << ca_it->action_id << ", " <<
-        ca_it->action_request_id << ", " <<
-        ca_it->referer << "]";
+        ca_it->action_request_id << ", " << ca_it->referer << "]";
     }
 
     ostr << " }";
@@ -291,8 +283,7 @@ namespace
       if (ri.expression != "TEST-SHARE" && ri.expression != "TEST-ABSOLUTE")
       {
         Stream::Error ostr;
-        ostr << add_error << "request - lost expression: " <<
-          ri.expression << "'";
+        ostr << add_error << "request - lost expression: " << ri.expression << "'";
         throw RequestActionProcessor::Exception(ostr);
       }
     }
@@ -300,9 +291,9 @@ namespace
     void
     check_user_id(const Generics::Uuid& user_id, bool impression = false)
     {
-      if(impression)
+      if (impression)
       {
-        if(*user_id.begin() != 'I')
+        if (*user_id.begin() != 'I')
         {
           Stream::Error ostr;
           ostr << "request user_id isn't rewritten: '" <<
@@ -312,7 +303,7 @@ namespace
       }
       else
       {
-        if(*user_id.begin() != 'R')
+        if (*user_id.begin() != 'R')
         {
           Stream::Error ostr;
           ostr << "impression user_id unexpected";
@@ -322,9 +313,7 @@ namespace
     }
 
     void
-    check_pub_revenue(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    check_pub_revenue(const RequestInfo& ri, const ProcessingState& processing_state)
     {
       const RevenueDecimal& expected_pub_imp_revenue =
         (ri.expression == "TEST-ABSOLUTE" ? PUB_IMP_REVENUE : PUB_SHARE_REVENUE); // 0.3,
@@ -336,15 +325,14 @@ namespace
         pub_sys_impression != expected_pub_imp_sys_revenue)
       {
         std::cerr << get_current_test() << ": impression - incorrect pub revenue (" <<
-          RequestInfo::request_state_string(processing_state.state) << "):" <<
-          std::endl;
-        if(ri.pub_revenue.impression != expected_pub_imp_revenue)
+          RequestInfo::request_state_string(processing_state.state) << "):" << std::endl;
+        if (ri.pub_revenue.impression != expected_pub_imp_revenue)
         {
           std::cerr << "  pub revenue = " << ri.pub_revenue.impression <<
             " instead " << expected_pub_imp_revenue << std::endl;
         }
 
-        if(pub_sys_impression != expected_pub_imp_sys_revenue)
+        if (pub_sys_impression != expected_pub_imp_sys_revenue)
         {
           std::cerr << "  pub sys revenue = " << pub_sys_impression <<
             " instead " << expected_pub_imp_sys_revenue << std::endl;
@@ -356,9 +344,7 @@ namespace
     }
 
     virtual void
-    process_request(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_request(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       check_expression(ri);
@@ -379,8 +365,7 @@ namespace
         Stream::Error ostr;
 
         ostr << "request - non empty channels: ";
-        for (RequestInfo::ChannelIdList::const_iterator ch_it =
-         ri.channels.begin();
+        for (RequestInfo::ChannelIdList::const_iterator ch_it = ri.channels.begin();
             ch_it != ri.channels.end();
             ++ch_it)
         {
@@ -389,7 +374,7 @@ namespace
         throw RequestActionProcessor::Exception(ostr);
       }
 
-      if(aggregate_processor_)
+      if (aggregate_processor_)
       {
         aggregate_processor_->process_request(ri, processing_state);
       }
@@ -397,14 +382,14 @@ namespace
       SyncPolicy::WriteGuard lock(lock_);
       Counter& counter = (*this)[ri.request_id];
 
-      if(processing_state.state == RequestInfo::RS_NORMAL)
+      if (processing_state.state == RequestInfo::RS_NORMAL)
       {
         ++counter.prime_requests;
       }
 
       //int old_requests = counter.requests;
 
-      if(processing_state.state == RequestInfo::RS_NORMAL ||
+      if (processing_state.state == RequestInfo::RS_NORMAL ||
         processing_state.state == RequestInfo::RS_RESAVE)
       {
         ++counter.requests;
@@ -440,10 +425,9 @@ namespace
       check_expression(ri);
       check_user_id(ri.user_id, ri.device_channel_id);
 
-      if(ri.request_id.is_null())
+      if (ri.request_id.is_null())
       {
-        std::cerr << add_error << "impression - null request id" <<
-          std::endl;
+        std::cerr << add_error << "impression - null request id" << std::endl;
       }
 
       const RevenueDecimal etal("0.1");
@@ -464,8 +448,7 @@ namespace
         Stream::Error ostr;
 
         ostr << "impression - non empty channels: ";
-        for (RequestInfo::ChannelIdList::const_iterator ch_it =
-          ri.channels.begin();
+        for (RequestInfo::ChannelIdList::const_iterator ch_it = ri.channels.begin();
             ch_it != ri.channels.end();
             ++ch_it)
         {
@@ -474,7 +457,7 @@ namespace
         throw RequestActionProcessor::Exception(ostr);
       }
 
-      if(aggregate_processor_)
+      if (aggregate_processor_)
       {
         aggregate_processor_->process_impression(ri, imp_info, processing_state);
       }
@@ -482,7 +465,7 @@ namespace
       //std::cerr << "imp: " << RequestInfo::request_state_string(processing_state.state) << std::endl;
 
       SyncPolicy::WriteGuard lock(lock_);
-      if(processing_state.state != RequestInfo::RS_DUPLICATE &&
+      if (processing_state.state != RequestInfo::RS_DUPLICATE &&
         processing_state.state != RequestInfo::RS_ROLLBACK)
       {
         ++(*this)[ri.request_id].impressions;
@@ -494,9 +477,7 @@ namespace
     }
 
     virtual void
-    process_click(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    process_click(const RequestInfo& ri, const ProcessingState& processing_state)
       /*throw(RequestActionProcessor::Exception)*/
     {
       try
@@ -519,13 +500,13 @@ namespace
 
         check_pub_revenue(ri, processing_state);
 
-        if(aggregate_processor_)
+        if (aggregate_processor_)
         {
           aggregate_processor_->process_click(ri, processing_state);
         }
 
         SyncPolicy::WriteGuard lock(lock_);
-        if(processing_state.state != RequestInfo::RS_DUPLICATE &&
+        if (processing_state.state != RequestInfo::RS_DUPLICATE &&
           processing_state.state != RequestInfo::RS_ROLLBACK)
         {
           ++(*this)[ri.request_id].clicks;
@@ -571,7 +552,7 @@ namespace
 
         check_pub_revenue(ri, ProcessingState());
 
-        if(aggregate_processor_)
+        if (aggregate_processor_)
         {
           aggregate_processor_->process_action(ri);
         }
@@ -609,8 +590,7 @@ namespace
     sum() const
     {
       Counter result;
-      for(std::map<AdServer::Commons::RequestId, Counter>::
-            const_iterator it = begin();
+      for (std::map<AdServer::Commons::RequestId, Counter>::const_iterator it = begin();
           it != end(); ++it)
       {
         result += it->second;
@@ -656,8 +636,7 @@ namespace
     {}
 
     virtual void
-    process_impression(
-      const ImpressionInfo& impression_info)
+    process_impression(const ImpressionInfo& impression_info)
       /*throw(Exception)*/
     {
       /*
@@ -666,12 +645,11 @@ namespace
         " operation for '" << impression_info.user_id << "'" << std::endl;
       */
       assert(!impression_info.user_id.is_null());
-      if(*impression_info.user_id.begin() != 'I')
+      if (*impression_info.user_id.begin() != 'I')
       {
         Stream::Error ostr;
         ostr << "CheckRequestOperationProcessor::process_impression(): "
-          "non impression user_id: '" <<
-          static_cast<char>(*impression_info.user_id.begin()) << "'";
+          "non impression user_id: '" << static_cast<char>(*impression_info.user_id.begin()) << "'";
         throw RequestActionProcessor::Exception(ostr);
       }
       delegate_processor_->process_impression(impression_info);
@@ -685,16 +663,14 @@ namespace
       const AdServer::Commons::RequestId& request_id)
       /*throw(Exception)*/
     {
-      if(*new_user_id.begin() != 'I')
+      if (*new_user_id.begin() != 'I')
       {
         Stream::Error ostr;
         ostr << "CheckRequestOperationProcessor::process_action(): "
-          "non impression user_id: '" <<
-          static_cast<char>(*new_user_id.begin()) << "'";
+          "non impression user_id: '" << static_cast<char>(*new_user_id.begin()) << "'";
         throw RequestActionProcessor::Exception(ostr);
       }
-      delegate_processor_->process_action(
-        new_user_id, action_type, time, request_id);
+      delegate_processor_->process_action(new_user_id, action_type, time, request_id);
     }
 
     virtual void
@@ -724,8 +700,7 @@ namespace
       std::cout << "CheckRequestOperationProcessor: change request user id '" <<
         new_user_id << "'" << std::endl;
       */
-      delegate_processor_->change_request_user_id(
-        new_user_id, request_id, request_profile);
+      delegate_processor_->change_request_user_id(new_user_id, request_id, request_profile);
     }
 
   protected:
@@ -765,9 +740,7 @@ struct OrderFun
     custom_action_info = ca_info;
   }
 
-  OrderFun(
-    int flags,
-    int op1, int op2, int op3)
+  OrderFun(int flags, int op1, int op2, int op3)
   {
     fill_flags(flags);
     ops[0] = op1;
@@ -776,9 +749,7 @@ struct OrderFun
     sz = 3;
   }
 
-  OrderFun(
-    int flags,
-    int op1, int op2, int op3, int op4, int op5)
+  OrderFun(int flags, int op1, int op2, int op3, int op4, int op5)
   {
     fill_flags(flags);
     ops[0] = op1;
@@ -789,10 +760,7 @@ struct OrderFun
     sz = 5;
   }
 
-  OrderFun(
-    int flags,
-    int op1, int op2, int op3, int op4,
-    int op5, int op6)
+  OrderFun(int flags, int op1, int op2, int op3, int op4, int op5, int op6)
   {
     fill_flags(flags);
     ops[0] = op1;
@@ -804,10 +772,7 @@ struct OrderFun
     sz = 6;
   }
 
-  OrderFun(
-    int flags,
-    int op1, int op2, int op3, int op4,
-    int op5, int op6, int op7, int op8)
+  OrderFun(int flags, int op1, int op2, int op3, int op4, int op5, int op6, int op7, int op8)
   {
     fill_flags(flags);
     ops[0] = op1;
@@ -846,7 +811,7 @@ struct OrderFun
     request_info.enabled_action_tracking = action_track;
     request_info.enabled_impression_tracking = imp_track;
     request_info.enabled_notice = notice;
-    if(revenue_type_share)
+    if (revenue_type_share)
     {
       request_info.expression = "TEST-SHARE";
     }
@@ -911,19 +876,19 @@ struct OrderFun
         ImpressionInfo impression_info;
         impression_info.time = Generics::Time::get_time_of_day();
         impression_info.request_id = req_id;
-        if(ops[i] == IMPRESSION_OP && (
+        if (ops[i] == IMPRESSION_OP && (
              imp_change_user_id ||
              (non_first_imp_change_user_id && imp_done)))
         {
           impression_info.user_id = generate_user_id(true);
         }
 
-        if((ops[i] == NOTICE_OP && request_info.enabled_notice) ||
+        if ((ops[i] == NOTICE_OP && request_info.enabled_notice) ||
            (ops[i] == IMPRESSION_OP && !request_info.enabled_notice &&
             request_info.enabled_impression_tracking))
         {
           ImpressionInfo::PubRevenue pub_revenue;
-          if(revenue_type_share)
+          if (revenue_type_share)
           {
             pub_revenue.revenue_type = AdServer::CampaignSvcs::RT_SHARE;
             pub_revenue.impression = PUB_SHARE;
@@ -938,7 +903,7 @@ struct OrderFun
         impression_info.verify_impression = (ops[i] == IMPRESSION_OP);
         request_info_container->process_impression(impression_info);
 
-        if(ops[i] == IMPRESSION_OP)
+        if (ops[i] == IMPRESSION_OP)
         {
           imp_done = true;
         }
@@ -970,11 +935,11 @@ struct OrderFun
         ostr << "CUSTOM ACTION";
       }
       */
-      else if(ops[i] == NOTICE_OP)
+      else if (ops[i] == NOTICE_OP)
       {
         ostr << "NOTICE";
       }
-      else if(ops[i] == IMPRESSION_OP)
+      else if (ops[i] == IMPRESSION_OP)
       {
         ostr << "IMP";
       }
@@ -1029,12 +994,7 @@ test_seq_wrapper(
     std::cerr
       << "Incorrect Counter: "
       << res[req_id] << std::endl
-      << "Instead "
-      << check_counter
-      << " in test '"
-      << TEST_NAME << "'"
-      << add_error
-      << std::endl;
+      << "Instead " << check_counter << " in test '" << TEST_NAME << "'" << add_error << std::endl;
   }
   /*else
   {
@@ -1056,12 +1016,7 @@ test_order_wrapper(
 {
   action_processor->set_current_test(TEST_NAME);
 
-  test_seq_wrapper(
-    TEST_NAME,
-    action_processor,
-    request_info_container,
-    check_counter,
-    fun);
+  test_seq_wrapper(TEST_NAME, action_processor, request_info_container, check_counter, fun);
 }
 
 void
@@ -1089,7 +1044,7 @@ gen_seq(
     //std::cerr << "To '" << test_name_ostr.str() << "'" << std::endl;
 
     *counter += 1;
-    if(*counter % 1000 == 0)
+    if (*counter % 1000 == 0)
     {
       //std::cout << "finished " << *counter << " interations" << std::endl;
     }
@@ -1131,13 +1086,7 @@ test_all_combinations_wrapper(
   std::cout << TEST_NAME << std::endl;
   OrderFun fun_copy(fun);
   unsigned long counter = 0;
-  gen_seq(
-    TEST_NAME,
-    action_processor,
-    request_info_container,
-    &counter,
-    fun_copy,
-    check_counter);
+  gen_seq(TEST_NAME, action_processor, request_info_container, &counter, fun_copy, check_counter);
 }
 
 int
@@ -1158,12 +1107,9 @@ request_info_container_test()
     TestRequestActionProcessorImpl_var local_action_processor(
       new TestRequestActionProcessorImpl(action_processor, "local"));
 
-    const std::string delegate_request_path =
-      *root_path + TEST_FOLDER + "/DelegateRequest";
-    const std::string request_path =
-      *root_path + TEST_FOLDER + "/Request";
-    const std::string self_delegate_request_path =
-      *root_path + TEST_FOLDER + "/SDRequest";
+    const std::string delegate_request_path = *root_path + TEST_FOLDER + "/DelegateRequest";
+    const std::string request_path = *root_path + TEST_FOLDER + "/Request";
+    const std::string self_delegate_request_path = *root_path + TEST_FOLDER + "/SDRequest";
 
     RequestInfoContainer_var delegate_request_info_container(
       new RequestInfoContainer(
@@ -1184,16 +1130,14 @@ request_info_container_test()
         Generics::Time(10))); // expire time (sec)
 
     CompositeRequestOperationProcessor_var
-      self_delegate_request_operation_processor(
-        new CompositeRequestOperationProcessor());
+      self_delegate_request_operation_processor(new CompositeRequestOperationProcessor());
 
     RequestInfoContainer_var self_delegate_request_info_container(
       new RequestInfoContainer(
         logger,
         action_processor,
         RequestOperationProcessor_var(
-          new CheckRequestOperationProcessor(
-            self_delegate_request_operation_processor)),
+          new CheckRequestOperationProcessor(self_delegate_request_operation_processor)),
         String::SubString(self_delegate_request_path),
         Generics::Time(10))); // expire time (sec)
 
@@ -1202,9 +1146,9 @@ request_info_container_test()
 
     //multi_thread_test(request_info_container);
 
-    //for(int i = 0; i <= 2; ++i)
-    for(int i = 0; i <= 2; ++i)
-    //for(int i = 0; i <= 0; ++i)
+    //for (int i = 0; i <= 2; ++i)
+    for (int i = 0; i <= 2; ++i)
+    //for (int i = 0; i <= 0; ++i)
     {
       std::cout << "STAGE #" << i << std::endl;
 
@@ -1214,7 +1158,7 @@ request_info_container_test()
       TestRequestActionProcessorImpl_var orig_action_processor;
       RequestInfoContainer_var request_info_container;
 
-      if(i == 0 || i == 1)
+      if (i == 0 || i == 1)
       {
         orig_action_processor = local_action_processor;
         request_info_container = normal_request_info_container;
@@ -1234,7 +1178,7 @@ request_info_container_test()
       TestRequestActionProcessorImpl_var tgt_action_processor = action_processor;
         //i == 0 ? action_processor : delegate_action_processor;
 
-      if(i != 0)
+      if (i != 0)
       {
         // container should delegate all operations excluding requests (
         //   request can be processed localy or delegated)
@@ -1444,7 +1388,7 @@ request_info_container_test()
           REQUEST_OP),
         Counter(1, 1, 1, 0, 1, 0, 0));
 
-      if(i == 0)
+      if (i == 0)
       {
         /*
         // tests with disabled impression track - can't be delegated
@@ -1543,9 +1487,9 @@ request_info_container_test()
         */
       }
 
-      if(i == 0)
+      if (i == 0)
       {
-        if(!delegate_action_processor->empty())
+        if (!delegate_action_processor->empty())
         {
           std::cerr << add_error <<
             "delegate_action_processor isn't empty after non delegate cases" << std::endl;
@@ -1557,7 +1501,7 @@ request_info_container_test()
         Counter sum = local_action_processor->sum();
         Counter check_counter(0, 0, 0, 0, sum.prime_requests, 0, 0); // prime_requests can be non zero
 
-        if(sum != check_counter)
+        if (sum != check_counter)
         {
           std::cerr << add_error <<
             "action_processor have incorrect counter after all tests: " <<
@@ -1583,14 +1527,8 @@ init(int& argc, char**& argv) /*throw(eh::Exception)*/
   Args args;
   CheckOption opt_help;
 
-  args.add(
-    equal_name("path") ||
-    short_name("p"),
-    root_path);
-  args.add(
-    equal_name("help") ||
-    short_name("h"),
-    opt_help);
+  args.add(equal_name("path") || short_name("p"), root_path);
+  args.add(equal_name("help") || short_name("h"), opt_help);
 
   args.parse(argc - 1, argv + 1);
 

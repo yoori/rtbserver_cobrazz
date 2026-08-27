@@ -1,9 +1,9 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -23,12 +23,12 @@
       <xsd:annotation>
         <xsd:documentation>Adding test results to confluence report.</xsd:documentation>
       </xsd:annotation>
-    </xsd:attribute>    
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="TestType">
     <xsd:sequence>
-      <xsd:choice> 
+      <xsd:choice>
         <xsd:sequence>
           <xsd:element name="campaigns" type="CampaignsType" minOccurs="1" maxOccurs="1">
              <xsd:unique name="unique-campaign-type">
@@ -40,15 +40,15 @@
         <xsd:sequence>
           <xsd:element name="campaignsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
         </xsd:sequence>
-      </xsd:choice> 
-      <xsd:choice> 
+      </xsd:choice>
+      <xsd:choice>
         <xsd:sequence>
           <xsd:element name="channels" type="ChannelsType" minOccurs="1" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:sequence>
           <xsd:element name="channelsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
         </xsd:sequence>
-      </xsd:choice> 
+      </xsd:choice>
     </xsd:sequence>
     <xsd:attribute name="name" type="xsd:ID" use="required">
       <xsd:annotation>

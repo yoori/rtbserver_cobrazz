@@ -17,10 +17,7 @@ class MinUidAge : public BaseUnit
   };
 
 public:
-  MinUidAge(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  MinUidAge(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     base_time_(AutoTest::Time().get_gm_time().get_date())
   { }
@@ -35,10 +32,7 @@ private:
   // Utils
   template <size_t Count>
   void
-  process_case(
-    AdClient& client,
-    const TestCase(&testcases)[Count],
-    unsigned long colo = 0);
+  process_case(AdClient& client, const TestCase(&testcases)[Count], unsigned long colo = 0);
 
   // Test cases
   void

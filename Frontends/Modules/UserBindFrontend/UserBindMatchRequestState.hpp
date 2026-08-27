@@ -60,9 +60,7 @@ namespace AdServer
     log_channel_error_(const grpc::Status& status) const;
 
     void
-    log_user_info_error_(
-      const char* operation,
-      const grpc::Status& status) const;
+    log_user_info_error_(const char* operation, const grpc::Status& status) const;
 
   private:
     UserBindFrontend* frontend_;

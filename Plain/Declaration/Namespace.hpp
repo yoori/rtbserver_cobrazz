@@ -36,9 +36,7 @@ namespace Declaration
       NamespaceMap;
 
   public:
-    Namespace(
-      const char* name_val = 0,
-      Namespace* owner_val = 0)
+    Namespace(const char* name_val = 0, Namespace* owner_val = 0)
       noexcept;
 
     const char* name() const noexcept;

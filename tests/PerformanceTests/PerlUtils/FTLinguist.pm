@@ -40,6 +40,7 @@ sub create_ft
             store_ft($filepath, $text);
             $text = "";
           }
+
           if ($i++ == WORDS_IN_PHRASE)
           {
             push @phrases, $trigger;
@@ -63,7 +64,7 @@ sub create_ft
 
 sub store_ft {
   my ($path, $text) = @_;
-  open(my $FILE, ">:encoding(UTF-8)", $path) || die "Cann't open file $path for write.\n";  
+  open(my $FILE, ">:encoding(UTF-8)", $path) || die "Cann't open file $path for write.\n";
   print $FILE $text;
   close($FILE);
 }

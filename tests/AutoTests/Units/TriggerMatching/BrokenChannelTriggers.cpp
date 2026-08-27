@@ -1,10 +1,7 @@
 
 #include "BrokenChannelTriggers.hpp"
 
-REFLECT_UNIT(BrokenChannelTriggers) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(BrokenChannelTriggers) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::NSLookupRequest NSLookupRequest;
@@ -174,33 +171,22 @@ bool
 BrokenChannelTriggers::run_test()
 {
 
-  AUTOTEST_CASE(
-    test_group(INCORRECT_TRIGGER),
-    "Incorrect trigger definition");
+  AUTOTEST_CASE(test_group(INCORRECT_TRIGGER), "Incorrect trigger definition");
 
-  AUTOTEST_CASE(
-    test_group(TRIGGER_LENGTH_LIMIT1),
-    "Trigger length limit");
+  AUTOTEST_CASE(test_group(TRIGGER_LENGTH_LIMIT1), "Trigger length limit");
 
-  AUTOTEST_CASE(
-    test_group(TRIGGER_LENGTH_LIMIT2),
-    "Trigger length limit");
+  AUTOTEST_CASE(test_group(TRIGGER_LENGTH_LIMIT2), "Trigger length limit");
 
-  AUTOTEST_CASE(
-    test_group(TRIGGER_WORDS_LIMIT),
-    "Triggers word count limit");
+  AUTOTEST_CASE(test_group(TRIGGER_WORDS_LIMIT), "Triggers word count limit");
 
-  AUTOTEST_CASE(
-    test_group(HARD_WORDS_LIMIT),
-    "Hard keyword words count limit test");
+  AUTOTEST_CASE(test_group(HARD_WORDS_LIMIT), "Hard keyword words count limit test");
 
   return true;
 }
 
 template<size_t Count>
 void
-BrokenChannelTriggers::test_group(
-  const TestCase(&tests)[Count])
+BrokenChannelTriggers::test_group(const TestCase(&tests)[Count])
 {
   AdClient client(AdClient::create_user(this));
   for (size_t i = 0; i < Count; ++i)
@@ -210,9 +196,7 @@ BrokenChannelTriggers::test_group(
 }
 
 void
-BrokenChannelTriggers::test_case(
-  AdClient& client,
-  const TestCase& test)
+BrokenChannelTriggers::test_case(AdClient& client, const TestCase& test)
 {
   add_descr_phrase(test.description);
   NSLookupRequest request;
@@ -227,6 +211,7 @@ BrokenChannelTriggers::test_case(
       request.referer = fetch_string(test.referer);
     }
   }
+
   if (test.referer_kw)
   {
     request.referer_kw = fetch_string(test.referer_kw);
@@ -234,10 +219,7 @@ BrokenChannelTriggers::test_case(
   client.process_request(request);
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      test.matched,
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, test.matched, client.debug_info.trigger_channels).check(),
     test.description +
       " Expected trigger_channels");
 

@@ -18,8 +18,7 @@ namespace AutoTest
   }
 
   void
-  Shutdown_::wait(
-    const Time& timeout)
+  Shutdown_::wait(const Time& timeout)
     /*throw(ShutdownException, eh::Exception)*/
   {
     Sync::ConditionalGuard condition(cond_);

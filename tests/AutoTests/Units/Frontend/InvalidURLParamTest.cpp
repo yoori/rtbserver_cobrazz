@@ -3,10 +3,7 @@
 #include <String/RegEx.hpp>
 #include <Generics/Rand.hpp>
 
-REFLECT_UNIT(InvalidURLParamTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(InvalidURLParamTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -254,9 +251,7 @@ scenario(AutoTest::AdClient &client,
   }
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      status,
-      client.req_status()).check(),
+    AutoTest::equal_checker(status, client.req_status()).check(),
     "must got expected request status");
 
   if (test->header)
@@ -264,16 +259,14 @@ scenario(AutoTest::AdClient &client,
     std::string value;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.find_header_value(test->header, value)),
+      AutoTest::predicate_checker(client.find_header_value(test->header, value)),
       std::string(test->header) + " not found");
 
     if (test->regexp)
     {
       String::RegEx regexp(String::SubString(test->regexp));
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          regexp.match(value)),
+        AutoTest::predicate_checker(regexp.match(value)),
         std::string("Header '") + test->header
         + ":' doesn't match '" + test->regexp
         + "'");
@@ -306,7 +299,7 @@ InvalidURLParamTest::run_test()
       if (!strncmp(raw + 1, "RANDOM", 6))
       {
         int len = atoi(raw + 7);
-        if(len)
+        if (len)
         {
           fill_random(value, len);
         }
@@ -349,11 +342,7 @@ InvalidURLParamTest::run_test()
       + tests[i].param + ": " + value;
     add_descr_phrase(description);
     client.add_http_header(tests[i].param, value);
-    NOSTOP_FAIL_CONTEXT(
-      {
-        scenario(client, service, &tests[i], tests[i].status2);
-      },
-      description);
+    NOSTOP_FAIL_CONTEXT({ scenario(client, service, &tests[i], tests[i].status2); }, description);
   }
 
   return true;

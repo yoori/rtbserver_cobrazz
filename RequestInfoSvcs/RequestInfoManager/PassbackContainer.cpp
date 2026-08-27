@@ -12,9 +12,7 @@ namespace Aspect
   const char PASSBACK_CONTAINER[] = "PassbackContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -41,10 +39,7 @@ namespace RequestInfoSvcs
     {
       auto passback_map = open_rocksdb_transaction_profile_map<
         RequestIdTransactionHashAdapter,
-        RequestIdToString>(
-          passback_rocksdb_path,
-          expire_time_,
-          std::move(rocksdb_processor));
+        RequestIdToString>(passback_rocksdb_path, expire_time_, std::move(rocksdb_processor));
       passback_map_ = passback_map.map;
       add_child_object(passback_map.active_object);
     }
@@ -52,15 +47,13 @@ namespace RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init PassbackMap at '" <<
-        passback_rocksdb_path << "'. Caught eh::Exception: " <<
-        ex.what();
+        passback_rocksdb_path << "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  PassbackContainer::co_get_profile(
-    const AdServer::Commons::RequestId& request_id)
+  PassbackContainer::co_get_profile(const AdServer::Commons::RequestId& request_id)
   {
     static const char* FUN = "PassbackContainer::co_get_profile()";
     try
@@ -77,24 +70,19 @@ namespace RequestInfoSvcs
   }
 
   void
-  PassbackContainer::process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  PassbackContainer::process_tag_request(const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
   {
     static const char* FUN = "PassbackContainer::process_tag_request()";
 
-    if(!tag_request_info.request_id.is_null() &&
-       tag_request_info.tag_id)
+    if (!tag_request_info.request_id.is_null() && tag_request_info.tag_id)
     {
       PassbackProcessor::PassbackInfo passback_info;
       bool delegate_passback_processing;
 
-      process_tag_request_trans_(
-        passback_info,
-        delegate_passback_processing,
-        tag_request_info);
+      process_tag_request_trans_(passback_info, delegate_passback_processing, tag_request_info);
 
-      if(delegate_passback_processing)
+      if (delegate_passback_processing)
       {
         try
         {
@@ -108,27 +96,23 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Processed passback marker: " << std::endl;
         tag_request_info.print(ostr, "  ");
 
-        logger_->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::PASSBACK_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::PASSBACK_CONTAINER);
       }
     }
   }
 
   AdServer::Commons::Awaitable<void>
-  PassbackContainer::co_process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  PassbackContainer::co_process_tag_request(const TagRequestInfo& tag_request_info)
   {
     static const char* FUN = "PassbackContainer::co_process_tag_request()";
 
-    if(!tag_request_info.request_id.is_null() &&
-       tag_request_info.tag_id)
+    if (!tag_request_info.request_id.is_null() && tag_request_info.tag_id)
     {
       PassbackProcessor::PassbackInfo passback_info;
       bool delegate_passback_processing = false;
@@ -136,22 +120,18 @@ namespace RequestInfoSvcs
       try
       {
         PassbackMap::Transaction_var transaction =
-          co_await passback_map_->co_get_transaction(
-            tag_request_info.request_id);
+          co_await passback_map_->co_get_transaction(tag_request_info.request_id);
 
-        Generics::ConstSmartMemBuf_var mem_buf =
-          co_await transaction->co_get_profile();
+        Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
         bool save_required = true;
         PassbackInfoWriter passback_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          passback_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
-          if(passback_writer.verified() && !passback_writer.done())
+          if (passback_writer.verified() && !passback_writer.done())
           {
             delegate_passback_processing = true;
             passback_info.time = tag_request_info.time;
@@ -183,8 +163,7 @@ namespace RequestInfoSvcs
         else
         {
           passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
-          passback_writer.request_id() =
-            tag_request_info.request_id.to_string();
+          passback_writer.request_id() = tag_request_info.request_id.to_string();
           passback_writer.user_status() = tag_request_info.user_status;
           passback_writer.tag_id() = tag_request_info.tag_id;
           passback_writer.size_id() = tag_request_info.size_id;
@@ -197,11 +176,10 @@ namespace RequestInfoSvcs
           passback_writer.verified() = 0;
         }
 
-        if(save_required)
+        if (save_required)
         {
           unsigned long sz = passback_writer.size();
-          Generics::SmartMemBuf_var new_mem_buf(
-            new Generics::SmartMemBuf(sz));
+          Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
           passback_writer.save(new_mem_buf->membuf().data(), sz);
           co_await transaction->co_save_profile(
             Generics::transfer_membuf(new_mem_buf),
@@ -215,7 +193,7 @@ namespace RequestInfoSvcs
         throw TagRequestProcessor::Exception(ostr);
       }
 
-      if(delegate_passback_processing)
+      if (delegate_passback_processing)
       {
         try
         {
@@ -229,15 +207,13 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Processed passback marker: " << std::endl;
         tag_request_info.print(ostr, "  ");
 
-        logger_->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::PASSBACK_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::PASSBACK_CONTAINER);
       }
     }
   }
@@ -263,11 +239,11 @@ namespace RequestInfoSvcs
       bool save_required = true;
       PassbackInfoWriter passback_writer;
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
-        if(passback_writer.verified() && !passback_writer.done())
+        if (passback_writer.verified() && !passback_writer.done())
         {
           /* delegate call */
           delegate_passback_processing = true;
@@ -318,15 +294,13 @@ namespace RequestInfoSvcs
         passback_writer.verified() = 0;
       }
 
-      if(save_required)
+      if (save_required)
       {
         /* save profile */
         unsigned long sz = passback_writer.size();
         Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
         passback_writer.save(new_mem_buf->membuf().data(), sz);
-        transaction->save_profile(
-          Generics::transfer_membuf(new_mem_buf),
-          tag_request_info.time);
+        transaction->save_profile(Generics::transfer_membuf(new_mem_buf), tag_request_info.time);
       }
     }
     catch(const eh::Exception& ex)
@@ -351,19 +325,16 @@ namespace RequestInfoSvcs
       PassbackProcessor::PassbackInfo process_passback_info;
 
       {
-        PassbackMap::Transaction_var transaction =
-          passback_map_->get_transaction(request_id);
+        PassbackMap::Transaction_var transaction = passback_map_->get_transaction(request_id);
         Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
         PassbackInfoWriter passback_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          passback_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
-          if(!passback_writer.verified())
+          if (!passback_writer.verified())
           {
             /* delegate call */
             process_passback = true;
@@ -402,12 +373,10 @@ namespace RequestInfoSvcs
 
         passback_writer.save(new_mem_buf->membuf().data(), sz);
 
-        transaction->save_profile(
-          Generics::transfer_membuf(new_mem_buf),
-          impression_time);
+        transaction->save_profile(Generics::transfer_membuf(new_mem_buf), impression_time);
       }
 
-      if(process_passback)
+      if (process_passback)
       {
         passback_processor_->process_passback(process_passback_info);
       }
@@ -419,14 +388,12 @@ namespace RequestInfoSvcs
       throw PassbackVerificationProcessor::Exception(ostr);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed passback request: " << request_id;
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::PASSBACK_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::PASSBACK_CONTAINER);
     }
   }
 
@@ -435,8 +402,7 @@ namespace RequestInfoSvcs
     const AdServer::Commons::RequestId& request_id,
     const Generics::Time& impression_time)
   {
-    static const char* FUN =
-      "PassbackContainer::co_process_passback_request()";
+    static const char* FUN = "PassbackContainer::co_process_passback_request()";
 
     try
     {
@@ -446,18 +412,15 @@ namespace RequestInfoSvcs
       {
         PassbackMap::Transaction_var transaction =
           co_await passback_map_->co_get_transaction(request_id);
-        Generics::ConstSmartMemBuf_var mem_buf =
-          co_await transaction->co_get_profile();
+        Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
         PassbackInfoWriter passback_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          passback_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
-          if(!passback_writer.verified())
+          if (!passback_writer.verified())
           {
             process_passback = true;
             process_passback_info.user_status = passback_writer.user_status();
@@ -495,7 +458,7 @@ namespace RequestInfoSvcs
           impression_time);
       }
 
-      if(process_passback)
+      if (process_passback)
       {
         passback_processor_->process_passback(process_passback_info);
       }
@@ -507,14 +470,12 @@ namespace RequestInfoSvcs
       throw PassbackVerificationProcessor::Exception(ostr);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed passback request: " << request_id;
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::PASSBACK_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::PASSBACK_CONTAINER);
     }
   }
 
@@ -531,5 +492,4 @@ namespace RequestInfoSvcs
     const Generics::Time now = Generics::Time::get_time_of_day();
     co_await passback_map_->co_clear_expired(now - expire_time_);
   }
-}
 }

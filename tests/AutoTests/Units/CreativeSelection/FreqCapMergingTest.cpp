@@ -2,10 +2,7 @@
 #include "FreqCapMergingTest.hpp"
 #include <Generics/Uuid.hpp>
 
-REFLECT_UNIT(FreqCapMergingTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(FreqCapMergingTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -112,42 +109,30 @@ bool
 FreqCapMergingTest::run_test()
 {
 
-  NOSTOP_FAIL_CONTEXT(
-    check(
-      "Frequency caps enabled on merge.",
-      FC_ENABLED_ON_MERGE));
+  NOSTOP_FAIL_CONTEXT(check("Frequency caps enabled on merge.", FC_ENABLED_ON_MERGE));
 
-  NOSTOP_FAIL_CONTEXT(
-    check(
-      "Frequency caps expired on merge.",
-      FC_EXPIRED_ON_MERGE));
+  NOSTOP_FAIL_CONTEXT(check("Frequency caps expired on merge.", FC_EXPIRED_ON_MERGE));
 
   return true;
 }
 
 template <size_t COUNT>
-void FreqCapMergingTest::check(
-  const std::string& description,
-  const TestRequest (&requests)[COUNT])
+void FreqCapMergingTest::check(const std::string& description, const TestRequest (&requests)[COUNT])
 {
   add_descr_phrase(description);
   AdClient pclient(AdClient::create_user(this));
-  TemporaryAdClient tclient(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
 
   AutoTest::Time time;
   for (unsigned long i=0; i < COUNT; ++i)
   {
-    AdClient* client =
-      requests[i].request_type == RE_TEMPORARY?
-      &tclient: &pclient;
+    AdClient* client = requests[i].request_type == RE_TEMPORARY? &tclient: &pclient;
     NSLookupRequest request;
     if (requests[i].tid)
     {
       request.tid = fetch_string(requests[i].tid);
     }
-    request.referer_kw =
-      fetch_string(requests[i].referer_kw);
+    request.referer_kw = fetch_string(requests[i].referer_kw);
     request.debug_time = time + requests[i].time_ofset;
 
     if (requests[i].request_type == RE_MERGE)
@@ -173,9 +158,7 @@ void FreqCapMergingTest::check(
       fetch_string(requests[i].expected_ccid): "0";
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        expected_ccid,
-        client->debug_info.ccid).check(),
+      AutoTest::equal_checker(expected_ccid, client->debug_info.ccid).check(),
       description +
         " Check ccid#" +strof(i));
   }

@@ -54,9 +54,7 @@ protected:
     /*throw(InvalidArgument, eh::Exception)*/;
 
   void
-  hex_to_uid_(
-    std::istream& in,
-    std::ostream& out);
+  hex_to_uid_(std::istream& in, std::ostream& out);
 };
 
 typedef Generics::Singleton<Application_> Application;

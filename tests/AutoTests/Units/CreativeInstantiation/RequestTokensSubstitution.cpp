@@ -1,9 +1,7 @@
 
 #include "RequestTokensSubstitution.hpp"
 
-REFLECT_UNIT(RequestTokensSubstitution) (
-  "CreativeInstantiation",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(RequestTokensSubstitution) ("CreativeInstantiation", AUTO_TEST_FAST);
 
 
 namespace
@@ -24,9 +22,7 @@ namespace
   const char RESOURCES[] = "rs";
   const char FILE[] = "file";
 
-  void get_token_value(
-    Stream::Parser& stream,
-    std::string& token)
+  void get_token_value(Stream::Parser& stream, std::string& token)
   {
     if (!stream.eof())
     {
@@ -106,9 +102,7 @@ namespace
     {
       return host_and_path_ == a.host_and_path_ &&
         click_ == a.click_ &&
-        random_ == a.random_ &&
-        resources_ == a.resources_ &&
-        file_ == a.file_;
+        random_ == a.random_ && resources_ == a.resources_ && file_ == a.file_;
     }
   };
 
@@ -184,15 +178,9 @@ namespace
       get_token_value(body, dcradvsz_file);
 
       return AutoTest::and_checker(
-        AutoTest::equal_checker(
-          adimage_path_,
-          adimage_path),
-        AutoTest::equal_checker(
-          dcradvtmp_file_,
-          DCreativeURL(dcradvtmp_file))).and_if(
-        AutoTest::equal_checker(
-          dcradvsz_file_,
-          DCreativeURL(dcradvsz_file))).check();
+        AutoTest::equal_checker(adimage_path_, adimage_path),
+        AutoTest::equal_checker(dcradvtmp_file_, DCreativeURL(dcradvtmp_file))).and_if(
+        AutoTest::equal_checker(dcradvsz_file_, DCreativeURL(dcradvsz_file))).check();
     }
 
   private:
@@ -235,9 +223,7 @@ RequestTokensSubstitution::run_test()
       adv_resources_path += fetch_string("SingleAdvertiser") + "/";
 
     CreativeContentChecker crbody_checker = TESTS[i].empty_tokens
-      ? CreativeContentChecker(client.req_response_data(),
-          frontend.address,
-          adv_resources_path)
+      ? CreativeContentChecker(client.req_response_data(), frontend.address, adv_resources_path)
       : CreativeContentChecker(client.req_response_data(),
           frontend.address,
           adv_resources_path,
@@ -246,8 +232,7 @@ RequestTokensSubstitution::run_test()
           fetch_string("DynamicFile1"),
           fetch_string("DynamicFile2"));
 
-    FAIL_CONTEXT(crbody_checker.check(),
-      TESTS[i].prefix + " Unexpected creative response body.")
+    FAIL_CONTEXT(crbody_checker.check(), TESTS[i].prefix + " Unexpected creative response body.")
   }
 
   return true;

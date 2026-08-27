@@ -7,7 +7,7 @@ namespace AdServer
       uint colo_id;
       uint timestamp;
     };
-    
+
     autoreader ColoTimestampReader<ColoTimestamp>;
 
     struct SessionMatches
@@ -15,7 +15,7 @@ namespace AdServer
       uint channel_id;
       list<uint> timestamps;
     };
-    
+
     autoreader SessionMatchesReader<SessionMatches>;
 
     struct HistoryVisits
@@ -23,7 +23,7 @@ namespace AdServer
       uint channel_id;
       uint visits;
     };
-    
+
     autoreader HistoryVisitsReader<HistoryVisits>;
 
     struct HistoryMatches
@@ -31,7 +31,7 @@ namespace AdServer
       uint channel_id;
       uint weight;
     };
-    
+
     autoreader HistoryMatchesReader<HistoryMatches>;
 
     struct HTCandidates
@@ -41,7 +41,7 @@ namespace AdServer
       uint visits;
       uint weight;
     };
-    
+
     autoreader HTCandidatesReader<HTCandidates>;
 
     struct PartlyVisits
@@ -49,7 +49,7 @@ namespace AdServer
       uint visits;
       uint min_visits;
     };
-    
+
     autoreader PartlyVisitsReader<PartlyVisits>;
 
     struct PartlyVisitsSection
@@ -59,7 +59,7 @@ namespace AdServer
       list<PartlyVisits> all_ht_visits;
       list<PartlyVisits> all_history_visits;
     };
-    
+
     reader PartlyVisitsSectionReader<PartlyVisitsSection>
     {
       channel_id;
@@ -67,7 +67,7 @@ namespace AdServer
       list<PartlyVisitsReader> all_ht_visits;
       list<PartlyVisitsReader> all_history_visits;
     };
-    
+
     struct ChannelsInfo
     {
       list<HTCandidates> ht_candidates;
@@ -78,7 +78,7 @@ namespace AdServer
       list<PartlyVisitsSection> hpm;
       list<PartlyVisitsSection> hpm_from_now;
     };
-    
+
     reader ChannelsInfoReader<ChannelsInfo>
     {
       list<HTCandidatesReader> ht_candidates;
@@ -94,9 +94,9 @@ namespace AdServer
     {
       uint version;
     };
-    
+
     autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
-    
+
     struct ChannelsProfile
     {
       uint version;
@@ -105,16 +105,16 @@ namespace AdServer
       uint ignore_fraud_time;
       uint last_request_time;
       uint session_start;
-      
+
       list<ColoTimestamp> colo_ts_list;
-      
+
       ChannelsInfo context_channels;
       ChannelsInfo page_channels;
       ChannelsInfo search_channels;
       ChannelsInfo url_channels;
     };
-    
- 
+
+
     reader ChannelsProfileReader<ChannelsProfile>
     {
       version;
@@ -123,14 +123,14 @@ namespace AdServer
       ignore_fraud_time;
       last_request_time;
       session_start;
-      
+
       list<ColoTimestampReader> colo_ts_list;
-      
+
       ChannelsInfoReader context_channels;
       ChannelsInfoReader page_channels;
       ChannelsInfoReader search_channels;
       ChannelsInfoReader url_channels;
     };
-    
+
   }
 }

@@ -15,7 +15,7 @@ sub process
   my $res_value = shift(@arr);
   foreach my $value(@arr)
   {
-    if(ref($value) eq 'ARRAY')
+    if (ref($value) eq 'ARRAY')
     {
       foreach my $sub_value(@$value)
       {

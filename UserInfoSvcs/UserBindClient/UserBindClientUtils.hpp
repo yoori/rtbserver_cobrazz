@@ -12,16 +12,16 @@
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
 
+namespace AdServer::UserInfoSvcs::UserBindClient
+{
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  DECLARE_EXCEPTION(NotReady, Exception);
+  DECLARE_EXCEPTION(ChunkNotFound, Exception);
+  DECLARE_EXCEPTION(ImplementationException, Exception);
+}
+
 namespace AdServer::UserInfoSvcs
 {
-  namespace UserBindClient
-  {
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-    DECLARE_EXCEPTION(NotReady, Exception);
-    DECLARE_EXCEPTION(ChunkNotFound, Exception);
-    DECLARE_EXCEPTION(ImplementationException, Exception);
-  }
-
   inline void
   throw_user_bind_exception(const grpc::Status& status)
   {
@@ -85,7 +85,7 @@ namespace AdServer::UserInfoSvcs
       coalesce_runner,
     Logging::Logger* logger)
   {
-    if(!user_bind_controller_refs.empty())
+    if (!user_bind_controller_refs.empty())
     {
       return std::make_shared<UserBindDistributedGrpcClient>(
         user_bind_controller_refs,

@@ -9,8 +9,7 @@ namespace AutoTest
   { }
 
   template <typename T>
-  ExpValue<T>::ExpValue(
-    const T& value) :
+  ExpValue<T>::ExpValue(const T& value) :
     value_(value),
     is_set_(true)
   { }
@@ -42,7 +41,7 @@ namespace AutoTest
   {
     value_ = value;
     is_set_ = true;
-    
+
     return *this;
   }
 
@@ -55,17 +54,14 @@ namespace AutoTest
 
   template <typename T>
   void
-  ExpValue<T>::is_set(
-    bool is_set)
+  ExpValue<T>::is_set(bool is_set)
   {
     is_set_ = is_set;
   }
 
   template <typename T>
   std::istream&
-  operator>> (
-    std::istream &in,
-    ExpValue<T>& value)
+  operator>> (std::istream &in, ExpValue<T>& value)
   {
     T v;
     in >> v;

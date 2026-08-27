@@ -1,9 +1,7 @@
 
 #include "ZeroCollectorTest.hpp"
 
-REFLECT_UNIT(ZeroCollectorTest) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(ZeroCollectorTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -64,11 +62,7 @@ namespace
      * @param adserver status.
      * @param collected sign.
      */
-    ZeroCIChecker(
-      Conn& conn,
-      const Channel& channel,
-      char adserver_status,
-      bool collected)
+    ZeroCIChecker(Conn& conn, const Channel& channel, char adserver_status, bool collected)
       : conn_(conn),
         channel_(channel),
         adserver_status_(adserver_status),
@@ -127,8 +121,7 @@ ZeroCollectorTest::set_up()
 {
   add_descr_phrase("Setup.");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
     "Need CampaignServer config");
 
   active_channels.push_back(fetch_int("Channel/GN"));
@@ -147,19 +140,13 @@ ZeroCollectorTest::set_up()
     }
     c.name = fetch_string("Prefix") + strof(i+1);
     c.type = std::string(1, CHANNELS[i].type);
-    c.status =
-      CHANNELS[i].status == 'E'? "A":
-        std::string(1, CHANNELS[i].status);
+    c.status = CHANNELS[i].status == 'E'? "A": std::string(1, CHANNELS[i].status);
     c.qa_status = std::string(1, CHANNELS[i].qa_status);
     c.display_status_id = CHANNELS[i].display_status;
     if (CHANNELS[i].type != 'T')
     {
-      c.country_code =
-        CHANNELS[i].expected == 'W'?
-          "RU": "GN";
-      c.language =
-        CHANNELS[i].expected == 'W'?
-          "ru": "gn";
+      c.country_code = CHANNELS[i].expected == 'W'? "RU": "GN";
+      c.language = CHANNELS[i].expected == 'W'? "ru": "gn";
     }
 
     if (CHANNELS[i].type == 'K')
@@ -167,15 +154,13 @@ ZeroCollectorTest::set_up()
       c.trigger_type = "S";
     }
 
-    if (CHANNELS[i].type == 'B' ||
-        CHANNELS[i].type == 'D')
+    if (CHANNELS[i].type == 'B' || CHANNELS[i].type == 'D')
     {
       c.triggers_status = "A";
       c.distinct_url_triggers_count = 1;
     }
 
-    c.channel_namespace =
-       std::string(1, CHANNELS[i].ns);
+    c.channel_namespace = std::string(1, CHANNELS[i].ns);
     c.visibility =
       CHANNELS[i].type == 'K' || CHANNELS[i].type == 'D' ||
         CHANNELS[i].expected == 'W'? "PRI": "PUB";
@@ -183,10 +168,9 @@ ZeroCollectorTest::set_up()
     {
       c.language.null();
       c.expression =
-        CHANNELS[i].expected == 'W'?
-          strof(*(wait_channel++)):
-             strof(*(active_channel++));
+        CHANNELS[i].expected == 'W'? strof(*(wait_channel++)): strof(*(active_channel++));
     }
+
     if (CHANNELS[i].type == 'D')
     {
        c.behav_params_list_id = fetch_int("List");
@@ -194,10 +178,7 @@ ZeroCollectorTest::set_up()
        c.discover_annotation = "ZeroCollectorTest";
     }
     c.flags = 0;
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        c.insert()),
-      "Cann't insert channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(c.insert()), "Cann't insert channel");
 
     if (CHANNELS[i].status == 'E')
     {
@@ -208,19 +189,13 @@ ZeroCollectorTest::set_up()
       rate.currency_id = fetch_int("Currency");
       rate.effective_date = AutoTest::Time();
 
-      FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          rate.insert()),
-        "Cann't insert channel rate");
+      FAIL_CONTEXT(AutoTest::predicate_checker(rate.insert()), "Cann't insert channel rate");
 
       c.visibility = "CMP";
       c.channel_rate_id = rate.channel_rate_id();
       c.status = "E";
 
-      FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          c.update()),
-        "Cann't update channel");
+      FAIL_CONTEXT(AutoTest::predicate_checker(c.update()), "Cann't update channel");
     }
 
     channels.push_back(c);
@@ -235,8 +210,7 @@ ZeroCollectorTest::set_up()
       ch_trigger.trigger_id = fetch_int("TriggerID");
       ch_trigger.trigger_type = "P";
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          ch_trigger.insert()),
+        AutoTest::predicate_checker(ch_trigger.insert()),
         "linking trigger with channel");
       triggers.push_back(ch_trigger);
     }
@@ -245,6 +219,7 @@ ZeroCollectorTest::set_up()
     {
       active_channels.push_back(c.id());
     }
+
     if (CHANNELS[i].status == 'W')
     {
       wait_channels.push_back(c.id());
@@ -257,13 +232,11 @@ ZeroCollectorTest::set_up()
   // Check channels loading
   ChannelList::iterator it = channels.begin();
   const TestChannel* channel = CHANNELS;
-  for (int index = 1;
-       it != channels.end(); ++it, ++channel, ++index)
+  for (int index = 1; it != channels.end(); ++it, ++channel, ++index)
   {
     try
     {
-      if (channel->expected == 'D' ||
-        (channel->expected == 'I' && channel->type == 'K'))
+      if (channel->expected == 'D' || (channel->expected == 'I' && channel->type == 'K'))
       {
         FAIL_CONTEXT(
           AutoTest::wait_checker(
@@ -303,30 +276,23 @@ ZeroCollectorTest::run()
 
   // Check channels, which should collected
   ChannelList::const_iterator it = channels.begin();
-  for (const TestChannel* channel = CHANNELS;
-       it != channels.end(); ++it, ++channel)
+  for (const TestChannel* channel = CHANNELS; it != channels.end(); ++it, ++channel)
   {
     if (channel->collected)
     {
       FAIL_CONTEXT(
         AutoTest::wait_checker(
-          ZeroCIChecker(pq_conn_, *it,
-            channel->expected,
-            channel->collected)).check());
+          ZeroCIChecker(pq_conn_, *it, channel->expected, channel->collected)).check());
     }
   }
 
   // Check channels, which shouldn't collected
   it = channels.begin();
-  for (const TestChannel* channel = CHANNELS;
-       it != channels.end(); ++it, ++channel)
+  for (const TestChannel* channel = CHANNELS; it != channels.end(); ++it, ++channel)
   {
     if (!channel->collected)
     {
-      FAIL_CONTEXT(
-        ZeroCIChecker(pq_conn_, *it,
-          channel->expected,
-          channel->collected).check());
+      FAIL_CONTEXT(ZeroCIChecker(pq_conn_, *it, channel->expected, channel->collected).check());
     }
   }
 
@@ -338,29 +304,23 @@ ZeroCollectorTest::tear_down()
 {
   add_descr_phrase("Tear-down.");
 
-  for (TriggerList::iterator it = triggers.begin();
-       it != triggers.end(); ++it)
+  for (TriggerList::iterator it = triggers.begin(); it != triggers.end(); ++it)
   {
     NOSTOP_FAIL_CONTEXT(it->delet());
   }
 
-  for (ChannelList::iterator it = channels.begin();
-       it != channels.end(); ++it)
+  for (ChannelList::iterator it = channels.begin(); it != channels.end(); ++it)
   {
     {
       AutoTest::DBC::Query query(
-        pq_conn_.query(
-          "DELETE FROM DISCOVERCHANNELSTATE "
-          "WHERE CHANNEL_ID = :1"));
+        pq_conn_.query("DELETE FROM DISCOVERCHANNELSTATE " "WHERE CHANNEL_ID = :1"));
 
       query.set(it->id());
       query.update();
     }
     {
       AutoTest::DBC::Query query(
-        pq_conn_.query(
-          "DELETE FROM CHANNELINVENTORY "
-          "WHERE CHANNEL_ID = :1"));
+        pq_conn_.query("DELETE FROM CHANNELINVENTORY " "WHERE CHANNEL_ID = :1"));
 
       query.set(it->id());
       query.update();
@@ -368,8 +328,7 @@ ZeroCollectorTest::tear_down()
     pq_conn_.commit();
     if (!it->channel_rate_id.is_null())
     {
-      int rate_id =
-        it->channel_rate_id.value();
+      int rate_id = it->channel_rate_id.value();
       it->status = "A";
       it->channel_rate_id.null();
       it->visibility = "PUB";

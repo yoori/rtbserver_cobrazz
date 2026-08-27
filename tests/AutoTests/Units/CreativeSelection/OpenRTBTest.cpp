@@ -1,9 +1,7 @@
 
 #include "OpenRTBTest.hpp"
 
-REFLECT_UNIT(OpenRTBTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW );
+REFLECT_UNIT(OpenRTBTest) ("CreativeSelection", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -18,13 +16,9 @@ namespace
 bool
 OpenRTBTest::run()
 {
-  AUTOTEST_CASE(
-    simple_case(),
-    "Simple case");
+  AUTOTEST_CASE(simple_case(), "Simple case");
 
-  AUTOTEST_CASE(
-    auctions_lost(),
-    "Auctions lost");
+  AUTOTEST_CASE(auctions_lost(), "Auctions lost");
 
   return true;
 }
@@ -33,13 +27,9 @@ void OpenRTBTest::simple_case()
 {
   AdClient client(AdClient::create_user(this));
 
-  client.process_request(
-    NSLookupRequest().
-      referer_kw(fetch_string("SIMPLE/KWD")));
+  client.process_request(NSLookupRequest(). referer_kw(fetch_string("SIMPLE/KWD")));
 
-  client.process_request(
-    UserBindRequest().
-      ssp_user_id(client.get_uid()));
+  client.process_request(UserBindRequest(). ssp_user_id(client.get_uid()));
 
   client.process_post(
     OpenRTBRequest().
@@ -48,8 +38,7 @@ void OpenRTBTest::simple_case()
       debug_size(fetch_string("SIZE")).
       external_user_id(client.get_uid()).
       min_cpm_price(0).
-      min_cpm_price_currency_code(
-        fetch_string("CURRENCY")));
+      min_cpm_price_currency_code(fetch_string("CURRENCY")));
 
   FAIL_CONTEXT(
     OpenRTBResponseChecker(
@@ -84,9 +73,7 @@ void OpenRTBTest::auctions_lost()
         ccg_id(fetch_int(EXPECTED[i].ccg));
       stat.description("#" + strof(i+1));
       stats.push_back(stat);
-      diffs.push_back(
-        CcgStatsDiff().
-          auctions_lost(EXPECTED[i].auctions_lost));
+      diffs.push_back(CcgStatsDiff(). auctions_lost(EXPECTED[i].auctions_lost));
     }
 
     stats.select(pq_conn_);
@@ -94,13 +81,9 @@ void OpenRTBTest::auctions_lost()
 
   AdClient client(AdClient::create_user(this));
 
-  client.process_request(
-    NSLookupRequest().
-      referer_kw(fetch_string("AUCTIONSLOST/KWD")));
+  client.process_request(NSLookupRequest(). referer_kw(fetch_string("AUCTIONSLOST/KWD")));
 
-  client.process_request(
-    UserBindRequest().
-      ssp_user_id(client.get_uid()));
+  client.process_request(UserBindRequest(). ssp_user_id(client.get_uid()));
 
   client.process_post(
     OpenRTBRequest().
@@ -109,19 +92,11 @@ void OpenRTBTest::auctions_lost()
       debug_size(fetch_string("SIZE")).
       external_user_id(client.get_uid()).
       min_cpm_price(200).
-      min_cpm_price_currency_code(
-        fetch_string("CURRENCY")));
+      min_cpm_price_currency_code(fetch_string("CURRENCY")));
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      204,
-      client.req_status()).check(),
-    "No content check");
+  FAIL_CONTEXT(AutoTest::equal_checker(204, client.req_status()).check(), "No content check");
 
-  ADD_WAIT_CHECKER(
-    "CcgStatsDaily check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CcgStatsDaily check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void

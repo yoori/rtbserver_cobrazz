@@ -69,9 +69,7 @@ protected:
     bool out_hashes);
 
   void
-  load_dictionary_(
-    std::map<std::string, std::string>& dict,
-    const char* file);
+  load_dictionary_(std::map<std::string, std::string>& dict, const char* file);
 };
 
 typedef Generics::Singleton<Application_> Application;

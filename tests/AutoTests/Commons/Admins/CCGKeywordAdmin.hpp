@@ -41,10 +41,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<CCGKeywordAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* ccg_keyword_id,
-        ChannelSrv service
-      )
+      void make_cmd (const char* address, const char* ccg_keyword_id, ChannelSrv service)
       {
         address_ = address;
         AdminParams params;

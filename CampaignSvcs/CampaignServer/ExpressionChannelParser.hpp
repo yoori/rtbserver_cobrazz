@@ -4,50 +4,45 @@
 
 #include "NonLinkedExpressionChannel.hpp"
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  class ExpressionChannelParser
   {
-    class ExpressionChannelParser
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      /* parse expression:
-       *   attach child channels to channels from
-       *   channels container (channel_id -> ExpressionChannelHolder_var) and
-       *   insert ExpressionChannelHolder(0) for not found channels
-       */
-      static
-      NonLinkedExpressionChannel_var
-      parse(const String::SubString& expression)
-        /*throw(Exception)*/;
+    /* parse expression:
+     *   attach child channels to channels from
+     *   channels container (channel_id -> ExpressionChannelHolder_var) and
+     *   insert ExpressionChannelHolder(0) for not found channels
+     */
+    static
+    NonLinkedExpressionChannel_var
+    parse(const String::SubString& expression)
+      /*throw(Exception)*/;
 
-    private:
-      static
-      void
-      remove_border_parenthesis_(String::SubString& expression)
-        /*throw(Exception)*/;
+  private:
+    static
+    void
+    remove_border_parenthesis_(String::SubString& expression)
+      /*throw(Exception)*/;
 
-      static
-      bool
-      parse_op_(
-        NonLinkedExpressionChannel::Expression& result_expression,
-        const String::SubString& expression,
-        NonLinkedExpressionChannel::Operation op)
-        /*throw(Exception)*/;
+    static
+    bool
+    parse_op_(
+      NonLinkedExpressionChannel::Expression& result_expression,
+      const String::SubString& expression,
+      NonLinkedExpressionChannel::Operation op)
+      /*throw(Exception)*/;
 
-      static
-      NonLinkedExpressionChannel::Expression
-      parse_expr_(String::SubString expression)
-        /*throw(Exception)*/;
-    };
-  }
+    static
+    NonLinkedExpressionChannel::Expression
+    parse_expr_(String::SubString expression)
+      /*throw(Exception)*/;
+  };
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   inline
   void
@@ -99,8 +94,7 @@ namespace CampaignSvcs
           {
             Stream::Error ostr;
             ostr << "ExpressionChannelParser::parse_op_(): "
-              "incorrect brackets number in sub expression: " <<
-              expression;
+              "incorrect brackets number in sub expression: " << expression;
             throw Exception(ostr);
           }
 
@@ -119,8 +113,7 @@ namespace CampaignSvcs
     /* search minimum of bracket count */
     int bracket_count_min = remove_bracket_count;
 
-    for (String::SubString::Pointer it = border_it;
-      it != rev_border_it; ++it)
+    for (String::SubString::Pointer it = border_it; it != rev_border_it; ++it)
     {
       if (*it == '(')
       {
@@ -177,8 +170,7 @@ namespace CampaignSvcs
 
     if (expression.empty())
     {
-      throw Exception(
-        "ExpressionChannelParser::parse_op_(): expression is empty.");
+      throw Exception("ExpressionChannelParser::parse_op_(): expression is empty.");
     }
 
     if (expression[0] == op)
@@ -198,8 +190,7 @@ namespace CampaignSvcs
         if (!parenthesis_count)
         {
           result_expression.op = op;
-          result_expression.sub_channels.push_back(
-            parse_expr_(String::SubString(start_pos, pos)));
+          result_expression.sub_channels.push_back(parse_expr_(String::SubString(start_pos, pos)));
           start_pos = pos + 1;
         }
       }
@@ -235,12 +226,9 @@ namespace CampaignSvcs
 
     NonLinkedExpressionChannel::Expression result_expression;
 
-    if (!parse_op_(result_expression,
-         expression, NonLinkedExpressionChannel::OR) &&
-       !parse_op_(result_expression,
-         expression, NonLinkedExpressionChannel::AND) &&
-       !parse_op_(result_expression,
-         expression, NonLinkedExpressionChannel::AND_NOT))
+    if (!parse_op_(result_expression, expression, NonLinkedExpressionChannel::OR) &&
+       !parse_op_(result_expression, expression, NonLinkedExpressionChannel::AND) &&
+       !parse_op_(result_expression, expression, NonLinkedExpressionChannel::AND_NOT))
     {
       Stream::Parser istr(expression.data(), expression.size());
       ChannelId channel_id;
@@ -249,8 +237,7 @@ namespace CampaignSvcs
       if (istr.fail() || !istr.eof())
       {
         Stream::Error ostr;
-        ostr << FUN << ": Failed to read channel_id from expression = '" <<
-          expression << "'";
+        ostr << FUN << ": Failed to read channel_id from expression = '" << expression << "'";
         throw Exception(ostr);
       }
 
@@ -263,14 +250,11 @@ namespace CampaignSvcs
 
   inline
   NonLinkedExpressionChannel_var
-  ExpressionChannelParser::parse(
-    const String::SubString& expression_val)
+  ExpressionChannelParser::parse(const String::SubString& expression_val)
     /*throw(Exception)*/
   {
-    NonLinkedExpressionChannel::Expression expression =
-      parse_expr_(expression_val);
+    NonLinkedExpressionChannel::Expression expression = parse_expr_(expression_val);
 
     return new NonLinkedExpressionChannel(expression);
   }
-}
 }

@@ -5,9 +5,7 @@ namespace FrontendCommons
 {
   inline
   Generics::MonoString
-  normalize_ifa_impl_(
-    std::string_view idfa,
-    Generics::MonoAllocatorArena* resource)
+  normalize_ifa_impl_(std::string_view idfa, Generics::MonoAllocatorArena* resource)
   {
     Generics::MonoString res(idfa.data(), idfa.size(), resource);
     String::AsciiStringManip::to_lower(res.begin(), res.end());
@@ -16,15 +14,14 @@ namespace FrontendCommons
     norm_res.reserve(32);
 
     const String::SubString res_sub_string(res.data(), res.size());
-    String::StringManip::Splitter<String::AsciiStringManip::SepMinus> tokenizer(
-      res_sub_string);
+    String::StringManip::Splitter<String::AsciiStringManip::SepMinus> tokenizer(res_sub_string);
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       norm_res.append(token.data(), token.size());
     }
 
-    if(norm_res.size() == 32 &&
+    if (norm_res.size() == 32 &&
       String::AsciiStringManip::HEX_NUMBER.find_nonowned(
         norm_res.data(),
         norm_res.data() + norm_res.size()) ==
@@ -70,19 +67,20 @@ namespace FrontendCommons
   {
     std::string dst;
     String::SubString in_value;
-    if(mime_decode_)
+    if (mime_decode_)
     {
       String::StringManip::mime_url_decode(value, dst);
-      in_value = dst; 
+      in_value = dst;
     }
     else
     {
       in_value = value;
     }
-    if(max_len_ == 0 || in_value.size() <= max_len_)
+
+    if (max_len_ == 0 || in_value.size() <= max_len_)
     {
       in_value.assign_to(request_info.*field_);
-      if(lower_)
+      if (lower_)
       {
         String::AsciiStringManip::to_lower(
           (request_info.*field_).begin(),
@@ -92,7 +90,7 @@ namespace FrontendCommons
     else if (truncate_)
     {
       in_value.substr(0, max_len_).assign_to(request_info.*field_);
-      if(lower_)
+      if (lower_)
       {
         String::AsciiStringManip::to_lower(
           (request_info.*field_).begin(),
@@ -122,13 +120,13 @@ namespace FrontendCommons
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
-    if(max_len_ == 0 || value.size() <= max_len_)
+    if (max_len_ == 0 || value.size() <= max_len_)
     {
       const char* const END = value.end();
       if (allowed_symbols_.find_nonowned(value.begin(), END) == END)
       {
         value.assign_to(request_info.*field_);
-        if(lower_)
+        if (lower_)
         {
           String::AsciiStringManip::to_lower(
             (request_info.*field_).begin(),
@@ -142,7 +140,7 @@ namespace FrontendCommons
       if (allowed_symbols_.find_nonowned(value.begin(), END) == END)
       {
         value.substr(0, max_len_).assign_to(request_info.*field_);
-        if(lower_)
+        if (lower_)
         {
           String::AsciiStringManip::to_lower(
             (request_info.*field_).begin(),
@@ -167,12 +165,10 @@ namespace FrontendCommons
     typename NumberType>
   void
   NumberParamProcessor<RequestInfoType, NumberContainerType, NumberType>::
-  process(
-    RequestInfoType& request_info,
-    const String::SubString& value) const
+  process(RequestInfoType& request_info, const String::SubString& value) const
   {
     NumberType num_val;
-    if(String::StringManip::str_to_int(value, num_val))
+    if (String::StringManip::str_to_int(value, num_val))
     {
       request_info.*field_ = num_val;
     }
@@ -183,9 +179,7 @@ namespace FrontendCommons
     typename NumberContainerType,
     typename NumberType>
   DecimalParamProcessor<RequestInfoType, NumberContainerType, NumberType>::
-  DecimalParamProcessor(
-    NumberContainerType RequestInfoType::* field,
-    bool strict)
+  DecimalParamProcessor(NumberContainerType RequestInfoType::* field, bool strict)
     : field_(field),
       strict_(strict)
   {}
@@ -196,20 +190,17 @@ namespace FrontendCommons
     typename NumberType>
   void
   DecimalParamProcessor<RequestInfoType, NumberContainerType, NumberType>::
-  process(
-    RequestInfoType& request_info,
-    const String::SubString& value) const
+  process(RequestInfoType& request_info, const String::SubString& value) const
   {
     try
     {
-      if(strict_)
+      if (strict_)
       {
         request_info.*field_ = NumberType(value);
       }
-      else if(!value.empty())
+      else if (!value.empty())
       {
-        request_info.*field_ = AdServer::Commons::extract_decimal<NumberType>(
-          value);
+        request_info.*field_ = AdServer::Commons::extract_decimal<NumberType>(value);
       }
     }
     catch(const typename NumberType::Overflow&)
@@ -259,9 +250,9 @@ namespace FrontendCommons
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
-      if(value.size() > max_len_)
+      if (value.size() > max_len_)
       {
         Stream::Error ostr;
         ostr << "Value length(" << value.size() << ") exceed";
@@ -293,9 +284,9 @@ namespace FrontendCommons
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
-      if(value.size() > max_len_)
+      if (value.size() > max_len_)
       {
         Stream::Error ostr;
         ostr << "Value length(" << value.size() << ") exceed";
@@ -328,9 +319,8 @@ namespace FrontendCommons
     try
     {
       Generics::Time time(value,
-        value.size() > 2 && value[2] == '-' ?
-        "%d-%m-%Y:%H-%M-%S" : "%Y-%m-%d %H:%M:%S");
-      if(time >= min_ && time.tv_sec <= MAX_TIME_SEC)
+        value.size() > 2 && value[2] == '-' ? "%d-%m-%Y:%H-%M-%S" : "%Y-%m-%d %H:%M:%S");
+      if (time >= min_ && time.tv_sec <= MAX_TIME_SEC)
       {
         request_info.*field_ = time;
       }
@@ -357,10 +347,10 @@ namespace FrontendCommons
     try
     {
       unsigned long unix_time;
-      if(String::StringManip::str_to_int(value, unix_time))
+      if (String::StringManip::str_to_int(value, unix_time))
       {
         Generics::Time time(unix_time);
-        if(time >= min_ && time.tv_sec <= MAX_TIME_SEC)
+        if (time >= min_ && time.tv_sec <= MAX_TIME_SEC)
         {
           request_info.*field_ = time;
         }
@@ -412,17 +402,14 @@ namespace FrontendCommons
   void
   ContainerParamProcessor<
     RequestInfoType, ContainerType, SepCategoryType, ElementConverterType>::
-  process(
-    RequestInfoType& request_info,
-    const String::SubString& value) const
+  process(RequestInfoType& request_info, const String::SubString& value) const
   {
-    String::StringManip::Splitter<SepCategoryType> tokenizer(
-      value);
+    String::StringManip::Splitter<SepCategoryType> tokenizer(value);
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       typename ContainerType::value_type val;
-      if(converter_(token, val))
+      if (converter_(token, val))
       {
         (request_info.*field_).insert((request_info.*field_).end(), val);
       }
@@ -436,7 +423,7 @@ namespace FrontendCommons
     const String::SubString& value) const
   {
     Location_var location = Location::parse(value);
-    if(location)
+    if (location)
     {
       request_info.*field_ = location;
     }
@@ -465,7 +452,7 @@ namespace FrontendCommons
   {
     CoordLocation_var coord_location = CoordLocation::parse(value);
 
-    if(coord_location)
+    if (coord_location)
     {
       request_info.*field_ = coord_location;
     }
@@ -476,17 +463,13 @@ namespace FrontendCommons
   normalize_ifa(std::string_view idfa)
   {
     Generics::MonoAllocatorArena resource;
-    const Generics::MonoString result = normalize_ifa_impl_(
-      idfa,
-      &resource);
+    const Generics::MonoString result = normalize_ifa_impl_(idfa, &resource);
     return std::string(result.data(), result.size());
   }
 
   inline
   Generics::MonoString
-  normalize_ifa(
-    std::string_view idfa,
-    Generics::MonoAllocatorArena* resource)
+  normalize_ifa(std::string_view idfa, Generics::MonoAllocatorArena* resource)
   {
     return normalize_ifa_impl_(idfa, resource);
   }

@@ -20,7 +20,7 @@ namespace AdServer::RequestInfoSvcs
     pack_profile(const Generics::ConstSmartMemBuf* profile, Proto::ProfileResponse& response)
     {
       response.set_found(profile != nullptr);
-      if(profile)
+      if (profile)
       {
         response.set_profile(profile->membuf().data(), profile->membuf().size());
       }
@@ -77,8 +77,7 @@ namespace AdServer::RequestInfoSvcs
       grpc::Status& status) const
     {
       co_await co_execute_profile_request_(
-        expression_matcher_->co_get_inventory_profile(
-          AdServer::Commons::UserId(request.id())),
+        expression_matcher_->co_get_inventory_profile(AdServer::Commons::UserId(request.id())),
         response,
         status);
     }

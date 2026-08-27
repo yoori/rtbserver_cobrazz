@@ -1,9 +1,6 @@
 #include "ChannelInventoryTest.hpp"
 
-REFLECT_UNIT(ChannelInventoryTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelInventoryTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -28,9 +25,7 @@ namespace
      * @param client (user).
      * @param test.
      */
-    ProfileChecker(
-      AutoTest::AdClient& user,
-      BaseUnit* test) :
+    ProfileChecker(AutoTest::AdClient& user, BaseUnit* test) :
       user_(user),
       test_(test)
     { }
@@ -56,9 +51,7 @@ namespace
           AutoTest::prepare_uid(uid),
           InventoryProfileChecker::Expected().
             user_id(
-              AutoTest::prepare_uid(
-                uid,
-                AutoTest::UUE_EXPECTED_VALUE))).check(throw_on_error);
+              AutoTest::prepare_uid(uid, AutoTest::UUE_EXPECTED_VALUE))).check(throw_on_error);
     }
 
   private:
@@ -90,6 +83,7 @@ void ChannelInventoryTest::fill_expected_stats_(
     {
       key.sdate(statistic[i].sdate);
     }
+
     if (statistic[i].colo_id)
     {
       key.colo_id(fetch_int(statistic[i].colo_id));
@@ -114,8 +108,7 @@ bool
 ChannelInventoryTest::run()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER)),
     "ExpressionMatcher need for this test");
 
   const char BASE_SCENARIO[] = "Base scenario";
@@ -133,11 +126,7 @@ ChannelInventoryTest::run()
   Stats active_today_stats;
   Diffs active_today_diffs;
   AUTOTEST_CASE(
-    active_users_1(
-      active_user1,
-      active_user2,
-      active_today_stats,
-      active_today_diffs),
+    active_users_1(active_user1, active_user2, active_today_stats, active_today_diffs),
     ACTIVE_USERS);
 
 
@@ -163,11 +152,7 @@ ChannelInventoryTest::run()
   // 2nd step
   AUTOTEST_CASE(base_scenario_2(base_user), BASE_SCENARIO);
   AUTOTEST_CASE(
-    active_users_2(
-      active_user1,
-      active_user2,
-      active_today_stats,
-      active_today_diffs),
+    active_users_2(active_user1, active_user2, active_today_stats, active_today_diffs),
     ACTIVE_USERS);
   AUTOTEST_CASE(delayed_logs_2(delayed_user), DELAYED_LOGS);
   AUTOTEST_CASE(late_request_2(late_user), LATE_REQUEST);
@@ -241,23 +226,16 @@ void ChannelInventoryTest::base_scenario_1(AdClient& client)
       " Expected trigger_channels#1");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Base/Ext-GEO",
-      client.debug_info.geo_channels).check(),
+    ChannelsCheck(this, "Base/Ext-GEO", client.debug_info.geo_channels).check(),
     description +
       " Expected geo_channels#1");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Base/Ext-Device",
-      client.debug_info.device_channels).check(),
+    ChannelsCheck(this, "Base/Ext-Device", client.debug_info.device_channels).check(),
     description +
       " Expected device_channels#1");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 void ChannelInventoryTest::base_scenario_2(AdClient& client)
@@ -314,23 +292,16 @@ void ChannelInventoryTest::base_scenario_2(AdClient& client)
       " Expected trigger_channels#2");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Base/Ext-GEO",
-      client.debug_info.geo_channels).check(),
+    ChannelsCheck(this, "Base/Ext-GEO", client.debug_info.geo_channels).check(),
     description +
       " Expected geo_channels#2");
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Base/Ext-Device",
-      client.debug_info.device_channels).check(),
+    ChannelsCheck(this, "Base/Ext-Device", client.debug_info.device_channels).check(),
     description +
       " Expected device_channels#2");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 void
@@ -382,18 +353,13 @@ ChannelInventoryTest::active_users_2(AdClient& user1, AdClient& user2,
       referer_kw(fetch_string("ActiveUsers/Kwd")).
       debug_time(today));
 
-  FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      ProfileChecker(user1, this)).check());
+  FAIL_CONTEXT(AutoTest::wait_checker(ProfileChecker(user1, this)).check());
 
-  FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      ProfileChecker(user2, this)).check());
+  FAIL_CONTEXT(AutoTest::wait_checker(ProfileChecker(user2, this)).check());
 
   FAIL_CONTEXT(AutoTest::DailyProcess::execute(this));
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, today_diffs, today_stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, today_diffs, today_stats));
 }
 
 void
@@ -418,8 +384,7 @@ ChannelInventoryTest::active_users_3(AdClient& user1, AdClient& /*user2*/)
       referer_kw(fetch_string("ActiveUsers/Kwd")).
       debug_time(today));
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 void
@@ -468,9 +433,7 @@ ChannelInventoryTest::daily_processing()
     Generics::Time midnignt(today.get_gm_time().get_date());
 
     AdClient client(AdClient::create_user(this, create_time));
-    process_requests(client,
-      description + " Before first match.",
-      midnignt, BEFORE_MATCH);
+    process_requests(client, description + " Before first match.", midnignt, BEFORE_MATCH);
 
   }
 
@@ -484,9 +447,7 @@ ChannelInventoryTest::daily_processing()
     };
 
     AdClient client(AdClient::create_user(this, create_time));
-    process_requests(client,
-      description + " After yesterday match.",
-      today, YESTERDAY_MATCH);
+    process_requests(client, description + " After yesterday match.", today, YESTERDAY_MATCH);
   }
 
   // User#3
@@ -504,8 +465,7 @@ ChannelInventoryTest::daily_processing()
       today, TWO_DAYS_LATER_MATCH);
   }
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 
 }
 
@@ -549,14 +509,11 @@ void ChannelInventoryTest::delayed_logs_1(AdClient& client)
     description +
       " Expected trigger_channels#2");
 
-  FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      ProfileChecker(client, this)).check());
+  FAIL_CONTEXT(AutoTest::wait_checker(ProfileChecker(client, this)).check());
 
   FAIL_CONTEXT(AutoTest::DailyProcess::execute(this));
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 };
 
 void ChannelInventoryTest::delayed_logs_2(AdClient& client)
@@ -590,8 +547,7 @@ void ChannelInventoryTest::delayed_logs_2(AdClient& client)
     description +
       " Expected trigger_channels#3");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 void
@@ -615,12 +571,9 @@ ChannelInventoryTest::late_request_1(AdClient& client)
   client.process_request(
     NSLookupRequest().
     referer_kw(fetch_string("LateRequest/Kwd-B")).
-    debug_time(
-      midnight -
-      Generics::Time::ONE_SECOND * 5));
+    debug_time(midnight - Generics::Time::ONE_SECOND * 5));
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 void
@@ -643,10 +596,7 @@ ChannelInventoryTest::late_request_2(AdClient& client)
 
   std::string keyword = fetch_string("LateRequest/Kwd-B");
 
-  client.process_request(
-    NSLookupRequest().
-      referer_kw(keyword).
-      debug_time(today));
+  client.process_request(NSLookupRequest(). referer_kw(keyword). debug_time(today));
 
   // unordered (by time) request
   client.process_request(
@@ -654,8 +604,7 @@ ChannelInventoryTest::late_request_2(AdClient& client)
       referer_kw(keyword).
       debug_time(midnight - Generics::Time::ONE_SECOND * 5));
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 
@@ -696,15 +645,11 @@ void ChannelInventoryTest::merging_1(
   persistent.process_request(request);
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Merging/Channel-S",
-      persistent.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Merging/Channel-S", persistent.debug_info.history_channels).check(),
     description +
       " History check#2");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 };
 
 void ChannelInventoryTest::merging_2(
@@ -732,15 +677,11 @@ void ChannelInventoryTest::merging_2(
       referer_kw(fetch_string("Merging/Kwd-C")));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "Merging/Channel-C",
-      persistent.debug_info.history_channels).check(),
+    ChannelsCheck(this, "Merging/Channel-C", persistent.debug_info.history_channels).check(),
     description +
       " History check#3");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 };
 
 void ChannelInventoryTest::merging_3(
@@ -775,8 +716,7 @@ void ChannelInventoryTest::merging_3(
     description +
       " History check#4");
 
-  ADD_WAIT_CHECKER(description,
-    AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
+  ADD_WAIT_CHECKER(description, AutoTest::stats_diff_checker(pq_conn_, expected_diffs, stats));
 }
 
 template<size_t Count>
@@ -806,17 +746,12 @@ ChannelInventoryTest::process_requests(
         " trigger_channels check#" + strof(i));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        requests[i].expected_history,
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, requests[i].expected_history, client.debug_info.history_channels).check(),
       description +
         " history_channels check#" + strof(i));
   }
 
-  FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      ProfileChecker(client, this)).check());
+  FAIL_CONTEXT(AutoTest::wait_checker(ProfileChecker(client, this)).check());
 
   // call inventory daily processing
   // daily processing make today channel matching for user,
@@ -825,9 +760,7 @@ ChannelInventoryTest::process_requests(
 }
 
 void
-ChannelInventoryTest::set_referer_kws(
-  NSLookupRequest& request,
-  const char* referer_kws)
+ChannelInventoryTest::set_referer_kws(NSLookupRequest& request, const char* referer_kws)
 {
   if ( referer_kws )
   {

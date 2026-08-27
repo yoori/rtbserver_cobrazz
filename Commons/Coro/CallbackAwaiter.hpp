@@ -88,8 +88,7 @@ namespace AdServer::Commons
   async_callback(Call&& call, Args&&... args);
 
   template<typename... CallbackArgs>
-  CallbackAwaiter<CallbackArgs...>::CallbackAwaiter(
-    StartCallback start_callback)
+  CallbackAwaiter<CallbackArgs...>::CallbackAwaiter(StartCallback start_callback)
     : state_(std::make_shared<State>()),
       start_callback_(std::move(start_callback))
   {}
@@ -107,7 +106,7 @@ namespace AdServer::Commons
   {
     auto state = state_;
     state->handle = handle;
-    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    if (const auto* scheduler = current_coroutine_resume_scheduler())
     {
       state->resume_scheduler = *scheduler;
     }
@@ -122,7 +121,7 @@ namespace AdServer::Commons
           const auto previous_status = state->status.exchange(
             State::Status::S_COMPLETED,
             std::memory_order_acq_rel);
-          if(previous_status == State::Status::S_SUSPENDED)
+          if (previous_status == State::Status::S_SUSPENDED)
           {
             resume_(state);
           }
@@ -135,14 +134,14 @@ namespace AdServer::Commons
       const auto previous_status = state->status.exchange(
         State::Status::S_COMPLETED,
         std::memory_order_acq_rel);
-      if(previous_status == State::Status::S_SUSPENDED)
+      if (previous_status == State::Status::S_SUSPENDED)
       {
         resume_(state);
       }
     }
 
     auto expected_status = State::Status::S_RUNNING;
-    if(state->status.compare_exchange_strong(
+    if (state->status.compare_exchange_strong(
       expected_status,
       State::Status::S_SUSPENDED,
       std::memory_order_acq_rel,
@@ -160,7 +159,7 @@ namespace AdServer::Commons
   {
     state_->status.load(std::memory_order_acquire);
 
-    if(state_->exception)
+    if (state_->exception)
     {
       std::rethrow_exception(std::move(*state_->exception));
     }
@@ -183,7 +182,7 @@ namespace AdServer::Commons
   void
   CallbackAwaiter<CallbackArgs...>::resume_(const std::shared_ptr<State>& state)
   {
-    if(state->resume_scheduler)
+    if (state->resume_scheduler)
     {
       state->resume_scheduler(state->handle);
     }

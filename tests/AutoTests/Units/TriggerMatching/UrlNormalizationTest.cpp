@@ -1,10 +1,7 @@
 
 #include "UrlNormalizationTest.hpp"
 
-REFLECT_UNIT(UrlNormalizationTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(UrlNormalizationTest) ("TriggerMatching", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -55,13 +52,10 @@ void UrlNormalizationTest::pre_condition()
     istr >> channel_trigger_id;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !istr.bad() && !istr.fail()),
+      AutoTest::predicate_checker(!istr.bad() && !istr.fail()),
       "Can't fetch channel_trigger_id to int variable from LocalParams.xml");
 
-    TriggerStat stat(TriggerStat::Key().
-      channel_trigger_id(channel_trigger_id).
-      trigger_type("U"));
+    TriggerStat stat(TriggerStat::Key(). channel_trigger_id(channel_trigger_id). trigger_type("U"));
     stat.description(trigger->Name());
     stat.select(conn_);
     trigger_stats_.push_back(stat);
@@ -76,8 +70,7 @@ void UrlNormalizationTest::pre_condition()
     if (!TEST_CASES[i].expected_channels)
     { continue; }
 
-    String::StringManip::SplitComma tokenizer(
-      String::SubString(TEST_CASES[i].expected_channels));
+    String::StringManip::SplitComma tokenizer(String::SubString(TEST_CASES[i].expected_channels));
     String::SubString token;
     while (tokenizer.get_token(token))
     {
@@ -90,10 +83,8 @@ void UrlNormalizationTest::pre_condition()
         channels_diff[channel_id].hits_urls(0);
         channels_diff[channel_id].hits(0);
       }
-        channels_diff[channel_id].hits_urls(
-          channels_diff[channel_id].hits_urls() + 1);
-        channels_diff[channel_id].hits(
-          channels_diff[channel_id].hits() + 1);
+        channels_diff[channel_id].hits_urls(channels_diff[channel_id].hits_urls() + 1);
+        channels_diff[channel_id].hits(channels_diff[channel_id].hits() + 1);
     }
   }
 
@@ -102,8 +93,7 @@ void UrlNormalizationTest::pre_condition()
   {
     std::string channel_id(channel->Value());
 
-    ChannelStat stat(ChannelStat::Key().
-      channel_id(::atoi(channel_id.c_str())));
+    ChannelStat stat(ChannelStat::Key(). channel_id(::atoi(channel_id.c_str())));
     stat.description(channel->Name());
     stat.select(conn_);
     channel_stats_.push_back(stat);
@@ -120,8 +110,7 @@ UrlNormalizationTest::run()
 {
   AdClient client(AdClient::create_user(this));
 
-  for (unsigned int i = 0;
-       i < sizeof(TEST_CASES)/sizeof(*TEST_CASES);  ++i)
+  for (unsigned int i = 0; i < sizeof(TEST_CASES)/sizeof(*TEST_CASES);  ++i)
   {
     add_descr_phrase("Request " + strof(i+1));
     NSLookupRequest request;
@@ -154,14 +143,12 @@ void UrlNormalizationTest::post_condition()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, trigger_diffs_, trigger_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, trigger_diffs_, trigger_stats_)).check(),
     "ChannelTriggerStats check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, channel_diffs_, channel_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, channel_diffs_, channel_stats_)).check(),
     "ChannelInventory check");
 }
 

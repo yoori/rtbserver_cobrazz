@@ -36,9 +36,9 @@ def decimal2float( v, sign ):
   for i in range(DECIMAL_SIZE):
     c = chr( (v % 10) + ord('0'))
     if (i < FRACTION):
-      fraction = c + fraction 
+      fraction = c + fraction
     else:
-      integer = c + integer 
+      integer = c + integer
     v = v / 10
   buf = "%s.%s" % (integer, fraction)
   val = float(buf)

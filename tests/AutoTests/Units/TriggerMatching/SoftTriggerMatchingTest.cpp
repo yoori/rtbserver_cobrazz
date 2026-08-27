@@ -1,10 +1,7 @@
 #include "SoftTriggerMatchingTest.hpp"
 #include <String/InterConvertion.hpp>
 
-REFLECT_UNIT(SoftTriggerMatchingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(SoftTriggerMatchingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -76,12 +73,10 @@ SoftTriggerMatchingTest::run_test()
     if (CASES[i].matched)
     {
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          CASES[i].matched,
-          client.debug_info.trigger_channels).check(),
+        ChannelsCheck(this, CASES[i].matched, client.debug_info.trigger_channels).check(),
         "Expected history#" + strof(i+1));
     }
+
     if (CASES[i].unmatched)
     {
       FAIL_CONTEXT(

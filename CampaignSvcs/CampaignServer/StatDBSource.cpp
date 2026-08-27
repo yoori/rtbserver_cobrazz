@@ -6,9 +6,7 @@ namespace Aspect
   const char STAT_DB_SOURCE[] = "StatDBSource";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   StatDBSource::StatDBSource(
     Logging::Logger* logger,
@@ -23,12 +21,10 @@ namespace CampaignSvcs
     CORBACommons::CorbaClientAdapter_var corba_client_adapter(
       new CORBACommons::CorbaClientAdapter());
 
-    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it =
-          stat_provider_refs.begin();
+    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it = stat_provider_refs.begin();
         ref_it != stat_provider_refs.end(); ++ref_it)
     {
-      stat_providers_.push_back(LogGeneralizerRef(
-        corba_client_adapter.in(), *ref_it));
+      stat_providers_.push_back(LogGeneralizerRef(corba_client_adapter.in(), *ref_it));
     }
   }
 
@@ -44,8 +40,7 @@ namespace CampaignSvcs
 
     try
     {
-      for (LogGeneralizerRefList::iterator ref_it =
-            stat_providers_.begin();
+      for (LogGeneralizerRefList::iterator ref_it = stat_providers_.begin();
           ref_it != stat_providers_.end(); ++ref_it)
       {
         (*ref_it)->stop_stat_upload(server_id_);
@@ -55,20 +50,14 @@ namespace CampaignSvcs
     {
       full_synch_required = true;
 
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::STAT_DB_SOURCE,
-        "ADS-ICON-9") << __func__ <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::STAT_DB_SOURCE, "ADS-ICON-9") << __func__ <<
         ": can't do LogGeneralizer::stop_creative_stat_upload: " << ex.what();
     }
     catch(const CORBA::SystemException& ex)
     {
       full_synch_required = true;
 
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::STAT_DB_SOURCE,
-        "ADS-ICON-9") << __func__ <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::STAT_DB_SOURCE, "ADS-ICON-9") << __func__ <<
         ": can't do LogGeneralizer::stop_creative_stat_upload: " << ex;
     }
 
@@ -81,15 +70,11 @@ namespace CampaignSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::STAT_DB_SOURCE,
-        "ADS-DB-6000") << __func__ <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::STAT_DB_SOURCE, "ADS-DB-6000") << __func__ <<
         ": can't receive stats from DB: " << ex.what();
     }
 
-    for (LogGeneralizerRefList::reverse_iterator ref_it =
-          stat_providers_.rbegin();
+    for (LogGeneralizerRefList::reverse_iterator ref_it = stat_providers_.rbegin();
         ref_it != stat_providers_.rend(); ++ref_it)
     {
       try
@@ -127,8 +112,7 @@ namespace CampaignSvcs
   StatDBSource::query_db_stats_(const Generics::Time& now)
     /*throw(Exception)*/
   {
-    ExecutionTimeTracer db_stats_timer(
-      __func__, Aspect::STAT_DB_SOURCE, logger_);
+    ExecutionTimeTracer db_stats_timer(__func__, Aspect::STAT_DB_SOURCE, logger_);
 
     Commons::Postgres::Connection_var connection;
 
@@ -184,8 +168,7 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query account stats, eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query account stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -221,10 +204,8 @@ namespace CampaignSvcs
         Stat::AmountStat amount_stat;
         amount_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
         amount_stat.comm_amount = rs->get_decimal<RevenueDecimal>(POS_ADV_COMM_AMOUNT);
-        amount_stat.daily_amount = rs->get_decimal<RevenueDecimal>(
-          POS_DAILY_ADV_AMOUNT);
-        amount_stat.daily_comm_amount = rs->get_decimal<RevenueDecimal>(
-          POS_DAILY_ADV_COMM_AMOUNT);
+        amount_stat.daily_amount = rs->get_decimal<RevenueDecimal>(POS_DAILY_ADV_AMOUNT);
+        amount_stat.daily_comm_amount = rs->get_decimal<RevenueDecimal>(POS_DAILY_ADV_COMM_AMOUNT);
         static_cast<Stat::AmountStat&>(
           result->campaign_stats[rs->get_number<unsigned int>(POS_CAMPAIGN_ID)]) += amount_stat;
       }
@@ -233,16 +214,14 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query campaign stats. Caught eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query campaign stats. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
     // fill CCG level stats
     try
     {
-      ExecutionTimeTracer db_stats_timer(__func__,
-        Aspect::STAT_DB_SOURCE, logger_, "ccg stats");
+      ExecutionTimeTracer db_stats_timer(__func__, Aspect::STAT_DB_SOURCE, logger_, "ccg stats");
 
       enum
       {
@@ -287,10 +266,8 @@ namespace CampaignSvcs
         ccg_stat.actions = rs->get_decimal<ImpRevenueDecimal>(POS_ACTIONS);
         ccg_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
         ccg_stat.comm_amount = rs->get_decimal<RevenueDecimal>(POS_ADV_COMM_AMOUNT);
-        ccg_stat.daily_amount = rs->get_decimal<RevenueDecimal>(
-          POS_DAILY_ADV_AMOUNT);
-        ccg_stat.daily_comm_amount = rs->get_decimal<RevenueDecimal>(
-          POS_DAILY_ADV_COMM_AMOUNT);
+        ccg_stat.daily_amount = rs->get_decimal<RevenueDecimal>(POS_DAILY_ADV_AMOUNT);
+        ccg_stat.daily_comm_amount = rs->get_decimal<RevenueDecimal>(POS_DAILY_ADV_COMM_AMOUNT);
         result->campaign_stats[
           rs->get_number<unsigned int>(POS_CAMPAIGN_ID)].ccgs[
             rs->get_number<unsigned int>(POS_CCG_ID)] += ccg_stat;
@@ -300,8 +277,7 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query campaign stats. Caught eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query campaign stats. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -351,8 +327,7 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query creative stats, eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query creative stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -401,8 +376,7 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query publisher stats, eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query publisher stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -456,8 +430,7 @@ namespace CampaignSvcs
         Stat::CCGStat::TagStat tag_stat;
         tag_stat.current_hour_stat.isp_pub_amount = rs->get_decimal<RevenueDecimal>(
           POS_POT_ISP_PUB_AMOUNT);
-        tag_stat.current_hour_stat.adv_amount = rs->get_decimal<RevenueDecimal>(
-          POS_POT_ADV_AMOUNT);
+        tag_stat.current_hour_stat.adv_amount = rs->get_decimal<RevenueDecimal>(POS_POT_ADV_AMOUNT);
         tag_stat.current_hour_stat.adv_comm_amount = rs->get_decimal<RevenueDecimal>(
           POS_POT_ADV_COMM_AMOUNT);
         tag_stat.prev_hour_stat.isp_pub_amount = rs->get_decimal<RevenueDecimal>(
@@ -475,22 +448,17 @@ namespace CampaignSvcs
           rs->get_number<unsigned int>(POS_TAG_ID)] = tag_stat;
 
         // fill real hour amounts
-        ccg_stat.prev_hour_amount += rs->get_decimal<RevenueDecimal>(
-          POS_PREV_ADV_AMOUNT);
-        ccg_stat.prev_hour_comm_amount += rs->get_decimal<RevenueDecimal>(
-          POS_PREV_ADV_COMM_AMOUNT);
-        ccg_stat.cur_hour_amount += rs->get_decimal<RevenueDecimal>(
-          POS_ADV_AMOUNT);
-        ccg_stat.cur_hour_comm_amount += rs->get_decimal<RevenueDecimal>(
-          POS_ADV_COMM_AMOUNT);
+        ccg_stat.prev_hour_amount += rs->get_decimal<RevenueDecimal>(POS_PREV_ADV_AMOUNT);
+        ccg_stat.prev_hour_comm_amount += rs->get_decimal<RevenueDecimal>(POS_PREV_ADV_COMM_AMOUNT);
+        ccg_stat.cur_hour_amount += rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
+        ccg_stat.cur_hour_comm_amount += rs->get_decimal<RevenueDecimal>(POS_ADV_COMM_AMOUNT);
       }
     }
     catch(const eh::Exception& ex)
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query ccg tag stats, eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query ccg tag stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -530,12 +498,10 @@ namespace CampaignSvcs
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << __func__ << ": Can't query ccg ctr reset stats, eh::Exception: " <<
-        ex.what();
+      ostr << __func__ << ": Can't query ccg ctr reset stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
     return result;
   }
-}
 }

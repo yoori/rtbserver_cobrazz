@@ -10,15 +10,13 @@
 
 #include "FeedRouteGroupProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::LogProcessing::Aspect
 {
-namespace LogProcessing
-{
-  namespace Aspect
-  {
-    const char SYNC_LOGS[] = "SyncLogs";
-  }
+  const char SYNC_LOGS[] = "SyncLogs";
+}
 
+namespace AdServer::LogProcessing
+{
   namespace
   {
     const char COMMIT_FILE_PREFIX = '~';
@@ -53,7 +51,7 @@ namespace LogProcessing
 
     try
     {
-      if(!parse_source && feed_type != ST_ROUND_ROBIN)
+      if (!parse_source && feed_type != ST_ROUND_ROBIN)
       {
         Stream::Error err;
         err << "Have to parse source for type ";
@@ -77,39 +75,31 @@ namespace LogProcessing
 
       FileRouter_var local_file_router;
 
-      if(local_copy_command_type == CT_RSYNC)
+      if (local_copy_command_type == CT_RSYNC)
       {
-        local_file_router =
-          new RSyncFileRouter(local_copy_command_templ);
+        local_file_router = new RSyncFileRouter(local_copy_command_templ);
       }
-      else if(local_copy_command_type == CT_GENERIC)
+      else if (local_copy_command_type == CT_GENERIC)
       {
-        local_file_router =
-          new AppFileRouter(local_copy_command_templ);
+        local_file_router = new AppFileRouter(local_copy_command_templ);
       }
 
       FileRouter_var remote_file_router;
 
-      if(remote_copy_command_type == CT_RSYNC)
+      if (remote_copy_command_type == CT_RSYNC)
       {
-        remote_file_router =
-          new RSyncFileRouter(remote_copy_command_templ);
+        remote_file_router = new RSyncFileRouter(remote_copy_command_templ);
       }
-      else if(remote_copy_command_type == CT_GENERIC)
+      else if (remote_copy_command_type == CT_GENERIC)
       {
-        remote_file_router =
-          new AppFileRouter(remote_copy_command_templ);
+        remote_file_router = new AppFileRouter(remote_copy_command_templ);
       }
 
-      PathManip::split_path(
-        src_files_pattern,
-        &src_dir,
-        &file_mask,
-        !parse_source);
+      PathManip::split_path(src_files_pattern, &src_dir, &file_mask, !parse_source);
 
       if (parse_source)
       {
-        if(file_mask.empty())
+        if (file_mask.empty())
         {
           Stream::Error ostr;
           ostr << FUN << ": '" << src_files_pattern << "' not a file name mask";
@@ -275,10 +265,7 @@ namespace LogProcessing
       {
         Stream::Error ostr;
         ostr << FUN << " : got exception: " << ex.what();
-        error_logger_->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::SYNC_LOGS,
-          "ADS-IMPL-202");
+        error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
       }
     }
   }
@@ -294,21 +281,14 @@ namespace LogProcessing
       std::string file_path;
       std::string file_name;
 
-      PathManip::split_path(
-        file.file_guard->full_path().c_str(),
-        &file_path,
-        &file_name,
-        false);
+      PathManip::split_path(file.file_guard->full_path().c_str(), &file_path, &file_name, false);
       const bool is_commit_file = (file_name[0] == COMMIT_FILE_PREFIX);
 
       FeedRouteMover_var mover = is_commit_file ? route.commit_mover : route.mover;
 
       std::string dst_host;
 
-      if (!mover->move(
-            file_path.c_str(),
-            file_name.c_str(),
-            &dst_host))
+      if (!mover->move(file_path.c_str(), file_name.c_str(), &dst_host))
       {
         add_pending_task_(file, timeout_);
       }
@@ -330,8 +310,7 @@ namespace LogProcessing
 
         FileEntity commit_file_entity;
         commit_file_entity.type = file.type;
-        commit_file_entity.file_guard =
-          new FileReceiver::FileGuard(commit_file_name.c_str());
+        commit_file_entity.file_guard = new FileReceiver::FileGuard(commit_file_name.c_str());
         add_pending_task_(commit_file_entity, 0);
       }
     }
@@ -344,17 +323,12 @@ namespace LogProcessing
     {
       Stream::Error ostr;
       ostr << FUN << " : can't do processing: " << ex.what();
-      error_logger_->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::SYNC_LOGS,
-        "ADS-IMPL-202");
+      error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
     }
   }
 
   void
-  FeedRouteGroupProcessor::add_pending_task_(
-    const FileEntity& file,
-    unsigned long timeout)
+  FeedRouteGroupProcessor::add_pending_task_(const FileEntity& file, unsigned long timeout)
     /*throw(eh::Exception)*/
   {
     SyncPolicy::WriteGuard lock(pending_tasks_lock_);
@@ -375,7 +349,7 @@ namespace LogProcessing
       unlink_files_.swap(unlink_files);
     }
 
-    for(auto it = unlink_files.begin(); it != unlink_files.end(); ++it)
+    for (auto it = unlink_files.begin(); it != unlink_files.end(); ++it)
     {
       try
       {
@@ -394,11 +368,7 @@ namespace LogProcessing
 
         Stream::Error ostr;
         ostr << FUN << " : can't unlink source file: " << ex.what();
-        error_logger_->log(
-          ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::SYNC_LOGS,
-          "ADS-IMPL-201");
+        error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-201");
       }
     }
 
@@ -475,5 +445,4 @@ namespace LogProcessing
       error_logger_->log(ostr.str(), Logging::Logger::CRITICAL);
     }
   }
-}
 }

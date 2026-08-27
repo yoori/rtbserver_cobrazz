@@ -38,8 +38,7 @@ private:
   using Logging::LoggerCallbackHolder::callback;
   using Logging::LoggerCallbackHolder::logger;
 
-  typedef std::unique_ptr<xsd::AdServer::Configuration::
-    ChannelServerConfigType> ConfigPtr;
+  typedef std::unique_ptr<xsd::AdServer::Configuration::ChannelServerConfigType> ConfigPtr;
 
 private:
   void load_config_(const char* name) /*throw(Exception)*/;

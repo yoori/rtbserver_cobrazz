@@ -16,8 +16,7 @@ public:
   void main(int& argc, char** argv) noexcept;
 
 private:
-  using ConfigType =
-    AdServer::UserInfoSvcs::UserInfoControllerImpl::UserInfoControllerConfig;
+  using ConfigType = AdServer::UserInfoSvcs::UserInfoControllerImpl::UserInfoControllerConfig;
   using ConfigPtr = std::unique_ptr<ConfigType>;
 
   void stop_() noexcept;

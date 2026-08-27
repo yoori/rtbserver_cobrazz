@@ -144,9 +144,7 @@ namespace AdServer::ImprTrack
       /*throw(eh::Exception)*/;
 
     void
-    fill(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    fill(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     const Logging::Logger_var&
@@ -167,21 +165,15 @@ namespace AdServer::ImprTrack
       noexcept;
 
     void
-    cookies_processing_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    cookies_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
-    params_processing_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    params_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
-    headers_processing_(
-      RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+    headers_processing_(RequestInfo& request_info, const FCGI::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
   private:

@@ -8,10 +8,7 @@ namespace ORM = ::AutoTest::ORM;
 class CCGKeywordUpdate : public BaseDBUnit
 {
 public:
-  CCGKeywordUpdate(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  CCGKeywordUpdate(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 

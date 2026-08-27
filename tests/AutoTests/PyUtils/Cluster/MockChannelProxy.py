@@ -83,7 +83,7 @@ class ChannelProxyTestMixin(ComparisonMixin):
          (self.SourceID, channels))
     return UpdateData(self.SourceID, channels)
 
-    
+
   def ChannelProxy_update_all_ccg(self, query):
     tlog(10, "ChannelProxy.update_all_ccg(timestamp='%s', start=%d, limit=%d)" % \
          (time2str(orb2time(query.master_stamp)),

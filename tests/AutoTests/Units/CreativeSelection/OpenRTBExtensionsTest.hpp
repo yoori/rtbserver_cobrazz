@@ -136,10 +136,7 @@ class OpenRTBExtensionsTest : public BaseDBUnit
   };
 
 public:
-  OpenRTBExtensionsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  OpenRTBExtensionsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -169,8 +166,7 @@ private:
   // helpers
   template<size_t COUNT>
   void
-  process_requests_(
-    const CaseRequest (&cases)[COUNT], bool send_banner = true);
+  process_requests_(const CaseRequest (&cases)[COUNT], bool send_banner = true);
 
   template<size_t COUNT>
   void process_multislotcase_requests_(const MultislotCaseRequest (&cases)[COUNT]);

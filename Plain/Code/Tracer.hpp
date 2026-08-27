@@ -22,9 +22,7 @@ namespace Code
     public Code::ElementVisitor
   {
   public:
-    void generate(
-      std::ostream& out,
-      Code::ElementList* elements) noexcept;
+    void generate(std::ostream& out, Code::ElementList* elements) noexcept;
 
     virtual void visit_i(const Code::Element*) noexcept;
 
@@ -39,14 +37,11 @@ namespace Code
   protected:
     virtual ~Tracer() noexcept {}
 
-    void generate_descriptor_(
-      const Declaration::StructDescriptor* descriptor) noexcept;
+    void generate_descriptor_(const Declaration::StructDescriptor* descriptor) noexcept;
 
-    void generate_reader_(
-      Declaration::StructReader* reader) noexcept;
+    void generate_reader_(Declaration::StructReader* reader) noexcept;
 
-    void generate_writer_(
-      Declaration::StructWriter* writer) noexcept;
+    void generate_writer_(Declaration::StructWriter* writer) noexcept;
 
   private:
     std::ostream* out_;
@@ -61,41 +56,37 @@ namespace Code
 {
   inline
   void
-  Tracer::visit_i(
-    const Code::Element*) noexcept
+  Tracer::visit_i(const Code::Element*) noexcept
   {}
 
   inline
   void
-  Tracer::visit_i(
-    const Code::IncludeElement* elem) noexcept
+  Tracer::visit_i(const Code::IncludeElement* elem) noexcept
   {
     *out_ << offset_ << "#include <" << elem->file() << ">" << std::endl;
   }
 
   inline
   void
-  Tracer::visit_i(
-    const Code::NamespaceElement* elem) noexcept
+  Tracer::visit_i(const Code::NamespaceElement* elem) noexcept
   {
     Declaration::Namespace_var namespace_decl = elem->namespace_decl();
     std::string prev_offset;
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       prev_offset = offset_;
-      *out_ << offset_ << "namespace " << namespace_decl->name() << std::endl <<
-        offset_ << "{";
+      *out_ << offset_ << "namespace " << namespace_decl->name() << std::endl << offset_ << "{";
       offset_ = offset_ + "  ";
     }
 
-    for(Code::ElementList::const_iterator el_it = elem->elements()->begin();
+    for (Code::ElementList::const_iterator el_it = elem->elements()->begin();
         el_it != elem->elements()->end(); ++el_it)
     {
       visit(*el_it);
     }
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       offset_ = prev_offset;
       *out_ << offset_ << "}" << std::endl;
@@ -104,8 +95,7 @@ namespace Code
 
   inline
   void
-  Tracer::visit_i(
-    const Code::TypeDefElement* elem) noexcept
+  Tracer::visit_i(const Code::TypeDefElement* elem) noexcept
   {
     *out_ << offset_ << "typedef " << elem->base_type()->name() << " " <<
       elem->type_name() << ";" << std::endl;
@@ -113,16 +103,14 @@ namespace Code
 
   inline
   void
-  Tracer::visit_i(
-    const Code::TypeElement* elem) noexcept
+  Tracer::visit_i(const Code::TypeElement* elem) noexcept
   {
     Declaration::BaseType_var type = elem->type();
     Declaration::BaseDescriptor_var descriptor = type->as_descriptor();
 
-    if(descriptor.in())
+    if (descriptor.in())
     {
-      Declaration::StructDescriptor_var struct_descriptor =
-        descriptor->as_struct();
+      Declaration::StructDescriptor_var struct_descriptor = descriptor->as_struct();
 
       assert(struct_descriptor.in());
       generate_descriptor_(struct_descriptor);
@@ -130,10 +118,9 @@ namespace Code
     else
     {
       Declaration::BaseReader_var reader = type->as_reader();
-      if(reader.in())
+      if (reader.in())
       {
-        Declaration::StructReader_var struct_reader =
-          reader->as_struct_reader();
+        Declaration::StructReader_var struct_reader = reader->as_struct_reader();
         assert(struct_reader.in());
 
         generate_reader_(struct_reader);
@@ -143,8 +130,7 @@ namespace Code
         Declaration::BaseWriter_var writer = type->as_writer();
         assert(writer.in());
 
-        Declaration::StructWriter_var struct_writer =
-          writer->as_struct_writer();
+        Declaration::StructWriter_var struct_writer = writer->as_struct_writer();
         assert(struct_writer.in());
 
         generate_writer_(struct_writer);
@@ -154,21 +140,17 @@ namespace Code
 
   inline
   void
-  Tracer::generate_descriptor_(
-    const Declaration::StructDescriptor* struct_descriptor) noexcept
+  Tracer::generate_descriptor_(const Declaration::StructDescriptor* struct_descriptor) noexcept
   {
     *out_ << std::endl << offset_ <<
-      "struct " << struct_descriptor->name() << std::endl <<
-      offset_ << "{" << std::endl;
+      "struct " << struct_descriptor->name() << std::endl << offset_ << "{" << std::endl;
 
-    for(Declaration::StructDescriptor::
-        PosedFieldList::const_iterator field_it =
-          struct_descriptor->fields()->begin();
+    for (Declaration::StructDescriptor::
+        PosedFieldList::const_iterator field_it = struct_descriptor->fields()->begin();
         field_it != struct_descriptor->fields()->end(); ++field_it)
     {
       *out_ << offset_ << "  " <<
-        (*field_it)->descriptor()->name() << " " << (*field_it)->name() <<
-        ";" << std::endl;
+        (*field_it)->descriptor()->name() << " " << (*field_it)->name() << ";" << std::endl;
     }
 
     *out_ << offset_ << "};" << std::endl;
@@ -176,22 +158,18 @@ namespace Code
 
   inline
   void
-  Tracer::generate_reader_(
-    Declaration::StructReader* struct_reader) noexcept
+  Tracer::generate_reader_(Declaration::StructReader* struct_reader) noexcept
   {
     *out_ << std::endl <<
       offset_ << "reader " << struct_reader->name() << "<" <<
-      struct_reader->descriptor()->name() << ">" << std::endl <<
-      offset_ << "{" << std::endl;
+      struct_reader->descriptor()->name() << ">" << std::endl << offset_ << "{" << std::endl;
 
-    for(Declaration::StructReader::
-        FieldReaderList::const_iterator field_it =
-          struct_reader->fields()->begin();
+    for (Declaration::StructReader::
+        FieldReaderList::const_iterator field_it = struct_reader->fields()->begin();
         field_it != struct_reader->fields()->end(); ++field_it)
     {
       *out_ << offset_ << "  " <<
-        (*field_it)->reader()->name() << " " << (*field_it)->name() <<
-        ";" << std::endl;
+        (*field_it)->reader()->name() << " " << (*field_it)->name() << ";" << std::endl;
     }
 
     *out_ << offset_ << "};" << std::endl;
@@ -199,22 +177,18 @@ namespace Code
 
   inline
   void
-  Tracer::generate_writer_(
-    Declaration::StructWriter* struct_writer) noexcept
+  Tracer::generate_writer_(Declaration::StructWriter* struct_writer) noexcept
   {
     *out_ << std::endl <<
       offset_ << "writer " << struct_writer->name() << "<" <<
-      struct_writer->descriptor()->name() << ">" << std::endl <<
-      offset_ << "{" << std::endl;
+      struct_writer->descriptor()->name() << ">" << std::endl << offset_ << "{" << std::endl;
 
-    for(Declaration::StructWriter::
-        FieldWriterList::const_iterator field_it =
-          struct_writer->fields()->begin();
+    for (Declaration::StructWriter::
+        FieldWriterList::const_iterator field_it = struct_writer->fields()->begin();
         field_it != struct_writer->fields()->end(); ++field_it)
     {
       *out_ << offset_ << "  " <<
-        (*field_it)->writer()->name() << " " << (*field_it)->name() <<
-        ";" << std::endl;
+        (*field_it)->writer()->name() << " " << (*field_it)->name() << ";" << std::endl;
     }
 
     *out_ << offset_ << "};" << std::endl;
@@ -222,14 +196,11 @@ namespace Code
 
   inline
   void
-  Tracer::generate(
-    std::ostream& out,
-    Code::ElementList* elements) noexcept
+  Tracer::generate(std::ostream& out, Code::ElementList* elements) noexcept
   {
     out_ = &out;
 
-    for(Code::ElementList::const_iterator el_it =
-          elements->begin();
+    for (Code::ElementList::const_iterator el_it = elements->begin();
         el_it != elements->end(); ++el_it)
     {
       visit(*el_it);

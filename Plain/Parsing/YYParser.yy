@@ -117,7 +117,7 @@ struct_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $2->begin();
+        for (IdentifierList::const_iterator id_it = $2->begin();
             id_it != $2->end(); ++id_it)
         {
           parse_adapter.processor->add_descriptor_field(
@@ -145,7 +145,7 @@ autoreader_specifier
         YYABORT;
       }
     }
-  | PTOKEN_AUTOREADER error 
+  | PTOKEN_AUTOREADER error
     {
       error(yyla.location, "Expected auto reader name");
     }
@@ -188,7 +188,7 @@ reader_specifier
     {
       parse_adapter.processor->close_reader();
     }
-  | PTOKEN_READER error 
+  | PTOKEN_READER error
     {
       error(yyla.location, "Expected reader name");
     }
@@ -204,7 +204,7 @@ reader_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $2->begin();
+        for (IdentifierList::const_iterator id_it = $2->begin();
             id_it != $2->end(); ++id_it)
         {
           parse_adapter.processor->add_reader_field(
@@ -221,7 +221,7 @@ reader_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $1->begin();
+        for (IdentifierList::const_iterator id_it = $1->begin();
             id_it != $1->end(); ++id_it)
         {
           parse_adapter.processor->add_reader_field("", id_it->c_str());
@@ -267,7 +267,7 @@ writer_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $5->begin();
+        for (IdentifierList::const_iterator id_it = $5->begin();
             id_it != $5->end(); ++id_it)
         {
           parse_adapter.processor->add_writer_field(
@@ -286,7 +286,7 @@ writer_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $2->begin();
+        for (IdentifierList::const_iterator id_it = $2->begin();
             id_it != $2->end(); ++id_it)
         {
           parse_adapter.processor->add_writer_field(
@@ -304,7 +304,7 @@ writer_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $4->begin();
+        for (IdentifierList::const_iterator id_it = $4->begin();
             id_it != $4->end(); ++id_it)
         {
           parse_adapter.processor->add_writer_field(
@@ -323,7 +323,7 @@ writer_declaration
     {
       try
       {
-        for(IdentifierList::const_iterator id_it = $1->begin();
+        for (IdentifierList::const_iterator id_it = $1->begin();
             id_it != $1->end(); ++id_it)
         {
           parse_adapter.processor->add_writer_field(
@@ -371,7 +371,7 @@ identifier_list
     }
   | identifier_list ',' PTOKEN_IDENTIFIER
     {
-      $$ = new IdentifierList;      
+      $$ = new IdentifierList;
       $$->swap(*$1);
       $$->push_back(*$3);
     }

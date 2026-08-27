@@ -31,7 +31,7 @@
   <xsl:apply-templates/>
   </table>
   </html>
-</xsl:template> 
+</xsl:template>
 
 <xsl:template name="response" match="response">
   <html>
@@ -67,6 +67,6 @@
       </xsl:choose>
     </td>
   </tr>
-</xsl:template> 
+</xsl:template>
 
 </xsl:stylesheet>

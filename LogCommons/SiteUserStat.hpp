@@ -18,9 +18,7 @@ namespace AdServer::LogProcessing
         hash_()
     {}
 
-    SiteUserStatInnerKey(
-      std::uint32_t site_id,
-      const DayTimestamp& last_appearance_date)
+    SiteUserStatInnerKey(std::uint32_t site_id, const DayTimestamp& last_appearance_date)
       : site_id_(site_id),
         last_appearance_date_(last_appearance_date)
     {
@@ -149,8 +147,7 @@ namespace AdServer::LogProcessing
       {
         return true;
       }
-      return isp_sdate_ == rhs.isp_sdate_ &&
-        colo_id_ == rhs.colo_id_;
+      return isp_sdate_ == rhs.isp_sdate_ && colo_id_ == rhs.colo_id_;
     }
 
   public:
@@ -189,8 +186,7 @@ namespace AdServer::LogProcessing
     {
       if (!colo_id_)
       {
-        throw ConstraintViolation("SiteUserStatKey::invariant(): "
-          "colo_id_ must be > 0");
+        throw ConstraintViolation("SiteUserStatKey::invariant(): " "colo_id_ must be > 0");
       }
     }
 

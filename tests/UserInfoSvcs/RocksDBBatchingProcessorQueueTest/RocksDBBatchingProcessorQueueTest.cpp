@@ -367,9 +367,7 @@ namespace
 
     const auto stopped_state = queue.flush_pending();
     require(stopped_state.has_operation, "pending operation disappeared on flush");
-    require(
-      stopped_state.ready_time == stopped_state.enqueue_time,
-      "flush did not remove delay");
+    require(stopped_state.ready_time == stopped_state.enqueue_time, "flush did not remove delay");
 
     Queue::Operations batch;
     Queue::SelectedKeys selected_keys;

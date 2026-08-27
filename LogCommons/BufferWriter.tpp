@@ -17,8 +17,7 @@ namespace AdServer::LogProcessing
   template <typename InvariantsChecker, char Separator>
   template <typename Field>
   BufferOutputArchive<InvariantsChecker, Separator>&
-  BufferOutputArchive<InvariantsChecker, Separator>::operator&(
-    const Field& field)
+  BufferOutputArchive<InvariantsChecker, Separator>::operator&(const Field& field)
   {
     writer_ << field << Separator;
     return *this;
@@ -27,8 +26,7 @@ namespace AdServer::LogProcessing
   template <typename InvariantsChecker, char Separator>
   template <typename Field>
   BufferOutputArchive<InvariantsChecker, Separator>&
-  BufferOutputArchive<InvariantsChecker, Separator>::operator^(
-    const Field& field)
+  BufferOutputArchive<InvariantsChecker, Separator>::operator^(const Field& field)
   {
     writer_ << field;
     return *this;
@@ -37,8 +35,7 @@ namespace AdServer::LogProcessing
   template <typename InvariantsChecker, char Separator>
   template <typename Data>
   BufferOutputArchive<InvariantsChecker, Separator>&
-  BufferOutputArchive<InvariantsChecker, Separator>::operator<<(
-    const Data& data)
+  BufferOutputArchive<InvariantsChecker, Separator>::operator<<(const Data& data)
   {
     InvariantsChecker::invariant(data);
     const_cast<Data&>(data).serialize(*this);
@@ -48,9 +45,7 @@ namespace AdServer::LogProcessing
   inline void
   BufferWriter::flush_if_required_(std::size_t append_size)
   {
-    if (file_ &&
-      buffer_limit_ != 0 &&
-      buffer_.size() + append_size > buffer_limit_)
+    if (file_ && buffer_limit_ != 0 && buffer_.size() + append_size > buffer_limit_)
     {
       flush();
     }
@@ -209,9 +204,7 @@ namespace AdServer::LogProcessing
 
   template <typename Convertor, const char STRING_SEPARATOR>
   BufferWriter&
-  operator<<(
-    BufferWriter& out,
-    const StringIO<Convertor, STRING_SEPARATOR>& value)
+  operator<<(BufferWriter& out, const StringIO<Convertor, STRING_SEPARATOR>& value)
   {
     const char* ptr = value.data();
     const char* const end = ptr + value.size();
@@ -258,9 +251,7 @@ namespace AdServer::LogProcessing
 
   template <typename Base, const unsigned TOTAL, const unsigned FRACTION>
   BufferWriter&
-  operator<<(
-    BufferWriter& out,
-    const Generics::SimpleDecimal<Base, TOTAL, FRACTION>& value)
+  operator<<(BufferWriter& out, const Generics::SimpleDecimal<Base, TOTAL, FRACTION>& value)
   {
     out << value.str();
     return out;
@@ -268,9 +259,7 @@ namespace AdServer::LogProcessing
 
   template <typename Value, typename OptionalValueTraits>
   BufferWriter&
-  operator<<(
-    BufferWriter& out,
-    const OptionalValue<Value, OptionalValueTraits>& value)
+  operator<<(BufferWriter& out, const OptionalValue<Value, OptionalValueTraits>& value)
   {
     if (value.present() && !OptionalValueTraits::is_empty(value.get()))
     {

@@ -160,6 +160,7 @@ sub create_channel_targeted_campaigns_
     {
       $arg->{campaigncreativegroup_flags} |= DB::Campaign::RON
     }
+
     if (defined $arg->{campaign})
     {
       die "$self->{casename}: campaign '$arg->{campaign}' isn't defined!"
@@ -167,6 +168,7 @@ sub create_channel_targeted_campaigns_
       $arg->{campaign_id} = $self->{campaigns_}->{$arg->{campaign}}->{campaign_id};
       delete $arg->{campaign};
     }
+
     if (defined $arg->{specific_sites})
     {
       $arg->{site_links} = [];

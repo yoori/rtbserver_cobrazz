@@ -22,8 +22,7 @@ template <class T> ConstraintConfig* ref_2_constraint(const T& constraint_ref)
 
 
 // OptOutRequestConfig class
-OptOutRequestConfig::OptOutRequestConfig(ConstraintConfig* _constraint,
-                                         const char* _url) :
+OptOutRequestConfig::OptOutRequestConfig(ConstraintConfig* _constraint, const char* _url) :
   RequestConfig(_constraint, _url)
 {}
 
@@ -63,8 +62,7 @@ ClientConfig::ClientConfig(const AdClientType& client_config,
   {
     const GeneratedRequestType& click_config = client_config.Click().get();
     const generated_request_constraint& constraint_ref(click_config.requestConstraint());
-    click_request_ =
-        RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
+    click_request_ = RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
   }
 
   // Action request
@@ -72,8 +70,7 @@ ClientConfig::ClientConfig(const AdClientType& client_config,
   {
     const GeneratedRequestType& action_config = client_config.ActionTracking().get();
     const generated_request_constraint& constraint_ref(action_config.requestConstraint());
-    action_request_ =
-        RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
+    action_request_ = RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
   }
 
   // Passback request
@@ -81,8 +78,7 @@ ClientConfig::ClientConfig(const AdClientType& client_config,
   {
     const GeneratedRequestType& passback_config = client_config.Passback().get();
     const generated_request_constraint& constraint_ref(passback_config.requestConstraint());
-    passback_request_ =
-        RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
+    passback_request_ = RequestConfig_var(new RequestConfig(ref_2_constraint(constraint_ref)));
   }
 
   // OptOut request
@@ -92,8 +88,7 @@ ClientConfig::ClientConfig(const AdClientType& client_config,
     const optout_constraint& constraint_ref(optout_config.requestConstraint());
     std::string url = optout_config.url().get();
     optout_request_ =
-        RequestConfig_var(new OptOutRequestConfig(ref_2_constraint(constraint_ref),
-                                                  url.c_str()));
+        RequestConfig_var(new OptOutRequestConfig(ref_2_constraint(constraint_ref), url.c_str()));
   }
 }
 
@@ -152,7 +147,7 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
     {
       configuration = testParams(config_path_, error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
         {
           std::string error_string;
           throw InvalidConfiguration(error_handler.text(error_string));
@@ -228,11 +223,9 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
     {
       Stream::Error ostr;
 
-      ostr << "Can't parse config file '"
-           << config_path_ << "'."
-           << ": ";
+      ostr << "Can't parse config file '" << config_path_ << "'." << ": ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);

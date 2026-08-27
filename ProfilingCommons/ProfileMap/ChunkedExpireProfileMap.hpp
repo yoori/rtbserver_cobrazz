@@ -15,9 +15,8 @@
  *   ChunkedProfileMap -> TransactionProfileMap ->
  *   AdaptProfileMap -> ExpireProfileMap
  */
-namespace AdServer
-{
-namespace ProfilingCommons
+
+namespace AdServer::ProfilingCommons
 {
   typedef std::set<unsigned long> ChunkIdSet;
 
@@ -36,8 +35,8 @@ namespace ProfilingCommons
     typedef ReferenceCounting::SmartPtr<BaseProfileMap> BaseProfileMap_var;
     typedef typename ProfileMapType::Transaction_var Transaction_var;
 
-    typedef std::map<unsigned long, ReferenceCounting::SmartPtr<ProfileMapType> >
-      ChunkIdToProfileMap;
+    using ChunkIdToProfileMap =
+      std::map<unsigned long, ReferenceCounting::SmartPtr<ProfileMapType>>;
 
     typedef std::vector<BaseProfileMap_var> ChunkArray;
 
@@ -55,9 +54,7 @@ namespace ProfilingCommons
       noexcept;
 
     virtual void
-    wait_preconditions(
-      const KeyType& key,
-      OperationPriority priority) const
+    wait_preconditions(const KeyType& key, OperationPriority priority) const
       /*throw(ChunkNotFound, Exception)*/;
 
     bool
@@ -109,15 +106,11 @@ namespace ProfilingCommons
       override;
 
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(ChunkNotFound, Exception)*/;
 
     Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(ChunkNotFound, Exception)*/;
 
     void
@@ -129,9 +122,7 @@ namespace ProfilingCommons
       /*throw(ChunkNotFound, Exception)*/;
 
     bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority priority = OP_RUNTIME)
+    remove_profile(const KeyType& key, OperationPriority priority = OP_RUNTIME)
       /*throw(ChunkNotFound, Exception)*/;
 
     Transaction_var
@@ -182,6 +173,6 @@ namespace ProfilingCommons
     ChunkArray chunks_;
   };
 }
-}
+
 
 #include "ChunkedExpireProfileMap.tpp"

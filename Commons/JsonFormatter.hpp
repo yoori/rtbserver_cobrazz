@@ -10,49 +10,45 @@
 #include <Stream/MemoryStream.hpp>
 #include <Generics/Function.hpp>
 
+namespace AdServer::Commons::JsonFormatterDetail
+{
+  template<typename Value, typename = void>
+  struct HasStrMethod: std::false_type
+  {};
+
+  template<typename Value>
+  struct HasStrMethod<
+    Value,
+    std::void_t<decltype(std::declval<const Value&>().str())>>:
+    std::true_type
+  {};
+
+  template<typename Value, typename = void>
+  struct HasAppendToMethod: std::false_type
+  {};
+
+  template<typename Value>
+  struct HasAppendToMethod<
+    Value,
+    std::void_t<decltype(std::declval<const Value&>().append_to(std::declval<std::string&>()))>>:
+    std::true_type
+  {};
+
+  template<typename Value>
+  constexpr bool dependent_false = false;
+
+  inline constexpr std::string_view SIMPLE_OBJECT_BEGIN{"{"};
+  inline constexpr std::string_view SIMPLE_OBJECT_END{"}"};
+  inline constexpr std::string_view ARRAY_BEGIN{"["};
+  inline constexpr std::string_view ARRAY_END{"]"};
+  inline constexpr std::string_view COMMA_SEPARATOR{", "};
+  inline constexpr std::string_view NAME_SEPARATOR{"\": "};
+  inline constexpr std::string_view TRUE_VALUE{"true"};
+  inline constexpr std::string_view FALSE_VALUE{"false"};
+}
+
 namespace AdServer::Commons
 {
-  namespace JsonFormatterDetail
-  {
-    template<typename Value, typename = void>
-    struct HasStrMethod: std::false_type
-    {};
-
-    template<typename Value>
-    struct HasStrMethod<
-      Value,
-      std::void_t<decltype(std::declval<const Value&>().str())>>:
-      std::true_type
-    {};
-
-    template<typename Value, typename = void>
-    struct HasAppendToMethod: std::false_type
-    {};
-
-    template<typename Value>
-    struct HasAppendToMethod<
-      Value,
-      std::void_t<decltype(
-        std::declval<const Value&>().append_to(std::declval<std::string&>()))>>:
-      std::true_type
-    {};
-
-    template<typename Value>
-    constexpr bool dependent_false = false;
-
-    inline constexpr std::string_view SIMPLE_OBJECT_BEGIN{"{"};
-    inline constexpr std::string_view SIMPLE_OBJECT_END{"}"};
-    inline constexpr std::string_view ARRAY_BEGIN{"["};
-    inline constexpr std::string_view ARRAY_END{"]"};
-    inline constexpr std::string_view COMMA_SEPARATOR{", "};
-    inline constexpr std::string_view NAME_SEPARATOR{"\": "};
-    inline constexpr std::string_view TRUE_VALUE{"true"};
-    inline constexpr std::string_view FALSE_VALUE{"false"};
-  }
-
-  // Write Bid Response in JSON format into string on the fly.
-
-  // Possible split JsonObject to JsonObject and JsonArray
   class JsonObject
   {
     class JsonObjectDelegate
@@ -87,15 +83,10 @@ namespace AdServer::Commons
     add_escaped_string(std::string_view name, std::string_view value);
 
     JsonObject&
-    add_escaped_string_if_non_empty(
-      std::string_view name,
-      std::string_view value);
+    add_escaped_string_if_non_empty(std::string_view name, std::string_view value);
 
     JsonObject&
-    add_opt_escaped_string(
-      std::string_view name,
-      std::string_view value,
-      bool need_escape);
+    add_opt_escaped_string(std::string_view name, std::string_view value, bool need_escape);
 
     template<typename NumberType>
     JsonObject&
@@ -126,9 +117,7 @@ namespace AdServer::Commons
     add_escaped_string(std::string_view value);
 
     JsonObject&
-    add_opt_escaped_string(
-      std::string_view value,
-      bool need_escape);
+    add_opt_escaped_string(std::string_view value, bool need_escape);
 
     JsonObjectDelegate
     add_object();
@@ -348,15 +337,10 @@ namespace AdServer::Commons
   {
     using ValueType = std::decay_t<Value>;
 
-    if constexpr (
-      std::is_integral_v<ValueType> &&
-      !std::is_same_v<ValueType, bool>)
+    if constexpr (std::is_integral_v<ValueType> && !std::is_same_v<ValueType, bool>)
     {
       char buf[std::numeric_limits<ValueType>::digits10 + 3];
-      const std::size_t len = String::StringManip::int_to_str(
-        value,
-        buf,
-        sizeof(buf));
+      const std::size_t len = String::StringManip::int_to_str(value, buf, sizeof(buf));
       append_(std::string_view(buf, len));
     }
     else if constexpr (std::is_enum_v<ValueType>)
@@ -464,9 +448,7 @@ namespace AdServer::Commons
 
   inline
   JsonObject&
-  JsonObject::add_escaped_string_if_non_empty(
-    std::string_view name,
-    std::string_view value)
+  JsonObject::add_escaped_string_if_non_empty(std::string_view name, std::string_view value)
   {
     if (!value.empty())
     {
@@ -534,9 +516,7 @@ namespace AdServer::Commons
 
   inline
   JsonObject&
-  JsonObject::add_opt_escaped_string(
-    std::string_view value,
-    bool need_escape)
+  JsonObject::add_opt_escaped_string(std::string_view value, bool need_escape)
   {
     return need_escape ? add_escaped_string(value) : add_string(value);
   }

@@ -30,7 +30,7 @@ namespace AdServer
       create_user_profile(false),
       resolved_ext_user_i(0)
   {
-    if(app_request)
+    if (app_request)
     {
       result_user_id = AdServer::Commons::UserId();
     }
@@ -41,9 +41,9 @@ namespace AdServer
   {
     try
     {
-      if(request_info->delete_op)
+      if (request_info->delete_op)
       {
-        if(request_info->external_id.empty() || !frontend->has_user_bind_client_())
+        if (request_info->external_id.empty() || !frontend->has_user_bind_client_())
         {
           co_return ProcessRequestResult{http_status, BindResult(request_info->user_id)};
         }
@@ -52,10 +52,8 @@ namespace AdServer
         auto* add_user_request = google::protobuf::Arena::CreateMessage<
           adserver::user_info_svcs::user_bind::AddUserIdRequest>(&arena);
         add_user_request->set_id(request_info->external_id);
-        add_user_request->set_user_id(
-          GrpcAlgs::pack_user_id(Commons::UserId()));
-        add_user_request->set_timestamp(
-          GrpcAlgs::pack_time(request_info->time));
+        add_user_request->set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
+        add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
 
         auto add_result = co_await frontend->user_bind_client_coro_->co_add_user_id(
           *add_user_request);
@@ -66,14 +64,14 @@ namespace AdServer
 
       FrontendCommons::CountryFilter_var country_filter =
         frontend->common_module_->country_filter();
-      if(country_filter.in() && (
+      if (country_filter.in() && (
           !request_info->location ||
           !country_filter->enabled(request_info->location->country)))
       {
         co_return ProcessRequestResult{http_status, make_bind_result_()};
       }
 
-      if(frontend->has_user_bind_client_())
+      if (frontend->has_user_bind_client_())
       {
         external_ids = {
           ExternalId{request_info->ga_user_id, false, true},
@@ -83,11 +81,11 @@ namespace AdServer
         };
 
         resolved_ext_user_i = external_ids.size();
-        if(result_user_id.is_null())
+        if (result_user_id.is_null())
         {
-          for(std::size_t index = 0; index < external_ids.size(); ++index)
+          for (std::size_t index = 0; index < external_ids.size(); ++index)
           {
-            if(external_ids[index].id.empty())
+            if (external_ids[index].id.empty())
             {
               continue;
             }
@@ -100,14 +98,13 @@ namespace AdServer
             get_request->set_silent(true);
             get_request->set_generate_user_id(external_ids[index].set_uid);
             get_request->set_for_set_cookie(!app_request);
-            get_request->set_create_timestamp(
-              GrpcAlgs::pack_time(Generics::Time::ZERO));
+            get_request->set_create_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
 
             auto get_result = co_await
               frontend->user_bind_client_coro_->co_get_user_id(*get_request);
-            if(get_result.status.ok())
+            if (get_result.status.ok())
             {
-              if(get_result.response.invalid_operation())
+              if (get_result.response.invalid_operation())
               {
                 resolve_failed_external_ids.insert(external_ids[index].id);
                 frontend->report_bad_user_(*request_info);
@@ -116,7 +113,7 @@ namespace AdServer
               {
                 AdServer::Commons::UserId resolved_user_id =
                   GrpcAlgs::unpack_user_id(get_result.response.user_id());
-                if(!resolved_user_id.is_null())
+                if (!resolved_user_id.is_null())
                 {
                   result_user_id = resolved_user_id;
                   result_user_id_type =
@@ -125,7 +122,7 @@ namespace AdServer
                   frontend->common_module_->user_id_controller()->
                     null_blacklisted(result_user_id);
 
-                  if(frontend->config_->create_profile())
+                  if (frontend->config_->create_profile())
                   {
                     create_user_profile = get_result.response.created();
                   }
@@ -142,13 +139,12 @@ namespace AdServer
         }
       }
 
-      if(frontend->has_user_bind_client_() &&
-        (opted_out || !result_user_id.is_null()))
+      if (frontend->has_user_bind_client_() && (opted_out || !result_user_id.is_null()))
       {
-        for(std::size_t index = 0; index < external_ids.size(); ++index)
+        for (std::size_t index = 0; index < external_ids.size(); ++index)
         {
           const auto& external_id = external_ids[index].id;
-          if(external_id.empty() ||
+          if (external_id.empty() ||
             index == resolved_ext_user_i ||
             resolve_failed_external_ids.find(external_id) !=
               resolve_failed_external_ids.end())
@@ -162,14 +158,13 @@ namespace AdServer
           add_user_request->set_id(external_id);
           add_user_request->set_user_id(GrpcAlgs::pack_user_id(
             !opted_out ? result_user_id : Commons::UserId()));
-          add_user_request->set_timestamp(
-            GrpcAlgs::pack_time(request_info->time));
+          add_user_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
 
           auto add_result = co_await
             frontend->user_bind_client_coro_->co_add_user_id(*add_user_request);
-          if(add_result.status.ok())
+          if (add_result.status.ok())
           {
-            if(add_result.response.invalid_operation())
+            if (add_result.response.invalid_operation())
             {
               frontend->report_bad_user_(*request_info);
             }
@@ -181,15 +176,14 @@ namespace AdServer
         }
       }
 
-      if(!opted_out &&
-        !app_request && (
-          !result_user_id.is_null() || resolve_failed_external_ids.empty()))
+      if (!opted_out &&
+        !app_request && (!result_user_id.is_null() || resolve_failed_external_ids.empty()))
       {
         Generics::Uuid generated_user_id = result_user_id.is_null() ?
           Generics::Uuid::create_random_based() :
           result_user_id;
 
-        if(request_info->generate_external_id)
+        if (request_info->generate_external_id)
         {
           result_ssp_user_id =
             frontend->common_module_->user_id_controller()->ssp_uuid(
@@ -197,7 +191,7 @@ namespace AdServer
               request_info->source_id);
         }
 
-        if(frontend->config_->set_uid())
+        if (frontend->config_->set_uid())
         {
           result_user_id = generated_user_id;
           result_user_id_type = RUIT_COOKIE;
@@ -208,12 +202,12 @@ namespace AdServer
 
       user_match_stage_();
 
-      if(!dns_bind_request_id.empty() && frontend->has_user_bind_client_())
+      if (!dns_bind_request_id.empty() && frontend->has_user_bind_client_())
       {
         AdServer::Commons::ExternalUserIdArray user_ids;
-        if(!result_user_id.is_null())
+        if (!result_user_id.is_null())
         {
-          if(result_user_id_type == RUIT_EXTIDRESOLVE_NOCOOKIE)
+          if (result_user_id_type == RUIT_EXTIDRESOLVE_NOCOOKIE)
           {
             user_ids.push_back(std::string("/") + result_user_id.to_string());
           }
@@ -223,30 +217,33 @@ namespace AdServer
           }
         }
 
-        if(!app_request &&
+        if (!app_request &&
           !request_info->user_id.is_null() &&
           !(request_info->user_id == result_user_id))
         {
           user_ids.push_back(std::string("c/") + request_info->user_id.to_string());
         }
-        if(!request_info->ga_user_id.empty())
+
+        if (!request_info->ga_user_id.empty())
         {
           user_ids.push_back(request_info->ga_user_id);
         }
-        if(!request_info->ym_user_id.empty())
+
+        if (!request_info->ym_user_id.empty())
         {
           user_ids.push_back(request_info->ym_user_id);
         }
-        if(!request_info->external_id.empty())
+
+        if (!request_info->external_id.empty())
         {
           user_ids.push_back(request_info->external_id);
         }
-        if(!request_info->add_user_id.is_null() &&
+
+        if (!request_info->add_user_id.is_null() &&
           request_info->add_user_id != result_user_id &&
           request_info->add_user_id != request_info->user_id)
         {
-          user_ids.push_back(std::string("/") +
-            request_info->add_user_id.to_string());
+          user_ids.push_back(std::string("/") + request_info->add_user_id.to_string());
         }
 
         google::protobuf::Arena arena;
@@ -254,13 +251,12 @@ namespace AdServer
           adserver::user_info_svcs::user_bind::AddBindRequestRequest>(&arena);
         bind_request->set_request_id(dns_bind_request_id);
         bind_request->set_timestamp(GrpcAlgs::pack_time(request_info->time));
-        for(const auto& user_id : user_ids)
+        for (const auto& user_id : user_ids)
         {
           bind_request->add_bind_user_ids(user_id);
         }
 
-        co_await frontend->user_bind_client_coro_->co_add_bind_request(
-          *bind_request);
+        co_await frontend->user_bind_client_coro_->co_add_bind_request(*bind_request);
       }
 
       co_return ProcessRequestResult{http_status, bind_result};
@@ -276,11 +272,11 @@ namespace AdServer
   {
     BindResult bind_result;
     bind_result.result_user_id = result_user_id;
-    if(!result_ssp_user_id.is_null())
+    if (!result_ssp_user_id.is_null())
     {
       bind_result.ssp_user_id = result_ssp_user_id;
     }
-    else if(!app_request && !result_user_id.is_null())
+    else if (!app_request && !result_user_id.is_null())
     {
       bind_result.ssp_user_id =
         frontend->common_module_->user_id_controller()->ssp_uuid(
@@ -295,7 +291,7 @@ namespace AdServer
   UserBindFrontend::BindRequestState::user_match_stage_() noexcept
   {
     std::string ifa_str;
-    if(request_info->external_id.compare(0, 4, "ifa/") == 0)
+    if (request_info->external_id.compare(0, 4, "ifa/") == 0)
     {
       ifa_str = request_info->external_id.substr(4);
       String::AsciiStringManip::to_lower(ifa_str);

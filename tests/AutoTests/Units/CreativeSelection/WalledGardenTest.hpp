@@ -43,10 +43,7 @@ public:
   };
 
 public:
-  WalledGardenTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var):
+  WalledGardenTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   {};
 
@@ -69,17 +66,12 @@ private:
     const CCSelection& creative,
     const CCSelection& non_wg_creative);
 
-  void test_case(
-    const TestCase& testcase);
+  void test_case(const TestCase& testcase);
 
-  void test_priority(
-    const TestCase& testcase,
-    const CCSelection& non_wg_creative);
+  void test_priority(const TestCase& testcase, const CCSelection& non_wg_creative);
 
   template <size_t COUNT>
-    void wg_foros_competition_case (
-      const std::string& referer_kw,
-      std::string (&ccids)[COUNT]);
+    void wg_foros_competition_case (const std::string& referer_kw, std::string (&ccids)[COUNT]);
 
 private:
   AdvStats advstats;

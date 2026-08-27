@@ -3,9 +3,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   class CampaignReferrerStatInnerKey_V_3_5
   {
@@ -47,8 +45,7 @@ namespace LogProcessing
       return ccg_id_ == rhs.ccg_id_ &&
         cc_id_ == rhs.cc_id_ &&
         site_id_ == rhs.site_id_ &&
-        ext_tag_id_.get() == rhs.ext_tag_id_.get() &&
-        referer_.get() == rhs.referer_.get();
+        ext_tag_id_.get() == rhs.ext_tag_id_.get() && referer_.get() == rhs.referer_.get();
     }
 
     std::uint32_t ccg_id() const
@@ -208,8 +205,7 @@ namespace LogProcessing
         adv_comm_amount_ == rhs.adv_comm_amount_ &&
         adv_payable_comm_amount_ == rhs.adv_payable_comm_amount_ &&
         pub_amount_adv_ == rhs.pub_amount_adv_ &&
-        pub_comm_amount_adv_ == rhs.pub_comm_amount_adv_ &&
-        isp_amount_adv_ == rhs.isp_amount_adv_;
+        pub_comm_amount_adv_ == rhs.pub_comm_amount_adv_ && isp_amount_adv_ == rhs.isp_amount_adv_;
     }
 
     CampaignReferrerStatInnerData_V_3_5&
@@ -405,9 +401,7 @@ namespace LogProcessing
       : adv_sdate_(), hash_()
     {}
 
-    CampaignReferrerStatKey_V_3_5(
-      const DayTimestamp& adv_sdate
-      )
+    CampaignReferrerStatKey_V_3_5(const DayTimestamp& adv_sdate)
       : adv_sdate_(adv_sdate),
         hash_()
     {
@@ -471,5 +465,4 @@ namespace LogProcessing
     {}
   };
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

@@ -1,10 +1,7 @@
 
 #include "ExactUrlMatching.hpp"
 
-REFLECT_UNIT(ExactUrlMatching) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ExactUrlMatching) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -47,11 +44,7 @@ ExactUrlMatching::run_test()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel",
-        client.debug_info.trigger_channels,
-        REQUESTS[i]).check(),
+      ChannelsCheck(this, "Channel", client.debug_info.trigger_channels, REQUESTS[i]).check(),
       "Check trigger_channels#" +  strof(i+1));
 
   }

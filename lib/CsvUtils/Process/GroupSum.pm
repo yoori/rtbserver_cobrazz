@@ -17,7 +17,7 @@ sub new
   my %res_indexes_set;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes_set{$index - 1} = 1;
       push(@res_indexes, $index - 1);
@@ -49,7 +49,7 @@ sub process
 
   foreach my $field_index(@{$self->{field_}})
   {
-    if($row->[$field_index] ne '')
+    if ($row->[$field_index] ne '')
     {
       $all_empty = 0;
     }
@@ -64,22 +64,22 @@ sub process
 
   Encode::_utf8_on($group_key_str);
 
-  if($all_empty != 0 && $self->{group_empty_} == 0)
+  if ($all_empty != 0 && $self->{group_empty_} == 0)
   {
     return $row;
   }
   elsif(!exists($self->{rows_}->{$group_key_str}))
   {
     my @res;
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {
         push(@res, $row->[$i]);
       }
       else
       {
-        if(!looks_like_number($row->[$i]))
+        if (!looks_like_number($row->[$i]))
         {
           die "CsvUtils::Process::GroupSum: field isn't number(field #" . $i . "): " . $row->[$i];
         }
@@ -95,13 +95,13 @@ sub process
   {
     my $res = $self->{rows_}->{$group_key_str};
 
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {}
       else
       {
-        if(!looks_like_number($row->[$i]))
+        if (!looks_like_number($row->[$i]))
         {
           die "CsvUtils::Process::GroupSum: field isn't number(field #" . $i . "): " . $row->[$i];
         }

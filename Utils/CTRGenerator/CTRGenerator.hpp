@@ -4,9 +4,7 @@
 
 #include <CampaignSvcs/CampaignManager/CTRProvider.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class CTRGenerator
   {
@@ -102,14 +100,10 @@ namespace CampaignSvcs
     CTRGenerator(const FeatureList& features, bool xgb_model);
 
     void
-    calculate(
-      Calculation& calculation,
-      const CalculateParams& calc_params) const;
+    calculate(Calculation& calculation, const CalculateParams& calc_params) const;
 
     void
-    fill_dictionary(
-      FeatureDictionary& global_dictionary,
-      const CalculateParams& calc_params);
+    fill_dictionary(FeatureDictionary& global_dictionary, const CalculateParams& calc_params);
 
   protected:
     struct FeatureHolder
@@ -127,8 +121,7 @@ namespace CampaignSvcs
       noexcept;
 
     FeatureHashCalculator_var
-    create_final_feature_hash_calculator_(
-      CTR::BasicFeature basic_feature);
+    create_final_feature_hash_calculator_(CTR::BasicFeature basic_feature);
 
     FeatureHashCalculator_var
     create_delegate_feature_hash_calculator_(
@@ -145,5 +138,4 @@ namespace CampaignSvcs
     bool push_ssp_viewability_;
     bool push_ssp_vtr_;
   };
-}
 }

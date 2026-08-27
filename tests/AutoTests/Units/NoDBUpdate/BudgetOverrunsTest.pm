@@ -10,17 +10,19 @@ use constant DISPLAY => 'DisplayCampaign';
 use constant CT_TEXT => 'ChannelTargetedTACampaign';
 use constant TEXT => 'TextAdvertisingCampaign';
 
-sub creative_revenue 
+sub creative_revenue
 {
   my ($self, $params) = @_;
   if (defined $params->{cpm})
   {
     return $params->{cpm} / 1000;
   }
+
   if (defined $params->{cpc})
   {
     return $params->{cpc};
   }
+
   if (defined $params->{cpa})
   {
     return $params->{cpa};
@@ -49,7 +51,7 @@ sub request_revenue
 sub budget
 {
   my ($self, $params) = @_;
-  
+
   my $min = $params->{campaign_budget} ||
             $params->{ccg_budget} ||
             $params->{campaign_daily_budget} ||
@@ -229,7 +231,7 @@ sub init
     { account_id => $ns->create(Account => {
         name => 'GrossAdvSys',
         commission => 0.1,
-        agency_account_id => 
+        agency_account_id =>
           DB::Defaults::instance()->agency_gross(),
         role_id => DB::Defaults::instance()->advertiser_role() }),
       campaign_commission => 0.1,
@@ -249,7 +251,7 @@ sub init
     { account_id => $ns->create(Account => {
         name => 'GrossAdv',
         commission => 0.1,
-        agency_account_id => 
+        agency_account_id =>
           DB::Defaults::instance()->agency_gross(),
         role_id => DB::Defaults::instance()->advertiser_role(),
         currency_id => $ns->create(Currency => { rate => 0.5 }) }),

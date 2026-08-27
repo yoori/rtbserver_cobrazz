@@ -14,19 +14,18 @@ namespace FrontendCommons
     const xsd::AdServer::Configuration::CommonFeConfigurationType&
       common_config)
   {
-    AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient::
-      CampaignManagerRefs result;
+    AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient::CampaignManagerRefs result;
 
-    for(const auto& group : common_config.CampaignManagerGrpcGroup())
+    for (const auto& group : common_config.CampaignManagerGrpcGroup())
     {
       const auto& endpoints = group.Endpoint();
       result.reserve(result.size() + endpoints.size());
-      for(const auto& endpoint : endpoints)
+      for (const auto& endpoint : endpoints)
       {
         AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient::
           CampaignManagerRef converted_ref;
         converted_ref.object_ref = endpoint;
-        if(endpoint.service_index().present())
+        if (endpoint.service_index().present())
         {
           converted_ref.service_index = *endpoint.service_index();
         }
@@ -43,9 +42,9 @@ namespace FrontendCommons
     const xsd::AdServer::Configuration::CommonFeConfigurationType&
       common_config)
   {
-    for(const auto& group : common_config.CampaignManagerGrpcGroup())
+    for (const auto& group : common_config.CampaignManagerGrpcGroup())
     {
-      if(group.BatchingOptions().present())
+      if (group.BatchingOptions().present())
       {
         return Config::read_xsd_grpc_options(*group.BatchingOptions());
       }

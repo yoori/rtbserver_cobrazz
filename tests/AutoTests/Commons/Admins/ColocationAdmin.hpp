@@ -37,9 +37,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ColocationAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* colo
-      )
+      void make_cmd (const char* address, const char* colo)
       {
         address_ = address;
         AdminParams params;
@@ -49,45 +47,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "colocations", address, params, static_cast<size_t>(CampaignManager));
       }
-      ColocationAdmin(
-        const char* address,
-        const char* colo
-      )
+      ColocationAdmin(const char* address, const char* colo)
       {
         make_cmd(address, colo);
       }
-      ColocationAdmin(
-        const std::string& address,
-        const char* colo
-      )
+      ColocationAdmin(const std::string& address, const char* colo)
       {
         make_cmd(address.c_str(), colo);
       }
-      ColocationAdmin(
-        const char* address,
-        const std::string& colo
-      )
+      ColocationAdmin(const char* address, const std::string& colo)
       {
         make_cmd(address, colo.c_str());
       }
-      ColocationAdmin(
-        const std::string& address,
-        const std::string& colo
-      )
+      ColocationAdmin(const std::string& address, const std::string& colo)
       {
         make_cmd(address.c_str(), colo.c_str());
       }
-      ColocationAdmin(
-        const char* address,
-        unsigned long colo
-      )
+      ColocationAdmin(const char* address, unsigned long colo)
       {
         make_cmd(address, strof(colo).c_str());
       }
-      ColocationAdmin(
-        const std::string& address,
-        unsigned long colo
-      )
+      ColocationAdmin(const std::string& address, unsigned long colo)
       {
         make_cmd(address.c_str(), strof(colo).c_str());
       }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -45,18 +45,18 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChannelRules" 
-                   type="ChannelRulesType" 
-                   minOccurs="0" 
+      <xsd:element name="ChannelRules"
+                   type="ChannelRulesType"
+                   minOccurs="0"
                    maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
             Channel rules
           </xsd:documentation>
         </xsd:annotation>
-      </xsd:element> 
-      
-      <xsd:element name="MatchConfig" 
+      </xsd:element>
+
+      <xsd:element name="MatchConfig"
                    type="MatchConfigType"
                    minOccurs="0"
                    maxOccurs="unbounded">
@@ -74,7 +74,7 @@
     <xsd:annotation>
       <xsd:documentation>
         Match configuration
-      </xsd:documentation> 
+      </xsd:documentation>
     </xsd:annotation>
     <xsd:attribute name="user_id" type="xsd:string" use="required"/>
     <xsd:attribute name="matches_number" type="xsd:positiveInteger" use="required"/>
@@ -85,7 +85,7 @@
     <xsd:annotation>
       <xsd:documentation>
         Channel description
-      </xsd:documentation> 
+      </xsd:documentation>
     </xsd:annotation>
     <xsd:attribute name="chunks_path" type="xsd:string" use="required"/>
     <xsd:attribute name="base_chunk_file" type="xsd:string" use="required"/>
@@ -100,7 +100,7 @@
     <xsd:annotation>
       <xsd:documentation>
         Channel description
-      </xsd:documentation> 
+      </xsd:documentation>
     </xsd:annotation>
     <xsd:attribute name="channel_id" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="time_from" type="xsd:nonNegativeInteger" use="required"/>

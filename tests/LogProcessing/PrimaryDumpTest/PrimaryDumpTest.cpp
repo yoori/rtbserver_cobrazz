@@ -55,22 +55,12 @@ main()
   AdServer::LogProcessing::LogFlushTraits flush_traits;
   flush_traits.out_dir = std::string(root) + "/Request";
   flush_traits.primary_dump =
-    std::make_shared<AdServer::LogProcessing::PrimaryDump>(
-      root,
-      0,
-      ".ram",
-      Generics::Time(10));
+    std::make_shared<AdServer::LogProcessing::PrimaryDump>(root, 0, ".ram", Generics::Time(10));
 
   SavePolicy failing_policy;
   failing_policy.fail_primary = true;
-  AdServer::LogProcessing::save_log(
-    flush_traits,
-    failing_policy,
-    collector);
-  AdServer::LogProcessing::save_log(
-    flush_traits,
-    failing_policy,
-    collector);
+  AdServer::LogProcessing::save_log(flush_traits, failing_policy, collector);
+  AdServer::LogProcessing::save_log(flush_traits, failing_policy, collector);
 
   result |= !expect(
     failing_policy.paths == std::vector<std::string>{
@@ -85,10 +75,7 @@ main()
     std::make_shared<AdServer::LogProcessing::PrimaryDump>(root, 0, ".ram");
 
   SavePolicy successful_policy;
-  AdServer::LogProcessing::save_log(
-    successful_traits,
-    successful_policy,
-    collector);
+  AdServer::LogProcessing::save_log(successful_traits, successful_policy, collector);
   result |= !expect(
     successful_policy.paths == std::vector<std::string>{
       successful_traits.out_dir + ".ram"},
@@ -98,9 +85,7 @@ main()
     root,
     std::numeric_limits<std::uint64_t>::max(),
     ".ram");
-  result |= !expect(
-    !full_primary.available(),
-    "min_free_space limit was ignored");
+  result |= !expect(!full_primary.available(), "min_free_space limit was ignored");
 
   result |= !expect(::rmdir(root) == 0, "temporary directory cleanup failed");
   return result;

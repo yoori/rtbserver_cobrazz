@@ -2,10 +2,7 @@
 
 #include <Generics/Uuid.hpp>
 
-REFLECT_UNIT(MergingStatusTest) (
-  "UserProfiling",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(MergingStatusTest) ("UserProfiling", AUTO_TEST_FAST);
 
 namespace
 {
@@ -30,14 +27,10 @@ MergingStatusTest::run_test()
 void MergingStatusTest::set_up()
 {
   add_descr_phrase("setUp");
-  client.process_request(
-    NSLookupRequest().
-    tid(fetch_string("TID#1")),
-    "get real uid");
+  client.process_request(NSLookupRequest(). tid(fetch_string("TID#1")), "get real uid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.get_cookies().find_value("uid", uid)),
+    AutoTest::predicate_checker(client.get_cookies().find_value("uid", uid)),
     "Server should set uid for client");
 }
 
@@ -57,9 +50,7 @@ void MergingStatusTest::double_merging()
     "valid merging");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !client.find_header_value(
-        "X-Merge-Failed", merge_header)),
+    AutoTest::predicate_checker(!client.find_header_value("X-Merge-Failed", merge_header)),
     "Unexpected X-Merging-Failed header");
 
   // Second request with same uid - merging failed
@@ -70,14 +61,11 @@ void MergingStatusTest::double_merging()
     "repeat merging failed");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("X-Merge-Failed", merge_header)),
+    AutoTest::predicate_checker(client.find_header_value("X-Merge-Failed", merge_header)),
       "Unexpected X-Merging-Failed header");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      X_MERGE_FAILED,
-      merge_header).check(),
+    AutoTest::equal_checker(X_MERGE_FAILED, merge_header).check(),
     "Unexpected X-Merging-Failed value");
 }
 
@@ -94,21 +82,17 @@ void MergingStatusTest::unknown_tuid()
     "invalid tuid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("X-Merge-Failed", merge_header)),
+    AutoTest::predicate_checker(client.find_header_value("X-Merge-Failed", merge_header)),
     "Expected X-Merging-Failed header absent");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      X_MERGE_FAILED,
-      merge_header).check(),
+    AutoTest::equal_checker(X_MERGE_FAILED, merge_header).check(),
     "Unexpected X-Merging-Failed value");
 }
 
 std::string MergingStatusTest::create_temporary_profile()
 {
-  TemporaryAdClient tclient(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
 
   tclient.process_request(
     NSLookupRequest().

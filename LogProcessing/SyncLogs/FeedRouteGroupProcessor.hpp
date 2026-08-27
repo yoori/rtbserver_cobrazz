@@ -13,19 +13,17 @@
 #include "RouteHelpers.hpp"
 #include "Utils.hpp"
 
-namespace AdServer
+namespace AdServer::LogProcessing::SyncLog
 {
-namespace LogProcessing
-{
-  namespace SyncLog
-  {
-    typedef unsigned int LogType;
-    typedef LogProcessing::FileReceiverFacade<
-      LogProcessing::DefaultOrderStrategy<LogType> > FileReceiverFacade;
-    typedef ReferenceCounting::AssertPtr<FileReceiverFacade>::Ptr
-      FileReceiverFacade_var;
-  }
+  typedef unsigned int LogType;
+  typedef LogProcessing::FileReceiverFacade<
+    LogProcessing::DefaultOrderStrategy<LogType> > FileReceiverFacade;
+  typedef ReferenceCounting::AssertPtr<FileReceiverFacade>::Ptr
+    FileReceiverFacade_var;
+}
 
+namespace AdServer::LogProcessing
+{
   class Route
   {
   public:
@@ -97,9 +95,7 @@ namespace LogProcessing
       Generics::Time time;
       bool add_commit_suffix_flag;
 
-      PendingTask(
-        const FileEntity& f,
-        const Generics::Time& t)
+      PendingTask(const FileEntity& f, const Generics::Time& t)
         : file(f), time(t)
       {}
     };
@@ -119,9 +115,7 @@ namespace LogProcessing
     process_file_(const FileEntity& file) noexcept;
 
     void
-    add_pending_task_(
-      const FileEntity& file,
-      const unsigned long timeout)
+    add_pending_task_(const FileEntity& file, const unsigned long timeout)
       /*throw(eh::Exception)*/;
 
     void
@@ -134,9 +128,7 @@ namespace LogProcessing
     fetch_files_(SyncLog::LogType log_type) noexcept;
 
     friend bool
-    operator< (
-      const PendingTask& arg1,
-      const PendingTask& arg2)
+    operator<(const PendingTask& arg1, const PendingTask& arg2)
       noexcept
     {
       return arg1.time < arg2.time;
@@ -159,5 +151,4 @@ namespace LogProcessing
 
   typedef ReferenceCounting::AssertPtr<FeedRouteGroupProcessor>::Ptr
     FeedRouteGroupProcessor_var;
-}
 }

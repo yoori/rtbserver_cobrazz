@@ -50,8 +50,7 @@ namespace AdServer::Commons
         if (::mkdir(current.c_str(), 0755) == -1 && errno != EEXIST)
         {
           Stream::Error ostr;
-          ostr << "Can't create pid file directory '" << current <<
-            "': " << std::strerror(errno);
+          ostr << "Can't create pid file directory '" << current << "': " << std::strerror(errno);
           throw PidFileGuard::Exception(ostr);
         }
       }

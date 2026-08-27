@@ -6,59 +6,52 @@
 #include <Generics/Scheduler.hpp>
 #include <Generics/BoolFunctors.hpp>
 
-namespace AdServer
+namespace AdServer::Commons
 {
-  namespace Commons
-  {
-    typedef ReferenceCounting::QualPtr<Generics::TaskGoal>
-      TaskGoal_var;
+  typedef ReferenceCounting::QualPtr<Generics::TaskGoal>
+    TaskGoal_var;
 
-    typedef ReferenceCounting::QualPtr<Generics::GoalTask>
-      GoalTask_var;
+  typedef ReferenceCounting::QualPtr<Generics::GoalTask>
+    GoalTask_var;
 
-    template<typename Delegate>
-    TaskGoal_var
-    make_delegate_goal_task(
-      const Delegate& delegate,
-      Generics::TaskRunner* task_runner)
-      /*throw(eh::Exception)*/;
+  template<typename Delegate>
+  TaskGoal_var
+  make_delegate_goal_task(const Delegate& delegate, Generics::TaskRunner* task_runner)
+    /*throw(eh::Exception)*/;
 
-    /**
-     * create task that start execution loop (after first execution) with predefined period
-     * if function will return false execution loop will be interrupted
-     * if function return type is void exection loop uninterruptable
-     */
-    template<typename Delegate>
-    GoalTask_var
-    make_goal_task(
-      const Delegate& delegate,
-      Generics::TaskRunner* task_runner,
-      Generics::Planner* planner,
-      const Generics::Time& update_period)
-      /*throw(eh::Exception)*/;
+  /**
+   * create task that start execution loop (after first execution) with predefined period
+   * if function will return false execution loop will be interrupted
+   * if function return type is void exection loop uninterruptable
+   */
+  template<typename Delegate>
+  GoalTask_var
+  make_goal_task(
+    const Delegate& delegate,
+    Generics::TaskRunner* task_runner,
+    Generics::Planner* planner,
+    const Generics::Time& update_period)
+    /*throw(eh::Exception)*/;
 
-    template<typename Delegate>
-    Generics::Task_var
-    make_delegate_task(const Delegate& delegate)
-      /*throw(eh::Exception)*/;
+  template<typename Delegate>
+  Generics::Task_var
+  make_delegate_task(const Delegate& delegate)
+    /*throw(eh::Exception)*/;
 
-    /**
-     * create task that will reexecuted for time returned from delegate
-     * execution will be stopped if returned time is ZERO
-     */
-    template<typename Delegate>
-    GoalTask_var
-    make_repeating_task(
-      const Delegate& delegate,
-      Generics::TaskRunner* task_runner,
-      Generics::Planner* planner)
-      /*throw(eh::Exception)*/;
-  }
+  /**
+   * create task that will reexecuted for time returned from delegate
+   * execution will be stopped if returned time is ZERO
+   */
+  template<typename Delegate>
+  GoalTask_var
+  make_repeating_task(
+    const Delegate& delegate,
+    Generics::TaskRunner* task_runner,
+    Generics::Planner* planner)
+    /*throw(eh::Exception)*/;
 }
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename Delegate>
   class DelegateTask : public Generics::Task,
@@ -90,9 +83,7 @@ namespace Commons
   class DelegateTaskGoal : public Generics::TaskGoal
   {
   public:
-    DelegateTaskGoal(
-      const Delegate& delegate,
-      Generics::TaskRunner* task_runner)
+    DelegateTaskGoal(const Delegate& delegate, Generics::TaskRunner* task_runner)
       /*throw(eh::Exception)*/
       : TaskGoal(task_runner), delegate_(delegate)
     {}
@@ -137,7 +128,7 @@ namespace Commons
     {
       const Generics::Time next_execution_time = call_();
 
-      if(next_execution_time != Generics::Time::ZERO)
+      if (next_execution_time != Generics::Time::ZERO)
       {
         try
         {
@@ -188,9 +179,7 @@ namespace Commons
   template<typename FunctorType>
   struct VoidToPeriodHelper<FunctorType, void>
   {
-    VoidToPeriodHelper(
-      const FunctorType& fun,
-      const Generics::Time& period)
+    VoidToPeriodHelper(const FunctorType& fun, const Generics::Time& period)
       : fun_(fun),
         PERIOD_(period)
     {}
@@ -208,9 +197,7 @@ namespace Commons
 
   template<class FunctorType>
   VoidToPeriodHelper<FunctorType, typename std::result_of<FunctorType()>::type>
-  void_to_period_wrapper(
-    const FunctorType& fun,
-    const Generics::Time& period)
+  void_to_period_wrapper(const FunctorType& fun, const Generics::Time& period)
   {
     return VoidToPeriodHelper<FunctorType, typename std::result_of<FunctorType()>::type>(
       fun,
@@ -227,9 +214,7 @@ namespace Commons
 
   template<typename Delegate>
   TaskGoal_var
-  make_delegate_goal_task(
-    const Delegate& delegate,
-    Generics::TaskRunner* task_runner)
+  make_delegate_goal_task(const Delegate& delegate, Generics::TaskRunner* task_runner)
     /*throw(eh::Exception)*/
   {
     return new DelegateTaskGoal<Delegate>(delegate, task_runner);
@@ -243,10 +228,7 @@ namespace Commons
     Generics::Planner* planner)
     /*throw(eh::Exception)*/
   {
-    return new DelegateGoalTask<FunctorType>(
-      delegate,
-      task_runner,
-      planner);
+    return new DelegateGoalTask<FunctorType>(delegate, task_runner, planner);
   }
 
   template<typename Delegate>
@@ -257,10 +239,7 @@ namespace Commons
     Generics::Planner* planner)
     /*throw(eh::Exception)*/
   {
-    return make_functor_periodic_task_goal(
-      delegate,
-      task_runner,
-      planner);
+    return make_functor_periodic_task_goal(delegate, task_runner, planner);
   }
 
   template<typename Delegate>
@@ -277,5 +256,4 @@ namespace Commons
       task_runner,
       planner);
   }
-}
 }

@@ -129,9 +129,7 @@ namespace AdServer::LogProcessing
     hash() const;
 
     friend FixedBufStream<TabCategory>&
-    operator>>(
-      FixedBufStream<TabCategory>& is,
-      CreativeStatInnerKey_V_3_3& key);
+    operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerKey_V_3_3& key);
 
     friend std::ostream&
     operator<<(std::ostream& os, const CreativeStatInnerKey_V_3_3& key)
@@ -450,9 +448,7 @@ namespace AdServer::LogProcessing
   public:
     CreativeStatKey();
 
-    CreativeStatKey(
-      const DayHourTimestamp& sdate,
-      const DayHourTimestamp& adv_sdate);
+    CreativeStatKey(const DayHourTimestamp& sdate, const DayHourTimestamp& adv_sdate);
 
     CreativeStatKey(const DayHourTimestamp& timestamp);
 

@@ -15,10 +15,7 @@ public:
 
 
 public:
-  ZeroCollectorTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ZeroCollectorTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 

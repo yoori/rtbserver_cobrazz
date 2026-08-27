@@ -73,8 +73,7 @@ namespace AutoTest
     virtual ~DebugInfoChecker() noexcept;
 
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
     AdClient&
@@ -344,8 +343,7 @@ namespace AutoTest
   private:
 
     std::string
-    effects_to_str(
-      unsigned long special_effects);
+    effects_to_str(unsigned long special_effects);
 
     unsigned long special_effects_;
   };

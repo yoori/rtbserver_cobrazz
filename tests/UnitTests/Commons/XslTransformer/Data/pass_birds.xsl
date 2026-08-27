@@ -1,7 +1,7 @@
-<?xml version="1.0"?> 
+<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:output method="xml" 
-              doctype-system="html.dtd" 
+  <xsl:output method="xml"
+              doctype-system="html.dtd"
               doctype-public="-//W3C//DTD HTML 4.0 Transitional//EN"
               encoding="UTF-8"
               omit-xml-declaration="yes"

@@ -12,7 +12,7 @@ sub start
 {
   my ($host, $descr) = @_;
 
-  my $command = 
+  my $command =
       "\${config_root}/$host/http/bin/apachectl -host $host start ";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
@@ -24,9 +24,9 @@ sub stop
 
   Utils::Functions::init_environment();
 
-  my $command = 
+  my $command =
     "\${config_root}/$host/http/bin/apachectl -host $host graceful-stop";
-  
+
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
@@ -36,7 +36,7 @@ sub is_alive
 
   my $environment_dir = Utils::Functions::init_environment();
 
-  my $command = 
+  my $command =
     ". $environment_dir/environment.sh && " .
     "test \${workspace_root} || " .
       "{ echo \"Stop: Variable workspace_root isn't defined on $host\" && exit 1 ; } && " .
@@ -48,15 +48,15 @@ sub is_alive
   my ($res, $command_output) =
     Utils::Functions::safe_system_for_output($command);
 
-  if($res)  
+  if ($res)
   {
     $$descr =  "returned error code: $res, comment: " . $command_output;
     undef;
   }
- 
+
   my $adfe_port = 0;
 
-  if($command_output =~ m/^(\d*)$/)
+  if ($command_output =~ m/^(\d*)$/)
   {
     $adfe_port = $1;
   }
@@ -65,10 +65,10 @@ sub is_alive
     return 0;
   }
 
-  my $url = 'http://' . $host . ':' . $adfe_port . '/sysmon';  
+  my $url = 'http://' . $host . ':' . $adfe_port . '/sysmon';
   my $ret = Utils::Functions::probe_http($url, "system_monitor");
 
-  if($! == 111)
+  if ($! == 111)
   {
     # ignore connection refused error
     $@ = "";

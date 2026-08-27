@@ -25,7 +25,7 @@ sub set_ctr
 sub get_ctr
 {
   my ($self, $tag_id, $domain) = @_;
-  if(exists($self->{'model_'}->{"$tag_id,$domain"}))
+  if (exists($self->{'model_'}->{"$tag_id,$domain"}))
   {
     my $l = $self->{'model_'}->{"$tag_id,$domain"};
     my @a = split(',', $l);
@@ -48,7 +48,7 @@ sub save
     my $clicks = $a[0];
     my $imps = $a[1];
 
-    if($imps > 0)
+    if ($imps > 0)
     {
       print $fh "$key,$val\n";
     }
@@ -62,12 +62,12 @@ sub load
 
   open(my $fh, '<', $file_path) or die "Could not open '$file_path' $!\n";
 
-  while(my $line = <$fh>)
+  while (my $line = <$fh>)
   {
     chomp $line;
     my @fields = split(',', $line);
 
-    if(scalar(@fields) > 0)
+    if (scalar(@fields) > 0)
     {
       # <tag_id>,<domain>,<clicks>,<imps>
       my $tag_id = $fields[0];

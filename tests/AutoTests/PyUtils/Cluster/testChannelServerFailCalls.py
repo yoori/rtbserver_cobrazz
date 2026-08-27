@@ -62,10 +62,10 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
                                                         ("invalid implementation", ), 6),
                                                        (AdServer.ChannelSvcs.NotConfigured,
                                                         ("server is not configured",), 6)])
-    
+
     self.setUpServers(ChannelServer)
     self.startProc()
-                                               
+
   def __prepareConfig( self ):
     self.simple_channels = [SimpleChannelKey(
                                              11,                       # channel_id
@@ -74,7 +74,7 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
                                              "A",                      # status
                                              1,                        # behav_param_list_id
                                              "",                       # str_behav_param_list_id
-                                             [],                       # categories 
+                                             [],                       # categories
                                              0,                        # threshold
                                              0,                        # discover
                                              [],                       # page_triggers
@@ -89,7 +89,7 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
                                     # page_words
                                     [TriggerInfo(1, ChannelServerUtils.createChannelTriggerWord('P',
                                                                                                 "word")) ],
-                                    time2orb(currentTime()) # stamp        
+                                    time2orb(currentTime()) # stamp
                                     )]
 
 
@@ -149,4 +149,4 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
 if __name__ == '__main__':
  main()
 
-  
+

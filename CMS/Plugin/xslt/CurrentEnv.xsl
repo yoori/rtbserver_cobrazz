@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:colo="http://www.foros.com/cms/colocation"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:dyn="http://exslt.org/dynamic"
@@ -36,7 +36,7 @@ export <xsl:value-of select="$SERVICE_NAME"/>_port
 <xsl:template match="/">
   <!-- find pathes -->
   <xsl:variable name="port-xpath" select="$xpath"/>
-  
+
   <xsl:call-template name="CurrentEnvGenerator">
     <xsl:with-param name="port-xpath" select="$port-xpath"/>
   </xsl:call-template>

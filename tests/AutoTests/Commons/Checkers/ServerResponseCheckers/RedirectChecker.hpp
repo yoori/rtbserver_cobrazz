@@ -19,9 +19,7 @@ namespace AutoTest
      * @param client (user).
      * @param expected location.
      */
-    RedirectChecker(
-      AdClient& client,
-      const std::string& location);
+    RedirectChecker(AdClient& client, const std::string& location);
 
     /**
      * @brief Constructor.
@@ -29,9 +27,7 @@ namespace AutoTest
      * @param client (user).
      * @param regex to check location.
      */
-    RedirectChecker(
-      AdClient& client,
-      const String::RegEx& regex);
+    RedirectChecker(AdClient& client, const String::RegEx& regex);
 
     /**
      * @brief Destructor.
@@ -49,8 +45,7 @@ namespace AutoTest
      * @param throw on error flag.
      */
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(eh::Exception)*/;
 
   private:

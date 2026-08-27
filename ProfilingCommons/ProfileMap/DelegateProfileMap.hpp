@@ -1,8 +1,6 @@
 #pragma once
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   template<typename KeyType>
   class DelegateProfileMap:
@@ -11,7 +9,7 @@ namespace ProfilingCommons
   public:
     typedef typename ProfileMap<KeyType>::Exception Exception;
 
-    DelegateProfileMap(ProfileMap<KeyType>* profile_map) noexcept;
+    DelegateProfileMap(ProfileMap<KeyType>* profile_map); noexcept;
 
     virtual void
     wait_preconditions(const KeyType&, OperationPriority op_priority) const
@@ -22,9 +20,7 @@ namespace ProfilingCommons
 
     virtual
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time)
+    get_profile(const KeyType& key, Generics::Time* last_access_time)
       /*throw(Exception)*/;
 
     virtual void
@@ -36,9 +32,7 @@ namespace ProfilingCommons
       /*throw(Exception)*/;
 
     virtual bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority priority)
+    remove_profile(const KeyType& key, OperationPriority priority)
       /*throw(Exception)*/;
 
     virtual void process_keys(
@@ -60,17 +54,13 @@ namespace ProfilingCommons
     ReferenceCounting::SmartPtr<ProfileMap<KeyType>, ReferenceCounting::PolicyNotNull> profile_map_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /** DelegateProfileMap */
   template<typename KeyType>
   DelegateProfileMap<KeyType>::
-  DelegateProfileMap(
-    ProfileMap<KeyType>* profile_map)
+  DelegateProfileMap(ProfileMap<KeyType>* profile_map)
     noexcept
     : profile_map_(ReferenceCounting::add_ref(profile_map))
   {}
@@ -78,9 +68,7 @@ namespace ProfilingCommons
   template<typename KeyType>
   Generics::ConstSmartMemBuf_var
   DelegateProfileMap<KeyType>::
-  get_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  get_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(Exception)*/
   {
     return profile_map_->get_profile(key, last_access_time);
@@ -120,9 +108,7 @@ namespace ProfilingCommons
   template<typename KeyType>
   bool
   DelegateProfileMap<KeyType>::
-  remove_profile(
-    const KeyType& key,
-    OperationPriority priority)
+  remove_profile(const KeyType& key, OperationPriority priority)
     /*throw(Exception)*/
   {
     return profile_map_->remove_profile(key, priority);
@@ -135,9 +121,7 @@ namespace ProfilingCommons
     std::function<void(void)> process_complete)
     /*throw(Exception)*/
   {
-    profile_map_->process_keys(
-      std::move(process_key),
-      std::move(process_complete));
+    profile_map_->process_keys(std::move(process_key), std::move(process_complete));
   }
 
   template<typename KeyType>
@@ -169,5 +153,4 @@ namespace ProfilingCommons
   {
     return profile_map_.in();
   }
-}
 }

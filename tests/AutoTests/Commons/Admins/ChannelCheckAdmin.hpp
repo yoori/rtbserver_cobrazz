@@ -30,26 +30,18 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ChannelCheckAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        ChannelSrv service
-      )
+      void make_cmd (const char* address, ChannelSrv service)
       {
         address_ = address;
         AdminParams params;
         make_admin_cmd(*this, "check", address, params, static_cast<size_t>(service));
       }
-      ChannelCheckAdmin(
-        const char* address,
-        ChannelSrv service = ChannelManagerController
-      )
+      ChannelCheckAdmin(const char* address, ChannelSrv service = ChannelManagerController)
         :Base(DEFAULT_SKIP)
       {
         make_cmd(address, service);
       }
-      ChannelCheckAdmin(
-        const std::string& address,
-        ChannelSrv service = ChannelManagerController
-      )
+      ChannelCheckAdmin(const std::string& address, ChannelSrv service = ChannelManagerController)
         :Base(DEFAULT_SKIP)
       {
         make_cmd(address.c_str(), service);

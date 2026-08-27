@@ -16,7 +16,7 @@ sub new
   my $file = $params{'file'};
 
   open FILE, $file or die "Can't open $file";
-  while(<FILE>)
+  while (<FILE>)
   {
     my $line = $_;
     chomp $line;
@@ -32,7 +32,7 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(CsvUtils::Utils::find_value_in_row($row->[$self->{field_}], $self->{values_}))
+  if (CsvUtils::Utils::find_value_in_row($row->[$self->{field_}], $self->{values_}))
   {
     return undef;
   }

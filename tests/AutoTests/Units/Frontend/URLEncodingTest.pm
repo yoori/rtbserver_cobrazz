@@ -12,7 +12,7 @@ sub init {
   my ($self, $ns) = @_;
 
   my $url1 = "http://" . make_autotest_name($ns, "1") . ".com/";
-  my $url2 = "http://" . qq[\xd0\xbf\xd1\x80\xd0\xb5\xd0\xb7\xd0\xb8] . 
+  my $url2 = "http://" . qq[\xd0\xbf\xd1\x80\xd0\xb5\xd0\xb7\xd0\xb8] .
       qq[\xd0\xb4\xd0\xb5\xd0\xbd\xd1\x82] . "." . qq[\xd1\x80\xd1\x84\x2f];
   my $url3 = "www." . make_autotest_name($ns, "3") . ".com/zet?x=y";
   my $url3_exp = "www." . make_autotest_name($ns, "3") . ".com%2Fzet%3Fx%3Dy";
@@ -60,21 +60,21 @@ sub init {
     original_keyword => $keyword1,
     max_cpc_bid => 2 * $min_cpm / 10,
     ccgkeyword_click_url => $url2,
-    site_links => 
+    site_links =>
       [ { site_id =>  $publisher4->{site_id} }] });
 
   my $campaign2 = $ns->create(DisplayCampaign => {
     name => 'Click2',
     account_id => $advertiser,
     campaigncreativegroup_flags => DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_cpc => 50, 
+    campaigncreativegroup_cpc => 50,
     channel_id => DB::BehavioralChannel->blank(
       name => 'Channel-Clicl2',
       account_id => $advertiser,
       keyword_list => $keyword2,
       behavioral_parameters => [
         DB::BehavioralChannel::BehavioralParameter->blank(trigger_type => 'P') ]),
-    site_links => 
+    site_links =>
       [ { site_id =>  $publisher5->{site_id} }] });
 
   $ns->output("KEYWORD1", $keyword1);
@@ -83,7 +83,7 @@ sub init {
   $ns->output("PASSBACK_URL1_EXP", lc($url1));
   Encode::_utf8_on($url2);
   $ns->output("PASSBACK_URL2", $url2);
-  $ns->output("PASSBACK_URL2_IDNA_EXP", 
+  $ns->output("PASSBACK_URL2_IDNA_EXP",
               "http://xn--d1abbgf6aiiy.xn--p1ai/");
   $ns->output("PASSBACK_URL3", $url3);
   $ns->output("PASSBACK_URL3_EXP", $url3_exp);

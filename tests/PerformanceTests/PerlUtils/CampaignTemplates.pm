@@ -18,10 +18,10 @@ sub create {
   my $window_length = rand_in_range(60, 600);
   my $window_count  = rand_in_range(2, 10);
   my $life_count    = rand_in_range(1, 100);
-  return 
+  return
     DB::FreqCap->blank(
       period => $period,
-      window_length => $window_length, 
+      window_length => $window_length,
       window_count => $window_count,
       life_count => $life_count);
 }
@@ -126,10 +126,12 @@ sub _create_campaign {
   {
     $flags |= DB::Campaign::INCLUDE_SPECIFIC_SITES;
   }
+
   if ($self->{_flags} & CampaignConfig::CampaignFlags::RONFlag)
   {
     $flags |= DB::Campaign::RON | DB::Campaign::INCLUDE_SPECIFIC_SITES;
   }
+
   if ($self->{_flags} & CampaignConfig::CampaignFlags::FreqCapsCampaignFlag)
   {
     $freq_cap_id = PerformanceDB::FreqCap::create;
@@ -206,9 +208,9 @@ sub create {
   }
 
   my $tags = new PerformanceDB::Tags(
-    $self->{_db}, 
-    $self->{_entity_name}, 
-    $tags_count, 
+    $self->{_db},
+    $self->{_entity_name},
+    $tags_count,
     DB::Defaults::instance()->size);
   $tags->create($creative, $ccg);
 }

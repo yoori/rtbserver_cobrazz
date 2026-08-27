@@ -37,6 +37,5 @@ namespace AdServer::ChannelSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using ChannelControllerGrpc_var =
-    ReferenceCounting::SmartPtr<ChannelControllerGrpc>;
+  using ChannelControllerGrpc_var = ReferenceCounting::SmartPtr<ChannelControllerGrpc>;
 }

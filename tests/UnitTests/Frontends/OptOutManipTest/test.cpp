@@ -5,13 +5,13 @@
 
 int main(int argc, char* argv[])
 {
-  if(argc>2)
+  if (argc>2)
   {
     std::cout << "usage OptOutTest [days]" << std::endl;
     return 1;
   }
   unsigned long days =0;
-  if(argc==2)
+  if (argc==2)
   {
     std::stringstream convert;
     convert << argv[1];

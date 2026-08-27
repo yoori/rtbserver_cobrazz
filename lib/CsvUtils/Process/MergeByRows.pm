@@ -25,7 +25,7 @@ sub process
 
   # read file row
   my $line = readline($self->{file_});
-  if(defined($line))
+  if (defined($line))
   {
     chomp $line;
     $self->{csv_}->parse($line);

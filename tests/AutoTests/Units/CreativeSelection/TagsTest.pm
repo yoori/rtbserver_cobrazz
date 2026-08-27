@@ -50,7 +50,7 @@ sub init
 
   my $advertiser = $ns->create(Advertiser => { name => 1 });
 
-  my $creative1 = $ns->create(Creative => { 
+  my $creative1 = $ns->create(Creative => {
      name => "Creative1",
      account_id => $advertiser });
 
@@ -76,7 +76,7 @@ sub init
     cc_id => undef,
     creative_id => undef,
     campaigncreativegroup_country_code => "US",
-    site_links => 
+    site_links =>
       [ { site_id => $publisher1->{site_id}},
         { site_id => $publisher2->{site_id}} ]});
 
@@ -96,7 +96,7 @@ sub init
     creative_id => undef,
     campaigncreativegroup_cpm => 40,
     campaigncreativegroup_country_code => "RU",
-    site_links => 
+    site_links =>
       [ { site_id => $publisher1->{site_id}},
         { site_id => $publisher2->{site_id}} ]});
 
@@ -116,7 +116,7 @@ sub init
     campaigncreativegroup_country_code => "KR",
     cc_id => undef,
     creative_id => undef,
-    site_links => 
+    site_links =>
       [ { site_id => $publisher1->{site_id}},
         { site_id => $publisher2->{site_id}} ]});
 
@@ -144,10 +144,10 @@ sub init
   $ns->output("SiteRate Id/2", $tag_pricing2->site_rate_id);
   # Default TagPricing for tag_id1
   $ns->output(
-    "SiteRate Id/1/Default", 
+    "SiteRate Id/1/Default",
      $publisher1->{Tags}->{tag_pricing_id}->{site_rate_id});
   $ns->output(
-    "SiteRate Id/5", 
+    "SiteRate Id/5",
     $tag3->{tag_pricing_id}->{site_rate_id});
 
 }

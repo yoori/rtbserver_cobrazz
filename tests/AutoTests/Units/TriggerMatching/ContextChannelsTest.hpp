@@ -8,10 +8,7 @@ class ContextChannelsTest: public BaseUnit
 {
 public:
 
-  ContextChannelsTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ContextChannelsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     test_client_(AutoTest::AdClient::create_user(this)),
     req_count_(0)

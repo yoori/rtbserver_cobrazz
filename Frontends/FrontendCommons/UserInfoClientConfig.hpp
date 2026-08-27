@@ -22,27 +22,26 @@ namespace AdServer::UserInfoSvcs
     UserInfoDistributedGrpcClient::UserInfoControllerRefs
       user_info_controller_refs;
 
-    if(common_config.UserInfo().present())
+    if (common_config.UserInfo().present())
     {
       const auto& user_info_config = *common_config.UserInfo();
-      if(user_info_config.BatchingOptions().present())
+      if (user_info_config.BatchingOptions().present())
       {
-        batching_options =
-          Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
+        batching_options = Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
       }
 
-      for(const auto& group : user_info_config.UserInfoControllerGroup())
+      for (const auto& group : user_info_config.UserInfoControllerGroup())
       {
         UserInfoDistributedGrpcClient::UserInfoControllerRefGroup
           user_info_controller_ref_group;
-        for(const auto& endpoint : group.Endpoint())
+        for (const auto& endpoint : group.Endpoint())
         {
           user_info_controller_ref_group.emplace_back(endpoint);
         }
-        if(!user_info_controller_ref_group.empty())
+
+        if (!user_info_controller_ref_group.empty())
         {
-          user_info_controller_refs.emplace_back(
-            std::move(user_info_controller_ref_group));
+          user_info_controller_refs.emplace_back(std::move(user_info_controller_ref_group));
         }
       }
     }

@@ -74,8 +74,7 @@ const PositiveSample MATCH_URLS[] =
     "text11"
   },
 };
-const std::size_t MATCH_URLS_AMOUNT =
-  sizeof(MATCH_URLS) / sizeof(MATCH_URLS[0]);
+const std::size_t MATCH_URLS_AMOUNT = sizeof(MATCH_URLS) / sizeof(MATCH_URLS[0]);
 
 /// Code examples that should be not matched
 const char* NOT_MATCH_URLS[] =
@@ -93,8 +92,7 @@ const char* NOT_MATCH_URLS[] =
   "http://kr.altavista.com"
     "/web/results?fr=altavista&itag=ody&q=",
 };
-const std::size_t NOT_MATCH_URLS_AMOUNT =
-  sizeof(NOT_MATCH_URLS) / sizeof(NOT_MATCH_URLS[0]);
+const std::size_t NOT_MATCH_URLS_AMOUNT = sizeof(NOT_MATCH_URLS) / sizeof(NOT_MATCH_URLS[0]);
 
 void
 url_matcher_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
@@ -102,8 +100,7 @@ url_matcher_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
   std::string match_result;
   for (std::size_t i = 0; i < MATCH_URLS_AMOUNT; ++i)
   {
-    bool result =
-    matcher.match(MATCH_URLS[i].url, match_result, 0);
+    bool result = matcher.match(MATCH_URLS[i].url, match_result, 0);
 
     if (!result && match_result != MATCH_URLS[i].standard)
     {
@@ -117,18 +114,15 @@ url_matcher_test(FrontendCommons::UrlMatcher& matcher) /*throw(eh::Exception)*/
   std::cout << "Checked " << MATCH_URLS_AMOUNT << " positive samples" << std::endl;
   for (std::size_t i = 0; i < NOT_MATCH_URLS_AMOUNT; ++i)
   {
-    bool result =
-    matcher.match(NOT_MATCH_URLS[i], match_result, 0);
+    bool result = matcher.match(NOT_MATCH_URLS[i], match_result, 0);
     if (result)
     {
       std::cout << "ERROR: matched " << NOT_MATCH_URLS[i]
-        << ", but must be NOT matched. Result="
-        << match_result << std::endl;
+        << ", but must be NOT matched. Result=" << match_result << std::endl;
       match_result.clear();
     }
   }
-  std::cout << "Checked " << NOT_MATCH_URLS_AMOUNT << " negative samples"
-    << std::endl;
+  std::cout << "Checked " << NOT_MATCH_URLS_AMOUNT << " negative samples" << std::endl;
 }
 
 int
@@ -136,8 +130,7 @@ main() noexcept
 {
   try
   {
-    FrontendCommons::UrlMatcher_var matcher(
-      new FrontendCommons::UrlMatcher());
+    FrontendCommons::UrlMatcher_var matcher(new FrontendCommons::UrlMatcher());
     load_url_matcher(*matcher, "UrlMatcherTestConfig.xml");
     url_matcher_test(*matcher);
   }

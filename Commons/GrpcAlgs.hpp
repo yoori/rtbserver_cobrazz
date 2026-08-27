@@ -25,7 +25,7 @@ namespace GrpcAlgs
   {
     Generics::Time result;
     assert(str.size() == Generics::Time::TIME_PACK_LEN);
-    if(str.size() == Generics::Time::TIME_PACK_LEN)
+    if (str.size() == Generics::Time::TIME_PACK_LEN)
     {
       result.unpack(reinterpret_cast<const unsigned char*>(str.data()));
     }
@@ -50,7 +50,7 @@ namespace GrpcAlgs
   AdServer::Commons::RequestId
   unpack_request_id(const std::string& request_id_str)
   {
-    if(request_id_str.empty())
+    if (request_id_str.empty())
     {
       return AdServer::Commons::RequestId();
     }
@@ -65,7 +65,7 @@ namespace GrpcAlgs
   AdServer::Commons::UserId
   unpack_user_id(const std::string& user_id_str)
   {
-    if(user_id_str.empty())
+    if (user_id_str.empty())
     {
       return AdServer::Commons::UserId();
     }
@@ -91,7 +91,7 @@ namespace GrpcAlgs
   {
     DecimalType result;
     assert(str.size() == DecimalType::PACK_SIZE);
-    if(str.size() == DecimalType::PACK_SIZE)
+    if (str.size() == DecimalType::PACK_SIZE)
     {
       result.unpack(reinterpret_cast<const unsigned char*>(str.data()));
     }

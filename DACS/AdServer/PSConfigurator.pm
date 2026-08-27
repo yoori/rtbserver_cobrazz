@@ -8,7 +8,7 @@ sub start
 {
   my ($host, $descr) = @_;
 
-  my $command = 
+  my $command =
     "test \${ps_data_root} || " .
       "{ echo \"variable ps_data_root isn't defined on $host\" && exit -1 ; } && " .
     "mkdir -p \${workspace_root}/run/PS && " .

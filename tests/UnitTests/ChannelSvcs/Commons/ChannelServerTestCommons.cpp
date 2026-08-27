@@ -21,7 +21,7 @@ namespace
       String::UnicodeSymbol sym = BASE_SYMBOL;
       for (std::size_t i = 0; i < ALPHABET_SIZE;)
       {
-        if(String::is_digit(sym.c_str()) || String::is_letter(sym.c_str()))
+        if (String::is_digit(sym.c_str()) || String::is_letter(sym.c_str()))
         {
           CHARS[i++] = sym;
         }
@@ -55,10 +55,7 @@ namespace
   }
 }
 
-
-namespace AdServer
-{
-namespace UnitTests
+namespace AdServer::UnitTests
 {
   std::string& ChannelServerTestCommons::generate_uid_word(std::string& word)
     /*throw(eh::Exception)*/
@@ -68,13 +65,11 @@ namespace UnitTests
     return word;
   }
 
-  std::string& ChannelServerTestCommons::generate_word(
-    std::string& word,
-    size_t length)
+  std::string& ChannelServerTestCommons::generate_word(std::string& word, size_t length)
     /*throw(eh::Exception)*/
   {
     const std::size_t MAX_LEN = 10;
-    if(!length)
+    if (!length)
     {
       length = 1 + randomizer<MAX_LEN - 1>();
     }
@@ -93,9 +88,7 @@ namespace UnitTests
    */
 
   bool
-  ChannelServerTestCommons::generate_asc_word(
-    FixedBuf& word,
-    size_t length)
+  ChannelServerTestCommons::generate_asc_word(FixedBuf& word, size_t length)
     /*throw(eh::Exception)*/
   {
     std::size_t growth = std::min(word.max_size() - word.size(), length);
@@ -109,9 +102,7 @@ namespace UnitTests
   }
 
   void
-  ChannelServerTestCommons::generate_asc_word(
-    std::string& word,
-    size_t length)
+  ChannelServerTestCommons::generate_asc_word(std::string& word, size_t length)
     /*throw(eh::Exception)*/
   {
     word.reserve(word.size() + length);
@@ -131,15 +122,14 @@ namespace UnitTests
     std::string url_str;
     url_str.reserve(domain_length + (path_length + 1) * path_steps);
     generate_asc_word(url_str, domain_length);
-    for(size_t i = 0; i < path_steps; i++)
+    for (size_t i = 0; i < path_steps; i++)
     {
       url_str.push_back('/');
       generate_asc_word(url_str, path_length);
     }
     HTTP::BrowserAddress url(url_str);
     url.get_view(
-      (HTTP::HTTPAddress::VW_HOSTNAME | HTTP::HTTPAddress::VW_PATH |
-       HTTP::HTTPAddress::VW_QUERY),
+      (HTTP::HTTPAddress::VW_HOSTNAME | HTTP::HTTPAddress::VW_PATH | HTTP::HTTPAddress::VW_QUERY),
       word);
   }
 
@@ -149,12 +139,12 @@ namespace UnitTests
     noexcept
   {
     out << " ids = ";
-    for(auto it = res.begin(); it != res.end(); ++it)
+    for (auto it = res.begin(); it != res.end(); ++it)
     {
       const ChannelSvcs::TriggerMatchItem& item = it->second;
-      for(size_t j = 0; j < ChannelSvcs::CT_MAX; j++)
+      for (size_t j = 0; j < ChannelSvcs::CT_MAX; j++)
       {
-        for(size_t k = 0; k < item.trigger_ids[j].size(); k++)
+        for (size_t k = 0; k < item.trigger_ids[j].size(); k++)
         {
           out << " " << item.trigger_ids[j][k];
         }
@@ -171,7 +161,7 @@ namespace UnitTests
     /*throw(eh::Exception)*/
   {
     atom.id = id;
-    if(info)
+    if (info)
     {
       ChannelSvcs::MatchInfo& match_info = (*info)[id];
       match_info.channel = ChannelSvcs::Channel(id);
@@ -228,7 +218,7 @@ namespace UnitTests
     noexcept
   {
     ost << "Time: " << std::endl;
-    if(time_stat)
+    if (time_stat)
     {
       time_stat->dump(ost);
     }
@@ -237,7 +227,7 @@ namespace UnitTests
       time_stat_->dump(ost);
     }
     ost << "CPU time: " << std::endl;
-    if(cpu_time_stat)
+    if (cpu_time_stat)
     {
       cpu_time_stat->dump(ost);
     }
@@ -265,18 +255,19 @@ namespace UnitTests
       Generics::Uuid(),
       ChannelSvcs::MF_ACTIVE, res);
     size_t res_size = 0;
-    for(auto it = res.begin(); it != res.end(); ++it)
+    for (auto it = res.begin(); it != res.end(); ++it)
     {
       const ChannelSvcs::TriggerMatchItem& item = it->second;
-      for(size_t j = 0; j < ChannelSvcs::CT_MAX; j++)
+      for (size_t j = 0; j < ChannelSvcs::CT_MAX; j++)
       {
         res_size += item.trigger_ids[j].size();
       }
     }
-    if(res_size)
+
+    if (res_size)
     {
       res_size_ += res_size;
-      if(verbose_level_ > 1)
+      if (verbose_level_ > 1)
       {
         ChannelServerTestCommons::print_result(std::cout, res);
       }
@@ -315,12 +306,7 @@ namespace UnitTests
       int opt, index=0;
       do
       {
-        opt = getopt_long(
-          argc,
-          argv,
-          "vu:h:s:q:w:U:S:H:e:p:c:m:M:t:b:",
-          long_options,
-          &index);
+        opt = getopt_long(argc, argv, "vu:h:s:q:w:U:S:H:e:p:c:m:M:t:b:", long_options, &index);
         switch(opt)
         {
           case 'v':
@@ -348,11 +334,7 @@ namespace UnitTests
             read_number(optarg, 0UL, ULONG_MAX, word_length_);
             break;
           case 'S':
-            read_number(
-              optarg,
-              1UL,
-              Commons::DEFAULT_MAX_HARD_WORD_SEQ,
-              soft_length_);
+            read_number(optarg, 1UL, Commons::DEFAULT_MAX_HARD_WORD_SEQ, soft_length_);
             break;
           case 'H':
             read_number(optarg, 0UL, ULONG_MAX, hard_length_);
@@ -367,7 +349,7 @@ namespace UnitTests
             read_number(optarg, 0UL, 100UL, match_percent_);
             break;
           case 'M':
-            if(!body_)
+            if (!body_)
             {
               read_number(optarg, 512UL, ULONG_MAX, data_size_);
             }
@@ -383,10 +365,8 @@ namespace UnitTests
             read_number(optarg, (time_t)1, (time_t)3600, time_);
             break;
         }
-      } while(opt != -1);
-      ChannelSvcs::ChannelIdToMatchInfo_var info =
-        new ChannelSvcs::ChannelIdToMatchInfo;
+      } while (opt != -1);
+      ChannelSvcs::ChannelIdToMatchInfo_var info = new ChannelSvcs::ChannelIdToMatchInfo;
     }
   }
-}
 }

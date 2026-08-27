@@ -17,9 +17,7 @@ namespace Aspect
   const char SYNC_LOGS[] = "SyncLogs";
 }
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   FetchRouteProcessor::FetchRouteProcessor(
     Utils::ErrorPool* error_logger,
@@ -56,7 +54,7 @@ namespace LogProcessing
       String::TextTemplate::Args templ_args;
       templ_args[TemplateParams::HOST] = "";
       ssh_templ_.instantiate(templ_args);
-      if(dst_dir_.empty() || *dst_dir_.rbegin() != '/')
+      if (dst_dir_.empty() || *dst_dir_.rbegin() != '/')
       {
         dst_dir_ += '/';
       }
@@ -124,10 +122,7 @@ namespace LogProcessing
     try
     {
       Stream::Parser istr(remote_rm_command_templ);
-      remote_rm_templ_.init(
-        istr,
-        TemplateParams::MARKER,
-        TemplateParams::MARKER);
+      remote_rm_templ_.init(istr, TemplateParams::MARKER, TemplateParams::MARKER);
 
       String::TextTemplate::Args templ_args;
       templ_args[TemplateParams::PATH] = "";
@@ -161,20 +156,20 @@ namespace LogProcessing
 
     try
     {
-      if(local_copy_type == CT_RSYNC)
+      if (local_copy_type == CT_RSYNC)
       {
         local_file_router_ = new RSyncFileRouter(local_copy_command_templ);
       }
-      else if(local_copy_type == CT_GENERIC)
+      else if (local_copy_type == CT_GENERIC)
       {
         local_file_router_ = new AppFileRouter(local_copy_command_templ);
       }
 
-      if(remote_copy_type == CT_RSYNC)
+      if (remote_copy_type == CT_RSYNC)
       {
         remote_file_router_ = new RSyncFileRouter(remote_copy_command_templ);
       }
-      else if(remote_copy_type == CT_GENERIC)
+      else if (remote_copy_type == CT_GENERIC)
       {
         remote_file_router_ = new AppFileRouter(remote_copy_command_templ);
       }
@@ -197,28 +192,21 @@ namespace LogProcessing
     split_files_params_.main_separators = String::SequenceAnalyzer::CharSet("\n");
     split_files_params_.ignore_successive_separators = true;
 
-    split_files_params_.regular_symbs =
-      String::SequenceAnalyzer::CharSet("a-zA-Z0-9_.:-/");
-    split_files_params_.regular_range_symbs =
-      String::SequenceAnalyzer::CharSet("a-zA-Z0-9_.:");
+    split_files_params_.regular_symbs = String::SequenceAnalyzer::CharSet("a-zA-Z0-9_.:-/");
+    split_files_params_.regular_range_symbs = String::SequenceAnalyzer::CharSet("a-zA-Z0-9_.:");
 
     split_files_params_.allow_ignored_symbs = true;
-    split_files_params_.ignored_symbs =
-      String::SequenceAnalyzer::CharSet("\n");
+    split_files_params_.ignored_symbs = String::SequenceAnalyzer::CharSet("\n");
 
     split_files_params_.allow_recursion = true;
     split_files_params_.recursion_max_depth = 10000;
     split_files_params_.allow_repeat = true;
-    split_files_params_.num_retries_symb =
-      String::SequenceAnalyzer::CharPair('{', '}');
-    split_files_params_.retry_part_symb =
-      String::SequenceAnalyzer::CharPair('(', ')');
+    split_files_params_.num_retries_symb = String::SequenceAnalyzer::CharPair('{', '}');
+    split_files_params_.retry_part_symb = String::SequenceAnalyzer::CharPair('(', ')');
     split_files_params_.allow_range = true;
     split_files_params_.immediate_range_mode = false;
-    split_files_params_.range_part_symb =
-      String::SequenceAnalyzer::CharPair('[', ']');
-    split_files_params_.range_separators =
-      String::SequenceAnalyzer::CharSet(", ");
+    split_files_params_.range_part_symb = String::SequenceAnalyzer::CharPair('[', ']');
+    split_files_params_.range_separators = String::SequenceAnalyzer::CharSet(", ");
     split_files_params_.range_symbol = '-';
     split_files_params_.allow_padding = true;
     split_files_params_.padding_symb = '0';
@@ -245,7 +233,7 @@ namespace LogProcessing
   {
     try
     {
-      if(src_hosts_.empty())
+      if (src_hosts_.empty())
       {
         return;
       }
@@ -255,24 +243,22 @@ namespace LogProcessing
       PathManip::split_path(src_files_pattern_.c_str(), &src_dir, 0, false);
       file_route_params.dst_host = host_name_;
 
-      for(StringList::const_iterator src_host_it = src_hosts_.begin();
-          src_host_it != src_hosts_.end() &&
-            (interrupter_ && !interrupter_->interrupt());
+      for (StringList::const_iterator src_host_it = src_hosts_.begin();
+          src_host_it != src_hosts_.end() && (interrupter_ && !interrupter_->interrupt());
           ++src_host_it)
       {
         const char* src_host = src_host_it->c_str();
         StringList files_in_dir;
 
-        if(make_file_list_for_fetch_(
+        if (make_file_list_for_fetch_(
             src_files_pattern_.c_str(),
             files_in_dir,
             *src_host_it,
             file_route_params.dst_host,
             src_dir))
         {
-          for(StringList::const_iterator files_it = files_in_dir.begin();
-              files_it != files_in_dir.end() &&
-              (interrupter_ && !interrupter_->interrupt());
+          for (StringList::const_iterator files_it = files_in_dir.begin();
+              files_it != files_in_dir.end() && (interrupter_ && !interrupter_->interrupt());
               ++files_it)
           {
             const char *current_file = files_it->c_str();
@@ -280,11 +266,10 @@ namespace LogProcessing
             std::string src_file;
             PathManip::split_path(current_file, 0, &src_file);
 
-            if(src_file.empty())
+            if (src_file.empty())
             {
               Stream::Error ostr;
-              ostr << "empty file name after split_path. Pattern: '" <<
-                current_file << "'";
+              ostr << "empty file name after split_path. Pattern: '" << current_file << "'";
               error_logger_->add_error(*src_host_it,
                 file_route_params.dst_host,
                 src_dir,
@@ -300,23 +285,20 @@ namespace LogProcessing
             file_route_params.src_file_path = src_dir + src_file;
             file_route_params.dst_file_name = dst_dir_ + src_file;
 
-            if(error_logger_->log_level() >= TraceLevel::HIGH)
+            if (error_logger_->log_level() >= TraceLevel::HIGH)
             {
               Stream::Error ostr;
               ostr <<
                 "SyncLogsImpl::fetch_logs(): preparing to send the '" <<
-                current_file << "' file to '" <<
-                file_route_params.dst_file_name << "'. ";
-              error_logger_->log(ostr.str(),
-                TraceLevel::HIGH, Aspect::SYNC_LOGS);
+                current_file << "' file to '" << file_route_params.dst_file_name << "'. ";
+              error_logger_->log(ostr.str(), TraceLevel::HIGH, Aspect::SYNC_LOGS);
             }
 
             try
             {
-              bool local_moving =
-                host_checker_.check_host_name(file_route_params.src_host);
+              bool local_moving = host_checker_.check_host_name(file_route_params.src_host);
 
-              if(local_moving)
+              if (local_moving)
               {
                 local_file_router_->move(file_route_params);
                 Utils::unlink_file(file_route_params.src_file_path.c_str());
@@ -339,8 +321,7 @@ namespace LogProcessing
                 " src file path = " << file_route_params.src_file_path <<
                 " src file name = " << file_route_params.src_file_name <<
                 " dst host name = " << file_route_params.dst_host <<
-                " dst file name = " << file_route_params.dst_file_name <<
-                " : " << e.what();
+                " dst file name = " << file_route_params.dst_file_name << " : " << e.what();
 
               error_logger_->add_error(*src_host_it,
                 file_route_params.dst_host, src_dir,
@@ -359,8 +340,7 @@ namespace LogProcessing
                 " src file path = " << file_route_params.src_file_path <<
                 " src file name = " << file_route_params.src_file_name <<
                 " dst host name = " << file_route_params.dst_host <<
-                " dst file name = " << file_route_params.dst_file_name <<
-                " : " << e.what();
+                " dst file name = " << file_route_params.dst_file_name << " : " << e.what();
               error_logger_->add_error(*src_host_it,
                 file_route_params.dst_host, src_dir,
                 String::SubString("ADS-IMPL-203"),
@@ -378,9 +358,7 @@ namespace LogProcessing
       ostr << "FetchRouteProcessor::process(): "
         "Catch eh::Exception. : " << e.what();
 
-      error_logger_->log(ostr.str(), Logging::Logger::ERROR,
-        Aspect::SYNC_LOGS,
-        "ADS-IMPL-202");
+      error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
     }
   }
 
@@ -418,14 +396,12 @@ namespace LogProcessing
       }
 
       ssh_cmd_oss <<
-        ssh_templ_.instantiate(templ_args) << ' ' <<
-        remote_ls_templ_.instantiate(templ_args);
+        ssh_templ_.instantiate(templ_args) << ' ' << remote_ls_templ_.instantiate(templ_args);
 
       bool read_output = true;
       std::string output_str = "";
 
-      int exit_code =
-        Utils::run_cmd(ssh_cmd_oss.str().c_str(), read_output, output_str);
+      int exit_code = Utils::run_cmd(ssh_cmd_oss.str().c_str(), read_output, output_str);
 
       if (exit_code == 0)
       {
@@ -481,8 +457,7 @@ namespace LogProcessing
         Stream::Error ostr;
         ostr << "SyncLogsImpl::make_file_list_for_fetch(): " <<
           files_in_dir.size() << " files have been found.";
-        error_logger_->log(ostr.str(), TraceLevel::MIDDLE,
-          Aspect::SYNC_LOGS);
+        error_logger_->log(ostr.str(), TraceLevel::MIDDLE, Aspect::SYNC_LOGS);
       }
 
       return ret_val;
@@ -513,8 +488,7 @@ namespace LogProcessing
   }
 
   void
-  FetchRouteProcessor::unlink_remote_file_(
-    const char* file, const char* host)
+  FetchRouteProcessor::unlink_remote_file_(const char* file, const char* host)
     /*throw(Exception)*/
   {
     try
@@ -532,10 +506,9 @@ namespace LogProcessing
         remote_rm_templ_.instantiate(templ_args);
       std::string output_str;
 
-      int exit_code =
-        Utils::run_cmd(ssh_cmd_oss.str().c_str(), false, output_str);
+      int exit_code = Utils::run_cmd(ssh_cmd_oss.str().c_str(), false, output_str);
 
-      if(exit_code == 255)
+      if (exit_code == 255)
       {
         Stream::Error ostr;
         ostr << "SyncLogsImpl::unlink_file(" << file << "): "
@@ -582,9 +555,7 @@ namespace LogProcessing
   }
 
   void
-  FetchRouteProcessor::split_files_(
-    std::istream& is,
-    std::list<std::string>& files_in_dir)
+  FetchRouteProcessor::split_files_(std::istream& is, std::list<std::string>& files_in_dir)
     /*throw(Exception)*/
   {
     try
@@ -597,10 +568,8 @@ namespace LogProcessing
     {
       Stream::Error ostr;
       ostr << "Generics::interprete_base_sequence: "
-        "Got Analyzer::Exception. : " <<
-        ex.what();
+        "Got Analyzer::Exception. : " << ex.what();
       throw Exception(ostr);
     }
   }
-}
 }

@@ -31,8 +31,7 @@ namespace AdServer::Commons
   {
     template<typename StringType>
     struct HasDefaultStringCreator :
-      std::bool_constant<std::is_default_constructible_v<StringType>>
-    {};
+      std::bool_constant<std::is_default_constructible_v<StringType>> {};
 
     template<>
     struct HasDefaultStringCreator<Generics::MonoString> : std::false_type
@@ -58,19 +57,17 @@ namespace AdServer::Commons
       void
       emplace(KeyType&& key, ValueType&& value)
       {
-        if(size_ == 0)
+        if (size_ == 0)
         {
-          single_element_storage_.emplace(
-            std::move(key),
-            std::move(value));
+          single_element_storage_.emplace(std::move(key), std::move(value));
           mode_ = SINGLE_ELEMENT_STORAGE;
           size_ = 1;
           return;
         }
 
-        if(mode_ == SINGLE_ELEMENT_STORAGE)
+        if (mode_ == SINGLE_ELEMENT_STORAGE)
         {
-          if(single_element_storage_->first == key)
+          if (single_element_storage_->first == key)
           {
             return;
           }
@@ -82,39 +79,32 @@ namespace AdServer::Commons
           mode_ = VECTOR_STORAGE;
         }
 
-        if(mode_ == VECTOR_STORAGE)
+        if (mode_ == VECTOR_STORAGE)
         {
-          if(vector_storage_.size() + 1 < HASH_STORAGE_MIN_SIZE)
+          if (vector_storage_.size() + 1 < HASH_STORAGE_MIN_SIZE)
           {
             auto it = lower_bound_(key);
-            if(it != vector_storage_.end() && it->first == key)
+            if (it != vector_storage_.end() && it->first == key)
             {
               return;
             }
 
-            vector_storage_.emplace(
-              it,
-              std::move(key),
-              std::move(value));
+            vector_storage_.emplace(it, std::move(key), std::move(value));
             ++size_;
             return;
           }
 
           hash_storage_.reserve(vector_storage_.size() + 1);
-          for(auto& item : vector_storage_)
+          for (auto& item : vector_storage_)
           {
-            hash_storage_.emplace(
-              std::move(item.first),
-              std::move(item.second));
+            hash_storage_.emplace(std::move(item.first), std::move(item.second));
           }
           vector_storage_.clear();
           mode_ = HASH_STORAGE;
         }
 
-        const auto inserted = hash_storage_.emplace(
-          std::move(key),
-          std::move(value));
-        if(inserted.second)
+        const auto inserted = hash_storage_.emplace(std::move(key), std::move(value));
+        if (inserted.second)
         {
           ++size_;
         }
@@ -132,9 +122,7 @@ namespace AdServer::Commons
         case VECTOR_STORAGE:
           {
             auto it = lower_bound_(key);
-            return it != vector_storage_.end() && it->first == key ?
-              &it->second :
-              nullptr;
+            return it != vector_storage_.end() && it->first == key ? &it->second : nullptr;
           }
         case HASH_STORAGE:
           {
@@ -158,9 +146,7 @@ namespace AdServer::Commons
         case VECTOR_STORAGE:
           {
             auto it = lower_bound_(key);
-            return it != vector_storage_.end() && it->first == key ?
-              &it->second :
-              nullptr;
+            return it != vector_storage_.end() && it->first == key ? &it->second : nullptr;
           }
         case HASH_STORAGE:
           {
@@ -235,10 +221,7 @@ namespace AdServer::Commons
       case FastJsonParserSimd::Level::AVX512BW:
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW) && \
   defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        return Simd::has(
-          Simd::AVX512F |
-          Simd::AVX512BW |
-          Simd::AVX2);
+        return Simd::has(Simd::AVX512F | Simd::AVX512BW | Simd::AVX2);
 #else
         return false;
 #endif
@@ -250,17 +233,17 @@ namespace AdServer::Commons
     FastJsonParserSimd::Level
     select_default_simd_level_() noexcept
     {
-      if(simd_level_available_(FastJsonParserSimd::Level::AVX2))
+      if (simd_level_available_(FastJsonParserSimd::Level::AVX2))
       {
         return FastJsonParserSimd::Level::AVX2;
       }
 
-      if(simd_level_available_(FastJsonParserSimd::Level::AVX512BW))
+      if (simd_level_available_(FastJsonParserSimd::Level::AVX512BW))
       {
         return FastJsonParserSimd::Level::AVX512BW;
       }
 
-      if(simd_level_available_(FastJsonParserSimd::Level::SSE2))
+      if (simd_level_available_(FastJsonParserSimd::Level::SSE2))
       {
         return FastJsonParserSimd::Level::SSE2;
       }
@@ -356,7 +339,7 @@ namespace AdServer::Commons
     const char*
     find_non_space_scalar_(const char* pos, const char* end) noexcept
     {
-      while(pos != end && is_space_(*pos))
+      while (pos != end && is_space_(*pos))
       {
         ++pos;
       }
@@ -367,7 +350,7 @@ namespace AdServer::Commons
     const char*
     find_string_special_scalar_(const char* pos, const char* end) noexcept
     {
-      while(pos != end && !is_string_special_(*pos))
+      while (pos != end && !is_string_special_(*pos))
       {
         ++pos;
       }
@@ -378,7 +361,7 @@ namespace AdServer::Commons
     const char*
     find_quote_scalar_(const char* pos, const char* end) noexcept
     {
-      while(pos != end && *pos != '"')
+      while (pos != end && *pos != '"')
       {
         ++pos;
       }
@@ -389,7 +372,7 @@ namespace AdServer::Commons
     const char*
     find_unquoted_delimiter_scalar_(const char* pos, const char* end) noexcept
     {
-      while(pos != end && !is_unquoted_delimiter_(*pos))
+      while (pos != end && !is_unquoted_delimiter_(*pos))
       {
         ++pos;
       }
@@ -399,10 +382,7 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_non_space_(
-      const char* pos,
-      const char* end,
-      FastJsonParserSimd::Level simd_level) noexcept
+    find_non_space_(const char* pos, const char* end, FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
@@ -411,15 +391,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
-        if(simd_level ==
-          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        if (simd_level == FastJsonParserSimd::Level::AVX512BW && size >= 64)
         {
           return FastJsonParserSimd::find_non_space_avx512bw(pos, end);
         }
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        if((simd_level ==
+        if ((simd_level ==
             FastJsonParserSimd::Level::AVX512BW ||
             simd_level ==
               FastJsonParserSimd::Level::AVX2) &&
@@ -430,8 +409,7 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
-        if(simd_level !=
-          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        if (simd_level != FastJsonParserSimd::Level::SCALAR && size >= 16)
         {
           return FastJsonParserSimd::find_non_space_sse2(pos, end);
         }
@@ -455,15 +433,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
-        if(simd_level ==
-          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        if (simd_level == FastJsonParserSimd::Level::AVX512BW && size >= 64)
         {
           return FastJsonParserSimd::find_string_special_avx512bw(pos, end);
         }
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        if((simd_level ==
+        if ((simd_level ==
             FastJsonParserSimd::Level::AVX512BW ||
             simd_level ==
               FastJsonParserSimd::Level::AVX2) &&
@@ -474,8 +451,7 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
-        if(simd_level !=
-          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        if (simd_level != FastJsonParserSimd::Level::SCALAR && size >= 16)
         {
           return FastJsonParserSimd::find_string_special_sse2(pos, end);
         }
@@ -487,10 +463,7 @@ namespace AdServer::Commons
 
     template<bool UseSimd>
     const char*
-    find_quote_(
-      const char* pos,
-      const char* end,
-      FastJsonParserSimd::Level simd_level) noexcept
+    find_quote_(const char* pos, const char* end, FastJsonParserSimd::Level simd_level) noexcept
     {
       if constexpr(UseSimd)
       {
@@ -499,15 +472,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
-        if(simd_level ==
-          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        if (simd_level == FastJsonParserSimd::Level::AVX512BW && size >= 64)
         {
           return FastJsonParserSimd::find_quote_avx512bw(pos, end);
         }
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        if((simd_level ==
+        if ((simd_level ==
             FastJsonParserSimd::Level::AVX512BW ||
             simd_level ==
               FastJsonParserSimd::Level::AVX2) &&
@@ -518,8 +490,7 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
-        if(simd_level !=
-          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        if (simd_level != FastJsonParserSimd::Level::SCALAR && size >= 16)
         {
           return FastJsonParserSimd::find_quote_sse2(pos, end);
         }
@@ -543,15 +514,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
-        if(simd_level ==
-          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        if (simd_level == FastJsonParserSimd::Level::AVX512BW && size >= 64)
         {
           return FastJsonParserSimd::find_compound_special_avx512bw(pos, end);
         }
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        if((simd_level ==
+        if ((simd_level ==
             FastJsonParserSimd::Level::AVX512BW ||
             simd_level ==
               FastJsonParserSimd::Level::AVX2) &&
@@ -562,15 +532,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
-        if(simd_level !=
-          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        if (simd_level != FastJsonParserSimd::Level::SCALAR && size >= 16)
         {
           return FastJsonParserSimd::find_compound_special_sse2(pos, end);
         }
 #endif
       }
 
-      while(pos != end && !is_compound_special_(*pos))
+      while (pos != end && !is_compound_special_(*pos))
       {
         ++pos;
       }
@@ -592,17 +561,14 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX512BW)
-        if(simd_level ==
-          FastJsonParserSimd::Level::AVX512BW && size >= 64)
+        if (simd_level == FastJsonParserSimd::Level::AVX512BW && size >= 64)
         {
-          return FastJsonParserSimd::find_unquoted_delimiter_avx512bw(
-            pos,
-            end);
+          return FastJsonParserSimd::find_unquoted_delimiter_avx512bw(pos, end);
         }
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_AVX2)
-        if((simd_level ==
+        if ((simd_level ==
             FastJsonParserSimd::Level::AVX512BW ||
             simd_level ==
               FastJsonParserSimd::Level::AVX2) &&
@@ -613,8 +579,7 @@ namespace AdServer::Commons
 #endif
 
 #if defined(AD_FAST_JSON_PARSER_HAS_SSE2)
-        if(simd_level !=
-          FastJsonParserSimd::Level::SCALAR && size >= 16)
+        if (simd_level != FastJsonParserSimd::Level::SCALAR && size >= 16)
         {
           return FastJsonParserSimd::find_unquoted_delimiter_sse2(pos, end);
         }
@@ -635,9 +600,7 @@ namespace AdServer::Commons
       explicit
       JsonTreeProcessor(Generics::MonoAllocatorArena* arena);
 
-      JsonTreeProcessor(
-        std::string path_val,
-        Generics::MonoAllocatorArena* arena);
+      JsonTreeProcessor(std::string path_val, Generics::MonoAllocatorArena* arena);
 
       static std::uint64_t
       short_key_(std::string_view key) noexcept;
@@ -801,9 +764,7 @@ namespace AdServer::Commons
 
       template<bool UseSimd>
       void
-      skip_compound_rough_(
-        char open,
-        const char* error_message);
+      skip_compound_rough_(char open, const char* error_message);
 
       void
       skip_escape_();
@@ -898,24 +859,17 @@ namespace AdServer::Commons
     std::shared_ptr<ValueProcessor> processor,
     bool as_string)
   {
-    entries_.push_back({
-      std::string(path),
-      std::move(processor),
-      as_string});
+    entries_.push_back({ std::string(path), std::move(processor), as_string});
   }
 
   template<typename StringType>
   void
-  FastJsonParser<StringType>::ValueProcessor::object_started(
-    std::string_view,
-    void*) const
+  FastJsonParser<StringType>::ValueProcessor::object_started(std::string_view, void*) const
   {}
 
   template<typename StringType>
   void
-  FastJsonParser<StringType>::ValueProcessor::array_started(
-    std::string_view path,
-    void*) const
+  FastJsonParser<StringType>::ValueProcessor::array_started(std::string_view path, void*) const
   {
     throw UnexpectedType("unexpected array in " + std::string(path));
   }
@@ -948,14 +902,14 @@ namespace AdServer::Commons
     std::string_view path,
     void* context) const
   {
-    if(is_float)
+    if (is_float)
     {
       constexpr std::size_t stack_buffer_size = 128;
       char stack_buffer[stack_buffer_size];
       const char* number_data = nullptr;
       const std::size_t number_size = value.size();
       std::string number_string;
-      if(number_size < stack_buffer_size)
+      if (number_size < stack_buffer_size)
       {
         std::memcpy(stack_buffer, value.data(), number_size);
         stack_buffer[number_size] = '\0';
@@ -969,7 +923,7 @@ namespace AdServer::Commons
 
       char* end = nullptr;
       const double parsed = std::strtod(number_data, &end);
-      if(end != number_data + number_size)
+      if (end != number_data + number_size)
       {
         throw ParseError("bad float");
       }
@@ -978,12 +932,8 @@ namespace AdServer::Commons
     else
     {
       int64_t parsed = 0;
-      const auto result = std::from_chars(
-        value.data(),
-        value.data() + value.size(),
-        parsed);
-      if(result.ec != std::errc() ||
-        result.ptr != value.data() + value.size())
+      const auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
+      if (result.ec != std::errc() || result.ptr != value.data() + value.size())
       {
         throw ParseError("bad integer");
       }
@@ -1022,27 +972,20 @@ namespace AdServer::Commons
 
   template<typename StringType>
   void
-  FastJsonParser<StringType>::ValueProcessor::process_bool(
-    bool,
-    std::string_view path,
-    void*) const
+  FastJsonParser<StringType>::ValueProcessor::process_bool(bool, std::string_view path, void*) const
   {
     throw UnexpectedType("unexpected bool in " + std::string(path));
   }
 
   template<typename StringType>
   void
-  FastJsonParser<StringType>::ValueProcessor::process_null(
-    std::string_view path,
-    void*) const
+  FastJsonParser<StringType>::ValueProcessor::process_null(std::string_view path, void*) const
   {
     throw UnexpectedType("unexpected null in " + std::string(path));
   }
 
   template<typename StringType>
-  FastJsonParser<StringType>::FastJsonParser(
-    bool strict,
-    FastJsonParserSimdLevel simd_level)
+  FastJsonParser<StringType>::FastJsonParser(bool strict, FastJsonParserSimdLevel simd_level)
     : FastJsonParser(ProcessorSet(), strict, simd_level)
   {}
 
@@ -1052,22 +995,17 @@ namespace AdServer::Commons
     bool strict,
     FastJsonParserSimdLevel simd_level)
   {
-    const FastJsonParserSimd::Level resolved_simd_level =
-      to_internal_simd_level_(simd_level);
-    if(!simd_level_available_(resolved_simd_level))
+    const FastJsonParserSimd::Level resolved_simd_level = to_internal_simd_level_(simd_level);
+    if (!simd_level_available_(resolved_simd_level))
     {
       throw Exception(
         std::string("requested FastJsonParser SIMD level '") +
         simd_level_name_(simd_level) + "' isn't available, available level is '" +
-        simd_level_name_(
-          to_public_simd_level_(FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL)) +
+        simd_level_name_(to_public_simd_level_(FAST_JSON_PARSER_DEFAULT_SIMD_LEVEL)) +
         "'");
     }
 
-    impl_ = std::make_unique<Impl>(
-      std::move(processors),
-      strict,
-      resolved_simd_level);
+    impl_ = std::make_unique<Impl>(std::move(processors), strict, resolved_simd_level);
   }
 
   template<typename StringType>
@@ -1093,13 +1031,7 @@ namespace AdServer::Commons
   {
     if constexpr(HasDefaultStringCreator<StringType>::value)
     {
-      parse(
-        json,
-        context,
-        []()
-        {
-          return StringType();
-        });
+      parse(json, context, []() { return StringType(); });
     }
     else
     {
@@ -1117,11 +1049,7 @@ namespace AdServer::Commons
     typename FastJsonParser<StringType>::StringCreator string_creator,
     void* string_creator_context) const
   {
-    impl_->parse(
-      json,
-      context,
-      string_creator,
-      string_creator_context);
+    impl_->parse(json, context, string_creator, string_creator_context);
   }
 
   template<typename StringType>
@@ -1153,8 +1081,7 @@ namespace AdServer::Commons
 
   template<typename StringType>
   inline std::uint64_t
-  FastJsonParser<StringType>::Impl::JsonTreeProcessor::short_key_(
-    std::string_view key) noexcept
+  FastJsonParser<StringType>::Impl::JsonTreeProcessor::short_key_(std::string_view key) noexcept
   {
     const auto* data = reinterpret_cast<const unsigned char*>(key.data());
     switch(key.size())
@@ -1213,26 +1140,19 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::get_or_add_sub_processor(
     std::string_view key)
   {
-    for(auto& child : child_processors)
+    for (auto& child : child_processors)
     {
-      if(std::string_view(child.key.data(), child.key.size()) == key)
+      if (std::string_view(child.key.data(), child.key.size()) == key)
       {
         return child.processor.get();
       }
     }
 
-    std::string child_path = path.empty() ?
-      std::string(key) :
-      path + "." + std::string(key);
+    std::string child_path = path.empty() ? std::string(key) : path + "." + std::string(key);
 
-    auto child = std::make_unique<JsonTreeProcessor>(
-      std::move(child_path),
-      arena);
+    auto child = std::make_unique<JsonTreeProcessor>(std::move(child_path), arena);
     JsonTreeProcessor* const child_processor = child.get();
-    child_processors.emplace_back(
-      key,
-      std::move(child),
-      arena);
+    child_processors.emplace_back(key, std::move(child), arena);
     return child_processor;
   }
 
@@ -1240,19 +1160,15 @@ namespace AdServer::Commons
   void
   FastJsonParser<StringType>::Impl::JsonTreeProcessor::build_sub_processors_()
   {
-    for(auto& child : child_processors)
+    for (auto& child : child_processors)
     {
       const std::string_view key(child.key.data(), child.key.size());
       child.processor->build_sub_processors_();
-      sub_processors.emplace(
-        std::string_view(key),
-        child.processor.get());
+      sub_processors.emplace(std::string_view(key), child.processor.get());
 
-      if(key.size() <= sizeof(std::uint64_t))
+      if (key.size() <= sizeof(std::uint64_t))
       {
-        short_processors.emplace(
-          short_key_(key),
-          child.processor.get());
+        short_processors.emplace(short_key_(key), child.processor.get());
       }
     }
   }
@@ -1263,11 +1179,10 @@ namespace AdServer::Commons
     std::string_view key,
     bool escaped)
   {
-    if(!escaped && key.size() <= sizeof(std::uint64_t))
+    if (!escaped && key.size() <= sizeof(std::uint64_t))
     {
-      JsonTreeProcessor** const processor =
-        short_processors.find(short_key_(key));
-      if(processor != nullptr)
+      JsonTreeProcessor** const processor = short_processors.find(short_key_(key));
+      if (processor != nullptr)
       {
         return *processor;
       }
@@ -1284,11 +1199,10 @@ namespace AdServer::Commons
     std::string_view key,
     bool escaped) const
   {
-    if(!escaped && key.size() <= sizeof(std::uint64_t))
+    if (!escaped && key.size() <= sizeof(std::uint64_t))
     {
-      JsonTreeProcessor* const* const processor =
-        short_processors.find(short_key_(key));
-      if(processor != nullptr)
+      JsonTreeProcessor* const* const processor = short_processors.find(short_key_(key));
+      if (processor != nullptr)
       {
         return *processor;
       }
@@ -1307,16 +1221,13 @@ namespace AdServer::Commons
     : root_processor(&processor_arena),
       simd_level(simd_level_val)
   {
-    for(auto& entry : processors.entries_)
+    for (auto& entry : processors.entries_)
     {
-      add_processor_(
-        entry.path,
-        std::move(entry.processor),
-        entry.as_string);
+      add_processor_(entry.path, std::move(entry.processor), entry.as_string);
     }
     root_processor.build_sub_processors_();
 
-    if(strict_val)
+    if (strict_val)
     {
       parse_handler = simd_level != FastJsonParserSimd::Level::SCALAR ?
         &Impl::parse_<true, true> :
@@ -1339,7 +1250,7 @@ namespace AdServer::Commons
   {
     JsonTreeProcessor* current = &root_processor;
 
-    if(path.empty())
+    if (path.empty())
     {
       current->value_processor = std::move(processor);
       current->as_string = as_string;
@@ -1347,20 +1258,20 @@ namespace AdServer::Commons
     }
 
     std::size_t pos = 0;
-    while(pos <= path.size())
+    while (pos <= path.size())
     {
       const std::size_t next_pos = path.find('.', pos);
       const std::string_view key = next_pos == std::string_view::npos ?
         path.substr(pos) : path.substr(pos, next_pos - pos);
 
-      if(key.empty())
+      if (key.empty())
       {
         throw ParseError("empty path element in '" + std::string(path) + "'");
       }
 
       current = current->get_or_add_sub_processor(key);
 
-      if(next_pos == std::string_view::npos)
+      if (next_pos == std::string_view::npos)
       {
         break;
       }
@@ -1404,7 +1315,7 @@ namespace AdServer::Commons
   AD_FAST_JSON_ALWAYS_INLINE char
   FastJsonParser<StringType>::Impl::Cursor::get()
   {
-    if(eof())
+    if (eof())
     {
       throw_error("unexpected end of JSON");
     }
@@ -1429,7 +1340,7 @@ namespace AdServer::Commons
   AD_FAST_JSON_ALWAYS_INLINE void
   FastJsonParser<StringType>::Impl::Cursor::expect(char expected)
   {
-    if(eof() || *pos_ != expected)
+    if (eof() || *pos_ != expected)
     {
       throw_error(std::string("expected '") + expected + "'");
     }
@@ -1441,7 +1352,7 @@ namespace AdServer::Commons
   AD_FAST_JSON_ALWAYS_INLINE void
   FastJsonParser<StringType>::Impl::Cursor::skip_spaces() noexcept
   {
-    if(pos_ == end_ || !is_space_(*pos_))
+    if (pos_ == end_ || !is_space_(*pos_))
     {
       return;
     }
@@ -1452,13 +1363,13 @@ namespace AdServer::Commons
   AD_FAST_JSON_ALWAYS_INLINE void
   FastJsonParser<StringType>::Impl::Cursor::consume_literal(std::string_view literal)
   {
-    if(static_cast<std::size_t>(end_ - pos_) < literal.size() ||
+    if (static_cast<std::size_t>(end_ - pos_) < literal.size() ||
       std::string_view(pos_, literal.size()) != literal)
     {
       throw_error("bad identifier");
     }
     pos_ += literal.size();
-    if(pos_ != end_ && !is_delimiter_(*pos_))
+    if (pos_ != end_ && !is_delimiter_(*pos_))
     {
       throw_error("bad identifier");
     }
@@ -1471,16 +1382,15 @@ namespace AdServer::Commons
   {
     skip_char();
     const char* const value_begin = pos_;
-    const char* const special =
-      find_string_special_<UseSimd>(pos_, end_, simd_level_);
-    if(special == end_)
+    const char* const special = find_string_special_<UseSimd>(pos_, end_, simd_level_);
+    if (special == end_)
     {
       pos_ = end_;
       throw_error("bad string");
     }
 
     pos_ = special + 1;
-    if(*special == '"')
+    if (*special == '"')
     {
       return {
         std::string_view(value_begin, special - value_begin),
@@ -1490,9 +1400,7 @@ namespace AdServer::Commons
 
     StringToken token{
       {},
-      std::optional<StringType>(
-        std::in_place,
-        string_creator_(string_creator_context_)),
+      std::optional<StringType>(std::in_place, string_creator_(string_creator_context_)),
       true};
     token.unescaped->assign(value_begin, special - value_begin);
     parse_string_tail_(*token.unescaped);
@@ -1507,18 +1415,17 @@ namespace AdServer::Commons
   {
     skip_char();
 
-    for(;;)
+    for (;;)
     {
-      const char* const special =
-        find_string_special_<UseSimd>(pos_, end_, simd_level_);
-      if(special == end_)
+      const char* const special = find_string_special_<UseSimd>(pos_, end_, simd_level_);
+      if (special == end_)
       {
         pos_ = end_;
         throw_error("bad string");
       }
 
       pos_ = special + 1;
-      if(*special == '"')
+      if (*special == '"')
       {
         return;
       }
@@ -1549,22 +1456,22 @@ namespace AdServer::Commons
   inline void
   FastJsonParser<StringType>::Impl::Cursor::skip_string_rough_after_quote_()
   {
-    while(pos_ < end_)
+    while (pos_ < end_)
     {
       const char* const quote = find_quote_<UseSimd>(pos_, end_, simd_level_);
-      if(quote == end_)
+      if (quote == end_)
       {
         break;
       }
 
       std::size_t backslashes = 0;
-      for(const char* it = quote; it > pos_ && *(it - 1) == '\\'; --it)
+      for (const char* it = quote; it > pos_ && *(it - 1) == '\\'; --it)
       {
         ++backslashes;
       }
 
       pos_ = quote + 1;
-      if((backslashes & 1) == 0)
+      if ((backslashes & 1) == 0)
       {
         return;
       }
@@ -1601,11 +1508,10 @@ namespace AdServer::Commons
     unsigned object_depth = open == '{' ? 1 : 0;
     unsigned array_depth = open == '[' ? 1 : 0;
 
-    while(pos_ != end_)
+    while (pos_ != end_)
     {
-      const char* const special =
-        find_compound_special_<UseSimd>(pos_, end_, simd_level_);
-      if(special == end_)
+      const char* const special = find_compound_special_<UseSimd>(pos_, end_, simd_level_);
+      if (special == end_)
       {
         pos_ = end_;
         break;
@@ -1614,28 +1520,28 @@ namespace AdServer::Commons
       pos_ = special + 1;
       const char c = *special;
 
-      if(c == '"')
+      if (c == '"')
       {
         skip_string_rough_after_quote_<UseSimd>();
       }
-      else if(c == '{')
+      else if (c == '{')
       {
         ++object_depth;
       }
-      else if(c == '[')
+      else if (c == '[')
       {
         ++array_depth;
       }
-      else if(c == '}' && object_depth > 0)
+      else if (c == '}' && object_depth > 0)
       {
         --object_depth;
       }
-      else if(c == ']' && array_depth > 0)
+      else if (c == ']' && array_depth > 0)
       {
         --array_depth;
       }
 
-      if(object_depth == 0 && array_depth == 0)
+      if (object_depth == 0 && array_depth == 0)
       {
         return;
       }
@@ -1651,58 +1557,58 @@ namespace AdServer::Commons
     const char* const number_begin = pos_;
     bool is_float = false;
 
-    if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+    if (pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
     {
       ++pos_;
     }
 
     bool has_digits = false;
-    while(pos_ != end_ && is_dec_(*pos_))
+    while (pos_ != end_ && is_dec_(*pos_))
     {
       has_digits = true;
       ++pos_;
     }
 
-    if(pos_ != end_ && *pos_ == '.')
+    if (pos_ != end_ && *pos_ == '.')
     {
       is_float = true;
       ++pos_;
 
-      while(pos_ != end_ && is_dec_(*pos_))
+      while (pos_ != end_ && is_dec_(*pos_))
       {
         has_digits = true;
         ++pos_;
       }
     }
 
-    if(!has_digits)
+    if (!has_digits)
     {
       throw_error("bad number");
     }
 
-    if(pos_ != end_ && (*pos_ == 'e' || *pos_ == 'E'))
+    if (pos_ != end_ && (*pos_ == 'e' || *pos_ == 'E'))
     {
       is_float = true;
       ++pos_;
 
-      if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+      if (pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
       {
         ++pos_;
       }
 
       const char* const exponent_begin = pos_;
-      while(pos_ != end_ && is_dec_(*pos_))
+      while (pos_ != end_ && is_dec_(*pos_))
       {
         ++pos_;
       }
 
-      if(exponent_begin == pos_)
+      if (exponent_begin == pos_)
       {
         throw_error("bad number");
       }
     }
 
-    if(pos_ != end_ && !is_delimiter_(*pos_))
+    if (pos_ != end_ && !is_delimiter_(*pos_))
     {
       throw_error("bad number");
     }
@@ -1716,56 +1622,56 @@ namespace AdServer::Commons
   {
     const char* const number_begin = pos_;
 
-    if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+    if (pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
     {
       ++pos_;
     }
 
     bool has_digits = false;
-    while(pos_ != end_ && is_dec_(*pos_))
+    while (pos_ != end_ && is_dec_(*pos_))
     {
       has_digits = true;
       ++pos_;
     }
 
-    if(pos_ != end_ && *pos_ == '.')
+    if (pos_ != end_ && *pos_ == '.')
     {
       ++pos_;
 
-      while(pos_ != end_ && is_dec_(*pos_))
+      while (pos_ != end_ && is_dec_(*pos_))
       {
         has_digits = true;
         ++pos_;
       }
     }
 
-    if(!has_digits)
+    if (!has_digits)
     {
       throw_error("bad number");
     }
 
-    if(pos_ != end_ && (*pos_ == 'e' || *pos_ == 'E'))
+    if (pos_ != end_ && (*pos_ == 'e' || *pos_ == 'E'))
     {
       ++pos_;
 
-      if(pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
+      if (pos_ != end_ && (*pos_ == '-' || *pos_ == '+'))
       {
         ++pos_;
       }
 
       const char* const exponent_begin = pos_;
-      while(pos_ != end_ && is_dec_(*pos_))
+      while (pos_ != end_ && is_dec_(*pos_))
       {
         ++pos_;
       }
 
-      if(exponent_begin == pos_)
+      if (exponent_begin == pos_)
       {
         throw_error("bad number");
       }
     }
 
-    if(pos_ != end_ && !is_delimiter_(*pos_))
+    if (pos_ != end_ && !is_delimiter_(*pos_))
     {
       throw_error("bad number");
     }
@@ -1775,11 +1681,9 @@ namespace AdServer::Commons
 
   template<typename StringType>
   inline void
-  FastJsonParser<StringType>::Impl::Cursor::throw_error(
-    const std::string& message) const
+  FastJsonParser<StringType>::Impl::Cursor::throw_error(const std::string& message) const
   {
-    throw ParseError(
-      message + " at pos " + std::to_string(pos_ - begin_));
+    throw ParseError(message + " at pos " + std::to_string(pos_ - begin_));
   }
 
   template<typename StringType>
@@ -1807,19 +1711,19 @@ namespace AdServer::Commons
   inline bool
   FastJsonParser<StringType>::Impl::Cursor::is_hex_(char c) noexcept
   {
-    return is_dec_(c) ||
-      static_cast<unsigned>((c | 0x20) - 'a') <= ('f' - 'a');
+    return is_dec_(c) || static_cast<unsigned>((c | 0x20) - 'a') <= ('f' - 'a');
   }
 
   template<typename StringType>
   inline int
   FastJsonParser<StringType>::Impl::Cursor::hex_to_int_(char c) noexcept
   {
-    if(c >= 'a')
+    if (c >= 'a')
     {
       return c - 'a' + 10;
     }
-    if(c >= 'A')
+
+    if (c >= 'A')
     {
       return c - 'A' + 10;
     }
@@ -1837,16 +1741,16 @@ namespace AdServer::Commons
 
     append_escape_(out_pos);
 
-    while(pos_ != end_)
+    while (pos_ != end_)
     {
       char c = *pos_++;
-      if(c == '"')
+      if (c == '"')
       {
         out.resize(static_cast<std::size_t>(out_pos - out_begin));
         return;
       }
 
-      if(c == '\\')
+      if (c == '\\')
       {
         append_escape_(out_pos);
       }
@@ -1863,7 +1767,7 @@ namespace AdServer::Commons
   inline void
   FastJsonParser<StringType>::Impl::Cursor::append_escape_(char*& out)
   {
-    if(pos_ == end_)
+    if (pos_ == end_)
     {
       throw_error("bad string");
     }
@@ -1903,7 +1807,7 @@ namespace AdServer::Commons
   inline void
   FastJsonParser<StringType>::Impl::Cursor::skip_escape_()
   {
-    if(pos_ == end_)
+    if (pos_ == end_)
     {
       throw_error("bad string");
     }
@@ -1933,9 +1837,9 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::Cursor::parse_unicode_escape_()
   {
     uint32_t code = 0;
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-      if(pos_ == end_ || !is_hex_(*pos_))
+      if (pos_ == end_ || !is_hex_(*pos_))
       {
         throw_error("bad string");
       }
@@ -1948,9 +1852,9 @@ namespace AdServer::Commons
   inline void
   FastJsonParser<StringType>::Impl::Cursor::skip_unicode_escape_()
   {
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-      if(pos_ == end_ || !is_hex_(*pos_))
+      if (pos_ == end_ || !is_hex_(*pos_))
       {
         throw_error("bad string");
       }
@@ -1963,11 +1867,11 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::Cursor::append_unicode_escape_(char*& out)
   {
     const uint32_t code = parse_unicode_escape_();
-    if(code < 0x80)
+    if (code < 0x80)
     {
       *out++ = static_cast<char>(code);
     }
-    else if(code < 0x800)
+    else if (code < 0x800)
     {
       *out++ = static_cast<char>(0xC0 | (code >> 6));
       *out++ = static_cast<char>(0x80 | (code & 0x3F));
@@ -1992,16 +1896,16 @@ namespace AdServer::Commons
     }
 
     cursor.skip_char();
-    if(!cursor.eof() && cursor.peek() == '}')
+    if (!cursor.eof() && cursor.peek() == '}')
     {
       cursor.get();
       return;
     }
 
-    for(;;)
+    for (;;)
     {
       cursor.template skip_spaces<UseSimd>();
-      if(cursor.eof() || cursor.peek() != '"')
+      if (cursor.eof() || cursor.peek() != '"')
       {
         cursor.throw_error("object key expected");
       }
@@ -2012,19 +1916,19 @@ namespace AdServer::Commons
       skip_value_<Strict, UseSimd>(cursor);
 
       cursor.template skip_spaces<UseSimd>();
-      if(cursor.eof())
+      if (cursor.eof())
       {
         cursor.throw_error("unexpected end of object");
       }
 
       const char delimiter = cursor.get();
 
-      if(delimiter == '}')
+      if (delimiter == '}')
       {
         return;
       }
 
-      if(delimiter != ',')
+      if (delimiter != ',')
       {
         cursor.throw_error("expected ',' or '}'");
       }
@@ -2043,31 +1947,31 @@ namespace AdServer::Commons
     }
 
     cursor.skip_char();
-    if(!cursor.eof() && cursor.peek() == ']')
+    if (!cursor.eof() && cursor.peek() == ']')
     {
       cursor.get();
       return;
     }
 
-    for(;;)
+    for (;;)
     {
       cursor.template skip_spaces<UseSimd>();
       skip_value_<Strict, UseSimd>(cursor);
 
       cursor.template skip_spaces<UseSimd>();
-      if(cursor.eof())
+      if (cursor.eof())
       {
         cursor.throw_error("unexpected end of array");
       }
 
       const char delimiter = cursor.get();
 
-      if(delimiter == ']')
+      if (delimiter == ']')
       {
         return;
       }
 
-      if(delimiter != ',')
+      if (delimiter != ',')
       {
         cursor.throw_error("expected ',' or ']'");
       }
@@ -2080,21 +1984,21 @@ namespace AdServer::Commons
   FastJsonParser<StringType>::Impl::skip_value_(Cursor& cursor) const
   {
     cursor.template skip_spaces<UseSimd>();
-    if(cursor.eof())
+    if (cursor.eof())
     {
       cursor.throw_error("unexpected end of JSON");
     }
 
     const char c = cursor.peek();
-    if(c == '{')
+    if (c == '{')
     {
       skip_object_<Strict, UseSimd>(cursor);
     }
-    else if(c == '[')
+    else if (c == '[')
     {
       skip_array_<Strict, UseSimd>(cursor);
     }
-    else if(c == '"')
+    else if (c == '"')
     {
       if constexpr(Strict)
       {
@@ -2109,19 +2013,19 @@ namespace AdServer::Commons
     {
       cursor.template skip_unquoted_value_rough<UseSimd>();
     }
-    else if(c == '-' || (c >= '0' && c <= '9'))
+    else if (c == '-' || (c >= '0' && c <= '9'))
     {
       cursor.parse_number();
     }
-    else if(c == 't')
+    else if (c == 't')
     {
       cursor.consume_literal("true");
     }
-    else if(c == 'f')
+    else if (c == 'f')
     {
       cursor.consume_literal("false");
     }
-    else if(c == 'n')
+    else if (c == 'n')
     {
       cursor.consume_literal("null");
     }
@@ -2141,44 +2045,38 @@ namespace AdServer::Commons
     Generics::MonoVector<ParseFrame>& frames) const
   {
     cursor.template skip_spaces<UseSimd>();
-    if(cursor.eof())
+    if (cursor.eof())
     {
       cursor.throw_error("unexpected end of JSON");
     }
 
     const char c = cursor.peek();
-    if(c == '{')
+    if (c == '{')
     {
       cursor.skip_char();
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
         processor.value_processor->object_started(processor.path, context);
       }
 
-      frames.push_back({
-        ParseFrameType::Object,
-        ParseFrameState::ValueOrEnd,
-        &processor});
+      frames.push_back({ ParseFrameType::Object, ParseFrameState::ValueOrEnd, &processor});
     }
-    else if(c == '[')
+    else if (c == '[')
     {
       cursor.skip_char();
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
         processor.value_processor->array_started(processor.path, context);
       }
 
-      frames.push_back({
-        ParseFrameType::Array,
-        ParseFrameState::ValueOrEnd,
-        &processor});
+      frames.push_back({ ParseFrameType::Array, ParseFrameState::ValueOrEnd, &processor});
     }
-    else if(c == '"')
+    else if (c == '"')
     {
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
         StringToken token = cursor.template parse_string<UseSimd>();
-        if(token.escaped)
+        if (token.escaped)
         {
           processor.value_processor->process_string(
             std::move(*token.unescaped),
@@ -2187,10 +2085,7 @@ namespace AdServer::Commons
         }
         else
         {
-          processor.value_processor->process_string(
-            token.value,
-            processor.path,
-            context);
+          processor.value_processor->process_string(token.value, processor.path, context);
         }
       }
       else
@@ -2198,9 +2093,9 @@ namespace AdServer::Commons
         cursor.template skip_string<UseSimd>();
       }
     }
-    else if(c == '-' || (c >= '0' && c <= '9'))
+    else if (c == '-' || (c >= '0' && c <= '9'))
     {
-      if(processor.value_processor && processor.as_string)
+      if (processor.value_processor && processor.as_string)
       {
         processor.value_processor->process_string(
           cursor.scan_number_literal(),
@@ -2210,7 +2105,7 @@ namespace AdServer::Commons
       else
       {
         NumberToken number = cursor.parse_number();
-        if(processor.value_processor)
+        if (processor.value_processor)
         {
           processor.value_processor->process_number(
             number.value,
@@ -2220,12 +2115,12 @@ namespace AdServer::Commons
         }
       }
     }
-    else if(c == 't')
+    else if (c == 't')
     {
       cursor.consume_literal("true");
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
-        if(processor.as_string)
+        if (processor.as_string)
         {
           processor.value_processor->process_string(
             std::string_view("true", 4),
@@ -2234,19 +2129,16 @@ namespace AdServer::Commons
         }
         else
         {
-          processor.value_processor->process_bool(
-            true,
-            processor.path,
-            context);
+          processor.value_processor->process_bool(true, processor.path, context);
         }
       }
     }
-    else if(c == 'f')
+    else if (c == 'f')
     {
       cursor.consume_literal("false");
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
-        if(processor.as_string)
+        if (processor.as_string)
         {
           processor.value_processor->process_string(
             std::string_view("false", 5),
@@ -2255,19 +2147,16 @@ namespace AdServer::Commons
         }
         else
         {
-          processor.value_processor->process_bool(
-            false,
-            processor.path,
-            context);
+          processor.value_processor->process_bool(false, processor.path, context);
         }
       }
     }
-    else if(c == 'n')
+    else if (c == 'n')
     {
       cursor.consume_literal("null");
-      if(processor.value_processor)
+      if (processor.value_processor)
       {
-        if(processor.as_string)
+        if (processor.as_string)
         {
           processor.value_processor->process_string(
             std::string_view("null", 4),
@@ -2289,28 +2178,21 @@ namespace AdServer::Commons
   template<typename StringType>
   template<bool Strict, bool UseSimd>
   inline void
-  FastJsonParser<StringType>::Impl::parse_iterative_(
-    Cursor& cursor,
-    void* context) const
+  FastJsonParser<StringType>::Impl::parse_iterative_(Cursor& cursor, void* context) const
   {
     alignas(std::max_align_t) char frame_buffer[4096];
-    Generics::MonoAllocatorArena frame_arena(
-      frame_buffer,
-      sizeof(frame_buffer));
+    Generics::MonoAllocatorArena frame_arena(frame_buffer, sizeof(frame_buffer));
     Generics::MonoVector<ParseFrame> frames(&frame_arena);
     frames.reserve(32);
 
     cursor.skip_char();
-    frames.push_back({
-      ParseFrameType::Object,
-      ParseFrameState::ValueOrEnd,
-      &root_processor});
+    frames.push_back({ ParseFrameType::Object, ParseFrameState::ValueOrEnd, &root_processor});
 
-    while(!frames.empty())
+    while (!frames.empty())
     {
       ParseFrame& frame = frames.back();
       cursor.template skip_spaces<UseSimd>();
-      if(cursor.eof())
+      if (cursor.eof())
       {
         cursor.throw_error(
           frame.type == ParseFrameType::Object ?
@@ -2318,31 +2200,31 @@ namespace AdServer::Commons
             "unexpected end of array");
       }
 
-      if(frame.state == ParseFrameState::DelimiterOrEnd)
+      if (frame.state == ParseFrameState::DelimiterOrEnd)
       {
         const char delimiter = cursor.get_unchecked();
-        if(frame.type == ParseFrameType::Object)
+        if (frame.type == ParseFrameType::Object)
         {
-          if(delimiter == '}')
+          if (delimiter == '}')
           {
             frames.pop_back();
             continue;
           }
 
-          if(delimiter != ',')
+          if (delimiter != ',')
           {
             cursor.throw_error("expected ',' or '}'");
           }
         }
         else
         {
-          if(delimiter == ']')
+          if (delimiter == ']')
           {
             frames.pop_back();
             continue;
           }
 
-          if(delimiter != ',')
+          if (delimiter != ',')
           {
             cursor.throw_error("expected ',' or ']'");
           }
@@ -2352,23 +2234,23 @@ namespace AdServer::Commons
         continue;
       }
 
-      if(frame.type == ParseFrameType::Object)
+      if (frame.type == ParseFrameType::Object)
       {
-        if(cursor.peek() == '}')
+        if (cursor.peek() == '}')
         {
           cursor.get_unchecked();
           frames.pop_back();
           continue;
         }
 
-        if(cursor.peek() != '"')
+        if (cursor.peek() != '"')
         {
           cursor.throw_error("object key expected");
         }
 
         StringToken key = cursor.template parse_string<UseSimd>();
         cursor.template skip_spaces<UseSimd>();
-        if(cursor.eof() || cursor.peek() != ':')
+        if (cursor.eof() || cursor.peek() != ':')
         {
           cursor.throw_error("expected ':'");
         }
@@ -2378,13 +2260,9 @@ namespace AdServer::Commons
         const JsonTreeProcessor* const child_processor =
           frame.processor->find_sub_processor(key.value, key.escaped);
         frame.state = ParseFrameState::DelimiterOrEnd;
-        if(child_processor != nullptr)
+        if (child_processor != nullptr)
         {
-          parse_value_iterative_<Strict, UseSimd>(
-            cursor,
-            *child_processor,
-            context,
-            frames);
+          parse_value_iterative_<Strict, UseSimd>(cursor, *child_processor, context, frames);
         }
         else
         {
@@ -2393,7 +2271,7 @@ namespace AdServer::Commons
       }
       else
       {
-        if(cursor.peek() == ']')
+        if (cursor.peek() == ']')
         {
           cursor.get_unchecked();
           frames.pop_back();
@@ -2401,11 +2279,7 @@ namespace AdServer::Commons
         }
 
         frame.state = ParseFrameState::DelimiterOrEnd;
-        parse_value_iterative_<Strict, UseSimd>(
-          cursor,
-          *frame.processor,
-          context,
-          frames);
+        parse_value_iterative_<Strict, UseSimd>(cursor, *frame.processor, context, frames);
       }
     }
   }
@@ -2418,12 +2292,7 @@ namespace AdServer::Commons
     typename FastJsonParser<StringType>::Impl::StringCreator string_creator,
     void* string_creator_context) const
   {
-    parse_handler(
-      *this,
-      json,
-      context,
-      string_creator,
-      string_creator_context);
+    parse_handler(*this, json, context, string_creator, string_creator_context);
   }
 
   template<typename StringType>
@@ -2439,7 +2308,7 @@ namespace AdServer::Commons
     Cursor cursor(json, string_creator, string_creator_context, impl.simd_level);
     cursor.template skip_spaces<UseSimd>();
 
-    if(cursor.eof() || cursor.peek() != '{')
+    if (cursor.eof() || cursor.peek() != '{')
     {
       cursor.throw_error("top-level JSON value must be object");
     }
@@ -2447,7 +2316,7 @@ namespace AdServer::Commons
     impl.parse_iterative_<Strict, UseSimd>(cursor, context);
     cursor.template skip_spaces<UseSimd>();
 
-    if(!cursor.eof())
+    if (!cursor.eof())
     {
       cursor.throw_error("unexpected trailing character");
     }

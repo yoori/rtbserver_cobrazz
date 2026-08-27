@@ -77,6 +77,7 @@ sub create_channel_targeted_campaigns_
       $arg->{channel_id} = $self->{channels}->{$arg->{channel}};
       delete $arg->{channel};
     }
+
     if (defined $arg->{campaign})
     {
       die "$self->{case_name}: campaign '$arg->{campaign}' is undefined!"
@@ -84,6 +85,7 @@ sub create_channel_targeted_campaigns_
       $arg->{campaign_id} = $self->{campaigns}->{$arg->{campaign}}->{campaign_id};
       delete $arg->{campaign};
     }
+
     if (defined $arg->{specific_sites})
     {
       $arg->{site_links} = [];
@@ -152,7 +154,7 @@ sub create_text_campaigns
 
     $arg->{template_id} = DB::Defaults::instance()->text_template
       unless defined $arg->{template_id};
-    
+
     unless (defined $arg->{size_id})
     {
       $arg->{creative_size_type_id} =
@@ -346,7 +348,7 @@ sub ta_campaigns_scenario
       campaigncreativegroup_cpc =>
         (($self->{threshold_cpm} + 1) / (DB::Defaults::default_ctr() * 1000)),
       campaigncreativegroup_ctr => DB::Defaults::default_ctr(),
-      channel => "BChannel" } 
+      channel => "BChannel" }
   ]);
 
   $test_case->create_publishers([
@@ -372,7 +374,7 @@ sub pub_adv_commission_scenario
 
   $test_case->create_display_campaigns([
     { name => "GrossCampaign",
-      advertiser_agency_account_id => 
+      advertiser_agency_account_id =>
         DB::Defaults::instance()->agency_gross(),
       advertiser_currency_id => $self->{adv_currency},
       campaign_commission => 0.3,
@@ -422,7 +424,7 @@ sub virtual_scenario
 
   $test_case->create_display_campaigns([
     { name => "VirtualCampaign",
-      campaign_freq_cap_id => 
+      campaign_freq_cap_id =>
         DB::FreqCap->blank(life_count => 2),
       campaigncreativegroup_cpm => $self->{threshold_cpm} + 7,
       specific_sites => "VirtPublisher1",
@@ -624,7 +626,7 @@ sub init
 
   # Colocations
   $ns->output("ADS_COLO", DB::Defaults::instance()->ads_isp->{colo_id});
-    
+
   $self->base_scenario($ns);
   $self->ta_campaigns_scenario($ns);
   $self->pub_adv_commission_scenario($ns);

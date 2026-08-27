@@ -19,10 +19,7 @@ typedef std::unordered_map<unsigned long, ExpressionChannelHolder_var> ChannelCo
 namespace
 {
   void
-  print_channel(
-    std::ostream& out,
-    const ExpressionChannelBase* channel,
-    bool expand = false)
+  print_channel(std::ostream& out, const ExpressionChannelBase* channel, bool expand = false)
   {
     std::string expression;
     print(expression, channel, expand);
@@ -54,9 +51,7 @@ parse_for_channel(
 }
 
 ExpressionChannelInfo
-parse_for_channel(
-  const char* expression,
-  const ChannelParams& channel_params)
+parse_for_channel(const char* expression, const ChannelParams& channel_params)
 {
   NonLinkedExpressionChannel_var nl_ch =
     ExpressionChannelParser::parse(String::SubString(expression));
@@ -93,11 +88,9 @@ int check_parse() noexcept
   ex_channel_params.common_params = new ChannelParams::CommonParams;
   ex_channel_params.channel_id = 3;
   ex_channel_params.status = 'A';
-  ExpressionChannelBase_var ch = parse_for_channel(
-    "1 | 2", ex_channel_params, channels);
+  ExpressionChannelBase_var ch = parse_for_channel("1 | 2", ex_channel_params, channels);
 
-  if(channels.find(1) == channels.end() ||
-     channels.find(2) == channels.end())
+  if (channels.find(1) == channels.end() || channels.find(2) == channels.end())
   {
     std::cerr << "not found expected channels : 1, 2" << std::endl;
     return 1;
@@ -110,7 +103,7 @@ int check_parse() noexcept
     Generics::MonoAllocatorArena arena;
     ChannelIdHashSet tr_channels(&arena);
     bool triggered = ch->triggered(&tr_channels, 0);
-    if(triggered)
+    if (triggered)
     {
       std::cerr << "channel triggered when non expected, channel: " << std::endl;
       print_channel(std::cerr, ch);
@@ -123,7 +116,7 @@ int check_parse() noexcept
     ChannelIdHashSet tr_channels(&arena);
     tr_channels.insert(1);
     bool triggered = ch->triggered(&tr_channels, 0);
-    if(!triggered)
+    if (!triggered)
     {
       std::cerr << "channel not triggered when expected, channel: " << std::endl;
       print_channel(std::cerr, ch);
@@ -138,14 +131,12 @@ int check_parse() noexcept
     tr_channels.insert(1);
     ch->triggered_named_channels(triggered_named_channels, tr_channels);
 
-    if(triggered_named_channels.size() != 2 ||
+    if (triggered_named_channels.size() != 2 ||
        *triggered_named_channels.begin() != 1 ||
        *(++triggered_named_channels.begin()) != 3)
     {
       std::cerr << "triggered_named_channels: unexpected result: ";
-      Algs::print(std::cerr,
-        triggered_named_channels.begin(),
-        triggered_named_channels.end());
+      Algs::print(std::cerr, triggered_named_channels.begin(), triggered_named_channels.end());
       std::cerr << " instead 1, 3" << std::endl;
     }
   }
@@ -192,14 +183,12 @@ int check_parse_2() noexcept
     " ( ( ( ( ( 11 ) ) | ( ( 22 ) ) ) & ( ( ( 33 ) ) ) ) )",
     ex_channel_params, channels);
 
-  if(channels.find(11) == channels.end() ||
+  if (channels.find(11) == channels.end() ||
      channels.find(22) == channels.end() ||
      channels.find(33) == channels.end())
   {
-    std::cerr << "not found expected channels : 11, 22, 33" << std::endl <<
-      "presented : ";
-    for(ChannelCont::const_iterator ch_it = channels.begin();
-        ch_it != channels.end(); ++ch_it)
+    std::cerr << "not found expected channels : 11, 22, 33" << std::endl << "presented : ";
+    for (ChannelCont::const_iterator ch_it = channels.begin(); ch_it != channels.end(); ++ch_it)
     {
       std::cerr << (ch_it != channels.begin() ? ", " : "") << ch_it->first;
     }
@@ -215,7 +204,7 @@ int check_parse_2() noexcept
     Generics::MonoAllocatorArena arena;
     ChannelIdHashSet tr_channels(&arena);
     bool triggered = ch->triggered(&tr_channels, 0);
-    if(triggered)
+    if (triggered)
     {
       std::cerr << "channel triggered when non expected, channel: " << std::endl;
       print_channel(std::cerr, ch);
@@ -229,7 +218,7 @@ int check_parse_2() noexcept
     tr_channels.insert(11);
     tr_channels.insert(33);
     bool triggered = ch->triggered(&tr_channels, 0);
-    if(!triggered)
+    if (!triggered)
     {
       std::cerr << "channel not triggered when expected, channel: " << std::endl;
       print_channel(std::cerr, ch);
@@ -256,15 +245,14 @@ check_parse_invalid() noexcept
     bool is_invalid = false;
     try
     {
-      ExpressionChannelBase_var ch = parse_for_channel(
-        "()", ex_channel_params, channels);
+      ExpressionChannelBase_var ch = parse_for_channel("()", ex_channel_params, channels);
     }
     catch(const eh::Exception& ex)
     {
       is_invalid = true;
     }
 
-    if(!is_invalid)
+    if (!is_invalid)
     {
       result += 1;
     }
@@ -280,16 +268,14 @@ int check_tree_construct()
   {
     ChannelParams ch_params;
     ch_params.channel_id = 1;
-    ExpressionChannelBase_var ch = parse_for_channel(
-      "2 | 3", ch_params, channels);
+    ExpressionChannelBase_var ch = parse_for_channel("2 | 3", ch_params, channels);
     channels[1] = ExpressionChannelHolder_var(new ExpressionChannelHolder(ch));
   }
 
   {
     ChannelParams ch_params;
     ch_params.channel_id = 2;
-    ExpressionChannelBase_var ch = parse_for_channel(
-      "4 & 5", ch_params, channels);
+    ExpressionChannelBase_var ch = parse_for_channel("4 & 5", ch_params, channels);
     channels[2] = ExpressionChannelHolder_var(new ExpressionChannelHolder(ch));
   }
 
@@ -302,10 +288,7 @@ int check_tree_construct()
   return 0;
 }
 
-int check_custom_tree_construct(
-  const char* file,
-  const char* match_file,
-  unsigned long cache_size)
+int check_custom_tree_construct(const char* file, const char* match_file, unsigned long cache_size)
 {
   const unsigned long REPEAT_COUNT = 1;
   const bool PRINT = false;
@@ -318,18 +301,17 @@ int check_custom_tree_construct(
     std::vector<ExpressionChannelInfo> channels_info;
     std::ifstream ifile(file);
 
-    while(!ifile.eof())
+    while (!ifile.eof())
     {
       std::string str;
       std::getline(ifile, str);
 
-      if(!str.empty())
+      if (!str.empty())
       {
         String::StringManip::Splitter<String::AsciiStringManip::SepComma> split(str);
         String::SubString channel_id_str;
         String::SubString expression_str;
-        if(split.get_token(channel_id_str) &&
-          split.get_token(expression_str))
+        if (split.get_token(channel_id_str) && split.get_token(expression_str))
         {
           ExpressionChannelBase_var ch;
 
@@ -338,18 +320,17 @@ int check_custom_tree_construct(
           ch_params.common_params = new ChannelParams::CommonParams;
           ch_params.status = 'A';
 
-          if(channel_id_str.compare(expression_str) == 0)
+          if (channel_id_str.compare(expression_str) == 0)
           {
             ch = new SimpleChannel(ch_params);
           }
           else
           {
-            ch = parse_for_channel(
-              expression_str.str().c_str(), ch_params, channels);
+            ch = parse_for_channel(expression_str.str().c_str(), ch_params, channels);
           }
 
           ExpressionChannelHolder_var& ch_holder = channels[ch_params.channel_id];
-          if(ch_holder)
+          if (ch_holder)
           {
             ch_holder->channel = ch;
           }
@@ -383,10 +364,9 @@ int check_custom_tree_construct(
 
   std::cout << "channels.size() = " << channels.size() << std::endl;
   // fill stubs
-  for(ChannelCont::iterator ch_it = channels.begin();
-      ch_it != channels.end(); ++ch_it)
+  for (ChannelCont::iterator ch_it = channels.begin(); ch_it != channels.end(); ++ch_it)
   {
-    if(!ch_it->second->channel.in())
+    if (!ch_it->second->channel.in())
     {
       ChannelParams simple_channel_params;
       simple_channel_params.common_params = new ChannelParams::CommonParams;
@@ -398,10 +378,7 @@ int check_custom_tree_construct(
   }
 
   AdServer::RequestInfoSvcs::ChannelMatcher_var channel_matcher =
-    new AdServer::RequestInfoSvcs::ChannelMatcher(
-      0,
-      cache_size,
-      Generics::Time::ONE_DAY);
+    new AdServer::RequestInfoSvcs::ChannelMatcher(0, cache_size, Generics::Time::ONE_DAY);
 
   AdServer::RequestInfoSvcs::ChannelMatcher::Config_var config =
     new AdServer::RequestInfoSvcs::ChannelMatcher::Config();
@@ -422,24 +399,24 @@ int check_custom_tree_construct(
   std::cout << "indexing finished" << std::endl;
   std::cout << "start testing" << std::endl;
 
-  if(match_file)
+  if (match_file)
   {
     std::ifstream imatch_file(match_file);
 
-    while(!imatch_file.eof())
+    while (!imatch_file.eof())
     {
       std::string str;
       std::getline(imatch_file, str);
 
-      if(!str.empty())
+      if (!str.empty())
       {
         ChannelIdArray channels;
         String::StringManip::Splitter<String::AsciiStringManip::SepComma> split(str);
         String::SubString channel_id_str;
-        while(split.get_token(channel_id_str))
+        while (split.get_token(channel_id_str))
         {
           unsigned long channel_id;
-          if(String::StringManip::str_to_int(channel_id_str, channel_id))
+          if (String::StringManip::str_to_int(channel_id_str, channel_id))
           {
             channels.push_back(channel_id);
           }
@@ -450,7 +427,7 @@ int check_custom_tree_construct(
           ChannelIdArray result_channels;
           ChannelIdArray result_estimate_channels;
 
-          for(unsigned long i = 0; i < REPEAT_COUNT; ++i)
+          for (unsigned long i = 0; i < REPEAT_COUNT; ++i)
           {
             channel_matcher->process_request(
               channels,
@@ -484,21 +461,18 @@ int check_custom_tree_construct(
   Generics::CPUTimer timer;
   timer.start();
 
-  while(mit != match_groups.end())
+  while (mit != match_groups.end())
   {
     ChannelIdArray result_channels;
     ChannelIdArray result_estimate_channels;
 
-    for(unsigned long i = 0; i < REPEAT_COUNT; ++i)
+    for (unsigned long i = 0; i < REPEAT_COUNT; ++i)
     {
       /*
       Generics::CPUTimer sub_timer;
       sub_timer.start();
       */
-      channel_matcher->process_request(
-        *mit,
-        result_channels,
-        &result_estimate_channels);
+      channel_matcher->process_request(*mit, result_channels, &result_estimate_channels);
 
       /*
       index->match(
@@ -512,7 +486,7 @@ int check_custom_tree_construct(
       */
     }
 
-    if(PRINT)
+    if (PRINT)
     {
       Algs::print(std::cout, mit->begin(), mit->end(), ",");
       std::cout << " => ";
@@ -543,11 +517,10 @@ int check_tree_mem_use()
   typedef std::map<unsigned long, ExpressionChannelHolder_var> ChannelCont;
   ChannelCont channels;
 
-  for(unsigned long i = 0; i < 500000; ++i)
+  for (unsigned long i = 0; i < 500000; ++i)
   {
     channels[i] = ExpressionChannelHolder_var(
-      new ExpressionChannelHolder(
-        new ExpressionChannel(ChannelParams(i))));
+      new ExpressionChannelHolder(new ExpressionChannel(ChannelParams(i))));
   }
 
   AdServer::CampaignSvcs::ExpressionChannelIndex_var index =
@@ -586,7 +559,7 @@ check_fast_channel()
 
   ChannelCont channels;
 
-  for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+  for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
   {
     ChannelParams simple_channel_params;
     simple_channel_params.common_params = new ChannelParams::CommonParams;
@@ -614,9 +587,9 @@ check_fast_channel()
   Generics::MonoAllocatorArena match_channels_arena;
   ChannelIdHashSet match_channels(&match_channels_arena);
 
-  for(uint64_t mask = 0; mask < MM; ++mask)
+  for (uint64_t mask = 0; mask < MM; ++mask)
   {
-    if(mask % 10000000 == 0)
+    if (mask % 10000000 == 0)
     {
       std::cout << "fetched " << mask << " of " << MM << std::endl;
     }
@@ -624,9 +597,9 @@ check_fast_channel()
     match_channels.clear();
 
     // convert mask to hash
-    for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+    for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
     {
-      if(mask & (1 << i))
+      if (mask & (1 << i))
       {
         match_channels.insert(BASE_CHANNELS[i]);
       }
@@ -634,7 +607,7 @@ check_fast_channel()
       bool res1 = ch->triggered(&match_channels, &tt, "A");
       bool res2 = fast_channel->triggered(&match_channels, &tt, "A");
 
-      if((res1 ? 1 : 0) != (res2 ? 1 : 0))
+      if ((res1 ? 1 : 0) != (res2 ? 1 : 0))
       {
         std::cerr << "not equal match" << std::endl;
       }
@@ -646,7 +619,7 @@ check_fast_channel()
     bool res;
     Generics::CPUTimer timer;
     timer.start();
-    for(int i = 0; i < 1000000; ++i)
+    for (int i = 0; i < 1000000; ++i)
     {
       res = ch->triggered(&match_channels, &tt, "A");
     }
@@ -658,7 +631,7 @@ check_fast_channel()
     bool res;
     Generics::CPUTimer timer;
     timer.start();
-    for(int i = 0; i < 1000000; ++i)
+    for (int i = 0; i < 1000000; ++i)
     {
       res = fast_channel->triggered(&match_channels, &tt, "A");
     }
@@ -702,7 +675,7 @@ check_fast_channel2()
 
   ChannelCont channels;
 
-  for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+  for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
   {
     ChannelParams simple_channel_params;
     simple_channel_params.common_params = new ChannelParams::CommonParams;
@@ -730,9 +703,9 @@ check_fast_channel2()
   Generics::MonoAllocatorArena match_channels_arena;
   ChannelIdHashSet match_channels(&match_channels_arena);
 
-  for(uint64_t mask = 0; mask < MM; ++mask)
+  for (uint64_t mask = 0; mask < MM; ++mask)
   {
-    if(mask % 10000000 == 0)
+    if (mask % 10000000 == 0)
     {
       std::cout << "fetched " << mask << " of " << MM << std::endl;
     }
@@ -740,9 +713,9 @@ check_fast_channel2()
     match_channels.clear();
 
     // convert mask to hash
-    for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+    for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
     {
-      if(mask & (1 << i))
+      if (mask & (1 << i))
       {
         match_channels.insert(BASE_CHANNELS[i]);
       }
@@ -750,7 +723,7 @@ check_fast_channel2()
       bool res1 = ch->triggered(&match_channels, &tt, "A");
       bool res2 = fast_channel->triggered(&match_channels, &tt, "A");
 
-      if((res1 ? 1 : 0) != (res2 ? 1 : 0))
+      if ((res1 ? 1 : 0) != (res2 ? 1 : 0))
       {
         std::cerr << "not equal match" << std::endl;
       }
@@ -786,7 +759,7 @@ check_rand_spoof_fast_channel()
 
   ChannelCont channels;
 
-  for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+  for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
   {
     ChannelParams simple_channel_params;
     simple_channel_params.common_params = new ChannelParams::CommonParams;
@@ -814,16 +787,16 @@ check_rand_spoof_fast_channel()
   Generics::MonoAllocatorArena match_channels_arena;
   ChannelIdHashSet match_channels(&match_channels_arena);
 
-  while(true)
+  while (true)
   {
     uint64_t mask = (static_cast<uint64_t>(rand()) << 32 + static_cast<uint64_t>(rand())) & MM;
 
     match_channels.clear();
 
     // convert mask to hash
-    for(int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
+    for (int i = 0; i < sizeof(BASE_CHANNELS) / sizeof(BASE_CHANNELS[0]); ++i)
     {
-      if(mask & (1 << i))
+      if (mask & (1 << i))
       {
         match_channels.insert(BASE_CHANNELS[i]);
       }
@@ -831,7 +804,7 @@ check_rand_spoof_fast_channel()
       bool res1 = ch->triggered(&match_channels, &tt, "A");
       bool res2 = fast_channel->triggered(&match_channels, &tt, "A");
 
-      if((res1 ? 1 : 0) != (res2 ? 1 : 0))
+      if ((res1 ? 1 : 0) != (res2 ? 1 : 0))
       {
         std::cerr << "not equal match" << std::endl;
       }

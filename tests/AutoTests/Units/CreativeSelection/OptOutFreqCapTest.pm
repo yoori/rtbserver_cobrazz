@@ -69,7 +69,7 @@ sub init
     channel_id => $campaign1->{channel_id},
     creative_id => $campaign1->{creative_id},
     campaign_flags => 0,
-    campaign_freq_cap_id => 
+    campaign_freq_cap_id =>
       DB::FreqCap->blank(period => 1),
     campaigncreativegroup_flags => DB::Campaign::INCLUDE_SPECIFIC_SITES,
     site_links => [{name => 3}] });

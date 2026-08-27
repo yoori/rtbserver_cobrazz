@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:exsl="http://exslt.org/common"
@@ -27,7 +27,7 @@
   <xsl:param name="campaign-manager-path"/>
   <xsl:param name="campaign-manager-config"/>
   <xsl:param name="campaign-server-path"/>
-  <xsl:param name="campaign-server-config"/> 
+  <xsl:param name="campaign-server-config"/>
   <xsl:param name="channel-search-path"/>
   <xsl:param name="channel-search-config"/>
   <xsl:param name="channel-server-path"/>
@@ -61,7 +61,7 @@
       <xsl:with-param name="base-host" select="$channel-search-path/@host"/>
     </xsl:call-template>
   </xsl:variable>
- 
+
   <xsl:variable name="channel-search-port" select="$channel-search-config/cfg:networkParams/@port"/>
 
   <xsl:variable name="channel-server-host">
@@ -82,7 +82,7 @@
       <xsl:with-param name="base-host" select="$channel-controller-path/@host"/>
     </xsl:call-template>
   </xsl:variable>
- 
+
   <xsl:variable name="channel-controller-port" select="$channel-controller-config/cfg:networkParams/@port"/>
 
   <xsl:variable name="campaign-manager-host">
@@ -94,7 +94,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="campaign-manager-port" select="$campaign-manager-config/cfg:networkParams/@port"/>
 
 
@@ -107,7 +107,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="campaign-server-port" select="$campaign-server-config/cfg:networkParams/@port"/>
 
 
@@ -120,7 +120,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="expression-matcher-port" select="$expression-matcher-config/cfg:networkParams/@port"/>
 
 
@@ -133,7 +133,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="request-info-manager-port" select="$request-info-manager-config/cfg:networkParams/@port"/>
 
 
@@ -146,7 +146,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="user-info-manager-port" select="$user-info-manager-config/cfg:networkParams/@port"/>
 
   <xsl:variable name="user-info-controller-host">
@@ -158,7 +158,7 @@
     </xsl:variable>
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
- 
+
   <xsl:variable name="user-info-controller-port" select="$user-info-controller-config/cfg:networkParams/@port"/>
 
   <TimeOuts frontend_timeout="60" wait_timeout="300"/>
@@ -350,19 +350,19 @@
 
   <!-- find config sections -->
   <xsl:variable
-    name="colo-config" 
+    name="colo-config"
     select="$full-cluster-path/configuration/cfg:cluster"/>
 
   <xsl:variable
     name="central-colo-config"
     select="$colo-config/cfg:central"/>
 
-  <xsl:variable 
+  <xsl:variable
     name="remote-colo-config"
     select="$colo-config/cfg:remote"/>
 
   <xsl:variable name="cluster-type">
-    <xsl:choose>    
+    <xsl:choose>
       <xsl:when test="count($remote-colo-config) > 0">remote</xsl:when>
       <xsl:when test="count($central-colo-config) > 0">central</xsl:when>
       <xsl:otherwise>unknown</xsl:otherwise>
@@ -413,7 +413,7 @@
     name="test-global-config"
     select="$auto-test-path/../configuration/cfg:testsCommon"/>
 
-  <xsl:variable name="pg-connection" 
+  <xsl:variable name="pg-connection"
      select="$auto-test-config/cfg:pgConnection |
        $test-global-config/cfg:pgConnection"/>
 

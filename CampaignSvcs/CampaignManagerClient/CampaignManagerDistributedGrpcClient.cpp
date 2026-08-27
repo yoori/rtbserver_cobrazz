@@ -14,21 +14,16 @@ namespace AdServer::CampaignSvcs
     namespace pb = adserver::campaign_svcs::campaign_manager;
 
     const Generics::Time DEFAULT_POOL_TIMEOUT = Generics::Time::ONE_SECOND;
-    const char NO_AVAILABLE_DESCRIPTION[] =
-      "no available CampaignManager grpc client";
+    const char NO_AVAILABLE_DESCRIPTION[] = "no available CampaignManager grpc client";
 
     grpc::Status unavailable_status(const char* description)
     {
-      return grpc::Status(
-        grpc::StatusCode::UNAVAILABLE,
-        description ? description : "");
+      return grpc::Status(grpc::StatusCode::UNAVAILABLE, description ? description : "");
     }
 
     grpc::Status unavailable_status(const std::string& description)
     {
-      return grpc::Status(
-        grpc::StatusCode::UNAVAILABLE,
-        description);
+      return grpc::Status(grpc::StatusCode::UNAVAILABLE, description);
     }
 
     std::string status_description(const grpc::Status& status)
@@ -56,10 +51,7 @@ namespace AdServer::CampaignSvcs
     {
     public:
       void
-      report_error(
-        Severity,
-        const String::SubString&,
-        const char* = nullptr) throw () override
+      report_error(Severity, const String::SubString&, const char* = nullptr) throw () override
       {}
 
     protected:
@@ -159,9 +151,7 @@ namespace AdServer::CampaignSvcs
       client_holders_.emplace_back(std::move(client_holder));
     }
 
-    default_pool_ = std::make_shared<Pool>(
-      std::move(default_refs),
-      coalesce_runner);
+    default_pool_ = std::make_shared<Pool>(std::move(default_refs), coalesce_runner);
   }
 
   CampaignManagerDistributedGrpcClient::CampaignManagerDistributedGrpcClient(
@@ -248,8 +238,7 @@ namespace AdServer::CampaignSvcs
 
       merge_stats_(
         result,
-        static_cast<CampaignManagerGrpcAsyncClient*>(
-          client_holder->client.get())->stats());
+        static_cast<CampaignManagerGrpcAsyncClient*>(client_holder->client.get())->stats());
     }
     return result;
   }
@@ -289,16 +278,14 @@ namespace AdServer::CampaignSvcs
   }
 
   std::optional<CampaignManagerDistributedGrpcClient::Pool::Ref>
-  CampaignManagerDistributedGrpcClient::get_ref_(
-    const std::string& service_index) const
+  CampaignManagerDistributedGrpcClient::get_ref_(const std::string& service_index) const
   {
     auto pool = get_pool_(service_index);
     return pool ? pool->get_object() : std::nullopt;
   }
 
   std::string
-  CampaignManagerDistributedGrpcClient::unavailable_description_(
-    const PoolPtr& pool)
+  CampaignManagerDistributedGrpcClient::unavailable_description_(const PoolPtr& pool)
   {
     if (!pool)
     {
@@ -350,9 +337,7 @@ namespace AdServer::CampaignSvcs
         ref = std::move(pool_ref),
         callback = std::move(callback),
         pool_timeout = pool_timeout_
-      ](
-        const grpc::Status& status,
-        AdServer::Grpc::ResponseHolder<Response>&& response_holder)
+      ](const grpc::Status& status, AdServer::Grpc::ResponseHolder<Response>&& response_holder)
       mutable
       {
         if (!status.ok())
@@ -365,9 +350,7 @@ namespace AdServer::CampaignSvcs
           }
         }
         callback(
-          AdServer::Grpc::status_with_endpoint(
-            status,
-            ref->endpoint),
+          AdServer::Grpc::status_with_endpoint(status, ref->endpoint),
           std::move(response_holder));
       });
   }
@@ -409,14 +392,11 @@ namespace AdServer::CampaignSvcs
     {
       callback(
         unavailable_status(unavailable_description_(pool)),
-        AdServer::Grpc::ResponseHolder<pb::GetFileResponse>::make_value(
-          pb::GetFileResponse()));
+        AdServer::Grpc::ResponseHolder<pb::GetFileResponse>::make_value(pb::GetFileResponse()));
       return;
     }
 
-    auto fallback_ref = request.service_index().empty() ?
-      std::optional<Pool::Ref>() :
-      get_ref_();
+    auto fallback_ref = request.service_index().empty() ? std::optional<Pool::Ref>() : get_ref_();
 
     (*ref)->client->get_file(
       request,
@@ -724,8 +704,7 @@ namespace AdServer::CampaignSvcs
     result.completed_error_items += source.completed_error_items;
     result.queue_wait_count += source.queue_wait_count;
     result.queue_wait_sum_us += source.queue_wait_sum_us;
-    result.queue_wait_max_us =
-      std::max(result.queue_wait_max_us, source.queue_wait_max_us);
+    result.queue_wait_max_us = std::max(result.queue_wait_max_us, source.queue_wait_max_us);
     result.queue_timeout_count += source.queue_timeout_count;
     result.response_wait_count += source.response_wait_count;
     result.response_wait_sum_us += source.response_wait_sum_us;
@@ -747,8 +726,7 @@ namespace AdServer::CampaignSvcs
     {
       if (!result.consumer_stream_write.has_value())
       {
-        result.consumer_stream_write =
-          AdServer::Grpc::Stats::ConsumerStreamWrite();
+        result.consumer_stream_write = AdServer::Grpc::Stats::ConsumerStreamWrite();
       }
       result.consumer_stream_write->count += source.consumer_stream_write->count;
       result.consumer_stream_write->sum_us += source.consumer_stream_write->sum_us;

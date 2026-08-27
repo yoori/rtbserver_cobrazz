@@ -30,9 +30,7 @@ protected:
 
 protected:
   void
-  add_geo_(
-    std::istream& in,
-    std::ostream& out);
+  add_geo_(std::istream& in, std::ostream& out);
 };
 
 typedef Generics::Singleton<Application_> Application;

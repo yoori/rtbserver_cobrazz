@@ -140,8 +140,7 @@ TEST(PlatformMatcherEmptyMarker)
     std::string os;
     std::set<unsigned long> platform_id_set;
 
-    ASSERT_TRUE (platform_matcher->match(
-      &platform_id_set, short_os, os, USER_AGENTS[1]))
+    ASSERT_TRUE (platform_matcher->match(&platform_id_set, short_os, os, USER_AGENTS[1]))
     ASSERT_EQUALS (platform_id_set.size(), 1U);
     ASSERT_EQUALS (*platform_id_set.begin(), 20010061U);
   }
@@ -151,8 +150,7 @@ TEST(PlatformMatcherEmptyMarker)
     std::string os;
     std::set<unsigned long> platform_id_set;
 
-    ASSERT_TRUE (platform_matcher->match(
-      &platform_id_set, short_os, os, USER_AGENTS[4]))
+    ASSERT_TRUE (platform_matcher->match(&platform_id_set, short_os, os, USER_AGENTS[4]))
     ASSERT_EQUALS (platform_id_set.size(), 2U);
   }
 }

@@ -12,10 +12,8 @@
 class MyConstraint : public ConstraintElement
 {
 public:
-  MyConstraint(const unsigned long sampling_size,
-               const unsigned long threshold_value) :
-    ConstraintElement("Constraint", "Testing constraint",
-                      sampling_size, threshold_value)
+  MyConstraint(const unsigned long sampling_size, const unsigned long threshold_value) :
+    ConstraintElement("Constraint", "Testing constraint", sampling_size, threshold_value)
   {}
 
   void push(unsigned long numerator,

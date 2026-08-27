@@ -16,7 +16,6 @@
 #include <String/StringManip.hpp>
 #include <Stream/MemoryStream.hpp>
 
-
 namespace AdServer
 {
 
@@ -119,12 +118,12 @@ namespace AdServer
               reinterpret_cast<const xmlChar*>(fun_namespace),
               get_function());
         }
+
         if (res)
         {
           Stream::Error ostr;
           ostr << FUN << ": XSLT external function registration fail. "
-            "Namespace: " << fun_namespace << ", name: " << fun_name
-            << ", result code: " << res;
+            "Namespace: " << fun_namespace << ", name: " << fun_name << ", result code: " << res;
           throw Exception(ostr);
         }
         fun_namespace_ = fun_namespace;
@@ -153,8 +152,7 @@ namespace AdServer
         {
           Stream::Error ostr;
           ostr << FUN << ": XSLT external function unregistration fail. "
-            "Namespace: " << fun_namespace_ << ", name: " << fun_name_
-            << ", result code: " << res;
+            "Namespace: " << fun_namespace_ << ", name: " << fun_name_ << ", result code: " << res;
           throw Exception(ostr);
         }
       }
@@ -260,19 +258,16 @@ namespace AdServer
         std::string result_str;
         Functor::calculate(reinterpret_cast<char*>(input.get()), result_str);
 
-        xmlChar* result =
-          xmlStrdup(reinterpret_cast<const xmlChar*>(result_str.c_str()));
+        xmlChar* result = xmlStrdup(reinterpret_cast<const xmlChar*>(result_str.c_str()));
         xmlXPathReturnString(context, result);
       }
       catch (const eh::Exception& ex)
       {
-        xsltTransformError(transform_context, NULL, NULL, "%s%s",
-          FUN, ex.what());
+        xsltTransformError(transform_context, NULL, NULL, "%s%s", FUN, ex.what());
       }
       catch (...)
       {
-        xsltTransformError(transform_context, NULL, NULL, "%s%s", FUN,
-          ": Unknown exception.");
+        xsltTransformError(transform_context, NULL, NULL, "%s%s", FUN, ": Unknown exception.");
       }
     }
 
@@ -283,7 +278,6 @@ namespace AdServer
       virtual
       ~StringConvertFunction() noexcept;
   };
-
 
   namespace XsltExt
   {

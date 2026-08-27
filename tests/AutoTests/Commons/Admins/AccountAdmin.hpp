@@ -79,9 +79,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<AccountAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* account
-      )
+      void make_cmd (const char* address, const char* account)
       {
         address_ = address;
         AdminParams params;
@@ -91,45 +89,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "account", address, params, static_cast<size_t>(CampaignManager));
       }
-      AccountAdmin(
-        const char* address,
-        const char* account
-      )
+      AccountAdmin(const char* address, const char* account)
       {
         make_cmd(address, account);
       }
-      AccountAdmin(
-        const std::string& address,
-        const char* account
-      )
+      AccountAdmin(const std::string& address, const char* account)
       {
         make_cmd(address.c_str(), account);
       }
-      AccountAdmin(
-        const char* address,
-        const std::string& account
-      )
+      AccountAdmin(const char* address, const std::string& account)
       {
         make_cmd(address, account.c_str());
       }
-      AccountAdmin(
-        const std::string& address,
-        const std::string& account
-      )
+      AccountAdmin(const std::string& address, const std::string& account)
       {
         make_cmd(address.c_str(), account.c_str());
       }
-      AccountAdmin(
-        const char* address,
-        unsigned long account
-      )
+      AccountAdmin(const char* address, unsigned long account)
       {
         make_cmd(address, strof(account).c_str());
       }
-      AccountAdmin(
-        const std::string& address,
-        unsigned long account
-      )
+      AccountAdmin(const std::string& address, unsigned long account)
       {
         make_cmd(address.c_str(), strof(account).c_str());
       }

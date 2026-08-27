@@ -35,7 +35,7 @@ class Field:
         else
           out << %s.%s();""" % \
   (self.name, key, self.name, key, self.name)
-  
+
   def get_ask(self):
     return self.dbname
 
@@ -84,14 +84,14 @@ class Stats:
     self.template = self.get_template(self.tbase.name)
 
   #def process_keyset_args(self, strm):
-    
+
   def process_declaration(self, strm):
     fieldsCount = len(self.fields) - 1
     keysCount = len(self.keys)
     print >>strm, "class %s:" % self.name
     print >>strm, "  public %s" % self.template
     print >>strm, "{"
-    strm.addLevel()    
+    strm.addLevel()
     print >>strm, "protected:"
     strm.addLevel()
     # query_select_
@@ -128,7 +128,7 @@ class Stats:
       strm.delLevel()
       print >>strm, '};'
     # Diffs
-    print >>strm, "typedef %s Base;" % self.template    
+    print >>strm, "typedef %s Base;" % self.template
     print >>strm, 'typedef Base::Diffs Diffs;'
     # class declaration
     strm.delLevel()
@@ -139,7 +139,7 @@ class Stats:
       print >>strm, "class Key:"
       print >>strm, "  public %s" % self.subbase.name
     else:
-      print >>strm, "class Key"      
+      print >>strm, "class Key"
     print >>strm, "{"
     strm.addLevel()
     print >>strm, "protected:"
@@ -157,7 +157,7 @@ class Stats:
       print >>strm, "const %s& %s() const;" % (self.keys[i].type, self.keys[i].name)
       print >>strm, "bool %s_used() const;" % self.keys[i].name
       if (self.keys[i].do_not_init):
-          print >>strm, "Key& %s_set_used(bool used);" % self.keys[i].name          
+          print >>strm, "Key& %s_set_used(bool used);" % self.keys[i].name
       print >>strm, "bool %s_is_null() const;" % self.keys[i].name
     print >>strm, "Key ();"
     print >>strm, "Key ("
@@ -234,16 +234,16 @@ class Stats:
     print >>strm, "typedef const stats_diff_type const_array_type[%i];" % len(self.fields)
     print >>strm, "typedef const const_array_type& const_array_type_ref;"
     print >>strm, "typedef const stats_diff_type* const_iterator;"
-    print >>strm, ""    
+    print >>strm, ""
     print >>strm, "Diffs();"
     print >>strm, "Diffs(const stats_diff_type& value);"
     print >>strm, "Diffs(const const_array_type& array);"
-    print >>strm, "operator const_array_type_ref () const;"    
+    print >>strm, "operator const_array_type_ref () const;"
     print >>strm, "Diffs& operator= (const const_array_type& array);"
     print >>strm, "Diffs& operator+= (const const_array_type& array);"
     print >>strm, "Diffs& operator-= (const const_array_type& array);"
     print >>strm, "Diffs operator+ (const const_array_type& array);"
-    print >>strm, "Diffs operator- (const const_array_type& array);"    
+    print >>strm, "Diffs operator- (const const_array_type& array);"
     print >>strm, ""
     print >>strm, "stats_diff_type& operator[] (int i);"
     print >>strm, "const stats_diff_type& operator[] (int i) const;"
@@ -263,12 +263,12 @@ class Stats:
     print >>strm, "  stats_diff_type diffs[%i];" % len(self.fields)
     strm.delLevel()
     print >>strm, "};"
-    print >>strm, ""    
+    print >>strm, ""
 
   def process_implementation(self, strm):
-    keysCount = len(self.keys)    
+    keysCount = len(self.keys)
     expdiff_name = "%s::Diffs" % self.template
-    print >>strm, "///////////////////////////////// %s" % self.name    
+    print >>strm, "///////////////////////////////// %s" % self.name
     # constructor
     print >>strm, "inline"
     print >>strm, "%s::%s ()" % (self.name, self.name)
@@ -350,7 +350,7 @@ class Stats:
     for i in xrange(0, keysCount):
       if self.keys[i].default:
         init = init + "%s%s_(%s)" % (sep, self.keys[i].name, self.keys[i].name)
-        sep = ','    
+        sep = ','
     print >>strm, "inline"
     print >>strm, "%s::Key::Key (" % self.name
     strm.addLevel()
@@ -364,7 +364,7 @@ class Stats:
     strm.delLevel()
     print >>strm, ')'
     if init:
-      print >>strm, '  :' + init    
+      print >>strm, '  :' + init
     print >>strm, '{'
     strm.addLevel()
     for i in xrange(0, keysCount):
@@ -457,7 +457,7 @@ class Stats:
     print >>strm, ');'
     print >>strm, 'return key_;'
     strm.delLevel()
-    print >>strm, '}'    
+    print >>strm, '}'
     #
     print >>strm, "inline"
     print >>strm, "%s::Key&" % self.name
@@ -481,7 +481,7 @@ class Stats:
     print >>strm, "%s::Diffs()" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] = any_stats_diff;"
     strm.delLevel()
     print >>strm, "}"
@@ -489,7 +489,7 @@ class Stats:
     print >>strm, "%s::Diffs(const stats_diff_type& value)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] = value;"
     strm.delLevel()
     print >>strm, "}"
@@ -497,7 +497,7 @@ class Stats:
     print >>strm, "%s::Diffs(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] = array[i];"
     strm.delLevel()
     print >>strm, "}"
@@ -508,41 +508,41 @@ class Stats:
     strm.addLevel()
     print >>strm, 'return diffs;'
     strm.delLevel()
-    print >>strm, "}"    
+    print >>strm, "}"
     print >>strm, "inline"
-    print >>strm, "%s& " % expdiff_name    
+    print >>strm, "%s& " % expdiff_name
     print >>strm, "%s::operator=(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] = array[i];"
     print >>strm, 'return *this;'
     strm.delLevel()
     print >>strm, "}"
     #
     print >>strm, "inline"
-    print >>strm, "%s& " % expdiff_name    
+    print >>strm, "%s& " % expdiff_name
     print >>strm, "%s::operator+=(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] += array[i];"
     print >>strm, 'return *this;'
     strm.delLevel()
     print >>strm, "}"
     print >>strm, "inline"
-    print >>strm, "%s& " % expdiff_name    
+    print >>strm, "%s& " % expdiff_name
     print >>strm, "%s::operator-=(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
-    print >>strm, "for(int i = 0; i < %i; ++i)" % len(self.fields)
+    print >>strm, "for (int i = 0; i < %i; ++i)" % len(self.fields)
     print >>strm, "  diffs[i] -= array[i];"
     print >>strm, 'return *this;'
     strm.delLevel()
     print >>strm, "}"
     #
     print >>strm, "inline"
-    print >>strm, "%s " % expdiff_name    
+    print >>strm, "%s " % expdiff_name
     print >>strm, "%s::operator+(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
@@ -552,7 +552,7 @@ class Stats:
     strm.delLevel()
     print >>strm, "}"
     print >>strm, "inline"
-    print >>strm, "%s " % expdiff_name    
+    print >>strm, "%s " % expdiff_name
     print >>strm, "%s::operator-(const const_array_type& array)" % expdiff_name
     print >>strm, "{"
     strm.addLevel()
@@ -560,7 +560,7 @@ class Stats:
     print >>strm, "ret -= array;"
     print >>strm, 'return ret;'
     strm.delLevel()
-    print >>strm, "}"    
+    print >>strm, "}"
     # iterators
     print >>strm, "inline"
     print >>strm, "%s::const_iterator" % expdiff_name
@@ -625,7 +625,7 @@ class Stats:
       print >>strm, "stats_value_type"
       print >>strm, "%s::%s () const" % (self.name, field.name)
       print >>strm, "{"
-      strm.addLevel()      
+      strm.addLevel()
       print >>strm, "return values[%s::%s];"  % (self.name, field.name.upper())
       strm.delLevel()
       print >>strm, "}"
@@ -669,7 +669,7 @@ class Stats:
       additional_cond = ""
       if isinstance(key, PgDateField):
         additional_cond = " &&\n%s  key_.%s() != Generics::Time::ZERO" % \
-                          (' '*strm.level,  key.name) 
+                          (' '*strm.level,  key.name)
       print >>strm, "if (key_.%s_used() && !key_.%s_is_null()%s)" % \
             (key.name, key.name, additional_cond)
       strm.addLevel()
@@ -688,7 +688,7 @@ class Stats:
 
   def process_key_str(self, strm, stat):
     print >>strm, "std::string key_%s;" % stat.name
-    print >>strm, "{"    
+    print >>strm, "{"
     strm.addLevel()
     print >>strm, "std::ostringstream kstr;"
     print >>strm, "int ckey = 1;"
@@ -724,10 +724,10 @@ class Stats:
       strm.delLevel()
       print >>strm, "}"
       prefix = "and "
-    print >>strm, "key_%s = kstr.str();" % stat.name      
+    print >>strm, "key_%s = kstr.str();" % stat.name
     strm.delLevel()
     print >>strm, "}"
-    
+
   def process_data(self, strm):
     fieldsCount = len(self.fields) - 1
     keysCount = len(self.keys)
@@ -752,7 +752,7 @@ class Stats:
         print >>strm, "\"%s\"," % self.table[i]
       print >>strm, "\"%s\"" % self.table[count]
       strm.delLevel()
-      print >>strm, "};"    
+      print >>strm, "};"
     # print_idname
     print >>strm, "void"
     print >>strm, "%s::print_idname (std::ostream& out) const" % self.name
@@ -776,7 +776,7 @@ class Stats:
     print >>strm, "bool"
     print >>strm, "%s::query_select_(StatsDB::IConn& connection)" % self.name
     print >>strm, "{"
-       
+
     strm.addLevel()
     not_inited = filter(lambda x: x.do_not_init, self.keys)
     if not_inited:
@@ -816,7 +816,7 @@ class Stats:
       self.process_db_select(strm, self.table, self)
       strm.delLevel()
       print >>strm, "qstr << key_%s;" % self.name
-      print >>strm, "StatsDB::Query query(connection.get_query(qstr.str()));"      
+      print >>strm, "StatsDB::Query query(connection.get_query(qstr.str()));"
       # set keys
       self.process_keys(strm, self)
       if not_inited:
@@ -829,7 +829,7 @@ class StrField(Field):
   def __init__(self, name, dbname, do_not_init = False):
     Field.__init__(self, name, dbname, do_not_init)
     self.type = 'std::string'
-    
+
   def get_ask(self):
     return self.dbname
 
@@ -844,7 +844,7 @@ class StrField(Field):
 
   def process_implementation(self, strm, klass):
     pass
-    
+
 class IntNumber:
   def __init__(self):
     self.type = 'int'
@@ -905,10 +905,10 @@ class YesNoField(StrField):
     StrField.__init__(self, name, dbname)
     self.type = 'bool'
     self.default = 'false'
-  
+
   def get_ask(self):
     return self.dbname
-  
+
   def access(self, name):
     return name + self.name + "() ? \"Y\" : \"N\""
 
@@ -923,12 +923,12 @@ class YesNoField(StrField):
 
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
-  
+
 
 class Hourly:
   def __init__(self):
     self.format = '%Y-%m-%d:%H'
-    
+
   def dbset(self, dbname, name):
     suffix = "TRUNC(:\" << %s++ << \", 'HH24')\";" % name
     return '\"TRUNC(' + dbname + ', \'HH24\') = ' + suffix
@@ -939,7 +939,7 @@ class Hourly:
 class Daily:
   def __init__(self):
     self.format = '%Y-%m-%d'
-    
+
   def dbset(self, dbname, name):
     suffix = "TRUNC(:\" << %s++ << \")\";" % name
     return '\"TRUNC(' + dbname + ') = ' + suffix
@@ -950,7 +950,7 @@ class Daily:
 class NativeDate:
   def __init__(self):
     self.format = '%Y-%m-%d:%H-%M-%S'
-    
+
   def dbset(self, dbname, name):
     suffix = ":\" << %s++;" % name
     return '\"' + dbname + ' = ' + suffix
@@ -968,10 +968,10 @@ class OraDateField(StrField):
     self.type = 'AutoTest::Time'
     self.default = 'default_date()'
     self.format = format
-  
+
   def dbset(self, name):
     return self.format.dbset(self.dbname, name)
-    
+
   def access(self, name):
     return name + self.name + "().get_gm_time()"
 
@@ -983,7 +983,7 @@ class OraDateField(StrField):
         else
           out <<  %s.%s().get_gm_time().format(\"%s\") << '\\'';""" % (
       self.name, key, self.name, key, self.name, self.format.format)
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
 
@@ -993,7 +993,7 @@ class PgDateField(StrField):
     self.type = 'AutoTest::Time'
     self.default = 'default_date()'
     self.format = format
-  
+
   def dbset(self, name):
     suffix = "<< %s++;" %name
     return '\"' + self.dbname + ' = :\"' + suffix
@@ -1009,7 +1009,7 @@ class PgDateField(StrField):
         else
           out <<  %s.%s().get_gm_time().format(\"%s\") << '\\'';""" % (
       self.name, key, self.name, key, self.name, self.format.format)
- 
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
 
@@ -1018,23 +1018,23 @@ class CountField(StrField):
   def __init__(self, field_name = '*'):
     StrField.__init__(self, 'count', 'count')
     self.field_name = field_name
-  
+
   def get_ask(self):
     return "COUNT(%s)" % self.field_name
 
 
 class SumField(StrField):
- 
+
   def get_ask(self):
     return "SUM(%s)" % self.dbname
 
 class ExcludeField(Field):
-  
+
   def __init__(self, name, dbname, format = integer):
     Field.__init__(self, name, dbname)
     self.type = format.type
     self.format = format
-    
+
   def get_ask(self):
     return self.dbname
 
@@ -1055,7 +1055,7 @@ class MaxField(StrField):
 class SomeField(StrField):
   def __init__(self, name, dbname):
     StrField.__init__(self, name, dbname)
-  
+
   def process_implementation(self, strm, klass):
     StrField.process_implementation(self, strm, klass)
 
@@ -1102,21 +1102,21 @@ class IndentStream:
 
     def close(self):
       self.stream.close()
-    
+
     def addLevel (self):
         self.level = self.level + 2
-    
+
     def delLevel (self):
         self.level = self.level - 2
 
     def newline (self):
         self.stream.write('\n')
-    
+
     def write (self, string):
         """method need implemented"""
         self.stream.write(' '*self.level)
         self.stream.write(string)
-    
+
     def rawwrite (self, string):
         self.stream.write(string)
 
@@ -1131,7 +1131,7 @@ def process_namespace(strm, processor):
     processor(stat, strm)
   strm.delLevel()
   print >>strm, "}"
-  strm.delLevel()  
+  strm.delLevel()
   print >>strm, "}"
 
 def process_stats_namespace(strm, processor, stat):
@@ -1142,9 +1142,9 @@ def process_stats_namespace(strm, processor, stat):
   print >>strm, "{"
   strm.addLevel()
   processor(stat, strm)
-  strm.delLevel()    
+  strm.delLevel()
   print >>strm, "}"
-  strm.delLevel()  
+  strm.delLevel()
   print >>strm, "}"
 
 def process_header_header(header, name, includes = []):
@@ -1213,7 +1213,7 @@ def process_headers():
   process_header_footer(
     collector, collector_name)
   collector.close()
-    
+
 def process_source_header(source, name, includes = []):
   print >>source, "/** $" + "Id" + "$"
   print >>source, "* @file %s" % name

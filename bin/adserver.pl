@@ -14,9 +14,9 @@ my $host = $ARGV[0];
 my $service = $ARGV[1];
 my $command = $ARGV[2];
 
-my $ret_value =  do_command($host, $service, $command); 
+my $ret_value =  do_command($host, $service, $command);
 
-if(defined($ret_value) && $ret_value==1)
+if (defined($ret_value) && $ret_value==1)
 {
   exit(0);
 }

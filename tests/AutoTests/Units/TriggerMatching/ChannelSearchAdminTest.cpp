@@ -1,9 +1,6 @@
 #include "ChannelSearchAdminTest.hpp"
 
-REFLECT_UNIT(ChannelSearchAdminTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ChannelSearchAdminTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -81,12 +78,10 @@ ChannelSearchAdminTest::run_test()
 {
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
     "ChannelSearchServ must set in the XML configuration file");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CHANNEL_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CHANNEL_SERVER)),
     "ChannelServer must set in the XML configuration file");
 
   for (unsigned int i=0; i < countof(TEST_CASES); ++i)
@@ -99,23 +94,18 @@ ChannelSearchAdminTest::run_test()
 }
 
 
-void ChannelSearchAdminTest::test_case(
-    unsigned int index,
-    const TestCase& test)
+void ChannelSearchAdminTest::test_case(unsigned int index, const TestCase& test)
 {
   add_descr_phrase("Scenario#" + strof(index+1));
   std::string ChannelSearchServer =
     get_config().get_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER).address;
-  std::string ChannelServer =
-    get_config().get_service(CTE_ALL, STE_CHANNEL_SERVER).address;
+  std::string ChannelServer = get_config().get_service(CTE_ALL, STE_CHANNEL_SERVER).address;
 
   SearchAdmin admin(ChannelSearchServer, test.phrase);
 
   MatchAdmin(ChannelServer.c_str(),
     std::string("\"") + test.phrase + "\"",
-    AutoTest::ChannelServer).log(
-      AutoTest::Logger::thlog(),
-      Logging::Logger::TRACE);
+    AutoTest::ChannelServer).log(AutoTest::Logger::thlog(), Logging::Logger::TRACE);
 
   std::string names_(test.expected_channels);
   String::StringManip::SplitComma tokenizer(names_);

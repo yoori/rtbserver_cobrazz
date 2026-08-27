@@ -73,7 +73,7 @@ popd >/dev/null 2>&1
 
 if [ $OUT_FILE != '-' ]
 then
-  eval xsltproc $PARAMS -o $OUT_FILE $INCDIR "$PXSL_FILE" $APP_XML 
+  eval xsltproc $PARAMS -o $OUT_FILE $INCDIR "$PXSL_FILE" $APP_XML
   EX_CODE=$?
 else
   eval xsltproc $PARAMS $INCDIR "$PXSL_FILE" $APP_XML

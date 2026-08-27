@@ -7,7 +7,7 @@ from Util import currentTime, time2str
 from OrbUtil import time2orb, orb2time
 from OrbTestSuite import main
 from SingleThread import SingleThread
-                              
+
 from ProbeObj import ProbeObjMixin
 
 class ProbeObject(CORBAFunTest, ProbeObjMixin):
@@ -16,13 +16,13 @@ class ProbeObject(CORBAFunTest, ProbeObjMixin):
   def setUp( self ):
     self.LOGLEVEL = 100
     ProbeObjMixin.setUp( self )
-  
+
   def tearDown( self ):
     pass
-  
+
   def run( self ):
     res = self.test(1, self.testProbeObject)
-  
+
   def testProbeObject( self ):
     "ProbeObject - ProcessControl"
     pc = self.getProcessControl()
@@ -34,6 +34,6 @@ class ProbeObject(CORBAFunTest, ProbeObjMixin):
                                        'ProcessControl_comment',
                                        'ProcessControl_control',
                                        'ProcessControl_shutdown'])
-  
+
 if __name__ == '__main__':
  main()

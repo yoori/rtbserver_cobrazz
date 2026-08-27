@@ -135,19 +135,19 @@ sub print_NoAdvNoTrack
 {
   my ($ns) = @_;
 
-  $ns->output("no_track_words", 
+  $ns->output("no_track_words",
     DB::Defaults::instance()->no_track_channel->
       keyword_channel_triggers()->[0]->{original_trigger});
   $ns->output("no_adv_words",
     DB::Defaults::instance()->no_adv_channel->
       keyword_channel_triggers()->[0]->{original_trigger});
-  $ns->output("no_track_urls", 
+  $ns->output("no_track_urls",
     DB::Defaults::instance()->no_track_channel->
       url_channel_triggers()->[0]->{original_trigger});
-  $ns->output("no_adv_urls", 
+  $ns->output("no_adv_urls",
     DB::Defaults::instance()->no_adv_channel->
       url_channel_triggers()->[0]->{original_trigger});
-  $ns->output("no_track_url_words", 
+  $ns->output("no_track_url_words",
     DB::Defaults::instance()->no_track_channel->
       url_kwd_channel_triggers()->[0]->{original_trigger});
   $ns->output("no_adv_url_words",
@@ -169,7 +169,7 @@ sub unwrap {
 sub calc_ctr_pq  {
   my $dbh  = $_[0]->_pq_dbh();
   return if !$dbh;
-  my @ctr_functions = 
+  my @ctr_functions =
     qw(init pub_tag_adjustments
        keyword_targeted_text_groups
        keyword_targeted_text_groups_tow
@@ -180,9 +180,9 @@ sub calc_ctr_pq  {
 }
 
 sub get_tz_ofset {
-  my ($ns, $tz_name) = @_;  
+  my ($ns, $tz_name) = @_;
   my $stmt = $ns->pq_dbh->prepare_cached(q|
-    select now() - now() at time zone 'GMT' at time zone tzname from 
+    select now() - now() at time zone 'GMT' at time zone tzname from
     timezone where tzname = ?|, undef, 1);
   $stmt->execute($tz_name);
   my @result_row = $stmt->fetchrow_array() or
@@ -198,7 +198,7 @@ sub output_channel_triggers
 
   my $i = 0;
 
-  my $triggers = $type eq 'P'? 
+  my $triggers = $type eq 'P'?
     $channel->keyword_channel_triggers():
       $type eq 'S'? $channel->search_channel_triggers():
         $type eq 'R'? $channel->url_kwd_channel_triggers():
@@ -206,25 +206,25 @@ sub output_channel_triggers
 
   for my $trigger (@$triggers)
   {
-    $ns->output("$prefix/" . ++$i, 
+    $ns->output("$prefix/" . ++$i,
       ($type eq 'P'? $channel->page_key():
        $type eq 'S'? $channel->search_key():
        $type eq 'R'? $channel->url_kwd_key():
-         $channel->url_key())  . " :: " . 
-           $trigger->{channel_trigger_id}); 
+         $channel->url_key())  . " :: " .
+           $trigger->{channel_trigger_id});
   }
 }
 
 sub get_external_creative_id {
   my $creative = shift;
 
-  my ($year, $month, $day, $hour, $min, $sec, $nsec) = 
-    ($creative->{version} =~ 
+  my ($year, $month, $day, $hour, $min, $sec, $nsec) =
+    ($creative->{version} =~
        m!(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)!);
 
   my $time = timegm ($sec, $min, $hour, $day, $month - 1, $year);
 
-  $creative->{creative_id} . "-" . 
+  $creative->{creative_id} . "-" .
     strftime("%y%m%d%H%M%S", gmtime($time));
 }
 

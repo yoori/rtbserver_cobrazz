@@ -32,8 +32,7 @@ namespace AdServer::Frontends
     return fcgi_connection_in_progress_.load(std::memory_order_relaxed);
   }
 
-  FCGIAcceptorMetricsProvider::FCGIAcceptorMetricsProvider(
-    FCGIAcceptorStatHolder* stats)
+  FCGIAcceptorMetricsProvider::FCGIAcceptorMetricsProvider(FCGIAcceptorStatHolder* stats)
     : stats_(ReferenceCounting::add_ref(stats))
   {}
 
@@ -41,11 +40,9 @@ namespace AdServer::Frontends
   FCGIAcceptorMetricsProvider::get_values()
   {
     MetricArray result;
-    if(stats_.in())
+    if (stats_.in())
     {
-      result.emplace_back(
-        "fcgi_accept_total",
-        static_cast<long>(stats_->fcgi_accept_total()));
+      result.emplace_back("fcgi_accept_total", static_cast<long>(stats_->fcgi_accept_total()));
       result.emplace_back(
         "fcgi_connection_in_progress",
         static_cast<long>(stats_->fcgi_connection_in_progress()));

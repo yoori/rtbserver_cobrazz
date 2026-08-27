@@ -22,8 +22,7 @@ namespace AdServer::Grpc
 
     Response* create_response() override
     {
-      return google::protobuf::Arena::CreateMessage<Response>(
-        &response_arena_storage);
+      return google::protobuf::Arena::CreateMessage<Response>(&response_arena_storage);
     }
 
     void publish_response(Response* response) noexcept override
@@ -506,10 +505,7 @@ namespace AdServer::Grpc
     ReadyResponse ready_response;
     {
       std::lock_guard<std::mutex> lock(state_lock_);
-      if (write_in_flight_ ||
-        finish_in_flight_ ||
-        closing_ ||
-        ready_responses_.empty())
+      if (write_in_flight_ || finish_in_flight_ || closing_ || ready_responses_.empty())
       {
         return;
       }

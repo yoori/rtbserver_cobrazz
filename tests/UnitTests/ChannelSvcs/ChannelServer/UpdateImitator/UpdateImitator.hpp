@@ -7,11 +7,9 @@
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase_s.hpp>
 
-namespace AdServer
+namespace AdServer::UnitTests
 {
-namespace UnitTests
-{
-  typedef ::AdServer::ChannelSvcs::ChannelUpdateBase_v33 ChannelCurrent;
+  typedef ::AdServer::ChannelSvcs::ChannelUpdateBase_var ChannelCurrent;
 
   class UpdateImitator:
     public virtual CORBACommons::ReferenceCounting::ServantImpl
@@ -43,8 +41,8 @@ namespace UnitTests
     // IDL:AdServer/ChannelSvcs/ChannelCurrent/check:1.0
     //
     virtual void check(
-      const ChannelCurrent::CheckQuery& query,
-      ChannelCurrent::CheckData_out data)
+      const OBV_AdServer::ChannelSvcs::ChannelLoadSession::CheckQuery& query,
+      OBV_AdServer::ChannelSvcs::ChannelLoadSession::CheckData_out data)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
             AdServer::ChannelSvcs::NotConfigured)*/;
 
@@ -53,7 +51,7 @@ namespace UnitTests
     //
     virtual void update_triggers(
         const ChannelSvcs::ChannelIdSeq& ids,
-        ChannelCurrent::UpdateData_out result)
+        OBV_AdServer::ChannelSvcs::ChannelLoadSession::UpdateData_out result)
         /*throw(AdServer::ChannelSvcs::ImplementationException,
               AdServer::ChannelSvcs::NotConfigured)*/;
 
@@ -68,7 +66,7 @@ namespace UnitTests
     //
     virtual void update_all_ccg(
       const ChannelCurrent::CCGQuery& query,
-      ChannelCurrent::PosCCGResult_out result)
+      OBV_AdServer::ChannelSvcs::ChannelLoadSession::PosCCGResult_out result)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
             AdServer::ChannelSvcs::NotConfigured)*/;
 
@@ -107,9 +105,7 @@ namespace UnitTests
   class ControlImpl: public CORBACommons::ProcessControlImpl
   {
   public:
-    ControlImpl(
-      CORBACommons::OrbShutdowner* shutdowner,
-      UpdateImitator* server) noexcept
+    ControlImpl(CORBACommons::OrbShutdowner* shutdowner, UpdateImitator* server) noexcept
       : CORBACommons::ProcessControlImpl(shutdowner),
         server_(ReferenceCounting::add_ref(server)) {};
 
@@ -127,5 +123,4 @@ namespace UnitTests
 
   typedef ReferenceCounting::SmartPtr<ControlImpl> ControlImpl_var;
 
-}
 }

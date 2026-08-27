@@ -21,15 +21,12 @@ namespace
   public:
     using Method = void (AdServer::StatHolder::*)() noexcept;
 
-    StatStageGuard(
-      AdServer::StatHolder* stats,
-      Method add,
-      Method complete)
+    StatStageGuard(AdServer::StatHolder* stats, Method add, Method complete)
       noexcept
       : stats_(stats),
         complete_(complete)
     {
-      if(stats_)
+      if (stats_)
       {
         (stats_->*add)();
       }
@@ -37,7 +34,7 @@ namespace
 
     ~StatStageGuard()
     {
-      if(stats_)
+      if (stats_)
       {
         (stats_->*complete_)();
       }
@@ -53,9 +50,7 @@ namespace
 
   struct ChannelMatch
   {
-    ChannelMatch(
-      unsigned long channel_id_val,
-      unsigned long channel_trigger_id_val)
+    ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
       : channel_id(channel_id_val),
         channel_trigger_id(channel_trigger_id_val)
     {}
@@ -65,8 +60,7 @@ namespace
     {
       return
         channel_id < right.channel_id ||
-        (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id);
+        (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id);
     }
 
     unsigned long channel_id;
@@ -76,8 +70,7 @@ namespace
   struct GetChannelTriggerId
   {
     ChannelMatch
-    operator()(
-      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+    operator()(const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       const noexcept
     {
       return ChannelMatch(atom.id(), atom.trigger_channel_id());
@@ -119,8 +112,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  UserBindMatchRequestState::co_process_(
-    std::shared_ptr<UserBindMatchRequestState> self)
+  UserBindMatchRequestState::co_process_(std::shared_ptr<UserBindMatchRequestState> self)
     noexcept
   {
     (void)self;
@@ -136,8 +128,7 @@ namespace AdServer
 
     MatchTaskGuard match_task_guard(frontend_);
     now_ = Generics::Time::get_time_of_day();
-    if((!referer_.empty() || !keywords_.empty()) &&
-      !result_user_id_.is_null())
+    if ((!referer_.empty() || !keywords_.empty()) && !result_user_id_.is_null())
     {
       co_await co_channel_match_();
     }
@@ -149,7 +140,7 @@ namespace AdServer
   FrontendCommons::RequestTask
   UserBindMatchRequestState::co_channel_match_() noexcept
   {
-    if(frontend_->channel_client_coro_)
+    if (frontend_->channel_client_coro_)
     {
       StatStageGuard stat_guard(
         frontend_->stats_.in(),
@@ -167,9 +158,8 @@ namespace AdServer
       channel_request->set_pwords(keywords_);
       channel_request->set_first_url(referer_);
 
-      auto match_result = co_await frontend_->channel_client_coro_->co_match(
-        *channel_request);
-      if(match_result.status.ok())
+      auto match_result = co_await frontend_->channel_client_coro_->co_match(*channel_request);
+      if (match_result.status.ok())
       {
         trigger_match_result_ = std::move(match_result.response_holder);
         trigger_match_result_present_ = true;
@@ -186,7 +176,7 @@ namespace AdServer
   FrontendCommons::RequestTask
   UserBindMatchRequestState::co_history_() noexcept
   {
-    if(!need_history_() || !frontend_->user_info_client_coro_)
+    if (!need_history_() || !frontend_->user_info_client_coro_)
     {
       co_return FrontendCommons::RequestResult{};
     }
@@ -196,11 +186,10 @@ namespace AdServer
       adserver::user_info_svcs::user_info_manager::MatchRequest>(&arena);
     fill_history_match_request_(*history_match_request);
 
-    if(!merge_user_id_.is_null())
+    if (!merge_user_id_.is_null())
     {
       auto* get_profile_request = google::protobuf::Arena::CreateMessage<
-        adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(
-          &arena);
+        adserver::user_info_svcs::user_info_manager::GetUserProfileRequest>(&arena);
       get_profile_request->set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
       get_profile_request->set_temporary(false);
       auto* profile_request = get_profile_request->mutable_profile_request();
@@ -216,26 +205,20 @@ namespace AdServer
           &StatHolder::add_user_bind_match_get_profile_request,
           &StatHolder::complete_user_bind_match_get_profile_request);
         auto get_profile_result =
-          co_await frontend_->user_info_client_coro_->co_get_user_profile(
-            *get_profile_request);
-        if(!get_profile_result.status.ok())
+          co_await frontend_->user_info_client_coro_->co_get_user_profile(*get_profile_request);
+        if (!get_profile_result.status.ok())
         {
-          log_user_info_error_(
-            "UserInfoManager::get_user_profile()",
-            get_profile_result.status);
+          log_user_info_error_("UserInfoManager::get_user_profile()", get_profile_result.status);
           co_return FrontendCommons::RequestResult{};
         }
 
-        if(get_profile_result.response.found())
+        if (get_profile_result.response.found())
         {
           auto* merge_request = google::protobuf::Arena::CreateMessage<
             adserver::user_info_svcs::user_info_manager::MergeRequest>(&arena);
-          *merge_request->mutable_user_info() =
-            history_match_request->user_info();
-          *merge_request->mutable_match_params() =
-            history_match_request->match_params();
-          *merge_request->mutable_merge_user_profile() =
-            get_profile_result.response.user_profile();
+          *merge_request->mutable_user_info() = history_match_request->user_info();
+          *merge_request->mutable_match_params() = history_match_request->match_params();
+          *merge_request->mutable_merge_user_profile() = get_profile_result.response.user_profile();
 
           {
             StatStageGuard stat_guard(
@@ -243,20 +226,16 @@ namespace AdServer
               &StatHolder::add_user_bind_match_merge_request,
               &StatHolder::complete_user_bind_match_merge_request);
             auto merge_result =
-              co_await frontend_->user_info_client_coro_->co_merge(
-                *merge_request);
-            if(!merge_result.status.ok())
+              co_await frontend_->user_info_client_coro_->co_merge(*merge_request);
+            if (!merge_result.status.ok())
             {
-              log_user_info_error_(
-                "UserInfoManager::merge()",
-                merge_result.status);
+              log_user_info_error_("UserInfoManager::merge()", merge_result.status);
               co_return FrontendCommons::RequestResult{};
             }
           }
 
           auto* remove_request = google::protobuf::Arena::CreateMessage<
-            adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(
-              &arena);
+            adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(&arena);
           remove_request->set_user_id(GrpcAlgs::pack_user_id(merge_user_id_));
           {
             StatStageGuard stat_guard(
@@ -264,13 +243,10 @@ namespace AdServer
               &StatHolder::add_user_bind_match_remove_request,
               &StatHolder::complete_user_bind_match_remove_request);
             auto remove_result =
-              co_await frontend_->user_info_client_coro_->co_remove_user_profile(
-                *remove_request);
-            if(!remove_result.status.ok())
+              co_await frontend_->user_info_client_coro_->co_remove_user_profile(*remove_request);
+            if (!remove_result.status.ok())
             {
-              log_user_info_error_(
-                "UserInfoManager::remove_user_profile()",
-                remove_result.status);
+              log_user_info_error_("UserInfoManager::remove_user_profile()", remove_result.status);
             }
           }
 
@@ -286,7 +262,7 @@ namespace AdServer
         &StatHolder::complete_user_bind_match_history_request);
       auto match_result = co_await frontend_->user_info_client_coro_->co_match(
         *history_match_request);
-      if(match_result.status.ok())
+      if (match_result.status.ok())
       {
         history_match_result_ = std::move(match_result.response_holder);
       }
@@ -304,8 +280,7 @@ namespace AdServer
   {
     google::protobuf::Arena arena;
     auto* process_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(
-        &arena);
+      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest>(&arena);
     frontend_->fill_match_request_info_(
       *process_match_request->mutable_match_request_info(),
       result_user_id_,
@@ -316,7 +291,7 @@ namespace AdServer
       referer_,
       source_);
 
-    if(frontend_->campaign_manager_coro_)
+    if (frontend_->campaign_manager_coro_)
     {
       StatStageGuard stat_guard(
         frontend_->stats_.in(),
@@ -325,7 +300,7 @@ namespace AdServer
       auto campaign_result =
         co_await frontend_->campaign_manager_coro_->co_process_match_request(
           *process_match_request);
-      if(!campaign_result.status.ok())
+      if (!campaign_result.status.ok())
       {
         Stream::Error ostr;
         ostr << FUN << ": Can't process match request. "
@@ -351,7 +326,7 @@ namespace AdServer
   {
     auto* grpc_match_params = history_match_request.mutable_match_params();
 
-    if(trigger_match_result_present_)
+    if (trigger_match_result_present_)
     {
       const auto& matched_channels = trigger_match_result_->matched_channels();
       typedef std::set<ChannelMatch> ChannelMatchSet;
@@ -362,7 +337,7 @@ namespace AdServer
         matched_channels.page_channels().end(),
         std::inserter(page_channels, page_channels.end()),
         GetChannelTriggerId());
-      for(const auto& channel : page_channels)
+      for (const auto& channel : page_channels)
       {
         auto* channel_match = grpc_match_params->add_page_channel_ids();
         channel_match->set_channel_id(channel.channel_id);
@@ -375,7 +350,7 @@ namespace AdServer
         matched_channels.url_channels().end(),
         std::inserter(url_channels, url_channels.end()),
         GetChannelTriggerId());
-      for(const auto& channel : url_channels)
+      for (const auto& channel : url_channels)
       {
         auto* channel_match = grpc_match_params->add_url_channel_ids();
         channel_match->set_channel_id(channel.channel_id);
@@ -388,7 +363,7 @@ namespace AdServer
         matched_channels.url_keyword_channels().end(),
         std::inserter(url_keyword_channels, url_keyword_channels.end()),
         GetChannelTriggerId());
-      for(const auto& channel : url_keyword_channels)
+      for (const auto& channel : url_keyword_channels)
       {
         auto* channel_match = grpc_match_params->add_url_keyword_channel_ids();
         channel_match->set_channel_id(channel.channel_id);
@@ -405,8 +380,7 @@ namespace AdServer
     grpc_match_params->set_provide_persistent_channels(false);
     grpc_match_params->set_change_last_request(false);
     grpc_match_params->set_filter_contextual_triggers(false);
-    grpc_match_params->set_publishers_optin_timeout(
-      GrpcAlgs::pack_time(Generics::Time::ZERO));
+    grpc_match_params->set_publishers_optin_timeout(GrpcAlgs::pack_time(Generics::Time::ZERO));
     grpc_match_params->set_cohort(cohort_);
 
     auto* grpc_user_info = history_match_request.mutable_user_info();
@@ -432,13 +406,11 @@ namespace AdServer
   }
 
   void
-  UserBindMatchRequestState::log_channel_error_(
-    const grpc::Status& status) const
+  UserBindMatchRequestState::log_channel_error_(const grpc::Status& status) const
   {
     Stream::Error ostr;
     ostr << FUN << ": caught ChannelServerGrpcAsyncClient error: code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
+      static_cast<int>(status.error_code()) << ", message=" << status.error_message();
     frontend_->logger()->log(
       ostr.str(),
       Logging::Logger::EMERGENCY,
@@ -454,13 +426,11 @@ namespace AdServer
     Stream::Error ostr;
     ostr << FUN << ": " << operation << " gRPC call failed: user_id = '" <<
       result_user_id_.to_string() << "'; code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
+      static_cast<int>(status.error_code()) << ", message=" << status.error_message();
     frontend_->logger()->log(
       ostr.str(),
       Logging::Logger::EMERGENCY,
       USER_BIND_FRONTEND_ASPECT,
-      status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-        "ADS-IMPL-7804" : "ADS-IMPL-7803");
+      status.error_code() == grpc::StatusCode::UNAVAILABLE ? "ADS-IMPL-7804" : "ADS-IMPL-7803");
   }
 }

@@ -14,7 +14,7 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(!defined($self->{dumped_}))
+  if (!defined($self->{dumped_}))
   {
     my $index = 1;
     foreach my $value(@$row)

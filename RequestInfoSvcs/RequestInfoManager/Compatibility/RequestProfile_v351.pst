@@ -45,7 +45,7 @@ namespace RequestInfoSvcs_v351
   {
     uint version;
   };
-  
+
   autoreader RequestInfoProfileVersionReader<RequestInfoProfileVersionDescriptor>;
 
   struct RequestInfoProfileDescriptor
@@ -185,7 +185,7 @@ namespace RequestInfoSvcs_v351
 
     ccg_keyword_id;
     keyword_id;
-    
+
     num_shown;
     position;
 
@@ -245,7 +245,7 @@ namespace RequestInfoSvcs_v351
     array<NonconsideredCustomActionReader> custom_actions_imp_non_considered_;
     array<NonconsideredCustomActionReader> custom_actions_click_non_considered_;
     array<ChannelRevenueReader> cmp_channels;
-    
+
     auction_type;
   };
 
@@ -345,7 +345,7 @@ namespace RequestInfoSvcs_v351
     array<NonconsideredCustomActionWriter> custom_actions_imp_non_considered_;
     array<NonconsideredCustomActionWriter> custom_actions_click_non_considered_;
     array<ChannelRevenueWriter> cmp_channels;
-    
+
     auction_type;
   };
 }

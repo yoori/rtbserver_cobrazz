@@ -23,8 +23,7 @@ namespace AdServer
     struct GetChannelId
     {
       unsigned int
-      operator() (
-        const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+      operator() (const adserver::channel_svcs::channel_server::ChannelAtom& atom)
         noexcept
       {
         return atom.id();
@@ -36,9 +35,9 @@ namespace AdServer
       DebugStream& out,
       const google::protobuf::RepeatedField<google::protobuf::uint64>& ids)
     {
-      for(int i = 0; i < ids.size(); ++i)
+      for (int i = 0; i < ids.size(); ++i)
       {
-        if(i)
+        if (i)
         {
           out << ",";
         }
@@ -61,7 +60,7 @@ namespace AdServer
     {
       DebugStream ostr;
 
-      if(require_debug_body())
+      if (require_debug_body())
       {
         ostr << "<html>\n<head>\n"
           "<meta http-equiv=\"Content-Type\" "
@@ -78,7 +77,7 @@ namespace AdServer
 
       ostr << res;
 
-      if(require_debug_body())
+      if (require_debug_body())
       {
         ostr << "</pre>\n</body>\n</html>\n";
 
@@ -89,9 +88,7 @@ namespace AdServer
       }
       else
       {
-        response.add_header_nocopy_name(
-          Response::Header::DEBUG_INFO,
-          ostr.str());
+        response.add_header_nocopy_name(Response::Header::DEBUG_INFO, ostr.str());
       }
     }
   }
@@ -116,15 +113,12 @@ namespace AdServer
         "<html>\n<head>\n"
         "<meta http-equiv=\"Content-Type\" "
         "content=\"text/html; charset=utf-8\"/>\n</head>\n<body>\n<pre>\n\n" <<
-        Debug::ERROR_HEAD << "\n" << res_error <<
-        "</pre>\n</body>\n</html>\n";
+        Debug::ERROR_HEAD << "\n" << res_error << "</pre>\n</body>\n</html>\n";
 
       response.set_content_type_nocopy(Response::Type::TEXT_HTML);
 
       const std::string& debug_content_str = debug_content.str();
-      response.get_output_stream().write(
-        debug_content_str.data(),
-        debug_content_str.size());
+      response.get_output_stream().write(debug_content_str.data(), debug_content_str.size());
     }
     catch(...)
     {}
@@ -144,8 +138,7 @@ namespace AdServer
   }
 
   void
-  DebugSink::print_request_debug_info(
-    const RequestInfo& request_info)
+  DebugSink::print_request_debug_info(const RequestInfo& request_info)
     noexcept
   {
     if (require_long_debug_info())
@@ -187,14 +180,12 @@ namespace AdServer
         "page_load_id = " << request_info.page_load_id << sep_ <<
         "ccid = " << request_info.ccid << sep_ <<
         "test_request = " << request_info.test_request << sep_ <<
-        "log_as_test = " << request_info.log_as_test << sep_ <<
-        "location = ";
+        "log_as_test = " << request_info.log_as_test << sep_ << "location = ";
 
-      if(request_info.location)
+      if (request_info.location)
       {
         debug_info_str_ << request_info.location->country << "/" <<
-          request_info.location->region << "/" <<
-          request_info.location->city;
+          request_info.location->region << "/" << request_info.location->city;
       }
 
       debug_info_str_ << sep_ <<
@@ -209,8 +200,7 @@ namespace AdServer
         "colocation_passback = " << (request_info.passback_by_colocation ? "true" : "false") << sep_ <<
         "browser = " << request_info.web_browser << sep_ <<
         "platform = " << request_info.platform << sep_ <<
-        "full_platform = " << request_info.full_platform << sep_ <<
-        "platform_ids = ";
+        "full_platform = " << request_info.full_platform << sep_ << "platform_ids = ";
       Algs::print(debug_info_str_, request_info.platform_ids.begin(), request_info.platform_ids.end());
       debug_info_str_ << sep_;
     }
@@ -223,7 +213,7 @@ namespace AdServer
     char type)
     noexcept
   {
-    for(int ch_i = 0; ch_i < channels.size(); ++ch_i)
+    for (int ch_i = 0; ch_i < channels.size(); ++ch_i)
     {
       debug_info_str_ << field_begin_ << channels[ch_i].id() << type <<
         " :: " << channels[ch_i].trigger_channel_id() << field_end_;
@@ -239,9 +229,9 @@ namespace AdServer
     bool first_delimiter,
     const char* delim = ", ")
   {
-    for(IteratorType it = it_begin; it != it_end; ++it)
+    for (IteratorType it = it_begin; it != it_end; ++it)
     {
-      if(it != it_begin || first_delimiter)
+      if (it != it_begin || first_delimiter)
       {
         out << delim;
       }
@@ -266,7 +256,7 @@ namespace AdServer
     }
     else if (require_long_debug_info())
     {
-      if(require_debug_body())
+      if (require_debug_body())
       {
         debug_info_str_ << "\n" << Debug::CHANNEL_MATCHING_HEAD << "\n";
       }
@@ -275,37 +265,30 @@ namespace AdServer
         prefix << "special_channels_effects = " <<
           (match_result.no_track() ? "NO TRACK": "TRACK") << ", " <<
           (match_result.no_adv() ? "NO ADV": "ADV") << sep_ <<
-        prefix <<
-          "triggers = " << (require_debug_body() ? "\n" : "");
+        prefix << "triggers = " << (require_debug_body() ? "\n" : "");
 
       const auto& matched_channels = match_result.matched_channels();
-      print_channel_matching_seq_(
-        matched_channels.page_channels(), 'P');
-      print_channel_matching_seq_(
-        matched_channels.search_channels(), 'S');
-      print_channel_matching_seq_(
-        matched_channels.url_channels(), 'U');
-      print_channel_matching_seq_(
-        matched_channels.url_keyword_channels(), 'R');
+      print_channel_matching_seq_(matched_channels.page_channels(), 'P');
+      print_channel_matching_seq_(matched_channels.search_channels(), 'S');
+      print_channel_matching_seq_(matched_channels.url_channels(), 'U');
+      print_channel_matching_seq_(matched_channels.url_keyword_channels(), 'R');
 
-      debug_info_str_ << sep_ <<
-        prefix << "trigger_channels = ";
+      debug_info_str_ << sep_ << prefix << "trigger_channels = ";
 
       IdSetType uniq_ids;
       bool first_delimiter = false;
-      if(matched_channels.page_channels_size())
+      if (matched_channels.page_channels_size())
       {
         std::transform(
           matched_channels.page_channels().begin(),
           matched_channels.page_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
-        print_with_type(
-          debug_info_str_,
-          uniq_ids.begin(), uniq_ids.end(), 'P', first_delimiter);
+        print_with_type(debug_info_str_, uniq_ids.begin(), uniq_ids.end(), 'P', first_delimiter);
         first_delimiter = true;
       }
-      if(matched_channels.search_channels_size())
+
+      if (matched_channels.search_channels_size())
       {
         uniq_ids.clear();
         std::transform(
@@ -313,12 +296,11 @@ namespace AdServer
           matched_channels.search_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
-        print_with_type(
-          debug_info_str_,
-          uniq_ids.begin(), uniq_ids.end(), 'S', first_delimiter);
+        print_with_type(debug_info_str_, uniq_ids.begin(), uniq_ids.end(), 'S', first_delimiter);
         first_delimiter = true;
       }
-      if(matched_channels.url_channels_size())
+
+      if (matched_channels.url_channels_size())
       {
         uniq_ids.clear();
         std::transform(
@@ -326,12 +308,11 @@ namespace AdServer
           matched_channels.url_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
-        print_with_type(
-          debug_info_str_,
-          uniq_ids.begin(), uniq_ids.end(), 'U', first_delimiter);
+        print_with_type(debug_info_str_, uniq_ids.begin(), uniq_ids.end(), 'U', first_delimiter);
         first_delimiter = true;
       }
-      if(matched_channels.url_keyword_channels_size())
+
+      if (matched_channels.url_keyword_channels_size())
       {
         uniq_ids.clear();
         std::transform(
@@ -339,28 +320,25 @@ namespace AdServer
           matched_channels.url_keyword_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
-        print_with_type(
-          debug_info_str_,
-          uniq_ids.begin(), uniq_ids.end(), 'R', first_delimiter);
+        print_with_type(debug_info_str_, uniq_ids.begin(), uniq_ids.end(), 'R', first_delimiter);
         first_delimiter = true;
       }
-      if(matched_channels.uid_channels_size())
+
+      if (matched_channels.uid_channels_size())
       {
         uniq_ids.clear();
         std::copy(
           matched_channels.uid_channels().begin(),
           matched_channels.uid_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()));
-        print_with_type(
-          debug_info_str_,
-          uniq_ids.begin(), uniq_ids.end(), 'A', first_delimiter);
+        print_with_type(debug_info_str_, uniq_ids.begin(), uniq_ids.end(), 'A', first_delimiter);
       }
 
       debug_info_str_ << sep_ << prefix << "content_channels = ";
 
-      for(int i = 0; i < match_result.content_channels_size(); ++i)
+      for (int i = 0; i < match_result.content_channels_size(); ++i)
       {
-        if(i != 0)
+        if (i != 0)
         {
           debug_info_str_ << ", ";
         }
@@ -370,10 +348,10 @@ namespace AdServer
 
       debug_info_str_ << sep_;
 
-      if(ccg_keywords && allow_show_history_profile_)
+      if (ccg_keywords && allow_show_history_profile_)
       {
         debug_info_str_ << prefix << "ccg_keywords =";
-        for(const auto& ccg_keyword : ccg_keywords->ccg_keywords())
+        for (const auto& ccg_keyword : ccg_keywords->ccg_keywords())
         {
           debug_info_str_ << field_begin_ <<
             "'" << ccg_keyword.original_keyword() << "'" <<
@@ -381,8 +359,7 @@ namespace AdServer
             " :: ch_id = " << ccg_keyword.channel_id() <<
             " :: ccg_id = " << ccg_keyword.ccg_id() <<
             " :: max_cpc = " <<
-              GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-                ccg_keyword.max_cpc()) <<
+              GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(ccg_keyword.max_cpc()) <<
             " :: ctr = " <<
               GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
                 ccg_keyword.ctr()) << field_end_;
@@ -394,13 +371,12 @@ namespace AdServer
   }
 
   void
-  DebugSink::print_trigger_matching_error(
-    const String::SubString& error)
+  DebugSink::print_trigger_matching_error(const String::SubString& error)
     noexcept
   {
-    if(require_debug_info())
+    if (require_debug_info())
     {
-      if(require_debug_body())
+      if (require_debug_body())
       {
         debug_info_str_ << "\n" << Debug::CHANNEL_MATCHING_HEAD << "\n";
       }
@@ -415,7 +391,7 @@ namespace AdServer
       history_match_result)
     noexcept
   {
-    if(require_debug_body())
+    if (require_debug_body())
     {
       debug_info_str_ << "\n" << Debug::HISTORY_MATCHING_HEAD << "\n";
     }
@@ -427,8 +403,7 @@ namespace AdServer
     debug_info_str_ << "last_request_time = ";
     try
     {
-      debug_info_str_ << GrpcAlgs::unpack_time(
-          history_match_result.last_request_time()).gm_ft() <<
+      debug_info_str_ << GrpcAlgs::unpack_time(history_match_result.last_request_time()).gm_ft() <<
         sep_ << "create_time = " << GrpcAlgs::unpack_time(
           history_match_result.create_time()).gm_ft() <<
         sep_ << "session_start = " << GrpcAlgs::unpack_time(
@@ -439,12 +414,12 @@ namespace AdServer
       debug_info_str_ << "invalid time";
     }
 
-    if(allow_show_history_profile_)
+    if (allow_show_history_profile_)
     {
       debug_info_str_ << sep_ << "history_channels = ";
-      for(int i = 0; i < history_match_result.channels_size(); ++i)
+      for (int i = 0; i < history_match_result.channels_size(); ++i)
       {
-        if(i != 0)
+        if (i != 0)
         {
           debug_info_str_ << ",";
         }
@@ -453,9 +428,9 @@ namespace AdServer
     }
 
     debug_info_str_ << sep_ << "full_freq_caps = ";
-    for(int i = 0; i < history_match_result.full_freq_caps_size(); ++i)
+    for (int i = 0; i < history_match_result.full_freq_caps_size(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         debug_info_str_ << ",";
       }
@@ -477,8 +452,7 @@ namespace AdServer
   }
 
   void
-  DebugSink::print_time_metering_debug_info(
-    const RequestTimeMetering& time_metering)
+  DebugSink::print_time_metering_debug_info(const RequestTimeMetering& time_metering)
     noexcept
   {
     if (require_debug_body())
@@ -486,9 +460,7 @@ namespace AdServer
       debug_info_str_ << "\n" << Debug::TIME_METERING_HEAD << "\n";
     }
 
-    debug_info_str_ <<
-      "trigger_match_time = " <<
-      time_metering.trigger_match_time;
+    debug_info_str_ << "trigger_match_time = " << time_metering.trigger_match_time;
     if (require_long_debug_info())
     {
       debug_info_str_ << " : ";
@@ -519,14 +491,12 @@ namespace AdServer
   {
     if (require_debug_body())
     {
-      debug_info_str_ << "\n" <<
-        Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+      debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
     else if (require_short_header())
     {
       debug_info_str_ << "fc_click_url = " << sep_ <<
-        "passback_url = " << sep_ <<
-        "ccids = 0" << sep_;
+        "passback_url = " << sep_ << "ccids = 0" << sep_;
       return;
     }
 
@@ -535,9 +505,7 @@ namespace AdServer
       "cmpid = 0" << sep_ <<
       "creative_size_id = 0" << sep_ <<
       "mime_format = " << sep_ <<
-      "tag_id = 0" << sep_ <<
-      "site_id = 0" << sep_ <<
-      "site_rate_id = 0" << sep_;
+      "tag_id = 0" << sep_ << "site_id = 0" << sep_ << "site_rate_id = 0" << sep_;
   }
 
   void
@@ -546,10 +514,8 @@ namespace AdServer
     const CM::AdSlotResult& request_creative_result)
     noexcept
   {
-    const auto& selected_creatives =
-      request_creative_result.selected_creatives();
-    const CM::AdSlotDebugInfo& debug_info =
-      request_creative_result.debug_info();
+    const auto& selected_creatives = request_creative_result.selected_creatives();
+    const CM::AdSlotDebugInfo& debug_info = request_creative_result.debug_info();
     const auto& debug_selected_creatives =
       request_creative_result.debug_info().selected_creatives();
     const int creative_count = selected_creatives.size();
@@ -558,46 +524,38 @@ namespace AdServer
 
     if (require_debug_body())
     {
-      debug_info_str_ << "\n" <<
-        Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+      debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
     }
     else if (require_short_header())
     {
       const int dc_count = debug_selected_creatives.size();
       debug_info_str_ << "fc_click_url = " <<
         (dc_count ? selected_creatives.Get(0).click_url() : "") << sep_ <<
-        "passback_url = " << passback_info.url << sep_ <<
-        "ccids = " << creative_count << sep_;
+        "passback_url = " << passback_info.url << sep_ << "ccids = " << creative_count << sep_;
       return;
     }
 
     unsigned long first_ccid = 0;
     unsigned long first_cmp_id = 0;
 
-    if(creative_count != 0)
+    if (creative_count != 0)
     {
       first_ccid = selected_creatives.Get(0).ccid();
       first_cmp_id = selected_creatives.Get(0).cmp_id();
     }
 
-    CampaignSvcs::RevenueDecimal imp_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
-    CampaignSvcs::RevenueDecimal click_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
-    CampaignSvcs::RevenueDecimal action_revenue(
-      CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal imp_revenue(CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal click_revenue(CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal action_revenue(CampaignSvcs::RevenueDecimal::ZERO);
 
-    for(int i = 0; i < debug_selected_creatives.size(); ++i)
+    for (int i = 0; i < debug_selected_creatives.size(); ++i)
     {
       imp_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives.Get(i).imp_revenue().value());
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives.Get(i).imp_revenue().value());
       click_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives.Get(i).click_revenue().value());
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives.Get(i).click_revenue().value());
       action_revenue += GrpcAlgs::unpack_decimal<
-        CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives.Get(i).action_revenue().value());
+        CampaignSvcs::RevenueDecimal>(debug_selected_creatives.Get(i).action_revenue().value());
     }
 
     debug_info_str_ <<
@@ -619,18 +577,17 @@ namespace AdServer
       "cpm_threshold = " <<
         GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           debug_info.cpm_threshold().value()) << sep_ <<
-      "walled_garden = " << debug_info.walled_garden() << sep_ <<
-      "auction_type = ";
+      "walled_garden = " << debug_info.walled_garden() << sep_ << "auction_type = ";
 
-    if(debug_info.auction_type() == CampaignSvcs::AT_RANDOM)
+    if (debug_info.auction_type() == CampaignSvcs::AT_RANDOM)
     {
       debug_info_str_ << "random";
     }
-    else if(debug_info.auction_type() == CampaignSvcs::AT_MAX_ECPM)
+    else if (debug_info.auction_type() == CampaignSvcs::AT_MAX_ECPM)
     {
       debug_info_str_ << "max ecpm";
     }
-    else if(debug_info.auction_type() == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
+    else if (debug_info.auction_type() == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
     {
       debug_info_str_ << "proportional probability";
     }
@@ -639,15 +596,13 @@ namespace AdServer
       debug_info_str_ << "unknown";
     }
 
-    debug_info_str_ << sep_ <<
-      "selected_creatives = ";
+    debug_info_str_ << sep_ << "selected_creatives = ";
 
-    for(int i = 0; i < creative_count; ++i)
+    for (int i = 0; i < creative_count; ++i)
     {
       const String::SubString OFFSET(require_debug_body() ? "  " : "");
       const CM::CreativeSelectResult& creative = selected_creatives.Get(i);
-      const CM::CreativeSelectDebugInfo& debug_creative =
-        debug_selected_creatives.Get(i);
+      const CM::CreativeSelectDebugInfo& debug_creative = debug_selected_creatives.Get(i);
 
       debug_info_str_ << creative_start_sep_ <<
         OFFSET << "request_id = " <<
@@ -678,8 +633,7 @@ namespace AdServer
 
     debug_info_str_ << sep_;
 
-    if (require_debug_body() &&
-        !debug_info.trace_ccg().empty())
+    if (require_debug_body() && !debug_info.trace_ccg().empty())
     {
       debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n";
       debug_info_str_ << debug_info.trace_ccg();
@@ -697,19 +651,16 @@ namespace AdServer
       history_match_result)
     noexcept
   {
-    if(require_debug_info())
+    if (require_debug_info())
     {
       print_request_debug_info(request_info);
 
       if (trigger_matched_channels)
       {
-        print_trigger_matching_debug_info(
-          *trigger_matched_channels,
-          ccg_keywords);
+        print_trigger_matching_debug_info(*trigger_matched_channels, ccg_keywords);
       }
 
-      print_history_matching_debug_info_(
-        history_match_result);
+      print_history_matching_debug_info_(history_match_result);
     }
   }
 
@@ -722,35 +673,30 @@ namespace AdServer
     const RequestTimeMetering& request_time_metering)
     noexcept
   {
-    if(require_debug_info())
+    if (require_debug_info())
     {
-      const CM::AdRequestDebugInfo& debug_info =
-        campaign_matching_result.debug_info();
+      const CM::AdRequestDebugInfo& debug_info = campaign_matching_result.debug_info();
 
-      debug_info_str_ << "colo_id = " << debug_info.colo_id() << sep_ <<
-        "freq-caps = ";
-      for(int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
+      debug_info_str_ << "colo_id = " << debug_info.colo_id() << sep_ << "freq-caps = ";
+      for (int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
       {
-        if(i)
+        if (i)
         {
           debug_info_str_ << ",";
         }
-        print_ids(debug_info_str_,
-          campaign_matching_result.ad_slots(i).freq_caps());
+        print_ids(debug_info_str_, campaign_matching_result.ad_slots(i).freq_caps());
       }
       debug_info_str_ << sep_ << "uc-freq-caps = ";
-      for(int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
+      for (int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
       {
-        if(i)
+        if (i)
         {
           debug_info_str_ << ",";
         }
-        print_ids(debug_info_str_,
-          campaign_matching_result.ad_slots(i).uc_freq_caps());
+        print_ids(debug_info_str_, campaign_matching_result.ad_slots(i).uc_freq_caps());
       }
       debug_info_str_ << sep_ <<
-        "user_group_id = " << debug_info.user_group_id() << sep_ <<
-        "geo_channels = ";
+        "user_group_id = " << debug_info.user_group_id() << sep_ << "geo_channels = ";
       print_ids(debug_info_str_, debug_info.geo_channels());
       debug_info_str_ << sep_ << "device_channels = ";
       print_ids(debug_info_str_, debug_info.platform_channels());
@@ -758,33 +704,28 @@ namespace AdServer
         "last_device_channel_id = " << debug_info.last_platform_channel_id() << sep_ <<
         "random = " << request_info.random << sep_;
 
-      if(campaign_matching_result.ad_slots_size())
+      if (campaign_matching_result.ad_slots_size())
       {
-        print_creative_selection_debug_info_(
-          passback_info,
-          campaign_matching_result.ad_slots(0));
+        print_creative_selection_debug_info_(passback_info, campaign_matching_result.ad_slots(0));
       }
       else
       {
         print_empty_creative_selection_debug_info_();
       }
 
-      print_time_metering_debug_info(
-        request_time_metering);
+      print_time_metering_debug_info(request_time_metering);
     }
   }
 
   void
-  DebugSink::print_creative_selection_error(
-    const String::SubString& error)
+  DebugSink::print_creative_selection_error(const String::SubString& error)
     noexcept
   {
-    if(require_debug_info())
+    if (require_debug_info())
     {
-      if(require_debug_body())
+      if (require_debug_body())
       {
-        debug_info_str_ << "\n" <<
-          Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+        debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
       }
 
       debug_info_str_ << "error = " << error << sep_;

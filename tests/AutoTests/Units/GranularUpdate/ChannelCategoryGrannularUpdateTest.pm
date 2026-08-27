@@ -19,7 +19,7 @@ sub init
   $ns->output("InternalAccount", DB::Defaults::instance()->internal_account);
   $ns->output("CategoryName", $category_name);
   $ns->output("ChannelCategory", $category);
-  
+
 }
 
 1;

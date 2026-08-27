@@ -13,9 +13,7 @@
 
 #include "ChannelServerCore.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   typedef ChannelUpdateBase ChannelCurrent;
 
@@ -67,5 +65,4 @@ namespace ChannelSvcs
   };
 
   typedef ReferenceCounting::SmartPtr<ChannelUpdateImpl> ChannelUpdateImpl_var;
-}
 }

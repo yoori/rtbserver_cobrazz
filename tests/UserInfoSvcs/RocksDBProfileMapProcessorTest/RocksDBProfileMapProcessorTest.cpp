@@ -19,10 +19,8 @@
 
 namespace
 {
-  using Processor =
-    AdServer::ProfilingCommons::RocksDBProfileMapProcessor;
-  using ProfileMap =
-    AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+  using Processor = AdServer::ProfilingCommons::RocksDBProfileMapProcessor;
+  using ProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
 
   Generics::ConstSmartMemBuf_var
   make_profile(const std::string& value)
@@ -202,10 +200,7 @@ main()
     try
     {
       auto profile = make_profile("rejected");
-      first->save_profile_async(
-        "rejected",
-        profile.in(),
-        Generics::Time::get_time_of_day());
+      first->save_profile_async("rejected", profile.in(), Generics::Time::get_time_of_day());
     }
     catch(const eh::Exception&)
     {
@@ -218,20 +213,13 @@ main()
     }
     first.reset();
 
-    if (!wait_count(
-      completion_condition,
-      completion_lock,
-      second_done,
-      operations_per_map))
+    if (!wait_count(completion_condition, completion_lock, second_done, operations_per_map))
     {
       throw std::runtime_error("second map operations timed out");
     }
 
     auto profile = make_profile("still-active");
-    second->save_profile(
-      "still-active",
-      profile.in(),
-      Generics::Time::get_time_of_day());
+    second->save_profile("still-active", profile.in(), Generics::Time::get_time_of_day());
     const auto loaded = second->get_profile("still-active");
     if (!loaded.in() || loaded->membuf().size() != std::string("still-active").size())
     {
@@ -251,10 +239,7 @@ main()
       true);
     third->activate_object();
     profile = make_profile("third");
-    third->save_profile(
-      "third",
-      profile.in(),
-      Generics::Time::get_time_of_day());
+    third->save_profile("third", profile.in(), Generics::Time::get_time_of_day());
     if (!third->check_profile("third"))
     {
       throw std::runtime_error("saved profile wasn't found");
@@ -305,8 +290,7 @@ main()
     std::function<void()> enqueue_same_key;
     enqueue_same_key = [&]()
     {
-      const unsigned long index =
-        same_key_sent.fetch_add(1, std::memory_order_relaxed);
+      const unsigned long index = same_key_sent.fetch_add(1, std::memory_order_relaxed);
       if (index >= same_key_operations)
       {
         return;
@@ -314,9 +298,7 @@ main()
 
       first->get_profile_async(
         "shared",
-        [&, index](
-          Generics::ConstSmartMemBuf_var,
-          std::optional<std::string> error)
+        [&, index](Generics::ConstSmartMemBuf_var, std::optional<std::string> error)
         {
           if (error)
           {
@@ -346,11 +328,7 @@ main()
       enqueue_same_key();
     }
 
-    if (!wait_count(
-      completion_condition,
-      completion_lock,
-      same_key_done,
-      same_key_operations))
+    if (!wait_count(completion_condition, completion_lock, same_key_done, same_key_operations))
     {
       throw std::runtime_error("same-key operations timed out");
     }
@@ -366,8 +344,7 @@ main()
     {
       auto map = std::make_unique<ProfileMap>(
         processor,
-        String::SubString(
-          (root / ("lifecycle-" + std::to_string(map_index))).string()),
+        String::SubString((root / ("lifecycle-" + std::to_string(map_index))).string()),
         Generics::Time::ZERO,
         8,
         Generics::Time(1),
@@ -402,8 +379,7 @@ main()
       map->wait_object();
       if (lifecycle_done->load(std::memory_order_relaxed) != lifecycle_operations)
       {
-        throw std::runtime_error(
-          "map destroyed while selected workers were still active");
+        throw std::runtime_error("map destroyed while selected workers were still active");
       }
     }
 

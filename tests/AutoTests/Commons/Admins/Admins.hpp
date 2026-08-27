@@ -82,8 +82,7 @@ namespace AutoTest
        * @param logger
        * @param log_level
        */
-      DumpExaminer(Logger& logger_,
-                   unsigned long log_level_);
+      DumpExaminer(Logger& logger_, unsigned long log_level_);
 
       /**
        * @brief Examine input stream.
@@ -131,7 +130,7 @@ namespace AutoTest
      */
     bool add_cmd_i (const char* cmd)
     {
-      if(strlen(cmd) == 0)
+      if (strlen(cmd) == 0)
       {
         return false;
       }
@@ -149,7 +148,7 @@ namespace AutoTest
      */
     bool add_cmd_i (const std::string& cmd)
     {
-      if(cmd.empty() || !add_cmd_i(cmd.c_str()))
+      if (cmd.empty() || !add_cmd_i(cmd.c_str()))
       {
         return false;
       }
@@ -286,12 +285,8 @@ namespace AutoTest
      * @param values list of values.
      * @return reference to out stream.
      */
-    std::ostream& dumpout (
-      std::ostream& out,
-      const values_list_type& values) const;
-    std::ostream& dumpout (
-      std::ostream& out,
-      const expects_list_type& values) const;
+    std::ostream& dumpout (std::ostream& out, const values_list_type& values) const;
+    std::ostream& dumpout (std::ostream& out, const expects_list_type& values) const;
 
     /**
      * @brief Check some result value.
@@ -542,9 +537,7 @@ namespace AutoTest
      * @param size amount of name-value pairs to setup.
      * @param nvpair list of name-value pairs to setup
      */
-    bool setup_examine(BasicExaminer& examiner,
-      size_t size,
-      const std::string* nvpair);
+    bool setup_examine(BasicExaminer& examiner, size_t size, const std::string* nvpair);
 
   public:
 
@@ -618,10 +611,7 @@ namespace AutoTest
      * @return true if command executing is successful
      * and all expected values received.
      */
-    bool examine(
-      BasicExaminer& examiner,
-      size_t size,
-      const char* const* expects);
+    bool examine(BasicExaminer& examiner, size_t size, const char* const* expects);
 
     bool examine(const char* expects);
 
@@ -631,10 +621,7 @@ namespace AutoTest
      * This function is like previous one, but it uses list of STL strings
      * (instead of list of C-strings) as a list of expected values.
      */
-    bool examine(
-      BasicExaminer& examiner,
-      size_t size,
-      const std::string expects[]);
+    bool examine(BasicExaminer& examiner, size_t size, const std::string expects[]);
 
     /**
      * @brief Setup expected values and examine Admin output.
@@ -649,11 +636,7 @@ namespace AutoTest
      * @param expects list of expected values.
      * @return true if command execution and examination are successful.
      */
-    bool examine(
-      BasicExaminer& examiner,
-      size_t sizex,
-      size_t size,
-      const std::string* expects);
+    bool examine(BasicExaminer& examiner, size_t sizex, size_t size, const std::string* expects);
 
     /**
      * @brief Setup expected values and examine Admin output.
@@ -661,11 +644,7 @@ namespace AutoTest
      * This function is like previous one, but it uses list of STL strings
      * (instead of list of C-strings) as a list of expected values.
      */
-    bool examine(
-      BasicExaminer& examiner,
-      size_t sizex,
-      size_t size,
-      const char* const* expects);
+    bool examine(BasicExaminer& examiner, size_t sizex, size_t size, const char* const* expects);
 
     /**
      * @brief Prints Admin command call string.
@@ -793,10 +772,8 @@ namespace AutoTest
     bool examine(const expects_type1 (&expects)[Count2])
     {
       Examiner examiner(*this);
-      const expects_type1* array1 =
-        static_cast<const expects_type1*>(expects);
-      const std::string* array2 =
-        static_cast<const std::string*>(*array1);
+      const expects_type1* array1 = static_cast<const expects_type1*>(expects);
+      const std::string* array2 = static_cast<const std::string*>(*array1);
       return BaseCmd::examine(examiner,
         Count2,
         Count,
@@ -811,10 +788,7 @@ namespace AutoTest
     bool examine(const expects_type2 (&expects)[Count2])
     {
       Examiner examiner(*this);
-      return BaseCmd::examine(examiner,
-        Count2,
-        Count,
-        static_cast<const char* const*>(expects));
+      return BaseCmd::examine(examiner, Count2, Count, static_cast<const char* const*>(expects));
     }
 
     /**

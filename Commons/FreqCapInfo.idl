@@ -14,7 +14,7 @@ module AdServer
       CORBACommons::TimestampInfo period;
       unsigned long window_limit;
       CORBACommons::TimestampInfo window_time;
-    };    
+    };
   };
 };
 

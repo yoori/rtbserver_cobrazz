@@ -21,8 +21,7 @@ namespace
 ExpressionMatcherApp_::ExpressionMatcherApp_()
   /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "ExpressionMatcherApp_", ASPECT, 0)
 {
 }
@@ -37,7 +36,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
   {
     const char* usage = "usage: ExpressionMatcher <config_file>";
 
-    if(argc < 2)
+    if (argc < 2)
     {
       Stream::Error ostr;
       ostr << "config file is not specified\n" << usage;
@@ -56,25 +55,22 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
 
       configuration_ =
-        ConfigPtr(new ExpressionMatcherConfigType(
-          ad_configuration->ExpressionMatcherConfig()));
+        ConfigPtr(new ExpressionMatcherConfigType(ad_configuration->ExpressionMatcherConfig()));
     }
     catch(const xml_schema::parsing& e)
     {
       Stream::Error ostr;
 
-      ostr << "Can't parse config file '"
-           << argv[1] << "'."
-           << ": ";
+      ostr << "Can't parse config file '" << argv[1] << "'." << ": ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -85,10 +81,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "Can't parse config file '"
-           << argv[1] << "'."
-           << ": "
-           << e.what();
+      ostr << "Can't parse config file '" << argv[1] << "'." << ": " << e.what();
       throw Exception(ostr, "ADS-IMPL-4000");
     }
     catch(...)
@@ -101,8 +94,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
     /* Initializing logger */
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -135,8 +127,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
 
         snmp_stat_provider_ = new SNMPAgentX::SNMPStatsImpl(
           proc_stat_impl, snmp_index,
-          Logging::Logger_var(new Logging::LoggerDefaultHolder(
-            logger(), 0, "ADS-IMPL-4025")),
+          Logging::Logger_var(new Logging::LoggerDefaultHolder(logger(), 0, "ADS-IMPL-4025")),
           "",
           "ExpressionMatcher-MIB:expressionMatcher",
           configuration_->SNMPConfig().get().mib_dirs().c_str());
@@ -153,10 +144,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
 
     /* Creating expression matcher active object */
     expression_matcher_impl_ =
-      new AdServer::RequestInfoSvcs::ExpressionMatcherImpl(
-        logger(),
-        config(),
-        proc_stat_impl);
+      new AdServer::RequestInfoSvcs::ExpressionMatcherImpl(logger(), config(), proc_stat_impl);
 
     grpc_adapter_ = new AdServer::RequestInfoSvcs::ExpressionMatcherGrpc(
       expression_matcher_impl_,
@@ -168,8 +156,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
       config().GrpcConfig().Endpoint().port(),
       config().GrpcConfig().cq_threads());
 
-    active_objects_ =
-      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    active_objects_ = std::make_shared<Generics::CompositeActiveObject>(false, false);
     active_objects_->add_child_object(expression_matcher_impl_.in());
     active_objects_->add_child_object(grpc_adapter_.in());
 
@@ -189,25 +176,19 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
   }
   catch (const Exception& e)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-                      ASPECT, e.code())
+    logger()->sstream(Logging::Logger::CRITICAL, ASPECT, e.code())
       << "ExpressionMatcherApp_::main(): "
-        "Got UserInfoManagerApp_::Exception. : \n"
-      << e.what();
+        "Got UserInfoManagerApp_::Exception. : \n" << e.what();
   }
   catch (const eh::Exception& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-                      ASPECT,
-                      "ADS-IMPL-4005")
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-4005")
       << "ExpressionMatcherApp_::main(): "
-        "Got eh::Exception. : \n"
-      << e.what();
+        "Got eh::Exception. : \n" << e.what();
   }
   catch (...)
   {
-    logger()->log(String::SubString("ExpressionMatcherApp_::main(): "
-                  "Got Unknown exception."),
+    logger()->log(String::SubString("ExpressionMatcherApp_::main(): " "Got Unknown exception."),
                   Logging::Logger::EMERGENCY,
                   ASPECT,
                   "ADS-IMPL-4006");

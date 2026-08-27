@@ -24,7 +24,7 @@ namespace AdServer::Commons
   AsyncNoAllocLockMap<KeyType>::AsyncNoAllocLockMap(unsigned long size)
   {
     locks_.reserve(size);
-    for(unsigned long i = 0; i < size; ++i)
+    for (unsigned long i = 0; i < size; ++i)
     {
       locks_.emplace_back(std::make_unique<AsyncMutex>());
     }

@@ -31,8 +31,7 @@ namespace
   const RevenueDecimal ONE_NEGATE_IMP_COUNTER("-3.75");
   */
   const RevenueDecimal ONE_IMP_SUM(1);
-  const RevenueDecimal ONE_IMP_AND_NEGATE_COUNTER =
-    ONE_IMP_COUNTER + ONE_NEGATE_IMP_COUNTER;
+  const RevenueDecimal ONE_IMP_AND_NEGATE_COUNTER = ONE_IMP_COUNTER + ONE_NEGATE_IMP_COUNTER;
   const unsigned long TRIGGERS_IN_CHANNEL = 15;
 
   const unsigned long POSITIVE_TRIGGERS_GROUP_SIZE = 10;
@@ -47,8 +46,7 @@ struct CollTriggerActionProcessor:
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  virtual void process_triggers_impression(
-    const TriggersMatchInfo& match_info)
+  virtual void process_triggers_impression(const TriggersMatchInfo& match_info)
     /*throw(TriggerActionProcessor::Exception)*/
   {
     page_imps_.add(match_info.page_matches);
@@ -56,8 +54,7 @@ public:
     url_imps_.add(match_info.url_matches);
   }
 
-  virtual void process_triggers_click(
-    const TriggersMatchInfo& match_info)
+  virtual void process_triggers_click(const TriggersMatchInfo& match_info)
     /*throw(TriggerActionProcessor::Exception)*/
   {
     page_clicks_.add(match_info.page_matches);
@@ -128,9 +125,9 @@ public:
     MatchCountMap::const_iterator mit = page_imps_.find(
       MatchCounterKey(channel_trigger_id, channel_id));
 
-    if(mit == page_imps_.end())
+    if (mit == page_imps_.end())
     {
-      if(!zero_expected)
+      if (!zero_expected)
       {
         std::cerr << prefix <<
           ": unexpected null match counter for channel_trigger_id = " <<
@@ -142,22 +139,21 @@ public:
     }
 
     bool res = false;
-    for(std::list<RevenueDecimal>::const_iterator eit = expected.begin();
+    for (std::list<RevenueDecimal>::const_iterator eit = expected.begin();
         eit != expected.end(); ++eit)
     {
-      if(mit->second == *eit)
+      if (mit->second == *eit)
       {
         res = true;
         break;
       }
     }
 
-    if(!res)
+    if (!res)
     {
       std::cerr << prefix <<
         ": unexpected match counter for channel_trigger_id = " <<
-        channel_trigger_id << ": " << mit->second <<
-        " instead one of (";
+        channel_trigger_id << ": " << mit->second << " instead one of (";
       Algs::print(std::cerr, expected.begin(), expected.end());
       std::cerr << "), full result:" << std::endl;
       print(std::cerr, "  ");
@@ -180,14 +176,12 @@ public:
     return check_page_trigger(prefix, channel_trigger_id, channel_id, check);
   }
 
-  bool check_imp_sum(
-    const char* prefix,
-    const RevenueDecimal& expected_counter)
+  bool check_imp_sum(const char* prefix, const RevenueDecimal& expected_counter)
   {
     RevenueDecimal sum = get_sum_(page_imps_);
     sum += get_sum_(search_imps_);
     sum += get_sum_(url_imps_);
-    if(sum != expected_counter)
+    if (sum != expected_counter)
     {
       std::cerr << prefix << ": unexpected match counter sum = " << sum <<
         " instead " << expected_counter << ", full result:" << std::endl;
@@ -198,12 +192,10 @@ public:
     return true;
   }
 
-  bool check_page_sum(
-    const char* prefix,
-    const RevenueDecimal& expected_counter)
+  bool check_page_sum(const char* prefix, const RevenueDecimal& expected_counter)
   {
     RevenueDecimal page_sum = get_sum_(page_imps_);
-    if(page_sum != expected_counter)
+    if (page_sum != expected_counter)
     {
       std::cerr << prefix << ": unexpected match counter page sum = " << page_sum <<
         " instead " << expected_counter << ", full result:" << std::endl;
@@ -221,8 +213,7 @@ protected:
   static RevenueDecimal get_sum_(const MatchCountMap& matches)
   {
     RevenueDecimal res_sum = RevenueDecimal::ZERO;
-    for(MatchCountMap::const_iterator mit = matches.begin();
-        mit != matches.end(); ++mit)
+    for (MatchCountMap::const_iterator mit = matches.begin(); mit != matches.end(); ++mit)
     {
       res_sum += mit->second;
     }
@@ -244,8 +235,7 @@ class UserTriggerMatchProfileProviderTestImpl:
   public virtual ReferenceCounting::AtomicImpl
 {
 public:
-  UserTriggerMatchProfileProviderTestImpl(
-    UserTriggerMatchContainer* container)
+  UserTriggerMatchProfileProviderTestImpl(UserTriggerMatchContainer* container)
     : container_(ReferenceCounting::add_ref(container))
   {}
 
@@ -306,8 +296,7 @@ public:
         chunk_folders,
         (std::string(root_path) + TEST_FOLDER).c_str());
 
-      CollTriggerActionProcessor_var processor =
-        new CollTriggerActionProcessor();
+      CollTriggerActionProcessor_var processor = new CollTriggerActionProcessor();
 
       UserTriggerMatchContainer_var temp_container(
         new UserTriggerMatchContainer(
@@ -385,7 +374,7 @@ public:
       container->wait_object();
       temp_container->wait_object();
 
-      if(res)
+      if (res)
       {
         std::cout << "Test '" << name() << "': success" << std::endl;
       }
@@ -433,7 +422,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
     channel->page_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -446,8 +435,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -497,7 +485,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->search_min_visits = 1;
     channel->search_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->search_triggers.push_back(i);
     }
@@ -561,7 +549,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
     channel->page_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -574,8 +562,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -635,7 +622,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
     channel->page_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -648,8 +635,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -707,7 +693,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 0;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -720,8 +706,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -766,7 +751,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -779,8 +764,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -835,7 +819,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -848,8 +832,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     {
       ImpressionInfo imp_info;
@@ -898,7 +881,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -911,8 +894,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -970,7 +952,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -983,8 +965,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1034,7 +1015,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 2;
     channel->page_time_to = Generics::Time::ONE_DAY.tv_sec;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1047,8 +1028,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1108,7 +1088,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 2;
     channel->page_time_to = Generics::Time::ONE_DAY.tv_sec;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1121,8 +1101,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1151,33 +1130,22 @@ public:
       cont->process_impression(imp_info);
     }
 
-    RevenueDecimal divided_imp_counter =
-      RevenueDecimal::div(ONE_IMP_COUNTER, RevenueDecimal(2));
+    RevenueDecimal divided_imp_counter = RevenueDecimal::div(ONE_IMP_COUNTER, RevenueDecimal(2));
     RevenueDecimal divided_negate_imp_counter =
       RevenueDecimal::div(ONE_NEGATE_IMP_COUNTER, RevenueDecimal(2));
     std::list<RevenueDecimal> exp;
 
     exp.push_back(divided_imp_counter); // no noise
     exp.push_back(divided_imp_counter + divided_negate_imp_counter);
-    exp.push_back(divided_imp_counter +
-      divided_negate_imp_counter + divided_negate_imp_counter);
+    exp.push_back(divided_imp_counter + divided_negate_imp_counter + divided_negate_imp_counter);
 
     exp.push_back(divided_imp_counter + divided_imp_counter);
-    exp.push_back(divided_imp_counter + divided_imp_counter +
-      divided_negate_imp_counter);
+    exp.push_back(divided_imp_counter + divided_imp_counter + divided_negate_imp_counter);
     exp.push_back(divided_imp_counter + divided_imp_counter +
       divided_negate_imp_counter + divided_negate_imp_counter);
 
-    bool res = processor->check_page_trigger(
-      name(),
-      2,
-      1,
-      exp);
-    res &= processor->check_page_trigger(
-      name(),
-      3,
-      1,
-      exp);
+    bool res = processor->check_page_trigger(name(), 2, 1, exp);
+    res &= processor->check_page_trigger(name(), 3, 1, exp);
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     return res;
@@ -1211,8 +1179,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1233,8 +1200,7 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    bool res = processor->check_page_trigger(
-      name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
+    bool res = processor->check_page_trigger(name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     /*
@@ -1273,8 +1239,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1295,8 +1260,7 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    bool res = processor->check_page_trigger(
-      name(), 3, 1, RevenueDecimal(1), RevenueDecimal(1));
+    bool res = processor->check_page_trigger(name(), 3, 1, RevenueDecimal(1), RevenueDecimal(1));
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     /*
@@ -1325,7 +1289,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
     channel->page_time_to = 1;
-    for(int i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1338,8 +1302,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1360,8 +1323,7 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    bool res = processor->check_page_trigger(
-      name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
+    bool res = processor->check_page_trigger(name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     /*
@@ -1400,8 +1362,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1421,8 +1382,7 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    bool res = processor->check_page_trigger(
-      name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
+    bool res = processor->check_page_trigger(name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     /*
@@ -1455,8 +1415,7 @@ public:
     UserTriggerMatchContainer* /*temp_container*/,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
@@ -1476,8 +1435,7 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    bool res = processor->check_page_trigger(
-      name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
+    bool res = processor->check_page_trigger(name(), 2, 1, RevenueDecimal(1), RevenueDecimal(1));
     res &= processor->check_page_sum(name(), ONE_IMP_SUM);
 
     return res;
@@ -1503,7 +1461,7 @@ public:
     channel->page_time_to = 1;
     channel->url_min_visits = 1;
     channel->url_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1575,7 +1533,7 @@ public:
     channel->page_time_to = 1;
     channel->url_min_visits = 1;
     channel->url_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1588,8 +1546,7 @@ public:
     UserTriggerMatchContainer* temp_container,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     // #0
     {
@@ -1619,33 +1576,22 @@ public:
       cont->process_click(imp_info.request_id, base_time);
     }
 
-    RevenueDecimal divided_imp_counter =
-      RevenueDecimal::div(ONE_IMP_COUNTER, RevenueDecimal(2));
+    RevenueDecimal divided_imp_counter = RevenueDecimal::div(ONE_IMP_COUNTER, RevenueDecimal(2));
     RevenueDecimal divided_negate_imp_counter =
       RevenueDecimal::div(ONE_NEGATE_IMP_COUNTER, RevenueDecimal(2));
     std::list<RevenueDecimal> exp;
 
     exp.push_back(divided_imp_counter); // no noise
     exp.push_back(divided_imp_counter + divided_negate_imp_counter);
-    exp.push_back(divided_imp_counter +
-      divided_negate_imp_counter + divided_negate_imp_counter);
+    exp.push_back(divided_imp_counter + divided_negate_imp_counter + divided_negate_imp_counter);
     exp.push_back(divided_imp_counter + divided_imp_counter);
-    exp.push_back(divided_imp_counter + divided_imp_counter +
-      divided_negate_imp_counter);
+    exp.push_back(divided_imp_counter + divided_imp_counter + divided_negate_imp_counter);
     exp.push_back(divided_imp_counter + divided_imp_counter +
       divided_negate_imp_counter + divided_negate_imp_counter);
 
-    bool res = processor->check_page_trigger(
-      name(),
-      1,
-      1,
-      exp);
+    bool res = processor->check_page_trigger(name(), 1, 1, exp);
 
-    res &= processor->check_page_trigger(
-      name(),
-      2,
-      1,
-      exp);
+    res &= processor->check_page_trigger(name(), 2, 1, exp);
 
     res &= processor->check_imp_sum(name(), ONE_IMP_SUM);
 
@@ -1672,14 +1618,14 @@ public:
 
   virtual void init_config(Config& config)
   {
-    for(unsigned long channel_id = 1; channel_id <= 4; ++channel_id)
+    for (unsigned long channel_id = 1; channel_id <= 4; ++channel_id)
     {
       ChannelInfo_var channel(new ChannelInfo());
       channel->page_min_visits = 1;
       channel->page_time_to = 1;
       channel->url_min_visits = 1;
       channel->url_time_to = 1;
-      for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+      for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
       {
         channel->page_triggers.push_back(channel_id * TRIGGERS_IN_CHANNEL + i);
       }
@@ -1693,8 +1639,7 @@ public:
     UserTriggerMatchContainer* temp_container,
     CollTriggerActionProcessor* processor)
   {
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     // #0
     {
@@ -1752,7 +1697,7 @@ public:
     }
 
     bool res = true;
-    for(unsigned long i = 1; i <= 4; ++i)
+    for (unsigned long i = 1; i <= 4; ++i)
     {
       res &= processor->check_page_trigger(
         name(),
@@ -1763,8 +1708,7 @@ public:
 
     res &= processor->check_imp_sum(
       name(),
-      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, 4, 0),
-        Generics::DMR_FLOOR));
+      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, 4, 0), Generics::DMR_FLOOR));
 
     return res;
   }
@@ -1787,7 +1731,7 @@ public:
   {
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1801,8 +1745,7 @@ public:
     CollTriggerActionProcessor* processor)
   {
     static const unsigned long COUNT = 10000;
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     Generics::Timer timer;
     Generics::CPUTimer cpu_timer;
@@ -1810,7 +1753,7 @@ public:
     cpu_timer.start();
 
     // always match & click trigger #2
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     { // #0
       UserTriggerMatchContainer::RequestInfo request_info;
       request_info.time = base_time + i;
@@ -1828,7 +1771,7 @@ public:
       cont->process_click(imp_info.request_id, base_time + i);
 
       /*
-      if(i % 100 == 0)
+      if (i % 100 == 0)
       {
         std::cout << i << " requests done, size = " <<
           cont->get_profile(TEST_UID)->membuf().size() << std::endl;
@@ -1840,15 +1783,13 @@ public:
     timer.stop();
 
     std::cout << name() << ", abs time = " << timer.elapsed_time() <<
-      ", cpu time = " << cpu_timer.elapsed_time() <<
-      ", result:" << std::endl;
+      ", cpu time = " << cpu_timer.elapsed_time() << ", result:" << std::endl;
 
     processor->print(std::cout, "  ");
 
     return processor->check_page_sum(
       name(),
-      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0),
-        Generics::DMR_FLOOR));
+      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0), Generics::DMR_FLOOR));
   }
 
 protected:
@@ -1869,7 +1810,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 2;
     channel->page_time_to = 2;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1883,8 +1824,7 @@ public:
     CollTriggerActionProcessor* processor)
   {
     const unsigned long COUNT = 10000;
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     Generics::Timer timer;
     Generics::CPUTimer cpu_timer;
@@ -1892,7 +1832,7 @@ public:
     cpu_timer.start();
 
     // always match & click trigger #2
-    for(unsigned long i = 0; i < COUNT; ++i)
+    for (unsigned long i = 0; i < COUNT; ++i)
     { // #0
 
       {
@@ -1921,7 +1861,7 @@ public:
       cont->process_click(imp_info.request_id, base_time + i);
 
       /*
-      if(i % 100 == 0)
+      if (i % 100 == 0)
       {
         std::cout << i << " requests done, size = " <<
           cont->get_profile(TEST_UID)->membuf().size() << std::endl;
@@ -1933,15 +1873,13 @@ public:
     timer.stop();
 
     std::cout << name() << ", abs time = " << timer.elapsed_time() <<
-      ", cpu time = " << cpu_timer.elapsed_time() <<
-      ", result:" << std::endl;
+      ", cpu time = " << cpu_timer.elapsed_time() << ", result:" << std::endl;
 
     processor->print(std::cout, "  ");
 
     return processor->check_page_sum(
       name(),
-      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0),
-        Generics::DMR_FLOOR));
+      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0), Generics::DMR_FLOOR));
   }
 
 protected:
@@ -1962,7 +1900,7 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 2;
     channel->page_time_to = 2;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
       channel->page_triggers.push_back(i);
     }
@@ -1976,8 +1914,7 @@ public:
     CollTriggerActionProcessor* processor)
   {
     const unsigned long COUNT = 10000;
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     Generics::Timer timer;
     Generics::CPUTimer cpu_timer;
@@ -1985,7 +1922,7 @@ public:
     cpu_timer.start();
 
     // always match & click triggers #2,#3,#4,#5
-    for(unsigned long i = 0; i < COUNT; ++i)
+    for (unsigned long i = 0; i < COUNT; ++i)
     { // #0
 
       {
@@ -2009,7 +1946,7 @@ public:
       cont->process_click(imp_info.request_id, base_time + i);
 
       /*
-      if(i % 100 == 0)
+      if (i % 100 == 0)
       {
         std::cout << i << " requests done, size = " <<
           cont->get_profile(TEST_UID)->membuf().size() << std::endl;
@@ -2021,15 +1958,13 @@ public:
     timer.stop();
 
     std::cout << name() << ", abs time = " << timer.elapsed_time() <<
-      ", cpu time = " << cpu_timer.elapsed_time() <<
-      ", result:" << std::endl;
+      ", cpu time = " << cpu_timer.elapsed_time() << ", result:" << std::endl;
 
     processor->print(std::cout, "  ");
 
     return processor->check_page_sum(
       name(),
-      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0),
-        Generics::DMR_FLOOR));
+      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0), Generics::DMR_FLOOR));
   }
 
 protected:
@@ -2050,9 +1985,9 @@ public:
     ChannelInfo_var channel(new ChannelInfo());
     channel->page_min_visits = 1;
     channel->page_time_to = 1;
-    for(unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
+    for (unsigned long i = 0; i < TRIGGERS_IN_CHANNEL; ++i)
     {
-      if(i != 2)
+      if (i != 2)
       {
         channel->page_triggers.push_back(i);
       }
@@ -2067,15 +2002,14 @@ public:
     CollTriggerActionProcessor* processor)
   {
     const unsigned long COUNT = 10000;
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
     Generics::Timer timer;
     Generics::CPUTimer cpu_timer;
     timer.start();
     cpu_timer.start();
 
-    for(unsigned long i = 0; i < COUNT; ++i)
+    for (unsigned long i = 0; i < COUNT; ++i)
     { // #0
 
       {
@@ -2096,7 +2030,7 @@ public:
       cont->process_click(imp_info.request_id, base_time + i);
 
       /*
-      if(i % 100 == 0)
+      if (i % 100 == 0)
       {
         std::cout << i << " requests done, size = " <<
           cont->get_profile(TEST_UID)->membuf().size() << std::endl;
@@ -2108,15 +2042,13 @@ public:
     timer.stop();
 
     std::cout << name() << ", abs time = " << timer.elapsed_time() <<
-      ", cpu time = " << cpu_timer.elapsed_time() <<
-      ", result:" << std::endl;
+      ", cpu time = " << cpu_timer.elapsed_time() << ", result:" << std::endl;
 
     processor->print(std::cout, "  ");
 
     return processor->check_page_sum(
       name(),
-      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0),
-        Generics::DMR_FLOOR));
+      RevenueDecimal::mul(ONE_IMP_SUM, RevenueDecimal(false, COUNT, 0), Generics::DMR_FLOOR));
   }
 
 protected:
@@ -2136,12 +2068,12 @@ public:
 
   virtual void init_config(Config& config)
   {
-    for(unsigned long channel_i = 1; channel_i < CHANNEL_COUNT + 1; ++channel_i)
+    for (unsigned long channel_i = 1; channel_i < CHANNEL_COUNT + 1; ++channel_i)
     {
       ChannelInfo_var channel(new ChannelInfo());
       channel->page_min_visits = 5;
       channel->page_time_to = 30000;
-      for(unsigned long i = channel_i * TRIGGERS_IN_CHANNEL;
+      for (unsigned long i = channel_i * TRIGGERS_IN_CHANNEL;
           i < (channel_i + 1) * TRIGGERS_IN_CHANNEL; ++i)
       {
         channel->page_triggers.push_back(i);
@@ -2158,29 +2090,27 @@ public:
   {
     const unsigned long USER_COUNT = 1000;//10000;
     const unsigned long REQUESTS_PER_USER = 1000;//100;
-    const Generics::Time base_time(
-      String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
+    const Generics::Time base_time(String::SubString("2011-11-29 19:40:28"), "%Y-%m-%d %H:%M:%S");
 
-    for(unsigned long global_i = 0; global_i < 1; ++global_i)
+    for (unsigned long global_i = 0; global_i < 1; ++global_i)
     {
       Generics::Timer timer;
       Generics::CPUTimer cpu_timer;
       timer.start();
       cpu_timer.start();
 
-      for(unsigned long user_i = 0; user_i < USER_COUNT; ++user_i)
+      for (unsigned long user_i = 0; user_i < USER_COUNT; ++user_i)
       {
         AdServer::Commons::UserId uid = AdServer::Commons::UserId::create_random_based();
 
-        for(unsigned long i = 0; i < REQUESTS_PER_USER; ++i)
+        for (unsigned long i = 0; i < REQUESTS_PER_USER; ++i)
         {
           UserTriggerMatchContainer::RequestInfo request_info;
           request_info.time = base_time + /*2*i +*/ 1;
           request_info.user_id = uid;
-          for(unsigned long channel_i = 1; channel_i < CHANNEL_COUNT + 1; ++channel_i)
+          for (unsigned long channel_i = 1; channel_i < CHANNEL_COUNT + 1; ++channel_i)
           {
-            request_info.page_matches[channel_i].push_back(
-              channel_i * TRIGGERS_IN_CHANNEL + 1);
+            request_info.page_matches[channel_i].push_back(channel_i * TRIGGERS_IN_CHANNEL + 1);
           }
           cont->process_request(request_info);
         }
@@ -2250,7 +2180,7 @@ main(int argc, char** argv) noexcept
     tests.push_back(TestBase_var(new MergeChannelMatchTest()));
     tests.push_back(TestBase_var(new MergeFewChannelsMatchTest()));
 
-    if(opt_run_modeling_tests.enabled())
+    if (opt_run_modeling_tests.enabled())
     {
       tests.push_back(TestBase_var(new ModelTest()));
       tests.push_back(TestBase_var(new DivideImpModelTest()));
@@ -2258,14 +2188,13 @@ main(int argc, char** argv) noexcept
       tests.push_back(TestBase_var(new DeactivatedTriggerImpModelTest()));
     }
 
-    if(opt_run_perf_tests.enabled())
+    if (opt_run_perf_tests.enabled())
     {
       tests.push_back(TestBase_var(new PerfTest()));
     }
 
     int result = 0;
-    for(TestList::iterator test_it = tests.begin();
-        test_it != tests.end(); ++test_it)
+    for (TestList::iterator test_it = tests.begin(); test_it != tests.end(); ++test_it)
     {
       result += (*test_it)->run(root_path->c_str());
     }

@@ -1,9 +1,6 @@
 #include "ChannelCategoryGrannularUpdateTest.hpp"
 
-REFLECT_UNIT(ChannelCategoryGrannularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelCategoryGrannularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -33,15 +30,11 @@ ChannelCategoryGrannularUpdateTest::add_category()
   std::string description("Add category.");
   add_descr_phrase(description);
 
-  ORM::ORMRestorer<ORM::CategoryChannel>* category =
-    create<ORM::CategoryChannel>();
+  ORM::ORMRestorer<ORM::CategoryChannel>* category = create<ORM::CategoryChannel>();
 
   category->account = fetch_int("InternalAccount");
   category->name = fetch_string("CategoryName");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      category->insert()),
-    "must insert category channel!");
+  FAIL_CONTEXT(AutoTest::predicate_checker(category->insert()), "must insert category channel!");
 
   add_checker(
     description,
@@ -75,8 +68,7 @@ ChannelCategoryGrannularUpdateTest::deactivate_category()
  category->status = "D";
  category->display_status_id = 5; // 5 = Deleted
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      category->update(false)),
+    AutoTest::predicate_checker(category->update(false)),
    "must deactivate channel category");
 
  add_checker(

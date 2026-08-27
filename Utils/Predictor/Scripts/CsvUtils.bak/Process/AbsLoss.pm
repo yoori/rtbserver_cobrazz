@@ -32,7 +32,7 @@ sub process
   my $value = $row->[$self->{field_}];
   my $label = $row->[$self->{label_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     die "AbsLoss can't be applied to array row";
   }
@@ -40,7 +40,7 @@ sub process
   {
     $self->{count_} += 1;
 
-    if($label == 0)
+    if ($label == 0)
     {
       $self->{loss_} += $value;
     }

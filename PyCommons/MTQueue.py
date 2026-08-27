@@ -63,5 +63,5 @@ class MTQueue:
       self.queue = []
     finally:
       self.cond.release()
-    
+
 

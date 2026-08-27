@@ -31,19 +31,13 @@ namespace
   to_shared(ReferenceCounting::SmartPtr<T> ptr)
   {
     T* raw_ptr = ptr.in();
-    return std::shared_ptr<T>(
-      raw_ptr,
-      [ptr = std::move(ptr)](T*) mutable
-      {
-        ptr.reset();
-      });
+    return std::shared_ptr<T>(raw_ptr, [ptr = std::move(ptr)](T*) mutable { ptr.reset(); });
   }
 }
 
 CampaignServerApp_::CampaignServerApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "CampaignServerApp_", ASPECT, 0)
 {
 }
@@ -136,11 +130,9 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
           configuration_.only_tags));
     }
 
-    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
-      configuration_.pid_file);
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(configuration_.pid_file);
 
-    auto active_objects =
-      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    auto active_objects = std::make_shared<Generics::CompositeActiveObject>(false, false);
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
       [&]() noexcept
       {
@@ -154,69 +146,52 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
     {
       AdServer::CampaignSvcs::CampaignServerImpl_v350_var
         campaign_server_impl_v350 =
-          new AdServer::CampaignSvcs::CampaignServerImpl_v350(
-            logger(),
-            campaign_server_impl.get());
+          new AdServer::CampaignSvcs::CampaignServerImpl_v350(logger(), campaign_server_impl.get());
 
       corba_server_adapter->add_binding(
         CAMPAIGN_SERVER_V350_OBJ_KEY, campaign_server_impl_v350.in());
     }
 
-    corba_server_adapter->add_binding(
-      CAMPAIGN_SERVER_OBJ_KEY, campaign_server_impl.get());
+    corba_server_adapter->add_binding(CAMPAIGN_SERVER_OBJ_KEY, campaign_server_impl.get());
 
     active_objects->add_child_object(
-      std::static_pointer_cast<Generics::ActiveObject>(
-        campaign_server_impl));
+      std::static_pointer_cast<Generics::ActiveObject>(campaign_server_impl));
     active_objects->add_child_object(corba_server_adapter.in());
 
     AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects->activate_object();
 
     // Running orb loop
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT) <<
-      "service started.";
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
     signal_active_object.wait_object();
 
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT) <<
-      "service stopped.";
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)
   {
     Stream::Error ostr;
     ostr << "CampaignServerApp_::main(): "
-      "Got CampaignServerApp_::Exception: " <<
-      e.what();
-    logger()->log(ostr.str(),
-      Logging::Logger::CRITICAL,
-      ASPECT,
-      "ADS-IMPL-150");
+      "Got CampaignServerApp_::Exception: " << e.what();
+    logger()->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-150");
   }
   catch (const CORBA::SystemException& e)
   {
     Stream::Error ostr;
     ostr << "CampaignServerApp_::main(): "
       "Got CORBA::SystemException: " << e;
-    logger()->log(ostr.str(),
-      Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-150");
+    logger()->log(ostr.str(), Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-150");
   }
   catch (const eh::Exception& e)
   {
     Stream::Error ostr;
     ostr << "CampaignServerApp_::main(): "
       "Got eh::Exception: " << e.what();
-    logger()->log(ostr.str(),
-      Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-150");
+    logger()->log(ostr.str(), Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-150");
   }
   catch (...)
   {
-    logger()->log(String::SubString("CampaignServerApp_::main(): "
-      "Got Unknown exception."),
+    logger()->log(String::SubString("CampaignServerApp_::main(): " "Got Unknown exception."),
       Logging::Logger::EMERGENCY,
       ASPECT,
       "ADS-IMPL-150");
@@ -268,8 +243,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't parse config file '" << filename << "': " <<
-        e.what();
+      ostr << FUN << ": Can't parse config file '" << filename << "': " << e.what();
       throw Exception(ostr);
     }
     catch(...)
@@ -290,36 +264,29 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
         const xsd::AdServer::Configuration::CampaignServerLoggerType&
           xsd_logger = configuration->Logging().get().ColoUpdateStat().get();
 
-        configuration_.colo_update_flush_traits.out_dir =
-          configuration_.log_root;
+        configuration_.colo_update_flush_traits.out_dir = configuration_.log_root;
 
         AdServer::PathManip::create_path(
           configuration_.colo_update_flush_traits.out_dir,
           AdServer::LogProcessing::ColoUpdateStatTraits::log_base_name());
 
         configuration_.colo_update_flush_traits.size =
-          xsd_logger.max_size().present() ?
-          xsd_logger.max_size().get(): 0;
+          xsd_logger.max_size().present() ? xsd_logger.max_size().get(): 0;
 
         configuration_.colo_update_flush_traits.period =
-          xsd_logger.flush_period().present() ?
-          xsd_logger.flush_period().get() : 60;
+          xsd_logger.flush_period().present() ? xsd_logger.flush_period().get() : 60;
       }
     }
 
-    configuration_.config_update_period =
-      configuration->config_update_period();
-    configuration_.ecpm_update_period =
-      configuration->ecpm_update_period();
+    configuration_.config_update_period = configuration->config_update_period();
+    configuration_.ecpm_update_period = configuration->ecpm_update_period();
     configuration_.bill_stat_update_period = Generics::Time(
       configuration->bill_stat_update_period());
 
     // Fill corba_config
     try
     {
-      Config::CorbaConfigReader::read_config(
-        configuration->CorbaConfig(),
-        corba_config_);
+      Config::CorbaConfigReader::read_config(configuration->CorbaConfig(), corba_config_);
     }
     catch(const eh::Exception& e)
     {
@@ -330,8 +297,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        configuration->Logger(), argv0));
+      logger(Config::LoggerConfigReader::create(configuration->Logger(), argv0));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -342,11 +308,9 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
     configuration_.server_id = configuration->server_id();
     configuration_.colo_id =
-      configuration->colo_id().present() ?
-      configuration->colo_id().get() : 0;
+      configuration->colo_id().present() ? configuration->colo_id().get() : 0;
     configuration_.version =
-      configuration->version().present() ?
-      configuration->version().get() : "";
+      configuration->version().present() ? configuration->version().get() : "";
     configuration_.only_tags = false;
 
     if (configuration->campaign_statuses().present())
@@ -403,8 +367,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
       catch(const eh::Exception& e)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Can't read Campaign Server Corba Object Reference: " <<
-          e.what();
+        ostr << FUN << ": Can't read Campaign Server Corba Object Reference: " << e.what();
         throw Exception(ostr);
       }
 
@@ -420,21 +383,17 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
     }
     else if (configuration->ServerMode().present())
     {
-      CampaignServerType::ServerMode_optional& server_mode =
-        configuration->ServerMode();
+      CampaignServerType::ServerMode_optional& server_mode = configuration->ServerMode();
 
-      configuration_.pending_expire_time = Generics::Time(
-        server_mode->pending_expire_time());
+      configuration_.pending_expire_time = Generics::Time(server_mode->pending_expire_time());
       configuration_.audience_expiration_time = Generics::Time(
         server_mode->audience_expiration_time());
-      configuration_.enable_delivery_thresholds =
-        server_mode->enable_delivery_thresholds();
+      configuration_.enable_delivery_thresholds = server_mode->enable_delivery_thresholds();
 
       if (server_mode->PGConnection().present())
       {
         configuration_.server_mode = Configuration::SM_SERVER;
-        configuration_.pg_connection_string =
-          server_mode->PGConnection()->connection_string();
+        configuration_.pg_connection_string = server_mode->PGConnection()->connection_string();
       }
       else
       {
@@ -454,8 +413,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
         }
       }
 
-      configuration_.stat_stamp_sync_period =
-        Generics::Time(server_mode->stat_stamp_sync_period());
+      configuration_.stat_stamp_sync_period = Generics::Time(server_mode->stat_stamp_sync_period());
 
       Config::CorbaConfigReader::read_multi_corba_ref(
         server_mode->LogGeneralizerCorbaRef(),

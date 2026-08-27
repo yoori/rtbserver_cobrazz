@@ -5,7 +5,7 @@ package GEOCreativeSelection::City;
   {
     my $self = shift;
     my ($name, $latitude, $longitude, $altname) = @_;
-    
+
     unless (ref $self) {
       $self = bless {}, $self;
     }
@@ -13,7 +13,7 @@ package GEOCreativeSelection::City;
     $self->{latitude} = $latitude;
     $self->{longitude} = $longitude;
     $self->{altname} = $altname;
-    
+
     return $self;
   }
 }
@@ -32,24 +32,24 @@ sub create
 
   foreach my $state (sort keys(%$channels))
   {
-    my $statechannel = 
+    my $statechannel =
       $self->{ns}->create(DB::GEOChannel->blank(
         name => $state,
         country_code => 'GB',
-        parent_channel_id => 
+        parent_channel_id =>
           DB::Defaults::instance()->geo_gb_country->{channel_id},
         geo_type => 'STATE'));
 
     $self->{ns}->output(
-      $state . "-CH", 
+      $state . "-CH",
       $statechannel);
     $self->{ns}->output(
-      $state . "-STATE", 
+      $state . "-STATE",
       $statechannel->{name});
 
     $self->{state}->{$state} = $statechannel;
 
-  
+
     foreach my $city (@{$channels->{$state}})
     {
 
@@ -64,7 +64,7 @@ sub create
           $city_name . "-ALTCITY", $city->{altname});
       }
 
-      my $citychannel = 
+      my $citychannel =
         $self->{ns}->create(DB::GEOChannel->blank(
           name => $city->{name},
           country_code => 'GB',
@@ -77,7 +77,7 @@ sub create
       $self->{city}->{$city->{name}} = $citychannel;
 
       $self->{ns}->output(
-        $city_name . "-CH", 
+        $city_name . "-CH",
         $citychannel);
       $self->{ns}->output(
         $city_name . "-CITY", $citychannel->{name});
@@ -89,7 +89,7 @@ sub create
 sub state
 {
   my ($self, $name) = @_;
-   die "State '$name' is undefined" 
+   die "State '$name' is undefined"
        if not defined $self->{state}->{$name};
   return $self->{state}->{$name};
 }
@@ -97,7 +97,7 @@ sub state
 sub city
 {
   my ($self, $name) = @_;
-   die "City '$name' is undefined" 
+   die "City '$name' is undefined"
        if not defined $self->{city}->{$name};
   return $self->{city}->{$name};
 }
@@ -106,7 +106,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $account) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;
   }
@@ -114,7 +114,7 @@ sub new
   $self->{account} = $account;
   $self->{state} = {};
   $self->{city} = {};
-  
+
   return $self;
 }
 
@@ -132,8 +132,8 @@ sub create_channnel_text_ccg
   my ($self, $ns, $name, $size, $publisher, $cpm, $channels) = @_;
   my $keyword = make_autotest_name($ns, $name);
 
-  my $campaign = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $campaign =
+    $ns->create(ChannelTargetedTACampaign => {
       name => $name,
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -145,8 +145,8 @@ sub create_channnel_text_ccg
       site_links => [{site_id => $publisher->{site_id} }] });
 
   my $bp = $ns->create(
-    DB::BehavioralChannel::BehavioralParameter->blank( 
-      channel_id => $campaign->{channel_id},  
+    DB::BehavioralChannel::BehavioralParameter->blank(
+      channel_id => $campaign->{channel_id},
       trigger_type => "P",
       time_to => 3*60*60 ));
 
@@ -178,8 +178,8 @@ sub create_ta_ccg
         trigger_type => "P",
         time_to => 3*60*60 )] ));
 
-  my $campaign = 
-    $ns->create(TextAdvertisingCampaign => { 
+  my $campaign =
+    $ns->create(TextAdvertisingCampaign => {
       name => $name,
       size_id => $size,
       template_id => DB::Defaults::instance()->text_template,
@@ -207,34 +207,34 @@ sub display_case {
     role_id => DB::Defaults::instance()->advertiser_role });
 
   # GEO channels
-  my $geochannels = 
+  my $geochannels =
     GEOCreativeSelection::Channels->new(
-      $ns, 
+      $ns,
       $account);
-  
+
   $geochannels->create({
-    'Worcestershire' => 
+    'Worcestershire' =>
       [ GEOCreativeSelection::City->new(
-          'Ab Lench', 
-          52.15, 
+          'Ab Lench',
+          52.15,
           -1.9667),
         GEOCreativeSelection::City->new(
-          'Abberley', 
-           52.3, 
+          'Abberley',
+           52.3,
            -2.3667),
         GEOCreativeSelection::City->new(
-          'Elmbridge', 
-          52.3167, 
+          'Elmbridge',
+          52.3167,
           -2.15)],
-    'Belfast' => 
+    'Belfast' =>
       [ GEOCreativeSelection::City->new(
-          'Cliftonville', 
-          54.6167, 
+          'Cliftonville',
+          54.6167,
           -5.9333) ]});
-        
+
   # Behavioral channel
   my $keyword =  make_autotest_name($ns, "Display-KWD");
-  
+
   my $channel = $ns->create(DB::BehavioralChannel->blank(
     name => 'DisplayChannel',
     account_id => $account,
@@ -244,12 +244,12 @@ sub display_case {
         trigger_type => "P",
         time_to => 3*60*60 )] ));
 
-  my $citypublisher = 
-     $ns->create(Publisher => { 
+  my $citypublisher =
+     $ns->create(Publisher => {
        name => 'PublisherCity' });
 
-  my $statepublisher = 
-     $ns->create(Publisher => { 
+  my $statepublisher =
+     $ns->create(Publisher => {
        name => 'PublisherState' });
 
   # Display campaigns
@@ -259,13 +259,13 @@ sub display_case {
     channel_id => $channel,
     country_code => 'GB',
     campaigncreativegroup_cpm => 3,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_geo_channels => 
-      [ $geochannels->city('Ab Lench'), 
-        $geochannels->city('Abberley'), 
+    campaigncreativegroup_geo_channels =>
+      [ $geochannels->city('Ab Lench'),
+        $geochannels->city('Abberley'),
         $geochannels->city('Cliftonville') ],
-    site_links => 
+    site_links =>
       [{ site_id => $citypublisher->{site_id} }] });
 
   my $statecampaign = $ns->create(DisplayCampaign => {
@@ -274,11 +274,11 @@ sub display_case {
     channel_id => $channel,
     country_code => 'GB',
     campaigncreativegroup_cpm => 3,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_geo_channels => 
+    campaigncreativegroup_geo_channels =>
       $geochannels->state('Worcestershire'),
-    site_links => 
+    site_links =>
       [{ site_id => $statepublisher->{site_id}  }] });
 
   $ns->output("DisplayKWD", $keyword);
@@ -300,30 +300,30 @@ sub text_case {
     name => "Text",
     max_text_creatives => 4 });
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'PublisherText',
        pubaccount_country_code => 'GB',
        pricedtag_adjustment => 1.0,
        size_id => $size });
 
   # GEO channels
-  my $geochannels = 
+  my $geochannels =
     GEOCreativeSelection::Channels->new(
-      $ns, 
+      $ns,
       $account);
-  
+
   $geochannels->create({
     'Dorset' => [],
-    'Devon' => 
+    'Devon' =>
       [ GEOCreativeSelection::City->new(
-          'Abbotskerswell', 
-          50.5, 
+          'Abbotskerswell',
+          50.5,
           -3.6167) ],
-    'Conwy' => 
+    'Conwy' =>
       [ GEOCreativeSelection::City->new(
-          'Aber', 
-          53.2333, 
+          'Aber',
+          53.2333,
           -4.0167) ]});
 
   $self->create_channnel_text_ccg(
@@ -347,7 +347,7 @@ sub text_case {
       $geochannels->state('Devon'),
       $geochannels->city('Aber') ]);
 
-  $ns->output("TextTID", $publisher->{tag_id});  
+  $ns->output("TextTID", $publisher->{tag_id});
 }
 
 sub alternative_name_case {
@@ -357,21 +357,21 @@ sub alternative_name_case {
     name => 'AltNameAccount',
     role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'AltNamePublisher' });
 
   # GEO channels
-  my $geochannels = 
+  my $geochannels =
     GEOCreativeSelection::Channels->new(
-      $ns, 
+      $ns,
       $account);
-  
+
   $geochannels->create({
-    'Hertford' => 
+    'Hertford' =>
       [ GEOCreativeSelection::City->new(
-          'Hallingbury', 
-          51.8333, 
+          'Hallingbury',
+          51.8333,
           0.1833,
           'Great Hallingbury') ] });
 
@@ -392,12 +392,12 @@ sub alternative_name_case {
     channel_id => $channel,
     country_code => 'GB',
     campaigncreativegroup_cpm => 100,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_geo_channels => 
+    campaigncreativegroup_geo_channels =>
       [ $geochannels->city('Hallingbury') ],
-    site_links => 
-      [{ site_id => $publisher->{site_id} }] });  
+    site_links =>
+      [{ site_id => $publisher->{site_id} }] });
 
   $ns->output("AltNameKWD", $keyword);
   $ns->output("AltNameBP", $channel->page_key());
@@ -413,21 +413,21 @@ sub geo_competition {
     role_id => DB::Defaults::instance()->advertiser_role });
 
   # GEO channels
-  my $geochannels = 
+  my $geochannels =
     GEOCreativeSelection::Channels->new(
-      $ns, 
+      $ns,
       $account);
-  
+
   $geochannels->create({
-    'Highland' => 
+    'Highland' =>
       [ GEOCreativeSelection::City->new(
-          'Acharacle', 
-          56.7333, 
+          'Acharacle',
+          56.7333,
           -5.7833)] });
-        
+
   # Behavioral channel
   my $keyword =  make_autotest_name($ns, "Competition-KWD");
-  
+
   my $channel = $ns->create(DB::BehavioralChannel->blank(
     name => 'CompetitionChannel',
     account_id => $account,
@@ -437,8 +437,8 @@ sub geo_competition {
         trigger_type => "P",
         time_to => 3*60*60 )] ));
 
-  my $publisher = 
-     $ns->create(Publisher => { 
+  my $publisher =
+     $ns->create(Publisher => {
        name => 'CompetitionPublisher' });
 
   # Display campaigns
@@ -448,11 +448,11 @@ sub geo_competition {
     channel_id => $channel,
     country_code => 'GB',
     campaigncreativegroup_cpm => 10,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_geo_channels => 
+    campaigncreativegroup_geo_channels =>
       [ $geochannels->state('Highland') ],
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   my $citycampaign = $ns->create(DisplayCampaign => {
@@ -461,11 +461,11 @@ sub geo_competition {
     channel_id => $channel,
     country_code => 'GB',
     campaigncreativegroup_cpm => 20,
-    campaigncreativegroup_flags => 
+    campaigncreativegroup_flags =>
       DB::Campaign::INCLUDE_SPECIFIC_SITES,
-    campaigncreativegroup_geo_channels => 
+    campaigncreativegroup_geo_channels =>
       $geochannels->city('Acharacle'),
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   $ns->output("CompetitionKWD", $keyword);
@@ -477,7 +477,7 @@ sub geo_competition {
 
 sub init {
   my ($self, $ns) = @_;
-  
+
   $self->display_case($ns);
   $self->text_case($ns);
   $self->alternative_name_case($ns);

@@ -22,11 +22,11 @@ sub get_cost
   my ($self, $tag_id, $domain, $required_win_rate, $cur_cost) = @_;
   my $min_cost = 100000;
   my $max_cost = 0;
-  while(my ($win_rate, $x) = each(%{$self->{'win_rates_'}}))
+  while (my ($win_rate, $x) = each(%{$self->{'win_rates_'}}))
   {
-    if($win_rate >= $required_win_rate)
+    if ($win_rate >= $required_win_rate)
     {
-      if(exists($self->{'model_'}->{"$tag_id,$domain,$win_rate"}))
+      if (exists($self->{'model_'}->{"$tag_id,$domain,$win_rate"}))
       {
         my $l = $self->{'model_'}->{"$tag_id,$domain,$win_rate"};
         my @a = split(',', $l);
@@ -36,7 +36,7 @@ sub get_cost
     }
   }
 
-  if($cur_cost >= $max_cost)
+  if ($cur_cost >= $max_cost)
   {
     return $cur_cost;
   }
@@ -69,12 +69,12 @@ sub load
 
   open(my $fh, '<', $file_path) or die "Could not open '$file_path' $!\n";
 
-  while(my $line = <$fh>)
+  while (my $line = <$fh>)
   {
     chomp $line;
     my @fields = split(',', $line);
 
-    if(scalar(@fields) > 0)
+    if (scalar(@fields) > 0)
     {
       # <tag_id>,<domain>,<win_rate>,<cost>,<max cost>
       my $tag_id = $fields[0];

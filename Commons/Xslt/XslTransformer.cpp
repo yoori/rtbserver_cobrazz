@@ -12,8 +12,7 @@ namespace AdServer
   //
 
   XslTransformer::XslTransformer(XsltEngine /*engine*/) noexcept
-    : pimpl_(
-      static_cast<XslTransformerBase*>(new LibxslTransformer))
+    : pimpl_(static_cast<XslTransformerBase*>(new LibxslTransformer))
   {
   }
 
@@ -21,8 +20,7 @@ namespace AdServer
     const char* base_path,
     XsltEngine /*engine*/)
     /*throw(Exception)*/
-    : pimpl_(static_cast<XslTransformerBase*>(
-        new LibxslTransformer(xsl, base_path)))
+    : pimpl_(static_cast<XslTransformerBase*>(new LibxslTransformer(xsl, base_path)))
   {
   }
 
@@ -30,14 +28,12 @@ namespace AdServer
     const char* base_path,
     XsltEngine /*engine*/)
     /*throw(FileNotExists, Exception)*/
-    : pimpl_(static_cast<XslTransformerBase*>(
-        new LibxslTransformer(xsl_file, base_path)))
+    : pimpl_(static_cast<XslTransformerBase*>(new LibxslTransformer(xsl_file, base_path)))
   {
   }
 
   void
-  XslTransformer::open(const char* xsl_file,
-    const char* base_path)
+  XslTransformer::open(const char* xsl_file, const char* base_path)
     /*throw(FileNotExists, Exception)*/
   {
     pimpl_->open(xsl_file, base_path);

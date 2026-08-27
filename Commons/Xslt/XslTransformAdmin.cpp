@@ -61,30 +61,12 @@ init(int& argc, char**& argv)
   Args args;
   CheckOption opt_help;
 
-  args.add(
-    equal_name("base") ||
-    short_name("b"),
-    base_path);
-  args.add(
-    equal_name("params") ||
-    short_name("p"),
-    xslt_params);
-  args.add(
-    equal_name("values") ||
-    short_name("v"),
-    xslt_values);
-  args.add(
-    equal_name("info") ||
-    short_name("i"),
-    verbose);
-  args.add(
-    equal_name("count") ||
-    short_name("c"),
-    iterations);
-  args.add(
-    equal_name("help") ||
-    short_name("h"),
-    opt_help);
+  args.add(equal_name("base") || short_name("b"), base_path);
+  args.add(equal_name("params") || short_name("p"), xslt_params);
+  args.add(equal_name("values") || short_name("v"), xslt_values);
+  args.add(equal_name("info") || short_name("i"), verbose);
+  args.add(equal_name("count") || short_name("c"), iterations);
+  args.add(equal_name("help") || short_name("h"), opt_help);
 
   if (argc > 3)
   {
@@ -119,14 +101,13 @@ init(int& argc, char**& argv)
       std::string value = (i < values.size() ? values[i] : "");
       value = '\'' + value;
       value = value + '\'';
-      parameters.insert(XslParameters::value_type(params[i],
-        value ));
+      parameters.insert(XslParameters::value_type(params[i], value));
     }
+
     if (verbose.enabled())
     {
       std::cout << "XSLT parameters is following:\n";
-      for (XslParameters::const_iterator cit = parameters.begin();
-        cit != parameters.end(); ++cit)
+      for (XslParameters::const_iterator cit = parameters.begin(); cit != parameters.end(); ++cit)
       {
         std::clog << cit->first << " := " << cit->second << std::endl;
       }
@@ -243,8 +224,7 @@ main(int argc, char* argv[])
   }
   catch (const AdServer::XslTransformer::Exception& ex)
   {
-    std::cerr << "at stage '"
-      << stage;
+    std::cerr << "at stage '" << stage;
     if (stage == "transform")
     {
       std::cerr << "'. Broken XML file: " << argv[argc - 1];

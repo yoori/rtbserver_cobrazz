@@ -15,8 +15,7 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(0), Generics::Time(10), 1, 2));
+    channel_intervals.insert(ChannelInterval(Generics::Time(0), Generics::Time(10), 1, 2));
 
     TimestampList timestamps;
     timestamps.push_back(1);
@@ -34,7 +33,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(10);
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "1. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -47,8 +46,7 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(10), Generics::Time(20), 1, 2));
+    channel_intervals.insert(ChannelInterval(Generics::Time(10), Generics::Time(20), 1, 2));
 
     TimestampList timestamps;
     timestamps.push_back(1);
@@ -64,7 +62,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(10);
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "2. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -77,8 +75,7 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(10), Generics::Time(20), 1, 2));
+    channel_intervals.insert(ChannelInterval(Generics::Time(10), Generics::Time(20), 1, 2));
 
     TimestampList timestamps;
     timestamps.push_back(1);
@@ -95,7 +92,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(12);
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "3. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -108,8 +105,7 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(10), Generics::Time(20), 1, 2));
+    channel_intervals.insert(ChannelInterval(Generics::Time(10), Generics::Time(20), 1, 2));
 
     TimestampList timestamps;
     timestamps.push_back(1);
@@ -135,7 +131,7 @@ int main()
     etalon.push_back(16);
     etalon.push_back(17);
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "4. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -148,8 +144,7 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(10), Generics::Time(30), 2, 2));
+    channel_intervals.insert(ChannelInterval(Generics::Time(10), Generics::Time(30), 2, 2));
 
     TimestampList timestamps;
     timestamps.push_back(0);
@@ -177,7 +172,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(40);
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "5. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -201,7 +196,7 @@ int main()
 
     TimestampList etalon;
 
-    if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
+    if (timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "6. incorrect result:" << std::endl << "  ";
       Algs::print(std::cerr, timestamps.begin(), timestamps.end());
@@ -233,8 +228,7 @@ int main()
     };
 
     ChannelIntervalList channel_intervals;
-    channel_intervals.insert(ChannelInterval(
-      Generics::Time(0), Generics::Time(120), 1, 1));
+    channel_intervals.insert(ChannelInterval(Generics::Time(0), Generics::Time(120), 1, 1));
 
     TimestampList timestamps;
     std::copy(
@@ -244,7 +238,7 @@ int main()
 
     /*
     std::cout << ">>>> to clear ts list:" << std::endl;
-    for(TimestampList::const_iterator tit = timestamps.begin();
+    for (TimestampList::const_iterator tit = timestamps.begin();
         tit != timestamps.end(); ++tit)
     {
       std::cout << Generics::Time(*tit).get_gm_time() << std::endl;
@@ -259,7 +253,7 @@ int main()
       TS_ETALON_ARRAY + sizeof(TS_ETALON_ARRAY) / sizeof(TS_ETALON_ARRAY[0]),
       std::back_inserter(etalon));
 
-    if(timestamps.size() != etalon.size() ||
+    if (timestamps.size() != etalon.size() ||
        !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "7. incorrect result:" << std::endl << "  ";

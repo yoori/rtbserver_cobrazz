@@ -46,8 +46,7 @@ namespace AdServer::LogProcessing
       << opt_in_sect.user_id() << '\t'
       << opt_in_sect.page_load_id() << '\t'
       << opt_in_sect.ad_shown() << '\t'
-      << opt_in_sect.profile_referer() << '\t'
-      << StringIoWrapperOptional(opt_in_sect.user_agent());
+      << opt_in_sect.profile_referer() << '\t' << StringIoWrapperOptional(opt_in_sect.user_agent());
     return out;
   }
 
@@ -108,9 +107,7 @@ namespace AdServer::LogProcessing
       << data.referer_ << '\t'
       << data.full_referer_hash_ << '\t'
       << data.user_status_ << '\t'
-      << data.country_ << '\t'
-      << data.passback_request_id_ << '\t'
-      << data.floor_cost_ << '\t';
+      << data.country_ << '\t' << data.passback_request_id_ << '\t' << data.floor_cost_ << '\t';
 
     if (data.urls_.empty())
     {

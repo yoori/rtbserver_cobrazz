@@ -74,15 +74,14 @@ namespace Vanga
     ostr << tree_id << '\t' <<
       feature_id << '\t' <<
       delta_prob << '\t' <<
-      (yes_tree ? yes_tree->tree_id : 0) << '\t' <<
-      (no_tree ? no_tree->tree_id : 0) << std::endl;
+      (yes_tree ? yes_tree->tree_id : 0) << '\t' << (no_tree ? no_tree->tree_id : 0) << std::endl;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       yes_tree->save_node_(ostr);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       no_tree->save_node_(ostr);
     }
@@ -95,11 +94,11 @@ namespace Vanga
     std::map<unsigned long, DTreeLoadHelper> trees;
     unsigned long line_i = 0;
 
-    if(with_head)
+    if (with_head)
     {
       std::string line;
       AdServer::LogProcessing::read_until_eol(istr, line, false);
-      if(line != DTREE_MODEL_HEAD)
+      if (line != DTREE_MODEL_HEAD)
       {
         Stream::Error ostr;
         ostr << "DTree::load(): invalid model type: '" << line << "'(" << line.size() << ")";
@@ -107,7 +106,7 @@ namespace Vanga
       }
     }
 
-    while(!istr.eof())
+    while (!istr.eof())
     {
       std::string line;
 
@@ -115,43 +114,43 @@ namespace Vanga
       {
         AdServer::LogProcessing::read_until_eol(istr, line, false);
 
-        if(line.empty())
+        if (line.empty())
         {
           break;
         }
 
-        if(istr.fail())
+        if (istr.fail())
         {
           throw Exception("read failed or empty line");
         }
 
         String::StringManip::SplitTab tokenizer(line);
         String::SubString tree_id_str;
-        if(!tokenizer.get_token(tree_id_str))
+        if (!tokenizer.get_token(tree_id_str))
         {
           throw Exception("no id");
         }
 
         String::SubString feature_id_str;
-        if(!tokenizer.get_token(feature_id_str))
+        if (!tokenizer.get_token(feature_id_str))
         {
           throw Exception("no feature id");
         }
 
         String::SubString delta_prob_str;
-        if(!tokenizer.get_token(delta_prob_str))
+        if (!tokenizer.get_token(delta_prob_str))
         {
           throw Exception("no 'delta prob'");
         }
 
         String::SubString yes_tree_id_str;
-        if(!tokenizer.get_token(yes_tree_id_str))
+        if (!tokenizer.get_token(yes_tree_id_str))
         {
           throw Exception("no 'yes tree id'");
         }
 
         String::SubString no_tree_id_str;
-        if(!tokenizer.get_token(no_tree_id_str))
+        if (!tokenizer.get_token(no_tree_id_str))
         {
           throw Exception("no 'no tree id'");
         }
@@ -159,14 +158,14 @@ namespace Vanga
         unsigned long tree_id;
         DTreeLoadHelper dtree_load_helper;
 
-        if(!String::StringManip::str_to_int(tree_id_str, tree_id))
+        if (!String::StringManip::str_to_int(tree_id_str, tree_id))
         {
           Stream::Error ostr;
           ostr << "invalid tree id value: '" << tree_id_str << "'";
           throw Exception(ostr);
         }
 
-        if(!String::StringManip::str_to_int(feature_id_str, dtree_load_helper.feature_id))
+        if (!String::StringManip::str_to_int(feature_id_str, dtree_load_helper.feature_id))
         {
           Stream::Error ostr;
           ostr << "invalid feature id value: '" << feature_id_str << "'";
@@ -177,7 +176,7 @@ namespace Vanga
           std::istringstream istr(delta_prob_str.str().c_str());
           istr >> dtree_load_helper.delta_prob;
 
-          if(!istr.eof() || istr.fail())
+          if (!istr.eof() || istr.fail())
           {
             Stream::Error ostr;
             ostr << "invalid delta prob value: '" << delta_prob_str << "'";
@@ -185,21 +184,21 @@ namespace Vanga
           }
         }
 
-        if(!String::StringManip::str_to_int(yes_tree_id_str, dtree_load_helper.yes_tree_id))
+        if (!String::StringManip::str_to_int(yes_tree_id_str, dtree_load_helper.yes_tree_id))
         {
           Stream::Error ostr;
           ostr << "invalid 'yes tree id' value: '" << yes_tree_id_str << "'";
           throw Exception(ostr);
         }
 
-        if(!String::StringManip::str_to_int(no_tree_id_str, dtree_load_helper.no_tree_id))
+        if (!String::StringManip::str_to_int(no_tree_id_str, dtree_load_helper.no_tree_id))
         {
           Stream::Error ostr;
           ostr << "invalid 'no tree id' value: '" << no_tree_id_str << "'";
           throw Exception(ostr);
         }
 
-        if(root_tree_id == 0)
+        if (root_tree_id == 0)
         {
           root_tree_id = tree_id;
         }
@@ -218,7 +217,7 @@ namespace Vanga
     }
 
     // create stub trees
-    for(auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+    for (auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
       DTree_var dtree = new DTree();
       dtree->tree_id = tree_it->first;
@@ -228,12 +227,12 @@ namespace Vanga
     }
 
     // link trees
-    for(auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+    for (auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
-      if(tree_it->second.yes_tree_id != 0)
+      if (tree_it->second.yes_tree_id != 0)
       {
         auto res_tree_it = trees.find(tree_it->second.yes_tree_id);
-        if(res_tree_it == trees.end())
+        if (res_tree_it == trees.end())
         {
           Stream::Error ostr;
           ostr << "can't resolve tree id: " << tree_it->second.yes_tree_id;
@@ -243,10 +242,10 @@ namespace Vanga
         tree_it->second.resolved_tree->yes_tree = res_tree_it->second.resolved_tree;
       }
 
-      if(tree_it->second.no_tree_id != 0)
+      if (tree_it->second.no_tree_id != 0)
       {
         auto res_tree_it = trees.find(tree_it->second.no_tree_id);
-        if(res_tree_it == trees.end())
+        if (res_tree_it == trees.end())
         {
           Stream::Error ostr;
           ostr << "can't resolve tree id: " << tree_it->second.no_tree_id;
@@ -268,13 +267,12 @@ namespace Vanga
   {
     double res = delta_prob;
 
-    if(feature_id)
+    if (feature_id)
     {
-      if(std::binary_search(
-           features.begin(), features.end(), feature_id, FeatureLess()))
+      if (std::binary_search(features.begin(), features.end(), feature_id, FeatureLess()))
       {
         // yes tree
-        if(yes_tree)
+        if (yes_tree)
         {
           res += yes_tree->predict(features);
         }
@@ -282,7 +280,7 @@ namespace Vanga
       else
       {
         // no tree
-        if(no_tree)
+        if (no_tree)
         {
           res += no_tree->predict(features);
         }
@@ -293,18 +291,15 @@ namespace Vanga
   }
 
   std::string
-  DTree::to_string(
-    const char* prefix,
-    const FeatureDictionary* dict,
-    double base) const
+  DTree::to_string(const char* prefix, const FeatureDictionary* dict, double base) const
     noexcept
   {
     std::ostringstream ostr;
     ostr << prefix << feature_id << "{" << tree_id << "}";
-    if(dict)
+    if (dict)
     {
       auto dict_it = dict->find(feature_id);
-      if(dict_it != dict->end())
+      if (dict_it != dict->end())
       {
         ostr << " [" << dict_it->second << "]";
       }
@@ -312,25 +307,18 @@ namespace Vanga
 
     ostr << ": " << (delta_prob > 0 ? "+" : "") << delta_prob <<
       " = " << (base + delta_prob) <<
-      "(p = " << (1.0 / (1.0 + std::exp(-(base + delta_prob)))) << ")" <<
-      std::endl;
+      "(p = " << (1.0 / (1.0 + std::exp(-(base + delta_prob)))) << ")" << std::endl;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       ostr << prefix << "  yes =>" << std::endl <<
-        yes_tree->to_string(
-          (std::string(prefix) + ">   ").c_str(),
-          dict,
-          base + delta_prob);
+        yes_tree->to_string((std::string(prefix) + ">   ").c_str(), dict, base + delta_prob);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       ostr << prefix << "  no =>" << std::endl <<
-        no_tree->to_string(
-          (std::string(prefix) + ">   ").c_str(),
-          dict,
-          base + delta_prob);
+        no_tree->to_string((std::string(prefix) + ">   ").c_str(), dict, base + delta_prob);
     }
 
     return ostr.str();
@@ -344,12 +332,12 @@ namespace Vanga
     res->feature_id = feature_id;
     res->delta_prob = delta_prob;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       res->yes_tree = yes_tree->copy();
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       res->no_tree = no_tree->copy();
     }
@@ -383,7 +371,7 @@ namespace Vanga
   PredictorSet::predict(const FeatureArray& features) const noexcept
   {
     double sum = 0.0;
-    for(auto it = predictors_.begin(); it != predictors_.end(); ++it)
+    for (auto it = predictors_.begin(); it != predictors_.end(); ++it)
     {
       sum += (*it)->predict(features);
     }
@@ -395,7 +383,7 @@ namespace Vanga
   {
     ostr << (type_ == AVG ? UNION_MODEL_AVG_HEAD : UNION_MODEL_SUM_HEAD) << std::endl;
 
-    for(auto it = predictors_.begin(); it != predictors_.end(); ++it)
+    for (auto it = predictors_.begin(); it != predictors_.end(); ++it)
     {
       //ostr << ">>>>>>>> TO PREDICTOR SAVE" << std::endl;
       (*it)->save(ostr);
@@ -409,15 +397,15 @@ namespace Vanga
   {
     PredictorSet_var res = new PredictorSet(type);
 
-    if(with_head)
+    if (with_head)
     {
       std::string line;
       AdServer::LogProcessing::read_until_eol(istr, line, false);
-      if(line == UNION_MODEL_SUM_HEAD || line == UNION_MODEL_SUM_HEAD_2)
+      if (line == UNION_MODEL_SUM_HEAD || line == UNION_MODEL_SUM_HEAD_2)
       {
         res->type_ = SUM;
       }
-      else if(line == UNION_MODEL_AVG_HEAD)
+      else if (line == UNION_MODEL_AVG_HEAD)
       {
         res->type_ = AVG;
       }
@@ -429,10 +417,10 @@ namespace Vanga
       }
     }
 
-    while(!istr.eof())
+    while (!istr.eof())
     {
       Predictor_var predictor = PredictorLoader::load(istr);
-      if(predictor)
+      if (predictor)
       {
         res->add(predictor);
       }
@@ -448,23 +436,17 @@ namespace Vanga
   }
 
   std::string
-  PredictorSet::to_string(
-    const char* prefix,
-    const FeatureDictionary* dict,
-    double base) const
+  PredictorSet::to_string(const char* prefix, const FeatureDictionary* dict, double base) const
     noexcept
   {
     std::ostringstream ostr;
 
     unsigned long predictor_i = 0;
-    for(auto predictor_it = predictors_.begin();
+    for (auto predictor_it = predictors_.begin();
       predictor_it != predictors_.end(); ++predictor_it, ++predictor_i)
     {
       ostr << prefix << "Predictor #" << predictor_i << ":" << std::endl <<
-        (*predictor_it)->to_string(
-          (std::string(prefix) + "  ").c_str(),
-          dict,
-          base) << std::endl;
+        (*predictor_it)->to_string((std::string(prefix) + "  ").c_str(), dict, base) << std::endl;
     }
 
     return ostr.str();
@@ -476,19 +458,20 @@ namespace Vanga
   {
     std::string line;
     AdServer::LogProcessing::read_until_eol(istr, line, false);
-    if(line.empty())
+    if (line.empty())
     {
       return Predictor_var();
     }
-    if(line == DTREE_MODEL_HEAD)
+
+    if (line == DTREE_MODEL_HEAD)
     {
       return DTree::load(istr, false);
     }
-    else if(line == UNION_MODEL_AVG_HEAD)
+    else if (line == UNION_MODEL_AVG_HEAD)
     {
       return PredictorSet::load(istr, false, PredictorSet::AVG);
     }
-    else if(line == UNION_MODEL_SUM_HEAD || line == UNION_MODEL_SUM_HEAD_2)
+    else if (line == UNION_MODEL_SUM_HEAD || line == UNION_MODEL_SUM_HEAD_2)
     {
       return PredictorSet::load(istr, false, PredictorSet::SUM);
     }

@@ -3,7 +3,7 @@
 my $line_i = 0;
 #my $skipped_lines = 0;
 
-while(<STDIN>)
+while (<STDIN>)
 {
   my $line = $_;
   chomp $line;
@@ -11,15 +11,15 @@ while(<STDIN>)
 
   my @arr = split(' ', $line);
   my $label = shift(@arr);
-  if($label !~ m/^-?\d+(.\d+)?$/)
+  if ($label !~ m/^-?\d+(.\d+)?$/)
   {
-    die "invalid label at line #" . $line_i . ": $line";   
+    die "invalid label at line #" . $line_i . ": $line";
   }
 
   my %features;
   foreach my $el(@arr)
   {
-    if($el !~ m/^([0-9]+):([-.0-9]+)$/)
+    if ($el !~ m/^([0-9]+):([-.0-9]+)$/)
     {
       last;
       #die "can't parse '$el' from line #" . $line_i . ": $line";
@@ -27,8 +27,8 @@ while(<STDIN>)
 
     my $key = $1;
     my $val = $2;
-    
-    if($key <= 2000000000) # if($key <= 4294967295)
+
+    if ($key <= 2000000000) # if ($key <= 4294967295)
     {
       $features{$key} = $val;
     }

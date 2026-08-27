@@ -72,8 +72,7 @@ namespace AdServer::ImprTrack
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -130,8 +129,7 @@ namespace AdServer::ImprTrack
       bool invalid_bind_operation = false;
     };
 
-    using ResolveUserBindTask =
-      AdServer::Commons::Awaitable<ResolveUserBindResult>;
+    using ResolveUserBindTask = AdServer::Commons::Awaitable<ResolveUserBindResult>;
 
   private:
     struct MatchScheduleState;
@@ -156,13 +154,11 @@ namespace AdServer::ImprTrack
       noexcept;
 
     void
-    try_schedule_match_channels_(
-      const std::shared_ptr<MatchScheduleState>& state)
+    try_schedule_match_channels_(const std::shared_ptr<MatchScheduleState>& state)
       noexcept;
 
     FrontendCommons::RequestTask
-    co_match_request_(
-      std::shared_ptr<ImprTrackMatchRequestState> state)
+    co_match_request_(std::shared_ptr<ImprTrackMatchRequestState> state)
       noexcept;
 
     FrontendCommons::RequestTask
@@ -195,8 +191,7 @@ namespace AdServer::ImprTrack
       const noexcept;
 
     RequestInfoFiller::EncryptionKeys_var
-    read_keys_(
-      const xsd::AdServer::Configuration::EncryptionKeysType& src)
+    read_keys_(const xsd::AdServer::Configuration::EncryptionKeysType& src)
       /*throw(eh::Exception)*/;
 
     void

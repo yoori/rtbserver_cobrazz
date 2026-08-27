@@ -1,10 +1,7 @@
 
 #include "KeywordsNormalizationTest.hpp"
 
-REFLECT_UNIT(KeywordsNormalizationTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(KeywordsNormalizationTest) ("TriggerMatching", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -99,15 +96,13 @@ void KeywordsNormalizationTest::pre_condition()
     istr >> channel_trigger_id;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !istr.bad() && !istr.fail()),
+      AutoTest::predicate_checker(!istr.bad() && !istr.fail()),
       "Can't fetch channel_trigger_id to int variable from LocalParams.xml");
 
     TriggerStat stat(TriggerStat::Key().
       channel_trigger_id(channel_trigger_id).
       trigger_type(trigger->Name()));
-    stat.description(
-      trigger->Value() + " on " + (trigger->Name() == "S" ? "search" : "page"));
+    stat.description(trigger->Value() + " on " + (trigger->Name() == "S" ? "search" : "page"));
     stat.select(conn_);
     trigger_stats_.push_back(stat);
 
@@ -147,25 +142,21 @@ void KeywordsNormalizationTest::pre_condition()
         channels_diff[channel_id].hits_urls(0);
         channels_diff[channel_id].hits(0);
       }
+
       if (trigger_type == 'P')
       {
-        channels_diff[channel_id].hits_kws(
-          channels_diff[channel_id].hits_kws() + 1);
+        channels_diff[channel_id].hits_kws(channels_diff[channel_id].hits_kws() + 1);
       }
       else if (trigger_type == 'S')
       {
-        channels_diff[channel_id].hits_search_kws(
-          channels_diff[channel_id].hits_search_kws() + 1);
+        channels_diff[channel_id].hits_search_kws(channels_diff[channel_id].hits_search_kws() + 1);
       }
       channel_hits.insert(channel_id);
     }
 
-    for (IntSet::const_iterator it = channel_hits.begin();
-         it != channel_hits.end();
-         ++ it)
+    for (IntSet::const_iterator it = channel_hits.begin(); it != channel_hits.end(); ++ it)
     {
-      channels_diff[*it].hits(
-          channels_diff[*it].hits() + 1);
+      channels_diff[*it].hits(channels_diff[*it].hits() + 1);
     }
   }
 
@@ -178,12 +169,10 @@ void KeywordsNormalizationTest::pre_condition()
     istr >> channel_id;
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !istr.bad() && !istr.fail()),
+      AutoTest::predicate_checker(!istr.bad() && !istr.fail()),
       "Can't fetch channel_id to int variable from LocalParams.xml");
 
-    ChannelStat stat(ChannelStat::Key().
-      channel_id(channel_id));
+    ChannelStat stat(ChannelStat::Key(). channel_id(channel_id));
     stat.description(channel->Name());
     stat.select(conn_);
     channel_stats_.push_back(stat);
@@ -198,9 +187,7 @@ KeywordsNormalizationTest::run()
 
   AdClient client(AdClient::create_user(this));
 
-  for (unsigned int i = 0;
-       i < sizeof(TEST_CASES) /
-           sizeof(*TEST_CASES); ++i)
+  for (unsigned int i = 0; i < sizeof(TEST_CASES) / sizeof(*TEST_CASES); ++i)
   {
     std::string description("Request " + strof(i+1));
     add_descr_phrase(description);
@@ -212,9 +199,7 @@ KeywordsNormalizationTest::run()
     {
       try
       {
-        PARAMS[p].member(
-          request,
-          fetch_string(PARAMS[p].name + strof(i+1)));
+        PARAMS[p].member(request, fetch_string(PARAMS[p].name + strof(i+1)));
 
       }
       catch (const InvalidArgument&)
@@ -227,10 +212,7 @@ KeywordsNormalizationTest::run()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        TEST_CASES[i].matched,
-        client.debug_info.trigger_channels).check(),
+      ChannelsCheck(this, TEST_CASES[i].matched, client.debug_info.trigger_channels).check(),
       description +
         ". Expected trigger_channels");
 
@@ -253,20 +235,17 @@ void KeywordsNormalizationTest::post_condition()
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, trigger_diffs_, trigger_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, trigger_diffs_, trigger_stats_)).check(),
     "ChannelTriggerStats check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, channel_diffs_, channel_stats_)).check(),
+      AutoTest::stats_diff_checker(conn_, channel_diffs_, channel_stats_)).check(),
     "ChannelInventory check");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      AutoTest::stats_each_diff_checker(
-        conn_, 0, unexpected_trigger_stats_)).check(),
+      AutoTest::stats_each_diff_checker(conn_, 0, unexpected_trigger_stats_)).check(),
     "ChannelTriggerStats unexpected check");
 }
 

@@ -74,12 +74,8 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchParams
     {
-      explicit MatchParams(
-        std::shared_ptr<Generics::MonoAllocatorArena> arena =
-          nullptr)
-        : arena_(arena ?
-            std::move(arena) :
-            std::make_shared<Generics::MonoAllocatorArena>()),
+      explicit MatchParams(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+        : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
           matched_channels(arena_),
           geo_data_seq(arena_.get())
       {}
@@ -136,12 +132,8 @@ namespace AdServer::UserInfoSvcs
 
     struct MatchResult
     {
-      explicit MatchResult(
-        std::shared_ptr<Generics::MonoAllocatorArena> arena =
-          nullptr)
-        : arena_(arena ?
-            std::move(arena) :
-            std::make_shared<Generics::MonoAllocatorArena>()),
+      explicit MatchResult(std::shared_ptr<Generics::MonoAllocatorArena> arena = nullptr)
+        : arena_(arena ? std::move(arena) : std::make_shared<Generics::MonoAllocatorArena>()),
           geo_data_seq(arena_.get()),
           exclude_pubpixel_accounts(arena_.get()),
           full_freq_caps(arena_.get()),
@@ -249,10 +241,7 @@ namespace AdServer::UserInfoSvcs
       const std::set<unsigned long>& exclude_pubpixel_accounts,
       const Generics::Time& now);
 
-    void clear_expired(
-      bool synch,
-      const Generics::Time& cleanup_time,
-      long portion);
+    void clear_expired(bool synch, const Generics::Time& cleanup_time, long portion);
 
     UserStat get_stats()
       /*throw(NotReady, eh::Exception)*/;
@@ -261,9 +250,7 @@ namespace AdServer::UserInfoSvcs
     rocksdb_stats() noexcept;
 
     void
-    get_controllable_chunks(
-      ChunkIdList& chunk_ids,
-      unsigned long& common_chunks_number)
+    get_controllable_chunks(ChunkIdList& chunk_ids, unsigned long& common_chunks_number)
       /*throw(Exception)*/;
 
     Logging::Logger*
@@ -282,9 +269,7 @@ namespace AdServer::UserInfoSvcs
     class FlushLogsTask: public TaskBase
     {
     public:
-      FlushLogsTask(
-        UserInfoManagerCore* manager,
-        Generics::TaskRunner* task_runner)
+      FlushLogsTask(UserInfoManagerCore* manager, Generics::TaskRunner* task_runner)
         noexcept;
 
       virtual void execute() noexcept;
@@ -423,8 +408,7 @@ namespace AdServer::UserInfoSvcs
     void delete_old_temporary_profiles_(bool reschedule) noexcept;
 
     void
-    update_channels_config_(
-      UserInfoContainer* user_info_container)
+    update_channels_config_(UserInfoContainer* user_info_container)
       noexcept;
 
     void calc_user_daily_stat_(
@@ -439,8 +423,7 @@ namespace AdServer::UserInfoSvcs
     void log_slow_transactions_() noexcept;
 
     AdServer::ProfilingCommons::LevelMapTraits
-    fill_level_map_traits_(
-      const xsd::AdServer::Configuration::ChunksConfigType& chunks_config)
+    fill_level_map_traits_(const xsd::AdServer::Configuration::ChunksConfigType& chunks_config)
       noexcept;
 
   private:

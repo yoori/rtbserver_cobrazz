@@ -39,14 +39,11 @@ namespace
     MIME_ENCODED_SHEME_RELATIVE_PREFIX("%2f%2f");
 
   void
-  throw_grpc_exception_(
-    const char* name,
-    const grpc::Status& status)
+  throw_grpc_exception_(const char* name, const grpc::Status& status)
   {
     Stream::Error ostr;
     ostr << name << ": gRPC call failed: code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
+      static_cast<int>(status.error_code()) << ", message=" << status.error_message();
     throw GrpcCallException(ostr);
   }
 
@@ -59,20 +56,20 @@ namespace Aspect
 
 namespace Request::Context
 {
-    const String::SubString PRECLICK_URL("preclick");
-  }
+  const String::SubString PRECLICK_URL("preclick");
+}
 
 namespace Request::Cookie
-  {
-    const Generics::SubStringHashAdapter LAST_COLOCATION_ID(String::SubString("lc"));
-  }
+{
+  const Generics::SubStringHashAdapter LAST_COLOCATION_ID(String::SubString("lc"));
+}
 
 namespace Response::Header
 {
-    const String::SubString MERGE_FAILED("x-Merge-Failed");
-    const String::SubString LOCATION("Location");
-    const String::SubString DEBUG_INFO("Debug-Info");
-  }
+  const String::SubString MERGE_FAILED("x-Merge-Failed");
+  const String::SubString LOCATION("Location");
+  const String::SubString DEBUG_INFO("Debug-Info");
+}
 
 namespace AdServer::Instantiate
 {
@@ -105,14 +102,12 @@ namespace AdServer::Instantiate
   {
     std::string found_uri;
 
-    bool result = FrontendCommons::find_uri(
-      config_->UriList().Uri(), uri, found_uri);
+    bool result = FrontendCommons::find_uri(config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
-      ostr << "Instantiate::Frontend::will_handle(" << uri <<
-        "), service: '" << found_uri << "'";
+      ostr << "Instantiate::Frontend::will_handle(" << uri << "), service: '" << found_uri << "'";
 
       logger()->log(ostr.str());
     }
@@ -130,7 +125,7 @@ namespace AdServer::Instantiate
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration isn't present");
       }
@@ -138,18 +133,16 @@ namespace AdServer::Instantiate
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.AdInstFeConfiguration().present())
+      if (!fe_config.AdInstFeConfiguration().present())
       {
         throw Exception("AdInstFeConfiguration isn't present");
       }
 
-      config_.reset(
-        new AdInstFeConfiguration(*fe_config.AdInstFeConfiguration()));
+      config_.reset(new AdInstFeConfiguration(*fe_config.AdInstFeConfiguration()));
 
       cookie_manager_.reset(
         new FrontendCommons::CookieManager<
-          FCGI::HttpRequest, FCGI::HttpResponse>(
-            common_config_->Cookies()));
+          FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
     }
     catch(const eh::Exception& e)
     {
@@ -165,7 +158,7 @@ namespace AdServer::Instantiate
   {
     static const char* FUN = "Instantiate::Frontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
@@ -175,14 +168,11 @@ namespace AdServer::Instantiate
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
         add_child_object(campaign_manager);
 
         auto user_info_client =
@@ -192,9 +182,7 @@ namespace AdServer::Instantiate
             common_module_->grpc_coalesce_runner(),
             logger());
         user_info_client_coro_ = std::make_shared<
-          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
-            user_info_client,
-            workers_);
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(user_info_client, workers_);
         add_child_object(user_info_client);
 
         request_info_filler_.reset(
@@ -213,16 +201,14 @@ namespace AdServer::Instantiate
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "Frontend::init(): frontend is running ..."),
+      logger()->log(String::SubString("Frontend::init(): frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::AD_INST_FRONTEND);
     }
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -231,8 +217,7 @@ namespace AdServer::Instantiate
   }
 
   FrontendCommons::RequestTask
-  Frontend::co_handle_request_noparams(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -250,12 +235,9 @@ namespace AdServer::Instantiate
       wait_object();
 
       Stream::Error ostr;
-      ostr << "Frontend::shutdown: frontend terminated (pid = " <<
-        ::getpid() << ").";
+      ostr << "Frontend::shutdown: frontend terminated (pid = " << ::getpid() << ").";
 
-      logger()->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::AD_INST_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::INFO, Aspect::AD_INST_FRONTEND);
     }
     catch(...)
     {}
@@ -268,7 +250,7 @@ namespace AdServer::Instantiate
     unsigned int log_level_val)
     /*throw(eh::Exception)*/
   {
-    if(logger()->log_level() >= log_level_val)
+    if (logger()->log_level() >= log_level_val)
     {
       std::ostringstream ostr;
 
@@ -276,8 +258,7 @@ namespace AdServer::Instantiate
         "Args: " << request.args() << std::endl <<
         "Params ("<< request.params().size() << "):"  << std::endl;
 
-      for(HTTP::ParamList::const_iterator it =
-            request.params().begin();
+      for (HTTP::ParamList::const_iterator it = request.params().begin();
           it != request.params().end(); ++it)
       {
         ostr << "    " << it->name << " : " << it->value << std::endl;
@@ -293,15 +274,12 @@ namespace AdServer::Instantiate
 
       ostr << "    " << "Header_only : " << request.header_only() << std::endl;
 
-      logger()->log(ostr.str(),
-        log_level_val,
-        Aspect::AD_INST_FRONTEND);
+      logger()->log(ostr.str(), log_level_val, Aspect::AD_INST_FRONTEND);
     }
   }
 
   FrontendCommons::RequestTask
-  Frontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::handle_request_noparams_(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -368,8 +346,7 @@ namespace AdServer::Instantiate
 
   /** Frontend::handle_request */
   FrontendCommons::RequestTask
-  Frontend::co_process_request_(
-    FCGI::HttpRequestHolder_var request_holder)
+  Frontend::co_process_request_(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "Frontend::handle_request()";
@@ -378,7 +355,7 @@ namespace AdServer::Instantiate
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       logger()->log(String::SubString("Frontend::handle_request(): entered"),
         TraceLevel::MIDDLE,
@@ -414,21 +391,17 @@ namespace AdServer::Instantiate
             HTTP::CookieList cookies;
             cookies.load_from_headers(request.headers());
 
-            if(!merge_success)
+            if (!merge_success)
             {
-              response.add_header_nocopy_name(
-                Response::Header::MERGE_FAILED,
-                merge_error_message);
+              response.add_header_nocopy_name(Response::Header::MERGE_FAILED, merge_error_message);
             }
 
-            if(common_config_->ResponseHeaders().present())
+            if (common_config_->ResponseHeaders().present())
             {
-              FrontendCommons::add_headers(
-                *(common_config_->ResponseHeaders()),
-                response);
+              FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
             }
 
-            if(request_info.set_uid && request_info.user_id.is_null())
+            if (request_info.set_uid && request_info.user_id.is_null())
             {
               const Generics::SignedUuid signed_uid =
                 common_module_->user_id_controller()->generate();
@@ -439,7 +412,7 @@ namespace AdServer::Instantiate
                 signed_uid.str());
             }
 
-            if(request_info.format == "vast")
+            if (request_info.format == "vast")
             {
               FrontendCommons::CORS::set_headers(request, response);
             }
@@ -449,12 +422,9 @@ namespace AdServer::Instantiate
             status = 400;
 
             Stream::Error ostr;
-            ostr << FUN << ": HTTP::CookieList::Exception caught: " <<
-              e.what();
+            ostr << FUN << ": HTTP::CookieList::Exception caught: " << e.what();
 
-            logger()->log(ostr.str(),
-              Logging::Logger::NOTICE,
-              Aspect::AD_INST_FRONTEND);
+            logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_INST_FRONTEND);
           }
           catch(const eh::Exception& e)
           {
@@ -472,32 +442,23 @@ namespace AdServer::Instantiate
           return status;
         };
 
-      const MergeUsersResult merge_result =
-        co_await co_merge_users_(request_info);
+      const MergeUsersResult merge_result = co_await co_merge_users_(request_info);
 
-      http_status = co_await co_instantiate_ad_(
-        response_ptr,
-        request_info,
-        instantiate_type);
+      http_status = co_await co_instantiate_ad_(response_ptr, request_info, instantiate_type);
 
-      http_status = finish_response(
-        http_status,
-        merge_result.success,
-        merge_result.error_message);
+      http_status = finish_response(http_status, merge_result.success, merge_result.error_message);
     }
     catch (const ForbiddenException &ex)
     {
       /* forbidden request */
       http_status = 403;
 
-      if(logger()->log_level() >= TraceLevel::LOW)
+      if (logger()->log_level() >= TraceLevel::LOW)
       {
         Stream::Error ostr;
         ostr << FUN << ": ForbiddenException caught: " << ex.what();
 
-        logger()->log(ostr.str(),
-          TraceLevel::LOW,
-          Aspect::AD_INST_FRONTEND);
+        logger()->log(ostr.str(), TraceLevel::LOW, Aspect::AD_INST_FRONTEND);
       }
     }
     catch (const InvalidParamException& e)
@@ -505,16 +466,14 @@ namespace AdServer::Instantiate
       /* non correct or passback request */
       http_status = 400;
 
-      if(logger()->log_level() >= TraceLevel::MIDDLE)
+      if (logger()->log_level() >= TraceLevel::MIDDLE)
       {
         Stream::Error ostr;
         ostr << FUN << ": InvalidParamException caught: " << e.what();
 
-        if(logger()->log_level() >= TraceLevel::MIDDLE)
+        if (logger()->log_level() >= TraceLevel::MIDDLE)
         {
-          logger()->log(ostr.str(),
-            TraceLevel::MIDDLE,
-            Aspect::AD_INST_FRONTEND);
+          logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::AD_INST_FRONTEND);
         }
       }
     }
@@ -525,9 +484,7 @@ namespace AdServer::Instantiate
       Stream::Error ostr;
       ostr << FUN << ": HTTP::CookieList::Exception caught: " << e.what();
 
-      logger()->log(ostr.str(),
-        Logging::Logger::NOTICE,
-        Aspect::AD_INST_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_INST_FRONTEND);
     }
     catch(const eh::Exception& e)
     {
@@ -549,23 +506,22 @@ namespace AdServer::Instantiate
   }
 
   Frontend::MergeUsersTask
-  Frontend::co_merge_users_(
-    const RequestInfo& request_info)
+  Frontend::co_merge_users_(const RequestInfo& request_info)
     noexcept
   {
     static const char* FUN = "Frontend::co_merge_users_()";
 
-    if(request_info.temp_user_id.is_null() || request_info.user_id.is_null())
+    if (request_info.temp_user_id.is_null() || request_info.user_id.is_null())
     {
       co_return MergeUsersResult{};
     }
 
-    if(!user_info_client_coro_)
+    if (!user_info_client_coro_)
     {
       co_return MergeUsersResult{false, MergeMessage::SOURCE_NOT_READY};
     }
 
-    if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
+    if (request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
     {
       co_return MergeUsersResult{false, MergeMessage::SOURCE_IS_PROBE};
     }
@@ -574,11 +530,9 @@ namespace AdServer::Instantiate
     {
       adserver::user_info_svcs::user_info_manager::GetUserProfileRequest
         get_profile_request;
-      get_profile_request.set_user_id(
-        GrpcAlgs::pack_user_id(request_info.temp_user_id));
+      get_profile_request.set_user_id(GrpcAlgs::pack_user_id(request_info.temp_user_id));
       get_profile_request.set_temporary(true);
-      auto* profiles_request =
-        get_profile_request.mutable_profile_request();
+      auto* profiles_request = get_profile_request.mutable_profile_request();
       profiles_request->set_base_profile(true);
       profiles_request->set_add_profile(true);
       profiles_request->set_history_profile(true);
@@ -586,18 +540,15 @@ namespace AdServer::Instantiate
       profiles_request->set_pref_profile(false);
 
       auto get_profile_result =
-        co_await user_info_client_coro_->co_get_user_profile(
-          std::move(get_profile_request));
-      if(!get_profile_result.status.ok())
+        co_await user_info_client_coro_->co_get_user_profile(std::move(get_profile_request));
+      if (!get_profile_result.status.ok())
       {
-        throw_grpc_exception_(
-          "UserInfoManager::get_user_profile()",
-          get_profile_result.status);
+        throw_grpc_exception_("UserInfoManager::get_user_profile()", get_profile_result.status);
       }
 
       bool merge_success = get_profile_result.response.found();
 
-      if(get_profile_result.response.user_profile().
+      if (get_profile_result.response.user_profile().
            base_user_profile().empty() &&
          get_profile_result.response.user_profile().
            add_user_profile().empty())
@@ -605,28 +556,24 @@ namespace AdServer::Instantiate
         merge_success = false;
       }
 
-      if(!merge_success)
+      if (!merge_success)
       {
         co_return MergeUsersResult{false, MergeMessage::SOURCE_IS_UNKNOWN};
       }
 
-      if(!request_info.remove_merged_uid)
+      if (!request_info.remove_merged_uid)
       {
         co_return MergeUsersResult{};
       }
 
       adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest
         remove_request;
-      remove_request.set_user_id(
-        GrpcAlgs::pack_user_id(request_info.temp_user_id));
+      remove_request.set_user_id(GrpcAlgs::pack_user_id(request_info.temp_user_id));
       auto remove_result =
-        co_await user_info_client_coro_->co_remove_user_profile(
-          std::move(remove_request));
-      if(!remove_result.status.ok())
+        co_await user_info_client_coro_->co_remove_user_profile(std::move(remove_request));
+      if (!remove_result.status.ok())
       {
-        throw_grpc_exception_(
-          "UserInfoManager::remove_user_profile()",
-          remove_result.status);
+        throw_grpc_exception_("UserInfoManager::remove_user_profile()", remove_result.status);
       }
 
       co_return MergeUsersResult{};
@@ -634,13 +581,8 @@ namespace AdServer::Instantiate
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't get user profile for merging: " <<
-        ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::NOTICE,
-        Aspect::AD_INST_FRONTEND,
-        "ADS-IMPL-111");
+      ostr << FUN << ": Can't get user profile for merging: " << ex.what();
+      logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_INST_FRONTEND, "ADS-IMPL-111");
 
       co_return MergeUsersResult{false, MergeMessage::SOURCE_EXCEPTION};
     }
@@ -658,43 +600,40 @@ namespace AdServer::Instantiate
 
     try
     {
-      if(request_info.creatives.empty())
+      if (request_info.creatives.empty())
       {
         co_return 204;
       }
 
       adserver::campaign_svcs::campaign_manager::ClickInfo click_info;
 
-      const RequestInfo::CreativeInfo& first_creative =
-        request_info.creatives.front();
+      const RequestInfo::CreativeInfo& first_creative = request_info.creatives.front();
       click_info.set_colo_id(request_info.colo_id);
       click_info.set_tag_id(request_info.tag_id);
       click_info.set_tag_size_id(request_info.tag_size_id);
       click_info.set_log_click(request_info.consider_request);
       click_info.set_ccid(first_creative.ccid);
       click_info.set_ccg_keyword_id(first_creative.ccg_keyword_id);
-      if(request_info.creative_id)
+      if (request_info.creative_id)
       {
         click_info.set_creative_id(request_info.creative_id);
       }
-      click_info.mutable_ctr()->set_value(
-        GrpcAlgs::pack_decimal(first_creative.ctr));
+      click_info.mutable_ctr()->set_value(GrpcAlgs::pack_decimal(first_creative.ctr));
 
-      if(request_info.user_id_hash_mod.present())
+      if (request_info.user_id_hash_mod.present())
       {
         auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
         user_id_hash_mod->set_defined(true);
         user_id_hash_mod->set_value(*request_info.user_id_hash_mod);
       }
-      else if(request_info.consider_request &&
+      else if (request_info.consider_request &&
         !request_info.enabled_notice &&
         !request_info.user_id.is_null())
       {
         auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
         user_id_hash_mod->set_defined(true);
         user_id_hash_mod->set_value(
-          AdServer::LogProcessing::user_id_distribution_hash(
-            request_info.user_id));
+          AdServer::LogProcessing::user_id_distribution_hash(request_info.user_id));
       }
       else
       {
@@ -706,7 +645,7 @@ namespace AdServer::Instantiate
       click_info.set_time(GrpcAlgs::pack_time(request_info.time));
       click_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
 
-      if(inst_ad_result.request_ids_size())
+      if (inst_ad_result.request_ids_size())
       {
         click_info.set_request_id(inst_ad_result.request_ids(0));
       }
@@ -719,14 +658,12 @@ namespace AdServer::Instantiate
 
       auto click_url_result = co_await campaign_manager_coro_->co_get_click_url(
         std::move(click_url_request));
-      if(!click_url_result.status.ok())
+      if (!click_url_result.status.ok())
       {
-        throw_grpc_exception_(
-          "CampaignManager::get_click_url()",
-          click_url_result.status);
+        throw_grpc_exception_("CampaignManager::get_click_url()", click_url_result.status);
       }
 
-      if(click_url_result.response.found())
+      if (click_url_result.response.found())
       {
         response->add_header_nocopy_name(
           Response::Header::LOCATION,
@@ -741,10 +678,7 @@ namespace AdServer::Instantiate
     {
       Stream::Error ostr;
       ostr << FUN << ": fail. Caught eh::Exception: " << ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_INST_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_INST_FRONTEND);
       co_return 500;
     }
   }
@@ -764,8 +698,7 @@ namespace AdServer::Instantiate
 
       auto* common_info = inst_ad_info.mutable_common_info();
       common_info->set_time(GrpcAlgs::pack_time(request_info.bid_time));
-      common_info->set_request_id(
-        GrpcAlgs::pack_request_id(request_info.global_request_id));
+      common_info->set_request_id(GrpcAlgs::pack_request_id(request_info.global_request_id));
       common_info->set_creative_instantiate_type(instantiate_type.text().str());
       common_info->set_request_type(AdServer::CampaignSvcs::AR_NORMAL);
       common_info->set_random(request_info.random);
@@ -775,7 +708,7 @@ namespace AdServer::Instantiate
       common_info->set_external_user_id(request_info.external_user_id);
       common_info->set_source_id(request_info.source_id);
 
-      if(request_info.location)
+      if (request_info.location)
       {
         auto* location = common_info->add_location();
         location->set_country(request_info.location->country);
@@ -783,15 +716,13 @@ namespace AdServer::Instantiate
         location->set_city(request_info.location->city);
       }
 
-      if(request_info.coord_location)
+      if (request_info.coord_location)
       {
         auto* coord_location = common_info->add_coord_location();
         coord_location->set_longitude(
           GrpcAlgs::pack_decimal(request_info.coord_location->longitude));
-        coord_location->set_latitude(
-          GrpcAlgs::pack_decimal(request_info.coord_location->latitude));
-        coord_location->set_accuracy(
-          GrpcAlgs::pack_decimal(request_info.coord_location->accuracy));
+        coord_location->set_latitude(GrpcAlgs::pack_decimal(request_info.coord_location->latitude));
+        coord_location->set_accuracy(GrpcAlgs::pack_decimal(request_info.coord_location->accuracy));
       }
 
       common_info->set_referer(request_info.referer);
@@ -801,8 +732,7 @@ namespace AdServer::Instantiate
       common_info->set_click_prefix_url(request_info.click_prefix_url);
       common_info->set_original_url(request_info.original_url);
 
-      common_info->set_track_user_id(GrpcAlgs::pack_user_id(
-        request_info.track_user_id));
+      common_info->set_track_user_id(GrpcAlgs::pack_user_id(request_info.track_user_id));
       common_info->set_user_id(GrpcAlgs::pack_user_id(request_info.user_id));
       common_info->set_user_status(
         request_info.user_status != AdServer::CampaignSvcs::US_PROBE ?
@@ -814,7 +744,7 @@ namespace AdServer::Instantiate
       common_info->set_cohort(request_info.cohort);
       common_info->set_hpos(request_info.hpos);
       common_info->set_ext_track_params(request_info.ext_track_params);
-      for(const auto pubpixel_account : request_info.pubpixel_accounts)
+      for (const auto pubpixel_account : request_info.pubpixel_accounts)
       {
         inst_ad_info.add_pubpixel_accounts(pubpixel_account);
       }
@@ -824,8 +754,7 @@ namespace AdServer::Instantiate
       common_info->set_passback_url(request_info.passback_url);
       common_info->set_set_cookie(request_info.set_cookie);
 
-      for(auto it = request_info.tokens.begin();
-        it != request_info.tokens.end(); ++it)
+      for (auto it = request_info.tokens.begin(); it != request_info.tokens.end(); ++it)
       {
         auto* token = common_info->add_tokens();
         token->set_name(it->first);
@@ -836,9 +765,9 @@ namespace AdServer::Instantiate
       inst_ad_info.set_publisher_account_id(request_info.publisher_account_id);
       inst_ad_info.set_emulate_click(request_info.emulate_click);
 
-      if(request_info.consider_request)
+      if (request_info.consider_request)
       {
-        if(request_info.pub_imp_revenue.present())
+        if (request_info.pub_imp_revenue.present())
         {
           inst_ad_info.mutable_pub_imp_revenue()->set_value(
             GrpcAlgs::pack_decimal(*request_info.pub_imp_revenue));
@@ -851,7 +780,7 @@ namespace AdServer::Instantiate
         context_info->set_web_browser(request_info.web_browser);
         context_info->set_platform(request_info.platform);
         context_info->set_full_platform(request_info.full_platform);
-        for(const auto platform_id : request_info.platform_ids)
+        for (const auto platform_id : request_info.platform_ids)
         {
           context_info->add_platform_ids(platform_id);
         }
@@ -861,13 +790,13 @@ namespace AdServer::Instantiate
         context_info->set_short_referer_hash(request_info.short_referer_hash);
       }
 
-      if(request_info.user_id_hash_mod.present())
+      if (request_info.user_id_hash_mod.present())
       {
         auto* user_id_hash_mod = inst_ad_info.mutable_user_id_hash_mod();
         user_id_hash_mod->set_defined(true);
         user_id_hash_mod->set_value(*request_info.user_id_hash_mod);
       }
-      else if(request_info.consider_request &&
+      else if (request_info.consider_request &&
         !request_info.enabled_notice &&
         !request_info.user_id.is_null())
       {
@@ -892,80 +821,62 @@ namespace AdServer::Instantiate
       inst_ad_info.set_ext_tag_id(request_info.ext_tag_id);
       inst_ad_info.set_video_width(request_info.video_width);
       inst_ad_info.set_video_height(request_info.video_height);
-      RequestInfo::RequestIdList::const_iterator request_id_it =
-        request_info.request_ids.begin();
-      for(RequestInfo::CreativeList::const_iterator creative_it =
-            request_info.creatives.begin();
+      RequestInfo::RequestIdList::const_iterator request_id_it = request_info.request_ids.begin();
+      for (RequestInfo::CreativeList::const_iterator creative_it = request_info.creatives.begin();
           creative_it != request_info.creatives.end();
           ++creative_it)
       {
         auto* creative = inst_ad_info.add_creatives();
         creative->set_ccid(creative_it->ccid);
         creative->set_ccg_keyword_id(creative_it->ccg_keyword_id);
-        if(request_info.creative_id)
+        if (request_info.creative_id)
         {
           creative->set_creative_id(request_info.creative_id);
         }
-        creative->mutable_ctr()->set_value(
-          GrpcAlgs::pack_decimal(creative_it->ctr));
-        if(request_id_it != request_info.request_ids.end())
+        creative->mutable_ctr()->set_value(GrpcAlgs::pack_decimal(creative_it->ctr));
+        if (request_id_it != request_info.request_ids.end())
         {
           creative->set_request_id(GrpcAlgs::pack_request_id(*request_id_it));
           ++request_id_it;
         }
       }
 
-      if(!request_info.temp_user_id.is_null() &&
-         !request_info.user_id.is_null())
+      if (!request_info.temp_user_id.is_null() && !request_info.user_id.is_null())
       {
-        inst_ad_info.set_merged_user_id(
-          GrpcAlgs::pack_user_id(request_info.temp_user_id));
+        inst_ad_info.set_merged_user_id(GrpcAlgs::pack_user_id(request_info.temp_user_id));
       }
 
       adserver::campaign_svcs::campaign_manager::InstantiateAdRequest
         instantiate_ad_request;
       *instantiate_ad_request.mutable_instantiate_ad_info() = inst_ad_info;
-      instantiate_ad_request.set_service_index(
-        request_info.campaign_manager_index);
+      instantiate_ad_request.set_service_index(request_info.campaign_manager_index);
 
       auto instantiate_ad_result =
-        co_await campaign_manager_coro_->co_instantiate_ad(
-          std::move(instantiate_ad_request));
-      if(!instantiate_ad_result.status.ok())
+        co_await campaign_manager_coro_->co_instantiate_ad(std::move(instantiate_ad_request));
+      if (!instantiate_ad_result.status.ok())
       {
-        throw_grpc_exception_(
-          "CampaignManager::instantiate_ad()",
-          instantiate_ad_result.status);
+        throw_grpc_exception_("CampaignManager::instantiate_ad()", instantiate_ad_result.status);
       }
 
-      const auto& inst_ad_result =
-        instantiate_ad_result.response.instantiate_ad_result();
+      const auto& inst_ad_result = instantiate_ad_result.response.instantiate_ad_result();
 
-      if(request_info.emulate_click)
+      if (request_info.emulate_click)
       {
-        co_return co_await co_instantiate_click_(
-          response,
-          request_info,
-          inst_ad_result);
+        co_return co_await co_instantiate_click_(response, request_info, inst_ad_result);
       }
-      else if(!inst_ad_result.creative_body().empty())
+      else if (!inst_ad_result.creative_body().empty())
       {
         std::string response_body(inst_ad_result.creative_body());
         response->set_content_type(inst_ad_result.mime_format());
 
-        response->get_output_stream().write(
-          response_body.c_str(),
-          response_body.length());
+        response->get_output_stream().write(response_body.c_str(), response_body.length());
 
-        if(logger()->log_level() >= TraceLevel::MIDDLE)
+        if (logger()->log_level() >= TraceLevel::MIDDLE)
         {
           Stream::Error ostr;
-          ostr << FUN << ": response:" << std::endl <<
-            response_body;
+          ostr << FUN << ": response:" << std::endl << response_body;
 
-          logger()->log(ostr.str(),
-            TraceLevel::MIDDLE,
-            Aspect::AD_INST_FRONTEND);
+          logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::AD_INST_FRONTEND);
         }
 
         co_return 200;
@@ -977,10 +888,7 @@ namespace AdServer::Instantiate
     {
       Stream::Error ostr;
       ostr << FUN << ": fail. Caught eh::Exception: " << ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_INST_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_INST_FRONTEND);
       co_return 500;
     }
   }

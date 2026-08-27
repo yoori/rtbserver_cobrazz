@@ -110,9 +110,9 @@ namespace AdServer
     /*throw(typename ConfigurationType::Exception)*/
   {
     typename ElementMap::iterator it = map_.find(key);
-    if(it != map_.end())
+    if (it != map_.end())
     {
-      if(configuration_.update_required(it->first, it->second))
+      if (configuration_.update_required(it->first, it->second))
       {
         it = update_(it, key);
       }
@@ -137,7 +137,7 @@ namespace AdServer
     /*throw(typename ConfigurationType::Exception)*/
   {
     typename KeyLockMap::WriteGuard lock = update_lock_map_.write_lock(key);
-    if(it != map_.end())
+    if (it != map_.end())
     {
       map_.erase(it);
     }

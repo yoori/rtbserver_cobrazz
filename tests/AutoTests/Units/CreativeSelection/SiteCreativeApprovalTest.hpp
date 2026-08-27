@@ -7,10 +7,7 @@
 class SiteCreativeApprovalTest : public BaseUnit
 {
 public:
-  SiteCreativeApprovalTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  SiteCreativeApprovalTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   { }
 

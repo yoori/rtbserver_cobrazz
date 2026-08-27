@@ -68,7 +68,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -81,17 +81,17 @@ namespace
     options.channel_trigger_id_count = *opt_channel_trigger_id_count;
     options.log_root = *opt_log_root;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
 
-    if(options.channel_trigger_id_count == 0)
+    if (options.channel_trigger_id_count == 0)
     {
       throw std::runtime_error("--channel-trigger-id-count must be > 0");
     }
@@ -103,7 +103,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -210,7 +210,7 @@ namespace
       channel_trigger_id_count
     ](AdServer::CampaignSvcs::CampaignManagerLogger::TriggerChannelMap& triggers)
     {
-      for(auto& trigger : triggers)
+      for (auto& trigger : triggers)
       {
         trigger.channel_trigger_id = next_random_channel_trigger_id(
           random_state,
@@ -255,10 +255,8 @@ namespace
     request_info->platform_channels.insert(1891019);
 
     request_info->is_ad_request = true;
-    request_info->request_id =
-      AdServer::Commons::RequestId("pqE7jNSUQoaV_UsdtySkIQ..");
-    request_info->user_id =
-      AdServer::Commons::UserId("19GyC8_FSLafQfNj06PZzA..");
+    request_info->request_id = AdServer::Commons::RequestId("pqE7jNSUQoaV_UsdtySkIQ..");
+    request_info->user_id = AdServer::Commons::UserId("19GyC8_FSLafQfNj06PZzA..");
     request_info->merged_user_id = request_info->user_id;
     request_info->fraud = false;
     request_info->disable_fraud_detection = false;
@@ -357,23 +355,20 @@ main(int argc, char** argv)
 
     static constexpr unsigned long REQUEST_INFO_POOL_SIZE = 8192;
     std::vector<
-      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo>>
-        request_infos;
+      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerLogger::RequestInfo>> request_infos;
     request_infos.reserve(
-      options.count < REQUEST_INFO_POOL_SIZE ?
-        options.count :
-        REQUEST_INFO_POOL_SIZE);
-    while(request_infos.size() < request_infos.capacity())
+      options.count < REQUEST_INFO_POOL_SIZE ? options.count : REQUEST_INFO_POOL_SIZE);
+    while (request_infos.size() < request_infos.capacity())
     {
       request_infos.emplace_back(make_request_info());
     }
 
     std::uint64_t channel_trigger_random_state = 1;
     const auto start_cpu = current_cpu_times();
-    for(unsigned long i = 0; i < options.count; ++i)
+    for (unsigned long i = 0; i < options.count; ++i)
     {
       const auto request_info_i = i % request_infos.size();
-      if(request_info_i == 0 && i != 0)
+      if (request_info_i == 0 && i != 0)
       {
         campaign_logger->wait_processing();
       }
@@ -396,10 +391,8 @@ main(int argc, char** argv)
 
     const double process_user_cpu = process_finish_cpu.user - start_cpu.user;
     const double process_sys_cpu = process_finish_cpu.sys - start_cpu.sys;
-    const double flush_user_cpu =
-      flush_finish_cpu.user - process_finish_cpu.user;
-    const double flush_sys_cpu =
-      flush_finish_cpu.sys - process_finish_cpu.sys;
+    const double flush_user_cpu = flush_finish_cpu.user - process_finish_cpu.user;
+    const double flush_sys_cpu = flush_finish_cpu.sys - process_finish_cpu.sys;
     std::cout
       << "completed: " << options.count
       << ", threads: " << options.threads
@@ -416,8 +409,7 @@ main(int argc, char** argv)
       << ", flush_user_cpu_time: " <<
         format_float(flush_user_cpu) << "s"
       << ", flush_sys_cpu_time: " <<
-        format_float(flush_sys_cpu) << "s"
-      << std::endl;
+        format_float(flush_sys_cpu) << "s" << std::endl;
 
     return 0;
   }

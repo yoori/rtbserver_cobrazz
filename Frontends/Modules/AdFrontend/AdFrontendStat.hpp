@@ -134,9 +134,7 @@ namespace AdServer
     AdFrontendStat()
       /*throw(Exception)*/;
 
-    void consider_request(
-      const RequestInfo& request,
-      const RequestTimeMetering& request_times)
+    void consider_request(const RequestInfo& request, const RequestTimeMetering& request_times)
       noexcept;
 
     void

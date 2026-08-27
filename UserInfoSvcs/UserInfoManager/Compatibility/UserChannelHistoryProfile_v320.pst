@@ -21,7 +21,7 @@ namespace AdServer
     {
       channel_id;
       list<DaysVisitsReader> days_visits;
-    };        
+    };
 
     writer HistoryChannelInfoWriter<HistoryChannelInfo>
     {

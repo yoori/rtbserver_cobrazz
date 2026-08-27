@@ -46,10 +46,7 @@ class TargetingChannelStats : public BaseDBUnit
 
 public:
 
-  TargetingChannelStats(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  TargetingChannelStats(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -57,8 +54,7 @@ public:
   { }
 
   void
-  log_profile(
-    std::string uid);
+  log_profile(std::string uid);
 
 protected:
 
@@ -71,18 +67,12 @@ protected:
 private:
 
   bool
-  check_channels_(
-    const std::string& expected,
-    AutoTest::DebugInfo::StringListValue& got);
+  check_channels_(const std::string& expected, AutoTest::DebugInfo::StringListValue& got);
 
   void
-  set_req_param_(
-    NSLookupRequest& request,
-    NSLookupRequest::Member member,
-    const std::string& name);
+  set_req_param_(NSLookupRequest& request, NSLookupRequest::Member member, const std::string& name);
 
-  void process_case_(
-    const std::string& prefix);
+  void process_case_(const std::string& prefix);
 
   template <typename Stat>
   void
@@ -101,8 +91,7 @@ private:
     int text_size = 0);
 
   void
-  add_checkers_(
-    StatCollection& stats);
+  add_checkers_(StatCollection& stats);
 
   void
   case_all_();

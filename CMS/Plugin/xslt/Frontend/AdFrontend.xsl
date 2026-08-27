@@ -1140,7 +1140,7 @@
       <xsl:with-param name="default-log-level" select="$pass-pixel-module-log-level"/>
     </xsl:call-template>
   </cfg:PassPixelFeConfiguration>
-  
+
   <cfg:WebStatFeConfiguration threads="32">
     <xsl:attribute name="pixel_path"><xsl:value-of select="concat($data-root, '/aux/pt.gif')"/></xsl:attribute>
     <xsl:attribute name="rid_public_key"><xsl:value-of select="concat($config-root, '/rid_public_key.der')"/></xsl:attribute>
@@ -1357,12 +1357,12 @@
               <xsl:value-of select="@max_bid_time"/>
             </xsl:attribute>
           </xsl:if>
-          <xsl:attribute name="native_instantiate_type"><xsl:value-of 
-            select="@native_instantiate_type"/><xsl:if 
+          <xsl:attribute name="native_instantiate_type"><xsl:value-of
+            select="@native_instantiate_type"/><xsl:if
               test="count(@native_instantiate_type) = 0">none</xsl:if>
           </xsl:attribute>
           <xsl:if test="count(@native_impression_tracker_type) > 0">
-            <xsl:attribute name="native_impression_tracker_type"><xsl:value-of 
+            <xsl:attribute name="native_impression_tracker_type"><xsl:value-of
               select="@native_impression_tracker_type"/>
             </xsl:attribute>
           </xsl:if>
@@ -1500,7 +1500,7 @@
         </xsl:for-each>
       </xsl:if>
     </xsl:for-each>
-    <xsl:if test="count($colo-config/cfg:coloParams/cfg:RTB/@yandex_key) > 0"> 
+    <xsl:if test="count($colo-config/cfg:coloParams/cfg:RTB/@yandex_key) > 0">
       <cfg:Keys>
         <xsl:attribute name="yandex_key">
           <xsl:value-of select="$colo-config/cfg:coloParams/cfg:RTB/@yandex_key"/>

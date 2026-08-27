@@ -41,7 +41,7 @@ sub init
 
   my @currency_id = (DB::Defaults::instance()->currency(), $cur_id1, $cur_id2, $cur_id3);
   my @max_cpc_bid = (0.03, 0.035, 0.12, 0.04);
-    
+
   my $sum_cpm = 0.0;
   for (my $i = 0; $i < 4; ++$i)
   {
@@ -61,11 +61,11 @@ sub init
 
     if ($i != 2)
     {
-      $ns->output("actual_cpc".($i + 1), 
+      $ns->output("actual_cpc".($i + 1),
         money_upscale($bid));
       $sum_cpm = $sum_cpm + $cpm;
     }
-  }  
+  }
 
   my $actual_cpc3 = calc_ta_top_acpc(
     $max_cpc_bid[2] * $tag_cpm,
@@ -77,7 +77,7 @@ sub init
   # 1 cent for eCPM => 0.1 cent for CPC (eCPM  / CTR / 1000, CTR = 0.01 )
   my $top_cpc_correction = 0.001;
 
-  $ns->output("actual_cpc3", 
+  $ns->output("actual_cpc3",
     money_upscale(($actual_cpc3 + $top_cpc_correction) * $exchange_rate[2]));
 }
 

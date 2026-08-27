@@ -18,7 +18,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       push(@res_indexes, $index - 1);
     }
@@ -32,7 +32,7 @@ sub new
   my @res_coef;
   foreach my $coef_i(@coef)
   {
-    if(looks_like_number($coef_i))
+    if (looks_like_number($coef_i))
     {
       push(@res_coef, $coef_i);
     }
@@ -56,7 +56,7 @@ sub process
 
   my $value = 0;
 
-  for(my $field_i = 0; $field_i < scalar(@{$self->{field_}}); ++$field_i)
+  for (my $field_i = 0; $field_i < scalar(@{$self->{field_}}); ++$field_i)
   {
     my $local_value = $row->[$self->{field_}->[$field_i]];
     my $p = - log(1 / $local_value - 1);
@@ -71,7 +71,7 @@ sub process
 sub get_log_
 {
   my ($val) = @_;
-  if(Scalar::Util::looks_like_number($val))
+  if (Scalar::Util::looks_like_number($val))
   {
     return $val > 0 ? int(log($val) / log(2)) : 0;
   }

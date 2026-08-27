@@ -57,7 +57,7 @@ namespace
     std::vector<std::string> result;
     String::StringManip::SplitComma tokenizer(refs);
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       result.emplace_back(token.str());
     }
@@ -69,7 +69,7 @@ namespace
     ChannelTriggerMap& result,
     const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels)
   {
-    for(CORBA::ULong i = 0; i < channels.length(); ++i)
+    for (CORBA::ULong i = 0; i < channels.length(); ++i)
     {
       result[channels[i].id].insert(channels[i].trigger_channel_id);
     }
@@ -80,27 +80,18 @@ namespace
     const AdServer::ChannelSvcs::ChannelServerBase::MatchResult& source,
     CORBA::Long channels_count)
   {
-    AdServer::ChannelSearchSvcs::MatchInfo_var result =
-      new AdServer::ChannelSearchSvcs::MatchInfo;
+    AdServer::ChannelSearchSvcs::MatchInfo_var result = new AdServer::ChannelSearchSvcs::MatchInfo;
 
     ChannelTriggerMap matched_channels;
-    add_matched_channels(
-      matched_channels,
-      source.matched_channels.page_channels);
-    add_matched_channels(
-      matched_channels,
-      source.matched_channels.search_channels);
-    add_matched_channels(
-      matched_channels,
-      source.matched_channels.url_channels);
-    add_matched_channels(
-      matched_channels,
-      source.matched_channels.url_keyword_channels);
+    add_matched_channels(matched_channels, source.matched_channels.page_channels);
+    add_matched_channels(matched_channels, source.matched_channels.search_channels);
+    add_matched_channels(matched_channels, source.matched_channels.url_channels);
+    add_matched_channels(matched_channels, source.matched_channels.url_keyword_channels);
 
     result->channels.length(matched_channels.size());
 
     CORBA::Long channel_i = 0;
-    for(ChannelTriggerMap::const_iterator it = matched_channels.begin();
+    for (ChannelTriggerMap::const_iterator it = matched_channels.begin();
       it != matched_channels.end() && channel_i < channels_count;
       ++it, ++channel_i)
     {
@@ -108,7 +99,7 @@ namespace
       result->channels[channel_i].triggers.length(it->second.size());
 
       CORBA::ULong trigger_i = 0;
-      for(TriggerIdSet::const_iterator trigger_it = it->second.begin();
+      for (TriggerIdSet::const_iterator trigger_it = it->second.begin();
         trigger_it != it->second.end();
         ++trigger_it, ++trigger_i)
       {
@@ -152,12 +143,10 @@ main(int argc, char** argv)
     std::cerr << "ChannelSearchAdmin: eh::Exception exception caught. "
       ":" << std::endl << ex.what() << std::endl;
   }
-  catch (const AdServer::ChannelSearchSvcs::ChannelSearch::
-    ImplementationException& ex)
+  catch (const AdServer::ChannelSearchSvcs::ChannelSearch::ImplementationException& ex)
   {
     std::cerr << "ChannelSearchAdmin: ChannelSearch::ImplementationException "
-      "exception caught. :" << std::endl << ex.description.in() <<
-      std::endl;
+      "exception caught. :" << std::endl << ex.description.in() << std::endl;
   }
   catch (const CORBA::Exception& ex)
   {
@@ -178,14 +167,14 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/
 
 Application::~Application() noexcept
 {
-  if(channel_client_)
+  if (channel_client_)
   {
     channel_client_->deactivate_object();
     channel_client_->wait_object();
     channel_client_.reset();
   }
 
-  if(grpc_executor_)
+  if (grpc_executor_)
   {
     grpc_executor_->deactivate_object();
     grpc_executor_->wait_object();
@@ -211,25 +200,16 @@ Application::run(int& argc, char** argv)
   Generics::AppUtils::Option<CORBA::Long> opt_limit(10000);
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
 
   args.add(
     Generics::AppUtils::equal_name("phrase") ||
     Generics::AppUtils::short_name("p"),
     opt_phrase);
 
-  args.add(
-    Generics::AppUtils::equal_name("url") ||
-    Generics::AppUtils::short_name("u"),
-    opt_url);
+  args.add(Generics::AppUtils::equal_name("url") || Generics::AppUtils::short_name("u"), opt_url);
 
-  args.add(
-    Generics::AppUtils::equal_name("ref") ||
-    Generics::AppUtils::short_name("r"),
-    opt_ref);
+  args.add(Generics::AppUtils::equal_name("ref") || Generics::AppUtils::short_name("r"), opt_ref);
 
   args.add(
     Generics::AppUtils::equal_name("limit") ||
@@ -245,8 +225,7 @@ Application::run(int& argc, char** argv)
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return 0;
@@ -256,11 +235,10 @@ Application::run(int& argc, char** argv)
 
   if (cmd == "search" || cmd == "match")
   {
-    if(!opt_ref.installed())
+    if (!opt_ref.installed())
     {
       std::cout << "ChannelSearchService reference isn't defined."
-        << std::endl
-        << USAGE << std::endl;
+        << std::endl << USAGE << std::endl;
       return 1;
     }
 
@@ -269,7 +247,7 @@ Application::run(int& argc, char** argv)
       std::string url = *opt_url;
       std::string phrase = *opt_phrase;
 
-      if(cmd == "search")
+      if (cmd == "search")
       {
         orb_ = CORBA::ORB_init(argc, argv);
 
@@ -285,13 +263,11 @@ Application::run(int& argc, char** argv)
           if (CORBA::is_nil(obj))
           {
             Stream::Error ostr;
-            ostr << "string_to_object failed for service reference '" <<
-              service_ref << "'";
+            ostr << "string_to_object failed for service reference '" << service_ref << "'";
             throw Exception(ostr);
           }
 
-          channel_search_ =
-            AdServer::ChannelSearchSvcs::ChannelSearch::_narrow(obj.in());
+          channel_search_ = AdServer::ChannelSearchSvcs::ChannelSearch::_narrow(obj.in());
 
           if (CORBA::is_nil(channel_search_))
           {
@@ -312,12 +288,12 @@ Application::run(int& argc, char** argv)
 
       try
       {
-        if(cmd == "search")
+        if (cmd == "search")
         {
           ResultSeq_var result = search(phrase.c_str());
           print_result(result.in());
         }
-        else if(cmd == "match")
+        else if (cmd == "match")
         {
           grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
           grpc_executor_->activate_object();
@@ -336,8 +312,7 @@ Application::run(int& argc, char** argv)
           query.request_id = phrase.c_str();
           try
           {
-            const std::string normalized_url =
-              HTTP::BrowserAddress(String::SubString(url)).url();
+            const std::string normalized_url = HTTP::BrowserAddress(String::SubString(url)).url();
             query.first_url = normalized_url.c_str();
           }
           catch(const eh::Exception&)
@@ -358,13 +333,9 @@ Application::run(int& argc, char** argv)
           AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var
             channel_match_result =
               AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
-                AdServer::ChannelSvcs::GrpcAlgs::channel_match(
-                  *channel_client_,
-                  request));
+                AdServer::ChannelSvcs::GrpcAlgs::channel_match(*channel_client_, request));
           AdServer::ChannelSearchSvcs::MatchInfo_var result =
-            make_channel_search_match_info(
-              channel_match_result.in(),
-              *opt_limit);
+            make_channel_search_match_info(channel_match_result.in(), *opt_limit);
           print_match_result(result);
         }
       }
@@ -375,13 +346,11 @@ Application::run(int& argc, char** argv)
           "CORBA::SystemException caught:\n" << ex;
         throw Exception(ostr);
       }
-      catch (const AdServer::ChannelSearchSvcs::
-             ChannelSearch::ImplementationException& ex)
+      catch (const AdServer::ChannelSearchSvcs::ChannelSearch::ImplementationException& ex)
       {
         Stream::Error ostr;
         ostr << "failed to resolve service reference '"
-          << service_ref << "'. ImplementationException caught:\n"
-          << ex.description;
+          << service_ref << "'. ImplementationException caught:\n" << ex.description;
         throw Exception(ostr);
       }
     }
@@ -418,8 +387,7 @@ void
 Application::print_result(const ResultSeq &result)
   /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/
 {
-  size_t columns =
-    sizeof(RESULT_TABLE_COLUMNS) / sizeof(RESULT_TABLE_COLUMNS[0]);
+  size_t columns = sizeof(RESULT_TABLE_COLUMNS) / sizeof(RESULT_TABLE_COLUMNS[0]);
   TablePtr table(new Table(columns));
   for (size_t i = 0; i < columns; i++)
   {
@@ -439,13 +407,11 @@ Application::print_result(const ResultSeq &result)
 }
 
 void
-Application::print_match_result(
-  const AdServer::ChannelSearchSvcs::MatchInfo& result)
+Application::print_match_result(const AdServer::ChannelSearchSvcs::MatchInfo& result)
   /*throw(Exception, eh::Exception, CORBA::Exception)*/
 {
   {
-    size_t columns =
-      sizeof(MATCH_RESULT_TABLE_COLUMNS) / sizeof(MATCH_RESULT_TABLE_COLUMNS[0]);
+    size_t columns = sizeof(MATCH_RESULT_TABLE_COLUMNS) / sizeof(MATCH_RESULT_TABLE_COLUMNS[0]);
     TablePtr table(new Table(columns));
     for (size_t i = 0; i < columns; i++)
     {
@@ -457,9 +423,9 @@ Application::print_match_result(
       row.add_field(result.channels[i].channel_id);
 
       std::ostringstream tr_ostr;
-      for(CORBA::ULong tr_i = 0; tr_i < result.channels[i].triggers.length(); ++tr_i)
+      for (CORBA::ULong tr_i = 0; tr_i < result.channels[i].triggers.length(); ++tr_i)
       {
-        if(tr_i != 0)
+        if (tr_i != 0)
         {
           tr_ostr << ", ";
         }
@@ -470,9 +436,9 @@ Application::print_match_result(
       row.add_field(tr_ostr.str());
 
       std::ostringstream ccg_ostr;
-      for(CORBA::ULong ccg_i = 0; ccg_i < result.channels[i].ccgs.length(); ++ccg_i)
+      for (CORBA::ULong ccg_i = 0; ccg_i < result.channels[i].ccgs.length(); ++ccg_i)
       {
-        if(ccg_i != 0)
+        if (ccg_i != 0)
         {
           ccg_ostr << ", ";
         }

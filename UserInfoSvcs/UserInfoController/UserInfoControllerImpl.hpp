@@ -27,8 +27,7 @@ namespace AdServer::UserInfoSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
 
-    using UserInfoControllerConfig =
-      xsd::AdServer::Configuration::UserInfoControllerConfigType;
+    using UserInfoControllerConfig = xsd::AdServer::Configuration::UserInfoControllerConfigType;
     using SessionDescription =
       adserver::user_info_svcs::user_info_controller::GetSessionDescriptionResponse;
 
@@ -94,8 +93,7 @@ namespace AdServer::UserInfoSvcs
     UserInfoConfig_var user_info_config_;
   };
 
-  using UserInfoControllerImpl_var =
-    ReferenceCounting::SmartPtr<UserInfoControllerImpl>;
+  using UserInfoControllerImpl_var = ReferenceCounting::SmartPtr<UserInfoControllerImpl>;
 }
 
 namespace AdServer::UserInfoSvcs

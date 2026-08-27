@@ -13,10 +13,7 @@ class InvalidCookiesTest: public BaseUnit
 
 public:
 
-  InvalidCookiesTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  InvalidCookiesTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     client(AutoTest::AdClient::create_user(this))
   {};

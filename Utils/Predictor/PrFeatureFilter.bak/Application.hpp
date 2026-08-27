@@ -108,8 +108,7 @@ public:
     bool
     operator<(const GainTreeNodeDescrKey& right) const
     {
-      return gain < right.gain ||
-        (gain == right.gain && tree_node < right.tree_node);
+      return gain < right.gain || (gain == right.gain && tree_node < right.tree_node);
     }
 
     double gain;
@@ -188,9 +187,7 @@ protected:
     noexcept;
 
   static void
-  tree_features_(
-    FeatureSet& features,
-    const TreeNodeDescr* node);
+  tree_features_(FeatureSet& features, const TreeNodeDescr* node);
 
   /*
   void
@@ -220,9 +217,7 @@ protected:
     const RowArray& all_feature_unlabeled_rows);
 
   void
-  fill_feature_rows_(
-    FeatureRowsMap& feature_rows,
-    const SVM& svm);
+  fill_feature_rows_(FeatureRowsMap& feature_rows, const SVM& svm);
 
   SVM_var
   load_svm_(std::istream& in);

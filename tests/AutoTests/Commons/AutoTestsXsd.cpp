@@ -6,15 +6,12 @@
 
 const GlobalConfig::ServiceList GlobalConfig::EMPTY_;
 
-GlobalConfig::Service::Service(
-  const std::string& address_,
-  bool remote_) :
+GlobalConfig::Service::Service(const std::string& address_, bool remote_) :
   address(address_),
   remote(remote_)
 {}
 
-GlobalConfig::GlobalConfig(
-  const char* config_path) :
+GlobalConfig::GlobalConfig(const char* config_path) :
   params_()
 {
   initialize(config_path);
@@ -27,12 +24,10 @@ GlobalConfig::get_service(
   unsigned long index) const
   /*throw(eh::Exception)*/
 {
-  ClusterDictionary::const_iterator cit =
-    cluster_services_.find(cluster);
+  ClusterDictionary::const_iterator cit = cluster_services_.find(cluster);
   if (cit != cluster_services_.end())
   {
-    ServiceDictionary::const_iterator sit =
-      cit->second.find(service);
+    ServiceDictionary::const_iterator sit = cit->second.find(service);
     if ( sit != cit->second.end() && sit->second.size() > index)
     {
       return sit->second[index];
@@ -47,23 +42,18 @@ GlobalConfig::get_service(
   error << "XsdParams::get_service(). " <<
     "Error: Service '" <<
     ServiceEnum(static_cast<ServiceEnum::value>(service)) <<
-    "#" << index << "' absent in '" <<
-    cluster_str << "' cluster";
+    "#" << index << "' absent in '" << cluster_str << "' cluster";
   throw ConfigError(error);
 }
 
 const GlobalConfig::ServiceList&
-GlobalConfig::get_services(
-    ClusterTypeEnum cluster,
-    ServiceTypeEnum service) const
+GlobalConfig::get_services(ClusterTypeEnum cluster, ServiceTypeEnum service) const
     /*throw(eh::Exception)*/
 {
-   ClusterDictionary::const_iterator cit =
-     cluster_services_.find(cluster);
+   ClusterDictionary::const_iterator cit = cluster_services_.find(cluster);
    if (cit != cluster_services_.end())
    {
-     ServiceDictionary::const_iterator sit =
-       cit->second.find(service);
+     ServiceDictionary::const_iterator sit = cit->second.find(service);
      if ( sit != cit->second.end())
      {
        return sit->second;
@@ -80,14 +70,12 @@ GlobalConfig::check_service(
   ServiceTypeEnum service,
   unsigned long index) const
 {
-  ClusterDictionary::const_iterator cit =
-    cluster_services_.find(cluster);
+  ClusterDictionary::const_iterator cit = cluster_services_.find(cluster);
   if (cit == cluster_services_.end())
   {
     return false;
   }
-  ServiceDictionary::const_iterator sit =
-    cit->second.find(service);
+  ServiceDictionary::const_iterator sit = cit->second.find(service);
   if (sit == cit->second.end() || sit->second.size() <= index )
   {
     return false;
@@ -108,40 +96,26 @@ GlobalConfig::initialize(const char* config_path)
   ClusterIterator cit_begin = params_->Cluster().begin();
   ClusterIterator cit_end = params_->Cluster().end();
 
-  for (ClusterIterator cit = cit_begin;
-       cit != cit_end; ++cit)
+  for (ClusterIterator cit = cit_begin; cit != cit_end; ++cit)
   {
     ServiceIterator sit_begin = cit->Service().begin();
     ServiceIterator sit_end = cit->Service().end();
-    for (ServiceIterator sit = sit_begin;
-         sit != sit_end; ++sit)
+    for (ServiceIterator sit = sit_begin; sit != sit_end; ++sit)
     {
-      ClusterTypeEnum c =
-        static_cast<ClusterTypeEnum>(
-          (ClusterEnum::value)cit->name());
-      ServiceTypeEnum s =
-        static_cast<ServiceTypeEnum>(
-          (ServiceEnum::value)sit->name());
+      ClusterTypeEnum c = static_cast<ClusterTypeEnum>((ClusterEnum::value)cit->name());
+      ServiceTypeEnum s = static_cast<ServiceTypeEnum>((ServiceEnum::value)sit->name());
 
       cluster_services_[c][s].
-        push_back(
-          Service(
-            sit->address(),
-            c != CTE_CENTRAL));
+        push_back(Service(sit->address(), c != CTE_CENTRAL));
 
       if (c == CTE_REMOTE1 || c == CTE_REMOTE2)
       {
         (cluster_services_[CTE_ALL_REMOTE])[s].
-          push_back(
-            Service(
-              sit->address(), true));
+          push_back(Service(sit->address(), true));
       }
 
       (cluster_services_[CTE_ALL])[s].
-        push_back(
-          Service(
-            sit->address(),
-            c != CTE_CENTRAL));
+        push_back(Service(sit->address(), c != CTE_CENTRAL));
     }
   }
 }
@@ -155,9 +129,7 @@ GlobalConfig::get_params() const noexcept
 
 
 // class XsdParams
-XsdParams::XsdParams(
-  const GlobalConfig& config,
-  Locals locals)
+XsdParams::XsdParams(const GlobalConfig& config, Locals locals)
   noexcept
   : config_(config),
     locals_(locals)

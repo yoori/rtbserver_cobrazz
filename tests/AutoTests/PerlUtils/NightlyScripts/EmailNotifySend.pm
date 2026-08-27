@@ -9,7 +9,7 @@ use strict;
   use constant FAIL_STR     => "FAILED!!!";
   use constant OK_STR       => "OK";
   use constant REPLY_TO     => "server\@ocslab.com";
-  
+
   sub result_2_str {
     my $result = shift;
     if ( ! $result )
@@ -35,7 +35,7 @@ use strict;
     return $buffer;
   }
 
-  sub docs_2_content 
+  sub docs_2_content
   {
     my $docs    = shift;
     my $buffer  = "";

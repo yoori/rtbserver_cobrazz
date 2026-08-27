@@ -9,7 +9,7 @@ use DB::Util;
 sub init
 {
   my ($self, $ns) = @_;
-  
+
   my $publisher = $ns->create(Publisher => { name => "Publisher" });
 
   my $advertiser = $ns->create(Account => {
@@ -20,7 +20,7 @@ sub init
     name => 'Template',
     template_file => 'UnitTests/test.html',
     flags => 0 });
-  
+
   my $keyword = make_autotest_name($ns, "keyword");
 
   my $campaign1  = $ns->create(DisplayCampaign => {
@@ -47,7 +47,7 @@ sub init
     ccg_id => $campaign1->{ccg_id},
     creative_id => $creative2,
     weight => 1000 });
-  
+
   $ns->output("KEYWORD", $keyword);
   $ns->output("CC1", $campaign1->{cc_id});
   $ns->output("CC2", $cc_2);

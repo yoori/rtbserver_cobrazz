@@ -31,13 +31,13 @@ sub process
   my $value = $row->[$self->{field_}];
   my $label = $row->[$self->{label_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     die "QuadLoss can't be applied to array row";
   }
   else
   {
-    if($label == 0)
+    if ($label == 0)
     {
       $self->{loss_} += $value * $value;
     }

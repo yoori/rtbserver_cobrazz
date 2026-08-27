@@ -1,9 +1,6 @@
 #include "UidWithPlusTest.hpp"
 
-REFLECT_UNIT(UidWithPlusTest) (
-  "Frontend",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(UidWithPlusTest) ("Frontend", AUTO_TEST_FAST);
 
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
@@ -38,10 +35,10 @@ UidWithPlusTest::run_test()
     if (!client.get_cookies().find_value("uid", uid1))
     {
       Stream::Error error;
-      error << "Server didn't return uid on request: "
-            << request.url ();
+      error << "Server didn't return uid on request: " << request.url ();
       throw Exception(error);
     }
+
     if (uid1.find('_') != std::string::npos)
     {
       next = false;
@@ -49,23 +46,15 @@ UidWithPlusTest::run_test()
 
     AutoTest::DebugInfo::DebugInfo debug_info = client.debug_info;
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!debug_info.track_pixel_url.empty()),
       "must has track_pixel_url");
+    FAIL_CONTEXT(AutoTest::predicate_checker(!debug_info.click_url.empty()), "must has click_url");
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !debug_info.click_url.empty()),
-      "must has click_url");
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(!debug_info.selected_creatives.empty()),
       "must has selected creatives");
     client.process_request(debug_info.track_pixel_url);
     client.process_request(debug_info.click_url);
-    client.process_request(
-      AutoTest::ActionRequest().
-        cid(debug_info.cmpid.value()).
-        url());
+    client.process_request(AutoTest::ActionRequest(). cid(debug_info.cmpid.value()). url());
 
     --count;
   }

@@ -9,9 +9,7 @@
 #include "CampaignServerPool.hpp"
 #include "BillStatSource.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class BillStatServerSource:
     public BillStatSource,
@@ -25,9 +23,7 @@ namespace CampaignSvcs
       noexcept;
 
     virtual Stat_var
-    update(
-      Stat* stat,
-      const Generics::Time& now)
+    update(Stat* stat, const Generics::Time& now)
       /*throw(BillStatSource::Exception)*/;
 
   protected:
@@ -60,5 +56,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::QualPtr<BillStatServerSource>
     BillStatServerSource_var;
-}
 }

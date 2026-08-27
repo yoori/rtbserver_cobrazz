@@ -31,7 +31,7 @@ sub run_for
     "ProbeObj $doing $probe_ref 1>/dev/null";
   my $ret_value = 0;
   my $host;
-  if( $probe_ref =~ m/corbaloc:iiop:(.*?):\d+\/ProcessControl/)
+  if ( $probe_ref =~ m/corbaloc:iiop:(.*?):\d+\/ProcessControl/)
   {
     $host = $1;
   }
@@ -50,14 +50,14 @@ sub run_for
 
 my @services, @thr_ids;
 
-if(defined $channel_server) { push(@services, ['ChannelServer', $channel_server]);}
-if(defined $campaign_server) { push(@services, ['CampaignServer', $campaign_server]);}
-if(defined $log_generalizer) { push(@services, ['LogGeneralizer', $log_generalizer]);}
+if (defined $channel_server) { push(@services, ['ChannelServer', $channel_server]);}
+if (defined $campaign_server) { push(@services, ['CampaignServer', $campaign_server]);}
+if (defined $log_generalizer) { push(@services, ['LogGeneralizer', $log_generalizer]);}
 
 foreach $thr_args (@services)
 {
   my $pid = threads->create('run_for', @$thr_args);
-  if($pid)
+  if ($pid)
   {
     push(@thr_ids, $pid);
   }

@@ -87,14 +87,12 @@ empty_separated_string()
 
   int fails = 0;
   UserProperty up;
-  for (std::size_t i = 0;
-    i < sizeof(READ_MUST_FAIL) / sizeof(READ_MUST_FAIL[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(READ_MUST_FAIL) / sizeof(READ_MUST_FAIL[0]); ++i)
   {
     FixedBufStream<CommaCategory> is (String::SubString(READ_MUST_FAIL[i].in));
     up = UserProperty("nil", "nil");
     is >> up;
-    if (!is.fail() || up.first != READ_MUST_FAIL[i].first ||
-      up.second != READ_MUST_FAIL[i].second)
+    if (!is.fail() || up.first != READ_MUST_FAIL[i].first || up.second != READ_MUST_FAIL[i].second)
     {
       std::cerr << "pass or broken read invalid string: \'" << READ_MUST_FAIL[i].in << "\'" << std::endl;
       std::cerr << "Stream state: " << is.fail()
@@ -110,14 +108,12 @@ empty_separated_string()
       ++fails;
     }
   }
-  for (std::size_t i = 0;
-    i < sizeof(VALID) / sizeof(VALID[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(VALID) / sizeof(VALID[0]); ++i)
   {
     FixedBufStream<CommaCategory> is (String::SubString(VALID[i].in));
     up = UserProperty("nil", "nil");
     is >> up;
-    if (is.fail() || up.first != VALID[i].first ||
-      up.second != VALID[i].second)
+    if (is.fail() || up.first != VALID[i].first || up.second != VALID[i].second)
     {
       std::cerr << "Fail read string \'" << VALID[i].in << "\'" << std::endl;
       std::cerr << "Stream state: " << is.fail()
@@ -156,13 +152,13 @@ print_reserved_chars_table(const char* reserved)
         os.width(2);
         os << std::hex << std::setfill('0') << static_cast<unsigned>(ch);
       }
-      std::cout << "{'" << buf[0] << "', '" <<
-        buf[1] << "'}, ";
+      std::cout << "{'" << buf[0] << "', '" << buf[1] << "'}, ";
     }
     else
     {
       std::cout << "{0, 0}, ";
     }
+
     if (!((ch + 1) % 6))
     {
       std::cout << "\n  ";
@@ -250,8 +246,7 @@ test_io()
   restored += '\xFF';
   if (!is || restored != s)
   {
-    std::cerr << __PRETTY_FUNCTION__ << ": restore string failed"
-      << std::endl;
+    std::cerr << __PRETTY_FUNCTION__ << ": restore string failed" << std::endl;
     std::cerr << "OUT:" << (std::string)s << std::endl;
     std::cerr << "GET:" << (std::string)restored << std::endl;
     return 1;
@@ -284,10 +279,10 @@ test_separator()
     {
       continue;
     }
+
     if (!is || restored != STANDARDS[i])
     {
-      std::cerr << __PRETTY_FUNCTION__ << ": Test Separator failed"
-        << std::endl;
+      std::cerr << __PRETTY_FUNCTION__ << ": Test Separator failed" << std::endl;
       std::cerr << "OUT:" << (std::string)STRINGS[i] << std::endl;
       std::cerr << "REZ:" << os.str() << std::endl;
       std::cerr << "GET:" << (std::string)restored << std::endl;
@@ -334,8 +329,7 @@ stress_test()
 
   int fails = 0;
   SpacesMarksString v;
-  for (std::size_t i = 0;
-    i < sizeof(STRESS) / sizeof(STRESS[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(STRESS) / sizeof(STRESS[0]); ++i)
   {
     Stream::Parser is(STRESS[i].in);
     v.clear();
@@ -345,6 +339,7 @@ stress_test()
       std::cerr << "Stress test: #" << i << ": stream state good" << std::endl;
       ++fails;
     }
+
     if (static_cast<std::string>(v) != STRESS[i].rest_after_out)
     {
       std::cerr << "Stress test: #" << i << ": rest '"
@@ -365,18 +360,12 @@ main()
 
     int fails = 0;
     fails += stress_test();
-    fails +=
-      test_separator<StringIO<Aux_::ConvertSpacesSeparators, '\xFF'> >();
-    fails +=
-      test_io<StringIO<Aux_::ConvertSpacesSeparators, 255> >();
-    fails +=
-      test_io<StringIO<Aux_::ConvertSpaces, 255> >();
-    fails +=
-      test_io<StringIO<AllConvert, 255> >();
-    fails +=
-      direct_test_io_escapes<StringIO<Aux_::ConvertSpacesSeparators, '\0'> >();
-    fails +=
-      direct_test_io_escapes<StringIO<Aux_::ConvertSpacesSeparators, 255> >();
+    fails += test_separator<StringIO<Aux_::ConvertSpacesSeparators, '\xFF'> >();
+    fails += test_io<StringIO<Aux_::ConvertSpacesSeparators, 255> >();
+    fails += test_io<StringIO<Aux_::ConvertSpaces, 255> >();
+    fails += test_io<StringIO<AllConvert, 255> >();
+    fails += direct_test_io_escapes<StringIO<Aux_::ConvertSpacesSeparators, '\0'> >();
+    fails += direct_test_io_escapes<StringIO<Aux_::ConvertSpacesSeparators, 255> >();
     fails += empty_separated_string();
 
 //    print_reserved_chars_table("^");

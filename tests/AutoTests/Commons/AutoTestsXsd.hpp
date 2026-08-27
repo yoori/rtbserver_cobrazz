@@ -67,9 +67,7 @@ class GlobalConfig
      * @param service address.
      * @param remote sign.
      */
-    Service(
-      const std::string& address_,
-      bool remote_);
+    Service(const std::string& address_, bool remote_);
   };
 
   typedef std::vector<Service> ServiceArray;
@@ -103,9 +101,7 @@ class GlobalConfig
    * @param service.
    * @return services list.
    */
-  const ServiceArray& get_services(
-    ClusterTypeEnum cluster,
-    ServiceTypeEnum service) const
+  const ServiceArray& get_services(ClusterTypeEnum cluster, ServiceTypeEnum service) const
     /*throw(eh::Exception)*/;
 
 
@@ -151,9 +147,7 @@ public:
    * @param test global config.
    * @param test local config.
    */
-  XsdParams(
-    const GlobalConfig& config,
-    Locals new_locals)
+  XsdParams(const GlobalConfig& config, Locals new_locals)
     noexcept;
 
   /**

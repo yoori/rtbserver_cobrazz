@@ -4,9 +4,7 @@
 #include <LogCommons/StatCollector.hpp>
 #include <LogCommons/CsvUtils.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   struct BidCostData
   {
@@ -33,9 +31,7 @@ namespace LogProcessing
     }
 
     static std::ostream&
-    write_data_as_csv(
-      std::ostream& os,
-      const BaseTraits::CollectorType::DataT& data)
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       write_date_as_csv(os, data.time) << ',';
       os << data.tag_id << ',';
@@ -48,5 +44,4 @@ namespace LogProcessing
       return os;
     }
   };
-}
 }

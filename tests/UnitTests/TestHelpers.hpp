@@ -81,8 +81,7 @@ TestFactory::run_all() /*throw(std::exception)*/
 int
 TestFactory::run(const std::string& test_name) /*throw(std::exception)*/
 {
-  for (Tests::const_iterator i = registered_tests_.begin();
-       i != registered_tests_.end(); ++i)
+  for (Tests::const_iterator i = registered_tests_.begin(); i != registered_tests_.end(); ++i)
   {
     if (i->name == test_name)
     {
@@ -102,8 +101,7 @@ TestFactory::run_tests_(const Tests& tests) /*throw(std::exception)*/
   size_t successed = 0;
   std::string msg;
 
-  for (Tests::const_iterator ci = tests.begin();
-       ci != tests.end(); ++ci)
+  for (Tests::const_iterator ci = tests.begin(); ci != tests.end(); ++ci)
   {
     std::ostringstream oss;
     oss << ci->name << ": ";
@@ -237,8 +235,7 @@ usage()
   const TestFactory::Tests& tests = TestFactory::instance().available_tests();
   std::cout << "Available test cases:" << std::endl;
 
-  for (TestFactory::Tests::const_iterator i = tests.begin();
-       i != tests.end(); ++i)
+  for (TestFactory::Tests::const_iterator i = tests.begin(); i != tests.end(); ++i)
   {
     std::cout << '\t' << i->name << std::endl;
   }

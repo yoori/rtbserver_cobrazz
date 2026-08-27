@@ -7,9 +7,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "ExpressionChannel.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class ExpressionChannelIndex:
     public ReferenceCounting::AtomicImpl
@@ -47,10 +45,7 @@ namespace CampaignSvcs
       ChannelIdSet* result_cpm_channels = 0) const /*throw(eh::Exception)*/;
 
     void
-    print(
-      std::ostream& out,
-      const ChannelIdSet* custom_channels = 0,
-      bool expand = false) const
+    print(std::ostream& out, const ChannelIdSet* custom_channels = 0, bool expand = false) const
       noexcept;
 
   protected:
@@ -85,9 +80,7 @@ namespace CampaignSvcs
     {}
 
     static ExpressionChannelMatch&
-    init_match_cell_(
-      ExpressionChannelMatchMap& channels,
-      unsigned long channel_id)
+    init_match_cell_(ExpressionChannelMatchMap& channels, unsigned long channel_id)
       noexcept;
 
     static void
@@ -118,9 +111,7 @@ namespace CampaignSvcs
       noexcept;
 
     void
-    sub_index_(
-      ExpressionChannelMatch& index_node,
-      unsigned long depth)
+    sub_index_(ExpressionChannelMatch& index_node, unsigned long depth)
       noexcept;
 
     // cpu usage optimization (isn't required, but simplify indexing)
@@ -156,9 +147,7 @@ namespace CampaignSvcs
       noexcept;
 
     static void
-    get_required_channels_(
-      ChannelIdSet& simple_channels,
-      const ExpressionChannel::Expression& expr)
+    get_required_channels_(ChannelIdSet& simple_channels, const ExpressionChannel::Expression& expr)
       noexcept;
 
   protected:
@@ -167,5 +156,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::SmartPtr<ExpressionChannelIndex>
     ExpressionChannelIndex_var;
-}
 }

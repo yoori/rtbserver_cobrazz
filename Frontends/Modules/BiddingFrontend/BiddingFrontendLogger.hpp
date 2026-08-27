@@ -39,10 +39,8 @@ namespace AdServer::Bidding
       Generics::MonoAllocatorFixedArena<ARENA_SIZE> arena;
       Generics::MonoString ip;
       Generics::MonoString source;
-      AdServer::CampaignSvcs::CoordDecimal lat =
-        AdServer::CampaignSvcs::CoordDecimal::ZERO;
-      AdServer::CampaignSvcs::CoordDecimal lon =
-        AdServer::CampaignSvcs::CoordDecimal::ZERO;
+      AdServer::CampaignSvcs::CoordDecimal lat = AdServer::CampaignSvcs::CoordDecimal::ZERO;
+      AdServer::CampaignSvcs::CoordDecimal lon = AdServer::CampaignSvcs::CoordDecimal::ZERO;
       Generics::MonoString type;
       Generics::MonoString country;
       Generics::MonoString region;
@@ -81,6 +79,5 @@ namespace AdServer::Bidding
     Generics::TaskRunner_var task_runner_;
   };
 
-  using BiddingFrontendLogger_var =
-    ReferenceCounting::SmartPtr<BiddingFrontendLogger>;
+  using BiddingFrontendLogger_var = ReferenceCounting::SmartPtr<BiddingFrontendLogger>;
 }

@@ -25,14 +25,12 @@ int size_assumption_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
 
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time::ZERO, Generics::Time(3600), 4, 2));
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time(3600), Generics::Time(7200), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(3600), 4, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(3600), Generics::Time(7200), 2, 2));
     page->short_intervals.insert(ChannelInterval(
       Generics::Time(7200), Generics::Time(14400), 1, 2));
     page->short_intervals.insert(ChannelInterval(
@@ -61,17 +59,17 @@ int size_assumption_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
 
-    for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+    for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       std::cout << iteration << std::endl;
 
       ChannelMatchPack new_cid;
-      for(unsigned long i = 1; i <= 1000; ++i)
+      for (unsigned long i = 1; i <= 1000; ++i)
       {
         unsigned long chid = 0;
 
@@ -88,11 +86,9 @@ int size_assumption_test()
       ChannelMatchMap result(&result_arena);
       ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-      if (cm.need_history_optimization(tm, Generics::Time::ZERO,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(tm, Generics::Time::ZERO, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), tm, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), tm, Generics::Time::ZERO, *channel_rules);
       }
 
       cm.match(result, tm, new_cid, *channel_rules, pmp, pps, session_timeout, false);
@@ -101,8 +97,7 @@ int size_assumption_test()
     ChannelsMatcher::print(base_profile->membuf(), std::cout, "  ");
 
 
-    std::cout << FUN << ": base profile size = "
-              << base_profile->membuf().size() << std::endl;
+    std::cout << FUN << ": base profile size = " << base_profile->membuf().size() << std::endl;
     std::cout << FUN << ": history profile size = "
               << history_profile->membuf().size() << std::endl;
   }
@@ -119,15 +114,12 @@ int session_match_performance_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time(20), Generics::Time(60), 10, 2));
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time(40), Generics::Time(120), 20, 2));
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time(90), Generics::Time(130), 30, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(20), Generics::Time(60), 10, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(40), Generics::Time(120), 20, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(90), Generics::Time(130), 30, 2));
     channel_rules->page_channels[channel_i] = page;
   }
 
@@ -139,7 +131,7 @@ int session_match_performance_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
@@ -147,7 +139,7 @@ int session_match_performance_test()
     Generics::Timer timer;
     timer.start();
 
-    for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+    for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
       Generics::MonoAllocatorArena result_arena;
@@ -174,7 +166,7 @@ int history_match_performance_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
     page->long_intervals.insert(ChannelInterval(
@@ -194,7 +186,7 @@ int history_match_performance_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
@@ -202,7 +194,7 @@ int history_match_performance_test()
     Generics::Timer timer;
     timer.start();
 
-    for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+    for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
       Generics::MonoAllocatorArena result_arena;
@@ -230,7 +222,7 @@ history_today_match_performance_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
     page->today_long_intervals.insert(ChannelInterval(
@@ -250,7 +242,7 @@ history_today_match_performance_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
@@ -258,7 +250,7 @@ history_today_match_performance_test()
     Generics::Timer timer;
     timer.start();
 
-    for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+    for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
     {
       tm += 3;
       Generics::MonoAllocatorArena result_arena;
@@ -286,7 +278,7 @@ merge_performance_test()
 
   ChannelDictionary_var channel_rules(new ChannelDictionary);
 
-  for(unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
+  for (unsigned long channel_i = 1; channel_i < CHANNEL_NUMBER; ++channel_i)
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
     page->today_long_intervals.insert(ChannelInterval(
@@ -309,7 +301,7 @@ merge_performance_test()
     Generics::Time tm = Generics::Time::get_time_of_day();
 
     ChannelMatchPack cid;
-    for(unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
+    for (unsigned long channel_i = 0; channel_i < CHANNEL_NUMBER; ++channel_i)
     {
       cid.page_channels.push_back(channel_i);
     }
@@ -321,7 +313,7 @@ merge_performance_test()
 
     {
       // fill target profile
-      for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
+      for (unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
       {
         tm += 3;
         Generics::MonoAllocatorArena result_arena;

@@ -23,10 +23,7 @@ class CGEndDateTest: public BaseUnit
 
 public:
 
-  CGEndDateTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  CGEndDateTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   { }
 

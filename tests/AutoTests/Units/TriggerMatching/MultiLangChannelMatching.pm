@@ -106,7 +106,7 @@ sub init
     # 20
     qq[\x22kdkdaa~45aa\x20\xc5\x9f1e-\xc5\x9e\xc3\x87\xc4\x9e\x20I\xc5\x9f\xc4\xb1k101a\x22],
     # 21
-    qq[\xef\xbd\x81\xef\xbd\x81\xef\xbd\x82\xef\xbd\x82\xef\xbc\x90\xef\xbc\x90\xef\xbc\x91] . 
+    qq[\xef\xbd\x81\xef\xbd\x81\xef\xbd\x82\xef\xbd\x82\xef\xbc\x90\xef\xbc\x90\xef\xbc\x91] .
     qq[\xef\xbc\x91\xef\xbc\xb8\xef\xbc\xb9\xef\xbc\xba],
     # 22
     qq[\xe3\x85\xa4\xe3\x84\xb1\xe3\x85\x8e],
@@ -140,9 +140,9 @@ sub init
     # 2
     $keywords[1],
     # 3
-    $keywords[2], 
+    $keywords[2],
     # 4
-    $keywords[3], 
+    $keywords[3],
     # 5
     $keywords[4] . "\n" .  $keywords[5],
     # 6
@@ -186,7 +186,7 @@ sub init
   $ns->output('KEYWORD2_1', "\"" . $keywords[1] . "\"");
   $ns->output('FT3', $keywords[2]);
   $ns->output(
-    'KEYWORD4_1', 
+    'KEYWORD4_1',
     qq[ss\xe1\xba\x97\xd5\xa5\xd6\x82\xce\x90\xca\xbcnss\xe1\xbd\x96\xd5\xbe\xd5\xb6]);
   $ns->output('KEYWORD5_1', qq[\xef\xac\x97f\xef\xac\x80i]);
   $ns->output('KEYWORD5_2', qq[\xc3\x9fs\xe1\xba\x9e\xc5\x89]);
@@ -194,51 +194,51 @@ sub init
   $ns->output('KEYWORD6_2', qq[\xd5\xb4\xd5\xadfffi]);
   $ns->output('KEYWORD11_1', qq[\xe1\xbc\x84\xcf\x89]);
   $ns->output('KEYWORD11_2', qq[\xe1\xbe\x8c\xe1\xbf\xbc]);
-  $ns->output('KEYWORD14_1', 
+  $ns->output('KEYWORD14_1',
     qq[\xe6\xa0\xaa\xe5\xbc\x8f\xe4\xbc\x9a\xe7\xa4\xbehpa]);
-  $ns->output('KEYWORD15_1', 
+  $ns->output('KEYWORD15_1',
     qq[aaaaaac\x20isik\x20ac\xc3\xa6\xc3\xb8\xc3\xbe]);
-  $ns->output('KEYWORD15_2', 
-    qq[\xc3\xa0\xc3\xa1\xc3\xa2\xc3\xa3\xc3\xa4\xc3\xa5] . 
-    qq[\xc3\xa7\x20\xc4\xb1s\xc4\xb1k\x20\xc3\x83\xc3\x87] . 
+  $ns->output('KEYWORD15_2',
+    qq[\xc3\xa0\xc3\xa1\xc3\xa2\xc3\xa3\xc3\xa4\xc3\xa5] .
+    qq[\xc3\xa7\x20\xc4\xb1s\xc4\xb1k\x20\xc3\x83\xc3\x87] .
     qq[\xc3\x86\xc3\x98\xc3\x9e]);
   $ns->output('KEYWORD16_1',
               'aaccee kktt no bbddee');
-  $ns->output('FT16', 
+  $ns->output('FT16',
     qq[aaccee~kktt\x29\x5e\xe2\x84\x96-\x28bbddee]);
   $ns->output('KEYWORD17_1',
     'kdkdaa 45aa isik101a s1e scg');
-  $ns->output('KEYWORD17_2', 
+  $ns->output('KEYWORD17_2',
     qq[kdkdaa~45aa\x20\xc5\x9f1e-\xc5\x9e\xc3\x87\xc4\x9e\x20i\xc5\x9f\xc4\xb1k101a]);
   $ns->output('KEYWORD18_1',
    'isik101a scg 45aa kdkdaa s1e');
-  $ns->output('KEYWORD18_2', 
+  $ns->output('KEYWORD18_2',
     qq[\xc5\x9e\xc3\x87\xc4\x9e-45aa\x20\xc5\x9f1e~kdkdaa\x20I\xc5\x9f\xc4\xb1k101a]);
-  $ns->output('KEYWORD19_1', 
+  $ns->output('KEYWORD19_1',
     'isik101a scg 45aa s1e kdkdaa');
-  $ns->output('KEYWORD19_2', 
+  $ns->output('KEYWORD19_2',
     qq[45aa-\xc5\x9e\xc3\x87\xc4\x9e\x20I\xc5\x9f\xc4\xb1k101a\x20\xc5\x9f1e~kdkdaa]);
   $ns->output('KEYWORD21_1', 'aabb0011xyz');
   $ns->output('FT26', $keywords[25]);
-  $ns->output('KEYWORD26_1', 
-    qq[\xe3\x82\xaa\xe3\x83\xbc\xe3\x83\x97\xe3\x83\xb3\x20] . 
+  $ns->output('KEYWORD26_1',
+    qq[\xe3\x82\xaa\xe3\x83\xbc\xe3\x83\x97\xe3\x83\xb3\x20] .
     qq[\xe3\x82\xa2\xe3\x82\xaf\xe3\x82\xbb\xe3\x82\xb9]);
-  $ns->output('KEYWORD30_1', 
-    qq[\xE5\x8F\xAF\xE4\xBB\xA5\x20\xE4\xB8\xBA\x20] . 
+  $ns->output('KEYWORD30_1',
+    qq[\xE5\x8F\xAF\xE4\xBB\xA5\x20\xE4\xB8\xBA\x20] .
     qq[\xE6\x95\x88\xE5\x8A\x9B]);
 
-  # Keyword channels      
+  # Keyword channels
   $idx = 0;
   foreach my $trigger (@kwd_triggers) {
     $self->create_page_channel($ns, ++$idx, $account, $trigger);
   }
 
-  # URL channels      
+  # URL channels
   $idx = 0;
   foreach my $url (@urls) {
     $self->create_url_channel($ns, ++$idx, $account, $url);
   }
-  # REFERERS channels      
+  # REFERERS channels
   $ns->output('URL1', 'xn--schne-strasse-kmb.de');
   $ns->output('URL2', 'xn--Schne-Strae-46a50a.de');
 

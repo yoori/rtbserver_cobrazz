@@ -139,6 +139,7 @@ if (defined $options{'connection-file'})
   eval('require "' . $db_file . '"') ||
     die "File $options{'connection-file'} not found\n\n";
 }
+
 if (defined $options{'connection-string'})
 {
   foreach (split(/[\s;]+/, $options{'connection-string'}))
@@ -177,7 +178,7 @@ sub execute_modules
   my @loaded = ();
   foreach my $module (@modules)
   {
-    if($module =~ m|(?:.*/)?([^/]+)\.pm$|)
+    if ($module =~ m|(?:.*/)?([^/]+)\.pm$|)
     {
       my ($test_name) = $module =~ m|(?:.*/)?([^/]+)\.pm$|;
 
@@ -185,23 +186,23 @@ sub execute_modules
       eval
       {
         no strict;
-        %symbols = %{$test_name . "::"}; 
+        %symbols = %{$test_name . "::"};
       };
 
-      if(scalar(keys %symbols) == 0)
+      if (scalar(keys %symbols) == 0)
       {
         eval
         {
           require $module;
         };
-          
-        if($@)
+
+        if ($@)
         {
           die "require of '$module': " . $@;
         }
 
         no strict;
-        %symbols = %{$test_name . "::"}; 
+        %symbols = %{$test_name . "::"};
       }
 
       if (exists $symbols{"init"})
@@ -223,8 +224,8 @@ sub execute_modules
     {
       require $module;
     };
-    
-    if($@)
+
+    if ($@)
     {
       die "require of '$module': " . $@;
     }
@@ -248,7 +249,7 @@ my $database = new DB::Database($db_params{host}, $db_params{dbname},
 
 my @modules_mask = ( '*.pm' );
 
-if(exists $options{"tests"})
+if (exists $options{"tests"})
 {
   @modules_mask = ();
   foreach my $test_name(split(/,/, $options{"tests"}))

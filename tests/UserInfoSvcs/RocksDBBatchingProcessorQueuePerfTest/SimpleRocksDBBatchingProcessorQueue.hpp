@@ -49,9 +49,7 @@ namespace AdServer::ProfilingCommons::Test
 
     void account_operation_(OperationCounts& counts, OperationType type) const noexcept;
 
-    ReadyState request_ready_i_(
-      bool has_ready_operations,
-      bool force_update = false) noexcept;
+    ReadyState request_ready_i_(bool has_ready_operations, bool force_update = false) noexcept;
 
     ReadyState make_ready_state_i_() const noexcept;
 

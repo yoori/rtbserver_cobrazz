@@ -294,6 +294,7 @@ while (my ($table, $condition) = each %leaf_table) {
 
         ++$rowid{$rowid};
     }
+
     if (keys %rowid) {
         $delete->{preserve} = \%rowid;
     }
@@ -392,7 +393,7 @@ while (my $d = shift @delete) {
 
              if ($child_column && $parent_column)
              {
-               my $c = qq[$parent_column IN (SELECT $child_column FROM $d->{table} 
+               my $c = qq[$parent_column IN (SELECT $child_column FROM $d->{table}
                                       WHERE $d->{condition})];
 
                my $delete = { table => "$row->{fk_table}",
@@ -427,6 +428,7 @@ while (my $d = shift @delete) {
 
                     ++$rowid{$rowid};
                 }
+
                 if (keys %rowid) {
                     $delete->{preserve} = \%rowid;
                 }

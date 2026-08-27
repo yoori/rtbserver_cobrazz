@@ -1,9 +1,6 @@
 #include "BehavParamsGranularUpdateTest.hpp"
 
-REFLECT_UNIT(BehavParamsGranularUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(BehavParamsGranularUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace ORM = AutoTest::ORM;
 
@@ -11,25 +8,16 @@ bool
 BehavParamsGranularUpdateTest::run()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
     "CampaignServer must set in the XML configuration file");
 
-  AUTOTEST_CASE(
-    empty(),
-    "Empty behavioral parameters");
+  AUTOTEST_CASE(empty(), "Empty behavioral parameters");
 
-  AUTOTEST_CASE(
-    assign(),
-    "Assign behavioral parameters");
+  AUTOTEST_CASE(assign(), "Assign behavioral parameters");
 
-  AUTOTEST_CASE(
-    change(),
-    "Change behavioral parameters");
+  AUTOTEST_CASE(change(), "Change behavioral parameters");
 
-  AUTOTEST_CASE(
-    remove(),
-    "Remove a behavioral parameter");
+  AUTOTEST_CASE(remove(), "Remove a behavioral parameter");
 
 //  The case requires specific channel_type
 //  We possibly have to use MACRO channel ('L')
@@ -37,9 +25,7 @@ BehavParamsGranularUpdateTest::run()
 //     add_list(),
 //     "Add BP list");
 
-  AUTOTEST_CASE(
-    del_param(),
-    "Clear behavioral parameters");
+  AUTOTEST_CASE(del_param(), "Clear behavioral parameters");
 
   return true;
 }
@@ -81,8 +67,7 @@ void BehavParamsGranularUpdateTest::assign()
   bp_page->time_to        = 600;
   bp_page->trigger_type   = "P";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_page->insert()),
+    AutoTest::predicate_checker(bp_page->insert()),
     "must insert BehavioralParameters of type 'P'");
 
   bp_search->channel        = channel_id;
@@ -91,8 +76,7 @@ void BehavParamsGranularUpdateTest::assign()
   bp_search->time_to        = 1200;
   bp_search->trigger_type   = "S";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_search->insert()),
+    AutoTest::predicate_checker(bp_search->insert()),
     "must insert BehavioralParameters of type 'S'");
 
   // it isn't good check, because using internal server key
@@ -131,15 +115,13 @@ void BehavParamsGranularUpdateTest::change()
 
   bp_page->time_to = 1200;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_page->update()),
+    AutoTest::predicate_checker(bp_page->update()),
     "should update 'bp_page' behav params");
 
   bp_search->time_from = 60;
   bp_search->minimum_visits = 2;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_search->update()),
+    AutoTest::predicate_checker(bp_search->update()),
     "should update 'bp_search' behav params");
 
   ADD_WAIT_CHECKER(
@@ -172,10 +154,7 @@ void BehavParamsGranularUpdateTest::remove()
        behav_param_list_id(bp_key_initial))).check(),
    "Initial");
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_search->delet()),
-    "must delete behav params");
+  FAIL_CONTEXT(AutoTest::predicate_checker(bp_search->delet()), "must delete behav params");
 
   ADD_WAIT_CHECKER(
     "Check behav_param_list",
@@ -192,8 +171,7 @@ void BehavParamsGranularUpdateTest::add_list()
   const int channel_id = fetch_int("LIST/CHANNEL");
   ORM::ORMRestorer< ORM::PQ::Behavioralparameterslist>* bp_list =
     create<ORM::PQ::Behavioralparameterslist>();
-  ORM::ORMRestorer< ORM::PQ::Channel>* channel =
-    create<ORM::PQ::Channel>(channel_id);
+  ORM::ORMRestorer<ORM::PQ::Channel>* channel = create<ORM::PQ::Channel>(channel_id);
   ORM::ORMRestorer< ORM::PQ::BehavioralParameters>* bp_page =
     create<ORM::PQ::BehavioralParameters>(fetch_int("LIST/PAGE"));
 
@@ -213,22 +191,17 @@ void BehavParamsGranularUpdateTest::add_list()
   bp_list->name = fetch_string("BPListName");
   bp_list->threshold = 0;
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_list->insert()),
+    AutoTest::predicate_checker(bp_list->insert()),
     "should insert behavioral parameters list");
 
   bp_page->channel.null();
   bp_page->behav_params_list_id = bp_list->id();
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      bp_page->update()),
+    AutoTest::predicate_checker(bp_page->update()),
     "should update 'bp_page' behav params");
 
   channel->behav_params_list_id = bp_list->id();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->update()),
-    "should update channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->update()), "should update channel");
 
   ADD_WAIT_CHECKER(
     "Check behav_param_list",
@@ -243,8 +216,7 @@ void BehavParamsGranularUpdateTest::add_list()
 void BehavParamsGranularUpdateTest::del_param()
 {
   const int channel_id = fetch_int("DEL/CHANNEL");
-  ORM::ORMRestorer< ORM::PQ::Channel>* channel =
-    create<ORM::PQ::Channel>(channel_id);
+  ORM::ORMRestorer<ORM::PQ::Channel>* channel = create<ORM::PQ::Channel>(channel_id);
   ORM::ORMRestorer< ORM::PQ::BehavioralParameters>* bp_page =
     create<ORM::PQ::BehavioralParameters>(fetch_int("DEL/PAGE"));
 
@@ -263,10 +235,7 @@ void BehavParamsGranularUpdateTest::del_param()
 
   channel->behav_params_list_id.null();
   bp_page->delet();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel->update()),
-    "should update channel");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel->update()), "should update channel");
 
   ADD_WAIT_CHECKER(
     "Check behav_param_list",

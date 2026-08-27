@@ -33,7 +33,7 @@ namespace AutoTest
     std::string key_path = "/opt/foros/server"; // default unixcommons path
 
     char* unix_commons_env = getenv("unix_commons_root");
-    if(unix_commons_env)
+    if (unix_commons_env)
       key_path = unix_commons_env;
     key_path += "/share/uuid_keys";
 
@@ -58,14 +58,10 @@ namespace AutoTest
   // class UuidGenarator_
 
   UuidGenarator_::UuidGenarator_() :
-    temporary_generator_(
-      get_key_path(KE_PRIVATETEMPKEY).c_str()),
-    persistent_generator_(
-      get_key_path(KE_PRIVATEKEY).c_str()),
-    temporary_verifier_(
-      get_key_path(KE_PUBLICTEMPKEY).c_str()),
-    persistent_verifier_(
-      get_key_path(KE_PUBLICKEY).c_str())
+    temporary_generator_(get_key_path(KE_PRIVATETEMPKEY).c_str()),
+    persistent_generator_(get_key_path(KE_PRIVATEKEY).c_str()),
+    temporary_verifier_(get_key_path(KE_PUBLICTEMPKEY).c_str()),
+    persistent_verifier_(get_key_path(KE_PUBLICKEY).c_str())
   { }
 
   std::string
@@ -77,8 +73,7 @@ namespace AutoTest
   }
 
   Generics::SignedUuid
-  UuidGenarator_::verify(
-    const char* uid, bool is_temporary)
+  UuidGenarator_::verify(const char* uid, bool is_temporary)
   {
     return is_temporary?
       temporary_verifier_.verify(String::SubString(uid)):
@@ -90,14 +85,10 @@ namespace AutoTest
     return Generics::Singleton<UuidGenarator_>::instance().generate(is_temporary);
   }
 
-  std::string prepare_uid(
-    const std::string& uid,
-    UuidUsingEnum uid_using,
-    bool is_temporary)
+  std::string prepare_uid(const std::string& uid, UuidUsingEnum uid_using, bool is_temporary)
   {
     Generics::SignedUuid suid =
-      Generics::Singleton<UuidGenarator_>::instance().verify(
-        uid.c_str(), is_temporary);
+      Generics::Singleton<UuidGenarator_>::instance().verify(uid.c_str(), is_temporary);
     switch (uid_using)
     {
       case UUE_ADMIN_PARAMETER:
@@ -116,8 +107,7 @@ namespace AutoTest
   }
 
   const std::string&
-  get_client_address(BaseUnit* test,
-                     unsigned short flags)
+  get_client_address(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     ClusterTypeEnum cluster = flags & UF_CENTRAL_FRONTEND
@@ -135,17 +125,13 @@ namespace AutoTest
 
   // class AdClient
 
-  AdClient AdClient::create_user(
-    BaseUnit* test,
-    unsigned short flags)
+  AdClient AdClient::create_user(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     AutoTest::AdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     client.process_request(OptOutRequest().op("in"));
     return client;
   }
@@ -159,67 +145,50 @@ namespace AutoTest
     AutoTest::AdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     client.process_request(OptOutRequest().op("in").debug_time(debug_time));
     return client;
   }
 
-  AdClient AdClient::create_undef_user(
-    BaseUnit* test,
-    unsigned short flags)
+  AdClient AdClient::create_undef_user(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     std::string uid = AutoTest::generate_uid(false);
     AutoTest::AdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     client.set_uid(uid, false);
     return client;
   }
 
-  AdClient AdClient::create_probe_user(
-      BaseUnit* test,
-      unsigned short flags)
+  AdClient AdClient::create_probe_user(BaseUnit* test, unsigned short flags)
       /*throw(eh::Exception)*/
   {
     AutoTest::AdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     client.set_probe_uid();
     return client;
   }
 
 
-  AdClient AdClient::create_nonoptin_user(
-    BaseUnit* test,
-    unsigned short flags)
+  AdClient AdClient::create_nonoptin_user(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     AutoTest::AdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     return client;
   }
 
-  AdClient AdClient::create_optout_user(
-    BaseUnit* test,
-    unsigned short flags)
+  AdClient AdClient::create_optout_user(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     AutoTest::AdClient
-      client(
-        AutoTest::AdClient::create_nonoptin_user(test, flags));
+      client(AutoTest::AdClient::create_nonoptin_user(test, flags));
     client.add_http_header("Referer", "autotests.webwise.com");
     client.process_request(OptOutRequest().op("out"));
     return client;
@@ -232,8 +201,7 @@ namespace AutoTest
     /*throw(eh::Exception)*/
   {
     AutoTest::AdClient
-      client(
-        AutoTest::AdClient::create_nonoptin_user(test, flags));
+      client(AutoTest::AdClient::create_nonoptin_user(test, flags));
     client.process_request(OptOutRequest().op("out").debug_time(debug_time));
     return client;
   }
@@ -269,9 +237,7 @@ namespace AutoTest
     set_headers_(request.headers());
 
     process_request_(
-      (uses_profiling_cluster()
-        ? request.profiling_url()
-        : request.url()).c_str(),
+      (uses_profiling_cluster() ? request.profiling_url() : request.url()).c_str(),
       detail_info);
   }
 
@@ -298,7 +264,7 @@ namespace AutoTest
   unsigned int AdClient::process(const std::string& request, bool suppress_exceptions)
     /*throw(eh::Exception)*/
   {
-    if(suppress_exceptions)
+    if (suppress_exceptions)
     {
       try
       {
@@ -339,8 +305,7 @@ namespace AutoTest
 
     logger().stream(Logging::Logger::TRACE) <<
      "User#" << client_index_ <<
-     ". Sending request#" <<
-      request_count_ << " " << stored_request_info_ << "...";
+     ". Sending request#" << request_count_ << " " << stored_request_info_ << "...";
 
     {
       BaseAdClient::process_request(url);
@@ -351,17 +316,13 @@ namespace AutoTest
 
     logger().stream(Logging::Logger::TRACE) <<
       "User#" << client_index_ <<
-      ". Sending request#" <<
-      request_count_++ << " " << stored_request_info_ << " done.";
+      ". Sending request#" << request_count_++ << " " << stored_request_info_ << " done.";
   }
 
-  void AdClient::set_headers_(
-    const HTTP::HeaderList& headers)
+  void AdClient::set_headers_(const HTTP::HeaderList& headers)
     /*throw(eh::Exception)*/
   {
-    for ( HTTP::HeaderList::const_iterator
-            it = headers.begin();
-          it != headers.end();++it)
+    for (HTTP::HeaderList::const_iterator it = headers.begin(); it != headers.end();++it)
     {
       if (it->name != "Cookie")
       {
@@ -387,28 +348,24 @@ namespace AutoTest
 
     logger().stream(Logging::Logger::TRACE) <<
       "User#" << client_index_ <<
-      ". Sending POST request#" <<
-      request_count_ << " " << stored_request_info_ << "...";
+      ". Sending POST request#" << request_count_ << " " << stored_request_info_ << "...";
 
     BaseAdClient::process_request(url, body, HTTP::HTTP_Connection::HM_Post);
 
     logger().stream(Logging::Logger::TRACE) <<
       "User#" << client_index_ <<
-      ". Sending POST request#" <<
-      request_count_++ << " " << stored_request_info_ << " done.";
+      ". Sending POST request#" << request_count_++ << " " << stored_request_info_ << " done.";
   }
 
   unsigned int
-  AdClient::process_post(
-    const BaseRequest& request,
-    bool suppress_exceptions)
+  AdClient::process_post(const BaseRequest& request, bool suppress_exceptions)
     /*throw(eh::Exception)*/
   {
     set_headers_(request.headers());
 
     request.set_decoder(request_);
 
-    if(suppress_exceptions)
+    if (suppress_exceptions)
     {
       try
       {
@@ -458,33 +415,23 @@ namespace AutoTest
   }
 
   void
-  AdClient::merge(
-    const TemporaryAdClient& client_temp,
-    const BaseRequest& request)
+  AdClient::merge(const TemporaryAdClient& client_temp, const BaseRequest& request)
       /*throw(eh::Exception)*/
   {
     merge_(client_temp, request.url());
   }
 
   void
-  AdClient::merge(
-    const TemporaryAdClient& client_temp,
-    const NSLookupRequest& request)
+  AdClient::merge(const TemporaryAdClient& client_temp, const NSLookupRequest& request)
       /*throw(eh::Exception)*/
   {
-    merge_(client_temp,
-           uses_profiling_cluster()
-            ? request.profiling_url()
-            : request.url());
+    merge_(client_temp, uses_profiling_cluster() ? request.profiling_url() : request.url());
   }
 
-  void AdClient::merge_(const TemporaryAdClient& client_temp,
-                        const std::string& url)
+  void AdClient::merge_(const TemporaryAdClient& client_temp, const std::string& url)
       /*throw(eh::Exception)*/
   {
-    process_request(
-      url + "&tuid=" + client_temp.get_tuid(),
-      "Merge");
+    process_request(url + "&tuid=" + client_temp.get_tuid(), "Merge");
   }
 
 
@@ -506,10 +453,7 @@ namespace AutoTest
       {
         if (!debug_info.track_pixel_url.empty())
         {
-          urls.push_back(
-            UrlAction(
-              debug_info.track_pixel_url,
-              action->time));
+          urls.push_back(UrlAction(debug_info.track_pixel_url, action->time));
         }
         else
           throw RequestProcessError("track_pixel_url empty");
@@ -518,18 +462,14 @@ namespace AutoTest
       {
         if (!debug_info.selected_creatives.empty())
         {
-          urls.push_back(
-            UrlAction(
-              debug_info.selected_creatives.first().click_url,
-              action->time));
+          urls.push_back(UrlAction(debug_info.selected_creatives.first().click_url, action->time));
         }
         else
           throw RequestProcessError("selected_creatives is empty");
       }
       else
       {
-        for (CreativeList::const_iterator ccid = ccids.begin();
-             ccid != ccids.end(); ++ccid)
+        for (CreativeList::const_iterator ccid = ccids.begin(); ccid != ccids.end(); ++ccid)
         {
           DebugInfo::SelectedCreativesList::const_iterator creative =
             debug_info.selected_creatives.find(*ccid);
@@ -541,34 +481,22 @@ namespace AutoTest
               {
                 if (!creative->click_url.empty())
                 {
-                  urls.push_back(
-                    UrlAction(
-                      creative->click_url,
-                      action->time));
+                  urls.push_back(UrlAction(creative->click_url, action->time));
                 }
                 else
-                    throw RequestProcessError("ccid#" +
-                      *ccid + " click_url empty");
+                    throw RequestProcessError("ccid#" + *ccid + " click_url empty");
                 break;
               }
               case ACTION :
               {
                 urls.push_back(
-                  UrlAction(
-                    AutoTest::ActionRequest().
-                    cid(creative->cmp_id).
-                    url(),
-                    action->time));
+                  UrlAction(AutoTest::ActionRequest(). cid(creative->cmp_id). url(), action->time));
                 break;
               }
               case NON_EMPTY_ACTION:
               {
                 urls.push_back(
-                  UrlAction(
-                    AutoTest::ActionRequest().
-                    cid(creative->cmp_id).
-                    url(),
-                    action->time));
+                  UrlAction(AutoTest::ActionRequest(). cid(creative->cmp_id). url(), action->time));
                 break;
               }
 
@@ -579,9 +507,7 @@ namespace AutoTest
                   UrlAction(
                     "",
                     Generics::Time::ZERO == action->time ?
-                    Generics::Time(
-                      get_global_params().
-                      TimeOuts().ad_logs_delivery_timeout())
+                    Generics::Time(get_global_params(). TimeOuts().ad_logs_delivery_timeout())
                     : action->time));
                 break;
               }
@@ -596,8 +522,7 @@ namespace AutoTest
       }
     }
 
-    for (UrlsArray::const_iterator url = urls.begin();
-         url != urls.end(); ++url)
+    for (UrlsArray::const_iterator url = urls.begin(); url != urls.end(); ++url)
     {
       if (url->url.empty())
       {
@@ -614,8 +539,7 @@ namespace AutoTest
         }
         else
         {
-          std::string time_str(
-            url->time.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT));
+          std::string time_str(url->time.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT));
           std::string mime_time_str;
           String::StringManip::mime_url_encode(time_str, mime_time_str);
           if (url->url.find("*amp*") != std::string::npos)
@@ -660,7 +584,7 @@ namespace AutoTest
   {
     ConsequenceActionArray actions;
 
-     for( ConsequenceActionType action = TRACK;
+     for ( ConsequenceActionType action = TRACK;
           action <= WAIT; action = ConsequenceActionType( action << 1 ) )
      {
        if (action_flags & action)
@@ -689,17 +613,13 @@ namespace AutoTest
   bool AdClient::has_cookie (const std::string& cookie_name)
   {
     std::string cookie_value;
-    return get_cookies().find_value(cookie_name, cookie_value) &&
-      !cookie_value.empty();
+    return get_cookies().find_value(cookie_name, cookie_value) && !cookie_value.empty();
   }
 
-  bool AdClient::has_cookie (
-    const std::string& cookie_name,
-    const std::string& expected)
+  bool AdClient::has_cookie (const std::string& cookie_name, const std::string& expected)
   {
     std::string cookie_value;
-    if(get_cookies().find_value(cookie_name, cookie_value) &&
-       !cookie_value.empty())
+    if (get_cookies().find_value(cookie_name, cookie_value) && !cookie_value.empty())
     {
       return cookie_value == expected;
     }
@@ -709,22 +629,17 @@ namespace AutoTest
   bool AdClient::has_host_cookies ()
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_host());
+      cookies(get_cookies(), get_host());
     return !cookies.empty();
   }
 
   bool AdClient::has_host_cookie (const std::string& cookie_name)
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_host());
+      cookies(get_cookies(), get_host());
 
     std::string cookie_value;
-    return
-      cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty();
+    return cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty();
   }
 
   bool AdClient::has_host_cookie (
@@ -733,12 +648,10 @@ namespace AutoTest
     bool present)
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_host());
+      cookies(get_cookies(), get_host());
 
     std::string cookie_value;
-    if(cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty())
+    if (cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty())
     {
       if (present)
       {
@@ -752,9 +665,7 @@ namespace AutoTest
   bool AdClient::has_domain_cookies ()
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_domain());
+      cookies(get_cookies(), get_domain());
 
     return !cookies.empty();
   }
@@ -762,13 +673,10 @@ namespace AutoTest
   bool AdClient::has_domain_cookie (const std::string& cookie_name)
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_domain());
+      cookies(get_cookies(), get_domain());
 
     std::string cookie_value;
-    return
-      cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty();
+    return cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty();
   }
 
   bool AdClient::has_domain_cookie (
@@ -777,12 +685,10 @@ namespace AutoTest
     bool present)
   {
     AutoTest::Cookie::UnitCookieList
-      cookies(
-        get_cookies(),
-        get_domain());
+      cookies(get_cookies(), get_domain());
 
     std::string cookie_value;
-    if(cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty())
+    if (cookies.find_value(cookie_name, cookie_value) && !cookie_value.empty())
     {
       if (present)
       {
@@ -793,9 +699,7 @@ namespace AutoTest
     return false;
   }
 
-  void AdClient::get_cookie_value(
-    const char *cookie_name,
-    std::string& cookie_value) const
+  void AdClient::get_cookie_value(const char *cookie_name, std::string& cookie_value) const
     /*throw(CookieNotFound)*/
   {
     bool found;
@@ -810,12 +714,11 @@ namespace AutoTest
         e.what() << ", last request url " << get_stored_url();
       throw CookieNotFound(ostr);
     }
+
     if (!found)
     {
       Stream::Error ostr;
-      ostr << "Cookie '" << cookie_name
-        << "' not found, last request url "
-        << get_stored_url();
+      ostr << "Cookie '" << cookie_name << "' not found, last request url " << get_stored_url();
       throw CookieNotFound(ostr);
     }
   }
@@ -844,9 +747,7 @@ namespace AutoTest
   }
 
   void
-  AdClient::set_uid (
-    const std::string& value,
-    bool fail_if_not_exists)
+  AdClient::set_uid (const std::string& value, bool fail_if_not_exists)
     /*throw(eh::Exception)*/
   {
     if (fail_if_not_exists)
@@ -859,8 +760,7 @@ namespace AutoTest
 
     if (domain.empty())
     {
-      throw InvalidAdClientConf(
-        "Can't set UID cookie for empty domain");
+      throw InvalidAdClientConf("Can't set UID cookie for empty domain");
     }
     get_cookies().set_value(UID_COOKIE_NAME, value, domain);
   }
@@ -868,25 +768,18 @@ namespace AutoTest
 
   // class TemporaryAdClient
 
-  TemporaryAdClient TemporaryAdClient::create_user(
-    BaseUnit* test,
-    unsigned short flags)
+  TemporaryAdClient TemporaryAdClient::create_user(BaseUnit* test, unsigned short flags)
     /*throw(eh::Exception)*/
   {
     TemporaryAdClient
       client(
         get_client_address(test, flags).c_str(),
-        flags & UF_NULL_LOGGER?
-          BaseAdClient::LT_NULL: BaseAdClient::LT_BASE,
-        test);
+        flags & UF_NULL_LOGGER? BaseAdClient::LT_NULL: BaseAdClient::LT_BASE, test);
     return client;
   }
 
 
-  TemporaryAdClient::TemporaryAdClient(
-    const char* base_url,
-    LoggerType log_type,
-    BaseUnit* test)
+  TemporaryAdClient::TemporaryAdClient(const char* base_url, LoggerType log_type, BaseUnit* test)
       /*throw(Exception, eh::Exception)*/ :
     AdClient(base_url, log_type, test),
     tuid_(AutoTest::generate_uid())
@@ -901,8 +794,7 @@ namespace AutoTest
   TemporaryAdClient::~TemporaryAdClient() noexcept
   { }
 
-  void TemporaryAdClient::process_request_(const char* url,
-                                          const char* detail_info)
+  void TemporaryAdClient::process_request_(const char* url, const char* detail_info)
     /*throw(eh::Exception)*/
   {
     if (is_valid_request(url))
@@ -916,8 +808,7 @@ namespace AutoTest
     {
       Stream::Error ostr;
       ostr << "Temorary client can't send request "
-          "with tuid or setuid parametes '" << url <<
-          "'";
+          "with tuid or setuid parametes '" << url << "'";
       throw InvalidRequest(ostr);
     }
   }
@@ -942,18 +833,15 @@ namespace AutoTest
     return tuid_;
   }
 
-  void TemporaryAdClient::set_uid (
-    const std::string&, bool)
+  void TemporaryAdClient::set_uid (const std::string&, bool)
     /*throw(eh::Exception)*/
   {
    Stream::Error ostr;
-   ostr << "Temorary client can't set cookie " <<
-       "(TemporaryAdClient::set_uid is invalid call)" ;
+   ostr << "Temorary client can't set cookie " << "(TemporaryAdClient::set_uid is invalid call)" ;
    throw InvalidCall(ostr);
   }
 
-  void TemporaryAdClient::set_cookie_value(
-    const char *, const char *, bool)
+  void TemporaryAdClient::set_cookie_value(const char *, const char *, bool)
     /*throw(eh::Exception)*/
   {
     Stream::Error ostr;
@@ -963,9 +851,7 @@ namespace AutoTest
   }
 
   void
-  TemporaryAdClient::merge_(
-   const TemporaryAdClient&,
-   const std::string& )
+  TemporaryAdClient::merge_(const TemporaryAdClient&, const std::string&)
      /*throw(eh::Exception)*/
   {
     Stream::Error ostr;

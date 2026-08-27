@@ -27,7 +27,7 @@ namespace
   void
   check(bool condition, const char* message)
   {
-    if(!condition)
+    if (!condition)
     {
       std::cerr << message << std::endl;
       std::exit(1);
@@ -39,8 +39,7 @@ int
 main()
 {
   auto request_manager = std::make_shared<InstantiateAdRequestArgsManager>();
-  auto common_manager =
-    std::make_shared<InstantiateAdCommonCreativeArgsManager>();
+  auto common_manager = std::make_shared<InstantiateAdCommonCreativeArgsManager>();
   auto creative_manager = std::make_shared<InstantiateAdCreativeArgsManager>();
 
   unsigned long request_token_calls = 0;
@@ -49,8 +48,7 @@ main()
 
   request_manager->add_processor(
     "request-token",
-    [&request_token_calls](
-      const InstantiateAdRequestArgsProvider&)
+    [&request_token_calls](const InstantiateAdRequestArgsProvider&)
     {
       ++request_token_calls;
       return std::optional<std::string>("request-value");
@@ -58,24 +56,21 @@ main()
 
   request_manager->add_processor(
     "collision-token",
-    [](
-      const InstantiateAdRequestArgsProvider&)
+    [](const InstantiateAdRequestArgsProvider&)
     {
       return std::optional<std::string>("request-collision");
     });
 
   request_manager->add_processor(
     "REQ",
-    [](
-      const InstantiateAdRequestArgsProvider&)
+    [](const InstantiateAdRequestArgsProvider&)
     {
       return std::optional<std::string>("request");
     });
 
   common_manager->add_processor(
     "common-token",
-    [&common_token_calls](
-      const InstantiateAdCommonCreativeArgsProvider&)
+    [&common_token_calls](const InstantiateAdCommonCreativeArgsProvider&)
     {
       ++common_token_calls;
       return std::optional<std::string>("common-value");
@@ -83,28 +78,23 @@ main()
 
   creative_manager->add_processor(
     "creative-token",
-    [&creative_token_calls](
-      const InstantiateAdCreativeArgsProvider& provider)
+    [&creative_token_calls](const InstantiateAdCreativeArgsProvider& provider)
     {
       ++creative_token_calls;
-      return std::optional<std::string>(
-        provider.context().app_format);
+      return std::optional<std::string>(provider.context().app_format);
     });
 
   creative_manager->add_processor(
     "collision-token",
-    [](
-      const InstantiateAdCreativeArgsProvider&)
+    [](const InstantiateAdCreativeArgsProvider&)
     {
       return std::optional<std::string>("creative-collision");
     });
 
   auto request_context = std::make_shared<InstantiateAdContext>();
   auto request_union = std::make_shared<UnionArgs>();
-  request_union->add_provider(
-    request_manager->create_provider(request_context));
-  request_union->add_provider(
-    common_manager->create_provider(request_context));
+  request_union->add_provider(request_manager->create_provider(request_context));
+  request_union->add_provider(common_manager->create_provider(request_context));
   auto request_level_args = std::make_shared<CacheArgs>(request_union);
 
   std::string value;
@@ -129,16 +119,14 @@ main()
   check(common_token_calls == 1, "common token wasn't cached");
 
   const char* creative_values[] = {"creative-1", "creative-2"};
-  for(const char* creative_value : creative_values)
+  for (const char* creative_value : creative_values)
   {
     auto creative_context = std::make_shared<InstantiateAdContext>();
     creative_context->app_format = creative_value;
 
     auto creative_union = std::make_shared<UnionArgs>();
     creative_union->add_provider(
-      creative_manager->create_provider(
-        creative_context,
-        request_level_args));
+      creative_manager->create_provider(creative_context, request_level_args));
     auto creative_level_args = std::make_shared<CacheArgs>(creative_union);
 
     auto final_args = std::make_shared<UnionArgs>();
@@ -166,18 +154,14 @@ main()
     using namespace AdServer::CampaignSvcs;
 
     auto creative_tokens = std::make_shared<OptionTokenValueMap>();
-    (*creative_tokens)["lazy-token"] =
-      OptionValue(7, "prefix-##REQ##-##nested-token##");
-    (*creative_tokens)["nested-token"] =
-      OptionValue(0, "creative");
+    (*creative_tokens)["lazy-token"] = OptionValue(7, "prefix-##REQ##-##nested-token##");
+    (*creative_tokens)["nested-token"] = OptionValue(0, "creative");
 
     TokenProcessorMap token_processors;
     TokenSet insert_restrictions;
     insert_restrictions.insert("REQ");
     insert_restrictions.insert("nested-token");
-    token_processors[7] = new BaseTokenProcessor(
-      "lazy-token",
-      insert_restrictions);
+    token_processors[7] = new BaseTokenProcessor("lazy-token", insert_restrictions);
     CreativeInstantiateRule instantiate_rule;
     CreativeInstantiateArgs creative_args;
 

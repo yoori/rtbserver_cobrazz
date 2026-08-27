@@ -18,8 +18,7 @@
 
 namespace
 {
-  char USAGE[] =
-    "Usage: \nUserInfoContainerTest <test schema file>.";
+  char USAGE[] = "Usage: \nUserInfoContainerTest <test schema file>.";
 }
 
 Application_::Application_() noexcept
@@ -36,12 +35,10 @@ Application_::main(int& argc, char** argv)
 {
   if (!::setlocale(LC_CTYPE, "en_US.utf8"))
   {
-    std::cout
-      << "UserInfoChunksUtilApp_::main(): cannot set locale."
-      << std::endl;
+    std::cout << "UserInfoChunksUtilApp_::main(): cannot set locale." << std::endl;
   }
 
-  if(argc != 2)
+  if (argc != 2)
   {
     std::cout << USAGE << std::endl;
     return;
@@ -58,7 +55,7 @@ Application_::main(int& argc, char** argv)
       std::unique_ptr<TestConfigurationType>
         test_config = TestConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -96,8 +93,7 @@ Application_::main(int& argc, char** argv)
           channels->behav_params[ch_id].time_to = it->time_to();
           channels->behav_params[ch_id].minimum_visits = it->minimum_visits();
 
-          if (it->time_from() == it->time_to() &&
-              it->time_from() == 0)
+          if (it->time_from() == it->time_to() && it->time_from() == 0)
           {
             channels->behav_params[ch_id].type = BehavParam::BT_CONTEXT;
           }
@@ -149,13 +145,7 @@ Application_::main(int& argc, char** argv)
         }
       }
 
-      UserInfoContainer user_info_container(1,
-                                            1,
-                                            100,
-                                            3600*24,
-                                            20,
-                                            0,
-                                            logger_);
+      UserInfoContainer user_info_container(1, 1, 100, 3600*24, 20, 0, logger_);
 
       user_info_container.channels_config(channels);
 
@@ -170,8 +160,7 @@ Application_::main(int& argc, char** argv)
         chunk_files[5].c_str(),
         24*60*60*180);
 
-      unsigned long match_users =
-        test_config->UserInfoContainerTestConfig().MatchConfig().size();
+      unsigned long match_users = test_config->UserInfoContainerTestConfig().MatchConfig().size();
 
       std::vector<std::string> user_id;
       std::vector<std::string> match_channels;
@@ -180,8 +169,7 @@ Application_::main(int& argc, char** argv)
 
       for (unsigned long i = 0; i < match_users; ++i)
       {
-        user_id.push_back(
-          test_config->UserInfoContainerTestConfig().MatchConfig()[i].user_id());
+        user_id.push_back(test_config->UserInfoContainerTestConfig().MatchConfig()[i].user_id());
         match_channels.push_back(
           test_config->UserInfoContainerTestConfig().MatchConfig()[i].channels());
           matches_number.push_back(
@@ -203,7 +191,7 @@ Application_::main(int& argc, char** argv)
           input_channels_tokenizer(match_channels[i]);
 
         String::SubString channel;
-        while(input_channels_tokenizer.get_token(channel))
+        while (input_channels_tokenizer.get_token(channel))
         {
           ChannelId id;
           String::StringManip::str_to_int(channel, id);
@@ -247,11 +235,9 @@ Application_::main(int& argc, char** argv)
     {
       Stream::Error ostr;
 
-      ostr << "Can't parse config file '"
-           << argv[1] << "'."
-           << ": ";
+      ostr << "Can't parse config file '" << argv[1] << "'." << ": ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -261,8 +247,7 @@ Application_::main(int& argc, char** argv)
     }
     catch(const eh::Exception& ex)
     {
-      std::cout << "Caught eh::Exception. : "
-                << ex.what() << std::endl;
+      std::cout << "Caught eh::Exception. : " << ex.what() << std::endl;
     }
   }
 }

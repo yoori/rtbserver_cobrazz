@@ -1,9 +1,7 @@
 
 #include "TextChannelAndKeywordCreativesCompetition.hpp"
 
-REFLECT_UNIT(TextChannelAndKeywordCreativesCompetition) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(TextChannelAndKeywordCreativesCompetition) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -62,21 +60,15 @@ TextChannelAndKeywordCreativesCompetition::scenario1()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
@@ -114,21 +106,15 @@ TextChannelAndKeywordCreativesCompetition::scenario2()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
@@ -140,9 +126,7 @@ TextChannelAndKeywordCreativesCompetition::scenario3()
 
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
-  request.referer_kw =
-    fetch_string("TEXTKEYWORD2b") + "," +
-    fetch_string("CHANNELKEYWORD1");
+  request.referer_kw = fetch_string("TEXTKEYWORD2b") + "," + fetch_string("CHANNELKEYWORD1");
   client.process_request(request);
   client.repeat_request ();
 
@@ -162,21 +146,15 @@ TextChannelAndKeywordCreativesCompetition::scenario3()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
@@ -188,9 +166,7 @@ TextChannelAndKeywordCreativesCompetition::scenario4()
 
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
-  request.referer_kw =
-    fetch_string("TEXTKEYWORD1b") + "," +
-    fetch_string("CHANNELKEYWORD3");
+  request.referer_kw = fetch_string("TEXTKEYWORD1b") + "," + fetch_string("CHANNELKEYWORD3");
   client.process_request(request);
   client.repeat_request ();
 
@@ -202,20 +178,16 @@ TextChannelAndKeywordCreativesCompetition::scenario4()
   exp_ccids_reverse.reverse();
 
   std::list<precisely_number> exp_click_revenues;
-  exp_click_revenues.push_back(
-    precisely_number(fetch_float("CLICKREV4_1"), 0.001));
-  exp_click_revenues.push_back(
-    precisely_number(fetch_float("CLICKREV4_2"), 0.001));
+  exp_click_revenues.push_back(precisely_number(fetch_float("CLICKREV4_1"), 0.001));
+  exp_click_revenues.push_back(precisely_number(fetch_float("CLICKREV4_2"), 0.001));
 
   std::list<precisely_number>
     exp_click_revenues_reverse(exp_click_revenues);
   exp_click_revenues_reverse.reverse();
 
   std::list<precisely_number> exp_imp_revenues;
-  exp_imp_revenues.push_back(
-    precisely_number(fetch_float("IMPREV4_1"), 0.001));
-  exp_imp_revenues.push_back(
-    precisely_number(fetch_float("IMPREV4_2"), 0.001));
+  exp_imp_revenues.push_back(precisely_number(fetch_float("IMPREV4_1"), 0.001));
+  exp_imp_revenues.push_back(precisely_number(fetch_float("IMPREV4_2"), 0.001));
 
   std::list<precisely_number>
     exp_imp_revenues_reverse(exp_imp_revenues);
@@ -223,19 +195,13 @@ TextChannelAndKeywordCreativesCompetition::scenario4()
 
   FAIL_CONTEXT(
     AutoTest::or_checker(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)),
-      AutoTest::sequence_checker(
-        exp_ccids_reverse,
-        SelectedCreativesCCID(client))).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)),
+      AutoTest::sequence_checker(exp_ccids_reverse, SelectedCreativesCCID(client))).check(),
     "ccids check");
 
    FAIL_CONTEXT(
      AutoTest::or_checker(
-       AutoTest::sequence_checker(
-         exp_click_revenues,
-         SelectedCreativesActualCPC(client)),
+       AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)),
        AutoTest::sequence_checker(
          exp_click_revenues_reverse,
          SelectedCreativesActualCPC(client))).check(),
@@ -243,9 +209,7 @@ TextChannelAndKeywordCreativesCompetition::scenario4()
 
    FAIL_CONTEXT(
      AutoTest::or_checker(
-       AutoTest::sequence_checker(
-         exp_imp_revenues,
-         SelectedCreativesImpRevenue(client)),
+       AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)),
      AutoTest::sequence_checker(
        exp_imp_revenues_reverse,
        SelectedCreativesImpRevenue(client))).check(),
@@ -261,9 +225,7 @@ TextChannelAndKeywordCreativesCompetition::scenario5()
 
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
-  request.referer_kw =
-    fetch_string("TEXTKEYWORD1c") + "," +
-    fetch_string("CHANNELKEYWORD4");
+  request.referer_kw = fetch_string("TEXTKEYWORD1c") + "," + fetch_string("CHANNELKEYWORD4");
   client.process_request(request);
   client.repeat_request ();
 
@@ -278,15 +240,11 @@ TextChannelAndKeywordCreativesCompetition::scenario5()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 }
 
@@ -299,9 +257,7 @@ TextChannelAndKeywordCreativesCompetition::scenario6()
 
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
-  request.referer_kw =
-    fetch_string("TEXTKEYWORD1c") + "," +
-    fetch_string("CHANNELKEYWORD5");
+  request.referer_kw = fetch_string("TEXTKEYWORD1c") + "," + fetch_string("CHANNELKEYWORD5");
   client.process_request(request);
   client.repeat_request ();
 
@@ -316,14 +272,10 @@ TextChannelAndKeywordCreativesCompetition::scenario6()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 }

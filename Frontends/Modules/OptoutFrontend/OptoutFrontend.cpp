@@ -52,14 +52,14 @@ namespace Aspect
 
 namespace Request::Cookie
 {
-    const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
-    const Generics::SubStringHashAdapter OPTOUT(String::SubString("OPTED_OUT"));
-  }
+  const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
+  const Generics::SubStringHashAdapter OPTOUT(String::SubString("OPTED_OUT"));
+}
 
 namespace Request::Context
-  {
-    const Generics::SubStringHashAdapter CLIENT_ID(String::SubString("uid"));
-  }
+{
+  const Generics::SubStringHashAdapter CLIENT_ID(String::SubString("uid"));
+}
 
 namespace AdServer
 {
@@ -108,7 +108,7 @@ namespace
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration isn't present");
       }
@@ -116,33 +116,29 @@ namespace
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.OptOutFeConfiguration().present())
+      if (!fe_config.OptOutFeConfiguration().present())
       {
         throw Exception("OptOutFeConfiguration isn't present");
       }
 
-      config_.reset(
-        new OptOutFeConfiguration(*fe_config.OptOutFeConfiguration()));
+      config_.reset(new OptOutFeConfiguration(*fe_config.OptOutFeConfiguration()));
 
       cookie_manager_.reset(
         new FrontendCommons::CookieManager<
-          FCGI::HttpRequest, FCGI::HttpResponse>(
-            common_config_->Cookies()));
+          FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
 
     }
     catch(const xml_schema::parsing& e)
     {
       std::string str;
       Stream::Error ostr;
-      ostr << "Can't parse config file '" << config_file_ << "': " <<
-        error_handler.text(str);
+      ostr << "Can't parse config file '" << config_file_ << "': " << error_handler.text(str);
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "Can't parse config file '" << config_file_ << "': " <<
-        e.what();
+      ostr << "Can't parse config file '" << config_file_ << "': " << e.what();
       throw Exception(ostr);
     }
   }
@@ -152,25 +148,21 @@ namespace
   {
     std::string found_uri;
 
-    bool result = FrontendCommons::find_uri(
-      config_->UriList().Uri(), uri, found_uri);
+    bool result = FrontendCommons::find_uri(config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "OptoutFrontend::will_handle(" << uri << "), result " << result;
 
-      logger()->log(ostr.str(),
-        TraceLevel::MIDDLE,
-        Aspect::OPTOUT_FRONTEND);
+      logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::OPTOUT_FRONTEND);
     }
 
     return result;
   }
 
   FrontendCommons::RequestTask
-  OptoutFrontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  OptoutFrontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -187,9 +179,7 @@ namespace
   }
 
   int
-  OptoutFrontend::process_request_(
-    const FCGI::HttpRequest& request,
-    HttpResponse& response)
+  OptoutFrontend::process_request_(const FCGI::HttpRequest& request, HttpResponse& response)
     noexcept
   {
     static const char* FUN = "OptoutFrontend::process_request_()";
@@ -215,11 +205,7 @@ namespace
         const HTTP::SubHeaderList& headers = request.headers();
         HTTP::CookieList cookies;
 
-        request_info_filler_->fill(
-          request_info,
-          headers,
-          request.params(),
-          cookies);
+        request_info_filler_->fill(request_info, headers, request.params(), cookies);
 
         //-----------------------------------------------------------------------
         // 2. Handle oo Cookie request
@@ -231,8 +217,7 @@ namespace
 
         if (request_info.oo_operation != OO_STATUS)
         {
-          bool oo_to_set =
-           (request_info.old_oo_type != request_info.oo_operation);
+          bool oo_to_set = (request_info.old_oo_type != request_info.oo_operation);
           std::string new_client_id;
 
           // Place log record to apache log
@@ -242,7 +227,7 @@ namespace
 
             std::list<std::string> remove_cookie_list_holder;
             FrontendCommons::CookieNameSet remove_cookie_list;
-            for(auto it = common_config_->OptOutRemoveCookies().Cookie().begin();
+            for (auto it = common_config_->OptOutRemoveCookies().Cookie().begin();
               it != common_config_->OptOutRemoveCookies().Cookie().end(); ++it)
             {
               remove_cookie_list_holder.push_back(it->name());
@@ -261,30 +246,23 @@ namespace
           {
             ver_operation = pb::OPT_OPERATION_IN;
 
-            if(oo_to_set)
+            if (oo_to_set)
             {
               // generate uid
-              Generics::SignedUuid signed_uid =
-                common_module_->user_id_controller()->generate();
+              Generics::SignedUuid signed_uid = common_module_->user_id_controller()->generate();
               new_user_id = signed_uid.uuid();
               new_client_id = signed_uid.str();
 
-              FrontendCommons::add_UID_cookie(
-                response,
-                request,
-                *cookie_manager_,
-                new_client_id);
+              FrontendCommons::add_UID_cookie(response, request, *cookie_manager_, new_client_id);
 
               FrontendCommons::CookieNameSet remove_cookies;
               remove_cookies.insert(Request::Cookie::OPTOUT);
               cookie_manager_->remove(response, request, cookies, remove_cookies);
             }
           }
-          status =
-            calculate_status_(request_info.oo_operation,
-              request_info.old_oo_type);
+          status = calculate_status_(request_info.oo_operation, request_info.old_oo_type);
 
-          if(oo_to_set)
+          if (oo_to_set)
           {
             if (!request_info.oo_success_redirect_url.empty())
             {
@@ -301,24 +279,19 @@ namespace
             }
           }
 
-          if(logger()->log_level() >= Logging::Logger::TRACE)
+          if (logger()->log_level() >= Logging::Logger::TRACE)
           {
             // Log info about request
             std::ostringstream ostr;
             ostr << (request_info.oo_operation == OO_OUT ?
                 request_info.user_id.to_string() : new_client_id) <<
               LOG_DELIMITER <<
-              PrivacyFilter::filter(
-                request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
+              PrivacyFilter::filter(request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
               request_info.user_agent << LOG_DELIMITER <<
               verify_referer << LOG_DELIMITER <<
-              status << LOG_DELIMITER <<
-              request_info.cookie_expire_time.tv_sec;
+              status << LOG_DELIMITER << request_info.cookie_expire_time.tv_sec;
 
-            logger()->log(
-              ostr.str(),
-              Logging::Logger::TRACE,
-              local_aspect);
+            logger()->log(ostr.str(), Logging::Logger::TRACE, local_aspect);
           }
         } /* oo_operation != OO_STATUS */
         else
@@ -346,31 +319,26 @@ namespace
         verify_opt_operation_request.set_ct(request_info.ct);
         verify_opt_operation_request.set_curct(request_info.curct);
         verify_opt_operation_request.set_user_id(pack_user_id(new_user_id));
-        co_verify_opt_operation_(
-          std::move(verify_opt_operation_request)).start_detached(nullptr);
+        co_verify_opt_operation_(std::move(verify_opt_operation_request)).start_detached(nullptr);
 
-        if(stats_)
+        if (stats_)
         {
           stats_->consider_request(request_info.oo_operation);
         }
 
         // additional response headers
-        if(common_config_->ResponseHeaders().present())
+        if (common_config_->ResponseHeaders().present())
         {
-          FrontendCommons::add_headers(
-            *(common_config_->ResponseHeaders()),
-            response);
+          FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
         }
 
         if (request_info.oo_debug == "yes")
         {
           std::ostringstream dostr;
           dostr << "Debug time: "
-            << request_info.debug_time.get_gm_time().format(
-              "%d-%m-%Y %H:%M:%S GMT ")
+            << request_info.debug_time.get_gm_time().format("%d-%m-%Y %H:%M:%S GMT ")
             << std::endl
-            << " IP: " << PrivacyFilter::filter(
-              request_info.peer_ip.c_str(), "IP")
+            << " IP: " << PrivacyFilter::filter(request_info.peer_ip.c_str(), "IP")
             << std::endl
             << " User-ID: " << request_info.user_id.to_string() << std::endl
             << " Status: "
@@ -397,14 +365,9 @@ namespace
       {
         Stream::Error ostr;
 
-        ostr << __func__ <<
-          ": BadParameter exception has been caught: " <<
-          e.what();
+        ostr << __func__ << ": BadParameter exception has been caught: " << e.what();
 
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::NOTICE,
-          Aspect::OPTOUT_FRONTEND);
+        logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::OPTOUT_FRONTEND);
 
         http_result = 400;
       }
@@ -412,9 +375,7 @@ namespace
       {
         Stream::Error ostr;
 
-        ostr << FUN <<
-          ": Exception has been caught: " <<
-          e.what();
+        ostr << FUN << ": Exception has been caught: " << e.what();
 
         logger()->log(
           ostr.str(),
@@ -429,14 +390,13 @@ namespace
     {
       try
       {
-        if(request_info.oo_operation != OO_NOT_DEFINED)
+        if (request_info.oo_operation != OO_NOT_DEFINED)
         {
           std::ostringstream ostr;
 
           ostr << (request_info.oo_operation == OO_OUT ?
             request_info.user_id.to_string().c_str() : "") << LOG_DELIMITER <<
-            PrivacyFilter::filter(
-              request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
+            PrivacyFilter::filter(request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
             request_info.user_agent << LOG_DELIMITER <<
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;
@@ -448,20 +408,17 @@ namespace
           verify_opt_operation_request.set_operation(ver_operation);
           verify_opt_operation_request.set_status(0);
           verify_opt_operation_request.set_user_status(request_info.user_status);
-          verify_opt_operation_request.set_log_as_test(
-            request_info.log_as_test);
+          verify_opt_operation_request.set_log_as_test(request_info.log_as_test);
           verify_opt_operation_request.set_browser(request_info.browser);
           verify_opt_operation_request.set_os(request_info.os);
           verify_opt_operation_request.set_ct(request_info.ct);
           verify_opt_operation_request.set_curct(request_info.curct);
-          co_verify_opt_operation_(
-            std::move(verify_opt_operation_request)).start_detached(nullptr);
+          co_verify_opt_operation_(std::move(verify_opt_operation_request)).start_detached(nullptr);
 
           logger()->log(
             ostr.str(),
             Logging::Logger::INFO,
-            (request_info.oo_operation == OO_OUT ?
-               (Aspect::OPTOUT): (Aspect::OPTIN)));
+            (request_info.oo_operation == OO_OUT ? (Aspect::OPTOUT): (Aspect::OPTIN)));
         }
 
         if (request_info.oo_failure_redirect_url.empty())
@@ -470,8 +427,7 @@ namespace
         }
         else
         {
-          http_result = FrontendCommons::redirect(
-            request_info.oo_failure_redirect_url, response);
+          http_result = FrontendCommons::redirect(request_info.oo_failure_redirect_url, response);
         }
       }
       catch(...)
@@ -496,20 +452,15 @@ namespace
   }
 
   FrontendCommons::RequestTask
-  OptoutFrontend::co_verify_opt_operation_(
-    pb::VerifyOptOperationRequest request)
+  OptoutFrontend::co_verify_opt_operation_(pb::VerifyOptOperationRequest request)
     noexcept
   {
     try
     {
-      auto result = co_await campaign_manager_coro_->co_verify_opt_operation(
-        std::move(request));
-      if(!result.status.ok())
+      auto result = co_await campaign_manager_coro_->co_verify_opt_operation(std::move(request));
+      if (!result.status.ok())
       {
-        logger()->sstream(
-          Logging::Logger::EMERGENCY,
-          Aspect::OPTOUT_FRONTEND,
-          "ADS-ICON-4") <<
+        logger()->sstream(Logging::Logger::EMERGENCY, Aspect::OPTOUT_FRONTEND, "ADS-ICON-4") <<
           "CampaignManager::verify_opt_operation(): "
           "gRPC call failed: code=" <<
           static_cast<int>(result.status.error_code()) <<
@@ -518,10 +469,7 @@ namespace
     }
     catch(const eh::Exception& e)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::OPTOUT_FRONTEND,
-        "ADS-ICON-4") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::OPTOUT_FRONTEND, "ADS-ICON-4") <<
         "CampaignManager::verify_opt_operation(): " << e.what();
     }
 
@@ -533,7 +481,7 @@ namespace
   {
     static const char* FUN = "OptoutFrontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
@@ -543,14 +491,11 @@ namespace
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager, workers_);
         add_child_object(campaign_manager);
 
         stats_ = new OptOutFrontendStat();
@@ -565,8 +510,7 @@ namespace
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "OptoutFrontend::init: frontend is running ..."),
+      logger()->log(String::SubString("OptoutFrontend::init: frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::OPTOUT_FRONTEND);
     }
@@ -581,8 +525,7 @@ namespace
       wait_object();
       campaign_manager_coro_.reset();
 
-      logger()->log(String::SubString(
-            "OptoutFrontend::shutdown: frontend terminated"),
+      logger()->log(String::SubString("OptoutFrontend::shutdown: frontend terminated"),
           Logging::Logger::INFO,
           Aspect::OPTOUT_FRONTEND);
     }
@@ -603,25 +546,20 @@ namespace
     const Generics::Time& cookie_expire_time)
     /*throw(eh::Exception)*/
   {
-    cookie_manager_->set(
-      response,
-      request,
-      Request::Cookie::OPTOUT,
-      oo_value,
-      cookie_expire_time);
+    cookie_manager_->set(response, request, Request::Cookie::OPTOUT, oo_value, cookie_expire_time);
   }
 
   unsigned long OptoutFrontend::calculate_status_(
     OptOperation operation,
     OptOperation old_operation) noexcept
   {
-    if(operation == OO_OUT)
+    if (operation == OO_OUT)
     {
-      if(old_operation == OO_OUT)
+      if (old_operation == OO_OUT)
       {
         return 2; //FAILED - OPTED_OUT present
       }
-      else if(old_operation == OO_IN)
+      else if (old_operation == OO_IN)
       {
         return 11; //OK - UID present
       }
@@ -630,13 +568,13 @@ namespace
         return 10; //OK - UID adsent
       }
     }
-    else if(operation == OO_IN)
+    else if (operation == OO_IN)
     {
-      if(old_operation == OO_IN)
+      if (old_operation == OO_IN)
       {
         return 2; //FAILED UID present
       }
-      else if(old_operation == OO_OUT)
+      else if (old_operation == OO_OUT)
       {
         return 10; //OK - OPTED_OUT present
       }
@@ -667,7 +605,8 @@ namespace
       default:
         r_url =& oo_status_undef_redirect_url;
     }
-    if(!r_url->empty())
+
+    if (!r_url->empty())
     {
       return FrontendCommons::redirect(*r_url, response);
     }

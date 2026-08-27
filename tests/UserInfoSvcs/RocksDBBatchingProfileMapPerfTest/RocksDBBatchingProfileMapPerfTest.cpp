@@ -104,7 +104,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -119,45 +119,45 @@ namespace
     options.key_count = *opt_key_count;
     options.disable_wal = opt_disable_wal.enabled();
 
-    if(options.data_root.empty())
+    if (options.data_root.empty())
     {
       throw std::runtime_error("--data-root is required");
     }
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
 
-    if(options.batching_threads == 0)
+    if (options.batching_threads == 0)
     {
       throw std::runtime_error("--batching-threads must be > 0");
     }
 
-    if(options.enqueue_buckets == 0)
+    if (options.enqueue_buckets == 0)
     {
       throw std::runtime_error("--enqueue-buckets must be > 0");
     }
 
-    if(options.key_count == 0)
+    if (options.key_count == 0)
     {
       options.key_count = options.threads;
     }
 
-    if(*opt_mode == "read")
+    if (*opt_mode == "read")
     {
       options.mode = Mode::READ;
     }
-    else if(*opt_mode == "write")
+    else if (*opt_mode == "write")
     {
       options.mode = Mode::WRITE;
     }
-    else if(*opt_mode == "read-write")
+    else if (*opt_mode == "read-write")
     {
       options.mode = Mode::READ_WRITE;
     }
@@ -173,7 +173,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -193,23 +193,18 @@ namespace
   }
 
   Generics::ConstSmartMemBuf_var
-  make_profile(
-    const std::uint64_t thread_index,
-    const std::uint64_t operation_index)
+  make_profile(const std::uint64_t thread_index, const std::uint64_t operation_index)
   {
     const std::string body =
       "RocksDBBatchingProfileMapPerfTest/" +
       std::to_string(thread_index) + "/" +
       std::to_string(operation_index);
-    return Generics::ConstSmartMemBuf_var(
-      new Generics::ConstSmartMemBuf(body.data(), body.size()));
+    return Generics::ConstSmartMemBuf_var(new Generics::ConstSmartMemBuf(body.data(), body.size()));
   }
 
   template<typename ProfileMap>
   AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
-  co_read_profile(
-    ProfileMap& profile_map,
-    const std::string& key)
+  co_read_profile(ProfileMap& profile_map, const std::string& key)
   {
     co_return co_await profile_map.co_get_profile(key);
   }
@@ -221,10 +216,7 @@ namespace
     const std::string& key,
     const Generics::ConstSmartMemBuf* profile)
   {
-    co_await profile_map.co_save_profile(
-      key,
-      profile,
-      Generics::Time::get_time_of_day());
+    co_await profile_map.co_save_profile(key, profile, Generics::Time::get_time_of_day());
     co_return true;
   }
 }
@@ -234,8 +226,7 @@ main(int argc, char** argv)
 {
   try
   {
-    using ProfileMap =
-      AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+    using ProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
 
     const Options options = parse_options(argc, argv);
     const auto data_root = std::filesystem::absolute(options.data_root);
@@ -251,14 +242,11 @@ main(int argc, char** argv)
       options.enqueue_buckets);
     profile_map.activate_object();
 
-    for(std::size_t key_index = 0; key_index < options.key_count; ++key_index)
+    for (std::size_t key_index = 0; key_index < options.key_count; ++key_index)
     {
       const std::string key = "profile/" + std::to_string(key_index);
       const auto profile = make_profile(0, key_index);
-      profile_map.save_profile(
-        key,
-        profile.in(),
-        Generics::Time::get_time_of_day());
+      profile_map.save_profile(key, profile.in(), Generics::Time::get_time_of_day());
     }
 
     std::atomic<std::uint64_t> next{0};
@@ -274,18 +262,17 @@ main(int argc, char** argv)
     std::vector<std::thread> workers;
     workers.reserve(options.threads);
 
-    for(std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (std::size_t thread_index = 0; thread_index < options.threads; ++thread_index)
     {
       workers.emplace_back(
         [&, thread_index]()
         {
           const auto run = [&]<bool read_profiles, bool write_profiles>()
           {
-            while(true)
+            while (true)
             {
-              const auto operation_index =
-                next.fetch_add(1, std::memory_order_relaxed);
-              if(operation_index >= options.count)
+              const auto operation_index = next.fetch_add(1, std::memory_order_relaxed);
+              if (operation_index >= options.count)
               {
                 break;
               }
@@ -299,7 +286,7 @@ main(int argc, char** argv)
                   const auto profile = AdServer::Commons::sync_wait(
                     co_read_profile(profile_map, key));
                   reads.fetch_add(1, std::memory_order_relaxed);
-                  if(!profile.in())
+                  if (!profile.in())
                   {
                     misses.fetch_add(1, std::memory_order_relaxed);
                   }
@@ -310,21 +297,17 @@ main(int argc, char** argv)
                   const Generics::ConstSmartMemBuf_var new_profile =
                     make_profile(thread_index, operation_index);
                   AdServer::Commons::sync_wait(
-                    co_write_profile(
-                      profile_map,
-                      key,
-                      new_profile.in()));
+                    co_write_profile(profile_map, key, new_profile.in()));
                   writes.fetch_add(1, std::memory_order_relaxed);
                 }
               }
               catch(const std::exception& ex)
               {
-                if(errors.fetch_add(1, std::memory_order_relaxed) < 10)
+                if (errors.fetch_add(1, std::memory_order_relaxed) < 10)
                 {
                   std::cerr
                     << "worker #" << thread_index
-                    << " operation #" << operation_index
-                    << " failed: " << ex.what() << std::endl;
+                    << " operation #" << operation_index << " failed: " << ex.what() << std::endl;
                 }
               }
             }
@@ -345,7 +328,7 @@ main(int argc, char** argv)
         });
     }
 
-    for(auto& worker : workers)
+    for (auto& worker : workers)
     {
       worker.join();
     }
@@ -357,8 +340,7 @@ main(int argc, char** argv)
     stats.physical_write_operations -= stats_started.physical_write_operations;
     const CpuTimes cpu_finished = current_cpu_times();
     const auto finished_at = std::chrono::steady_clock::now();
-    const double elapsed =
-      std::chrono::duration<double>(finished_at - started_at).count();
+    const double elapsed = std::chrono::duration<double>(finished_at - started_at).count();
     const double user_cpu = cpu_finished.user - cpu_started.user;
     const double sys_cpu = cpu_finished.sys - cpu_started.sys;
 

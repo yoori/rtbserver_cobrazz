@@ -1,4 +1,4 @@
-#ifndef AD_SERVER_CHANNEL_COMMONS_IDL_ 
+#ifndef AD_SERVER_CHANNEL_COMMONS_IDL_
 #define AD_SERVER_CHANNEL_COMMONS_IDL_
 
 #include <Commons/CorbaTypes.idl>

@@ -47,21 +47,15 @@ namespace FCGI
     status() const noexcept;
 
     void
-    add_header_nocopy(
-      const String::SubString& name,
-      const String::SubString& value)
+    add_header_nocopy(const String::SubString& name, const String::SubString& value)
       /*throw(eh::Exception)*/;
 
     void
-    add_header_nocopy_name(
-      const String::SubString& name,
-      std::string value)
+    add_header_nocopy_name(const String::SubString& name, std::string value)
       /*throw(eh::Exception)*/;
 
     void
-    add_header(
-      std::string name,
-      std::string value)
+    add_header(std::string name, std::string value)
       /*throw(eh::Exception)*/;
 
     void

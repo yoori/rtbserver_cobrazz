@@ -20,9 +20,7 @@ namespace AdServer::RequestInfoSvcs
     std::string
     operator()(const KeyType& key) const
     {
-      return std::string(
-        reinterpret_cast<const char*>(&*key.begin()),
-        key.size());
+      return std::string(reinterpret_cast<const char*>(&*key.begin()), key.size());
     }
 
     template<typename KeyType>
@@ -39,10 +37,8 @@ namespace AdServer::RequestInfoSvcs
   template<typename KeyType>
   struct RocksDBTransactionProfileMapHolder
   {
-    using TransactionMap =
-      ProfilingCommons::TransactionProfileMap<KeyType>;
-    using TransactionMap_var =
-      ReferenceCounting::SmartPtr<TransactionMap>;
+    using TransactionMap = ProfilingCommons::TransactionProfileMap<KeyType>;
+    using TransactionMap_var = ReferenceCounting::SmartPtr<TransactionMap>;
 
     TransactionMap_var map;
     Generics::ActiveObject_var active_object;
@@ -55,8 +51,7 @@ namespace AdServer::RequestInfoSvcs
     const Generics::Time& expire_time,
     std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor = {})
   {
-    using RocksDBMap =
-      ProfilingCommons::RocksDBBatchingProfileMap<KeyType, KeyAdapterType>;
+    using RocksDBMap = ProfilingCommons::RocksDBBatchingProfileMap<KeyType, KeyAdapterType>;
     using TransactionMap = ProfilingCommons::TransactionProfileMap<KeyType>;
 
     ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map = processor ?
@@ -66,12 +61,7 @@ namespace AdServer::RequestInfoSvcs
         expire_time,
         128,
         Generics::Time::ZERO) :
-      new RocksDBMap(
-        String::SubString(path),
-        expire_time,
-        2,
-        128,
-        Generics::Time::ZERO);
+      new RocksDBMap(String::SubString(path), expire_time, 2, 128, Generics::Time::ZERO);
 
     RocksDBTransactionProfileMapHolder<KeyType> holder;
     holder.map = new TransactionMap(rocksdb_map.in());

@@ -75,17 +75,17 @@ namespace
   {
     constexpr std::string_view corbaloc_prefix = "corbaloc::";
     constexpr std::string_view iiop_prefix = "corbaloc:iiop:";
-    if(endpoint.compare(0, corbaloc_prefix.size(), corbaloc_prefix) == 0)
+    if (endpoint.compare(0, corbaloc_prefix.size(), corbaloc_prefix) == 0)
     {
       endpoint.erase(0, corbaloc_prefix.size());
     }
-    else if(endpoint.compare(0, iiop_prefix.size(), iiop_prefix) == 0)
+    else if (endpoint.compare(0, iiop_prefix.size(), iiop_prefix) == 0)
     {
       endpoint.erase(0, iiop_prefix.size());
     }
 
     const std::size_t object_key_pos = endpoint.find('/');
-    if(object_key_pos != std::string::npos)
+    if (object_key_pos != std::string::npos)
     {
       endpoint.resize(object_key_pos);
     }
@@ -106,7 +106,7 @@ namespace
           error = status;
         });
 
-      if(error.ok())
+      if (error.ok())
       {
         return response;
       }
@@ -116,8 +116,7 @@ namespace
     }
     catch(const std::exception& ex)
     {
-      std::cerr << "RequestInfoManager gRPC call failed: " <<
-        ex.what() << '\n';
+      std::cerr << "RequestInfoManager gRPC call failed: " << ex.what() << '\n';
     }
 
     return std::nullopt;
@@ -125,10 +124,7 @@ namespace
 
   template<typename Call>
   bool
-  get_profile(
-    Call&& call,
-    const char* id,
-    Proto::ProfileResponse& response)
+  get_profile(Call&& call, const char* id, Proto::ProfileResponse& response)
   {
     Proto::ProfileRequest request;
     request.set_id(id);
@@ -137,7 +133,7 @@ namespace
       {
         call(request, std::move(callback));
       });
-    if(!result)
+    if (!result)
     {
       return false;
     }
@@ -151,8 +147,7 @@ namespace
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner;
-    std::shared_ptr<AdServer::RequestInfoSvcs::
-      RequestInfoManagerGrpcAsyncBatchingClient> client;
+    std::shared_ptr<AdServer::RequestInfoSvcs::RequestInfoManagerGrpcAsyncBatchingClient> client;
   };
 
   ClientHolder
@@ -162,14 +157,10 @@ namespace
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
 
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
-        new Logging::ActiveObjectCallbackImpl(
-          logger,
-          "RequestInfoAdmin",
-          "gRPC"),
+        new Logging::ActiveObjectCallbackImpl(logger, "RequestInfoAdmin", "gRPC"),
         std::make_shared<boost::asio::io_service>(),
         1);
     result.coalesce_runner->activate_object();
@@ -191,19 +182,19 @@ namespace
   {
     try
     {
-      if(holder.client)
+      if (holder.client)
       {
         holder.client->deactivate_object();
         holder.client->wait_object();
       }
 
-      if(holder.grpc_executor)
+      if (holder.grpc_executor)
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
       }
 
-      if(holder.coalesce_runner)
+      if (holder.coalesce_runner)
       {
         holder.coalesce_runner->deactivate_object();
         holder.coalesce_runner->wait_object();
@@ -252,7 +243,7 @@ namespace
   {
     std::string res = uuid;
 
-    if(uuid[0] == '\\')
+    if (uuid[0] == '\\')
     {
       res = std::string(uuid + 1);
     }
@@ -266,8 +257,7 @@ namespace
     const char* space_align)
   {
     std::ostringstream ostr;
-    for(UserFraudProtectionProfileReader::requests_Container::const_iterator it =
-          motions.begin();
+    for (UserFraudProtectionProfileReader::requests_Container::const_iterator it = motions.begin();
         it != motions.end();
         ++it)
     {
@@ -296,8 +286,7 @@ struct NullProcessor :
   {}
 
   virtual void
-  process_action(
-    ActionType, const Generics::Time&, const AdServer::Commons::RequestId&)
+  process_action(ActionType, const Generics::Time&, const AdServer::Commons::RequestId&)
     noexcept
   {}
 
@@ -307,9 +296,7 @@ struct NullProcessor :
   {}
 
   virtual void
-  process_impression_post_action(
-    const AdServer::Commons::RequestId&,
-    const RequestPostActionInfo&)
+  process_impression_post_action(const AdServer::Commons::RequestId&, const RequestPostActionInfo&)
     /*throw(Exception)*/
   {}
 };
@@ -335,10 +322,10 @@ Application_::print_plain_(
 {
   ostr << prefix << std::hex << std::setfill('0') << std::setw(2);
 
-  for(unsigned long i = 0; i < size; ++i)
+  for (unsigned long i = 0; i < size; ++i)
   {
     ostr << "0x" << (int)*((const unsigned char*)buf + i) << " ";
-    if(i && (i + 1) % 16 == 0)
+    if (i && (i + 1) % 16 == 0)
     {
       ostr << std::endl << prefix;
     }
@@ -348,10 +335,7 @@ Application_::print_plain_(
 }
 
 int
-Application_::print(
-  Client& request_info_manager,
-  const char* request_id_str,
-  bool print_plain)
+Application_::print(Client& request_info_manager, const char* request_id_str, bool print_plain)
   noexcept
 {
   using namespace AdServer::RequestInfoSvcs;
@@ -361,10 +345,8 @@ Application_::print(
     AdServer::Commons::RequestId request_id(request_id_str);
 
     Proto::ProfileResponse request_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
            request_info_manager.get_profile(request, std::move(callback));
          },
@@ -374,29 +356,22 @@ Application_::print(
       return 1;
     }
 
-    if(request_profile.found())
+    if (request_profile.found())
     {
       const std::string& profile = request_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
 
       // print content
-      RequestInfoProfileReader request_reader(
-        profile.data(),
-        profile.size());
+      RequestInfoProfileReader request_reader(profile.data(), profile.size());
 
-      AdServer::RequestInfoSvcs::print_request_info_profile(
-        std::cout, request_reader);
+      AdServer::RequestInfoSvcs::print_request_info_profile(std::cout, request_reader);
     }
     else
     {
@@ -423,13 +398,10 @@ Application_::print_user_campaign_reach(
     AdServer::Commons::UserId user_id(user_id_str);
 
     Proto::ProfileResponse user_campaign_reach_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_user_campaign_reach_profile(
-             request, std::move(callback));
+           request_info_manager.get_user_campaign_reach_profile(request, std::move(callback));
          },
          user_id_str,
          user_campaign_reach_profile))
@@ -437,26 +409,20 @@ Application_::print_user_campaign_reach(
       return 1;
     }
 
-    if(user_campaign_reach_profile.found())
+    if (user_campaign_reach_profile.found())
     {
       const std::string& profile = user_campaign_reach_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
 
       AdServer::RequestInfoSvcs::UserCampaignReachProfileReader
-        user_campaign_reach_reader(
-          profile.data(),
-          profile.size());
+        user_campaign_reach_reader(profile.data(), profile.size());
 
       AdServer::RequestInfoSvcs::print_user_campaign_reach_profile(
         std::cout, user_campaign_reach_reader);
@@ -483,7 +449,7 @@ Application_::print_user_action_buf_(
   /*throw(eh::Exception)*/
 {
   // print plain
-  if(print_plain)
+  if (print_plain)
   {
     print_plain_(std::cout, buf, buf_size, "  ");
 
@@ -493,8 +459,7 @@ Application_::print_user_action_buf_(
   AdServer::RequestInfoSvcs::UserActionProfileReader
     user_action_reader(buf, buf_size);
 
-  AdServer::RequestInfoSvcs::print_user_action_profile(
-    std::cout, user_action_reader, align);
+  AdServer::RequestInfoSvcs::print_user_action_profile(std::cout, user_action_reader, align);
 }
 
 int
@@ -510,13 +475,10 @@ Application_::print_user_action(
     AdServer::Commons::UserId user_id(user_id_str);
 
     Proto::ProfileResponse user_action_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_user_action_profile(
-             request, std::move(callback));
+           request_info_manager.get_user_action_profile(request, std::move(callback));
          },
          user_id_str,
          user_action_profile))
@@ -524,14 +486,10 @@ Application_::print_user_action(
       return 1;
     }
 
-    if(user_action_profile.found())
+    if (user_action_profile.found())
     {
       const std::string& profile = user_action_profile.profile();
-      print_user_action_buf_(
-        profile.data(),
-        profile.size(),
-        print_plain,
-        align);
+      print_user_action_buf_(profile.data(), profile.size(), print_plain, align);
     }
     else
     {
@@ -558,13 +516,10 @@ Application_::print_user_fraud_protection(
     AdServer::Commons::UserId user_id(user_id_str);
 
     Proto::ProfileResponse user_fraud_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_user_fraud_protection_profile(
-             request, std::move(callback));
+           request_info_manager.get_user_fraud_protection_profile(request, std::move(callback));
          },
          user_id_str,
          user_fraud_profile))
@@ -572,26 +527,20 @@ Application_::print_user_fraud_protection(
       return 1;
     }
 
-    if(user_fraud_profile.found())
+    if (user_fraud_profile.found())
     {
       const std::string& profile = user_fraud_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
 
       AdServer::RequestInfoSvcs::UserFraudProtectionProfileReader
-        user_fraud_reader(
-          profile.data(),
-          profile.size());
+        user_fraud_reader(profile.data(), profile.size());
 
       unsigned long columns =
         sizeof(USER_FRAUD_TABLE_COLUMNS) /
@@ -599,24 +548,20 @@ Application_::print_user_fraud_protection(
 
       Table table(columns);
 
-      for(unsigned long i = 0; i < columns; i++)
+      for (unsigned long i = 0; i < columns; i++)
       {
         table.column(i, USER_FRAUD_TABLE_COLUMNS[i]);
       }
 
       Table::Row row(table.columns());
 
-      row.add_field(Generics::Time(
-        user_fraud_reader.fraud_time()).gm_ft());
+      row.add_field(Generics::Time(user_fraud_reader.fraud_time()).gm_ft());
 
       std::string space_align(table.value_align(), ' ');
 
-      row.add_field(print_motion_list(
-        user_fraud_reader.requests(), space_align.c_str()));
-      row.add_field(print_motion_list(
-        user_fraud_reader.rollback_requests(), space_align.c_str()));
-      row.add_field(print_motion_list(
-        user_fraud_reader.clicks(), space_align.c_str()));
+      row.add_field(print_motion_list(user_fraud_reader.requests(), space_align.c_str()));
+      row.add_field(print_motion_list(user_fraud_reader.rollback_requests(), space_align.c_str()));
+      row.add_field(print_motion_list(user_fraud_reader.clicks(), space_align.c_str()));
 
       table.add_row(row);
       table.dump(std::cout);
@@ -646,13 +591,10 @@ Application_::print_user_site_reach(
     AdServer::Commons::UserId user_id(user_id_str);
 
     Proto::ProfileResponse user_site_reach_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_user_site_reach_profile(
-             request, std::move(callback));
+           request_info_manager.get_user_site_reach_profile(request, std::move(callback));
          },
          user_id_str,
          user_site_reach_profile))
@@ -660,26 +602,20 @@ Application_::print_user_site_reach(
       return 1;
     }
 
-    if(user_site_reach_profile.found())
+    if (user_site_reach_profile.found())
     {
       const std::string& profile = user_site_reach_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
 
       AdServer::RequestInfoSvcs::UserSiteReachProfileReader
-        user_site_reach_reader(
-          profile.data(),
-          profile.size());
+        user_site_reach_reader(profile.data(), profile.size());
 
       unsigned long columns =
         sizeof(USER_SITE_REACH_TABLE_COLUMNS) /
@@ -687,7 +623,7 @@ Application_::print_user_site_reach(
 
       Table table(columns);
 
-      for(unsigned long i = 0; i < columns; i++)
+      for (unsigned long i = 0; i < columns; i++)
       {
         table.column(i, USER_SITE_REACH_TABLE_COLUMNS[i]);
       }
@@ -697,10 +633,7 @@ Application_::print_user_site_reach(
       std::string space_align(table.value_align(), ' ');
 
       std::ostringstream ostr;
-      print_appearance_list(
-        ostr,
-        user_site_reach_reader.appearance_list(),
-        space_align.c_str());
+      print_appearance_list(ostr, user_site_reach_reader.appearance_list(), space_align.c_str());
       row.add_field(ostr.str());
 
       table.add_row(row);
@@ -731,13 +664,10 @@ Application_::print_user_tag_request_group(
     AdServer::Commons::UserId user_id(user_id_str);
 
     Proto::ProfileResponse user_tag_request_group_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_user_tag_request_group_profile(
-             request, std::move(callback));
+           request_info_manager.get_user_tag_request_group_profile(request, std::move(callback));
          },
          user_id_str,
          user_tag_request_group_profile))
@@ -745,18 +675,14 @@ Application_::print_user_tag_request_group(
       return 1;
     }
 
-    if(user_tag_request_group_profile.found())
+    if (user_tag_request_group_profile.found())
     {
       const std::string& profile = user_tag_request_group_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
@@ -767,17 +693,15 @@ Application_::print_user_tag_request_group(
 
       Table table(columns);
 
-      for(unsigned long i = 0; i < columns; i++)
+      for (unsigned long i = 0; i < columns; i++)
       {
         table.column(i, USER_TAG_REQUEST_GROUP_TABLE_COLUMNS[i]);
       }
 
       AdServer::RequestInfoSvcs::UserTagRequestMergeProfileReader
-        user_tag_request_group_reader(
-          profile.data(),
-          profile.size());
+        user_tag_request_group_reader(profile.data(), profile.size());
 
-      for(UserTagRequestMergeProfileReader::tag_groups_Container::const_iterator tg_it =
+      for (UserTagRequestMergeProfileReader::tag_groups_Container::const_iterator tg_it =
             user_tag_request_group_reader.tag_groups().begin();
           tg_it != user_tag_request_group_reader.tag_groups().end(); ++tg_it)
       {
@@ -839,15 +763,11 @@ Application_::print_user_action_from_file(
 
     Generics::ConstSmartMemBuf_var buf = act_container->get_profile(user_id);
 
-    if(buf.in())
+    if (buf.in())
     {
-      print_user_action_buf_(
-        buf->membuf().data(),
-        buf->membuf().size(),
-        print_plain,
-        align);
+      print_user_action_buf_(buf->membuf().data(), buf->membuf().size(), print_plain, align);
 
-      if(debug_plain)
+      if (debug_plain)
       {
         malloc_stats();
 
@@ -886,13 +806,10 @@ Application_::print_passback(
     AdServer::Commons::RequestId request_id(request_id_str);
 
     Proto::ProfileResponse passback_profile;
-    if(!get_profile(
-         [&request_info_manager](
-           const Proto::ProfileRequest& request,
-           auto callback)
+    if (!get_profile(
+         [&request_info_manager](const Proto::ProfileRequest& request, auto callback)
          {
-           request_info_manager.get_passback_profile(
-             request, std::move(callback));
+           request_info_manager.get_passback_profile(request, std::move(callback));
          },
          request_id_str,
          passback_profile))
@@ -900,27 +817,21 @@ Application_::print_passback(
       return 1;
     }
 
-    if(passback_profile.found())
+    if (passback_profile.found())
     {
       const std::string& profile = passback_profile.profile();
 
       // print plain
-      if(print_plain)
+      if (print_plain)
       {
-        print_plain_(
-          std::cout,
-          profile.data(),
-          profile.size(),
-          "  ");
+        print_plain_(std::cout, profile.data(), profile.size(), "  ");
 
         std::cout << std::endl;
       }
 
       // print content
       AdServer::RequestInfoSvcs::PassbackInfoReader
-        passback_reader(
-          profile.data(),
-          profile.size());
+        passback_reader(profile.data(), profile.size());
 
       print_passback_profile(std::cout, passback_reader);
     }
@@ -943,9 +854,9 @@ void Application_::check_option_(
   const std::string& value)
   /*throw(InvalidParam)*/
 {
-  if(!option.installed())
+  if (!option.installed())
   {
-    if(!value.empty())
+    if (!value.empty())
     {
       option.set_value(value);
     }
@@ -980,20 +891,14 @@ Application_::main(int& argc, char** argv) noexcept
   Generics::AppUtils::Option<std::string> opt_file;
   Generics::AppUtils::CheckOption opt_align;
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
 
   args.add(
     Generics::AppUtils::equal_name("host_and_port") ||
     Generics::AppUtils::short_name("P"),
     opt_endpoint);
 
-  args.add(
-    Generics::AppUtils::equal_name("ref") ||
-    Generics::AppUtils::short_name("r"),
-    opt_ref);
+  args.add(Generics::AppUtils::equal_name("ref") || Generics::AppUtils::short_name("r"), opt_ref);
 
   args.add(
     Generics::AppUtils::equal_name("rid") ||
@@ -1012,32 +917,21 @@ Application_::main(int& argc, char** argv) noexcept
     Generics::AppUtils::short_name("t"),
     opt_user_temporary);
 
-  args.add(
-    Generics::AppUtils::short_name("f"),
-    opt_file);
+  args.add(Generics::AppUtils::short_name("f"), opt_file);
 
-  args.add(
-    Generics::AppUtils::equal_name("plain"),
-    opt_print_plain);
+  args.add(Generics::AppUtils::equal_name("plain"), opt_print_plain);
 
-  args.add(
-    Generics::AppUtils::equal_name("align"),
-    opt_align);
+  args.add(Generics::AppUtils::equal_name("align"), opt_align);
 
-  args.add(
-    Generics::AppUtils::equal_name("plain-debug"),
-    opt_debug_plain);
+  args.add(Generics::AppUtils::equal_name("plain-debug"), opt_debug_plain);
 
-  args.add(
-    Generics::AppUtils::equal_name("sync") ||
-    Generics::AppUtils::short_name("s"),
-    opt_sync);
+  args.add(Generics::AppUtils::equal_name("sync") || Generics::AppUtils::short_name("s"), opt_sync);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled())
+  if (commands.empty() || opt_help.enabled())
   {
     std::cout << USAGE << std::endl;
     return 0;
@@ -1045,7 +939,7 @@ Application_::main(int& argc, char** argv) noexcept
 
   std::string command = *commands.begin();
   std::string first_option;
-  if(commands.size() > 1)
+  if (commands.size() > 1)
   {
     first_option = *(++commands.begin());
   }
@@ -1059,7 +953,7 @@ Application_::main(int& argc, char** argv) noexcept
     command == "print-tag-request-groups" ||
     command == "clear-expired")
   {
-    if(command == "print-action" && opt_file.installed())
+    if (command == "print-action" && opt_file.installed())
     {
       check_option_("user-id", opt_user_id, first_option);
       return print_user_action_from_file(
@@ -1072,7 +966,7 @@ Application_::main(int& argc, char** argv) noexcept
 
     try
     {
-      if(!opt_ref.installed())
+      if (!opt_ref.installed())
       {
         check_option_("host_and_port", opt_endpoint);
         opt_ref.set_value(*opt_endpoint);
@@ -1088,87 +982,78 @@ Application_::main(int& argc, char** argv) noexcept
         });
       auto* request_info_manager = client_holder.client.get();
 
-      if(command == "print-request")
+      if (command == "print-request")
       {
         check_option_("request-id", opt_request_id, first_option);
 
         return print(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_request_id->c_str()).c_str(),
+          remove_uuid_escape(opt_request_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "print-reach")
+      else if (command == "print-reach")
       {
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_campaign_reach(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_user_id->c_str()).c_str(),
+          remove_uuid_escape(opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "print-action")
+      else if (command == "print-action")
       {
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_action(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_user_id->c_str()).c_str(),
+          remove_uuid_escape(opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled(),
           opt_align.enabled());
       }
-      else if(command == "print-fraud")
+      else if (command == "print-fraud")
       {
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_fraud_protection(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_user_id->c_str()).c_str(),
+          remove_uuid_escape(opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "print-passback")
+      else if (command == "print-passback")
       {
         check_option_("request-id", opt_request_id, first_option);
 
         return print_passback(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_request_id->c_str()).c_str(),
+          remove_uuid_escape(opt_request_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "print-site-reach")
+      else if (command == "print-site-reach")
       {
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_site_reach(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_user_id->c_str()).c_str(),
+          remove_uuid_escape(opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "print-tag-request-groups")
+      else if (command == "print-tag-request-groups")
       {
         check_option_("user-id", opt_user_id, first_option);
 
         return print_user_tag_request_group(
           *request_info_manager,
-          remove_uuid_escape(
-              opt_user_id->c_str()).c_str(),
+          remove_uuid_escape(opt_user_id->c_str()).c_str(),
           opt_print_plain.enabled());
       }
-      else if(command == "clear-expired")
+      else if (command == "clear-expired")
       {
         Proto::ClearExpiredRequest request;
         request.set_synchronous(opt_sync.enabled());
         const auto response = sync_call<Proto::ClearExpiredResponse>(
           [request_info_manager, &request](auto callback)
           {
-            request_info_manager->clear_expired(
-              request,
-              std::move(callback));
+            request_info_manager->clear_expired(request, std::move(callback));
           });
         return response ? 0 : 1;
       }
@@ -1188,8 +1073,7 @@ Application_::main(int& argc, char** argv) noexcept
   {
     if (command != "help")
     {
-      std::cerr
-        << "Unknown command '" << command << "'" << std::endl;
+      std::cerr << "Unknown command '" << command << "'" << std::endl;
       return 1;
     }
     std::cout  << USAGE << std::endl;

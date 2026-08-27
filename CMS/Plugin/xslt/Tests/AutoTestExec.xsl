@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet 
-  version="1.0" 
+<xsl:stylesheet
+  version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:dyn="http://exslt.org/dynamic"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns:exsl="http://exslt.org/common"
   xmlns:colo="http://www.foros.com/cms/colocation"
@@ -56,7 +56,7 @@ stage=0
 </xsl:variable>
 
 <xsl:if test="$zero-downtime = 'true'">
-# Start zerodowntime 
+# Start zerodowntime
 
 # stage#1 - stop services
 stop_service ui
@@ -134,7 +134,7 @@ do
         "(cd $config_root; ./adserver.sh ${srv[1]}:${srv[0]} start)"
  check_error $? "${srv[0]} start "
  echo "Start service ${srv[0]} on ${srv[1]}...ok"
- 
+
 done
 </xsl:if>
 

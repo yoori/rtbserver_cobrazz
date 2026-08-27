@@ -30,27 +30,21 @@ namespace MergeMessage
   const char MERGE_UNAVAILABLE[] = "merge - unavailable";
 }
 
+namespace FrontendCommons::ContentType
+{
+  const String::SubString TEXT_HTML("text/html");
+}
+
 namespace FrontendCommons
 {
-  namespace ContentType
-  {
-    const String::SubString TEXT_HTML("text/html");
-  }
-
-  const Generics::SubStringHashAdapter UNSECURE_INSTANTIATE_TYPE(
-    String::SubString("unsecure"));
-  const Generics::SubStringHashAdapter SECURE_INSTANTIATE_TYPE(
-    String::SubString("secure"));
-  const String::AsciiStringManip::Caseless SECURE_PROTOCOL_NAME(
-    "ssl/tls filter");
+  const Generics::SubStringHashAdapter UNSECURE_INSTANTIATE_TYPE(String::SubString("unsecure"));
+  const Generics::SubStringHashAdapter SECURE_INSTANTIATE_TYPE(String::SubString("secure"));
+  const String::AsciiStringManip::Caseless SECURE_PROTOCOL_NAME("ssl/tls filter");
 
   typedef std::map<std::string, std::string> ParsedParamsMap;
 
   void
-  ip_hash(
-    std::string& hash,
-    std::string_view ip_address,
-    const String::SubString& ip_salt)
+  ip_hash(std::string& hash, std::string_view ip_address, const String::SubString& ip_salt)
     noexcept;
 
   /**
@@ -80,8 +74,7 @@ namespace FrontendCommons
 
         throw InvalidParamException(ostr);
       }
-      for (HTTP::ParamList::const_iterator it = params.begin();
-        it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
         HTTPParamsConstrain::template apply<ConstrainTraits>(*it);
       }
@@ -97,8 +90,7 @@ namespace FrontendCommons
     {
       if (request.method() != 0 /* M_GET */ || request.header_only())
       {
-        throw ForbiddenException(
-          "HTTPConstrain::apply(): Forbidden HTTP method");
+        throw ForbiddenException("HTTPConstrain::apply(): Forbidden HTTP method");
       }
     }
   };
@@ -113,8 +105,7 @@ namespace FrontendCommons
       if ((request.method() != 0 /* M_GET */ && request.method() != 2 /* M_POST */) ||
         request.header_only())
       {
-        throw ForbiddenException(
-          "HTTP_constrain::apply(): Forbidden HTTP method");
+        throw ForbiddenException("HTTP_constrain::apply(): Forbidden HTTP method");
       }
     }
   };
@@ -143,11 +134,10 @@ namespace FrontendCommons
 
         throw InvalidParamException(ostr);
       }
-      else if(param.value.size() > ConstrainTraits::MAX_LENGTH_PARAM_VALUE)
+      else if (param.value.size() > ConstrainTraits::MAX_LENGTH_PARAM_VALUE)
       {
         Stream::Error ostr;
-        ostr << FUN << ": param value length(" << param.value.size() <<
-          ") exceed";
+        ostr << FUN << ": param value length(" << param.value.size() << ") exceed";
 
         throw InvalidParamException(ostr);
       }
@@ -165,19 +155,17 @@ namespace FrontendCommons
   template<typename HttpRequest>
   inline
   Generics::SubStringHashAdapter
-  deduce_instantiate_type(
-    bool* secure,
-    const HttpRequest& request)
+  deduce_instantiate_type(bool* secure, const HttpRequest& request)
     noexcept
   {
-    if(secure && *secure)
+    if (secure && *secure)
     {
       return SECURE_INSTANTIATE_TYPE;
     }
 
     if (is_secure_request(request))
     {
-      if(secure)
+      if (secure)
       {
         *secure = true;
       }
@@ -195,7 +183,7 @@ namespace FrontendCommons
     const xsd::AdServer::Configuration::ResponseHeadersType& headers,
     HttpResponse& response)
   {
-    for(xsd::AdServer::Configuration::ResponseHeadersType::
+    for (xsd::AdServer::Configuration::ResponseHeadersType::
         Header_sequence::const_iterator
           it = headers.Header().begin();
         it != headers.Header().end(); ++it)
@@ -217,8 +205,7 @@ namespace FrontendCommons
     String::SubString suri(uri);
     typedef xsd::AdServer::Configuration::UriListType::Uri_sequence UriSeq;
 
-    for(UriSeq::const_iterator uri_it = uri_list.begin();
-        uri_it != uri_list.end(); ++uri_it)
+    for (UriSeq::const_iterator uri_it = uri_list.begin(); uri_it != uri_list.end(); ++uri_it)
     {
       const std::string& cur_uri = uri_it->path();
       if (suri.substr(0, cur_uri.size()) == cur_uri &&
@@ -226,7 +213,7 @@ namespace FrontendCommons
             (suri.size() == cur_uri.size() ||
              (suri.size() > cur_uri.size() && uri[cur_uri.size()] == '?'))))
       {
-        if(marker && uri_it->marker().present())
+        if (marker && uri_it->marker().present())
         {
           *marker = *uri_it->marker();
         }
@@ -250,8 +237,7 @@ namespace FrontendCommons
   {
     typedef xsd::AdServer::Configuration::UriListType::Uri_sequence UriSeq;
 
-    for(UriSeq::const_iterator uri_it = uri_list.begin();
-        uri_it != uri_list.end(); ++uri_it)
+    for (UriSeq::const_iterator uri_it = uri_list.begin(); uri_it != uri_list.end(); ++uri_it)
     {
       const std::string& cur_uri = uri_it->path();
       if (suri.substr(0, cur_uri.size()) == cur_uri &&
@@ -259,7 +245,7 @@ namespace FrontendCommons
             (suri.size() == cur_uri.size() ||
              (suri.size() > cur_uri.size() && suri[cur_uri.size()] == '?'))))
       {
-        if(marker && uri_it->marker().present())
+        if (marker && uri_it->marker().present())
         {
           *marker = *uri_it->marker();
         }
@@ -283,8 +269,7 @@ namespace FrontendCommons
     String::SubString suri(uri), ssuburi(suburi);
     typedef xsd::AdServer::Configuration::UriListType::Uri_sequence UriSeq;
 
-    for(UriSeq::const_iterator uri_it = uri_list.begin();
-        uri_it != uri_list.end(); ++uri_it)
+    for (UriSeq::const_iterator uri_it = uri_list.begin(); uri_it != uri_list.end(); ++uri_it)
     {
       const std::string& cur_uri = uri_it->path();
       if (suri.substr(0, cur_uri.size()) == cur_uri)
@@ -324,7 +309,7 @@ namespace FrontendCommons
 
       HTTP::HeaderList out_cookie_headers;
 
-      for(HTTP::CookieList::const_iterator it = input_cookies.begin();
+      for (HTTP::CookieList::const_iterator it = input_cookies.begin();
           it != input_cookies.end(); it++)
       {
         const char* cookie_name = it->name.c_str();
@@ -333,7 +318,7 @@ namespace FrontendCommons
                remove_cookies.begin();
              rem_it != remove_cookies.end(); ++rem_it)
         {
-          if(!strcasecmp(cookie_name, rem_it->c_str()))
+          if (!strcasecmp(cookie_name, rem_it->c_str()))
           {
             HTTP::CookieDefList out_cookies;
 
@@ -354,7 +339,7 @@ namespace FrontendCommons
 
         CookieCounter::iterator cit = cookie_counter.find(cookie_name);
 
-        if(cit == cookie_counter.end())
+        if (cit == cookie_counter.end())
         {
           cookie_counter[cookie_name] = 1;
         }
@@ -364,12 +349,12 @@ namespace FrontendCommons
         }
       }
 
-      if(!cookie_domain.empty())
+      if (!cookie_domain.empty())
       {
-        for(CookieCounter::iterator it = cookie_counter.begin();
+        for (CookieCounter::iterator it = cookie_counter.begin();
             it != cookie_counter.end(); it++)
         {
-          if(it->second > 1)
+          if (it->second > 1)
           {
             // Karen: This is to fix the situation with Firefox happened
             // after importing cookies from IE, when
@@ -434,9 +419,7 @@ namespace FrontendCommons
     response.add_header_nocopy(
       String::SubString("Expires"),
       String::SubString("Sat, 26 Jul 1997 05:00:00 GMT"));
-    response.add_header_nocopy(
-      String::SubString("Vary"),
-      String::SubString("Cookie"));
+    response.add_header_nocopy(String::SubString("Vary"), String::SubString("Cookie"));
   }
 
   inline
@@ -451,13 +434,13 @@ namespace FrontendCommons
 
     bool parse = true;
 
-    while(parse)
+    while (parse)
     {
       String::SubString::SizeType pos = arguments.find(amp);
 
       String::SubString arg_pair;
 
-      if(pos == std::string::npos)
+      if (pos == std::string::npos)
       {
         arg_pair = arguments;
         parse = false;
@@ -473,7 +456,7 @@ namespace FrontendCommons
       String::SubString name;
       String::SubString value;
 
-      if(pos == String::SubString::NPOS)
+      if (pos == String::SubString::NPOS)
       {
         name = arg_pair;
       }
@@ -490,15 +473,13 @@ namespace FrontendCommons
   template<typename HttpRequest>
   inline
   void
-  print_request(
-    std::ostringstream& ostr,
-    const HttpRequest& request)
+  print_request(std::ostringstream& ostr, const HttpRequest& request)
     noexcept
   {
     ostr << "Uri: " << request.uri() << std::endl <<
       "Params ("<< request.params().size() << "):"  << std::endl;
 
-    for(HTTP::ParamList::const_iterator it =
+    for (HTTP::ParamList::const_iterator it =
           request.params().begin(); it != request.params().end(); it++)
     {
       ostr << "    " << it->name << " : " << it->value << std::endl;
@@ -544,13 +525,10 @@ namespace FrontendCommons
 {
   inline
   void
-  ip_hash(
-    std::string& result_hash,
-    std::string_view ip_address,
-    const String::SubString& ip_salt)
+  ip_hash(std::string& result_hash, std::string_view ip_address, const String::SubString& ip_salt)
     noexcept
   {
-    if(!ip_salt.empty())
+    if (!ip_salt.empty())
     {
       MD5_CTX ctx;
       MD5_Init(&ctx);
@@ -624,17 +602,14 @@ namespace FrontendCommons
   public:
     template<typename HttpRequest, typename HttpResponse>
     static void
-    set_headers(
-      const HttpRequest& request,
-      HttpResponse& response)
+    set_headers(const HttpRequest& request, HttpResponse& response)
       /*throw(eh::Exception)*/
     {
       const String::SubString ORIGIN("origin");
       const HTTP::SubHeaderList& headers = request.headers();
       String::SubString origin;
 
-      for (HTTP::SubHeaderList::const_iterator ci = headers.begin();
-           ci != headers.end(); ++ci)
+      for (HTTP::SubHeaderList::const_iterator ci = headers.begin(); ci != headers.end(); ++ci)
       {
         std::string name = ci->name.str();
         String::AsciiStringManip::to_lower(name);
@@ -666,9 +641,7 @@ namespace FrontendCommons
       response.add_header_nocopy(
         String::SubString("Access-Control-Allow-Credentials"),
         String::SubString("true"));
-      response.add_header_nocopy(
-        String::SubString("Vary"),
-        String::SubString("Origin"));
+      response.add_header_nocopy(String::SubString("Vary"), String::SubString("Origin"));
     }
   };
 
@@ -683,7 +656,7 @@ namespace FrontendCommons
     String::SubString token3;
     String::SubString token4;
 
-    if(tokenizer.get_token(token1) &&
+    if (tokenizer.get_token(token1) &&
       tokenizer.get_token(token2) &&
       tokenizer.get_token(token3) &&
       tokenizer.get_token(token4))

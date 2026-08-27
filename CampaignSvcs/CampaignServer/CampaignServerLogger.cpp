@@ -1,12 +1,9 @@
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include "CampaignServerLogger.hpp"
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-namespace CampaignSvcs
-{
-  CampaignServerLogger::CampaignServerLogger(
-    const LogFlushTraits& colo_update_flush_traits)
+  CampaignServerLogger::CampaignServerLogger(const LogFlushTraits& colo_update_flush_traits)
     /*throw(Exception)*/
     : colo_update_flush_traits_(colo_update_flush_traits)
   {
@@ -38,15 +35,13 @@ namespace CampaignSvcs
 
       if (flush)
       {
-        ColoUpdateStatIoHelper(tmp_collector).save(
-          colo_update_flush_traits_.out_dir);
+        ColoUpdateStatIoHelper(tmp_collector).save(colo_update_flush_traits_.out_dir);
       }
     }
     catch (const AdServer::LogProcessing::LogSaver::Exception &ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": AdServer::LogProcessing::LogSaver::Exception caught: " <<
-        ex.what();
+      ostr << FUN << ": AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
       throw Exception(ostr);
     }
     catch (const eh::Exception &ex)
@@ -68,19 +63,16 @@ namespace CampaignSvcs
   }
 
   void
-  CampaignServerLogger::process_config_update(
-    const ConfigUpdateInfo& colo_update_info)
+  CampaignServerLogger::process_config_update(const ConfigUpdateInfo& colo_update_info)
     /*throw(Exception)*/
   {
      SyncPolicy::WriteGuard guard(colo_update_lock_);
 
      colo_update_collector_.add(
-       ColoUpdateCollector::KeyT(
-         colo_update_info.colo_id),
+       ColoUpdateCollector::KeyT(colo_update_info.colo_id),
        ColoUpdateCollector::DataT(
          LogProcessing::OptionalSecondsTimestamp(),
          colo_update_info.time,
          colo_update_info.version));
   }
-}
 }

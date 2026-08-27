@@ -6,16 +6,16 @@ use DB::Defaults;
 use DB::Util;
 
 
-sub get_keyword 
+sub get_keyword
 {
   my ($self, $name, $args) = @_;
-  
-  return 
+
+  return
     defined $args->{keyword}?
       make_autotest_name(
         $self->{ns_}, $args->{keyword}):
         defined $self->{keyword_}?
-          $self->{keyword_}: 
+          $self->{keyword_}:
             make_autotest_name(
               $self->{ns_}, $name);
 }
@@ -26,29 +26,29 @@ sub get_advertiser
   my $account = (defined $args->{country_code} or defined $args->{currency})?
     $self->{ns_}->create(Account => {
       name => 'Advertiser-' . $name,
-      currency_id => 
+      currency_id =>
         defined $args->{currency}?
           $args->{currency}: DB::Defaults::instance()->currency(),
-      country_code => 
+      country_code =>
         defined $args->{country_code}?
           $args->{country_code}: DB::Defaults::instance()->country()->{country_code},
       role_id => DB::Defaults::instance()->advertiser_role }) : $self->{account_};
 
   return $account;
-} 
+}
 
 sub create_publisher
 {
   my ($self, $name, $args) = @_;
 
-  my $publisher = 
+  my $publisher =
       $self->{ns_}->create(Publisher => {
         name => "Publisher-". $name,
-        pubaccount_currency_id => 
+        pubaccount_currency_id =>
           defined $args->{currency}?
             $args->{currency}: DB::Defaults::instance()->currency(),
-        pricedtag_size_id => 
-          defined $args->{size}? 
+        pricedtag_size_id =>
+          defined $args->{size}?
             $args->{size}: DB::Defaults::instance()->size(),
         pricedtag_cpm => $args->{tag_cpm},
         pubaccount_country_code => defined $args->{country_code}?
@@ -71,11 +71,11 @@ sub create_channel
 
   my $keyword = $self->get_keyword($name, $args);
   my $channel = $self->{ns_}->create(DB::BehavioralChannel->blank(
-    name => 
+    name =>
       'Channel-' . $name,
     account_id => $self->get_advertiser($name, $args),
     keyword_list => $keyword,
-    channel_type => 
+    channel_type =>
       defined $args->{type}? $args->{type}: 'B',
     country_code => defined $args->{country_code}
       ? $args->{country_code}
@@ -83,13 +83,13 @@ sub create_channel
     behavioral_parameters => [
       DB::BehavioralChannel::BehavioralParameter->blank(
       trigger_type => 'P',
-      minimum_visits => 
+      minimum_visits =>
        defined $args->{min_visits}?
          $args->{min_visits}: 1,
       time_from =>
         defined $args->{time_from}?
           $args->{time_from}: 0,
-      time_to => 
+      time_to =>
        defined $args->{time_to}?
          $args->{time_to}: 0) ]
     ));
@@ -112,14 +112,14 @@ sub create_expression
   {
     my $c = $self->{storage}->{$w};
     die "Channel '$w' is not defined " .
-        "in the case '$self->{ns_}->namespace'" 
+        "in the case '$self->{ns_}->namespace'"
        if not defined $c;
     $expression =~ s/$w/$c->{channel_id}/;
   }
- 
-  my $channel = 
+
+  my $channel =
     $self->{ns_}->create(DB::ExpressionChannel->blank(
-    name => 
+    name =>
       'Expression-' . $name,
     account_id => $self->get_advertiser($name, $args),
     country_code => defined $args->{country_code}
@@ -153,7 +153,7 @@ sub create_channel_ta_campaign
 
   my $channel = $self->{storage}->{$args->{channel}};
 
-  my $campaign =  
+  my $campaign =
       $self->{ns_}->create(ChannelTargetedTACampaign => {
       name => $name,
       size_id => defined $args->{size} ? $args->{size} : DB::Defaults::instance()->text_size,
@@ -162,7 +162,7 @@ sub create_channel_ta_campaign
       campaigncreativegroup_cpm => defined $args->{cpm} ? $args->{cpm} : 0,
       campaigncreativegroup_cpc => defined $args->{cpc} ? $args->{cpc} : 0,
       campaigncreativegroup_rate_type => defined $args->{cpc} ? 'CPC' : 'CPM',
-      campaigncreativegroup_ctr => defined $args->{ctr} ? $args->{ctr} : undef, 
+      campaigncreativegroup_ctr => defined $args->{ctr} ? $args->{ctr} : undef,
       site_links => [
         {site_id => $publisher->{site_id} }] });
 
@@ -182,9 +182,9 @@ sub create_text_ta_campaign
     $self->create_publisher($name, $args): $self->{publisher_};
 
   my $channel = $self->{storage}->{$args->{channel}};
-  
-  my $campaign = 
-    $self->{ns_}->create(TextAdvertisingCampaign => { 
+
+  my $campaign =
+    $self->{ns_}->create(TextAdvertisingCampaign => {
       name => $name,
       size_id => defined $args->{size} ? $args->{size} : DB::Defaults::instance()->text_size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -206,7 +206,7 @@ sub create_display_campaign
 
   my $channel = $self->{storage}->{$args->{channel}};
 
-  die "Undefined channel_id for campaign '$self->{ns_}->namespace-$name'" 
+  die "Undefined channel_id for campaign '$self->{ns_}->namespace-$name'"
       if not defined $channel;
 
   my $publisher = defined $args->{tag_cpm}?
@@ -214,10 +214,10 @@ sub create_display_campaign
 
   my $campaign = $self->{ns_}->create(DisplayCampaign => {
     name => $name,
-    size_id => 
-      defined $args->{size}? 
+    size_id =>
+      defined $args->{size}?
         $args->{size}: DB::Defaults::instance()->size(),
-    account_id => 
+    account_id =>
       $self->get_advertiser($name, $args),
     template_id => DB::Defaults::instance()->display_template(),
     channel_id => $channel,
@@ -228,7 +228,7 @@ sub create_display_campaign
     campaigncreativegroup_rate_type => defined $args->{cpc} ? 'CPC' : 'CPM',
     campaigncreativegroup_ctr => defined $args->{ctr} ? $args->{ctr} : undef,
     site_links => [
-      { site_id => $publisher->{site_id} } ] }); 
+      { site_id => $publisher->{site_id} } ] });
 
   $self->{ns_}->create(TemplateFile => {
     template_id => DB::Defaults::instance()->display_template(),
@@ -251,7 +251,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;
   }
@@ -259,7 +259,7 @@ sub new
   $self->{storage} = ();
   $self->{publisher_} = undef;
   $self->{keyword_} = undef;
-  $self->{account_} = 
+  $self->{account_} =
     $self->{ns_}->create(Account => {
       name => 'Advertiser',
       role_id => DB::Defaults::instance()->advertiser_role });
@@ -273,13 +273,13 @@ sub new
 
   if (exists $args->{keyword})
   {
-    $self->{keyword_} = 
+    $self->{keyword_} =
         make_autotest_name(
         $self->{ns_}, $args->{keyword});
 
     $self->{ns_}->output('Kwd',  $self->{keyword_});
   }
-  
+
   # Create channels
    $self->create($args, "channels", 'B', \&create_channel);
 
@@ -314,15 +314,15 @@ sub one_group
   my ($self, $ns) = @_;
 
   ChannelPriceRangeLogging::Case->new(
-    $ns, 'ONE_GROUP', 
+    $ns, 'ONE_GROUP',
     { publisher => { tag_cpm => 5 },
       channels => [ { name => "B1" },
                     { name => "B2" } ],
-      expressions => [ { expression => "B1" }, 
-                       { expression => "B2" }, 
-                       { expression => "Expr1" }, 
+      expressions => [ { expression => "B1" },
+                       { expression => "B2" },
+                       { expression => "Expr1" },
                        { expression => "Expr2" } ],
-      campaigns => 
+      campaigns =>
        [ { cpm => 10, channel => "Expr3" },
          { cpm => 10, channel => "Expr4" } ]
    });
@@ -333,14 +333,14 @@ sub tag_cpm
   my ($self, $ns) = @_;
 
  ChannelPriceRangeLogging::Case->new(
-    $ns, 'TAG_CPM', 
+    $ns, 'TAG_CPM',
     { publisher => { tag_cpm => 5 },
-      channels => [ { name => "B1" }, 
+      channels => [ { name => "B1" },
                     { name => "B2" } ],
-      expressions => [ { expression => "B1" }, 
-                       { expression => "Expr1" }, 
+      expressions => [ { expression => "B1" },
+                       { expression => "Expr1" },
                        { expression => "B2" } ],
-      campaigns => 
+      campaigns =>
        [ { cpm => 10, channel => "Expr2" },
          { cpm => 20, channel => "Expr2", tag_cpm => 5 } ]
    });
@@ -351,21 +351,21 @@ sub groups
   my ($self, $ns) = @_;
 
   ChannelPriceRangeLogging::Case->new(
-    $ns, 'GROUPS', 
+    $ns, 'GROUPS',
     { publisher => { tag_cpm => 5 },
       channels => [ { name => "B1" },
                     { name => "B2" },
                     { name => "B3" },
-                    { name => "B4",  time_to => 60, 
+                    { name => "B4",  time_to => 60,
                       country_code => DB::Defaults::instance()->test_country_1()->{country_code} } ],
-      expressions => [ { expression => "B1" }, 
-                       { expression => "B2" }, 
-                       { expression => "Expr1" }, 
-                       { expression => "Expr2" }, 
+      expressions => [ { expression => "B1" },
+                       { expression => "B2" },
+                       { expression => "Expr1" },
+                       { expression => "Expr2" },
                        { expression => "B3" },
-                       { expression => "B4", 
+                       { expression => "B4",
                          country_code => DB::Defaults::instance()->test_country_1()->{country_code} }],
-      campaigns => 
+      campaigns =>
        [ { cpm => 10, channel => "Expr3" },
          { cpm => 10, channel => "Expr4" },
          { cpm => 20, channel => "Expr3", tag_cpm => 5 },
@@ -374,7 +374,7 @@ sub groups
          { cpm => 5, tag_cpm => 0, channel => "Expr6",
             size => DB::Defaults::instance()->size(),
             country_code => DB::Defaults::instance()->test_country_1()->{country_code} },
-          { cpm => 10, tag_cpm => 1, channel => "Expr6", 
+          { cpm => 10, tag_cpm => 1, channel => "Expr6",
             size => DB::Defaults::instance()->size(),
             country_code => DB::Defaults::instance()->test_country_1()->{country_code} } ]
    });
@@ -385,12 +385,12 @@ sub day_switch
   my ($self, $ns) = @_;
 
   ChannelPriceRangeLogging::Case->new(
-    $ns, 'DAY_SWITCH', 
+    $ns, 'DAY_SWITCH',
     { publisher => { tag_cpm => 5 },
       channels => [ { name => "B1" } ],
-      expressions => [ { expression => "B1" }, 
+      expressions => [ { expression => "B1" },
                        { expression => "Expr1" }],
-      campaigns => 
+      campaigns =>
      [ { cpm => 20, channel => "Expr2", tag_cpm => 5 },
        { cpm => 15, channel => "Expr2", tag_cpm => 5 } ]
    });
@@ -403,28 +403,28 @@ sub key_variation
   my $size = $ns->create(CreativeSize => {
     name => 'KeyVariation' });
 
-  $ns->output("KeyVariation/CreativeSize", $size);  
-  
+  $ns->output("KeyVariation/CreativeSize", $size);
+
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'KeyVariation', 
-    { publisher => { 
+    $ns, 'KeyVariation',
+    { publisher => {
         tag_cpm => 0,
         size => DB::Defaults::instance()->size(),
         country_code => DB::Defaults::instance()->test_country_1()->{country_code} },
-      channels => [ { 
-        time_to => 60, 
+      channels => [ {
+        time_to => 60,
         country_code => DB::Defaults::instance()->test_country_1()->{country_code} }],
       expressions => [ {
-        expression => "B1", 
+        expression => "B1",
         country_code => DB::Defaults::instance()->test_country_1()->{country_code} }],
-      campaigns => 
-        [ { cpm => 5, channel => "Expr1", 
-            size => DB::Defaults::instance()->size(), 
+      campaigns =>
+        [ { cpm => 5, channel => "Expr1",
+            size => DB::Defaults::instance()->size(),
             country_code => DB::Defaults::instance()->test_country_1()->{country_code} },
-          { cpm => 10, size => $size, tag_cpm => 1, channel => "Expr1", 
+          { cpm => 10, size => $size, tag_cpm => 1, channel => "Expr1",
             country_code => DB::Defaults::instance()->test_country_1()->{country_code} }]});
 
-  $case->create_publisher('Country', 
+  $case->create_publisher('Country',
     { tag_cpm => 1,
       size => DB::Defaults::instance()->size(),
       country_code => DB::Defaults::instance()->test_country_1()->{country_code} });
@@ -435,8 +435,8 @@ sub no_impression
   my ($self, $ns) = @_;
 
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'NoImpression', 
-    { 
+    $ns, 'NoImpression',
+    {
       channels => [ { name => "B1" }, { name => "B2" } ]
     });
 
@@ -451,30 +451,30 @@ sub currency
   my $pub_rate = 5;
   my $adv_rate = 10;
 
-  my $pub_currency = 
+  my $pub_currency =
     $ns->create(
       Currency => { rate => $pub_rate });
 
-  my $adv_currency = 
+  my $adv_currency =
     $ns->create(
       Currency => { rate => $adv_rate });
 
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'Currency', 
-    { 
+    $ns, 'Currency',
+    {
       publisher => { tag_cpm => 0, currency => $pub_currency },
-      channels => [  { name => "B1" }, 
+      channels => [  { name => "B1" },
                      { name => "B2" } ],
       expressions => [ {expression => "B1"},
                        {expression => "Expr1|B2"}],
-      campaigns =>  [ { cpm => 300, channel => "Expr2", 
+      campaigns =>  [ { cpm => 300, channel => "Expr2",
                         currency => $adv_currency } ]
     });
 
-  $case->create_publisher('2', 
+  $case->create_publisher('2',
     { tag_cpm => 100, currency => $pub_currency } );
 
-  $ns->output("Currency/Pub/Rate", $pub_rate);    
+  $ns->output("Currency/Pub/Rate", $pub_rate);
   $ns->output("Currency/Adv/Rate", $adv_rate);
 }
 
@@ -483,10 +483,10 @@ sub ta_text
   my ($self, $ns, $size) = @_;
 
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'TAText', 
-    { 
+    $ns, 'TAText',
+    {
       publisher => { tag_cpm => 0, size => $size },
-      channels => [ { type => "K", time_to => 60*60 }, 
+      channels => [ { type => "K", time_to => 60*60 },
                     { type => "K", time_to => 60*60 } ],
       ta_text =>  [ { cpc => 2, size => $size, channel => "B1" },
                     { cpc => 1, size => $size, channel => "B2" }]
@@ -498,12 +498,12 @@ sub ta_text
 sub ta_channel
 {
   my ($self, $ns, $size) = @_;
- 
+
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'TAChannel', 
-    { 
+    $ns, 'TAChannel',
+    {
       publisher => { tag_cpm => 0, size => $size },
-      channels => [ { time_to => 60*60 }, 
+      channels => [ { time_to => 60*60 },
                     { time_to => 60*60 } ],
       ta_channel =>  [ { cpm => 11, size => $size, channel => "B1" },
                        { cpm => 9, size => $size, channel => "B2" }]
@@ -516,10 +516,10 @@ sub ta_mixed
   my ($self, $ns, $size) = @_;
 
   my $case = ChannelPriceRangeLogging::Case->new(
-    $ns, 'TAMixed', 
-    { 
+    $ns, 'TAMixed',
+    {
       publisher => { tag_cpm => 0, size => $size },
-      channels => [ { type => "K", time_to => 60*60 }, 
+      channels => [ { type => "K", time_to => 60*60 },
                     { time_to => 60*60 } ],
       ta_text =>  [ { cpc => 20, size => $size, channel => "B1" } ],
       ta_channel =>  [ { cpm => 10, size => $size, channel => "B2" }]
@@ -565,7 +565,7 @@ sub init
     max_text_creatives => 2 });
 
   $ns->output("CreativeSize-TA", $size);
- 
+
   $self->one_group($ns);
   $self->tag_cpm($ns);
   $self->groups($ns);

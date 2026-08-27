@@ -50,10 +50,7 @@ namespace AdServer::UserInfoSvcs
       /*throw(Exception)*/;
 
     static void
-    fetch_chunk_folders(
-      ChunkPathMap& chunks,
-      const char* chunks_root,
-      const char* chunks_prefix)
+    fetch_chunk_folders(ChunkPathMap& chunks, const char* chunks_root, const char* chunks_prefix)
       /*throw(eh::Exception)*/;
 
     // UserBindProcessor impl

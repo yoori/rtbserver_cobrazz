@@ -101,8 +101,7 @@ namespace AdServer::UserInfoSvcs
   private:
     using Client = UserInfoManagerGrpcAsyncBatchingClient;
     struct ControllerClient;
-    using Pool =
-      AdServer::Grpc::BalancedDistributedPartitionPool<Client, ControllerClient>;
+    using Pool = AdServer::Grpc::BalancedDistributedPartitionPool<Client, ControllerClient>;
     using PoolPtr = std::shared_ptr<Pool>;
 
     std::optional<Pool::Ref> get_ref_(const std::string& user_id) noexcept;
@@ -110,9 +109,7 @@ namespace AdServer::UserInfoSvcs
     std::optional<Pool::EndpointChunksArray> resolve_partition_(
       ControllerClient& controller_client);
 
-    static unsigned long chunk_index_(
-      const std::string& user_id,
-      unsigned long chunks_number);
+    static unsigned long chunk_index_(const std::string& user_id, unsigned long chunks_number);
     static std::uint64_t partition_hash_(const std::string& user_id);
 
   private:

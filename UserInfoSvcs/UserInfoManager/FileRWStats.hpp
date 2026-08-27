@@ -4,9 +4,7 @@
 
 #include <ProfilingCommons/FileController.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class FileRWStats : public ProfilingCommons::PosixFileController::Stat
   {
@@ -32,9 +30,7 @@ namespace UserInfoSvcs
     typedef std::list<IntervalStat> IntervalStats;
 
   public:
-    FileRWStats(
-      const Generics::Time interval,
-      const std::size_t times)
+    FileRWStats(const Generics::Time interval, const std::size_t times)
       noexcept;
 
     IntervalStats
@@ -46,17 +42,11 @@ namespace UserInfoSvcs
     {}
 
     void
-    add_read_time_(
-      const Generics::Time& start,
-      const Generics::Time& stop,
-      unsigned long size)
+    add_read_time_(const Generics::Time& start, const Generics::Time& stop, unsigned long size)
       noexcept;
 
     void
-    add_write_time_(
-      const Generics::Time& start,
-      const Generics::Time& stop,
-      unsigned long size)
+    add_write_time_(const Generics::Time& start, const Generics::Time& stop, unsigned long size)
       noexcept;
 
     void
@@ -76,5 +66,4 @@ namespace UserInfoSvcs
     mutable SyncPolicy::Mutex stats_lock_;
     IntervalStats stats_;
   };
-}
 }

@@ -40,6 +40,7 @@ namespace
       first = second;
       return;
     }
+
     if (*(first.rbegin()) != '/')
     {
       first += "/";
@@ -61,10 +62,7 @@ namespace AdServer::UserInfoSvcs
 
     template<typename Container>
     void
-    print_id_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
+    print_id_sequence(std::ostream& out, const char* name, const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -82,10 +80,7 @@ namespace AdServer::UserInfoSvcs
 
     template<typename Container>
     void
-    print_geo_data_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
+    print_geo_data_sequence(std::ostream& out, const char* name, const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -97,18 +92,14 @@ namespace AdServer::UserInfoSvcs
         }
         first = false;
         out << "{latitude=" << value.latitude <<
-          ",longitude=" << value.longitude <<
-          ",accuracy=" << value.accuracy << '}';
+          ",longitude=" << value.longitude << ",accuracy=" << value.accuracy << '}';
       }
       out << "]\n";
     }
 
     template<typename Container>
     void
-    print_channel_weight_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
+    print_channel_weight_sequence(std::ostream& out, const char* name, const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -126,10 +117,7 @@ namespace AdServer::UserInfoSvcs
 
     template<typename Container>
     void
-    print_seq_order_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
+    print_seq_order_sequence(std::ostream& out, const char* name, const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -141,18 +129,14 @@ namespace AdServer::UserInfoSvcs
         }
         first = false;
         out << "{ccg_id=" << value.ccg_id <<
-          ",set_id=" << value.set_id <<
-          ",imps=" << value.imps << '}';
+          ",set_id=" << value.set_id << ",imps=" << value.imps << '}';
       }
       out << "]\n";
     }
 
     template<typename Container>
     void
-    print_campaign_freq_sequence(
-      std::ostream& out,
-      const char* name,
-      const Container& values)
+    print_campaign_freq_sequence(std::ostream& out, const char* name, const Container& values)
     {
       out << "  " << name << " = [";
       bool first = true;
@@ -183,12 +167,9 @@ namespace AdServer::UserInfoSvcs
         << "  current_colo_id = " << user_info.current_colo_id << '\n'
         << "  temporary = " << user_info.temporary << '\n';
 
-      print_id_sequence(
-        out, "page_channel_ids", match_params.matched_channels.page_channels);
-      print_id_sequence(
-        out, "search_channel_ids", match_params.matched_channels.search_channels);
-      print_id_sequence(
-        out, "url_channel_ids", match_params.matched_channels.url_channels);
+      print_id_sequence(out, "page_channel_ids", match_params.matched_channels.page_channels);
+      print_id_sequence(out, "search_channel_ids", match_params.matched_channels.search_channels);
+      print_id_sequence(out, "url_channel_ids", match_params.matched_channels.url_channels);
       print_id_sequence(
         out, "url_keyword_channel_ids",
         match_params.matched_channels.url_keyword_channels);
@@ -238,19 +219,13 @@ namespace AdServer::UserInfoSvcs
         << "  cohort = " << match_result.cohort << '\n'
         << "  cohort2 = " << match_result.cohort2 << '\n';
       print_geo_data_sequence(out, "geo_data_seq", match_result.geo_data_seq);
-      print_id_sequence(
-        out, "exclude_pubpixel_accounts",
-        match_result.exclude_pubpixel_accounts);
+      print_id_sequence(out, "exclude_pubpixel_accounts", match_result.exclude_pubpixel_accounts);
       print_id_sequence(out, "full_freq_caps", match_result.full_freq_caps);
-      print_id_sequence(
-        out, "full_virtual_freq_caps",
-        match_result.full_virtual_freq_caps);
+      print_id_sequence(out, "full_virtual_freq_caps", match_result.full_virtual_freq_caps);
       print_seq_order_sequence(out, "seq_orders", match_result.seq_orders);
-      print_campaign_freq_sequence(
-        out, "campaign_freqs", match_result.campaign_freqs);
+      print_campaign_freq_sequence(out, "campaign_freqs", match_result.campaign_freqs);
       print_channel_weight_sequence(out, "channels", match_result.channels);
-      print_channel_weight_sequence(
-        out, "hid_channels", match_result.hid_channels);
+      print_channel_weight_sequence(out, "hid_channels", match_result.hid_channels);
       out << "  process_time = " << match_result.process_time << '\n';
 
       std::cout << out.str() << std::flush;
@@ -314,8 +289,7 @@ namespace AdServer::UserInfoSvcs
 
     file_controller_ = new AdServer::ProfilingCommons::SSDFileController(
       AdServer::ProfilingCommons::FileController_var(
-        new AdServer::ProfilingCommons::PosixFileController(
-          file_rw_stats_)));
+        new AdServer::ProfilingCommons::PosixFileController(file_rw_stats_)));
 
     try
     {
@@ -340,10 +314,7 @@ namespace AdServer::UserInfoSvcs
 
       if (user_info_manager_config_.Logging().present())
       {
-        if (user_info_manager_config_.Logging()
-          .get()
-          .ChannelCountStat()
-          .present())
+        if (user_info_manager_config_.Logging() .get() .ChannelCountStat() .present())
         {
           const xsd::AdServer::Configuration::UserInfoManagerLoggerType&
             xsd_logger = user_info_manager_config_.Logging()
@@ -366,8 +337,7 @@ namespace AdServer::UserInfoSvcs
       Task_var msg = new FlushLogsTask(this, 0);
       task_runner_->enqueue_task(msg);
 
-      Task_var slow_transactions_msg =
-        new LogSlowTransactionsTask(this, 0);
+      Task_var slow_transactions_msg = new LogSlowTransactionsTask(this, 0);
       task_runner_->enqueue_task(slow_transactions_msg);
     }
     catch (const eh::Exception& ex)
@@ -395,8 +365,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      repeat_trigger_timeout_ =
-        Generics::Time(user_info_manager_config_.repeat_trigger_timeout());
+      repeat_trigger_timeout_ = Generics::Time(user_info_manager_config_.repeat_trigger_timeout());
 
       profile_lifetime_ = Generics::Time(
         user_info_manager_config_.Storage().BaseChunksConfig().expire_time());
@@ -416,8 +385,7 @@ namespace AdServer::UserInfoSvcs
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't instantiate object. Caught eh::Exception: " << ex.what();
+      ostr << FUN << ": Can't instantiate object. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
@@ -432,8 +400,7 @@ namespace AdServer::UserInfoSvcs
 
     // deactivate (dump) user_info_container only when finished
     // all operations on it (through user_info_processor or directly)
-    UserInfoContainer_var user_info_container =
-      user_info_container_->get_object();
+    UserInfoContainer_var user_info_container = user_info_container_->get_object();
     if (user_info_container)
     {
       user_info_container->deactivate_object();
@@ -447,11 +414,9 @@ namespace AdServer::UserInfoSvcs
   bool
   UserInfoManagerCore::uim_ready() noexcept
   {
-    UserInfoContainerAccessor user_info_container =
-      get_user_info_container_(false);
+    UserInfoContainerAccessor user_info_container = get_user_info_container_(false);
 
-    return user_info_container.get().in() &&
-      user_info_container->channels_config().in();
+    return user_info_container.get().in() && user_info_container->channels_config().in();
   }
 
   std::string
@@ -479,12 +444,10 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& user_time,
     const Generics::Time& time_offset) noexcept
   {
-    unsigned long day =
-      (current_time + time_offset).tv_sec / Generics::Time::ONE_DAY.tv_sec;
+    unsigned long day = (current_time + time_offset).tv_sec / Generics::Time::ONE_DAY.tv_sec;
     unsigned long request_day =
       (request_time + time_offset).tv_sec / Generics::Time::ONE_DAY.tv_sec;
-    unsigned long user_day =
-      (user_time + time_offset).tv_sec / Generics::Time::ONE_DAY.tv_sec;
+    unsigned long user_day = (user_time + time_offset).tv_sec / Generics::Time::ONE_DAY.tv_sec;
     if (request_day == day)
     {
       SyncPolicy::WriteGuard guard(daily_stat_lock_);
@@ -493,6 +456,7 @@ namespace AdServer::UserInfoSvcs
         current_day_ = day;
         daily_users_ = 0;
       }
+
       if (current_day_ == request_day && user_day != request_day)
       {
         daily_users_++;
@@ -516,8 +480,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
 
       UserFreqCapProfile::FreqCapIdArray fcs;
       UserFreqCapProfile::FreqCapIdArray uc_fcs;
@@ -576,8 +539,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
       co_return co_await user_operation_processor->co_confirm_freq_caps(
         user_id,
         time,
@@ -614,8 +576,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
       co_return co_await user_operation_processor->co_consider_publishers_optin(
         user_id,
         exclude_pubpixel_accounts,
@@ -639,8 +600,7 @@ namespace AdServer::UserInfoSvcs
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't consider publisher. Caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't consider publisher. Caught eh::Exception: " << ex.what();
       throw UserInfoManagerCore::Exception(ostr.str());
     }
   }
@@ -687,8 +647,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserInfoContainerAccessor user_info_container =
-        get_user_info_container_();
+      UserInfoContainerAccessor user_info_container = get_user_info_container_();
 
       SmartMemBuf_var mb_base_profile_out;
       SmartMemBuf_var mb_add_profile_out;
@@ -705,20 +664,17 @@ namespace AdServer::UserInfoSvcs
       {
         if (mb_base_profile_out.in())
         {
-          user_profile.base_user_profile =
-            convert_mem_buf(mb_base_profile_out->membuf());
+          user_profile.base_user_profile = convert_mem_buf(mb_base_profile_out->membuf());
         }
 
         if (mb_add_profile_out.in())
         {
-          user_profile.add_user_profile =
-            convert_mem_buf(mb_add_profile_out->membuf());
+          user_profile.add_user_profile = convert_mem_buf(mb_add_profile_out->membuf());
         }
 
         if (mb_history_profile_out.in())
         {
-          user_profile.history_user_profile =
-            convert_mem_buf(mb_history_profile_out->membuf());
+          user_profile.history_user_profile = convert_mem_buf(mb_history_profile_out->membuf());
         }
 
         if (mb_fc_profile_out.in())
@@ -728,8 +684,7 @@ namespace AdServer::UserInfoSvcs
 
         if (mb_pref_profile_out.in())
         {
-          user_profile.pref_profile =
-            convert_mem_buf(mb_pref_profile_out->membuf());
+          user_profile.pref_profile = convert_mem_buf(mb_pref_profile_out->membuf());
         }
 
         co_return true;
@@ -768,26 +723,22 @@ namespace AdServer::UserInfoSvcs
   }
 
   AdServer::Commons::StartableAwaitable<bool>
-  UserInfoManagerCore::co_remove_user_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserInfoManagerCore::co_remove_user_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserInfoManagerCore::co_remove_user_profile()";
 
     try
     {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
 
-      co_return co_await user_operation_processor->co_remove_user_profile(
-        user_id);
+      co_return co_await user_operation_processor->co_remove_user_profile(user_id);
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
       Stream::Error ostr;
       ostr << FUN
            << ": Can not remove user profile. "
-              "Caught UserInfoContainer::NotReady: "
-           << ex.what();
+              "Caught UserInfoContainer::NotReady: " << ex.what();
       throw UserInfoManagerCore::NotReady(ostr.str());
     }
     catch (const UserInfoContainer::ChunkNotFound& ex)
@@ -795,17 +746,13 @@ namespace AdServer::UserInfoSvcs
       Stream::Error ostr;
       ostr << FUN
            << ": Can not remove user profile. "
-              "Caught UserInfoContainer::ChunkNotFound: "
-           << ex.what();
+              "Caught UserInfoContainer::ChunkNotFound: " << ex.what();
       throw UserInfoManagerCore::ChunkNotFound(ostr.str());
     }
     catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN
-           << ": Can not remove user profile. "
-              "Caught eh::Exception: "
-           << ex.what();
+      ostr << FUN << ": Can not remove user profile. " "Caught eh::Exception: " << ex.what();
 
       throw UserInfoManagerCore::Exception(ostr.str());
     }
@@ -831,8 +778,7 @@ namespace AdServer::UserInfoSvcs
       bool household = uid.is_null();
       UserId user_id = household ? huid : uid;
 
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
 
       UserInfoContainer::RequestMatchParams request_params(
         user_id,
@@ -932,8 +878,7 @@ namespace AdServer::UserInfoSvcs
       {
         merge_success = false;
 
-        logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER,
-          "ADS-IMPL-50") <<
+        logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER, "ADS-IMPL-50") <<
           FUN << ": Can't do merging. Caught eh::Exception: " << ex.what();
       }
     }
@@ -971,11 +916,8 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
-      co_return co_await user_operation_processor->co_fraud_user(
-        user_id,
-        time);
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
+      co_return co_await user_operation_processor->co_fraud_user(user_id, time);
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
@@ -1052,13 +994,11 @@ namespace AdServer::UserInfoSvcs
         }
         ostr << std::endl;
 
-        logger_->log(ostr.str(), Logging::Logger::TRACE,
-                     Aspect::USER_INFO_MANAGER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER);
       }
 
       UserInfoContainerAccessor user_info_container = get_user_info_container_();
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
+      UserOperationProcessorAccessor user_operation_processor = get_user_operation_processor_();
 
       CoordData coord_data;
       if (!match_params.geo_data_seq.empty())
@@ -1128,8 +1068,7 @@ namespace AdServer::UserInfoSvcs
         &unique_channels_result);
 
       const bool run_pre_bid_process =
-        match_params.ret_freq_caps ||
-        match_params.publishers_optin_timeout != Generics::Time::ZERO;
+        match_params.ret_freq_caps || match_params.publishers_optin_timeout != Generics::Time::ZERO;
 
       if (run_pre_bid_process)
       {
@@ -1234,8 +1173,7 @@ namespace AdServer::UserInfoSvcs
         }
         else
         {
-          match_result.full_freq_caps.assign(
-            freq_caps.begin(), freq_caps.end());
+          match_result.full_freq_caps.assign(freq_caps.begin(), freq_caps.end());
           match_result.full_virtual_freq_caps.assign(
             virtual_freq_caps.begin(), virtual_freq_caps.end());
 
@@ -1257,8 +1195,7 @@ namespace AdServer::UserInfoSvcs
       match_result.channels.reserve(result_channels.size());
       for (const auto& channel : result_channels)
       {
-        match_result.channels.push_back(
-          ChannelWeight{channel.first, channel.second});
+        match_result.channels.push_back(ChannelWeight{channel.first, channel.second});
       }
 
       if (!request_params.silent_match)
@@ -1325,8 +1262,7 @@ namespace AdServer::UserInfoSvcs
       chunk_ids.push_back(chunk_it->first);
     }
 
-    common_chunks_number =
-      user_info_manager_config_.Storage().common_chunks_number();
+    common_chunks_number = user_info_manager_config_.Storage().common_chunks_number();
   }
 
   void
@@ -1338,12 +1274,10 @@ namespace AdServer::UserInfoSvcs
     {
       try
       {
-        Task_var delete_old_profiles_msg =
-          new DeleteOldProfilesTask(0, this, false);
+        Task_var delete_old_profiles_msg = new DeleteOldProfilesTask(0, this, false);
         task_runner_->enqueue_task(delete_old_profiles_msg);
 
-        Task_var delete_old_temp_profiles_msg =
-          new DeleteOldTemporaryProfilesTask(0, this, false);
+        Task_var delete_old_temp_profiles_msg = new DeleteOldTemporaryProfilesTask(0, this, false);
         task_runner_->enqueue_task(delete_old_temp_profiles_msg);
 
         if (logger_->log_level() >= Logging::Logger::TRACE)
@@ -1415,8 +1349,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      next_flush = user_info_manager_logger_->flush_if_required(
-        Generics::Time::get_time_of_day());
+      next_flush = user_info_manager_logger_->flush_if_required(Generics::Time::get_time_of_day());
     }
     catch (const eh::Exception& ex)
     {
@@ -1426,16 +1359,14 @@ namespace AdServer::UserInfoSvcs
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception caught on flush logs:" << ex.what();
 
-      logger_->log(ostr.str(), Logging::Logger::ERROR,
-        Aspect::USER_INFO_MANAGER, "ADS-IMPL-77");
+      logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER, "ADS-IMPL-77");
     }
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": logs flushed, next flush at " << next_flush.get_gm_time();
-      logger_->log(ostr.str(), Logging::Logger::TRACE,
-        Aspect::USER_INFO_MANAGER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER);
     }
 
     if (next_flush != Generics::Time::ZERO)
@@ -1451,8 +1382,7 @@ namespace AdServer::UserInfoSvcs
         ostr << FUN << ": Can't schedule next flush task. "
           "eh::Exception caught:" << ex.what();
 
-        logger_->log(ostr.str(), Logging::Logger::ERROR,
-          Aspect::USER_INFO_MANAGER, "ADS-IMPL-78");
+        logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER, "ADS-IMPL-78");
       }
 
       if (logger_->log_level() >= Logging::Logger::TRACE)
@@ -1466,13 +1396,11 @@ namespace AdServer::UserInfoSvcs
   void
   UserInfoManagerCore::log_slow_transactions_() noexcept
   {
-    static const char* FUN =
-      "UserInfoManagerCore::log_slow_transactions_()";
+    static const char* FUN = "UserInfoManagerCore::log_slow_transactions_()";
 
     try
     {
-      UserInfoContainerAccessor user_info_container =
-        get_user_info_container_(false);
+      UserInfoContainerAccessor user_info_container = get_user_info_container_(false);
       if (user_info_container.get().in())
       {
         user_info_container->flush_slow_transactions();
@@ -1480,26 +1408,18 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-78") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER, "ADS-IMPL-78") <<
         FUN << ": Can't log slow transactions: " << ex.what();
     }
 
     try
     {
       Task_var msg = new LogSlowTransactionsTask(this, task_runner_);
-      scheduler_->schedule(
-        msg,
-        Generics::Time::get_time_of_day() + SLOW_TRANSACTION_LOG_PERIOD);
+      scheduler_->schedule(msg, Generics::Time::get_time_of_day() + SLOW_TRANSACTION_LOG_PERIOD);
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::ERROR,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-78") <<
+      logger_->sstream(Logging::Logger::ERROR, Aspect::USER_INFO_MANAGER, "ADS-IMPL-78") <<
         FUN << ": Can't schedule next task: " << ex.what();
     }
   }
@@ -1523,24 +1443,20 @@ namespace AdServer::UserInfoSvcs
       else
       {
         logger_->log(
-          String::SubString(
-            "Can't do profiles cleaning - UserInfoManager isn't ready."),
+          String::SubString("Can't do profiles cleaning - UserInfoManager isn't ready."),
           Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER);
       }
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
-      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-51") <<
+      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER, "ADS-IMPL-51") <<
         FUN << ": Can't delete old user profiles. "
         "Caught UserInfoContainer::NotReady: " << ex.what();
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-51") <<
-        FUN << ": Can't delete old user profiles. Caught eh::Exception: " <<
-        ex.what();
+      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER, "ADS-IMPL-51") <<
+        FUN << ": Can't delete old user profiles. Caught eh::Exception: " << ex.what();
     }
 
     if (reschedule)
@@ -1549,8 +1465,7 @@ namespace AdServer::UserInfoSvcs
       {
         Generics::Time now = Generics::Time::get_time_of_day();
 
-        Task_var msg =
-          new DeleteOldProfilesTask(task_runner_, this, reschedule);
+        Task_var msg = new DeleteOldProfilesTask(task_runner_, this, reschedule);
         scheduler_->schedule(
           msg,
           now + std::min(std::max(profile_lifetime_ / 10, Generics::Time(1)),
@@ -1558,8 +1473,7 @@ namespace AdServer::UserInfoSvcs
       }
       catch (const eh::Exception& ex)
       {
-        logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER,
-          "ADS-IMPL-52") <<
+        logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
           FUN << ": Can't schedule task. Caught eh::Exception: " << ex.what();
       }
     }
@@ -1568,8 +1482,7 @@ namespace AdServer::UserInfoSvcs
   void
   UserInfoManagerCore::delete_old_temporary_profiles_(bool reschedule) noexcept
   {
-    static const char* FUN =
-      "UserInfoManagerCore::delete_old_temporary_profiles_()";
+    static const char* FUN = "UserInfoManagerCore::delete_old_temporary_profiles_()";
 
     try
     {
@@ -1583,28 +1496,24 @@ namespace AdServer::UserInfoSvcs
 
       if (user_info_container.get().in())
       {
-        user_info_container->delete_old_temporary_profiles(
-          temp_profile_lifetime_);
+        user_info_container->delete_old_temporary_profiles(temp_profile_lifetime_);
       }
       else
       {
         logger_->log(
-          String::SubString(
-            "Can't do profiles cleaning - UserInfoManager isn't ready."),
+          String::SubString("Can't do profiles cleaning - UserInfoManager isn't ready."),
           Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER);
       }
     }
     catch (const UserInfoContainer::NotReady& ex)
     {
-      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-51") <<
+      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER, "ADS-IMPL-51") <<
         FUN << ": Can't delete old user temporary profiles. "
         "Caught UserInfoContainer::NotReady: " << ex.what();
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-51") <<
+      logger_->sstream(Logging::Logger::NOTICE, Aspect::USER_INFO_MANAGER, "ADS-IMPL-51") <<
         FUN << ": Can't delete old user temporary profiles. Caught "
         "eh::Exception: " << ex.what();
     }
@@ -1621,18 +1530,12 @@ namespace AdServer::UserInfoSvcs
       {
         Generics::Time now = Generics::Time::get_time_of_day();
 
-        Task_var msg =
-          new DeleteOldTemporaryProfilesTask(task_runner_, this, reschedule);
-        scheduler_->schedule(
-          msg,
-          now + std::max(
-            temp_profile_lifetime_ / 10,
-            Generics::Time(1)));
+        Task_var msg = new DeleteOldTemporaryProfilesTask(task_runner_, this, reschedule);
+        scheduler_->schedule(msg, now + std::max(temp_profile_lifetime_ / 10, Generics::Time(1)));
       }
       catch (const eh::Exception& ex)
       {
-        logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER,
-          "ADS-IMPL-52") <<
+        logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
           FUN << ": Can't schedule task. Caught eh::Exception: " << ex.what();
       }
     }
@@ -1662,8 +1565,7 @@ namespace AdServer::UserInfoSvcs
         fill_level_map_traits_(storage_config.BaseChunksConfig()),
         fill_level_map_traits_(storage_config.FreqCapChunksConfig()),
         user_info_manager_config_.colo_id(), Generics::Time::ZERO,
-        Generics::Time(
-          user_info_manager_config_.history_optimization_period()),
+        Generics::Time(user_info_manager_config_.history_optimization_period()),
         provide_channel_counters_,
         Generics::Time(user_info_manager_config_.session_timeout()),
         user_info_manager_config_.use_add_profile_on_match(),
@@ -1686,8 +1588,7 @@ namespace AdServer::UserInfoSvcs
           storage_config.common_chunks_number(), file_controller_,
           user_info_container);
 
-        user_info_container_dependent_active_object_->add_child_object(
-          user_operation_saver_.in());
+        user_info_container_dependent_active_object_->add_child_object(user_operation_saver_.in());
 
         user_operation_processor = user_operation_saver_;
 
@@ -1711,8 +1612,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-53") <<
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-53") <<
         FUN << ": Can't load chunk files. Caught eh::Exception: " << ex.what();
     }
 
@@ -1720,8 +1620,7 @@ namespace AdServer::UserInfoSvcs
     {
       try
       {
-        const Generics::Time tm =
-          Generics::Time::get_time_of_day() + CHUNKS_RELOAD_PERIOD;
+        const Generics::Time tm = Generics::Time::get_time_of_day() + CHUNKS_RELOAD_PERIOD;
 
         Task_var msg = new LoadChunksDataTask(this, task_runner_);
         scheduler_->schedule(msg, tm);
@@ -1744,8 +1643,7 @@ namespace AdServer::UserInfoSvcs
       }
       catch (const eh::Exception& ex)
       {
-        logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER,
-          "ADS-IMPL-52") <<
+        logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
           FUN << ": Can't schedule channels updating task. "
           "Caught eh::Exception: " << ex.what();
       }
@@ -1759,16 +1657,14 @@ namespace AdServer::UserInfoSvcs
   }
 
   void
-  UserInfoManagerCore::update_channels_config_(
-    UserInfoContainer* user_info_container) noexcept
+  UserInfoManagerCore::update_channels_config_(UserInfoContainer* user_info_container) noexcept
   {
     static const char* FUN = "UserInfoManagerCore::update_channels_config_()";
 
     try
     {
       UserInfoConfigSource::Config config = config_source_->get_config();
-      const bool first_config_initialization =
-        user_info_container->channels_config().in() == 0;
+      const bool first_config_initialization = user_info_container->channels_config().in() == 0;
 
       user_info_container->config(
         Generics::Time::ZERO,
@@ -1783,12 +1679,10 @@ namespace AdServer::UserInfoSvcs
 
       if (first_config_initialization)
       {
-        Task_var delete_old_profiles_msg =
-          new DeleteOldProfilesTask(0, this, true);
+        Task_var delete_old_profiles_msg = new DeleteOldProfilesTask(0, this, true);
         task_runner_->enqueue_task(delete_old_profiles_msg);
 
-        Task_var delete_old_temp_profiles_msg =
-          new DeleteOldTemporaryProfilesTask(0, this, true);
+        Task_var delete_old_temp_profiles_msg = new DeleteOldTemporaryProfilesTask(0, this, true);
         task_runner_->enqueue_task(delete_old_temp_profiles_msg);
 
         BaseOperationRecordFetcher::ChunkIdSet chunk_ids;
@@ -1804,8 +1698,7 @@ namespace AdServer::UserInfoSvcs
 
         if (user_info_manager_config_.UserOperationsLoad().present())
         {
-          std::string op_root =
-            user_info_manager_config_.UserOperationsLoad()->dir().c_str();
+          std::string op_root = user_info_manager_config_.UserOperationsLoad()->dir().c_str();
 
           user_operation_loader_ = new InternalUserOperationLoader(
             check_operations_callback_,
@@ -1818,8 +1711,7 @@ namespace AdServer::UserInfoSvcs
               ->file_prefix()
               .c_str(),
             chunk_ids,
-            Generics::Time(user_info_manager_config_.UserOperationsLoad()
-              ->check_period()),
+            Generics::Time(user_info_manager_config_.UserOperationsLoad() ->check_period()),
             user_info_manager_config_.UserOperationsLoad()->threads());
 
           add_child_object(user_operation_loader_.in());
@@ -1829,14 +1721,8 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->stream(
-        Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-ICON-10")
-        << FUN
-        << ": Can't update channels configuration. "
-          "Caught eh::Exception: "
-        << ex.what();
+      logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-ICON-10")
+        << FUN << ": Can't update channels configuration. " "Caught eh::Exception: " << ex.what();
     }
   }
 
@@ -1851,8 +1737,7 @@ namespace AdServer::UserInfoSvcs
         "UpdateChannelsConfigTask started.";
     }
 
-    UserInfoContainerAccessor user_info_container =
-      get_user_info_container_(false);
+    UserInfoContainerAccessor user_info_container = get_user_info_container_(false);
     if (user_info_container.get().in())
     {
       // user_info_container can be null after deactivation
@@ -1870,10 +1755,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->stream(
-        Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-52") <<
+      logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
         FUN << ": Can't schedule channels updating task. "
         "Caught eh::Exception: " << ex.what();
     }
@@ -1888,8 +1770,7 @@ namespace AdServer::UserInfoSvcs
   void
   UserInfoManagerCore::rotate_user_operations_backup_() noexcept
   {
-    static const char* FUN =
-      "UserInfoManagerCore::rotate_user_operations_backup_()";
+    static const char* FUN = "UserInfoManagerCore::rotate_user_operations_backup_()";
 
     user_operation_saver_->rotate();
 
@@ -1904,10 +1785,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const eh::Exception& ex)
     {
-      logger_->stream(
-        Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-52") <<
+      logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
         FUN << ": Can't schedule user operations backup rotate task. "
         "Caught eh::Exception: " << ex.what();
     }
@@ -1934,8 +1812,7 @@ namespace AdServer::UserInfoSvcs
     UserStat user_stat;
 
     {
-      UserInfoContainerAccessor user_info_container =
-        get_user_info_container_();
+      UserInfoContainerAccessor user_info_container = get_user_info_container_();
       user_stat = user_info_container->get_stats();
     }
 
@@ -1950,8 +1827,7 @@ namespace AdServer::UserInfoSvcs
   AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
   UserInfoManagerCore::rocksdb_stats() noexcept
   {
-    UserInfoContainerAccessor user_info_container =
-      get_user_info_container_(false);
+    UserInfoContainerAccessor user_info_container = get_user_info_container_(false);
     return user_info_container.get().in() ?
       user_info_container->rocksdb_stats() :
       AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats{};

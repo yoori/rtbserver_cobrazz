@@ -10,9 +10,9 @@ sub parse
   my $expect_spaced_val = undef;
   foreach my $arg(@args)
   {
-    if($arg =~ m/^-[-]?([^-][^=]*)='([^']*)'$/)
+    if ($arg =~ m/^-[-]?([^-][^=]*)='([^']*)'$/)
     {
-      if(!exists($res{$1}))
+      if (!exists($res{$1}))
       {
         $res{$1} = $2;
       }
@@ -20,7 +20,7 @@ sub parse
     }
     elsif($arg =~ m/^-[-]?([^-][^=]*)=([^ ']*)$/)
     {
-      if(!exists $res{$1})
+      if (!exists $res{$1})
       {
         $res{$1} = $2;
       }
@@ -28,7 +28,7 @@ sub parse
     }
     elsif($arg =~ m/^-[-]?([^-][^=]*)$/)
     {
-      if(!exists $res{$1})
+      if (!exists $res{$1})
       {
         $res{$1} = undef;
       }

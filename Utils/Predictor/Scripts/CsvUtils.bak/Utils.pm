@@ -7,7 +7,7 @@ sub prepare_row
   my @res_row;
   foreach my $value(@$row)
   {
-    if(ref($value) eq 'ARRAY')
+    if (ref($value) eq 'ARRAY')
     {
       push(@res_row, '|' . join('|', @$value) . '|');
     }
@@ -23,11 +23,11 @@ sub prepare_row
 sub find_value_in_row
 {
   my ($value, $filter) = @_;
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     foreach my $sub_val(@$value)
     {
-      if(exists($filter->{$sub_val}))
+      if (exists($filter->{$sub_val}))
       {
         return 1;
       }
@@ -35,7 +35,7 @@ sub find_value_in_row
   }
   else
   {
-    if(exists($filter->{$value}))
+    if (exists($filter->{$value}))
     {
       return 1;
     }

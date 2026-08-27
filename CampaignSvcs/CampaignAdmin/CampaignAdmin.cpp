@@ -483,8 +483,7 @@ namespace
     unsigned long random,
     bool optout)
   {
-    const Generics::Uuid request_id =
-      Generics::Uuid::create_random_based();
+    const Generics::Uuid request_id = Generics::Uuid::create_random_based();
     const Generics::Uuid user_id = uid.installed() && !uid->empty() ?
       Generics::Uuid(*uid, true) :
       Generics::Uuid::create_random_based();
@@ -513,8 +512,7 @@ namespace
     ClientHolder result;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         new Logging::ActiveObjectCallbackImpl(logger, "CampaignAdmin", "gRPC"),
@@ -580,9 +578,7 @@ namespace
     std::cout << "colo_id\tflags\thid_profile\n";
     for (const auto& item : response.colocations())
     {
-      std::cout << item.colo_id() << '\t' <<
-        item.flags() << '\t' <<
-        item.hid_profile() << '\n';
+      std::cout << item.colo_id() << '\t' << item.flags() << '\t' << item.hid_profile() << '\n';
     }
   }
 
@@ -594,11 +590,8 @@ namespace
     for (const auto& channel : channels)
     {
       std::cout << prefix << channel.channel_id() << '\t' <<
-        channel.flags() << '\t' <<
-        channel.name() << '\n';
-      print_category_channels(
-        channel.child_category_channels(),
-        prefix + "  ");
+        channel.flags() << '\t' << channel.name() << '\n';
+      print_category_channels(channel.child_category_channels(), prefix + "  ");
     }
   }
 
@@ -635,8 +628,7 @@ namespace
 
     try
     {
-      return GrpcAlgs::unpack_time(value).get_gm_time().format(
-        "%Y-%m-%d %H:%M:%S");
+      return GrpcAlgs::unpack_time(value).get_gm_time().format("%Y-%m-%d %H:%M:%S");
     }
     catch(...)
     {}
@@ -708,9 +700,7 @@ namespace
   }
 
   Table
-  make_table(
-    const Table::Column* columns,
-    std::size_t columns_count)
+  make_table(const Table::Column* columns, std::size_t columns_count)
   {
     Table table(columns_count);
     for (std::size_t i = 0; i < columns_count; ++i)
@@ -721,9 +711,7 @@ namespace
   }
 
   std::string
-  make_prefix(
-    const Table::Column* columns,
-    std::size_t columns_count)
+  make_prefix(const Table::Column* columns, std::size_t columns_count)
   {
     std::size_t max_len = 0;
     for (std::size_t i = 0; i < columns_count; ++i)
@@ -750,15 +738,13 @@ namespace
       }
       out << "'," << size.up_expand_space() <<
         ',' << size.right_expand_space() <<
-        ',' << size.down_expand_space() <<
-        ',' << size.left_expand_space() << ']';
+        ',' << size.down_expand_space() << ',' << size.left_expand_space() << ']';
     }
     return out.str();
   }
 
   std::string
-  option_values(
-    const google::protobuf::RepeatedPtrField<cm::ConfigOptionValue>& values)
+  option_values(const google::protobuf::RepeatedPtrField<cm::ConfigOptionValue>& values)
   {
     std::ostringstream out;
     for (int i = 0; i < values.size(); ++i)
@@ -816,8 +802,7 @@ namespace
     {
       out << "(invoice commision)";
     }
-    out << (flags & AccountTypeFlags::USE_SELF_BUDGET ?
-      "(advertiser budget)" : "(agency budget)");
+    out << (flags & AccountTypeFlags::USE_SELF_BUDGET ? "(advertiser budget)" : "(agency budget)");
     out << (flags & AccountTypeFlags::AGENCY_PROFIT_BY_PUB_AMOUNT ?
       "(agency profit by pub amount)" : "(fix price)");
     return out.str();
@@ -973,8 +958,7 @@ namespace
     {
       const auto& interval = campaign.weekly_run_intervals(i);
       out << (i != 0 ? ",(" : "(") <<
-        weekly_run_convert(interval.min()) <<
-        "," << weekly_run_convert(interval.max()) << ")";
+        weekly_run_convert(interval.min()) << "," << weekly_run_convert(interval.max()) << ")";
     }
     return out.str();
   }
@@ -1043,8 +1027,7 @@ namespace
         }
       }
 
-      return channel_id ? (
-        std::string("[") + std::to_string(channel_id) + "]") :
+      return channel_id ? (std::string("[") + std::to_string(channel_id) + "]") :
         std::string("NULL");
     }
 
@@ -1068,10 +1051,7 @@ namespace
       {
         out << ' ' << op << ' ';
       }
-      out << expression_value(
-        expression.sub_channels(i),
-        expression_channels,
-        expanded_channels);
+      out << expression_value(expression.sub_channels(i), expression_channels, expanded_channels);
     }
     out << ')';
     return out.str();
@@ -1087,9 +1067,7 @@ namespace
   }
 
   cm::CampaignConfig
-  fetch_config(
-    const std::string& reference,
-    bool geo_channels)
+  fetch_config(const std::string& reference, bool geo_channels)
   {
     cm::GetConfigRequest request;
     request.set_geo_channels(geo_channels);
@@ -1111,8 +1089,7 @@ namespace
     {
       std::ostringstream error;
       error << "gRPC get_config failed: code=" <<
-        static_cast<int>(status.error_code()) <<
-        ", message=" << status.error_message();
+        static_cast<int>(status.error_code()) << ", message=" << status.error_message();
       throw std::runtime_error(error.str());
     }
 
@@ -1128,9 +1105,7 @@ namespace
     ExpressionChannelMap expression_channels;
     for (const auto& expression_channel : config.expression_channels())
     {
-      expression_channels.emplace(
-        expression_channel.channel_id(),
-        &expression_channel);
+      expression_channels.emplace(expression_channel.channel_id(), &expression_channel);
     }
 
     for (const auto& adapted_campaign : config.campaigns())
@@ -1152,12 +1127,8 @@ namespace
       row.add_field(weekly_run_value(campaign));
       row.add_field(decimal_value(adapted_campaign.ecpm()));
       row.add_field(decimal_value(adapted_campaign.ctr()));
-      row.add_field(expression_value(
-        campaign.expression(),
-        &expression_channels));
-      row.add_field(expression_value(
-        campaign.stat_expression(),
-        &expression_channels));
+      row.add_field(expression_value(campaign.expression(), &expression_channels));
+      row.add_field(expression_value(campaign.stat_expression(), &expression_channels));
       row.add_field(campaign.country());
       row.add_field(join_numbers(campaign.sites()));
       row.add_field(creative_ids(campaign));
@@ -1177,22 +1148,18 @@ namespace
       row.add_field(optional_decimal_value(ccg_limits.budget()));
       row.add_field(optional_decimal_value(ccg_limits.daily_budget()));
       row.add_field(std::string(1, static_cast<char>(ccg_limits.delivery_pacing())));
-      row.add_field(ccg_limits.has_imps() ?
-        std::to_string(ccg_limits.imps()) : std::string());
+      row.add_field(ccg_limits.has_imps() ? std::to_string(ccg_limits.imps()) : std::string());
       row.add_field(std::string());
-      row.add_field(ccg_limits.has_clicks() ?
-        std::to_string(ccg_limits.clicks()) : std::string());
+      row.add_field(ccg_limits.has_clicks() ? std::to_string(ccg_limits.clicks()) : std::string());
       row.add_field(std::string());
       row.add_field(time_value(cmp_limits.date_start()));
       row.add_field(time_value(cmp_limits.date_end()));
       row.add_field(optional_decimal_value(cmp_limits.budget()));
       row.add_field(optional_decimal_value(cmp_limits.daily_budget()));
       row.add_field(std::string(1, static_cast<char>(cmp_limits.delivery_pacing())));
-      row.add_field(cmp_limits.has_imps() ?
-        std::to_string(cmp_limits.imps()) : std::string());
+      row.add_field(cmp_limits.has_imps() ? std::to_string(cmp_limits.imps()) : std::string());
       row.add_field(std::string());
-      row.add_field(cmp_limits.has_clicks() ?
-        std::to_string(cmp_limits.clicks()) : std::string());
+      row.add_field(cmp_limits.has_clicks() ? std::to_string(cmp_limits.clicks()) : std::string());
       row.add_field(std::string());
       row.add_field(decimal_value(campaign.max_pub_share()));
       row.add_field(bid_strategy_string(campaign.bid_strategy()));
@@ -1206,10 +1173,7 @@ namespace
   }
 
   void
-  print_creatives(
-    const cm::CampaignConfig& config,
-    unsigned long ccid,
-    bool filter_by_ccid)
+  print_creatives(const cm::CampaignConfig& config, unsigned long ccid, bool filter_by_ccid)
   {
     Table table = make_table(
       CREATIVE_TABLE_COLUMNS,
@@ -1426,8 +1390,7 @@ namespace
       sizeof(GLOBAL_TABLE_COLUMNS) / sizeof(GLOBAL_TABLE_COLUMNS[0]));
     Table::Row row(table.columns());
     row.add_field(config.currency_exchange_id());
-    row.add_field(GrpcAlgs::unpack_time(
-      config.fraud_user_deactivate_period()).tv_sec);
+    row.add_field(GrpcAlgs::unpack_time(config.fraud_user_deactivate_period()).tv_sec);
     row.add_field(decimal_value(config.cost_limit()));
     row.add_field(config.google_publisher_account_id());
     row.add_field(time_value(config.global_params_timestamp()));
@@ -1439,9 +1402,7 @@ namespace
   }
 
   void
-  print_simple_config_table(
-    const cm::CampaignConfig& config,
-    const std::string& command)
+  print_simple_config_table(const cm::CampaignConfig& config, const std::string& command)
   {
     if (command == "freq_cap" || command == "freq_caps")
     {
@@ -1504,8 +1465,7 @@ namespace
         Table::Row row(table.columns());
         row.add_field(item.currency_id());
         row.add_field(item.currency_exchange_id());
-        row.add_field(
-          Generics::Time(item.effective_date()).get_gm_time().format("%F"));
+        row.add_field(Generics::Time(item.effective_date()).get_gm_time().format("%F"));
         row.add_field(decimal_value(item.rate()));
         row.add_field(item.fraction_digits());
         row.add_field(item.currency_code());
@@ -1592,8 +1552,7 @@ namespace
         std::ostringstream localizations;
         for (const auto& localization : item.localizations())
         {
-          localizations << "(" << localization.language() << ", '" <<
-            localization.name() << "') ";
+          localizations << "(" << localization.language() << ", '" << localization.name() << "') ";
         }
         row.add_field(localizations.str());
         table.add_row(row);
@@ -1949,10 +1908,7 @@ namespace
       return;
     }
 
-    const auto& first = owner_reflection->GetRepeatedMessage(
-      owner,
-      &repeated_field,
-      0);
+    const auto& first = owner_reflection->GetRepeatedMessage(owner, &repeated_field, 0);
     const auto* descriptor = first.GetDescriptor();
     for (int field_i = 0; field_i < descriptor->field_count(); ++field_i)
     {
@@ -1966,10 +1922,7 @@ namespace
 
     for (int row_i = 0; row_i < rows_size; ++row_i)
     {
-      const auto& row = owner_reflection->GetRepeatedMessage(
-        owner,
-        &repeated_field,
-        row_i);
+      const auto& row = owner_reflection->GetRepeatedMessage(owner, &repeated_field, row_i);
       for (int field_i = 0; field_i < descriptor->field_count(); ++field_i)
       {
         if (field_i > 0)
@@ -2051,8 +2004,7 @@ namespace
 
     const cm::CampaignConfig config = fetch_config(
       reference,
-      geo_channels || command == "geo_channel" ||
-        command == "geo_coord_channel");
+      geo_channels || command == "geo_channel" || command == "geo_coord_channel");
     if (command == "globals")
     {
       print_globals(config);
@@ -2076,12 +2028,10 @@ namespace
     else
     {
       const auto* descriptor = config.GetDescriptor();
-      const auto* field = descriptor->FindFieldByName(
-        FIELD_BY_COMMAND.at(command));
+      const auto* field = descriptor->FindFieldByName(FIELD_BY_COMMAND.at(command));
       if (!field)
       {
-        throw std::runtime_error(
-          "internal error: config field not found for command: " + command);
+        throw std::runtime_error("internal error: config field not found for command: " + command);
       }
       print_message_table(config, *field);
     }
@@ -2130,9 +2080,7 @@ main(int argc, char** argv)
     args.add(Generics::AppUtils::equal_name("channels"), channels);
     args.add(Generics::AppUtils::equal_name("country"), country);
     args.add(Generics::AppUtils::equal_name("language"), language);
-    args.add(
-      Generics::AppUtils::equal_name("publisher_account_ids"),
-      publisher_account_ids);
+    args.add(Generics::AppUtils::equal_name("publisher_account_ids"), publisher_account_ids);
     args.add(Generics::AppUtils::equal_name("format"), format);
     args.add(
       Generics::AppUtils::equal_name("referer") ||
@@ -2147,10 +2095,7 @@ main(int argc, char** argv)
     args.add(Generics::AppUtils::equal_name("match"), match);
     args.add(Generics::AppUtils::equal_name("geo_channels"), geo_channels);
     args.add(Generics::AppUtils::equal_name("optout"), optout);
-    args.add(
-      Generics::AppUtils::equal_name("id") ||
-      Generics::AppUtils::short_name("i"),
-      ccid);
+    args.add(Generics::AppUtils::equal_name("id") || Generics::AppUtils::short_name("i"), ccid);
     args.add(Generics::AppUtils::equal_name("tag_id"), tag_id);
     args.add(Generics::AppUtils::equal_name("user_status"), user_status);
     args.add(Generics::AppUtils::equal_name("colo_id"), colo_id);
@@ -2172,12 +2117,7 @@ main(int argc, char** argv)
 
     const std::string& command = commands.front();
 
-    if (print_config_command(
-      *reference,
-      command,
-      geo_channels.enabled(),
-      *ccid,
-      ccid.installed()))
+    if (print_config_command(*reference, command, geo_channels.enabled(), *ccid, ccid.installed()))
     {
       return 0;
     }
@@ -2223,8 +2163,7 @@ main(int argc, char** argv)
         *random,
         optout.enabled());
       params->mutable_context_info()->set_client(option_value(client_name));
-      params->mutable_context_info()->set_client_version(
-        option_value(client_version));
+      params->mutable_context_info()->set_client_version(option_value(client_version));
       params->mutable_context_info()->set_platform(option_value(platform));
       params->mutable_context_info()->set_web_browser(option_value(browser));
       fill_channels(channels, params->mutable_channels());
@@ -2301,9 +2240,7 @@ main(int argc, char** argv)
       request.set_user_status(*user_status);
       if (publisher_account_ids.installed())
       {
-        add_ids(
-          parse_ids(*publisher_account_ids),
-          request.mutable_publisher_account_ids());
+        add_ids(parse_ids(*publisher_account_ids), request.mutable_publisher_account_ids());
       }
       const auto response = call<cm::GetPubPixelsResponse>(
         client,
@@ -2342,8 +2279,7 @@ main(int argc, char** argv)
       {
         std::cout << channel.channel_id() << '\t' <<
           channel.use_count() << '\t' <<
-          channel.language() << '\t' <<
-          channel.discover_query() << '\n';
+          channel.language() << '\t' << channel.discover_query() << '\n';
       }
     }
     else if (command == "get_file")

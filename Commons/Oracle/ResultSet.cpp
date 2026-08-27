@@ -14,9 +14,7 @@
 # include "ResultSetDummyImpl.cpp"
 #endif
 
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   ResultSet::~ResultSet() noexcept
   {}
@@ -24,7 +22,7 @@ namespace Oracle
   void ResultSet::check_terminated_(const char* fun) const
     /*throw(NotSupported)*/
   {
-    if(statement_->is_terminated_())
+    if (statement_->is_terminated_())
     {
       Stream::Error error;
       error << fun << CONN_TERMINATED_ERROR;
@@ -42,6 +40,4 @@ namespace Oracle
   {
     return get_timestamp(ind);
   }
-}
-}
 }

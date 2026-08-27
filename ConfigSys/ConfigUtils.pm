@@ -4,11 +4,11 @@ sub print_value
 {
   my ($value, $tab) = @_;
 
-  if(ref($value) eq 'HASH')
+  if (ref($value) eq 'HASH')
   {
     my $ret = "$tab\{ \n";
 
-    while(my ($key, $value) = each(%$value))
+    while (my ($key, $value) = each(%$value))
     {
       $ret = $ret . $tab . "  $key => " . print_value($value, "$tab  ") . ",\n";
     }
@@ -44,7 +44,7 @@ sub save
     die "Error: can't open $out for writing.\n";
 
   print OUTPUT_FILE "%CONFIG = (%CONFIG, \n";
-  while(my ($key, $value) = each(%$vars))
+  while (my ($key, $value) = each(%$vars))
   {
     print OUTPUT_FILE "  '$key' => ". print_value($value, "  "). ",\n";
   }

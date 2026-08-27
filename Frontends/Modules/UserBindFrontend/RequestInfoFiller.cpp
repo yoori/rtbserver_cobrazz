@@ -4,74 +4,74 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::UserBind::Aspect
+{
+  const char USER_BIND_FRONTEND[] = "UserBindFrontend";
+}
+
+namespace AdServer::UserBind::Request::Cookies
+{
+  const String::SubString COHORT("ct");
+  const String::SubString GA_USER_ID("_ga");
+  const String::SubString GCLU_USER_ID("_gcl_au");
+  const String::SubString YM_USER_ID("_ym_uid");
+}
+
+namespace AdServer::UserBind::Request::Context
+{
+  const String::SubString AMP("*amp*");
+  const String::SubString EQL("*eql*");
+
+  const String::SubString EXTERNAL_IDS[] = {
+    String::SubString("id"),
+    String::SubString("tid"),
+    String::SubString("ssp_user_id"),
+    String::SubString("google_gid")
+  };
+
+  const String::SubString CLID_ID("clid");
+  const String::SubString SOURCE_ID("src");
+  const String::SubString OPTOUT("OPTED_OUT");
+  const String::SubString LOCATION_NAME("loc.name");
+  const String::SubString COLOCATION_ID("colo");
+  const String::SubString IP_ADDRESS("debug.ip");
+  const String::SubString DO_PASSBACK("pbf");
+  const String::SubString GENERATE_EXTERNAL_ID("gi");
+  const String::SubString BIDSWITCH_SSP_ID("bidswitch_ssp_id");
+  const String::SubString DEBUG_CURRENT_TIME("debug-time");
+  const String::SubString PASSBACK_URL("passback");
+  const String::SubString PASSBACK_URL2("url");
+  const String::SubString DO_DELETE("delete");
+  const String::SubString ADD_USER_ID("au");
+  const String::SubString DISABLE_SECURE_REDIRECT("nosecure");
+  const String::SubString CHANNELS_WL("sg_wl");
+  const String::SubString CL_ID("cl_id");
+  const String::SubString SESSION_ID("session_id");
+
+  // Used to return back somedata to a sender
+  const String::SubString PUSH_DATA[] = {
+    String::SubString("fp"),
+    String::SubString("google_push")
+  };
+
+  const String::SubString EXTERNAL_ID("fid");
+  const String::SubString GOOGLE_ERROR("google_error");
+}
+
+namespace AdServer::UserBind::Request::Header
+{
+  const String::SubString REM_HOST(".remotehost");
+  const String::AsciiStringManip::Caseless X_FORWARDED_FOR("x-forwarded-for");
+  const String::AsciiStringManip::Caseless FCGI_X_FORWARDED_FOR("x_forwarded_for");
+  const String::AsciiStringManip::Caseless USER_AGENT("user-agent");
+  const String::AsciiStringManip::Caseless FCGI_USER_AGENT("user_agent");
+  const String::AsciiStringManip::Caseless REFERER("referer");
+  const String::SubString SECURE("secure");
+  const String::SubString HOST("host");
+}
+
 namespace AdServer::UserBind
 {
-  namespace Aspect
-  {
-    const char USER_BIND_FRONTEND[] = "UserBindFrontend";
-  }
-
-  namespace Request::Cookies
-  {
-      const String::SubString COHORT("ct");
-      const String::SubString GA_USER_ID("_ga");
-      const String::SubString GCLU_USER_ID("_gcl_au");
-      const String::SubString YM_USER_ID("_ym_uid");
-    }
-
-  namespace Request::Context
-    {
-      const String::SubString AMP("*amp*");
-      const String::SubString EQL("*eql*");
-
-      const String::SubString EXTERNAL_IDS[] = {
-        String::SubString("id"),
-        String::SubString("tid"),
-        String::SubString("ssp_user_id"),
-        String::SubString("google_gid")
-      };
-
-      const String::SubString CLID_ID("clid");
-      const String::SubString SOURCE_ID("src");
-      const String::SubString OPTOUT("OPTED_OUT");
-      const String::SubString LOCATION_NAME("loc.name");
-      const String::SubString COLOCATION_ID("colo");
-      const String::SubString IP_ADDRESS("debug.ip");
-      const String::SubString DO_PASSBACK("pbf");
-      const String::SubString GENERATE_EXTERNAL_ID("gi");
-      const String::SubString BIDSWITCH_SSP_ID("bidswitch_ssp_id");
-      const String::SubString DEBUG_CURRENT_TIME("debug-time");
-      const String::SubString PASSBACK_URL("passback");
-      const String::SubString PASSBACK_URL2("url");
-      const String::SubString DO_DELETE("delete");
-      const String::SubString ADD_USER_ID("au");
-      const String::SubString DISABLE_SECURE_REDIRECT("nosecure");
-      const String::SubString CHANNELS_WL("sg_wl");
-      const String::SubString CL_ID("cl_id");
-      const String::SubString SESSION_ID("session_id");
-
-      // Used to return back somedata to a sender
-      const String::SubString PUSH_DATA[] = {
-        String::SubString("fp"),
-        String::SubString("google_push")
-      };
-
-      const String::SubString EXTERNAL_ID("fid");
-      const String::SubString GOOGLE_ERROR("google_error");
-    }
-
-  namespace Request::Header
-    {
-      const String::SubString REM_HOST(".remotehost");
-      const String::AsciiStringManip::Caseless X_FORWARDED_FOR("x-forwarded-for");
-      const String::AsciiStringManip::Caseless FCGI_X_FORWARDED_FOR("x_forwarded_for");
-      const String::AsciiStringManip::Caseless USER_AGENT("user-agent");
-      const String::AsciiStringManip::Caseless FCGI_USER_AGENT("user_agent");
-      const String::AsciiStringManip::Caseless REFERER("referer");
-      const String::SubString SECURE("secure");
-      const String::SubString HOST("host");
-    }
-
   namespace
   {
     class UuidParamProcessor:
@@ -90,15 +90,12 @@ namespace AdServer::UserBind
       {}
 
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         noexcept
       {
         try
         {
-          FrontendCommons::SignedUuidParamProcessor<RequestInfo>::process(
-            request_info, value);
+          FrontendCommons::SignedUuidParamProcessor<RequestInfo>::process(request_info, value);
 
           if (request_info.user_status == AdServer::CampaignSvcs::US_UNDEFINED &&
             request_info.user_id == AdServer::Commons::PROBE_USER_ID)
@@ -130,16 +127,11 @@ namespace AdServer::UserBind
       "cohort = " << cohort << "\n" <<
       "colo_id = " << colo_id << "\n" <<
       "external_id = " << external_id << "\n" <<
-      "source_id = " << source_id << "\n" <<
-      "peer_ip = " << peer_ip << "\n"
-      "location = ";
+      "source_id = " << source_id << "\n" << "peer_ip = " << peer_ip << "\n" "location = ";
 
     if (location)
     {
-      os <<
-        location->country << '/' <<
-        location->region << '/' <<
-        location->city;
+      os << location->country << '/' << location->region << '/' << location->city;
     }
 
     os << std::endl;
@@ -179,28 +171,23 @@ namespace AdServer::UserBind
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTOUT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::OptOutParamProcessor<RequestInfo>(
-          &RequestInfo::user_status))));
+        new FrontendCommons::OptOutParamProcessor<RequestInfo>(&RequestInfo::user_status))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookies::COHORT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::cohort))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::cohort))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookies::GA_USER_ID,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::ga_user_id))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::ga_user_id))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookies::GCLU_USER_ID,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::gclu_user_id))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::gclu_user_id))));
     cookie_processors_.insert(std::make_pair(
       Request::Cookies::YM_USER_ID,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::ym_user_id))));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::ym_user_id))));
 
     add_processor_(true, true, Request::Context::CLID_ID,
       new UuidParamProcessor(
@@ -209,53 +196,40 @@ namespace AdServer::UserBind
         true // clid override cookies now !!!
         ));
 
-    for(unsigned long i = 0;
+    for (unsigned long i = 0;
         i < sizeof(Request::Context::EXTERNAL_IDS) /
           sizeof(Request::Context::EXTERNAL_IDS[0]); ++i)
     {
       add_processor_(false, true, Request::Context::EXTERNAL_IDS[i],
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::short_external_id));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::short_external_id));
     }
 
     add_processor_(false, true, Request::Context::SOURCE_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::source_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::source_id));
     add_processor_(false, true, Request::Context::LOCATION_NAME,
-      new FrontendCommons::LocationNameParamProcessor<RequestInfo>(
-        &RequestInfo::location));
+      new FrontendCommons::LocationNameParamProcessor<RequestInfo>(&RequestInfo::location));
     add_processor_(false, true, Request::Context::COLOCATION_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::colo_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::colo_id));
     add_processor_(false, true, Request::Context::DO_PASSBACK,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::passback));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::passback));
     add_processor_(false, true, Request::Context::GENERATE_EXTERNAL_ID,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::generate_external_id));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::generate_external_id));
     add_processor_(false, true, Request::Context::BIDSWITCH_SSP_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::ssp_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::ssp_id));
     add_processor_(false, true, Request::Context::DEBUG_CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(&RequestInfo::time));
     add_processor_(false, true, Request::Context::PASSBACK_URL,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::passback_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::passback_url));
     add_processor_(false, true, Request::Context::PASSBACK_URL2,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::passback_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::passback_url));
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::external_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::external_id));
     add_processor_(true, false, Request::Header::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(true, false, Request::Header::HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::server_host));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::server_host));
     add_processor_(false, true, Request::Context::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(true, false, Request::Header::X_FORWARDED_FOR.str,
       new FrontendCommons::StringCheckParamProcessor<
         RequestInfo, String::AsciiStringManip::CharCategory>(
@@ -265,46 +239,36 @@ namespace AdServer::UserBind
         RequestInfo, String::AsciiStringManip::CharCategory>(
         &RequestInfo::x_peer_ip, IPCat, 30, false, true));
     add_processor_(true, false, Request::Header::USER_AGENT.str,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, false, Request::Header::FCGI_USER_AGENT.str,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     // referer must be saved as is (without normalization) - this required for yandex sign calc
     add_processor_(true, false, Request::Header::REFERER.str,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::referer));
     add_processor_(true, false, Request::Header::SECURE,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::secure));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::secure));
     add_processor_(false, true, Request::Context::DO_DELETE,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::delete_op));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::delete_op));
     add_processor_(false, true, Request::Context::ADD_USER_ID,
-      new FrontendCommons::UuidParamProcessor<RequestInfo>(
-        &RequestInfo::add_user_id));
+      new FrontendCommons::UuidParamProcessor<RequestInfo>(&RequestInfo::add_user_id));
     add_processor_(false, true, Request::Context::DISABLE_SECURE_REDIRECT,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::disable_secure_redirect));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::disable_secure_redirect));
     add_processor_(false, true, Request::Context::CL_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::cl_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::cl_id));
     add_processor_(false, true, Request::Context::SESSION_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::session_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::session_id));
     add_processor_(false, true, Request::Context::CHANNELS_WL,
       new FrontendCommons::NumberContainerParamProcessor<
         RequestInfo,
         RequestInfo::ChannelsWl,
         String::AsciiStringManip::SepComma>(&RequestInfo::channels_wl));
 
-    for(unsigned long i = 0;
+    for (unsigned long i = 0;
         i < sizeof(Request::Context::PUSH_DATA) /
           sizeof(Request::Context::PUSH_DATA[0]); ++i)
     {
       add_processor_(false, true, Request::Context::PUSH_DATA[i],
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::push_data));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::push_data));
     }
     add_processor_(false, true, Request::Context::GOOGLE_ERROR,
         new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
@@ -324,25 +288,19 @@ namespace AdServer::UserBind
     headers_processing_(request_info, request);
     params_processing_(request_info, request, path_args);
 
-    if(!request_info.x_peer_ip.empty())
+    if (!request_info.x_peer_ip.empty())
     {
       //x-forwarded-for must override other sources
       request_info.peer_ip = request_info.x_peer_ip;
     }
 
-    if(!request_info.location &&
-       !request_info.peer_ip.empty() &&
-       ip_map_.get())
+    if (!request_info.location && !request_info.peer_ip.empty() && ip_map_.get())
     {
       try
       {
         GeoIPMapping::IPMapCity2::CityLocation geo_location;
 
-        if(ip_map_->city_location_by_addr(
-             request_info.peer_ip.c_str(),
-             geo_location,
-             false,
-             true))
+        if (ip_map_->city_location_by_addr(request_info.peer_ip.c_str(), geo_location, false, true))
         {
           request_info.location = std::make_shared<FrontendCommons::Location>();
           request_info.location->country = geo_location.country_code.str();
@@ -355,11 +313,11 @@ namespace AdServer::UserBind
       {}
     }
 
-    if(request_info.source_id.empty() && request_info.server_host == String::SubString("ad-blast.ru"))
+    if (request_info.source_id.empty() && request_info.server_host == String::SubString("ad-blast.ru"))
     {
       // special processing of ad-blast.ru?id=... request
       request_info.source_id = "adblast0";
-      if(!request_info.short_external_id.empty())
+      if (!request_info.short_external_id.empty())
       {
         try
         {
@@ -375,19 +333,19 @@ namespace AdServer::UserBind
       }
     }
 
-    if(request_info.external_id.empty() && !request_info.short_external_id.empty())
+    if (request_info.external_id.empty() && !request_info.short_external_id.empty())
     {
       request_info.external_id = request_info.source_id + "/" +
         request_info.short_external_id;
     }
 
-    if(!request_info.external_id.empty())
+    if (!request_info.external_id.empty())
     {
       std::string short_external_id;
 
       // get short external id by external_id
       std::size_t pos = request_info.external_id.find('/');
-      if(pos != std::string::npos)
+      if (pos != std::string::npos)
       {
         short_external_id.assign(
           request_info.external_id,
@@ -400,8 +358,7 @@ namespace AdServer::UserBind
       }
 
       // if external_id defined in skip list and gi is true - generate user id
-      if(skip_external_ids_.find(short_external_id) !=
-        skip_external_ids_.end())
+      if (skip_external_ids_.find(short_external_id) != skip_external_ids_.end())
       {
         request_info.external_id.clear();
       }
@@ -411,7 +368,7 @@ namespace AdServer::UserBind
       }
     }
 
-    if(!request_info.external_id.empty())
+    if (!request_info.external_id.empty())
     {
       request_info.generate_external_id = false;
     }
@@ -425,7 +382,7 @@ namespace AdServer::UserBind
       request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
     }
 
-    if(!allowed_passback_domains_.empty() && !request_info.passback_url.empty())
+    if (!allowed_passback_domains_.empty() && !request_info.passback_url.empty())
     {
       bool passback_allowed = false;
 
@@ -434,19 +391,19 @@ namespace AdServer::UserBind
         HTTP::BrowserAddress addr(request_info.passback_url);
         String::SubString host = addr.host();
 
-        for(auto it = allowed_passback_domains_.begin();
+        for (auto it = allowed_passback_domains_.begin();
           it != allowed_passback_domains_.end(); ++it)
         {
-          if(*it->begin() == '*')
+          if (*it->begin() == '*')
           {
             const std::string& cmp = *it;
-            if(host.size() >= cmp.size() - 1 &&
+            if (host.size() >= cmp.size() - 1 &&
                host.compare(host.size() - (cmp.size() - 1), cmp.size() - 1, cmp.data() + 1) == 0)
             {
               passback_allowed = true;
             }
           }
-          else if(host.compare(*it) == 0)
+          else if (host.compare(*it) == 0)
           {
             passback_allowed = true;
           }
@@ -455,7 +412,7 @@ namespace AdServer::UserBind
       catch(...)
       {}
 
-      if(!passback_allowed)
+      if (!passback_allowed)
       {
         request_info.passback_url.clear();
       }
@@ -465,35 +422,31 @@ namespace AdServer::UserBind
       request_info.passback_url.clear();
     }
 
-    if(!request_info.ga_user_id.empty())
+    if (!request_info.ga_user_id.empty())
     {
       request_info.ga_user_id = std::string("ga/") + request_info.ga_user_id;
     }
 
-    if(!request_info.gclu_user_id.empty())
+    if (!request_info.gclu_user_id.empty())
     {
       request_info.gclu_user_id = std::string("gu/") + request_info.gclu_user_id;
     }
 
-    if(!request_info.ym_user_id.empty())
+    if (!request_info.ym_user_id.empty())
     {
       request_info.ym_user_id = std::string("ym/") + request_info.ym_user_id;
     }
 
-    if(request_info.colo_id == 0)
+    if (request_info.colo_id == 0)
     {
       // resolve colo by IP + cohort
-      FrontendCommons::IPMatcher_var ip_matcher =
-        common_module_->ip_matcher();
+      FrontendCommons::IPMatcher_var ip_matcher = common_module_->ip_matcher();
 
       try
       {
         FrontendCommons::IPMatcher::MatchResult ip_match_result;
-        if(ip_matcher.in() && !request_info.peer_ip.empty() &&
-          ip_matcher->match(
-            ip_match_result,
-            request_info.peer_ip,
-            request_info.cohort))
+        if (ip_matcher.in() && !request_info.peer_ip.empty() &&
+          ip_matcher->match(ip_match_result, request_info.peer_ip, request_info.cohort))
         {
           request_info.colo_id = ip_match_result.colo_id;
         }
@@ -502,7 +455,7 @@ namespace AdServer::UserBind
       {}
     }
 
-    if(request_info.colo_id == 0)
+    if (request_info.colo_id == 0)
     {
       request_info.colo_id = colo_id_;
     }
@@ -517,13 +470,11 @@ namespace AdServer::UserBind
   {
     const HTTP::ParamList& params = request.params();
 
-    for(HTTP::ParamList::const_iterator it = params.begin();
-        it != params.end(); ++it)
+    for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        param_processors_.find(it->name);
+      ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-      if(param_it != param_processors_.end())
+      if (param_it != param_processors_.end())
       {
         param_it->second->process(request_info, it->value);
       }
@@ -531,18 +482,13 @@ namespace AdServer::UserBind
 
     FrontendCommons::ParsedParamsMap parsed_params;
 
-    FrontendCommons::parse_args(
-      parsed_params,
-      path_args,
-      AMP,
-      EQL);
+    FrontendCommons::parse_args(parsed_params, path_args, AMP, EQL);
 
-    for(auto it = parsed_params.begin(); it != parsed_params.end(); ++it)
+    for (auto it = parsed_params.begin(); it != parsed_params.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        param_processors_.find(it->first);
+      ParamProcessorMap::const_iterator param_it = param_processors_.find(it->first);
 
-      if(param_it != param_processors_.end())
+      if (param_it != param_processors_.end())
       {
         param_it->second->process(request_info, it->second);
       }
@@ -559,16 +505,14 @@ namespace AdServer::UserBind
   {
     RequestInfoParamProcessor_var processor_ptr(processor);
 
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      header_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      param_processors_.insert(std::make_pair(name, processor_ptr));
     }
   }
 
@@ -580,16 +524,14 @@ namespace AdServer::UserBind
   {
     const HTTP::SubHeaderList& headers = request.headers();
 
-    for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-      it != headers.end(); ++it)
+    for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
     {
       std::string header_name = it->name.str();
       String::AsciiStringManip::to_lower(header_name);
 
-      ParamProcessorMap::const_iterator param_it =
-        header_processors_.find(header_name);
+      ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-      if(param_it != header_processors_.end())
+      if (param_it != header_processors_.end())
       {
         param_it->second->process(request_info, it->value);
       }
@@ -612,26 +554,21 @@ namespace AdServer::UserBind
     }
     catch(HTTP::CookieList::InvalidArgument& ex)
     {
-      if(logger()->log_level() >= Logging::Logger::TRACE)
+      if (logger()->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " <<
-          ex.what();
-        logger()->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_BIND_FRONTEND);
+        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " << ex.what();
+        logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_BIND_FRONTEND);
       }
 
       throw InvalidParamException("");
     }
 
-    for(HTTP::CookieList::const_iterator it = cookies.begin();
-        it != cookies.end(); ++it)
+    for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
     {
-      ParamProcessorMap::const_iterator param_it =
-        cookie_processors_.find(it->name);
+      ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-      if(param_it != cookie_processors_.end())
+      if (param_it != cookie_processors_.end())
       {
         param_it->second->process(request_info, it->value);
       }

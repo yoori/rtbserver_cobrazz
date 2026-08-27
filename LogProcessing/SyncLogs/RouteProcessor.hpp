@@ -5,9 +5,7 @@
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   /**
    * RouteProcessor interface
@@ -23,5 +21,4 @@ namespace LogProcessing
 
   typedef ReferenceCounting::QualPtr<RouteProcessor>
     RouteProcessor_var;
-}
 }

@@ -137,8 +137,7 @@ namespace AdServer::Grpc
     if (logger_)
     {
       logger_->sstream(Logging::Logger::NOTICE, aspect_.c_str()) <<
-        "gRPC endpoint started at " << bind_address_ <<
-        ", threads = " << threads_;
+        "gRPC endpoint started at " << bind_address_ << ", threads = " << threads_;
     }
   }
 

@@ -544,7 +544,7 @@
     </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name="SkipExternalIdsType">  
+  <xsd:complexType name="SkipExternalIdsType">
     <xsd:sequence>
       <xsd:element name="Id"
         type="SkipExternalIdType"
@@ -553,7 +553,7 @@
     </xsd:sequence>
     <xsd:attribute name="skip_external_ids" type="xsd:string" use="required"/>
   </xsd:complexType>
-  
+
   <xsd:complexType name="SkipExternalIdType">
     <xsd:attribute name="value" type="xsd:string" use="required"/>
   </xsd:complexType>
@@ -570,7 +570,7 @@
     <xsd:attribute name="vast_notice" type="NoticeInstantiateType" use="required"/>
 
     <xsd:attribute name="native_instantiate_type" type="NativeInstantiateType" use="required"/>
-    <xsd:attribute name="native_impression_tracker_type" 
+    <xsd:attribute name="native_impression_tracker_type"
       type="NativeImpressionTrackerType" use="optional"/>
     <xsd:attribute name="native_notice" type="NoticeInstantiateType" use="required"/>
 

@@ -48,7 +48,7 @@ sub init
     { token => uc($test_name) . "_OPTION_1",
       option_group_id =>  $template_id_simple->{option_group_id},
       template_id => $template_id_simple });
-      
+
   $ns->create(CreativeOptionValue => {
     option_id => $option,
     creative_id => $campaign->{creative_id},
@@ -60,10 +60,10 @@ sub init
   my $js_ucode = "\\u000a\\u043f\\u0440\\u0438\\u002e\\u003a\\u002f\\u003c\\u003e01abc\\u0020\\u0026\\u0025\\u003f";
   my $mime_url = "%0A%D0%BF%D1%80%D0%B8.%3A%2F%3C%3E01abc+%26%25%3F";
   my $xml = "&#xa;&#x43f;&#x440;&#x438;.:/&lt;&gt;01abc &amp;%?";
-  my $expected_body1 = $orig . "\n" . 
-    $js . "\n" . 
-    $js_ucode . "\n" . 
-    $mime_url . "\n" . 
+  my $expected_body1 = $orig . "\n" .
+    $js . "\n" .
+    $js_ucode . "\n" .
+    $mime_url . "\n" .
     $xml . "\n";
   Encode::_utf8_on($expected_body1);
 

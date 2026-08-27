@@ -29,8 +29,7 @@ namespace AdServer::RequestInfoSvcs
       TagRequestGroupProcessor::TagRequestGroupInfo& tag_request_group_info,
       const TagGroupWriter& tag_request_group_writer)
     {
-      tag_request_group_info.time =
-        Generics::Time(tag_request_group_writer.min_time());
+      tag_request_group_info.time = Generics::Time(tag_request_group_writer.min_time());
       tag_request_group_info.site_id = tag_request_group_writer.site_id();
       tag_request_group_info.country = tag_request_group_writer.country();
       tag_request_group_info.colo_id = tag_request_group_writer.colo_id();
@@ -96,7 +95,7 @@ namespace AdServer::RequestInfoSvcs
        */
       if (tag_request_info.page_load_id.present() && *tag_request_info.page_load_id)
       {
-        for(UserTagRequestMergeProfileWriter::tag_groups_Container::
+        for (UserTagRequestMergeProfileWriter::tag_groups_Container::
               reverse_iterator change_git = tag_groups.rbegin();
             change_git != tag_groups.rend(); ++change_git)
         {
@@ -118,12 +117,11 @@ namespace AdServer::RequestInfoSvcs
       }
       else
       {
-        for(UserTagRequestMergeProfileWriter::tag_groups_Container::
+        for (UserTagRequestMergeProfileWriter::tag_groups_Container::
             reverse_iterator change_git = tag_groups.rbegin();
           change_git != tag_groups.rend(); ++change_git)
         {
-          if (change_git->max_time() + merge_by_time_bound.tv_sec <
-             tag_request_info.time.tv_sec)
+          if (change_git->max_time() + merge_by_time_bound.tv_sec < tag_request_info.time.tv_sec)
           {
             break;
           }
@@ -150,8 +148,7 @@ namespace AdServer::RequestInfoSvcs
           // find new position for changed max_time
           UserTagRequestMergeProfileWriter::tag_groups_Container::iterator ins_it =
             target_git.base();
-          while (ins_it != tag_groups.end() &&
-            ins_it->max_time() < tag_request_info.time.tv_sec)
+          while (ins_it != tag_groups.end() && ins_it->max_time() < tag_request_info.time.tv_sec)
           {
             ++ins_it;
           }
@@ -168,8 +165,7 @@ namespace AdServer::RequestInfoSvcs
         // delegate new tag request group
         tag_group_info_list.push_back(*tag_group_info_list.rbegin());
         tag_group_info_list.rbegin()->tags.insert(tag_request_info.tag_id);
-        tag_group_info_list.rbegin()->ad_shown |=
-          (tag_request_info.ad_shown ? 1 : 0);
+        tag_group_info_list.rbegin()->ad_shown |= (tag_request_info.ad_shown ? 1 : 0);
         tag_group_info_list.rbegin()->rollback = false;
 
         if (target_git->tags().size() + 1 < MAX_TAGS_IN_GROUP)
@@ -248,8 +244,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init ProfileMap at '" << rocksdb_path <<
-        "'. Caught eh::Exception: " <<
-        ex.what();
+        "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -297,7 +292,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      for(TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
+      for (TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
           tag_request_group_info_list.begin();
         it != tag_request_group_info_list.end(); ++it)
       {
@@ -345,7 +340,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      for(TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
+      for (TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
           tag_request_group_info_list.begin();
         it != tag_request_group_info_list.end(); ++it)
       {

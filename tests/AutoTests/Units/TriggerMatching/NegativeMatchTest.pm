@@ -20,10 +20,10 @@ sub init
     name => 1,
     account_id => $account,
     keyword_list => "squid\n" .
-      "-squid-ocean\n" . 
-      "-giant squid\n" . 
-      "-ocean\n" . 
-      "-\"mega squid\"\n" . 
+      "-squid-ocean\n" .
+      "-giant squid\n" .
+      "-ocean\n" .
+      "-\"mega squid\"\n" .
       "small squid",
     url_list => "-ocean.com\n" .
       "-squids-online.com",
@@ -120,8 +120,8 @@ sub init
     name => "ExprCCG",
     account_id => $account,
     expression =>
-      $channels[0]->channel_id() . "|" . 
-      $channels[1]->channel_id() . "|" . 
+      $channels[0]->channel_id() . "|" .
+      $channels[1]->channel_id() . "|" .
       $channels[2]->channel_id()  . "|" .
       $channels[3]->channel_id()  . "|" .
       $channels[4]->channel_id() . "|" .
@@ -167,7 +167,7 @@ sub init
   $ns->output("SEARCH17", "SplitPageSearchNeg3");
   $ns->output("KWD17", "SplitPageSearch,SplitPageSearchNeg2");
   $ns->output("KWD18", "SplitPageSearch,SplitPageSearchNeg3");
-  
+
   $ns->output("Channel1_1", $channels[0]->page_key());
   $ns->output("Channel1_2", $channels[0]->url_key());
   $ns->output("Channel1_3", $channels[0]->search_key());

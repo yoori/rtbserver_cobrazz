@@ -79,8 +79,7 @@ struct TestObjectList:
       }
     }
 
-    std::list<TestObject_var>::insert(
-      it, ReferenceCounting::add_ref(obj));
+    std::list<TestObject_var>::insert(it, ReferenceCounting::add_ref(obj));
   }
 };
 
@@ -98,17 +97,15 @@ int perf_test()
   {
     Generics::Timer timer;
 
-    SequencePacker_var sequence_packer(
-      new SequencePacker<TestObject, TestObjectList>());
+    SequencePacker_var sequence_packer(new SequencePacker<TestObject, TestObjectList>());
 
     TestObjectList_var prev_seq;
 
     timer.start();
 
-    for(unsigned long i = 1; i < 1000; ++i)
+    for (unsigned long i = 1; i < 1000; ++i)
     {
-      prev_seq = sequence_packer->get(
-        prev_seq.in(), TestObject_var(new TestObject(i)));
+      prev_seq = sequence_packer->get(prev_seq.in(), TestObject_var(new TestObject(i)));
     }
 
     timer.stop();
@@ -132,8 +129,7 @@ int perf_with_keep_test()
   {
     Generics::Timer timer;
 
-    SequencePacker_var sequence_packer(
-      new SequencePacker<TestObject, TestObjectList>());
+    SequencePacker_var sequence_packer(new SequencePacker<TestObject, TestObjectList>());
 
     std::list<TestObjectList_var> seqs;
 
@@ -142,10 +138,9 @@ int perf_with_keep_test()
 
       timer.start();
 
-      for(unsigned long i = 1; i < 1000; ++i)
+      for (unsigned long i = 1; i < 1000; ++i)
       {
-        prev_seq = sequence_packer->get(
-          prev_seq.in(), TestObject_var(new TestObject(i)));
+        prev_seq = sequence_packer->get(prev_seq.in(), TestObject_var(new TestObject(i)));
         seqs.push_back(prev_seq);
       }
 
@@ -179,14 +174,12 @@ main() noexcept
   int result = 0;
   try
   {
-    SequencePacker_var sequence_packer(
-      new SequencePacker<TestObject, TestObjectList>());
+    SequencePacker_var sequence_packer(new SequencePacker<TestObject, TestObjectList>());
 
     TestObjectList_var first_seq;
 
     {
-      first_seq =
-        sequence_packer->get(0, TestObject_var(new TestObject(1)));
+      first_seq = sequence_packer->get(0, TestObject_var(new TestObject(1)));
 
       TestObjectList_var second_seq =
         sequence_packer->get(first_seq, TestObject_var(new TestObject(2)));
@@ -194,17 +187,13 @@ main() noexcept
         sequence_packer->get(second_seq, TestObject_var(new TestObject(3)));
 
       {
-        TestObjectList_var first_seq_2 =
-          sequence_packer->get(0, TestObject_var(new TestObject(1)));
+        TestObjectList_var first_seq_2 = sequence_packer->get(0, TestObject_var(new TestObject(1)));
         TestObjectList_var second_seq_2 =
-          sequence_packer->get(first_seq_2,
-            TestObject_var(new TestObject(2)));
+          sequence_packer->get(first_seq_2, TestObject_var(new TestObject(2)));
         TestObjectList_var third_seq_2 =
-          sequence_packer->get(second_seq_2,
-            TestObject_var(new TestObject(3)));
+          sequence_packer->get(second_seq_2, TestObject_var(new TestObject(3)));
 
-        if (first_seq.in() != first_seq_2.in() ||
-          second_seq.in() != second_seq_2.in())
+        if (first_seq.in() != first_seq_2.in() || second_seq.in() != second_seq_2.in())
         {
           std::cerr << "sequence pointers isn't equal." << std::endl;
           result = 1;
@@ -214,15 +203,13 @@ main() noexcept
         second_seq.reset();
         second_seq_2.reset();
 
-        if (sequence_packer->ptrs_size_() != 2 ||
-          sequence_packer->size_() != 2)
+        if (sequence_packer->ptrs_size_() != 2 || sequence_packer->size_() != 2)
         {
           std::cerr
             << "sequence packer size isn't equal 2: " << std::endl
             << "  sequence_packer->ptrs_size_() = "
             << sequence_packer->ptrs_size_() << std::endl
-            << "  sequence_packer->size_() = "
-            << sequence_packer->size_() << std::endl;
+            << "  sequence_packer->size_() = " << sequence_packer->size_() << std::endl;
           result = 1;
         }
       }

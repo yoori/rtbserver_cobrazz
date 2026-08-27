@@ -37,15 +37,15 @@ tr.odd {
 
 tr.failed-even, tr.exception {
 	background-color: #f7f7f7;
-}	
+}
 
 tr.failed-odd, tr.failed {
 	background-color: #fff0f0;
-}	
+}
 
 tr.success {
 	background-color: #f0fff0;
-}	
+}
 
 td {
 	border: 1px dotted #dddddd;

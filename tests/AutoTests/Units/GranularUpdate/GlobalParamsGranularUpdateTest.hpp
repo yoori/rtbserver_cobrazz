@@ -14,10 +14,7 @@ namespace ORM = ::AutoTest::ORM;
 class GlobalParamsGranularUpdateTest: public BaseDBUnit
 {
 public:
-  GlobalParamsGranularUpdateTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  GlobalParamsGranularUpdateTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       currency_exchange_id_(0)
   {};
@@ -44,8 +41,7 @@ private:
      * @param connection specify DB connection.
      * @param id CurrencyExchange id to select.
      */
-    Exchange(DB::IConn& connection,
-      unsigned int id);
+    Exchange(DB::IConn& connection, unsigned int id);
 
     /**
      * @brief Constructor.
@@ -54,9 +50,7 @@ private:
      * @param connection specify DB connection
      * @param effective_date currency exchange date
      */
-    Exchange(
-      DB::IConn& connection,
-      const AutoTest::Time& effective_date);
+    Exchange(DB::IConn& connection, const AutoTest::Time& effective_date);
 
     ~Exchange();
 

@@ -2,11 +2,7 @@
 
 #include "OraException.hpp"
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
 #ifdef _USE_OCCI
   void oci_error_text(
@@ -50,9 +46,7 @@ namespace Oracle
 
     error << "'";
 
-    if(oci_error_handler &&
-       (status == OCI_SUCCESS_WITH_INFO ||
-        status == OCI_ERROR))
+    if (oci_error_handler && (status == OCI_SUCCESS_WITH_INFO || status == OCI_ERROR))
     {
       text err_buf[1024] = "";
       sb4 err_code = 0;
@@ -71,7 +65,7 @@ namespace Oracle
       }
     }
 
-    if(query)
+    if (query)
     {
       error << ", sql = " << query;
     }
@@ -90,11 +84,7 @@ namespace Oracle
     throw SqlException(error);
   }
 
-  void throw_type_error(
-    const char* fun,
-    unsigned long pos,
-    unsigned long type,
-    bool null)
+  void throw_type_error(const char* fun, unsigned long pos, unsigned long type, bool null)
   {
     std::string oci_type_name;
     switch(type)
@@ -113,7 +103,7 @@ namespace Oracle
     }
 
     Stream::Error error;
-    if(!null)
+    if (!null)
     {
       error << fun << ": Can't use '" << oci_type_name << "' as source, ";
     }
@@ -137,10 +127,7 @@ namespace Oracle
     /*throw(SqlException)*/
   {}
 
-  void throw_type_error(
-    const char*,
-    unsigned long,
-    bool)
+  void throw_type_error(const char*, unsigned long, bool)
   {}
 
 #endif
@@ -157,6 +144,4 @@ namespace Oracle
       passed_time << ", timeout = " << timeout;
     throw TimedOut(ostr);
   }
-}
-}
 }

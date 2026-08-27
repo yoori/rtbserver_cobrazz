@@ -113,10 +113,7 @@ namespace AdServer::RequestInfoSvcs
     }
 
     void
-    insert(
-      const MatchKeyHashAdapter& key,
-      MatchResult* match_result,
-      const Generics::Time& now)
+    insert(const MatchKeyHashAdapter& key, MatchResult* match_result, const Generics::Time& now)
       noexcept
     {
       CacheMap::value_type ins(key, new MatchResultHolder(now, match_result));
@@ -127,9 +124,7 @@ namespace AdServer::RequestInfoSvcs
     class MatchResultHolder: public ReferenceCounting::AtomicImpl
     {
     public:
-      MatchResultHolder(
-        const Generics::Time& actual_time_val,
-        MatchResult* match_result_val)
+      MatchResultHolder(const Generics::Time& actual_time_val, MatchResult* match_result_val)
         : actual_time(actual_time_val),
           match_result(ReferenceCounting::add_ref(match_result_val))
       {}
@@ -177,13 +172,6 @@ namespace AdServer::RequestInfoSvcs
     CacheMap cache_map_;
   };
 
-  ChannelMatcher::MatchKey::MatchKey(const ChannelIdArray& history_channels)
-    : match_key_holder_(new MatchKeyHolder(history_channels))
-  {}
-
-  ChannelMatcher::MatchKey::~MatchKey() noexcept
-  {}
-
   ChannelMatcher::MatchResult::MatchResult(
     const ChannelIdSet& result_channels_val,
     const ChannelIdSet& result_estimate_channels_val,
@@ -219,25 +207,7 @@ namespace AdServer::RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(): Caught eh::Exception: " <<
-        ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  ChannelMatcher::ExpressionChannelIndex_var
-  ChannelMatcher::get_channel_index_() const /*throw(Exception)*/
-  {
-    try
-    {
-      SyncPolicy::ReadGuard lock(lock_);
-      return ReferenceCounting::add_ref(channel_index_);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << "ChannelMatcher::get_channel_index_(): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::config(): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -251,7 +221,7 @@ namespace AdServer::RequestInfoSvcs
       ch_index->index(new_config->expression_channels);
       Config_var config = ReferenceCounting::add_ref(new_config);
       MatchCache_var match_cache;
-      if(cache_limit_ > 0)
+      if (cache_limit_ > 0)
       {
         match_cache = new MatchCache(cache_limit_);
       }
@@ -278,8 +248,7 @@ namespace AdServer::RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(...): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::config(...): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }

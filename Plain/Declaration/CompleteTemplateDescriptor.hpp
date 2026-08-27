@@ -12,9 +12,7 @@ namespace Declaration
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(InvalidParam, Exception);
 
-    CompleteTemplateDescriptor(
-      const char* name,
-      const BaseDescriptorList& args)
+    CompleteTemplateDescriptor(const char* name, const BaseDescriptorList& args)
       noexcept;
 
     virtual bool is_fixed() const noexcept = 0;

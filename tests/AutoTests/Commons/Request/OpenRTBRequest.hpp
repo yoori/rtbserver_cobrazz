@@ -5,47 +5,46 @@
 #include "BaseRequest.hpp"
 #include "DebugSizeParam.hpp"
 
+namespace AutoTest::OpenRtb
+{
+  /**
+   * @struct TagDescriptor
+   * @brief Open RTB parameter tag descriptor.
+   */
+  struct TagDescriptor
+  {
+    // tag open string
+    const char* begin;
+    // tag close string
+    const char* end;
+  };
+
+  enum EscapeJSON
+  {
+    JSON_ESCAPE,
+    JSON_RAW
+  };
+
+  enum RequestFlags
+  {
+    RF_SET_DEFS = 0x01,   // set params to defaults
+    RF_SEND_BANNER = 0x02 // send banner object in request even if it's empty
+  };
+
+  // Tag for empty (raw) parameter
+  extern const TagDescriptor EMPTY_TAG;
+  // Tag for string (quoted) parameter
+  extern const TagDescriptor STRING_TAG;
+  // Tag for struct (group) parameter
+  extern const TagDescriptor STRUCT_TAG;
+  // Tag for array of structs (group) parameter
+  extern const TagDescriptor ARRAY_TAG;
+
+  typedef const TagDescriptor& TagConst;
+}
+
 namespace AutoTest
 {
-
-  namespace OpenRtb
-  {
-    /**
-     * @struct TagDescriptor
-     * @brief Open RTB parameter tag descriptor.
-     */
-    struct TagDescriptor
-    {
-      // tag open string
-      const char* begin;
-      // tag close string
-      const char* end;
-    };
-
-    enum EscapeJSON
-    {
-      JSON_ESCAPE,
-      JSON_RAW
-    };
-
-    enum RequestFlags
-    {
-      RF_SET_DEFS = 0x01,   // set params to defaults
-      RF_SEND_BANNER = 0x02 // send banner object in request even if it's empty
-    };
-
-    // Tag for empty (raw) parameter
-    extern const TagDescriptor EMPTY_TAG;
-    // Tag for string (quoted) parameter
-    extern const TagDescriptor STRING_TAG;
-    // Tag for struct (group) parameter
-    extern const TagDescriptor STRUCT_TAG;
-    // Tag for array of structs (group) parameter
-    extern const TagDescriptor ARRAY_TAG;
-
-    typedef const TagDescriptor& TagConst;
-  }
-
   /**
    * @class OpenRTBRequest
    * @brief Presentation of openRTB bid request.
@@ -78,9 +77,7 @@ namespace AutoTest
        * @param request request which param belongs to
        * @param other param
        */
-      Parameter(
-        BaseParamsContainer* container,
-        const Parameter& other);
+      Parameter(BaseParamsContainer* container, const Parameter& other);
 
       /**
        * @brief Destructor.
@@ -93,10 +90,7 @@ namespace AutoTest
        * @param out stream where param will be written to.
        * @param indentation.
        */
-      virtual void print(
-        std::ostream& out,
-        unsigned long indent,
-        bool print_name) const;
+      virtual void print(std::ostream& out, unsigned long indent, bool print_name) const;
 
       /**
        * @brief Print request parameter.
@@ -107,10 +101,7 @@ namespace AutoTest
        * @return false always.
        */
       virtual
-      bool print (
-        std::ostream& out,
-        const char* prefix,
-        const char* eql) const;
+      bool print (std::ostream& out, const char* prefix, const char* eql) const;
 
       OpenRtb::TagConst tag() const;
     };
@@ -135,10 +126,7 @@ namespace AutoTest
        * @param parameter name
        * @param parameter tag
        */
-      Group(
-        BaseParamsContainer* container,
-        const char* name,
-        bool required = false);
+      Group(BaseParamsContainer* container, const char* name, bool required = false);
 
       /**
        * @brief Destructor.
@@ -151,10 +139,7 @@ namespace AutoTest
        * @param out stream where param will be written to.
        * @param indentation.
        */
-      virtual void print(
-        std::ostream& out,
-        unsigned long indent,
-        bool print_name) const;
+      virtual void print(std::ostream& out, unsigned long indent, bool print_name) const;
 
       /**
        * @brief Check parameter empty.
@@ -169,8 +154,7 @@ namespace AutoTest
        */
       virtual bool need_encode() const;
 
-      virtual void set_param_val(
-        const String::SubString& val);
+      virtual void set_param_val(const String::SubString& val);
 
     private:
       bool required_;
@@ -181,9 +165,7 @@ namespace AutoTest
     {
       template<typename... Args>
       ParamType*
-      operator()(
-        BaseParamsContainer* request,
-        Args&&... args);
+      operator()(BaseParamsContainer* request, Args&&... args);
     };
 
     /**
@@ -220,8 +202,7 @@ namespace AutoTest
         BaseParamsContainer* group,
         const char* name,
         const T& defs,
-        unsigned short flags =
-          OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
+        unsigned short flags = OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
         //bool set_defs = true);
 
       /**
@@ -231,10 +212,7 @@ namespace AutoTest
        * @param group
        * @param name
        */
-      ParamsArray(
-        OpenRTBRequest* request,
-        BaseParamsContainer* group,
-        const char* name);
+      ParamsArray(OpenRTBRequest* request, BaseParamsContainer* group, const char* name);
 
       /**
        * @brief Constructor.
@@ -250,8 +228,7 @@ namespace AutoTest
         OpenRTBRequest* request,
         BaseParamsContainer* group,
         const char* name,
-        unsigned short flags =
-          OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
+        unsigned short flags = OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
         //bool set_defs = true);
 
       /**
@@ -260,10 +237,7 @@ namespace AutoTest
        * @param group
        * @param other param
        */
-      ParamsArray(
-        OpenRTBRequest* request,
-        BaseParamsContainer* group,
-        const ParamsArray& other);
+      ParamsArray(OpenRTBRequest* request, BaseParamsContainer* group, const ParamsArray& other);
 
       /**
        * @brief Assigment operator
@@ -286,21 +260,17 @@ namespace AutoTest
        * @return reference to request which param belongs to
        */
       template <class T>
-      OpenRTBRequest& operator() (
-        const T& val,
-        size_t index);
+      OpenRTBRequest& operator() (const T& val, size_t index);
 
       template <class T>
-      OpenRTBRequest& operator() (
-        const T& val);
+      OpenRTBRequest& operator() (const T& val);
 
       /**
        * @brief Clear param value for group.
        *
        * @param group id
        */
-      virtual bool clear(
-        unsigned int index);
+      virtual bool clear(unsigned int index);
 
       virtual void clear();
 
@@ -318,8 +288,7 @@ namespace AutoTest
        * @param encode if this flag is true encode param value with mime.
        */
       virtual void
-      set_param_val(
-        const String::SubString& val);
+      set_param_val(const String::SubString& val);
 
       /**
        * @brief Print request parameter to body.
@@ -328,10 +297,7 @@ namespace AutoTest
        * @param indentation.
        */
       virtual
-      bool print(
-        std::ostream& out,
-        const char* prefix,
-        const char* eql) const;
+      bool print(std::ostream& out, const char* prefix, const char* eql) const;
 
       /**
        * @brief Print parameter.
@@ -340,10 +306,7 @@ namespace AutoTest
        * @param indentation.
        */
       void
-      print(
-        std::ostream& out,
-        unsigned long indent,
-        bool print_name) const;
+      print(std::ostream& out, unsigned long indent, bool print_name) const;
 
     };
 
@@ -368,9 +331,7 @@ namespace AutoTest
        * @param request
        * @param internal parameter
        */
-      ProxyParam(
-        OpenRTBRequest* request,
-        ParamType& param);
+      ProxyParam(OpenRTBRequest* request, ParamType& param);
 
       /**
        * @brief Destructor.
@@ -383,8 +344,7 @@ namespace AutoTest
        * This function sets value to parameter,
        * @param value
        */
-      virtual void set_param_val(
-        const String::SubString& val);
+      virtual void set_param_val(const String::SubString& val);
 
       /**
      * @brief Clear param value.
@@ -423,10 +383,7 @@ namespace AutoTest
        * @return false always.
        */
       virtual
-      bool print (
-        std::ostream& out,
-        const char* prefix,
-        const char* eql) const;
+      bool print (std::ostream& out, const char* prefix, const char* eql) const;
 
       /**
        * @brief Assigment operator
@@ -498,20 +455,14 @@ namespace AutoTest
        * @param group
        * @param other param
        */
-      Param(
-        OpenRTBRequest* request,
-        BaseParamsContainer* group,
-        const Param& other);
+      Param(OpenRTBRequest* request, BaseParamsContainer* group, const Param& other);
 
       /**
        * Creates Param and determines its name.
        * @param request request which this param belongs to
        * @param name Param's name
        */
-      Param(
-        OpenRTBRequest* request,
-        BaseParamsContainer* group,
-        const char* name);
+      Param(OpenRTBRequest* request, BaseParamsContainer* group, const char* name);
 
       /**
        * @brief Destructor.
@@ -529,8 +480,7 @@ namespace AutoTest
        */
       template <class T>
       Param&
-      operator=(
-        const T& val);
+      operator=(const T& val);
 
       /**
        * @brief Assigment operator
@@ -541,8 +491,7 @@ namespace AutoTest
        */
       template <class T>
       OpenRTBRequest&
-      operator() (
-        const T& val);
+      operator() (const T& val);
     };
 
     typedef Param<> OpenRTBNumber;
@@ -572,18 +521,14 @@ namespace AutoTest
         OpenRTBRequest* request,
         BaseParamsContainer* group,
         const char* name,
-        unsigned short flags =
-          OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
+        unsigned short flags = OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
 
       /**
        * @brief Constructor.
        * @param request
        * @param other imp group
        */
-      ImpGroup(
-        OpenRTBRequest* request,
-        BaseParamsContainer* group,
-        const ImpGroup& other);
+      ImpGroup(OpenRTBRequest* request, BaseParamsContainer* group, const ImpGroup& other);
 
       /**
        * @brief Destructor.
@@ -733,8 +678,7 @@ namespace AutoTest
      * and sets default values for params.
      * @param flags bid request flags
      */
-    explicit OpenRTBRequest(unsigned short flags =
-      OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
+    explicit OpenRTBRequest(unsigned short flags = OpenRtb::RF_SET_DEFS | OpenRtb::RF_SEND_BANNER);
 
     /**
      * @brief Copy constructor.

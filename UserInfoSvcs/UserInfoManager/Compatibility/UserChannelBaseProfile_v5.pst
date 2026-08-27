@@ -18,7 +18,7 @@ namespace UserInfoSvcs_v5
   };
 
   autoreader SessionMatchesReader<SessionMatches>;
-    
+
   struct HistoryVisits
   {
     uint channel_id;
@@ -52,7 +52,7 @@ namespace UserInfoSvcs_v5
   };
 
   autoreader PartlyVisitsReader<PartlyVisits>;
- 
+
   struct PartlyVisitsSection
   {
     uint channel_id;
@@ -68,7 +68,7 @@ namespace UserInfoSvcs_v5
     list<PartlyVisitsReader> all_ht_visits;
     list<PartlyVisitsReader> all_history_visits;
   };
-      
+
   struct ChannelsInfo
   {
     list<HTCandidates> ht_candidates;
@@ -90,14 +90,14 @@ namespace UserInfoSvcs_v5
     list<PartlyVisitsSectionReader> hpm;
     list<PartlyVisitsSectionReader> hpm_from_now;
   };
-   
+
   struct ChannelsProfileVersion
   {
     uint version;
   };
 
-  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
-    
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+
   struct ChannelsProfile
   {
     uint version;
@@ -111,7 +111,7 @@ namespace UserInfoSvcs_v5
     ChannelsInfo search_channels;
     ChannelsInfo url_channels;
   };
- 
+
   reader ChannelsProfileReader<ChannelsProfile>
   {
     version;

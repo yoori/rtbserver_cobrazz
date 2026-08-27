@@ -9,10 +9,7 @@ namespace DB  = ::AutoTest::DBC;
 class DisputingInvoice : public BaseDBUnit
 {
 public:
-  DisputingInvoice(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  DisputingInvoice(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -39,12 +36,10 @@ private:
 
   // Cases
   void
-  create_invoice_(
-    ORM::PQ::Accountfinancialdata* acc_data);
+  create_invoice_(ORM::PQ::Accountfinancialdata* acc_data);
 
   void
-  edit_invoice_(
-    ORM::PQ::Accountfinancialdata* acc_data);
+  edit_invoice_(ORM::PQ::Accountfinancialdata* acc_data);
 
   // Utils
   void

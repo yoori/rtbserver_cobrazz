@@ -68,10 +68,7 @@ class RTBWinPriceNotificationTest : public BaseDBUnit
   };
 
 public:
-  RTBWinPriceNotificationTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  RTBWinPriceNotificationTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -89,9 +86,7 @@ private:
   StoredRequests process_requests_(const CaseRequest (&requests)[Count]);
 
   template<size_t Count>
-  void select_current_stats_(const CaseStats (&expected)[Count],
-    Stats& stats,
-    Diffs& diffs);
+  void select_current_stats_(const CaseStats (&expected)[Count], Stats& stats, Diffs& diffs);
 
   // Cases
   void openx_();

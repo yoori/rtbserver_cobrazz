@@ -26,7 +26,7 @@ ChannelClusterSessionFactoryImpl::create_for_unmarshal()
   }
   catch(const eh::Exception& e)
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
       ostr << "ChannelClusterSessionFactoryImpl::create_for_unmarshal: "
@@ -46,9 +46,7 @@ void ChannelClusterSessionFactoryImpl::report_error(
   callback_->report_error(severity, description, error_code);
 }
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   ChannelClusterSessionImpl::ChannelClusterSessionImpl(
     Generics::ActiveObjectCallback* callback) noexcept:
@@ -69,10 +67,8 @@ namespace ChannelSvcs
     CORBA::ULong i = 0;
     try
     {
-      CORBACommons::IProcessControl::ALIVE_STATUS status =
-        CORBACommons::IProcessControl::AS_READY;
-      const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref =
-        servers();
+      CORBACommons::IProcessControl::ALIVE_STATUS status = CORBACommons::IProcessControl::AS_READY;
+      const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref = servers();
       for (; i < servers_ref.length(); ++i)
       {
         switch (servers_ref[i]->is_alive())
@@ -88,7 +84,7 @@ namespace ChannelSvcs
     }
     catch(const CORBA::SystemException& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << "ChannelClusterSessionImpl::is_alive: Caught "
@@ -99,7 +95,7 @@ namespace ChannelSvcs
     }
     catch(const eh::Exception& e)
     {
-      if(callback_)
+      if (callback_)
       {
         Stream::Error ostr;
         ostr << "ChannelClusterSessionImpl::is_alive: Caught "
@@ -113,8 +109,7 @@ namespace ChannelSvcs
 
   void ChannelClusterSessionImpl::shutdown(CORBA::Boolean wait) noexcept
   {
-    const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref =
-      servers();
+    const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref = servers();
     for (CORBA::ULong i = 0; i < servers_ref.length(); ++i)
     {
       try
@@ -123,7 +118,7 @@ namespace ChannelSvcs
       }
       catch(const CORBA::SystemException& e)
       {
-        if(callback_)
+        if (callback_)
         {
           Stream::Error ostr;
           ostr << "ChannelClusterSessionImpl::shutdown: Caught "
@@ -134,7 +129,7 @@ namespace ChannelSvcs
       }
       catch(const eh::Exception& e)
       {
-        if(callback_)
+        if (callback_)
         {
           Stream::Error ostr;
           ostr << "ChannelClusterSessionImpl::shutdown: Caught "
@@ -152,31 +147,28 @@ namespace ChannelSvcs
     try
     {
       Stream::Error ostr;
-      const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref =
-        servers();
+      const AdServer::ChannelSvcs::ProcessControlDescriptionSeq& servers_ref = servers();
       for (CORBA::ULong i = 0; i < servers_ref.length(); ++i)
       {
         try
         {
-          ostr << CORBACommons::CorbaClientAdapter::get_object_info(
-            servers_ref[i]).host << ": ";
+          ostr << CORBACommons::CorbaClientAdapter::get_object_info(servers_ref[i]).host << ": ";
           ostr << servers_ref[i]->comment() << ';';
         }
         catch(const CORBACommons::OutOfMemory& e)
         {
-          if(callback_)
+          if (callback_)
           {
             Stream::Error ostr;
             ostr << FUN <<
-              ": caught CORBACommons::OutOfMemory on getting comment for "
-              << i << " server.";
+              ": caught CORBACommons::OutOfMemory on getting comment for " << i << " server.";
             callback_->error(ostr.str());
           }
           ostr << "ChannelServer in critical state." << std::endl;
         }
         catch(const CORBA::SystemException& e)
         {
-          if(callback_)
+          if (callback_)
           {
             Stream::Error ostr;
             ostr << FUN
@@ -188,12 +180,11 @@ namespace ChannelSvcs
         }
         catch(const eh::Exception& e)
         {
-          if(callback_)
+          if (callback_)
           {
             Stream::Error ostr;
             ostr << FUN <<
-              ": Caught eh::Exception on getting comment for " << i
-              << " server. : " << e.what();
+              ": Caught eh::Exception on getting comment for " << i << " server. : " << e.what();
             callback_->error(ostr.str());
           }
           ostr << "ChannelServer internal error." << std::endl;
@@ -233,5 +224,3 @@ namespace ChannelSvcs
   }
 
 }
-}
-

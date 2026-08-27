@@ -38,9 +38,7 @@ namespace
 
 // EmptyResponse class
 
-EmptyResponse::EmptyResponse(
-  HttpMethod method,
-  const char* request) noexcept :
+EmptyResponse::EmptyResponse(HttpMethod method, const char* request) noexcept :
   method_(method),
   request_(request)
 { }
@@ -105,8 +103,7 @@ BaseRequest::~BaseRequest() noexcept
 
 
 void
-BaseRequest::on_response(
-  const ResponseInformation& data) noexcept
+BaseRequest::on_response(const ResponseInformation& data) noexcept
 {
   if (!request_handled_)
   {
@@ -126,9 +123,7 @@ BaseRequest::on_response(
 }
 
 void
-BaseRequest::on_error(
-  const String::SubString& description,
-  const RequestInformation& data) noexcept
+BaseRequest::on_error(const String::SubString& description, const RequestInformation& data) noexcept
 {
   if (!request_handled_)
   {
@@ -136,12 +131,7 @@ BaseRequest::on_error(
     Stream::Error err;
     err << "error: " << description << std::endl;;
     err << this << std::endl;
-    owner_->on_error(
-      err.str(),
-      EmptyResponse(
-        data.method(),
-        data.http_request()),
-      optout_);
+    owner_->on_error(err.str(), EmptyResponse(data.method(), data.http_request()), optout_);
   }
 }
 
@@ -166,22 +156,17 @@ BaseRequest::_body()
 void
 BaseRequest::headers(HeaderList& headers) const
 {
-  SelectorPolicyArray::const_iterator it_header =
-    config_->headers().begin();
-  for(; it_header != config_->headers().end(); ++it_header)
+  SelectorPolicyArray::const_iterator it_header = config_->headers().begin();
+  for (; it_header != config_->headers().end(); ++it_header)
   {
     std::string header_value;
     (*it_header)->get(header_value, PO_NO_NEED_ENCODE);
-    headers.push_back(
-      Header(
-        (*it_header)->entity_name,
-        header_value.c_str()));
+    headers.push_back(Header((*it_header)->entity_name, header_value.c_str()));
   }
 }
 
 bool
-BaseRequest::_check_response_code(
-  unsigned long response_code)
+BaseRequest::_check_response_code(unsigned long response_code)
 {
   if (response_code < 200 || response_code >= 400)
   {
@@ -193,8 +178,7 @@ BaseRequest::_check_response_code(
 bool
 BaseRequest::isGet() const
 {
-  return config_->method.empty() ||
-    config_->method == "get";
+  return config_->method.empty() || config_->method == "get";
 }
 
 unsigned long
@@ -210,8 +194,7 @@ BaseRequest::optout() const
 }
 
 std::ostream&
-BaseRequest::dump(
-  std::ostream& out) const
+BaseRequest::dump(std::ostream& out) const
 {
   if (optout_)
   {
@@ -220,6 +203,7 @@ BaseRequest::dump(
   {
     out << "Client#" << client_id_ << " ";
   }
+
   if (isGet())
   {
     out << " GET: " << url_ << std::endl;
@@ -249,9 +233,7 @@ ParamsRequest::ParamsRequest(
   const RequestConfig_var& config,
   const char* server,
   bool cfg_ad_all_optout) :
-  BaseRequest(
-    owner, client_id,
-    optout, config),
+  BaseRequest(owner, client_id, optout, config),
   server_(server),
   cfg_ad_all_optout_(cfg_ad_all_optout)
 {}
@@ -260,15 +242,13 @@ ParamsRequest::~ParamsRequest() noexcept
 {}
 
 const std::string&
-ParamsRequest::_url(
-  bool generate)
+ParamsRequest::_url(bool generate)
 {
   if (!generate) return url_;
   url_ = server_ + config_->url;
-  SelectorPolicyArray::const_iterator it_param =
-    config_->parameters().begin();
+  SelectorPolicyArray::const_iterator it_param = config_->parameters().begin();
   unsigned int param_count = 0;
-  for(; it_param != config_->parameters().end(); ++it_param)
+  for (; it_param != config_->parameters().end(); ++it_param)
   {
     std::string param_value;
     unsigned short flags = 0;
@@ -282,6 +262,7 @@ ParamsRequest::_url(
     {
       continue;
     }
+
     if (!param_value.empty())
     {
       if (!param_count)
@@ -301,8 +282,7 @@ ParamsRequest::_url(
 }
 
 void
-ParamsRequest::_on_response(
-  const ResponseInformation& data)
+ParamsRequest::_on_response(const ResponseInformation& data)
 {
   HTTP::HeaderList headers;
   data.find_headers("Debug-Info", headers);
@@ -320,9 +300,7 @@ ParamsRequest::_on_response(
     }
     return;
   }
-  owner_->on_response(client_id_,
-                      data,
-                      optout_);
+  owner_->on_response(client_id_, data, optout_);
 }
 
 // NSLookup request
@@ -334,17 +312,14 @@ NSLookupRequest::NSLookupRequest(
   const RequestConfig_var& config,
   const char* server,
   bool cfg_ad_all_optout) :
-  ParamsRequest(
-    owner, client_id, optout,
-    config, server, cfg_ad_all_optout)
+  ParamsRequest(owner, client_id, optout, config, server, cfg_ad_all_optout)
 { }
 
 NSLookupRequest::~NSLookupRequest() noexcept
 { }
 
 void
-NSLookupRequest::_process_response(
-  const ResponseInformation& data)
+NSLookupRequest::_process_response(const ResponseInformation& data)
 {
   unsigned long ccid = atoi(debug_info_.ccid.value().c_str());
   HTTP::HeaderList location;
@@ -375,12 +350,7 @@ NSLookupRequest::_process_response(
         debug_info_.history_match_time.value().c_str(),
         debug_info_.creative_selection_time.value().c_str(),
         optout_));
-  owner_->on_response(
-    client_id_,
-    data,
-    optout_,
-    ccid,
-    ad_response.get());
+  owner_->on_response(client_id_, data, optout_, ccid, ad_response.get());
 }
 
 // SimpleRequest class
@@ -391,8 +361,7 @@ SimpleRequest::SimpleRequest(
   bool optout,
   const RequestConfig_var& config,
   const char* url) :
-  BaseRequest(
-    owner, client_id, optout, config, url)
+  BaseRequest(owner, client_id, optout, config, url)
 { }
 
 SimpleRequest::~SimpleRequest() noexcept
@@ -405,8 +374,7 @@ SimpleRequest::_url(bool)
 }
 
 void
-SimpleRequest::_on_response(
-  const ResponseInformation& data)
+SimpleRequest::_on_response(const ResponseInformation& data)
 {
   String::SubString r(data.http_request());
   String::RegEx::Result result;
@@ -436,9 +404,7 @@ SimpleRequest::_on_response(
       }
     }
   }
-  owner_->on_response(client_id_,
-                      data,
-                      optout_, ccid);
+  owner_->on_response(client_id_, data, optout_, ccid);
 }
 
 
@@ -450,17 +416,14 @@ ClickRequest::ClickRequest(
   bool optout,
   const RequestConfig_var& config,
   const char* url) :
-  SimpleRequest(
-    owner, client_id, optout,
-    config, url)
+  SimpleRequest(owner, client_id, optout, config, url)
 { }
 
 ClickRequest::~ClickRequest() noexcept
 { }
 
 bool
-ClickRequest::_check_response_code(
-  unsigned long response_code)
+ClickRequest::_check_response_code(unsigned long response_code)
 {
   if (response_code != 200 && response_code != 302)
   {
@@ -477,17 +440,14 @@ ActionRequest::ActionRequest(
   bool optout,
   const RequestConfig_var& config,
   const char* url) :
-  SimpleRequest(
-    owner, client_id,
-    optout, config, url)
+  SimpleRequest(owner, client_id, optout, config, url)
 { }
 
 ActionRequest::~ActionRequest() noexcept
 { }
 
 bool
-ActionRequest::_check_response_code(
-  unsigned long response_code)
+ActionRequest::_check_response_code(unsigned long response_code)
 {
   if (response_code != 200)
   {
@@ -504,17 +464,14 @@ PassbackRequest::PassbackRequest(
   bool optout,
   const RequestConfig_var& config,
   const char* url) :
-  SimpleRequest(
-    owner, client_id,
-    optout, config, url)
+  SimpleRequest(owner, client_id, optout, config, url)
 { }
 
 PassbackRequest::~PassbackRequest() noexcept
 { }
 
 bool
-PassbackRequest::_check_response_code(
-  unsigned long response_code)
+PassbackRequest::_check_response_code(unsigned long response_code)
 {
   if (response_code != 200 && response_code != 302)
   {
@@ -531,8 +488,7 @@ UserBindRequest::UserBindRequest(
   const std::string& ssp_user_id,
   const RequestConfig_var& config,
   const char* server) :
-  BaseRequest(
-    owner,client_id, false, config),
+  BaseRequest(owner,client_id, false, config),
   server_(server),
   ssp_user_id_(ssp_user_id)
 { }
@@ -545,10 +501,9 @@ UserBindRequest::_url(bool)
 {
   std::ostringstream url_stream;
   url_stream << server_ << config_->url;
-  SelectorPolicyArray::const_iterator it_param =
-    config_->parameters().begin();
+  SelectorPolicyArray::const_iterator it_param = config_->parameters().begin();
   unsigned int param_count = 0;
-  for(; it_param != config_->parameters().end(); ++it_param)
+  for (; it_param != config_->parameters().end(); ++it_param)
   {
     std::string param_value;
     (*it_param)->get(param_value, PO_ALWAYS_SET);
@@ -557,24 +512,21 @@ UserBindRequest::_url(bool)
     {
       continue;
     }
+
     if (!param_value.empty())
     {
-      url_stream << (param_count++? '&': '?') <<
-        (*it_param)->entity_name << "=" << param_value;
+      url_stream << (param_count++? '&': '?') << (*it_param)->entity_name << "=" << param_value;
     }
   }
-  url_stream << (param_count? '&': '?') <<
-     "ssp_user_id=" << ssp_user_id_;
+  url_stream << (param_count? '&': '?') << "ssp_user_id=" << ssp_user_id_;
   url_ = url_stream.str();
   return url_;
 }
 
 void
-UserBindRequest::_on_response(
-  const ResponseInformation& data)
+UserBindRequest::_on_response(const ResponseInformation& data)
 {
-  owner_->on_response(
-    client_id_, data, false, 0);
+  owner_->on_response(client_id_, data, false, 0);
 }
 
 // OpenRTBRequest
@@ -628,8 +580,7 @@ OpenRTBRequest::_body()
 }
 
 void
-OpenRTBRequest::_on_response(
-  const ResponseInformation& data)
+OpenRTBRequest::_on_response(const ResponseInformation& data)
 {
   try
   {
@@ -638,8 +589,7 @@ OpenRTBRequest::_on_response(
 
     if (openrtb_response.status() == JSON_PARSE_OK)
     {
-      unsigned long ccid = openrtb_response.bids().size()?
-        openrtb_response.bids().front().cid: 0;
+      unsigned long ccid = openrtb_response.bids().size()? openrtb_response.bids().front().cid: 0;
 
       (void)ccid;
 
@@ -658,12 +608,7 @@ OpenRTBRequest::_on_response(
             "0:000000 (sec:usec)",
             false));
 
-      owner_->on_response(
-        client_id_,
-        data,
-        false,
-        ccid,
-        ad_response.get());
+      owner_->on_response(client_id_, data, false, ccid, ad_response.get());
 
       return;
 
@@ -689,12 +634,10 @@ OpenRTBRequest::_init()
 {
   AutoTest::OpenRTBRequest request;
 
-  SelectorPolicyArray::const_iterator it_param =
-    config_->parameters().begin();
-  for(; it_param != config_->parameters().end(); ++it_param)
+  SelectorPolicyArray::const_iterator it_param = config_->parameters().begin();
+  for (; it_param != config_->parameters().end(); ++it_param)
   {
-    int param_idx = _get_param_idx(
-      (*it_param)->entity_name);
+    int param_idx = _get_param_idx((*it_param)->entity_name);
 
     if (param_idx >= 0)
     {
@@ -714,8 +657,7 @@ OpenRTBRequest::_init()
 }
 
 int
-OpenRTBRequest::_get_param_idx(
-  const std::string& name)
+OpenRTBRequest::_get_param_idx(const std::string& name)
 {
   for (size_t i = 0; i < PARAM_COUNT; ++i)
   {

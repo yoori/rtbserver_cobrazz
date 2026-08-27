@@ -13,9 +13,7 @@
 #  include "StatementDummyImpl.cpp"
 #endif
 
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   /** Statement */
   Statement::~Statement() noexcept
@@ -29,9 +27,7 @@ namespace Oracle
   }
 
   ResultSet_var
-  Statement::execute_query(
-    const Generics::Time* timeout,
-    unsigned long fetch_size)
+  Statement::execute_query(const Generics::Time* timeout, unsigned long fetch_size)
     /*throw(Exception, SqlException, TimedOut, NotSupported)*/
   {
     return execute_query_(timeout, fetch_size);
@@ -46,7 +42,7 @@ namespace Oracle
   void Statement::check_terminated_(const char* fun)
     /*throw(NotSupported)*/
   {
-    if(connection_->is_terminated_())
+    if (connection_->is_terminated_())
     {
       Stream::Error error;
       error << fun << CONN_TERMINATED_ERROR;
@@ -54,22 +50,20 @@ namespace Oracle
     }
   }
 
-  const Generics::Time* Statement::use_timeout_(
-    const Generics::Time* timeout) const
+  const Generics::Time* Statement::use_timeout_(const Generics::Time* timeout) const
     noexcept
   {
-    if(timeout)
+    if (timeout)
     {
       return timeout;
     }
 
-    if(connection_->timeout_ != Generics::Time::ZERO)
+    if (connection_->timeout_ != Generics::Time::ZERO)
     {
       return &connection_->timeout_;
     }
 
-    if(connection_->environment_->timeout_ !=
-       Generics::Time::ZERO)
+    if (connection_->environment_->timeout_ != Generics::Time::ZERO)
     {
       return &connection_->environment_->timeout_;
     }
@@ -87,7 +81,4 @@ namespace Oracle
   {
     set_ulong(val);
   }
-} /*Oracle*/
-} /*Commons*/
-} /*AdServer*/
-
+} // namespace AdServer::Commons::Oracle

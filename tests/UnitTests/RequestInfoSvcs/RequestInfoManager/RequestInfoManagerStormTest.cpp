@@ -54,22 +54,22 @@ namespace
     virtual void
     process_request(const RequestInfo& /*ri*/,
       const ProcessingState&) noexcept
-    { if(print_) std::cout << "(R)"; }
+    { if (print_) std::cout << "(R)"; }
 
     virtual void
     process_impression(const RequestInfo& /*ri*/,
       const ImpressionInfo&,
       const ProcessingState&) noexcept
-    { if(print_) std::cout << "(I)"; }
+    { if (print_) std::cout << "(I)"; }
 
     virtual void
     process_click(const RequestInfo& /*ri*/,
       const ProcessingState&) noexcept
-    { if(print_) std::cout << "(C)"; }
+    { if (print_) std::cout << "(C)"; }
 
     virtual void
     process_action(const RequestInfo& /*ri*/) noexcept
-    { if(print_) std::cout << "(A)"; }
+    { if (print_) std::cout << "(A)"; }
 
     virtual void
     process_custom_action(
@@ -189,7 +189,7 @@ namespace
     Generics::Timer timer;
     timer.start();
 
-    for(unsigned long i = 0; i < ITER_COUNT_; ++i)
+    for (unsigned long i = 0; i < ITER_COUNT_; ++i)
     {
       fun_();
     }
@@ -217,14 +217,10 @@ void generate_op_seq(std::list<int>& op_seq, unsigned long op_seq_len)
   }
 }
 
-void print_op_seq(
-  std::ostream& out,
-  const UserId& user_id,
-  const std::list<int>& op_seq)
+void print_op_seq(std::ostream& out, const UserId& user_id, const std::list<int>& op_seq)
 {
   out << user_id << ": ";
-  for (std::list<int>::const_iterator it = op_seq.begin();
-       it != op_seq.end(); ++it)
+  for (std::list<int>::const_iterator it = op_seq.begin(); it != op_seq.end(); ++it)
   {
     if (it != op_seq.begin()) out << " -> ";
     switch (*it)
@@ -244,9 +240,7 @@ struct ProcessingTraits
       ccg_reach_container(true)
   {}
 
-  ProcessingTraits(
-    bool action_info_container_val,
-    bool ccg_reach_container_val)
+  ProcessingTraits(bool action_info_container_val, bool ccg_reach_container_val)
     : action_info_container(action_info_container_val),
       ccg_reach_container(ccg_reach_container_val)
   {}
@@ -283,7 +277,7 @@ request_info_manager_storm_test(
     CompositeRequestActionProcessor_var processing_distributor =
       new CompositeRequestActionProcessor();
 
-    if(processing_traits.ccg_reach_container)
+    if (processing_traits.ccg_reach_container)
     {
       UserCampaignReachContainer_var user_campaign_reach_container =
         new UserCampaignReachContainer(
@@ -292,14 +286,12 @@ request_info_manager_storm_test(
           (std::string(root_path) + USER_CAMPAIGN_REACH_CHUNKS_ROOT).c_str(),
           Generics::Time(24*60*60));
 
-      processing_distributor->add_child_processor(
-        user_campaign_reach_container);
+      processing_distributor->add_child_processor(user_campaign_reach_container);
     }
 
     processing_distributor->add_child_processor(test_processor);
 
-    const std::string request_chunks_path =
-      std::string(root_path) + REQUEST_CHUNKS_ROOT;
+    const std::string request_chunks_path = std::string(root_path) + REQUEST_CHUNKS_ROOT;
 
     RequestInfoContainer_var request_info_container =
       new RequestInfoContainer(
@@ -311,7 +303,7 @@ request_info_manager_storm_test(
 
     UserActionInfoContainer_var user_action_info_container;
 
-    if(processing_traits.action_info_container)
+    if (processing_traits.action_info_container)
     {
       user_action_info_container =
         new UserActionInfoContainer(
@@ -321,8 +313,7 @@ request_info_manager_storm_test(
           Generics::Time::ZERO,
           Generics::Time(10));
 
-      processing_distributor->add_child_processor(
-        user_action_info_container->request_processor());
+      processing_distributor->add_child_processor(user_action_info_container->request_processor());
     }
 
     /* create users pool */
@@ -343,8 +334,7 @@ request_info_manager_storm_test(
       int j = ::rand() % users_count;
       const UserId& user_id = users[j];
 
-      Generics::Time stime(
-        Generics::Time::get_time_of_day() - 24 * 60 * 60);
+      Generics::Time stime(Generics::Time::get_time_of_day() - 24 * 60 * 60);
       RequestInfo request_info;
       request_info.time = stime + ::rand() % (24 * 60 * 60);
       request_info.user_id = user_id;
@@ -380,13 +370,13 @@ request_info_manager_storm_test(
       std::list<int> gen_op_seq;
       const std::list<int>* use_op_seq = op_seq;
 
-      if(!use_op_seq)
+      if (!use_op_seq)
       {
         generate_op_seq(gen_op_seq, ::rand() % 20 + 1);
         use_op_seq = &gen_op_seq;
       }
 
-      if(print_ops)
+      if (print_ops)
       {
         print_op_seq(std::cout, user_id, *use_op_seq);
         std::cout << ": ";
@@ -408,7 +398,7 @@ request_info_manager_storm_test(
         }
       }
 
-      if(print_ops)
+      if (print_ops)
       {
         std::cout << std::endl;
       }
@@ -417,8 +407,7 @@ request_info_manager_storm_test(
     timer.stop();
 
     std::cout << fun << ": " << iter_count <<
-      " iterations, avg time = " <<
-      (timer.elapsed_time() / iter_count) << std::endl;
+      " iterations, avg time = " << (timer.elapsed_time() / iter_count) << std::endl;
   }
 
   return 0;
@@ -426,9 +415,7 @@ request_info_manager_storm_test(
 
 struct TagRequestFun
 {
-  TagRequestFun(
-    PassbackContainer* passback_container,
-    const Generics::Time& base_time)
+  TagRequestFun(PassbackContainer* passback_container, const Generics::Time& base_time)
     : passback_container_(ReferenceCounting::add_ref(passback_container)),
       base_time_(base_time)
   {}
@@ -471,7 +458,7 @@ request_info_manager_passback_storm_test(
     /* create full sequence of containers like RequestInfoManager */
     Logging::Logger_var logger(new Logging::Null::Logger);
 
-    if(remove_old_data)
+    if (remove_old_data)
     {
       ::system((
         std::string("rm -r ") + root_path + PASSBACK_CHUNKS_ROOT +
@@ -479,12 +466,10 @@ request_info_manager_passback_storm_test(
     }
     else
     {
-      ::system((
-        std::string("mkdir -p ") + root_path + PASSBACK_CHUNKS_ROOT).c_str());
+      ::system((std::string("mkdir -p ") + root_path + PASSBACK_CHUNKS_ROOT).c_str());
     }
 
-    NullPassbackProcessorImpl_var test_processor(
-      new NullPassbackProcessorImpl());
+    NullPassbackProcessorImpl_var test_processor(new NullPassbackProcessorImpl());
 
     PassbackContainer_var passback_container =
       new PassbackContainer(
@@ -494,8 +479,7 @@ request_info_manager_passback_storm_test(
         Generics::Time::ONE_HOUR * 2 * 10);
 
     /* start loop */
-    Generics::Time base_time(
-      Generics::Time::get_time_of_day() - Generics::Time::ONE_DAY);
+    Generics::Time base_time(Generics::Time::get_time_of_day() - Generics::Time::ONE_DAY);
 
     MTRunner<TagRequestFun>::ProcessingState_var processing_state =
       new MTRunner<TagRequestFun>::ProcessingState(threads_count);
@@ -512,11 +496,11 @@ request_info_manager_passback_storm_test(
 
     mt_runner->activate_object();
 
-    while(true)
+    while (true)
     {
       Sync::ConditionalGuard lock(processing_state->cond);
       lock.wait();
-      if(processing_state->threads_in_progress == 0)
+      if (processing_state->threads_in_progress == 0)
       {
         break;
       }
@@ -528,8 +512,7 @@ request_info_manager_passback_storm_test(
     std::cout << fun << ": " << iter_count <<
       " iterations"
       ", sum time = " << processing_state->processing_time <<
-      ", time per thread = " << (processing_state->processing_time / threads_count) <<
-      std::endl;
+      ", time per thread = " << (processing_state->processing_time / threads_count) << std::endl;
   }
 
   return 0;
@@ -600,7 +583,7 @@ main(int argc, char* argv[]) noexcept
       *users_count,
       *iter_count);
 
-    for(unsigned long run_i = 0; run_i < *run_count; ++run_i)
+    for (unsigned long run_i = 0; run_i < *run_count; ++run_i)
     {
       result += request_info_manager_passback_storm_test(
         "passback request test",

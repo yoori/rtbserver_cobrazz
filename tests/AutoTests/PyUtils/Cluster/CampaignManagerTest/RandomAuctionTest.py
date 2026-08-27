@@ -15,7 +15,7 @@ def prepareConfig(config):
 
   config.tags.extend([
     createTag(
-      tag_id = 213110, 
+      tag_id = 213110,
       site_id = 1,
       auction_max_ecpm_share = decimal2orb(0.0),
       sizes = [
@@ -36,7 +36,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334026,                         # cc id
         318617,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -50,7 +50,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -66,7 +66,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334027,                         # cc id
         318618,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -80,7 +80,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -96,7 +96,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334028,                         # cc id
         318619,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -110,7 +110,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -126,7 +126,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334029,                         # cc id
         318620,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -140,7 +140,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -156,7 +156,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334030,                         # cc id
         318621,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -170,7 +170,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -186,7 +186,7 @@ def prepareConfig(config):
       creatives = [CreativeInfo(
         334031,                         # cc id
         318622,                         # creative id
-        0,                              # fc_id 
+        0,                              # fc_id
         1,                              # weight
         [CreativeSizeInfo(
           2,  # size_id
@@ -200,7 +200,7 @@ def prepareConfig(config):
         OptionValueInfo(0, "http://www.foros.com"), # click_url
         OptionValueInfo(104, ""),       # html_url
         0,                              # order_set_id
-        [],                             # categories  
+        [],                             # categories
         [],                             # tokens
         'A',                            # status
         ''                              # version_id
@@ -214,7 +214,7 @@ def prepareConfig(config):
 # 306230  1           T
 # 306245  3           T
 # 306246  3           T
-# 306247  3           T 
+# 306247  3           T
 #
 # [EXPECTED]
 # ccgs 306227, 306228, 306230 match with 25% probability each
@@ -241,7 +241,7 @@ def baseTest ():
     campaignManager.assertEqual(1, len(response.ad_slots[0].selected_creatives),'selected creatives')
     #print response.ad_slots[0].debug_info.trace_ccg
     cmp_id = response.ad_slots[0].selected_creatives[0].cmp_id
-  
+
     if cmp_id in result.keys():
       result[cmp_id] += 1
     else:

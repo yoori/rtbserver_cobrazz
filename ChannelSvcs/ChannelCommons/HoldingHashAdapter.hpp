@@ -142,8 +142,7 @@ namespace Generics
   }
 
   inline
-  HoldingHashAdapter::HoldingHashAdapter(size_t hash,
-    const String::SubString& text)
+  HoldingHashAdapter::HoldingHashAdapter(size_t hash, const String::SubString& text)
     noexcept
     : holder_(text.str()), text_(holder_), hash_(hash)
   {

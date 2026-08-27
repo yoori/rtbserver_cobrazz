@@ -61,7 +61,7 @@ module AdServer
     };
 
     typedef sequence<BehaveInfo> BehaveInfoSeq;
-    
+
     struct CSSimpleChannel
     {
       unsigned long channel_id;
@@ -74,12 +74,12 @@ module AdServer
 
     typedef sequence<CSSimpleChannel> CSSimpleChannelSeq;
 
-    struct ChannelServerChannelAnswer 
+    struct ChannelServerChannelAnswer
     {
       CSSimpleChannelSeq simple_channels;
       CORBACommons::DecimalInfo cost_limit;
     };
-    
+
     /**
      * Struct describes options for get_config method of CampaignServer
      */

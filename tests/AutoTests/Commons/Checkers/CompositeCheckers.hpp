@@ -13,142 +13,135 @@
 #include <tests/AutoTests/Commons/Shutdown.hpp>
 #include <tests/AutoTests/Commons/Logger.hpp>
 
-namespace AutoTest
+namespace AutoTest::Internals
 {
-  namespace Internals
+  /**
+   * @class CheckerHolder
+   * @brief Checker holder interface
+   */
+  class CheckerHolder:
+    public Checker,
+    public ReferenceCounting::AtomicCopyImpl
   {
-    /**
-     * @class CheckerHolder
-     * @brief Checker holder interface
-     */
-    class CheckerHolder:
-      public Checker,
-      public ReferenceCounting::AtomicCopyImpl
-    {
-    public:
-
-      /**
-       * @brief Clone held checker
-       * @return copy of held checker
-       */
-      virtual
-      ReferenceCounting::SmartPtr<CheckerHolder>
-      clone() const noexcept = 0;
-
-    protected:
-
-      /**
-       * @brief Destructor
-       */
-      virtual
-      ~CheckerHolder() noexcept;
-    };
-
-    typedef ReferenceCounting::SmartPtr<CheckerHolder>
-      CheckerHolder_var;
+  public:
 
     /**
-     * @class CheckerHolderImpl
-     * @brief Checker holder implementation
+     * @brief Clone held checker
+     * @return copy of held checker
      */
-    template<typename CheckerType>
-    struct CheckerHolderImpl: public CheckerHolder
-    {
-    public:
+    virtual
+    ReferenceCounting::SmartPtr<CheckerHolder>
+    clone() const noexcept = 0;
 
-      /**
-       * @brief Constructor
-       * @param checker
-       */
-      CheckerHolderImpl(const CheckerType& init) noexcept;
-
-      /**
-       * @brief Clone held checker
-       * @return copy of held checker
-       */
-      virtual CheckerHolder_var
-      clone() const noexcept;
-
-      /**
-       * @brief test checker
-       * @param throw on error flag
-       * @return true - OK, false - check FAIL
-       */
-      bool
-      check(
-        bool throw_error = true)
-        /*throw(CheckFailed, eh::Exception)*/;
-
-    protected:
-      /**
-       * @brief Destructor
-       */
-      virtual
-      ~CheckerHolderImpl() noexcept;
-
-    private:
-      CheckerType checker_;
-    };
+  protected:
 
     /**
-     * @class SubCheckersHolder
-     * @brief Checkers container
+     * @brief Destructor
      */
-    class SubCheckersHolder
-    {
-    public:
+    virtual
+    ~CheckerHolder() noexcept;
+  };
 
-      /**
-       * @brief Default constructor
-       */
-      SubCheckersHolder() noexcept;
-
-      /**
-       * @brief Constructor
-       * @param sub checker
-       */
-      SubCheckersHolder(const SubCheckersHolder& init)
-        noexcept;
-
-      /**
-       * @brief Destructor
-       */
-      virtual ~SubCheckersHolder() noexcept;
-
-      /**
-       * @brief add sub checkers
-       * @param first sub checker
-       * @param other sub checkers
-       */
-      template<typename SubCheckerType, typename... SubCheckers>
-      void
-      add_sub_checker(
-        const SubCheckerType& sub_checker,
-        SubCheckers... sub_checkers)
-        noexcept;
-
-      /**
-       * @brief add sub checker
-       * @param checker
-       */
-      template<typename SubCheckerType>
-      void
-      add_sub_checker(const SubCheckerType& sub_checker)
-        noexcept;
-
-    protected:
-      typedef std::list<CheckerHolder_var> CheckerHolderList;
-      CheckerHolderList sub_checkers_;  // checkers list
-    };
-
-    // To release cyclic includes (BaseUnit <-> CompositeCheckers)
-    int get_unit_timeout();
-  }
+  typedef ReferenceCounting::SmartPtr<CheckerHolder>
+    CheckerHolder_var;
 
   /**
-   * @class WaitChecker
-   * @brief Event wait checker
+   * @class CheckerHolderImpl
+   * @brief Checker holder implementation
    */
+  template<typename CheckerType>
+  struct CheckerHolderImpl: public CheckerHolder
+  {
+  public:
+
+    /**
+     * @brief Constructor
+     * @param checker
+     */
+    CheckerHolderImpl(const CheckerType& init) noexcept;
+
+    /**
+     * @brief Clone held checker
+     * @return copy of held checker
+     */
+    virtual CheckerHolder_var
+    clone() const noexcept;
+
+    /**
+     * @brief test checker
+     * @param throw on error flag
+     * @return true - OK, false - check FAIL
+     */
+    bool
+    check(bool throw_error = true)
+      /*throw(CheckFailed, eh::Exception)*/;
+
+  protected:
+    /**
+     * @brief Destructor
+     */
+    virtual
+    ~CheckerHolderImpl() noexcept;
+
+  private:
+    CheckerType checker_;
+  };
+
+  /**
+   * @class SubCheckersHolder
+   * @brief Checkers container
+   */
+  class SubCheckersHolder
+  {
+  public:
+
+    /**
+     * @brief Default constructor
+     */
+    SubCheckersHolder() noexcept;
+
+    /**
+     * @brief Constructor
+     * @param sub checker
+     */
+    SubCheckersHolder(const SubCheckersHolder& init)
+      noexcept;
+
+    /**
+     * @brief Destructor
+     */
+    virtual ~SubCheckersHolder() noexcept;
+
+    /**
+     * @brief add sub checkers
+     * @param first sub checker
+     * @param other sub checkers
+     */
+    template<typename SubCheckerType, typename... SubCheckers>
+    void
+    add_sub_checker(const SubCheckerType& sub_checker, SubCheckers... sub_checkers)
+      noexcept;
+
+    /**
+     * @brief add sub checker
+     * @param checker
+     */
+    template<typename SubCheckerType>
+    void
+    add_sub_checker(const SubCheckerType& sub_checker)
+      noexcept;
+
+  protected:
+    typedef std::list<CheckerHolder_var> CheckerHolderList;
+    CheckerHolderList sub_checkers_;  // checkers list
+  };
+
+  // To release cyclic includes (BaseUnit <-> CompositeCheckers)
+  int get_unit_timeout();
+}
+
+namespace AutoTest
+{
   template<typename SubCheckerType>
   class WaitChecker: public Checker
   {
@@ -163,8 +156,7 @@ namespace AutoTest
     WaitChecker(
       const SubCheckerType& sub_checker,
       unsigned long wait_time = 0,
-      unsigned long sleep_time =
-        AutoTest::DEFAULT_SLEEP_TIME);
+      unsigned long sleep_time = AutoTest::DEFAULT_SLEEP_TIME);
 
     /**
      * @brief Destructor
@@ -299,9 +291,7 @@ namespace AutoTest
      * @param number of events
      * @param sample size
      */
-    CountChecker(
-      size_t events_size,
-      size_t sample_size);
+    CountChecker(size_t events_size, size_t sample_size);
 
     /**
      * @brief Destructor
@@ -352,8 +342,7 @@ namespace AutoTest
      * @param sub checkers
      */
     template<typename... SubCheckers>
-    AndChecker(
-      SubCheckers... sub_checkers)
+    AndChecker(SubCheckers... sub_checkers)
       noexcept;
 
     /**
@@ -395,9 +384,7 @@ namespace AutoTest
      * @param sub checker
      * @param throw on error flag.
      */
-    ThrowChecker(
-      const SubCheckerType& sub_checker,
-      bool throw_error);
+    ThrowChecker(const SubCheckerType& sub_checker, bool throw_error);
 
     /**
      * @brief Destructor
@@ -432,9 +419,7 @@ namespace AutoTest
      * @param master checker
      * @param slave checker.
      */
-    FailChecker(
-      const MasterChecker& master,
-      const SlaveChecker& slave);
+    FailChecker(const MasterChecker& master, const SlaveChecker& slave);
 
     /**
      * @brief Destructor
@@ -467,8 +452,7 @@ namespace AutoTest
   wait_checker(
     const SubCheckerType& sub_checker,
     unsigned long wait_time = 0,
-    unsigned long sleep_time =
-      AutoTest::DEFAULT_SLEEP_TIME);
+    unsigned long sleep_time = AutoTest::DEFAULT_SLEEP_TIME);
 
   /**
    * @brief ThrowChecker helper
@@ -478,9 +462,7 @@ namespace AutoTest
    */
   template<typename SubCheckerType>
   ThrowChecker<SubCheckerType>
-  throw_checker(
-    const SubCheckerType& sub_checker,
-    bool throw_error = true);
+  throw_checker(const SubCheckerType& sub_checker, bool throw_error = true);
 
   /**
    * @brief FailChecker helper
@@ -490,9 +472,7 @@ namespace AutoTest
    */
   template<typename MasterChecker, typename SlaveChecker>
   FailChecker<MasterChecker, SlaveChecker>
-  fail_checker(
-    const MasterChecker& master,
-    const SlaveChecker& slave);
+  fail_checker(const MasterChecker& master, const SlaveChecker& slave);
 
   /**
    * @brief OrChecker helper
@@ -501,8 +481,7 @@ namespace AutoTest
    */
   template<typename... SubCheckers>
   OrChecker
-  or_checker(
-    SubCheckers... sub_checkers);
+  or_checker(SubCheckers... sub_checkers);
 
   /**
    * @brief OrChecker with counter object helper
@@ -512,9 +491,7 @@ namespace AutoTest
    */
   template<typename... SubCheckers>
   OrChecker
-  or_count_checker(
-    OrChecker::ICounter* counter,
-    SubCheckers... sub_checkers);
+  or_count_checker(OrChecker::ICounter* counter, SubCheckers... sub_checkers);
 
   /**
    * @brief AndChecker helper
@@ -523,8 +500,7 @@ namespace AutoTest
    */
   template<typename... SubCheckers>
   AndChecker
-  and_checker(
-    SubCheckers... sub_checkers);
+  and_checker(SubCheckers... sub_checkers);
 
   /**
    * @brief NotChecker helper
@@ -533,8 +509,7 @@ namespace AutoTest
    */
   template<typename SubCheckerType>
   NotChecker<SubCheckerType>
-  not_checker(
-    const SubCheckerType& checker);
+  not_checker(const SubCheckerType& checker);
 
 }
 

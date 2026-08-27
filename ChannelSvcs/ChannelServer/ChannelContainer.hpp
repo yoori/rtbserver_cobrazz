@@ -16,9 +16,7 @@
 #include <ChannelSvcs/ChannelServer/ChannelChunk.hpp>
 #include "ContainerMatchers.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   const unsigned int c_special_adv = 1;
   const unsigned int c_special_track = 2;
@@ -150,7 +148,7 @@ namespace ChannelSvcs
       void
       print(std::ostream& out)
       {
-        for(auto it = this->begin(); it != this->end(); ++it)
+        for (auto it = this->begin(); it != this->end(); ++it)
         {
           const UnmergedItem& ui = *it;
           out << "[ channel_id = " << ui.channel_id << ", " <<
@@ -168,9 +166,7 @@ namespace ChannelSvcs
   protected:
 
     /*calculate number of chunk in container by hash sum*/
-    unsigned long calc_chunk_num_(
-      unsigned long hash_sum,
-      unsigned long count_chunks) const
+    unsigned long calc_chunk_num_(unsigned long hash_sum, unsigned long count_chunks) const
       noexcept;
 
   protected:
@@ -228,9 +224,7 @@ namespace ChannelSvcs
 
     void change_stage(size_t stage) noexcept;
 
-    void set_relative_progress(
-      size_t absolute_value,
-      size_t div) noexcept;
+    void set_relative_progress(size_t absolute_value, size_t div) noexcept;
 
     void reset(size_t stages, size_t total) noexcept;
 
@@ -273,16 +267,10 @@ namespace ChannelSvcs
     /* add trigger with existing matching in container
      * and uid channels
      * */
-    size_t add_stage1(
-      UpdateContainer& add,
-      UnmergedMap& unmerged,
-      ChannelIdToTrigers& added)
+    size_t add_stage1(UpdateContainer& add, UnmergedMap& unmerged, ChannelIdToTrigers& added)
       /*throw(Exception)*/;
 
-    void add_stage2(
-      UpdateContainer& add,
-      UnmergedMap& unmerged,
-      ChannelIdToTrigers& added)
+    void add_stage2(UpdateContainer& add, UnmergedMap& unmerged, ChannelIdToTrigers& added)
       /*throw(Exception)*/;
 
     /*merge 2 containers*/
@@ -386,12 +374,9 @@ namespace ChannelSvcs
     typedef MatcherVarsSet NSTriggerAtom;
 
     void
-    fetch_add_item_url_map_(
-      const std::string& step, const ChannelChunk& channel_chunk) const;
+    fetch_add_item_url_map_(const std::string& step, const ChannelChunk& channel_chunk) const;
 
-    void trace_update_data_(
-      const UpdateContainer& add,
-      std::ostream& debug)
+    void trace_update_data_(const UpdateContainer& add, std::ostream& debug)
       noexcept;
 
     void add_with_existing_matcher_(
@@ -419,23 +404,16 @@ namespace ChannelSvcs
 
     /*calculate number of chunk in container by trigger*/
     template<class HASHADAPTER>
-    unsigned long calc_chunk_num_i_(
-      const HASHADAPTER& trigger) const
+    unsigned long calc_chunk_num_i_(const HASHADAPTER& trigger) const
       noexcept;
 
-    void add_ns_urls_(
-      const String::SubString& url,
-      SoftMatcher* matcher)
+    void add_ns_urls_(const String::SubString& url, SoftMatcher* matcher)
       noexcept;
 
-    void remove_ns_urls_(
-      const String::SubString& url,
-      const SoftMatcher_var& matcher)
+    void remove_ns_urls_(const String::SubString& url, const SoftMatcher_var& matcher)
       noexcept;
 
-    void remove_ns_words_(
-      const SubStringVector& keys,
-      const SoftMatcher_var& matcher)
+    void remove_ns_words_(const SubStringVector& keys, const SoftMatcher_var& matcher)
       noexcept;
 
     void add_ns_words_(
@@ -445,16 +423,11 @@ namespace ChannelSvcs
       noexcept;
 
 
-    void add_ns_(
-      SoftMatcher* matcher,
-      const String::SubString& key_word)
+    void add_ns_(SoftMatcher* matcher, const String::SubString& key_word)
       noexcept;
 
     /* match uid*/
-    void match_uid_(
-      const Generics::Uuid& uid,
-      const ChannelChunkArray& array,
-      TriggerMatchRes& res)
+    void match_uid_(const Generics::Uuid& uid, const ChannelChunkArray& array, TriggerMatchRes& res)
       /*throw(Exception)*/;
 
     /* match urls for triggers*/
@@ -551,12 +524,9 @@ namespace ChannelSvcs
   };
 
 }
-}
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
-  {
 
   template<class Map>
   void fill_deleted(
@@ -565,11 +535,10 @@ namespace AdServer
     std::map<unsigned long, Generics::Time>& deleted)
     /*throw(eh::Exception)*/
   {
-    for (typename Map::InactiveMap::const_iterator del_iter(
-      map.inactive().begin());
+    for (typename Map::InactiveMap::const_iterator del_iter(map.inactive().begin());
       del_iter != map.inactive().end(); ++del_iter)
     {
-      if(del_iter->second.timestamp > master)
+      if (del_iter->second.timestamp > master)
       {
         deleted[del_iter->first] = del_iter->second.timestamp;
       }
@@ -629,8 +598,7 @@ namespace AdServer
   //
   inline
   ChannelContainerBase::ChannelUpdateData_var
-  ChannelContainer::get_channel(
-    unsigned long channel_id) const noexcept
+  ChannelContainer::get_channel(unsigned long channel_id) const noexcept
   {
     ReadGuard_ lock(lock_update_data_);
     return ChannelContainerBase::get_channel(channel_id);
@@ -665,8 +633,7 @@ namespace AdServer
       ReadGuard_ lock(lock_configuration_);
       chunk_array = ReferenceCounting::add_ref(chunks_);
     }
-    for (ChannelChunkArray::const_iterator it(chunk_array->begin());
-      it != chunk_array->end(); ++it)
+    for (ChannelChunkArray::const_iterator it(chunk_array->begin()); it != chunk_array->end(); ++it)
     {
       (*it)->terminate();
     }
@@ -674,8 +641,7 @@ namespace AdServer
 
   template<>
   inline
-  unsigned long ChannelContainer::calc_chunk_num_i_(
-    const String::SubString& trigger) const
+  unsigned long ChannelContainer::calc_chunk_num_i_(const String::SubString& trigger) const
     noexcept
   {
     return calc_chunk_num_i_<Generics::SubStringHashAdapter>(
@@ -684,11 +650,9 @@ namespace AdServer
 
   /*calculate number of chunk in container*/
   template<class HASHADAPTER>
-  unsigned long ChannelContainer::calc_chunk_num_i_(
-    const HASHADAPTER& trigger) const
+  unsigned long ChannelContainer::calc_chunk_num_i_(const HASHADAPTER& trigger) const
     noexcept
   {
     return trigger.hash() % count_chunks_;
   }
-  }//namespace ChannelSvcs
-}
+} // namespace AdServer::ChannelSvcs

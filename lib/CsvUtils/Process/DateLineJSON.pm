@@ -22,7 +22,7 @@ sub new
   my %res_indexes_set;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       $res_indexes_set{$index - 1} = 1;
       push(@res_indexes, $index - 1);
@@ -36,12 +36,12 @@ sub new
   my $date_index = $params{'date_field'};
   my $value_index = $params{'value_field'};
 
-  if(!looks_like_number($date_index))
+  if (!looks_like_number($date_index))
   {
     die "CsvUtils::Process::DateLineJSON: invalid 'date_field' argument";
   }
 
-  if(!looks_like_number($value_index))
+  if (!looks_like_number($value_index))
   {
     die "CsvUtils::Process::DateLineJSON: invalid 'value_field' argument";
   }
@@ -68,7 +68,7 @@ sub process
 
   foreach my $field_index(@{$self->{field_}})
   {
-    if($row->[$field_index] ne '')
+    if ($row->[$field_index] ne '')
     {
       $all_empty = 0;
     }
@@ -83,16 +83,16 @@ sub process
 
   Encode::_utf8_on($group_key_str);
 
-  if($all_empty != 0 && $self->{group_empty_} == 0)
+  if ($all_empty != 0 && $self->{group_empty_} == 0)
   {
     return $row;
   }
   elsif(!exists($self->{rows_}->{$group_key_str}))
   {
     my @res;
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {
         push(@res, $row->[$i]);
       }
@@ -113,9 +113,9 @@ sub process
   {
     my $res = $self->{rows_}->{$group_key_str};
 
-    for(my $i = 0; $i < scalar(@$row); ++$i)
+    for (my $i = 0; $i < scalar(@$row); ++$i)
     {
-      if(exists($self->{field_set_}->{$i}))
+      if (exists($self->{field_set_}->{$i}))
       {}
       elsif(ref($row->[$i]) eq 'ARRAY')
       {
@@ -145,14 +145,14 @@ sub flush
     my $date_array = $row->[$self->{date_field_}];
     my $value_array = $row->[$self->{value_field_}];
 
-    if(scalar(@$date_array) != scalar(@$value_array))
+    if (scalar(@$date_array) != scalar(@$value_array))
     {
       die "CsvUtils::Process::DateLineJSON: date array size not equal to value array size (" .
         scalar(@$date_array) . " dates, " . scalar(@$value_array) . " values)";
     }
 
     my $json = "[";
-    for(my $i = 0; $i < scalar(@$date_array); ++$i)
+    for (my $i = 0; $i < scalar(@$date_array); ++$i)
     {
       $json .= ($i > 0 ? "," : "") . '{' .
         '"date":"' . $date_array->[$i] . '",' .

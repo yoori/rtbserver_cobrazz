@@ -76,15 +76,9 @@ namespace
       Generics::AppUtils::equal_name("help") ||
       Generics::AppUtils::short_name("h"),
       opt_help);
-    args.add(
-      Generics::AppUtils::equal_name("listen-port"),
-      opt_listen_port);
-    args.add(
-      Generics::AppUtils::equal_name("send-endpoint"),
-      opt_send_endpoint);
-    args.add(
-      Generics::AppUtils::equal_name("save-dump"),
-      opt_save_dump);
+    args.add(Generics::AppUtils::equal_name("listen-port"), opt_listen_port);
+    args.add(Generics::AppUtils::equal_name("send-endpoint"), opt_send_endpoint);
+    args.add(Generics::AppUtils::equal_name("save-dump"), opt_save_dump);
     args.parse(argc - 1, argv + 1);
 
     if (opt_help.enabled() ||
@@ -511,17 +505,14 @@ int main(int argc, char** argv)
     grpc::ServerBuilder builder;
     builder.SetMaxReceiveMessageSize(-1);
     builder.SetMaxSendMessageSize(-1);
-    builder.AddListeningPort(
-      "0.0.0.0:" + config.listen_port,
-      grpc::InsecureServerCredentials());
+    builder.AddListeningPort("0.0.0.0:" + config.listen_port, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     builder.RegisterService(&batch_service);
 
     auto server = builder.BuildAndStart();
     if (!server)
     {
-      throw std::runtime_error(
-        "failed to listen on gRPC port: " + config.listen_port);
+      throw std::runtime_error("failed to listen on gRPC port: " + config.listen_port);
     }
 
     std::cout << "UserInfoManagerProxy listens on port " <<

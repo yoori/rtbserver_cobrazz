@@ -10,9 +10,7 @@
 #include <Logger/StreamLogger.hpp>
 #include <Commons/UserInfoManip.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   // number of uids in blacklist epected very small, so use default copy constructor
   class UserIdBlackList
@@ -69,10 +67,7 @@ namespace Commons
               Stream::Error ostr;
               ostr << FNS << " can not add UserId: \'" << buf
                    << "\' into UserIdBlackList: eh::Exception: " << ex.what();
-              logger->log(ostr.str(),
-                Logging::Logger::WARNING,
-                aspect,
-                "ADS-IMPL-132");
+              logger->log(ostr.str(), Logging::Logger::WARNING, aspect, "ADS-IMPL-132");
               res = false;
             }
             catch(...)
@@ -80,10 +75,7 @@ namespace Commons
               Stream::Error ostr;
               ostr << FNS << " can not add UserId: \'" << buf
                    << "\' into UserIdBlackList: unknown exception";
-              logger->log(ostr.str(),
-                Logging::Logger::WARNING,
-                aspect,
-                "ADS-IMPL-132");
+              logger->log(ostr.str(), Logging::Logger::WARNING, aspect, "ADS-IMPL-132");
               res = false;
             }
             buf.clear();
@@ -108,5 +100,4 @@ namespace Commons
   private:
     UserIdBlackListContainer cont_;
   };
-}
 }

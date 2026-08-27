@@ -8,123 +8,109 @@
 #include <google/protobuf/generated_enum_reflection.h>
 #include "BaseRequest.hpp"
 
-namespace AutoTest
+namespace AutoTest::ProtoBuf
 {
-  namespace ProtoBuf
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  typedef google::protobuf::Reflection Reflection;
+  typedef google::protobuf::Message Message;
+  typedef google::protobuf::Descriptor Descriptor;
+  typedef google::protobuf::FieldDescriptor FieldDescriptor;
+  typedef google::protobuf::EnumValueDescriptor EnumValueDescriptor;
+  typedef google::protobuf::EnumDescriptor EnumDescriptor;
+
+  template<typename T>
+  concept IntegralBidParam = std::is_integral_v<typename T::Type>;
+
+  template<typename T>
+  concept NonIntegralBidParam = !IntegralBidParam<T>;
+
+  const FieldDescriptor*
+  get_field(
+    const Descriptor* descriptor,
+    const std::string& name) /*throw(Exception)*/;
+
+  void clear(Message* message, const std::string& name);
+
+  bool empty(Message* message, const std::string& name);
+
+  /**
+   * @class Type
+   * @brief Protobuf field wrapper.
+   */
+  template <typename ST, typename GT>
+  struct Type
   {
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-    typedef google::protobuf::Reflection Reflection;
-    typedef google::protobuf::Message Message;
-    typedef google::protobuf::Descriptor Descriptor;
-    typedef google::protobuf::FieldDescriptor FieldDescriptor;
-    typedef google::protobuf::EnumValueDescriptor EnumValueDescriptor;
-    typedef google::protobuf::EnumDescriptor EnumDescriptor;
+    typedef ST SetterType;
+    typedef GT NestedType;
+    typedef void (Reflection::*Setter)(Message*, const FieldDescriptor*, ST) const;
+    typedef GT (Reflection::*Getter)(const Message&, const FieldDescriptor*) const;
 
-    template<typename T>
-    concept IntegralBidParam = std::is_integral_v<typename T::Type>;
-
-    template<typename T>
-    concept NonIntegralBidParam = !IntegralBidParam<T>;
-
-    const FieldDescriptor*
-    get_field(
-      const Descriptor* descriptor,
-      const std::string& name) /*throw(Exception)*/;
-
-    void clear(
-      Message* message,
-      const std::string& name);
-
-    bool empty(
-      Message* message,
-      const std::string& name);
+    static const Setter setter_;
+    static const Getter getter_;
 
     /**
-     * @class Type
-     * @brief Protobuf field wrapper.
-     */
-    template <typename ST, typename GT>
-    struct Type
-    {
-      typedef ST SetterType;
-      typedef GT NestedType;
-      typedef void (Reflection::*Setter)(Message*, const FieldDescriptor*, ST) const;
-      typedef GT (Reflection::*Getter)(const Message&, const FieldDescriptor*) const;
-
-      static const Setter setter_;
-      static const Getter getter_;
-
-      /**
-       * @brief Set protobuf field value.
-       * @param Protobuf message
-       * @param field name
-       * @param value
-       */
-      template <typename T>
-      void
-      set_value(
-        Message* message,
-        const std::string& name,
-        T value);
-
-      /**
-       * @brief Get protobuf field value.
-       * @param Protobuf message
-       * @param field name
-       */
-      GT
-      get_value(
-        Message* message,
-        const std::string& name);
-    };
-
-    typedef Type<const EnumValueDescriptor*, const EnumValueDescriptor*> EnumType;
-
-    /**
-     * @class Enum
-     * @brief Protobuf enum wrapper.
+     * @brief Set protobuf field value.
+     * @param Protobuf message
+     * @param field name
+     * @param value
      */
     template <typename T>
-    struct Enum
-    {
-      typedef T SetterType;
-      typedef T NestedType;
-      static const EnumDescriptor* descriptor_;
+    void
+    set_value(Message* message, const std::string& name, T value);
 
-      /**
-       * @brief Set protobuf enum value.
-       * @param Protobuf message
-       * @param field name
-       * @param value
-       */
-      void
-      set_value(
-        Message* message,
-        const std::string& name,
-        T value);
+    /**
+     * @brief Get protobuf field value.
+     * @param Protobuf message
+     * @param field name
+     */
+    GT
+    get_value(Message* message, const std::string& name);
+  };
 
-      /**
-       * @brief Get protobuf enum value.
-       * @param Protobuf message
-       * @param field name
-       */
-      T get_value(
-        Message* message,
-        const std::string& name);
-    };
+  typedef Type<const EnumValueDescriptor*, const EnumValueDescriptor*> EnumType;
 
-    typedef Type<bool, bool> Bool;
-    typedef Type<int, int> Int;
-    typedef Type<unsigned, unsigned> UInt;
-    typedef Type<std::string, std::string> String;
-    typedef google::protobuf::RepeatedField<int> RepeatedInt;
-    typedef Type<int, const RepeatedInt&> IntSeq;
-    typedef google::protobuf::RepeatedField<unsigned> RepeatedUInt;
-    typedef Type<unsigned, const RepeatedUInt&> UIntSeq;
-    typedef google::protobuf::RepeatedPtrField<std::string> RepeatedString;
-    typedef Type<std::string, const RepeatedString&> StringSeq;
-  }
+  /**
+   * @class Enum
+   * @brief Protobuf enum wrapper.
+   */
+  template <typename T>
+  struct Enum
+  {
+    typedef T SetterType;
+    typedef T NestedType;
+    static const EnumDescriptor* descriptor_;
 
+    /**
+     * @brief Set protobuf enum value.
+     * @param Protobuf message
+     * @param field name
+     * @param value
+     */
+    void
+    set_value(Message* message, const std::string& name, T value);
+
+    /**
+     * @brief Get protobuf enum value.
+     * @param Protobuf message
+     * @param field name
+     */
+    T get_value(Message* message, const std::string& name);
+  };
+
+  typedef Type<bool, bool> Bool;
+  typedef Type<int, int> Int;
+  typedef Type<unsigned, unsigned> UInt;
+  typedef Type<std::string, std::string> String;
+  typedef google::protobuf::RepeatedField<int> RepeatedInt;
+  typedef Type<int, const RepeatedInt&> IntSeq;
+  typedef google::protobuf::RepeatedField<unsigned> RepeatedUInt;
+  typedef Type<unsigned, const RepeatedUInt&> UIntSeq;
+  typedef google::protobuf::RepeatedPtrField<std::string> RepeatedString;
+  typedef Type<std::string, const RepeatedString&> StringSeq;
+}
+
+namespace AutoTest
+{
   template<typename Request, typename Setter>
   class BidParam : public BaseParam
   {
@@ -146,12 +132,7 @@ namespace AutoTest
      * to use defs as default value for parameter
      */
     template <typename T>
-    BidParam(
-      Request* request,
-      Message* message,
-      const char* name,
-      T def,
-      bool set_defs = true);
+    BidParam(Request* request, Message* message, const char* name, T def, bool set_defs = true);
 
     /**
      * @brief Constructor.
@@ -159,10 +140,7 @@ namespace AutoTest
      * @param obj - protobuf message
      * @param parameter name
      */
-    BidParam(
-      Request* request,
-      Message* message,
-      const char* name);
+    BidParam(Request* request, Message* message, const char* name);
 
     /**
      * @brief Copy constructor.
@@ -170,10 +148,7 @@ namespace AutoTest
      * @param obj - protobuf message
      * @param other parameter
      */
-    BidParam(
-      Request* request,
-      Message* message,
-      const BidParam& other);
+    BidParam(Request* request, Message* message, const BidParam& other);
 
     /* @brief Destructor.
      *
@@ -228,10 +203,7 @@ namespace AutoTest
      * @return true for successfully dump.
      */
     virtual
-    bool print(
-      std::ostream& out,
-      const char* prefix,
-      const char* eql) const;
+    bool print(std::ostream& out, const char* prefix, const char* eql) const;
 
     /**
      * @brief Assignment operator.
@@ -312,9 +284,7 @@ namespace AutoTest
        */
       template<typename T, typename Arg>
       void
-      set_int(
-        T& param,
-        Arg arg)
+      set_int(T& param, Arg arg)
         requires AutoTest::ProtoBuf::IntegralBidParam<T>;
 
       /**
@@ -325,9 +295,7 @@ namespace AutoTest
        */
       template<typename T, typename Arg>
       void
-      set_int(
-        T& param,
-        Arg arg)
+      set_int(T& param, Arg arg)
         requires AutoTest::ProtoBuf::NonIntegralBidParam<T>;
 
       /**
@@ -338,9 +306,7 @@ namespace AutoTest
        */
       template<typename T>
       void
-      set_string(
-        T& param,
-        const std::string& arg)
+      set_string(T& param, const std::string& arg)
         requires AutoTest::ProtoBuf::IntegralBidParam<T>;
 
       /**
@@ -351,9 +317,7 @@ namespace AutoTest
        */
       template<typename T>
       void
-      set_string(
-        T& param,
-        const std::string& arg)
+      set_string(T& param, const std::string& arg)
         requires AutoTest::ProtoBuf::NonIntegralBidParam<T>;
     };
 
@@ -363,8 +327,7 @@ namespace AutoTest
      *
      * @param pointer to request member
      */
-    RequestMember(
-      Param Request::* member);
+    RequestMember(Param Request::* member);
 
     /**
      * @brief Destructor.
@@ -381,20 +344,15 @@ namespace AutoTest
      */
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      const std::string& val);
+    set_param_val(BaseRequest& request, const std::string& val);
 
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      unsigned long val);
+    set_param_val(BaseRequest& request, unsigned long val);
 
     virtual
     void
-    clear_param(
-      BaseRequest& request);
+    clear_param(BaseRequest& request);
 
     /**
      * @brief Clone member.

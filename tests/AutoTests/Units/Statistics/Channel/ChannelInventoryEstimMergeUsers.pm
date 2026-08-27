@@ -19,7 +19,7 @@ sub init {
     role_id => DB::Defaults::instance()->advertiser_role });
 
   # Session channels
-  $self->create_channel($ns, "S1", $account, 
+  $self->create_channel($ns, "S1", $account,
     [  DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 0,
@@ -31,7 +31,7 @@ sub init {
          time_to => 7200,
          minimum_visits => 1)]);
 
-  $self->create_channel($ns, "S2", $account, 
+  $self->create_channel($ns, "S2", $account,
     [ DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "U",
          time_from => 0,
@@ -39,7 +39,7 @@ sub init {
          minimum_visits => 1)]);
 
   # History channels
-  $self->create_channel($ns, "H1", $account, 
+  $self->create_channel($ns, "H1", $account,
     [  DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 86400,
@@ -47,14 +47,14 @@ sub init {
          minimum_visits => 10)]);
 
   # History+today channels
-  $self->create_channel($ns, "HT1", $account, 
+  $self->create_channel($ns, "HT1", $account,
     [  DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 0,
          time_to => 259200,
          minimum_visits => 10)]);
 
-  $self->create_channel($ns, "HT2", $account, 
+  $self->create_channel($ns, "HT2", $account,
     [  DB::BehavioralChannel::BehavioralParameter->blank(
          trigger_type =>  "P",
          time_from => 0,

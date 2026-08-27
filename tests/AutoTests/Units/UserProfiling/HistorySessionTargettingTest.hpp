@@ -24,14 +24,9 @@ public:
 
 public:
 
-  HistorySessionTargettingTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  HistorySessionTargettingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
-    base_time(
-      (AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
-        ":" + "12-00-00").c_str())
+    base_time((AutoTest::Time().get_gm_time().format("%d-%m-%Y") + ":" + "12-00-00").c_str())
   {};
 
   virtual ~HistorySessionTargettingTest() noexcept
@@ -43,9 +38,6 @@ private:
 
   virtual bool run_test();
 
-  void check(
-    const RequestType* requests,
-    size_t requests_size,
-    const AutoTest::Time& base_time);
+  void check(const RequestType* requests, size_t requests_size, const AutoTest::Time& base_time);
 
 };

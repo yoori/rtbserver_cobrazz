@@ -115,9 +115,9 @@ namespace UserInfoSvcs
     uint version;
   };
 
-  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
-  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;    
-    
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;
+
   struct PersistentMatches
   {
     list<uint> channel_ids;
@@ -158,7 +158,7 @@ namespace UserInfoSvcs
 
   autoreader AudienceChannelReader<AudienceChannel>;
   autowriter AudienceChannelWriter<AudienceChannel>;
-  
+
   struct ChannelsProfile
   {
     uint version;
@@ -186,7 +186,7 @@ namespace UserInfoSvcs
 
     list<GeoData> geo_data;
   };
- 
+
   reader ChannelsProfileReader<ChannelsProfile>
   {
     version;
@@ -199,14 +199,14 @@ namespace UserInfoSvcs
     first_colo_id;
     last_colo_id;
     cohort;
-    
+
     PersistentMatchesReader persistent_matches;
     ChannelsInfoReader page_channels;
     ChannelsInfoReader search_channels;
     ChannelsInfoReader url_channels;
     ChannelsInfoReader url_keyword_channels;
     array<AudienceChannelReader> audience_channels;
-     
+
     list<LastTriggerReader> unused_last_page_triggers;
     list<LastTriggerReader> unused_last_search_triggers;
     list<LastTriggerReader> unused_last_url_triggers;
@@ -214,7 +214,7 @@ namespace UserInfoSvcs
 
     list<GeoDataReader> geo_data;
   };
-   
+
   writer ChannelsProfileWriter<ChannelsProfile>
   {
     version;
@@ -227,7 +227,7 @@ namespace UserInfoSvcs
     first_colo_id;
     last_colo_id;
     cohort;
-    
+
     PersistentMatchesWriter persistent_matches;
     ChannelsInfoWriter page_channels;
     ChannelsInfoWriter search_channels;

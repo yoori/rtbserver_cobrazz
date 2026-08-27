@@ -1,10 +1,7 @@
 
 #include "NoAdvNoTrackTest.hpp"
 
-REFLECT_UNIT(NoAdvNoTrackTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(NoAdvNoTrackTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -17,10 +14,7 @@ namespace
   const char* TIME_FORMAT  = "%Y-%m-%d %H:%M:%S";
 }
 
-NoAdvNoTrackTest::NoAdvNoTrackTest(
-  UnitStat& stat_var,
-  const char* task_name,
-  XsdParams params_var)
+NoAdvNoTrackTest::NoAdvNoTrackTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
   : BaseUnit(stat_var, task_name, params_var)
 { }
 
@@ -46,32 +40,21 @@ NoAdvNoTrackTest::run_test()
   // Tests
   AdClient client(AdClient::create_user(this));
 
-  AUTOTEST_CASE(
-    no_adv_case_(client),
-    "No Advertisement");
+  AUTOTEST_CASE(no_adv_case_(client), "No Advertisement");
 
-  AUTOTEST_CASE(
-    no_track_case_(client),
-    "No Track");
+  AUTOTEST_CASE(no_track_case_(client), "No Track");
 
-  AUTOTEST_CASE(
-    no_adv_and_no_track_case_(client),
-    "No Advertisement and No Track");
+  AUTOTEST_CASE(no_adv_and_no_track_case_(client), "No Advertisement and No Track");
 
-  AUTOTEST_CASE(
-    session_info_case_(),
-    "Banned channels and session info");
+  AUTOTEST_CASE(session_info_case_(), "Banned channels and session info");
 
-  AUTOTEST_CASE(
-    passback_case_(),
-    "Banned channels and passback");
+  AUTOTEST_CASE(passback_case_(), "Banned channels and passback");
 
   return true;
 }
 
 void
-NoAdvNoTrackTest::no_adv_case_(
-  AdClient& client)
+NoAdvNoTrackTest::no_adv_case_(AdClient& client)
 {
   {
     add_descr_phrase("No adv by urls");
@@ -83,15 +66,10 @@ NoAdvNoTrackTest::no_adv_case_(
         referer(no_adv_urls + "/advertising.html"),
       "0", SpecialEffectsChecker::SE_NO_ADV);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "Check 'NO ADV' effect");
+    FAIL_CONTEXT(checker.check(), "Check 'NO ADV' effect");
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1_2",
-        checker.client().debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "Channel1_2", checker.client().debug_info.trigger_channels).check(),
       "Check url channels");
   }
 
@@ -105,22 +83,14 @@ NoAdvNoTrackTest::no_adv_case_(
         search(no_adv_url_words),
       "0", SpecialEffectsChecker::SE_NO_ADV);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "Check 'NO ADV' effect");
+    FAIL_CONTEXT(checker.check(), "Check 'NO ADV' effect");
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1_4",
-        checker.client().debug_info.trigger_channels).check(),
+      ChannelsCheck(this, "Channel1_4", checker.client().debug_info.trigger_channels).check(),
       "Check page channels");
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "Channel1",
-        checker.client().debug_info.history_channels).check(),
+      ChannelsCheck(this, "Channel1", checker.client().debug_info.history_channels).check(),
       "Check history channels");
   }
 
@@ -135,9 +105,7 @@ NoAdvNoTrackTest::no_adv_case_(
         ft(no_adv_words),
       "0", SpecialEffectsChecker::SE_NO_ADV);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "Check 'NO ADV' effect");
+    FAIL_CONTEXT(checker.check(), "Check 'NO ADV' effect");
 
     FAIL_CONTEXT(
       ChannelsCheck(
@@ -157,8 +125,7 @@ NoAdvNoTrackTest::no_adv_case_(
 }
 
 void
-NoAdvNoTrackTest::no_track_case_(
-  AdClient& client)
+NoAdvNoTrackTest::no_track_case_(AdClient& client)
 {
 
   {
@@ -172,20 +139,14 @@ NoAdvNoTrackTest::no_track_case_(
           referer(fetch_string("not_store_kwd")  + ".com/" + no_track_url_words ),
         "0", SpecialEffectsChecker::SE_NO_TRACK);
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check 'NO TRACK' effect");
+      FAIL_CONTEXT(checker.check(), "Check 'NO TRACK' effect");
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "Channel5_3",
-          checker.client().debug_info.trigger_channels).check(),
+        ChannelsCheck(this, "Channel5_3", checker.client().debug_info.trigger_channels).check(),
         "Check trigger channels");
 
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()),
+        AutoTest::predicate_checker(!checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
     }
 
@@ -195,9 +156,7 @@ NoAdvNoTrackTest::no_track_case_(
         NSLookupRequest().tid(fetch_string("Tag")),
         fetch_string("CC"));
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check creative");
+      FAIL_CONTEXT(checker.check(), "Check creative");
 
       FAIL_CONTEXT(
         ChannelsCheck(
@@ -229,20 +188,14 @@ NoAdvNoTrackTest::no_track_case_(
           referer_kw(fetch_string("not_store_kwd")),
         "0", SpecialEffectsChecker::SE_NO_TRACK);
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check 'NO TRACK' effect");
+      FAIL_CONTEXT(checker.check(), "Check 'NO TRACK' effect");
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "Channel5_1",
-          checker.client().debug_info.trigger_channels).check(),
+        ChannelsCheck(this, "Channel5_1", checker.client().debug_info.trigger_channels).check(),
         "Check trigger channels");
 
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()),
+        AutoTest::predicate_checker(!checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
     }
 
@@ -252,9 +205,7 @@ NoAdvNoTrackTest::no_track_case_(
         NSLookupRequest().tid(fetch_string("Tag")),
         fetch_string("CC"));
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check creative");
+      FAIL_CONTEXT(checker.check(), "Check creative");
 
       FAIL_CONTEXT(
         ChannelsCheck(
@@ -285,20 +236,14 @@ NoAdvNoTrackTest::no_track_case_(
           ft(no_track_words),
         "0", SpecialEffectsChecker::SE_NO_TRACK);
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check 'NO TRACK' effect");
+      FAIL_CONTEXT(checker.check(), "Check 'NO TRACK' effect");
 
       FAIL_CONTEXT(
-        ChannelsCheck(
-          this,
-          "Channel5_2",
-          checker.client().debug_info.trigger_channels).check(),
+        ChannelsCheck(this, "Channel5_2", checker.client().debug_info.trigger_channels).check(),
         "Check trigger channels");
 
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()),
+        AutoTest::predicate_checker(!checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
 
     }
@@ -309,9 +254,7 @@ NoAdvNoTrackTest::no_track_case_(
         NSLookupRequest().tid(fetch_string("Tag")),
         fetch_string("CC"));
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check creative");
+      FAIL_CONTEXT(checker.check(), "Check creative");
 
       FAIL_CONTEXT(
         ChannelsCheck(
@@ -333,8 +276,7 @@ NoAdvNoTrackTest::no_track_case_(
 
 
 void
-NoAdvNoTrackTest::no_adv_and_no_track_case_(
-  AdClient& client)
+NoAdvNoTrackTest::no_adv_and_no_track_case_(AdClient& client)
 {
 
   {
@@ -346,13 +288,10 @@ NoAdvNoTrackTest::no_adv_and_no_track_case_(
         referer_kw(no_adv_words + "," + fetch_string("not_store_kwd")),
       "0", SpecialEffectsChecker::SE_NO_TRACK | SpecialEffectsChecker::SE_NO_ADV);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "Check 'NO TRACK & NO ADV' effects");
+    FAIL_CONTEXT(checker.check(), "Check 'NO TRACK & NO ADV' effects");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !checker.client().debug_info.history_channels.size()),
+      AutoTest::predicate_checker(!checker.client().debug_info.history_channels.size()),
       "Check empty history on NO TRACK");
   }
 
@@ -362,9 +301,7 @@ NoAdvNoTrackTest::no_adv_and_no_track_case_(
       NSLookupRequest().tid(fetch_string("Tag")),
       fetch_string("CC"));
 
-      FAIL_CONTEXT(
-        checker.check(),
-        "Check creative");
+      FAIL_CONTEXT(checker.check(), "Check creative");
 
       FAIL_CONTEXT(
         ChannelsCheck(
@@ -418,15 +355,10 @@ NoAdvNoTrackTest::session_info_case_()
     "Check 'NO TRACK & NO ADV' effects (10 sec later)");
 
 
-  std::string session_start_expected =
-    now.get_gm_time().format(TIME_FORMAT);
-  std::string last_request_expected =
-    (now + 10).get_gm_time().format(TIME_FORMAT);
+  std::string session_start_expected = now.get_gm_time().format(TIME_FORMAT);
+  std::string last_request_expected = (now + 10).get_gm_time().format(TIME_FORMAT);
 
-  std::string uid =
-    AutoTest::prepare_uid(
-      client.get_uid(),
-      AutoTest::UUE_ADMIN_PARAMVALUE);
+  std::string uid = AutoTest::prepare_uid(client.get_uid(), AutoTest::UUE_ADMIN_PARAMVALUE);
 
   FAIL_CONTEXT(
     BaseProfileChecker(
@@ -445,15 +377,11 @@ NoAdvNoTrackTest::session_info_case_()
       debug_time(now+10));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      last_request_expected,
-      client.debug_info.last_request_time).check(),
+    AutoTest::equal_checker(last_request_expected, client.debug_info.last_request_time).check(),
     "Check last_request_time");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      session_start_expected,
-      client.debug_info.session_start).check(),
+    AutoTest::equal_checker(session_start_expected, client.debug_info.session_start).check(),
     "Check session_start");
 }
 
@@ -471,13 +399,10 @@ NoAdvNoTrackTest::passback_case_()
 
   for (size_t i = 0; i < countof(requests); ++i)
   {
-    client.process_request(
-      requests[i].tid(fetch_string("PassbackTag")));
+    client.process_request(requests[i].tid(fetch_string("PassbackTag")));
 
     FAIL_CONTEXT(
-      TagPassbackChecker(
-        client,
-        fetch_string("PassbackURL")).check(),
+      TagPassbackChecker(client, fetch_string("PassbackURL")).check(),
       "Passback check#" + strof(i+1));
   }
 }

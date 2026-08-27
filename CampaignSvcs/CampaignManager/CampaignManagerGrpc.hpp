@@ -122,6 +122,5 @@ namespace AdServer::CampaignSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using CampaignManagerGrpc_var =
-    ReferenceCounting::SmartPtr<CampaignManagerGrpc>;
+  using CampaignManagerGrpc_var = ReferenceCounting::SmartPtr<CampaignManagerGrpc>;
 }

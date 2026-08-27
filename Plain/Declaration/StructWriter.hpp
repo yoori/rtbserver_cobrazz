@@ -60,10 +60,7 @@ namespace Declaration
       FieldWriterList_var;
 
   public:
-    StructWriter(
-      const char* name_val,
-      BaseDescriptor* descriptor_val,
-      FieldWriterList* fields_val);
+    StructWriter(const char* name_val, BaseDescriptor* descriptor_val, FieldWriterList* fields_val);
 
     FieldWriterList_var fields() const;
 
@@ -72,8 +69,7 @@ namespace Declaration
     virtual StructWriter_var as_struct_writer() noexcept;
 
     virtual void
-    check_mapping_specifiers(
-      const Declaration::MappingSpecifierSet& mapping_specifiers)
+    check_mapping_specifiers(const Declaration::MappingSpecifierSet& mapping_specifiers)
       /*throw(InvalidMappingSpecifier)*/;
 
   protected:
@@ -172,11 +168,10 @@ namespace Declaration
 
   inline
   void
-  StructWriter::check_mapping_specifiers(
-    const Declaration::MappingSpecifierSet& mapping_specifiers)
+  StructWriter::check_mapping_specifiers(const Declaration::MappingSpecifierSet& mapping_specifiers)
     /*throw(BaseWriter::InvalidMappingSpecifier)*/
   {
-    if(!mapping_specifiers.empty())
+    if (!mapping_specifiers.empty())
     {
       // no allowed specifiers
       Stream::Error ostr;

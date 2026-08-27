@@ -17,9 +17,7 @@ namespace rocksdb
   class DBWithTTL;
 }
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /**
    * class RocksDBProfileMap
@@ -42,19 +40,13 @@ namespace ProfilingCommons
     check_profile(const std::string& key) const;
 
     virtual void
-    check_profile_async(
-      const std::string& key,
-      CheckCallback callback) const;
+    check_profile_async(const std::string& key, CheckCallback callback) const;
 
     virtual Generics::ConstSmartMemBuf_var
-    get_profile(
-      const std::string& key,
-      Generics::Time* last_access_time = 0);
+    get_profile(const std::string& key, Generics::Time* last_access_time = 0);
 
     virtual Generics::SmartMemBuf_var
-    get_own_profile(
-      const std::string& key,
-      Generics::Time* last_access_time = 0);
+    get_own_profile(const std::string& key, Generics::Time* last_access_time = 0);
 
     virtual Generics::ConstSmartMemBuf_var
     get_profile_async(
@@ -83,9 +75,7 @@ namespace ProfilingCommons
       SaveCallback callback = SaveCallback());
 
     virtual bool
-    remove_profile(
-      const std::string& key,
-      OperationPriority op_priority = OP_RUNTIME);
+    remove_profile(const std::string& key, OperationPriority op_priority = OP_RUNTIME);
 
     virtual void
     remove_profile_async(
@@ -164,14 +154,10 @@ namespace ProfilingCommons
       typename AsyncProfileMap<KeyType>::CheckCallback callback) const;
 
     virtual Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0);
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0);
 
     virtual Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0);
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0);
 
     virtual Generics::ConstSmartMemBuf_var
     get_profile_async(
@@ -201,9 +187,7 @@ namespace ProfilingCommons
         typename AsyncProfileMap<KeyType>::SaveCallback());
 
     virtual bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME);
+    remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME);
 
     virtual void
     remove_profile_async(
@@ -241,11 +225,8 @@ namespace ProfilingCommons
     std::shared_ptr<RocksDBProfileMapImpl> impl_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   template<typename KeyType, typename KeyAdapterType>
   RocksDBProfileMap<KeyType, KeyAdapterType>::RocksDBProfileMap(
@@ -297,10 +278,7 @@ namespace ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return impl_->get_profile_async(
-      key_adapter_(key),
-      std::move(callback),
-      last_access_time);
+    return impl_->get_profile_async(key_adapter_(key), std::move(callback), last_access_time);
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -310,10 +288,7 @@ namespace ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return impl_->get_own_profile_async(
-      key_adapter_(key),
-      std::move(callback),
-      last_access_time);
+    return impl_->get_own_profile_async(key_adapter_(key), std::move(callback), last_access_time);
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -324,11 +299,7 @@ namespace ProfilingCommons
     const Generics::Time& now,
     OperationPriority op_priority)
   {
-    impl_->save_profile(
-      key_adapter_(key),
-      profile,
-      now,
-      op_priority);
+    impl_->save_profile(key_adapter_(key), profile, now, op_priority);
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -339,11 +310,7 @@ namespace ProfilingCommons
     const Generics::Time& now,
     typename AsyncProfileMap<KeyType>::SaveCallback callback)
   {
-    impl_->save_profile_async(
-      key_adapter_(key),
-      profile,
-      now,
-      std::move(callback));
+    impl_->save_profile_async(key_adapter_(key), profile, now, std::move(callback));
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -362,10 +329,7 @@ namespace ProfilingCommons
     OperationPriority op_priority,
     typename AsyncProfileMap<KeyType>::RemoveCallback callback)
   {
-    impl_->remove_profile_async(
-      key_adapter_(key),
-      op_priority,
-      std::move(callback));
+    impl_->remove_profile_async(key_adapter_(key), op_priority, std::move(callback));
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -425,5 +389,4 @@ namespace ProfilingCommons
   {
     impl_->flush();
   }
-}
 }

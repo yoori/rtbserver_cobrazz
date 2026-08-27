@@ -3,10 +3,7 @@
 #include <sstream>
 #include <Logger/ActiveObjectCallback.hpp>
 
-REFLECT_UNIT(SessionSyncTest) (
-  "UserProfiling",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(SessionSyncTest) ("UserProfiling", AUTO_TEST_QUIET);
 
 namespace
 {
@@ -27,11 +24,7 @@ namespace
     virtual ~SesSyncTestThread() noexcept {}
 
     //construct this
-    SesSyncTestThread(
-      const AdClient& client,
-      Logger& logger,
-      int num,
-      const BaseRequest* request) :
+    SesSyncTestThread(const AdClient& client, Logger& logger, int num, const BaseRequest* request) :
       client_(client),
       logger_(logger),
       num_(num),
@@ -45,11 +38,9 @@ namespace
       AutoTest::Logger::thlog(logger_);
       try
       {
-        logger_.stream(Logging::Logger::DEBUG, ASPECT) <<
-          "Thread#" << num_ << " start";
+        logger_.stream(Logging::Logger::DEBUG, ASPECT) << "Thread#" << num_ << " start";
         client_.process_request(*request_);
-        logger_.stream(Logging::Logger::DEBUG, ASPECT) <<
-          "Thread#" << num_ << " stop";
+        logger_.stream(Logging::Logger::DEBUG, ASPECT) << "Thread#" << num_ << " stop";
       }
       catch(const eh::Exception& exc)
       {
@@ -62,14 +53,9 @@ namespace
 
 }
 
-SessionSyncTest::SessionSyncTest(
-  UnitStat& stat_var,
-  const char* task_name,
-  XsdParams params_var)
+SessionSyncTest::SessionSyncTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
   : BaseUnit(stat_var, task_name, params_var),
-    callback_(
-      new Logging::ActiveObjectCallbackImpl(
-        &AutoTest::Logger::thlog()))
+    callback_(new Logging::ActiveObjectCallbackImpl(&AutoTest::Logger::thlog()))
 
 { }
 
@@ -88,18 +74,13 @@ SessionSyncTest::run_test_element(int count,
   client.process_request(validating_request);
   {
     Generics::TaskRunner_var task_runner(
-      new Generics::TaskRunner(callback_,
-                                 minimum_visits - 2,
-                                 1024 * 1024));
+      new Generics::TaskRunner(callback_, minimum_visits - 2, 1024 * 1024));
     //Creating of <minimum_visits - 2> threads, which will send equal requests concurrently;
     for (size_t ind = 0; ind < minimum_visits - 2; ++ind)
     {
       task_runner->
         enqueue_task(Generics::Task_var(
-          new SesSyncTestThread(
-            client,
-            AutoTest::Logger::thlog(),
-            ind, &validating_request)), 0);
+          new SesSyncTestThread(client, AutoTest::Logger::thlog(), ind, &validating_request)), 0);
     }
     task_runner->activate_object();
     task_runner->wait_for_queue_exhausting();
@@ -112,12 +93,8 @@ SessionSyncTest::run_test_element(int count,
   // Status != 200 and != 204, if race occur
   FAIL_CONTEXT(
     AutoTest::or_checker(
-      AutoTest::equal_checker(
-        204,
-        client.req_status()),
-      AutoTest::equal_checker(
-        200,
-        client.req_status())),
+      AutoTest::equal_checker(204, client.req_status()),
+      AutoTest::equal_checker(200, client.req_status())),
     "Invalid HTTP status");
   return true;
 }
@@ -132,7 +109,7 @@ SessionSyncTest::run_test()
   int count  = repeat_count;
 
   bool result = false;
-  while(count-- && (result = run_test_element(repeat_count-count, minimum_visits, keyword)));
+  while (count-- && (result = run_test_element(repeat_count-count, minimum_visits, keyword)));
   return result;
 }
 

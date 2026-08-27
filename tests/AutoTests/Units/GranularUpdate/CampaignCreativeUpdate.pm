@@ -11,8 +11,8 @@ sub add_creative
   my ($self, $namespace) = @_;
 
   my $ns = $namespace->sub_namespace("ADDCREATIVE");
- 
-  my $campaign = $ns->create(DisplayCampaign => { 
+
+  my $campaign = $ns->create(DisplayCampaign => {
     name => 'Display' });
 
   my $template = $ns->create(Template => {
@@ -35,7 +35,7 @@ sub remove_creative
 
   my $ns = $namespace->sub_namespace("REMOVECREATIVE");
 
-  my $campaign = $ns->create(DisplayCampaign => { 
+  my $campaign = $ns->create(DisplayCampaign => {
     name => 'Display' });
 
   $ns->output("CC", $campaign->{cc_id});
@@ -52,7 +52,7 @@ sub update_creative
     template_file => 'UnitTests/banner_img_clk.html',
     flags => 0 });
 
-  my $campaign = $ns->create(DisplayCampaign => { 
+  my $campaign = $ns->create(DisplayCampaign => {
     name => 'Display',
     size_id => DB::Defaults::instance()->size(),
     template_id => $template });
@@ -74,7 +74,7 @@ sub update_option_value
 
   my $ns = $namespace->sub_namespace("UPDATEOPTION");
 
-  my $acc_type_id = $ns->create(AccountType => { 
+  my $acc_type_id = $ns->create(AccountType => {
     name => "AccType",
     adv_exclusions => 'S',
     account_role_id => DB::Defaults::instance()->publisher_role });
@@ -86,7 +86,7 @@ sub update_option_value
 
   my $keyword = make_autotest_name($ns, "ADSC-5428");
 
-  my $campaign = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign = $ns->create(TextAdvertisingCampaign => {
     name => 'TA-UpdateOptionValue',
     size_id => DB::Defaults::instance()->size(),
     template_id => DB::Defaults::instance()->text_template,
@@ -95,38 +95,38 @@ sub update_option_value
     campaigncreativegroup_flags => 0,
     max_cpc_bid => 100 });
 
-  my $option = $ns->create(Options => { 
+  my $option = $ns->create(Options => {
     token => "HEADLINE",
     option_group_id => DB::Defaults::instance()->text_option_group,
     template_id => DB::Defaults::instance()->text_template  });
 
-  my $v_category = $ns->create(CreativeCategory => { 
+  my $v_category = $ns->create(CreativeCategory => {
     name => "V",
     cct_id => 0 });
 
-  my $c_category = $ns->create(CreativeCategory => { 
+  my $c_category = $ns->create(CreativeCategory => {
     name => "C",
     cct_id => 1 });
 
-  $ns->create(CreativeCategory_Creative => { 
+  $ns->create(CreativeCategory_Creative => {
     creative_category_id => $v_category,
     creative_id => $campaign->{creative_id} });
 
-  $ns->create(CreativeCategory_Creative => { 
+  $ns->create(CreativeCategory_Creative => {
     creative_category_id => $c_category,
     creative_id => $campaign->{creative_id} });
 
   my $exclusion_tag = make_autotest_name($ns, "tag");
 
-  my $category = $ns->create(CreativeCategory => { 
+  my $category = $ns->create(CreativeCategory => {
     name => $exclusion_tag,
     cct_id => 2 }); # tag type
 
-  $ns->create(SiteCreativeCategoryExclusion => { 
+  $ns->create(SiteCreativeCategoryExclusion => {
     site_id => $publisher->{site_id},
     creative_category_id => $category });
 
-  $ns->create(CreativeOptionValue => { 
+  $ns->create(CreativeOptionValue => {
     creative_id => $campaign->{creative_id},
     option_id => $option,
     value => 'CampaignCreativeUpdate' });
@@ -143,12 +143,12 @@ sub update_option_value
 sub init
 {
   my ($self, $ns) = @_;
-  
+
   $self->add_creative($ns);
   $self->remove_creative($ns);
   $self->update_creative($ns);
   $self->update_option_value($ns);
-  
+
 }
 
 1;

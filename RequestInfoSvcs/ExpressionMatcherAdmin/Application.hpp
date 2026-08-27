@@ -10,8 +10,7 @@ class Application_
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  using Client = AdServer::RequestInfoSvcs::
-    ExpressionMatcherGrpcAsyncClient;
+  using Client = AdServer::RequestInfoSvcs::ExpressionMatcherGrpcAsyncClient;
 
   Application_() noexcept;
   virtual ~Application_() noexcept;
@@ -26,13 +25,9 @@ protected:
     const char* user_id,
     bool temporary) noexcept;
 
-  void print_request_trigger_match(
-    Client& expression_matcher,
-    const char* request_id) noexcept;
+  void print_request_trigger_match(Client& expression_matcher, const char* request_id) noexcept;
 
-  void print_household_colo_reach(
-    Client& expression_matcher,
-    const char* user_id) noexcept;
+  void print_household_colo_reach(Client& expression_matcher, const char* user_id) noexcept;
 };
 
 using Application = Generics::Singleton<Application_>;

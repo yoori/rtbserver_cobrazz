@@ -165,7 +165,7 @@ valueof (const std::string& str) /*throw(eh::Exception)*/
   Stream::Parser istrm(str);
   T value;
   istrm >> value;
-  if(istrm.fail() || !istrm.eof())
+  if (istrm.fail() || !istrm.eof())
   {
     Stream::Error ostr;
     ostr << "failed conversion of '" << str << "'";

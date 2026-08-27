@@ -15,8 +15,7 @@ namespace Cpp
   {}
 
   void
-  DescriptorGenerator::generate_decl(
-    Declaration::StructDescriptor* struct_descriptor)
+  DescriptorGenerator::generate_decl(Declaration::StructDescriptor* struct_descriptor)
     noexcept
   {
     out_ << offset_ << "/* " << struct_descriptor->name() <<
@@ -27,23 +26,19 @@ namespace Cpp
     WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_default_buffers_decl(
       struct_descriptor);
 
-    WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_protected_decl(
-      struct_descriptor);
+    WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_protected_decl(struct_descriptor);
   }
 
   void
-  DescriptorGenerator::generate_impl(
-    Declaration::StructDescriptor* struct_descriptor)
+  DescriptorGenerator::generate_impl(Declaration::StructDescriptor* struct_descriptor)
     noexcept
   {
-    Declaration::StructDescriptor::PosedFieldList_var fields =
-      struct_descriptor->fields();
+    Declaration::StructDescriptor::PosedFieldList_var fields = struct_descriptor->fields();
 
     WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_default_buffers_impl(
       struct_descriptor);
 
-    WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_protected_impl(
-      struct_descriptor);
+    WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_protected_impl(struct_descriptor);
   }
 
   void
@@ -59,8 +54,7 @@ namespace Cpp
       std::endl <<
       offset_ << "{" << std::endl <<
       offset_ << "  static const bool IS_FIXED = " <<
-      (struct_descriptor->is_fixed() ? "true" : "false") <<
-      ";" << std::endl;
+      (struct_descriptor->is_fixed() ? "true" : "false") << ";" << std::endl;
 
     unsigned long fixed_size = struct_descriptor->fields()->empty() ? 0 :
       (*struct_descriptor->fields()->rbegin())->pos() +
@@ -69,9 +63,8 @@ namespace Cpp
     out_ << offset_ << "  static const unsigned FIXED_SIZE = " <<
       fixed_size << ";" << std::endl << std::endl;
 
-    for(Declaration::StructDescriptor::
-        PosedFieldList::const_iterator field_it =
-          struct_descriptor->fields()->begin();
+    for (Declaration::StructDescriptor::
+        PosedFieldList::const_iterator field_it = struct_descriptor->fields()->begin();
         field_it != struct_descriptor->fields()->end(); ++field_it)
     {
       out_ << offset_ << "  static const unsigned " <<

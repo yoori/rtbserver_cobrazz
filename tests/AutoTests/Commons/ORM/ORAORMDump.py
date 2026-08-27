@@ -39,7 +39,7 @@ def makeIndex (table, sequence, fields, pk):
         return ORMBase.Index([index], sequence)
     else:
         if sequence:
-            #sort indexes 
+            #sort indexes
             indexes = []
             for p in pk:
                 indexes.append(p[0])
@@ -50,7 +50,7 @@ def makeIndex (table, sequence, fields, pk):
                     return 1
                 return cmp(x, y)
             indexes.sort(sorter)
-            print 'WARNING!, found '+table+' with sequence '+sequence+' but with '+str(len(pk))+' primary keys {', pk, '} use '+ indexes[0] 
+            print 'WARNING!, found '+table+' with sequence '+sequence+' but with '+str(len(pk))+' primary keys {', pk, '} use '+ indexes[0]
             ret = ORMBase.Index([fields[indexes[0]](indexes[0])], sequence)
             del fields[indexes[0]]
             return ret
@@ -77,7 +77,7 @@ class Schemer:
 
     def close (self):
         self.conn.close()
-    
+
     def getRecords (self, sql):
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -91,7 +91,7 @@ class Schemer:
         for tblRecord in tblRecords:
             ret.append(tblRecord[0])
         return ret
-    
+
     def getSequence (self, tableName):
         sqlString = "select SEQUENCE_NAME from USER_SEQUENCES where SEQUENCE_NAME = '%sSEQ' or SEQUENCE_NAME = '%s_SEQ'"
         seqRecords = self.getRecords(sqlString%(tableName, tableName))
@@ -120,7 +120,7 @@ class Schemer:
                 return ( fieldName, )
             return True, map(fld2tuple, filter(flt, self.getFields(tableName).items()))
         return False, pkRecords
-    
+
     def getReferences (self, tableName):
         sqlString = """select USER_CONS_COLUMNS.COLUMN_NAME, c2.TABLE_NAME from USER_CONS_COLUMNS
         inner join USER_CONSTRAINTS c1
@@ -133,7 +133,7 @@ class Schemer:
         for field in linksRecords:
             fields[field[0]] = field[1]
         return fields
-                                    
+
     def getFields(self, tableName):
         sqlString = """select COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_SCALE
         from USER_TAB_COLUMNS where TABLE_NAME = '%s' """

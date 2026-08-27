@@ -46,52 +46,52 @@ Source0: http://c-ares.haxx.se/download/%{name}-%{version}.tar.gz
 Source1: LICENSE
 #Patch0: 0001-Use-RPM-compiler-options.patch
 #Patch1: c-ares-1.10.0-multilib.patch
- 
+
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
- 
+
 %description
-c-ares is a C library that performs DNS requests and name resolves 
-asynchronously. c-ares is a fork of the library named 'ares', written 
+c-ares is a C library that performs DNS requests and name resolves
+asynchronously. c-ares is a fork of the library named 'ares', written
 by Greg Hudson at MIT.
- 
+
 %package devel
 Summary: Development files for c-ares
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
- 
+
 %description devel
 This package contains the header files and libraries needed to
 compile applications or shared objects that use c-ares.
- 
+
 %prep
 %setup -q
 #%patch0 -p1 -b .optflags
 #%patch1 -p1 -b .multilib
- 
+
 cp %{SOURCE1} .
 f=CHANGES ; iconv -f iso-8859-1 -t utf-8 $f -o $f.utf8 ; mv $f.utf8 $f
- 
+
 %build
 autoreconf -if
 %configure --enable-shared --disable-static --disable-dependency-tracking --enable-debug CFLAGS="-fPIC"
 %{__make} %{?_smp_mflags} VERBOSE=1
- 
+
 %install
 rm -rf $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT install
 rm -f $RPM_BUILD_ROOT/%{_libdir}/libcares.la
- 
+
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
- 
+
 %files
 %defattr(-, root, root)
 %doc README.cares CHANGES NEWS LICENSE
 %{_libdir}/*.so.*
- 
+
 %files devel
 %defattr(-, root, root, 0755)
 %{_includedir}/ares_nameser.h

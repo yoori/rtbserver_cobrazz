@@ -15,9 +15,7 @@ namespace
 
   int usage()
   {
-    std::cerr
-      << "usage: GrpcProbeObj <host:port> [timeout_ms] "
-         "[-control DB {-1|0|1}]\n";
+    std::cerr << "usage: GrpcProbeObj <host:port> [timeout_ms] " "[-control DB {-1|0|1}]\n";
     return 2;
   }
 
@@ -41,6 +39,7 @@ namespace
     {
       result = std::to_string(static_cast<int>(status.error_code()));
     }
+
     if (!status.error_details().empty())
     {
       if (!result.empty())
@@ -104,32 +103,27 @@ main(int argc, char** argv)
     }
 
     grpc::ClientContext context;
-    context.set_deadline(
-      std::chrono::system_clock::now() +
-      std::chrono::milliseconds(timeout_ms));
+    context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms));
 
     if (db_state == -1)
     {
       pc::GetDbStateRequest request;
       pc::GetDbStateResponse response;
-      const grpc::Status status =
-        stub->get_db_state(&context, request, &response);
+      const grpc::Status status = stub->get_db_state(&context, request, &response);
       if (!status.ok())
       {
         print_error(status);
         return 2;
       }
 
-      std::cout << (response.enabled() ? "DB enabled" : "DB disabled") <<
-        '\n';
+      std::cout << (response.enabled() ? "DB enabled" : "DB disabled") << '\n';
       return response.enabled() ? 0 : 1;
     }
 
     pc::SetDbStateRequest request;
     request.set_enabled(db_state != 0);
     pc::SetDbStateResponse response;
-    const grpc::Status status =
-      stub->set_db_state(&context, request, &response);
+    const grpc::Status status = stub->set_db_state(&context, request, &response);
     if (!status.ok())
     {
       print_error(status);
@@ -140,9 +134,7 @@ main(int argc, char** argv)
   }
 
   grpc::ClientContext context;
-  context.set_deadline(
-    std::chrono::system_clock::now() +
-    std::chrono::milliseconds(timeout_ms));
+  context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms));
 
   pc::GetStatusRequest request;
   pc::GetStatusResponse response;

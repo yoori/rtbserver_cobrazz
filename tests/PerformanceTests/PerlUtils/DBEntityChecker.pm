@@ -24,14 +24,14 @@ sub check {
   elsif ($class->can('_name'))
   {
     my ($name)        = ($class->_name);
-    if ($name) 
+    if ($name)
     {
       my $statment = "SELECT $name FROM $table WHERE $name='$entity_name'";
       return _exec_checker_query($ns, $statment)
     }
   }
   return 1;
-}  
+}
 
 sub _exec_checker_query {
 

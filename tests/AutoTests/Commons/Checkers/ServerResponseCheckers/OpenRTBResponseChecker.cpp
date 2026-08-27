@@ -34,12 +34,8 @@ namespace AutoTest
     parse_integer(std::string_view value, T& result)
     {
       T parsed = T();
-      const auto parse_result = std::from_chars(
-        value.data(),
-        value.data() + value.size(),
-        parsed);
-      if(parse_result.ec == std::errc() &&
-        parse_result.ptr == value.data() + value.size())
+      const auto parse_result = std::from_chars(value.data(), value.data() + value.size(), parsed);
+      if (parse_result.ec == std::errc() && parse_result.ptr == value.data() + value.size())
       {
         result = parsed;
       }
@@ -107,7 +103,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           bid->*field_ = to_string(value);
         }
@@ -118,7 +114,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           bid->*field_ = std::move(value);
         }
@@ -142,7 +138,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           assign_integer(value, bid->*field_);
         }
@@ -153,7 +149,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           parse_integer(value, bid->*field_);
         }
@@ -164,7 +160,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           parse_integer(value, bid->*field_);
         }
@@ -193,7 +189,7 @@ namespace AutoTest
       process_float(double value, std::string_view, void* context) const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           bid->*field_ = value;
         }
@@ -204,7 +200,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           bid->*field_ = value;
         }
@@ -215,7 +211,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           double parsed = 0;
           Stream::Parser strm(String::SubString(value.data(), value.size()));
@@ -245,7 +241,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_).push_back(to_string(value));
         }
@@ -256,7 +252,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_).push_back(std::move(value));
         }
@@ -279,7 +275,7 @@ namespace AutoTest
       array_started(std::string_view, void* context) const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_).is_set(true);
         }
@@ -290,7 +286,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_)->push_back(to_string(value));
         }
@@ -301,7 +297,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_)->push_back(std::move(value));
         }
@@ -316,8 +312,7 @@ namespace AutoTest
     {
     public:
       explicit
-      BidOptionalIntegerListProcessor(
-        ExpValue<std::list<T> > OpenRTBResponse::Bid::* field)
+      BidOptionalIntegerListProcessor(ExpValue<std::list<T> > OpenRTBResponse::Bid::* field)
         : field_(field)
       {}
 
@@ -325,7 +320,7 @@ namespace AutoTest
       array_started(std::string_view, void* context) const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_).is_set(true);
         }
@@ -336,7 +331,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           (bid->*field_)->push_back(static_cast<T>(value));
         }
@@ -347,7 +342,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           T result = T();
           parse_integer(value, result);
@@ -372,7 +367,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           bid->*field_ = static_cast<unsigned long>(value);
         }
@@ -383,7 +378,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           unsigned long result = 0;
           parse_integer(value, result);
@@ -396,7 +391,7 @@ namespace AutoTest
         const override
       {
         auto* bid = static_cast<ParseContext*>(context)->bid;
-        if(bid)
+        if (bid)
         {
           unsigned long result = 0;
           parse_integer(value, result);
@@ -423,22 +418,22 @@ namespace AutoTest
 
       bool in_string = false;
       bool escaped = false;
-      for(char ch : value)
+      for (char ch : value)
       {
         result += ch;
-        if(escaped)
+        if (escaped)
         {
           escaped = false;
         }
-        else if(in_string && ch == '\\')
+        else if (in_string && ch == '\\')
         {
           escaped = true;
         }
-        else if(ch == '"')
+        else if (ch == '"')
         {
           in_string = !in_string;
         }
-        else if(!in_string && (ch == ':' || ch == ','))
+        else if (!in_string && (ch == ':' || ch == ','))
         {
           result += ' ';
         }
@@ -455,26 +450,26 @@ namespace AutoTest
       std::string& value)
     {
       const std::string pattern = "\"" + std::string(name) + "\"";
-      while((pos = json.find(pattern, pos)) != std::string_view::npos)
+      while ((pos = json.find(pattern, pos)) != std::string_view::npos)
       {
         std::size_t value_pos = pos + pattern.size();
-        while(value_pos < json.size() && std::isspace(
-          static_cast<unsigned char>(json[value_pos])))
+        while (value_pos < json.size() && std::isspace(static_cast<unsigned char>(json[value_pos])))
         {
           ++value_pos;
         }
-        if(value_pos == json.size() || json[value_pos] != ':')
+
+        if (value_pos == json.size() || json[value_pos] != ':')
         {
           pos = value_pos;
           continue;
         }
         ++value_pos;
-        while(value_pos < json.size() && std::isspace(
-          static_cast<unsigned char>(json[value_pos])))
+        while (value_pos < json.size() && std::isspace(static_cast<unsigned char>(json[value_pos])))
         {
           ++value_pos;
         }
-        if(value_pos == json.size() || json[value_pos] != '{')
+
+        if (value_pos == json.size() || json[value_pos] != '{')
         {
           pos = value_pos;
           continue;
@@ -483,32 +478,31 @@ namespace AutoTest
         bool in_string = false;
         bool escaped = false;
         int depth = 0;
-        for(std::size_t end_pos = value_pos; end_pos < json.size(); ++end_pos)
+        for (std::size_t end_pos = value_pos; end_pos < json.size(); ++end_pos)
         {
           const char ch = json[end_pos];
-          if(escaped)
+          if (escaped)
           {
             escaped = false;
           }
-          else if(in_string && ch == '\\')
+          else if (in_string && ch == '\\')
           {
             escaped = true;
           }
-          else if(ch == '"')
+          else if (ch == '"')
           {
             in_string = !in_string;
           }
-          else if(!in_string && ch == '{')
+          else if (!in_string && ch == '{')
           {
             ++depth;
           }
-          else if(!in_string && ch == '}')
+          else if (!in_string && ch == '}')
           {
             --depth;
-            if(depth == 0)
+            if (depth == 0)
             {
-              value = normalize_json_spacing(
-                json.substr(value_pos, end_pos - value_pos + 1));
+              value = normalize_json_spacing(json.substr(value_pos, end_pos - value_pos + 1));
               pos = end_pos + 1;
               return true;
             }
@@ -526,13 +520,9 @@ namespace AutoTest
     {
       std::size_t matching_ad_id_pos = 0;
       std::size_t nurl_pos = 0;
-      for(auto& bid : bids)
+      for (auto& bid : bids)
       {
-        extract_json_object_value(
-          body,
-          "matching_ad_id",
-          matching_ad_id_pos,
-          bid.matching_ad_id);
+        extract_json_object_value(body, "matching_ad_id", matching_ad_id_pos, bid.matching_ad_id);
         extract_json_object_value(body, "nurl", nurl_pos, bid.nurl);
       }
     }
@@ -549,9 +539,7 @@ namespace AutoTest
         processors.add_processor(
           "cur",
           std::make_shared<ResponseStringProcessor>(&ParseContext::currency));
-        processors.add_processor(
-          "seatbid.bid",
-          std::make_shared<StartBidProcessor>());
+        processors.add_processor("seatbid.bid", std::make_shared<StartBidProcessor>());
 
         processors.add_processor(
           "seatbid.bid.id",
@@ -564,16 +552,14 @@ namespace AutoTest
           std::make_shared<BidMoneyProcessor>(&OpenRTBResponse::Bid::price));
         processors.add_processor(
           "seatbid.bid.adid",
-          std::make_shared<BidIntegerProcessor<unsigned long> >(
-            &OpenRTBResponse::Bid::adid),
+          std::make_shared<BidIntegerProcessor<unsigned long> >(&OpenRTBResponse::Bid::adid),
           true);
         processors.add_processor(
           "seatbid.bid.crid",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::crid));
         processors.add_processor(
           "seatbid.bid.adomain",
-          std::make_shared<BidStringListProcessor>(
-            &OpenRTBResponse::Bid::adomain));
+          std::make_shared<BidStringListProcessor>(&OpenRTBResponse::Bid::adomain));
         processors.add_processor(
           "seatbid.bid.adm",
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::adm));
@@ -582,8 +568,7 @@ namespace AutoTest
           std::make_shared<BidStringProcessor>(&OpenRTBResponse::Bid::nurl));
         processors.add_processor(
           "seatbid.bid.cid",
-          std::make_shared<BidIntegerProcessor<unsigned long> >(
-            &OpenRTBResponse::Bid::cid),
+          std::make_shared<BidIntegerProcessor<unsigned long> >(&OpenRTBResponse::Bid::cid),
           true);
         processors.add_processor(
           "seatbid.bid.attr",
@@ -591,13 +576,11 @@ namespace AutoTest
             &OpenRTBResponse::Bid::attr));
         processors.add_processor(
           "seatbid.bid.fmt",
-          std::make_shared<BidOptionalIntegerProcessor>(
-            &OpenRTBResponse::Bid::fmt),
+          std::make_shared<BidOptionalIntegerProcessor>(&OpenRTBResponse::Bid::fmt),
           true);
         processors.add_processor(
           "seatbid.bid.cat",
-          std::make_shared<BidOptionalStringListProcessor>(
-            &OpenRTBResponse::Bid::cat));
+          std::make_shared<BidOptionalStringListProcessor>(&OpenRTBResponse::Bid::cat));
         processors.add_processor(
           "seatbid.bid.ext.ad_ox_cats",
           std::make_shared<BidOptionalIntegerListProcessor<unsigned long> >(
@@ -610,43 +593,29 @@ namespace AutoTest
     }
 
     template<typename Exp, typename Got>
-    bool check_bid_value(
-      const char* name,
-      const Exp& exp,
-      const Got& got,
-      Stream::Error& err)
+    bool check_bid_value(const char* name, const Exp& exp, const Got& got, Stream::Error& err)
     {
       if (exp.is_set() && !equal(*exp, got))
       {
-        err << std::endl << "    " <<  name << " (" << *exp <<
-          " != " << got << ")";
+        err << std::endl << "    " <<  name << " (" << *exp << " != " << got << ")";
         return false;
       }
       return true;
     }
 
     template<typename Exp, typename Got>
-    bool match_bid_value(
-      const char* name,
-      const Exp& exp,
-      const Got& got,
-      Stream::Error& err)
+    bool match_bid_value(const char* name, const Exp& exp, const Got& got, Stream::Error& err)
     {
       if (exp.is_set() && !equal(got, ComparableRegExp(*exp)))
       {
-        err << std::endl << "    " <<  name << " (" << got <<
-          " doesn't match " << *exp << ")";
+        err << std::endl << "    " <<  name << " (" << got << " doesn't match " << *exp << ")";
         return false;
       }
       return true;
     }
 
     template<typename ExpSeq, typename GotSeq>
-    bool check_bid_seq(
-      const char* name,
-      const ExpSeq& exp,
-      const GotSeq& got,
-      Stream::Error& err)
+    bool check_bid_seq(const char* name, const ExpSeq& exp, const GotSeq& got, Stream::Error& err)
     {
       if (exp.is_set() && !equal_seq(*exp, got))
       {
@@ -666,8 +635,7 @@ namespace AutoTest
     {
       if (exp.is_set() && !equal(*exp, *got))
       {
-        err << std::endl << "    " <<  name << " (" << *exp <<
-          " != " << *got << ")";
+        err << std::endl << "    " <<  name << " (" << *exp << " != " << *got << ")";
         return false;
       }
       return true;
@@ -707,8 +675,7 @@ namespace AutoTest
 
   // OpenRTBResponse
 
-  OpenRTBResponse::OpenRTBResponse(
-    const std::string& body)
+  OpenRTBResponse::OpenRTBResponse(const std::string& body)
     : status_(JSON_PARSE_OK)
   {
     try
@@ -732,9 +699,7 @@ namespace AutoTest
   // OpenRTBCid
   OpenRTBCid::OpenRTBCid(AdClient& client) :
     OpenRTBResponse(client.req_response_data()),
-    OpenRTBIntSlice(
-      OpenRTBResponse::bids(),
-      &OpenRTBResponse::Bid::cid)
+    OpenRTBIntSlice(OpenRTBResponse::bids(), &OpenRTBResponse::Bid::cid)
   { }
 
   OpenRTBCid::~OpenRTBCid()
@@ -744,9 +709,7 @@ namespace AutoTest
   OpenRTBResponseChecker::Expected::Expected()
   { }
 
-  OpenRTBResponseChecker::OpenRTBResponseChecker(
-    const AdClient& client,
-    const Expected& expected) :
+  OpenRTBResponseChecker::OpenRTBResponseChecker(const AdClient& client, const Expected& expected) :
     response_(client.req_response_data())
   {
     expected_.push_back(expected);
@@ -760,8 +723,7 @@ namespace AutoTest
   { }
 
   void
-  OpenRTBResponseChecker::add_expected(
-    const Expected& expected)
+  OpenRTBResponseChecker::add_expected(const Expected& expected)
   {
     expected_.push_back(expected);
   }
@@ -776,8 +738,7 @@ namespace AutoTest
 
 
   bool
-  OpenRTBResponseChecker::check(
-    bool throw_error)
+  OpenRTBResponseChecker::check(bool throw_error)
     /*throw(eh::Exception)*/
   {
     if (response_.bids().size() != expected_.size())

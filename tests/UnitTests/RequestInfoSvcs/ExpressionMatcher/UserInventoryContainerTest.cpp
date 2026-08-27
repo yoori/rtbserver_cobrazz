@@ -33,8 +33,7 @@ namespace
     const Container& container,
     const MatchRequestProcessor::MatchInfo& match_info)
   {
-    AdServer::Commons::sync_wait(
-      container->co_process_match_request(match_info));
+    AdServer::Commons::sync_wait(container->co_process_match_request(match_info));
   }
 
   void prepare_test_folders(
@@ -149,8 +148,7 @@ public:
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollInvTestProcessor_var inv_processor(
-        new CollInvTestProcessor());
+      CollInvTestProcessor_var inv_processor(new CollInvTestProcessor());
 
       AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
       prepare_test_folders(chunk_folders);
@@ -184,7 +182,7 @@ public:
       InventoryInfoList etalon;
       bool check_inventory_etalon = fill_inventory_etalon(etalon);
 
-      if(check_inventory_etalon)
+      if (check_inventory_etalon)
       {
         // inventory check
         const InventoryInfoList& result = inv_processor->result();
@@ -194,10 +192,9 @@ public:
 
         int i = 0;
 
-        for(; et_it != etalon.end() && res_it != result.end();
-          ++et_it, ++res_it, ++i)
+        for (; et_it != etalon.end() && res_it != result.end(); ++et_it, ++res_it, ++i)
         {
-          if(!(*et_it == *res_it))
+          if (!(*et_it == *res_it))
           {
             Stream::Error ostr;
             ostr << "inventory result non equal to standard - element #" << i <<
@@ -210,13 +207,13 @@ public:
           }
         }
 
-        if(!(et_it == etalon.end() && res_it == result.end()))
+        if (!(et_it == etalon.end() && res_it == result.end()))
         {
           Stream::Error ostr;
           ostr << "inventory result size = " << result.size() <<
             " non equal to standard = " << etalon.size() << ". Result: " << std::endl;
           int i = 0;
-          for(InventoryInfoList::const_iterator e_it = result.begin();
+          for (InventoryInfoList::const_iterator e_it = result.begin();
             e_it != result.end();
             ++e_it, ++i)
           {
@@ -282,15 +279,12 @@ public:
   MatchRequestProcessor::MatchInfo
   simple_match_info(const char* date) noexcept
   {
-    return simple_match_info(
-      Generics::Time(String::SubString(date), "%Y-%m-%d"));
+    return simple_match_info(Generics::Time(String::SubString(date), "%Y-%m-%d"));
   }
 
   static
   InventoryActionProcessor::InventoryInfo
-  simple_etalon(
-    const Generics::Time& date,
-    const char* country_code = "RU") noexcept
+  simple_etalon(const Generics::Time& date, const char* country_code = "RU") noexcept
   {
     InventoryActionProcessor::InventoryInfo inv_info;
     inv_info.time = date;
@@ -302,12 +296,9 @@ public:
 
   static
   InventoryActionProcessor::InventoryInfo
-  simple_etalon(
-    const char* date, const char* country_code = "RU") noexcept
+  simple_etalon(const char* date, const char* country_code = "RU") noexcept
   {
-    return simple_etalon(
-      Generics::Time(String::SubString(date), "%Y-%m-%d"),
-      country_code);
+    return simple_etalon(Generics::Time(String::SubString(date), "%Y-%m-%d"), country_code);
   }
 
   static
@@ -324,8 +315,7 @@ public:
     {
       Generics::Time last_daily_processing_time;
 
-      if (!cont->get_last_daily_processing_time(*user_it,
-        last_daily_processing_time))
+      if (!cont->get_last_daily_processing_time(*user_it, last_daily_processing_time))
       {
         Stream::Error ostr;
         ostr << "Daily process user must exists.";
@@ -434,8 +424,7 @@ public:
   {
     { // #0
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test2"));
@@ -460,8 +449,7 @@ public:
 
     { // #1
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test2"));
@@ -489,19 +477,16 @@ public:
         SizeChannel(AdServer::Commons::ImmutableString("test2"), 2));
 
       inv_info.disappear_channel_ecpms.push_back(
-        ChannelECPM(AdServer::Commons::ImmutableString("test"),
-          1, 20 * CPM_FACTOR));
+        ChannelECPM(AdServer::Commons::ImmutableString("test"), 1, 20 * CPM_FACTOR));
       inv_info.disappear_channel_ecpms.push_back(
-        ChannelECPM(AdServer::Commons::ImmutableString("test2"),
-          1, 20 * CPM_FACTOR));
+        ChannelECPM(AdServer::Commons::ImmutableString("test2"), 1, 20 * CPM_FACTOR));
 
       inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #2
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.country_code = "RU";
       inv_info.impop_ecpm = 0;
@@ -514,8 +499,7 @@ public:
 
     { // #3
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test2"));
@@ -596,8 +580,7 @@ public:
   {
     {
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -619,8 +602,7 @@ public:
 
     {
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -637,8 +619,7 @@ public:
         1, RevenueDecimal(false, 10, 0)));
 
       inv_info.disappear_channel_ecpms.push_back(
-        ChannelECPM(AdServer::Commons::ImmutableString("test"),
-          1, 20 * CPM_FACTOR));
+        ChannelECPM(AdServer::Commons::ImmutableString("test"), 1, 20 * CPM_FACTOR));
 
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 1));
@@ -731,8 +712,7 @@ public:
   {
     { // #0
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -754,8 +734,7 @@ public:
 
     { // #1
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -779,8 +758,7 @@ public:
 
     { // #2
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -791,8 +769,7 @@ public:
         1, RevenueDecimal(false, 15, 0)));
 
       inv_info.disappear_channel_ecpms.push_back(
-        ChannelECPM(AdServer::Commons::ImmutableString("test"),
-          2, 20 * CPM_FACTOR));
+        ChannelECPM(AdServer::Commons::ImmutableString("test"), 2, 20 * CPM_FACTOR));
 
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 2));
@@ -844,8 +821,7 @@ public:
     {
       Generics::Time last_daily_processing_time;
 
-      if (!cont->get_last_daily_processing_time(*user_it,
-        last_daily_processing_time))
+      if (!cont->get_last_daily_processing_time(*user_it, last_daily_processing_time))
       {
         Stream::Error ostr;
         ostr << "Daily process user must exists.";
@@ -870,8 +846,7 @@ public:
   {
     {
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.sizes.insert(AdServer::Commons::ImmutableString("test"));
       inv_info.country_code = "RU";
@@ -891,8 +866,7 @@ public:
 
     {
       InventoryActionProcessor::InventoryInfo inv_info;
-      inv_info.time =
-        Generics::Time(String::SubString("2008-01-02"), "%Y-%m-%d");
+      inv_info.time = Generics::Time(String::SubString("2008-01-02"), "%Y-%m-%d");
       inv_info.colo_id = 1;
       inv_info.impop_ecpm = 0;
 
@@ -933,17 +907,15 @@ public:
   run_impl(UserInventoryInfoContainer* cont)
   {
     {
-      MatchRequestProcessor::MatchInfo match_info(
-        simple_match_info("2008-01-05"));
+      MatchRequestProcessor::MatchInfo match_info(simple_match_info("2008-01-05"));
       match_info.triggered_expression_channels->push_back(1);
       process_match_request(cont, match_info);
     }
 
-    for(int i = 0; i < 2; ++i)
+    for (int i = 0; i < 2; ++i)
     {
       UserInventoryInfoContainer::InventoryDailyMatchInfo inv_daily_info;
-      inv_daily_info.time =
-        Generics::Time(String::SubString("2008-01-06"), "%Y-%m-%d");
+      inv_daily_info.time = Generics::Time(String::SubString("2008-01-06"), "%Y-%m-%d");
       inv_daily_info.colo_id = 1;
       inv_daily_info.triggered_expression_channels.push_back(1);
 
@@ -951,23 +923,20 @@ public:
     }
 
     {
-      MatchRequestProcessor::MatchInfo match_info(
-        simple_match_info("2008-01-05"));
+      MatchRequestProcessor::MatchInfo match_info(simple_match_info("2008-01-05"));
       match_info.triggered_expression_channels->push_back(1);
       process_match_request(cont, match_info);
     }
 
     {
-      MatchRequestProcessor::MatchInfo match_info(
-        simple_match_info("2008-01-08"));
+      MatchRequestProcessor::MatchInfo match_info(simple_match_info("2008-01-08"));
       match_info.triggered_expression_channels->push_back(1);
       process_match_request(cont, match_info);
     }
 
     {
       UserInventoryInfoContainer::InventoryDailyMatchInfo inv_daily_info;
-      inv_daily_info.time =
-        Generics::Time(String::SubString("2008-01-07"), "%Y-%m-%d");
+      inv_daily_info.time = Generics::Time(String::SubString("2008-01-07"), "%Y-%m-%d");
       inv_daily_info.colo_id = 1;
       inv_daily_info.triggered_expression_channels.push_back(1);
       daily_process(cont, inv_daily_info);
@@ -975,8 +944,7 @@ public:
 
     {
       UserInventoryInfoContainer::InventoryDailyMatchInfo inv_daily_info;
-      inv_daily_info.time =
-        Generics::Time(String::SubString("2008-01-08"), "%Y-%m-%d");
+      inv_daily_info.time = Generics::Time(String::SubString("2008-01-08"), "%Y-%m-%d");
       inv_daily_info.colo_id = 1;
       inv_daily_info.triggered_expression_channels.push_back(1);
       daily_process(cont, inv_daily_info);
@@ -984,8 +952,7 @@ public:
 
     {
       UserInventoryInfoContainer::InventoryDailyMatchInfo inv_daily_info;
-      inv_daily_info.time =
-        Generics::Time(String::SubString("2008-01-09"), "%Y-%m-%d");
+      inv_daily_info.time = Generics::Time(String::SubString("2008-01-09"), "%Y-%m-%d");
       inv_daily_info.colo_id = 1;
       inv_daily_info.triggered_expression_channels.push_back(1);
       daily_process(cont, inv_daily_info);
@@ -996,16 +963,14 @@ public:
   fill_inventory_etalon(InventoryInfoList& inv_info_list)
   {
     {
-      InventoryActionProcessor::InventoryInfo inv_info(
-        simple_etalon("2008-01-05"));
+      InventoryActionProcessor::InventoryInfo inv_info(simple_etalon("2008-01-05"));
       inv_info.total_appear_channels.push_back(1);
       inv_info.active_appear_channels.push_back(1);
       inv_info_list.push_back(std::move(inv_info));
     }
 
     {
-      InventoryActionProcessor::InventoryInfo inv_info(
-        simple_etalon("2008-01-06", ""));
+      InventoryActionProcessor::InventoryInfo inv_info(simple_etalon("2008-01-06", ""));
       inv_info.total_appear_channels.push_back(1);
       inv_info_list.push_back(std::move(inv_info));
     }
@@ -1013,16 +978,14 @@ public:
     inv_info_list.push_back(simple_etalon("2008-01-05"));
 
     {
-      InventoryActionProcessor::InventoryInfo inv_info(
-        simple_etalon("2008-01-08"));
+      InventoryActionProcessor::InventoryInfo inv_info(simple_etalon("2008-01-08"));
       inv_info.active_appear_channels.push_back(1);
       inv_info.total_appear_channels.push_back(1);
       inv_info_list.push_back(std::move(inv_info));
     }
 
     {
-      InventoryActionProcessor::InventoryInfo inv_info(
-        simple_etalon("2008-01-09", ""));
+      InventoryActionProcessor::InventoryInfo inv_info(simple_etalon("2008-01-09", ""));
       inv_info.total_appear_channels.push_back(1);
       inv_info_list.push_back(std::move(inv_info));
     }
@@ -1048,10 +1011,9 @@ public:
   {
     Generics::Time date(String::SubString("2008-01-01"), "%Y-%m-%d");
 
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-      MatchRequestProcessor::MatchInfo match_info(
-        simple_match_info(date));
+      MatchRequestProcessor::MatchInfo match_info(simple_match_info(date));
       match_info.triggered_expression_channels->push_back(1);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
@@ -1061,8 +1023,7 @@ public:
       date += Generics::Time::ONE_DAY;
     }
 
-    MatchRequestProcessor::MatchInfo match_info(
-      simple_match_info("2008-01-01"));
+    MatchRequestProcessor::MatchInfo match_info(simple_match_info("2008-01-01"));
     match_info.triggered_expression_channels->push_back(2);
     MatchRequestProcessor::MatchInfo::AdSlot display_ad;
     display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
@@ -1075,7 +1036,7 @@ public:
     UserChannelInventoryProfileReader profile_reader(
       mem_buf->membuf().data(),
       mem_buf->membuf().size());
-    if(profile_reader.days().size() > 3)
+    if (profile_reader.days().size() > 3)
     {
       Stream::Error ostr;
       ostr << "Profile contains more then 3 days";
@@ -1088,7 +1049,7 @@ public:
   {
     Generics::Time date(String::SubString("2008-01-01"), "%Y-%m-%d");
 
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
       InventoryActionProcessor::InventoryInfo inv_info(simple_etalon(date));
       inv_info.total_appear_channels.push_back(1);
@@ -1117,11 +1078,9 @@ public:
   void
   run_impl(UserInventoryInfoContainer* cont)
   {
-    Generics::Time base_date(
-      Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d"));
+    Generics::Time base_date(Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d"));
 
-    MatchRequestProcessor::MatchInfo match_info(
-      simple_match_info(base_date));
+    MatchRequestProcessor::MatchInfo match_info(simple_match_info(base_date));
 
     {
       match_info.triggered_expression_channels->push_back(1);
@@ -1164,8 +1123,7 @@ perf_test()
   {
     Logging::Logger_var logger(new Logging::Null::Logger);
 
-    InventoryActionProcessor_var inv_processor(
-      new NullInvProcessor());
+    InventoryActionProcessor_var inv_processor(new NullInvProcessor());
 
     AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
     prepare_test_folders(chunk_folders);
@@ -1197,7 +1155,7 @@ perf_test()
     match_info.sizes.insert(match_info.tag_size);
     match_info.country_code = "RU";
     match_info.cost_threshold = RevenueDecimal(false, 20, 0);
-    for(unsigned long channel_id = 1; channel_id < 10000; ++channel_id)
+    for (unsigned long channel_id = 1; channel_id < 10000; ++channel_id)
     {
       match_info.triggered_expression_channels->push_back(channel_id);
       match_info.triggered_cpm_expression_channels.push_back(channel_id);
@@ -1206,7 +1164,7 @@ perf_test()
     Generics::CPUTimer timer;
     timer.start();
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
       process_match_request(inv_container, match_info);
     }
@@ -1216,8 +1174,7 @@ perf_test()
     inv_container->deactivate_object();
     inv_container->wait_object();
 
-    std::cout << "Test 'Performance': execution time = " <<
-      timer.elapsed_time() << std::endl;
+    std::cout << "Test 'Performance': execution time = " << timer.elapsed_time() << std::endl;
 
     return 0;
   }
@@ -1236,8 +1193,7 @@ perf_test2()
   {
     Logging::Logger_var logger(new Logging::Null::Logger);
 
-    InventoryActionProcessor_var inv_processor(
-      new NullInvProcessor());
+    InventoryActionProcessor_var inv_processor(new NullInvProcessor());
 
     AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
     prepare_test_folders(chunk_folders);
@@ -1266,7 +1222,7 @@ perf_test2()
     const unsigned long MATCH_INFO_ARRAY_SIZE = 100;
     MatchRequestProcessor::MatchInfo match_info_array[MATCH_INFO_ARRAY_SIZE];
 
-    for(unsigned long i = 0; i < MATCH_INFO_ARRAY_SIZE; ++i)
+    for (unsigned long i = 0; i < MATCH_INFO_ARRAY_SIZE; ++i)
     {
       MatchRequestProcessor::MatchInfo& match_info = match_info_array[i];
       match_info = TestBase::base_match_info(
@@ -1275,8 +1231,7 @@ perf_test2()
       match_info.sizes.insert(match_info.tag_size);
       match_info.country_code = "RU";
       match_info.cost_threshold = RevenueDecimal(false, 20, 0);
-      for(unsigned long channel_id = i * 100;
-          channel_id < i * 100 + 100; ++channel_id)
+      for (unsigned long channel_id = i * 100; channel_id < i * 100 + 100; ++channel_id)
       {
         match_info.triggered_expression_channels->push_back(channel_id);
         match_info.triggered_cpm_expression_channels.push_back(channel_id);
@@ -1286,7 +1241,7 @@ perf_test2()
     Generics::CPUTimer timer;
     timer.start();
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
       process_match_request(inv_container, match_info_array[i % MATCH_INFO_ARRAY_SIZE]);
     }
@@ -1296,8 +1251,7 @@ perf_test2()
     inv_container->deactivate_object();
     inv_container->wait_object();
 
-    std::cout << "Test 'Performance2': execution time = " <<
-      timer.elapsed_time() << std::endl;
+    std::cout << "Test 'Performance2': execution time = " << timer.elapsed_time() << std::endl;
 
     return 0;
   }
@@ -1316,8 +1270,7 @@ main(int argc, char** argv) noexcept
   {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      CollInvTestProcessor_var inv_processor(
-        new CollInvTestProcessor());
+      CollInvTestProcessor_var inv_processor(new CollInvTestProcessor());
 
       AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_folders;
       prepare_test_folders(chunk_folders);
@@ -1343,7 +1296,7 @@ main(int argc, char** argv) noexcept
 
       inv_container->activate_object();
 
-      for(int i = 0; i < 100000; ++i)
+      for (int i = 0; i < 100000; ++i)
       {
         MatchRequestProcessor::MatchInfo match_info = TestBase::base_match_info(
           Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d"));
@@ -1395,8 +1348,7 @@ main(int argc, char** argv) noexcept
     tests.push_back(new TestSimpleDailyProcessing());
     tests.push_back(new TestExtendedDailyProcessing());
     tests.push_back(new TestExpire());
-    for (TestList::iterator it = tests.begin();
-      it != tests.end(); ++it)
+    for (TestList::iterator it = tests.begin(); it != tests.end(); ++it)
     {
       result += (*it)->run();
     }

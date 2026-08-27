@@ -84,8 +84,7 @@ namespace AdServer::CampaignSvcs
     std::size_t
     operator()(const Value& value) const noexcept
     {
-      return std::hash<std::string_view>()(
-        OptionTokenValueMapDetail::to_string_view(value));
+      return std::hash<std::string_view>()(OptionTokenValueMapDetail::to_string_view(value));
     }
   };
 
@@ -290,9 +289,7 @@ namespace AdServer::CampaignSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(InvalidValue, Exception);
 
-    BaseTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    BaseTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -332,15 +329,12 @@ namespace AdServer::CampaignSvcs
     TokenSet insert_restrictions_;
   };
 
-  using BaseTokenProcessor_var =
-    ReferenceCounting::SmartPtr<BaseTokenProcessor>;
+  using BaseTokenProcessor_var = ReferenceCounting::SmartPtr<BaseTokenProcessor>;
 
   class LinkTokenProcessor: public BaseTokenProcessor
   {
   public:
-    LinkTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    LinkTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -355,9 +349,7 @@ namespace AdServer::CampaignSvcs
   class UrlTokenProcessor: public BaseTokenProcessor
   {
   public:
-    UrlTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    UrlTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -372,9 +364,7 @@ namespace AdServer::CampaignSvcs
   class FileTokenProcessor: public BaseTokenProcessor
   {
   public:
-    FileTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    FileTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -389,9 +379,7 @@ namespace AdServer::CampaignSvcs
   class PublisherUrlTokenProcessor: public BaseTokenProcessor
   {
   public:
-    PublisherUrlTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    PublisherUrlTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -406,9 +394,7 @@ namespace AdServer::CampaignSvcs
   class PublisherFileTokenProcessor: public BaseTokenProcessor
   {
   public:
-    PublisherFileTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    PublisherFileTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -423,9 +409,7 @@ namespace AdServer::CampaignSvcs
   class DynamicContentUrlTokenProcessor: public BaseTokenProcessor
   {
   public:
-    DynamicContentUrlTokenProcessor(
-      const char* token_name,
-      const TokenSet& insert_restrictions)
+    DynamicContentUrlTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
       /*throw(eh::Exception)*/;
 
     virtual void post_process(
@@ -437,10 +421,8 @@ namespace AdServer::CampaignSvcs
     virtual ~DynamicContentUrlTokenProcessor() noexcept {}
   };
 
-  using TokenProcessorMap =
-    boost::unordered_flat_map<long, BaseTokenProcessor_var>;
+  using TokenProcessorMap = boost::unordered_flat_map<long, BaseTokenProcessor_var>;
 
-  using CreativeInstantiateRuleMap =
-    std::map<std::string, CreativeInstantiateRule, std::less<>>;
+  using CreativeInstantiateRuleMap = std::map<std::string, CreativeInstantiateRule, std::less<>>;
 
 } // namespace AdServer::CampaignSvcs

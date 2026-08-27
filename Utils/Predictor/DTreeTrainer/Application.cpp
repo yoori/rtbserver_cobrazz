@@ -28,9 +28,7 @@
 
 namespace
 {
-  const char USAGE[] =
-    "\nUsage: \n"
-    "DTreeTrainer [train|train-add|train-forest|print|predict]\n";
+  const char USAGE[] = "\nUsage: \n" "DTreeTrainer [train|train-add|train-forest|print|predict]\n";
 
   class Callback:
     public Generics::ActiveObjectCallback,
@@ -43,8 +41,7 @@ namespace
     {
       try
       {
-        std::cerr << severity << "(" << error_code << "): " <<
-          description << std::endl;
+        std::cerr << severity << "(" << error_code << "): " << description << std::endl;
       }
       catch (...) {}
     }
@@ -130,7 +127,7 @@ Application_::TrainTreeTask::execute() noexcept
     DTree_var best_tree;
     DTreeProp_var best_tree_props;
 
-    for(unsigned long iter_i = 0; iter_i < max_iterations_; ++iter_i)
+    for (unsigned long iter_i = 0; iter_i < max_iterations_; ++iter_i)
     {
       DTree_var cur_dtree = learn_context->train(
         cur_step_depth,
@@ -138,12 +135,12 @@ Application_::TrainTreeTask::execute() noexcept
         TreeLearner<PredictedBoolLabel, UseLogLossGain>::LearnContext::FSS_BEST);
 
       double test_logloss = 0.0;
-      for(auto test_bag_it = test_bags_.begin(); test_bag_it != test_bags_.end(); ++test_bag_it)
+      for (auto test_bag_it = test_bags_.begin(); test_bag_it != test_bags_.end(); ++test_bag_it)
       {
         test_logloss += Utils::logloss(cur_dtree, test_bag_it->in());
       }
 
-      if(test_logloss < best_test_logloss)
+      if (test_logloss < best_test_logloss)
       {
         best_test_logloss = test_logloss;
         best_iter_i = iter_i;
@@ -176,7 +173,7 @@ void
 Application_::TrainTreeTask::wait() noexcept
 {
   Sync::ConditionalGuard guard(cond_);
-  while(!finished_)
+  while (!finished_)
   {
     guard.wait();
   }
@@ -191,14 +188,9 @@ Application_::TrainTreeTask::result() const noexcept
 // Application
 template<typename IteratorType>
 Predictor_var
-Application_::init_reg_predictor(
-  IteratorType begin_it,
-  IteratorType end_it)
+Application_::init_reg_predictor(IteratorType begin_it, IteratorType end_it)
 {
-  Predictor_var sub_predictor_set = new PredictorSet(
-    begin_it,
-    end_it,
-    PredictorSet::SUM);
+  Predictor_var sub_predictor_set = new PredictorSet(begin_it, end_it, PredictorSet::SUM);
   return new LogRegPredictor(sub_predictor_set);
 }
 
@@ -220,21 +212,15 @@ Application_::deep_print_(
   const noexcept
 {
   PredictorSet_var predictor_set = predictor->as_predictor_set();
-  if(predictor_set)
+  if (predictor_set)
   {
     unsigned long predictor_i = 0;
-    for(auto pr_it = predictor_set->predictors().begin();
+    for (auto pr_it = predictor_set->predictors().begin();
       pr_it != predictor_set->predictors().end();
       ++pr_it, ++predictor_i)
     {
       ostr << prefix << "Predictor #" << predictor_i << ":" << std::endl;
-      deep_print_(
-        ostr,
-        *pr_it,
-        (std::string(prefix) + "  ").c_str(),
-        dict,
-        base,
-        svm);
+      deep_print_(ostr, *pr_it, (std::string(prefix) + "  ").c_str(), dict, base, svm);
       ostr << std::endl;
     }
   }
@@ -242,11 +228,7 @@ Application_::deep_print_(
   {
     DTree_var dtree = predictor->as_dtree();
     assert(dtree.in());
-    ostr << dtree->to_string_ext(
-      (std::string(prefix) + "  ").c_str(),
-      dict,
-      base,
-      svm);
+    ostr << dtree->to_string_ext((std::string(prefix) + "  ").c_str(), dict, base, svm);
     ostr << std::endl;
   }
 }
@@ -280,10 +262,7 @@ Application_::main(int& argc, char** argv)
   //
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
   args.add(
     Generics::AppUtils::equal_name("max-top-element") ||
     Generics::AppUtils::short_name("me"),
@@ -316,41 +295,24 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::equal_name("trees") ||
     Generics::AppUtils::short_name("nt"),
     opt_num_trees);
-  args.add(
-    Generics::AppUtils::equal_name("dict"),
-    opt_feature_dictionary);
+  args.add(Generics::AppUtils::equal_name("dict"), opt_feature_dictionary);
   args.add(
     Generics::AppUtils::equal_name("threads") ||
     Generics::AppUtils::short_name("t"),
     opt_threads);
-  args.add(
-    Generics::AppUtils::equal_name("train-bags"),
-    opt_train_bags_number);
-  args.add(
-    Generics::AppUtils::equal_name("test-bags"),
-    opt_test_bags_number);
-  args.add(
-    Generics::AppUtils::equal_name("out-of-bag"),
-    opt_out_of_bag_validate);
-  args.add(
-    Generics::AppUtils::equal_name("step-model-out"),
-    opt_step_model_out);
-  args.add(
-    Generics::AppUtils::equal_name("not-add"),
-    opt_not_add);
-  args.add(
-    Generics::AppUtils::equal_name("only-add"),
-    opt_only_add);
-  args.add(
-    Generics::AppUtils::equal_name("add-coef"),
-    opt_add_tree_coef);
+  args.add(Generics::AppUtils::equal_name("train-bags"), opt_train_bags_number);
+  args.add(Generics::AppUtils::equal_name("test-bags"), opt_test_bags_number);
+  args.add(Generics::AppUtils::equal_name("out-of-bag"), opt_out_of_bag_validate);
+  args.add(Generics::AppUtils::equal_name("step-model-out"), opt_step_model_out);
+  args.add(Generics::AppUtils::equal_name("not-add"), opt_not_add);
+  args.add(Generics::AppUtils::equal_name("only-add"), opt_only_add);
+  args.add(Generics::AppUtils::equal_name("add-coef"), opt_add_tree_coef);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -360,10 +322,10 @@ Application_::main(int& argc, char** argv)
   std::string command = *command_it;
   ++command_it;
 
-  if(command == "train" || command == "train-add" || command == "train-forest" ||
+  if (command == "train" || command == "train-add" || command == "train-forest" ||
     command == "train-trees")
   {
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "result file not defined" << std::endl;
       return;
@@ -372,7 +334,7 @@ Application_::main(int& argc, char** argv)
     const std::string result_file_path = *command_it;
 
     ++command_it;
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "train file not defined" << std::endl;
       return;
@@ -381,7 +343,7 @@ Application_::main(int& argc, char** argv)
     const std::string train_file_path = *command_it;
 
     ++command_it;
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "train file not defined" << std::endl;
       return;
@@ -398,14 +360,14 @@ Application_::main(int& argc, char** argv)
     // div to folds
 
 
-    if(command == "train-trees")
+    if (command == "train-trees")
     {
       std::vector<DTree_var> trees;
 
-      if(AdServer::FileManip::file_exists(result_file_path))
+      if (AdServer::FileManip::file_exists(result_file_path))
       {
         std::ifstream result_file(result_file_path.c_str());
-        if(result_file.fail())
+        if (result_file.fail())
         {
           Stream::Error ostr;
           ostr << "can't open model file '" << result_file_path << "'" << std::endl;
@@ -414,11 +376,11 @@ Application_::main(int& argc, char** argv)
 
         PredictorSet_var predictor_set = PredictorSet::load(result_file);
 
-        for(auto it = predictor_set->predictors().begin(); it != predictor_set->predictors().end(); ++it)
+        for (auto it = predictor_set->predictors().begin(); it != predictor_set->predictors().end(); ++it)
         {
           DTree_var dtree = (*it)->as_dtree();
 
-          if(!dtree)
+          if (!dtree)
           {
             Stream::Error ostr;
             ostr << "incorrect file, it contains non dtree model";
@@ -438,8 +400,7 @@ Application_::main(int& argc, char** argv)
           "train-ll(" << train_svm->size() << ") = " << train_logloss <<
           ", abs-train-ll = " << abs_train_logloss <<
           ", etest-ll(" << test_svm->size() << ") = " << ext_test_logloss <<
-          ", abs-etest-ll = " << abs_ext_test_logloss <<
-          std::endl;
+          ", abs-etest-ll = " << abs_ext_test_logloss << std::endl;
       }
 
       std::vector<DTree_var> new_trees;
@@ -468,14 +429,14 @@ Application_::main(int& argc, char** argv)
       std::ofstream result_file(result_file_path.c_str());
       predictor_set->save(result_file);
     }
-    else if(command == "train-forest")
+    else if (command == "train-forest")
     {
       std::vector<std::pair<DTree_var, DTreeProp_var> > trees;
 
-      if(AdServer::FileManip::file_exists(result_file_path))
+      if (AdServer::FileManip::file_exists(result_file_path))
       {
         std::ifstream result_file(result_file_path.c_str());
-        if(result_file.fail())
+        if (result_file.fail())
         {
           Stream::Error ostr;
           ostr << "can't open model file '" << result_file_path << "'" << std::endl;
@@ -484,11 +445,11 @@ Application_::main(int& argc, char** argv)
 
         PredictorSet_var predictor_set = PredictorSet::load(result_file);
 
-        for(auto it = predictor_set->predictors().begin(); it != predictor_set->predictors().end(); ++it)
+        for (auto it = predictor_set->predictors().begin(); it != predictor_set->predictors().end(); ++it)
         {
           DTree_var dtree = (*it)->as_dtree();
 
-          if(!dtree)
+          if (!dtree)
           {
             Stream::Error ostr;
             ostr << "incorrect file, it contains non dtree model";
@@ -515,7 +476,7 @@ Application_::main(int& argc, char** argv)
 
       {
         std::vector<DTree_var> ltrees;
-        for(auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+        for (auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
         {
           ltrees.push_back(tree_it->first);
         }
@@ -530,9 +491,9 @@ Application_::main(int& argc, char** argv)
       assert(0);
     }
   }
-  else if(command == "print")
+  else if (command == "print")
   {
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "result file not defined" << std::endl;
       return;
@@ -544,7 +505,7 @@ Application_::main(int& argc, char** argv)
 
     SVMImpl_var cover_svm;
 
-    if(command_it != commands.end())
+    if (command_it != commands.end())
     {
       // cover file
       std::ifstream cover_file(command_it->c_str());
@@ -552,7 +513,7 @@ Application_::main(int& argc, char** argv)
     }
 
     FeatureDictionary feature_dictionary;
-    if(!opt_feature_dictionary->empty())
+    if (!opt_feature_dictionary->empty())
     {
       // load feature dictionary
       load_dictionary_(feature_dictionary, opt_feature_dictionary->c_str());
@@ -562,13 +523,7 @@ Application_::main(int& argc, char** argv)
     std::ifstream result_file(result_file_path.c_str());
     predictor_set = PredictorSet::load(result_file);
 
-    deep_print_(
-      std::cout,
-      predictor_set,
-      "",
-      &feature_dictionary,
-      0.0,
-      cover_svm);
+    deep_print_(std::cout, predictor_set, "", &feature_dictionary, 0.0, cover_svm);
 
     /*
     std::cout << predictor_set->to_string_ext(
@@ -578,9 +533,9 @@ Application_::main(int& argc, char** argv)
       cover_svm);
     */
   }
-  else if(command == "predict")
+  else if (command == "predict")
   {
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "result file not defined" << std::endl;
       return;
@@ -589,7 +544,7 @@ Application_::main(int& argc, char** argv)
     const std::string result_file_path = *command_it;
 
     ++command_it;
-    if(command_it == commands.end())
+    if (command_it == commands.end())
     {
       std::cerr << "svm file not defined" << std::endl;
       return;
@@ -606,11 +561,11 @@ Application_::main(int& argc, char** argv)
     std::cout.setf(std::ios::fixed, std::ios::floatfield);
     std::cout.precision(7);
 
-    while(!svm_file.eof())
+    while (!svm_file.eof())
     {
       PredictedBoolLabel label_value;
       Row_var row = SVMImpl::load_line(svm_file, label_value);
-      if(!row)
+      if (!row)
       {
         break;
       }
@@ -628,12 +583,10 @@ Application_::main(int& argc, char** argv)
 }
 
 void
-Application_::load_dictionary_(
-  Vanga::FeatureDictionary& dict,
-  const char* file)
+Application_::load_dictionary_(Vanga::FeatureDictionary& dict, const char* file)
 {
   std::ifstream in(file);
-  if(!in.is_open())
+  if (!in.is_open())
   {
     Stream::Error ostr;
     ostr << "can't open '" << file << "'";
@@ -642,12 +595,12 @@ Application_::load_dictionary_(
 
   std::vector<std::string> values;
 
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -655,7 +608,7 @@ Application_::load_dictionary_(
     values.resize(0);
     Commons::CsvReader::parse_line(values, line);
 
-    if(values.size() != 2)
+    if (values.size() != 2)
     {
       Stream::Error ostr;
       ostr << "invalid dictionary line '" << line << "'";
@@ -663,7 +616,7 @@ Application_::load_dictionary_(
     }
 
     unsigned long feature_id;
-    if(!String::StringManip::str_to_int(values[0], feature_id))
+    if (!String::StringManip::str_to_int(values[0], feature_id))
     {
       Stream::Error ostr;
       ostr << "invalid feature value '" << values[0] << "'";
@@ -692,7 +645,7 @@ Application_::init_bags_(
   };
   //static const Fold FOLDS[] = { { 0.0, 3 }, { 1.0, 3 }, { 0.9, 10 }, { 0.5, 10 }, { 0.3, 10 }, { 0.1, 10 }, { 0.05, 10 } };
 
-  if(out_of_bag_validate)
+  if (out_of_bag_validate)
   {
     std::pair<SVMImpl_var, SVMImpl_var> sets = ext_train_svm->div(ext_train_svm->size() * 9 / 10);
     train_svm = sets.first;
@@ -706,7 +659,7 @@ Application_::init_bags_(
 
   bags.clear();
 
-  if(train_bags > 0)
+  if (train_bags > 0)
   {
     fill_bags_(bags, FOLDS, train_bags, train_svm);
   }
@@ -724,7 +677,7 @@ Application_::prepare_bags_(
 {
   std::cout << "to prepare bags" << std::endl;
 
-  for(auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
+  for (auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
   {
     *bag_it = (*bag_it)->copy(PredictedBoolLabelAddConverter(predictor));
   }
@@ -762,7 +715,7 @@ Application_::train_dtree_set_(
       ) :
     nullptr;
 
-  if(task_runner)
+  if (task_runner)
   {
     task_runner->activate_object();
   }
@@ -780,7 +733,7 @@ Application_::train_dtree_set_(
   std::copy(prev_dtrees.begin(), prev_dtrees.end(), std::back_inserter(cur_dtrees));
   prev_step_dtrees = cur_dtrees;
 
-  for(unsigned long gi = 0; gi < max_global_iterations; ++gi)
+  for (unsigned long gi = 0; gi < max_global_iterations; ++gi)
   {
     bags.clear();
 
@@ -799,33 +752,27 @@ Application_::train_dtree_set_(
     double best_choose_logloss = 1000000.0;
     DTree_var best_dtree;
 
-    if(!only_add_trees)
+    if (!only_add_trees)
     {
       int dtree_index = 0;
-      for(auto dtree_it = cur_dtrees.begin(); dtree_it != cur_dtrees.end();
+      for (auto dtree_it = cur_dtrees.begin(); dtree_it != cur_dtrees.end();
         ++dtree_it, ++dtree_index)
       {
         assert(dtree_it->in());
 
         Predictor_var predictor_set;
 
-        if(!cur_dtrees.empty())
+        if (!cur_dtrees.empty())
         {
           std::vector<DTree_var> sub_dtrees;
           std::copy(cur_dtrees.begin(), dtree_it, std::back_inserter(sub_dtrees));
           auto next_dtree_it = dtree_it;
           std::copy(++next_dtree_it, cur_dtrees.end(), std::back_inserter(sub_dtrees));
 
-          predictor_set = new PredictorSet(
-            sub_dtrees.begin(),
-            sub_dtrees.end(),
-            PredictorSet::SUM);
+          predictor_set = new PredictorSet(sub_dtrees.begin(), sub_dtrees.end(), PredictorSet::SUM);
         }
 
-        prepare_bags_(
-          context,
-          bags,
-          predictor_set);
+        prepare_bags_(context, bags, predictor_set);
 
         DTree_var modified_dtree = (*dtree_it)->copy();
 
@@ -845,7 +792,7 @@ Application_::train_dtree_set_(
         std::cout << "Modify #" << dtree_index << ": ll = " << cur_logloss << ": " << std::endl <<
           (modified_dtree ? modified_dtree->to_string("  ", nullptr) : std::string("null")) << std::endl;
 
-        if(cur_logloss < best_choose_logloss && modified_dtree.in())
+        if (cur_logloss < best_choose_logloss && modified_dtree.in())
         {
           best_index = dtree_index;
           best_dtree = modified_dtree;
@@ -858,16 +805,13 @@ Application_::train_dtree_set_(
     double add_logloss = 10000000.0;
     DTree_var new_dtree;
 
-    if(add_trees || cur_dtrees.empty())
+    if (add_trees || cur_dtrees.empty())
     {
       Predictor_var predictor_set;
 
-      if(!cur_dtrees.empty())
+      if (!cur_dtrees.empty())
       {
-        predictor_set = new PredictorSet(
-          cur_dtrees.begin(),
-          cur_dtrees.end(),
-          PredictorSet::SUM);
+        predictor_set = new PredictorSet(cur_dtrees.begin(), cur_dtrees.end(), PredictorSet::SUM);
       }
 
       prepare_bags_(context, bags, predictor_set);
@@ -875,7 +819,7 @@ Application_::train_dtree_set_(
       /*
       const double pre_add_train_logloss = Utils::logloss_by_pred(train_svm.in());
 
-      for(auto row_it = train_svm->grouped_rows.begin(); row_it != train_svm->grouped_rows.end(); ++row_it)
+      for (auto row_it = train_svm->grouped_rows.begin(); row_it != train_svm->grouped_rows.end(); ++row_it)
       {
         std::cout << ">>> label = " << (*row_it)->label.orig() <<
           ", pred = " << (*row_it)->label.pred <<
@@ -903,7 +847,7 @@ Application_::train_dtree_set_(
 
       /*
       std::cout << "FROM ADD TREE with add-logloss = " << add_logloss << ":";
-      if(new_dtree)
+      if (new_dtree)
       {
         std::cout << new_dtree->to_string("", nullptr);
       }
@@ -917,14 +861,14 @@ Application_::train_dtree_set_(
 
     std::cout << "Add: ll = " << add_logloss << std::endl;
 
-    if(add_logloss < best_choose_logloss && new_dtree.in())
+    if (add_logloss < best_choose_logloss && new_dtree.in())
     {
       best_index = -1;
       best_dtree = new_dtree;
       best_choose_logloss = add_logloss;
     }
 
-    if(best_index < 0)
+    if (best_index < 0)
     {
       cur_dtrees.push_back(new_dtree);
     }
@@ -942,7 +886,7 @@ Application_::train_dtree_set_(
         cur_dtrees.end(),
         PredictorSet::SUM);
 
-      if(opt_step_model_out[0])
+      if (opt_step_model_out[0])
       {
         std::ostringstream step_file_name_ostr;
         step_file_name_ostr << opt_step_model_out << gi << ".dtf";
@@ -962,13 +906,11 @@ Application_::train_dtree_set_(
       std::ostringstream test_losses_ostr;
       std::ostringstream ext_test_losses_ostr;
 
-      for(auto tree_it = cur_dtrees.begin(); tree_it != cur_dtrees.end(); ++tree_it)
+      for (auto tree_it = cur_dtrees.begin(); tree_it != cur_dtrees.end(); ++tree_it)
       {
         auto next_tree_it = tree_it;
         ++next_tree_it;
-        Predictor_var sub_log_reg_predictor = init_reg_predictor(
-          cur_dtrees.begin(),
-          next_tree_it);
+        Predictor_var sub_log_reg_predictor = init_reg_predictor(cur_dtrees.begin(), next_tree_it);
         const double tree_logloss = Utils::logloss(sub_log_reg_predictor, test_svm.in());
         const double tree_ext_test_logloss = Utils::logloss(sub_log_reg_predictor, ext_test_svm);
 
@@ -985,7 +927,7 @@ Application_::train_dtree_set_(
         ", etest-ll(" << ext_test_svm->size() << ") = " << ext_test_logloss <<
         ", abs-etest-ll = " << abs_ext_test_logloss;
 
-      if(best_index == -1)
+      if (best_index == -1)
       {
         std::cout << " // added tree #" << (cur_dtrees.size() - 1) << ": " << best_choose_logloss;
       }
@@ -1003,7 +945,7 @@ Application_::train_dtree_set_(
     prev_step_dtrees = cur_dtrees;
   }
 
-  if(task_runner)
+  if (task_runner)
   {
     task_runner->deactivate_object();
     task_runner->wait_object();
@@ -1044,7 +986,7 @@ Application_::train_on_bags_(
   //train_svm->dump();
   //std::cout << "==============" << std::endl;
 
-  for(unsigned long iter_i = 0; iter_i < max_iterations; ++iter_i)
+  for (unsigned long iter_i = 0; iter_i < max_iterations; ++iter_i)
   {
     cur_dtree = learn_context->train(
       step_depth,
@@ -1053,11 +995,11 @@ Application_::train_on_bags_(
 
     Predictor_var log_reg_predictor;
 
-    if(prev_predictor)
+    if (prev_predictor)
     {
       std::vector<Predictor_var> predictors;
       predictors.push_back(ReferenceCounting::add_ref(prev_predictor));
-      if(cur_dtree)
+      if (cur_dtree)
       {
         predictors.push_back(cur_dtree);
       }
@@ -1078,20 +1020,18 @@ Application_::train_on_bags_(
       Utils::logloss(log_reg_predictor, ext_test_svm) :
       0.0;
 
-    if(test_logloss < best_test_logloss)
+    if (test_logloss < best_test_logloss)
     {
       best_test_logloss = test_logloss;
       best_iter_i = iter_i;
       best_dtree = cur_dtree;
     }
 
-    if(print_trace)
+    if (print_trace)
     {
       std::cout << "[" << iter_i << "]: "
         "train-loss = " << train_logloss <<
-        ", test-loss = " << test_logloss <<
-        ", ext-test-loss = " << ext_test_logloss <<
-        std::endl;
+        ", test-loss = " << test_logloss << ", ext-test-loss = " << ext_test_logloss << std::endl;
     }
 
     //std::cout << cur_dtree->to_string("", nullptr) << std::endl;
@@ -1099,7 +1039,7 @@ Application_::train_on_bags_(
 
   (void)best_iter_i;
 
-  if(print_trace)
+  if (print_trace)
   {
     std::cout << best_dtree->to_string("", nullptr) << std::endl;
   }
@@ -1129,7 +1069,7 @@ Application_::train_(
   SVMImpl_var test_svm;
   SVMImpl_var train_svm;
 
-  if(out_of_bag_validate)
+  if (out_of_bag_validate)
   {
     std::pair<SVMImpl_var, SVMImpl_var> sets = ext_train_svm->div(ext_train_svm->size() * 9 / 10);
     train_svm = sets.first;
@@ -1141,7 +1081,7 @@ Application_::train_(
     test_svm = ReferenceCounting::add_ref(ext_test_svm);
   }
 
-  if(train_bags > 0)
+  if (train_bags > 0)
   {
     fill_bags_(bags, FOLDS, train_bags, train_svm);
   }
@@ -1191,9 +1131,9 @@ Application_::fill_dtree_prop_(
 
   {
     std::ostringstream ss;
-    for(auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
+    for (auto bag_it = bags.begin(); bag_it != bags.end(); ++bag_it)
     {
-      if(bag_it != bags.begin())
+      if (bag_it != bags.begin())
       {
         ss << ",";
       }
@@ -1214,24 +1154,24 @@ Application_::fill_bags_(
   SVMImpl* svm)
 {
   unsigned long fold_sum = 0;
-  for(unsigned long i = 0; i < FOLD_SIZE; ++i)
+  for (unsigned long i = 0; i < FOLD_SIZE; ++i)
   {
     fold_sum += folds[i].weight;
   }
 
   std::cout << "to fill " << bag_number << " bags" << std::endl;
 
-  for(unsigned long bug_i = 0; bug_i < bag_number; ++bug_i)
+  for (unsigned long bug_i = 0; bug_i < bag_number; ++bug_i)
   {
     // select folds randomly
     unsigned long fold_index = 0;
     unsigned long c_fold = Generics::safe_rand(fold_sum);
     unsigned long cur_fold_sum = 0;
 
-    for(unsigned long i = 0; i < FOLD_SIZE; ++i)
+    for (unsigned long i = 0; i < FOLD_SIZE; ++i)
     {
       cur_fold_sum += folds[i].weight;
-      if(c_fold < cur_fold_sum)
+      if (c_fold < cur_fold_sum)
       {
         fold_index = i;
         break;
@@ -1243,7 +1183,7 @@ Application_::fill_bags_(
     SVMImpl_var part_svm;
 
     /*
-    for(auto row_it = svm->grouped_rows.begin(); row_it != svm->grouped_rows.end(); ++row_it)
+    for (auto row_it = svm->grouped_rows.begin(); row_it != svm->grouped_rows.end(); ++row_it)
     {
       std::cout << "X>> label = " << (*row_it)->label.orig() <<
         ", pred = " << (*row_it)->label.pred <<
@@ -1251,7 +1191,7 @@ Application_::fill_bags_(
     }
     */
 
-    if(part_size > 0)
+    if (part_size > 0)
     {
       part_svm = svm->part(part_size);
     }
@@ -1261,7 +1201,7 @@ Application_::fill_bags_(
     }
 
     /*
-    for(auto row_it = part_svm->grouped_rows.begin(); row_it != part_svm->grouped_rows.end(); ++row_it)
+    for (auto row_it = part_svm->grouped_rows.begin(); row_it != part_svm->grouped_rows.end(); ++row_it)
     {
       std::cout << "P>> label = " << (*row_it)->label.orig() <<
         ", pred = " << (*row_it)->label.pred <<
@@ -1286,22 +1226,22 @@ Application_::fill_bags_(
   SVMImpl* svm)
 {
   unsigned long fold_sum = 0;
-  for(auto fold_it = folds.begin(); fold_it != folds.end(); ++fold_it)
+  for (auto fold_it = folds.begin(); fold_it != folds.end(); ++fold_it)
   {
     fold_sum += fold_it->weight;
   }
 
-  for(unsigned long bug_i = 0; bug_i < bag_number; ++bug_i)
+  for (unsigned long bug_i = 0; bug_i < bag_number; ++bug_i)
   {
     // select folds randomly
     unsigned long fold_index = 0;
     unsigned long c_fold = Generics::safe_rand(fold_sum);
     unsigned long cur_fold_sum = 0;
 
-    for(auto fold_it = folds.begin(); fold_it != folds.end(); ++fold_it)
+    for (auto fold_it = folds.begin(); fold_it != folds.end(); ++fold_it)
     {
       cur_fold_sum += fold_it->weight;
-      if(c_fold < cur_fold_sum)
+      if (c_fold < cur_fold_sum)
       {
         fold_index = fold_it - folds.begin();
         break;
@@ -1312,7 +1252,7 @@ Application_::fill_bags_(
 
     SVMImpl_var part_svm;
 
-    if(part_size > 0)
+    if (part_size > 0)
     {
       part_svm = svm->part(part_size);
     }
@@ -1378,32 +1318,30 @@ Application_::train_sub_forest_(
 
   //std::cout << "to train sub forest (" << max_global_iterations << " iterations)" << std::endl;
 
-  for(unsigned long gi = 0; gi < max_global_iterations; ++gi)
+  for (unsigned long gi = 0; gi < max_global_iterations; ++gi)
   {
     /*
-    if(log_losses.size() >= LOSS_ITERATIONS_CHECK)
+    if (log_losses.size() >= LOSS_ITERATIONS_CHECK)
     {
       std::cout << "T: l=" << log_losses[log_losses.size() - LOSS_ITERATIONS_CHECK] <<
         ", r=" << log_losses[log_losses.size() - 1] << std::endl;
     }
     */
 
-    if(log_losses.size() >= LOSS_ITERATIONS_CHECK &&
+    if (log_losses.size() >= LOSS_ITERATIONS_CHECK &&
        log_losses[log_losses.size() - LOSS_ITERATIONS_CHECK] -
          log_losses[log_losses.size() - 1] <= 0.000001)
     {
       break;
     }
 
-    unsigned long add_trees = trees.size() < num_trees ?
-      num_trees - trees.size() :
-      1;
+    unsigned long add_trees = trees.size() < num_trees ? num_trees - trees.size() : 1;
 
     //std::cout << "to train " << add_trees << " trees" << std::endl;
 
     std::list<TrainTreeTask_var> tasks;
 
-    for(unsigned long i = 0; i < add_trees; ++i)
+    for (unsigned long i = 0; i < add_trees; ++i)
     {
       TrainTreeTask_var new_task = new TrainTreeTask(
         context,
@@ -1420,7 +1358,7 @@ Application_::train_sub_forest_(
 
     //std::cout << "to wait trees" << std::endl;
 
-    for(auto task_it = tasks.begin(); task_it != tasks.end(); ++task_it)
+    for (auto task_it = tasks.begin(); task_it != tasks.end(); ++task_it)
     {
       (*task_it)->wait();
       trees.push_back((*task_it)->result());
@@ -1434,7 +1372,7 @@ Application_::train_sub_forest_(
     {
       //PredictorSet_var forest = new PredictorSet();
       unsigned long tree_i = 0;
-      for(auto it = trees.begin(); it != trees.end(); ++it, ++tree_i)
+      for (auto it = trees.begin(); it != trees.end(); ++it, ++tree_i)
       {
         const double train_logloss = Utils::logloss(it->first, train_svm);
         const double test_logloss = Utils::logloss(it->first, test_svm);
@@ -1449,12 +1387,12 @@ Application_::train_sub_forest_(
     }
     */
 
-    //if(trees.size() > num_trees)
+    //if (trees.size() > num_trees)
     {
       // drop worse trees
       std::vector<PredArrayHolder_var> preds;
 
-      for(auto it = trees.begin(); it != trees.end(); ++it)
+      for (auto it = trees.begin(); it != trees.end(); ++it)
       {
         preds.push_back(it->first->Predictor::predict(combine_bag.in()));
       }
@@ -1467,7 +1405,7 @@ Application_::train_sub_forest_(
         num_trees > 3 ? num_trees - 3 : num_trees - 1);
 
       std::vector<std::pair<DTree_var, DTreeProp_var> > new_trees;
-      for(auto tree_index_it = result_indexes.begin();
+      for (auto tree_index_it = result_indexes.begin();
         tree_index_it != result_indexes.end();
         ++tree_index_it)
       {
@@ -1485,7 +1423,7 @@ Application_::train_sub_forest_(
 
     {
       std::vector<DTree_var> ltrees;
-      for(auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+      for (auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
       {
         ltrees.push_back(tree_it->first);
       }
@@ -1498,11 +1436,9 @@ Application_::train_sub_forest_(
       std::cout << "forest #" << gi << ": "
         "train-loss = " << train_logloss <<
         ", test-loss = " << test_logloss <<
-        ", train-absloss = " << train_absloss <<
-        ", test-absloss = " << test_absloss <<
-        std::endl;
+        ", train-absloss = " << train_absloss << ", test-absloss = " << test_absloss << std::endl;
 
-      if(test_logloss < best_test_logloss)
+      if (test_logloss < best_test_logloss)
       {
         best_train_logloss = train_logloss;
         best_test_logloss = test_logloss;
@@ -1548,15 +1484,14 @@ Application_::train_forest_(
   double min_logloss = 1000000.0;
   std::vector<std::pair<DTree_var, DTreeProp_var> > best_trees = trees;
 
-  if(!best_trees.empty())
+  if (!best_trees.empty())
   {
     double base_train_logloss = logloss_(best_trees, train_svm);
     min_logloss = logloss_(best_trees, test_svm);
 
     std::cout << ">>>>>>>>>>> Base Super forest: "
       "train-loss = " << base_train_logloss <<
-      ", test-loss = " << min_logloss << "(" << min_logloss << ")" <<
-      std::endl;
+      ", test-loss = " << min_logloss << "(" << min_logloss << ")" << std::endl;
   }
   else
   {
@@ -1565,7 +1500,7 @@ Application_::train_forest_(
 
   std::vector<std::pair<DTree_var, DTreeProp_var> > cur_trees;
 
-  for(unsigned long super_i = 0; super_i < max_super_iterations; ++super_i)
+  for (unsigned long super_i = 0; super_i < max_super_iterations; ++super_i)
   {
     std::pair<SVMImpl_var, SVMImpl_var> sets = train_svm->div(train_svm->size() * 9 / 10);
     SVMImpl_var sub_train_svm = sets.first;
@@ -1591,17 +1526,13 @@ Application_::train_forest_(
     union_trees = cur_trees;
     union_trees.insert(union_trees.end(), sub_trees.begin(), sub_trees.end());
 
-    construct_best_forest_(
-      res_trees,
-      union_trees,
-      num_trees,
-      sub_test_svm);
+    construct_best_forest_(res_trees, union_trees, num_trees, sub_test_svm);
 
     double cur_train_logloss = logloss_(res_trees, train_svm);
     double cur_logloss = logloss_(res_trees, test_svm);
     bool best_iteration = false;
 
-    if(min_logloss > cur_logloss)
+    if (min_logloss > cur_logloss)
     {
       best_trees = res_trees;
       min_logloss = cur_logloss;
@@ -1610,8 +1541,7 @@ Application_::train_forest_(
 
     std::cout << (best_iteration ? "* " : ">>") << ">>>>>>>>> Super forest #" << super_i << ": "
       "train-loss = " << cur_train_logloss <<
-      ", test-loss = " << cur_logloss << "(" << min_logloss << ")" <<
-      std::endl;
+      ", test-loss = " << cur_logloss << "(" << min_logloss << ")" << std::endl;
 
     cur_trees = res_trees;
   }
@@ -1622,9 +1552,7 @@ Application_::train_forest_(
   trees = best_trees;
 
   // print result
-  std::cout << "Best forest(size=" << trees.size() <<
-    "): test-loss = " << min_logloss <<
-    std::endl;
+  std::cout << "Best forest(size=" << trees.size() << "): test-loss = " << min_logloss << std::endl;
 }
 
 double
@@ -1634,7 +1562,7 @@ Application_::logloss_(
   noexcept
 {
   std::vector<DTree_var> ltrees;
-  for(auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+  for (auto tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
   {
     ltrees.push_back(tree_it->first);
   }
@@ -1655,20 +1583,16 @@ Application_::construct_best_forest_(
 {
   std::vector<PredArrayHolder_var> preds;
 
-  for(auto it = check_trees.begin(); it != check_trees.end(); ++it)
+  for (auto it = check_trees.begin(); it != check_trees.end(); ++it)
   {
     preds.push_back(it->first->Predictor::predict(svm));
   }
 
   std::vector<unsigned long> result_indexes;
-  select_best_forest_(
-    result_indexes,
-    preds,
-    svm,
-    max_trees);
+  select_best_forest_(result_indexes, preds, svm, max_trees);
 
   std::vector<std::pair<DTree_var, DTreeProp_var> > new_trees;
-  for(auto tree_index_it = result_indexes.begin();
+  for (auto tree_index_it = result_indexes.begin();
     tree_index_it != result_indexes.end();
     ++tree_index_it)
   {
@@ -1703,16 +1627,16 @@ Application_::select_best_forest_(
 
   //std::cout << "maxmask=" << maskmax << std::endl;
 
-  for(uint64_t mask = 1; mask <= maskmax; ++mask)
+  for (uint64_t mask = 1; mask <= maskmax; ++mask)
   {
     // fill variant
     variant.clear();
 
     auto pred_it = preds.begin();
     unsigned long trees_num = 0;
-    for(unsigned long i = 0; pred_it != preds.end(); ++i, ++pred_it)
+    for (unsigned long i = 0; pred_it != preds.end(); ++i, ++pred_it)
     {
-      if((i > 0 ? mask >> i : mask) & 0x1)
+      if ((i > 0 ? mask >> i : mask) & 0x1)
       {
         ++trees_num;
         variant.push_back(*pred_it);
@@ -1725,7 +1649,7 @@ Application_::select_best_forest_(
       ", max_trees = " << max_trees << std::endl;
     */
 
-    if(trees_num >= max_trees)
+    if (trees_num >= max_trees)
     {
       continue;
     }
@@ -1733,7 +1657,7 @@ Application_::select_best_forest_(
     double avg_logloss = Utils::avg_logloss(variant, labels);
     //std::cout << "mask=" << mask << ", avg_logloss = " << avg_logloss << std::endl;
 
-    if(avg_logloss < min_logloss ||
+    if (avg_logloss < min_logloss ||
        (std::abs(avg_logloss - min_logloss) < 0.000001 && trees_num < min_trees_num))
     {
       min_logloss = avg_logloss;
@@ -1743,9 +1667,9 @@ Application_::select_best_forest_(
   }
 
   auto pred_it = preds.begin();
-  for(unsigned long i = 0; pred_it != preds.end(); ++i, ++pred_it)
+  for (unsigned long i = 0; pred_it != preds.end(); ++i, ++pred_it)
   {
-    if((i > 0 ? min_mask >> i : min_mask) & 0x1)
+    if ((i > 0 ? min_mask >> i : min_mask) & 0x1)
     {
       indexes.push_back(i);
     }

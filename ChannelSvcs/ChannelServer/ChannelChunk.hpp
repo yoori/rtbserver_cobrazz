@@ -175,9 +175,7 @@ namespace AdServer::ChannelSvcs
         ccg_id == cp.ccg_id &&
         channel_id == cp.channel_id &&
         max_cpc == cp.max_cpc &&
-        ctr == cp.ctr &&
-        click_url == cp.click_url &&
-        original_keyword == cp.original_keyword;
+        ctr == cp.ctr && click_url == cp.click_url && original_keyword == cp.original_keyword;
     }
 
     unsigned int ccg_keyword_id;
@@ -401,10 +399,7 @@ namespace AdServer::ChannelSvcs
     using AddUidMap = std::map<Generics::Uuid, IdSet>;
 
   public:
-    void match_url(
-      const MatchUrl& url,
-      unsigned int flags,
-      TriggerMatchRes& res) const
+    void match_url(const MatchUrl& url, unsigned int flags, TriggerMatchRes& res) const
       /*throw(eh::Exception)*/;
 
     void match_words(
@@ -418,9 +413,7 @@ namespace AdServer::ChannelSvcs
       const
       /*throw(eh::Exception)*/;
 
-    void match_uid(
-      const Generics::Uuid& uid,
-      TriggerMatchRes& res)
+    void match_uid(const Generics::Uuid& uid, TriggerMatchRes& res)
       const
       /*throw(eh::Exception)*/;
 
@@ -486,19 +479,14 @@ namespace AdServer::ChannelSvcs
       noexcept;
 
     /* add entity  in chunk for merging*/
-    void add_entity(
-      const String::SubString& key,
-      const MatchingEntity& entity,
-      char trigger_type)
+    void add_entity(const String::SubString& key, const MatchingEntity& entity, char trigger_type)
       /*throw(Exception)*/;
 
     /* add/remove channel to uid
      * @uuid - uid
      * channel_id - new channel id, it id == 0, uid marks on removing
      */
-    void update_uid(
-      const Generics::Uuid& uuid,
-      IdType channel_id)
+    void update_uid(const Generics::Uuid& uuid, IdType channel_id)
       noexcept;
 
     static unsigned int get_active_options(unsigned int flags) noexcept;
@@ -703,6 +691,7 @@ namespace AdServer::ChannelSvcs
     {
       active |= (Channel::CH_ACTIVE | Channel::CH_WAIT);
     }
+
     if (flags & MF_INACTIVE)
     {
       active |= Channel::CH_INACTIVE;
@@ -717,8 +706,7 @@ namespace AdServer::ChannelSvcs
   }
 
   inline
-  ChannelIdToMatchInfo& ChannelIdToMatchInfo::operator=(
-    const ChannelIdToMatchInfo& in)
+  ChannelIdToMatchInfo& ChannelIdToMatchInfo::operator=(const ChannelIdToMatchInfo& in)
     /*throw(eh::Exception)*/
   {
     if (&in != this)
@@ -799,8 +787,7 @@ namespace AdServer::ChannelSvcs
   ChannelMatchInfo::ChannelMatchInfo(const ChannelIdToMatchInfo& info) noexcept
   {
     find_container_.reserve(info.size());
-    for(ChannelIdToMatchInfo::const_iterator i = info.begin();
-        i != info.end(); ++i)
+    for (ChannelIdToMatchInfo::const_iterator i = info.begin(); i != info.end(); ++i)
     {
       ordered_container_.emplace(i->first, i->second.channel);
       find_container_.emplace(i->first, i->second.channel);

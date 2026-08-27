@@ -42,24 +42,24 @@ sub init
 
   $ns->output("KEYWORD1", $keyword1);
   $ns->output("KEYWORD2", $keyword2);
-  
+
   $ns->output("CC Id/1", $campaign1->{cc_id}, "CC Id/1");
   $ns->output("CC Id/2", $campaign2->{cc_id}, "CC Id/2");
-  
+
   my $tag_pricing = get_config($ns->pq_dbh, 'OIX_MIN_FIXED_MARGIN')/10;
-  
+
   my $tag_id1 = $ns->create(PricedTag =>
                             { name => 1,
                               site_id => $site1,
                               cpm => $tag_pricing });
-  
+
   $ns->output("Tag Id/1", $tag_id1, "Tag Id/1");
-  
+
   my $tag_id2 = $ns->create(PricedTag =>
                             { name => 2,
                               site_id => $site2,
                               cpm => $tag_pricing });
-  
+
   $ns->output("Tag Id/2", $tag_id2, "Tag Id/2");
 }
 

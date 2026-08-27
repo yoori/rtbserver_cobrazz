@@ -14,37 +14,28 @@ namespace Cpp
   class WriterGenerator
   {
   public:
-    WriterGenerator(
-      std::ostream& out_hpp,
-      std::ostream& out_cpp,
-      const char* offset)
+    WriterGenerator(std::ostream& out_hpp, std::ostream& out_cpp, const char* offset)
       noexcept;
 
     /* X_DefaultBuffers */
-    void generate_default_buffers_decl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_default_buffers_decl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
-    void generate_default_buffers_impl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_default_buffers_impl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
     /* X_ProtectedWriter */
-    void generate_protected_decl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_protected_decl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
-    void generate_protected_impl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_protected_impl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
     /* X */
-    void generate_decl(
-      Declaration::StructWriter* struct_writer)
+    void generate_decl(Declaration::StructWriter* struct_writer)
       noexcept;
 
-    void generate_impl(
-      Declaration::StructWriter* struct_writer)
+    void generate_impl(Declaration::StructWriter* struct_writer)
       noexcept;
 
   private:
@@ -61,14 +52,11 @@ namespace Cpp
       Declaration::StructDescriptor* struct_descriptor) noexcept;
 
     /* X */
-    void generate_field_types_decl_(
-      Declaration::StructWriter* writer) noexcept;
+    void generate_field_types_decl_(Declaration::StructWriter* writer) noexcept;
 
-    void generate_accessors_decl_(
-      Declaration::StructWriter* writer) noexcept;
+    void generate_accessors_decl_(Declaration::StructWriter* writer) noexcept;
 
-    void generate_accessors_impl_(
-      Declaration::StructWriter* writer) noexcept;
+    void generate_accessors_impl_(Declaration::StructWriter* writer) noexcept;
 
   private:
     std::ostream& out_;

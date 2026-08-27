@@ -67,12 +67,10 @@ namespace AdServer::ProfilingCommons
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
-    co_get_profile(
-      std::optional<Generics::Time> last_access_time = std::nullopt);
+    co_get_profile(std::optional<Generics::Time> last_access_time = std::nullopt);
 
     AdServer::Commons::StartableAwaitable<Generics::SmartMemBuf_var>
-    co_get_own_profile(
-      std::optional<Generics::Time> last_access_time = std::nullopt);
+    co_get_own_profile(std::optional<Generics::Time> last_access_time = std::nullopt);
 
     AdServer::Commons::StartableAwaitable<bool>
     co_save_profile(
@@ -135,15 +133,11 @@ namespace AdServer::ProfilingCommons
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     virtual Generics::ConstSmartMemBuf_var
-    get_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     virtual Generics::SmartMemBuf_var
-    get_own_profile(
-      const KeyType& key,
-      Generics::Time* last_access_time = 0)
+    get_own_profile(const KeyType& key, Generics::Time* last_access_time = 0)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     virtual void
@@ -155,9 +149,7 @@ namespace AdServer::ProfilingCommons
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     virtual bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME)
+    remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     void
@@ -244,15 +236,11 @@ namespace AdServer::ProfilingCommons
       /*throw(eh::Exception)*/;
 
     Generics::ConstSmartMemBuf_var
-    get_profile_i_(
-      const KeyType& key,
-      Generics::Time* last_access_time)
+    get_profile_i_(const KeyType& key, Generics::Time* last_access_time)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     Generics::SmartMemBuf_var
-    get_own_profile_i_(
-      const KeyType& key,
-      Generics::Time* last_access_time)
+    get_own_profile_i_(const KeyType& key, Generics::Time* last_access_time)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     void
@@ -264,9 +252,7 @@ namespace AdServer::ProfilingCommons
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     bool
-    remove_profile_i_(
-      const KeyType& key,
-      OperationPriority op_priority)
+    remove_profile_i_(const KeyType& key, OperationPriority op_priority)
       /*throw(typename ProfileMap<KeyType>::Exception)*/;
 
     AsyncProfileMap<KeyType>*
@@ -373,8 +359,7 @@ namespace AdServer::ProfilingCommons
       key_,
       mem_buf,
       now,
-      [transaction = std::move(transaction)](
-        std::optional<std::string>) mutable noexcept
+      [transaction = std::move(transaction)](std::optional<std::string>) mutable noexcept
       {
         transaction.reset();
       });
@@ -390,12 +375,9 @@ namespace AdServer::ProfilingCommons
 
   template <typename KeyType>
   AdServer::Commons::StartableAwaitable<Generics::ConstSmartMemBuf_var>
-  ProfileTransactionImpl<KeyType>::co_get_profile(
-    std::optional<Generics::Time> last_access_time)
+  ProfileTransactionImpl<KeyType>::co_get_profile(std::optional<Generics::Time> last_access_time)
   {
-    co_return co_await profile_map_.async_delegate_map_()->co_get_profile(
-      key_,
-      last_access_time);
+    co_return co_await profile_map_.async_delegate_map_()->co_get_profile(key_, last_access_time);
   }
 
   template <typename KeyType>
@@ -414,10 +396,7 @@ namespace AdServer::ProfilingCommons
     const Generics::ConstSmartMemBuf* mem_buf,
     const Generics::Time& now)
   {
-    co_await profile_map_.async_delegate_map_()->co_save_profile(
-      key_,
-      mem_buf,
-      now);
+    co_await profile_map_.async_delegate_map_()->co_save_profile(key_, mem_buf, now);
     co_return true;
   }
 
@@ -425,9 +404,7 @@ namespace AdServer::ProfilingCommons
   AdServer::Commons::StartableAwaitable<bool>
   ProfileTransactionImpl<KeyType>::co_remove_profile()
   {
-    co_return co_await profile_map_.async_delegate_map_()->co_remove_profile(
-      key_,
-      op_priority_);
+    co_return co_await profile_map_.async_delegate_map_()->co_remove_profile(key_, op_priority_);
   }
 
   template <typename KeyType>
@@ -464,12 +441,7 @@ namespace AdServer::ProfilingCommons
     AdServer::Commons::AsyncMutex::Guard&& guard)
     /*throw(eh::Exception)*/
   {
-    return new ProfileTransactionImplType(
-      *this,
-      holder,
-      key,
-      arg,
-      std::move(guard));
+    return new ProfileTransactionImplType(*this, holder, key, arg, std::move(guard));
   }
 
   template <typename KeyType>
@@ -482,12 +454,10 @@ namespace AdServer::ProfilingCommons
 
   template <typename KeyType>
   Generics::ConstSmartMemBuf_var
-  TransactionProfileMap<KeyType>::get_profile(
-    const KeyType& key,
-    Generics::Time* last_access_time)
+  TransactionProfileMap<KeyType>::get_profile(const KeyType& key, Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    if(create_transaction_on_get_)
+    if (create_transaction_on_get_)
     {
       return this->get_transaction(key, false)->get_profile(last_access_time);
     }
@@ -504,7 +474,7 @@ namespace AdServer::ProfilingCommons
     Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    if(create_transaction_on_get_)
+    if (create_transaction_on_get_)
     {
       return this->get_transaction(key, false)->get_own_profile(last_access_time);
     }
@@ -528,9 +498,7 @@ namespace AdServer::ProfilingCommons
 
   template <typename KeyType>
   bool
-  TransactionProfileMap<KeyType>::remove_profile(
-    const KeyType& key,
-    OperationPriority op_priority)
+  TransactionProfileMap<KeyType>::remove_profile(const KeyType& key, OperationPriority op_priority)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     return this->get_transaction(key, false, op_priority)->remove_profile();
@@ -545,8 +513,7 @@ namespace AdServer::ProfilingCommons
 
   template <typename KeyType>
   void
-  TransactionProfileMap<KeyType>::clear_expired(
-    const Generics::Time& expire_time)
+  TransactionProfileMap<KeyType>::clear_expired(const Generics::Time& expire_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     AsyncProfileMapToProfileMap<KeyType>::clear_expired(expire_time);
@@ -568,10 +535,7 @@ namespace AdServer::ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return async_delegate_map_()->get_profile_async(
-      key,
-      std::move(callback),
-      last_access_time);
+    return async_delegate_map_()->get_profile_async(key, std::move(callback), last_access_time);
   }
 
   template <typename KeyType>
@@ -581,10 +545,7 @@ namespace AdServer::ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return async_delegate_map_()->get_own_profile_async(
-      key,
-      std::move(callback),
-      last_access_time);
+    return async_delegate_map_()->get_own_profile_async(key, std::move(callback), last_access_time);
   }
 
   template <typename KeyType>
@@ -614,7 +575,7 @@ namespace AdServer::ProfilingCommons
 
     transaction.reset();
 
-    if(callback)
+    if (callback)
     {
       callback(std::move(error));
     }
@@ -647,7 +608,7 @@ namespace AdServer::ProfilingCommons
 
     transaction.reset();
 
-    if(callback)
+    if (callback)
     {
       callback(result, std::move(error));
     }
@@ -732,8 +693,7 @@ namespace AdServer::ProfilingCommons
     Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return AsyncProfileMapToProfileMap<KeyType>::get_own_profile(
-      key, last_access_time);
+    return AsyncProfileMapToProfileMap<KeyType>::get_own_profile(key, last_access_time);
   }
 
   template <typename KeyType>
@@ -745,11 +705,7 @@ namespace AdServer::ProfilingCommons
     OperationPriority op_priority)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    AsyncProfileMapToProfileMap<KeyType>::save_profile(
-      key,
-      mem_buf,
-      now,
-      op_priority);
+    AsyncProfileMapToProfileMap<KeyType>::save_profile(key, mem_buf, now, op_priority);
   }
 
   template <typename KeyType>
@@ -759,8 +715,6 @@ namespace AdServer::ProfilingCommons
     OperationPriority op_priority)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return AsyncProfileMapToProfileMap<KeyType>::remove_profile(
-      key,
-      op_priority);
+    return AsyncProfileMapToProfileMap<KeyType>::remove_profile(key, op_priority);
   }
 }

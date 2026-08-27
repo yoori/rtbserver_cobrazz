@@ -84,8 +84,7 @@ public:
     if (test_it_->reach_processor->result().size() != MT_OPERATIONS_AMOUNT)
     {
       std::cerr << "FAIL, must processed " << MT_OPERATIONS_AMOUNT <<
-        " impressions, but really " <<
-        test_it_->reach_processor->result().size() << std::endl;
+        " impressions, but really " << test_it_->reach_processor->result().size() << std::endl;
       return false;
     }
     std::cout << "Processed " << test_it_->reach_processor->result().size() <<
@@ -97,19 +96,14 @@ private:
   class Task : public ReferenceCounting::AtomicImpl
   {
   public:
-    Task(const TestIt* test_it,
-      const UserId& uid,
-      const RequestId& id,
-      unsigned long i)
+    Task(const TestIt* test_it, const UserId& uid, const RequestId& id, unsigned long i)
       noexcept
       : test_it_(test_it),
         request_info_(id)
     {
       request_info_.user_id = uid;
-      request_info_.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      request_info_.adv_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      request_info_.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      request_info_.adv_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       request_info_.colo_id = 1;
       request_info_.advertiser_id = i / 8;
       request_info_.campaign_id = i / 4; // 1
@@ -153,9 +147,7 @@ multi_thread_test(const TestIt* test_it)
   TestCommons::MTTester<UserCampaignReachContainerTester&> mt_tester_ucr(
     test_user_campaign_reach_info, 15);
 
-  mt_tester_ucr.run(MT_OPERATIONS_AMOUNT * 4,
-    0,
-    MT_OPERATIONS_AMOUNT * 4);
+  mt_tester_ucr.run(MT_OPERATIONS_AMOUNT * 4, 0, MT_OPERATIONS_AMOUNT * 4);
 
   return test_user_campaign_reach_info.check();
 }

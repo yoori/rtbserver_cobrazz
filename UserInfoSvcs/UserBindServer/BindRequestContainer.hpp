@@ -47,15 +47,11 @@ namespace AdServer::UserInfoSvcs
       /*throw(ChunkNotFound, Exception)*/;
 
     AdServer::Commons::StartableAwaitable<BindRequest>
-    co_get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    co_get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ override;
 
     BindRequest
-    get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ override;
 
     virtual void
@@ -82,7 +78,6 @@ namespace AdServer::UserInfoSvcs
     ChunkArray chunks_;
   };
 
-  using BindRequestContainer_var =
-    ReferenceCounting::SmartPtr<BindRequestContainer>;
+  using BindRequestContainer_var = ReferenceCounting::SmartPtr<BindRequestContainer>;
 
 } /* namespace AdServer::UserInfoSvcs */

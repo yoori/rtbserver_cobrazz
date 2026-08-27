@@ -26,9 +26,7 @@ namespace
 
 struct Transformer
 {
-  Transformer(
-    const Files& files,
-    const XslParameters& parameters);
+  Transformer(const Files& files, const XslParameters& parameters);
 
   void
   operator ()() noexcept;
@@ -44,15 +42,11 @@ private:
 };
 
 void
-mt_transform_test(const XslParameters& parameters,
-  const Files& files);
+mt_transform_test(const XslParameters& parameters, const Files& files);
 
 struct CreateTransformer
 {
-  CreateTransformer(
-    const Files& files,
-    const char* xsl_file,
-    const XslParameters& parameters);
+  CreateTransformer(const Files& files, const char* xsl_file, const XslParameters& parameters);
 
   void
   operator ()() noexcept;
@@ -70,8 +64,7 @@ private:
 CreateTransformer::Mutex CreateTransformer::mutex_;
 
 void
-mt_constructor_test(const XslParameters& parameters,
-  const char* xsl_file, const Files& files);
+mt_constructor_test(const XslParameters& parameters, const char* xsl_file, const Files& files);
 
 //
 // Test body below
@@ -91,10 +84,8 @@ main()
     files.push_back(get_root_path() + "pass_birds.xml");
     files.push_back(get_root_path() + "pass_test.xml");
 
-    parameters.insert(XslParameters::value_type("test_xsl_parameter1",
-      "'SetValue1'"));
-    parameters.insert(XslParameters::value_type("test_xsl_parameter3",
-      "'SetValue3'"));
+    parameters.insert(XslParameters::value_type("test_xsl_parameter1", "'SetValue1'"));
+    parameters.insert(XslParameters::value_type("test_xsl_parameter3", "'SetValue3'"));
 
     mt_constructor_test(parameters, "test.xsl", files);
     std::cout << "Valid xsl test complete" << std::endl;
@@ -136,23 +127,18 @@ get_root_path() /*throw(eh::Exception)*/
 }
 
 void
-mt_transform_test(const XslParameters& parameters,
-  const Files& files)
+mt_transform_test(const XslParameters& parameters, const Files& files)
 {
   Transformer transformers(files, parameters);
-  TestCommons::MTTester<Transformer&> mt_tester(
-    transformers, 10);
+  TestCommons::MTTester<Transformer&> mt_tester(transformers, 10);
 
   mt_tester.run(1000, 0, 1000);
 }
 
-Transformer::Transformer(
-  const Files& files,
-  const XslParameters& parameters)
+Transformer::Transformer(const Files& files, const XslParameters& parameters)
   : FILES_(files),
     PARAMETERS_(parameters),
-    transformer_((get_root_path() + "test.xsl").c_str(), 0,
-      AdServer::XslTransformer::XE_LIBXSLT)
+    transformer_((get_root_path() + "test.xsl").c_str(), 0, AdServer::XslTransformer::XE_LIBXSLT)
 {
   transformer_.register_external_fun(
     XSLT_EXT_NAMESPACE,
@@ -173,8 +159,7 @@ Transformer::operator ()() noexcept
     const char* chosen_file = FILES_[index].c_str();
     std::ifstream xml_file(chosen_file, std::ios::in);
     std::ostringstream result;
-    const XslParameters* parameters_ptr =
-      (PARAMETERS_.empty() ? 0 : &PARAMETERS_);
+    const XslParameters* parameters_ptr = (PARAMETERS_.empty() ? 0 : &PARAMETERS_);
     transformer_.transform(xml_file, result, parameters_ptr);
     if (result.str().empty())
     {
@@ -189,13 +174,10 @@ Transformer::operator ()() noexcept
 }
 
 void
-mt_constructor_test(const XslParameters& parameters,
-  const char* xsl_file,
-  const Files& files)
+mt_constructor_test(const XslParameters& parameters, const char* xsl_file, const Files& files)
 {
   CreateTransformer transformers(files, xsl_file, parameters);
-  TestCommons::MTTester<CreateTransformer&> mt_tester(
-    transformers, 10);
+  TestCommons::MTTester<CreateTransformer&> mt_tester(transformers, 10);
 
   mt_tester.run(1000, 0, 1000);
 }
@@ -224,14 +206,12 @@ CreateTransformer::operator ()() noexcept
     const char* XSL_FILE = XSL_FILE_.c_str();
     if (XSL_FILE_.empty())
     {
-      XSL_FILE = XSL_FILES[Generics::safe_rand(
-        sizeof(XSL_FILES)/sizeof(XSL_FILES[0]))];
+      XSL_FILE = XSL_FILES[Generics::safe_rand(sizeof(XSL_FILES)/sizeof(XSL_FILES[0]))];
     }
 
     AdServer::XslTransformer transformer(AdServer::XslTransformer::XE_LIBXSLT);
 
-    transformer.open((get_root_path() +
-      XSL_FILE).c_str());
+    transformer.open((get_root_path() + XSL_FILE).c_str());
 
     transformer.register_external_fun(
       XSLT_EXT_NAMESPACE,
@@ -246,8 +226,7 @@ CreateTransformer::operator ()() noexcept
     const char* chosen_file = FILES_[index].c_str();
     std::ifstream xml_file(chosen_file, std::ios::in);
     std::ostringstream result;
-    const XslParameters* parameters_ptr =
-      (PARAMETERS_.empty() ? 0 : &PARAMETERS_);
+    const XslParameters* parameters_ptr = (PARAMETERS_.empty() ? 0 : &PARAMETERS_);
     transformer.transform(xml_file, result, parameters_ptr);
     if (result.str().empty())
     {

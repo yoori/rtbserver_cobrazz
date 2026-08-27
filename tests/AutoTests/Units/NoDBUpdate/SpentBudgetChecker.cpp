@@ -22,8 +22,7 @@ namespace AutoTest
   {}
 
   bool
-  SpentBudgetChecker::check(
-    bool throw_error)
+  SpentBudgetChecker::check(bool throw_error)
     /*throw(AutoTest::CheckFailed, eh::Exception)*/
   {
     CampaignChecker campaign_checker(test_, ccgid_,
@@ -38,9 +37,7 @@ namespace AutoTest
         and_checker(
           wait_checker(
             deadline_ != Generics::Time::ZERO
-              ? and_checker(
-                  throw_checker(TimeLessChecker(deadline_)),
-                  campaign_checker)
+              ? and_checker(throw_checker(TimeLessChecker(deadline_)), campaign_checker)
               : and_checker(campaign_checker)),
           SelectedCreativeChecker(
             AdClient::create_user(test_),

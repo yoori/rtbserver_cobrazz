@@ -28,10 +28,7 @@ public:
 
 public:
 
-  FraudProtectionFeatureTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  FraudProtectionFeatureTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -58,24 +55,18 @@ private:
   void click_fraud_();
   void genuine_user_();
   void mixed_();
-  void cpa_part_1_(
-    AdClient& client);
-  void cpa_part_2_(
-    AdClient& client);
+  void cpa_part_1_(AdClient& client);
+  void cpa_part_2_(AdClient& client);
   void no_fraud_();
   void ta_no_fraud_();
   void ta_channel_fraud_();
   void ta_text_fraud_();
   void unconfirmed_imps_();
   void merging_();
-  void impression_fraud_(
-    const std::string& suffix,
-    bool wait_fraud);
+  void impression_fraud_(const std::string& suffix, bool wait_fraud);
   void fraud_override_();
-  void reversed_order_fraud_part_1_(
-    AdClient& client);
-  void reversed_order_fraud_part_2_(
-    AdClient& client);
+  void reversed_order_fraud_part_1_(AdClient& client);
+  void reversed_order_fraud_part_2_(AdClient& client);
   void delayed_clicks_();
 
   AutoTest::Time today;    // 'today' timestamp

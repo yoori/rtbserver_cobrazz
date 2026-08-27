@@ -2,9 +2,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include "ConvLogger.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   template <> const char*
   ConvTraits::B::base_name_ = "Conv";
@@ -16,8 +14,7 @@ namespace LogProcessing
   ConvTraits::B::current_version_ = "3.6";
 
   FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is,
-      ConvData& data)
+    operator>>(FixedBufStream<TabCategory>& is, ConvData& data)
     /*throw(eh::Exception)*/
   {
     is >> data.time_;
@@ -35,6 +32,4 @@ namespace LogProcessing
     os << data.action_id_ << '\t';
     return os;
   }
-} // namespace LogProcessing
-} // namespace AdServer
-
+} // namespace AdServer::LogProcessing

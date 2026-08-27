@@ -20,9 +20,7 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
-namespace AdServer
-{
-namespace Frontends
+namespace AdServer::Frontends
 {
   class Http2Response;
 
@@ -92,5 +90,4 @@ namespace Frontends
     std::mutex connections_lock_;
     std::unordered_map<Connection*, Connection_var> connections_;
   };
-}
 }

@@ -16,8 +16,7 @@
     std::string config_path;
     char* ev = getenv("TEST_TOP_SRC_DIR");
     config_path = ev ? ev : "../../../../..";
-    config_path +=
-      "/tests/UnitTests/Frontends/FrontendCommons/";
+    config_path += "/tests/UnitTests/Frontends/FrontendCommons/";
     config_path += file_name;
     return config_path;
   }
@@ -37,8 +36,7 @@ load_url_matcher(FrontendCommons::UrlMatcher& matcher,
   try
   {
     permanent_fe_config =
-      xsd::AdServer::Configuration::PermanentFeConfiguration(
-        CONFIG_FILE.c_str(), error_handler);
+      xsd::AdServer::Configuration::PermanentFeConfiguration(CONFIG_FILE.c_str(), error_handler);
 
     if (error_handler.has_errors())
     {
@@ -49,8 +47,7 @@ load_url_matcher(FrontendCommons::UrlMatcher& matcher,
   catch (const xml_schema::parsing& e)
   {
     Stream::Error ostr;
-    ostr << FUN << ": Can't parse config file '" << CONFIG_FILE << "': "
-      << std::endl;
+    ostr << FUN << ": Can't parse config file '" << CONFIG_FILE << "': " << std::endl;
 
     std::string str;
     ostr << error_handler.text(str);
@@ -59,8 +56,7 @@ load_url_matcher(FrontendCommons::UrlMatcher& matcher,
   catch (const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << FUN << "Can't parse config file '" << CONFIG_FILE << "': "
-      << e.what();
+    ostr << FUN << "Can't parse config file '" << CONFIG_FILE << "': " << e.what();
     throw TestException(ostr);
   }
   catch (...)

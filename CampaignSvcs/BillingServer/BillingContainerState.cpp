@@ -1,8 +1,6 @@
 #include "BillingContainerState.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // BillingContainerState::AccountAmountHolder impl
   BillingContainerState::AccountAmountHolder::AccountAmountHolder()
@@ -10,8 +8,7 @@ namespace CampaignSvcs
 
   // pack amounts before defined date
   void
-  BillingContainerState::AccountAmountHolder::pack(
-    const Generics::Time& date)
+  BillingContainerState::AccountAmountHolder::pack(const Generics::Time& date)
     noexcept
   {
     auto start_it = days.lower_bound(date);
@@ -31,8 +28,7 @@ namespace CampaignSvcs
   }
 
   void
-  BillingContainerState::AccountAmountHolder::add_prev_days_amount(
-    const RevenueDecimal& amount)
+  BillingContainerState::AccountAmountHolder::add_prev_days_amount(const RevenueDecimal& amount)
     noexcept
   {
     for (auto it = days.begin(); it != days.end(); ++it)
@@ -47,8 +43,7 @@ namespace CampaignSvcs
     const RevenueDecimal& amount)
     noexcept
   {
-    auto ins = days.insert(std::make_pair(
-      date, BillingContainerState::AccountDayAmount()));
+    auto ins = days.insert(std::make_pair(date, BillingContainerState::AccountDayAmount()));
 
     auto it = ins.first;
 
@@ -103,8 +98,7 @@ namespace CampaignSvcs
   }
 
   RevenueDecimal
-  BillingContainerState::AccountAmountHolder::get_day_amount(
-    const Generics::Time& date)
+  BillingContainerState::AccountAmountHolder::get_day_amount(const Generics::Time& date)
     const
     noexcept
   {
@@ -118,17 +112,14 @@ namespace CampaignSvcs
   }
 
   void
-  BillingContainerState::AccountAmountHolder::print(
-    std::ostream& out,
-    const char* offset)
+  BillingContainerState::AccountAmountHolder::print(std::ostream& out, const char* offset)
     const noexcept
   {
     for (auto day_it = days.begin(); day_it != days.end(); ++day_it)
     {
       out << offset << day_it->first.get_gm_time().format("%F") <<
         ": amount_before = " << day_it->second.amount_before <<
-        ", amount = " << day_it->second.amount <<
-        std::endl;
+        ", amount = " << day_it->second.amount << std::endl;
     }
   }
 
@@ -138,8 +129,7 @@ namespace CampaignSvcs
 
   // pack amounts before defined date
   void
-  BillingContainerState::AmountHolder::pack(
-    const Generics::Time& date)
+  BillingContainerState::AmountHolder::pack(const Generics::Time& date)
     noexcept
   {
     auto start_it = days.lower_bound(date);
@@ -187,8 +177,7 @@ namespace CampaignSvcs
     const ImpRevenueDecimal& clicks)
     noexcept
   {
-    auto ins = days.insert(std::make_pair(
-      date, BillingContainerState::DayAmount()));
+    auto ins = days.insert(std::make_pair(date, BillingContainerState::DayAmount()));
 
     auto it = ins.first;
 
@@ -205,8 +194,7 @@ namespace CampaignSvcs
 
         ins.first->second.amount_before +=
           before_it->second.amount_before + before_it->second.amount;
-        ins.first->second.imps_before +=
-          before_it->second.imps_before + before_it->second.imps;
+        ins.first->second.imps_before += before_it->second.imps_before + before_it->second.imps;
         ins.first->second.clicks_before +=
           before_it->second.clicks_before + before_it->second.clicks;
       }
@@ -273,8 +261,7 @@ namespace CampaignSvcs
   }
 
   RevenueDecimal
-  BillingContainerState::AmountHolder::get_day_amount(
-    const Generics::Time& date)
+  BillingContainerState::AmountHolder::get_day_amount(const Generics::Time& date)
     const
     noexcept
   {
@@ -288,8 +275,7 @@ namespace CampaignSvcs
   }
 
   ImpRevenueDecimal
-  BillingContainerState::AmountHolder::get_day_imps(
-    const Generics::Time& date)
+  BillingContainerState::AmountHolder::get_day_imps(const Generics::Time& date)
     const
     noexcept
   {
@@ -303,8 +289,7 @@ namespace CampaignSvcs
   }
 
   ImpRevenueDecimal
-  BillingContainerState::AmountHolder::get_day_clicks(
-    const Generics::Time& date)
+  BillingContainerState::AmountHolder::get_day_clicks(const Generics::Time& date)
     const
     noexcept
   {
@@ -318,9 +303,7 @@ namespace CampaignSvcs
   }
 
   void
-  BillingContainerState::AmountHolder::print(
-    std::ostream& out,
-    const char* offset)
+  BillingContainerState::AmountHolder::print(std::ostream& out, const char* offset)
     const noexcept
   {
     for (auto day_it = days.begin(); day_it != days.end(); ++day_it)
@@ -331,8 +314,7 @@ namespace CampaignSvcs
         ", imps_before = " << day_it->second.imps_before.str() <<
         ", imps = " << day_it->second.imps.str() <<
         ", clicks_before = " << day_it->second.clicks_before.str() <<
-        ", clicks = " << day_it->second.clicks.str() <<
-        std::endl;
+        ", clicks = " << day_it->second.clicks.str() << std::endl;
     }
   }
 
@@ -492,8 +474,7 @@ namespace CampaignSvcs
           throw Exception(ostr);
         }
 
-        if (type_str.length() != 1 || (
-             type_str[0] != 'F' && type_str[0] != 'G'))
+        if (type_str.length() != 1 || (type_str[0] != 'F' && type_str[0] != 'G'))
         {
           Stream::Error ostr;
           ostr << "invalid type '" << type_str << "'(len=" << type_str.length() << ")";
@@ -525,8 +506,7 @@ namespace CampaignSvcs
         }
 
         unsigned long use_time_sec;
-        if (!String::StringManip::str_to_int(use_time_str, use_time_sec) ||
-          use_time_sec > 3600)
+        if (!String::StringManip::str_to_int(use_time_str, use_time_sec) || use_time_sec > 3600)
         {
           Stream::Error ostr;
           ostr << "invalid use time value '" << use_time_str << "'";
@@ -550,9 +530,7 @@ namespace CampaignSvcs
     const Generics::Time& use_time)
     noexcept
   {
-    HourActivity& hour_act = free_budget ?
-      free_rates[rate].hours[hour] :
-      rates[rate].hours[hour];
+    HourActivity& hour_act = free_budget ? free_rates[rate].hours[hour] : rates[rate].hours[hour];
 
     hour_act.imps += imps;
     hour_act.clicks += clicks;
@@ -628,9 +606,7 @@ namespace CampaignSvcs
   {}
 
   BillingContainerState::
-  CampaignCCGId::CampaignCCGId(
-    unsigned long campaign_id_val,
-    unsigned long ccg_id_val)
+  CampaignCCGId::CampaignCCGId(unsigned long campaign_id_val, unsigned long ccg_id_val)
     noexcept
     : campaign_id(campaign_id_val),
       ccg_id(ccg_id_val)
@@ -777,5 +753,4 @@ namespace CampaignSvcs
       noise_ignore_part,
       rate_multiplier);
   }
-}
 }

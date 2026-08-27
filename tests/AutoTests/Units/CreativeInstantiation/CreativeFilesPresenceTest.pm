@@ -91,7 +91,7 @@ sub CreateCreativeOptionValues
 sub CreateHelper
 {
   my ($ns, $acc, $num, $args) = @_;
-    
+
   my $keyword = make_autotest_name($ns, "Keyword".$num);
   $ns->output("KEYWORD".$num, $keyword, "keyword for ad request");
 
@@ -126,14 +126,14 @@ sub CreateHelper
 sub CreateHelperText
 {
   my ($ns, $acc, $num, $publisher, $size, $args) = @_;
- 
+
   my $keyword = make_autotest_name($ns, "Keyword".$num);
   $ns->output("KEYWORD".$num, $keyword, "keyword for ad request");
 
   my $template = DB::Defaults::instance()->text_template;
   my $option_group = DB::Defaults::instance()->text_option_group;
 
-  my $campaign = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign = $ns->create(TextAdvertisingCampaign => {
     name => "Text".$num,
     size_id => $size,
     template_id => $template,
@@ -157,14 +157,14 @@ sub CreateHelperText
 sub CreateHelperTextN
 {
   my ($ns, $acc, $num, $publisher, $size, $args) = @_;
- 
+
   my $keyword = make_autotest_name($ns, "Keyword".$num);
   $ns->output("KEYWORD".$num, $keyword, "keyword for ad request");
 
   my $template = DB::Defaults::instance()->text_template;
   my $option_group = DB::Defaults::instance()->text_option_group;
 
-  my $campaign = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign = $ns->create(TextAdvertisingCampaign => {
     name => "Text".$num,
     size_id => $size,
     template_id => $template,
@@ -178,7 +178,7 @@ sub CreateHelperTextN
   my @opts = @{$args};
   my $cnum = 1;
   foreach my $opt (@opts)
-  {    
+  {
     my $creative = undef;
     my $cc_id = undef;
     if ($cnum eq 1)
@@ -209,7 +209,7 @@ sub CreateHelperTextN
 sub CreateHelper6
 {
   my ($ns, $acc, $num, $args) = @_;
-    
+
   my $keyword = make_autotest_name($ns, "Keyword".$num);
   $ns->output("KEYWORD".$num, $keyword, "keyword for ad request");
 
@@ -226,7 +226,7 @@ sub CreateHelper6
       name => $num});
 
   my $creativea_id = $ns->create(Creative => {
-      name => $num."a",      
+      name => $num."a",
       account_id => $acc });
 
   my $campaign = $ns->create(DisplayCampaign => {
@@ -257,7 +257,7 @@ sub CreateHelper6
 sub CreateHelper7
 {
   my ($ns, $acc, $num) = @_;
-    
+
   my $keyword = make_autotest_name($ns, "Keyword".$num);
   $ns->output("KEYWORD".$num, $keyword, "keyword for ad request");
 
@@ -297,7 +297,7 @@ sub CreateHelper7
       flags => 0,
       app_format_id => DB::Defaults::instance()->app_format_track,
       template_type => 'T'});
-  
+
   my $creative_id = $ns->create(Creative => {
       name => $num,
       size_id => $size_id,
@@ -320,7 +320,7 @@ sub CreateHelper7
 sub ADSC_8367
 {
   my ($ns, $account, $file) = @_;
- 
+
   my $kwd = make_autotest_name($ns, "ADSC-8367");
   $ns->output('ADSC-8367/KEYWORD', $kwd);
 
@@ -385,7 +385,7 @@ sub ADSC_8367
   $ns->create(
     DB::BehavioralChannel::BehavioralParameter->blank(
       channel_id => $campaign->{channel_id},
-      trigger_type => "P" )); 
+      trigger_type => "P" ));
 }
 
 sub init
@@ -436,7 +436,7 @@ sub init
 
   CreateHelper7($ns, $acc, 7);
 
-  my $size8 = $ns->create(CreativeSize => { 
+  my $size8 = $ns->create(CreativeSize => {
     name => "Size8",
     max_text_creatives => 2 });
 
@@ -459,7 +459,7 @@ sub init
      default_value => $existing_file,
      value => "/CreativeFilesPresenceTest-AbsentFile.txt"}]);
 
-  my $size9 = $ns->create(CreativeSize => { 
+  my $size9 = $ns->create(CreativeSize => {
     name => "Size9",
     max_text_creatives => 2 });
 

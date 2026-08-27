@@ -9,40 +9,33 @@
 #include <eh/Errno.hpp>
 #include <String/SubString.hpp>
 
-namespace AdServer
+namespace AdServer::FileManip
 {
-  namespace FileManip
-  {
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    bool
-    dir_exists(const String::SubString& path) noexcept;
+  bool
+  dir_exists(const String::SubString& path) noexcept;
 
-    bool
-    file_exists(const String::SubString& path) noexcept;
+  bool
+  file_exists(const String::SubString& path) noexcept;
 
-    void
-    rename(const String::SubString& src,
-      const String::SubString& dst,
-      bool ignore_non_existing)
-      /*throw(eh::Exception)*/;
-  }
+  void
+  rename(const String::SubString& src, const String::SubString& dst, bool ignore_non_existing)
+    /*throw(eh::Exception)*/;
 }
 
-namespace AdServer
-{
-namespace FileManip
+namespace AdServer::FileManip
 {
   inline bool
   dir_exists(const String::SubString& path) noexcept
   {
     struct stat info;
 
-    if(::stat(path.str().c_str(), &info) != 0)
+    if (::stat(path.str().c_str(), &info) != 0)
     {
       return false;
     }
-    else if(info.st_mode & S_IFDIR)
+    else if (info.st_mode & S_IFDIR)
     {
       return true;
     }
@@ -55,11 +48,11 @@ namespace FileManip
   {
     struct stat info;
 
-    if(::stat(path.str().c_str(), &info) != 0)
+    if (::stat(path.str().c_str(), &info) != 0)
     {
       return false;
     }
-    else if(info.st_mode & S_IFREG)
+    else if (info.st_mode & S_IFREG)
     {
       return true;
     }
@@ -68,16 +61,14 @@ namespace FileManip
   }
 
   void
-  rename(const String::SubString& src,
-    const String::SubString& dst,
-    bool ignore_non_existing)
+  rename(const String::SubString& src, const String::SubString& dst, bool ignore_non_existing)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "rename()";
 
-    if(std::rename(src.str().c_str(), dst.str().c_str()))
+    if (std::rename(src.str().c_str(), dst.str().c_str()))
     {
-      if(!ignore_non_existing || errno != ENOENT)
+      if (!ignore_non_existing || errno != ENOENT)
       {
         eh::throw_errno_exception<Exception>(
           FUN,
@@ -89,5 +80,4 @@ namespace FileManip
       }
     }
   }
-}
 }

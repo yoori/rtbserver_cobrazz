@@ -40,9 +40,7 @@ namespace AdServer::Commons
       Callback callback) noexcept;
 
     template<typename Owner, typename CallbackType>
-      requires (
-        std::is_empty_v<CallbackType> &&
-        std::is_nothrow_invocable_v<CallbackType, Owner&>)
+      requires (std::is_empty_v<CallbackType> && std::is_nothrow_invocable_v<CallbackType, Owner&>)
     void schedule(
       Task& task,
       const Generics::Time& deadline,
@@ -56,9 +54,7 @@ namespace AdServer::Commons
   };
 
   template<typename Owner, typename CallbackType>
-    requires (
-      std::is_empty_v<CallbackType> &&
-      std::is_nothrow_invocable_v<CallbackType, Owner&>)
+    requires (std::is_empty_v<CallbackType> && std::is_nothrow_invocable_v<CallbackType, Owner&>)
   void FastScheduler::schedule(
     Task& task,
     const Generics::Time& deadline,
@@ -66,9 +62,7 @@ namespace AdServer::Commons
     CallbackType) noexcept
   {
     using Result = std::invoke_result_t<CallbackType, Owner&>;
-    static_assert(
-      std::is_void_v<Result> ||
-      std::is_same_v<Result, std::optional<Generics::Time>>);
+    static_assert(std::is_void_v<Result> || std::is_same_v<Result, std::optional<Generics::Time>>);
 
     schedule(
       task,

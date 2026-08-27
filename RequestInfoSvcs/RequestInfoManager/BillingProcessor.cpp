@@ -23,9 +23,8 @@
  * divided between servers : servers_ array
  * inside Server aggregated into agg_amounts and pushed to send_amounts for keep required sending order
  */
-namespace AdServer
-{
-namespace RequestInfoSvcs
+
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -70,20 +69,15 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/;
 
     void
-    add_to_server(
-      unsigned long server_index,
-      RequestArray& requests)
+    add_to_server(unsigned long server_index, RequestArray& requests)
       /*throw(Exception)*/;
 
     void
-    add_to_all_servers(
-      const RequestArray& requests)
+    add_to_all_servers(const RequestArray& requests)
       /*throw(Exception)*/;
 
     void
-    add_resend_to_server(
-      unsigned long server_index,
-      RequestArray& requests)
+    add_resend_to_server(unsigned long server_index, RequestArray& requests)
       /*throw(Exception)*/;
 
     void
@@ -106,10 +100,7 @@ namespace RequestInfoSvcs
 
     // blocking if here no requests to process
     bool
-    get_requests(
-      unsigned long& server_index,
-      RequestArray& requests,
-      unsigned long max_requests)
+    get_requests(unsigned long& server_index, RequestArray& requests, unsigned long max_requests)
       noexcept;
 
     bool
@@ -123,9 +114,6 @@ namespace RequestInfoSvcs
     void
     activate_server(unsigned long server_index)
       noexcept;
-
-    void
-    print(std::ostream& ostr) noexcept;
 
   protected:
     typedef Sync::Policy::PosixThread SyncPolicy;
@@ -224,8 +212,7 @@ namespace RequestInfoSvcs
     struct ServerStateFirstRequestLess
     {
       bool
-      operator()(const ServerStateHolder* left,
-        const ServerStateHolder* right) const noexcept;
+      operator()(const ServerStateHolder* left, const ServerStateHolder* right) const noexcept;
     };
 
     typedef std::multiset<ServerStateHolder_var, ServerStateFirstRequestLess>
@@ -238,16 +225,12 @@ namespace RequestInfoSvcs
     ~RequestPool() noexcept = default;
 
     bool
-    add_to_server_(
-      unsigned long server_index,
-      RequestArray& requests)
+    add_to_server_(unsigned long server_index, RequestArray& requests)
       /*throw(Exception)*/;
 
     // get ownership on requests, but don't clear container (do it outside lock)
     static void
-    add_to_aggregator_i_(
-      AmountAggregateHolder* amount_aggregator,
-      RequestArray& requests)
+    add_to_aggregator_i_(AmountAggregateHolder* amount_aggregator, RequestArray& requests)
       /*throw(Exception)*/;
 
     static void
@@ -349,9 +332,7 @@ namespace RequestInfoSvcs
         public ReferenceCounting::AtomicImpl
       {
       public:
-        ActivateServerGoal(
-          RequestPool* request_pool,
-          unsigned long server_index)
+        ActivateServerGoal(RequestPool* request_pool, unsigned long server_index)
           noexcept;
 
         virtual
@@ -472,7 +453,7 @@ namespace RequestInfoSvcs
     amount += right.amount;
     imps += right.imps;
     clicks += right.clicks;
-    if(first_request_time > right.first_request_time)
+    if (first_request_time > right.first_request_time)
     {
       first_request_time = right.first_request_time;
       return true;
@@ -481,9 +462,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::Request::print(
-    std::ostream& out,
-    const char* prefix)
+  BillingProcessor::Request::print(std::ostream& out, const char* prefix)
     const noexcept
   {
     out << prefix << "rounded_time: " << rounded_time.gm_ft() << std::endl <<
@@ -491,17 +470,16 @@ namespace RequestInfoSvcs
       prefix << "advertiser_id: " << advertiser_id << std::endl <<
       prefix << "campaign_id: " << campaign_id << std::endl <<
       prefix << "ccg_id: " << ccg_id << std::endl <<
-      prefix << "ctr: " << ctr << std::endl <<
-      prefix << "mode: ";
-    if(mode == RM_NORMAL)
+      prefix << "ctr: " << ctr << std::endl << prefix << "mode: ";
+    if (mode == RM_NORMAL)
     {
       out << "normal";
     }
-    else if(mode == RM_RESEND)
+    else if (mode == RM_RESEND)
     {
       out << "resend";
     }
-    else if(mode == RM_FORCED)
+    else if (mode == RM_FORCED)
     {
       out << "forced";
     }
@@ -510,14 +488,12 @@ namespace RequestInfoSvcs
       prefix << "first_request_time: " << first_request_time.gm_ft() << std::endl <<
       prefix << "account_amount: " << account_amount << std::endl <<
       prefix << "amount: " << amount << std::endl <<
-      prefix << "imps: " << imps.str() << std::endl <<
-      prefix << "clicks: " << clicks.str();
+      prefix << "imps: " << imps.str() << std::endl << prefix << "clicks: " << clicks.str();
   }
 
   // BillingProcessor::RequestPool::AggregateRequestHashAdapter impl
   BillingProcessor::RequestPool::
-  AggregateRequestHashAdapter::AggregateRequestHashAdapter(
-    Request* request)
+  AggregateRequestHashAdapter::AggregateRequestHashAdapter(Request* request)
     noexcept
     : request_(ReferenceCounting::add_ref(request))
   {
@@ -541,8 +517,7 @@ namespace RequestInfoSvcs
 
   bool
   BillingProcessor::RequestPool::
-  AggregateRequestHashAdapter::operator==(
-    const AggregateRequestHashAdapter& right)
+  AggregateRequestHashAdapter::operator==(const AggregateRequestHashAdapter& right)
     const noexcept
   {
     return request_->rounded_time == right.request_->rounded_time &&
@@ -550,8 +525,7 @@ namespace RequestInfoSvcs
       request_->advertiser_id == right.request_->advertiser_id &&
       request_->campaign_id == right.request_->campaign_id &&
       request_->ccg_id == right.request_->ccg_id &&
-      request_->ctr == right.request_->ctr &&
-      request_->mode == right.request_->mode;
+      request_->ctr == right.request_->ctr && request_->mode == right.request_->mode;
   }
 
   const BillingProcessor::Request_var&
@@ -563,8 +537,7 @@ namespace RequestInfoSvcs
 
   // BillingProcessor::RequestPool::SaveAggregateRequestHashAdapter impl
   BillingProcessor::RequestPool::
-  SaveAggregateRequestHashAdapter::SaveAggregateRequestHashAdapter(
-    Request* request)
+  SaveAggregateRequestHashAdapter::SaveAggregateRequestHashAdapter(Request* request)
     noexcept
     : request_(ReferenceCounting::add_ref(request))
   {
@@ -587,16 +560,14 @@ namespace RequestInfoSvcs
 
   bool
   BillingProcessor::RequestPool::
-  SaveAggregateRequestHashAdapter::operator==(
-    const SaveAggregateRequestHashAdapter& right)
+  SaveAggregateRequestHashAdapter::operator==(const SaveAggregateRequestHashAdapter& right)
     const noexcept
   {
     return request_->rounded_time == right.request_->rounded_time &&
       request_->account_id == right.request_->account_id &&
       request_->advertiser_id == right.request_->advertiser_id &&
       request_->campaign_id == right.request_->campaign_id &&
-      request_->ccg_id == right.request_->ccg_id &&
-      request_->ctr == right.request_->ctr;
+      request_->ccg_id == right.request_->ccg_id && request_->ctr == right.request_->ctr;
   }
 
   const BillingProcessor::Request_var&
@@ -613,65 +584,65 @@ namespace RequestInfoSvcs
     const BillingProcessor::Request* right) const
     noexcept
   {
-    if(left->first_request_time < right->first_request_time)
+    if (left->first_request_time < right->first_request_time)
     {
       return true;
     }
-    else if(left->first_request_time > right->first_request_time)
+    else if (left->first_request_time > right->first_request_time)
     {
       return false;
     }
 
-    if(left->account_id < right->account_id)
+    if (left->account_id < right->account_id)
     {
       return true;
     }
-    else if(left->account_id > right->account_id)
+    else if (left->account_id > right->account_id)
     {
       return false;
     }
 
-    if(left->advertiser_id < right->advertiser_id)
+    if (left->advertiser_id < right->advertiser_id)
     {
       return true;
     }
-    else if(left->advertiser_id > right->advertiser_id)
+    else if (left->advertiser_id > right->advertiser_id)
     {
       return false;
     }
 
-    if(left->advertiser_id < right->advertiser_id)
+    if (left->advertiser_id < right->advertiser_id)
     {
       return true;
     }
-    else if(left->advertiser_id > right->advertiser_id)
+    else if (left->advertiser_id > right->advertiser_id)
     {
       return false;
     }
 
-    if(left->campaign_id < right->campaign_id)
+    if (left->campaign_id < right->campaign_id)
     {
       return true;
     }
-    else if(left->campaign_id > right->campaign_id)
+    else if (left->campaign_id > right->campaign_id)
     {
       return false;
     }
 
-    if(left->ccg_id < right->ccg_id)
+    if (left->ccg_id < right->ccg_id)
     {
       return true;
     }
-    else if(left->ccg_id > right->ccg_id)
+    else if (left->ccg_id > right->ccg_id)
     {
       return false;
     }
 
-    if(left->ctr < right->ctr)
+    if (left->ctr < right->ctr)
     {
       return true;
     }
-    else if(left->ctr > right->ctr)
+    else if (left->ctr > right->ctr)
     {
       return false;
     }
@@ -680,8 +651,7 @@ namespace RequestInfoSvcs
   }
 
   // BillingProcessor::RequestPool::ServerStateHolder impl
-  BillingProcessor::RequestPool::ServerStateHolder::ServerStateHolder(
-    unsigned long server_id_val)
+  BillingProcessor::RequestPool::ServerStateHolder::ServerStateHolder(unsigned long server_id_val)
     noexcept
     : server_id(server_id_val),
       active(true)
@@ -696,15 +666,15 @@ namespace RequestInfoSvcs
   {
     bool left_empty = left->send_amounts.empty();
     bool right_empty = right->send_amounts.empty();
-    if(left_empty && right_empty)
+    if (left_empty && right_empty)
     {
       return left->server_id < right->server_id;
     }
-    else if(left_empty)
+    else if (left_empty)
     {
       return false;
     }
-    else if(right_empty)
+    else if (right_empty)
     {
       return true;
     }
@@ -768,23 +738,21 @@ namespace RequestInfoSvcs
 
     add_to_all_servers(requests);
 
-    if(check_active && !active())
+    if (check_active && !active())
     {
       throw Exception("RequestPool::add() called after deactivating");
     }
   }
 
   void
-  BillingProcessor::RequestPool::add_to_all_servers(
-    const RequestArray& requests)
+  BillingProcessor::RequestPool::add_to_all_servers(const RequestArray& requests)
     /*throw(Exception)*/
   {
 #   ifdef DEBUG_OUTPUT
     {
       std::ostringstream ostr;
       ostr << Generics::Time::get_time_of_day().get_gm_time().format("%F %T.%q") <<
-        ": add_to_all_servers(requests = " << requests.size() << ")" <<
-        std::endl;
+        ": add_to_all_servers(requests = " << requests.size() << ")" << std::endl;
       std::cout << ostr.str();
       std::cout.flush();
     }
@@ -795,9 +763,9 @@ namespace RequestInfoSvcs
     RequestArray first_server_requests;
     RequestArray non_first_server_requests;
 
-    for(auto req_it = requests.begin(); req_it != requests.end(); ++req_it)
+    for (auto req_it = requests.begin(); req_it != requests.end(); ++req_it)
     {
-      if(servers_.size() > 1)
+      if (servers_.size() > 1)
       {
         // divide amount between servers
         RevenueDecimal first_account_amount;
@@ -816,8 +784,7 @@ namespace RequestInfoSvcs
             (*req_it)->account_amount,
             RevenueDecimal(false, servers_.size(), 0),
             account_amount_div_reminder);
-          first_account_amount =
-            non_first_account_amount + account_amount_div_reminder;
+          first_account_amount = non_first_account_amount + account_amount_div_reminder;
 
           RevenueDecimal amount_div_reminder;
           non_first_amount = RevenueDecimal::div(
@@ -893,14 +860,14 @@ namespace RequestInfoSvcs
     //
     add_to_server(0, first_server_requests);
 
-    if(servers_.size() > 1)
+    if (servers_.size() > 1)
     {
-      for(unsigned long server_i = 2; server_i < servers_.size(); ++server_i)
+      for (unsigned long server_i = 2; server_i < servers_.size(); ++server_i)
       {
         // copy requests, because add_to_server get ownership and
         // can modify passed requests
         RequestArray copy_requests;
-        for(auto req_it = non_first_server_requests.begin();
+        for (auto req_it = non_first_server_requests.begin();
           req_it != non_first_server_requests.end(); ++req_it)
         {
           copy_requests.push_back(new Request(**req_it));
@@ -914,9 +881,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::add_to_server(
-    unsigned long server_index,
-    RequestArray& requests)
+  BillingProcessor::RequestPool::add_to_server(unsigned long server_index, RequestArray& requests)
     /*throw(Exception)*/
   {
 #   ifdef DEBUG_OUTPUT
@@ -924,14 +889,13 @@ namespace RequestInfoSvcs
       std::ostringstream ostr;
       ostr << Generics::Time::get_time_of_day().get_gm_time().format("%F %T.%q") <<
         ": add_to_server(server_index = "  << server_index <<
-        ", requests = " << requests.size() << ")" <<
-        std::endl;
+        ", requests = " << requests.size() << ")" << std::endl;
       std::cout << ostr.str();
       std::cout.flush();
     }
 #   endif
 
-    if(!add_to_server_(server_index, requests))
+    if (!add_to_server_(server_index, requests))
     {
       add_resend_to_server(server_index + 1, requests);
     }
@@ -948,8 +912,7 @@ namespace RequestInfoSvcs
       std::ostringstream ostr;
       ostr << Generics::Time::get_time_of_day().get_gm_time().format("%F %T.%q") <<
         ": add_resend_to_server(server_index = "  << server_index <<
-        ", requests = " << requests.size() << ")" <<
-        std::endl;
+        ", requests = " << requests.size() << ")" << std::endl;
       std::cout << ostr.str();
       std::cout.flush();
     }
@@ -961,10 +924,9 @@ namespace RequestInfoSvcs
     resend_requests_first_server.reserve(requests.size());
     resend_requests_next_server.reserve(requests.size());
 
-    for(RequestArray::iterator it = requests.begin();
-      it != requests.end(); ++it)
+    for (RequestArray::iterator it = requests.begin(); it != requests.end(); ++it)
     {
-      if((*it)->mode == Request::RM_RESEND)
+      if ((*it)->mode == Request::RM_RESEND)
       {
         resend_requests_next_server.push_back(Request_var());
         resend_requests_next_server.back().swap(*it);
@@ -976,12 +938,12 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(!resend_requests_first_server.empty())
+    if (!resend_requests_first_server.empty())
     {
       mark_resend_(resend_requests_first_server);
 
       unsigned long server_i = server_index <= 1 ? 1 : 0;
-      while(server_i < server_count())
+      while (server_i < server_count())
       {
 #       ifdef DEBUG_OUTPUT
         {
@@ -994,7 +956,7 @@ namespace RequestInfoSvcs
         }
 #       endif
 
-        if(add_to_server_(server_i, resend_requests_first_server))
+        if (add_to_server_(server_i, resend_requests_first_server))
         {
           resend_requests_first_server.clear();
           break;
@@ -1003,11 +965,10 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(server_index < server_count() &&
-      !resend_requests_next_server.empty())
+    if (server_index < server_count() && !resend_requests_next_server.empty())
     {
       unsigned long server_i = server_index + 1;
-      while(server_i < server_count())
+      while (server_i < server_count())
       {
 #       ifdef DEBUG_OUTPUT
         {
@@ -1020,7 +981,7 @@ namespace RequestInfoSvcs
         }
 #       endif
 
-        if(add_to_server_(server_i, resend_requests_next_server))
+        if (add_to_server_(server_i, resend_requests_next_server))
         {
           // resend_requests_next_server owned only if returned true
           resend_requests_next_server.clear();
@@ -1030,7 +991,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(!resend_requests_first_server.empty() || !resend_requests_next_server.empty())
+    if (!resend_requests_first_server.empty() || !resend_requests_next_server.empty())
     {
       // delay requests
       std::copy(resend_requests_next_server.begin(),
@@ -1052,16 +1013,14 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::add_delayed(
-    RequestArray& requests)
+  BillingProcessor::RequestPool::add_delayed(RequestArray& requests)
     /*throw(Exception)*/
   {
 #   ifdef DEBUG_OUTPUT
     {
       std::ostringstream ostr;
       ostr << Generics::Time::get_time_of_day().get_gm_time().format("%F %T.%q") <<
-        ": add_delayed(requests = " << requests.size() << ")" <<
-        std::endl;
+        ": add_delayed(requests = " << requests.size() << ")" << std::endl;
       std::cout << ostr.str();
       std::cout.flush();
     }
@@ -1076,9 +1035,7 @@ namespace RequestInfoSvcs
   }
 
   bool
-  BillingProcessor::RequestPool::add_to_server_(
-    unsigned long server_index,
-    RequestArray& requests)
+  BillingProcessor::RequestPool::add_to_server_(unsigned long server_index, RequestArray& requests)
     /*throw(Exception)*/
   {
     bool added = false;
@@ -1088,13 +1045,13 @@ namespace RequestInfoSvcs
     {
       RequestPool::SyncPolicy::WriteGuard guard(server->lock);
 
-      if(server->active)
+      if (server->active)
       {
         bool server_empty = server->send_amounts.empty();
 
         // remove from non_empty_servers_ before modifications (
         //   see ServerStateFirstRequestLess)
-        if(!server_empty)
+        if (!server_empty)
         {
           RequestPool::SyncPolicy::WriteGuard guard(non_empty_servers_lock_);
           non_empty_servers_.erase(server);
@@ -1123,7 +1080,7 @@ namespace RequestInfoSvcs
       }
     }
 
-    if(added)
+    if (added)
     {
       requests.clear();
     }
@@ -1141,7 +1098,7 @@ namespace RequestInfoSvcs
 
     try
     {
-      for(RequestArray::const_iterator req_it = requests.begin();
+      for (RequestArray::const_iterator req_it = requests.begin();
         req_it != requests.end(); ++req_it)
       {
         assert(req_it->in());
@@ -1149,12 +1106,12 @@ namespace RequestInfoSvcs
         AggregateAmountSet::iterator agg_it = amount_aggregator->agg_amounts.find(
           AggregateRequestHashAdapter(*req_it));
 
-        if(agg_it != amount_aggregator->agg_amounts.end())
+        if (agg_it != amount_aggregator->agg_amounts.end())
         {
           const Request_var& add_req = agg_it->request();
           assert(add_req.in());
 
-          if(add_req->first_request_time <= (*req_it)->first_request_time)
+          if (add_req->first_request_time <= (*req_it)->first_request_time)
           {
             agg_it->request()->add(**req_it);
           }
@@ -1189,8 +1146,7 @@ namespace RequestInfoSvcs
     noexcept
   {
     SendOrderAmountSet::iterator end_it;
-    if(max_requests == 0 ||
-      amount_aggregator->send_amounts.size() <= max_requests)
+    if (max_requests == 0 || amount_aggregator->send_amounts.size() <= max_requests)
     {
       std::copy(amount_aggregator->send_amounts.begin(),
         amount_aggregator->send_amounts.end(),
@@ -1202,8 +1158,7 @@ namespace RequestInfoSvcs
     else
     {
       unsigned long req_i = 0;
-      while(req_i < max_requests &&
-        !amount_aggregator->send_amounts.empty())
+      while (req_i < max_requests && !amount_aggregator->send_amounts.empty())
       {
         res_requests.push_back(*amount_aggregator->send_amounts.begin());
         amount_aggregator->agg_amounts.erase(
@@ -1227,21 +1182,20 @@ namespace RequestInfoSvcs
     {
       RequestPool::SyncPolicy::ReadGuard guard(amount_aggregator->lock);
 
-      for(AggregateAmountSet::const_iterator agg_it = amount_aggregator->agg_amounts.begin();
+      for (AggregateAmountSet::const_iterator agg_it = amount_aggregator->agg_amounts.begin();
         agg_it != amount_aggregator->agg_amounts.end(); ++agg_it)
       {
         SaveAggregateAmountSet::iterator res_agg_it =
           res_agg_amounts.find(SaveAggregateRequestHashAdapter(agg_it->request()));
 
-        if(res_agg_it != res_agg_amounts.end())
+        if (res_agg_it != res_agg_amounts.end())
         {
           res_agg_it->request()->add(*agg_it->request());
         }
         else
         {
           res_agg_amounts.insert(
-            SaveAggregateRequestHashAdapter(
-              Request_var(new Request(*agg_it->request()))));
+            SaveAggregateRequestHashAdapter(Request_var(new Request(*agg_it->request()))));
         }
       }
     }
@@ -1263,25 +1217,24 @@ namespace RequestInfoSvcs
     // get top elements(minimal first_request_time) from send_requests
     res_requests.reserve(max_requests > 0 ? max_requests : 1024);
 
-    while(true)
+    while (true)
     {
       ServerStateHolder_var check_server;
 
       {
         // collect non empty servers
-        RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(
-          non_empty_servers_lock_);
+        RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(non_empty_servers_lock_);
 
-        if(!active())
+        if (!active())
         {
           return false;
         }
 
-        while(non_empty_servers_.empty())
+        while (non_empty_servers_.empty())
         {
           non_empty_servers_cond_.wait(non_empty_servers_lock_);
 
-          if(!active())
+          if (!active())
           {
             return false;
           }
@@ -1309,31 +1262,26 @@ namespace RequestInfoSvcs
 #       endif
       }
 
-      if(check_server)
+      if (check_server)
       {
         {
           RequestPool::SyncPolicy::WriteGuard check_server_lock(check_server->lock);
 
-          if(!check_server->send_amounts.empty()) // not cleaned by other thread
+          if (!check_server->send_amounts.empty()) // not cleaned by other thread
           {
             // try remove from non_empty_servers_ again, because it can be returned by add_to_server_,
             // that lock in order server->lock, non_empty_servers_
             {
-              RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(
-                non_empty_servers_lock_);
+              RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(non_empty_servers_lock_);
 
               non_empty_servers_.erase(check_server);
             }
 
-            get_aggregator_requests_i_(
-              res_requests,
-              check_server,
-              max_requests);
+            get_aggregator_requests_i_(res_requests, check_server, max_requests);
 
-            if(!check_server->send_amounts.empty())
+            if (!check_server->send_amounts.empty())
             {
-              RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(
-                non_empty_servers_lock_);
+              RequestPool::NonEmptyServersSyncPolicy::WriteGuard guard(non_empty_servers_lock_);
               non_empty_servers_.insert(check_server);
 
               non_empty_servers_cond_.signal(); // signal always because this isn't broadcast
@@ -1341,22 +1289,21 @@ namespace RequestInfoSvcs
           }
         } // check_server->lock
 
-        if(!res_requests.empty())
+        if (!res_requests.empty())
         {
           server_index = check_server->server_id;
           return true;
         }
 
         check_server = ServerStateHolder_var();
-      } // if(check_server)
+      } // if (check_server)
     }
 
     return false; // unreachable
   }
 
   bool
-  BillingProcessor::RequestPool::get_delayed_requests(
-    RequestArray& requests)
+  BillingProcessor::RequestPool::get_delayed_requests(RequestArray& requests)
     noexcept
   {
     RequestPool::SyncPolicy::WriteGuard guard(delayed_amounts_->lock);
@@ -1371,8 +1318,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::deactivate_server(
-    unsigned long server_index)
+  BillingProcessor::RequestPool::deactivate_server(unsigned long server_index)
     noexcept
   {
     ServerStateHolder& server = *(servers_[server_index]);
@@ -1383,8 +1329,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::activate_server(
-    unsigned long server_index)
+  BillingProcessor::RequestPool::activate_server(unsigned long server_index)
     noexcept
   {
     ServerStateHolder_var server = servers_[server_index];
@@ -1392,7 +1337,7 @@ namespace RequestInfoSvcs
     // server unreachable - deactivate it (stop tring to send requests)
     RequestPool::SyncPolicy::WriteGuard guard(server->lock);
     server->active = true;
-    if(!server->send_amounts.empty())
+    if (!server->send_amounts.empty())
     {
       RequestPool::SyncPolicy::WriteGuard guard(non_empty_servers_lock_);
       non_empty_servers_.insert(server);
@@ -1401,56 +1346,18 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::print(std::ostream& ostr) noexcept
-  {
-    std::list<std::unique_ptr<RequestPool::SyncPolicy::WriteGuard> > locks;
-
-    locks.emplace_back(new RequestPool::SyncPolicy::WriteGuard(delayed_amounts_->lock));
-
-    for(ServerArray::const_iterator server_it = servers_.begin();
-      server_it != servers_.end(); ++server_it)
-    {
-      locks.emplace_back(new RequestPool::SyncPolicy::WriteGuard((*server_it)->lock));
-    }
-
-    ostr << "Delayed amounts:" << std::endl;
-
-    for(AggregateAmountSet::const_iterator agg_it = delayed_amounts_->agg_amounts.begin();
-      agg_it != delayed_amounts_->agg_amounts.end(); ++agg_it)
-    {
-      agg_it->request()->print(ostr, "  ");
-      ostr << std::endl;
-    }
-
-    unsigned long server_i = 0;
-    for(ServerArray::const_iterator server_it = servers_.begin();
-        server_it != servers_.end(); ++server_it, ++server_i)
-    {
-      ostr << "Server #" << server_i << ":" << std::endl;
-      for(AggregateAmountSet::const_iterator agg_it = (*server_it)->agg_amounts.begin();
-        agg_it != (*server_it)->agg_amounts.end(); ++agg_it)
-      {
-        agg_it->request()->print(ostr, "  ");
-        ostr << std::endl;
-      }
-    }
-  }
-
-  void
-  BillingProcessor::RequestPool::load(
-    const String::SubString& storage_root)
+  BillingProcessor::RequestPool::load(const String::SubString& storage_root)
     /*throw(Exception)*/
   {
     // load storage
-    if(FileManip::dir_exists(storage_root))
+    if (FileManip::dir_exists(storage_root))
     {
       load_amounts_(storage_root.str() + "/" + AMOUNT_FILE_);
     }
   }
 
   void
-  BillingProcessor::RequestPool::dump(
-    const String::SubString& storage_root)
+  BillingProcessor::RequestPool::dump(const String::SubString& storage_root)
     /*throw(Exception)*/
   {
     static const char* FUN = "BillingProcessor::RequestPool::dump()";
@@ -1466,7 +1373,7 @@ namespace RequestInfoSvcs
       remove_storage_(tmp_root);
       remove_storage_(old_storage_tmp_root);
 
-      if(mkdir(tmp_root.c_str(), 0777) == -1)
+      if (mkdir(tmp_root.c_str(), 0777) == -1)
       {
         // folder must not exist
         eh::throw_errno_exception<Exception>(
@@ -1506,7 +1413,7 @@ namespace RequestInfoSvcs
     ServerArray servers;
     servers.resize(server_count, nullptr);
     unsigned long i = 0;
-    for(ServerArray::iterator it = servers.begin(); it != servers.end(); ++it, ++i)
+    for (ServerArray::iterator it = servers.begin(); it != servers.end(); ++it, ++i)
     {
       *it = new ServerStateHolder(i);
     }
@@ -1514,15 +1421,14 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::load_amounts_(
-    const String::SubString& file_path)
+  BillingProcessor::RequestPool::load_amounts_(const String::SubString& file_path)
     /*throw(Exception)*/
   {
     static const char* FUN = "BillingProcessor::RequestPool::load_amounts_()";
 
     std::ifstream file(file_path.str().c_str(), std::ios_base::in);
 
-    if(!file.is_open())
+    if (!file.is_open())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't open file '" << file_path << "'";
@@ -1535,13 +1441,13 @@ namespace RequestInfoSvcs
       // empty file allowed
       char sym;
       file.get(sym);
-      if(!file.eof())
+      if (!file.eof())
       {
         file.putback(sym);
       }
     }
 
-    while(!file.eof())
+    while (!file.eof())
     {
       std::string line;
 
@@ -1549,50 +1455,50 @@ namespace RequestInfoSvcs
       {
         AdServer::LogProcessing::read_until_eol(file, line);
 
-        if(file.fail())
+        if (file.fail())
         {
           throw Exception("read failed or empty line");
         }
 
         String::StringManip::SplitTab tokenizer(line);
         String::SubString date_str;
-        if(!tokenizer.get_token(date_str))
+        if (!tokenizer.get_token(date_str))
         {
           throw Exception("no date");
         }
 
         String::SubString account_id_str;
-        if(!tokenizer.get_token(account_id_str))
+        if (!tokenizer.get_token(account_id_str))
         {
           throw Exception("no account id");
         }
 
         String::SubString advertiser_id_str;
-        if(!tokenizer.get_token(advertiser_id_str))
+        if (!tokenizer.get_token(advertiser_id_str))
         {
           throw Exception("no advertiser id");
         }
 
         String::SubString campaign_id_str;
-        if(!tokenizer.get_token(campaign_id_str))
+        if (!tokenizer.get_token(campaign_id_str))
         {
           throw Exception("no campaign id");
         }
 
         String::SubString ccg_id_str;
-        if(!tokenizer.get_token(ccg_id_str))
+        if (!tokenizer.get_token(ccg_id_str))
         {
           throw Exception("no ccg id");
         }
 
         String::SubString account_amount_str;
-        if(!tokenizer.get_token(account_amount_str))
+        if (!tokenizer.get_token(account_amount_str))
         {
           throw Exception("no account amount");
         }
 
         String::SubString amount_str;
-        if(!tokenizer.get_token(amount_str))
+        if (!tokenizer.get_token(amount_str))
         {
           throw Exception("no amount");
         }
@@ -1607,7 +1513,7 @@ namespace RequestInfoSvcs
         tokenizer.get_token(clicks_str);
 
         /*
-        if(amount_str.end() != &line[0] + line.size())
+        if (amount_str.end() != &line[0] + line.size())
         {
           throw Exception("unexpected content after amount");
         }
@@ -1616,7 +1522,7 @@ namespace RequestInfoSvcs
         {
           char eol;
           file.get(eol);
-          if(!file.eof() && (file.fail() || eol != '\n'))
+          if (!file.eof() && (file.fail() || eol != '\n'))
           {
             Stream::Error ostr;
             ostr << "line isn't closed when expected";
@@ -1626,7 +1532,7 @@ namespace RequestInfoSvcs
 
         // use tokenized fields
         unsigned long account_id;
-        if(!String::StringManip::str_to_int(account_id_str, account_id))
+        if (!String::StringManip::str_to_int(account_id_str, account_id))
         {
           Stream::Error ostr;
           ostr << "invalid account id value: '" << account_id_str << "'";
@@ -1634,7 +1540,7 @@ namespace RequestInfoSvcs
         }
 
         unsigned long advertiser_id;
-        if(!String::StringManip::str_to_int(advertiser_id_str, advertiser_id))
+        if (!String::StringManip::str_to_int(advertiser_id_str, advertiser_id))
         {
           Stream::Error ostr;
           ostr << "invalid advertiser id value: '" << advertiser_id_str << "'";
@@ -1642,7 +1548,7 @@ namespace RequestInfoSvcs
         }
 
         unsigned long campaign_id;
-        if(!String::StringManip::str_to_int(campaign_id_str, campaign_id))
+        if (!String::StringManip::str_to_int(campaign_id_str, campaign_id))
         {
           Stream::Error ostr;
           ostr << "invalid campaign id value: '" << campaign_id_str << "'";
@@ -1650,7 +1556,7 @@ namespace RequestInfoSvcs
         }
 
         unsigned long ccg_id;
-        if(!String::StringManip::str_to_int(ccg_id_str, ccg_id))
+        if (!String::StringManip::str_to_int(ccg_id_str, ccg_id))
         {
           Stream::Error ostr;
           ostr << "invalid ccg id value: '" << ccg_id_str << "'";
@@ -1660,8 +1566,7 @@ namespace RequestInfoSvcs
         Generics::Time date(date_str, "%Y-%m-%d %H"); // %F
         RevenueDecimal account_amount(account_amount_str);
         RevenueDecimal amount(amount_str);
-        RevenueDecimal ctr = !ctr_str.empty() ?
-          RevenueDecimal(ctr_str) : RevenueDecimal::ZERO;
+        RevenueDecimal ctr = !ctr_str.empty() ? RevenueDecimal(ctr_str) : RevenueDecimal::ZERO;
         ImpRevenueDecimal imps = !imps_str.empty() ?
           ImpRevenueDecimal(imps_str) : ImpRevenueDecimal::ZERO;
         ImpRevenueDecimal clicks = !clicks_str.empty() ?
@@ -1684,8 +1589,7 @@ namespace RequestInfoSvcs
       {
         Stream::Error ostr;
         ostr << FUN << ": can't read '" << file_path <<
-          "', invalid line #" << line_i << " '" << line <<
-          "': " << ex.what();
+          "', invalid line #" << line_i << " '" << line << "': " << ex.what();
         throw Exception(ostr);
       }
 
@@ -1696,8 +1600,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::RequestPool::save_amounts_(
-    const String::SubString& file_path)
+  BillingProcessor::RequestPool::save_amounts_(const String::SubString& file_path)
     /*throw(Exception)*/
   {
     static const char* FUN = "BillingProcessor::RequestPool::save_amounts_()";
@@ -1707,28 +1610,26 @@ namespace RequestInfoSvcs
 
     collect_aggregator_(res_agg_amounts, delayed_amounts_);
 
-    for(ServerArray::const_iterator server_it = servers_.begin();
+    for (ServerArray::const_iterator server_it = servers_.begin();
       server_it != servers_.end(); ++server_it)
     {
       collect_aggregator_(res_agg_amounts, *server_it);
     }
 
     // save aggregated stats
-    std::ofstream file(
-      file_path.str().c_str(),
-      std::ios_base::out | std::ios_base::trunc);
+    std::ofstream file(file_path.str().c_str(), std::ios_base::out | std::ios_base::trunc);
 
-    if(!file.is_open())
+    if (!file.is_open())
     {
       Stream::Error ostr;
       ostr << FUN << ": can't open file '" << file_path << "'";
       throw Exception(ostr);
     }
 
-    for(SaveAggregateAmountSet::const_iterator agg_it = res_agg_amounts.begin();
+    for (SaveAggregateAmountSet::const_iterator agg_it = res_agg_amounts.begin();
       agg_it != res_agg_amounts.end(); ++agg_it)
     {
-      if(agg_it != res_agg_amounts.begin())
+      if (agg_it != res_agg_amounts.begin())
       {
         file << std::endl;
       }
@@ -1741,8 +1642,7 @@ namespace RequestInfoSvcs
         agg_it->request()->account_amount << '\t' <<
         agg_it->request()->amount << '\t' <<
         agg_it->request()->ctr << '\t' <<
-        agg_it->request()->imps.str() << '\t' <<
-        agg_it->request()->clicks.str();
+        agg_it->request()->imps.str() << '\t' << agg_it->request()->clicks.str();
     }
   }
 
@@ -1756,13 +1656,9 @@ namespace RequestInfoSvcs
 
     ::unlink((path_str + "/" + AMOUNT_FILE_).c_str());
 
-    if(::rmdir(path_str.c_str()) == -1 && errno != ENOENT)
+    if (::rmdir(path_str.c_str()) == -1 && errno != ENOENT)
     {
-      eh::throw_errno_exception<Exception>(
-        FUN,
-        ": failed to remove '",
-        path_str.c_str(),
-        "'");
+      eh::throw_errno_exception<Exception>(FUN, ": failed to remove '", path_str.c_str(), "'");
     }
   }
 
@@ -1774,11 +1670,7 @@ namespace RequestInfoSvcs
     BillingProcessor::RequestPool* request_pool)
     /*throw(eh::Exception)*/
     : Generics::ActiveObjectCommonImpl(
-        SingleJob_var(new Job(
-          callback,
-          context,
-          request_pool,
-          thread_count)),
+        SingleJob_var(new Job(callback, context, request_pool, thread_count)),
         thread_count)
   {}
 
@@ -1814,15 +1706,12 @@ namespace RequestInfoSvcs
   void
   BillingProcessor::Sender::Job::work() noexcept
   {
-    while(true)
+    while (true)
     {
       unsigned long server_index;
       RequestArray process_requests;
 
-      if(!request_pool_->get_requests(
-           server_index,
-           process_requests,
-           100))
+      if (!request_pool_->get_requests(server_index, process_requests, 100))
       {
         // interrupted through pool
 #       ifdef DEBUG_OUTPUT
@@ -1847,13 +1736,11 @@ namespace RequestInfoSvcs
       }
 #     endif
 
-      if(!process_requests.empty())
+      if (!process_requests.empty())
       {
         try
         {
-          context_->request_sender->send_requests(
-            process_requests,
-            server_index);
+          context_->request_sender->send_requests(process_requests, server_index);
         }
         catch(const RequestSender::ServerUnreachable& ex)
         {
@@ -1869,11 +1756,9 @@ namespace RequestInfoSvcs
         // push left normal requests to looped resend mode or
         // to next server if it already have resend marker
         // independent on fail reason (reminded or server is not available)
-        if(!process_requests.empty())
+        if (!process_requests.empty())
         {
-          request_pool_->add_resend_to_server(
-            server_index + 1,
-            process_requests);
+          request_pool_->add_resend_to_server(server_index + 1, process_requests);
         }
       }
     }
@@ -1886,19 +1771,14 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::Sender::Job::deactivate_server_(
-    unsigned long server_index)
+  BillingProcessor::Sender::Job::deactivate_server_(unsigned long server_index)
     noexcept
   {
     request_pool_->deactivate_server(server_index);
 
-    Generics::Goal_var msg = new ActivateServerGoal(
-      request_pool_,
-      server_index);
+    Generics::Goal_var msg = new ActivateServerGoal(request_pool_, server_index);
 
-    context_->scheduler->schedule(
-      msg,
-      Generics::Time::get_time_of_day() + deactivate_period_);
+    context_->scheduler->schedule(msg, Generics::Time::get_time_of_day() + deactivate_period_);
   }
 
   // BillingServerRequestSender impl
@@ -1908,9 +1788,7 @@ namespace RequestInfoSvcs
   {
     billing_servers_holder_.reset(new BillingServerArrayHolder());
 
-    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(
-      1,
-      "rim-bs-grpc");
+    auto grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1, "rim-bs-grpc");
     auto coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         callback,
@@ -1922,7 +1800,7 @@ namespace RequestInfoSvcs
     add_child_object(grpc_executor);
     add_child_object(coalesce_runner);
 
-    for(std::string& endpoint : billing_server_refs)
+    for (std::string& endpoint : billing_server_refs)
     {
       std::string client_endpoint = endpoint;
       billing_servers_holder_->billing_servers.push_back(
@@ -1952,7 +1830,7 @@ namespace RequestInfoSvcs
       namespace Proto = adserver::campaign_svcs::billing_server;
 
       Proto::AddAmountRequest request;
-      for(RequestArray::const_iterator req_it = requests.begin();
+      for (RequestArray::const_iterator req_it = requests.begin();
           req_it != requests.end(); ++req_it)
       {
         Proto::ConfirmBidInfo* confirm_bid_info = request.add_requests();
@@ -1965,14 +1843,10 @@ namespace RequestInfoSvcs
         bid->set_ctr(GrpcAlgs::pack_decimal((*req_it)->ctr));
         confirm_bid_info->set_account_spent_budget(
           GrpcAlgs::pack_decimal((*req_it)->account_amount));
-        confirm_bid_info->set_spent_budget(
-          GrpcAlgs::pack_decimal((*req_it)->amount));
-        confirm_bid_info->set_reserved_budget(
-          GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
-        confirm_bid_info->set_imps(
-          GrpcAlgs::pack_decimal((*req_it)->imps));
-        confirm_bid_info->set_clicks(
-          GrpcAlgs::pack_decimal((*req_it)->clicks));
+        confirm_bid_info->set_spent_budget(GrpcAlgs::pack_decimal((*req_it)->amount));
+        confirm_bid_info->set_reserved_budget(GrpcAlgs::pack_decimal(RevenueDecimal::ZERO));
+        confirm_bid_info->set_imps(GrpcAlgs::pack_decimal((*req_it)->imps));
+        confirm_bid_info->set_clicks(GrpcAlgs::pack_decimal((*req_it)->clicks));
         confirm_bid_info->set_forced(false);
       }
 
@@ -1990,15 +1864,13 @@ namespace RequestInfoSvcs
             Stream::Error ostr;
             ostr << "BillingServer gRPC add_amount failed by service index #" <<
               service_index << ", endpoint=" << billing_server.endpoint <<
-              ", code=" << status.error_code() <<
-              ", message=" << status.error_message();
+              ", code=" << status.error_code() << ", message=" << status.error_message();
             throw RequestSender::ServerUnreachable(ostr.str());
           });
 
       RequestArray remind_requests;
 
-      for(const Proto::ConfirmBidRefInfo& remainder_request :
-        response.remainder_requests())
+      for (const Proto::ConfirmBidRefInfo& remainder_request : response.remainder_requests())
       {
         Request_var result = new Request(*requests[remainder_request.index()]);
         result->account_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
@@ -2055,7 +1927,7 @@ namespace RequestInfoSvcs
     add_child_object(scheduler_.in());
     add_child_object(task_runner_.in());
     add_child_object(request_pool_.in());
-    if(Generics::RefCountableActiveObject* active_request_sender =
+    if (Generics::RefCountableActiveObject* active_request_sender =
       dynamic_cast<Generics::RefCountableActiveObject*>(request_sender))
     {
       add_child_object(active_request_sender);
@@ -2078,7 +1950,7 @@ namespace RequestInfoSvcs
     add_child_object(sender.in());
 
     // TODO: do in background
-    if(FileManip::dir_exists(storage_root_))
+    if (FileManip::dir_exists(storage_root_))
     {
       // load storage
       request_pool_->load(storage_root_);
@@ -2107,7 +1979,7 @@ namespace RequestInfoSvcs
   {
     // each impression on frontend side confirmed with adv_revenue
     // adv_revenue + delta_adv_revenue = confirmed adv_revenue (orig)
-    if(processing_state.state == RequestInfo::RS_FRAUD ||
+    if (processing_state.state == RequestInfo::RS_FRAUD ||
       processing_state.state == RequestInfo::RS_DUPLICATE)
     {
       request_pool_->add(
@@ -2125,7 +1997,7 @@ namespace RequestInfoSvcs
         );
     }
     // corection on normal impression (delta_adv_revenue)
-    else if(processing_state.state == RequestInfo::RS_NORMAL &&
+    else if (processing_state.state == RequestInfo::RS_NORMAL &&
       ri.delta_adv_revenue.impression != RevenueDecimal::ZERO)
     {
       request_pool_->add(
@@ -2144,12 +2016,10 @@ namespace RequestInfoSvcs
   }
 
   void
-  BillingProcessor::process_click(
-    const RequestInfo& ri,
-    const ProcessingState& processing_state)
+  BillingProcessor::process_click(const RequestInfo& ri, const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    if(processing_state.state == RequestInfo::RS_FRAUD ||
+    if (processing_state.state == RequestInfo::RS_FRAUD ||
       processing_state.state == RequestInfo::RS_DUPLICATE)
     {
       request_pool_->add(
@@ -2167,7 +2037,7 @@ namespace RequestInfoSvcs
         );
     }
     // corection on normal impression (delta_adv_revenue)
-    else if(processing_state.state == RequestInfo::RS_NORMAL &&
+    else if (processing_state.state == RequestInfo::RS_NORMAL &&
       ri.delta_adv_revenue.click != RevenueDecimal::ZERO)
     {
       request_pool_->add(
@@ -2207,8 +2077,7 @@ namespace RequestInfoSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_PROCESSOR, "ADS-IMPL-3032") <<
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_PROCESSOR, "ADS-IMPL-3032") <<
         FUN << ": caught eh::Exception: " << ex.what();
     }
 
@@ -2227,15 +2096,13 @@ namespace RequestInfoSvcs
     try
     {
       // send delayed
-      for(unsigned long server_index = 0;
+      for (unsigned long server_index = 0;
         server_index < request_pool_->server_count() && !requests.empty();
         ++server_index)
       {
         try
         {
-          request_sender_->send_requests(
-            requests,
-            server_index);
+          request_sender_->send_requests(requests, server_index);
         }
         catch(const RequestSender::ServerUnreachable& ex)
         {
@@ -2253,12 +2120,11 @@ namespace RequestInfoSvcs
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BILLING_PROCESSOR, "ADS-IMPL-3031") <<
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::BILLING_PROCESSOR, "ADS-IMPL-3031") <<
         FUN << ": caught eh::Exception: " << ex.what();
     }
 
-    if(!requests.empty())
+    if (!requests.empty())
     {
       // pass unprocessed delayed back to pool
       request_pool_->add_delayed(requests);
@@ -2271,11 +2137,9 @@ namespace RequestInfoSvcs
   BillingProcessor::mark_resend_(RequestArray& requests)
     noexcept
   {
-    for(RequestArray::iterator req_it = requests.begin();
-      req_it != requests.end(); ++req_it)
+    for (RequestArray::iterator req_it = requests.begin(); req_it != requests.end(); ++req_it)
     {
       (*req_it)->mode = Request::RM_RESEND;
     }
   }
-}
 }

@@ -14,8 +14,7 @@ class BaseConstraint :
   public virtual ReferenceCounting::DefaultImpl<>
 {
 public:
-  BaseConstraint(const char* name_,
-                 const char* description_);
+  BaseConstraint(const char* name_, const char* description_);
 
   virtual ~BaseConstraint() noexcept;
 
@@ -80,8 +79,7 @@ class ConstraintsContainer : public BaseConstraint
 {
 
 public:
-  ConstraintsContainer(const char* name_,
-                       const char* description_);
+  ConstraintsContainer(const char* name_, const char* description_);
 
   ~ConstraintsContainer() noexcept;
 

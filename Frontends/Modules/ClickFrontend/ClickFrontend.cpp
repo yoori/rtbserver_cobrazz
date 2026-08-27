@@ -31,14 +31,11 @@ namespace
   DECLARE_EXCEPTION(GrpcCallException, eh::DescriptiveException);
 
   void
-  throw_grpc_exception_(
-    const char* name,
-    const grpc::Status& status)
+  throw_grpc_exception_(const char* name, const grpc::Status& status)
   {
     Stream::Error ostr;
     ostr << name << ": gRPC call failed: code=" <<
-      static_cast<int>(status.error_code()) <<
-      ", message=" << status.error_message();
+      static_cast<int>(status.error_code()) << ", message=" << status.error_message();
     throw GrpcCallException(ostr);
   }
 
@@ -74,13 +71,13 @@ namespace
 
   namespace Request::Param
   {
-      const char RELOCATE[] = "relocate";
-    }
+    const char RELOCATE[] = "relocate";
+  }
 
   namespace Response::Header
   {
-      const String::SubString LOCATION("Location");
-    }
+    const String::SubString LOCATION("Location");
+  }
 
 }
 
@@ -122,18 +119,15 @@ namespace AdServer
     std::string found_uri;
 
     bool result =
-      FrontendCommons::find_uri(
-        config_->PathUriList().Uri(), uri, found_uri, 0, false) ||
-      FrontendCommons::find_uri(
-        config_->UriList().Uri(), uri, found_uri);
+      FrontendCommons::find_uri(config_->PathUriList().Uri(), uri, found_uri, 0, false) ||
+      FrontendCommons::find_uri(config_->UriList().Uri(), uri, found_uri);
 
-    if(log_level() >= TraceLevel::MIDDLE)
+    if (log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr
         << "ClickFrontend::will_handle(" << uri
-        << "), result " << result << ", for service: '"
-        << found_uri << "'";
+        << "), result " << result << ", for service: '" << found_uri << "'";
 
       log(ostr.str());
     }
@@ -151,7 +145,7 @@ namespace AdServer
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration not presented.");
       }
@@ -159,31 +153,27 @@ namespace AdServer
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.ClickFeConfiguration().present())
+      if (!fe_config.ClickFeConfiguration().present())
       {
         throw Exception("ClickFeConfiguration not presented.");
       }
 
-      config_ = ConfigPtr(
-        new ClickFeConfiguration(*fe_config.ClickFeConfiguration()));
+      config_ = ConfigPtr(new ClickFeConfiguration(*fe_config.ClickFeConfiguration()));
 
       cookie_manager_.reset(
         new FrontendCommons::CookieManager<
-          FCGI::HttpRequest, FCGI::HttpResponse>(
-            common_config_->Cookies()));
+          FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't parse config file '" << config_file_ <<
-        "': " << e.what();
+      ostr << FUN << ": Can't parse config file '" << config_file_ << "': " << e.what();
       throw Exception(ostr);
     }
   }
 
   FrontendCommons::RequestTask
-  ClickFrontend::co_handle_request_noparams(
-    FCGI::HttpRequestHolder_var request_holder)
+  ClickFrontend::co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -255,31 +245,25 @@ namespace AdServer
   {
     static const char* FUN = "ClickFrontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
         parse_config_();
 
         request_info_filler_.reset(
-          new ClickFE::RequestInfoFiller(
-            logger(),
-            common_module_,
-            common_module_->ip_mapper()));
+          new ClickFE::RequestInfoFiller(logger(), common_module_, common_module_->ip_mapper()));
         grpc_executor_ = common_module_->grpc_executor();
 
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-            FrontendCommons::read_campaign_manager_grpc_batching_options(
-              *common_config_),
+            FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
             grpc_executor_,
             common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager;
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager_,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager_, workers_);
         add_child_object(campaign_manager);
 
         auto user_bind_client =
@@ -289,7 +273,7 @@ namespace AdServer
             common_module_->grpc_coalesce_runner(),
             logger());
         user_bind_client_ = user_bind_client;
-        if(user_bind_client_)
+        if (user_bind_client_)
         {
           add_child_object(user_bind_client);
         }
@@ -343,8 +327,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  ClickFrontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  ClickFrontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     co_await AdServer::Commons::ExecutorPool::yield(workers_);
@@ -361,8 +344,7 @@ namespace AdServer
       wait_object();
       clear();
 
-      log(String::SubString(
-          "ClickFrontend::shutdown: frontend terminated"),
+      log(String::SubString("ClickFrontend::shutdown: frontend terminated"),
         Logging::Logger::INFO,
         Aspect::CLICK_FRONTEND);
     }
@@ -393,26 +375,23 @@ namespace AdServer
     mri.set_request_time(GrpcAlgs::pack_time(now));
 
     {
-      const int result_len =
-        trigger_match_result->matched_channels().page_channels_size();
-      for(int i = 0; i < result_len; ++i)
+      const int result_len = trigger_match_result->matched_channels().page_channels_size();
+      for (int i = 0; i < result_len; ++i)
       {
         auto* pkw_channel = match_info->add_pkw_channels();
-        pkw_channel->set_channel_id(
-          trigger_match_result->matched_channels().page_channels(i).id());
+        pkw_channel->set_channel_id(trigger_match_result->matched_channels().page_channels(i).id());
         pkw_channel->set_channel_trigger_id(
           trigger_match_result->matched_channels().
             page_channels(i).trigger_channel_id());
       }
     }
 
-    if(history_match_result)
+    if (history_match_result)
     {
       const int result_len = history_match_result->match_result().channels_size();
-      for(int i = 0; i < result_len; ++i)
+      for (int i = 0; i < result_len; ++i)
       {
-        match_info->add_channels(
-          history_match_result->match_result().channels(i).channel_id());
+        match_info->add_channels(history_match_result->match_result().channels(i).channel_id());
       }
     }
 
@@ -422,14 +401,9 @@ namespace AdServer
       {
         GeoIPMapping::IPMapCity2::CityLocation geo_location;
 
-        if(ip_map_->city_location_by_addr(
-             peer_ip_val.str().c_str(),
-             geo_location,
-             false,
-             true))
+        if (ip_map_->city_location_by_addr(peer_ip_val.str().c_str(), geo_location, false, true))
         {
-          FrontendCommons::Location_var location =
-            std::make_shared<FrontendCommons::Location>();
+          FrontendCommons::Location_var location = std::make_shared<FrontendCommons::Location>();
           location->country = geo_location.country_code.str();
           geo_location.region.assign_to(location->region);
           location->city = geo_location.city.str();
@@ -466,21 +440,17 @@ namespace AdServer
 
     for (auto it = params.begin(); it != params.end(); ++it)
     {
-      if (it->first.size() >
-        ClickFrontendConstrainTraits::MAX_LENGTH_PARAM_NAME)
+      if (it->first.size() > ClickFrontendConstrainTraits::MAX_LENGTH_PARAM_NAME)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Param name length(" << it->first.size() <<
-          ") exceed";
+        ostr << FUN << ": Param name length(" << it->first.size() << ") exceed";
 
         throw InvalidParamException(ostr);
       }
-      else if (it->second.size() >
-        ClickFrontendConstrainTraits::MAX_LENGTH_PARAM_VALUE)
+      else if (it->second.size() > ClickFrontendConstrainTraits::MAX_LENGTH_PARAM_VALUE)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Param value length(" << it->second.size() <<
-          ") exceed";
+        ostr << FUN << ": Param value length(" << it->second.size() << ") exceed";
 
         throw InvalidParamException(ostr);
       }
@@ -509,26 +479,21 @@ namespace AdServer
         config_->PathUriList().Uri(), request.uri(), found_uri, 0, false);
       FrontendCommons::ParsedParamsMap parsed_params;
 
-      if(params_in_path)
+      if (params_in_path)
       {
         std::string arguments = request.uri().substr(found_uri.length()).str();
 
-        if(!request.args().empty())
+        if (!request.args().empty())
         {
           arguments += std::string("?") + request.args().str();
         }
 
-        FrontendCommons::parse_args(
-          parsed_params,
-          arguments,
-          AMP,
-          EQL);
+        FrontendCommons::parse_args(parsed_params, arguments, AMP, EQL);
       }
       else // !params_in_path
       {
         const HTTP::ParamList& params = request.params();
-        for(HTTP::ParamList::const_iterator it = params.begin();
-            it != params.end(); ++it)
+        for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
         {
           // use last defined parameter when requestid defined for both frontends
           parsed_params[it->name] = it->value;
@@ -537,7 +502,7 @@ namespace AdServer
 
       check_constraints_(parsed_params, request);
 
-      if(log_level() >= TraceLevel::MIDDLE)
+      if (log_level() >= TraceLevel::MIDDLE)
       {
         std::ostringstream ostr;
         ostr << FUN << ": " << std::endl <<
@@ -545,8 +510,7 @@ namespace AdServer
           "Arg: " << request.args() << std::endl <<
           "Params ("<< parsed_params.size() << "):"  << std::endl;
 
-        for(std::map<std::string, std::string>::const_iterator it =
-              parsed_params.begin();
+        for (std::map<std::string, std::string>::const_iterator it = parsed_params.begin();
             it != parsed_params.end(); ++it)
         {
           ostr << "    " << it->first << " : " << it->second << std::endl;
@@ -560,9 +524,7 @@ namespace AdServer
           ostr << "    " << it->name << " : " << it->value << std::endl;
         }
 
-        log(ostr.str(),
-          TraceLevel::MIDDLE,
-          Aspect::CLICK_FRONTEND);
+        log(ostr.str(), TraceLevel::MIDDLE, Aspect::CLICK_FRONTEND);
       }
 
       adserver::campaign_svcs::campaign_manager::ClickInfo click_info;
@@ -582,33 +544,28 @@ namespace AdServer
         click_info.set_relocate(request_info.relocate);
         click_info.set_time(GrpcAlgs::pack_time(request_info.request_time));
         click_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
-        click_info.set_request_id(
-          GrpcAlgs::pack_request_id(request_info.request_id));
+        click_info.set_request_id(GrpcAlgs::pack_request_id(request_info.request_id));
         click_info.set_referer(request_info.referer);
         click_info.set_log_click(true);
-        click_info.mutable_ctr()->set_value(
-          GrpcAlgs::pack_decimal(request_info.ctr));
-        click_info.set_match_user_id(
-          GrpcAlgs::pack_user_id(request_info.match_user_id));
-        click_info.set_cookie_user_id(
-          GrpcAlgs::pack_user_id(request_info.cookie_user_id));
+        click_info.mutable_ctr()->set_value(GrpcAlgs::pack_decimal(request_info.ctr));
+        click_info.set_match_user_id(GrpcAlgs::pack_user_id(request_info.match_user_id));
+        click_info.set_cookie_user_id(GrpcAlgs::pack_user_id(request_info.cookie_user_id));
 
-        if(!request_info.match_user_id.is_null())
+        if (!request_info.match_user_id.is_null())
         {
           auto* token = click_info.add_tokens();
           token->set_name("UNSIGNEDUID");
           token->set_value(request_info.match_user_id.to_string());
         }
 
-        if(!request_info.cookie_user_id.is_null())
+        if (!request_info.cookie_user_id.is_null())
         {
           auto* token = click_info.add_tokens();
           token->set_name("UNSIGNEDCOOKIEUID");
           token->set_value(request_info.cookie_user_id.to_string());
         }
 
-        for(auto it = request_info.tokens.begin();
-          it != request_info.tokens.end(); ++it)
+        for (auto it = request_info.tokens.begin(); it != request_info.tokens.end(); ++it)
         {
           auto* token = click_info.add_tokens();
           token->set_name(it->first);
@@ -620,24 +577,21 @@ namespace AdServer
         click_result_info;
       bool got_click_url = false;
 
-      if(click_info.ccid() != 0 || click_info.creative_id() != 0)
+      if (click_info.ccid() != 0 || click_info.creative_id() != 0)
       {
         adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
           click_url_request;
         *click_url_request.mutable_click_info() = click_info;
-        click_url_request.set_service_index(
-          request_info.campaign_manager_index);
+        click_url_request.set_service_index(request_info.campaign_manager_index);
 
         try
         {
           const auto click_url_response = co_await
             campaign_manager_coro_->co_get_click_url(std::move(click_url_request));
 
-          if(!click_url_response.status.ok())
+          if (!click_url_response.status.ok())
           {
-            throw_grpc_exception_(
-              "CampaignManager::get_click_url()",
-              click_url_response.status);
+            throw_grpc_exception_("CampaignManager::get_click_url()", click_url_response.status);
           }
 
           got_click_url = click_url_response.response.found();
@@ -648,9 +602,7 @@ namespace AdServer
           Stream::Error ostr;
           ostr << FUN << ": eh::Exception caught: " << e.what();
 
-          log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::CLICK_FRONTEND);
+          log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::CLICK_FRONTEND);
         }
       }
 
@@ -662,7 +614,7 @@ namespace AdServer
           request_info.cookie_user_id,
           false);
 
-      if(got_click_url && (
+      if (got_click_url && (
         (!request_info.match_user_id.is_null() && !(
           request_info.match_user_id ==
             AdServer::Commons::PROBE_USER_ID)) ||
@@ -671,10 +623,9 @@ namespace AdServer
             AdServer::Commons::PROBE_USER_ID)) ||
         set_uid))
       {
-        const unsigned long current_task_count =
-          match_task_count_.exchange_and_add(1) + 1;
+        const unsigned long current_task_count = match_task_count_.exchange_and_add(1) + 1;
 
-        if(config_->match_task_limit() == 0 ||
+        if (config_->match_task_limit() == 0 ||
           current_task_count <=
             config_->match_task_limit() + config_->threads())
         {
@@ -713,7 +664,7 @@ namespace AdServer
         }
       }
 
-      if(set_uid)
+      if (set_uid)
       {
         FrontendCommons::add_UID_cookie(
           response,
@@ -722,18 +673,16 @@ namespace AdServer
           set_uid->client_id.str());
       }
 
-      if(common_config_->ResponseHeaders().present())
+      if (common_config_->ResponseHeaders().present())
       {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
+        FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
       }
 
       FrontendCommons::CORS::set_headers(request, response);
 
       bool instantiated = false;
 
-      if(request_info.use_click_template)
+      if (request_info.use_click_template)
       {
         try
         {
@@ -741,19 +690,19 @@ namespace AdServer
             click_template_file_.text(),
             std::string());
 
-          if(!templ)
+          if (!templ)
           {
             throw Exception("Click template file isn't loaded");
           }
 
           typedef std::map<String::SubString, std::string> ArgMap;
           ArgMap args_cont;
-          if(!request_info.preclick_url.empty())
+          if (!request_info.preclick_url.empty())
           {
             args_cont[Tokens::PRECLICK] = request_info.preclick_url;
           }
 
-          if(got_click_url)
+          if (got_click_url)
           {
             args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
               click_result_info.url();
@@ -772,31 +721,26 @@ namespace AdServer
         }
         catch(const eh::Exception& ex)
         {
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::CLICK_FRONTEND,
-            "ADS-IMPL-?") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::CLICK_FRONTEND, "ADS-IMPL-?") <<
             FUN << ": eh::Exception has been caught: " << ex.what();
         }
       }
 
-      if(!instantiated)
+      if (!instantiated)
       {
-        if(got_click_url)
+        if (got_click_url)
         {
           http_status = 302;
           response.add_header_nocopy_name(
             Response::Header::LOCATION,
             request_info.click_prefix + click_result_info.url());
 
-          if(log_level() >= TraceLevel::MIDDLE)
+          if (log_level() >= TraceLevel::MIDDLE)
           {
             Stream::Error ostr;
             ostr << FUN << ": redirecting to " << click_result_info.url();
 
-            log(ostr.str(),
-              TraceLevel::MIDDLE,
-              Aspect::CLICK_FRONTEND);
+            log(ostr.str(), TraceLevel::MIDDLE, Aspect::CLICK_FRONTEND);
           }
         }
         else
@@ -833,9 +777,7 @@ namespace AdServer
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception caught: " << e.what();
 
-      log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CLICK_FRONTEND);
+      log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::CLICK_FRONTEND);
     }
 
     co_return FrontendCommons::RequestResult{http_status, response_ptr};

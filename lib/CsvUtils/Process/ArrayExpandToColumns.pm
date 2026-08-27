@@ -23,12 +23,12 @@ sub process
 
   my $row = [ @$row_param ];
   my @res_row;
-  for(my $i = 0; $i < $self->{field_}; ++$i)
+  for (my $i = 0; $i < $self->{field_}; ++$i)
   {
     push(@res_row, $row->[$i]);
   }
 
-  if(ref($row->[$self->{field_}]) eq 'ARRAY')
+  if (ref($row->[$self->{field_}]) eq 'ARRAY')
   {
     push(@res_row, @{$row->[$self->{field_}]});
   }
@@ -37,7 +37,7 @@ sub process
     push(@res_row, $row->[$self->{field_}]);
   }
 
-  for(my $i = $self->{field_} + 1; $i < scalar(@$row); ++$i)
+  for (my $i = $self->{field_} + 1; $i < scalar(@$row); ++$i)
   {
     push(@res_row, $row->[$i]);
   }

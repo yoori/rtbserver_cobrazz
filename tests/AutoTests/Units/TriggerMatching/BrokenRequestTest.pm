@@ -27,7 +27,7 @@ sub init
   my $channel1 = $ns->create(
     DB::BehavioralChannel->blank(
       name => 1,
-      keyword_list => 
+      keyword_list =>
         $keyword1 . "\n" .
         $keyword2 . "\n" . $keyword3,
       account_id => $account,
@@ -62,7 +62,7 @@ sub init
   $ns->output("Channel2", $channel2->url_key());
   $ns->output("Channel3_1", $channel3->url_key());
   $ns->output("Channel3_2", $channel3->search_key());
-  
+
   $ns->output("REF1", $url1);
   $ns->output("KWD1", "\"p," . $keyword2);
   $ns->output("REF2", "www.mail:infobox.ru");

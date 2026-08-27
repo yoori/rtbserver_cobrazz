@@ -118,7 +118,7 @@ target_link_libraries(RequestInfoManager
     gRPC::grpc++
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(RequestInfoManager
     PRIVATE
       Protobuf::libprotobuf

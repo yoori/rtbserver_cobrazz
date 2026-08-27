@@ -1,9 +1,6 @@
 #include "TagsTest.hpp"
 
-REFLECT_UNIT(TagsTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(TagsTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 bool
 TagsTest::run_test()
@@ -58,21 +55,15 @@ void TagsTest::empty_country_case()
   // tag_id & site_rate_id is empty.
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id1,
-      client.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id1, client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must got ccid = 0 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.site_rate_id).check(),
+    AutoTest::equal_checker("0", client.debug_info.site_rate_id).check(),
     "must got site_rate_id = 0 in response");
 }
 
@@ -84,21 +75,15 @@ void TagsTest::country_ru_case()
   client.process_request(request.tid(tag_id1).loc_name("ru"));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id1,
-      client.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id1, client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id3,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id3, client.debug_info.ccid).check(),
     "must got CCID/3 of RU CCG in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      siterate_id1,
-      client.debug_info.site_rate_id).check(),
+    AutoTest::equal_checker(siterate_id1, client.debug_info.site_rate_id).check(),
     "must got site_rate_id = SiteRate Id/1 in response");
 }
 
@@ -111,21 +96,15 @@ void TagsTest::country_us_case()
   client.process_request(request.tid(tag_id3).loc_name("us"));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id3,
-      client.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id3, client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/3 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id2,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id2, client.debug_info.ccid).check(),
     "must got CCID/2 of US CCG in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      siterate_id5,
-      client.debug_info.site_rate_id).check(),
+    AutoTest::equal_checker(siterate_id5, client.debug_info.site_rate_id).check(),
     "must got site_rate_id = SiteRate Id/5 in response");
 }
 
@@ -137,21 +116,15 @@ void TagsTest::unknown_country_case()
   client.process_request(request.tid(tag_id1).loc_name("kr"));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id1,
-      client.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id1, client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id5,
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id5, client.debug_info.ccid).check(),
     "must got CCID/5 of KR CCG in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      siterate_id_def,
-      client.debug_info.site_rate_id).check(),
+    AutoTest::equal_checker(siterate_id_def, client.debug_info.site_rate_id).check(),
     "must got site_rate_id = SiteRate Id/1/Default in response");
 }
 
@@ -163,20 +136,14 @@ void TagsTest::cpm_filter_case()
   client.process_request(request.tid(tag_id2).loc_name("ru"));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id2,
-      client.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id2, client.debug_info.tag_id).check(),
     "must got tag_id = 0 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "must got ccid = 0 in response");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.site_rate_id).check(),
+    AutoTest::equal_checker("0", client.debug_info.site_rate_id).check(),
     "must site_rate_id = 0 in response");
 }

@@ -10,26 +10,26 @@ namespace
 
   namespace Request::Cookies
   {
-      const String::SubString OPTOUT("OPTED_OUT");
-      const String::SubString OPTOUT_TRUE_VALUE("YES");
-    }
+    const String::SubString OPTOUT("OPTED_OUT");
+    const String::SubString OPTOUT_TRUE_VALUE("YES");
+  }
 
   namespace Request::Parameters
-    {
-      const String::SubString COLO_ID("colo");
-      const String::SubString TAG_ID("tid");
-      const String::SubString COUNTRY("country");
-      const String::SubString LOCATION_NAME("loc.name");
+  {
+    const String::SubString COLO_ID("colo");
+    const String::SubString TAG_ID("tid");
+    const String::SubString COUNTRY("country");
+    const String::SubString LOCATION_NAME("loc.name");
 
-      /* debug params */
-      const String::SubString DEBUG_TIME("debug-time");
-      const String::SubString IP_ADDRESS("debug.ip");
-    }
+    /* debug params */
+    const String::SubString DEBUG_TIME("debug-time");
+    const String::SubString IP_ADDRESS("debug.ip");
+  }
 
   namespace Request::Headers
-    {
-      const String::SubString IP_ADDRESS(".remotehost");
-    }
+  {
+    const String::SubString IP_ADDRESS(".remotehost");
+  }
 }
 
 namespace AdServer::PassbackPixel
@@ -69,8 +69,7 @@ namespace AdServer::PassbackPixel
     // track request
     track_cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,
-      PassbackTrackParamProcessor_var(
-        new UuidParamProcessor<PassbackTrackInfo>())));
+      PassbackTrackParamProcessor_var(new UuidParamProcessor<PassbackTrackInfo>())));
     track_cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTOUT,
       PassbackTrackParamProcessor_var(
@@ -79,8 +78,7 @@ namespace AdServer::PassbackPixel
 
     track_header_processors_.insert(std::make_pair(
       Request::Headers::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<PassbackTrackInfo>(
-        &PassbackTrackInfo::ip)));
+      new FrontendCommons::StringParamProcessor<PassbackTrackInfo>(&PassbackTrackInfo::ip)));
 
     track_param_processors_.insert(std::make_pair(
       Request::Parameters::COLO_ID,
@@ -112,8 +110,7 @@ namespace AdServer::PassbackPixel
           &PassbackTrackInfo::time, Generics::Time::ONE_DAY))));
     track_param_processors_.insert(std::make_pair(
       Request::Parameters::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<PassbackTrackInfo>(
-        &PassbackTrackInfo::ip)));
+      new FrontendCommons::StringParamProcessor<PassbackTrackInfo>(&PassbackTrackInfo::ip)));
   }
 
   void
@@ -131,8 +128,7 @@ namespace AdServer::PassbackPixel
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);
@@ -140,19 +136,17 @@ namespace AdServer::PassbackPixel
         PassbackTrackProcessorMap::const_iterator param_it =
           track_header_processors_.find(header_name);
 
-        if(param_it != track_header_processors_.end())
+        if (param_it != track_header_processors_.end())
         {
           param_it->second->process(passback_track_info, it->value);
         }
       } /* headers processing */
 
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        PassbackTrackProcessorMap::const_iterator param_it =
-          track_param_processors_.find(it->name);
+        PassbackTrackProcessorMap::const_iterator param_it = track_param_processors_.find(it->name);
 
-        if(param_it != track_param_processors_.end())
+        if (param_it != track_param_processors_.end())
         {
           param_it->second->process(passback_track_info, it->value);
         }
@@ -169,36 +163,29 @@ namespace AdServer::PassbackPixel
         throw InvalidParamException("");
       }
 
-      for(HTTP::CookieList::const_iterator it = cookies.begin();
-          it != cookies.end(); ++it)
+      for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
       {
         PassbackTrackProcessorMap::const_iterator param_it =
           track_cookie_processors_.find(it->name);
 
-        if(param_it != track_cookie_processors_.end())
+        if (param_it != track_cookie_processors_.end())
         {
           param_it->second->process(passback_track_info, it->value);
         }
       } /* cookies processing */
 
-      if(passback_track_info.time == Generics::Time::ZERO)
+      if (passback_track_info.time == Generics::Time::ZERO)
       {
         passback_track_info.time = Generics::Time::get_time_of_day();
       }
 
-      if(passback_track_info.country.empty() &&
-         !passback_track_info.ip.empty() &&
-         ip_map_.get())
+      if (passback_track_info.country.empty() && !passback_track_info.ip.empty() && ip_map_.get())
       {
         try
         {
           GeoIPMapping::IPMapCity2::CityLocation loc;
 
-          if(ip_map_->city_location_by_addr(
-               passback_track_info.ip.c_str(),
-               loc,
-               false,
-               true))
+          if (ip_map_->city_location_by_addr(passback_track_info.ip.c_str(), loc, false, true))
           {
             passback_track_info.country = loc.country_code.str();
           }
@@ -219,8 +206,7 @@ namespace AdServer::PassbackPixel
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }

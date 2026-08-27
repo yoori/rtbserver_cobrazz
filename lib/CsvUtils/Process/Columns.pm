@@ -13,7 +13,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if($index =~ m/^[<](.*)[>]$/)
+    if ($index =~ m/^[<](.*)[>]$/)
     {
       my $val = $1;
       Encode::_utf8_on($val);
@@ -23,7 +23,7 @@ sub new
     {
       my $first = $1;
       my $last = $2;
-      for(my $i = $first; $i <= $last; ++$i)
+      for (my $i = $first; $i <= $last; ++$i)
       {
         push(@res_indexes, $i - 1);
       }
@@ -50,7 +50,7 @@ sub process
   foreach my $index(@{$self->{fields_}})
   {
     #print STDERR "index: $index\n";
-    if(ref($index) eq 'ARRAY')
+    if (ref($index) eq 'ARRAY')
     {
       push(@res_row, $index->[0]);
     }

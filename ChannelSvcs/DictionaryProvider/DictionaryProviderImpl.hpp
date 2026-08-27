@@ -25,124 +25,111 @@
 #include <xsd/ChannelSvcs/DictionaryProviderConfig.hpp>
 #include "DictionaryContainer.hpp"
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
+  /**
+   * Implementation of common part DictionaryProvider
+   */
+  class DictionaryProviderImpl:
+    public virtual Generics::CompositeActiveObject,
+    public virtual CORBACommons::ReferenceCounting::ServantImpl
+     <POA_AdServer::ChannelSvcs::DictionaryProvider>
   {
-    /**
-     * Implementation of common part DictionaryProvider
-     */
-    class DictionaryProviderImpl:
-      public virtual Generics::CompositeActiveObject,
-      public virtual CORBACommons::ReferenceCounting::ServantImpl
-       <POA_AdServer::ChannelSvcs::DictionaryProvider>
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    typedef xsd::AdServer::Configuration::DictionaryProviderConfigType
+      DictionaryProviderConfig;
+
+    DictionaryProviderImpl(Logging::Logger* logger, const DictionaryProviderConfig* config)
+      /*throw(Exception, eh::Exception)*/;
+
+    virtual ~DictionaryProviderImpl() noexcept {};
+
+    void load_dictionary_(const char* lang, const char* file_name) noexcept;
+
+  public:
+
+    virtual
+      ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
+      get_lexemes(const char * language, const ::CORBACommons::StringSeq& words)
+      /*throw(ChannelSvcs::NotReady,
+            ChannelSvcs::ImplementationException)*/;
+
+  protected:
+    typedef Generics::TaskGoal TaskBase;
+    typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
+
+    class LoadTask: public TaskBase
     {
     public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      typedef xsd::AdServer::Configuration::DictionaryProviderConfigType
-        DictionaryProviderConfig;
+      LoadTask(
+        DictionaryProviderImpl* impl,
+        Generics::TaskRunner* task_runner,
+        const char* file_name,
+        const char* lang)
+        noexcept;
 
-      DictionaryProviderImpl(
-        Logging::Logger* logger,
-        const DictionaryProviderConfig* config)
-        /*throw(Exception, eh::Exception)*/;
-
-      virtual ~DictionaryProviderImpl() noexcept {};
-
-      void load_dictionary_(
-        const char* lang,
-        const char* file_name) noexcept;
-
-    public:
-
-      virtual
-        ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-        get_lexemes(
-          const char * language,
-          const ::CORBACommons::StringSeq& words)
-        /*throw(ChannelSvcs::NotReady,
-              ChannelSvcs::ImplementationException)*/;
-
-    protected:
-      typedef Generics::TaskGoal TaskBase;
-      typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
-
-      class LoadTask: public TaskBase
-      {
-      public:
-
-        LoadTask(
-          DictionaryProviderImpl* impl,
-          Generics::TaskRunner* task_runner,
-          const char* file_name,
-          const char* lang)
-          noexcept;
-
-        virtual ~LoadTask() noexcept;
-        virtual void execute() noexcept;
-
-      private:
-        DictionaryProviderImpl* impl_;
-        const char* lang_;
-        const char* file_name_;
-      };
-
-
-      Logging::Logger* logger () const noexcept;
+      virtual ~LoadTask() noexcept;
+      virtual void execute() noexcept;
 
     private:
-      Logging::ActiveObjectCallbackImpl_var callback_;
-      Generics::TaskRunner_var task_runner_;
-      DictionaryContainer cont_;
-      std::atomic<long> task_runned_;
-      static const char* ASPECT;
-      static const size_t MAX_LOAD_SIZE;
+      DictionaryProviderImpl* impl_;
+      const char* lang_;
+      const char* file_name_;
     };
 
-    typedef ReferenceCounting::SmartPtr<DictionaryProviderImpl>
-        DictionaryProviderImpl_var;
 
-  } /* ChannelSvcs */
-} /* AdServer */
+    Logging::Logger* logger () const noexcept;
 
-namespace AdServer
+  private:
+    Logging::ActiveObjectCallbackImpl_var callback_;
+    Generics::TaskRunner_var task_runner_;
+    DictionaryContainer cont_;
+    std::atomic<long> task_runned_;
+    static const char* ASPECT;
+    static const size_t MAX_LOAD_SIZE;
+  };
+
+  typedef ReferenceCounting::SmartPtr<DictionaryProviderImpl>
+      DictionaryProviderImpl_var;
+
+} // namespace AdServer::ChannelSvcs
+
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
+  /* DictionaryProviderImpl */
+  inline
+  Logging::Logger*
+  DictionaryProviderImpl::logger() const noexcept
   {
-    /* DictionaryProviderImpl */
-    inline
-    Logging::Logger*
-    DictionaryProviderImpl::logger() const noexcept
-    {
-      return callback_->logger();
-    }
+    return callback_->logger();
+  }
 
-    inline
-    DictionaryProviderImpl::LoadTask::LoadTask(
-      DictionaryProviderImpl* impl,
-      Generics::TaskRunner* task_runner,
-      const char* file_name,
-      const char* lang)
-      noexcept
-      : TaskBase(task_runner),
-        impl_(impl),
-        lang_(lang),
-        file_name_(file_name)
-    {
-    }
+  inline
+  DictionaryProviderImpl::LoadTask::LoadTask(
+    DictionaryProviderImpl* impl,
+    Generics::TaskRunner* task_runner,
+    const char* file_name,
+    const char* lang)
+    noexcept
+    : TaskBase(task_runner),
+      impl_(impl),
+      lang_(lang),
+      file_name_(file_name)
+  {
+  }
 
-    inline
-    DictionaryProviderImpl::LoadTask::~LoadTask() noexcept
-    {
-    }
+  inline
+  DictionaryProviderImpl::LoadTask::~LoadTask() noexcept
+  {
+  }
 
-    inline void
-    DictionaryProviderImpl::LoadTask::execute() noexcept
-    {
-      impl_->load_dictionary_(lang_, file_name_);
-    }
+  inline void
+  DictionaryProviderImpl::LoadTask::execute() noexcept
+  {
+    impl_->load_dictionary_(lang_, file_name_);
+  }
 
-  } /* ChannelSvcs */
-} /* AdServer */
-
+} // namespace AdServer::ChannelSvcs

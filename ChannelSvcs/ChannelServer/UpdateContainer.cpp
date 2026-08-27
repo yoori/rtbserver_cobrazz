@@ -5,9 +5,7 @@
 #include <string>
 #include <algorithm>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   namespace
   {
@@ -22,7 +20,7 @@ namespace ChannelSvcs
 
     unsigned short get_lang_from_str(const std::string& lang) noexcept
     {
-      if(lang.size() <  2)
+      if (lang.size() <  2)
       {
         return 0;
       }
@@ -38,9 +36,7 @@ namespace ChannelSvcs
    *
    * */
 
-  UpdateContainer::UpdateContainer(
-    ChannelContainer* cont,
-    DictionaryMatcher* dict)
+  UpdateContainer::UpdateContainer(ChannelContainer* cont, DictionaryMatcher* dict)
     noexcept
     : ChannelContainerBase(),
       helper_(cont),
@@ -62,19 +58,16 @@ namespace ChannelSvcs
   {
     size_t mem_size = 0;
     cleanup_();
-    helper_->check_actual(
-      info, new_channels_, updated_channels_, removed_channels_);
-    for(ExcludeContainerType::const_iterator it = removed_channels_.begin();
+    helper_->check_actual(info, new_channels_, updated_channels_, removed_channels_);
+    for (ExcludeContainerType::const_iterator it = removed_channels_.begin();
         it != removed_channels_.end(); ++it)
     {
       ChannelUpdateData_var data_ptr = helper_->get_channel(*it);
-      if(data_ptr)
+      if (data_ptr)
       {
-        const ChannelUpdateData::TriggerItemVector& old_triggers =
-          data_ptr->triggers;
+        const ChannelUpdateData::TriggerItemVector& old_triggers = data_ptr->triggers;
         MatterItem& item = matters_[*it];
-        item.removed.insert(
-          item.removed.end(), old_triggers.begin(), old_triggers.end());
+        item.removed.insert(item.removed.end(), old_triggers.begin(), old_triggers.end());
         mem_size +=
           (sizeof(IdType) + STRING_ADAPTER_SIZE + TRIGGER_ATOM_SIZE) *
           item.removed.size();
@@ -87,10 +80,10 @@ namespace ChannelSvcs
   {
     ChannelMatchInfo_var old_info = helper_->get_active();
     ChannelIdToMatchInfo_var res = new ChannelIdToMatchInfo;
-    for(auto it = old_info->begin(); it != old_info->end(); ++it)
+    for (auto it = old_info->begin(); it != old_info->end(); ++it)
     {
       ChannelUpdateData_var data_ptr = helper_->get_channel(it->first);
-      if(data_ptr)
+      if (data_ptr)
       {//should be always true
         MatchInfo& info = (*res)[it->first];
         info.channel = it->second;
@@ -120,7 +113,7 @@ namespace ChannelSvcs
       unsigned short lang = 0;
       auto it = unmerged.begin();
       bool ask_lexemes = false, have_unprocesed = false;
-      while(true)
+      while (true)
       {
         if (ask_lexemes)
         {
@@ -167,8 +160,7 @@ namespace ChannelSvcs
               // need lexemes only for unprocessed words
               SubStringVector parts;
               Serialization::get_parts(it->first.trigger, parts);
-              for(auto part_it = parts.begin();
-                part_it != parts.end(); ++part_it)
+              for (auto part_it = parts.begin(); part_it != parts.end(); ++part_it)
               {
                 lexemes_[lang].insert(std::make_pair(*part_it, Lexeme_var()));
               }
@@ -196,7 +188,7 @@ namespace ChannelSvcs
     auto lex_lang_it = lexemes_.find(lang);
     if (lex_lang_it != lexemes_.end())
     {
-      for(auto index = 0U; index < parts.size(); ++index)
+      for (auto index = 0U; index < parts.size(); ++index)
       {
         auto lex_it = lex_lang_it->second.find(parts[index]);
 
@@ -238,34 +230,30 @@ namespace ChannelSvcs
     noexcept
   {
     size_t mem_size = 0;
-    if(new_channels_.find(channel_id) != new_channels_.end())
+    if (new_channels_.find(channel_id) != new_channels_.end())
     {//need to load all triggers from this channel
       return mem_size;
     }
     ChannelUpdateData_var data_ptr = helper_->get_channel(channel_id);
-    if(data_ptr)
+    if (data_ptr)
     {
       MatterItem& item = matters_[channel_id];
-      bool updated =
-        (updated_channels_.find(channel_id) != updated_channels_.end());
-      const ChannelUpdateData::TriggerItemVector& old_triggers =
-        data_ptr->triggers;
+      bool updated = (updated_channels_.find(channel_id) != updated_channels_.end());
+      const ChannelUpdateData::TriggerItemVector& old_triggers = data_ptr->triggers;
       IdSet old_ids;
       old_ids.insert(old_triggers.begin(), old_triggers.end());
-      if(!updated && load_once)
+      if (!updated && load_once)
       {
         data_ptr.reset();
-        for(TriggerList::iterator new_it = triggers.begin();
-            new_it != triggers.end();)
+        for (TriggerList::iterator new_it = triggers.begin(); new_it != triggers.end();)
         {
           IdSet::iterator id_it = old_ids.find(new_it->channel_trigger_id);
-          if(id_it != old_ids.end())
+          if (id_it != old_ids.end())
           {
             do
             {
               new_it = triggers.erase(new_it);//don't need parse and load it
-            }while(new_it != triggers.end() &&
-                   *id_it == new_it->channel_trigger_id);
+            }while (new_it != triggers.end() && *id_it == new_it->channel_trigger_id);
             old_ids.erase(id_it);
           }
           else
@@ -274,15 +262,10 @@ namespace ChannelSvcs
           }
         }
       }
-      item.removed.insert(
-        item.removed.end(), old_ids.begin(), old_ids.end());
-      mem_size +=
-        (sizeof(IdType) + STRING_ADAPTER_SIZE + TRIGGER_ATOM_SIZE) *
-        item.removed.size();
+      item.removed.insert(item.removed.end(), old_ids.begin(), old_ids.end());
+      mem_size += (sizeof(IdType) + STRING_ADAPTER_SIZE + TRIGGER_ATOM_SIZE) * item.removed.size();
     }
     return mem_size;
   }
 
-}// namespace ChannelSvcs
-}
-
+} // namespace AdServer::ChannelSvcs

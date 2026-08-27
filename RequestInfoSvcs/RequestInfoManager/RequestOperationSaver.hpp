@@ -4,9 +4,7 @@
 #include <ProfilingCommons/MessageSaver.hpp>
 #include "RequestOperationProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   class RequestOperationSaver:
     public virtual RequestOperationProcessor,
@@ -28,8 +26,7 @@ namespace RequestInfoSvcs
       noexcept;
 
     virtual void
-    process_impression(
-      const ImpressionInfo& impression_info)
+    process_impression(const ImpressionInfo& impression_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
     virtual void
@@ -74,7 +71,5 @@ namespace RequestInfoSvcs
       /*throw(eh::Exception)*/;
   };
 
-  using RequestOperationSaver_var =
-    ReferenceCounting::SmartPtr<RequestOperationSaver>;
-}
+  using RequestOperationSaver_var = ReferenceCounting::SmartPtr<RequestOperationSaver>;
 }

@@ -7,7 +7,7 @@
             border-collapse:collapse;
         }
         table, th, td {
-            border: 1px solid black; 
+            border: 1px solid black;
             padding:5px;
         }
         input.large {
@@ -22,7 +22,7 @@
 <body>
 <h1>Cookies Editor</h1>
 <form name="cookies">
-<table> 
+<table>
     <thead>
         <th>Name</th>
         <th>Value</th>
@@ -50,7 +50,7 @@ var init = false;
 function add_cookie(name,value)
 {
     var t = $("#cookie_template").clone();
-      
+
     t.appendTo($("#cookie_template").parent());
     t.find("button[name=delete]").click(function () {
         $(this).parents("tr").remove();
@@ -120,7 +120,7 @@ function save_changes() {
     var new_cookies = get_table_values();
     // delete cookies that are no longer present
     $.each(old_cookies, function (k,v) {
-        if(!(k in new_cookies))
+        if (!(k in new_cookies))
             document.cookie = encodeURIComponent(k) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=" + domain + "; path=/";;
     });
     $.each(new_cookies, function (k,v) {

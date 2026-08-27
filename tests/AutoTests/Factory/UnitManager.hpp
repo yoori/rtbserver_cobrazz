@@ -94,8 +94,7 @@ private:
     /*throw(eh::Exception)*/;
 
   void
-  run_serialized_(
-    const TestFactory::UnitsList& serialized);
+  run_serialized_(const TestFactory::UnitsList& serialized);
 
   UnitStat*
   add_stat() /*throw(eh::Exception)*/;

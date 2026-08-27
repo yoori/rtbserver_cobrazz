@@ -52,7 +52,7 @@ sub is_alive
 
   my $res = AdServer::Functions::execute_command($host, $descr, $command);
 
-  if($res != 0)
+  if ($res != 0)
   {
     return 1;
   }

@@ -68,8 +68,7 @@ public:
   void print_result(const ResultSeq &result)
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/;
 
-  void print_match_result(
-    const AdServer::ChannelSearchSvcs::MatchInfo& result)
+  void print_match_result(const AdServer::ChannelSearchSvcs::MatchInfo& result)
     /*throw(Exception, eh::Exception, CORBA::Exception)*/;
 
 private:

@@ -24,8 +24,7 @@ namespace AdServer::Grpc
   {
     const char NO_ACTIVE_BATCHING_STREAMS_FORCED_SEND[] =
       "no active batching streams (forced send)";
-    const char NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND[] =
-      "no active batching streams (timed send)";
+    const char NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND[] = "no active batching streams (timed send)";
     const char NO_ACTIVE_BATCHING_STREAMS_AFTER_CONNECT_TRY[] =
       "no active batching streams (after connect trying)";
     const char NO_ACTIVE_BATCHING_STREAMS_CONNECT_EXCEPTION[] =
@@ -52,9 +51,7 @@ namespace AdServer::Grpc
       const char* status_message,
       const std::string& endpoint)
     {
-      const auto message = message_with_endpoint(
-        status_message ? status_message : "",
-        endpoint);
+      const auto message = message_with_endpoint(status_message ? status_message : "", endpoint);
       for (auto& request : batch)
       {
         adserver::grpc::BatchResponseItem item;
@@ -105,8 +102,7 @@ namespace AdServer::Grpc
 
     if (!coalesce_runner_)
     {
-      throw InvalidParam(
-        "AsyncBatchingClientBase requires BoostAsioContextRunActiveObject");
+      throw InvalidParam("AsyncBatchingClientBase requires BoostAsioContextRunActiveObject");
     }
 
     grpc::ChannelArguments channel_args;
@@ -121,10 +117,7 @@ namespace AdServer::Grpc
       channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
     }
 
-    channel_ = create_custom_channel(
-      endpoint_,
-      grpc::InsecureChannelCredentials(),
-      channel_args);
+    channel_ = create_custom_channel(endpoint_, grpc::InsecureChannelCredentials(), channel_args);
 
     streams_.reserve(max_streams_);
   }
@@ -134,10 +127,8 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::activate_object_()
   {
-    timing_coalesce_gate_ =
-      std::make_shared<AdServer::Commons::ActivityGate>();
-    stream_shrink_gate_ =
-      std::make_shared<AdServer::Commons::ActivityGate>();
+    timing_coalesce_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
+    stream_shrink_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
     submission_gate_->activate_object();
     timing_coalesce_gate_->activate_object();
     stream_shrink_gate_->activate_object();
@@ -195,11 +186,7 @@ namespace AdServer::Grpc
       "inactive",
       endpoint_);
     auto batches = batching_queue_->drain_all();
-    finish_batches_with_error(
-      batches,
-      grpc::StatusCode::UNAVAILABLE,
-      "inactive",
-      endpoint_);
+    finish_batches_with_error(batches, grpc::StatusCode::UNAVAILABLE, "inactive", endpoint_);
     clear_streams_();
     timing_coalesce_gate_.reset();
     stream_shrink_gate_.reset();
@@ -230,8 +217,7 @@ namespace AdServer::Grpc
       {
         if (stream_holder && stream_holder->stream)
         {
-          total.stream_inflight_items +=
-            stream_holder->stream->inflight_items();
+          total.stream_inflight_items += stream_holder->stream->inflight_items();
         }
       }
     }
@@ -269,9 +255,7 @@ namespace AdServer::Grpc
     pending_request->stats_owner = this;
 
     const auto now = Generics::Time::get_time_of_day();
-    auto enqueue_result = batching_queue_->enqueue(
-      std::move(pending_request),
-      now);
+    auto enqueue_result = batching_queue_->enqueue(std::move(pending_request), now);
 
     if (enqueue_result.was_empty_before_push &&
       !enqueue_result.queue_empty_after_enqueue &&
@@ -283,9 +267,7 @@ namespace AdServer::Grpc
 
     if (!enqueue_result.ready_batch.empty())
     {
-      if (acquire_batch_inflight_(
-            enqueue_result.ready_batch,
-            options_.error_on_inflight_reaching))
+      if (acquire_batch_inflight_(enqueue_result.ready_batch, options_.error_on_inflight_reaching))
       {
         process_batch_(
           std::move(enqueue_result.ready_batch),
@@ -357,8 +339,7 @@ namespace AdServer::Grpc
         else
         {
           pending_batches_.emplace_back(std::move(batch));
-          start_connect =
-            maybe_start_connect_for_pending_(failed_batches, now);
+          start_connect = maybe_start_connect_for_pending_(failed_batches, now);
         }
       }
     }
@@ -438,19 +419,14 @@ namespace AdServer::Grpc
     std::vector<BatchingStreamBase::PendingBatch>& failed_batches,
     const Generics::Time& now) noexcept
   {
-    if (!active() ||
-      pending_batches_.empty() ||
-      !available_streams_.empty() ||
-      connecting_)
+    if (!active() || pending_batches_.empty() || !available_streams_.empty() || connecting_)
     {
       return false;
     }
 
-    if (last_connect_failure_time_ &&
-      now - *last_connect_failure_time_ < options_.reconnect_period)
+    if (last_connect_failure_time_ && now - *last_connect_failure_time_ < options_.reconnect_period)
     {
-      failed_batches.reserve(
-        failed_batches.size() + pending_batches_.size());
+      failed_batches.reserve(failed_batches.size() + pending_batches_.size());
       while (!pending_batches_.empty())
       {
         failed_batches.emplace_back(std::move(pending_batches_.front()));
@@ -459,16 +435,14 @@ namespace AdServer::Grpc
       return false;
     }
 
-    const auto streams_count =
-      up_streams_.load(std::memory_order_acquire);
+    const auto streams_count = up_streams_.load(std::memory_order_acquire);
     if (streams_count >= max_streams_)
     {
       return false;
     }
 
     connecting_ = true;
-    const auto new_streams_count =
-      up_streams_.fetch_add(1, std::memory_order_acq_rel) + 1;
+    const auto new_streams_count = up_streams_.fetch_add(1, std::memory_order_acq_rel) + 1;
     update_max_streams_(new_streams_count);
 
     return true;
@@ -481,11 +455,7 @@ namespace AdServer::Grpc
     const char* status_message,
     const char* source) noexcept
   {
-    set_last_error(
-      endpoint_,
-      status_code,
-      status_message ? status_message : "",
-      source);
+    set_last_error(endpoint_, status_code, status_message ? status_message : "", source);
     finish_batch_with_error(batch, status_code, status_message, endpoint_);
   }
 
@@ -501,11 +471,7 @@ namespace AdServer::Grpc
       return;
     }
 
-    set_last_error(
-      endpoint_,
-      status_code,
-      status_message ? status_message : "",
-      source);
+    set_last_error(endpoint_, status_code, status_message ? status_message : "", source);
     finish_batches_with_error(batches, status_code, status_message, endpoint_);
   }
 
@@ -540,11 +506,7 @@ namespace AdServer::Grpc
     }
     catch (const std::exception& ex)
     {
-      set_last_error(
-        endpoint_,
-        grpc::StatusCode::UNAVAILABLE,
-        ex.what(),
-        "connect_exception");
+      set_last_error(endpoint_, grpc::StatusCode::UNAVAILABLE, ex.what(), "connect_exception");
 
       if (stream_registered)
       {
@@ -613,8 +575,7 @@ namespace AdServer::Grpc
   }
 
   void
-  AsyncBatchingClientBase::release_or_dispatch_(
-    const StreamHolderPtr& stream_holder) noexcept
+  AsyncBatchingClientBase::release_or_dispatch_(const StreamHolderPtr& stream_holder) noexcept
   {
     assert(stream_holder);
     assert(stream_holder->stream);
@@ -634,8 +595,7 @@ namespace AdServer::Grpc
         {
           batch = std::move(pending_batches_.front());
           pending_batches_.pop_front();
-          start_connect =
-            maybe_start_connect_for_pending_(failed_batches, now);
+          start_connect = maybe_start_connect_for_pending_(failed_batches, now);
         }
         else
         {
@@ -736,8 +696,7 @@ namespace AdServer::Grpc
 
     {
       std::shared_lock<std::shared_mutex> lock(coalesce_timer_lock_);
-      if (coalesce_timer_deadline_.has_value() &&
-        *coalesce_timer_deadline_ <= deadline)
+      if (coalesce_timer_deadline_.has_value() && *coalesce_timer_deadline_ <= deadline)
       {
         return;
       }
@@ -745,8 +704,7 @@ namespace AdServer::Grpc
 
     {
       std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
-      if (coalesce_timer_deadline_.has_value() &&
-        *coalesce_timer_deadline_ <= deadline)
+      if (coalesce_timer_deadline_.has_value() && *coalesce_timer_deadline_ <= deadline)
       {
         return;
       }
@@ -773,8 +731,7 @@ namespace AdServer::Grpc
     catch (...)
     {
       std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
-      if (coalesce_timer_deadline_.has_value() &&
-        *coalesce_timer_deadline_ == deadline)
+      if (coalesce_timer_deadline_.has_value() && *coalesce_timer_deadline_ == deadline)
       {
         coalesce_timer_deadline_.reset();
       }
@@ -789,8 +746,7 @@ namespace AdServer::Grpc
     {
       {
         std::unique_lock<std::shared_mutex> lock(coalesce_timer_lock_);
-        if (!coalesce_timer_deadline_.has_value() ||
-          *coalesce_timer_deadline_ != deadline)
+        if (!coalesce_timer_deadline_.has_value() || *coalesce_timer_deadline_ != deadline)
         {
           return;
         }
@@ -853,8 +809,7 @@ namespace AdServer::Grpc
           streams_to_close.size() + 1)
       {
         auto stream_holder = available_streams_.back();
-        if (!stream_holder ||
-          now - stream_holder->last_use <= options_.stream_idle_timeout)
+        if (!stream_holder || now - stream_holder->last_use <= options_.stream_idle_timeout)
         {
           break;
         }
@@ -925,16 +880,12 @@ namespace AdServer::Grpc
     }
 
     add_timing_coalesce_stats(pending_batch.size());
-    if (options_.error_on_inflight_reaching &&
-      !acquire_batch_inflight_(pending_batch, true))
+    if (options_.error_on_inflight_reaching && !acquire_batch_inflight_(pending_batch, true))
     {
       return true;
     }
 
-    process_batch_(
-      std::move(pending_batch),
-      now,
-      NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND);
+    process_batch_(std::move(pending_batch), now, NO_ACTIVE_BATCHING_STREAMS_TIMED_SEND);
     return true;
   }
 
@@ -973,8 +924,7 @@ namespace AdServer::Grpc
   }
 
   void
-  AsyncBatchingClientBase::handle_stream_closed_(
-    BatchingStreamBase* stream) noexcept
+  AsyncBatchingClientBase::handle_stream_closed_(BatchingStreamBase* stream) noexcept
   {
     assert(stream);
 
@@ -1005,10 +955,7 @@ namespace AdServer::Grpc
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.erase(
-        std::remove(
-          available_streams_.begin(),
-          available_streams_.end(),
-          stream_holder),
+        std::remove(available_streams_.begin(), available_streams_.end(), stream_holder),
         available_streams_.end());
       if (connecting_stream_ == stream_holder)
       {
@@ -1025,8 +972,7 @@ namespace AdServer::Grpc
         }
       }
       up_streams_.fetch_sub(1, std::memory_order_acq_rel);
-      start_connect =
-        maybe_start_connect_for_pending_(failed_batches, failure_time);
+      start_connect = maybe_start_connect_for_pending_(failed_batches, failure_time);
     }
 
     finish_batches_with_error_(
@@ -1051,10 +997,7 @@ namespace AdServer::Grpc
 
     {
       std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
-      auto it = std::find(
-        draining_streams_.begin(),
-        draining_streams_.end(),
-        stream_holder);
+      auto it = std::find(draining_streams_.begin(), draining_streams_.end(), stream_holder);
       if (it == draining_streams_.end())
       {
         return;
@@ -1080,15 +1023,11 @@ namespace AdServer::Grpc
   }
 
   void
-  AsyncBatchingClientBase::update_max_streams_(
-    std::size_t streams_count) noexcept
+  AsyncBatchingClientBase::update_max_streams_(std::size_t streams_count) noexcept
   {
     auto current = max_streams_seen_.load(std::memory_order_relaxed);
     while (current < streams_count &&
-      !max_streams_seen_.compare_exchange_weak(
-        current,
-        streams_count,
-        std::memory_order_relaxed))
+      !max_streams_seen_.compare_exchange_weak(current, streams_count, std::memory_order_relaxed))
     {}
   }
 

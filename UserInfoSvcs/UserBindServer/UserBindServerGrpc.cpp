@@ -55,8 +55,7 @@ namespace AdServer::UserInfoSvcs
 
       ~InProgressGuard()
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         call_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         method_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         method_counter_.fetch_sub(1, std::memory_order_relaxed);
@@ -93,8 +92,7 @@ namespace AdServer::UserInfoSvcs
 
       ~BatchStatsGuard() noexcept
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
@@ -111,8 +109,7 @@ namespace AdServer::UserInfoSvcs
 
 #ifdef MOCK_USER_BIND_SERVER_FAST_GET_USER_ID
     void
-    maybe_sleep_mock_response(
-      const std::shared_ptr<std::atomic_uint>& response_sleep_ms)
+    maybe_sleep_mock_response(const std::shared_ptr<std::atomic_uint>& response_sleep_ms)
     {
       if (!response_sleep_ms)
       {
@@ -130,9 +127,7 @@ namespace AdServer::UserInfoSvcs
     std::size_t
     resolve_max_sequential_ops(std::size_t configured)
     {
-      return std::max<std::size_t>(
-        1,
-        configured != 0 ? configured : 4);
+      return std::max<std::size_t>(1, configured != 0 ? configured : 4);
     }
   }
 
@@ -164,8 +159,7 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_bind::UserBindServerGrpc,
       adserver::user_info_svcs::user_bind::UserBindServerGrpc::AsyncService>
   {
-    using AsyncService =
-      adserver::user_info_svcs::user_bind::UserBindServerGrpc::AsyncService;
+    using AsyncService = adserver::user_info_svcs::user_bind::UserBindServerGrpc::AsyncService;
 
   public:
     ServiceImpl(
@@ -428,21 +422,15 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const UserBindServerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const UserBindServerCore::ChunkNotFound& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::NOT_FOUND, ex.what());
     }
     catch (const UserBindServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -490,21 +478,15 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const UserBindServerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const UserBindServerCore::ChunkNotFound& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::NOT_FOUND, ex.what());
     }
     catch (const UserBindServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -568,21 +550,15 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const UserBindServerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const UserBindServerCore::ChunkNotFound& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::NOT_FOUND, ex.what());
     }
     catch (const UserBindServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
     process_timer.stop();
     response.set_process_time(GrpcAlgs::pack_time(process_timer.elapsed_time()));
@@ -631,21 +607,15 @@ namespace AdServer::UserInfoSvcs
     }
     catch (const UserBindServerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const UserBindServerCore::ChunkNotFound& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::NOT_FOUND, ex.what());
     }
     catch (const UserBindServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -670,30 +640,22 @@ namespace AdServer::UserInfoSvcs
     try
     {
       const auto result = core_->get_source();
-      response.mutable_chunks()->Add(
-        result.chunks.begin(),
-        result.chunks.end());
+      response.mutable_chunks()->Add(result.chunks.begin(), result.chunks.end());
       response.set_chunks_number(result.chunks_number);
 
       result_status = ::grpc::Status::OK;
     }
     catch (const UserBindServerCore::NotReady& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::UNAVAILABLE,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::UNAVAILABLE, ex.what());
     }
     catch (const UserBindServerCore::ChunkNotFound& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::NOT_FOUND,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::NOT_FOUND, ex.what());
     }
     catch (const UserBindServerCore::Exception& ex)
     {
-      result_status = AdServer::Grpc::error_status(
-        ::grpc::StatusCode::INTERNAL,
-        ex.what());
+      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
     }
   }
 
@@ -736,15 +698,11 @@ namespace AdServer::UserInfoSvcs
     std::size_t max_sequential_ops,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      max_sequential_ops_(resolve_max_sequential_ops(
-        max_sequential_ops)),
+      max_sequential_ops_(resolve_max_sequential_ops(max_sequential_ops)),
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
-          new Logging::ActiveObjectCallbackImpl(
-            logger,
-            "",
-            user_bind_server_grpc_aspect)),
+          new Logging::ActiveObjectCallbackImpl(logger, "", user_bind_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
         AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
         "ca:ub-grpc-p")),

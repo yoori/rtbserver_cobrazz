@@ -15,10 +15,7 @@ namespace AutoTest
     already_url(this, "already_url"),
     success_url(this, "success_url"),
     testrequest(this, "testrequest"),
-    colo(
-      this, "colo",
-      AutoTest::GlobalSettings::instance().optout_colo(),
-      set_defs),
+    colo(this, "colo", AutoTest::GlobalSettings::instance().optout_colo(), set_defs),
     ct(this, "ct"),
     ce(this, "ce"),
     fail_url(this, "fail_url"),

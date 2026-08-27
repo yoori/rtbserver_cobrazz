@@ -1,6 +1,4 @@
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   //
   // Statement
@@ -161,6 +159,3 @@ namespace Oracle
     /*throw(SqlException)*/
   {}
 }
-}
-}
-

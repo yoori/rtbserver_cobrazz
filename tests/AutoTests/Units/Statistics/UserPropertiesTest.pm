@@ -73,7 +73,7 @@ sub init
   my ($self, $ns) = @_;
 
 
-  my $publisher = 
+  my $publisher =
    $ns->create(Publisher => {
      name => "Publisher" });
 
@@ -89,11 +89,11 @@ sub init
 
   my $campaign1 = $ns->create(DisplayCampaign => {
     name => "Display-1",
-    campaigncreativegroup_country_code => 
+    campaigncreativegroup_country_code =>
       DB::Defaults::instance()->test_country_1->{country_code},
     campaigncreativegroup_cpa => 1,
     behavioralchannel_keyword_list => $keyword1,
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
 
   $ns->create(
@@ -104,15 +104,15 @@ sub init
 
   my $campaign2 = $ns->create(DisplayCampaign => {
     name => "Display-2",
-    campaigncreativegroup_country_code => 
+    campaigncreativegroup_country_code =>
       DB::Defaults::instance()->test_country_2->{country_code},
     campaigncreativegroup_cpa => 1,
     campaigncreativegroup_ar => 0.01,
     behavioralchannel_keyword_list => $keyword1,
     behavioralchannel_url_list => $url1,
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
-  
+
   $ns->create(
     DB::BehavioralChannel::BehavioralParameter->blank(
       trigger_type => "P",
@@ -127,14 +127,14 @@ sub init
 
   my $campaign3 = $ns->create(DisplayCampaign => {
     name => "Display-3",
-    campaigncreativegroup_country_code => 
+    campaigncreativegroup_country_code =>
       DB::Defaults::instance()->test_country_2->{country_code},
     campaigncreativegroup_cpm => 10,
     behavioralchannel_keyword_list => $keyword2,
     behavioralchannel_url_list => $url2,
-    site_links => 
+    site_links =>
       [{ site_id => $publisher->{site_id} }] });
-  
+
   $ns->create(
     DB::BehavioralChannel::BehavioralParameter->blank(
       trigger_type => "P",
@@ -205,7 +205,7 @@ sub init
       "mac os x 10.7.3",
       "Safari 5.1.3" ],
     #6
-    [ "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 " . 
+    [ "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 " .
       "(KHTML, like Gecko) Chrome/20.0.1092.0 Safari/536.6",
       "windows nt 6.1",
       "Chrome 20.0.1092.0" ],
@@ -239,7 +239,7 @@ sub init
       undef, 1 ],
     #13
     [ $broken_unicode_2 . $broken_ext_2,
-      $broken_exp_2 . $broken_ext_2, 
+      $broken_exp_2 . $broken_ext_2,
       undef, 1 ],
  );
 

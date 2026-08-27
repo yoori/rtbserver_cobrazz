@@ -6,9 +6,7 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   struct BillStatSource: public virtual ReferenceCounting::Interface
   {
@@ -119,9 +117,7 @@ namespace CampaignSvcs
       CStat_var;
 
     virtual Stat_var
-    update(
-      Stat* stat,
-      const Generics::Time& now)
+    update(Stat* stat, const Generics::Time& now)
       /*throw(Exception)*/ = 0;
 
   protected:
@@ -135,5 +131,4 @@ namespace CampaignSvcs
 
   typedef ReferenceCounting::FixedPtr<BillStatSource>
     FBillStatSource_var;
-}
 }

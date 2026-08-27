@@ -82,9 +82,9 @@ sub DailyRunTest_create_testcase
 sub init
 {
   my ($self, $ns) = @_;
-  
+
   my $site = $ns->create(Site => { name => 1 });
-  
+
   my $tag = $ns->create(PricedTag => {
     name => 1,
     site_id => $site });
@@ -100,22 +100,22 @@ sub init
     [SATURDAY, '20:00', '21:59'],
     [SUNDAY, '23:00',  '23:59' ]
     );
-  
+
   $self->DailyRunTest_create_testcase(
     $ns, $site, "Europe/Moscow", [], \@moscow);
-  
+
   my @tokyo = (
     [MONDAY, '05:30', '05:59'],
     [TUESDAY, '08:00', '09:59'],
     [SATURDAY, '11:00', '11:29']
     );
-  
+
   $self->DailyRunTest_create_testcase(
     $ns, $site, "Asia/Tokyo", \@tokyo, []);
-  
+
   $self->DailyRunTest_create_testcase(
     $ns, $site, "America/Los_Angeles", [], [], "America/Los_Angeles-any");
-  
+
   my @los_angeles_ccg = (
     [undef, '07:00', '14:29'],
     [undef, '15:00', '16:59']
@@ -125,9 +125,9 @@ sub init
     [undef, '16:30', '17:29'],
     [undef, '21:00', '22:59']
     );
-  
+
   $self->DailyRunTest_create_testcase(
-    $ns, $site, "America/Los_Angeles", 
+    $ns, $site, "America/Los_Angeles",
     \@los_angeles_ccg, \@los_angeles_campaign);
 }
 

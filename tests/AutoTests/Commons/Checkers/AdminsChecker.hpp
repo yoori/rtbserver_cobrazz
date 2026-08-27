@@ -57,7 +57,7 @@ namespace AutoTest
         if (throw_error)
         {
           Stream::Error error;
-          if(exists_)
+          if (exists_)
           {
             error << "can't get expected (";
           }
@@ -68,8 +68,7 @@ namespace AutoTest
           admin_.print_idname(error);
           error << ')' << std::endl;
           admin_.dump_expects(error);
-          error << std::endl << "got:" <<
-            std::endl << std::endl;
+          error << std::endl << "got:" << std::endl << std::endl;
           {
             admin_.dumpout(error);
           }
@@ -100,10 +99,7 @@ namespace AutoTest
     const Expected& expected,
     AdminExistCheck exists = AEC_EXISTS) /*throw(CheckFailed, eh::Exception)*/
   {
-    return AdminChecker<Admin, Expected>(
-      admin,
-      expected,
-      exists);
+    return AdminChecker<Admin, Expected>(admin, expected, exists);
   }
 
   /**
@@ -124,9 +120,6 @@ namespace AutoTest
     {
       throw CheckFailed("Admin container is empty!");
     }
-    return AdminChecker<AdminsArray<Admin, ch>, Expected>(
-      admin,
-      expected,
-      exists);
+    return AdminChecker<AdminsArray<Admin, ch>, Expected>(admin, expected, exists);
   }
 }

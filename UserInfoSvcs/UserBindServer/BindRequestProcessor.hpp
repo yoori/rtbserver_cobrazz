@@ -29,15 +29,11 @@ namespace AdServer::UserInfoSvcs
 
     // return previous bind request state
     virtual AdServer::Commons::StartableAwaitable<BindRequest>
-    co_get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    co_get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
     virtual BindRequest
-    get_bind_request(
-      const String::SubString& external_id,
-      const Generics::Time& now)
+    get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
     virtual void
@@ -48,6 +44,5 @@ namespace AdServer::UserInfoSvcs
     dump() /*throw(Exception)*/ = 0;
   };
 
-  using BindRequestProcessor_var =
-    ReferenceCounting::SmartPtr<BindRequestProcessor>;
+  using BindRequestProcessor_var = ReferenceCounting::SmartPtr<BindRequestProcessor>;
 }

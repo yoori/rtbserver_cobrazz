@@ -12,11 +12,7 @@
 #include <Sync/Semaphore.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelCommons.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
-{
-namespace Protected
+namespace AdServer::ChannelSvcs::Protected
 {
 
   template<class T>
@@ -38,11 +34,7 @@ namespace Protected
     size_t count_exception() const noexcept;
 
     template<class DESCR>
-    void set_exception(
-      size_t num,
-      const char* func,
-      const char* ex,
-      const DESCR& descr)
+    void set_exception(size_t num, const char* func, const char* ex, const DESCR& descr)
       noexcept;
 
   private:
@@ -147,9 +139,8 @@ namespace Protected
     try
     {
       result_[num] = result._retn();
-      const std::size_t old =
-        res_count_.fetch_add(1, std::memory_order_relaxed);
-      if(old + 1 == result_.size())
+      const std::size_t old = res_count_.fetch_add(1, std::memory_order_relaxed);
+      if (old + 1 == result_.size())
       {
         wait_end_.release();
       }
@@ -169,7 +160,7 @@ namespace Protected
     {
       WriteGuard_ guard(lock_exception_);
       count_exception_++;
-      if(ex_descr_.str().size())
+      if (ex_descr_.str().size())
       {
         ex_descr_ << ". ";
       }
@@ -178,8 +169,7 @@ namespace Protected
     try
     {
       result_[num] = 0;
-      if(res_count_.fetch_add(1, std::memory_order_relaxed) + 1 ==
-        result_.size())
+      if (res_count_.fetch_add(1, std::memory_order_relaxed) + 1 == result_.size())
       {
         wait_end_.release();
       }
@@ -201,8 +191,7 @@ namespace Protected
     noexcept
   {
     std::ostringstream ostr;
-    ostr << func << ": caught " << ex << ". Instance " << num
-      << ". : " << descr;
+    ostr << func << ": caught " << ex << ". Instance " << num << ". : " << descr;
     set_exception(num, ostr);
   }
 
@@ -221,11 +210,7 @@ namespace Protected
     }
     catch(const eh::Exception& e)
     {
-      caller_.callback_->set_exception(
-        caller_.id_,
-        caller_.name_,
-        "eh::Exception",
-        e.what());
+      caller_.callback_->set_exception(caller_.id_, caller_.name_, "eh::Exception", e.what());
     }
     catch(const AdServer::ChannelSvcs::NotConfigured& e)
     {
@@ -245,14 +230,8 @@ namespace Protected
     }
     catch(const CORBA::SystemException& e)
     {
-      caller_.callback_->set_exception(
-        caller_.id_,
-        caller_.name_,
-        "CORBA::SystemException",
-        e);
+      caller_.callback_->set_exception(caller_.id_, caller_.name_, "CORBA::SystemException", e);
     }
   }
 
-}// namespace Protected
-}//namespace ChannelSvcs
-}// namespace AdServer
+} // namespace AdServer::ChannelSvcs::Protected

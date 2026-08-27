@@ -19,23 +19,17 @@ namespace Cpp
   class DescriptorGenerator
   {
   public:
-    DescriptorGenerator(
-      std::ostream& out_hpp,
-      std::ostream& out_cpp,
-      const char* offset)
+    DescriptorGenerator(std::ostream& out_hpp, std::ostream& out_cpp, const char* offset)
       noexcept;
 
-    void generate_decl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_decl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
-    void generate_impl(
-      Declaration::StructDescriptor* struct_descriptor)
+    void generate_impl(Declaration::StructDescriptor* struct_descriptor)
       noexcept;
 
   private:
-    void generate_descriptor_base_decl_(
-      const Declaration::StructDescriptor* descriptor) noexcept;
+    void generate_descriptor_base_decl_(const Declaration::StructDescriptor* descriptor) noexcept;
 
   private:
     std::ostream& out_;

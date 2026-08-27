@@ -15,7 +15,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(looks_like_number($index))
+    if (looks_like_number($index))
     {
       push(@res_indexes, $index - 1);
     }
@@ -36,7 +36,7 @@ sub process
   foreach my $field_index(@{$self->{field_}})
   {
     my $value = $row->[$field_index];
-    if(defined($value) && (ref($value) ne 'ARRAY'))
+    if (defined($value) && (ref($value) ne 'ARRAY'))
     {
       my @arr = split('\|', $value);
       @arr = grep { $_ ne '' } @arr;

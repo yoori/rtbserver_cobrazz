@@ -1,9 +1,6 @@
 #include "ChannelStatusTest.hpp"
 
-REFLECT_UNIT(ChannelStatusTest) (
-  "GranularUpdate",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelStatusTest) ("GranularUpdate", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -14,13 +11,11 @@ namespace
   typedef AutoTest::TriggerChecker TriggerChecker;
   typedef AutoTest::WaitChecker<TriggerChecker> WaitTriggerChecker;
 
-  void update_channel_status( 	
-    DB::IConn& pq_conn) 	
+  void update_channel_status(DB::IConn& pq_conn)
   {
-    ORM::SerializeQueryManager::instance().execute( 	
-      pq_conn, 	
-      pq_conn.get_query( 	
-        "select displaystatus.update_channel_status_by_stats();"));
+    ORM::SerializeQueryManager::instance().execute(
+      pq_conn,
+      pq_conn.get_query("select displaystatus.update_channel_status_by_stats();"));
   }
 
 };
@@ -32,8 +27,7 @@ void ChannelStatusTest::ChannelStatusChecker<ChannelChecker>::init_()
 template<>
 void ChannelStatusTest::ChannelStatusChecker<EChannelChecker>::init_()
 {
-  AutoTest::ORM::update_display_status(
-    test_, "CHANNEL", test_->fetch_int(prefix_ + "/CHANNEL_ID"));
+  AutoTest::ORM::update_display_status(test_, "CHANNEL", test_->fetch_int(prefix_ + "/CHANNEL_ID"));
 }
 
 template<typename ChannelChecker>
@@ -67,15 +61,13 @@ ChannelStatusTest::ChannelStatusChecker<ChannelChecker>::request_check_(
     NSLookupRequest().
       referer_kw(test_->fetch_string(prefix_ + "/TRIGGERS")),
     test_->fetch_string(prefix_ + "/CHANNEL_ID") + "P",
-    status_ != "A" && status_ != "W"?
-      AutoTest::SCE_NOT_ENTRY: AutoTest::SCE_ENTRY);
+    status_ != "A" && status_ != "W"? AutoTest::SCE_NOT_ENTRY: AutoTest::SCE_ENTRY);
 
   // The following situation may occur:
   // CampaignServer loaded new status for channel,
   // but ChannelServer had not loaded it yet,
   // so we must wait some time to get channels matched.
-  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error)
-                : checker.check(throw_error));
+  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error) : checker.check(throw_error));
 }
 
 template<>
@@ -96,8 +88,7 @@ ChannelStatusTest::ChannelStatusChecker<EChannelChecker>::request_check_(
     test_->fetch_int(prefix_ + "/TARGETING_CHANNEL_ID"),
     EChannelChecker::Expected().status("A"));
 
-  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error)
-                : checker.check(throw_error))
+  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error) : checker.check(throw_error))
           && targeting_channel_chekcer.check(throw_error);
 }
 
@@ -112,8 +103,7 @@ ChannelStatusTest::ChannelStatusChecker<ChannelChecker>::check(bool throw_error)
   {
     DB::Conn pq_conn(test_->open_pq());
     update_channel_status(pq_conn);
-    AutoTest::ORM::update_display_status(
-      test_, "CHANNEL", channel_id);
+    AutoTest::ORM::update_display_status(test_, "CHANNEL", channel_id);
   }
 
 
@@ -125,8 +115,7 @@ ChannelStatusTest::ChannelStatusChecker<ChannelChecker>::check(bool throw_error)
       status(status_ == "D" ? AutoTest::ANY : status_),
     status_ == "D" ? AutoTest::AEC_NOT_EXISTS : AutoTest::AEC_EXISTS );
 
-  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error)
-                : checker.check(throw_error))
+  return (wait_ ? AutoTest::wait_checker(checker).check(throw_error) : checker.check(throw_error))
           && request_check_(throw_error);
 }
 
@@ -172,8 +161,7 @@ ChannelStatusTest::set_up()
   add_descr_phrase("Setup");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
     "CampaignServer must set in the XML configuration file");
 }
 
@@ -212,8 +200,7 @@ ChannelStatusTest::run()
     std::string description("Check loading of expression channels");
     add_descr_phrase(description);
 
-    String::StringManip::SplitComma tokenizer(
-      fetch_string("ExpressionChannelsStaticCases"));
+    String::StringManip::SplitComma tokenizer(fetch_string("ExpressionChannelsStaticCases"));
     String::SubString token;
     while (tokenizer.get_token(token))
     {
@@ -245,10 +232,7 @@ ChannelStatusTest::tear_down()
   for (size_t i = 0; i < sizeof(channels)/sizeof(*channels); ++i)
   {
     NOSTOP_FAIL_CONTEXT(
-      DB::Query query(
-        pq_conn_.query(
-          "DELETE FROM CHANNELINVENTORY"
-          " WHERE CHANNEL_ID = $1"));
+      DB::Query query(pq_conn_.query("DELETE FROM CHANNELINVENTORY" " WHERE CHANNEL_ID = $1"));
       query.set(channels[i]);
       query.update();
       pq_conn_.commit(););
@@ -334,10 +318,7 @@ ChannelStatusTest::channel_threshold_feature()
   // Changes in DB
   channel_A->country_code = "GB";
   channel_A->language = "en";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel_A->update()),
-    "updating channel.country_code");
+  FAIL_CONTEXT(AutoTest::predicate_checker(channel_A->update()), "updating channel.country_code");
 
     FAIL_CONTEXT(AutoTest::predicate_checker(
       ccg_A->set_display_status(AutoTest::ORM::DS_NOT_LIVE_BY_CHANNEL_TARGET)),
@@ -360,8 +341,7 @@ ChannelStatusTest::channel_threshold_feature()
       "server must match expected channels");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
       "server must return empty ccid");
   }
 
@@ -391,20 +371,16 @@ ChannelStatusTest::channel_threshold_feature()
 
   // Status changed also for some expression channels
   add_checker(description + "expression status changed to 'A'",
-    ChannelStatusChecker<EChannelChecker>(this,
-      expression_W_and_A, "A", true));
+    ChannelStatusChecker<EChannelChecker>(this, expression_W_and_A, "A", true));
 
   add_checker(description + "expression status without changes",
-    ChannelStatusChecker<EChannelChecker>(this,
-      expression_W_or_A, "A", true));
+    ChannelStatusChecker<EChannelChecker>(this, expression_W_or_A, "A", true));
 
   add_checker(description + "expression status changed to 'A'",
-    ChannelStatusChecker<EChannelChecker>(this,
-      expression_W_andnot_A, "A", true));
+    ChannelStatusChecker<EChannelChecker>(this, expression_W_andnot_A, "A", true));
 
   add_checker(description + "expression status changed to 'I'",
-    ChannelStatusChecker<EChannelChecker>(this,
-      expression_A_or_I, "I", true));
+    ChannelStatusChecker<EChannelChecker>(this, expression_A_or_I, "I", true));
 
 }
 
@@ -450,26 +426,22 @@ ChannelStatusTest::change_channel_status()
   // Changes in DB
   channel_A->status = "I";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel_A->set_display_status(ORM::DS_INACTIVE)),
+    AutoTest::predicate_checker(channel_A->set_display_status(ORM::DS_INACTIVE)),
     "updating channel.status");
 
   channel_I->status = "A";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel_I->set_display_status(ORM::DS_LIVE)),
+    AutoTest::predicate_checker(channel_I->set_display_status(ORM::DS_LIVE)),
     "updating channel.status");
 
   channel_D->status = "A";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel_D->set_display_status(ORM::DS_LIVE)),
+    AutoTest::predicate_checker(channel_D->set_display_status(ORM::DS_LIVE)),
     "updating channel.status");
 
   channel_E->status = "D";
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      channel_E->set_display_status(ORM::DS_DELETED)),
+    AutoTest::predicate_checker(channel_E->set_display_status(ORM::DS_DELETED)),
     "updating channel.status");
 
   // Checks

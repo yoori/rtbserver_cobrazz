@@ -77,9 +77,7 @@ namespace AdServer::WebStat
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    RequestInfoFiller(
-      const char* public_key,
-      CommonModule* common_module)
+    RequestInfoFiller(const char* public_key, CommonModule* common_module)
       /*throw(eh::Exception)*/;
 
     void
@@ -123,8 +121,7 @@ namespace AdServer::WebStat
     ParamProcessorMap param_processors_;
     ParamProcessorMap cookie_processors_;
 
-    std::unique_ptr<AdServer::Commons::FastJsonParser<>>
-      yn_json_parser_;
+    std::unique_ptr<AdServer::Commons::FastJsonParser<>> yn_json_parser_;
 
     std::unordered_map<int, std::string> yn_reasons_;
   };

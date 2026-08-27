@@ -28,9 +28,7 @@ const double DEPTH_PINALTY = 0.0001;
 
 namespace
 {
-  const char USAGE[] =
-    "\nUsage: \n"
-    "PrFeatureFilter\n";
+  const char USAGE[] = "\nUsage: \n" "PrFeatureFilter\n";
 
   typedef const String::AsciiStringManip::Char2Category<',', '|'>
     ListSepType;
@@ -130,10 +128,7 @@ Application_::main(int& argc, char** argv)
   //
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
   args.add(
     Generics::AppUtils::equal_name("max-features") ||
     Generics::AppUtils::short_name("mf"),
@@ -151,8 +146,7 @@ Application_::main(int& argc, char** argv)
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -160,7 +154,7 @@ Application_::main(int& argc, char** argv)
 
   std::string command = *commands.begin();
 
-  if(command == "eval-gains")
+  if (command == "eval-gains")
   {
     //const size_t DEPTH = 4;
 
@@ -174,7 +168,7 @@ Application_::main(int& argc, char** argv)
     FeatureSet selected_features;
     unsigned long iteration = 0;
 
-    while(iteration < *opt_max_features && selected_features.size() < *opt_max_features)
+    while (iteration < *opt_max_features && selected_features.size() < *opt_max_features)
     {
       std::cerr << "iteration #" << iteration << std::endl;
 
@@ -205,7 +199,7 @@ Application_::main(int& argc, char** argv)
       std::set<double> best_gains;
       trace_tree_branching_(best_gains, root_node, 0.0, 10);
 
-      if(!best_gains.empty())
+      if (!best_gains.empty())
       {
         std::cout << "Best gains in [" << *best_gains.begin() << "," <<
           *best_gains.rbegin() << "]" << std::endl;
@@ -223,18 +217,18 @@ Application_::main(int& argc, char** argv)
 
       //std::cout << "best_trees.size() = " << best_trees.size() << std::endl;
 
-      if(!best_trees.empty())
+      if (!best_trees.empty())
       {
         // collect selected features
         FeatureSet local_selected_features;
 
         const unsigned long MAX_TREES = 1;
         unsigned long tree_i = 0;
-        for(auto tree_it = best_trees.begin();
+        for (auto tree_it = best_trees.begin();
           tree_it != best_trees.end() && tree_i < MAX_TREES;
           ++tree_it, ++tree_i)
         {
-          if(tree_it->gain < -EPS)
+          if (tree_it->gain < -EPS)
           {
             tree_features_(local_selected_features, tree_it->tree_node);
           }
@@ -249,7 +243,7 @@ Application_::main(int& argc, char** argv)
         }
 
         std::cout << "Iteration #" << iteration << ":" << std::endl;
-        for(auto feature_it = local_selected_features.begin();
+        for (auto feature_it = local_selected_features.begin();
           feature_it != local_selected_features.end(); ++feature_it)
         {
           std::cout << *feature_it << std::endl;
@@ -287,12 +281,12 @@ Application_::load_svm_(std::istream& in)
   Row::FeatureArray features;
   features.reserve(10240);
 
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -303,12 +297,12 @@ Application_::load_svm_(std::istream& in)
     bool label = true;
     unsigned long label_value = 0;
 
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
-      if(label)
+      if (label)
       {
         label = false;
-        if(!String::StringManip::str_to_int(token, label_value))
+        if (!String::StringManip::str_to_int(token, label_value))
         {
           Stream::Error ostr;
           ostr << "can't parse label '" << token << "'";
@@ -320,7 +314,7 @@ Application_::load_svm_(std::istream& in)
         String::SubString::SizeType pos = token.find(':');
         String::SubString feature_value_str = token.substr(0, pos);
         unsigned long feature_value = 0;
-        if(!String::StringManip::str_to_int(feature_value_str, feature_value))
+        if (!String::StringManip::str_to_int(feature_value_str, feature_value))
         {
           Stream::Error ostr;
           ostr << "can't parse feature '" << feature_value_str << "'";
@@ -336,7 +330,7 @@ Application_::load_svm_(std::istream& in)
     // create Row
     Row_var new_row(new Row());
     new_row->features.swap(features);
-    if(label_value > 0)
+    if (label_value > 0)
     {
       svm->labeled_rows.push_back(new_row);
     }
@@ -347,7 +341,7 @@ Application_::load_svm_(std::istream& in)
 
     ++line_i;
 
-    if(line_i % 100000 == 0)
+    if (line_i % 100000 == 0)
     {
       std::cerr << "loaded " << line_i << " lines" << std::endl;
     }
@@ -364,29 +358,27 @@ Application_::load_svm_(std::istream& in)
 }
 
 void
-Application_::fill_feature_rows_(
-  FeatureRowsMap& feature_rows,
-  const SVM& svm)
+Application_::fill_feature_rows_(FeatureRowsMap& feature_rows, const SVM& svm)
 {
   std::cerr << "to fill labeled feature rows" << std::endl;
 
   unsigned long row_i = 0;
-  for(RowArray::const_iterator row_it = svm.labeled_rows.begin();
+  for (RowArray::const_iterator row_it = svm.labeled_rows.begin();
       row_it != svm.labeled_rows.end();
       ++row_it, ++row_i)
   {
-    for(auto feature_it = (*row_it)->features.begin();
+    for (auto feature_it = (*row_it)->features.begin();
       feature_it != (*row_it)->features.end(); ++feature_it)
     {
       FeatureRows_var& fr = feature_rows[*feature_it];
-      if(!fr.in())
+      if (!fr.in())
       {
         fr = new FeatureRows();
       }
       fr->labeled_rows.push_back(*row_it);
     }
 
-    if(row_i % 100000 == 0)
+    if (row_i % 100000 == 0)
     {
       std::cerr << row_i << " rows processed" << std::endl;
     }
@@ -396,22 +388,22 @@ Application_::fill_feature_rows_(
   std::cerr << "to fill unlabeled feature rows" << std::endl;
 
   row_i = 0;
-  for(RowArray::const_iterator row_it = svm.unlabeled_rows.begin();
+  for (RowArray::const_iterator row_it = svm.unlabeled_rows.begin();
       row_it != svm.unlabeled_rows.end();
       ++row_it, ++row_i)
   {
-    for(auto feature_it = (*row_it)->features.begin();
+    for (auto feature_it = (*row_it)->features.begin();
       feature_it != (*row_it)->features.end(); ++feature_it)
     {
       FeatureRows_var& fr = feature_rows[*feature_it];
-      if(!fr.in())
+      if (!fr.in())
       {
         fr = new FeatureRows();
       }
       fr->unlabeled_rows.push_back(*row_it);
     }
 
-    if(row_i % 100000 == 0)
+    if (row_i % 100000 == 0)
     {
       std::cerr << row_i << " rows processed" << std::endl;
     }
@@ -421,20 +413,18 @@ Application_::fill_feature_rows_(
 }
 
 void
-Application_::tree_features_(
-  FeatureSet& features,
-  const TreeNodeDescr* node)
+Application_::tree_features_(FeatureSet& features, const TreeNodeDescr* node)
 {
-  if(node)
+  if (node)
   {
     features.insert(node->feature_id);
 
-    if(node->yes_tree)
+    if (node->yes_tree)
     {
       tree_features_(features, node->yes_tree);
     }
 
-    if(node->no_tree)
+    if (node->no_tree)
     {
       tree_features_(features, node->no_tree);
     }
@@ -444,7 +434,7 @@ Application_::tree_features_(
 std::string
 Application_::tree_to_string_(const TreeNodeDescr* node, const char* prefix)
 {
-  if(!node)
+  if (!node)
   {
     return "";
   }
@@ -452,13 +442,13 @@ Application_::tree_to_string_(const TreeNodeDescr* node, const char* prefix)
   std::ostringstream ostr;
   ostr << prefix << node->feature_id << " (delta gain=" << node->delta_gain << ")" << std::endl;
 
-  if(node->yes_tree)
+  if (node->yes_tree)
   {
     ostr << prefix << "  yes =>" << std::endl <<
       tree_to_string_(node->yes_tree, (std::string(prefix) + "    ").c_str());
   }
 
-  if(node->no_tree)
+  if (node->no_tree)
   {
     ostr << prefix << "  no =>" << std::endl <<
       tree_to_string_(node->no_tree, (std::string(prefix) + "    ").c_str());
@@ -472,12 +462,12 @@ TreeNode_var
 Application_::copy_tree_(const TreeNode* node)
 {
   TreeNode_var new_node = new TreeNode(*node);
-  if(node->yes_tree)
+  if (node->yes_tree)
   {
     new_node->yes_tree = copy_tree_(node->yes_tree);
   }
 
-  if(node->no_tree)
+  if (node->no_tree)
   {
     new_node->no_tree = copy_tree_(node->no_tree);
   }
@@ -526,8 +516,7 @@ Application_::eval_gain_(
     ", yes_value_unlabeled = " << yes_value_unlabeled <<
     ", no_value_labeled = " << no_value_labeled <<
     ", no_value_unlabeled = " << no_value_unlabeled <<
-    ", labeled = " << labeled <<
-    ", unlabeled = " << unlabeled << std::endl;
+    ", labeled = " << labeled << ", unlabeled = " << unlabeled << std::endl;
 # endif
 
   const double no_part = (
@@ -545,9 +534,7 @@ Application_::eval_gain_(
 # ifdef TRACE_OUTPUT
   std::cerr << "no_part = " << no_part << ", p1 = " << p1 <<
     ", yes_part = " << yes_part << ", p2 = " << p2 <<
-    ", old_logloss = " << old_logloss <<
-    ", new_logloss = " << new_logloss <<
-    std::endl;
+    ", old_logloss = " << old_logloss << ", new_logloss = " << new_logloss << std::endl;
 # endif
 
   // new logloss += gain, new logloss =
@@ -563,22 +550,21 @@ Application_::trace_gain_(
   const char* prefix)
   noexcept
 {
-  if(gain_node)
+  if (gain_node)
   {
     const unsigned long feature_id = gain_node->feature_id;
 
     unsigned long pos = 0;
-    for(auto gain_it = root_node->branching->begin();
+    for (auto gain_it = root_node->branching->begin();
         gain_it != root_node->branching->end(); ++gain_it, ++pos)
     {
-      if(gain_it->second.feature_id == feature_id)
+      if (gain_it->second.feature_id == feature_id)
       {
         out << prefix << "feature #" << feature_id <<
           ": sum gain = " << (base_gain + gain_it->first) <<
-          ", branching delta gain = " << gain_it->first <<
-          ", pos = " << pos << std::endl;
+          ", branching delta gain = " << gain_it->first << ", pos = " << pos << std::endl;
 
-        if(gain_node->yes_tree)
+        if (gain_node->yes_tree)
         {
           out << prefix << "  yes:" << std::endl;
           trace_gain_(
@@ -589,7 +575,7 @@ Application_::trace_gain_(
             (std::string(prefix) + "    ").c_str());
         }
 
-        if(gain_node->no_tree)
+        if (gain_node->no_tree)
         {
           out << prefix << "  no:" << std::endl;
           trace_gain_(
@@ -614,9 +600,9 @@ Application_::trace_tree_branching_(
   const char* prefix)
   noexcept
 {
-  if(node && node->branching.present())
+  if (node && node->branching.present())
   {
-    for(auto branch_it = node->branching->begin();
+    for (auto branch_it = node->branching->begin();
       branch_it != node->branching->end(); ++branch_it)
     {
       out << prefix << (base_gain + branch_it->first) << ": " << branch_it->second.feature_id << std::endl;
@@ -647,11 +633,11 @@ Application_::get_tree_branching_(
 {
   //std::cerr << "node: " << node->branching.present() << std::endl;
 
-  if(node && node->branching.present())
+  if (node && node->branching.present())
   {
     //std::cout << "D0(IN), node->branching->size() = " << node->branching->size() << std::endl;
 
-    for(auto branch_it = node->branching->begin();
+    for (auto branch_it = node->branching->begin();
       branch_it != node->branching->end(); ++branch_it)
     {
       GainToTreeNodeDescrMap yes_best_trees;
@@ -680,20 +666,20 @@ Application_::get_tree_branching_(
       auto null_no_it = no_best_trees.insert(GainTreeNodeDescrKey(0.0, nullptr));
 
       /*
-      if(cur_depth == 0)
+      if (cur_depth == 0)
       {
         std::cout << "yes_best_trees.size() = " << yes_best_trees.size() <<
           ", no_best_trees.size() = " << no_best_trees.size() << std::endl;
       }
       */
 
-      for(auto yes_it = yes_best_trees.begin(); yes_it != yes_best_trees.end(); ++yes_it)
+      for (auto yes_it = yes_best_trees.begin(); yes_it != yes_best_trees.end(); ++yes_it)
       {
-        for(auto no_it = no_best_trees.begin(); no_it != no_best_trees.end(); ++no_it)
+        for (auto no_it = no_best_trees.begin(); no_it != no_best_trees.end(); ++no_it)
         {
           double union_gain = base_gain + branch_it->first + yes_it->gain + no_it->gain;
 
-          if((result_trees.empty() ||
+          if ((result_trees.empty() ||
               result_trees.size() < limit ||
               union_gain < result_trees.rbegin()->gain) &&
             (yes_it != null_yes_it || no_it != null_no_it))
@@ -706,7 +692,7 @@ Application_::get_tree_branching_(
             //std::cout << "D1(IN), result_trees.size() = " << result_trees.size() << std::endl;
             result_trees.insert(GainTreeNodeDescrKey(union_gain, union_tree));
             //std::cout << "D1(MID), result_trees.size() = " << result_trees.size() << std::endl;
-            if(result_trees.size() > limit)
+            if (result_trees.size() > limit)
             {
               result_trees.erase(--result_trees.end());
             }
@@ -721,7 +707,7 @@ Application_::get_tree_branching_(
   }
 
   // try add empty tree
-  if(result_trees.empty() ||
+  if (result_trees.empty() ||
     result_trees.size() < limit ||
     base_gain < result_trees.rbegin()->gain)
   {
@@ -729,7 +715,7 @@ Application_::get_tree_branching_(
     //std::cout << "D2(IN), result_trees.size() = " << result_trees.size() << std::endl;
     result_trees.insert(GainTreeNodeDescrKey(base_gain, nullptr));
     //std::cout << "D2(MID), result_trees.size() = " << result_trees.size() << std::endl;
-    if(result_trees.size() > limit)
+    if (result_trees.size() > limit)
     {
       result_trees.erase(--result_trees.end());
     }
@@ -865,10 +851,9 @@ Application_::find_best_gain_(
   unsigned long top_element_limit)
   noexcept
 {
-  for(auto feature_it = feature_rows.begin();
-    feature_it != feature_rows.end(); ++feature_it)
+  for (auto feature_it = feature_rows.begin(); feature_it != feature_rows.end(); ++feature_it)
   {
-    if(skip_features.find(feature_it->first) == skip_features.end())
+    if (skip_features.find(feature_it->first) == skip_features.end())
     {
 #     ifdef TRACE_OUTPUT
       std::cerr << "find_best_gain_(" << depth << "): feature #" << feature_it->first << std::endl;
@@ -890,7 +875,7 @@ Application_::find_best_gain_(
 
       tree_branching.insert(std::make_pair(gain + gain_add, tree_node_branching));
 
-      if(tree_branching.size() > top_element_limit)
+      if (tree_branching.size() > top_element_limit)
       {
         tree_branching.erase(--tree_branching.end());
       }
@@ -917,10 +902,10 @@ Application_::fill_tree_leafs_branching_(
     skip_features,
     top_element_limit);
 
-  if(depth - 1 > 0)
+  if (depth - 1 > 0)
   {
     unsigned long node_i = 0;
-    for(auto node_it = node_branching.begin(); node_it != node_branching.end();
+    for (auto node_it = node_branching.begin(); node_it != node_branching.end();
         ++node_it, ++node_i)
     {
       FeatureSet local_skip_features = skip_features;
@@ -941,7 +926,7 @@ Application_::fill_tree_leafs_branching_(
         local_skip_features,
         top_element_limit);
 
-      if(depth == 0)
+      if (depth == 0)
       {
         std::cerr << "filled " << node_i << "/" << node_branching.size() << " root nodes" << std::endl;
       }
@@ -961,10 +946,9 @@ Application_::fill_tree_branching_(
   unsigned long top_element_limit)
   noexcept
 {
-  for(auto feature_it = feature_rows.begin();
-    feature_it != feature_rows.end(); ++feature_it)
+  for (auto feature_it = feature_rows.begin(); feature_it != feature_rows.end(); ++feature_it)
   {
-    if(skip_features.find(feature_it->first) == skip_features.end())
+    if (skip_features.find(feature_it->first) == skip_features.end())
     {
 #     ifdef TRACE_OUTPUT
       std::cerr << "feature #" << feature_it->first << std::endl;
@@ -989,7 +973,7 @@ Application_::fill_tree_branching_(
 
       tree_branching.insert(std::make_pair(gain + gain_add, tree_node_branching));
 
-      if(tree_branching.size() > top_element_limit)
+      if (tree_branching.size() > top_element_limit)
       {
         tree_branching.erase(--tree_branching.end());
       }
@@ -1043,5 +1027,3 @@ main(int argc, char** argv)
 
   return 0;
 }
-
-

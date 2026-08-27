@@ -21,8 +21,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
 
     constexpr std::string_view CLICK_F_SUFFIX = "*amp*m*eql*f";
     constexpr std::string_view PRECLICK_SUFFIX = "*amp*relocate*eql*";
-    constexpr std::string_view PRECLICK_F_SUFFIX =
-      "*amp*m*eql*f*amp*relocate*eql*";
+    constexpr std::string_view PRECLICK_F_SUFFIX = "*amp*m*eql*f*amp*relocate*eql*";
 
     std::string
     format_click_url(
@@ -263,8 +262,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
         return data && data->creative ?
-          std::optional<std::string>(
-            to_string(data->creative->campaign->advertiser->account_id)) :
+          std::optional<std::string>(to_string(data->creative->campaign->advertiser->account_id)) :
           std::nullopt;
       });
 
@@ -274,8 +272,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
         return data && data->creative ?
-          std::optional<std::string>(
-            to_string(data->creative->campaign->campaign_id)) :
+          std::optional<std::string>(to_string(data->creative->campaign->campaign_id)) :
           std::nullopt;
       });
 
@@ -285,8 +282,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
         return data && data->creative ?
-          std::optional<std::string>(
-            to_string(data->creative->campaign->campaign_group_id)) :
+          std::optional<std::string>(to_string(data->creative->campaign->campaign_group_id)) :
           std::nullopt;
       });
 
@@ -295,9 +291,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto* tag_size = provider.context().tag_size;
-        return tag_size ?
-          std::optional<std::string>(tag_size->size->protocol_name) :
-          std::nullopt;
+        return tag_size ? std::optional<std::string>(tag_size->size->protocol_name) : std::nullopt;
       });
 
     add_processor(

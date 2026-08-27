@@ -14,11 +14,11 @@ class FakeCallWrapper:
     self.method = method                   # method to wrapping
     self.storedMethod = getattr( self.test, self.method)
     setattr( self.test, self.method, self.fake)
-    
+
   @Util.abstract
   def fake(self, *args, **kw): pass
-    
-  
+
+
 class ExceptionCallWrapper(FakeCallWrapper):
 
   def __init__( self, test, method, exceptions ):
@@ -60,7 +60,7 @@ class ExceptionCallWrapper(FakeCallWrapper):
 class DelayCallWrapper(FakeCallWrapper):
 
   ContinueTimeOut = 20 # timeout for waiting continued
-  
+
   def __init__( self, test, method, delayCount = 1 ):
     FakeCallWrapper.__init__( self, test, method )
     self.callFlag = MTFlag()

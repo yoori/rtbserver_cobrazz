@@ -7,9 +7,7 @@
 #include <String/SubString.hpp>
 #include <Stream/MemoryStream.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   const char*
   find_end_of_number(const char* str)
@@ -47,18 +45,15 @@ namespace Commons
     Generics::DecimalMulRemainder round_type = Generics::DMR_ROUND,
     bool check_format = false) /*throw(typename DecimalType::Overflow, typename DecimalType::NotNumber)*/;
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   inline
   const char*
   find_end_of_number(const char* str)
     noexcept
   {
-    if(*str == '-' || *str == '+')
+    if (*str == '-' || *str == '+')
     {
       ++str;
     }
@@ -82,7 +77,7 @@ namespace Commons
     {
       ++str;
 
-      if(*str == '-' || *str == '+')
+      if (*str == '-' || *str == '+')
       {
         ++str;
       }
@@ -100,14 +95,12 @@ namespace Commons
   {
     inline
     bool
-    check_negative(
-      const String::SubString& str,
-      String::SubString::SizeType& cur_pos)
+    check_negative(const String::SubString& str, String::SubString::SizeType& cur_pos)
     {
-      if(cur_pos < str.length())
+      if (cur_pos < str.length())
       {
         const bool res = (str[cur_pos] == '-');
-        if(str[cur_pos] == '-' || str[cur_pos] == '+')
+        if (str[cur_pos] == '-' || str[cur_pos] == '+')
         {
           ++cur_pos;
         }
@@ -208,8 +201,7 @@ namespace Commons
     DecimalType result(negative, integer, fraction);
     result += rounding;
 
-    if ((cur_pos < str.length()) &&
-        (str[cur_pos] == 'e' || str[cur_pos] == 'E'))
+    if ((cur_pos < str.length()) && (str[cur_pos] == 'e' || str[cur_pos] == 'E'))
     {
       ++cur_pos;
       const bool negative_order = check_negative(str, cur_pos);
@@ -221,10 +213,8 @@ namespace Commons
         exponent = (exponent * 10) + (str[cur_pos++] - '0');
       }
 
-      const unsigned pow_rank =
-        DecimalType::FRACTION_RANK > 1 ?
-        DecimalType::FRACTION_RANK - 1 : 1;
-      for(unsigned i = 0; i < exponent / pow_rank; ++i)
+      const unsigned pow_rank = DecimalType::FRACTION_RANK > 1 ? DecimalType::FRACTION_RANK - 1 : 1;
+      for (unsigned i = 0; i < exponent / pow_rank; ++i)
       {
         const DecimalType power(1, pow_rank);
 
@@ -238,7 +228,7 @@ namespace Commons
         }
       }
 
-      if(exponent % pow_rank > 0)
+      if (exponent % pow_rank > 0)
       {
         const DecimalType power(1, exponent % pow_rank);
 
@@ -290,5 +280,4 @@ namespace Commons
       round_type,
       check_format);
   }
-}
 }

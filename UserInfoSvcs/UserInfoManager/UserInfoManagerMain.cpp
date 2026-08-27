@@ -18,10 +18,7 @@ namespace
   const char ASPECT[] = "UserInfoManager";
 
   void
-  append_json_stat(
-    std::string& body,
-    const char* name,
-    const std::uint64_t value)
+  append_json_stat(std::string& body, const char* name, const std::uint64_t value)
   {
     body += ",\"";
     body += name;
@@ -34,18 +31,9 @@ namespace
     std::string& body,
     const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
   {
-    append_json_stat(
-      body,
-      "grpc_unary_call_created_total",
-      stats.unary_call_created_total);
-    append_json_stat(
-      body,
-      "grpc_unary_call_deleted_total",
-      stats.unary_call_deleted_total);
-    append_json_stat(
-      body,
-      "grpc_unary_call_live",
-      stats.unary_call_live);
+    append_json_stat(body, "grpc_unary_call_created_total", stats.unary_call_created_total);
+    append_json_stat(body, "grpc_unary_call_deleted_total", stats.unary_call_deleted_total);
+    append_json_stat(body, "grpc_unary_call_live", stats.unary_call_live);
     append_json_stat(
       body,
       "grpc_coro_unary_call_created_total",
@@ -54,10 +42,7 @@ namespace
       body,
       "grpc_coro_unary_call_deleted_total",
       stats.coro_unary_call_deleted_total);
-    append_json_stat(
-      body,
-      "grpc_coro_unary_call_live",
-      stats.coro_unary_call_live);
+    append_json_stat(body, "grpc_coro_unary_call_live", stats.coro_unary_call_live);
     append_json_stat(
       body,
       "grpc_batch_stream_call_created_total",
@@ -66,10 +51,7 @@ namespace
       body,
       "grpc_batch_stream_call_deleted_total",
       stats.batch_stream_call_deleted_total);
-    append_json_stat(
-      body,
-      "grpc_batch_stream_call_live",
-      stats.batch_stream_call_live);
+    append_json_stat(body, "grpc_batch_stream_call_live", stats.batch_stream_call_live);
   }
 
   void
@@ -83,22 +65,15 @@ namespace
     append_json_stat(body, "rdb_save_total", stats.save_total);
     append_json_stat(body, "rdb_remove_total", stats.remove_total);
     append_json_stat(body, "rdb_read_batch_total", stats.read_batch_total);
-    append_json_stat(
-      body,
-      "rdb_read_batch_total_time",
-      stats.read_batch_total_time);
+    append_json_stat(body, "rdb_read_batch_total_time", stats.read_batch_total_time);
     append_json_stat(body, "rdb_write_batch_total", stats.write_batch_total);
-    append_json_stat(
-      body,
-      "rdb_write_batch_total_time",
-      stats.write_batch_total_time);
+    append_json_stat(body, "rdb_write_batch_total_time", stats.write_batch_total_time);
   }
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "UserInfoManagerApp_", ASPECT, 0)
 {}
 
@@ -132,15 +107,14 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
 
       configuration_ =
-        ConfigPtr(new UserInfoManagerConfigType(
-          ad_configuration->UserInfoManagerConfig()));
+        ConfigPtr(new UserInfoManagerConfigType(ad_configuration->UserInfoManagerConfig()));
     }
     catch(const xml_schema::parsing& e)
     {
@@ -149,7 +123,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       ostr << "Can't parse config file '" << argv[1] << "'."
         ": ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -167,8 +141,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     // Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -178,15 +151,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     }
 
     user_info_manager_core_ =
-      std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerCore>(
-        callback(),
-        logger(),
-        config());
+      std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerCore>(callback(), logger(), config());
 
     add_child_object(user_info_manager_core_);
 
     AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter;
-    if(config().GrpcConfig().present())
+    if (config().GrpcConfig().present())
     {
       grpc_adapter = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
         user_info_manager_core_,
@@ -202,7 +172,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       add_child_object(grpc_adapter);
     }
 
-    if(config().HttpConfig().present())
+    if (config().HttpConfig().present())
     {
       AdServer::Commons::HttpServer::HttpServer_var http_server =
         new AdServer::Commons::HttpServer::HttpServer(
@@ -310,8 +280,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     }
 
     pid_file_guard =
-      std::make_unique<AdServer::Commons::PidFileGuard>(
-        std::string(config().pid_file()));
+      std::make_unique<AdServer::Commons::PidFileGuard>(std::string(config().pid_file()));
 
     AdServer::Commons::SignalActiveObject signal_active_object;
 
@@ -328,16 +297,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
   }
   catch (const Exception& e)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-      ASPECT,
-      "ADS-IMPL-58") << FUN <<
+    logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-58") << FUN <<
       ": Got UserInfoManagerApp_::Exception: " << e.what();
   }
   catch (const eh::Exception& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<
       ": Got eh::Exception: " << e.what();
   }
 }

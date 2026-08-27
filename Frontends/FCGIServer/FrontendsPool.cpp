@@ -87,9 +87,7 @@ namespace AdServer::Frontends
     {
       if ((*frontend_it)->will_handle(request_holder->request().uri()))
       {
-        (*frontend_it)->handle_request(
-          std::move(request_holder),
-          std::move(response_writer));
+        (*frontend_it)->handle_request(std::move(request_holder), std::move(response_writer));
         return;
       }
     }
@@ -241,8 +239,7 @@ namespace AdServer::Frontends
 
       if (interrupt_threads != 0)
       {
-        timeout_scheduler_ = std::make_shared<AdServer::Commons::FastScheduler>(
-          interrupt_threads);
+        timeout_scheduler_ = std::make_shared<AdServer::Commons::FastScheduler>(interrupt_threads);
       }
 
       for (auto module_it = modules_.begin(); module_it != modules_.end(); ++module_it)

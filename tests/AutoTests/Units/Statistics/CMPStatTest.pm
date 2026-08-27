@@ -12,12 +12,13 @@ sub output_revenue
   if (defined $args->{cpm})
   {
     $self->{ns_}->output(
-      $entity . "/CPM/" . $args->{name},  $args->{cpm}); 
+      $entity . "/CPM/" . $args->{name},  $args->{cpm});
   }
+
   if (defined $args->{cpc})
   {
     $self->{ns_}->output(
-      $entity . "/CPC/" . $args->{name},  $args->{cpc}); 
+      $entity . "/CPC/" . $args->{name},  $args->{cpc});
   }
 }
 
@@ -28,9 +29,9 @@ sub get_site_list
   foreach my $p ( split(/,/, $args->{publisher}) )
   {
     my $pub = $self->{publishers_}->{$p};
-    die $self->{prefix_} . ".Publisher '$p' is not defined!" 
+    die $self->{prefix_} . ".Publisher '$p' is not defined!"
         if not defined $pub;
-    
+
     push @sites, { site_id => $pub->{site_id} };
   }
 
@@ -40,18 +41,18 @@ sub get_site_list
 sub create_sizes
 {
   my ($self, $args) = @_;
-  
+
  foreach my $s (@$args)
  {
-    die $self->{prefix_} . ".Size '$s->{name}' is redefined!" 
+    die $self->{prefix_} . ".Size '$s->{name}' is redefined!"
       if exists $self->{sizes_}->{$s->{name}};
 
-    my $size = $self->{ns_}->create(CreativeSize => 
+    my $size = $self->{ns_}->create(CreativeSize =>
       { name => $s->{name},
-        max_text_creatives => 
-          defined $s->{max_text_creatives}? 
+        max_text_creatives =>
+          defined $s->{max_text_creatives}?
             $s->{max_text_creatives}: 1 });
-  
+
     $self->{sizes_}->{$s->{name}} = $size;
   }
 }
@@ -63,7 +64,7 @@ sub create_accounts
 
   foreach my $a (@$args)
   {
-    die $self->{prefix_} . ".Account '$a->{name}' is redefined!" 
+    die $self->{prefix_} . ".Account '$a->{name}' is redefined!"
       if exists $self->{accounts_}->{$a->{name}};
 
     my %account_args = (
@@ -78,11 +79,11 @@ sub create_accounts
         DB::TimeZone->blank(tzname => $a->{timezone}):
           DB::Defaults::instance()->timezone() );
 
-    if (defined $a->{agency} and 
+    if (defined $a->{agency} and
         (not defined $a->{role} or
          $a->{role} == DB::Defaults::instance()->advertiser_role))
     {
-      die $self->{prefix_} . ".Agency '$a->{agency}' is not defined!" 
+      die $self->{prefix_} . ".Agency '$a->{agency}' is not defined!"
         if not defined $self->{accounts_}->{$a->{agency}};
 
       $account_args{agency_account_id} =
@@ -94,15 +95,15 @@ sub create_accounts
     my $account = $self->{ns_}->create(
       Account => \%account_args);
 
-    if (defined $a->{agency} and 
-        defined $a->{role} and 
+    if (defined $a->{agency} and
+        defined $a->{role} and
         $a->{role} == DB::Defaults::instance()->publisher_role)
     {
-      die $self->{prefix_} . ".Agency '$a->{agency}' is not defined!" 
+      die $self->{prefix_} . ".Agency '$a->{agency}' is not defined!"
         if not defined $self->{accounts_}->{$a->{agency}};
       $self->{ns_}->create(WalledGarden => {
         pub_account_id => $account->{account_id},
-        agency_account_id => 
+        agency_account_id =>
            $self->{accounts_}->{$a->{agency}}->{account_id},
         pub_marketplace => 'WG',
         agency_marketplace => 'WG'});
@@ -123,24 +124,24 @@ sub create_expressions
     foreach my $w ( split(/\W+/, $expression) )
     {
       my $c = $self->{channels_}->{$w};
-      die $self->{prefix_} . ".Channel '$w' is not defined!" 
+      die $self->{prefix_} . ".Channel '$w' is not defined!"
           if not defined $c;
       $expression =~ s/$w/$c->{channel_id}/;
     }
 
-    
-    die $self->{prefix_} . ".Account '$e->{account}' is not defined!" 
+
+    die $self->{prefix_} . ".Account '$e->{account}' is not defined!"
       if defined $e->{account} and not exists $self->{accounts_}->{$e->{account}};
- 
-    my $channel = 
+
+    my $channel =
       $self->{ns_}->create(DB::ExpressionChannel->blank(
          name => $e->{name},
          account_id => defined $e->{account}?
-           $self->{accounts_}->{$e->{account}}:  
+           $self->{accounts_}->{$e->{account}}:
              $self->{ns_}->create(Account => {
                name => 'Advertiser-' .  $e->{name},
                role_id => DB::Defaults::instance()->advertiser_role }),
-         visibility => 
+         visibility =>
            defined $e->{visibility}?
              $e->{visibility}: 'PUB',
          expression => $expression,
@@ -161,27 +162,27 @@ sub create_channels
 
   foreach my $c (@$args)
   {
-   die $self->{prefix_} . ".Channel '$c->{name}' is redefined!" 
+   die $self->{prefix_} . ".Channel '$c->{name}' is redefined!"
       if exists $self->{channels_}->{$c->{name}};
 
-   die $self->{prefix_} . ".Account '$c->{account}' is not defined!" 
+   die $self->{prefix_} . ".Account '$c->{account}' is not defined!"
       if defined $c->{account} and not exists $self->{accounts_}->{$c->{account}};
 
-    my $keyword = 
+    my $keyword =
       make_autotest_name(
         $self->{ns_}, $c->{name});
-   
+
     my $channel =
       $self->{ns_}->create(
         DB::BehavioralChannel->blank(
         name => $c->{name},
         account_id => defined $c->{account}?
-          $self->{accounts_}->{$c->{account}}: 
+          $self->{accounts_}->{$c->{account}}:
             $self->{ns_}->create(Account => {
               name => 'Advertiser-CH-' .  $c->{name},
               role_id => DB::Defaults::instance()->advertiser_role }),
         keyword_list => $keyword,
-        visibility => 
+        visibility =>
           defined $c->{visibility}? $c->{visibility}: "PUB",
         behavioral_parameters => [
           DB::BehavioralChannel::BehavioralParameter->blank(trigger_type => "P") ],
@@ -202,20 +203,20 @@ sub create_display_campaigns
   foreach my $c (@$args)
   {
 
-   die $self->{prefix_} . ".Campaign '$c->{name}' is redefined!" 
+   die $self->{prefix_} . ".Campaign '$c->{name}' is redefined!"
      if exists $self->{campaigns_}->{$c->{name}};
-   
-   die $self->{prefix_} . ".Channel '$c->{channel}' is not defined!" 
+
+   die $self->{prefix_} . ".Channel '$c->{channel}' is not defined!"
       if not defined $self->{channels_}->{$c->{channel}};
 
-   die $self->{prefix_} . ".Account '$c->{account}' is not defined!" 
+   die $self->{prefix_} . ".Account '$c->{account}' is not defined!"
       if defined $c->{account} and not exists $self->{accounts_}->{$c->{account}};
 
-   die $self->{prefix_} . ".Size '$c->{size}' is not defined!" 
+   die $self->{prefix_} . ".Size '$c->{size}' is not defined!"
       if defined $c->{size} and not exists $self->{sizes_}->{$c->{size}};
 
 
-   my $campaign = 
+   my $campaign =
      $self->{ns_}->create(DisplayCampaign => {
        name =>  $c->{name},
        account_id => defined $c->{account}?
@@ -228,13 +229,13 @@ sub create_display_campaigns
        cpm => defined $c->{cpm}? $c->{cpm}: DB::Defaults::instance()->cpm,
        channel_id => $self->{channels_}->{$c->{channel}},
        targeting_channel_id => undef,
-       marketplace => 
+       marketplace =>
           exists $c->{marketplace}? $c->{marketplace}: undef,
        site_links => $self->get_site_list($c) });
 
    $self->{ns_}->output("CC/" . $c->{name}, $campaign->{cc_id});
    $self->{ns_}->output("CCG/" . $c->{name} , $campaign->{ccg_id});
-   
+
    $self->output_revenue("Display", $c);
    $self->{campaigns_}->{$c->{name}} = $campaign;
   }
@@ -246,7 +247,7 @@ sub create_creatives
 
   foreach my $c (@$args)
   {
-    die $self->{prefix_} . ".Campaign '$c->{campaign}' is not defined!" 
+    die $self->{prefix_} . ".Campaign '$c->{campaign}' is not defined!"
       if not defined $self->{campaigns_}->{$c->{campaign}};
 
     my $size = defined $c->{size}?
@@ -261,15 +262,15 @@ sub create_creatives
         template_file => 'UnitTests/banner_img_clk.html',
         flags => 0 });
 
-    my $creative = $self->{ns_}->create(Creative => 
+    my $creative = $self->{ns_}->create(Creative =>
       {  name => $c->{campaign} . "-" . $c->{name},
-         account_id => 
+         account_id =>
            $self->{campaigns_}->{$c->{campaign}}->{account_id},
          size_id => $size,
        template_id => $template });
 
     my $cc =  $self->{ns_}->create(CampaignCreative =>
-     { ccg_id => 
+     { ccg_id =>
          $self->{campaigns_}->{$c->{campaign}}->{ccg_id},
        creative_id => $creative });
 
@@ -284,16 +285,16 @@ sub create_publishers
 
   foreach my $p (@$args)
   {
-   die $self->{prefix_} . ".Publisher '$p->{name}' is redefined!" 
+   die $self->{prefix_} . ".Publisher '$p->{name}' is redefined!"
      if exists $self->{publishers_}->{$p->{name}};
-   
-   die $self->{prefix_} . ".Account '$p->{account}' is not defined!" 
+
+   die $self->{prefix_} . ".Account '$p->{account}' is not defined!"
       if defined $p->{account} and not exists $self->{accounts_}->{$p->{account}};
 
-   die $self->{prefix_} . ".Size '$p->{size}' is not defined!" 
+   die $self->{prefix_} . ".Size '$p->{size}' is not defined!"
       if defined $p->{size} and not exists $self->{sizes_}->{$p->{size}};
 
-    my $publisher = 
+    my $publisher =
      $self->{ns_}->create(Publisher => {
        name =>  $p->{name},
        site_account_id => defined $p->{account}?
@@ -320,19 +321,19 @@ sub create_ta_campaigns
   foreach my $c (@$args)
   {
 
-   die $self->{prefix_} . ".Campaign '$c->{name}' is redefined!" 
+   die $self->{prefix_} . ".Campaign '$c->{name}' is redefined!"
      if exists $self->{campaigns_}->{$c->{name}};
-   
-   die $self->{prefix_} . ".Channel '$c->{channel}' is not defined!" 
+
+   die $self->{prefix_} . ".Channel '$c->{channel}' is not defined!"
       if not defined $self->{channels_}->{$c->{channel}};
 
-   die $self->{prefix_} . ".Account '$c->{account}' is not defined!" 
+   die $self->{prefix_} . ".Account '$c->{account}' is not defined!"
       if defined $c->{account} and not exists $self->{accounts_}->{$c->{account}};
 
-   die $self->{prefix_} . ".Size '$c->{size}' is not defined!" 
+   die $self->{prefix_} . ".Size '$c->{size}' is not defined!"
       if defined $c->{size} and not exists $self->{sizes_}->{$c->{size}};
 
-    my $campaign = 
+    my $campaign =
       $self->{ns_}->create(ChannelTargetedTACampaign => {
         name =>  $c->{name},
         account_id => defined $c->{account}?
@@ -351,7 +352,7 @@ sub create_ta_campaigns
 
     $self->{ns_}->output("CC/" . $c->{name}, $campaign->{cc_id});
     $self->{ns_}->output("CCG/" . $c->{name} , $campaign->{ccg_id});
-   
+
     $self->output_revenue("TA", $c);
     $self->{campaigns_}->{$c->{name}} = $campaign;
  }
@@ -361,7 +362,7 @@ sub new
 {
   my $self = shift;
   my ($ns, $prefix, $args) = @_;
-  
+
   unless (ref $self) {
     $self = bless {}, $self;  }
   $self->{ns_} = $ns->sub_namespace($prefix);
@@ -415,28 +416,28 @@ sub base_case
   $ns->output("RATE2", $currency2->{rate});
 
   CMPStatTest::TestCase->new(
-    $ns, 'Base', 
-      { 
-        accounts => [ 
-          { name => 'ADV', currency => $currency2, 
+    $ns, 'Base',
+      {
+        accounts => [
+          { name => 'ADV', currency => $currency2,
             timezone => "Asia/Tokyo" },
-          { name => 'WG-AGENCY', currency => $currency2, 
+          { name => 'WG-AGENCY', currency => $currency2,
             timezone => "Asia/Tokyo", role => DB::Defaults::instance()->agency_role,
             type => DB::Defaults::instance()->agency_type },
-          { name => 'CMP', role => DB::Defaults::instance()->cmp_role, 
+          { name => 'CMP', role => DB::Defaults::instance()->cmp_role,
             type => DB::Defaults::instance()->cmp_type, currency => $currency1,
             timezone => "Europe/Moscow" },
-          { name => 'WG-PUB', role => DB::Defaults::instance()->publisher_role, 
+          { name => 'WG-PUB', role => DB::Defaults::instance()->publisher_role,
             type => DB::Defaults::instance()->publisher_type, agency => 'WG-AGENCY' },
-          { name => 'WG-ADV', type => undef, 
-            currency => $currency1, timezone => "Europe/Moscow", 
+          { name => 'WG-ADV', type => undef,
+            currency => $currency1, timezone => "Europe/Moscow",
             agency => 'WG-AGENCY' } ],
         sizes => [ { name => 'SIZE' } ],
         publishers => [
           { name => 'PUBLISHER1' },
           { name => 'PUBLISHER2', size => 'SIZE' },
           { name => 'WG', account => 'WG-PUB', marketplace => 'WG' } ],
-        channels => [ 
+        channels => [
           { name => 'CPM', cpm => 12, account => 'CMP', visibility => 'CMP' },
           { name => 'CPC', cpc => 20, account => 'CMP', visibility => 'CMP' },
           { name => 'WG', cpm => 12, account => 'CMP', visibility => 'CMP' } ],
@@ -445,11 +446,11 @@ sub base_case
             publisher => 'PUBLISHER1,PUBLISHER2' },
           { name => 'CPC', account => 'ADV', channel => 'CPC',
             publisher => 'PUBLISHER1' },
-          { name => 'WG', account => 'WG-ADV', 
+          { name => 'WG', account => 'WG-ADV',
             channel => 'WG', marketplace => 'WG',
             publisher => 'WG' } ],
-        creatives => [ 
-          { name => "CC2", campaign => "CPM", 
+        creatives => [
+          { name => "CC2", campaign => "CPM",
             size => "SIZE" }]  });
 }
 
@@ -458,18 +459,18 @@ sub adv_expression
   my ($self, $ns) = @_;
 
   CMPStatTest::TestCase->new(
-    $ns, 'AdvExpr', 
-      { 
-        accounts => [ 
+    $ns, 'AdvExpr',
+      {
+        accounts => [
           { name => 'CMP', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type},
           { name => 'ADV' }],
         publishers => [ { name => 'PUBLISHER' } ],
-        channels => [ 
+        channels => [
           { name => 'CPM', cpm => 12, account => 'CMP', visibility => 'CMP' },
           { name => 'CPC', cpc => 20, account => 'CMP', visibility => 'CMP' },
           { name => 'PRI', account => 'ADV', visibility => 'PRI' }],
         expressions => [
-          { name => "EXPR", expression => "CPM^CPC|PRI", 
+          { name => "EXPR", expression => "CPM^CPC|PRI",
             account => 'ADV', visibility => 'PRI' }],
         displays => [
           { name => 'CCG', account => 'ADV',
@@ -483,16 +484,16 @@ sub cmp_expression
 
   CMPStatTest::TestCase->new(
     $ns, 'CmpExpr',
-    { 
-      accounts => [ 
+    {
+      accounts => [
         { name => 'CMP', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type},
         { name => 'ADV' } ],
       publishers => [ { name => 'PUBLISHER' } ],
-      channels => [ 
+      channels => [
         { name => 'CPM', cpm => 12, account => 'CMP', visibility => 'CMP' },
         { name => 'PRI', cpm => undef, account => 'ADV', visibility => 'PRI' } ],
       expressions => [
-        { name => "EXPR", expression => "CPM|PRI", 
+        { name => "EXPR", expression => "CPM|PRI",
           account => 'CMP', cpm => 15, visibility => 'CMP' }],
       displays => [
         { name => 'CCG', account => 'ADV', channel => 'EXPR',
@@ -505,15 +506,15 @@ sub pub_expression
 
   CMPStatTest::TestCase->new(
     $ns, 'PubExpr',
-    { 
-      accounts => [ 
+    {
+      accounts => [
         { name => 'CMP', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type},
         { name => 'ADV' } ],
       publishers => [ { name => 'PUBLISHER' } ],
-      channels => [ 
+      channels => [
         { name => 'CPM', cpm => 12, account => 'CMP', visibility => 'CMP' } ],
       expressions => [
-        { name => "EXPR", expression => "CPM", 
+        { name => "EXPR", expression => "CPM",
           account => 'CMP', visibility => 'PUB' }],
       displays => [
         { name => 'CCG', account => 'ADV', channel => 'EXPR',
@@ -527,29 +528,29 @@ sub currency_case
 
   CMPStatTest::TestCase->new(
     $ns, 'Currency',
-    { 
-      accounts => [ 
+    {
+      accounts => [
         { name => 'CMP1', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type },
-        { name => 'CMP2', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type, 
+        { name => 'CMP2', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type,
           currency => $currency },
         { name => 'ADV1' },
         { name => 'ADV2', currency => $currency } ],
-      publishers => [ 
+      publishers => [
         { name => 'PUBLISHER1', cpm => 5 },
         { name => 'PUBLISHER2', cpm => 20 } ],
       channels => [
-        { name => 'CPM1', cpm => 10, account => 'CMP1', 
-          visibility => 'CMP' },  
-        { name => 'CPM2', cpm => 15, account => 'CMP2', 
-          visibility => 'CMP' },  
-        { name => 'CPM3', cpm => 20, account => 'CMP2', 
+        { name => 'CPM1', cpm => 10, account => 'CMP1',
+          visibility => 'CMP' },
+        { name => 'CPM2', cpm => 15, account => 'CMP2',
+          visibility => 'CMP' },
+        { name => 'CPM3', cpm => 20, account => 'CMP2',
           visibility => 'CMP' } ] ,
       expressions => [
-        { name => "EXPR1", expression => "CPM1", 
-          cpm => 5, account => 'CMP1', 
+        { name => "EXPR1", expression => "CPM1",
+          cpm => 5, account => 'CMP1',
           visibility => 'CMP' },
-        { name => "EXPR2", expression => "EXPR1", 
-          cpm => 2,  account => 'CMP1', 
+        { name => "EXPR2", expression => "EXPR1",
+          cpm => 2,  account => 'CMP1',
           visibility => 'CMP' }],
       displays => [
         { name => 'CCG1', account => 'ADV1', cpm => 10,
@@ -566,15 +567,15 @@ sub text_adv_case
 
   CMPStatTest::TestCase->new(
     $ns, 'TA',
-    { 
-      accounts => [ 
+    {
+      accounts => [
         { name => 'CMP', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type},
         { name => 'ADV1' },
         { name => 'ADV2' } ],
      sizes => [ { name => 'TEXTSIZE', max_text_creatives => 2 } ],
      publishers => [ { name => 'PUBLISHER', size => 'TEXTSIZE' } ],
-     channels => [ 
-        { name => 'TEXT', cpc => 30, account => 'CMP', 
+     channels => [
+        { name => 'TEXT', cpc => 30, account => 'CMP',
           visibility => 'CMP' } ],
      ta_campaigns => [
         { name => 'CCG1', account => 'ADV1', cpm => 20,
@@ -591,18 +592,18 @@ sub expression_case
 
   CMPStatTest::TestCase->new(
     $ns, 'Expression',
-    { 
-      accounts => [ 
+    {
+      accounts => [
         { name => 'CMP', role => DB::Defaults::instance()->cmp_role,  type => DB::Defaults::instance()->cmp_type},
         { name => 'ADV' } ],
-      publishers => [ 
+      publishers => [
         { name => 'PUBLISHER1' },
         { name => 'PUBLISHER2' },
         { name => 'PUBLISHER3' } ],
-      channels => [ 
+      channels => [
         { name => 'CH1', cpm => 1, account => 'CMP', visibility => 'CMP' },
-        { name => 'CH2', cpm => 2, account => 'CMP', visibility => 'CMP' }, 
-        { name => 'CH3', cpm => 3, account => 'CMP', visibility => 'CMP' }, 
+        { name => 'CH2', cpm => 2, account => 'CMP', visibility => 'CMP' },
+        { name => 'CH3', cpm => 3, account => 'CMP', visibility => 'CMP' },
         { name => 'CH4', cpm => 4, account => 'CMP', visibility => 'CMP' },
         { name => 'CH5', cpm => 5, account => 'CMP', visibility => 'CMP' },
         { name => 'CH6', cpm => 6, account => 'CMP', visibility => 'CMP' },
@@ -617,13 +618,13 @@ sub expression_case
           account => 'CMP', visibility => 'CMP' },
         { name => "EXPR2", expression => "CH1|EXPR1|CH3^CH4",
           account => 'ADV', visibility => 'PRI' },
-        { name => "EXPR3", expression => "CH7&CH8", 
+        { name => "EXPR3", expression => "CH7&CH8",
           account => 'ADV', visibility => 'PRI' },
-        { name => "EXPR4", expression => "CH5^(CH6|EXPR3)", 
+        { name => "EXPR4", expression => "CH5^(CH6|EXPR3)",
           account => 'ADV', visibility => 'PRI' },
-        { name => "EXPR5", expression => "CH11", 
+        { name => "EXPR5", expression => "CH11",
           account => 'ADV', visibility => 'PRI' },
-        { name => "EXPR6", expression => "EXPR5|CH9^CH10", 
+        { name => "EXPR6", expression => "EXPR5|CH9^CH10",
           account => 'ADV', visibility => 'PRI' } ],
     displays => [
         { name => 'CCG1', account => 'ADV',
@@ -644,7 +645,7 @@ sub init
   $ns->output("COLO", DB::Defaults::instance()->remote_isp->{colo_id});
 
   my $currency = $ns->create(Currency => { rate => 1.6 });
-  $ns->output("RATE", $currency->{rate});  
+  $ns->output("RATE", $currency->{rate});
 
   $self->base_case($ns);
   $self->adv_expression($ns);

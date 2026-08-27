@@ -41,22 +41,17 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<CreativeTemplatesAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address
-      )
+      void make_cmd (const char* address)
       {
         address_ = address;
         AdminParams params;
         make_admin_cmd(*this, "creative_templates", address, params, static_cast<size_t>(CampaignManager));
       }
-      CreativeTemplatesAdmin(
-        const char* address
-      )
+      CreativeTemplatesAdmin(const char* address)
       {
         make_cmd(address);
       }
-      CreativeTemplatesAdmin(
-        const std::string& address
-      )
+      CreativeTemplatesAdmin(const std::string& address)
       {
         make_cmd(address.c_str());
       }

@@ -85,8 +85,7 @@ TestJob<ConnectionCreatorType>::execute() noexcept
 
       Stream::Error error;
       error << "SwitchableEnvironment::create_connection(): "
-        "object is not active, but method succeeded" <<
-        std::endl;
+        "object is not active, but method succeeded" << std::endl;
       throw Exception(error);
     }
     catch(const Oracle::NonActive&)
@@ -117,8 +116,7 @@ TestJob<ConnectionCreatorType>::execute() noexcept
     {
       Connection_var conn = conn_creator_();
       Stream::Error error;
-      error << "create_connection didn't failed on inactive object" <<
-        std::endl;
+      error << "create_connection didn't failed on inactive object" << std::endl;
       throw Exception(error);
     }
     catch(const Oracle::NonActive&)
@@ -154,8 +152,7 @@ public:
   {
     try
     {
-      std::cerr << severity << "(" << error_code << "): " <<
-        description << std::endl;
+      std::cerr << severity << "(" << error_code << "): " << description << std::endl;
     }
     catch (...) {}
   }
@@ -164,9 +161,7 @@ public:
 class EnvironmentConnectionCreator
 {
 public:
-  EnvironmentConnectionCreator(
-    Environment* env,
-    const ConnectionDescription& conn_descr)
+  EnvironmentConnectionCreator(Environment* env, const ConnectionDescription& conn_descr)
     : env_(ReferenceCounting::add_ref(env)),
       conn_descr_(conn_descr)
   {}
@@ -184,8 +179,7 @@ protected:
 class PoolConnectionCreator
 {
 public:
-  PoolConnectionCreator(
-    ConnectionPool* connection_pool)
+  PoolConnectionCreator(ConnectionPool* connection_pool)
     : connection_pool_(ReferenceCounting::add_ref(connection_pool))
   {}
 
@@ -199,9 +193,7 @@ protected:
 };
 
 void
-run(const ConnectionDescription& conn_descr,
-  unsigned long threads,
-  unsigned long pools)
+run(const ConnectionDescription& conn_descr, unsigned long threads, unsigned long pools)
   /*throw(eh::Exception)*/
 {
   {
@@ -209,12 +201,10 @@ run(const ConnectionDescription& conn_descr,
 
     // SwitchableEnvironment testing
     SwitchableEnvironment_var env =
-      SwitchableEnvironment::create_environment(
-        SwitchableEnvironment::EM_THREADED_MUTEXED);
+      SwitchableEnvironment::create_environment(SwitchableEnvironment::EM_THREADED_MUTEXED);
 
     Generics::ActiveObjectCallback_var callback(new Callback);
-    Generics::TaskRunner_var crew(
-      new Generics::TaskRunner(callback, threads));
+    Generics::TaskRunner_var crew(new Generics::TaskRunner(callback, threads));
 
     Barrier barrier(threads);
     EnvironmentConnectionCreator conn_creator(env, conn_descr);
@@ -237,19 +227,16 @@ run(const ConnectionDescription& conn_descr,
 
     // ConnectionPool testing
     SwitchableEnvironment_var env =
-      SwitchableEnvironment::create_environment(
-        SwitchableEnvironment::EM_THREADED_MUTEXED);
+      SwitchableEnvironment::create_environment(SwitchableEnvironment::EM_THREADED_MUTEXED);
 
     Generics::ActiveObjectCallback_var callback(new Callback);
-    Generics::TaskRunner_var crew(
-      new Generics::TaskRunner(callback, threads));
+    Generics::TaskRunner_var crew(new Generics::TaskRunner(callback, threads));
 
     Barrier barrier(threads);
 
-    for(unsigned long pool_i = 0; pool_i < pools; ++pool_i)
+    for (unsigned long pool_i = 0; pool_i < pools; ++pool_i)
     {
-      ConnectionPool_var connection_pool = env->create_connection_pool(
-        conn_descr);
+      ConnectionPool_var connection_pool = env->create_connection_pool(conn_descr);
       PoolConnectionCreator conn_creator(connection_pool);
 
       for (size_t i = threads * pool_i / pools;
@@ -272,16 +259,14 @@ run(const ConnectionDescription& conn_descr,
 
     // ConnectionPool testing
     SwitchableEnvironment_var env =
-      SwitchableEnvironment::create_environment(
-        SwitchableEnvironment::EM_THREADED_MUTEXED);
+      SwitchableEnvironment::create_environment(SwitchableEnvironment::EM_THREADED_MUTEXED);
 
     Generics::ActiveObjectCallback_var callback(new Callback);
-    Generics::TaskRunner_var crew(
-      new Generics::TaskRunner(callback, threads));
+    Generics::TaskRunner_var crew(new Generics::TaskRunner(callback, threads));
 
     Barrier barrier(threads);
 
-    for(unsigned long pool_i = 0; pool_i < pools; ++pool_i)
+    for (unsigned long pool_i = 0; pool_i < pools; ++pool_i)
     {
       ConnectionPool_var connection_pool = env->create_connection_pool(
         conn_descr,
@@ -290,8 +275,7 @@ run(const ConnectionDescription& conn_descr,
         );
       PoolConnectionCreator conn_creator(connection_pool);
 
-      for (size_t i = threads * pool_i / pools;
-           i < threads * (pool_i + 1) / pools; ++i)
+      for (size_t i = threads * pool_i / pools; i < threads * (pool_i + 1) / pools; ++i)
       {
         crew->enqueue_task(Generics::Task_var(
           new TestJob<PoolConnectionCreator>(env, conn_creator, &barrier)));
@@ -310,46 +294,32 @@ main(int argc, const char *argv[])
 {
   try
   {
-    Generics::AppUtils::StringOption opt_ora_server(
-      "//oraads/addbads.ocslab.com");
+    Generics::AppUtils::StringOption opt_ora_server("//oraads/addbads.ocslab.com");
     Generics::AppUtils::StringOption opt_ora_user("ads_3");
     Generics::AppUtils::StringOption opt_ora_pwd("adserver");
     Generics::AppUtils::Option<unsigned long> opt_threads(10);
     Generics::AppUtils::Option<unsigned long> opt_pools(2);
     Generics::AppUtils::CheckOption opt_help;
     Generics::AppUtils::Args args(-1);
-    args.add(
-      Generics::AppUtils::equal_name("db"),
-      opt_ora_server);
-    args.add(
-      Generics::AppUtils::equal_name("user"),
-      opt_ora_user);
+    args.add(Generics::AppUtils::equal_name("db"), opt_ora_server);
+    args.add(Generics::AppUtils::equal_name("user"), opt_ora_user);
     args.add(
       Generics::AppUtils::equal_name("pwd") ||
       Generics::AppUtils::equal_name("password"),
       opt_ora_pwd);
-    args.add(
-      Generics::AppUtils::equal_name("threads"),
-      opt_threads);
-    args.add(
-      Generics::AppUtils::equal_name("pools"),
-      opt_pools);
-    args.add(
-      Generics::AppUtils::equal_name("help"),
-      opt_help);
+    args.add(Generics::AppUtils::equal_name("threads"), opt_threads);
+    args.add(Generics::AppUtils::equal_name("pools"), opt_pools);
+    args.add(Generics::AppUtils::equal_name("help"), opt_help);
 
     args.parse(argc - 1, argv + 1);
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       usage(argv[0]);
       return 0;
     }
 
     run(
-      ConnectionDescription(
-        opt_ora_user->c_str(),
-        opt_ora_pwd->c_str(),
-        opt_ora_server->c_str()),
+      ConnectionDescription(opt_ora_user->c_str(), opt_ora_pwd->c_str(), opt_ora_server->c_str()),
       *opt_threads,
       *opt_pools);
 

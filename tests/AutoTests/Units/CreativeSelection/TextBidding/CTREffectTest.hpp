@@ -7,10 +7,7 @@ class CTREffectTest: public BaseUnit
 {
 public:
 
-  CTREffectTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  CTREffectTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

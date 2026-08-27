@@ -14,9 +14,7 @@ namespace Aspect
   const char MESSAGE_SAVER[] = "MessageSaver";
 }
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   namespace
   {
@@ -24,7 +22,7 @@ namespace ProfilingCommons
       unsigned long chunks_count,
       unsigned long threads_count) noexcept
     {
-      if(chunks_count == 0)
+      if (chunks_count == 0)
       {
         return 1;
       }
@@ -84,8 +82,7 @@ namespace ProfilingCommons
       membuf(std::move(membuf_val))
   {}
 
-  MessageSaver::FileHolderGuard::FileHolderGuard(
-    FileHolder* file_holder)
+  MessageSaver::FileHolderGuard::FileHolderGuard(FileHolder* file_holder)
     : file_holder_(ReferenceCounting::add_ref(file_holder)),
       guard_(file_holder_->lock)
   {}
@@ -138,13 +135,13 @@ namespace ProfilingCommons
     }
 
     worker_conds_.reserve(write_workers_count_);
-    for(unsigned long i = 0; i < write_workers_count_; ++i)
+    for (unsigned long i = 0; i < write_workers_count_; ++i)
     {
       worker_conds_.emplace_back(std::make_shared<QueueCond>());
     }
 
     files_.reserve(chunks_count);
-    for(unsigned long i = 0; i < chunks_count; ++i)
+    for (unsigned long i = 0; i < chunks_count; ++i)
     {
       FileHolder* file_holder = new FileHolder();
       file_holder->queue_cond = worker_conds_[i % write_workers_count_];
@@ -220,9 +217,7 @@ namespace ProfilingCommons
       std::lock_guard<std::mutex> guard(file_holder.queue_lock);
       queue_cond = file_holder.queue_cond.get();
       file_holder.queue.emplace_back(chunk_i, op_index_val, std::move(membuf));
-      notify_worker = queue_cond->queued_operations.fetch_add(
-        1,
-        std::memory_order_acq_rel) == 0;
+      notify_worker = queue_cond->queued_operations.fetch_add(1, std::memory_order_acq_rel) == 0;
     }
     catch(...)
     {
@@ -268,16 +263,14 @@ namespace ProfilingCommons
   {
     wait_pending_operations_();
     check_background_error_();
-    for(FileHolderArray::iterator it = files_.begin(); it != files_.end(); ++it)
+    for (FileHolderArray::iterator it = files_.begin(); it != files_.end(); ++it)
     {
       dump_file_holder_(**it, dumped_files);
     }
   }
 
   void
-  MessageSaver::dump_file_holder_(
-    FileHolder& file_holder,
-    FileNameList* dumped_files)
+  MessageSaver::dump_file_holder_(FileHolder& file_holder, FileNameList* dumped_files)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "RequestOperationSaver::dump_()";
@@ -301,8 +294,7 @@ namespace ProfilingCommons
       if (::rename(tmp_file_name.c_str(), file_name.c_str()) < 0)
       {
         Stream::Error ostr;
-        ostr << FUN << ": can't rename '" << tmp_file_name <<
-          "' to '" << file_name << "'";
+        ostr << FUN << ": can't rename '" << tmp_file_name << "' to '" << file_name << "'";
         eh::throw_errno_exception<Exception>(ostr.str());
       }
 
@@ -325,9 +317,7 @@ namespace ProfilingCommons
     file_holder.file_name = files.first;
     file_holder.tmp_file_name = files.second;
     file_holder.file_writer.reset(
-      new AdServer::ProfilingCommons::FileWriter(
-        file_holder.tmp_file_name.c_str(),
-        1024*1024));
+      new AdServer::ProfilingCommons::FileWriter(file_holder.tmp_file_name.c_str(), 1024*1024));
   }
 
   void
@@ -341,27 +331,19 @@ namespace ProfilingCommons
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::MESSAGE_SAVER,
-        "ADS-IMPL-?") << FUN <<
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::MESSAGE_SAVER, "ADS-IMPL-?") << FUN <<
         ": Can't flush request operations: " << ex.what();
     }
 
     try
     {
       scheduler_->schedule(
-        Commons::make_delegate_goal_task(
-          std::bind(&MessageSaver::flush_logs_, this),
-          task_runner_),
+        Commons::make_delegate_goal_task(std::bind(&MessageSaver::flush_logs_, this), task_runner_),
         Generics::Time::get_time_of_day() + flush_period_);
     }
     catch(const eh::Exception& ex)
     {
-      logger_->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::MESSAGE_SAVER,
-        "ADS-IMPL-?") << FUN <<
+      logger_->sstream(Logging::Logger::EMERGENCY, Aspect::MESSAGE_SAVER, "ADS-IMPL-?") << FUN <<
         ": Can't schedule next flush task: " << ex.what();
     }
   }
@@ -370,20 +352,16 @@ namespace ProfilingCommons
   MessageSaver::start_write_workers_()
   {
     write_workers_.reserve(write_workers_count_);
-    for(unsigned long i = 0; i < write_workers_count_; ++i)
+    for (unsigned long i = 0; i < write_workers_count_; ++i)
     {
-      write_workers_.emplace_back(
-        [this, i]()
-        {
-          write_worker_loop_(i);
-        });
+      write_workers_.emplace_back([this, i]() { write_worker_loop_(i); });
     }
   }
 
   void
   MessageSaver::notify_write_workers_()
   {
-    for(const auto& queue_cond : worker_conds_)
+    for (const auto& queue_cond : worker_conds_)
     {
       std::lock_guard<std::mutex> lock(queue_cond->mutex);
       queue_cond->cond.notify_all();
@@ -409,7 +387,7 @@ namespace ProfilingCommons
     QueueCond* const queue_cond = worker_conds_[worker_i].get();
     std::deque<QueuedOperation> operations;
 
-    while(true)
+    while (true)
     {
       {
         std::unique_lock<std::mutex> lock(queue_cond->mutex);
@@ -424,8 +402,7 @@ namespace ProfilingCommons
 
       unsigned long processed_operations = 0;
 
-      for (std::size_t chunk_i = worker_i;
-        chunk_i < files_.size(); chunk_i += write_workers_count_)
+      for (std::size_t chunk_i = worker_i; chunk_i < files_.size(); chunk_i += write_workers_count_)
       {
         FileHolder& file_holder = *files_[chunk_i];
         {
@@ -440,9 +417,7 @@ namespace ProfilingCommons
 
         const unsigned long operations_count = operations.size();
         processed_operations += operations_count;
-        queue_cond->queued_operations.fetch_sub(
-          operations_count,
-          std::memory_order_acq_rel);
+        queue_cond->queued_operations.fetch_sub(operations_count, std::memory_order_acq_rel);
 
         while (!operations.empty())
         {
@@ -550,5 +525,4 @@ namespace ProfilingCommons
     ostr << "MessageSaver background error: " << background_error_;
     throw Exception(ostr);
   }
-}
 }

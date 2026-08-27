@@ -7,15 +7,12 @@ namespace Aspect
   const char CAMPAIGN_CONFIG_MODIFIER[] = "CampaignConfigModifier";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace
   {
     const RevenueDecimal TAG_DELIVERY_MAX_DECIMAL(false, TAG_DELIVERY_MAX, 0);
-    const RevenueDecimal REVENUEDECIMAL_ONE_DAY(
-      false, Generics::Time::ONE_DAY.tv_sec, 0);
+    const RevenueDecimal REVENUEDECIMAL_ONE_DAY(false, Generics::Time::ONE_DAY.tv_sec, 0);
     const StatSource::Stat::CCGStat::TagHourStat ZERO_TAG_HOUR_STAT;
 
     const ImpRevenueDecimal MIN_IMP_FOR_CREATIVE_WEIGHT_CALC(false, 2000, 0);
@@ -47,9 +44,7 @@ namespace CampaignSvcs
   }
 
   void
-  CampaignConfigModifier::update_stat(
-    CampaignConfig* campaign_config,
-    const Generics::Time& now)
+  CampaignConfigModifier::update_stat(CampaignConfig* campaign_config, const Generics::Time& now)
     /*throw(Exception)*/
   {
     SyncPolicy::WriteGuard update_lock(update_stat_lock_);
@@ -67,9 +62,7 @@ namespace CampaignSvcs
   }
 
   void
-  CampaignConfigModifier::update(
-    CampaignConfig* campaign_config,
-    const Generics::Time& now)
+  CampaignConfigModifier::update(CampaignConfig* campaign_config, const Generics::Time& now)
     /*throw(Exception)*/
   {
     StatSource::Stat_var campaign_stat;
@@ -80,8 +73,7 @@ namespace CampaignSvcs
 
       if (campaign_stat_.get().in())
       {
-        StatSource::Stat_var adapt_campaign_stat(
-          new StatSource::Stat(*campaign_stat_.get()));
+        StatSource::Stat_var adapt_campaign_stat(new StatSource::Stat(*campaign_stat_.get()));
         adapt_stat_(*adapt_campaign_stat, campaign_config, now);
         campaign_stat = adapt_campaign_stat;
       }
@@ -92,8 +84,7 @@ namespace CampaignSvcs
 
     {
       // update modify config
-      ModifyConfig_var new_modify_config =
-        modify_config_source_->update();
+      ModifyConfig_var new_modify_config = modify_config_source_->update();
       CModifyConfig_var new_modify_config_ptr = new_modify_config;
 
       SyncPolicy::WriteGuard lock(modify_config_lock_);
@@ -159,8 +150,7 @@ namespace CampaignSvcs
     bool full_update)
     /*throw(Exception)*/
   {
-    StatSource::Stat_var res_campaign_stat(
-      ReferenceCounting::add_ref(campaign_stat));
+    StatSource::Stat_var res_campaign_stat(ReferenceCounting::add_ref(campaign_stat));
 
     if (!res_campaign_stat.in() ||
        full_synch_required_ ||
@@ -215,8 +205,7 @@ namespace CampaignSvcs
       ModifiedCampaignMap;
 
     // check account budget limitations
-    for (AccountMap::ActiveMap::iterator acc_it =
-          campaign_config.accounts.active().begin();
+    for (AccountMap::ActiveMap::iterator acc_it = campaign_config.accounts.active().begin();
         acc_it != campaign_config.accounts.active().end(); ++acc_it)
     {
       const AccountDef* account = acc_it->second;
@@ -270,16 +259,12 @@ namespace CampaignSvcs
     RevenueDecimal prev_hour_factor;
     RevenueDecimal cur_hour_factor;
 
-    fill_campaign_delivery_check_params_(
-      prev_hour_factor,
-      cur_hour_factor,
-      sysdate);
+    fill_campaign_delivery_check_params_(prev_hour_factor, cur_hour_factor, sysdate);
 
     // group ccg by campaigns
     CampaignCCGMap grouped_campaigns;
 
-    for (CampaignMap::ActiveMap::iterator ccg_it =
-          campaign_config.campaigns.active().begin();
+    for (CampaignMap::ActiveMap::iterator ccg_it = campaign_config.campaigns.active().begin();
         ccg_it != campaign_config.campaigns.active().end(); ++ccg_it)
     {
       const CampaignDef* campaign = ccg_it->second;
@@ -315,8 +300,7 @@ namespace CampaignSvcs
         if (acc_it != campaign_config.accounts.active().end())
         {
           account = acc_it->second;
-          account_is_active = account_is_active && (
-            account->eval_status == 'A');
+          account_is_active = account_is_active && (account->eval_status == 'A');
         }
         else
         {
@@ -497,8 +481,7 @@ namespace CampaignSvcs
       if (ENABLE_DELIVERY_THRESHOLDS_ && campaign_daily_budget_defined)
       {
         // reeval delivery coefs by campaign daily budget
-        Generics::Time campaign_open_time = campaign_open_time_(
-          first_campaign, sysdate);
+        Generics::Time campaign_open_time = campaign_open_time_(first_campaign, sysdate);
 
         const RevenueDecimal period_budget_limit = eval_period_budget_limit_(
           campaign_daily_budget,
@@ -524,8 +507,7 @@ namespace CampaignSvcs
       {
         bool modified = false;
         ReferenceCounting::SmartPtr<CampaignDef> orig;
-        ModifiedCampaignMap::const_iterator mcmp_it = modified_ccgs.find(
-          cmp_it->first);
+        ModifiedCampaignMap::const_iterator mcmp_it = modified_ccgs.find(cmp_it->first);
         if (mcmp_it != modified_ccgs.end())
         {
           orig = mcmp_it->second;
@@ -592,8 +574,7 @@ namespace CampaignSvcs
   }
 
   unsigned long
-  CampaignConfigModifier::time_to_week_offset_(
-    const Generics::Time& time)
+  CampaignConfigModifier::time_to_week_offset_(const Generics::Time& time)
     noexcept
   {
     Generics::ExtendedTime ex_time = time.get_gm_time();
@@ -630,8 +611,7 @@ namespace CampaignSvcs
            (now + time_offset).get_gm_time().get_date()).tv_sec /
           Generics::Time::ONE_DAY.tv_sec + 1);
         daily_budget = (remain_days > RevenueDecimal::ZERO ?
-          RevenueDecimal::div(
-            *delivery_limits.budget - amount + daily_amount, remain_days) :
+          RevenueDecimal::div(*delivery_limits.budget - amount + daily_amount, remain_days) :
           RevenueDecimal::ZERO);
         return true;
       }
@@ -659,8 +639,7 @@ namespace CampaignSvcs
       if (deactivate_trace_str)
       {
         *deactivate_trace_str << "deactivate campaign #" << id <<
-          ": " << (account->eval_status != 'A' ? "account status" : "") <<
-          std::endl;
+          ": " << (account->eval_status != 'A' ? "account status" : "") << std::endl;
       }
 
       return false;
@@ -676,12 +655,10 @@ namespace CampaignSvcs
     if (cmp_stat_it != stat.campaign_stats.end())
     {
       amount = cmp_stat_it->second.amount +
-        (account->is_gross() ? cmp_stat_it->second.comm_amount :
-         RevenueDecimal::ZERO);
+        (account->is_gross() ? cmp_stat_it->second.comm_amount : RevenueDecimal::ZERO);
 
       daily_amount = cmp_stat_it->second.daily_amount +
-        (account->is_gross() ? cmp_stat_it->second.daily_comm_amount :
-         RevenueDecimal::ZERO);
+        (account->is_gross() ? cmp_stat_it->second.daily_comm_amount : RevenueDecimal::ZERO);
     }
 
     if (campaign->campaign_delivery_limits.budget.present() &&
@@ -738,17 +715,14 @@ namespace CampaignSvcs
 
     if (cmp_stat_it != stat.campaign_stats.end())
     {
-      StatSource::Stat::CCGStatMap::const_iterator ccg_stats_it =
-        cmp_stat_it->second.ccgs.find(id);
+      StatSource::Stat::CCGStatMap::const_iterator ccg_stats_it = cmp_stat_it->second.ccgs.find(id);
 
       if (ccg_stats_it != cmp_stat_it->second.ccgs.end())
       {
         RevenueDecimal amount = ccg_stats_it->second.amount +
-          (account->is_gross() ? ccg_stats_it->second.comm_amount :
-           RevenueDecimal::ZERO);
+          (account->is_gross() ? ccg_stats_it->second.comm_amount : RevenueDecimal::ZERO);
         RevenueDecimal daily_amount = ccg_stats_it->second.daily_amount +
-          (account->is_gross() ? ccg_stats_it->second.daily_comm_amount :
-           RevenueDecimal::ZERO);
+          (account->is_gross() ? ccg_stats_it->second.daily_comm_amount : RevenueDecimal::ZERO);
 
         if (campaign->ctr_reset_id == 0)
         {
@@ -775,15 +749,13 @@ namespace CampaignSvcs
           daily_amount);
 
         // CCG budget check
-        if ((ccg_daily_budget_defined &&
-             daily_amount >= ccg_daily_budget) ||
+        if ((ccg_daily_budget_defined && daily_amount >= ccg_daily_budget) ||
            (campaign->ccg_delivery_limits.budget.present() &&
              *campaign->ccg_delivery_limits.budget <= amount))
         {
           if (deactivate_trace_str)
           {
-            *deactivate_trace_str << "deactivate ccg #" << id <<
-              ": ccg budget limits" << std::endl;
+            *deactivate_trace_str << "deactivate ccg #" << id << ": ccg budget limits" << std::endl;
           }
 
           return false;
@@ -817,10 +789,8 @@ namespace CampaignSvcs
 
     // cross result [today_open_time_start, today_open_time_end)
     // with weekly run intervals
-    unsigned long today_open_time_start_offset =
-      time_to_week_offset_(today_open_time_start);
-    unsigned long today_open_time_end_offset =
-      time_to_week_offset_(today_open_time_end);
+    unsigned long today_open_time_start_offset = time_to_week_offset_(today_open_time_start);
+    unsigned long today_open_time_end_offset = time_to_week_offset_(today_open_time_end);
 
     if (today_open_time_end_offset <= today_open_time_start_offset)
     {
@@ -836,8 +806,7 @@ namespace CampaignSvcs
       intervals.cross(campaign->weekly_run_intervals);
 
       today_open_time = Generics::Time::ZERO;
-      for (WeeklyRunIntervalSet::const_iterator it = intervals.begin();
-          it != intervals.end(); ++it)
+      for (WeeklyRunIntervalSet::const_iterator it = intervals.begin(); it != intervals.end(); ++it)
       {
         today_open_time += Generics::Time::ONE_MINUTE *
           (it->max - it->min);
@@ -916,8 +885,7 @@ namespace CampaignSvcs
           0,
           0);
 
-        StatSource::Stat::CampaignStat* campaign_stat =
-          find_campaign_stat_(stat, ccg_it->second);
+        StatSource::Stat::CampaignStat* campaign_stat = find_campaign_stat_(stat, ccg_it->second);
 
         if (campaign_stat)
         {
@@ -927,8 +895,7 @@ namespace CampaignSvcs
             campaign_stat->daily_comm_amount = RevenueDecimal::ZERO;
           }
 
-          StatSource::Stat::CCGStat* ccg_stat = find_ccg_stat_(
-            *campaign_stat, ccg_it->first);
+          StatSource::Stat::CCGStat* ccg_stat = find_ccg_stat_(*campaign_stat, ccg_it->first);
 
           if (ccg_stat)
           {
@@ -1078,8 +1045,7 @@ namespace CampaignSvcs
     const Generics::Time& now)
     noexcept
   {
-    static const Generics::Time DELIVERY_CALCULATE_PERIOD =
-      Generics::Time::ONE_MINUTE * 30;
+    static const Generics::Time DELIVERY_CALCULATE_PERIOD = Generics::Time::ONE_MINUTE * 30;
 
     Generics::ExtendedTime ex_now = now.get_gm_time();
 
@@ -1114,9 +1080,7 @@ namespace CampaignSvcs
 
   struct CampaignTagAmount
   {
-    CampaignTagAmount(
-      unsigned long tag_id_val,
-      const RevenueDecimal& adv_amount_val)
+    CampaignTagAmount(unsigned long tag_id_val, const RevenueDecimal& adv_amount_val)
       : tag_id(tag_id_val),
         adv_amount(adv_amount_val)
     {}
@@ -1158,17 +1122,14 @@ namespace CampaignSvcs
         prev_hour_factor,
         cur_hour_factor);
 
-      RevenueDecimal budget_limit = eval_period_budget_limit_(
-        ccg_daily_budget,
-        today_open_time);
+      RevenueDecimal budget_limit = eval_period_budget_limit_(ccg_daily_budget, today_open_time);
 
       State::CampaignState_var old_cmp_state;
       State::CampaignState_var new_cmp_state;
 
       if (old_state)
       {
-        State::CampaignStateMap::const_iterator cmp_state_it =
-          old_state->campaigns.find(ccg_id);
+        State::CampaignStateMap::const_iterator cmp_state_it = old_state->campaigns.find(ccg_id);
         if (cmp_state_it != old_state->campaigns.end())
         {
           old_cmp_state = cmp_state_it->second;
@@ -1217,8 +1178,7 @@ namespace CampaignSvcs
               campaign_stat.tag_stats.begin();
             ts_it != campaign_stat.tag_stats.end(); ++ts_it)
         {
-          TagDeliveryMap::const_iterator td_it =
-            campaign.exclude_tags.find(ts_it->first);
+          TagDeliveryMap::const_iterator td_it = campaign.exclude_tags.find(ts_it->first);
 
           if (td_it == campaign.exclude_tags.end() || td_it->second != 0)
           {
@@ -1248,9 +1208,7 @@ namespace CampaignSvcs
               // tag priority is oix-profit / adv-amount =
               //  = (adv-amount - (pub-amount + isp-amount)) / adv-amount
               RevenueDecimal priority = period_adv_amount != RevenueDecimal::ZERO ?
-                RevenueDecimal::div(
-                  period_adv_amount - period_isp_pub_amount,
-                  period_adv_amount) :
+                RevenueDecimal::div(period_adv_amount - period_isp_pub_amount, period_adv_amount) :
                 RevenueDecimal::ZERO;
 
               tag_priorities.insert(std::make_pair(
@@ -1265,8 +1223,7 @@ namespace CampaignSvcs
                 old_cmp_state->tag_exclusions.begin();
               ts_it != old_cmp_state->tag_exclusions.end(); ++ts_it)
           {
-            TagDeliveryMap::const_iterator td_it =
-              campaign.exclude_tags.find(ts_it->first);
+            TagDeliveryMap::const_iterator td_it = campaign.exclude_tags.find(ts_it->first);
             if (td_it != campaign.exclude_tags.end() && td_it->second == 0)
             {
               // fully excluded tags - we use old saved state
@@ -1282,8 +1239,7 @@ namespace CampaignSvcs
         // without processing tags that not present in stats &
         // not present in exclusion
         RevenueDecimal sum_amount = RevenueDecimal::ZERO;
-        TagPriorityMap::const_reverse_iterator tag_it =
-          tag_priorities.rbegin();
+        TagPriorityMap::const_reverse_iterator tag_it = tag_priorities.rbegin();
         predictable_period_adv_amount = RevenueDecimal::ZERO;
 
         for (; tag_it != tag_priorities.rend(); ++tag_it)
@@ -1329,8 +1285,7 @@ namespace CampaignSvcs
         predictable_period_adv_amount = sum_amount;
 
         // copy old tag exclusion, but remove tags with changed tag pricings
-        for (TagDeliveryMap::const_iterator td_it =
-              campaign.exclude_tags.begin();
+        for (TagDeliveryMap::const_iterator td_it = campaign.exclude_tags.begin();
             td_it != campaign.exclude_tags.end(); ++td_it)
         {
           TagMap::ActiveMap::const_iterator tag_it = active_tags.find(td_it->first);
@@ -1352,10 +1307,7 @@ namespace CampaignSvcs
       ostr << FUN << ": can't evaluate delivery thresholds for ccg_id=" <<
         ccg_id << ": " << ex.what();
 
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CAMPAIGN_CONFIG_MODIFIER);
+      logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::CAMPAIGN_CONFIG_MODIFIER);
     }
   }
 
@@ -1371,15 +1323,11 @@ namespace CampaignSvcs
     noexcept
   {
     const RevenueDecimal res_prev_hour_amount = prev_hour_amount +
-      (account->is_gross() ? prev_hour_comm_amount :
-       RevenueDecimal::ZERO);
+      (account->is_gross() ? prev_hour_comm_amount : RevenueDecimal::ZERO);
     const RevenueDecimal res_cur_hour_amount = cur_hour_amount +
-      (account->is_gross() ? cur_hour_comm_amount :
-       RevenueDecimal::ZERO);
-    return RevenueDecimal::mul(
-        res_prev_hour_amount, prev_hour_factor, Generics::DMR_FLOOR) +
-      RevenueDecimal::mul(
-        res_cur_hour_amount, cur_hour_factor, Generics::DMR_FLOOR);
+      (account->is_gross() ? cur_hour_comm_amount : RevenueDecimal::ZERO);
+    return RevenueDecimal::mul(res_prev_hour_amount, prev_hour_factor, Generics::DMR_FLOOR) +
+      RevenueDecimal::mul(res_cur_hour_amount, cur_hour_factor, Generics::DMR_FLOOR);
   }
 
   RevenueDecimal
@@ -1393,9 +1341,7 @@ namespace CampaignSvcs
       if (today_open_time != Generics::Time::ZERO)
       {
         return RevenueDecimal::div(
-          RevenueDecimal::mul(
-            daily_budget, delivery_calc_params_.day_part,
-            Generics::DMR_FLOOR),
+          RevenueDecimal::mul(daily_budget, delivery_calc_params_.day_part, Generics::DMR_FLOOR),
           RevenueDecimal(false, today_open_time.tv_sec, 0));
       }
     }
@@ -1404,8 +1350,7 @@ namespace CampaignSvcs
       // will be lost precision at great budget values
       return RevenueDecimal::mul(
         daily_budget,
-        RevenueDecimal::div(delivery_calc_params_.day_part,
-        REVENUEDECIMAL_ONE_DAY),
+        RevenueDecimal::div(delivery_calc_params_.day_part, REVENUEDECIMAL_ONE_DAY),
         Generics::DMR_FLOOR);
     }
 
@@ -1413,9 +1358,7 @@ namespace CampaignSvcs
   }
 
   StatSource::Stat::CampaignStat*
-  CampaignConfigModifier::find_campaign_stat_(
-    StatSource::Stat& stats,
-    CampaignDef* campaign)
+  CampaignConfigModifier::find_campaign_stat_(StatSource::Stat& stats, CampaignDef* campaign)
     noexcept
   {
     const StatSource::Stat::CampaignStatMap::iterator it =
@@ -1429,9 +1372,7 @@ namespace CampaignSvcs
     unsigned long ccg_id)
     noexcept
   {
-    const StatSource::Stat::CCGStatMap::iterator it =
-      stats.ccgs.find(ccg_id);
+    const StatSource::Stat::CCGStatMap::iterator it = stats.ccgs.find(ccg_id);
     return (it != stats.ccgs.end() ? &it->second : nullptr);
   }
-}
 }

@@ -249,16 +249,13 @@ namespace AdServer::UserInfoSvcs
           return lhs->second.total_wait_us > rhs->second.total_wait_us;
         });
 
-      const auto keys_to_log = std::min(
-        ordered_states.size(),
-        MAX_SLOW_TRANSACTION_KEYS_TO_LOG);
+      const auto keys_to_log = std::min(ordered_states.size(), MAX_SLOW_TRANSACTION_KEYS_TO_LOG);
 
       Stream::Error ostr;
       ostr << "Slow co_get_transaction waits: threshold_us=" <<
         SLOW_TRANSACTION_THRESHOLD_US <<
         ", events=" << total_count <<
-        ", keys=" << ordered_states.size() <<
-        ", shown_keys=" << keys_to_log;
+        ", keys=" << ordered_states.size() << ", shown_keys=" << keys_to_log;
 
       for (std::size_t i = 0; i < keys_to_log; ++i)
       {
@@ -271,10 +268,7 @@ namespace AdServer::UserInfoSvcs
           ", max_wait_us=" << state.max_wait_us;
       }
 
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::NOTICE,
-        Aspect::USER_INFO_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::NOTICE, Aspect::USER_INFO_CONTAINER);
     }
     catch (...)
     {}
@@ -305,8 +299,7 @@ namespace AdServer::UserInfoSvcs
       colo_id_(colo_id),
       profile_request_timeout_(profile_request_timeout),
       rocksdb_processor_(std::make_shared<
-        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
-          rocksdb_batching_threads)),
+        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(rocksdb_batching_threads)),
       time_offset_(Generics::Time::ZERO),
       profile_avg_statistic_(avg_statistic),
       ad_channels_count_(0),
@@ -444,7 +437,7 @@ namespace AdServer::UserInfoSvcs
     }
     catch(const UserFreqCapProfile::Invalid& ex)
     {
-      if(fill_full_freq_caps)
+      if (fill_full_freq_caps)
       {
         Stream::Error ostr;
         ostr << FUN << ": Caught UserFreqCapProfile::Invalid: " << ex.what();
@@ -543,7 +536,7 @@ namespace AdServer::UserInfoSvcs
       bool res = profile.consider_publishers_optin(exclude_pubpixel_accounts, now);
       res |= profile.confirm_request(request_id, now, *freq_cap_config);
 
-      if(res)
+      if (res)
       {
         fc_profile_trans->save_profile_async(profile.transfer_membuf(), now);
       }
@@ -581,9 +574,9 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      if(mb_base_profile_out)
+      if (mb_base_profile_out)
       {
-        if(!temporary)
+        if (!temporary)
         {
           *mb_base_profile_out = co_await base_profiles_->co_get_own_profile(user_id);
         }
@@ -593,14 +586,14 @@ namespace AdServer::UserInfoSvcs
         }
       }
 
-      if(mb_add_profile_out)
+      if (mb_add_profile_out)
       {
         *mb_add_profile_out = co_await add_profiles_->co_get_own_profile(user_id);
       }
 
-      if(mb_history_profile_out)
+      if (mb_history_profile_out)
       {
-        if(!temporary)
+        if (!temporary)
         {
           *mb_history_profile_out = co_await history_profiles_->co_get_own_profile(user_id);
         }
@@ -610,11 +603,11 @@ namespace AdServer::UserInfoSvcs
         }
       }
 
-      if(mb_fc_profile_out)
+      if (mb_fc_profile_out)
       {
         SmartMemBuf_var mb = co_await freq_cap_profiles_->co_get_own_profile(user_id);
 
-        if(mb && mb->membuf().size() <= 40 * 1024 * 1024)
+        if (mb && mb->membuf().size() <= 40 * 1024 * 1024)
         {
           *mb_fc_profile_out = mb;
         }
@@ -707,12 +700,11 @@ namespace AdServer::UserInfoSvcs
 
       SmartMemBuf_var add_buf = co_await add_profile_trans->co_get_own_profile();
 
-      if(add_buf.in() && !other_base_profile_buf.empty())
+      if (add_buf.in() && !other_base_profile_buf.empty())
       {
         try
         {
-          Generics::SmartMemBuf_var base_profile(
-            new Generics::SmartMemBuf(other_base_profile_buf));
+          Generics::SmartMemBuf_var base_profile(new Generics::SmartMemBuf(other_base_profile_buf));
           if (other_base_profile_buf.size() != 0)
           {
             BaseProfileAdapter base_adapter;
@@ -849,12 +841,11 @@ namespace AdServer::UserInfoSvcs
       SmartMemBuf_var target_profile;
       SmartMemBuf_var target_history_profile;
 
-      bool new_user =
-        !temporary && request_params.change_last_request && !request_params.household;
+      bool new_user = !temporary && request_params.change_last_request && !request_params.household;
 
       try
       {
-        if(temporary)
+        if (temporary)
         {
           target_profile_trans = co_await co_get_transaction_(temp_profiles_.in(),
             user_id, true, op_priority);
@@ -908,7 +899,7 @@ namespace AdServer::UserInfoSvcs
 
       Generics::ConstSmartMemBuf_var merge_freq_cap_profile;
 
-      if(!merge_freq_cap_profile_buf.empty())
+      if (!merge_freq_cap_profile_buf.empty())
       {
         Generics::SmartMemBuf_var v(new SmartMemBuf(merge_freq_cap_profile_buf));
         UserFreqCapProfileAdapter freq_cap_adapter;
@@ -928,17 +919,15 @@ namespace AdServer::UserInfoSvcs
         user_app.create_time = get_create_time_(target_profile.in());
       }
 
-      if(temporary)
+      if (temporary)
       {
         target_history_profile_trans =
-          co_await co_get_transaction_(temp_history_profiles_.in(),
-            user_id, true, op_priority);
+          co_await co_get_transaction_(temp_history_profiles_.in(), user_id, true, op_priority);
       }
       else
       {
         target_history_profile_trans =
-          co_await co_get_transaction_(history_profiles_.in(),
-            user_id, true, op_priority);
+          co_await co_get_transaction_(history_profiles_.in(), user_id, true, op_priority);
       }
 
       target_history_profile = co_await target_history_profile_trans->co_get_own_profile();
@@ -948,7 +937,7 @@ namespace AdServer::UserInfoSvcs
         target_history_profile = new SmartMemBuf;
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         std::ostringstream tracing_ostr;
 
@@ -1016,15 +1005,12 @@ namespace AdServer::UserInfoSvcs
 
         tracing_ostr << std::endl;
 
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
+        logger_->log(tracing_ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
       }
 
       SmartMemBuf_var add_mb(new SmartMemBuf);
 
-      ChannelsMatcher user_profile_adapter(
-        target_profile.in(), add_mb.in());
+      ChannelsMatcher user_profile_adapter(target_profile.in(), add_mb.in());
 
       if (target_profile.in())
       {
@@ -1067,7 +1053,7 @@ namespace AdServer::UserInfoSvcs
         request_params,
         merge_time);
 
-      if(merge_add_profile_buf.size() > 0)
+      if (merge_add_profile_buf.size() > 0)
       {
         SmartMemBuf_var empty_hp(new SmartMemBuf);
 
@@ -1098,31 +1084,25 @@ namespace AdServer::UserInfoSvcs
       }
 
       UserProfileMap::Transaction_var target_freq_cap_profile_trans =
-        co_await co_get_transaction_(freq_cap_profiles_.in(),
-          user_id, true, op_priority);
+        co_await co_get_transaction_(freq_cap_profiles_.in(), user_id, true, op_priority);
 
       SmartMemBuf_var target_freq_cap_profile =
         co_await target_freq_cap_profile_trans->co_get_own_profile();
       ConstSmartMemBuf_var result_freq_cap_profile;
 
-      if(merge_freq_cap_profile)
+      if (merge_freq_cap_profile)
       {
         try
         {
-          UserFreqCapProfile freq_cap_profile(
-            target_freq_cap_profile,
-            true);
-          freq_cap_profile.merge(
-            merge_freq_cap_profile,
-            merge_time,
-            *freq_cap_config);
+          UserFreqCapProfile freq_cap_profile(target_freq_cap_profile, true);
+          freq_cap_profile.merge(merge_freq_cap_profile, merge_time, *freq_cap_config);
           result_freq_cap_profile = freq_cap_profile.transfer_membuf();
         }
         catch(const UserFreqCapProfile::Invalid&)
         {}
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         std::ostringstream tracing_ostr;
 
@@ -1149,9 +1129,7 @@ namespace AdServer::UserInfoSvcs
           tracing_ostr,
           true);
 
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
+        logger_->log(tracing_ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
       }
 
       if (!merge_to_additional && new_user && ho_info != 0)
@@ -1183,11 +1161,9 @@ namespace AdServer::UserInfoSvcs
           merge_time);
       }
 
-      if(result_freq_cap_profile)
+      if (result_freq_cap_profile)
       {
-        target_freq_cap_profile_trans->save_profile_async(
-          result_freq_cap_profile,
-          merge_time);
+        target_freq_cap_profile_trans->save_profile_async(result_freq_cap_profile, merge_time);
       }
 
       co_return true;
@@ -1200,8 +1176,7 @@ namespace AdServer::UserInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught ChannelsMatcher::InvalidProfileException"
-        " at user '" << request_params.user_id.to_string() <<
-        ": " << ex.what();
+        " at user '" << request_params.user_id.to_string() << ": " << ex.what();
       throw Exception(ostr);
     }
     catch(const NotReady& ex)
@@ -1238,7 +1213,7 @@ namespace AdServer::UserInfoSvcs
         AdServer::ProfilingCommons::OP_RUNTIME);
       SmartMemBuf_var base_mem_buf = co_await base_profile_trans->co_get_own_profile();
 
-      if(base_mem_buf.in() == 0)
+      if (base_mem_buf.in() == 0)
       {
         base_mem_buf = new SmartMemBuf;
       }
@@ -1246,7 +1221,7 @@ namespace AdServer::UserInfoSvcs
       SmartMemBuf_var add_mem_buf(new SmartMemBuf);
       ChannelsMatcher cm(base_mem_buf.in(), add_mem_buf.in());
 
-      if(cm.fraud_user(now))
+      if (cm.fraud_user(now))
       {
         base_profile_trans->save_profile_async(
           Generics::transfer_membuf(base_mem_buf),
@@ -1307,8 +1282,7 @@ namespace AdServer::UserInfoSvcs
       bool temporary = request_params.temporary;
       Generics::Time match_time = request_params.current_time;
 
-      UserProfileMap* base_profiles =
-        temporary ? temp_profiles_.in() : base_profiles_.in();
+      UserProfileMap* base_profiles = temporary ? temp_profiles_.in() : base_profiles_.in();
 
       UserProfileMap::Transaction_var base_profile_trans;
       UserProfileMap::Transaction_var add_profile_trans;
@@ -1343,8 +1317,7 @@ namespace AdServer::UserInfoSvcs
       bool match_to_additional =
         use_add_profile_on_match_ &&
         !request_params.use_empty_profile &&
-        ((last_colo_id != current_placement_colo_id &&
-         last_colo_id != DEFAULT_COLO_ID) ||
+        ((last_colo_id != current_placement_colo_id && last_colo_id != DEFAULT_COLO_ID) ||
          add_mem_buf.in());
 
       if (add_mem_buf.in() == 0)
@@ -1355,15 +1328,12 @@ namespace AdServer::UserInfoSvcs
         {
           std::ostringstream ostr;
           ostr << "Additional profile for user with uid = " << user_id <<
-            "was created with create_time " <<
-            match_time.get_gm_time();
+            "was created with create_time " << match_time.get_gm_time();
 
-          logger_->log(
-            ostr.str(),
-            Logging::Logger::TRACE,
-            Aspect::USER_INFO_CONTAINER);
+          logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
         }
       }
+
       if (base_mem_buf.in() == 0)
       {
         new_user = request_params.change_last_request;
@@ -1400,7 +1370,7 @@ namespace AdServer::UserInfoSvcs
 
       ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in());
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         std::ostringstream tracing_ostr;
         tracing_ostr << "Input match request: " << std::endl;
@@ -1412,14 +1382,12 @@ namespace AdServer::UserInfoSvcs
           base_mem_buf->membuf(),
           &add_mem_buf->membuf());
 
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
+        logger_->log(tracing_ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
       }
 
-      if(!request_params.use_empty_profile)
+      if (!request_params.use_empty_profile)
       {
-        if(request_params.request_colo_id != -1)
+        if (request_params.request_colo_id != -1)
         {
           user_app.last_request = matching.last_request();
         }
@@ -1433,15 +1401,13 @@ namespace AdServer::UserInfoSvcs
           !match_to_additional &&
           request_params.change_last_request &&
           !request_params.household &&
-          (new_user ||
-           matching.need_channel_count_stats_logging(
-             match_time, current_time_offset));
+          (new_user || matching.need_channel_count_stats_logging(match_time, current_time_offset));
 
-        if(need_history_optimize)
+        if (need_history_optimize)
         {
           /* first request today : history optimization */
           UserProfileMap::Transaction_var history_profile_trans;
-          if(temporary)
+          if (temporary)
           {
             history_profile_trans = co_await co_get_transaction_(temp_history_profiles_.in(),
               user_id, true, op_priority);
@@ -1459,7 +1425,7 @@ namespace AdServer::UserInfoSvcs
             hist_mem_buf = new SmartMemBuf;
           }
 
-          if(logger_->log_level() >= Logging::Logger::TRACE)
+          if (logger_->log_level() >= Logging::Logger::TRACE)
           {
             std::ostringstream ostr;
             ostr << "To history optimize user '" << user_id << "':" <<
@@ -1471,10 +1437,7 @@ namespace AdServer::UserInfoSvcs
               ostr,
               true);
 
-            logger_->log(
-              ostr.str(),
-              Logging::Logger::TRACE,
-              Aspect::USER_INFO_CONTAINER);
+            logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
           }
 
           bool first_today_history_optimization;
@@ -1486,7 +1449,7 @@ namespace AdServer::UserInfoSvcs
             *channel_rules,
             &first_today_history_optimization);
 
-          if(logger_->log_level() >= Logging::Logger::TRACE)
+          if (logger_->log_level() >= Logging::Logger::TRACE)
           {
             std::ostringstream ostr;
             ostr << "From history optimize user '" << user_id << "':" <<
@@ -1496,9 +1459,7 @@ namespace AdServer::UserInfoSvcs
               hist_mem_buf->membuf().get<unsigned char>(),
               hist_mem_buf->membuf().size(), ostr, true);
 
-            logger_->log(ostr.str(),
-              Logging::Logger::TRACE,
-              Aspect::USER_INFO_CONTAINER);
+            logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
           }
 
           if (!request_params.silent_match)
@@ -1536,8 +1497,7 @@ namespace AdServer::UserInfoSvcs
       if (request_params.provide_channel_count && unique_channels_result != 0)
       {
         UserProfileMap::Transaction_var history_profile_trans =
-          co_await co_get_transaction_(history_profiles_.in(),
-            user_id, true, op_priority);
+          co_await co_get_transaction_(history_profiles_.in(), user_id, true, op_priority);
 
         SmartMemBuf_var hist_mem_buf = co_await history_profile_trans->co_get_own_profile();
 
@@ -1549,15 +1509,14 @@ namespace AdServer::UserInfoSvcs
           *unique_channels_result);
       }
 
-      if(!request_params.use_empty_profile && !request_params.silent_match)
+      if (!request_params.use_empty_profile && !request_params.silent_match)
       {
         user_app.session_start = matching.session_start();
 
         if (new_user && !temporary && ho_info != 0)
         {
           UserProfileMap::Transaction_var history_profile_trans =
-            co_await co_get_transaction_(history_profiles_.in(),
-              user_id, true, op_priority);
+            co_await co_get_transaction_(history_profiles_.in(), user_id, true, op_priority);
 
           SmartMemBuf_var hist_mem_buf = co_await history_profile_trans->co_get_own_profile();
 
@@ -1575,7 +1534,7 @@ namespace AdServer::UserInfoSvcs
 
         if (match_to_additional)
         {
-          if(add_mem_buf->membuf().empty())
+          if (add_mem_buf->membuf().empty())
           {
             co_await add_profile_trans->co_remove_profile();
           }
@@ -1598,32 +1557,27 @@ namespace AdServer::UserInfoSvcs
 
       filter_channel_thresholds_(result_channels);
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         std::ostringstream tracing_ostr;
-        tracing_ostr << "Match request result: " << std::endl <<
-          "  Result channels:";
+        tracing_ostr << "Match request result: " << std::endl << "  Result channels:";
 
-        for(ChannelMatchMap::const_iterator ch_it = result_channels.begin();
+        for (ChannelMatchMap::const_iterator ch_it = result_channels.begin();
             ch_it != result_channels.end(); ++ch_it)
         {
           tracing_ostr << " " << ch_it->first << "->" << ch_it->second;
         }
 
-        tracing_ostr << std::endl <<
-          " Base user profile after matching: " << std::endl;
+        tracing_ostr << std::endl << " Base user profile after matching: " << std::endl;
         matching.print(
           base_mem_buf->membuf().get<unsigned char>(),
           base_mem_buf->membuf().size(), tracing_ostr, true, true);
-        tracing_ostr << std::endl <<
-          "  Add user profile after matching: " << std::endl;
+        tracing_ostr << std::endl << "  Add user profile after matching: " << std::endl;
         matching.print(
           add_mem_buf->membuf().get<unsigned char>(),
           add_mem_buf->membuf().size(), tracing_ostr, true, true);
 
-        logger_->log(tracing_ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_INFO_CONTAINER);
+        logger_->log(tracing_ostr.str(), Logging::Logger::TRACE, Aspect::USER_INFO_CONTAINER);
       }
 
       co_return true;
@@ -1638,8 +1592,7 @@ namespace AdServer::UserInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Caught ChannelsMatcher::InvalidProfileException"
-        " at user '" << request_params.user_id << ": " <<
-        ex.what();
+        " at user '" << request_params.user_id << ": " << ex.what();
       throw Exception(ostr);
     }
     catch(const NotReady& ex)
@@ -1662,8 +1615,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void UserInfoContainer::delete_old_profiles(
-    const Generics::Time& persistent_lifetime)
+  void UserInfoContainer::delete_old_profiles(const Generics::Time& persistent_lifetime)
     /*throw(NotReady, Exception)*/
   {
     static const char* FUN = "UserInfoContainer::delete_old_profiles()";
@@ -1687,8 +1639,7 @@ namespace AdServer::UserInfoSvcs
     }
   }
 
-  void UserInfoContainer::delete_old_temporary_profiles(
-    const Generics::Time& temp_lifetime)
+  void UserInfoContainer::delete_old_temporary_profiles(const Generics::Time& temp_lifetime)
     /*throw(NotReady, Exception)*/
   {
     static const char* FUN = "UserInfoContainer::delete_old_temporary_profiles()";
@@ -1733,8 +1684,7 @@ namespace AdServer::UserInfoSvcs
       res.users_count += base_profiles_->size();
       res.users_count += temp_profiles_->size();
       res.base_area_size = base_profiles_->area_size();
-      res.temp_area_size =
-        temp_profiles_->area_size() + temp_history_profiles_->area_size();
+      res.temp_area_size = temp_profiles_->area_size() + temp_history_profiles_->area_size();
       res.add_area_size = add_profiles_->area_size();
       res.history_area_size = history_profiles_->area_size();
       res.freq_cap_area_size = freq_cap_profiles_->area_size();
@@ -1834,8 +1784,7 @@ namespace AdServer::UserInfoSvcs
     if (update_force || ucm.need_history_optimization(
           current_time, Generics::Time::ZERO, current_time_offset))
     {
-      ucm.history_optimize(history_profile,
-        current_time, current_time_offset, channel_rules);
+      ucm.history_optimize(history_profile, current_time, current_time_offset, channel_rules);
     }
   }
 
@@ -1876,7 +1825,7 @@ namespace AdServer::UserInfoSvcs
       {
         auto f_it = channel_features.find(ch_it->first);
 
-        if(f_it != channel_features.end() && ch_it->second < f_it->second.threshold)
+        if (f_it != channel_features.end() && ch_it->second < f_it->second.threshold)
         {
           channels.erase(ch_it++);
         }
@@ -1970,8 +1919,7 @@ namespace AdServer::UserInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't open '" << chunk_prefix <<
-        "' profiles : " << ex.what();
+      ostr << FUN << ": Can't open '" << chunk_prefix << "' profiles : " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -1986,8 +1934,7 @@ namespace AdServer::UserInfoSvcs
     noexcept
   {
     ostr << "Matching with params: " << std::endl <<
-      "  uid = '" << PrivacyFilter::filter(
-        request_params.user_id.to_string().c_str(), "USER_ID") <<
+      "  uid = '" << PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
       "'" << std::endl <<
       "  current-time = " << request_params.current_time.get_gm_time() <<
         std::endl <<
@@ -2001,16 +1948,10 @@ namespace AdServer::UserInfoSvcs
       matched_channels.persistent_channels.end());
 
     ostr << std::endl << "  Url channels: ";
-    Algs::print(
-      ostr,
-      matched_channels.url_channels.begin(),
-      matched_channels.url_channels.end());
+    Algs::print(ostr, matched_channels.url_channels.begin(), matched_channels.url_channels.end());
 
     ostr << std::endl << "  Page channels: ";
-    Algs::print(
-      ostr,
-      matched_channels.page_channels.begin(),
-      matched_channels.page_channels.end());
+    Algs::print(ostr, matched_channels.page_channels.begin(), matched_channels.page_channels.end());
 
     ostr << std::endl << "  Search channels: ";
     Algs::print(
@@ -2030,7 +1971,7 @@ namespace AdServer::UserInfoSvcs
       base_profile.size(),
       ostr, true, true);
 
-    if(add_profile)
+    if (add_profile)
     {
       ostr << std::endl << "  Add user profile: " << std::endl;
       ChannelsMatcher::print(

@@ -25,19 +25,16 @@ const Generics::Time session_timeout = Generics::Time(30);
 ProfileProperties pps;
 ProfileMatchParams pmp;
 
-bool compare_partly_match_result(
-  const PartlyMatchResult& left,
-  const PartlyMatchResult& right)
+bool compare_partly_match_result(const PartlyMatchResult& left, const PartlyMatchResult& right)
 {
   {
     PartlyMatchMap::const_iterator right_it = right.from_to_matches.begin();
     PartlyMatchMap::const_iterator left_it = left.from_to_matches.begin();
 
-    for(; left_it != left.from_to_matches.end() &&
-          right_it != right.from_to_matches.end();
+    for (; left_it != left.from_to_matches.end() && right_it != right.from_to_matches.end();
         ++left_it, ++right_it)
     {
-      if(left_it->first != right_it->first ||
+      if (left_it->first != right_it->first ||
          left_it->second.visits != right_it->second.visits ||
          left_it->second.minimum_visits != right_it->second.minimum_visits)
       {
@@ -45,8 +42,7 @@ bool compare_partly_match_result(
       }
     }
 
-    if(right_it != right.from_to_matches.end() ||
-       left_it != left.from_to_matches.end())
+    if (right_it != right.from_to_matches.end() || left_it != left.from_to_matches.end())
     {
       return false;
     }
@@ -56,11 +52,10 @@ bool compare_partly_match_result(
     PartlyMatchMap::const_iterator right_it = right.now_to_matches.begin();
     PartlyMatchMap::const_iterator left_it = left.now_to_matches.begin();
 
-    for(; left_it != left.now_to_matches.end() &&
-          right_it != right.now_to_matches.end();
+    for (; left_it != left.now_to_matches.end() && right_it != right.now_to_matches.end();
         ++left_it, ++right_it)
     {
-      if(left_it->first != right_it->first ||
+      if (left_it->first != right_it->first ||
          left_it->second.visits != right_it->second.visits ||
          left_it->second.minimum_visits != right_it->second.minimum_visits)
       {
@@ -68,8 +63,7 @@ bool compare_partly_match_result(
       }
     }
 
-    if(right_it != right.now_to_matches.end() ||
-       left_it != left.now_to_matches.end())
+    if (right_it != right.now_to_matches.end() || left_it != left.now_to_matches.end())
     {
       return false;
     }
@@ -78,11 +72,10 @@ bool compare_partly_match_result(
   return true;
 }
 
-void print_partly_match_result(
-  std::ostream& out, const PartlyMatchResult& result)
+void print_partly_match_result(std::ostream& out, const PartlyMatchResult& result)
 {
   out << "  from-to:" << std::endl;
-  for(PartlyMatchMap::const_iterator res_it = result.from_to_matches.begin();
+  for (PartlyMatchMap::const_iterator res_it = result.from_to_matches.begin();
       res_it != result.from_to_matches.end(); ++res_it)
   {
     out << "    " << res_it->first << " : " << res_it->second.visits << "/" <<
@@ -90,7 +83,7 @@ void print_partly_match_result(
   }
 
   out << "  now-to:" << std::endl;
-  for(PartlyMatchMap::const_iterator res_it = result.now_to_matches.begin();
+  for (PartlyMatchMap::const_iterator res_it = result.now_to_matches.begin();
       res_it != result.now_to_matches.end(); ++res_it)
   {
     out << "    " << res_it->first << " : " << res_it->second.visits << "/" <<
@@ -106,15 +99,13 @@ int session_match_test()
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time::ZERO, Generics::Time(60), 1, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 1, 2));
     channel_rules->page_channels[1] = page;
   }
 
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
-    page->short_intervals.insert(ChannelInterval(
-      Generics::Time(30), Generics::Time(120), 2, 2));
+    page->short_intervals.insert(ChannelInterval(Generics::Time(30), Generics::Time(120), 2, 2));
     channel_rules->page_channels[2] = page;
   }
 
@@ -141,7 +132,7 @@ int session_match_test()
     etalon.from_to_matches.insert(std::make_pair(1, PartlyMatch(1, 1)));
     etalon.now_to_matches.insert(std::make_pair(1, PartlyMatch(1, 1)));
 
-    if(!compare_partly_match_result(partly_result, etalon))
+    if (!compare_partly_match_result(partly_result, etalon))
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_partly_match_result(std::cerr, partly_result);
@@ -182,23 +173,19 @@ int history_today_match_test()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:10"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-10 10:10:10"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
     {
       Generics::Time now(String::SubString("2006-10-11 10:10:20"), "%Y-%m-%d %H:%M:%S");
-      if(cm.need_history_optimization(now, Generics::Time::ZERO,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, Generics::Time::ZERO, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
     }
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
@@ -207,8 +194,7 @@ int history_today_match_test()
 
       cm.partly_match(
         partly_result,
-        Generics::Time(String::SubString("2006-10-10 10:10:30"),
-          "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2006-10-10 10:10:30"), "%Y-%m-%d %H:%M:%S"),
         *channel_rules);
 
       PartlyMatchResult etalon;
@@ -217,7 +203,7 @@ int history_today_match_test()
       etalon.now_to_matches.insert(std::make_pair(1, PartlyMatch(2, 3)));
       etalon.now_to_matches.insert(std::make_pair(2, PartlyMatch(2, 3)));
 
-      if(!compare_partly_match_result(partly_result, etalon))
+      if (!compare_partly_match_result(partly_result, etalon))
       {
         std::cerr << FUN << ": incorrect match result: " << std::endl;
         print_partly_match_result(std::cerr, partly_result);
@@ -227,12 +213,10 @@ int history_today_match_test()
       }
     }
 
-    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
-    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2006-10-11 10:10:20"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
@@ -241,8 +225,7 @@ int history_today_match_test()
 
       cm.partly_match(
         partly_result,
-        Generics::Time(String::SubString("2006-10-10 10:10:30"),
-          "%Y-%m-%d %H:%M:%S"),
+        Generics::Time(String::SubString("2006-10-10 10:10:30"), "%Y-%m-%d %H:%M:%S"),
         *channel_rules);
 
       PartlyMatchResult etalon;
@@ -251,7 +234,7 @@ int history_today_match_test()
       etalon.now_to_matches.insert(std::make_pair(1, PartlyMatch(4, 3)));
       etalon.now_to_matches.insert(std::make_pair(2, PartlyMatch(4, 3)));
 
-      if(!compare_partly_match_result(partly_result, etalon))
+      if (!compare_partly_match_result(partly_result, etalon))
       {
         std::cerr << FUN << ": incorrect match result (2): " << std::endl;
         print_partly_match_result(std::cerr, partly_result);
@@ -291,8 +274,7 @@ int history_match_test()
 
     ChannelsMatcher cm(base_profile.in(), add_profile.in());
 
-    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"),
-      "%Y-%m-%d %H:%M:%S"),
+    cm.match(result, Generics::Time(String::SubString("2010-05-20 04:01:00"), "%Y-%m-%d %H:%M:%S"),
              cid, *channel_rules, pmp, pps, session_timeout, false);
     result.clear();
 
@@ -302,15 +284,12 @@ int history_match_test()
       Generics::Time now(String::SubString("2010-05-22 04:01:00"), "%Y-%m-%d %H:%M:%S");
 
 
-      if(cm.need_history_optimization(now, Generics::Time::ZERO,
-        Generics::Time::ZERO))
+      if (cm.need_history_optimization(now, Generics::Time::ZERO, Generics::Time::ZERO))
       {
-        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO,
-          *channel_rules);
+        cm.history_optimize(history_profile.in(), now, Generics::Time::ZERO, *channel_rules);
       }
 
-      auto empty_cid_arena =
-        std::make_shared<Generics::MonoAllocatorArena>();
+      auto empty_cid_arena = std::make_shared<Generics::MonoAllocatorArena>();
       ChannelIdPack empty_cid(empty_cid_arena);
       cm.match(result, now, empty_cid, *channel_rules, pmp, pps, session_timeout, false);
 
@@ -321,7 +300,7 @@ int history_match_test()
     etalon.from_to_matches.insert(std::make_pair(1, PartlyMatch(1, 1)));
     etalon.now_to_matches.insert(std::make_pair(1, PartlyMatch(1, 1)));
 
-    if(!compare_partly_match_result(partly_result, etalon))
+    if (!compare_partly_match_result(partly_result, etalon))
     {
       std::cerr << FUN << ": incorrect match result: " << std::endl;
       print_partly_match_result(std::cerr, partly_result);

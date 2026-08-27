@@ -17,21 +17,17 @@ namespace Cpp
     ReaderGenerator(std::ostream& out, const char* offset)
       noexcept;
 
-    void generate_decl(
-      Declaration::StructReader* struct_reader)
+    void generate_decl(Declaration::StructReader* struct_reader)
       noexcept;
 
-    void generate_impl(
-      Declaration::StructReader* struct_reader)
+    void generate_impl(Declaration::StructReader* struct_reader)
       noexcept;
 
   private:
-    void generate_ctor_impl_(
-      const Declaration::StructReader* struct_reader)
+    void generate_ctor_impl_(const Declaration::StructReader* struct_reader)
       noexcept;
 
-    void generate_field_funs_impl_(
-      const Declaration::StructReader* struct_reader)
+    void generate_field_funs_impl_(const Declaration::StructReader* struct_reader)
       noexcept;
 
   private:

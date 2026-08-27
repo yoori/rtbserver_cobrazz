@@ -73,16 +73,13 @@ namespace Declaration
     typedef ReferenceCounting::SmartPtr<CppWriteTraitsGenerator>
       CppWriteTraitsGenerator_var;
 
-    SimpleWriter(
-      const char* name_val,
-      CppWriteTraitsGenerator* cpp_write_traits_generator)
+    SimpleWriter(const char* name_val, CppWriteTraitsGenerator* cpp_write_traits_generator)
       noexcept;
 
     virtual SimpleWriter_var as_simple_writer() noexcept;
 
     virtual void
-    check_mapping_specifiers(
-      const Declaration::MappingSpecifierSet& mapping_specifiers)
+    check_mapping_specifiers(const Declaration::MappingSpecifierSet& mapping_specifiers)
       /*throw(InvalidMappingSpecifier)*/;
 
     CppWriteTraitsGenerator_var
@@ -102,8 +99,7 @@ namespace Declaration
     public SimpleWriter::CppWriteTraitsGenerator
   {
   public:
-    CppWriteTraitsGeneratorNoSpecifiersImpl(
-      SimpleWriter::CppWriteTraits* cpp_write_traits)
+    CppWriteTraitsGeneratorNoSpecifiersImpl(SimpleWriter::CppWriteTraits* cpp_write_traits)
       : cpp_write_traits_(ReferenceCounting::add_ref(cpp_write_traits))
     {}
 
@@ -140,8 +136,7 @@ namespace Declaration
     noexcept
     : BaseType(name_val),
       BaseWriter(name_val),
-      cpp_write_traits_generator_(
-        ReferenceCounting::add_ref(cpp_write_traits_generator))
+      cpp_write_traits_generator_(ReferenceCounting::add_ref(cpp_write_traits_generator))
   {}
 
   inline
@@ -153,15 +148,13 @@ namespace Declaration
 
   inline
   void
-  SimpleWriter::check_mapping_specifiers(
-    const Declaration::MappingSpecifierSet& mapping_specifiers)
+  SimpleWriter::check_mapping_specifiers(const Declaration::MappingSpecifierSet& mapping_specifiers)
     /*throw(InvalidMappingSpecifier)*/
   {
-    for(Declaration::MappingSpecifierSet::const_iterator it =
-          mapping_specifiers.begin();
+    for (Declaration::MappingSpecifierSet::const_iterator it = mapping_specifiers.begin();
         it != mapping_specifiers.end(); ++it)
     {
-      if(!cpp_write_traits_generator_->check_mapping_specifier(it->c_str()))
+      if (!cpp_write_traits_generator_->check_mapping_specifier(it->c_str()))
       {
         Stream::Error ostr;
         ostr << "Incorrect specifier: " << *it;

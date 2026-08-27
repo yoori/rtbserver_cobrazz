@@ -8,19 +8,16 @@
 #include "ChannelServerControlImpl.hpp"
 #include "ChannelServerCore.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   namespace
   {
     std::vector<unsigned long>
-    unpack_sources(
-      const ::AdServer::ChannelSvcs::ChunkKeySeq& sources)
+    unpack_sources(const ::AdServer::ChannelSvcs::ChunkKeySeq& sources)
     {
       std::vector<unsigned long> result;
       result.reserve(sources.length());
-      for(CORBA::ULong i = 0; i < sources.length(); ++i)
+      for (CORBA::ULong i = 0; i < sources.length(); ++i)
       {
         result.push_back(sources[i]);
       }
@@ -28,12 +25,11 @@ namespace ChannelSvcs
     }
 
     std::vector<ChannelServerCore::DBSourceInfo::ObjectRef>
-    unpack_refs(
-      const ChannelServerControl::CorbaObjectRefDefSeq& refs)
+    unpack_refs(const ChannelServerControl::CorbaObjectRefDefSeq& refs)
     {
       std::vector<ChannelServerCore::DBSourceInfo::ObjectRef> result;
       result.reserve(refs.length());
-      for(CORBA::ULong i = 0; i < refs.length(); ++i)
+      for (CORBA::ULong i = 0; i < refs.length(); ++i)
       {
         CORBACommons::CorbaObjectRef ref;
         ref.load(refs[i]);
@@ -47,8 +43,7 @@ namespace ChannelSvcs
   /**
    * Implementation of control part ChannelServer
    */
-  ChannelServerControlImpl::ChannelServerControlImpl(
-      ChannelServerCorePtr custom) noexcept
+  ChannelServerControlImpl::ChannelServerControlImpl(ChannelServerCorePtr custom) noexcept
       : custom_impl_(std::move(custom))
   {
   }
@@ -76,8 +71,7 @@ namespace ChannelSvcs
     }
     catch(const eh::Exception& ex)
     {
-      CORBACommons::throw_desc<ImplementationException>(
-        String::SubString(ex.what()));
+      CORBACommons::throw_desc<ImplementationException>(String::SubString(ex.what()));
     }
   }
 
@@ -103,14 +97,11 @@ namespace ChannelSvcs
       core_proxy_info.proxy_refs = unpack_refs(proxy_info.proxy_refs);
       core_proxy_info.campaign_refs = unpack_refs(proxy_info.campaign_refs);
 
-      custom_impl_->set_proxy_sources(
-        core_proxy_info,
-        unpack_sources(sources));
+      custom_impl_->set_proxy_sources(core_proxy_info, unpack_sources(sources));
     }
     catch(const eh::Exception& ex)
     {
-      CORBACommons::throw_desc<ImplementationException>(
-        String::SubString(ex.what()));
+      CORBACommons::throw_desc<ImplementationException>(String::SubString(ex.what()));
     }
   }
 
@@ -127,5 +118,4 @@ namespace ChannelSvcs
   {
   }
 
-} /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs

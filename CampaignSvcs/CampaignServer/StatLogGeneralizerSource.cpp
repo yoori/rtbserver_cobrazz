@@ -7,9 +7,7 @@ namespace Aspect
   const char STAT_LOGGENERALIZER_SOURCE[] = "StatLogGeneralizerSource";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   StatLogGeneralizerSource::StatLogGeneralizerSource(
     Logging::Logger* logger,
@@ -22,12 +20,10 @@ namespace CampaignSvcs
     CORBACommons::CorbaClientAdapter_var corba_client_adapter(
       new CORBACommons::CorbaClientAdapter());
 
-    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it =
-          stat_provider_refs.begin();
+    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it = stat_provider_refs.begin();
         ref_it != stat_provider_refs.end(); ++ref_it)
     {
-      stat_providers_.push_back(LogGeneralizerRef(
-        corba_client_adapter.in(), *ref_it));
+      stat_providers_.push_back(LogGeneralizerRef(corba_client_adapter.in(), *ref_it));
     }
   }
 
@@ -46,24 +42,20 @@ namespace CampaignSvcs
 
     try
     {
-      for (LogGeneralizerRefList::iterator ref_it =
-            stat_providers_.begin();
+      for (LogGeneralizerRefList::iterator ref_it = stat_providers_.begin();
           ref_it != stat_providers_.end(); ++ref_it)
       {
         AdServer::LogProcessing::StatInfo_var stats_portion =
           (*ref_it)->get_stat_info(server_id_, true);
 
-        StatSource::Stat_var stat_portion = convert_stats_update_(
-          *stats_portion, now);
+        StatSource::Stat_var stat_portion = convert_stats_update_(*stats_portion, now);
 
         sum_stat->add(*stat_portion);
       }
     }
     catch(const AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted&)
     {
-      logger_->sstream(
-        Logging::Logger::TRACE,
-        Aspect::STAT_LOGGENERALIZER_SOURCE) << FUN <<
+      logger_->sstream(Logging::Logger::TRACE, Aspect::STAT_LOGGENERALIZER_SOURCE) << FUN <<
         ": Caught LogGeneralizer::CollectionNotStarted";
 
       full_synch_required = true;
@@ -73,16 +65,14 @@ namespace CampaignSvcs
       logger_->sstream(
         Logging::Logger::ERROR,
         Aspect::STAT_LOGGENERALIZER_SOURCE,
-        "ADS-ICON-6000") << FUN <<
-        ": can't do LogGeneralizer::get_stat_info: " << ex.what();
+        "ADS-ICON-6000") << FUN << ": can't do LogGeneralizer::get_stat_info: " << ex.what();
     }
     catch(const CORBA::SystemException& ex)
     {
       logger_->sstream(
         Logging::Logger::ERROR,
         Aspect::STAT_LOGGENERALIZER_SOURCE,
-        "ADS-ICON-6000") << FUN <<
-        ": can't do LogGeneralizer::get_stat_info: " << ex;
+        "ADS-ICON-6000") << FUN << ": can't do LogGeneralizer::get_stat_info: " << ex;
     }
 
     if (logger_->log_level() >= Logging::Logger::DEBUG)
@@ -90,10 +80,7 @@ namespace CampaignSvcs
       Stream::Dynamic ostr(4096);
       ostr << "Received from LogGeneralizer stats:" << std::endl;
       sum_stat->print(ostr, "  ");
-      logger_->log(
-        ostr.str(),
-        Logging::Logger::DEBUG,
-        Aspect::STAT_LOGGENERALIZER_SOURCE);
+      logger_->log(ostr.str(), Logging::Logger::DEBUG, Aspect::STAT_LOGGENERALIZER_SOURCE);
     }
 
     if (stat)
@@ -148,8 +135,7 @@ namespace CampaignSvcs
       ccg_stat.amount = amount;
       ccg_stat.comm_amount = comm_amount;
 
-      for (CORBA::ULong cc_i = 0;
-          cc_i < campaign_stat_info.creative_stats.length(); ++cc_i)
+      for (CORBA::ULong cc_i = 0; cc_i < campaign_stat_info.creative_stats.length(); ++cc_i)
       {
         const AdServer::LogProcessing::CreativeStatInfo& creative_stat_info =
           campaign_stat_info.creative_stats[cc_i];
@@ -165,8 +151,7 @@ namespace CampaignSvcs
         ccg_stat.creatives[creative_stat_info.cc_id] += creative_stat;
       }
 
-      for (CORBA::ULong pub_i = 0;
-          pub_i < campaign_stat_info.publisher_amounts.length(); ++pub_i)
+      for (CORBA::ULong pub_i = 0; pub_i < campaign_stat_info.publisher_amounts.length(); ++pub_i)
       {
         RevenueDecimal pub_amount = CorbaAlgs::unpack_decimal<RevenueDecimal>(
           campaign_stat_info.publisher_amounts[pub_i].adv_amount);
@@ -180,8 +165,7 @@ namespace CampaignSvcs
         pub_stat.amount += pub_amount;
 
         ccg_stat.publisher_amounts[
-          campaign_stat_info.publisher_amounts[pub_i].publisher_account_id] +=
-          pub_stat;
+          campaign_stat_info.publisher_amounts[pub_i].publisher_account_id] += pub_stat;
       }
 
       if (current_hour || prev_hour)
@@ -190,8 +174,7 @@ namespace CampaignSvcs
           current_hour ? ccg_stat.cur_hour_amount :
           ccg_stat.prev_hour_amount;
 
-        sum_hour_amount += CorbaAlgs::unpack_decimal<RevenueDecimal>(
-          campaign_stat_info.adv_amount);
+        sum_hour_amount += CorbaAlgs::unpack_decimal<RevenueDecimal>(campaign_stat_info.adv_amount);
 
         RevenueDecimal& sum_hour_comm_amount =
           current_hour ? ccg_stat.cur_hour_comm_amount :
@@ -200,8 +183,7 @@ namespace CampaignSvcs
         sum_hour_comm_amount += CorbaAlgs::unpack_decimal<RevenueDecimal>(
           campaign_stat_info.adv_comm_amount);
 
-        for (CORBA::ULong tag_i = 0;
-            tag_i < campaign_stat_info.tag_amounts.length(); ++tag_i)
+        for (CORBA::ULong tag_i = 0; tag_i < campaign_stat_info.tag_amounts.length(); ++tag_i)
         {
           const AdServer::LogProcessing::TagAmountInfo& tag_stat_info =
             campaign_stat_info.tag_amounts[tag_i];
@@ -265,5 +247,4 @@ namespace CampaignSvcs
 
     return stat;
   }
-}
 }

@@ -101,7 +101,7 @@ namespace PlainTypes
 
     this->reserve((end_buf_ptr - buf_ptr) / ElementType::FIXED_SIZE);
 
-    for(; buf_ptr < end_buf_ptr; buf_ptr += ElementType::FIXED_SIZE)
+    for (; buf_ptr < end_buf_ptr; buf_ptr += ElementType::FIXED_SIZE)
     {
       this->push_back(ElementType());
       // header bounds checked call unsafe_init for performance
@@ -116,7 +116,7 @@ namespace PlainTypes
   {
     static const char* FUN = "Vector<ElementType>::init()";
 
-    if(size < 8)
+    if (size < 8)
     {
       Stream::Error ostr;
       ostr << FUN << ": buffer size = " << size << " is less then list header size";
@@ -131,8 +131,7 @@ namespace PlainTypes
   Vector<ElementType>::dyn_size_() const noexcept
   {
     unsigned long res = this->size() * ElementType::FIXED_SIZE;
-    for(typename BaseVector<ElementType>::const_iterator it =
-          this->begin();
+    for (typename BaseVector<ElementType>::const_iterator it = this->begin();
         it != this->end(); ++it)
     {
       res += it->dyn_size_();
@@ -145,11 +144,7 @@ namespace PlainTypes
   Vector<ElementType>::save_(void* fixed_buf, void* dyn_buf) const
     noexcept
   {
-    PlainArrayHelper<ElementType>::dyn_save(
-      fixed_buf,
-      dyn_buf,
-      this->begin(),
-      this->end());
+    PlainArrayHelper<ElementType>::dyn_save(fixed_buf, dyn_buf, this->begin(), this->end());
   }
 
   // SimpleVector
@@ -165,14 +160,12 @@ namespace PlainTypes
     uint32_t start_pos = *static_cast<const uint32_t*>(buf);
     uint32_t end_pos = *(static_cast<const uint32_t*>(buf) + 1);
 
-    const unsigned char* buf_ptr =
-      static_cast<const unsigned char*>(buf) + start_pos;
-    const unsigned char* end_buf_ptr =
-      static_cast<const unsigned char*>(buf) + end_pos;
+    const unsigned char* buf_ptr = static_cast<const unsigned char*>(buf) + start_pos;
+    const unsigned char* end_buf_ptr = static_cast<const unsigned char*>(buf) + end_pos;
 
     this->resize((end_buf_ptr - buf_ptr) / STEP);
     typename BaseVector<ElementType>::iterator it = this->begin();
-    for(; buf_ptr < end_buf_ptr; buf_ptr += STEP, ++it)
+    for (; buf_ptr < end_buf_ptr; buf_ptr += STEP, ++it)
     {
       *it = ReadCastFun(buf_ptr);
     }
@@ -200,8 +193,7 @@ namespace PlainTypes
   {
     unsigned char* dyn_ptr = static_cast<unsigned char*>(dyn_buf);
 
-    for(typename BaseVector<ElementType>::const_iterator it =
-          this->begin();
+    for (typename BaseVector<ElementType>::const_iterator it = this->begin();
         it != this->end(); ++it, dyn_ptr += STEP)
     {
       WriteCastFun(dyn_ptr) = *it;
@@ -209,7 +201,6 @@ namespace PlainTypes
 
     *static_cast<uint32_t*>(fixed_buf) =
       static_cast<unsigned char*>(dyn_buf) - static_cast<unsigned char*>(fixed_buf);
-    *(static_cast<uint32_t*>(fixed_buf) + 1) =
-      dyn_ptr - static_cast<unsigned char*>(fixed_buf);
+    *(static_cast<uint32_t*>(fixed_buf) + 1) = dyn_ptr - static_cast<unsigned char*>(fixed_buf);
   }
 }

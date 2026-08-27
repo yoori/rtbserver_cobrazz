@@ -31,9 +31,7 @@ struct TestUserInfo
 };
 
 bool
-check_user_info(
-  const TestUserInfo& test_user_info,
-  const UserBindContainer::UserInfo& user_info)
+check_user_info(const TestUserInfo& test_user_info, const UserBindContainer::UserInfo& user_info)
 {
   if (test_user_info.user_id_is_null == user_info.user_id.is_null() &&
       test_user_info.min_age_reached == user_info.min_age_reached &&
@@ -47,8 +45,7 @@ check_user_info(
    << "user_id: " << (test_user_info.user_id_is_null ? "is null" : "is not null")
    << ", min_age_reached: " << test_user_info.min_age_reached
    << ", user_id_generated: " << test_user_info.user_id_generated
-   << ", created: " << test_user_info.created
-   << ". But got: ";
+   << ", created: " << test_user_info.created << ". But got: ";
    user_info.print(std::cerr);
  std::cerr << std::endl;
 
@@ -156,11 +153,11 @@ performance_test(unsigned long iterations)
 
   char buf[100];
 
-  for(int global_i = 0; global_i < 2; ++global_i)
+  for (int global_i = 0; global_i < 2; ++global_i)
   {
     Generics::Time start_time = Generics::Time::get_time_of_day();
 
-    for(unsigned long i = 0; i < iterations; ++i)
+    for (unsigned long i = 0; i < iterations; ++i)
     {
       size_t size = String::StringManip::int_to_str(i, buf, sizeof(buf));
 
@@ -179,9 +176,7 @@ performance_test(unsigned long iterations)
 
     std::cout << FUN << ": execution time = " <<
       (finish_time - start_time) << " for " << iterations <<
-      " operations(" <<
-      (global_i ? "exists user" : "new user") <<
-      ")" << std::endl;
+      " operations(" << (global_i ? "exists user" : "new user") << ")" << std::endl;
   }
 
   return 0;
@@ -190,9 +185,7 @@ performance_test(unsigned long iterations)
 class GetUserIdTester
 {
 public:
-  GetUserIdTester(
-    UserBindContainer* user_bind_container,
-    unsigned long iterations)
+  GetUserIdTester(UserBindContainer* user_bind_container, unsigned long iterations)
     noexcept
     : user_bind_container_(ReferenceCounting::add_ref(user_bind_container)),
       iterations_(iterations),
@@ -206,8 +199,8 @@ public:
 
     char buf[100];
 
-//  while(true)
-    for(unsigned long i = 0; i < iterations_; ++i)
+//  while (true)
+    for (unsigned long i = 0; i < iterations_; ++i)
     {
       int res = counter_.exchange_and_add(1);
       size_t size = String::StringManip::int_to_str(res, buf, sizeof(buf));
@@ -278,7 +271,7 @@ mt_performance_test(unsigned long iterations, unsigned long threads)
       0,
       1);
 
-  for(int global_i = 0; global_i < 2; ++global_i)
+  for (int global_i = 0; global_i < 2; ++global_i)
   {
     GetUserIdTester test_op(
       user_bind_container,
@@ -286,8 +279,7 @@ mt_performance_test(unsigned long iterations, unsigned long threads)
       //(global_i ? 1000000000 : iterations) / threads
       );
 
-    TestCommons::MTTester<GetUserIdTester&> mt_tester(
-      test_op, threads);
+    TestCommons::MTTester<GetUserIdTester&> mt_tester(test_op, threads);
     mt_tester.run(threads, 0, threads);
 
     std::cout << FUN <<
@@ -295,9 +287,7 @@ mt_performance_test(unsigned long iterations, unsigned long threads)
       ", max time = " << test_op.max_time() <<
       " for " << iterations <<
       " operations(" <<
-      (global_i ? "exists user" : "new user") <<
-      ") at " << threads << " threads" <<
-      std::endl;
+      (global_i ? "exists user" : "new user") << ") at " << threads << " threads" << std::endl;
   }
 
   return 0;
@@ -336,7 +326,7 @@ int simple_test()
       false,
       false));
 
-  if(!user_info.user_id.is_null() || user_info.min_age_reached)
+  if (!user_info.user_id.is_null() || user_info.min_age_reached)
   {
     std::cerr << FUN << ": invalid result at first get" << std::endl;
     return 1;
@@ -352,7 +342,7 @@ int simple_test()
       false,
       false));
 
-  if(!user_info.user_id.is_null() || user_info.min_age_reached)
+  if (!user_info.user_id.is_null() || user_info.min_age_reached)
   {
     std::cerr << FUN << ": invalid result at second get" << std::endl;
     return 1;
@@ -368,16 +358,15 @@ int simple_test()
       false,
       false));
 
-  if(user_info.user_id.is_null() || !user_info.min_age_reached)
+  if (user_info.user_id.is_null() || !user_info.min_age_reached)
   {
     std::cerr << FUN << ": invalid result at third get: "
       "user_id = " << user_info.user_id <<
-      ", min_age_reached = " << user_info.min_age_reached <<
-      std::endl;
+      ", min_age_reached = " << user_info.min_age_reached << std::endl;
     return 1;
   }
 
-  for(int i = 0; i < 10; ++i)
+  for (int i = 0; i < 10; ++i)
   {
     user_info = AdServer::Commons::sync_wait(
       user_bind_container->co_get_user_id(
@@ -389,12 +378,11 @@ int simple_test()
         false,
         false));
 
-    if(user_info.user_id.is_null() || !user_info.min_age_reached)
+    if (user_info.user_id.is_null() || !user_info.min_age_reached)
     {
       std::cerr << FUN << ": invalid result at get #" << (i + 4) << ": "
         "user_id = " << user_info.user_id <<
-        ", min_age_reached = " << user_info.min_age_reached <<
-        std::endl;
+        ", min_age_reached = " << user_info.min_age_reached << std::endl;
       return 1;
     }
   }
@@ -435,7 +423,7 @@ int expired_test()
       false,
       false));
 
-  if(!user_info.user_id.is_null() || user_info.min_age_reached)
+  if (!user_info.user_id.is_null() || user_info.min_age_reached)
   {
     std::cerr << FUN << ": invalid result at first get" << std::endl;
     return 1;
@@ -455,7 +443,7 @@ int expired_test()
       false,
       false));
 
-  if(!user_info.user_id.is_null() || user_info.min_age_reached)
+  if (!user_info.user_id.is_null() || user_info.min_age_reached)
   {
     std::cerr << FUN << ": invalid result at second get"
       "(after clear expired)" << std::endl;
@@ -535,8 +523,7 @@ get_get_user_id_test()
     {false, true, false, false}
   };
 
-  UserBindContainer_var user_bind_container =
-    get_default_user_bind_container(true);
+  UserBindContainer_var user_bind_container = get_default_user_bind_container(true);
 
   const Generics::Time base_date(Generics::Time::get_time_of_day().get_gm_time().get_date());
   const std::string external_id = "external_id";
@@ -592,8 +579,7 @@ save_load_users_test()
   size_t index = 0;
 
   {
-    UserBindContainer_var user_bind_container =
-      get_default_user_bind_container(true);
+    UserBindContainer_var user_bind_container = get_default_user_bind_container(true);
 
     UserBindContainer::UserInfo user_info = AdServer::Commons::sync_wait(
       user_bind_container->co_get_user_id(
@@ -629,8 +615,7 @@ save_load_users_test()
   }
 
   {
-    UserBindContainer_var user_bind_container =
-      get_default_user_bind_container(false);
+    UserBindContainer_var user_bind_container = get_default_user_bind_container(false);
 
     UserBindContainer::UserInfo user_info = AdServer::Commons::sync_wait(
       user_bind_container->co_get_user_id(
@@ -666,8 +651,7 @@ save_load_users_test()
   }
 
   {
-    UserBindContainer_var user_bind_container =
-      get_default_user_bind_container(false);
+    UserBindContainer_var user_bind_container = get_default_user_bind_container(false);
 
     UserBindContainer::UserInfo user_info = AdServer::Commons::sync_wait(
       user_bind_container->co_get_user_id(

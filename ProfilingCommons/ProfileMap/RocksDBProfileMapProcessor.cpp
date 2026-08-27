@@ -125,9 +125,7 @@ namespace AdServer::ProfilingCommons
           "RocksDBProfileMapProcessor::register_map_(): map is already registered");
       }
 
-      registrations_.emplace(
-        &map_queue,
-        std::make_unique<Registration>(map_impl, map_queue));
+      registrations_.emplace(&map_queue, std::make_unique<Registration>(map_impl, map_queue));
     }
   }
 
@@ -333,9 +331,7 @@ namespace AdServer::ProfilingCommons
   }
 
   bool
-  RocksDBProfileMapProcessor::apply_ready_(
-    MapQueue& map_queue,
-    const ReadyState& state) noexcept
+  RocksDBProfileMapProcessor::apply_ready_(MapQueue& map_queue, const ReadyState& state) noexcept
   {
     if (!state.has_operation)
     {

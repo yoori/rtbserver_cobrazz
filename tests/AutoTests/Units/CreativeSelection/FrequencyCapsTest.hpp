@@ -10,10 +10,7 @@ typedef std::vector<std::string> StrVector;
 class FrequencyCapsTest: public BaseUnit
 {
 public:
-  FrequencyCapsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  FrequencyCapsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var),
       time_()
   {};
@@ -115,9 +112,7 @@ private:
 
   // period freq caps helpers
   void
-  process_period_display_ad_case_(
-    const char* case_name,
-    const char* entities_name);
+  process_period_display_ad_case_(const char* case_name, const char* entities_name);
 
   void
   process_period_text_ads_case_(

@@ -6,54 +6,48 @@
 #include<Commons/CountActiveObject.hpp>
 #include<Sync/SyncPolicy.hpp>
 
-namespace AdServer
+namespace AdServer::Commons::Postgres
 {
-namespace Commons
-{
-  namespace Postgres
+  class ConnectionPool;
+
+  typedef ReferenceCounting::SmartPtr<ConnectionPool>
+    ConnectionPool_var;
+
+  class Environment:
+    public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
+    public virtual ReferenceCounting::AtomicImpl,
+    protected ConnectionOwner
   {
-    class ConnectionPool;
+  public:
+    explicit
+    Environment(const char* conninfo) noexcept;
 
-    typedef ReferenceCounting::SmartPtr<ConnectionPool>
-      ConnectionPool_var;
+    Connection_var
+    create_connection(ConnectionOwner* owner = 0)
+      /*throw(ConnectionError, eh::Exception)*/;
 
-    class Environment:
-      public Generics::CompositeActiveObject,
-      public virtual Generics::RefCountableActiveObject,
-      public virtual ReferenceCounting::AtomicImpl,
-      protected ConnectionOwner
-    {
-    public:
-      explicit
-      Environment(const char* conninfo) noexcept;
+    ConnectionPool_var
+    create_connection_pool(unsigned long max_conn = 0)
+      /*throw(ConnectionError)*/;
 
-      Connection_var
-      create_connection(ConnectionOwner* owner = 0)
-        /*throw(ConnectionError, eh::Exception)*/;
+    virtual bool
+    destroy_connection(Connection*) noexcept;
 
-      ConnectionPool_var
-      create_connection_pool(unsigned long max_conn = 0)
-        /*throw(ConnectionError)*/;
+    virtual void
+    connection_destroyed() noexcept;
 
-      virtual bool
-      destroy_connection(Connection*) noexcept;
+    friend class ConnectionPool;
+  protected:
+    virtual
+    ~Environment() noexcept = default;
 
-      virtual void
-      connection_destroyed() noexcept;
+  private:
+    std::string conn_info_;
 
-      friend class ConnectionPool;
-    protected:
-      virtual
-      ~Environment() noexcept = default;
+    CountActiveObject_var count_;
+    Generics::CompositeSetActiveObject_var children_;
+  };
 
-    private:
-      std::string conn_info_;
-
-      CountActiveObject_var count_;
-      Generics::CompositeSetActiveObject_var children_;
-    };
-
-    typedef ReferenceCounting::SmartPtr<Environment> Environment_var;
-  }
-}
+  typedef ReferenceCounting::SmartPtr<Environment> Environment_var;
 }

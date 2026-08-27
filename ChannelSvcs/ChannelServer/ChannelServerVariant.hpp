@@ -25,9 +25,7 @@
 
 #include "ChannelContainer.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   typedef ChannelUpdateBase ChannelCurrent;
 
@@ -176,9 +174,7 @@ namespace ChannelSvcs
   public:
 
     /* update triggers*/
-    virtual void update(
-      unsigned long merge_limit,
-      UpdateData* data)
+    virtual void update(unsigned long merge_limit, UpdateData* data)
       /*throw(ChannelServerException::Exception,
             ChannelServerException::TemporyUnavailable)*/ = 0;
 
@@ -212,9 +208,7 @@ namespace ChannelSvcs
 
     bool is_my_id_(unsigned long id) noexcept;
 
-    void add_special_(
-      unsigned long id,
-      ChannelIdToMatchInfo& match_info)
+    void add_special_(unsigned long id, ChannelIdToMatchInfo& match_info)
       /*throw(eh::Exception)*/;
 
     void process_portion_(
@@ -272,9 +266,7 @@ namespace ChannelSvcs
         ChannelServerException::TemporyUnavailable)*/;
 
     /* update triggers*/
-    virtual void update(
-      unsigned long merge_limit,
-      UpdateData* data)
+    virtual void update(unsigned long merge_limit, UpdateData* data)
       /*throw(ChannelServerException::Exception,
         ChannelServerException::TemporyUnavailable)*/;
 
@@ -374,9 +366,7 @@ namespace ChannelSvcs
     virtual void update_ccg(UpdateData* data, unsigned long limit)
       /*throw(ChannelServerException::Exception)*/;
 
-    virtual void update(
-      unsigned long merge_limit,
-      UpdateData* data)
+    virtual void update(unsigned long merge_limit, UpdateData* data)
       /*throw(ChannelServerException::Exception,
         ChannelServerException::TemporyUnavailable)*/;
 
@@ -405,195 +395,177 @@ namespace ChannelSvcs
   };
 
 }
-}
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-  namespace ChannelSvcs
+  inline
+  bool UpdateData::empty() const noexcept
   {
-    inline
-    bool UpdateData::empty() const noexcept
-    {
-      return check_data.empty() && uid_check_data.empty();
-    }
+    return check_data.empty() && uid_check_data.empty();
+  }
 
-    inline
-    size_t UpdateData::size() const noexcept
-    {
-      return check_data.size() + uid_check_data.size();
-    }
+  inline
+  size_t UpdateData::size() const noexcept
+  {
+    return check_data.size() + uid_check_data.size();
+  }
 
-    inline
-    bool ChannelServerVariantBase::TriggerCheckInfo::operator< (
-      const unsigned long comp) const noexcept
-    {
-      return (id < comp);
-    }
+  inline
+  bool ChannelServerVariantBase::TriggerCheckInfo::operator< (
+    const unsigned long comp) const noexcept
+  {
+    return (id < comp);
+  }
 
-    inline
-    ChannelServerVariantBase::TriggerCheckInfo::operator unsigned long() const
-      noexcept
-    {
-      return id;
-    }
+  inline
+  ChannelServerVariantBase::TriggerCheckInfo::operator unsigned long() const
+    noexcept
+  {
+    return id;
+  }
 
-    inline
-    bool ChannelServerVariantBase::is_my_id_(unsigned long id) noexcept
-    {
-      return (id &&
-              std::find(sources_.begin(), sources_.end(), id%count_chunks_)
-              != sources_.end());
-    }
+  inline
+  bool ChannelServerVariantBase::is_my_id_(unsigned long id) noexcept
+  {
+    return (id && std::find(sources_.begin(), sources_.end(), id%count_chunks_) != sources_.end());
+  }
 
-    inline
-    unsigned long ChannelServerVariantBase::get_check_sum() noexcept
-    {
-      return check_sum_;
-    }
+  inline
+  unsigned long ChannelServerVariantBase::get_check_sum() noexcept
+  {
+    return check_sum_;
+  }
 
-    inline
-    int ChannelServerVariantBase::get_source_id() noexcept
-    {
-      ReadGuard_ lock(mutex_);
-      return source_id_;
-    }
+  inline
+  int ChannelServerVariantBase::get_source_id() noexcept
+  {
+    ReadGuard_ lock(mutex_);
+    return source_id_;
+  }
 
-    inline
-    void ChannelServerVariantBase::set_sources_id_(int source_id) noexcept
-    {
-      WriteGuard_ lock(mutex_);
-      source_id_ = source_id;
-    }
+  inline
+  void ChannelServerVariantBase::set_sources_id_(int source_id) noexcept
+  {
+    WriteGuard_ lock(mutex_);
+    source_id_ = source_id;
+  }
 
-    inline
-    Generics::Time ChannelServerVariantBase::get_first_load_stamp() noexcept
-    {
-      WriteGuard_ lock(mutex_);
-      return first_load_stamp_;
-    }
+  inline
+  Generics::Time ChannelServerVariantBase::get_first_load_stamp() noexcept
+  {
+    WriteGuard_ lock(mutex_);
+    return first_load_stamp_;
+  }
 
-    inline
-    void ChannelServerVariantBase::set_first_load_stamp_(const Generics::Time& stamp)
-      noexcept
-    {
-      WriteGuard_ lock(mutex_);
-      first_load_stamp_  = stamp;
-    }
+  inline
+  void ChannelServerVariantBase::set_first_load_stamp_(const Generics::Time& stamp)
+    noexcept
+  {
+    WriteGuard_ lock(mutex_);
+    first_load_stamp_  = stamp;
+  }
 
-    template<typename Function, typename...Args>
-    void ChannelServerProxy::do_query_(
-      const char* fn_name, Function func, Args&... args)
-      /*throw(ChannelServerException::Exception)*/
+  template<typename Function, typename...Args>
+  void ChannelServerProxy::do_query_(const char* fn_name, Function func, Args&... args)
+    /*throw(ChannelServerException::Exception)*/
+  {
+    bool next_try;
+    bool exception;
+    unsigned long iter = 0;
+    bool log = false;
+    std::ostringstream ostr;
+    bool use_servers = priority_ == PRIORITY_SERVERS && tries_;
+    Generics::Timer timer;
+    do
     {
-      bool next_try;
-      bool exception;
-      unsigned long iter = 0;
-      bool log = false;
-      std::ostringstream ostr;
-      bool use_servers = priority_ == PRIORITY_SERVERS && tries_;
-      Generics::Timer timer;
-      do
+      exception = false;
+      next_try = false;
+      try
       {
-        exception = false;
-        next_try = false;
-        try
+        timer.start();
+        if (use_servers)
         {
-          timer.start();
-          if(use_servers)
+          ++iter;
+          (&*load_session_->*func)(args...);
+        }
+        else
+        {
+          ChannelProxyPool::ObjectHandlerType proxy = proxy_pool_->get_object();
+          try
           {
-            ++iter;
-            (&*load_session_->*func)(args...);
+            (&*proxy->*func)(args...);
           }
-          else
+          catch(const AdServer::ChannelSvcs::NotConfigured&)
           {
-            ChannelProxyPool::ObjectHandlerType proxy =
-              proxy_pool_->get_object();
-            try
-            {
-              (&*proxy->*func)(args...);
-            }
-            catch(const AdServer::ChannelSvcs::NotConfigured&)
-            {
-              throw;
-            }
-            catch(...)
-            {
-              proxy.release_bad(String::SubString(fn_name));
-              throw;
-            }
+            throw;
           }
-          timer.stop();
-          logger_->sstream(Logging::Logger::DEBUG, ASPECT)
-            << fn_name << ": execute query time: " << timer.elapsed_time();
-        }
-        catch(const AdServer::ChannelSvcs::ImplementationException& e)
-        {
-          ostr << (log ? "; " : fn_name) << ": ImplementationException: "
-            << e.description;
-          log = true;
-          exception = true;
-        }
-        catch(const AdServer::ChannelSvcs::NotConfigured& e)
-        {
-          ostr << (log ? "; " : fn_name) << ": NotConfigured"
-            << e.description;
-          log = true;
-          exception = true;
-        }
-        catch(const CORBA::SystemException& e)
-        {
-          Stream::Error err;
-          err << fn_name << ": CORBA::SystemException: " << e;
-          logger_->log(
-            err.str(),
-            Logging::Logger::CRITICAL,
-            ASPECT,
-            "ADS-ICON-0");
-          exception = true;
-        }
-        catch(const eh::Exception& ex)
-        {
-          ostr << fn_name << ": eh::Exception: " << ex.what();
-          log = true;
-          exception = true;
-        }
-        if(exception)
-        {
-          if(use_servers)
+          catch(...)
           {
-            if(iter < tries_)
-            {
-              next_try = true;
-            }
-            else if(proxy_pool_.get() && priority_ == PRIORITY_SERVERS)
-            {
-              use_servers = false;
-              next_try = true;
-            }
+            proxy.release_bad(String::SubString(fn_name));
+            throw;
           }
-          else if(priority_ == PRIORITY_PROXY && tries_)
+        }
+        timer.stop();
+        logger_->sstream(Logging::Logger::DEBUG, ASPECT)
+          << fn_name << ": execute query time: " << timer.elapsed_time();
+      }
+      catch(const AdServer::ChannelSvcs::ImplementationException& e)
+      {
+        ostr << (log ? "; " : fn_name) << ": ImplementationException: " << e.description;
+        log = true;
+        exception = true;
+      }
+      catch(const AdServer::ChannelSvcs::NotConfigured& e)
+      {
+        ostr << (log ? "; " : fn_name) << ": NotConfigured" << e.description;
+        log = true;
+        exception = true;
+      }
+      catch(const CORBA::SystemException& e)
+      {
+        Stream::Error err;
+        err << fn_name << ": CORBA::SystemException: " << e;
+        logger_->log(err.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-ICON-0");
+        exception = true;
+      }
+      catch(const eh::Exception& ex)
+      {
+        ostr << fn_name << ": eh::Exception: " << ex.what();
+        log = true;
+        exception = true;
+      }
+
+      if (exception)
+      {
+        if (use_servers)
+        {
+          if (iter < tries_)
           {
-            use_servers = true;
+            next_try = true;
+          }
+          else if (proxy_pool_.get() && priority_ == PRIORITY_SERVERS)
+          {
+            use_servers = false;
             next_try = true;
           }
         }
-      }
-      while(next_try);
-
-      if(exception)
-      {
-        throw ChannelServerException::Exception(
-          log ? ostr.str().c_str() : "");
-      }
-      else if(log)
-      {
-        logger_->log(
-          String::SubString(ostr.str()),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-IMPL-15");
+        else if (priority_ == PRIORITY_PROXY && tries_)
+        {
+          use_servers = true;
+          next_try = true;
+        }
       }
     }
+    while (next_try);
 
+    if (exception)
+    {
+      throw ChannelServerException::Exception(log ? ostr.str().c_str() : "");
+    }
+    else if (log)
+    {
+      logger_->log(String::SubString(ostr.str()), Logging::Logger::ERROR, ASPECT, "ADS-IMPL-15");
+    }
   }
+
 }

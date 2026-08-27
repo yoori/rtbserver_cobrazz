@@ -114,8 +114,7 @@ namespace AdServer::LogProcessing
 
       try
       {
-        task_runner_->enqueue_task(Generics::Task_var(
-          new ScheduledTask(shared_from_this(), task)));
+        task_runner_->enqueue_task(Generics::Task_var(new ScheduledTask(shared_from_this(), task)));
       }
       catch (...)
       {
@@ -270,8 +269,7 @@ namespace AdServer::LogProcessing
       configure_fetch_mode_(fetch_type);
 
       const bool commit_mode_flag = post_command &&
-        ::strstr(post_command, "touch") &&
-        ::strstr(post_command, "commit");
+        ::strstr(post_command, "touch") && ::strstr(post_command, "commit");
 
       mover_ = new FeedRouteMover(
         error_logger,
@@ -306,7 +304,7 @@ namespace AdServer::LogProcessing
   {
     static const char* FUN = "BasicFeedRouteProcessor::process(): ";
 
-    for(StringList::iterator unlink_it = unlink_files_.begin(); unlink_it != unlink_files_.end(); )
+    for (StringList::iterator unlink_it = unlink_files_.begin(); unlink_it != unlink_files_.end(); )
     {
       try
       {
@@ -323,11 +321,7 @@ namespace AdServer::LogProcessing
 
         Stream::Error ostr;
         ostr << FUN << ": can't unlink source file: " << ex.what();
-        error_logger_->log(
-          ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::SYNC_LOGS,
-          "ADS-IMPL-201");
+        error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-201");
       }
     }
 
@@ -371,10 +365,7 @@ namespace AdServer::LogProcessing
       {
         Stream::Error ostr;
         ostr << FUN << ": can't do processing: " << ex.what();
-        error_logger_->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::SYNC_LOGS,
-          "ADS-IMPL-202");
+        error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
       }
     }
   }
@@ -525,10 +516,7 @@ namespace AdServer::LogProcessing
     {
       Stream::Error ostr;
       ostr << FUN << ": can't do processing: " << ex.what();
-      error_logger_->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::SYNC_LOGS,
-        "ADS-IMPL-202");
+      error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
     }
 
     while (file_it != process_files.end() && active())
@@ -604,16 +592,12 @@ namespace AdServer::LogProcessing
         file_it != process_files.end() && active(); ++file_it)
       {
         task_scheduler_->enqueue_task(
-          Generics::Task_var(new MoveTask(
-            mover_,
-            move_state_,
-            src_dir,
-            *file_it)),
+          Generics::Task_var(new MoveTask(mover_, move_state_, src_dir, *file_it)),
           (*file_it)->full_path().c_str());
         ++tasks_enqueued;
       }
 
-      for(unsigned long i = 0; i < tasks_enqueued && active(); ++i)
+      for (unsigned long i = 0; i < tasks_enqueued && active(); ++i)
       {
         move_state_->tasks_count.acquire();
       }
@@ -626,10 +610,7 @@ namespace AdServer::LogProcessing
     {
       Stream::Error ostr;
       ostr << FUN << ": can't do processing: " << ex.what();
-      error_logger_->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::SYNC_LOGS,
-        "ADS-IMPL-202");
+      error_logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::SYNC_LOGS, "ADS-IMPL-202");
     }
   }
 }

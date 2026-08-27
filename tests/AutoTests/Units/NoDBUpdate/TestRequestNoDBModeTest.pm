@@ -43,7 +43,7 @@ sub create_testcase
   $ns->output("$name/CCID", $campaign->{cc_id});
   $ns->output("$name/TEST_CCGID", $test_campaign->{ccg_id});
   $ns->output("$name/TEST_CCID", $test_campaign->{cc_id});
-} 
+}
 
 sub init
 {
@@ -57,11 +57,11 @@ sub init
   my $keyword1 = make_autotest_name($ns, "Keyword1");
   my $keyword2 = make_autotest_name($ns, "Keyword2");
   my $keyword3 = make_autotest_name($ns, "Keyword3");
-  
-  $self->{publisher} =  
+
+  $self->{publisher} =
       $ns->create(Publisher => { name => 'PUB'});
 
-  $self->{test_publisher} =  
+  $self->{test_publisher} =
       $ns->create(Publisher => { name => 'PUB-TEST'});
 
   $self->create_testcase($ns, "CCGBudget", $cpm,

@@ -68,10 +68,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::CheckOption opt_out_hashes;
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
 
   args.add(
     Generics::AppUtils::equal_name("dictionary") ||
@@ -85,40 +82,25 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::short_name("nd"),
     opt_name_dictionary);
 
-  args.add(
-    Generics::AppUtils::equal_name("cc-to-ccg"),
-    opt_cc_to_ccg_dictionary);
+  args.add(Generics::AppUtils::equal_name("cc-to-ccg"), opt_cc_to_ccg_dictionary);
 
-  args.add(
-    Generics::AppUtils::equal_name("cc-to-campaign"),
-    opt_cc_to_campaign_dictionary);
+  args.add(Generics::AppUtils::equal_name("cc-to-campaign"), opt_cc_to_campaign_dictionary);
 
-  args.add(
-    Generics::AppUtils::equal_name("tag-to-publisher"),
-    opt_tag_to_publisher_dictionary);
+  args.add(Generics::AppUtils::equal_name("tag-to-publisher"), opt_tag_to_publisher_dictionary);
 
-  args.add(
-    Generics::AppUtils::equal_name("hashes"),
-    opt_out_hashes);
+  args.add(Generics::AppUtils::equal_name("hashes"), opt_out_hashes);
 
-  args.add(
-    Generics::AppUtils::equal_name("model"),
-    opt_model);
+  args.add(Generics::AppUtils::equal_name("model"), opt_model);
 
-  args.add(
-    Generics::AppUtils::equal_name("feature-indexes-file"),
-    opt_feature_indexes_file);
+  args.add(Generics::AppUtils::equal_name("feature-indexes-file"), opt_feature_indexes_file);
 
-  args.add(
-    Generics::AppUtils::equal_name("feature-stats"),
-    opt_feature_stats_file);
+  args.add(Generics::AppUtils::equal_name("feature-stats"), opt_feature_stats_file);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -126,12 +108,11 @@ Application_::main(int& argc, char** argv)
 
   std::string command = *commands.begin();
 
-  if(command == "generate-model")
+  if (command == "generate-model")
   {
-    Generics::AppUtils::Args::CommandList::const_iterator cmd_it =
-      ++commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator cmd_it = ++commands.begin();
 
-    if(cmd_it == args.commands().end())
+    if (cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-model: config file not defined";
@@ -140,7 +121,7 @@ Application_::main(int& argc, char** argv)
 
     std::string config_file = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-model: config data file not defined";
@@ -149,7 +130,7 @@ Application_::main(int& argc, char** argv)
 
     std::string config_data_file = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-model: result file not defined";
@@ -158,18 +139,13 @@ Application_::main(int& argc, char** argv)
 
     std::string weight_file = *cmd_it;
 
-    generate_model_(
-      std::cout,
-      weight_file.c_str(),
-      config_file.c_str(),
-      config_data_file.c_str());
+    generate_model_(std::cout, weight_file.c_str(), config_file.c_str(), config_data_file.c_str());
   }
-  else if(command == "generate-svm")
+  else if (command == "generate-svm")
   {
-    Generics::AppUtils::Args::CommandList::const_iterator cmd_it =
-      ++commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator cmd_it = ++commands.begin();
 
-    if(cmd_it == args.commands().end())
+    if (cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-svm: config data file not defined";
@@ -179,7 +155,7 @@ Application_::main(int& argc, char** argv)
     const std::string config_data_file = *cmd_it;
     std::string feature_columns;
 
-    if(++cmd_it != args.commands().end())
+    if (++cmd_it != args.commands().end())
     {
       feature_columns = *cmd_it;
     }
@@ -189,11 +165,11 @@ Application_::main(int& argc, char** argv)
     }
 
     bool catboost_model;
-    if(*opt_model == "catboost")
+    if (*opt_model == "catboost")
     {
       catboost_model = true;
     }
-    else if(*opt_model == "xgboost")
+    else if (*opt_model == "xgboost")
     {
       catboost_model = false;
     }
@@ -218,12 +194,11 @@ Application_::main(int& argc, char** argv)
       opt_feature_stats_file->c_str(),
       catboost_model);
   }
-  else if(command == "generate-xgb-ctr")
+  else if (command == "generate-xgb-ctr")
   {
-    Generics::AppUtils::Args::CommandList::const_iterator cmd_it =
-      ++commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator cmd_it = ++commands.begin();
 
-    if(cmd_it == args.commands().end())
+    if (cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-xgb-ctr: xgb model not defined";
@@ -232,7 +207,7 @@ Application_::main(int& argc, char** argv)
 
     const std::string xgb_model_file = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-xgb-ctr: config data file not defined";
@@ -241,7 +216,7 @@ Application_::main(int& argc, char** argv)
 
     const std::string config_data_file = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-xgb-ctr: feature columns not defined";
@@ -261,12 +236,11 @@ Application_::main(int& argc, char** argv)
       opt_tag_to_publisher_dictionary->c_str(),
       opt_out_hashes.enabled());
   }
-  else if(command == "generate-ctr")
+  else if (command == "generate-ctr")
   {
-    Generics::AppUtils::Args::CommandList::const_iterator cmd_it =
-      ++commands.begin();
+    Generics::AppUtils::Args::CommandList::const_iterator cmd_it = ++commands.begin();
 
-    if(cmd_it == args.commands().end())
+    if (cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-ctr: config folder not defined";
@@ -275,7 +249,7 @@ Application_::main(int& argc, char** argv)
 
     const std::string config_dir = *cmd_it;
 
-    if(++cmd_it == args.commands().end())
+    if (++cmd_it == args.commands().end())
     {
       Stream::Error ostr;
       ostr << "generate-ctr: feature columns not defined";
@@ -284,7 +258,7 @@ Application_::main(int& argc, char** argv)
 
     const std::string feature_columns = *cmd_it;
 
-    if(++cmd_it != args.commands().end())
+    if (++cmd_it != args.commands().end())
     {
       std::istringstream istr(*cmd_it);
 
@@ -343,7 +317,7 @@ Application_::generate_model_(
   {
     Stream::Error ostr;
     ostr << "Can't parse config data file '" << config_data_file << "': ";
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error_string;
       ostr << error_handler.text(error_string);
@@ -368,28 +342,26 @@ Application_::generate_model_(
 
   weights[0] = config_data->base_weight();
 
-  for(Configuration::CTRGeneratorDataType::Value_sequence::
+  for (Configuration::CTRGeneratorDataType::Value_sequence::
         const_iterator val_it = config_data->Value().begin();
       val_it != config_data->Value().end();
       ++val_it, ++value_i)
   {
     CTRGenerator::CalculateParams calc_params;
 
-    for(Configuration::ValueType::BasicFeatureValue_sequence::
+    for (Configuration::ValueType::BasicFeatureValue_sequence::
           const_iterator bf_it = val_it->BasicFeatureValue().begin();
         bf_it != val_it->BasicFeatureValue().end(); ++bf_it)
     {
       CTR::BasicFeature basic_feature;
-      if(!feature_name_resolver.basic_feature_by_name(
-           basic_feature,
-           bf_it->name()))
+      if (!feature_name_resolver.basic_feature_by_name(basic_feature, bf_it->name()))
       {
         Stream::Error ostr;
         ostr << "Invalid basic feature name: '" << bf_it->name() << "'";
         throw Exception(ostr);
       }
 
-      if(basic_feature == CTR::BF_CAMPAIGN_FREQ_LOG_ID)
+      if (basic_feature == CTR::BF_CAMPAIGN_FREQ_LOG_ID)
       {
         Stream::Error ostr;
         ostr << "Feature '" << bf_it->name() << "' can't be defined directly, "
@@ -406,21 +378,19 @@ Application_::generate_model_(
 
     out << "Hashes for record #" << value_i << ":";
 
-    if(!ctr_calculation.hashes.empty())
+    if (!ctr_calculation.hashes.empty())
     {
       unsigned long hashes_count = ctr_calculation.hashes.size();
       float result_weight = val_it->weight();
       float result_weight_part = result_weight / hashes_count;
 
-      for(auto hash_it = ctr_calculation.hashes.begin();
+      for (auto hash_it = ctr_calculation.hashes.begin();
           hash_it != ctr_calculation.hashes.end(); ++hash_it)
       {
-        const uint32_t index = CTR::feature_hash_index(
-          hash_it->first,
-          features_size);
+        const uint32_t index = CTR::feature_hash_index(hash_it->first, features_size);
         weights[index] = result_weight_part;
 
-        if(hash_it != ctr_calculation.hashes.begin())
+        if (hash_it != ctr_calculation.hashes.begin())
         {
           out << ",";
         }
@@ -429,15 +399,12 @@ Application_::generate_model_(
     }
 
     out << std::endl;
-    out << "Weight = " << val_it->weight() << " divided between these hashes" <<
-      std::endl;
+    out << "Weight = " << val_it->weight() << " divided between these hashes" << std::endl;
   }
 
   // dump weight table
-  AdServer::ProfilingCommons::FileWriter weight_file_writer(
-    out_weight_file, 10*1024*1024);
-  for(std::vector<float>::const_iterator wit = weights.begin();
-      wit != weights.end(); ++wit)
+  AdServer::ProfilingCommons::FileWriter weight_file_writer(out_weight_file, 10*1024*1024);
+  for (std::vector<float>::const_iterator wit = weights.begin(); wit != weights.end(); ++wit)
   {
     uint32_t val = htonl(*reinterpret_cast<const uint32_t*>(&*wit));
     weight_file_writer.write(&val, sizeof(val));
@@ -446,12 +413,10 @@ Application_::generate_model_(
 }
 
 void
-Application_::load_dictionary_(
-  std::map<std::string, std::string>& dict,
-  const char* file)
+Application_::load_dictionary_(std::map<std::string, std::string>& dict, const char* file)
 {
   std::ifstream in(file);
-  if(!in.is_open())
+  if (!in.is_open())
   {
     Stream::Error ostr;
     ostr << "can't open '" << file << "'";
@@ -460,12 +425,12 @@ Application_::load_dictionary_(
 
   std::vector<std::string> values;
 
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -473,7 +438,7 @@ Application_::load_dictionary_(
     values.resize(0);
     Commons::CsvReader::parse_line(values, line);
 
-    if(values.size() != 2)
+    if (values.size() != 2)
     {
       Stream::Error ostr;
       ostr << "invalid dictionary line '" << line << "'";
@@ -503,26 +468,26 @@ Application_::generate_svm_(
 
   // load creative dictionary
   std::map<std::string, std::string> ccid_to_ccg;
-  if(cc_to_ccg_dictionary_file_path[0])
+  if (cc_to_ccg_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_ccg, cc_to_ccg_dictionary_file_path);
   }
 
   std::map<std::string, std::string> ccid_to_campaign;
-  if(cc_to_campaign_dictionary_file_path[0])
+  if (cc_to_campaign_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
   // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
-  if(tag_to_publisher_dictionary_file_path[0])
+  if (tag_to_publisher_dictionary_file_path[0])
   {
     load_dictionary_(tag_to_publisher, tag_to_publisher_dictionary_file_path);
   }
 
   std::map<std::string, std::string> names;
-  if(name_dictionary_file_path[0])
+  if (name_dictionary_file_path[0])
   {
     load_dictionary_(names, name_dictionary_file_path);
   }
@@ -534,14 +499,14 @@ Application_::generate_svm_(
   const unsigned long features_size = 1UL << dimension;
   CTR::FeatureNameResolver feature_name_resolver;
 
-  if(catboost_model)
+  if (catboost_model)
   {
-    for(const auto& feature : config.features)
+    for (const auto& feature : config.features)
     {
-      if(feature.basic_features.size() == 1)
+      if (feature.basic_features.size() == 1)
       {
         const auto feature_id = *feature.basic_features.begin();
-        if(
+        if (
           CTR::is_direct_ssp_float_feature(feature_id) &&
           features_size <= static_cast<unsigned long>(feature_id))
         {
@@ -563,53 +528,49 @@ Application_::generate_svm_(
   std::vector<FeatureStat> feature_stats;
   std::uint64_t total_impressions = 0;
   std::uint64_t total_clicks = 0;
-  if(feature_stats_file_path[0])
+  if (feature_stats_file_path[0])
   {
     feature_stats.resize(features_size + 1);
   }
 
   std::vector<unsigned char> allowed_feature_indexes;
-  if(feature_indexes_file_path[0])
+  if (feature_indexes_file_path[0])
   {
     allowed_feature_indexes.resize(features_size + 1, 0);
     std::ifstream feature_indexes_file(feature_indexes_file_path);
-    if(!feature_indexes_file)
+    if (!feature_indexes_file)
     {
       Stream::Error ostr;
-      ostr << "Can't open feature indexes file '" <<
-        feature_indexes_file_path << "'";
+      ostr << "Can't open feature indexes file '" << feature_indexes_file_path << "'";
       throw Exception(ostr);
     }
 
     unsigned long feature_index;
     unsigned long feature_indexes_count = 0;
-    while(feature_indexes_file >> feature_index)
+    while (feature_indexes_file >> feature_index)
     {
-      if(feature_index == 0 || feature_index > features_size)
+      if (feature_index == 0 || feature_index > features_size)
       {
         Stream::Error ostr;
         ostr << "Invalid feature index " << feature_index << " in '" <<
-          feature_indexes_file_path << "', expected range is [1, " <<
-          features_size << "]";
+          feature_indexes_file_path << "', expected range is [1, " << features_size << "]";
         throw Exception(ostr);
       }
       allowed_feature_indexes[feature_index] = 1;
       ++feature_indexes_count;
     }
 
-    if(!feature_indexes_file.eof())
+    if (!feature_indexes_file.eof())
     {
       Stream::Error ostr;
-      ostr << "Invalid feature index in '" <<
-        feature_indexes_file_path << "'";
+      ostr << "Invalid feature index in '" << feature_indexes_file_path << "'";
       throw Exception(ostr);
     }
 
-    if(feature_indexes_count == 0)
+    if (feature_indexes_count == 0)
     {
       Stream::Error ostr;
-      ostr << "Feature indexes file '" << feature_indexes_file_path <<
-        "' is empty";
+      ostr << "Feature indexes file '" << feature_indexes_file_path << "' is empty";
       throw Exception(ostr);
     }
   }
@@ -620,30 +581,28 @@ Application_::generate_svm_(
 
   {
     std::vector<std::string> feature_column_names;
-    Commons::CsvReader::parse_line(
-      feature_column_names,
-      String::SubString(feature_columns_str));
+    Commons::CsvReader::parse_line(feature_column_names, String::SubString(feature_columns_str));
     unsigned long column_i = 0;
-    for(auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
+    for (auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
     {
-      if(*it == "label" || *it == "Label")
+      if (*it == "label" || *it == "Label")
       {
         label_index = column_i;
       }
-      else if(*it == "timestamp" || *it == "Timestamp")
+      else if (*it == "timestamp" || *it == "Timestamp")
       {
         feature_columns[CalculateParamsFiller::BF_TIMESTAMP] = column_i;
       }
-      else if(*it == "link" || *it == "Link")
+      else if (*it == "link" || *it == "Link")
       {
         feature_columns[CalculateParamsFiller::BF_LINK] = column_i;
       }
-      else if(!it->empty() && (*it)[0] != '#')
+      else if (!it->empty() && (*it)[0] != '#')
       {
         String::AsciiStringManip::to_lower(*it);
 
         CTR::BasicFeature basic_feature;
-        if(!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
+        if (!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
         {
           Stream::Error ostr;
           ostr << "Invalid basic feature name: '" << *it << "'";
@@ -656,7 +615,7 @@ Application_::generate_svm_(
   }
 
   std::unique_ptr<CTRGenerator::FeatureDictionary> dict_table;
-  if(dictionary_file_path[0])
+  if (dictionary_file_path[0])
   {
     dict_table.reset(new CTRGenerator::FeatureDictionary());
   }
@@ -668,12 +627,12 @@ Application_::generate_svm_(
   unsigned long line_i = 0;
   std::vector<std::string> feature_column_values;
   feature_column_values.reserve(feature_columns.size());
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -690,11 +649,11 @@ Application_::generate_svm_(
       label = feature_column_values[label_index];
 
       unsigned long column_i = 0;
-      for(auto feature_it = feature_columns.begin();
+      for (auto feature_it = feature_columns.begin();
         feature_it != feature_columns.end();
         ++feature_it, ++column_i)
       {
-        if(feature_it->second >= feature_column_values.size())
+        if (feature_it->second >= feature_column_values.size())
         {
           Stream::Error ostr;
           ostr << "Line #" << line_i << ", column #" << feature_it->second << " out of parsed columns (" <<
@@ -704,12 +663,12 @@ Application_::generate_svm_(
 
         const std::string& value = feature_column_values[feature_it->second];
 
-        if(feature_it->first == CTR::BF_CC_ID)
+        if (feature_it->first == CTR::BF_CC_ID)
         {
           {
             // fill campaign
             auto it = ccid_to_campaign.find(value);
-            if(it != ccid_to_campaign.end())
+            if (it != ccid_to_campaign.end())
             {
               calc_params_filler.set_value(calc_params, CTR::BF_CAMPAIGN_ID, it->second);
             }
@@ -718,18 +677,18 @@ Application_::generate_svm_(
           {
             // fill ccg
             auto it = ccid_to_ccg.find(value);
-            if(it != ccid_to_ccg.end())
+            if (it != ccid_to_ccg.end())
             {
               calc_params_filler.set_value(calc_params, CTR::BF_CCG_ID, it->second);
             }
           }
         }
 
-        if(feature_it->first == CTR::BF_TAG_ID)
+        if (feature_it->first == CTR::BF_TAG_ID)
         {
         // fill publisher
           auto it = tag_to_publisher.find(value);
-          if(it != tag_to_publisher.end())
+          if (it != tag_to_publisher.end())
           {
             calc_params_filler.set_value(calc_params, CTR::BF_PUBLISHER_ID, it->second);
           }
@@ -764,7 +723,7 @@ Application_::generate_svm_(
       skip_line = true;
     }
 
-    if(skip_line)
+    if (skip_line)
     {
       continue;
     }
@@ -775,30 +734,27 @@ Application_::generate_svm_(
     // output hashes
     std::ostringstream res_line_ostr;
     res_line_ostr <<
-      std::setprecision(std::numeric_limits<float>::max_digits10) <<
-      label;
+      std::setprecision(std::numeric_limits<float>::max_digits10) << label;
 
     std::map<unsigned long, float> ordered_hashes;
 
-    for(auto hash_it = ctr_calculation.hashes.begin();
+    for (auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
-      const uint32_t index = CTR::feature_hash_index(
-        hash_it->first,
-        features_size);
+      const uint32_t index = CTR::feature_hash_index(hash_it->first, features_size);
       const uint32_t svm_index = index + 1;
-      if(allowed_feature_indexes.empty() || allowed_feature_indexes[svm_index])
+      if (allowed_feature_indexes.empty() || allowed_feature_indexes[svm_index])
       {
         ordered_hashes[svm_index] = hash_it->second;
       }
     }
 
-    if(!feature_stats.empty())
+    if (!feature_stats.empty())
     {
       const bool clicked = label == "1";
       ++total_impressions;
       total_clicks += clicked;
-      for(const auto& hash : ordered_hashes)
+      for (const auto& hash : ordered_hashes)
       {
         FeatureStat& stat = feature_stats[hash.first];
         ++stat.impressions;
@@ -806,21 +762,17 @@ Application_::generate_svm_(
       }
     }
 
-    if(
-      catboost_model &&
-      line_i == 0 &&
-      ordered_hashes.find(features_size) == ordered_hashes.end())
+    if (catboost_model && line_i == 0 && ordered_hashes.find(features_size) == ordered_hashes.end())
     {
       ordered_hashes[features_size] = 0;
     }
 
-    for(auto hash_it = ordered_hashes.begin();
-      hash_it != ordered_hashes.end(); ++hash_it)
+    for (auto hash_it = ordered_hashes.begin(); hash_it != ordered_hashes.end(); ++hash_it)
     {
       res_line_ostr << ' ' << hash_it->first << ":" << hash_it->second;
     }
 
-    if(dict_table.get())
+    if (dict_table.get())
     {
       // fill dict
       ctr_generator.fill_dictionary(*dict_table, calc_params);
@@ -832,62 +784,53 @@ Application_::generate_svm_(
   }
 
   // dump dictionaries
-  if(dict_table.get())
+  if (dict_table.get())
   {
     std::ofstream dictionary_file(dictionary_file_path, std::ios_base::out);
-    for(auto it = dict_table->begin(); it != dict_table->end(); ++it)
+    for (auto it = dict_table->begin(); it != dict_table->end(); ++it)
     {
-      const uint32_t index = CTR::feature_hash_index(
-        it->first,
-        features_size);
-      if(
-        !allowed_feature_indexes.empty() &&
-        !allowed_feature_indexes[index + 1])
+      const uint32_t index = CTR::feature_hash_index(it->first, features_size);
+      if (!allowed_feature_indexes.empty() && !allowed_feature_indexes[index + 1])
       {
         continue;
       }
       dictionary_file << (index + 1) << ",";
-      if(!it->second.empty())
+      if (!it->second.empty())
       {
         std::string res = it->second;
 
         auto name_it = names.find(it->second);
-        if(name_it != names.end())
+        if (name_it != names.end())
         {
           res += "(";
           res += name_it->second;
           res += ")";
         }
 
-        AdServer::LogProcessing::write_not_empty_string_as_csv(
-          dictionary_file,
-          res);
+        AdServer::LogProcessing::write_not_empty_string_as_csv(dictionary_file, res);
       }
       dictionary_file << std::endl;
     }
     dictionary_file.close();
   }
 
-  if(!feature_stats.empty())
+  if (!feature_stats.empty())
   {
     std::ofstream feature_stats_file(feature_stats_file_path);
-    if(!feature_stats_file)
+    if (!feature_stats_file)
     {
       Stream::Error ostr;
-      ostr << "Can't open feature stats file '" <<
-        feature_stats_file_path << "'";
+      ostr << "Can't open feature stats file '" << feature_stats_file_path << "'";
       throw Exception(ostr);
     }
 
-    feature_stats_file << "0," << total_impressions << ',' <<
-      total_clicks << '\n';
-    for(std::size_t index = 1; index < feature_stats.size(); ++index)
+    feature_stats_file << "0," << total_impressions << ',' << total_clicks << '\n';
+    for (std::size_t index = 1; index < feature_stats.size(); ++index)
     {
       const FeatureStat& stat = feature_stats[index];
-      if(stat.impressions != 0)
+      if (stat.impressions != 0)
       {
-        feature_stats_file << index << ',' << stat.impressions << ',' <<
-          stat.clicks << '\n';
+        feature_stats_file << index << ',' << stat.impressions << ',' << stat.clicks << '\n';
       }
     }
   }
@@ -909,20 +852,20 @@ Application_::generate_xgb_ctr_(
 
   // load creative dictionary
   std::map<std::string, std::string> ccid_to_ccg;
-  if(cc_to_ccg_dictionary_file_path[0])
+  if (cc_to_ccg_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_ccg, cc_to_ccg_dictionary_file_path);
   }
 
   std::map<std::string, std::string> ccid_to_campaign;
-  if(cc_to_campaign_dictionary_file_path[0])
+  if (cc_to_campaign_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
   // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
-  if(tag_to_publisher_dictionary_file_path[0])
+  if (tag_to_publisher_dictionary_file_path[0])
   {
     load_dictionary_(tag_to_publisher, tag_to_publisher_dictionary_file_path);
   }
@@ -933,8 +876,7 @@ Application_::generate_xgb_ctr_(
   */
   CTR::XGBoostPredictorPool_var xgb_pool(
     new CTR::XGBoostPredictorPool(String::SubString(xgb_model_file)));
-  CTR::XGBoostPredictorPool::Predictor_var xgb_predictor =
-    xgb_pool->get_predictor();
+  CTR::XGBoostPredictorPool::Predictor_var xgb_predictor = xgb_pool->get_predictor();
 
   const auto config = load_ctr_generator_feature_config(config_file);
 
@@ -949,30 +891,28 @@ Application_::generate_xgb_ctr_(
 
   {
     std::vector<std::string> feature_column_names;
-    Commons::CsvReader::parse_line(
-      feature_column_names,
-      String::SubString(feature_columns_str));
+    Commons::CsvReader::parse_line(feature_column_names, String::SubString(feature_columns_str));
     unsigned long column_i = 0;
-    for(auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
+    for (auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
     {
-      if(*it == "label" || *it == "Label")
+      if (*it == "label" || *it == "Label")
       {
         label_index = column_i;
       }
-      else if(*it == "timestamp" || *it == "Timestamp")
+      else if (*it == "timestamp" || *it == "Timestamp")
       {
         feature_columns[CalculateParamsFiller::BF_TIMESTAMP] = column_i;
       }
-      else if(*it == "link" || *it == "Link")
+      else if (*it == "link" || *it == "Link")
       {
         feature_columns[CalculateParamsFiller::BF_LINK] = column_i;
       }
-      else if(!it->empty() && (*it)[0] != '#')
+      else if (!it->empty() && (*it)[0] != '#')
       {
         String::AsciiStringManip::to_lower(*it);
 
         CTR::BasicFeature basic_feature;
-        if(!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
+        if (!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
         {
           Stream::Error ostr;
           ostr << "Invalid basic feature name: '" << *it << "'";
@@ -991,12 +931,12 @@ Application_::generate_xgb_ctr_(
   unsigned long line_i = 0;
   std::vector<std::string> feature_column_values;
   feature_column_values.reserve(feature_columns.size());
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -1009,11 +949,11 @@ Application_::generate_xgb_ctr_(
 
     bool skip_line = false;
     unsigned long column_i = 0;
-    for(auto feature_it = feature_columns.begin();
+    for (auto feature_it = feature_columns.begin();
       feature_it != feature_columns.end();
       ++feature_it, ++column_i)
     {
-      if(feature_it->second >= feature_column_values.size())
+      if (feature_it->second >= feature_column_values.size())
       {
         Stream::Error ostr;
         ostr << "Line #" << line_i << ", column #" << feature_it->second << " out of parsed columns (" <<
@@ -1023,12 +963,12 @@ Application_::generate_xgb_ctr_(
 
       const std::string& value = feature_column_values[feature_it->second];
 
-      if(feature_it->first == CTR::BF_CC_ID)
+      if (feature_it->first == CTR::BF_CC_ID)
       {
         {
           // fill campaign
           auto it = ccid_to_campaign.find(value);
-          if(it != ccid_to_campaign.end())
+          if (it != ccid_to_campaign.end())
           {
             calc_params_filler.set_value(calc_params, CTR::BF_CAMPAIGN_ID, it->second);
           }
@@ -1037,18 +977,18 @@ Application_::generate_xgb_ctr_(
         {
           // fill ccg
           auto it = ccid_to_ccg.find(value);
-          if(it != ccid_to_ccg.end())
+          if (it != ccid_to_ccg.end())
           {
             calc_params_filler.set_value(calc_params, CTR::BF_CCG_ID, it->second);
           }
         }
       }
 
-      if(feature_it->first == CTR::BF_TAG_ID)
+      if (feature_it->first == CTR::BF_TAG_ID)
       {
         // fill publisher
         auto it = tag_to_publisher.find(value);
-        if(it != tag_to_publisher.end())
+        if (it != tag_to_publisher.end())
         {
           calc_params_filler.set_value(calc_params, CTR::BF_PUBLISHER_ID, it->second);
         }
@@ -1074,7 +1014,7 @@ Application_::generate_xgb_ctr_(
       }
     }
 
-    if(skip_line)
+    if (skip_line)
     {
       continue;
     }
@@ -1088,24 +1028,22 @@ Application_::generate_xgb_ctr_(
 
     Generics::MonoAllocatorArena hashes_arena;
     CTR::HashArray hashes{CTR::HashArray::allocator_type(hashes_arena)};
-    for(auto hash_it = ctr_calculation.hashes.begin();
+    for (auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
     {
-      const uint32_t index = CTR::feature_hash_index(
-        hash_it->first,
-        features_size);
+      const uint32_t index = CTR::feature_hash_index(hash_it->first, features_size);
       hashes.push_back(std::make_pair(index, hash_it->second));
     }
 
     const RevenueDecimal ctr = Generics::convert_float<RevenueDecimal>(xgb_predictor->predict(hashes));
 
     // push line to output
-    if(out_hashes)
+    if (out_hashes)
     {
       out << "hashes: ";
-      for(auto hash_it = hashes.begin(); hash_it != hashes.end(); ++hash_it)
+      for (auto hash_it = hashes.begin(); hash_it != hashes.end(); ++hash_it)
       {
-        if(hash_it != hashes.begin())
+        if (hash_it != hashes.begin())
         {
           out << ",";
         }
@@ -1134,20 +1072,20 @@ Application_::generate_ctr_(
 
   // load creative dictionary
   std::map<std::string, std::string> ccid_to_ccg;
-  if(cc_to_ccg_dictionary_file_path[0])
+  if (cc_to_ccg_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_ccg, cc_to_ccg_dictionary_file_path);
   }
 
   std::map<std::string, std::string> ccid_to_campaign;
-  if(cc_to_campaign_dictionary_file_path[0])
+  if (cc_to_campaign_dictionary_file_path[0])
   {
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
   // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
-  if(tag_to_publisher_dictionary_file_path[0])
+  if (tag_to_publisher_dictionary_file_path[0])
   {
     load_dictionary_(tag_to_publisher, tag_to_publisher_dictionary_file_path);
   }
@@ -1166,30 +1104,28 @@ Application_::generate_ctr_(
 
   {
     std::vector<std::string> feature_column_names;
-    Commons::CsvReader::parse_line(
-      feature_column_names,
-      String::SubString(feature_columns_str));
+    Commons::CsvReader::parse_line(feature_column_names, String::SubString(feature_columns_str));
     unsigned long column_i = 0;
-    for(auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
+    for (auto it = feature_column_names.begin(); it != feature_column_names.end(); ++it, ++column_i)
     {
-      if(*it == "label" || *it == "Label")
+      if (*it == "label" || *it == "Label")
       {
         label_index = column_i;
       }
-      else if(*it == "timestamp" || *it == "Timestamp")
+      else if (*it == "timestamp" || *it == "Timestamp")
       {
         feature_columns[CalculateParamsFiller::BF_TIMESTAMP] = column_i;
       }
-      else if(*it == "link" || *it == "Link")
+      else if (*it == "link" || *it == "Link")
       {
         feature_columns[CalculateParamsFiller::BF_LINK] = column_i;
       }
-      else if(!it->empty() && (*it)[0] != '#')
+      else if (!it->empty() && (*it)[0] != '#')
       {
         String::AsciiStringManip::to_lower(*it);
 
         CTR::BasicFeature basic_feature;
-        if(!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
+        if (!feature_name_resolver.basic_feature_by_name(basic_feature, *it))
         {
           Stream::Error ostr;
           ostr << "Invalid basic feature name: '" << *it << "'";
@@ -1208,12 +1144,12 @@ Application_::generate_ctr_(
   unsigned long line_i = 0;
   std::vector<std::string> feature_column_values;
   feature_column_values.reserve(feature_columns.size());
-  while(!in.eof())
+  while (!in.eof())
   {
     // parse line
     std::string line;
     std::getline(in, line);
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -1226,11 +1162,11 @@ Application_::generate_ctr_(
 
     bool skip_line = false;
     unsigned long column_i = 0;
-    for(auto feature_it = feature_columns.begin();
+    for (auto feature_it = feature_columns.begin();
       feature_it != feature_columns.end();
       ++feature_it, ++column_i)
     {
-      if(feature_it->second >= feature_column_values.size())
+      if (feature_it->second >= feature_column_values.size())
       {
         Stream::Error ostr;
         ostr << "Line #" << line_i << ", column #" << feature_it->second << " out of parsed columns (" <<
@@ -1240,12 +1176,12 @@ Application_::generate_ctr_(
 
       const std::string& value = feature_column_values[feature_it->second];
 
-      if(feature_it->first == CTR::BF_CC_ID)
+      if (feature_it->first == CTR::BF_CC_ID)
       {
         {
           // fill campaign
           auto it = ccid_to_campaign.find(value);
-          if(it != ccid_to_campaign.end())
+          if (it != ccid_to_campaign.end())
           {
             calc_params_filler.set_value(calc_params, CTR::BF_CAMPAIGN_ID, it->second);
           }
@@ -1254,18 +1190,18 @@ Application_::generate_ctr_(
         {
           // fill ccg
           auto it = ccid_to_ccg.find(value);
-          if(it != ccid_to_ccg.end())
+          if (it != ccid_to_ccg.end())
           {
             calc_params_filler.set_value(calc_params, CTR::BF_CCG_ID, it->second);
           }
         }
       }
 
-      if(feature_it->first == CTR::BF_TAG_ID)
+      if (feature_it->first == CTR::BF_TAG_ID)
       {
         // fill publisher
         auto it = tag_to_publisher.find(value);
-        if(it != tag_to_publisher.end())
+        if (it != tag_to_publisher.end())
         {
           calc_params_filler.set_value(calc_params, CTR::BF_PUBLISHER_ID, it->second);
         }
@@ -1291,7 +1227,7 @@ Application_::generate_ctr_(
       }
     }
 
-    if(skip_line)
+    if (skip_line)
     {
       continue;
     }
@@ -1344,7 +1280,7 @@ Application_::generate_ctr_(
     request_params.time_week_day = calc_params.wd;
     request_params.last_platform_channel_id = calc_params.device_id;
 
-    if(calc_params.campaign_freq > 0)
+    if (calc_params.campaign_freq > 0)
     {
       request_params.campaign_imps.insert(
         std::make_pair(calc_params.campaign_id, calc_params.campaign_freq));
@@ -1379,21 +1315,20 @@ Application_::generate_ctr_(
       CTR::CTRProvider::Calculation_var calculation =
         ctr_provider->create_calculation(request_params_ptr);
 
-      if(calculation.in())
+      if (calculation.in())
       {
         CTR::CTRProvider::CalculationContext_var calculation_context =
           calculation->create_context(request_params.tag->sizes.begin()->second);
 
         ctr = calculation_context->get_ctr(creative);
 
-        if(out_hashes)
+        if (out_hashes)
         {
           Generics::MonoAllocatorArena hashes_arena;
           CTR::HashArray hashes{CTR::HashArray::allocator_type(hashes_arena)};
           const auto* impl_calculation_context =
-            dynamic_cast<const CTR::CTRProviderImpl::CalculationContext*>(
-              calculation_context.in());
-          if(!impl_calculation_context)
+            dynamic_cast<const CTR::CTRProviderImpl::CalculationContext*>(calculation_context.in());
+          if (!impl_calculation_context)
           {
             Stream::Error ostr;
             ostr << "Unexpected CTR calculation context type";
@@ -1403,9 +1338,9 @@ Application_::generate_ctr_(
           std::sort(hashes.begin(), hashes.end());
 
           out << "hashes: ";
-          for(auto hash_it = hashes.begin(); hash_it != hashes.end(); ++hash_it)
+          for (auto hash_it = hashes.begin(); hash_it != hashes.end(); ++hash_it)
           {
-            if(hash_it != hashes.begin())
+            if (hash_it != hashes.begin())
             {
               out << ",";
             }

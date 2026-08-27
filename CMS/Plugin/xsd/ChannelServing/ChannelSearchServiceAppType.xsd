@@ -28,7 +28,7 @@
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
-  
+
   <xsd:complexType name="ChannelSearchServiceConfigType">
     <xsd:sequence>
       <xsd:element name="networkParams" type="ChannelSearchServiceNetworkParamsType" minOccurs="0" maxOccurs="1">
@@ -51,7 +51,7 @@
             CORBA thread pool.
           </xsd:documentation>
         </xsd:annotation>
-      </xsd:element> 
+      </xsd:element>
     </xsd:sequence>
     <xsd:attribute name="grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
       <xsd:annotation>

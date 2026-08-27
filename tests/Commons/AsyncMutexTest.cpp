@@ -49,20 +49,20 @@ main()
   cancelled.reset();
   owner.reset();
 
-  if(!order.empty() || scheduled.size() != 1)
+  if (!order.empty() || scheduled.size() != 1)
   {
     std::cerr << "AsyncMutexTest: waiter wasn't passed to its scheduler\n";
     return 1;
   }
 
-  while(!scheduled.empty())
+  while (!scheduled.empty())
   {
     const auto handle = scheduled.front();
     scheduled.pop_front();
     handle.resume();
   }
 
-  if(order != std::vector<int>({1, 3}))
+  if (order != std::vector<int>({1, 3}))
   {
     std::cerr << "AsyncMutexTest: FIFO or cancellation failed\n";
     return 1;
@@ -74,14 +74,14 @@ main()
     immediate.start({});
   }
 
-  if(order != std::vector<int>({1, 3, 4}) || !scheduled.empty())
+  if (order != std::vector<int>({1, 3, 4}) || !scheduled.empty())
   {
     std::cerr << "AsyncMutexTest: immediate acquisition failed\n";
     return 1;
   }
 
   const auto stats = AsyncMutex::stats();
-  if(stats.lock_attempts != 4 ||
+  if (stats.lock_attempts != 4 ||
     stats.immediate_locks != 1 ||
     stats.contended_locks != 3 ||
     stats.current_waiters != 0 ||
@@ -92,7 +92,7 @@ main()
   }
 
   auto final_guard = mutex.scoped_lock();
-  if(!final_guard)
+  if (!final_guard)
   {
     std::cerr << "AsyncMutexTest: mutex remained locked\n";
     return 1;

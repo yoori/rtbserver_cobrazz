@@ -99,8 +99,7 @@ namespace AdServer
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -157,9 +156,7 @@ namespace AdServer
 
     void parse_configs_() /*throw(Exception)*/;
 
-    void sign_client_id(
-      const std::string& uid,
-      std::string& signed_uid)
+    void sign_client_id(const std::string& uid, std::string& signed_uid)
       noexcept;
 
     void
@@ -182,8 +179,7 @@ namespace AdServer
       std::string error_message;
     };
 
-    using TriggerMatcherTask =
-      AdServer::Commons::Awaitable<TriggerMatcherResult>;
+    using TriggerMatcherTask = AdServer::Commons::Awaitable<TriggerMatcherResult>;
 
     struct MergeUsersResult
     {
@@ -202,17 +198,14 @@ namespace AdServer
       bool profiling_available = false;
     };
 
-    using UserInfoMatcherTask =
-      AdServer::Commons::Awaitable<UserInfoMatcherResult>;
+    using UserInfoMatcherTask = AdServer::Commons::Awaitable<UserInfoMatcherResult>;
 
     BoolTask
-    co_acquire_ad_(
-      const std::shared_ptr<RequestContext>& context)
+    co_acquire_ad_(const std::shared_ptr<RequestContext>& context)
       noexcept;
 
     FrontendCommons::RequestResult
-    finish_request_(
-      const std::shared_ptr<RequestContext>& context)
+    finish_request_(const std::shared_ptr<RequestContext>& context)
       noexcept;
 
     void
@@ -268,8 +261,7 @@ namespace AdServer
       noexcept;
 
     MergeUsersTask
-    co_merge_users_(
-      const std::shared_ptr<RequestContext>& context)
+    co_merge_users_(const std::shared_ptr<RequestContext>& context)
       noexcept;
 
     TriggerMatcherTask
@@ -328,10 +320,7 @@ namespace AdServer
 
   private:
     void
-    log_request(
-      const char* function_name,
-      const FCGI::HttpRequest& request,
-      unsigned int log_level)
+    log_request(const char* function_name, const FCGI::HttpRequest& request, unsigned int log_level)
       /*throw(eh::Exception)*/;
 
     static void prepare_ui_match_params_(

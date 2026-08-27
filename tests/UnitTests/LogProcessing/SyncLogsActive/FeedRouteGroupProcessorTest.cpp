@@ -31,15 +31,10 @@ namespace
   const StringList dst_hosts{"-"};
 
   RouteBasicHelper_var destination_host_router =
-    new RouteRoundRobinHelper(
-      ST_ROUND_ROBIN,
-      dst_hosts,
-      10);
+    new RouteRoundRobinHelper(ST_ROUND_ROBIN, dst_hosts, 10);
 
   void
-  read_dir(
-    const std::string& path,
-    std::set<std::string>& entries)
+  read_dir(const std::string& path, std::set<std::string>& entries)
     /*throw(std::exception)*/
   {
     DIR *dir = opendir(path.c_str());
@@ -56,8 +51,7 @@ namespace
       const std::string full_path = path + '/' + ent->d_name;
       struct stat st;
 
-      if (ent->d_name[0] != '.' &&
-          stat(full_path.c_str(), &st) == 0)
+      if (ent->d_name[0] != '.' && stat(full_path.c_str(), &st) == 0)
       {
         if (S_ISREG(st.st_mode))
         {
@@ -74,10 +68,7 @@ namespace
   {
   public:
     virtual void
-    report_error(
-      Severity,
-      const String::SubString& description,
-      const char* = 0) noexcept
+    report_error(Severity, const String::SubString& description, const char* = 0) noexcept
     {
       std::cerr << description.str() << std::endl;
     }

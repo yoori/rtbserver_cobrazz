@@ -66,15 +66,12 @@ namespace AdServer::Bidding
 
     std::ostringstream response_ostr;
 
-    fill_response_(
-      response_ostr,
-      request_info_,
-      campaign_match_result);
+    fill_response_(response_ostr, request_info_, campaign_match_result);
 
     // write response
     const std::string bid_response = response_ostr.str();
 
-    if(!bid_response.empty())
+    if (!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       response->set_content_type_nocopy(Response::Type::TEXT_XML);
@@ -97,7 +94,7 @@ namespace AdServer::Bidding
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
 
-    if(code < 300)
+    if (code < 300)
     {
       // no-bid is No content
       write_response_(204, response, response_claimed);
@@ -143,7 +140,7 @@ namespace AdServer::Bidding
 
       AdServer::Commons::JsonObject bid_array(root_json.add_array(Response::AdJson::BIDS));
 
-      for(unsigned long ad_slot_i = 0; ad_slot_i < campaign_match_result.ad_slots.size(); ++ad_slot_i)
+      for (unsigned long ad_slot_i = 0; ad_slot_i < campaign_match_result.ad_slots.size(); ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
           AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
@@ -153,8 +150,7 @@ namespace AdServer::Bidding
         CampaignSvcs::RevenueDecimal sum_pub_ecpm = GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           ad_slot_result.selected_creatives[0].pub_ecpm);
 
-        bid_frontend_->limit_max_cpm_(
-          sum_pub_ecpm, request_info.publisher_account_ids);
+        bid_frontend_->limit_max_cpm_(sum_pub_ecpm, request_info.publisher_account_ids);
 
         // result price, ecpm is in 0.01/1000
         CampaignSvcs::RevenueDecimal adjson_price = CampaignSvcs::RevenueDecimal::div(
@@ -169,23 +165,19 @@ namespace AdServer::Bidding
         ad_slot_result.selected_creatives[0].click_url);
 
       // icon
-      if(ad_slot_result.native_image_tokens.size() > 1)
+      if (ad_slot_result.native_image_tokens.size() > 1)
       {
         const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
-        root_json.add_escaped_string(
-          Response::AdJson::ICON,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::ICON, token.value);
       }
 
       // image
-      if(ad_slot_result.native_image_tokens.size() > 0)
+      if (ad_slot_result.native_image_tokens.size() > 0)
       {
         const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
-        root_json.add_escaped_string(
-          Response::AdJson::IMAGE,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::IMAGE, token.value);
       }
       }
       }

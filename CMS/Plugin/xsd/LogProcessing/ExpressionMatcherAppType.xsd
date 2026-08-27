@@ -76,7 +76,7 @@
             gRPC completion queue threads.
           </xsd:documentation>
         </xsd:annotation>
-      </xsd:element> 
+      </xsd:element>
       <xsd:element name="updateParams" type="ExpressionMatcherUpdateParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>

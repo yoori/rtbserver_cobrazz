@@ -11,7 +11,7 @@ class OrbTestInfo(FunTest.TestInfo):
     self.orb = None
 
 class OrbTestSuite (FunTest.TestSuite):
-  
+
   def __init__( self, info, children = None ):
     assert isinstance(info, OrbTestInfo)
     FunTest.TestSuite.__init__(self, info, children)
@@ -53,7 +53,7 @@ class OrbTestSuite (FunTest.TestSuite):
   def getObject( self, objectKey, objectType ):
     ior = "corbaloc:iiop:%s:%s/%s" % (os.environ['HOSTNAME'], self.orbPort, objectKey)
     obj = self.info.orb.string_to_object(ior)
-    return obj._narrow(objectType) 
+    return obj._narrow(objectType)
 
 def makeTestInfo( workDir  = '.' ):
   ti = FunTest.makeTestInfo( workDir )

@@ -4,7 +4,7 @@
 # FreqCapsCampaign, FreqCapsCreative, FreqCapsCCG: 3
 # FreqCapsCreative: 3
 # FreqCapsCCG: 3
-# :3 
+# :3
 package CampaignConfig::CampaignFlags;
 
 use warnings;
@@ -41,12 +41,12 @@ sub new {
 
 sub _get_count_and_flag_str {
   my $self = shift;
-  my $s    = shift;  
+  my $s    = shift;
   if ($s =~ /([\w\W]*?) *: *(\d+) */o)
   {
     return ($1, int($2))
   }
-  else 
+  else
   {
     die "Invalid line $self->{line_count} of the config file $self->{file_path}";
   }

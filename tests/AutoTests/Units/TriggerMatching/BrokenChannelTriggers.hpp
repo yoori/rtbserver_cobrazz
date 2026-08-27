@@ -21,10 +21,7 @@ public:
 
 public:
 
-  BrokenChannelTriggers(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  BrokenChannelTriggers(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -38,8 +35,6 @@ private:
   template<size_t Count>
   void test_group(const TestCase(&tests)[Count]);
 
-  void test_case(
-    AdClient& client,
-    const TestCase& test);
+  void test_case(AdClient& client, const TestCase& test);
 
 };

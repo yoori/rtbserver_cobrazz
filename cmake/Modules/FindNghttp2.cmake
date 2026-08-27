@@ -14,7 +14,7 @@ find_package_handle_standard_args(Nghttp2
     Nghttp2_INCLUDE_DIR
 )
 
-if(Nghttp2_FOUND AND NOT TARGET Nghttp2::Nghttp2)
+if (Nghttp2_FOUND AND NOT TARGET Nghttp2::Nghttp2)
   add_library(Nghttp2::Nghttp2 UNKNOWN IMPORTED)
   set_target_properties(Nghttp2::Nghttp2 PROPERTIES
     IMPORTED_LOCATION "${Nghttp2_LIBRARY}"

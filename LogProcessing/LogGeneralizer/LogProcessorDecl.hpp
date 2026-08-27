@@ -8,45 +8,41 @@
 #include <Sync/SyncPolicy.hpp>
 #include <LogCommons/FileReceiver.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-class LogProcessor: public ReferenceCounting::AtomicImpl
+namespace AdServer::LogProcessing
 {
-public:
-  virtual
-  void
-  check_and_load() = 0;
 
-  virtual
-  const FileReceiver_var&
-  get_file_receiver() = 0;
-
-protected:
-  virtual ~LogProcessor() noexcept {}
-};
-
-typedef ReferenceCounting::SmartPtr<LogProcessor> LogProcessor_var;
-
-class LogProcessorImplBase: public LogProcessor
-{
-public:
-  LogProcessorImplBase(
-    const std::string &in_dir,
-    Logging::Logger *logger
-  )
-  :
-    in_dir_(in_dir),
-    logger_(ReferenceCounting::add_ref(logger))
+  class LogProcessor: public ReferenceCounting::AtomicImpl
   {
-  }
+  public:
+    virtual
+    void
+    check_and_load() = 0;
 
-protected:
-  virtual ~LogProcessorImplBase() noexcept {}
+    virtual
+    const FileReceiver_var&
+    get_file_receiver() = 0;
 
-  const std::string in_dir_;
-  Logging::Logger_var logger_;
-};
+  protected:
+    virtual ~LogProcessor() noexcept {}
+  };
 
-} // namespace LogProcessing
-} // namespace AdServer
+  typedef ReferenceCounting::SmartPtr<LogProcessor> LogProcessor_var;
+
+  class LogProcessorImplBase: public LogProcessor
+  {
+  public:
+    LogProcessorImplBase(const std::string &in_dir, Logging::Logger *logger)
+    :
+      in_dir_(in_dir),
+      logger_(ReferenceCounting::add_ref(logger))
+    {
+    }
+
+  protected:
+    virtual ~LogProcessorImplBase() noexcept {}
+
+    const std::string in_dir_;
+    Logging::Logger_var logger_;
+  };
+
+} // namespace AdServer::LogProcessing

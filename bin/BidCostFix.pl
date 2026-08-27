@@ -26,10 +26,10 @@ sub fix
 
   my %req_tag_coefs;
 
-  if(defined($req_tag_coef_file))
+  if (defined($req_tag_coef_file))
   {
     open(my $fh, '<', $req_tag_coef_file) or die "Could not open '$req_tag_coef_file' $!\n";
-    while(my $line = <$fh>)
+    while (my $line = <$fh>)
     {
       chomp $line;
       my @fields = split(',', $line);
@@ -42,10 +42,10 @@ sub fix
 
   my %imp_tag_coefs;
 
-  if(defined($imp_tag_coef_file))
+  if (defined($imp_tag_coef_file))
   {
     open(my $fh, '<', $imp_tag_coef_file) or die "Could not open '$imp_tag_coef_file' $!\n";
-    while(my $line = <$fh>)
+    while (my $line = <$fh>)
     {
       chomp $line;
       my @fields = split(',', $line);
@@ -63,20 +63,20 @@ sub fix
 
     my $new_bid_cost_evaluator = new Predictor::BidCostModelEvaluator();
 
-    if($input_file =~ m/BidCostAggStat[.]([^.]+)[.].*/)
+    if ($input_file =~ m/BidCostAggStat[.]([^.]+)[.].*/)
     {
       my $date = $1;
       my $base_dump_file_path = "BidCostAggStat." . $date . "." . sprintf( "%06d", rand(999999) );
       my $dump_tmp_file_path = $output_folder . "/~" . $base_dump_file_path;
       my $dump_file_path = $output_folder . "/" . $base_dump_file_path;
 
-      while(my ($key, $sub_agg) = each(%{$bid_cost_evaluator->agg()}))
+      while (my ($key, $sub_agg) = each(%{$bid_cost_evaluator->agg()}))
       {
         my @key_fields = split('\t', $key);
         my $tag_id = $key_fields[0];
         my $domain = $key_fields[1];
 
-        while(my ($cost, $agg) = each(%$sub_agg))
+        while (my ($cost, $agg) = each(%$sub_agg))
         {
           #print("X $key\t$cost\n");
           # key : $tag_id\t$domain\t$cost
@@ -86,7 +86,7 @@ sub fix
 
           # req coefs
           my $local_req_coef;
-          if(exists($req_tag_coefs{$tag_id}))
+          if (exists($req_tag_coefs{$tag_id}))
           {
             $local_req_coef = $req_tag_coefs{$tag_id};
           }
@@ -99,7 +99,7 @@ sub fix
 
           # imp coefs
           my $local_imp_coef;
-          if(exists($imp_tag_coefs{$tag_id}))
+          if (exists($imp_tag_coefs{$tag_id}))
           {
             $local_imp_coef = $imp_tag_coefs{$tag_id};
           }
@@ -132,7 +132,7 @@ sub fix
     }
   };
 
-  if($@)
+  if ($@)
   {
     print("ERROR: $@");
   }

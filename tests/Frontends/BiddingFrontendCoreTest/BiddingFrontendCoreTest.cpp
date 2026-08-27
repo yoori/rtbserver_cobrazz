@@ -76,7 +76,7 @@ namespace
   {
     using namespace Generics::AppUtils;
 
-    if(argc < 2)
+    if (argc < 2)
     {
       print_usage();
       throw std::runtime_error("command is required");
@@ -107,7 +107,7 @@ namespace
     args.add(equal_name("help") || short_name("h"), opt_help);
     args.parse(argc - 2, argv + 2);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -122,15 +122,17 @@ namespace
     options.domain_config = *opt_domain_config;
     options.print_calls = opt_print_calls.enabled();
 
-    if(options.command != "perf")
+    if (options.command != "perf")
     {
       throw std::runtime_error("unknown command '" + options.command + "'");
     }
-    if(options.count == 0)
+
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
-    if(options.fe_config.empty() && options.domain_config.empty())
+
+    if (options.fe_config.empty() && options.domain_config.empty())
     {
       throw std::runtime_error(
         "--fe-config or --domain-config is required for OpenRTB referer parsing");
@@ -143,7 +145,7 @@ namespace
   read_file(const std::string& path)
   {
     std::ifstream file(path, std::ios::binary);
-    if(!file)
+    if (!file)
     {
       throw std::runtime_error("can't open '" + path + "'");
     }
@@ -155,23 +157,21 @@ namespace
 
   template<typename Message>
   void
-  load_binary_proto(
-    Message& message,
-    const std::string& record_dir,
-    const char* file_name)
+  load_binary_proto(Message& message, const std::string& record_dir, const char* file_name)
   {
-    if(record_dir.empty())
+    if (record_dir.empty())
     {
       return;
     }
 
     const std::string path = record_dir + "/" + file_name;
     std::ifstream file(path, std::ios::binary);
-    if(!file)
+    if (!file)
     {
       return;
     }
-    if(!message.ParseFromIstream(&file))
+
+    if (!message.ParseFromIstream(&file))
     {
       throw std::runtime_error("can't parse protobuf fixture '" + path + "'");
     }
@@ -181,7 +181,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -210,7 +210,7 @@ namespace
   {
     std::string actual_domain_config_path = domain_config_path;
 
-    if(!fe_config_path.empty())
+    if (!fe_config_path.empty())
     {
       Config::ErrorHandler error_handler;
       std::unique_ptr<xsd::AdServer::Configuration::FeConfigurationType>
@@ -218,13 +218,13 @@ namespace
           fe_config_path.c_str(),
           error_handler).release());
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error;
         throw std::runtime_error(error_handler.text(error));
       }
 
-      if(!fe_config->CommonFeConfiguration().present())
+      if (!fe_config->CommonFeConfiguration().present())
       {
         throw std::runtime_error("CommonFeConfiguration not presented.");
       }
@@ -247,13 +247,13 @@ namespace
         user_id_config.ssp_cache_size(),
         uid_blacklist);
 
-      if(actual_domain_config_path.empty())
+      if (actual_domain_config_path.empty())
       {
         actual_domain_config_path = common_config.domain_config_path();
       }
     }
 
-    if(actual_domain_config_path.empty())
+    if (actual_domain_config_path.empty())
     {
       return;
     }
@@ -264,14 +264,13 @@ namespace
         actual_domain_config_path.c_str(),
         error_handler).release());
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error;
       throw std::runtime_error(error_handler.text(error));
     }
 
-    common_module.domain_parser_ =
-      new AdServer::CampaignSvcs::DomainParser(*domain_config);
+    common_module.domain_parser_ = new AdServer::CampaignSvcs::DomainParser(*domain_config);
   }
 
   AdServer::Bidding::SourceTraits
@@ -281,15 +280,12 @@ namespace
     result.instantiate_type = AdServer::CampaignSvcs::AIT_BODY;
     result.notice_instantiate_type = AdServer::Bidding::SourceTraits::NIT_NONE;
     result.vast_instantiate_type = AdServer::CampaignSvcs::AIT_BODY;
-    result.vast_notice_instantiate_type =
-      AdServer::Bidding::SourceTraits::NIT_NONE;
-    result.native_notice_instantiate_type =
-      AdServer::Bidding::SourceTraits::NIT_NONE;
+    result.vast_notice_instantiate_type = AdServer::Bidding::SourceTraits::NIT_NONE;
+    result.native_notice_instantiate_type = AdServer::Bidding::SourceTraits::NIT_NONE;
     result.ipw_extension = false;
     result.truncate_domain = false;
     result.fill_adid = false;
-    result.native_ads_instantiate_type =
-      AdServer::Bidding::SourceTraits::NAIT_NONE;
+    result.native_ads_instantiate_type = AdServer::Bidding::SourceTraits::NAIT_NONE;
     result.skip_ext_category = false;
     result.erid_return_type = AdServer::Bidding::SourceTraits::ERIDRT_EXT_BUZSAPE;
     return result;
@@ -303,10 +299,8 @@ namespace
         body_(std::move(body))
     {
       const auto scheme_pos = url_.find("://");
-      const auto path_pos = scheme_pos == std::string::npos ?
-        0 : url_.find('/', scheme_pos + 3);
-      std::string path = path_pos == std::string::npos ?
-        "/" : url_.substr(path_pos);
+      const auto path_pos = scheme_pos == std::string::npos ? 0 : url_.find('/', scheme_pos + 3);
+      std::string path = path_pos == std::string::npos ? "/" : url_.substr(path_pos);
       const auto query_pos = path.find('?');
       uri_ = query_pos == std::string::npos ? path : path.substr(0, query_pos);
       args_ = query_pos == std::string::npos ? std::string() :
@@ -370,7 +364,7 @@ namespace
 
   void print_mock_call(const char* name)
   {
-    if(print_mock_calls)
+    if (print_mock_calls)
     {
       std::cout << "Mock call: " << name << std::endl;
     }
@@ -538,9 +532,7 @@ namespace
     public AdServer::UserIdControllerBase
   {
   public:
-    Generics::SignedUuid verify(
-      std::string_view,
-      KeyType = PERSISTENT) const override
+    Generics::SignedUuid verify(std::string_view, KeyType = PERSISTENT) const override
     {
       throw std::runtime_error("MockUserIdController::verify is not implemented");
     }
@@ -550,9 +542,7 @@ namespace
       return false;
     }
 
-    Generics::Uuid ssp_uuid(
-      const Generics::Uuid& uuid,
-      const String::SubString&) override
+    Generics::Uuid ssp_uuid(const Generics::Uuid& uuid, const String::SubString&) override
     {
       return uuid;
     }
@@ -573,12 +563,9 @@ namespace
           1,
           AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext,
           "bf-test-bid")),
-        timeout_scheduler(
-          std::make_shared<AdServer::Commons::FastScheduler>(1)),
-        sources(
-          std::make_shared<AdServer::Bidding::RequestInfoFiller::SourceMap>()),
-        account_traits(
-          std::make_shared<AdServer::Bidding::RequestInfoFiller::AccountTraitsById>()),
+        timeout_scheduler(std::make_shared<AdServer::Commons::FastScheduler>(1)),
+        sources(std::make_shared<AdServer::Bidding::RequestInfoFiller::SourceMap>()),
+        account_traits(std::make_shared<AdServer::Bidding::RequestInfoFiller::AccountTraitsById>()),
         stats(new AdServer::StatHolder())
     {
       print_mock_calls = options.print_calls;
@@ -599,14 +586,10 @@ namespace
         true,
         *account_traits);
 
-      auto user_bind_client =
-        std::make_shared<MockUserBindClient>(options.record_dir);
-      auto user_info_client =
-        std::make_shared<MockUserInfoClient>(options.record_dir);
-      auto campaign_manager =
-        std::make_shared<MockCampaignManager>(options.record_dir);
-      auto channel_client =
-        std::make_shared<MockChannelClient>(options.record_dir);
+      auto user_bind_client = std::make_shared<MockUserBindClient>(options.record_dir);
+      auto user_info_client = std::make_shared<MockUserInfoClient>(options.record_dir);
+      auto campaign_manager = std::make_shared<MockCampaignManager>(options.record_dir);
+      auto channel_client = std::make_shared<MockChannelClient>(options.record_dir);
 
       AdServer::Bidding::BiddingFrontendCore::InitParams params;
       params.logger = logger;
@@ -634,8 +617,7 @@ namespace
       params.trace_mapping = false;
       params.enable_profile_referer = true;
 
-      ext_config =
-        new AdServer::Bidding::BiddingFrontendCore::ExtConfig;
+      ext_config = new AdServer::Bidding::BiddingFrontendCore::ExtConfig;
       core = std::make_unique<AdServer::Bidding::BiddingFrontendCore>(params);
       core->set_config(ext_config);
 
@@ -651,8 +633,7 @@ namespace
     Logging::Logger_var logger;
     Logging::ActiveObjectCallbackImpl_var callback;
     AdServer::CommonModule_var common_module;
-    AdServer::UserIdControllerBase_var user_id_controller =
-      new MockUserIdController;
+    AdServer::UserIdControllerBase_var user_id_controller = new MockUserIdController;
     std::shared_ptr<AdServer::Commons::ExecutorPool> bid_workers;
     std::shared_ptr<AdServer::Commons::FastScheduler> timeout_scheduler;
     std::shared_ptr<AdServer::Bidding::RequestInfoFiller::SourceMap> sources;
@@ -668,12 +649,11 @@ namespace
   run_perf(TestContext& context, const Options& options)
   {
     std::uint64_t checksum = 0;
-    for(std::uint64_t i = 0; i < options.count; ++i)
+    for (std::uint64_t i = 0; i < options.count; ++i)
     {
       FCGI::HttpRequestHolder_var request_holder(
         new TestHttpRequestHolder(options.url, options.body));
-      ReferenceCounting::SmartPtr<WaitResponseWriter> response_writer(
-        new WaitResponseWriter);
+      ReferenceCounting::SmartPtr<WaitResponseWriter> response_writer(new WaitResponseWriter);
 
       context.core->handle_request(request_holder, response_writer);
 
@@ -691,7 +671,7 @@ main(int argc, char** argv)
   try
   {
     Options options = parse_options(argc, argv);
-    if(!options.body_file.empty())
+    if (!options.body_file.empty())
     {
       options.body = read_file(options.body_file);
     }
@@ -705,8 +685,7 @@ main(int argc, char** argv)
 
     const CpuTimes cpu_finished = current_cpu_times();
     const auto finished_at = std::chrono::steady_clock::now();
-    const double elapsed = std::chrono::duration<double>(
-      finished_at - started_at).count();
+    const double elapsed = std::chrono::duration<double>(finished_at - started_at).count();
     const double rate = static_cast<double>(options.count) / elapsed;
 
     std::cout

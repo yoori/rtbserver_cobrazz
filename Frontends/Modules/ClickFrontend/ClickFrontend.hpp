@@ -89,13 +89,11 @@ namespace AdServer
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     FrontendCommons::RequestTask
-    co_handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -141,8 +139,7 @@ namespace AdServer
     ~ClickFrontend() noexcept;
 
     FrontendCommons::RequestTask
-    process_request_(
-      FCGI::HttpRequestHolder_var request_holder);
+    process_request_(FCGI::HttpRequestHolder_var request_holder);
 
     void
     parse_config_() /*throw(Exception)*/;

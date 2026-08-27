@@ -77,19 +77,17 @@ namespace FrontendCommons
     bool can_be_encoded)
     noexcept
   {
-    if(!can_be_encoded)
+    if (!can_be_encoded)
     {
       country_end = value.find('/');
     }
     else
     {
-      country_end = (COUNTRY_SEP_SYMBOLS.find_owned(
-        value.begin(), value.end()) - value.begin());
+      country_end = (COUNTRY_SEP_SYMBOLS.find_owned(value.begin(), value.end()) - value.begin());
     }
     country.assign(
       value.data(),
-      value.data() + (
-        country_end != String::SubString::NPOS ? country_end : value.size()));
+      value.data() + (country_end != String::SubString::NPOS ? country_end : value.size()));
 
     return (country.empty() ||
             (country.size() == 2 &&
@@ -108,10 +106,10 @@ namespace FrontendCommons
     {
       std::string region;
       std::string city;
-      if(country_end != String::SubString::NPOS)
+      if (country_end != String::SubString::NPOS)
       {
         String::SubString::SizeType region_end = value.find('/', country_end + 1);
-        if(region_end != String::SubString::NPOS)
+        if (region_end != String::SubString::NPOS)
         {
           region.assign(value.data() + country_end + 1, region_end - (country_end + 1));
           city.assign(value.data() + region_end + 1, value.size() - (region_end + 1));
@@ -150,7 +148,7 @@ namespace FrontendCommons
     static const AdServer::CampaignSvcs::CoordDecimal MAX_ACCURACY("21000000");
 
     String::SubString::SizeType latitude_end = value.find('/', 0);
-    if(latitude_end != String::SubString::NPOS)
+    if (latitude_end != String::SubString::NPOS)
     {
       try
       {
@@ -173,7 +171,7 @@ namespace FrontendCommons
           return CoordLocation_var();
         }
 
-        if(longitude_end != String::SubString::NPOS)
+        if (longitude_end != String::SubString::NPOS)
         {
           coord_location->accuracy = AdServer::Commons::extract_decimal<
             AdServer::CampaignSvcs::AccuracyDecimal>(

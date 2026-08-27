@@ -23,7 +23,7 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
       ChannelServerBase::ChannelAtomSeq& target)
     {
       target.length(source.size());
-      for(int i = 0; i < source.size(); ++i)
+      for (int i = 0; i < source.size(); ++i)
       {
         target[i].id = source[i].id();
         target[i].trigger_channel_id = source[i].trigger_channel_id();
@@ -34,8 +34,7 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
     {
       Stream::Error ostr;
       ostr << "ChannelServer grpc match failed: code=" <<
-        static_cast<int>(status.error_code()) <<
-        ", message=" << status.error_message();
+        static_cast<int>(status.error_code()) << ", message=" << status.error_message();
       throw Exception(ostr);
     }
   }
@@ -64,9 +63,7 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
     target.set_urls_words(source.urls_words.in());
     target.set_pwords(source.pwords.in());
     target.set_swords(source.swords.in());
-    target.set_uid(
-      reinterpret_cast<const char*>(source.uid.get_buffer()),
-      source.uid.length());
+    target.set_uid(reinterpret_cast<const char*>(source.uid.get_buffer()), source.uid.length());
     target.set_statuses(source.statuses, sizeof(source.statuses));
     target.set_non_strict_word_match(source.non_strict_word_match);
     target.set_non_strict_url_match(source.non_strict_url_match);
@@ -78,8 +75,7 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
   ChannelServerBase::MatchResult* make_match_result(
     const adserver::channel_svcs::channel_server::MatchResponse& source)
   {
-    ChannelServerBase::MatchResult_var result =
-      new ChannelServerBase::MatchResult;
+    ChannelServerBase::MatchResult_var result = new ChannelServerBase::MatchResult;
     unpack_channel_atoms(
       source.matched_channels().page_channels(),
       result->matched_channels.page_channels);
@@ -93,26 +89,23 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
       source.matched_channels().url_keyword_channels(),
       result->matched_channels.url_keyword_channels);
 
-    result->matched_channels.uid_channels.length(
-      source.matched_channels().uid_channels_size());
-    for(int i = 0; i < source.matched_channels().uid_channels_size(); ++i)
+    result->matched_channels.uid_channels.length(source.matched_channels().uid_channels_size());
+    for (int i = 0; i < source.matched_channels().uid_channels_size(); ++i)
     {
-      result->matched_channels.uid_channels[i] =
-        source.matched_channels().uid_channels(i);
+      result->matched_channels.uid_channels[i] = source.matched_channels().uid_channels(i);
     }
 
     result->content_channels.length(source.content_channels_size());
-    for(int i = 0; i < source.content_channels_size(); ++i)
+    for (int i = 0; i < source.content_channels_size(); ++i)
     {
       result->content_channels[i].id = source.content_channels(i).id();
-      result->content_channels[i].weight =
-        source.content_channels(i).weight();
+      result->content_channels[i].weight = source.content_channels(i).weight();
     }
 
     result->no_adv = source.no_adv();
     result->no_track = source.no_track();
     result->match_time.length(source.match_time().empty() ? 0 : 1);
-    if(!source.match_time().empty())
+    if (!source.match_time().empty())
     {
       unpack_oct_seq(source.match_time(), result->match_time[0]);
     }
@@ -133,8 +126,7 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
   ChannelServerBase::CCGKeywordSeq* make_ccg_traits_result(
     const adserver::channel_svcs::channel_server::GetCcgTraitsResponse& source)
   {
-    ChannelServerBase::CCGKeywordSeq_var result =
-      new ChannelServerBase::CCGKeywordSeq;
+    ChannelServerBase::CCGKeywordSeq_var result = new ChannelServerBase::CCGKeywordSeq;
     result->length(source.ccg_keywords_size());
     for (int i = 0; i < source.ccg_keywords_size(); ++i)
     {

@@ -11,19 +11,19 @@ namespace
 
   namespace Request::Parameters
   {
-      const String::SubString DATA_PASSBACK_URL("dp");
-      const String::SubString PASSBACK_URL("passback");
-      const String::SubString PASSBACK_URL2("redir");
-      const String::SubString REQUEST_ID("requestid");
-      const String::SubString USER_ID_DISTRIBUTION_HASH("h");
-      const String::SubString TEST_REQUEST("testrequest");
-      const String::SubString PUBLISHER_PIXEL_ACCOUNT_IDS("paid");
-      const String::SubString TOKEN_PREFIX("t.");
-      const String::SubString ENCODED_TOKENS("dt");
+    const String::SubString DATA_PASSBACK_URL("dp");
+    const String::SubString PASSBACK_URL("passback");
+    const String::SubString PASSBACK_URL2("redir");
+    const String::SubString REQUEST_ID("requestid");
+    const String::SubString USER_ID_DISTRIBUTION_HASH("h");
+    const String::SubString TEST_REQUEST("testrequest");
+    const String::SubString PUBLISHER_PIXEL_ACCOUNT_IDS("paid");
+    const String::SubString TOKEN_PREFIX("t.");
+    const String::SubString ENCODED_TOKENS("dt");
 
-      /* debug params */
-      const String::SubString DEBUG_TIME("debug-time");
-    }
+    /* debug params */
+    const String::SubString DEBUG_TIME("debug-time");
+  }
 
   namespace Tokens
   {
@@ -40,13 +40,11 @@ namespace AdServer::Passback
     class UserIdHashModProcessor: public PassbackParamProcessor
     {
     public:
-      virtual void process(
-        PassbackInfo& passback_info,
-        const String::SubString& value) const
+      virtual void process(PassbackInfo& passback_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         unsigned long val;
-        if(String::StringManip::str_to_int(value, val))
+        if (String::StringManip::str_to_int(value, val))
         {
           passback_info.user_id_hash_mod = val;
         }
@@ -60,9 +58,7 @@ namespace AdServer::Passback
     {
     public:
       virtual void
-      process(
-        PassbackInfo& passback_info,
-        const String::SubString& value) const
+      process(PassbackInfo& passback_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         std::string decoded;
@@ -74,7 +70,7 @@ namespace AdServer::Passback
         catch(const String::StringManip::InvalidFormatException&)
         {}
 
-        if(!decoded.empty())
+        if (!decoded.empty())
         {
           passback_info.passback_url_templ = decoded;
         }
@@ -101,9 +97,7 @@ namespace AdServer::Passback
       }
 
       virtual void
-      process(
-        PassbackInfo& passback_info,
-        const String::SubString& value) const
+      process(PassbackInfo& passback_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         std::string decoded;
@@ -122,22 +116,21 @@ namespace AdServer::Passback
         std::string::const_iterator end_name = decoded.begin();
         bool replace_double_amp = false;
         bool found_eq = false;
-        for(std::string::const_iterator it = decoded.begin();
-          it <= decoded.end(); ++it)
+        for (std::string::const_iterator it = decoded.begin(); it <= decoded.end(); ++it)
         {
-          if(it == decoded.end() || *it == AMP)
+          if (it == decoded.end() || *it == AMP)
           {
-            if(it + 1 < decoded.end() && *(it + 1) == AMP)
+            if (it + 1 < decoded.end() && *(it + 1) == AMP)
             {
               replace_double_amp = true;
               ++it;// skip next amp
             }
-            else if(start_name < end_name)
+            else if (start_name < end_name)
             {
               std::string purify_value;
               String::SubString param_name(&*start_name, &*end_name);
               String::SubString param_value(&*(end_name + 1), it - end_name - 1);
-              if(replace_double_amp)
+              if (replace_double_amp)
               {
                 String::StringManip::replace(
                   param_value,
@@ -149,17 +142,13 @@ namespace AdServer::Passback
 
               auto alias_it = token_aliases_.find(param_name);
 
-              if(alias_it != token_aliases_.end())
+              if (alias_it != token_aliases_.end())
               {
-                passback_info.tokens.insert(std::make_pair(
-                  alias_it->second,
-                  param_value.str()));
+                passback_info.tokens.insert(std::make_pair(alias_it->second, param_value.str()));
               }
               else
               {
-                passback_info.tokens.insert(std::make_pair(
-                  param_name.str(),
-                  param_value.str()));
+                passback_info.tokens.insert(std::make_pair(param_name.str(), param_value.str()));
               }
 
               replace_double_amp = false;
@@ -168,7 +157,7 @@ namespace AdServer::Passback
               end_name = start_name;
             }
           }
-          else if(!found_eq && *it == EQ)
+          else if (!found_eq && *it == EQ)
           {
             end_name = it;
             found_eq = true;
@@ -192,9 +181,7 @@ namespace AdServer::Passback
   }
 
   /** RequestInfoFiller */
-  RequestInfoFiller::RequestInfoFiller(
-    Logging::Logger* logger,
-    CommonModule* common_module)
+  RequestInfoFiller::RequestInfoFiller(Logging::Logger* logger, CommonModule* common_module)
     /*throw(eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger))
   {
@@ -210,21 +197,18 @@ namespace AdServer::Passback
           &PassbackInfo::passback_url_templ))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::DATA_PASSBACK_URL,
-      PassbackParamProcessor_var(
-        new DataPassbackUrlParamProcessor())));
+      PassbackParamProcessor_var(new DataPassbackUrlParamProcessor())));
     param_processors_.insert(std::make_pair(
       Request::Parameters::REQUEST_ID,
       PassbackParamProcessor_var(
-        new FrontendCommons::RequestIdParamProcessor<PassbackInfo>(
-          &PassbackInfo::request_id))));
+        new FrontendCommons::RequestIdParamProcessor<PassbackInfo>(&PassbackInfo::request_id))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::USER_ID_DISTRIBUTION_HASH,
       PassbackParamProcessor_var(new UserIdHashModProcessor())));
     param_processors_.insert(std::make_pair(
       Request::Parameters::TEST_REQUEST,
       PassbackParamProcessor_var(
-        new FrontendCommons::BoolParamProcessor<PassbackInfo>(
-          &PassbackInfo::test_request))));
+        new FrontendCommons::BoolParamProcessor<PassbackInfo>(&PassbackInfo::test_request))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::DEBUG_TIME,
       PassbackParamProcessor_var(
@@ -236,12 +220,10 @@ namespace AdServer::Passback
         new FrontendCommons::NumberContainerParamProcessor<
           PassbackInfo,
           PassbackInfo::AccountIdList,
-          String::AsciiStringManip::SepComma>(
-            &PassbackInfo::pubpixel_accounts))));
+          String::AsciiStringManip::SepComma>(&PassbackInfo::pubpixel_accounts))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::ENCODED_TOKENS,
-      PassbackParamProcessor_var(
-        new DataTokensParamProcessor())));
+      PassbackParamProcessor_var(new DataTokensParamProcessor())));
 
     // cookie_processors_
     cookie_processors_.insert(std::make_pair(
@@ -264,30 +246,26 @@ namespace AdServer::Passback
 
     try
     {
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        PassbackProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        PassbackProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(passback_info, it->value);
         }
-        else if(it->name.size() >= Request::Parameters::TOKEN_PREFIX.size() &&
+        else if (it->name.size() >= Request::Parameters::TOKEN_PREFIX.size() &&
           it->name.compare(
             0,
             Request::Parameters::TOKEN_PREFIX.size(),
             Request::Parameters::TOKEN_PREFIX.data()) == 0)
         {
           passback_info.tokens.insert(
-            std::make_pair(
-              it->name.substr(Request::Parameters::TOKEN_PREFIX.size()),
-              it->value));
+            std::make_pair(it->name.substr(Request::Parameters::TOKEN_PREFIX.size()), it->value));
         }
       } // url parameters processing
 
-      if(passback_info.time == Generics::Time::ZERO)
+      if (passback_info.time == Generics::Time::ZERO)
       {
         passback_info.time = Generics::Time::get_time_of_day();
       }
@@ -306,15 +284,14 @@ namespace AdServer::Passback
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
     // post process passback_url
     std::string passback_url;
 
-    if(passback_info.passback_url_templ.find(TOKEN_SUBS_PREFIX) == std::string::npos)
+    if (passback_info.passback_url_templ.find(TOKEN_SUBS_PREFIX) == std::string::npos)
     {
       // inst passback_url
       passback_url = passback_info.passback_url_templ;
@@ -332,10 +309,8 @@ namespace AdServer::Passback
           passback_info.passback_url_templ,
           TOKEN_SUBS_PREFIX,
           TOKEN_SUBS_PREFIX);
-        String::TextTemplate::DefaultValue default_cont(
-          &passback_info.tokens);
-        String::TextTemplate::ArgsEncoder encoder(
-          &default_cont);
+        String::TextTemplate::DefaultValue default_cont(&passback_info.tokens);
+        String::TextTemplate::ArgsEncoder encoder(&default_cont);
         passback_url = text_template.instantiate(encoder);
       }
       catch(const eh::Exception&)
@@ -344,7 +319,7 @@ namespace AdServer::Passback
       }
     }
 
-    if(!passback_url.empty())
+    if (!passback_url.empty())
     {
       try
       {
@@ -372,25 +347,21 @@ namespace AdServer::Passback
     }
     catch(HTTP::CookieList::InvalidArgument& ex)
     {
-      if(logger()->log_level() >= Logging::Logger::TRACE)
+      if (logger()->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " <<
-          ex.what();
-        logger()->log(ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::PASSBACK_FRONTEND);
+        ostr << FUN << ": caught HTTP::CookieList::InvalidArgument: " << ex.what();
+        logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::PASSBACK_FRONTEND);
       }
 
       throw InvalidParamException("");
     }
 
-    for(HTTP::CookieList::const_iterator it = cookies.begin();
-        it != cookies.end(); ++it)
+    for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
     {
       const auto param_it = cookie_processors_.find(it->name);
 
-      if(param_it != cookie_processors_.end())
+      if (param_it != cookie_processors_.end())
       {
         param_it->second->process(passback_info, it->value);
       }

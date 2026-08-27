@@ -52,7 +52,7 @@ sub create_rtb_campaigns
 
   for my $a (@$args)
   {
-    my %arg = 
+    my %arg =
     (
       name => "Campaign" . ++$i,
       country_code => COUNTRY_CODE,
@@ -64,16 +64,16 @@ sub create_rtb_campaigns
       site_links => [ map { site_id => $_->{site_id} }, @$sites ]
     );
 
-    $arg{campaigncreativegroup_rate_type} = $a->{rate_type} 
+    $arg{campaigncreativegroup_rate_type} = $a->{rate_type}
        if $a->{rate_type};
 
-    my $channel;    
+    my $channel;
     my $url = make_autotest_name($ns, $i) . ".openrtb.com";
     my $keyword = make_autotest_name($ns, "kwd" . $i);
 
     if ($a->{ron})
     {
-      $arg{campaigncreativegroup_flags} = 
+      $arg{campaigncreativegroup_flags} =
         DB::Campaign::INCLUDE_SPECIFIC_SITES | DB::Campaign::RON;
       $arg{channel_id} = undef;
     }
@@ -116,16 +116,16 @@ sub create_rtb_campaigns
       my $creative = $ns->create(Creative => {
         name => $i . "-" . ++$j,
         account_id => $campaign->{account_id},
-        template_id => 
+        template_id =>
           $a->{entity} eq 'DisplayCampaign'?
             DB::Defaults::instance()->display_template:
               DB::Defaults::instance()->text_template,
         tag_sizes => [$size] });
-      
+
       my $cc = $ns->create(CampaignCreative => {
         ccg_id => $campaign->{ccg_id},
         creative_id => $creative });
-      
+
       $ns->output('CC/' . $i . "/" . $j, $cc);
       $ns->output('CREATIVE/' . $i . "/" . $j, get_external_creative_id($creative));
       $ns->output('CREATIVEID/' . $i . "/" . $j, $creative);
@@ -152,7 +152,7 @@ sub create_sites
     my $j  = 0;
     for (@{$arg->{tags}})
     {
-      my $tag = $ns->create(PricedTag => {      
+      my $tag = $ns->create(PricedTag => {
         name => "Tag-" . $i . "-" . ++$j,
         site_id => $site,
         size_id => $_->{size},
@@ -179,7 +179,7 @@ sub create_display_campaigns
     my $campaign = $ns->create(DisplayCampaign => {
       name => "Display" . $i,
       country_code => COUNTRY_CODE,
-      channel_id => 
+      channel_id =>
          DB::BehavioralChannel->blank(
            name => 'Display' . $i,
            keyword_list => $keyword,
@@ -209,7 +209,7 @@ sub create_channel_campaigns
       name => "ChannelText" . $i,
       template_id => DB::Defaults::instance()->text_template,
       country_code => COUNTRY_CODE,
-      channel_id => 
+      channel_id =>
          DB::BehavioralChannel->blank(
            name => 'ChannelText' . $i,
            keyword_list => $keyword,
@@ -385,7 +385,7 @@ sub open_rtb
     name => "Publisher1",
     currency_id => $currency1,
     country_code => COUNTRY_CODE,
-    internal_account_id => 
+    internal_account_id =>
          DB::Internal->blank(
             name => 'Internal1',
             country_code => COUNTRY_CODE,
@@ -396,67 +396,67 @@ sub open_rtb
     name => "Publisher2",
     currency_id => $currency1,
     country_code => COUNTRY_CODE,
-    internal_account_id => 
+    internal_account_id =>
          DB::Internal->blank(
             name => 'Internal2',
             country_code => COUNTRY_CODE,
             currency_id => $currency2,
             max_random_cpm => 59.18)});
-  
-  my @sites = 
+
+  my @sites =
     $self->create_sites(
-       $ns, 
-       [{ account => $publisher1, 
-          tags => [{size => $sizes->[0], cpm => 0, 
-                    max_ecpm => 1, probability => 0, 
+       $ns,
+       [{ account => $publisher1,
+          tags => [{size => $sizes->[0], cpm => 0,
+                    max_ecpm => 1, probability => 0,
                     random => 99 }] },
-        { account => $publisher1, 
-          tags => [{ size => $sizes->[1], cpm => 0, 
-                     max_ecpm => 0, probability => 0, 
+        { account => $publisher1,
+          tags => [{ size => $sizes->[1], cpm => 0,
+                     max_ecpm => 0, probability => 0,
                      random => 100 }] },
-        { account => $publisher1, 
-          tags => [{ size => $sizes->[2], cpm => 0, 
-                     max_ecpm => 1, probability => 1, 
+        { account => $publisher1,
+          tags => [{ size => $sizes->[2], cpm => 0,
+                     max_ecpm => 1, probability => 1,
                      random => 98 }] },
-        { account => $publisher1, 
-          tags => [{ size => $sizes->[3], cpm => 0, 
-                     max_ecpm => 1, probability => 1, 
+        { account => $publisher1,
+          tags => [{ size => $sizes->[3], cpm => 0,
+                     max_ecpm => 1, probability => 1,
                      random => 98 }] },
-        { account => $publisher1, 
+        { account => $publisher1,
           tags => [{ size => $sizes->[4], cpm => 0,
-                     max_ecpm => 0, probability => 0, 
+                     max_ecpm => 0, probability => 0,
                      random => 100 }] },
-        { account => $publisher1, 
-          tags => [{ size => $sizes->[5], cpm => 0, 
-                     max_ecpm => 1, probability => 0, 
+        { account => $publisher1,
+          tags => [{ size => $sizes->[5], cpm => 0,
+                     max_ecpm => 1, probability => 0,
                      random => 99 }] },
-        { account => $publisher1, 
-          tags => [{ size => $sizes->[6], cpm => 0.01, 
-                     max_ecpm => 1, probability => 0, 
+        { account => $publisher1,
+          tags => [{ size => $sizes->[6], cpm => 0.01,
+                     max_ecpm => 1, probability => 0,
                      random => 99 }] },
-        { account => $publisher2, 
-          tags => [{ size => $sizes->[0], cpm => 0, 
-                     max_ecpm => 1, probability => 0, 
+        { account => $publisher2,
+          tags => [{ size => $sizes->[0], cpm => 0,
+                     max_ecpm => 1, probability => 0,
                      random => 99 }] },
-        { account => $publisher2, 
-          tags => [{ size => $sizes->[1], cpm => 0, 
-                     max_ecpm => 0, probability => 0, 
+        { account => $publisher2,
+          tags => [{ size => $sizes->[1], cpm => 0,
+                     max_ecpm => 0, probability => 0,
                      random => 100 }] }]);
 
-  
+
   $self->create_rtb_campaigns(
     $ns, \@sites, $currency1,
-    [ { entity => 'DisplayCampaign', cpm => 2000, 
+    [ { entity => 'DisplayCampaign', cpm => 2000,
         sizes => [$sizes->[2], $sizes->[0], $sizes->[3]], ron => 1 },
-      { entity => 'DisplayCampaign', cpm => 2100, 
+      { entity => 'DisplayCampaign', cpm => 2100,
         sizes => [$sizes->[2], $sizes->[0], $sizes->[3]]  },
-      { entity => 'DisplayCampaign', cpc => 2100, 
+      { entity => 'DisplayCampaign', cpc => 2100,
         sizes => [ $sizes->[1], $sizes->[2], $sizes->[0]] },
       { entity => 'DisplayCampaign', cpc => 100, sizes => [ $sizes->[1]] },
       { entity => 'DisplayCampaign', cpc => 0, sizes => [ $sizes->[5], $sizes->[6]]  },
-      { entity => 'ChannelTargetedTACampaign', cpc => 1000, 
+      { entity => 'ChannelTargetedTACampaign', cpc => 1000,
         sizes => [ $sizes->[4] ], ron => 1 },
-      { entity => 'TextAdvertisingCampaign', cpc => 1200, 
+      { entity => 'TextAdvertisingCampaign', cpc => 1200,
         sizes => [ $sizes->[4] ] } ]);
 
   $ns->output('ACCOUNT/1', $publisher1);

@@ -2,10 +2,7 @@
 #include "CampaignBudgetTest.hpp"
 #include "SpentBudgetChecker.hpp"
 
-REFLECT_UNIT(CampaignBudgetTest) (
-  "NoDBUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CampaignBudgetTest) ("NoDBUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -53,6 +50,7 @@ namespace
         AutoTest::TimeLessChecker(deadline_).check();
         throw;
       }
+
       if (!result)
       {
         result |= AutoTest::TimeLessChecker(deadline_).check();
@@ -83,17 +81,13 @@ CampaignBudgetTest::fixed_daily_budget(bool initial)
   std::string kwd_cpm = fetch_string("FixedCPM/Keyword");
   std::string kwd_cpc = fetch_string("FixedCPC/Keyword");
 
-  Generics::Time next_date =
-    (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
+  Generics::Time next_date = (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
 
   AutoTest::AndChecker initial_checker =
     AutoTest::and_checker(
-      CampaignChecker(this, ccg_cpm,
-        CampaignChecker::Expected().eval_status("A")),
-      CampaignChecker(this, ccg_cpc,
-        CampaignChecker::Expected().eval_status("A")),
-      CampaignChecker(this, never_matched_ccg,
-        CampaignChecker::Expected().eval_status("A")));
+      CampaignChecker(this, ccg_cpm, CampaignChecker::Expected().eval_status("A")),
+      CampaignChecker(this, ccg_cpc, CampaignChecker::Expected().eval_status("A")),
+      CampaignChecker(this, never_matched_ccg, CampaignChecker::Expected().eval_status("A")));
 
   // initial check
   if (initial)
@@ -124,24 +118,19 @@ CampaignBudgetTest::fixed_daily_budget(bool initial)
       request.referer_kw(kwd_cpc),
       cc_cpc);
 
-  FAIL_CONTEXT(
-      checker.check(),
-    "server must return expected ccid (FixedCPC CCG)");
+  FAIL_CONTEXT(checker.check(), "server must return expected ccid (FixedCPC CCG)");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !checker.client().debug_info.click_url.empty()),
+    AutoTest::predicate_checker(!checker.client().debug_info.click_url.empty()),
     "server must return not null click_url for returned creative");
 
   checker.client().process_request(checker.client().debug_info.click_url);
 
   add_checker("Checking spent daily budget (FixedCPM)",
-    SpentBudgetChecker(
-      this, request.referer_kw(kwd_cpm), ccg_cpm, 0, next_date));
+    SpentBudgetChecker(this, request.referer_kw(kwd_cpm), ccg_cpm, 0, next_date));
 
   add_checker("Checking spent daily budget (FixedCPC)",
-    SpentBudgetChecker(
-      this, request.referer_kw(kwd_cpc), ccg_cpc, 0, next_date));
+    SpentBudgetChecker(this, request.referer_kw(kwd_cpc), ccg_cpc, 0, next_date));
 
   add_wait_checker("Checking spent daily budget (never matched CCG)",
     TimeoutCampaignChecker(this,
@@ -161,20 +150,16 @@ CampaignBudgetTest::dynamic_daily_budget(bool initial)
   unsigned long ccg1 = fetch_int("Dynamic1/CCG");
   unsigned long ccg2 = fetch_int("Dynamic2/CCG");
 
-  Generics::Time next_date =
-    (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
+  Generics::Time next_date = (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
 
   AutoTest::AndChecker initial_checker =
     AutoTest::and_checker(
-      CampaignChecker(this, ccg1,
-        CampaignChecker::Expected().eval_status("A")),
-      CampaignChecker(this, ccg2,
-        CampaignChecker::Expected().eval_status("A")));
+      CampaignChecker(this, ccg1, CampaignChecker::Expected().eval_status("A")),
+      CampaignChecker(this, ccg2, CampaignChecker::Expected().eval_status("A")));
 
   if (initial)
   {
-    FAIL_CONTEXT(initial_checker.check(),
-      description + " - initial check");
+    FAIL_CONTEXT(initial_checker.check(), description + " - initial check");
     realized_budget.clear();
   }
   else
@@ -240,18 +225,13 @@ CampaignBudgetTest::dynamic_daily_budget(bool initial)
       next_date));
 
   add_wait_checker("Checking not spent dynamic daily budget",
-    TimeoutCampaignChecker(
-      this,
-      ccg2,
-      CampaignChecker::Expected().eval_status("A"),
-      next_date));
+    TimeoutCampaignChecker(this, ccg2, CampaignChecker::Expected().eval_status("A"), next_date));
 }
 
 bool
 CampaignBudgetTest::run()
 {
-  base_time_ = Generics::Time(fetch_string("TODAY"),
-    "%Y-%m-%d %H:%M:%S");
+  base_time_ = Generics::Time(fetch_string("TODAY"), "%Y-%m-%d %H:%M:%S");
 
   AUTOTEST_CASE(fixed_daily_budget(true), FIXED_CASE);
   AUTOTEST_CASE(dynamic_daily_budget(true), DYNAMIC_CASE);
@@ -277,8 +257,7 @@ CampaignBudgetTest::fixed_daily_budget_update()
   std::string description("Increase daily_budget of campaign");
   add_descr_phrase(description);
 
-  Generics::Time next_date =
-    (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
+  Generics::Time next_date = (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
 
   unsigned long ccg_cpm = fetch_int("FixedCPM/CCG");
   unsigned long ccg_cpc = fetch_int("FixedCPC/CCG");
@@ -291,14 +270,8 @@ CampaignBudgetTest::fixed_daily_budget_update()
   try
   {
     AutoTest::and_checker(
-      CampaignChecker(
-        this,
-        ccg_cpm,
-        CampaignChecker::Expected().eval_status("I")),
-      CampaignChecker(
-        this,
-        ccg_cpc,
-        CampaignChecker::Expected().eval_status("I")),
+      CampaignChecker(this, ccg_cpm, CampaignChecker::Expected().eval_status("I")),
+      CampaignChecker(this, ccg_cpc, CampaignChecker::Expected().eval_status("I")),
       CampaignChecker(
         this,
         ccg_never_matched,
@@ -311,17 +284,13 @@ CampaignBudgetTest::fixed_daily_budget_update()
       FAIL_CONTEXT({ throw; }, description + " - initial check");
     }
     AutoTest::Logger::thlog().stream(WARNING, ASPECT)
-      << "Day switched at post_condition step: '"
-      << description << "' case will be omitted";
+      << "Day switched at post_condition step: '" << description << "' case will be omitted";
     return;
   }
 
   // Changes
   campaign->daily_budget = campaign->daily_budget.value() + 1;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->update()),
-    "updating campaign.daily_budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.daily_budget");
 
   // Check new statuses
   NSLookupRequest request;
@@ -358,8 +327,7 @@ CampaignBudgetTest::dynamic_daily_budget_update()
   std::string description("Increase budget of campaign");
   add_descr_phrase(description);
 
-  Generics::Time next_date =
-    (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
+  Generics::Time next_date = (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
 
   unsigned long ccg1 = fetch_int("Dynamic1/CCG");
   ORM::ORMRestorer<ORM::PQ::Campaign>* campaign1 =
@@ -373,14 +341,8 @@ CampaignBudgetTest::dynamic_daily_budget_update()
   try
   {
     AutoTest::and_checker(
-      CampaignChecker(
-        this,
-        ccg1,
-        CampaignChecker::Expected().eval_status("I")),
-      CampaignChecker(
-        this,
-        ccg2,
-        CampaignChecker::Expected().eval_status("A"))).check();
+      CampaignChecker(this, ccg1, CampaignChecker::Expected().eval_status("I")),
+      CampaignChecker(this, ccg2, CampaignChecker::Expected().eval_status("A"))).check();
   }
   catch(const AutoTest::CheckFailed& e)
   {
@@ -389,25 +351,18 @@ CampaignBudgetTest::dynamic_daily_budget_update()
       FAIL_CONTEXT({ throw; }, description + " - initial check");
     }
     AutoTest::Logger::thlog().stream(WARNING, ASPECT)
-      << "Day switched at post_condition step: '"
-      << description << "' case will be omitted";
+      << "Day switched at post_condition step: '" << description << "' case will be omitted";
     return;
   }
 
   // Changes
   campaign1->budget = campaign1->budget.value() + 1;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign1->update()),
-    "updating campaign.budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(campaign1->update()), "updating campaign.budget");
 
   campaign2->date_end =
     Generics::Time(fetch_string("Dynamic2/DateEnd"), "%Y-%m-%d %H:%M:%S") +
     12 * Generics::Time::ONE_DAY.tv_sec;
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign2->update()),
-    "updating campaign.budget");
+  FAIL_CONTEXT(AutoTest::predicate_checker(campaign2->update()), "updating campaign.budget");
 
   NSLookupRequest request;
   request.debug_time(base_time_);
@@ -440,8 +395,7 @@ CampaignBudgetTest::checker_call(
   {
     return checker->check();
   }
-  catch (
-    const AutoTest::TimeLessChecker::TimeLessCheckFailed&)
+  catch (const AutoTest::TimeLessChecker::TimeLessCheckFailed&)
   {
     throw;
   }
@@ -468,8 +422,7 @@ CampaignBudgetTest::post_condition()
   catch(const AutoTest::TimeLessChecker::TimeLessCheckFailed&)
   {
     AutoTest::Logger::thlog().stream(WARNING, ASPECT)
-      << "Day switched at post_condition step: "
-      << "dynamic cases checks will be omitted";
+      << "Day switched at post_condition step: " << "dynamic cases checks will be omitted";
     return;
   }
 }

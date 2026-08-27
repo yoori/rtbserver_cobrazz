@@ -24,6 +24,7 @@ sub create_behavioral_channels
         $self->{ns}->output("$arg->{name}/$keyword", $self->{keywords}->{$keyword});
       }
     }
+
     if (defined $arg->{url_list})
     {
       foreach my $url (split(/\W+/, $arg->{url_list}))
@@ -136,7 +137,7 @@ sub create_text_campaigns
       $args{original_keyword} = $negative . $self->{keywords}->{$kwd};
       $args{channel_id} = $self->{channels}->{$keyword->{channel}}->channel_id()
         if defined $keyword->{channel};
-      delete $args{channel}; 
+      delete $args{channel};
       my $ccg_keyword_id = $self->{ns}->create(CCGKeyword => \%args);
       $keyword->{max_cpc_bid} = 0 unless defined $keyword->{max_cpc_bid};
       $self->{ns}->output("$arg->{name}/$keyword_name/CPC", $keyword->{max_cpc_bid});
@@ -169,6 +170,7 @@ sub create_channel_targeted_campaigns_
       $arg->{channel_id} = $self->{channels}->{$arg->{channel}};
       delete $arg->{channel};
     }
+
     if (defined $arg->{campaign})
     {
       die "$self->{case_name}: campaign '$arg->{campaign}' is undefined!"
@@ -176,6 +178,7 @@ sub create_channel_targeted_campaigns_
       $arg->{campaign_id} = $self->{campaigns}->{$arg->{campaign}}->{campaign_id};
       delete $arg->{campaign};
     }
+
     if (defined $arg->{specific_sites})
     {
       $arg->{campaigncreativegroup_flags} |= DB::Campaign::INCLUDE_SPECIFIC_SITES;
@@ -277,7 +280,7 @@ sub create_publishers
     delete $args_copy{site};
     delete $args_copy{tags};
     $self->{publishers}->{$arg->{name}} = $self->{ns}->create(Publisher => \%args_copy );
-  
+
     $self->{ns}->output("$arg->{name}/TAG_ID",
                         $self->{publishers}->{$arg->{name}}->{tag_id})
       unless defined $arg->{tags};
@@ -316,7 +319,7 @@ sub create
 {
   my $self = shift;
   my ($class, $args) = @_;
-  return $self->{ns}->create($class, $args);  
+  return $self->{ns}->create($class, $args);
 }
 
 sub output
@@ -645,7 +648,7 @@ sub tag_adjustment_
 
   my $text_cmp_2_cpc = 0.01;
   my $text_cmp_2_ctr = 1;
-  
+
   $test_case->create_text_campaigns([
     { name => "KeywordTargeted",
       campaign => "ChannelTargetedCPM",

@@ -52,8 +52,7 @@ namespace AdServer::CampaignSvcs
 
       ~InProgressGuard()
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         call_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         method_total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         method_counter_.fetch_sub(1, std::memory_order_relaxed);
@@ -90,8 +89,7 @@ namespace AdServer::CampaignSvcs
 
       ~BatchStatsGuard() noexcept
       {
-        const auto elapsed_us =
-          (Generics::Time::get_time_of_day() - start_time_).microseconds();
+        const auto elapsed_us = (Generics::Time::get_time_of_day() - start_time_).microseconds();
         total_time_.fetch_add(elapsed_us, std::memory_order_relaxed);
         in_progress_.fetch_sub(1, std::memory_order_relaxed);
       }
@@ -109,9 +107,7 @@ namespace AdServer::CampaignSvcs
     RevenueDecimal
     unpack_revenue_decimal(const std::string& value)
     {
-      return value.empty() ?
-        RevenueDecimal::ZERO :
-        GrpcAlgs::unpack_decimal<RevenueDecimal>(value);
+      return value.empty() ? RevenueDecimal::ZERO : GrpcAlgs::unpack_decimal<RevenueDecimal>(value);
     }
 
     ImpRevenueDecimal
@@ -169,9 +165,7 @@ namespace AdServer::CampaignSvcs
     }
 
     void
-    fill_confirm_bid(
-      Proto::ConfirmBidInfo& target,
-      const BillingServerCore::ConfirmBidInfo& source)
+    fill_confirm_bid(Proto::ConfirmBidInfo& target, const BillingServerCore::ConfirmBidInfo& source)
     {
       fill_bid(*target.mutable_bid(), source.bid);
       target.set_account_spent_budget(GrpcAlgs::pack_decimal(source.account_spent_budget));
@@ -194,52 +188,40 @@ namespace AdServer::CampaignSvcs
       switch(source.unavailable_reason)
       {
         case Reason::ACCOUNT_NOT_FOUND:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_NOT_FOUND);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_ACCOUNT_NOT_FOUND);
           break;
         case Reason::ACCOUNT_INACTIVE:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_INACTIVE);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_ACCOUNT_INACTIVE);
           break;
         case Reason::ADVERTISER_NOT_FOUND:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_ADVERTISER_NOT_FOUND);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_ADVERTISER_NOT_FOUND);
           break;
         case Reason::ADVERTISER_INACTIVE:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_ADVERTISER_INACTIVE);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_ADVERTISER_INACTIVE);
           break;
         case Reason::CAMPAIGN_NOT_FOUND:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_NOT_FOUND);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_NOT_FOUND);
           break;
         case Reason::CAMPAIGN_INACTIVE:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_INACTIVE);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_INACTIVE);
           break;
         case Reason::CCG_NOT_FOUND:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CCG_NOT_FOUND);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CCG_NOT_FOUND);
           break;
         case Reason::CCG_INACTIVE:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CCG_INACTIVE);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CCG_INACTIVE);
           break;
         case Reason::ACCOUNT_BUDGET_BLOCKED:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_ACCOUNT_BUDGET_BLOCKED);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_ACCOUNT_BUDGET_BLOCKED);
           break;
         case Reason::CAMPAIGN_BUDGET_BLOCKED:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_BUDGET_BLOCKED);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CAMPAIGN_BUDGET_BLOCKED);
           break;
         case Reason::CCG_BUDGET_BLOCKED:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_CCG_BUDGET_BLOCKED);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_CCG_BUDGET_BLOCKED);
           break;
         case Reason::UNSPECIFIED:
-          target.set_unavailable_reason(
-            Proto::BID_UNAVAILABLE_REASON_UNSPECIFIED);
+          target.set_unavailable_reason(Proto::BID_UNAVAILABLE_REASON_UNSPECIFIED);
           break;
       }
     }
@@ -256,9 +238,7 @@ namespace AdServer::CampaignSvcs
     std::size_t
     resolve_max_sequential_ops(std::size_t configured)
     {
-      return std::max<std::size_t>(
-        1,
-        configured != 0 ? configured : 4);
+      return std::max<std::size_t>(1, configured != 0 ? configured : 4);
     }
   }
 
@@ -374,14 +354,11 @@ namespace AdServer::CampaignSvcs
       Proto::AddAmountResponse& response,
       ::grpc::Status& result_status) const;
 
-    static std::size_t hash_check_available_bid(
-      const Proto::CheckBidRequest& request);
+    static std::size_t hash_check_available_bid(const Proto::CheckBidRequest& request);
 
-    static std::size_t hash_reserve_bid(
-      const Proto::ReserveBidRequest& request);
+    static std::size_t hash_reserve_bid(const Proto::ReserveBidRequest& request);
 
-    static std::size_t hash_confirm_bid(
-      const Proto::ConfirmBidRequest& request);
+    static std::size_t hash_confirm_bid(const Proto::ConfirmBidRequest& request);
 
   private:
     static std::size_t hash_bid_(const Proto::BidInfo& bid);
@@ -609,8 +586,7 @@ namespace AdServer::CampaignSvcs
         core_requests.emplace_back(adapt_confirm_bid(request.requests(i)));
       }
 
-      const BillingServerCore::ConfirmBidRefSeq core_remainders =
-        core_->add_amount(core_requests);
+      const BillingServerCore::ConfirmBidRefSeq core_remainders = core_->add_amount(core_requests);
 
       for (const BillingServerCore::ConfirmBidRefInfo& source : core_remainders)
       {
@@ -628,22 +604,19 @@ namespace AdServer::CampaignSvcs
   }
 
   std::size_t
-  BillingServerGrpc::ServiceImpl::hash_check_available_bid(
-    const Proto::CheckBidRequest& request)
+  BillingServerGrpc::ServiceImpl::hash_check_available_bid(const Proto::CheckBidRequest& request)
   {
     return hash_bid_(request.bid());
   }
 
   std::size_t
-  BillingServerGrpc::ServiceImpl::hash_reserve_bid(
-    const Proto::ReserveBidRequest& request)
+  BillingServerGrpc::ServiceImpl::hash_reserve_bid(const Proto::ReserveBidRequest& request)
   {
     return hash_bid_(request.bid());
   }
 
   std::size_t
-  BillingServerGrpc::ServiceImpl::hash_confirm_bid(
-    const Proto::ConfirmBidRequest& request)
+  BillingServerGrpc::ServiceImpl::hash_confirm_bid(const Proto::ConfirmBidRequest& request)
   {
     return hash_bid_(request.bid().bid());
   }
@@ -698,10 +671,7 @@ namespace AdServer::CampaignSvcs
       stats_(std::make_shared<AtomicStats>()),
       executor_pool_(std::make_shared<AdServer::Commons::ExecutorPool>(
         Generics::ActiveObjectCallback_var(
-          new Logging::ActiveObjectCallbackImpl(
-            logger,
-            "",
-            billing_server_grpc_aspect)),
+          new Logging::ActiveObjectCallbackImpl(logger, "", billing_server_grpc_aspect)),
         std::max<std::size_t>(1, process_threads),
         AdServer::Commons::ExecutorPool::ResumeStrategy::CurrentContext)),
       impl_(std::make_shared<Impl>(

@@ -2,9 +2,7 @@
 #include "ConfigCommons.hpp"
 
 // Request config class
-RequestConfig::RequestConfig(ConstraintConfig* _constraint,
-                             const char* _url,
-                             const char* _method) :
+RequestConfig::RequestConfig(ConstraintConfig* _constraint, const char* _url, const char* _method) :
   url(_url),
   method(_method),
   constraint(_constraint)
@@ -63,9 +61,7 @@ ParamsRequestConfig::ParamsRequestConfig(ConstraintConfig* _constraint,
         }
       else
         {
-          make_cookie_policy_list(cookies_,
-                                  request.header()[i],
-                                  request_lists);
+          make_cookie_policy_list(cookies_, request.header()[i], request_lists);
         }
     }
 }

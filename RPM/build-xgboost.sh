@@ -97,7 +97,7 @@ popd
 
 %install
 pushd build
-DESTDIR=%{buildroot} %{__make} install 
+DESTDIR=%{buildroot} %{__make} install
 mkdir -p %{buildroot}/usr/include/xgboost/common/
 mkdir -p %{buildroot}/usr/include/xgboost/data/
 mkdir -p %{buildroot}/usr/include/xgboost/c_api/

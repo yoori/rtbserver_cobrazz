@@ -32,9 +32,7 @@ namespace
   }
 
   RequestInfo
-  fill_simple_request_info(
-    const UserId& user_id,
-    const Generics::Time& time)
+  fill_simple_request_info(const UserId& user_id, const Generics::Time& time)
   {
     RequestId request_id(generate_request_id());
 
@@ -77,10 +75,10 @@ struct TestProcessor:
     const AdServer::Commons::RequestId& request_id)
     /*throw(RequestContainerProcessor::Exception)*/
   {
-    if(action_type == RequestContainerProcessor::AT_FRAUD_ROLLBACK)
+    if (action_type == RequestContainerProcessor::AT_FRAUD_ROLLBACK)
     {
       RequestIdSet::iterator it = fraud_imps.find(request_id);
-      if(it != fraud_imps.end())
+      if (it != fraud_imps.end())
       {
         /*
         throw RequestContainerProcessor::Exception(
@@ -103,9 +101,7 @@ struct TestProcessor:
   {}
 
   virtual void
-  process_impression_post_action(
-    const AdServer::Commons::RequestId&,
-    const RequestPostActionInfo&)
+  process_impression_post_action(const AdServer::Commons::RequestId&, const RequestPostActionInfo&)
     /*throw(Exception)*/
   {}
 
@@ -149,9 +145,9 @@ template<typename Iterator>
 void
 print_time_seq(std::ostream& out, Iterator begin, Iterator end)
 {
-  for(Iterator it = begin; it != end; ++it)
+  for (Iterator it = begin; it != end; ++it)
   {
-    if(it != begin)
+    if (it != begin)
     {
       out << ", ";
     }
@@ -192,13 +188,9 @@ struct RequestInfoWrap: public RequestInfo
 typedef std::vector<RequestInfoWrap> RequestInfoWrapArray;
 
 void
-print_request_array(
-  std::ostream& out,
-  const RequestInfoWrapArray& requests,
-  const char* offset)
+print_request_array(std::ostream& out, const RequestInfoWrapArray& requests, const char* offset)
 {
-  for(RequestInfoWrapArray::const_iterator it = requests.begin();
-      it != requests.end(); ++it)
+  for (RequestInfoWrapArray::const_iterator it = requests.begin(); it != requests.end(); ++it)
   {
     out << offset << "[ " << it->time.gm_ft() << "(" <<
       (it->type == RequestInfoWrap::IMPRESSION ? "imp" : "click") <<
@@ -207,9 +199,7 @@ print_request_array(
 }
 
 bool
-simple_test(
-  UserFraudProtectionContainer* fraud_container,
-  TestProcessor* test_processor)
+simple_test(UserFraudProtectionContainer* fraud_container, TestProcessor* test_processor)
 {
   static const char* TEST_NAME = "simple_test";
 
@@ -217,8 +207,7 @@ simple_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
     UserFraudProtectionContainer::Config::FraudRule rule;
     rule.limit = 1000;
     rule.period = Generics::Time::ONE_DAY;
@@ -227,13 +216,12 @@ simple_test(
 
     UserId user_id(generate_user_id());
 
-    for(unsigned long i = 0; i < 999; ++i)
+    for (unsigned long i = 0; i < 999; ++i)
     {
       RequestId request_id(generate_request_id());
 
       RequestInfo request_info;
-      request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       request_info.ccg_id = 1;
       request_info.cc_id = 1;
       request_info.user_id = user_id;
@@ -252,13 +240,12 @@ simple_test(
       return false;
     }
 
-    for(unsigned long i = 0; i < 1; ++i)
+    for (unsigned long i = 0; i < 1; ++i)
     {
       RequestId request_id(generate_request_id());
 
       RequestInfo request_info;
-      request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d") + 1000;
+      request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d") + 1000;
       request_info.ccg_id = 1;
       request_info.cc_id = 1;
       request_info.user_id = user_id;
@@ -289,9 +276,7 @@ simple_test(
 }
 
 bool
-reverse_order_test(
-  UserFraudProtectionContainer* fraud_container,
-  TestProcessor* test_processor)
+reverse_order_test(UserFraudProtectionContainer* fraud_container, TestProcessor* test_processor)
 {
   static const char* TEST_NAME = "reverse_order_test";
 
@@ -299,8 +284,7 @@ reverse_order_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
     UserFraudProtectionContainer::Config::FraudRule rule;
     rule.limit = 1000;
     rule.period = Generics::Time::ONE_DAY;
@@ -309,13 +293,12 @@ reverse_order_test(
 
     UserId user_id(generate_user_id());
 
-    for(unsigned long i = 999; i > 0; --i)
+    for (unsigned long i = 999; i > 0; --i)
     {
       RequestId request_id(generate_request_id());
 
       RequestInfo request_info;
-      request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       request_info.ccg_id = 1;
       request_info.cc_id = 1;
       request_info.user_id = user_id;
@@ -334,13 +317,12 @@ reverse_order_test(
       return false;
     }
 
-    for(unsigned long i = 0; i < 1; ++i)
+    for (unsigned long i = 0; i < 1; ++i)
     {
       RequestId request_id(generate_request_id());
 
       RequestInfo request_info;
-      request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d") + i;
+      request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d") + i;
       request_info.ccg_id = 1;
       request_info.cc_id = 1;
       request_info.user_id = user_id;
@@ -371,9 +353,7 @@ reverse_order_test(
 }
 
 bool
-strange_order_test(
-  UserFraudProtectionContainer* fraud_container,
-  TestProcessor* test_processor)
+strange_order_test(UserFraudProtectionContainer* fraud_container, TestProcessor* test_processor)
 {
   static const char* TEST_NAME = "strange_order_test";
 
@@ -381,8 +361,7 @@ strange_order_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     {
       UserFraudProtectionContainer::Config::FraudRule rule;
@@ -402,7 +381,7 @@ strange_order_test(
 
     UserId user_id(generate_user_id());
 
-    for(unsigned long i = 0; i < 9; ++i)
+    for (unsigned long i = 0; i < 9; ++i)
     {
       fraud_container->process_impression(
         fill_simple_request_info(
@@ -418,7 +397,7 @@ strange_order_test(
       return false;
     }
 
-    for(unsigned long i = 11; i < 20; ++i)
+    for (unsigned long i = 11; i < 20; ++i)
     {
       fraud_container->process_impression(
         fill_simple_request_info(
@@ -435,7 +414,7 @@ strange_order_test(
       return false;
     }
 
-    for(unsigned long i = 9; i < 10; ++i)
+    for (unsigned long i = 9; i < 10; ++i)
     {
       fraud_container->process_impression(
         fill_simple_request_info(
@@ -463,9 +442,7 @@ strange_order_test(
 }
 
 bool
-double_fraud_test(
-  UserFraudProtectionContainer* fraud_container,
-  TestProcessor* test_processor)
+double_fraud_test(UserFraudProtectionContainer* fraud_container, TestProcessor* test_processor)
 {
   static const char* TEST_NAME = "double_fraud_test";
 
@@ -473,8 +450,7 @@ double_fraud_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     {
       UserFraudProtectionContainer::Config::FraudRule rule;
@@ -496,7 +472,7 @@ double_fraud_test(
 
     Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
 
-    for(unsigned long i = 0; i < 60; ++i)
+    for (unsigned long i = 0; i < 60; ++i)
     {
       RequestId request_id(generate_request_id());
 
@@ -520,7 +496,7 @@ double_fraud_test(
       return false;
     }
 
-    for(unsigned long i = 0; i < 60; ++i)
+    for (unsigned long i = 0; i < 60; ++i)
     {
       RequestId request_id(generate_request_id());
 
@@ -568,8 +544,7 @@ fraud_time_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     config->deactivate_period = Generics::Time(60);
 
@@ -586,7 +561,7 @@ fraud_time_test(
 
     Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
 
-    for(unsigned long i = 0; i < 41; ++i)
+    for (unsigned long i = 0; i < 41; ++i)
     {
       RequestId request_id(generate_request_id());
 
@@ -604,12 +579,11 @@ fraud_time_test(
         RequestActionProcessor::ProcessingState());
     }
 
-    if(test_callback->last_deactivate_time != base_time + Generics::Time::ONE_MINUTE*2)
+    if (test_callback->last_deactivate_time != base_time + Generics::Time::ONE_MINUTE*2)
     {
       std::cerr << TEST_NAME << ": error: incorrect deactivate time: " <<
         test_callback->last_deactivate_time.get_gm_time() <<
-        " instead " << (base_time + Generics::Time::ONE_MINUTE*2
-          ).get_gm_time() << std::endl;
+        " instead " << (base_time + Generics::Time::ONE_MINUTE*2).get_gm_time() << std::endl;
       return false;
     }
   }
@@ -634,8 +608,7 @@ fraud_non_first_pos_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     {
       UserFraudProtectionContainer::Config::FraudRule rule;
@@ -650,7 +623,7 @@ fraud_non_first_pos_test(
 
     Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       RequestId request_id(generate_request_id());
 
@@ -669,7 +642,7 @@ fraud_non_first_pos_test(
         RequestActionProcessor::ProcessingState());
     }
 
-    for(unsigned long i = 0; i < 10; ++i)
+    for (unsigned long i = 0; i < 10; ++i)
     {
       RequestId request_id(generate_request_id());
 
@@ -690,8 +663,7 @@ fraud_non_first_pos_test(
     if (test_processor->fraud_imps.size() != 20)
     {
       std::cerr << TEST_NAME << ": error: fraud imps after 10*2 imps: " <<
-        test_processor->fraud_imps.size() << " != 20" <<
-        std::endl;
+        test_processor->fraud_imps.size() << " != 20" << std::endl;
       return false;
     }
   }
@@ -721,8 +693,7 @@ fraud_move_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     config->deactivate_period = DEACTIVATE_PERIOD;
 
@@ -751,18 +722,18 @@ fraud_move_test(
       base_time + Generics::Time::ONE_MINUTE * 3
     };
 
-    while(std::next_permutation(TIMES, TIMES + sizeof(TIMES) / sizeof(TIMES[0])))
+    while (std::next_permutation(TIMES, TIMES + sizeof(TIMES) / sizeof(TIMES[0])))
     {
       test_processor->clear();
       test_callback->max_deactivate_time = Generics::Time::ZERO;
 
       UserId user_id(generate_user_id());
 
-      for(unsigned long j = 0; j < 4; ++j)
+      for (unsigned long j = 0; j < 4; ++j)
       {
 //      std::cerr << "IT #" << j << std::endl;
 
-        for(unsigned long i = 0; i < REQUESTS_PER_TIME; ++i)
+        for (unsigned long i = 0; i < REQUESTS_PER_TIME; ++i)
         {
           RequestId request_id(generate_request_id());
 
@@ -782,8 +753,7 @@ fraud_move_test(
         }
       }
 
-      if (test_processor->fraud_imps.size() !=
-          sizeof(TIMES) / sizeof(TIMES[0]) * REQUESTS_PER_TIME)
+      if (test_processor->fraud_imps.size() != sizeof(TIMES) / sizeof(TIMES[0]) * REQUESTS_PER_TIME)
       {
         std::cerr << TEST_NAME << ": error: fraud imps after all imps: " <<
           test_processor->fraud_imps.size() << " != 40: by " <<
@@ -800,7 +770,7 @@ fraud_move_test(
         DEACTIVATE_PERIOD
         ;
 
-      if(test_callback->max_deactivate_time != expected_deactivate_time)
+      if (test_callback->max_deactivate_time != expected_deactivate_time)
       {
         std::cerr << TEST_NAME << ": error: incorrect user max deactivation time: " <<
           test_callback->max_deactivate_time.get_gm_time() <<
@@ -838,8 +808,7 @@ fraud_deactivate_period_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     config->deactivate_period = DEACTIVATE_PERIOD;
 
@@ -855,7 +824,7 @@ fraud_deactivate_period_test(
     Generics::Time base_time(String::SubString("2008-01-01"), "%Y-%m-%d");
     UserId user_id(generate_user_id());
 
-    for(unsigned long i = 0; i < REQUESTS_PER_TIME; ++i)
+    for (unsigned long i = 0; i < REQUESTS_PER_TIME; ++i)
     {
       fraud_container->process_impression(
         fill_simple_request_info(user_id, base_time),
@@ -868,40 +837,31 @@ fraud_deactivate_period_test(
       std::cerr << TEST_NAME << ": error: fraud imps after all imps: " <<
         test_processor->fraud_imps.size() << " != " <<
         REQUESTS_PER_TIME << ": by " <<
-        REQUESTS_PER_TIME << " requests for " <<
-        base_time.get_gm_time() << std::endl;
+        REQUESTS_PER_TIME << " requests for " << base_time.get_gm_time() << std::endl;
       return false;
     }
 
-    const Generics::Time expected_deactivate_time =
-      base_time +
-      RULE_PERIOD +
-      DEACTIVATE_PERIOD
-      ;
+    const Generics::Time expected_deactivate_time = base_time + RULE_PERIOD + DEACTIVATE_PERIOD ;
 
-    if(test_callback->max_deactivate_time != expected_deactivate_time)
+    if (test_callback->max_deactivate_time != expected_deactivate_time)
     {
       std::cerr << TEST_NAME << ": error: incorrect user max deactivation time: " <<
         test_callback->max_deactivate_time.get_gm_time() <<
         " != " << expected_deactivate_time.get_gm_time() <<
-        ": by " << REQUESTS_PER_TIME << " requests for " <<
-        base_time.get_gm_time() << std::endl;
+        ": by " << REQUESTS_PER_TIME << " requests for " << base_time.get_gm_time() << std::endl;
       return false;
     }
 
     // send additional request for up deactivate period bound
     fraud_container->process_impression(
-      fill_simple_request_info(
-        user_id,
-        expected_deactivate_time - Generics::Time::ONE_SECOND),
+      fill_simple_request_info(user_id, expected_deactivate_time - Generics::Time::ONE_SECOND),
       ImpressionInfo(),
       RequestActionProcessor::ProcessingState());
 
     if (test_processor->fraud_imps.size() != REQUESTS_PER_TIME + 1)
     {
       std::cerr << TEST_NAME << ": error: fraud imps after additional imp on deactivate bound: " <<
-        test_processor->fraud_imps.size() << " != " <<
-        (REQUESTS_PER_TIME + 1) << std::endl;
+        test_processor->fraud_imps.size() << " != " << (REQUESTS_PER_TIME + 1) << std::endl;
       return false;
     }
   }
@@ -934,8 +894,7 @@ fraud_reverse_deactivate_period_test(
   {
     test_processor->clear();
 
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     config->deactivate_period = DEACTIVATE_PERIOD;
 
@@ -949,11 +908,9 @@ fraud_reverse_deactivate_period_test(
     fraud_container->config(config);
 
     UserId user_id(generate_user_id());
-    Generics::Time base_time(
-      String::SubString("2008-01-01 01:00:40"),
-      "%Y-%m-%d %H:%M:%S");
+    Generics::Time base_time(String::SubString("2008-01-01 01:00:40"), "%Y-%m-%d %H:%M:%S");
 
-    for(unsigned long i = 0; i < REQUESTS_PER_TIME - 1; ++i)
+    for (unsigned long i = 0; i < REQUESTS_PER_TIME - 1; ++i)
     {
       fraud_container->process_impression(
         fill_simple_request_info(user_id, base_time + 20),
@@ -973,13 +930,9 @@ fraud_reverse_deactivate_period_test(
       ImpressionInfo(),
       RequestActionProcessor::ProcessingState());
 
-    const Generics::Time expected_deactivate_time =
-      base_time +
-      RULE_PERIOD +
-      DEACTIVATE_PERIOD
-      ;
+    const Generics::Time expected_deactivate_time = base_time + RULE_PERIOD + DEACTIVATE_PERIOD ;
 
-    if(test_callback->max_deactivate_time != expected_deactivate_time)
+    if (test_callback->max_deactivate_time != expected_deactivate_time)
     {
       std::cerr << TEST_NAME << ": error: incorrect user max deactivation time: " <<
         test_callback->max_deactivate_time.get_gm_time() <<
@@ -992,8 +945,7 @@ fraud_reverse_deactivate_period_test(
     if (test_processor->fraud_imps.size() != REQUESTS_PER_TIME)
     {
       std::cerr << TEST_NAME << ": error: number of fraud imps is incorrect: " <<
-        test_processor->fraud_imps.size() << " != " <<
-        (REQUESTS_PER_TIME + 1) << std::endl;
+        test_processor->fraud_imps.size() << " != " << (REQUESTS_PER_TIME + 1) << std::endl;
       return false;
     }
   }
@@ -1026,8 +978,7 @@ complex_deactivate_period_test(
 
   try
   {
-    UserFraudProtectionContainer::Config_var config(
-      new UserFraudProtectionContainer::Config());
+    UserFraudProtectionContainer::Config_var config(new UserFraudProtectionContainer::Config());
 
     config->deactivate_period = DEACTIVATE_PERIOD;
 
@@ -1064,9 +1015,7 @@ complex_deactivate_period_test(
 
     fraud_container->config(config);
 
-    Generics::Time base_time(
-    String::SubString("2008-01-01 12:00:40"),
-      "%Y-%m-%d %H:%M:%S");
+    Generics::Time base_time(String::SubString("2008-01-01 12:00:40"), "%Y-%m-%d %H:%M:%S");
 
     const TimeToCounter TIMES[] = {
       { base_time + 1, 10 },
@@ -1079,11 +1028,10 @@ complex_deactivate_period_test(
     unsigned long request_id = 0;
     RequestInfoWrapArray requests;
 
-    for(unsigned long i = 0; i < sizeof(TIMES) / sizeof(TIMES[0]); ++i)
+    for (unsigned long i = 0; i < sizeof(TIMES) / sizeof(TIMES[0]); ++i)
     {
       RequestIdArray request_ids;
-      for(unsigned long request_id_i = 0;
-          request_id_i < TIMES[i].count; ++request_id_i)
+      for (unsigned long request_id_i = 0; request_id_i < TIMES[i].count; ++request_id_i)
       {
         request_ids.push_back(generate_request_id());
       }
@@ -1112,11 +1060,11 @@ complex_deactivate_period_test(
 
     unsigned long perm_i = 0;
 
-    while(std::next_permutation(requests.begin(), requests.end()))
+    while (std::next_permutation(requests.begin(), requests.end()))
     {
       ++perm_i;
 
-      if(perm_i % 10000 == 0)
+      if (perm_i % 10000 == 0)
       {
         std::cout << perm_i << "/3628800" << std::endl;
       }
@@ -1126,20 +1074,20 @@ complex_deactivate_period_test(
 
       UserId user_id(generate_user_id());
 
-      for(RequestInfoWrapArray::const_iterator req_it = requests.begin();
+      for (RequestInfoWrapArray::const_iterator req_it = requests.begin();
           req_it != requests.end(); ++req_it)
       {
         RequestInfo request_info(*req_it);
         request_info.user_id = user_id;
 
-        for(RequestIdArray::const_iterator
+        for (RequestIdArray::const_iterator
               request_id_it = req_it->request_ids.begin();
             request_id_it != req_it->request_ids.end();
             ++request_id_it)
         {
           request_info.request_id = *request_id_it;
 
-          if(req_it->type == RequestInfoWrap::IMPRESSION)
+          if (req_it->type == RequestInfoWrap::IMPRESSION)
           {
             fraud_container->process_impression(
               request_info,
@@ -1148,14 +1096,12 @@ complex_deactivate_period_test(
           }
           else
           {
-            fraud_container->process_click(
-              request_info,
-              RequestActionProcessor::ProcessingState());
+            fraud_container->process_click(request_info, RequestActionProcessor::ProcessingState());
           }
         }
       }
 
-      if(test_callback->max_deactivate_time != expected_deactivate_time)
+      if (test_callback->max_deactivate_time != expected_deactivate_time)
       {
         std::cerr << TEST_NAME << ": error: incorrect user max deactivation time: " <<
           test_callback->max_deactivate_time.get_gm_time() <<
@@ -1169,8 +1115,7 @@ complex_deactivate_period_test(
       if (test_processor->fraud_imps.size() != 40)
       {
         std::cerr << TEST_NAME << ": error: number of fraud imps is incorrect: " <<
-          test_processor->fraud_imps.size() <<
-          " != 40, at sequence: " << std::endl;
+          test_processor->fraud_imps.size() << " != 40, at sequence: " << std::endl;
         print_request_array(std::cerr, requests, "  ");
         std::cerr << std::endl;
         return false;
@@ -1241,8 +1186,7 @@ main(int argc, char* argv[]) noexcept
       result &= fraud_reverse_deactivate_period_test(
         fraud_container, test_processor, test_callback);
       */
-      result &= complex_deactivate_period_test(
-        fraud_container, test_processor, test_callback);
+      result &= complex_deactivate_period_test(fraud_container, test_processor, test_callback);
     }
 
     return result ? 0 : 1;

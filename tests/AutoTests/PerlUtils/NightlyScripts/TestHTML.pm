@@ -82,8 +82,8 @@ sub diffs_to_color_tag {
 
 sub test_key {
   my $filename = shift;
-  my ($file, $dir, $ext) = File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+  my ($file, $dir, $ext) = File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT));
   my @file_parts = split(/\./, $file);
   if (scalar(@file_parts) eq 2)
@@ -100,14 +100,14 @@ sub test_key {
 
 sub is_error {
   my $filename = shift;
-  my ($file, $dir, $ext) = File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+  my ($file, $dir, $ext) = File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT,
                                                       TestCommon::LOG_STORE_EXT));
   if ($ext eq TestCommon::LOG_STORE_EXT)
   {
-    ($file, $dir, $ext) =  File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+    ($file, $dir, $ext) =  File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT));
   }
   return $ext eq TestCommon::ERROR_EXT;
@@ -115,34 +115,34 @@ sub is_error {
 
 sub is_log {
   my $filename = shift;
-  my ($file, $dir, $ext) = File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+  my ($file, $dir, $ext) = File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT,
                                                       TestCommon::LOG_STORE_EXT));
   if ($ext eq TestCommon::LOG_STORE_EXT)
   {
-    ($file, $dir, $ext) =  File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+    ($file, $dir, $ext) =  File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT));
   }
   return $ext eq TestCommon::OUT_EXT;
 }
 
-sub is_contain_error 
+sub is_contain_error
 {
   my $filename = shift;
   if (-e $filename)
   {
     my $filesize  = -s "$filename";
-    return $filesize ne 0; 
+    return $filesize ne 0;
   }
   return 0;
 }
 
 sub normalize_path {
   my ($filename, $link_suffix, $new_ext) = @_;
-  my ($file, $dir, $ext) = File::Basename::fileparse($filename, 
-                                                     (TestCommon::ERROR_EXT, 
+  my ($file, $dir, $ext) = File::Basename::fileparse($filename,
+                                                     (TestCommon::ERROR_EXT,
                                                       TestCommon::OUT_EXT));
   $new_ext = $ext if !defined $new_ext;
   return TestCommon::normalize(File::Spec->join($link_suffix, $file . $new_ext));
@@ -157,6 +157,7 @@ sub tr_class {
   {
     $prefix = TestCommon::FAILED_STATUS . "-";
   }
+
   if ($odd)
   {
     return $prefix . "odd";
@@ -183,11 +184,11 @@ sub new {
   $self->{WORKSPACE}    = shift;
   $self->{DST_PATH}     = shift;
   if (!defined $self->{DST_PATH})
-  { 
+  {
     $self->{DST_PATH}     = "";
   }
   return $self;
-} 
+}
 
 # HTML header
 sub header {
@@ -221,10 +222,11 @@ sub file_link {
   {
     return "";
   }
+
   if (-f $filepath)
   {
     my $filesize  = -s "$filepath";
-    if ($filesize ne 0 || $empty_link) 
+    if ($filesize ne 0 || $empty_link)
     {
       if ($linkpath eq $filepath)
       {
@@ -244,15 +246,15 @@ sub flush {
   my $self     = shift;
   my $path     = shift;  # HTML file path
   open(my $HTMLFILE, ">$path") || die "Error when openning file $path";
-  print $HTMLFILE $self->header(); 
-  print $HTMLFILE $self->get_body(); 
+  print $HTMLFILE $self->header();
+  print $HTMLFILE $self->get_body();
   print $HTMLFILE $self->footer();
   close($HTMLFILE);
 }
 
 1;
 
-# Base HTML Tests Results page  
+# Base HTML Tests Results page
 package HTMLTestsResults;
 
 use warnings;
@@ -314,10 +316,10 @@ sub prepare
   if (-d $self->{HISTORY_PATH})
   {
     my @paths = ();
-    File::Find::find({wanted => sub { $self->wanted($File::Find::name, 
-                                                    "tests.html", $search_path, \@paths);} }, 
+    File::Find::find({wanted => sub { $self->wanted($File::Find::name,
+                                                    "tests.html", $search_path, \@paths);} },
                      $self->{HISTORY_PATH});
-      @{$self->{history_paths}} = 
+      @{$self->{history_paths}} =
           sort {-M "$a" <=> -M  "$b"} @paths;
   }
   $self->{RESULT_PATH} = $search_path;
@@ -326,7 +328,7 @@ sub prepare
 # adding test category
 sub add_category {
   my ($self, $category)= @_;
-  if ( ! exists  $self->{tests}{$category} )  
+  if ( ! exists  $self->{tests}{$category} )
   {
     $self->{tests}{$category} = {};
   }
@@ -336,13 +338,13 @@ sub add_error {
   my ($self, $category, $name, $status, $filename) = @_;
   $self->{tests}{$category}{$name}{error_file} = $filename;
   $self->{tests}{$category}{$name}{status} = $status;
-  $self->{tests}{$category}{$name}{error}  = 
-  HTMLCommon::normalize_path($filename, 
+  $self->{tests}{$category}{$name}{error}  =
+  HTMLCommon::normalize_path($filename,
                              TestCommon::ERROR_PATH_SUFFIX);
   if (! exists $self->{tests}{$category}{$name}{log})
   {
-    $self->{tests}{$category}{$name}{log} =  
-        HTMLCommon::normalize_path($filename, 
+    $self->{tests}{$category}{$name}{log} =
+        HTMLCommon::normalize_path($filename,
                                    TestCommon::OUT_PATH_SUFFIX,
                                    TestCommon::OUT_EXT);
   }
@@ -350,24 +352,25 @@ sub add_error {
 
 sub add_log {
   my ($self, $category, $name, $status, $filename) = @_;
-  $self->{tests}{$category}{$name}{log}  = 
-      HTMLCommon::normalize_path($filename, 
+  $self->{tests}{$category}{$name}{log}  =
+      HTMLCommon::normalize_path($filename,
                                  TestCommon::OUT_PATH_SUFFIX);
   $self->{tests}{$category}{$name}{log_file}  = $filename;
   if (! exists $self->{tests}{$category}{$name}{status})
   {
     $self->{tests}{$category}{$name}{status}  = $status;
   }
+
   if (! exists $self->{tests}{$category}{$name}{error})
   {
-    $self->{tests}{$category}{$name}{error} =  
-        HTMLCommon::normalize_path($filename, 
+    $self->{tests}{$category}{$name}{error} =
+        HTMLCommon::normalize_path($filename,
                                    TestCommon::ERROR_PATH_SUFFIX,
                                    TestCommon::ERROR_EXT);
   }
 }
 
-# adding test  
+# adding test
 sub add_test {
   my ($self, $filename) = @_;
   my ($category, $name) = HTMLCommon::test_key($filename);
@@ -376,7 +379,7 @@ sub add_test {
   ++$self->{tests_count} if (! exists $self->{tests}{$category}{$name});
   if (HTMLCommon::is_error($filename))
   {
-    if (HTMLCommon::is_contain_error($filename)) 
+    if (HTMLCommon::is_contain_error($filename))
     {
       $status       = TestCommon::FAILED_STATUS;
       ++$self->{errors_count};
@@ -393,7 +396,7 @@ sub add_test {
 # Result page body
 sub get_body {
   my $self   = shift;
-  my $buffer = "";      
+  my $buffer = "";
   my $idx    = 0;
   my %tests = % { $self->{tests} };
   foreach my $category ( sort keys(%tests) )
@@ -407,13 +410,13 @@ sub get_body {
       $idx++;
       my %test = % { $tests{$category}{$name} };
       my $tr_class  = HTMLCommon::tr_class($idx % 2, $test{status} );
-      $buffer .= CGI::TR({-class=>"$tr_class"}, 
+      $buffer .= CGI::TR({-class=>"$tr_class"},
                          CGI::td($name),
                          HTMLCommon::status_to_td($self->get_history_status($category, $name)),
-                         CGI::td($self->file_link($test{error}  . TestCommon::LOG_STORE_EXT, 
-                                                  $test{error_file}, 
+                         CGI::td($self->file_link($test{error}  . TestCommon::LOG_STORE_EXT,
+                                                  $test{error_file},
                                                   "error", 0 )),
-                         CGI::td($self->file_link($test{log}  . TestCommon::LOG_STORE_EXT, 
+                         CGI::td($self->file_link($test{log}  . TestCommon::LOG_STORE_EXT,
                                                   $test{log_file}, "debug")),
                          CGI::td($self->get_history_tag($category, $name)));
     }
@@ -432,43 +435,44 @@ sub summary {
     my $prior_log_path    = File::Spec->join($dirs[0], TestCommon::OUT_PATH_SUFFIX);
     opendir(DIR, $prior_error_path);
     my @errorfiles = grep (-f $_, map (File::Spec->join($prior_error_path, $_), readdir(DIR)));
-    closedir(DIR);    
+    closedir(DIR);
     opendir(DIR, $prior_log_path);
     my @logfiles = grep (-f $_, map (File::Spec->join($prior_log_path, $_), readdir(DIR)));
-    closedir(DIR);    
+    closedir(DIR);
     $self->{l_tests_count}   = scalar(grep (HTMLCommon::is_log($_),  @logfiles));
     $self->{l_errors_count}  = scalar(grep (HTMLCommon::is_error($_) && HTMLCommon::is_contain_error($_), @errorfiles));
   }
   my @list;
   for my $dir (splice(@dirs, 0, HTMLCommon::MAX_HISTORY_SIZE))
   {
-    my $docpath  = File::Spec->join($dir, "tests.html");    
+    my $docpath  = File::Spec->join($dir, "tests.html");
     if (-e $docpath)
     {
       my $time     = strftime "%d-%m-%y %H:%M", gmtime(stat($docpath)->mtime);
-      my $root_path = File::Spec->catfile($self->{HISTORY_PATH}, $self->{DST_PATH}, 
+      my $root_path = File::Spec->catfile($self->{HISTORY_PATH}, $self->{DST_PATH},
                                           $self->{RESULT_PATH});
       my $tag = CGI::li(CGI::a({href=>File::Spec->abs2rel($docpath, $root_path),
                                 type=>"text/html"}, $time));
       push @list, $tag;
     }
   }
+
   if (@list)
   {
     $buffer .= CGI::h2("History") . CGI::hr({color=>"black", noshade=>"true"}),;
-    $buffer .= CGI::ol({-type=>"1"}, @list); 
+    $buffer .= CGI::ol({-type=>"1"}, @list);
   }
   $buffer .= CGI::h2("Summary ") . CGI::hr({color=>"black", noshade=>"true"}),;
   my $passed     = $self->{tests_count} - $self->{errors_count};
   my $new_passed = $self->{l_errors_count} - $self->{errors_count};
   my $new_test   = $self->{tests_count} - $self->{l_tests_count};
-  $buffer .= CGI::start_table() . 
-             CGI::TR({}, CGI::td("Total tests"), 
-                     CGI::td($self->{tests_count}), 
+  $buffer .= CGI::start_table() .
+             CGI::TR({}, CGI::td("Total tests"),
+                     CGI::td($self->{tests_count}),
                      CGI::td(HTMLCommon::diffs_to_color_tag($new_test) ) ) .
-             CGI::TR({}, 
-                     CGI::td("Passed"), 
-                     CGI::td($passed), 
+             CGI::TR({},
+                     CGI::td("Passed"),
+                     CGI::td($passed),
                      CGI::td(HTMLCommon::diffs_to_color_tag($new_passed))) .
              CGI::end_table();
   return $buffer;
@@ -495,10 +499,11 @@ sub get_history_status {
   {
     my $err_file = $err_files[0];
     my $search_status       = TestCommon::SUCCESS_STATUS;
-    if (HTMLCommon::is_contain_error($err_file)) 
+    if (HTMLCommon::is_contain_error($err_file))
     {
       $search_status = TestCommon::FAILED_STATUS;
     }
+
     if ($search_status eq TestCommon::FAILED_STATUS && $status eq TestCommon::SUCCESS_STATUS)
     {
       return HTMLCommon::HS_NEW_PASS;
@@ -515,10 +520,10 @@ sub get_history_status {
   }
   elsif (@out_files)
   {
-    return ($status eq TestCommon::FAILED_STATUS) ? 
+    return ($status eq TestCommon::FAILED_STATUS) ?
         HTMLCommon::HS_NEW_FAIL : HTMLCommon::HS_PASSED;
   }
-  return ($status eq TestCommon::FAILED_STATUS) ? 
+  return ($status eq TestCommon::FAILED_STATUS) ?
       HTMLCommon::HS_NEW_FAIL : HTMLCommon::HS_NEW_PASS;
 }
 
@@ -531,9 +536,9 @@ sub get_history_tag
     $filename = join(".", ($category, $filename));
   }
   $filename = TestCommon::normalize($filename);
-  my $history_doc = HTMLTestsHistory->new($self->{HTML_PATH},  
+  my $history_doc = HTMLTestsHistory->new($self->{HTML_PATH},
                                           File::Spec->catfile($self->{HISTORY_PATH}, $self->{DST_PATH}, $self->{RESULT_PATH}),
-                                          $filename, 
+                                          $filename,
                                           $category, $test,
                                           File::Basename::basename($self->{tests}->{$category}->{$test}->{error} . TestCommon::LOG_STORE_EXT),
                                           File::Basename::basename($self->{tests}->{$category}->{$test}->{log} . TestCommon::LOG_STORE_EXT),
@@ -549,14 +554,14 @@ sub get_history_tag
 }
 
 
-# my HTML header 
+# my HTML header
 sub header {
   my $self     = shift;
   my $doc_name = $self->{DOC_NAME};
   my @list;
   foreach my $path (@ {$self->{ADD_PATHS} })
   {
-    my $log_doc = HTMLServerLogs->new($self->{HTML_PATH}, $path); 
+    my $log_doc = HTMLServerLogs->new($self->{HTML_PATH}, $path);
     if (length($log_doc->get_body()) != 0)
     {
       my $filename = TestCommon::normalize(File::Basename::basename($path)) . TestCommon::HTML_EXT;
@@ -566,9 +571,9 @@ sub header {
     }
   }
   my $buffer = CGI::ol({-type=>"1"}, @list);
-  return 
+  return
       CGI::start_html(-title=>"$doc_name",
-                      -style=>{'src' => HTMLCommon::get_doc_style}), 
+                      -style=>{'src' => HTMLCommon::get_doc_style}),
       CGI::h1("$doc_name"),
       CGI::hr({color=>"black", noshade=>"true"}),
       CGI::h3("Ran on host: " . TestCommon::get_host_name()),
@@ -579,7 +584,7 @@ sub header {
       CGI::TR({}, [CGI::th(['Test', 'Status', 'Error', 'Log', 'History'])]);
 }
 
-# my HTML footer  
+# my HTML footer
 sub footer {
   my $self     = shift;
   return CGI::end_table(), CGI::br(), $self->summary(), CGI::end_html();
@@ -588,7 +593,7 @@ sub footer {
 sub flush {
   my $self     = shift;
   my $path     = shift;  # HTML file path
-  $self->SUPER::flush($path);  
+  $self->SUPER::flush($path);
   my %histories = % { $self->{histories} };
   my %logs      = % { $self->{add_logs} };
   my ($file, $dir, $ext) = File::Basename::fileparse($path);
@@ -606,7 +611,7 @@ sub flush {
 
 1;
 
-# Test history page  
+# Test history page
 package HTMLTestsHistory;
 
 use warnings;
@@ -643,12 +648,12 @@ sub _get_category_tag {
   return "";
 }
 
-# my HTML header 
+# my HTML header
 sub header {
   my $self     = shift;
-  return 
+  return
       CGI::start_html(-title=>"$self->{NAME} history",
-                      -style=>{'src' => HTMLCommon::get_doc_style}), 
+                      -style=>{'src' => HTMLCommon::get_doc_style}),
       CGI::h2("History"),
       CGI::hr({color=>"black", noshade=>"true"}),
       $self->_get_category_tag,
@@ -658,7 +663,7 @@ sub header {
 }
 
 
-# my HTML footer  
+# my HTML footer
 sub footer {
   my $self     = shift;
   return CGI::end_table(), CGI::end_html();
@@ -703,7 +708,7 @@ sub file_link
   my ($self, $path, $linkname) = @_;
   if ( -f $path)
   {
-    return CGI::a({href=>File::Spec->abs2rel($path, 
+    return CGI::a({href=>File::Spec->abs2rel($path,
                                              $self->{WORKSPACE}),
                    type=>"text/html"}, $linkname);
   }
@@ -714,8 +719,8 @@ sub file_link
 sub row {
   my $self                = shift;
   my ($path, $idx, $time) = @_;
-  my $errorfile_path  = File::Spec->join($path, "Errors", $self->{ERROR_FILE});  
-  my $logfile_path    = File::Spec->join($path, "Logs", $self->{LOG_FILE});  
+  my $errorfile_path  = File::Spec->join($path, "Errors", $self->{ERROR_FILE});
+  my $logfile_path    = File::Spec->join($path, "Logs", $self->{LOG_FILE});
   if (-f $errorfile_path || -f $logfile_path)
   {
     my $logname         = File::Basename::basename($path);
@@ -723,9 +728,9 @@ sub row {
     my $tr_class        = HTMLCommon::tr_class($idx % 2, $status);
 
 
-    return  CGI::TR({-class=>"$tr_class"}, 
+    return  CGI::TR({-class=>"$tr_class"},
                     CGI::td($time),
-                    CGI::td($logname), 
+                    CGI::td($logname),
                     HTMLCommon::status_to_td($status),
                     CGI::td($self->file_link($errorfile_path, "error")),
                     CGI::td($self->file_link($logfile_path, "log")));
@@ -763,19 +768,19 @@ sub wanted
   my ($file, $dir, $ext) = File::Basename::fileparse($path);
   if ($file eq "tests.html")
   {
-    
+
     (my $linkname = substr($dir, 0, -1)) =~ s/\//-/g;
-    
+
     $links->{$linkname} = CGI::a({href=>$self->relative_path($fullpath),
                                   type=>"text/html"}, $linkname);
   }
 }
 
-sub get_body 
+sub get_body
 {
   my $self = shift;
   my %links;
-  File::Find::find({wanted => sub { $self->wanted($File::Find::name, \%links);} }, 
+  File::Find::find({wanted => sub { $self->wanted($File::Find::name, \%links);} },
                    ($self->{WORKSPACE}));
   my @list = ();
   foreach my $linkname (sort keys( %links ) )
@@ -783,7 +788,7 @@ sub get_body
     my $tag=CGI::li($links{$linkname});
     push @list, $tag;
   }
-  return CGI::ol({-type=>"1"}, @list); 
+  return CGI::ol({-type=>"1"}, @list);
 }
 
 1;
@@ -813,9 +818,9 @@ sub new {
 
 sub header{
   my $self     = shift;
-  return 
+  return
       CGI::start_html(-title=>"$self->{DOC_NAME}",
-                      -style=>{'src' => HTMLCommon::get_doc_style}), 
+                      -style=>{'src' => HTMLCommon::get_doc_style}),
       CGI::h1("$self->{DOC_NAME}"),
       CGI::start_table(),
       CGI::TR({}, [CGI::th(['File'])]);
@@ -831,7 +836,7 @@ sub wanted
   my ($self, $path) = @_;
   if (-f $path)
   {
-    my $srcpath = File::Spec->abs2rel($path, 
+    my $srcpath = File::Spec->abs2rel($path,
                                       $self->{WORKSPACE});
     (my $dstname = $srcpath) =~ s/\//-/g;
     my $dst_path =  File::Spec->catfile(TestCommon::OUT_PATH_SUFFIX, $dstname) . TestCommon::LOG_STORE_EXT;
@@ -842,13 +847,13 @@ sub wanted
 sub get_body
 {
   my $self = shift;
-  File::Find::find({wanted => sub { $self->wanted($File::Find::name);} }, 
+  File::Find::find({wanted => sub { $self->wanted($File::Find::name);} },
                    $self->{WORKSPACE});
   my $buffer = "";
   my %files = % { $self->{files} };
   foreach my $file (sort keys( %files ) )
   {
-    my $linkname = File::Spec->abs2rel($files{$file}, 
+    my $linkname = File::Spec->abs2rel($files{$file},
                                       $self->{WORKSPACE});
     $buffer.=CGI::TR(CGI::td(CGI::a({href=>$file,
                               type=>"text/html"}, $linkname)));
@@ -859,7 +864,7 @@ sub get_body
 sub flush {
   my $self     = shift;
   my $path     = shift;  # HTML file path
-  $self->SUPER::flush($path);  
+  $self->SUPER::flush($path);
   my ($file, $dir, $ext) = File::Basename::fileparse($path);
   my %files = % { $self->{files} };
   foreach my $file (sort keys( %files ) )

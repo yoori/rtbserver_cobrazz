@@ -1,9 +1,7 @@
 
 #include "ChannelOverlapStats.hpp"
 
-REFLECT_UNIT(ChannelOverlapStats) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(ChannelOverlapStats) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -38,18 +36,14 @@ ChannelOverlapStats::run_test()
   status_case();
 
   AdClient client(AdClient::create_user(this));
-  now_ =
-    AutoTest::Time(
-      now_.get_gm_time().format("%d-%m-%Y:02-00-00"));
+  now_ = AutoTest::Time(now_.get_gm_time().format("%d-%m-%Y:02-00-00"));
   history_today_case(client);
 
   check_stats("ChannelOverlapUserStats checks (today).");
 
   // Tomorrow (02:00:00) statistics
   now_ =
-    AutoTest::Time(
-      (now_ + Generics::Time::ONE_DAY).
-        get_gm_time().format("%d-%m-%Y:02-00-00"));
+    AutoTest::Time((now_ + Generics::Time::ONE_DAY). get_gm_time().format("%d-%m-%Y:02-00-00"));
 
   history_tomorrow_case(client);
 
@@ -65,8 +59,7 @@ ChannelOverlapStats::send_requests(
   AdClient* client,
   const Request(&requests) [Count])
 {
-  for (size_t i = 0;
-       i < Count; ++i)
+  for (size_t i = 0; i < Count; ++i)
   {
 
     AutoTest::NSLookupRequest request(false);
@@ -81,9 +74,7 @@ ChannelOverlapStats::send_requests(
     client->process_request(request);
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this, requests[i].expected,
-        client->debug_info.history_channels).check(),
+      ChannelsCheck(this, requests[i].expected, client->debug_info.history_channels).check(),
       description +
         " Expected history#" + strof(i+1));
 
@@ -111,6 +102,7 @@ ChannelOverlapStats::add_stat(
     {
       key.channel1(fetch_int(channel1));
     }
+
     if (channel2)
     {
       key.channel2(fetch_int(channel2));
@@ -119,8 +111,7 @@ ChannelOverlapStats::add_stat(
 
     Stat stat(key);
 
-    stat.description(
-      description.c_str());
+    stat.description(description.c_str());
 
     stat.select(conn_);
 
@@ -145,8 +136,7 @@ ChannelOverlapStats::add_stats(
   const Expected(&expected) [Count],
   unsigned long time_ofset)
 {
-  for (size_t i = 0;
-       i < Count; ++i)
+  for (size_t i = 0; i < Count; ++i)
   {
     add_stat(
       description + "#" + strof(i+1),
@@ -163,11 +153,7 @@ ChannelOverlapStats::check_stats(const std::string& description)
   add_descr_phrase(description);
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        diffs_,
-        stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
     description);
 
   stats_.clear();
@@ -380,8 +366,7 @@ ChannelOverlapStats::channel_type_case()
 
   NSLookupRequest request;
 
-  request.referer_kw =
-    fetch_string("ChannelType/KWD/Kwd");
+  request.referer_kw = fetch_string("ChannelType/KWD/Kwd");
   request.debug_time = now_;
   request.loc_name =
     "gn/" + fetch_string("ChannelType/LOC/Guinea") +
@@ -400,10 +385,7 @@ ChannelOverlapStats::channel_type_case()
         " Expected history");
 
    FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "ChannelType/Device",
-      client.debug_info.device_channels).check(),
+    ChannelsCheck(this, "ChannelType/Device", client.debug_info.device_channels).check(),
     description +
         " Expected history");
 
@@ -448,8 +430,7 @@ void ChannelOverlapStats::non_optin_case()
   {
     NSLookupRequest request;
 
-    request.referer =
-      fetch_string("NonOptin/URL/Url");
+    request.referer = fetch_string("NonOptin/URL/Url");
     request.debug_time = now_;
     request.colo = fetch_string("ADSCOLO");
 
@@ -504,9 +485,7 @@ void ChannelOverlapStats::config_case()
 
     add_stats(description, EXPECTED);
 
-    AdClient client(
-      AdClient::create_user(
-        this, AutoTest::UF_FRONTEND_MINOR));
+    AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
     client.process_request(
       NSLookupRequest().
@@ -896,8 +875,7 @@ void ChannelOverlapStats::daily_proc_case()
       }
     };
 
-    send_requests(
-      description, &client, REQUESTS);
+    send_requests(description, &client, REQUESTS);
   }
 
   // Daily processing
@@ -918,8 +896,7 @@ void ChannelOverlapStats::daily_proc_case()
       }
     };
 
-    send_requests(
-      description, &client, REQUESTS);
+    send_requests(description, &client, REQUESTS);
   }
 
 }

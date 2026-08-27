@@ -10,10 +10,7 @@ class StatsHourlyNumShowingTest: public BaseUnit
   typedef AutoTest::NSLookupRequest NSLookupRequest;
 
 public:
-  StatsHourlyNumShowingTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  StatsHourlyNumShowingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   { }

@@ -62,8 +62,7 @@ void HttpPoolPolicy::report_error(
   const String::SubString& description,
   const char* ) noexcept
 {
-  logger_->stream(Logging::Logger::WARNING) <<
-    "HttpPoolPolicies, error: " << description;
+  logger_->stream(Logging::Logger::WARNING) << "HttpPoolPolicies, error: " << description;
 }
 
 

@@ -18,10 +18,7 @@ class PageLoadsDailyStats : public BaseDBUnit
   };
 
 public:
-  PageLoadsDailyStats(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  PageLoadsDailyStats(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var),
     pq_conn_(open_pq())
   {};
@@ -38,13 +35,10 @@ private:
 
   template <size_t Count>
   void
-  initialize_stats(
-    const std::string& description,
-    const TagGroupExpected (&expected)[Count]);
+  initialize_stats(const std::string& description, const TagGroupExpected (&expected)[Count]);
 
   std::string
-  fetch_tag_group(
-    const char* tags);
+  fetch_tag_group(const char* tags);
 
   void case01_multiple_tags_in_one_domain();
   void case02_multiple_tags_iframe_eq_page();
@@ -59,10 +53,8 @@ private:
   void case11_different_sites();
   void case12_different_countries();
   void case13_inventory_mode_tags();
-  void case14_reverse_logs_delivery_order_part_1(
-    AdClient& client);
-  void case14_reverse_logs_delivery_order_part_2(
-    AdClient& client);
+  void case14_reverse_logs_delivery_order_part_1(AdClient& client);
+  void case14_reverse_logs_delivery_order_part_2(AdClient& client);
   void case15_user_statuses();
 
   ORM::StatsList<ORM::PageLoadsDaily> stats;

@@ -11,37 +11,37 @@ namespace
 
 namespace AdServer::Request::Param
 {
-      const String::SubString COLOCATION_ID("colo");
-      const String::SubString TAG_ID("tid");
-      const String::SubString TAG_SIZE_ID("tsid");
-      const String::SubString CCID("ccid");
-      const String::SubString CREATIVE_ID("crid");
-      const String::SubString DATA("d");
-      const String::SubString CCG_KEYWORD_ID("ccgkeyword");
-      const String::SubString REQUEST_ID("requestid");
-      const String::SubString USER_ID_DISTRIBUTION_HASH("h");
-      const String::SubString RELOCATE("relocate");
-      const String::SubString PRECLICK("preclick");
-      const String::SubString CLICK_PREFIX("clickpref");
-      const String::SubString CLIENT_ID("u");
-      const String::SubString CAMPAIGN_MANAGER_INDEX("cmi");
-      const String::SubString F_FLAG("f");
-      const String::SubString MARKERS("m");
-      const String::SubString CLICK_RATE("cr");
-      const String::SubString TOKEN_PREFIX("t.");
-      const String::SubString BID_TIME("bt");
+  const String::SubString COLOCATION_ID("colo");
+  const String::SubString TAG_ID("tid");
+  const String::SubString TAG_SIZE_ID("tsid");
+  const String::SubString CCID("ccid");
+  const String::SubString CREATIVE_ID("crid");
+  const String::SubString DATA("d");
+  const String::SubString CCG_KEYWORD_ID("ccgkeyword");
+  const String::SubString REQUEST_ID("requestid");
+  const String::SubString USER_ID_DISTRIBUTION_HASH("h");
+  const String::SubString RELOCATE("relocate");
+  const String::SubString PRECLICK("preclick");
+  const String::SubString CLICK_PREFIX("clickpref");
+  const String::SubString CLIENT_ID("u");
+  const String::SubString CAMPAIGN_MANAGER_INDEX("cmi");
+  const String::SubString F_FLAG("f");
+  const String::SubString MARKERS("m");
+  const String::SubString CLICK_RATE("cr");
+  const String::SubString TOKEN_PREFIX("t.");
+  const String::SubString BID_TIME("bt");
 
-      // debug params
-      const String::SubString DEBUG_CURRENT_TIME("debug-time");
-      const String::SubString DEBUG_IP_ADDRESS("debug-ip");
-    }
+  // debug params
+  const String::SubString DEBUG_CURRENT_TIME("debug-time");
+  const String::SubString DEBUG_IP_ADDRESS("debug-ip");
+}
 
 namespace AdServer::Request::Headers
-    {
-      const String::AsciiStringManip::Caseless REM_HOST(".remotehost");
-      const String::AsciiStringManip::Caseless REM_HOST_TEST("remote_addr");
-      const String::AsciiStringManip::Caseless REFERER("referer");
-    }
+{
+  const String::AsciiStringManip::Caseless REM_HOST(".remotehost");
+  const String::AsciiStringManip::Caseless REM_HOST_TEST("remote_addr");
+  const String::AsciiStringManip::Caseless REFERER("referer");
+}
 
 namespace AdServer
 {
@@ -61,17 +61,14 @@ namespace AdServer
       error_flag_(error_flag)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const
     {
       String::StringManip::Splitter<CreativeIdSepCategory> tokenizer(value);
       String::SubString cur;
       while (tokenizer.get_token(cur))
       {
         unsigned long creative_id = 0;
-        if(!String::StringManip::str_to_int(
-             cur, creative_id))
+        if (!String::StringManip::str_to_int(cur, creative_id))
         {
           request_info.*error_flag_ = true;
         }
@@ -98,9 +95,7 @@ namespace AdServer
     {}
 
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     NumberType RequestInfoType::* field_number_;
@@ -113,9 +108,7 @@ namespace AdServer
   {
   public:
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value)
+    process(RequestInfoType& request_info, const String::SubString& value)
       const noexcept;
   };
 
@@ -132,16 +125,14 @@ namespace AdServer
       const String::SubString& name,
       const String::SubString& value) const
     {
-      if(name.size() >= Request::Param::TOKEN_PREFIX.size() &&
+      if (name.size() >= Request::Param::TOKEN_PREFIX.size() &&
          name.compare(
            0,
            Request::Param::TOKEN_PREFIX.size(),
            Request::Param::TOKEN_PREFIX.data()) == 0)
       {
         request_info.tokens.insert(
-          std::make_pair(
-            name.substr(Request::Param::TOKEN_PREFIX.size()).str(),
-            value.str()));
+          std::make_pair(name.substr(Request::Param::TOKEN_PREFIX.size()).str(), value.str()));
       }
     }
 
@@ -189,9 +180,7 @@ namespace AdServer
       unsigned long max_len = MAX_URL_LENGTH,
       unsigned long view_flags = HTTP::HTTPAddress::VW_FULL);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     std::string RequestInfoType::* field_;
@@ -218,9 +207,9 @@ namespace AdServer
     RequestInfoType& request_info,
     const String::SubString& value) const
   {
-    if(!value.empty())
+    if (!value.empty())
     {
-      if(value.size() > max_len_)
+      if (value.size() > max_len_)
       {
         Stream::Error ostr;
         ostr << "Value length(" << value.size() << ") exceed";
@@ -258,16 +247,16 @@ namespace AdServer
   {
     const std::string fstr("f");
     bool ff = false;
-    for(auto it = value.cbegin(); it != value.cend(); ++it)
+    for (auto it = value.cbegin(); it != value.cend(); ++it)
     {
       bool local_ff = *it == 'f' || *it == 'F';
 
-      if(!local_ff && (*it == 'r' || *it == 'R'))
+      if (!local_ff && (*it == 'r' || *it == 'R'))
       {
         request_info.markers.push_back("r");
       }
 
-      if(ff)
+      if (ff)
       {
         request_info.markers.push_back(
           *it >= '0' && *it <= '9' ? fstr + std::string(1, *it) : fstr);
@@ -276,7 +265,7 @@ namespace AdServer
       ff = local_ff;
     }
 
-    if(ff)
+    if (ff)
     {
       request_info.markers.push_back(fstr);
     }
@@ -295,16 +284,14 @@ namespace AdServer
   {
     RequestInfoParamProcessor_var processor_ptr(processor);
 
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      header_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      param_processors_.insert(std::make_pair(name, processor_ptr));
     }
   }
 
@@ -337,28 +324,24 @@ namespace AdServer
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);
 
-        ParamProcessorMap::const_iterator param_it =
-          header_processors_.find(header_name);
+        ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       }
 
-      for(auto it = parsed_params.begin();
-        it != parsed_params.end(); ++it)
+      for (auto it = parsed_params.begin(); it != parsed_params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->first);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->first);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->second);
         }
@@ -375,20 +358,19 @@ namespace AdServer
         {
           cookies.load_from_headers(request.headers());
 
-          for(HTTP::CookieList::const_iterator it = cookies.begin();
-            it != cookies.end(); ++it)
+          for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
           {
             const String::SubString& name = it->name;
             const String::SubString& value = it->value;
 
-            if(name == FrontendCommons::Cookies::CLIENT_ID)
+            if (name == FrontendCommons::Cookies::CLIENT_ID)
             {
               try
               {
                 AdServer::Commons::UserId uid =
                   common_module_->user_id_controller()->verify(
                     value, UserIdController::PERSISTENT).uuid();
-                if(!uid.is_null())
+                if (!uid.is_null())
                 {
                   request_info.cookie_user_id = uid;
                   request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
@@ -397,15 +379,14 @@ namespace AdServer
               catch(const eh::Exception&)
               {}
             }
-            else if(name == FrontendCommons::Cookies::OPTOUT &&
+            else if (name == FrontendCommons::Cookies::OPTOUT &&
               value == FrontendCommons::Cookies::OPTOUT_TRUE_VALUE)
             {
               request_info.user_status = AdServer::CampaignSvcs::US_OPTOUT;
             }
             else if (name == FrontendCommons::Cookies::SET_UID)
             {
-              if(value.size() == 1 && (
-                value[0] == '0' || value[0] == '1'))
+              if (value.size() == 1 && (value[0] == '0' || value[0] == '1'))
               {
                 request_info.set_uid_param = (value[0] == '1');
               }
@@ -423,15 +404,14 @@ namespace AdServer
 
       // f flag with bit-value of 0x2 indicates that
       //   click template is NOT to be used during click processing.
-      if(request_info.f_flag_value == 2)
+      if (request_info.f_flag_value == 2)
       {
         request_info.use_click_template = false;
       }
-      else if(request_info.f_flag_value == 3)
+      else if (request_info.f_flag_value == 3)
       {
         request_info.use_click_template = (!request_info.relocate.empty() ||
-          !request_info.preclick_url.empty() ||
-          !request_info.click_prefix.empty());
+          !request_info.preclick_url.empty() || !request_info.click_prefix.empty());
       }
       else
       {
@@ -456,12 +436,11 @@ namespace AdServer
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(request_info.ctr < AdServer::CampaignSvcs::RevenueDecimal::ZERO ||
+    if (request_info.ctr < AdServer::CampaignSvcs::RevenueDecimal::ZERO ||
       request_info.ctr > AdServer::CampaignSvcs::REVENUE_ONE)
     {
       request_info.ctr = AdServer::CampaignSvcs::RevenueDecimal::ZERO;
@@ -482,12 +461,10 @@ namespace AdServer
 
     // Headers
     add_processor_(true, false, Request::Headers::REM_HOST.str,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
 
     add_processor_(true, false, Request::Headers::REFERER.str,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::referer));
 
     // Parameters
     add_processor_(false, true, Request::Param::RELOCATE,
@@ -551,8 +528,7 @@ namespace AdServer
     add_processor_(false, true, Request::Param::DATA,
       new FrontendCommons::DataParamProcessor<RequestInfo>(param_processors_, tokens_processor_));
 
-    add_processor_(false, true, Request::Param::MARKERS,
-      new MarkerParamProcessor<RequestInfo>());
+    add_processor_(false, true, Request::Param::MARKERS, new MarkerParamProcessor<RequestInfo>());
   }
   } //namespace ClickFE
 }

@@ -62,7 +62,7 @@ module CampaignSvcs_v360
     CORBACommons::DecimalInfo prev_hour_comm_amount;
     CORBACommons::DecimalInfo current_hour_amount;
     CORBACommons::DecimalInfo current_hour_comm_amount;
-      
+
     CreativeStatSeq creatives;
     PublisherCCGStatSeq publishers;
     TagCCGStatSeq tags;

@@ -212,9 +212,7 @@ namespace FrontendCommons
     class OnMatch
     {
     public:
-      OnMatch(
-        unsigned long max_priority,
-        String::RegEx::MatchContext& match_context) noexcept;
+      OnMatch(unsigned long max_priority, String::RegEx::MatchContext& match_context) noexcept;
 
       bool
       operator() (const MultiStringMatcher::MatchDetails& details)
@@ -235,9 +233,7 @@ namespace FrontendCommons
       CategoryMatcher() noexcept;
 
       const MatchElement*
-      match(
-        std::string_view user_agent,
-        String::RegEx::MatchContext& match_context) const
+      match(std::string_view user_agent, String::RegEx::MatchContext& match_context) const
         /*throw(eh::Exception, String::RegEx::Exception)*/;
 
       void
@@ -250,7 +246,7 @@ namespace FrontendCommons
         const char* output_regexp,
         unsigned long priority)
         /*throw(String::RegEx::Exception)*/;
-	
+
     protected:
       virtual
       ~CategoryMatcher() noexcept {}
@@ -299,9 +295,7 @@ namespace FrontendCommons
     WebBrowserMatcher() noexcept;
 
     bool
-    match(
-      std::string& browser,
-      std::string_view user_agent) const
+    match(std::string& browser, std::string_view user_agent) const
       /*throw(eh::Exception)*/;
 
     void add_rule(
@@ -396,10 +390,7 @@ namespace FrontendCommons
     };
 
     bool
-    match(
-      MatchResult& result,
-      const String::SubString& ip,
-      const String::SubString& cohort) const
+    match(MatchResult& result, const String::SubString& ip, const String::SubString& cohort) const
       /*throw(InvalidParameter)*/;
 
     void
@@ -413,9 +404,7 @@ namespace FrontendCommons
     class CohortMaskHashAdapter
     {
     public:
-      CohortMaskHashAdapter(
-        const String::SubString& cohort_val,
-        uint32_t ip_mask_val)
+      CohortMaskHashAdapter(const String::SubString& cohort_val, uint32_t ip_mask_val)
         noexcept;
 
       size_t
@@ -478,8 +467,7 @@ namespace FrontendCommons
       noexcept;
 
     void
-    enable_country(
-      const String::SubString& country)
+    enable_country(const String::SubString& country)
       noexcept;
 
   protected:
@@ -520,21 +508,22 @@ namespace FrontendCommons
       special(0),
       special_way(SC_NONE)
   {
-    if(enc)
+    if (enc)
     {
       charset = enc;
       String::AsciiStringManip::to_upper(charset);
     }
+
     if (post_enc)
     {
       static const char* JS_UNICODE = "js_unicode:";
-      if(strlen(post_enc) > strlen(JS_UNICODE) &&
+      if (strlen(post_enc) > strlen(JS_UNICODE) &&
          strncmp(post_enc, JS_UNICODE, strlen(JS_UNICODE)) == 0)
       {
         special = *(post_enc + strlen(JS_UNICODE));
         special_way = SC_JS;
       }
-      else if(strcmp(post_enc, "html") == 0)
+      else if (strcmp(post_enc, "html") == 0)
       {
         special_way = SC_HTML;
       }
@@ -563,8 +552,7 @@ namespace FrontendCommons
 
   inline
   PlatformMatcher::
-  MatchElement::MatchElement(
-    const MatchElement& init)
+  MatchElement::MatchElement(const MatchElement& init)
     noexcept
     : platform_id(init.platform_id),
       name(init.name),
@@ -586,18 +574,14 @@ namespace FrontendCommons
     /*throw(String::RegEx::Exception)*/
       : name(name_val.str()),
       marker(marker_val),
-      regexp(
-        re[0] ?
-          new String::RegEx(String::SubString(re), PCRE_CASELESS) :
-          0),
+      regexp(re[0] ? new String::RegEx(String::SubString(re), PCRE_CASELESS) : 0),
       regexp_required(regexp_required_val),
       priority(priority_val)
   {}
 
   inline
   WebBrowserMatcher::
-  MatchElement::MatchElement(
-    const MatchElement& init)
+  MatchElement::MatchElement(const MatchElement& init)
     noexcept
     : name(init.name),
       marker(init.marker),

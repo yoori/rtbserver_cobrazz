@@ -6,20 +6,14 @@
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserCampaignReachProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void
-  print_user_campaign_reach_profile(std::ostream& out,
-    const UserCampaignReachProfileReader& reader)
+  print_user_campaign_reach_profile(std::ostream& out, const UserCampaignReachProfileReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -36,9 +30,7 @@ namespace RequestInfoSvcs
 
   inline
   void
-  print_user_campaign_reach_profile(
-    std::ostream& out,
-    const UserCampaignReachProfileReader& reader)
+  print_user_campaign_reach_profile(std::ostream& out, const UserCampaignReachProfileReader& reader)
     noexcept
   {
     unsigned long columns =
@@ -47,7 +39,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, USER_CAMPAIGN_REACH_TABLE_COLUMNS[i]);
     }
@@ -65,5 +57,4 @@ namespace RequestInfoSvcs
     table.add_row(row);
     table.dump(out);
   }
-}
 }

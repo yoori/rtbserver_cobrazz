@@ -1,8 +1,7 @@
 namespace AutoTest
 {
   template<typename AdminType, CheckType ch>
-  AdminsArray<AdminType, ch>::AdminsArray(
-    const AdminsArray<AdminType, ch>& from)
+  AdminsArray<AdminType, ch>::AdminsArray(const AdminsArray<AdminType, ch>& from)
     : admins_(from.admins_)
   {}
 
@@ -15,9 +14,7 @@ namespace AutoTest
   {
     clear();
 
-    const ServiceList& services =
-      test->get_config().get_services(
-        cluster, service);
+    const ServiceList& services = test->get_config().get_services(cluster, service);
 
     for (Service_iterator it = services.begin(); it != services.end(); ++it)
     {
@@ -35,10 +32,8 @@ namespace AutoTest
     Arg arg)
   {
     clear();
-    
-    const ServiceList& services =
-      test->get_config().get_services(
-        cluster, service);
+
+    const ServiceList& services = test->get_config().get_services(cluster, service);
 
     for (Service_iterator it = services.begin(); it != services.end(); ++it)
     {
@@ -57,10 +52,8 @@ namespace AutoTest
     Arg2 arg2)
   {
     clear();
-    
-    const ServiceList& services =
-      test->get_config().get_services(
-        cluster, service);
+
+    const ServiceList& services = test->get_config().get_services(cluster, service);
 
     for (Service_iterator it = services.begin(); it != services.end(); ++it)
     {
@@ -80,10 +73,8 @@ namespace AutoTest
     Arg3 arg3)
   {
     clear();
-    
-    const ServiceList& services =
-      test->get_config().get_services(
-        cluster, service);
+
+    const ServiceList& services = test->get_config().get_services(cluster, service);
 
     for (Service_iterator it = services.begin(); it != services.end(); ++it)
     {
@@ -125,14 +116,10 @@ namespace AutoTest
 
   template<typename AdminType, CheckType ch>
   template<typename Expects>
-  bool AdminsArray<AdminType, ch>::check(
-    const Expects& expects,
-    bool exists)
+  bool AdminsArray<AdminType, ch>::check(const Expects& expects, bool exists)
   {
     unsigned int succed = 0;
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       if (exists == it->check(expects))
       {
@@ -152,9 +139,7 @@ namespace AutoTest
   bool AdminsArray<AdminType, ch>::fetch()
   {
     bool result = true;
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       result &= it->fetch();
     }
@@ -164,27 +149,21 @@ namespace AutoTest
   template<typename AdminType, CheckType ch>
   void AdminsArray<AdminType, ch>::exec()
   {
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       it->exec();
     }
   }
 
   template<typename AdminType, CheckType ch>
-  void AdminsArray<AdminType, ch>::log(
-    Logger& logger,
-    unsigned long log_level)
+  void AdminsArray<AdminType, ch>::log(Logger& logger, unsigned long log_level)
   {
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       it->log(logger, log_level);
     }
   }
-  
+
   template<typename AdminType, CheckType ch>
   bool AdminsArray<AdminType, ch>::empty() const
   {
@@ -194,9 +173,7 @@ namespace AutoTest
   template<typename AdminType, CheckType ch>
   std::ostream& AdminsArray<AdminType, ch>::print_idname(std::ostream& out)
   {
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       it->print_idname(out);
       out << "; ";
@@ -215,9 +192,7 @@ namespace AutoTest
   template<typename AdminType, CheckType ch>
   std::ostream& AdminsArray<AdminType, ch>::dumpout(std::ostream& out)
   {
-    for (typename ArrayType::iterator it = admins_.begin();
-         it != admins_.end();
-         ++it)
+    for (typename ArrayType::iterator it = admins_.begin(); it != admins_.end(); ++it)
     {
       out << "For command '";
       it->print_idname(out);

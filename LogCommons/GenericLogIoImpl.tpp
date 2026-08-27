@@ -5,8 +5,8 @@
 #include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/StatCollector.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
+namespace AdServer::LogProcessing
+{
 
   class DistribHashHelper
   {
@@ -162,8 +162,7 @@ namespace LogProcessing {
     void
     save(std::ostream& o, const CollectorT& collector) const
     {
-      for (typename CollectorT::const_iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::const_iterator it = collector.begin(); it != collector.end(); ++it)
       {
         if (it != collector.begin())
         {
@@ -177,8 +176,7 @@ namespace LogProcessing {
     void
     save(BufferWriter& o, const CollectorT& collector) const
     {
-      for (typename CollectorT::const_iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::const_iterator it = collector.begin(); it != collector.end(); ++it)
       {
         if (it != collector.begin())
         {
@@ -203,8 +201,7 @@ namespace LogProcessing {
       unsigned long distrib_count,
       DistribData& distrib_data) const
     {
-      for (typename CollectorT::const_iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::const_iterator it = collector.begin(); it != collector.end(); ++it)
       {
         unsigned long distrib_index = ValueTypeDistribHashHelper::get_distrib_hash(*it) % distrib_count;
         distrib_data[distrib_index].add(*it);
@@ -224,8 +221,7 @@ namespace LogProcessing {
       unsigned long distrib_count,
       DistribData& distrib_data) const
     {
-      for (typename CollectorT::const_iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::const_iterator it = collector.begin(); it != collector.end(); ++it)
       {
         for (typename CollectorT::DataT::const_iterator data_it = it->second.begin();
           data_it != it->second.end(); ++data_it)
@@ -244,13 +240,9 @@ namespace LogProcessing {
     typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
 
     void
-    distribute(
-      CollectorT& collector,
-      unsigned long distrib_count,
-      DistribData& distrib_data) const
+    distribute(CollectorT& collector, unsigned long distrib_count, DistribData& distrib_data) const
     {
-      for (typename CollectorT::iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::iterator it = collector.begin(); it != collector.end(); ++it)
       {
         const unsigned long distrib_index =
           ValueTypeDistribHashHelper::get_distrib_hash(*it) % distrib_count;
@@ -266,13 +258,9 @@ namespace LogProcessing {
     typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
 
     void
-    distribute(
-      CollectorT& collector,
-      unsigned long distrib_count,
-      DistribData& distrib_data) const
+    distribute(CollectorT& collector, unsigned long distrib_count, DistribData& distrib_data) const
     {
-      for (typename CollectorT::iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::iterator it = collector.begin(); it != collector.end(); ++it)
       {
         const unsigned long distrib_index =
           ValueTypeDistribHashHelper::get_distrib_hash(*it) % distrib_count;
@@ -290,13 +278,9 @@ namespace LogProcessing {
     typedef Generics::ArrayAutoPtr<CollectorT> DistribData;
 
     void
-    distribute(
-      CollectorT& collector,
-      unsigned long distrib_count,
-      DistribData& distrib_data) const
+    distribute(CollectorT& collector, unsigned long distrib_count, DistribData& distrib_data) const
     {
-      for (typename CollectorT::iterator it = collector.begin();
-        it != collector.end(); ++it)
+      for (typename CollectorT::iterator it = collector.begin(); it != collector.end(); ++it)
       {
         for (typename CollectorT::DataT::iterator data_it = it->second.begin();
           data_it != it->second.end(); ++data_it)
@@ -320,7 +304,7 @@ namespace LogProcessing {
     const CollectorT& collector,
     unsigned long distrib_index,
     bool rename) const
-  {      
+  {
     StringPair filenames;
 
     try
@@ -384,8 +368,7 @@ namespace LogProcessing {
       unlink(filenames.second.c_str());
 
       Stream::Error es;
-      es << __PRETTY_FUNCTION__ << ": Caught eh::Exception. "
-         << ": " << ex.what();
+      es << __PRETTY_FUNCTION__ << ": Caught eh::Exception. " << ": " << ex.what();
 
       throw Exception(es);
     }
@@ -523,12 +506,10 @@ namespace LogProcessing {
       {
         Stream::Error es;
         es << __PRETTY_FUNCTION__ << ": Error: "
-           << "Failed to rename temporary file '" << it->second
-           << "to file '" << it->first << '\'';
+           << "Failed to rename temporary file '" << it->second << "to file '" << it->first << '\'';
         throw typename LogSaver::Exception(es);
       }
     }
   }
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

@@ -9,9 +9,7 @@
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/Serialization.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   namespace
   {
@@ -31,9 +29,7 @@ namespace ChannelSvcs
 
     typedef std::vector<InternalWord> WordsVector;
 
-    SoftMatcher(
-      unsigned short lang,
-      std::string& trigger)
+    SoftMatcher(unsigned short lang, std::string& trigger)
       noexcept;
 
     bool match(const MatchWords& words, bool soft_match) const
@@ -101,12 +97,9 @@ namespace ChannelSvcs
 
   typedef std::set<SoftMatcher_var> MatcherVarsSet;
 
-}// namespace ChannelSvcs
-}// namespace AdServer
+} // namespace AdServer::ChannelSvcs
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   inline
   char SoftMatcher::trigger_type() const
@@ -168,6 +161,4 @@ namespace ChannelSvcs
     return main_lexem_;
   }
 
-}// namespace ChannelSvcs
-}// namespace AdServer
-
+} // namespace AdServer::ChannelSvcs

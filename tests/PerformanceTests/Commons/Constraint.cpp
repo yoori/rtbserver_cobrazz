@@ -5,8 +5,7 @@
 
 // BaseConstraint class
 
-BaseConstraint::BaseConstraint(const char* name_,
-                       const char* description_) :
+BaseConstraint::BaseConstraint(const char* name_, const char* description_) :
   name(name_),
   description(description_),
   error_("")
@@ -67,6 +66,7 @@ void ConstraintElement::push(unsigned long numerator,
         {
           index = _incr_index(index);
         }
+
       if ( index != sampling_begin_idx_ )
         {
           sampling_begin_idx_ = _dec_index(index);
@@ -95,8 +95,7 @@ void ConstraintElement::detect_error()
       std::ostringstream ostr;
       ostr << "Constraint '" << name << "' (" << description <<
         ") failed, because number of events (" << current_numerator <<
-        ") more than allowable limit (" << threshold_value_ * current_denominator_ / 100 <<
-        ")";
+        ") more than allowable limit (" << threshold_value_ * current_denominator_ / 100 << ")";
       error_ = ostr.str();
       error_detected_ = true;
     }
@@ -119,8 +118,7 @@ unsigned long ConstraintElement::_incr_index(unsigned long index)
 
 // ConstraintsContainer class
 
-ConstraintsContainer::ConstraintsContainer(const char* name_,
-                                           const char* description_) :
+ConstraintsContainer::ConstraintsContainer(const char* name_, const char* description_) :
   BaseConstraint(name_, description_)
 {}
 
@@ -135,7 +133,7 @@ void ConstraintsContainer::register_constraint(Constraint_var& constraint)
 bool ConstraintsContainer::check()
 {
   ConstraintsList::iterator it = constraints_.begin();
-  for(; it != constraints_.end(); ++it)
+  for (; it != constraints_.end(); ++it)
     {
       if (!(*it)->check())
         {

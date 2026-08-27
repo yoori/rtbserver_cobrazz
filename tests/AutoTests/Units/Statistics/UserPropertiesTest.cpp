@@ -1,10 +1,7 @@
 
 #include "UserPropertiesTest.hpp"
 
-REFLECT_UNIT(UserPropertiesTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(UserPropertiesTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -53,8 +50,7 @@ const std::string UserPropertiesTest::PropertyKey::key() const
     user_status + value;
 }
 
-bool UserPropertiesTest::PropertyKey::operator<(
-  const PropertyKey &other) const
+bool UserPropertiesTest::PropertyKey::operator<(const PropertyKey &other) const
 {
   return key() < other.key();
 }
@@ -73,41 +69,23 @@ bool
 UserPropertiesTest::run()
 {
 
-  AUTOTEST_CASE(
-    os_browser_case(),
-    "OS & Browser property");
+  AUTOTEST_CASE(os_browser_case(), "OS & Browser property");
 
-  AUTOTEST_CASE(
-    country_case(),
-    "Country property");
+  AUTOTEST_CASE(country_case(), "Country property");
 
-  AUTOTEST_CASE(
-    version_case(),
-    "ClientVersion property");
+  AUTOTEST_CASE(version_case(), "ClientVersion property");
 
-  AUTOTEST_CASE(
-    app_props_case(),
-    "Client property");
+  AUTOTEST_CASE(app_props_case(), "Client property");
 
-  AUTOTEST_CASE(
-    user_status_case(),
-    "User statuses");
+  AUTOTEST_CASE(user_status_case(), "User statuses");
 
-  AUTOTEST_CASE(
-    inactive_tag_case(),
-    "Inactive tags");
+  AUTOTEST_CASE(inactive_tag_case(), "Inactive tags");
 
-  AUTOTEST_CASE(
-    no_ads_isp_case(),
-    "ISP.optout_serving = NONE");
+  AUTOTEST_CASE(no_ads_isp_case(), "ISP.optout_serving = NONE");
 
-  AUTOTEST_CASE(
-    probe_case(),
-    "Probe user");
+  AUTOTEST_CASE(probe_case(), "Probe user");
 
-  AUTOTEST_CASE(
-    upvalue_case(),
-    "OS & Browser limit");
+  AUTOTEST_CASE(upvalue_case(), "OS & Browser limit");
 
   return true;
 }
@@ -338,9 +316,7 @@ void UserPropertiesTest::upvalue_case()
 {
   std::string referer;
 
-  String::StringManip::mime_url_encode(
-    fetch_string("UserAgent/11"),
-    referer);
+  String::StringManip::mime_url_encode(fetch_string("UserAgent/11"), referer);
 
   const Property PROPERTIES[] =
   {
@@ -398,7 +374,7 @@ unsigned long UserPropertiesTest::get_count(
     String::StringManip::SplitComma tokenizer(s);
 
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       if (get_property_name(property.name) == get_property_name(token.str()) &&
         property.value == fetch_string(token.str()) &&
@@ -428,7 +404,7 @@ void UserPropertiesTest::test_case(
     String::StringManip::SplitComma tokenizer(s);
 
     String::SubString token;
-    while(tokenizer.get_token(token))
+    while (tokenizer.get_token(token))
     {
       std::string prop(token.str());
       PropertyKey key;
@@ -439,26 +415,22 @@ void UserPropertiesTest::test_case(
     }
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        properties[idx].requests >= properties[idx].impressions),
+      AutoTest::predicate_checker(properties[idx].requests >= properties[idx].impressions),
       "Requests must be more than inpressions");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        properties[idx].impressions >= properties[idx].clicks),
+      AutoTest::predicate_checker(properties[idx].impressions >= properties[idx].clicks),
       "Impressions must be more than clicks");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        properties[idx].clicks >= properties[idx].actions),
+      AutoTest::predicate_checker(properties[idx].clicks >= properties[idx].actions),
       "Clicks must be more than actions");
   }
 
   // Initialize stats and diffs
 
   unsigned int idx = 0;
-  for (PropertyKeys::const_iterator it = keys.begin();
-       it != keys.end(); ++it, ++idx)
+  for (PropertyKeys::const_iterator it = keys.begin(); it != keys.end(); ++it, ++idx)
   {
     ORM::UserPropertiesStats stat;
 
@@ -477,13 +449,11 @@ void UserPropertiesTest::test_case(
 
     stat.key( key );
 
-    stat.description(
-      (std::string("UserProperties. ") + "'" + it->name + "'").c_str());
+    stat.description((std::string("UserProperties. ") + "'" + it->name + "'").c_str());
 
     stats.push_back(stat);
 
-    unsigned long profiling =
-      get_count(properties, *it, &Property::profiling_requests);
+    unsigned long profiling = get_count(properties, *it, &Property::profiling_requests);
 
     ORM::UserPropertiesStats::Diffs diff;
 
@@ -491,18 +461,12 @@ void UserPropertiesTest::test_case(
     diff.clicks(get_count(properties, *it, &Property::clicks));
     diff.actions(get_count(properties, *it, &Property::actions));
     // Exclude profiling requests
-    diff.requests(
-      get_count(properties, *it, &Property::requests) -
-        profiling);
-    diff.imps_unverified(
-      get_count(properties, *it, &Property::imps_unverified));
+    diff.requests(get_count(properties, *it, &Property::requests) - profiling);
+    diff.imps_unverified(get_count(properties, *it, &Property::imps_unverified));
     diff.profiling_requests(profiling);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      0,
-      diff[3] + diff[5],
-      AutoTest::CT_NOT_EQUAL).check(),
+    AutoTest::equal_checker(0, diff[3] + diff[5], AutoTest::CT_NOT_EQUAL).check(),
     "Invalid initialization "
     "(UserProperties.requests=0) of " +
       it->name + "='" + it->value + "'" );
@@ -518,14 +482,12 @@ void UserPropertiesTest::test_case(
     request.user_agent.clear();
     if (properties[prop_idx].tid)
     {
-      request.tid =
-        fetch_string(properties[prop_idx].tid);
+      request.tid = fetch_string(properties[prop_idx].tid);
     }
     request.colo = fetch_string(colo_name);
     if (properties[prop_idx].referer_kw)
     {
-      request.referer_kw =
-        fetch_string(properties[prop_idx].referer_kw);
+      request.referer_kw = fetch_string(properties[prop_idx].referer_kw);
     }
     request.format = DEFAULT_FORMAT;
     request.loc_name = DEFAULT_COUNTRY;
@@ -534,8 +496,7 @@ void UserPropertiesTest::test_case(
     std::list<std::string> expected_ccs;
     if (properties[prop_idx].expected_ccid)
     {
-      expected_ccs.push_back(
-        fetch_string(properties[prop_idx].expected_ccid));
+      expected_ccs.push_back(fetch_string(properties[prop_idx].expected_ccid));
     }
 
     properties[prop_idx].request_param.clear(request);
@@ -566,19 +527,14 @@ void UserPropertiesTest::test_case(
           counts[i]),
         "Request#" + strof(prop_idx));
 
-      actions.push_back(
-        AutoTest::ConsequenceAction(
-          action, today));
+      actions.push_back(AutoTest::ConsequenceAction(action, today));
 
-      action =
-        static_cast<AutoTest::ConsequenceActionType>(
-          action << 1);
+      action = static_cast<AutoTest::ConsequenceActionType>(action << 1);
     }
   }
 
   ADD_WAIT_CHECKER(
     "UserPropertiesStatsHourly check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }

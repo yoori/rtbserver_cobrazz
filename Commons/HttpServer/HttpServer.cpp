@@ -30,8 +30,7 @@ namespace AdServer::Commons::HttpServer
 
   struct HttpServer::Impl
   {
-    using WorkGuard =
-      asio::executor_work_guard<asio::io_context::executor_type>;
+    using WorkGuard = asio::executor_work_guard<asio::io_context::executor_type>;
 
     asio::io_context io_context;
     std::unique_ptr<tcp::acceptor> acceptor;
@@ -42,9 +41,7 @@ namespace AdServer::Commons::HttpServer
     public std::enable_shared_from_this<Session>
   {
   public:
-    Session(
-      tcp::socket&& socket,
-      HttpServer* server)
+    Session(tcp::socket&& socket, HttpServer* server)
       : stream_(std::move(socket)),
         server_(server)
     {}
@@ -56,9 +53,7 @@ namespace AdServer::Commons::HttpServer
         stream_,
         buffer_,
         request_,
-        [self = shared_from_this()](
-          const boost::system::error_code& ec,
-          std::size_t)
+        [self = shared_from_this()](const boost::system::error_code& ec, std::size_t)
         {
           if (!ec)
           {
@@ -92,9 +87,7 @@ namespace AdServer::Commons::HttpServer
         [
           self = shared_from_this(),
           response
-        ](
-          const boost::system::error_code&,
-          std::size_t)
+        ](const boost::system::error_code&, std::size_t)
         {
           boost::system::error_code ec;
           self->stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
@@ -108,10 +101,7 @@ namespace AdServer::Commons::HttpServer
     HttpServer* const server_;
   };
 
-  HttpServer::HttpServer(
-    std::string host,
-    unsigned short port,
-    unsigned long threads)
+  HttpServer::HttpServer(std::string host, unsigned short port, unsigned long threads)
     : host_(std::move(host)),
       port_(port),
       threads_(std::max<unsigned long>(1, threads)),
@@ -121,9 +111,7 @@ namespace AdServer::Commons::HttpServer
   HttpServer::~HttpServer() noexcept = default;
 
   void
-  HttpServer::add_handler(
-    const std::string& path,
-    Handler handler)
+  HttpServer::add_handler(const std::string& path, Handler handler)
   {
     std::lock_guard<std::mutex> lock(handlers_lock_);
     handlers_[path] = std::move(handler);
@@ -216,19 +204,14 @@ namespace AdServer::Commons::HttpServer
       [
         this,
         socket
-      ](
-        const boost::system::error_code& ec)
+      ](const boost::system::error_code& ec)
       {
         if (!ec)
         {
-          std::make_shared<Session>(
-            std::move(*socket),
-            this)->start();
+          std::make_shared<Session>(std::move(*socket), this)->start();
         }
 
-        if (active() &&
-          ec != asio::error::operation_aborted &&
-          ec != asio::error::bad_descriptor)
+        if (active() && ec != asio::error::operation_aborted && ec != asio::error::bad_descriptor)
         {
           do_accept_();
         }

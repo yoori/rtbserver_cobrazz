@@ -8,10 +8,7 @@ class ProfilesExpirationTest: public BaseUnit
 {
 public:
 
-  ProfilesExpirationTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ProfilesExpirationTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var), remote_case_(false)
   {};
 
@@ -23,10 +20,7 @@ private:
   bool remote_case_;
 
   void
-  check_profiles_exist(
-    const std::string& uid,
-    bool exists,
-    bool temp_user);
+  check_profiles_exist(const std::string& uid, bool exists, bool temp_user);
 
   void
   expired_visits_removal_();

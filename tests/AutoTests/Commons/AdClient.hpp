@@ -184,9 +184,7 @@ namespace AutoTest
      * @param test.
      * @param frontend type.
      */
-    static AdClient create_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static AdClient create_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
     static AdClient create_user(
@@ -199,36 +197,28 @@ namespace AutoTest
      * @brief Create undefined user.
      * Create user with "unknown" UID.
      */
-    static AdClient create_undef_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static AdClient create_undef_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
     /**
      * @brief Create probe user.
      * Create user with probe UID.
      */
-    static AdClient create_probe_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static AdClient create_probe_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
     /**
      * @brief Create optout user.
      * Create user without UID.
      */
-    static  AdClient create_nonoptin_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static  AdClient create_nonoptin_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
     /**
      * @brief Create optout user.
      * Create user optout.
      */
-    static  AdClient create_optout_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static  AdClient create_optout_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
     static AdClient create_optout_user(
@@ -249,10 +239,7 @@ namespace AutoTest
      * @param logger logger for created AdClient object.
      * For more info see BaseAdClient::logger_
      */
-    AdClient(
-      const char* base_url,
-      LoggerType log_type,
-      BaseUnit* unit)
+    AdClient(const char* base_url, LoggerType log_type, BaseUnit* unit)
       /*throw(Exception, eh::Exception)*/
       : BaseAdClient(base_url, log_type),
         request_count_(0),
@@ -295,9 +282,7 @@ namespace AutoTest
      * @param temporary user.
      * @param merging request.
      */
-    virtual void merge(
-      const TemporaryAdClient& client_temp,
-      const BaseRequest& request)
+    virtual void merge(const TemporaryAdClient& client_temp, const BaseRequest& request)
       /*throw(eh::Exception)*/;
 
     virtual void merge(
@@ -332,19 +317,13 @@ namespace AutoTest
      * to suppress all exceptions.
      * @return response status code on sent request.
      */
-    unsigned int process(
-      const BaseRequest& request,
-      bool suppress_exceptions = false)
+    unsigned int process(const BaseRequest& request, bool suppress_exceptions = false)
       /*throw(eh::Exception)*/;
 
-    unsigned int process(
-      const NSLookupRequest& request,
-      bool suppress_exceptions = false)
+    unsigned int process(const NSLookupRequest& request, bool suppress_exceptions = false)
       /*throw(eh::Exception)*/;
 
-    unsigned int process(
-      const std::string& request,
-      bool suppress_exceptions = false)
+    unsigned int process(const std::string& request, bool suppress_exceptions = false)
       /*throw(eh::Exception)*/;
 
     /**
@@ -386,9 +365,7 @@ namespace AutoTest
       /*throw(eh::Exception)*/;
 
     unsigned int
-    process_post(
-      const BaseRequest& request,
-      bool suppress_exceptions = false)
+    process_post(const BaseRequest& request, bool suppress_exceptions = false)
       /*throw(eh::Exception)*/;
 
     /**
@@ -458,9 +435,7 @@ namespace AutoTest
      * @return whether client has indicated cookie
      * and its value equal to expected one.
      */
-    bool has_cookie (
-      const std::string& cookie_name,
-      const std::string& cookie_value);
+    bool has_cookie (const std::string& cookie_name, const std::string& cookie_value);
 
     /**
      * @brief Check if client has cookies for specific host.
@@ -528,9 +503,7 @@ namespace AutoTest
      * @param cookie_name cookie name.
      * @param cookie_value outpur parameter. Found cookie value.
      */
-    void get_cookie_value(
-      const char *cookie_name,
-      std::string& cookie_value) const
+    void get_cookie_value(const char *cookie_name, std::string& cookie_value) const
       /*throw(CookieNotFound)*/;
 
     /**
@@ -571,9 +544,7 @@ namespace AutoTest
      * @param fail_if_not_exists flag to determine function behavior
      * in case of uid cookie was not found.
      */
-    virtual void set_uid (
-      const std::string& value,
-      bool fail_if_not_exists = true)
+    virtual void set_uid (const std::string& value, bool fail_if_not_exists = true)
       /*throw(eh::Exception)*/;
 
 
@@ -639,9 +610,7 @@ namespace AutoTest
       /*throw(eh::Exception)*/;
 
 
-    virtual void merge_(
-      const TemporaryAdClient& client_temp,
-      const std::string& url)
+    virtual void merge_(const TemporaryAdClient& client_temp, const std::string& url)
       /*throw(eh::Exception)*/;
   };
 
@@ -682,9 +651,7 @@ namespace AutoTest
      * @param test.
      * @param frontend type.
      */
-    static TemporaryAdClient create_user(
-      BaseUnit* test,
-      unsigned short flags = 0)
+    static TemporaryAdClient create_user(BaseUnit* test, unsigned short flags = 0)
       /*throw(eh::Exception)*/;
 
   protected:
@@ -698,10 +665,7 @@ namespace AutoTest
      * @param logger logger for created AdClient object.
      * For more info see AdClient::logger_
      */
-    TemporaryAdClient(
-      const char* base_url,
-      LoggerType log_type,
-      BaseUnit* test)
+    TemporaryAdClient(const char* base_url, LoggerType log_type, BaseUnit* test)
       /*throw(Exception, eh::Exception)*/;
 
   public:
@@ -731,9 +695,7 @@ namespace AutoTest
 
   protected:
     // Protect some AdClient methods
-    virtual void set_uid (
-      const std::string& value,
-      bool fail_if_not_exists = true)
+    virtual void set_uid (const std::string& value, bool fail_if_not_exists = true)
       /*throw(eh::Exception)*/;
 
     virtual void set_cookie_value(
@@ -742,9 +704,7 @@ namespace AutoTest
       bool fail_if_not_exists = true)
       /*throw(eh::Exception)*/;
 
-    virtual void merge_(
-      const TemporaryAdClient& client_temp,
-      const std::string& url)
+    virtual void merge_(const TemporaryAdClient& client_temp, const std::string& url)
       /*throw(eh::Exception)*/;
 
     virtual void process_request_(const char* url, const char* detail_info)
@@ -787,8 +747,7 @@ namespace AutoTest
       for (unsigned long i = 0; i < count; ++i)
       {
         Client client = Creator(test, 0);
-        client.do_ad_requests(
-          request, ccids, action_list, 1);
+        client.do_ad_requests(request, ccids, action_list, 1);
       }
     }
 
@@ -811,8 +770,7 @@ namespace AutoTest
       for (unsigned long i = 0; i < count; ++i)
       {
         Client client = Creator(test, 0);
-        client.do_ad_requests(
-          request, ccids, action_flags, 1);
+        client.do_ad_requests(request, ccids, action_flags, 1);
       }
     }
 
@@ -823,9 +781,7 @@ namespace AutoTest
   };
 
   inline
-  ConsequenceAction::ConsequenceAction(
-    ConsequenceActionType act,
-    const Generics::Time& tm)
+  ConsequenceAction::ConsequenceAction(ConsequenceActionType act, const Generics::Time& tm)
     : action(act),
       time(tm)
   {}

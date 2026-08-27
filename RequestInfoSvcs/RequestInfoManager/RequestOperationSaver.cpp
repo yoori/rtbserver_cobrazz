@@ -13,9 +13,7 @@ namespace Aspect
   const char REQUEST_OPERATION_SAVER[] = "RequestOperationSaver";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   // RequestOperationSaver
   RequestOperationSaver::RequestOperationSaver(
@@ -36,8 +34,7 @@ namespace RequestInfoSvcs
   {}
 
   void
-  RequestOperationSaver::process_impression(
-    const ImpressionInfo& impression_info)
+  RequestOperationSaver::process_impression(const ImpressionInfo& impression_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
     RequestOperationImpressionWriter operation_writer;
@@ -46,7 +43,7 @@ namespace RequestInfoSvcs
     operation_writer.time() = impression_info.time.tv_sec;
     operation_writer.request_id() = impression_info.request_id.to_string();
     operation_writer.verify_impression() = impression_info.verify_impression;
-    if(impression_info.pub_revenue.present())
+    if (impression_info.pub_revenue.present())
     {
       operation_writer.pub_revenue_type() = impression_info.pub_revenue->revenue_type;
       operation_writer.pub_revenue() = impression_info.pub_revenue->impression.str();
@@ -83,10 +80,7 @@ namespace RequestInfoSvcs
     Generics::MemBuf op_mem_buf(operation_writer.size());
     operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
-    write_operation_(
-      user_id,
-      RequestOperationLoader::OP_ACTION,
-      std::move(op_mem_buf));
+    write_operation_(user_id, RequestOperationLoader::OP_ACTION, std::move(op_mem_buf));
   }
 
   void
@@ -106,10 +100,7 @@ namespace RequestInfoSvcs
     Generics::MemBuf op_mem_buf(operation_writer.size());
     operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
-    write_operation_(
-      user_id,
-      RequestOperationLoader::OP_REQUEST_ACTION,
-      std::move(op_mem_buf));
+    write_operation_(user_id, RequestOperationLoader::OP_REQUEST_ACTION, std::move(op_mem_buf));
   }
 
   void
@@ -147,12 +138,10 @@ namespace RequestInfoSvcs
   }
 
   RequestOperationSaver::FileHolderGuard_var
-  RequestOperationSaver::get_file_holder_(
-    const AdServer::Commons::UserId& user_id)
+  RequestOperationSaver::get_file_holder_(const AdServer::Commons::UserId& user_id)
     /*throw(eh::Exception)*/
   {
     return MessageSaver::get_file_holder_(
       AdServer::LogProcessing::user_id_distribution_hash(user_id));
   }
-}
 }

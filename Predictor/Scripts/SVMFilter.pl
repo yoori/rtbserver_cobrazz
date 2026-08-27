@@ -18,7 +18,7 @@ open(my $res_file, '>', $file . '~') or die "Can't open '$file': $!";
 
 #my $skipped_lines = 0;
 
-while(<FILE>)
+while (<FILE>)
 {
   my $line = $_;
   chomp $line;
@@ -26,15 +26,15 @@ while(<FILE>)
 
   my @arr = split(' ', $line);
   my $label = shift(@arr);
-  if($label !~ m/^-?\d+(.\d+)?$/)
+  if ($label !~ m/^-?\d+(.\d+)?$/)
   {
-    die "invalid label at line #" . $line_i . ": $line";   
+    die "invalid label at line #" . $line_i . ": $line";
   }
 
   my %features;
   foreach my $el(@arr)
   {
-    if($el !~ m/^([0-9]+):([-.0-9]+)$/)
+    if ($el !~ m/^([0-9]+):([-.0-9]+)$/)
     {
       last;
       #die "can't parse '$el' from line #" . $line_i . ": $line";
@@ -42,12 +42,12 @@ while(<FILE>)
 
     my $key = $1;
     my $val = $2;
-    
-    if($key <= 2000000000) # if($key <= 4294967295)
+
+    if ($key <= 2000000000) # if ($key <= 4294967295)
     {
       $features{$key} = $val;
 
-      if(!exists($feature_imps{$key}))
+      if (!exists($feature_imps{$key}))
       {
         $feature_imps{$key} = 1;
       }
@@ -56,11 +56,11 @@ while(<FILE>)
         ++$feature_imps{$key};
       }
 
-      if($label == 1)
+      if ($label == 1)
       {
         ++$all_clicks;
 
-        if(!exists($feature_clicks{$key}))
+        if (!exists($feature_clicks{$key}))
         {
           $feature_clicks{$key} = 1;
         }
@@ -104,7 +104,7 @@ foreach my $key(keys %feature_imps)
     [$imps_with_feature - $all_clicks * $imps_with_feature * 1.0 / $all_imps,
      $all_clicks * $imps_with_feature * 1.0 / $all_imps]);
 
-  if($min_prob >= $max_probability_of_independence ||
+  if ($min_prob >= $max_probability_of_independence ||
     ($clicks_with_feature == 0 && (($imps_with_feature * 1.0 / ($all_imps - $all_clicks)) < 0.01)))
   {
     $skip_features{$key} = 1;
@@ -115,7 +115,7 @@ foreach my $key(keys %feature_imps)
     print "$max_prob $key\n";
   }
 
-  #if($feature_counters{$key} > $line_i * $max / 100)
+  #if ($feature_counters{$key} > $line_i * $max / 100)
   #{
   #  $skip_features{$key} = 1;
   #}
@@ -126,7 +126,7 @@ print "to filter features\n";
 open($res_file, '>', $file . '.f') or die "Can't open '$file.f': $!";
 open FILE, $file . '~' or die $!;
 
-while(<FILE>)
+while (<FILE>)
 {
   my $line = $_;
   chomp $line;
@@ -138,7 +138,7 @@ while(<FILE>)
   {
     $el =~ m/^([0-9]+):([-.0-9]+)$/;
     my $key = $1;
-    if(!exists($skip_features{$key}))
+    if (!exists($skip_features{$key}))
     {
       push(@res_array, $el);
     }

@@ -26,7 +26,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     die "Sum can't be applied to array row";
   }

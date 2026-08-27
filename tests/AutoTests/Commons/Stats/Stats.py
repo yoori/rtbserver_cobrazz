@@ -19,7 +19,7 @@ MaxLastAppearanceDiff = 32
 def pg_user_stats_control_sum(date_field, count_field):
   return \
 """SUM(
- ((%s - to_date('01-01-1970', 'DD.MM.YYYY')) * (%d + 1) + 
+ ((%s - to_date('01-01-1970', 'DD.MM.YYYY')) * (%d + 1) +
  least(%s - nullif(last_appearance_date, '-infinity'), %d))
  * %s)""" % \
 (date_field, MaxLastAppearanceDiff, date_field,MaxLastAppearanceDiff, count_field)
@@ -29,7 +29,7 @@ def pg_negative_control_sum(count_field):
 """SUM(CASE WHEN %s < 0 THEN %s ELSE 0 END)""" % (count_field, count_field)
 
 Stats('ChannelInventoryStats',
-      'ChannelInventory', BasicDiffStats, 
+      'ChannelInventory', BasicDiffStats,
       [number('channel_id'),
        number('colo_id'),
        pgdate('sdate')]).fields = [
@@ -677,5 +677,5 @@ Stats('CcgAuctionStatsDaily',
         number('colo_id'),
         number('ccg_id')]).fields = [
   sum('auctions_lost')]
-  
+
 process_stats()

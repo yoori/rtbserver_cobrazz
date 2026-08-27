@@ -15,9 +15,7 @@
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/CsvUtils.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   class ConvData
   {
@@ -64,9 +62,7 @@ namespace LogProcessing
         return true;
       }
 
-      return time_ == data.time_ &&
-        user_id_ == data.user_id_ &&
-        action_id_ == data.action_id_;
+      return time_ == data.time_ && user_id_ == data.user_id_ && action_id_ == data.action_id_;
     }
 
     unsigned long distrib_hash() const
@@ -94,5 +90,4 @@ namespace LogProcessing
 
     typedef GenericLogIoHelperImpl<ConvTraits> IoHelperType;
   };
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing

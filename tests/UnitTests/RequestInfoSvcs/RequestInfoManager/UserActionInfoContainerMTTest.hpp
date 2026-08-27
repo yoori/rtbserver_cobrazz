@@ -34,8 +34,7 @@ struct TestProcessor :
         (action_id < right.action_id ||
          (action_id == right.action_id &&
           (action_request_id < right.action_request_id ||
-           (action_request_id == right.action_request_id &&
-           referer < right.referer)))));
+           (action_request_id == right.action_request_id && referer < right.referer)))));
     }
 
     AdServer::Commons::RequestId request_id;

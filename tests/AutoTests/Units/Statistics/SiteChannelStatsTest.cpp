@@ -1,9 +1,6 @@
 #include "SiteChannelStatsTest.hpp"
 
-REFLECT_UNIT(SiteChannelStatsTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(SiteChannelStatsTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -83,19 +80,14 @@ SiteChannelStatsTest::run_test()
       "BehavioralParams ids");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        client.debug_info.selected_creatives.size()).check(),
+      AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc1,
-        client.debug_info.selected_creatives.begin()->ccid).check(),
+      AutoTest::equal_checker(cc1, client.debug_info.selected_creatives.begin()->ccid).check(),
       "must got expected ccid");
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.begin()->click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.begin()->click_url.empty()),
       "click_url is empty");
     if (i % 2 == 1)
     {
@@ -114,19 +106,14 @@ SiteChannelStatsTest::run_test()
       "BehavioralParams ids");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        client.debug_info.selected_creatives.size()).check(),
+      AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        cc2,
-        client.debug_info.selected_creatives.begin()->ccid).check(),
+      AutoTest::equal_checker(cc2, client.debug_info.selected_creatives.begin()->ccid).check(),
       "must got expected ccid");
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.begin()->click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.begin()->click_url.empty()),
        "click_url is empty");
     if (i % 4 == 3)
     {
@@ -145,14 +132,11 @@ SiteChannelStatsTest::run_test()
       "BehavioralParams ids");
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        1,
-        client.debug_info.selected_creatives.size()).check(),
+      AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.begin()->click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.begin()->click_url.empty()),
        "click_url is empty");
     if (client.debug_info.selected_creatives.begin()->ccid == cc2)
     {
@@ -176,9 +160,7 @@ SiteChannelStatsTest::run_test()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn, diff, stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
     "SiteChannelStats check");
 
   return true;

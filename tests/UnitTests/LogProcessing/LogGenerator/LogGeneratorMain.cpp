@@ -51,8 +51,7 @@ namespace
   /// Most of logs use the same data, declare it here
   const Generics::Time TEST_TIME(Generics::Time::get_time_of_day());
   const UserId TEST_USER_ID("PPPPPPPPPPPPPPPPPPPPPA..");
-  const RequestId TEST_REQUEST_ID(
-    "PPPPPPPPPPPPPPPPPPPPPA..");
+  const RequestId TEST_REQUEST_ID("PPPPPPPPPPPPPPPPPPPPPA..");
 
   const unsigned long NUMBERS_ARRAY[] =
   {
@@ -66,8 +65,7 @@ namespace
   const NumberList PAGE_CHANNELS(
     std::reverse_iterator<const unsigned long*>(endof(NUMBERS_ARRAY)),
     std::reverse_iterator<const unsigned long*>(&NUMBERS_ARRAY[0]));
-  const NumberList URL_CHANNELS(
-    &NUMBERS_MIXED_ARRAY[0], endof(NUMBERS_MIXED_ARRAY));
+  const NumberList URL_CHANNELS(&NUMBERS_MIXED_ARRAY[0], endof(NUMBERS_MIXED_ARRAY));
 
   /// Make type ClickCollector differ to
   /// ImpressionCollector and PassbackImpressionCollector. (enable override)
@@ -109,8 +107,7 @@ namespace
   Generics::AppUtils::StringOption generate_distrib_list;
 
   const unsigned long DEFAULT_RECORDS_COUNT = 1;
-  Generics::AppUtils::Option<unsigned long> records_count(
-    DEFAULT_RECORDS_COUNT);
+  Generics::AppUtils::Option<unsigned long> records_count(DEFAULT_RECORDS_COUNT);
   Generics::AppUtils::Option<unsigned long> files_count(1);
 
   Generics::AppUtils::CheckOption opt_generate_req_ids;
@@ -182,18 +179,15 @@ struct Filler
     ActionStatCollector::KeyT key2(TEST_TIME, 321);
     ActionStatCollector::DataT data;
     ActionStatCollector::DataT::DataT
-      inner_data1(88, 77, "", "", "  www.google.com/\t", TEST_TIME,
-        FixedNumber("11.11"), 10001);
+      inner_data1(88, 77, "", "", "  www.google.com/\t", TEST_TIME, FixedNumber("11.11"), 10001);
     ActionStatCollector::DataT::DataT
       inner_data2(88, 77, "ORDER_ID 1", "", "  www.google.com/\t", TEST_TIME,
         TEST_TIME, FixedNumber("22.22"), 10002);
     typedef ActionStatCollector::DataT::KeyT KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      data.add(KeyType(RequestId("1OOydKMMTs2X0nelpQ2eHg.."), RequestId(), i),
-        inner_data1);
-      data.add(KeyType(RequestId("1OOydKMMTs2X0nelpQ2eHg.."), RequestId(), i),
-        inner_data2);
+      data.add(KeyType(RequestId("1OOydKMMTs2X0nelpQ2eHg.."), RequestId(), i), inner_data1);
+      data.add(KeyType(RequestId("1OOydKMMTs2X0nelpQ2eHg.."), RequestId(), i), inner_data2);
     }
     collector.add(key1, data);
     collector.add(key2, data);
@@ -286,8 +280,7 @@ struct Filler
     CcgKeywordStatCollector::DataT data;
     typedef CcgKeywordStatCollector::DataT::DataT::FixedNum FixedNum;
     CcgKeywordStatCollector::DataT::DataT
-      inner_data(111, 222, FixedNum("200.98765"),
-        FixedNum("300.98765"), FixedNum("400.98765"));
+      inner_data(111, 222, FixedNum("200.98765"), FixedNum("300.98765"), FixedNum("400.98765"));
     typedef CcgKeywordStatCollector::DataT::KeyT KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
@@ -443,8 +436,7 @@ struct Filler
     typedef ChannelPerformanceCollector::DataT::KeyT KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      data.add(KeyType(i, i, AdServer::Commons::ImmutableString("SIZE 1")),
-        inner_data);
+      data.add(KeyType(i, i, AdServer::Commons::ImmutableString("SIZE 1")), inner_data);
     }
     collector.add(key1, data);
     collector.add(key2, data);
@@ -498,9 +490,7 @@ struct Filler
     char types[] = { 'P', 'S', 'U' };
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      data.add(
-        KeyType(i, i + 100, types[i % sizeof(types)]),
-        inner_data);
+      data.add(KeyType(i, i + 100, types[i % sizeof(types)]), inner_data);
     }
     collector.add(key1, data);
     collector.add(key2, data);
@@ -509,8 +499,7 @@ struct Filler
   void
   operator ()(ClickCollectorT& collector)
   {
-    ClickData data(TEST_TIME, TEST_REQUEST_ID, "",
-      AdServer::Commons::Optional<unsigned long>());
+    ClickData data(TEST_TIME, TEST_REQUEST_ID, "", AdServer::Commons::Optional<unsigned long>());
 
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
@@ -519,8 +508,7 @@ struct Filler
   }
 
   static void
-  distribute_save(ClickCollectorT& collector,
-    Generics::Time& time, Generics::Time& time_abs)
+  distribute_save(ClickCollectorT& collector, Generics::Time& time, Generics::Time& time_abs)
   {
     distribute_save_def_<ClickTraits>(collector, time, time_abs);
   }
@@ -533,8 +521,7 @@ struct Filler
     CmpStatCollector::DataT data;
     typedef CmpStatCollector::DataT::DataT::FixedNum FixedNum;
     CmpStatCollector::DataT::DataT
-      inner_data(111, 222, FixedNum("400.12345"),
-        FixedNum("300.98765"), FixedNum("12.34567890"));
+      inner_data(111, 222, FixedNum("400.12345"), FixedNum("300.98765"), FixedNum("12.34567890"));
     typedef CmpStatCollector::DataT::KeyT KeyType;
     typedef KeyType::DeliveryThresholdT DeliveryThresholdT;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
@@ -642,8 +629,7 @@ struct Filler
   void
   operator ()(PassbackOpportunityCollector& collector)
   {
-    PassbackOpportunityData data(TEST_TIME, 321, 123, TEST_REQUEST_ID, 'U',
-      TEST_USER_ID);
+    PassbackOpportunityData data(TEST_TIME, 321, 123, TEST_REQUEST_ID, 'U', TEST_USER_ID);
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
       if (generate_unique_request_ids_)
@@ -721,16 +707,11 @@ struct Filler
     channel_list.push_back(555);
 
     UserPropertyList user_properties;
-    user_properties.push_back(UserProperty("Property Name 1",
-        "Property Value 1"));
-    user_properties.push_back(UserProperty("Property Name 2",
-        "Property Value 2"));
-    user_properties.push_back(UserProperty("Property Name 3",
-        "Property Value 3"));
-    user_properties.push_back(UserProperty("Property Name 4",
-        "Property Value 4"));
-    user_properties.push_back(UserProperty("Property Name 5",
-        "Property Value 5"));
+    user_properties.push_back(UserProperty("Property Name 1", "Property Value 1"));
+    user_properties.push_back(UserProperty("Property Name 2", "Property Value 2"));
+    user_properties.push_back(UserProperty("Property Name 3", "Property Value 3"));
+    user_properties.push_back(UserProperty("Property Name 4", "Property Value 4"));
+    user_properties.push_back(UserProperty("Property Name 5", "Property Value 5"));
 
     NumberArray lost_auction_ccgs;
     lost_auction_ccgs.push_back(101);
@@ -935,8 +916,7 @@ struct Filler
   }
 
   static void
-  distribute_save(RequestCollector& collector,
-    Generics::Time& time, Generics::Time& time_abs)
+  distribute_save(RequestCollector& collector, Generics::Time& time, Generics::Time& time_abs)
   {
     std::ostringstream dump_ostr;
     dump_ostr << collector;
@@ -976,15 +956,11 @@ struct Filler
   operator ()(RequestBasicChannelsCollector& collector)
   {
     RequestBasicChannelsCollector::KeyT key1(
-      Generics::Time(String::SubString("2007-11-28 12:13:14"),
-        "%Y-%m-%d %H:%M:%S"),
-      Generics::Time(String::SubString("2007-11-28 11:13:14"),
-        "%Y-%m-%d %H:%M:%S"), 21);
+      Generics::Time(String::SubString("2007-11-28 12:13:14"), "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2007-11-28 11:13:14"), "%Y-%m-%d %H:%M:%S"), 21);
     RequestBasicChannelsCollector::KeyT key2(
-      Generics::Time(String::SubString("2007-11-29 14:13:12"),
-        "%Y-%m-%d %H:%M:%S"),
-      Generics::Time(String::SubString("2007-11-29 13:13:12"),
-        "%Y-%m-%d %H:%M:%S"), 22);
+      Generics::Time(String::SubString("2007-11-29 14:13:12"), "%Y-%m-%d %H:%M:%S"),
+      Generics::Time(String::SubString("2007-11-29 13:13:12"), "%Y-%m-%d %H:%M:%S"), 22);
 
     RequestBasicChannelsCollector::DataT data;
 
@@ -1154,8 +1130,7 @@ struct Filler
     typedef TagAuctionStatCollector::DataT::KeyT KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      data.add(KeyType(i + 1, 988),
-        inner_data);
+      data.add(KeyType(i + 1, 988), inner_data);
     }
     collector.add(key1, data);
     collector.add(key2, data);
@@ -1220,7 +1195,7 @@ struct Filler
 
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      if(i % 2 == 0)
+      if (i % 2 == 0)
       {
         collector.add(make_data1());
       }
@@ -1232,8 +1207,7 @@ struct Filler
   }
 
   static void
-  distribute_save(TagRequestCollector& collector,
-    Generics::Time& time, Generics::Time& time_abs)
+  distribute_save(TagRequestCollector& collector, Generics::Time& time, Generics::Time& time_abs)
   {
     std::ostringstream dump_ostr;
     dump_ostr << collector;
@@ -1284,8 +1258,7 @@ struct Filler
     typedef UserPropertiesKey KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      collector.add(KeyType(TEST_TIME, TEST_TIME, i, 'U', keys[i % 5],
-        "prop_value"), data);
+      collector.add(KeyType(TEST_TIME, TEST_TIME, i, 'U', keys[i % 5], "prop_value"), data);
     }
   }
 
@@ -1417,17 +1390,14 @@ public:
   virtual void
   init()
   {
-    dir_name_ = root_path.installed() ?
-      root_path + '/' + name() :
-      std::string("./") + name();
+    dir_name_ = root_path.installed() ? root_path + '/' + name() : std::string("./") + name();
     Stream::Error clean_cmd;
     clean_cmd
        << "rm -f ./" << dir_name_ << "/* 2>/dev/null;"
        << "rm -f ./" << dir_name_ << "/Intermediate/* 2>/dev/null;"
        << "rm -f ./" << dir_name_ << "/Deferred/* 2>/dev/null;"
        << "rm -f ./" << dir_name_ << "/Deferred/Intermediate/* 2>/dev/null;"
-       << "mkdir -p " << dir_name_ << "/Intermediate 2>/dev/null"
-       << std::ends;
+       << "mkdir -p " << dir_name_ << "/Intermediate 2>/dev/null" << std::ends;
     system(clean_cmd.str().data());
   }
 
@@ -1445,12 +1415,12 @@ public:
         << ">: Failed to read log header";
       throw Exception(ostr);
     }
+
     if (log_header.version() != LogTraits::current_version())
     {
       Stream::Error ostr;
       ostr << "load_log<" << RequestTraits::log_base_name()
-        << ">: Invalid log header version: "
-        << log_header.version();
+        << ">: Invalid log header version: " << log_header.version();
       throw Exception(ostr);
     }
     LogIoProxy<LogTraits>::load(restored_collector, ifs);
@@ -1565,8 +1535,7 @@ namespace
     args.add(short_name("mt"), multi_thread_generation);
     args.add(equal_name("time") || short_name("t"), print_time);
     args.add(equal_name("generate") || short_name("g"), generate_list);
-    args.add(equal_name("generate-dist") || short_name("gd"),
-      generate_distrib_list);
+    args.add(equal_name("generate-dist") || short_name("gd"), generate_distrib_list);
     args.add(equal_name("content") || short_name("c"), records_count);
     args.add(equal_name("raw") || short_name("r"), no_commit_files);
     args.add(equal_name("log-number") || short_name("l"), files_count);
@@ -1609,6 +1578,7 @@ namespace
         }
       }
     }
+
     if (test_schedule.empty())
     {
       for (std::size_t i = 0; i < LOGS_SIZE; ++i)
@@ -1679,8 +1649,7 @@ public:
 void
 load_folder()
 {
-  const std::string DIR_NAME = (root_path.installed() ? root_path :
-    std::string("./In"));
+  const std::string DIR_NAME = (root_path.installed() ? root_path : std::string("./In"));
 
   FileGetter loader;
   loader.load_files(DIR_NAME);
@@ -1703,13 +1672,13 @@ public:
     }
     Results fill_results, save_results, distrib_save_results, load_results;
 
-    for (Schedule::const_iterator cit = test_schedule.begin();
-      cit != test_schedule.end(); ++cit)
+    for (Schedule::const_iterator cit = test_schedule.begin(); cit != test_schedule.end(); ++cit)
     {
       for (unsigned long fi = 0; fi < *files_count; ++fi)
       {
         exitcode_ += LOGS[*cit]->probe_log(opt_generate_req_ids.enabled());
       }
+
       if (print_time.enabled())
       {
         consider_result_(fill_results, LOGS[*cit]->name(),
@@ -1722,6 +1691,7 @@ public:
           LOGS[*cit]->load_time, LOGS[*cit]->load_time_abs);
       }
     }
+
     if (file_generator_mode)
     {
       std::cout << "Finish logs generation "
@@ -1818,11 +1788,9 @@ public:
       Tester test;
       TestCommons::MTTester<Tester&> mt_tester(test, threads_);
 
-      mt_tester.run(*files_count * test_schedule.size(), 0,
-        *files_count * test_schedule.size());
+      mt_tester.run(*files_count * test_schedule.size(), 0, *files_count * test_schedule.size());
     }
-    std::cout << "Finish logs generation, elapsed time: "
-      << abs_time << std::endl << std::endl;
+    std::cout << "Finish logs generation, elapsed time: " << abs_time << std::endl << std::endl;
   }
 private:
   std::size_t threads_;
@@ -1885,9 +1853,7 @@ main(int argc, char* argv[]) noexcept
 // Implementations
 //
 void
-read_dir(
-  const std::string& path,
-  std::list<std::string>& entries)
+read_dir(const std::string& path, std::list<std::string>& entries)
   /*throw(std::exception)*/
 {
   DIR *dir = opendir(path.c_str());
@@ -1904,8 +1870,7 @@ read_dir(
     const std::string full_path = path + '/' + ent->d_name;
     struct stat st;
 
-    if (ent->d_name[0] != '.' && ent->d_name[0] != '~' &&
-        stat(full_path.c_str(), &st) == 0)
+    if (ent->d_name[0] != '.' && ent->d_name[0] != '~' && stat(full_path.c_str(), &st) == 0)
     {
       if (S_ISREG(st.st_mode))
       {
@@ -1924,8 +1889,7 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
 {
   if (!print_time.enabled() && (!file_generator_mode || debug.enabled()))
   {
-    std::cout << "Testing " << std::setw(40) << std::setfill('.') <<
-      std::left << name();
+    std::cout << "Testing " << std::setw(40) << std::setfill('.') << std::left << name();
   }
 
   {
@@ -1940,8 +1904,7 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
 
     if (generate_distrib_list.installed())
     {
-      Filler::distribute_save(collector,
-        distrib_save_time, distrib_save_time_abs);
+      Filler::distribute_save(collector, distrib_save_time, distrib_save_time_abs);
     }
     else
     {
@@ -1964,13 +1927,11 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
         FileList files;
 
         read_dir(dir_name_ , files);
-        for (FileList::const_iterator ci = files.begin();
-             ci != files.end(); ++ci)
+        for (FileList::const_iterator ci = files.begin(); ci != files.end(); ++ci)
         {
           const std::string file_name(*ci + ".C");
           ::rename(ci->c_str(), file_name.c_str());
-          std::ofstream ofs(
-            std::string(dir_name_ + "/~" + *ci + ".commit").c_str());
+          std::ofstream ofs(std::string(dir_name_ + "/~" + *ci + ".commit").c_str());
         }
       }
 
@@ -1996,12 +1957,12 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
           << ">: Failed to read log header";
         throw Exception(ostr);
       }
+
       if (log_header.version() != LogTraits::current_version())
       {
         Stream::Error ostr;
         ostr << "LogIoTester<" << name()
-          << ">: Invalid log header version: "
-          << log_header.version();
+          << ">: Invalid log header version: " << log_header.version();
         throw Exception(ostr);
       }
       LogIoProxy<LogTraits>::load(restored_collector, ifs);
@@ -2027,8 +1988,7 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
           name() << "_Original" << std::endl;
         system(mv_orig_dir_cmd_oss.str().c_str());
 
-        const std::string DUMP_DIR_NAME =
-          dir_name_ + "_Restored";
+        const std::string DUMP_DIR_NAME = dir_name_ + "_Restored";
         system(("mkdir -p " + DUMP_DIR_NAME).c_str());
 
         LogIoProxy<LogTraits>::save(restored_collector, DUMP_DIR_NAME);

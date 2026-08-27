@@ -10,7 +10,7 @@ class SignalInterruptHandler(object):
 
   def add_handler(self, handler):
     self._handlers.append(handler)
-    
+
   def __enter__(self):
     self._interrupted = False
     self._released = False

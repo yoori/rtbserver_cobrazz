@@ -15,7 +15,7 @@
   <xsl:param name="sync-logs-hosts"/>
   <xsl:param name="workspace-root"/>
   <xsl:param name="chunk-configurator"/>
-  
+
   <xsl:variable name="distrib-count"><xsl:value-of select="$colo-config/cfg:inventoryStats/@distrib_count"/>
     <xsl:if test="count($colo-config/cfg:inventoryStats/@distrib_count) = 0">
       <xsl:value-of select="$default-distrib-count"/>
@@ -23,7 +23,7 @@
   </xsl:variable>
 
   <xsl:variable name="em-configurator-args"> --chunks-count=<xsl:value-of
-    select="$distrib-count"/> --target-hosts='<xsl:for-each 
+    select="$distrib-count"/> --target-hosts='<xsl:for-each
     select="exsl:node-set($all-hosts)//host"> <xsl:value-of
     select="."/>,</xsl:for-each>' --modifier 'ExpressionMatcher::Modifier' --chunks-root='<xsl:value-of
     select="concat($cache-root, '/ExpressionMatcher')"/>' --transport='ssh:<xsl:value-of

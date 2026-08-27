@@ -27,17 +27,17 @@ sub create_sizes
     $ns->create(TemplateFile => {
       template_id => DB::Defaults::instance()->display_template,
       app_format_id => $overlay?
-        DB::Defaults::instance()->html_format: 
+        DB::Defaults::instance()->html_format:
          DB::Defaults::instance()->app_format_no_track(),
       size_id => $size});
-    
+
     $ns->create(TemplateFile => {
       template_id => DB::Defaults::instance()->text_template,
       size_id => $size,
       template_file => $overlay?
          'UnitTests/rtb.html': 'UnitTests/textad.xsl',
       app_format_id => $overlay?
-        DB::Defaults::instance()->html_format: 
+        DB::Defaults::instance()->html_format:
          DB::Defaults::instance()->app_format_no_track(),
       template_type => $overlay? 'T': 'X' });
 
@@ -266,7 +266,7 @@ sub multi_creative_ccg
 
   my $publisher = $ns->create(Publisher => {
     name => "Publisher",
-    pricedtag_size_id => 
+    pricedtag_size_id =>
      [$sizes[0], $sizes[1], $sizes[2], $sizes[3], $sizes[4]]});
 
   my $keyword = make_autotest_name($ns, "KWD");
@@ -290,7 +290,7 @@ sub multi_creative_ccg
   my $creative1_2 = $ns->create(Creative => {
     name => "1_2",
     account_id => $campaign->{account_id},
-    tag_sizes => 
+    tag_sizes =>
       [$sizes[0], $sizes[1], $sizes[2], $sizes[3], $sizes[4]],
     template_id => DB::Defaults::instance()->text_template });
 
@@ -301,7 +301,7 @@ sub multi_creative_ccg
   my $creative1_3 = $ns->create(Creative => {
     name => "1_3",
     account_id => $campaign->{account_id},
-    tag_sizes => 
+    tag_sizes =>
       [$sizes[4]],
     template_id => DB::Defaults::instance()->text_template });
 
@@ -334,7 +334,7 @@ sub display_text
     size_id => $size,
     template_file => 'UnitTests/textad.xsl',
     template_type => 'X'});
-  
+
   $ns->output('Size', $size);
 
   my @cpms = ([20, 10], [10, 20], [10, 10]);
@@ -392,8 +392,8 @@ sub size_type_level
   my $disabled_size = $ns->create(CreativeSize => {
     name => 'Disabled-Size',
     size_type_id => $size_type,
-    max_text_creatives => 2 });  
-  
+    max_text_creatives => 2 });
+
   $ns->create(TemplateFile => {
     template_id => DB::Defaults::instance()->text_template,
     size_id => $disabled_size,
@@ -479,11 +479,11 @@ sub rtb_case
   my $publisher = $ns->create(Publisher => {
     name => "Publisher",
     account_id => DB::Defaults::instance()->openx_account,
-    pricedtag_size_id => 
+    pricedtag_size_id =>
      [$sizes[0], $sizes[1]]});
 
   my $keyword = make_autotest_name($ns, "KWD");
-  
+
   my $campaign1 = $ns->create(ChannelTargetedTACampaign => {
     name => "Campaign1",
     channel_id => DB::BehavioralChannel->blank(
@@ -493,7 +493,7 @@ sub rtb_case
         DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => 'S',
           time_to => 3*60*60) ]),
-    template_id => 
+    template_id =>
        DB::Defaults::instance()->text_template,
     campaigncreativegroup_country_code => 'RU',
     campaigncreativegroup_cpm => 10,
@@ -502,7 +502,7 @@ sub rtb_case
 
   my $campaign2 = $ns->create(TextAdvertisingCampaign => {
     name => "Campaign2",
-    template_id => 
+    template_id =>
        DB::Defaults::instance()->text_template,
     ccgkeyword_channel_id => $campaign1->{channel_id},
     ccgkeyword_max_cpc_bid => undef,

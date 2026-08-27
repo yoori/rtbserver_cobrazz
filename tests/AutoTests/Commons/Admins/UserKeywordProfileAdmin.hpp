@@ -37,9 +37,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<UserKeywordProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uuid
-      )
+      void make_cmd (const char* address, const char* uuid)
       {
         address_ = address;
         AdminParams params;
@@ -49,31 +47,19 @@ namespace AutoTest
         make_admin_cmd(*this, "print-user-keyword-match", address, params, static_cast<size_t>(RequestInfoManager));
         add_cmd_i("--align");
       }
-      UserKeywordProfileAdmin(
-        const char* address,
-        const char* uuid
-      )
+      UserKeywordProfileAdmin(const char* address, const char* uuid)
       {
         make_cmd(address, uuid);
       }
-      UserKeywordProfileAdmin(
-        const std::string& address,
-        const char* uuid
-      )
+      UserKeywordProfileAdmin(const std::string& address, const char* uuid)
       {
         make_cmd(address.c_str(), uuid);
       }
-      UserKeywordProfileAdmin(
-        const char* address,
-        const std::string& uuid
-      )
+      UserKeywordProfileAdmin(const char* address, const std::string& uuid)
       {
         make_cmd(address, uuid.c_str());
       }
-      UserKeywordProfileAdmin(
-        const std::string& address,
-        const std::string& uuid
-      )
+      UserKeywordProfileAdmin(const std::string& address, const std::string& uuid)
       {
         make_cmd(address.c_str(), uuid.c_str());
       }

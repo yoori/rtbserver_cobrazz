@@ -1,10 +1,7 @@
 
 #include "UnexistingTokenInCreativeOption.hpp"
 
-REFLECT_UNIT(UnexistingTokenInCreativeOption) (
-  "CreativeInstantiation",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(UnexistingTokenInCreativeOption) ("CreativeInstantiation", AUTO_TEST_SLOW);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -18,8 +15,7 @@ void UnexistingTokenInCreativeOption::set_up()
 {
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must prisent in the configuration file");
 
   add_descr_phrase("Preconditions");
@@ -30,8 +26,7 @@ void
 UnexistingTokenInCreativeOption::tear_down()
 {
   CreativeOptionValue option(pq_conn_);
-  option.select(fetch_int("CC1"),
-                fetch_int("OPTION"));
+  option.select(fetch_int("CC1"), fetch_int("OPTION"));
   option.value = "##FUDJIN##";
   option.update();
 }
@@ -49,36 +44,22 @@ UnexistingTokenInCreativeOption::run()
 
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC2"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC2"), client.debug_info.ccid).check(),
       "must return creative#2");
   }
 
-  add_descr_phrase("Test 1.2. Dynamic test - "
-                   "changing Creative Option "
-                   "with version updating");
+  add_descr_phrase("Test 1.2. Dynamic test - " "changing Creative Option " "with version updating");
 
   CreativeOptionValue option(pq_conn_);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      option.select(
-        fetch_int("CREATIVE1"),
-        fetch_int("OPTION"))),
+    AutoTest::predicate_checker(option.select(fetch_int("CREATIVE1"), fetch_int("OPTION"))),
     "Can't select creative option value");
   option.value.null();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      option.update()),
-    "Can't update creative option value");
+  FAIL_CONTEXT(AutoTest::predicate_checker(option.update()), "Can't update creative option value");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      CreativeChecker(
-        this,
-        fetch_int("CC1"),
-        CreativeChecker::Expected().
-          status("A"))).check(),
+      CreativeChecker(this, fetch_int("CC1"), CreativeChecker::Expected(). status("A"))).check(),
     "Check creative#1 status");
 
   {
@@ -86,9 +67,7 @@ UnexistingTokenInCreativeOption::run()
 
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("CC1"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("CC1"), client.debug_info.ccid).check(),
       "must return creative#1");
   }
 
@@ -103,33 +82,19 @@ void UnexistingTokenInCreativeOption::set_creative_option()
 {
   CreativeOptionValue option(pq_conn_);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      option.select(
-        fetch_int("CREATIVE1"),
-        fetch_int("OPTION"))),
+    AutoTest::predicate_checker(option.select(fetch_int("CREATIVE1"), fetch_int("OPTION"))),
     "Can't select creative option value");
   option.value = "##FUDJIN##";
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      option.update()),
-    "Can't update creative option value");
+  FAIL_CONTEXT(AutoTest::predicate_checker(option.update()), "Can't update creative option value");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      CreativeChecker(
-        this,
-        fetch_int("CC1"),
-        CreativeChecker::Expected().
-          status("C"))).check(),
+      CreativeChecker(this, fetch_int("CC1"), CreativeChecker::Expected(). status("C"))).check(),
     "Check creative#1 status");
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
-      CreativeChecker(
-        this,
-        fetch_int("CC2"),
-        CreativeChecker::Expected().
-          status("A"))).check(),
+      CreativeChecker(this, fetch_int("CC2"), CreativeChecker::Expected(). status("A"))).check(),
       "Check creative#2 status");
 }
 

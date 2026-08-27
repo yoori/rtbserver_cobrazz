@@ -88,9 +88,7 @@ namespace AdServer::CampaignSvcs::CTR
     public:
       using CTRList = CTRProvider::CalculationContext::CTRList;
 
-      CalculationContext(
-        const Calculation* calculation,
-        const Tag::Size* tag_size)
+      CalculationContext(const Calculation* calculation, const Tag::Size* tag_size)
         noexcept;
 
       RevenueDecimal
@@ -103,23 +101,17 @@ namespace AdServer::CampaignSvcs::CTR
         bool* creative_dependent = 0) const;
 
       void
-      get_ctr_details(
-        CTRList& ctrs,
-        const Creative* creative) const;
+      get_ctr_details(CTRList& ctrs, const Creative* creative) const;
 
       void
-      get_xgb_hashes_i(
-        HashArray& res,
-        const Creative* creative) const
+      get_xgb_hashes_i(HashArray& res, const Creative* creative) const
         noexcept;
 
     protected:
       ~CalculationContext() noexcept override;
 
       std::pair<RevenueDecimal, const Algorithm*>
-      get_ctr_(
-        const Creative* creative,
-        bool* creative_dependent) const;
+      get_ctr_(const Creative* creative, bool* creative_dependent) const;
 
       double
       get_model_prediction_(
@@ -161,15 +153,11 @@ namespace AdServer::CampaignSvcs::CTR
         noexcept;
 
       bool
-      check_feature_set_level_eval_weights_(
-        FeatureType feature_type,
-        float& weight) const
+      check_feature_set_level_eval_weights_(FeatureType feature_type, float& weight) const
         noexcept;
 
       void
-      insert_feature_set_level_eval_weights_(
-        FeatureType feature_type,
-        float weight) const
+      insert_feature_set_level_eval_weights_(FeatureType feature_type, float weight) const
         noexcept;
 
     private:
@@ -182,8 +170,7 @@ namespace AdServer::CampaignSvcs::CTR
       mutable PredictionContextArray prediction_contexts_;
     };
 
-    using CalculationContextImpl_var =
-      ReferenceCounting::SmartPtr<CalculationContext>;
+    using CalculationContextImpl_var = ReferenceCounting::SmartPtr<CalculationContext>;
 
     class Calculation final: public CTRProvider::Calculation
     {
@@ -200,17 +187,13 @@ namespace AdServer::CampaignSvcs::CTR
         noexcept override;
 
     protected:
-      Calculation(
-        const CTRProviderImpl* ctr_provider,
-        const CampaignSelectParams* request_params)
+      Calculation(const CTRProviderImpl* ctr_provider, const CampaignSelectParams* request_params)
         noexcept;
 
       ~Calculation() noexcept override;
 
       static long
-      select_alg_(
-        const AlgsRef& alg_ref,
-        unsigned long rand)
+      select_alg_(const AlgsRef& alg_ref, unsigned long rand)
         noexcept;
 
       long
@@ -237,9 +220,7 @@ namespace AdServer::CampaignSvcs::CTR
       struct FeatureSetLevelHashAdapter
       {
       public:
-        FeatureSetLevelHashAdapter(
-          uint64_t feature_set_hash,
-          FeatureType feature_type)
+        FeatureSetLevelHashAdapter(uint64_t feature_set_hash, FeatureType feature_type)
           : feature_set_hash_(feature_set_hash),
             feature_type_(feature_type)
         {
@@ -285,8 +266,7 @@ namespace AdServer::CampaignSvcs::CTR
       Generics::TaskRunner* task_runner);
 
     Calculation_var
-    create_calculation(
-      const CampaignSelectParams* request_params) const
+    create_calculation(const CampaignSelectParams* request_params) const
       noexcept override;
 
     Generics::Time
@@ -296,9 +276,7 @@ namespace AdServer::CampaignSvcs::CTR
     }
 
     static Generics::Time
-    check_config_appearance(
-      std::string& config_root,
-      const String::SubString& check_root);
+    check_config_appearance(std::string& config_root, const String::SubString& check_root);
 
     void
     remove_config_files_at_destroy(bool val) const noexcept;
@@ -307,8 +285,7 @@ namespace AdServer::CampaignSvcs::CTR
     class ConfigParser;
 
     using ConfigParser_var = ReferenceCounting::SmartPtr<ConfigParser>;
-    using ConfigParserFactory =
-      Generics::Singleton<ConfigParser, ConfigParser_var>;
+    using ConfigParserFactory = Generics::Singleton<ConfigParser, ConfigParser_var>;
     using FileList = std::list<std::string>;
 
     struct FeatureArrayLess
@@ -316,24 +293,17 @@ namespace AdServer::CampaignSvcs::CTR
       bool
       operator()(const FeatureArray& left, const FeatureArray& right) const
       {
-        return std::lexicographical_compare(
-          left.begin(),
-          left.end(),
-          right.begin(),
-          right.end());
+        return std::lexicographical_compare(left.begin(), left.end(), right.begin(), right.end());
       }
     };
 
-    using FeatureSetIndexMap =
-      std::map<FeatureArray, unsigned long, FeatureArrayLess>;
+    using FeatureSetIndexMap = std::map<FeatureArray, unsigned long, FeatureArrayLess>;
 
   protected:
     ~CTRProviderImpl() noexcept override;
 
     void
-    load_(
-      const String::SubString& directory,
-      const String::SubString& file);
+    load_(const String::SubString& directory, const String::SubString& file);
 
     static FeatureType
     feature_type_(const Feature& feature) noexcept;
@@ -345,9 +315,7 @@ namespace AdServer::CampaignSvcs::CTR
     normalize_algs_ref_(AlgsRef& args_ref) noexcept;
 
     void
-    load_campaign_list_(
-      CampaignIdSet& campaigns,
-      const String::SubString& file_name);
+    load_campaign_list_(CampaignIdSet& campaigns, const String::SubString& file_name);
 
     std::unique_ptr<HashMap>
     load_hash_mapping_(const String::SubString& file_name);
@@ -374,8 +342,7 @@ namespace AdServer::CampaignSvcs::CTR
   };
 
   using CTRProviderImpl_var = ReferenceCounting::SmartPtr<CTRProviderImpl>;
-  using ConstCTRProviderImpl_var =
-    ReferenceCounting::SmartPtr<const CTRProviderImpl>;
+  using ConstCTRProviderImpl_var = ReferenceCounting::SmartPtr<const CTRProviderImpl>;
 
   inline
   CTRProviderImpl::ModelValue::ModelValue(CTRProviderImpl::ModelValue&& init)

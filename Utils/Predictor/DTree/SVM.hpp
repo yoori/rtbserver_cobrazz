@@ -96,15 +96,10 @@ namespace Vanga
       /*throw(Exception)*/;
 
     static Row_var
-    load_line(
-      std::istream& in,
-      LabelType& label_value);
+    load_line(std::istream& in, LabelType& label_value);
 
     static void
-    save_line(
-      std::ostream& out,
-      const Row* row,
-      const LabelType& label_value);
+    save_line(std::ostream& out, const Row* row, const LabelType& label_value);
 
     ReferenceCounting::SmartPtr<SVM<LabelType> >
     by_feature(unsigned long feature_id, bool yes)
@@ -119,10 +114,7 @@ namespace Vanga
     sort_() noexcept;
 
     static Row_var
-    load_line_(
-      std::istream& in,
-      LabelType& label_value,
-      FeatureArray& features);
+    load_line_(std::istream& in, LabelType& label_value, FeatureArray& features);
 
   protected:
     virtual ~SVM() noexcept {}

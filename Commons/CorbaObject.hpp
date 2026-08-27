@@ -7,9 +7,7 @@
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename ObjectType>
   class CorbaObject
@@ -64,11 +62,8 @@ namespace Commons
     Holder_var holder_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<typename ObjectType>
   CorbaObject<ObjectType>::Holder::Holder(
@@ -98,20 +93,19 @@ namespace Commons
   {
     Holder* holder = holder_;
 
-    if(!holder)
+    if (!holder)
     {
       throw NullPointer("");
     }
 
     SyncPolicy::WriteGuard lock(holder->lock);
 
-    if(!holder->object.in())
+    if (!holder->object.in())
     {
       try
       {
         holder->object =
-          holder->corba_client_adapter->template resolve_object<ObjectType>(
-            holder->object_ref);
+          holder->corba_client_adapter->template resolve_object<ObjectType>(holder->object_ref);
       }
       catch(const eh::Exception& ex)
       {
@@ -138,7 +132,7 @@ namespace Commons
   {
     Holder* holder = holder_;
 
-    if(!holder)
+    if (!holder)
     {
       return ObjectType_var();
     }
@@ -154,7 +148,7 @@ namespace Commons
   {
     const Holder* holder = holder_;
 
-    if(!holder)
+    if (!holder)
     {
       throw NullPointer("");
     }
@@ -162,5 +156,4 @@ namespace Commons
     SyncPolicy::ReadGuard lock(holder->lock);
     return holder->object_ref;
   }
-}
 }

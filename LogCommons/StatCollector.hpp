@@ -107,10 +107,7 @@ namespace AdServer::LogProcessing
       template <class INPUT_ITERATOR_>
       static
       void
-      insert_non_excludables(
-        STAT_COLLECTOR_& sc,
-        INPUT_ITERATOR_ first,
-        INPUT_ITERATOR_ last)
+      insert_non_excludables(STAT_COLLECTOR_& sc, INPUT_ITERATOR_ first, INPUT_ITERATOR_ last)
       {
         sc.insert_i_(first, last);
       }
@@ -127,10 +124,7 @@ namespace AdServer::LogProcessing
 
       static
       void
-      remove_if_excludable(
-        STAT_COLLECTOR_& sc,
-        typename STAT_COLLECTOR_::iterator it
-      )
+      remove_if_excludable(STAT_COLLECTOR_& sc, typename STAT_COLLECTOR_::iterator it)
       {
         if (excludable(it->second))
         {
@@ -141,10 +135,7 @@ namespace AdServer::LogProcessing
       template <class INPUT_ITERATOR_>
       static
       void
-      insert_non_excludables(
-        STAT_COLLECTOR_& sc,
-        INPUT_ITERATOR_ first,
-        INPUT_ITERATOR_ last)
+      insert_non_excludables(STAT_COLLECTOR_& sc, INPUT_ITERATOR_ first, INPUT_ITERATOR_ last)
       {
         for (auto it = first; it != last; ++it)
         {
@@ -164,11 +155,7 @@ namespace AdServer::LogProcessing
     {
       static
       std::istream&
-      read(
-        std::istream& is,
-        typename STAT_COLLECTOR_::LoadValueT& value,
-        unsigned long& line_num
-      )
+      read(std::istream& is, typename STAT_COLLECTOR_::LoadValueT& value, unsigned long& line_num)
       {
         typedef typename STAT_COLLECTOR_::KeyT KeyT;
         typedef typename STAT_COLLECTOR_::DataT DataT;
@@ -203,6 +190,7 @@ namespace AdServer::LogProcessing
              << line_num << ", position = " << is.tellg() - line_begin_pos << ")";
           throw Exception(es);
         }
+
         if (!read_eol(is))
         {
           Stream::Error es;
@@ -225,10 +213,7 @@ namespace AdServer::LogProcessing
       }
 
       std::istream&
-      read(
-        std::istream& is,
-        typename STAT_COLLECTOR_::LoadValueT& value,
-        unsigned long& line_num)
+      read(std::istream& is, typename STAT_COLLECTOR_::LoadValueT& value, unsigned long& line_num)
       {
         typedef typename STAT_COLLECTOR_::KeyT KeyT;
         typedef typename STAT_COLLECTOR_::DataT DataT;
@@ -241,8 +226,7 @@ namespace AdServer::LogProcessing
         {
           Stream::Error es;
           es << __PRETTY_FUNCTION__ <<
-            ": Malformed file (file must end with an end-of-line character), line " <<
-            line_num;
+            ": Malformed file (file must end with an end-of-line character), line " << line_num;
           throw Exception(es);
         }
 
@@ -253,16 +237,15 @@ namespace AdServer::LogProcessing
           {
             Stream::Error es;
             es << __PRETTY_FUNCTION__
-               << ": Failed to read key from istream (line number = " << line_num
-               << ")";
+               << ": Failed to read key from istream (line number = " << line_num << ")";
             throw Exception(es);
           }
+
           if (!(fbs >> static_cast<DataT&>(value.second)))
           {
             Stream::Error es;
             es << __PRETTY_FUNCTION__
-               << ": Failed to read data from istream (line number = " << line_num
-               << ")";
+               << ": Failed to read data from istream (line number = " << line_num << ")";
             throw Exception(es);
           }
           fbs.transfer_state(is);
@@ -302,8 +285,7 @@ namespace AdServer::LogProcessing
       ValueOps_;
 
     friend
-    class StatCollectorImplDefs_::
-      ValueReader<StatCollector, USE_FIXED_BUF_STREAM_>;
+    class StatCollectorImplDefs_::ValueReader<StatCollector, USE_FIXED_BUF_STREAM_>;
 
     typedef StatCollectorImplDefs_::ValueReader<StatCollector, USE_FIXED_BUF_STREAM_>
       ValueReader_;
@@ -340,8 +322,7 @@ namespace AdServer::LogProcessing
 
     bool operator==(const StatCollector& collector) const
     {
-      return map_impl_ == collector.map_impl_ ||
-        *map_impl_ == *collector.map_impl_;
+      return map_impl_ == collector.map_impl_ || *map_impl_ == *collector.map_impl_;
     }
 
     template<typename Mediator>
@@ -572,18 +553,14 @@ namespace AdServer::LogProcessing
     template <class K_, class D_, bool EX_, bool U_F_, bool S_, bool O_>
     friend
     std::istream&
-    operator>>(
-      std::istream& is,
-      StatCollector<K_, D_, EX_, U_F_, S_, O_>& collector)
+    operator>>(std::istream& is, StatCollector<K_, D_, EX_, U_F_, S_, O_>& collector)
       /*throw(eh::Exception,
         typename StatCollector<K_, D_, EX_, U_F_, S_, O_>::Exception)*/;
 
     template <class K_, class D_, bool EX_, bool U_F_, bool S_, bool O_>
     friend
     std::ostream&
-    operator<<(
-      std::ostream& os,
-      const StatCollector<K_, D_, EX_, U_F_, S_, O_>& collector)
+    operator<<(std::ostream& os, const StatCollector<K_, D_, EX_, U_F_, S_, O_>& collector)
       /*throw(eh::Exception,
         typename StatCollector<K_, D_, EX_, U_F_, S_, O_>::Exception)*/;
 
@@ -597,8 +574,7 @@ namespace AdServer::LogProcessing
       typedef StatCollectorImplDefs_::MonoUnorderedFlatMapArenaHolder
         ArenaHolder_;
 
-      typedef Generics::MonoAllocator<std::pair<const M_KEY_, M_DATA_>>
-        Allocator_;
+      typedef Generics::MonoAllocator<std::pair<const M_KEY_, M_DATA_>> Allocator_;
 
       typedef boost::unordered_flat_map<
         M_KEY_,
@@ -845,9 +821,7 @@ namespace AdServer::LogProcessing
   template <class KEY_, class DATA_, bool EX_, bool U_F_, bool S_, bool O_>
   inline
   std::istream&
-  operator>>(
-    std::istream& is,
-    StatCollector<KEY_, DATA_, EX_, U_F_, S_, O_>& collector)
+  operator>>(std::istream& is, StatCollector<KEY_, DATA_, EX_, U_F_, S_, O_>& collector)
   {
     collector.load(is);
     return is;
@@ -856,9 +830,7 @@ namespace AdServer::LogProcessing
   template <class KEY_, class DATA_, bool EX_, bool U_F_, bool S_, bool O_>
   inline
   std::ostream&
-  operator<<(
-    std::ostream& os,
-    const StatCollector<KEY_, DATA_, EX_, U_F_, S_, O_>& collector)
+  operator<<(std::ostream& os, const StatCollector<KEY_, DATA_, EX_, U_F_, S_, O_>& collector)
   {
     collector.dump(os);
     return os;
@@ -882,8 +854,7 @@ namespace AdServer::LogProcessing
       if (!ins_res.second)
       {
         Stream::Error es;
-        es << __PRETTY_FUNCTION__ <<
-          ": Malformed file (duplicate key found), line " << line_num;
+        es << __PRETTY_FUNCTION__ << ": Malformed file (duplicate key found), line " << line_num;
         throw Exception(es);
       }
 
@@ -951,11 +922,7 @@ namespace AdServer::LogProcessing
     {
       static
       std::istream&
-      read(
-        std::istream& is,
-        typename SEQ_COLLECTOR_::DataT& value,
-        unsigned long& line_num
-      )
+      read(std::istream& is, typename SEQ_COLLECTOR_::DataT& value, unsigned long& line_num)
       {
         typedef typename SEQ_COLLECTOR_::Exception Exception;
 
@@ -964,10 +931,10 @@ namespace AdServer::LogProcessing
         {
           Stream::Error es;
           es << __PRETTY_FUNCTION__
-             << ": Failed to read data from istream (line number = "
-             << line_num;
+             << ": Failed to read data from istream (line number = " << line_num;
           throw Exception(es);
         }
+
         if (!read_eol(is))
         {
           Stream::Error es;
@@ -990,11 +957,7 @@ namespace AdServer::LogProcessing
       }
 
       std::istream&
-      read(
-        std::istream& is,
-        typename SEQ_COLLECTOR_::DataT& value,
-        unsigned long& line_num
-      )
+      read(std::istream& is, typename SEQ_COLLECTOR_::DataT& value, unsigned long& line_num)
       {
         typedef typename SEQ_COLLECTOR_::Exception Exception;
 
@@ -1005,8 +968,7 @@ namespace AdServer::LogProcessing
         {
           Stream::Error es;
           es << __PRETTY_FUNCTION__ <<
-            ": Malformed file (file must end with an end-of-line character), line " <<
-            line_num;
+            ": Malformed file (file must end with an end-of-line character), line " << line_num;
           throw Exception(es);
         }
 
@@ -1047,12 +1009,9 @@ namespace AdServer::LogProcessing
         CopyImpl_;
 
     friend
-    class SeqCollectorImplDefs_::
-      ValueReader<SeqCollector, USE_FIXED_BUF_STREAM_>;
+    class SeqCollectorImplDefs_::ValueReader<SeqCollector, USE_FIXED_BUF_STREAM_>;
 
-    typedef SeqCollectorImplDefs_::
-      ValueReader<SeqCollector, USE_FIXED_BUF_STREAM_>
-        ValueReader_;
+    typedef SeqCollectorImplDefs_::ValueReader<SeqCollector, USE_FIXED_BUF_STREAM_> ValueReader_;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

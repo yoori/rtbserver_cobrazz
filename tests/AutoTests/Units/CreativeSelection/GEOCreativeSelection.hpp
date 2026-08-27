@@ -18,10 +18,7 @@ public:
   };
 
 public:
-  GEOCreativeSelection(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  GEOCreativeSelection(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -34,9 +31,7 @@ private:
 
 
   template <size_t COUNT>
-  void testcase(
-    const std::string& description,
-    const TestRequest (&requests)[COUNT]);
+  void testcase(const std::string& description, const TestRequest (&requests)[COUNT]);
 
   void set_param(
     NSLookupRequest::NSLookupParam& param,

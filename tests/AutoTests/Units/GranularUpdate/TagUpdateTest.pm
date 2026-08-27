@@ -175,7 +175,7 @@ sub init
 
   $ns->create(CreativeCategory_Creative => {
     creative_category_id => $self->{visual_category},
-    creative_id => $campaign->{creative_id} }); 
+    creative_id => $campaign->{creative_id} });
 
   $ns->create(CreativeCategory_Creative => {
     creative_category_id => $self->{content_category},

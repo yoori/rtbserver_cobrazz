@@ -69,7 +69,7 @@
 
 <xsl:variable name="user-bind-server-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindServer'"/>
-  
+
 <xsl:variable name="user-bind-controller-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindController'"/>
 

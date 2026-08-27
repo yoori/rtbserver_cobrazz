@@ -7,22 +7,14 @@
 #include "Utils.hpp"
 #include "FileRouter.hpp"
 
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-namespace LogProcessing
-{
-  AppFileRouter::AppFileRouter(
-    const char* command_template,
-    const char* post_command_template)
+  AppFileRouter::AppFileRouter(const char* command_template, const char* post_command_template)
     /*throw(Exception)*/
   {
-    check_and_set_command_template_(
-      command_template,
-      command_template_);
+    check_and_set_command_template_(command_template, command_template_);
 
-    check_and_set_command_template_(
-      post_command_template,
-      post_command_template_);
+    check_and_set_command_template_(post_command_template, post_command_template_);
   }
 
   void
@@ -31,16 +23,12 @@ namespace LogProcessing
     String::TextTemplate::IStream& command_template)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "AppFileRouter::check_and_set_command_template_()";
+    static const char* FUN = "AppFileRouter::check_and_set_command_template_()";
 
     try
     {
       Stream::Parser istr(str_command_template);
-      command_template.init(
-        istr,
-        TemplateParams::MARKER,
-        TemplateParams::MARKER);
+      command_template.init(istr, TemplateParams::MARKER, TemplateParams::MARKER);
 
       /* test template */
       String::TextTemplate::Args templ_args;
@@ -100,7 +88,7 @@ namespace LogProcessing
         output,
         interrupter);
 
-      if(exit_code != 0)
+      if (exit_code != 0)
       {
         Stream::Error ostr;
         ostr << FUN << ": can't move '" <<
@@ -122,7 +110,7 @@ namespace LogProcessing
         output,
         0);
 
-      if(exit_code != 0)
+      if (exit_code != 0)
       {
         Stream::Error ostr;
         ostr << FUN << ": post command failed '" <<
@@ -165,11 +153,10 @@ namespace LogProcessing
 
       // if sync_mode == true then split_log_name() must not expect
       // a pattern in a file name
-      if(!sync_mode && temp.empty())
+      if (!sync_mode && temp.empty())
       {
         Stream::Error ostr;
-        ostr << "," << file_route_params.dst_file_name <<
-            "' not a file name";
+        ostr << "," << file_route_params.dst_file_name << "' not a file name";
         throw Exception(ostr);
       }
 
@@ -216,11 +203,7 @@ namespace LogProcessing
 
     if (!command_template.empty())
     {
-      init_command_(
-        command_template,
-        file_route_params,
-        command,
-        sync_mode);
+      init_command_(command_template, file_route_params, command, sync_mode);
 
       try
       {
@@ -238,5 +221,4 @@ namespace LogProcessing
 
     return 0;
   }
-}
 }

@@ -15,10 +15,7 @@ class DynamicTriggerListUpdate:
 
 public:
 
-  DynamicTriggerListUpdate(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var);
+  DynamicTriggerListUpdate(UnitStat& stat_var, const char* task_name, XsdParams params_var);
 
   virtual ~DynamicTriggerListUpdate() noexcept;
 

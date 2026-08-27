@@ -20,7 +20,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)

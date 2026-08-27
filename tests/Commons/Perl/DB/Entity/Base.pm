@@ -13,7 +13,7 @@ sub new
   {
     $self = bless {}, $self;
   }
-  
+
   $self->{__sql} = $sql;
 
   return $self;
@@ -37,9 +37,9 @@ sub create
 {
   my $class = shift;
   my $entity = shift;
-  my $self = { 
+  my $self = {
     __entity => ref($entity) || $entity, @_ };
-  return bless $self, $class; 
+  return bless $self, $class;
 }
 
 # return entity class name
@@ -106,8 +106,8 @@ use DB::Entity::Type;
 #   default value, must pass type restrictions
 # - private => 1
 #   field is private, used nested entities and doesn't appear in SQL statements
-sub struct 
-{ 
+sub struct
+{
   my $class = ref($_[0]) || $_[0];
   $class->STRUCT
 }
@@ -148,11 +148,11 @@ sub _fields
   my $class = shift;
   my %struct = %{ $class->struct };
   grep {
-    not (ref($struct{$_}) && 
-       ((defined $struct{$_}->{unique} && 
+    not (ref($struct{$_}) &&
+       ((defined $struct{$_}->{unique} &&
           $struct{$_}->{unique} == 1) ||
-        (defined $struct{$_}->{private} && 
-          $struct{$_}->{private} == 1) || 
+        (defined $struct{$_}->{private} &&
+          $struct{$_}->{private} == 1) ||
         exists $struct{$_}->{sequence} ))} (keys %struct)
 }
 
@@ -183,8 +183,8 @@ sub _unique
   my $class = shift;
   my %struct = %{ $class->struct };
   grep {
-    ref($struct{$_}) && 
-      defined $struct{$_}->{unique} && 
+    ref($struct{$_}) &&
+      defined $struct{$_}->{unique} &&
          $struct{$_}->{unique} == 1} (keys %struct)
 }
 
@@ -202,7 +202,7 @@ sub _name
   my $class = shift;
   my %struct = %{ $class->struct };
   grep {
-    ref($struct{$_}) && 
+    ref($struct{$_}) &&
       $struct{$_}->{is_name}} (keys %struct)
 }
 
@@ -218,7 +218,7 @@ sub _external_fields
 # Get entity ID
 sub _id
 {
-  defined $_[0]->_sequence? 
+  defined $_[0]->_sequence?
     $_[0]->_sequence: $_[0]->_fields;
 }
 
@@ -257,7 +257,7 @@ sub __get_values
     }
   }
 
-  my @placeholders = map({ 
+  my @placeholders = map({
     ref $_ eq 'DB::Entity::SQL'? $_->sql($ns): '?' }
         @$self{ @columns });
 
@@ -270,14 +270,14 @@ sub __get_values
 sub __check_struct
 {
   my $class = shift;
-  
+
   my %struct = %{ $class->struct };
-  my @invalid_fields = 
-      grep {ref($struct{$_}) && 
-        !UNIVERSAL::isa($struct{$_}, 'DB::Entity::Type::Base')} 
+  my @invalid_fields =
+      grep {ref($struct{$_}) &&
+        !UNIVERSAL::isa($struct{$_}, 'DB::Entity::Type::Base')}
           (keys %struct);
 
-  die "'$class' unknown types: [" . join(", ", @invalid_fields) . "]" 
+  die "'$class' unknown types: [" . join(", ", @invalid_fields) . "]"
     if @invalid_fields;
 }
 
@@ -297,9 +297,9 @@ sub __check_args
     }
     elsif (ref($struct{$k}))
     {
-      my $vs = defined $v? $v: 'undef'; 
+      my $vs = defined $v? $v: 'undef';
       my $class = ref($self) || $self;
-      !$struct{$k}->check($v) && 
+      !$struct{$k}->check($v) &&
          die "'$class' incorrect '$k' value: '$vs', expected type: '" .
            $struct{$k}->type() . "'";
     }
@@ -314,35 +314,36 @@ sub __init_args
   my $class = ref($self) || $self;
 
   $self->preinit_($ns, $args);
-  
+
   my %struct = %{$self->struct};
   while (my ($k, $v) = each %struct )
   {
     # Name field special case
-    if (ref($v) && defined $v->{is_name}) 
-    { 
+    if (ref($v) && defined $v->{is_name})
+    {
       die "$class should defined value for field '$k'"
         if not defined $args->{$k};
       # Store original name
-      $self->{'__' . $k} = $args->{$k}; 
-      $args->{$k} = $ns->namespace . '-' . $args->{$k}; 
+      $self->{'__' . $k} = $args->{$k};
+      $args->{$k} = $ns->namespace . '-' . $args->{$k};
     }
+
     if (not exists $args->{$k})
     {
       # Constant values
-      if (not ref($v)) 
-      { 
-        $args->{$k} = $v; 
+      if (not ref($v))
+      {
+        $args->{$k} = $v;
       }
       else
       {
         # Default values
-        if (exists ($v->{default})) 
-        { 
+        if (exists ($v->{default}))
+        {
           $args->{$k} = $v->{default};
         }
         else
-        { 
+        {
           my $value = $v->get($ns, $self, $k);
           $args->{$k} = $value if $value;
         }
@@ -370,7 +371,7 @@ sub __set_args
   if (defined $args->{display_status_id} &&
       $args->{display_status_id} !~ /^\d+$/)
   {
-    $args->{display_status_id} = 
+    $args->{display_status_id} =
       $self->get_display_status($ns, $args->{display_status_id});
   }
 
@@ -378,8 +379,8 @@ sub __set_args
   $self->__check_args($args);
 
   foreach my $field (
-      $self->_fields, 
-      $self->_unique, 
+      $self->_fields,
+      $self->_unique,
       $self->_sequence,
       $self->_external_fields)
   {
@@ -455,7 +456,7 @@ sub __select
   my $table = $self->_table;
   my @result_columns = ($self->_fields(), $self->_unique());
 
-  if(defined($self->_sequence()))
+  if (defined($self->_sequence()))
   {
     unshift(@result_columns, $self->_sequence());
   }
@@ -493,20 +494,20 @@ sub __select
 }
 
 # Actions before entry arguments initialization
-sub preinit_ 
-{ 
+sub preinit_
+{
   return
 }
 
 # Actions after set arguments values
-sub precreate_ 
-{ 
+sub precreate_
+{
   return
 }
 
 # Actions after create entity
-sub postcreate_ 
-{ 
+sub postcreate_
+{
   return
 }
 
@@ -545,6 +546,7 @@ sub __get_db_values
     {
       $value = $value->($self);
     }
+
     if (UNIVERSAL::isa($value, 'DB::Entity::Base'))
     {
       my $key = join('::', $self->_table, $field, $value->_table);
@@ -588,7 +590,7 @@ sub __get_where
 }
 
 # Constructor
-sub _new 
+sub _new
 {
   my ($class_name, $ns, $args) = @_;
 
@@ -687,7 +689,7 @@ package DB::Entity::UpdateMixin;
 sub compare
 {
   my ($self, $name) = @_;
-  UNIVERSAL::isa($self->struct->{$name}, 'DB::Entity::Type::Int') || 
+  UNIVERSAL::isa($self->struct->{$name}, 'DB::Entity::Type::Int') ||
     UNIVERSAL::isa($self->struct->{$name}, 'DB::Entity::Type::Float')?
       $self->{$name} != $self->{args__}->{$name}:
         $self->{$name} ne $self->{args__}->{$name};
@@ -697,8 +699,8 @@ sub postcreate_
 {
   my ($self, $ns) = @_;
 
-  my @changed = 
-    grep { $self->compare($_) } 
+  my @changed =
+    grep { $self->compare($_) }
       (keys %{$self->{args__}});
 
   if (@changed)

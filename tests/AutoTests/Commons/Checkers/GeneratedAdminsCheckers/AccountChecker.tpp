@@ -6,16 +6,15 @@
 namespace AutoTest
 {
 
-  template<typename ExpectedType>  
-  bool  
-  AccountChecker_<ExpectedType>::check(bool throw_error)  
-    /*throw (CheckFailed, eh::Exception)*/  
-  {  
+  template<typename ExpectedType>
+  bool
+  AccountChecker_<ExpectedType>::check(bool throw_error)
+    /*throw (CheckFailed, eh::Exception)*/
+  {
     if (expected_.has_status())
     {
       // To calc new account display status
-      AutoTest::ORM::update_display_status(
-        test_, "ACCOUNT", static_cast<int>(account_));
+      AutoTest::ORM::update_display_status(test_, "ACCOUNT", static_cast<int>(account_));
     }
 
     AdminExistCheck remote_exists =
@@ -26,19 +25,11 @@ namespace AutoTest
 
     AdminsArray<AccountAdmin, CT_ALL> central_admins;
 
-    central_admins.initialize(
-      test_,
-      CTE_CENTRAL,
-      STE_CAMPAIGN_MANAGER,
-      account_);
-    
+    central_admins.initialize(test_, CTE_CENTRAL, STE_CAMPAIGN_MANAGER, account_);
+
     AdminsArray<AccountAdmin, CT_ALL> remote_admins;
 
-    remote_admins.initialize(
-      test_,
-      CTE_ALL_REMOTE,
-      STE_CAMPAIGN_MANAGER,
-      account_);
+    remote_admins.initialize(test_, CTE_ALL_REMOTE, STE_CAMPAIGN_MANAGER, account_);
 
     if (central_admins.empty() && remote_admins.empty())
     {
@@ -47,10 +38,7 @@ namespace AutoTest
 
     return
       (central_admins.empty() ||
-        admin_checker(
-          central_admins,
-          expected_,
-          exists_).
+        admin_checker(central_admins, expected_, exists_).
             check(throw_error)) &&
       (remote_admins.empty() ||
         admin_checker(

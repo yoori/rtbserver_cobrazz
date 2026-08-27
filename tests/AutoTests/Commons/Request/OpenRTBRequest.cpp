@@ -1,18 +1,18 @@
 
 #include "OpenRTBRequest.hpp"
 
+namespace AutoTest::OpenRtb
+{
+
+  const TagDescriptor EMPTY_TAG = {"", ""};
+  const TagDescriptor STRING_TAG = {"\"", "\""};
+  const TagDescriptor STRUCT_TAG = {"{", "}"};
+  const TagDescriptor ARRAY_TAG = {"[", "]"};
+
+}
+
 namespace AutoTest
 {
-  namespace OpenRtb
-  {
-
-    const TagDescriptor EMPTY_TAG = {"", ""};
-    const TagDescriptor STRING_TAG = {"\"", "\""};
-    const TagDescriptor STRUCT_TAG = {"{", "}"};
-    const TagDescriptor ARRAY_TAG = {"[", "]"};
-
-  }
-
   template<>
   OpenRTBRequest::ParamsArray<OpenRTBRequest::ImpGroup>::ParamsArray(
     size_t size,
@@ -26,8 +26,7 @@ namespace AutoTest
     for (size_t i = 0; i < size; i++)
     {
       this->parameters_[i] =
-        ParamsGenerator<OpenRTBRequest::ImpGroup>()(
-          this->request_, this, strof(i).c_str(), flags);
+        ParamsGenerator<OpenRTBRequest::ImpGroup>()(this->request_, this, strof(i).c_str(), flags);
     }
   }
 
@@ -43,9 +42,7 @@ namespace AutoTest
     escape_(escape)
   { }
 
-  OpenRTBRequest::Parameter::Parameter(
-    BaseParamsContainer* container,
-    const Parameter& other) :
+  OpenRTBRequest::Parameter::Parameter(BaseParamsContainer* container, const Parameter& other) :
     StringParam(container, other),
     tag_(other.tag_),
     escape_(other.escape_)
@@ -55,10 +52,7 @@ namespace AutoTest
   { }
 
   void
-  OpenRTBRequest::Parameter::print(
-    std::ostream& out,
-    unsigned long indent,
-    bool print_name) const
+  OpenRTBRequest::Parameter::print(std::ostream& out, unsigned long indent, bool print_name) const
   {
     if (!empty())
     {
@@ -74,10 +68,7 @@ namespace AutoTest
   }
 
   bool
-  OpenRTBRequest::Parameter::print(
-    std::ostream&,
-    const char*,
-    const char*) const
+  OpenRTBRequest::Parameter::print(std::ostream&, const char*, const char*) const
   {
     return false;
   }
@@ -90,10 +81,7 @@ namespace AutoTest
 
   // Group
 
-  OpenRTBRequest::Group::Group(
-    BaseParamsContainer* container,
-    const char* name,
-    bool required) :
+  OpenRTBRequest::Group::Group(BaseParamsContainer* container, const char* name, bool required) :
     Parameter(container, name, OpenRtb::STRUCT_TAG),
     required_(required)
   { }
@@ -102,10 +90,7 @@ namespace AutoTest
   { }
 
   void
-  OpenRTBRequest::Group::print(
-    std::ostream& out,
-    unsigned long indent,
-    bool print_name) const
+  OpenRTBRequest::Group::print(std::ostream& out, unsigned long indent, bool print_name) const
   {
     if (!name_.empty() && print_name)
     {
@@ -115,7 +100,7 @@ namespace AutoTest
     out << tag_.begin;
 
     bool first = true;
-    for(auto i = params_.cbegin(); i != params_.cend(); i++)
+    for (auto i = params_.cbegin(); i != params_.cend(); i++)
     {
       if (!(*i)->empty())
       {
@@ -138,7 +123,7 @@ namespace AutoTest
   bool
   OpenRTBRequest::Group::empty() const
   {
-    for(auto i = params_.cbegin(); i != params_.cend(); i++)
+    for (auto i = params_.cbegin(); i != params_.cend(); i++)
     {
       if (!(*i)->empty() || required_) return false;
     }
@@ -152,8 +137,7 @@ namespace AutoTest
   }
 
   void
-  OpenRTBRequest::Group::set_param_val(
-        const String::SubString&)
+  OpenRTBRequest::Group::set_param_val(const String::SubString&)
   {
     throw GroupAccessError("Can't set value for group parameter");
   }
@@ -248,11 +232,7 @@ namespace AutoTest
     device_(&body_, "device"),
     user_(&body_, "user"),
     ext_(&body_, "ext"),
-    content_type(
-      this,
-      "Content-Type",
-      "application/json",
-      flags & OpenRtb::RF_SET_DEFS),
+    content_type(this, "Content-Type", "application/json", flags & OpenRtb::RF_SET_DEFS),
     width(this, imp[0].width),
     height(this, imp[0].height),
     battr(this, imp[0].battr),
@@ -295,8 +275,7 @@ namespace AutoTest
     debug_size(this, "debug.size")
   { }
 
-  OpenRTBRequest::OpenRTBRequest(
-    const OpenRTBRequest& other) :
+  OpenRTBRequest::OpenRTBRequest(const OpenRTBRequest& other) :
     BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     body_(this, ""),
     imp(this, &body_, other.imp),

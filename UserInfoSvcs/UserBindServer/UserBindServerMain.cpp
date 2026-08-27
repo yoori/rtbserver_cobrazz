@@ -20,13 +20,9 @@ namespace
   const char ASPECT[] = "UserBindServer";
 
   void
-  append_json_stat(
-    std::string& body,
-    bool& first,
-    const char* name,
-    std::uint64_t value)
+  append_json_stat(std::string& body, bool& first, const char* name, std::uint64_t value)
   {
-    if(first)
+    if (first)
     {
       first = false;
     }
@@ -47,21 +43,9 @@ namespace
     bool& first,
     const AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot& stats)
   {
-    append_json_stat(
-      body,
-      first,
-      "grpc_unary_call_created_total",
-      stats.unary_call_created_total);
-    append_json_stat(
-      body,
-      first,
-      "grpc_unary_call_deleted_total",
-      stats.unary_call_deleted_total);
-    append_json_stat(
-      body,
-      first,
-      "grpc_unary_call_live",
-      stats.unary_call_live);
+    append_json_stat(body, first, "grpc_unary_call_created_total", stats.unary_call_created_total);
+    append_json_stat(body, first, "grpc_unary_call_deleted_total", stats.unary_call_deleted_total);
+    append_json_stat(body, first, "grpc_unary_call_live", stats.unary_call_live);
     append_json_stat(
       body,
       first,
@@ -72,11 +56,7 @@ namespace
       first,
       "grpc_coro_unary_call_deleted_total",
       stats.coro_unary_call_deleted_total);
-    append_json_stat(
-      body,
-      first,
-      "grpc_coro_unary_call_live",
-      stats.coro_unary_call_live);
+    append_json_stat(body, first, "grpc_coro_unary_call_live", stats.coro_unary_call_live);
     append_json_stat(
       body,
       first,
@@ -87,11 +67,7 @@ namespace
       first,
       "grpc_batch_stream_call_deleted_total",
       stats.batch_stream_call_deleted_total);
-    append_json_stat(
-      body,
-      first,
-      "grpc_batch_stream_call_live",
-      stats.batch_stream_call_live);
+    append_json_stat(body, first, "grpc_batch_stream_call_live", stats.batch_stream_call_live);
   }
 
   void
@@ -106,17 +82,9 @@ namespace
     append_json_stat(body, first, "rdb_save_total", stats.save_total);
     append_json_stat(body, first, "rdb_remove_total", stats.remove_total);
     append_json_stat(body, first, "rdb_read_batch_total", stats.read_batch_total);
-    append_json_stat(
-      body,
-      first,
-      "rdb_read_batch_total_time",
-      stats.read_batch_total_time);
+    append_json_stat(body, first, "rdb_read_batch_total_time", stats.read_batch_total_time);
     append_json_stat(body, first, "rdb_write_batch_total", stats.write_batch_total);
-    append_json_stat(
-      body,
-      first,
-      "rdb_write_batch_total_time",
-      stats.write_batch_total_time);
+    append_json_stat(body, first, "rdb_write_batch_total_time", stats.write_batch_total_time);
   }
 
   void fill_shutdown_signals_(sigset_t& signals)
@@ -149,8 +117,7 @@ namespace
 
     if (xml_logger_config.filename().empty())
     {
-      throw UserBindServerApp_::Exception(
-        "create_logger_(): empty file name");
+      throw UserBindServerApp_::Exception("create_logger_(): empty file name");
     }
 
     const std::string& filename = xml_logger_config.filename();
@@ -168,15 +135,13 @@ namespace
         if (it->size_span().present())
         {
           log_policies.push_back(
-            new Logging::File::Policies::SizeSpanPolicy(
-              it->size_span().get()));
+            new Logging::File::Policies::SizeSpanPolicy(it->size_span().get()));
         }
 
         if (it->time_span().present())
         {
           log_policies.push_back(
-            new Logging::File::Policies::TimeSpanPolicy(
-              Generics::Time(it->time_span().get())));
+            new Logging::File::Policies::TimeSpanPolicy(Generics::Time(it->time_span().get())));
         }
 
         Logging::File::Config config(
@@ -185,22 +150,17 @@ namespace
           xml_logger_config.log_level() > it->max_log_level() ?
             it->max_log_level() : xml_logger_config.log_level());
 
-        Logging::QLogger_var file_logger(
-          new Logging::File::Logger(std::move(config)));
+        Logging::QLogger_var file_logger(new Logging::File::Logger(std::move(config)));
 
         if (it->min_log_level().present())
         {
           loggers.push_back(Logging::QLogger_var(
-            new Logging::SeveritySelectorLogger(
-              file_logger,
-              it->min_log_level().get())));
+            new Logging::SeveritySelectorLogger(file_logger, it->min_log_level().get())));
         }
         else
         {
           loggers.push_back(Logging::QLogger_var(
-            new Logging::SeveritySelectorLogger(
-              it->max_log_level(),
-              file_logger)));
+            new Logging::SeveritySelectorLogger(it->max_log_level(), file_logger)));
         }
       }
 
@@ -229,8 +189,7 @@ namespace
         return loggers[0];
       }
 
-      return Logging::Logger_var(
-        new Logging::DistributorLogger(loggers.begin(), loggers.end()));
+      return Logging::Logger_var(new Logging::DistributorLogger(loggers.begin(), loggers.end()));
     }
     catch (const eh::Exception& ex)
     {
@@ -242,71 +201,60 @@ namespace
   }
 
   AdServer::UserInfoSvcs::UserBindServerCore::Config
-  make_core_config_(
-    const xsd::AdServer::Configuration::UserBindServerConfigType& config)
+  make_core_config_(const xsd::AdServer::Configuration::UserBindServerConfigType& config)
   {
     AdServer::UserInfoSvcs::UserBindServerCore::Config core_config;
 
     core_config.storage.chunks_root = config.Storage().chunks_root();
     core_config.storage.prefix = config.Storage().prefix();
     core_config.storage.bound_prefix = config.Storage().bound_prefix();
-    core_config.storage.common_chunks_number =
-      config.Storage().common_chunks_number();
-    core_config.storage.expire_time =
-      Generics::Time(config.Storage().expire_time());
-    core_config.storage.bound_expire_time =
-      Generics::Time(config.Storage().bound_expire_time());
-    if(config.Storage().dump_period().present())
+    core_config.storage.common_chunks_number = config.Storage().common_chunks_number();
+    core_config.storage.expire_time = Generics::Time(config.Storage().expire_time());
+    core_config.storage.bound_expire_time = Generics::Time(config.Storage().bound_expire_time());
+    if (config.Storage().dump_period().present())
     {
-      core_config.storage.dump_period =
-        Generics::Time(*config.Storage().dump_period());
+      core_config.storage.dump_period = Generics::Time(*config.Storage().dump_period());
     }
     core_config.storage.portions = config.Storage().portions();
-    core_config.storage.rocksdb_batching_threads =
-      config.Storage().rocksdb_batching_threads();
-    core_config.storage.load_slave =
-      config.Storage().user_bind_keep_mode() == "keep slave";
+    core_config.storage.rocksdb_batching_threads = config.Storage().rocksdb_batching_threads();
+    core_config.storage.load_slave = config.Storage().user_bind_keep_mode() == "keep slave";
 
-    core_config.bind_request_storage.prefix =
-      config.BindRequestStorage().prefix();
+    core_config.bind_request_storage.prefix = config.BindRequestStorage().prefix();
     core_config.bind_request_storage.common_chunks_number =
       config.BindRequestStorage().common_chunks_number();
     core_config.bind_request_storage.expire_time =
       Generics::Time(config.BindRequestStorage().expire_time());
-    core_config.bind_request_storage.portions =
-      config.BindRequestStorage().portions();
+    core_config.bind_request_storage.portions = config.BindRequestStorage().portions();
 
-    if(config.OperationBackup().present())
+    if (config.OperationBackup().present())
     {
       AdServer::UserInfoSvcs::UserBindServerCore::OperationBackupConfig
         operation_backup;
       operation_backup.dir = config.OperationBackup()->dir();
       operation_backup.file_prefix = config.OperationBackup()->file_prefix();
-      operation_backup.rotate_period =
-        Generics::Time(config.OperationBackup()->rotate_period());
+      operation_backup.rotate_period = Generics::Time(config.OperationBackup()->rotate_period());
       operation_backup.threads = config.OperationBackup()->threads();
       core_config.operation_backup = std::move(operation_backup);
     }
 
-    if(config.OperationLoad().present())
+    if (config.OperationLoad().present())
     {
       AdServer::UserInfoSvcs::UserBindServerCore::OperationLoadConfig
         operation_load;
       operation_load.dir = config.OperationLoad()->dir();
       operation_load.unprocessed_dir = config.OperationLoad()->unprocessed_dir();
       operation_load.file_prefix = config.OperationLoad()->file_prefix();
-      operation_load.check_period =
-        Generics::Time(config.OperationLoad()->check_period());
+      operation_load.check_period = Generics::Time(config.OperationLoad()->check_period());
       operation_load.threads = config.OperationLoad()->threads();
       core_config.operation_load = std::move(operation_load);
     }
 
-    if(config.UserIdBlackList().present())
+    if (config.UserIdBlackList().present())
     {
       core_config.user_id_black_list = config.UserIdBlackList().get();
     }
 
-    if(config.bind_on_min_age())
+    if (config.bind_on_min_age())
     {
       core_config.bind_min_age = Generics::Time(config.min_age());
     }
@@ -325,37 +273,17 @@ namespace
     const AdServer::UserInfoSvcs::UserBindServerGrpc* grpc_adapter)
   {
     const auto stats = user_bind_server_core->stats();
-    append_json_stat(
-      body,
-      first,
-      "get_user_id_total",
-      stats.get_user_id_total_requests);
-    append_json_stat(
-      body,
-      first,
-      "add_user_id_request_total",
-      stats.add_user_id_requests);
+    append_json_stat(body, first, "get_user_id_total", stats.get_user_id_total_requests);
+    append_json_stat(body, first, "add_user_id_request_total", stats.add_user_id_requests);
     append_rocksdb_stats(body, first, user_bind_server_core->rocksdb_stats());
 
-    if(grpc_adapter != 0)
+    if (grpc_adapter != 0)
     {
       const auto grpc_stats = grpc_adapter->stats();
       append_json_stat(body, first, "call_total", grpc_stats.call_total);
-      append_json_stat(
-        body,
-        first,
-        "call_total_time",
-        grpc_stats.call_total_time);
-      append_json_stat(
-        body,
-        first,
-        "call_in_progress",
-        grpc_stats.call_in_progress);
-      append_json_stat(
-        body,
-        first,
-        "get_bind_request_total",
-        grpc_stats.get_bind_request_total);
+      append_json_stat(body, first, "call_total_time", grpc_stats.call_total_time);
+      append_json_stat(body, first, "call_in_progress", grpc_stats.call_in_progress);
+      append_json_stat(body, first, "get_bind_request_total", grpc_stats.get_bind_request_total);
       append_json_stat(
         body,
         first,
@@ -366,11 +294,7 @@ namespace
         first,
         "get_bind_request_in_progress",
         grpc_stats.get_bind_request_in_progress);
-      append_json_stat(
-        body,
-        first,
-        "add_bind_request_total",
-        grpc_stats.add_bind_request_total);
+      append_json_stat(body, first, "add_bind_request_total", grpc_stats.add_bind_request_total);
       append_json_stat(
         body,
         first,
@@ -381,46 +305,15 @@ namespace
         first,
         "add_bind_request_in_progress",
         grpc_stats.add_bind_request_in_progress);
-      append_json_stat(
-        body,
-        first,
-        "get_user_id_total_time",
-        grpc_stats.get_user_id_total_time);
-      append_json_stat(
-        body,
-        first,
-        "get_user_id_in_progress",
-        grpc_stats.get_user_id_in_progress);
-      append_json_stat(
-        body,
-        first,
-        "add_user_id_total",
-        grpc_stats.add_user_id_total);
-      append_json_stat(
-        body,
-        first,
-        "add_user_id_total_time",
-        grpc_stats.add_user_id_total_time);
-      append_json_stat(
-        body,
-        first,
-        "add_user_id_in_progress",
-        grpc_stats.add_user_id_in_progress);
+      append_json_stat(body, first, "get_user_id_total_time", grpc_stats.get_user_id_total_time);
+      append_json_stat(body, first, "get_user_id_in_progress", grpc_stats.get_user_id_in_progress);
+      append_json_stat(body, first, "add_user_id_total", grpc_stats.add_user_id_total);
+      append_json_stat(body, first, "add_user_id_total_time", grpc_stats.add_user_id_total_time);
+      append_json_stat(body, first, "add_user_id_in_progress", grpc_stats.add_user_id_in_progress);
       append_json_stat(body, first, "batch_total", grpc_stats.batch_total);
-      append_json_stat(
-        body,
-        first,
-        "batch_total_time",
-        grpc_stats.batch_total_time);
-      append_json_stat(
-        body,
-        first,
-        "batch_in_progress",
-        grpc_stats.batch_in_progress);
-      append_grpc_lifecycle_stats(
-        body,
-        first,
-        grpc_stats.grpc_lifecycle_stats);
+      append_json_stat(body, first, "batch_total_time", grpc_stats.batch_total_time);
+      append_json_stat(body, first, "batch_in_progress", grpc_stats.batch_in_progress);
+      append_grpc_lifecycle_stats(body, first, grpc_stats.grpc_lifecycle_stats);
     }
   }
 }
@@ -454,7 +347,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
       std::unique_ptr<AdConfigurationType> ad_configuration =
         AdConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -469,7 +362,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
 
       ostr << "Can't parse config file '" << argv[1] << "': ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -501,23 +394,21 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
     block_shutdown_signals_();
 
     AdServer::UserInfoSvcs::UserBindServerCore_var user_bind_server_core =
-      new AdServer::UserInfoSvcs::UserBindServerCore(
-        make_core_config_(config()),
-        logger());
+      new AdServer::UserInfoSvcs::UserBindServerCore(make_core_config_(config()), logger());
     add_child_object(user_bind_server_core);
 
     AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter;
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
       [&]() noexcept
       {
-        if(active())
+        if (active())
         {
           deactivate_object();
           wait_object();
         }
       });
 
-    if(config().GrpcConfig().present())
+    if (config().GrpcConfig().present())
     {
       grpc_adapter = new AdServer::UserInfoSvcs::UserBindServerGrpc(
         user_bind_server_core,
@@ -533,7 +424,7 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
       add_child_object(grpc_adapter);
     }
 
-    if(config().HttpConfig().present())
+    if (config().HttpConfig().present())
     {
       AdServer::Commons::HttpServer::HttpServer_var http_server;
       http_server = new AdServer::Commons::HttpServer::HttpServer(
@@ -548,14 +439,9 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
         [user_bind_server_core, grpc_adapter](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
-          std::string body =
-            "{";
+          std::string body = "{";
           bool first = true;
-          append_user_bind_server_stats(
-            body,
-            first,
-            user_bind_server_core.in(),
-            grpc_adapter.in());
+          append_user_bind_server_stats(body, first, user_bind_server_core.in(), grpc_adapter.in());
 
           body += "}\n";
           return AdServer::Commons::HttpServer::HttpServer::Response{
@@ -582,24 +468,19 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
   {
     if (logger())
     {
-      logger()->sstream(Logging::Logger::CRITICAL,
-        ASPECT,
-        "ADS-IMPL-58") << FUN <<
+      logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-58") << FUN <<
         ": Got UserBindServerApp_::Exception: " << e.what();
     }
     else
     {
-      std::cerr << FUN << ": Got UserBindServerApp_::Exception: " <<
-        e.what() << std::endl;
+      std::cerr << FUN << ": Got UserBindServerApp_::Exception: " << e.what() << std::endl;
     }
   }
   catch (const eh::Exception& e)
   {
     if (logger())
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-        ASPECT,
-        "ADS-IMPL-59") << FUN <<
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<
         ": Got eh::Exception: " << e.what();
     }
     else

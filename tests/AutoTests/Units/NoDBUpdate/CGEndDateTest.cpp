@@ -1,10 +1,7 @@
 
 #include "CGEndDateTest.hpp"
 
-REFLECT_UNIT(CGEndDateTest) (
-  "NoDBUpdate",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(CGEndDateTest) ("NoDBUpdate", AUTO_TEST_QUIET);
 
 namespace
 {
@@ -84,10 +81,7 @@ CGEndDateTest::gmt_case_()
     { kwd7 , 0, ccg7, CCG_INACTIVE }
   };
 
-  process_requests_(
-    "GMT cases.",
-    fetch_int("GMT/TAG"),
-    START_DATE);
+  process_requests_("GMT cases.", fetch_int("GMT/TAG"), START_DATE);
 }
 
 bool

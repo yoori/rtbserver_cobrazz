@@ -30,8 +30,7 @@ namespace
     { }
 
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(eh::Exception)*/
     {
       ColoStats stats(conn_, colo_);
@@ -71,10 +70,7 @@ namespace
   };
 }
 
-REFLECT_UNIT(RemoteColoUpdateStats) (
-  "Statistics",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE_PRE);
+REFLECT_UNIT(RemoteColoUpdateStats) ("Statistics", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE_PRE);
 
 bool
 RemoteColoUpdateStats::run_test()
@@ -84,9 +80,7 @@ RemoteColoUpdateStats::run_test()
   AutoTest::DBC::Conn conn(open_pq());
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_REMOTE2, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
     "Remote configuration required");
 
   AutoTest::Time debug_time;
@@ -99,10 +93,7 @@ RemoteColoUpdateStats::run_test()
         debug_time(debug_time));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this,
-        "CHANNEL",
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, "CHANNEL", client.debug_info.history_channels).check(),
       "Expected history_channels");
 
     FAIL_CONTEXT(
@@ -114,9 +105,7 @@ RemoteColoUpdateStats::run_test()
         fetch_int("CC")).check(),
       "Expected ccid");
 
-    client.change_base_url(
-      get_config().get_service(
-        CTE_REMOTE2, STE_FRONTEND).address.c_str());
+    client.change_base_url(get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address.c_str());
   }
 
   const unsigned long COLOCATIONS[] =

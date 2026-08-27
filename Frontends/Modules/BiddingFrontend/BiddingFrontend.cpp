@@ -223,8 +223,7 @@ namespace AdServer::Bidding
     if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
-      ostr << "Bidding::Frontend::will_handle(" << uri <<
-        "), service: '" << found_uri << "'";
+      ostr << "Bidding::Frontend::will_handle(" << uri << "), service: '" << found_uri << "'";
 
       logger()->log(ostr.str());
     }
@@ -316,9 +315,7 @@ namespace AdServer::Bidding
         user_info_distributed_client_ = user_info_client;
         user_info_client_ = user_info_client;
         user_info_client_coro_ = std::make_shared<
-          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
-            user_info_client_,
-            bid_workers_);
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(user_info_client_, bid_workers_);
         add_child_object(user_info_client);
 
         auto campaign_manager_client =
@@ -329,9 +326,7 @@ namespace AdServer::Bidding
             common_module_->grpc_coalesce_runner());
         campaign_manager_ = campaign_manager_client;
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager_,
-            bid_workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager_, bid_workers_);
         add_child_object(campaign_manager_client);
 
         auto user_bind_client = AdServer::UserInfoSvcs::create_distributed_user_bind_client(
@@ -343,9 +338,7 @@ namespace AdServer::Bidding
         {
           user_bind_client_ = user_bind_client;
           user_bind_client_coro_ = std::make_shared<
-            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
-              user_bind_client_,
-              bid_workers_);
+            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(user_bind_client_, bid_workers_);
           add_child_object(user_bind_client);
         }
 
@@ -656,9 +649,7 @@ namespace AdServer::Bidding
     }
     catch (const eh::Exception& ex)
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7605") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-7605") <<
         FUN << ": schedule failed: " << ex.what();
     }
   }
@@ -690,9 +681,7 @@ namespace AdServer::Bidding
     }
     catch (const eh::Exception& ex)
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7605") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-7605") <<
         FUN << ": schedule failed: " << ex.what();
     }
   }
@@ -787,8 +776,7 @@ namespace AdServer::Bidding
       logger()->sstream(
         Logging::Logger::CRITICAL,
         Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-118") << FUN <<
-        ": CampaignManager::get_colocation_flags() failed: " << ex.what();
+        "ADS-IMPL-118") << FUN << ": CampaignManager::get_colocation_flags() failed: " << ex.what();
     }
 
     co_return FrontendCommons::RequestResult::written();

@@ -7,7 +7,7 @@ namespace AdServer
     {
       uint operation_type;
       uint version;
-      
+
       string user_id;
       uint temporary;
       uint time;
@@ -27,7 +27,7 @@ namespace AdServer
     {
       uint operation_type;
       uint version;
-      
+
       string user_id;
       uint time;
       uint exchange_merge;
@@ -35,7 +35,7 @@ namespace AdServer
       bytes merge_add_profile;
       bytes merge_history_profile;
     };
-    
+
     autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
 
   }

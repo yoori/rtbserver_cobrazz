@@ -5,21 +5,14 @@
 #include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void
-  print_request_info_profile(
-    std::ostream& out,
-    const RequestInfoProfileReader& reader)
+  print_request_info_profile(std::ostream& out, const RequestInfoProfileReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -140,7 +133,7 @@ namespace RequestInfoSvcs
     std::string
     print_optional_uint(long value)
     {
-      if(value < 0)
+      if (value < 0)
       {
         return "undefined";
       }
@@ -149,14 +142,12 @@ namespace RequestInfoSvcs
     }
 
     std::string
-    print_revenue_reader(
-      const RequestInfoRevenueReader& rev_reader)
+    print_revenue_reader(const RequestInfoRevenueReader& rev_reader)
     {
       std::ostringstream ostr;
       ostr << "rate_id = " << rev_reader.rate_id() <<
         ", imp = " << rev_reader.impression() <<
-        ", click = " << rev_reader.click() <<
-        ", action = " << rev_reader.action();
+        ", click = " << rev_reader.click() << ", action = " << rev_reader.action();
       return ostr.str();
     }
 
@@ -176,12 +167,12 @@ namespace RequestInfoSvcs
     AdServer::CampaignSvcs::RevenueType revenue_type =
       static_cast<AdServer::CampaignSvcs::RevenueType>(int_revenue_type);
 
-    if(revenue_type == AdServer::CampaignSvcs::RT_ABSOLUTE)
+    if (revenue_type == AdServer::CampaignSvcs::RT_ABSOLUTE)
     {
       return "absolute";
     }
 
-    if(revenue_type == AdServer::CampaignSvcs::RT_SHARE)
+    if (revenue_type == AdServer::CampaignSvcs::RT_SHARE)
     {
       return "share";
     }
@@ -190,9 +181,7 @@ namespace RequestInfoSvcs
   }
 
   void
-  print_request_info_profile(
-    std::ostream& out,
-    const RequestInfoProfileReader& reader)
+  print_request_info_profile(std::ostream& out, const RequestInfoProfileReader& reader)
     noexcept
   {
     const unsigned long columns = sizeof(REQUEST_INFO_TABLE_COLUMNS) /
@@ -200,7 +189,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, REQUEST_INFO_TABLE_COLUMNS[i]);
     }
@@ -262,8 +251,7 @@ namespace RequestInfoSvcs
 
     {
       std::ostringstream channels_str;
-      Algs::print(channels_str,
-        reader.channels().begin(), reader.channels().end());
+      Algs::print(channels_str, reader.channels().begin(), reader.channels().end());
       row.add_field(channels_str.str());
     }
 
@@ -278,7 +266,7 @@ namespace RequestInfoSvcs
     row.add_field(reader.country());
 
     std::ostringstream cmp_channels_ostr;
-    for(RequestInfoProfileReader::cmp_channels_Container::const_iterator
+    for (RequestInfoProfileReader::cmp_channels_Container::const_iterator
           ch_it = reader.cmp_channels().begin();
         ch_it != reader.cmp_channels().end(); ++ch_it)
     {
@@ -343,5 +331,4 @@ namespace RequestInfoSvcs
     table.add_row(row);
     table.dump(out);
   }
-}
 }

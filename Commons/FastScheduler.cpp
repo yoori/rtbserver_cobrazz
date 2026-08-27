@@ -110,8 +110,7 @@ namespace AdServer::Commons
       {
         constexpr long long quantum_us = 1000;
         const auto deadline_us = deadline.microseconds();
-        const auto quantized_us =
-          (deadline_us + quantum_us - 1) / quantum_us * quantum_us;
+        const auto quantized_us = (deadline_us + quantum_us - 1) / quantum_us * quantum_us;
         return Generics::Time(
           quantized_us / Generics::Time::USEC_MAX,
           quantized_us % Generics::Time::USEC_MAX);
@@ -168,9 +167,7 @@ namespace AdServer::Commons
 
       void clear_() noexcept
       {
-        Task* task = pending_.exchange(
-          stopped_task_(),
-          std::memory_order_acq_rel);
+        Task* task = pending_.exchange(stopped_task_(), std::memory_order_acq_rel);
 
         while (task && task != stopped_task_())
         {
@@ -222,9 +219,7 @@ namespace AdServer::Commons
             continue;
           }
 
-          wakeup_ticks_.store(
-            deadline.microseconds(),
-            std::memory_order_release);
+          wakeup_ticks_.store(deadline.microseconds(), std::memory_order_release);
           if (pending_.load(std::memory_order_acquire))
           {
             continue;
@@ -278,11 +273,7 @@ namespace AdServer::Commons
       const auto worker_index = next_worker_.fetch_add(
         1,
         std::memory_order_relaxed) % workers_.size();
-      workers_[worker_index]->schedule(
-        task,
-        deadline,
-        std::move(owner),
-        callback);
+      workers_[worker_index]->schedule(task, deadline, std::move(owner), callback);
     }
 
   private:

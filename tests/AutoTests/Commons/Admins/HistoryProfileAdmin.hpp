@@ -32,11 +32,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<HistoryProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uid,
-        bool temp,
-        UserInfoSrv service
-      )
+      void make_cmd (const char* address, const char* uid, bool temp, UserInfoSrv service)
       {
         address_ = address;
         AdminParams params;

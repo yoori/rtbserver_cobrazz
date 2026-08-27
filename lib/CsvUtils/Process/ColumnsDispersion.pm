@@ -13,7 +13,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::Columns: incorrect column index: $index";
     }
@@ -39,7 +39,7 @@ sub process
   $mx = $mx / $count;
 
   my $disp = 0.0;
-  if($count > 1)
+  if ($count > 1)
   {
     # SUM(x^2 - (Mx)^2) / (n - 1)
     foreach my $index(@{$self->{fields_}})

@@ -38,14 +38,11 @@ namespace AdServer::Bidding
       RequestParamProcessor;
     typedef ReferenceCounting::SmartPtr<RequestParamProcessor>
       RequestParamProcessor_var;
-    using ParamProcessorMap =
-      SubStringHashAdapterFlatMap<RequestParamProcessor_var>;
+    using ParamProcessorMap = SubStringHashAdapterFlatMap<RequestParamProcessor_var>;
 
   protected:
     void
-    add_param_processor_(
-      const String::SubString& name,
-      RequestParamProcessor* processor)
+    add_param_processor_(const String::SubString& name, RequestParamProcessor* processor)
       noexcept;
 
   protected:

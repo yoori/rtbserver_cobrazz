@@ -84,8 +84,7 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -118,8 +117,7 @@ namespace AdServer
       BindResult bind_result;
     };
 
-    using ProcessRequestTask =
-      AdServer::Commons::Awaitable<ProcessRequestResult>;
+    using ProcessRequestTask = AdServer::Commons::Awaitable<ProcessRequestResult>;
 
   protected:
     virtual ~UserBindFrontend() noexcept;
@@ -180,9 +178,7 @@ namespace AdServer
     parse_configs_() /*throw(Exception)*/;
 
     ProcessRequestTask
-    co_process_request_(
-      UserBind::RequestInfo_var request_info,
-      std::string dns_bind_request_id)
+    co_process_request_(UserBind::RequestInfo_var request_info, std::string dns_bind_request_id)
       noexcept;
 
     void
@@ -203,8 +199,7 @@ namespace AdServer
       noexcept;
 
     void
-    report_bad_user_(
-      const UserBind::RequestInfo& request_info)
+    report_bad_user_(const UserBind::RequestInfo& request_info)
       noexcept;
 
     void
@@ -222,9 +217,7 @@ namespace AdServer
       /*throw(UserBindFrontend::InvalidSource)*/;
 
     static void
-    init_redirect_template_(
-      String::TextTemplate::IStream& templ,
-      const String::SubString& text)
+    init_redirect_template_(String::TextTemplate::IStream& templ, const String::SubString& text)
       /*throw(UserBindFrontend::InvalidSource)*/;
 
     void

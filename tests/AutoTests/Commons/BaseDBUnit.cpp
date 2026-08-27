@@ -28,8 +28,7 @@ bool BaseDBUnit::run_test()
   }
   catch(...)
   {
-    AutoTest::Logger::thlog().log(String::SubString("Unknown exception"),
-      Logging::Logger::ERROR);
+    AutoTest::Logger::thlog().log(String::SubString("Unknown exception"), Logging::Logger::ERROR);
     safe_tear_down ();
     throw;
   }
@@ -52,15 +51,12 @@ void BaseDBUnit::safe_tear_down()
   }
   catch(...)
   {
-    AutoTest::Logger::thlog().log("Unknown exception",
-      Logging::Logger::ERROR);
+    AutoTest::Logger::thlog().log("Unknown exception", Logging::Logger::ERROR);
   }
 
 }
 
-BaseDBUnit::BaseDBUnit(UnitStat& stat_var,
-                       const char* task_name,
-                       XsdParams params_var) :
+BaseDBUnit::BaseDBUnit(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
   BaseUnit(stat_var, task_name, params_var),
   pq_conn_(open_pq())
 { }
@@ -78,8 +74,7 @@ BaseDBUnit::~BaseDBUnit() noexcept
   }
   catch (...)
   {
-    AutoTest::Logger::thlog().log("Unknown exception",
-      Logging::Logger::ERROR);
+    AutoTest::Logger::thlog().log("Unknown exception", Logging::Logger::ERROR);
   }
 }
 

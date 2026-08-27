@@ -15,11 +15,7 @@
 //#include <Generics/MMap.hpp>
 #include "XGBoostPredictor.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
-{
-namespace CTR
+namespace AdServer::CampaignSvcs::CTR
 {
   namespace
   {
@@ -110,8 +106,7 @@ namespace CTR
 
   // XGBoostPredictorPool::PredictorWrapperDescriptor impl
   XGBoostPredictorPool::
-  PredictorWrapperDescriptor::PredictorWrapperDescriptor(
-    const String::SubString& file)
+  PredictorWrapperDescriptor::PredictorWrapperDescriptor(const String::SubString& file)
     : model_file_name(file.str())
   {
     static const char* FUN = "XGBoostPredictorPool::"
@@ -134,9 +129,7 @@ namespace CTR
         std::istream_iterator<unsigned char>(fstr),
         std::istream_iterator<unsigned char>());
 
-      model_stream.reset(
-        new rabit::utils::MemoryFixSizeBuffer(
-          &model_buffer[0], file_size));
+      model_stream.reset(new rabit::utils::MemoryFixSizeBuffer(&model_buffer[0], file_size));
     }
     catch(const eh::Exception& ex)
     {
@@ -156,8 +149,7 @@ namespace CTR
 
     // load & resave model for prevent compatibility exception
     std::unique_ptr<xgboost::Learner> comp_learner(
-      xgboost::Learner::Create(
-        std::vector<std::shared_ptr<xgboost::DMatrix> >()));
+      xgboost::Learner::Create(std::vector<std::shared_ptr<xgboost::DMatrix> >()));
     rabit::utils::MemoryFixSizeBuffer orig_model_stream_copy(*init.model_stream);
     comp_learner->LoadModel(&orig_model_stream_copy);
 
@@ -338,13 +330,11 @@ namespace CTR
   }
 
   // XGBoostPredictorPool::XGBoostPredictorPool impl
-  XGBoostPredictorPool::XGBoostPredictorPool(
-    const String::SubString& model_file)
+  XGBoostPredictorPool::XGBoostPredictorPool(const String::SubString& model_file)
   {
     predictor_descriptor_.reset(new PredictorWrapperDescriptor(model_file));
     // create one PredictorWrapper (validate model)
-    predictors_.push_back(
-      PredictorWrapperPtr(new PredictorWrapper(*predictor_descriptor_)));
+    predictors_.push_back(PredictorWrapperPtr(new PredictorWrapper(*predictor_descriptor_)));
     (*predictors_.begin())->init();
   }
 
@@ -369,8 +359,7 @@ namespace CTR
     if (predictors.empty())
     {
       // create new learner
-      predictors.push_back(
-        PredictorWrapperPtr(new PredictorWrapper(*predictor_descriptor_)));
+      predictors.push_back(PredictorWrapperPtr(new PredictorWrapper(*predictor_descriptor_)));
     }
 
     return XGBoostPredictorPool::Predictor_var(
@@ -387,6 +376,4 @@ namespace CTR
     SyncPolicy::WriteGuard lock(lock_);
     predictors_.splice(predictors_.begin(), predictors);
   }
-}
-}
 }

@@ -1,9 +1,6 @@
 #include "BiddingLogicTest.hpp"
 
-REFLECT_UNIT(BiddingLogicTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(BiddingLogicTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -44,9 +41,7 @@ BiddingLogicTest::scenario1 ()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
@@ -66,9 +61,7 @@ BiddingLogicTest::scenario2 ()
     fetch_string("CC04")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
@@ -87,9 +80,7 @@ BiddingLogicTest::scenario3 ()
     fetch_string("CC03")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
@@ -108,21 +99,15 @@ BiddingLogicTest::scenario4 ()
   // 'selected_creatives' may contain creatives in any order,
   // because creatives have same ecpmBid for this case.
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      2,
-      SelectedCreativesCCID(client).size()).check(),
+    AutoTest::equal_checker(2, SelectedCreativesCCID(client).size()).check(),
     "unexpected selected_creatives size");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("CC03"),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(fetch_string("CC03"), SelectedCreativesCCID(client)).check(),
     "ccid must entry to selected_creatives");
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("CC05"),
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::entry_checker(fetch_string("CC05"), SelectedCreativesCCID(client)).check(),
     "ccid must entry to selected_creatives");
 }
 
@@ -142,9 +127,7 @@ BiddingLogicTest::scenario5 ()
     fetch_string("CC05")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
@@ -161,9 +144,7 @@ BiddingLogicTest::scenario6 ()
   client.process_request(request, "for making keyword context");
   client.repeat_request ("text advertising");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      2,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(2, client.debug_info.selected_creatives.size()).check(),
     "must got 2 creatives");
   std::string exp_ccids_1[] =
   {
@@ -179,12 +160,8 @@ BiddingLogicTest::scenario6 ()
 
   FAIL_CONTEXT(
     AutoTest::or_checker(
-      AutoTest::sequence_checker(
-        exp_ccids_1,
-        SelectedCreativesCCID(client)),
-      AutoTest::sequence_checker(
-        exp_ccids_2,
-        SelectedCreativesCCID(client))).check(),
+      AutoTest::sequence_checker(exp_ccids_1, SelectedCreativesCCID(client)),
+      AutoTest::sequence_checker(exp_ccids_2, SelectedCreativesCCID(client))).check(),
     "selected_creatives ccid first variant");
 }
 
@@ -200,18 +177,14 @@ BiddingLogicTest::scenario7 ()
   client.process_request(request, "for making keyword context");
   client.repeat_request ("text advertising");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      2,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(2, client.debug_info.selected_creatives.size()).check(),
     "must got 2 creatives");
   std::string exp_ccids[] = {
     fetch_string("CC06_2"),
     fetch_string("CC06_1")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
@@ -227,26 +200,21 @@ BiddingLogicTest::scenario8 ()
   client.process_request(request, "for making keyword context");
   client.repeat_request ("text advertising");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      2,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(2, client.debug_info.selected_creatives.size()).check(),
     "must got 2 creatives");
   std::string exp_ccids[] = {
     fetch_string("CC07_1"),
     fetch_string("CC07_2")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }
 
 void
 BiddingLogicTest::scenario9 ()
 {
-  add_descr_phrase("'BiddingLogicTest' One winner "
-                   "(tag with cpm = 0 and margin = 0");
+  add_descr_phrase("'BiddingLogicTest' One winner " "(tag with cpm = 0 and margin = 0");
   AdClient client(AdClient::create_user(this));
 
   NSLookupRequest request;
@@ -259,8 +227,6 @@ BiddingLogicTest::scenario9 ()
     fetch_string("CC01")
   };
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "selected_creatives ccid");
 }

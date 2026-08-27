@@ -9,9 +9,7 @@
 
 #include "ChannelServerCore.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   class ChannelServerCustomImpl:
     public virtual CORBACommons::ReferenceCounting::ServantImpl
@@ -37,5 +35,4 @@ namespace ChannelSvcs
 
   typedef ReferenceCounting::SmartPtr<ChannelServerCustomImpl>
     ChannelServerCustomImpl_var;
-}
 }

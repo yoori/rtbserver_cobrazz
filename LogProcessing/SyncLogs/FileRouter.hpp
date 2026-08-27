@@ -6,26 +6,24 @@
 
 #include "Utils.hpp"
 
-namespace AdServer
+namespace AdServer::LogProcessing::TemplateParams
 {
-namespace LogProcessing
-{
-  namespace TemplateParams
-  {
-    const String::SubString MARKER("##", 2);
-    const char HOST[]      = "HOST";
-    const char PATH[]      = "PATH";
-    const char PATTERN[]   = "PATTERN";
-    const char FILE_NAME[] = "FILE_NAME";
-    const char SRC_HOST[]  = "SRC_HOST";
-    const char SRC_PATH[]  = "SRC_PATH";
-    const char SRC_DIR[]   = "SRC_DIR";
-    const char DST_HOST[]  = "DST_HOST";
-    const char DST_PATH[]  = "DST_PATH";
-    const char DST_DIR[]  = "DST_DIR";
-    const char HASH[]  = "HASH";
-  }
+  const String::SubString MARKER("##", 2);
+  const char HOST[]      = "HOST";
+  const char PATH[]      = "PATH";
+  const char PATTERN[]   = "PATTERN";
+  const char FILE_NAME[] = "FILE_NAME";
+  const char SRC_HOST[]  = "SRC_HOST";
+  const char SRC_PATH[]  = "SRC_PATH";
+  const char SRC_DIR[]   = "SRC_DIR";
+  const char DST_HOST[]  = "DST_HOST";
+  const char DST_PATH[]  = "DST_PATH";
+  const char DST_DIR[]  = "DST_DIR";
+  const char HASH[]  = "HASH";
+}
 
+namespace AdServer::LogProcessing
+{
   struct FileRouteParams
   {
     std::string src_file_name; // to keep between calls
@@ -65,9 +63,7 @@ namespace LogProcessing
     public ReferenceCounting::AtomicImpl
   {
   public:
-    AppFileRouter(
-      const char* command_template,
-      const char* post_command_template = "")
+    AppFileRouter(const char* command_template, const char* post_command_template = "")
       /*throw(Exception)*/;
 
     virtual void
@@ -111,5 +107,4 @@ namespace LogProcessing
     String::TextTemplate::IStream command_template_;
     String::TextTemplate::IStream post_command_template_;
   };
-}
 }

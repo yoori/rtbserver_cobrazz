@@ -23,7 +23,7 @@ sub new
     my $file = $params{'file'};
     my $csv = Text::CSV_XS->new({ binary => 1, eol => $/ });
     open FILE, $file or die "Can't open $file";
-    while(<FILE>)
+    while (<FILE>)
     {
       my $line = $_;
       chomp $line;
@@ -51,11 +51,11 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if($value ne '')
+  if ($value ne '')
   {
-    for(my $i = 0; $i < scalar @{$self->{values_}}; ++$i)
+    for (my $i = 0; $i < scalar @{$self->{values_}}; ++$i)
     {
-      if(($self->{values_}->[$i]->min() eq '' || $self->{values_}->[$i]->min() le $value) && (
+      if (($self->{values_}->[$i]->min() eq '' || $self->{values_}->[$i]->min() le $value) && (
          $self->{values_}->[$i]->max() eq '' || $value lt $self->{values_}->[$i]->max()))
       {
         $row->[$self->{field_}] = $self->{values_}->[$i]->replace();

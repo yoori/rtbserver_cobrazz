@@ -1,11 +1,7 @@
 #include "CampaignStartupTest.hpp"
 #include <math.h>
 
-REFLECT_UNIT(CampaignStartupTest) (
-  "Statistics",
-  AUTO_TEST_SLOW,
-  AUTO_TEST_SERIALIZE
-);
+REFLECT_UNIT(CampaignStartupTest) ("Statistics", AUTO_TEST_SLOW, AUTO_TEST_SERIALIZE);
 
 namespace DB = ::AutoTest::DBC;
 namespace ORM = ::AutoTest::ORM;
@@ -37,11 +33,7 @@ namespace
      * @param CCG ID.
      * @param expected eCPM.
      */
-    CheckEcpm(
-      BaseUnit* test,
-      DB::IConn& conn,
-      unsigned long ccg_id,
-      const Money& expected_ecpm) :
+    CheckEcpm(BaseUnit* test, DB::IConn& conn, unsigned long ccg_id, const Money& expected_ecpm) :
       test_(test),
       conn_(conn),
       ccg_id_(ccg_id),
@@ -92,18 +84,13 @@ void CampaignStartupTest::set_up()
 
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
     create<ORM::PQ::CampaignCreativeGroup>(ccg_id);
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(ccg->select()),
-    "should found CCG");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->select()), "should found CCG");
 
   ccg->status = "A";
   ccg->country_code = fetch_string("COUNTRYCODE");
   ccg->set_display_status(AutoTest::ORM::DS_LIVE);
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg->update()),
-    "should activate CCG");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "should activate CCG");
 }
 
 void CampaignStartupTest::initial_check()
@@ -113,12 +100,7 @@ void CampaignStartupTest::initial_check()
   //const int cpc = fetch_int("CPC");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      CheckEcpm(
-        this,
-        pq_conn_,
-        ccg_id,
-        0.0)).check(),
+    AutoTest::wait_checker(CheckEcpm(this, pq_conn_, ccg_id, 0.0)).check(),
     "Campaign ecpm initial state");
 }
 
@@ -152,9 +134,7 @@ void CampaignStartupTest::base_scenario()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
   }
 
@@ -169,15 +149,8 @@ void CampaignStartupTest::base_scenario()
     // CTR = 0! No clicks!
     FAIL_CONTEXT(
       AutoTest::and_checker(
-        AutoTest::wait_checker(
-          AutoTest::stats_diff_checker(
-            pq_conn_, diff, stats)),
-        AutoTest::wait_checker(
-          CheckEcpm(
-            this,
-            pq_conn_,
-            ccg_id,
-            0.0))).check(),
+        AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diff, stats)),
+        AutoTest::wait_checker(CheckEcpm(this, pq_conn_, ccg_id, 0.0))).check(),
       "must got expected stats and ecpm");
 
   }
@@ -193,9 +166,7 @@ void CampaignStartupTest::base_scenario()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
 
     FAIL_CONTEXT(client.process_request(
@@ -220,15 +191,8 @@ void CampaignStartupTest::base_scenario()
 
     FAIL_CONTEXT(
       AutoTest::and_checker(
-        AutoTest::wait_checker(
-          AutoTest::stats_diff_checker(
-            pq_conn_, diff, stats)),
-      AutoTest::wait_checker(
-        CheckEcpm(
-          this,
-          pq_conn_,
-          ccg_id,
-          exp_ecpm))).check(),
+        AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diff, stats)),
+      AutoTest::wait_checker(CheckEcpm(this, pq_conn_, ccg_id, exp_ecpm))).check(),
       "must got expected stats and ecpm");
 
   }

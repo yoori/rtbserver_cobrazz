@@ -21,14 +21,14 @@ my $usage =
 my $args = Args::parse(@ARGV);
 my %services;
 
-if(!defined($args->{'ssh-identity'}) || !defined($args->{'env'}))
+if (!defined($args->{'ssh-identity'}) || !defined($args->{'env'}))
 {
   die "Required ssh-identity and env arguments\n$usage";
 }
 
 my $log_file = $args->{'log-file'};
 
-if(defined($log_file))
+if (defined($log_file))
 {
   open(LOG, ">>$log_file");
 }
@@ -38,17 +38,17 @@ else
 }
 my $verbose = exists $args->{'verbose'} ? 1 : 0;
 
-while(my ($arg_key, $arg_value) = each(%$args))
+while (my ($arg_key, $arg_value) = each(%$args))
 {
-  if($arg_key =~ m/^serv-(.*)$/)
+  if ($arg_key =~ m/^serv-(.*)$/)
   {
     my $service_name = $1;
     my @service_refs = split(',', $arg_value);
     foreach my $service_ref(@service_refs)
     {
-      if($service_ref ne '')
+      if ($service_ref ne '')
       {
-        if($service_ref !~ m|^(.*)#(.*)$|)
+        if ($service_ref !~ m|^(.*)#(.*)$|)
         {
           die "Invalid reference format: $service_ref";
         }
@@ -81,6 +81,7 @@ foreach my $service_name(keys(%services))
       {
         $comment = 'not ready';
       }
+
       if (not $service_name eq "ChannelServer")
       {
 # ChannelController contain hosts into comment already.
@@ -92,6 +93,7 @@ foreach my $service_name(keys(%services))
       push @comments, $comment;
     }
   }
+
   if (scalar(@exit_codes))
   {
     $check_result{$service_name}{'codes'} = \@exit_codes;
@@ -146,6 +148,7 @@ sub filter_comments
     {
       $n1 = ~0;
     }
+
     if (defined $n2 and $n2 > 0)
     {
       $n1 = $n1 / $n2;
@@ -184,6 +187,7 @@ sub print_list
     }
     $str .= shift @$list_ref;
   }
+
   if (scalar(@$list_ref))
   {
     $str .= "$separator ...";

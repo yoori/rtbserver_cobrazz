@@ -1,9 +1,7 @@
 #include "Base32.hpp"
 #include "ExternalUserIdUtils.hpp"
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   namespace
   {
@@ -15,9 +13,9 @@ namespace Commons
       char to_escape_char)
     {
       escaped_str.reserve(str.size() * 2);
-      for(auto ch_it = str.begin(); ch_it != str.end(); ++ch_it)
+      for (auto ch_it = str.begin(); ch_it != str.end(); ++ch_it)
       {
-        if(*ch_it == to_escape_char)
+        if (*ch_it == to_escape_char)
         {
           escaped_str.push_back(escape_char);
           escaped_str.push_back(*ch_it);
@@ -30,9 +28,7 @@ namespace Commons
     }
 
     void
-    dns_div(
-      std::string& dns_res,
-      const String::SubString& src)
+    dns_div(std::string& dns_res, const String::SubString& src)
     {
       const unsigned int MAX_DNS_PART_LEN = 63;
 
@@ -41,11 +37,11 @@ namespace Commons
 
       unsigned int cur_block_len = 0;
       auto prev_it = src.begin();
-      for(auto it = src.begin(); it != src.end(); ++it, ++cur_block_len)
+      for (auto it = src.begin(); it != src.end(); ++it, ++cur_block_len)
       {
-        if(cur_block_len >= MAX_DNS_PART_LEN - 1)
+        if (cur_block_len >= MAX_DNS_PART_LEN - 1)
         {
-          if(!dns_res.empty())
+          if (!dns_res.empty())
           {
             dns_res += ".";
           }
@@ -56,7 +52,7 @@ namespace Commons
         }
       }
 
-      if(!dns_res.empty())
+      if (!dns_res.empty())
       {
         dns_res += ".";
       }
@@ -65,22 +61,20 @@ namespace Commons
     }
 
     void
-    dns_undiv(
-      std::string& undoted_src,
-      const String::SubString& enc_src)
+    dns_undiv(std::string& undoted_src, const String::SubString& enc_src)
     {
       undoted_src.clear();
       undoted_src.reserve(enc_src.size());
 
       auto prev_it = enc_src.begin();
-      for(auto it = enc_src.begin(); it != enc_src.end(); )
+      for (auto it = enc_src.begin(); it != enc_src.end(); )
       {
-        if(*it == '.')
+        if (*it == '.')
         {
           undoted_src.append(prev_it, it);
           prev_it = enc_src.end();
           // skip one char after dot
-          if(++it == enc_src.end() || ++it == enc_src.end())
+          if (++it == enc_src.end() || ++it == enc_src.end())
           {
             break;
           }
@@ -101,7 +95,7 @@ namespace Commons
     div_src_external_user_id(const String::SubString& src)
     {
       String::SubString::SizeType pos = src.find('/');
-      if(pos != String::SubString::NPOS)
+      if (pos != String::SubString::NPOS)
       {
         return ExternalUserId(
           src.substr(0, pos),
@@ -116,16 +110,13 @@ namespace Commons
   }
 
   void
-  dns_encode_external_user_ids(
-    std::string& res,
-    const ExternalUserIdArray& user_ids)
+  dns_encode_external_user_ids(std::string& res, const ExternalUserIdArray& user_ids)
     noexcept
   {
     std::string union_str;
-    for(auto user_id_it = user_ids.begin();
-      user_id_it != user_ids.end(); ++user_id_it)
+    for (auto user_id_it = user_ids.begin(); user_id_it != user_ids.end(); ++user_id_it)
     {
-      if(user_id_it != user_ids.begin())
+      if (user_id_it != user_ids.begin())
       {
         union_str += ",";
       }
@@ -149,12 +140,10 @@ namespace Commons
   }
 
   void
-  dns_decode_external_user_ids(
-    ExternalUserIdArray& user_ids,
-    const String::SubString& src)
+  dns_decode_external_user_ids(ExternalUserIdArray& user_ids, const String::SubString& src)
     noexcept
   {
-    if(!src.empty())
+    if (!src.empty())
     {
       String::SubString enc_src = src.substr(1);
       std::string undoted_src;
@@ -162,34 +151,32 @@ namespace Commons
       dns_undiv(undoted_src, enc_src);
 
       std::string bind_user_ids;
-      AdServer::Commons::base32_decode(
-        bind_user_ids,
-        undoted_src);
+      AdServer::Commons::base32_decode(bind_user_ids, undoted_src);
 
       // div by ','
 
       {
         std::string cur_block;
-        for(auto it = bind_user_ids.begin(); it != bind_user_ids.end(); ++it)
+        for (auto it = bind_user_ids.begin(); it != bind_user_ids.end(); ++it)
         {
-          if(*it == ',')
+          if (*it == ',')
           {
             ++it;
 
-            if(it != bind_user_ids.end() && *it == ',')
+            if (it != bind_user_ids.end() && *it == ',')
             {
               // escaped ','
               cur_block.push_back(',');
             }
             else
             {
-              if(!cur_block.empty())
+              if (!cur_block.empty())
               {
                 user_ids.push_back(cur_block); //div_src_external_user_id(cur_block));
               }
 
               cur_block.clear();
-              if(it != bind_user_ids.end())
+              if (it != bind_user_ids.end())
               {
                 cur_block.push_back(*it);
               }
@@ -201,7 +188,7 @@ namespace Commons
           }
         }
 
-        if(!cur_block.empty())
+        if (!cur_block.empty())
         {
           user_ids.push_back(cur_block); //div_src_external_user_id(cur_block));
         }
@@ -209,5 +196,3 @@ namespace Commons
     } // !src.empty()
   }
 }
-}
-

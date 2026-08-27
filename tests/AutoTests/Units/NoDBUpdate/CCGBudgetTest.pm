@@ -15,17 +15,19 @@ use constant DAY => 24 * HOUR;
 use constant DEFAULT_BUDGET => 10_000_000;
 
 
-sub creative_revenue 
+sub creative_revenue
 {
   my ($self, $params) = @_;
   if (defined $params->{cpm})
   {
     return $params->{cpm} / 1000;
   }
+
   if (defined $params->{cpc})
   {
     return $params->{cpc};
   }
+
   if (defined $params->{cpa})
   {
     return $params->{cpa};
@@ -46,7 +48,7 @@ sub channel_revenue
 sub request_revenue
 {
   my ($self, $params) = @_;
-  return 
+  return
     $self->channel_revenue($params) +
     $self->creative_revenue($params);
 }
@@ -101,12 +103,12 @@ sub create_campaign
     campaigncreativegroup_cpc => $params->{cpc},
     campaigncreativegroup_cpa => $params->{cpa},
     campaigncreativegroup_budget =>
-        defined $params->{budget}? 
+        defined $params->{budget}?
           $params->{budget}: DEFAULT_BUDGET,
-    campaigncreativegroup_daily_budget => 
+    campaigncreativegroup_daily_budget =>
        $params->{ccg_daily_budget},
-    campaigncreativegroup_delivery_pacing => 
-       defined $params->{ccg_delivery_pacing}? 
+    campaigncreativegroup_delivery_pacing =>
+       defined $params->{ccg_delivery_pacing}?
           $params->{ccg_delivery_pacing} : 'F',
     campaigncreativegroup_date_end =>
       defined $params->{ccg_date_end}?
@@ -137,8 +139,8 @@ sub create_campaign
   if (defined $params->{ccg_date_end})
   {
     $ns->output(
-      $prefix . "/DateEnd", 
-      $params->{ccg_date_end});   
+      $prefix . "/DateEnd",
+      $params->{ccg_date_end});
   }
 }
 
@@ -147,13 +149,13 @@ sub time_in_tz
   my ($ns, $utc, $tzname) = @_;
 
   my ($tz_offset) = $ns->pq_dbh->selectrow_array(q[
-    select now() - now() at time zone 'GMT' at time zone tzname from 
+    select now() - now() at time zone 'GMT' at time zone tzname from
     timezone where tzname = ?;
     ], undef, $tzname);
 
   chop $tz_offset;
 
-  my ($sign, $hours, $minutes, $secs) = 
+  my ($sign, $hours, $minutes, $secs) =
     $tz_offset =~ m/^\s*(\+|-)?([0-9]+):([0-9]+):([0-9]+)\s*$/;
 
   my $offset = $hours * HOUR + $minutes * MINUTE;
@@ -181,7 +183,7 @@ sub init
 
   my $advertiser = $ns->create(Account => {
     name => 'Adv',
-    role_id => 
+    role_id =>
       DB::Defaults::instance()->advertiser_role() });
 
   my $cpm = 1000;
@@ -217,9 +219,9 @@ sub init
   my $gross_advertiser = $ns->create(Account => {
     name => 'GrossAdv',
     commission => 0.1,
-    agency_account_id => 
+    agency_account_id =>
         DB::Defaults::instance()->agency_gross(),
-    role_id => 
+    role_id =>
       DB::Defaults::instance()->advertiser_role() });
 
   $self->create_campaign(
@@ -232,7 +234,7 @@ sub init
   my $net_advertiser = $ns->create(Account => {
     name => 'NetAdv',
     commission => 0.5,
-    role_id => 
+    role_id =>
       DB::Defaults::instance()->advertiser_role() });
 
   $self->create_campaign(
@@ -247,12 +249,12 @@ sub init
      { cpm => 1000,
        ccg_daily_budget => 2,
        publishers => [ $publisher1, $publisher2 ],
-       timezone => 'America/Sao_Paulo' });  
+       timezone => 'America/Sao_Paulo' });
 
   my ($tz_positive_offset, $tz_negative_offset) =
     ('Europe/Istanbul', 'America/Sao_Paulo');
 
-  my ($time_in_pos_tz, $time_in_neg_tz) = 
+  my ($time_in_pos_tz, $time_in_neg_tz) =
     (time_in_tz($ns, $now->[0], $tz_positive_offset),
      time_in_tz($ns, $now->[0], $tz_negative_offset));
 

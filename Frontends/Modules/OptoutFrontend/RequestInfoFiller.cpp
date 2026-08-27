@@ -78,9 +78,7 @@ namespace AdServer::OptOut
     {
     public:
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
       {
         if (value == Cookie::OPTOUT_TRUE_VALUE)
         {
@@ -98,31 +96,26 @@ namespace AdServer::OptOut
     class UuidParamProcessor: public RequestInfoParamProcessor
     {
     public:
-      UuidParamProcessor(
-        Logging::Logger* logger,
-        CommonModule* common_module)
+      UuidParamProcessor(Logging::Logger* logger, CommonModule* common_module)
         noexcept
         : logger_(ReferenceCounting::add_ref(logger)),
           common_module_(ReferenceCounting::add_ref(common_module))
       {}
 
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         noexcept
       {
         try
         {
-          if(value == AdServer::Commons::PROBE_USER_ID.to_string())
+          if (value == AdServer::Commons::PROBE_USER_ID.to_string())
           {
             request_info.user_id = AdServer::Commons::PROBE_USER_ID;
             request_info.user_status = AdServer::CampaignSvcs::US_PROBE;
           }
           else
           {
-            Generics::SignedUuid uid =
-              common_module_->user_id_controller()->verify(value);
+            Generics::SignedUuid uid = common_module_->user_id_controller()->verify(value);
             if (!uid.uuid().is_null())
             {
               request_info.user_id = uid.uuid();
@@ -135,10 +128,7 @@ namespace AdServer::OptOut
           Stream::Error ostr;
           ostr << FNS << ": Invalid uid value=\"" << value << "): " << e.what();
 
-          logger_->log(
-            ostr.str(),
-            Logging::Logger::NOTICE,
-            Aspect::OPTOUT_FRONTEND);
+          logger_->log(ostr.str(), Logging::Logger::NOTICE, Aspect::OPTOUT_FRONTEND);
         }
       }
 
@@ -158,9 +148,7 @@ namespace AdServer::OptOut
       {}
 
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(eh::Exception)*/
       {
         std::string& user_agent = request_info.user_agent;
@@ -197,9 +185,7 @@ namespace AdServer::OptOut
     {
     public:
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::BadParameter)*/
       {
         if (value == Context::OO_OUT_OPERATION)
@@ -217,13 +203,11 @@ namespace AdServer::OptOut
         else
         {
           Stream::Error ostr;
-          ostr << FNS << ": unknown type of OptOut operation: '" <<
-            value << "'";
+          ostr << FNS << ": unknown type of OptOut operation: '" << value << "'";
 
           throw RequestInfoFiller::BadParameter(ostr);
         }
-        request_info.local_aspect =
-          Aspect::LOCAL_ASPECTS[request_info.oo_operation];
+        request_info.local_aspect = Aspect::LOCAL_ASPECTS[request_info.oo_operation];
       }
 
     private:
@@ -235,9 +219,7 @@ namespace AdServer::OptOut
     {
     public:
       virtual void
-      process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::BadParameter)*/
       {
         if (!value.empty())
@@ -247,7 +229,7 @@ namespace AdServer::OptOut
 
           String::SubString num_value;
 
-          if(*value.rbegin() == 'm')
+          if (*value.rbegin() == 'm')
           {
             expire_value_multiplier = Generics::Time::ONE_MINUTE;
             num_value.assign(value.begin(), value.end() - 1);
@@ -255,16 +237,13 @@ namespace AdServer::OptOut
           else
           {
             expire_value_multiplier = Generics::Time::ONE_DAY;
-            num_value.assign(
-              value.begin(),
-              *value.rbegin() == 'd' ? value.end() - 1 : value.end());
+            num_value.assign(value.begin(), *value.rbegin() == 'd' ? value.end() - 1 : value.end());
           }
 
           if (!String::StringManip::str_to_int(num_value, expire_value))
           {
             Stream::Error ostr;
-            ostr << "Non correct " << Context::OO_CE <<
-              " value '" << value << "'.";
+            ostr << "Non correct " << Context::OO_CE << " value '" << value << "'.";
             throw RequestInfoFiller::BadParameter(ostr);
           }
 
@@ -300,17 +279,13 @@ namespace AdServer::OptOut
     // Get oo type and partner id for partner based OO
     // Params
     add_processor_(false, true, Context::OO_SUCCESS_REDIRECT,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::oo_success_redirect_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::oo_success_redirect_url));
     add_processor_(false, true, Context::OO_FAILURE_REDIRECT,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::oo_failure_redirect_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::oo_failure_redirect_url));
     add_processor_(false, true, Context::OO_ALREADY_REDIRECT,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::oo_already_redirect_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::oo_already_redirect_url));
     add_processor_(false, true, Context::OO_IN_REDIRECT,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::oo_status_in_redirect_url));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::oo_status_in_redirect_url));
     add_processor_(false, true, Context::OO_OUT_REDIRECT,
       new FrontendCommons::UrlParamProcessor<RequestInfo>(
         &RequestInfo::oo_status_out_redirect_url));
@@ -319,25 +294,20 @@ namespace AdServer::OptOut
         &RequestInfo::oo_status_undef_redirect_url));
 
     add_processor_(false, true, Context::COLOCATION_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, long>(
-        &RequestInfo::colo_id));
-    add_processor_(false, true, Context::OO_CE,
-      new CeProcessor);
+      new FrontendCommons::NumberParamProcessor<RequestInfo, long>(&RequestInfo::colo_id));
+    add_processor_(false, true, Context::OO_CE, new CeProcessor);
 
-    add_processor_(false, true, Context::OO_OPERATION,
-      new OperationProcessor);
+    add_processor_(false, true, Context::OO_OPERATION, new OperationProcessor);
     add_processor_(false, true, Cookie::COHORT,
       new FrontendCommons::StringCheckParamProcessor<
-      RequestInfo, String::AsciiStringManip::CharCategory>(
-        &RequestInfo::ct, COHORT_CHARS, 50));
+      RequestInfo, String::AsciiStringManip::CharCategory>(&RequestInfo::ct, COHORT_CHARS, 50));
 
     // Get peer IP address and user id
     // Headers
     if (config->log_ip())
     {
       add_processor_(true, false, Header::REM_HOST,
-        new FrontendCommons::StringParamProcessor<RequestInfo>(
-          &RequestInfo::peer_ip));
+        new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     }
 
     add_processor_(true, false, Header::USER_AGENT, new UserAgentProcessor(common_module_));
@@ -360,14 +330,12 @@ namespace AdServer::OptOut
 
     // debug parameters
     add_processor_(false, true, Context::OO_DEBUG,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::oo_debug));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::oo_debug));
     add_processor_(false, true, Context::DEBUG_CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(
         &RequestInfo::debug_time, Generics::Time::ONE_DAY));
     add_processor_(false, true, Context::TEST_REQUEST,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::log_as_test));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::log_as_test));
 
   }
 
@@ -405,28 +373,24 @@ namespace AdServer::OptOut
     /* fill opt-out request parameters */
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name(it->name.str());
         String::AsciiStringManip::to_lower(header_name);
 
-        ParamProcessorMap::const_iterator param_it =
-          header_processors_.find(header_name);
+        ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       } /* headers processing */
 
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
@@ -443,13 +407,11 @@ namespace AdServer::OptOut
         throw RequestInfoFiller::BadParameter(ostr);
       }
 
-      for(HTTP::CookieList::const_iterator it = cookies.begin();
-          it != cookies.end(); ++it)
+      for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          cookie_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-        if(param_it != cookie_processors_.end())
+        if (param_it != cookie_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
@@ -477,8 +439,7 @@ namespace AdServer::OptOut
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw FillerException(ostr);
     }
   }

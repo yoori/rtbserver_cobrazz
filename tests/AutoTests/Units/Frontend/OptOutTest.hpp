@@ -12,10 +12,7 @@ class OptOutTest: public BaseUnit
 
 public:
 
-  OptOutTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  OptOutTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   { }
 

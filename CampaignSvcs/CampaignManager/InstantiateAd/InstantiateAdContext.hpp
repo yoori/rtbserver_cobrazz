@@ -42,8 +42,7 @@ namespace AdServer::CampaignSvcs
       };
 
       const CampaignManagerCore::CommonAdRequest* request_params = nullptr;
-      const CampaignManagerCore::RequestResultParams* request_result_params =
-        nullptr;
+      const CampaignManagerCore::RequestResultParams* request_result_params = nullptr;
       const CampaignManagerCore::InstantiateParams* inst_params = nullptr;
       CampaignManagerCore::CreativeParamsList* creative_params_list = nullptr;
       CreativeInstantiator* creative_instantiator = nullptr;

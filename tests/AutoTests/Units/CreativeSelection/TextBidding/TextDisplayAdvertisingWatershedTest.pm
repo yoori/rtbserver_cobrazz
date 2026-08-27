@@ -20,7 +20,7 @@ sub init
     $ns->output("Keyword_2", $keyword2);
     $ns->output("Keyword_3", $keyword3);
 
-    my $size_id = $ns->create(CreativeSize => { 
+    my $size_id = $ns->create(CreativeSize => {
       name => 1,
       max_text_creatives => 2 });
 
@@ -30,7 +30,7 @@ sub init
       pricedtag_cpm => $tag_cpm,
       pricedtag_adjustment => 1.0 });
 
-     my $account = $ns->create(Account => { 
+     my $account = $ns->create(Account => {
        name => 'Advertiser',
        role_id => DB::Defaults::instance()->advertiser_role });
 
@@ -62,13 +62,13 @@ sub init
     my $expression1 = $ns->create(DB::ExpressionChannel->blank(
       name => "Expr1",
       account_id => $account,
-      expression => 
+      expression =>
         $channel1->channel_id . "&" . $channel2->channel_id));
 
     my $expression2 = $ns->create(DB::ExpressionChannel->blank(
       name => "Expr2",
       account_id => $account,
-      expression => 
+      expression =>
         $channel1->channel_id . "&" . $channel3->channel_id));
 
 
@@ -81,7 +81,7 @@ sub init
        campaigncreativegroup_cpm => 0,
        campaigncreativegroup_ctr => 0.1,
        campaigncreativegroup_cpc => 3.0*$tag_cpm,
-       site_links => 
+       site_links =>
          [{ site_id => $publisher->{site_id} }] });
 
     my $campaign_display2 = $ns->create(DisplayCampaign => {
@@ -93,16 +93,16 @@ sub init
        campaigncreativegroup_cpm => 0,
        campaigncreativegroup_ctr => 0.1,
        campaigncreativegroup_cpc => 5.0*$tag_cpm,
-       site_links => 
+       site_links =>
          [{ site_id => $publisher->{site_id} }] });
 
-    my $campaign_text = $ns->create(TextAdvertisingCampaign => { 
+    my $campaign_text = $ns->create(TextAdvertisingCampaign => {
       name => 'Text',
       size_id => $size_id,
       account_id => $account,
       template_id => DB::Defaults::instance()->text_template,
       original_keyword => $keyword2,
-      ccgkeyword_channel_id => $channel2,                  
+      ccgkeyword_channel_id => $channel2,
       campaigncreativegroup_cpm => 0,
       campaigncreativegroup_cpc => 4.0*$tag_cpm,
       ccgkeyword_ctr => 0.1,

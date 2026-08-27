@@ -10,10 +10,7 @@ class ChannelInventoryEstimMergeUsers: public BaseUnit
   typedef AutoTest::DBC::Conn DBConnection;
   typedef AutoTest::TemporaryAdClient TemporaryAdClient;
 public:
-  ChannelInventoryEstimMergeUsers(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ChannelInventoryEstimMergeUsers(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn(open_pq())
   {};

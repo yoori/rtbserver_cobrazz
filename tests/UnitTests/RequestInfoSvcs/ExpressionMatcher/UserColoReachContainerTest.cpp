@@ -58,8 +58,7 @@ struct UserColoReachTestProcessor:
   public virtual ReferenceCounting::AtomicImpl
 {
   virtual void
-  process_gmt_colo_reach(
-    const ColoReachInfo& request_info)
+  process_gmt_colo_reach(const ColoReachInfo& request_info)
     /*throw(ColoReachProcessor::Exception)*/
   {
     Sync::PosixGuard lock(mutex_gmt_);
@@ -67,8 +66,7 @@ struct UserColoReachTestProcessor:
   }
 
   virtual void
-  process_isp_colo_reach(
-    const ColoReachInfo& request_info)
+  process_isp_colo_reach(const ColoReachInfo& request_info)
     /*throw(ColoReachProcessor::Exception)*/
   {
     Sync::PosixGuard lock(mutex_isp_);
@@ -116,8 +114,7 @@ struct TestBase : public ReferenceCounting::AtomicImpl
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      UserColoReachTestProcessor_var reach_processor(
-        new UserColoReachTestProcessor());
+      UserColoReachTestProcessor_var reach_processor(new UserColoReachTestProcessor());
 
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER +
@@ -159,14 +156,14 @@ struct TestBase : public ReferenceCounting::AtomicImpl
       bool check_etalon_gmt = fill_gmt_etalon(gmt_etalon);
       bool check_etalon_isp = fill_isp_etalon(isp_etalon);
 
-      if(check_etalon_gmt)
+      if (check_etalon_gmt)
       {
         // gmt (GlobalColoUserStat) check
         const ColoReachInfoList& gmt_result = reach_processor->result_gmt();
         compare_list(gmt_etalon, gmt_result, "colo reach GMT");
       }
 
-      if(check_etalon_isp)
+      if (check_etalon_isp)
       {
         // isp (ColoUserStat) check
         const ColoReachInfoList& isp_result = reach_processor->result_isp();
@@ -233,10 +230,9 @@ struct TestBase : public ReferenceCounting::AtomicImpl
 
     int i = 0;
 
-    for(; et_it != etalon.end() && res_it != result.end();
-      ++et_it, ++res_it, ++i)
+    for (; et_it != etalon.end() && res_it != result.end(); ++et_it, ++res_it, ++i)
     {
-      if(!(*et_it == *res_it))
+      if (!(*et_it == *res_it))
       {
         Stream::Error ostr;
         ostr << result_name << " result non equal standard - element #" << i <<
@@ -249,14 +245,14 @@ struct TestBase : public ReferenceCounting::AtomicImpl
       }
     }
 
-    if(!(et_it == etalon.end() && res_it == result.end()))
+    if (!(et_it == etalon.end() && res_it == result.end()))
     {
       Stream::Error ostr;
       ostr << result_name << " result size non equal size = " << result.size() <<
         " of standard = " << etalon.size() << ". Result: " << std::endl;
 
       int i = 0;
-      for(ColoReachInfoList::const_iterator e_it = result.begin();
+      for (ColoReachInfoList::const_iterator e_it = result.begin();
         e_it != result.end();
         ++e_it, ++i)
       {
@@ -282,15 +278,13 @@ struct TestCreateDateISPTimeZoneLogging: public TestBase
   {
     {
       ri1 = create_request_info(
-        Generics::Time(
-          String::SubString("2014-11-26 01:00:00"), "%Y-%m-%d %H:%M:%S"));
+        Generics::Time(String::SubString("2014-11-26 01:00:00"), "%Y-%m-%d %H:%M:%S"));
       ri1.isp_time = ri1.time - Generics::Time::ONE_HOUR*2;
     }
 
     {
       ri2 = create_request_info(
-        Generics::Time(
-          String::SubString("2014-11-26 01:10:00"), "%Y-%m-%d %H:%M:%S"));
+        Generics::Time(String::SubString("2014-11-26 01:10:00"), "%Y-%m-%d %H:%M:%S"));
       ri2.colo_id = 2;
     }
   }
@@ -317,11 +311,7 @@ struct TestCreateDateISPTimeZoneLogging: public TestBase
       ColoReachProcessor::ColoReachInfo reach_info;
       reach_info.create_time = Algs::round_to_day(ri1.isp_time);
       reach_info.colocations.push_back(
-        IdAppearance(
-          ri1.colo_id,
-          Algs::round_to_day(ri1.isp_time),
-          Generics::Time::ZERO,
-          1));
+        IdAppearance(ri1.colo_id, Algs::round_to_day(ri1.isp_time), Generics::Time::ZERO, 1));
 
       l.push_back(std::move(reach_info));
     }
@@ -332,11 +322,7 @@ struct TestCreateDateISPTimeZoneLogging: public TestBase
       // Note: create_time logged in TZ for colo_id: 2
       reach_info.create_time = Algs::round_to_day(ri2.isp_time);
       reach_info.colocations.push_back(
-        IdAppearance(
-          ri2.colo_id,
-          Algs::round_to_day(ri2.isp_time),
-          Generics::Time::ZERO,
-          1));
+        IdAppearance(ri2.colo_id, Algs::round_to_day(ri2.isp_time), Generics::Time::ZERO, 1));
       l.push_back(std::move(reach_info));
     }
 
@@ -476,8 +462,7 @@ int main(int argc, char** argv) noexcept
     tests.push_back(new TestLastAppearanceDateBound());
     tests.push_back(new TestCreateDateISPTimeZoneLogging());
 
-    for (TestList::iterator it = tests.begin();
-      it != tests.end(); ++it)
+    for (TestList::iterator it = tests.begin(); it != tests.end(); ++it)
     {
       result += (*it)->run();
     }

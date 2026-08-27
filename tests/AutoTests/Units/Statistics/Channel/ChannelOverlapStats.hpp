@@ -3,7 +3,6 @@
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
-
 namespace ORM = AutoTest::ORM;
 
 class ChannelOverlapStats : public BaseUnit
@@ -30,10 +29,7 @@ class ChannelOverlapStats : public BaseUnit
   };
 
 public:
-  ChannelOverlapStats(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ChannelOverlapStats(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   {};
@@ -49,10 +45,7 @@ private:
   // Utils
   template<size_t Count>
   void
-  send_requests(
-    const std::string& description,
-    AdClient* client,
-    const Request(&requests) [Count]);
+  send_requests(const std::string& description, AdClient* client, const Request(&requests) [Count]);
 
   void
   add_stat(

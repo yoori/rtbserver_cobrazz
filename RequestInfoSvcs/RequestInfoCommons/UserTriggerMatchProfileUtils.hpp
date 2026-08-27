@@ -5,9 +5,7 @@
 #include <Commons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestTriggerMatchProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void print_user_trigger_match_profile(
     std::ostream& out,
@@ -16,11 +14,8 @@ namespace RequestInfoSvcs
     bool align = false)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -41,7 +36,7 @@ namespace RequestInfoSvcs
     const IteratorType& begin, const IteratorType& end, const char* offset, bool align)
   {
     std::ostringstream ostr;
-    for(IteratorType it = begin; it != end; ++it)
+    for (IteratorType it = begin; it != end; ++it)
     {
       if (align)
       {
@@ -78,7 +73,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[i]);
     }
@@ -86,9 +81,7 @@ namespace RequestInfoSvcs
     std::string::size_type max_len = 0;
     for (unsigned long ind = 0; ind < table.columns(); ++ind)
     {
-      max_len = std::max(
-        max_len,
-        TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[ind].name.length());
+      max_len = std::max(max_len, TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[ind].name.length());
     }
 
     std::string prefix(max_len + 3, ' ');
@@ -119,7 +112,7 @@ namespace RequestInfoSvcs
 
     {
       std::ostringstream ostr;
-      for(UserTriggerMatchReader::impressions_Container::const_iterator imp_it =
+      for (UserTriggerMatchReader::impressions_Container::const_iterator imp_it =
             profile_reader.impressions().begin();
           imp_it != profile_reader.impressions().end(); ++imp_it)
       {
@@ -134,5 +127,4 @@ namespace RequestInfoSvcs
     table.dump(out);
     out << std::endl;
   }
-}
 }

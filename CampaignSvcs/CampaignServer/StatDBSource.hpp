@@ -10,9 +10,7 @@
 
 #include "StatSource.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   class StatDBSource:
     public StatSource,
@@ -29,10 +27,7 @@ namespace CampaignSvcs
       noexcept;
 
     virtual Stat_var
-    update(
-      Stat* stat,
-      bool& full_synch_required,
-      const Generics::Time& now)
+    update(Stat* stat, bool& full_synch_required, const Generics::Time& now)
       /*throw(Exception)*/;
 
   protected:
@@ -54,5 +49,4 @@ namespace CampaignSvcs
     unsigned long server_id_;
     LogGeneralizerRefList stat_providers_;
   };
-}
 }

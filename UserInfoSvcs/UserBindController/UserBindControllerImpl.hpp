@@ -27,8 +27,7 @@ namespace AdServer::UserInfoSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
 
-    using UserBindControllerConfig =
-      xsd::AdServer::Configuration::UserBindControllerConfigType;
+    using UserBindControllerConfig = xsd::AdServer::Configuration::UserBindControllerConfigType;
     using SessionDescription =
       adserver::user_info_svcs::user_bind_controller::GetSessionDescriptionResponse;
 
@@ -94,8 +93,7 @@ namespace AdServer::UserInfoSvcs
     UserBindConfig_var user_bind_config_;
   };
 
-  using UserBindControllerImpl_var =
-    ReferenceCounting::SmartPtr<UserBindControllerImpl>;
+  using UserBindControllerImpl_var = ReferenceCounting::SmartPtr<UserBindControllerImpl>;
 }
 
 namespace AdServer::UserInfoSvcs
@@ -103,9 +101,7 @@ namespace AdServer::UserInfoSvcs
   class UserBindControllerImpl::InitUserBindSourceTask: public TaskBase
   {
   public:
-    InitUserBindSourceTask(
-      UserBindControllerImpl* controller,
-      Generics::TaskRunner* task_runner)
+    InitUserBindSourceTask(UserBindControllerImpl* controller, Generics::TaskRunner* task_runner)
       noexcept
       : TaskBase(task_runner),
         controller_(controller)

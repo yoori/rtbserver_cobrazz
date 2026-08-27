@@ -78,9 +78,7 @@ namespace Declaration
       PosedFieldList_var;
 
   public:
-    StructDescriptor(
-      const char* name_val,
-      FieldList* fields_val) noexcept;
+    StructDescriptor(const char* name_val, FieldList* fields_val) noexcept;
 
     PosedFieldList_var fields() const noexcept;
 
@@ -108,17 +106,14 @@ namespace Declaration
 namespace Declaration
 {
   inline
-  StructDescriptor::Field::Field(
-    BaseDescriptor* descriptor_val,
-    const char* name_val)
+  StructDescriptor::Field::Field(BaseDescriptor* descriptor_val, const char* name_val)
     /*throw(eh::Exception)*/
     : descriptor_(ReferenceCounting::add_ref(descriptor_val)),
       name_(name_val)
   {}
 
   inline
-  StructDescriptor::Field::Field(
-    const Field& other)
+  StructDescriptor::Field::Field(const Field& other)
     /*throw(eh::Exception)*/
     : ReferenceCounting::Interface(),
       ReferenceCounting::DefaultImpl<>(),
@@ -160,9 +155,7 @@ namespace Declaration
   }
 
   inline
-  StructDescriptor::StructDescriptor(
-    const char* name_val,
-    FieldList* fields_val)
+  StructDescriptor::StructDescriptor(const char* name_val, FieldList* fields_val)
     noexcept
     : BaseType(name_val),
       BaseDescriptor(name_val),
@@ -170,8 +163,7 @@ namespace Declaration
       is_fixed_(true)
   {
     unsigned long pos = 0;
-    for(FieldList::const_iterator fit = fields_val->begin();
-        fit != fields_val->end(); ++fit)
+    for (FieldList::const_iterator fit = fields_val->begin(); fit != fields_val->end(); ++fit)
     {
       is_fixed_ &= (*fit)->descriptor()->is_fixed();
       fields_->push_back(PosedField_var(new PosedField(*(*fit), pos)));
@@ -192,11 +184,10 @@ namespace Declaration
   StructDescriptor::PosedField_var
   StructDescriptor::find_field(const char* name) const noexcept
   {
-    for(StructDescriptor::PosedFieldList::const_iterator fit =
-          fields_->begin();
+    for (StructDescriptor::PosedFieldList::const_iterator fit = fields_->begin();
         fit != fields_->end(); ++fit)
     {
-      if(strcmp(name, (*fit)->name()) == 0)
+      if (strcmp(name, (*fit)->name()) == 0)
       {
         return *fit;
       }

@@ -18,199 +18,190 @@
 #include "TagRequestProcessor.hpp"
 #include "RequestOperationLoader.hpp"
 
-namespace AdServer
+namespace AdServer::RequestInfoSvcs
 {
-  namespace RequestInfoSvcs
+  class RequestInfoManagerStatsImpl;
+
+  struct LogProcessingState: public ReferenceCounting::AtomicImpl
   {
-    class RequestInfoManagerStatsImpl;
+    LogProcessingState()
+      : interrupter(new LogProcessing::FileReceiverInterrupter())
+    {}
 
-    struct LogProcessingState: public ReferenceCounting::AtomicImpl
+    LogProcessing::FileReceiverInterrupter_var interrupter;
+
+  protected:
+    virtual
+    ~LogProcessingState() noexcept
+    {}
+  };
+
+  typedef ReferenceCounting::AssertPtr<LogProcessingState>::Ptr
+    LogProcessingState_var;
+
+  struct InLog
+  {
+    std::string dir;
+    unsigned int priority;
+
+    InLog() noexcept;
+  };
+
+  struct InLogs
+  {
+    std::size_t fetch_threads = 10;
+    InLog request;
+    InLog impression;
+    InLog click;
+    InLog advertiser_action;
+    InLog passback_impression;
+    InLog tag_request;
+    InLog request_operation;
+  };
+
+  class LogFetcherBase: public ReferenceCounting::AtomicImpl
+  {
+  public:
+    LogFetcherBase(unsigned int priority, LogProcessing::FileReceiver* file_receiver)
+      noexcept;
+
+    virtual
+    Generics::Time
+    check_files() noexcept = 0;
+
+    virtual void
+    process(LogProcessing::FileReceiver::FileGuard* file_ptr) noexcept = 0;
+
+    unsigned int
+    priority() const noexcept;
+
+    LogProcessing::FileReceiver_var
+    file_receiver() noexcept;
+
+  protected:
+    virtual
+    ~LogFetcherBase() noexcept
+    {}
+
+  protected:
+    const unsigned int priority_;
+    LogProcessing::FileReceiver_var file_receiver_;
+  };
+
+  typedef ReferenceCounting::AssertPtr<LogFetcherBase>::Ptr LogFetcher_var;
+
+  class RequestLogLoader:
+    public virtual Generics::RefCountableCompositeActiveObject
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    RequestLogLoader(
+      Generics::ActiveObjectCallback* callback,
+      const InLogs& in_logs,
+      UnmergedClickProcessor* unmerged_click_processor,
+      RequestContainerProcessor* request_container_processor,
+      AdvActionProcessor* adv_action_processor,
+      PassbackVerificationProcessor* passback_verification_processor,
+      TagRequestProcessor* tag_request_processor,
+      RequestOperationProcessor* request_operation_processor,
+      const Generics::Time& check_period,
+      const Generics::Time& max_process_time,
+      std::size_t process_threads_count,
+      RequestInfoManagerStatsImpl* process_stats_values)
+      /*throw(Exception)*/;
+
+  protected:
+    virtual
+    ~RequestLogLoader() noexcept
+    {}
+
+    void
+    process_file_() noexcept;
+
+  private:
+    enum InLogType
     {
-      LogProcessingState()
-        : interrupter(new LogProcessing::FileReceiverInterrupter())
-      {}
+      RequestLogType = 0,
+      ImpressionLogType,
+      ClickLogType,
+      AdvertiserActionLogType,
+      PassbackImpressionLogType,
+      TagRequestLogType,
+      RequestOperationLogType,
 
-      LogProcessing::FileReceiverInterrupter_var interrupter;
-
-    protected:
-      virtual
-      ~LogProcessingState() noexcept
-      {}
+      LogTypesCount
     };
 
-    typedef ReferenceCounting::AssertPtr<LogProcessingState>::Ptr
-      LogProcessingState_var;
-
-    struct InLog
-    {
-      std::string dir;
-      unsigned int priority;
-
-      InLog() noexcept;
-    };
-
-    struct InLogs
-    {
-      std::size_t fetch_threads = 10;
-      InLog request;
-      InLog impression;
-      InLog click;
-      InLog advertiser_action;
-      InLog passback_impression;
-      InLog tag_request;
-      InLog request_operation;
-    };
-
-    class LogFetcherBase: public ReferenceCounting::AtomicImpl
+    class OrderStrategy
     {
     public:
-      LogFetcherBase(
-        unsigned int priority,
-        LogProcessing::FileReceiver* file_receiver)
-        noexcept;
+      typedef InLogType LogType;
 
-      virtual
-      Generics::Time
-      check_files() noexcept = 0;
-
-      virtual void
-      process(LogProcessing::FileReceiver::FileGuard* file_ptr) noexcept = 0;
-
-      unsigned int
-      priority() const noexcept;
-
-      LogProcessing::FileReceiver_var
-      file_receiver() noexcept;
-
-    protected:
-      virtual
-      ~LogFetcherBase() noexcept
-      {}
-
-    protected:
-      const unsigned int priority_;
-      LogProcessing::FileReceiver_var file_receiver_;
-    };
-
-    typedef ReferenceCounting::AssertPtr<LogFetcherBase>::Ptr LogFetcher_var;
-
-    class RequestLogLoader:
-      public virtual Generics::RefCountableCompositeActiveObject
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-      RequestLogLoader(
-        Generics::ActiveObjectCallback* callback,
-        const InLogs& in_logs,
-        UnmergedClickProcessor* unmerged_click_processor,
-        RequestContainerProcessor* request_container_processor,
-        AdvActionProcessor* adv_action_processor,
-        PassbackVerificationProcessor* passback_verification_processor,
-        TagRequestProcessor* tag_request_processor,
-        RequestOperationProcessor* request_operation_processor,
-        const Generics::Time& check_period,
-        const Generics::Time& max_process_time,
-        std::size_t process_threads_count,
-        RequestInfoManagerStatsImpl* process_stats_values)
-        /*throw(Exception)*/;
-
-    protected:
-      virtual
-      ~RequestLogLoader() noexcept
-      {}
-
-      void
-      process_file_() noexcept;
-
-    private:
-      enum InLogType
+      struct Key
       {
-        RequestLogType = 0,
-        ImpressionLogType,
-        ClickLogType,
-        AdvertiserActionLogType,
-        PassbackImpressionLogType,
-        TagRequestLogType,
-        RequestOperationLogType,
+        std::size_t priority;
+        Generics::Time time;
 
-        LogTypesCount
+        friend bool
+        operator<(const Key& arg1, const Key& arg2)
+        {
+          if (arg1.priority != arg2.priority)
+          {
+            return (arg1.priority > arg2.priority);
+          }
+
+          return (arg1.time < arg2.time);
+        }
       };
 
-      class OrderStrategy
+    public:
+      OrderStrategy(std::vector<std::size_t> priorities) noexcept
+        : priorities_(priorities)
+      {}
+
+      Key
+      key(LogType log_type, const std::string* log_file_name = nullptr) const
+        noexcept
       {
-      public:
-        typedef InLogType LogType;
+        Key k;
+        k.priority = priorities_[log_type];
 
-        struct Key
+        if (log_file_name)
         {
-          std::size_t priority;
-          Generics::Time time;
-
-          friend bool
-          operator< (
-            const Key& arg1,
-            const Key& arg2)
-          {
-            if (arg1.priority != arg2.priority)
-            {
-              return (arg1.priority > arg2.priority);
-            }
-
-            return (arg1.time < arg2.time);
-          }
-        };
-
-      public:
-        OrderStrategy(std::vector<std::size_t> priorities) noexcept
-          : priorities_(priorities)
-        {}
-
-        Key
-        key(
-          LogType log_type,
-          const std::string* log_file_name = nullptr) const
-          noexcept
-        {
-          Key k;
-          k.priority = priorities_[log_type];
-
-          if (log_file_name)
-          {
-            LogProcessing::LogFileNameInfo name_info;
-            LogProcessing::parse_log_file_name(*log_file_name, name_info);
-            k.time = name_info.timestamp;
-          }
-
-          return k;
+          LogProcessing::LogFileNameInfo name_info;
+          LogProcessing::parse_log_file_name(*log_file_name, name_info);
+          k.time = name_info.timestamp;
         }
 
-      private:
-        std::vector<std::size_t> priorities_;
-      };
-
-      typedef LogProcessing::FileReceiverFacade<OrderStrategy>
-        FileReceiverFacade;
-
-      typedef ReferenceCounting::SmartPtr<FileReceiverFacade>
-        FileReceiverFacade_var;
-
-      typedef std::map<InLogType, LogFetcher_var> LogFetchers;
+        return k;
+      }
 
     private:
-      /// Callback for task_runner and logger for threads.
-      Generics::ActiveObjectCallback_var log_errors_callback_;
-
-      LogProcessingState_var processing_state_;
-
-      Generics::Planner_var scheduler_;
-      Generics::TaskRunner_var log_fetch_runner_;
-      std::shared_ptr<Commons::ExecutorPool> processing_executor_pool_;
-
-      FileReceiverFacade_var file_receiver_facade_;
-      LogFetchers log_fetchers_;
+      std::vector<std::size_t> priorities_;
     };
 
-    typedef ReferenceCounting::SmartPtr<RequestLogLoader> RequestLogLoader_var;
-  }
+    typedef LogProcessing::FileReceiverFacade<OrderStrategy>
+      FileReceiverFacade;
+
+    typedef ReferenceCounting::SmartPtr<FileReceiverFacade>
+      FileReceiverFacade_var;
+
+    typedef std::map<InLogType, LogFetcher_var> LogFetchers;
+
+  private:
+    /// Callback for task_runner and logger for threads.
+    Generics::ActiveObjectCallback_var log_errors_callback_;
+
+    LogProcessingState_var processing_state_;
+
+    Generics::Planner_var scheduler_;
+    Generics::TaskRunner_var log_fetch_runner_;
+    std::shared_ptr<Commons::ExecutorPool> processing_executor_pool_;
+
+    FileReceiverFacade_var file_receiver_facade_;
+    LogFetchers log_fetchers_;
+  };
+
+  typedef ReferenceCounting::SmartPtr<RequestLogLoader> RequestLogLoader_var;
 }

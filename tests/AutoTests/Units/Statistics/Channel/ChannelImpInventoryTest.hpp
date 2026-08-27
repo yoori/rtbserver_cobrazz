@@ -11,10 +11,7 @@ class ChannelImpInventoryTest: public BaseDBUnit
 
 
 public:
-  ChannelImpInventoryTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  ChannelImpInventoryTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
 
@@ -48,23 +45,16 @@ private:
   };
 
   void
-  do_case_requests_(
-    const std::string& prefix,
-    int flags = SEND_DEFAULT);
+  do_case_requests_(const std::string& prefix, int flags = SEND_DEFAULT);
 
   unsigned long
-  fetch_colo_(
-    const std::string& prefix);
+  fetch_colo_(const std::string& prefix);
 
   void
-  fetch_list_(
-    StringSeq& seq,
-    const std::string& prefix);
+  fetch_list_(StringSeq& seq, const std::string& prefix);
 
   void
-  fetch_list_(
-    IntSeq& seq,
-    const std::string& prefix);
+  fetch_list_(IntSeq& seq, const std::string& prefix);
 
   void
   init_(
@@ -74,20 +64,13 @@ private:
     size_t size);
 
   void
-  check_cretives_(
-    const std::string& prefix,
-    AutoTest::AdClient& client);
+  check_cretives_(const std::string& prefix, AutoTest::AdClient& client);
 
   void
-  check_channels_(
-    const std::string& prefix,
-    AutoTest::AdClient& client);
+  check_channels_(const std::string& prefix, AutoTest::AdClient& client);
 
   void
-  test_case(
-    const char* prefix,
-    size_t size,
-    int flags = SEND_DEFAULT);
+  test_case(const char* prefix, size_t size, int flags = SEND_DEFAULT);
 
   void
   colo_case();

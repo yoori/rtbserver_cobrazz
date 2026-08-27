@@ -37,9 +37,7 @@ UnitStat::~UnitStat() noexcept
 
 Generics::Time UnitStat::duration () const
 {
-  return start_time !=
-    Generics::Time::ZERO? stop_time - start_time:
-      Generics::Time::ZERO;
+  return start_time != Generics::Time::ZERO? stop_time - start_time: Generics::Time::ZERO;
 }
 
 void UnitStat::mark_begin ()
@@ -47,7 +45,7 @@ void UnitStat::mark_begin ()
   start_time = Generics::Time::get_time_of_day();
   SyncPolicy::ReadGuard guard(lock);
   std::cout << unit_name;
-  if(config.verbose_start)
+  if (config.verbose_start)
   {
     std::cout << " start" << std::endl;
   }
@@ -58,7 +56,7 @@ void UnitStat::mark_ok ()
 {
   stop_time = Generics::Time::get_time_of_day();
   SyncPolicy::ReadGuard guard(lock);
-  if(config.verbose_start)
+  if (config.verbose_start)
   {
     std::cout << unit_name;
   }
@@ -70,7 +68,7 @@ void UnitStat::mark_error ()
 {
   stop_time = Generics::Time::get_time_of_day();
   SyncPolicy::ReadGuard guard(lock);
-  if(config.verbose_start)
+  if (config.verbose_start)
   {
     std::cout << unit_name;
   }
@@ -82,7 +80,7 @@ void UnitStat::mark_fault ()
 {
   stop_time = Generics::Time::get_time_of_day();
   SyncPolicy::ReadGuard guard(lock);
-  if(config.verbose_start)
+  if (config.verbose_start)
   {
     std::cout << unit_name;
   }
@@ -92,7 +90,7 @@ void UnitStat::mark_fault ()
 
 void UnitStat::dump_error ()
 {
-  if(config.verbose && !succeed)
+  if (config.verbose && !succeed)
   {
     std::cout << unit_name;
     std::cout << " Error:" << std::endl;
@@ -104,16 +102,11 @@ void UnitStat::dump_error ()
 //
 //  BaseUnit class
 //
-BaseUnit::BaseUnit(
-  UnitStat& stat_var,
-  const char* task_name,
-  XsdParams params_var)
+BaseUnit::BaseUnit(UnitStat& stat_var, const char* task_name, XsdParams params_var)
   : stat_(stat_var),
     current_client_index_(0),
     task_name_(task_name),
-    timeout_(
-      AutoTest::GlobalSettings::instance().
-      wait_timeout()),
+    timeout_(AutoTest::GlobalSettings::instance(). wait_timeout()),
     params_(params_var),
     test_descr_(),
     descr_counter_(1)
@@ -136,8 +129,7 @@ BaseUnit::~BaseUnit()
   }
   catch (...)
   {
-    AutoTest::Logger::thlog().log("Unknown exception",
-      Logging::Logger::ERROR);
+    AutoTest::Logger::thlog().log("Unknown exception", Logging::Logger::ERROR);
   }
 }
 
@@ -153,7 +145,7 @@ BaseUnit::execute()
         << task_name_ << "' started" << std::endl;
       stat_.mark_begin ();
       stat_.succeed = run_test() && stat_.error.empty();
-      if(stat_.succeed)
+      if (stat_.succeed)
       {
         stat_.mark_ok ();
       }
@@ -207,8 +199,7 @@ BaseUnit::add_descr_phrase(const String::SubString& phrase)
   catch (eh::Exception& e)
   {
     Stream::Error error;
-    error << "BaseUnit::add_descr_phrase(). eh::Exception exception caught. "
-          << ": " << e.what();
+    error << "BaseUnit::add_descr_phrase(). eh::Exception exception caught. " << ": " << e.what();
     throw Exception(error);
   }
 }
@@ -238,14 +229,12 @@ BaseUnit::get_object_by_name(const std::string& obj_name)
   catch(eh::Exception& e)
   {
     Stream::Error error;
-    error << "BaseUnit::get_object_by_name() eh::Exception exception caught. "
-          << ": " << e.what();
+    error << "BaseUnit::get_object_by_name() eh::Exception exception caught. " << ": " << e.what();
     throw Exception(error);
   }
 
   Stream::Error error;
-  error << "BaseUnit::get_object_by_name(). "
-        << "Error: Got unexpected object name = " << obj_name;
+  error << "BaseUnit::get_object_by_name(). " << "Error: Got unexpected object name = " << obj_name;
   throw InvalidArgument(error);
 }
 
@@ -275,8 +264,7 @@ BaseUnit::fetch_int(const char* obj_name)
   catch (const eh::Exception& e)
   {
     Stream::Error error;
-    error << "BaseUnit::fetch_integer_type() eh::Exception caught. "
-          << ": " << e.what();
+    error << "BaseUnit::fetch_integer_type() eh::Exception caught. " << ": " << e.what();
     throw Exception(error);
   }
 
@@ -309,8 +297,7 @@ BaseUnit::fetch_float(const char* obj_name)
   catch (const eh::Exception& e)
   {
     Stream::Error error;
-    error << "BaseUnit::fetch_float() eh::Exception caught. "
-          << ": " << e.what();
+    error << "BaseUnit::fetch_float() eh::Exception caught. " << ": " << e.what();
     throw Exception(error);
   }
 
@@ -325,8 +312,7 @@ BaseUnit::next_list_item(DataElemObjectPtr& res, const std::string& list_name)
   {
     Locals all_locals = params_.get_local_params();
     unsigned long locals_len = all_locals.DataElem().size();
-    std::map<std::string, unsigned long>::iterator cur_list_it =
-      xml_lists_.find(list_name);
+    std::map<std::string, unsigned long>::iterator cur_list_it = xml_lists_.find(list_name);
 
     if (cur_list_it == xml_lists_.end())
     {
@@ -349,8 +335,7 @@ BaseUnit::next_list_item(DataElemObjectPtr& res, const std::string& list_name)
       if (all_locals.DataElem()[ind + 1].Name() == list_name + "End")
         return false;
 
-      cur_list_it = xml_lists_.insert(std::pair<std::string, unsigned long>(
-                                                                            list_name, ind)).first;
+      cur_list_it = xml_lists_.insert(std::pair<std::string, unsigned long>(list_name, ind)).first;
     }
 
     ++cur_list_it->second;
@@ -379,22 +364,18 @@ BaseUnit::next_list_item(DataElemObjectPtr& res, const std::string& list_name)
   catch(eh::Exception& e)
   {
     Stream::Error error;
-    error << "BaseUnit::next_list_item(...). eh::Exception exception caught. "
-          << ": " << e.what();
+    error << "BaseUnit::next_list_item(...). eh::Exception exception caught. " << ": " << e.what();
     throw Exception(error);
   }
 }
 
 std::string
-BaseUnit::map_objects(
-  const char* obj_names,
-  const char* separator)
+BaseUnit::map_objects(const char* obj_names, const char* separator)
   /*throw(Exception)*/
 {
   std::string value;
   const String::AsciiStringManip::CharCategory SEP(separator);
-  String::StringManip::CharSplitter tokenizer(
-    String::SubString(obj_names), SEP);
+  String::StringManip::CharSplitter tokenizer(String::SubString(obj_names), SEP);
   String::SubString token;
   while (tokenizer.get_token(token))
   {
@@ -431,8 +412,7 @@ BaseUnit::open_pq() /*throw(eh::Exception)*/
 }
 
 AutoTest::Logger&
-BaseUnit::add_logger(
-  const std::string& log_name)
+BaseUnit::add_logger(const std::string& log_name)
 {
   Loggers::iterator it = loggers_.find(log_name);
   if (it != loggers_.end())
@@ -440,8 +420,7 @@ BaseUnit::add_logger(
     return *it->second;
   }
 
-  AutoTest::Logger* logger =
-    new AutoTest::Logger(log_name.c_str());
+  AutoTest::Logger* logger = new AutoTest::Logger(log_name.c_str());
 
   loggers_[log_name] = logger;
 
@@ -459,18 +438,16 @@ BaseUnit::timeout()
 
 void BaseUnit::check(bool clear_checkers)  /*throw(eh::Exception)*/
 {
-  timeout_ =
-    AutoTest::GlobalSettings::instance().wait_timeout();
+  timeout_ = AutoTest::GlobalSettings::instance().wait_timeout();
   bool case_ok = true;
-  for (DescriptiveCheckerList::iterator
-    it = checkers_.begin(); it != checkers_.end(); ++it)
+  for (DescriptiveCheckerList::iterator it = checkers_.begin(); it != checkers_.end(); ++it)
   {
     AutoTest::Time start_time;
 
     AutoTest::Logger& case_logger = std::get<1>(*it);
 
     // Switch case
-    if(&case_logger != &AutoTest::Logger::thlog())
+    if (&case_logger != &AutoTest::Logger::thlog())
     {
       case_ok = true;
     }
@@ -484,8 +461,7 @@ void BaseUnit::check(bool clear_checkers)  /*throw(eh::Exception)*/
       // before rethrow this exception.
       try
       {
-        checker_call_result =
-          checker_call(std::get<0>(*it), std::get<2>(*it));
+        checker_call_result = checker_call(std::get<0>(*it), std::get<2>(*it));
       }
       catch (const eh::Exception& e)
       {
@@ -495,6 +471,7 @@ void BaseUnit::check(bool clear_checkers)  /*throw(eh::Exception)*/
         }
         throw;
       }
+
       if (!checker_call_result)
       {
         case_ok = false;
@@ -507,11 +484,13 @@ void BaseUnit::check(bool clear_checkers)  /*throw(eh::Exception)*/
         }
       }
     }
+
     if (timeout_ >= 0)
     {
       timeout_ -= (AutoTest::Time() - start_time).tv_sec;
     }
   }
+
   if (clear_checkers)
   {
     checkers_.clear();
@@ -533,9 +512,7 @@ BaseUnit::checker_call(
     error.append(description);
     error.append(": ");
     error.append(exc.what());
-    AutoTest::Logger::thlog().log(
-      error,
-      Logging::Logger::ERROR);
+    AutoTest::Logger::thlog().log(error, Logging::Logger::ERROR);
     stat_.error.append(error);
     stat_.error.push_back('\n');
     return false;

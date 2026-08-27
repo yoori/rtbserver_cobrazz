@@ -31,8 +31,7 @@ request_out_logger_test(const char* tmp_dir)
   AdServer::LogProcessing::LogFlushTraits log_traits;
   log_traits.out_dir = tmp_dir;
 
-  Logging::Logger_var logger =
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+  Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
 
   Logging::ActiveObjectCallbackImpl_var callback(
     new Logging::ActiveObjectCallbackImpl(
@@ -80,9 +79,7 @@ request_out_logger_test(const char* tmp_dir)
   request_info.pub_revenue.currency_rate = RevenueDecimal(1);
   request_info.isp_revenue.currency_rate = RevenueDecimal(1);
 
-  request_out_logger->process_request(
-    request_info,
-    RequestActionProcessor::ProcessingState());
+  request_out_logger->process_request(request_info, RequestActionProcessor::ProcessingState());
   request_out_logger->flush_if_required();
 
   request_out_logger->process_impression(
@@ -91,9 +88,7 @@ request_out_logger_test(const char* tmp_dir)
     RequestActionProcessor::ProcessingState());
   request_out_logger->flush_if_required();
 
-  request_out_logger->process_click(
-    request_info,
-    RequestActionProcessor::ProcessingState());
+  request_out_logger->process_click(request_info, RequestActionProcessor::ProcessingState());
   request_out_logger->flush_if_required();
 
   request_out_logger->process_action(request_info);
@@ -109,14 +104,8 @@ init(int& argc, char**& argv) /*throw(eh::Exception)*/
   Args args;
   CheckOption opt_help;
 
-  args.add(
-    equal_name("path") ||
-    short_name("p"),
-    root_path);
-  args.add(
-    equal_name("help") ||
-    short_name("h"),
-    opt_help);
+  args.add(equal_name("path") || short_name("p"), root_path);
+  args.add(equal_name("help") || short_name("h"), opt_help);
 
   args.parse(argc - 1, argv + 1);
 
@@ -139,8 +128,7 @@ main(int argc, char* argv[]) noexcept
     }
     system(("rm -r " + *root_path + TEST_FOLDER +
       " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
-    return request_out_logger_test(
-      (*root_path + TEST_FOLDER).c_str());
+    return request_out_logger_test((*root_path + TEST_FOLDER).c_str());
   }
   catch (const eh::Exception& ex)
   {

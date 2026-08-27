@@ -23,9 +23,7 @@ namespace
   const unsigned long FETCH_FILES_LIMIT = 50000;
 }
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   /* BaseOperationRecordFetcher implementation */
   BaseOperationRecordFetcher::BaseOperationRecordFetcher(
@@ -47,15 +45,13 @@ namespace UserInfoSvcs
   {}
 
   void
-  BaseOperationRecordFetcher::process(
-    LogProcessing::FileReceiver::FileGuard* file_ptr)
+  BaseOperationRecordFetcher::process(LogProcessing::FileReceiver::FileGuard* file_ptr)
     noexcept
   {
     static const char* FUN = "OperationRecordFetcher::process()";
 
     // file guard must be destroyed after moving file into errors store
-    LogProcessing::FileReceiver::FileGuard_var file(
-      ReferenceCounting::add_ref(file_ptr));
+    LogProcessing::FileReceiver::FileGuard_var file(ReferenceCounting::add_ref(file_ptr));
 
     try
     {
@@ -72,10 +68,10 @@ namespace UserInfoSvcs
       unsigned long chunk_id = file_name_info.distrib_index;
 
       // check, that chunk id controllable
-      if(chunk_ids_.find(chunk_id) != chunk_ids_.end())
+      if (chunk_ids_.find(chunk_id) != chunk_ids_.end())
       {
         std::ifstream file_stream(file->full_path().c_str(), std::ios_base::binary);
-        if(file_stream.fail())
+        if (file_stream.fail())
         {
           Stream::Error ostr;
           ostr << "Can't open file";
@@ -86,17 +82,17 @@ namespace UserInfoSvcs
         unsigned long processed_records = 0;
         unsigned long processed_lines_count = file_name_info.processed_lines_count;
 
-        while(true)
+        while (true)
         {
           uint32_t record_size = 0;
           file_stream.read(reinterpret_cast<char*>(&record_size), 4);
 
-          if(file_stream.eof())
+          if (file_stream.eof())
           {
             break;
           }
 
-          if(file_stream.fail())
+          if (file_stream.fail())
           {
             Stream::Error ostr;
             ostr << "Reading failed";
@@ -106,7 +102,7 @@ namespace UserInfoSvcs
           mem_buf.alloc(record_size);
           file_stream.read(mem_buf.get<char>(), mem_buf.size());
 
-          if(file_stream.eof() || file_stream.fail())
+          if (file_stream.eof() || file_stream.fail())
           {
             Stream::Error ostr;
             ostr << "Unexpected eof or fail";
@@ -135,12 +131,11 @@ namespace UserInfoSvcs
           file_name_info.processed_lines_count = processed_lines_count;
           file_move_back_to_input_dir_(file_name_info, file->full_path().c_str());
         }
-        else if(::unlink(file->full_path().c_str()) != 0)
+        else if (::unlink(file->full_path().c_str()) != 0)
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't delete file '" << file->full_path() << "'";
-          log_errors_->report_error(
-            Generics::ActiveObjectCallback::ERROR, ostr.str());
+          log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
       }
       else
@@ -156,20 +151,17 @@ namespace UserInfoSvcs
       // copy the erroneous file to the error folder
       try
       {
-        AdServer::LogProcessing::FileStore file_store(
-          DIR_, DEFAULT_ERROR_DIR);
+        AdServer::LogProcessing::FileStore file_store(DIR_, DEFAULT_ERROR_DIR);
         file_store.store(file->full_path());
       }
       catch (const eh::Exception& store_ex)
       {
         ostr << FUN << store_ex.what() << " Can't copy the file '" <<
-          file->full_path() << "' to the error folder. Initial error: " <<
-          ex.what() << std::endl;
+          file->full_path() << "' to the error folder. Initial error: " << ex.what() << std::endl;
       }
 
       ostr << ex.what();
-      log_errors_->report_error(
-        Generics::ActiveObjectCallback::ERROR, ostr.str());
+      log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
     }
   }
 
@@ -180,19 +172,17 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "OperationRecordFetcher::file_move_back_to_input_dir_()";
 
-    const std::string new_file_name =
-      AdServer::LogProcessing::restore_log_file_name(info, DIR_);
+    const std::string new_file_name = AdServer::LogProcessing::restore_log_file_name(info, DIR_);
 
     std::string file_name;
     AdServer::PathManip::split_path(new_file_name.c_str(), 0, &file_name);
     std::string reprocess_path = unprocessed_dir_;
     reprocess_path += "/";
     reprocess_path += file_name;
-    if(::rename(file_path, reprocess_path.c_str()) != 0)
+    if (::rename(file_path, reprocess_path.c_str()) != 0)
     {
       Stream::Error ostr;
-      ostr << FUN << "can't move file '" << file_path << "' to '" <<
-        reprocess_path << "'";
+      ostr << FUN << "can't move file '" << file_path << "' to '" << reprocess_path << "'";
       eh::throw_errno_exception<Exception>(ostr.str());
     }
   }
@@ -230,8 +220,7 @@ namespace UserInfoSvcs
     : log_errors_callback_(ReferenceCounting::add_ref(callback)),
       unprocessed_dir_(unprocessed_dir)
   {
-    Generics::ActiveObject_var interrupter =
-      new AdServer::LogProcessing::FileReceiverInterrupter();
+    Generics::ActiveObject_var interrupter = new AdServer::LogProcessing::FileReceiverInterrupter();
     add_child_object(interrupter.in());
 
     operation_fetcher_ =
@@ -260,15 +249,11 @@ namespace UserInfoSvcs
   InternalUserOperationLoader::~InternalUserOperationLoader() noexcept
   {}
 }
-}
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   void
-  InternalOperationRecordFetcher::read_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_operation_(Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "InternalOperationRecordFetcher::read_operation_()";
@@ -277,23 +262,23 @@ namespace UserInfoSvcs
       smart_mem_buf->membuf().data(), UserOperationTypeReader::FIXED_SIZE);
     Generics::MemBuf& mem_buf = smart_mem_buf->membuf();
 
-    if(profile_type_reader.operation_type() == UserOperationSaver::UO_FRAUD)
+    if (profile_type_reader.operation_type() == UserOperationSaver::UO_FRAUD)
     {
       read_fraud_operation_(mem_buf);
     }
-    else if(profile_type_reader.operation_type() == UserOperationSaver::UO_MATCH)
+    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_MATCH)
     {
       read_match_operation_(smart_mem_buf);
     }
-    else if(profile_type_reader.operation_type() == UserOperationSaver::UO_MERGE)
+    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_MERGE)
     {
       read_merge_operation_(smart_mem_buf);
     }
-    else if(profile_type_reader.operation_type() == UserOperationSaver::UO_FC_UPDATE)
+    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_FC_UPDATE)
     {
       read_fc_update_operation_(smart_mem_buf);
     }
-    else if(profile_type_reader.operation_type() == UserOperationSaver::UO_FC_CONFIRM)
+    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_FC_CONFIRM)
     {
       read_fc_confirm_operation_(smart_mem_buf);
     }
@@ -307,8 +292,7 @@ namespace UserInfoSvcs
 
 
   void
-  InternalOperationRecordFetcher::read_fraud_operation_(
-    const Generics::MemBuf& mem_buf)
+  InternalOperationRecordFetcher::read_fraud_operation_(const Generics::MemBuf& mem_buf)
     /*throw(eh::Exception)*/
   {
     UserFraudOperationReader reader(mem_buf.data(), mem_buf.size());
@@ -319,16 +303,13 @@ namespace UserInfoSvcs
   }
 
   void
-  InternalOperationRecordFetcher::read_match_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_match_operation_(Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     UserMatchOperationProfilesAdapter match_profile_adapter;
     Generics::SmartMemBuf_var smb = match_profile_adapter(smart_mem_buf);
 
-    UserMatchOperationReader reader(
-      smb.in()->membuf().data(),
-      smb.in()->membuf().size());
+    UserMatchOperationReader reader(smb.in()->membuf().data(), smb.in()->membuf().size());
 
     CoordData coord_data;
     CoordData* coord_data_ptr = 0;
@@ -433,9 +414,7 @@ namespace UserInfoSvcs
   {
     UserMergeOperationProfilesAdapter merge_profile_adapter;
     Generics::SmartMemBuf_var smb = merge_profile_adapter(smart_mem_buf);
-    UserMergeOperationReader reader(
-      smb.in()->membuf().data(),
-      smb.in()->membuf().size());
+    UserMergeOperationReader reader(smb.in()->membuf().data(), smb.in()->membuf().size());
 
     Generics::MemBuf merge_base_profile;
     merge_base_profile.assign(
@@ -450,7 +429,7 @@ namespace UserInfoSvcs
       reader.merge_freq_cap_profile().get(),
       reader.merge_freq_cap_profile().size());
 
-    if(!reader.exchange_merge())
+    if (!reader.exchange_merge())
     {
       UserOperationProcessor::RequestMatchParams channel_match_params(
         AdServer::Commons::UserId(reader.user_id()),
@@ -471,9 +450,7 @@ namespace UserInfoSvcs
         reader.household() == 1);
 
       Generics::MemBuf merge_add_profile;
-      merge_add_profile.assign(
-        reader.merge_add_profile().get(),
-        reader.merge_add_profile().size());
+      merge_add_profile.assign(reader.merge_add_profile().get(), reader.merge_add_profile().size());
 
       UserOperationProcessor::UserAppearance user_app;
 
@@ -502,8 +479,7 @@ namespace UserInfoSvcs
   }
 
   void
-  InternalOperationRecordFetcher::read_fc_update_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_fc_update_operation_(Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     UserFreqCapUpdateOperationProfilesAdapter ufc_update_profile_adapter;
@@ -519,10 +495,7 @@ namespace UserInfoSvcs
     UserFreqCapProfile::CampaignIds campaign_ids;
     UserFreqCapProfile::CampaignIds uc_campaign_ids;
 
-    std::copy(
-      reader.freq_caps().begin(),
-      reader.freq_caps().end(),
-      std::back_inserter(freq_caps));
+    std::copy(reader.freq_caps().begin(), reader.freq_caps().end(), std::back_inserter(freq_caps));
     std::copy(
       reader.uc_freq_caps().begin(),
       reader.uc_freq_caps().end(),
@@ -545,10 +518,7 @@ namespace UserInfoSvcs
          it != reader.seq_orders().end(); ++it)
     {
       seq_orders.push_back(
-        UserFreqCapProfile::SeqOrder(
-          (*it).ccg_id(),
-          (*it).set_id(),
-          (*it).imps()));
+        UserFreqCapProfile::SeqOrder((*it).ccg_id(), (*it).set_id(), (*it).imps()));
     }
 
     AdServer::Commons::sync_wait(
@@ -566,8 +536,7 @@ namespace UserInfoSvcs
   }
 
   void
-  InternalOperationRecordFetcher::read_fc_confirm_operation_(
-    Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_fc_confirm_operation_(Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     UserFreqCapConfirmOperationProfilesAdapter ufc_confirm_profile_adapter;
@@ -575,9 +544,7 @@ namespace UserInfoSvcs
 
     std::set<unsigned long> publishers;
 
-    UserFreqCapConfirmOperationReader reader(
-      smb.in()->membuf().data(),
-      smb.in()->membuf().size());
+    UserFreqCapConfirmOperationReader reader(smb.in()->membuf().data(), smb.in()->membuf().size());
 
     std::copy(
       reader.publisher_accounts().begin(),
@@ -592,9 +559,7 @@ namespace UserInfoSvcs
         publishers));
   }
 
-  void unpack_freq_cap_info(
-    AdServer::Commons::FreqCap& res,
-    const FreqCapInfoReader& fc)
+  void unpack_freq_cap_info(AdServer::Commons::FreqCap& res, const FreqCapInfoReader& fc)
   {
     res.fc_id = fc.fc_id();
     res.lifelimit = fc.lifelimit();
@@ -603,5 +568,4 @@ namespace UserInfoSvcs
     res.window_time = Generics::Time(fc.window_time());
   }
 
-}
 }

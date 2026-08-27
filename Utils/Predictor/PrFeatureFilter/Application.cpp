@@ -28,9 +28,7 @@ const double DEPTH_PINALTY = 0.0001;
 
 namespace
 {
-  const char USAGE[] =
-    "\nUsage: \n"
-    "PrFeatureFilter\n";
+  const char USAGE[] = "\nUsage: \n" "PrFeatureFilter\n";
 }
 
 // Application
@@ -72,10 +70,7 @@ Application_::main(int& argc, char** argv)
   //
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
   args.add(
     Generics::AppUtils::equal_name("max-features") ||
     Generics::AppUtils::short_name("mf"),
@@ -88,9 +83,7 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::equal_name("depth") ||
     Generics::AppUtils::short_name("d"),
     opt_depth);
-  args.add(
-    Generics::AppUtils::equal_name("dict"),
-    opt_feature_dictionary);
+  args.add(Generics::AppUtils::equal_name("dict"), opt_feature_dictionary);
   args.add(
     Generics::AppUtils::equal_name("features") ||
     Generics::AppUtils::short_name("f"),
@@ -104,19 +97,14 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::equal_name("min-cover") ||
     Generics::AppUtils::short_name("mc"),
     opt_min_cover);
-  args.add(
-    Generics::AppUtils::equal_name("dump-tree"),
-    opt_dump_tree);
-  args.add(
-    Generics::AppUtils::equal_name("xml"),
-    opt_xml);
+  args.add(Generics::AppUtils::equal_name("dump-tree"), opt_dump_tree);
+  args.add(Generics::AppUtils::equal_name("xml"), opt_xml);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -124,7 +112,7 @@ Application_::main(int& argc, char** argv)
 
   std::string command = *commands.begin();
 
-  if(command == "filter-svm")
+  if (command == "filter-svm")
   {
     std::unordered_set<unsigned long> filter_features;
 
@@ -134,10 +122,10 @@ Application_::main(int& argc, char** argv)
         String::AsciiStringManip::SepComma> tokenizer(*opt_features);
 
       String::SubString token;
-      while(tokenizer.get_token(token))
+      while (tokenizer.get_token(token))
       {
         unsigned long feature_id;
-        if(!String::StringManip::str_to_int(token, feature_id))
+        if (!String::StringManip::str_to_int(token, feature_id))
         {
           Stream::Error ostr;
           ostr << "can't parse label '" << token << "'";
@@ -148,20 +136,20 @@ Application_::main(int& argc, char** argv)
       }
     }
 
-    while(!std::cin.eof())
+    while (!std::cin.eof())
     {
       BoolLabel label;
       Row_var row = SVM<BoolLabel>::load_line(std::cin, label);
 
-      if(row)
+      if (row)
       {
         FeatureArray filtered_features;
 
-        if(!filter_features.empty())
+        if (!filter_features.empty())
         {
-          for(auto it = row->features.begin(); it != row->features.end(); ++it)
+          for (auto it = row->features.begin(); it != row->features.end(); ++it)
           {
-            if(filter_features.find(it->first) != filter_features.end())
+            if (filter_features.find(it->first) != filter_features.end())
             {
               filtered_features.push_back(*it);
             }
@@ -175,15 +163,10 @@ Application_::main(int& argc, char** argv)
       }
     }
   }
-  else if(command == "generate-svm")
+  else if (command == "generate-svm")
   {
     // convert csv to svm
-    generate_svm_(
-      std::cout,
-      std::cin,
-      opt_column_names->c_str(),
-      opt_dictionary->c_str()
-      );
+    generate_svm_(std::cout, std::cin, opt_column_names->c_str(), opt_dictionary->c_str());
   }
   else
   {
@@ -225,5 +208,3 @@ main(int argc, char** argv)
 
   return 0;
 }
-
-

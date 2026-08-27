@@ -12,7 +12,7 @@ sub _table
   'Platform'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   platform_id => DB::Entity::Type::sequence('channel_channel_id_seq'),
   name => DB::Entity::Type::string(unique => 1),
@@ -25,11 +25,11 @@ use constant STRUCT =>
   output_regexp => DB::Entity::Type::string(private => 1)
 };
 
-sub postcreate_ 
+sub postcreate_
 {
   my ($self, $ns) = @_;
 
-  my @defined_args = 
+  my @defined_args =
     grep {exists $self->{$_}}
       qw(prority match_marker match_regexp output_regexp);
 
@@ -57,11 +57,11 @@ sub _table
   'Channel'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   name => DB::Entity::Type::name(unique => 1),
   channel_id => DB::Entity::Type::sequence(),
-  account_id => undef, 
+  account_id => undef,
   status => DB::Entity::Type::status(),
   qa_status => DB::Entity::Type::qa_status(),
   display_status_id => DB::Entity::Type::display_status('DeviceChannel'),
@@ -83,7 +83,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   platform_detector_id => DB::Entity::Type::raw_sequence(),
   platform_id => DB::Entity::Type::link('DB::Platform'),

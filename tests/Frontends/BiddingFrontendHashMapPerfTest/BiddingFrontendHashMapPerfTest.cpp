@@ -71,7 +71,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -83,22 +83,22 @@ namespace
     options.miss_percent = *opt_miss_percent;
     options.key_type = *opt_key_type;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.items == 0)
+    if (options.items == 0)
     {
       throw std::runtime_error("--items must be > 0");
     }
 
-    if(options.miss_percent > 100)
+    if (options.miss_percent > 100)
     {
       throw std::runtime_error("--miss-percent must be <= 100");
     }
 
-    if(options.key_type != "uint64" && options.key_type != "string")
+    if (options.key_type != "uint64" && options.key_type != "string")
     {
       throw std::runtime_error("--key-type must be uint64 or string");
     }
@@ -110,7 +110,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -134,7 +134,7 @@ namespace
   {
     std::vector<std::uint64_t> keys;
     keys.reserve(count);
-    for(std::size_t i = 0; i < count; ++i)
+    for (std::size_t i = 0; i < count; ++i)
     {
       keys.emplace_back(i * 2654435761ULL + 17);
     }
@@ -147,26 +147,23 @@ namespace
   {
     std::vector<std::string> keys;
     keys.reserve(count);
-    for(std::size_t i = 0; i < count; ++i)
+    for (std::size_t i = 0; i < count; ++i)
     {
-      keys.emplace_back("bidding_frontend_key/" + std::to_string(
-        i * 2654435761ULL + 17));
+      keys.emplace_back("bidding_frontend_key/" + std::to_string(i * 2654435761ULL + 17));
     }
 
     return keys;
   }
 
   std::vector<std::uint64_t>
-  make_uint64_lookup_keys(
-    const std::vector<std::uint64_t>& keys,
-    unsigned long miss_percent)
+  make_uint64_lookup_keys(const std::vector<std::uint64_t>& keys, unsigned long miss_percent)
   {
     std::vector<std::uint64_t> lookup_keys;
     lookup_keys.reserve(keys.size());
 
-    for(std::size_t i = 0; i < keys.size(); ++i)
+    for (std::size_t i = 0; i < keys.size(); ++i)
     {
-      if(miss_percent != 0 && (i * 100 / keys.size()) < miss_percent)
+      if (miss_percent != 0 && (i * 100 / keys.size()) < miss_percent)
       {
         lookup_keys.emplace_back(keys[i] ^ 0x8000000000000000ULL);
       }
@@ -180,16 +177,14 @@ namespace
   }
 
   std::vector<std::string>
-  make_string_lookup_keys(
-    const std::vector<std::string>& keys,
-    unsigned long miss_percent)
+  make_string_lookup_keys(const std::vector<std::string>& keys, unsigned long miss_percent)
   {
     std::vector<std::string> lookup_keys;
     lookup_keys.reserve(keys.size());
 
-    for(std::size_t i = 0; i < keys.size(); ++i)
+    for (std::size_t i = 0; i < keys.size(); ++i)
     {
-      if(miss_percent != 0 && (i * 100 / keys.size()) < miss_percent)
+      if (miss_percent != 0 && (i * 100 / keys.size()) < miss_percent)
       {
         lookup_keys.emplace_back(keys[i] + "/miss");
       }
@@ -230,15 +225,15 @@ namespace
     return measure([&]() {
       Map map;
       map.reserve(keys.size());
-      for(std::size_t i = 0; i < keys.size(); ++i)
+      for (std::size_t i = 0; i < keys.size(); ++i)
       {
         map.emplace(keys[i], i + 1);
       }
 
       std::uint64_t checksum = 0;
-      for(unsigned long i = 0; i < count; ++i)
+      for (unsigned long i = 0; i < count; ++i)
       {
-        for(const auto& key : lookup_keys)
+        for (const auto& key : lookup_keys)
         {
           const auto it = map.find(key);
           checksum += it != map.end() ? it->second : 1;
@@ -251,21 +246,19 @@ namespace
 
   template<typename Map>
   MeasureResult
-  measure_update_or_insert(
-    const std::vector<typename Map::key_type>& keys,
-    unsigned long count)
+  measure_update_or_insert(const std::vector<typename Map::key_type>& keys, unsigned long count)
   {
     return measure([&]() {
       Map map;
       map.reserve(keys.size());
 
       std::uint64_t checksum = 0;
-      for(unsigned long i = 0; i < count; ++i)
+      for (unsigned long i = 0; i < count; ++i)
       {
-        for(const auto& key : keys)
+        for (const auto& key : keys)
         {
           auto it = map.find(key);
-          if(it == map.end())
+          if (it == map.end())
           {
             it = map.emplace(key, 0).first;
           }
@@ -341,21 +334,18 @@ main(int argc, char** argv)
     std::cout
       << "count=" << options.count << '\n'
       << "items=" << options.items << '\n'
-      << "miss_percent=" << options.miss_percent << '\n'
-      << "key_type=" << options.key_type << '\n';
+      << "miss_percent=" << options.miss_percent << '\n' << "key_type=" << options.key_type << '\n';
 
-    if(options.key_type == "string")
+    if (options.key_type == "string")
     {
       const auto keys = make_string_keys(options.items);
-      const auto lookup_keys =
-        make_string_lookup_keys(keys, options.miss_percent);
+      const auto lookup_keys = make_string_lookup_keys(keys, options.miss_percent);
       run_tests(options, keys, lookup_keys);
     }
     else
     {
       const auto keys = make_uint64_keys(options.items);
-      const auto lookup_keys =
-        make_uint64_lookup_keys(keys, options.miss_percent);
+      const auto lookup_keys = make_uint64_lookup_keys(keys, options.miss_percent);
       run_tests(options, keys, lookup_keys);
     }
 

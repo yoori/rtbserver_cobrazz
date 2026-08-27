@@ -14,32 +14,29 @@ namespace Vanga
   {
     std::ostringstream ostr;
     ostr << prefix << feature_id << "{" << tree_id << "}";
-    if(dict)
+    if (dict)
     {
       auto dict_it = dict->find(feature_id);
-      if(dict_it != dict->end())
+      if (dict_it != dict->end())
       {
         ostr << " [" << dict_it->second << "]";
       }
     }
 
     ostr << ": " << (delta_prob > 0 ? "+" : "") << delta_prob <<
-      " = " << (base + delta_prob) <<
-      "(p = " << (1.0 / (1.0 + std::exp(-(base + delta_prob))));
+      " = " << (base + delta_prob) << "(p = " << (1.0 / (1.0 + std::exp(-(base + delta_prob))));
 
-    if(svm)
+    if (svm)
     {
       ostr << ", cover = " << (static_cast<double>(svm->size()) * 100.0 / full_size) << "%";
     }
 
     ostr << ")" << std::endl;
 
-    if(yes_tree)
+    if (yes_tree)
     {
       ReferenceCounting::SmartPtr<SVM<LabelType> > yes_svm =
-        svm ?
-        svm->by_feature(feature_id, true) :
-        ReferenceCounting::SmartPtr<SVM<LabelType> >();
+        svm ? svm->by_feature(feature_id, true) : ReferenceCounting::SmartPtr<SVM<LabelType> >();
 
       ostr << prefix << "  yes =>" << std::endl <<
         yes_tree->to_string_ext_(
@@ -50,12 +47,10 @@ namespace Vanga
           full_size);
     }
 
-    if(no_tree)
+    if (no_tree)
     {
       ReferenceCounting::SmartPtr<SVM<LabelType> > no_svm =
-        svm ?
-        svm->by_feature(feature_id, false) :
-        ReferenceCounting::SmartPtr<SVM<LabelType> >();
+        svm ? svm->by_feature(feature_id, false) : ReferenceCounting::SmartPtr<SVM<LabelType> >();
 
       ostr << prefix << "  no =>" << std::endl <<
         no_tree->to_string_ext_(
@@ -78,11 +73,6 @@ namespace Vanga
     const SVM<LabelType>* svm)
     const noexcept
   {
-    return to_string_ext_(
-      prefix,
-      dict,
-      base,
-      svm,
-      svm ? svm->size() : 0);
+    return to_string_ext_(prefix, dict, base, svm, svm ? svm->size() : 0);
   }
 }

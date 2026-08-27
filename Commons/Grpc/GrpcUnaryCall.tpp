@@ -17,12 +17,7 @@ namespace AdServer::Grpc
       ServiceImplType,
       AsyncServiceType,
       Request,
-      Response>(
-      service_impl,
-      async_service,
-      call.request_method,
-      call.handler,
-      completion_queue);
+      Response>(service_impl, async_service, call.request_method, call.handler, completion_queue);
     grpc_call->proceed(true);
   }
 

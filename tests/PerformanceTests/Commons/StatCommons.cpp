@@ -175,8 +175,7 @@ const PerformanceStatisticsBase::ItemList&
 
 void PerformanceStatisticsBase::reset()
 {
-  for (ItemList::iterator it = items_.begin();
-    it != items_.end(); ++it)
+  for (ItemList::iterator it = items_.begin(); it != items_.end(); ++it)
   {
     it->second->reset();
   }

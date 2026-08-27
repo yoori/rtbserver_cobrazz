@@ -121,7 +121,7 @@ namespace MT
     CTR::XGBoostPredictorPool_var xgboost_pool =
       new CTR::XGBoostPredictorPool(context->model_path);
     */
-    for(int i = 0; i < 1; ++i)
+    for (int i = 0; i < 1; ++i)
     {
       //xgboost_pool->get_predictor();
 
@@ -131,11 +131,10 @@ namespace MT
       assert(calculation.in());
 
       CTRProvider::CalculationContext_var calculation_context =
-        calculation->create_context(
-          context->request_params->tag->sizes.begin()->second);
+        calculation->create_context(context->request_params->tag->sizes.begin()->second);
 
       RevenueDecimal ctr;
-      for(int i = 0; i < 1; ++i)
+      for (int i = 0; i < 1; ++i)
       {
         ctr = calculation_context->get_ctr(context->creative);
       }
@@ -147,7 +146,7 @@ namespace MT
 
 int main(int argc, char** argv) noexcept
 {
-  if(argc < 2)
+  if (argc < 2)
   {
     return 0;
   }
@@ -164,7 +163,7 @@ int main(int argc, char** argv) noexcept
   args.parse(argc - 1, argv + 1);
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.size() < 2)
+  if (commands.size() < 2)
   {
     std::cerr << "Command not defined" << std::endl;
     return -1;
@@ -179,7 +178,7 @@ int main(int argc, char** argv) noexcept
   {
     Holder holder;
 
-    if(command == "simple-test")
+    if (command == "simple-test")
     {
       CTRProvider_var ctr_provider(new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
@@ -214,14 +213,14 @@ int main(int argc, char** argv) noexcept
       CTRProvider::Calculation_var calculation =
         ctr_provider->create_calculation(request_params_ptr);
 
-      if(calculation.in())
+      if (calculation.in())
       {
         Campaign_var campaign;
         Creative_var creative = create_creative(campaign, 1, 1, 1, 1, 1, 1);
         CTRProvider::CalculationContext_var calculation_context =
           calculation->create_context(request_params.tag->sizes.begin()->second);
         RevenueDecimal ctr;
-        for(int i = 0; i < METER_NUM; ++i)
+        for (int i = 0; i < METER_NUM; ++i)
         {
           ctr = calculation_context->get_ctr(creative);
         }
@@ -233,7 +232,7 @@ int main(int argc, char** argv) noexcept
         std::cout << "selected default ctr algorithm" << std::endl;
       }
     }
-    else if(command == "thread-test")
+    else if (command == "thread-test")
     {
       std::unique_ptr<MT::Context> context(new MT::Context());
 
@@ -264,58 +263,56 @@ int main(int argc, char** argv) noexcept
 
       std::cout << "to create_calculation" << std::endl;
 
-      for(int k = 0; k < 1000; ++k)
+      for (int k = 0; k < 1000; ++k)
       {
         std::cout << "iteration #" << k << std::endl;
         //context->model_path = config;
         //context->xgboost_pool = new CTR::XGBoostPredictorPool(config);
-        context->ctr_provider = new CTRProviderImpl(
-          config, Generics::Time::ZERO, nullptr);
+        context->ctr_provider = new CTRProviderImpl(config, Generics::Time::ZERO, nullptr);
 
         std::vector<pthread_t> thread_ids;
 
-        for(unsigned long i = 0; i < *opt_threads; ++i)
+        for (unsigned long i = 0; i < *opt_threads; ++i)
         {
           pthread_t tid;
           ::pthread_create(&tid, 0, &MT::eval_ctr_thread, context.get());
           thread_ids.push_back(tid);
         }
 
-        for(std::vector<pthread_t>::reverse_iterator tit = thread_ids.rbegin();
+        for (std::vector<pthread_t>::reverse_iterator tit = thread_ids.rbegin();
           tit != thread_ids.rend(); ++tit)
         {
           ::pthread_join(*tit, 0);
         }
       }
     }
-    else if(command == "csv")
+    else if (command == "csv")
     {
-      CTRProvider_var ctr_provider(
-        new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
+      CTRProvider_var ctr_provider(new CTRProviderImpl(config, Generics::Time::ZERO, nullptr));
 
-      if(cmd_it == commands.end())
+      if (cmd_it == commands.end())
       {
         std::cerr << "csv file not defined" << std::endl;
         return -1;
       }
       // parse csv
       std::fstream csv_file(*++cmd_it);
-      if(!csv_file.is_open())
+      if (!csv_file.is_open())
       {
         std::cerr << "Can't open csv file" << std::endl;
         return -1;
       }
 
-      while(!csv_file.eof())
+      while (!csv_file.eof())
       {
         char line[32000];
         csv_file.getline(line, sizeof(line));
-        if(line[0] == 0)
+        if (line[0] == 0)
         {
           continue;
         }
 
-        if(csv_file.bad())
+        if (csv_file.bad())
         {
           std::cerr << "Can't read csv file" << std::endl;
           return -1;
@@ -345,8 +342,7 @@ int main(int argc, char** argv) noexcept
         unsigned long campaign_id;
         unsigned long creative_id;
 
-        String::StringManip::Tokenizer tokenizer(
-          String::SubString(line), ",");
+        String::StringManip::Tokenizer tokenizer(String::SubString(line), ",");
         String::SubString token;
         /*
         tokenizer.get_token(token); // rid
@@ -362,7 +358,7 @@ int main(int argc, char** argv) noexcept
         {
           tokenizer.get_token(token); // device
           std::cout << "device = " << token << std::endl;
-          if(!String::StringManip::str_to_int(token, request_params.last_platform_channel_id))
+          if (!String::StringManip::str_to_int(token, request_params.last_platform_channel_id))
           {
             std::cerr << "invalid device: " << token << std::endl;
             return -1;
@@ -374,10 +370,10 @@ int main(int argc, char** argv) noexcept
           std::cout << "geo = " << token << std::endl;
           String::StringManip::Tokenizer sub_tokenizer(token, "|");
           String::SubString sub_token;
-          while(sub_tokenizer.get_token(sub_token))
+          while (sub_tokenizer.get_token(sub_token))
           {
             unsigned long channel_id;
-            if(!String::StringManip::str_to_int(sub_token, channel_id))
+            if (!String::StringManip::str_to_int(sub_token, channel_id))
             {
               std::cerr << "invalid geo channel: " << sub_token << std::endl;
               return -1;
@@ -392,10 +388,10 @@ int main(int argc, char** argv) noexcept
           std::cout << "userch = " << token << std::endl;
           String::StringManip::Tokenizer sub_tokenizer(token, "|");
           String::SubString sub_token;
-          while(sub_tokenizer.get_token(sub_token))
+          while (sub_tokenizer.get_token(sub_token))
           {
             unsigned long channel_id;
-            if(!String::StringManip::str_to_int(sub_token, channel_id))
+            if (!String::StringManip::str_to_int(sub_token, channel_id))
             {
               std::cerr << "invalid channel: " << sub_token << std::endl;
               return -1;
@@ -415,7 +411,7 @@ int main(int argc, char** argv) noexcept
 
         {
           tokenizer.get_token(token); // publisher
-          if(!String::StringManip::str_to_int(token, publisher_id))
+          if (!String::StringManip::str_to_int(token, publisher_id))
           {
             std::cerr << "invalid publisher_id: " << token << std::endl;
             return -1;
@@ -425,7 +421,7 @@ int main(int argc, char** argv) noexcept
 
         {
           tokenizer.get_token(token); // advertiser
-          if(!String::StringManip::str_to_int(token, advertiser_id))
+          if (!String::StringManip::str_to_int(token, advertiser_id))
           {
             std::cerr << "invalid advertiser_id: " << token << std::endl;
             return -1;
@@ -435,7 +431,7 @@ int main(int argc, char** argv) noexcept
 
         {
           tokenizer.get_token(token); // tag
-          if(!String::StringManip::str_to_int(token, tag_id))
+          if (!String::StringManip::str_to_int(token, tag_id))
           {
             std::cerr << "invalid tag: " << token << std::endl;
             return -1;
@@ -446,7 +442,7 @@ int main(int argc, char** argv) noexcept
         {
           tokenizer.get_token(token); // etag
           request_params.ext_tag_id = token.str();
-          if(request_params.ext_tag_id == "-" || request_params.ext_tag_id == "0")
+          if (request_params.ext_tag_id == "-" || request_params.ext_tag_id == "0")
           {
             request_params.ext_tag_id.clear();
           }
@@ -454,7 +450,7 @@ int main(int argc, char** argv) noexcept
 
         {
           tokenizer.get_token(token); // campaign
-          if(!String::StringManip::str_to_int(token, campaign_id))
+          if (!String::StringManip::str_to_int(token, campaign_id))
           {
             std::cerr << "invalid campaign: " << token << std::endl;
             return -1;
@@ -466,7 +462,7 @@ int main(int argc, char** argv) noexcept
         {
           unsigned long ts;
           tokenizer.get_token(token); // time
-          if(!String::StringManip::str_to_int(token, ts))
+          if (!String::StringManip::str_to_int(token, ts))
           {
             std::cerr << "invalid time: " << token << std::endl;
             return -1;
@@ -487,7 +483,7 @@ int main(int argc, char** argv) noexcept
 
         {
           tokenizer.get_token(token); // size_id
-          if(!String::StringManip::str_to_int(token, size_id))
+          if (!String::StringManip::str_to_int(token, size_id))
           {
             std::cerr << "invalid sizeid: " << token << std::endl;
             return -1;
@@ -501,7 +497,7 @@ int main(int argc, char** argv) noexcept
         /*
         {
           tokenizer.get_token(token); // creative_id
-          if(!String::StringManip::str_to_int(token, creative_id))
+          if (!String::StringManip::str_to_int(token, creative_id))
           {
             std::cerr << "invalid creative id: " << token << std::endl;
             return -1;
@@ -547,12 +543,12 @@ int main(int argc, char** argv) noexcept
         CTRProvider::Calculation_var calculation =
           ctr_provider->create_calculation(request_params_ptr);
 
-        if(calculation.in())
+        if (calculation.in())
         {
           CTRProvider::CalculationContext_var calculation_context =
             calculation->create_context(request_params.tag->sizes.begin()->second);
           RevenueDecimal ctr;
-          for(int i = 0; i < METER_NUM; ++i)
+          for (int i = 0; i < METER_NUM; ++i)
           {
             ctr = calculation_context->get_ctr(creative);
           }

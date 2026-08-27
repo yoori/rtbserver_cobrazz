@@ -11,7 +11,7 @@ sub _table
   'Channel'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   name => DB::Entity::Type::name(unique => 1),
   channel_id => DB::Entity::Type::sequence(),

@@ -6,7 +6,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   expression_channel_id => DB::Entity::Type::link('DB::ExpressionChannel', unique => 1),
   used_channel_id => DB::Entity::Type::int(unique => 1)
@@ -32,7 +32,7 @@ sub _table
   'Channel'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   name => DB::Entity::Type::name(unique => 1),
   channel_id => DB::Entity::Type::sequence(),
@@ -57,38 +57,38 @@ use constant STRUCT =>
 sub preinit_
 {
   my ($self, $ns, $args) = @_;
-  
+
   DB::CMPChannelBase::cmp_channel_preinit_($self, $args);
-  
-  if(exists $args->{behavioral_parameters})
+
+  if (exists $args->{behavioral_parameters})
   {
     $self->{behavioral_parameters} = $args->{behavioral_parameters};
     delete $args->{behavioral_parameters};
   }
-  
-  if(exists $args->{categories})
+
+  if (exists $args->{categories})
   {
     $self->{categories} = $args->{categories};
     delete $args->{categories};
   }
-  
-  if(exists $args->{keyword_list})
+
+  if (exists $args->{keyword_list})
   {
     delete $args->{keyword_list};
   }
-  
-  if(exists $args->{url_list})
+
+  if (exists $args->{url_list})
   {
     delete $args->{url_list};
   }
-  
+
   DB::CMPChannelBase::cmp_channel_preinit_($self, $args);
 }
 
 sub postcreate_
 {
   my ($self, $ns) = @_;
-  
+
   DB::CMPChannelBase::cmp_channel_postcreate_($self, $ns);
 
   if (defined $self->{expression})

@@ -2,15 +2,11 @@
 #include <iostream>
 #include <LogCommons/LogCommons.ipp>
 
-const Generics::Time TEST_TIME_DAY(
-  String::SubString("2011-04-05"), "%Y-%m-%d");
-const Generics::Time TEST_TIME_DAY_HOUR(
-  String::SubString("2011-04-05_14:13:36"), "%Y-%m-%d_%H");
-const Generics::Time TEST_TIME(
-  String::SubString("2011-04-05_14:13:36"), "%Y-%m-%d_%H:%M:%S");
+const Generics::Time TEST_TIME_DAY(String::SubString("2011-04-05"), "%Y-%m-%d");
+const Generics::Time TEST_TIME_DAY_HOUR(String::SubString("2011-04-05_14:13:36"), "%Y-%m-%d_%H");
+const Generics::Time TEST_TIME(String::SubString("2011-04-05_14:13:36"), "%Y-%m-%d_%H:%M:%S");
 
-const char STANDARD_STREAM[] =
-  "2011-04-05\t2011-04-05:14\t2011-04-05_14:13:36";
+const char STANDARD_STREAM[] = "2011-04-05\t2011-04-05:14\t2011-04-05_14:13:36";
 
 using namespace AdServer::LogProcessing;
 
@@ -30,8 +26,7 @@ public:
   {
     TimeSet restored(ostr_);
     bool condition = times_.day == restored.day &&
-      times_.day_hour == restored.day_hour &&
-      restored.seconds == times_.seconds;
+      times_.day_hour == restored.day_hour && restored.seconds == times_.seconds;
     if (!condition)
     {
       std::cerr << "Check fail:" << std::endl
@@ -39,8 +34,7 @@ public:
         << std::endl
         << "day_hour=" << times_.day_hour << ", restore=" << restored.day_hour
         << std::endl
-        << "seconds=" << times_.seconds << ", restore=" << restored.seconds
-        << std::endl;
+        << "seconds=" << times_.seconds << ", restore=" << restored.seconds << std::endl;
     }
     return !condition;
   }
@@ -49,8 +43,7 @@ public:
   {
     if (ostr_.str() != STANDARD_STREAM)
     {
-      std::cerr << "Output in stream failed, unexpected result="
-        << ostr_.str() << std::endl;
+      std::cerr << "Output in stream failed, unexpected result=" << ostr_.str() << std::endl;
       return true;
     }
     TimeSet restored(ostr_);
@@ -59,8 +52,7 @@ public:
       restored.day.time() == TEST_TIME_DAY &&
       restored.day_hour.time() == TEST_TIME_DAY_HOUR &&
       restored.seconds == TEST_TIME &&
-      restored.day == TEST_TIME_DAY &&
-      restored.day_hour == TEST_TIME_DAY_HOUR;
+      restored.day == TEST_TIME_DAY && restored.day_hour == TEST_TIME_DAY_HOUR;
     return !condition;
   }
 private:
@@ -101,6 +93,7 @@ main()
       Tester test(Generics::Time::get_time_of_day());
       fails += test.check_fail();
     }
+
     if (fails)
     {
       std::cerr << "Test FAILED, fails count=" << fails << std::endl;

@@ -59,9 +59,7 @@ namespace AdServer::CampaignSvcs
       BidResult(
         bool available_val,
         const RevenueDecimal& goal_ctr_val,
-        BidUnavailableReason unavailable_reason_val =
-          BidUnavailableReason::UNSPECIFIED)
-        noexcept;
+        BidUnavailableReason unavailable_reason_val = BidUnavailableReason::UNSPECIFIED) noexcept;
 
       bool available;
       RevenueDecimal goal_ctr;
@@ -540,8 +538,7 @@ namespace AdServer::CampaignSvcs
       ", account_id = " << account_id <<
       ", advertiser_id = " << advertiser_id <<
       ", campaign_id = " << campaign_id <<
-      ", ccg_id = " << ccg_id <<
-      ", optimize_campaign_ctr = " << optimize_campaign_ctr;
+      ", ccg_id = " << ccg_id << ", optimize_campaign_ctr = " << optimize_campaign_ctr;
   }
 
   // BillingProcessor::BidResult

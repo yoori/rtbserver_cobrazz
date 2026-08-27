@@ -40,8 +40,7 @@ const char* RESULTS[] =
 struct Test : public AdServer::Commons::ProcessControlVarsLoggerImpl
 {
   Test() :
-    AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "ProcessControlVarsTestApp_", ASPECT)
+    AdServer::Commons::ProcessControlVarsLoggerImpl("ProcessControlVarsTestApp_", ASPECT)
   {}
 private:
   virtual
@@ -76,8 +75,7 @@ typedef ReferenceCounting::SmartPtr<DbStateChangerImpl>
 void
 check_test_case(const ProcessControlVarsLoggerImpl_var& var, std::size_t index)
 {
-  CORBA::String_var result =
-    var->control(TEST_CASES[index].p1, TEST_CASES[index].p2);
+  CORBA::String_var result = var->control(TEST_CASES[index].p1, TEST_CASES[index].p2);
   if (strcmp(result, RESULTS[index]))
   {
     std::cerr << "FAIL: can't set " << TEST_CASES[index].p1
@@ -106,8 +104,7 @@ main()
   }
 
   DbStateChangerImpl_var db_state = new DbStateChangerImpl;
-  var->add_var_processor(DbStateProcessor::VAR_NAME,
-    new DbStateProcessor(db_state));
+  var->add_var_processor(DbStateProcessor::VAR_NAME, new DbStateProcessor(db_state));
   check_test_case(var, test_case_index++);
   if (!db_state->get_db_state())
   {

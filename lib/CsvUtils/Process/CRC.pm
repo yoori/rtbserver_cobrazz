@@ -11,7 +11,7 @@ sub new
     die "CsvUtils::Process::InFile: not defined 'field' argument";
 
   my $fields = { field_ => $params{'field'} - 1 };
-  if(exists($params{'mod'}))
+  if (exists($params{'mod'}))
   {
     $fields->{'mod_'} = $params{'mod'};
   }
@@ -25,7 +25,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)

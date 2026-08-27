@@ -88,7 +88,7 @@ sub init {
       cpm => 10 });
 
   $ns->output("TagId", $tag_id, "");
-  
+
   $ns->output("DefaultColo", DB::Defaults::instance()->isp->{colo_id});
 }
 

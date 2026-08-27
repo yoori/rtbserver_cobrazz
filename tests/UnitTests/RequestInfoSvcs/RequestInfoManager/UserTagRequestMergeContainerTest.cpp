@@ -31,8 +31,7 @@ public:
   typedef std::list<TagRequestGroupInfo> TagRequestGroupInfoList;
 
 public:
-  virtual void process_tag_request_group(
-    const TagRequestGroupInfo& tag_group_info)
+  virtual void process_tag_request_group(const TagRequestGroupInfo& tag_group_info)
     /*throw(Exception)*/
   {
     groups_.push_back(tag_group_info);
@@ -64,8 +63,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
     {
       Logging::Logger_var logger(new Logging::Null::Logger);
 
-      TestTagGroupProcessor_var processor(
-        new TestTagGroupProcessor());
+      TestTagGroupProcessor_var processor(new TestTagGroupProcessor());
 
       system(("rm -r " + *root_path + TEST_FOLDER +
         " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
@@ -83,18 +81,14 @@ struct TestBase: public ReferenceCounting::AtomicImpl
 
       fill_etalon(etalon);
 
-      const TagRequestGroupProcessor::TagRequestGroupInfoList& result =
-        processor->result();
+      const TagRequestGroupProcessor::TagRequestGroupInfoList& result = processor->result();
 
-      TagRequestGroupProcessor::TagRequestGroupInfoList::
-        const_iterator et_it = etalon.begin();
-      TagRequestGroupProcessor::TagRequestGroupInfoList::
-        const_iterator res_it = result.begin();
+      TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator et_it = etalon.begin();
+      TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator res_it = result.begin();
 
       int i = 0;
 
-      for (; et_it != etalon.end() && res_it != result.end();
-          ++et_it, ++res_it, ++i)
+      for (; et_it != etalon.end() && res_it != result.end(); ++et_it, ++res_it, ++i)
       {
         if (!(*et_it == *res_it))
         {
@@ -132,7 +126,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
 
         {
           int i = 0;
-          for(TagRequestGroupProcessor::TagRequestGroupInfoList::
+          for (TagRequestGroupProcessor::TagRequestGroupInfoList::
                 const_iterator e_it = etalon.begin();
               e_it != etalon.end();
               ++e_it, ++i)
@@ -185,10 +179,8 @@ struct TestPageIdAppearAndChange: public TestBase
     {
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -204,10 +196,8 @@ struct TestPageIdAppearAndChange: public TestBase
     {
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -223,10 +213,8 @@ struct TestPageIdAppearAndChange: public TestBase
     {
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -246,8 +234,7 @@ struct TestPageIdAppearAndChange: public TestBase
     TagRequestGroupProcessor::TagRequestGroupInfo group_info1;
 
     {
-      group_info1.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info1.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info1.colo_id = 1;
       group_info1.site_id = 1;
       group_info1.country = "ru";
@@ -259,8 +246,7 @@ struct TestPageIdAppearAndChange: public TestBase
 
     {
       TagRequestGroupProcessor::TagRequestGroupInfo group_info;
-      group_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info.colo_id = 1;
       group_info.site_id = 1;
       group_info.country = "ru";
@@ -297,10 +283,8 @@ struct TestPageIdAndRefererHashMerge: public TestBase
     {
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -316,10 +300,8 @@ struct TestPageIdAndRefererHashMerge: public TestBase
     {
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -339,8 +321,7 @@ struct TestPageIdAndRefererHashMerge: public TestBase
     TagRequestGroupProcessor::TagRequestGroupInfo group_info1;
 
     {
-      group_info1.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info1.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info1.colo_id = 1;
       group_info1.site_id = 1;
       group_info1.country = "ru";
@@ -356,8 +337,7 @@ struct TestPageIdAndRefererHashMerge: public TestBase
       groups_list.push_back(group_info1_rollback);
 
       TagRequestGroupProcessor::TagRequestGroupInfo group_info;
-      group_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info.colo_id = 1;
       group_info.site_id = 1;
       group_info.country = "ru";
@@ -395,10 +375,8 @@ struct TestRefererAppearAndChange: public TestBase
       // produce #0
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -415,10 +393,8 @@ struct TestRefererAppearAndChange: public TestBase
       // produce #1
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -435,10 +411,8 @@ struct TestRefererAppearAndChange: public TestBase
       // produce #2, #3
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -497,8 +471,7 @@ struct TestRefererAppearAndChange: public TestBase
     TagRequestGroupProcessor::TagRequestGroupInfo group_info1;
 
     {
-      group_info1.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info1.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info1.colo_id = 1;
       group_info1.site_id = 1;
       group_info1.country = "ru";
@@ -511,8 +484,7 @@ struct TestRefererAppearAndChange: public TestBase
 
     {
       TagRequestGroupProcessor::TagRequestGroupInfo group_info;
-      group_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info.colo_id = 1;
       group_info.site_id = 1;
       group_info.country = "ru";
@@ -584,10 +556,8 @@ struct TestAdShownChange: public TestBase
       // produce #0
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -604,10 +574,8 @@ struct TestAdShownChange: public TestBase
       // produce #1, #2
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -624,10 +592,8 @@ struct TestAdShownChange: public TestBase
       // produce #3, #4
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -647,8 +613,7 @@ struct TestAdShownChange: public TestBase
     TagRequestGroupProcessor::TagRequestGroupInfo group_info1;
 
     {
-      group_info1.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info1.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info1.colo_id = 1;
       group_info1.site_id = 1;
       group_info1.country = "ru";
@@ -704,10 +669,8 @@ struct TestMergeWithDiffRefererIfDefinedOnePageLoadId: public TestBase
       // produce #0
       TagRequestInfo tag_request_info;
       tag_request_info.user_id = uid;
-      tag_request_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
-      tag_request_info.isp_time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      tag_request_info.isp_time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       tag_request_info.country = "ru";
       tag_request_info.colo_id = 1;
       tag_request_info.site_id = 1;
@@ -770,8 +733,7 @@ struct TestMergeWithDiffRefererIfDefinedOnePageLoadId: public TestBase
   {
     {
       TagRequestGroupProcessor::TagRequestGroupInfo group_info;
-      group_info.time =
-        Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
+      group_info.time = Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d");
       group_info.colo_id = 1;
       group_info.site_id = 1;
       group_info.country = "ru";
@@ -826,7 +788,7 @@ int main(int argc, char* argv[]) noexcept
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       std::cout << USAGE << std::endl;
       return 0;
@@ -841,7 +803,7 @@ int main(int argc, char* argv[]) noexcept
     tests.push_back(new TestMergeWithDiffRefererIfDefinedOnePageLoadId());
 
     int result = 0;
-    for(TestList::iterator it = tests.begin(); it != tests.end(); ++it)
+    for (TestList::iterator it = tests.begin(); it != tests.end(); ++it)
     {
       result += (*it)->run();
     }

@@ -50,8 +50,7 @@ namespace AdServer::WebStat
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -81,9 +80,7 @@ namespace AdServer::WebStat
     void parse_config_() /*throw(Exception)*/;
 
     FrontendCommons::RequestTask
-    process_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponse_var response)
+    process_request_(FCGI::HttpRequestHolder_var request_holder, FCGI::HttpResponse_var response)
       noexcept;
 
     int

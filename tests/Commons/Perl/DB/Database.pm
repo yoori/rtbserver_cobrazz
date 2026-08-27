@@ -73,7 +73,7 @@ sub begin_namespace
 sub _xml_encode {
     my ($s, $encode) = @_;
 
-    if(!defined($s))
+    if (!defined($s))
     {
       die "_xml_encode: undefined input value";
     }
@@ -96,7 +96,7 @@ sub dump
   my $self = shift;
   my ($name, $v_name, $value, $description, $flags) = @_;
 
-  die "Unknown namespace '$name'" 
+  die "Unknown namespace '$name'"
     if (not exists $self->{_namespaces}->{$name});
 
   $value = _xml_encode($value, $flags & XML_ENCODE);
@@ -112,7 +112,7 @@ sub end_namespace
   my $self = shift;
   my $name = shift;
 
-  die "Unknown namespace '$name'" 
+  die "Unknown namespace '$name'"
     if (not exists $self->{_namespaces}->{$name});
 
   (my $begin = << "  EOF;") =~ s/^ {2}//mg;
@@ -146,7 +146,7 @@ sub end_namespace
 sub DESTROY
 {
   my $self = shift;
-  
+
   (my $footer = << '  EOF;') =~ s/^ {4}//mg;
     </LocalParams>
   EOF;
@@ -197,7 +197,7 @@ sub new
 sub options
 {
   my $self = shift;
-  return $self->{options_};  
+  return $self->{options_};
 }
 
 sub pq_dbh
@@ -236,7 +236,7 @@ sub create
 
   my $obj;
 
-  if(ref($class) eq ENTITY_BASE_CLASS_NAME)
+  if (ref($class) eq ENTITY_BASE_CLASS_NAME)
   {
     my $blank_obj = $class;
 
@@ -249,12 +249,12 @@ sub create
     $obj = $class->_new($self, $args);
   }
 
-  if($self->{trace_} > 0)
+  if ($self->{trace_} > 0)
   {
     print "created $class" . (
       UNIVERSAL::isa($obj, "DB::Entity::Base") && scalar($obj->_unique()) ?
       " with key: " . join(',', $obj->{$obj->_unique()}) : "") . "\n";
-    if($self->{trace_} > 1)
+    if ($self->{trace_} > 1)
     {
       my $dumper = Data::Dumper->new([$obj]);
       $dumper->Indent(2);
@@ -310,7 +310,7 @@ sub output_base64
   my $self = shift;
   my ($key, $value) = @_;
 
-  my $encoded_base64 = 
+  my $encoded_base64 =
     encode_base64($value);
 
   $self->{_db}->_dumper->dump(
@@ -362,7 +362,7 @@ sub output
 }
 
 sub DESTROY
-{ 
+{
   # Suppress dump namespace name.
 }
 
@@ -408,7 +408,7 @@ sub new
 sub DESTROY
 {
   my $self = shift;
-  $self->{_pq_dbh}->finish(); 
+  $self->{_pq_dbh}->finish();
   $self->{_pq_dbh}->disconnect();
   undef($self->{_pq_dbh});
 }

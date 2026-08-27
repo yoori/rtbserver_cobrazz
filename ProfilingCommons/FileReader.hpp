@@ -5,9 +5,7 @@
 
 #include <ProfilingCommons/FileController.hpp>
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   class FileReader
   {
@@ -73,5 +71,4 @@ namespace ProfilingCommons
     Generics::SmartMemBuf_var mem_buf_;
     unsigned long mem_buf_pos_;
   };
-}
 }

@@ -2,10 +2,7 @@
 #include <Generics/Rand.hpp>
 #include <cmath>
 
-REFLECT_UNIT(StatsHourlyLoggingTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(StatsHourlyLoggingTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -15,8 +12,7 @@ namespace
 
   const unsigned int DEFAULT_CPM = 11;
 
-  double revenue(const unsigned int& imps,
-                 const unsigned int& cpm = DEFAULT_CPM)
+  double revenue(const unsigned int& imps, const unsigned int& cpm = DEFAULT_CPM)
   {
     return (double) imps*cpm/1000;
   }
@@ -54,9 +50,7 @@ bool
 StatsHourlyLoggingTest::run()
 {
 
-  AUTOTEST_CASE(
-    case_absent_imp_req_id(),
-    "Request for tracking without request-id");
+  AUTOTEST_CASE(case_absent_imp_req_id(), "Request for tracking without request-id");
 
   AUTOTEST_CASE(
     case_all_counters_imptrack_disabled(),
@@ -80,35 +74,25 @@ StatsHourlyLoggingTest::run()
   noimp_stats.select(pq_conn_);
 
   AUTOTEST_CASE(
-    case_clicks_actions_noimpressions_part_1(
-      noimp_stats, noimp_req_list),
+    case_clicks_actions_noimpressions_part_1(noimp_stats, noimp_req_list),
     "Clicks and actions, but no impressions");
 
-  AUTOTEST_CASE(
-    case_ammounts("TC1"),
-    "Ammounts net campaign");
+  AUTOTEST_CASE(case_ammounts("TC1"), "Ammounts net campaign");
 
-  AUTOTEST_CASE(
-    case_ammounts("TC2"),
-    "Ammounts gross campaign");
+  AUTOTEST_CASE(case_ammounts("TC2"), "Ammounts gross campaign");
 
-  AUTOTEST_CASE(
-    case_with_sdate_tinkling(),
-    "Sdate tinkling");
+  AUTOTEST_CASE(case_with_sdate_tinkling(), "Sdate tinkling");
 
   AUTOTEST_CASE(
     case_template_level_disabled_imptrack(),
     "Impression tracking disabled at template level");
 
-  AUTOTEST_CASE(
-    case_multiple_confirmation_of_creative(),
-    "Multiple confirmation of creative");
+  AUTOTEST_CASE(case_multiple_confirmation_of_creative(), "Multiple confirmation of creative");
 
   check();
 
   AUTOTEST_CASE(
-    case_clicks_actions_noimpressions_part_2(
-      noimp_stats, noimp_req_list),
+    case_clicks_actions_noimpressions_part_2(noimp_stats, noimp_req_list),
     "Clicks and actions, but no impressions");
 
   return true;
@@ -161,14 +145,11 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
       "must have debug_info.click_url");
 
     std::string action_url = AutoTest::ActionRequest().
@@ -188,9 +169,7 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
 
     client.process_request(zero_request);
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        "0",
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker("0", client.debug_info.ccid).check(),
       "must have empty ccid");
   }
 
@@ -208,10 +187,7 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
 
     ADD_WAIT_CHECKER(
       "RequestStatsHourly check",
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats));
+      AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
   }
 }
 
@@ -242,12 +218,9 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_1(
     AdClient client(AdClient::create_user(this));
     client.process_request(request);
 
-    std::string imp_url =
-      client.debug_info.track_pixel_url.value();
+    std::string imp_url = client.debug_info.track_pixel_url.value();
 
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        exp_ccids, actions));
+    FAIL_CONTEXT(client.do_ad_requests(exp_ccids, actions));
 
     if (i % 2 == 0)
     {
@@ -266,10 +239,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_1(
 
     ADD_WAIT_CHECKER(
       "RequestStatsHourly check",
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats));
+      AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
   }
 }
 
@@ -280,8 +250,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_2(
 {
   stats.select(pq_conn_);
 
-  for (RequestList::iterator req_pair = req_list.begin();
-       req_pair != req_list.end(); ++req_pair)
+  for (RequestList::iterator req_pair = req_list.begin(); req_pair != req_list.end(); ++req_pair)
   {
     req_pair->first.process_request(req_pair->second);
   }
@@ -295,17 +264,12 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_2(
         requests(0).
         clicks(REPEAT_COUNT / 2).
         actions(REPEAT_COUNT / 2).
-        adv_amount(
-          ORM::stats_diff_type(
-            REPEAT_COUNT * ADV_CPA / 2, 0.1))
+        adv_amount(ORM::stats_diff_type(REPEAT_COUNT * ADV_CPA / 2, 0.1))
     };
 
     ADD_WAIT_CHECKER(
       "RequestStatsHourly check",
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats));
+      AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
   }
 }
 
@@ -342,17 +306,13 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
   for (unsigned int i = 0; i < REPEAT_COUNT / 2; ++i)
   {
     AdClient client(AdClient::create_user(this));
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        request, exp_ccids, actions2));
+    FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions2));
   }
 
   for (unsigned int i = 0; i < REPEAT_COUNT / 2; ++i)
   {
     AdClient client(AdClient::create_user(this));
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        request, exp_ccids, actions1));
+    FAIL_CONTEXT(client.do_ad_requests(request, exp_ccids, actions1));
   }
 
   ADD_WAIT_CHECKER(
@@ -367,8 +327,7 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
           actions(0). // no actions : CPA = 0
           adv_amount(ORM::stats_diff_type(REQ_REVENUE, 0.1)).
           adv_comm_amount(
-            ORM::stats_diff_type(REQ_REVENUE * ADV_COMMISSION /
-              (1 - ADV_COMMISSION), 0.1)).
+            ORM::stats_diff_type(REQ_REVENUE * ADV_COMMISSION / (1 - ADV_COMMISSION), 0.1)).
           pub_amount(ORM::stats_diff_type(PUB_AMOUNT, 0.1)).
           pub_comm_amount(ORM::stats_diff_type(PUB_COMM_AMOUNT, 0.1)).
           isp_amount(ORM::stats_diff_type(isp_ammount(false), 0.1)):
@@ -377,12 +336,8 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
             requests(REPEAT_COUNT).
             clicks(REPEAT_COUNT).
             actions(0). // no actions : CPA = 0
-            adv_amount(
-              ORM::stats_diff_type(
-                REQ_REVENUE * (1 - ADV_COMMISSION), 0.1)).
-            adv_comm_amount(
-              ORM::stats_diff_type(
-                REQ_REVENUE * ADV_COMMISSION , 0.1)).
+            adv_amount(ORM::stats_diff_type(REQ_REVENUE * (1 - ADV_COMMISSION), 0.1)).
+            adv_comm_amount(ORM::stats_diff_type(REQ_REVENUE * ADV_COMMISSION, 0.1)).
             pub_amount(ORM::stats_diff_type(PUB_AMOUNT, 0.1)).
             pub_comm_amount(ORM::stats_diff_type(PUB_COMM_AMOUNT, 0.1)).
             isp_amount(ORM::stats_diff_type(isp_ammount(true), 0.1)),
@@ -397,11 +352,9 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
     ((target_request_time_ - Generics::Time::ONE_DAY * 2).
       get_gm_time().format("%d-%m-%Y") + ":" + "12-00-00").c_str());
 
-  AutoTest::Time hour_later(
-    base_time + Generics::Time::ONE_HOUR);
+  AutoTest::Time hour_later(base_time + Generics::Time::ONE_HOUR);
 
-  AutoTest::Time day_later(
-    base_time + Generics::Time::ONE_DAY);
+  AutoTest::Time day_later(base_time + Generics::Time::ONE_DAY);
 
   ORM::StatsArray<HourlyStats, 3> stats;
 
@@ -451,18 +404,14 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.click_url.empty()),
       "must have debug_info.click_url");
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.empty()),
       "Server has returned selected creatives");
     AutoTest::ActionRequest action_request;
     action_request.cid = client.debug_info.cmpid.value();
@@ -495,10 +444,7 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
 
     ADD_WAIT_CHECKER(
       "RequestStatsHourly check",
-      AutoTest::stats_diff_checker(
-        pq_conn_,
-        diffs,
-        stats));
+      AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
   }
 }
 
@@ -530,16 +476,13 @@ StatsHourlyLoggingTest::case_multiple_confirmation_of_creative()
 
     client.process_request(request);
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
       "must have debug_info.track_pixel_url");
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.empty()),
       "Server has returned selected creatives");
 
-    std::string imp_url =
-      client.debug_info.track_pixel_url.value();
+    std::string imp_url = client.debug_info.track_pixel_url.value();
 
     RequestPair req_pair(client, imp_url);
     req_list.push_back(req_pair);
@@ -549,8 +492,7 @@ StatsHourlyLoggingTest::case_multiple_confirmation_of_creative()
     }
   }
 
-  for (RequestList::iterator req_pair = req_list.begin();
-       req_pair != req_list.end(); ++req_pair)
+  for (RequestList::iterator req_pair = req_list.begin(); req_pair != req_list.end(); ++req_pair)
   {
     req_pair->first.process_request(req_pair->second);
   }
@@ -595,14 +537,11 @@ StatsHourlyLoggingTest::case_template_level_disabled_imptrack()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(client.debug_info.track_pixel_url.empty()),
       "must not have debug_info.track_pixel_url");
   }
 
@@ -646,14 +585,11 @@ StatsHourlyLoggingTest::case_absent_imp_req_id()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "unexpected creatives");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
       "must have debug_info.track_pixel_url");
 
     ImpressionRequest impression;

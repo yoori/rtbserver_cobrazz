@@ -3,9 +3,7 @@
 #include "UpdateContainer.hpp"
 #include "DictionaryMatcher.hpp"
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   const char* DictionaryMatcher::ASPECT = "DictionaryMatcher";
 
@@ -18,7 +16,7 @@ namespace ChannelSvcs
       logger_(logger)
   {
     static const char* FN = "DictionaryMatcher::DictionaryMatcher";
-    if(dictionary_server_refs.empty())
+    if (dictionary_server_refs.empty())
     {
       return;
     }
@@ -50,10 +48,10 @@ namespace ChannelSvcs
   static Stream::Error& print(const LexemeData& lexeme, Stream::Error& trace) noexcept
   {
     trace << " ";
-    for(LexemeData::Forms::const_iterator v_it = lexeme.forms.begin();
+    for (LexemeData::Forms::const_iterator v_it = lexeme.forms.begin();
         v_it != lexeme.forms.end(); ++v_it)
     {
-      if(v_it != lexeme.forms.begin())
+      if (v_it != lexeme.forms.begin())
       {
         trace << ",";
       }
@@ -63,12 +61,10 @@ namespace ChannelSvcs
     return trace;
   }
 
-  void DictionaryMatcher::get_lexemes(
-    const char* lang,
-    LexemeCache& lexemes)
+  void DictionaryMatcher::get_lexemes(const char* lang, LexemeCache& lexemes)
     /*throw(Exception)*/
   {
-    if(!dictionary_pool_.get())
+    if (!dictionary_pool_.get())
     {
       return;
     }
@@ -84,23 +80,22 @@ namespace ChannelSvcs
       AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq_var lexemes_res =
         query_dictionary_words_(lang, seq_words);
       assert(seq_words.length() == lexemes_res->length());
-      for(CORBA::ULong i = 0; i < count; ++i)
+      for (CORBA::ULong i = 0; i < count; ++i)
       {
-        const AdServer::ChannelSvcs::DictionaryProvider::Lexeme& lex =
-          lexemes_res[i];
-        if(lex.forms.length())
+        const AdServer::ChannelSvcs::DictionaryProvider::Lexeme& lex = lexemes_res[i];
+        if (lex.forms.length())
         {
           Lexeme_var& lex_data = lexemes[String::SubString(seq_words[i])];
           lex_data = new Lexeme;
           size_t len_form = 0;
           lex_data->forms.resize(lex.forms.length());
-          for(size_t j = 0; j < lex.forms.length(); ++j)
+          for (size_t j = 0; j < lex.forms.length(); ++j)
           {
             lex_data->forms[j] = String::SubString(lex.forms[j]);
             len_form += lex_data->forms[j].text().length();
           }
           lex_data->data.reserve(len_form);
-          for(size_t j = 0; j < lex.forms.length(); ++j)
+          for (size_t j = 0; j < lex.forms.length(); ++j)
           {
             size_t start = lex_data->data.size();
             lex_data->data.append(
@@ -122,14 +117,12 @@ namespace ChannelSvcs
     }
   }
 
-  void DictionaryMatcher::trace_result_(
-    const char* lang,
-    const LexemeCache& cache)
+  void DictionaryMatcher::trace_result_(const char* lang, const LexemeCache& cache)
     noexcept
   {
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      for(auto it = cache.begin(); it != cache.end(); ++it)
+      for (auto it = cache.begin(); it != cache.end(); ++it)
       {
         Stream::Error trace;
         trace << lang << ": '" << it->first << "' :";
@@ -182,15 +175,14 @@ namespace ChannelSvcs
     {
       Stream::Error ostr;
       ostr << __func__ << ": eh::Exception :" << e.what();
-      logger_->log(
-        ostr.str(), Logging::Logger::WARNING, ASPECT, "ADS-ICON-10");
+      logger_->log(ostr.str(), Logging::Logger::WARNING, ASPECT, "ADS-ICON-10");
       throw Exception(ostr);
     }
   }
 
   bool DictionaryMatcher::ready() const noexcept
   {
-    if(!dictionary_pool_.get())
+    if (!dictionary_pool_.get())
     {
       return true;
     }
@@ -205,5 +197,4 @@ namespace ChannelSvcs
       return false;
     }
   }
-}
 }

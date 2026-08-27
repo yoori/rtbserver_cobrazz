@@ -56,9 +56,7 @@ public:
    * @param _url Base URL for request.
    * @param _method HTTP-method for request.
    */
-  RequestConfig(ConstraintConfig* _constraint,
-                const char* _url = "",
-                const char* _method = "");
+  RequestConfig(ConstraintConfig* _constraint, const char* _url = "", const char* _method = "");
 
   /**
    * @brief Access to request parameters.

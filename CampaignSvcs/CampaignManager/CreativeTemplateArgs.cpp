@@ -5,9 +5,7 @@
 
 #include "CreativeTemplateArgs.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   void
   TokenValueMap::set_value(std::string_view name, std::string&& value)
@@ -34,10 +32,7 @@ namespace CampaignSvcs
   }
 
   bool
-  TokenValueMap::get_argument(
-    const String::SubString& key,
-    std::string& result,
-    bool value) const
+  TokenValueMap::get_argument(const String::SubString& key, std::string& result, bool value) const
   {
     if (!value)
     {
@@ -74,8 +69,7 @@ namespace CampaignSvcs
     values_.clear();
   }
 
-  bool CreativeInstantiateRule::instantiate_relative_protocol_url(
-    std::string& url) const noexcept
+  bool CreativeInstantiateRule::instantiate_relative_protocol_url(std::string& url) const noexcept
   {
     if (RELATIVE_URL_PREFIX.start(url))
     {
@@ -136,8 +130,7 @@ namespace CampaignSvcs
       TokenOptionValue token_value;
       if (token_values_.get(key_view, token_value))
       {
-        TokenProcessorMap::const_iterator it = token_processors_.find(
-          token_value.option_id);
+        TokenProcessorMap::const_iterator it = token_processors_.find(token_value.option_id);
 
         if (it != token_processors_.end())
         {
@@ -147,8 +140,7 @@ namespace CampaignSvcs
 
       if (!token_processor.in())
       {
-        token_processor = BaseTokenProcessor::default_token_processor(
-          key_str.c_str());
+        token_processor = BaseTokenProcessor::default_token_processor(key_str.c_str());
       }
 
       return token_processor->instantiate(
@@ -185,20 +177,16 @@ namespace CampaignSvcs
       creative_args_(creative_args)
   {}
 
-  TokenOptionValueProvider::TokenOptionValueProvider(
-    const OptionTokenValueMap& creative_args)
+  TokenOptionValueProvider::TokenOptionValueProvider(const OptionTokenValueMap& creative_args)
     noexcept
     : request_args_(nullptr),
       creative_args_(creative_args)
   {}
 
   bool
-  TokenOptionValueProvider::get(
-    std::string_view token,
-    TokenOptionValue& value) const
+  TokenOptionValueProvider::get(std::string_view token, TokenOptionValue& value) const
   {
-    OptionTokenValueMap::const_iterator creative_it =
-      creative_args_.find(token);
+    OptionTokenValueMap::const_iterator creative_it = creative_args_.find(token);
     if (creative_it != creative_args_.end())
     {
       value.option_id = creative_it->second.option_id;
@@ -209,9 +197,7 @@ namespace CampaignSvcs
     if (request_args_)
     {
       std::string request_value;
-      if (request_args_->get_argument(
-          String::SubString(token.data(), token.size()),
-          request_value))
+      if (request_args_->get_argument(String::SubString(token.data(), token.size()), request_value))
       {
         value.option_id = 0;
         value.value = request_value;
@@ -277,9 +263,7 @@ namespace CampaignSvcs
     {
       Stream::Error ostr;
       ostr << "Can't init token '" << token_ <<
-        "'='" <<
-        (has_value ? std::string(token_value.value) : "") <<
-        "': " << ex.what();
+        "'='" << (has_value ? std::string(token_value.value) : "") << "': " << ex.what();
       throw Exception(ostr);
     }
 
@@ -307,8 +291,7 @@ namespace CampaignSvcs
   }
 
   BaseTokenProcessor*
-  BaseTokenProcessor::default_token_processor(
-    const char* token)
+  BaseTokenProcessor::default_token_processor(const char* token)
   {
     return new BaseTokenProcessor(token, TokenSet());
   }
@@ -318,9 +301,7 @@ namespace CampaignSvcs
     const char* token_name,
     const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -347,13 +328,9 @@ namespace CampaignSvcs
   }
 
   /* UrlTokenProcessor */
-  UrlTokenProcessor::UrlTokenProcessor(
-    const char* token_name,
-    const TokenSet& insert_restrictions)
+  UrlTokenProcessor::UrlTokenProcessor(const char* token_name, const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -387,9 +364,7 @@ namespace CampaignSvcs
     const char* token_name,
     const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -417,9 +392,7 @@ namespace CampaignSvcs
     const char* token_name,
     const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -441,9 +414,7 @@ namespace CampaignSvcs
     const char* token_name,
     const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -463,9 +434,7 @@ namespace CampaignSvcs
     const char* token_name,
     const TokenSet& insert_restrictions)
     /*throw(eh::Exception)*/
-    : BaseTokenProcessor(
-        token_name,
-        insert_restrictions)
+    : BaseTokenProcessor(token_name, insert_restrictions)
   {}
 
   void
@@ -474,20 +443,16 @@ namespace CampaignSvcs
     const CreativeInstantiateArgs& creative_args,
     std::string& value) const
   {
-    if (!value.empty() &&
-       value[0] == '/' &&
-       (value.size() < 2 || value[1] != '/'))
+    if (!value.empty() && value[0] == '/' && (value.size() < 2 || value[1] != '/'))
     {
       std::string mime_file;
       String::StringManip::mime_url_encode(value, mime_file);
 
       std::ostringstream res_ostr;
       res_ostr << creative_args.full_dynamic_creative_prefix <<
-        "&file=" << mime_file <<
-        creative_args.last_c_param;
+        "&file=" << mime_file << creative_args.last_c_param;
 
       value = res_ostr.str();
     }
   }
-}
 }

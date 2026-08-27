@@ -7,9 +7,7 @@
 #include <Generics/Hash.hpp>
 #include <Generics/Hash.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   /* const std::string holder for decrease
    *   number of std::string copy construction
@@ -154,7 +152,7 @@ namespace Commons
     CStringHolder_var string_holder_;
   };
 }
-}
+
 
 inline
 std::ostream&

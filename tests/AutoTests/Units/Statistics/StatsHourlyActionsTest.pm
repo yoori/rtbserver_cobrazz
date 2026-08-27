@@ -170,7 +170,7 @@ sub init {
       ccg_id => $campaign5->{ccg_id},
       creative_id => $creative5_2
       });
-  
+
   $ns->output("CCG Id/5", $campaign5->{ccg_id});
   $ns->output("CC Id/5/1", $cc5_1);
   $ns->output("CC Id/5/2", $cc5_2);

@@ -40,13 +40,13 @@ sub load_agg_file
 
   my $res_agg = {};
 
-  if(defined($prev_agg))
+  if (defined($prev_agg))
   {
     $res_agg = $prev_agg;
   }
 
   open(my $fh, '<', $file_path) or die "Could not open '$file_path' $!\n";
-  while(my $line = <$fh>)
+  while (my $line = <$fh>)
   {
     chomp $line;
     my @fields = split('\t', $line);
@@ -61,7 +61,7 @@ sub load_agg_file
     my $clicks = $fields[5];
 
     my $key = "$tag_id\t$domain\t$cost";
-    if(!exists($res_agg->{$key}))
+    if (!exists($res_agg->{$key}))
     {
       $res_agg->{$key} = Agg->new(bids => 0, imps => 0, clicks => 0);
     }
@@ -83,7 +83,7 @@ sub add_file
   my $agg = $self->{agg_};
 
   open(my $fh, '<', $file_path) or die "Could not open '$file_path' $!\n";
-  while(my $line = <$fh>)
+  while (my $line = <$fh>)
   {
     chomp $line;
     my @fields = split('\t', $line);
@@ -111,14 +111,14 @@ sub add_agg
   my $top_key = "$tag_id\t$domain";
   my $sub_key = $cost;
 
-  if(!exists($self->{agg_}->{$top_key}))
+  if (!exists($self->{agg_}->{$top_key}))
   {
     $self->{agg_}->{$top_key} = {};
   }
 
   my $check_agg;
 
-  if(!exists($self->{agg_}->{$top_key}->{$sub_key}))
+  if (!exists($self->{agg_}->{$top_key}->{$sub_key}))
   {
     $self->{agg_}->{$top_key}->{$sub_key} = $agg;
     $check_agg = $agg;
@@ -132,7 +132,7 @@ sub add_agg
     $check_agg = $res_agg;
   }
 
-  if($check_agg->imps() == 0 && $check_agg->bids() == 0 && $check_agg->clicks() == 0)
+  if ($check_agg->imps() == 0 && $check_agg->bids() == 0 && $check_agg->clicks() == 0)
   {
     delete $self->{agg_}->{$top_key}->{$sub_key};
   }
@@ -162,9 +162,9 @@ sub evaluate_ctr
 
   my $save_model = 1;
 
-  while(my ($top_key, $cost_dict) = each(%{$self->{agg_}}))
+  while (my ($top_key, $cost_dict) = each(%{$self->{agg_}}))
   {
-    if($$continue == 0)
+    if ($$continue == 0)
     {
       $save_model = 0;
       last;
@@ -188,7 +188,7 @@ sub evaluate_ctr
     $res->set_ctr($tag_id, $domain, $all_clicks, $all_imps);
   }
 
-  if($save_model > 0)
+  if ($save_model > 0)
   {
     return $res;
   }
@@ -206,9 +206,9 @@ sub evaluate
 
   my $save_model = 1;
 
-  while(my ($top_key, $cost_dict) = each(%{$self->{agg_}}))
+  while (my ($top_key, $cost_dict) = each(%{$self->{agg_}}))
   {
-    if($$continue == 0)
+    if ($$continue == 0)
     {
       $save_model = 0;
       last;
@@ -227,20 +227,20 @@ sub evaluate
         my $agg = $cost_dict->{$cost};
         $bids += $agg->bids();
         $imps += $agg->imps();
-        if($imps >= TOP_LEVEL_WIN_RATE_MIN_IMPS)
+        if ($imps >= TOP_LEVEL_WIN_RATE_MIN_IMPS)
         {
           last;
         }
       }
 
-      if($bids > 0)
+      if ($bids > 0)
       {
         $top_level_win_rate = $imps * 1.0 / $bids;
         #print("Top win rate $top_level_win_rate(imps = $imps, bids = $bids)\n");
       }
     }
 
-    if(defined($top_level_win_rate) && $top_level_win_rate > 0)
+    if (defined($top_level_win_rate) && $top_level_win_rate > 0)
     {
       for my $point(@points)
       {
@@ -249,26 +249,26 @@ sub evaluate
         #print("find win rate $check_win_rate\n");
         my $max_cost = $all_costs[scalar(@all_costs) - 1];
 
-        for(my $base_cost_i = 0; $base_cost_i < scalar(@all_costs); ++$base_cost_i)
+        for (my $base_cost_i = 0; $base_cost_i < scalar(@all_costs); ++$base_cost_i)
         {
           my $bids = 0;
           my $imps = 0;
           my $cost_i;
-          for($cost_i = $base_cost_i; $cost_i < scalar(@all_costs); ++$cost_i)
+          for ($cost_i = $base_cost_i; $cost_i < scalar(@all_costs); ++$cost_i)
           {
             $bids += $cost_dict->{$all_costs[$cost_i]}->bids();
             $imps += $cost_dict->{$all_costs[$cost_i]}->imps();
-            if($imps >= LEVEL_WIN_RATE_MIN_IMPS)
+            if ($imps >= LEVEL_WIN_RATE_MIN_IMPS)
             {
               last;
             }
           }
 
-          if($imps >= LEVEL_WIN_RATE_MIN_IMPS && $bids > 0)
+          if ($imps >= LEVEL_WIN_RATE_MIN_IMPS && $bids > 0)
           {
             my $local_win_rate = $imps * 1.0 / $bids;
             #print("> Local win rate: $local_win_rate\n");
-            if($local_win_rate >= $check_win_rate)
+            if ($local_win_rate >= $check_win_rate)
             {
               $target_cost = $all_costs[min($cost_i, scalar(@all_costs) - 1)];
               last;
@@ -276,7 +276,7 @@ sub evaluate
           }
         }
 
-        if(defined($target_cost))
+        if (defined($target_cost))
         {
           #print("target cost for $check_win_rate : $target_cost\n");
           my @top_key_parts = split('\t', $top_key);
@@ -288,7 +288,7 @@ sub evaluate
     } # top_level_win_rate defined
   }
 
-  if($save_model > 0)
+  if ($save_model > 0)
   {
     return $res;
   }

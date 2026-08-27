@@ -66,10 +66,7 @@ namespace AdServer::CampaignSvcs::CTR
   constexpr bool
   is_direct_ssp_float_feature(BasicFeature feature) noexcept
   {
-    return
-      feature == BF_SSP_CTR ||
-      feature == BF_SSP_VIEWABILITY ||
-      feature == BF_SSP_VTR;
+    return feature == BF_SSP_CTR || feature == BF_SSP_VIEWABILITY || feature == BF_SSP_VTR;
   }
 
   constexpr float SSP_FLOAT_UNSPECIFIED_VALUE = -1.0F;

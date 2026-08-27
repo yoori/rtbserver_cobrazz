@@ -12,25 +12,15 @@ namespace AutoTest
   {
     AdminExistCheck remote_exists =
       !expected_.has_status() ||
-         expected_.status() == "A" ||
-           expected_.status() == "W"?
-        exists_: AEC_NOT_EXISTS;
+         expected_.status() == "A" || expected_.status() == "W"? exists_: AEC_NOT_EXISTS;
 
     AdminsArray<SimpleChannelAdmin, CT_ALL> central_admins;
 
-    central_admins.initialize(
-      test_,
-      CTE_CENTRAL,
-      STE_CAMPAIGN_SERVER,
-      id_);
+    central_admins.initialize(test_, CTE_CENTRAL, STE_CAMPAIGN_SERVER, id_);
 
     AdminsArray<SimpleChannelAdmin, CT_ALL> remote_admins;
 
-    remote_admins.initialize(
-      test_,
-      CTE_ALL_REMOTE,
-      STE_CAMPAIGN_SERVER,
-      id_);
+    remote_admins.initialize(test_, CTE_ALL_REMOTE, STE_CAMPAIGN_SERVER, id_);
 
     if (central_admins.empty() && remote_admins.empty())
     {
@@ -42,10 +32,7 @@ namespace AutoTest
 
     return
       (central_admins.empty() ||
-        admin_checker(
-          central_admins,
-          expected_,
-          exists_).
+        admin_checker(central_admins, expected_, exists_).
             check(throw_error)) &&
       (remote_admins.empty() ||
         admin_checker(

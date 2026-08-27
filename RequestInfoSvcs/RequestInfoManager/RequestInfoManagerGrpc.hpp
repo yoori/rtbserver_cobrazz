@@ -38,6 +38,5 @@ namespace AdServer::RequestInfoSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using RequestInfoManagerGrpc_var =
-    ReferenceCounting::SmartPtr<RequestInfoManagerGrpc>;
+  using RequestInfoManagerGrpc_var = ReferenceCounting::SmartPtr<RequestInfoManagerGrpc>;
 }

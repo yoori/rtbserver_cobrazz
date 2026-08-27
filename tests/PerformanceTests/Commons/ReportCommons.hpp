@@ -123,8 +123,7 @@ public:
    * @param statistics ref
    * @param dump short form of range stats
    */
-  DumpRangeStats(const RangeStats& stats,
-                 bool short_form = false);
+  DumpRangeStats(const RangeStats& stats, bool short_form = false);
 
   /**
    * @brief Destructor
@@ -163,8 +162,7 @@ public:
    * @brief Constructor.
    * @param statistics ref
    */
-  DumpPerformanceStats(const PerformanceStatisticsBase& stats,
-                       const char* header);
+  DumpPerformanceStats(const PerformanceStatisticsBase& stats, const char* header);
 
   /**
    * @brief Destructor

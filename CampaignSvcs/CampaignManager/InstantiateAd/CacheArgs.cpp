@@ -4,16 +4,12 @@
 
 namespace AdServer::CampaignSvcs::InstantiateAd
 {
-  CacheArgs::CacheArgs(
-    std::shared_ptr<String::TextTemplate::ArgsCallback> source)
+  CacheArgs::CacheArgs(std::shared_ptr<String::TextTemplate::ArgsCallback> source)
     : source_(std::move(source))
   {}
 
   bool
-  CacheArgs::get_argument(
-    const String::SubString& key,
-    std::string& result,
-    bool value) const
+  CacheArgs::get_argument(const String::SubString& key, std::string& result, bool value) const
   {
     if (!source_)
     {

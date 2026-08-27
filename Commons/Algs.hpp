@@ -45,7 +45,7 @@ namespace Algs
     TargetType res;
     Stream::Parser istr(str);
     istr >> res;
-    if(!istr.eof() || istr.fail())
+    if (!istr.eof() || istr.fail())
     {
       Stream::Error ostr;
       ostr << "Non correct value : '" << str << "'.";
@@ -127,16 +127,14 @@ namespace Algs
     public std::iterator<std::output_iterator_tag, void, void, void, void>
   {
   public:
-    FilterInsertIterator(
-      InsertIteratorType ins_it,
-      FilterOpType filter_op)
+    FilterInsertIterator(InsertIteratorType ins_it, FilterOpType filter_op)
       : ins_it_(ins_it), filter_op_(filter_op)
     {}
 
     template<typename ValueType>
     FilterInsertIterator& operator=(ValueType&& val)
     {
-      if(filter_op_(val))
+      if (filter_op_(val))
       {
         *(ins_it_++) = std::forward<ValueType>(val);
       }
@@ -174,9 +172,7 @@ namespace Algs
     public std::iterator<std::output_iterator_tag, void, void, void, void>
   {
   public:
-    ModifyInsertIterator(
-      InsertIteratorType ins_it,
-      ModifyOpType modify_op)
+    ModifyInsertIterator(InsertIteratorType ins_it, ModifyOpType modify_op)
       : ins_it_(ins_it), modify_op_(modify_op)
     {}
 
@@ -216,16 +212,14 @@ namespace Algs
   FilterInsertIterator<InsertIteratorType, FilterOpType>
   filter_inserter(InsertIteratorType ins_it, FilterOpType filter_op)
   {
-    return FilterInsertIterator<InsertIteratorType, FilterOpType>(
-      ins_it, filter_op);
+    return FilterInsertIterator<InsertIteratorType, FilterOpType>(ins_it, filter_op);
   }
 
   template<typename InsertIteratorType, typename ModifyOpType>
   ModifyInsertIterator<InsertIteratorType, ModifyOpType>
   modify_inserter(InsertIteratorType ins_it, ModifyOpType modify_op)
   {
-    return ModifyInsertIterator<InsertIteratorType, ModifyOpType>(
-      ins_it, modify_op);
+    return ModifyInsertIterator<InsertIteratorType, ModifyOpType>(ins_it, modify_op);
   }
 
   template<
@@ -238,9 +232,7 @@ namespace Algs
     typedef decltype(std::declval<UnaryFunction>()(
       std::declval<typename Iterator::value_type>())) value_type;
 
-    TransformIterator(
-      const Iterator& iterator,
-      UnaryFunction func)
+    TransformIterator(const Iterator& iterator, UnaryFunction func)
       : iterator_(iterator), func_(func)
     {}
 
@@ -288,14 +280,14 @@ namespace Algs
     LessOpType less_op,
     MergeOpType merge_op)
   {
-    while(first_it != first_end && second_it != second_end)
+    while (first_it != first_end && second_it != second_end)
     {
-      if(less_op(*first_it, *second_it))
+      if (less_op(*first_it, *second_it))
       {
         *(output_it++) = *first_it;
         ++first_it;
       }
-      else if(less_op(*second_it, *first_it))
+      else if (less_op(*second_it, *first_it))
       {
         *(output_it++) = *second_it;
         ++second_it;
@@ -308,8 +300,7 @@ namespace Algs
       }
     }
 
-    return std::copy(first_it, first_end,
-      std::copy(second_it, second_end, output_it));
+    return std::copy(first_it, first_end, std::copy(second_it, second_end, output_it));
   }
 
   template<
@@ -324,12 +315,7 @@ namespace Algs
     OutputIteratorType output_it,
     LessOpType less_op)
   {
-    return merge_unique(
-      first_it, first_end,
-      second_it, second_end,
-      output_it,
-      less_op,
-      FirstArg());
+    return merge_unique(first_it, first_end, second_it, second_end, output_it, less_op, FirstArg());
   }
 
   template<
@@ -364,13 +350,13 @@ namespace Algs
     OutputIteratorType output_it,
     LessOpType less_op, CrossOpType cross_op)
   {
-    while(first_it != first_end && second_it != second_end)
+    while (first_it != first_end && second_it != second_end)
     {
-      if(less_op(*first_it, *second_it))
+      if (less_op(*first_it, *second_it))
       {
         ++first_it;
       }
-      else if(less_op(*second_it, *first_it))
+      else if (less_op(*second_it, *first_it))
       {
         ++second_it;
       }
@@ -391,8 +377,7 @@ namespace Algs
     _RangeLess() {}
     _RangeLess(const LessOpType& less_val): less_op(less_val) {}
 
-    bool operator()(
-      const RangeIteratorType& left, const RangeIteratorType& right) const
+    bool operator()(const RangeIteratorType& left, const RangeIteratorType& right) const
     {
       return less_op(*(left.first), *(right.first));
     }
@@ -417,16 +402,16 @@ namespace Algs
     RangeSet range_set(less_op);
 
     /* init range set */
-    for(; range_begin != range_end; ++range_begin)
+    for (; range_begin != range_end; ++range_begin)
     {
-      if(range_begin->begin() != range_begin->end())
+      if (range_begin->begin() != range_begin->end())
       {
         range_set.insert(ItRange(range_begin->begin(), range_begin->end()));
       }
     }
 
     /* merge loop */
-    while(!range_set.empty())
+    while (!range_set.empty())
     {
       typename RangeSet::iterator cur_it = range_set.begin();
       *output_it++ = *cur_it->first;
@@ -434,7 +419,7 @@ namespace Algs
       /* update range set */
       ItRange cur_range = *cur_it;
       range_set.erase(cur_it++);
-      if(++(cur_range.first) != cur_range.second)
+      if (++(cur_range.first) != cur_range.second)
       {
         range_set.insert(cur_range);
       }
@@ -452,12 +437,11 @@ namespace Algs
 
   template<typename IteratorType>
   std::ostream&
-  print(std::ostream& out,
-    IteratorType it_begin, IteratorType it_end, const char* delim = ", ")
+  print(std::ostream& out, IteratorType it_begin, IteratorType it_end, const char* delim = ", ")
   {
-    for(IteratorType it = it_begin; it != it_end; ++it)
+    for (IteratorType it = it_begin; it != it_end; ++it)
     {
-      if(it != it_begin)
+      if (it != it_begin)
       {
         out << delim;
       }
@@ -478,10 +462,9 @@ namespace Algs
     const char* field_delim = " : ")
     /*throw(eh::Exception)*/
   {
-    for(typename ContainerType::const_iterator it = container.begin();
-        it != container.end(); ++it)
+    for (typename ContainerType::const_iterator it = container.begin(); it != container.end(); ++it)
     {
-      if(it != container.begin())
+      if (it != container.begin())
       {
         out << delim;
       }
@@ -502,11 +485,10 @@ namespace Algs
 
   inline
   Generics::SmartMemBuf_var
-  copy_membuf(
-    const Generics::ConstSmartMemBuf* ptr)
+  copy_membuf(const Generics::ConstSmartMemBuf* ptr)
     /*throw(eh::Exception)*/
   {
-    if(ptr)
+    if (ptr)
     {
       Generics::SmartMemBuf_var res(new Generics::SmartMemBuf());
       res->membuf().assign(ptr->membuf().data(), ptr->membuf().size());
@@ -518,8 +500,7 @@ namespace Algs
 
   inline
   Generics::SmartMemBuf_var
-  copy_membuf(
-    const Generics::SmartMemBuf* ptr)
+  copy_membuf(const Generics::SmartMemBuf* ptr)
     /*throw(eh::Exception)*/
   {
     Generics::SmartMemBuf_var res(new Generics::SmartMemBuf());
@@ -529,8 +510,7 @@ namespace Algs
 
   template<typename Writer>
   Generics::ConstSmartMemBuf_var
-  save_to_membuf(
-    const Writer& writer)
+  save_to_membuf(const Writer& writer)
     /*throw(eh::Exception)*/
   {
     const unsigned long size = writer.size();

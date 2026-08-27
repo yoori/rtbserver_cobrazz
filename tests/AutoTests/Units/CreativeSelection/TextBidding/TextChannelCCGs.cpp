@@ -1,9 +1,7 @@
 
 #include "TextChannelCCGs.hpp"
 
-REFLECT_UNIT(TextChannelCCGs) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(TextChannelCCGs) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -47,22 +45,17 @@ void TextChannelCCGs::scenario1()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
 void TextChannelCCGs::scenario2()
 {
-  add_descr_phrase("Channel targeted CCG on "
-                   "tag with CPM=0 and margin=0.");
+  add_descr_phrase("Channel targeted CCG on " "tag with CPM=0 and margin=0.");
 
   AdClient client(AdClient::create_user(this));
 
@@ -82,22 +75,17 @@ void TextChannelCCGs::scenario2()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
 void TextChannelCCGs::scenario3()
 {
-  add_descr_phrase("Three text creatives "
-                   "served (four available).");
+  add_descr_phrase("Three text creatives " "served (four available).");
 
   AdClient client(AdClient::create_user(this));
 
@@ -123,22 +111,17 @@ void TextChannelCCGs::scenario3()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
 void TextChannelCCGs::scenario4()
 {
-  add_descr_phrase("Three text creatives "
-                   "served (three available).");
+  add_descr_phrase("Three text creatives " "served (three available).");
 
 
   AdClient client(AdClient::create_user(this));
@@ -164,22 +147,17 @@ void TextChannelCCGs::scenario4()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
 void TextChannelCCGs::scenario5()
 {
-  add_descr_phrase("Keyword and Channel Text CCGs "
-                   "from the same account.");
+  add_descr_phrase("Keyword and Channel Text CCGs " "from the same account.");
 
   AdClient client(AdClient::create_user(this));
 
@@ -209,21 +187,15 @@ void TextChannelCCGs::scenario5()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "ccids check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_click_revenues,
-      SelectedCreativesActualCPC(client)).check(),
+    AutoTest::sequence_checker(exp_click_revenues, SelectedCreativesActualCPC(client)).check(),
     "click revenue check");
 
 }

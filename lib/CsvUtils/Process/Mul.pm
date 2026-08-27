@@ -14,7 +14,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::Mul: incorrect column index: $index";
     }

@@ -6,12 +6,9 @@ namespace AutoTest
   namespace
   {
 
-    HTTP::HTTPAddress get_address(
-      const std::string& base_url,
-      const std::string& request_url)
+    HTTP::HTTPAddress get_address(const std::string& base_url, const std::string& request_url)
     {
-      if (strstr(request_url.c_str(), "://") != 0 ||
-               base_url.empty())
+      if (strstr(request_url.c_str(), "://") != 0 || base_url.empty())
       {
         HTTP::HTTPAddress request_addr(request_url);
         HTTP::HTTPAddress base_addr(base_url);
@@ -33,9 +30,7 @@ namespace AutoTest
 
   Logging::Logger_var BaseAdClient::NULL_LOGGER_(new Logging::Null::Logger());
 
-  BaseAdClient::BaseAdClient(
-    const char* base_url,
-    LoggerType log_type)
+  BaseAdClient::BaseAdClient(const char* base_url, LoggerType log_type)
     /*throw(BaseAdClient::Exception, eh::Exception)*/:
     base_url_(base_url != 0 ? base_url : ""),
     cookies_(),
@@ -74,17 +69,14 @@ namespace AutoTest
   }
 
   bool
-  BaseAdClient::find_header_value(const char* name,
-                                  std::string& value) const
+  BaseAdClient::find_header_value(const char* name, std::string& value) const
     /*throw(Exception)*/
   {
     try
     {
       bool found = false;
-      HTTP::HeaderList& response_headers =
-        request_->response_headers();
-      HTTP::HeaderList::iterator it =
-        response_headers.begin();
+      HTTP::HeaderList& response_headers = request_->response_headers();
+      HTTP::HeaderList::iterator it = response_headers.begin();
 
       for (; it != response_headers.end(); ++it)
       {
@@ -109,8 +101,7 @@ namespace AutoTest
   }
 
   bool
-  BaseAdClient::process_request(const char* request_url,
-                                HTTP::HTTP_Connection::HTTP_Method method)
+  BaseAdClient::process_request(const char* request_url, HTTP::HTTP_Connection::HTTP_Method method)
     /*throw(BaseAdClient::Exception, InvalidArgument)*/
   {
     try
@@ -133,8 +124,7 @@ namespace AutoTest
       {
         std::ostringstream trace_str;
         trace_str << "Sending request:\n    " << url.url() << std::endl;
-        for (HTTP::HeaderList::iterator i1 =
-               request_->request_headers().begin();
+        for (HTTP::HeaderList::iterator i1 = request_->request_headers().begin();
              i1 != request_->request_headers().end(); ++i1)
         {
           trace_str << "    " << i1->name << ": " << i1->value << std::endl;
@@ -156,8 +146,7 @@ namespace AutoTest
 
       if (!cookie.empty())
       {
-        request_->request_headers().push_back(
-          HTTP::Header("Cookie", cookie.c_str()));
+        request_->request_headers().push_back(HTTP::Header("Cookie", cookie.c_str()));
       }
 
       try
@@ -191,16 +180,14 @@ namespace AutoTest
     catch(const Exception& e)
     {
       Stream::Error ostr;
-      ostr << "BaseAdClient::process_request. Exception exception caught. "
-           << ": " << e.what();
+      ostr << "BaseAdClient::process_request. Exception exception caught. " << ": " << e.what();
 
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "BaseAdClient::process_request. eh::Exception exception caught. "
-           << ": " << e.what();
+      ostr << "BaseAdClient::process_request. eh::Exception exception caught. " << ": " << e.what();
 
       throw Exception(ostr);
     }
@@ -216,8 +203,7 @@ namespace AutoTest
       trace_str << "Got Response data. Status=" << request_->status()
                 << "\n\n    Response_headers:\n";
 
-      for (HTTP::HeaderList::iterator i1 =
-             request_->response_headers().begin();
+      for (HTTP::HeaderList::iterator i1 = request_->response_headers().begin();
            i1 != request_->response_headers().end(); ++i1)
       {
         trace_str << "        " << i1->name << "=" << i1->value << "\n";
@@ -225,9 +211,7 @@ namespace AutoTest
       trace_str << "\n\n";
 
       trace_str << "    Cookies for current url:\n"
-                << "        "
-                << cookies_.cookie_header(HTTP::HTTPAddress(url))
-                << "\n\n";
+                << "        " << cookies_.cookie_header(HTTP::HTTPAddress(url)) << "\n\n";
       trace_str << "    Body:";
       request_->print(trace_str, ClientRequest::Decoder::T_RESPONSE);
       logger().log(trace_str.str(), Logging::Logger::TRACE + 2);
@@ -260,7 +244,7 @@ namespace AutoTest
       std::string::size_type beg = 0;
       std::string nul_str("");
 
-      if((beg = url.find("ww.")) != std::string::npos)
+      if ((beg = url.find("ww.")) != std::string::npos)
       {
         beg += 3;
       }
@@ -279,8 +263,7 @@ namespace AutoTest
     catch (eh::Exception& e)
     {
       Stream::Error error;
-      error << "BaseAdClient::get_domain_from_url. eh::Exception caught. "
-            << ": " << e.what();
+      error << "BaseAdClient::get_domain_from_url. eh::Exception caught. " << ": " << e.what();
       throw Exception(error);
     }
   }
@@ -310,8 +293,7 @@ namespace AutoTest
     catch (eh::Exception& e)
     {
       Stream::Error error;
-      error << "BaseAdClient::get_host_from_url. eh::Exception caught. "
-            << ": " << e.what();
+      error << "BaseAdClient::get_host_from_url. eh::Exception caught. " << ": " << e.what();
       throw Exception(error);
     }
   }
@@ -331,20 +313,17 @@ namespace AutoTest
   }
 
   void
-  BaseAdClient::add_http_header(const std::string& header_name,
-                                const std::string& header_val)
+  BaseAdClient::add_http_header(const std::string& header_name, const std::string& header_val)
     /*throw(Exception)*/
   {
     try
     {
-      request_->request_headers().push_back(HTTP::Header(header_name,
-                                                         header_val));
+      request_->request_headers().push_back(HTTP::Header(header_name, header_val));
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "BaseAdClient::add_http_header. eh::Exception exception caught. "
-           << ": " << e.what();
+      ostr << "BaseAdClient::add_http_header. eh::Exception exception caught. " << ": " << e.what();
 
       throw Exception(ostr);
     }

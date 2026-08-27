@@ -118,9 +118,7 @@ namespace AdServer::Frontends
     void reject_stream_(int32_t stream_id, StreamData& stream_data);
 
     void order_read_();
-    void handle_read_(
-      const boost::system::error_code& error,
-      size_t bytes_transferred);
+    void handle_read_(const boost::system::error_code& error, size_t bytes_transferred);
 
     void process_http2_data_(const char* data, size_t size);
     void flush_send_queue_();
@@ -198,12 +196,10 @@ namespace AdServer::Frontends
       request.set_body(String::SubString(body_));
 
       HTTP::SubHeaderList headers;
-      if(!authority_.empty())
+      if (!authority_.empty())
       {
         headers.push_back(
-          HTTP::SubHeader(
-            String::SubString(HOST_HEADER),
-            String::SubString(authority_)));
+          HTTP::SubHeader(String::SubString(HOST_HEADER), String::SubString(authority_)));
       }
       request.set_headers(std::move(headers));
     }
@@ -231,7 +227,7 @@ namespace AdServer::Frontends
     void write(FCGI::HttpResponse_var response) override
     {
       auto connection = connection_.lock();
-      if(!connection)
+      if (!connection)
       {
         return;
       }
@@ -270,7 +266,7 @@ namespace AdServer::Frontends
 
   Http2Acceptor::Connection::~Connection() noexcept
   {
-    if(session_)
+    if (session_)
     {
       nghttp2_session_del(session_);
     }
@@ -287,7 +283,7 @@ namespace AdServer::Frontends
   {
     boost::system::error_code endpoint_ec;
     const auto local = socket_.local_endpoint(endpoint_ec);
-    if(!endpoint_ec)
+    if (!endpoint_ec)
     {
       Stream::Error ostr;
       ostr << local.address().to_string() << ':' << local.port();
@@ -296,14 +292,14 @@ namespace AdServer::Frontends
 
     endpoint_ec.clear();
     const auto remote = socket_.remote_endpoint(endpoint_ec);
-    if(!endpoint_ec)
+    if (!endpoint_ec)
     {
       Stream::Error ostr;
       ostr << remote.address().to_string() << ':' << remote.port();
       remote_endpoint_ = ostr.str().str();
     }
 
-    if(!init_http2_())
+    if (!init_http2_())
     {
       close_("init_http2_failed");
       return;
@@ -318,10 +314,7 @@ namespace AdServer::Frontends
   Http2Acceptor::Connection::deactivate()
   {
     auto self = shared_from_this();
-    strand_.post([self]()
-    {
-      self->close_("deactivate");
-    });
+    strand_.post([self]() { self->close_("deactivate"); });
   }
 
   ssize_t
@@ -345,11 +338,11 @@ namespace AdServer::Frontends
     const nghttp2_frame* frame,
     void* user_data)
   {
-    if(frame->hd.type == NGHTTP2_HEADERS && frame->headers.cat == NGHTTP2_HCAT_REQUEST)
+    if (frame->hd.type == NGHTTP2_HEADERS && frame->headers.cat == NGHTTP2_HCAT_REQUEST)
     {
       auto data = std::make_shared<StreamData>();
       Connection* self = static_cast<Connection*>(user_data);
-      if(self)
+      if (self)
       {
         self->streams_.emplace(frame->hd.stream_id, data);
       }
@@ -369,7 +362,7 @@ namespace AdServer::Frontends
     uint8_t /*flags*/,
     void* /*user_data*/)
   {
-    if(frame->hd.type != NGHTTP2_HEADERS || frame->headers.cat != NGHTTP2_HCAT_REQUEST)
+    if (frame->hd.type != NGHTTP2_HEADERS || frame->headers.cat != NGHTTP2_HCAT_REQUEST)
     {
       return 0;
     }
@@ -377,20 +370,20 @@ namespace AdServer::Frontends
     auto* stream_data = static_cast<StreamData*>(
       nghttp2_session_get_stream_user_data(session, frame->hd.stream_id));
 
-    if(!stream_data)
+    if (!stream_data)
     {
       return 0;
     }
 
-    if(namelen == 7 && std::memcmp(name, ":method", 7) == 0)
+    if (namelen == 7 && std::memcmp(name, ":method", 7) == 0)
     {
       stream_data->method.assign(reinterpret_cast<const char*>(value), valuelen);
     }
-    else if(namelen == 5 && std::memcmp(name, ":path", 5) == 0)
+    else if (namelen == 5 && std::memcmp(name, ":path", 5) == 0)
     {
       stream_data->path.assign(reinterpret_cast<const char*>(value), valuelen);
     }
-    else if(namelen == 10 && std::memcmp(name, ":authority", 10) == 0)
+    else if (namelen == 10 && std::memcmp(name, ":authority", 10) == 0)
     {
       stream_data->authority.assign(reinterpret_cast<const char*>(value), valuelen);
     }
@@ -409,7 +402,7 @@ namespace AdServer::Frontends
     void* /*user_data*/)
   {
     const auto* body = static_cast<const std::shared_ptr<std::string>*>(source->ptr);
-    if(!body || !*body)
+    if (!body || !*body)
     {
       *data_flags = NGHTTP2_DATA_FLAG_EOF;
       return 0;
@@ -434,7 +427,7 @@ namespace AdServer::Frontends
     void* user_data)
   {
     auto* self = static_cast<Connection*>(user_data);
-    if(!self || len == 0)
+    if (!self || len == 0)
     {
       return 0;
     }
@@ -442,12 +435,12 @@ namespace AdServer::Frontends
     auto* stream_data = static_cast<StreamData*>(
       nghttp2_session_get_stream_user_data(session, stream_id));
 
-    if(!stream_data || stream_data->request_rejected)
+    if (!stream_data || stream_data->request_rejected)
     {
       return 0;
     }
 
-    if(stream_data->body.size() > self->max_request_size_ ||
+    if (stream_data->body.size() > self->max_request_size_ ||
       len > self->max_request_size_ - stream_data->body.size())
     {
       self->reject_stream_(stream_id, *stream_data);
@@ -466,13 +459,13 @@ namespace AdServer::Frontends
   {
     auto* self = static_cast<Connection*>(user_data);
 
-    if((frame->hd.type == NGHTTP2_HEADERS && frame->headers.cat == NGHTTP2_HCAT_REQUEST) ||
+    if ((frame->hd.type == NGHTTP2_HEADERS && frame->headers.cat == NGHTTP2_HCAT_REQUEST) ||
        frame->hd.type == NGHTTP2_DATA)
     {
       auto* stream_data = static_cast<StreamData*>(
         nghttp2_session_get_stream_user_data(session, frame->hd.stream_id));
 
-      if(stream_data && !stream_data->response_sent &&
+      if (stream_data && !stream_data->response_sent &&
         (frame->hd.flags & NGHTTP2_FLAG_END_STREAM) != 0)
       {
         self->process_request_(frame->hd.stream_id, *stream_data);
@@ -491,7 +484,7 @@ namespace AdServer::Frontends
     void* user_data)
   {
     Connection* self = static_cast<Connection*>(user_data);
-    if(self)
+    if (self)
     {
       self->streams_.erase(stream_id);
     }
@@ -503,7 +496,7 @@ namespace AdServer::Frontends
   {
     nghttp2_session_callbacks* callbacks = nullptr;
 
-    if(nghttp2_session_callbacks_new(&callbacks) != 0)
+    if (nghttp2_session_callbacks_new(&callbacks) != 0)
     {
       owner_->logger_i_()->log(
         String::SubString("Can't allocate nghttp2 session callbacks"),
@@ -522,7 +515,7 @@ namespace AdServer::Frontends
     const int res = nghttp2_session_server_new(&session_, callbacks, this);
     nghttp2_session_callbacks_del(callbacks);
 
-    if(res != 0)
+    if (res != 0)
     {
       Stream::Error ostr;
       ostr << "Can't initialize nghttp2 session: " << nghttp2_strerror(res);
@@ -547,7 +540,7 @@ namespace AdServer::Frontends
       settings.data(),
       settings.size());
 
-    if(res != 0)
+    if (res != 0)
     {
       Stream::Error ostr;
       ostr << "Can't submit HTTP/2 settings: " << nghttp2_strerror(res);
@@ -562,7 +555,7 @@ namespace AdServer::Frontends
     std::string query;
 
     const auto pos = uri.find('?');
-    if(pos != std::string::npos)
+    if (pos != std::string::npos)
     {
       query = uri.substr(pos + 1);
       uri.resize(pos);
@@ -596,7 +589,7 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::reject_stream_(int32_t stream_id, StreamData& stream_data)
   {
-    if(stream_data.response_sent)
+    if (stream_data.response_sent)
     {
       return;
     }
@@ -616,7 +609,7 @@ namespace AdServer::Frontends
       stream_id,
       NGHTTP2_CANCEL);
 
-    if(res != 0)
+    if (res != 0)
     {
       Stream::Error ostr;
       ostr << "Can't submit HTTP/2 stream reset: " << nghttp2_strerror(res);
@@ -659,7 +652,7 @@ namespace AdServer::Frontends
       headers.size(),
       &provider);
 
-    if(res != 0)
+    if (res != 0)
     {
       Stream::Error ostr;
       ostr << "Can't submit HTTP/2 response: " << nghttp2_strerror(res);
@@ -680,7 +673,7 @@ namespace AdServer::Frontends
       [self, stream_id, response]()
       {
         auto it = self->streams_.find(stream_id);
-        if(it == self->streams_.end())
+        if (it == self->streams_.end())
         {
           return;
         }
@@ -690,13 +683,11 @@ namespace AdServer::Frontends
         // map generic HttpResponse to Http2Response
         stream_data->response.status = response->status();
         stream_data->response.content_type = TEXT_PLAIN;
-        for(const auto& header : response->headers())
+        for (const auto& header : response->headers())
         {
-          if(header.name == String::SubString(CONTENT_TYPE_HEADER))
+          if (header.name == String::SubString(CONTENT_TYPE_HEADER))
           {
-            stream_data->response.content_type.assign(
-              header.value.data(),
-              header.value.size());
+            stream_data->response.content_type.assign(header.value.data(), header.value.size());
           }
         }
         stream_data->response.body = response->body();
@@ -725,26 +716,20 @@ namespace AdServer::Frontends
     const boost::system::error_code& error,
     size_t bytes_transferred)
   {
-    if(error)
+    if (error)
     {
       close_("read_error", &error);
       return;
     }
 
-    if(preface_received_ < sizeof(HTTP2_PREFACE))
+    if (preface_received_ < sizeof(HTTP2_PREFACE))
     {
       const size_t need = sizeof(HTTP2_PREFACE) - preface_received_;
       const size_t take = std::min(need, bytes_transferred);
 
-      if(std::memcmp(
-        HTTP2_PREFACE + preface_received_,
-        read_buf_.data(),
-        take) != 0)
+      if (std::memcmp(HTTP2_PREFACE + preface_received_, read_buf_.data(), take) != 0)
       {
-        owner_->logger_i_()->log(
-          INVALID_HTTP2_PREFACE,
-          Logging::Logger::ERROR,
-          ASPECT);
+        owner_->logger_i_()->log(INVALID_HTTP2_PREFACE, Logging::Logger::ERROR, ASPECT);
         close_("invalid_preface");
         return;
       }
@@ -765,7 +750,7 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::process_http2_data_(const char* data, size_t size)
   {
-    if(!session_ || size == 0)
+    if (!session_ || size == 0)
     {
       return;
     }
@@ -775,7 +760,7 @@ namespace AdServer::Frontends
       reinterpret_cast<const uint8_t*>(data),
       size);
 
-    if(rv < 0)
+    if (rv < 0)
     {
       close_("nghttp2_recv_error", nullptr, rv);
       return;
@@ -785,19 +770,19 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::flush_send_queue_()
   {
-    if(!session_)
+    if (!session_)
     {
       return;
     }
 
     const int rv = nghttp2_session_send(session_);
-    if(rv != 0)
+    if (rv != 0)
     {
       close_("nghttp2_send_error", nullptr, rv);
       return;
     }
 
-    if(!write_active_ && !send_queue_.empty())
+    if (!write_active_ && !send_queue_.empty())
     {
       write_active_ = true;
       order_write_();
@@ -807,7 +792,7 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::order_write_()
   {
-    if(send_queue_.empty())
+    if (send_queue_.empty())
     {
       write_active_ = false;
       return;
@@ -828,18 +813,18 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::Connection::handle_write_(const boost::system::error_code& error)
   {
-    if(error)
+    if (error)
     {
       close_("write_error", &error);
       return;
     }
 
-    if(!send_queue_.empty())
+    if (!send_queue_.empty())
     {
       send_queue_.pop_front();
     }
 
-    if(send_queue_.empty())
+    if (send_queue_.empty())
     {
       write_active_ = false;
       return;
@@ -857,27 +842,27 @@ namespace AdServer::Frontends
     Stream::Error ostr;
     ostr << "HTTP/2 connection close";
 
-    if(reason)
+    if (reason)
     {
       ostr << ": reason=" << reason;
     }
 
-    if(!local_endpoint_.empty())
+    if (!local_endpoint_.empty())
     {
       ostr << " local=" << local_endpoint_;
     }
 
-    if(!remote_endpoint_.empty())
+    if (!remote_endpoint_.empty())
     {
       ostr << " remote=" << remote_endpoint_;
     }
 
-    if(error)
+    if (error)
     {
       ostr << " asio_error=" << error->message() << '(' << error->value() << ')';
     }
 
-    if(nghttp2_error != 0)
+    if (nghttp2_error != 0)
     {
       ostr << " nghttp2_error=" << nghttp2_strerror(static_cast<int>(nghttp2_error))
         << '(' << nghttp2_error << ')';
@@ -894,13 +879,13 @@ namespace AdServer::Frontends
   {
     std::lock_guard<std::mutex> lock(close_lock_);
 
-    if(close_started_)
+    if (close_started_)
     {
       return;
     }
 
     close_started_ = true;
-    if(reason && std::strcmp(reason, "deactivate") != 0)
+    if (reason && std::strcmp(reason, "deactivate") != 0)
     {
       log_connection_error_(reason, error, nghttp2_error);
     }
@@ -961,7 +946,7 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::activate_object_()
   {
-    if(use_unix_socket_)
+    if (use_unix_socket_)
     {
       Stream::Error ostr;
       ostr << "unix domain socket initialization is not supported by current Http2Acceptor transport";
@@ -970,16 +955,14 @@ namespace AdServer::Frontends
 
     boost::system::error_code ec;
     const auto address = boost::asio::ip::address::from_string(bind_address_, ec);
-    if(ec)
+    if (ec)
     {
       Stream::Error ostr;
       ostr << "invalid HTTP/2 bind address '" << bind_address_ << "': " << ec.message();
       throw Exception(ostr);
     }
 
-    const boost::asio::ip::tcp::endpoint endpoint(
-      address,
-      static_cast<unsigned short>(port_));
+    const boost::asio::ip::tcp::endpoint endpoint(address, static_cast<unsigned short>(port_));
 
     acceptor_->open(endpoint.protocol());
     acceptor_->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
@@ -1010,7 +993,7 @@ namespace AdServer::Frontends
       connections_copy.swap(connections_);
     }
 
-    for(auto& connection_it : connections_copy)
+    for (auto& connection_it : connections_copy)
     {
       connection_it.second->deactivate();
     }
@@ -1022,7 +1005,7 @@ namespace AdServer::Frontends
   void
   Http2Acceptor::wait_object_()
   {
-    if(io_runner_)
+    if (io_runner_)
     {
       io_runner_->deactivate_object();
       io_runner_->wait_object();
@@ -1053,7 +1036,7 @@ namespace AdServer::Frontends
     const Connection_var& accepted_connection,
     const boost::system::error_code& error)
   {
-    if(!error)
+    if (!error)
     {
       {
         std::lock_guard<std::mutex> lock(connections_lock_);
@@ -1061,14 +1044,14 @@ namespace AdServer::Frontends
       }
       accepted_connection->activate();
     }
-    else if(error != boost::asio::error::operation_aborted)
+    else if (error != boost::asio::error::operation_aborted)
     {
       Stream::Error ostr;
       ostr << "accept failed: " << error.message();
       logger_i_()->log(ostr.str(), Logging::Logger::ERROR, ASPECT);
     }
 
-    if(active())
+    if (active())
     {
       create_accept_stub_();
     }

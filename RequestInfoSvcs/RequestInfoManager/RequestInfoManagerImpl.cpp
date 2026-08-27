@@ -315,9 +315,7 @@ namespace AdServer::RequestInfoSvcs
         new RequestOutLogger(
           logger_,
           callback_,
-          read_flush_policy(
-            lp_config.CreativeStat(),
-            (log_root + CREATIVE_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.CreativeStat(), (log_root + CREATIVE_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.UserProperties(),
             (log_root + USER_PROPERTIES_OUT_DIR).c_str()),
@@ -330,30 +328,18 @@ namespace AdServer::RequestInfoSvcs
           read_flush_policy(
             lp_config.CcgKeywordStat(),
             (log_root + CCG_KEYWORD_STAT_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.CmpStat(),
-            (log_root + CMP_STAT_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.ActionStat(),
-            (log_root + ACTION_STAT_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.CcgUserStat(),
-            (log_root + CCG_USER_STAT_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.CcUserStat(),
-            (log_root + CC_USER_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.CmpStat(), (log_root + CMP_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.ActionStat(), (log_root + ACTION_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.CcgUserStat(), (log_root + CCG_USER_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.CcUserStat(), (log_root + CC_USER_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.CampaignUserStat(),
             (log_root + CAMPAIGN_USER_STAT_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.PassbackStat(),
-            (log_root + PASSBACK_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.PassbackStat(), (log_root + PASSBACK_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.ChannelImpInventory(),
             (log_root + CHANNEL_IMP_INVENTORY_OUT_DIR).c_str()),
-          read_flush_policy(
-            lp_config.SiteUserStat(),
-            (log_root + SITE_USER_STAT_OUT_DIR).c_str()),
+          read_flush_policy(lp_config.SiteUserStat(), (log_root + SITE_USER_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.AdvertiserUserStat(),
             (log_root + ADVERTISER_USER_OUT_DIR).c_str()),
@@ -393,8 +379,7 @@ namespace AdServer::RequestInfoSvcs
             request_info_manager_config_.use_referrer_site_referrer_stats()),
 	  request_info_manager_config_.colo_id());
 
-      processing_distributor_->add_child_processor(
-        request_out_logger_);
+      processing_distributor_->add_child_processor(request_out_logger_);
     }
     catch (const eh::Exception& ex)
     {
@@ -476,8 +461,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (logger_->log_level() >= Logging::Logger::TRACE)
       {
-        logger_->sstream(Logging::Logger::TRACE,
-          Aspect::REQUEST_INFO_MANAGER) <<
+        logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
           "LoadTask's was enqueued.";
       }
     }
@@ -535,74 +519,51 @@ namespace AdServer::RequestInfoSvcs
   {
     static const char* FUN = "RequestInfoManagerImpl::co_get_profile()";
 
-    co_return co_await co_get_profile_(
-      FUN,
-      request_info_container_,
-      request_id);
+    co_return co_await co_get_profile_(FUN, request_info_container_, request_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_user_campaign_reach_profile(
-    AdServer::Commons::UserId user_id)
+  RequestInfoManagerImpl::co_get_user_campaign_reach_profile(AdServer::Commons::UserId user_id)
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::co_get_user_campaign_reach_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_user_campaign_reach_profile()";
 
-    co_return co_await co_get_profile_(
-      FUN,
-      user_campaign_reach_container_,
-      user_id);
+    co_return co_await co_get_profile_(FUN, user_campaign_reach_container_, user_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_user_action_profile(
-    AdServer::Commons::UserId user_id)
+  RequestInfoManagerImpl::co_get_user_action_profile(AdServer::Commons::UserId user_id)
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::co_get_user_action_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_user_action_profile()";
 
     co_return co_await co_get_profile_(FUN, user_action_info_container_, user_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_user_fraud_protection_profile(
-    AdServer::Commons::UserId user_id)
+  RequestInfoManagerImpl::co_get_user_fraud_protection_profile(AdServer::Commons::UserId user_id)
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::co_get_user_fraud_protection_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_user_fraud_protection_profile()";
 
-    co_return co_await co_get_profile_(
-      FUN,
-      user_fraud_protection_container_,
-      user_id);
+    co_return co_await co_get_profile_(FUN, user_fraud_protection_container_, user_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_user_site_reach_profile(
-    AdServer::Commons::UserId user_id)
+  RequestInfoManagerImpl::co_get_user_site_reach_profile(AdServer::Commons::UserId user_id)
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::co_get_user_site_reach_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_user_site_reach_profile()";
 
     co_return co_await co_get_profile_(FUN, user_site_reach_container_, user_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_user_tag_request_group_profile(
-    AdServer::Commons::UserId user_id)
+  RequestInfoManagerImpl::co_get_user_tag_request_group_profile(AdServer::Commons::UserId user_id)
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::co_get_user_tag_request_group_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_user_tag_request_group_profile()";
 
-    co_return co_await co_get_profile_(
-      FUN,
-      user_tag_request_merge_container_,
-      user_id);
+    co_return co_await co_get_profile_(FUN, user_tag_request_merge_container_, user_id);
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  RequestInfoManagerImpl::co_get_passback_profile(
-    AdServer::Commons::RequestId request_id)
+  RequestInfoManagerImpl::co_get_passback_profile(AdServer::Commons::RequestId request_id)
   {
     static const char* FUN = "RequestInfoManagerImpl::co_get_passback_profile()";
 
@@ -654,8 +615,7 @@ namespace AdServer::RequestInfoSvcs
       user_action_info_container_.get()->request_container_processor(
         request_info_container_.get()->proxy());
 
-      CompositeTagRequestProcessor_var tag_request_processor =
-        new CompositeTagRequestProcessor();
+      CompositeTagRequestProcessor_var tag_request_processor = new CompositeTagRequestProcessor();
 
       tag_request_processor->add_child_processor(user_site_reach_container_.get());
       tag_request_processor->add_child_processor(passback_container_.get());
@@ -670,7 +630,7 @@ namespace AdServer::RequestInfoSvcs
         TagRequestProfiler::AddressList profiler_addresses;
         const xsd::AdServer::Configuration::ProfilingType&
           profiling_config = *request_info_manager_config_.Profiling();
-        for(xsd::AdServer::Configuration::ProfilingType::Endpoint_sequence::
+        for (xsd::AdServer::Configuration::ProfilingType::Endpoint_sequence::
             const_iterator it = profiling_config.Endpoint().begin();
           it != profiling_config.Endpoint().end(); ++it)
         {
@@ -693,8 +653,7 @@ namespace AdServer::RequestInfoSvcs
         add_child_object(tag_request_profiler.in());
       }
 
-      CompositeAdvActionProcessor_var adv_action_processor =
-        new CompositeAdvActionProcessor();
+      CompositeAdvActionProcessor_var adv_action_processor = new CompositeAdvActionProcessor();
 
       adv_action_processor->add_child_processor(user_action_info_container_.get());
       adv_action_processor->add_child_processor(request_out_logger_);
@@ -720,8 +679,7 @@ namespace AdServer::RequestInfoSvcs
         passback_container_.get(),
         tag_request_processor,
         request_operation_distributor_,
-        Generics::Time(request_info_manager_config_.LogProcessing().
-          InLogs().check_logs_period()),
+        Generics::Time(request_info_manager_config_.LogProcessing(). InLogs().check_logs_period()),
         Generics::Time(1),
         lp_config.threads(),
         rim_stats_impl_);
@@ -731,8 +689,7 @@ namespace AdServer::RequestInfoSvcs
       logger_->sstream(
         Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
-        "ADS-IMPL-3008") << FUN <<
-        ": Can't init logs loader. Caught eh::Exception: " << ex.what();
+        "ADS-IMPL-3008") << FUN << ": Can't init logs loader. Caught eh::Exception: " << ex.what();
     }
 
     logger_->log(
@@ -779,8 +736,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of user fraud protection chunks started.";
         }
 
@@ -814,8 +770,7 @@ namespace AdServer::RequestInfoSvcs
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
           "ADS-IMPL-3009") << FUN <<
-          ": Can't load user fraud protection chunk files. Caught eh::Exception: " <<
-          ex.what();
+          ": Can't load user fraud protection chunk files. Caught eh::Exception: " << ex.what();
       }
     }
 
@@ -833,8 +788,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of user action chunks started.";
         }
 
@@ -870,8 +824,7 @@ namespace AdServer::RequestInfoSvcs
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
           "ADS-IMPL-3009") << FUN <<
-          ": Can't load user action chunk files. Caught eh::Exception: " <<
-          ex.what();
+          ": Can't load user action chunk files. Caught eh::Exception: " << ex.what();
       }
 
       return false;
@@ -891,8 +844,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of user campaign reach chunks started.";
         }
 
@@ -941,8 +893,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of request chunks started.";
         }
 
@@ -1000,8 +951,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of passback chunks started.";
         }
 
@@ -1055,8 +1005,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of site reach chunks started.";
         }
 
@@ -1103,8 +1052,7 @@ namespace AdServer::RequestInfoSvcs
   bool
   RequestInfoManagerImpl::init_user_tag_request_merge_container_() noexcept
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::init_user_tag_request_merge_container_()";
+    static const char* FUN = "RequestInfoManagerImpl::init_user_tag_request_merge_container_()";
 
     if (!request_info_manager_config_.TagRequestGroupingConfig().present())
     {
@@ -1117,8 +1065,7 @@ namespace AdServer::RequestInfoSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE)
         {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::REQUEST_INFO_MANAGER) <<
+          logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
             "Loading of tag request group chunks started.";
         }
 
@@ -1170,8 +1117,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (logger_->log_level() >= Logging::Logger::TRACE)
       {
-        logger_->sstream(Logging::Logger::TRACE,
-          Aspect::REQUEST_INFO_MANAGER) <<
+        logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
           "Init of billing processor started.";
       }
 
@@ -1179,7 +1125,7 @@ namespace AdServer::RequestInfoSvcs
         bs_config = *request_info_manager_config_.Billing();
 
       std::vector<std::string> billing_server_refs;
-      for(const auto& grpc_ref : bs_config.BillingServerGrpcRef())
+      for (const auto& grpc_ref : bs_config.BillingServerGrpcRef())
       {
         const std::string host = grpc_ref.host().present() ?
           std::string(*grpc_ref.host()) :
@@ -1253,16 +1199,9 @@ namespace AdServer::RequestInfoSvcs
       // reschedule data loading
       try
       {
-        Task_var msg = new LoadTask(
-          load_data_state,
-          data_loaded,
-          load_data,
-          task_runner_,
-          this);
+        Task_var msg = new LoadTask(load_data_state, data_loaded, load_data, task_runner_, this);
 
-        scheduler_->schedule(
-          msg,
-          Generics::Time::get_time_of_day() + CHUNKS_RELOAD_PERIOD);
+        scheduler_->schedule(msg, Generics::Time::get_time_of_day() + CHUNKS_RELOAD_PERIOD);
       }
       catch (const eh::Exception& ex)
       {
@@ -1304,8 +1243,7 @@ namespace AdServer::RequestInfoSvcs
 
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
-        "ADS-IMPL-3017") << FUN <<
-        ": Can't flush logs. Caught eh::Exception: " << ex.what();
+        "ADS-IMPL-3017") << FUN << ": Can't flush logs. Caught eh::Exception: " << ex.what();
     }
 
     if (next_flush != Generics::Time::ZERO)
@@ -1320,8 +1258,7 @@ namespace AdServer::RequestInfoSvcs
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
           "ADS-IMPL-3018") << FUN <<
-          ": Can't schedule next logs flush task. Caught eh::Exception: " <<
-          ex.what();
+          ": Can't schedule next logs flush task. Caught eh::Exception: " << ex.what();
       }
     }
   }
@@ -1385,16 +1322,14 @@ namespace AdServer::RequestInfoSvcs
           AdServer::CampaignSvcs::FraudConditionConfig_var fraud_config_info =
             campaign_server->fraud_conditions();
 
-          const AdServer::CampaignSvcs::FraudConditionSeq& fraud_conds =
-            fraud_config_info->rules;
+          const AdServer::CampaignSvcs::FraudConditionSeq& fraud_conds = fraud_config_info->rules;
 
           UserFraudProtectionContainer::Config_var config(
             new UserFraudProtectionContainer::Config());
 
-          config->deactivate_period = CorbaAlgs::unpack_time(
-            fraud_config_info->deactivate_period);
+          config->deactivate_period = CorbaAlgs::unpack_time(fraud_config_info->deactivate_period);
 
-          for(CORBA::ULong fraud_i = 0; fraud_i < fraud_conds.length(); ++fraud_i)
+          for (CORBA::ULong fraud_i = 0; fraud_i < fraud_conds.length(); ++fraud_i)
           {
             UserFraudProtectionContainer::Config::FraudRule rule;
             rule.limit = fraud_conds[fraud_i].limit;
@@ -1428,8 +1363,7 @@ namespace AdServer::RequestInfoSvcs
           Stream::Error ostr;
           ostr << FUN << ": CampaignServer not ready.";
           campaign_server.release_bad(ostr.str());
-          logger_->stream(Logging::Logger::NOTICE,
-            Aspect::REQUEST_INFO_MANAGER) << ostr.str();
+          logger_->stream(Logging::Logger::NOTICE, Aspect::REQUEST_INFO_MANAGER) << ostr.str();
         }
         catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
@@ -1438,14 +1372,12 @@ namespace AdServer::RequestInfoSvcs
             ": Can't get session. Caught CampaignServer::ImplementationException: "
             << ex.description;
           campaign_server.release_bad(ostr.str());
-          logger_->stream(Logging::Logger::EMERGENCY,
-            Aspect::REQUEST_INFO_MANAGER) << ostr.str();
+          logger_->stream(Logging::Logger::EMERGENCY, Aspect::REQUEST_INFO_MANAGER) << ostr.str();
         }
         catch (const CORBA::SystemException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN <<
-            ": Can't get session. Caught CORBA::SystemException: " << ex;
+          ostr << FUN << ": Can't get session. Caught CORBA::SystemException: " << ex;
           campaign_server.release_bad(ostr.str());
           logger_->stream(Logging::Logger::EMERGENCY,
             Aspect::REQUEST_INFO_MANAGER,
@@ -1514,17 +1446,14 @@ namespace AdServer::RequestInfoSvcs
         Stream::Error ostr;
         ostr << "Cleanup expired data finished";
 
-        logger_->log(ostr.str(),
-          Logging::Logger::INFO,
-          Aspect::CLEAR_EXPIRED_DATA);
+        logger_->log(ostr.str(), Logging::Logger::INFO, Aspect::CLEAR_EXPIRED_DATA);
       }
     }
     catch (const eh::Exception& e)
     {
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
-        "ADS-IMPL-3021") << FUN <<
-        ": eh::Exception caught: " << e.what();
+        "ADS-IMPL-3021") << FUN << ": eh::Exception caught: " << e.what();
     }
 
     if (reschedule)
@@ -1538,9 +1467,7 @@ namespace AdServer::RequestInfoSvcs
 
         logger_->sstream(Logging::Logger::INFO, Aspect::REQUEST_INFO_MANAGER) <<
           FUN << ": Cleanup expired data task scheduled for '" <<
-          tm.get_gm_time() <<
-          "' start time of prev task '" <<
-          start_time.get_gm_time() << "'";
+          tm.get_gm_time() << "' start time of prev task '" << start_time.get_gm_time() << "'";
       }
       catch (const eh::Exception& ex)
       {
@@ -1548,8 +1475,7 @@ namespace AdServer::RequestInfoSvcs
           Aspect::REQUEST_INFO_MANAGER,
           "ADS-IMPL-3022") << FUN <<
           ": Can't schedule next clear expired data task. "
-          "Caught eh::Exception: " <<
-          ex.what();
+          "Caught eh::Exception: " << ex.what();
       }
     }
   }
@@ -1616,18 +1542,18 @@ namespace AdServer::RequestInfoSvcs
         batching_options = Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
       }
 
-      for(const auto& group : user_info_config.UserInfoControllerGroup())
+      for (const auto& group : user_info_config.UserInfoControllerGroup())
       {
         AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient::
           UserInfoControllerRefGroup user_info_controller_ref_group;
-        for(const auto& endpoint : group.Endpoint())
+        for (const auto& endpoint : group.Endpoint())
         {
           user_info_controller_ref_group.emplace_back(endpoint);
         }
+
         if (!user_info_controller_ref_group.empty())
         {
-          user_info_controller_refs.emplace_back(
-            std::move(user_info_controller_ref_group));
+          user_info_controller_refs.emplace_back(std::move(user_info_controller_ref_group));
         }
       }
 
@@ -1647,8 +1573,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN <<
-        ": Can't init UserInfoManager grpc client. eh::Exception caught: " <<
-        ex.what();
+        ": Can't init UserInfoManager grpc client. eh::Exception caught: " << ex.what();
       throw Exception(ostr, "ADS-IMPL-3024");
     }
   }
@@ -1663,11 +1588,9 @@ namespace AdServer::RequestInfoSvcs
 
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      logger_->sstream(Logging::Logger::TRACE,
-        Aspect::REQUEST_INFO_MANAGER) <<
+      logger_->sstream(Logging::Logger::TRACE, Aspect::REQUEST_INFO_MANAGER) <<
         FUN << ": detected fraud user : '" << user_id <<
-        "', will be disabled for " <<
-        deactivate_time.get_gm_time();
+        "', will be disabled for " << deactivate_time.get_gm_time();
     }
 
     try
@@ -1679,8 +1602,7 @@ namespace AdServer::RequestInfoSvcs
     }
     catch (const AdServer::UserInfoSvcs::GrpcAlgs::NotReady&)
     {
-      logger_->stream(Logging::Logger::NOTICE,
-        Aspect::REQUEST_INFO_MANAGER) << FUN <<
+      logger_->stream(Logging::Logger::NOTICE, Aspect::REQUEST_INFO_MANAGER) << FUN <<
         ": Can't mark user as fraud. "
         "Caught UserInfoSvcs::GrpcAlgs::NotReady.";
     }

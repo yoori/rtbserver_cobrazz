@@ -52,10 +52,7 @@ namespace Vanga
     save(std::ostream& ostr) const = 0;
 
     virtual std::string
-    to_string(
-      const char* prefix,
-      const FeatureDictionary* dict = nullptr,
-      double base = 0.0)
+    to_string(const char* prefix, const FeatureDictionary* dict = nullptr, double base = 0.0)
       const noexcept = 0;
 
     virtual DTree_var
@@ -85,10 +82,7 @@ namespace Vanga
     save(std::ostream& ostr) const;
 
     virtual std::string
-    to_string(
-      const char* prefix,
-      const FeatureDictionary* dict = nullptr,
-      double base = 0.0)
+    to_string(const char* prefix, const FeatureDictionary* dict = nullptr, double base = 0.0)
       const noexcept;
 
     virtual DTree_var

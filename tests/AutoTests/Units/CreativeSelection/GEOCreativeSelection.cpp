@@ -1,9 +1,7 @@
 
 #include "GEOCreativeSelection.hpp"
 
-REFLECT_UNIT(GEOCreativeSelection) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(GEOCreativeSelection) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -146,82 +144,36 @@ namespace
 bool
 GEOCreativeSelection::run_test()
 {
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Display. Ab Lench city.",
-      DISPLAYCITY1));
+  NOSTOP_FAIL_CONTEXT(testcase("Display. Ab Lench city.", DISPLAYCITY1));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Display. Abberley city.", DISPLAYCITY2));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Display. Elmbridge city.", DISPLAYCITY3));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Display. Worcestershire state level.", DISPLAYSTATE));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Display. Country level.", DISPLAYCOUNTRY));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Abbotskerswell city.", TEXTCITY1));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Aber city.", TEXTCITY2));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Dorset state level.", TEXTSTATE1));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Devon state level.", TEXTSTATE2));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Conwy state level.", TEXTSTATE3));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Different state.", DIFFSTATE));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Text. Same country, no state.", SAMECOUNTRYSTATE));
+
+  NOSTOP_FAIL_CONTEXT(testcase("Alternative Geo-Channel Name. " "Hallingbury city.", ALTNAME1));
 
   NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Display. Abberley city.",
-      DISPLAYCITY2));
+    testcase("Alternative Geo-Channel Name. " "Great Hallingbury - alternative name.", ALTNAME2));
 
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Display. Elmbridge city.",
-      DISPLAYCITY3));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Display. Worcestershire state level.",
-      DISPLAYSTATE));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Display. Country level.",
-      DISPLAYCOUNTRY));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Abbotskerswell city.",
-      TEXTCITY1));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Aber city.",
-      TEXTCITY2));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Dorset state level.",
-      TEXTSTATE1));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Devon state level.",
-      TEXTSTATE2));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Conwy state level.",
-      TEXTSTATE3));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Different state.",
-      DIFFSTATE));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Text. Same country, no state.",
-      SAMECOUNTRYSTATE));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Alternative Geo-Channel Name. "
-      "Hallingbury city.",
-      ALTNAME1));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "Alternative Geo-Channel Name. "
-      "Great Hallingbury - alternative name.",
-      ALTNAME2));
-
-  NOSTOP_FAIL_CONTEXT(
-    testcase(
-      "GEO Competition.",
-      COMPETITION));
+  NOSTOP_FAIL_CONTEXT(testcase("GEO Competition.", COMPETITION));
 
   return true;
 }
@@ -264,9 +216,7 @@ void GEOCreativeSelection::testcase(
       }
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          ccids,
-          SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(ccids, SelectedCreativesCCID(client)).check(),
         description +
         " Expected creatives#" +
         strof(i+1));
@@ -274,9 +224,7 @@ void GEOCreativeSelection::testcase(
     else
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "0",
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker("0", client.debug_info.ccid).check(),
         description +
         " Expected creatives#" +
         strof(i+1));

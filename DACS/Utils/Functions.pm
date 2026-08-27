@@ -97,7 +97,7 @@ sub process_control_is_alive
   my $ret = process_control_any(
     $host, $port_var, $current_config_dir, "", $descr);
 
-  if($ret == -1)
+  if ($ret == -1)
   {
     $$descr =  "failed to run ProbeObj: $!";
     return undef;

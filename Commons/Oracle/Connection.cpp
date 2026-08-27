@@ -5,9 +5,8 @@
 #include "Environment.hpp"
 #include "Statement.hpp"
 
-namespace AdServer {
-namespace Commons {
-namespace Oracle {
+namespace AdServer::Commons::Oracle
+{
 
   Connection::Connection(
     Environment* environment,
@@ -26,7 +25,7 @@ namespace Oracle {
     sword result;
 
     // allocate an error handle
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
           environment_->environment_handle_.get(),
           (void **) &error_handle_.fill(),
           OCI_HTYPE_ERROR,
@@ -37,7 +36,7 @@ namespace Oracle {
     }
 
     // allocate a server handle
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
           environment_->environment_handle_.get(),
           (void **) &server_handle_.fill(),
           OCI_HTYPE_SERVER,
@@ -47,7 +46,7 @@ namespace Oracle {
       throw_oci_error(FUN, "OCIHandleAlloc", result);
     }
 
-    if((result = OCIServerAttach(
+    if ((result = OCIServerAttach(
           server_handle_.get(),
           error_handle_.get(),
           (text*)conn.db.c_str(),
@@ -60,7 +59,7 @@ namespace Oracle {
     try
     {
       // allocate a service handle
-      if((result = OCIHandleAlloc(
+      if ((result = OCIHandleAlloc(
             environment_->environment_handle_.get(),
             (void **) &svc_context_handle_.fill(),
             OCI_HTYPE_SVCCTX,
@@ -71,7 +70,7 @@ namespace Oracle {
       }
 
       // set the server attribute in the service context handle
-      if((result = OCIAttrSet(
+      if ((result = OCIAttrSet(
             svc_context_handle_.get(),
             OCI_HTYPE_SVCCTX,
             server_handle_.get(),
@@ -83,7 +82,7 @@ namespace Oracle {
       }
 
       // allocate a user session handle
-      if((result = OCIHandleAlloc(
+      if ((result = OCIHandleAlloc(
             environment_->environment_handle_.get(),
             (void **)&session_handle_.fill(),
             OCI_HTYPE_SESSION,
@@ -94,7 +93,7 @@ namespace Oracle {
       }
 
       // set username and password attributes in user session handle
-      if((result = OCIAttrSet(
+      if ((result = OCIAttrSet(
             session_handle_.get(),
             OCI_HTYPE_SESSION,
             (text*)conn.user_name.c_str(),
@@ -105,7 +104,7 @@ namespace Oracle {
         throw_oci_error(FUN, "OCIAttrSet", result, error_handle_.get());
       }
 
-      if((result = OCIAttrSet(
+      if ((result = OCIAttrSet(
             session_handle_.get(),
             OCI_HTYPE_SESSION,
             (text*)conn.password.c_str(),
@@ -121,7 +120,7 @@ namespace Oracle {
         Sync::Policy::PosixThread::WriteGuard lock(environment->oci_session_begin_lock_);
         // workaround for 'Patch 5893079': NLS GLOS NEEDS TO BE MUTEXED IN KPUSSI AND KPUSCN0
 
-        if((result = OCISessionBegin(
+        if ((result = OCISessionBegin(
               svc_context_handle_.get(),
               error_handle_.get(),
               session_handle_.get(),
@@ -135,7 +134,7 @@ namespace Oracle {
       try
       {
         // set the user session attribute in the service context handle
-        if((result = OCIAttrSet(
+        if ((result = OCIAttrSet(
               svc_context_handle_.get(),
               OCI_HTYPE_SVCCTX,
               session_handle_.get(),
@@ -148,7 +147,7 @@ namespace Oracle {
 
         ub1 attr_value = 1;
 
-        if((result = OCIAttrSet(
+        if ((result = OCIAttrSet(
               server_handle_.get(),
               OCI_HTYPE_SERVER,
               &attr_value,
@@ -159,7 +158,7 @@ namespace Oracle {
           throw_oci_error(FUN, "OCIAttrSet", result, error_handle_.get());
         }
 
-        if(!conn.schema.empty())
+        if (!conn.schema.empty())
         {
           // switch default schema
           std::string after_session_sql =
@@ -183,7 +182,7 @@ namespace Oracle {
       {
         try
         {
-          if((result = OCISessionEnd(
+          if ((result = OCISessionEnd(
                 svc_context_handle_.get(),
                 error_handle_.get(),
                 session_handle_.get(),
@@ -204,7 +203,7 @@ namespace Oracle {
     {
       try
       {
-        if((result = OCIServerDetach(
+        if ((result = OCIServerDetach(
               server_handle_.get(),
               error_handle_.get(),
               OCI_DEFAULT)) != OCI_SUCCESS)
@@ -234,7 +233,7 @@ namespace Oracle {
 
     try
     {
-      if((result = OCISessionEnd(
+      if ((result = OCISessionEnd(
             svc_context_handle_.get(),
             error_handle_.get(),
             session_handle_.get(),
@@ -243,7 +242,7 @@ namespace Oracle {
         throw_oci_error(FUN, "OCISessionEnd", result, error_handle_.get());
       }
 
-      if((result = OCIServerDetach(
+      if ((result = OCIServerDetach(
             server_handle_.get(),
             error_handle_.get(),
             OCI_DEFAULT)) != OCI_SUCCESS)
@@ -251,7 +250,7 @@ namespace Oracle {
         throw_oci_error(FUN, "OCIServerDetach", result, error_handle_.get());
       }
 
-      if(broken_)
+      if (broken_)
       {
         OCIReset(server_handle_.get(), error_handle_.get());
         server_handle_.reset(0, true); // skip OCI_ERROR
@@ -263,7 +262,7 @@ namespace Oracle {
     }
 #endif
 
-    if(connection_owner_.in())
+    if (connection_owner_.in())
     {
       connection_owner_->connection_destroyed();
     }
@@ -373,36 +372,32 @@ namespace Oracle {
 
     int result;
 
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
          (dvoid*)environment_->environment_handle_.get(),
          (dvoid**)&local_error_handle.fill(),
          (ub4)OCI_HTYPE_ERROR,
          (size_t)0,
          (dvoid**)0)) != OCI_SUCCESS)
     {
-      throw_oci_error(
-        FUN, "OCIHandleAlloc", result);
+      throw_oci_error(FUN, "OCIHandleAlloc", result);
     }
 
     // OCIBreak: legal way to break connection from documentation,
     //   don't work, but call it because we don't know what internal values, flags, ...
     //   it modificate
 
-    result = OCIBreak(
-      svc_context_handle_.get(),
-      local_error_handle.get());
+    result = OCIBreak(svc_context_handle_.get(), local_error_handle.get());
 
-    if(result != OCI_SUCCESS)
+    if (result != OCI_SUCCESS)
     {
-      throw_oci_error(
-        FUN, "OCIBreak", result, local_error_handle.get());
+      throw_oci_error(FUN, "OCIBreak", result, local_error_handle.get());
     }
 
     // emulate operation cancel in sqlplus way:
     // tcp packet with PSH, URG: 21
     Lda_Def lda;
 
-    if((result = OCISvcCtxToLda( // no server round trip
+    if ((result = OCISvcCtxToLda( // no server round trip
           svc_context_handle_.get(),
           error_handle_.get(),
           &lda)) != OCI_SUCCESS)
@@ -422,21 +417,18 @@ namespace Oracle {
     FD_SET(socket_descriptor, &fset);
     Generics::Time start_time = Generics::Time::get_time_of_day();
 
-    while(wait_timeout > Generics::Time::ZERO)
+    while (wait_timeout > Generics::Time::ZERO)
     {
-      int select_result = ::select(socket_descriptor + 1,
-        0, &fset, 0, &wait_timeout);
-      if(select_result < 0 && errno != EINTR)
+      int select_result = ::select(socket_descriptor + 1, 0, &fset, 0, &wait_timeout);
+      if (select_result < 0 && errno != EINTR)
       {
         // connection closed or ...
         break;
       }
 
-      if(select_result > 0 &&
-         FD_ISSET(socket_descriptor, &fset))
+      if (select_result > 0 && FD_ISSET(socket_descriptor, &fset))
       {
-        ::send(socket_descriptor,
-          URG_MESSAGE, sizeof(URG_MESSAGE), MSG_OOB);
+        ::send(socket_descriptor, URG_MESSAGE, sizeof(URG_MESSAGE), MSG_OOB);
         break; // error independent
       }
 
@@ -444,7 +436,7 @@ namespace Oracle {
       wait_timeout = SEND_TIMEOUT - (now - start_time);
     }
 
-    if((result = OCILdaToSvcCtx( // no server round trip
+    if ((result = OCILdaToSvcCtx( // no server round trip
           &svc_context_handle_.inout(),
           error_handle_.get(),
           &lda)) != OCI_SUCCESS)
@@ -494,9 +486,9 @@ namespace Oracle {
   void
   Connection::owner_(ConnectionOwner* owner) noexcept
   {
-    if(owner != connection_owner_.in())
+    if (owner != connection_owner_.in())
     {
-      if(connection_owner_.in())
+      if (connection_owner_.in())
       {
         ConnectionOwner_var pass_destroy_to_owner;
         connection_owner_.swap(pass_destroy_to_owner);
@@ -538,8 +530,7 @@ namespace Oracle {
 
     if (connection_owner_)
     {
-      ConnectionOwner_var pass_destroy_to_owner(
-        std::move(non_const_this->connection_owner_));
+      ConnectionOwner_var pass_destroy_to_owner(std::move(non_const_this->connection_owner_));
       if (!pass_destroy_to_owner->destroy_connection(non_const_this))
       {
         return;
@@ -550,6 +541,3 @@ namespace Oracle {
     AtomicImpl::delete_this_();
   }
 }
-}
-}
-

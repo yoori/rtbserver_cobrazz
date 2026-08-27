@@ -59,6 +59,6 @@ namespace UserInfoSvcs_v320
     repeat_trigger_timeout;
     filter_contextual_triggers;
   };
-  
+
 }
 }

@@ -115,9 +115,7 @@ namespace AdServer::CampaignSvcs
   class DeliveryLimitsChecker
   {
   public:
-    DeliveryLimitsChecker(
-      const DeliveryLimitsType& delivery_limits,
-      const Generics::Time& now)
+    DeliveryLimitsChecker(const DeliveryLimitsType& delivery_limits, const Generics::Time& now)
       : delivery_limits_(delivery_limits)
     {
       adv_tz_now_date_ = get_date_in_adv_tz(delivery_limits_, now);
@@ -125,8 +123,7 @@ namespace AdServer::CampaignSvcs
 #     ifdef DEBUG_OUTPUT
       std::cerr << "  DeliveryLimitsChecker::DeliveryLimitsChecker(): "
         "{now = " << now.gm_ft() << "} => {adv_tz_now_date_ = " << adv_tz_now_date_.gm_ft() << "}" <<
-        ", delivery_limits_.time_offset = " << delivery_limits_.time_offset.gm_ft() <<
-        std::endl;
+        ", delivery_limits_.time_offset = " << delivery_limits_.time_offset.gm_ft() << std::endl;
 #     endif
 
       if (delivery_limits_.budget.present() || delivery_limits_.daily_budget.present())
@@ -148,8 +145,7 @@ namespace AdServer::CampaignSvcs
         delivery_limits_.daily_budget.present() ||
         delivery_limits_.imps_dec.has_value() ||
         delivery_limits_.daily_imps_dec.has_value() ||
-        delivery_limits_.clicks_dec.has_value() ||
-        delivery_limits_.daily_clicks_dec.has_value();
+        delivery_limits_.clicks_dec.has_value() || delivery_limits_.daily_clicks_dec.has_value();
     };
 
     bool
@@ -199,8 +195,7 @@ namespace AdServer::CampaignSvcs
       }
 
 #     ifdef DEBUG_OUTPUT
-      std::cerr << "  confirm_amount(P1): check_result = " <<
-        check_result << std::endl;
+      std::cerr << "  confirm_amount(P1): check_result = " << check_result << std::endl;
 #     endif
 
       if (check_result || forced)
@@ -226,9 +221,7 @@ namespace AdServer::CampaignSvcs
     }
 
     static Generics::Time
-    get_date_in_adv_tz(
-      const DeliveryLimitsType& delivery_limits,
-      const Generics::Time& now)
+    get_date_in_adv_tz(const DeliveryLimitsType& delivery_limits, const Generics::Time& now)
       noexcept
     {
       return (now + delivery_limits.time_offset).get_gm_time().get_date();
@@ -237,8 +230,7 @@ namespace AdServer::CampaignSvcs
     bool
     daily_budget_defined() const noexcept
     {
-      return (delivery_limits_.delivery_pacing == 'F' &&
-          delivery_limits_.daily_budget.present()) ||
+      return (delivery_limits_.delivery_pacing == 'F' && delivery_limits_.daily_budget.present()) ||
         (delivery_limits_.delivery_pacing == 'D' &&
           delivery_limits_.date_end != Generics::Time::ZERO);
     }
@@ -328,8 +320,7 @@ namespace AdServer::CampaignSvcs
 #       ifdef DEBUG_OUTPUT
         std::cerr << "DeliveryLimitsChecker::check_(): input, today_amount = " << today_amount <<
           ", adv_tz_now_date_ = " << adv_tz_now_date_.gm_ft() <<
-          ", positive = " << positive <<
-          std::endl;
+          ", positive = " << positive << std::endl;
 #       endif
 
         if (positive)
@@ -414,23 +405,17 @@ namespace AdServer::CampaignSvcs
           // fill allowed values
           if (allowed_amount)
           {
-            *allowed_amount = std::max(
-              RevenueDecimal(today_amount).negate(),
-              *allowed_amount);
+            *allowed_amount = std::max(RevenueDecimal(today_amount).negate(), *allowed_amount);
           }
 
           if (allowed_imps)
           {
-            *allowed_imps = std::max(
-              ImpRevenueDecimal(today_imps).negate(),
-              *allowed_imps);
+            *allowed_imps = std::max(ImpRevenueDecimal(today_imps).negate(), *allowed_imps);
           }
 
           if (allowed_clicks)
           {
-            *allowed_clicks = std::max(
-              ImpRevenueDecimal(today_clicks).negate(),
-              *allowed_clicks);
+            *allowed_clicks = std::max(ImpRevenueDecimal(today_clicks).negate(), *allowed_clicks);
           }
         }
 
@@ -479,26 +464,20 @@ namespace AdServer::CampaignSvcs
 
             if (allowed_amount)
             {
-              *allowed_amount = std::min(
-                *delivery_limits_.budget - total_amount,
-                *allowed_amount);
+              *allowed_amount = std::min(*delivery_limits_.budget - total_amount, *allowed_amount);
             }
 
             if (allowed_imps)
             {
               *allowed_imps = delivery_limits_.imps_dec.has_value() ?
-                std::min(
-                  *delivery_limits_.imps_dec - total_imps,
-                  *allowed_imps) :
+                std::min(*delivery_limits_.imps_dec - total_imps, *allowed_imps) :
                 UNLIMITED_IMPS;
             }
 
             if (allowed_clicks)
             {
               *allowed_clicks = delivery_limits_.clicks_dec.has_value() ?
-                std::min(
-                  *delivery_limits_.clicks_dec - total_clicks,
-                  *allowed_clicks) :
+                std::min(*delivery_limits_.clicks_dec - total_clicks, *allowed_clicks) :
                 UNLIMITED_IMPS;
             }
 
@@ -525,9 +504,7 @@ namespace AdServer::CampaignSvcs
 
               if (allowed_amount)
               {
-                *allowed_amount = std::min(
-                  dynamic_daily_budget - today_amount,
-                  *allowed_amount);
+                *allowed_amount = std::min(dynamic_daily_budget - today_amount, *allowed_amount);
               }
             }
           }
@@ -556,23 +533,17 @@ namespace AdServer::CampaignSvcs
 
             if (allowed_amount)
             {
-              *allowed_amount = std::max(
-                RevenueDecimal(total_amount).negate(),
-                *allowed_amount);
+              *allowed_amount = std::max(RevenueDecimal(total_amount).negate(), *allowed_amount);
             }
 
             if (allowed_imps)
             {
-              *allowed_imps = std::max(
-                ImpRevenueDecimal(total_imps).negate(),
-                *allowed_imps);
+              *allowed_imps = std::max(ImpRevenueDecimal(total_imps).negate(), *allowed_imps);
             }
 
             if (allowed_clicks)
             {
-              *allowed_clicks = std::max(
-                ImpRevenueDecimal(total_clicks).negate(),
-                *allowed_clicks);
+              *allowed_clicks = std::max(ImpRevenueDecimal(total_clicks).negate(), *allowed_clicks);
             }
           }
         } // !positive || delivery_limits_.budget.present()
@@ -629,14 +600,12 @@ namespace AdServer::CampaignSvcs
 
     {
       auto campaign_it = campaigns.find(bid.campaign_id);
-      resolve_result.campaign = campaign_it != campaigns.end() ?
-        &campaign_it->second : nullptr;
+      resolve_result.campaign = campaign_it != campaigns.end() ? &campaign_it->second : nullptr;
     }
 
     {
       auto ccg_it = ccgs.find(bid.ccg_id);
-      resolve_result.ccg = ccg_it != ccgs.end() ?
-        &ccg_it->second : nullptr;
+      resolve_result.ccg = ccg_it != ccgs.end() ? &ccg_it->second : nullptr;
     }
 
     return resolve_result;
@@ -757,10 +726,7 @@ namespace AdServer::CampaignSvcs
       std::cerr << "): result = false, blocked on account level" << std::endl;
 #     endif
 
-      return BidResult(
-        false,
-        RevenueDecimal::ZERO,
-        BidUnavailableReason::ACCOUNT_BUDGET_BLOCKED);
+      return BidResult(false, RevenueDecimal::ZERO, BidUnavailableReason::ACCOUNT_BUDGET_BLOCKED);
     }
 
     if (!check_available_budget_(
@@ -776,10 +742,7 @@ namespace AdServer::CampaignSvcs
       std::cerr << "): result = false, blocked on campaign level" << std::endl;
 #     endif
 
-      return BidResult(
-        false,
-        RevenueDecimal::ZERO,
-        BidUnavailableReason::CAMPAIGN_BUDGET_BLOCKED);
+      return BidResult(false, RevenueDecimal::ZERO, BidUnavailableReason::CAMPAIGN_BUDGET_BLOCKED);
     }
 
     if (!check_available_budget_(
@@ -795,10 +758,7 @@ namespace AdServer::CampaignSvcs
       std::cerr << "): result = false, blocked on ccg level" << std::endl;
 #     endif
 
-      return BidResult(
-        false,
-        RevenueDecimal::ZERO,
-        BidUnavailableReason::CCG_BUDGET_BLOCKED);
+      return BidResult(false, RevenueDecimal::ZERO, BidUnavailableReason::CCG_BUDGET_BLOCKED);
     }
 
     RevenueDecimal min_ctr_goal = RevenueDecimal::ZERO;
@@ -849,8 +809,7 @@ namespace AdServer::CampaignSvcs
       ", amount = " << bid_amount <<
       ", imps = " << imps.str() <<
       ", clicks = " << clicks <<
-      ", forced = " << forced <<
-      ", time = " << bid.time.gm_ft() << std::endl;
+      ", forced = " << forced << ", time = " << bid.time.gm_ft() << std::endl;
 #   endif
 
     const Generics::Time now = bid.time;
@@ -1170,8 +1129,7 @@ namespace AdServer::CampaignSvcs
         now,
         account_confirm_amount_holder.revert_amount);
 
-      account_confirm_amount_holder.confirmed_amount -=
-        account_confirm_amount_holder.revert_amount;
+      account_confirm_amount_holder.confirmed_amount -= account_confirm_amount_holder.revert_amount;
     }
 
     account_bid_amount -= account_confirm_amount_holder.confirmed_amount;
@@ -1261,11 +1219,9 @@ namespace AdServer::CampaignSvcs
         min_confirmed_share,
         bid_amount,
         Generics::DMR_FLOOR);
-      if (ccg_bid_amount_confirmed &&
-        target_ccg_bid_amount != ccg_confirm.confirmed_amount)
+      if (ccg_bid_amount_confirmed && target_ccg_bid_amount != ccg_confirm.confirmed_amount)
       {
-        ccg_confirm.revert_amount =
-          ccg_confirm.confirmed_amount - target_ccg_bid_amount;
+        ccg_confirm.revert_amount = ccg_confirm.confirmed_amount - target_ccg_bid_amount;
       }
       ccg_confirm.available_amount = !ccg_bid_amount_confirmed ?
         target_ccg_bid_amount :
@@ -1283,8 +1239,7 @@ namespace AdServer::CampaignSvcs
       ", campaign_revert_amount = " << campaign_confirm.revert_amount <<
       ", ccg_available_amount = " << ccg_confirm.available_amount <<
       ", ccg_confirmed_amount = " << ccg_confirm.confirmed_amount <<
-      ", ccg_revert_amount = " << ccg_confirm.revert_amount <<
-      std::endl;
+      ", ccg_revert_amount = " << ccg_confirm.revert_amount << std::endl;
 #   endif
   }
 
@@ -1319,42 +1274,34 @@ namespace AdServer::CampaignSvcs
     {
       Config::Account& account = acc_it->second;
 
-      account.budget = RevenueDecimal::mul(
-        account.budget,
-        limit_coef_,
-        Generics::DMR_FLOOR);
+      account.budget = RevenueDecimal::mul(account.budget, limit_coef_, Generics::DMR_FLOOR);
     }
 
-    for (Config::CampaignMap::const_iterator cmp_it =
-          new_config->campaigns.begin();
+    for (Config::CampaignMap::const_iterator cmp_it = new_config->campaigns.begin();
         cmp_it != new_config->campaigns.end(); ++cmp_it)
     {
       InternalConfig::Campaign campaign;
       static_cast<Config::Campaign&>(campaign) = cmp_it->second;
       adapt_delivery_limits_(campaign);
 
-      new_internal_config->campaigns.insert(
-        std::make_pair(cmp_it->first, campaign));
+      new_internal_config->campaigns.insert(std::make_pair(cmp_it->first, campaign));
     }
 
-    for (Config::CCGMap::const_iterator ccg_it =
-          new_config->ccgs.begin();
+    for (Config::CCGMap::const_iterator ccg_it = new_config->ccgs.begin();
         ccg_it != new_config->ccgs.end(); ++ccg_it)
     {
       InternalConfig::CCG ccg;
       static_cast<Config::CCG&>(ccg) = ccg_it->second;
       adapt_delivery_limits_(ccg);
 
-      new_internal_config->ccgs.insert(
-        std::make_pair(ccg_it->first, ccg));
+      new_internal_config->ccgs.insert(std::make_pair(ccg_it->first, ccg));
     }
 
     config_ = new_internal_config;
   }
 
   void
-  BillingContainer::stat(
-    BillStatSource::Stat* bill_stat)
+  BillingContainer::stat(BillStatSource::Stat* bill_stat)
     noexcept
   {
     stat_ = ReferenceCounting::add_ref(bill_stat);
@@ -1402,9 +1349,7 @@ namespace AdServer::CampaignSvcs
     auto account_it = amounts.find(account_id);
 
     const RevenueDecimal account_total_amount = (
-      account_it != amounts.end() ?
-      account_it->second->get_total_amount() :
-      RevenueDecimal::ZERO);
+      account_it != amounts.end() ? account_it->second->get_total_amount() : RevenueDecimal::ZERO);
 
 #   ifdef DEBUG_OUTPUT
     std::cerr << "check_available_account_budget_(): for account_id = " << account_id <<
@@ -1428,9 +1373,7 @@ namespace AdServer::CampaignSvcs
     const Generics::Time& now)
     noexcept
   {
-    DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(
-      delivery_limits,
-      now);
+    DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(delivery_limits, now);
 
     if (!delivery_limits_checker.check_required())
     {
@@ -1471,9 +1414,7 @@ namespace AdServer::CampaignSvcs
 
     {
       // eval today budget
-      DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(
-        delivery_limits,
-        now);
+      DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(delivery_limits, now);
 
       if (delivery_limits_checker.daily_budget_defined())
       {
@@ -1489,9 +1430,7 @@ namespace AdServer::CampaignSvcs
     if (today_budget != RevenueDecimal::ZERO)
     {
       Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
-        DeliveryLimitsType>::get_date_in_adv_tz(
-          delivery_limits,
-          now);
+        DeliveryLimitsType>::get_date_in_adv_tz(delivery_limits, now);
 
       // do optimization
       std::list<std::pair<unsigned long, BillingContainerState::RateDistributionHolder> > past_amount_holders;
@@ -1537,8 +1476,7 @@ namespace AdServer::CampaignSvcs
         }
       }
 
-      const unsigned long cur_hour = (
-        now + delivery_limits.time_offset).get_gm_time().tm_hour;
+      const unsigned long cur_hour = (now + delivery_limits.time_offset).get_gm_time().tm_hour;
 
       //
       // convert imps/clicks to amount by actual cost's
@@ -1625,8 +1563,7 @@ namespace AdServer::CampaignSvcs
         ostr << "BillingContainer::make_min_rate_goal_optimization_(): "
           "campaign_id = " << object_id <<
           ", goal_budget = " << goal_budget <<
-          ", today_budget = " << today_budget <<
-          ", free_budget_distribution = ";
+          ", today_budget = " << today_budget << ", free_budget_distribution = ";
         free_budget_distribution.print(ostr);
         ostr << std::endl;
         std::cerr << ostr.str();
@@ -1672,8 +1609,7 @@ namespace AdServer::CampaignSvcs
     // check min rate
     const Generics::Time ASYNCH_PERIOD(10);
 
-    const unsigned long hour = (
-      now + delivery_limits.time_offset).get_gm_time().tm_hour;
+    const unsigned long hour = (now + delivery_limits.time_offset).get_gm_time().tm_hour;
     const Generics::Time round_time = Generics::Time(
       (now - ASYNCH_PERIOD).tv_sec / Generics::Time::ONE_HOUR.tv_sec *
       Generics::Time::ONE_HOUR.tv_sec);
@@ -1715,8 +1651,7 @@ namespace AdServer::CampaignSvcs
 #     ifdef DEBUG_OUTPUT
       std::cerr << "check_min_rate_goal_(): result = " <<
         (result ? "true" : "false") << ", already optimized"
-        ", rate = " << rate <<
-        ", min_rate_goal = " << min_rate_goal << std::endl;
+        ", rate = " << rate << ", min_rate_goal = " << min_rate_goal << std::endl;
 #     endif
 
       return result;
@@ -1777,8 +1712,7 @@ namespace AdServer::CampaignSvcs
 #   ifdef DEBUG_OUTPUT
     std::cerr << "check_min_rate_goal_(): result = " <<
       (result ? "true" : "false") << ", after optimization"
-      ", rate = " << rate <<
-      ", min_rate_goal = " << min_rate_goal << std::endl;
+      ", rate = " << rate << ", min_rate_goal = " << min_rate_goal << std::endl;
 #   endif
 
     return result;
@@ -1807,8 +1741,7 @@ namespace AdServer::CampaignSvcs
 #   ifdef DEBUG_OUTPUT
     std::cerr << "BillingContainer::confirm_bid_rate_(): campaign_id = " << campaign_id <<
       ", ccg_id = " << ccg_id <<
-      ", imps = " << confirm_imps.str() <<
-      ", clicks = " << confirm_clicks.str() << std::endl;
+      ", imps = " << confirm_imps.str() << ", clicks = " << confirm_clicks.str() << std::endl;
 #   endif
 
     const Generics::Time adv_tz_now = now + delivery_limits.time_offset;
@@ -1851,8 +1784,7 @@ namespace AdServer::CampaignSvcs
         free_amount,
         confirm_imps,
         confirm_clicks,
-        free_amount ? hour_time : (
-          positive ? Generics::Time::ONE_HOUR : Generics::Time::ZERO));
+        free_amount ? hour_time : (positive ? Generics::Time::ONE_HOUR : Generics::Time::ZERO));
     }
   }
 
@@ -1878,17 +1810,14 @@ namespace AdServer::CampaignSvcs
       new BillingContainerState::AccountAmountHolder();
 
     const Generics::Time adv_tz_now_date =
-      DeliveryLimitsChecker<AccountDeliveryLimitsType>::get_date_in_adv_tz(
-        account_config, now);
+      DeliveryLimitsChecker<AccountDeliveryLimitsType>::get_date_in_adv_tz(account_config, now);
 
     StateSyncPolicy::WriteGuard lock(amounts_lock);
 
     auto account_it = amounts.find(account_id);
 
     const RevenueDecimal account_total_amount = (
-      account_it != amounts.end() ?
-      account_it->second->get_total_amount() :
-      RevenueDecimal::ZERO);
+      account_it != amounts.end() ? account_it->second->get_total_amount() : RevenueDecimal::ZERO);
 
     bool res = account_total_amount < account_config.budget;
 
@@ -1940,9 +1869,7 @@ namespace AdServer::CampaignSvcs
     ImpRevenueDecimal remind_confirm_imps = confirm_imps;
     ImpRevenueDecimal remind_confirm_clicks = confirm_clicks;
 
-    DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(
-      delivery_limits,
-      now);
+    DeliveryLimitsChecker<DeliveryLimitsType> delivery_limits_checker(delivery_limits, now);
 
     BillingContainerState::AmountHolder_var new_amount_holder =
       new BillingContainerState::AmountHolder();
@@ -1965,8 +1892,7 @@ namespace AdServer::CampaignSvcs
 #     ifdef DEBUG_OUTPUT
       std::cerr << "  delivery_limits_checker.confirm_amount(): output"
         ", remind_confirm_amount = " << remind_confirm_amount <<
-        ", now = " << now.gm_ft() <<
-        std::endl;
+        ", now = " << now.gm_ft() << std::endl;
 #     endif
 
       if (it == amounts.end() && (res || forced))
@@ -2000,9 +1926,7 @@ namespace AdServer::CampaignSvcs
     revert_amount.negate();
 
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
-      DeliveryLimitsType>::get_date_in_adv_tz(
-        delivery_limits,
-        now);
+      DeliveryLimitsType>::get_date_in_adv_tz(delivery_limits, now);
 
     bool add_amount_result;
 
@@ -2011,9 +1935,7 @@ namespace AdServer::CampaignSvcs
       auto it = amounts.find(object_id);
       assert(it != amounts.end());
 
-      add_amount_result = it->second->add_amount(
-        adv_tz_now_date,
-        revert_amount);
+      add_amount_result = it->second->add_amount(adv_tz_now_date, revert_amount);
     }
 
     assert(add_amount_result); // overflow unexpected
@@ -2044,9 +1966,7 @@ namespace AdServer::CampaignSvcs
 
 
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
-      DeliveryLimitsType>::get_date_in_adv_tz(
-        delivery_limits,
-        now);
+      DeliveryLimitsType>::get_date_in_adv_tz(delivery_limits, now);
 
     bool add_amount_result;
 
@@ -2055,11 +1975,7 @@ namespace AdServer::CampaignSvcs
       auto it = amounts.find(object_id);
       assert(it != amounts.end());
 
-      add_amount_result = it->second->add_amount(
-        adv_tz_now_date,
-        revert_amount,
-        imps,
-        clicks);
+      add_amount_result = it->second->add_amount(adv_tz_now_date, revert_amount, imps, clicks);
     }
 
     assert(add_amount_result); // overflow unexpected
@@ -2089,8 +2005,7 @@ namespace AdServer::CampaignSvcs
     bool end_reached = false;
     bool last_key_inited = false;
     bool target_end_reached = false;
-    typename AmountMapType::key_type last_key =
-      typename AmountMapType::key_type();
+    typename AmountMapType::key_type last_key = typename AmountMapType::key_type();
 
     auto source_it = source_amounts.begin();
 
@@ -2135,8 +2050,7 @@ namespace AdServer::CampaignSvcs
         }
 
         if (cur_it == day_amounts.end() ||
-          (source_it != source_amounts.end() &&
-            source_it->first < cur_it->first))
+          (source_it != source_amounts.end() && source_it->first < cur_it->first))
         {
           // source defined, local not
           // convert source to local (use only data before use_source_end_date)
@@ -2144,10 +2058,7 @@ namespace AdServer::CampaignSvcs
           BillingContainerState::AccountAmountHolder_var new_amount_holder =
             new BillingContainerState::AccountAmountHolder();
 
-          if (replace_account_amount_(
-               *new_amount_holder,
-               &source_it->second,
-               use_source_end_date))
+          if (replace_account_amount_(*new_amount_holder, &source_it->second, use_source_end_date))
           {
             day_amounts.insert(std::make_pair(source_it->first, new_amount_holder));
             assert(!new_amount_holder->days.empty());
@@ -2157,25 +2068,18 @@ namespace AdServer::CampaignSvcs
         }
         else
         {
-          if (source_it == source_amounts.end() ||
-            cur_it->first < source_it->first)
+          if (source_it == source_amounts.end() || cur_it->first < source_it->first)
           {
             assert(!cur_it->second->days.empty());
 
-            replace_account_amount_(
-              *(cur_it->second),
-              nullptr,
-              use_source_end_date);
+            replace_account_amount_(*(cur_it->second), nullptr, use_source_end_date);
           }
           else
           {
             // source and local defined
             assert(source_it->first == cur_it->first);
 
-            replace_account_amount_(
-              *(cur_it->second),
-              &source_it->second,
-              use_source_end_date);
+            replace_account_amount_(*(cur_it->second), &source_it->second, use_source_end_date);
 
             ++source_it;
           }
@@ -2233,8 +2137,7 @@ namespace AdServer::CampaignSvcs
     bool end_reached = false;
     bool last_key_inited = false;
     bool target_end_reached = false;
-    typename AmountMapType::key_type last_key =
-      typename AmountMapType::key_type();
+    typename AmountMapType::key_type last_key = typename AmountMapType::key_type();
 
     auto source_it = source_amounts.begin();
 
@@ -2279,8 +2182,7 @@ namespace AdServer::CampaignSvcs
         }
 
         if (cur_it == day_amounts.end() ||
-          (source_it != source_amounts.end() &&
-            source_it->first < cur_it->first))
+          (source_it != source_amounts.end() && source_it->first < cur_it->first))
         {
           // source defined, local not
           // convert source to local (use only data before use_source_end_date)
@@ -2294,10 +2196,7 @@ namespace AdServer::CampaignSvcs
             "  source:" << std::endl;
           source_it->second.print(std::cout, "    ");
           */
-          if (replace_amount_(
-               *new_amount_holder,
-               &source_it->second,
-               use_source_end_date))
+          if (replace_amount_(*new_amount_holder, &source_it->second, use_source_end_date))
           {
             day_amounts.insert(std::make_pair(source_it->first, new_amount_holder));
             assert(!new_amount_holder->days.empty());
@@ -2319,8 +2218,7 @@ namespace AdServer::CampaignSvcs
         }
         else
         {
-          if (source_it == source_amounts.end() ||
-            cur_it->first < source_it->first)
+          if (source_it == source_amounts.end() || cur_it->first < source_it->first)
           {
             assert(!cur_it->second->days.empty());
 
@@ -2332,10 +2230,7 @@ namespace AdServer::CampaignSvcs
             cur_it->second->print(std::cout, "    ");
             */
 
-            replace_amount_(
-              *(cur_it->second),
-              nullptr,
-              use_source_end_date);
+            replace_amount_(*(cur_it->second), nullptr, use_source_end_date);
 
             /*
             std::cout << "  result:" << std::endl;
@@ -2357,10 +2252,7 @@ namespace AdServer::CampaignSvcs
             cur_it->second->print(std::cout, "    ");
             */
 
-            replace_amount_(
-              *(cur_it->second),
-              &source_it->second,
-              use_source_end_date);
+            replace_amount_(*(cur_it->second), &source_it->second, use_source_end_date);
 
             /*
             std::cout << "  result:" << std::endl;
@@ -2413,8 +2305,7 @@ namespace AdServer::CampaignSvcs
     {
       {
         // erase replace days
-        auto replace_end_day_it =
-          amount_holder.days.lower_bound(use_source_end_date);
+        auto replace_end_day_it = amount_holder.days.lower_bound(use_source_end_date);
 
         RevenueDecimal amount_before = RevenueDecimal::ZERO;
         if (replace_end_day_it != amount_holder.days.end())
@@ -2423,8 +2314,7 @@ namespace AdServer::CampaignSvcs
         }
 
         amount_holder.days.erase(amount_holder.days.begin(), replace_end_day_it);
-        for (auto day_it = amount_holder.days.begin();
-          day_it != amount_holder.days.end(); ++day_it)
+        for (auto day_it = amount_holder.days.begin(); day_it != amount_holder.days.end(); ++day_it)
         {
           day_it->second.amount_before -= amount_before;
         }
@@ -2432,8 +2322,7 @@ namespace AdServer::CampaignSvcs
 
       if (source_amount)
       {
-        auto source_day_it = source_amount->day_amounts.lower_bound(
-          use_source_end_date);
+        auto source_day_it = source_amount->day_amounts.lower_bound(use_source_end_date);
 
         {
           // collect sum amount for replace days and add it to target days
@@ -2470,8 +2359,7 @@ namespace AdServer::CampaignSvcs
             BillingContainerState::AccountDayAmount prev_day;
             prev_day.amount_before = amount_before;
 
-            amount_holder.days.insert(std::make_pair(
-              source_amount->prev_day, prev_day));
+            amount_holder.days.insert(std::make_pair(source_amount->prev_day, prev_day));
           }
 
           assert(source_amount->day_amounts.empty() ||
@@ -2517,8 +2405,7 @@ namespace AdServer::CampaignSvcs
     {
       {
         // erase replace days
-        auto replace_end_day_it =
-          amount_holder.days.lower_bound(use_source_end_date);
+        auto replace_end_day_it = amount_holder.days.lower_bound(use_source_end_date);
 
         RevenueDecimal amount_before = RevenueDecimal::ZERO;
         ImpRevenueDecimal imps_before = ImpRevenueDecimal::ZERO;
@@ -2531,8 +2418,7 @@ namespace AdServer::CampaignSvcs
         }
 
         amount_holder.days.erase(amount_holder.days.begin(), replace_end_day_it);
-        for (auto day_it = amount_holder.days.begin();
-          day_it != amount_holder.days.end(); ++day_it)
+        for (auto day_it = amount_holder.days.begin(); day_it != amount_holder.days.end(); ++day_it)
         {
           day_it->second.amount_before -= amount_before;
           day_it->second.imps_before -= imps_before;
@@ -2542,8 +2428,7 @@ namespace AdServer::CampaignSvcs
 
       if (source_amount)
       {
-        auto source_day_it = source_amount->day_amount_counts.lower_bound(
-          use_source_end_date);
+        auto source_day_it = source_amount->day_amount_counts.lower_bound(use_source_end_date);
 
         {
           // collect sum amount for replace days and add it to target days
@@ -2608,8 +2493,7 @@ namespace AdServer::CampaignSvcs
             prev_day.imps_before = imps_before;
             prev_day.clicks_before = clicks_before;
 
-            amount_holder.days.insert(std::make_pair(
-              source_amount->prev_day, prev_day));
+            amount_holder.days.insert(std::make_pair(source_amount->prev_day, prev_day));
           }
 
           assert(source_amount->day_amount_counts.empty() ||
@@ -2726,11 +2610,7 @@ namespace AdServer::CampaignSvcs
 
     if (::rmdir(path_str.c_str()) == -1 && errno != ENOENT)
     {
-      eh::throw_errno_exception<Exception>(
-        FUN,
-        ": failed to remove '",
-        path_str.c_str(),
-        "'");
+      eh::throw_errno_exception<Exception>(FUN, ": failed to remove '", path_str.c_str(), "'");
     }
   }
 
@@ -2743,15 +2623,9 @@ namespace AdServer::CampaignSvcs
     State_var state = state_;
     assert(state.in());
 
-    save_account_amounts_(path.str() + "/" + ACCOUNTS_FILE,
-      state->accounts,
-      state->accounts_lock);
-    save_amounts_(path.str() + "/" + CAMPAIGNS_FILE,
-      state->campaigns,
-      state->campaigns_lock);
-    save_amounts_(path.str() + "/" + CCGS_FILE,
-      state->ccgs,
-      state->ccgs_lock);
+    save_account_amounts_(path.str() + "/" + ACCOUNTS_FILE, state->accounts, state->accounts_lock);
+    save_amounts_(path.str() + "/" + CAMPAIGNS_FILE, state->campaigns, state->campaigns_lock);
+    save_amounts_(path.str() + "/" + CCGS_FILE, state->ccgs, state->ccgs_lock);
     save_ccg_rates_(path.str() + "/" + CCG_RATE_AMOUNTS_FILE,
       state->ccg_rate_amounts,
       state->ccg_rate_amounts_lock);
@@ -2800,9 +2674,7 @@ namespace AdServer::CampaignSvcs
 
     typedef std::list<typename AmountMapType::value_type> ValueList;
 
-    std::ofstream file(
-      file_path.str().c_str(),
-      std::ios_base::out | std::ios_base::trunc);
+    std::ofstream file(file_path.str().c_str(), std::ios_base::out | std::ios_base::trunc);
 
     if (!file.is_open())
     {
@@ -2811,14 +2683,12 @@ namespace AdServer::CampaignSvcs
       throw Exception(ostr);
     }
 
-    const std::string zero_time_str =
-      Generics::Time::ZERO.get_gm_time().format("%F");
+    const std::string zero_time_str = Generics::Time::ZERO.get_gm_time().format("%F");
 
     bool end_reached = false;
     bool last_key_inited = false;
     bool save_started = false;
-    typename AmountMapType::key_type last_key =
-      typename AmountMapType::key_type();
+    typename AmountMapType::key_type last_key = typename AmountMapType::key_type();
 
     while (!end_reached)
     {
@@ -2837,8 +2707,7 @@ namespace AdServer::CampaignSvcs
         }
 
         unsigned long cur_i = 0;
-        for (; cur_it != amounts.end() && cur_i < SAVE_PORTION_SIZE_;
-          ++cur_it, ++cur_i)
+        for (; cur_it != amounts.end() && cur_i < SAVE_PORTION_SIZE_; ++cur_it, ++cur_i)
         {
           // do deep copy inside lock
           save_amounts.push_back(typename AmountMapType::value_type(
@@ -2873,19 +2742,14 @@ namespace AdServer::CampaignSvcs
 
         auto first_day_it = it->second->days.begin();
 
-        for (auto day_it = first_day_it;
-          day_it != it->second->days.end(); ++day_it)
+        for (auto day_it = first_day_it; day_it != it->second->days.end(); ++day_it)
         {
           file << it->first << '\t' <<
-            day_it->first.get_gm_time().format("%F") << '\t' <<
-            day_it->second.amount <<
-            std::endl;
+            day_it->first.get_gm_time().format("%F") << '\t' << day_it->second.amount << std::endl;
         }
 
         // storage should garantee that zero amount saved after other
-        file << it->first << '\t' << zero_time_str << '\t' <<
-          first_day_it->second.amount_before
-          ;
+        file << it->first << '\t' << zero_time_str << '\t' << first_day_it->second.amount_before ;
       }
     }
 
@@ -2904,9 +2768,7 @@ namespace AdServer::CampaignSvcs
 
     typedef std::list<typename AmountMapType::value_type> ValueList;
 
-    std::ofstream file(
-      file_path.str().c_str(),
-      std::ios_base::out | std::ios_base::trunc);
+    std::ofstream file(file_path.str().c_str(), std::ios_base::out | std::ios_base::trunc);
 
     if (!file.is_open())
     {
@@ -2915,14 +2777,12 @@ namespace AdServer::CampaignSvcs
       throw Exception(ostr);
     }
 
-    const std::string zero_time_str =
-      Generics::Time::ZERO.get_gm_time().format("%F");
+    const std::string zero_time_str = Generics::Time::ZERO.get_gm_time().format("%F");
 
     bool end_reached = false;
     bool last_key_inited = false;
     bool save_started = false;
-    typename AmountMapType::key_type last_key =
-      typename AmountMapType::key_type();
+    typename AmountMapType::key_type last_key = typename AmountMapType::key_type();
 
     while (!end_reached)
     {
@@ -2941,8 +2801,7 @@ namespace AdServer::CampaignSvcs
         }
 
         unsigned long cur_i = 0;
-        for (; cur_it != amounts.end() && cur_i < SAVE_PORTION_SIZE_;
-          ++cur_it, ++cur_i)
+        for (; cur_it != amounts.end() && cur_i < SAVE_PORTION_SIZE_; ++cur_it, ++cur_i)
         {
           // do deep copy inside lock
           save_amounts.push_back(typename AmountMapType::value_type(
@@ -2977,15 +2836,12 @@ namespace AdServer::CampaignSvcs
 
         auto first_day_it = it->second->days.begin();
 
-        for (auto day_it = first_day_it;
-          day_it != it->second->days.end(); ++day_it)
+        for (auto day_it = first_day_it; day_it != it->second->days.end(); ++day_it)
         {
           file << it->first << '\t' <<
             day_it->first.get_gm_time().format("%F") << '\t' <<
             day_it->second.amount << '\t' <<
-            day_it->second.imps.str() << '\t' <<
-            day_it->second.clicks.str() <<
-            std::endl;
+            day_it->second.imps.str() << '\t' << day_it->second.clicks.str() << std::endl;
         }
 
         // storage should garantee that zero amount saved after other
@@ -3012,9 +2868,7 @@ namespace AdServer::CampaignSvcs
 
     typedef std::list<typename RateMapType::value_type> ValueList;
 
-    std::ofstream file(
-      file_path.str().c_str(),
-      std::ios_base::out | std::ios_base::trunc);
+    std::ofstream file(file_path.str().c_str(), std::ios_base::out | std::ios_base::trunc);
 
     if (!file.is_open())
     {
@@ -3023,14 +2877,12 @@ namespace AdServer::CampaignSvcs
       throw Exception(ostr);
     }
 
-    const std::string zero_time_str =
-      Generics::Time::ZERO.get_gm_time().format("%F");
+    const std::string zero_time_str = Generics::Time::ZERO.get_gm_time().format("%F");
 
     bool end_reached = false;
     bool last_key_inited = false;
     bool save_started = false;
-    typename RateMapType::key_type last_key =
-      typename RateMapType::key_type();
+    typename RateMapType::key_type last_key = typename RateMapType::key_type();
 
     while (!end_reached)
     {
@@ -3049,8 +2901,7 @@ namespace AdServer::CampaignSvcs
         }
 
         unsigned long cur_i = 0;
-        for (; cur_it != rates.end() && cur_i < SAVE_RATES_PORTION_SIZE_;
-          ++cur_it, ++cur_i)
+        for (; cur_it != rates.end() && cur_i < SAVE_RATES_PORTION_SIZE_; ++cur_it, ++cur_i)
         {
           // do deep copy inside lock
           save_rates.push_back(*cur_it);
@@ -3070,8 +2921,7 @@ namespace AdServer::CampaignSvcs
       // save collected portion
       for (auto it = save_rates.begin(); it != save_rates.end(); ++it)
       {
-        for (auto ti_it = it->second.dates.begin();
-          ti_it != it->second.dates.end(); ++ti_it)
+        for (auto ti_it = it->second.dates.begin(); ti_it != it->second.dates.end(); ++ti_it)
         {
           if (!ti_it->second.empty())
           {
@@ -3087,8 +2937,7 @@ namespace AdServer::CampaignSvcs
             file <<
               // key
               it->first.campaign_id << '\t' <<
-              it->first.ccg_id << '\t' <<
-              ti_it->first.get_gm_time().format("%F") << '\t';
+              it->first.ccg_id << '\t' << ti_it->first.get_gm_time().format("%F") << '\t';
             ti_it->second.save(file);
           }
         }
@@ -3110,9 +2959,7 @@ namespace AdServer::CampaignSvcs
 
     typedef std::list<typename RateOptMapType::value_type> ValueList;
 
-    std::ofstream file(
-      file_path.str().c_str(),
-      std::ios_base::out | std::ios_base::trunc);
+    std::ofstream file(file_path.str().c_str(), std::ios_base::out | std::ios_base::trunc);
 
     if (!file.is_open())
     {
@@ -3121,8 +2968,7 @@ namespace AdServer::CampaignSvcs
       throw Exception(ostr);
     }
 
-    const std::string zero_time_str =
-      Generics::Time::ZERO.get_gm_time().format("%F");
+    const std::string zero_time_str = Generics::Time::ZERO.get_gm_time().format("%F");
 
     bool end_reached = false;
     bool last_key_inited = false;
@@ -3146,8 +2992,7 @@ namespace AdServer::CampaignSvcs
         }
 
         unsigned long cur_i = 0;
-        for (; cur_it != rate_opts.end() && cur_i < SAVE_RATE_OPTS_PORTION_SIZE_;
-          ++cur_it, ++cur_i)
+        for (; cur_it != rate_opts.end() && cur_i < SAVE_RATE_OPTS_PORTION_SIZE_; ++cur_it, ++cur_i)
         {
           // do deep copy inside lock
           save_rates.push_back(*cur_it);
@@ -3167,8 +3012,7 @@ namespace AdServer::CampaignSvcs
       // save collected portion
       for (auto it = save_rates.begin(); it != save_rates.end(); ++it)
       {
-        for (auto ti_it = it->second.dates.begin();
-          ti_it != it->second.dates.end(); ++ti_it)
+        for (auto ti_it = it->second.dates.begin(); ti_it != it->second.dates.end(); ++ti_it)
         {
           if (!ti_it->second.empty())
           {
@@ -3181,8 +3025,7 @@ namespace AdServer::CampaignSvcs
               save_started = true;
             }
 
-            file << it->first << '\t' <<
-              ti_it->first.get_gm_time().format("%F") << '\t';
+            file << it->first << '\t' << ti_it->first.get_gm_time().format("%F") << '\t';
             ti_it->second.save(file);
           }
         }
@@ -3201,9 +3044,7 @@ namespace AdServer::CampaignSvcs
   {
     static const char* FUN = "BillingContainer::load_account_amounts_()";
 
-    std::ifstream file(
-      file_path.str().c_str(),
-      std::ios_base::in);
+    std::ifstream file(file_path.str().c_str(), std::ios_base::in);
 
     if (!file.is_open())
     {
@@ -3305,8 +3146,7 @@ namespace AdServer::CampaignSvcs
       {
         Stream::Error ostr;
         ostr << FUN << ": can't read '" << file_path <<
-          "', invalid line #" << line_i << " '" << line <<
-          "': " << ex.what();
+          "', invalid line #" << line_i << " '" << line << "': " << ex.what();
         throw Exception(ostr);
       }
 
@@ -3318,16 +3158,12 @@ namespace AdServer::CampaignSvcs
 
   template<typename AmountMapType>
   void
-  BillingContainer::load_amounts_(
-    AmountMapType& amounts,
-    const String::SubString& file_path)
+  BillingContainer::load_amounts_(AmountMapType& amounts, const String::SubString& file_path)
     /*throw(Exception)*/
   {
     static const char* FUN = "BillingContainer::load_amounts_()";
 
-    std::ifstream file(
-      file_path.str().c_str(),
-      std::ios_base::in);
+    std::ifstream file(file_path.str().c_str(), std::ios_base::in);
 
     if (!file.is_open())
     {
@@ -3459,8 +3295,7 @@ namespace AdServer::CampaignSvcs
       {
         Stream::Error ostr;
         ostr << FUN << ": can't read '" << file_path <<
-          "', invalid line #" << line_i << " '" << line <<
-          "': " << ex.what();
+          "', invalid line #" << line_i << " '" << line << "': " << ex.what();
         throw Exception(ostr);
       }
 
@@ -3472,9 +3307,7 @@ namespace AdServer::CampaignSvcs
 
   template<typename RateMapType>
   void
-  BillingContainer::load_rates_(
-    RateMapType& rates,
-    const String::SubString& file_path)
+  BillingContainer::load_rates_(RateMapType& rates, const String::SubString& file_path)
     /*throw(Exception)*/
   {
     // rates file format:
@@ -3586,8 +3419,7 @@ namespace AdServer::CampaignSvcs
       {
         Stream::Error ostr;
         ostr << FUN << ": can't read '" << file_path <<
-          "', invalid line #" << line_i << " '" << line <<
-          "': " << ex.what();
+          "', invalid line #" << line_i << " '" << line << "': " << ex.what();
         throw Exception(ostr);
       }
 
@@ -3599,9 +3431,7 @@ namespace AdServer::CampaignSvcs
 
   template<typename RateOptMapType>
   void
-  BillingContainer::load_rate_opts_(
-    RateOptMapType& rate_opts,
-    const String::SubString& file_path)
+  BillingContainer::load_rate_opts_(RateOptMapType& rate_opts, const String::SubString& file_path)
     /*throw(Exception)*/
   {
     // rates file format:
@@ -3696,8 +3526,7 @@ namespace AdServer::CampaignSvcs
       {
         Stream::Error ostr;
         ostr << FUN << ": can't read '" << file_path <<
-          "', invalid line #" << line_i << " '" << line <<
-          "': " << ex.what();
+          "', invalid line #" << line_i << " '" << line << "': " << ex.what();
         throw Exception(ostr);
       }
 
@@ -3710,8 +3539,7 @@ namespace AdServer::CampaignSvcs
   template<typename DeliveryLimitsType>
     // CommonDeliveryLimits + DeliveryLimitsCalcHelper
   void
-  BillingContainer::adapt_delivery_limits_(
-    DeliveryLimitsType& delivery_limits)
+  BillingContainer::adapt_delivery_limits_(DeliveryLimitsType& delivery_limits)
     const noexcept
   {
     if (delivery_limits.daily_budget.present())
@@ -3764,8 +3592,7 @@ namespace AdServer::CampaignSvcs
 
     delivery_limits.adv_tz_date_end =
       delivery_limits.date_end != Generics::Time::ZERO ?
-        (delivery_limits.date_end + delivery_limits.time_offset
-          ).get_gm_time().get_date() :
+        (delivery_limits.date_end + delivery_limits.time_offset).get_gm_time().get_date() :
         Generics::Time::ZERO;
   }
 

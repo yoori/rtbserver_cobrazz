@@ -92,11 +92,7 @@ main(int argc, char** argv)
 
   Logging::Logger_var logger(new Logging::Null::Logger());
   Logging::ActiveObjectCallbackImpl_var callback(
-    new Logging::ActiveObjectCallbackImpl(
-      logger,
-      "FCGIEchoServer::main",
-      "FCGIEchoServer",
-      ""));
+    new Logging::ActiveObjectCallbackImpl(logger, "FCGIEchoServer::main", "FCGIEchoServer", ""));
 
   FrontendCommons::Frontend_var frontend(new EchoFrontend());
 
@@ -114,7 +110,7 @@ main(int argc, char** argv)
 
   std::cerr << "FCGIEchoServer listen unix socket: " << *bind_address << std::endl;
 
-  while(!stop_requested.load())
+  while (!stop_requested.load())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }

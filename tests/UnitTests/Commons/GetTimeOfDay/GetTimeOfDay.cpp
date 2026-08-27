@@ -50,9 +50,7 @@ void TaskCheck::execute() /*throw(eh::Exception)*/
   test_->iteration(this);
 }
 
-GetTimeOfDayTest::GetTimeOfDayTest(
-  long timeout,
-  long count_threads) noexcept
+GetTimeOfDayTest::GetTimeOfDayTest(long timeout, long count_threads) noexcept
   : task_runner_(new Generics::TaskRunner(this, count_threads)),
     timeout_(timeout),
     count_threads_(count_threads),
@@ -64,7 +62,7 @@ int GetTimeOfDayTest::run() noexcept
 {
   task_runner_->activate_object();
   TaskCheck_var task = new TaskCheck(this);
-  for(long i = 0; i < count_threads_; i++)
+  for (long i = 0; i < count_threads_; i++)
   {
     try
     {
@@ -115,10 +113,10 @@ int main(int argc, char* argv[])
 {
   long timeout = 30;
   long count_threads = 1;
-  if(argc > 1)
+  if (argc > 1)
   {
     count_threads = atol(argv[1]);
-    if(argc > 2)
+    if (argc > 2)
     {
       timeout = atol(argv[2]);
     }

@@ -59,10 +59,7 @@ namespace AdServer::ProfilingCommons
     //   uint32_t size
     //   byte message[size]
     void
-    write_operation(
-      std::size_t distrib_hash,
-      unsigned long op_index,
-      Generics::MemBuf&& membuf)
+    write_operation(std::size_t distrib_hash, unsigned long op_index, Generics::MemBuf&& membuf)
       /*throw(eh::Exception)*/;
 
   protected:

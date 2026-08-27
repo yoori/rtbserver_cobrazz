@@ -1,9 +1,6 @@
 #include "CombinedHardSoftMatchingTest.hpp"
 
-REFLECT_UNIT(CombinedHardSoftMatchingTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(CombinedHardSoftMatchingTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;

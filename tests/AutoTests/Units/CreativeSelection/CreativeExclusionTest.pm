@@ -53,7 +53,7 @@ sub SiteLevelExlusions
       die "Error in sub SiteLevelExlusions. Got unexpected <approved> parameter: '$approved', instead of 'A' or 'R'.";
   }
 
-  my $site = $ns->create(Site => { 
+  my $site = $ns->create(Site => {
     name => "$name",
     account_id => $pub_acc,
     flags => $site_flags });
@@ -97,7 +97,7 @@ sub SiteLevelExlusions
                                  creative_category_id => $content_category,
                                  template_id => $template });
 
-    $ns->create(SiteCreativeApproval => { 
+    $ns->create(SiteCreativeApproval => {
       site_id => $site,
       creative_id => $creative }) if $approved eq 'A';
 
@@ -236,7 +236,7 @@ sub SiteTagLevelExclusions
                                  creative_category_id => $category_content,
                                  template_id => $template });
 
-    $ns->create(SiteCreativeApproval => { 
+    $ns->create(SiteCreativeApproval => {
       site_id => $site,
       creative_id => $creative }) if $approved eq 'A';
 
@@ -364,7 +364,7 @@ sub exclusion_by_creative_template_and_tag
   $ns->create(TemplateFile =>
               { template_id => $template_id,
                 size_id => $size,
-                template_file => 
+                template_file =>
                   'UnitTests/banner_img_clk.html',
                 flags => 0,
                 template_type => 'T'});
@@ -410,7 +410,7 @@ sub exclusion_by_creative_template_and_tag
                                  cct_id => 2 });
 
   my $option_group = $template_id->{option_group_id};
-  
+
   my $option =  $ns->create(Options =>
                             { token => "HEADLINE",
                               option_group_id => $option_group,
@@ -583,7 +583,7 @@ sub text_creatives_exclusion
     $ns->output("TEST-5-6/KWD-" . ($i + 1), $keyword, "keyword for creative $text_campaign->{cc_id}");
     $ns->output("TEST-5-6/EXP_CCID-" . ($i + 1), $exp_ccid, "expected ccid for test case #" . ($i + 1));
     $ns->output("TEST-5-6/TestCase-" . ($i + 1), $test_case[$i]->{name}, "test case name");
-    
+
   }
 
 }
@@ -686,7 +686,7 @@ sub exclusion_text_by_domain_match_within_creative_token
     $ns->output("TEST-5-8/KWD-" . ($i + 1), $keyword, "keyword for creative $text_campaign->{cc_id}");
     $ns->output("TEST-5-8/EXP_CCID-" . ($i + 1), $exp_ccid, "expected ccid for test case #" . ($i + 1));
     $ns->output("TEST-5-8/TestCase-" . ($i + 1), $test_case[$i]->{name}, "test case name");
-    
+
   }
 
 }
@@ -775,7 +775,7 @@ sub exclusion_by_ccg_keyword_click_url
     $ns->output("TEST-5-9/KWD-" . ($i + 1), $keyword, "keyword for creative $text_campaign->{cc_id}");
     $ns->output("TEST-5-9/EXP_CCID-" . ($i + 1), $exp_ccid, "expected ccid for test case #" . ($i + 1));
     $ns->output("TEST-5-9/TestCase-" . ($i + 1), $test_case[$i]->{name}, "test case name");
-    
+
   }
 
 }

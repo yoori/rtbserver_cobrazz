@@ -20,9 +20,7 @@ namespace
   }
 }
 
-namespace AdServer
-{
-namespace Utils
+namespace AdServer::Utils
 {
   class EchoFrontendImpl final:
     public FrontendCommons::FrontendInterface,
@@ -65,7 +63,7 @@ namespace Utils
     ~EchoFrontendImpl() noexcept override = default;
   };
 }
-}
+
 
 int
 main(int argc, char** argv)
@@ -75,21 +73,12 @@ main(int argc, char** argv)
   Generics::AppUtils::Option<unsigned long> opt_port(8080);
 
   Generics::AppUtils::Args args(-1);
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
-  args.add(
-    Generics::AppUtils::equal_name("bind") ||
-    Generics::AppUtils::short_name("b"),
-    opt_bind);
-  args.add(
-    Generics::AppUtils::equal_name("port") ||
-    Generics::AppUtils::short_name("p"),
-    opt_port);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
+  args.add(Generics::AppUtils::equal_name("bind") || Generics::AppUtils::short_name("b"), opt_bind);
+  args.add(Generics::AppUtils::equal_name("port") || Generics::AppUtils::short_name("p"), opt_port);
   args.parse(argc - 1, argv + 1);
 
-  if(opt_help.enabled())
+  if (opt_help.enabled())
   {
     std::cout << "Http2EchoServer options:\n"
       "  --bind|-b <address>   Bind address (default: 127.0.0.1)\n"
@@ -100,8 +89,7 @@ main(int argc, char** argv)
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);
 
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
   FrontendCommons::Frontend_var frontend(new AdServer::Utils::EchoFrontendImpl());
 
   ReferenceCounting::SmartPtr<AdServer::Frontends::Http2Acceptor> acceptor(
@@ -117,7 +105,7 @@ main(int argc, char** argv)
 
   acceptor->activate_object();
 
-  while(!g_stop)
+  while (!g_stop)
   {
     ::sleep(1);
   }

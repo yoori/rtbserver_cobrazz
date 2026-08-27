@@ -60,8 +60,7 @@ namespace AdServer::Commons
 
   template<typename CoroutineType, typename Allocator>
   bool
-  SetAwaitable<CoroutineType, Allocator>::await_suspend(
-    std::coroutine_handle<> continuation)
+  SetAwaitable<CoroutineType, Allocator>::await_suspend(std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
     if (const auto* scheduler = current_coroutine_resume_scheduler())
@@ -70,7 +69,7 @@ namespace AdServer::Commons
     }
     state_->remaining = operations_.size();
 
-    for(auto& operation : operations_)
+    for (auto& operation : operations_)
     {
       operation.start(
         [state = state_](std::optional<std::exception_ptr> exception) mutable

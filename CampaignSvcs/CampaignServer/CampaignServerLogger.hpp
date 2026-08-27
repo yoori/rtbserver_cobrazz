@@ -7,64 +7,60 @@
 
 #include <LogCommons/ColoUpdateStat.hpp>
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  struct LogFlushTraits
   {
-    struct LogFlushTraits
+    unsigned long size;
+    unsigned long period;
+    std::string out_dir;
+  };
+
+  class CampaignServerLogger:
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    struct ConfigUpdateInfo
     {
-      unsigned long size;
-      unsigned long period;
-      std::string out_dir;
+      unsigned long colo_id;
+      Generics::Time time;
+      std::string version;
     };
 
-    class CampaignServerLogger:
-      public virtual ReferenceCounting::AtomicImpl
-    {
-    public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  public:
+    CampaignServerLogger(const LogFlushTraits& colo_update_log_params)
+      /*throw(Exception)*/;
 
-      struct ConfigUpdateInfo
-      {
-        unsigned long colo_id;
-        Generics::Time time;
-        std::string version;
-      };
+    void process_config_update(const ConfigUpdateInfo& request_info)
+      /*throw(Exception)*/;
 
-    public:
-      CampaignServerLogger(const LogFlushTraits& colo_update_log_params)
-        /*throw(Exception)*/;
+    void flush_if_required() /*throw(Exception)*/;
 
-      void process_config_update(
-        const ConfigUpdateInfo& request_info)
-        /*throw(Exception)*/;
+  protected:
+    virtual ~CampaignServerLogger() noexcept
+    {}
 
-      void flush_if_required() /*throw(Exception)*/;
+    bool need_flush_i() const /*throw(eh::Exception)*/;
 
-    protected:
-      virtual ~CampaignServerLogger() noexcept
-      {}
-
-      bool need_flush_i() const /*throw(eh::Exception)*/;
-
-    protected:
-      typedef Sync::Policy::PosixThread SyncPolicy;
-      typedef
-        AdServer::LogProcessing::ColoUpdateStatTraits::CollectorType
-        ColoUpdateCollector;
-      typedef
-        AdServer::LogProcessing::GenericLogIoHelperImpl<
-          AdServer::LogProcessing::ColoUpdateStatTraits>
-        ColoUpdateStatIoHelper;
-
-      LogFlushTraits colo_update_flush_traits_;
-      SyncPolicy::Mutex colo_update_lock_;
-      ColoUpdateCollector colo_update_collector_;
-      Generics::Time flush_time_;
-    };
-
+  protected:
+    typedef Sync::Policy::PosixThread SyncPolicy;
     typedef
-      ReferenceCounting::SmartPtr<CampaignServerLogger>
-      CampaignServerLogger_var;
-  }
+      AdServer::LogProcessing::ColoUpdateStatTraits::CollectorType
+      ColoUpdateCollector;
+    typedef
+      AdServer::LogProcessing::GenericLogIoHelperImpl<
+        AdServer::LogProcessing::ColoUpdateStatTraits>
+      ColoUpdateStatIoHelper;
+
+    LogFlushTraits colo_update_flush_traits_;
+    SyncPolicy::Mutex colo_update_lock_;
+    ColoUpdateCollector colo_update_collector_;
+    Generics::Time flush_time_;
+  };
+
+  typedef
+    ReferenceCounting::SmartPtr<CampaignServerLogger>
+    CampaignServerLogger_var;
 }

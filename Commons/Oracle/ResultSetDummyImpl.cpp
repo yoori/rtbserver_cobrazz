@@ -1,6 +1,4 @@
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   ResultSet::ResultSet(
     Statement* /*statement*/,
@@ -142,6 +140,4 @@ namespace Oracle
   ResultSet::check_column_index_(unsigned long /*ind*/) const
     /*throw(SqlException)*/
   {}
-} /*Oracle*/
-} /*Commons*/
-} /*AdServer*/
+} // namespace AdServer::Commons::Oracle

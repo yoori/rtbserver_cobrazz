@@ -20,8 +20,7 @@ namespace
 
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "RequestInfoManagerApp_", ASPECT, 0)
 {
 }
@@ -56,25 +55,22 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
 
       configuration_ =
-        ConfigPtr(new RequestInfoManagerConfigType(
-          ad_configuration->RequestInfoManagerConfig()));
+        ConfigPtr(new RequestInfoManagerConfigType(ad_configuration->RequestInfoManagerConfig()));
     }
     catch(const xml_schema::parsing& e)
     {
       Stream::Error ostr;
 
-      ostr << FUN << "Can't parse config file '"
-        << argv[1] << "'."
-        << ": ";
+      ostr << FUN << "Can't parse config file '" << argv[1] << "'." << ": ";
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
@@ -85,10 +81,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << "Can't parse config file '"
-        << argv[1] << "'."
-        << ": "
-        << e.what();
+      ostr << FUN << "Can't parse config file '" << argv[1] << "'." << ": " << e.what();
       throw Exception(ostr, "ADS-IMPL-3000");
     }
     catch(...)
@@ -101,8 +94,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     // Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -119,8 +111,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     {
       try
       {
-        rim_stats_impl =
-          new AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl;
+        rim_stats_impl = new AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl;
 
         unsigned snmp_index =
           configuration_->SNMPConfig().get().index().present() ?
@@ -129,8 +120,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
 
         snmp_stat_provider = new AdServer::RequestInfoSvcs::SNMPStatsImpl(
           rim_stats_impl, snmp_index,
-          Logging::Logger_var(new Logging::LoggerDefaultHolder(
-            logger(), 0, "ADS-IMPL-?")),
+          Logging::Logger_var(new Logging::LoggerDefaultHolder(logger(), 0, "ADS-IMPL-?")),
           "",
           "RequestInfoManager-MIB:requestInfoManager",
           configuration_->SNMPConfig().get().mib_dirs().c_str());
@@ -162,12 +152,11 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         config().GrpcConfig().Endpoint().port(),
         config().GrpcConfig().cq_threads());
 
-    auto active_objects =
-      std::make_shared<Generics::CompositeActiveObject>(false, false);
+    auto active_objects = std::make_shared<Generics::CompositeActiveObject>(false, false);
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(
       [&]() noexcept
       {
-        if(active_objects->active())
+        if (active_objects->active())
         {
           active_objects->deactivate_object();
           active_objects->wait_object();
@@ -189,11 +178,9 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
   {
     try
     {
-      logger()->sstream(Logging::Logger::CRITICAL,
-                        ASPECT, e.code())
+      logger()->sstream(Logging::Logger::CRITICAL, ASPECT, e.code())
         << "RequestInfoManagerApp_::main(): "
-          "Got RequestInfoManagerApp_::Exception. : \n"
-        << e.what();
+          "Got RequestInfoManagerApp_::Exception. : \n" << e.what();
     }
     catch (...)
     {
@@ -208,12 +195,9 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                        ASPECT,
-                        "ADS-IMPL-3004")
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-3004")
         << "RequestInfoManagerApp_::main(): "
-          "Got CORBA::SystemException. : \n"
-        << e;
+          "Got CORBA::SystemException. : \n" << e;
     }
     catch (...)
     {
@@ -228,17 +212,13 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
   {
     try
     {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-                        ASPECT,
-                        "ADS-IMPL-3005")
+      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-3005")
         << "RequestInfoManagerApp_::main(): "
-          "Got eh::Exception. : \n"
-        << e.what();
+          "Got eh::Exception. : \n" << e.what();
     }
     catch (...)
     {
-      logger()->log(String::SubString("RequestInfoManagerApp_::main(): "
-                    "Got eh::Exception."),
+      logger()->log(String::SubString("RequestInfoManagerApp_::main(): " "Got eh::Exception."),
                     Logging::Logger::EMERGENCY,
                     ASPECT,
                     "ADS-IMPL-3003");
@@ -246,8 +226,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
   }
   catch (...)
   {
-    logger()->log(String::SubString("RequestInfoServerApp_::main(): "
-                  "Got Unknown exception."),
+    logger()->log(String::SubString("RequestInfoServerApp_::main(): " "Got Unknown exception."),
                   Logging::Logger::EMERGENCY,
                   ASPECT,
                   "ADS-IMPL-3006");
@@ -273,8 +252,7 @@ main(int argc, char** argv)
 
   if (app == 0)
   {
-    std::cerr << FUN << ": Critical: got NULL application object."
-              << std::endl;
+    std::cerr << FUN << ": Critical: got NULL application object." << std::endl;
     return -1;
   }
 

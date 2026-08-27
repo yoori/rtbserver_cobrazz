@@ -18,9 +18,9 @@ namespace Parsing
     parse_adapter.processor = processor;
     parse_adapter.scanner = new yy::PlainScanner(&istr, &error_ostr);
     yy::PlainParser parser(parse_adapter);
-    if(!parser.parse())
+    if (!parser.parse())
     {
-      if(root_namespace)
+      if (root_namespace)
       {
         *root_namespace = processor->root_namespace();
       }

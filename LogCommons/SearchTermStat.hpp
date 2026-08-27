@@ -143,10 +143,7 @@ namespace AdServer::LogProcessing
   {
     SearchTermStatKey(): sdate_(), colo_id_(), hash_() {}
 
-    SearchTermStatKey(
-      const DayTimestamp& sdate,
-      std::uint32_t colo_id
-    )
+    SearchTermStatKey(const DayTimestamp& sdate, std::uint32_t colo_id)
     :
       sdate_(sdate),
       colo_id_(colo_id),

@@ -51,9 +51,7 @@ namespace AdServer::Grpc
       bool shutdown_requested_ = false;
     };
 
-    explicit GrpcExecutor(
-      std::size_t workers_number,
-      std::string thread_name = "grpc-asio-p");
+    explicit GrpcExecutor(std::size_t workers_number, std::string thread_name = "grpc-asio-p");
 
     std::shared_ptr<CQ> queue(unsigned int index) noexcept;
 

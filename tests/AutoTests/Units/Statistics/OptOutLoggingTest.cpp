@@ -5,10 +5,7 @@
 
 #include "OptOutLoggingTest.hpp"
 
-REFLECT_UNIT(OptOutLoggingTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(OptOutLoggingTest) ("Statistics", AUTO_TEST_SLOW);
 
 //OptOutStatsDBTable=======================================================================
 
@@ -23,7 +20,6 @@ namespace
   typedef AutoTest::OptOutRequest OptOutRequest;
   typedef AutoTest::RedirectChecker RedirectChecker;
 }
-
 
 namespace ORM = ::AutoTest::ORM;
 
@@ -40,9 +36,7 @@ OptOutLoggingTest::run_test()
   add_descr_phrase("Check OptoutStats");
   // Check results
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_, diffs_, stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
     "OptOutStats: check results");
 
   return true;
@@ -63,10 +57,7 @@ void OptOutLoggingTest::non_test_mode_()
     {time_, 'O', 10, 1}
   };
 
-  initialize_stats_(
-    description,
-    fetch_int("COLO"),
-    EXPECTED);
+  initialize_stats_(description, fetch_int("COLO"), EXPECTED);
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
@@ -80,11 +71,7 @@ void OptOutLoggingTest::non_test_mode_()
       {time_, "in", SUCCESS_URL }, // status 10
     };
 
-    process_requests_(
-      description + " Part#1.",
-      client,
-      fetch_int("COLO"),
-      REQUESTS);
+    process_requests_(description + " Part#1.", client, fetch_int("COLO"), REQUESTS);
   }
 
   {
@@ -95,11 +82,7 @@ void OptOutLoggingTest::non_test_mode_()
       {time_, "out", SUCCESS_URL } // status 10
     };
 
-    process_requests_(
-      description + " Part#2.",
-      client,
-      fetch_int("COLO"),
-      REQUESTS);
+    process_requests_(description + " Part#2.", client, fetch_int("COLO"), REQUESTS);
   }
 
   {
@@ -112,11 +95,7 @@ void OptOutLoggingTest::non_test_mode_()
       {time_, "in", SUCCESS_URL } // status 11
     };
 
-    process_requests_(
-      description + " Part#3.",
-      client,
-      fetch_int("COLO"),
-      REQUESTS);
+    process_requests_(description + " Part#3.", client, fetch_int("COLO"), REQUESTS);
   }
 
 }
@@ -136,11 +115,7 @@ void OptOutLoggingTest::test_mode_()
     {time_, 'O', 10, 1}
   };
 
-  initialize_stats_(
-    description,
-    fetch_int("COLO"),
-    EXPECTED,
-    true);
+  initialize_stats_(description, fetch_int("COLO"), EXPECTED, true);
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
@@ -154,12 +129,7 @@ void OptOutLoggingTest::test_mode_()
       {time_, "in", SUCCESS_URL }, // status 10
     };
 
-    process_requests_(
-      description + " Part#1.",
-      client,
-      fetch_int("COLO"),
-      REQUESTS,
-      true);
+    process_requests_(description + " Part#1.", client, fetch_int("COLO"), REQUESTS, true);
   }
 
   {
@@ -170,12 +140,7 @@ void OptOutLoggingTest::test_mode_()
       {time_, "out", SUCCESS_URL } // status 10
     };
 
-    process_requests_(
-      description + " Part#2.",
-      client,
-      fetch_int("COLO"),
-      REQUESTS,
-      true);
+    process_requests_(description + " Part#2.", client, fetch_int("COLO"), REQUESTS, true);
   }
 
 }
@@ -185,12 +150,9 @@ void OptOutLoggingTest::account_timezone_()
   std::string description("Account timezone.");
   add_descr_phrase(description);
 
-  AutoTest::Time tz_ofset(
-    AutoTest::ORM::get_tz_ofset(
-      this, fetch_string("TZ")));
+  AutoTest::Time tz_ofset(AutoTest::ORM::get_tz_ofset(this, fetch_string("TZ")));
 
-  AutoTest::Time time(
-    AutoTest::Time().get_gm_time().get_date());
+  AutoTest::Time time(AutoTest::Time().get_gm_time().get_date());
 
 
   const Expected EXPECTED[] =
@@ -200,13 +162,9 @@ void OptOutLoggingTest::account_timezone_()
     {time + 15 * HOUR + tz_ofset, 'I', 11, 1}  // tomorrow 02:00
   };
 
-  initialize_stats_(
-    description,
-    fetch_int("COLO/TZ"),
-    EXPECTED);
+  initialize_stats_(description, fetch_int("COLO/TZ"), EXPECTED);
 
-  const unsigned long ofsets[] =
-    { 6 * HOUR, 15 * HOUR, 10 * HOUR };
+  const unsigned long ofsets[] = { 6 * HOUR, 15 * HOUR, 10 * HOUR };
 
   for (size_t i = 0; i < countof(ofsets); ++i)
   {
@@ -217,11 +175,7 @@ void OptOutLoggingTest::account_timezone_()
       {time + ofsets[i], "in", SUCCESS_URL } // status 11
     };
 
-    process_requests_(
-      description + " Part#" + strof(i+1),
-      client,
-      fetch_int("COLO/TZ"),
-      REQUESTS);
+    process_requests_(description + " Part#" + strof(i+1), client, fetch_int("COLO/TZ"), REQUESTS);
   }
 }
 
@@ -253,9 +207,7 @@ void OptOutLoggingTest::process_requests_(
     client.process_request(request);
 
     FAIL_CONTEXT(
-      RedirectChecker(
-        client,
-        requests[i].redirect).check(),
+      RedirectChecker(client, requests[i].redirect).check(),
       description +
       " Redirect check#" + strof(i+1));
   }
@@ -279,15 +231,13 @@ void OptOutLoggingTest::initialize_stats_(
       status(expects[i].status).
       test(test? "Y": "N");
 
-    stat.description(
-      description + " #" + strof(i+1));
+    stat.description(description + " #" + strof(i+1));
 
     stat.select(conn_);
 
     stats_.push_back(stat);
 
-    diffs_.push_back(
-      Diff().count(expects[i].count));
+    diffs_.push_back(Diff().count(expects[i].count));
   }
 }
 

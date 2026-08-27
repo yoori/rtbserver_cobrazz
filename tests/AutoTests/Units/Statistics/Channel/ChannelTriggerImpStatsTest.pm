@@ -12,7 +12,7 @@ sub init_case
   my $keyword_prefix = make_autotest_name($ns, "Keyword-${case_name}");
 
   my $keyword_list = '';
-  for(my $i = 0; $i < 20; ++$i)
+  for (my $i = 0; $i < 20; ++$i)
   {
     $keyword_list .= "$keyword_prefix-$i\n";
   }
@@ -51,7 +51,7 @@ sub init_case
 
   foreach my $chtr_id(@$keyword_channel_triggers)
   {
-    if(exists $match_triggers->{$i})
+    if (exists $match_triggers->{$i})
     {
       $match_channel_trigger_ids .= (length($match_channel_trigger_ids) > 0 ? "," : "") .
         $chtr_id->channel_trigger_id();
@@ -87,7 +87,7 @@ sub channel_types
   my $ns = $namespace->sub_namespace('Types');
 
   my $publisher = $ns->create(
-    Publisher => { 
+    Publisher => {
       name => 'Publisher',
       pricedtag_adjustment => 0.9 } );
 
@@ -96,21 +96,21 @@ sub channel_types
   my @channels = (
      #1
      [ 'DB::BehavioralChannel', ['P'] ],
-     #2 
+     #2
      [ 'DB::BehavioralChannel', ['P'] ],
-     #3 
+     #3
      [ 'DB::BehavioralChannel', ['P'] ],
-     #4  
+     #4
      [ 'DB::BehavioralChannel', ['P'] ],
-     #5 
+     #5
      [ 'DB::BehavioralChannel', ['P', 'R'] ],
-     #6 
+     #6
      [ 'DB::BehavioralChannel', ['S'], 'K' ],
-     #7 
+     #7
      [ 'DB::BehavioralChannel', ['S'], 'K' ],
-     #8 
+     #8
      [ 'DB::BehavioralChannel', ['S'], 'K' ],
-     #9 
+     #9
      [ 'DB::BehavioralChannel', ['R'] ] );
 
   my @chs = ();
@@ -121,7 +121,7 @@ sub channel_types
     my ($type, $types, $channel_type) = @$c;
 
     my $keyword = make_autotest_name($ns, 'kwd' . ++$index);
-    
+
     my @params = map {
       DB::BehavioralChannel::BehavioralParameter->blank(
          time_to => 10*60,
@@ -152,7 +152,7 @@ sub channel_types
    {
      $args{url_kwd_list} = $keyword;
    }
- 
+
     my $channel = $ns->create(
         $type->blank(%args));
 
@@ -166,24 +166,24 @@ sub channel_types
     $ns->output("Keyword/$index", $keyword);
   }
 
-  my $expression1 = 
+  my $expression1 =
     $ns->create(
       DB::ExpressionChannel->blank(
         name => 'Expression1',
         account_id => $advertiser,
-        expression => 
+        expression =>
           $chs[0]->channel_id . "|" .
           $chs[1]->channel_id . "|" .
           $chs[2]->channel_id . "|" .
           $chs[3]->channel_id . "|" .
           $chs[8]->channel_id ));
 
-  my $expression2 = 
+  my $expression2 =
     $ns->create(
       DB::ExpressionChannel->blank(
         name => 'Expression2',
         account_id => $advertiser,
-        expression => 
+        expression =>
           $chs[0]->channel_id . "|" .
           $chs[1]->channel_id ));
 
@@ -196,25 +196,25 @@ sub channel_types
     channel_id => $expression1,
     campaigncreativegroup_cpm => 10,
     site_links => [
-      {site_id => $publisher->{site_id}} ] });  
+      {site_id => $publisher->{site_id}} ] });
 
   $ns->output("CC/Display", $campaign->{cc_id});
-  
+
   my $text_campaign = $ns->create(
-    TextAdvertisingCampaign => { 
+    TextAdvertisingCampaign => {
       name => "TextCampaign",
       size_id => DB::Defaults::instance()->size(),
       creative_size_type_id => DB::Defaults::instance()->other_size_type,
       template_id => DB::Defaults::instance()->text_template,
       campaigncreativegroup_ctr => 0.01,
       ccg_keyword_id => undef,
-      site_links => [ {site_id => $publisher->{site_id} }] 
+      site_links => [ {site_id => $publisher->{site_id} }]
 });
 
   $ns->create(CCGKeyword => {
     name => "TextKWD-1",
     ccg_id => $text_campaign->{ccg_id},
-    original_keyword => 
+    original_keyword =>
       $chs[5]->search_channel_triggers()->[0]->{original_trigger},
     max_cpc_bid => undef,
     channel_id => $chs[5] });
@@ -223,7 +223,7 @@ sub channel_types
   $ns->create(CCGKeyword => {
     name => "TextKWD-2",
     ccg_id => $text_campaign->{ccg_id},
-    original_keyword => 
+    original_keyword =>
        $chs[6]->search_channel_triggers()->[0]->{original_trigger},
     max_cpc_bid => undef,
     channel_id => $chs[6] });
@@ -231,7 +231,7 @@ sub channel_types
   $ns->create(CCGKeyword => {
     name => "TextKWD-3",
     ccg_id => $text_campaign->{ccg_id},
-    original_keyword => 
+    original_keyword =>
       $chs[7]->search_channel_triggers()->[0]->{original_trigger},
     max_cpc_bid => undef,
     channel_id => $chs[7] });

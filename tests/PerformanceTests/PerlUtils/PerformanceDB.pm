@@ -15,8 +15,8 @@
 package PerformanceDB::Database;
 
 use constant {
-TAGS_ALL => 0, 
-TAGS_FREE => 1, 
+TAGS_ALL => 0,
+TAGS_FREE => 1,
 TAGS_USED => 2,
 REFS_ALL => 0,
 REFS_DISCOVER => 1,
@@ -56,7 +56,7 @@ sub new {
                                     "$namespace_name-$user_name");
     $self->{_namespace} = $self->{_db}->namespace($test_name);
     $self->{_test_name}                 = $test_name;
-    $self->{_bhv_channel_idx}           = 0; 
+    $self->{_bhv_channel_idx}           = 0;
     $self->{_channel_idx}               = 0;
     $self->{_campaign_idx}              = 0;
     $self->{_set_channel_idx}           = 0;
@@ -82,7 +82,7 @@ sub new {
 sub live_display_status {
     my $self = shift;
     my ($object_type_name) = @_;
-    my $ns = $self->{_namespace};  
+    my $ns = $self->{_namespace};
     my $stmt = $ns->pq_dbh->prepare_cached(q[
                                           SELECT display_status_id
                                           FROM DisplayStatus
@@ -91,11 +91,11 @@ sub live_display_status {
                                                                   WHERE name = ?)
                                           AND disp_status = 'L'
                                           ]);
-    
+
     $stmt->execute($object_type_name);
     my ($display_status_id) = $stmt->fetchrow_array();
     $stmt->finish;
-    
+
     return $display_status_id;
 }
 
@@ -105,13 +105,13 @@ sub init_namespace {
   my $database = $self->{_db};
   my $ns = $self->{_namespace};
   my $test_name = $self->{_test_name};
-  
+
   # Namespace defaults
   DB::Defaults::instance()->initialize($database);
 
   $self->{_default_size} = DB::Defaults::instance()->size;
 
-  $self->{_acc_id} = $ns->create(Advertiser => { 
+  $self->{_acc_id} = $ns->create(Advertiser => {
     name => "$test_name-01"} );
 }
 
@@ -120,7 +120,7 @@ sub allow_html_format
   my $self = shift;
   my $ns = $self->{_namespace};
 
-  my $format = 
+  my $format =
     $ns->create(DB::AppFormat->blank(
       name => 'html',
       mime_type => 'text/html'));
@@ -148,7 +148,7 @@ sub get_channel_account
   my $ns = $self->{_namespace};
   my $account_idx = int(@{$self->{_channels}} / CHANNELS_PER_ACCOUNT);
 
-  return $ns->create(Account => { 
+  return $ns->create(Account => {
     name => "$test_name-Channel-" . $account_idx,
     role_id => DB::Defaults::instance()->advertiser_role });
 
@@ -174,8 +174,8 @@ sub create_channels {
     else
     {
       $keyword = RandWords::rand_keyword($self->{_test_name});
-    }   
-    
+    }
+
     if ( $channel_type eq 'D' )
     {
       my $query_ind        = $i % scalar @$queries;
@@ -185,7 +185,7 @@ sub create_channels {
         name => "$test_name-$idx",
         account_id => $self->get_channel_account(),
         keyword_list => $keyword,
-        url_list => $url, 
+        url_list => $url,
         discover_query => $discover_query,
         discover_annotation => $discover_annotation,
         behavioral_parameters => [
@@ -203,7 +203,7 @@ sub create_channels {
         name => "$test_name-$idx",
         account_id => $self->get_channel_account(),
         keyword_list => $keyword,
-        url_list => $url, 
+        url_list => $url,
         behavioral_parameters => [
           DB::BehavioralChannel::BehavioralParameter->blank(
             trigger_type => $trigger_type,
@@ -224,7 +224,7 @@ sub create_ft_channels {
   my $test_name  = $self->{_test_name};
   use POSIX qw(ceil);
   my $channels_count = ceil(($size * $percentage) / 100);
-  for(my $i=0; $i < $channels_count; $i++)
+  for (my $i=0; $i < $channels_count; $i++)
   {
     my $phrase = @$ft_phrases[int(rand(scalar(@$ft_phrases)))];
     $self->create(DB::BehavioralChannel->blank(
@@ -284,7 +284,7 @@ sub create_campaigns {
 sub create_ron_campaign {
   my $self = shift;
   my ($tags_count, $site_id) = @_;
-  my $campaign = new PerformanceDB::Campaign($self, "RON-".(++($self->{_ron_index})),  
+  my $campaign = new PerformanceDB::Campaign($self, "RON-".(++($self->{_ron_index})),
                                              CampaignConfig::CampaignFlags::RONFlag |
                                              CampaignConfig::CampaignFlags::CampaignSpecificSitesFlag);
   $campaign->create(undef, $tags_count, $site_id);
@@ -315,9 +315,9 @@ sub rtb_publisher {
 sub store_tid {
   my $self = shift;
   my ($tag_id, $free) = @_;
-  if ($free) 
+  if ($free)
   {
-    push(@{$self->{_free_tids}}, $tag_id);    
+    push(@{$self->{_free_tids}}, $tag_id);
   }
   else
   {
@@ -332,7 +332,7 @@ sub create {
    {
     if (!PerformanceDB::EntityChecker::check($self->{_namespace}, $class, $args->{'name'}))
      {
-       $self->{_namespace}->pq_dbh->rollback;        
+       $self->{_namespace}->pq_dbh->rollback;
        my $class = "DB::$class";
        my $table = $class;
        unless (!$class->_table) {$table = $class->_table; }
@@ -365,7 +365,8 @@ sub tids {
   $tags_type = TAGS_ALL unless defined $tags_type;
   if ($tags_type == TAGS_FREE) {
     return $self->{_free_tids};
-  }    
+  }
+
   if ($tags_type == TAGS_USED) {
     return $self->{_tids};
   }
@@ -378,7 +379,8 @@ sub keywords {
   $ref_type = REFS_ALL unless defined $ref_type;
   if ($ref_type == REFS_ADVERTISING) {
     return $self->{_keywords};
-  }    
+  }
+
   if ($ref_type == REFS_DISCOVER) {
     return $self->{_discover_keywords};
   }
@@ -391,7 +393,8 @@ sub urls {
   $ref_type = REFS_ALL unless defined $ref_type;
   if ($ref_type == REFS_ADVERTISING) {
     return $self->{_urls};
-  }    
+  }
+
   if ($ref_type == REFS_DISCOVER) {
     return $self->{_discover_urls};
   }

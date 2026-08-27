@@ -81,8 +81,7 @@ namespace AutoTest
   public:
     DECLARE_EXCEPTION(TimeLessCheckFailed, CheckFailed);
 
-    TimeLessChecker(
-      const Generics::Time& now_less_then) noexcept;
+    TimeLessChecker(const Generics::Time& now_less_then) noexcept;
 
     virtual ~TimeLessChecker() noexcept;
 
@@ -100,9 +99,7 @@ namespace AutoTest
   class DBRecordChecker : public Checker
   {
   public:
-    DBRecordChecker(
-      DBFetcher& table,
-      bool exists);
+    DBRecordChecker(DBFetcher& table, bool exists);
 
     virtual ~DBRecordChecker() noexcept;
 
@@ -126,10 +123,7 @@ namespace AutoTest
 
   template<typename ArgType>
   EqualChecker<std::string, ArgType>
-  equal_checker(
-    const char* exp_value,
-    const ArgType& got_value,
-    CheckerType check_type = CT_EQUAL);
+  equal_checker(const char* exp_value, const ArgType& got_value, CheckerType check_type = CT_EQUAL);
 
   template<typename FirstSequenceType, typename SecondSequenceType>
   SequenceChecker<FirstSequenceType, SecondSequenceType>

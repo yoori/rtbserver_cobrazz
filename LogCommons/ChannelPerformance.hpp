@@ -13,317 +13,308 @@
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <Commons/StringHolder.hpp>
 
-namespace AdServer {
-namespace LogProcessing {
-
-class ChannelPerformanceInnerKey
+namespace AdServer::LogProcessing
 {
-public:
-  ChannelPerformanceInnerKey()
-  :
-    channel_id_(),
-    ccg_id_(),
-    tag_size_(),
-    hash_()
-  {
-  }
 
-  ChannelPerformanceInnerKey(
-    std::uint32_t channel_id,
-    std::uint32_t ccg_id,
-    const Commons::ImmutableString& tag_size
-  )
-  :
-    channel_id_(channel_id),
-    ccg_id_(ccg_id),
-    tag_size_(tag_size),
-    hash_()
+  class ChannelPerformanceInnerKey
   {
-    calc_hash_();
-  }
-
-  bool operator==(const ChannelPerformanceInnerKey& rhs) const
-  {
-    if (&rhs == this)
+  public:
+    ChannelPerformanceInnerKey()
+    :
+      channel_id_(),
+      ccg_id_(),
+      tag_size_(),
+      hash_()
     {
-      return true;
     }
-    return channel_id_ == rhs.channel_id_ &&
-      ccg_id_ == rhs.ccg_id_ &&
-      tag_size_ == rhs.tag_size_;
-  }
 
-  std::uint32_t channel_id() const
-  {
-    return channel_id_;
-  }
-
-  std::uint32_t ccg_id() const
-  {
-    return ccg_id_;
-  }
-
-  const std::string& tag_size() const
-  {
-    return tag_size_.str();
-  }
-
-  size_t hash() const
-  {
-    return hash_;
-  }
-
-  friend FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ChannelPerformanceInnerKey& key);
-
-  friend std::istream&
-  operator>>(std::istream& is, ChannelPerformanceInnerKey& key);
-
-  friend std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceInnerKey& key);
-
-private:
-  void calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    hash_add(hasher, channel_id_);
-    hash_add(hasher, ccg_id_);
-    hash_add(hasher, tag_size_.str());
-  }
-
-  std::uint32_t channel_id_;
-  std::uint32_t ccg_id_;
-  Commons::ImmutableString tag_size_;
-  size_t hash_;
-};
-
-class ChannelPerformanceInnerData
-{
-public:
-  typedef AdServer::LogProcessing::FixedNumber FixedNum;
-
-  ChannelPerformanceInnerData()
-  :
-    requests_(),
-    imps_(),
-    clicks_(),
-    actions_(),
-    revenue_(FixedNum::ZERO)
-  {
-  }
-
-  ChannelPerformanceInnerData(
-    long requests,
-    long imps,
-    long clicks,
-    long actions,
-    const FixedNum& revenue
-  )
-  :
-    requests_(requests),
-    imps_(imps),
-    clicks_(clicks),
-    actions_(actions),
-    revenue_(revenue)
-  {
-  }
-
-  bool operator==(const ChannelPerformanceInnerData& rhs) const
-  {
-    if (&rhs == this)
+    ChannelPerformanceInnerKey(
+      std::uint32_t channel_id,
+      std::uint32_t ccg_id,
+      const Commons::ImmutableString& tag_size
+    )
+    :
+      channel_id_(channel_id),
+      ccg_id_(ccg_id),
+      tag_size_(tag_size),
+      hash_()
     {
-      return true;
+      calc_hash_();
     }
-    return requests_ == rhs.requests_ &&
-      imps_ == rhs.imps_ &&
-      clicks_ == rhs.clicks_ &&
-      actions_ == rhs.actions_ &&
-      revenue_ == rhs.revenue_;
-  }
 
-  ChannelPerformanceInnerData&
-  operator+=(const ChannelPerformanceInnerData& rhs)
-  {
-    requests_ += rhs.requests_;
-    imps_ += rhs.imps_;
-    clicks_ += rhs.clicks_;
-    actions_ += rhs.actions_;
-    revenue_ += rhs.revenue_;
-    return *this;
-  }
+    bool operator==(const ChannelPerformanceInnerKey& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return channel_id_ == rhs.channel_id_ && ccg_id_ == rhs.ccg_id_ && tag_size_ == rhs.tag_size_;
+    }
 
-  long requests() const
-  {
-    return requests_;
-  }
+    std::uint32_t channel_id() const
+    {
+      return channel_id_;
+    }
 
-  long imps() const
-  {
-    return imps_;
-  }
+    std::uint32_t ccg_id() const
+    {
+      return ccg_id_;
+    }
 
-  long clicks() const
-  {
-    return clicks_;
-  }
+    const std::string& tag_size() const
+    {
+      return tag_size_.str();
+    }
 
-  long actions() const
-  {
-    return actions_;
-  }
+    size_t hash() const
+    {
+      return hash_;
+    }
 
-  const FixedNum& revenue() const
-  {
-    return revenue_;
-  }
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ChannelPerformanceInnerKey& key);
 
-  friend FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is,
-    ChannelPerformanceInnerData& data);
+    friend std::istream&
+    operator>>(std::istream& is, ChannelPerformanceInnerKey& key);
 
-  friend std::istream&
-  operator>>(std::istream& is, ChannelPerformanceInnerData& data);
+    friend std::ostream&
+    operator<<(std::ostream& os, const ChannelPerformanceInnerKey& key);
 
-  friend std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceInnerData& data);
+  private:
+    void calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      hash_add(hasher, channel_id_);
+      hash_add(hasher, ccg_id_);
+      hash_add(hasher, tag_size_.str());
+    }
 
-public:
-  //
-  // Mediators
-  //
-
-  /*
-   * StatRequestOne
-   */
-  struct StatRequestOne
-  {
-    long requests;
-
-    StatRequestOne(long requests_val)
-      : requests(requests_val)
-    {}
+    std::uint32_t channel_id_;
+    std::uint32_t ccg_id_;
+    Commons::ImmutableString tag_size_;
+    size_t hash_;
   };
 
-
-  explicit
-  ChannelPerformanceInnerData(const StatRequestOne& rhs)
-  :
-    requests_(rhs.requests),
-    imps_(),
-    clicks_(),
-    actions_(),
-    revenue_(FixedNum::ZERO)
+  class ChannelPerformanceInnerData
   {
-  }
+  public:
+    typedef AdServer::LogProcessing::FixedNumber FixedNum;
 
-  ChannelPerformanceInnerData&
-  operator+= (const StatRequestOne& rhs)
-  {
-    requests_ += rhs.requests;
-    return *this;
-  }
-
-private:
-  void invariant() const /*throw(eh::Exception)*/
-  {
-    if (revenue_ < FixedNum::ZERO)
+    ChannelPerformanceInnerData()
+    :
+      requests_(),
+      imps_(),
+      clicks_(),
+      actions_(),
+      revenue_(FixedNum::ZERO)
     {
-      throw ConstraintViolation("ChannelPerformanceInnerData::invariant(): "
-        "revenue_ must be >= 0");
     }
-  }
 
-  long requests_;
-  long imps_;
-  long clicks_;
-  long actions_;
-  FixedNum revenue_;
-};
-
-struct ChannelPerformanceKey
-{
-  ChannelPerformanceKey(): sdate_(), colo_id_(), hash_() {}
-
-  ChannelPerformanceKey(
-    const DayHourTimestamp& sdate,
-    std::uint32_t colo_id
-  )
-  :
-    sdate_(sdate),
-    colo_id_(colo_id),
-    hash_()
-  {
-    calc_hash_();
-  }
-
-  bool operator==(const ChannelPerformanceKey& rhs) const
-  {
-    if (&rhs == this)
+    ChannelPerformanceInnerData(
+      long requests,
+      long imps,
+      long clicks,
+      long actions,
+      const FixedNum& revenue
+    )
+    :
+      requests_(requests),
+      imps_(imps),
+      clicks_(clicks),
+      actions_(actions),
+      revenue_(revenue)
     {
-      return true;
     }
-    return sdate_ == rhs.sdate_ && colo_id_ == rhs.colo_id_;
-  }
 
-  const DayHourTimestamp& sdate() const
+    bool operator==(const ChannelPerformanceInnerData& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return requests_ == rhs.requests_ &&
+        imps_ == rhs.imps_ &&
+        clicks_ == rhs.clicks_ && actions_ == rhs.actions_ && revenue_ == rhs.revenue_;
+    }
+
+    ChannelPerformanceInnerData&
+    operator+=(const ChannelPerformanceInnerData& rhs)
+    {
+      requests_ += rhs.requests_;
+      imps_ += rhs.imps_;
+      clicks_ += rhs.clicks_;
+      actions_ += rhs.actions_;
+      revenue_ += rhs.revenue_;
+      return *this;
+    }
+
+    long requests() const
+    {
+      return requests_;
+    }
+
+    long imps() const
+    {
+      return imps_;
+    }
+
+    long clicks() const
+    {
+      return clicks_;
+    }
+
+    long actions() const
+    {
+      return actions_;
+    }
+
+    const FixedNum& revenue() const
+    {
+      return revenue_;
+    }
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ChannelPerformanceInnerData& data);
+
+    friend std::istream&
+    operator>>(std::istream& is, ChannelPerformanceInnerData& data);
+
+    friend std::ostream&
+    operator<<(std::ostream& os, const ChannelPerformanceInnerData& data);
+
+  public:
+    //
+    // Mediators
+    //
+
+    /*
+     * StatRequestOne
+     */
+    struct StatRequestOne
+    {
+      long requests;
+
+      StatRequestOne(long requests_val)
+        : requests(requests_val)
+      {}
+    };
+
+
+    explicit
+    ChannelPerformanceInnerData(const StatRequestOne& rhs)
+    :
+      requests_(rhs.requests),
+      imps_(),
+      clicks_(),
+      actions_(),
+      revenue_(FixedNum::ZERO)
+    {
+    }
+
+    ChannelPerformanceInnerData&
+    operator+= (const StatRequestOne& rhs)
+    {
+      requests_ += rhs.requests;
+      return *this;
+    }
+
+  private:
+    void invariant() const /*throw(eh::Exception)*/
+    {
+      if (revenue_ < FixedNum::ZERO)
+      {
+        throw ConstraintViolation("ChannelPerformanceInnerData::invariant(): "
+          "revenue_ must be >= 0");
+      }
+    }
+
+    long requests_;
+    long imps_;
+    long clicks_;
+    long actions_;
+    FixedNum revenue_;
+  };
+
+  struct ChannelPerformanceKey
   {
-    return sdate_;
-  }
+    ChannelPerformanceKey(): sdate_(), colo_id_(), hash_() {}
 
-  std::uint32_t colo_id() const
-  {
-    return colo_id_;
-  }
+    ChannelPerformanceKey(const DayHourTimestamp& sdate, std::uint32_t colo_id)
+    :
+      sdate_(sdate),
+      colo_id_(colo_id),
+      hash_()
+    {
+      calc_hash_();
+    }
 
-  size_t hash() const
-  {
-    return hash_;
-  }
+    bool operator==(const ChannelPerformanceKey& rhs) const
+    {
+      if (&rhs == this)
+      {
+        return true;
+      }
+      return sdate_ == rhs.sdate_ && colo_id_ == rhs.colo_id_;
+    }
 
-  friend FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ChannelPerformanceKey& key);
+    const DayHourTimestamp& sdate() const
+    {
+      return sdate_;
+    }
 
-  friend std::istream&
-  operator>>(std::istream& is, ChannelPerformanceKey& key);
+    std::uint32_t colo_id() const
+    {
+      return colo_id_;
+    }
 
-  friend std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceKey& key)
-    /*throw(eh::Exception)*/;
+    size_t hash() const
+    {
+      return hash_;
+    }
 
-private:
-  void calc_hash_()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    sdate_.hash_add(hasher);
-    hash_add(hasher, colo_id_);
-  }
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ChannelPerformanceKey& key);
 
-  DayHourTimestamp sdate_;
-  std::uint32_t colo_id_;
-  size_t hash_;
-};
+    friend std::istream&
+    operator>>(std::istream& is, ChannelPerformanceKey& key);
 
-typedef StatCollector<
-          ChannelPerformanceInnerKey,
-          ChannelPerformanceInnerData,
-          false,
-          true, // Use FixedBufStream
-          true,
-          false
-        > ChannelPerformanceInnerCollector;
+    friend std::ostream&
+    operator<<(std::ostream& os, const ChannelPerformanceKey& key)
+      /*throw(eh::Exception)*/;
 
-typedef ChannelPerformanceInnerCollector ChannelPerformanceData;
+  private:
+    void calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      sdate_.hash_add(hasher);
+      hash_add(hasher, colo_id_);
+    }
 
-typedef StatCollector<
-          ChannelPerformanceKey,
-          ChannelPerformanceData,
-          false,
-          false, // Don't use FixedBufStream
-          true,
-          false
-        > ChannelPerformanceCollector;
+    DayHourTimestamp sdate_;
+    std::uint32_t colo_id_;
+    size_t hash_;
+  };
 
-typedef LogDefaultTraits<ChannelPerformanceCollector> ChannelPerformanceTraits;
+  typedef StatCollector<
+            ChannelPerformanceInnerKey,
+            ChannelPerformanceInnerData,
+            false,
+            true, // Use FixedBufStream
+            true,
+            false
+          > ChannelPerformanceInnerCollector;
 
-} // namespace LogProcessing
-} // namespace AdServer
+  typedef ChannelPerformanceInnerCollector ChannelPerformanceData;
+
+  typedef StatCollector<
+            ChannelPerformanceKey,
+            ChannelPerformanceData,
+            false,
+            false, // Don't use FixedBufStream
+            true,
+            false
+          > ChannelPerformanceCollector;
+
+  typedef LogDefaultTraits<ChannelPerformanceCollector> ChannelPerformanceTraits;
+
+} // namespace AdServer::LogProcessing

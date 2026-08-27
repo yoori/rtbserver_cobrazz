@@ -1,9 +1,7 @@
 
 #include "ISPColocationTargeting.hpp"
 
-REFLECT_UNIT(ISPColocationTargeting) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(ISPColocationTargeting) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -29,13 +27,11 @@ ISPColocationTargeting::process_case(
 
     NSLookupRequest request;
 
-    request.referer_kw =
-      map_objects(testcases[i].referer_kw);
+    request.referer_kw = map_objects(testcases[i].referer_kw);
     request.tid = fetch_int("TAG");
     if (testcases[i].colo)
     {
-      request.colo =
-        fetch_int(testcases[i].colo);
+      request.colo = fetch_int(testcases[i].colo);
     }
 
     client.process_request(request);
@@ -52,9 +48,7 @@ ISPColocationTargeting::process_case(
     else
     {
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          0,
-          client.debug_info.history_channels.size()).check(),
+        AutoTest::equal_checker(0, client.debug_info.history_channels.size()).check(),
         description +
           " Check history#" + strof(i+1));
     }
@@ -63,15 +57,11 @@ ISPColocationTargeting::process_case(
 
     if (testcases[i].expected_ccs)
     {
-      fetch_objects(
-        std::inserter(exp_ccids, exp_ccids.begin()),
-        testcases[i].expected_ccs);
+      fetch_objects(std::inserter(exp_ccids, exp_ccids.begin()), testcases[i].expected_ccs);
     }
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       description +  " Check CCs#"  + strof(i+1));
   }
 }

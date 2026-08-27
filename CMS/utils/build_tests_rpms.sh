@@ -10,7 +10,7 @@ function print_usage()
   echo -e "                           If \033[4mversion\033[0m equal to 'wcopy' uses version of working copy.\n"
   echo -e "  -c, --cert \033[4mcert\033[0m          Use client certificate \033[4mcert\033[0m for CMS authentication."
   echo -e "                           By default script asks your CMS login and password.\n"
-  echo -e "  -l, --login \033[4mlogin\033[0m        Use this \033[4mlogin\033[0m for CMS authentication." 
+  echo -e "  -l, --login \033[4mlogin\033[0m        Use this \033[4mlogin\033[0m for CMS authentication."
   echo -e "  -r, --remove \033[4mrem\033[0m         If \033[4mrem\033[0m equal to 1 script removes all colo configs having magor version"
   echo -e "                           same as new colo config version and minor vaersion less than new colo config minor vesion "
   echo -e "                           after deploing new colo config. By default \033[4mrem\033[0m equal to 1."
@@ -149,7 +149,7 @@ echo "Archiving plugin..."
 cd $plugin_root && zip -qr $plugin_root/AdServer-$plugin_version.zip * -x *svn*
 if [ $? -ne 0 ]
 then
-  echo -e "\033[31mERROR: build_tests_rpms.sh: failed to archive plugin!\033[0m" 
+  echo -e "\033[31mERROR: build_tests_rpms.sh: failed to archive plugin!\033[0m"
   rm -rf $cms_root/temp-AdServer-$branch_version.$TIMESTAMP
   exit 1
 fi

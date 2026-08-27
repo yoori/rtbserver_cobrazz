@@ -1,8 +1,6 @@
 #include "AverageUsersCost.hpp"
 
-REFLECT_UNIT(AverageUsersCost) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(AverageUsersCost) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -51,12 +49,9 @@ namespace
 }
 
 void
-AverageUsersCost::log_profile(
-  std::string uid)
+AverageUsersCost::log_profile(std::string uid)
 {
-  if (
-    get_config().check_service(
-      CTE_ALL, STE_EXPRESSION_MATCHER))
+  if (get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER))
   {
     AutoTest::AdminsArray<AutoTest::InventoryProfileAdmin>
       admins;
@@ -124,30 +119,26 @@ AverageUsersCost::test_case(
     AutoTest::ConsequenceActionArray consequence_actions;
     if (requests[i].actions & UA_TRACK)
     {
-      consequence_actions.push_back(
-        AutoTest::ConsequenceAction(
-          AutoTest::TRACK, today_));
+      consequence_actions.push_back(AutoTest::ConsequenceAction(AutoTest::TRACK, today_));
       if (exp_ccid.size() < 2) {
         d_imps++; }
       else {
         t_imps += exp_ccid.size(); };
     }
+
     if (requests[i].actions & UA_CLICK)
     {
-      consequence_actions.push_back(
-        AutoTest::ConsequenceAction(
-          AutoTest::CLICK, today_));
+      consequence_actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, today_));
       if (exp_ccid.size() < 2) {
         d_clicks++; }
       else {
         t_clicks += exp_ccid.size(); };
     }
+
     if (requests[i].actions & UA_ACTION)
     {
       d_actions += exp_ccid.size();
-      consequence_actions.push_back(
-        AutoTest::ConsequenceAction(
-          AutoTest::ACTION, today_));
+      consequence_actions.push_back(AutoTest::ConsequenceAction(AutoTest::ACTION, today_));
     }
 
     // if expected more than one creative then this creatives are text and
@@ -158,10 +149,7 @@ AverageUsersCost::test_case(
       // sum_ecpm must depend on requsts count, not imps.
       // But in case of text ad it depends on imps count
       additional_reqs += exp_ccid.size() - 1;
-      client.process_request(
-        NSLookupRequest().
-          referer_kw(request_keyword_).
-           debug_time(today_));
+      client.process_request(NSLookupRequest(). referer_kw(request_keyword_). debug_time(today_));
     }
 
     client.process_request(
@@ -176,10 +164,7 @@ AverageUsersCost::test_case(
       uid = "\\" + client.debug_info.uid.value();
     }
 
-    FAIL_CONTEXT(
-      client.do_ad_requests(
-        exp_ccid,
-        consequence_actions));
+    FAIL_CONTEXT(client.do_ad_requests(exp_ccid, consequence_actions));
 
     if (requests[i].revenue && strlen(requests[i].revenue))
     {
@@ -218,9 +203,7 @@ AverageUsersCost::test_case(
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)).check(),
     description +
       "ChannelPerformance check");
 
@@ -228,13 +211,10 @@ AverageUsersCost::test_case(
 
   uids_.push_back(uid);
 
-  client.process_request(
-    NSLookupRequest().referer_kw(test_keyword).debug_time(today_));
+  client.process_request(NSLookupRequest().referer_kw(test_keyword).debug_time(today_));
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      strof(test_channel) + "P",
-      client.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(strof(test_channel) + "P", client.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
 
   return (d_revenue + t_revenue) * 1000 / (RequestsCount + additional_reqs);
@@ -255,16 +235,11 @@ AverageUsersCost::run_test()
   unsigned long test_channel5 = fetch_int("TEST5/CHANNEL");
 
   ORM::StatsArray<ORM::ChannelInventoryStats, 5> stats;
-  stats[0].key(ORM::ChannelInventoryStats::Key().
-    channel_id(test_channel1).sdate(today_));
-  stats[1].key(ORM::ChannelInventoryStats::Key().
-    channel_id(test_channel2).sdate(today_));
-  stats[2].key(ORM::ChannelInventoryStats::Key().
-    channel_id(test_channel3).sdate(today_));
-  stats[3].key(ORM::ChannelInventoryStats::Key().
-    channel_id(test_channel4).sdate(today_));
-  stats[4].key(ORM::ChannelInventoryStats::Key().
-    channel_id(test_channel5).sdate(today_));
+  stats[0].key(ORM::ChannelInventoryStats::Key(). channel_id(test_channel1).sdate(today_));
+  stats[1].key(ORM::ChannelInventoryStats::Key(). channel_id(test_channel2).sdate(today_));
+  stats[2].key(ORM::ChannelInventoryStats::Key(). channel_id(test_channel3).sdate(today_));
+  stats[3].key(ORM::ChannelInventoryStats::Key(). channel_id(test_channel4).sdate(today_));
+  stats[4].key(ORM::ChannelInventoryStats::Key(). channel_id(test_channel5).sdate(today_));
   stats.select(pq_conn_);
 
   typedef ORM::ChannelInventoryStats::Diffs Diffs;
@@ -324,8 +299,7 @@ AverageUsersCost::run_test()
   try
   {
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(pq_conn_, diffs, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats)).check(),
       "ChannelInventory users stats check");
   }
   catch (const eh::Exception&)
@@ -333,9 +307,7 @@ AverageUsersCost::run_test()
     std::for_each(
       uids_.begin(),
       uids_.end(),
-      std::bind1st(
-        std::mem_fun(
-          &AverageUsersCost::log_profile), this));
+      std::bind1st(std::mem_fun(&AverageUsersCost::log_profile), this));
     throw;
   }
 

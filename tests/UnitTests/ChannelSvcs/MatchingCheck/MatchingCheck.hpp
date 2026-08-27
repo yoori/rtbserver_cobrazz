@@ -2,9 +2,7 @@
 
 #include<tests/UnitTests/ChannelSvcs/Commons/ChannelServerTestCommons.hpp>
 
-namespace AdServer
-{
-namespace UnitTests
+namespace AdServer::UnitTests
 {
   class MatchingCheckTest: public TestTemplate
   {
@@ -23,5 +21,4 @@ namespace UnitTests
 
     void reset_staitstic_() /*throw(eh::Exception)*/;
   };
-}
 }

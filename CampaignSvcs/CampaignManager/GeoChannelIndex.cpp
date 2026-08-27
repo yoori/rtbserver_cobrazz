@@ -8,9 +8,7 @@
 
 #include "GeoChannelIndex.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace bg = boost::geometry;
   namespace bgi = boost::geometry::index;
@@ -83,10 +81,7 @@ namespace CampaignSvcs
       public std::iterator<std::output_iterator_tag, void, void, void, void>
     {
     public:
-      MatchCollector(
-        ChannelIdSet& result_channels,
-        const GeoPoint& point,
-        double accuracy)
+      MatchCollector(ChannelIdSet& result_channels, const GeoPoint& point, double accuracy)
         : result_channels_(result_channels),
           point_(point),
           accuracy_(accuracy)
@@ -113,10 +108,7 @@ namespace CampaignSvcs
       operator=(const ValuePair& value)
       {
         // final check of point
-        if (CoordIndexImpl::channel_check_(
-             value,
-             point_,
-             accuracy_))
+        if (CoordIndexImpl::channel_check_(value, point_, accuracy_))
         {
           std::copy(
             value.second.value->channels.begin(),
@@ -135,10 +127,7 @@ namespace CampaignSvcs
 
   protected:
     static bool
-    channel_check_(
-      const ValuePair& value_pair,
-      const GeoPoint& point,
-      double accuracy)
+    channel_check_(const ValuePair& value_pair, const GeoPoint& point, double accuracy)
       noexcept;
 
     static GeoCoordChannelIndex::CoordIndexImpl::GeoBox
@@ -176,13 +165,10 @@ namespace CampaignSvcs
 
   const AccuracyDecimal
   GeoCoordChannelIndex::CoordIndexImpl::EARTH_M_TO_ANGLE_MULTIPLYER =
-    AccuracyDecimal::div(
-      ANGLE_MULTIPLYER, EARTH_RADIUS_M, Generics::DDR_CEIL);
+    AccuracyDecimal::div(ANGLE_MULTIPLYER, EARTH_RADIUS_M, Generics::DDR_CEIL);
 
   void
-  GeoCoordChannelIndex::CoordIndexImpl::add(
-    const Key& key,
-    Value* value)
+  GeoCoordChannelIndex::CoordIndexImpl::add(const Key& key, Value* value)
     noexcept
   {
     // fill covering box, convert accuracy to angle
@@ -207,10 +193,7 @@ namespace CampaignSvcs
     GeoBox cover_box = cover_box_(longitude, latitude, accuracy);
     geo_map_.query(
       bgi::intersects(cover_box),
-      MatchCollector(
-        result_channels,
-        point,
-        coord_to_double_(accuracy)));
+      MatchCollector(result_channels, point, coord_to_double_(accuracy)));
   }
 
   GeoCoordChannelIndex::CoordIndexImpl::GeoBox
@@ -226,17 +209,14 @@ namespace CampaignSvcs
       Generics::DDR_CEIL);
 
     return GeoBox(
-      GeoPoint(
-        coord_to_double_(longitude - angle_delta),
-        coord_to_double_(latitude - angle_delta)),
+      GeoPoint(coord_to_double_(longitude - angle_delta), coord_to_double_(latitude - angle_delta)),
       GeoPoint(
         coord_to_double_(longitude + angle_delta),
         coord_to_double_(latitude + angle_delta)));
   }
 
   double
-  GeoCoordChannelIndex::CoordIndexImpl::coord_to_double_(
-    const CoordDecimal& coord)
+  GeoCoordChannelIndex::CoordIndexImpl::coord_to_double_(const CoordDecimal& coord)
     noexcept
   {
     double res = coord.floating<double>();
@@ -250,8 +230,7 @@ namespace CampaignSvcs
     double accuracy)
     noexcept
   {
-    double distance = boost::geometry::distance(
-      value_pair.second.point, point) *
+    double distance = boost::geometry::distance(value_pair.second.point, point) *
       EARTH_RADIUS_M_DOUBLE;
     double distance_sqr = distance * distance;
 
@@ -313,21 +292,13 @@ namespace CampaignSvcs
     for (const auto& channel : init.channels_)
     {
       const std::string_view country = resolve_name_(
-        String::SubString(
-          channel.first.country().data(),
-          channel.first.country().size()));
+        String::SubString(channel.first.country().data(), channel.first.country().size()));
       const std::string_view region = resolve_name_(
-        String::SubString(
-          channel.first.region().data(),
-          channel.first.region().size()));
+        String::SubString(channel.first.region().data(), channel.first.region().size()));
       const std::string_view city = resolve_name_(
-        String::SubString(
-          channel.first.city().data(),
-          channel.first.city().size()));
+        String::SubString(channel.first.city().data(), channel.first.city().size()));
 
-      channels_.emplace(
-        Key(country, region, city),
-        channel.second);
+      channels_.emplace(Key(country, region, city), channel.second);
     }
   }
 
@@ -343,9 +314,7 @@ namespace CampaignSvcs
   {}
 
   void
-  GeoCoordChannelIndex::add(
-    const Key& key,
-    unsigned long channel_id)
+  GeoCoordChannelIndex::add(const Key& key, unsigned long channel_id)
     noexcept
   {
     channel_ids_.insert(channel_id);
@@ -372,8 +341,6 @@ namespace CampaignSvcs
     const AccuracyDecimal& accuracy) const
     noexcept
   {
-    coord_index_impl_->match(
-      result_channels, longitude, latitude, accuracy);
+    coord_index_impl_->match(result_channels, longitude, latitude, accuracy);
   }
-}
 }

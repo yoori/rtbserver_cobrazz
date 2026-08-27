@@ -14,7 +14,7 @@ sub new
 
   my $fields = {};
 
-  if($params{'field'} eq '*')
+  if ($params{'field'} eq '*')
   {
     $fields->{field_} = undef;
   }
@@ -24,7 +24,7 @@ sub new
     my @res_indexes;
     foreach my $index(@indexes)
     {
-      if(looks_like_number($index))
+      if (looks_like_number($index))
       {
         push(@res_indexes, $index - 1);
       }
@@ -48,17 +48,17 @@ sub process
 
   my $row = [ @$row_param ];
 
-  if(defined($self->{field_}))
+  if (defined($self->{field_}))
   {
     foreach my $field_index(@{$self->{field_}})
     {
       my $value = $row->[$field_index];
 
-      if((ref($value) eq 'ARRAY') && scalar(@$value) > 0)
+      if ((ref($value) eq 'ARRAY') && scalar(@$value) > 0)
       {
         my @r;
 
-        if(defined($self->{numeric_}) && $self->{numeric_} > 0)
+        if (defined($self->{numeric_}) && $self->{numeric_} > 0)
         {
           @r = sort {$a <=> $b} (@$value);
         }
@@ -73,15 +73,15 @@ sub process
   }
   else
   {
-    for(my $field_index = 0; $field_index < scalar(@$row); ++$field_index)
+    for (my $field_index = 0; $field_index < scalar(@$row); ++$field_index)
     {
       my $value = $row->[$field_index];
 
-      if((ref($value) eq 'ARRAY') && scalar(@$value) > 0)
+      if ((ref($value) eq 'ARRAY') && scalar(@$value) > 0)
       {
         my @r;
 
-        if(defined($self->{numeric_}) && $self->{numeric_} > 0)
+        if (defined($self->{numeric_}) && $self->{numeric_} > 0)
         {
           @r = sort {$a <=> $b} (@$value);
         }

@@ -1,8 +1,6 @@
 #include <algorithm>
 
-namespace AutoTest
-{
-namespace ORM
+namespace AutoTest::ORM
 {
   template<typename StatsContainerType>
   StatsContainerWrapper<StatsContainerType>::StatsContainerWrapper(
@@ -21,11 +19,9 @@ namespace ORM
 
   template<typename StatsContainerType>
   void
-  StatsContainerWrapper<StatsContainerType>::print_idname(
-    std::ostream& out) const
+  StatsContainerWrapper<StatsContainerType>::print_idname(std::ostream& out) const
   {
-    for(typename StatsContainerType::const_iterator it = this->begin();
-        it != this->end(); ++it)
+    for (typename StatsContainerType::const_iterator it = this->begin(); it != this->end(); ++it)
     {
       it->print_idname(out);
     }
@@ -33,14 +29,11 @@ namespace ORM
 
   template<typename StatsContainerType>
   bool
-  StatsContainerWrapper<StatsContainerType>::select(
-    StatsDB::IConn& connection,
-    bool initial)
+  StatsContainerWrapper<StatsContainerType>::select(StatsDB::IConn& connection, bool initial)
   {
     // Must handle all values
     bool ret = true;
-    for(typename StatsContainerType::iterator it = this->begin();
-        it != this->end(); ++it)
+    for (typename StatsContainerType::iterator it = this->begin(); it != this->end(); ++it)
     {
       ret &= it->select(connection, initial);
     }
@@ -49,17 +42,14 @@ namespace ORM
 
   template<typename StatsContainerType>
   bool
-  StatsContainerWrapper<StatsContainerType>::operator==(
-    const StatsContainerType& right) const
+  StatsContainerWrapper<StatsContainerType>::operator==(const StatsContainerType& right) const
   {
-    return this->size() == right.size() &&
-      std::equal(this->begin(), this->end(), right.begin());
+    return this->size() == right.size() && std::equal(this->begin(), this->end(), right.begin());
   }
 
   template<typename StatsContainerType>
   bool
-  StatsContainerWrapper<StatsContainerType>::operator!=(
-    const StatsContainerType& stats) const
+  StatsContainerWrapper<StatsContainerType>::operator!=(const StatsContainerType& stats) const
   {
     return !(*this == stats);
   }
@@ -83,9 +73,9 @@ namespace ORM
     DiffIteratorType diff_end_it)
   {
     bool first = true;
-    for(; diff_it != diff_end_it; ++diff_it)
+    for (; diff_it != diff_end_it; ++diff_it)
     {
-      if(!first)
+      if (!first)
       {
         out << ",";
         first = false;
@@ -106,10 +96,8 @@ namespace ORM
     DiffIteratorType diff_it,
     DiffIteratorType diff_end_it) const
   {
-    for(typename StatsContainerType::const_iterator it = this->begin();
-        it != this->end() &&
-          real_it != real_end_it &&
-          diff_it != diff_end_it;
+    for (typename StatsContainerType::const_iterator it = this->begin();
+        it != this->end() && real_it != real_end_it && diff_it != diff_end_it;
         ++it, ++real_it, ++diff_it)
     {
       // Print only failed
@@ -131,8 +119,7 @@ namespace ORM
   {
     typename StatsContainerType::const_iterator it = this->begin();
 
-    for(; it != this->end() && real_it != real_end_it;
-        ++it, ++real_it)
+    for (; it != this->end() && real_it != real_end_it; ++it, ++real_it)
     {
       // Print only failed
       if (check_difference(*real_it, *it, diff) != -1)
@@ -141,7 +128,7 @@ namespace ORM
       }
     }
 
-    if(it != this->end() || real_it != real_end_it)
+    if (it != this->end() || real_it != real_end_it)
     {
       Stream::Error ostr;
       ostr << "incorrect diff array size";
@@ -154,8 +141,7 @@ namespace ORM
     std::ostream& out,
     const StatsContainerWrapper<StatsContainerType>& stats)
   {
-    for(typename StatsContainerWrapper<StatsContainerType>::
-          const_iterator it = stats.begin();
+    for (typename StatsContainerWrapper<StatsContainerType>::const_iterator it = stats.begin();
         it != stats.end(); ++it)
     {
       out << *it;
@@ -172,20 +158,13 @@ namespace ORM
     const StatsArray<ValueType, SIZE>& real)
     const
   {
-    return this->print_diff_(
-      out,
-      real.begin(),
-      real.end(),
-      diff,
-      diff + SIZE);
-  } 
+    return this->print_diff_(out, real.begin(), real.end(), diff, diff + SIZE);
+  }
 
   template<typename ValueType, std::size_t SIZE>
   template<typename DiffType>
   void
-  StatsArray<ValueType, SIZE>::print_diff(
-    std::ostream& out,
-    const DiffType (&diff)[SIZE])
+  StatsArray<ValueType, SIZE>::print_diff(std::ostream& out, const DiffType (&diff)[SIZE])
   {
     StatsContainerWrapper<FixedArray<ValueType, SIZE> >::
       print_diff_array_(out, diff, diff + SIZE);
@@ -200,12 +179,8 @@ namespace ORM
     const StatsArray<ValueType, SIZE>& real)
     const
   {
-    this->print_each_diff_(
-      out,
-      real.begin(),
-      real.end(),
-      diff);
-  } 
+    this->print_each_diff_(out, real.begin(), real.end(), diff);
+  }
 
   template<typename ValueType>
     template<typename StatsDiffContainerType, typename StatsContainerType>
@@ -215,19 +190,12 @@ namespace ORM
     const StatsContainerType& real)
     const
   {
-    this->print_diff_(
-      out,
-      real.begin(),
-      real.end(),
-      diffs.begin(),
-      diffs.end());
+    this->print_diff_(out, real.begin(), real.end(), diffs.begin(), diffs.end());
   }
 
   template<typename ValueType>
     template<typename StatsDiffContainerType>
-  void StatsList<ValueType>::print_diff(
-    std::ostream& out,
-    const StatsDiffContainerType& diffs)
+  void StatsList<ValueType>::print_diff(std::ostream& out, const StatsDiffContainerType& diffs)
   {
     StatsContainerWrapper<std::list<ValueType> >::print_diff_array_(
       out,
@@ -243,11 +211,6 @@ namespace ORM
     const StatsContainerType& real)
     const
   {
-    this->print_each_diff_(
-      out,
-      real.begin(),
-      real.end(),
-      diff);
+    this->print_each_diff_(out, real.begin(), real.end(), diff);
   }
-}
 }

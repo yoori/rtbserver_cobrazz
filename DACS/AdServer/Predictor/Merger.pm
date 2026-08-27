@@ -39,13 +39,13 @@ sub is_alive
   my ($host, $descr) = @_;
 
   my $command =
-    "test -e \${workspace_root}/run/predictor_merger.pid || exit 1 && " . 
+    "test -e \${workspace_root}/run/predictor_merger.pid || exit 1 && " .
     "kill -0 \`cat \${workspace_root}/run/predictor_merger.pid\` 2>/dev/null" .
     " || exit 1 && exit 0 ";
 
   my $res = AdServer::Functions::execute_command($host, $descr, $command);
 
-  if($res != 0)
+  if ($res != 0)
   {
     return 1;
   }

@@ -49,13 +49,9 @@ class ActionStatsTest:
 
 
 public:
-  ActionStatsTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  ActionStatsTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
-      base_time(
-        AutoTest::Time().get_gm_time().format("%d-%m-%Y:%H-00-00"))
+      base_time(AutoTest::Time().get_gm_time().format("%d-%m-%Y:%H-00-00"))
   { }
 
   virtual ~ActionStatsTest() noexcept
@@ -74,30 +70,20 @@ private:
 
   // Utils
   void
-  initialize_stat_(
-    ORM::ActionStats& stat,
-    const CaseStat& expected);
+  initialize_stat_(ORM::ActionStats& stat, const CaseStat& expected);
 
   void
-  initialize_stat_(
-    ORM::ActionRequests& stat,
-    const CaseStat& expected);
+  initialize_stat_(ORM::ActionRequests& stat, const CaseStat& expected);
 
   void
-  initialize_stat_(
-    ORM::ActionStats& stat,
-    const ConversationStat& expected);
+  initialize_stat_(ORM::ActionStats& stat, const ConversationStat& expected);
 
   void
-  initialize_stat_(
-    ORM::ActionRequests& stat,
-    const char* action);
+  initialize_stat_(ORM::ActionRequests& stat, const char* action);
 
   template<class Stat, class Expected, size_t Count>
   void
-  initialize_stats_(
-    ORM::StatsList<Stat>& stats_array,
-    const Expected(&case_stats) [Count]);
+  initialize_stats_(ORM::StatsList<Stat>& stats_array, const Expected(&case_stats) [Count]);
 
   template<size_t Count>
   void
@@ -108,24 +94,16 @@ private:
 
   // Cases
   void
-  base_case_part_1_(
-    AdClient& client,
-    std::list<std::string>& imps,
-    std::list<std::string>& clicks);
+  base_case_part_1_(AdClient& client, std::list<std::string>& imps, std::list<std::string>& clicks);
 
   void
-  base_case_part_2_(
-    AdClient& client,
-    std::list<std::string>& imps);
+  base_case_part_2_(AdClient& client, std::list<std::string>& imps);
 
   void
-  base_case_part_3_(
-    AdClient& client,
-    std::list<std::string>& clicks);
+  base_case_part_3_(AdClient& client, std::list<std::string>& clicks);
 
   void
-  base_case_part_4_(
-    AdClient& client);
+  base_case_part_4_(AdClient& client);
 
   void
   cross_action_();
@@ -143,15 +121,12 @@ private:
   expired_profile_();
 
   void
-  conversation_value_(
-    AdClient& client);
+  conversation_value_(AdClient& client);
 
   void
-  conversation_orderid_(
-    AdClient& client);
+  conversation_orderid_(AdClient& client);
 
   void
-  referrer_test_(
-    AdClient& client);
+  referrer_test_(AdClient& client);
 
 };

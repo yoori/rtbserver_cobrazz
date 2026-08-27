@@ -37,6 +37,5 @@ namespace AdServer::UserInfoSvcs
     const std::shared_ptr<Impl> impl_;
   };
 
-  using UserBindControllerGrpc_var =
-    ReferenceCounting::SmartPtr<UserBindControllerGrpc>;
+  using UserBindControllerGrpc_var = ReferenceCounting::SmartPtr<UserBindControllerGrpc>;
 }

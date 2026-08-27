@@ -36,7 +36,7 @@
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
-  
+
   <xsd:complexType name="SyncLogsServerConfigType">
     <xsd:sequence>
       <xsd:element name="networkParams" type="SyncLogsServerNetworkParamsType" minOccurs="0" maxOccurs="1">
@@ -59,7 +59,7 @@
             CORBA thread pool.
           </xsd:documentation>
         </xsd:annotation>
-      </xsd:element> 
+      </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
 

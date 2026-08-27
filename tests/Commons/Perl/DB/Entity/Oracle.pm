@@ -27,7 +27,7 @@ sub __insert
 
   my ($placeholders, $values) = $self->__get_values($ns, @columns);
 
-  my @auto_columns = grep { 
+  my @auto_columns = grep {
      ref $self->{$_} eq 'CODE' || ref $self->{$_} eq 'DB::Entity::SQL' } @columns;
 
   my $sql = qq|
@@ -91,7 +91,7 @@ sub __get_select_cause
 
   qq|
     SELECT @{[ join(', ', @$result_columns) or 1 ]}
-      FROM $table 
+      FROM $table
       $where|
 }
 
@@ -101,7 +101,7 @@ sub __set_sequence
 
   if ($self->_sequence and not exists $self->{ $self->_sequence })
   {
-    $self->{ $self->_sequence } = 
+    $self->{ $self->_sequence } =
       $self->sql($self->_sequence_name . '.nextval');
   }
 }
@@ -114,10 +114,10 @@ sub get_display_status
   my $object = $self->_table;
 
   my $stmt = $ns->dbh->prepare_cached(q[
-    SELECT display_status_id 
+    SELECT display_status_id
     FROM DisplayStatus ds
     JOIN ObjectType ot
-    ON (ds.object_type_id = ot.object_type_id) 
+    ON (ds.object_type_id = ot.object_type_id)
     WHERE replace(upper(ot.name), ' ') = upper(?) and ds.description = ?]);
 
   $stmt->execute($object, $status);
@@ -133,7 +133,7 @@ sub __set_args
   if (defined $args->{display_status_id} &&
       $args->{display_status_id} !~ /^\d+$/)
   {
-    $args->{display_status_id} = 
+    $args->{display_status_id} =
       $self->get_display_status($ns, $args->{display_status_id});
   }
 

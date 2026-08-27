@@ -15,9 +15,7 @@ namespace Aspect
   const char USER_CAMPAIGN_REACH_CONTAINER[] = "UserCampaignReachContainer";
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -36,8 +34,7 @@ namespace RequestInfoSvcs
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       expire_time_(expire_time),
-      campaign_reach_processor_(
-        ReferenceCounting::add_ref(campaign_reach_processor))
+      campaign_reach_processor_(ReferenceCounting::add_ref(campaign_reach_processor))
   {
     static const char* FUN = "UserCampaignReachContainer::UserCampaignReachContainer()";
 
@@ -56,8 +53,7 @@ namespace RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init UserCampaignReachMap at '" <<
-        user_campaign_reach_rocksdb_path << "'. Caught eh::Exception: " <<
-        ex.what();
+        user_campaign_reach_rocksdb_path << "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -66,8 +62,7 @@ namespace RequestInfoSvcs
   {}
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserCampaignReachContainer::co_get_profile(
-    const AdServer::Commons::UserId& user_id)
+  UserCampaignReachContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
     static const char* FUN = "UserCampaignReachContainer::co_get_profile()";
     try
@@ -90,7 +85,7 @@ namespace RequestInfoSvcs
     const ProcessingState& processing_state)
     /*throw(RequestActionProcessor::Exception)*/
   {
-    if(!(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (!(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL))
@@ -112,7 +107,7 @@ namespace RequestInfoSvcs
     const ImpressionInfo&,
     const ProcessingState& processing_state)
   {
-    if(!(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
+    if (!(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
       processing_state.state != RequestInfo::RS_NORMAL))
@@ -128,8 +123,7 @@ namespace RequestInfoSvcs
     }
   }
 
-  void UserCampaignReachContainer::process_ad_impression_(
-    const RequestInfo& request_info)
+  void UserCampaignReachContainer::process_ad_impression_(const RequestInfo& request_info)
     /*throw(Exception)*/
   {
     static const char* FUN = "UserCampaignReachContainer::process_ad_impression_()";
@@ -153,7 +147,7 @@ namespace RequestInfoSvcs
 
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserCampaignReachProfileReader user_profile_reader(
           mem_buf->membuf().data(),
@@ -185,7 +179,7 @@ namespace RequestInfoSvcs
 
         advertiser_appeared = false;
 
-        if(request_info.advertiser_id)
+        if (request_info.advertiser_id)
         {
           advertiser_appeared = collect_appearance(
             reach_info.advertisers,
@@ -195,7 +189,7 @@ namespace RequestInfoSvcs
             date,
             BaseAppearanceLess());
 
-          if(request_info.text_campaign)
+          if (request_info.text_campaign)
           {
             advertiser_text_appeared = collect_appearance(
               reach_info.text_advertisers,
@@ -219,52 +213,34 @@ namespace RequestInfoSvcs
       }
       else
       {
-        add_total_appearance(
-          reach_info.campaigns,
-          request_info.campaign_id,
-          date);
+        add_total_appearance(reach_info.campaigns, request_info.campaign_id, date);
 
-        add_total_appearance(
-          reach_info.ccgs,
-          request_info.ccg_id,
-          date);
+        add_total_appearance(reach_info.ccgs, request_info.ccg_id, date);
 
-        add_total_appearance(
-          reach_info.creatives,
-          request_info.cc_id,
-          date);
+        add_total_appearance(reach_info.creatives, request_info.cc_id, date);
 
-        if(request_info.advertiser_id)
+        if (request_info.advertiser_id)
         {
           advertiser_appeared = true;
 
-          add_total_appearance(
-            reach_info.advertisers,
-            request_info.advertiser_id,
-            date);
+          add_total_appearance(reach_info.advertisers, request_info.advertiser_id, date);
 
-          if(request_info.text_campaign)
+          if (request_info.text_campaign)
           {
             advertiser_text_appeared = true;
 
-            add_total_appearance(
-              reach_info.text_advertisers,
-              request_info.advertiser_id,
-              date);
+            add_total_appearance(reach_info.text_advertisers, request_info.advertiser_id, date);
           }
           else
           {
             advertiser_display_appeared = true;
 
-            add_total_appearance(
-              reach_info.display_advertisers,
-              request_info.advertiser_id,
-              date);
+            add_total_appearance(reach_info.display_advertisers, request_info.advertiser_id, date);
           }
         }
       }
 
-      if(campaign_appeared ||
+      if (campaign_appeared ||
          ccg_appeared ||
          cc_appeared ||
          advertiser_appeared ||
@@ -275,18 +251,16 @@ namespace RequestInfoSvcs
 
         UserCampaignReachProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
           user_profile_writer.version() = CURRENT_CAMPAIGN_REACH_PROFILE_VERSION;
         }
 
-        if(campaign_appeared)
+        if (campaign_appeared)
         {
           update_appearance(
             user_profile_writer.campaign_appears(),
@@ -296,7 +270,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(ccg_appeared)
+        if (ccg_appeared)
         {
           update_appearance(
             user_profile_writer.ccg_appears(),
@@ -306,7 +280,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(cc_appeared)
+        if (cc_appeared)
         {
           update_appearance(
             user_profile_writer.cc_appears(),
@@ -316,7 +290,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_appeared)
+        if (advertiser_appeared)
         {
           update_appearance(
             user_profile_writer.adv_appears(),
@@ -326,7 +300,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_text_appeared)
+        if (advertiser_text_appeared)
         {
           update_appearance(
             user_profile_writer.adv_text_appears(),
@@ -336,7 +310,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_display_appeared)
+        if (advertiser_display_appeared)
         {
           update_appearance(
             user_profile_writer.adv_display_appears(),
@@ -354,15 +328,12 @@ namespace RequestInfoSvcs
 
           user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-          transaction->save_profile(
-            Generics::transfer_membuf(new_mem_buf),
-            request_info.time);
+          transaction->save_profile(Generics::transfer_membuf(new_mem_buf), request_info.time);
         }
         catch(const eh::Exception& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Can't save profile - caught eh::Exception: " <<
-            ex.what();
+          ostr << FUN << ": Can't save profile - caught eh::Exception: " << ex.what();
           throw Exception(ostr);
         }
       }
@@ -370,14 +341,13 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't process request - caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't process request - caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(some_appear && !request_info.test_request)
+    if (some_appear && !request_info.test_request)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Process request: " << std::endl;
@@ -385,10 +355,7 @@ namespace RequestInfoSvcs
         ostr << std::endl << "Result reach: " << std::endl;
         reach_info.print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_CAMPAIGN_REACH_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_CAMPAIGN_REACH_CONTAINER);
       }
 
       try
@@ -405,12 +372,10 @@ namespace RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<void>
-  UserCampaignReachContainer::co_process_ad_impression_(
-    const RequestInfo& request_info)
+  UserCampaignReachContainer::co_process_ad_impression_(const RequestInfo& request_info)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "UserCampaignReachContainer::co_process_ad_impression_()";
+    static const char* FUN = "UserCampaignReachContainer::co_process_ad_impression_()";
 
     CampaignReachProcessor::ReachInfo reach_info;
     bool some_appear = false;
@@ -429,10 +394,9 @@ namespace RequestInfoSvcs
       UserCampaignReachMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(request_info.user_id);
 
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
         UserCampaignReachProfileReader user_profile_reader(
           mem_buf->membuf().data(),
@@ -464,7 +428,7 @@ namespace RequestInfoSvcs
 
         advertiser_appeared = false;
 
-        if(request_info.advertiser_id)
+        if (request_info.advertiser_id)
         {
           advertiser_appeared = collect_appearance(
             reach_info.advertisers,
@@ -474,7 +438,7 @@ namespace RequestInfoSvcs
             date,
             BaseAppearanceLess());
 
-          if(request_info.text_campaign)
+          if (request_info.text_campaign)
           {
             advertiser_text_appeared = collect_appearance(
               reach_info.text_advertisers,
@@ -498,52 +462,34 @@ namespace RequestInfoSvcs
       }
       else
       {
-        add_total_appearance(
-          reach_info.campaigns,
-          request_info.campaign_id,
-          date);
+        add_total_appearance(reach_info.campaigns, request_info.campaign_id, date);
 
-        add_total_appearance(
-          reach_info.ccgs,
-          request_info.ccg_id,
-          date);
+        add_total_appearance(reach_info.ccgs, request_info.ccg_id, date);
 
-        add_total_appearance(
-          reach_info.creatives,
-          request_info.cc_id,
-          date);
+        add_total_appearance(reach_info.creatives, request_info.cc_id, date);
 
-        if(request_info.advertiser_id)
+        if (request_info.advertiser_id)
         {
           advertiser_appeared = true;
 
-          add_total_appearance(
-            reach_info.advertisers,
-            request_info.advertiser_id,
-            date);
+          add_total_appearance(reach_info.advertisers, request_info.advertiser_id, date);
 
-          if(request_info.text_campaign)
+          if (request_info.text_campaign)
           {
             advertiser_text_appeared = true;
 
-            add_total_appearance(
-              reach_info.text_advertisers,
-              request_info.advertiser_id,
-              date);
+            add_total_appearance(reach_info.text_advertisers, request_info.advertiser_id, date);
           }
           else
           {
             advertiser_display_appeared = true;
 
-            add_total_appearance(
-              reach_info.display_advertisers,
-              request_info.advertiser_id,
-              date);
+            add_total_appearance(reach_info.display_advertisers, request_info.advertiser_id, date);
           }
         }
       }
 
-      if(campaign_appeared ||
+      if (campaign_appeared ||
          ccg_appeared ||
          cc_appeared ||
          advertiser_appeared ||
@@ -554,19 +500,16 @@ namespace RequestInfoSvcs
 
         UserCampaignReachProfileWriter user_profile_writer;
 
-        if(mem_buf.in())
+        if (mem_buf.in())
         {
-          user_profile_writer.init(
-            mem_buf->membuf().data(),
-            mem_buf->membuf().size());
+          user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
         }
         else
         {
-          user_profile_writer.version() =
-            CURRENT_CAMPAIGN_REACH_PROFILE_VERSION;
+          user_profile_writer.version() = CURRENT_CAMPAIGN_REACH_PROFILE_VERSION;
         }
 
-        if(campaign_appeared)
+        if (campaign_appeared)
         {
           update_appearance(
             user_profile_writer.campaign_appears(),
@@ -576,7 +519,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(ccg_appeared)
+        if (ccg_appeared)
         {
           update_appearance(
             user_profile_writer.ccg_appears(),
@@ -586,7 +529,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(cc_appeared)
+        if (cc_appeared)
         {
           update_appearance(
             user_profile_writer.cc_appears(),
@@ -596,7 +539,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_appeared)
+        if (advertiser_appeared)
         {
           update_appearance(
             user_profile_writer.adv_appears(),
@@ -606,7 +549,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_text_appeared)
+        if (advertiser_text_appeared)
         {
           update_appearance(
             user_profile_writer.adv_text_appears(),
@@ -616,7 +559,7 @@ namespace RequestInfoSvcs
             BaseInsertAppearanceAdapter<IdAppearanceWriter>());
         }
 
-        if(advertiser_display_appeared)
+        if (advertiser_display_appeared)
         {
           update_appearance(
             user_profile_writer.adv_display_appears(),
@@ -629,8 +572,7 @@ namespace RequestInfoSvcs
         try
         {
           unsigned long sz = user_profile_writer.size();
-          Generics::SmartMemBuf_var new_mem_buf(
-            new Generics::SmartMemBuf(sz));
+          Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
 
           user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
@@ -641,8 +583,7 @@ namespace RequestInfoSvcs
         catch(const eh::Exception& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Can't save profile - caught eh::Exception: " <<
-            ex.what();
+          ostr << FUN << ": Can't save profile - caught eh::Exception: " << ex.what();
           throw Exception(ostr);
         }
       }
@@ -650,14 +591,13 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't process request - caught eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't process request - caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(some_appear && !request_info.test_request)
+    if (some_appear && !request_info.test_request)
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         Stream::Error ostr;
         ostr << FUN << ": Process request: " << std::endl;
@@ -665,10 +605,7 @@ namespace RequestInfoSvcs
         ostr << std::endl << "Result reach: " << std::endl;
         reach_info.print(ostr, "  ");
 
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::USER_CAMPAIGN_REACH_CONTAINER);
+        logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::USER_CAMPAIGN_REACH_CONTAINER);
       }
 
       try
@@ -678,8 +615,7 @@ namespace RequestInfoSvcs
       catch(const CampaignReachProcessor::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught CampaignReachProcessor::Exception: " <<
-          ex.what();
+        ostr << FUN << ": caught CampaignReachProcessor::Exception: " << ex.what();
         throw Exception(ostr);
       }
     }
@@ -698,5 +634,4 @@ namespace RequestInfoSvcs
     const Generics::Time now = Generics::Time::get_time_of_day();
     co_await user_map_->co_clear_expired(now - expire_time_);
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+} // namespace AdServer::RequestInfoSvcs

@@ -1,8 +1,6 @@
 #include "URLEncodingTest.hpp"
 
-REFLECT_UNIT(URLEncodingTest) (
-  "Frontend",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(URLEncodingTest) ("Frontend", AUTO_TEST_FAST);
 
 namespace
 {
@@ -53,30 +51,18 @@ URLEncodingTest::run_test()
       false,
       "PASSBACK_URL2_IDNA_EXP"));
 
-  NOSTOP_FAIL_CONTEXT(
-    tag_passback_encoding(
-      "ENPASSBACK_TAG",
-      "PASSBACK_URL1_EXP"));
+  NOSTOP_FAIL_CONTEXT(tag_passback_encoding("ENPASSBACK_TAG", "PASSBACK_URL1_EXP"));
 
-  NOSTOP_FAIL_CONTEXT(
-    tag_passback_encoding(
-      "RUPASSBACK_TAG",
-      "PASSBACK_URL2_IDNA_EXP"));
+  NOSTOP_FAIL_CONTEXT(tag_passback_encoding("RUPASSBACK_TAG", "PASSBACK_URL2_IDNA_EXP"));
 
   NOSTOP_FAIL_CONTEXT(clickurl_encoding());
   NOSTOP_FAIL_CONTEXT(clickurl_relocate_encoding());
 
   add_descr_phrase("Click frontend - preclick.");
 
-  NOSTOP_FAIL_CONTEXT(
-    clickurl_preclick_encoding(
-      "PASSBACK_URL1",
-      "PASSBACK_URL1_EXP"));
+  NOSTOP_FAIL_CONTEXT(clickurl_preclick_encoding("PASSBACK_URL1", "PASSBACK_URL1_EXP"));
 
-  NOSTOP_FAIL_CONTEXT(
-    clickurl_preclick_encoding(
-      "PASSBACK_URL2",
-      "PASSBACK_URL2_IDNA_EXP"));
+  NOSTOP_FAIL_CONTEXT(clickurl_preclick_encoding("PASSBACK_URL2", "PASSBACK_URL2_IDNA_EXP"));
 
   NOSTOP_FAIL_CONTEXT(optout_redirect());
 
@@ -105,8 +91,7 @@ URLEncodingTest::passback_encoding(
   std::string passback_request;
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      client.find_header_value("Location", passback_request)),
+    AutoTest::predicate_checker(client.find_header_value("Location", passback_request)),
     "Client must be redirected to passback frontend");
 
   if (with_frontend)
@@ -114,22 +99,17 @@ URLEncodingTest::passback_encoding(
     client.process_request(passback_request);
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        client.find_header_value("Location", passback_request)),
+      AutoTest::predicate_checker(client.find_header_value("Location", passback_request)),
         "Client must be redirected to passback");
   }
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string(expected_passback),
-      passback_request).check(),
+    AutoTest::equal_checker(fetch_string(expected_passback), passback_request).check(),
     "Client must be redirected to original passback URL");
 }
 
 void
-URLEncodingTest::tag_passback_encoding(
-  const char* tag,
-  const char* expected_passback)
+URLEncodingTest::tag_passback_encoding(const char* tag, const char* expected_passback)
 {
   NSLookupRequest request;
   request.tid = fetch_string(tag);
@@ -137,16 +117,10 @@ URLEncodingTest::tag_passback_encoding(
   AdClient client(AdClient::create_user(this));
   client.process_request(request);
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check ccid empty");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check ccid empty");
 
   FAIL_CONTEXT(
-    TagPassbackChecker(
-      client,
-      fetch_string(expected_passback)).check(),
+    TagPassbackChecker(client, fetch_string(expected_passback)).check(),
     "Check passback");
 }
 
@@ -166,19 +140,12 @@ URLEncodingTest::clickurl_encoding()
   client.process_request(request);
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   std::string url_to_click = client.debug_info.selected_creatives.first().click_url;
   client.process_request(url_to_click, "click on keyword click_url");
 
-  FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      idna_click_url).check(),
-    "Check click response");
+  FAIL_CONTEXT(ClickResponseChecker(client, "", idna_click_url).check(), "Check click response");
 }
 
 void
@@ -196,37 +163,26 @@ URLEncodingTest::clickurl_relocate_encoding()
   client.process_request(request);
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   std::string url_to_click = client.debug_info.selected_creatives.first().click_url;
   {
-    client.process_request(url_to_click +
-    "*amp*relocate*eql*" + fetch_string("PASSBACK_URL1"));
+    client.process_request(url_to_click + "*amp*relocate*eql*" + fetch_string("PASSBACK_URL1"));
 
     FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      fetch_string("PASSBACK_URL1_EXP")).check(),
+    ClickResponseChecker(client, "", fetch_string("PASSBACK_URL1_EXP")).check(),
     "Check click response");
   }
   {
 
     std::string url;
-    String::StringManip::mime_url_encode(
-      fetch_string("PASSBACK_URL2"), url);
+    String::StringManip::mime_url_encode(fetch_string("PASSBACK_URL2"), url);
 
 
-    client.process_request(url_to_click +
-    "*amp*relocate*eql*" + url);
+    client.process_request(url_to_click + "*amp*relocate*eql*" + url);
 
     FAIL_CONTEXT(
-    ClickResponseChecker(
-      client,
-      "",
-      fetch_string("PASSBACK_URL2_IDNA_EXP")).check(),
+    ClickResponseChecker(client, "", fetch_string("PASSBACK_URL2_IDNA_EXP")).check(),
     "Check click response");
   }
   {
@@ -234,34 +190,24 @@ URLEncodingTest::clickurl_relocate_encoding()
     // Server doesn't decode URLs without 'http://' prefix
 
     std::string url;
-    String::StringManip::mime_url_encode(
-      fetch_string("PASSBACK_URL3"), url);
+    String::StringManip::mime_url_encode(fetch_string("PASSBACK_URL3"), url);
 
-    client.process_request(url_to_click +
-    "*amp*relocate*eql*" + url);
+    client.process_request(url_to_click + "*amp*relocate*eql*" + url);
 
     FAIL_CONTEXT(
-      ClickResponseChecker(
-        client,
-        "",
-        fetch_string("CRCLICK_DEFAULT")).check(),
+      ClickResponseChecker(client, "", fetch_string("CRCLICK_DEFAULT")).check(),
     "Check click response");
 
   }
 
   {
     std::string url;
-    String::StringManip::mime_url_encode(
-      fetch_string("PASSBACK_URL4"), url);
+    String::StringManip::mime_url_encode(fetch_string("PASSBACK_URL4"), url);
 
-    client.process_request(url_to_click +
-    "*amp*relocate*eql*" + url);
+    client.process_request(url_to_click + "*amp*relocate*eql*" + url);
 
     FAIL_CONTEXT(
-      ClickResponseChecker(
-        client,
-        "",
-        fetch_string("PASSBACK_URL4_EXP")).check(),
+      ClickResponseChecker(client, "", fetch_string("PASSBACK_URL4_EXP")).check(),
     "Check click response");
 
   }
@@ -269,9 +215,7 @@ URLEncodingTest::clickurl_relocate_encoding()
 }
 
 void
-URLEncodingTest::clickurl_preclick_encoding(
-  const char* preclick,
-  const char* expected_preclick)
+URLEncodingTest::clickurl_preclick_encoding(const char* preclick, const char* expected_preclick)
 {
   std::string keyword   = fetch_string("KEYWORD2");
 
@@ -284,9 +228,7 @@ URLEncodingTest::clickurl_preclick_encoding(
 
   client.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      1,
-      client.debug_info.selected_creatives.size()).check(),
+    AutoTest::equal_checker(1, client.debug_info.selected_creatives.size()).check(),
     "must select creative");
   std::string url_to_click = client.debug_info.selected_creatives.first().click_url;
   client.process_request(url_to_click);
@@ -335,17 +277,13 @@ URLEncodingTest::optout_redirect()
         already_url(REQUESTS[i].url), true);
 
     FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          REQUESTS[i].status,
-          client.req_status()).check(),
+        AutoTest::equal_checker(REQUESTS[i].status, client.req_status()).check(),
         "Check status#" + strof(i+1));
 
     if (!REQUESTS[i].expected_url.empty())
     {
       FAIL_CONTEXT(
-        RedirectChecker(
-          client,
-          REQUESTS[i].expected_url).check(),
+        RedirectChecker(client, REQUESTS[i].expected_url).check(),
         "Check redirect#" + strof(i+1));
     }
   }

@@ -80,8 +80,7 @@ namespace AdServer::Bidding
     {
       Stream::Error ostr;
       ostr << FUN << ": bad request, " << ex.what() <<
-        ", request: '" << bid_request << "'" <<
-        ", uri: '" << uri_ << "'";
+        ", request: '" << bid_request << "'" << ", uri: '" << uri_ << "'";
 
       bid_frontend_->logger()->log(
         ostr.str(),
@@ -103,15 +102,12 @@ namespace AdServer::Bidding
 
     std::ostringstream response_ostr;
 
-    fill_response_(
-      response_ostr,
-      request_info_,
-      campaign_match_result);
+    fill_response_(response_ostr, request_info_, campaign_match_result);
 
     // write response
     const std::string bid_response = response_ostr.str();
 
-    if(!bid_response.empty())
+    if (!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       response->set_content_type_nocopy(Response::Type::JSON);
@@ -134,7 +130,7 @@ namespace AdServer::Bidding
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
 
-    if(code < 300)
+    if (code < 300)
     {
       // no-bid is No content
       write_response_(204, response, response_claimed);
@@ -172,17 +168,14 @@ namespace AdServer::Bidding
     {
       response_ostr << "[";
 
-      for(std::size_t slot_i = 0;
-        slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
+      for (std::size_t slot_i = 0; slot_i < campaign_match_result.ad_slots.size(); ++slot_i)
       {
-        if(slot_i > 0)
+        if (slot_i > 0)
         {
           response_ostr << ",";
         }
 
-        fill_response_adslot_(
-          response_ostr,
-          campaign_match_result.ad_slots[slot_i]);
+        fill_response_adslot_(response_ostr, campaign_match_result.ad_slots[slot_i]);
       }
 
       response_ostr << "]";
@@ -217,47 +210,37 @@ namespace AdServer::Bidding
 
     root_json.add_number(Response::Json::CPC_PRICE, cpc_price);
 
-    if(ad_slot_result.native_data_tokens.size() >= 1)
+    if (ad_slot_result.native_data_tokens.size() >= 1)
     {
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[0];
-      root_json.add_string(
-        Response::Json::TITLE,
-        token.value);
+      root_json.add_string(Response::Json::TITLE, token.value);
     }
 
-    if(ad_slot_result.native_data_tokens.size() >= 2)
+    if (ad_slot_result.native_data_tokens.size() >= 2)
     {
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
         ad_slot_result.native_data_tokens[1];
-      root_json.add_string(
-        Response::Json::DESCRIPTION,
-        token.value);
+      root_json.add_string(Response::Json::DESCRIPTION, token.value);
     }
 
-    if(ad_slot_result.native_image_tokens.size() >= 1)
+    if (ad_slot_result.native_image_tokens.size() >= 1)
     {
       // NITE_MAIN
       const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
-      root_json.add_string(
-        Response::Json::IMAGE,
-        token.value);
+      root_json.add_string(Response::Json::IMAGE, token.value);
     }
 
-    if(ad_slot_result.native_image_tokens.size() >= 2)
+    if (ad_slot_result.native_image_tokens.size() >= 2)
     {
       // NITE_ICON
       const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
         ad_slot_result.native_image_tokens[1];
-      root_json.add_string(
-        Response::Json::ICON,
-        token.value);
+      root_json.add_string(Response::Json::ICON, token.value);
     }
 
-    root_json.add_string(
-      Response::Json::CLICK_URL,
-      ad_slot_result.selected_creatives[0].click_url);
+    root_json.add_string(Response::Json::CLICK_URL, ad_slot_result.selected_creatives[0].click_url);
 
     root_json.add_number(Response::Json::TTL, Response::Json::TTL_VALUE);
     }
@@ -265,9 +248,7 @@ namespace AdServer::Bidding
   }
 
   void
-  ClickStarBidRequestState::add_xml_escaped_string_(
-    std::ostream& response_ostr,
-    const char* str)
+  ClickStarBidRequestState::add_xml_escaped_string_(std::ostream& response_ostr, const char* str)
     noexcept
   {
     std::string escaped_str;

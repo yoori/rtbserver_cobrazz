@@ -67,9 +67,7 @@ BenchmarkBase::make_client(unsigned long client_id)
 
 
 BaseRequest*
-BenchmarkBase::make_request(
-  AdServerClientBase* client,
-  const char* url)
+BenchmarkBase::make_request(AdServerClientBase* client, const char* url)
 {
   std::string uid;
   client->uid(uid);
@@ -109,20 +107,10 @@ BenchmarkBase::make_request(
       false);
 
   case  FrontendType::userbind:
-    return new UserBindRequest(
-      client,
-      client->id(),
-      uid,
-      config_->config,
-      config_->server.c_str());
+    return new UserBindRequest(client, client->id(), uid, config_->config, config_->server.c_str());
 
   case  FrontendType::openrtb:
-    return new OpenRTBRequest(
-      client,
-      client->id(),
-      uid,
-      config_->config,
-      config_->server.c_str());
+    return new OpenRTBRequest(client, client->id(), uid, config_->config, config_->server.c_str());
 
   default:
       return 0;
@@ -196,7 +184,6 @@ GeneratedBenchmark::run()
 void GeneratedBenchmark::send_storage_request()
 {
   std::string url;
-  AdServerClientBase* client =
-    storage_->get_request_pair(config_->frontend_type, url);
+  AdServerClientBase* client = storage_->get_request_pair(config_->frontend_type, url);
   client->send_request(make_request(client, url.c_str()));
 }

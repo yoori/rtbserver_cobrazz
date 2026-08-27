@@ -4,8 +4,7 @@
 
 namespace AdServer::ImprTrack
 {
-  ImprTrackMatchRequestState::ImprTrackMatchRequestState(
-    Frontend* frontend) noexcept
+  ImprTrackMatchRequestState::ImprTrackMatchRequestState(Frontend* frontend) noexcept
     : frontend_(frontend)
   {}
 }

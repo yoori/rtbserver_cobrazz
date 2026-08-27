@@ -17,9 +17,7 @@
 #include "ProcStatImpl.hpp"
 #include "LogProcessorDecl.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
 
   struct Configuration
@@ -134,8 +132,7 @@ namespace LogProcessing
     deactivation() noexcept
     {
       // awake possible waiters for free task slot (forever captured by deactivated tasks)
-      for (Contexts::iterator it = contexts_.begin();
-        it != contexts_.end(); ++it)
+      for (Contexts::iterator it = contexts_.begin(); it != contexts_.end(); ++it)
       {
         LogProcThreadInfo::GuardT guard((*it)->upload_event_mutex);
         (*it)->upload_event.broadcast();
@@ -146,8 +143,7 @@ namespace LogProcessing
     clear() noexcept
     {
       // resolve cyclic references
-      for (Contexts::iterator it = contexts_.begin();
-        it != contexts_.end(); ++it)
+      for (Contexts::iterator it = contexts_.begin(); it != contexts_.end(); ++it)
       {
         (*it)->log_processor.reset();
       }
@@ -179,5 +175,4 @@ namespace LogProcessing
     static Contexts contexts_;
     static LogProcThreadInfo_var null_;
   };
-}
 }

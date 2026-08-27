@@ -55,24 +55,19 @@ AdServerClientBase::on_response(
     logger_->log(out.str(), Logging::Logger::DEBUG);
   }
 
-  storage_->stats()->add_response(
-    client_uid.c_str(),
-    ad_response);
+  storage_->stats()->add_response(client_uid.c_str(), ad_response);
   if (ad_response)
   {
     bool check_passback = true;
     if (!ad_response->click_url.empty())
     {
-      storage_->push_request_pair(FrontendType::click,
-                                  this,
-                                  ad_response->click_url.c_str());
+      storage_->push_request_pair(FrontendType::click, this, ad_response->click_url.c_str());
       check_passback = false;
     }
+
     if (check_passback && !ad_response->passback_url.empty())
     {
-      storage_->push_request_pair(FrontendType::passback,
-                                  this,
-                                  ad_response->passback_url.c_str());
+      storage_->push_request_pair(FrontendType::passback, this, ad_response->passback_url.c_str());
 
     }
 
@@ -88,9 +83,7 @@ AdServerClientBase::on_error(
   if (logger_->log_level() >=  Logging::Logger::DEBUG)
   {
     Stream::Error err;
-    err << "Response error (" <<
-      data.http_request() << "):" <<
-      description << std::endl;
+    err << "Response error (" << data.http_request() << "):" << description << std::endl;
     err << "  Response headers: " << std::endl;
     HTTP::HeaderList::const_iterator
       h_it(data.response_headers().begin());
@@ -105,8 +98,7 @@ AdServerClientBase::on_error(
 }
 
 void
-AdServerClientBase::send_request(
-  BaseRequest* request)
+AdServerClientBase::send_request(BaseRequest* request)
 {
 
   // Prepare request
@@ -126,20 +118,13 @@ AdServerClientBase::send_request(
   // Send request
   if (request->isGet())
   {
-    client_->add_get_request(url.c_str(),
-                             response_cb_,
-                             HTTP::HttpServer(),
-                             headers);
+    client_->add_get_request(url.c_str(), response_cb_, HTTP::HttpServer(), headers);
   }
   else
   {
     // Prepare body
     std::string body_cont(request->body());
-    client_->add_post_request(url.c_str(),
-                              response_cb_,
-                              body_cont,
-                              HTTP::HttpServer(),
-                              headers);
+    client_->add_post_request(url.c_str(), response_cb_, body_cont, HTTP::HttpServer(), headers);
   }
 }
 

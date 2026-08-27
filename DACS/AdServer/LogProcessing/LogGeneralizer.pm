@@ -187,7 +187,7 @@ sub db_status
 {
   my ($host, $descr) = @_;
   my $status = is_alive @_;
-  if($status == 1)
+  if ($status == 1)
   {
     Utils::Functions::process_control_any(
       $host,

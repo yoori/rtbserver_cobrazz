@@ -63,7 +63,7 @@ target_include_directories(BillingServer PRIVATE
   ${Protobuf_INCLUDE_DIRS}
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(BillingServer
     PRIVATE
       Protobuf::libprotobuf

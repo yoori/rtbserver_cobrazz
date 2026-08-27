@@ -35,7 +35,7 @@ sub incorrect_trigger
   my $ch1 = $ns->create(DB::BehavioralChannel->blank(
     name => 1,
     keyword_list => "nonexactmatch",
-    url_list => 
+    url_list =>
       "www.gmail.ru\n" .
       "www:nt.ru\n" .
       "www.tuning1.ru\n" .
@@ -200,12 +200,12 @@ sub trigger_words
   $ns->output("SEARCH1", $words4);
   $ns->output("KWD2", $words3);
   $ns->output("SEARCH2", $words3);
-  $ns->output("KWD3", 
+  $ns->output("KWD3",
     "CC1 CC2 CC3 CC4 CC5 CC6 CC7 CC8 CC9 CC10 CC11 " .
     "CC12 CC13 CC14 CC15 CC16 CC17 CC18 CC19 CC20 CC21, " .
     "AA1 AA2 AA3 AA4 AA5 AA6 AA7 AA8 AA9 AA10 AA11 AA12 " .
     "AA13 AA14 AA15 AA16 AA17 AA18 AA19 AA20");
-  $ns->output("KWD4", 
+  $ns->output("KWD4",
     "WW1 WW2 WW3 WW4 WW5 WW6 WW7 WW8 WW9 WW10 BB11 WW12 " .
     "WW13 WW14 WW15 WW16 WW17 WW18 WW19 WW20 WW21");
   $ns->output("KWD5",

@@ -12,66 +12,61 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Action::Aspect
+{
+  const char ACTION_FRONTEND[] = "ActionFrontend";
+}
+
+namespace AdServer::Action::Request::Cookie
+{
+  const String::AsciiStringManip::Caseless OPTOUT("OPTED_OUT");
+  const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
+  //const String::AsciiStringManip::Caseless USER_ID("uid");
+}
+
+namespace AdServer::Action::Request::Header
+{
+  const String::SubString REM_HOST(".remotehost");
+  const String::SubString USER_AGENT("user-agent");
+  const String::SubString FCGI_USER_AGENT("user_agent");
+  const String::AsciiStringManip::Caseless REFERER("referer");
+  const String::SubString SECURE("secure");
+}
+
+namespace AdServer::Action::Request::Context
+{
+  const String::SubString CLID_ID("clid");
+  const String::SubString CAMPAIGN_ID("cid");
+  const String::SubString ACTION_ID("actionid");
+  const String::SubString CONVERSION_ID("convid");
+  const String::SubString COUNTRY("country");
+  const String::SubString TEST_REQUEST("testrequest");
+  const String::SubString LOCATION_NAME("loc.name");
+  const String::SubString ORDER_ID("orderid");
+  const String::SubString ACTION_VALUE("value");
+  const String::SubString EXTERNAL_ID("fid");
+
+  /* debug params */
+  const String::SubString IP_ADDRESS("debug.ip");
+  const String::SubString DEBUG_CURRENT_TIME("debug-time");
+}
+
 namespace AdServer::Action
 {
-  namespace Aspect
-  {
-    const char ACTION_FRONTEND[] = "ActionFrontend";
-  }
-
-  namespace Request::Cookie
-  {
-      const String::AsciiStringManip::Caseless OPTOUT("OPTED_OUT");
-      const String::AsciiStringManip::Caseless OPTOUT_TRUE_VALUE("YES");
-      //const String::AsciiStringManip::Caseless USER_ID("uid");
-    }
-
-  namespace Request::Header
-    {
-      const String::SubString REM_HOST(".remotehost");
-      const String::SubString USER_AGENT("user-agent");
-      const String::SubString FCGI_USER_AGENT("user_agent");
-      const String::AsciiStringManip::Caseless REFERER("referer");
-      const String::SubString SECURE("secure");
-    }
-
-  namespace Request::Context
-    {
-      const String::SubString CLID_ID("clid");
-      const String::SubString CAMPAIGN_ID("cid");
-      const String::SubString ACTION_ID("actionid");
-      const String::SubString CONVERSION_ID("convid");
-      const String::SubString COUNTRY("country");
-      const String::SubString TEST_REQUEST("testrequest");
-      const String::SubString LOCATION_NAME("loc.name");
-      const String::SubString ORDER_ID("orderid");
-      const String::SubString ACTION_VALUE("value");
-      const String::SubString EXTERNAL_ID("fid");
-
-      /* debug params */
-      const String::SubString IP_ADDRESS("debug.ip");
-      const String::SubString DEBUG_CURRENT_TIME("debug-time");
-    }
-
   class UuidParamProcessor: public RequestInfoParamProcessor
   {
   public:
-    UuidParamProcessor(
-      const RequestInfoFiller* filler,
-      bool allow_rewrite = true)
+    UuidParamProcessor(const RequestInfoFiller* filler, bool allow_rewrite = true)
       : filler_(filler),
         allow_rewrite_(allow_rewrite)
     {}
 
-    virtual void process(
-      RequestInfo& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfo& request_info, const String::SubString& value) const
       /*throw(RequestInfoFiller::InvalidParamException)*/
     {
       try
       {
-        filler_->adapt_client_id_(
-          value, request_info, allow_rewrite_);
+        filler_->adapt_client_id_(value, request_info, allow_rewrite_);
       }
       catch(...)
       {}
@@ -134,16 +129,12 @@ namespace AdServer::Action
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::OPTOUT,
       RequestInfoParamProcessor_var(
-        new FrontendCommons::OptOutParamProcessor<RequestInfo>(
-          &RequestInfo::user_status))));
+        new FrontendCommons::OptOutParamProcessor<RequestInfo>(&RequestInfo::user_status))));
 
-    add_processor_(true, true, FrontendCommons::Cookies::CLIENT_ID,
-      new UuidParamProcessor(this));
-    add_processor_(true, true, Request::Context::CLID_ID,
-      new UuidParamProcessor(this, false));
+    add_processor_(true, true, FrontendCommons::Cookies::CLIENT_ID, new UuidParamProcessor(this));
+    add_processor_(true, true, Request::Context::CLID_ID, new UuidParamProcessor(this, false));
     add_processor_(true, true, Request::Context::LOCATION_NAME,
-      new FrontendCommons::LocationCountryParamProcessor<RequestInfo>(
-        &RequestInfo::req_country));
+      new FrontendCommons::LocationCountryParamProcessor<RequestInfo>(&RequestInfo::req_country));
     add_processor_(true, true, Request::Context::COUNTRY,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::req_country,
@@ -154,20 +145,17 @@ namespace AdServer::Action
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
         AdServer::Commons::Optional<unsigned long>,
-        unsigned long>(
-        &RequestInfo::campaign_id));
+        unsigned long>(&RequestInfo::campaign_id));
     add_processor_(true, true, Request::Context::ACTION_ID,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
         AdServer::Commons::Optional<unsigned long>,
-        unsigned long>(
-        &RequestInfo::action_id));
+        unsigned long>(&RequestInfo::action_id));
     add_processor_(true, true, Request::Context::CONVERSION_ID,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
         AdServer::Commons::Optional<unsigned long>,
-        unsigned long>(
-        &RequestInfo::action_id));
+        unsigned long>(&RequestInfo::action_id));
     add_processor_(true, true, Request::Context::ORDER_ID,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::order_id,
@@ -178,38 +166,30 @@ namespace AdServer::Action
       new FrontendCommons::DecimalParamProcessor<
         RequestInfo,
         AdServer::Commons::Optional<AdServer::CampaignSvcs::RevenueDecimal>,
-        AdServer::CampaignSvcs::RevenueDecimal>(
-          &RequestInfo::value, false));
+        AdServer::CampaignSvcs::RevenueDecimal>(&RequestInfo::value, false));
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::external_user_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::external_user_id));
 
     add_processor_(true, true, Request::Context::TEST_REQUEST,
       new FrontendCommons::TestRequestParamProcessor<RequestInfo>());
     add_processor_(false, true, Request::Context::IP_ADDRESS,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(false, true, Request::Context::DEBUG_CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(
         &RequestInfo::time, Generics::Time::ONE_DAY));
 
     add_processor_(true, false, Request::Header::REFERER.str,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::referer));
 
     add_processor_(true, false, Request::Header::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
 
     add_processor_(true, false, Request::Header::USER_AGENT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, false, Request::Header::FCGI_USER_AGENT,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::user_agent));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, false, Request::Header::SECURE,
-      new FrontendCommons::BoolParamProcessor<RequestInfo>(
-        &RequestInfo::secure));
+      new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::secure));
   }
 
   void
@@ -222,16 +202,14 @@ namespace AdServer::Action
   {
     RequestInfoParamProcessor_var processor_ptr(processor);
 
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      header_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      param_processors_.insert(std::make_pair(name, processor_ptr));
     }
   }
 
@@ -250,63 +228,49 @@ namespace AdServer::Action
     const HTTP::ParamList& params = request.params();
     std::map<std::string, std::string> path_params;
 
-    if(!path_params_str.empty())
+    if (!path_params_str.empty())
     {
-      if(path_params_str.find(OLD_EQL) != std::string::npos)
+      if (path_params_str.find(OLD_EQL) != std::string::npos)
       {
-        FrontendCommons::parse_args(
-          path_params,
-          path_params_str,
-          OLD_AMP,
-          OLD_EQL);
+        FrontendCommons::parse_args(path_params, path_params_str, OLD_AMP, OLD_EQL);
       }
       else
       {
-        FrontendCommons::parse_args(
-          path_params,
-          path_params_str,
-          AMP,
-          EQL);
+        FrontendCommons::parse_args(path_params, path_params_str, AMP, EQL);
       }
     }
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);
 
-        ParamProcessorMap::const_iterator param_it =
-          header_processors_.find(header_name);
+        ParamProcessorMap::const_iterator param_it = header_processors_.find(header_name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       }
 
-      for(std::map<std::string, std::string>::const_iterator it =
-            path_params.begin();
+      for (std::map<std::string, std::string>::const_iterator it = path_params.begin();
           it != path_params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->first);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->first);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->second);
         }
       }
 
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
@@ -323,25 +287,23 @@ namespace AdServer::Action
         throw InvalidParamException("");
       }
 
-      for(HTTP::CookieList::const_iterator it = cookies.begin();
-          it != cookies.end(); ++it)
+      for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          cookie_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-        if(param_it != cookie_processors_.end())
+        if (param_it != cookie_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       }
 
-      if(request_info.value.present() &&
+      if (request_info.value.present() &&
         *request_info.value == AdServer::CampaignSvcs::RevenueDecimal::ZERO)
       {
         request_info.value.clear();
       }
 
-      if(!request_info.req_country.empty())
+      if (!request_info.req_country.empty())
       {
         request_info.location.country_code = request_info.req_country;
       }
@@ -359,11 +321,11 @@ namespace AdServer::Action
         {}
       }
 
-      if(request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT)
+      if (request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT)
       {
-        if(!request_info.user_id.is_null())
+        if (!request_info.user_id.is_null())
         {
-          if(request_info.user_id == AdServer::Commons::PROBE_USER_ID)
+          if (request_info.user_id == AdServer::Commons::PROBE_USER_ID)
           {
             request_info.user_status = AdServer::CampaignSvcs::US_PROBE;
             request_info.user_id = AdServer::Commons::UserId();
@@ -373,20 +335,17 @@ namespace AdServer::Action
             request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
           }
         }
-        else if(set_uid_)
+        else if (set_uid_)
         {
-          FrontendCommons::CountryFilter_var country_filter =
-            common_module_->country_filter();
+          FrontendCommons::CountryFilter_var country_filter = common_module_->country_filter();
 
           bool pass_by_country =
-            (!country_filter.in() ||
-             country_filter->enabled(request_info.location.country_code)) ?
+            (!country_filter.in() || country_filter->enabled(request_info.location.country_code)) ?
             true : false;
 
-          if(pass_by_country)
+          if (pass_by_country)
           {
-            Generics::SignedUuid uid =
-              common_module_->user_id_controller()->generate();
+            Generics::SignedUuid uid = common_module_->user_id_controller()->generate();
             request_info.user_id = uid.uuid();
             request_info.signed_client_id = uid.str();
             request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
@@ -395,8 +354,7 @@ namespace AdServer::Action
       }
 
 
-      FrontendCommons::PlatformMatcher_var platform_matcher =
-        common_module_->platform_matcher();
+      FrontendCommons::PlatformMatcher_var platform_matcher = common_module_->platform_matcher();
 
       if (platform_matcher.in())
       {
@@ -433,13 +391,11 @@ namespace AdServer::Action
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
-    if(!request_info.action_id.present() &&
-       !request_info.campaign_id.present())
+    if (!request_info.action_id.present() && !request_info.campaign_id.present())
     {
       throw InvalidParamException("");
     }
@@ -447,7 +403,7 @@ namespace AdServer::Action
     // process case when external_user_id is:
     // 1) UNSIGNEDUID
     // 2) UNSIGNEDUID/UNSIGNEDCOOKIEUID
-    if((request_info.external_user_id.size() == 24 &&
+    if ((request_info.external_user_id.size() == 24 &&
         request_info.external_user_id[22] == '.' && request_info.external_user_id[23] == '.') ||
       (request_info.external_user_id.size() == 49 &&
         request_info.external_user_id[22] == '.' && request_info.external_user_id[23] == '.' &&
@@ -461,34 +417,31 @@ namespace AdServer::Action
         request_info.external_user_id[22] == '.' && request_info.external_user_id[23] == '.' &&
         request_info.external_user_id[24] == '/'))
     {
-      if(parse_utm_term_(request_info, request_info.external_user_id))
+      if (parse_utm_term_(request_info, request_info.external_user_id))
       {
         request_info.external_user_id.clear();
       }
     }
 
-    if(request_info.external_user_id.compare(0, 4, "ifa/") == 0)
+    if (request_info.external_user_id.compare(0, 4, "ifa/") == 0)
     {
       String::AsciiStringManip::to_lower(request_info.external_user_id);
     }
 
-    if(!request_info.external_user_id.empty())
+    if (!request_info.external_user_id.empty())
     {
       std::string short_external_id;
 
       // get short external id by external_id
       std::size_t pos = request_info.external_user_id.find('/');
-      if(pos != std::string::npos)
+      if (pos != std::string::npos)
       {
         short_external_id.assign(
           request_info.external_user_id,
           pos + 1,
           request_info.external_user_id.size() - pos - 1);
 
-        request_info.source_id.assign(
-          request_info.external_user_id,
-          0,
-          pos);
+        request_info.source_id.assign(request_info.external_user_id, 0, pos);
       }
       else
       {
@@ -505,20 +458,20 @@ namespace AdServer::Action
       String::SubString::SizeType utm_term_pos2 = ref.find(UTM_TERM_2);
       String::SubString::SizeType utm_term_pos3 = ref.find(UTM_TERM_3);
       String::SubString::SizeType start_pos = String::SubString::NPOS;
-      if(utm_term_pos1 != String::SubString::NPOS)
+      if (utm_term_pos1 != String::SubString::NPOS)
       {
         start_pos = utm_term_pos1 + UTM_TERM_1.size();
       }
-      else if(utm_term_pos2 != String::SubString::NPOS)
+      else if (utm_term_pos2 != String::SubString::NPOS)
       {
         start_pos = utm_term_pos2 + UTM_TERM_2.size();
       }
-      else if(utm_term_pos3 != String::SubString::NPOS)
+      else if (utm_term_pos3 != String::SubString::NPOS)
       {
         start_pos = utm_term_pos3 + UTM_TERM_3.size();
       }
 
-      if(start_pos != String::SubString::NPOS)
+      if (start_pos != String::SubString::NPOS)
       {
         String::SubString::SizeType end_pos = ref.find('&', start_pos);
 
@@ -528,16 +481,14 @@ namespace AdServer::Action
             end_pos - start_pos);
 
         std::string decoded_utm_term;
-        String::StringManip::mime_url_decode(
-          utm_term,
-          decoded_utm_term);
+        String::StringManip::mime_url_decode(utm_term, decoded_utm_term);
 
         parse_utm_term_(request_info, decoded_utm_term);
       }
     }
 
     // shrink referer for precision from config
-    if(use_referrer_ == Commons::LogReferrer::LR_EMPTY)
+    if (use_referrer_ == Commons::LogReferrer::LR_EMPTY)
     {
       request_info.referer.clear();
     }
@@ -564,15 +515,13 @@ namespace AdServer::Action
   }
 
   bool
-  RequestInfoFiller::parse_utm_term_(
-    RequestInfo& request_info,
-    const String::SubString& utm_term)
+  RequestInfoFiller::parse_utm_term_(RequestInfo& request_info, const String::SubString& utm_term)
     noexcept
   {
     // fill utm_resolved_user_id, utm_cookie_user_id
     String::SubString::SizeType slash_pos = utm_term.find('/');
 
-    if(slash_pos == String::SubString::NPOS)
+    if (slash_pos == String::SubString::NPOS)
     {
       try
       {
@@ -589,7 +538,7 @@ namespace AdServer::Action
       String::SubString u1 = utm_term.substr(0, slash_pos);
       String::SubString u2 = utm_term.substr(slash_pos + 1);
 
-      if(!u1.empty())
+      if (!u1.empty())
       {
         try
         {
@@ -602,12 +551,12 @@ namespace AdServer::Action
         }
       }
 
-      if(!u2.empty())
+      if (!u2.empty())
       {
         String::SubString::SizeType slash2_pos = u2.find('/');
         String::SubString utm_cookie_user_id_str;
         String::SubString ifa_str;
-        if(slash2_pos == String::SubString::NPOS)
+        if (slash2_pos == String::SubString::NPOS)
         {
           utm_cookie_user_id_str = u2;
         }
@@ -617,7 +566,7 @@ namespace AdServer::Action
           ifa_str = u2.substr(slash2_pos + 1);
         }
 
-        if(!utm_cookie_user_id_str.empty())
+        if (!utm_cookie_user_id_str.empty())
         {
           try
           {
@@ -630,7 +579,7 @@ namespace AdServer::Action
           }
         }
 
-        if(!ifa_str.empty())
+        if (!ifa_str.empty())
         {
           request_info.ifa = FrontendCommons::normalize_ifa(
             std::string_view(ifa_str.data(), ifa_str.size()));
@@ -651,11 +600,11 @@ namespace AdServer::Action
   {
     try
     {
-      if(in == AdServer::Commons::PROBE_USER_ID.to_string())
+      if (in == AdServer::Commons::PROBE_USER_ID.to_string())
       {
         request_info.user_id = AdServer::Commons::PROBE_USER_ID;
       }
-      else if(allow_rewrite || request_info.user_id.is_null())
+      else if (allow_rewrite || request_info.user_id.is_null())
       {
         Generics::SignedUuid uid = common_module_->user_id_controller()->verify(in);
         if (!uid.uuid().is_null())

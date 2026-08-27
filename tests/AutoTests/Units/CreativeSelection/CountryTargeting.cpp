@@ -1,8 +1,6 @@
 #include "CountryTargeting.hpp"
 
-REFLECT_UNIT(CountryTargeting) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(CountryTargeting) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -96,8 +94,7 @@ CountryTargeting::run_test()
 
     request.tid = fetch_string(TEST_CASES[i].tid);
     request.loc_name = TEST_CASES[i].loc_name;
-    request.referer_kw =
-      map_objects(TEST_CASES[i].referer_kws);
+    request.referer_kw = map_objects(TEST_CASES[i].referer_kws);
     if (TEST_CASES[i].tag_inv)
     {
       request.tag_inv = "1";
@@ -107,22 +104,17 @@ CountryTargeting::run_test()
     if (TEST_CASES[i].exp_ccs)
     {
       std::list<std::string> expected_ccs;
-      fetch_objects(
-        std::inserter(expected_ccs, expected_ccs.begin()),
-        TEST_CASES[i].exp_ccs);
+      fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), TEST_CASES[i].exp_ccs);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          expected_ccs,
-          SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(expected_ccs, SelectedCreativesCCID(client)).check(),
         TEST_CASES[i].description +
         " Check CCs");
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.debug_info.selected_creatives.empty()),
+        AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
         TEST_CASES[i].description +
         " Check CCs");
     }

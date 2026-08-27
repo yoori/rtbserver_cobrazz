@@ -17,8 +17,7 @@ namespace
 }
 
 SyncLogsApp_::SyncLogsApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "SyncLogsApp_", ASPECT)
+  : AdServer::Commons::ProcessControlVarsLoggerImpl("SyncLogsApp_", ASPECT)
 {
 }
 
@@ -53,8 +52,7 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
   }
   catch(const eh::Exception& ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT,
-      "ADS-IMPL-205") <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-205") <<
       "SyncLogsApp_::main(): Got eh::Exception: " << ex.what();
 
     return;
@@ -68,8 +66,7 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
       const char *usage = "usage: SyncLogs <config_file>";
 
       Stream::Error ostr;
-      ostr << "config file or colocation config file is not specified\n"
-          << usage;
+      ostr << "config file or colocation config file is not specified\n" << usage;
       throw Exception(ostr);
     }
 
@@ -83,8 +80,7 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
     catch (const eh::Exception &ex)
     {
       Stream::Error ostr;
-      ostr << "Can't parse config file '" << argv[1] << "'. "
-          << ": " << ex.what();
+      ostr << "Can't parse config file '" << argv[1] << "'. " << ": " << ex.what();
       throw Exception(ostr);
     }
     catch (...)
@@ -96,10 +92,7 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
 
     // Creating synclogs servant
     sync_logs_impl_ =
-      new AdServer::LogProcessing::SyncLogsImpl(
-        callback(),
-        logger(),
-        *configuration_);
+      new AdServer::LogProcessing::SyncLogsImpl(callback(), logger(), *configuration_);
     register_vars_controller();
 
     // Initialization of CORBA
@@ -118,15 +111,12 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
   }
   catch (const Exception &ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-205") <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-205") <<
       "SyncLogsApp_::main(): Got SyncLogsApp_::Exception: " << ex.what();
   }
   catch (const eh::Exception &ex)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT,
-      "ADS-IMPL-205") <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-205") <<
       "SyncLogsApp_::main(): Got eh::Exception: " << ex.what();
   }
 
@@ -158,8 +148,7 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
         throw Exception(error_handler.text(error_string));
       }
 
-      configuration_ = SyncLogsConfigPtr(
-        new SyncLogsConfig(ad_configuration->SyncLogsConfig()));
+      configuration_ = SyncLogsConfigPtr(new SyncLogsConfig(ad_configuration->SyncLogsConfig()));
 
       if (error_handler.has_errors())
       {
@@ -182,9 +171,7 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
     // Fill corba_config
     try
     {
-      Config::CorbaConfigReader::read_config(
-        configuration_->CorbaConfig(),
-        corba_config_);
+      Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
     }
     catch(const eh::Exception &ex)
     {
@@ -195,8 +182,7 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
 
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        configuration_->Logger(), argv0));
+      logger(Config::LoggerConfigReader::create(configuration_->Logger(), argv0));
     }
     catch (const Config::LoggerConfigReader::Exception &ex)
     {
@@ -208,8 +194,7 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
   catch (const Exception &ex)
   {
     Stream::Error ostr;
-    ostr << FUN << ": got Exception. Invalid SyncLogs configuration: " <<
-      ex.what();
+    ostr << FUN << ": got Exception. Invalid SyncLogs configuration: " << ex.what();
     throw Exception(ostr);
   }
 }
@@ -219,8 +204,7 @@ void SyncLogsApp_::init_corba() /*throw(Exception)*/
   try
   {
     // init CORBA Server
-    corba_server_adapter_ =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
+    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
 
     shutdowner_ = corba_server_adapter_->shutdowner();
 
@@ -229,8 +213,7 @@ void SyncLogsApp_::init_corba() /*throw(Exception)*/
   catch (const eh::Exception &ex)
   {
     Stream::Error ostr;
-    ostr << "SyncLogsApp_::init_corba(): "
-        << "Can't init CorbaServerAdapter. : " << ex.what();
+    ostr << "SyncLogsApp_::init_corba(): " << "Can't init CorbaServerAdapter. : " << ex.what();
     throw Exception(ostr);
   }
 }
@@ -259,4 +242,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

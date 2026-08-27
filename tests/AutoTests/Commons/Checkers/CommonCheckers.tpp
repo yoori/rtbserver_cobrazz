@@ -19,24 +19,24 @@ namespace AutoTest
   EqualChecker<ArgType1, ArgType2>::~EqualChecker()
     noexcept
   { }
-  
+
   template<typename ArgType1,typename ArgType2>
   bool
   EqualChecker<ArgType1, ArgType2>::check(bool throw_error)
     /*throw (CheckFailed)*/
   {
-    
+
     bool result = equal(exp_value_, got_value_);
     if (check_type_ == CT_NOT_EQUAL)
     {
       result = !result;
     }
-    if(throw_error && !result)
+
+    if (throw_error && !result)
     {
       Stream::Error ostr;
       ostr << "Error: 'equal' constraint failed " <<
-        to_string(exp_value_) << " != " <<
-        to_string(got_value_) << " (expected != got)";
+        to_string(exp_value_) << " != " << to_string(got_value_) << " (expected != got)";
       throw CheckFailed(ostr);
     }
     return result;
@@ -44,28 +44,16 @@ namespace AutoTest
 
   template<typename ArgType1, typename ArgType2>
   EqualChecker<ArgType1,ArgType2>
-  equal_checker(
-    const ArgType1& exp_value,
-    const ArgType2& got_value,
-    CheckerType check_type)
+  equal_checker(const ArgType1& exp_value, const ArgType2& got_value, CheckerType check_type)
   {
-    return EqualChecker<ArgType1,ArgType2>(
-      exp_value,
-      got_value,
-      check_type);
+    return EqualChecker<ArgType1,ArgType2>(exp_value, got_value, check_type);
   }
 
   template<typename ArgType>
   EqualChecker<std::string, ArgType>
-  equal_checker(
-    const char* exp_value,
-    const ArgType& got_value,
-    CheckerType check_type)
+  equal_checker(const char* exp_value, const ArgType& got_value, CheckerType check_type)
   {
-    return EqualChecker<std::string,ArgType>(
-      exp_value,
-      got_value,
-      check_type);
+    return EqualChecker<std::string,ArgType>(exp_value, got_value, check_type);
   }
 
   // SequenceChecker
@@ -86,26 +74,20 @@ namespace AutoTest
 
   template<typename FirstSequenceType, typename SecondSequenceType>
   bool
-  SequenceChecker<FirstSequenceType, SecondSequenceType>::check_seq_(
-    std::string& dsc) const
+  SequenceChecker<FirstSequenceType, SecondSequenceType>::check_seq_(std::string& dsc) const
   {
     switch (check_type_)
     {
     case SCE_COMPARE:
         dsc = " != ";
         return (countof(expected_) == countof(got_) &&
-          std::equal(
-            beginof(expected_),
-            endof(expected_),
-            beginof(got_)));
+          std::equal(beginof(expected_), endof(expected_), beginof(got_)));
     case SCE_ENTRY:
         dsc = " not entry in ";
-        return AutoTest::entry_in_seq(
-          expected_, got_);
+        return AutoTest::entry_in_seq(expected_, got_);
     case SCE_NOT_ENTRY:
         dsc = " entry in ";
-        return AutoTest::not_entry_in_seq(
-          expected_, got_);
+        return AutoTest::not_entry_in_seq(expected_, got_);
     }
     return false;
   }
@@ -119,13 +101,12 @@ namespace AutoTest
     std::string description;
 
     bool result = check_seq_(description);
-    
-    if(throw_error && !result)
+
+    if (throw_error && !result)
     {
       Stream::Error ostr;
-      ostr << AutoTest::seq_to_str(expected_) <<
-        description <<  AutoTest::seq_to_str(got_);
-      throw CheckFailed(ostr);  
+      ostr << AutoTest::seq_to_str(expected_) << description <<  AutoTest::seq_to_str(got_);
+      throw CheckFailed(ostr);
     }
 
     return result;
@@ -138,10 +119,7 @@ namespace AutoTest
     const SecondSequenceType& got,
     SequenceCheckerEnum check_type)
   {
-    return SequenceChecker<FirstSequenceType, SecondSequenceType>(
-      expected,
-      got,
-      check_type);
+    return SequenceChecker<FirstSequenceType, SecondSequenceType>(expected, got, check_type);
   }
 
   template<typename Arg, size_t Count, typename SequenceType>
@@ -153,10 +131,7 @@ namespace AutoTest
   {
     std::vector<Arg> exp(expected, expected + Count);
 
-    return SequenceChecker<std::vector<Arg>, SequenceType>(
-      exp,
-      got,
-      check_type);
+    return SequenceChecker<std::vector<Arg>, SequenceType>(exp, got, check_type);
   }
 
   template<typename Arg, typename SequenceType>
@@ -167,32 +142,21 @@ namespace AutoTest
     SequenceCheckerEnum check_type)
   {
     std::vector<Arg> exp(expected);
-    
-    return SequenceChecker<std::vector<Arg>, SequenceType>(
-      expected,
-      got,
-      check_type);
+
+    return SequenceChecker<std::vector<Arg>, SequenceType>(expected, got, check_type);
   }
 
   template<typename Arg, typename SequenceType>
   SequenceChecker<std::vector<Arg>, SequenceType>
-  entry_checker(
-    const Arg& expected,
-    const SequenceType& got,
-    SequenceCheckerEnum check_type)
+  entry_checker(const Arg& expected, const SequenceType& got, SequenceCheckerEnum check_type)
   {
     std::vector<Arg> exp(1, expected);
 
-    return SequenceChecker<std::vector<Arg>, SequenceType>(
-      exp,
-      got,
-      check_type);
+    return SequenceChecker<std::vector<Arg>, SequenceType>(exp, got, check_type);
   }
 
   template<typename DBFetcher>
-  DBRecordChecker<DBFetcher>::DBRecordChecker(
-    DBFetcher& table,
-    bool exists)
+  DBRecordChecker<DBFetcher>::DBRecordChecker(DBFetcher& table, bool exists)
     : table_(table),
       exists_(exists)
   {}
@@ -203,17 +167,15 @@ namespace AutoTest
 
   template<typename DBFetcher>
   bool
-  DBRecordChecker<DBFetcher>::check(
-    bool throw_error)
+  DBRecordChecker<DBFetcher>::check(bool throw_error)
     /*throw(CheckFailed, eh::Exception)*/
   {
-    if(table_.select() != exists_ )
+    if (table_.select() != exists_ )
     {
       if (throw_error)
       {
         Stream::Error ostr;
-        ostr << (exists_ ? "can't get expected record" :
-          "got unexpected record");
+        ostr << (exists_ ? "can't get expected record" : "got unexpected record");
         throw CheckFailed(ostr);
       }
       return false;

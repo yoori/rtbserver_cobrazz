@@ -27,10 +27,10 @@ sub write_date($$) {
 
 #callback of File::Find
 sub wanted {
-  if("$_" ne ".") {
+  if ("$_" ne ".") {
     if (my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = lstat($File::Find::name)) {
       my $filetype = S_IFMT($mode);
-      if($filetype == S_IFREG and (time - $mtime) < 172800) {
+      if ($filetype == S_IFREG and (time - $mtime) < 172800) {
         (my $to = $File::Find::dir) =~ s/^$from_place/$to_place/;
         mkpath($to);
         copy($File::Find::name, $to);

@@ -29,10 +29,7 @@ namespace
 }
 
 int
-check_specific_domain(
-  const DomainParser* domain_parser,
-  const char* domain,
-  const char* standard)
+check_specific_domain(const DomainParser* domain_parser, const char* domain, const char* standard)
 {
   std::string res;
   domain_parser->specific_domain(String::SubString(domain), res);
@@ -40,8 +37,7 @@ check_specific_domain(
   if (res != standard)
   {
     std::cerr << "specific_domain() return '" << res <<
-      "' instead '" << standard <<
-      "' for '" << domain << "'" << std::endl;
+      "' instead '" << standard << "' for '" << domain << "'" << std::endl;
     return 1;
   }
 
@@ -49,20 +45,15 @@ check_specific_domain(
 }
 
 int
-check_specific_url(
-  const DomainParser* domain_parser,
-  const char* url,
-  const char* standard)
+check_specific_url(const DomainParser* domain_parser, const char* url, const char* standard)
 {
   std::string res;
-  domain_parser->specific_domain(
-    HTTP::BrowserAddress(String::SubString(url)).host(), res);
+  domain_parser->specific_domain(HTTP::BrowserAddress(String::SubString(url)).host(), res);
 
   if (res != standard)
   {
     std::cerr << "specific_domain() return '" << res <<
-      "' instead '" << standard <<
-      "' for '" << url << "'" << std::endl;
+      "' instead '" << standard << "' for '" << url << "'" << std::endl;
     return 1;
   }
 
@@ -80,8 +71,7 @@ stress_test(
   if (res != standard)
   {
     std::cerr << "specific_domain() return '" << res <<
-      "' instead '" << standard <<
-      "' for '" << url << "'" << std::endl;
+      "' instead '" << standard << "' for '" << url << "'" << std::endl;
     return 1;
   }
   return 0;
@@ -119,8 +109,7 @@ total_test(DomainParser_var& domain_parser)
   }
 
   // 2. Total test
-  for(DomainConfig::Domain_sequence::const_iterator d_it =
-    domain_config->Domain().begin();
+  for (DomainConfig::Domain_sequence::const_iterator d_it = domain_config->Domain().begin();
     d_it != domain_config->Domain().end(); ++d_it)
   {
     if (!d_it->SubDomain().size()) // The first level domains
@@ -141,14 +130,12 @@ total_test(DomainParser_var& domain_parser)
         ("add_level." + d_it->name()).c_str(), ("add_level." + d_it->name()).c_str());
       res += check_specific_domain(domain_parser,
         ("add.level." + d_it->name()).c_str(), ("level." + d_it->name()).c_str());
-      res += check_specific_domain(domain_parser,
-        d_it->name().c_str(), d_it->name().c_str());
+      res += check_specific_domain(domain_parser, d_it->name().c_str(), d_it->name().c_str());
       continue;
     }
     std::string suffix = "." + d_it->name();
     for (xsd::AdServer::Configuration::DomainType::
-      SubDomain_sequence::const_iterator sd_it =
-        d_it->SubDomain().begin();
+      SubDomain_sequence::const_iterator sd_it = d_it->SubDomain().begin();
       sd_it != d_it->SubDomain().end(); ++sd_it)
     {
       std::string domain = sd_it->name() + suffix;
@@ -158,8 +145,7 @@ total_test(DomainParser_var& domain_parser)
         std::string domain_first = "_some_text_" + suffix;
         std::string domain_second_first = "_some_text_" +
           sd_it->name().substr(pos) + suffix;
-        res += check_specific_domain(domain_parser,
-          domain_first.c_str(), domain_first.c_str());
+        res += check_specific_domain(domain_parser, domain_first.c_str(), domain_first.c_str());
         res += check_specific_domain(domain_parser,
           ("add." + domain_first).c_str(), domain_first.c_str());
         res += check_specific_domain(domain_parser,
@@ -167,18 +153,13 @@ total_test(DomainParser_var& domain_parser)
         res += check_specific_domain(domain_parser,
           ("add." + domain_second_first).c_str(), domain_second_first.c_str());
       }
-      res += check_specific_domain(domain_parser,
-        ("www." + domain).c_str(), domain.c_str());
-      res += check_specific_domain(domain_parser,
-        ("." + domain).c_str(), domain.c_str());
-      res += check_specific_domain(domain_parser,
-        (".." + domain).c_str(), ("." + domain).c_str());
-      res += check_specific_domain(domain_parser,
-        ("..." + domain).c_str(), ("." + domain).c_str());
+      res += check_specific_domain(domain_parser, ("www." + domain).c_str(), domain.c_str());
+      res += check_specific_domain(domain_parser, ("." + domain).c_str(), domain.c_str());
+      res += check_specific_domain(domain_parser, (".." + domain).c_str(), ("." + domain).c_str());
+      res += check_specific_domain(domain_parser, ("..." + domain).c_str(), ("." + domain).c_str());
       res += check_specific_domain(domain_parser,
         ("www" + domain).c_str(), ("www" + domain).c_str());
-      res += check_specific_domain(domain_parser,
-        ("*." + domain).c_str(), ("*." + domain).c_str());
+      res += check_specific_domain(domain_parser, ("*." + domain).c_str(), ("*." + domain).c_str());
       res += check_specific_domain(domain_parser,
         ("www.*." + domain).c_str(), ("*." + domain).c_str());
       res += check_specific_domain(domain_parser,
@@ -187,8 +168,7 @@ total_test(DomainParser_var& domain_parser)
         ("s.*." + domain).c_str(), ("*." + domain).c_str());
       res += check_specific_domain(domain_parser,
         ("some.up." + domain).c_str(), ("up." + domain).c_str());
-      res += check_specific_domain(domain_parser,
-        domain.c_str(), domain.c_str());
+      res += check_specific_domain(domain_parser, domain.c_str(), domain.c_str());
     }
   }
   return res;
@@ -208,16 +188,16 @@ main(int argc, char* argv[]) noexcept
       String::SubString::SizeType utm_term_pos1 = ref.find(UTM_TERM_1);
       String::SubString::SizeType utm_term_pos2 = ref.find(UTM_TERM_2);
       String::SubString::SizeType start_pos = String::SubString::NPOS;
-      if(utm_term_pos1 != String::SubString::NPOS)
+      if (utm_term_pos1 != String::SubString::NPOS)
       {
         start_pos = utm_term_pos1 + UTM_TERM_1.size();
       }
-      else if(utm_term_pos2 != String::SubString::NPOS)
+      else if (utm_term_pos2 != String::SubString::NPOS)
       {
         start_pos = utm_term_pos2 + UTM_TERM_2.size();
       }
 
-      if(start_pos != String::SubString::NPOS)
+      if (start_pos != String::SubString::NPOS)
       {
         String::SubString::SizeType end_pos = ref.find('&', start_pos);
         String::SubString utm_term_user_id = ref.substr(
@@ -259,26 +239,17 @@ main(int argc, char* argv[]) noexcept
     char BUF[] = "BU";
     BUF[2] = 'G';
 
-    res += stress_test(domain_parser,
-      String::SubString(BUF, (std::size_t)0), "");
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 1), "B");
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 2), "BU");
+    res += stress_test(domain_parser, String::SubString(BUF, (std::size_t)0), "");
+    res += stress_test(domain_parser, String::SubString(BUF, 1), "B");
+    res += stress_test(domain_parser, String::SubString(BUF, 2), "BU");
     std::fill(BUF, BUF+sizeof(BUF), 0);
-    res += stress_test(domain_parser,
-      String::SubString(BUF, (std::size_t)0), "");
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 1), std::string("\0", 1));
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 2), std::string("\0\0", 2));
+    res += stress_test(domain_parser, String::SubString(BUF, (std::size_t)0), "");
+    res += stress_test(domain_parser, String::SubString(BUF, 1), std::string("\0", 1));
+    res += stress_test(domain_parser, String::SubString(BUF, 2), std::string("\0\0", 2));
     std::fill(BUF, BUF+sizeof(BUF), '.');
-    res += stress_test(domain_parser,
-      String::SubString(BUF, (std::size_t)0), "");
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 1), ".");
-    res += stress_test(domain_parser,
-      String::SubString(BUF, 2), ".");
+    res += stress_test(domain_parser, String::SubString(BUF, (std::size_t)0), "");
+    res += stress_test(domain_parser, String::SubString(BUF, 1), ".");
+    res += stress_test(domain_parser, String::SubString(BUF, 2), ".");
     // check SubStrings without termination zero
     res += stress_test(domain_parser,
       String::SubString("fedora.wiki.brAdditionalTextWithoutZero", 14),
@@ -298,8 +269,7 @@ main(int argc, char* argv[]) noexcept
 
     res += check_specific_domain(domain_parser,
       "levelup.pref.kumamoto.jp", "levelup.pref.kumamoto.jp");
-    res += check_specific_domain(domain_parser,
-      ".pref.kumamoto.jp", "pref.kumamoto.jp");
+    res += check_specific_domain(domain_parser, ".pref.kumamoto.jp", "pref.kumamoto.jp");
     res += check_specific_domain(domain_parser, ".unknown", ".unknown");
 
     // Old tests

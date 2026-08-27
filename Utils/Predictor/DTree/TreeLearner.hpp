@@ -48,9 +48,7 @@ namespace Vanga
     gain_features(GainToFeatureMap& gain_to_features) const noexcept;
 
     ReferenceCounting::SmartPtr<TreeNodeDescr>
-    sub_tree(
-      double min_avg,
-      unsigned long min_node_cover = 0)
+    sub_tree(double min_avg, unsigned long min_node_cover = 0)
       const noexcept;
 
     /*
@@ -77,13 +75,10 @@ namespace Vanga
 
   protected:
     void
-    collect_avg_covers_(
-      AvgCoverMap& avg_covers,
-      unsigned long all_rows) const;
+    collect_avg_covers_(AvgCoverMap& avg_covers, unsigned long all_rows) const;
 
     void
-    collect_feature_gains_(
-      FeatureToGainMap& feature_to_gains)
+    collect_feature_gains_(FeatureToGainMap& feature_to_gains)
       const;
   };
 
@@ -198,18 +193,12 @@ namespace Vanga
       typedef std::map<DigCacheKey, DigCache> DigCacheMap;
 
     protected:
-      LearnContext(
-        Generics::TaskRunner* task_runner,
-        const BagPartArray& bags,
-        const DTree* tree);
+      LearnContext(Generics::TaskRunner* task_runner, const BagPartArray& bags, const DTree* tree);
 
       virtual ~LearnContext() noexcept;
 
       LearnTreeHolder_var
-      fill_learn_tree_(
-        unsigned long& max_tree_id,
-        const BagPartArray& bags,
-        const DTree* tree);
+      fill_learn_tree_(unsigned long& max_tree_id, const BagPartArray& bags, const DTree* tree);
 
       double
       init_delta_prob_(const BagPartArray& bags);
@@ -227,10 +216,7 @@ namespace Vanga
       fill_dtree_(LearnTreeHolder* learn_tree_holder);
 
       void
-      convert_abs_prob_to_delta_(
-        LearnTreeHolder* tree,
-        double base_prob,
-        const BagPartArray& bags);
+      convert_abs_prob_to_delta_(LearnTreeHolder* tree, double base_prob, const BagPartArray& bags);
 
     protected:
       Generics::TaskRunner_var task_runner_;
@@ -253,9 +239,7 @@ namespace Vanga
 
     public:
       LearnContext_var
-      create_learner(
-        const DTree* base_tree,
-        Generics::TaskRunner* task_runner = nullptr);
+      create_learner(const DTree* base_tree, Generics::TaskRunner* task_runner = nullptr);
 
     protected:
       Context(const BagPartArray& bag_parts);
@@ -392,8 +376,7 @@ namespace Vanga
   TreeLearner<LabelType, GainType>::GainTreeNodeDescrKey::operator<(
     const GainTreeNodeDescrKey& right) const
   {
-    return gain < right.gain ||
-      (gain == right.gain && tree_node < right.tree_node);
+    return gain < right.gain || (gain == right.gain && tree_node < right.tree_node);
   }
 }
 

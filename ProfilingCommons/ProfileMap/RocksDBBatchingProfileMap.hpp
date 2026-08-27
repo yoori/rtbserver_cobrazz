@@ -87,19 +87,13 @@ namespace AdServer::ProfilingCommons
     check_profile(const std::string& key) const override;
 
     void
-    check_profile_async(
-      const std::string& key,
-      CheckCallback callback) const override;
+    check_profile_async(const std::string& key, CheckCallback callback) const override;
 
     Generics::ConstSmartMemBuf_var
-    get_profile(
-      const std::string& key,
-      Generics::Time* last_access_time = 0) override;
+    get_profile(const std::string& key, Generics::Time* last_access_time = 0) override;
 
     Generics::SmartMemBuf_var
-    get_own_profile(
-      const std::string& key,
-      Generics::Time* last_access_time = 0) override;
+    get_own_profile(const std::string& key, Generics::Time* last_access_time = 0) override;
 
     Generics::ConstSmartMemBuf_var
     get_profile_async(
@@ -128,9 +122,7 @@ namespace AdServer::ProfilingCommons
       SaveCallback callback = SaveCallback()) override;
 
     bool
-    remove_profile(
-      const std::string& key,
-      OperationPriority op_priority = OP_RUNTIME) override;
+    remove_profile(const std::string& key, OperationPriority op_priority = OP_RUNTIME) override;
 
     void
     remove_profile_async(
@@ -297,9 +289,7 @@ namespace AdServer::ProfilingCommons
         typename AsyncProfileMap<KeyType>::SaveCallback()) override;
 
     bool
-    remove_profile(
-      const KeyType& key,
-      OperationPriority op_priority = OP_RUNTIME) override;
+    remove_profile(const KeyType& key, OperationPriority op_priority = OP_RUNTIME) override;
 
     void
     remove_profile_async(
@@ -416,15 +406,10 @@ namespace AdServer::ProfilingCommons
   Generics::ConstSmartMemBuf_var
   RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::get_profile_async(
     const KeyType& key,
-    std::function<void (
-      Generics::ConstSmartMemBuf_var,
-      std::optional<std::string> error)> callback,
+    std::function<void (Generics::ConstSmartMemBuf_var, std::optional<std::string> error)> callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return impl_->get_profile_async(
-      key_adapter_(key),
-      std::move(callback),
-      last_access_time);
+    return impl_->get_profile_async(key_adapter_(key), std::move(callback), last_access_time);
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -434,10 +419,7 @@ namespace AdServer::ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    return impl_->get_own_profile_async(
-      key_adapter_(key),
-      std::move(callback),
-      last_access_time);
+    return impl_->get_own_profile_async(key_adapter_(key), std::move(callback), last_access_time);
   }
 
   template<typename KeyType, typename KeyAdapterType>
@@ -478,10 +460,7 @@ namespace AdServer::ProfilingCommons
     OperationPriority op_priority,
     typename AsyncProfileMap<KeyType>::RemoveCallback callback)
   {
-    impl_->remove_profile_async(
-      key_adapter_(key),
-      op_priority,
-      std::move(callback));
+    impl_->remove_profile_async(key_adapter_(key), op_priority, std::move(callback));
   }
 
   template<typename KeyType, typename KeyAdapterType>

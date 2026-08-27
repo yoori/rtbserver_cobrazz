@@ -86,14 +86,12 @@ namespace AdServer::WebStat
         : field_(field)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
       {
-        if(value.size() == 1)
+        if (value.size() == 1)
         {
           char val = String::AsciiStringManip::to_upper(*value.begin());
-          if(val != 'U' && val != 'S' && val != 'F')
+          if (val != 'U' && val != 'S' && val != 'F')
           {
             throw RequestInfoFiller::InvalidParamException("");
           }
@@ -112,12 +110,10 @@ namespace AdServer::WebStat
     class UuidParamProcessor: public RequestInfoParamProcessor
     {
     public:
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
-        if(value == AdServer::Commons::PROBE_USER_ID.to_string())
+        if (value == AdServer::Commons::PROBE_USER_ID.to_string())
         {
           request_info.user_status = AdServer::CampaignSvcs::US_PROBE;
         }
@@ -142,15 +138,12 @@ namespace AdServer::WebStat
         request_id_verifier_(request_id_verifier)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         try
         {
-          request_info.*field_ =
-            request_id_verifier_->verify(value).uuid();
+          request_info.*field_ = request_id_verifier_->verify(value).uuid();
         }
         catch(const eh::Exception&)
         {}
@@ -176,18 +169,15 @@ namespace AdServer::WebStat
         request_id_verifier_(request_id_verifier)
       {}
 
-      virtual void process(
-        RequestInfo& request_info,
-        const String::SubString& value) const
+      virtual void process(RequestInfo& request_info, const String::SubString& value) const
         /*throw(RequestInfoFiller::InvalidParamException)*/
       {
         typedef const String::AsciiStringManip::Char2Category<',', ' '>
           ListParameterSepCategory;
 
-        String::StringManip::Splitter<ListParameterSepCategory> tokenizer(
-          value);
+        String::StringManip::Splitter<ListParameterSepCategory> tokenizer(value);
         String::SubString token;
-        while(tokenizer.get_token(token))
+        while (tokenizer.get_token(token))
         {
           try
           {
@@ -275,24 +265,18 @@ namespace AdServer::WebStat
       {}
 
       void
-      process_string(
-        std::string_view value,
-        std::string_view,
-        void* context) const override
+      process_string(std::string_view value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           assign_string_(element->*field_, value);
         }
       }
 
       void
-      process_string(
-        std::string&& value,
-        std::string_view,
-        void* context) const override
+      process_string(std::string&& value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           element->*field_ = std::move(value);
         }
@@ -307,24 +291,18 @@ namespace AdServer::WebStat
     {
     public:
       void
-      process_integer(
-        int64_t value,
-        std::string_view,
-        void* context) const override
+      process_integer(int64_t value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           element->status = static_cast<int>(value);
         }
       }
 
       void
-      process_float(
-        double value,
-        std::string_view,
-        void* context) const override
+      process_float(double value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           element->status = static_cast<int>(value);
         }
@@ -340,24 +318,18 @@ namespace AdServer::WebStat
       {}
 
       void
-      process_integer(
-        int64_t value,
-        std::string_view,
-        void* context) const override
+      process_integer(int64_t value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           element->reasons.emplace_back(static_cast<int>(value));
         }
       }
 
       void
-      process_float(
-        double value,
-        std::string_view,
-        void* context) const override
+      process_float(double value, std::string_view, void* context) const override
       {
-        if(auto* element = current_yandex_element_(context))
+        if (auto* element = current_yandex_element_(context))
         {
           element->reasons.emplace_back(static_cast<int>(value));
         }
@@ -366,9 +338,7 @@ namespace AdServer::WebStat
   }
 
   /** RequestInfoFiller */
-  RequestInfoFiller::RequestInfoFiller(
-    const char* public_key,
-    CommonModule* common_module)
+  RequestInfoFiller::RequestInfoFiller(const char* public_key, CommonModule* common_module)
     /*throw(eh::Exception)*/
     : common_module_(ReferenceCounting::add_ref(common_module))
   {
@@ -399,27 +369,21 @@ namespace AdServer::WebStat
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::operation));
     add_processor_(false, true, Request::Parameters::COHORT,
       new FrontendCommons::StringCheckParamProcessor<RequestInfo,
-        String::AsciiStringManip::CharCategory>(
-          &RequestInfo::ct, Request::COHORT_CHARS, 50));
+        String::AsciiStringManip::CharCategory>(&RequestInfo::ct, Request::COHORT_CHARS, 50));
     add_processor_(false, true, Request::Parameters::RESULT,
       new ResParamProcessor(&RequestInfo::result));
     add_processor_(false, true, Request::Parameters::TEST_REQUEST,
       new FrontendCommons::BoolParamProcessor<RequestInfo>(&RequestInfo::test_request));
     add_processor_(false, true, Request::Parameters::TAG_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::tag_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::tag_id));
     add_processor_(false, true, Request::Parameters::CC_ID,
-      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
-        &RequestInfo::cc_id));
+      new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::cc_id));
     add_processor_(false, true, Request::Parameters::REFERER,
-      new FrontendCommons::UrlParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::UrlParamProcessor<RequestInfo>(&RequestInfo::referer));
     add_processor_(false, true, Request::Parameters::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
     add_processor_(false, true, Request::Parameters::EXTERNAL_USER_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::external_user_id));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::external_user_id));
 
     if (request_id_verifier_)
     {
@@ -438,11 +402,9 @@ namespace AdServer::WebStat
     add_processor_(true, false, Request::Header::ORIGIN,
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::origin));
     add_processor_(true, false, Request::Header::REFERER,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::referer));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::referer));
     add_processor_(true, false, Request::Header::REM_HOST,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::peer_ip));
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));
 
     /* debug parameters */
     add_processor_(false, true, Request::Parameters::DEBUG_TIME,
@@ -452,11 +414,8 @@ namespace AdServer::WebStat
     // init yandex notification filler
     {
       FastJsonParser::ProcessorSet processors;
-      const std::string base_path =
-        std::string(YandexNotificationRequest::NOTIFICATIONS.str());
-      processors.add_processor(
-        base_path,
-        std::make_shared<YandexNotificationsProcessor>());
+      const std::string base_path = std::string(YandexNotificationRequest::NOTIFICATIONS.str());
+      processors.add_processor(base_path, std::make_shared<YandexNotificationsProcessor>());
       processors.add_processor(
         base_path + "." + YandexNotificationRequest::CR_ID.str(),
         std::make_shared<YandexNotificationStringProcessor>(
@@ -479,8 +438,7 @@ namespace AdServer::WebStat
         base_path + "." + YandexNotificationRequest::PAYLOAD.str(),
         std::make_shared<YandexNotificationStringProcessor>(
           &YandexNotificationProcessingElementContext::payload));
-      yn_json_parser_ = std::make_unique<FastJsonParser>(
-        std::move(processors));
+      yn_json_parser_ = std::make_unique<FastJsonParser>(std::move(processors));
     }
   }
 
@@ -494,16 +452,14 @@ namespace AdServer::WebStat
   {
     RequestInfoParamProcessor_var processor_ptr(processor);
 
-    if(headers)
+    if (headers)
     {
-      header_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      header_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
-    if(parameters)
+    if (parameters)
     {
-      param_processors_.insert(
-        std::make_pair(name, processor_ptr));
+      param_processors_.insert(std::make_pair(name, processor_ptr));
     }
 
     yn_reasons_.insert(std::make_pair(0, "win"));
@@ -541,9 +497,9 @@ namespace AdServer::WebStat
       throw InvalidParamException(ostr);
     }
 
-    for(auto it = context.elements.begin(); it != context.elements.end(); ++it)
+    for (auto it = context.elements.begin(); it != context.elements.end(); ++it)
     {
-      for(auto reason_it = it->reasons.begin(); reason_it != it->reasons.end(); ++reason_it)
+      for (auto reason_it = it->reasons.begin(); reason_it != it->reasons.end(); ++reason_it)
       {
         RequestInfo request_info;
         request_info.time = Generics::Time::get_time_of_day();
@@ -598,28 +554,24 @@ namespace AdServer::WebStat
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin();
-        it != headers.end(); ++it)
+      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
       {
         std::string name = it->name.str();
         String::AsciiStringManip::to_lower(name);
 
-        ParamProcessorMap::const_iterator param_it =
-          header_processors_.find(name);
+        ParamProcessorMap::const_iterator param_it = header_processors_.find(name);
 
-        if(param_it != header_processors_.end())
+        if (param_it != header_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       } /* headers processing */
 
-      for(HTTP::ParamList::const_iterator it = params.begin();
-          it != params.end(); ++it)
+      for (HTTP::ParamList::const_iterator it = params.begin(); it != params.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          param_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = param_processors_.find(it->name);
 
-        if(param_it != param_processors_.end())
+        if (param_it != param_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
@@ -636,45 +588,36 @@ namespace AdServer::WebStat
         throw InvalidParamException("");
       }
 
-      for(HTTP::CookieList::const_iterator it = cookies.begin();
-          it != cookies.end(); ++it)
+      for (HTTP::CookieList::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
       {
-        ParamProcessorMap::const_iterator param_it =
-          cookie_processors_.find(it->name);
+        ParamProcessorMap::const_iterator param_it = cookie_processors_.find(it->name);
 
-        if(param_it != cookie_processors_.end())
+        if (param_it != cookie_processors_.end())
         {
           param_it->second->process(request_info, it->value);
         }
       } /* cookies processing */
 
-      if(request_info.time == Generics::Time::ZERO)
+      if (request_info.time == Generics::Time::ZERO)
       {
         request_info.time = Generics::Time::get_time_of_day();
       }
 
-      if(!request_info.user_agent.empty())
+      if (!request_info.user_agent.empty())
       {
         FrontendCommons::WebBrowserMatcher_var web_browser_matcher =
           common_module_->web_browser_matcher();
-        FrontendCommons::PlatformMatcher_var platform_matcher =
-          common_module_->platform_matcher();
+        FrontendCommons::PlatformMatcher_var platform_matcher = common_module_->platform_matcher();
 
-        if(web_browser_matcher.in())
+        if (web_browser_matcher.in())
         {
-          web_browser_matcher->match(
-            request_info.browser,
-            request_info.user_agent);
+          web_browser_matcher->match(request_info.browser, request_info.user_agent);
         }
 
-        if(platform_matcher.in())
+        if (platform_matcher.in())
         {
           std::string short_os;
-          platform_matcher->match(
-            0,
-            short_os,
-            request_info.os,
-            request_info.user_agent);
+          platform_matcher->match(0, short_os, request_info.os, request_info.user_agent);
         }
       }
     }
@@ -690,8 +633,7 @@ namespace AdServer::WebStat
     {
       Stream::Error ostr;
       ostr << FUN << ": "
-        "Can't fill request info. Caught eh::Exception: " <<
-        ex.what();
+        "Can't fill request info. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -700,7 +642,7 @@ namespace AdServer::WebStat
   RequestInfoFiller::reason_to_str_(int reason) const noexcept
   {
     auto reason_it = yn_reasons_.find(reason);
-    if(reason_it != yn_reasons_.end())
+    if (reason_it != yn_reasons_.end())
     {
       return reason_it->second;
     }

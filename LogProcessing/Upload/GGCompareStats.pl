@@ -25,7 +25,7 @@ while (my $line = <$old_fh>)
   {
     my @fields = $csv->fields();
     my $key = $fields[0];
-    for(my $i = 0; $i < KEY_FIELDS; ++$i)
+    for (my $i = 0; $i < KEY_FIELDS; ++$i)
     {
       $key = $key . "," . $fields[$i];
     }
@@ -45,7 +45,7 @@ while (my $line = <$new_fh>)
   {
     my @fields = $csv->fields();
     my $key = $fields[0];
-    for(my $i = 0; $i < KEY_FIELDS; ++$i)
+    for (my $i = 0; $i < KEY_FIELDS; ++$i)
     {
       $key = $key . "," . $fields[$i];
     }
@@ -65,7 +65,7 @@ my $out_csv = Text::CSV_XS->new({
 
 for my $new_key(keys %new)
 {
-  if(!exists $old{$new_key})
+  if (!exists $old{$new_key})
   {
     my $res_row = $new{$new_key};
     $out_csv->print(\*STDOUT, $res_row);
@@ -75,16 +75,16 @@ for my $new_key(keys %new)
     my $res_row = $new{$new_key};
     my $old_row = $old{$new_key};
     my $not_zero = undef;
-    for(my $i = KEY_FIELDS; $i < scalar(@$old_row); ++$i)
+    for (my $i = KEY_FIELDS; $i < scalar(@$old_row); ++$i)
     {
       $res_row->[$i] -= $old_row->[$i];
-      if($res_row->[$i] != 0)
+      if ($res_row->[$i] != 0)
       {
         $not_zero = 1;
       }
     }
 
-    if($not_zero)
+    if ($not_zero)
     {
       $out_csv->print(\*STDOUT, $res_row);
     }

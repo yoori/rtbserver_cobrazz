@@ -148,14 +148,10 @@ namespace AdServer::CampaignSvcs
       const AdServer::CampaignSvcs::CreativeInfo& creative_info)
       /*throw(Exception, eh::Exception)*/;
 
-    const char* adapt_creative_file_path(
-      const char* file_path,
-      std::string& result_file_path)
+    const char* adapt_creative_file_path(const char* file_path, std::string& result_file_path)
       noexcept;
 
-    const char* adopt_template_path(
-      const char* template_dir,
-      std::string& result_template_path)
+    const char* adopt_template_path(const char* template_dir, std::string& result_template_path)
       noexcept;
 
     static void
@@ -169,9 +165,7 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/;
 
     void
-    apply_sizes_update_(
-      const CampaignConfigUpdateInfo& update_info,
-      CampaignConfig& new_config)
+    apply_sizes_update_(const CampaignConfigUpdateInfo& update_info, CampaignConfig& new_config)
       /*throw(Exception)*/;
 
     void
@@ -342,8 +336,7 @@ namespace AdServer::CampaignSvcs
     void enrich_channels_by_geo_channels_(CampaignConfig& new_config) noexcept;
 
     void
-    enrich_channels_by_geo_coord_channels_(
-      CampaignConfig& new_config) noexcept;
+    enrich_channels_by_geo_coord_channels_(CampaignConfig& new_config) noexcept;
 
     void enrich_channels_by_platform_channels_(CampaignConfig& new_config) noexcept;
 
@@ -374,15 +367,11 @@ namespace AdServer::CampaignSvcs
       noexcept;
 
     static void
-    link_contract_update_(
-      CampaignConfig& new_config,
-      const ConfigUpdateLinks& config_update_links)
+    link_contract_update_(CampaignConfig& new_config, const ConfigUpdateLinks& config_update_links)
       noexcept;
 
     /* dynamic changes */
-    void apply_campaign_limitations_(
-      CampaignConfig& config,
-      const Generics::Time& now)
+    void apply_campaign_limitations_(CampaignConfig& config, const Generics::Time& now)
       noexcept;
 
     void check_creative_files_option_(CampaignConfig& new_config)

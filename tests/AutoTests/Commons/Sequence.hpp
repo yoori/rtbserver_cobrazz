@@ -185,10 +185,7 @@ namespace AutoTest
   equal_seq(const Seq1& expected, const Seq2& got)
   {
     return countof(expected) == countof(got) &&
-      equal_seq(
-        beginof(expected),
-        endof(expected),
-        beginof(got));
+      equal_seq(beginof(expected), endof(expected), beginof(got));
   }
 
   template <typename It, typename T>
@@ -240,10 +237,7 @@ namespace AutoTest
   // test, expected sequence entry in got sequence
   template <typename It, typename Seq>
   bool
-  not_entry_in_seq(
-                   It it,
-                   const It& end,
-                   const Seq& got)
+  not_entry_in_seq(It it, const It& end, const Seq& got)
     noexcept
   {
     for (; it != end; it++)
@@ -258,9 +252,7 @@ namespace AutoTest
 
   template <typename Seq1, typename Seq2>
   bool
-  not_entry_in_seq(
-                   const Seq1& expected,
-                   const Seq2& got)
+  not_entry_in_seq(const Seq1& expected, const Seq2& got)
     noexcept
   {
     return not_entry_in_seq(beginof(expected), endof(expected), got);

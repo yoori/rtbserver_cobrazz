@@ -3,9 +3,7 @@
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   const unsigned long CURRENT_REQUESTOPERATIONIMPRESSION_PROFILE_VERSION = 331;
 
@@ -16,5 +14,4 @@ namespace RequestInfoSvcs
     void
     operator()(Generics::MemBuf& mem_buf) /*throw(Exception)*/;
   };
-}
 }

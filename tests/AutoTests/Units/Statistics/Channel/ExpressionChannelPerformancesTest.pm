@@ -16,11 +16,11 @@ sub create_channels
   my $keyword3 = make_autotest_name($ns, "KWD3");
   my $keyword4 = make_autotest_name($ns, "KWD4");
 
-  $ns->output("URL/1", $url1);  
-  $ns->output("KW/1", $keyword1);  
-  $ns->output("KW/2", $keyword2);  
-  $ns->output("KW/3", $keyword3);  
-  $ns->output("KW/4", $keyword4);  
+  $ns->output("URL/1", $url1);
+  $ns->output("KW/1", $keyword1);
+  $ns->output("KW/2", $keyword2);
+  $ns->output("KW/3", $keyword3);
+  $ns->output("KW/4", $keyword4);
 
   # Behavioral channels
   my $channel1 = $ns->create(
@@ -91,7 +91,7 @@ sub create_channels
       expression => $channel1->channel_id . "|" . $channel2->channel_id,
       account_id => $account));
 
-  $ns->output("ExpressionId/02", 
+  $ns->output("ExpressionId/02",
               $e2->channel_id);
 
   my $e3 = $ns->create(DB::ExpressionChannel->blank(
@@ -100,12 +100,12 @@ sub create_channels
       "|" . $channel4->channel_id),
     account_id => $account));
 
-  $ns->output("ExpressionId/03", 
+  $ns->output("ExpressionId/03",
               $e3->channel_id);
 
   my $e1 = $ns->create(DB::ExpressionChannel->blank(
     name => 'E01',
-    expression => ("(" . $e2->channel_id . "|" . $channel3->channel_id . 
+    expression => ("(" . $e2->channel_id . "|" . $channel3->channel_id .
       ")^" . $channel5->channel_id),
     account_id => $account));
 
@@ -116,7 +116,7 @@ sub create_channels
   push(@expression_channels, $e1);
   push(@expression_channels, $e2);
   push(@expression_channels, $e3);
-  
+
   return @expression_channels;
 }
 
@@ -176,7 +176,7 @@ sub create_ta_campaigns
     max_text_creatives => 2 });
 
   my $site = $ns->create(Site => { name => "TA"});
-  
+
   my $tag = $ns->create(PricedTag => {
     name => "TA",
     site_id => $site,
@@ -221,7 +221,7 @@ sub init
     name => 1,
     role_id => DB::Defaults::instance()->advertiser_role });
 
-  $ns->output("Colocation", 
+  $ns->output("Colocation",
     DB::Defaults::instance()->ads_isp->{colo_id});
 
   my $exchange_rate = 20;

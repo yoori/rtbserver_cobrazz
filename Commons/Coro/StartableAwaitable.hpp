@@ -117,25 +117,22 @@ namespace AdServer::Commons
   void sync_wait(StartableAwaitable<void> awaitable);
 
   template<typename ResultType>
-  inline StartableAwaitable<ResultType>::StartableAwaitable(
-    Handle handle) noexcept
+  inline StartableAwaitable<ResultType>::StartableAwaitable(Handle handle) noexcept
     : handle_(handle)
   {}
 
   template<typename ResultType>
-  inline StartableAwaitable<ResultType>::StartableAwaitable(
-    StartableAwaitable&& other) noexcept
+  inline StartableAwaitable<ResultType>::StartableAwaitable(StartableAwaitable&& other) noexcept
     : handle_(std::exchange(other.handle_, {}))
   {}
 
   template<typename ResultType>
   inline StartableAwaitable<ResultType>&
-  StartableAwaitable<ResultType>::operator=(
-    StartableAwaitable&& other) noexcept
+  StartableAwaitable<ResultType>::operator=(StartableAwaitable&& other) noexcept
   {
-    if(this != &other)
+    if (this != &other)
     {
-      if(handle_)
+      if (handle_)
       {
         handle_.destroy();
       }
@@ -148,7 +145,7 @@ namespace AdServer::Commons
   template<typename ResultType>
   inline StartableAwaitable<ResultType>::~StartableAwaitable()
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.destroy();
     }
@@ -181,8 +178,7 @@ namespace AdServer::Commons
 
   template<typename ResultType>
   inline void
-  StartableAwaitable<ResultType>::await_suspend(
-    std::coroutine_handle<> continuation) noexcept
+  StartableAwaitable<ResultType>::await_suspend(std::coroutine_handle<> continuation) noexcept
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
@@ -192,12 +188,12 @@ namespace AdServer::Commons
   inline ResultType
   StartableAwaitable<ResultType>::await_resume()
   {
-    if(handle_.promise().exception)
+    if (handle_.promise().exception)
     {
       std::rethrow_exception(std::move(*handle_.promise().exception));
     }
 
-    if(!handle_.promise().result)
+    if (!handle_.promise().result)
     {
       throw std::logic_error("StartableAwaitable result is not initialized");
     }
@@ -235,16 +231,16 @@ namespace AdServer::Commons
     auto& promise = handle.promise();
     const bool destroy_on_completion = promise.destroy_on_completion;
     auto completion = std::move(promise.completion);
-    if(completion)
+    if (completion)
     {
       completion(std::move(promise.exception));
     }
-    else if(promise.continuation)
+    else if (promise.continuation)
     {
       resume_coroutine(promise.continuation);
     }
 
-    if(destroy_on_completion)
+    if (destroy_on_completion)
     {
       handle.destroy();
     }
@@ -284,11 +280,7 @@ namespace AdServer::Commons
   {
     std::promise<void> promise;
     auto future = promise.get_future();
-    awaitable.start(
-      [&promise](std::optional<std::exception_ptr>) mutable
-      {
-        promise.set_value();
-      });
+    awaitable.start([&promise](std::optional<std::exception_ptr>) mutable { promise.set_value(); });
     future.get();
     return awaitable.await_resume();
   }
@@ -297,17 +289,16 @@ namespace AdServer::Commons
     : handle_(handle)
   {}
 
-  inline StartableAwaitable<void>::StartableAwaitable(
-    StartableAwaitable&& other) noexcept
+  inline StartableAwaitable<void>::StartableAwaitable(StartableAwaitable&& other) noexcept
     : handle_(std::exchange(other.handle_, {}))
   {}
 
   inline StartableAwaitable<void>&
   StartableAwaitable<void>::operator=(StartableAwaitable&& other) noexcept
   {
-    if(this != &other)
+    if (this != &other)
     {
-      if(handle_)
+      if (handle_)
       {
         handle_.destroy();
       }
@@ -319,7 +310,7 @@ namespace AdServer::Commons
 
   inline StartableAwaitable<void>::~StartableAwaitable()
   {
-    if(handle_)
+    if (handle_)
     {
       handle_.destroy();
     }
@@ -348,8 +339,7 @@ namespace AdServer::Commons
   }
 
   inline void
-  StartableAwaitable<void>::await_suspend(
-    std::coroutine_handle<> continuation) noexcept
+  StartableAwaitable<void>::await_suspend(std::coroutine_handle<> continuation) noexcept
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
@@ -358,7 +348,7 @@ namespace AdServer::Commons
   inline void
   StartableAwaitable<void>::await_resume()
   {
-    if(handle_.promise().exception)
+    if (handle_.promise().exception)
     {
       std::rethrow_exception(std::move(*handle_.promise().exception));
     }
@@ -384,22 +374,21 @@ namespace AdServer::Commons
   }
 
   inline void
-  StartableAwaitable<void>::promise_type::FinalAwaiter::await_suspend(
-    Handle handle) const noexcept
+  StartableAwaitable<void>::promise_type::FinalAwaiter::await_suspend(Handle handle) const noexcept
   {
     auto& promise = handle.promise();
     const bool destroy_on_completion = promise.destroy_on_completion;
     auto completion = std::move(promise.completion);
-    if(completion)
+    if (completion)
     {
       completion(std::move(promise.exception));
     }
-    else if(promise.continuation)
+    else if (promise.continuation)
     {
       resume_coroutine(promise.continuation);
     }
 
-    if(destroy_on_completion)
+    if (destroy_on_completion)
     {
       handle.destroy();
     }
@@ -431,11 +420,7 @@ namespace AdServer::Commons
   {
     std::promise<void> promise;
     auto future = promise.get_future();
-    awaitable.start(
-      [&promise](std::optional<std::exception_ptr>) mutable
-      {
-        promise.set_value();
-      });
+    awaitable.start([&promise](std::optional<std::exception_ptr>) mutable { promise.set_value(); });
     future.get();
     awaitable.await_resume();
   }

@@ -28,22 +28,19 @@ namespace AdServer::Bidding
   void
   BidRequestState::execute() noexcept
   {
-    if(!parse_request_())
+    if (!parse_request_())
     {
       finish_(false);
       return;
     }
 
-    bid_frontend_->co_process_bid_request_(
-      shared_from_this()).start_detached(nullptr);
+    bid_frontend_->co_process_bid_request_(shared_from_this()).start_detached(nullptr);
   }
 
   std::string_view
   BidRequestState::channel_keywords() const noexcept
   {
-    return std::string_view(
-      request_info_.keywords.data(),
-      request_info_.keywords.size());
+    return std::string_view(request_info_.keywords.data(), request_info_.keywords.size());
   }
 
   void
@@ -52,12 +49,12 @@ namespace AdServer::Bidding
     try
     {
       String::SubString require_debug_info;
-      if(request_holder_.in())
+      if (request_holder_.in())
       {
         const HTTP::ParamList& params = request_holder_->request().params();
-        for(const auto& param : params)
+        for (const auto& param : params)
         {
-          if(param.name == REQUIRE_DEBUG_INFO)
+          if (param.name == REQUIRE_DEBUG_INFO)
           {
             require_debug_info = param.value;
             break;
@@ -90,7 +87,7 @@ namespace AdServer::Bidding
     }
 
     // fill request info & request type specific parameters
-    if(!this->read_request())
+    if (!this->read_request())
     {
       this->write_empty_response(400);
       return false;
@@ -103,7 +100,7 @@ namespace AdServer::Bidding
     bid_frontend_->process_geo(request_info_);
 
     // check interrupt
-    if(check_interrupt_(Stage::RequestParsing))
+    if (check_interrupt_(Stage::RequestParsing))
     {
       this->write_empty_response(0);
       return false;
@@ -134,19 +131,19 @@ namespace AdServer::Bidding
       campaign_match_result)
     noexcept
   {
-    if(!not_interrupted)
+    if (!not_interrupted)
     {
       return true;
     }
 
-    if(check_interrupt_(Stage::CampaignSelection))
+    if (check_interrupt_(Stage::CampaignSelection))
     {
       return true;
     }
 
     const auto& campaign_match_result_ref = *campaign_match_result;
 
-    if(campaign_match_result_ref.ad_slots.size())
+    if (campaign_match_result_ref.ad_slots.size())
     {
       set_current_stage(Stage::CampaignSelectionConsidering);
 
@@ -162,13 +159,13 @@ namespace AdServer::Bidding
 
     {
       std::lock_guard lock(debug_sink_mutex_);
-      if(debug_sink_.require_debug_info())
+      if (debug_sink_.require_debug_info())
       {
         debug_sink_.print_creative_selection_debug_info(
           campaign_match_result_ref,
           request_time_metering_.creative_selection ?
             &*request_time_metering_.creative_selection : nullptr);
-        if(!time_metering_debug_info_printed_)
+        if (!time_metering_debug_info_printed_)
         {
           request_time_metering_.total_time =
             Generics::Time::get_time_of_day() - start_processing_time_;
@@ -178,32 +175,31 @@ namespace AdServer::Bidding
       }
     }
 
-    if(check_interrupt_(Stage::CampaignSelectionConsidering))
+    if (check_interrupt_(Stage::CampaignSelectionConsidering))
     {
       return true;
     }
 
-    if(campaign_match_result_ref.ad_slots.size())
+    if (campaign_match_result_ref.ad_slots.size())
     {
       // check that any campaign selected (in any slot)
       bool ad_selected = false;
 
-      for(std::size_t ad_slot_i = 0;
+      for (std::size_t ad_slot_i = 0;
           ad_slot_i < campaign_match_result_ref.ad_slots.size();
           ++ad_slot_i)
       {
         const AdServer::Bidding::CampaignManager::
-          AdSlotResult& ad_slot_result =
-            campaign_match_result_ref.ad_slots[ad_slot_i];
+          AdSlotResult& ad_slot_result = campaign_match_result_ref.ad_slots[ad_slot_i];
 
-        if(ad_slot_result.selected_creatives.size() > 0)
+        if (ad_slot_result.selected_creatives.size() > 0)
         {
           ad_selected = true;
           break;
         }
       }
 
-      if(ad_selected)
+      if (ad_selected)
       {
         this->write_response(campaign_match_result_ref);
         return false;
@@ -216,9 +212,9 @@ namespace AdServer::Bidding
   void
   BidRequestState::finish_(bool write_empty_response) noexcept
   {
-    if(write_empty_response)
+    if (write_empty_response)
     {
-      if(require_debug_info_())
+      if (require_debug_info_())
       {
         print_time_metering_debug_info_();
       }
@@ -233,20 +229,19 @@ namespace AdServer::Bidding
   void
   BidRequestState::interrupt() noexcept
   {
-    if(!claim_response_())
+    if (!claim_response_())
     {
       return;
     }
 
-    write_interrupted_empty_response_(
-      convert_stage_to_string(get_current_stage()));
+    write_interrupted_empty_response_(convert_stage_to_string(get_current_stage()));
   }
 
   void
   BidRequestState::write_interrupted_empty_response(
     const String::SubString& interrupted_step) noexcept
   {
-    if(!claim_response_())
+    if (!claim_response_())
     {
       return;
     }
@@ -263,8 +258,7 @@ namespace AdServer::Bidding
     if (require_debug_info_())
     {
       print_available_request_debug_info_();
-      const auto in_progress_stats =
-        bid_frontend_->stats()->rtb_request_in_progress_stats();
+      const auto in_progress_stats = bid_frontend_->stats()->rtb_request_in_progress_stats();
       AdServer::Grpc::Stats user_bind_client_stats;
       if (bid_frontend_->user_bind_client())
       {
@@ -273,8 +267,7 @@ namespace AdServer::Bidding
       AdServer::Grpc::Stats user_info_client_stats;
       if (bid_frontend_->user_info_distributed_client())
       {
-        user_info_client_stats =
-          bid_frontend_->user_info_distributed_client()->stats();
+        user_info_client_stats = bid_frontend_->user_info_distributed_client()->stats();
       }
       AdServer::Grpc::Stats channel_client_stats;
       if (bid_frontend_->channel_client())
@@ -301,7 +294,7 @@ namespace AdServer::Bidding
           user_info_client_stats,
           channel_client_stats,
           campaign_client_stats);
-        if(!time_metering_debug_info_printed_)
+        if (!time_metering_debug_info_printed_)
         {
           request_time_metering_.total_time =
             Generics::Time::get_time_of_day() - start_processing_time_;
@@ -321,17 +314,14 @@ namespace AdServer::Bidding
   }
 
   void
-  BidRequestState::write_response_(
-    int code,
-    FCGI::HttpResponse_var response,
-    bool response_claimed)
+  BidRequestState::write_response_(int code, FCGI::HttpResponse_var response, bool response_claimed)
     noexcept
   {
     bool send_response = response_claimed || claim_response_();
 
-    if(send_response)
+    if (send_response)
     {
-      if(require_debug_info_())
+      if (require_debug_info_())
       {
         std::lock_guard lock(debug_sink_mutex_);
         debug_sink_.write_response(response, code, resolved_user_id_);
@@ -361,9 +351,7 @@ namespace AdServer::Bidding
     const StageResult* stage) noexcept
   {
     std::lock_guard lock(debug_sink_mutex_);
-    debug_sink_.print_user_resolving_debug_info(
-      user_resolving_debug_info,
-      stage);
+    debug_sink_.print_user_resolving_debug_info(user_resolving_debug_info, stage);
   }
 
   void
@@ -389,14 +377,11 @@ namespace AdServer::Bidding
   BidRequestState::print_available_request_debug_info_() noexcept
   {
     std::lock_guard lock(debug_sink_mutex_);
-    if(debug_sink_.require_debug_info() &&
+    if (debug_sink_.require_debug_info() &&
       !request_debug_info_printed_ &&
       get_current_stage() != Stage::Initial)
     {
-      debug_sink_.print_request_debug_info(
-        request_info_,
-        resolved_user_id_,
-        channel_keywords());
+      debug_sink_.print_request_debug_info(request_info_, resolved_user_id_, channel_keywords());
       request_debug_info_printed_ = true;
     }
   }
@@ -405,7 +390,7 @@ namespace AdServer::Bidding
   BidRequestState::print_time_metering_debug_info_() noexcept
   {
     std::lock_guard lock(debug_sink_mutex_);
-    if(debug_sink_.require_debug_info() && !time_metering_debug_info_printed_)
+    if (debug_sink_.require_debug_info() && !time_metering_debug_info_printed_)
     {
       request_time_metering_.total_time =
         Generics::Time::get_time_of_day() - start_processing_time_;

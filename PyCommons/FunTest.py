@@ -40,7 +40,7 @@ class TestResult:
     self.total    = 0
     self.failures = []  # (test name, excinfo) list
     self.errors   = []  #  --//--
-    
+
   def startTest( self, testId, desc, level ):
     self.total += 1
     print '[%d] %s ...' % (level, desc),
@@ -88,7 +88,7 @@ class TestResult:
     print 'total actions executed: %d, errors: %d, failures: %d' % \
           (self.total, len(self.errors), len(self.failures))
     print
-    
+
   def printErrorList( self, flavour, errors ):
     for desc, xInfo in errors:
       print self.separator1
@@ -151,9 +151,9 @@ class TestSuite:
         xInfo = self.__excInfo()
         self.logStack(xInfo)
         # todo/problem remains: what to do - some threads are still running...
-    
+
   def main( self ):
-    
+
     r = self.info
     print '** funtest at %s, level=%d' % (r.workDir, r.testLevel)
     self._run()
@@ -176,7 +176,7 @@ class TestSuite:
       return joinId(self.id, test.classDesc())
     else:
       return escapeId(test.__doc__ or test.__name__)
- 
+
   def testDesc( self, test ):
     if isinstance(test, TestSuite):
       desc = test.classDesc()
@@ -186,12 +186,12 @@ class TestSuite:
       return desc
     else:
       return self.classDesc() + ': ' + desc
-  
+
   def test( self, level, test, dep = True ):
     desc = self.testDesc(test)
     if self.setUpFailed and level < self.info.testLevel:
       print '[%d] %s ... FAIL' % (level, desc)
-      return False  
+      return False
     if not dep or level > self.info.testLevel:
       print '[%d] %s ... SKIPPED' % (level, desc)
       return False
@@ -374,14 +374,14 @@ def makeTestInfo( workDir = '.' ):
   pid = os.getpid()
   host = os.uname()[1]
   suffix = '-%s-%d' % (host, pid)  # to make unique identifiers
-  
+
   tmpDir = os.path.join(workDir, 'output')
   testLevel = None
   logLevel  = 29
   prefix, tmpDir, testLevel, logLevel = parseArgs(tmpDir, testLevel, logLevel)
   if testLevel is None:
     testLevel = 2
-    
+
   result = TestResult(prefix)
   return TestInfo(prefix, workDir, testLevel, tmpDir, logLevel, result)
 
@@ -398,8 +398,8 @@ def runTests( info, root ):
         (int(execTime),
          int(execTime * 1000000 % 1000000))
   return result
-  
-  
+
+
 def main():
   info = makeTestInfo()
   suites = collectSuites(info, __import__('__main__'))

@@ -1,10 +1,7 @@
 
 #include "BrokenRequestTest.hpp"
 
-REFLECT_UNIT(BrokenRequestTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(BrokenRequestTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 namespace
 {
@@ -24,10 +21,7 @@ BrokenRequestTest::test_case(
   client.process_request(request);
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      expected,
-      client.debug_info.trigger_channels).check(),
+    ChannelsCheck(this, expected, client.debug_info.trigger_channels).check(),
     description +
         ". Expected trigger_channels check");
 

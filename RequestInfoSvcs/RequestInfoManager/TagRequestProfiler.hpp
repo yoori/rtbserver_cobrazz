@@ -9,9 +9,7 @@
 
 #include "TagRequestProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   struct RequestPool;
 
@@ -58,5 +56,4 @@ namespace RequestInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<TagRequestProfiler>
     TagRequestProfiler_var;
-}
 }

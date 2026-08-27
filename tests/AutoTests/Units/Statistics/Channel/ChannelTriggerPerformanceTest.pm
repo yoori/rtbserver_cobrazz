@@ -49,6 +49,7 @@ sub create_channels
         ? %{$channel->{keyword_list}}
         : map { $_ => 'A' } split(/\W+/, $channel->{keyword_list});
     }
+
     if (defined $channel->{search_list})
     {
       %search_keywords = ref $channel->{search_list}
@@ -59,6 +60,7 @@ sub create_channels
     {
       %search_keywords = %page_keywords;
     }
+
     if (defined $channel->{url_list})
     {
       %urls = ref $channel->{url_list}
@@ -127,7 +129,7 @@ sub create_channels
             $self->{ns_},
             $negative . $self->{keywords_}->{$keyword},
             $trigger_list->{trigger_type},
-            $trigger_list->{list}->{$keyword})->channel_trigger_id()); 
+            $trigger_list->{list}->{$keyword})->channel_trigger_id());
 
         $self->{ns_}->output("$channel->{name}/KEYWORDS/$keyword",
           $self->{keywords_}->{$keyword});
@@ -322,18 +324,18 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'P',
           time_from => 0,
-          time_to => 10 * MINUTE, 
+          time_to => 10 * MINUTE,
           minimum_visits => 1 },
         { trigger_type => 'U',
           time_from => 0,
-          time_to => 10 * MINUTE, 
+          time_to => 10 * MINUTE,
           minimum_visits => 1 } ] },
     { name => "Channel3",
       keyword_list => join(',', map { "Keyword3_$_" } 1 .. 3),
       behavioral_parameters => [
         { trigger_type => 'P',
           time_from => 0,
-          time_to => 10 * MINUTE, 
+          time_to => 10 * MINUTE,
           minimum_visits => 1 } ] },
     { name => "ChannelCMP",
       account_id => $self->{cmp_account},
@@ -342,11 +344,11 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'P',
           time_from => 0,
-          time_to => DAY, 
+          time_to => DAY,
           minimum_visits => 1 },
         { trigger_type => 'S',
           time_from => 0,
-          time_to => DAY, 
+          time_to => DAY,
           minimum_visits => 1 } ] },
     { name => "ChannelWithoutCCG",
       keyword_list => join(',', map { "Keyword4_$_" } 1 .. 5) .
@@ -355,7 +357,7 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'P',
           time_from => 0,
-          time_to => 10 * MINUTE, 
+          time_to => 10 * MINUTE,
           minimum_visits => 1 } ] },
     { name => "KeywordChannel1",
       channel_type => 'K',
@@ -363,7 +365,7 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'S',
           time_from => 0,
-          time_to => MINUTE, 
+          time_to => MINUTE,
           minimum_visits => 1 } ] },
     { name => "KeywordChannel2",
       channel_type => 'K',
@@ -371,7 +373,7 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'S',
           time_from => 0,
-          time_to => MINUTE,    
+          time_to => MINUTE,
           minimum_visits => 1 } ] },
     { name => "KeywordChannel3",
       channel_type => 'K',
@@ -379,7 +381,7 @@ sub reason_of_impression_
       behavioral_parameters => [
         { trigger_type => 'S',
           time_from => 0,
-          time_to => MINUTE,    
+          time_to => MINUTE,
           minimum_visits => 1 } ] },
     { name => "EChannel",
       expression => "Channel1|Channel2" },
@@ -400,10 +402,10 @@ sub reason_of_impression_
       { channel => "KeywordChannel3", max_cpc_bid => 1 } ] }]);
 }
 
-sub behavioral_params_restrictions_ 
-{     
+sub behavioral_params_restrictions_
+{
   my ($self, $ns) = @_;
-          
+
   my $testcase = new ChannelTriggerPerformanceTest::Case($ns, 'Test#2.2');
 
   $testcase->create_channels([
@@ -418,7 +420,7 @@ sub behavioral_params_restrictions_
           minimum_visits => 2 },
         { trigger_type => 'U',
           time_from => 0,
-          time_to => 5 * MINUTE, 
+          time_to => 5 * MINUTE,
           minimum_visits => 1 } ] },
     { name => "Channel2",
       keyword_list => join(',', map { "Keyword2_$_" } 1 .. 5),
@@ -430,7 +432,7 @@ sub behavioral_params_restrictions_
           minimum_visits => 2 },
         { trigger_type => 'S',
           time_from => 5 * MINUTE,
-          time_to => 10 * MINUTE, 
+          time_to => 10 * MINUTE,
           minimum_visits => 2 },
         { trigger_type => 'U',
           time_from => 0,
@@ -442,11 +444,11 @@ sub behavioral_params_restrictions_
       behavioral_parameters => [
         { trigger_type => 'P',
           time_from => 0,
-          time_to => DAY, 
+          time_to => DAY,
           minimum_visits => 2 },
         { trigger_type => 'S',
           time_from => 0,
-          time_to => 3 * DAY,        
+          time_to => 3 * DAY,
           minimum_visits => 2 },
         { trigger_type => 'U',
           time_from => 0,
@@ -458,17 +460,17 @@ sub behavioral_params_restrictions_
     { name => "Campaign1",
       cpm => 10,
       channel => "Channel1" },
-    { name => "Campaign2", 
-      cpm => 11, 
+    { name => "Campaign2",
+      cpm => 11,
       channel => "Channel2" },
-    { name => "Campaign3", 
+    { name => "Campaign3",
       cpm => 12,
       size_id => DB::Defaults::instance()->size_300x250,
       channel => "Channel3" },
   ]);
 }
 
-sub trigger_status_restrictions_ 
+sub trigger_status_restrictions_
 {
   my ($self, $ns) = @_;
 
@@ -510,7 +512,7 @@ sub trigger_status_restrictions_
     channel => "Channel" }]);
 }
 
-sub channels_linked_with_text_campaign_ 
+sub channels_linked_with_text_campaign_
 {
   my ($self, $ns) = @_;
 
@@ -546,11 +548,11 @@ $testcase->create_channel_targeted_text_campaigns([
     channel => "Channel1" },
   { name => "CTTCampaign2",
     campaign => "CTTCampaign1",
-    cpm => 5, 
+    cpm => 5,
     channel => "Channel1" } ] );
 }
 
-sub last_visits_for_history_channels_ 
+sub last_visits_for_history_channels_
 {
   my ($self, $ns) = @_;
 

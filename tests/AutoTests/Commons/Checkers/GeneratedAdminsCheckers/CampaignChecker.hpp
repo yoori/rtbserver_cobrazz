@@ -36,10 +36,7 @@ namespace AutoTest
       const Expected& expected = Expected(),
       CampaignAdmin::Modificator expand = CampaignAdmin::EXPAND);
 
-    CampaignChecker(
-      BaseUnit* test,
-      unsigned long ccg_id,
-      NotPresentTag);
+    CampaignChecker(BaseUnit* test, unsigned long ccg_id, NotPresentTag);
 
     virtual ~CampaignChecker() noexcept;
 

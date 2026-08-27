@@ -34,7 +34,7 @@ sub store_link
 {
   my ($self,  $entity, $primary_key, $args) = @_;
   push (@{$self->{$entity->_table}}, $entity);
-  $args->{$primary_key} = $entity->{$primary_key} 
+  $args->{$primary_key} = $entity->{$primary_key}
     if ($primary_key);
 }
 
@@ -46,16 +46,17 @@ sub __create_entity
  (my $class = $blank->{__entity}) =~ s/^.+::(\w+)$/$1/;
   my $prefix = lc $class;
   my $table = lc $blank->{__entity}->_table;
-  my @fields = ($blank->{__entity}->_fields, 
+  my @fields = ($blank->{__entity}->_fields,
     $blank->{__entity}->_unique, $blank->{__entity}->_external_fields);
   my $primary_key = $blank->{__entity}->_sequence;
   if ($primary_key && exists $args{$primary_key})
   {
     if (UNIVERSAL::isa($args{$primary_key}, 'DB::Entity::Base::Blank'))
     {
-      $common_args->{$primary_key} = 
+      $common_args->{$primary_key} =
         $ns->create($args{$primary_key})->{$primary_key};
     }
+
     if (defined $counters->{$primary_key})
     {
       ++$counters->{$primary_key};
@@ -71,8 +72,8 @@ sub __create_entity
       if (exists $args{$arg_name})
       {
         $blank->{$f} = $args{$arg_name};
-        ++$counters->{$arg_name} 
-          if defined $counters->{$arg_name};  
+        ++$counters->{$arg_name}
+          if defined $counters->{$arg_name};
         last;
       }
     }
@@ -86,11 +87,11 @@ sub __create_tables
 {
   my ($self, $ns, $args, $args_count) = @_;
   my $class = ref($self) || $self;
- 
+
   for my $blank ($self->tables)
   {
      $self->__create_entity(
-       $ns, $blank, $args, {}, 
+       $ns, $blank, $args, {},
        $args_count, \&store_table);
   }
 }

@@ -24,10 +24,7 @@ class ChannelTriggerPerformanceTest: public BaseUnit
   };
 
 public:
-  ChannelTriggerPerformanceTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  ChannelTriggerPerformanceTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var),
       conn_(open_pq()),
       today_(),

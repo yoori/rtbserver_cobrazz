@@ -37,7 +37,7 @@ sub new
   $self->{case_name} = $case_name;
 
   return $self;
-} 
+}
 
 1;
 
@@ -56,8 +56,8 @@ sub create_site_
   $sub_ns->output("Site/NAME", make_autotest_name($sub_ns, "inserted"));
 
   my $fc = $sub_ns->create(
-    FreqCap => { 
-      window_length => 11, 
+    FreqCap => {
+      window_length => 11,
       window_count => 1 });
 
   $sub_ns->output("FC", $fc);
@@ -115,9 +115,9 @@ sub delete_site_
 
   $test_case->create_publishers([
     { name => "Publisher",
-      site_freq_cap_id => 
-        DB::FreqCap->blank( 
-          window_length => 22, 
+      site_freq_cap_id =>
+        DB::FreqCap->blank(
+          window_length => 22,
           window_count => 1) }] );
 
   $test_case->{ns}->output("FC/WindowLength", 22);
@@ -132,8 +132,8 @@ sub update_freq_caps_
   $test_case->create_publishers([
     { name => "Publisher",
       site_freq_cap_id =>
-        DB::FreqCap->blank( 
-          window_length => 30, 
+        DB::FreqCap->blank(
+          window_length => 30,
           window_count => 1) } ] );
 
   $test_case->{ns}->output("FC/WindowLength", 30);

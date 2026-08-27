@@ -86,8 +86,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::nullopt;
         }
 
-        std::string passback_imp_url =
-          data.instantiate_info->passback_pixel_url;
+        std::string passback_imp_url = data.instantiate_info->passback_pixel_url;
         passback_imp_url += "?requestid=";
         passback_imp_url += data.request_params->request_id.to_string();
         passback_imp_url += "&random=";
@@ -103,12 +102,10 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           passback_imp_url += '&';
           passback_imp_url += AdProtocol::USER_ID_DISTRIBUTION_HASH;
           passback_imp_url += '=';
-          passback_imp_url +=
-            to_string(*data.inst_params->user_id_hash_mod);
+          passback_imp_url += to_string(*data.inst_params->user_id_hash_mod);
         }
 
-        const AccountIdList& consider_pub_pixel_accounts =
-          data.consider_pub_pixel_accounts();
+        const AccountIdList& consider_pub_pixel_accounts = data.consider_pub_pixel_accounts();
         if (!consider_pub_pixel_accounts.empty())
         {
           passback_imp_url += '&';

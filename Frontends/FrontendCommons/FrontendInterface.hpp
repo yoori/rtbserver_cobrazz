@@ -112,8 +112,7 @@ namespace FrontendCommons
     ~FrontendInterface() noexcept = default;
 
     static bool
-    parse_args_(
-      FCGI::HttpRequestHolder_var request_holder)
+    parse_args_(FCGI::HttpRequestHolder_var request_holder)
       /*throw(eh::Exception)*/;
   };
 
@@ -124,13 +123,11 @@ namespace FrontendCommons
   {
   public:
     virtual RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request)
+    co_handle_request(FCGI::HttpRequestHolder_var request)
       noexcept = 0;
 
     virtual RequestTask
-    co_handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request_noparams(FCGI::HttpRequestHolder_var request_holder)
       noexcept;
 
     void

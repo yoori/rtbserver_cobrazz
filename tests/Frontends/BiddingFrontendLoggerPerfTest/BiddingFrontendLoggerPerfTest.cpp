@@ -86,7 +86,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -100,32 +100,32 @@ namespace
     options.geo_period = *opt_geo_period;
     options.log_root = *opt_log_root;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
 
-    if(options.geo_shards == 0)
+    if (options.geo_shards == 0)
     {
       throw std::runtime_error("--geo-shards must be > 0");
     }
 
-    if(options.keys == 0)
+    if (options.keys == 0)
     {
       throw std::runtime_error("--keys must be > 0");
     }
 
-    if(options.geo_period == 0)
+    if (options.geo_period == 0)
     {
       throw std::runtime_error("--geo-period must be > 0");
     }
 
-    if(options.log_root.empty())
+    if (options.log_root.empty())
     {
       throw std::runtime_error("--log-root must not be empty");
     }
@@ -137,7 +137,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -162,12 +162,10 @@ namespace
     std::vector<GeoSample> samples;
     samples.reserve(key_count);
 
-    for(std::uint64_t i = 0; i < key_count; ++i)
+    for (std::uint64_t i = 0; i < key_count; ++i)
     {
       GeoSample sample;
-      sample.ip =
-        "85.249." + std::to_string((i / 256) % 256) + "." +
-        std::to_string(i % 256);
+      sample.ip = "85.249." + std::to_string((i / 256) % 256) + "." + std::to_string(i % 256);
       sample.source = (i % 2 == 0 ? "msc" : "app");
       sample.lat = AdServer::CampaignSvcs::CoordDecimal("45.0355");
       sample.lon = AdServer::CampaignSvcs::CoordDecimal("38.975");
@@ -216,7 +214,7 @@ extern "C"
   {
     std::uint64_t checksum = 0;
 
-    for(std::uint64_t i = 0; i < count; ++i)
+    for (std::uint64_t i = 0; i < count; ++i)
     {
       const GeoSample& sample = samples[(i + offset) % samples.size()];
       AdServer::Bidding::BiddingFrontendLogger::GeoParams params;
@@ -239,9 +237,7 @@ main(int argc, char** argv)
 
     Logging::Logger_var logger(new Logging::Null::Logger);
     Generics::ActiveObjectCallback_var callback(
-      new Logging::ActiveObjectCallbackImpl(
-        logger,
-        "BiddingFrontendLoggerPerfTest"));
+      new Logging::ActiveObjectCallbackImpl(logger, "BiddingFrontendLoggerPerfTest"));
     AdServer::Bidding::BiddingFrontendLogger_var frontend_logger(
       new AdServer::Bidding::BiddingFrontendLogger(
         callback,
@@ -257,7 +253,7 @@ main(int argc, char** argv)
     const CpuTimes cpu_started = current_cpu_times();
 
     std::uint64_t checksum = 0;
-    if(options.threads == 1)
+    if (options.threads == 1)
     {
       checksum = bidding_frontend_logger_process_geo_benchmark(
         *frontend_logger,
@@ -273,10 +269,9 @@ main(int argc, char** argv)
 
       const std::uint64_t base_count = options.count / options.threads;
       const std::uint64_t extra_count = options.count % options.threads;
-      for(std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
+      for (std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
       {
-        const std::uint64_t thread_count =
-          base_count + (thread_i < extra_count ? 1 : 0);
+        const std::uint64_t thread_count = base_count + (thread_i < extra_count ? 1 : 0);
         threads.emplace_back(
           [
             &frontend_logger,
@@ -295,12 +290,12 @@ main(int argc, char** argv)
           });
       }
 
-      for(auto& thread : threads)
+      for (auto& thread : threads)
       {
         thread.join();
       }
 
-      for(const std::uint64_t thread_checksum : checksums)
+      for (const std::uint64_t thread_checksum : checksums)
       {
         checksum += thread_checksum;
       }
@@ -312,8 +307,7 @@ main(int argc, char** argv)
     frontend_logger->deactivate_object();
     frontend_logger->wait_object();
 
-    const double elapsed = std::chrono::duration<double>(
-      finished_at - started_at).count();
+    const double elapsed = std::chrono::duration<double>(finished_at - started_at).count();
     const double user_cpu = cpu_finished.user - cpu_started.user;
     const double sys_cpu = cpu_finished.sys - cpu_started.sys;
     const double rate = static_cast<double>(options.count) / elapsed;
@@ -328,8 +322,7 @@ main(int argc, char** argv)
       << "rate_per_sec=" << format_float(rate) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'
       << "sys_cpu_sec=" << format_float(sys_cpu) << '\n'
-      << "cpu_sec=" << format_float(user_cpu + sys_cpu) << '\n'
-      << "checksum=" << checksum << '\n';
+      << "cpu_sec=" << format_float(user_cpu + sys_cpu) << '\n' << "checksum=" << checksum << '\n';
 
     return 0;
   }

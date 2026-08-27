@@ -30,17 +30,13 @@ namespace FrontendCommons
 
   inline
   Generics::MonoString
-  normalize_ifa(
-    std::string_view idfa,
-    Generics::MonoAllocatorArena* resource);
+  normalize_ifa(std::string_view idfa, Generics::MonoAllocatorArena* resource);
 
   template<typename RequestInfoType>
   struct RequestParamProcessor:
     public ReferenceCounting::AtomicImpl
   {
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const = 0;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const = 0;
 
   protected:
     virtual
@@ -73,9 +69,7 @@ namespace FrontendCommons
       bool truncate = false,
       bool mime_decode = false);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     StringType RequestInfoType::* field_;
@@ -97,9 +91,7 @@ namespace FrontendCommons
       bool lower = false,
       bool truncate = false);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     StringType RequestInfoType::* field_;
@@ -118,12 +110,9 @@ namespace FrontendCommons
       : field_(field)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const
     {
-      if(value.size() == 1 && (
-           *value.begin() == '0' || *value.begin() == '1'))
+      if (value.size() == 1 && (*value.begin() == '0' || *value.begin() == '1'))
       {
         request_info.*field_ = (*value.begin() == '1');
       }
@@ -142,9 +131,7 @@ namespace FrontendCommons
   public:
     NumberParamProcessor(NumberContainerType RequestInfoType::* field);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     NumberContainerType RequestInfoType::* field_;
@@ -157,13 +144,9 @@ namespace FrontendCommons
   class DecimalParamProcessor: public RequestParamProcessor<RequestInfoType>
   {
   public:
-    DecimalParamProcessor(
-      NumberContainerType RequestInfoType::* field,
-      bool strict = true);
+    DecimalParamProcessor(NumberContainerType RequestInfoType::* field, bool strict = true);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     NumberContainerType RequestInfoType::* field_;
@@ -175,15 +158,11 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    StringEqualParamProcessor(
-      bool RequestInfoType::* field,
-      const String::SubString& true_value);
+    StringEqualParamProcessor(bool RequestInfoType::* field, const String::SubString& true_value);
 
     virtual ~StringEqualParamProcessor() noexcept {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     bool RequestInfoType::* field_;
@@ -201,9 +180,7 @@ namespace FrontendCommons
       unsigned long max_len = MAX_URL_LENGTH,
       unsigned long view_flags = HTTP::HTTPAddress::VW_FULL);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     StringType RequestInfoType::* field_;
@@ -222,9 +199,7 @@ namespace FrontendCommons
       unsigned long max_len = MAX_URL_LENGTH);
 
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     HTTP::HTTPAddress RequestInfoType::* field_;
@@ -240,9 +215,7 @@ namespace FrontendCommons
       Generics::Time RequestInfoType::* field,
       const Generics::Time& min = Generics::Time::ZERO);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     Generics::Time RequestInfoType::* field_;
@@ -259,9 +232,7 @@ namespace FrontendCommons
       const Generics::Time& min = Generics::Time::ZERO);
 
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     Generics::Time RequestInfoType::* field_;
@@ -274,9 +245,7 @@ namespace FrontendCommons
   public:
     RequestIdParamProcessor(AdServer::Commons::RequestId RequestInfoType::* field);
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     AdServer::Commons::RequestId RequestInfoType::* field_;
@@ -295,9 +264,7 @@ namespace FrontendCommons
       ContainerType RequestInfoType::* field,
       const ElementConverterType& converter = ElementConverterType());
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   private:
     ContainerType RequestInfoType::* field_;
@@ -324,20 +291,16 @@ namespace FrontendCommons
 
   struct RequestIdConverter
   {
-    bool operator()(
-      const String::SubString& value,
-      AdServer::Commons::RequestId& res) const
+    bool operator()(const String::SubString& value, AdServer::Commons::RequestId& res) const
     {
-      if(value.length() < AdServer::Commons::RequestId::encoded_size()) // hex representation
+      if (value.length() < AdServer::Commons::RequestId::encoded_size()) // hex representation
       {
         Generics::ArrayByte decoded_value;
-        int decoded_value_len = String::StringManip::hex_decode(
-          value, decoded_value, true);
+        int decoded_value_len = String::StringManip::hex_decode(value, decoded_value, true);
         decoded_value_len = std::min(decoded_value_len, 8);
         AdServer::Commons::RequestId result_request_id; // filled by zeros
         std::copy(
-          std::reverse_iterator<const unsigned char*>(
-            decoded_value.get() + decoded_value_len),
+          std::reverse_iterator<const unsigned char*>(decoded_value.get() + decoded_value_len),
           std::reverse_iterator<const unsigned char*>(decoded_value.get()),
           std::reverse_iterator<AdServer::Commons::RequestId::iterator>(
             result_request_id.begin() + result_request_id.size()));
@@ -361,11 +324,9 @@ namespace FrontendCommons
       RequestInfoType, ContainerType, SepCategoryType, IntConverter>
   {
   public:
-    NumberContainerParamProcessor(
-      ContainerType RequestInfoType::* field)
+    NumberContainerParamProcessor(ContainerType RequestInfoType::* field)
       : ContainerParamProcessor<
-          RequestInfoType, ContainerType, SepCategoryType, IntConverter>(
-            field, IntConverter())
+          RequestInfoType, ContainerType, SepCategoryType, IntConverter>(field, IntConverter())
     {}
   };
 
@@ -378,8 +339,7 @@ namespace FrontendCommons
       RequestInfoType, ContainerType, SepCategoryType, RequestIdConverter>
   {
   public:
-    RequestIdContainerParamProcessor(
-      ContainerType RequestInfoType::* field)
+    RequestIdContainerParamProcessor(ContainerType RequestInfoType::* field)
       : ContainerParamProcessor<
           RequestInfoType, ContainerType, SepCategoryType, RequestIdConverter>(
             field, RequestIdConverter())
@@ -391,17 +351,14 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    OptOutParamProcessor(
-      AdServer::CampaignSvcs::UserStatus RequestInfoType::* field)
+    OptOutParamProcessor(AdServer::CampaignSvcs::UserStatus RequestInfoType::* field)
       : field_(field)
     {}
 
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    process(RequestInfoType& request_info, const String::SubString& value) const
     {
-      if(value == FrontendCommons::Cookies::OPTOUT_TRUE_VALUE)
+      if (value == FrontendCommons::Cookies::OPTOUT_TRUE_VALUE)
       {
         request_info.user_status = AdServer::CampaignSvcs::US_OPTOUT;
       }
@@ -416,14 +373,11 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    LocationNameParamProcessor(
-      Location_var RequestInfoType::* field)
+    LocationNameParamProcessor(Location_var RequestInfoType::* field)
       : field_(field)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   protected:
     Location_var RequestInfoType::* field_;
@@ -434,14 +388,11 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    LocationCountryParamProcessor(
-        FieldType RequestInfoType::* field)
+    LocationCountryParamProcessor(FieldType RequestInfoType::* field)
       : field_(field)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   protected:
     FieldType RequestInfoType::* field_;
@@ -452,14 +403,11 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    LocationCoordParamProcessor(
-      CoordLocation_var RequestInfoType::* field)
+    LocationCoordParamProcessor(CoordLocation_var RequestInfoType::* field)
       : field_(field)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const;
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const;
 
   protected:
     CoordLocation_var RequestInfoType::* field_;
@@ -470,9 +418,7 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const
     {
       request_info.log_as_test = (value[0] != '0');
       request_info.test_request = (value[0] == '1');
@@ -484,16 +430,13 @@ namespace FrontendCommons
     public RequestParamProcessor<RequestInfoType>
   {
   public:
-    UuidParamProcessor(
-      Generics::Uuid RequestInfoType::* field)
+    UuidParamProcessor(Generics::Uuid RequestInfoType::* field)
       : field_(field)
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const
     {
-      if(!value.empty())
+      if (!value.empty())
       {
         try
         {
@@ -539,23 +482,20 @@ namespace FrontendCommons
     {}
 
     virtual void
-    process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    process(RequestInfoType& request_info, const String::SubString& value) const
       noexcept
     {
       try
       {
-        if(value != AdServer::Commons::PROBE_USER_ID.to_string() &&
+        if (value != AdServer::Commons::PROBE_USER_ID.to_string() &&
            ((request_info.*field_).is_null() || allow_rewrite_))
         {
-          Generics::SignedUuid uid =
-            user_id_controller_->verify(value, user_id_type_);
+          Generics::SignedUuid uid = user_id_controller_->verify(value, user_id_type_);
 
           if (!uid.uuid().is_null())
           {
             request_info.*field_ = uid.uuid();
-            if(signed_user_id_field_ != nullptr)
+            if (signed_user_id_field_ != nullptr)
             {
               request_info.*signed_user_id_field_ = uid.str();
             }
@@ -598,9 +538,7 @@ namespace FrontendCommons
         alt_processor_(ReferenceCounting::add_ref(alt_processor))
     {}
 
-    virtual void process(
-      RequestInfoType& request_info,
-      const String::SubString& value) const
+    virtual void process(RequestInfoType& request_info, const String::SubString& value) const
     {
       std::string decoded;
 
@@ -617,22 +555,21 @@ namespace FrontendCommons
       std::string::const_iterator end_name = decoded.begin();
       bool replace_double_amp = false;
       bool found_eq = false;
-      for(std::string::const_iterator it = decoded.begin();
-          it <= decoded.end(); ++it)
+      for (std::string::const_iterator it = decoded.begin(); it <= decoded.end(); ++it)
       {
-        if(it == decoded.end() || *it == AMP)
+        if (it == decoded.end() || *it == AMP)
         {
-          if(it + 1 < decoded.end() && *(it + 1) == AMP)
+          if (it + 1 < decoded.end() && *(it + 1) == AMP)
           {
             replace_double_amp = true;
             ++it;// skip next amp
           }
-          else if(start_name < end_name)
+          else if (start_name < end_name)
           {
             std::string purify_value;
             String::SubString param_name(&*start_name, &*end_name);
             String::SubString param_value(&*(end_name + 1), it - end_name - 1);
-            if(replace_double_amp)
+            if (replace_double_amp)
             {
               String::StringManip::replace(
                 param_value,
@@ -642,13 +579,12 @@ namespace FrontendCommons
               param_value = purify_value;
             }
 
-            typename ParamProcessorMap::const_iterator param_it =
-              processors_.find(param_name);
-            if(param_it != processors_.end())
+            typename ParamProcessorMap::const_iterator param_it = processors_.find(param_name);
+            if (param_it != processors_.end())
             {
               param_it->second->process(request_info, param_value);
             }
-            else if(alt_processor_)
+            else if (alt_processor_)
             {
               alt_processor_->process(request_info, param_name, param_value);
             }
@@ -659,7 +595,7 @@ namespace FrontendCommons
             end_name = start_name;
           }
         }
-        else if(!found_eq && *it == EQ)
+        else if (!found_eq && *it == EQ)
         {
           end_name = it;
           found_eq = true;

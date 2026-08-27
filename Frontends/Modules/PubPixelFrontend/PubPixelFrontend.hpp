@@ -53,8 +53,7 @@ namespace AdServer::PubPixel
      * @param uri URI provided by Apache.
      */
     virtual bool
-    will_handle(
-      const String::SubString& uri) noexcept;
+    will_handle(const String::SubString& uri) noexcept;
 
     /** Executed if will_handle returns true; processes an HTTP request. Provides
      *  browsing context to a Channel Manager, returns list of channels in the HTTP
@@ -63,8 +62,7 @@ namespace AdServer::PubPixel
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -111,9 +109,7 @@ namespace AdServer::PubPixel
     void parse_config_() /*throw(Exception)*/;
 
     FrontendCommons::RequestTask
-    process_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponse_var response)
+    process_request_(FCGI::HttpRequestHolder_var request_holder, FCGI::HttpResponse_var response)
       noexcept;
 
   private:

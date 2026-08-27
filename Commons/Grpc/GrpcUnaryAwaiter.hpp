@@ -23,12 +23,8 @@ namespace AdServer::Grpc
   class GrpcUnaryAwaiter final
   {
   public:
-    using Callback = std::function<void(
-      const grpc::Status&,
-      ResponseHolder<ResponseType>&&)>;
-    using Method = void (AsyncClientType::*)(
-      const RequestType&,
-      Callback);
+    using Callback = std::function<void(const grpc::Status&, ResponseHolder<ResponseType>&&)>;
+    using Method = void (AsyncClientType::*)(const RequestType&, Callback);
 
     GrpcUnaryAwaiter(
       std::shared_ptr<AsyncClientType> client,
@@ -123,9 +119,7 @@ namespace AdServer::Grpc
         request_,
         [state = std::move(callback_state),
          executor_pool = std::move(callback_executor_pool),
-         handle](
-          const grpc::Status& status,
-          ResponseHolder<ResponseType>&& response_holder) mutable
+         handle](const grpc::Status& status, ResponseHolder<ResponseType>&& response_holder) mutable
         {
           state->status = status;
           state->response_holder = std::move(response_holder);
@@ -151,14 +145,14 @@ namespace AdServer::Grpc
     ResponseType,
     ResultType>::await_resume()
   {
-    if(state_->exception)
+    if (state_->exception)
     {
       std::rethrow_exception(std::move(*state_->exception));
     }
 
-    if(!state_->response_holder)
+    if (!state_->response_holder)
     {
-      if(state_->status.ok())
+      if (state_->status.ok())
       {
         throw std::logic_error(default_response_error_);
       }

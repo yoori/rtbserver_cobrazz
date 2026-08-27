@@ -33,8 +33,7 @@ private:
   using Logging::LoggerCallbackHolder::callback;
   using Logging::LoggerCallbackHolder::logger;
 
-  typedef std::unique_ptr<xsd::AdServer::Configuration::
-    DictionaryProviderConfigType> ConfigPtr;
+  typedef std::unique_ptr<xsd::AdServer::Configuration::DictionaryProviderConfigType> ConfigPtr;
 
   void load_config_(const char* name) /*throw(Exception)*/;
   void init_logger_() /*throw(Exception)*/;

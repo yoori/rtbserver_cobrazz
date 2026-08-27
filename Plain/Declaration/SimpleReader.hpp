@@ -32,9 +32,7 @@ namespace Declaration
       std::string field_type_suffix;
     };
 
-    SimpleReader(
-      const char* name_val,
-      const CppReadTraits& cpp_read_traits)
+    SimpleReader(const char* name_val, const CppReadTraits& cpp_read_traits)
       noexcept;
 
     /* BaseReader */
@@ -56,9 +54,7 @@ namespace Declaration
 namespace Declaration
 {
   inline
-  SimpleReader::SimpleReader(
-    const char* name_val,
-    const CppReadTraits& cpp_read_traits)
+  SimpleReader::SimpleReader(const char* name_val, const CppReadTraits& cpp_read_traits)
     noexcept
     : BaseType(name_val),
       BaseReader(name_val),

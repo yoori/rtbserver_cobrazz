@@ -1,9 +1,7 @@
 
 #include "SiteCreativeApprovalTest.hpp"
 
-REFLECT_UNIT(SiteCreativeApprovalTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(SiteCreativeApprovalTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {

@@ -1,10 +1,7 @@
 
 #include "CMPStatTest.hpp"
 
-REFLECT_UNIT(CMPStatTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CMPStatTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -21,18 +18,14 @@ namespace
 
 template<size_t Count>
 void
-CMPStatTest::initialize_stats(
-  CMPStats& stats,
-  CMPDiffs& diffs,
-  const CaseStat(&case_stats) [Count])
+CMPStatTest::initialize_stats(CMPStats& stats, CMPDiffs& diffs, const CaseStat(&case_stats) [Count])
 {
   for (unsigned int i = 0; i < Count; ++i)
   {
     CMPStat::Key key;
     key.adv_account_id(fetch_int(case_stats[i].adv_account));
     key.cmp_account_id(fetch_int(case_stats[i].cmp_account));
-    key.colo_id(case_stats[i].colo?
-      fetch_int(case_stats[i].colo): 1);
+    key.colo_id(case_stats[i].colo? fetch_int(case_stats[i].colo): 1);
     key.channel_id(fetch_int(case_stats[i].channel));
     key.country_code(GN);
     key.walled_garden(case_stats[i].walled_garden);
@@ -60,11 +53,7 @@ CMPStatTest::initialize_stats(
     stat.description("#" +strof(i+1));
     stat.select(pq_conn_);
 
-    if (
-      std::equal(
-        case_stats[i].diff.begin(),
-        case_stats[i].diff.end(),
-        ZERO_DIFF.begin()) )
+    if (std::equal(case_stats[i].diff.begin(), case_stats[i].diff.end(), ZERO_DIFF.begin()))
     {
       stats.push_back(stat);
       diffs.push_back(case_stats[i].diff);
@@ -80,12 +69,9 @@ CMPStatTest::initialize_stats(
 
 template<size_t Count>
 void
-CMPStatTest::send_requests(
-  const AutoTest::Time& debug_time,
-  const Request(&requests) [Count])
+CMPStatTest::send_requests(const AutoTest::Time& debug_time, const Request(&requests) [Count])
 {
-  for (size_t i = 0;
-       i < Count; ++i)
+  for (size_t i = 0; i < Count; ++i)
   {
     AdClient client(AdClient::create_user(this));
 
@@ -96,29 +82,22 @@ CMPStatTest::send_requests(
             debug_time(debug_time));
 
     FAIL_CONTEXT(
-      ChannelsCheck(
-        this, requests[i].channels,
-        client.debug_info.history_channels).check(),
+      ChannelsCheck(this, requests[i].channels, client.debug_info.history_channels).check(),
       "Expected history#" + strof(i+1));
 
     if (requests[i].ccs)
     {
       std::list<std::string> expected_ccs;
-      fetch_objects(
-        std::inserter(expected_ccs, expected_ccs.begin()),
-        requests[i].ccs);
+      fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), requests[i].ccs);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          expected_ccs,
-          SelectedCreativesCCID(client)).check(),
+        AutoTest::sequence_checker(expected_ccs, SelectedCreativesCCID(client)).check(),
         "Check CCs#" + strof(i+1));
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.debug_info.selected_creatives.empty()),
+        AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
         "Check CCs#" + strof(i+1));
     }
   }
@@ -449,9 +428,7 @@ CMPStatTest::base_scenario()
 
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          fetch_string("Base/CC/WG"),
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(fetch_string("Base/CC/WG"), client.debug_info.ccid).check(),
         "Walled garden check CC#" + strof(i+1)
         );
 
@@ -460,8 +437,7 @@ CMPStatTest::base_scenario()
           !client.debug_info.selected_creatives.first().click_url.empty()),
         "Walled garden check click#" + strof(i+1));
 
-      std::string click_url =
-        client.debug_info.selected_creatives.first().click_url;
+      std::string click_url = client.debug_info.selected_creatives.first().click_url;
 
       client.process_request(click_url);
     }
@@ -481,9 +457,7 @@ CMPStatTest::base_scenario()
       client.process_request(request);
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          fetch_string("Base/CC/CPC"),
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(fetch_string("Base/CC/CPC"), client.debug_info.ccid).check(),
         "CPC check CC#" + strof(i+1)
         );
 
@@ -502,10 +476,7 @@ CMPStatTest::base_scenario()
     }
   }
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -591,9 +562,7 @@ CMPStatTest::adv_exp_ch_scenario()
       client.process_request(request);
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          fetch_string("AdvExpr/CC/CCG"),
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(fetch_string("AdvExpr/CC/CCG"), client.debug_info.ccid).check(),
         "Check CC#" + strof(i+1) + "-1");
 
 
@@ -605,8 +574,7 @@ CMPStatTest::adv_exp_ch_scenario()
       // Every 3rd iteration click on ad.
       if (i % 3 == 2)
       {
-        client.process_request(
-          std::string(client.debug_info.selected_creatives.first().click_url));
+        client.process_request(std::string(client.debug_info.selected_creatives.first().click_url));
       }
     }
 
@@ -618,9 +586,7 @@ CMPStatTest::adv_exp_ch_scenario()
       client.process_request(request);
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          fetch_string("AdvExpr/CC/CCG"),
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(fetch_string("AdvExpr/CC/CCG"), client.debug_info.ccid).check(),
         "Check CC#" + strof(i+1) + "-2");
 
       FAIL_CONTEXT(
@@ -631,8 +597,7 @@ CMPStatTest::adv_exp_ch_scenario()
       // Every 5th iteration click on ad.
       if (i % 5 == 2)
       {
-        client.process_request(
-          std::string(client.debug_info.selected_creatives.first().click_url));
+        client.process_request(std::string(client.debug_info.selected_creatives.first().click_url));
       }
     }
 
@@ -644,16 +609,12 @@ CMPStatTest::adv_exp_ch_scenario()
       client.process_request(request);
 
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.debug_info.selected_creatives.empty()),
+        AutoTest::predicate_checker(client.debug_info.selected_creatives.empty()),
         "Check CCG#" + strof(i+1) + "-3");
     }
   }
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -719,9 +680,7 @@ CMPStatTest::cmp_exp_ch_scenario()
       client.process_request(request);
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          fetch_string("CmpExpr/CC/CCG"),
-          client.debug_info.ccid).check(),
+        AutoTest::equal_checker(fetch_string("CmpExpr/CC/CCG"), client.debug_info.ccid).check(),
         "Check CC#" + strof(i+1) + "-" + strof(k+1));
 
       FAIL_CONTEXT(
@@ -733,16 +692,12 @@ CMPStatTest::cmp_exp_ch_scenario()
       // Every 3rd iteration click on ad.
       if (i % 3 == 2)
       {
-        client.process_request(
-          std::string(client.debug_info.selected_creatives.first().click_url));
+        client.process_request(std::string(client.debug_info.selected_creatives.first().click_url));
        }
      }
   }
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -787,24 +742,17 @@ CMPStatTest::pub_exp_ch_scenario()
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        fetch_string("PubExpr/CC/CCG"),
-        client.debug_info.ccid).check(),
+      AutoTest::equal_checker(fetch_string("PubExpr/CC/CCG"), client.debug_info.ccid).check(),
       "Check CCG#" + strof(i+1));
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.selected_creatives.first().click_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.selected_creatives.first().click_url.empty()),
       "Check click#" + strof(i+1));
 
-    client.process_request(
-      std::string(client.debug_info.selected_creatives.first().click_url));
+    client.process_request(std::string(client.debug_info.selected_creatives.first().click_url));
    }
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -910,10 +858,7 @@ CMPStatTest::currency_scenario()
 
   send_requests(today, requests);
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
@@ -969,23 +914,14 @@ CMPStatTest::ta_scenario()
 
   AutoTest::ConsequenceActionArray actions;
 
-  actions.push_back(
-    AutoTest::ConsequenceAction(
-      AutoTest::CLICK, today));
+  actions.push_back(AutoTest::ConsequenceAction(AutoTest::CLICK, today));
 
   std::list<std::string> expected_ccs;
-  fetch_objects(
-    std::inserter(expected_ccs, expected_ccs.begin()),
-    "TA/CC/CCG1,TA/CC/CCG2");
+  fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), "TA/CC/CCG1,TA/CC/CCG2");
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      expected_ccs, actions));
+  FAIL_CONTEXT(client.do_ad_requests(expected_ccs, actions));
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 
 }
 
@@ -1191,10 +1127,7 @@ CMPStatTest::expression_scenario()
 
   send_requests(today, requests);
 
-  ADD_WAIT_CHECKER(
-    "CMPStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));
+  ADD_WAIT_CHECKER("CMPStats check", AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
 }
 
 void
@@ -1204,33 +1137,19 @@ CMPStatTest::set_up()
 bool
 CMPStatTest::run()
 {
-  AUTOTEST_CASE(
-    pub_exp_ch_scenario(),
-    "PUB expression");
+  AUTOTEST_CASE(pub_exp_ch_scenario(), "PUB expression");
 
-  AUTOTEST_CASE(
-    base_scenario(),
-    "Base  cases");
+  AUTOTEST_CASE(base_scenario(), "Base  cases");
 
-  AUTOTEST_CASE(
-    adv_exp_ch_scenario(),
-    "Advertiser expression");
+  AUTOTEST_CASE(adv_exp_ch_scenario(), "Advertiser expression");
 
-  AUTOTEST_CASE(
-    cmp_exp_ch_scenario(),
-    "CMP expression");
+  AUTOTEST_CASE(cmp_exp_ch_scenario(), "CMP expression");
 
-  AUTOTEST_CASE(
-    currency_scenario(),
-    "Currency cases");
+  AUTOTEST_CASE(currency_scenario(), "Currency cases");
 
-  AUTOTEST_CASE(
-    expression_scenario(),
-    "Expression cases");
+  AUTOTEST_CASE(expression_scenario(), "Expression cases");
 
-  AUTOTEST_CASE(
-    ta_scenario(),
-    "Text advertising");
+  AUTOTEST_CASE(ta_scenario(), "Text advertising");
 
   return true;
 }

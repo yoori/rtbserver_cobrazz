@@ -31,9 +31,7 @@ namespace AdServer::Grpc
 {
   struct BasicControllerRefHolder
   {
-    explicit BasicControllerRefHolder(
-      std::string endpoint_val,
-      std::size_t partition_index_val = 0)
+    explicit BasicControllerRefHolder(std::string endpoint_val, std::size_t partition_index_val = 0)
       : endpoint(std::move(endpoint_val)),
         name(endpoint),
         partition_index(partition_index_val)
@@ -158,21 +156,15 @@ namespace AdServer::Grpc
     void resolve_all_partitions_() noexcept;
     void periodic_resolve_loop_() noexcept;
     void wait_next_resolve_() noexcept;
-    void schedule_reresolve_partition_(
-      unsigned long partition_index,
-      bool force) noexcept;
+    void schedule_reresolve_partition_(unsigned long partition_index, bool force) noexcept;
     void resolve_partition_(unsigned long partition_index) noexcept;
     void record_resolve_error_(
       unsigned long partition_index,
       const std::string& message,
       const char* source,
       std::string endpoint = {}) noexcept;
-    bool begin_resolve_partition_(
-      unsigned long partition_index,
-      bool force) noexcept;
-    void finish_resolve_partition_(
-      unsigned long partition_index,
-      bool installed) noexcept;
+    bool begin_resolve_partition_(unsigned long partition_index, bool force) noexcept;
+    void finish_resolve_partition_(unsigned long partition_index, bool installed) noexcept;
     PartitionPtr get_partition_(unsigned long partition_index) noexcept;
     RefHolderPtr get_or_create_ref_holder_(const std::string& endpoint);
     void deactivate_partitions_() noexcept;

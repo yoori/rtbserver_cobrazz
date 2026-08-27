@@ -46,14 +46,12 @@ main(int, char** argv)
 
   std::cout << "probes: " << exp_array.size() <<
     ", labels: " << labels <<
-    ", pbase: " << p_base <<
-    ", base: " << base <<
-    ", expbase: " << exp_base << std::endl;
+    ", pbase: " << p_base << ", base: " << base << ", expbase: " << exp_base << std::endl;
 
   double res = Vanga::Utils::solve_grouped_logloss_min(exp_array, exp_array.size() - labels);
   std::cout << "res = " << res << std::endl;
 
-  for(auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
+  for (auto exp_it = exp_array.begin(); exp_it != exp_array.end(); ++exp_it)
   {
     //const double p = 1.0 / (1.0 + std::exp(- (- std::log(*exp_it) + res)));
     const double p = 1.0 / (1.0 + std::exp(- (base + res)));

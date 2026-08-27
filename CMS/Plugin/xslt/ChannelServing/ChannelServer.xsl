@@ -206,12 +206,12 @@
           </xsl:attribute>
         </xsl:if>
         <xsl:choose>
-          <xsl:when test="$matching-segmentor = 'Polyglot' and 
+          <xsl:when test="$matching-segmentor = 'Polyglot' and
              count($colo-config/cfg:central/cfg:segmentorMapping/cfg:country[@segmentor = 'Polyglot'
                and @name='']) = 0">
             <cfg:Segmentor name="Polyglot" country='' base="/opt/foros/polyglot/dict/"/>
           </xsl:when>
-          <xsl:when test="$matching-segmentor = 'Nlpir' and 
+          <xsl:when test="$matching-segmentor = 'Nlpir' and
              count($colo-config/cfg:central/cfg:segmentorMapping/cfg:country[@segmentor = 'Nlpir'
                and @name='']) = 0">
             <cfg:Segmentor name="Nlpir" country='' base="/usr/share/NLPIR"/>

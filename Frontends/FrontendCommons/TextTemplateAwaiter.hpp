@@ -8,8 +8,7 @@
 
 namespace FrontendCommons
 {
-  using TextTemplateAwaiter =
-    AdServer::Commons::TextTemplateCache::CacheAwaiter;
+  using TextTemplateAwaiter = AdServer::Commons::TextTemplateCache::CacheAwaiter;
 
   inline TextTemplateAwaiter
   co_get_text_template(
@@ -19,9 +18,6 @@ namespace FrontendCommons
     std::string service_index)
     noexcept
   {
-    return cache->co_get(
-      std::move(workers),
-      std::move(file),
-      std::move(service_index));
+    return cache->co_get(std::move(workers), std::move(file), std::move(service_index));
   }
 }

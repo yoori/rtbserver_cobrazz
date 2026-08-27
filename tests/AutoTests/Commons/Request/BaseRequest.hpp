@@ -39,9 +39,7 @@ namespace AutoTest
   struct EqualHeaderName : std::binary_function <HTTP::Header, std::string, bool>
   {
     bool
-    operator() (
-      const HTTP::Header& header,
-      const std::string& name) const;
+    operator() (const HTTP::Header& header, const std::string& name) const;
   };
 
   /**
@@ -72,9 +70,7 @@ namespace AutoTest
      * @param seconds
      * @param microseconds
      */
-    Time(
-      time_t time_sec,
-      suseconds_t usec = 0) noexcept;
+    Time(time_t time_sec, suseconds_t usec = 0) noexcept;
 
     /**
      * @brief Constructor.
@@ -150,9 +146,7 @@ namespace AutoTest
   };
 
   std::ostream&
-  operator <<(
-    std::ostream& ostr,
-    const Time& time)
+  operator <<(std::ostream& ostr, const Time& time)
     /*throw(eh::Exception)*/;
 
   class BaseParam;
@@ -216,9 +210,7 @@ namespace AutoTest
      * Create request with base url.
      * @param base_url base url for request
      */
-    BaseRequest(
-      const char* base_url,
-      RequestType req_type);
+    BaseRequest(const char* base_url, RequestType req_type);
 
     /**
      * @brief Destructor.
@@ -344,18 +336,14 @@ namespace AutoTest
      * @param request request which param belongs to
      * @param name param's name
      */
-    BaseParam(
-      BaseParamsContainer* request,
-      const char* name);
+    BaseParam(BaseParamsContainer* request, const char* name);
 
     /**
      * @brief Copy constructor.
      * @param request request which param belongs to
      * @param other param
      */
-    BaseParam(
-      BaseParamsContainer* request,
-      const BaseParam& other);
+    BaseParam(BaseParamsContainer* request, const BaseParam& other);
 
     /**
      * @brief Destructor.
@@ -405,10 +393,7 @@ namespace AutoTest
      * @return true for successfully dump.
      */
     virtual
-    bool print (
-      std::ostream& out,
-      const char* prefix,
-      const char* eql) const;
+    bool print (std::ostream& out, const char* prefix, const char* eql) const;
 
     /**
      * @brief Set param value.
@@ -445,18 +430,14 @@ namespace AutoTest
      * @param request request which param belongs to
      * @param name param's name
      */
-    StringParam(
-      BaseParamsContainer* request,
-      const char* name);
+    StringParam(BaseParamsContainer* request, const char* name);
 
     /**
      * @brief Copy constructor.
      * @param request request which param belongs to
      * @param other param
      */
-    StringParam(
-      BaseParamsContainer* request,
-      const StringParam& other);
+    StringParam(BaseParamsContainer* request, const StringParam& other);
 
     /**
      * @brief Destructor.
@@ -553,18 +534,14 @@ namespace AutoTest
      * @param request request which param belongs to
      * @param name param's name
      */
-    SearchParam(
-      BaseParamsContainer* request,
-      const char* name);
+    SearchParam(BaseParamsContainer* request, const char* name);
 
     /**
      * @brief Copy constructor.
      * @param request request which param belongs to
      * @param other param
      */
-    SearchParam(
-      BaseParamsContainer* request,
-      const SearchParam& other);
+    SearchParam(BaseParamsContainer* request, const SearchParam& other);
 
     /**
      * @brief Destructor.
@@ -623,18 +600,14 @@ namespace AutoTest
      * @param request request which param belongs to
      * @param name param's name
      */
-    TimeParamBase(
-      BaseParamsContainer* request,
-      const char* name);
+    TimeParamBase(BaseParamsContainer* request, const char* name);
 
     /**
      * @brief Copy constructor.
      * @param request request which param belongs to
      * @param other param
      */
-    TimeParamBase(
-      BaseParamsContainer* request,
-      const TimeParamBase& other);
+    TimeParamBase(BaseParamsContainer* request, const TimeParamBase& other);
 
     /**
      * @brief Destructor.
@@ -769,18 +742,13 @@ namespace AutoTest
      * to use defs as default value for parameter
      */
     template <class T>
-    RequestParam(
-      Request* request,
-      const char* name,
-      T defs,
-      bool set_defs);
+    RequestParam(Request* request, const char* name, T defs, bool set_defs);
 
     /**
      * @brief Constructor.
      */
     template<typename... Args>
-    RequestParam(
-      Args&&... args);
+    RequestParam(Args&&... args);
 
     /**
      * @brief Destructor.
@@ -830,11 +798,7 @@ namespace AutoTest
      * to use defs as default value for parameter
      */
     template <class T>
-    HeaderParam(
-      Request* request,
-      const char* name,
-      const T& defs,
-      bool set_defs = true);
+    HeaderParam(Request* request, const char* name, const T& defs, bool set_defs = true);
 
     /**
      * @brief Constructor.
@@ -855,8 +819,7 @@ namespace AutoTest
      * @param request request which param belongs to
      * @param other param
      */
-    HeaderParam(Request* request,
-      const HeaderParam& other);
+    HeaderParam(Request* request, const HeaderParam& other);
 
     /**
      * Creates HeaderParam and determines its name.
@@ -901,10 +864,7 @@ namespace AutoTest
      * @return true for successfully dump.
      */
     virtual
-    bool print(
-      std::ostream& out,
-      const char* prefix,
-      const char* eql) const;
+    bool print(std::ostream& out, const char* prefix, const char* eql) const;
 
     /**
      * @brief Assignment operator.
@@ -957,9 +917,7 @@ namespace AutoTest
   {
     template<typename... Args>
     Param*
-    operator()(
-      BaseParamsContainer* request,
-      Args&&... args);
+    operator()(BaseParamsContainer* request, Args&&... args);
   };
 
   /**
@@ -1001,17 +959,14 @@ namespace AutoTest
      * @brief Constructor.
      */
     template<typename... Args>
-    ComplexParam(
-      Args&&... args);
+    ComplexParam(Args&&... args);
 
     /**
      * @brief Copy constructor.
      * @param request request which param belongs to
      * @param other param
      */
-    ComplexParam(
-      Request* request,
-      const ComplexParam& other);
+    ComplexParam(Request* request, const ComplexParam& other);
 
     /**
      * @brief Destructor.
@@ -1084,9 +1039,7 @@ namespace AutoTest
      * @return reference to request which param belongs to
      */
     template <class T>
-    Request& operator() (
-      const T& val,
-      TKey  key);
+    Request& operator() (const T& val, TKey  key);
 
     /**
      * @brief Assigment operator.
@@ -1132,10 +1085,7 @@ namespace AutoTest
      */
     virtual
     bool
-    print(
-      std::ostream& out,
-      const char* prefix,
-      const char* eql) const = 0;
+    print(std::ostream& out, const char* prefix, const char* eql) const = 0;
 
     /**
      * @brief Returns encode flag.
@@ -1187,9 +1137,7 @@ namespace AutoTest
      */
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      const std::string& val) = 0;
+    set_param_val(BaseRequest& request, const std::string& val) = 0;
 
     /**
      * @brief Set parameter value.
@@ -1199,9 +1147,7 @@ namespace AutoTest
      */
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      unsigned long val) = 0;
+    set_param_val(BaseRequest& request, unsigned long val) = 0;
 
     /**
      * @brief Clear parameter.
@@ -1210,8 +1156,7 @@ namespace AutoTest
      */
     virtual
     void
-    clear_param(
-      BaseRequest& request) = 0;
+    clear_param(BaseRequest& request) = 0;
 
     /**
      * @brief Clone member.
@@ -1237,8 +1182,7 @@ namespace AutoTest
      *
      * @param pointer to request member
      */
-    RequestMember(
-      Param Request::* member);
+    RequestMember(Param Request::* member);
 
     /**
      * @brief Destructor.
@@ -1255,9 +1199,7 @@ namespace AutoTest
      */
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      const std::string& val);
+    set_param_val(BaseRequest& request, const std::string& val);
 
     /**
      * @brief Set parameter value.
@@ -1267,9 +1209,7 @@ namespace AutoTest
      */
     virtual
     void
-    set_param_val(
-      BaseRequest& request,
-      unsigned long val);
+    set_param_val(BaseRequest& request, unsigned long val);
 
     /**
      * @brief Clear parameter.
@@ -1278,8 +1218,7 @@ namespace AutoTest
      */
     virtual
     void
-    clear_param(
-      BaseRequest& request);
+    clear_param(BaseRequest& request);
 
     /**
      * @brief Clone member.
@@ -1314,8 +1253,7 @@ namespace AutoTest
      * @param pointer to Request member (parameter).
      */
     template <typename Param>
-    RequestParamSetter(
-      Param Request::* member);
+    RequestParamSetter(Param Request::* member);
 
     /**
      * @brief Copy constructor.
@@ -1338,9 +1276,7 @@ namespace AutoTest
      * @param parameter value
      */
     template <typename T>
-    void operator() (
-      Request& request,
-      const T& val) const
+    void operator() (Request& request, const T& val) const
       /*throw(eh::Exception)*/;
 
     /**
@@ -1348,8 +1284,7 @@ namespace AutoTest
      *
      * @param request
      */
-    void clear(
-      Request& request) const;
+    void clear(Request& request) const;
 
     /**
      * @brief Check setter is empty.

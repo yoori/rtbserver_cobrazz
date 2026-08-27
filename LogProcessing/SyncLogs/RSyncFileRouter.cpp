@@ -42,132 +42,123 @@ namespace
   };
 }
 
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-  namespace LogProcessing
+  RSyncFileRouter::RSyncFileRouter(const char* command_template, const char* post_command_template)
+    /*throw(Exception)*/
+    : AppFileRouter(command_template, post_command_template)
+  {}
+
+  void
+  RSyncFileRouter::move(
+    const FileRouteParams& file_route_params,
+    bool sync_mode,
+    InterruptCallback* interrupter)
+    /*throw(Exception)*/
   {
-    RSyncFileRouter::RSyncFileRouter(
-      const char* command_template,
-      const char* post_command_template)
-      /*throw(Exception)*/
-      : AppFileRouter(command_template, post_command_template)
-    {}
+    static const char* FUN = "RSyncFileRouter::move()";
 
-    void
-    RSyncFileRouter::move(
-      const FileRouteParams& file_route_params,
-      bool sync_mode,
-      InterruptCallback* interrupter)
-      /*throw(Exception)*/
+    int rename_try_index = MAX_RENAME_TRY_COUNT - 1;
+
+    while (rename_try_index > 0)
     {
-      static const char* FUN = "RSyncFileRouter::move()";
+      std::string command;
+      std::string output;
 
-      int rename_try_index = MAX_RENAME_TRY_COUNT - 1;
+      const int exit_code = run_command_(
+        command_template_,
+        file_route_params,
+        sync_mode,
+        command,
+        output,
+        interrupter);
 
-      while(rename_try_index > 0)
-      {
-        std::string command;
-        std::string output;
-
-        const int exit_code = run_command_(
-          command_template_,
-          file_route_params,
-          sync_mode,
-          command,
-          output,
-          interrupter);
-
-        if(exit_code != 0)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": '" <<
-            command << "' return error (" << exit_code <<
-            ", '" << rsync_err_msg_(exit_code) << "').";
-          throw Exception(ostr);
-        }
-
-        bool already_exists = false;
-
-        try
-        {
-          check_rsync_output_(file_route_params, output.c_str());
-        }
-        catch(const AlreadyExists& )
-        {
-          already_exists = true;
-        }
-
-        std::string post_command;
-        std::string post_output;
-
-        const int post_exit_code = run_command_(
-          post_command_template_,
-          file_route_params,
-          sync_mode,
-          post_command,
-          post_output,
-          0);
-
-        if(post_exit_code != 0)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": '" <<
-            post_command << "' return error (" << post_exit_code << ").";
-          throw Exception(ostr);
-        }
-
-        if(!already_exists)
-        {
-          break;
-        }
-
-        /* TODO: rename file */
-        --rename_try_index;
-      }
-    }
-
-    void
-    RSyncFileRouter::check_rsync_output_(
-      const FileRouteParams& file_route_params,
-      const char* output_str)
-      /*throw(AlreadyExists, Exception)*/
-    {
-      static const char* FUN = "RSyncFileRouter::check_rsync_output()";
-
-      std::string output_str_s(output_str);
-
-      if(output_str_s.empty())
-      {
-        throw AlreadyExists("");
-      }
-
-      if(output_str_s.find(file_route_params.src_file_name) == std::string::npos)
+      if (exit_code != 0)
       {
         Stream::Error ostr;
-        ostr << FUN << ": "
-          "rsync has printed: '" << output_str <<
-          "', and it does not contain the '" <<
-          file_route_params.src_file_name <<
-          "' file name.";
-
+        ostr << FUN << ": '" <<
+          command << "' return error (" << exit_code << ", '" << rsync_err_msg_(exit_code) << "').";
         throw Exception(ostr);
       }
-    }
 
-    /** Returns error message corresponding rsync exit code */
-    const char*
-    RSyncFileRouter::rsync_err_msg_(int exit_code)
-      noexcept
-    {
-      for(int i = 1; RSYNC_ERRORS[i].msg_str; ++i)
+      bool already_exists = false;
+
+      try
       {
-        if (RSYNC_ERRORS[i].code == exit_code)
-        {
-          return RSYNC_ERRORS[i].msg_str;
-        }
+        check_rsync_output_(file_route_params, output.c_str());
+      }
+      catch(const AlreadyExists& )
+      {
+        already_exists = true;
       }
 
-      return RSYNC_ERRORS[0].msg_str;
+      std::string post_command;
+      std::string post_output;
+
+      const int post_exit_code = run_command_(
+        post_command_template_,
+        file_route_params,
+        sync_mode,
+        post_command,
+        post_output,
+        0);
+
+      if (post_exit_code != 0)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": '" << post_command << "' return error (" << post_exit_code << ").";
+        throw Exception(ostr);
+      }
+
+      if (!already_exists)
+      {
+        break;
+      }
+
+      /* TODO: rename file */
+      --rename_try_index;
     }
+  }
+
+  void
+  RSyncFileRouter::check_rsync_output_(
+    const FileRouteParams& file_route_params,
+    const char* output_str)
+    /*throw(AlreadyExists, Exception)*/
+  {
+    static const char* FUN = "RSyncFileRouter::check_rsync_output()";
+
+    std::string output_str_s(output_str);
+
+    if (output_str_s.empty())
+    {
+      throw AlreadyExists("");
+    }
+
+    if (output_str_s.find(file_route_params.src_file_name) == std::string::npos)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": "
+        "rsync has printed: '" << output_str <<
+        "', and it does not contain the '" << file_route_params.src_file_name << "' file name.";
+
+      throw Exception(ostr);
+    }
+  }
+
+  /** Returns error message corresponding rsync exit code */
+  const char*
+  RSyncFileRouter::rsync_err_msg_(int exit_code)
+    noexcept
+  {
+    for (int i = 1; RSYNC_ERRORS[i].msg_str; ++i)
+    {
+      if (RSYNC_ERRORS[i].code == exit_code)
+      {
+        return RSYNC_ERRORS[i].msg_str;
+      }
+    }
+
+    return RSYNC_ERRORS[0].msg_str;
   }
 }

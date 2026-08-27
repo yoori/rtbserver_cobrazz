@@ -131,12 +131,8 @@ namespace AdServer::CampaignSvcs
         selected_campaigns(
           init.selected_campaigns,
           Generics::MonoAllocator<CampaignSelectionData>{arena_.get()}),
-        freq_caps(
-          init.freq_caps,
-          Generics::MonoAllocator<unsigned long>{arena_.get()}),
-        uc_freq_caps(
-          init.uc_freq_caps,
-          Generics::MonoAllocator<unsigned long>{arena_.get()}),
+        freq_caps(init.freq_caps, Generics::MonoAllocator<unsigned long>{arena_.get()}),
+        uc_freq_caps(init.uc_freq_caps, Generics::MonoAllocator<unsigned long>{arena_.get()}),
         walled_garden(init.walled_garden),
         household_based(init.household_based),
         auction_type(init.auction_type)

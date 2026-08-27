@@ -116,8 +116,7 @@ namespace AdServer
      * @param parameters Optional parameters for XSL stylesheet
      */
     void
-    transform(std::istream& input, std::ostream& output,
-      const XslParameters* parameters = 0)
+    transform(std::istream& input, std::ostream& output, const XslParameters* parameters = 0)
       /*throw(Exception)*/;
 
     /**
@@ -155,7 +154,7 @@ namespace AdServer
       void
       operator()(const xsltStylesheetPtr stylesheet) noexcept
       {
-        if(stylesheet)
+        if (stylesheet)
         {
           stylesheet->doc->URL = 0;
           xsltFreeStylesheet(stylesheet);

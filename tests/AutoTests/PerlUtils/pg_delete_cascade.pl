@@ -397,6 +397,7 @@ while (my $d = shift @delete)
               if $verbose >= 1;
             ++$ctid{$ctid};
           }
+
           if (keys %ctid)
           {
             $delete->{preserve} = \%ctid;

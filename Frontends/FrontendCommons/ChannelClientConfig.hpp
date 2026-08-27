@@ -21,27 +21,26 @@ namespace AdServer::ChannelSvcs
       channel_controller_refs;
     AdServer::Grpc::BatchingOptions batching_options;
 
-    if(common_config.Channel().present())
+    if (common_config.Channel().present())
     {
       const auto& channel_config = *common_config.Channel();
-      if(channel_config.BatchingOptions().present())
+      if (channel_config.BatchingOptions().present())
       {
-        batching_options =
-          Config::read_xsd_grpc_options(*channel_config.BatchingOptions());
+        batching_options = Config::read_xsd_grpc_options(*channel_config.BatchingOptions());
       }
 
-      for(const auto& group : channel_config.ChannelControllerGroup())
+      for (const auto& group : channel_config.ChannelControllerGroup())
       {
         ChannelDistributedGrpcClient::ChannelControllerRefGroup
           channel_controller_ref_group;
-        for(const auto& endpoint : group.Endpoint())
+        for (const auto& endpoint : group.Endpoint())
         {
           channel_controller_ref_group.emplace_back(endpoint);
         }
-        if(!channel_controller_ref_group.empty())
+
+        if (!channel_controller_ref_group.empty())
         {
-          channel_controller_refs.emplace_back(
-            std::move(channel_controller_ref_group));
+          channel_controller_refs.emplace_back(std::move(channel_controller_ref_group));
         }
       }
     }

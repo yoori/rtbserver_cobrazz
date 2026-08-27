@@ -6,21 +6,21 @@
     <test:threadsNumber>30</test:threadsNumber>
     <test:serverStartTime>1</test:serverStartTime>
     <test:maxTaskExecutionDelay>1000</test:maxTaskExecutionDelay>
-  
+
     <test:urlsListFile>urls.txt</test:urlsListFile>
-  
+
     <test:RefererKWsListFile>keywords.txt</test:RefererKWsListFile>
-  
+
     <test:ContextKWsListFile>keywords.txt</test:ContextKWsListFile>
-  
+
     <test:serverBase>
       <test:url>http://prof1.ocslab.com:28180</test:url>
     </test:serverBase>
-  
+
     <test:set name="tid">
       <test:item>1</test:item>
     </test:set>
-  
+
     <test:set name="format">
       <test:item>unit-test</test:item>
     </test:set>
@@ -30,7 +30,7 @@
       <test:item>1.0.168</test:item>
       <test:item>1.0.180</test:item>
     </test:set>
-  
+
     <test:set name="browser">
       <test:item>1.1</test:item>
       <test:item>1.2</test:item>
@@ -48,7 +48,7 @@
       <test:item>US</test:item>
     </test:set>
 
-  
+
     <test:set name="user_agent">
       <test:item>Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)</test:item>
       <test:item>Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322)</test:item>
@@ -89,9 +89,9 @@
         <test:prolongedPercentage>10</test:prolongedPercentage>
       </test:requestConstraint>
     </test:requestConstraints>
-  
+
     <test:requestAggregatedStatistics statisticsIntervalDump="1"/>
-  
+
   </test:global>
   <test:adClient count="10"
                  temp_uid_users_prc="0"

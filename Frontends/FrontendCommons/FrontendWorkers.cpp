@@ -2,9 +2,7 @@
 
 namespace FrontendCommons
 {
-  FrontendWorkers::FrontendWorkers(
-    Generics::ActiveObjectCallback* callback,
-    unsigned long threads)
+  FrontendWorkers::FrontendWorkers(Generics::ActiveObjectCallback* callback, unsigned long threads)
     : AdServer::Commons::ExecutorPool(
         callback,
         threads,

@@ -51,7 +51,7 @@ use Cwd;
 use Getopt::Long qw(:config gnu_getopt bundling);
 use Pod::Usage;
 use File::Spec;
-use File::Basename; 
+use File::Basename;
 use File::Path;
 
 use DB::Database;
@@ -122,14 +122,14 @@ my $namespace_name = "BT-Storm";
 
 my $database = new PerformanceDB::Database($options{host},
                                            $options{dbname},
-                                           $options{user}, 
+                                           $options{user},
                                            $options{password},
                                            $namespace_name,
                                            $options{prefix});
 
 my @queries;
 
-foreach my $channel (@channels_info)  
+foreach my $channel (@channels_info)
 {
   my ($time_from, $time_to, $minimum_visits, $count, $channel_type) = @$channel;
   $database->create_channels($count, $time_from, $time_to, $minimum_visits, $channel_type, \@queries);
@@ -138,12 +138,12 @@ foreach my $channel (@channels_info)
 $database->commit;
 
 my $server = "http://" . $options{server};
-my $urls_file_path =  join("/", $config_path, URLS_FILE_NAME . $options{prefix}); 
+my $urls_file_path =  join("/", $config_path, URLS_FILE_NAME . $options{prefix});
 my $keywords_file_path = join("/", $config_path, KWS_FILE_NAME . $options{prefix});
 
 my $global =
   XML::Encoder::GROUP_PARAM({},
-    "GlobalSettings", 
+    "GlobalSettings",
      [ XML::Encoder::PARAM("ThreadsNumber", $options{threads}),
        XML::Encoder::NEW_LINE,
        XML::Encoder::PARAM("URLsFile", $urls_file_path),
@@ -162,13 +162,13 @@ my @params_create_user = [
   XML::Encoder::PARAM("body")];
 
 push(
-  @benchmarks, 
+  @benchmarks,
   XML::Encoder::GROUP_PARAM(
     {  frontend => "nslookup",
        initial => "true",
        size => CLIENTS_COUNT,
        description => "Create users" },
-    "Benchmark", 
+    "Benchmark",
      [ XML::Encoder::GROUP_PARAM(
        { url => "/services/OO",
          method => "get"},
@@ -190,12 +190,12 @@ my @params_profiling =  [
 for (my $i = 0; $i < 10; ++$i)
 {
   push(
-    @benchmarks, 
+    @benchmarks,
     XML::Encoder::GROUP_PARAM(
       {  frontend  =>  "nslookup",
          size => PROFILING_SIZE / 10,
          description => "Profiling storm#" . ($i+1)},
-      "Benchmark", 
+      "Benchmark",
       [ XML::Encoder::GROUP_PARAM(
          { url => "/services/nslookup",
            method => "get"},
@@ -206,10 +206,10 @@ my $xml_config_path = join("/", $config_path, "ProfilingStorm-optin.xml");
 
 open(my $XML, ">$xml_config_path") || die "Cann't open file $xml_config_path for write.\n";
 
-my $benchmarks =  
+my $benchmarks =
   XML::Encoder::GROUP_PARAM(
     {}, "Benchmarks", \@benchmarks);
-  
+
 print $XML XML::Encoder::GROUP_PARAM(
   { "xmlns:test"=> XML_CONFIG_HTML_PATH,
     "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",

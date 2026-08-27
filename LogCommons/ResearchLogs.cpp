@@ -1,8 +1,6 @@
 #include "ResearchLogs.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   template <> const char*
   ResearchBidTraits::B::base_name_ = "<UNDEFINED>";
@@ -31,6 +29,4 @@ namespace LogProcessing
   ResearchActionTraits::B::signature_ = "<UNDEFINED>";
   template <> const char*
   ResearchActionTraits::B::current_version_ = "<UNDEFINED>";
-} // namespace LogProcessing
-} // namespace AdServer
-
+} // namespace AdServer::LogProcessing

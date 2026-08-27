@@ -1,10 +1,7 @@
 #include "Common.hpp"
 #include "UserProfileMergingTest.hpp"
 
-REFLECT_UNIT(UserProfileMergingTest) (
-  "UserProfiling",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(UserProfileMergingTest) ("UserProfiling", AUTO_TEST_FAST);
 
 
 namespace
@@ -258,39 +255,21 @@ bool
 UserProfileMergingTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "Merging two empty profiles.",
-      EMPTY_PROFILES,
-      countof(EMPTY_PROFILES)));
+    check("Merging two empty profiles.", EMPTY_PROFILES, countof(EMPTY_PROFILES)));
 
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "Merging with empty profile.",
-      EMPTY_TEMP_PROFILE,
-      countof(EMPTY_TEMP_PROFILE)));
+    check("Merging with empty profile.", EMPTY_TEMP_PROFILE, countof(EMPTY_TEMP_PROFILE)));
 
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "Merging with unknown profile.",
-      UNKNOWN_TEMP_PROFILE,
-      countof(UNKNOWN_TEMP_PROFILE)));
+    check("Merging with unknown profile.", UNKNOWN_TEMP_PROFILE, countof(UNKNOWN_TEMP_PROFILE)));
+
+  NOSTOP_FAIL_CONTEXT(check("H+T channel (visits=2).", HT_CHANNEL, countof(HT_CHANNEL)));
 
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "H+T channel (visits=2).",
-      HT_CHANNEL,
-      countof(HT_CHANNEL)));
+    check("Session channel (visits=3).", SESSION_CHANNEL_1, countof(SESSION_CHANNEL_1)));
 
   NOSTOP_FAIL_CONTEXT(
-    check("Session channel (visits=3).",
-      SESSION_CHANNEL_1,
-      countof(SESSION_CHANNEL_1)));
-
-  NOSTOP_FAIL_CONTEXT(
-    check(
-      "Session channel (visits=1).",
-      SESSION_CHANNEL_2,
-      countof(SESSION_CHANNEL_2)));
+    check("Session channel (visits=1).", SESSION_CHANNEL_2, countof(SESSION_CHANNEL_2)));
 
   NOSTOP_FAIL_CONTEXT(
     check(
@@ -301,11 +280,7 @@ UserProfileMergingTest::run_test()
       AutoTest::Time()));
 
   NOSTOP_FAIL_CONTEXT(
-    check(
-      "Merging two history profiles.",
-      HISTORY_PROFILE,
-      countof(HISTORY_PROFILE),
-      base_time));
+    check("Merging two history profiles.", HISTORY_PROFILE, countof(HISTORY_PROFILE), base_time));
 
   return true;
 }
@@ -318,29 +293,19 @@ void UserProfileMergingTest::check(
 {
   add_descr_phrase(description);
   // Create clients
-  TemporaryAdClient t_client(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient t_client(TemporaryAdClient::create_user(this));
   AdClient p_client(AdClient::create_user(this));
 
   for (size_t i = 0; i < requests_size; ++i)
   {
 
-    AdClient* client =
-      requests[i].req_type == RE_TEMPORARY?
-      &t_client: &p_client;
+    AdClient* client = requests[i].req_type == RE_TEMPORARY? &t_client: &p_client;
     NSLookupRequest request;
-    AutoTest::UserProfiling::make_request(
-      this,
-      request,
-      requests[i],
-      base_time);
+    AutoTest::UserProfiling::make_request(this, request, requests[i], base_time);
 
     if (requests[i].req_type == RE_MERGING)
     {
-      log_admin_output(
-        p_client,
-        t_client,
-        RE_TEMPORARY);
+      log_admin_output(p_client, t_client, RE_TEMPORARY);
 
       client->merge(t_client, request);
     }
@@ -349,10 +314,7 @@ void UserProfileMergingTest::check(
       client->process_request(request);
     }
 
-    log_admin_output(
-      p_client,
-      t_client,
-      requests[i].req_type);
+    log_admin_output(p_client, t_client, requests[i].req_type);
 
     // Check channels
     FAIL_CONTEXT(
@@ -409,9 +371,7 @@ void UserProfileMergingTest::log_admin_output(
       admin.initialize(
         this, CTE_ALL,
         STE_USER_INFO_MANAGER_CONTROLLER,
-        AutoTest::prepare_uid(
-          tclient.get_tuid(),
-          AutoTest::UUE_ADMIN_PARAMVALUE, true).c_str(),
+        AutoTest::prepare_uid(tclient.get_tuid(), AutoTest::UUE_ADMIN_PARAMVALUE, true).c_str(),
         AutoTest::UserInfoManagerController, true);
 
       admin.log(AutoTest::Logger::thlog());
@@ -426,9 +386,7 @@ void UserProfileMergingTest::log_admin_output(
       admin.initialize(
         this, CTE_ALL,
         STE_USER_INFO_MANAGER_CONTROLLER,
-        AutoTest::prepare_uid(
-          pclient.get_uid(),
-          AutoTest::UUE_ADMIN_PARAMVALUE).c_str(),
+        AutoTest::prepare_uid(pclient.get_uid(), AutoTest::UUE_ADMIN_PARAMVALUE).c_str(),
         AutoTest::UserInfoManagerController);
 
       admin.log(AutoTest::Logger::thlog());

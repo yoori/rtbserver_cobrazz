@@ -2,9 +2,7 @@
 
 //#define DEBUG_OUT_
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   const RevenueDecimal
   DEFAULT_SAFE_GOAL_DAILY_BUDGET_MULTIPLIER = RevenueDecimal(1.1);
@@ -180,8 +178,7 @@ namespace CampaignSvcs
 
   // CTROptimizer::RateAmountDistribution impl
   void
-  CTROptimizer::RateAmountDistribution::swap(
-    RateAmountDistribution& right) noexcept
+  CTROptimizer::RateAmountDistribution::swap(RateAmountDistribution& right) noexcept
   {
     amounts.swap(right.amounts);
     rate_distributions.swap(right.rate_distributions);
@@ -202,8 +199,7 @@ namespace CampaignSvcs
   }
 
   RevenueDecimal
-  CTROptimizer::RateAmountDistribution::restricted_amount(
-    const RevenueDecimal& min_rate)
+  CTROptimizer::RateAmountDistribution::restricted_amount(const RevenueDecimal& min_rate)
     const noexcept
   {
     RevenueDecimal res = RevenueDecimal::ZERO;
@@ -218,9 +214,7 @@ namespace CampaignSvcs
   }
 
   void
-  CTROptimizer::RateAmountDistribution::print(
-    std::ostream& out,
-    const char* prefix)
+  CTROptimizer::RateAmountDistribution::print(std::ostream& out, const char* prefix)
     const noexcept
   {
     out << prefix << "{" << std::endl;
@@ -355,9 +349,7 @@ namespace CampaignSvcs
     RateAmountDistribution combined_amount_distribution;
     combined_amount_distribution.swap(approximated_free_amount_distribution);
 
-    add_amount_distribution_(
-      combined_amount_distribution,
-      approximated_goaled_amount_distribution);
+    add_amount_distribution_(combined_amount_distribution, approximated_goaled_amount_distribution);
 
     // planned values at day start point (only by past info)
     HourBudgetDistribution today_planned_free_budget_distribution;
@@ -369,8 +361,7 @@ namespace CampaignSvcs
     goal_budget = today_budget - today_planned_scan_budget;
 
 #   ifdef DEBUG_OUT_
-    std::cout << "today_planned_scan_budget = " << today_planned_scan_budget <<
-      std::endl;
+    std::cout << "today_planned_scan_budget = " << today_planned_scan_budget << std::endl;
 #   endif
 
     plan_free_budget_distribution_(
@@ -478,9 +469,7 @@ namespace CampaignSvcs
 
     // approximate last hour by first hour
     *res_hour_it = last_hour_it->use_time != Generics::Time::ZERO ?
-      approximate_hour_lineary_(
-        *last_hour_it,
-        *amount_distribution.amounts.begin()) :
+      approximate_hour_lineary_(*last_hour_it, *amount_distribution.amounts.begin()) :
       HourAmount();
   }
 
@@ -494,9 +483,7 @@ namespace CampaignSvcs
       rate_it != amount_distribution.rate_distributions.end(); ++rate_it)
     {
       HourAmountDistribution approximated_hour_amount_distribution;
-      approximate_hour_amount_distribution_(
-        approximated_hour_amount_distribution,
-        rate_it->second);
+      approximate_hour_amount_distribution_(approximated_hour_amount_distribution, rate_it->second);
 
       unsigned long hour_i = 0;
       for (auto hour_it = approximated_hour_amount_distribution.amounts.begin();
@@ -554,10 +541,7 @@ namespace CampaignSvcs
         ++hour_it, ++res_hour_it)
       {
         const RevenueDecimal normalized_hour_amount = RevenueDecimal::mul(
-          RevenueDecimal::div(
-            hour_it->amount,
-            prev_amount_sum,
-            Generics::DDR_FLOOR),
+          RevenueDecimal::div(hour_it->amount, prev_amount_sum, Generics::DDR_FLOOR),
           budget,
           Generics::DMR_FLOOR);
 
@@ -644,14 +628,11 @@ namespace CampaignSvcs
     {
       if (hour_i < now_hour)
       {
-        actual_delivered_free_amount +=
-          actual_free_amount_distribution.amounts[hour_i].amount;
-        planned_free_amount +=
-          today_planned_free_budget_distribution[hour_i];
+        actual_delivered_free_amount += actual_free_amount_distribution.amounts[hour_i].amount;
+        planned_free_amount += today_planned_free_budget_distribution[hour_i];
       }
 
-      free_budget_distribution[hour_i] +=
-        today_planned_free_budget_distribution[hour_i];
+      free_budget_distribution[hour_i] += today_planned_free_budget_distribution[hour_i];
     }
 
 #   ifdef DEBUG_OUT_
@@ -662,8 +643,7 @@ namespace CampaignSvcs
     if (actual_delivered_free_amount < planned_free_amount)
     {
       // add underdelivered amount to current hour
-      free_budget_distribution[now_hour] +=
-        planned_free_amount - actual_delivered_free_amount;
+      free_budget_distribution[now_hour] += planned_free_amount - actual_delivered_free_amount;
     }
     else if (planned_free_amount < actual_delivered_free_amount)
     {
@@ -700,8 +680,7 @@ namespace CampaignSvcs
 
     for (unsigned long hour_i = 0; hour_i < now_hour; ++hour_i)
     {
-      actual_delivered_goaled_amount +=
-        actual_goaled_amount_distribution.amounts[hour_i].amount;
+      actual_delivered_goaled_amount += actual_goaled_amount_distribution.amounts[hour_i].amount;
     }
 
     // eval planned amount
@@ -714,8 +693,7 @@ namespace CampaignSvcs
       unsigned long hour_i = 0;
 
       for (auto hour_it = rate_it->second.amounts.begin();
-          hour_it != rate_it->second.amounts.end() &&
-            hour_i < now_hour;
+          hour_it != rate_it->second.amounts.end() && hour_i < now_hour;
           ++hour_it, ++hour_i)
       {
         if (rate_it->first >= actual_rate_distribution[hour_i])
@@ -798,8 +776,7 @@ namespace CampaignSvcs
       "  actual_delivered_goaled_amount = " << actual_delivered_goaled_amount << std::endl <<
       "  free_budget_reminder = " << free_budget_reminder << std::endl <<
       "  safe_goal_daily_budget_multiplier = " << safe_goal_daily_budget_multiplier << std::endl <<
-      "  safe_goal_daily_budget = " << safe_goal_daily_budget << std::endl <<
-      std::endl;
+      "  safe_goal_daily_budget = " << safe_goal_daily_budget << std::endl << std::endl;
 #   endif
 
     // select rate goal by safe_goal_daily_budget
@@ -833,15 +810,12 @@ namespace CampaignSvcs
 #   ifdef DEBUG_OUT_
     std::cout << "DEBUG: eval_goal_rate_(): " << std::endl <<
       "  cur_goal_amount = " << cur_goal_amount << std::endl <<
-      "  free_budget_reminder = " << free_budget_reminder <<
-      std::endl;
+      "  free_budget_reminder = " << free_budget_reminder << std::endl;
 #   endif
   }
 
   CTROptimizer::HourAmount
-  CTROptimizer::approximate_hour_lineary_(
-    const HourAmount& left,
-    const HourAmount& right)
+  CTROptimizer::approximate_hour_lineary_(const HourAmount& left, const HourAmount& right)
     noexcept
   {
     const RevenueDecimal cur_sec_amount = RevenueDecimal::div(
@@ -862,10 +836,7 @@ namespace CampaignSvcs
         cur_sec_amount + next_sec_amount,
         RevenueDecimal(false, 2, 0),
         Generics::DDR_FLOOR),
-      RevenueDecimal(
-        false,
-        (Generics::Time::ONE_HOUR - left.use_time).tv_sec,
-        0),
+      RevenueDecimal(false, (Generics::Time::ONE_HOUR - left.use_time).tv_sec, 0),
       Generics::DMR_FLOOR);
 
     return HourAmount(left.amount + hour_add_amount, Generics::Time::ONE_HOUR);
@@ -910,5 +881,3 @@ namespace CampaignSvcs
     }
   }
 }
-}
-

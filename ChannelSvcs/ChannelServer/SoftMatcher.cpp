@@ -1,40 +1,34 @@
-
-#ifndef AD_SERVER_CONTAINER_MATCHERS_TPP
-#define AD_SERVER_CONTAINER_MATCHERS_TPP
-
 #include <Commons/Constants.hpp>
 #include <ChannelSvcs/ChannelCommons/Serialization.hpp>
 #include "SoftMatcher.hpp"
 
-namespace AdServer
+namespace AdServer::ChannelSvcs
 {
-namespace ChannelSvcs
-{
-
   std::ostream& SoftMatcher::print(std::ostream& out) const /*throw(eh::Exception)*/
   {
     out  << lang_ << " : '" << trigger_;
     out << "' : ";
     size_t i;
-    for(i = 0; i < simple_words_.size(); i++)
+    for (i = 0; i < simple_words_.size(); i++)
     {
-      if(i)
+      if (i)
       {
         out << ", ";
       }
       out << "'" << simple_words_[i].text() << "'";
     }
-    if(main_lexem_)
+
+    if (main_lexem_)
     {
-      if(i)
+      if (i)
       {
         out << ", ";
       }
       out << "'" << main_lexem_->forms[0].text().str() << "'";
     }
-    for(size_t j = 0; j < words_.size(); j++)
+    for (size_t j = 0; j < words_.size(); j++)
     {
-      if(i)
+      if (i)
       {
         out << ", ";
       }
@@ -46,25 +40,25 @@ namespace ChannelSvcs
 
   bool SoftMatcher::match_exact(const StringVector& words) const
     /*throw(eh::Exception)*/
-  {//for exact triggers arrays words_ and simple_words_ are equal length
-    //iterate by both of them and use one with data
-    if(!Serialization::exact(trigger_.c_str()) ||
-       words.size() != simple_words_.size())
+  {
+    // for exact triggers arrays words_ and simple_words_ are equal length
+    // iterate by both of them and use one with data
+    if (!Serialization::exact(trigger_.c_str()) || words.size() != simple_words_.size())
     {
       return false;
     }
     StringVector::const_iterator word_it = words.begin();
     LexemesPtrVector::const_iterator it = words_.begin();
     SubHashVector::const_iterator simple_it = simple_words_.begin();
-    for(; word_it != words.end(); ++it, ++word_it, ++simple_it)
+    for (; word_it != words.end(); ++it, ++word_it, ++simple_it)
     {
       bool match = false;
-      if(it < words_.end() && *it)
+      if (it < words_.end() && *it)
       {
-        for(LexemeData::Forms::const_iterator i = (*it)->forms.begin();
+        for (LexemeData::Forms::const_iterator i = (*it)->forms.begin();
             i != (*it)->forms.end(); ++i)
         {
-          if(*i == *word_it)
+          if (*i == *word_it)
           {
             match = true;
             break;
@@ -75,7 +69,8 @@ namespace ChannelSvcs
       {
         match = (*simple_it == *word_it);
       }
-      if(!match)
+
+      if (!match)
       {
         return false;
       }
@@ -86,44 +81,45 @@ namespace ChannelSvcs
   bool SoftMatcher::match(const MatchWords& words, bool soft_match) const
     /*throw(eh::Exception)*/
   {
-    if(soft_match)
+    if (soft_match)
     {
       return true;
     }
-    if(Serialization::exact(trigger_.c_str()))
+
+    if (Serialization::exact(trigger_.c_str()))
     {
       return false;
     }
     bool match = true;
     MatchWords::const_iterator m_it = words.end();
-    for(SubHashVector::const_iterator it = simple_words_.begin();
-        it != simple_words_.end(); ++it)
+    for (SubHashVector::const_iterator it = simple_words_.begin(); it != simple_words_.end(); ++it)
     {
-        m_it = words.find(*it);
-        match = (m_it != words.end());
-        if(!match)
-        {
-          return false;
-        }
+      m_it = words.find(*it);
+      match = (m_it != words.end());
+      if (!match)
+      {
+        return false;
+      }
     }
-    for(LexemesPtrVector::const_iterator it = words_.begin();
-        it != words_.end(); ++it)
+
+    for (LexemesPtrVector::const_iterator it = words_.begin(); it != words_.end(); ++it)
     {
       match = false;
-      if(*it)
+      if (*it)
       {
-        for(LexemeData::Forms::const_iterator i = (*it)->forms.begin();
-            i != (*it)->forms.end(); ++i)
+        for (LexemeData::Forms::const_iterator i = (*it)->forms.begin();
+          i != (*it)->forms.end(); ++i)
         {
           m_it = words.find(*i);
-          if(m_it != words.end())
+          if (m_it != words.end())
           {
             match = true;
             break;
           }
         }
       }
-      if(!match)
+
+      if (!match)
       {
         return false;
       }
@@ -131,14 +127,13 @@ namespace ChannelSvcs
     return match;
   }
 
-  bool SoftMatcher::find_token(
-    const String::SubString& ftoken, String::SubString& token) noexcept
+  bool SoftMatcher::find_token(const String::SubString& ftoken, String::SubString& token) noexcept
   {
-    if(main_lexem_.in())
+    if (main_lexem_.in())
     {
-      for(auto it = main_lexem_->forms.begin(); it != main_lexem_->forms.end(); ++it)
+      for (auto it = main_lexem_->forms.begin(); it != main_lexem_->forms.end(); ++it)
       {
-        if(*it == ftoken)
+        if (*it == ftoken)
         {
           token = *it;
           return true;
@@ -148,9 +143,9 @@ namespace ChannelSvcs
     }
     SubStringVector substrings;
     Serialization::get_parts(trigger_, substrings);
-    for(auto it = substrings.begin(); it != substrings.end(); ++it)
+    for (auto it = substrings.begin(); it != substrings.end(); ++it)
     {
-      if(*it == ftoken)
+      if (*it == ftoken)
       {
         token = *it;
         return true;
@@ -165,13 +160,11 @@ namespace ChannelSvcs
   {
     SubStringVector substrings;
     Serialization::get_parts(trigger_, substrings);
-    container.reserve(
-      Commons::DEFAULT_MAX_HARD_WORD_SEQ * substrings.size());
+    container.reserve(Commons::DEFAULT_MAX_HARD_WORD_SEQ * substrings.size());
     String::SubString token;
-    for(auto it = substrings.begin(); it != substrings.end(); ++it)
+    for (auto it = substrings.begin(); it != substrings.end(); ++it)
     {
-      String::StringManip::CharSplitter tokenizer(
-        *it, TRIGGER_WORD_SEPARATORS);
+      String::StringManip::CharSplitter tokenizer(*it, TRIGGER_WORD_SEPARATORS);
       while (tokenizer.get_token(token))
       {
         container.push_back(token);
@@ -181,9 +174,7 @@ namespace ChannelSvcs
   }
 
 
-  SoftMatcher::SoftMatcher(
-    unsigned short lang,
-    std::string& trigger)
+  SoftMatcher::SoftMatcher(unsigned short lang, std::string& trigger)
     noexcept
     : lang_(lang)
   {
@@ -198,34 +189,38 @@ namespace ChannelSvcs
   {
     char type = trigger_type();
     if (type == 'D')
-    {//there isn't any additional information for uid triggers
+    {
+      // there isn't any additional information for uid triggers
       return;
     }
+
     if (type == 'U')
     {
       simple_words_.insert(simple_words_.end(), parts.begin(), parts.end());
       return;
     }
-    if(Serialization::exact(trigger_.c_str()))
+
+    if (Serialization::exact(trigger_.c_str()))
     {
       simple_words_.insert(simple_words_.end(), parts.begin(), parts.end());
       words_.swap(lexemes);
-      if(words_.size() > word_num)
+      if (words_.size() > word_num)
       {
         main_lexem_ = words_[word_num];
       }
       return;
     }
-    if(!lexemes.empty() && lexemes[word_num])
+
+    if (!lexemes.empty() && lexemes[word_num])
     {
       main_lexem_.swap(lexemes[word_num]);
     }
     simple_words_.reserve(parts.size());
-    for(size_t i = 0; i < parts.size(); ++i)
+    for (size_t i = 0; i < parts.size(); ++i)
     {
-      if(i != word_num)
+      if (i != word_num)
       {
-        if(!lexemes.empty() && lexemes[i])
+        if (!lexemes.empty() && lexemes[i])
         {
           words_.push_back(lexemes[i]);
         }
@@ -236,9 +231,4 @@ namespace ChannelSvcs
       }
     }
   }
-
 }
-}
-
-#endif
-

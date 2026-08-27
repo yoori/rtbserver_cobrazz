@@ -59,7 +59,7 @@ for host in $HOSTS; do
     copy_files $host ".*\(\.\(log\|err\)\|/error_log\..*\)$" $test_log_path/server-logs/$host $workspace_root/log
     check_error $? "Copy log files"
     echo "Getting logs from $host...done"
-    
+
     # Copy server output
     mkdir -p $test_log_path/server-output/$host
     echo "Getting output from $host..."

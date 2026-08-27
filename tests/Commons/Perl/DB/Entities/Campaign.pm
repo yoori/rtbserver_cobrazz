@@ -7,7 +7,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   schedule_id => DB::Entity::Type::sequence(),
   campaign_id => DB::Entity::Type::link('DB::Campaign', unique => 1),
@@ -47,7 +47,7 @@ use constant CREATIVE_OPTIMIZATION    =>  0x020;
 use constant EXCLUDE_CLICK_URL        =>  0x040;
 use constant INCLUDE_SPECIFIC_SITES   =>  0x200;
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   campaign_id => DB::Entity::Type::sequence(),
   name => DB::Entity::Type::name(unique => 1),
@@ -56,12 +56,12 @@ use constant STRUCT =>
   freq_cap_id => DB::Entity::Type::link('DB::FreqCap', nullable => 1),
   budget => DB::Entity::Type::int(nullable => 1, default => undef),
   status => DB::Entity::Type::status(),
-  sold_to_user_id => 
-    DB::Entity::Type::link( 
+  sold_to_user_id =>
+    DB::Entity::Type::link(
       'DB::Users',
       default => sub { DB::Defaults::instance()->user }),
-  bill_to_user_id => 
-    DB::Entity::Type::link( 
+  bill_to_user_id =>
+    DB::Entity::Type::link(
       'DB::Users',
       default => sub { DB::Defaults::instance()->user }),
   display_status_id => DB::Entity::Type::display_status('Campaign'),
@@ -84,11 +84,11 @@ sub preinit_
 
   my $account = ref $args->{account_id}?
       $args->{account_id}->{account_id}: $args->{account_id};
-  ($args->{marketplace}) = 
+  ($args->{marketplace}) =
     $ns->pq_dbh->selectrow_array(qq[
       SELECT agency_marketplace
       FROM walledgarden
-      WHERE agency_account_id = $account]) 
+      WHERE agency_account_id = $account])
       if not exists $args->{marketplace};
 }
 
@@ -125,10 +125,10 @@ sub _table {
     'Campaign'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   %{ DB::Campaign->STRUCT },
-    
+
   campaign_type => 'T'
 };
 
@@ -146,10 +146,10 @@ sub _table {
     'Campaign'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   %{ DB::Campaign->STRUCT },
-    
+
   campaign_type => 'D'
 };
 
@@ -176,7 +176,7 @@ sub links
 sub store_pubaccount
 {
   my ($self,  $publisher, $primary_key, $args) = @_;
-  die "Invalid primary key '$primary_key' for PubAccount" 
+  die "Invalid primary key '$primary_key' for PubAccount"
     if $primary_key ne 'account_id';
   push (@{$self->{PubAccount}}, $publisher);
   $args->{account_id} = $publisher->{account_id};
@@ -214,7 +214,7 @@ sub __create_entity
 
   # Create Creative_TagSize links
   my %args_copy = (%$args, %$own_args);
-  if (defined  $self->{creative_id} && defined $args_copy{site_id} && 
+  if (defined  $self->{creative_id} && defined $args_copy{site_id} &&
       !$args_copy{creative_tag_sizes} && !$args_copy{creative_tag_size_types})
   {
     if (defined $own_args->{size_id})

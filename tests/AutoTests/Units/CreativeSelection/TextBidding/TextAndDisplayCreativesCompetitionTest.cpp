@@ -1,9 +1,6 @@
 #include "TextAndDisplayCreativesCompetitionTest.hpp"
 
-REFLECT_UNIT(TextAndDisplayCreativesCompetitionTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(TextAndDisplayCreativesCompetitionTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace ORM = AutoTest::ORM;
 
@@ -21,28 +18,15 @@ namespace
 bool
 TextAndDisplayCreativesCompetitionTest::run_test()
 {
-  AUTOTEST_CASE(
-    scenario1(),
-    "Display wins Keyword");
+  AUTOTEST_CASE(scenario1(), "Display wins Keyword");
 
-  AUTOTEST_CASE(
-    scenario2(),
-    "Keyword wins display");
+  AUTOTEST_CASE(scenario2(), "Keyword wins display");
 
-  AUTOTEST_CASE(
-    scenario3(),
-    "Channel wins display("
-    "channel eCPM equal to display eCpm)");
+  AUTOTEST_CASE(scenario3(), "Channel wins display(" "channel eCPM equal to display eCpm)");
 
-  AUTOTEST_CASE(
-    scenario4(),
-    "Channel wins display("
-    "channel eCPM more than display eCpm)");
+  AUTOTEST_CASE(scenario4(), "Channel wins display(" "channel eCPM more than display eCpm)");
 
-  AUTOTEST_CASE(
-    scenario5(),
-    "Display wins channel("
-    "channel eCPM less than display eCpm)");
+  AUTOTEST_CASE(scenario5(), "Display wins channel(" "channel eCPM less than display eCpm)");
 
   return true;
 }
@@ -62,17 +46,13 @@ TextAndDisplayCreativesCompetitionTest::scenario1()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "display ccid check#1");
 
   client.repeat_request ();
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "display ccid check#2");
 
 
@@ -93,9 +73,7 @@ TextAndDisplayCreativesCompetitionTest::scenario2()
       fetch_string("DISPLAYCC_2")
     };
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "display ccid check#1");
   }
 
@@ -107,9 +85,7 @@ TextAndDisplayCreativesCompetitionTest::scenario2()
       fetch_string("TEXTCC2_2")
     };
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp_ccids,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
       "text ccids check#2");
   }
 
@@ -130,9 +106,7 @@ TextAndDisplayCreativesCompetitionTest::scenario3()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "display ccids check");
 
   precisely_number exp_imp_revenues[] = {
@@ -140,9 +114,7 @@ TextAndDisplayCreativesCompetitionTest::scenario3()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
@@ -163,9 +135,7 @@ TextAndDisplayCreativesCompetitionTest::scenario4()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "channel text ccids check");
 
   precisely_number exp_imp_revenues[] = {
@@ -175,9 +145,7 @@ TextAndDisplayCreativesCompetitionTest::scenario4()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }
 
@@ -196,9 +164,7 @@ TextAndDisplayCreativesCompetitionTest::scenario5()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccids,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccids, SelectedCreativesCCID(client)).check(),
     "display ccids check");
 
   precisely_number exp_imp_revenues[] = {
@@ -206,8 +172,6 @@ TextAndDisplayCreativesCompetitionTest::scenario5()
   };
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_imp_revenues,
-      SelectedCreativesImpRevenue(client)).check(),
+    AutoTest::sequence_checker(exp_imp_revenues, SelectedCreativesImpRevenue(client)).check(),
     "imp revenue check");
 }

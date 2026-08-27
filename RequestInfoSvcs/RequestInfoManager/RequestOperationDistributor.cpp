@@ -1,9 +1,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include "RequestOperationDistributor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   RequestOperationDistributor::RequestOperationDistributor(
     unsigned long distrib_count,
@@ -15,28 +13,22 @@ namespace RequestInfoSvcs
     : distrib_count_(distrib_count),
       index_(index),
       services_count_(services_count),
-      request_operation_processor_(
-        ReferenceCounting::add_ref(request_operation_processor)),
+      request_operation_processor_(ReferenceCounting::add_ref(request_operation_processor)),
       other_request_operation_processor_(
         ReferenceCounting::add_ref(other_request_operation_processor))
   {}
 
   void
-  RequestOperationDistributor::process_impression(
-    const ImpressionInfo& impression_info)
+  RequestOperationDistributor::process_impression(const ImpressionInfo& impression_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
-    get_request_operation_processor_(
-      impression_info.user_id)->process_impression(
-        impression_info);
+    get_request_operation_processor_(impression_info.user_id)->process_impression(impression_info);
   }
 
   AdServer::Commons::Awaitable<void>
-  RequestOperationDistributor::co_process_impression(
-    const ImpressionInfo& impression_info)
+  RequestOperationDistributor::co_process_impression(const ImpressionInfo& impression_info)
   {
-    co_await get_request_operation_processor_(
-      impression_info.user_id)->co_process_impression(
+    co_await get_request_operation_processor_(impression_info.user_id)->co_process_impression(
         impression_info);
   }
 
@@ -89,10 +81,7 @@ namespace RequestInfoSvcs
     const RequestPostActionInfo& request_post_action_info)
   {
     co_await get_request_operation_processor_(new_user_id)->
-      co_process_impression_post_action(
-        new_user_id,
-        request_id,
-        request_post_action_info);
+      co_process_impression_post_action(new_user_id, request_id, request_post_action_info);
   }
 
   void
@@ -115,10 +104,7 @@ namespace RequestInfoSvcs
     const Generics::ConstSmartMemBuf* request_profile)
   {
     co_await get_request_operation_processor_(new_user_id)->
-      co_change_request_user_id(
-        new_user_id,
-        request_id,
-        request_profile);
+      co_change_request_user_id(new_user_id, request_id, request_profile);
   }
 
   RequestOperationProcessor_var
@@ -131,7 +117,7 @@ namespace RequestInfoSvcs
         // ~ file index
       services_count_;
 
-    if(target_index == index_)
+    if (target_index == index_)
     {
       return request_operation_processor_;
     }
@@ -144,8 +130,6 @@ namespace RequestInfoSvcs
     RequestOperationProcessor* request_operation_processor)
     noexcept
   {
-    request_operation_processor_ = ReferenceCounting::add_ref(
-      request_operation_processor);
+    request_operation_processor_ = ReferenceCounting::add_ref(request_operation_processor);
   }
-}
 }

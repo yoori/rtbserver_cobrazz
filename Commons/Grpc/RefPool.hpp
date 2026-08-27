@@ -32,9 +32,7 @@ namespace AdServer::Grpc
     struct RefHolder:
       public std::enable_shared_from_this<RefHolder>
     {
-      RefHolder(
-        std::shared_ptr<T> object_val,
-        std::weak_ptr<RefPool> pool_val);
+      RefHolder(std::shared_ptr<T> object_val, std::weak_ptr<RefPool> pool_val);
 
       std::shared_ptr<T> object;
       std::weak_ptr<RefPool> pool;
@@ -57,9 +55,7 @@ namespace AdServer::Grpc
       const T& operator*() const noexcept;
 
       void mark_as_bad(const Generics::Time& bad_before_time);
-      void mark_as_bad(
-        const Generics::Time& bad_before_time,
-        std::string unavailable_error);
+      void mark_as_bad(const Generics::Time& bad_before_time, std::string unavailable_error);
       bool is_bad() const noexcept;
 
     private:
@@ -73,9 +69,7 @@ namespace AdServer::Grpc
         std::shared_ptr<RefHolder> ref_holder;
       };
 
-      explicit Ref(
-        std::shared_ptr<RefHolder> ref_holder,
-        bool probe_ref = false);
+      explicit Ref(std::shared_ptr<RefHolder> ref_holder, bool probe_ref = false);
 
       std::shared_ptr<RefHolder> ref_holder_;
       std::shared_ptr<ProbeGuard> probe_guard_;
@@ -117,8 +111,7 @@ namespace AdServer::Grpc
       const Generics::Time& bad_before_time,
       std::string unavailable_error);
 
-    void finish_probe_(
-      const std::shared_ptr<RefHolder>& ref_holder) noexcept;
+    void finish_probe_(const std::shared_ptr<RefHolder>& ref_holder) noexcept;
 
     void schedule_bad_refs_move_(const Generics::Time& bad_time) noexcept;
     void move_ready_bad_refs_(const Generics::Time& expected_bad_time) noexcept;

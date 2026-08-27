@@ -1,9 +1,6 @@
 #include "ContextChannelsTest.hpp"
 
-REFLECT_UNIT(ContextChannelsTest) (
-  "TriggerMatching",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ContextChannelsTest) ("TriggerMatching", AUTO_TEST_FAST);
 
 typedef AutoTest::NSLookupRequest NSLookupRequest;
 typedef AutoTest::AdClient AdClient;

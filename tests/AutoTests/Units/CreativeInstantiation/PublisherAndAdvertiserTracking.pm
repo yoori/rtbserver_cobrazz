@@ -10,27 +10,27 @@ sub init
 {
   my ($self, $ns) = @_;
 
-  my $pub_track = 
+  my $pub_track =
     "http://img.yandex.net/i/1.gif?r=##RANDOM##";
 
-  my $adv_track_imp = 
+  my $adv_track_imp =
     "http://img.yandex.net/i/imp.gif?r=##RANDOM##";
 
-  my $adv_track_no_imp = 
+  my $adv_track_no_imp =
     "http://img.yandex.net/i/no_imp.gif?r=##RANDOM##";
 
   my $publisher = $ns->create(Publisher => {
     name => "Publisher",
     flags => 0,
     cpm => 0,
-    pricedtag_publ_tag_track_pixel_value => 
+    pricedtag_publ_tag_track_pixel_value =>
       $pub_track } );
 
   my $test_publisher = $ns->create(Publisher => {
     name => "PublisherTest",
     pubaccount_flags => DB::Account::TEST,
     cpm => 0,
-    pricedtag_publ_tag_track_pixel_value => 
+    pricedtag_publ_tag_track_pixel_value =>
       $pub_track } );
 
   my $advertiser = $ns->create(Account => {
@@ -38,14 +38,14 @@ sub init
     role_id => DB::Defaults::instance()->advertiser_role,
     account_type_id => DB::Defaults::instance()->advertiser_type } );
 
-  my $templateNoImp = $ns->create(Template => { 
+  my $templateNoImp = $ns->create(Template => {
     name => 'TemplateNoImp',
     template_file => 'UnitTests/PublisherAndAdvertiserTracking.html',
     app_format_id =>  DB::Defaults::instance()->app_format_no_track,
     flags => 0,
     template_file_type => 'T'});
 
-  my $templateImp = $ns->create(Template => { 
+  my $templateImp = $ns->create(Template => {
     name => 'TemplateImp',
     template_file => 'UnitTests/PublisherAndAdvertiserTracking.html',
     app_format_id =>  DB::Defaults::instance()->app_format_track,

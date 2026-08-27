@@ -78,9 +78,7 @@ public:
     }
     else if (ops_[index] == -2)
     {
-      request_info_container->process_custom_action(
-        request_info_.request_id,
-        custom_action_info_);
+      request_info_container->process_custom_action(request_info_.request_id, custom_action_info_);
     }
     else
     {
@@ -171,8 +169,7 @@ public:
    * Here, form queue of tasks.
    */
   Tester(RequestInfoContainer* request_info_container)
-    : request_info_container_(
-        ReferenceCounting::add_ref(request_info_container))
+    : request_info_container_(ReferenceCounting::add_ref(request_info_container))
   {
     for (std::size_t i = 0; i < MT_OPERATIONS_AMOUNT; ++i)
     {
@@ -204,16 +201,12 @@ private:
 };
 
 bool
-multi_thread_test(
-  AdServer::RequestInfoSvcs::RequestInfoContainer* request_info_container)
+multi_thread_test(AdServer::RequestInfoSvcs::RequestInfoContainer* request_info_container)
   noexcept
 {
   Tester test(request_info_container);
-  TestCommons::MTTester<Tester&> mt_tester(
-    test, 15);
+  TestCommons::MTTester<Tester&> mt_tester(test, 15);
 
-  mt_tester.run(MT_OPERATIONS_AMOUNT * 8,
-    0,
-    MT_OPERATIONS_AMOUNT * 8);
+  mt_tester.run(MT_OPERATIONS_AMOUNT * 8, 0, MT_OPERATIONS_AMOUNT * 8);
   return true;
 }

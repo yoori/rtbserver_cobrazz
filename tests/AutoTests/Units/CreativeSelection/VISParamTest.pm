@@ -51,8 +51,8 @@ sub case01_vis_param_tests {
 }
 
 sub case02_ad_selection_based_on_visibility_filter {
-  my ($self, $ns, $name, $country1, $country_code1, 
-      $country2, $country_code2, 
+  my ($self, $ns, $name, $country1, $country_code1,
+      $country2, $country_code2,
       $country4, $country_code4) = @_;
 
   my $pub_acc1 = $ns->create(PubAccount => {

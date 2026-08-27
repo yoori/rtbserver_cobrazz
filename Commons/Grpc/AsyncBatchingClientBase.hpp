@@ -30,48 +30,48 @@
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 
-namespace AdServer::Grpc
+namespace AdServer::Grpc::Detail
 {
-  namespace Detail
+  inline constexpr const char PARSE_RESPONSE_SOURCE[] = "parse_response";
+
+  inline
+  std::string hex_prefix_(const std::string& value, const std::size_t limit)
   {
-    inline constexpr const char PARSE_RESPONSE_SOURCE[] = "parse_response";
+    static constexpr char HEX[] = "0123456789abcdef";
 
-    inline
-    std::string hex_prefix_(const std::string& value, const std::size_t limit)
+    const auto size = std::min(value.size(), limit);
+    std::string result;
+    result.reserve(size * 2);
+    for (std::size_t i = 0; i < size; ++i)
     {
-      static constexpr char HEX[] = "0123456789abcdef";
-
-      const auto size = std::min(value.size(), limit);
-      std::string result;
-      result.reserve(size * 2);
-      for (std::size_t i = 0; i < size; ++i)
-      {
-        const auto ch = static_cast<unsigned char>(value[i]);
-        result.push_back(HEX[ch >> 4]);
-        result.push_back(HEX[ch & 0x0F]);
-      }
-
-      return result;
+      const auto ch = static_cast<unsigned char>(value[i]);
+      result.push_back(HEX[ch >> 4]);
+      result.push_back(HEX[ch & 0x0F]);
     }
 
-    inline
-    std::string make_parse_error_message_(
-      const char* parse_error_message,
-      const char* full_method,
-      const std::string& payload)
-    {
-      std::string message = parse_error_message ? parse_error_message : "";
-      message += " [method=";
-      message += full_method ? full_method : "";
-      message += ", payload_size=";
-      message += std::to_string(payload.size());
-      message += ", payload_hex_prefix=";
-      message += hex_prefix_(payload, 64);
-      message += "]";
-      return message;
-    }
+    return result;
   }
 
+  inline
+  std::string make_parse_error_message_(
+    const char* parse_error_message,
+    const char* full_method,
+    const std::string& payload)
+  {
+    std::string message = parse_error_message ? parse_error_message : "";
+    message += " [method=";
+    message += full_method ? full_method : "";
+    message += ", payload_size=";
+    message += std::to_string(payload.size());
+    message += ", payload_hex_prefix=";
+    message += hex_prefix_(payload, 64);
+    message += "]";
+    return message;
+  }
+}
+
+namespace AdServer::Grpc
+{
   inline const grpc::Status NO_ACTIVE_BATCHING_STREAMS_STATUS(
     grpc::StatusCode::UNAVAILABLE,
     NO_ACTIVE_BATCHING_STREAMS_MESSAGE);
@@ -102,15 +102,12 @@ namespace AdServer::Grpc
       const char* parse_error_message);
 
   private:
-    using BatchingStreamPtr =
-      std::shared_ptr<AdServer::Grpc::BatchingStreamBase>;
-    using BatchingQueuePtr =
-      std::shared_ptr<AdServer::Grpc::BatchingQueue>;
+    using BatchingStreamPtr = std::shared_ptr<AdServer::Grpc::BatchingStreamBase>;
+    using BatchingQueuePtr = std::shared_ptr<AdServer::Grpc::BatchingQueue>;
     struct StreamHolder;
     using StreamHolderPtr = std::shared_ptr<StreamHolder>;
     using ActivityGatePtr = std::shared_ptr<AdServer::Commons::ActivityGate>;
-    using BatchResponseCallback =
-      std::function<void(const adserver::grpc::BatchResponseItem&)>;
+    using BatchResponseCallback = std::function<void(const adserver::grpc::BatchResponseItem&)>;
 
     void activate_object_() override;
     void deactivate_object_() override;
@@ -147,8 +144,7 @@ namespace AdServer::Grpc
       BatchingStreamBase::PendingBatch&& batch,
       const StreamHolderPtr& stream_holder) noexcept;
     void schedule_timing_coalesce_() noexcept;
-    void schedule_timing_coalesce_(
-      const Generics::Time& oldest_enqueue_time) noexcept;
+    void schedule_timing_coalesce_(const Generics::Time& oldest_enqueue_time) noexcept;
     void run_timing_coalesce_(Generics::Time deadline) noexcept;
     void schedule_stream_shrink_() noexcept;
     void shrink_idle_streams_() noexcept;
@@ -219,8 +215,7 @@ namespace AdServer::Grpc
           batch_response.status_message());
 
         auto arena = std::make_shared<google::protobuf::Arena>();
-        auto* response =
-          google::protobuf::Arena::CreateMessage<Response>(arena.get());
+        auto* response = google::protobuf::Arena::CreateMessage<Response>(arena.get());
         if (status.ok() && !response->ParseFromString(batch_response.payload()))
         {
           const auto message = AdServer::Grpc::Detail::make_parse_error_message_(
@@ -236,9 +231,7 @@ namespace AdServer::Grpc
           {
             callback(
               grpc::Status(grpc::StatusCode::INTERNAL, message),
-              AdServer::Grpc::ResponseHolder<Response>::make_arena(
-                *response,
-                std::move(arena)));
+              AdServer::Grpc::ResponseHolder<Response>::make_arena(*response, std::move(arena)));
           }
           return;
         }
@@ -247,9 +240,7 @@ namespace AdServer::Grpc
         {
           callback(
             status,
-            AdServer::Grpc::ResponseHolder<Response>::make_arena(
-              *response,
-              std::move(arena)));
+            AdServer::Grpc::ResponseHolder<Response>::make_arena(*response, std::move(arena)));
         }
       });
   }

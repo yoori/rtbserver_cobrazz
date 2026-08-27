@@ -64,8 +64,7 @@ namespace AdServer::RequestInfoSvcs
       bool operator()(const LeftType& left, const RightType& right) const
       {
         return left.channel_id() < right.channel_id() ||
-          (left.channel_id() == right.channel_id() &&
-          left.time() <= right.time());
+          (left.channel_id() == right.channel_id() && left.time() <= right.time());
       }
     };
 
@@ -138,8 +137,7 @@ namespace AdServer::RequestInfoSvcs
           use_noise_size > 0 ? triggers.size() * (use_noise_size + 1) :
           triggers.size()));
 
-      UserTriggerMatchContainer::MatchedTriggerIdArray trigger_indexes(
-        triggers.get_allocator());
+      UserTriggerMatchContainer::MatchedTriggerIdArray trigger_indexes(triggers.get_allocator());
 
       for (auto tr_it = triggers.begin(); tr_it != triggers.end(); ++tr_it)
       {
@@ -165,10 +163,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (use_noise_size > 0) // number of triggers in channel > 1
         {
-          fill_index_sampling(
-            trigger_indexes,
-            channel_triggers.size(),
-            use_noise_size);
+          fill_index_sampling(trigger_indexes, channel_triggers.size(), use_noise_size);
         }
 
         //
@@ -215,8 +210,7 @@ namespace AdServer::RequestInfoSvcs
         {
           if (*tr_idx_it < channel_triggers.size())
           {
-            compensate_triggers.push_back(
-              channel_triggers[*tr_idx_it]);
+            compensate_triggers.push_back(channel_triggers[*tr_idx_it]);
           }
           else
           {
@@ -236,8 +230,7 @@ namespace AdServer::RequestInfoSvcs
       unsigned long positive_group_size,
       unsigned long negative_group_size)
     {
-      UserTriggerMatchWriter::page_matches_Container::iterator res_it =
-        res_matches.begin();
+      UserTriggerMatchWriter::page_matches_Container::iterator res_it = res_matches.begin();
 
       for (UserTriggerMatchContainer::MatchMap::const_iterator mit = new_matches.begin();
         mit != new_matches.end(); ++mit)
@@ -381,17 +374,11 @@ namespace AdServer::RequestInfoSvcs
       UserTriggerMatchWriter& profile_writer,
       const UserTriggerMatchReader& merge_profile_reader)
     {
-      merge_matches(
-        profile_writer.page_matches(),
-        merge_profile_reader.page_matches());
+      merge_matches(profile_writer.page_matches(), merge_profile_reader.page_matches());
 
-      merge_matches(
-        profile_writer.search_matches(),
-        merge_profile_reader.search_matches());
+      merge_matches(profile_writer.search_matches(), merge_profile_reader.search_matches());
 
-      merge_matches(
-        profile_writer.url_matches(),
-        merge_profile_reader.url_matches());
+      merge_matches(profile_writer.url_matches(), merge_profile_reader.url_matches());
 
       merge_matches(
         profile_writer.url_keyword_matches(),
@@ -402,8 +389,7 @@ namespace AdServer::RequestInfoSvcs
       Generics::Time& time,
       const UserTriggerMatchReader::page_matches_Container& matches)
     {
-      for (UserTriggerMatchReader::page_matches_Container::const_iterator it =
-          matches.begin();
+      for (UserTriggerMatchReader::page_matches_Container::const_iterator it = matches.begin();
         it != matches.end(); ++it)
       {
         time = (time == Generics::Time::ZERO ?
@@ -588,8 +574,7 @@ namespace AdServer::RequestInfoSvcs
           {
             inc = RevenueDecimal::div(
               RevenueDecimal(false, 1, 0),
-              RevenueDecimal::mul(weight, RevenueDecimal(min_visits),
-              Generics::DMR_FLOOR));
+              RevenueDecimal::mul(weight, RevenueDecimal(min_visits), Generics::DMR_FLOOR));
           }
 
           TriggerActionProcessor::MatchCounterKey key;
@@ -641,10 +626,8 @@ namespace AdServer::RequestInfoSvcs
       const UserTriggerMatchContainer::Config::ChannelInfo* default_channel_info)
     {
       UserTriggerMatchReader::page_matches_Container::const_iterator pit = page_matches.begin();
-      UserTriggerMatchReader::search_matches_Container::
-        const_iterator sit = search_matches.begin();
-      UserTriggerMatchReader::url_matches_Container::
-        const_iterator uit = url_matches.begin();
+      UserTriggerMatchReader::search_matches_Container::const_iterator sit = search_matches.begin();
+      UserTriggerMatchReader::url_matches_Container::const_iterator uit = url_matches.begin();
       UserTriggerMatchReader::url_keyword_matches_Container::
         const_iterator ukit = url_keyword_matches.begin();
 
@@ -665,9 +648,7 @@ namespace AdServer::RequestInfoSvcs
           const_iterator all_ch_it = all_channels.find(*ch_it);
 
         const UserTriggerMatchContainer::Config::ChannelInfo& channel_info =
-          all_ch_it != all_channels.end() ?
-          *all_ch_it->second :
-          *default_channel_info;
+          all_ch_it != all_channels.end() ? *all_ch_it->second : *default_channel_info;
 
         UserTriggerMatchReader::page_matches_Container::const_iterator
           pit_end = move_for_channel_matches(
@@ -720,24 +701,14 @@ namespace AdServer::RequestInfoSvcs
                RevenueDecimal(channel_info.url_keyword_min_visits)) :
              RevenueDecimal::ZERO);
 
-        collect_matches(
-          res_page_matches,
-          pit,
-          pit_end,
-          channel_info.page_min_visits,
-          sum_weight);
+        collect_matches(res_page_matches, pit, pit_end, channel_info.page_min_visits, sum_weight);
         collect_matches(
           res_search_matches,
           sit,
           sit_end,
           channel_info.search_min_visits,
           sum_weight);
-        collect_matches(
-          res_url_matches,
-          uit,
-          uit_end,
-          channel_info.url_min_visits,
-          sum_weight);
+        collect_matches(res_url_matches, uit, uit_end, channel_info.url_min_visits, sum_weight);
         collect_matches(
           res_url_keyword_matches,
           ukit,
@@ -788,9 +759,7 @@ namespace AdServer::RequestInfoSvcs
       convert_match_counters(
         matches_info.search_matches,
         request_profile_writer.search_match_counters());
-      convert_match_counters(
-        matches_info.url_matches,
-        request_profile_writer.url_match_counters());
+      convert_match_counters(matches_info.url_matches, request_profile_writer.url_match_counters());
       convert_match_counters(
         matches_info.url_keyword_matches,
         request_profile_writer.url_keyword_match_counters());
@@ -893,8 +862,7 @@ namespace AdServer::RequestInfoSvcs
 
         for (const auto& [chunk_id, chunk_folder] : chunk_folders)
         {
-          const std::string rocksdb_path =
-            chunk_folder + "/" + request_file_prefix;
+          const std::string rocksdb_path = chunk_folder + "/" + request_file_prefix;
           ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
             new RocksDBRequestProfileMap(
               rocksdb_processor,
@@ -904,9 +872,7 @@ namespace AdServer::RequestInfoSvcs
               Generics::Time::ZERO,
               false);
 
-          request_maps_.emplace(
-            chunk_id,
-            new RequestProfileMap(rocksdb_map.in()));
+          request_maps_.emplace(chunk_id, new RequestProfileMap(rocksdb_map.in()));
           add_child_object(rocksdb_map.in());
         }
       }
@@ -952,11 +918,9 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
-  UserTriggerMatchContainer::co_get_request_profile(
-    const AdServer::Commons::RequestId& request_id)
+  UserTriggerMatchContainer::co_get_request_profile(const AdServer::Commons::RequestId& request_id)
   {
-    static const char* FUN =
-      "UserTriggerMatchContainer::co_get_request_profile()";
+    static const char* FUN = "UserTriggerMatchContainer::co_get_request_profile()";
 
     if (request_maps_.empty())
     {
@@ -1042,8 +1006,7 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::StartableAwaitable<void>
-  UserTriggerMatchContainer::co_process_impression(
-    const ImpressionInfo& imp_info)
+  UserTriggerMatchContainer::co_process_impression(const ImpressionInfo& imp_info)
   {
     static const char* FUN = "UserTriggerMatchContainer::co_process_impression()";
 
@@ -1106,8 +1069,7 @@ namespace AdServer::RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": user_id = '" << user_id.to_string() <<
-        "', request_id = '" << request_id.to_string() <<
-        "'. Caught eh::Exception: " << ex.what();
+        "', request_id = '" << request_id.to_string() << "'. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -1295,8 +1257,7 @@ namespace AdServer::RequestInfoSvcs
               {
                 // do impression rollback
                 delegate_imps.push_back(TriggerActionProcessor::TriggersMatchInfo());
-                TriggerActionProcessor::TriggersMatchInfo& revert_match_info =
-                  delegate_imps.back();
+                TriggerActionProcessor::TriggersMatchInfo& revert_match_info = delegate_imps.back();
                 revert_match_info.time = Generics::Time(change_request_profile_writer.time());
                 convert_match_counters(revert_match_info, change_request_profile_writer);
                 revert_match_info.page_matches.negate();
@@ -1324,8 +1285,7 @@ namespace AdServer::RequestInfoSvcs
 
               // save new trigger matches into request profile
               TriggerActionProcessor::TriggersMatchInfo replace_match_info;
-              replace_match_info.time =
-                Generics::Time(change_request_profile_writer.time());
+              replace_match_info.time = Generics::Time(change_request_profile_writer.time());
 
               collect_matches(
                 replace_match_info.page_matches,
@@ -1513,9 +1473,7 @@ namespace AdServer::RequestInfoSvcs
       co_await co_save_profile_(request_trans.in(), request_profile_writer, imp_info.time);
 
       // save request marker for user
-      clear_expired_impressions(
-        user_profile_writer.impressions(),
-        imp_info.time);
+      clear_expired_impressions(user_profile_writer.impressions(), imp_info.time);
 
       ImpressionMarkerWriter new_impression;
       new_impression.time() = imp_info.time.tv_sec;
@@ -1588,8 +1546,7 @@ namespace AdServer::RequestInfoSvcs
           request_mem_buf->membuf().data(),
           request_mem_buf->membuf().size());
 
-        click_matches_info.time =
-          Generics::Time(request_profile_writer.time());
+        click_matches_info.time = Generics::Time(request_profile_writer.time());
         convert_match_counters(
           click_matches_info.page_matches,
           request_profile_writer.page_match_counters());

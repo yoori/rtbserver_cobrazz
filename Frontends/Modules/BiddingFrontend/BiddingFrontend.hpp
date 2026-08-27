@@ -236,20 +236,17 @@ namespace AdServer::Bidding
 
     static
     SourceTraits::NativeAdsInstantiateType
-    adapt_native_ads_instantiate_type_(
-      const std::string& inst_type_str)
+    adapt_native_ads_instantiate_type_(const std::string& inst_type_str)
       /*throw(Exception)*/;
 
     static
     AdServer::CampaignSvcs::NativeAdsImpressionTrackerType
-    adapt_native_ads_impression_tracker_type_(
-      const std::string& imp_type_str)
+    adapt_native_ads_impression_tracker_type_(const std::string& imp_type_str)
       /*throw(Exception)*/;
 
     static
     SourceTraits::ERIDReturnType
-    adapt_erid_return_type_(
-      const std::string& inst_type_str);
+    adapt_erid_return_type_(const std::string& inst_type_str);
 
   protected:
     // configuration

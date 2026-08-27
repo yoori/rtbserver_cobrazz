@@ -17,59 +17,49 @@ namespace
     "Please recompile with -D_USE_OCCI flag.";
 }
 
-namespace AdServer
+namespace AdServer::Commons::Oracle
 {
-namespace Commons
-{
-  namespace Oracle
-  {
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-    DECLARE_EXCEPTION(NotSupported, Exception);
-    DECLARE_EXCEPTION(SqlException, Exception);
-    DECLARE_EXCEPTION(ConnectionError, Exception);
-    DECLARE_EXCEPTION(TimedOut, ConnectionError);
-    DECLARE_EXCEPTION(InvalidValue, Exception);
-    DECLARE_EXCEPTION(NonActive, Exception);
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+  DECLARE_EXCEPTION(NotSupported, Exception);
+  DECLARE_EXCEPTION(SqlException, Exception);
+  DECLARE_EXCEPTION(ConnectionError, Exception);
+  DECLARE_EXCEPTION(TimedOut, ConnectionError);
+  DECLARE_EXCEPTION(InvalidValue, Exception);
+  DECLARE_EXCEPTION(NonActive, Exception);
 
 #ifdef _USE_OCCI
-    void oci_error_text(
-      std::ostream& err,
-      const char* fun,
-      const char* oci_op,
-      long status,
-      OCIError* oci_error_handler = 0,
-      const char* query = 0)
-      noexcept;
+  void oci_error_text(
+    std::ostream& err,
+    const char* fun,
+    const char* oci_op,
+    long status,
+    OCIError* oci_error_handler = 0,
+    const char* query = 0)
+    noexcept;
 
-    void throw_oci_error(
-      const char* fun,
-      const char* oci_op,
-      long status,
-      OCIError* oci_error_handler = 0,
-      const char* query = 0)
-      /*throw(SqlException)*/;
+  void throw_oci_error(
+    const char* fun,
+    const char* oci_op,
+    long status,
+    OCIError* oci_error_handler = 0,
+    const char* query = 0)
+    /*throw(SqlException)*/;
 #else
-    void throw_oci_error(
-      const char* fun,
-      const char* oci_op,
-      long status,
-      void* oci_error_handler = 0,
-      const char* query = 0)
-      /*throw(SqlException)*/;
+  void throw_oci_error(
+    const char* fun,
+    const char* oci_op,
+    long status,
+    void* oci_error_handler = 0,
+    const char* query = 0)
+    /*throw(SqlException)*/;
 #endif
 
-    void throw_type_error(
-      const char* fun,
-      unsigned long pos,
-      unsigned long type,
-      bool null);
+  void throw_type_error(const char* fun, unsigned long pos, unsigned long type, bool null);
 
-    void throw_timeout_error(
-      const char* fun,
-      const char* oci_op,
-      const Generics::Time& passed_time,
-      const Generics::Time& timeout)
-      /*throw(TimedOut)*/;
-  }
-}
+  void throw_timeout_error(
+    const char* fun,
+    const char* oci_op,
+    const Generics::Time& passed_time,
+    const Generics::Time& timeout)
+    /*throw(TimedOut)*/;
 }

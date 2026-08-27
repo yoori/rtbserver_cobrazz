@@ -18,8 +18,7 @@ namespace FrontendCommons
       return *config_;
     }
     Stream::Error err;
-    err << "Configuration file '" << config_path_ << "' did not" <<
-      " initialize correctly";
+    err << "Configuration file '" << config_path_ << "' did not" << " initialize correctly";
     throw InvalidConfiguration(err);
   }
 

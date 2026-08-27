@@ -48,10 +48,10 @@ sub execute_command
   my ($host, $descr, $exe_command) = @_;
   my $environment_dir = Utils::Functions::init_environment();
 
-  my $command = 
+  my $command =
       "source $environment_dir/environment.sh && " .
       "test \${workspace_root}  || " .
-        "{ echo \"Variable workspace_root isn't defined on $host\" && exit -1 ; } && " .  
+        "{ echo \"Variable workspace_root isn't defined on $host\" && exit -1 ; } && " .
       "test \${config_root} || " .
         "{ echo \"Variable config_root isn't defined on $host\" && exit -1 ; } && " .
       "test \${log_root} || " .
@@ -61,13 +61,13 @@ sub execute_command
       "$exe_command ";
 
   my $res =  Utils::Functions::safe_system($command);
-  if($res)
+  if ($res)
   {
     return 0;
   }
   else
   {
-    if($res>>8 == 0)
+    if ($res>>8 == 0)
     {
       return 1;
     }

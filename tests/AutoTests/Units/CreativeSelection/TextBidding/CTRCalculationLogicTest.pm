@@ -20,13 +20,13 @@ sub init
 
   my $tag_cpm = 4.0;
 
-  my $publisher1 = $ns->create(Publisher => { 
+  my $publisher1 = $ns->create(Publisher => {
     name => "Publisher1",
     pubaccount_country_code => $country->{country_code},
     pricedtag_size_id => $size,
     pricedtag_cpm => $tag_cpm });
 
-  my $publisher2 = $ns->create(Publisher => { 
+  my $publisher2 = $ns->create(Publisher => {
     name => "Publisher2",
     pubaccount_country_code => $country->{country_code},
     pricedtag_size_id => $size,

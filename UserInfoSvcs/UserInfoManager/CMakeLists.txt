@@ -98,7 +98,7 @@ target_include_directories(UserInfoManager PRIVATE
   ${Protobuf_INCLUDE_DIRS}
 )
 
-if(TARGET Protobuf::libprotobuf)
+if (TARGET Protobuf::libprotobuf)
   target_link_libraries(UserInfoManager
     PRIVATE
       Protobuf::libprotobuf

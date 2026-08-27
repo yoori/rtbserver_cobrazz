@@ -4,11 +4,7 @@
 
 #include "CTRTrivialPredictor.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
-{
-namespace CTR
+namespace AdServer::CampaignSvcs::CTR
 {
   namespace
   {
@@ -127,6 +123,3 @@ namespace CTR
     return RevenueDecimal::ZERO;
   }
 }
-}
-}
-

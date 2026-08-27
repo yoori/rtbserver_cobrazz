@@ -30,10 +30,7 @@ public:
   };
 
 public:
-  FreqCapMergingTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var)
+  FreqCapMergingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -44,7 +41,5 @@ private:
   virtual bool run_test();
 
   template <size_t COUNT>
-  void check(
-    const std::string& description,
-    const TestRequest (&requests)[COUNT]);
+  void check(const std::string& description, const TestRequest (&requests)[COUNT]);
 };

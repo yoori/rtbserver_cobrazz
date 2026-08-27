@@ -9,9 +9,7 @@ namespace Aspect
   const char BILL_STAT_DB_SOURCE[] = "BillStatDBSource";
 }
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   namespace
   {
@@ -103,8 +101,7 @@ namespace CampaignSvcs
       {
         BillStatSource::Stat::AmountDistribution& res = amounts[it->first];
         RevenueDecimal sum_day_amount = RevenueDecimal::ZERO;
-        for (auto day_it = res.day_amounts.begin();
-          day_it != res.day_amounts.end(); ++day_it)
+        for (auto day_it = res.day_amounts.begin(); day_it != res.day_amounts.end(); ++day_it)
         {
           sum_day_amount += day_it->second;
         }
@@ -154,8 +151,7 @@ namespace CampaignSvcs
   catch(const eh::Exception& ex)
   {
     Stream::Error ostr;
-    ostr << "BillStatDBSource::BillStatDBSource(): caught eh::Exception: " <<
-      ex.what();
+    ostr << "BillStatDBSource::BillStatDBSource(): caught eh::Exception: " << ex.what();
     throw Exception(ostr);
   }
 
@@ -176,8 +172,7 @@ namespace CampaignSvcs
       logger_->sstream(
         Logging::Logger::ERROR,
         Aspect::BILL_STAT_DB_SOURCE,
-        "ADS-DB-6000") << __func__ <<
-        ": can't receive stats from DB: " << ex.what();
+        "ADS-DB-6000") << __func__ << ": can't receive stats from DB: " << ex.what();
     }
 
     return new_stat;
@@ -189,10 +184,7 @@ namespace CampaignSvcs
   {
     static const char* FUN = "BillStatDBSource::query_db_stats_()";
 
-    ExecutionTimeTracer db_stats_timer(
-      FUN,
-      Aspect::BILL_STAT_DB_SOURCE,
-      logger_);
+    ExecutionTimeTracer db_stats_timer(FUN, Aspect::BILL_STAT_DB_SOURCE, logger_);
 
     Commons::Postgres::Connection_var connection;
 
@@ -219,10 +211,7 @@ namespace CampaignSvcs
 
     try
     {
-      ExecutionTimeTracer db_stats_timer(FUN,
-        Aspect::BILL_STAT_DB_SOURCE,
-        logger_,
-        "amount stats");
+      ExecutionTimeTracer db_stats_timer(FUN, Aspect::BILL_STAT_DB_SOURCE, logger_, "amount stats");
 
       enum
       {
@@ -300,8 +289,7 @@ namespace CampaignSvcs
         const RevenueDecimal ccg_amount =
           (account_flags & AccountTypeFlags::GROSS ? amount + comm_amount : amount);
 
-        if (amount != RevenueDecimal::ZERO ||
-           comm_amount != RevenueDecimal::ZERO)
+        if (amount != RevenueDecimal::ZERO || comm_amount != RevenueDecimal::ZERO)
         {
           Generics::Time day = !rs->is_null(POS_ADV_DATE) ?
             rs->get_date(POS_ADV_DATE) :
@@ -356,31 +344,20 @@ namespace CampaignSvcs
       }
 
       // fill truncated by date amounts
-      set_prev_day_amount(
-        result->accounts,
-        account_total_amounts,
-        trunc_date);
+      set_prev_day_amount(result->accounts, account_total_amounts, trunc_date);
 
-      set_prev_day_amount_acount(
-        result->campaigns,
-        campaign_total_amounts,
-        trunc_date);
+      set_prev_day_amount_acount(result->campaigns, campaign_total_amounts, trunc_date);
 
-      set_prev_day_amount_acount(
-        result->ccgs,
-        ccg_total_amounts,
-        trunc_date);
+      set_prev_day_amount_acount(result->ccgs, ccg_total_amounts, trunc_date);
     }
     catch(const eh::Exception& ex)
     {
       pg_pool_->bad_connection(connection);
       Stream::Error ostr;
-      ostr << FUN << ": Can't query account stats, eh::Exception: " <<
-        ex.what();
+      ostr << FUN << ": Can't query account stats, eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
 
     return result;
   }
-}
 }

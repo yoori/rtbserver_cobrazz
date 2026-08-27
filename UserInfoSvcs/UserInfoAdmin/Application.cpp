@@ -71,8 +71,7 @@ namespace
   bool operator<(const ChannelMatch& left, const ChannelMatch& right) noexcept
   {
     return left.channel_id < right.channel_id ||
-      (left.channel_id == right.channel_id &&
-        left.channel_trigger_id < right.channel_trigger_id);
+      (left.channel_id == right.channel_id && left.channel_trigger_id < right.channel_trigger_id);
   }
 
   std::string bytes_from_user_id_(const AdServer::Commons::UserId& user_id)
@@ -90,19 +89,14 @@ namespace
     return GrpcAlgs::unpack_time(bytes);
   }
 
-  void print_plain_(
-    std::ostream& ostr,
-    const void* buf,
-    unsigned long size,
-    const char* prefix)
+  void print_plain_(std::ostream& ostr, const void* buf, unsigned long size, const char* prefix)
     noexcept
   {
     ostr << prefix;
     for (unsigned long i = 0; i < size; ++i)
     {
       ostr << "0x" << std::hex << std::setfill('0') << std::setw(2)
-        << static_cast<int>(*(static_cast<const unsigned char*>(buf) + i)) <<
-        " ";
+        << static_cast<int>(*(static_cast<const unsigned char*>(buf) + i)) << " ";
       if (i && (i + 1) % 16 == 0)
       {
         ostr << std::endl << prefix;
@@ -151,18 +145,13 @@ namespace
   bool is_user_info_controller_(const std::string& reference)
   {
     auto stub = uic::UserInfoControllerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        reference,
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(reference, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
     uic::GetSessionDescriptionRequest request;
     uic::GetSessionDescriptionResponse response;
-    const auto status = stub->get_session_description(
-      &context,
-      request,
-      &response);
+    const auto status = stub->get_session_description(&context, request, &response);
 
     return status.ok() && !response.user_info_managers().empty();
   }
@@ -182,8 +171,7 @@ namespace
     UserInfoClientHolder result;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         new Logging::ActiveObjectCallbackImpl(logger, "UserInfoAdmin", "gRPC"),
@@ -225,9 +213,7 @@ namespace
   uim::GetSourceResponse get_source_from_manager_(const std::string& reference)
   {
     auto stub = uim::UserInfoManagerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        reference,
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(reference, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + GET_SOURCE_TIMEOUT);
@@ -240,17 +226,14 @@ namespace
       std::ostringstream ostr;
       ostr << "UserInfoManager '" << reference <<
         "': get_source failed: code=" <<
-        static_cast<int>(status.error_code()) <<
-        ", message=" << status.error_message();
+        static_cast<int>(status.error_code()) << ", message=" << status.error_message();
       throw std::runtime_error(ostr.str());
     }
 
     return response;
   }
 
-  void print_source_(
-    const std::string& reference,
-    const uim::GetSourceResponse& response)
+  void print_source_(const std::string& reference, const uim::GetSourceResponse& response)
   {
     std::cout << "Reference : " << reference << std::endl;
     std::cout << "Chunks number : " << response.chunks_number() << std::endl;
@@ -265,28 +248,20 @@ namespace
   void print_source_(const std::string& reference)
   {
     auto controller_stub = uic::UserInfoControllerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        reference,
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(reference, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
     uic::GetSessionDescriptionRequest request;
     uic::GetSessionDescriptionResponse response;
-    const auto status = controller_stub->get_session_description(
-      &context,
-      request,
-      &response);
+    const auto status = controller_stub->get_session_description(&context, request, &response);
 
     if (status.ok() && !response.user_info_managers().empty())
     {
       for (const auto& manager : response.user_info_managers())
       {
-        const std::string manager_reference =
-          manager.user_info_manager_endpoint();
-        print_source_(
-          manager_reference,
-          get_source_from_manager_(manager_reference));
+        const std::string manager_reference = manager.user_info_manager_endpoint();
+        print_source_(manager_reference, get_source_from_manager_(manager_reference));
       }
       return;
     }
@@ -303,11 +278,13 @@ namespace
         holder.active_object->deactivate_object();
         holder.active_object->wait_object();
       }
+
       if (holder.grpc_executor)
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
       }
+
       if (holder.coalesce_runner)
       {
         holder.coalesce_runner->deactivate_object();
@@ -329,14 +306,10 @@ namespace
     uim::GetUserProfileRequest request;
     request.set_user_id(bytes_from_user_id_(user_id));
     request.set_temporary(false);
-    request.mutable_profile_request()->set_base_profile(
-      (print_kind & PRINT_BASE) != 0);
-    request.mutable_profile_request()->set_add_profile(
-      (print_kind & PRINT_ADD) != 0);
-    request.mutable_profile_request()->set_history_profile(
-      (print_kind & PRINT_HISTORY) != 0);
-    request.mutable_profile_request()->set_freq_cap_profile(
-      print_kind == 0);
+    request.mutable_profile_request()->set_base_profile((print_kind & PRINT_BASE) != 0);
+    request.mutable_profile_request()->set_add_profile((print_kind & PRINT_ADD) != 0);
+    request.mutable_profile_request()->set_history_profile((print_kind & PRINT_HISTORY) != 0);
+    request.mutable_profile_request()->set_freq_cap_profile(print_kind == 0);
 
     const auto response =
       AdServer::Grpc::sync_call<uim::GetUserProfileResponse>(
@@ -421,8 +394,7 @@ namespace
     request.mutable_user_info()->set_temporary(false);
     request.mutable_user_info()->set_last_colo_id(-1);
     request.mutable_user_info()->set_current_colo_id(1);
-    request.mutable_user_info()->set_time(
-      Generics::Time(opt_time, "%d-%m-%Y:%H-%M-%S").tv_sec);
+    request.mutable_user_info()->set_time(Generics::Time(opt_time, "%d-%m-%Y:%H-%M-%S").tv_sec);
 
     std::set<ChannelMatch> page_channels;
     std::set<ChannelMatch> search_channels;
@@ -468,8 +440,7 @@ namespace
     std::cout << "Output Channels: ";
     for (int i = 0; i < response.match_result().channels_size(); ++i)
     {
-      std::cout << (i ? "," : "") <<
-        response.match_result().channels(i).channel_id();
+      std::cout << (i ? "," : "") << response.match_result().channels(i).channel_id();
     }
     std::cout << std::endl;
   }
@@ -494,8 +465,7 @@ int main(int argc, char** argv)
   Generics::AppUtils::Option<unsigned long> opt_portion;
   Generics::AppUtils::Args args(-1);
 
-  args.add(Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"), opt_help);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
   args.add(Generics::AppUtils::equal_name("plain") ||
     Generics::AppUtils::short_name("p"), opt_plain);
   args.add(Generics::AppUtils::equal_name("expand") ||
@@ -510,8 +480,7 @@ int main(int argc, char** argv)
   args.add(Generics::AppUtils::equal_name("page-channels"), opt_page_channels);
   args.add(Generics::AppUtils::equal_name("search-channels"), opt_search_channels);
   args.add(Generics::AppUtils::equal_name("url-channels"), opt_url_channels);
-  args.add(Generics::AppUtils::equal_name("persistent-channels"),
-    opt_persistent_channels);
+  args.add(Generics::AppUtils::equal_name("persistent-channels"), opt_persistent_channels);
   args.add(Generics::AppUtils::equal_name("keys-dir"), opt_keys_directory);
   args.add(Generics::AppUtils::equal_name("persistent"), opt_persistent);
   args.add(Generics::AppUtils::equal_name("time"), opt_time);
@@ -552,8 +521,7 @@ int main(int argc, char** argv)
       else
       {
         std::cout << "'" << generator.sign(
-          AdServer::Commons::UserId(opt_user_id->c_str())).str() << "'" <<
-          std::endl;
+          AdServer::Commons::UserId(opt_user_id->c_str())).str() << "'" << std::endl;
       }
       return 0;
     }
@@ -590,8 +558,7 @@ int main(int argc, char** argv)
             client->get_master_stamp(request, std::move(callback));
           });
       std::cout << "Config timestamp : " <<
-        time_from_bytes_(response.master_stamp()).get_gm_time().format(TIME_FORMAT) <<
-        std::endl;
+        time_from_bytes_(response.master_stamp()).get_gm_time().format(TIME_FORMAT) << std::endl;
       return 0;
     }
 
@@ -658,8 +625,7 @@ int main(int argc, char** argv)
     }
     else
     {
-      std::cerr << "Unknown command '" << command << "'. See help for more info." <<
-        std::endl;
+      std::cerr << "Unknown command '" << command << "'. See help for more info." << std::endl;
       return 1;
     }
   }

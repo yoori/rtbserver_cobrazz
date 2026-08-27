@@ -26,9 +26,7 @@ namespace AdServer
     AcFrontendStat()
       /*throw(Exception)*/;
 
-    void consider_request(
-      bool test_request,
-      unsigned long user_status)
+    void consider_request(bool test_request, unsigned long user_status)
       noexcept;
 
     Generics::Values_var

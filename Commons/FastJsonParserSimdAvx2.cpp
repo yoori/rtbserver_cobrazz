@@ -14,10 +14,9 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m256i form_feed = _mm256_set1_epi8('\f');
     const __m256i carriage_return = _mm256_set1_epi8('\r');
 
-    while(static_cast<std::size_t>(end - pos) >= 32)
+    while (static_cast<std::size_t>(end - pos) >= 32)
     {
-      const __m256i bytes = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(pos));
+      const __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pos));
       const __m256i blank_matches = _mm256_or_si256(
         _mm256_cmpeq_epi8(bytes, space),
         _mm256_cmpeq_epi8(bytes, tab));
@@ -29,10 +28,8 @@ namespace AdServer::Commons::FastJsonParserSimd
         _mm256_cmpeq_epi8(bytes, form_feed));
       const unsigned space_mask = static_cast<unsigned>(
         _mm256_movemask_epi8(
-          _mm256_or_si256(
-            blank_matches,
-            _mm256_or_si256(line_matches, other_matches))));
-      if(space_mask != 0xFFFFFFFFu)
+          _mm256_or_si256(blank_matches, _mm256_or_si256(line_matches, other_matches))));
+      if (space_mask != 0xFFFFFFFFu)
       {
         return pos + __builtin_ctz(~space_mask);
       }
@@ -49,16 +46,14 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m256i quote = _mm256_set1_epi8('"');
     const __m256i backslash = _mm256_set1_epi8('\\');
 
-    while(static_cast<std::size_t>(end - pos) >= 32)
+    while (static_cast<std::size_t>(end - pos) >= 32)
     {
-      const __m256i bytes = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(pos));
+      const __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pos));
       const __m256i matches = _mm256_or_si256(
         _mm256_cmpeq_epi8(bytes, quote),
         _mm256_cmpeq_epi8(bytes, backslash));
-      const unsigned mask = static_cast<unsigned>(
-        _mm256_movemask_epi8(matches));
-      if(mask != 0)
+      const unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(matches));
+      if (mask != 0)
       {
         return pos + __builtin_ctz(mask);
       }
@@ -74,13 +69,12 @@ namespace AdServer::Commons::FastJsonParserSimd
   {
     const __m256i quote = _mm256_set1_epi8('"');
 
-    while(static_cast<std::size_t>(end - pos) >= 32)
+    while (static_cast<std::size_t>(end - pos) >= 32)
     {
-      const __m256i bytes = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(pos));
+      const __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pos));
       const unsigned mask = static_cast<unsigned>(
         _mm256_movemask_epi8(_mm256_cmpeq_epi8(bytes, quote)));
-      if(mask != 0)
+      if (mask != 0)
       {
         return pos + __builtin_ctz(mask);
       }
@@ -100,10 +94,9 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m256i array_open = _mm256_set1_epi8('[');
     const __m256i array_close = _mm256_set1_epi8(']');
 
-    while(static_cast<std::size_t>(end - pos) >= 32)
+    while (static_cast<std::size_t>(end - pos) >= 32)
     {
-      const __m256i bytes = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(pos));
+      const __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pos));
       const __m256i object_matches = _mm256_or_si256(
         _mm256_cmpeq_epi8(bytes, object_open),
         _mm256_cmpeq_epi8(bytes, object_close));
@@ -113,9 +106,8 @@ namespace AdServer::Commons::FastJsonParserSimd
       const __m256i matches = _mm256_or_si256(
         _mm256_cmpeq_epi8(bytes, quote),
         _mm256_or_si256(object_matches, array_matches));
-      const unsigned mask = static_cast<unsigned>(
-        _mm256_movemask_epi8(matches));
-      if(mask != 0)
+      const unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(matches));
+      if (mask != 0)
       {
         return pos + __builtin_ctz(mask);
       }
@@ -133,18 +125,16 @@ namespace AdServer::Commons::FastJsonParserSimd
     const __m256i array_close = _mm256_set1_epi8(']');
     const __m256i object_close = _mm256_set1_epi8('}');
 
-    while(static_cast<std::size_t>(end - pos) >= 32)
+    while (static_cast<std::size_t>(end - pos) >= 32)
     {
-      const __m256i bytes = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(pos));
+      const __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pos));
       const __m256i matches = _mm256_or_si256(
         _mm256_cmpeq_epi8(bytes, comma),
         _mm256_or_si256(
           _mm256_cmpeq_epi8(bytes, array_close),
           _mm256_cmpeq_epi8(bytes, object_close)));
-      const unsigned mask = static_cast<unsigned>(
-        _mm256_movemask_epi8(matches));
-      if(mask != 0)
+      const unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(matches));
+      if (mask != 0)
       {
         return pos + __builtin_ctz(mask);
       }

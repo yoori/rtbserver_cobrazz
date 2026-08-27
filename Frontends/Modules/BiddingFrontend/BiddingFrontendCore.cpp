@@ -60,12 +60,10 @@ namespace AdServer::Bidding
     }
 
     void
-    atomic_update_max(
-      std::atomic<unsigned long>& value,
-      const unsigned long candidate) noexcept
+    atomic_update_max(std::atomic<unsigned long>& value, const unsigned long candidate) noexcept
     {
       unsigned long current = value.load(std::memory_order_relaxed);
-      while(current < candidate &&
+      while (current < candidate &&
         !value.compare_exchange_weak(
           current,
           candidate,
@@ -99,8 +97,7 @@ namespace AdServer::Bidding
         : stats_(ReferenceCounting::add_ref(stats)),
           complete_(stats ? complete : nullptr),
           add_time_(stats ? add_time : nullptr),
-          started_at_(add_time_ ? Generics::Time::get_time_of_day() :
-            Generics::Time::ZERO)
+          started_at_(add_time_ ? Generics::Time::get_time_of_day() : Generics::Time::ZERO)
       {
         if (stats_.in())
         {
@@ -231,12 +228,9 @@ namespace AdServer::Bidding
       for (std::size_t i = 0; i < source.coord_location.size(); ++i)
       {
         auto* coord = target.add_coord_location();
-        coord->set_longitude(
-          GrpcAlgs::pack_decimal(source.coord_location[i].longitude));
-        coord->set_latitude(
-          GrpcAlgs::pack_decimal(source.coord_location[i].latitude));
-        coord->set_accuracy(
-          GrpcAlgs::pack_decimal(source.coord_location[i].accuracy));
+        coord->set_longitude(GrpcAlgs::pack_decimal(source.coord_location[i].longitude));
+        coord->set_latitude(GrpcAlgs::pack_decimal(source.coord_location[i].latitude));
+        coord->set_accuracy(GrpcAlgs::pack_decimal(source.coord_location[i].accuracy));
       }
       target.set_full_referer(source.full_referer);
       target.set_referer(source.referer);
@@ -251,6 +245,7 @@ namespace AdServer::Bidding
       {
         target.set_track_user_id(GrpcAlgs::pack_user_id(*source.track_user_id));
       }
+
       if (source.user_id.has_value())
       {
         target.set_user_id(GrpcAlgs::pack_user_id(*source.user_id));
@@ -286,14 +281,17 @@ namespace AdServer::Bidding
       {
         target.set_ssp_tag_id(source.additional_info.tagid);
       }
+
       if (source.additional_info.ctr.has_value())
       {
         target.set_ssp_ctr(*source.additional_info.ctr);
       }
+
       if (source.additional_info.viewability.has_value())
       {
         target.set_ssp_viewability(*source.additional_info.viewability);
       }
+
       if (source.additional_info.vtr.has_value())
       {
         target.set_ssp_vtr(*source.additional_info.vtr);
@@ -336,8 +334,7 @@ namespace AdServer::Bidding
         dst->set_tag_id(src.tag_id);
         pack_strings(src.sizes, dst->mutable_sizes());
         dst->set_ext_tag_id(src.ext_tag_id);
-        dst->mutable_min_ecpm()->set_value(
-          GrpcAlgs::pack_decimal(src.min_ecpm));
+        dst->mutable_min_ecpm()->set_value(GrpcAlgs::pack_decimal(src.min_ecpm));
         dst->set_min_ecpm_currency_code(src.min_ecpm_currency_code);
         pack_strings(src.currency_codes, dst->mutable_currency_codes());
         dst->set_passback(src.passback);
@@ -465,12 +462,11 @@ namespace AdServer::Bidding
           dst_debug_creative.click_revenue = src_debug_creative.click_revenue().value();
           dst_debug_creative.action_revenue = src_debug_creative.action_revenue().value();
           dst_debug_creative.ecpm_bid = src_debug_creative.ecpm_bid().value();
-          if(src_debug_creative.has_ctr())
+          if (src_debug_creative.has_ctr())
           {
             dst_debug_creative.ctr = src_debug_creative.ctr().value();
           }
-          dst_debug_creative.ctr_algorithm_id =
-            src_debug_creative.ctr_algorithm_id();
+          dst_debug_creative.ctr_algorithm_id = src_debug_creative.ctr_algorithm_id();
           dst_debug_creative.html_url = src_debug_creative.html_url();
         }
         dst_debug.trace_ccg = src_debug.trace_ccg();
@@ -519,11 +515,8 @@ namespace AdServer::Bidding
       target.process_time = source.process_time();
       target.debug_info.colo_id = source.debug_info().colo_id();
       unpack_ids(source.debug_info().geo_channels(), target.debug_info.geo_channels);
-      unpack_ids(
-        source.debug_info().platform_channels(),
-        target.debug_info.platform_channels);
-      target.debug_info.last_platform_channel_id =
-        source.debug_info().last_platform_channel_id();
+      unpack_ids(source.debug_info().platform_channels(), target.debug_info.platform_channels);
+      target.debug_info.last_platform_channel_id = source.debug_info().last_platform_channel_id();
       target.debug_info.user_group_id = source.debug_info().user_group_id();
     }
 
@@ -624,9 +617,7 @@ namespace AdServer::Bidding
 
     struct ChannelMatch
     {
-      ChannelMatch(
-        unsigned long channel_id_val,
-        unsigned long channel_trigger_id_val)
+      ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
         : channel_id(channel_id_val),
           channel_trigger_id(channel_trigger_id_val)
       {}
@@ -635,8 +626,7 @@ namespace AdServer::Bidding
       {
         return
           (channel_id < right.channel_id ||
-           (channel_id == right.channel_id &&
-            channel_trigger_id < right.channel_trigger_id));
+           (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id));
       }
 
       unsigned long channel_id;
@@ -646,8 +636,7 @@ namespace AdServer::Bidding
     struct GetChannelTriggerId
     {
       ChannelMatch
-      operator() (
-        const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+      operator() (const adserver::channel_svcs::channel_server::ChannelAtom& atom)
         noexcept
       {
         return ChannelMatch(atom.id(), atom.trigger_channel_id());
@@ -658,9 +647,7 @@ namespace AdServer::Bidding
   namespace
   {
     bool
-    find_uri(
-      const BiddingFrontendCore::InitParams::UriList& uri_list,
-      const String::SubString suri)
+    find_uri(const BiddingFrontendCore::InitParams::UriList& uri_list, const String::SubString suri)
       noexcept
     {
       for (const auto& cur_uri : uri_list)
@@ -715,33 +702,25 @@ namespace AdServer::Bidding
     if (user_bind_client_)
     {
       user_bind_client_coro_ = std::make_shared<
-        AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
-          user_bind_client_,
-          bid_workers_);
+        AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(user_bind_client_, bid_workers_);
     }
 
     if (user_info_client_)
     {
       user_info_client_coro_ = std::make_shared<
-        AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
-          user_info_client_,
-          bid_workers_);
+        AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(user_info_client_, bid_workers_);
     }
 
     if (campaign_manager_)
     {
       campaign_manager_coro_ = std::make_shared<
-        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-          campaign_manager_,
-          bid_workers_);
+        AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager_, bid_workers_);
     }
 
     if (channel_client_)
     {
       channel_client_coro_ = std::make_shared<
-        AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
-          channel_client_,
-          bid_workers_);
+        AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(channel_client_, bid_workers_);
     }
   }
 
@@ -755,21 +734,11 @@ namespace AdServer::Bidding
 
     BiddingFrontendLogger::GeoParams params;
     params.ip.assign(request_info.peer_ip.data(), request_info.peer_ip.size());
-    params.source.assign(
-      request_info.source_id.data(),
-      request_info.source_id.size());
-    params.country.assign(
-      request_info.ssp_geo_country.data(),
-      request_info.ssp_geo_country.size());
-    params.region.assign(
-      request_info.ssp_geo_region.data(),
-      request_info.ssp_geo_region.size());
-    params.city.assign(
-      request_info.ssp_geo_city.data(),
-      request_info.ssp_geo_city.size());
-    params.type.assign(
-      request_info.ssp_geo_type.data(),
-      request_info.ssp_geo_type.size());
+    params.source.assign(request_info.source_id.data(), request_info.source_id.size());
+    params.country.assign(request_info.ssp_geo_country.data(), request_info.ssp_geo_country.size());
+    params.region.assign(request_info.ssp_geo_region.data(), request_info.ssp_geo_region.size());
+    params.city.assign(request_info.ssp_geo_city.data(), request_info.ssp_geo_city.size());
+    params.type.assign(request_info.ssp_geo_type.data(), request_info.ssp_geo_type.size());
 
     if (request_info.ssp_latitude && request_info.ssp_longitude)
     {
@@ -803,8 +772,7 @@ namespace AdServer::Bidding
   }
 
   double
-  BiddingFrontendCore::resolve_process_coef_(
-    const Generics::Time& time) const noexcept
+  BiddingFrontendCore::resolve_process_coef_(const Generics::Time& time) const noexcept
   {
     const auto gmt_time = time.get_gm_time();
     const unsigned long minute =
@@ -933,11 +901,7 @@ namespace AdServer::Bidding
             request.interrupt();
           });
 
-        bid_workers_->post(
-          [request_task]()
-          {
-            request_task->execute();
-          });
+        bid_workers_->post([request_task]() { request_task->execute(); });
       }
     }
     catch(const BidRequestState::Invalid& e)
@@ -953,9 +917,7 @@ namespace AdServer::Bidding
 
       Stream::Error ostr;
       ostr << FUN << ": BidRequestState::Invalid caught: " << e.what();
-      logger_->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::BIDDING_FRONTEND);
+      logger_->log(ostr.str(), Logging::Logger::INFO, Aspect::BIDDING_FRONTEND);
     }
     catch(const eh::Exception& e)
     {
@@ -1013,8 +975,7 @@ namespace AdServer::Bidding
       {
         const auto source_it = sources_->find(it->value);
 
-        if (source_it != sources_->end() &&
-          source_it->second.max_bid_time)
+        if (source_it != sources_->end() && source_it->second.max_bid_time)
         {
           return *(source_it->second.max_bid_time);
         }
@@ -1057,8 +1018,7 @@ namespace AdServer::Bidding
       user_id_controller_->null_blacklisted(match_user_id);
       if (!match_user_id.is_null())
       {
-        request_info.user_status = static_cast<std::size_t>(
-          AdServer::CampaignSvcs::US_OPTIN);
+        request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN);
       }
       else if (request_info.advertising_id.empty() &&
         request_info.idfa.empty() &&
@@ -1157,10 +1117,8 @@ namespace AdServer::Bidding
               get_request->set_silent(false);
               get_request->set_generate_user_id(generate_user_id);
               get_request->set_for_set_cookie(false);
-              get_request->set_create_timestamp(
-                GrpcAlgs::pack_time(request_info.user_create_time));
-              get_request->set_current_user_id(GrpcAlgs::pack_user_id(
-                AdServer::Commons::UserId()));
+              get_request->set_create_timestamp(GrpcAlgs::pack_time(request_info.user_create_time));
+              get_request->set_current_user_id(GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
 
               auto get_result = co_await user_bind_client_coro_->co_get_user_id(*get_request);
               result.completed = true;
@@ -1226,12 +1184,8 @@ namespace AdServer::Bidding
                 result.exception_message,
                 std::string()};
             }
-            logger()->sstream(
-              Logging::Logger::ERROR,
-              Aspect::BIDDING_FRONTEND,
-              "ADS-IMPL-10681") <<
-              FUN << ": caught UserBindClient exception: " <<
-              result.exception_message;
+            logger()->sstream(Logging::Logger::ERROR, Aspect::BIDDING_FRONTEND, "ADS-IMPL-10681") <<
+              FUN << ": caught UserBindClient exception: " << result.exception_message;
             continue;
           }
 
@@ -1241,10 +1195,7 @@ namespace AdServer::Bidding
             {
               user_resolving_stage->set_grpc_error(result.status);
             }
-            logger()->sstream(
-              Logging::Logger::ERROR,
-              Aspect::BIDDING_FRONTEND,
-              "ADS-IMPL-10681") <<
+            logger()->sstream(Logging::Logger::ERROR, Aspect::BIDDING_FRONTEND, "ADS-IMPL-10681") <<
               FUN << ": UserBindServer::get_user_id(): "
               "gRPC call failed: code=" <<
               static_cast<int>(result.status.error_code()) <<
@@ -1282,9 +1233,7 @@ namespace AdServer::Bidding
           }
         }
 
-        if (external_user_ids.size() > 1 &&
-          base_index == no_index &&
-          min_age_index != no_index)
+        if (external_user_ids.size() > 1 && base_index == no_index && min_age_index != no_index)
         {
           local_match_user_id = AdServer::Commons::UserId::create_random_based();
           user_bind_info = user_bind_results[min_age_index].response;
@@ -1356,18 +1305,15 @@ namespace AdServer::Bidding
         }
         else if (blacklisted)
         {
-          request_info.user_status = static_cast<std::size_t>(
-            AdServer::CampaignSvcs::US_UNDEFINED);
+          request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_UNDEFINED);
         }
         else if (user_bind_info && user_bind_info->user_found())
         {
-          request_info.user_status = static_cast<std::size_t>(
-            AdServer::CampaignSvcs::US_OPTOUT);
+          request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTOUT);
         }
         else if (min_age_reached)
         {
-          request_info.user_status = static_cast<std::size_t>(
-            AdServer::CampaignSvcs::US_UNDEFINED);
+          request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_UNDEFINED);
         }
         else if (!external_user_ids.empty())
         {
@@ -1404,12 +1350,8 @@ namespace AdServer::Bidding
     {
       Stream::Error ostr;
       ostr << FUN << ": SSP user mapping: " << match_user_id.to_string() <<
-        " <-> (" << request_info.external_user_id << ", " <<
-        request_info.source_id << ')';
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::DEBUG,
-        Aspect::BIDDING_FRONTEND);
+        " <-> (" << request_info.external_user_id << ", " << request_info.source_id << ')';
+      logger()->log(ostr.str(), Logging::Logger::DEBUG, Aspect::BIDDING_FRONTEND);
     }
 
     if (user_resolving_stage)
@@ -1495,8 +1437,7 @@ namespace AdServer::Bidding
         {
           google::protobuf::Arena channel_request_arena;
           auto* channel_request = google::protobuf::Arena::CreateMessage<
-            adserver::channel_svcs::channel_server::MatchRequest>(
-              &channel_request_arena);
+            adserver::channel_svcs::channel_server::MatchRequest>(&channel_request_arena);
           channel_request->set_non_strict_word_match(false);
           channel_request->set_non_strict_url_match(false);
           channel_request->set_return_negative(false);
@@ -1520,9 +1461,7 @@ namespace AdServer::Bidding
           }
           catch(const eh::Exception& e)
           {
-            logger()->sstream(
-              Logging::Logger::TRACE,
-              Aspect::BIDDING_FRONTEND) <<
+            logger()->sstream(Logging::Logger::TRACE, Aspect::BIDDING_FRONTEND) <<
               FUN << ": url keywords extracting error: " << e.what();
           }
 
@@ -1573,8 +1512,7 @@ namespace AdServer::Bidding
             if (trigger_match_stage)
             {
               trigger_match_stage->server_id = channel_result.response.hostname();
-              if (auto server_time =
-                    unpack_optional_time(channel_result.response.match_time()))
+              if (auto server_time = unpack_optional_time(channel_result.response.match_time()))
               {
                 trigger_match_stage->local_time = *server_time;
               }
@@ -1586,16 +1524,14 @@ namespace AdServer::Bidding
               trigger_match.failed = true;
               if (trigger_match_stage)
               {
-                trigger_match_stage->set_channel_server_error(
-                  "ChannelServer is not fully loaded");
+                trigger_match_stage->set_channel_server_error("ChannelServer is not fully loaded");
               }
             }
 
             if (!trigger_match.failed &&
               request_info.user_status ==
                 static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN) &&
-              (trigger_match.result->no_track() ||
-               trigger_match.result->no_adv()))
+              (trigger_match.result->no_track() || trigger_match.result->no_adv()))
             {
               request_info.user_status = static_cast<std::size_t>(
                 AdServer::CampaignSvcs::US_BLACKLISTED);
@@ -1625,12 +1561,8 @@ namespace AdServer::Bidding
           {
             trigger_match_stage->set_exception_error(ex);
           }
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::BIDDING_FRONTEND,
-            "ADS-IMPL-117") <<
-            FUN << ": caught ChannelServerGrpcCoroClient match error: " <<
-            ex.what();
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-117") <<
+            FUN << ": caught ChannelServerGrpcCoroClient match error: " << ex.what();
         }
       }
 
@@ -1746,9 +1678,7 @@ namespace AdServer::Bidding
           match_params->set_use_empty_profile(false);
           match_params->set_silent_match(false);
           match_params->set_no_match(
-            trigger_match.result &&
-              !trigger_match.failed &&
-              trigger_match.result->no_track());
+            trigger_match.result && !trigger_match.failed && trigger_match.result->no_track());
           match_params->set_no_result(false);
           match_params->set_ret_freq_caps(true);
           match_params->set_provide_channel_count(false);
@@ -1757,15 +1687,13 @@ namespace AdServer::Bidding
           match_params->set_publishers_optin_timeout(GrpcAlgs::pack_time(
             request_info.current_time - Generics::Time::ONE_DAY * 15));
           match_params->set_cohort(
-            !request_info.idfa.empty() ?
-              request_info.idfa : request_info.advertising_id);
+            !request_info.idfa.empty() ? request_info.idfa : request_info.advertising_id);
 
           match_params->mutable_persistent_channel_ids()->Add(
             request_info.platform_ids.begin(),
             request_info.platform_ids.end());
 
-          if (trigger_match.result && !trigger_match.failed &&
-            !trigger_match.result->no_track())
+          if (trigger_match.result && !trigger_match.failed && !trigger_match.result->no_track())
           {
             const auto& matched_channels = trigger_match.result->matched_channels();
             ChannelMatchSet page_channels;
@@ -1800,19 +1728,12 @@ namespace AdServer::Bidding
               {
                 auto* result = out->Add();
                 result->set_channel_id(channel_match.channel_id);
-                result->set_channel_trigger_id(
-                  channel_match.channel_trigger_id);
+                result->set_channel_trigger_id(channel_match.channel_trigger_id);
               }
             };
-            fill_channel_matches(
-              match_params->mutable_page_channel_ids(),
-              page_channels);
-            fill_channel_matches(
-              match_params->mutable_url_channel_ids(),
-              url_channels);
-            fill_channel_matches(
-              match_params->mutable_search_channel_ids(),
-              search_channels);
+            fill_channel_matches(match_params->mutable_page_channel_ids(), page_channels);
+            fill_channel_matches(match_params->mutable_url_channel_ids(), url_channels);
+            fill_channel_matches(match_params->mutable_search_channel_ids(), search_channels);
             fill_channel_matches(
               match_params->mutable_url_keyword_channel_ids(),
               url_keyword_channels);
@@ -1852,13 +1773,9 @@ namespace AdServer::Bidding
           {
             history_match_stage->set_exception_error(ex);
           }
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::BIDDING_FRONTEND,
-            "ADS-IMPL-112") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-112") <<
             "Bidding::BiddingFrontendCore::co_process_bid_request_(): "
-            "caught UserInfoManagerGrpcCoroClient match error: " <<
-            ex.what();
+            "caught UserInfoManagerGrpcCoroClient match error: " << ex.what();
         }
       }
 
@@ -1954,12 +1871,9 @@ namespace AdServer::Bidding
 
             if (has_trace && !has_selected_creatives)
             {
-              logger()->sstream(
-                Logging::Logger::NOTICE,
-                Aspect::BIDDING_FRONTEND) <<
+              logger()->sstream(Logging::Logger::NOTICE, Aspect::BIDDING_FRONTEND) <<
                 "CampaignManager::get_campaign_creative() returned "
-                "trace without selected creatives: ad_slots=" <<
-                request_result.ad_slots_size();
+                "trace without selected creatives: ad_slots=" << request_result.ad_slots_size();
             }
           }
 
@@ -1974,10 +1888,7 @@ namespace AdServer::Bidding
           {
             creative_selection_stage->set_grpc_error(campaign_result.status);
           }
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::BIDDING_FRONTEND,
-            "ADS-IMPL-118") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-118") <<
             "CampaignManager::get_campaign_creative(): "
             "gRPC call failed: code=" <<
             static_cast<int>(campaign_result.status.error_code()) <<
@@ -1990,10 +1901,7 @@ namespace AdServer::Bidding
         {
           creative_selection_stage->set_exception_error(ex);
         }
-        logger()->sstream(
-          Logging::Logger::EMERGENCY,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-IMPL-118") <<
+        logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-118") <<
           "CampaignManager::get_campaign_creative(): "
           "caught CampaignManagerGrpcCoroClient error: " << ex.what();
       }
@@ -2024,17 +1932,13 @@ namespace AdServer::Bidding
       {
         std::ostringstream ostr;
         ostr << FUN << ": CCG Trace of " <<
-          request_task->request_info_.ad_slots[0].debug_ccg <<
-          " for request:" << std::endl;
+          request_task->request_info_.ad_slots[0].debug_ccg << " for request:" << std::endl;
 
         request_task->print_request(ostr);
 
         ostr << std::endl << campaign_match_result->ad_slots[0].debug_info.trace_ccg;
 
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::TRACE,
-          Aspect::BIDDING_FRONTEND);
+        logger()->log(ostr.str(), Logging::Logger::TRACE, Aspect::BIDDING_FRONTEND);
       }
 
       flush_stats();
@@ -2042,20 +1946,14 @@ namespace AdServer::Bidding
     }
     catch(const eh::Exception& ex)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-109") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-109") <<
         FUN << ": eh::Exception caught: " << ex.what();
       flush_stats();
       request_task->complete_request_(false, campaign_match_result);
     }
     catch(...)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-109") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-109") <<
         FUN << ": unknown exception caught";
       flush_stats();
       request_task->complete_request_(false, campaign_match_result);
@@ -2083,10 +1981,7 @@ namespace AdServer::Bidding
       auto add_result = co_await user_bind_client_coro_->co_add_user_id(add_request);
       if (!add_result.status.ok())
       {
-        logger()->sstream(
-          Logging::Logger::ERROR,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-IMPL-10681") <<
+        logger()->sstream(Logging::Logger::ERROR, Aspect::BIDDING_FRONTEND, "ADS-IMPL-10681") <<
           FUN << ": UserBindServer::add_user_id(): "
           "gRPC call failed: code=" <<
           static_cast<int>(add_result.status.error_code()) <<
@@ -2095,10 +1990,7 @@ namespace AdServer::Bidding
     }
     catch(const eh::Exception& ex)
     {
-      logger()->sstream(
-        Logging::Logger::ERROR,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-10681") <<
+      logger()->sstream(Logging::Logger::ERROR, Aspect::BIDDING_FRONTEND, "ADS-IMPL-10681") <<
         FUN << ": caught UserBindClient exception: " << ex.what();
     }
 
@@ -2130,10 +2022,7 @@ namespace AdServer::Bidding
     }
     catch(const eh::Exception& e)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-112") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-112") <<
         "Bidding::BiddingFrontendCore::consider_campaign_selection_(): "
         "post match failed: " << e.what();
       return false;
@@ -2218,8 +2107,7 @@ namespace AdServer::Bidding
 
         google::protobuf::Arena request_arena;
         auto* request = google::protobuf::Arena::CreateMessage<
-          adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest>(
-            &request_arena);
+          adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest>(&request_arena);
         request->set_user_id(GrpcAlgs::pack_user_id(user_id));
         request->set_time(GrpcAlgs::pack_time(now));
         request->set_request_id(ad_slot_result.request_id);
@@ -2246,10 +2134,7 @@ namespace AdServer::Bidding
         auto result = co_await user_info_client_coro_->co_update_user_freq_caps(*request);
         if (!result.status.ok())
         {
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::BIDDING_FRONTEND,
-            "ADS-IMPL-112") <<
+          logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-112") <<
             "UserInfoManager grpc update_user_freq_caps failed: code=" <<
             static_cast<int>(result.status.error_code()) <<
             ", message=" << result.status.error_message();
@@ -2258,21 +2143,15 @@ namespace AdServer::Bidding
     }
     catch(const eh::Exception& e)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-112") <<
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND, "ADS-IMPL-112") <<
         FUN << ": post match failed: " << e.what();
     }
 
     if (logger()->log_level() >= Logging::Logger::TRACE)
     {
       const Generics::Time end_process_time = Generics::Time::get_time_of_day();
-      logger()->sstream(
-        Logging::Logger::TRACE,
-        Aspect::BIDDING_FRONTEND) <<
-        FUN << ": campaign selection considering = " <<
-        (end_process_time - start_process_time);
+      logger()->sstream(Logging::Logger::TRACE, Aspect::BIDDING_FRONTEND) <<
+        FUN << ": campaign selection considering = " << (end_process_time - start_process_time);
     }
 
     co_return FrontendCommons::RequestResult::written();
@@ -2335,9 +2214,7 @@ namespace AdServer::Bidding
           auto* ad_slot = request_params_pb.mutable_ad_slots(i);
           ad_slot->set_passback(
             ad_slot->passback() ||
-            passback ||
-            interrupted ||
-            (history_result && history_result->fraud_request()));
+            passback || interrupted || (history_result && history_result->fraud_request()));
         }
       }
 
@@ -2353,8 +2230,7 @@ namespace AdServer::Bidding
         request_params_pb.mutable_full_freq_caps()->Reserve(history_result->full_freq_caps_size());
         for (int i = 0; i < history_result->full_freq_caps_size(); ++i)
         {
-          request_params_pb.mutable_full_freq_caps()->Add(
-            history_result->full_freq_caps(i));
+          request_params_pb.mutable_full_freq_caps()->Add(history_result->full_freq_caps(i));
         }
 
         request_params_pb.clear_exclude_pubpixel_accounts();
@@ -2539,8 +2415,7 @@ namespace AdServer::Bidding
 
         if (request_info.location)
         {
-          add_token(common_info->mutable_tokens(),
-            "GEO_REGION", request_info.location->region);
+          add_token(common_info->mutable_tokens(), "GEO_REGION", request_info.location->region);
         }
 
         if (!request_info.ssp_devicetype_str.empty())
@@ -2604,13 +2479,9 @@ namespace AdServer::Bidding
       ostr += convert_stage_to_string(stage).str();
       ostr += ", after";
 
-      logger()->sstream(
-        Logging::Logger::ERROR,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7600") <<
+      logger()->sstream(Logging::Logger::ERROR, Aspect::BIDDING_FRONTEND, "ADS-IMPL-7600") <<
         ostr << " on " <<
-        (!request_task->hostname().empty() ?
-          request_task->hostname().c_str() : "Undefined host") <<
+        (!request_task->hostname().empty() ? request_task->hostname().c_str() : "Undefined host") <<
         ", timeout = " << timeout;
     }
   }

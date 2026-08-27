@@ -12,10 +12,7 @@ namespace AutoTest
 {
   namespace
   {
-    const char CHARSET[] =
-      "abcdefghijklmnopqrstuvwxyz"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "0123456789";
+    const char CHARSET[] = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789";
 
     void unique_name(std::string& templ)
     {
@@ -62,9 +59,7 @@ namespace AutoTest
   {
     try
     {
-      add_user(
-        prepare_uid(client.get_uid(), UUE_ADMIN_PARAMVALUE),
-        auto_commit);
+      add_user(prepare_uid(client.get_uid(), UUE_ADMIN_PARAMVALUE), auto_commit);
     }
     catch(const CookieNotFound&)
     {
@@ -88,6 +83,7 @@ namespace AutoTest
     {
       add_user(*it, false);
     }
+
     if (auto_commit)
     { commit(); }
   }
@@ -118,9 +114,7 @@ namespace AutoTest
   {
     try
     {
-      return del_user(
-        prepare_uid(client.get_uid(), UUE_ADMIN_PARAMVALUE),
-        auto_commit);
+      return del_user(prepare_uid(client.get_uid(), UUE_ADMIN_PARAMVALUE), auto_commit);
     }
     catch(const CookieNotFound&)
     {
@@ -143,6 +137,7 @@ namespace AutoTest
     {
       is_changed |= del_user(*it, false);
     }
+
     if (is_changed && auto_commit)
     { commit(); }
   }
@@ -160,6 +155,7 @@ namespace AutoTest
     {
       add_user(Generics::Uuid::create_random_based().to_string(), false);
     }
+
     if (auto_commit)
     { commit(); }
   }
@@ -193,8 +189,7 @@ namespace AutoTest
     {
       Stream::Error err;
       err << "LocalAudienceChannel::commit(): "
-          << "failed to move uids file to UserOperationGenerator service: "
-          << e.what();
+          << "failed to move uids file to UserOperationGenerator service: " << e.what();
       throw Exception(err);
     }
   }

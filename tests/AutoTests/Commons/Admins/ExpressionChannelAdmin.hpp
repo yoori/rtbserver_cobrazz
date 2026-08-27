@@ -40,9 +40,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ExpressionChannelAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* channel_id
-      )
+      void make_cmd (const char* address, const char* channel_id)
       {
         address_ = address;
         AdminParams params;
@@ -52,45 +50,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "expression_channel", address, params, static_cast<size_t>(CampaignServer));
       }
-      ExpressionChannelAdmin(
-        const char* address,
-        const char* channel_id
-      )
+      ExpressionChannelAdmin(const char* address, const char* channel_id)
       {
         make_cmd(address, channel_id);
       }
-      ExpressionChannelAdmin(
-        const std::string& address,
-        const char* channel_id
-      )
+      ExpressionChannelAdmin(const std::string& address, const char* channel_id)
       {
         make_cmd(address.c_str(), channel_id);
       }
-      ExpressionChannelAdmin(
-        const char* address,
-        const std::string& channel_id
-      )
+      ExpressionChannelAdmin(const char* address, const std::string& channel_id)
       {
         make_cmd(address, channel_id.c_str());
       }
-      ExpressionChannelAdmin(
-        const std::string& address,
-        const std::string& channel_id
-      )
+      ExpressionChannelAdmin(const std::string& address, const std::string& channel_id)
       {
         make_cmd(address.c_str(), channel_id.c_str());
       }
-      ExpressionChannelAdmin(
-        const char* address,
-        unsigned long channel_id
-      )
+      ExpressionChannelAdmin(const char* address, unsigned long channel_id)
       {
         make_cmd(address, strof(channel_id).c_str());
       }
-      ExpressionChannelAdmin(
-        const std::string& address,
-        unsigned long channel_id
-      )
+      ExpressionChannelAdmin(const std::string& address, unsigned long channel_id)
       {
         make_cmd(address.c_str(), strof(channel_id).c_str());
       }

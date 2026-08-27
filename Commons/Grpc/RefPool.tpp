@@ -3,9 +3,7 @@
 namespace AdServer::Grpc
 {
   template<typename T>
-  RefPool<T>::RefHolder::RefHolder(
-    std::shared_ptr<T> object_val,
-    std::weak_ptr<RefPool> pool_val)
+  RefPool<T>::RefHolder::RefHolder(std::shared_ptr<T> object_val, std::weak_ptr<RefPool> pool_val)
     : object(std::move(object_val)),
       pool(std::move(pool_val))
   {}
@@ -16,8 +14,7 @@ namespace AdServer::Grpc
   {
     return
       bad_before_time < rhs.bad_before_time ||
-      (bad_before_time == rhs.bad_before_time &&
-        ref_holder < rhs.ref_holder);
+      (bad_before_time == rhs.bad_before_time && ref_holder < rhs.ref_holder);
   }
 
   template<typename T>
@@ -57,16 +54,11 @@ namespace AdServer::Grpc
 
   template<typename T>
   void
-  RefPool<T>::Ref::mark_as_bad(
-    const Generics::Time& bad_before_time,
-    std::string unavailable_error)
+  RefPool<T>::Ref::mark_as_bad(const Generics::Time& bad_before_time, std::string unavailable_error)
   {
     if (auto pool = ref_holder_->pool.lock())
     {
-      pool->mark_as_bad_(
-        ref_holder_,
-        bad_before_time,
-        std::move(unavailable_error));
+      pool->mark_as_bad_(ref_holder_, bad_before_time, std::move(unavailable_error));
     }
   }
 
@@ -78,8 +70,7 @@ namespace AdServer::Grpc
   }
 
   template<typename T>
-  RefPool<T>::Ref::ProbeGuard::ProbeGuard(
-    std::shared_ptr<RefHolder> ref_holder_val)
+  RefPool<T>::Ref::ProbeGuard::ProbeGuard(std::shared_ptr<RefHolder> ref_holder_val)
     : ref_holder(std::move(ref_holder_val))
   {}
 
@@ -96,13 +87,9 @@ namespace AdServer::Grpc
   }
 
   template<typename T>
-  RefPool<T>::Ref::Ref(
-    std::shared_ptr<RefHolder> ref_holder,
-    const bool probe_ref)
+  RefPool<T>::Ref::Ref(std::shared_ptr<RefHolder> ref_holder, const bool probe_ref)
     : ref_holder_(std::move(ref_holder)),
-      probe_guard_(probe_ref ?
-        std::make_shared<ProbeGuard>(ref_holder_) :
-        nullptr)
+      probe_guard_(probe_ref ? std::make_shared<ProbeGuard>(ref_holder_) : nullptr)
   {}
 
   template<typename T>
@@ -118,6 +105,7 @@ namespace AdServer::Grpc
     {
       throw InvalidArgument("RefPool refs list is empty");
     }
+
     if (!scheduler_)
     {
       throw InvalidArgument("RefPool scheduler is null");
@@ -163,16 +151,13 @@ namespace AdServer::Grpc
       {
         auto ref_holder = std::move(try_ref_holders_.back());
         try_ref_holders_.pop_back();
-        try_ref_count_.store(
-          try_ref_holders_.size(),
-          std::memory_order_release);
+        try_ref_count_.store(try_ref_holders_.size(), std::memory_order_release);
         ref_holder->probing = true;
         return Ref(ref_holder, true);
       }
     }
 
-    const auto ref_index =
-      next_ref_index_.fetch_add(1, std::memory_order_relaxed);
+    const auto ref_index = next_ref_index_.fetch_add(1, std::memory_order_relaxed);
 
     std::shared_lock<std::shared_mutex> lock(lock_);
     if (available_ref_holders_.empty())
@@ -180,9 +165,7 @@ namespace AdServer::Grpc
       return std::nullopt;
     }
 
-    return Ref(
-      available_ref_holders_[ref_index % available_ref_holders_.size()],
-      false);
+    return Ref(available_ref_holders_[ref_index % available_ref_holders_.size()], false);
   }
 
   template<typename T>
@@ -228,8 +211,7 @@ namespace AdServer::Grpc
       }
       description += " => ";
       description += "[";
-      description += error_time.get_gm_time().format(
-        "%Y-%m-%d %H:%M:%S");
+      description += error_time.get_gm_time().format("%Y-%m-%d %H:%M:%S");
       description += "] ";
       description += error;
     }
@@ -273,8 +255,7 @@ namespace AdServer::Grpc
       std::optional<Generics::Time> previous_first_bad_time;
       if (!bad_ref_holders_.empty())
       {
-        previous_first_bad_time =
-          bad_ref_holders_.begin()->first.bad_before_time;
+        previous_first_bad_time = bad_ref_holders_.begin()->first.bad_before_time;
       }
 
       auto available_it = std::find(
@@ -287,22 +268,15 @@ namespace AdServer::Grpc
       }
       else if (ref_holder->bad_before_time)
       {
-        bad_ref_holders_.erase(BadRefKey{
-          *ref_holder->bad_before_time,
-          ref_holder.get()});
+        bad_ref_holders_.erase(BadRefKey{ *ref_holder->bad_before_time, ref_holder.get()});
       }
       else if (!ref_holder->probing)
       {
-        auto try_it = std::find(
-          try_ref_holders_.begin(),
-          try_ref_holders_.end(),
-          ref_holder);
+        auto try_it = std::find(try_ref_holders_.begin(), try_ref_holders_.end(), ref_holder);
         if (try_it != try_ref_holders_.end())
         {
           try_ref_holders_.erase(try_it);
-          try_ref_count_.store(
-            try_ref_holders_.size(),
-            std::memory_order_release);
+          try_ref_count_.store(try_ref_holders_.size(), std::memory_order_release);
         }
       }
 
@@ -311,10 +285,8 @@ namespace AdServer::Grpc
         bad_before_time;
 
       {
-        std::lock_guard<std::mutex> error_lock(
-          ref_holder->unavailable_error_lock);
-        ref_holder->unavailable_error_time =
-          Generics::Time::get_time_of_day();
+        std::lock_guard<std::mutex> error_lock(ref_holder->unavailable_error_lock);
+        ref_holder->unavailable_error_time = Generics::Time::get_time_of_day();
         ref_holder->unavailable_error = unavailable_error.empty() ?
           std::string() :
           std::move(unavailable_error);
@@ -323,13 +295,9 @@ namespace AdServer::Grpc
       ref_holder->bad_before_time = new_bad_before_time;
       ref_holder->probing = false;
       ref_holder->bad.store(true, std::memory_order_release);
-      bad_ref_holders_.emplace(
-        BadRefKey{new_bad_before_time, ref_holder.get()},
-        ref_holder);
+      bad_ref_holders_.emplace(BadRefKey{new_bad_before_time, ref_holder.get()}, ref_holder);
 
-      wake_worker =
-        !previous_first_bad_time ||
-        new_bad_before_time < *previous_first_bad_time;
+      wake_worker = !previous_first_bad_time || new_bad_before_time < *previous_first_bad_time;
       if (wake_worker)
       {
         scheduled_bad_time_ = new_bad_before_time;
@@ -345,13 +313,11 @@ namespace AdServer::Grpc
 
   template<typename T>
   void
-  RefPool<T>::finish_probe_(
-    const std::shared_ptr<RefHolder>& ref_holder) noexcept
+  RefPool<T>::finish_probe_(const std::shared_ptr<RefHolder>& ref_holder) noexcept
   {
     {
       std::unique_lock<std::shared_mutex> lock(lock_);
-      if (!ref_holder->probing ||
-        ref_holder->bad.load(std::memory_order_acquire))
+      if (!ref_holder->probing || ref_holder->bad.load(std::memory_order_acquire))
       {
         return;
       }
@@ -372,9 +338,7 @@ namespace AdServer::Grpc
     {
       auto weak_this = this->weak_from_this();
       const auto now = Generics::Time::get_time_of_day();
-      const auto delay = bad_time > now ?
-        bad_time - now :
-        Generics::Time::ZERO;
+      const auto delay = bad_time > now ? bad_time - now : Generics::Time::ZERO;
       scheduler_->schedule(
         delay,
         [weak_this, gate = gate_, bad_time]() mutable
@@ -398,8 +362,7 @@ namespace AdServer::Grpc
 
   template<typename T>
   void
-  RefPool<T>::move_ready_bad_refs_(
-    const Generics::Time& expected_bad_time) noexcept
+  RefPool<T>::move_ready_bad_refs_(const Generics::Time& expected_bad_time) noexcept
   {
     std::optional<Generics::Time> next_bad_time;
 
@@ -419,8 +382,7 @@ namespace AdServer::Grpc
         return;
       }
 
-      const auto first_bad_time =
-        bad_ref_holders_.begin()->first.bad_before_time;
+      const auto first_bad_time = bad_ref_holders_.begin()->first.bad_before_time;
       if (first_bad_time > now)
       {
         scheduled_bad_time_ = first_bad_time;
@@ -443,9 +405,7 @@ namespace AdServer::Grpc
           ref_holder->bad.store(false, std::memory_order_release);
           try_ref_holders_.emplace_back(std::move(ref_holder));
         }
-        try_ref_count_.store(
-          try_ref_holders_.size(),
-          std::memory_order_release);
+        try_ref_count_.store(try_ref_holders_.size(), std::memory_order_release);
 
         if (!bad_ref_holders_.empty())
         {

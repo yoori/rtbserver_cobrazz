@@ -2,10 +2,7 @@
 #include "StatsHourlyNumShowingTest.hpp"
 #include <math.h>
 
-REFLECT_UNIT(StatsHourlyNumShowingTest) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(StatsHourlyNumShowingTest) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -32,11 +29,7 @@ StatsHourlyNumShowingTest::run_test()
   add_descr_phrase("Check RequestStatsHourly.");
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        conn_,
-        diffs_,
-        stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(conn_, diffs_, stats_)).check(),
     "RequestStatsHourly: check stats");
 
   return true;
@@ -62,16 +55,13 @@ StatsHourlyNumShowingTest::make_requests_(
     client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        expected_ccs,
-        SelectedCreativesCCID(client)).check(),
+      AutoTest::sequence_checker(expected_ccs, SelectedCreativesCCID(client)).check(),
       description + " Check CCs#" + strof(i+1));
 
     if (impression)
     {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
       description +
         " Check impression#" + strof(i+1));
       if (i % 2)
@@ -82,8 +72,7 @@ StatsHourlyNumShowingTest::make_requests_(
     else
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.debug_info.track_pixel_url.empty()),
+        AutoTest::predicate_checker(client.debug_info.track_pixel_url.empty()),
         description +
           " Check impression absence#" + strof(i+1));
     }
@@ -114,8 +103,7 @@ StatsHourlyNumShowingTest::num_shown_one_case_()
   // pub amount for 1 impression = PUB_AMOUNT / 1000 / num_shown
   //  (approximate to 5 digits after point)
   // num_shown = 1
-  double pub_amount =
-    round_pub_amount(fetch_float("PUB_CPM")/1000) * REPEAT_COUNT;
+  double pub_amount = round_pub_amount(fetch_float("PUB_CPM")/1000) * REPEAT_COUNT;
 
   diffs_.push_back(
     ORM::HourlyStats::Diffs().
@@ -123,8 +111,7 @@ StatsHourlyNumShowingTest::num_shown_one_case_()
       clicks(0).
       actions(0).
       requests(REPEAT_COUNT).
-      pub_amount(
-        ORM::stats_diff_type(pub_amount, 0.00001)));
+      pub_amount(ORM::stats_diff_type(pub_amount, 0.00001)));
 
   make_requests_(
     description,
@@ -150,19 +137,14 @@ StatsHourlyNumShowingTest::num_shown_two_case_()
     "TwoShown/CC/2"
   };
 
-  double pub_amount =
-    round_pub_amount(fetch_float("PUB_CPM") / (2 * 1000)) * REPEAT_COUNT;
+  double pub_amount = round_pub_amount(fetch_float("PUB_CPM") / (2 * 1000)) * REPEAT_COUNT;
 
   for (size_t i = 0; i < countof(CC); ++i)
   {
     ccid_exp.push_back(fetch_string(CC[i]));
 
     ORM::HourlyStats stat;
-    stat.key(
-      ORM::HourlyStats::Key().
-      cc_id(fetch_int(CC[i])).
-      num_shown(2).
-      stimestamp(today_));
+    stat.key(ORM::HourlyStats::Key(). cc_id(fetch_int(CC[i])). num_shown(2). stimestamp(today_));
     stat.description(description + " #" + strof(i+1));
     stat.select(conn_);
     stats_.push_back(stat);
@@ -173,8 +155,7 @@ StatsHourlyNumShowingTest::num_shown_two_case_()
         clicks(0).
         actions(0).
         requests(REPEAT_COUNT).
-        pub_amount(
-          ORM::stats_diff_type(pub_amount, 0.00001)));
+        pub_amount(ORM::stats_diff_type(pub_amount, 0.00001)));
   }
 
   make_requests_(
@@ -203,19 +184,14 @@ StatsHourlyNumShowingTest::num_shown_two_pub_specific_currency_case_()
   };
 
   double pub_amount =
-    round_pub_amount(
-      fetch_float("PUB_CPM") * exchange_rate / ( 2 * 1000)) * REPEAT_COUNT;
+    round_pub_amount(fetch_float("PUB_CPM") * exchange_rate / (2 * 1000)) * REPEAT_COUNT;
 
   for (size_t i = 0; i < countof(CC); ++i)
   {
     ccid_exp.push_back(fetch_string(CC[i]));
 
     ORM::HourlyStats stat;
-    stat.key(
-      ORM::HourlyStats::Key().
-      cc_id(fetch_int(CC[i])).
-      num_shown(2).
-      stimestamp(today_));
+    stat.key(ORM::HourlyStats::Key(). cc_id(fetch_int(CC[i])). num_shown(2). stimestamp(today_));
     stat.description(description + " #" + strof(i+1));
     stat.select(conn_);
     stats_.push_back(stat);
@@ -226,8 +202,7 @@ StatsHourlyNumShowingTest::num_shown_two_pub_specific_currency_case_()
         clicks(0).
         actions(0).
         requests(REPEAT_COUNT).
-        pub_amount(
-          ORM::stats_diff_type(pub_amount, 0.00001)));
+        pub_amount(ORM::stats_diff_type(pub_amount, 0.00001)));
   }
 
   make_requests_(
@@ -253,20 +228,14 @@ StatsHourlyNumShowingTest::num_shown_two_track_imp_case_()
     "ImprTrack/CC/2"
   };
 
-  double pub_amount =
-    round_pub_amount(
-      fetch_float("PUB_CPM") / (2 * 1000)) * REPEAT_COUNT / 2;
+  double pub_amount = round_pub_amount(fetch_float("PUB_CPM") / (2 * 1000)) * REPEAT_COUNT / 2;
 
   for (size_t i = 0; i < countof(CC); ++i)
   {
     ccid_exp.push_back(fetch_string(CC[i]));
 
     ORM::HourlyStats stat;
-    stat.key(
-      ORM::HourlyStats::Key().
-      cc_id(fetch_int(CC[i])).
-      num_shown(2).
-      stimestamp(today_));
+    stat.key(ORM::HourlyStats::Key(). cc_id(fetch_int(CC[i])). num_shown(2). stimestamp(today_));
     stat.description(description + " #" + strof(i+1));
     stat.select(conn_);
     stats_.push_back(stat);
@@ -277,8 +246,7 @@ StatsHourlyNumShowingTest::num_shown_two_track_imp_case_()
         clicks(0).
         actions(0).
         requests(REPEAT_COUNT).
-        pub_amount(
-          ORM::stats_diff_type(pub_amount, 0.0000001)));
+        pub_amount(ORM::stats_diff_type(pub_amount, 0.0000001)));
   }
 
   make_requests_(

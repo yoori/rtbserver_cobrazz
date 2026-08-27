@@ -1,6 +1,6 @@
 <GeneralParams  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-                xmlns:xi="http://www.w3.org/2001/XInclude" 
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:xi="http://www.w3.org/2001/XInclude"
                 xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration ../../../xsd/tests/AutoTests/AutoTests.xsd">
 
   <TimeOuts frontend_timeout="15" wait_timeout="300"/>

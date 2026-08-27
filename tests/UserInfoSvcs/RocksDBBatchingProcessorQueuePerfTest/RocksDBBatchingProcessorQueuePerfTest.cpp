@@ -22,8 +22,7 @@
 namespace
 {
   using BucketQueue = AdServer::ProfilingCommons::RocksDBBatchingProcessorQueue;
-  using SimpleQueue =
-    AdServer::ProfilingCommons::Test::SimpleRocksDBBatchingProcessorQueue;
+  using SimpleQueue = AdServer::ProfilingCommons::Test::SimpleRocksDBBatchingProcessorQueue;
 
   enum class Mode
   {
@@ -395,9 +394,7 @@ namespace
               local_checksum += operation.key.text().size() + operation.type;
               if (operation.get_callback)
               {
-                (*operation.get_callback)(
-                  Generics::ConstSmartMemBuf_var(),
-                  std::nullopt);
+                (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), std::nullopt);
               }
 
               if (operation.save_callback)
@@ -408,8 +405,7 @@ namespace
 
             if (options.process_delay_us != 0)
             {
-              std::this_thread::sleep_for(
-                std::chrono::microseconds(options.process_delay_us));
+              std::this_thread::sleep_for(std::chrono::microseconds(options.process_delay_us));
             }
 
             processed.fetch_add(batch.size(), std::memory_order_relaxed);
@@ -466,9 +462,7 @@ namespace
             else
             {
               operation.get_callback =
-                [&done_count](
-                  Generics::ConstSmartMemBuf_var,
-                  std::optional<std::string>)
+                [&done_count](Generics::ConstSmartMemBuf_var, std::optional<std::string>)
                 {
                   done_count.fetch_add(1, std::memory_order_relaxed);
                 };
@@ -517,8 +511,7 @@ namespace
 
     const auto finished_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_finished = current_cpu_times();
-    const double elapsed =
-      std::chrono::duration<double>(finished_at - started_at).count();
+    const double elapsed = std::chrono::duration<double>(finished_at - started_at).count();
     const double user_cpu = cpu_finished.user - cpu_started.user;
     const double sys_cpu = cpu_finished.sys - cpu_started.sys;
     const std::uint64_t enqueued_count = enqueued.load(std::memory_order_relaxed);
@@ -575,8 +568,7 @@ namespace
     return errors.load(std::memory_order_relaxed) == 0 &&
       enqueued_count == options.count &&
       measured_enqueue_call_count == options.count &&
-      done == options.count &&
-      processed_count == options.count ? 0 : 2;
+      done == options.count && processed_count == options.count ? 0 : 2;
   }
 }
 

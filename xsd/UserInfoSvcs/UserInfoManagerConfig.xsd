@@ -138,7 +138,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ReadWriteStats" 
+      <xsd:element name="ReadWriteStats"
         type="ReadWriteStatsType"
         minOccurs="0"
         maxOccurs="1">

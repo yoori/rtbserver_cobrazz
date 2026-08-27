@@ -1,11 +1,7 @@
 #include "RemoteTriggersCheck.hpp"
 #include <set>
 
-REFLECT_UNIT(RemoteTriggersCheck) (
-  "TriggerMatching",
-  AUTO_TEST_FAST,
-  AUTO_TEST_SERIALIZE
-);
+REFLECT_UNIT(RemoteTriggersCheck) ("TriggerMatching", AUTO_TEST_FAST, AUTO_TEST_SERIALIZE);
 
 namespace
 {
@@ -51,8 +47,7 @@ namespace
       for (unsigned int i = 0; i < remote_admin_.size(); ++i)
       {
         remote_admin_[i][TriggerAdmin::Expected::STAMP] = FAKE_STAMP;
-        TriggerLists::const_iterator pos =
-          central_triggers_list.find(remote_admin_[i][0]);
+        TriggerLists::const_iterator pos = central_triggers_list.find(remote_admin_[i][0]);
         if (pos == central_triggers_list.end())
         {
           error << error_num++ << ". Can't find trigger list with id = '" <<
@@ -70,8 +65,7 @@ namespace
           for (size_t j = 0; j < remote_admin_.slice_size(); ++j)
           {
             if (j == TriggerAdmin::Expected::STAMP) { continue; }
-            error << "  " << remote_admin_.field_name(j) << " = " <<
-              pos->second[j] << std::endl;
+            error << "  " << remote_admin_.field_name(j) << " = " << pos->second[j] << std::endl;
           }
           error << "}" << std::endl << std::endl
                 << "Remote (ChannelController on '" << remote_admin_.address()
@@ -106,8 +100,7 @@ namespace
           sorted_tokens.insert(token.str());
         }
         values[i].clear();
-        for (SortedVector::const_iterator p = sorted_tokens.begin();
-             p != sorted_tokens.end();)
+        for (SortedVector::const_iterator p = sorted_tokens.begin(); p != sorted_tokens.end();)
         {
           values[i] += *p;
           if (++p != sorted_tokens.end())
@@ -129,8 +122,7 @@ bool
 RemoteTriggersCheck::run_test()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_CENTRAL, STE_CHANNEL_CONTROLLER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_CENTRAL, STE_CHANNEL_CONTROLLER)),
     "Test require Central.ChannelController in AutoTest config!");
 
   FAIL_CONTEXT(
@@ -149,21 +141,17 @@ RemoteTriggersCheck::run_test()
 
   CheckAdmin c_admin(remote_channel_controller.c_str());
   c_admin.fetch();
-  std::string trigger_list = AutoTest::get_field_list(c_admin,
-    CheckAdmin::Expected::ID);
+  std::string trigger_list = AutoTest::get_field_list(c_admin, CheckAdmin::Expected::ID);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !trigger_list.empty()),
+    AutoTest::predicate_checker(!trigger_list.empty()),
     "Admin command returns empty channel list!");
 
   TriggerAdmin u_admin_central(central_channel_controller.c_str(), trigger_list);
   TriggerAdmin u_admin_remote(remote_channel_controller.c_str(), trigger_list);
 
   TrigerListsComparator<TriggerAdmin> comparator(u_admin_central, u_admin_remote);
-  FAIL_CONTEXT(
-    comparator.check(),
-    "must get expected trigger lists for central cluster");
+  FAIL_CONTEXT(comparator.check(), "must get expected trigger lists for central cluster");
 
   return true;
 }

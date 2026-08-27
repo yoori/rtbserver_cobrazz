@@ -33,9 +33,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<ChannelCategoryAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* category
-      )
+      void make_cmd (const char* address, const char* category)
       {
         address_ = address;
         AdminParams params;
@@ -45,45 +43,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "category_channel", address, params, static_cast<size_t>(CampaignManager));
       }
-      ChannelCategoryAdmin(
-        const char* address,
-        const char* category
-      )
+      ChannelCategoryAdmin(const char* address, const char* category)
       {
         make_cmd(address, category);
       }
-      ChannelCategoryAdmin(
-        const std::string& address,
-        const char* category
-      )
+      ChannelCategoryAdmin(const std::string& address, const char* category)
       {
         make_cmd(address.c_str(), category);
       }
-      ChannelCategoryAdmin(
-        const char* address,
-        const std::string& category
-      )
+      ChannelCategoryAdmin(const char* address, const std::string& category)
       {
         make_cmd(address, category.c_str());
       }
-      ChannelCategoryAdmin(
-        const std::string& address,
-        const std::string& category
-      )
+      ChannelCategoryAdmin(const std::string& address, const std::string& category)
       {
         make_cmd(address.c_str(), category.c_str());
       }
-      ChannelCategoryAdmin(
-        const char* address,
-        unsigned long category
-      )
+      ChannelCategoryAdmin(const char* address, unsigned long category)
       {
         make_cmd(address, strof(category).c_str());
       }
-      ChannelCategoryAdmin(
-        const std::string& address,
-        unsigned long category
-      )
+      ChannelCategoryAdmin(const std::string& address, unsigned long category)
       {
         make_cmd(address.c_str(), strof(category).c_str());
       }

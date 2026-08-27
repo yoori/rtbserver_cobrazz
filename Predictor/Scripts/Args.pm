@@ -8,10 +8,10 @@ sub parse
   my %res;
   foreach my $arg(@args)
   {
-    while($arg =~ m/--([^=]*)='([^']*)'/g)
+    while ($arg =~ m/--([^=]*)='([^']*)'/g)
     {
       my $key = $1;
-      if(!exists($res{$key}))
+      if (!exists($res{$key}))
       {
         $res{$key} = $2;
       }
@@ -21,10 +21,10 @@ sub parse
       }
     }
 
-    while($arg =~ m/--([^=]*)=([^ ']*)/g)
+    while ($arg =~ m/--([^=]*)=([^ ']*)/g)
     {
       my $key = $1;
-      if(!exists($res{$1}))
+      if (!exists($res{$1}))
       {
         $res{$key} = $2;
       }
@@ -34,9 +34,9 @@ sub parse
       }
     }
 
-    while($arg =~ m/--([^=]*)/g)
+    while ($arg =~ m/--([^=]*)/g)
     {
-      if(!exists($res{$1}))
+      if (!exists($res{$1}))
       {
         $res{$1} = undef;
       }

@@ -68,9 +68,7 @@ namespace FrontendCommons
     };
 
     void
-    emplace_platform_name(
-      PlatformMatcher::PlatformNameSet& platform_names,
-      std::string_view name)
+    emplace_platform_name(PlatformMatcher::PlatformNameSet& platform_names, std::string_view name)
     {
       platform_names.emplace(name.data(), name.size(), platform_names.get_allocator().arena());
     }
@@ -131,8 +129,7 @@ namespace FrontendCommons
       String::SubString::SizeType hostname_pos = hostname.rfind('.');
 
       String::SubString hostname_part(
-        hostname_pos == String::SubString::NPOS ?
-        hostname : hostname.substr(hostname_pos + 1));
+        hostname_pos == String::SubString::NPOS ? hostname : hostname.substr(hostname_pos + 1));
 
       String::SubString hostname_prefix(
         hostname_pos == String::SubString::NPOS ?
@@ -243,8 +240,7 @@ namespace FrontendCommons
               case UrlMatchElement::SC_JS:
                 {
                   std::string buf;
-                  String::StringManip::js_unicode_decode(
-                    match_result, buf, false, (*it)->special);
+                  String::StringManip::js_unicode_decode(match_result, buf, false, (*it)->special);
                   buf.swap(match_result);
                 }
               break;
@@ -351,7 +347,7 @@ namespace FrontendCommons
         break;
       }
     }
-    while(pos < in.size());
+    while (pos < in.size());
 
     return ret_value;
   }
@@ -399,7 +395,7 @@ namespace FrontendCommons
         target_matcher = matcher;
         prev_pos = (pos == std::string::npos ? pos : pos - 1);
       }
-      while(prev_pos != std::string::npos);
+      while (prev_pos != std::string::npos);
 
       UrlMatchElement_var match_element(new UrlMatchElement(
         search_engine_id,
@@ -819,8 +815,7 @@ namespace FrontendCommons
   {
     const String::SubString user_agent(user_agent_.data(), user_agent_.size());
     return (!element->regexp.get() ||
-      element->regexp->search(sub_strs_, user_agent, match_context_) ||
-      !element->regexp_required);
+      element->regexp->search(sub_strs_, user_agent, match_context_) || !element->regexp_required);
   }
 
   WebBrowserMatcher::WebBrowserMatcher() noexcept
@@ -1019,8 +1014,7 @@ namespace FrontendCommons
 
         BitsMaskMatcher* bits_mask_matcher;
 
-        if (bits_matcher_it == bits_mask_matchers_.end() ||
-           bits_matcher_it->bits_mask != bits_mask)
+        if (bits_matcher_it == bits_mask_matchers_.end() || bits_matcher_it->bits_mask != bits_mask)
         {
           BitsMaskMatcherArray::iterator ins_it =
             bits_mask_matchers_.insert(bits_matcher_it, BitsMaskMatcher());
@@ -1065,12 +1059,11 @@ namespace FrontendCommons
       {
         uint32_t masked_ip = int_ip & bits_mask_matcher_it->bits_mask;
 
-        for(std::vector<String::SubString>::const_iterator cohort_it = cohorts.begin();
+        for (std::vector<String::SubString>::const_iterator cohort_it = cohorts.begin();
           cohort_it != cohorts.end(); ++cohort_it)
         {
           CohortMaskMap::const_iterator cohort_mask_it =
-            bits_mask_matcher_it->cohort_masks.find(
-              CohortMaskHashAdapter(*cohort_it, masked_ip));
+            bits_mask_matcher_it->cohort_masks.find(CohortMaskHashAdapter(*cohort_it, masked_ip));
           if (cohort_mask_it != bits_mask_matcher_it->cohort_masks.end())
           {
             result = cohort_mask_it->second;
@@ -1108,8 +1101,7 @@ namespace FrontendCommons
     if (::inet_pton(AF_INET, ip.str().c_str(), &addr) <= 0)
     {
       Stream::Error ostr;
-      ostr << FUN << ": invalid ip value '" <<
-        ip << "'(errno = " << errno << ")";
+      ostr << FUN << ": invalid ip value '" << ip << "'(errno = " << errno << ")";
       throw InvalidParameter(ostr.str());
     }
 

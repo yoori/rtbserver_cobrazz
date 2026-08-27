@@ -17,7 +17,7 @@ sub make_server_url {
 
 sub store_list {
   my ($path, $list) = @_;
-  open(my $FILE, ">$path") || die "Cann't open file $path for write.\n";  
+  open(my $FILE, ">$path") || die "Cann't open file $path for write.\n";
   for my $elem (@$list)
   {
     print $FILE "$elem\n";

@@ -33,36 +33,24 @@ namespace AdServer::UserInfoSvcs
     void
     save_seq(std::ostream& out, const std::vector<std::string>& elements)
     {
-      for(auto it = elements.begin(); it != elements.end(); ++it)
+      for (auto it = elements.begin(); it != elements.end(); ++it)
       {
         // escape '|' '\n' ESCAPE_CHAR
         std::string to_rep;
 
-        String::AsciiStringManip::flatten(
-          to_rep,
-          *it,
-          String::SubString("^0"),
-          SAVE_ESCAPE_CHAR);
+        String::AsciiStringManip::flatten(to_rep, *it, String::SubString("^0"), SAVE_ESCAPE_CHAR);
 
         std::string tmp;
 
-        String::AsciiStringManip::flatten(
-          tmp,
-          to_rep,
-          String::SubString("^1"),
-          NL_CHAR_CATEGORY);
+        String::AsciiStringManip::flatten(tmp, to_rep, String::SubString("^1"), NL_CHAR_CATEGORY);
 
         to_rep.swap(tmp);
 
-        String::AsciiStringManip::flatten(
-          tmp,
-          to_rep,
-          String::SubString("^2"),
-          BAR_CHAR_CATEGORY);
+        String::AsciiStringManip::flatten(tmp, to_rep, String::SubString("^2"), BAR_CHAR_CATEGORY);
 
         to_rep.swap(tmp);
 
-        if(it != elements.begin())
+        if (it != elements.begin())
         {
           out << '|';
         }
@@ -77,9 +65,9 @@ namespace AdServer::UserInfoSvcs
       String::StringManip::Splitter<String::AsciiStringManip::SepBar> tokenizer(line);
 
       String::SubString token;
-      while(tokenizer.get_token(token))
+      while (tokenizer.get_token(token))
       {
-        if(token.find('^') != String::SubString::NPOS)
+        if (token.find('^') != String::SubString::NPOS)
         {
           std::string to_rep(token.str());
           std::string tmp;
@@ -156,8 +144,7 @@ namespace AdServer::UserInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": invalid line '" << str << "': " <<
-        ex.what();
+      ostr << FUN << ": invalid line '" << str << "': " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -215,13 +202,13 @@ namespace AdServer::UserInfoSvcs
   {
     portions_.resize(portions_number);
 
-    for(PortionArray::iterator portion_it = portions_.begin();
+    for (PortionArray::iterator portion_it = portions_.begin();
         portion_it != portions_.end(); ++portion_it)
     {
       *portion_it = new Portion();
     }
 
-    if(file_root[0])
+    if (file_root[0])
     {
       load_holders_();
     }
@@ -231,9 +218,7 @@ namespace AdServer::UserInfoSvcs
   {}
 
   AdServer::Commons::StartableAwaitable<BindRequestProcessor::BindRequest>
-  BindRequestChunk::co_get_bind_request(
-    const String::SubString& external_id,
-    const Generics::Time&)
+  BindRequestChunk::co_get_bind_request(const String::SubString& external_id, const Generics::Time&)
     noexcept
   {
     //static const char* FUN = "BindRequestChunk::get_user_id()";
@@ -243,20 +228,17 @@ namespace AdServer::UserInfoSvcs
 
     unsigned long portion_i = 0;
 
-    HashHashAdapter external_id_hash(
-      get_external_id_hash_(portion_i, external_id));
+    HashHashAdapter external_id_hash(get_external_id_hash_(portion_i, external_id));
 
     Portion_var portion = portions_[portion_i];
 
-    UserLockMap::WriteGuard user_lock(
-      portion->holders_lock.write_lock(external_id_hash));
+    UserLockMap::WriteGuard user_lock(portion->holders_lock.write_lock(external_id_hash));
 
     HolderContainerGuard<BindRequestHolderContainer>::
-      HolderContainer_var holder_container =
-        portion->holder_container_guard.holder_container();
+      HolderContainer_var holder_container = portion->holder_container_guard.holder_container();
 
     // find user
-    for(auto time_holder_it = holder_container->time_holders.begin();
+    for (auto time_holder_it = holder_container->time_holders.begin();
       time_holder_it != holder_container->time_holders.end();
       ++time_holder_it)
     {
@@ -265,10 +247,9 @@ namespace AdServer::UserInfoSvcs
 
       SyncReadGuard lock(time_period_holder.lock);
 
-      auto req_it = time_period_holder.holders.find(
-        external_id_hash);
+      auto req_it = time_period_holder.holders.find(external_id_hash);
 
-      if(req_it != time_period_holder.holders.end())
+      if (req_it != time_period_holder.holders.end())
       {
         res_bind_request.bind_user_ids = req_it->second.bind_user_ids();
       }
@@ -283,8 +264,7 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time& now)
     noexcept
   {
-    return AdServer::Commons::sync_wait(
-      co_get_bind_request(external_id, now));
+    return AdServer::Commons::sync_wait(co_get_bind_request(external_id, now));
   }
 
   void
@@ -298,17 +278,14 @@ namespace AdServer::UserInfoSvcs
 
     unsigned long portion_i;
 
-    HashHashAdapter external_id_hash(
-      get_external_id_hash_(portion_i, external_id));
+    HashHashAdapter external_id_hash(get_external_id_hash_(portion_i, external_id));
 
     Portion_var portion = portions_[portion_i];
 
-    UserLockMap::WriteGuard user_lock(
-      portion->holders_lock.write_lock(external_id_hash));
+    UserLockMap::WriteGuard user_lock(portion->holders_lock.write_lock(external_id_hash));
 
     HolderContainerGuard<BindRequestHolderContainer>::HolderContainer_var
-      holder_container =
-        portion->holder_container_guard.holder_container();
+      holder_container = portion->holder_container_guard.holder_container();
 
     // insert into new portion
     BindRequestHolderContainer::TimePeriodHolder_var
@@ -326,8 +303,7 @@ namespace AdServer::UserInfoSvcs
   BindRequestChunk::clear_expired(const Generics::Time& expire_time)
     noexcept
   {
-    for(PortionArray::const_iterator portion_it =
-          portions_.begin();
+    for (PortionArray::const_iterator portion_it = portions_.begin();
         portion_it != portions_.end(); ++portion_it)
     {
       clear_expired_((*portion_it)->holder_container_guard, expire_time);
@@ -357,12 +333,11 @@ namespace AdServer::UserInfoSvcs
         max_time.get_gm_time().format(LOG_TIME_FORMAT) << "." <<
         std::setfill('0') << std::setw(4) <<
         (Generics::safe_rand() % 10000) <<
-        std::setfill('0') << std::setw(4) <<
-        (Generics::safe_rand() % 10000);
+        std::setfill('0') << std::setw(4) << (Generics::safe_rand() % 10000);
 
       persistent_file_name = fname_ostr.str();
     }
-    while(used_file_names.find(persistent_file_name) != used_file_names.end());
+    while (used_file_names.find(persistent_file_name) != used_file_names.end());
 
     tmp_file_name = "~";
     tmp_file_name += persistent_file_name;
@@ -373,7 +348,7 @@ namespace AdServer::UserInfoSvcs
   {
     static const char* FUN = "BindRequestChunk::save_holders_()";
 
-    if(!file_root_.empty())
+    if (!file_root_.empty())
     {
       FlushWriteGuard flush_lock(flush_lock_);
 
@@ -392,7 +367,7 @@ namespace AdServer::UserInfoSvcs
 
       FileNameSet used_file_names;
 
-      for(auto it = old_chunk_files.begin(); it != old_chunk_files.end(); ++it)
+      for (auto it = old_chunk_files.begin(); it != old_chunk_files.end(); ++it)
       {
         std::string file_name;
         PathManip::split_path(it->first.c_str(), 0, &file_name);
@@ -402,17 +377,14 @@ namespace AdServer::UserInfoSvcs
       // save holders into tmp files
       TempFilePathMap new_chunk_files;
 
-      save_holders_i_(
-        new_chunk_files,
-        &Portion::holder_container_guard,
-        used_file_names);
+      save_holders_i_(new_chunk_files, &Portion::holder_container_guard, used_file_names);
 
-      for(auto it = new_chunk_files.begin(); it != new_chunk_files.end(); ++it)
+      for (auto it = new_chunk_files.begin(); it != new_chunk_files.end(); ++it)
       {
         const std::string tmp_file = file_root_ + "/" + it->first;
         const std::string p_file = file_root_ + "/" + it->second;
 
-        if(std::rename(tmp_file.c_str(), p_file.c_str()))
+        if (std::rename(tmp_file.c_str(), p_file.c_str()))
         {
           eh::throw_errno_exception<Exception>(
             FUN,
@@ -425,9 +397,9 @@ namespace AdServer::UserInfoSvcs
       }
 
       // remove old files
-      for(auto it = old_chunk_files.begin(); it != old_chunk_files.end(); ++it)
+      for (auto it = old_chunk_files.begin(); it != old_chunk_files.end(); ++it)
       {
-        if(::unlink(it->first.c_str()) == -1)
+        if (::unlink(it->first.c_str()) == -1)
         {
           eh::throw_errno_exception<BaseChunkSelector::Exception>(
             "can't remove file '",
@@ -441,9 +413,7 @@ namespace AdServer::UserInfoSvcs
   void
   BindRequestChunk::load_holders_() /*throw(Exception)*/
   {
-    load_holders_(
-      &Portion::holder_container_guard,
-      extend_time_period_);
+    load_holders_(&Portion::holder_container_guard, extend_time_period_);
   }
 
   template<typename HolderContainerType>
@@ -464,25 +434,23 @@ namespace AdServer::UserInfoSvcs
 
     MaxTimePeriodHolderMap time_period_holders_by_time;
 
-    for(PortionArray::const_iterator portion_it = portions_.begin();
+    for (PortionArray::const_iterator portion_it = portions_.begin();
         portion_it != portions_.end(); ++portion_it)
     {
       const HolderContainerGuard<HolderContainerType>& holder_container_guard =
         (**portion_it).*holder_container_guard_field;
       typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
         holder_container = holder_container_guard.holder_container();
-      for(typename HolderContainerType::TimePeriodHolderArray::
-            const_iterator time_holder_it =
-              holder_container->time_holders.begin();
+      for (typename HolderContainerType::TimePeriodHolderArray::
+            const_iterator time_holder_it = holder_container->time_holders.begin();
           time_holder_it != holder_container->time_holders.end();
           ++time_holder_it)
       {
-        time_period_holders_by_time[(*time_holder_it)->max_time].push_back(
-          *time_holder_it);
+        time_period_holders_by_time[(*time_holder_it)->max_time].push_back(*time_holder_it);
       }
     }
 
-    for(typename MaxTimePeriodHolderMap::const_iterator max_time_it =
+    for (typename MaxTimePeriodHolderMap::const_iterator max_time_it =
           time_period_holders_by_time.begin();
         max_time_it != time_period_holders_by_time.end();
         ++max_time_it)
@@ -503,7 +471,7 @@ namespace AdServer::UserInfoSvcs
 
       std::unique_ptr<std::fstream> file;
 
-      for(typename TimePeriodHolderList::const_iterator time_period_holder_it =
+      for (typename TimePeriodHolderList::const_iterator time_period_holder_it =
             max_time_it->second.begin();
           time_period_holder_it != max_time_it->second.end();
           ++time_period_holder_it)
@@ -512,29 +480,26 @@ namespace AdServer::UserInfoSvcs
         const typename HolderContainerType::HolderMap&
           holders = (*time_period_holder_it)->holders;
 
-        for(typename HolderContainerType::HolderMap::
-              const_iterator user_it = holders.begin();
+        for (typename HolderContainerType::HolderMap::const_iterator user_it = holders.begin();
             user_it != holders.end(); ++user_it)
         {
-          if(!file.get())
+          if (!file.get())
           {
             file.reset(new std::fstream(
               new_file_name.c_str(),
               std::ios_base::out | std::ios_base::trunc));
 
-            if(!file->is_open())
+            if (!file->is_open())
             {
               Stream::Error ostr;
               ostr << FUN << ": can't open file '" << new_file_name << "'";
               throw Exception(ostr);
             }
 
-            result_files.insert(std::make_pair(
-              new_tmp_file_name,
-              new_persistent_file_name));
+            result_files.insert(std::make_pair(new_tmp_file_name, new_persistent_file_name));
           }
 
-          if(user_saved)
+          if (user_saved)
           {
             *file << std::endl;
           }
@@ -547,7 +512,7 @@ namespace AdServer::UserInfoSvcs
         }
       }
 
-      if(file.get())
+      if (file.get())
       {
         file->close();
       }
@@ -578,8 +543,7 @@ namespace AdServer::UserInfoSvcs
 
     HolderContainerArray holder_containers;
     holder_containers.resize(portions_.size());
-    for(typename HolderContainerArray::iterator holder_container_it =
-          holder_containers.begin();
+    for (typename HolderContainerArray::iterator holder_container_it = holder_containers.begin();
         holder_container_it != holder_containers.end();
         ++holder_container_it)
     {
@@ -588,7 +552,7 @@ namespace AdServer::UserInfoSvcs
 
     /*
     std::cerr << "Found chunks for '" << file_prefix << "':";
-    for(ChunkSelector::ChunkFileDescriptionMap::const_iterator
+    for (ChunkSelector::ChunkFileDescriptionMap::const_iterator
           it = chunk_files.begin();
         it != chunk_files.end();
         ++it)
@@ -601,7 +565,7 @@ namespace AdServer::UserInfoSvcs
     typename HolderContainerType::TimePeriodHolderArray time_period_holders;
     Generics::Time cur_max_time;
 
-    for(ChunkSelector::ChunkFileDescriptionMap::const_reverse_iterator
+    for (ChunkSelector::ChunkFileDescriptionMap::const_reverse_iterator
           it = chunk_files.rbegin();
         it != chunk_files.rend();
         ++it)
@@ -612,41 +576,37 @@ namespace AdServer::UserInfoSvcs
       {
         std::fstream file(it->first.c_str(), std::ios_base::in);
 
-        if(file.is_open())
+        if (file.is_open())
         {
           // correct max_time by currently configured extend_time_period
           Generics::Time it_max_time = extend_time_period * (
             it->second.max_time.tv_sec / extend_time_period.tv_sec);
 
-          if(it_max_time < it->second.max_time)
+          if (it_max_time < it->second.max_time)
           {
             it_max_time += extend_time_period;
           }
 
-          if(time_period_holders.empty() ||
-             it_max_time + extend_time_period <= cur_max_time)
+          if (time_period_holders.empty() || it_max_time + extend_time_period <= cur_max_time)
           {
             // time period changed - merge fetched data (
             //   otherwise use previously fetched time holders)
-            for(unsigned long portion_i = 0;
-                portion_i < time_period_holders.size();
-                ++portion_i)
+            for (unsigned long portion_i = 0; portion_i < time_period_holders.size(); ++portion_i)
             {
               // push value with less max_time to end
-              holder_containers[portion_i]->time_holders.push_back(
-                time_period_holders[portion_i]);
+              holder_containers[portion_i]->time_holders.push_back(time_period_holders[portion_i]);
             }
 
             time_period_holders.clear();
             cur_max_time = it_max_time;
           }
 
-          if(time_period_holders.empty())
+          if (time_period_holders.empty())
           {
             time_period_holders.resize(portions_.size());
 
             // init time holders for each portion
-            for(typename HolderContainerType::TimePeriodHolderArray::
+            for (typename HolderContainerType::TimePeriodHolderArray::
                   iterator time_period_holder_it = time_period_holders.begin();
                 time_period_holder_it != time_period_holders.end();
                 ++time_period_holder_it)
@@ -658,28 +618,28 @@ namespace AdServer::UserInfoSvcs
             }
           }
 
-          while(!file.eof())
+          while (!file.eof())
           {
             unsigned long portion;
             typename HolderContainerType::KeyType external_id;
             typename HolderContainerType::MappedType user_info;
 
-            if(!file.fail())
+            if (!file.fail())
             {
               load_key_(external_id, portion, file);
             }
 
-            if(!file.fail())
+            if (!file.fail())
             {
               AdServer::LogProcessing::read_tab(file);
             }
 
-            if(!file.fail())
+            if (!file.fail())
             {
               user_info.load(file);
             }
 
-            if(file.fail())
+            if (file.fail())
             {
               Stream::Error ostr;
               ostr << FUN << ": incorrect line #" << line_i;
@@ -689,7 +649,7 @@ namespace AdServer::UserInfoSvcs
             {
               char eol;
               file.get(eol);
-              if(!file.eof() && (file.fail() || eol != '\n'))
+              if (!file.eof() && (file.fail() || eol != '\n'))
               {
                 Stream::Error ostr;
                 ostr << FUN << ": incorrect line #" << line_i <<
@@ -700,8 +660,7 @@ namespace AdServer::UserInfoSvcs
 
             ++line_i;
 
-            time_period_holders[portion]->holders.insert(
-              std::make_pair(external_id, user_info));
+            time_period_holders[portion]->holders.insert(std::make_pair(external_id, user_info));
           }
         }
       }
@@ -714,16 +673,12 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    for(unsigned long portion_i = 0;
-        portion_i < time_period_holders.size();
-        ++portion_i)
+    for (unsigned long portion_i = 0; portion_i < time_period_holders.size(); ++portion_i)
     {
-      holder_containers[portion_i]->time_holders.push_back(
-        time_period_holders[portion_i]);
+      holder_containers[portion_i]->time_holders.push_back(time_period_holders[portion_i]);
     }
 
-    for(unsigned long portion_i = 0;
-        portion_i < portions_.size(); ++portion_i)
+    for (unsigned long portion_i = 0; portion_i < portions_.size(); ++portion_i)
     {
       HolderContainerGuard<HolderContainerType>& holder_container_guard =
         portions_[portion_i]->*holder_container_guard_field;
@@ -745,15 +700,14 @@ namespace AdServer::UserInfoSvcs
 
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       holder_container = holder_container_guard.holder_container();
-    new_holder_container->time_holders.reserve(
-      holder_container->time_holders.size());
+    new_holder_container->time_holders.reserve(holder_container->time_holders.size());
 
-    for(typename HolderContainerType::TimePeriodHolderArray::
+    for (typename HolderContainerType::TimePeriodHolderArray::
           iterator time_holder_it = holder_container->time_holders.begin();
         time_holder_it != holder_container->time_holders.end();
         ++time_holder_it)
     {
-      if((*time_holder_it)->max_time > expire_time)
+      if ((*time_holder_it)->max_time > expire_time)
       {
         new_holder_container->time_holders.push_back(*time_holder_it);
       }
@@ -773,13 +727,13 @@ namespace AdServer::UserInfoSvcs
     typename HolderContainerType::TimePeriodHolderArray::
       const_iterator it = holder_container->time_holders.begin();
 
-    for(; it != holder_container->time_holders.end(); ++it)
+    for (; it != holder_container->time_holders.end(); ++it)
     {
-      if((*it)->max_time <= time)
+      if ((*it)->max_time <= time)
       {
         return;
       }
-      else if((*it)->min_time <= time && time < (*it)->max_time)
+      else if ((*it)->min_time <= time && time < (*it)->max_time)
       {
         res_holder = *it;
         break;
@@ -798,14 +752,14 @@ namespace AdServer::UserInfoSvcs
     typename HolderContainerType::TimePeriodHolderArray::
       iterator it = holder_container->time_holders.begin();
 
-    for(; it != holder_container->time_holders.end(); ++it)
+    for (; it != holder_container->time_holders.end(); ++it)
     {
-      if((*it)->max_time <= time)
+      if ((*it)->max_time <= time)
       {
         // insert new holder before it
         return it;
       }
-      else if((*it)->min_time <= time && time < (*it)->max_time)
+      else if ((*it)->min_time <= time && time < (*it)->max_time)
       {
         res_holder = *it;
         break;
@@ -828,7 +782,7 @@ namespace AdServer::UserInfoSvcs
 
     get_holder_i_(res_holder, holder_container, now);
 
-    if(res_holder)
+    if (res_holder)
     {
       return res_holder;
     }
@@ -837,8 +791,7 @@ namespace AdServer::UserInfoSvcs
     typename HolderContainerGuard<HolderContainerType>::HolderContainer_var
       new_holder_container;
 
-    Generics::Time min_time = extend_time_period * (
-      now.tv_sec / extend_time_period.tv_sec);
+    Generics::Time min_time = extend_time_period * (now.tv_sec / extend_time_period.tv_sec);
 
     /*
     std::cerr << "create TimePeriodHolder(" << min_time.gm_ft() << ", " <<
@@ -846,8 +799,7 @@ namespace AdServer::UserInfoSvcs
     */
 
     typename HolderContainerType::TimePeriodHolder_var new_time_holder =
-      new typename HolderContainerType::TimePeriodHolder(
-        min_time, min_time + extend_time_period);
+      new typename HolderContainerType::TimePeriodHolder(min_time, min_time + extend_time_period);
 
     // serialize new holders creation
     ExtendWriteGuard extend_lock(holder_container_guard.extend_lock);
@@ -856,15 +808,14 @@ namespace AdServer::UserInfoSvcs
       actual_holder_container = holder_container_guard.holder_container();
 
     // recheck : container can be extended by other thread
-    new_holder_container = new HolderContainerType(
-      *actual_holder_container);
+    new_holder_container = new HolderContainerType(*actual_holder_container);
 
     typename HolderContainerType::TimePeriodHolderArray::iterator ins_it =
       get_holder_i_(res_holder,
         new_holder_container.in(),
         new_time_holder->max_time - Generics::Time::ONE_SECOND);
 
-    if(res_holder)
+    if (res_holder)
     {
       return res_holder;
     }
@@ -893,33 +844,27 @@ namespace AdServer::UserInfoSvcs
   }
 
   unsigned long
-  BindRequestChunk::get_external_id_portion_(
-    unsigned long full_hash) const noexcept
+  BindRequestChunk::get_external_id_portion_(unsigned long full_hash) const noexcept
   {
-    return (
-      (full_hash & 0xFFFF) ^ ((full_hash >> 16) & 0xFFFF)) %
+    return ((full_hash & 0xFFFF) ^ ((full_hash >> 16) & 0xFFFF)) %
       portions_.size();
   }
 
   void
-  BindRequestChunk::save_key_(
-    std::ostream& out, const HashHashAdapter& key)
+  BindRequestChunk::save_key_(std::ostream& out, const HashHashAdapter& key)
   {
     out << key.hash();
   }
 
   void
-  BindRequestChunk::load_key_(
-    HashHashAdapter& res,
-    unsigned long& portion,
-    std::istream& in) const
+  BindRequestChunk::load_key_(HashHashAdapter& res, unsigned long& portion, std::istream& in) const
     noexcept
   {
     AdServer::LogProcessing::SpacesString text;
     in >> text;
 
     size_t hash;
-    if(String::StringManip::str_to_int(text, hash))
+    if (String::StringManip::str_to_int(text, hash))
     {
       res = HashHashAdapter(hash);
       portion = get_external_id_portion_(hash);

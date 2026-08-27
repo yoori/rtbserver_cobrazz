@@ -1,9 +1,7 @@
 
 #include "MinUidAge.hpp"
 
-REFLECT_UNIT(MinUidAge) (
-  "CreativeSelection",
-  AUTO_TEST_FAST);
+REFLECT_UNIT(MinUidAge) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -16,10 +14,7 @@ namespace
 
 template <size_t Count>
 void
-MinUidAge::process_case(
-  AdClient& client,
-  const TestCase(&testcases)[Count],
-  unsigned long colo)
+MinUidAge::process_case(AdClient& client, const TestCase(&testcases)[Count], unsigned long colo)
 {
   for (size_t i = 0; i < Count; ++i)
   {
@@ -27,8 +22,7 @@ MinUidAge::process_case(
     NSLookupRequest request;
     if (testcases[i].referer_kw)
     {
-      request.referer_kw =
-         map_objects(testcases[i].referer_kw);
+      request.referer_kw = map_objects(testcases[i].referer_kw);
     }
 
     if (colo)
@@ -44,17 +38,13 @@ MinUidAge::process_case(
       testcases[i].expected_cc?
         fetch_int(testcases[i].expected_cc): 0);
 
-    FAIL_CONTEXT(
-      checker.check(),
-      "CC check#" + strof(i+1));
+    FAIL_CONTEXT(checker.check(), "CC check#" + strof(i+1));
 
     if (!testcases[i].expected_cc)
     {
 
       FAIL_CONTEXT(
-        TagPassbackChecker(
-          checker.client(),
-          fetch_string("PASSBACK")).check(),
+        TagPassbackChecker(checker.client(), fetch_string("PASSBACK")).check(),
         "Passback check#" + strof(i+1));
     }
 
@@ -72,10 +62,7 @@ MinUidAge::uid_age_()
       debug_time(base_time_ - 12*60*60));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "CHANNEL/MINAGE_24",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "CHANNEL/MINAGE_24", client.debug_info.history_channels).check(),
     "Check history");
 
   const TestCase TESTCASES[] =
@@ -111,10 +98,7 @@ MinUidAge::boundary_values_()
       {2*365*24*60*60, "KWD/MINAGE_10000,KWD/MINAGE_0", "CC/MINAGE_10000"},
     };
 
-    process_case(
-      client,
-      TESTCASES,
-      fetch_int("TESTCOLO"));
+    process_case(client, TESTCASES, fetch_int("TESTCOLO"));
   }
 }
 
@@ -137,18 +121,14 @@ MinUidAge::non_optin_()
       {0, "KWD/NONOPTIN", "CC/NONOPTIN"}
     };
 
-    process_case(
-      clients[i],
-      TESTCASES,
-      fetch_int("ALLCOLO"));
+    process_case(clients[i], TESTCASES, fetch_int("ALLCOLO"));
   }
 }
 
 void
 MinUidAge::temporary_()
 {
-  TemporaryAdClient temporary(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
 
   // Use current time, to avoid temporary profile removing
   // by 'delete-old-profiles' procedure (DeleteOldUserProfiles).
@@ -161,31 +141,19 @@ MinUidAge::temporary_()
       debug_time(now));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "CHANNEL/TEMPORARY",
-      temporary.debug_info.history_channels).check(),
+    ChannelsCheck(this, "CHANNEL/TEMPORARY", temporary.debug_info.history_channels).check(),
     "Check temporary channels");
 
   AdClient client(AdClient::create_user(this));
 
-  client.merge(
-    temporary,
-    NSLookupRequest().
-      tid(fetch_int("TAG")).
-      debug_time(now + 30*60));
+  client.merge(temporary, NSLookupRequest(). tid(fetch_int("TAG")). debug_time(now + 30*60));
 
   FAIL_CONTEXT(
-    ChannelsCheck(
-      this,
-      "CHANNEL/TEMPORARY",
-      client.debug_info.history_channels).check(),
+    ChannelsCheck(this, "CHANNEL/TEMPORARY", client.debug_info.history_channels).check(),
     "Check persistent channels");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", client.debug_info.ccid).check(),
     "Check CC (after merging)");
 
   const TestCase TESTCASES[] =
@@ -200,21 +168,13 @@ MinUidAge::temporary_()
 bool
 MinUidAge::run_test()
 {
-  AUTOTEST_CASE(
-    uid_age_(),
-    "UID age test");
+  AUTOTEST_CASE(uid_age_(), "UID age test");
 
-  AUTOTEST_CASE(
-    boundary_values_(),
-    "Boundary values");
+  AUTOTEST_CASE(boundary_values_(), "Boundary values");
 
-  AUTOTEST_CASE(
-    non_optin_(),
-    "Not opted-in users");
+  AUTOTEST_CASE(non_optin_(), "Not opted-in users");
 
-  AUTOTEST_CASE(
-    temporary_(),
-    "Temporary user test");
+  AUTOTEST_CASE(temporary_(), "Temporary user test");
 
   return true;
 }

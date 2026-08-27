@@ -37,13 +37,13 @@
 #include "ActionFrontendStat.hpp"
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::Action::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer::Action
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -87,8 +87,7 @@ namespace AdServer::Action
      * @return HTTP status code.
      */
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -212,8 +211,7 @@ namespace AdServer::Action
       Commons::UserId user_id;
     };
 
-    using ResolveUserIdTask =
-      AdServer::Commons::Awaitable<ResolveUserIdResult>;
+    using ResolveUserIdTask = AdServer::Commons::Awaitable<ResolveUserIdResult>;
 
     ResolveUserIdTask
     co_resolve_user_id_(
@@ -231,15 +229,11 @@ namespace AdServer::Action
       noexcept;
 
     FrontendCommons::RequestTask
-    co_add_user_id_(
-      std::string external_user_id,
-      Commons::UserId user_id,
-      Generics::Time time)
+    co_add_user_id_(std::string external_user_id, Commons::UserId user_id, Generics::Time time)
       noexcept;
 
     FrontendCommons::RequestTask
-    co_action_taken_(
-      adserver::campaign_svcs::campaign_manager::ActionTakenRequest request)
+    co_action_taken_(adserver::campaign_svcs::campaign_manager::ActionTakenRequest request)
       noexcept;
 
     void

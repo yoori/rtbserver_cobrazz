@@ -17,12 +17,7 @@ namespace AdServer::Grpc
       ServiceImplType,
       AsyncServiceType,
       Request,
-      Response>(
-      service_impl,
-      async_service,
-      call.request_method,
-      call.handler,
-      completion_queue);
+      Response>(service_impl, async_service, call.request_method, call.handler, completion_queue);
     grpc_call->proceed(true);
   }
 
@@ -120,10 +115,7 @@ namespace AdServer::Grpc
     try
     {
       operation_.emplace(
-        (service_impl_->*handler_rpc_)(
-          std::move(*this->request_),
-          this->response_,
-          status_));
+        (service_impl_->*handler_rpc_)(std::move(*this->request_), this->response_, status_));
     }
     catch (const std::exception& ex)
     {
@@ -133,9 +125,7 @@ namespace AdServer::Grpc
     }
     catch (...)
     {
-      status_ = ::grpc::Status(
-        ::grpc::StatusCode::INTERNAL,
-        "Unknown coroutine handler exception");
+      status_ = ::grpc::Status(::grpc::StatusCode::INTERNAL, "Unknown coroutine handler exception");
       finish_();
       return true;
     }

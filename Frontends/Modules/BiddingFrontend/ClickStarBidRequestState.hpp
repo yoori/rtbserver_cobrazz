@@ -37,9 +37,7 @@ namespace AdServer::Bidding
       noexcept;
 
     virtual void
-    write_empty_response(
-      unsigned int code,
-      bool response_claimed = false)
+    write_empty_response(unsigned int code, bool response_claimed = false)
       noexcept;
 
     virtual void
@@ -71,9 +69,7 @@ namespace AdServer::Bidding
       noexcept;
 
     void
-    add_xml_escaped_string_(
-      std::ostream& response_ostr,
-      const char* str)
+    add_xml_escaped_string_(std::ostream& response_ostr, const char* str)
       noexcept;
 
   private:

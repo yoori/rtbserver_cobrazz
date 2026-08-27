@@ -83,10 +83,7 @@ namespace AdServer
 
     /// debug info printing
     void
-    write_response(
-      HttpResponse& response,
-      std::string& str_response,
-      int& http_status) const;
+    write_response(HttpResponse& response, std::string& str_response, int& http_status) const;
 
     void
     print_acquire_ad(
@@ -109,13 +106,11 @@ namespace AdServer
       noexcept;
 
     void
-    print_creative_selection_error(
-      const String::SubString& error)
+    print_creative_selection_error(const String::SubString& error)
       noexcept;
 
     void
-    print_request_debug_info(
-      const RequestInfo& request_info)
+    print_request_debug_info(const RequestInfo& request_info)
       noexcept;
 
     void
@@ -127,19 +122,14 @@ namespace AdServer
       noexcept;
 
     void
-    print_trigger_matching_error(
-      const String::SubString& error)
+    print_trigger_matching_error(const String::SubString& error)
       noexcept;
 
     void
-    fill_debug_body(
-      HttpResponse& response,
-      int& http_status,
-      Stream::Error& ostr) const noexcept;
+    fill_debug_body(HttpResponse& response, int& http_status, Stream::Error& ostr) const noexcept;
 
     void
-    print_time_metering_debug_info(
-      const RequestTimeMetering& time_metering)
+    print_time_metering_debug_info(const RequestTimeMetering& time_metering)
       noexcept;
 
   private:
@@ -170,9 +160,7 @@ namespace AdServer
       noexcept;
 
     static void
-    fill_debug_body_(
-      HttpResponse& response,
-      const String::SubString& error_description) noexcept;
+    fill_debug_body_(HttpResponse& response, const String::SubString& error_description) noexcept;
 
   private:
     const bool allow_show_history_profile_;
@@ -220,8 +208,7 @@ namespace AdServer
     field_begin_ = NEED_BODY ? "  " : "( ";
     field_end_ = NEED_BODY ? "\n" : ") ";
     sep_ = NEED_BODY ? ";\n" : "; ";
-    creative_start_sep_ = NEED_BODY ?
-      String::SubString("\n------\n") : String::SubString("( ");
+    creative_start_sep_ = NEED_BODY ? String::SubString("\n------\n") : String::SubString("(");
     creative_end_sep_ = NEED_BODY ? "" : ") ";
   }
 

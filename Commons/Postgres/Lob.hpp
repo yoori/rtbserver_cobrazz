@@ -2,11 +2,7 @@
 
 #include<Commons/Postgres/Connection.hpp>
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Postgres
+namespace AdServer::Commons::Postgres
 {
   /*
    * Lob
@@ -120,20 +116,12 @@ namespace Postgres
     int fd_;
   };
 }
-}
-}
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Postgres
+namespace AdServer::Commons::Postgres
 {
   inline
   Oid Lob::oid() const noexcept
   {
     return oid_;
   }
-}
-}
 }

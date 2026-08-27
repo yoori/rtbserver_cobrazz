@@ -3,9 +3,7 @@
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionFactory.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   /** ChannelServerSessionFactory */
   class ChannelServerSessionFactory
@@ -25,6 +23,4 @@ namespace ChannelSvcs
         /*throw(eh::Exception)*/;
   };
 
-} /* ChannelSvcs */
-} /* AdServer */
-
+} // namespace AdServer::ChannelSvcs

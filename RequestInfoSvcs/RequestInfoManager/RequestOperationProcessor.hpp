@@ -8,9 +8,7 @@
 
 #include "RequestActionProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   struct RequestOperationProcessor:
     public virtual ReferenceCounting::Interface
@@ -18,13 +16,11 @@ namespace RequestInfoSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
     virtual void
-    process_impression(
-      const ImpressionInfo& impression_info)
+    process_impression(const ImpressionInfo& impression_info)
       /*throw(Exception)*/ = 0;
 
     virtual AdServer::Commons::Awaitable<void>
-    co_process_impression(
-      const ImpressionInfo& impression_info);
+    co_process_impression(const ImpressionInfo& impression_info);
 
     virtual void
     process_action(
@@ -74,15 +70,11 @@ namespace RequestInfoSvcs
   typedef ReferenceCounting::SmartPtr<RequestOperationProcessor>
     RequestOperationProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   inline AdServer::Commons::Awaitable<void>
-  RequestOperationProcessor::co_process_impression(
-    const ImpressionInfo& impression_info)
+  RequestOperationProcessor::co_process_impression(const ImpressionInfo& impression_info)
   {
     process_impression(impression_info);
     co_return;
@@ -105,10 +97,7 @@ namespace RequestInfoSvcs
     const AdServer::Commons::RequestId& request_id,
     const RequestPostActionInfo& request_post_action_info)
   {
-    process_impression_post_action(
-      new_user_id,
-      request_id,
-      request_post_action_info);
+    process_impression_post_action(new_user_id, request_id, request_post_action_info);
     co_return;
   }
 
@@ -121,5 +110,4 @@ namespace RequestInfoSvcs
     change_request_user_id(new_user_id, request_id, request_profile);
     co_return;
   }
-}
 }

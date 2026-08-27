@@ -7,9 +7,7 @@ namespace Aspect
   const char CHANNEL_MATCHER[] = "ChannelMatcher";
 }
 
-namespace AdServer
-{
-namespace ChannelSearchSvcs
+namespace AdServer::ChannelSearchSvcs
 {
   ChannelMatcher::ChannelMatcher() noexcept
   {}
@@ -25,8 +23,7 @@ namespace ChannelSearchSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::config(): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -42,8 +39,7 @@ namespace ChannelSearchSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::get_channel_index_(): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::get_channel_index_(): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -59,8 +55,7 @@ namespace ChannelSearchSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::get_channel_search_index_(): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::get_channel_search_index_(): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -70,26 +65,21 @@ namespace ChannelSearchSvcs
   {
     try
     {
-      ExpressionChannelIndex_var ch_index =
-        new AdServer::CampaignSvcs::ExpressionChannelIndex();
+      ExpressionChannelIndex_var ch_index = new AdServer::CampaignSvcs::ExpressionChannelIndex();
       ch_index->index(new_config->expression_channels);
 
-      ExpressionChannelSearchIndex_var ch_search_index =
-        new ExpressionChannelSearchIndex();
+      ExpressionChannelSearchIndex_var ch_search_index = new ExpressionChannelSearchIndex();
 
-      for(ChannelMap::const_iterator ch_it =
-            new_config->expression_channels.begin();
+      for (ChannelMap::const_iterator ch_it = new_config->expression_channels.begin();
           ch_it != new_config->expression_channels.end(); ++ch_it)
       {
         ChannelIdSet used_channels;
         ch_it->second->get_all_channels(used_channels);
 
-        for(ChannelIdSet::const_iterator uch_it =
-              used_channels.begin();
+        for (ChannelIdSet::const_iterator uch_it = used_channels.begin();
             uch_it != used_channels.end(); ++uch_it)
         {
-          ch_search_index->channel_search_map[*uch_it].insert(
-            ch_it->first);
+          ch_search_index->channel_search_map[*uch_it].insert(ch_it->first);
         }
       }
 
@@ -103,16 +93,13 @@ namespace ChannelSearchSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(...): Caught eh::Exception: " <<
-        ex.what();
+      ostr << "ChannelMatcher::config(...): Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
 
   void
-  ChannelMatcher::match(
-    ChannelMatchResultMap& result,
-    const ChannelIdSet& history_channels)
+  ChannelMatcher::match(ChannelMatchResultMap& result, const ChannelIdSet& history_channels)
     /*throw(Exception)*/
   {
     Config_var channels_config = config();
@@ -121,10 +108,9 @@ namespace ChannelSearchSvcs
       throw Exception("there isn't config of service");
     }
 
-    AdServer::CampaignSvcs::ExpressionChannelIndex_var channel_index =
-      get_channel_index_();
+    AdServer::CampaignSvcs::ExpressionChannelIndex_var channel_index = get_channel_index_();
 
-    for(ChannelIdSet::const_iterator ch_it = history_channels.begin();
+    for (ChannelIdSet::const_iterator ch_it = history_channels.begin();
         ch_it != history_channels.end(); ++ch_it)
     {
       Generics::MonoAllocatorArena local_history_channels_arena;
@@ -134,11 +120,11 @@ namespace ChannelSearchSvcs
       ChannelIdSet local_result_channels;
       channel_index->match(local_result_channels, local_history_channels);
 
-      for(ChannelIdSet::const_iterator ech_it = local_result_channels.begin();
+      for (ChannelIdSet::const_iterator ech_it = local_result_channels.begin();
           ech_it != local_result_channels.end(); ++ech_it)
       {
         ChannelMatchResultMap::iterator res_it = result.find(*ech_it);
-        if(res_it != result.end())
+        if (res_it != result.end())
         {
           res_it->second.matched_simple_channels.insert(*ch_it);
         }
@@ -149,7 +135,7 @@ namespace ChannelSearchSvcs
 
           Config::ChannelTraitsMap::const_iterator chm_it =
             channels_config->expression_channel_traits_map.find(*ech_it);
-          if(chm_it != channels_config->expression_channel_traits_map.end())
+          if (chm_it != channels_config->expression_channel_traits_map.end())
           {
             res.ccg_ids = chm_it->second.ccg_ids;
           }
@@ -158,21 +144,19 @@ namespace ChannelSearchSvcs
     }
   }
 
-  void ChannelMatcher::search(
-    ChannelIdSet& result_channels,
-    const ChannelIdSet& history_channels)
+  void ChannelMatcher::search(ChannelIdSet& result_channels, const ChannelIdSet& history_channels)
     /*throw(Exception)*/
   {
     ExpressionChannelSearchIndex_var channel_search_index = get_channel_search_index_();
 
-    if(channel_search_index.in())
+    if (channel_search_index.in())
     {
-      for(ChannelIdSet::const_iterator ch_it = history_channels.begin();
+      for (ChannelIdSet::const_iterator ch_it = history_channels.begin();
           ch_it != history_channels.end(); ++ch_it)
       {
         ExpressionChannelSearchIndex::ChannelSearchMap::const_iterator chs_it =
           channel_search_index->channel_search_map.find(*ch_it);
-        if(chs_it != channel_search_index->channel_search_map.end())
+        if (chs_it != channel_search_index->channel_search_map.end())
         {
           std::copy(chs_it->second.begin(),
             chs_it->second.end(), std::inserter(result_channels, result_channels.begin()));
@@ -180,5 +164,4 @@ namespace ChannelSearchSvcs
       }
     }
   }
-}
 }

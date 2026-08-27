@@ -24,9 +24,7 @@ namespace AdServer::RequestInfoSvcs
     Algs::IteratorRange<Algs::TransformIterator<
       typename Container::const_iterator,
       UnaryFunction> >
-    make_transform_range(
-      const Container& cont,
-      UnaryFunction func)
+    make_transform_range(const Container& cont, UnaryFunction func)
     {
       return Algs::IteratorRange<Algs::TransformIterator<typename Container::const_iterator, UnaryFunction> >(
         Algs::TransformIterator<typename Container::const_iterator, UnaryFunction>(cont.begin(), func),
@@ -77,8 +75,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (!inv_info.total_appear_channels.empty())
       {
-        const ChannelInventoryKey ch_inv_key(
-          inv_info.placement_colo_time, placement_colo_id_);
+        const ChannelInventoryKey ch_inv_key(inv_info.placement_colo_time, placement_colo_id_);
 
         LogProcessing::ChannelInventoryCollector::DataT ch_inv_data;
 
@@ -101,8 +98,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (!inv_info.total_appear_channels.empty() || !inv_info.active_appear_channels.empty())
       {
-        const ChannelInventoryKey ch_inv_key(
-          inv_info.placement_colo_time, placement_colo_id_);
+        const ChannelInventoryKey ch_inv_key(inv_info.placement_colo_time, placement_colo_id_);
         ChannelInventoryData ch_inv_data;
 
         // fill appears
@@ -175,9 +171,7 @@ namespace AdServer::RequestInfoSvcs
     class OneUserAppearCounter
     {
     public:
-      OneUserAppearCounter(
-        CCGType ccg_type,
-        const Mediator& counter)
+      OneUserAppearCounter(CCGType ccg_type, const Mediator& counter)
         : ccg_type_(ccg_type), counter_(counter)
       {}
 
@@ -195,9 +189,7 @@ namespace AdServer::RequestInfoSvcs
     class ImpChannelsCounter
     {
     public:
-      ImpChannelsCounter(
-        CCGType ccg_type,
-        const RevenueDecimal& users_simpl_factor)
+      ImpChannelsCounter(CCGType ccg_type, const RevenueDecimal& users_simpl_factor)
         : ccg_type_(ccg_type), users_simpl_factor_(users_simpl_factor)
       {}
 
@@ -220,9 +212,7 @@ namespace AdServer::RequestInfoSvcs
     class ChannelImpCounter
     {
     public:
-      ChannelImpCounter(
-        CCGType ccg_type,
-        const RevenueDecimal& users_simpl_factor)
+      ChannelImpCounter(CCGType ccg_type, const RevenueDecimal& users_simpl_factor)
         : ccg_type_(ccg_type), users_simpl_factor_(users_simpl_factor)
       {}
 
@@ -240,9 +230,7 @@ namespace AdServer::RequestInfoSvcs
               :
               RevenueDecimal(false, val.second.imps, 0)),
             (SAMPLING_FLAG ?
-              RevenueDecimal::mul(
-                val.second.revenue, users_simpl_factor_,
-                Generics::DMR_ROUND)
+              RevenueDecimal::mul(val.second.revenue, users_simpl_factor_, Generics::DMR_ROUND)
               :
               val.second.revenue)));
       }
@@ -306,8 +294,7 @@ namespace AdServer::RequestInfoSvcs
       AdServer::LogProcessing::ChannelInventoryTraits>
   {
   public:
-    ChannelActivityLogger(
-      const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+    ChannelActivityLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
       : AdServer::LogProcessing::LogHolderPool<
           AdServer::LogProcessing::ChannelInventoryTraits>(flush_traits)
@@ -324,8 +311,7 @@ namespace AdServer::RequestInfoSvcs
       {
         LogProcessing::ChannelInventoryCollector::KeyT ch_inv_key(date, colo_id);
         LogProcessing::ChannelInventoryCollector::DataT::DataT
-          channel_props(
-            RevenueDecimal::ZERO, RevenueDecimal::ZERO, RevenueDecimal::ZERO);
+          channel_props(RevenueDecimal::ZERO, RevenueDecimal::ZERO, RevenueDecimal::ZERO);
 
         LogProcessing::ChannelInventoryCollector::DataT ch_inv_data;
 
@@ -438,12 +424,7 @@ namespace AdServer::RequestInfoSvcs
       operator() (unsigned long channel_id) const
       {
         return std::make_pair(
-          InnerKey(
-            creative_size_,
-            country_code_,
-            channel_id,
-            ecpm_,
-            colo_id_),
+          InnerKey(creative_size_, country_code_, channel_id, ecpm_, colo_id_),
           counter_);
       }
 
@@ -475,8 +456,7 @@ namespace AdServer::RequestInfoSvcs
     {}
 
     virtual void
-    process_request(
-      const InventoryActionProcessor::InventoryInfo& inv_info)
+    process_request(const InventoryActionProcessor::InventoryInfo& inv_info)
       /*throw(eh::Exception)*/
     {
       if (inv_info.sizes.empty())
@@ -567,9 +547,7 @@ namespace AdServer::RequestInfoSvcs
     class RequestCounter
     {
     public:
-      RequestCounter(
-        const StatRequestOne& counter,
-        const Commons::ImmutableString& tag_size)
+      RequestCounter(const StatRequestOne& counter, const Commons::ImmutableString& tag_size)
         : counter_(counter), tag_size_(tag_size)
       {}
 
@@ -698,8 +676,7 @@ namespace AdServer::RequestInfoSvcs
       AdServer::LogProcessing::ChannelHitStatTraits>
   {
   public:
-    ChannelHitStatLogger(
-      const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+    ChannelHitStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
       : AdServer::LogProcessing::LogHolderPool<
           AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits)
@@ -735,10 +712,7 @@ namespace AdServer::RequestInfoSvcs
       add_channel_masks_(channel_masks, url_triggers, URL_MASK);
       add_channel_masks_(channel_masks, page_triggers, PAGE_MASK);
       add_channel_masks_(channel_masks, search_triggers, SEARCH_MASK);
-      add_channel_masks_(
-        channel_masks,
-        url_keyword_triggers,
-        URL_KEYWORD_MASK);
+      add_channel_masks_(channel_masks, url_keyword_triggers, URL_KEYWORD_MASK);
 
       CollectorT::DataT data;
       data.prepare_adding(channel_masks.size());
@@ -770,8 +744,7 @@ namespace AdServer::RequestInfoSvcs
       URL_KEYWORD_MASK = 8
     };
 
-    using ChannelMaskMap =
-      Generics::MonoUnorderedMap<std::uint32_t, std::uint8_t>;
+    using ChannelMaskMap = Generics::MonoUnorderedMap<std::uint32_t, std::uint8_t>;
 
     static void
     add_channel_masks_(
@@ -807,8 +780,7 @@ namespace AdServer::RequestInfoSvcs
     {}
 
     virtual void
-    process_triggers_impression(
-      const TriggersMatchInfo& match_info)
+    process_triggers_impression(const TriggersMatchInfo& match_info)
       /*throw(TriggerActionProcessor::Exception)*/
     {
       Generics::Time date = match_info.time.get_gm_time().get_date();
@@ -834,10 +806,7 @@ namespace AdServer::RequestInfoSvcs
     ~ChannelTriggerImpLogger() noexcept = default;
 
     void
-    add_imp_records_(
-      const Generics::Time& time,
-      char type,
-      const MatchCountMap& matches)
+    add_imp_records_(const Generics::Time& time, char type, const MatchCountMap& matches)
     {
       if (!matches.empty())
       {
@@ -855,10 +824,7 @@ namespace AdServer::RequestInfoSvcs
       }
     }
 
-    void add_click_records_(
-      const Generics::Time& time,
-      char type,
-      const MatchCountMap& matches)
+    void add_click_records_(const Generics::Time& time, char type, const MatchCountMap& matches)
     {
       if (!matches.empty())
       {
@@ -911,20 +877,14 @@ namespace AdServer::RequestInfoSvcs
     if (simplify_factor_ == NO_SAMPLIN)
     {
       ReferenceCounting::SmartPtr<ChannelImpInventoryLogger<false> > logger =
-        new ChannelImpInventoryLogger<false>(
-          colo_id,
-          simplify_factor,
-          channel_imp_inventory_flush);
+        new ChannelImpInventoryLogger<false>(colo_id, simplify_factor, channel_imp_inventory_flush);
       channel_imp_inventory_logger_ = logger;
       add_child_log_holder(logger);
     }
     else
     {
       ReferenceCounting::SmartPtr<ChannelImpInventoryLogger<true> > logger =
-        new ChannelImpInventoryLogger<true>(
-          colo_id,
-          simplify_factor,
-          channel_imp_inventory_flush);
+        new ChannelImpInventoryLogger<true>(colo_id, simplify_factor, channel_imp_inventory_flush);
       channel_imp_inventory_logger_ = logger;
       add_child_log_holder(logger);
     }
@@ -949,9 +909,7 @@ namespace AdServer::RequestInfoSvcs
     channel_trigger_stat_logger_ = new ChannelTriggerStatLogger(channel_trigger_stat_flush);
     add_child_log_holder(channel_trigger_stat_logger_);
 
-    channel_trigger_imp_logger_ = new ChannelTriggerImpLogger(
-      channel_trigger_imp_flush,
-      colo_id);
+    channel_trigger_imp_logger_ = new ChannelTriggerImpLogger(channel_trigger_imp_flush, colo_id);
     add_child_log_holder(channel_trigger_imp_logger_);
 
     global_colo_user_stat_logger_ = new GlobalColoUserStatLogger(global_colo_user_stat_flush);
@@ -978,10 +936,7 @@ namespace AdServer::RequestInfoSvcs
     const AdServer::LogProcessing::RequestBasicChannelsInnerData::Match& match_request)
     /*throw(Exception)*/
   {
-    channel_hit_stat_logger_->process_match_request(
-      isp_time,
-      colo_id,
-      match_request);
+    channel_hit_stat_logger_->process_match_request(isp_time, colo_id, match_request);
   }
 
   void
@@ -1188,9 +1143,7 @@ namespace AdServer::RequestInfoSvcs
 
     pool_object->add_record(
       ch_inv_key,
-      make_transform_range(
-        appears.imp_other_appear_channels,
-        one_imp_other_user_appear_counter));
+      make_transform_range(appears.imp_other_appear_channels, one_imp_other_user_appear_counter));
 
     pool_object->add_record(
       ch_inv_key,

@@ -1,9 +1,6 @@
 #include "CampaignUpdateTest.hpp"
 
-REFLECT_UNIT(CampaignUpdateTest) (
-  "GranularUpdate",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(CampaignUpdateTest) ("GranularUpdate", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -36,6 +33,7 @@ namespace
       firstToken = false;
       channelsCount++;
     }
+
     if (!channelsCount) return "0";
     if (channelsCount == 1) return regexp;
     return "\\(" + regexp + "\\)";
@@ -45,8 +43,7 @@ namespace
 
 void CampaignUpdateTest::add_campaign_case_()
 {
-  ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-    create<ORM::PQ::Campaign>();
+  ORM::ORMRestorer<ORM::PQ::Campaign>* campaign = create<ORM::PQ::Campaign>();
   campaign->name = fetch_string("AddCampaign/NewName");
   campaign->account = fetch_int("Advertiser");
   campaign->flags = 16;
@@ -55,10 +52,7 @@ void CampaignUpdateTest::add_campaign_case_()
   campaign->sold_to_user = fetch_int("DefaultUser");
   campaign->bill_to_user = fetch_int("DefaultUser");
   campaign->date_start.set_now().trunc();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->insert()),
-    "inserting campaign");
+  FAIL_CONTEXT(AutoTest::predicate_checker(campaign->insert()), "inserting campaign");
 
   // Create CCG
   ORM::ORMRestorer<ORM::RatedCampaignCreativeGroup>* ccg =
@@ -81,21 +75,14 @@ void CampaignUpdateTest::add_campaign_case_()
   ccg->rate.cpa = 0;
   ccg->rate.rate_type = "CPM";
   ccg->rate.effective_date.set_now();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccg->insert()),
-    "inserting CampaignCreativeGroup");
+  FAIL_CONTEXT(AutoTest::predicate_checker(ccg->insert()), "inserting CampaignCreativeGroup");
 
   // Link with existing creative
   // (to avoid status 'I' for campaign)
-  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc =
-    create<ORM::PQ::CampaignCreative>();
+  ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc = create<ORM::PQ::CampaignCreative>();
   cc->creative = fetch_int("AddCampaign/Creative#1");
   cc->ccg = ccg->id();
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      cc->insert()),
-    "inserting CampaignCreative");
+  FAIL_CONTEXT(AutoTest::predicate_checker(cc->insert()), "inserting CampaignCreative");
 
   ADD_WAIT_CHECKER(
     "Check campaign",
@@ -116,8 +103,7 @@ void CampaignUpdateTest::currency_change_case_()
   unsigned int account_id = fetch_int("CurrencyChange/Campaign/ACCOUNT");
   unsigned int ccg_id = fetch_int("CurrencyChange/Campaign/CCG");
 
-  ORM::ORMRestorer<ORM::PQ::Account>* account =
-    create<ORM::PQ::Account>(account_id);
+  ORM::ORMRestorer<ORM::PQ::Account>* account = create<ORM::PQ::Account>(account_id);
 
   FAIL_CONTEXT(
     CampaignChecker(
@@ -133,10 +119,7 @@ void CampaignUpdateTest::currency_change_case_()
   unsigned int new_currency = fetch_int("CurrencyChange/Currency#1");
   account->currency = new_currency;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      account->update()),
-    "updating currency");
+  FAIL_CONTEXT(AutoTest::predicate_checker(account->update()), "updating currency");
 
   ADD_WAIT_CHECKER(
     "Check campaign",
@@ -165,8 +148,7 @@ CampaignUpdateTest::update_channel_case_()
 
     std::string account_id = fetch_string("UpdateChannel/AddChannel/ACCOUNT");
     ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-      create<ORM::PQ::CampaignCreativeGroup>(
-        fetch_int("UpdateChannel/AddChannel/CCG"));
+      create<ORM::PQ::CampaignCreativeGroup>(fetch_int("UpdateChannel/AddChannel/CCG"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
         CampaignChecker::Expected().
@@ -179,10 +161,7 @@ CampaignUpdateTest::update_channel_case_()
     ccg->channel = channel1;
     ccg->targeting_channel_id = targeting_full;
     ccg->channel_target = "T";
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.channel");
 
     std::string regexp("\\(\\[" + strof(channel1) + "\\] & \\[" +
       strof(geo) + "\\] & \\[" + strof(platform) + "\\]\\)");
@@ -205,8 +184,7 @@ CampaignUpdateTest::update_channel_case_()
 
     std::string account_id = fetch_string("UpdateChannel/ChangeChannel/ACCOUNT");
     ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-      create<ORM::PQ::CampaignCreativeGroup>(
-        fetch_int("UpdateChannel/ChangeChannel/CCG"));
+      create<ORM::PQ::CampaignCreativeGroup>(fetch_int("UpdateChannel/ChangeChannel/CCG"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
         CampaignChecker::Expected().
@@ -218,10 +196,7 @@ CampaignUpdateTest::update_channel_case_()
 
     ccg->channel = channel2;
     ccg->targeting_channel_id = channel2;
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.channel");
 
     ADD_WAIT_CHECKER(
       description,
@@ -240,8 +215,7 @@ CampaignUpdateTest::update_channel_case_()
     std::string description("Unlink channel.");
     std::string account_id = fetch_string("UpdateChannel/NullChannel/ACCOUNT");
     ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-      create<ORM::PQ::CampaignCreativeGroup>(
-        fetch_int("UpdateChannel/NullChannel/CCG"));
+      create<ORM::PQ::CampaignCreativeGroup>(fetch_int("UpdateChannel/NullChannel/CCG"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
         CampaignChecker::Expected().
@@ -254,15 +228,11 @@ CampaignUpdateTest::update_channel_case_()
     ccg->channel.null();
     ccg->targeting_channel_id.null();
     ccg->channel_target = "N";
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.channel");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        ccg->set_display_status(
-          AutoTest::ORM::DS_NOT_LIVE_BY_CHANNEL_TARGET)),
+        ccg->set_display_status(AutoTest::ORM::DS_NOT_LIVE_BY_CHANNEL_TARGET)),
       "updating ccg.display_status changed");
 
     ADD_WAIT_CHECKER(
@@ -284,8 +254,7 @@ CampaignUpdateTest::update_channel_case_()
     const unsigned int ccg_id = fetch_int("UpdateChannel/ExprChannel/CCG");
 
     ORM::ORMRestorer<ORM::PQ::Channel>* channel =
-      create<ORM::PQ::Channel>(
-        fetch_int("UpdateChannel/EChannel/ID"));
+      create<ORM::PQ::Channel>(fetch_int("UpdateChannel/EChannel/ID"));
 
     {
       std::string regexp = make_channels_regexp(*channel);
@@ -296,19 +265,13 @@ CampaignUpdateTest::update_channel_case_()
     }
 
     channel->expression = fetch_string("UpdateChannel/B1forExpr/ID");
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        channel->update()),
-      "updating expression channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(channel->update()), "updating expression channel");
 
     std::string regexp = make_channels_regexp(*channel);
 
     ADD_WAIT_CHECKER(
       description,
-      CampaignChecker(
-        this,
-        ccg_id,
-        CampaignChecker::Expected().channels(regexp)));
+      CampaignChecker(this, ccg_id, CampaignChecker::Expected().channels(regexp)));
   }
 
   // Untargeting
@@ -333,14 +296,10 @@ CampaignUpdateTest::update_channel_case_()
       description + " - Initial");
 
     ccg->channel.null();
-    ccg->targeting_channel_id =
-      fetch_int("UpdateChannel/TargetingUntarget/ID");
+    ccg->targeting_channel_id = fetch_int("UpdateChannel/TargetingUntarget/ID");
     ccg->channel_target = "U";
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.channel");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.channel");
 
     regexp = "\\(\\[" +  strof(geo) + "\\] & \\[" +
       strof(platform) + "\\]\\)";
@@ -377,17 +336,9 @@ void CampaignUpdateTest::change_status_case_()
       description + " Initial");
 
     campaign->status = "D";
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        campaign->update()),
-      "updating campaign.status");
+    FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.status");
 
-    ADD_WAIT_CHECKER(
-      description,
-      CampaignChecker(
-        this,
-        ccg_id,
-        CampaignChecker::NOT_PRESENT));
+    ADD_WAIT_CHECKER(description, CampaignChecker(this, ccg_id, CampaignChecker::NOT_PRESENT));
   }
 
   // Activation
@@ -398,22 +349,15 @@ void CampaignUpdateTest::change_status_case_()
     const unsigned int ccg_id = fetch_int("ChangeStatus/CampaignD/CCG");
 
     ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-      create<ORM::PQ::Campaign>(
-        fetch_int("ChangeStatus/CampaignD/CAMPAIGN"));
+      create<ORM::PQ::Campaign>(fetch_int("ChangeStatus/CampaignD/CAMPAIGN"));
 
     FAIL_CONTEXT(
-      CampaignChecker(
-        this,
-        ccg_id,
-        CampaignChecker::NOT_PRESENT).check(),
+      CampaignChecker(this, ccg_id, CampaignChecker::NOT_PRESENT).check(),
       description + " Initial");
 
     campaign->status = "A";
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        campaign->update()),
-      "updating campaign.status");
+    FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.status");
 
     ADD_WAIT_CHECKER(
       description,
@@ -436,8 +380,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     const unsigned int ccg_id = fetch_int("ChangeDateInterval/CMPOutside/CCG");
 
     ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-      create<ORM::PQ::Campaign>(
-        fetch_int("ChangeDateInterval/CMPOutside/CAMPAIGN"));
+      create<ORM::PQ::Campaign>(fetch_int("ChangeDateInterval/CMPOutside/CAMPAIGN"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg_id,
         CampaignChecker::Expected().
@@ -456,10 +399,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     campaign->date_start = date_start;
     campaign->date_end = date_end;
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        campaign->update()),
-      "updating campaign.dates");
+    FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.dates");
 
     ADD_WAIT_CHECKER(
       description,
@@ -467,10 +407,8 @@ void CampaignUpdateTest::change_date_interval_case_()
         this,
         ccg_id,
         CampaignChecker::Expected().
-          cmp_date_start(
-            date_start.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
-          cmp_date_end(
-            date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          cmp_date_start(date_start.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          cmp_date_end(date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
           status("A").
           eval_status("A")));
   }
@@ -480,8 +418,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     std::string description("Change ccg date interval.");
 
     ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-      create<ORM::PQ::CampaignCreativeGroup>(
-        fetch_int("ChangeDateInterval/CCGOutside/CCG"));
+      create<ORM::PQ::CampaignCreativeGroup>(fetch_int("ChangeDateInterval/CCGOutside/CCG"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
         CampaignChecker::Expected().
@@ -499,10 +436,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     ccg->date_start = date_start;
     ccg->date_end = date_end;
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.dates");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.dates");
 
     ADD_WAIT_CHECKER(
       description,
@@ -510,10 +444,8 @@ void CampaignUpdateTest::change_date_interval_case_()
         this,
         ccg->id(),
         CampaignChecker::Expected().
-          date_start(
-            date_start.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
-          date_end(
-            date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          date_start(date_start.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          date_end(date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
           status("A").
           eval_status("A")));
   }
@@ -525,8 +457,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     const unsigned int ccg_id = fetch_int("ChangeDateInterval/CMPExpiration/CCG");
 
     ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-      create<ORM::PQ::Campaign>(
-        fetch_int("ChangeDateInterval/CMPExpiration/CAMPAIGN"));
+      create<ORM::PQ::Campaign>(fetch_int("ChangeDateInterval/CMPExpiration/CAMPAIGN"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg_id,
         CampaignChecker::Expected().
@@ -539,10 +470,7 @@ void CampaignUpdateTest::change_date_interval_case_()
 
     campaign->date_end = date_end;
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        campaign->update()),
-      "updating campaign.date_end");
+    FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.date_end");
 
     ADD_WAIT_CHECKER(
       description,
@@ -550,8 +478,7 @@ void CampaignUpdateTest::change_date_interval_case_()
         this,
         ccg_id,
         CampaignChecker::Expected().
-          cmp_date_end(
-            date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          cmp_date_end(date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
           status("A").
           eval_status("I").
           force_remote_present(true)));
@@ -562,8 +489,7 @@ void CampaignUpdateTest::change_date_interval_case_()
     std::string description("Creative group expiration.");
 
     ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
-      create<ORM::PQ::CampaignCreativeGroup>(
-        fetch_int("ChangeDateInterval/CCGExpiration/CCG"));
+      create<ORM::PQ::CampaignCreativeGroup>(fetch_int("ChangeDateInterval/CCGExpiration/CCG"));
 
     FAIL_CONTEXT(CampaignChecker(this, ccg->id(),
         CampaignChecker::Expected().
@@ -576,10 +502,7 @@ void CampaignUpdateTest::change_date_interval_case_()
 
     ccg->date_end = date_end;
 
-    FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        ccg->update()),
-      "updating ccg.date_end");
+    FAIL_CONTEXT(AutoTest::predicate_checker(ccg->update()), "updating ccg.date_end");
 
     ADD_WAIT_CHECKER(
       description,
@@ -587,8 +510,7 @@ void CampaignUpdateTest::change_date_interval_case_()
         this,
         ccg->id(),
         CampaignChecker::Expected().
-          date_end(
-            date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
+          date_end(date_end.get_gm_time().format("%d-%m-%Y:%H-%M-00.000000")).
           status("A").
           eval_status("I").
           force_remote_present(true)));
@@ -602,8 +524,7 @@ CampaignUpdateTest::change_max_pub_share_case_()
   std::string account_id = fetch_string("ChangeMaxPubShare/Campaign/ACCOUNT");
 
   ORM::ORMRestorer<ORM::PQ::Campaign>* campaign =
-    create<ORM::PQ::Campaign>(
-      fetch_int("ChangeMaxPubShare/Campaign/CAMPAIGN"));
+    create<ORM::PQ::Campaign>(fetch_int("ChangeMaxPubShare/Campaign/CAMPAIGN"));
 
   const char* old_max_pub_share = "1.0";
   const char* new_max_pub_share = "0.5";
@@ -619,10 +540,7 @@ CampaignUpdateTest::change_max_pub_share_case_()
 
   campaign->max_pub_share = 0.5;
 
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      campaign->update()),
-    "updating campaign.max_pub_share");
+  FAIL_CONTEXT(AutoTest::predicate_checker(campaign->update()), "updating campaign.max_pub_share");
 
   ADD_WAIT_CHECKER(
     "Check campaign",
@@ -637,38 +555,24 @@ CampaignUpdateTest::change_max_pub_share_case_()
 void CampaignUpdateTest::set_up()
 {
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_ALL, STE_CAMPAIGN_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must set in the XML configuration file");
 }
 
 bool
 CampaignUpdateTest::run()
 {
-  AUTOTEST_CASE(
-    add_campaign_case_(),
-    "Add campaign");
+  AUTOTEST_CASE(add_campaign_case_(), "Add campaign");
 
-  AUTOTEST_CASE(
-    currency_change_case_(),
-    "Update currency");
+  AUTOTEST_CASE(currency_change_case_(), "Update currency");
 
-  AUTOTEST_CASE(
-    update_channel_case_(),
-    "Update channel");
+  AUTOTEST_CASE(update_channel_case_(), "Update channel");
 
-  AUTOTEST_CASE(
-    change_status_case_(),
-    "Change status");
+  AUTOTEST_CASE(change_status_case_(), "Change status");
 
-  AUTOTEST_CASE(
-    change_date_interval_case_(),
-    "Change date interval");
+  AUTOTEST_CASE(change_date_interval_case_(), "Change date interval");
 
-  AUTOTEST_CASE(
-    change_max_pub_share_case_(),
-    "Change campaign max_pub_share");
+  AUTOTEST_CASE(change_max_pub_share_case_(), "Change campaign max_pub_share");
 
   return true;
 }

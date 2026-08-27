@@ -102,8 +102,7 @@ namespace AdServer::ProfilingCommons
         }
       }
 
-      const bool new_earliest_operation =
-        current_operation->enqueue_time < group->enqueue_time;
+      const bool new_earliest_operation = current_operation->enqueue_time < group->enqueue_time;
       group->operations.splice(operation_position, source, current_operation);
       if (new_earliest_operation)
       {
@@ -184,8 +183,7 @@ namespace AdServer::ProfilingCommons
       operation_it->enqueue_time = now;
       account_operation_(result.counts, operation_it->type);
       const bool write_operation = is_write_operation(operation_it->type);
-      const std::size_t bucket_index =
-        operation_it->key.hash() % enqueue_buckets_.size();
+      const std::size_t bucket_index = operation_it->key.hash() % enqueue_buckets_.size();
       auto& bucket = *enqueue_buckets_[bucket_index];
 
       add_pending_operations();
@@ -205,8 +203,7 @@ namespace AdServer::ProfilingCommons
         current_it->enqueue_time = now;
         account_operation_(result.counts, current_it->type);
         const bool write_operation = is_write_operation(current_it->type);
-        const std::size_t bucket_index =
-          current_it->key.hash() % staged_buckets.size();
+        const std::size_t bucket_index = current_it->key.hash() % staged_buckets.size();
         Operations& target = write_operation ?
           staged_buckets[bucket_index].write_operations :
           staged_buckets[bucket_index].read_operations;
@@ -247,9 +244,7 @@ namespace AdServer::ProfilingCommons
       previous_pending_count < batch_size_ &&
       previous_pending_count + operation_count >= batch_size_;
 
-    ReadyState ready_state = request_ready_i_(
-      true,
-      previous_pending_count == 0 || fills_batch);
+    ReadyState ready_state = request_ready_i_(true, previous_pending_count == 0 || fills_batch);
     if (ready_state.has_operation)
     {
       result.ready_state = ready_state;
@@ -373,9 +368,7 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBBatchingProcessorQueue::add_in_flight_key_(
-    InFlightKeys& keys,
-    const Operation& operation)
+  RocksDBBatchingProcessorQueue::add_in_flight_key_(InFlightKeys& keys, const Operation& operation)
   {
     const auto it = keys.find(operation.key);
     if (it == keys.end())
@@ -534,8 +527,7 @@ namespace AdServer::ProfilingCommons
     unsigned long collected = 0;
     for (std::size_t offset = selected_offset; offset < enqueue_buckets_.size(); ++offset)
     {
-      const std::size_t bucket_index =
-        (start_bucket_index + offset) % enqueue_buckets_.size();
+      const std::size_t bucket_index = (start_bucket_index + offset) % enqueue_buckets_.size();
       auto& bucket = *enqueue_buckets_[bucket_index];
       if (!bucket.has_pending_operations.load(std::memory_order_acquire))
       {
@@ -547,11 +539,7 @@ namespace AdServer::ProfilingCommons
       {
         OperationQueue& source = collect_reads ? bucket.read_operations : bucket.write_operations;
         const std::size_t initial_batch_size = batch.size();
-        collected += collect_from_queue_i_(
-          source,
-          collect_reads,
-          batch,
-          selected_keys);
+        collected += collect_from_queue_i_(source, collect_reads, batch, selected_keys);
 
         if (batch.size() != initial_batch_size)
         {
@@ -599,8 +587,7 @@ namespace AdServer::ProfilingCommons
       auto current_group = group_it++;
       OperationGroup& group = *current_group;
       const auto& key = group.key;
-      if (collect_reads &&
-        in_flight_write_keys_.find(key) != in_flight_write_keys_.end())
+      if (collect_reads && in_flight_write_keys_.find(key) != in_flight_write_keys_.end())
       {
         continue;
       }

@@ -2,9 +2,7 @@
 #include "RandomAuctionTest.hpp"
 #include <math.h>
 
-REFLECT_UNIT(RandomAuctionTest) (
-  "CreativeSelection",
-  AUTO_TEST_QUIET);
+REFLECT_UNIT(RandomAuctionTest) ("CreativeSelection", AUTO_TEST_QUIET);
 
 namespace
 {
@@ -37,17 +35,13 @@ namespace
     Money price;
   };
 
-  std::string search_url(
-    const std::string& kwds)
+  std::string search_url(const std::string& kwds)
   {
     return "http://search.live.de/results.aspx?q=" + kwds;
   }
 
   void
-  rtb_request(
-    BaseUnit* test,
-    OpenRTBRequest& request,
-    const RandomAuctionTest::RTBCase& rtb_case)
+  rtb_request(BaseUnit* test, OpenRTBRequest& request, const RandomAuctionTest::RTBCase& rtb_case)
   {
     request.
       aid(test->fetch_int(rtb_case.aid)).
@@ -62,17 +56,13 @@ namespace
 
     request.referer =
       rtb_case.flags & RTCF_SEARCH?
-        search_url(
-          test->map_objects(rtb_case.url, " ")):
+        search_url(test->map_objects(rtb_case.url, " ")):
             test->fetch_string(rtb_case.url);
 
   }
 
   void
-  rtb_expected(
-    BaseUnit* test,
-    OpenRTBResponseChecker::Expected& expected,
-    const RTBExpected& e)
+  rtb_expected(BaseUnit* test, OpenRTBResponseChecker::Expected& expected, const RTBExpected& e)
   {
     expected.
       price(e.price).
@@ -87,8 +77,7 @@ namespace
     struct ProbabilityCounter
     {
       template <typename Probability>
-      ProbabilityCounter(
-        const Probability& p) :
+      ProbabilityCounter(const Probability& p) :
         count(0),
         probability(p.probability)
       { }
@@ -99,9 +88,7 @@ namespace
 
   public:
     template <typename Probability, size_t COUNT>
-    ProbabilityChecker(
-      const Probability(& test_case)[COUNT],
-      size_t sample_size) :
+    ProbabilityChecker(const Probability(& test_case)[COUNT], size_t sample_size) :
       counts_(test_case, test_case + COUNT),
       sample_size_(sample_size)
     { }
@@ -147,8 +134,7 @@ namespace
 
 
         AutoTest::Logger::thlog().stream(Logging::Logger::TRACE) <<
-          "Condition#" << i+1 << ": "  << low_limit << " < " <<
-          it->count << " < " << high_limit;
+          "Condition#" << i+1 << ": "  << low_limit << " < " << it->count << " < " << high_limit;
 
         if ( it->count < low_limit || it->count > high_limit )
         {
@@ -188,14 +174,9 @@ RandomAuctionTest::prepare_checker(
   for (size_t i = 0; i < COUNT; ++i)
   {
     std::list<std::string> expected_ccs;
-    fetch_objects(
-      std::inserter(expected_ccs, expected_ccs.begin()),
-      test_case[i].ccs);
+    fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), test_case[i].ccs);
 
-    checker.or_if(
-      AutoTest::sequence_checker(
-        expected_ccs,
-        got_ccs));
+    checker.or_if(AutoTest::sequence_checker(expected_ccs, got_ccs));
   }
   return checker;
 }
@@ -211,9 +192,7 @@ RandomAuctionTest::prepare_checker(
   for (size_t i = 0; i < COUNT; ++i)
   {
     checker.or_if(
-      AutoTest::entry_checker(
-        fetch_string(test_case[i].cc),
-        SelectedCreativesCCID(client)));
+      AutoTest::entry_checker(fetch_string(test_case[i].cc), SelectedCreativesCCID(client)));
   }
   return checker;
 }
@@ -234,17 +213,10 @@ RandomAuctionTest::test_case(
 
      client.process_request(request);
 
-     FAIL_CONTEXT(
-       prepare_checker(
-         client,
-         &counter,
-         expected).check(),
-       "Check CC#" + strof(i+1));
+     FAIL_CONTEXT(prepare_checker(client, &counter, expected).check(), "Check CC#" + strof(i+1));
   }
 
-  FAIL_CONTEXT(
-    counter.check(),
-    "Probability checker");
+  FAIL_CONTEXT(counter.check(), "Probability checker");
 }
 
 
@@ -266,19 +238,14 @@ RandomAuctionTest::rtb_test_case(
           String::AsciiStringManip::CharCategory(","));
 
       String::SubString token;
-      while(tokenizer.get_token(token))
+      while (tokenizer.get_token(token))
       {
-        String::RegEx re(
-          String::SubString("([^:]+):([^:]+)"));
+        String::RegEx re(String::SubString("([^:]+):([^:]+)"));
 
         String::RegEx::Result result;
         re.search(result, token);
 
-        FAIL_CONTEXT(
-          AutoTest::equal_checker(
-            3,
-            result.size()).check(),
-          "Invalid expected format");
+        FAIL_CONTEXT(AutoTest::equal_checker(3, result.size()).check(), "Invalid expected format");
 
         RTBExpected e;
         e.ccid = result[1].str();
@@ -294,10 +261,7 @@ RandomAuctionTest::rtb_test_case(
     {
       typename Traits::Request request(base_request);
 
-      rtb_request(
-        this,
-        request,
-        rtb_cases[i]);
+      rtb_request(this, request, rtb_cases[i]);
 
       client.process_post(request);
 
@@ -306,44 +270,30 @@ RandomAuctionTest::rtb_test_case(
         FAIL_CONTEXT(
           AutoTest::or_checker(
             AutoTest::and_checker(
-              AutoTest::equal_checker(
-                200,
-                client.req_status()),
-              typename Traits::Checker(
-                client,
-                typename Traits::Checker::Expected())),
-            AutoTest::equal_checker(
-              204,
-              client.req_status())).check(),
+              AutoTest::equal_checker(200, client.req_status()),
+              typename Traits::Checker(client, typename Traits::Checker::Expected())),
+            AutoTest::equal_checker(204, client.req_status())).check(),
             "No content check#" + strof(i+1));
 
 
       }
       else
       {
-        OrChecker checker(
-          static_cast<OrChecker::ICounter*>(&counter));
+        OrChecker checker(static_cast<OrChecker::ICounter*>(&counter));
         for (auto it = expected.begin(); it != expected.end(); ++it)
         {
           typename Traits::Checker::Expected expected;
 
           rtb_expected(this, expected, *it);
 
-          checker.or_if(
-            typename Traits::Checker(
-              client,
-              expected));
+          checker.or_if(typename Traits::Checker(client, expected));
         }
 
-        FAIL_CONTEXT(
-          checker.check(),
-          "Check CC#" + strof(i+1));
+        FAIL_CONTEXT(checker.check(), "Check CC#" + strof(i+1));
       }
     }
 
-    FAIL_CONTEXT(
-      counter.check(),
-      "Events count checker#" + strof(i+1));
+    FAIL_CONTEXT(counter.check(), "Events count checker#" + strof(i+1));
   }
 }
 
@@ -476,8 +426,7 @@ RandomAuctionTest::proportional_2()
 }
 
 void
-RandomAuctionTest::open_rtb_random(
-  AdClient& client)
+RandomAuctionTest::open_rtb_random(AdClient& client)
 {
   const RTBCase CASES[] =
   {
@@ -520,16 +469,11 @@ RandomAuctionTest::open_rtb_random(
     }
   };
 
-  rtb_test_case<RTBTraits>(
-    client,
-    RTBTraits::Request().
-      ip(LC_IP),
-    CASES);
+  rtb_test_case<RTBTraits>(client, RTBTraits::Request(). ip(LC_IP), CASES);
 }
 
 void
-RandomAuctionTest::open_rtb_secondary(
-  AdClient& client)
+RandomAuctionTest::open_rtb_secondary(AdClient& client)
 {
   // Secondary auctions
   const RTBCase CASES[] =
@@ -556,19 +500,12 @@ RandomAuctionTest::open_rtb_secondary(
     }
   };
 
-  rtb_test_case<RTBTraits>(
-    client,
-    RTBTraits::Request().
-      ip(LC_IP),
-    CASES);
+  rtb_test_case<RTBTraits>(client, RTBTraits::Request(). ip(LC_IP), CASES);
 }
 
 RandomAuctionTest::set_up()
 {
-  AutoTest::ORM::clear_stats(
-    pq_conn_,
-    "country_code",
-    fetch_string("COUNTRYCODE"));
+  AutoTest::ORM::clear_stats(pq_conn_, "country_code", fetch_string("COUNTRYCODE"));
 
   AutoTest::ORM::calc_ctr(pq_conn_);
 }
@@ -576,36 +513,22 @@ RandomAuctionTest::set_up()
 bool
 RandomAuctionTest::run()
 {
-  AUTOTEST_CASE(
-    random_text_1(),
-    "Random auction. Multiple sizes (display)");
+  AUTOTEST_CASE(random_text_1(), "Random auction. Multiple sizes (display)");
 
-  AUTOTEST_CASE(
-    random_text_2(),
-    "Random auction. Multiple sizes (text)");
+  AUTOTEST_CASE(random_text_2(), "Random auction. Multiple sizes (text)");
 
-  AUTOTEST_CASE(
-    creative_size_1(),
-    "Random auction. Creative size probability (text)");
+  AUTOTEST_CASE(creative_size_1(), "Random auction. Creative size probability (text)");
 
-  AUTOTEST_CASE(
-    proportional_1(),
-    "Proporion probability. Creative size probability (display)");
+  AUTOTEST_CASE(proportional_1(), "Proporion probability. Creative size probability (display)");
 
-  AUTOTEST_CASE(
-    proportional_2(),
-    "Proporion probability. Creative size probability (text)");
+  AUTOTEST_CASE(proportional_2(), "Proporion probability. Creative size probability (text)");
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
 
-    AUTOTEST_CASE(
-      open_rtb_random(client),
-      "Open RTB. Random auction");
+    AUTOTEST_CASE(open_rtb_random(client), "Open RTB. Random auction");
 
-    AUTOTEST_CASE(
-      open_rtb_secondary(client),
-      "Open RTB. Secondary auctions");
+    AUTOTEST_CASE(open_rtb_secondary(client), "Open RTB. Secondary auctions");
   }
 
   return true;
@@ -614,10 +537,7 @@ RandomAuctionTest::run()
 void
 RandomAuctionTest::tear_down()
 {
-  AutoTest::ORM::clear_stats(
-    pq_conn_,
-    "country_code",
-    fetch_string("COUNTRYCODE"));
+  AutoTest::ORM::clear_stats(pq_conn_, "country_code", fetch_string("COUNTRYCODE"));
 
   AutoTest::ORM::calc_ctr(pq_conn_);
 }

@@ -57,21 +57,15 @@ namespace AdServer::UserInfoSvcs
     {}
 
     virtual void
-    read_operation_(
-      uint32_t operation_type,
-      Generics::SmartMemBuf* smart_mem_buf)
+    read_operation_(uint32_t operation_type, Generics::SmartMemBuf* smart_mem_buf)
       /*throw(eh::Exception)*/;
 
     virtual void
-    read_get_user_id_operation_(
-      const void* data_buf,
-      unsigned long data_size)
+    read_get_user_id_operation_(const void* data_buf, unsigned long data_size)
       /*throw(eh::Exception)*/;
 
     virtual void
-    read_add_user_id_operation_(
-      const void* data_buf,
-      unsigned long data_size)
+    read_add_user_id_operation_(const void* data_buf, unsigned long data_size)
       /*throw(eh::Exception)*/;
 
   protected:
@@ -113,15 +107,13 @@ namespace AdServer::UserInfoSvcs
   {}
 
   void
-  UserBindOperationFetcher::process(
-    LogProcessing::FileReceiver::FileGuard* file_ptr)
+  UserBindOperationFetcher::process(LogProcessing::FileReceiver::FileGuard* file_ptr)
     noexcept
   {
     static const char* FUN = "UserBindOperationFetcher::process()";
 
     // file guard must be destroyed after moving file into errors store
-    LogProcessing::FileReceiver::FileGuard_var file(
-      ReferenceCounting::add_ref(file_ptr));
+    LogProcessing::FileReceiver::FileGuard_var file(ReferenceCounting::add_ref(file_ptr));
 
     try
     {
@@ -138,10 +130,10 @@ namespace AdServer::UserInfoSvcs
       unsigned long chunk_id = file_name_info.distrib_index;
 
       // check, that chunk id controllable
-      if(chunk_ids_.find(chunk_id) != chunk_ids_.end())
+      if (chunk_ids_.find(chunk_id) != chunk_ids_.end())
       {
         std::ifstream file_stream(file->full_path().c_str(), std::ios_base::binary);
-        if(file_stream.fail())
+        if (file_stream.fail())
         {
           Stream::Error ostr;
           ostr << "Can't open file";
@@ -152,7 +144,7 @@ namespace AdServer::UserInfoSvcs
         unsigned long processed_records = 0;
         unsigned long processed_lines_count = file_name_info.processed_lines_count;
 
-        while(true)
+        while (true)
         {
           uint32_t operation_type = 0;
           file_stream.read(reinterpret_cast<char*>(&operation_type), 4);
@@ -160,12 +152,12 @@ namespace AdServer::UserInfoSvcs
           uint32_t record_size = 0;
           file_stream.read(reinterpret_cast<char*>(&record_size), 4);
 
-          if(file_stream.eof())
+          if (file_stream.eof())
           {
             break;
           }
 
-          if(file_stream.fail())
+          if (file_stream.fail())
           {
             Stream::Error ostr;
             ostr << "Reading failed";
@@ -175,7 +167,7 @@ namespace AdServer::UserInfoSvcs
           mem_buf.alloc(record_size);
           file_stream.read(mem_buf.get<char>(), mem_buf.size());
 
-          if(file_stream.eof() || file_stream.fail())
+          if (file_stream.eof() || file_stream.fail())
           {
             Stream::Error ostr;
             ostr << "Unexpected eof or fail";
@@ -204,12 +196,11 @@ namespace AdServer::UserInfoSvcs
           file_name_info.processed_lines_count = processed_lines_count;
           file_move_back_to_input_dir_(file_name_info, file->full_path().c_str());
         }
-        else if(::unlink(file->full_path().c_str()) != 0)
+        else if (::unlink(file->full_path().c_str()) != 0)
         {
           Stream::Error ostr;
           ostr << FUN << ": Can't delete file '" << file->full_path() << "'";
-          callback_->report_error(
-            Generics::ActiveObjectCallback::ERROR, ostr.str());
+          callback_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
       }
       else
@@ -225,20 +216,17 @@ namespace AdServer::UserInfoSvcs
       // copy the erroneous file to the error folder
       try
       {
-        AdServer::LogProcessing::FileStore file_store(
-          DIR_, DEFAULT_ERROR_DIR);
+        AdServer::LogProcessing::FileStore file_store(DIR_, DEFAULT_ERROR_DIR);
         file_store.store(file->full_path());
       }
       catch (const eh::Exception& store_ex)
       {
         ostr << FUN << store_ex.what() << " Can't copy the file '" <<
-          file->full_path() << "' to the error folder. Initial error: " <<
-          ex.what() << std::endl;
+          file->full_path() << "' to the error folder. Initial error: " << ex.what() << std::endl;
       }
 
       ostr << ex.what();
-      callback_->report_error(
-        Generics::ActiveObjectCallback::ERROR, ostr.str());
+      callback_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
     }
   }
 
@@ -249,19 +237,17 @@ namespace AdServer::UserInfoSvcs
   {
     static const char* FUN = "UserBindOperationFetcher::file_move_back_to_input_dir_()";
 
-    const std::string new_file_name =
-      AdServer::LogProcessing::restore_log_file_name(info, DIR_);
+    const std::string new_file_name = AdServer::LogProcessing::restore_log_file_name(info, DIR_);
 
     std::string file_name;
     AdServer::PathManip::split_path(new_file_name.c_str(), 0, &file_name);
     std::string reprocess_path = unprocessed_dir_;
     reprocess_path += "/";
     reprocess_path += file_name;
-    if(::rename(file_path, reprocess_path.c_str()) != 0)
+    if (::rename(file_path, reprocess_path.c_str()) != 0)
     {
       Stream::Error ostr;
-      ostr << FUN << "can't move file '" << file_path << "' to '" <<
-        reprocess_path << "'";
+      ostr << FUN << "can't move file '" << file_path << "' to '" << reprocess_path << "'";
       eh::throw_errno_exception<Exception>(ostr.str());
     }
   }
@@ -275,7 +261,7 @@ namespace AdServer::UserInfoSvcs
     static const char* FUN = "UserBindOperationFetcher::read_operation_()";
 
     const Generics::MemBuf& mem_buf = mem_buf_ptr->membuf();
-    if(mem_buf.size() < 4)
+    if (mem_buf.size() < 4)
     {
       Stream::Error ostr;
       ostr << FUN << ": input buffer have incorrect size: " << mem_buf.size();
@@ -285,11 +271,11 @@ namespace AdServer::UserInfoSvcs
     const void* data_buf = mem_buf.data();
     const unsigned long data_size = mem_buf.size();
 
-    if(operation_type == UserBindOperationSaver::OP_ADD_USER_ID)
+    if (operation_type == UserBindOperationSaver::OP_ADD_USER_ID)
     {
       read_add_user_id_operation_(data_buf, data_size);
     }
-    else if(operation_type == UserBindOperationSaver::OP_GET_USER_ID)
+    else if (operation_type == UserBindOperationSaver::OP_GET_USER_ID)
     {
       read_get_user_id_operation_(data_buf, data_size);
     }

@@ -19,7 +19,7 @@ sub init
 
   my $isp_tz = $ns->create(Isp => {
     name => "ISP-TZ",
-    account_timezone_id => 
+    account_timezone_id =>
         DB::TimeZone->blank(tzname => 'Australia/Sydney'),
     account_internal_account_id =>
       DB::Defaults::instance()->no_margin_internal_account->{account_id} });

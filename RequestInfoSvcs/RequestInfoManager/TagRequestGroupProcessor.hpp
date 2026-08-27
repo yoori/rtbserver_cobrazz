@@ -9,9 +9,7 @@
 #include <Generics/Time.hpp>
 #include <Commons/Algs.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   struct TagRequestGroupProcessor: public virtual ReferenceCounting::Interface
   {
@@ -62,8 +60,7 @@ namespace RequestInfoSvcs
           prefix << "colo_id = " << colo_id << std::endl <<
           prefix << "site_id = " << site_id << std::endl <<
           prefix << "ad_shown = " << ad_shown << std::endl <<
-          prefix << "rollback = " << rollback << std::endl <<
-          prefix << "tags = ";
+          prefix << "rollback = " << rollback << std::endl << prefix << "tags = ";
         Algs::print(ostr, tags.begin(), tags.end());
         ostr << std::endl;
         return ostr;
@@ -91,5 +88,4 @@ namespace RequestInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<TagRequestGroupProcessor>
     TagRequestGroupProcessor_var;
-}
 }

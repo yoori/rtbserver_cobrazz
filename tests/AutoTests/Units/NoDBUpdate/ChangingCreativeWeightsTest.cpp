@@ -1,10 +1,7 @@
 
 #include "ChangingCreativeWeightsTest.hpp"
 
-REFLECT_UNIT(ChangingCreativeWeightsTest) (
-  "NoDBUpdate",
-  AUTO_TEST_QUIET
-);
+REFLECT_UNIT(ChangingCreativeWeightsTest) ("NoDBUpdate", AUTO_TEST_QUIET);
 
 namespace {
   typedef AutoTest::AdClient AdClient;
@@ -57,17 +54,13 @@ ChangingCreativeWeightsTest::run()
 
     FAIL_CONTEXT(
       AutoTest::or_checker(
-        AutoTest::sequence_checker(
-          ccid1_seq,
-          SelectedCreativesCCID(client)),
-      AutoTest::sequence_checker(
-        ccid2_seq,
-        SelectedCreativesCCID(client))).check(),
+        AutoTest::sequence_checker(ccid1_seq, SelectedCreativesCCID(client)),
+      AutoTest::sequence_checker(ccid2_seq, SelectedCreativesCCID(client))).check(),
       "unexpected creatives");
 
     bool ccid1_shown = ( strof(ccid1) == client.debug_info.ccid );
 
-    if(ccid1_shown)
+    if (ccid1_shown)
     {
       ++ccid1_imps;
     }
@@ -78,12 +71,11 @@ ChangingCreativeWeightsTest::run()
 
     if (i % 2 == 0)
     {
-      std::string click_url =
-        client.debug_info.selected_creatives.first().click_url;
+      std::string click_url = client.debug_info.selected_creatives.first().click_url;
 
       client.process_request(click_url, "Click on creative");
 
-      if(ccid1_shown)
+      if (ccid1_shown)
       {
         ++ccid1_clicks;
       }
@@ -100,8 +92,7 @@ ChangingCreativeWeightsTest::run()
     "Creative2 (clicks/imps): " <<  ccid2_clicks << "/" <<  ccid2_imps;
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      ccid1_imps >= 2000 || ccid2_imps >= 2000),
+    AutoTest::predicate_checker(ccid1_imps >= 2000 || ccid2_imps >= 2000),
     "one or two creatives must have more "
     "than 2000 impression");
 
@@ -112,9 +103,7 @@ ChangingCreativeWeightsTest::run()
     ccid1_imps && ccid1_imps >= 2000 ?
       ( ccid1_clicks * 10000 / ccid1_imps) : initial_weight,
     // New weight#2
-    ccid2_imps && ccid2_imps >= 2000 ?
-    ( ccid2_clicks * 10000 / ccid2_imps) : initial_weight
-  };
+    ccid2_imps && ccid2_imps >= 2000 ? (ccid2_clicks * 10000 / ccid2_imps) : initial_weight };
 
   for (size_t i = 0; i < sizeof(ccids)/sizeof(*ccids); ++i)
   {

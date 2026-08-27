@@ -5,7 +5,7 @@ use warnings;
 use DB::Defaults;
 use DB::Util;
 
-sub create_campaign 
+sub create_campaign
 {
   my ($self, $ns, $opt, $params, $site_links) = @_;
 
@@ -33,11 +33,12 @@ sub create_campaign
       trigger_type => "P" ));
 
   $ns->output("CC-$opt", $campaign->{cc_id});
-  
+
   if (defined $params->{cpm})
   {
     $ns->output("CC-CPM-$opt", $params->{cpm});
   }
+
   if (defined $params->{cpc})
   {
     $ns->output("CC-CPC-$opt", $params->{cpc});
@@ -47,12 +48,12 @@ sub create_campaign
 sub create_publisher
 {
   my ($self, $ns, $opt, $params, $site_links) = @_;
-  
+
   my $marketplace = exists $params->{marketplace}?
     $params->{marketplace}: $opt;
 
   my $cpm = defined $params->{cpm} ?
-     $params->{cpm} / 2: 
+     $params->{cpm} / 2:
         defined $params->{cpc}? DB::Defaults::instance()->cpm / 2: 0;
 
   my $publisher = $ns->create(Publisher => {
@@ -60,7 +61,7 @@ sub create_publisher
     account_id => $params->{pub_account},
     pricedtag_cpm => $cpm,
     pricedtag_marketplace => $marketplace });
-    
+
   push(@$site_links, {site_id => $publisher->{site_id}});
 
   $ns->output("TAG-$opt", $publisher->{tag_id});
@@ -69,7 +70,7 @@ sub create_publisher
 
   return $publisher;
 }
-  
+
 sub init
 {
   my ($self, $ns) = @_;
@@ -86,37 +87,37 @@ sub init
       name => 'agency non wg',
       role_id => DB::Defaults::instance()->advertiser_role });
 
-  my $pub_acc = 
-    $ns->create(PubAccount => { 
+  my $pub_acc =
+    $ns->create(PubAccount => {
       name => "publisher" });
 
-  my $pub_acc_2 = 
-    $ns->create(PubAccount => { 
+  my $pub_acc_2 =
+    $ns->create(PubAccount => {
       name => "publisher2" });
 
-  my $pub_acc_non_wg = 
-    $ns->create(PubAccount => { 
+  my $pub_acc_non_wg =
+    $ns->create(PubAccount => {
       name => "publisher non wg" });
 
   my $cpc = 100;
 
   my %wg_options = (
-    'WG' => { 
+    'WG' => {
       cpc => $cpc,
       agency_account => $agency_acc,
       pub_account => $pub_acc
-    }, 
-    'OIX' => { 
+    },
+    'OIX' => {
       cpm => DB::Defaults::instance()->cpm + 1,
       agency_account => $agency_acc,
       pub_account => $pub_acc
-    }, 
-    'ALL' => { 
+    },
+    'ALL' => {
       cpm => DB::Defaults::instance()->cpm - 1,
       agency_account => $agency_acc,
       pub_account => $pub_acc
-    },  
-    'NON-WG' => { 
+    },
+    'NON-WG' => {
       cpm => DB::Defaults::instance()->cpm + 2,
       agency_account => $agency_acc_non_wg,
       pub_account => $pub_acc_non_wg,
@@ -147,17 +148,17 @@ sub init
     name => 'TAG-OIX-2',
     site_id => $pub_wg_2->{site_id},
     marketplace => 'OIX'});
-  
+
   $ns->output("TAG-OIX-2", $tag_foros_2);
 
-    
+
   while (my ($opt, $params) = each %wg_options)
   {
     $self->create_campaign($ns, $opt, $params, \@site_links);
   }
 
   $self->create_campaign(
-    $ns, 
+    $ns,
     "NON-WG-2",
     { cpm => DB::Defaults::instance()->cpm - 2,
       agency_account => $agency_acc_non_wg,
@@ -165,14 +166,14 @@ sub init
 
 
   $self->create_campaign(
-    $ns, 
+    $ns,
     "WG-2",
     { cpm => DB::Defaults::instance()->cpm / 4.0,
       agency_account => $agency_acc,
       marketplace => 'WG' } , \@site_links);
 
   $self->create_campaign(
-    $ns, 
+    $ns,
     "ALL-2",
     { cpc => $cpc + 10,
       agency_account => $agency_acc,

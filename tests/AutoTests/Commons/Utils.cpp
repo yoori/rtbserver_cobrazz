@@ -5,7 +5,7 @@ tolower(size_t size, const char* str)
 {
   std::string ret;
   ret.reserve(size);
-  for(const char* i = str; *i != 0; ++i)
+  for (const char* i = str; *i != 0; ++i)
   {
     ret += ::tolower(*i);
   }
@@ -17,7 +17,7 @@ toupper(size_t size, const char* str)
 {
   std::string ret;
   ret.reserve(size);
-  for(const char* i = str; *i != 0; ++i)
+  for (const char* i = str; *i != 0; ++i)
   {
     ret += ::toupper(*i);
   }
@@ -33,8 +33,7 @@ namespace AutoTest
 
   time_t gmt_str_to_time( const char* gmt_str ) /*throw(eh::Exception)*/
   {
-    return Generics::Time(String::SubString(gmt_str),
-      "%d-%m-%Y:%H-%M-%S").tv_sec;
+    return Generics::Time(String::SubString(gmt_str), "%d-%m-%Y:%H-%M-%S").tv_sec;
   }
 
   Comparable::~Comparable() noexcept
@@ -46,9 +45,7 @@ namespace AutoTest
   {
     try
     {
-      String::RegEx re(
-        std::string("\\A") + value_ + "\\Z",
-        PCRE_MULTILINE | PCRE_DOTALL);
+      String::RegEx re(std::string("\\A") + value_ + "\\Z", PCRE_MULTILINE | PCRE_DOTALL);
       return re.match( String::SubString(other));
     }
     catch (const eh::Exception&)

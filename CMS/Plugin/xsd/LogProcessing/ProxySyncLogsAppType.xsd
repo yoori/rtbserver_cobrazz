@@ -21,7 +21,7 @@
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
-  
+
   <xsd:complexType name="ProxySyncLogsConfigType">
     <xsd:sequence>
       <xsd:element name="networkParams" type="NetworkParamsType" minOccurs="0" maxOccurs="1">
@@ -44,7 +44,7 @@
             CORBA thread pool.
           </xsd:documentation>
         </xsd:annotation>
-      </xsd:element> 
+      </xsd:element>
       <xsd:element name="fileTransferring" type="ProxySyncLogsFileTransferringType">
         <xsd:annotation>
           <xsd:documentation>

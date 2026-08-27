@@ -26,7 +26,7 @@ sub normalize_company_name_form
   $name =~ s/ сбер\s+банк / сбербанк /g;
   $name =~ s/ ([^ ]+)сервис / $1 сервис /g;
 
-  if($name =~ m/ муниципальное / && $name =~ m/ казенное / && $name =~ m/ предприятие /)
+  if ($name =~ m/ муниципальное / && $name =~ m/ казенное / && $name =~ m/ предприятие /)
   {
     $name =~ s/ (муниципальное|казенное|предприятие) / /g;
     $name .= ' мкп ';
@@ -64,9 +64,9 @@ sub normalize_company_name
 
   my $nf = normalize_company_name_form($name);
 
-  if($nf !~ m/ ип /)
+  if ($nf !~ m/ ип /)
   {
-    while($name =~ m/((?:\p{Uppercase}\s*[.]\s*)+)/)
+    while ($name =~ m/((?:\p{Uppercase}\s*[.]\s*)+)/)
     {
       my $rep = $1;
       my $res = lc($rep);
@@ -111,7 +111,7 @@ sub normalize_company_name
   {
     Encode::_utf8_on($w);
 
-    if($w =~ m/^(мкоу|мку|фгку|мбоу|нп|ип|ооо|ао|оао|зао|сооо|гау|фгау|мп|пао|фгу|гку|муп|маоу|тоо|ou|ltd|фгуп)$/)
+    if ($w =~ m/^(мкоу|мку|фгку|мбоу|нп|ип|ооо|ао|оао|зао|сооо|гау|фгау|мп|пао|фгу|гку|муп|маоу|тоо|ou|ltd|фгуп)$/)
     {
       $type = $1;
     }
@@ -136,7 +136,7 @@ sub normalize_company_name
     $w =~ s/^нск$//;
     $w =~ s/^(москве|москва|столичный)$//;
 
-    if(length($w) > 1 || $w =~ m/^\d+$/)
+    if (length($w) > 1 || $w =~ m/^\d+$/)
     {
       push(@res_words, $w);
     }

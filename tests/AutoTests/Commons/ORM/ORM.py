@@ -12,23 +12,23 @@ def create_objects(filename, objects, namespace):
   ormSource = "%s.cpp" % filename
   connection_type = namespace == 'PQ' and \
                     'postgres_connection' or 'oracle_connection'
-  
+
   def_suffix = ormHeader.upper().replace('.','_')
-  
+
   header = file(ormHeader, 'w+')
   print '  generate header code'
-  
+
   print >>header, """/** $Id$
  * @file %s
  * ORM C++ objects
- * THIS FILE IS AUTOMATICALY GENERATED, ! DON'T EDIT ! 
+ * THIS FILE IS AUTOMATICALY GENERATED, ! DON'T EDIT !
  */
 
 #ifndef _AUTOTEST_COMMONS_ORM_%s
 #define _AUTOTEST_COMMONS_ORM_%s
- 
+
 #include \"ORM.hpp\"
- 
+
 namespace AutoTest
 {
   namespace ORM
@@ -62,9 +62,9 @@ namespace AutoTest
         else:
           print 'ERROR!', object.name + '.' + field.name+  ' referenced unknown', field.link
           sys.exit(0)
-          
+
     sys.stdout.addLevel()
-    object.printDeclaration(stream, connection_type)    
+    object.printDeclaration(stream, connection_type)
     sys.stdout.delLevel()
 
 
@@ -86,7 +86,7 @@ namespace AutoTest
 
 #include <tests/AutoTests/Commons/Common.hpp>
 #include "Utils.hpp"
- 
+
 namespace AutoTest
 {
   namespace ORM

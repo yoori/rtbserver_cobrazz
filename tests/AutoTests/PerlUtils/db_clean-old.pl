@@ -129,7 +129,7 @@ sub dbh_do {
 dbh_do <<'EOF;';
 
     DELETE FROM SiteRate WHERE site_rate_id IN
-      (SELECT site_rate_id FROM TagPricing WHERE tag_id IN 
+      (SELECT site_rate_id FROM TagPricing WHERE tag_id IN
         (SELECT tag_id FROM Tags WHERE name LIKE :1))
 
     DELETE FROM TagPricing WHERE tag_id IN
@@ -159,13 +159,13 @@ dbh_do <<'EOF;';
     DELETE FROM Site WHERE name LIKE :1
 
     DELETE FROM StatsHourly WHERE cc_id IN
-      (SELECT cc_id FROM CampaignCreative WHERE ccg_id IN 
+      (SELECT cc_id FROM CampaignCreative WHERE ccg_id IN
         (SELECT ccg_id FROM CampaignCreativeGroup WHERE name LIKE :1))
     OR colo_id IN
       (SELECT colo_id FROM Colocation WHERE name LIKE :1)
 
     DELETE FROM ExpressionPerformance WHERE cc_id IN
-      (SELECT cc_id FROM CampaignCreative WHERE ccg_id IN 
+      (SELECT cc_id FROM CampaignCreative WHERE ccg_id IN
         (SELECT ccg_id FROM CampaignCreativeGroup WHERE name LIKE :1))
 
     DELETE FROM CCGSite WHERE ccg_id IN
@@ -287,8 +287,8 @@ my $delete_channel_inventory_by_cpm = $dbh->prepare(q{
 
 my $delete_channel_trigger_stats = $dbh->prepare(q{
     DELETE FROM ChannelTriggerStats
-    WHERE behav_params_id IN 
-     (SELECT behav_params_id FROM BehavioralParameters 
+    WHERE behav_params_id IN
+     (SELECT behav_params_id FROM BehavioralParameters
       WHERE channel_id = :1)
 });
 
@@ -336,7 +336,7 @@ foreach my $expression (@$expressions) {
           if defined $keyword_id;
         push @trigger_list_ids, $url_id
           if defined $url_id;
-    
+
         $delete_channel_inventory->execute($context_channel_id);
         $delete_channel_inventory_by_cpm->execute($context_channel_id);
         $delete_channel_trigger_stats->execute($context_channel_id);
@@ -372,7 +372,7 @@ foreach my $expression (@$expressions_old) {
         $trigger_list_id->execute($context_channel_id);
         my ($trigger_id) = $trigger_list_id->fetchrow_array;
         push @trigger_list_ids, $trigger_id;
-      
+
         $delete_channel_inventory->execute($context_channel_id);
         $delete_channel_inventory_by_cpm->execute($context_channel_id);
         $delete_channel_performance->execute($context_channel_id);
@@ -385,12 +385,12 @@ dbh_do <<'EOF;';
 
     DELETE FROM ChannelInventory WHERE channel_id IN
       (SELECT channel_id FROM Channel WHERE name LIKE :1)
-    or channel_id IN 
+    or channel_id IN
       (SELECT channel_id FROM ChannelOld WHERE name LIKE :1)
 
     DELETE FROM ChannelInventoryByCPM WHERE channel_id IN
       (SELECT channel_id FROM Channel WHERE name LIKE :1)
-    or channel_id IN 
+    or channel_id IN
       (SELECT channel_id FROM ChannelOld WHERE name LIKE :1)
 
     DELETE FROM ChannelTriggerStats WHERE behav_params_id IN
@@ -398,14 +398,14 @@ dbh_do <<'EOF;';
         (SELECT channel_id FROM Channel WHERE name LIKE :1))
 
     DELETE FROM ChannelPerformance WHERE channel_id IN
-      (SELECT channel_id FROM Channel WHERE name LIKE :1) 
-    or channel_id IN 
+      (SELECT channel_id FROM Channel WHERE name LIKE :1)
+    or channel_id IN
       (SELECT channel_id FROM ChannelOld WHERE name LIKE :1)
 
 
     DELETE FROM BehavioralParameters WHERE channel_id IN
-      (SELECT channel_id FROM Channel WHERE name LIKE :1) 
- 
+      (SELECT channel_id FROM Channel WHERE name LIKE :1)
+
     DELETE FROM Channel WHERE channel_id IN
       (SELECT channel_id FROM Channel WHERE name LIKE :1)
 

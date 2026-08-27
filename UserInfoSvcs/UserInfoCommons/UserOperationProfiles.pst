@@ -57,7 +57,7 @@ namespace UserInfoSvcs
 
   autoreader CoordDataReader<CoordData>;
   autowriter CoordDataWriter<CoordData>;
-  
+
   struct UserMatchOperationDescriptor
   {
     uint operation_type;
@@ -199,7 +199,7 @@ namespace UserInfoSvcs
     campaign_ids;
     uc_campaign_ids;
   };
-  
+
   writer UserFreqCapUpdateOperationWriter<UserFreqCapUpdateOperationDescriptor>
   {
     operation_type;

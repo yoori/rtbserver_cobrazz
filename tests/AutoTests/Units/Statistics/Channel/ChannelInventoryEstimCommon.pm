@@ -20,7 +20,7 @@ sub create_channel
       name => "Adv-" . $prefix,
       account_id => $account,
       keyword_list => $keyword,
-      url_list => $url, 
+      url_list => $url,
       behavioral_parameters => $params));
 
   $ns->output("AdvChannel$prefix", $adv_channel);

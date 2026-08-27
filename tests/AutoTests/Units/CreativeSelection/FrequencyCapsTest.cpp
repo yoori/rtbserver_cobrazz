@@ -1,10 +1,7 @@
 
 #include "FrequencyCapsTest.hpp"
 
-REFLECT_UNIT(FrequencyCapsTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(FrequencyCapsTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -36,8 +33,7 @@ FrequencyCapsTest::run_test()
   min_request_period = 0;
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER)),
     "UserInfoManager need for this test");
 
   add_descr_phrase("Starting");
@@ -132,8 +128,7 @@ FrequencyCapsTest::run_test()
     "Cc-Period-Text",
     false));
 
-  NOSTOP_FAIL_CONTEXT(
-    process_creative_window_limit_with_competitive_creative_case_());
+  NOSTOP_FAIL_CONTEXT(process_creative_window_limit_with_competitive_creative_case_());
 
   // channel frequency caps cases
   NOSTOP_FAIL_CONTEXT(process_window_limit_text_ads_case_(
@@ -205,10 +200,7 @@ FrequencyCapsTest::process_campaign_combined_limits_case_()
   StrVector exp_cc;
   exp_cc.push_back(fetch_string("CC/Cmp-Comb"));
 
-  FAIL_CONTEXT(process_combined_limits_case_(
-    test_client,
-    request,
-    exp_cc));
+  FAIL_CONTEXT(process_combined_limits_case_(test_client, request, exp_cc));
 }
 
 void
@@ -231,8 +223,7 @@ process_creative_window_limit_with_competitive_creative_case_()
   request.tid = fetch_string("Tag/Cc2-Window");
   request.referer_kw = fetch_string("KWD/Cc2-Window");
 
-  FAIL_CONTEXT(process_window_limit_and_competitive_selection_case_(
-    test_client, request));
+  FAIL_CONTEXT(process_window_limit_and_competitive_selection_case_(test_client, request));
 }
 
 void
@@ -263,37 +254,34 @@ FrequencyCapsTest::process_window_limit_simple_case_(
   std::string track_pixel_url;
   std::list<std::string> track_requests;
 
-  if(expected_track_pixel)
+  if (expected_track_pixel)
   {
     request.format(Data::TRACK_PIXEL_CREATIVE_FORMAT);
   }
 
   Generics::Time start_time = time_;
 
-  for(unsigned int i = 0; i < window_limit; ++i)
+  for (unsigned int i = 0; i < window_limit; ++i)
   {
     request.debug_time(time_);
 
     test_client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        nofc_ccids,
-        SelectedCreativesCCID(test_client)).check(),
+      AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
       "unexpected creatives (not full freq caps)");
 
     if (expected_track_pixel)
     {
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !test_client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!test_client.debug_info.track_pixel_url.empty()),
       "must got track_pixel_url");
 
-      if(confirm_imps == FCC_CONFIRM_PREVIOUS_AFTER_NEW)
+      if (confirm_imps == FCC_CONFIRM_PREVIOUS_AFTER_NEW)
       {
         std::string new_track_pixel_url = test_client.debug_info.track_pixel_url;
 
-        if(!track_pixel_url.empty())
+        if (!track_pixel_url.empty())
         {
           // track previous only after new done ad request
           test_client.process_request(track_pixel_url);
@@ -301,7 +289,7 @@ FrequencyCapsTest::process_window_limit_simple_case_(
 
         track_pixel_url = new_track_pixel_url;
       }
-      else if(confirm_imps == FCC_CONFIRM_ALL_AFTER)
+      else if (confirm_imps == FCC_CONFIRM_ALL_AFTER)
       {
         track_requests.push_back(test_client.debug_info.track_pixel_url);
       }
@@ -310,14 +298,13 @@ FrequencyCapsTest::process_window_limit_simple_case_(
     time_ += 1;
   }
 
-  if(!track_pixel_url.empty())
+  if (!track_pixel_url.empty())
   {
     // track previous only after new done ad request
     test_client.process_request(track_pixel_url);
   }
 
-  for(std::list<std::string>::const_iterator tp_it =
-        track_requests.begin();
+  for (std::list<std::string>::const_iterator tp_it = track_requests.begin();
       tp_it != track_requests.end(); ++tp_it)
   {
     test_client.process_request(*tp_it);
@@ -333,9 +320,7 @@ FrequencyCapsTest::process_window_limit_simple_case_(
   print_fcap_ui_(test_client);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      fullfil_fc_ccids,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::sequence_checker(fullfil_fc_ccids, SelectedCreativesCCID(test_client)).check(),
     "unexpected creatives (full freq caps)");
 
   // 3
@@ -346,9 +331,7 @@ FrequencyCapsTest::process_window_limit_simple_case_(
   print_fcap_ui_(test_client);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        nofc_ccids,
-        SelectedCreativesCCID(test_client)).check(),
+      AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
       "unexpected creatives (not full freq caps)");
 
   time_ += window_time + 2;
@@ -377,9 +360,9 @@ FrequencyCapsTest::process_window_limit_confirm_timeout_case_(
 
   request.format(Data::TRACK_PIXEL_CREATIVE_FORMAT);
 
-  for(unsigned int confirm_window_i = 0; confirm_window_i < 2; ++confirm_window_i)
+  for (unsigned int confirm_window_i = 0; confirm_window_i < 2; ++confirm_window_i)
   {
-    for(unsigned int i = 0; i < window_limit; ++i)
+    for (unsigned int i = 0; i < window_limit; ++i)
     {
       request.debug_time(time_);
 
@@ -388,14 +371,11 @@ FrequencyCapsTest::process_window_limit_confirm_timeout_case_(
       print_fcap_ui_(test_client);
 
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          nofc_ccids,
-          SelectedCreativesCCID(test_client)).check(),
+        AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
         "server must return expected creatives");
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        !test_client.debug_info.track_pixel_url.empty()),
+      AutoTest::predicate_checker(!test_client.debug_info.track_pixel_url.empty()),
       "must got track_pixel_url");
     }
 
@@ -454,7 +434,7 @@ void FrequencyCapsTest::process_window_limit_text_ads_case_(
 
   StrVector fullfc_exp_ccids;
   // for Site case no creatives expected
-  if(!noads_if_fc_full)
+  if (!noads_if_fc_full)
   {
     fullfc_exp_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-2"));
     fullfc_exp_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-3"));
@@ -491,7 +471,7 @@ FrequencyCapsTest::process_window_limit_case_(
    *   [time = 2*window_limit]: Run simple scenario without track pixel sending,
    *     for check that previous impressions expired by confirmation timeout
    */
-  if(track_pixel)
+  if (track_pixel)
   {
     add_descr_phrase(std::string(case_name) + " (confirm previous after new sending)");
 
@@ -515,10 +495,7 @@ FrequencyCapsTest::process_window_limit_case_(
 
     add_descr_phrase(std::string(case_name) + " (confirm timeout check)");
 
-    FAIL_CONTEXT(process_window_limit_confirm_timeout_case_(
-      test_client,
-      request,
-      nofc_ccids));
+    FAIL_CONTEXT(process_window_limit_confirm_timeout_case_(test_client, request, nofc_ccids));
   }
   else
   {
@@ -551,8 +528,7 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
   const unsigned long MAX_REQUESTS_AT_FIRST_STEP = 20;
   const unsigned long MAX_REQUESTS_AT_LAST_STEP = 20;
   const Generics::Time window_time(fetch_int(Data::FC_WINDOW_TIME));
-  unsigned long cc1_allowed_showing_number =
-    fetch_int(Data::FC_WINDOW_LIMIT);
+  unsigned long cc1_allowed_showing_number = fetch_int(Data::FC_WINDOW_LIMIT);
 
   StrVector exp1_ccids;
   exp1_ccids.push_back(fetch_string("CC/Cc2-Window-1"));
@@ -570,19 +546,14 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
   {
     test_client.process_request(request);
 
-    if(
-      AutoTest::sequence_checker(
-        exp1_ccids,
-        SelectedCreativesCCID(test_client)).check(false))
+    if (AutoTest::sequence_checker(exp1_ccids, SelectedCreativesCCID(test_client)).check(false))
     {
       --cc1_allowed_showing_number;
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          exp2_ccids,
-          SelectedCreativesCCID(test_client)).check(),
+        AutoTest::sequence_checker(exp2_ccids, SelectedCreativesCCID(test_client)).check(),
         "unexpected creatives (not full freq caps)");
     }
 
@@ -591,8 +562,7 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
   while (cc1_allowed_showing_number && i < MAX_REQUESTS_AT_FIRST_STEP);
 
     FAIL_CONTEXT(
-      AutoTest::predicate_checker(
-        i < MAX_REQUESTS_AT_FIRST_STEP),
+      AutoTest::predicate_checker(i < MAX_REQUESTS_AT_FIRST_STEP),
       "must requests for first creative exceeds");
 
   // step 2
@@ -606,9 +576,7 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
     test_client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        exp2_ccids,
-        SelectedCreativesCCID(test_client)).check(),
+      AutoTest::sequence_checker(exp2_ccids, SelectedCreativesCCID(test_client)).check(),
       "unexpected creatives (full freq caps)");
 
     time_ += ITERATION_DELAY;
@@ -622,19 +590,14 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
   {
     test_client.process_request(request);
 
-    if(
-      AutoTest::sequence_checker(
-        exp1_ccids,
-        SelectedCreativesCCID(test_client)).check(false))
+    if (AutoTest::sequence_checker(exp1_ccids, SelectedCreativesCCID(test_client)).check(false))
     {
       break;
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          exp2_ccids,
-          SelectedCreativesCCID(test_client)).check(),
+        AutoTest::sequence_checker(exp2_ccids, SelectedCreativesCCID(test_client)).check(),
         "unexpected creatives (not full freq caps)");
     }
 
@@ -643,8 +606,7 @@ FrequencyCapsTest::process_window_limit_and_competitive_selection_case_(
   while (cc1_allowed_showing_number && i < MAX_REQUESTS_AT_LAST_STEP);
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      i < MAX_REQUESTS_AT_LAST_STEP),
+    AutoTest::predicate_checker(i < MAX_REQUESTS_AT_LAST_STEP),
     "must requests for first creative at last step exceeds");
 }
 
@@ -665,12 +627,7 @@ FrequencyCapsTest::process_life_count_display_ad_case_(
 
   AdClient client(AdClient::create_user(this));
 
-  FAIL_CONTEXT(process_life_count_case_(
-    client,
-    request,
-    nofc_exp_ccids,
-    StrVector(),
-    track_pixel));
+  FAIL_CONTEXT(process_life_count_case_(client, request, nofc_exp_ccids, StrVector(), track_pixel));
 }
 
 void
@@ -692,14 +649,14 @@ FrequencyCapsTest::process_life_count_text_ads_case_(
   nofc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-3"));
 
   StrVector fullfil_fc_ccids;
-  if(!noads_if_fc_full)
+  if (!noads_if_fc_full)
   {
     fullfil_fc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-2"));
     fullfil_fc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-3"));
     fullfil_fc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-4"));
   }
 
-  if(track_pixel)
+  if (track_pixel)
   {
     {
       AdClient client(AdClient::create_user(this));
@@ -755,8 +712,7 @@ FrequencyCapsTest::process_life_count_text_ads_case_(
         referer_kw(fetch_string(std::string("KWD/") + entities_name)).
         debug_time(time_));
 
-    FAIL_CONTEXT(process_life_count_case_(
-      client, request, nofc_ccids, fullfil_fc_ccids));
+    FAIL_CONTEXT(process_life_count_case_(client, request, nofc_ccids, fullfil_fc_ccids));
   }
 }
 
@@ -779,7 +735,7 @@ FrequencyCapsTest::process_life_count_case_(
   const unsigned int life_count = fetch_int(Data::FC_LIFE_LIMIT);
   std::string track_pixel_url;
 
-  if(track_pixel)
+  if (track_pixel)
   {
     request.format(Data::TRACK_PIXEL_CREATIVE_FORMAT);
   }
@@ -792,19 +748,16 @@ FrequencyCapsTest::process_life_count_case_(
     test_client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        nofc_ccids,
-        SelectedCreativesCCID(test_client)).check(),
+      AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
       "unexpected creatives (not full freq caps)");
 
     if (track_pixel)
     {
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          !test_client.debug_info.track_pixel_url.empty()),
+        AutoTest::predicate_checker(!test_client.debug_info.track_pixel_url.empty()),
         "must got track_pixel_url");
 
-      if(!track_pixel_url.empty())
+      if (!track_pixel_url.empty())
       {
         test_client.process_request(track_pixel_url);
       }
@@ -818,16 +771,12 @@ FrequencyCapsTest::process_life_count_case_(
   test_client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      fullfil_fc_ccids,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::sequence_checker(fullfil_fc_ccids, SelectedCreativesCCID(test_client)).check(),
     "unexpected creatives (full freq caps)");
 }
 
 void
-FrequencyCapsTest::process_period_display_ad_case_(
-  const char* case_name,
-  const char* entities_name)
+FrequencyCapsTest::process_period_display_ad_case_(const char* case_name, const char* entities_name)
 {
   add_descr_phrase(case_name);
 
@@ -866,7 +815,7 @@ FrequencyCapsTest::process_period_text_ads_case_(
   nofc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-3"));
 
   StrVector fullfil_fc_ccids;
-  if(!noads_if_fc_full)
+  if (!noads_if_fc_full)
   {
     fullfil_fc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-2"));
     fullfil_fc_ccids.push_back(fetch_string(std::string("CC/") + entities_name + "-3"));
@@ -880,8 +829,7 @@ FrequencyCapsTest::process_period_text_ads_case_(
       referer_kw(fetch_string(std::string("KWD/") + entities_name)).
       debug_time(time_));
 
-  FAIL_CONTEXT(process_period_case_(
-    client, request, nofc_ccids, fullfil_fc_ccids));
+  FAIL_CONTEXT(process_period_case_(client, request, nofc_ccids, fullfil_fc_ccids));
 }
 
 void
@@ -906,23 +854,19 @@ FrequencyCapsTest::process_period_case_(
   test_client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      nofc_ccids,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
     "unexpected creatives (not full freq caps)");
 
   Generics::Time start_time = time_;
 
-  while(time_ - start_time < period)
+  while (time_ - start_time < period)
   {
     request.debug_time(time_);
 
     test_client.process_request(request);
 
     FAIL_CONTEXT(
-      AutoTest::sequence_checker(
-        fullfil_fc_ccids,
-        SelectedCreativesCCID(test_client)).check(),
+      AutoTest::sequence_checker(fullfil_fc_ccids, SelectedCreativesCCID(test_client)).check(),
       "unexpected creatives (full freq caps)");
 
     time_ += ITERATION_DELAY;
@@ -933,9 +877,7 @@ FrequencyCapsTest::process_period_case_(
   test_client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      nofc_ccids,
-      SelectedCreativesCCID(test_client)).check(),
+    AutoTest::sequence_checker(nofc_ccids, SelectedCreativesCCID(test_client)).check(),
     "unexpected creatives (not full freq caps)");
 }
 
@@ -971,27 +913,23 @@ FrequencyCapsTest::process_combined_limits_case_(
 
   Generics::Time start_time = time_;
 
-  for(unsigned int i = 0; i < sizeof(ETALON) / sizeof(ETALON[0]); ++i)
+  for (unsigned int i = 0; i < sizeof(ETALON) / sizeof(ETALON[0]); ++i)
   {
     time_ = start_time + ETALON[i].time;
     request.debug_time(time_);
 
     test_client.process_request(request);
 
-    if(ETALON[i].ad_expected)
+    if (ETALON[i].ad_expected)
     {
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          cc_id,
-          SelectedCreativesCCID(test_client)).check(),
+        AutoTest::sequence_checker(cc_id, SelectedCreativesCCID(test_client)).check(),
         std::string("server must return expected creatives at step #") + strof(i));
     }
     else
     {
       FAIL_CONTEXT(
-        AutoTest::sequence_checker(
-          StrVector(),
-          SelectedCreativesCCID(test_client)).check(),
+        AutoTest::sequence_checker(StrVector(), SelectedCreativesCCID(test_client)).check(),
         std::string("server mustn't return creatives at step #") + strof(i));
     }
   }

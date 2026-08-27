@@ -17,11 +17,11 @@ sub create_channnel_text_ccg
 
   my @site_links = ();
   foreach my $publisher (@$publishers) {
-    push(@site_links, 
+    push(@site_links,
          {site_id => $publisher->{site_id}});
   }
-  my $campaign = 
-    $ns->create(ChannelTargetedTACampaign => { 
+  my $campaign =
+    $ns->create(ChannelTargetedTACampaign => {
       name => "Channel" . $index,
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -29,8 +29,8 @@ sub create_channnel_text_ccg
       campaigncreativegroup_cpm => $cpm,
       site_links => \@site_links });
 
-  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank( 
-     channel_id => $campaign->{channel_id},  
+  $ns->create(DB::BehavioralChannel::BehavioralParameter->blank(
+     channel_id => $campaign->{channel_id},
      trigger_type => "P" ));
 
   $ns->output("CHANNELKEYWORD" .$index, $keyword);
@@ -43,8 +43,8 @@ sub create_keyword_text_ccg {
   my ($self, $ns, $index, $size, $publisher, $account, $cpc_bid) = @_;
 
   my $keyword = make_autotest_name($ns, "Keyword" . $index);
-  my $campaign = 
-    $ns->create(TextAdvertisingCampaign => { 
+  my $campaign =
+    $ns->create(TextAdvertisingCampaign => {
       name => "Keyword" . $index,
       size_id => $size,
       template_id =>  DB::Defaults::instance()->text_template,
@@ -63,7 +63,7 @@ sub init {
   my ($self, $ns) = @_;
   # Remove this comment and insert your code here
 
-  my $size = $ns->create(CreativeSize => { 
+  my $size = $ns->create(CreativeSize => {
     name => "Size",
     max_text_creatives => 3 });
 
@@ -83,34 +83,34 @@ sub init {
   my $index = 0;
   foreach my $cpm (10, 9, 8, 7) {
     $self->create_channnel_text_ccg(
-      $ns, ++$index, $size, 
-      [$publisher_simple, 
-       $publisher_no_margin], 
+      $ns, ++$index, $size,
+      [$publisher_simple,
+       $publisher_no_margin],
       $cpm);
   }
 
   my @campaigns = ();
   foreach my $cpm (11.12, 9) {
     push (
-      @campaigns, 
+      @campaigns,
       $self->create_channnel_text_ccg(
-        $ns, ++$index, $size, 
+        $ns, ++$index, $size,
         [$publisher_simple], $cpm));
-    
+
   }
 
   $index = 0;
   foreach my $cpc_bid (0.09, 0.12) {
     $self->create_keyword_text_ccg(
-      $ns, ++$index, $size, 
-      $publisher_simple, 
+      $ns, ++$index, $size,
+      $publisher_simple,
       $campaigns[$index-1]->{account_id},
       $cpc_bid);
   }
 
   $ns->output("TAGSIMPLE", $publisher_simple->{tag_id});
   $ns->output("TAGNOMARGIN", $publisher_no_margin->{tag_id});
-  $ns->output("COLONOMARGIN", 
+  $ns->output("COLONOMARGIN",
     DB::Defaults::instance()->no_margin_isp->{colo_id});
 
   # Expected click & impressions revenue

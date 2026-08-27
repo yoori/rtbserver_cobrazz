@@ -44,7 +44,7 @@ sub init_case_
 
   $ns->output("ChannelId", $channel->channel_id());
 
-  if(defined($with_ad))
+  if (defined($with_ad))
   {
 
     my $publisher = $ns->create(Publisher => {
@@ -59,7 +59,7 @@ sub init_case_
     $ns->output("CC", $campaign->{cc_id});
   }
 
-  if(defined($colo_id))
+  if (defined($colo_id))
   {
     $ns->output("Colo", $colo_id);
   }
@@ -209,7 +209,7 @@ sub init
 
   $self->init_case_($ns, 'NoTid', undef, undef);
 
-  $self->init_case_($ns, 'WithAd', 1, 
+  $self->init_case_($ns, 'WithAd', 1,
     DB::Defaults::instance()->ads_isp->{colo_id});
 
   $self->url_keyword_($ns);

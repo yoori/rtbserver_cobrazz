@@ -1,14 +1,12 @@
 #include "WorkerStatsObject.hpp"
 
-namespace AdServer
+namespace AdServer::Frontends::Aspect
 {
-namespace Frontends
-{
-  namespace Aspect
-  {
-    const char WORKER[] = "FCGI::Worker";
-  }
+  const char WORKER[] = "FCGI::Worker";
+}
 
+namespace AdServer::Frontends
+{
   const Generics::Time WorkerStatsObject::STATS_TIMEOUT(5l);  // 5 seconds
 
   // WorkerStatsObject impl
@@ -27,7 +25,7 @@ namespace Frontends
   void
   WorkerStatsObject::work_() noexcept
   {
-    while(active())
+    while (active())
     {
       Stream::Error ostr;
 
@@ -50,8 +48,7 @@ namespace Frontends
           "current use: " << use_workers_count <<
           ", free: " << free_workers_count <<
           ", max: : " << workers_max <<
-          ", last " << STATS_TIMEOUT.tv_sec <<
-          " seconds max: " << workers_interval_max;
+          ", last " << STATS_TIMEOUT.tv_sec << " seconds max: " << workers_interval_max;
       }
 
       logger_->info(ostr.str(), Aspect::WORKER);
@@ -103,12 +100,12 @@ namespace Frontends
   void
   WorkerStatsObject::eval_max_workers_i_()
   {
-    if(free_workers_count_ + use_workers_count_ > workers_interval_max_)
+    if (free_workers_count_ + use_workers_count_ > workers_interval_max_)
     {
       workers_interval_max_ = free_workers_count_ + use_workers_count_;
     }
 
-    if(free_workers_count_ + use_workers_count_ > workers_max_)
+    if (free_workers_count_ + use_workers_count_ > workers_max_)
     {
       workers_max_ = free_workers_count_ + use_workers_count_;
     }
@@ -116,5 +113,4 @@ namespace Frontends
 
   WorkerStatsObject::~WorkerStatsObject() noexcept
   {}
-}
 }

@@ -30,10 +30,9 @@ namespace AdServer::Tests::Frontends
   {
     char* end = nullptr;
     const unsigned long long parsed = std::strtoull(value, &end, 10);
-    if(end == value || *end != '\0' || parsed == 0)
+    if (end == value || *end != '\0' || parsed == 0)
     {
-      throw std::runtime_error(
-        std::string(option_name) + " must be positive integer");
+      throw std::runtime_error(std::string(option_name) + " must be positive integer");
     }
     return parsed;
   }
@@ -41,13 +40,13 @@ namespace AdServer::Tests::Frontends
   inline std::string
   read_request_body(const std::string& file_path)
   {
-    if(file_path.empty())
+    if (file_path.empty())
     {
       return std::string(OPENRTB_REQUEST);
     }
 
     std::ifstream file(file_path, std::ios::binary);
-    if(!file)
+    if (!file)
     {
       throw std::runtime_error("can't open request file '" + file_path + "'");
     }
@@ -61,7 +60,7 @@ namespace AdServer::Tests::Frontends
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }

@@ -17,7 +17,7 @@ class BindOutput:
     self.finArgs = finArgs
     self.thread = Thread(None, self._run, '%s' % self.name)
     self.thread.start()
-    
+
   def _run( self ):
     try:
       while 1:
@@ -63,7 +63,7 @@ class Process:
       self.err = BindOutput(self.name, self.proc.stderr, self._error)
     except:
       logException(1)
-      
+
 
   # will block until process finishes
   def _close( self ):
@@ -72,7 +72,7 @@ class Process:
 
   def _output( self, line ):
     log(5, '%s: %s' % (self.name, line))
- 
+
   def _error( self, line ):
     log(1, '%s: [ERROR] %s' % (self.name, line))
 

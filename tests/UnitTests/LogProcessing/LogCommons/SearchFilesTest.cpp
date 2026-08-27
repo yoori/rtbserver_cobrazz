@@ -177,8 +177,7 @@ test_parser()
   LogFileNameInfo file_name_info;
 
   std::cout << "Check positive tests" << std::endl;
-  for (std::size_t i = 0;
-    i < sizeof(valid_names) / sizeof(valid_names[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(valid_names) / sizeof(valid_names[0]); ++i)
   {
     try
     {
@@ -186,13 +185,11 @@ test_parser()
     }
     catch (const InvalidLogFileNameFormat&)
     {
-      std::cerr << "Failed to parse a valid file name '"
-                << valid_names[i] << "'" << std::endl;
+      std::cerr << "Failed to parse a valid file name '" << valid_names[i] << "'" << std::endl;
     }
   }
   std::cout << "Check negative tests" << std::endl;
-  for (std::size_t i = 0;
-    i < sizeof(invalid_names) / sizeof(invalid_names[0]); ++i)
+  for (std::size_t i = 0; i < sizeof(invalid_names) / sizeof(invalid_names[0]); ++i)
   {
     bool fails = false;
     try
@@ -202,9 +199,9 @@ test_parser()
     catch (const InvalidLogFileNameFormat&)
     {
       fails = true;
-      std::cout << "File name '" << invalid_names[i] << "' is invalid"
-        << std::endl;
+      std::cout << "File name '" << invalid_names[i] << "' is invalid" << std::endl;
     }
+
     if (!fails)
     {
       std::cerr << "Parsed bad name: " << invalid_names[i] << std::endl;
@@ -216,8 +213,7 @@ FileReceiver_var
 make_receiver(size_t max_files_to_store) noexcept
 {
   return FileReceiver_var(
-    new FileReceiver((working_folder+"Intermediate").c_str(),
-      max_files_to_store, 0, 0));
+    new FileReceiver((working_folder+"Intermediate").c_str(), max_files_to_store, 0, 0));
 }
 
 int
@@ -233,16 +229,14 @@ run_test(unsigned long files_number)
 
   try
   {
-    Logging::Logger_var logger(
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
+    Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr)));
     logger->log_level(TraceLevel::MIDDLE);
 
     std::ostringstream cmd;
     cmd << "rm -rf " << working_folder << "; mkdir -p "
       << working_folder << "/Intermediate" << " && for i in {10000000.."
       << 10000000 + files_number - 1 <<
-      "} ; do touch " << working_folder
-      << "ColoUpdateStat.log_1.1_20101120.1290285094.$i ; done";
+      "} ; do touch " << working_folder << "ColoUpdateStat.log_1.1_20101120.1290285094.$i ; done";
 
     std::cout << TEST_NAME << ": " << Generics::Time::get_time_of_day() <<
       ": To create files ..." << std::endl;
@@ -274,11 +268,10 @@ run_test(unsigned long files_number)
       ": Files fetched: elapsed time = " << timer.elapsed_time() <<
       ", elapsed cpu time = " << cpu_timer.elapsed_time() << std::endl;
 
-    if(counter != files_number)
+    if (counter != files_number)
     {
       std::cerr << TEST_NAME << ": fetched "
-        << counter << " files instead "
-        << files_number << std::endl;
+        << counter << " files instead " << files_number << std::endl;
       return 1;
     }
     return 0;
@@ -304,8 +297,7 @@ main(int argc, char* argv[]) noexcept
       return 0;
     }
     working_folder = *root_path + CHECK_ROOT;
-    system(
-      ("rm -rf " + working_folder + "; mkdir -p " + working_folder).c_str());
+    system(("rm -rf " + working_folder + "; mkdir -p " + working_folder).c_str());
 
     prepare_test_cases();
     direct_test();

@@ -32,18 +32,18 @@ sub process
   my $value = $row->[$self->{field_}];
   my $label = ($row->[$self->{label_}] ne '0' ? 1 : undef);
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     foreach my $sub_val(@$value)
     {
-      if(!exists($self->{values_}->{$sub_val}))
+      if (!exists($self->{values_}->{$sub_val}))
       {
         $self->{values_}->{$sub_val} = Value->new(labels => 0, total => 0);
       }
 
       my $val_ref = $self->{values_}->{$sub_val};
       $val_ref->total($val_ref->total() + 1);
-      if($label)
+      if ($label)
       {
         $val_ref->labels($val_ref->labels() + 1);
       }
@@ -51,14 +51,14 @@ sub process
   }
   else
   {
-    if(!exists($self->{values_}->{$value}))
+    if (!exists($self->{values_}->{$value}))
     {
       $self->{values_}->{$value} = Value->new(labels => 0, total => 0);
     }
 
     my $val_ref = $self->{values_}->{$value};
     $val_ref->total($val_ref->total() + 1);
-    if($label)
+    if ($label)
     {
       $val_ref->labels($val_ref->labels() + 1);
     }
@@ -79,7 +79,7 @@ sub flush
   {
     my $value = $self->{values_}->{$key};
     $value->value($key);
-    if(defined($self->{min_total_}) && $value->total() < $self->{min_total_})
+    if (defined($self->{min_total_}) && $value->total() < $self->{min_total_})
     {
       $value->rate(-1.0);
       push(@und_res, $value);
@@ -97,7 +97,7 @@ sub flush
 
   @res = sort {$a->rate() <=> $b->rate()} @res;
 
-  if(!defined($self->{divs_}))
+  if (!defined($self->{divs_}))
   {
     foreach my $res_val(@und_res)
     {
@@ -124,9 +124,9 @@ sub flush
     my $prev_rate = -1;
     my $next_total = $full_total / $self->{divs_};
 
-    for(my $i = 1; $i <= $self->{divs_}; ++$i)
+    for (my $i = 1; $i <= $self->{divs_}; ++$i)
     {
-      while($arr_i < scalar(@res) && (
+      while ($arr_i < scalar(@res) && (
         $cur_total < $next_total || $res[$arr_i]->rate() != $prev_rate))
       {
         my @res_row;

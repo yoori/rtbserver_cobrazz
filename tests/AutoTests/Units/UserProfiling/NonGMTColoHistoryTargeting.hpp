@@ -26,10 +26,7 @@ public:
   };
 
 public:
-  NonGMTColoHistoryTargeting(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  NonGMTColoHistoryTargeting(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -44,9 +41,7 @@ private:
 
   // Utils
   Generics::Time
-  get_time(
-    GMTvsTZEnum date_type,
-    const AutoTest::Time& time);
+  get_time(GMTvsTZEnum date_type, const AutoTest::Time& time);
 
   void check(
     const std::string& description,

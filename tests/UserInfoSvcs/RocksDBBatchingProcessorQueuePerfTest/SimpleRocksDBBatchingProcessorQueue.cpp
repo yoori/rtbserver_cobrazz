@@ -46,8 +46,7 @@ namespace AdServer::ProfilingCommons::Test
       auto current = it++;
       current->enqueue_time = now;
       account_operation_(result.counts, current->type);
-      Operations& target = is_write_operation(current->type) ?
-        write_operations_ : read_operations_;
+      Operations& target = is_write_operation(current->type) ? write_operations_ : read_operations_;
       target.splice(target.end(), operations, current);
       ++operation_count;
     }

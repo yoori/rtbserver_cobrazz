@@ -65,9 +65,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<RequestKeywordProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* requestid
-      )
+      void make_cmd (const char* address, const char* requestid)
       {
         address_ = address;
         AdminParams params;
@@ -77,31 +75,19 @@ namespace AutoTest
         make_admin_cmd(*this, "print-request-keyword-match", address, params, static_cast<size_t>(RequestInfoManager));
         add_cmd_i("--align");
       }
-      RequestKeywordProfileAdmin(
-        const char* address,
-        const char* requestid
-      )
+      RequestKeywordProfileAdmin(const char* address, const char* requestid)
       {
         make_cmd(address, requestid);
       }
-      RequestKeywordProfileAdmin(
-        const std::string& address,
-        const char* requestid
-      )
+      RequestKeywordProfileAdmin(const std::string& address, const char* requestid)
       {
         make_cmd(address.c_str(), requestid);
       }
-      RequestKeywordProfileAdmin(
-        const char* address,
-        const std::string& requestid
-      )
+      RequestKeywordProfileAdmin(const char* address, const std::string& requestid)
       {
         make_cmd(address, requestid.c_str());
       }
-      RequestKeywordProfileAdmin(
-        const std::string& address,
-        const std::string& requestid
-      )
+      RequestKeywordProfileAdmin(const std::string& address, const std::string& requestid)
       {
         make_cmd(address.c_str(), requestid.c_str());
       }

@@ -651,8 +651,7 @@ namespace AdServer::CampaignSvcs
       char operation)
       /*throw(Exception)*/;
 
-    void process_web_operation(
-      const WebOperationInfo& web_op_info)
+    void process_web_operation(const WebOperationInfo& web_op_info)
       /*throw(Exception)*/;
 
     void process_passback(const PassbackInfo& passback_info)
@@ -662,8 +661,7 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/;
 
     void
-    process_anon_request(
-      const AnonymousRequestInfo& anon_request_info)
+    process_anon_request(const AnonymousRequestInfo& anon_request_info)
       /*throw(Exception)*/;
 
     void

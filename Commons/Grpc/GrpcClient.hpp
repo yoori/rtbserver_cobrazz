@@ -145,9 +145,7 @@ namespace AdServer::Grpc
 
     void add_queue_timeout_stats() noexcept;
 
-    void add_response_wait_stats(
-      std::uint64_t wait_us,
-      std::uint64_t count = 1) noexcept;
+    void add_response_wait_stats(std::uint64_t wait_us, std::uint64_t count = 1) noexcept;
 
     void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
 
@@ -162,9 +160,7 @@ namespace AdServer::Grpc
   private:
     Stats own_stats_() const noexcept;
 
-    static void update_max_(
-      std::atomic<std::uint64_t>& value,
-      std::uint64_t candidate) noexcept;
+    static void update_max_(std::atomic<std::uint64_t>& value, std::uint64_t candidate) noexcept;
 
     std::atomic<std::uint64_t> write_batches_{0};
     std::atomic<std::uint64_t> write_items_{0};
@@ -220,11 +216,9 @@ namespace AdServer::Grpc
       stream_shrink_period(Generics::Time::ONE_SECOND)
   {}
 
-  inline constexpr const char QUEUE_WAIT_TIMEOUT_STATUS[] =
-    "queue wait timeout";
+  inline constexpr const char QUEUE_WAIT_TIMEOUT_STATUS[] = "queue wait timeout";
 
-  inline constexpr const char NO_ACTIVE_BATCHING_STREAMS_MESSAGE[] =
-    "no active batching streams";
+  inline constexpr const char NO_ACTIVE_BATCHING_STREAMS_MESSAGE[] = "no active batching streams";
 
   inline bool
   is_queue_wait_timeout(const grpc::Status& status)
@@ -270,17 +264,14 @@ namespace AdServer::Grpc
   merge_last_error(Stats& result, const Stats& source) noexcept
   {
     if (source.last_error.has_value() &&
-      (!result.last_error.has_value() ||
-        result.last_error->time < source.last_error->time))
+      (!result.last_error.has_value() || result.last_error->time < source.last_error->time))
     {
       result.last_error = source.last_error;
     }
   }
 
   inline std::string
-  message_with_endpoint(
-    std::string message,
-    const std::string& endpoint)
+  message_with_endpoint(std::string message, const std::string& endpoint)
   {
     if (endpoint.empty() || message.find("[grpc_endpoint=") != std::string::npos)
     {
@@ -298,9 +289,7 @@ namespace AdServer::Grpc
   }
 
   inline grpc::Status
-  status_with_endpoint(
-    const grpc::Status& status,
-    const std::string& endpoint)
+  status_with_endpoint(const grpc::Status& status, const std::string& endpoint)
   {
     if (status.ok() || endpoint.empty())
     {
@@ -337,9 +326,7 @@ namespace AdServer::Grpc
     stats_owner_->completed_items_.fetch_add(1, std::memory_order_relaxed);
     if (error)
     {
-      stats_owner_->completed_error_items_.fetch_add(
-        1,
-        std::memory_order_relaxed);
+      stats_owner_->completed_error_items_.fetch_add(1, std::memory_order_relaxed);
     }
   }
 
@@ -350,18 +337,14 @@ namespace AdServer::Grpc
   }
 
   inline void
-  Client::add_write_stats(
-    std::uint64_t batches,
-    std::uint64_t items) noexcept
+  Client::add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept
   {
     stats_owner_->write_batches_.fetch_add(batches, std::memory_order_relaxed);
     stats_owner_->write_items_.fetch_add(items, std::memory_order_relaxed);
   }
 
   inline void
-  Client::add_read_stats(
-    std::uint64_t batches,
-    std::uint64_t items) noexcept
+  Client::add_read_stats(std::uint64_t batches, std::uint64_t items) noexcept
   {
     stats_owner_->read_batches_.fetch_add(batches, std::memory_order_relaxed);
     stats_owner_->read_items_.fetch_add(items, std::memory_order_relaxed);
@@ -382,9 +365,7 @@ namespace AdServer::Grpc
   }
 
   inline void
-  Client::add_response_wait_stats(
-    std::uint64_t wait_us,
-    std::uint64_t count) noexcept
+  Client::add_response_wait_stats(std::uint64_t wait_us, std::uint64_t count) noexcept
   {
     stats_owner_->response_wait_count_.fetch_add(count, std::memory_order_relaxed);
     stats_owner_->response_wait_sum_us_.fetch_add(wait_us * count, std::memory_order_relaxed);
@@ -403,9 +384,7 @@ namespace AdServer::Grpc
   inline void
   Client::add_timing_coalesce_stats(std::uint64_t items) noexcept
   {
-    stats_owner_->timing_coalesce_items_.fetch_add(
-      items,
-      std::memory_order_relaxed);
+    stats_owner_->timing_coalesce_items_.fetch_add(items, std::memory_order_relaxed);
   }
 
   inline void
@@ -445,8 +424,7 @@ namespace AdServer::Grpc
     stats.read_items = read_items_.load(std::memory_order_relaxed);
     stats.input_items = input_items_.load(std::memory_order_relaxed);
     stats.completed_items = completed_items_.load(std::memory_order_relaxed);
-    stats.completed_error_items =
-      completed_error_items_.load(std::memory_order_relaxed);
+    stats.completed_error_items = completed_error_items_.load(std::memory_order_relaxed);
     stats.queue_wait_count = queue_wait_count_.load(std::memory_order_relaxed);
     stats.queue_wait_sum_us = queue_wait_sum_us_.load(std::memory_order_relaxed);
     stats.queue_wait_max_us = queue_wait_max_us_.load(std::memory_order_relaxed);
@@ -454,8 +432,7 @@ namespace AdServer::Grpc
     stats.response_wait_count = response_wait_count_.load(std::memory_order_relaxed);
     stats.response_wait_sum_us = response_wait_sum_us_.load(std::memory_order_relaxed);
     stats.response_wait_max_us = response_wait_max_us_.load(std::memory_order_relaxed);
-    stats.timing_coalesce_items =
-      timing_coalesce_items_.load(std::memory_order_relaxed);
+    stats.timing_coalesce_items = timing_coalesce_items_.load(std::memory_order_relaxed);
     if (consumer_stream_write_enabled_.load(std::memory_order_relaxed))
     {
       stats.consumer_stream_write = Stats::ConsumerStreamWrite{
@@ -472,16 +449,11 @@ namespace AdServer::Grpc
   }
 
   inline void
-  Client::update_max_(
-    std::atomic<std::uint64_t>& value,
-    std::uint64_t candidate) noexcept
+  Client::update_max_(std::atomic<std::uint64_t>& value, std::uint64_t candidate) noexcept
   {
     auto current = value.load(std::memory_order_relaxed);
     while (current < candidate &&
-      !value.compare_exchange_weak(
-        current,
-        candidate,
-        std::memory_order_relaxed))
+      !value.compare_exchange_weak(current, candidate, std::memory_order_relaxed))
     {}
   }
 
@@ -596,10 +568,7 @@ namespace AdServer::Grpc
     }
 
     template<typename Request, typename Response, typename Callback, typename Rpc>
-    void call(
-      const Request& request,
-      Callback callback,
-      Rpc&& rpc)
+    void call(const Request& request, Callback callback, Rpc&& rpc)
     {
       grpc::ClientContext context;
       Response response;
@@ -674,8 +643,7 @@ namespace AdServer::Grpc
           bool ok = false;
           while (cq->Next(&tag, &ok))
           {
-            std::unique_ptr<CompletionTag> completion_tag(
-              static_cast<CompletionTag*>(tag));
+            std::unique_ptr<CompletionTag> completion_tag(static_cast<CompletionTag*>(tag));
             completion_tag->complete(ok);
           }
         });
@@ -696,10 +664,7 @@ namespace AdServer::Grpc
     }
 
     template<typename Request, typename Response, typename Callback, typename PrepareRpc>
-    void call(
-      const Request& request,
-      Callback callback,
-      PrepareRpc&& prepare_rpc)
+    void call(const Request& request, Callback callback, PrepareRpc&& prepare_rpc)
     {
       limiter_.acquire();
       auto call = std::make_unique<Call<Response, Callback>>();
@@ -710,11 +675,7 @@ namespace AdServer::Grpc
 
       call->callback = std::move(callback);
       call->on_complete = [this]() { limiter_.release(); };
-      call->rpc = prepare_rpc(
-        choose_stub_(),
-        &call->context,
-        request,
-        &choose_completion_queue_());
+      call->rpc = prepare_rpc(choose_stub_(), &call->context, request, &choose_completion_queue_());
       call->rpc->StartCall();
       call->rpc->Finish(&call->response, &call->status, call.get());
       add_write_stats(1, 1);
@@ -746,17 +707,13 @@ namespace AdServer::Grpc
           {
             callback(
               status,
-              AdServer::Grpc::ResponseHolder<Response>::make_value(
-                std::move(response)));
+              AdServer::Grpc::ResponseHolder<Response>::make_value(std::move(response)));
           }
           else
           {
             callback(
-              grpc::Status(
-                grpc::StatusCode::UNKNOWN,
-                "completion queue event failed"),
-              AdServer::Grpc::ResponseHolder<Response>::make_value(
-                Response()));
+              grpc::Status(grpc::StatusCode::UNKNOWN, "completion queue event failed"),
+              AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
           }
         }
 
@@ -777,8 +734,7 @@ namespace AdServer::Grpc
     grpc::CompletionQueue& choose_completion_queue_()
     {
       const auto size = completion_queues_.size();
-      const auto idx =
-        next_completion_queue_.fetch_add(1, std::memory_order_relaxed) % size;
+      const auto idx = next_completion_queue_.fetch_add(1, std::memory_order_relaxed) % size;
       return *completion_queues_[idx];
     }
 

@@ -61,7 +61,7 @@ sub init
       DB::Defaults::instance()->no_margin_internal_account,
     pricedtag_cpm => 0 });
 
-  $ns->output("NoMarginColo", 
+  $ns->output("NoMarginColo",
      DB::Defaults::instance()->no_margin_isp->{colo_id});
 
   my $tag3 = $ns->create(PricedTag => {
@@ -118,7 +118,7 @@ sub init
     original_keyword => $keyword1,
     max_cpc_bid => (0.11*$tag_cpm1),
     site_links => [
-      {site_id => $publisher1->{site_id}}, 
+      {site_id => $publisher1->{site_id}},
       {site_id => $publisher2->{site_id}},
       {site_id => $publisherNoMargin->{site_id}}] });
 
@@ -133,7 +133,7 @@ sub init
     original_keyword => $keyword3,
     max_cpc_bid => (0.09*$tag_cpm1),
     site_links => [
-      {site_id => $publisher1->{site_id}}, 
+      {site_id => $publisher1->{site_id}},
       {site_id => $publisher2->{site_id}},
       {site_id => $publisherNoMargin->{site_id}}] });
 
@@ -165,7 +165,7 @@ sub init
       {site_id => $publisher1->{site_id}},
       {site_id => $publisherNoMargin->{site_id}}] });
 
-  $ns->create(CCGKeyword => { 
+  $ns->create(CCGKeyword => {
     ccg_id => $campaign5->{ccg_id},
     channel_id => $ccg_keyword4_2->{channel_id},
     original_keyword => $keyword4,
@@ -189,7 +189,7 @@ sub init
   my $flags = DB::Campaign::INCLUDE_SPECIFIC_SITES;
 
   # Display company
-  my $display_campaign = $ns->create(DisplayCampaign => { 
+  my $display_campaign = $ns->create(DisplayCampaign => {
     name => "DisplayCampaign",
     account_id => $campaign1->{account_id},
     channel_id => $ccg_keyword4_3->{channel_id},
@@ -260,7 +260,7 @@ sub init
 
   $ns->output("CC06_1", $campaign6_1->{cc_id});
 
-  my $campaign6_2 = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign6_2 = $ns->create(TextAdvertisingCampaign => {
     name => "6-2",
     size_id => $size_id3,
     template_id => DB::Defaults::instance()->text_template,
@@ -273,10 +273,10 @@ sub init
     site_links => [
       {site_id => $publisher1->{site_id}},
       {site_id => $publisherNoMargin->{site_id}}] });
-  
+
   $ns->output("CC06_2", $campaign6_2->{cc_id});
 
-  my $campaign6_3 = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign6_3 = $ns->create(TextAdvertisingCampaign => {
     name => "6-3",
     size_id => $size_id3,
     template_id => DB::Defaults::instance()->text_template,
@@ -291,7 +291,7 @@ sub init
   $ns->output("CC06_3", $campaign6_3->{cc_id});
 
   # Filtering by account (O) case
-  my $campaign7_1 = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign7_1 = $ns->create(TextAdvertisingCampaign => {
     name => "7-1",
     size_id => $size_id3,
     template_id => DB::Defaults::instance()->text_template,
@@ -304,7 +304,7 @@ sub init
 
   $ns->output("CC07_1", $campaign7_1->{cc_id});
 
-  my $campaign7_2 = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign7_2 = $ns->create(TextAdvertisingCampaign => {
     name => "7-2",
     size_id => $size_id3,
     template_id => DB::Defaults::instance()->text_template,
@@ -318,7 +318,7 @@ sub init
 
   $ns->output("CC07_2", $campaign7_2->{cc_id});
 
-  my $campaign7_3 = $ns->create(TextAdvertisingCampaign => { 
+  my $campaign7_3 = $ns->create(TextAdvertisingCampaign => {
     name => "7-3",
     size_id => $size_id3,
     template_id => DB::Defaults::instance()->text_template,

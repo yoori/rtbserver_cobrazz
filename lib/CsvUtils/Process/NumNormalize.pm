@@ -14,7 +14,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::Columns: incorrect column index: $index";
     }
@@ -44,21 +44,21 @@ sub process
     $value =~ s/\s+//g;
     $value =~ s/,/./;
 
-    if($value ne '')
+    if ($value ne '')
     {
-      if(looks_like_number($value))
+      if (looks_like_number($value))
       {
         $value = sprintf('%.' . $self->{precision_} . 'f', $value);
       }
 
       $value =~ s/^0+//;
-      if($value =~ m/[.]/)
+      if ($value =~ m/[.]/)
       {
         $value =~ s/0+$//;
         $value =~ s/[.]$//;
       }
 
-      if($value eq '' || $value eq '.')
+      if ($value eq '' || $value eq '.')
       {
         $value = '0';
       }
@@ -66,7 +66,7 @@ sub process
       $value =~ s/^[.]/0./;
     }
 
-    if(looks_like_number($value))
+    if (looks_like_number($value))
     {
       $row->[$index] = $value;
     }

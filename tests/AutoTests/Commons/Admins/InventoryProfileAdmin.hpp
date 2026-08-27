@@ -35,9 +35,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<InventoryProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uid
-      )
+      void make_cmd (const char* address, const char* uid)
       {
         address_ = address;
         AdminParams params;
@@ -47,31 +45,19 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "print", address, params, static_cast<size_t>(ExpressionMatcher));
       }
-      InventoryProfileAdmin(
-        const char* address,
-        const char* uid
-      )
+      InventoryProfileAdmin(const char* address, const char* uid)
       {
         make_cmd(address, uid);
       }
-      InventoryProfileAdmin(
-        const std::string& address,
-        const char* uid
-      )
+      InventoryProfileAdmin(const std::string& address, const char* uid)
       {
         make_cmd(address.c_str(), uid);
       }
-      InventoryProfileAdmin(
-        const char* address,
-        const std::string& uid
-      )
+      InventoryProfileAdmin(const char* address, const std::string& uid)
       {
         make_cmd(address, uid.c_str());
       }
-      InventoryProfileAdmin(
-        const std::string& address,
-        const std::string& uid
-      )
+      InventoryProfileAdmin(const std::string& address, const std::string& uid)
       {
         make_cmd(address.c_str(), uid.c_str());
       }

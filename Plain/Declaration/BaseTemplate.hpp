@@ -19,17 +19,14 @@ namespace Declaration
     unsigned long args() const noexcept;
 
     CompleteTemplateDescriptor_var
-    complete_template_descriptor(
-      const BaseDescriptorList& args) const
+    complete_template_descriptor(const BaseDescriptorList& args) const
       /*throw(InvalidParam)*/;
 
   protected:
     virtual ~BaseTemplate() noexcept {}
 
     virtual CompleteTemplateDescriptor_var
-    create_template_descriptor_(
-      const char* name,
-      const BaseDescriptorList& args) const
+    create_template_descriptor_(const char* name, const BaseDescriptorList& args) const
       /*throw(InvalidParam)*/ = 0;
 
   private:

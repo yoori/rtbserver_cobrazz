@@ -54,32 +54,18 @@ Application_::main(int& argc, char** argv)
 
   Generics::AppUtils::Args args(-1);
 
-  args.add(
-    Generics::AppUtils::equal_name("help") ||
-    Generics::AppUtils::short_name("h"),
-    opt_help);
-  args.add(
-    Generics::AppUtils::equal_name("source"),
-    opt_source_id);
-  args.add(
-    Generics::AppUtils::equal_name("global-key"),
-    opt_global_key);
-  args.add(
-    Generics::AppUtils::equal_name("column"),
-    opt_column);
-  args.add(
-    Generics::AppUtils::equal_name("private-key-file"),
-    opt_private_key_file);
-  args.add(
-    Generics::AppUtils::equal_name("sep"),
-    opt_sep);
+  args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
+  args.add(Generics::AppUtils::equal_name("source"), opt_source_id);
+  args.add(Generics::AppUtils::equal_name("global-key"), opt_global_key);
+  args.add(Generics::AppUtils::equal_name("column"), opt_column);
+  args.add(Generics::AppUtils::equal_name("private-key-file"), opt_private_key_file);
+  args.add(Generics::AppUtils::equal_name("sep"), opt_sep);
 
   args.parse(argc - 1, argv + 1);
 
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  if(commands.empty() || opt_help.enabled() ||
-     *commands.begin() == "help")
+  if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -87,40 +73,23 @@ Application_::main(int& argc, char** argv)
 
   std::string command = *commands.begin();
 
-  if(command == "uid-to-sspuid")
+  if (command == "uid-to-sspuid")
   {
-    uid_to_sspuid_(
-      std::cin,
-      std::cout,
-      *opt_source_id,
-      *opt_global_key,
-      *opt_sep,
-      *opt_column);
+    uid_to_sspuid_(std::cin, std::cout, *opt_source_id, *opt_global_key, *opt_sep, *opt_column);
   }
-  else if(command == "sspuid-to-uid")
+  else if (command == "sspuid-to-uid")
   {
-    sspuid_to_uid_(
-      std::cin,
-      std::cout,
-      *opt_source_id,
-      *opt_global_key,
-      *opt_sep,
-      *opt_column);
+    sspuid_to_uid_(std::cin, std::cout, *opt_source_id, *opt_global_key, *opt_sep, *opt_column);
   }
-  else if(command == "sign-uid")
+  else if (command == "sign-uid")
   {
-    sign_uid_(
-      std::cin,
-      std::cout,
-      *opt_private_key_file,
-      *opt_sep,
-      *opt_column);
+    sign_uid_(std::cin, std::cout, *opt_private_key_file, *opt_sep, *opt_column);
   }
-  else if(command == "hex-to-uid")
+  else if (command == "hex-to-uid")
   {
     hex_to_uid_(std::cin, std::cout);
   }
-  else if(command == "help")
+  else if (command == "help")
   {
     std::cout << USAGE << std::endl;
     return;
@@ -146,12 +115,11 @@ Application_::uid_to_sspuid_(
   ssp_uid_encrypt_key_buf.reset(16);
   ::memset(ssp_uid_encrypt_key_buf.get(), 0, 16);
 
-  if(!global_key.empty())
+  if (!global_key.empty())
   {
     Generics::ArrayByte ssp_uid_encrypt_global_key_buf;
     unsigned long ssp_uid_encrypt_global_key_size =
-      String::StringManip::hex_decode(global_key,
-        ssp_uid_encrypt_global_key_buf);
+      String::StringManip::hex_decode(global_key, ssp_uid_encrypt_global_key_buf);
 
     ::memcpy(
       ssp_uid_encrypt_key_buf.get(),
@@ -159,38 +127,35 @@ Application_::uid_to_sspuid_(
       std::min(ssp_uid_encrypt_global_key_size, 16ul));
   }
 
-  uint32_t source_seed = Generics::CRC::quick(
-    0, source_id.data(), source_id.length());
-  for(unsigned long i = 0; i < 4; ++i)
+  uint32_t source_seed = Generics::CRC::quick(0, source_id.data(), source_id.length());
+  for (unsigned long i = 0; i < 4; ++i)
   {
-    *(reinterpret_cast<uint32_t*>(
-      ssp_uid_encrypt_key_buf.get()) + i) ^= source_seed;
+    *(reinterpret_cast<uint32_t*>(ssp_uid_encrypt_key_buf.get()) + i) ^= source_seed;
   }
 
-  AdServer::Commons::AesEncryptKey ssp_uid_encrypt_key(
-    ssp_uid_encrypt_key_buf.get(), 16);
+  AdServer::Commons::AesEncryptKey ssp_uid_encrypt_key(ssp_uid_encrypt_key_buf.get(), 16);
 
   unsigned long line_i = 0;
-  while(!in.eof())
+  while (!in.eof())
   {
     std::string line;
     std::getline(in, line);
-    if(line_i != 0)
+    if (line_i != 0)
     {
       out << std::endl;
     }
 
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
     String::SubString line_ss(line);
     String::SubString::SizeType prefix_end = 0;
     unsigned long cur_column = column - 1;
-    while(cur_column > 0)
+    while (cur_column > 0)
     {
       String::SubString::SizeType pos = line_ss.find(sep, prefix_end);
-      if(pos == String::SubString::NPOS)
+      if (pos == String::SubString::NPOS)
       {
         Stream::Error ostr;
         ostr << "Column #" << column << " not present in line: '" << line << "'";
@@ -203,17 +168,12 @@ Application_::uid_to_sspuid_(
 
     String::SubString user_id_ss = String::SubString(
       line_ss.begin() + prefix_end,
-      suffix_begin == String::SubString::NPOS ?
-        line_ss.end() : line_ss.begin() + suffix_begin);
+      suffix_begin == String::SubString::NPOS ? line_ss.end() : line_ss.begin() + suffix_begin);
     try
     {
       std::string user_id_b;
       uint8_t fill_b = 0;
-      String::StringManip::base64mod_decode(
-        user_id_b,
-        user_id_ss,
-        true,
-        &fill_b);
+      String::StringManip::base64mod_decode(user_id_b, user_id_ss, true, &fill_b);
 
       AdServer::Commons::UserId user_id(user_id_b.begin(), user_id_b.end());
 
@@ -225,8 +185,7 @@ Application_::uid_to_sspuid_(
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "line #" << line_i << " incorrect user id '" <<
-        user_id_ss << "': " << ex.what();
+      ostr << "line #" << line_i << " incorrect user id '" << user_id_ss << "': " << ex.what();
       throw InvalidArgument(ostr);
     }
 
@@ -248,12 +207,11 @@ Application_::sspuid_to_uid_(
   ssp_uid_encrypt_key_buf.reset(16);
   ::memset(ssp_uid_encrypt_key_buf.get(), 0, 16);
 
-  if(!global_key.empty())
+  if (!global_key.empty())
   {
     Generics::ArrayByte ssp_uid_encrypt_global_key_buf;
     unsigned long ssp_uid_encrypt_global_key_size =
-      String::StringManip::hex_decode(global_key,
-        ssp_uid_encrypt_global_key_buf);
+      String::StringManip::hex_decode(global_key, ssp_uid_encrypt_global_key_buf);
 
     ::memcpy(
       ssp_uid_encrypt_key_buf.get(),
@@ -261,38 +219,35 @@ Application_::sspuid_to_uid_(
       std::min(ssp_uid_encrypt_global_key_size, 16ul));
   }
 
-  uint32_t source_seed = Generics::CRC::quick(
-    0, source_id.data(), source_id.length());
-  for(unsigned long i = 0; i < 4; ++i)
+  uint32_t source_seed = Generics::CRC::quick(0, source_id.data(), source_id.length());
+  for (unsigned long i = 0; i < 4; ++i)
   {
-    *(reinterpret_cast<uint32_t*>(
-      ssp_uid_encrypt_key_buf.get()) + i) ^= source_seed;
+    *(reinterpret_cast<uint32_t*>(ssp_uid_encrypt_key_buf.get()) + i) ^= source_seed;
   }
 
-  AdServer::Commons::AesDecryptKey ssp_uid_decrypt_key(
-    ssp_uid_encrypt_key_buf.get(), 16);
+  AdServer::Commons::AesDecryptKey ssp_uid_decrypt_key(ssp_uid_encrypt_key_buf.get(), 16);
 
   unsigned long line_i = 0;
-  while(!in.eof())
+  while (!in.eof())
   {
     std::string line;
     std::getline(in, line);
-    if(line_i != 0)
+    if (line_i != 0)
     {
       out << std::endl;
     }
 
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
     String::SubString line_ss(line);
     String::SubString::SizeType prefix_end = 0;
     unsigned long cur_column = column - 1;
-    while(cur_column > 0)
+    while (cur_column > 0)
     {
       String::SubString::SizeType pos = line_ss.find(sep, prefix_end);
-      if(pos == String::SubString::NPOS)
+      if (pos == String::SubString::NPOS)
       {
         Stream::Error ostr;
         ostr << "Column #" << column << " not present in line: '" << line << "'";
@@ -305,8 +260,7 @@ Application_::sspuid_to_uid_(
 
     String::SubString user_id_ss = String::SubString(
       line_ss.begin() + prefix_end,
-      suffix_begin == String::SubString::NPOS ?
-        line_ss.end() : line_ss.begin() + suffix_begin);
+      suffix_begin == String::SubString::NPOS ? line_ss.end() : line_ss.begin() + suffix_begin);
 
     try
     {
@@ -316,8 +270,7 @@ Application_::sspuid_to_uid_(
       if (user_id_ss.length() == 22)
       {
         std::string ssp_id_buf;
-        String::StringManip::base64mod_decode(
-          ssp_id_buf, user_id_ss, false, &ssp_uid_marker);
+        String::StringManip::base64mod_decode(ssp_id_buf, user_id_ss, false, &ssp_uid_marker);
         ssp_uid = Generics::Uuid(ssp_id_buf.begin(), ssp_id_buf.end());
       }
       else
@@ -341,8 +294,7 @@ Application_::sspuid_to_uid_(
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "line #" << line_i << " incorrect user id '" <<
-        user_id_ss << "': " << ex.what();
+      ostr << "line #" << line_i << " incorrect user id '" << user_id_ss << "': " << ex.what();
       std::cerr << ostr.str() << std::endl;
     }
 
@@ -373,12 +325,10 @@ Application_::uid_to_sspuid_(
 }
 
 void
-Application_::hex_to_uid_(
-  std::istream& in,
-  std::ostream& out)
+Application_::hex_to_uid_(std::istream& in, std::ostream& out)
 {
   //unsigned long line_i = 0;
-  while(!in.eof())
+  while (!in.eof())
   {
     std::string line;
     std::getline(in, line);
@@ -402,12 +352,12 @@ Application_::sign_uid_(
     new Generics::SignedUuidGenerator(private_key_file.str().c_str()));
 
   unsigned long line_i = 0;
-  while(!in.eof())
+  while (!in.eof())
   {
     std::string line;
     std::getline(in, line);
 
-    if(line.empty())
+    if (line.empty())
     {
       continue;
     }
@@ -415,10 +365,10 @@ Application_::sign_uid_(
     String::SubString line_ss(line);
     String::SubString::SizeType prefix_end = 0;
     unsigned long cur_column = column - 1;
-    while(cur_column > 0)
+    while (cur_column > 0)
     {
       String::SubString::SizeType pos = line_ss.find(sep, prefix_end);
-      if(pos == String::SubString::NPOS)
+      if (pos == String::SubString::NPOS)
       {
         Stream::Error ostr;
         ostr << "Column #" << column << " not present in line: '" << line << "'";
@@ -432,26 +382,20 @@ Application_::sign_uid_(
 
     String::SubString user_id_ss = String::SubString(
       line_ss.begin() + prefix_end,
-      suffix_begin == String::SubString::NPOS ?
-        line_ss.end() : line_ss.begin() + suffix_begin);
+      suffix_begin == String::SubString::NPOS ? line_ss.end() : line_ss.begin() + suffix_begin);
 
     try
     {
       std::string user_id_b;
       uint8_t fill_b = 0;
-      String::StringManip::base64mod_decode(
-        user_id_b,
-        user_id_ss,
-        true,
-        &fill_b);
+      String::StringManip::base64mod_decode(user_id_b, user_id_ss, true, &fill_b);
 
       AdServer::Commons::UserId user_id(user_id_b.begin(), user_id_b.end());
       Generics::SignedUuid signed_user_id = uid_signer->sign(user_id);
       out << line_ss.substr(0, prefix_end) <<
         signed_user_id.str() <<
         (suffix_begin != String::SubString::NPOS ?
-          line_ss.substr(suffix_begin) : String::SubString()) <<
-        std::endl;
+          line_ss.substr(suffix_begin) : String::SubString()) << std::endl;
     }
     catch(const eh::Exception& ex)
     {
@@ -460,8 +404,7 @@ Application_::sign_uid_(
 
       out << line_ss.substr(0, prefix_end) <<
         (suffix_begin != String::SubString::NPOS ?
-          line_ss.substr(suffix_begin) : String::SubString()) <<
-        std::endl;
+          line_ss.substr(suffix_begin) : String::SubString()) << std::endl;
     }
 
     ++line_i;

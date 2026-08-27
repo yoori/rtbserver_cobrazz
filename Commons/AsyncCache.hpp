@@ -44,11 +44,7 @@ namespace AdServer::Commons
         const Generics::Time& check_time_val,
         const Generics::Time& mod_time_val,
         std::size_t size_val)
-        : Holder(
-            OptionalValue(std::move(value_val)),
-            check_time_val,
-            mod_time_val,
-            size_val)
+        : Holder(OptionalValue(std::move(value_val)), check_time_val, mod_time_val, size_val)
       {}
 
       Holder(
@@ -96,15 +92,10 @@ namespace AdServer::Commons
     get_async(const Key& key, GetCallback callback, Args... args) noexcept;
 
     CacheAwaiter
-    co_get(
-      std::shared_ptr<ExecutorPool> workers,
-      Key key,
-      Args... args) noexcept;
+    co_get(std::shared_ptr<ExecutorPool> workers, Key key, Args... args) noexcept;
 
     CacheAwaiter
-    co_get(
-      Key key,
-      Args... args) noexcept;
+    co_get(Key key, Args... args) noexcept;
 
   private:
     struct Entry
@@ -200,11 +191,7 @@ namespace AdServer::Commons
     using Key = typename Cache::KeyType;
     using Value = typename Cache::ValueType;
 
-    AsyncCacheAwaiter(
-      CachePtr cache,
-      std::shared_ptr<ExecutorPool> workers,
-      Key key,
-      Args... args);
+    AsyncCacheAwaiter(CachePtr cache, std::shared_ptr<ExecutorPool> workers, Key key, Args... args);
 
     AsyncCacheAwaiter(const AsyncCacheAwaiter&) = delete;
     AsyncCacheAwaiter& operator=(const AsyncCacheAwaiter&) = delete;
@@ -282,7 +269,7 @@ namespace AdServer::Commons
     {
       std::lock_guard<std::mutex> guard(state_->lock);
       state_->handle = handle;
-      if(const auto* scheduler = current_coroutine_resume_scheduler())
+      if (const auto* scheduler = current_coroutine_resume_scheduler())
       {
         state_->resume_scheduler = *scheduler;
       }
@@ -322,7 +309,7 @@ namespace AdServer::Commons
 
               if (handle)
               {
-                if(resume_scheduler)
+                if (resume_scheduler)
                 {
                   resume_scheduler(handle);
                 }
@@ -414,9 +401,7 @@ namespace AdServer::Commons
 
   template<typename Key, typename Value, typename... Args>
   inline typename AsyncCache<Key, Value, Args...>::CacheAwaiter
-  AsyncCache<Key, Value, Args...>::co_get(
-    Key key,
-    Args... args) noexcept
+  AsyncCache<Key, Value, Args...>::co_get(Key key, Args... args) noexcept
   {
     return CacheAwaiter(
       this->shared_from_this(),
@@ -434,10 +419,7 @@ namespace AdServer::Commons
     LookupResult lookup = lookup_(key, now);
     if (lookup.run_background_update)
     {
-      start_background_update_(
-        key,
-        std::move(lookup.background_holder),
-        std::move(args)...);
+      start_background_update_(key, std::move(lookup.background_holder), std::move(args)...);
     }
 
     if (lookup.cache_hit)
@@ -470,10 +452,7 @@ namespace AdServer::Commons
       LookupResult lookup = lookup_(key, now);
       if (lookup.run_background_update)
       {
-        start_background_update_(
-          key,
-          std::move(lookup.background_holder),
-          std::move(args)...);
+        start_background_update_(key, std::move(lookup.background_holder), std::move(args)...);
       }
 
       if (lookup.cache_hit)
@@ -626,9 +605,7 @@ namespace AdServer::Commons
 
   template<typename Key, typename Value, typename... Args>
   inline void
-  AsyncCache<Key, Value, Args...>::complete_load_(
-    const Key& key,
-    HolderPtr holder) noexcept
+  AsyncCache<Key, Value, Args...>::complete_load_(const Key& key, HolderPtr holder) noexcept
   {
     std::vector<GetCallback> callbacks;
     Value value;
@@ -717,9 +694,7 @@ namespace AdServer::Commons
 
     if (max_size_ == UNLIMITED_SIZE)
     {
-      entries_.emplace(
-        key,
-        Entry{std::move(holder), typename std::list<Key>::iterator()});
+      entries_.emplace(key, Entry{std::move(holder), typename std::list<Key>::iterator()});
       return;
     }
 
@@ -745,11 +720,7 @@ namespace AdServer::Commons
     }
 
     lru_.push_back(key);
-    entries_.emplace(
-      key,
-      Entry{
-        std::move(holder),
-        std::prev(lru_.end())});
+    entries_.emplace(key, Entry{ std::move(holder), std::prev(lru_.end())});
     current_size_ += holder_size;
   }
 
@@ -790,10 +761,7 @@ namespace AdServer::Commons
           old_holder = std::move(callback_old_holder)
         ](HolderPtr new_holder) mutable
         {
-          self->complete_background_update_(
-            callback_key,
-            old_holder,
-            std::move(new_holder));
+          self->complete_background_update_(callback_key, old_holder, std::move(new_holder));
         },
         std::move(args)...);
     }

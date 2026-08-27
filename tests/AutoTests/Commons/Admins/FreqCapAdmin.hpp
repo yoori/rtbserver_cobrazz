@@ -32,9 +32,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<FreqCapAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* freqcap
-      )
+      void make_cmd (const char* address, const char* freqcap)
       {
         address_ = address;
         AdminParams params;
@@ -44,45 +42,27 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "freq_cap", address, params, static_cast<size_t>(CampaignManager));
       }
-      FreqCapAdmin(
-        const char* address,
-        const char* freqcap
-      )
+      FreqCapAdmin(const char* address, const char* freqcap)
       {
         make_cmd(address, freqcap);
       }
-      FreqCapAdmin(
-        const std::string& address,
-        const char* freqcap
-      )
+      FreqCapAdmin(const std::string& address, const char* freqcap)
       {
         make_cmd(address.c_str(), freqcap);
       }
-      FreqCapAdmin(
-        const char* address,
-        const std::string& freqcap
-      )
+      FreqCapAdmin(const char* address, const std::string& freqcap)
       {
         make_cmd(address, freqcap.c_str());
       }
-      FreqCapAdmin(
-        const std::string& address,
-        const std::string& freqcap
-      )
+      FreqCapAdmin(const std::string& address, const std::string& freqcap)
       {
         make_cmd(address.c_str(), freqcap.c_str());
       }
-      FreqCapAdmin(
-        const char* address,
-        unsigned long freqcap
-      )
+      FreqCapAdmin(const char* address, unsigned long freqcap)
       {
         make_cmd(address, strof(freqcap).c_str());
       }
-      FreqCapAdmin(
-        const std::string& address,
-        unsigned long freqcap
-      )
+      FreqCapAdmin(const std::string& address, unsigned long freqcap)
       {
         make_cmd(address.c_str(), strof(freqcap).c_str());
       }

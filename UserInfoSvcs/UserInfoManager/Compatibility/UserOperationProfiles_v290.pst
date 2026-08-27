@@ -19,6 +19,6 @@ namespace UserInfoSvcs_v290
   };
 
   autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
-  
+
 }
 }

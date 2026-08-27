@@ -1,8 +1,6 @@
 #pragma once
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   inline
   void ChannelsMatcher::delete_excess_timestamps_(
@@ -11,25 +9,21 @@ namespace UserInfoSvcs
   {
     unsigned long max_vis = cil.max_visits();
     unsigned long min_window_size = cil.min_window_size();
-      
-    if(max_vis == 0)
+
+    if (max_vis == 0)
     {
       wr.clear();
       return;
     }
 
-    SessionMatchesWriter::timestamps_Container::
-      iterator window_end_it = wr.begin();
-    SessionMatchesWriter::timestamps_Container::
-      iterator window_begin_it = window_end_it;
-    SessionMatchesWriter::timestamps_Container::
-      iterator erase_candidate_it = window_end_it;
+    SessionMatchesWriter::timestamps_Container::iterator window_end_it = wr.begin();
+    SessionMatchesWriter::timestamps_Container::iterator window_begin_it = window_end_it;
+    SessionMatchesWriter::timestamps_Container::iterator erase_candidate_it = window_end_it;
     unsigned long window_imps = 0;
-  
-    for(; window_end_it != wr.end(); ++window_end_it, ++window_imps)
+
+    for (; window_end_it != wr.end(); ++window_end_it, ++window_imps)
     {
-      while(static_cast<unsigned long>(*window_end_it - *window_begin_it) >
-            min_window_size)
+      while (static_cast<unsigned long>(*window_end_it - *window_begin_it) > min_window_size)
       {
         // offset window begin
         --window_imps;
@@ -37,12 +31,12 @@ namespace UserInfoSvcs
         erase_candidate_it = window_begin_it;
       }
 
-      if(window_imps > 2*max_vis) // > max_vis without partly match
+      if (window_imps > 2*max_vis) // > max_vis without partly match
       {
         ++erase_candidate_it;
       }
-    
-      if(window_imps >= 4*max_vis) // >= 2*max_vis without partly match
+
+      if (window_imps >= 4*max_vis) // >= 2*max_vis without partly match
       {
         // clear middle element
         wr.erase(erase_candidate_it--);
@@ -50,5 +44,4 @@ namespace UserInfoSvcs
       }
     }
   }
-}
 }

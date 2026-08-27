@@ -31,9 +31,7 @@ namespace AdServer
   }
 
   void
-  AcFrontendStat::consider_request(
-    bool test_request,
-    unsigned long user_status)
+  AcFrontendStat::consider_request(bool test_request, unsigned long user_status)
     noexcept
   {
     if (test_request)

@@ -56,8 +56,7 @@ namespace AdServer::Commons
     using Holder = typename Base::Holder;
     using HolderPtr = typename Base::HolderPtr;
     using UpdateCallback = typename Base::UpdateCallback;
-    using FarUpdateCallback =
-      std::function<void(std::optional<std::string> data)>;
+    using FarUpdateCallback = std::function<void(std::optional<std::string> data)>;
     using FarUpdateStrategy = std::function<void(
       std::string key,
       std::string service_id,
@@ -75,14 +74,10 @@ namespace AdServer::Commons
     make_sync_update_();
 
     static typename Base::AsyncUpdate
-    make_async_update_(
-      Generics::TaskRunner* task_runner,
-      FarUpdateStrategy far_update_strategy);
+    make_async_update_(Generics::TaskRunner* task_runner, FarUpdateStrategy far_update_strategy);
 
     static HolderPtr
-    load_local_(
-      std::string_view path,
-      const HolderPtr& old_holder);
+    load_local_(std::string_view path, const HolderPtr& old_holder);
 
     static void
     call_update_callback_(
@@ -133,7 +128,7 @@ namespace AdServer::Commons
         make_async_update_(task_runner, std::move(far_update_strategy))),
       task_runner_(ReferenceCounting::add_ref(task_runner))
   {
-    if(task_runner_.in() == 0)
+    if (task_runner_.in() == 0)
     {
       throw Exception("TextTemplateAsyncCache: task_runner is null");
     }
@@ -143,10 +138,7 @@ namespace AdServer::Commons
   inline typename TextTemplateAsyncCache<Text>::Base::SyncUpdate
   TextTemplateAsyncCache<Text>::make_sync_update_()
   {
-    return [](
-      const std::string& path,
-      const HolderPtr& old_holder,
-      const std::string&) -> HolderPtr
+    return [](const std::string& path, const HolderPtr& old_holder, const std::string&) -> HolderPtr
     {
       return load_local_(path, old_holder);
     };
@@ -161,24 +153,16 @@ namespace AdServer::Commons
     return [
       task_runner,
       far_update_strategy = std::move(far_update_strategy)
-    ](
-      std::string path,
-      HolderPtr old_holder,
-      UpdateCallback callback,
-      std::string service_id)
+    ](std::string path, HolderPtr old_holder, UpdateCallback callback, std::string service_id)
     {
-      auto callback_holder =
-        std::make_shared<UpdateCallback>(std::move(callback));
+      auto callback_holder = std::make_shared<UpdateCallback>(std::move(callback));
       auto callback_called = std::make_shared<std::atomic_bool>(false);
 
       try
       {
-        if(task_runner == 0)
+        if (task_runner == 0)
         {
-          call_update_callback_(
-            callback_holder,
-            callback_called,
-            HolderPtr());
+          call_update_callback_(callback_holder, callback_called, HolderPtr());
           return;
         }
 
@@ -199,10 +183,7 @@ namespace AdServer::Commons
               {
                 if (!far_update_strategy)
                 {
-                  call_update_callback_(
-                    callback_holder,
-                    callback_called,
-                    HolderPtr());
+                  call_update_callback_(callback_holder, callback_called, HolderPtr());
                   return;
                 }
 
@@ -248,19 +229,13 @@ namespace AdServer::Commons
             }
             catch(...)
             {
-              call_update_callback_(
-                callback_holder,
-                callback_called,
-                HolderPtr());
+              call_update_callback_(callback_holder, callback_called, HolderPtr());
             }
           }));
       }
       catch(...)
       {
-        call_update_callback_(
-          callback_holder,
-          callback_called,
-          HolderPtr());
+        call_update_callback_(callback_holder, callback_called, HolderPtr());
       }
     };
   }
@@ -274,11 +249,11 @@ namespace AdServer::Commons
     noexcept
   {
     bool expected = false;
-    if(callback_called->compare_exchange_strong(expected, true))
+    if (callback_called->compare_exchange_strong(expected, true))
     {
       try
       {
-        if(callback && *callback)
+        if (callback && *callback)
         {
           (*callback)(std::move(holder));
         }
@@ -290,9 +265,7 @@ namespace AdServer::Commons
 
   template<typename Text>
   inline typename TextTemplateAsyncCache<Text>::HolderPtr
-  TextTemplateAsyncCache<Text>::load_local_(
-    std::string_view path,
-    const HolderPtr& old_holder)
+  TextTemplateAsyncCache<Text>::load_local_(std::string_view path, const HolderPtr& old_holder)
   {
     static const char* FUN = "TextTemplateAsyncCache<Text>::load_local_()";
 
@@ -302,26 +275,20 @@ namespace AdServer::Commons
     const std::string path_string(path);
     if (::stat(path_string.c_str(), &fs) < 0)
     {
-      eh::throw_errno_exception<Exception>(
-        errno, FUN, ": failed to stat file '", path_string, "'");
+      eh::throw_errno_exception<Exception>(errno, FUN, ": failed to stat file '", path_string, "'");
     }
 
     const Generics::Time new_mod_time(fs.st_mtime);
 
     if (old_holder && old_holder->value && new_mod_time == old_holder->mod_time)
     {
-      return std::make_shared<Holder>(
-        *old_holder->value,
-        now,
-        new_mod_time,
-        old_holder->size);
+      return std::make_shared<Holder>(*old_holder->value, now, new_mod_time, old_holder->size);
     }
 
     const int fd = ::open(path_string.c_str(), O_RDONLY);
     if (fd < 0)
     {
-      eh::throw_errno_exception<Exception>(
-        errno, FUN, ": failed to open file '", path_string, "'");
+      eh::throw_errno_exception<Exception>(errno, FUN, ": failed to open file '", path_string, "'");
     }
 
     try
@@ -337,7 +304,7 @@ namespace AdServer::Commons
       std::string file_data;
       file_data.resize(static_cast<std::size_t>(fs.st_size));
       std::size_t read_size = 0;
-      while(read_size < file_data.size())
+      while (read_size < file_data.size())
       {
         const ssize_t ret = ::read(
           fd_guard.get().fd,

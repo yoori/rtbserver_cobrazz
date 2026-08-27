@@ -56,7 +56,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -66,12 +66,12 @@ namespace
     options.count = *opt_count;
     options.threads = *opt_threads;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
 
-    if(options.threads == 0)
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
@@ -83,7 +83,7 @@ namespace
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -181,14 +181,10 @@ namespace
     OptionTokenValueMap creative_args;
     creative_args[CreativeTokens::REQUEST_ID] =
       AdServer::CampaignSvcs::OptionValue(0, "pqE7jNSUQoaV_UsdtySkIQ..");
-    creative_args[CreativeTokens::CCID] =
-      AdServer::CampaignSvcs::OptionValue(0, "2558626");
-    creative_args[CreativeTokens::ADVERTISER_ID] =
-      AdServer::CampaignSvcs::OptionValue(0, "12028");
-    creative_args[CreativeTokens::CGID] =
-      AdServer::CampaignSvcs::OptionValue(0, "21875");
-    creative_args[CreativeTokens::CID] =
-      AdServer::CampaignSvcs::OptionValue(0, "9803");
+    creative_args[CreativeTokens::CCID] = AdServer::CampaignSvcs::OptionValue(0, "2558626");
+    creative_args[CreativeTokens::ADVERTISER_ID] = AdServer::CampaignSvcs::OptionValue(0, "12028");
+    creative_args[CreativeTokens::CGID] = AdServer::CampaignSvcs::OptionValue(0, "21875");
+    creative_args[CreativeTokens::CID] = AdServer::CampaignSvcs::OptionValue(0, "9803");
     creative_args[CreativeTokens::CREATIVE_SIZE] =
       AdServer::CampaignSvcs::OptionValue(0, "300x250");
     creative_args[CreativeTokens::TEMPLATE_FORMAT] =
@@ -228,10 +224,9 @@ main(int argc, char** argv)
     const unsigned long per_thread = options.count / options.threads;
     const unsigned long remainder = options.count % options.threads;
 
-    for(unsigned long thread_index = 0; thread_index < options.threads; ++thread_index)
+    for (unsigned long thread_index = 0; thread_index < options.threads; ++thread_index)
     {
-      const unsigned long items =
-        per_thread + (thread_index < remainder ? 1 : 0);
+      const unsigned long items = per_thread + (thread_index < remainder ? 1 : 0);
 
       workers.emplace_back(
         [
@@ -246,7 +241,7 @@ main(int argc, char** argv)
         {
           AdServer::CampaignSvcs::TokenValueMap result;
 
-          for(unsigned long i = 0; i < items; ++i)
+          for (unsigned long i = 0; i < items; ++i)
           {
             result.clear();
             AdServer::CampaignSvcs::CreativeTextGenerator::init_creative_tokens(
@@ -262,7 +257,7 @@ main(int argc, char** argv)
         });
     }
 
-    for(auto& worker : workers)
+    for (auto& worker : workers)
     {
       worker.join();
     }
@@ -278,8 +273,7 @@ main(int argc, char** argv)
       << ", checksum: " << checksum.load()
       << ", cpu_time: " << format_float(user_cpu + sys_cpu) << "s"
       << ", user_cpu_time: " << format_float(user_cpu) << "s"
-      << ", sys_cpu_time: " << format_float(sys_cpu) << "s"
-      << std::endl;
+      << ", sys_cpu_time: " << format_float(sys_cpu) << "s" << std::endl;
 
     return 0;
   }

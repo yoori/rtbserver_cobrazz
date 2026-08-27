@@ -6,9 +6,7 @@
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   void print_channel_inventory_day_profile(
     std::ostream& out,
@@ -28,11 +26,8 @@ namespace RequestInfoSvcs
     const UserChannelInventoryProfileReader& reader)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -104,7 +99,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS[i]);
     }
@@ -112,8 +107,7 @@ namespace RequestInfoSvcs
     std::string::size_type max_len = 0;
     for (unsigned long ind = 0; ind < table.columns(); ++ind)
     {
-      std::string::size_type len =
-        CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS[ind].name.length();
+      std::string::size_type len = CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS[ind].name.length();
       max_len = std::max(len, max_len);
     }
 
@@ -153,12 +147,12 @@ namespace RequestInfoSvcs
     {
       std::ostringstream ostr;
 
-      for(ChannelInventoryDayReader::channel_price_ranges_Container::const_iterator it =
+      for (ChannelInventoryDayReader::channel_price_ranges_Container::const_iterator it =
             inv_day_profile_reader.channel_price_ranges().begin();
           it != inv_day_profile_reader.channel_price_ranges().end();
           ++it)
       {
-        if(it != inv_day_profile_reader.channel_price_ranges().begin())
+        if (it != inv_day_profile_reader.channel_price_ranges().begin())
         {
           ostr << prefix;
         }
@@ -167,8 +161,7 @@ namespace RequestInfoSvcs
           (*it).tag_size() << "]: "
           "ecpm = " << (*it).ecpm() << ", {";
 
-        Algs::print(ostr,
-          (*it).channel_list().begin(), (*it).channel_list().end());
+        Algs::print(ostr, (*it).channel_list().begin(), (*it).channel_list().end());
 
         ostr << "}" << std::endl;
       }
@@ -193,7 +186,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, COLO_REACH_PROFILE_TABLE_COLUMNS[i]);
     }
@@ -203,8 +196,7 @@ namespace RequestInfoSvcs
 
     row.add_field(user_id);
 
-    row.add_field(
-      Generics::Time(profile_reader.create_time()).gm_ft());
+    row.add_field(Generics::Time(profile_reader.create_time()).gm_ft());
     row.add_field(
       AdServer::RequestInfoSvcs::stringify_id_date_list(
         profile_reader.isp_colo_create_time(), space_align.c_str()));
@@ -233,7 +225,7 @@ namespace RequestInfoSvcs
 
     Table table(columns);
 
-    for(unsigned long i = 0; i < columns; i++)
+    for (unsigned long i = 0; i < columns; i++)
     {
       table.column(i, CHANNEL_INVENTORY_PROFILE_TABLE_COLUMNS[i]);
     }
@@ -243,16 +235,12 @@ namespace RequestInfoSvcs
 
     row.add_field(user_id);
 
-    row.add_field(
-      Generics::Time(inv_profile_reader.create_time()).gm_ft());
+    row.add_field(Generics::Time(inv_profile_reader.create_time()).gm_ft());
     row.add_field(
       AdServer::RequestInfoSvcs::stringify_id_date_list(
         inv_profile_reader.isp_colo_create_time(), space_align.c_str()));
-    row.add_field(
-      Generics::Time(inv_profile_reader.last_request_time()).gm_ft());
-    row.add_field(
-      Generics::Time(inv_profile_reader.last_daily_processing_time()).
-        gm_ft());
+    row.add_field(Generics::Time(inv_profile_reader.last_request_time()).gm_ft());
+    row.add_field(Generics::Time(inv_profile_reader.last_daily_processing_time()). gm_ft());
 
     row.add_field(inv_profile_reader.sum_revenue());
     row.add_field(inv_profile_reader.imp_count());
@@ -275,7 +263,7 @@ namespace RequestInfoSvcs
     table.dump(out);
     out << std::endl;
 
-    for(UserChannelInventoryProfileReader::days_Container::const_iterator it =
+    for (UserChannelInventoryProfileReader::days_Container::const_iterator it =
             inv_profile_reader.days().begin();
         it != inv_profile_reader.days().end(); ++it)
     {
@@ -283,5 +271,4 @@ namespace RequestInfoSvcs
       out << std::endl;
     }
   }
-}
 }

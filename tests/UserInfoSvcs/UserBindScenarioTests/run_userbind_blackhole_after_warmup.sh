@@ -47,6 +47,7 @@ wait_successful_perf() {
             gsub(/,/, "", writes)
           }
         }
+
         if (done > 0 && errors == 0 && writes > 0) {
           found=1
         }

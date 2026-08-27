@@ -8,10 +8,7 @@ class AbsentProfileTest: public BaseUnit
 {
 public:
 
-  AbsentProfileTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  AbsentProfileTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

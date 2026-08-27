@@ -8,9 +8,7 @@
 #include "FileRouter.hpp"
 #include "RouteHelpers.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
   class FeedRouteMover:
     public Generics::RefCountableSimpleActiveObject,
@@ -34,10 +32,7 @@ namespace LogProcessing
       /*throw(Exception)*/;
 
     bool
-    move(
-      const char* src_path,
-      const char* src_file,
-      std::string* dst_host = nullptr)
+    move(const char* src_path, const char* src_file, std::string* dst_host = nullptr)
       /*throw(Utils::UnlinkException)*/;
 
     bool
@@ -83,5 +78,4 @@ namespace LogProcessing
     FeedRouteMover_var;
   typedef ReferenceCounting::FixedPtr<FeedRouteMover>
     FixedFeedRouteMover_var;
-}
 }

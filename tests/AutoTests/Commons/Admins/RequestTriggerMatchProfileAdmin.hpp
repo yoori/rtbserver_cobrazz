@@ -37,9 +37,7 @@ namespace AutoTest
     public:
       typedef BaseAdminCmd<RequestTriggerMatchProfileAdmin, FIELDS_COUNT> Base;
 
-      void make_cmd (const char* address,
-        const char* uid
-      )
+      void make_cmd (const char* address, const char* uid)
       {
         address_ = address;
         AdminParams params;
@@ -49,31 +47,19 @@ namespace AutoTest
         }
         make_admin_cmd(*this, "print-request-trigger-match", address, params, static_cast<size_t>(ExpressionMatcher));
       }
-      RequestTriggerMatchProfileAdmin(
-        const char* address,
-        const char* uid
-      )
+      RequestTriggerMatchProfileAdmin(const char* address, const char* uid)
       {
         make_cmd(address, uid);
       }
-      RequestTriggerMatchProfileAdmin(
-        const std::string& address,
-        const char* uid
-      )
+      RequestTriggerMatchProfileAdmin(const std::string& address, const char* uid)
       {
         make_cmd(address.c_str(), uid);
       }
-      RequestTriggerMatchProfileAdmin(
-        const char* address,
-        const std::string& uid
-      )
+      RequestTriggerMatchProfileAdmin(const char* address, const std::string& uid)
       {
         make_cmd(address, uid.c_str());
       }
-      RequestTriggerMatchProfileAdmin(
-        const std::string& address,
-        const std::string& uid
-      )
+      RequestTriggerMatchProfileAdmin(const std::string& address, const std::string& uid)
       {
         make_cmd(address.c_str(), uid.c_str());
       }

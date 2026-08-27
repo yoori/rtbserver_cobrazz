@@ -1,9 +1,6 @@
 #include "OptOutFreqCapTest.hpp"
 
-REFLECT_UNIT(OptOutFreqCapTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(OptOutFreqCapTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 void
 OptOutFreqCapTest::process_testcase(AdClient& test_client)
@@ -33,13 +30,10 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
         colo(fetch_string("Colo")));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !test_client.debug_info.ccid.empty()),
+    AutoTest::predicate_checker(!test_client.debug_info.ccid.empty()),
     "Server has returned empty ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC-1"),
-      test_client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC-1"), test_client.debug_info.ccid).check(),
     "Server has returned not expected ccid");
 
   add_descr_phrase("FreqCaps with period = 0");
@@ -49,18 +43,14 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
         colo(fetch_string("Colo")));
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !test_client.debug_info.ccid.empty()),
+    AutoTest::predicate_checker(!test_client.debug_info.ccid.empty()),
     "Server has returned empty ccid");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC-2"),
-      test_client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC-2"), test_client.debug_info.ccid).check(),
     "Server has returned not expected ccid");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      !test_client.debug_info.selected_creatives.empty()),
+    AutoTest::predicate_checker(!test_client.debug_info.selected_creatives.empty()),
     "Server has returned selected creatives");
 
   add_descr_phrase("FreqCaps with period != 0");
@@ -70,9 +60,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
         colo(fetch_string("Colo")));
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      test_client.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", test_client.debug_info.ccid).check(),
     "Server has returned not empty ccid");
 }
 
@@ -80,8 +68,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
 bool
 OptOutFreqCapTest::run_test()
 {
-  add_descr_phrase(
-                   "Starting https://confluence.ocslab.com/display/ADS/OptOutFreqCapTest");
+  add_descr_phrase("Starting https://confluence.ocslab.com/display/ADS/OptOutFreqCapTest");
 
   AdClient test_client(AdClient::create_nonoptin_user(this));
 

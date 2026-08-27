@@ -1,79 +1,76 @@
 #include "CampaignTypes.hpp"
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  const char*
+  to_str(UserStatus status) noexcept
   {
-    const char*
-    to_str(UserStatus status) noexcept
+    switch (status)
     {
-      switch (status)
-      {
-      case US_UNDEFINED:
-        return "UNDEFINED";
+    case US_UNDEFINED:
+      return "UNDEFINED";
 
-      case US_OPTIN:
-        return "OPTIN";
+    case US_OPTIN:
+      return "OPTIN";
 
-      case US_OPTOUT:
-        return "OPTOUT";
+    case US_OPTOUT:
+      return "OPTOUT";
 
-      case US_PROBE:
-        return "PROBE";
+    case US_PROBE:
+      return "PROBE";
 
-      case US_TEMPORARY:
-        return "TEMPORARY";
+    case US_TEMPORARY:
+      return "TEMPORARY";
 
-      case US_NONE:
-        return "NONE";
+    case US_NONE:
+      return "NONE";
 
-      case US_NOEXTERNALID:
-        return "NOEXTERNALID";
+    case US_NOEXTERNALID:
+      return "NOEXTERNALID";
 
-      case US_EXTERNALPROBE:
-        return "EXTERNALPROBE";
+    case US_EXTERNALPROBE:
+      return "EXTERNALPROBE";
 
-      case US_FOREIGN:
-        return "FOREIGN";
+    case US_FOREIGN:
+      return "FOREIGN";
 
-      case US_BLACKLISTED:
-        return "BLACKLISTED";
-      }
-
-      return "";
+    case US_BLACKLISTED:
+      return "BLACKLISTED";
     }
 
-    const char*
-    to_str(CampaignMode mode) noexcept
+    return "";
+  }
+
+  const char*
+  to_str(CampaignMode mode) noexcept
+  {
+    switch (mode)
     {
-      switch (mode)
-      {
-      case CM_RANDOM:
-        return "RANDOM";
+    case CM_RANDOM:
+      return "RANDOM";
 
-      case CM_NON_RANDOM:
-        return "NON-RANDOM";
-      }
-
-      return "";
+    case CM_NON_RANDOM:
+      return "NON-RANDOM";
     }
 
-    const char*
-    to_str(AuctionType type) noexcept
+    return "";
+  }
+
+  const char*
+  to_str(AuctionType type) noexcept
+  {
+    switch (type)
     {
-      switch (type)
-      {
-      case AT_RANDOM:
-        return "RANDOM";
+    case AT_RANDOM:
+      return "RANDOM";
 
-      case AT_MAX_ECPM:
-        return "MAX ECPM";
+    case AT_MAX_ECPM:
+      return "MAX ECPM";
 
-      case AT_PROPORTIONAL_PROBABILITY:
-        return "PROPORTIONAL PROBABILITY";
-      }
-
-      return "";
+    case AT_PROPORTIONAL_PROBABILITY:
+      return "PROPORTIONAL PROBABILITY";
     }
+
+    return "";
   }
 }

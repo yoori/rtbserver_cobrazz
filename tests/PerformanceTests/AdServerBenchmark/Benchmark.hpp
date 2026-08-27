@@ -69,8 +69,7 @@ protected:
    * @param client
    * @param request URL
    */
-  BaseRequest* make_request(AdServerClientBase* client,
-                            const char* url = 0);
+  BaseRequest* make_request(AdServerClientBase* client, const char* url = 0);
 
 protected:
   const BenchmarkConfig* config_;     // benchmark config

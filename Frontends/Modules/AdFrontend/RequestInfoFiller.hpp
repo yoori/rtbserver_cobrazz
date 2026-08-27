@@ -97,9 +97,7 @@ namespace AdServer
     ColoFlagsMap_var
     get_colocations_() const noexcept;
 
-    void sign_client_id_(
-      std::string& signed_uid,
-      const AdServer::Commons::UserId& uid) const
+    void sign_client_id_(std::string& signed_uid, const AdServer::Commons::UserId& uid) const
       noexcept;
 
     void add_processor_(

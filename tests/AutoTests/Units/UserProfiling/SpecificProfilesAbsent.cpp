@@ -1,9 +1,7 @@
 
 #include "SpecificProfilesAbsent.hpp"
 
-REFLECT_UNIT(SpecificProfilesAbsent) (
-  "UserProfiling",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(SpecificProfilesAbsent) ("UserProfiling", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -22,8 +20,7 @@ namespace
     UIOE_None
   };
 
-  const String::SubString PROFILE_EMPTY_STRING(
-    "[Pp]rofile is empty.|[Pp]rofile not found.");
+  const String::SubString PROFILE_EMPTY_STRING("[Pp]rofile is empty.|[Pp]rofile not found.");
   class ProfileAdminCmd : public AutoTest::ShellCmd
   {
 
@@ -122,32 +119,21 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
   add_descr_phrase("Scenario#1. Empty profile for non opted in users");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_ALL,
-        STE_USER_INFO_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER)),
     "this test requires UserInfoManager in autotest config");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_ALL,
-        STE_REQUEST_INFO_MANAGER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_REQUEST_INFO_MANAGER)),
     "this test requires RequestInfoManager in autotest config");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(
-        CTE_ALL,
-        STE_EXPRESSION_MATCHER)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER)),
     "this test requires ExpressionMatcher in autotest config");
 
   GlobalConfig::Service service
     = get_config().get_service(CTE_ALL, STE_FRONTEND);
 
-  std::string uid =
-    service.remote ? "AAAAAAAAAAAAAAAAAAAAAA.."
-    : AutoTest::PROBE_UID;
+  std::string uid = service.remote ? "AAAAAAAAAAAAAAAAAAAAAA.." : AutoTest::PROBE_UID;
 
 
   add_descr_phrase("Scenario#1. Prepare");
@@ -220,9 +206,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
     "must match second channel");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CCId2"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CCId2"), client.debug_info.ccid).check(),
     "must match second channel");
 
   client.process_request(ActionRequest()
@@ -243,9 +227,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn, diffs_hs, stats_hs)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn, diffs_hs, stats_hs)).check(),
     "must got expected diffs for HourlyStats");
 
   const ORM::ChannelImpInventory::Diffs diffs_cii[] =
@@ -259,9 +241,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn, diffs_cii, stats_cii)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn, diffs_cii, stats_cii)).check(),
     "must got expected diffs for ChannelImpInventory");
 
   add_descr_phrase("Scenario#1. Check admins");
@@ -439,20 +419,17 @@ namespace
     {
     case CROE_Controller :
       {
-        add_cmd_i(std::string("-r orbaloc::")
-                  +  address + "/" + service);
+        add_cmd_i(std::string("-r orbaloc::") +  address + "/" + service);
         break;
       }
     case CROE_Manager :
       {
-        add_cmd_i(std::string("-r corbaloc::")
-                  +  address + "/" + service);
+        add_cmd_i(std::string("-r corbaloc::") +  address + "/" + service);
         break;
       }
     case CROE_Ref :
       {
-        add_cmd_i(std::string("-r corbaloc::")
-                  +  address + "/" + service);
+        add_cmd_i(std::string("-r corbaloc::") +  address + "/" + service);
         break;
       }
     };

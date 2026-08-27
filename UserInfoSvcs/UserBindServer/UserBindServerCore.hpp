@@ -137,36 +137,25 @@ namespace AdServer::UserInfoSvcs
       unsigned long add_user_id_requests = 0;
     };
 
-    using UserBindProcessorHolder =
-      AdServer::Commons::AccessActiveObject<UserBindProcessor_var>;
-    using UserBindProcessorHolder_var =
-      ReferenceCounting::SmartPtr<UserBindProcessorHolder>;
+    using UserBindProcessorHolder = AdServer::Commons::AccessActiveObject<UserBindProcessor_var>;
+    using UserBindProcessorHolder_var = ReferenceCounting::SmartPtr<UserBindProcessorHolder>;
 
-    using UserBindContainerHolder =
-      AdServer::Commons::AccessActiveObject<UserBindContainer_var>;
-    using UserBindContainerHolder_var =
-      ReferenceCounting::SmartPtr<UserBindContainerHolder>;
+    using UserBindContainerHolder = AdServer::Commons::AccessActiveObject<UserBindContainer_var>;
+    using UserBindContainerHolder_var = ReferenceCounting::SmartPtr<UserBindContainerHolder>;
 
     using BindRequestProcessorHolder =
       AdServer::Commons::AccessActiveObject<BindRequestProcessor_var>;
-    using BindRequestProcessorHolder_var =
-      ReferenceCounting::SmartPtr<BindRequestProcessorHolder>;
+    using BindRequestProcessorHolder_var = ReferenceCounting::SmartPtr<BindRequestProcessorHolder>;
 
   public:
-    UserBindServerCore(
-      const Config& config,
-      Logging::Logger* logger);
+    UserBindServerCore(const Config& config, Logging::Logger* logger);
 
     virtual ~UserBindServerCore();
 
     AdServer::Commons::StartableAwaitable<BindRequestInfo>
-    co_get_bind_request(
-      const std::string& id,
-      const Generics::Time& timestamp);
+    co_get_bind_request(const std::string& id, const Generics::Time& timestamp);
 
-    BindRequestInfo get_bind_request(
-      const std::string& id,
-      const Generics::Time& timestamp);
+    BindRequestInfo get_bind_request(const std::string& id, const Generics::Time& timestamp);
 
     void add_bind_request(
       const std::string& id,
@@ -205,9 +194,7 @@ namespace AdServer::UserInfoSvcs
     class LoadUserBindTask: public Generics::TaskGoal
     {
     public:
-      LoadUserBindTask(
-        Generics::TaskRunner* task_runner,
-        UserBindServerCore* core) noexcept;
+      LoadUserBindTask(Generics::TaskRunner* task_runner, UserBindServerCore* core) noexcept;
 
       void execute() noexcept override;
 
@@ -218,9 +205,7 @@ namespace AdServer::UserInfoSvcs
     class LoadBindRequestTask: public Generics::TaskGoal
     {
     public:
-      LoadBindRequestTask(
-        Generics::TaskRunner* task_runner,
-        UserBindServerCore* core) noexcept;
+      LoadBindRequestTask(Generics::TaskRunner* task_runner, UserBindServerCore* core) noexcept;
 
       void execute() noexcept override;
 
@@ -261,9 +246,7 @@ namespace AdServer::UserInfoSvcs
     class DumpUserBindTask: public Generics::TaskGoal
     {
     public:
-      DumpUserBindTask(
-        Generics::TaskRunner* task_runner,
-        UserBindServerCore* core) noexcept;
+      DumpUserBindTask(Generics::TaskRunner* task_runner, UserBindServerCore* core) noexcept;
 
       void execute() noexcept override;
 
@@ -293,6 +276,5 @@ namespace AdServer::UserInfoSvcs
     mutable std::atomic<unsigned long> add_user_id_requests_{0};
   };
 
-  using UserBindServerCore_var =
-    ReferenceCounting::SmartPtr<UserBindServerCore>;
+  using UserBindServerCore_var = ReferenceCounting::SmartPtr<UserBindServerCore>;
 }

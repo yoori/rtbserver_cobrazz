@@ -42,7 +42,7 @@ sub aggregate
   foreach my $file(@all_files)
   {
     my ($file_name, $file_path) = fileparse($file);
-    if($file_name =~ m/BidCostAggStat[.]([^.]+)[.].*/)
+    if ($file_name =~ m/BidCostAggStat[.]([^.]+)[.].*/)
     {
       $res_agg = Predictor::BidCostModelEvaluator::load_agg_file($file, $res_agg);
     }
@@ -61,7 +61,7 @@ sub main
     "max-ctr|c=f" => \$max_ctr,
   );
 
-  if(!GetOptions(%options))
+  if (!GetOptions(%options))
   {
     pod2usage(1);
   }
@@ -70,7 +70,7 @@ sub main
 
   my %domain_agg;
 
-  while(my ($top_key, $agg) = each(%$agg))
+  while (my ($top_key, $agg) = each(%$agg))
   {
     my $bids = $agg->bids();
     my $imps = $agg->imps();
@@ -78,7 +78,7 @@ sub main
     my @top_key_parts = split('\t', $top_key);
     my $domain = $top_key_parts[1];
 
-    if(!exists($domain_agg{$domain}))
+    if (!exists($domain_agg{$domain}))
     {
       $domain_agg{$domain} = new Agg(bids => 0, imps => 0, clicks => 0);
     }
@@ -89,9 +89,9 @@ sub main
     $agg->clicks($agg->clicks() + $clicks);
   }
 
-  while(my ($domain, $agg) = each(%domain_agg))
+  while (my ($domain, $agg) = each(%domain_agg))
   {
-    if($agg->imps() > 500 && $agg->clicks() * 1.0 / $agg->imps() < $max_ctr)
+    if ($agg->imps() > 500 && $agg->clicks() * 1.0 / $agg->imps() < $max_ctr)
     {
       print($domain . "\t" . $agg->imps() . "\t" . $agg->clicks() . "\n");
     }

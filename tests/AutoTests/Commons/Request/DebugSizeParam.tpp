@@ -13,23 +13,18 @@ namespace AutoTest
   template<typename Request>
   template<class T>
   DebugSizeParam<Request>&
-  DebugSizeParam<Request>::operator= (
-    const T& val)
+  DebugSizeParam<Request>::operator= (const T& val)
   {
     Base::operator=(val);
     return *this;
   }
 
   template<typename Request>
-  DebugSizeParam<Request>::DebugSizeParam(
-    Request* request,
-    const char* name) : Base(request, name)
+  DebugSizeParam<Request>::DebugSizeParam(Request* request, const char* name) : Base(request, name)
   {}
 
   template<typename Request>
-  DebugSizeParam<Request>::DebugSizeParam(
-    Request* request,
-    const DebugSizeParam& other):
+  DebugSizeParam<Request>::DebugSizeParam(Request* request, const DebugSizeParam& other):
     Base(request, static_cast<const Base&>(other))
   {}
 
@@ -38,10 +33,7 @@ namespace AutoTest
   {}
 
   template<typename Request>
-  bool DebugSizeParam<Request>::print(
-    std::ostream& out,
-    const char* prefix,
-    const char* eql) const
+  bool DebugSizeParam<Request>::print(std::ostream& out, const char* prefix, const char* eql) const
   {
     out << prefix;
     if (!Base::param_value_.empty())
@@ -50,7 +42,7 @@ namespace AutoTest
     }
 
     typename Base::ParamsMap::const_iterator it = Base::parameters_.begin();
-    for(;it != Base::parameters_.end(); ++it)
+    for (;it != Base::parameters_.end(); ++it)
     {
       if (it != Base::parameters_.begin() || !Base::param_value_.empty())
       {

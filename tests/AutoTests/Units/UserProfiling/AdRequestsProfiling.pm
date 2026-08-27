@@ -24,13 +24,13 @@ sub init {
   my $publisher = $ns->create(Publisher => {
     name => "Publisher"});
 
-  
+
   my $channel1 = $ns->create(DB::BehavioralChannel->blank(
     account_id => $account,
     name => 1,
     keyword_list => $keyword1,
     url_list => $url1,
-    behavioral_parameters => 
+    behavioral_parameters =>
       [ DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => "U",
           minimum_visits => 1,
@@ -45,7 +45,7 @@ sub init {
     name => 2,
     keyword_list => $keyword2,
     url_list => $url2,
-    behavioral_parameters => 
+    behavioral_parameters =>
       [ DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => "U",
           minimum_visits => 3,
@@ -60,7 +60,7 @@ sub init {
     account_id => $account,
     name => 3,
     keyword_list => $keyword3,
-    behavioral_parameters => 
+    behavioral_parameters =>
       [ DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => "P",
           minimum_visits => 1,
@@ -70,7 +70,7 @@ sub init {
     account_id => $account,
     name => 4,
     keyword_list => $keyword4  . "\n" . $keyword5,
-    behavioral_parameters => 
+    behavioral_parameters =>
       [ DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => "P",
           minimum_visits => 2,
@@ -80,7 +80,7 @@ sub init {
     account_id => $account,
     name => 5,
     keyword_list => $keyword4,
-    behavioral_parameters => 
+    behavioral_parameters =>
       [ DB::BehavioralChannel::BehavioralParameter->blank(
           trigger_type => "P",
           minimum_visits => 1,
@@ -89,9 +89,9 @@ sub init {
   my $expression = $ns->create(DB::ExpressionChannel->blank(
     name => "Expression",
     account_id => $account,
-    expression => 
-      $channel1->channel_id . "|" . 
-      $channel2->channel_id . "|" . 
+    expression =>
+      $channel1->channel_id . "|" .
+      $channel2->channel_id . "|" .
       $channel3->channel_id));
 
   my $campaign = $ns->create(DisplayCampaign => {

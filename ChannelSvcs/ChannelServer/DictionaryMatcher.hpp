@@ -51,9 +51,7 @@ namespace AdServer::ChannelSvcs
 
   private:
     AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-    query_dictionary_words_(
-      const char* lang,
-      const CORBACommons::StringSeq& seq_words) const
+    query_dictionary_words_(const char* lang, const CORBACommons::StringSeq& seq_words) const
       /*throw(Exception)*/;
 
     void trace_result_(const char* lang, const LexemeCache& cache)

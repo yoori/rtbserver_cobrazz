@@ -23,7 +23,7 @@ parse_rate_amount_distribution(
 
   String::StringManip::Splitter<ListSepType> tokenizer(str);
   String::SubString token;
-  while(tokenizer.get_token(token))
+  while (tokenizer.get_token(token))
   {
     String::StringManip::SplitColon sub_tokenizer(token);
 
@@ -31,7 +31,7 @@ parse_rate_amount_distribution(
     String::SubString ctr_str;
     String::SubString amount_str;
     String::SubString use_time_str;
-    if(!sub_tokenizer.get_token(hour_str) ||
+    if (!sub_tokenizer.get_token(hour_str) ||
       !sub_tokenizer.get_token(ctr_str) ||
       !sub_tokenizer.get_token(amount_str) ||
       !sub_tokenizer.get_token(use_time_str))
@@ -41,7 +41,7 @@ parse_rate_amount_distribution(
     }
 
     unsigned long hour;
-    if(!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
+    if (!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
     {
       std::cerr << "invalid hour value '" << hour_str << "'" << std::endl;
       return 1;
@@ -70,7 +70,7 @@ parse_rate_amount_distribution(
     }
 
     unsigned long use_time_sec;
-    if(!String::StringManip::str_to_int(use_time_str, use_time_sec))
+    if (!String::StringManip::str_to_int(use_time_str, use_time_sec))
     {
       std::cerr << "invalid use time value '" << use_time_str << "'" << std::endl;
       return 1;
@@ -93,21 +93,20 @@ parse_rate_hour_distribution(
 
   String::StringManip::Splitter<ListSepType> tokenizer(str);
   String::SubString token;
-  while(tokenizer.get_token(token))
+  while (tokenizer.get_token(token))
   {
     String::StringManip::SplitColon sub_tokenizer(token);
 
     String::SubString hour_str;
     String::SubString ctr_str;
-    if(!sub_tokenizer.get_token(hour_str) ||
-      !sub_tokenizer.get_token(ctr_str))
+    if (!sub_tokenizer.get_token(hour_str) || !sub_tokenizer.get_token(ctr_str))
     {
       std::cerr << "invalid hour part '" << token << "'" << std::endl;
       return 1;
     }
 
     unsigned long hour;
-    if(!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
+    if (!String::StringManip::str_to_int(hour_str, hour) || hour >= 24)
     {
       std::cerr << "invalid hour value '" << hour_str << "'" << std::endl;
       return 1;
@@ -166,27 +165,27 @@ int main(int argc, char** argv) noexcept
   CTROptimizer::RateAmountDistribution actual_free_amount_distribution;
   CTROptimizer::HourRateDistribution actual_rate_distribution;
 
-  if(parse_rate_amount_distribution(past_goaled_amount_distribution, *opt_goal_hours))
+  if (parse_rate_amount_distribution(past_goaled_amount_distribution, *opt_goal_hours))
   {
     return 1;
   }
 
-  if(parse_rate_amount_distribution(past_free_amount_distribution, *opt_free_hours))
+  if (parse_rate_amount_distribution(past_free_amount_distribution, *opt_free_hours))
   {
     return 1;
   }
 
-  if(parse_rate_amount_distribution(actual_goaled_amount_distribution, *opt_actual_goal_hours))
+  if (parse_rate_amount_distribution(actual_goaled_amount_distribution, *opt_actual_goal_hours))
   {
     return 1;
   }
 
-  if(parse_rate_amount_distribution(actual_free_amount_distribution, *opt_actual_free_hours))
+  if (parse_rate_amount_distribution(actual_free_amount_distribution, *opt_actual_free_hours))
   {
     return 1;
   }
 
-  if(parse_rate_hour_distribution(actual_rate_distribution, *opt_actual_rate_distribution))
+  if (parse_rate_hour_distribution(actual_rate_distribution, *opt_actual_rate_distribution))
   {
     return 1;
   }
@@ -221,11 +220,9 @@ int main(int argc, char** argv) noexcept
     */
 
     std::cout << "Input:" << std::endl <<
-      "  hour: " << *opt_hour << std::endl <<
-      "  past_goal_amount_distribution: " << std::endl;
+      "  hour: " << *opt_hour << std::endl << "  past_goal_amount_distribution: " << std::endl;
     past_goaled_amount_distribution.print(std::cout, "  ");
-    std::cout << std::endl <<
-      "  past_free_amount_distribution: " << std::endl;
+    std::cout << std::endl << "  past_free_amount_distribution: " << std::endl;
     past_free_amount_distribution.print(std::cout, "  ");
     std::cout << std::endl;
 
@@ -243,8 +240,7 @@ int main(int argc, char** argv) noexcept
 
     std::cout << std::endl << "Result:" << std::endl <<
       "  goal_rate: " << goal_rate << std::endl <<
-      "  goal_budget: " << goal_budget << std::endl <<
-      "  free_budget_distribution: ";
+      "  goal_budget: " << goal_budget << std::endl << "  free_budget_distribution: ";
     free_budget_distribution.print(std::cout);
     std::cout << std::endl <<
       "  free budget sum: " <<

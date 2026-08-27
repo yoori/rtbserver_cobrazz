@@ -1,10 +1,6 @@
 #include "Environment.hpp"
 
-namespace AdServer
-{
-namespace Commons
-{
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   // AllocController_
   AllocController_* AllocController_::instance_ = new AllocController_();
@@ -55,7 +51,7 @@ namespace Oracle
     sword result;
 
     // allocate an environment handle
-    if((result = OCIEnvCreate(
+    if ((result = OCIEnvCreate(
           &environment_handle_.fill(),
           OCI_OBJECT | OCI_THREADED,
           0, // context
@@ -115,23 +111,17 @@ namespace Oracle
   {}
 
   Connection_var
-  Environment::create_connection(
-    const ConnectionDescription& conn)
+  Environment::create_connection(const ConnectionDescription& conn)
     /*throw(SqlException, NonActive, ConnectionError)*/
   {
     return new Connection(this, 0, conn);
   }
 
   ConnectionPool_var
-  Environment::create_connection_pool(
-    const ConnectionDescription& conn,
-    int max_conn)
+  Environment::create_connection_pool(const ConnectionDescription& conn, int max_conn)
     /*throw(SqlException)*/
   {
-    return new StandartConnectionPool(
-      this,
-      conn,
-      max_conn);
+    return new StandartConnectionPool(this, conn, max_conn);
   }
 
   void
@@ -172,8 +162,7 @@ namespace Oracle
   }
 
   Connection_var
-  SwitchableEnvironment::create_connection(
-    const ConnectionDescription& conn)
+  SwitchableEnvironment::create_connection(const ConnectionDescription& conn)
     /*throw(SqlException, NonActive, ConnectionError)*/
   {
     static const char* FUN = "SwitchableEnvironment::create_connection()";
@@ -197,17 +186,10 @@ namespace Oracle
   }
 
   ConnectionPool_var
-  SwitchableEnvironment::create_connection_pool(
-    const ConnectionDescription& conn,
-    int max_conn)
+  SwitchableEnvironment::create_connection_pool(const ConnectionDescription& conn, int max_conn)
     /*throw(SqlException)*/
   {
-    SwitchableConnectionPool_var res(
-      new SwitchableConnectionPool(
-        this,
-        children_,
-        conn,
-        max_conn));
+    SwitchableConnectionPool_var res(new SwitchableConnectionPool(this, children_, conn, max_conn));
 
     children_->add_child_object(res);
 
@@ -238,6 +220,4 @@ namespace Oracle
   {
     count_->add_active_count(-1);
   }
-}
-}
 }

@@ -11,9 +11,7 @@
 
 #include "RequestActionProcessor.hpp"
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   /** ExpressionMatcherNotifier */
   class ExpressionMatcherNotifier:
@@ -36,9 +34,7 @@ namespace RequestInfoSvcs
       noexcept;
 
     virtual void
-    process_request(
-      const RequestInfo&,
-      const ProcessingState&)
+    process_request(const RequestInfo&, const ProcessingState&)
       /*throw(Exception)*/
     {}
 
@@ -50,9 +46,7 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/;
 
     virtual void
-    process_click(
-      const RequestInfo&,
-      const ProcessingState& processing_state)
+    process_click(const RequestInfo&, const ProcessingState& processing_state)
       /*throw(Exception)*/;
 
     virtual void
@@ -68,9 +62,7 @@ namespace RequestInfoSvcs
 
   private:
     static bool
-    need_process_(
-      const RequestInfo& ri,
-      const ProcessingState& processing_state)
+    need_process_(const RequestInfo& ri, const ProcessingState& processing_state)
       noexcept;
 
   private:
@@ -86,5 +78,4 @@ namespace RequestInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<ExpressionMatcherNotifier>
     ExpressionMatcherNotifier_var;
-}
 }

@@ -16,8 +16,7 @@ namespace AdServer::Bidding
     Skipped
   };
 
-  constexpr String::SubString convert_stage_to_string(
-    const Stage stage)
+  constexpr String::SubString convert_stage_to_string(const Stage stage)
   {
     switch (stage)
     {

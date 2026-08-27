@@ -1,161 +1,149 @@
 #include <fstream>
 #include "PassbackTemplate.hpp"
 
-namespace AdServer
+namespace AdServer::CampaignSvcs
 {
-  namespace CampaignSvcs
+  namespace
   {
-    namespace
+    const Generics::Time UPDATE_PERIOD(1);
+
+    class TextTemplate: public PassbackTemplate
     {
-      const Generics::Time UPDATE_PERIOD(1);
+    public:
+      TextTemplate(const char* file)
+        /*throw(PassbackTemplate::FileNotExists, Exception)*/;
 
-      class TextTemplate: public PassbackTemplate
-      {
-      public:
-        TextTemplate(const char* file)
-          /*throw(PassbackTemplate::FileNotExists, Exception)*/;
-
-        virtual std::string
-        instantiate(
-          const TokenValueMap& args)
-          /*throw(InvalidParams,
-            InvalidTemplate,
-            ImplementationException)*/;
-
-        std::string
-        instantiate(
-          const String::TextTemplate::ArgsCallback& args)
-          /*throw(InvalidParams,
-            InvalidTemplate,
-            ImplementationException)*/;
-
-      protected:
-        String::TextTemplate::IStream text_template_;
-      };
-
-      TextTemplate::TextTemplate(const char* file)
-        /*throw(PassbackTemplate::FileNotExists, Exception)*/
-      {
-        static const char* FUN = "TextTemplate::TextTemplate()";
-
-        std::fstream fstr(file, std::ios::in);
-        if (!fstr.is_open())
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": Can't open file '" << file << "'";
-          throw PassbackTemplate::FileNotExists(ostr);
-        }
-
-        try
-        {
-          text_template_.init(
-            fstr,
-            TokenTemplateProperties::START_TOKEN,
-            TokenTemplateProperties::STOP_TOKEN);
-        }
-        catch(const eh::Exception& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": Can't init template - caught eh::Exception: " <<
-            ex.what();
-          throw Exception(ostr);
-        }
-      }
-
-      std::string
-      TextTemplate::instantiate(
-        const TokenValueMap& args)
+      virtual std::string
+      instantiate(const TokenValueMap& args)
         /*throw(InvalidParams,
           InvalidTemplate,
-          ImplementationException)*/
-      {
-        return instantiate(
-          static_cast<const String::TextTemplate::ArgsCallback&>(args));
-      }
+          ImplementationException)*/;
 
       std::string
-      TextTemplate::instantiate(
-        const String::TextTemplate::ArgsCallback& args)
+      instantiate(const String::TextTemplate::ArgsCallback& args)
         /*throw(InvalidParams,
           InvalidTemplate,
-          ImplementationException)*/
+          ImplementationException)*/;
+
+    protected:
+      String::TextTemplate::IStream text_template_;
+    };
+
+    TextTemplate::TextTemplate(const char* file)
+      /*throw(PassbackTemplate::FileNotExists, Exception)*/
+    {
+      static const char* FUN = "TextTemplate::TextTemplate()";
+
+      std::fstream fstr(file, std::ios::in);
+      if (!fstr.is_open())
       {
-        try
-        {
-          String::TextTemplate::DefaultValue default_cont(&args);
-          String::TextTemplate::ArgsEncoder encoder(&default_cont);
-          return text_template_.instantiate(encoder);
-        }
-        catch(const String::TextTemplate::UnknownName& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Can't instantiate creative. Caught UnknownName: " <<
-            ex.what();
-          throw InvalidParams(ostr);
-        }
-        catch(const eh::Exception& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Can't instantiate creative. Caught eh::Exception: " <<
-            ex.what();
-          throw ImplementationException(ostr);
-        }
+        Stream::Error ostr;
+        ostr << FUN << ": Can't open file '" << file << "'";
+        throw PassbackTemplate::FileNotExists(ostr);
+      }
+
+      try
+      {
+        text_template_.init(
+          fstr,
+          TokenTemplateProperties::START_TOKEN,
+          TokenTemplateProperties::STOP_TOKEN);
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Can't init template - caught eh::Exception: " << ex.what();
+        throw Exception(ostr);
       }
     }
 
-    PassbackTemplate_var
-    PassbackTemplateMap::get(const Generics::StringHashAdapter& key)
-      /*throw(PassbackTemplate::FileNotExists,
-        PassbackTemplate::InvalidTemplate)*/
+    std::string
+    TextTemplate::instantiate(const TokenValueMap& args)
+      /*throw(InvalidParams,
+        InvalidTemplate,
+        ImplementationException)*/
     {
-      TemplateHolder_var holder;
+      return instantiate(static_cast<const String::TextTemplate::ArgsCallback&>(args));
+    }
 
+    std::string
+    TextTemplate::instantiate(const String::TextTemplate::ArgsCallback& args)
+      /*throw(InvalidParams,
+        InvalidTemplate,
+        ImplementationException)*/
+    {
+      try
       {
-        SyncPolicy::WriteGuard lock(templates_lock_);
-        KeyMap::iterator it = templates_.find(key);
-        if (it != templates_.end())
-        {
-          holder = it->second;
-        }
+        String::TextTemplate::DefaultValue default_cont(&args);
+        String::TextTemplate::ArgsEncoder encoder(&default_cont);
+        return text_template_.instantiate(encoder);
       }
-
-      if (holder)
+      catch(const String::TextTemplate::UnknownName& ex)
       {
-        Generics::Time now = Generics::Time::get_time_of_day();
-        SyncPolicy::WriteGuard lock(holder->lock);
-
-        if (now - holder->last_update > UPDATE_PERIOD)
-        {
-          // reopen template
-          holder->last_update = now;
-          try
-          {
-            holder->passback_template = new TextTemplate(key.text().c_str());
-          }
-          catch(...)
-          {
-            // use old template
-          }
-        }
-
-        return holder->passback_template;
+        Stream::Error ostr;
+        ostr << "Can't instantiate creative. Caught UnknownName: " << ex.what();
+        throw InvalidParams(ostr);
       }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << "Can't instantiate creative. Caught eh::Exception: " << ex.what();
+        throw ImplementationException(ostr);
+      }
+    }
+  }
 
-      // open template
+  PassbackTemplate_var
+  PassbackTemplateMap::get(const Generics::StringHashAdapter& key)
+    /*throw(PassbackTemplate::FileNotExists,
+      PassbackTemplate::InvalidTemplate)*/
+  {
+    TemplateHolder_var holder;
+
+    {
+      SyncPolicy::WriteGuard lock(templates_lock_);
+      KeyMap::iterator it = templates_.find(key);
+      if (it != templates_.end())
+      {
+        holder = it->second;
+      }
+    }
+
+    if (holder)
+    {
       Generics::Time now = Generics::Time::get_time_of_day();
-      TemplateHolder_var new_holder = new TemplateHolder();
+      SyncPolicy::WriteGuard lock(holder->lock);
 
+      if (now - holder->last_update > UPDATE_PERIOD)
       {
-        OpenLockMap::WriteGuard open_lock(open_locks_.write_lock(key));
-        new_holder->last_update = now;
-        new_holder->passback_template = new TextTemplate(key.text().c_str());
-
-        SyncPolicy::WriteGuard lock(templates_lock_);
-        templates_.insert(std::make_pair(key, new_holder));
+        // reopen template
+        holder->last_update = now;
+        try
+        {
+          holder->passback_template = new TextTemplate(key.text().c_str());
+        }
+        catch(...)
+        {
+          // use old template
+        }
       }
 
-      return new_holder->passback_template;
+      return holder->passback_template;
     }
+
+    // open template
+    Generics::Time now = Generics::Time::get_time_of_day();
+    TemplateHolder_var new_holder = new TemplateHolder();
+
+    {
+      OpenLockMap::WriteGuard open_lock(open_locks_.write_lock(key));
+      new_holder->last_update = now;
+      new_holder->passback_template = new TextTemplate(key.text().c_str());
+
+      SyncPolicy::WriteGuard lock(templates_lock_);
+      templates_.insert(std::make_pair(key, new_holder));
+    }
+
+    return new_holder->passback_template;
   }
 }

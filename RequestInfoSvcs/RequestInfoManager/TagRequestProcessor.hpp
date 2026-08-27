@@ -14,9 +14,8 @@
 /**
  * TagRequestProcessor
  */
-namespace AdServer
-{
-namespace RequestInfoSvcs
+
+namespace AdServer::RequestInfoSvcs
 {
   struct TagRequestInfo
   {
@@ -66,15 +65,11 @@ namespace RequestInfoSvcs
   typedef ReferenceCounting::SmartPtr<TagRequestProcessor>
     TagRequestProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   inline AdServer::Commons::Awaitable<void>
-  TagRequestProcessor::co_process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  TagRequestProcessor::co_process_tag_request(const TagRequestInfo& tag_request_info)
   {
     process_tag_request(tag_request_info);
     co_return;
@@ -92,9 +87,8 @@ namespace RequestInfoSvcs
       offset << "tag_id = " << tag_id << std::endl <<
       offset << "ext_tag_id = " << ext_tag_id << std::endl <<
       offset << "user_status = '" << user_status << "'" << std::endl <<
-      offset << "referer = '" << referer << "'" << std::endl <<
-      offset << "page_load_id = ";
-    if(page_load_id.present())
+      offset << "referer = '" << referer << "'" << std::endl << offset << "page_load_id = ";
+    if (page_load_id.present())
     {
       out << *page_load_id;
     }
@@ -107,5 +101,4 @@ namespace RequestInfoSvcs
       offset << "ad_shown = " << ad_shown << std::endl <<
       offset << "profile_referer = " << profile_referer << std::endl;
   }
-}
 }

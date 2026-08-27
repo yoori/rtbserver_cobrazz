@@ -1,9 +1,7 @@
 
 #include "TargetingChannelStats.hpp"
 
-REFLECT_UNIT(TargetingChannelStats) (
-  "Statistics",
-  AUTO_TEST_SLOW);
+REFLECT_UNIT(TargetingChannelStats) ("Statistics", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -20,9 +18,7 @@ namespace
   {
   public:
 
-    UserLogger(
-      TargetingChannelStats* test,
-      const std::list<std::string>& users) :
+    UserLogger(TargetingChannelStats* test, const std::list<std::string>& users) :
       test_(test),
       users_(users)
     { }
@@ -40,9 +36,7 @@ namespace
         std::for_each(
           users_.begin(),
           users_.end(),
-          std::bind1st(
-            std::mem_fun(
-              &TargetingChannelStats::log_profile), test_));
+          std::bind1st(std::mem_fun(&TargetingChannelStats::log_profile), test_));
       }
       return true;
     }
@@ -57,12 +51,9 @@ namespace
 }
 
 void
-TargetingChannelStats::log_profile(
-  std::string uid)
+TargetingChannelStats::log_profile(std::string uid)
 {
-  if (
-    get_config().check_service(
-      CTE_ALL, STE_EXPRESSION_MATCHER))
+  if (get_config().check_service(CTE_ALL, STE_EXPRESSION_MATCHER))
   {
     AutoTest::AdminsArray<AutoTest::InventoryProfileAdmin>
       admins;
@@ -82,10 +73,7 @@ TargetingChannelStats::check_channels_(
   {
     fetch_string(expected);
     return
-      ChannelsCheck(
-        this,
-        expected.c_str(),
-        got).check();
+      ChannelsCheck(this, expected.c_str(), got).check();
   }
   catch(const BaseUnit::InvalidArgument&)
   {
@@ -175,8 +163,7 @@ TargetingChannelStats::initialize_stats_(
       sdate(now_),
     stats.imp_inv_disp);
 
-  stats.imp_inv_disp_diffs.push_back(
-    text_size? no_imp_diff: imp_diff);
+  stats.imp_inv_disp_diffs.push_back(text_size? no_imp_diff: imp_diff);
 
   add_stats_(
     pq_conn_,
@@ -186,8 +173,7 @@ TargetingChannelStats::initialize_stats_(
       sdate(now_),
     stats.imp_inv_text);
 
-  stats.imp_inv_text_diffs.push_back(
-    text_size? imp_diff: no_imp_diff);
+  stats.imp_inv_text_diffs.push_back(text_size? imp_diff: no_imp_diff);
 
   add_stats_(
     pq_conn_,
@@ -265,11 +251,9 @@ TargetingChannelStats::initialize_stats_(
 }
 
 void
-TargetingChannelStats::add_checkers_(
-  StatCollection& stats)
+TargetingChannelStats::add_checkers_(StatCollection& stats)
 {
-  UserLogger log_checker(
-    this, stats.users);
+  UserLogger log_checker(this, stats.users);
 
   ADD_WAIT_CHECKER(
     "ChannelInventory",
@@ -287,20 +271,14 @@ TargetingChannelStats::add_checkers_(
     "ChannelImpInventory (display)",
     AutoTest::fail_checker(
       AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.imp_inv_disp_diffs,
-          stats.imp_inv_disp)),
+        AutoTest::stats_diff_checker(pq_conn_, stats.imp_inv_disp_diffs, stats.imp_inv_disp)),
       log_checker));
 
   ADD_WAIT_CHECKER(
     "ChannelImpInventory (text)",
     AutoTest::fail_checker(
       AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.imp_inv_text_diffs,
-          stats.imp_inv_text)),
+        AutoTest::stats_diff_checker(pq_conn_, stats.imp_inv_text_diffs, stats.imp_inv_text)),
       log_checker));
 
   ADD_WAIT_CHECKER(
@@ -317,11 +295,7 @@ TargetingChannelStats::add_checkers_(
   ADD_WAIT_CHECKER(
     "ChannelPerformance",
     AutoTest::fail_checker(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.perf_diffs,
-          stats.perf)),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, stats.perf_diffs, stats.perf)),
       log_checker));
 
 
@@ -329,30 +303,21 @@ TargetingChannelStats::add_checkers_(
     "ChannelUsageStats",
     AutoTest::fail_checker(
       AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.usage_diffs,
-          stats.usage)),
+        AutoTest::stats_diff_checker(pq_conn_, stats.usage_diffs, stats.usage)),
       log_checker));
 
   ADD_WAIT_CHECKER(
     "ExpressionPerformance",
     AutoTest::fail_checker(
       AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.expr_perf_diffs,
-          stats.expr_perf)),
+        AutoTest::stats_diff_checker(pq_conn_, stats.expr_perf_diffs, stats.expr_perf)),
       log_checker));
 
   ADD_WAIT_CHECKER(
     "SiteChannelStats",
     AutoTest::fail_checker(
       AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          pq_conn_,
-          stats.site_channel_diffs,
-          stats.site_channel)),
+        AutoTest::stats_diff_checker(pq_conn_, stats.site_channel_diffs, stats.site_channel)),
       log_checker));
 
   ADD_WAIT_CHECKER(
@@ -368,8 +333,7 @@ TargetingChannelStats::add_checkers_(
 
 
 void
-TargetingChannelStats::process_case_(
-  const std::string& prefix)
+TargetingChannelStats::process_case_(const std::string& prefix)
 {
   AdClient client(AdClient::create_user(this));
 
@@ -385,9 +349,7 @@ TargetingChannelStats::process_case_(
       AutoTest::wait_checker(
         AutoTest::BaseProfileChecker(
           this,
-          AutoTest::prepare_uid(
-            client.get_uid(),
-            AutoTest::UUE_ADMIN_PARAMVALUE),
+          AutoTest::prepare_uid(client.get_uid(), AutoTest::UUE_ADMIN_PARAMVALUE),
           false,
           AutoTest::UserInfoManagerController,
           AutoTest::BaseProfileChecker::Expected().
@@ -432,11 +394,7 @@ TargetingChannelStats::process_case_(
   request.tid = fetch_int("NoImp/Tag");
   client.process_request(request);
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check CC (no imps)");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check CC (no imps)");
 
   // imps other
   request.tid = fetch_int("Other/Tag");
@@ -452,9 +410,7 @@ TargetingChannelStats::process_case_(
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("Other/CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("Other/CC"), client.debug_info.ccid).check(),
     "Check CC (imps other)");
 
   // imps
@@ -465,27 +421,19 @@ TargetingChannelStats::process_case_(
   client.process_request(request);
 
   FAIL_CONTEXT(
-    check_channels_(
-      prefix + "/Device",
-      client.debug_info.device_channels),
+    check_channels_(prefix + "/Device", client.debug_info.device_channels),
     "Check device channels");
 
   FAIL_CONTEXT(
-    check_channels_(
-      prefix + "/GEO",
-      client.debug_info.geo_channels),
+    check_channels_(prefix + "/GEO", client.debug_info.geo_channels),
     "Check GEO channels");
 
   FAIL_CONTEXT(
-    check_channels_(
-      prefix + "/Channel",
-      client.debug_info.history_channels),
+    check_channels_(prefix + "/Channel", client.debug_info.history_channels),
     "Check history");
 
   FAIL_CONTEXT(
-    check_channels_(
-      prefix + "/Audience",
-      client.debug_info.history_channels),
+    check_channels_(prefix + "/Audience", client.debug_info.history_channels),
     "Check history");
 
   stats.users.push_back("\\" + client.debug_info.uid.value());
@@ -495,12 +443,9 @@ TargetingChannelStats::process_case_(
   actions.push_back(AutoTest::ACTION);
 
   std::list<std::string> expected_ccs;
-  expected_ccs.push_back(
-    fetch_string(prefix + "/CC"));
+  expected_ccs.push_back(fetch_string(prefix + "/CC"));
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      expected_ccs, actions));
+  FAIL_CONTEXT(client.do_ad_requests(expected_ccs, actions));
 
   add_checkers_(stats);
 
@@ -523,16 +468,11 @@ TargetingChannelStats::run()
     {"Campaign Excluded channel targeting", "GEO-EXCLUDED"}
   };
 
-  AUTOTEST_CASE(
-    case_all_(),
-    "Channel, geo and device targeting.");
+  AUTOTEST_CASE(case_all_(), "Channel, geo and device targeting.");
 
   for (size_t i = 0; i < countof(TEST_CASES); ++i)
   {
-    AUTOTEST_CASE(
-      process_case_(
-        TEST_CASES[i].prefix),
-      TEST_CASES[i].description);
+    AUTOTEST_CASE(process_case_(TEST_CASES[i].prefix), TEST_CASES[i].description);
   }
 
   return true;
@@ -613,11 +553,7 @@ TargetingChannelStats::case_all_()
   request.tid = fetch_int("ALL/NoImp/Tag");
   client.process_request(request);
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      client.debug_info.ccid).check(),
-    "Check CC (no imps)");
+  FAIL_CONTEXT(AutoTest::equal_checker("0", client.debug_info.ccid).check(), "Check CC (no imps)");
 
   // imps other
   request.tid = fetch_int("ALL/Other/Tag");
@@ -626,28 +562,19 @@ TargetingChannelStats::case_all_()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("ALL/Other/CC"),
-      client.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("ALL/Other/CC"), client.debug_info.ccid).check(),
     "Check CC (imps other)");
 
-  request.referer_kw =
-    map_objects("ALL/KWDB1,ALL/KWDB2,ALL/KWDB3,ALL/KWDB4");
+  request.referer_kw = map_objects("ALL/KWDB1,ALL/KWDB2,ALL/KWDB3,ALL/KWDB4");
   request.tid = fetch_int("ALL/Tag");
 
   client.process_request(request);
 
   FAIL_CONTEXT(
-    check_channels_(
-      "ALL/Device",
-      client.debug_info.device_channels),
+    check_channels_("ALL/Device", client.debug_info.device_channels),
     "Check device channels");
 
-  FAIL_CONTEXT(
-    check_channels_(
-      "ALL/GEO",
-      client.debug_info.geo_channels),
-    "Check GEO channels");
+  FAIL_CONTEXT(check_channels_("ALL/GEO", client.debug_info.geo_channels), "Check GEO channels");
 
   FAIL_CONTEXT(
     ChannelsCheck(
@@ -663,13 +590,9 @@ TargetingChannelStats::case_all_()
   actions.push_back(AutoTest::NON_EMPTY_ACTION);
 
   std::list<std::string> expected_ccs;
-  fetch_objects(
-    std::inserter(expected_ccs, expected_ccs.begin()),
-    "ALL/CC/1,ALL/CC/2,ALL/CC/3");
+  fetch_objects(std::inserter(expected_ccs, expected_ccs.begin()), "ALL/CC/1,ALL/CC/2,ALL/CC/3");
 
-  FAIL_CONTEXT(
-    client.do_ad_requests(
-      expected_ccs, actions));
+  FAIL_CONTEXT(client.do_ad_requests(expected_ccs, actions));
 
   add_checkers_(stats);
 

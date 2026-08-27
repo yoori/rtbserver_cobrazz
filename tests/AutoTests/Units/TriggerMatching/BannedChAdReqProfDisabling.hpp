@@ -7,10 +7,7 @@ class BannedChAdReqProfDisabling: public BaseUnit
 {
 public:
 
-  BannedChAdReqProfDisabling(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  BannedChAdReqProfDisabling(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 

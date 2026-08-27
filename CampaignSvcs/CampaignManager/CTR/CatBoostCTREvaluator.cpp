@@ -113,9 +113,7 @@ namespace AdServer::CampaignSvcs::CTR
     }
 
     double
-    predict(
-      const HashArray* candidate_hashes,
-      const HashArray* opt_hashes) override
+    predict(const HashArray* candidate_hashes, const HashArray* opt_hashes) override
     {
       saved_values_.clear();
       saved_values_.reserve(
@@ -187,11 +185,7 @@ namespace AdServer::CampaignSvcs::CTR
     const HashArray* auction_hashes,
     Generics::MonoAllocatorArena* arena) const
   {
-    return std::make_unique<PredictionContextImpl>(
-      *this,
-      request_hashes,
-      auction_hashes,
-      arena);
+    return std::make_unique<PredictionContextImpl>(*this, request_hashes, auction_hashes, arena);
   }
 
   double

@@ -26,11 +26,11 @@ sub get
   my ($self) = @_;
   my $ret = $self->{csv_}->getline(*STDIN);
 
-  if(!defined($ret))
+  if (!defined($ret))
   {
     my @error = $self->{csv_}->error_diag();
 
-    if($error[0] != 2012 && (!defined($self->{ignore_errors_}) || $self->{ignore_errors_} == 0))
+    if ($error[0] != 2012 && (!defined($self->{ignore_errors_}) || $self->{ignore_errors_} == 0))
     {
       die "Input::Std: " . join(',', $self->{csv_}->error_diag());
     }
@@ -41,7 +41,7 @@ sub get
 =for comment
   my $line = <STDIN>;
 
-  if(defined($line))
+  if (defined($line))
   {
     chomp $line;
     #$line =~ s/\r$//;

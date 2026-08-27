@@ -12,16 +12,12 @@ namespace AutoTest
   class StatsDiffChecker: public Checker
   {
   public:
-    StatsDiffChecker(
-      DBC::IConn& connection,
-      const StatsDiffType& diff,
-      const StatsType& initial);
+    StatsDiffChecker(DBC::IConn& connection, const StatsDiffType& diff, const StatsType& initial);
 
     virtual ~StatsDiffChecker() noexcept;
 
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
   protected:
@@ -47,8 +43,7 @@ namespace AutoTest
     virtual ~StatsEachDiffChecker() noexcept;
 
     bool
-    check(
-      bool throw_error = true)
+    check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
   protected:
@@ -61,10 +56,7 @@ namespace AutoTest
   // helper functions
   template<typename StatsType, typename StatsDiffType>
   StatsDiffChecker<StatsType, StatsDiffType>
-  stats_diff_checker(
-    DBC::IConn& connection,
-    const StatsDiffType& diff,
-    const StatsType& initial);
+  stats_diff_checker(DBC::IConn& connection, const StatsDiffType& diff, const StatsType& initial);
 
   template<typename StatsType, typename Diff>
   StatsDiffChecker<StatsType, std::list<Diff> >

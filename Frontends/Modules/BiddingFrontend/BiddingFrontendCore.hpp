@@ -172,17 +172,11 @@ namespace AdServer::Bidding
     noexcept;
 
     bool
-    check_interrupt_(
-      const char* fun,
-      const Stage stage,
-      BidRequestState* task)
+    check_interrupt_(const char* fun, const Stage stage, BidRequestState* task)
       noexcept;
 
     void
-    interrupt_(
-      const char* fun,
-      const Stage stage,
-      const BidRequestState* task)
+    interrupt_(const char* fun, const Stage stage, const BidRequestState* task)
       noexcept;
 
     void

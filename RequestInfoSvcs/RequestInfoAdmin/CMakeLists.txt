@@ -9,7 +9,6 @@ target_link_libraries(RequestInfoAdmin
     UtilCommons
     Threads::Threads
     UserActionProfilePST
-    UserActionProfile_v321PST
     RequestInfoManagerGrpcClient
     UserActionInfoContainer
 )

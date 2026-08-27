@@ -16,10 +16,7 @@ class ChannelsGrannularUpdateTest
 
 public:
 
-  ChannelsGrannularUpdateTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  ChannelsGrannularUpdateTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var),
     chp(pq_conn_),
     che(pq_conn_),
@@ -48,9 +45,7 @@ private:
   std::list<ORM::PQ::Channeltrigger> channeltriggers;
 
   void
-  create_trigger(
-    ORM::BehavioralChannel* channel,
-    const char* kwd_name);
+  create_trigger(ORM::BehavioralChannel* channel, const char* kwd_name);
 
   void page_channel();
   void search_channel();

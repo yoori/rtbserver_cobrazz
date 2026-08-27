@@ -29,10 +29,7 @@ public:
 
 public:
 
-  DailyRunTest(
-      UnitStat& stat_var,
-      const char* task_name,
-      XsdParams params_var):
+  DailyRunTest(UnitStat& stat_var, const char* task_name, XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 
@@ -50,9 +47,6 @@ private:
     size_t expect_count);
 
   Generics::Time
-  get_gmt(
-    DailyRunTest::WeekDays wday,
-    const char* local_tm,
-    const char* time_zone);
+  get_gmt(DailyRunTest::WeekDays wday, const char* local_tm, const char* time_zone);
 
 };

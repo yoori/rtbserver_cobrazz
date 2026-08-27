@@ -11,411 +11,387 @@
 #include <Commons/Kafka/LimitedMTQueue.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
-namespace AdServer
+namespace AdServer::Commons::Kafka
 {
-  namespace Commons
+  /**
+   * @class StatCounter
+   * @brief Simple class to store counter.
+   */
+  class StatCounter
   {
-    namespace Kafka
+  public:
+    /**
+     * @brief Constructor
+     */
+    StatCounter();
+
+    /**
+     * @brief Increment counter
+     *
+     * @param increment value.
+     */
+    StatCounter& operator+=(int val);
+
+    /**
+     * @brief Reduction of int
+     */
+    operator int() const;
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const StatCounter& cnt);
+
+  private:
+    mutable Algs::AtomicUInt prev_;
+    Algs::AtomicUInt current_;
+  };
+
+  /**
+   * @brief Counter to stream
+   *
+   * @param stream
+   * @param counter
+   * @return stream
+   */
+  std::ostream&
+  operator<<(std::ostream& os, const StatCounter& cnt);
+
+  /**
+   * @brief Producer
+   * RdKafka::Producer wrapper
+   */
+  class Producer : public Commons::DelegateActiveObject
+  {
+    DECLARE_EXCEPTION(ProducerError, eh::DescriptiveException);
+
+    typedef std::pair<std::string, std::string> ProducerPair;
+
+    class ProducerHandler;
+
+    /**
+     * @brief EventCallback
+     * RdKafka::EventCb wrapper
+     */
+    class EventCallback: public RdKafka::EventCb
     {
+    public:
       /**
-       * @class StatCounter
-       * @brief Simple class to store counter.
+       * @brief Constructor
+       * @param producer handler
        */
-      class StatCounter
-      {
-      public:
-        /**
-         * @brief Constructor
-         */
-        StatCounter();
-
-        /**
-         * @brief Increment counter
-         *
-         * @param increment value.
-         */
-        StatCounter& operator+=(int val);
-
-        /**
-         * @brief Reduction of int
-         */
-        operator int() const;
-
-        friend
-        std::ostream&
-        operator<<(
-          std::ostream& os,
-          const StatCounter& cnt);
-
-      private:
-        mutable Algs::AtomicUInt prev_;
-        Algs::AtomicUInt current_;
-      };
+      EventCallback(ProducerHandler* handler)
+        noexcept;
 
       /**
-       * @brief Counter to stream
-       *
-       * @param stream
-       * @param counter
-       * @return stream
+       * @brief Event callback
+       * @param kafka event (see RdKafka::Event)
        */
-      std::ostream&
-      operator<<(
-        std::ostream& os,
-        const StatCounter& cnt);
+      virtual void
+      event_cb(RdKafka::Event& event);
+
+    protected:
+      ProducerHandler* handler_;
+    };
+
+    /**
+     * @brief DeliveryReportCallback
+     * RdKafka::DeliveryReportCb wrapper
+     */
+    class DeliveryReportCallback: public RdKafka::DeliveryReportCb
+    {
+    public:
+      /**
+       * @brief Constructor
+       * @param producer handler
+       */
+      DeliveryReportCallback(ProducerHandler* handler)
+        noexcept;
 
       /**
-       * @brief Producer
-       * RdKafka::Producer wrapper
+       * @brief Delivery callback
+       * @param kafka message (see RdKafka::Message)
        */
-      class Producer : public Commons::DelegateActiveObject
-      {
-        DECLARE_EXCEPTION(ProducerError, eh::DescriptiveException);
+      virtual
+      void
+      dr_cb(RdKafka::Message &message);
 
-        typedef std::pair<std::string, std::string> ProducerPair;
+    protected:
+      ProducerHandler* handler_;
+    };
 
-        class ProducerHandler;
+    /**
+     * @brief PartitionCallback
+     * RdKafka::PartitionerCb wrapper
+     */
+    class PartitionCallback: public RdKafka::PartitionerCb
+    {
+    public:
+      /**
+       * @brief Partition callback
+       * @param kafka topic (see RdKafka::Topic)
+       * @param message key
+       * @param topic max partition number
+       * @return partition number
+       */
+      virtual int32_t
+      partitioner_cb(
+        const RdKafka::Topic *topic,
+        const std::string *key,
+        int32_t partition_cnt,
+        void *msg_opaque);
+    };
 
-        /**
-         * @brief EventCallback
-         * RdKafka::EventCb wrapper
-         */
-        class EventCallback: public RdKafka::EventCb
-        {
-        public:
-          /**
-           * @brief Constructor
-           * @param producer handler
-           */
-          EventCallback(ProducerHandler* handler)
-            noexcept;
+    //
 
-          /**
-           * @brief Event callback
-           * @param kafka event (see RdKafka::Event)
-           */
-          virtual void
-          event_cb(RdKafka::Event& event);
+    /**
+     * @class StatsObject
+     * @brief Statistic thread
+     */
+    class StatsObject : public Commons::DelegateActiveObject
+    {
+    public:
+      /**
+       * @brief Constructor
+       * @param producer object
+       * @param active object callback
+       */
+      StatsObject(Producer* owner, Generics::ActiveObjectCallback* callback);
 
-        protected:
-          ProducerHandler* handler_;
-        };
+      // Statistics
+      StatCounter error_overflow;  // input message overflow events
+      StatCounter error_exception; // kafka errors
+      StatCounter reconnect;       // reconnects to broker
+      StatCounter sent;            // sent (into rdkafka internal queue) messages
+      StatCounter sent_bytes;      // sent (into rdkafka internal queue) bytes
+      volatile sig_atomic_t disconnected; // disconnected flag
 
-        /**
-         * @brief DeliveryReportCallback
-         * RdKafka::DeliveryReportCb wrapper
-         */
-        class DeliveryReportCallback: public RdKafka::DeliveryReportCb
-        {
-        public:
-          /**
-           * @brief Constructor
-           * @param producer handler
-           */
-          DeliveryReportCallback(ProducerHandler* handler)
-            noexcept;
+      /**
+       * @brief Move to disconnected state
+       */
+      void consider_disconnect(); //
 
-          /**
-           * @brief Delivery callback
-           * @param kafka message (see RdKafka::Message)
-           */
-          virtual
-          void
-          dr_cb(
-            RdKafka::Message &message);
+      /**
+       * @brief Move to connected state
+       */
+      void consider_connect();
 
-        protected:
-          ProducerHandler* handler_;
-        };
+    protected:
 
-        /**
-         * @brief PartitionCallback
-         * RdKafka::PartitionerCb wrapper
-         */
-        class PartitionCallback: public RdKafka::PartitionerCb
-        {
-        public:
-          /**
-           * @brief Partition callback
-           * @param kafka topic (see RdKafka::Topic)
-           * @param message key
-           * @param topic max partition number
-           * @return partition number
-           */
-          virtual int32_t
-          partitioner_cb(
-            const RdKafka::Topic *topic,
-            const std::string *key,
-            int32_t partition_cnt,
-            void *msg_opaque);
-        };
+      /**
+       * @brief Main work cycle
+       */
+      void
+      work_() noexcept;
 
-        //
+      /**
+       * @brief Termination handler
+       */
+      virtual void
+      terminate_() noexcept;
 
-        /**
-         * @class StatsObject
-         * @brief Statistic thread
-         */
-        class StatsObject : public Commons::DelegateActiveObject
-        {
-        public:
-          /**
-           * @brief Constructor
-           * @param producer object
-           * @param active object callback
-           */
-          StatsObject(
-            Producer* owner,
-            Generics::ActiveObjectCallback* callback);
+      /**
+       * @brief Destructor
+       */
+      virtual
+      ~StatsObject() noexcept = default;
 
-          // Statistics
-          StatCounter error_overflow;  // input message overflow events
-          StatCounter error_exception; // kafka errors
-          StatCounter reconnect;       // reconnects to broker
-          StatCounter sent;            // sent (into rdkafka internal queue) messages
-          StatCounter sent_bytes;      // sent (into rdkafka internal queue) bytes
-          volatile sig_atomic_t disconnected; // disconnected flag
+    private:
+      Producer* owner_;
+      typedef Sync::Policy::PosixThread SyncPolicy;
+      Generics::Time last_stat_time_;
+      SyncPolicy::Mutex lock_;
+      Sync::Conditional condition_;
+    };
 
-          /**
-           * @brief Move to disconnected state
-           */
-          void consider_disconnect(); //
+    typedef ReferenceCounting::SmartPtr<StatsObject> StatsObject_var;
 
-          /**
-           * @brief Move to connected state
-           */
-          void consider_connect();
+    /**
+     * @class ProducerHandler
+     * @brief Producer handler
+     */
+    class ProducerHandler
+    {
+    public:
 
-        protected:
+      /**
+       * @brief Constructor
+       * @param producer object
+       */
+      ProducerHandler(Producer* owner)
+        /*throw(ProducerError)*/;
 
-          /**
-           * @brief Main work cycle
-           */
-          void
-          work_() noexcept;
+      /**
+       * @brief Produce message pair
+       * @param message pair (key, data)
+       */
+      void
+      produce(const ProducerPair& msg)
+        /*throw(ProducerError)*/;
 
-          /**
-           * @brief Termination handler
-           */
-          virtual void
-          terminate_() noexcept;
+      /**
+       * @brief Process error
+       * @param error context
+       * @param error message
+       * @param disconnected flag
+       */
+      void
+      process_error(const char* context, const char* error, bool disconnected);
 
-          /**
-           * @brief Destructor
-           */
-          virtual
-          ~StatsObject() noexcept = default;
+      /**
+       * @brief Notify that everything looks OK on rdkafka side
+       */
+      void notify_ok();
 
-        private:
-          Producer* owner_;
-          typedef Sync::Policy::PosixThread SyncPolicy;
-          Generics::Time last_stat_time_;
-          SyncPolicy::Mutex lock_;
-          Sync::Conditional condition_;
-        };
+      /**
+       * @brief Polls the provided kafka handle for events
+       * @param timeout_ms the maximum amount of time (in milliseconds)
+       *        that the call will block waiting for events
+       */
+      int poll(int timeout_ms = 0);
 
-        typedef ReferenceCounting::SmartPtr<StatsObject> StatsObject_var;
+      int
+      flush(int timeout_ms = 0);
 
-        /**
-         * @class ProducerHandler
-         * @brief Producer handler
-         */
-        class ProducerHandler
-        {
-        public:
+      /**
+       * @brief Resend message (push into input queue)
+       * @param topic name
+       * @param key
+       * @param data buffer
+       * @param data size
+       */
+      void resend_message(
+        const std::string& topic_name,
+        const std::string* key,
+        void* payload,
+        size_t len);
 
-          /**
-           * @brief Constructor
-           * @param producer object
-           */
-          ProducerHandler(Producer* owner)
-            /*throw(ProducerError)*/;
+    private:
+      Producer* owner_;
+      EventCallback event_callback_;
+      DeliveryReportCallback delivery_callback_;
+      PartitionCallback partition_callback_;
+      std::unique_ptr<RdKafka::Conf> producer_conf_;
+      std::unique_ptr<RdKafka::Producer> producer_;
+      std::unique_ptr<RdKafka::Conf> topic_conf_;
+      std::unique_ptr<RdKafka::Topic> topic_;
+    };
 
-          /**
-           * @brief Produce message pair
-           * @param message pair (key, data)
-           */
-          void
-          produce(
-            const ProducerPair& msg)
-            /*throw(ProducerError)*/;
+    typedef ::xsd::AdServer::Configuration::KafkaTopic
+       KafkaTopicConfig;
 
-          /**
-           * @brief Process error
-           * @param error context
-           * @param error message
-           * @param disconnected flag
-           */
-          void
-          process_error(
-            const char* context,
-            const char* error,
-            bool disconnected);
+  public:
 
-          /**
-           * @brief Notify that everything looks OK on rdkafka side
-           */
-          void notify_ok();
+    /**
+     * @brief Constructor
+     * @param logger
+     * @param active object callback
+     * @param kafka producer topic config
+     */
+    Producer(
+      Logging::Logger* logger,
+      Generics::ActiveObjectCallback* callback,
+      const KafkaTopicConfig& config);
 
-          /**
-           * @brief Polls the provided kafka handle for events
-           * @param timeout_ms the maximum amount of time (in milliseconds)
-           *        that the call will block waiting for events
-           */
-          int poll(
-            int timeout_ms = 0);
+    /**
+     * @brief Constructor
+     * @param logger
+     * @param active object callback
+     * @param threads number
+     * @param input queue size
+     * @param brokers string, sample host1:9092,host2:9093
+     * @param topic name
+     */
+    Producer(
+       Logging::Logger* logger,
+       Generics::ActiveObjectCallback* callback,
+       unsigned long threads_number,
+       unsigned long queue_size,
+       const char* brokers,
+       const char* topic_name);
 
-          int
-          flush(int timeout_ms = 0);
+    /**
+     * @brief Push data
+     * @param key
+     * @param data
+     */
+    void push_data(const std::string& key, const std::string& data) noexcept;
 
-          /**
-           * @brief Resend message (push into input queue)
-           * @param topic name
-           * @param key
-           * @param data buffer
-           * @param data size
-           */
-          void resend_message(
-            const std::string& topic_name,
-            const std::string* key,
-            void* payload,
-            size_t len);
+    /**
+     * @brief Activate objects (start threads)
+     */
+    virtual void
+    activate_object()
+      /*throw(Exception, eh::Exception)*/;
 
-        private:
-          Producer* owner_;
-          EventCallback event_callback_;
-          DeliveryReportCallback delivery_callback_;
-          PartitionCallback partition_callback_;
-          std::unique_ptr<RdKafka::Conf> producer_conf_;
-          std::unique_ptr<RdKafka::Producer> producer_;
-          std::unique_ptr<RdKafka::Conf> topic_conf_;
-          std::unique_ptr<RdKafka::Topic> topic_;
-        };
+    /**
+     * @brief Get errors
+     */
+    unsigned long
+    errors() const;
 
-        typedef ::xsd::AdServer::Configuration::KafkaTopic
-           KafkaTopicConfig;
+    /**
+     * @brief Get sent messages
+     */
+    unsigned long
+    sent() const;
 
-      public:
+    /**
+     * @brief Get sent bytes
+     */
+    unsigned long
+    sent_bytes() const;
 
-        /**
-         * @brief Constructor
-         * @param logger
-         * @param active object callback
-         * @param kafka producer topic config
-         */
-        Producer(
-          Logging::Logger* logger,
-          Generics::ActiveObjectCallback* callback,
-          const KafkaTopicConfig& config);
+  private:
+    typedef LimitedMTQueue<ProducerPair> ProducerQueue;
 
-        /**
-         * @brief Constructor
-         * @param logger
-         * @param active object callback
-         * @param threads number
-         * @param input queue size
-         * @param brokers string, sample host1:9092,host2:9093
-         * @param topic name
-         */
-        Producer(
-           Logging::Logger* logger,
-           Generics::ActiveObjectCallback* callback,
-           unsigned long threads_number,
-           unsigned long queue_size,
-           const char* brokers,
-           const char* topic_name);
+  protected:
+    /**
+     * @brief Produce message from input queue
+     * @param producer handler
+     */
+    void
+    produce_(ProducerHandler& handler);
 
-        /**
-         * @brief Push data
-         * @param key
-         * @param data
-         */
-        void push_data(
-          const std::string& key,
-          const std::string& data) noexcept;
+    /**
+     * @brief Process error
+     * @param error context
+     * @param error message
+     */
+    void
+    process_error_(const char* context, const char* error);
 
-        /**
-         * @brief Activate objects (start threads)
-         */
-        virtual void
-        activate_object()
-          /*throw(Exception, eh::Exception)*/;
+    /**
+     * @brief Main working cycle.
+     */
+    void
+    work_() noexcept;
 
-        /**
-         * @brief Get errors
-         */
-        unsigned long
-        errors() const;
+    /**
+     * @brief Termination.
+     */
+    virtual void
+    terminate_() noexcept;
 
-        /**
-         * @brief Get sent messages
-         */
-        unsigned long
-        sent() const;
+    /**
+     * @brief Destructor
+     */
+    ~Producer() noexcept = default;
 
-        /**
-         * @brief Get sent bytes
-         */
-        unsigned long
-        sent_bytes() const;
+  private:
+    Logging::Logger_var logger_;
+    std::string brokers_;
+    const std::string topic_name_;
+    ProducerQueue messages_;
 
-      private:
-        typedef LimitedMTQueue<ProducerPair> ProducerQueue;
+    // Synchronization
+    typedef Sync::Policy::PosixThread SyncPolicy;
+    SyncPolicy::Mutex reconnect_lock_;
+    Sync::Conditional reconnect_cond_;
 
-      protected:
-        /**
-         * @brief Produce message from input queue
-         * @param producer handler
-         */
-        void
-        produce_(
-          ProducerHandler& handler);
+    // Statistics
+    StatsObject_var stats_;
+  };
 
-        /**
-         * @brief Process error
-         * @param error context
-         * @param error message
-         */
-        void
-        process_error_(
-          const char* context,
-          const char* error);
+  typedef ReferenceCounting::SmartPtr<Producer> Producer_var;
 
-        /**
-         * @brief Main working cycle.
-         */
-        void
-        work_() noexcept;
-
-        /**
-         * @brief Termination.
-         */
-        virtual void
-        terminate_() noexcept;
-
-        /**
-         * @brief Destructor
-         */
-        ~Producer() noexcept = default;
-
-      private:
-        Logging::Logger_var logger_;
-        std::string brokers_;
-        const std::string topic_name_;
-        ProducerQueue messages_;
-
-        // Synchronization
-        typedef Sync::Policy::PosixThread SyncPolicy;
-        SyncPolicy::Mutex reconnect_lock_;
-        Sync::Conditional reconnect_cond_;
-
-        // Statistics
-        StatsObject_var stats_;
-      };
-
-      typedef ReferenceCounting::SmartPtr<Producer> Producer_var;
-
-    }
-  }
 }
-

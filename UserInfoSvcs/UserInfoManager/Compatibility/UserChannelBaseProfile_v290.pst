@@ -10,7 +10,7 @@ namespace UserInfoSvcs_v290
 
   autoreader SessionMatchesReader<SessionMatches>;
   autowriter SessionMatchesWriter<SessionMatches>;
-    
+
   struct HistoryVisits
   {
     uint channel_id;
@@ -64,7 +64,7 @@ namespace UserInfoSvcs_v290
     list<PartlyVisitsReader> all_ht_visits;
     list<PartlyVisitsReader> all_history_visits;
   };
-      
+
   writer PartlyVisitsSectionWriter<PartlyVisitsSection>
   {
     channel_id;
@@ -94,7 +94,7 @@ namespace UserInfoSvcs_v290
     list<PartlyVisitsSectionReader> hpm;
     list<PartlyVisitsSectionReader> hpm_from_now;
   };
-   
+
   writer ChannelsInfoWriter<ChannelsInfo>
   {
     list<HTCandidatesWriter> ht_candidates;
@@ -111,9 +111,9 @@ namespace UserInfoSvcs_v290
     uint version;
   };
 
-  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
-  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;    
-    
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;
+
   struct PersistentMatches
   {
     list<uint> channel_ids;
@@ -131,13 +131,13 @@ namespace UserInfoSvcs_v290
     uint last_request_time;
     uint session_start;
     uint household;
-    
+
     PersistentMatches persistent_matches;
     ChannelsInfo page_channels;
     ChannelsInfo search_channels;
     ChannelsInfo url_channels;
   };
- 
+
   reader ChannelsProfileReader<ChannelsProfile>
   {
     version;
@@ -147,13 +147,13 @@ namespace UserInfoSvcs_v290
     last_request_time;
     session_start;
     household;
-    
+
     PersistentMatchesReader persistent_matches;
     ChannelsInfoReader page_channels;
     ChannelsInfoReader search_channels;
     ChannelsInfoReader url_channels;
   };
-   
+
   writer ChannelsProfileWriter<ChannelsProfile>
   {
     version;
@@ -163,7 +163,7 @@ namespace UserInfoSvcs_v290
     last_request_time;
     session_start;
     household;
-    
+
     PersistentMatchesWriter persistent_matches;
     ChannelsInfoWriter page_channels;
     ChannelsInfoWriter search_channels;

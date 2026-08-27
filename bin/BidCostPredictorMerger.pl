@@ -112,7 +112,7 @@ sub dump_date
 
   my $dump_file_path = '';
 
-  if(exists($result_files->{$date}))
+  if (exists($result_files->{$date}))
   {
     $dump_file_path = $result_files->{$date}->tmp_file();
   }
@@ -153,10 +153,10 @@ sub reaggregate
     foreach my $file(@all_files)
     {
       my ($file_name, $file_path) = fileparse($file);
-      if($file_name =~ m/BidCostAggStat[.]([^.]+)[.].*/)
+      if ($file_name =~ m/BidCostAggStat[.]([^.]+)[.].*/)
       {
         my $date = $1;
-        if(!exists($agg_files{$date}))
+        if (!exists($agg_files{$date}))
         {
           $agg_files{$date} = [];
         }
@@ -166,14 +166,14 @@ sub reaggregate
 
     my %date_to_agg;
 
-    while(my ($date, $files) = each(%agg_files))
+    while (my ($date, $files) = each(%agg_files))
     {
-      if($$continue == 0)
+      if ($$continue == 0)
       {
         last;
       }
 
-      if(scalar(@$files) > 1)
+      if (scalar(@$files) > 1)
       {
         INFO("Reaggregate: reaggregate @$files");
 
@@ -202,7 +202,7 @@ sub reaggregate
     }
   };
 
-  if($@)
+  if ($@)
   {
     ERROR("Reaggregate: caught error $@");
   }
@@ -225,7 +225,7 @@ sub aggregate
 
   eval
   {
-    while(scalar(@all_files) > 0 && $$continue > 0)
+    while (scalar(@all_files) > 0 && $$continue > 0)
     {
       my @process_files = splice(@all_files, 0, MAX_PROCESS_FILES);
 
@@ -239,32 +239,32 @@ sub aggregate
 
       foreach my $file(@process_files)
       {
-        if($$continue == 0)
+        if ($$continue == 0)
         {
           last;
         }
 
         INFO("Check $file");
 
-        if(open(my $fh, '<', $file))
+        if (open(my $fh, '<', $file))
         {
           # read head
           my $head = <$fh>;
           chomp $head;
 
           #print("Head <" . $head . ">\n");
-          if($head =~ /^BidCostStat/)
+          if ($head =~ /^BidCostStat/)
           {
             INFO("To process $file");
 
             # read file content
             my $date = '';
-            while(my $line = <$fh>)
+            while (my $line = <$fh>)
             {
               chomp $line;
               #print("LINE: $line\n");
 
-              if($line =~ /^(\d{4}-\d{2}-\d{2})$/)
+              if ($line =~ /^(\d{4}-\d{2}-\d{2})$/)
               {
                 $date = $1;
               }
@@ -275,7 +275,7 @@ sub aggregate
                 #print("FIELDS: ");
                 #print(@fields);
                 #print("\n");
-                if(scalar @fields >= 7)
+                if (scalar @fields >= 7)
                 {
                   my $tag_id = $fields[0];
                   my $ext_tag_id = $fields[1];
@@ -285,13 +285,13 @@ sub aggregate
                   my $imps = $fields[5];
                   my $clicks = $fields[6];
 
-                  if(!exists($aggs_by_date{$date}))
+                  if (!exists($aggs_by_date{$date}))
                   {
                     $aggs_by_date{$date} = {};
                   }
 
                   my $key = "$tag_id\t$domain\t$cost";
-                  if(!exists($aggs_by_date{$date}->{$key}))
+                  if (!exists($aggs_by_date{$date}->{$key}))
                   {
                     $aggs_by_date{$date}->{$key} = new Agg(bids => 0, imps => 0, clicks => 0);
                     $record_count = $record_count + 1;
@@ -309,7 +309,7 @@ sub aggregate
             INFO("Processed " . $file . "(record count = " . $record_count . ")");
 
             # check dump or not
-            while($record_count > DUMP_MAX_SIZE)
+            while ($record_count > DUMP_MAX_SIZE)
             {
               my $min_date = minstr(keys(%aggs_by_date));
               $record_count = $record_count - dump_date(
@@ -324,7 +324,7 @@ sub aggregate
       # dump aggs_by_date
       my @vals;
 
-      while(my ($d, $res_file) = each(%aggs_by_date))
+      while (my ($d, $res_file) = each(%aggs_by_date))
       {
         push(@vals, [$d, $res_file]);
       }
@@ -351,7 +351,7 @@ sub aggregate
     }
   };
 
-  if($@)
+  if ($@)
   {
     ERROR("Aggregate: caught error $@");
   }
@@ -377,7 +377,7 @@ sub generate_model
   my $eval_model = new Predictor::BidCostModelEvaluator();
   foreach my $file(reverse(@all_files))
   {
-    if($$continue == 0)
+    if ($$continue == 0)
     {
       last;
     }
@@ -387,13 +387,13 @@ sub generate_model
     $eval_model->add_file($file);
   }
 
-  if($$continue > 0)
+  if ($$continue > 0)
   {
     INFO("Generate model: to evaluate model");
     my $model = $eval_model->evaluate([0.95, 0.75, 0.5, 0.25], $continue, $logger);
     INFO("Generate model: from evaluate model");
 
-    if(defined($model))
+    if (defined($model))
     {
       my $model_dir = strftime("%Y%m%d.%H%M%S", gmtime);
       my $out_model_dir = $tmp_model_folder . "/" . $model_dir;
@@ -407,13 +407,13 @@ sub generate_model
     }
   }
 
-  if($$continue > 0 && defined($ctr_model_folder))
+  if ($$continue > 0 && defined($ctr_model_folder))
   {
     INFO("Generate model: to evaluate ctr model");
     my $model = $eval_model->evaluate_ctr($continue, $logger);
     INFO("Generate model: from evaluate ctr model");
 
-    if(defined($model))
+    if (defined($model))
     {
       my $model_dir = strftime("%Y%m%d.%H%M%S", gmtime);
       my $out_model_dir = $ctr_tmp_model_folder . "/" . $model_dir;
@@ -446,7 +446,7 @@ sub start
     $SIG{__DIE__} = sub { ERROR("Caught error: @_"); exit(1); };
 
     my $twig = XML::Twig->new;
-    eval { $twig->parsefile($config_file) } or 
+    eval { $twig->parsefile($config_file) } or
       die "Invalid xml config: $@";
 
     my $config = $twig->root;
@@ -456,7 +456,7 @@ sub start
     my $stat_config = $config->first_child('cfg:BidCost') or
       die "Invalid xml config: impression config is undefined";
 
-    my $processing_period = 
+    my $processing_period =
       $stat_config->att('process_period') || DEFAULT_SLEEP_TIMEOUT;
 
     my @outputs;
@@ -504,14 +504,14 @@ sub start
       #INFO("T2 = " . $last_model_generate_time->clone()->add_duration($model_period)->strftime('%F %T'));
       #INFO("T3 = " . $last_reaggregate_time->clone()->add_duration($reaggregate_period)->strftime('%F %T'));
 
-      if(DateTime->compare($last_fetch_input_files_time->clone()->add_duration($aggregate_period), $now) < 0)
+      if (DateTime->compare($last_fetch_input_files_time->clone()->add_duration($aggregate_period), $now) < 0)
       {
         #INFO("XXX1");
         aggregate($in_stat_path, $agg_bid_cost_path, \$continue);
         $last_fetch_input_files_time = $now;
       }
 
-      if(DateTime->compare($last_model_generate_time->clone()->add_duration($model_period), $now) < 0)
+      if (DateTime->compare($last_model_generate_time->clone()->add_duration($model_period), $now) < 0)
       {
         #INFO("XXX2");
         generate_model($agg_bid_cost_path,
@@ -521,7 +521,7 @@ sub start
         $last_model_generate_time = $now;
       }
 
-      if(DateTime->compare($last_reaggregate_time->clone()->add_duration($reaggregate_period), $now) < 0)
+      if (DateTime->compare($last_reaggregate_time->clone()->add_duration($reaggregate_period), $now) < 0)
       {
         #INFO("XXX3");
         reaggregate($agg_bid_cost_path, $agg_bid_cost_path, \$continue);

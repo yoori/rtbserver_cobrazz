@@ -47,7 +47,7 @@ sub construct_expressions
 
   #print "construct_expressions($root_id)\n";
 
-  if(exists($leafs->{$root_id}))
+  if (exists($leafs->{$root_id}))
   {
     #print "Score($root_id): " . $leafs->{$root_id} . "\n";
     return (new Expression(expression => undef, score => $leafs->{$root_id}));
@@ -64,7 +64,7 @@ sub construct_expressions
   foreach my $e(@yes_expressions)
   {
     my $expr = ' ' . $fid;
-    if(defined($e->expression()))
+    if (defined($e->expression()))
     {
       #print "E <" . $e->expression() . ">\n";
       $expr = $expr . ' &' . $e->expression();
@@ -75,7 +75,7 @@ sub construct_expressions
   foreach my $e(@no_expressions)
   {
     my $expr = '!' . $fid;
-    if(defined($e->expression()))
+    if (defined($e->expression()))
     {
       #print "E <" . $e->expression() . ">\n";
       $expr = $expr . ' &' . $e->expression();
@@ -97,11 +97,11 @@ sub print_table
 
 my @boosters;
 
-while(<STDIN>)
+while (<STDIN>)
 {
   my $line = $_;
   chomp $line;
-  if($line =~ m/booster\[.*\]:/)
+  if ($line =~ m/booster\[.*\]:/)
   {
     my $booster = new Booster(leafs => {}, nodes => {});
     push(@boosters, $booster);
@@ -122,7 +122,7 @@ while(<STDIN>)
     my $yes_id = $4;
     my $no_id = $5; # unused now
     my $miss_id = $6;
-    if($val <= 0 || $val > 1)
+    if ($val <= 0 || $val > 1)
     {
       #die "invalid model value: $val";
     }

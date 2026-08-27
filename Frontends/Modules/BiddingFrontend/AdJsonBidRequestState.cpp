@@ -81,8 +81,7 @@ namespace AdServer::Bidding
     {
       Stream::Error ostr;
       ostr << FUN << ": bad request, " << ex.what() <<
-        ", request: '" << bid_request << "'" <<
-        ", uri: '" << uri_ << "'";
+        ", request: '" << bid_request << "'" << ", uri: '" << uri_ << "'";
 
       bid_frontend_->logger()->log(
         ostr.str(),
@@ -104,15 +103,12 @@ namespace AdServer::Bidding
 
     std::ostringstream response_ostr;
 
-    fill_response_(
-      response_ostr,
-      request_info_,
-      campaign_match_result);
+    fill_response_(response_ostr, request_info_, campaign_match_result);
 
     // write response
     const std::string bid_response = response_ostr.str();
 
-    if(!bid_response.empty())
+    if (!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       response->set_content_type_nocopy(Response::Type::TEXT_XML);
@@ -135,7 +131,7 @@ namespace AdServer::Bidding
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
 
-    if(code < 300)
+    if (code < 300)
     {
       // no-bid is No content
       write_response_(204, response, response_claimed);
@@ -185,8 +181,7 @@ namespace AdServer::Bidding
       CampaignSvcs::RevenueDecimal sum_pub_ecpm = GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
         ad_slot_result.selected_creatives[0].pub_ecpm);
 
-        bid_frontend_->limit_max_cpm_(
-          sum_pub_ecpm, request_info.publisher_account_ids);
+        bid_frontend_->limit_max_cpm_(sum_pub_ecpm, request_info.publisher_account_ids);
 
       root_json.add_string(
         Response::AdJson::CRID,
@@ -200,26 +195,20 @@ namespace AdServer::Bidding
         CampaignSvcs::RevenueDecimal(false, 100, 0));
       root_json.add_number(Response::AdJson::COST, adjson_price);
 
-      if(ad_slot_result.native_data_tokens.size() >= 1)
+      if (ad_slot_result.native_data_tokens.size() >= 1)
       {
         // NDTE_TITLE
         const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
           ad_slot_result.native_data_tokens[0];
         // title
-        root_json.add_escaped_string(
-          Response::AdJson::TITLE,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::TITLE, token.value);
         // text
-        root_json.add_escaped_string(
-          Response::AdJson::TEXT,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::TEXT, token.value);
       }
       // nurl
-      if(!ad_slot_result.notice_url.empty())
+      if (!ad_slot_result.notice_url.empty())
       {
-        root_json.add_escaped_string(
-          Response::AdJson::NURL,
-          ad_slot_result.notice_url);
+        root_json.add_escaped_string(Response::AdJson::NURL, ad_slot_result.notice_url);
       }
 
       // link
@@ -228,13 +217,11 @@ namespace AdServer::Bidding
         ad_slot_result.selected_creatives[0].click_url);
 
       // icon
-      if(ad_slot_result.native_image_tokens.size() > 1)
+      if (ad_slot_result.native_image_tokens.size() > 1)
       {
         const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
-        root_json.add_escaped_string(
-          Response::AdJson::ICON,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::ICON, token.value);
       }
 
       // pixels
@@ -244,13 +231,11 @@ namespace AdServer::Bidding
       }
 
       // image
-      if(ad_slot_result.native_image_tokens.size() > 0)
+      if (ad_slot_result.native_image_tokens.size() > 0)
       {
         const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
-        root_json.add_escaped_string(
-          Response::AdJson::IMAGE,
-          token.value);
+        root_json.add_escaped_string(Response::AdJson::IMAGE, token.value);
       }
       }
       response_ostr << response;
@@ -273,7 +258,7 @@ namespace AdServer::Bidding
     // find title & image
     response_ostr << "<ad>\n";
     response_ostr << "<title>";
-    if(ad_slot_result.native_data_tokens.size() >= 1)
+    if (ad_slot_result.native_data_tokens.size() >= 1)
     {
       // NDTE_TITLE
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
@@ -282,7 +267,7 @@ namespace AdServer::Bidding
     }
     response_ostr << "</title>\n";
     response_ostr << "<desc>";
-    if(ad_slot_result.native_data_tokens.size() >= 2)
+    if (ad_slot_result.native_data_tokens.size() >= 2)
     {
       // NDTE_DESC
       const AdServer::Bidding::CampaignManager::ResultTokenInfo& token =
@@ -303,7 +288,7 @@ namespace AdServer::Bidding
 
     response_ostr << "<bid>" << adxml_price.str() << "</bid>\n";
     response_ostr << "<image>";
-    if(ad_slot_result.native_image_tokens.size() > 0)
+    if (ad_slot_result.native_image_tokens.size() > 0)
     {
       // NITE_MAIN
       const AdServer::Bidding::CampaignManager::ResultTokenImageInfo& token =
@@ -317,9 +302,7 @@ namespace AdServer::Bidding
   }
 
   void
-  AdJsonBidRequestState::add_xml_escaped_string_(
-    std::ostream& response_ostr,
-    const char* str)
+  AdJsonBidRequestState::add_xml_escaped_string_(std::ostream& response_ostr, const char* str)
     noexcept
   {
     std::string escaped_str;

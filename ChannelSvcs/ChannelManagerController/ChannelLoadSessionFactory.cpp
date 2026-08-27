@@ -21,8 +21,7 @@
 #include "ChannelSessionFactory.hpp"
 #include "ThreadHandlerTemplate.hpp"
 
-const char* ChannelLoadSessionFactoryImpl::ASPECT =
-  "ChannelLoadSessionFactoryImpl";
+const char* ChannelLoadSessionFactoryImpl::ASPECT = "ChannelLoadSessionFactoryImpl";
 
 /**
  * ChannelLoadSessionFactoryImpl
@@ -41,7 +40,7 @@ ChannelLoadSessionFactoryImpl::ChannelLoadSessionFactoryImpl(
   }
   catch(const eh::Exception& e)
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
       ostr << __func__ << ": eh::Exception: " << e.what();
@@ -58,12 +57,11 @@ CORBA::ValueBase* ChannelLoadSessionFactoryImpl::create_for_unmarshal()
 {
   try
   {
-    return new ::AdServer::ChannelSvcs::ChannelLoadSessionImpl(
-      callback_, task_runner_.in());
+    return new ::AdServer::ChannelSvcs::ChannelLoadSessionImpl(callback_, task_runner_.in());
   }
   catch(const eh::Exception& e)
   {
-    if(callback_)
+    if (callback_)
     {
       Stream::Error ostr;
       ostr << __func__ << ": eh::Exception: " << e.what();
@@ -79,7 +77,7 @@ void ChannelLoadSessionFactoryImpl::report_error(
     const char* error_code)
     noexcept
 {
-  if(callback_)
+  if (callback_)
   {
     Stream::Error ostr;
     ostr << __func__ << ": " << description;

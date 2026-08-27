@@ -1,9 +1,6 @@
 #include "DisplayAdNetAndGrossTest.hpp"
 
-REFLECT_UNIT(DisplayAdNetAndGrossTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW
-);
+REFLECT_UNIT(DisplayAdNetAndGrossTest) ("CreativeSelection", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
@@ -37,14 +34,10 @@ DisplayAdNetAndGrossTest::case_net_campaign_win()
   user.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id,
-      user.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id, user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id,
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id, user.debug_info.ccid).check(),
     "must got ccid = CC Id/1/2 in response");
 }
 
@@ -67,14 +60,10 @@ DisplayAdNetAndGrossTest::case_gross_campaign_win()
   user.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id,
-      user.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id, user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/2 in response");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id,
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id, user.debug_info.ccid).check(),
     "must got ccid = CC Id/2/1 in response");
 }
 
@@ -97,14 +86,10 @@ DisplayAdNetAndGrossTest::case_net_campaign_win_with_commission()
   user.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id,
-      user.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id, user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/3 in response");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id,
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id, user.debug_info.ccid).check(),
     "must got ccid = CC Id/3/2 in response");
 }
 
@@ -128,26 +113,18 @@ DisplayAdNetAndGrossTest::case_publisher_commission()
   request.tid = tag_id1;
   user.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id1,
-      user.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id1, user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/4/1 in response");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      cc_id,
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker(cc_id, user.debug_info.ccid).check(),
     "must got ccid = CC Id/4 in response");
   request.tid = tag_id2;
   user.process_request(request);
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      tag_id2,
-      user.debug_info.tag_id).check(),
+    AutoTest::equal_checker(tag_id2, user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/4/2 in response");
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      user.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", user.debug_info.ccid).check(),
     "must got ccid = 0 in response");
 }
 
@@ -159,7 +136,7 @@ DisplayAdNetAndGrossTest::pre_condition()
     Generics::Time::ONE_HOUR * target_request_time_.get_gm_time().tm_hour;
   Generics::Time target_sdate = target_request_time_;
   // set stats keys
-  for(int i = 0; i < 5; ++i)
+  for (int i = 0; i < 5; ++i)
   {
     stats_[i].key().stimestamp(target_sdate);
   }
@@ -238,9 +215,7 @@ DisplayAdNetAndGrossTest::post_condition()
   };
 
   FAIL_CONTEXT(
-    AutoTest::wait_checker(
-      AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats_)).check(),
+    AutoTest::wait_checker(AutoTest::stats_diff_checker(pq_conn_, diffs, stats_)).check(),
   "RequestStatsHourly check");
 }
 

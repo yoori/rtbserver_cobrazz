@@ -69,13 +69,10 @@ public:
       case 2:
         { // action_ADSC_3478_test
           tasks_.push_back(new Request(test_it, uid, id,
-            Generics::Time(String::SubString("2008-01-01 00:00:00"),
-              "%Y-%m-%d %H:%M:%S")));
-          RequestId id2(
-            Generics::Uuid::create_random_based().to_string().c_str());
+            Generics::Time(String::SubString("2008-01-01 00:00:00"), "%Y-%m-%d %H:%M:%S")));
+          RequestId id2(Generics::Uuid::create_random_based().to_string().c_str());
           tasks_.push_back(new Request(test_it, uid, id2,
-            Generics::Time(String::SubString("2008-01-01 00:00:01"),
-              "%Y-%m-%d %H:%M:%S")));
+            Generics::Time(String::SubString("2008-01-01 00:00:01"), "%Y-%m-%d %H:%M:%S")));
           tasks_.push_back(new AdvAction(test_it, uid, id));
           ++std_simple_actions_size_;
           break;
@@ -83,22 +80,18 @@ public:
       case 3:
         { // action_ADSC_3478_reverse_test
           tasks_.push_back(new AdvAction(test_it, uid, id));
-          RequestId id2(
-            Generics::Uuid::create_random_based().to_string().c_str());
+          RequestId id2(Generics::Uuid::create_random_based().to_string().c_str());
           tasks_.push_back(new Request(test_it, uid, id2,
-            Generics::Time(String::SubString("2008-01-01 00:00:01"),
-              "%Y-%m-%d %H:%M:%S")));
+            Generics::Time(String::SubString("2008-01-01 00:00:01"), "%Y-%m-%d %H:%M:%S")));
           ++std_simple_actions_size_;
           tasks_.push_back(new Request(test_it, uid, id,
-            Generics::Time(String::SubString("2008-01-01 00:00:00"),
-              "%Y-%m-%d %H:%M:%S")));
+            Generics::Time(String::SubString("2008-01-01 00:00:00"), "%Y-%m-%d %H:%M:%S")));
           break;
         }
       case 4:
         { // custom_action_direct_order_test
           tasks_.push_back(new Request(test_it, uid, id));
-          RequestId id2(
-            Generics::Uuid::create_random_based().to_string().c_str());
+          RequestId id2(Generics::Uuid::create_random_based().to_string().c_str());
           tasks_.push_back(new Request(test_it, uid, id2));
           tasks_.push_back(new CustomAction(test_it, uid, id2));
           ++std_custom_actions_size_;
@@ -107,8 +100,7 @@ public:
       case 5:
         { // custom_two_action_direct_order_test
           tasks_.push_back(new Request(test_it, uid, id));
-          RequestId id2(
-            Generics::Uuid::create_random_based().to_string().c_str());
+          RequestId id2(Generics::Uuid::create_random_based().to_string().c_str());
           tasks_.push_back(new Request(test_it, uid, id2,
             Generics::Time(String::SubString("2008-01-01"), "%Y-%m-%d"), 2));
           tasks_.push_back(new CustomAction(test_it, uid, id));
@@ -204,9 +196,7 @@ public:
   /// UserActionInfoContainer::process_custom_action
   struct CustomAction : public Task
   {
-    CustomAction(const TestIt* test_it,
-      const UserId& uid,
-      const RequestId& id) noexcept
+    CustomAction(const TestIt* test_it, const UserId& uid, const RequestId& id) noexcept
       : Task(test_it, uid, id)
     {
     }
@@ -300,8 +290,7 @@ public:
       if (result != std_custom_actions_size_)
       {
         std::cerr << "FAIL, standard custom actions="
-          << std_custom_actions_size_
-          << ", but performed custom actions=" << result << std::endl;
+          << std_custom_actions_size_ << ", but performed custom actions=" << result << std::endl;
         tasks_ = save_tasks_;
         std_simple_actions_size_ = save_std_simple_actions_size_;
         std_custom_actions_size_ = save_std_custom_actions_size_;
@@ -318,8 +307,7 @@ private:
   {
     template <typename ValueType>
     std::size_t
-    operator ()(std::size_t sum,
-      const ValueType& map_iterator) const
+    operator ()(std::size_t sum, const ValueType& map_iterator) const
     {
       return sum + map_iterator.second;
     }
@@ -345,14 +333,10 @@ multi_thread_test(const TestIt* test_it)
   noexcept
 {
   UserActionInfoContainerTester test_user_action_info(test_it);
-  TestCommons::MTTester<UserActionInfoContainerTester&> mt_tester_uai(
-    test_user_action_info, 15);
+  TestCommons::MTTester<UserActionInfoContainerTester&> mt_tester_uai(test_user_action_info, 15);
 
-  const std::size_t MT_OPERATIONS_AMOUNT =
-    test_user_action_info.tasks_amount();
-  mt_tester_uai.run(MT_OPERATIONS_AMOUNT,
-    0,
-    MT_OPERATIONS_AMOUNT);
+  const std::size_t MT_OPERATIONS_AMOUNT = test_user_action_info.tasks_amount();
+  mt_tester_uai.run(MT_OPERATIONS_AMOUNT, 0, MT_OPERATIONS_AMOUNT);
 
   return true;
   //return test_user_action_info.check();

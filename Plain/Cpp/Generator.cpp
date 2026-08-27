@@ -60,16 +60,13 @@ namespace Cpp
     bool is_struct(Declaration::BaseDescriptor* descriptor)
       noexcept
     {
-      return Declaration::StructDescriptor_var(
-        descriptor->as_struct()).in();
+      return Declaration::StructDescriptor_var(descriptor->as_struct()).in();
 
     }
   }
 
   /* DeclareGenerator implementation */
-  DeclareGenerator::DeclareGenerator(
-    std::ostream& out,
-    std::ostream& out_cpp) noexcept
+  DeclareGenerator::DeclareGenerator(std::ostream& out, std::ostream& out_cpp) noexcept
     : out_(out),
       out_cpp_(out_cpp)
   {}
@@ -86,7 +83,7 @@ namespace Cpp
     Declaration::Namespace_var namespace_decl = elem->namespace_decl();
     std::string prev_offset;
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       prev_offset = offset_;
       out_ << offset_ << "namespace " << namespace_decl->name() << std::endl <<
@@ -94,13 +91,13 @@ namespace Cpp
       offset_ = offset_ + "  ";
     }
 
-    for(Code::ElementList::const_iterator el_it = elem->elements()->begin();
+    for (Code::ElementList::const_iterator el_it = elem->elements()->begin();
         el_it != elem->elements()->end(); ++el_it)
     {
       visit(*el_it);
     }
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       offset_ = prev_offset;
       out_ << offset_ << "}" << std::endl;
@@ -115,55 +112,46 @@ namespace Cpp
   }
 
   void
-  DeclareGenerator::visit_i(
-    const Code::TypeElement* elem) noexcept
+  DeclareGenerator::visit_i(const Code::TypeElement* elem) noexcept
   {
     Declaration::BaseType_var type = elem->type();
     Declaration::BaseDescriptor_var descriptor = type->as_descriptor();
 
-    if(descriptor.in())
+    if (descriptor.in())
     {
-      Declaration::StructDescriptor_var struct_descriptor =
-        descriptor->as_struct();
+      Declaration::StructDescriptor_var struct_descriptor = descriptor->as_struct();
 
       assert(struct_descriptor.in());
 
-      DescriptorGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(
-        struct_descriptor);
+      DescriptorGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(struct_descriptor);
     }
     else
     {
       Declaration::BaseReader_var reader = type->as_reader();
-      if(reader.in())
+      if (reader.in())
       {
-        Declaration::StructReader_var struct_reader =
-          reader->as_struct_reader();
+        Declaration::StructReader_var struct_reader = reader->as_struct_reader();
 
         assert(struct_reader.in());
 
-        ReaderGenerator(out_, offset_.c_str()).generate_decl(
-          struct_reader);
+        ReaderGenerator(out_, offset_.c_str()).generate_decl(struct_reader);
       }
       else
       {
         Declaration::BaseWriter_var writer = type->as_writer();
         assert(writer.in());
 
-        Declaration::StructWriter_var struct_writer =
-          writer->as_struct_writer();
+        Declaration::StructWriter_var struct_writer = writer->as_struct_writer();
 
         assert(struct_writer.in());
 
-        WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(
-          struct_writer);
+        WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(struct_writer);
       }
     }
   }
 
   /* Generator::ImplGenerator */
-  ImplGenerator::ImplGenerator(
-    std::ostream& out,
-    std::ostream& out_cpp) noexcept
+  ImplGenerator::ImplGenerator(std::ostream& out, std::ostream& out_cpp) noexcept
     : out_(out),
       out_cpp_(out_cpp)
   {}
@@ -174,7 +162,7 @@ namespace Cpp
     Declaration::Namespace_var namespace_decl = elem->namespace_decl();
     std::string prev_offset;
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       prev_offset = offset_;
       out_ << offset_ << "namespace " << namespace_decl->name() << std::endl <<
@@ -184,13 +172,13 @@ namespace Cpp
       offset_ = offset_ + "  ";
     }
 
-    for(Code::ElementList::const_iterator el_it = elem->elements()->begin();
+    for (Code::ElementList::const_iterator el_it = elem->elements()->begin();
         el_it != elem->elements()->end(); ++el_it)
     {
       visit(*el_it);
     }
 
-    if(namespace_decl.in() && namespace_decl->name()[0])
+    if (namespace_decl.in() && namespace_decl->name()[0])
     {
       offset_ = prev_offset;
       out_ << offset_ << "}" << std::endl;
@@ -204,40 +192,34 @@ namespace Cpp
     Declaration::BaseType_var type = elem->type();
     Declaration::BaseDescriptor_var descriptor = type->as_descriptor();
 
-    if(descriptor.in())
+    if (descriptor.in())
     {
-      Declaration::StructDescriptor_var struct_descriptor =
-        descriptor->as_struct();
+      Declaration::StructDescriptor_var struct_descriptor = descriptor->as_struct();
 
       assert(struct_descriptor.in());
 
-      DescriptorGenerator(out_, out_cpp_, offset_.c_str()).generate_impl(
-        struct_descriptor);
+      DescriptorGenerator(out_, out_cpp_, offset_.c_str()).generate_impl(struct_descriptor);
     }
     else
     {
       Declaration::BaseReader_var reader = type->as_reader();
-      if(reader.in())
+      if (reader.in())
       {
-        Declaration::StructReader_var struct_reader =
-          reader->as_struct_reader();
+        Declaration::StructReader_var struct_reader = reader->as_struct_reader();
 
         assert(struct_reader.in());
 
-        ReaderGenerator(out_, offset_.c_str()).generate_impl(
-          struct_reader);
+        ReaderGenerator(out_, offset_.c_str()).generate_impl(struct_reader);
       }
       else
       {
         Declaration::BaseWriter_var writer = type->as_writer();
         assert(writer.in());
-        Declaration::StructWriter_var struct_writer =
-          writer->as_struct_writer();
+        Declaration::StructWriter_var struct_writer = writer->as_struct_writer();
 
         assert(struct_writer.in());
 
-        WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_impl(
-          struct_writer);
+        WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_impl(struct_writer);
       }
     }
   }
@@ -249,14 +231,14 @@ namespace Cpp
     std::ostream& out_cpp,
     Code::ElementList* elements) noexcept
   {
-    if(INCLUDE_LIST[0])
+    if (INCLUDE_LIST[0])
     {
       out << INCLUDE_LIST << std::endl << std::endl;
     }
 
     DeclareGenerator declare_generator(out, out_cpp);
 
-    for(Code::ElementList::const_iterator el_it = elements->begin();
+    for (Code::ElementList::const_iterator el_it = elements->begin();
         el_it != elements->end(); ++el_it)
     {
       declare_generator.visit(*el_it);
@@ -266,7 +248,7 @@ namespace Cpp
 
     ImplGenerator impl_generator(out_inl_impl, out_cpp);
 
-    for(Code::ElementList::const_iterator el_it = elements->begin();
+    for (Code::ElementList::const_iterator el_it = elements->begin();
         el_it != elements->end(); ++el_it)
     {
       impl_generator.visit(*el_it);

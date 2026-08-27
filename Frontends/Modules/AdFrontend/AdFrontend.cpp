@@ -38,8 +38,7 @@ namespace
 {
   struct ChannelMatch
   {
-    ChannelMatch(unsigned long channel_id_val,
-                 unsigned long channel_trigger_id_val)
+    ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
       :
       channel_id(channel_id_val),
       channel_trigger_id(channel_trigger_id_val)
@@ -49,8 +48,7 @@ namespace
     {
       return
         (channel_id < right.channel_id ||
-         (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id));
+         (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id));
     }
 
     unsigned long channel_id;
@@ -60,8 +58,7 @@ namespace
   struct GetChannelTriggerId
   {
     ChannelMatch
-    operator() (
-      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+    operator() (const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       noexcept
     {
       return ChannelMatch(atom.id(), atom.trigger_channel_id());
@@ -112,23 +109,13 @@ namespace
       add_counter_(result, prefix, "input_items", stats.input_items);
       add_counter_(result, prefix, "call_total", stats.input_items);
       add_counter_(result, prefix, "completed_items", stats.completed_items);
-      add_counter_(
-        result,
-        prefix,
-        "completed_error_items",
-        stats.completed_error_items);
-      add_counter_(
-        result,
-        prefix,
-        "call_error_total",
-        stats.completed_error_items);
+      add_counter_(result, prefix, "completed_error_items", stats.completed_error_items);
+      add_counter_(result, prefix, "call_error_total", stats.completed_error_items);
       add_counter_(
         result,
         prefix,
         "outstanding_items",
-        stats.input_items > stats.completed_items ?
-          stats.input_items - stats.completed_items :
-          0);
+        stats.input_items > stats.completed_items ? stats.input_items - stats.completed_items : 0);
       add_counter_(result, prefix, "write_batches", stats.write_batches);
       add_counter_(result, prefix, "batch_total", stats.write_batches);
       add_counter_(result, prefix, "write_batch_total", stats.write_batches);
@@ -139,46 +126,18 @@ namespace
       add_counter_(result, prefix, "queue_wait_total", stats.queue_wait_count);
       add_counter_(result, prefix, "queue_wait_time", stats.queue_wait_sum_us);
       add_counter_(result, prefix, "queue_wait_max_time", stats.queue_wait_max_us);
-      add_counter_(
-        result,
-        prefix,
-        "queue_timeout_total",
-        stats.queue_timeout_count);
-      add_counter_(
-        result,
-        prefix,
-        "response_wait_total",
-        stats.response_wait_count);
-      add_counter_(
-        result,
-        prefix,
-        "response_wait_time",
-        stats.response_wait_sum_us);
-      add_counter_(
-        result,
-        prefix,
-        "response_wait_max_time",
-        stats.response_wait_max_us);
+      add_counter_(result, prefix, "queue_timeout_total", stats.queue_timeout_count);
+      add_counter_(result, prefix, "response_wait_total", stats.response_wait_count);
+      add_counter_(result, prefix, "response_wait_time", stats.response_wait_sum_us);
+      add_counter_(result, prefix, "response_wait_max_time", stats.response_wait_max_us);
       add_counter_(result, prefix, "queue_items", stats.queue_items);
       add_counter_(result, prefix, "pending_batches", stats.pending_batches);
-      add_counter_(
-        result,
-        prefix,
-        "pending_batch_items",
-        stats.pending_batch_items);
+      add_counter_(result, prefix, "pending_batch_items", stats.pending_batch_items);
       add_counter_(result, prefix, "inflight_items", stats.inflight_items);
-      add_counter_(
-        result,
-        prefix,
-        "stream_inflight_items",
-        stats.stream_inflight_items);
+      add_counter_(result, prefix, "stream_inflight_items", stats.stream_inflight_items);
       add_counter_(result, prefix, "active_streams", stats.active_streams);
       add_counter_(result, prefix, "available_streams", stats.available_streams);
-      add_counter_(
-        result,
-        prefix,
-        "connecting_streams",
-        stats.connecting_streams);
+      add_counter_(result, prefix, "connecting_streams", stats.connecting_streams);
       add_counter_(result, prefix, "draining_streams", stats.draining_streams);
       add_counter_(result, prefix, "deferred_streams", stats.deferred_streams);
 
@@ -206,18 +165,10 @@ namespace
         result.emplace_back(
           prefix + "_last_error_time",
           stats.last_error->time.get_gm_time().format("%F %T"));
-        result.emplace_back(
-          prefix + "_last_error_endpoint",
-          stats.last_error->endpoint);
-        result.emplace_back(
-          prefix + "_last_error_code",
-          static_cast<long>(stats.last_error->code));
-        result.emplace_back(
-          prefix + "_last_error_message",
-          stats.last_error->message);
-        result.emplace_back(
-          prefix + "_last_error_source",
-          stats.last_error->source);
+        result.emplace_back(prefix + "_last_error_endpoint", stats.last_error->endpoint);
+        result.emplace_back(prefix + "_last_error_code", static_cast<long>(stats.last_error->code));
+        result.emplace_back(prefix + "_last_error_message", stats.last_error->message);
+        result.emplace_back(prefix + "_last_error_source", stats.last_error->source);
       }
     }
 
@@ -237,9 +188,7 @@ namespace
 
     template<typename Type>
     void
-    operator()(
-      const Generics::Values::Key& key,
-      const Type& value)
+    operator()(const Generics::Values::Key& key, const Type& value)
     {
       if constexpr (std::is_integral_v<Type>)
       {
@@ -268,7 +217,7 @@ namespace
     MetricArray get_values() override
     {
       MetricArray result;
-      if(stats_.in())
+      if (stats_.in())
       {
         Generics::Values_var values = stats_->extract_stats_values();
         ValuesMetricWriter writer(result);
@@ -287,7 +236,7 @@ namespace
     explicit AdRequestInProgressGuard(AdServer::AdFrontendStat* stats) noexcept
       : stats_(ReferenceCounting::add_ref(stats))
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->add_request();
       }
@@ -295,7 +244,7 @@ namespace
 
     ~AdRequestInProgressGuard() noexcept
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->complete_request();
       }
@@ -319,10 +268,9 @@ namespace
       : stats_(ReferenceCounting::add_ref(stats)),
         stage_(stage),
         track_time_(track_time),
-        started_at_(track_time ? Generics::Time::get_time_of_day() :
-          Generics::Time::ZERO)
+        started_at_(track_time ? Generics::Time::get_time_of_day() : Generics::Time::ZERO)
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->add_stage(stage_);
       }
@@ -330,14 +278,12 @@ namespace
 
     ~AdStageInProgressGuard() noexcept
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->complete_stage(stage_);
-        if(track_time_)
+        if (track_time_)
         {
-          stats_->add_stage_time(
-            stage_,
-            Generics::Time::get_time_of_day() - started_at_);
+          stats_->add_stage_time(stage_, Generics::Time::get_time_of_day() - started_at_);
         }
       }
     }
@@ -345,7 +291,7 @@ namespace
     void
     add_error() noexcept
     {
-      if(stats_.in())
+      if (stats_.in())
       {
         stats_->add_stage_error(stage_);
       }
@@ -367,8 +313,7 @@ namespace
   namespace CM = adserver::campaign_svcs::campaign_manager;
 
   CM::ChannelTriggerMatchInfo
-  convert_channel_atom(
-    const adserver::channel_svcs::channel_server::ChannelAtom& atom)
+  convert_channel_atom(const adserver::channel_svcs::channel_server::ChannelAtom& atom)
     noexcept
   {
     CM::ChannelTriggerMatchInfo out;
@@ -383,7 +328,7 @@ namespace
   {
     std::string result;
     result.resize(source.length());
-    for(std::size_t i = 0; i < source.length(); ++i)
+    for (std::size_t i = 0; i < source.length(); ++i)
     {
       result[i] = static_cast<char>(source[i]);
     }
@@ -398,20 +343,19 @@ namespace Aspect
 
 namespace Request::Context
 {
-    const String::AsciiStringManip::Caseless CLIENT_ID("uid");
-    const String::AsciiStringManip::Caseless OPTIN("OPTED_IN");
-  }
+  const String::AsciiStringManip::Caseless CLIENT_ID("uid");
+  const String::AsciiStringManip::Caseless OPTIN("OPTED_IN");
+}
 
 namespace Request::Cookie
-  {
-    const Generics::SubStringHashAdapter OPTOUT(String::SubString("OPTED_OUT"));
-    const Generics::SubStringHashAdapter OPTOUT_TRUE_VALUE(String::SubString("YES"));
-    const Generics::SubStringHashAdapter OI_PROMPT(String::SubString("oi_prompt"));
-    const Generics::SubStringHashAdapter OI_PROMPT_VALUE(String::SubString("yes-trial-end"));
-    const Generics::SubStringHashAdapter OPT_IN_TRIAL(String::SubString("trialoptin"));
-    const Generics::SubStringHashAdapter LAST_COLOCATION_ID(String::SubString("lc"));
-  }
-
+{
+  const Generics::SubStringHashAdapter OPTOUT(String::SubString("OPTED_OUT"));
+  const Generics::SubStringHashAdapter OPTOUT_TRUE_VALUE(String::SubString("YES"));
+  const Generics::SubStringHashAdapter OI_PROMPT(String::SubString("oi_prompt"));
+  const Generics::SubStringHashAdapter OI_PROMPT_VALUE(String::SubString("yes-trial-end"));
+  const Generics::SubStringHashAdapter OPT_IN_TRIAL(String::SubString("trialoptin"));
+  const Generics::SubStringHashAdapter LAST_COLOCATION_ID(String::SubString("lc"));
+}
 
 namespace AdServer
 {
@@ -472,8 +416,7 @@ namespace AdServer
         }
         catch (const eh::Exception& ex)
         {
-          logger_->sstream(Logging::Logger::EMERGENCY,
-            Aspect::AD_FRONTEND) <<
+          logger_->sstream(Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND) <<
             "UpdateTask::execute(): schedule failed: " << ex.what();
         }
       }
@@ -526,8 +469,7 @@ namespace AdServer
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
-      composite_metrics_provider_(
-        ReferenceCounting::add_ref(composite_metrics_provider)),
+      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
       workers_(std::move(request_workers))
   {}
 
@@ -535,10 +477,9 @@ namespace AdServer
   AdFrontend::will_handle(const String::SubString& uri) noexcept
   {
     std::string found_uri;
-    bool result = FrontendCommons::find_uri(
-      config_->UriList().Uri(), uri, found_uri);
+    bool result = FrontendCommons::find_uri(config_->UriList().Uri(), uri, found_uri);
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       Stream::Error ostr;
       ostr << "AdFrontend::will_handle(" << uri << "), service: '" << found_uri << "'";
@@ -558,7 +499,7 @@ namespace AdServer
       typedef Configuration::FeConfig Config;
       const Config& fe_config = frontend_config_->get();
 
-      if(!fe_config.CommonFeConfiguration().present())
+      if (!fe_config.CommonFeConfiguration().present())
       {
         throw Exception("CommonFeConfiguration isn't present");
       }
@@ -566,30 +507,26 @@ namespace AdServer
       common_config_ = CommonConfigPtr(
         new CommonFeConfiguration(*fe_config.CommonFeConfiguration()));
 
-      if(!fe_config.AdFeConfiguration().present())
+      if (!fe_config.AdFeConfiguration().present())
       {
         throw Exception("AdFeConfiguration isn't present");
       }
 
-      config_.reset(
-        new AdFeConfiguration(*fe_config.AdFeConfiguration()));
+      config_.reset(new AdFeConfiguration(*fe_config.AdFeConfiguration()));
 
-      if(fe_config.PassFeConfiguration().present())
+      if (fe_config.PassFeConfiguration().present())
       {
-        pass_config_ = PassConfigPtr(
-          new PassFeConfiguration(*fe_config.PassFeConfiguration()));
+        pass_config_ = PassConfigPtr(new PassFeConfiguration(*fe_config.PassFeConfiguration()));
       }
 
       cookie_manager_.reset(
         new FrontendCommons::CookieManager<
-          FCGI::HttpRequest, FCGI::HttpResponse>(
-            common_config_->Cookies()));
+          FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't parse config file '" << fe_config_path_ << "': " <<
-        e.what();
+      ostr << FUN << ": Can't parse config file '" << fe_config_path_ << "': " << e.what();
       throw Exception(ostr);
     }
   }
@@ -600,27 +537,25 @@ namespace AdServer
   {
     static const char* FUN = "AdFrontend::init()";
 
-    if(true) // module_used())
+    if (true) // module_used())
     {
       try
       {
         parse_configs_();
 
         /* create list of cookies to remove */
-        if(common_config_->OutdatedCookies().present())
+        if (common_config_->OutdatedCookies().present())
         {
-          for(auto it = common_config_->OutdatedCookies()->Cookie().begin();
+          for (auto it = common_config_->OutdatedCookies()->Cookie().begin();
             it != common_config_->OutdatedCookies()->Cookie().end(); ++it)
           {
             remove_cookies_holder_.push_back(it->name());
-            remove_cookies_.insert(
-              Generics::SubStringHashAdapter(remove_cookies_holder_.back()));
+            remove_cookies_.insert(Generics::SubStringHashAdapter(remove_cookies_holder_.back()));
           }
         }
 
         task_runner_ = new Generics::TaskRunner(callback(), 2);
-        task_scheduler_ = new FrontendCommons::TaskScheduler(
-          callback(), task_runner_);
+        task_scheduler_ = new FrontendCommons::TaskScheduler(callback(), task_runner_);
         add_child_object(task_scheduler_.in());
         grpc_executor_ = common_module_->grpc_executor();
 
@@ -631,23 +566,18 @@ namespace AdServer
             common_module_->grpc_coalesce_runner(),
             logger());
         user_info_client_coro_ = std::make_shared<
-          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(
-            user_info_client,
-            workers_);
+          AdServer::UserInfoSvcs::UserInfoManagerGrpcCoroClient>(user_info_client, workers_);
         add_child_object(user_info_client);
 
         auto campaign_manager_client =
           std::make_shared<
             AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
               FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
-              FrontendCommons::read_campaign_manager_grpc_batching_options(
-                *common_config_),
+              FrontendCommons::read_campaign_manager_grpc_batching_options(*common_config_),
               grpc_executor_,
               common_module_->grpc_coalesce_runner());
         campaign_manager_coro_ = std::make_shared<
-          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(
-            campaign_manager_client,
-            workers_);
+          AdServer::CampaignSvcs::CampaignManagerGrpcCoroClient>(campaign_manager_client, workers_);
         add_child_object(campaign_manager_client);
 
         auto user_bind_client =
@@ -656,12 +586,10 @@ namespace AdServer
             grpc_executor_,
             common_module_->grpc_coalesce_runner(),
             logger());
-        if(user_bind_client)
+        if (user_bind_client)
         {
           user_bind_client_coro_ = std::make_shared<
-            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(
-              user_bind_client,
-              workers_);
+            AdServer::UserInfoSvcs::UserBindServerGrpcCoroClient>(user_bind_client, workers_);
           add_child_object(user_bind_client);
         }
 
@@ -672,9 +600,7 @@ namespace AdServer
             common_module_->grpc_coalesce_runner(),
             logger());
         channel_client_coro_ = std::make_shared<
-          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(
-            channel_client,
-            workers_);
+          AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>(channel_client, workers_);
         add_child_object(channel_client);
 
         stats_ = new AdFrontendStat();
@@ -700,35 +626,30 @@ namespace AdServer
           add_client_source("ad_channel_client", channel_client);
 
           ReferenceCounting::SmartPtr<Generics::MetricsProvider>
-            grpc_client_metrics_provider(
-              new GrpcClientMetricsProvider(std::move(client_sources)));
-          composite_metrics_provider_->add_provider(
-            grpc_client_metrics_provider.in());
+            grpc_client_metrics_provider(new GrpcClientMetricsProvider(std::move(client_sources)));
+          composite_metrics_provider_->add_provider(grpc_client_metrics_provider.in());
 
           ReferenceCounting::SmartPtr<Generics::MetricsProvider>
-            ad_frontend_metrics_provider(
-              new AdFrontendMetricsProvider(stats_.in()));
-          composite_metrics_provider_->add_provider(
-            ad_frontend_metrics_provider.in());
+            ad_frontend_metrics_provider(new AdFrontendMetricsProvider(stats_.in()));
+          composite_metrics_provider_->add_provider(ad_frontend_metrics_provider.in());
         }
 
         std::string user_agent_filter_path;
-        if(common_config_->user_agent_filter_path().present())
+        if (common_config_->user_agent_filter_path().present())
         {
-          std::string config_file_path =
-            fe_config_path_.substr(0, fe_config_path_.rfind('/'));
+          std::string config_file_path = fe_config_path_.substr(0, fe_config_path_.rfind('/'));
           user_agent_filter_path = config_file_path +
             "/" + *common_config_->user_agent_filter_path();
         }
 
         std::set<std::string> acl_list;
 
-        if(common_config_->DebugInfo().use_acl())
+        if (common_config_->DebugInfo().use_acl())
         {
           String::StringManip::Splitter<String::AsciiStringManip::SepNL>
             splitter(String::SubString(common_config_->DebugInfo().ips().c_str()));
           String::SubString token;
-          while(splitter.get_token(token))
+          while (splitter.get_token(token))
           {
             acl_list.insert(token.str());
           }
@@ -740,7 +661,7 @@ namespace AdServer
           String::StringManip::Splitter<String::AsciiStringManip::SepComma>
             splitter2(String::SubString(common_config_->DebugInfo().colocations().c_str()));
           String::SubString token;
-          while(splitter2.get_token(token))
+          while (splitter2.get_token(token))
           {
             int colo_id;
             if (String::StringManip::str_to_int(token, colo_id))
@@ -776,8 +697,7 @@ namespace AdServer
         throw Exception(ostr);
       }
 
-      logger()->log(String::SubString(
-          "AdFrontend::init(): frontend is running ..."),
+      logger()->log(String::SubString("AdFrontend::init(): frontend is running ..."),
         Logging::Logger::INFO,
         Aspect::AD_FRONTEND);
     }
@@ -793,12 +713,9 @@ namespace AdServer
       wait_object();
 
       Stream::Error ostr;
-      ostr << "AdFrontend::shutdown: frontend terminated (pid = " <<
-        ::getpid() << ").";
+      ostr << "AdFrontend::shutdown: frontend terminated (pid = " << ::getpid() << ").";
 
-      logger()->log(ostr.str(),
-        Logging::Logger::INFO,
-        Aspect::AD_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::INFO, Aspect::AD_FRONTEND);
     }
     catch(...)
     {}
@@ -812,7 +729,7 @@ namespace AdServer
     unsigned int log_level_val)
     /*throw(eh::Exception)*/
   {
-    if(logger()->log_level() >= log_level_val)
+    if (logger()->log_level() >= log_level_val)
     {
       std::ostringstream ostr;
 
@@ -820,8 +737,7 @@ namespace AdServer
         "Args: " << request.args() << std::endl <<
         "Params ("<< request.params().size() << "):"  << std::endl;
 
-      for(HTTP::ParamList::const_iterator it =
-            request.params().begin();
+      for (HTTP::ParamList::const_iterator it = request.params().begin();
           it != request.params().end(); ++it)
       {
         ostr << "    " << it->name << " : " << it->value << std::endl;
@@ -837,20 +753,17 @@ namespace AdServer
 
       ostr << "    " << "Header_only : " << request.header_only() << std::endl;
 
-      logger()->log(ostr.str(),
-        log_level_val,
-        Aspect::AD_FRONTEND);
+      logger()->log(ostr.str(), log_level_val, Aspect::AD_FRONTEND);
     }
   }
 
   /** AdFrontend::handle_request */
   FrontendCommons::RequestResult
-  AdFrontend::finish_request_(
-    const std::shared_ptr<RequestContext>& context)
+  AdFrontend::finish_request_(const std::shared_ptr<RequestContext>& context)
     noexcept
   {
     FCGI::HttpResponse_var response_ptr = context->response_ptr;
-    if(!response_ptr)
+    if (!response_ptr)
     {
       response_ptr = new FCGI::HttpResponse();
       context->response_ptr = response_ptr;
@@ -859,26 +772,21 @@ namespace AdServer
     try
     {
       FCGI::HttpResponse& response = *response_ptr;
-      if(context->request_holder)
+      if (context->request_holder)
       {
         const FCGI::HttpRequest& request = context->request_holder->request();
 
         HTTP::CookieList cookies;
         cookies.load_from_headers(request.headers());
 
-        cookie_manager_->remove(
-          response, request, cookies, remove_cookies_);
+        cookie_manager_->remove(response, request, cookies, remove_cookies_);
 
-        if(context->request_info.do_opt_out)
+        if (context->request_info.do_opt_out)
         {
-          opt_out_client_(
-            cookies,
-            response,
-            request,
-            context->request_info);
+          opt_out_client_(cookies, response, request, context->request_info);
         }
 
-        if(context->request_info.have_uid_cookie)
+        if (context->request_info.have_uid_cookie)
         {
           FrontendCommons::add_UID_cookie(
             response,
@@ -887,37 +795,28 @@ namespace AdServer
             context->request_info.signed_client_id);
         }
 
-        if(context->request_info.format == "vast")
+        if (context->request_info.format == "vast")
         {
           FrontendCommons::CORS::set_headers(request, response);
         }
       }
 
-      context->debug_sink.write_response(
-        response,
-        context->str_response,
-        context->http_status);
+      context->debug_sink.write_response(response, context->str_response, context->http_status);
 
-      if(common_config_->ResponseHeaders().present())
+      if (common_config_->ResponseHeaders().present())
       {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
+        FrontendCommons::add_headers(*(common_config_->ResponseHeaders()), response);
       }
 
-      if(logger()->log_level() >= TraceLevel::MIDDLE)
+      if (logger()->log_level() >= TraceLevel::MIDDLE)
       {
         Stream::Error ostr;
-        ostr << "AdFrontend::handle_request(): response:" <<
-          std::endl << context->str_response;
+        ostr << "AdFrontend::handle_request(): response:" << std::endl << context->str_response;
 
-        logger()->log(
-          ostr.str(),
-          TraceLevel::MIDDLE,
-          Aspect::AD_FRONTEND);
+        logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::AD_FRONTEND);
       }
 
-      if(context->http_status != 204)
+      if (context->http_status != 204)
       {
         response.get_output_stream().write(
           context->str_response.c_str(),
@@ -928,42 +827,32 @@ namespace AdServer
     {
       context->http_status = 500;
       Stream::Error ostr;
-      ostr << "AdFrontend::finish_request_(): eh::Exception caught: " <<
-        ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-109");
-      if(!response_ptr)
+      ostr << "AdFrontend::finish_request_(): eh::Exception caught: " << ex.what();
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-109");
+      if (!response_ptr)
       {
         response_ptr = new FCGI::HttpResponse();
         context->response_ptr = response_ptr;
       }
-      context->debug_sink.fill_debug_body(
-        *response_ptr,
-        context->http_status,
-        ostr);
+      context->debug_sink.fill_debug_body(*response_ptr, context->http_status, ostr);
     }
 
-    if(stats_.in())
+    if (stats_.in())
     {
-      stats_->consider_request(
-        context->request_info,
-        context->request_time_metering);
+      stats_->consider_request(context->request_info, context->request_time_metering);
     }
 
-    if(context->http_status != 200)
+    if (context->http_status != 200)
     {
       try
       {
-        if(!context->request_info.original_url.empty())
+        if (!context->request_info.original_url.empty())
         {
           context->http_status = FrontendCommons::redirect(
             context->request_info.original_url,
             *response_ptr);
         }
-        else if(!context->passback_info.url.empty())
+        else if (!context->passback_info.url.empty())
         {
           context->http_status = FrontendCommons::redirect(
             context->passback_info.url,
@@ -981,8 +870,7 @@ namespace AdServer
   }
 
   FrontendCommons::RequestTask
-  AdFrontend::co_handle_request(
-    FCGI::HttpRequestHolder_var request_holder)
+  AdFrontend::co_handle_request(FCGI::HttpRequestHolder_var request_holder)
     noexcept
   {
     static const char* FUN = "AdFrontend::handle_request()";
@@ -995,7 +883,7 @@ namespace AdServer
     const FCGI::HttpRequest& request = context->request_holder->request();
     AdRequestInProgressGuard request_in_progress(stats_.in());
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= TraceLevel::MIDDLE)
     {
       logger()->log(String::SubString("AdFrontend::handle_request: entered"),
         TraceLevel::MIDDLE,
@@ -1008,16 +896,12 @@ namespace AdServer
 
       TimeGuard request_fill_time_metering;
 
-      request_info_filler_->fill(
-        context->request_info,
-        &context->debug_sink,
-        request);
+      request_info_filler_->fill(context->request_info, &context->debug_sink, request);
 
-      context->request_time_metering.request_fill_time =
-        request_fill_time_metering.consider();
+      context->request_time_metering.request_fill_time = request_fill_time_metering.consider();
 
       const bool success = co_await co_acquire_ad_(context);
-      if(!success)
+      if (!success)
       {
         context->http_status = 500;
       }
@@ -1027,42 +911,34 @@ namespace AdServer
     catch(const ForbiddenException& ex)
     {
       context->http_status = 403;
-      if(logger()->log_level() >= TraceLevel::LOW ||
-        context->debug_sink.require_debug_body())
+      if (logger()->log_level() >= TraceLevel::LOW || context->debug_sink.require_debug_body())
       {
         Stream::Error ostr;
         ostr << FUN << ": ForbiddenException caught: " << ex.what();
 
-        if(logger()->log_level() >= TraceLevel::MIDDLE)
+        if (logger()->log_level() >= TraceLevel::MIDDLE)
         {
           logger()->log(ostr.str(), TraceLevel::LOW, Aspect::AD_FRONTEND);
         }
 
-        context->debug_sink.fill_debug_body(
-          *context->response_ptr,
-          context->http_status,
-          ostr);
+        context->debug_sink.fill_debug_body(*context->response_ptr, context->http_status, ostr);
       }
       co_return finish_request_(context);
     }
     catch(const InvalidParamException& e)
     {
       context->http_status = 400;
-      if(logger()->log_level() >= TraceLevel::MIDDLE ||
-        context->debug_sink.require_debug_body())
+      if (logger()->log_level() >= TraceLevel::MIDDLE || context->debug_sink.require_debug_body())
       {
         Stream::Error ostr;
         ostr << FUN << ": InvalidParamException caught: " << e.what();
 
-        if(logger()->log_level() >= TraceLevel::MIDDLE)
+        if (logger()->log_level() >= TraceLevel::MIDDLE)
         {
           logger()->log(ostr.str(), TraceLevel::MIDDLE, Aspect::AD_FRONTEND);
         }
 
-        context->debug_sink.fill_debug_body(
-          *context->response_ptr,
-          context->http_status,
-          ostr);
+        context->debug_sink.fill_debug_body(*context->response_ptr, context->http_status, ostr);
       }
       co_return finish_request_(context);
     }
@@ -1071,14 +947,8 @@ namespace AdServer
       context->http_status = 400;
       Stream::Error ostr;
       ostr << FUN << ": HTTP::CookieList::Exception caught: " << e.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::NOTICE,
-        Aspect::AD_FRONTEND);
-      context->debug_sink.fill_debug_body(
-        *context->response_ptr,
-        context->http_status,
-        ostr);
+      logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_FRONTEND);
+      context->debug_sink.fill_debug_body(*context->response_ptr, context->http_status, ostr);
       co_return finish_request_(context);
     }
     catch(const eh::Exception& e)
@@ -1086,23 +956,15 @@ namespace AdServer
       context->http_status = 500;
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception caught: " << e.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-109");
-      context->debug_sink.fill_debug_body(
-        *context->response_ptr,
-        context->http_status,
-        ostr);
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-109");
+      context->debug_sink.fill_debug_body(*context->response_ptr, context->http_status, ostr);
       co_return finish_request_(context);
     }
 
   }
 
   AdFrontend::MergeUsersTask
-  AdFrontend::co_merge_users_(
-    const std::shared_ptr<RequestContext>& context)
+  AdFrontend::co_merge_users_(const std::shared_ptr<RequestContext>& context)
     noexcept
   {
     const RequestInfo& request_info = context->request_info;
@@ -1111,7 +973,7 @@ namespace AdServer
       merge_temp ? request_info.temp_client_id :
         request_info.merge_persistent_client_id;
 
-    if(!user_info_client_coro_)
+    if (!user_info_client_coro_)
     {
       co_return MergeUsersResult{
         false,
@@ -1119,7 +981,7 @@ namespace AdServer
         MergeMessage::SOURCE_NOT_READY};
     }
 
-    if(merged_uid == AdServer::Commons::PROBE_USER_ID)
+    if (merged_uid == AdServer::Commons::PROBE_USER_ID)
     {
       co_return MergeUsersResult{
         false,
@@ -1142,12 +1004,10 @@ namespace AdServer
     profile_request->set_pref_profile(false);
 
     auto get_profile_result =
-      co_await user_info_client_coro_->co_get_user_profile(
-        *get_profile_request);
-    context->request_time_metering.merge_users_time =
-      user_merge_time_metering.consider();
+      co_await user_info_client_coro_->co_get_user_profile(*get_profile_request);
+    context->request_time_metering.merge_users_time = user_merge_time_metering.consider();
 
-    if(!get_profile_result.status.ok())
+    if (!get_profile_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "UserInfoManager::get_user_profile(): "
@@ -1171,7 +1031,7 @@ namespace AdServer
     }
 
     const auto& response = get_profile_result.response;
-    if(!response.found() ||
+    if (!response.found() ||
       (response.user_profile().base_user_profile().empty() &&
         response.user_profile().add_user_profile().empty()))
     {
@@ -1181,32 +1041,26 @@ namespace AdServer
         MergeMessage::SOURCE_IS_UNKNOWN};
     }
 
-    if(context->request_info.remove_merged_uid)
+    if (context->request_info.remove_merged_uid)
     {
       google::protobuf::Arena remove_request_arena;
       auto* remove_request = google::protobuf::Arena::CreateMessage<
         adserver::user_info_svcs::user_info_manager::RemoveUserProfileRequest>(
           &remove_request_arena);
       remove_request->set_user_id(GrpcAlgs::pack_user_id(merged_uid));
-      auto remove_result =
-        co_await user_info_client_coro_->co_remove_user_profile(
-          *remove_request);
-      if(!remove_result.status.ok())
+      auto remove_result = co_await user_info_client_coro_->co_remove_user_profile(*remove_request);
+      if (!remove_result.status.ok())
       {
         Stream::Error ostr;
         ostr << "UserInfoManager::remove_user_profile(): "
           "gRPC call failed: code=" <<
           static_cast<int>(remove_result.status.error_code()) <<
           ", message=" << remove_result.status.error_message();
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::NOTICE,
-          Aspect::AD_FRONTEND,
-          "ADS-IMPL-111");
+        logger()->log(ostr.str(), Logging::Logger::NOTICE, Aspect::AD_FRONTEND, "ADS-IMPL-111");
       }
     }
 
-    if(context->request_info.silent_match)
+    if (context->request_info.silent_match)
     {
       logger()->log(
         String::SubString(
@@ -1223,27 +1077,22 @@ namespace AdServer
 
     google::protobuf::Arena merge_request_arena;
     auto* merge_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MergeRequest>(
-        &merge_request_arena);
+      adserver::user_info_svcs::user_info_manager::MergeRequest>(&merge_request_arena);
     auto* user_info = merge_request->mutable_user_info();
-    user_info->set_user_id(
-      GrpcAlgs::pack_user_id(context->request_info.client_id));
+    user_info->set_user_id(GrpcAlgs::pack_user_id(context->request_info.client_id));
     user_info->set_last_colo_id(context->request_info.last_colo_id);
     user_info->set_request_colo_id(context->request_info.colo_id);
     user_info->set_current_colo_id(-1);
     user_info->set_temporary(
-      context->request_info.user_status ==
-        AdServer::CampaignSvcs::US_TEMPORARY);
+      context->request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY);
     user_info->set_time(context->request_info.current_time.tv_sec);
 
     auto* match_params = merge_request->mutable_match_params();
     match_params->set_use_empty_profile(
       context->request_info.user_status !=
         AdServer::CampaignSvcs::US_OPTIN &&
-      context->request_info.user_status !=
-        AdServer::CampaignSvcs::US_TEMPORARY);
-    match_params->set_silent_match(
-      context->request_info.silent_match);
+      context->request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY);
+    match_params->set_silent_match(context->request_info.silent_match);
     match_params->set_no_match(context->request_info.no_match);
     match_params->set_no_result(context->request_info.no_result);
     match_params->set_provide_persistent_channels(false);
@@ -1251,16 +1100,12 @@ namespace AdServer
     match_params->set_filter_contextual_triggers(false);
     match_params->set_publishers_optin_timeout(
       context->request_info.tag_id != 0 ?
-        GrpcAlgs::pack_time(
-          context->request_info.current_time -
-            Generics::Time::ONE_DAY * 15) :
+        GrpcAlgs::pack_time(context->request_info.current_time - Generics::Time::ONE_DAY * 15) :
         GrpcAlgs::pack_time(Generics::Time::ZERO));
-    *merge_request->mutable_merge_user_profile() =
-      response.user_profile();
+    *merge_request->mutable_merge_user_profile() = response.user_profile();
 
-    auto merge_result = co_await user_info_client_coro_->co_merge(
-      *merge_request);
-    if(!merge_result.status.ok())
+    auto merge_result = co_await user_info_client_coro_->co_merge(*merge_request);
+    if (!merge_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "UserInfoManager::merge(): "
@@ -1274,9 +1119,7 @@ namespace AdServer
             Logging::Logger::WARNING :
             Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
-        merge_result.status.error_code() ==
-          grpc::StatusCode::UNAVAILABLE ?
-            "" : "ADS-IMPL-111");
+        merge_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ? "" : "ADS-IMPL-111");
       co_return MergeUsersResult{
         false,
         Generics::Time::ZERO,
@@ -1343,7 +1186,7 @@ namespace AdServer
           match_response,
       bool match_success)
     {
-        if(!match_response)
+        if (!match_response)
         {
           auto empty_response = *get_empty_history_matching();
           match_response =
@@ -1353,10 +1196,9 @@ namespace AdServer
         }
         auto* match_result = match_response->mutable_match_result();
 
-        if(trigger_matching_result_present &&
-          !trigger_matching_result->no_track())
+        if (trigger_matching_result_present && !trigger_matching_result->no_track())
         {
-          if(!match_success || !do_history_matching)
+          if (!match_success || !do_history_matching)
           {
             auto empty_response = *get_empty_history_matching();
             match_response =
@@ -1364,29 +1206,26 @@ namespace AdServer
                 adserver::user_info_svcs::user_info_manager::MatchResponse>::
                   make_value(std::move(empty_response));
             match_result = match_response->mutable_match_result();
-            const auto& content_channels =
-              trigger_matching_result->content_channels();
+            const auto& content_channels = trigger_matching_result->content_channels();
 
-            for(const auto& content_channel : content_channels)
+            for (const auto& content_channel : content_channels)
             {
               auto* channel = match_result->add_channels();
               channel->set_channel_id(content_channel.id());
               channel->set_weight(content_channel.weight());
             }
           }
-          else if(context->request_info.tag_id != 0 &&
-            !config_->ad_request_profiling())
+          else if (context->request_info.tag_id != 0 && !config_->ad_request_profiling())
           {
-            const auto& content_channels =
-              trigger_matching_result->content_channels();
+            const auto& content_channels = trigger_matching_result->content_channels();
             std::set<std::uint64_t> channel_ids;
-            for(const auto& channel : match_result->channels())
+            for (const auto& channel : match_result->channels())
             {
               channel_ids.insert(channel.channel_id());
             }
-            for(const auto& content_channel : content_channels)
+            for (const auto& content_channel : content_channels)
             {
-              if(channel_ids.insert(content_channel.id()).second)
+              if (channel_ids.insert(content_channel.id()).second)
               {
                 auto* channel = match_result->add_channels();
                 channel->set_channel_id(content_channel.id());
@@ -1399,7 +1238,7 @@ namespace AdServer
         return UserInfoMatcherResult{std::move(match_response), match_success};
     };
 
-    if(!user_info_client_coro_ || !do_history_matching)
+    if (!user_info_client_coro_ || !do_history_matching)
     {
       co_return finish({}, false);
     }
@@ -1410,17 +1249,14 @@ namespace AdServer
 
     google::protobuf::Arena history_match_request_arena;
     auto* history_match_request = google::protobuf::Arena::CreateMessage<
-      adserver::user_info_svcs::user_info_manager::MatchRequest>(
-        &history_match_request_arena);
+      adserver::user_info_svcs::user_info_manager::MatchRequest>(&history_match_request_arena);
     auto* user_info = history_match_request->mutable_user_info();
     user_info->set_user_id(GrpcAlgs::pack_user_id(request_info.client_id));
     user_info->set_last_colo_id(request_info.last_colo_id);
     user_info->set_request_colo_id(
-      request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY ?
-      request_info.colo_id : -1);
+      request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY ? request_info.colo_id : -1);
     user_info->set_current_colo_id(-1);
-    user_info->set_temporary(
-      request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY);
+    user_info->set_temporary(request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY);
     user_info->set_time(request_info.current_time.tv_sec);
 
     auto* match_params = history_match_request->mutable_match_params();
@@ -1435,22 +1271,18 @@ namespace AdServer
     match_params->set_change_last_request(true);
     match_params->set_filter_contextual_triggers(false);
     match_params->set_publishers_optin_timeout(request_info.tag_id != 0 ?
-      GrpcAlgs::pack_time(
-        request_info.current_time - Generics::Time::ONE_DAY * 15) :
+      GrpcAlgs::pack_time(request_info.current_time - Generics::Time::ONE_DAY * 15) :
       GrpcAlgs::pack_time(Generics::Time::ZERO));
 
-    if(request_info.coord_location)
+    if (request_info.coord_location)
     {
       auto* geo_data = match_params->add_geo_data_seq();
-      geo_data->set_latitude(
-        GrpcAlgs::pack_decimal(request_info.coord_location->latitude));
-      geo_data->set_longitude(
-        GrpcAlgs::pack_decimal(request_info.coord_location->longitude));
-      geo_data->set_accuracy(
-        GrpcAlgs::pack_decimal(request_info.coord_location->accuracy));
+      geo_data->set_latitude(GrpcAlgs::pack_decimal(request_info.coord_location->latitude));
+      geo_data->set_longitude(GrpcAlgs::pack_decimal(request_info.coord_location->longitude));
+      geo_data->set_accuracy(GrpcAlgs::pack_decimal(request_info.coord_location->accuracy));
     }
 
-    if(request_info.tag_id == 0 || config_->ad_request_profiling())
+    if (request_info.tag_id == 0 || config_->ad_request_profiling())
     {
       prepare_ui_match_params_(
         *match_params,
@@ -1461,9 +1293,8 @@ namespace AdServer
     match_params->set_cohort(request_info.curct);
 
     TimeGuard history_match_time_metering;
-    auto match_result = co_await user_info_client_coro_->co_match(
-      *history_match_request);
-    if(!match_result.status.ok())
+    auto match_result = co_await user_info_client_coro_->co_match(*history_match_request);
+    if (!match_result.status.ok())
     {
       history_match_in_progress.add_error();
       Stream::Error ostr;
@@ -1476,18 +1307,15 @@ namespace AdServer
           Logging::Logger::WARNING :
           Logging::Logger::EMERGENCY,
         Aspect::AD_FRONTEND,
-        match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-          "" : "ADS-IMPL-112");
+        match_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ? "" : "ADS-IMPL-112");
       co_return finish({}, false);
     }
 
     context->request_time_metering.matched_channels =
       match_result.response.match_result().channels_size();
-    context->request_time_metering.history_match_time =
-      history_match_time_metering.consider();
+    context->request_time_metering.history_match_time = history_match_time_metering.consider();
     context->request_time_metering.history_match_local_time =
-      GrpcAlgs::unpack_time(
-        match_result.response.match_result().process_time());
+      GrpcAlgs::unpack_time(match_result.response.match_result().process_time());
 
     co_return finish(std::move(match_result.response_holder), true);
   }
@@ -1508,7 +1336,7 @@ namespace AdServer
     try
     {
 
-      if(!user_info_client_coro_)
+      if (!user_info_client_coro_)
       {
         logger()->log(
           String::SubString("AdFrontend::user_info_post_match_():"
@@ -1519,24 +1347,22 @@ namespace AdServer
         return;
       }
 
-      for(int ad_slot_i = 0;
-          ad_slot_i < campaign_select_result.ad_slots_size(); ++ad_slot_i)
+      for (int ad_slot_i = 0; ad_slot_i < campaign_select_result.ad_slots_size(); ++ad_slot_i)
       {
-        const CM::AdSlotResult& ad_slot_result =
-          campaign_select_result.ad_slots(ad_slot_i);
+        const CM::AdSlotResult& ad_slot_result = campaign_select_result.ad_slots(ad_slot_i);
 
-        if(ad_slot_result.selected_creatives_size() > 0)
+        if (ad_slot_result.selected_creatives_size() > 0)
         {
           std::vector<unsigned long> campaign_ids;
           std::vector<unsigned long> uc_campaign_ids;
-          for(int creative_i = 0;
+          for (int creative_i = 0;
             creative_i < ad_slot_result.selected_creatives_size();
             ++creative_i)
           {
             const CM::CreativeSelectResult& creative =
               ad_slot_result.selected_creatives(creative_i);
 
-            if(ad_slot_result.track_impr())
+            if (ad_slot_result.track_impr())
             {
               uc_campaign_ids.push_back(creative.campaign_group_id());
             }
@@ -1546,25 +1372,20 @@ namespace AdServer
             }
           }
 
-          adserver::user_info_svcs::user_info_manager::
-            UpdateUserFreqCapsRequest update_request;
-          update_request.set_user_id(GrpcAlgs::pack_user_id(
-            request_info.client_id));
-          update_request.set_time(GrpcAlgs::pack_time(
-            request_info.current_time));
+          adserver::user_info_svcs::user_info_manager::UpdateUserFreqCapsRequest update_request;
+          update_request.set_user_id(GrpcAlgs::pack_user_id(request_info.client_id));
+          update_request.set_time(GrpcAlgs::pack_time(request_info.current_time));
           Commons::RequestId request_id;
           try
           {
-            request_id = GrpcAlgs::unpack_request_id(
-              ad_slot_result.request_id());
+            request_id = GrpcAlgs::unpack_request_id(ad_slot_result.request_id());
           }
           catch(const std::exception& ex)
           {
             Stream::Error ostr;
             ostr << FUN << ": skip post match for ad slot #" << ad_slot_i <<
               ": invalid request_id size=" <<
-              ad_slot_result.request_id().size() <<
-              ": " << ex.what();
+              ad_slot_result.request_id().size() << ": " << ex.what();
 
             logger()->log(
               ostr.str(),
@@ -1581,9 +1402,9 @@ namespace AdServer
           update_request.mutable_uc_freq_caps()->Add(
             ad_slot_result.uc_freq_caps().begin(),
             ad_slot_result.uc_freq_caps().end());
-          for(const auto& creative : ad_slot_result.selected_creatives())
+          for (const auto& creative : ad_slot_result.selected_creatives())
           {
-            if(creative.order_set_id())
+            if (creative.order_set_id())
             {
               auto* seq_order = update_request.add_seq_orders();
               seq_order->set_ccg_id(creative.cmp_id());
@@ -1591,9 +1412,7 @@ namespace AdServer
               seq_order->set_imps(1);
             }
           }
-          update_request.mutable_campaign_ids()->Add(
-            campaign_ids.begin(),
-            campaign_ids.end());
+          update_request.mutable_campaign_ids()->Add(campaign_ids.begin(), campaign_ids.end());
           update_request.mutable_uc_campaign_ids()->Add(
             uc_campaign_ids.begin(),
             uc_campaign_ids.end());
@@ -1606,13 +1425,9 @@ namespace AdServer
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": post match failed: " << e.what();
+      ostr << FUN << ": post match failed: " << e.what();
 
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-112");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-112");
     }
 
     timer.stop();
@@ -1633,7 +1448,7 @@ namespace AdServer
     {
       auto update_result = co_await user_info_client_coro_->
         co_update_user_freq_caps(std::move(request));
-      if(!update_result.status.ok())
+      if (!update_result.status.ok())
       {
         history_post_match_in_progress.add_error();
         Stream::Error ostr;
@@ -1647,8 +1462,7 @@ namespace AdServer
             Logging::Logger::WARNING :
             Logging::Logger::EMERGENCY,
           Aspect::AD_FRONTEND,
-          update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ?
-            "" : "ADS-IMPL-112");
+          update_result.status.error_code() == grpc::StatusCode::UNAVAILABLE ? "" : "ADS-IMPL-112");
       }
     }
     catch(const eh::Exception& ex)
@@ -1657,11 +1471,7 @@ namespace AdServer
       Stream::Error ostr;
       ostr << "UserInfoManager::update_user_freq_caps(): "
         "caught eh::Exception: " << ex.what();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-112");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-112");
     }
 
     co_return FrontendCommons::RequestResult{};
@@ -1695,27 +1505,23 @@ namespace AdServer
 
     channel_request.set_first_url(request_info.referer);
     channel_request.set_first_url_words(request_info.referer_url_words);
-    context->request_time_metering.recived_triggers =
-      request_info.referer.empty() ? 0 : 1;
+    context->request_time_metering.recived_triggers = request_info.referer.empty() ? 0 : 1;
 
-    if(request_info.full_text_words.empty())
+    if (request_info.full_text_words.empty())
     {
       channel_request.set_pwords(request_info.page_words);
-      context->request_time_metering.recived_triggers +=
-        request_info.page_words.size();
+      context->request_time_metering.recived_triggers += request_info.page_words.size();
     }
     else
     {
       channel_request.set_pwords(request_info.full_text_words);
-      context->request_time_metering.recived_triggers +=
-        request_info.full_text_words.size();
+      context->request_time_metering.recived_triggers += request_info.full_text_words.size();
     }
     channel_request.set_swords(request_info.search_words);
     channel_request.set_uid(GrpcAlgs::pack_user_id(request_info.client_id));
 
-    auto channel_result = co_await channel_client_coro_->co_match(
-      channel_request);
-    if(!channel_result.status.ok())
+    auto channel_result = co_await channel_client_coro_->co_match(channel_request);
+    if (!channel_result.status.ok())
     {
       trigger_match_in_progress.add_error();
       Stream::Error ostr;
@@ -1723,11 +1529,7 @@ namespace AdServer
         static_cast<int>(channel_result.status.error_code()) <<
         ", message=" << channel_result.status.error_message();
       const auto error = ostr.str().str();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-117");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-117");
       co_return TriggerMatcherResult{{}, false, error};
     }
 
@@ -1739,11 +1541,10 @@ namespace AdServer
       matched_channels.url_channels_size() +
       matched_channels.url_keyword_channels_size() +
       matched_channels.uid_channels_size();
-    context->request_time_metering.trigger_match_time =
-      trigger_match_time_metering.consider();
+    context->request_time_metering.trigger_match_time = trigger_match_time_metering.consider();
     context->request_time_metering.detail_trigger_match_time.resize(
       response.match_time().empty() ? 0 : 1);
-    if(!response.match_time().empty())
+    if (!response.match_time().empty())
     {
       context->request_time_metering.detail_trigger_match_time[0] =
         GrpcAlgs::unpack_time(response.match_time());
@@ -1756,42 +1557,39 @@ namespace AdServer
   }
 
   AdFrontend::BoolTask
-  AdFrontend::co_acquire_ad_(
-    const std::shared_ptr<RequestContext>& context)
+  AdFrontend::co_acquire_ad_(const std::shared_ptr<RequestContext>& context)
     noexcept
   {
     try
     {
       google::protobuf::Arena channel_request_arena;
       auto* channel_request = google::protobuf::Arena::CreateMessage<
-        adserver::channel_svcs::channel_server::MatchRequest>(
-          &channel_request_arena);
+        adserver::channel_svcs::channel_server::MatchRequest>(&channel_request_arena);
       *channel_request = get_empty_matching_request();
       AdServer::Grpc::ResponseHolder<
         adserver::channel_svcs::channel_server::MatchResponse>
           trigger_matched_channels;
-      auto campaign_matching_result =
-        std::make_shared<CM::RequestCreativeResult>();
+      auto campaign_matching_result = std::make_shared<CM::RequestCreativeResult>();
       const bool make_merge =
         (!context->request_info.temp_client_id.is_null() ||
           !context->request_info.merge_persistent_client_id.is_null()) &&
         !context->request_info.client_id.is_null();
 
-      if(context->request_info.keywords_normalized)
+      if (context->request_info.keywords_normalized)
       {
         channel_request->set_simplify_page(false);
       }
 
       MergeUsersResult merge_result;
 
-      if(make_merge)
+      if (make_merge)
       {
         merge_result = co_await co_merge_users_(context);
       }
 
       bool trigger_success = true;
       std::string trigger_error;
-      if(context->request_info.passback_by_colocation)
+      if (context->request_info.passback_by_colocation)
       {
         trigger_matched_channels =
           AdServer::Grpc::ResponseHolder<
@@ -1800,9 +1598,7 @@ namespace AdServer
       }
       else
       {
-        auto trigger_matcher = co_await co_match_triggers_(
-          context,
-          *channel_request);
+        auto trigger_matcher = co_await co_match_triggers_(context, *channel_request);
         trigger_success = trigger_matcher.success;
         trigger_error = std::move(trigger_matcher.error_message);
         trigger_matched_channels = std::move(trigger_matcher.trigger_match_result);
@@ -1813,7 +1609,7 @@ namespace AdServer
         trigger_matched_channels ? &*trigger_matched_channels : nullptr,
         trigger_success);
       auto history_match_result = user_info_matcher.history_match_result;
-      if(!history_match_result)
+      if (!history_match_result)
       {
         auto empty_response = *get_empty_history_matching();
         history_match_result =
@@ -1832,10 +1628,9 @@ namespace AdServer
         trigger_success ? &*trigger_matched_channels : nullptr,
         ccg_keywords.get(),
         history_match_result->match_result());
-      if(!trigger_success)
+      if (!trigger_success)
       {
-        context->debug_sink.print_trigger_matching_error(
-          String::SubString(trigger_error));
+        context->debug_sink.print_trigger_matching_error(String::SubString(trigger_error));
       }
 
       std::string campaign_error;
@@ -1852,19 +1647,17 @@ namespace AdServer
         trigger_success ? &*trigger_matched_channels : nullptr,
         &*history_match_result,
         merge_result.success ? merge_result.merged_last_request :
-          GrpcAlgs::unpack_time(
-            history_match_result->match_result().last_request_time()),
+          GrpcAlgs::unpack_time(history_match_result->match_result().last_request_time()),
         user_info_matcher.profiling_available,
         ccg_keywords.get(),
         &context->debug_sink);
-      if(!campaign_success)
+      if (!campaign_success)
       {
-        context->debug_sink.print_creative_selection_error(
-          String::SubString(campaign_error));
+        context->debug_sink.print_creative_selection_error(String::SubString(campaign_error));
         co_return false;
       }
 
-      if(context->request_info.user_status ==
+      if (context->request_info.user_status ==
         AdServer::CampaignSvcs::US_OPTIN &&
         campaign_matching_result->ad_slots_size() > 0)
       {
@@ -1874,7 +1667,7 @@ namespace AdServer
           *campaign_matching_result);
       }
 
-      if(context->request_info.user_status ==
+      if (context->request_info.user_status ==
         AdServer::CampaignSvcs::US_OPTIN &&
         history_match_result->match_result().colo_id() != -1)
       {
@@ -1888,7 +1681,7 @@ namespace AdServer
           current_colo_ostr.str());
       }
 
-      if(!merge_result.success)
+      if (!merge_result.success)
       {
         context->response_ptr->add_header_nocopy_name(
           Response::Header::MERGE_FAILED,
@@ -1902,22 +1695,19 @@ namespace AdServer
         context->request_time_metering);
 
       context->http_status = 204;
-      if(campaign_matching_result->ad_slots_size() > 0 &&
+      if (campaign_matching_result->ad_slots_size() > 0 &&
         !campaign_matching_result->ad_slots(0).creative_body().empty())
       {
-        const CM::AdSlotResult& ad_slot_result =
-          campaign_matching_result->ad_slots(0);
+        const CM::AdSlotResult& ad_slot_result = campaign_matching_result->ad_slots(0);
         context->str_response = ad_slot_result.creative_body();
 
-        if(!ad_slot_result.mime_format().empty())
+        if (!ad_slot_result.mime_format().empty())
         {
-          context->response_ptr->set_content_type(
-            ad_slot_result.mime_format());
+          context->response_ptr->set_content_type(ad_slot_result.mime_format());
         }
         else
         {
-          context->response_ptr->set_content_type_nocopy(
-            Response::Type::TEXT_HTML);
+          context->response_ptr->set_content_type_nocopy(Response::Type::TEXT_HTML);
         }
 
         context->http_status = 200;
@@ -1927,12 +1717,8 @@ namespace AdServer
     }
     catch(const eh::Exception& ex)
     {
-      logger()->sstream(
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-109") <<
-        "AdFrontend::co_acquire_ad_(): caught eh::Exception: " <<
-        ex.what();
+      logger()->sstream(Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-109") <<
+        "AdFrontend::co_acquire_ad_(): caught eh::Exception: " << ex.what();
       co_return false;
     }
   }
@@ -1944,9 +1730,9 @@ namespace AdServer
       src_ccg_keywords)
     noexcept
   {
-    if(src_ccg_keywords)
+    if (src_ccg_keywords)
     {
-      for(const auto& src_ccg_kw : src_ccg_keywords->ccg_keywords())
+      for (const auto& src_ccg_kw : src_ccg_keywords->ccg_keywords())
       {
         CM::CcgKeywordInfo* res_ccg_kw = ccg_keywords.Add();
         res_ccg_kw->set_ccg_keyword_id(src_ccg_kw.ccg_keyword_id());
@@ -2002,48 +1788,38 @@ namespace AdServer
     try
     {
       CM::RequestParams request_params;
-      CM::CommonAdRequestInfo* common_info =
-        request_params.mutable_common_info();
-      CM::ContextAdRequestInfo* context_info =
-        request_params.mutable_context_info();
-      CM::TriggerMatchResult* trigger_match_result =
-        request_params.mutable_trigger_match_result();
-      const auto& history_match_result =
-        history_match_response->match_result();
+      CM::CommonAdRequestInfo* common_info = request_params.mutable_common_info();
+      CM::ContextAdRequestInfo* context_info = request_params.mutable_context_info();
+      CM::TriggerMatchResult* trigger_match_result = request_params.mutable_trigger_match_result();
+      const auto& history_match_result = history_match_response->match_result();
 
       if (trigger_matched_channels)
       {
-        const auto& matched_channels =
-          trigger_matched_channels->matched_channels();
-        for(const auto& channel : matched_channels.page_channels())
+        const auto& matched_channels = trigger_matched_channels->matched_channels();
+        for (const auto& channel : matched_channels.page_channels())
         {
-          *trigger_match_result->add_pkw_channels() =
-            convert_channel_atom(channel);
+          *trigger_match_result->add_pkw_channels() = convert_channel_atom(channel);
         }
-        for(const auto& channel : matched_channels.search_channels())
+        for (const auto& channel : matched_channels.search_channels())
         {
-          *trigger_match_result->add_skw_channels() =
-            convert_channel_atom(channel);
+          *trigger_match_result->add_skw_channels() = convert_channel_atom(channel);
         }
-        for(const auto& channel : matched_channels.url_channels())
+        for (const auto& channel : matched_channels.url_channels())
         {
-          *trigger_match_result->add_url_channels() =
-            convert_channel_atom(channel);
+          *trigger_match_result->add_url_channels() = convert_channel_atom(channel);
         }
-        for(const auto& channel : matched_channels.url_keyword_channels())
+        for (const auto& channel : matched_channels.url_keyword_channels())
         {
-          *trigger_match_result->add_ukw_channels() =
-            convert_channel_atom(channel);
+          *trigger_match_result->add_ukw_channels() = convert_channel_atom(channel);
         }
         trigger_match_result->mutable_uid_channels()->Add(
           matched_channels.uid_channels().begin(),
           matched_channels.uid_channels().end());
       }
 
-      common_info->set_creative_instantiate_type(
-        instantiate_type.text().str());
+      common_info->set_creative_instantiate_type(instantiate_type.text().str());
 
-      if(request_info.location)
+      if (request_info.location)
       {
         CM::GeoInfo* location = common_info->add_location();
         location->set_country(request_info.location->country);
@@ -2051,9 +1827,9 @@ namespace AdServer
         location->set_city(request_info.location->city);
       }
 
-      if(history_match_response)
+      if (history_match_response)
       {
-        for(const auto& geo_data : history_match_result.geo_data_seq())
+        for (const auto& geo_data : history_match_result.geo_data_seq())
         {
           CM::GeoCoordInfo* res_loc = common_info->add_coord_location();
           res_loc->set_longitude(geo_data.longitude());
@@ -2061,15 +1837,13 @@ namespace AdServer
           res_loc->set_accuracy(geo_data.accuracy());
         }
       }
-      else if(request_info.coord_location)
+      else if (request_info.coord_location)
       {
         CM::GeoCoordInfo* coord_location = common_info->add_coord_location();
         coord_location->set_longitude(GrpcAlgs::pack_decimal(
           request_info.coord_location->longitude));
-        coord_location->set_latitude(GrpcAlgs::pack_decimal(
-          request_info.coord_location->latitude));
-        coord_location->set_accuracy(GrpcAlgs::pack_decimal(
-          request_info.coord_location->accuracy));
+        coord_location->set_latitude(GrpcAlgs::pack_decimal(request_info.coord_location->latitude));
+        coord_location->set_accuracy(GrpcAlgs::pack_decimal(request_info.coord_location->accuracy));
       }
 
       const std::string user_id = GrpcAlgs::pack_user_id(
@@ -2080,11 +1854,9 @@ namespace AdServer
       common_info->set_track_user_id(user_id);
 
       common_info->set_signed_user_id(request_info.signed_client_id);
-      if(!request_info.temp_client_id.is_null() &&
-         !request_info.client_id.is_null())
+      if (!request_info.temp_client_id.is_null() && !request_info.client_id.is_null())
       {
-        request_params.set_merged_user_id(
-          GrpcAlgs::pack_user_id(request_info.temp_client_id));
+        request_params.set_merged_user_id(GrpcAlgs::pack_user_id(request_info.temp_client_id));
       }
 
       request_params.set_ad_instantiate_type(AdServer::CampaignSvcs::AIT_BODY);
@@ -2093,7 +1865,7 @@ namespace AdServer
       // reduce user status values
       common_info->set_user_status(request_info.user_status);
 
-      if(request_info.user_status == AdServer::CampaignSvcs::US_OPTIN && (
+      if (request_info.user_status == AdServer::CampaignSvcs::US_OPTIN && (
            trigger_matched_channels && (
              trigger_matched_channels->no_track() ||
              trigger_matched_channels->no_adv())))
@@ -2101,8 +1873,7 @@ namespace AdServer
         common_info->set_user_status(AdServer::CampaignSvcs::US_BLACKLISTED);
       }
 
-      request_params.set_client_create_time(
-        history_match_result.create_time());
+      request_params.set_client_create_time(history_match_result.create_time());
       common_info->set_full_referer(request_info.referer);
       common_info->set_referer(request_info.allowable_referer);
       context_info->set_full_referer_hash(request_info.full_referer_hash);
@@ -2112,19 +1883,16 @@ namespace AdServer
       common_info->set_random(request_info.random);
 
       request_params.set_fraud(
-        history_match_result.fraud_request() &&
-          !request_info.disable_fraud_detection);
+        history_match_result.fraud_request() && !request_info.disable_fraud_detection);
       common_info->set_test_request(
         request_info.test_request || request_info.disable_fraud_detection);
       common_info->set_log_as_test(request_info.log_as_test);
-      request_params.set_disable_fraud_detection(
-        request_info.disable_fraud_detection);
+      request_params.set_disable_fraud_detection(request_info.disable_fraud_detection);
       request_params.set_profiling_available(profiling_available);
 
       request_params.set_search_engine_id(request_info.search_engine_id);
       request_params.set_page_keywords_present(
-        !request_info.page_words.empty() ||
-          !request_info.full_text_words.empty());
+        !request_info.page_words.empty() || !request_info.full_text_words.empty());
 
       // sample requests
       if ((((double)request_info.random * 100.0) / CampaignSvcs::RANDOM_PARAM_MAX)
@@ -2136,14 +1904,14 @@ namespace AdServer
           request_params.set_page_keywords(request_info.full_text_words);
           added = true;
         }
+
         if (!request_info.page_words.empty())
         {
           if (added)
           {
             request_params.mutable_page_keywords()->append(" ");
           }
-          request_params.mutable_page_keywords()->append(
-            request_info.page_words);
+          request_params.mutable_page_keywords()->append(request_info.page_words);
           added = true;
         }
 
@@ -2156,8 +1924,7 @@ namespace AdServer
       common_info->set_colo_id(request_info.colo_id);
 
       common_info->set_original_url(request_info.original_url);
-      common_info->set_request_id(
-        GrpcAlgs::pack_request_id(request_info.request_id));
+      common_info->set_request_id(GrpcAlgs::pack_request_id(request_info.request_id));
       common_info->set_time(GrpcAlgs::pack_time(request_info.current_time));
 
       common_info->set_user_agent(request_info.user_agent);
@@ -2174,7 +1941,7 @@ namespace AdServer
       context_info->set_platform(request_info.platform);
       context_info->set_full_platform(request_info.full_platform);
       context_info->set_page_load_id(request_info.page_load_id);
-      if(common_config_->ip_logging_enabled())
+      if (common_config_->ip_logging_enabled())
       {
         std::string ip_hash;
         FrontendCommons::ip_hash(ip_hash, request_info.peer_ip, common_config_->ip_salt());
@@ -2185,7 +1952,7 @@ namespace AdServer
         history_match_result.full_freq_caps().begin(),
         history_match_result.full_freq_caps().end());
 
-      for(const auto& history_seq_order : history_match_result.seq_orders())
+      for (const auto& history_seq_order : history_match_result.seq_orders())
       {
         CM::SeqOrderInfo* seq_order = request_params.add_seq_orders();
         seq_order->set_ccg_id(history_seq_order.ccg_id());
@@ -2193,12 +1960,10 @@ namespace AdServer
         seq_order->set_imps(history_seq_order.imps());
       }
 
-      for(const auto& history_campaign_freq :
-          history_match_result.campaign_freqs())
+      for (const auto& history_campaign_freq : history_match_result.campaign_freqs())
       {
         CM::CampaignFreq* campaign_freq = request_params.add_campaign_freqs();
-        campaign_freq->set_campaign_id(
-          history_campaign_freq.campaign_id());
+        campaign_freq->set_campaign_id(history_campaign_freq.campaign_id());
         campaign_freq->set_imps(history_campaign_freq.imps());
       }
 
@@ -2221,13 +1986,11 @@ namespace AdServer
       {
         request_params.add_channels(channel.channel_id());
       }
+
       if (trigger_matched_channels)
       {
-        const auto& uid_channels =
-          trigger_matched_channels->matched_channels().uid_channels();
-        request_params.mutable_channels()->Add(
-          uid_channels.begin(),
-          uid_channels.end());
+        const auto& uid_channels = trigger_matched_channels->matched_channels().uid_channels();
+        request_params.mutable_channels()->Add(uid_channels.begin(), uid_channels.end());
       }
 
       request_params.mutable_exclude_pubpixel_accounts()->Add(
@@ -2238,13 +2001,12 @@ namespace AdServer
 
       request_params.set_search_words(request_info.search_words);
       request_params.set_need_debug_info(debug_sink->require_debug_info());
-      request_params.set_session_start(
-        history_match_result.session_start());
+      request_params.set_session_start(history_match_result.session_start());
       request_params.set_only_display_ad(false);
       request_params.set_profiling_type(AdServer::CampaignSvcs::PT_ALL);
       context_info->set_additional_info("{}");
 
-      if(request_info.tag_id)
+      if (request_info.tag_id)
       {
         // initialize slot
         CM::AdSlotInfo* ad_slot = request_params.add_ad_slots();
@@ -2255,12 +2017,10 @@ namespace AdServer
           request_info.passback_by_colocation ||
           history_match_result.fraud_request() ||
           (trigger_matched_channels &&
-            (trigger_matched_channels->no_track() ||
-              trigger_matched_channels->no_adv())));
+            (trigger_matched_channels->no_track() || trigger_matched_channels->no_adv())));
         ad_slot->set_ext_tag_id(request_info.ext_tag_id);
         ad_slot->mutable_min_ecpm()->set_value(
-          GrpcAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
-            CampaignSvcs::RevenueDecimal::ZERO));
+          GrpcAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(CampaignSvcs::RevenueDecimal::ZERO));
 
         ad_slot->set_up_expand_space(request_info.up_expand_space.present() ?
           static_cast<long>(*request_info.up_expand_space) : -1);
@@ -2342,9 +2102,8 @@ namespace AdServer
         request->mutable_request_params());
 
       TimeGuard creative_selection_time_metering;
-      auto campaign_result = co_await campaign_manager_coro_->co_get_campaign_creative(
-        *request);
-      if(!campaign_result.status.ok())
+      auto campaign_result = co_await campaign_manager_coro_->co_get_campaign_creative(*request);
+      if (!campaign_result.status.ok())
       {
         campaign_selection_in_progress.add_error();
         Stream::Error ostr;
@@ -2353,11 +2112,7 @@ namespace AdServer
           static_cast<int>(campaign_result.status.error_code()) <<
           ", message=" << campaign_result.status.error_message();
         error = ostr.str().str();
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::AD_FRONTEND,
-          "ADS-IMPL-118");
+        logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-118");
         co_return false;
       }
 
@@ -2365,26 +2120,21 @@ namespace AdServer
       request_time_metering.creative_selection_local_time =
         GrpcAlgs::unpack_time(campaign_matching_result.process_time());
 
-      if(campaign_matching_result.ad_slots_size() > 0)
+      if (campaign_matching_result.ad_slots_size() > 0)
       {
-        const CM::AdSlotResult& ad_slot_result =
-          campaign_matching_result.ad_slots(0);
+        const CM::AdSlotResult& ad_slot_result = campaign_matching_result.ad_slots(0);
 
-        if(ad_slot_result.passback() &&
-          !ad_slot_result.passback_url().empty())
+        if (ad_slot_result.passback() && !ad_slot_result.passback_url().empty())
         {
           passback_info.url = ad_slot_result.passback_url();
         }
 
         log_as_test |= ad_slot_result.test_request();
 
-        request_time_metering.creative_selection_time =
-          creative_selection_time_metering.consider();
+        request_time_metering.creative_selection_time = creative_selection_time_metering.consider();
 
-        request_time_metering.creative_count =
-          ad_slot_result.selected_creatives_size();
-        request_time_metering.passback =
-          ad_slot_result.passback();
+        request_time_metering.creative_count = ad_slot_result.selected_creatives_size();
+        request_time_metering.passback = ad_slot_result.passback();
       }
 
       co_return true;
@@ -2396,11 +2146,7 @@ namespace AdServer
       ostr << "AdFrontend::co_request_campaign_manager_(): fail. "
         "Caught eh::Exception: " << ex.what();
       error = ostr.str().str();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-118");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-118");
       co_return false;
     }
   }
@@ -2414,16 +2160,17 @@ namespace AdServer
     /*throw(eh::Exception)*/
   {
     size_t count = 0;
-    for(int i = 0; i < in.size(); ++i)
+    for (int i = 0; i < in.size(); ++i)
     {
-      if(count)
+      if (count)
       {
         out << ",";
       }
       out << in[i].id() << type;
       count++;
     }
-    if(count == 0)
+
+    if (count == 0)
     {
       out << "empty";
     }
@@ -2472,7 +2219,7 @@ namespace AdServer
     {
       FrontendCommons::CookieNameSet remove_cookie_list;
 
-      for(auto it = common_config_->OptOutRemoveCookies().Cookie().begin();
+      for (auto it = common_config_->OptOutRemoveCookies().Cookie().begin();
         it != common_config_->OptOutRemoveCookies().Cookie().end(); ++it)
       {
         remove_cookie_list.insert(it->name());
@@ -2513,32 +2260,23 @@ namespace AdServer
       Stream::Error ostr;
       ostr << FUN << ": Can't do opt out. Caught eh::Exception: " << ex.what();
 
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-116");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-116");
     }
   }
 
   FrontendCommons::RequestTask
-  AdFrontend::co_verify_opt_operation_(
-    CM::VerifyOptOperationRequest request)
+  AdFrontend::co_verify_opt_operation_(CM::VerifyOptOperationRequest request)
     noexcept
   {
-    auto opt_result = co_await campaign_manager_coro_->co_verify_opt_operation(
-      std::move(request));
-    if(!opt_result.status.ok())
+    auto opt_result = co_await campaign_manager_coro_->co_verify_opt_operation(std::move(request));
+    if (!opt_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "CampaignManager::verify_opt_operation(): "
         "gRPC call failed: code=" <<
         static_cast<int>(opt_result.status.error_code()) <<
         ", message=" << opt_result.status.error_message();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_FRONTEND,
-        "ADS-IMPL-116");
+      logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::AD_FRONTEND, "ADS-IMPL-116");
     }
 
     co_return FrontendCommons::RequestResult{};
@@ -2557,32 +2295,25 @@ namespace AdServer
   {
     CM::GetColocationFlagsRequest request;
     auto colocation_result =
-      co_await campaign_manager_coro_->co_get_colocation_flags(
-        std::move(request));
-    if(!colocation_result.status.ok())
+      co_await campaign_manager_coro_->co_get_colocation_flags(std::move(request));
+    if (!colocation_result.status.ok())
     {
       Stream::Error ostr;
       ostr << "CampaignManager::get_colocation_flags(): "
         "gRPC call failed: code=" <<
         static_cast<int>(colocation_result.status.error_code()) <<
         ", message=" << colocation_result.status.error_message();
-      logger()->log(
-        ostr.str(),
-        Logging::Logger::CRITICAL,
-        Aspect::AD_FRONTEND);
+      logger()->log(ostr.str(), Logging::Logger::CRITICAL, Aspect::AD_FRONTEND);
       co_return FrontendCommons::RequestResult{};
     }
 
-    RequestInfoFiller::ColoFlagsMap_var new_colo_flags(
-      new RequestInfoFiller::ColoFlagsMap());
-    for(const auto& colocation : colocation_result.response.colocations())
+    RequestInfoFiller::ColoFlagsMap_var new_colo_flags(new RequestInfoFiller::ColoFlagsMap());
+    for (const auto& colocation : colocation_result.response.colocations())
     {
       RequestInfoFiller::ColoFlags colo_flags;
       colo_flags.flags = colocation.flags();
       new_colo_flags->insert(
-        RequestInfoFiller::ColoFlagsMap::value_type(
-          colocation.colo_id(),
-          colo_flags));
+        RequestInfoFiller::ColoFlagsMap::value_type(colocation.colo_id(), colo_flags));
     }
 
     request_info_filler_->colo_flags(new_colo_flags);
@@ -2596,7 +2327,7 @@ namespace AdServer
         result_channel_ids,
     const AdServer::CampaignSvcs::ChannelIdArray& hit_channels)
   {
-    for(auto it = hit_channels.begin(); it != hit_channels.end(); ++it)
+    for (auto it = hit_channels.begin(); it != hit_channels.end(); ++it)
     {
       auto* result_channel_id = result_channel_ids.Add();
       result_channel_id->set_channel_id(*it);
@@ -2612,7 +2343,7 @@ namespace AdServer
   {
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    if(match_result && !match_result->no_track())
+    if (match_result && !match_result->no_track())
     {
       const auto& matched_channels = match_result->matched_channels();
       ChannelMatchSet url_channels;
@@ -2645,50 +2376,34 @@ namespace AdServer
         GetChannelTriggerId());
 
       const auto fill_channel_matches =
-        [](
-          auto* out,
-          const ChannelMatchSet& in)
+        [](auto* out, const ChannelMatchSet& in)
       {
-        for(const auto& channel_match : in)
+        for (const auto& channel_match : in)
         {
           auto* result = out->Add();
           result->set_channel_id(channel_match.channel_id);
           result->set_channel_trigger_id(channel_match.channel_trigger_id);
         }
       };
-      fill_channel_matches(
-        match_params.mutable_url_channel_ids(),
-        url_channels);
-      fill_channel_matches(
-        match_params.mutable_page_channel_ids(),
-        page_channels);
-      fill_channel_matches(
-        match_params.mutable_search_channel_ids(),
-        search_channels);
-      fill_channel_matches(
-        match_params.mutable_url_keyword_channel_ids(),
-        url_keyword_channels);
+      fill_channel_matches(match_params.mutable_url_channel_ids(), url_channels);
+      fill_channel_matches(match_params.mutable_page_channel_ids(), page_channels);
+      fill_channel_matches(match_params.mutable_search_channel_ids(), search_channels);
+      fill_channel_matches(match_params.mutable_url_keyword_channel_ids(), url_keyword_channels);
 
       match_params.mutable_persistent_channel_ids()->Add(
         request_info.platform_ids.begin(),
         request_info.platform_ids.end());
     }
 
-    add_hit_channels_(
-      *match_params.mutable_url_channel_ids(),
-      request_info.hit_channel_ids);
+    add_hit_channels_(*match_params.mutable_url_channel_ids(), request_info.hit_channel_ids);
 
     add_hit_channels_(
       *match_params.mutable_url_keyword_channel_ids(),
       request_info.hit_channel_ids);
 
-    add_hit_channels_(
-      *match_params.mutable_page_channel_ids(),
-      request_info.hit_channel_ids);
+    add_hit_channels_(*match_params.mutable_page_channel_ids(), request_info.hit_channel_ids);
 
-    add_hit_channels_(
-      *match_params.mutable_search_channel_ids(),
-      request_info.hit_channel_ids);
+    add_hit_channels_(*match_params.mutable_search_channel_ids(), request_info.hit_channel_ids);
   }
 
 }

@@ -60,9 +60,7 @@ namespace AdServer::CampaignSvcs
       }
 
       ChannelIdSet responded_channels;
-      cs_data.campaign->channel->triggered_named_channels(
-        responded_channels,
-        *channels);
+      cs_data.campaign->channel->triggered_named_channels(responded_channels, *channels);
 
       ad_info.channels.insert(
         ad_info.channels.end(),
@@ -72,9 +70,7 @@ namespace AdServer::CampaignSvcs
       if (cs_data.campaign->stat_channel.in())
       {
         std::string responded_expression;
-        if (cs_data.campaign->stat_channel->triggered_expression(
-          responded_expression,
-          *channels))
+        if (cs_data.campaign->stat_channel->triggered_expression(responded_expression, *channels))
         {
           ad_info.expression = std::move(responded_expression);
         }
@@ -135,19 +131,13 @@ namespace AdServer::CampaignSvcs
 
     request_info.history_channels.reserve(channels.size());
 
-    request_info.history_channels.assign(
-      channels.begin(),
-      channels.end());
+    request_info.history_channels.assign(channels.begin(), channels.end());
 
-    request_info.page_keywords_present =
-      log_request.page_keywords_present;
+    request_info.page_keywords_present = log_request.page_keywords_present;
 
-    request_info.search_words = new Commons::StringHolder(
-      log_request.search_words);
-    request_info.page_keywords = new Commons::StringHolder(
-      log_request.page_keywords);
-    request_info.url_keywords = new Commons::StringHolder(
-      log_request.url_keywords);
+    request_info.search_words = new Commons::StringHolder(log_request.search_words);
+    request_info.page_keywords = new Commons::StringHolder(log_request.page_keywords);
+    request_info.url_keywords = new Commons::StringHolder(log_request.url_keywords);
     request_info.fraud = log_request.fraud;
     request_info.search_engine_id = log_request.search_engine_id;
 
@@ -248,11 +238,7 @@ namespace AdServer::CampaignSvcs
 
     if (log_request && channels)
     {
-      fill_request_info_by_profiling_(
-        request_info,
-        *log_request,
-        *channels,
-        common_info);
+      fill_request_info_by_profiling_(request_info, *log_request, *channels, common_info);
 
       request_info.is_ad_request = is_ad_request;
       request_info.disable_fraud_detection = log_request->disable_fraud_detection;
@@ -341,8 +327,7 @@ namespace AdServer::CampaignSvcs
         auto pr_it = campaign_config->platform_channel_priorities.find(*pch_it);
         if (pr_it != campaign_config->platform_channel_priorities.end())
         {
-          if (request_info.last_platform_channel_id == 0 ||
-            cur_priority < pr_it->second.priority)
+          if (request_info.last_platform_channel_id == 0 || cur_priority < pr_it->second.priority)
           {
             cur_priority = pr_it->second.priority;
             request_info.last_platform_channel_id = *pch_it;
@@ -663,8 +648,7 @@ namespace AdServer::CampaignSvcs
 
         const RevenueDecimal orig_self_service_commission =
           cs_data->campaign->advertiser->get_self_service_commission();
-        const RevenueDecimal adv_commission =
-          cs_data->campaign->advertiser->adv_commission();
+        const RevenueDecimal adv_commission = cs_data->campaign->advertiser->adv_commission();
 
         ad_info.cc_id = cs_data->creative->ccid;
         ad_info.ccg_id = cs_data->campaign->campaign_id;
@@ -684,20 +668,16 @@ namespace AdServer::CampaignSvcs
         if (ad_selection_result.ctr_calculation)
         {
           ad_info.ctr_algorithm_id =
-            ad_selection_result.ctr_calculation->algorithm_id(
-              cs_data->creative);
+            ad_selection_result.ctr_calculation->algorithm_id(cs_data->creative);
 
           ad_selection_result.ctr_calculation->create_context(
-            ad_selection_result.tag_size)->get_ctr_details(
-              ad_info.model_ctrs,
-              cs_data->creative);
+            ad_selection_result.tag_size)->get_ctr_details(ad_info.model_ctrs, cs_data->creative);
         }
 
         if (ad_selection_result.conv_rate_calculation)
         {
           ad_info.conv_rate_algorithm_id =
-            ad_selection_result.conv_rate_calculation->algorithm_id(
-              cs_data->creative);
+            ad_selection_result.conv_rate_calculation->algorithm_id(cs_data->creative);
         }
 
         assert(cs_data->ctr.is_nonnegative());
@@ -807,9 +787,7 @@ namespace AdServer::CampaignSvcs
             ExpressionChannelList cmp_channels;
             Generics::MonoAllocatorArena simple_channels_arena;
             ChannelIdHashSet simple_channels(&simple_channels_arena);
-            simple_channels.insert(
-              channels->begin(),
-              channels->end());
+            simple_channels.insert(channels->begin(), channels->end());
 
             cs_data->campaign->channel->get_cmp_channels(cmp_channels, simple_channels);
 
@@ -899,19 +877,15 @@ namespace AdServer::CampaignSvcs
         ad_info.adv_comm_revenue.rate_id = cs_data->campaign->ccg_rate_id;
 
         // isp_revenue (subscription fee)
-        ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(
-          *pub_currency,
-          *isp_currency);
+        ad_info.isp_revenue = ad_info.pub_revenue.convert_currency(*pub_currency, *isp_currency);
         ad_info.isp_revenue *= self_service_commission;
         ad_info.isp_revenue.rate_id = colocation->colo_rate_id;
 
         Revenue& adv_revenue_sys = data_pricing.adv_revenue_sys;
         adv_revenue_sys.impression = campaign_currency->to_system_currency(
           ad_info.adv_revenue.impression);
-        adv_revenue_sys.click = campaign_currency->to_system_currency(
-          ad_info.adv_revenue.click);
-        adv_revenue_sys.action = campaign_currency->to_system_currency(
-          ad_info.adv_revenue.action);
+        adv_revenue_sys.click = campaign_currency->to_system_currency(ad_info.adv_revenue.click);
+        adv_revenue_sys.action = campaign_currency->to_system_currency(ad_info.adv_revenue.action);
 
         if (cs_data->campaign->account->invoice_commision())
         {
@@ -943,8 +917,7 @@ namespace AdServer::CampaignSvcs
       Stream::Error ostr;
       ostr << FUN << ": eh::Exception caught(tid = " <<
         (tag ? tag->tag_id : 0) << ", ccid = " <<
-        (cs_data ? cs_data->creative->ccid : 0) << "): " <<
-        ex.what();
+        (cs_data ? cs_data->creative->ccid : 0) << "): " << ex.what();
       throw Exception(ostr);
     }
   }

@@ -19,9 +19,7 @@
 #include <UserInfoSvcs/UserInfoCommons/UserFreqCapProfile.hpp>
 #include "UserInfoManagerLogger.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   typedef AdServer::Commons::UserId UserId;
 
@@ -102,15 +100,12 @@ namespace UserInfoSvcs
 
   public:
     virtual AdServer::Commons::StartableAwaitable<bool>
-    co_remove_user_profile(
-      const UserId& user_id)
+    co_remove_user_profile(const UserId& user_id)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
 
     virtual AdServer::Commons::StartableAwaitable<bool>
-    co_fraud_user(
-      const UserId& user_id,
-      const Generics::Time& now)
+    co_fraud_user(const UserId& user_id, const Generics::Time& now)
       /*throw(NotReady, ChunkNotFound, Exception)*/ = 0;
 
     virtual AdServer::Commons::StartableAwaitable<bool>
@@ -184,5 +179,4 @@ namespace UserInfoSvcs
 
   typedef ReferenceCounting::SmartPtr<UserOperationProcessor>
     UserOperationProcessor_var;
-}
 }

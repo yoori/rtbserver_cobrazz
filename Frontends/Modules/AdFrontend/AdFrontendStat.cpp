@@ -30,24 +30,16 @@ namespace
   const char AD_REQUEST_TOTAL[] = "ad_request_total";
   const char AD_REQUEST_IN_PROGRESS[] = "ad_request_in_progress";
 
-  const char AD_REQUEST_TRIGGER_MATCH_TOTAL[] =
-    "ad_request_trigger_match_total";
-  const char AD_REQUEST_TRIGGER_MATCH_IN_PROGRESS[] =
-    "ad_request_trigger_match_in_progress";
-  const char AD_REQUEST_TRIGGER_MATCH_ERROR_TOTAL[] =
-    "ad_request_trigger_match_error_total";
+  const char AD_REQUEST_TRIGGER_MATCH_TOTAL[] = "ad_request_trigger_match_total";
+  const char AD_REQUEST_TRIGGER_MATCH_IN_PROGRESS[] = "ad_request_trigger_match_in_progress";
+  const char AD_REQUEST_TRIGGER_MATCH_ERROR_TOTAL[] = "ad_request_trigger_match_error_total";
 
-  const char AD_REQUEST_HISTORY_MATCH_TOTAL[] =
-    "ad_request_history_match_total";
-  const char AD_REQUEST_HISTORY_MATCH_TOTAL_TIME[] =
-    "ad_request_history_match_total_time";
-  const char AD_REQUEST_HISTORY_MATCH_IN_PROGRESS[] =
-    "ad_request_history_match_in_progress";
-  const char AD_REQUEST_HISTORY_MATCH_ERROR_TOTAL[] =
-    "ad_request_history_match_error_total";
+  const char AD_REQUEST_HISTORY_MATCH_TOTAL[] = "ad_request_history_match_total";
+  const char AD_REQUEST_HISTORY_MATCH_TOTAL_TIME[] = "ad_request_history_match_total_time";
+  const char AD_REQUEST_HISTORY_MATCH_IN_PROGRESS[] = "ad_request_history_match_in_progress";
+  const char AD_REQUEST_HISTORY_MATCH_ERROR_TOTAL[] = "ad_request_history_match_error_total";
 
-  const char AD_REQUEST_CAMPAIGN_SELECTION_TOTAL[] =
-    "ad_request_campaign_selection_total";
+  const char AD_REQUEST_CAMPAIGN_SELECTION_TOTAL[] = "ad_request_campaign_selection_total";
   const char AD_REQUEST_CAMPAIGN_SELECTION_TOTAL_TIME[] =
     "ad_request_campaign_selection_total_time";
   const char AD_REQUEST_CAMPAIGN_SELECTION_IN_PROGRESS[] =
@@ -55,8 +47,7 @@ namespace
   const char AD_REQUEST_CAMPAIGN_SELECTION_ERROR_TOTAL[] =
     "ad_request_campaign_selection_error_total";
 
-  const char AD_REQUEST_HISTORY_POST_MATCH_TOTAL[] =
-    "ad_request_history_post_match_total";
+  const char AD_REQUEST_HISTORY_POST_MATCH_TOTAL[] = "ad_request_history_post_match_total";
   const char AD_REQUEST_HISTORY_POST_MATCH_TOTAL_TIME[] =
     "ad_request_history_post_match_total_time";
   const char AD_REQUEST_HISTORY_POST_MATCH_IN_PROGRESS[] =
@@ -74,7 +65,7 @@ namespace
     const char* error_total_key)
   {
     values.set(total_key, stage.total);
-    if(total_time_key)
+    if (total_time_key)
     {
       values.set(total_time_key, stage.total_time.as_double());
     }
@@ -168,6 +159,7 @@ namespace AdServer
     {
       min = time;
     }
+
     if (time > max)
     {
       max = time;
@@ -180,9 +172,7 @@ namespace AdServer
   }
 
   AdFrontendStat::StageStat&
-  AdFrontendStat::select_stage_(
-    RealtimeStatData& data,
-    Stage stage)
+  AdFrontendStat::select_stage_(RealtimeStatData& data, Stage stage)
     noexcept
   {
     switch(stage)
@@ -254,7 +244,7 @@ namespace AdServer
   AdFrontendStat::complete_request() noexcept
   {
     Sync::PosixGuard lock(mutex_);
-    if(realtime_stat_data_.ad_request_in_progress)
+    if (realtime_stat_data_.ad_request_in_progress)
     {
       --realtime_stat_data_.ad_request_in_progress;
     }
@@ -274,16 +264,14 @@ namespace AdServer
   {
     Sync::PosixGuard lock(mutex_);
     StageStat& stage_stat = select_stage_(realtime_stat_data_, stage);
-    if(stage_stat.in_progress)
+    if (stage_stat.in_progress)
     {
       --stage_stat.in_progress;
     }
   }
 
   void
-  AdFrontendStat::add_stage_time(
-    Stage stage,
-    const Generics::Time& time)
+  AdFrontendStat::add_stage_time(Stage stage, const Generics::Time& time)
     noexcept
   {
     Sync::PosixGuard lock(mutex_);

@@ -88,7 +88,7 @@ namespace
 
     args.parse(argc - 1, argv + 1);
 
-    if(opt_help.enabled())
+    if (opt_help.enabled())
     {
       print_usage();
       std::exit(0);
@@ -101,11 +101,12 @@ namespace
     options.fe_config = *opt_fe_config;
     options.domain_config = *opt_domain_config;
 
-    if(options.count == 0)
+    if (options.count == 0)
     {
       throw std::runtime_error("--count must be > 0");
     }
-    if(options.threads == 0)
+
+    if (options.threads == 0)
     {
       throw std::runtime_error("--threads must be > 0");
     }
@@ -116,13 +117,13 @@ namespace
   std::string
   read_request_body(const std::string& file_path)
   {
-    if(file_path.empty())
+    if (file_path.empty())
     {
       return OPENRTB_REQUEST;
     }
 
     std::ifstream file(file_path, std::ios::binary);
-    if(!file)
+    if (!file)
     {
       throw std::runtime_error("can't open request file '" + file_path + "'");
     }
@@ -141,7 +142,7 @@ namespace
   {
     std::string actual_domain_config_path = domain_config_path;
 
-    if(!fe_config_path.empty())
+    if (!fe_config_path.empty())
     {
       Config::ErrorHandler error_handler;
       std::unique_ptr<xsd::AdServer::Configuration::FeConfigurationType>
@@ -149,13 +150,13 @@ namespace
           fe_config_path.c_str(),
           error_handler).release());
 
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error;
         throw std::runtime_error(error_handler.text(error));
       }
 
-      if(!fe_config->CommonFeConfiguration().present())
+      if (!fe_config->CommonFeConfiguration().present())
       {
         throw std::runtime_error("CommonFeConfiguration not presented.");
       }
@@ -178,13 +179,13 @@ namespace
         user_id_config.ssp_cache_size(),
         uid_blacklist);
 
-      if(actual_domain_config_path.empty())
+      if (actual_domain_config_path.empty())
       {
         actual_domain_config_path = common_config.domain_config_path();
       }
     }
 
-    if(actual_domain_config_path.empty())
+    if (actual_domain_config_path.empty())
     {
       return;
     }
@@ -195,21 +196,20 @@ namespace
         actual_domain_config_path.c_str(),
         error_handler).release());
 
-    if(error_handler.has_errors())
+    if (error_handler.has_errors())
     {
       std::string error;
       throw std::runtime_error(error_handler.text(error));
     }
 
-    common_module.domain_parser_ =
-      new AdServer::CampaignSvcs::DomainParser(*domain_config);
+    common_module.domain_parser_ = new AdServer::CampaignSvcs::DomainParser(*domain_config);
   }
 
   CpuTimes
   current_cpu_times()
   {
     rusage usage{};
-    if(getrusage(RUSAGE_SELF, &usage) != 0)
+    if (getrusage(RUSAGE_SELF, &usage) != 0)
     {
       throw std::runtime_error("getrusage failed");
     }
@@ -252,7 +252,7 @@ namespace
   hash_string_sequence(std::uint64_t& seed, const Sequence& values)
   {
     hash_combine(seed, values.size());
-    for(const auto& value : values)
+    for (const auto& value : values)
     {
       hash_string_value(seed, value);
     }
@@ -263,21 +263,19 @@ namespace
   hash_number_set(std::uint64_t& seed, const Set& values)
   {
     hash_combine(seed, values.size());
-    for(const auto value : values)
+    for (const auto value : values)
     {
       hash_combine(seed, value);
     }
   }
 
   void
-  hash_ad_slot(
-    std::uint64_t& seed,
-    const AdServer::Bidding::JsonAdSlotProcessingContext& ad_slot)
+  hash_ad_slot(std::uint64_t& seed, const AdServer::Bidding::JsonAdSlotProcessingContext& ad_slot)
   {
     hash_string_value(seed, ad_slot.id);
     hash_string(seed, ad_slot.min_cpm_price.str());
     hash_combine(seed, ad_slot.private_auction.has_value());
-    if(ad_slot.private_auction)
+    if (ad_slot.private_auction)
     {
       hash_combine(seed, *ad_slot.private_auction);
     }
@@ -295,7 +293,7 @@ namespace
     hash_string_value(seed, ad_slot.imp_ext_type);
 
     hash_combine(seed, ad_slot.deals.size());
-    for(const auto& deal : ad_slot.deals)
+    for (const auto& deal : ad_slot.deals)
     {
       hash_string_value(seed, deal.id);
       hash_string(seed, deal.cpm_price.str());
@@ -303,21 +301,21 @@ namespace
     }
 
     hash_combine(seed, ad_slot.metrics.size());
-    for(const auto& metric : ad_slot.metrics)
+    for (const auto& metric : ad_slot.metrics)
     {
       hash_string_value(seed, metric.type);
       hash_string_value(seed, metric.value);
     }
 
     hash_combine(seed, ad_slot.banners.size());
-    for(const auto& banner : ad_slot.banners)
+    for (const auto& banner : ad_slot.banners)
     {
       hash_string_value(seed, banner.pos);
       hash_string_value(seed, banner.matching_ad);
       hash_string_sequence(seed, banner.exclude_categories);
       hash_combine(seed, banner.ext_hpos);
       hash_combine(seed, banner.formats.size());
-      for(const auto& format : banner.formats)
+      for (const auto& format : banner.formats)
       {
         hash_string_value(seed, format.width);
         hash_string_value(seed, format.height);
@@ -327,18 +325,18 @@ namespace
     }
 
     hash_combine(seed, ad_slot.native.in() != nullptr);
-    if(ad_slot.native.in())
+    if (ad_slot.native.in())
     {
       const auto& native = *ad_slot.native;
       hash_string_value(seed, native.version);
       hash_combine(seed, native.placement.has_value());
-      if(native.placement)
+      if (native.placement)
       {
         hash_combine(seed, *native.placement);
       }
 
       hash_combine(seed, native.data_assets.size());
-      for(const auto& asset : native.data_assets)
+      for (const auto& asset : native.data_assets)
       {
         hash_combine(seed, asset.id);
         hash_combine(seed, asset.required);
@@ -347,7 +345,7 @@ namespace
       }
 
       hash_combine(seed, native.image_assets.size());
-      for(const auto& asset : native.image_assets)
+      for (const auto& asset : native.image_assets)
       {
         hash_combine(seed, asset.id);
         hash_combine(seed, asset.required);
@@ -358,7 +356,7 @@ namespace
       }
 
       hash_combine(seed, native.video_assets.size());
-      for(const auto& asset : native.video_assets)
+      for (const auto& asset : native.video_assets)
       {
         hash_combine(seed, asset.id);
         hash_combine(seed, asset.required);
@@ -428,7 +426,7 @@ namespace
     hash_number_set(seed, context.member_ids);
 
     hash_combine(seed, context.segments.size());
-    for(const auto& segment : context.segments)
+    for (const auto& segment : context.segments)
     {
       hash_string_value(seed, segment.id);
       hash_string_value(seed, segment.name);
@@ -436,11 +434,11 @@ namespace
     }
 
     hash_combine(seed, context.user_eids.size());
-    for(const auto& eid : context.user_eids)
+    for (const auto& eid : context.user_eids)
     {
       hash_string_value(seed, eid.source);
       hash_combine(seed, eid.uids.size());
-      for(const auto& uid : eid.uids)
+      for (const auto& uid : eid.uids)
       {
         hash_string_value(seed, uid.id);
         hash_string_value(seed, uid.stable_id);
@@ -448,7 +446,7 @@ namespace
     }
 
     hash_combine(seed, context.ad_slots.size());
-    for(const auto& ad_slot : context.ad_slots)
+    for (const auto& ad_slot : context.ad_slots)
     {
       hash_ad_slot(seed, ad_slot);
     }
@@ -457,8 +455,7 @@ namespace
   }
 
   void
-  verify_ext_tag_id_is_single_line(
-    const AdServer::Bidding::RequestInfoFiller& filler)
+  verify_ext_tag_id_is_single_line(const AdServer::Bidding::RequestInfoFiller& filler)
   {
     constexpr const char REQUEST[] = R"JSON(
 {"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],"site":{"id":"site\nid","name":"site\rname","publisher":{"id":"pub\nid","name":"pub\rname"}}}
@@ -470,15 +467,13 @@ namespace
     request_info.current_time = Generics::Time::get_time_of_day();
 
     filler.fill_by_openrtb_request(request_info, context, REQUEST);
-    if(request_info.ad_slots.empty())
+    if (request_info.ad_slots.empty())
     {
-      throw std::runtime_error(
-        "ext_tag_id normalization test produced no ad slots");
+      throw std::runtime_error("ext_tag_id normalization test produced no ad slots");
     }
 
-    constexpr std::string_view EXPECTED =
-      "pub id-site id-pub name-site name";
-    if(request_info.ad_slots.front().ext_tag_id != EXPECTED)
+    constexpr std::string_view EXPECTED = "pub id-site id-pub name-site name";
+    if (request_info.ad_slots.front().ext_tag_id != EXPECTED)
     {
       throw std::runtime_error(
         "ext_tag_id normalization failed: '" +
@@ -506,10 +501,7 @@ extern "C"
     AdServer::Bidding::JsonProcessingContext reference_context(reference_arena);
 
     reference_request_info.current_time = Generics::Time::get_time_of_day();
-    filler.fill_by_openrtb_request(
-      reference_request_info,
-      reference_context,
-      request_body.c_str());
+    filler.fill_by_openrtb_request(reference_request_info, reference_context, request_body.c_str());
 
     const auto reference_checksum = parsed_result_checksum(
       reference_request_info,
@@ -517,7 +509,7 @@ extern "C"
 
     std::uint64_t checksum = 0;
 
-    for(std::uint64_t i = 0; i < count; ++i)
+    for (std::uint64_t i = 0; i < count; ++i)
     {
       Generics::MonoAllocatorArena arena;
       AdServer::Bidding::RequestInfo request_info;
@@ -525,10 +517,7 @@ extern "C"
 
       request_info.current_time = Generics::Time::get_time_of_day();
 
-      filler.fill_by_openrtb_request(
-        request_info,
-        context,
-        request_body.c_str());
+      filler.fill_by_openrtb_request(request_info, context, request_body.c_str());
 
       checksum += reference_checksum;
     }
@@ -547,11 +536,7 @@ main(int argc, char** argv)
 
     Logging::Logger_var logger(new Logging::Null::Logger);
     AdServer::CommonModule_var common_module(new AdServer::CommonModule(logger));
-    init_common_module(
-      *common_module,
-      logger,
-      options.fe_config,
-      options.domain_config);
+    init_common_module(*common_module, logger, options.fe_config, options.domain_config);
 
     AdServer::Bidding::RequestInfoFiller::ExternalUserIdSet skip_external_ids;
     AdServer::Bidding::RequestInfoFiller::SourceMap sources;
@@ -576,12 +561,9 @@ main(int argc, char** argv)
     const CpuTimes cpu_started = current_cpu_times();
 
     std::uint64_t checksum = 0;
-    if(options.threads == 1)
+    if (options.threads == 1)
     {
-      checksum = bidding_request_info_filler_run_benchmark(
-        filler,
-        options.count,
-        request_body);
+      checksum = bidding_request_info_filler_run_benchmark(filler, options.count, request_body);
     }
     else
     {
@@ -591,10 +573,9 @@ main(int argc, char** argv)
 
       const std::uint64_t base_count = options.count / options.threads;
       const std::uint64_t extra_count = options.count % options.threads;
-      for(std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
+      for (std::uint64_t thread_i = 0; thread_i < options.threads; ++thread_i)
       {
-        const std::uint64_t thread_count =
-          base_count + (thread_i < extra_count ? 1 : 0);
+        const std::uint64_t thread_count = base_count + (thread_i < extra_count ? 1 : 0);
         threads.emplace_back(
           [&filler, &request_body, &checksums, thread_i, thread_count]()
           {
@@ -605,12 +586,12 @@ main(int argc, char** argv)
           });
       }
 
-      for(auto& thread : threads)
+      for (auto& thread : threads)
       {
         thread.join();
       }
 
-      for(const std::uint64_t thread_checksum : checksums)
+      for (const std::uint64_t thread_checksum : checksums)
       {
         checksum += thread_checksum;
       }
@@ -619,8 +600,7 @@ main(int argc, char** argv)
     const CpuTimes cpu_finished = current_cpu_times();
     const auto finished_at = std::chrono::steady_clock::now();
 
-    const double elapsed = std::chrono::duration<double>(
-      finished_at - started_at).count();
+    const double elapsed = std::chrono::duration<double>(finished_at - started_at).count();
     const double user_cpu = cpu_finished.user - cpu_started.user;
     const double sys_cpu = cpu_finished.sys - cpu_started.sys;
     const double rate = static_cast<double>(options.count) / elapsed;
@@ -632,8 +612,7 @@ main(int argc, char** argv)
       << "elapsed_sec=" << format_float(elapsed) << '\n'
       << "rate_per_sec=" << format_float(rate) << '\n'
       << "user_cpu_sec=" << format_float(user_cpu) << '\n'
-      << "sys_cpu_sec=" << format_float(sys_cpu) << '\n'
-      << "checksum=" << checksum << '\n';
+      << "sys_cpu_sec=" << format_float(sys_cpu) << '\n' << "checksum=" << checksum << '\n';
 
     return 0;
   }

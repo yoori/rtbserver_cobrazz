@@ -2,10 +2,7 @@
 #include "DiffColoTZTest.hpp"
 #include "UserProfilesExchangeCommon.hpp"
 
-REFLECT_UNIT(DiffColoTZTest) (
-  "UserProfilesExchange",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(DiffColoTZTest) ("UserProfilesExchange", AUTO_TEST_SLOW);
 
 namespace
 {
@@ -42,39 +39,29 @@ DiffColoTZTest::run_test()
 {
   tz_ofset = fetch_float("TZOfset");
   colo_req_timeout = fetch_int("COLO_EXCHANGE_TIMEOUT") + 1;
+  FAIL_CONTEXT(AutoTest::predicate_checker(tz_ofset != 0.0), "GMT isn't valid timezone for Colo#2");
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tz_ofset != 0.0),
-    "GMT isn't valid timezone for Colo#2");
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      tz_ofset <= 24.0 && tz_ofset >= -24.0),
+    AutoTest::predicate_checker(tz_ofset <= 24.0 && tz_ofset >= -24.0),
     "Invalid timezone ofset for Colo#2");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
     "Remote#1.AdFrontend must set in the XML configuration file");
 
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(
-      get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
+    AutoTest::predicate_checker(get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
     "Remote#1.AdFrontend must set in the XML configuration file");
   if (tz_ofset > 0)
   {
-    remote1 =
-      get_config().get_service(CTE_REMOTE1, STE_FRONTEND).address;
-    remote2 =
-      get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
+    remote1 = get_config().get_service(CTE_REMOTE1, STE_FRONTEND).address;
+    remote2 = get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
     colo1_id = fetch_string("Colo/1");
     colo2_id = fetch_string("Colo/2");
   }
   else
   {
-    remote1 =
-      get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
-    remote2 =
-      get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
+    remote1 = get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
+    remote2 = get_config().get_service(CTE_REMOTE2, STE_FRONTEND).address;
     colo1_id = fetch_string("Colo/2");
     colo2_id = fetch_string("Colo/1");
   }
@@ -110,9 +97,7 @@ DiffColoTZTest::local_day_switch()
                                fetch_string("BP/HT1") };
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        colo2_id,
-        client.debug_info.colo_id).check(),
+      AutoTest::equal_checker(colo2_id, client.debug_info.colo_id).check(),
       "must receive Colo#2");
 
     FAIL_CONTEXT(
@@ -129,9 +114,7 @@ DiffColoTZTest::local_day_switch()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("BP/HT1"),
-      client.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(fetch_string("BP/HT1"), client.debug_info.trigger_channels).check(),
     "must have expected channel in trigger_channels");
 
   request.referer_kw.clear();
@@ -183,9 +166,7 @@ DiffColoTZTest::gmt_day_switch()
                                fetch_string("BP/HT2") };
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        colo2_id,
-        client.debug_info.colo_id).check(),
+      AutoTest::equal_checker(colo2_id, client.debug_info.colo_id).check(),
       "must receive Colo#2");
 
     FAIL_CONTEXT(
@@ -201,9 +182,7 @@ DiffColoTZTest::gmt_day_switch()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("BP/HT2"),
-      client.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(fetch_string("BP/HT2"), client.debug_info.trigger_channels).check(),
     "must have expected channel in trigger_channels");
 
   client.change_base_url(remote1.c_str());
@@ -212,9 +191,7 @@ DiffColoTZTest::gmt_day_switch()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::entry_checker(
-      fetch_string("BP/HT2"),
-      client.debug_info.trigger_channels).check(),
+    AutoTest::entry_checker(fetch_string("BP/HT2"), client.debug_info.trigger_channels).check(),
     "must have expected channel in trigger_channels");
 
   request.referer_kw.clear();

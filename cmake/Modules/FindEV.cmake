@@ -7,8 +7,8 @@
 find_path(EV_INCLUDE_DIR ev.h)
 find_library(EV_LIBRARY NAMES ev)
 
-if(EV_INCLUDE_DIR)
-  if(EXISTS "${EV_INCLUDE_DIR}/ev.h")
+if (EV_INCLUDE_DIR)
+  if (EXISTS "${EV_INCLUDE_DIR}/ev.h")
     file(STRINGS "${EV_INCLUDE_DIR}/ev.h" ev_version_major_str REGEX "^#define[\t ]+EV_VERSION_MAJOR[\t ]+.*")
     file(STRINGS "${EV_INCLUDE_DIR}/ev.h" ev_version_minor_str REGEX "^#define[\t ]+EV_VERSION_MINOR[\t ]+.*")
 
@@ -30,11 +30,11 @@ find_package_handle_standard_args(
   EV_VERSION_STRING
 )
 
-if(EV_FOUND)
+if (EV_FOUND)
   set(EV_LIBRARIES ${EV_LIBRARY})
   set(EV_INCLUDE_DIRS ${EV_INCLUDE_DIR})
 
-  if(NOT TARGET EV::EV)
+  if (NOT TARGET EV::EV)
     add_library(EV::EV UNKNOWN IMPORTED)
     set_target_properties(
       EV::EV

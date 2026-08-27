@@ -8,9 +8,7 @@
 #include <Generics/BoundedMap.hpp>
 #include <Commons/LockMap.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   /* BoundedCacheConfiguration requirements:
    *   Exception
@@ -43,10 +41,7 @@ namespace Commons
     typedef std::function<void(ValueType)> GetCallback;
 
     void
-    get_async(
-      const KeyType& key,
-      const char* service_index,
-      GetCallback callback)
+    get_async(const KeyType& key, const char* service_index, GetCallback callback)
       noexcept;
 
   private:
@@ -87,10 +82,7 @@ namespace Commons
     {}
 
     typename ElementMap::iterator
-    update_(
-      typename ElementMap::iterator& it,
-      const KeyType& key,
-      const char* service_index)
+    update_(typename ElementMap::iterator& it, const KeyType& key, const char* service_index)
       /*throw(typename ConfigurationType::Exception)*/;
 
     void
@@ -107,11 +99,8 @@ namespace Commons
     KeyLockMap update_lock_map_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   template<
     typename KeyType,
@@ -139,9 +128,9 @@ namespace Commons
     /*throw(typename ConfigurationType::Exception)*/
   {
     typename ElementMap::iterator it = map_.find(key);
-    if(it != map_.end())
+    if (it != map_.end())
     {
-      if(configuration_.update_required(it->first, it->second))
+      if (configuration_.update_required(it->first, it->second))
       {
         it = update_(it, key, service_index);
       }
@@ -161,17 +150,13 @@ namespace Commons
     template <typename, typename> class MapType>
   void
   BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
-  get_async(
-    const KeyType& key,
-    const char* service_index,
-    GetCallback callback)
+  get_async(const KeyType& key, const char* service_index, GetCallback callback)
     noexcept
   {
     try
     {
       typename ElementMap::iterator it = map_.find(key);
-      if(it != map_.end() &&
-        !configuration_.update_required(it->first, it->second))
+      if (it != map_.end() && !configuration_.update_required(it->first, it->second))
       {
         callback(configuration_.adapt(it->second));
         return;
@@ -193,14 +178,11 @@ namespace Commons
   typename BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
     ElementMap::iterator
   BoundedCache<KeyType, ValueType, ConfigurationType, MapType>::
-  update_(
-    typename ElementMap::iterator& it,
-    const KeyType& key,
-    const char* service_index)
+  update_(typename ElementMap::iterator& it, const KeyType& key, const char* service_index)
     /*throw(typename ConfigurationType::Exception)*/
   {
     typename KeyLockMap::WriteGuard lock = update_lock_map_.write_lock(key);
-    if(it != map_.end())
+    if (it != map_.end())
     {
       map_.erase(it);
     }
@@ -227,7 +209,7 @@ namespace Commons
 
     {
       typename KeyLockMap::WriteGuard lock = update_lock_map_.write_lock(key);
-      if(it != map_.end())
+      if (it != map_.end())
       {
         old_holder = it->second;
         map_.erase(it);
@@ -242,14 +224,13 @@ namespace Commons
       {
         try
         {
-          if(!holder)
+          if (!holder)
           {
             callback(ValueType());
             return;
           }
 
-          typename KeyLockMap::WriteGuard lock =
-            update_lock_map_.write_lock(key);
+          typename KeyLockMap::WriteGuard lock = update_lock_map_.write_lock(key);
           typename ElementMap::iterator inserted =
             map_.insert(typename ElementMap::value_type(key, holder)).first;
           callback(configuration_.adapt(inserted->second));
@@ -260,5 +241,4 @@ namespace Commons
         }
       });
   }
-}
 }

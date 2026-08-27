@@ -11,7 +11,7 @@ sub _table
   'BehavioralParameters'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   channel_id => DB::Entity::Type::int(unique => 1, nullable => 1),
   behav_params_id => DB::Entity::Type::sequence(),
@@ -28,7 +28,7 @@ sub __init_args
    my ($self, $ns, $args) = @_;
 
    $self->SUPER::__init_args($ns, $args);
-   
+
    # ADDB-3430 don't set channel_id when behav_params_list_id used
    if (defined $args->{behav_params_list_id})
    {
@@ -47,7 +47,7 @@ use DB::Entity::PQ;
 
 our @ISA = qw(DB::Entity::PQ);
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   channel_id => DB::Entity::Type::int(unique => 1),
   category_channel_id => DB::Entity::Type::int(unique => 1)
@@ -70,7 +70,7 @@ sub _table
 }
 
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   channel_rate_id => DB::Entity::Type::sequence(),
   channel_id => DB::Entity::Type::int(unique => 1, nullable => 1), # unsettable
@@ -96,7 +96,7 @@ sub _table
   'Triggers'
 }
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   trigger_id => DB::Entity::Type::sequence('triggers_trigger_id_seq'),
   trigger_type => DB::Entity::Type::enum(['K', 'U'], unique => 1),
@@ -124,7 +124,7 @@ sub _table
 }
 
 
-use constant STRUCT => 
+use constant STRUCT =>
 {
   channel_trigger_id => DB::Entity::Type::next_sequence(),
   channel_id => DB::Entity::Type::int(unique => 1),
@@ -171,7 +171,7 @@ sub cmp_channel_preinit_
 
   my $message_prefix = defined($class_name) ? "$class_name: " : "";
 
-  if(exists($self->{channel_rate_id}))
+  if (exists($self->{channel_rate_id}))
   {
     # don't allow to define channel_rate_id directly,
     # for exclude inconsistent states like
@@ -180,10 +180,10 @@ sub cmp_channel_preinit_
     die "${message_prefix}channel_rate_id is private field, " .
       "can't be defined";
   }
-  
-  if(defined($args->{visibility}))
+
+  if (defined($args->{visibility}))
   {
-    if($args->{visibility} ne 'PUB' &&
+    if ($args->{visibility} ne 'PUB' &&
       $args->{visibility} ne 'PRI' &&
       $args->{visibility} ne 'CMP')
     {
@@ -192,7 +192,7 @@ sub cmp_channel_preinit_
     }
   }
 
-  if(exists($args->{channel_rate_}))
+  if (exists($args->{channel_rate_}))
   {
     $self->{channel_rate_} = $args->{channel_rate_};
     delete $args->{channel_rate_};
@@ -200,13 +200,13 @@ sub cmp_channel_preinit_
   elsif(defined($args->{cpm}) || defined($args->{cpc}))
   {
     # CMP channel
-    if(defined($args->{visibility}) && $args->{visibility} ne 'CMP')
+    if (defined($args->{visibility}) && $args->{visibility} ne 'CMP')
     {
       die "${message_prefix}Incorrect visibility value '" .
         $args->{visibility} . "' for CMP channel(defined cpm or cpc)";
     }
 
-    if(defined($args->{cpm}) &&
+    if (defined($args->{cpm}) &&
        $args->{cpm} != 0 &&
        defined($args->{cpc}) &&
        $args->{cpc} != 0)
@@ -233,7 +233,7 @@ sub cmp_channel_postcreate_
 {
   my ($self, $ns) = @_;
 
-  if(exists $self->{channel_rate_})
+  if (exists $self->{channel_rate_})
   {
     $self->{channel_rate_}->{channel_id} = $self->channel_id();
     $self->{channel_rate_}->{currency_id} = $self->{account_id}->currency_id();
@@ -241,7 +241,7 @@ sub cmp_channel_postcreate_
     delete $self->{channel_rate_};
   }
 
-  if(defined($self->{channel_rate_id}))
+  if (defined($self->{channel_rate_id}))
   {
     $self->__update($ns, { channel_rate_id => $self->{channel_rate_id}, visibility => 'CMP' });
   }
@@ -313,7 +313,7 @@ sub key_
   my ($self, $type) = @_;
   foreach my $bp(@{$self->{behavioral_parameters}})
   {
-    if($bp->{trigger_type} eq $type)
+    if ($bp->{trigger_type} eq $type)
     {
       return $self->channel_id() . "$type";
     }
@@ -331,73 +331,73 @@ sub keyword_channel_triggers
 {
   my ($self) = @_;
   return $self->{keyword_channel_triggers_};
-} 
+}
 
 sub search_channel_triggers
 {
   my ($self) = @_;
   return $self->{search_channel_triggers_};
-} 
+}
 
 sub url_channel_triggers
 {
   my ($self) = @_;
   return $self->{url_channel_triggers_};
-} 
+}
 
 sub url_kwd_channel_triggers
 {
   my ($self) = @_;
   return $self->{url_kwd_channel_triggers_};
-} 
+}
 
 sub behavioral_channel_preinit_
 {
   my ($self, $args) = @_;
 
-  if(!exists($args->{country_code}))
+  if (!exists($args->{country_code}))
   {
-    $args->{country_code} = 
+    $args->{country_code} =
       exists $self->{country_code}?
         $self->{country_code}:
            DB::Defaults::instance()->country()->{country_code};
   }
- 
+
   # process alternate arg names
-  if(exists $args->{search_list} or exists $args->{keyword_list})
+  if (exists $args->{search_list} or exists $args->{keyword_list})
   {
-    $self->{search_list_} = 
+    $self->{search_list_} =
       exists $args->{search_list}?
         $args->{search_list}: $args->{keyword_list};
     delete $args->{search_list};
   }
 
-  if(exists $args->{keyword_list})
+  if (exists $args->{keyword_list})
   {
     $self->{keyword_list_} = $args->{keyword_list};
     delete $args->{keyword_list};
   }
 
-  if(exists $args->{url_list})
+  if (exists $args->{url_list})
   {
     $self->{url_list_} = $args->{url_list};
     delete $args->{url_list};
   }
 
-  if(exists $args->{url_kwd_list})
+  if (exists $args->{url_kwd_list})
   {
     $self->{url_kwd_list_} = $args->{url_kwd_list};
     delete $args->{url_kwd_list};
   }
 
   # process relations
-  if(exists $args->{behavioral_parameters})
+  if (exists $args->{behavioral_parameters})
   {
     $self->{behavioral_parameters} = $args->{behavioral_parameters};
     delete $args->{behavioral_parameters};
   }
 
-  if(exists $args->{categories})
+  if (exists $args->{categories})
   {
     $self->{categories} = $args->{categories};
     delete $args->{categories};
@@ -405,14 +405,14 @@ sub behavioral_channel_preinit_
 }
 
 sub set_language_
-{ 
+{
   my ($self, $ns) = @_;
- 
-  if (not defined $self->{language} 
+
+  if (not defined $self->{language}
       and defined $self->{country_code})
   {
     ($self->{language}) = $ns->pq_dbh->selectrow_array(
-      qq[select LANGUAGE from COUNTRY 
+      qq[select LANGUAGE from COUNTRY
          where COUNTRY_CODE='$self->{country_code}']);
   }
 }
@@ -420,7 +420,7 @@ sub set_language_
 sub behavioral_channel_precreate_
 {
   my ($self, $ns) = @_;
- 
+
   $self->set_language_($ns);
 }
 
@@ -432,7 +432,7 @@ sub behavioral_channel_postcreate_
   # link behavioral parameters
   my @res_behavioral_parameters;
 
-  if(defined($self->{behavioral_parameters}))
+  if (defined($self->{behavioral_parameters}))
   {
     foreach my $bp(@{$self->{behavioral_parameters}})
     {
@@ -444,7 +444,7 @@ sub behavioral_channel_postcreate_
   $self->{behavioral_parameters} = \@res_behavioral_parameters;
 
   # link categories
-  if(defined($self->{categories}))
+  if (defined($self->{categories}))
   {
     foreach my $cat(@{$self->{categories}})
     {
@@ -453,14 +453,14 @@ sub behavioral_channel_postcreate_
         category_channel_id => $cat));
     }
   }
-  
+
 
   $self->{triggers_} = {};
   $self->{keyword_channel_triggers_} = [];
   $self->{search_channel_triggers_} = [];
   $self->{url_kwd_channel_triggers_} = [];
   $self->{url_channel_triggers_} = [];
-   
+
   $self->fill_triggers_($ns, $self->{keyword_list_}, 'P');
   $self->fill_triggers_($ns, $self->{search_list_}, 'S');
   $self->fill_triggers_($ns, $self->{url_kwd_list_}, 'R');
@@ -473,9 +473,9 @@ sub normalize_url_
   $trigger_word = lc($trigger_word);
   $trigger_word =~ s|^(?:http://)?(?:www.)?(.*)$|$1|;
   $trigger_word =~ s/\#(.*)$//;
-  if($trigger_word !~ m/^\".*\"$/) # not exact url
+  if ($trigger_word !~ m/^\".*\"$/) # not exact url
   {
-    if($trigger_word =~ m/\?/)
+    if ($trigger_word =~ m/\?/)
     {
       $trigger_word =~ s|^([^?]*[^?/])\?|$1/?|;
     }
@@ -503,11 +503,12 @@ sub normalize_keyword_
 sub process_raw_trigger_
 {
   my ($trigger_word_raw) = @_;
-  
+
   if (substr($trigger_word_raw, 0, 2) eq '\-')
   {
     return (substr($trigger_word_raw, 1), 'N');
   }
+
   if (substr($trigger_word_raw, 0, 1) eq '-')
   {
     return (substr($trigger_word_raw, 1), 'Y');
@@ -520,24 +521,24 @@ sub add_trigger
   my ($self, $ns, $trigger_word_raw, $trigger_type, $qa_status) = @_;
 
   $qa_status = 'A' unless defined $qa_status;
-  my ($trigger_word, $negative) = 
+  my ($trigger_word, $negative) =
     process_raw_trigger_($trigger_word_raw);
   my $nomalized_trigger = ($trigger_type eq 'U' ?
     normalize_url_($trigger_word) : normalize_keyword_($trigger_word));
 
-  my $trigger = 
+  my $trigger =
     defined $self->{triggers_}->{$nomalized_trigger}?
       $self->{triggers_}->{$nomalized_trigger}:
         $ns->create(DB::BehavioralChannel::Trigger->blank(
-          trigger_type => 
+          trigger_type =>
             $trigger_type eq 'U'? $trigger_type: 'K',
           normalized_trigger => $nomalized_trigger,
           qa_status => $qa_status,
-          channel_type => 
-            ($self->channel_type() eq 'D' || $self->channel_type() eq 'S'? 
+          channel_type =>
+            ($self->channel_type() eq 'D' || $self->channel_type() eq 'S'?
              $self->channel_type() : 'A'),
-          country_code =>  
-            $self->channel_type() eq 'S'? 
+          country_code =>
+            $self->channel_type() eq 'S'?
               '': $self->{country_code} ));
 
   if (! defined $self->{triggers_}->{$nomalized_trigger})
@@ -547,9 +548,9 @@ sub add_trigger
 
   my $trigger_group = undef;
 
-  if($trigger_type eq 'U')
+  if ($trigger_type eq 'U')
   {
-    if($trigger_word !~ m|^(?:http://)?([^/?]*).*$|)
+    if ($trigger_word !~ m|^(?:http://)?([^/?]*).*$|)
     {
       die "Incorrect trigger word '$trigger_word'";
     }
@@ -559,8 +560,8 @@ sub add_trigger
   my $channel_trigger = $ns->create(DB::BehavioralChannel::ChannelTrigger->blank(
     channel_id => $self->channel_id(),
     trigger_id => $trigger->trigger_id(),
-    channel_type => 
-     ($self->channel_type() eq 'D' || $self->channel_type() eq 'S'? 
+    channel_type =>
+     ($self->channel_type() eq 'D' || $self->channel_type() eq 'S'?
         $self->channel_type() : 'A'),
     trigger_type => $trigger_type,
     original_trigger => $trigger_word,
@@ -569,9 +570,9 @@ sub add_trigger
     qa_status => $qa_status,
     masked => ($trigger_type eq 'U' ? 'N' : undef)));
 
-  my $channel_trigger_list = $trigger_type eq 'U'? 
+  my $channel_trigger_list = $trigger_type eq 'U'?
      $self->{url_channel_triggers_}:
-     ($trigger_type eq 'S'? 
+     ($trigger_type eq 'S'?
        $self->{search_channel_triggers_}:
          ($trigger_type eq 'R'?
             $self->{url_kwd_channel_triggers_}:
@@ -586,7 +587,7 @@ sub fill_triggers_
 {
   my ($self, $ns, $trigger_list, $trigger_type) = @_;
 
-  if(defined($trigger_list))
+  if (defined($trigger_list))
   {
     my @triggers = split('\n', $trigger_list);
     foreach my $trigger_word_raw(@triggers)
@@ -630,8 +631,8 @@ use constant STRUCT =>
   status => DB::Entity::Type::status(),
   qa_status => DB::Entity::Type::qa_status(),
   display_status_id => DB::Entity::Type::display_status('BehavioralChannel'),
-  country_code => DB::Entity::Type::country(), 
-  language => DB::Entity::Type::string(nullable => 1), 
+  country_code => DB::Entity::Type::country(),
+  language => DB::Entity::Type::string(nullable => 1),
   status_change_date => DB::Entity::Type::pq_timestamp("timestamp 'now'"),
   freq_cap_id => DB::Entity::Type::link('DB::FreqCap', nullable => 1),
   channel_type => DB::Entity::Type::enum(['B', 'K']),
@@ -661,8 +662,8 @@ use constant STRUCT =>
 sub preinit_
 {
   my ($self, $ns, $args) = @_;
-  
-  if(exists($args->{channel_type}) &&
+
+  if (exists($args->{channel_type}) &&
      $args->{channel_type} eq 'K')
   {
     $args->{visibility} = 'PRI';
@@ -678,7 +679,7 @@ sub preinit_
   }
 
   DB::BehavioralChannelBase::behavioral_channel_preinit_($self, $args);
-  
+
   DB::CMPChannelBase::cmp_channel_preinit_($self, $args);
 }
 
@@ -696,9 +697,9 @@ sub postcreate_
 
   # link behavioral parameters
   DB::BehavioralChannelBase::behavioral_channel_postcreate_($self, $ns);
-  
+
   # link categories
-  if(defined($self->{categories}))
+  if (defined($self->{categories}))
   {
     foreach my $cat(@{$self->{categories}})
     {

@@ -19,7 +19,7 @@ sub process
 
   my $value = $row->[$self->{field_}];
 
-  if(ref($value) eq 'ARRAY')
+  if (ref($value) eq 'ARRAY')
   {
     my @res_arr;
     foreach my $sub_val(@$value)
@@ -51,7 +51,7 @@ sub extract_
   my @res;
   foreach my $w(@words)
   {
-    if(length($w) > 2 && $w !~ m/^[0-9]+$/)
+    if (length($w) > 2 && $w !~ m/^[0-9]+$/)
     {
       push(@res, $w);
     }

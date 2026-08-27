@@ -1,78 +1,73 @@
 
-namespace AutoTest
+namespace AutoTest::Internals
 {
-  namespace Internals
+  //  Internals::CheckerHolderImpl
+
+  template<typename CheckerType>
+  CheckerHolderImpl<CheckerType>::~CheckerHolderImpl() noexcept
+  { }
+
+  template<typename CheckerType>
+  CheckerHolderImpl<CheckerType>::
+  CheckerHolderImpl(const CheckerType& init)
+    noexcept
+    : checker_(init)
+  {}
+
+  template<typename CheckerType>
+  CheckerHolder_var
+  CheckerHolderImpl<CheckerType>::
+  clone() const noexcept
   {
-    //  Internals::CheckerHolderImpl
-
-    template<typename CheckerType>
-    CheckerHolderImpl<CheckerType>::~CheckerHolderImpl() noexcept
-    { }
-
-    template<typename CheckerType>
-    CheckerHolderImpl<CheckerType>::
-    CheckerHolderImpl(const CheckerType& init)
-      noexcept
-      : checker_(init)
-    {}
-
-    template<typename CheckerType>
-    CheckerHolder_var
-    CheckerHolderImpl<CheckerType>::
-    clone() const noexcept
-    {
-      return new CheckerHolderImpl<CheckerType>(*this);
-    }
-
-    template<typename CheckerType>
-    bool
-    CheckerHolderImpl<CheckerType>::
-    check(bool throw_error) /*throw(CheckFailed, eh::Exception)*/
-    {
-      return checker_.check(throw_error);
-    }
-
-    // Internals::SubCheckersHolder
-
-    inline
-    SubCheckersHolder::SubCheckersHolder() noexcept
-    { }
-    
-    template<typename SubCheckerType, typename... SubCheckers>
-    void
-    SubCheckersHolder::add_sub_checker(
-      const SubCheckerType& sub_checker,
-      SubCheckers... sub_checkers)
-      noexcept
-    {
-      add_sub_checker(sub_checker);
-      add_sub_checker(sub_checkers...);
-    }
-
-    inline
-    SubCheckersHolder::SubCheckersHolder(const SubCheckersHolder& init)
-      noexcept
-    {
-      for(CheckerHolderList::const_iterator checker_it =
-            init.sub_checkers_.begin();
-          checker_it != init.sub_checkers_.end(); ++checker_it)
-      {
-        sub_checkers_.push_back((*checker_it)->clone());
-      }
-    }
-
-    template<typename SubCheckerType>
-    void
-    SubCheckersHolder::add_sub_checker(const SubCheckerType& sub_checker)
-      noexcept
-    {
-      sub_checkers_.push_back(new CheckerHolderImpl<SubCheckerType>(sub_checker));
-    }
-
+    return new CheckerHolderImpl<CheckerType>(*this);
   }
 
-  // WaitChecker
-  
+  template<typename CheckerType>
+  bool
+  CheckerHolderImpl<CheckerType>::
+  check(bool throw_error) /*throw(CheckFailed, eh::Exception)*/
+  {
+    return checker_.check(throw_error);
+  }
+
+  // Internals::SubCheckersHolder
+
+  inline
+  SubCheckersHolder::SubCheckersHolder() noexcept
+  { }
+
+  template<typename SubCheckerType, typename... SubCheckers>
+  void
+  SubCheckersHolder::add_sub_checker(const SubCheckerType& sub_checker, SubCheckers... sub_checkers)
+    noexcept
+  {
+    add_sub_checker(sub_checker);
+    add_sub_checker(sub_checkers...);
+  }
+
+  inline
+  SubCheckersHolder::SubCheckersHolder(const SubCheckersHolder& init)
+    noexcept
+  {
+    for (CheckerHolderList::const_iterator checker_it = init.sub_checkers_.begin();
+        checker_it != init.sub_checkers_.end(); ++checker_it)
+    {
+      sub_checkers_.push_back((*checker_it)->clone());
+    }
+  }
+
+  template<typename SubCheckerType>
+  void
+  SubCheckersHolder::add_sub_checker(const SubCheckerType& sub_checker)
+    noexcept
+  {
+    sub_checkers_.push_back(new CheckerHolderImpl<SubCheckerType>(sub_checker));
+  }
+
+}
+
+namespace AutoTest
+{
   template<typename SubCheckerType>
   WaitChecker<SubCheckerType>::~WaitChecker() noexcept
   { }
@@ -96,9 +91,9 @@ namespace AutoTest
     Generics::Time now = start_loop_time;
     int timeout = wait_time_? wait_time_: AutoTest::Internals::get_unit_timeout();
 
-    while(now < start_loop_time + timeout)
+    while (now < start_loop_time + timeout)
     {
-      if(sub_checker_.check(false))
+      if (sub_checker_.check(false))
       {
         return true;
       }
@@ -110,11 +105,11 @@ namespace AutoTest
   }
 
   // NotChecker
-  
+
   template<typename SubCheckerType>
   NotChecker<SubCheckerType>::~NotChecker() noexcept
   { }
-  
+
   template<typename SubCheckerType>
   NotChecker<SubCheckerType>::NotChecker(const SubCheckerType& sub_checker)
     : sub_checker_(sub_checker)
@@ -146,14 +141,13 @@ namespace AutoTest
   }
 
   // ThrowChecker
-  
+
   template<typename SubCheckerType>
   ThrowChecker<SubCheckerType>::~ThrowChecker() noexcept
   { }
-  
+
   template<typename SubCheckerType>
-  ThrowChecker<SubCheckerType>::ThrowChecker(
-    const SubCheckerType& sub_checker, bool throw_error)
+  ThrowChecker<SubCheckerType>::ThrowChecker(const SubCheckerType& sub_checker, bool throw_error)
     : sub_checker_(sub_checker),
       throw_error_(throw_error)
   {}
@@ -175,11 +169,11 @@ namespace AutoTest
     master_(master),
     slave_(slave)
   { }
-  
+
   template<typename MasterChecker, typename SlaveChecker>
   FailChecker<MasterChecker,SlaveChecker>::~FailChecker() noexcept
   { }
-  
+
   template<typename MasterChecker, typename SlaveChecker>
   bool
   FailChecker<MasterChecker,SlaveChecker>::check(bool throw_error)
@@ -195,19 +189,17 @@ namespace AutoTest
       throw;
     }
   }
-  
+
 
   // OrChecker
 
   inline
-  OrChecker::OrChecker(
-    ICounter* counter) noexcept:
-    counter_(counter) 
+  OrChecker::OrChecker(ICounter* counter) noexcept:
+    counter_(counter)
   { }
-  
+
   template<typename... SubCheckers>
-  OrChecker::OrChecker(
-    SubCheckers... sub_checkers) :
+  OrChecker::OrChecker(SubCheckers... sub_checkers) :
     counter_(0)
   {
     add_sub_checker(sub_checkers...);
@@ -215,18 +207,16 @@ namespace AutoTest
 
   template<typename... SubCheckers>
   OrChecker&
-  OrChecker::or_if(
-    SubCheckers... sub_checkers)
+  OrChecker::or_if(SubCheckers... sub_checkers)
   {
     add_sub_checker(sub_checkers...);
     return *this;
   }
 
   // AndChecker
-  
+
   template<typename... SubCheckers>
-  AndChecker::AndChecker(
-    SubCheckers... sub_checkers)
+  AndChecker::AndChecker(SubCheckers... sub_checkers)
     noexcept
   {
     add_sub_checker(sub_checkers...);
@@ -242,75 +232,54 @@ namespace AutoTest
   }
 
   // helpers implementation
-  
+
   template<typename SubCheckerType>
   WaitChecker<SubCheckerType>
-  wait_checker(
-    const SubCheckerType& sub_checker,
-    unsigned long wait_time,
-    unsigned long sleep_time)
+  wait_checker(const SubCheckerType& sub_checker, unsigned long wait_time, unsigned long sleep_time)
   {
-    return WaitChecker<SubCheckerType>(
-      sub_checker,
-      wait_time,
-      sleep_time);
+    return WaitChecker<SubCheckerType>(sub_checker, wait_time, sleep_time);
   }
 
   template<typename SubCheckerType>
   ThrowChecker<SubCheckerType>
-  throw_checker(
-    const SubCheckerType& sub_checker,
-    bool throw_error)
+  throw_checker(const SubCheckerType& sub_checker, bool throw_error)
   {
-    return ThrowChecker<SubCheckerType>(
-      sub_checker,
-      throw_error);
+    return ThrowChecker<SubCheckerType>(sub_checker, throw_error);
   }
 
   template<typename MasterChecker, typename SlaveChecker>
   FailChecker<MasterChecker, SlaveChecker>
-  fail_checker(
-    const MasterChecker& master,
-    const SlaveChecker& slave)
+  fail_checker(const MasterChecker& master, const SlaveChecker& slave)
   {
-    return
-      FailChecker<MasterChecker, SlaveChecker>(
-        master,
-        slave);
+    return FailChecker<MasterChecker, SlaveChecker>(master, slave);
   }
 
   template<typename... SubCheckers>
   OrChecker
-  or_checker(
-    SubCheckers... sub_checkers)
+  or_checker(SubCheckers... sub_checkers)
   {
     return OrChecker(sub_checkers...);
   }
 
   template<typename... SubCheckers>
   OrChecker
-  or_count_checker(
-    OrChecker::ICounter* counter,
-    SubCheckers... sub_checkers)
+  or_count_checker(OrChecker::ICounter* counter, SubCheckers... sub_checkers)
   {
     return OrChecker(counter).or_if(sub_checkers...);
   }
 
   template<typename... SubCheckers>
   AndChecker
-  and_checker(
-    SubCheckers... sub_checkers)
+  and_checker(SubCheckers... sub_checkers)
   {
     return AndChecker(sub_checkers...);
   }
 
   template<typename SubCheckerType>
   NotChecker<SubCheckerType>
-  not_checker(
-    const SubCheckerType& checker)
+  not_checker(const SubCheckerType& checker)
   {
     return   NotChecker<SubCheckerType>(checker);
   }
 
 }
-

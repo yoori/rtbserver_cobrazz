@@ -2,16 +2,11 @@
 #include "CampaignReferrerStat.hpp"
 #include <LogCommons/LogCommons.ipp>
 
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-namespace LogProcessing
-{
-  template <> const char* CampaignReferrerStatTraits::B::base_name_ =
-    "CampaignReferrerStat";
-  template <> const char* CampaignReferrerStatTraits::B::signature_ =
-    "CampaignReferrerStat";
-  template <> const char* CampaignReferrerStatTraits::B::current_version_ =
-    "3.5";
+  template <> const char* CampaignReferrerStatTraits::B::base_name_ = "CampaignReferrerStat";
+  template <> const char* CampaignReferrerStatTraits::B::signature_ = "CampaignReferrerStat";
+  template <> const char* CampaignReferrerStatTraits::B::current_version_ = "3.5";
 
   std::istream&
   operator>>(std::istream& is, CampaignReferrerStatKey_V_3_5& key)
@@ -142,6 +137,4 @@ namespace LogProcessing
 
     return os;
   }
-} // namespace LogProcessing
-} // namespace AdServer
-
+} // namespace AdServer::LogProcessing

@@ -2,9 +2,7 @@
 #include <algorithm>
 #include "WebStatFrontendProtocolTest.hpp"
 
-REFLECT_UNIT(WebStatFrontendProtocolTest) (
-  "Statistics",
-  AUTO_TEST_FAST | AUTO_TEST_SLOW);
+REFLECT_UNIT(WebStatFrontendProtocolTest) ("Statistics", AUTO_TEST_FAST | AUTO_TEST_SLOW);
 
 namespace
 {
@@ -20,8 +18,7 @@ namespace
   const char* SUCCESS_URL = "http://cs.ocslab.com/opt-in/success.html";
   const char* ALREADY_URL = "http://cs.ocslab.com/opt-in/already.html";
   const char* FAIL_URL = "http://cs.ocslab.com/opt-in/fail.html";
-  const char* INVALID_UID =
-    "wr4q7EmtTN-tiUfV-zIGOAQEd49aaF3FCsbqM4R5Tc37Mq8yzC4faGrWXpdj2gJ3W";
+  const char* INVALID_UID = "wr4q7EmtTN-tiUfV-zIGOAQEd49aaF3FCsbqM4R5Tc37Mq8yzC4faGrWXpdj2gJ3W";
 
   struct  OoTestCase
   {
@@ -46,8 +43,7 @@ namespace
   };
 
   const char*
-  oo_to_str(
-    OoOperation operation)
+  oo_to_str(OoOperation operation)
   {
     switch(operation)
     {
@@ -61,21 +57,15 @@ namespace
   }
 
   unsigned int
-  oo_state_to_status(
-    OoOperation prev_operation,
-    OoOperation current_operation)
+  oo_state_to_status(OoOperation prev_operation, OoOperation current_operation)
   {
-    return prev_operation == current_operation?
-      2: 11;
+    return prev_operation == current_operation? 2: 11;
   }
 
   const char*
-  oo_state_to_redirect(
-    OoOperation prev_operation,
-    OoOperation current_operation)
+  oo_state_to_redirect(OoOperation prev_operation, OoOperation current_operation)
   {
-    return prev_operation == current_operation?
-      ALREADY_URL: SUCCESS_URL;
+    return prev_operation == current_operation? ALREADY_URL: SUCCESS_URL;
   }
 
   enum CaseOption
@@ -107,9 +97,7 @@ const char* WebStatFrontendProtocolTest::OS = "windows nt 6.0";
 const char* WebStatFrontendProtocolTest::WebStatRequest::BASE_URL = "/sl.gif";
 
 WebStatFrontendProtocolTest::WebStatRequest::WebStatRequest()
-  : BaseRequest(
-      BASE_URL,
-      BaseRequest::RT_ENCODED),
+  : BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     res(this, "res", "U", true),
     app(this, "app"),
     src(this, "src"),
@@ -123,11 +111,8 @@ WebStatFrontendProtocolTest::WebStatRequest::WebStatRequest()
     tid(this,  "tid")
 { }
 
-WebStatFrontendProtocolTest::WebStatRequest::WebStatRequest(
-  const WebStatRequest& other)
-  : BaseRequest(
-      BASE_URL,
-      BaseRequest::RT_ENCODED),
+WebStatFrontendProtocolTest::WebStatRequest::WebStatRequest(const WebStatRequest& other)
+  : BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     res(this, other.res),
     app(this, other.app),
     src(this, other.src),
@@ -165,9 +150,7 @@ WebStatFrontendProtocolTest::process_(
     request.time(now_);
     if (tests[i].value)
     {
-      member(request,
-        tests[i].flags & CO_PARAM_NAME?
-          fetch_string(tests[i].value): tests[i].value);
+      member(request, tests[i].flags & CO_PARAM_NAME? fetch_string(tests[i].value): tests[i].value);
     }
     else
     {
@@ -190,8 +173,7 @@ WebStatFrontendProtocolTest::process_(
       client.get_cookies().remove_cookie("ct");
     }
 
-    if (tests[i].status == 200 && stat_.db_active() &&
-      (tests[i].flags & CO_SKIP_STAT) == 0)
+    if (tests[i].status == 200 && stat_.db_active() && (tests[i].flags & CO_SKIP_STAT) == 0)
     {
       std::string ct(request.ct.raw_str());
       {
@@ -204,9 +186,7 @@ WebStatFrontendProtocolTest::process_(
       key.ct(ct.length() <= 50? tests[i].flags & CO_NULL_CT? "": ct: "");
       key.curct(curct.length() <= 50? tests[i].flags & CO_NULL_CURCT? "": curct: "");
       key.app(request.app.raw_str());
-      key.result(
-        request.res.empty()? "U":
-          toupper(request.res.raw_str()));
+      key.result(request.res.empty()? "U": toupper(request.res.raw_str()));
       key.operation(request.op.raw_str());
       key.source(request.src.raw_str());
       key.user_status(user_status);
@@ -220,8 +200,7 @@ WebStatFrontendProtocolTest::process_(
         key.os(os);
         key.browser(browser);
       }
-      key.test(
-        !request.testrequest.empty() && request.testrequest.raw_str() == "1");
+      key.test(!request.testrequest.empty() && request.testrequest.raw_str() == "1");
       key.country_sdate(now_);
       key.stimestamp(now_);
 
@@ -232,14 +211,10 @@ WebStatFrontendProtocolTest::process_(
     }
 
     unsigned int status =
-      tests[i].flags & CO_POST?
-      client.process_post(request, true):
-          client.process(request , true);
+      tests[i].flags & CO_POST? client.process_post(request, true): client.process(request, true);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        tests[i].status,
-        status).check(),
+      AutoTest::equal_checker(tests[i].status, status).check(),
       "Check HTTP status#" + strof(i+1));
 
     // Check Access-Control-Allow... HTTP headers
@@ -248,14 +223,11 @@ WebStatFrontendProtocolTest::process_(
       std::string value;
 
       FAIL_CONTEXT(
-        AutoTest::predicate_checker(
-          client.find_header_value("Access-Control-Allow-Origin", value)),
+        AutoTest::predicate_checker(client.find_header_value("Access-Control-Allow-Origin", value)),
         "Check Access-Control-Allow-Origin#" + strof(i+1));
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          request.origin.raw_str(),
-          value).check(),
+        AutoTest::equal_checker(request.origin.raw_str(), value).check(),
         "Check Access-Control-Allow-Origin value#" + strof(i+1));
 
       FAIL_CONTEXT(
@@ -264,9 +236,7 @@ WebStatFrontendProtocolTest::process_(
         "Access-Control-Allow-Credentials#" + strof(i+1));
 
       FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          "true",
-          value).check(),
+        AutoTest::equal_checker("true", value).check(),
         "Check Access-Control-Allow-Credentials value#" + strof(i+1));
     }
 
@@ -281,10 +251,8 @@ WebStatFrontendProtocolTest::oo_cases_()
   OOStatsList oo_stats;
 
   const unsigned int colo = fetch_int("Colo");
-  std::string CURST_1 =
-    Generics::Uuid::create_random_based().to_string();
-  std::string CURST_2 =
-    Generics::Uuid::create_random_based().to_string();
+  std::string CURST_1 = Generics::Uuid::create_random_based().to_string();
+  std::string CURST_2 = Generics::Uuid::create_random_based().to_string();
 
   const OoTestCase TEST_CACES[] =
   {
@@ -338,8 +306,7 @@ WebStatFrontendProtocolTest::oo_cases_()
         if (TEST_CACES[i].operation == OO_STATUS)
         {
 
-          key.stimestamp(
-            AutoTest::Time(now_.get_gm_time().get_date()));
+          key.stimestamp(AutoTest::Time(now_.get_gm_time().get_date()));
           key.os("");
           key.browser("");
           key.ct("");
@@ -347,9 +314,7 @@ WebStatFrontendProtocolTest::oo_cases_()
         }
         else
         {
-          key.ct(
-            TEST_CACES[i].ct && strlen(TEST_CACES[i].ct) <= 50?
-              i==1? "":TEST_CACES[i].ct: "");
+          key.ct(TEST_CACES[i].ct && strlen(TEST_CACES[i].ct) <= 50? i==1? "":TEST_CACES[i].ct: "");
           key.curct(
             !TEST_CACES[i].curst || strlen(TEST_CACES[i].curst) > 50?
             "":  i==1? "": TEST_CACES[i].curst);
@@ -369,9 +334,7 @@ WebStatFrontendProtocolTest::oo_cases_()
         ORM::OptOutStats::Key key;
         key.isp_sdate(now_);
         key.colo_id(colo);
-        key.status(
-          oo_state_to_status(
-            prev_op, TEST_CACES[i].operation));
+        key.status(oo_state_to_status(prev_op, TEST_CACES[i].operation));
         key.operation(TEST_CACES[i].operation == OO_IN? "I": "O");
         key.test(TEST_CACES[i].testrequest? "Y": "N");
 
@@ -403,28 +366,21 @@ WebStatFrontendProtocolTest::oo_cases_()
       already_url(ALREADY_URL).
       fail_url(FAIL_URL);
 
-    if(!TEST_CACES[i].ct_encode)
+    if (!TEST_CACES[i].ct_encode)
     {
       request.ct.not_encode();
     }
 
-    unsigned long status =
-      client.process(request, true);
+    unsigned long status = client.process(request, true);
 
     if (TEST_CACES[i].operation == OO_STATUS)
     {
-      FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          200,
-          status).check(),
-        "Check HTTP status#" + strof(i+1));
+      FAIL_CONTEXT(AutoTest::equal_checker(200, status).check(), "Check HTTP status#" + strof(i+1));
     }
     else
     {
       FAIL_CONTEXT(
-        RedirectChecker(
-          client,
-          oo_state_to_redirect(prev_op, TEST_CACES[i].operation)).check(),
+        RedirectChecker(client, oo_state_to_redirect(prev_op, TEST_CACES[i].operation)).check(),
         "Check redirection#"  + strof(i+1));
     }
 
@@ -433,23 +389,15 @@ WebStatFrontendProtocolTest::oo_cases_()
 
   ADD_WAIT_CHECKER(
     "WebStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      { 1, 2, 1, 1, 1, 1 },
-      web_stats));
+    AutoTest::stats_diff_checker(pq_conn_, { 1, 2, 1, 1, 1, 1 }, web_stats));
 
   ADD_WAIT_CHECKER(
     "OptOutStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      { 1, 2, 1, 1, 1 },
-      oo_stats));
+    AutoTest::stats_diff_checker(pq_conn_, { 1, 2, 1, 1, 1 }, oo_stats));
 }
 
 void
-WebStatFrontendProtocolTest::cc_tag_cases_(
-  unsigned short client_flags,
-  CCTagCaseEnum ccid_log_mask)
+WebStatFrontendProtocolTest::cc_tag_cases_(unsigned short client_flags, CCTagCaseEnum ccid_log_mask)
 {
 
   AdClient client(AdClient::create_user(this, client_flags));
@@ -573,11 +521,9 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
   for (size_t i = 0; i < countof(CASES); ++i)
   {
 
-    std::string curct =
-      Generics::Uuid::create_random_based().to_string();
+    std::string curct = Generics::Uuid::create_random_based().to_string();
 
-    std::string ct =
-      Generics::Uuid::create_random_based().to_string();
+    std::string ct = Generics::Uuid::create_random_based().to_string();
 
     WebStatRequest request;
     request.time(now_);
@@ -592,9 +538,7 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
     client.set_cookie_value("ct", curct.c_str(), false);
 
     FAIL_CONTEXT(
-      AutoTest::equal_checker(
-        200,
-        client.process(request)).check(),
+      AutoTest::equal_checker(200, client.process(request)).check(),
       "Check HTTP status#" + strof(i+1));
 
     if (stat_.db_active())
@@ -603,9 +547,7 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
       key.ct(CASES[i].flags & CCTCE_NO_LOG_CT? "":ct);
       key.curct(CASES[i].flags & CCTCE_NO_LOG_CURCT? "": curct);
       key.app(request.app.raw_str());
-      key.result(
-        request.res.empty()? "U":
-          toupper(request.res.raw_str()));
+      key.result(request.res.empty()? "U": toupper(request.res.raw_str()));
       key.operation(request.op.raw_str());
       key.source(request.src.raw_str());
       key.user_status("I");
@@ -615,10 +557,8 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
       key.country_sdate(now_);
       key.stimestamp(CASES[i].flags & CCTCE_NO_LOG_HOUR?
         AutoTest::Time(now_.get_gm_time().get_date()): now_);
-      key.cc_id(
-        CASES[i].flags & ccid_log_mask? atoi(CASES[i].cc): 0);
-      key.tag_id(
-        CASES[i].flags & CCTCE_LOG_TID? atoi(CASES[i].tag): 0);
+      key.cc_id(CASES[i].flags & ccid_log_mask? atoi(CASES[i].cc): 0);
+      key.tag_id(CASES[i].flags & CCTCE_LOG_TID? atoi(CASES[i].tag): 0);
 
       ORM::WebStats stat(key);
       stat.description("#" + strof(i+1));
@@ -628,12 +568,7 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
     }
   }
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
@@ -665,12 +600,7 @@ WebStatFrontendProtocolTest::invalid_uid()
       src(fetch_string("Source/1")).
       op(fetch_string("Operation/1")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      2,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 2, web_stats));
 }
 
 void
@@ -692,17 +622,11 @@ WebStatFrontendProtocolTest::probe_uid()
       src(fetch_string("Source/2")).
       op(fetch_string("Operation/2")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::res_param(
-  AdClient& client)
+WebStatFrontendProtocolTest::res_param(AdClient& client)
 {
 
   WebStatsList web_stats;
@@ -727,17 +651,11 @@ WebStatFrontendProtocolTest::res_param(
       src(fetch_string("Source/3")).
       op(fetch_string("Operation/3")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::testrequest_param(
-  AdClient& client)
+WebStatFrontendProtocolTest::testrequest_param(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -760,17 +678,11 @@ WebStatFrontendProtocolTest::testrequest_param(
       src(fetch_string("Source/4")).
       op(fetch_string("Operation/4")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::post_cors(
-  AdClient& client)
+WebStatFrontendProtocolTest::post_cors(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -794,17 +706,11 @@ WebStatFrontendProtocolTest::post_cors(
       src(fetch_string("Source/1")).
       origin(ORIGIN_HEADER));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::app_param(
-  AdClient& client)
+WebStatFrontendProtocolTest::app_param(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -825,17 +731,11 @@ WebStatFrontendProtocolTest::app_param(
       op(fetch_string("Operation/5")).
       src(fetch_string("Source/5")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::app_webapp_deleted(
-  AdClient& client)
+WebStatFrontendProtocolTest::app_webapp_deleted(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -855,17 +755,11 @@ WebStatFrontendProtocolTest::app_webapp_deleted(
       op(fetch_string("Operation/17")).
       src(fetch_string("Source/17")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::op_param(
-  AdClient& client)
+WebStatFrontendProtocolTest::op_param(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -886,17 +780,11 @@ WebStatFrontendProtocolTest::op_param(
       app(fetch_string("App/6")).
       src(fetch_string("Source/6")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::src_missed(
-  AdClient& client)
+WebStatFrontendProtocolTest::src_missed(AdClient& client)
 {
 
   WebStatsList web_stats;
@@ -916,17 +804,11 @@ WebStatFrontendProtocolTest::src_missed(
       app(fetch_string("App/7")).
       op(fetch_string("Operation/7")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::src_param(
-  AdClient& client)
+WebStatFrontendProtocolTest::src_param(AdClient& client)
 {
 
   WebStatsList web_stats;
@@ -947,12 +829,7 @@ WebStatFrontendProtocolTest::src_param(
       app(fetch_string("App/8")).
       op(fetch_string("Operation/8")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
@@ -985,20 +862,15 @@ WebStatFrontendProtocolTest::ct_param()
 
   ADD_WAIT_CHECKER(
     "WebStats check",
-    AutoTest::stats_diff_checker(
-      pq_conn_,
-      { 1, 1, 1, 1, 2 },
-      web_stats));
+    AutoTest::stats_diff_checker(pq_conn_, { 1, 1, 1, 1, 2 }, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::ua_case(
-  AdClient& client)
+WebStatFrontendProtocolTest::ua_case(AdClient& client)
 {
   WebStatsList web_stats;
 
-  std::string timestamp(
-    now_.get_gm_time().format("%Y%m%d%H%M%S"));
+  std::string timestamp(now_.get_gm_time().format("%Y%m%d%H%M%S"));
 
   std::string UA(
     "Mozilla/5.0 (Windows NT " + timestamp +
@@ -1023,17 +895,11 @@ WebStatFrontendProtocolTest::ua_case(
     "windows nt " + timestamp,
     "Firefox " + timestamp);
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 void
-WebStatFrontendProtocolTest::not_exists_triplet(
-  AdClient& client)
+WebStatFrontendProtocolTest::not_exists_triplet(AdClient& client)
 {
   WebStatsList web_stats;
 
@@ -1053,12 +919,7 @@ WebStatFrontendProtocolTest::not_exists_triplet(
       src(fetch_string("Source/2")).
       op(fetch_string("Operation/3")));
 
-  ADD_WAIT_CHECKER(
-    "WebStats check",
-    AutoTest::stats_each_diff_checker(
-      pq_conn_,
-      1,
-      web_stats));
+  ADD_WAIT_CHECKER("WebStats check", AutoTest::stats_each_diff_checker(pq_conn_, 1, web_stats));
 }
 
 
@@ -1066,73 +927,47 @@ bool
 WebStatFrontendProtocolTest::run()
 {
 
-  AUTOTEST_CASE(
-    invalid_uid(),
-    "Invalid uid");
+  AUTOTEST_CASE(invalid_uid(), "Invalid uid");
 
-  AUTOTEST_CASE(
-    probe_uid(),
-    "Probe uid");
+  AUTOTEST_CASE(probe_uid(), "Probe uid");
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
 
-    AUTOTEST_CASE(
-      res_param(client),
-      "'res' parameter tests");
+    AUTOTEST_CASE(res_param(client), "'res' parameter tests");
 
-    AUTOTEST_CASE(
-      testrequest_param(client),
-      "'testrequest' parameter tests");
+    AUTOTEST_CASE(testrequest_param(client), "'testrequest' parameter tests");
 
-    AUTOTEST_CASE(
-      post_cors(client),
-      "POST/CORS requests");
+    AUTOTEST_CASE(post_cors(client), "POST/CORS requests");
   }
 
   {
     AdClient client(AdClient::create_optout_user(this));
 
-    AUTOTEST_CASE(
-      app_param(client),
-      "'app' parameter tests");
+    AUTOTEST_CASE(app_param(client), "'app' parameter tests");
 
-    AUTOTEST_CASE(
-      app_webapp_deleted(client),
-      "'app' WebOperation deleted");
+    AUTOTEST_CASE(app_webapp_deleted(client), "'app' WebOperation deleted");
 
-    AUTOTEST_CASE(
-      op_param(client),
-      "'op' parameter tests");
+    AUTOTEST_CASE(op_param(client), "'op' parameter tests");
 
-    AUTOTEST_CASE(
-      src_missed(client),
-      "'src' DB missed");
+    AUTOTEST_CASE(src_missed(client), "'src' DB missed");
 
-     AUTOTEST_CASE(
-       src_param(client),
-       "'src' parameter tests");
+     AUTOTEST_CASE(src_param(client), "'src' parameter tests");
   }
 
-  AUTOTEST_CASE(
-    ct_param(),
-    "'ct' parameter tests");
+  AUTOTEST_CASE(ct_param(), "'ct' parameter tests");
 
   {
     AdClient client(AdClient::create_user(this));
 
-    AUTOTEST_CASE(
-      ua_case(client),
-      "'User-Agent' tests");
+    AUTOTEST_CASE(ua_case(client), "'User-Agent' tests");
 
     AUTOTEST_CASE(
       not_exists_triplet(client),
       "Non-existent combination of parameter 'app', 'src', 'op' test");
   }
 
-  AUTOTEST_CASE(
-    oo_cases_(),
-    "Optout case");
+  AUTOTEST_CASE(oo_cases_(), "Optout case");
 
   AUTOTEST_CASE(
     cc_tag_cases_(
@@ -1148,10 +983,7 @@ WebStatFrontendProtocolTest::run()
   {
     check();
 
-    AUTOTEST_CASE(
-      cc_tag_cases_(
-        AutoTest::UF_CENTRAL_FRONTEND),
-      "Tag and CC case (central)");
+    AUTOTEST_CASE(cc_tag_cases_(AutoTest::UF_CENTRAL_FRONTEND), "Tag and CC case (central)");
 
   }
 

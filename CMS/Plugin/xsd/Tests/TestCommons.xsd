@@ -1,9 +1,9 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration" 
-            elementFormDefault="qualified" 
-            xml:lang="en" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
             version="1.0">
 
   <xsd:annotation>
@@ -81,7 +81,7 @@
   <xsd:simpleType name="PercentageDecimalType">
     <xsd:restriction base="xsd:decimal">
       <xsd:fractionDigits value="2"/>
-      <xsd:minInclusive value="0.00"/>                                  
+      <xsd:minInclusive value="0.00"/>
       <xsd:maxInclusive value="100.00"/>
     </xsd:restriction>
   </xsd:simpleType>

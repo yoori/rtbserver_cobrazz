@@ -48,26 +48,19 @@ namespace AdServer::UserInfoSvcs
 
   struct UserInfoDistributedGrpcClient::ControllerClient
   {
-    using ControllerGrpc =
-      adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc;
+    using ControllerGrpc = adserver::user_info_svcs::user_info_controller::UserInfoControllerGrpc;
 
-    explicit ControllerClient(
-      const std::string& endpoint,
-      const std::size_t partition_index)
+    explicit ControllerClient(const std::string& endpoint, const std::size_t partition_index)
       : endpoint(endpoint),
         name(endpoint),
         partition_index(partition_index),
-        channel(AdServer::Grpc::create_channel(
-          this->endpoint,
-          grpc::InsecureChannelCredentials())),
+        channel(AdServer::Grpc::create_channel(this->endpoint, grpc::InsecureChannelCredentials())),
         stub(ControllerGrpc::NewStub(channel))
     {}
 
     void reset()
     {
-      channel = AdServer::Grpc::create_channel(
-        endpoint,
-        grpc::InsecureChannelCredentials());
+      channel = AdServer::Grpc::create_channel(endpoint, grpc::InsecureChannelCredentials());
       stub = ControllerGrpc::NewStub(channel);
     }
 
@@ -105,8 +98,7 @@ namespace AdServer::UserInfoSvcs
     add_child_object(pool_);
   }
 
-  UserInfoDistributedGrpcClient::~UserInfoDistributedGrpcClient() noexcept =
-    default;
+  UserInfoDistributedGrpcClient::~UserInfoDistributedGrpcClient() noexcept = default;
 
   AdServer::Grpc::Stats
   UserInfoDistributedGrpcClient::stats() const noexcept
@@ -121,8 +113,7 @@ namespace AdServer::UserInfoSvcs
   }
 
   std::string
-  UserInfoDistributedGrpcClient::endpoint_for_user(
-    const std::string& user_id) noexcept
+  UserInfoDistributedGrpcClient::endpoint_for_user(const std::string& user_id) noexcept
   {
     auto ref = get_ref_(user_id);
     return ref ? (*ref)->endpoint : std::string();
@@ -320,15 +311,12 @@ namespace AdServer::UserInfoSvcs
   }
 
   std::optional<UserInfoDistributedGrpcClient::Pool::EndpointChunksArray>
-  UserInfoDistributedGrpcClient::resolve_partition_(
-    ControllerClient& controller_client)
+  UserInfoDistributedGrpcClient::resolve_partition_(ControllerClient& controller_client)
   {
     grpc::ClientContext context;
     set_deadline_(context);
-    adserver::user_info_svcs::user_info_controller::
-      GetSessionDescriptionRequest request;
-    adserver::user_info_svcs::user_info_controller::
-      GetSessionDescriptionResponse response;
+    adserver::user_info_svcs::user_info_controller::GetSessionDescriptionRequest request;
+    adserver::user_info_svcs::user_info_controller::GetSessionDescriptionResponse response;
 
     const auto status = controller_client.stub->get_session_description(
       &context,
@@ -359,6 +347,7 @@ namespace AdServer::UserInfoSvcs
       }
       refs.emplace_back(std::move(endpoint_chunks));
     }
+
     if (refs.empty())
     {
       std::ostringstream ostr;

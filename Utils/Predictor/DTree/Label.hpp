@@ -61,7 +61,7 @@ namespace Vanga
     {
       PredictedBoolLabel converted_label = label;
 
-      if(predictor_)
+      if (predictor_)
       {
         converted_label.pred += predictor_->predict(row->features);
       }
@@ -130,17 +130,17 @@ namespace Vanga
   inline void
   BoolLabel::load(const String::SubString& str)
   {
-    if(str.length() != 1)
+    if (str.length() != 1)
     {
       Stream::Error ostr;
       ostr << "can't parse label '" << str << "'";
       throw LabelException(ostr);
     }
-    else if(str[0] == '1')
+    else if (str[0] == '1')
     {
       value = true;
     }
-    else if(str[0] == '0')
+    else if (str[0] == '0')
     {
       value = false;
     }
@@ -193,7 +193,7 @@ namespace Vanga
   inline bool
   PredictedBoolLabel::operator<(const PredictedBoolLabel& right) const
   {
-    if(!value)
+    if (!value)
     {
       return right.value || pred < right.pred;
     }
@@ -204,7 +204,6 @@ namespace Vanga
   void
   PredictedBoolLabel::print(std::ostream& ostr) const noexcept
   {
-    ostr << "label = " << orig() <<
-      ", pred = " << pred;
+    ostr << "label = " << orig() << ", pred = " << pred;
   }
 }

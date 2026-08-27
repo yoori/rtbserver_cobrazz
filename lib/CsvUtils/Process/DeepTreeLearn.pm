@@ -21,7 +21,7 @@ sub new
   my @res_indexes;
   foreach my $index(@indexes)
   {
-    if(!looks_like_number($index))
+    if (!looks_like_number($index))
     {
       die "CsvUtils::Process::Columns: incorrect column index: $index";
     }
@@ -49,18 +49,18 @@ sub process
   {
     my $value = $row->[$index];
 
-    if(ref($value) eq 'ARRAY')
+    if (ref($value) eq 'ARRAY')
     {
       foreach my $sub_val(@$value)
       {
-        if(!exists($self->{values_}->{$sub_val}))
+        if (!exists($self->{values_}->{$sub_val}))
         {
           $self->{values_}->{$sub_val} = Value->new(labels => 0, total => 0);
         }
 
         my $val_ref = $self->{values_}->{$sub_val};
         $val_ref->total($val_ref->total() + 1);
-        if($label)
+        if ($label)
         {
           $val_ref->labels($val_ref->labels() + 1);
         }
@@ -68,14 +68,14 @@ sub process
     }
     else
     {
-      if(!exists($self->{values_}->{$value}))
+      if (!exists($self->{values_}->{$value}))
       {
         $self->{values_}->{$value} = Value->new(labels => 0, total => 0);
       }
 
       my $val_ref = $self->{values_}->{$value};
       $val_ref->total($val_ref->total() + 1);
-      if($label)
+      if ($label)
       {
         $val_ref->labels($val_ref->labels() + 1);
       }
@@ -83,7 +83,7 @@ sub process
   }
 
   $self->{total_}->total($self->{total_}->total() + 1);
-  if($label)
+  if ($label)
   {
     $self->{total_}->labels($self->{total_}->labels() + 1);
   }
@@ -102,7 +102,7 @@ sub flush
   my $full_total = $self->{total_}->total();
   my $steps = $self->{steps_};
 
-  while(%{$self->{values_}} && (!defined($steps) || $i < $steps)) # not empty values_
+  while (%{$self->{values_}} && (!defined($steps) || $i < $steps)) # not empty values_
   {
     # find value that give minimal logloss
     # on next iteration will be used total, labels without row's with this feature
@@ -110,7 +110,7 @@ sub flush
     my $min_logloss;
     my $min_p1;
     my $min_p2;
-    my $true_part; 
+    my $true_part;
     my $false_part;
     my $min_value_total;
     my $agg_logloss = 0;
@@ -129,7 +129,7 @@ sub flush
       my $p1 = $s2 > 0 ? $s2 / ($s1 + $s2) : 0.0;
       my $p2 = $s4 > 0 ? $s4 / ($s3 + $s4) : 0.0;
 
-      if($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
+      if ($s1 < 0 || $s2 < 0 || $s3 < 0 || $s4 < 0)
       {
         die "assert: s1=$s1,s2=$s2,s3=$s3,s4=$s4";
       }
@@ -142,7 +142,7 @@ sub flush
 
       my $logloss = $agg_logloss - ($false_part + $true_part);
 
-      if(!defined($min_logloss) || $min_logloss > $logloss)
+      if (!defined($min_logloss) || $min_logloss > $logloss)
       {
         $min_value = $value;
         $min_logloss = $logloss;

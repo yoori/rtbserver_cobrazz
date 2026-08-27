@@ -75,6 +75,7 @@ stress_read_test(const char* input, const char* standard)
       ostr << "fail";
       istr.clear(istr.rdstate() & ~std::ios_base::failbit);
     }
+
     if (value.present())
     {
       ostr << value;
@@ -86,6 +87,7 @@ stress_read_test(const char* input, const char* standard)
     ostr << ' ';
     istr.get(); // read separator
   }
+
   if (ostr.str() != standard)
   {
     std::cerr << __PRETTY_FUNCTION__ <<": unexpected out: "
@@ -117,8 +119,7 @@ test_buffer_writer_optional_empty_first_field()
 
   if (!stream.good() || !restored.present() || !(restored.get() == value.get()))
   {
-    std::cerr << "BufferWriter optional empty first field read failed"
-      << std::endl;
+    std::cerr << "BufferWriter optional empty first field read failed" << std::endl;
     return 1;
   }
 
@@ -131,14 +132,10 @@ test_optional_value()
   Optional value;
   int result = 0;
   // Stress read tests
-  const char READ_TEST_INPUT[] =
-    "@123.4 - @-15. @-15";
-  const char FIXED_READ_TEST_STANDARD[] =
-    "@123.4 <nil> @-15.0 @-15.0 ";
-  result += stress_read_test<Optional>(
-    READ_TEST_INPUT, FIXED_READ_TEST_STANDARD);
-  const char STRING_READ_TEST_STANDARD[] =
-    "@123.4 <nil> @-15. @-15 ";
+  const char READ_TEST_INPUT[] = "@123.4 - @-15. @-15";
+  const char FIXED_READ_TEST_STANDARD[] = "@123.4 <nil> @-15.0 @-15.0 ";
+  result += stress_read_test<Optional>(READ_TEST_INPUT, FIXED_READ_TEST_STANDARD);
+  const char STRING_READ_TEST_STANDARD[] = "@123.4 <nil> @-15. @-15 ";
   result += stress_read_test<OptionalValue<std::string> >(
     READ_TEST_INPUT, STRING_READ_TEST_STANDARD);
 
@@ -154,6 +151,7 @@ test_optional_value()
         std::cerr << "fail coords:" << i << ',' << j << std::endl;
         ++result;
       }
+
       if (!istr)
       {
         std::cerr << "stream broken, coords:" << i << ',' << j << std::endl;
@@ -171,8 +169,7 @@ test_optional_value()
     if (ostr.str() != TEST_CASES[i].stream)
     {
       std::cerr << "output failed, coords:" << i
-        << "result: " << ostr.str() << ", standard: "
-        << TEST_CASES[i].stream << std::endl;
+        << "result: " << ostr.str() << ", standard: " << TEST_CASES[i].stream << std::endl;
       ++result;
     }
   }
@@ -261,9 +258,7 @@ test_optional_strings()
     std::cerr << "optional io failed" << std::endl;
   }
   int result = 0;
-  for (std::size_t i = 0;
-    i < sizeof(OPTIONAL_STRINGS) / sizeof(OPTIONAL_STRINGS[0]);
-    ++i)
+  for (std::size_t i = 0; i < sizeof(OPTIONAL_STRINGS) / sizeof(OPTIONAL_STRINGS[0]); ++i)
   {
     Stream::Parser istr(OPTIONAL_STRINGS[i].saved);
     istr >> v;
@@ -342,20 +337,21 @@ test_sequences_io()
   int fails = 0;
 
   NumberList::const_iterator list_cit(box.begin());
-  for (Numbers::const_iterator cit(NUMBERS.begin());
-    cit != NUMBERS.end(); ++cit, ++list_cit)
+  for (Numbers::const_iterator cit(NUMBERS.begin()); cit != NUMBERS.end(); ++cit, ++list_cit)
   {
     if (list_cit == box.end())
     {
       std::cerr << "output_sequence failed" << std::endl;
       return 1;
     }
+
     if (*list_cit != *cit)
     {
       std::cerr << "output_sequence/read_sequence failed" << std::endl;
       return 1;
     }
   }
+
   if (s != "someText")
   {
     std::cerr << "output_sequence/read_sequence failed" << std::endl;

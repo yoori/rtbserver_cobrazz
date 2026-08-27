@@ -75,20 +75,20 @@ sub create_test_case_data
   foreach my $c (@$colocations)
   {
     my $colo = $ns->create(Isp => {
-      name => 
-        $c->{name}? 
+      name =>
+        $c->{name}?
           $c->{name}: $c->{oo_serving},
       colocation_optout_serving => $c->{oo_serving},
       account_hid_profile => $c->{hid_profile}? $c->{hid_profile}: 'N',
-      account_timezone_id => 
-        $c->{tz_name}? 
+      account_timezone_id =>
+        $c->{tz_name}?
           DB::TimeZone->blank(tzname => $c->{tz_name}):
             DB::Defaults::instance()->timezone->{timezone_id},
       account_internal_account_id =>
         DB::Defaults::instance()->no_margin_internal_account->{account_id} });
-    
+
     $ns->output(
-      'COLO/' . ($c->{name}? $c->{name}: $c->{oo_serving}), 
+      'COLO/' . ($c->{name}? $c->{name}: $c->{oo_serving}),
       $colo->{colo_id});
   }
 }

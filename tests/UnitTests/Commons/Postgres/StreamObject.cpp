@@ -70,8 +70,7 @@ namespace
     action_date_ = Generics::Time(Generics::safe_rand());
     action_date_ -= action_date_.tv_sec % 86400;
     action_time_ = Generics::Time(Generics::safe_rand() % 86400);
-    action_timestamp_ = Generics::Time(
-      Generics::safe_rand(), Generics::safe_rand() % 1000000);
+    action_timestamp_ = Generics::Time(Generics::safe_rand(), Generics::safe_rand() % 1000000);
     ccg_id_ = value;
     action_id_ = Generics::safe_rand();
     action_revenue_ = TestDecimal(
@@ -81,7 +80,7 @@ namespace
     std::ostringstream ostr;
     ostr << "name__" << Generics::safe_rand();
     name_  = ostr.str();
-    if(value % 2 == 0)
+    if (value % 2 == 0)
     {
       ostr << "\"\\value";
       value_ = ostr.str();
@@ -90,19 +89,16 @@ namespace
 
 }
 
-namespace AdServer
+namespace AdServer::UnitTests
 {
-  namespace UnitTests
+  void PostgresTest::init_objs_(Commons::Postgres::ObjectVector& objs)
+    /*throw(eh::Exception)*/
   {
-    void PostgresTest::init_objs_(Commons::Postgres::ObjectVector& objs)
-      /*throw(eh::Exception)*/
+    for (auto i = 0; i < 10; ++i)
     {
-      for(auto i = 0; i < 10; ++i)
-      {
-        TestStreamObject_var obj = new TestStreamObject();
-        obj->init_random_values_(i);
-        objs.push_back(obj);
-      }
+      TestStreamObject_var obj = new TestStreamObject();
+      obj->init_random_values_(i);
+      objs.push_back(obj);
     }
   }
 }

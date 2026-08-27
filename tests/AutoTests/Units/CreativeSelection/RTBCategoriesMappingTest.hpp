@@ -12,10 +12,7 @@ class RTBCategoriesMappingTest : public BaseUnit
   typedef AutoTest::OpenRTBResponseChecker OpenRTBResponseChecker;
 
 public:
-  RTBCategoriesMappingTest(
-    UnitStat& stat_var,
-    const char* task_name,
-    XsdParams params_var) :
+  RTBCategoriesMappingTest(UnitStat& stat_var, const char* task_name, XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var)
   { }
 
@@ -71,36 +68,21 @@ private:
 
   template<typename Object, typename Param>
   void
-  set_category(
-    Object& obj,
-    Param Object::* setter,
-    const std::string& cat);
+  set_category(Object& obj, Param Object::* setter, const std::string& cat);
 
   template<typename Object, typename RetVal, typename T>
   void
-  set_category(
-    Object& obj,
-    RetVal (Object::*setter)(T),
-    const std::string& cat);
+  set_category(Object& obj, RetVal (Object::*setter)(T), const std::string& cat);
 
   template<typename Object, typename Setter>
-  void set_categories(
-    const char* cat_list,
-    Object& obj,
-    Setter setter);
+  void set_categories(const char* cat_list, Object& obj, Setter setter);
 
   template<typename Object, typename Setter, typename Touch>
-  void set_expected_categories(
-    const char* cat_list,
-    Object& obj,
-    Setter setter,
-    Touch touch);
+  void set_expected_categories(const char* cat_list, Object& obj, Setter setter, Touch touch);
 
   template<typename TestCase>
   void
-  prepare_request(
-    OpenRTBRequest& request,
-    const TestCase& test_case);
+  prepare_request(OpenRTBRequest& request, const TestCase& test_case);
 
   template<size_t Slots>
   void
@@ -116,8 +98,7 @@ private:
 
   template<typename Traits, typename CaseType, size_t Cases>
   void
-  perform_case_(
-    const CaseType (&cases)[Cases]);
+  perform_case_(const CaseType (&cases)[Cases]);
 
   bool run_test();
 };

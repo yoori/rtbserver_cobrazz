@@ -44,7 +44,7 @@ public:
     to_string() const
     {
       std::ostringstream ss;
-      for(auto it = props.begin(); it != props.end(); ++it)
+      for (auto it = props.begin(); it != props.end(); ++it)
       {
         ss << (it != props.begin() ? "," : "") << it->first << "=" << it->second;
       }
@@ -203,9 +203,7 @@ protected:
     unsigned long max_trees);
 
   double
-  logloss_(
-    const std::vector<std::pair<DTree_var, DTreeProp_var> >& trees,
-    const SVMImpl* svm)
+  logloss_(const std::vector<std::pair<DTree_var, DTreeProp_var> >& trees, const SVMImpl* svm)
     noexcept;
 
   template<int FOLD_SIZE>
@@ -224,15 +222,11 @@ protected:
     unsigned long train_size);
 
   void
-  load_dictionary_(
-    Vanga::FeatureDictionary& dict,
-    const char* file);
+  load_dictionary_(Vanga::FeatureDictionary& dict, const char* file);
 
   template<typename IteratorType>
   Predictor_var
-  init_reg_predictor(
-    IteratorType begin_it,
-    IteratorType end_it);
+  init_reg_predictor(IteratorType begin_it, IteratorType end_it);
 
   void
   deep_print_(

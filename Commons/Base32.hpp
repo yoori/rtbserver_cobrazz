@@ -6,27 +6,18 @@
 #include <iostream>
 #include <String/SubString.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   void
-  base32_encode(
-    std::string& res,
-    const String::SubString& src)
+  base32_encode(std::string& res, const String::SubString& src)
     noexcept;
 
   bool
-  base32_decode(
-    std::string& res,
-    const String::SubString& src)
+  base32_decode(std::string& res, const String::SubString& src)
     noexcept;
 }
-}
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   namespace
   {
@@ -76,17 +67,15 @@ namespace Commons
   }
 
   inline void
-  base32_encode_block(
-    char* res,
-    const char* src)
+  base32_encode_block(char* res, const char* src)
     noexcept
   {
     // pack 5 bytes
     uint64_t buffer = 0;
 
-    for(int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++)
     {
-      if(i != 0)
+      if (i != 0)
       {
         buffer = (buffer << 8);
       }
@@ -95,7 +84,7 @@ namespace Commons
     }
 
     // output 8 bytes
-    for(int j = 7; j >= 0; --j)
+    for (int j = 7; j >= 0; --j)
     {
       buffer = buffer << (24 + (7 - j) * 5);
       buffer = buffer >> (24 + (7 - j) * 5);
@@ -116,16 +105,16 @@ namespace Commons
   {
     // pack 8 bytes
     uint64_t buffer = 0;
-    for(int i = 0; i < 8; ++i)
+    for (int i = 0; i < 8; ++i)
     {
       // input check
-      if(i != 0)
+      if (i != 0)
       {
         buffer = (buffer << 5);
       }
 
       uint8_t dec = BASE32_LOW_DECODE[static_cast<unsigned char>(src[i])];
-      if(dec >= 32)
+      if (dec >= 32)
       {
         std::cerr << "Invalid code: " <<
           static_cast<unsigned int>(static_cast<unsigned char>(src[i])) << "' => '" <<
@@ -137,7 +126,7 @@ namespace Commons
     }
 
     // output 5 bytes
-    for(int j = 4; j >= 0; --j)
+    for (int j = 4; j >= 0; --j)
     {
       res[4 - j] = static_cast<unsigned char>(buffer >> (j * 8));
     }
@@ -146,9 +135,7 @@ namespace Commons
   }
 
   inline void
-  base32_encode(
-    std::string& res,
-    const String::SubString& src)
+  base32_encode(std::string& res, const String::SubString& src)
     noexcept
   {
     int d = src.size() / 5;
@@ -158,7 +145,7 @@ namespace Commons
 
     char out_buf[8];
 
-    for(int j = 0; j < d; j++)
+    for (int j = 0; j < d; j++)
     {
       base32_encode_block(out_buf, src.data() + j * 5);
       res.append(out_buf, out_buf + 8);
@@ -166,7 +153,7 @@ namespace Commons
 
     char padd[5];
     ::memset(padd, 0, 5);
-    for(int i = 0; i < r; i++)
+    for (int i = 0; i < r; i++)
     {
       padd[i] = src[src.size() - r + i];
     }
@@ -180,9 +167,7 @@ namespace Commons
   }
 
   inline bool
-  base32_decode(
-    std::string& res,
-    const String::SubString& src)
+  base32_decode(std::string& res, const String::SubString& src)
     noexcept
   {
     int d = src.size() / 8;
@@ -192,9 +177,9 @@ namespace Commons
 
     char out_buf[5];
 
-    for(int j = 0; j < d; ++j)
+    for (int j = 0; j < d; ++j)
     {
-      if(!base32_decode_block(out_buf, src.data() + j * 8))
+      if (!base32_decode_block(out_buf, src.data() + j * 8))
       {
         return false;
       }
@@ -205,12 +190,12 @@ namespace Commons
     char padd[8];
     ::memset(padd, 0, 8);
 
-    for(int i = 0; i < r; i++)
+    for (int i = 0; i < r; i++)
     {
       padd[i] = src[src.size() - r + i];
     }
 
-    if(!base32_decode_block(out_buf, padd))
+    if (!base32_decode_block(out_buf, padd))
     {
       return false;
     }
@@ -219,5 +204,4 @@ namespace Commons
 
     return true;
   }
-}
 }

@@ -6,8 +6,7 @@ namespace AdServer::Grpc
   GrpcUnaryCallBase<Request, Response>::GrpcUnaryCallBase(
     ::grpc::ServerCompletionQueue* completion_queue)
     : completion_queue_(completion_queue),
-      request_(
-        google::protobuf::Arena::CreateMessage<Request>(&request_arena_)),
+      request_(google::protobuf::Arena::CreateMessage<Request>(&request_arena_)),
       responder_(&context_),
       state_(State::Create)
   {}

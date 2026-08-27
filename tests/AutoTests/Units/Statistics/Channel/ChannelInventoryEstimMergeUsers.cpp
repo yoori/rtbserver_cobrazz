@@ -1,10 +1,7 @@
 
 #include "ChannelInventoryEstimMergeUsers.hpp"
 
-REFLECT_UNIT(ChannelInventoryEstimMergeUsers) (
-  "Statistics",
-  AUTO_TEST_SLOW
-);
+REFLECT_UNIT(ChannelInventoryEstimMergeUsers) ("Statistics", AUTO_TEST_SLOW);
 
 
 namespace {
@@ -27,54 +24,42 @@ ChannelInventoryEstimMergeUsers::run_test()
     colo_id(1).
     match_level(0.3).
     sdate(base_time);
-   stats[0].description(
-     "ChannelInventoryEstimStats.H#1 - "
-     "level 0.3, today");
+   stats[0].description("ChannelInventoryEstimStats.H#1 - " "level 0.3, today");
   //   H1, level=0.2
   stats[1].key().
     channel_id(fetch_int("AdvChannelH1")).
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[1].description(
-    "ChannelInventoryEstimStats.H#1 - "
-    "level 0.2, today");
+  stats[1].description("ChannelInventoryEstimStats.H#1 - " "level 0.2, today");
   //   HT1, level=0.1
   stats[2].key().
     channel_id(fetch_int("AdvChannelHT1")).
     colo_id(1).
     match_level(0.1).
     sdate(base_time);
-  stats[2].description(
-    "ChannelInventoryEstimStats.HT#1 - "
-    "level 0.1, today");
+  stats[2].description("ChannelInventoryEstimStats.HT#1 - " "level 0.1, today");
   //   S1, level=0.2
   stats[3].key().
     channel_id(fetch_int("AdvChannelS1")).
     colo_id(1).
     match_level(0.2).
     sdate(base_time);
-  stats[3].description(
-    "ChannelInventoryEstimStats.S#1 - "
-    "level 0.2, today");
+  stats[3].description("ChannelInventoryEstimStats.S#1 - " "level 0.2, today");
   //   S2, level=2.0
   stats[4].key().
     channel_id(fetch_int("AdvChannelS2")).
     colo_id(1).
     match_level(2.0).
     sdate(base_time);
-  stats[4].description(
-    "ChannelInventoryEstimStats.S#2 - "
-    "level 2.0, today");
+  stats[4].description("ChannelInventoryEstimStats.S#2 - " "level 2.0, today");
   //   HT2, level=2.0
   stats[5].key().
     channel_id(fetch_int("AdvChannelHT2")).
     colo_id(1).
     match_level(2.0).
     sdate(base_time);
-  stats[5].description(
-    "ChannelInventoryEstimStats.HT#2 - "
-    "level 2.0, today");
+  stats[5].description("ChannelInventoryEstimStats.HT#2 - " "level 2.0, today");
   // Tomorrow
   //   H1, level=0.3
   stats[6].key().
@@ -82,27 +67,21 @@ ChannelInventoryEstimMergeUsers::run_test()
     colo_id(1).
     match_level(0.3).
     sdate(base_time+24*60*60);
-  stats[6].description(
-    "ChannelInventoryEstimStats.H#1 - "
-    "level 0.3, tomorrow");
+  stats[6].description("ChannelInventoryEstimStats.H#1 - " "level 0.3, tomorrow");
   //   H1, level=0.4
   stats[7].key().
     channel_id(fetch_int("AdvChannelH1")).
     colo_id(1).
     match_level(0.4).
     sdate(base_time+24*60*60);
-  stats[7].description(
-    "ChannelInventoryEstimStats.H#1 - "
-    "level 0.4, tomorrow");
+  stats[7].description("ChannelInventoryEstimStats.H#1 - " "level 0.4, tomorrow");
   //   HT1, level=0.4
   stats[8].key().
     channel_id(fetch_int("AdvChannelHT1")).
     colo_id(1).
     match_level(0.4).
     sdate(base_time+24*60*60);
-  stats[8].description(
-    "ChannelInventoryEstimStats.HT#1 - "
-    "level 0.4, tomorrow");
+  stats[8].description("ChannelInventoryEstimStats.HT#1 - " "level 0.4, tomorrow");
 
   stats.select(conn);
 
@@ -141,11 +120,7 @@ ChannelInventoryEstimMergeUsers::run_test()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn,
-          diff,
-          stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
       "verification");
 
   }
@@ -187,9 +162,7 @@ ChannelInventoryEstimMergeUsers::run_test()
     };
 
     FAIL_CONTEXT(
-      AutoTest::wait_checker(
-        AutoTest::stats_diff_checker(
-          conn, diff, stats)).check(),
+      AutoTest::wait_checker(AutoTest::stats_diff_checker(conn, diff, stats)).check(),
                          "verification");
 
   }
@@ -203,8 +176,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_1()
 {
   add_descr_phrase("Simple merging 1");
 
-  TemporaryAdClient user_temp(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient user_temp(TemporaryAdClient::create_user(this));
 
   NSLookupRequest merge;
   merge.debug_time = base_time;
@@ -247,8 +219,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_1()
     "trigger_channels");
 
   user.merge(user_temp, merge);
-  user.process_request(NSLookupRequest().
-                       debug_time(base_time + 24*60*60));
+  user.process_request(NSLookupRequest(). debug_time(base_time + 24*60*60));
 }
 
 // Test 6. Merging simple (part #2 - with history optimization)
@@ -257,8 +228,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_2()
 {
   add_descr_phrase("Simple merging 1 (with history optimization)");
 
-  TemporaryAdClient user_temp(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient user_temp(TemporaryAdClient::create_user(this));
 
   NSLookupRequest merge;
   merge.referer_kw = fetch_string("KWH1");
@@ -314,11 +284,9 @@ ChannelInventoryEstimMergeUsers::simple_merging_2()
 // Test 7. Temporary user's history isn't considered for the previous day
 void ChannelInventoryEstimMergeUsers::temp_user_lost_history()
 {
-  add_descr_phrase("Temporary user's history isn't "
-                   "considered for the previous day");
+  add_descr_phrase("Temporary user's history isn't " "considered for the previous day");
 
-  TemporaryAdClient user_temp(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient user_temp(TemporaryAdClient::create_user(this));
 
   NSLookupRequest request;
   request.referer_kw = fetch_string("KWHT1");
@@ -370,9 +338,7 @@ void ChannelInventoryEstimMergeUsers::temp_user_lost_history()
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
 
-  user.merge(user_temp,
-             NSLookupRequest().
-             debug_time(base_time + 24*60*60));
+  user.merge(user_temp, NSLookupRequest(). debug_time(base_time + 24*60*60));
 
 }
 
@@ -381,8 +347,7 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
 {
   add_descr_phrase("Records expiration on merging (session)");
 
-  TemporaryAdClient user_temp(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient user_temp(TemporaryAdClient::create_user(this));
 
   {
     NSLookupRequest request;
@@ -435,9 +400,7 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
 
   AdClient user(AdClient::create_user(this));
 
-  user.merge(user_temp,
-             NSLookupRequest().
-             debug_time(base_time + 3*60*60));
+  user.merge(user_temp, NSLookupRequest(). debug_time(base_time + 3*60*60));
 
 }
 
@@ -446,8 +409,7 @@ void ChannelInventoryEstimMergeUsers::exceed_match_level_on_merging()
 {
   add_descr_phrase("Match_level exceeding on the merging");
 
-  TemporaryAdClient user_temp(
-      TemporaryAdClient::create_user(this));
+  TemporaryAdClient user_temp(TemporaryAdClient::create_user(this));
 
   NSLookupRequest request;
   request.debug_time = base_time;

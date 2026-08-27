@@ -23,7 +23,7 @@ namespace AdServer::Commons
   AsyncMutex::Guard&
   AsyncMutex::Guard::operator=(Guard&& rhs) noexcept
   {
-    if(this != &rhs)
+    if (this != &rhs)
     {
       reset();
       mutex_ = std::exchange(rhs.mutex_, nullptr);
@@ -40,7 +40,7 @@ namespace AdServer::Commons
   void
   AsyncMutex::Guard::reset() noexcept
   {
-    if(mutex_)
+    if (mutex_)
     {
       AsyncMutex* mutex = std::exchange(mutex_, nullptr);
       mutex->unlock_();
@@ -68,8 +68,7 @@ namespace AdServer::Commons
   }
 
   bool
-  AsyncMutex::ScopedLockAwaiter::await_suspend(
-    std::coroutine_handle<> handle)
+  AsyncMutex::ScopedLockAwaiter::await_suspend(std::coroutine_handle<> handle)
   {
     return mutex_.try_lock_or_enqueue_(waiter_, handle);
   }
@@ -102,12 +101,7 @@ namespace AdServer::Commons
   AsyncMutex::scoped_lock()
   {
     std::unique_lock<std::mutex> guard(mutex_);
-    condition_.wait(
-      guard,
-      [this]() noexcept
-      {
-        return !locked_ && waiters_.empty();
-      });
+    condition_.wait(guard, [this]() noexcept { return !locked_ && waiters_.empty(); });
 
     locked_ = true;
     return Guard(this);
@@ -121,7 +115,7 @@ namespace AdServer::Commons
     lock_attempts_.fetch_add(1, std::memory_order_relaxed);
 
     std::lock_guard<std::mutex> guard(mutex_);
-    if(!locked_)
+    if (!locked_)
     {
       locked_ = true;
       immediate_locks_.fetch_add(1, std::memory_order_relaxed);
@@ -129,14 +123,13 @@ namespace AdServer::Commons
     }
 
     waiter.handle = handle;
-    if(const auto* scheduler = current_coroutine_resume_scheduler())
+    if (const auto* scheduler = current_coroutine_resume_scheduler())
     {
       waiter.resume_scheduler = *scheduler;
     }
     waiters_.push_back(waiter);
     contended_locks_.fetch_add(1, std::memory_order_relaxed);
-    const auto waiters =
-      current_waiters_.fetch_add(1, std::memory_order_relaxed) + 1;
+    const auto waiters = current_waiters_.fetch_add(1, std::memory_order_relaxed) + 1;
     update_max_waiters_(waiters);
     return true;
   }
@@ -145,7 +138,7 @@ namespace AdServer::Commons
   AsyncMutex::cancel_(ScopedLockAwaiter::Waiter& waiter) noexcept
   {
     std::lock_guard<std::mutex> guard(mutex_);
-    if(waiter.is_linked())
+    if (waiter.is_linked())
     {
       waiter.unlink();
       current_waiters_.fetch_sub(1, std::memory_order_relaxed);
@@ -159,7 +152,7 @@ namespace AdServer::Commons
     CoroutineResumeScheduler resume_scheduler;
     {
       std::lock_guard<std::mutex> guard(mutex_);
-      if(!waiters_.empty())
+      if (!waiters_.empty())
       {
         ScopedLockAwaiter::Waiter& waiter = waiters_.front();
         waiter.unlink();
@@ -168,19 +161,19 @@ namespace AdServer::Commons
         resume_scheduler = std::move(waiter.resume_scheduler);
       }
 
-      if(!next)
+      if (!next)
       {
         locked_ = false;
       }
     }
 
-    if(!next)
+    if (!next)
     {
       condition_.notify_one();
       return;
     }
 
-    if(resume_scheduler)
+    if (resume_scheduler)
     {
       resume_scheduler(next);
     }
@@ -194,7 +187,7 @@ namespace AdServer::Commons
   AsyncMutex::update_max_waiters_(std::uint64_t value) noexcept
   {
     auto current = max_waiters_.load(std::memory_order_relaxed);
-    while(current < value &&
+    while (current < value &&
       !max_waiters_.compare_exchange_weak(
         current,
         value,

@@ -18,12 +18,10 @@ struct TestExpressionChannelIndex: public ExpressionChannelIndex
     unsigned long simple_channel_id,
     const unsigned long (&check_channels)[CHECK_CHANNELS_COUNT])
   {
-    ExpressionChannelMatchMap::const_iterator ind_it =
-      channels_.find(simple_channel_id);
-    if(ind_it == channels_.end())
+    ExpressionChannelMatchMap::const_iterator ind_it = channels_.find(simple_channel_id);
+    if (ind_it == channels_.end())
     {
-      std::cerr << test_name << ": cell for #" << simple_channel_id <<
-        " not found." << std::endl;
+      std::cerr << test_name << ": cell for #" << simple_channel_id << " not found." << std::endl;
       return false;
     }
 
@@ -36,13 +34,13 @@ struct TestExpressionChannelIndex: public ExpressionChannelIndex
       ind_it->second->matched_channels.end(),
       std::inserter(channels, channels.begin()));
 
-    for(auto eit = ind_it->second->check_channels.cbegin();
+    for (auto eit = ind_it->second->check_channels.cbegin();
         eit != ind_it->second->check_channels.cend(); ++eit)
     {
       channels.insert(eit->channel_id);
     }
 
-    if(channels.size() == etalon_channels.size() &&
+    if (channels.size() == etalon_channels.size() &&
        std::equal(etalon_channels.begin(), etalon_channels.end(), channels.begin()))
     {
       return true;
@@ -77,9 +75,7 @@ parse_for_channel(
 }
 
 void
-create_simple_channel(
-  ExpressionChannelHolderMap& channels,
-  unsigned long simple_channel_id)
+create_simple_channel(ExpressionChannelHolderMap& channels, unsigned long simple_channel_id)
 {
   ChannelParams simple_channel_params;
 //simple_channel_params.name = "TEST";
@@ -114,21 +110,20 @@ generate_channels(
   unsigned long simple_channel_id = 1;
 
   unsigned long first_channel_id = 1;
-  for(; simple_channel_id < sc_number + 1; ++simple_channel_id)
+  for (; simple_channel_id < sc_number + 1; ++simple_channel_id)
   {
     create_simple_channel(channels, simple_channel_id);
   }
 
   unsigned long last_channel_id = simple_channel_id - 1;
-  for(unsigned long level_i = 1; level_i < LEVEL_NUMBER; ++level_i)
+  for (unsigned long level_i = 1; level_i < LEVEL_NUMBER; ++level_i)
   {
     unsigned long channel_id = last_channel_id;
     unsigned long next_level_channel_id = first_channel_id;
-    for(unsigned long i = 0; i < sc_number - level_i; ++i)
+    for (unsigned long i = 0; i < sc_number - level_i; ++i)
     {
       std::ostringstream eostr;
-      eostr << next_level_channel_id << "|" <<
-        (next_level_channel_id + 1);
+      eostr << next_level_channel_id << "|" << (next_level_channel_id + 1);
       create_expr_channel(channels, channel_id++, eostr.str().c_str());
       ++next_level_channel_id;
     }
@@ -164,16 +159,15 @@ int test_balance_1()
   check |= ch_index->check(TEST_NAME, 2, CH_2);
   check |= ch_index->check(TEST_NAME, 3, CH_3);
 
-  if(check)
+  if (check)
   {
-    if(ch_index->size() == 3)
+    if (ch_index->size() == 3)
     {
       std::cout << TEST_NAME << ": success" << std::endl;
     }
     else
     {
-      std::cerr << TEST_NAME << ": incorrect index size: " <<
-        ch_index->size() << std::endl;
+      std::cerr << TEST_NAME << ": incorrect index size: " << ch_index->size() << std::endl;
       return 1;
     }
     return 0;
@@ -205,19 +199,18 @@ int test_balance_2()
   const unsigned long CH_3[] = {3, 5};
   const unsigned long CH_4[] = {4, 6, 7, 8};
 
-  if(ch_index->check(TEST_NAME, 1, CH_1) &&
+  if (ch_index->check(TEST_NAME, 1, CH_1) &&
      ch_index->check(TEST_NAME, 2, CH_2) &&
      ch_index->check(TEST_NAME, 3, CH_3) &&
      ch_index->check(TEST_NAME, 4, CH_4))
   {
-    if(ch_index->size() == 4)
+    if (ch_index->size() == 4)
     {
       std::cout << TEST_NAME << ": success" << std::endl;
     }
     else
     {
-      std::cerr << TEST_NAME << ": incorrect index size: " <<
-        ch_index->size() << std::endl;
+      std::cerr << TEST_NAME << ": incorrect index size: " << ch_index->size() << std::endl;
       return 1;
     }
     return 0;
@@ -256,16 +249,15 @@ int test_and_not()
   check &= ch_index->check(TEST_NAME, 3, CH_3);
   check &= ch_index->check(TEST_NAME, 4, CH_4);
   check &= ch_index->check(TEST_NAME, 5, CH_5);
-  if(check)
+  if (check)
   {
-    if(ch_index->size() == 5)
+    if (ch_index->size() == 5)
     {
       std::cout << TEST_NAME << ": success" << std::endl;
     }
     else
     {
-      std::cerr << TEST_NAME << ": incorrect index size: " <<
-        ch_index->size() << std::endl;
+      std::cerr << TEST_NAME << ": incorrect index size: " << ch_index->size() << std::endl;
       return 1;
     }
     return 0;
@@ -282,15 +274,14 @@ int perf_test(
 {
 //const unsigned long REQUESTS_NUMBER = 1000;
 
-  if(expected_result_size == 0)
+  if (expected_result_size == 0)
   {
     expected_result_size = 2 * MATCH_CHANNEL_COUNT + 1;
   }
 
   ExpressionChannelHolderMap expression_channels;
   /*unsigned long max_sc_id = */
-  generate_channels(
-    expression_channels, SIMPLE_CHANNEL_COUNT, LEVEL_NUMBER);
+  generate_channels(expression_channels, SIMPLE_CHANNEL_COUNT, LEVEL_NUMBER);
 
   /*
   ExpressionChannelIndex_var ch_index(new ExpressionChannelIndex());
@@ -302,17 +293,17 @@ int perf_test(
   timer.start();
   ChannelIdSet hist_channels;
   unsigned long base = ::rand() % (max_sc_id - MATCH_CHANNEL_COUNT - 1) + 1;
-  for(unsigned long i = base; i < base + MATCH_CHANNEL_COUNT; ++i)
+  for (unsigned long i = base; i < base + MATCH_CHANNEL_COUNT; ++i)
   {
     hist_channels.insert(i);
   }
 
-  for(unsigned long i = 0; i < REQUESTS_NUMBER; ++i)
+  for (unsigned long i = 0; i < REQUESTS_NUMBER; ++i)
   {
     ChannelIdSet res_channels;
     ch_index->match(res_channels, hist_channels);
 
-    if(res_channels.size() != expected_result_size)
+    if (res_channels.size() != expected_result_size)
     {
       std::cerr << "result size incorrect : " << res_channels.size() << std::endl;
       return 1;

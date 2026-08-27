@@ -161,18 +161,14 @@ namespace AdServer::Instantiate
       /*throw(eh::Exception)*/;
 
     void
-    fill(RequestInfo& request_info,
-      const FCGI::HttpRequest& request) const
+    fill(RequestInfo& request_info, const FCGI::HttpRequest& request) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 
     const Logging::Logger_var&
     logger() const noexcept;
 
     void
-    adapt_client_id_(
-      const String::SubString& in,
-      RequestInfo& request_info,
-      bool persistent)
+    adapt_client_id_(const String::SubString& in, RequestInfo& request_info, bool persistent)
       const
       /*throw(InvalidParamException)*/;
 

@@ -52,9 +52,7 @@ namespace AdServer::Frontends
     {}
 
     void
-    read_config_(
-      const char *filename,
-      const char* argv0)
+    read_config_(const char *filename, const char* argv0)
       /*throw(Exception, eh::Exception)*/;
 
     void

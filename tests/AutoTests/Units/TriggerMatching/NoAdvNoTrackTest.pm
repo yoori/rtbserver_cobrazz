@@ -13,9 +13,9 @@ sub init
   print_NoAdvNoTrack($ns);
 
   my $not_stored_kwd = make_autotest_name($ns, "not_store_in_profile_1");
-  
+
   my $account = $ns->create(
-    Account => { 
+    Account => {
       name => 1,
       role_id => DB::Defaults::instance()->advertiser_role });
 
@@ -23,11 +23,11 @@ sub init
     DB::BehavioralChannel->blank(
       name => 1,
       account_id =>  $account,
-      keyword_list => 
+      keyword_list =>
         "robbery\n" .
         "crime\n" .
         "unbanned_2",
-      url_list => 
+      url_list =>
         "alcoholnews.org\n" .
         "alcoholism.about.com\n" .
         "www.tobacco.org/ads\n" .
@@ -54,7 +54,7 @@ sub init
     DB::BehavioralChannel->blank(
       name => 2,
       account_id =>  $account,
-      keyword_list => 
+      keyword_list =>
           "drugs\n" .
           "crime\n" .
           "murder\n" .
@@ -69,10 +69,10 @@ sub init
           time_to => 24 * 60 * 60)] ));
 
   my $channel3 = $ns->create(
-    DB::BehavioralChannel->blank( 
+    DB::BehavioralChannel->blank(
       name => 3,
       account_id =>  $account,
-      keyword_list => 
+      keyword_list =>
           "drugs\n" .
           "robbery\n",
       behavioral_parameters => [
@@ -86,7 +86,7 @@ sub init
     DB::BehavioralChannel->blank(
       name => 4,
       account_id =>  $account,
-      keyword_list => 
+      keyword_list =>
         "drugs\n" .
         "crime\n" .
         "robbery\n",
@@ -112,21 +112,21 @@ sub init
           time_to => 3 * 60 * 60)] ));
 
   my $expression_channel = $ns->create(
-    ExpressionChannel => { 
+    ExpressionChannel => {
       name => "Expr",
       account_id => $account,
-      expression => 
-        $channel1->channel_id . "|" . 
-        $channel2->channel_id . "|" . 
+      expression =>
+        $channel1->channel_id . "|" .
+        $channel2->channel_id . "|" .
         $channel3->channel_id . "|" .
         $channel4->channel_id . "|" .
         $channel5->channel_id });
 
   my $publisher = $ns->create(
     Publisher => { name => "Publisher" });
-  
+
   my $campaign = $ns->create(
-    DisplayCampaign => { 
+    DisplayCampaign => {
       name => 'Campaign',
       channel_id =>  $expression_channel->{channel_id},
       campaigncreativegroup_cpm => 1000,
@@ -135,7 +135,7 @@ sub init
   my $passback_url = 'https://jira.corp.foros.com/browse/ADSC-5272';
 
   my $passback_tag = $ns->create(
-    PricedTag => { 
+    PricedTag => {
       name => "Passback",
       site_id => $publisher->{site_id},
       passback => $passback_url });

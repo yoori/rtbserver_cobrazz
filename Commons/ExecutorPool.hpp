@@ -37,9 +37,7 @@ namespace AdServer::Commons
     post(std::function<void()> task);
 
     void
-    dispatch(
-      std::function<void()> task,
-      std::optional<ContextIndex> context_index = std::nullopt);
+    dispatch(std::function<void()> task, std::optional<ContextIndex> context_index = std::nullopt);
 
     ContextIndex
     get_next_context_index() noexcept;
@@ -48,9 +46,7 @@ namespace AdServer::Commons
     running_in_this_thread() const noexcept;
 
     void
-    schedule(
-      const Generics::Time& timeout,
-      std::function<void()> task);
+    schedule(const Generics::Time& timeout, std::function<void()> task);
 
     class YieldAwaiter
     {

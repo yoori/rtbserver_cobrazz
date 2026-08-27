@@ -23,13 +23,13 @@
 
 #include "RequestInfoFiller.hpp"
 
+namespace AdServer::PassbackPixel::Configuration
+{
+  using namespace xsd::AdServer::Configuration;
+}
+
 namespace AdServer::PassbackPixel
 {
-  namespace Configuration
-  {
-    using namespace xsd::AdServer::Configuration;
-  }
-
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -52,8 +52,7 @@ namespace AdServer::PassbackPixel
     will_handle(const String::SubString& uri) noexcept;
 
     FrontendCommons::RequestTask
-    co_handle_request(
-      FCGI::HttpRequestHolder_var request_holder)
+    co_handle_request(FCGI::HttpRequestHolder_var request_holder)
       noexcept override;
 
     /** Performs initialization for the module child process. */
@@ -65,8 +64,7 @@ namespace AdServer::PassbackPixel
     shutdown() noexcept;
 
     int
-    handle_track_request(const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    handle_track_request(const FCGI::HttpRequest& request, FCGI::HttpResponse& response)
       /*throw(ForbiddenException, InvalidParamException, eh::Exception)*/;
 
   private:
@@ -98,9 +96,7 @@ namespace AdServer::PassbackPixel
     void parse_config_() /*throw(Exception)*/;
 
     virtual int
-    process_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+    process_request_(const FCGI::HttpRequest& request, FCGI::HttpResponse& response)
       noexcept;
 
     FrontendCommons::RequestTask

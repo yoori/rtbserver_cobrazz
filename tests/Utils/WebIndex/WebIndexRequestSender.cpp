@@ -52,19 +52,19 @@ main(int argc, char* argv[]) noexcept
       return 0;
     }
 
-    if(!opt_private_key.installed())
+    if (!opt_private_key.installed())
     {
       std::cerr << "private key must be defined" << std::endl;
       return 1;
     }
 
-    if(!opt_addresses.installed())
+    if (!opt_addresses.installed())
     {
       std::cerr << "one address must be defined" << std::endl;
       return 1;
     }
 
-    if(!opt_url.installed())
+    if (!opt_url.installed())
     {
       std::cerr << "URL must be defined" << std::endl;
       return 1;
@@ -84,12 +84,10 @@ main(int argc, char* argv[]) noexcept
       AdServer::Commons::UserId::create_random_based();
     tag_request_info.ad_shown = false;
     tag_request_info.profile_referer = true;
-    tag_request_info.request_id =
-      AdServer::Commons::RequestId::create_random_based();
+    tag_request_info.request_id = AdServer::Commons::RequestId::create_random_based();
 
     // send webindex request
-    Logging::Logger_var logger = new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
 
     Logging::ActiveObjectCallbackImpl_var callback(
       new Logging::ActiveObjectCallbackImpl(
@@ -134,9 +132,9 @@ main(int argc, char* argv[]) noexcept
     /*
     sleep(60);
 
-    for(int i = 0; i < 6; ++i)
+    for (int i = 0; i < 6; ++i)
     {
-      for(int i = 0; i < 100; ++i)
+      for (int i = 0; i < 100; ++i)
       {
         sender->process_tag_request(tag_request_info);
       }
@@ -145,14 +143,14 @@ main(int argc, char* argv[]) noexcept
     }
     */
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
       sender->process_tag_request(tag_request_info);
     }
 
     sleep(30);
 
-    for(int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
       sender->process_tag_request(tag_request_info);
     }

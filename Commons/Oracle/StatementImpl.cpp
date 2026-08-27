@@ -2,9 +2,7 @@
 #include <oci.h>
 #include <oratypes.h>
 
-namespace AdServer {
-namespace Commons {
-namespace Oracle
+namespace AdServer::Commons::Oracle
 {
   namespace
   {
@@ -93,7 +91,7 @@ namespace Oracle
     {
       sword result;
 
-      if((result = OCIDescriptorAlloc(
+      if ((result = OCIDescriptorAlloc(
             (dvoid*)env_handle,
             (dvoid**)&datetime_handle.fill(),
             (ub4)TypeId,
@@ -105,7 +103,7 @@ namespace Oracle
 
       Generics::ExtendedTime ex_time(date.get_gm_time());
 
-      if((result = OCIDateTimeConstruct(
+      if ((result = OCIDateTimeConstruct(
             env_handle,
             error_handle,
             datetime_handle.get(),
@@ -135,11 +133,10 @@ namespace Oracle
       String::SubString number_format = number_format_provider.get(
         precision_pos != std::string::npos ?
           precision_pos : number_text.size(),
-        precision_pos != std::string::npos ?
-          number_text.size() - precision_pos - 1 : 0);
+        precision_pos != std::string::npos ? number_text.size() - precision_pos - 1 : 0);
 
       sword result;
-      if((result = OCINumberFromText(
+      if ((result = OCINumberFromText(
             error_handle,
             (text*)number_text.c_str(),
             number_text.size(),
@@ -257,9 +254,7 @@ namespace Oracle
   };
 
   /** Statement */
-  Statement::Statement(
-    Connection* connection,
-    const char* query)
+  Statement::Statement(Connection* connection, const char* query)
     /*throw(Exception, SqlException)*/
     : connection_(ReferenceCounting::add_ref(connection)),
       query_(query)
@@ -268,7 +263,7 @@ namespace Oracle
 
     sword result;
 
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
           connection_->environment_->environment_handle_.get(),
           (void**)&stmt_handle_.fill(),
           OCI_HTYPE_STMT,
@@ -279,7 +274,7 @@ namespace Oracle
     }
 
     // allocate an error handle
-    if((result = OCIHandleAlloc(
+    if ((result = OCIHandleAlloc(
           connection_->environment_->environment_handle_.get(),
           (void **) &error_handle_.fill(),
           OCI_HTYPE_ERROR,
@@ -289,7 +284,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIHandleAlloc", result);
     }
 
-    if((result = OCIStmtPrepare(
+    if ((result = OCIStmtPrepare(
           stmt_handle_.get(),
           error_handle_.get(),
           (text*)query,
@@ -297,13 +292,12 @@ namespace Oracle
           OCI_NTV_SYNTAX,
           OCI_DEFAULT)) != OCI_SUCCESS)
     {
-      throw_oci_error(
-        FUN, "OCIStmtPrepare", result, error_handle_.get());
+      throw_oci_error(FUN, "OCIStmtPrepare", result, error_handle_.get());
     }
 
     ub2 stmt_type;
 
-    if((result = OCIAttrGet(
+    if ((result = OCIAttrGet(
           stmt_handle_.get(),
           OCI_HTYPE_STMT,
           &stmt_type,
@@ -311,8 +305,7 @@ namespace Oracle
           OCI_ATTR_STMT_TYPE,
           error_handle_.get())) != OCI_SUCCESS)
     {
-      throw_oci_error(
-        FUN, "OCIAttrGet", result, error_handle_.get());
+      throw_oci_error(FUN, "OCIAttrGet", result, error_handle_.get());
     }
 
     type_ = stmt_type;
@@ -347,7 +340,7 @@ namespace Oracle
 
     bool no_data = false;
 
-    while((result = OCIStmtExecute(
+    while ((result = OCIStmtExecute(
           connection_->svc_context_handle_.get(),
           stmt_handle_.get(),
           error_handle_.get(),
@@ -357,18 +350,16 @@ namespace Oracle
           0,
           OCI_DEFAULT)) != OCI_SUCCESS)
     {
-      if(result != OCI_STILL_EXECUTING)
+      if (result != OCI_STILL_EXECUTING)
       {
-        throw_oci_error(
-          FUN, "OCIStmtExecute", result, error_handle_.get());
+        throw_oci_error(FUN, "OCIStmtExecute", result, error_handle_.get());
       }
 
-      if(!timer.sleep_step())
+      if (!timer.sleep_step())
       {
         handle_timeout_();
 
-        throw_timeout_error(FUN,
-          "OCIStmtExecute", timer.passed_time(), timer.timeout());
+        throw_timeout_error(FUN, "OCIStmtExecute", timer.passed_time(), timer.timeout());
       }
     }
 
@@ -383,15 +374,13 @@ namespace Oracle
   }
 
   ResultSet_var
-  Statement::execute_query_(
-    const Generics::Time* timeout,
-    unsigned long fetch_size)
+  Statement::execute_query_(const Generics::Time* timeout, unsigned long fetch_size)
     /*throw(TimedOut, Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::execute_query_()";
 
     check_terminated_(FUN);
-    if(!execute_(timeout))
+    if (!execute_(timeout))
     {
       Stream::Error err;
       err << FUN << ": no data (valno) for query";
@@ -444,8 +433,7 @@ namespace Oracle
   }
 
   void
-  Statement::set_timestamp(
-    unsigned int col_index, const Generics::Time& date)
+  Statement::set_timestamp(unsigned int col_index, const Generics::Time& date)
     /*throw(Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::set_timestamp()";
@@ -512,7 +500,7 @@ namespace Oracle
 
     sword result;
 
-    if((result = OCINumberFromInt(
+    if ((result = OCINumberFromInt(
           error_handle_.get(),
           &val,
           sizeof(unsigned int),
@@ -547,7 +535,7 @@ namespace Oracle
     params_.push_back(ParamValueHolder_var(oci_number_holder));
 
     sword result;
-    if((result = OCINumberFromReal(
+    if ((result = OCINumberFromReal(
           error_handle_.get(),
           &val,
           sizeof(double),
@@ -569,9 +557,7 @@ namespace Oracle
   }
 
   void
-  Statement::set_number_from_string(
-    unsigned int col_index,
-    const char* val)
+  Statement::set_number_from_string(unsigned int col_index, const char* val)
     /*throw(Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::set_number_from_string()";
@@ -582,11 +568,7 @@ namespace Oracle
     OCINumber& oci_number = oci_number_holder->oci_number;
     params_.push_back(ParamValueHolder_var(oci_number_holder));
 
-    create_oci_number_from_text(
-      FUN,
-      error_handle_.get(),
-      val,
-      oci_number_holder->oci_number);
+    create_oci_number_from_text(FUN, error_handle_.get(), val, oci_number_holder->oci_number);
 
     oci_number_holder->indicator = 0;
     oci_number_holder->data_len = sizeof(OCINumber);
@@ -615,7 +597,7 @@ namespace Oracle
 
     oci_lob_holder->indicator = 0;
 
-    if(lob_len < 0xFFFF)
+    if (lob_len < 0xFFFF)
     {
       oci_lob_holder->data_len = oci_lob_holder->lob.length;
 
@@ -632,7 +614,7 @@ namespace Oracle
       sword result;
       OCIBind* bind_handle; // Bind handle can't be freed
 
-      if((result = OCIBindByPos(
+      if ((result = OCIBindByPos(
             stmt_handle_.get(),
             &bind_handle,
             error_handle_.get(),
@@ -650,7 +632,7 @@ namespace Oracle
         throw_oci_error(FUN, "OCIBindByPos", result, error_handle_.get());
       }
 
-      if((result = OCIBindDynamic(
+      if ((result = OCIBindDynamic(
             bind_handle,
             error_handle_.get(),
             static_cast<void*>(oci_lob_holder),
@@ -676,10 +658,7 @@ namespace Oracle
   }
 
   void
-  Statement::set_number_array(
-    unsigned int ind,
-    std::vector<std::string>& vec,
-    const char* type)
+  Statement::set_number_array(unsigned int ind, std::vector<std::string>& vec, const char* type)
     /*throw(eh::Exception, TimedOut, Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::set_number_array()";
@@ -693,7 +672,7 @@ namespace Oracle
     OCIBind* bind_handle; // Bind handle can't be freed
     describe_type_(type, oci_array_holder->oci_named_type);
 
-    if((result = OCIObjectNew(
+    if ((result = OCIObjectNew(
           connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           connection_->svc_context_handle_.get(),
@@ -702,8 +681,7 @@ namespace Oracle
           0,
           OCI_DURATION_SESSION,
           false,
-          reinterpret_cast<void**>(
-            &oci_array_holder->collection_handle.fill()))) != OCI_SUCCESS)
+          reinterpret_cast<void**>(&oci_array_holder->collection_handle.fill()))) != OCI_SUCCESS)
     {
       throw_oci_error(FUN, "OCIObjectNew", result, error_handle_.get());
     }
@@ -714,11 +692,9 @@ namespace Oracle
       unsigned long i = 0;
       std::unique_ptr<Sync::Policy::PosixThread::WriteGuard> guard_holder;
 
-      for(std::vector<std::string>::const_iterator it =
-            vec.begin();
-          it != vec.end(); ++it, ++i)
+      for (std::vector<std::string>::const_iterator it = vec.begin(); it != vec.end(); ++it, ++i)
       {
-        if(i % SET_ARRAY_LOCK_BULK == 0)
+        if (i % SET_ARRAY_LOCK_BULK == 0)
         {
           guard_holder.reset(nullptr);
           guard_holder.reset(
@@ -727,11 +703,7 @@ namespace Oracle
         }
 
         OCINumber oci_number;
-        create_oci_number_from_text(
-          FUN,
-          error_handle_.get(),
-          *it,
-          oci_number);
+        create_oci_number_from_text(FUN, error_handle_.get(), *it, oci_number);
 
         OCICollAppend(
           connection_->environment_->environment_handle_.get(),
@@ -742,7 +714,7 @@ namespace Oracle
       }
     }
 
-    if((result = OCIBindByPos(
+    if ((result = OCIBindByPos(
           stmt_handle_.get(),
           &bind_handle,
           error_handle_.get(),
@@ -760,7 +732,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIBindByPos", result, error_handle_.get());
     }
 
-    if((result = OCIBindObject(
+    if ((result = OCIBindObject(
           bind_handle,
           error_handle_.get(),
           oci_array_holder->oci_named_type.get(),
@@ -774,10 +746,7 @@ namespace Oracle
   }
 
   void
-  Statement::set_array(
-    unsigned int ind,
-    std::vector<std::string>& vec,
-    const char* type)
+  Statement::set_array(unsigned int ind, std::vector<std::string>& vec, const char* type)
     /*throw(eh::Exception, TimedOut, Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::set_array(1)";
@@ -791,7 +760,7 @@ namespace Oracle
     OCIBind* bind_handle; // Bind handle can't be freed
     describe_type_(type, oci_array_holder->oci_named_type);
 
-    if((result = OCIObjectNew(
+    if ((result = OCIObjectNew(
           connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           connection_->svc_context_handle_.get(),
@@ -800,8 +769,7 @@ namespace Oracle
           0,
           OCI_DURATION_SESSION,
           false,
-          reinterpret_cast<void**>(
-            &oci_array_holder->collection_handle.fill()))) != OCI_SUCCESS)
+          reinterpret_cast<void**>(&oci_array_holder->collection_handle.fill()))) != OCI_SUCCESS)
     {
       throw_oci_error(FUN, "OCIObjectNew", result, error_handle_.get());
     }
@@ -812,11 +780,9 @@ namespace Oracle
       unsigned long i = 0;
       std::unique_ptr<Sync::Policy::PosixThread::WriteGuard> guard_holder;
 
-      for(std::vector<std::string>::const_iterator it =
-            vec.begin();
-          it != vec.end(); ++it, ++i)
+      for (std::vector<std::string>::const_iterator it = vec.begin(); it != vec.end(); ++it, ++i)
       {
-        if(i % SET_ARRAY_LOCK_BULK == 0)
+        if (i % SET_ARRAY_LOCK_BULK == 0)
         {
           guard_holder.reset(nullptr);
           guard_holder.reset(
@@ -828,15 +794,14 @@ namespace Oracle
           connection_->environment_->environment_handle_.get(),
           error_handle_.get());
 
-        if((result = OCIStringAssignText(
+        if ((result = OCIStringAssignText(
               connection_->environment_->environment_handle_.get(),
               error_handle_.get(),
               (text*)it->c_str(),
               it->size(),
               &oci_string.fill())) != OCI_SUCCESS)
         {
-          throw_oci_error(FUN,
-            "OCIStringAssignText", result, error_handle_.get());
+          throw_oci_error(FUN, "OCIStringAssignText", result, error_handle_.get());
         }
 
         OCICollAppend(
@@ -848,7 +813,7 @@ namespace Oracle
       }
     }
 
-    if((result = OCIBindByPos(
+    if ((result = OCIBindByPos(
           stmt_handle_.get(),
           &bind_handle,
           error_handle_.get(),
@@ -866,7 +831,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIBindByPos", result, error_handle_.get());
     }
 
-    if((result = OCIBindObject(
+    if ((result = OCIBindObject(
           bind_handle,
           error_handle_.get(),
           oci_array_holder->oci_named_type.get(),
@@ -879,18 +844,15 @@ namespace Oracle
     }
   }
 
-  void Statement::describe_type_(
-    const char* full_type_name,
-    OCIObjectPtr<OCIType, true>& type_info)
+  void Statement::describe_type_(const char* full_type_name, OCIObjectPtr<OCIType, true>& type_info)
     /*throw(TimedOut, SqlException)*/
   {
     static const char* FUN = "Statement::describe_type_()";
 
-    std::string type_name = (
-      full_type_name[0] == '.' ? full_type_name + 1 : full_type_name);
+    std::string type_name = (full_type_name[0] == '.' ? full_type_name + 1 : full_type_name);
 
     sword result;
-    while((result = OCITypeByName(
+    while ((result = OCITypeByName(
           connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           connection_->svc_context_handle_.get(),
@@ -906,7 +868,7 @@ namespace Oracle
     {
     }
 
-    if(result != OCI_SUCCESS)
+    if (result != OCI_SUCCESS)
     {
       throw_oci_error(FUN, "OCITypeByName", result, error_handle_.get());
     }
@@ -930,19 +892,17 @@ namespace Oracle
 
         OCIError* error_handle = statement_->error_handle_.get();
 
-        for(std::map<std::string, Cell>::iterator it =
-              secondary_check_.begin();
+        for (std::map<std::string, Cell>::iterator it = secondary_check_.begin();
             it != secondary_check_.end(); ++it)
         {
           sword result;
-          if((result = OCIObjectFree(
+          if ((result = OCIObjectFree(
                 environment_handle,
                 error_handle,
                 it->second.oci_object,
                 OCI_OBJECTFREE_FORCE)) != OCI_SUCCESS)
           {
-            throw_oci_error(FUN,
-              "OCIObjectFree", result, statement_->error_handle_.get());
+            throw_oci_error(FUN, "OCIObjectFree", result, statement_->error_handle_.get());
           }
 
           OCIObjectPtr<OCIType, true> oci_type(
@@ -970,17 +930,15 @@ namespace Oracle
 
       // fast check: main use case when equal type name string pointers is
       // equal
-      std::map<const char*, Cell>::const_iterator fit =
-        primary_check_.find(object_type_name);
-      if(fit != primary_check_.end())
+      std::map<const char*, Cell>::const_iterator fit = primary_check_.find(object_type_name);
+      if (fit != primary_check_.end())
       {
         result_cell = &(fit->second);
       }
       else
       {
-        std::map<std::string, Cell>::const_iterator sit =
-          secondary_check_.find(object_type_name);
-        if(sit != secondary_check_.end())
+        std::map<std::string, Cell>::const_iterator sit = secondary_check_.find(object_type_name);
+        if (sit != secondary_check_.end())
         {
           // don't insert into primary_check_
           result_cell = &(fit->second);
@@ -990,8 +948,7 @@ namespace Oracle
           OCIEnv* environment_handle =
             statement_->connection_->environment_->environment_handle_.get();
 
-          OCIObjectPtr<OCIType, true> oci_type(
-            environment_handle, statement_->error_handle_.get());
+          OCIObjectPtr<OCIType, true> oci_type(environment_handle, statement_->error_handle_.get());
           statement_->describe_type_(object_type_name, oci_type);
 
           Cell new_cell;
@@ -999,7 +956,7 @@ namespace Oracle
           int result;
 
           // create transient object (table = null, value = false)
-          if((result = OCIObjectNew(
+          if ((result = OCIObjectNew(
             environment_handle,
             statement_->error_handle_.get(),
             statement_->connection_->svc_context_handle_.get(),
@@ -1010,8 +967,7 @@ namespace Oracle
             false, // value = false
             &new_cell.oci_object)) != OCI_SUCCESS)
           {
-            throw_oci_error(FUN,
-              "OCIObjectNew", result, statement_->error_handle_.get());
+            throw_oci_error(FUN, "OCIObjectNew", result, statement_->error_handle_.get());
           }
 
           // no throw section {
@@ -1043,10 +999,7 @@ namespace Oracle
   };
 
   void
-  Statement::set_array(
-    unsigned int ind,
-    std::vector<Object_var>& vec,
-    const char* type)
+  Statement::set_array(unsigned int ind, std::vector<Object_var>& vec, const char* type)
     /*throw(eh::Exception, TimedOut, Exception, SqlException, NotSupported)*/
   {
     static const char* FUN = "Statement::set_array(2)";
@@ -1060,7 +1013,7 @@ namespace Oracle
     OCIBind* bind_handle; // Bind handle can't be freed
     describe_type_(type, stream_holder->oci_named_type);
 
-    if((result = OCIObjectNew(
+    if ((result = OCIObjectNew(
           connection_->environment_->environment_handle_.get(),
           error_handle_.get(),
           connection_->svc_context_handle_.get(),
@@ -1069,8 +1022,7 @@ namespace Oracle
           0,
           OCI_DURATION_SESSION,
           false,
-          reinterpret_cast<void**>(
-            &stream_holder->collection_handle.fill()))) != OCI_SUCCESS)
+          reinterpret_cast<void**>(&stream_holder->collection_handle.fill()))) != OCI_SUCCESS)
     {
       throw_oci_error(FUN, "OCIObjectNew", result, error_handle_.get(), type);
     }
@@ -1083,11 +1035,9 @@ namespace Oracle
       unsigned long i = 0;
       std::unique_ptr<Sync::Policy::PosixThread::WriteGuard> guard_holder;
 
-      for(std::vector<Object_var>::const_iterator it =
-            vec.begin();
-          it != vec.end(); ++it, ++i)
+      for (std::vector<Object_var>::const_iterator it = vec.begin(); it != vec.end(); ++it, ++i)
       {
-        if(i % SET_ARRAY_LOCK_BULK == 0)
+        if (i % SET_ARRAY_LOCK_BULK == 0)
         {
           guard_holder.reset(nullptr);
           guard_holder.reset(
@@ -1098,8 +1048,7 @@ namespace Oracle
         void* cur_oci_object = 0;
         OCIType* cur_oci_type = 0;
 
-        obj_fill_cache.get_for_fill(
-          cur_oci_type, cur_oci_object, (*it)->getSQLTypeName());
+        obj_fill_cache.get_for_fill(cur_oci_type, cur_oci_object, (*it)->getSQLTypeName());
 
         /* fill object */
 //      std::cerr << "In: " << (void*)cur_oci_type << std::endl;
@@ -1119,7 +1068,7 @@ namespace Oracle
       }
     }
 
-    if((result = OCIBindByPos(
+    if ((result = OCIBindByPos(
           stmt_handle_.get(),
           &bind_handle,
           error_handle_.get(),
@@ -1137,7 +1086,7 @@ namespace Oracle
       throw_oci_error(FUN, "OCIBindByPos", result, error_handle_.get());
     }
 
-    if((result = OCIBindObject(
+    if ((result = OCIBindObject(
           bind_handle,
           error_handle_.get(),
           stream_holder->oci_named_type.get(),
@@ -1166,7 +1115,7 @@ namespace Oracle
     sword result;
     OCIBind* bind_handle; // Bind handle can't be freed
 
-    if((result = OCIBindByPos(
+    if ((result = OCIBindByPos(
           stmt_handle_.get(),
           &bind_handle,
           error_handle_.get(),
@@ -1204,7 +1153,7 @@ namespace Oracle
       OCI_DURATION_SESSION,
       &oci_duration_);
 
-    if((result = OCIAnyDataBeginCreate(
+    if ((result = OCIAnyDataBeginCreate(
           statement_->connection_->svc_context_handle_.get(),
           statement_->error_handle_.get(),
           OCI_TYPECODE_OBJECT,
@@ -1212,8 +1161,7 @@ namespace Oracle
           oci_duration_,
           &oci_any_data_)) != OCI_SUCCESS)
     {
-      throw_oci_error(FUN,
-        "OCIAnyDataBeginCreate", result, statement_->error_handle_.get());
+      throw_oci_error(FUN, "OCIAnyDataBeginCreate", result, statement_->error_handle_.get());
     }
   }
 
@@ -1252,21 +1200,20 @@ namespace Oracle
 
     sword result;
 
-    if(!str.empty())
+    if (!str.empty())
     {
       OCIObjectPtr<OCIString> value(
         statement_->connection_->environment_->environment_handle_.get(),
         statement_->error_handle_.get());
 
-      if((result = OCIStringAssignText(
+      if ((result = OCIStringAssignText(
             statement_->connection_->environment_->environment_handle_.get(),
             statement_->error_handle_.get(),
             (text*)str.c_str(),
             str.size(),
             &value.fill())) != OCI_SUCCESS)
       {
-        throw_oci_error(FUN,
-          "OCIStringAssignText", result, statement_->error_handle_.get());
+        throw_oci_error(FUN, "OCIStringAssignText", result, statement_->error_handle_.get());
       }
 
       set_object_attr_(FUN, value.get(), OCI_TYPECODE_VARCHAR2);
@@ -1284,7 +1231,7 @@ namespace Oracle
     OCINumber oci_num;
     sword result;
 
-    if((result = OCINumberFromInt(
+    if ((result = OCINumberFromInt(
           statement_->error_handle_.get(),
           &val,
           sizeof(long),
@@ -1304,7 +1251,7 @@ namespace Oracle
     OCINumber oci_number;
     sword result;
 
-    if((result = OCINumberFromInt(
+    if ((result = OCINumberFromInt(
           statement_->error_handle_.get(),
           &val,
           sizeof(unsigned long),
@@ -1324,7 +1271,7 @@ namespace Oracle
     OCINumber oci_number;
     sword result;
 
-    if((result = OCINumberFromReal(
+    if ((result = OCINumberFromReal(
           statement_->error_handle_.get(),
           &val,
           sizeof(double),
@@ -1336,19 +1283,14 @@ namespace Oracle
     set_object_attr_(FUN, &oci_number, OCI_TYPECODE_NUMBER);
   }
 
-  void SqlStream::set_number_from_string(
-    const char* val)
+  void SqlStream::set_number_from_string(const char* val)
     /*throw(Exception, SqlException)*/
   {
     static const char* FUN = "SqlStream::set_number()";
 
     OCINumber oci_number;
 
-    create_oci_number_from_text(
-      FUN,
-      statement_->error_handle_.get(),
-      val,
-      oci_number);
+    create_oci_number_from_text(FUN, statement_->error_handle_.get(), val, oci_number);
 
     set_object_attr_(FUN, &oci_number, OCI_TYPECODE_NUMBER);
   }
@@ -1370,20 +1312,19 @@ namespace Oracle
 
     sword result;
 
-    if((result = OCIAnyDataEndCreate(
+    if ((result = OCIAnyDataEndCreate(
           statement_->connection_->svc_context_handle_.get(),
           statement_->error_handle_.get(),
           oci_any_data_)) != OCI_SUCCESS)
     {
-      throw_oci_error(FUN,
-        "OCIAnyDataEndCreate", result, statement_->error_handle_.get());
+      throw_oci_error(FUN, "OCIAnyDataEndCreate", result, statement_->error_handle_.get());
     }
 
     // TODO: check of set_.. counter (<MAX_OBJECT_FIELDS)
     OCIInd* indp = obj_ind_;
     ub4 len;
 
-    if((result = OCIAnyDataAccess(
+    if ((result = OCIAnyDataAccess(
           statement_->connection_->svc_context_handle_.get(),
           statement_->error_handle_.get(),
           oci_any_data_,
@@ -1393,8 +1334,7 @@ namespace Oracle
           &obj,
           &len)) != OCI_SUCCESS)
     {
-      throw_oci_error(FUN,
-        "OCIAnyDataAccess", result, statement_->error_handle_.get());
+      throw_oci_error(FUN, "OCIAnyDataAccess", result, statement_->error_handle_.get());
     }
   }
 
@@ -1403,14 +1343,13 @@ namespace Oracle
     return obj_ind_;
   }
 
-  void SqlStream::set_object_attr_(
-    const char* fun, void* value, unsigned long type_id)
+  void SqlStream::set_object_attr_(const char* fun, void* value, unsigned long type_id)
     /*throw(SqlException)*/
   {
     indicators_.push_back(value ? OCI_IND_NOTNULL : OCI_IND_NULL);
     sword result;
 
-    if((result = OCIAnyDataAttrSet(
+    if ((result = OCIAnyDataAttrSet(
           statement_->connection_->svc_context_handle_.get(),
           statement_->error_handle_.get(),
           oci_any_data_,
@@ -1421,10 +1360,7 @@ namespace Oracle
           0,
           false)) != OCI_SUCCESS)
     {
-      throw_oci_error(fun,
-        "OCIAnyDataAttrSet", result, statement_->error_handle_.get());
+      throw_oci_error(fun, "OCIAnyDataAttrSet", result, statement_->error_handle_.get());
     }
   }
-} /*Oracle*/
-} /*Commons*/
-} /*AdServer*/
+} // namespace AdServer::Commons::Oracle

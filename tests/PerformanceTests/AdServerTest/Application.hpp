@@ -25,8 +25,7 @@ class Application :
 {
 
 public:
-  Application(unsigned long log_level,
-              const char* cfg_file_path);
+  Application(unsigned long log_level, const char* cfg_file_path);
 
   ~Application() noexcept;
 

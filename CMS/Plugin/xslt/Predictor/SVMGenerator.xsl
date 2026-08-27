@@ -40,7 +40,7 @@
       <xsl:value-of select="$predictor-config/@log_days_to_keep"/>
       <xsl:if test="count($predictor-config/@log_days_to_keep) = 0"><xsl:value-of select="$def-predictor-keep-logs"/></xsl:if>
     </xsl:attribute>
-    
+
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$predictor-config/cfg:logging"/>
       <xsl:with-param name="log-file" select="concat($workspace-root, $predictor-svm-generator-log-path)"/>
@@ -64,7 +64,7 @@
         <cfg:Object servant="ProcessControl" name="ProcessControl"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
-    
+
     <cfg:Model features_dimension="24">
       <cfg:Feature>
          <cfg:BasicFeature name="publisher"/>
@@ -100,10 +100,10 @@
         <cfg:BasicFeature name="campaign_freq_log"/>
       </cfg:Feature>
       <cfg:Feature>
-        <cfg:BasicFeature name="geoch"/>      
+        <cfg:BasicFeature name="geoch"/>
       </cfg:Feature>
       <cfg:Feature>
-        <cfg:BasicFeature name="userch"/>      
+        <cfg:BasicFeature name="userch"/>
       </cfg:Feature>
     </cfg:Model>
   </cfg:SVMGeneratorConfiguration>
@@ -131,7 +131,7 @@
     <xsl:with-param name="env-config" select="$env-config"/>
     <xsl:with-param name="predictor-config" select="$predictor-config"/>
   </xsl:call-template>
-  
+
 </xsl:template>
 
 </xsl:stylesheet>

@@ -28,7 +28,7 @@ Client:
   ssize_t res = recv(sock, buf, sizeof(buf), 0);                      // let's assume we get all response
   {
     tinyfcgi::const_message m(buf, res);
-    for(tinyfcgi::const_message::iterator i = m.begin();              // enum all headers
+    for (tinyfcgi::const_message::iterator i = m.begin();              // enum all headers
       i != m.end(); ++i) {
       const tinyfcgi::header& h = *i;
       assert(h.valid());                                              // it is required to validate header before using it
@@ -37,6 +37,7 @@ Client:
       if (h.size() && (h.type == FCGI_STDOUT || h.type == FCGI_STDERR)) {
         std::cout << ": " << h.str();                                 // it is possible to merge chunks of same type with merge_next()
       }
+
       if (h.type == FCGI_END_REQUEST) {                               // response should be terminated with "END REQUEST"
         std::cout << "; status " << h.end_request()->app_status();
       }
@@ -54,7 +55,7 @@ Server:
   ssize_t res = recv(sock, buf, sizeof(buf), 0);                      // let's assume we get all request
   {
     tinyfcgi::const_message m(buf, res);
-    for(tinyfcgi::const_message::iterator i = m.begin();              // enum all headers
+    for (tinyfcgi::const_message::iterator i = m.begin();              // enum all headers
       i != m.end(); ++i) {
       const tinyfcgi::header& h = *i;
       assert(h.valid());                                              // it is required to validate header before using it
@@ -63,12 +64,14 @@ Server:
         std::cout << "; role " << h.begin_request()->role();
         id = h.id();
       }
+
       if (h.size() && h.type == FCGI_STDIN) {                         // request is complete, when it is terminated with empty STDIN chunk
         std::cout << ": " << h.str();
       }
+
       if (h.type == FCGI_PARAMS) {
         tinyfcgi::const_params params(h.str());
-        for(tinyfcgi::const_params::iterator i = params.begin();      // enum all params
+        for (tinyfcgi::const_params::iterator i = params.begin();      // enum all params
           i != params.end(); ++i) {
           const tinyfcgi::param& p = *i;
           string_ref name, value;
@@ -669,6 +672,7 @@ header* message::add_header(unsigned char type, bool force, size_t size) {
     good_ = false;
     return 0;
   }
+
   if (cur_header_->type != type || force) {
     if (cur_header_->type) {
       header* n = cur_header_->next();

@@ -45,13 +45,11 @@ class InterruptCallbackImpl :
     public ReferenceCounting::AtomicImpl
   {
   public:
-    Callback(std::string* output, std::string& error,
-      InterruptCallback* interrupter)
+    Callback(std::string* output, std::string& error, InterruptCallback* interrupter)
       /*throw(eh::Exception)*/;
 
     virtual void
-    on_data_ready(int fd, std::size_t fd_index, const char* str,
-      std::size_t size) noexcept;
+    on_data_ready(int fd, std::size_t fd_index, const char* str, std::size_t size) noexcept;
 
     virtual void
     on_periodic() noexcept;
@@ -74,8 +72,7 @@ class InterruptCallbackImpl :
     pid_t pid_;
   };
 
-  Callback::Callback(std::string* output, std::string& error,
-    InterruptCallback* interrupter)
+  Callback::Callback(std::string* output, std::string& error, InterruptCallback* interrupter)
     /*throw(eh::Exception)*/
     : output_(output), error_(error), interrupter_(interrupter)
   {
@@ -141,8 +138,7 @@ class InterruptCallbackImpl :
     {
       try
       {
-        std::unique_ptr<InterruptCallback> interrupter(
-          new InterruptCallbackImpl);
+        std::unique_ptr<InterruptCallback> interrupter(new InterruptCallbackImpl);
 
         static const int LISTEN[] = { STDOUT_FILENO };
         static const int REDIRECT[] = { STDIN_FILENO, STDERR_FILENO };
@@ -169,8 +165,7 @@ class InterruptCallbackImpl :
             if (!error.empty())
             {
               Stream::Error ostr;
-              ostr << error.c_str() << ", status=" << status
-                << ", tid=" << pthread_self();
+              ostr << error.c_str() << ", status=" << status << ", tid=" << pthread_self();
               throw Exception(ostr);
             }
 
@@ -202,6 +197,7 @@ class InterruptCallbackImpl :
           for (; *cit == '*'; ++cit);
           success = (cit == output_str.end());
         }
+
         if (success)
         {
           Guard lock(mutex_);
@@ -293,8 +289,7 @@ main() noexcept
 {
   try
   {
-    std::cout << "SyncLogsActive multi-thread processing test started.."
-      << std::endl;
+    std::cout << "SyncLogsActive multi-thread processing test started.." << std::endl;
 
     Generics::ThreadRunner* mem_thread_runner =
       new Generics::ThreadRunner(
@@ -302,8 +297,7 @@ main() noexcept
     mem_thread_runner->start();
 
     Generics::ThreadRunner* thread_runner =
-      new Generics::ThreadRunner(
-        Generics::ThreadJob_var(new MemoryUsageThread()).in(), 1);
+      new Generics::ThreadRunner(Generics::ThreadJob_var(new MemoryUsageThread()).in(), 1);
     thread_runner->start();
 
     delete thread_runner;
@@ -319,8 +313,7 @@ main() noexcept
     {
       std::cerr << "Test FAILED, not all fork() task complete" << std::endl
         << "Must pass " << THREADS_BUNDLE_SIZE << " threads, but really "
-        << SyncLogThread::get_successes() << " threads finished well"
-        << std::endl;
+        << SyncLogThread::get_successes() << " threads finished well" << std::endl;
     }
     return 0;
   }

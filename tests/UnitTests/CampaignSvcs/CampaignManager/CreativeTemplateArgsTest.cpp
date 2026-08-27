@@ -20,10 +20,7 @@ main() noexcept
       restrictions.insert("TEST2");
       restrictions.insert("TEST3");
 
-      BaseTokenProcessor_var token_processor =
-        new BaseTokenProcessor(
-          "TEST",
-          restrictions);
+      BaseTokenProcessor_var token_processor = new BaseTokenProcessor("TEST", restrictions);
       token_processor_map[1] = token_processor;
     }
 
@@ -31,20 +28,14 @@ main() noexcept
       TokenSet restrictions;
       restrictions.insert("TEST3");
 
-      BaseTokenProcessor_var token_processor =
-        new BaseTokenProcessor(
-          "TEST2",
-          restrictions);
+      BaseTokenProcessor_var token_processor = new BaseTokenProcessor("TEST2", restrictions);
       token_processor_map[2] = token_processor;
     }
 
     {
       TokenSet restrictions;
 
-      BaseTokenProcessor_var token_processor =
-        new BaseTokenProcessor(
-          "TEST3",
-          restrictions);
+      BaseTokenProcessor_var token_processor = new BaseTokenProcessor("TEST3", restrictions);
       token_processor_map[3] = token_processor;
     }
 
@@ -64,8 +55,7 @@ main() noexcept
 
       if (result != "EEEE EEEE")
       {
-        std::cerr << "Test#1: incorrect instantiate result: '" << result
-          << "'." << std::endl;
+        std::cerr << "Test#1: incorrect instantiate result: '" << result << "'." << std::endl;
         ret_code = -1;
       }
       else
@@ -90,8 +80,7 @@ main() noexcept
 
       if (result != "123 ")
       {
-        std::cerr << "Test#2: incorrect instantiate result: '" << result
-          << "'." << std::endl;
+        std::cerr << "Test#2: incorrect instantiate result: '" << result << "'." << std::endl;
         ret_code = -1;
       }
       else
@@ -115,8 +104,7 @@ main() noexcept
         CreativeInstantiateArgs(),
         result);
 
-      std::cerr << "Test#3: must be thrown InvalidValue exception."
-        << std::endl;
+      std::cerr << "Test#3: must be thrown InvalidValue exception." << std::endl;
       ret_code = -1;
     }
     catch (const eh::Exception& ex)

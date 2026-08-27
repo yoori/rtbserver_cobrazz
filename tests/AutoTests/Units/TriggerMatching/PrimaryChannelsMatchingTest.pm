@@ -132,12 +132,12 @@ sub init
         trigger_type => 'R',
         time_to => 60 )]));
 
-   
+
   $ns->output("SEARCH1", $keyword1_6);
   $ns->output("KW2",  $keyword2_4 . " " .  $keyword2_5 . " " .  $keyword2_3 . " " .
-    $keyword2_6 . " word1,first1 " .  $keyword2_1 . " " .  
+    $keyword2_6 . " word1,first1 " .  $keyword2_1 . " " .
     $keyword2_2 . " " .  $keyword2_3);
-    
+
   $ns->output("SEARCH3", $keyword3_6 . "+" . $keyword3_5);
   $ns->output("KW3", "generic " . $keyword3_3 . " home," .  $keyword3_2);
 
@@ -145,12 +145,12 @@ sub init
     $keyword3_1 . "+" . $keyword3_6 . "+" . $keyword3_5);
   $ns->output("KW4", "generic " . $keyword3_3 . "," .  $keyword3_1 . " " . $keyword3_2);
 
-  $ns->output("KW5", 
+  $ns->output("KW5",
     $keyword3_1 . " "  . $keyword3_6 . ", " . $keyword3_5 . ", " .
     $keyword3_2 . " " . $keyword3_3);
 
-  $ns->output("KW6", 
-    $keyword3_1 . " "  . $keyword3_2 . ", " . 
+  $ns->output("KW6",
+    $keyword3_1 . " "  . $keyword3_2 . ", " .
     $keyword3_5  . " " . $keyword3_3);
 
   $ns->output("KW7", $keyword3_4 . " " . $keyword3_5);
@@ -172,7 +172,7 @@ sub init
     "fulltextmatching4\nfulltextmatch");
 
   $ns->output("REF14", "http://url2.keywords3.ru/index.php");
-  $ns->output("REF15", "http://a.com/" . $keyword3_1 . "?" . 
+  $ns->output("REF15", "http://a.com/" . $keyword3_1 . "?" .
     $keyword3_6  . "," . $keyword3_5 . "&1");
 
   $ns->output("Channel1", $page->{channel_id});

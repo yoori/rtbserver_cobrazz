@@ -47,18 +47,13 @@ namespace
   get_controller_session_description_(const std::string& reference)
   {
     auto stub = Controller::UserBindControllerGrpc::NewStub(
-      AdServer::Grpc::create_channel(
-        reference,
-        grpc::InsecureChannelCredentials()));
+      AdServer::Grpc::create_channel(reference, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
     Controller::GetSessionDescriptionRequest request;
     Controller::GetSessionDescriptionResponse response;
-    const auto status = stub->get_session_description(
-      &context,
-      request,
-      &response);
+    const auto status = stub->get_session_description(&context, request, &response);
 
     if (!status.ok() || response.user_bind_servers().empty())
     {
@@ -97,9 +92,7 @@ namespace
       {
         if (server_chunk_id == chunk_id)
         {
-          return std::make_pair(
-            server.user_bind_server_endpoint(),
-            chunk_id);
+          return std::make_pair(server.user_bind_server_endpoint(), chunk_id);
         }
       }
     }
@@ -126,8 +119,7 @@ namespace
     result.reference = reference;
     result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     result.grpc_executor->activate_object();
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
+    Logging::Logger_var logger = new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
     result.coalesce_runner =
       std::make_shared<AdServer::Commons::BoostAsioContextRunActiveObject>(
         new Logging::ActiveObjectCallbackImpl(logger, "UserBindAdmin", "gRPC"),
@@ -135,8 +127,7 @@ namespace
         1);
     result.coalesce_runner->activate_object();
 
-    result.controller_session_description =
-      get_controller_session_description_(reference);
+    result.controller_session_description = get_controller_session_description_(reference);
     AdServer::Grpc::BatchingOptions batching_options;
     batching_options.max_batch_delay = Generics::Time::ZERO;
     if (result.controller_session_description)
@@ -177,11 +168,13 @@ namespace
         holder.active_object->deactivate_object();
         holder.active_object->wait_object();
       }
+
       if (holder.grpc_executor)
       {
         holder.grpc_executor->deactivate_object();
         holder.grpc_executor->wait_object();
       }
+
       if (holder.coalesce_runner)
       {
         holder.coalesce_runner->deactivate_object();
@@ -236,9 +229,7 @@ namespace
       "invalid_operation = " << response.invalid_operation() << std::endl;
   }
 
-  void get_user_id_(
-    const ClientHolder& holder,
-    const std::string& external_id)
+  void get_user_id_(const ClientHolder& holder, const std::string& external_id)
   {
     const auto now = Generics::Time::get_time_of_day();
     Proto::GetUserIdRequest request;
@@ -248,8 +239,7 @@ namespace
     request.set_generate_user_id(false);
     request.set_for_set_cookie(false);
     request.set_create_timestamp(GrpcAlgs::pack_time(now));
-    request.set_current_user_id(GrpcAlgs::pack_user_id(
-      AdServer::Commons::UserId()));
+    request.set_current_user_id(GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
 
     const auto response =
       AdServer::Grpc::sync_call<Proto::GetUserIdResponse>(
@@ -332,8 +322,7 @@ int main(int argc, char** argv)
     {
       if (commands.size() != 1)
       {
-        throw std::runtime_error(
-          "print-bind-request: expected argument: <bind request id>");
+        throw std::runtime_error("print-bind-request: expected argument: <bind request id>");
       }
       print_bind_request_(holder.client.get(), commands.front());
     }
@@ -341,15 +330,11 @@ int main(int argc, char** argv)
     {
       if (commands.size() != 2)
       {
-        throw std::runtime_error(
-          "add-user-id: expected arguments: <external id> <user id>");
+        throw std::runtime_error("add-user-id: expected arguments: <external id> <user id>");
       }
       const std::string external_id = commands.front();
       commands.pop_front();
-      add_user_id_(
-        holder.client.get(),
-        external_id,
-        AdServer::Commons::UserId(commands.front()));
+      add_user_id_(holder.client.get(), external_id, AdServer::Commons::UserId(commands.front()));
     }
     else if (command == "get-user-id")
     {
@@ -361,8 +346,7 @@ int main(int argc, char** argv)
     }
     else
     {
-      std::cerr << "Unknown command '" << command << "'. See help for more info." <<
-        std::endl;
+      std::cerr << "Unknown command '" << command << "'. See help for more info." << std::endl;
       return 1;
     }
 

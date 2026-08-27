@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# 
+#
 
 import zmq, dpkt, struct, optparse, Util, Logger, socket, os, re
 
@@ -41,7 +41,7 @@ class SessionKey:
 
   def invert( self ):
     return SessionKey(self.daddr, self.saddr, self.dport, self.sport)
- 
+
   def get( self ):
     return self.saddr, self.daddr, self.sport, self.dport
 
@@ -58,7 +58,7 @@ class SessionKey:
 
   def __eq__( self, other ):
     return self.unique() == other.unique()
-  
+
   def __hash__( self ):
     return hash(self.unique())
 
@@ -171,6 +171,6 @@ def main():
       Logger.logException(1)
   Logger.log(2, "Send sessions: %d (%d/%d),  incomplete %d, total sessions %d" % \
              (sessionNum, requestNum, responseNum, notComplete, len(http_sessions)))
-  
+
 
 main()

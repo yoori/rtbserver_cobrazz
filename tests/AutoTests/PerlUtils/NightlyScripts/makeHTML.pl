@@ -84,10 +84,10 @@ my %options = ( timestamp       => TestCommon::get_local_time,
                 additional_log_path => \@add_paths,
                 maillist        => \@maillist );
 
-if (! GetOptions(\%options, qw(desc|d=s in|i=s timestamp|t=s 
+if (! GetOptions(\%options, qw(desc|d=s in|i=s timestamp|t=s
                                stylesheet|s=s url|u=s http_root|hr=s
                                dst_sub_path|dp=s history_path|hp=s
-                               http_test_path|ht=s  
+                               http_test_path|ht=s
                                additional_log_path|al=s@
                                maillist|m=s@)))
 {
@@ -124,9 +124,9 @@ sub round_dirs {
   my $path      = shift;
   my $docs      = shift;
   my $result    = 0;
-  my $log_proc  = TestResultProcessor->new($path, $options{http_root}, 
-                                           $options{http_test_path}, 
-                                           $root_path, 
+  my $log_proc  = TestResultProcessor->new($path, $options{http_root},
+                                           $options{http_test_path},
+                                           $root_path,
                                            $options{timestamp},
                                            $options{history_path},
                                            $options{dst_sub_path},

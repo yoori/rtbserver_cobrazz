@@ -1,9 +1,6 @@
 #include "ChannelTargetingTest.hpp"
 
-REFLECT_UNIT(ChannelTargetingTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(ChannelTargetingTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 namespace
 {
@@ -39,9 +36,7 @@ ChannelTargetingTest::part1()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccid,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccid, SelectedCreativesCCID(client)).check(),
     "selected_creatives cc_ids");
 }
 
@@ -64,8 +59,6 @@ ChannelTargetingTest::part2()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      exp_ccid,
-      SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(exp_ccid, SelectedCreativesCCID(client)).check(),
     "selected_creatives cc_ids");
 }

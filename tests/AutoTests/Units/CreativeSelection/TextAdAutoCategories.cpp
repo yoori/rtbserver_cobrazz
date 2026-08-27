@@ -1,9 +1,6 @@
 #include "TextAdAutoCategories.hpp"
 
-REFLECT_UNIT(TextAdAutoCategories) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(TextAdAutoCategories) ("CreativeSelection", AUTO_TEST_FAST);
 
 bool
 TextAdAutoCategories::run_test()
@@ -27,9 +24,7 @@ TextAdAutoCategories::run_test()
   client.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::sequence_checker(
-      ccid_exp,
-      AutoTest::SelectedCreativesCCID(client)).check(),
+    AutoTest::sequence_checker(ccid_exp, AutoTest::SelectedCreativesCCID(client)).check(),
     "selected_creatives cc_id");
 
   FAIL_CONTEXT(

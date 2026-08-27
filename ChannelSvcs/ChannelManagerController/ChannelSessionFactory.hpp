@@ -15,24 +15,16 @@
 
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 
-namespace AdServer
+namespace AdServer::ChannelSvcs::Protected
 {
-namespace ChannelSvcs
-{
-
-  namespace Protected
+  class Task :public Generics::TaskImpl
   {
-    class Task :public Generics::TaskImpl
-    {
-    };
-    typedef ReferenceCounting::SmartPtr<Task> Task_var;
-  }
+  };
+  typedef ReferenceCounting::SmartPtr<Task> Task_var;
+}
 
-  /**
-   * NullStat
-   * implementation of empty statistic class
-   */
-
+namespace AdServer::ChannelSvcs
+{
   class NullStat
   {
   public:
@@ -125,12 +117,7 @@ namespace ChannelSvcs
   };
 
 }
-}
 
-  /**
-   * ChannelServerSessionFactoryImpl
-   * implementation of corba valuetype factory
-   */
 class ChannelServerSessionFactoryImpl :
   public virtual Generics::RefCountableActiveObject,
   public virtual Generics::CompositeActiveObject,
@@ -170,9 +157,7 @@ private:
 typedef ReferenceCounting::SmartPtr<ChannelServerSessionFactoryImpl>
   ChannelServerSessionFactoryImpl_var;
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   /**
    * ChannelServerSessionImpl
@@ -192,13 +177,10 @@ namespace ChannelSvcs
       unsigned long check_period)
       /*throw(eh::Exception)*/;
 
-    ChannelServerSessionImpl(
-      ChannelServerSessionImpl& init)
+    ChannelServerSessionImpl(ChannelServerSessionImpl& init)
       /*throw(Exception)*/;
 
-    ChannelServerSessionImpl(
-      const AdServer::ChannelSvcs::Protected::GroupDescriptionSeq&
-        servers)
+    ChannelServerSessionImpl(const AdServer::ChannelSvcs::Protected::GroupDescriptionSeq& servers)
       /*throw(Exception)*/;
 
     virtual ~ChannelServerSessionImpl() noexcept;
@@ -356,12 +338,9 @@ namespace ChannelSvcs
     static const unsigned long stat_dump_margin;
   };
 
-} /* ChannelSvcs */
-} /* AdServer */
+} // namespace AdServer::ChannelSvcs
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   inline
   bool operator==(
@@ -372,11 +351,9 @@ namespace ChannelSvcs
   }
 
   inline
-  bool operator<(
-    const ChannelServerBase::ChannelAtom& v1,
-    const ChannelServerBase::ChannelAtom& v2)
+  bool operator<(const ChannelServerBase::ChannelAtom& v1, const ChannelServerBase::ChannelAtom& v2)
   {
-    if(v1.id == v2.id)
+    if (v1.id == v2.id)
     {
       return (v1.trigger_channel_id < v2.trigger_channel_id);
     }
@@ -388,7 +365,7 @@ namespace ChannelSvcs
     /*throw(eh::Exception)*/
   {
     unsigned long value_length = value.length();
-    if(value_length)
+    if (value_length)
     {
       unsigned long old_length, new_length;
       old_length = result.length();
@@ -398,15 +375,13 @@ namespace ChannelSvcs
           value.get_buffer(),
           value.get_buffer() + value_length,
           result.get_buffer() + old_length);
-      if(old_length)
+      if (old_length)
       {
         std::inplace_merge(
             result.get_buffer(),
             result.get_buffer() + old_length,
             result.get_buffer() + new_length);
-        Value* end = std::unique(
-            result.get_buffer(),
-            result.get_buffer() + new_length);
+        Value* end = std::unique(result.get_buffer(), result.get_buffer() + new_length);
         result.length(end - result.get_buffer());
       }
     }
@@ -448,7 +423,4 @@ namespace ChannelSvcs
     return ref;
   }
 
-} /* ChannelSvcs */
-} /* AdServer */
-
-
+} // namespace AdServer::ChannelSvcs

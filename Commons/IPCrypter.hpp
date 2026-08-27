@@ -10,9 +10,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace AdServer
-{
-namespace Commons
+namespace AdServer::Commons
 {
   class AesEncryptKey
   {
@@ -65,15 +63,11 @@ namespace Commons
       /*throw(InvalidKey)*/;
 
     void
-    encrypt(
-      std::string& encrypted_ip,
-      const char* ip)
+    encrypt(std::string& encrypted_ip, const char* ip)
       /*throw(InvalidParams)*/;
 
     void
-    decrypt(
-      std::string& ip,
-      const String::SubString& encrypted_ip)
+    decrypt(std::string& ip, const String::SubString& encrypted_ip)
       /*throw(InvalidParams)*/;
 
   private:
@@ -89,5 +83,4 @@ namespace Commons
 
   typedef ReferenceCounting::SmartPtr<IPCrypter>
     IPCrypter_var;
-}
 }

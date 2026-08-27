@@ -31,8 +31,7 @@ namespace AdServer::CampaignSvcs
     noexcept;
 
   void
-  CampaignManagerCore::precalculate_pub_pixel_accounts_(
-    CampaignConfig* campaign_config)
+  CampaignManagerCore::precalculate_pub_pixel_accounts_(CampaignConfig* campaign_config)
     /*throw(eh::Exception)*/
   {
     if (country_whitelist_.empty())
@@ -104,14 +103,11 @@ namespace AdServer::CampaignSvcs
       bool config_expired =
         campaign_manager_config_.campaigns_update_timeout() != 0 &&
         master_stamp != Generics::Time::ZERO && //there is old or new config
-        now - master_stamp > Generics::Time(
-          campaign_manager_config_.campaigns_update_timeout());
+        now - master_stamp > Generics::Time(campaign_manager_config_.campaigns_update_timeout());
 
       if (config_expired)
       {
-        logger_->stream(Logging::Logger::ERROR,
-          Aspect::CAMPAIGN_MANAGER,
-          "ADS-IMPL-5093") << FUN <<
+        logger_->stream(Logging::Logger::ERROR, Aspect::CAMPAIGN_MANAGER, "ADS-IMPL-5093") << FUN <<
           ": Config expired - disable ad showing: config timestamp = " <<
           master_stamp.get_gm_time();
 
@@ -126,24 +122,18 @@ namespace AdServer::CampaignSvcs
       {
         if (logger_->log_level() >= Logging::Logger::TRACE + 1)
         {
-          logger_->stream(Logging::Logger::TRACE + 1,
-            Aspect::CAMPAIGN_MANAGER) << FUN <<
+          logger_->stream(Logging::Logger::TRACE + 1, Aspect::CAMPAIGN_MANAGER) << FUN <<
             ": To construct campaign index for " <<
-            new_config->campaigns.size() << " campaigns, " <<
-            new_config->tags.size() << " tags.";
+            new_config->campaigns.size() << " campaigns, " << new_config->tags.size() << " tags.";
         }
 
-        configuration_index =
-          std::make_shared<CampaignIndex>(new_config, logger_);
+        configuration_index = std::make_shared<CampaignIndex>(new_config, logger_);
 
-        if (configuration_index->index_campaigns(
-             &indexing_progress_,
-             this))
+        if (configuration_index->index_campaigns(&indexing_progress_, this))
         {
           if (logger_->log_level() >= Logging::Logger::TRACE + 1)
           {
-            logger_->stream(Logging::Logger::TRACE + 1,
-              Aspect::CAMPAIGN_MANAGER) << FUN <<
+            logger_->stream(Logging::Logger::TRACE + 1, Aspect::CAMPAIGN_MANAGER) << FUN <<
               ": Campaign index constructed.";
           }
 
@@ -162,8 +152,7 @@ namespace AdServer::CampaignSvcs
         }
         else if (logger_->log_level() >= Logging::Logger::TRACE + 1)
         {
-          logger_->stream(Logging::Logger::TRACE + 1,
-            Aspect::CAMPAIGN_MANAGER) << FUN <<
+          logger_->stream(Logging::Logger::TRACE + 1, Aspect::CAMPAIGN_MANAGER) << FUN <<
             ": Campaign indexing interrupted.";
         }
       }
@@ -221,12 +210,10 @@ namespace AdServer::CampaignSvcs
       if (!new_ctr_config_root.empty())
       {
         bool config_not_expired =
-          expire_timeout == Generics::Time::ZERO ||
-          now <= new_config_timestamp + expire_timeout;
+          expire_timeout == Generics::Time::ZERO || now <= new_config_timestamp + expire_timeout;
 
         if (config_captured || (
-             (!old_ctr_provider ||
-              new_config_timestamp > old_ctr_provider->config_timestamp()) &&
+             (!old_ctr_provider || new_config_timestamp > old_ctr_provider->config_timestamp()) &&
              config_not_expired))
           // don't load config if it already expired, but load if it captured
           // for remove (will be reloaded or skipped at next interation)
@@ -293,8 +280,7 @@ namespace AdServer::CampaignSvcs
             }
             catch(const eh::Exception& ex)
             {
-              ::rename(new_ctr_config_root.c_str(),
-                new_ctr_config_root_error.c_str());
+              ::rename(new_ctr_config_root.c_str(), new_ctr_config_root_error.c_str());
 
               Stream::Error ostr;
               ostr << FUN << ": can't load CTR config '" <<
@@ -373,12 +359,10 @@ namespace AdServer::CampaignSvcs
       if (!new_ctr_config_root.empty())
       {
         const bool config_not_expired =
-          expire_timeout == Generics::Time::ZERO ||
-          now <= new_config_timestamp + expire_timeout;
+          expire_timeout == Generics::Time::ZERO || now <= new_config_timestamp + expire_timeout;
 
         if (config_captured || (
-             (!old_ctr_provider ||
-              new_config_timestamp > old_ctr_provider->config_timestamp()) &&
+             (!old_ctr_provider || new_config_timestamp > old_ctr_provider->config_timestamp()) &&
              config_not_expired))
         {
           std::string new_ctr_config_path;
@@ -439,9 +423,7 @@ namespace AdServer::CampaignSvcs
             }
             catch(const eh::Exception& ex)
             {
-              ::rename(
-                new_ctr_config_root.c_str(),
-                new_ctr_config_root_error.c_str());
+              ::rename(new_ctr_config_root.c_str(), new_ctr_config_root_error.c_str());
 
               Stream::Error ostr;
               ostr << FUN << ": can't load CTR config '" <<
@@ -461,8 +443,7 @@ namespace AdServer::CampaignSvcs
 
     if (expire_timeout != Generics::Time::ZERO && old_ctr_provider)
     {
-      const Generics::Time ctr_config_timestamp =
-        old_ctr_provider->config_timestamp();
+      const Generics::Time ctr_config_timestamp = old_ctr_provider->config_timestamp();
 
       if (now > ctr_config_timestamp + expire_timeout)
       {

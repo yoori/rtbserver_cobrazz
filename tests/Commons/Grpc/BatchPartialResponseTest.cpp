@@ -25,10 +25,7 @@ namespace
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    void report_error(
-      Severity,
-      const String::SubString&,
-      const char* = nullptr) noexcept override
+    void report_error(Severity, const String::SubString&, const char* = nullptr) noexcept override
     {}
 
   protected:
@@ -39,16 +36,14 @@ namespace
     public AdServer::Grpc::GrpcServiceBase
   {
   public:
-    explicit TestService(
-      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool)
+    explicit TestService(std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool)
       : executor_pool_(std::move(executor_pool))
     {
       register_batch_method<BatchRequest, BatchResponse>(
         "/test.Delay",
         [](const BatchRequest& request, BatchResponse& response, grpc::Status&)
         {
-          std::this_thread::sleep_for(
-            std::chrono::microseconds(request.batch_id()));
+          std::this_thread::sleep_for(std::chrono::microseconds(request.batch_id()));
           response.set_batch_id(request.batch_id());
         });
     }
@@ -128,9 +123,7 @@ namespace
       condition_.notify_all();
     }
 
-    bool wait_for_chunks(
-      const std::size_t count,
-      const std::chrono::milliseconds timeout)
+    bool wait_for_chunks(const std::size_t count, const std::chrono::milliseconds timeout)
     {
       std::unique_lock<std::mutex> lock(lock_);
       return condition_.wait_for(
@@ -145,13 +138,7 @@ namespace
     bool wait_for_completion(const std::chrono::milliseconds timeout)
     {
       std::unique_lock<std::mutex> lock(lock_);
-      return condition_.wait_for(
-        lock,
-        timeout,
-        [this]() noexcept
-        {
-          return completed_;
-        });
+      return condition_.wait_for(lock, timeout, [this]() noexcept { return completed_; });
     }
 
     std::vector<Chunk> chunks() const
@@ -175,10 +162,7 @@ namespace
     bool completed_ = false;
   };
 
-  void add_item(
-    BatchRequest& batch,
-    const std::uint64_t request_id,
-    const std::uint64_t delay_us)
+  void add_item(BatchRequest& batch, const std::uint64_t request_id, const std::uint64_t delay_us)
   {
     BatchRequest request;
     request.set_batch_id(delay_us);
@@ -224,8 +208,7 @@ namespace
 
     const auto chunks = publisher->chunks();
     assert(chunks.size() == 1);
-    assert(chunks.front().request_ids ==
-      (std::vector<std::uint64_t>{100, 101}));
+    assert(chunks.front().request_ids == (std::vector<std::uint64_t>{100, 101}));
     assert(chunks.front().time - started_at < std::chrono::milliseconds(50));
   }
 
@@ -246,8 +229,7 @@ namespace
     const auto chunks = publisher->chunks();
     assert(chunks.size() == 1);
     assert(chunks.front().batch_id == 150);
-    assert(chunks.front().request_ids ==
-      (std::vector<std::uint64_t>{150, 151}));
+    assert(chunks.front().request_ids == (std::vector<std::uint64_t>{150, 151}));
   }
 
   void test_slow_lane_is_published_separately(TestService& service)
@@ -279,10 +261,7 @@ namespace
     std::vector<std::uint64_t> request_ids;
     for (const auto& chunk : chunks)
     {
-      request_ids.insert(
-        request_ids.end(),
-        chunk.request_ids.begin(),
-        chunk.request_ids.end());
+      request_ids.insert(request_ids.end(), chunk.request_ids.begin(), chunk.request_ids.end());
     }
     std::sort(request_ids.begin(), request_ids.end());
     assert(request_ids == (std::vector<std::uint64_t>{200, 201, 202}));

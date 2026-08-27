@@ -33,7 +33,7 @@ sub flush
 {
   my ($self) = @_;
   my $disp = 0;
-  if($self->{count_} > 1)
+  if ($self->{count_} > 1)
   {
     $disp = ($self->{quad_sum_} - ($self->{sum_} / $self->{count_}) * ($self->{sum_} / $self->{count_})) / ($self->{count_} - 1);
   }

@@ -54,8 +54,7 @@ protected:
     bool
     operator<(const CountFeatureKey& right) const
     {
-      return count < right.count || (
-        count == right.count && feature_id < right.feature_id);
+      return count < right.count || (count == right.count && feature_id < right.feature_id);
     }
 
     const unsigned long count;
@@ -67,9 +66,7 @@ protected:
 protected:
   // load only counters
   void
-  load_feature_counters_(
-    CountFeatureSet& feature_counters,
-    const char* file_path);
+  load_feature_counters_(CountFeatureSet& feature_counters, const char* file_path);
 
   void
   correlate_(

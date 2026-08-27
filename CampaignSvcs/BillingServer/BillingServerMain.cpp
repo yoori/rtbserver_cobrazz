@@ -19,11 +19,7 @@ namespace
   const char ASPECT[] = "BillingServer";
 
   void
-  append_json_stat(
-    std::string& body,
-    bool& first,
-    const char* name,
-    std::uint64_t value)
+  append_json_stat(std::string& body, bool& first, const char* name, std::uint64_t value)
   {
     if (first)
     {
@@ -56,11 +52,7 @@ namespace
     append_json_stat(body, first, "call_total", stats.call_total);
     append_json_stat(body, first, "call_total_time", stats.call_total_time);
     append_json_stat(body, first, "call_in_progress", stats.call_in_progress);
-    append_json_stat(
-      body,
-      first,
-      "check_available_bid_total",
-      stats.check_available_bid_total);
+    append_json_stat(body, first, "check_available_bid_total", stats.check_available_bid_total);
     append_json_stat(
       body,
       first,
@@ -72,52 +64,23 @@ namespace
       "check_available_bid_in_progress",
       stats.check_available_bid_in_progress);
     append_json_stat(body, first, "reserve_bid_total", stats.reserve_bid_total);
-    append_json_stat(
-      body,
-      first,
-      "reserve_bid_total_time",
-      stats.reserve_bid_total_time);
-    append_json_stat(
-      body,
-      first,
-      "reserve_bid_in_progress",
-      stats.reserve_bid_in_progress);
+    append_json_stat(body, first, "reserve_bid_total_time", stats.reserve_bid_total_time);
+    append_json_stat(body, first, "reserve_bid_in_progress", stats.reserve_bid_in_progress);
     append_json_stat(body, first, "confirm_bid_total", stats.confirm_bid_total);
-    append_json_stat(
-      body,
-      first,
-      "confirm_bid_total_time",
-      stats.confirm_bid_total_time);
-    append_json_stat(
-      body,
-      first,
-      "confirm_bid_in_progress",
-      stats.confirm_bid_in_progress);
+    append_json_stat(body, first, "confirm_bid_total_time", stats.confirm_bid_total_time);
+    append_json_stat(body, first, "confirm_bid_in_progress", stats.confirm_bid_in_progress);
     append_json_stat(body, first, "add_amount_total", stats.add_amount_total);
-    append_json_stat(
-      body,
-      first,
-      "add_amount_total_time",
-      stats.add_amount_total_time);
-    append_json_stat(
-      body,
-      first,
-      "add_amount_in_progress",
-      stats.add_amount_in_progress);
+    append_json_stat(body, first, "add_amount_total_time", stats.add_amount_total_time);
+    append_json_stat(body, first, "add_amount_in_progress", stats.add_amount_in_progress);
     append_json_stat(body, first, "batch_total", stats.batch_total);
-    append_json_stat(
-      body,
-      first,
-      "batch_total_time",
-      stats.batch_total_time);
+    append_json_stat(body, first, "batch_total_time", stats.batch_total_time);
     append_json_stat(body, first, "batch_in_progress", stats.batch_in_progress);
   }
 }
 
 BillingServerApp_::BillingServerApp_() /*throw(eh::Exception)*/
   : Logging::LoggerCallbackHolder(
-      Logging::Logger_var(new Logging::OStream::Logger(
-        Logging::OStream::Config(std::cerr))),
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
       "BillingServerApp_", ASPECT, 0)
 {}
 
@@ -156,8 +119,7 @@ BillingServerApp_::main(int argc, char** argv)
         throw Exception(error_handler.text(error_string));
       }
 
-      configuration_ = ConfigPtr(new BillingServerConfigType(
-        ad_configuration->BillingServer()));
+      configuration_ = ConfigPtr(new BillingServerConfigType(ad_configuration->BillingServer()));
     }
     catch(const xml_schema::parsing& e)
     {
@@ -183,8 +145,7 @@ BillingServerApp_::main(int argc, char** argv)
     // Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -233,8 +194,7 @@ BillingServerApp_::main(int argc, char** argv)
         4);
       http_server->add_handler(
         "/stats",
-        [grpc_adapter](
-          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        [grpc_adapter](const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           std::string body = "{";
           bool first = true;
@@ -264,23 +224,17 @@ BillingServerApp_::main(int argc, char** argv)
   }
   catch(const Exception& e)
   {
-    logger()->sstream(Logging::Logger::CRITICAL,
-      ASPECT,
-      "ADS-IMPL-58") << FUN <<
+    logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-58") << FUN <<
       ": Got BillingServerApp_::Exception: " << e.what();
   }
   catch(const CORBA::SystemException& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<
       ": Got CORBA::SystemException: " << e;
   }
   catch(const eh::Exception& e)
   {
-    logger()->sstream(Logging::Logger::EMERGENCY,
-      ASPECT,
-      "ADS-IMPL-59") << FUN <<
+    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<
       ": Got eh::Exception: " << e.what();
   }
 }

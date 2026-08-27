@@ -78,8 +78,7 @@ namespace CorbaAlgs
     return ret;
   }
 
-  static_assert(Generics::Time::TIME_PACK_LEN == 8,
-    "Unexpected TIME_PACK_LEN value");
+  static_assert(Generics::Time::TIME_PACK_LEN == 8, "Unexpected TIME_PACK_LEN value");
 
   inline
   Generics::Time
@@ -101,10 +100,9 @@ namespace CorbaAlgs
   unpack_user_id(const CORBACommons::UserIdInfo& uid)
     /*throw(eh::Exception)*/
   {
-    if(uid.length())
+    if (uid.length())
     {
-      return AdServer::Commons::UserId(
-        uid.get_buffer(), uid.get_buffer() + uid.length());
+      return AdServer::Commons::UserId(uid.get_buffer(), uid.get_buffer() + uid.length());
     }
     else
     {
@@ -151,7 +149,7 @@ namespace CorbaAlgs
   AdServer::Commons::Optional<DecimalType>
   unpack_optional_decimal(const CORBACommons::DecimalInfo& dec)
   {
-    if(dec.length())
+    if (dec.length())
     {
       DecimalType ret;
       assert(DecimalType::PACK_SIZE == dec.length());
@@ -181,11 +179,10 @@ namespace CorbaAlgs
 
   template<typename DecimalType>
   CORBACommons::OptionalDecimalInfo
-  pack_optional_decimal(
-    const AdServer::Commons::Optional<DecimalType>& dec)
+  pack_optional_decimal(const AdServer::Commons::Optional<DecimalType>& dec)
   {
     CORBACommons::OptionalDecimalInfo ret;
-    if(dec.present())
+    if (dec.present())
     {
       ret.length(DecimalType::PACK_SIZE);
       dec->pack(ret.get_buffer());
@@ -224,14 +221,14 @@ namespace CorbaAlgs
   {
     std::size_t dist = std::distance(begin, end);
     target_seq.length(dist);
-    if(dist>0)
+    if (dist>0)
     {
       SourceIteratorType it = begin;
       target_seq[0] = *it++;
       CORBA::ULong i = 1;
-      while(it!=end)
+      while (it!=end)
       {
-        if(!(target_seq[i - 1] == *it))
+        if (!(target_seq[i - 1] == *it))
         {
           target_seq[i++] = *it;
         }
@@ -248,8 +245,7 @@ namespace CorbaAlgs
     const SourceSeqType& source_seq,
     TargetContainerType& target_cont) /*throw(CORBA::SystemException)*/
   {
-    std::insert_iterator<TargetContainerType> ins_it(
-      target_cont, target_cont.end());
+    std::insert_iterator<TargetContainerType> ins_it(target_cont, target_cont.end());
 
     for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
     {
@@ -265,7 +261,7 @@ namespace CorbaAlgs
     const SourceSeqType& source_seq,
     InsertIteratorType ins_it) /*throw(CORBA::SystemException)*/
   {
-    for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+    for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
     {
       *ins_it = convert_type_adapter(source_seq[i]);
       ++ins_it;
@@ -281,11 +277,11 @@ namespace CorbaAlgs
     TargetType& target_seq,
     bool add = false) /*throw(CORBA::SystemException)*/
   {
-    if(add)
+    if (add)
     {
       CORBA::ULong prev_len = target_seq.length();
       target_seq.length(prev_len + source_seq.length());
-      for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+      for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
       {
         target_seq[prev_len + i] = source_seq[i];
       }
@@ -293,7 +289,7 @@ namespace CorbaAlgs
     else
     {
       target_seq.length(source_seq.length());
-      for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+      for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
       {
         target_seq[i] = source_seq[i];
       }
@@ -301,15 +297,12 @@ namespace CorbaAlgs
   }
 
   template<typename SourceSeqType>
-  void print_sequence(
-    std::ostream& out,
-    const SourceSeqType& source_seq,
-    const char* delim = ",")
+  void print_sequence(std::ostream& out, const SourceSeqType& source_seq, const char* delim = ",")
     /*throw(CORBA::SystemException)*/
   {
-    for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+    for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         out << delim;
       }
@@ -352,9 +345,9 @@ namespace CorbaAlgs
     const char* delim = ",")
     /*throw(CORBA::SystemException)*/
   {
-    for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+    for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         out << delim;
       }
@@ -373,9 +366,9 @@ namespace CorbaAlgs
     const char* field_delim = " : ")
     /*throw(CORBA::SystemException)*/
   {
-    for(CORBA::ULong i = 0; i < source_seq.length(); ++i)
+    for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
     {
-      if(i != 0)
+      if (i != 0)
       {
         out << delim;
       }
@@ -386,9 +379,7 @@ namespace CorbaAlgs
 
   inline
   void
-  convert_mem_buf(
-    CORBACommons::OctSeq& oct_seq,
-    const Generics::MemBuf& mem_buf)
+  convert_mem_buf(CORBACommons::OctSeq& oct_seq, const Generics::MemBuf& mem_buf)
     /*throw(Exception)*/
   {
     try
@@ -415,9 +406,7 @@ namespace CorbaAlgs
 
   template<typename ULongSeqType, typename DecimalType>
   void
-  pack_decimal_into_seq(
-    ULongSeqType& seq,
-    const DecimalType& value)
+  pack_decimal_into_seq(ULongSeqType& seq, const DecimalType& value)
   {
     const unsigned long EL_NUMBER = DecimalType::PACK_SIZE / 4 +
       (DecimalType::PACK_SIZE % 4 ? 1 : 0);
@@ -428,7 +417,7 @@ namespace CorbaAlgs
     CORBA::ULong pos = seq.length();
     seq.length(pos + EL_NUMBER + 1);
     seq[pos] = 0;
-    for(CORBA::ULong i = 0; i < EL_NUMBER; ++i)
+    for (CORBA::ULong i = 0; i < EL_NUMBER; ++i)
     {
       seq[pos + i + 1] = buf[i];
     }
@@ -436,10 +425,7 @@ namespace CorbaAlgs
 
   template<typename ULongSeqType, typename DecimalType>
   void
-  unpack_decimal_from_seq(
-    DecimalType& value,
-    const ULongSeqType& seq,
-    CORBA::ULong pos)
+  unpack_decimal_from_seq(DecimalType& value, const ULongSeqType& seq, CORBA::ULong pos)
   {
     const unsigned long EL_NUMBER = DecimalType::PACK_SIZE / 4 +
       (DecimalType::PACK_SIZE % 4 ? 1 : 0);
@@ -447,7 +433,7 @@ namespace CorbaAlgs
 
     assert(seq.length() - pos == EL_NUMBER);
 
-    for(CORBA::ULong i = 0; i < EL_NUMBER; ++i)
+    for (CORBA::ULong i = 0; i < EL_NUMBER; ++i)
     {
       buf[i] = seq[pos + i];
     }

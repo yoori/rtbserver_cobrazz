@@ -5,14 +5,14 @@ use warnings;
 use DB::Defaults;
 use DB::Util;
 
-# Case1. Add action & link to CCG 
+# Case1. Add action & link to CCG
 sub add_action
 {
   my ($self, $namespace) = @_;
-  
+
   my $ns = $namespace->sub_namespace("ADDACTION");
- 
-  my $campaign = $ns->create(DisplayCampaign => { 
+
+  my $campaign = $ns->create(DisplayCampaign => {
     name => 'Display' });
 
   $ns->output("CCG", $campaign->{ccg_id});
@@ -21,11 +21,11 @@ sub add_action
   $ns->output("URL", "http:\\www.addaction.com");
 }
 
-# Case2. Unlink action from CCG 
+# Case2. Unlink action from CCG
 sub unlink_action
 {
   my ($self, $namespace) = @_;
-  
+
   my $ns = $namespace->sub_namespace("UNLINKACTION");
 
   my $advertiser = $ns->create(Account => {
@@ -42,13 +42,13 @@ sub unlink_action
     url => "http:\\www.unlinkaction2.com",
     account_id => $advertiser});
 
-  my $campaign1 = $ns->create(DisplayCampaign => { 
+  my $campaign1 = $ns->create(DisplayCampaign => {
     name => 'Display-1',
     account_id => $advertiser,
     action_id => [$action1, $action2]
  });
 
-  my $campaign2 = $ns->create(DisplayCampaign => { 
+  my $campaign2 = $ns->create(DisplayCampaign => {
     name => 'Display-2',
     account_id => $advertiser,
     action_id => [$action1, $action2]
@@ -60,11 +60,11 @@ sub unlink_action
   $ns->output("ACTION2", $action2);
 }
 
-# Case3. Action linked to inactive CCG 
+# Case3. Action linked to inactive CCG
 sub inactive_ccg
 {
   my ($self, $namespace) = @_;
-  
+
   my $ns = $namespace->sub_namespace("INACTIVECCG");
 
   my $advertiser = $ns->create(Account => {

@@ -9,16 +9,14 @@ using namespace AdServer::CampaignSvcs;
 std::ostream&
 print_bid_result(std::ostream& ostr, const BillingContainer::BidResult& bid_result)
 {
-  ostr << "available = " << bid_result.available <<
-    ", goal_ctr = " << bid_result.goal_ctr;
+  ostr << "available = " << bid_result.available << ", goal_ctr = " << bid_result.goal_ctr;
   return ostr;
 }
 
 bool
 imp_limits_test()
 {
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
   std::string storage_root = "./tmp/BillingContainerTest";
 
@@ -78,7 +76,7 @@ imp_limits_test()
     print_bid_result(std::cout, check_available_bid_res) << std::endl;
   }
 
-  for(int i = 0; i < 1001; ++i)
+  for (int i = 0; i < 1001; ++i)
   {
     AdServer::CampaignSvcs::RevenueDecimal acc_amount(false, 10, 0);
     AdServer::CampaignSvcs::RevenueDecimal cmp_amount(false, 10, 0);
@@ -94,20 +92,19 @@ imp_limits_test()
       false // forced
       );
 
-    if(i == 0 || i >= 999)
+    if (i == 0 || i >= 999)
     {
       std::cout << "confirm #" << i << ": ";
       print_bid_result(std::cout, confirm_bid_res) <<
         ", acc_amount(reminder) = " << acc_amount <<
         ", cmp_amount(reminder) = " << cmp_amount <<
-        ", imp(reminder) = " << imp.str() <<
-        ", click(reminder) = " << click.str() << std::endl;
+        ", imp(reminder) = " << imp.str() << ", click(reminder) = " << click.str() << std::endl;
     }
   }
 
   bid.time = bid.time + Generics::Time::ONE_DAY;
 
-  for(int i = 1001; i < 1802; ++i)
+  for (int i = 1001; i < 1802; ++i)
   {
     AdServer::CampaignSvcs::RevenueDecimal acc_amount(false, 10, 0);
     AdServer::CampaignSvcs::RevenueDecimal cmp_amount(false, 10, 0);
@@ -123,14 +120,13 @@ imp_limits_test()
       false // forced
       );
 
-    if(i == 1001 || i >= 1800 - 1)
+    if (i == 1001 || i >= 1800 - 1)
     {
       std::cout << "confirm #" << i << ": ";
       print_bid_result(std::cout, confirm_bid_res) <<
         ", acc_amount(reminder) = " << acc_amount <<
         ", cmp_amount(reminder) = " << cmp_amount <<
-        ", imp(reminder) = " << imp.str() <<
-        ", click(reminder) = " << click.str() << std::endl;
+        ", imp(reminder) = " << imp.str() << ", click(reminder) = " << click.str() << std::endl;
     }
   }
 

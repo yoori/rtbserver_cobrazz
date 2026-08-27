@@ -30,19 +30,19 @@ sub init
   my $russian_url3 = $domain_2 . "/wiki/" .
       qq[\xd0\x97\xd0\xb0\xd0\xb3\xd0\xbb\xd0\xb0\xd0\xb2\xd0\xbd\xd0\xb0\xd1\x8f_\xd1\x81\xd1\x82\xd1\x80\xd0\xb0\xd0\xbd\xd0\xb8\xd1\x86\xd0\xb0];
   # Url with russian 'anchor' word
-  my $russian_url4 = $domain_1 . "/path?p2=a#" . 
+  my $russian_url4 = $domain_1 . "/path?p2=a#" .
       qq[\xd1\x8f\xd0\xba\xd0\xbe\xd1\x80\xd1\x8c];
 
   # Urls with korean 'image' word
   my $korean_url =  $domain . "/Path?" .
       qq[\xec\x98\x81\xec\x83\x81];
-  
+
   my $channel = $ns->create(
     DB::BehavioralChannel->blank(
       name => 1,
-      url_list =>  
-        "\"" . $domain . "\"\n" . 
-        "\"a." . uc($domain) . "\"\n" . 
+      url_list =>
+        "\"" . $domain . "\"\n" .
+        "\"a." . uc($domain) . "\"\n" .
         "\"" . uc($domain) . "/path\"\n" .
         "\"a." . uc($domain) . "/PATH\"\n" .
         "\"" . $domain . "/path/page\"\n" .
@@ -56,8 +56,8 @@ sub init
         "\"" . $domain_2 . "/path?p1=a#%D1%8F%D0%BA%D0%BE%D1%80%D1%8C\"\n" .
         "\"" . $russian_url3 . "\"\n" .
         "\"" . $russian_url4 . "\"\n" .
-        "\"http://" . $domain . 
-        "/oiinternet/staticContent.do?path=/html/torpedo-cobrar\"", 
+        "\"http://" . $domain .
+        "/oiinternet/staticContent.do?path=/html/torpedo-cobrar\"",
         account_id => $account,
         behavioral_parameters => [
           DB::BehavioralChannel::BehavioralParameter->blank(

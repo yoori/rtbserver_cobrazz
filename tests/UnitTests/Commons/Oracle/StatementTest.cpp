@@ -35,12 +35,10 @@ namespace
   Generics::AppUtils::StringOption password(DEFAULT_PASSWORD);
 
   const char DEFAULT_QUERY[] = "";
-  Generics::AppUtils::StringOption query(
-    DEFAULT_QUERY);
+  Generics::AppUtils::StringOption query(DEFAULT_QUERY);
 
   const char DEFAULT_SQL[] = "";
-  Generics::AppUtils::StringOption sql(
-    DEFAULT_SQL);
+  Generics::AppUtils::StringOption sql(DEFAULT_SQL);
 
   Generics::AppUtils::Option<unsigned long> opt_execute_timeout;
 
@@ -100,8 +98,7 @@ main(int argc, char* argv[]) noexcept
           Commons::Oracle::Environment::EM_THREADED_MUTEXED |
           Commons::Oracle::Environment::EM_OBJECT));
 
-    Generics::Time execute_timeout(
-      opt_execute_timeout.installed() ? *opt_execute_timeout : 0);
+    Generics::Time execute_timeout(opt_execute_timeout.installed() ? *opt_execute_timeout : 0);
 
     Commons::Oracle::Connection_var connection =
       occi_environment->create_connection(
@@ -118,20 +115,18 @@ main(int argc, char* argv[]) noexcept
     {
       status = DO_QUERY;
       // perform query and fetch all data
-      Commons::Oracle::Statement_var sql_query =
-        connection->create_statement((*query).c_str());
+      Commons::Oracle::Statement_var sql_query = connection->create_statement((*query).c_str());
 
-      Commons::Oracle::ResultSet_var rs =
-        sql_query->execute_query();
+      Commons::Oracle::ResultSet_var rs = sql_query->execute_query();
 
       while (rs->next());
     }
+
     if (sql.installed())
     {
       status = DO_SQL;
       // perform sql script
-      Commons::Oracle::Statement_var sql_statement =
-        connection->create_statement((*sql).c_str());
+      Commons::Oracle::Statement_var sql_statement = connection->create_statement((*sql).c_str());
 
       sql_statement->execute();
     }
@@ -142,6 +137,7 @@ main(int argc, char* argv[]) noexcept
     {
       std::cerr << "Failure with query:\n" << *query << std::endl;
     }
+
     if (status == DO_SQL)
     {
       std::cerr << "Failure with SQL:\n" << *sql << std::endl;

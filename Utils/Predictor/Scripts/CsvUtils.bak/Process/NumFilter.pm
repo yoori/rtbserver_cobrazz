@@ -18,7 +18,7 @@ sub process
 {
   my ($self, $row) = @_;
 
-  if(Scalar::Util::looks_like_number($row->[$self->{field_}]))
+  if (Scalar::Util::looks_like_number($row->[$self->{field_}]))
   {
     return $row;
   }

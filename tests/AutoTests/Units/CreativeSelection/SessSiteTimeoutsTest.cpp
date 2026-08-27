@@ -1,10 +1,7 @@
 
 #include "SessSiteTimeoutsTest.hpp"
 
-REFLECT_UNIT(SessSiteTimeoutsTest) (
-  "CreativeSelection",
-  AUTO_TEST_FAST
-);
+REFLECT_UNIT(SessSiteTimeoutsTest) ("CreativeSelection", AUTO_TEST_FAST);
 
 struct SessSiteTimeoutsTest::Request
 {
@@ -168,37 +165,24 @@ SessSiteTimeoutsTest::run_test()
   no_track = fetch_string("no_track_words").c_str();
   no_adv = fetch_string("no_adv_words").c_str();
 
-  AUTOTEST_CASE(
-    testcase(NOADS_TIMEOUT),
-    "Site with noads_timeout.");
+  AUTOTEST_CASE(testcase(NOADS_TIMEOUT), "Site with noads_timeout.");
 
-  AUTOTEST_CASE(
-    testcase(NOADS_TIMEOUT_TEXT),
-    "Site with noads_timeout TA.");
+  AUTOTEST_CASE(testcase(NOADS_TIMEOUT_TEXT), "Site with noads_timeout TA.");
 
-  AUTOTEST_CASE(
-    testcase(ZERO_TIMEOUT),
-    "Site without noads_timeout.");
+  AUTOTEST_CASE(testcase(ZERO_TIMEOUT), "Site without noads_timeout.");
 
-  AUTOTEST_CASE(
-    testcase(SPECIAL_EFFECTS),
-    "No adv & No track.");
+  AUTOTEST_CASE(testcase(SPECIAL_EFFECTS), "No adv & No track.");
 
-  AUTOTEST_CASE(
-    testcase(RON),
-    "RON case.");
+  AUTOTEST_CASE(testcase(RON), "RON case.");
 
-  AUTOTEST_CASE(
-    merge_users(),
-    "Merge users.");
+  AUTOTEST_CASE(merge_users(), "Merge users.");
 
   return true;
 }
 
 
 template <size_t COUNT>
-void SessSiteTimeoutsTest::testcase(
-  const Request (&requests)[COUNT])
+void SessSiteTimeoutsTest::testcase(const Request (&requests)[COUNT])
 {
   AdClient client(AdClient::create_user(this));
   for (size_t i = 0; i <  COUNT; ++i)
@@ -224,24 +208,14 @@ void SessSiteTimeoutsTest::testcase(
       std::string exp_ccid =
         requests[i].expected_ccid?
           fetch_string(requests[i].expected_ccid): "0";
-      std::string exp_tag =
-        requests[i].expected_tag?
-          fetch_string(requests[i].expected_tag): "0";
+      std::string exp_tag = requests[i].expected_tag? fetch_string(requests[i].expected_tag): "0";
 
-      SpecialEffectsChecker checker(
-        client,
-        request,
-        exp_ccid,
-        requests[i].effects);
+      SpecialEffectsChecker checker(client, request, exp_ccid, requests[i].effects);
+
+      FAIL_CONTEXT(checker.check(), "Ccid check#" + strof(i));
 
       FAIL_CONTEXT(
-        checker.check(),
-        "Ccid check#" + strof(i));
-
-      FAIL_CONTEXT(
-        AutoTest::equal_checker(
-          exp_tag,
-          checker.client().debug_info.tag_id).check(),
+        AutoTest::equal_checker(exp_tag, checker.client().debug_info.tag_id).check(),
         "Tag check#" + strof(i));
     }
   }
@@ -263,22 +237,14 @@ void SessSiteTimeoutsTest::merge_users()
   persistent2.process_request(request);
 
   // Temporary user creation
-  TemporaryAdClient temporary1(
-    TemporaryAdClient::create_user(this));
-  TemporaryAdClient temporary2(
-    TemporaryAdClient::create_user(this));
-  TemporaryAdClient temporary3(
-    TemporaryAdClient::create_user(this));
+  TemporaryAdClient temporary1(TemporaryAdClient::create_user(this));
+  TemporaryAdClient temporary2(TemporaryAdClient::create_user(this));
+  TemporaryAdClient temporary3(TemporaryAdClient::create_user(this));
 
   request.debug_time = now - SESSION_TIMEOUT -1;
-  temporary1.process_request(
-    NSLookupRequest().
-      debug_time(now + SESSION_TIMEOUT - 1));
-  temporary2.process_request(
-    NSLookupRequest().
-      debug_time(now + SESSION_TIMEOUT - 1));
-  temporary3.process_request(
-    NSLookupRequest().debug_time(now));
+  temporary1.process_request(NSLookupRequest(). debug_time(now + SESSION_TIMEOUT - 1));
+  temporary2.process_request(NSLookupRequest(). debug_time(now + SESSION_TIMEOUT - 1));
+  temporary3.process_request(NSLookupRequest().debug_time(now));
   persistent4.process_request(request);
 
   request.debug_time = now + SESSION_TIMEOUT + 1;
@@ -289,30 +255,22 @@ void SessSiteTimeoutsTest::merge_users()
   persistent3.merge(temporary2, request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC/MERGE"),
-      persistent1.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC/MERGE"), persistent1.debug_info.ccid).check(),
     "Ccid check (temporary#1 keep session opened)");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("CC/MERGE"),
-      persistent3.debug_info.ccid).check(),
+    AutoTest::equal_checker(fetch_string("CC/MERGE"), persistent3.debug_info.ccid).check(),
     "Ccid check (temporary#2 keep session opened)");
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      persistent4.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", persistent4.debug_info.ccid).check(),
     "Ccid check (noads_timeout works "
     "still work for user#4)");
 
   persistent2.process_request(request);
 
   FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      "0",
-      persistent2.debug_info.ccid).check(),
+    AutoTest::equal_checker("0", persistent2.debug_info.ccid).check(),
     "Ccid check (noads_timeout works "
     "still work for user#2)");
 }

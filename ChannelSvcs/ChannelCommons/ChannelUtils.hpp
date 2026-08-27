@@ -8,9 +8,7 @@
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include<Language/SegmentorCommons/SegmentorInterface.hpp>
 
-namespace AdServer
-{
-namespace ChannelSvcs
+namespace AdServer::ChannelSvcs
 {
   typedef const String::AsciiStringManip::Char2Category<',', '\n'>
     MatchBreakSeparators;
@@ -19,20 +17,17 @@ namespace ChannelSvcs
 
   //stl types
   template<class SEQ, class OUT>
-  void trace_sequence(
-    const char* description,
-    const SEQ& seq,
-    OUT& out)
+  void trace_sequence(const char* description, const SEQ& seq, OUT& out)
     /*throw(eh::Exception)*/
   {
-    if(seq.empty())
+    if (seq.empty())
     {
       return;
     }
     out << description << ": ";
-    for(typename SEQ::const_iterator it = seq.begin(); it != seq.end(); it++)
+    for (typename SEQ::const_iterator it = seq.begin(); it != seq.end(); it++)
     {
-      if(it != seq.begin())
+      if (it != seq.begin())
       {
         out << ',';
       }
@@ -75,7 +70,7 @@ namespace ChannelSvcs
           splitter(!separators ? String::SubString() : in);
         //should be enough memory for any result of parsing
         //only one allocation
-        if(!separators)
+        if (!separators)
         {
           make_split = true;
           token = in;
@@ -84,34 +79,35 @@ namespace ChannelSvcs
         {
           make_split = splitter.get_token(token);
         }
-        while(make_split)
+        while (make_split)
         {
-          if(mode == PM_SIMPLIFY)
+          if (mode == PM_SIMPLIFY)
           {
             Language::Trigger::normalize_phrase(token, subword, segmentor);
             token = subword;
           }
           String::StringManip::Splitter<MatchSeparators> splitter2(token);
           positions.push_back(match_words.data_holder_.length());
-          while(splitter2.get_token(parsed_token))
+          while (splitter2.get_token(parsed_token))
           {
-            if(parsed_token.length() <= TriggerParser::TriggerParser::MAX_TRIGGER_LENGTH)
+            if (parsed_token.length() <= TriggerParser::TriggerParser::MAX_TRIGGER_LENGTH)
             {
               match_words.data_holder_.append(parsed_token.data(), parsed_token.length());
               match_words.data_holder_.push_back(' ');
               positions.push_back(match_words.data_holder_.length());
             }
-            else if(exact_words)
+            else if (exact_words)
             {
               exact_words->clear();
               exact_words = nullptr;
             }
           }
-          if(exact_words)
+
+          if (exact_words)
           {
             auto it = positions.begin();
             auto pos = *it;
-            for(++it; it != positions.end(); ++it)
+            for (++it; it != positions.end(); ++it)
             {
               exact_words->emplace_back(match_words.data_holder_, pos, *it - pos - 1);
               pos = *it;
@@ -127,5 +123,3 @@ namespace ChannelSvcs
       }
     }
 }
-}
-

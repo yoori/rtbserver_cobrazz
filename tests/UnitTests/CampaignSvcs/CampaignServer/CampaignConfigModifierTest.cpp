@@ -25,8 +25,7 @@ AccountDef_var create_base_account(unsigned long id)
   return p_acc;
 }
 
-Campaign_var create_base_campaign(
-  unsigned long campaign_id, unsigned long account_id)
+Campaign_var create_base_campaign(unsigned long campaign_id, unsigned long account_id)
 {
   Campaign_var campaign = new CampaignDef();
 
@@ -114,9 +113,9 @@ public:
   {
     StatMap::iterator sit = timed_stats_.find(now);
 
-    if(sit != timed_stats_.end())
+    if (sit != timed_stats_.end())
     {
-      if(stat)
+      if (stat)
       {
 //#define PRINT_STATS
 #ifdef PRINT_STATS
@@ -141,7 +140,7 @@ public:
       return sit->second;
     }
 
-    if(stat)
+    if (stat)
     {
       stat->check_time = now;
       return Stat_var(ReferenceCounting::add_ref(stat));
@@ -185,23 +184,21 @@ bool check_statuses(
   int etalon_statuses_size)
 {
   bool res = true;
-  for(int i = 0; i < etalon_statuses_size; ++i)
+  for (int i = 0; i < etalon_statuses_size; ++i)
   {
     CampaignMap::ActiveMap::const_iterator cmp_it =
       campaign_config.campaigns.active().find(etalon_statuses[i].id);
-    if(cmp_it == campaign_config.campaigns.active().end())
+    if (cmp_it == campaign_config.campaigns.active().end())
     {
-      std::cerr << "Campaign #" << etalon_statuses[i].id << " not found" <<
-        std::endl;
+      std::cerr << "Campaign #" << etalon_statuses[i].id << " not found" << std::endl;
       res = false;
     }
-    else if(cmp_it->second->eval_status != etalon_statuses[i].status)
+    else if (cmp_it->second->eval_status != etalon_statuses[i].status)
     {
       std::cerr << "Campaign #" <<
         etalon_statuses[i].id << " have incorrect status: '" <<
         cmp_it->second->eval_status << "' instead '" <<
-        etalon_statuses[i].status << "'" <<
-        std::endl;
+        etalon_statuses[i].status << "'" << std::endl;
       res = false;
     }
   }
@@ -214,19 +211,19 @@ bool check_tag_deliveries(
   const TagDeliveryMap& etalon_tag_deliveries,
   const TagDeliveryMap& tag_deliveries)
 {
-  if(etalon_tag_deliveries.size() != tag_deliveries.size() ||
+  if (etalon_tag_deliveries.size() != tag_deliveries.size() ||
      !std::equal(etalon_tag_deliveries.begin(),
        etalon_tag_deliveries.end(),
        tag_deliveries.begin()))
   {
     std::cerr << error_prefix << ", unexpected tag deliveries: ";
-    for(TagDeliveryMap::const_iterator td_it = tag_deliveries.begin();
+    for (TagDeliveryMap::const_iterator td_it = tag_deliveries.begin();
       td_it != tag_deliveries.end(); ++td_it)
     {
       std::cerr << " (" << td_it->first << ", " << td_it->second << ")";
     }
     std::cerr << "  instead: ";
-    for(TagDeliveryMap::const_iterator td_it = etalon_tag_deliveries.begin();
+    for (TagDeliveryMap::const_iterator td_it = etalon_tag_deliveries.begin();
       td_it != etalon_tag_deliveries.end(); ++td_it)
     {
       std::cerr << " (" << td_it->first << ", " << td_it->second << ")";
@@ -244,8 +241,7 @@ int acc_budgets_test()
 
   int res = 0;
 
-  Generics::Time now(String::SubString("2011-04-02 22:31:30"),
-    "%Y-%m-%d %H:%M:%S");
+  Generics::Time now(String::SubString("2011-04-02 22:31:30"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
 
@@ -263,8 +259,7 @@ int acc_budgets_test()
   Campaign_var cmp2 = create_base_campaign(2, 2);
   campaign_config->campaigns.activate(2, cmp2);
 
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
   TestStatSource_var inc_stat_source(new TestStatSource);
 
@@ -301,8 +296,7 @@ int acc_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' }, { 2, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #1 failed" << std::endl;
       ++res;
@@ -314,8 +308,7 @@ int acc_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' }, { 2, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #2 failed" << std::endl;
       ++res;
@@ -327,8 +320,7 @@ int acc_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' }, { 2, 'I' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #3 failed" << std::endl;
       ++res;
@@ -400,8 +392,7 @@ int simple_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' }, { 2, 'A' } };
 
-    if(!check_statuses(
-         *campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #1 failed" << std::endl;
       ++res;
@@ -413,8 +404,7 @@ int simple_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' }, { 2, 'I' } };
 
-    if(!check_statuses(
-         *campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #2 failed" << std::endl;
       ++res;
@@ -432,14 +422,10 @@ int dynamic_cmp_budgets_test()
 
   CampaignConfig_var campaign_config(new CampaignConfig());
 
-  campaign_config->accounts.activate(
-    1,
-    create_base_account(1));
+  campaign_config->accounts.activate(1, create_base_account(1));
 
-  Generics::Time now(String::SubString("2011-04-02 22:31:30"),
-    "%Y-%m-%d %H:%M:%S");
-  Generics::Time date_end(String::SubString("2011-04-07 22:31:30"),
-    "%Y-%m-%d %H:%M:%S");
+  Generics::Time now(String::SubString("2011-04-02 22:31:30"), "%Y-%m-%d %H:%M:%S");
+  Generics::Time date_end(String::SubString("2011-04-07 22:31:30"), "%Y-%m-%d %H:%M:%S");
 
   Campaign_var cmp1 = create_base_campaign(1, 1);
   cmp1->campaign_delivery_limits.budget = RevenueDecimal(false, 11, 0);
@@ -448,8 +434,7 @@ int dynamic_cmp_budgets_test()
   cmp1->campaign_delivery_limits.delivery_pacing = 'D';
   campaign_config->campaigns.activate(1, cmp1);
 
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
+  Logging::Logger_var logger(new Logging::OStream::Logger(Logging::OStream::Config(std::cout)));
 
   TestStatSource_var inc_stat_source(new TestStatSource);
 
@@ -491,8 +476,7 @@ int dynamic_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #1 failed" << std::endl;
       ++res;
@@ -504,8 +488,7 @@ int dynamic_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #2 failed" << std::endl;
       ++res;
@@ -517,8 +500,7 @@ int dynamic_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #3 failed" << std::endl;
       ++res;
@@ -530,8 +512,7 @@ int dynamic_cmp_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #4 failed" << std::endl;
       ++res;
@@ -547,8 +528,7 @@ int simple_ccg_budgets_test()
 
   int res = 0;
 
-  Generics::Time now(String::SubString("2011-04-02 22:31:30"),
-    "%Y-%m-%d %H:%M:%S");
+  Generics::Time now(String::SubString("2011-04-02 22:31:30"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
 
@@ -608,8 +588,7 @@ int simple_ccg_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' }, { 2, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #1 failed" << std::endl;
       ++res;
@@ -621,8 +600,7 @@ int simple_ccg_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' }, { 2, 'I' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #2 failed" << std::endl;
       ++res;
@@ -634,8 +612,7 @@ int simple_ccg_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'A' }, { 2, 'A' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #3 failed" << std::endl;
       ++res;
@@ -647,8 +624,7 @@ int simple_ccg_budgets_test()
   {
     const CheckCampaignStatus CHECK[] = { { 1, 'I' }, { 2, 'I' } };
 
-    if(!check_statuses(*campaign_config,
-         CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
+    if (!check_statuses(*campaign_config, CHECK, sizeof(CHECK) / sizeof(CHECK[0])))
     {
       std::cerr << TEST_NAME << ": step #4 failed" << std::endl;
       ++res;
@@ -666,8 +642,7 @@ int ccg_delivery_tags_test()
 
   int res = 0;
 
-  Generics::Time now(String::SubString("2011-04-02 22:30:00"),
-    "%Y-%m-%d %H:%M:%S");
+  Generics::Time now(String::SubString("2011-04-02 22:30:00"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
   campaign_config->master_stamp = now;
@@ -743,9 +718,8 @@ int ccg_delivery_tags_test()
   campaign_config_modifier->update(campaign_config, now);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
       std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
@@ -794,17 +768,14 @@ int ccg_delivery_tags_test()
     inc_stat_source->add(now + Generics::Time::ONE_HOUR, stat_1);
   }
 
-  campaign_config_modifier->update(
-    campaign_config, now + Generics::Time::ONE_HOUR);
+  campaign_config_modifier->update(campaign_config, now + Generics::Time::ONE_HOUR);
 
   {
     // no delivery changes
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
-      std::cerr << TEST_NAME << ": Campaign #1 not found" <<
-        std::endl;
+      std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
     }
     else
@@ -852,16 +823,13 @@ int ccg_delivery_tags_test()
     inc_stat_source->add(now + Generics::Time::ONE_HOUR * 2, stat_1);
   }
 
-  campaign_config_modifier->update(
-    campaign_config, now + Generics::Time::ONE_HOUR * 2);
+  campaign_config_modifier->update(campaign_config, now + Generics::Time::ONE_HOUR * 2);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
-      std::cerr << TEST_NAME << ": Campaign #1 not found" <<
-        std::endl;
+      std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
     }
     else
@@ -881,16 +849,13 @@ int ccg_delivery_tags_test()
   campaign_config->master_stamp = now + Generics::Time::ONE_HOUR * 2 + 1;
   tag2->tag_pricings_timestamp = campaign_config->master_stamp;
 
-  campaign_config_modifier->update(
-    campaign_config, now + Generics::Time::ONE_HOUR * 2 + 1);
+  campaign_config_modifier->update(campaign_config, now + Generics::Time::ONE_HOUR * 2 + 1);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
-      std::cerr << TEST_NAME << ": Campaign #1 not found" <<
-        std::endl;
+      std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
     }
     else
@@ -916,12 +881,9 @@ int one_hour_dynamic_test()
 
   int res = 0;
 
-  const Generics::Time now(String::SubString("2011-04-02 22:03:00"),
-    "%Y-%m-%d %H:%M:%S");
-  const Generics::Time STEP2_TIME(String::SubString("2011-04-02 22:32:00"),
-    "%Y-%m-%d %H:%M:%S");
-  const Generics::Time STEP3_TIME(String::SubString("2011-04-02 22:50:00"),
-    "%Y-%m-%d %H:%M:%S");
+  const Generics::Time now(String::SubString("2011-04-02 22:03:00"), "%Y-%m-%d %H:%M:%S");
+  const Generics::Time STEP2_TIME(String::SubString("2011-04-02 22:32:00"), "%Y-%m-%d %H:%M:%S");
+  const Generics::Time STEP3_TIME(String::SubString("2011-04-02 22:50:00"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
   campaign_config->master_stamp = now;
@@ -990,9 +952,8 @@ int one_hour_dynamic_test()
   campaign_config_modifier->update(campaign_config, now);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
       std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
@@ -1014,12 +975,10 @@ int one_hour_dynamic_test()
   campaign_config_modifier->update(campaign_config, STEP2_TIME);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
-      std::cerr << TEST_NAME << ": Campaign #1 not found" <<
-        std::endl;
+      std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
     }
     else
@@ -1039,12 +998,10 @@ int one_hour_dynamic_test()
   campaign_config_modifier->update(campaign_config, STEP3_TIME);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
-      std::cerr << TEST_NAME << ": Campaign #1 not found" <<
-        std::endl;
+      std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
     }
     else
@@ -1070,8 +1027,7 @@ int zero_adv_amount_test()
 
   int res = 0;
 
-  const Generics::Time now(String::SubString("2011-04-02 22:32:00"),
-    "%Y-%m-%d %H:%M:%S");
+  const Generics::Time now(String::SubString("2011-04-02 22:32:00"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
   campaign_config->master_stamp = now;
@@ -1149,9 +1105,8 @@ int zero_adv_amount_test()
   campaign_config_modifier->update(campaign_config, now);
 
   {
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
       std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;
@@ -1180,8 +1135,7 @@ int exclusion_with_zero_coef_test()
 
   int res = 0;
 
-  const Generics::Time now(String::SubString("2011-04-02 22:30:00"),
-    "%Y-%m-%d %H:%M:%S");
+  const Generics::Time now(String::SubString("2011-04-02 22:30:00"), "%Y-%m-%d %H:%M:%S");
 
   CampaignConfig_var campaign_config(new CampaignConfig());
   campaign_config->master_stamp = now;
@@ -1260,21 +1214,18 @@ int exclusion_with_zero_coef_test()
 
   const unsigned long CHECKS_COUNT = 4;
 
-  for(unsigned long i = 1; i < CHECKS_COUNT; ++i)
+  for (unsigned long i = 1; i < CHECKS_COUNT; ++i)
   {
     StatSource::Stat_var empty_stat(new StatSource::Stat());
     inc_stat_source->add(now + Generics::Time::ONE_SECOND * i / 1000, empty_stat);
   }
 
-  for(unsigned long i = 0; i < CHECKS_COUNT; ++i)
+  for (unsigned long i = 0; i < CHECKS_COUNT; ++i)
   {
-    campaign_config_modifier->update(
-      campaign_config,
-      now + Generics::Time::ONE_SECOND * i / 1000);
+    campaign_config_modifier->update(campaign_config, now + Generics::Time::ONE_SECOND * i / 1000);
 
-    CampaignMap::ActiveMap::const_iterator cmp_it =
-      campaign_config->campaigns.active().find(1);
-    if(cmp_it == campaign_config->campaigns.active().end())
+    CampaignMap::ActiveMap::const_iterator cmp_it = campaign_config->campaigns.active().find(1);
+    if (cmp_it == campaign_config->campaigns.active().end())
     {
       std::cerr << TEST_NAME << ": Campaign #1 not found" << std::endl;
       res = false;

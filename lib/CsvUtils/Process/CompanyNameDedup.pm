@@ -15,7 +15,7 @@ sub new
 
   my $fields = {};
 
-  if($params{'field'} eq '*')
+  if ($params{'field'} eq '*')
   {
     $fields->{field_} = undef;
   }
@@ -25,7 +25,7 @@ sub new
     my @res_indexes;
     foreach my $index(@indexes)
     {
-      if(looks_like_number($index))
+      if (looks_like_number($index))
       {
         push(@res_indexes, $index - 1);
       }
@@ -47,7 +47,7 @@ sub process
 
   my @res_row = @$row;
 
-  if(defined($self->{field_}))
+  if (defined($self->{field_}))
   {
     foreach my $field_index(@{$self->{field_}})
     {
@@ -57,7 +57,7 @@ sub process
   }
   else
   {
-    for(my $index = 0; $index < scalar(@res_row); ++$index)
+    for (my $index = 0; $index < scalar(@res_row); ++$index)
     {
       my $value = $res_row[$index];
       $res_row[$index] = norm_array_($value);
@@ -72,27 +72,27 @@ sub norm_array_
 {
   my ($arr) = @_;
 
-  if(ref($arr) eq 'ARRAY')
+  if (ref($arr) eq 'ARRAY')
   {
     my @res_arr;
 
-    for(my $index = 0; $index < scalar(@$arr); ++$index)
+    for (my $index = 0; $index < scalar(@$arr); ++$index)
     {
       my $skip = 0;
 
-      for(my $sub_index = 0; $sub_index < scalar(@$arr); ++$sub_index)
+      for (my $sub_index = 0; $sub_index < scalar(@$arr); ++$sub_index)
       {
-        if($index != $sub_index)
+        if ($index != $sub_index)
         {
           my @left_words = split(/\s+/, $arr->[$index]);
           my @right_words = split(/\s+/, $arr->[$sub_index]);
 
           my $contains = array_contains_(\@right_words, \@left_words);
           #print "CHECK " . $arr->[$index] . " IN " . $arr->[$sub_index] . " : " . $contains . "\n";
-          if($contains != 0)
+          if ($contains != 0)
           {
             my $oth_contains = array_contains_(\@left_words, \@right_words);
-            if($oth_contains == 0 || $index < $sub_index)
+            if ($oth_contains == 0 || $index < $sub_index)
             {
               $skip = 1;
               last;
@@ -101,7 +101,7 @@ sub norm_array_
         }
       }
 
-      if($skip == 0)
+      if ($skip == 0)
       {
         push(@res_arr, $arr->[$index]);
       }
@@ -121,7 +121,7 @@ sub array_contains_
 
   foreach my $el(@$left_arr)
   {
-    if(!exists($right_hash{$el}))
+    if (!exists($right_hash{$el}))
     {
       return 0;
     }

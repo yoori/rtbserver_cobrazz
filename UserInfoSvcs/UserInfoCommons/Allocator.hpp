@@ -3,29 +3,26 @@
 #include <Generics/Allocator.hpp>
 #include <Generics/MemBuf.hpp>
 
-namespace AdServer
+namespace AdServer::UserInfoSvcs
 {
-  namespace UserInfoSvcs
+  struct MembufAllocator
   {
-    struct MembufAllocator
-    {
-      static Generics::Allocator::FixedBase_var ALLOCATOR;
-    };
+    static Generics::Allocator::FixedBase_var ALLOCATOR;
+  };
 
-    typedef Generics::MemBufTmpl<MembufAllocator> MemBuf;
-    typedef Generics::SmartMemBufTmpl<Generics::MemBuf, MembufAllocator>
-      SmartMemBuf;
-    typedef Generics::SmartMemBufTmpl<const Generics::MemBuf,
-      MembufAllocator> ConstSmartMemBuf;
+  typedef Generics::MemBufTmpl<MembufAllocator> MemBuf;
+  typedef Generics::SmartMemBufTmpl<Generics::MemBuf, MembufAllocator>
+    SmartMemBuf;
+  typedef Generics::SmartMemBufTmpl<const Generics::MemBuf,
+    MembufAllocator> ConstSmartMemBuf;
 
-    typedef Generics::SmartMemBuf* SmartMemBufPtr;
-    typedef const Generics::ConstSmartMemBuf* ConstSmartMemBufPtr;
+  typedef Generics::SmartMemBuf* SmartMemBufPtr;
+  typedef const Generics::ConstSmartMemBuf* ConstSmartMemBufPtr;
 
-    using Generics::SmartMemBuf_var;
-    using Generics::ConstSmartMemBuf_var;
-    /*
-    typedef ReferenceCounting::ConstPtr<ConstSmartMemBuf>
-      ConstSmartMemBuf_var;
-    */
-  }
+  using Generics::SmartMemBuf_var;
+  using Generics::ConstSmartMemBuf_var;
+  /*
+  typedef ReferenceCounting::ConstPtr<ConstSmartMemBuf>
+    ConstSmartMemBuf_var;
+  */
 }

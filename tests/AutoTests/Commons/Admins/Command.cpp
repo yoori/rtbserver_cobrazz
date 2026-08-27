@@ -55,8 +55,7 @@ namespace AutoTest
     cmd.clear();
     cmd.add_cmd_i(SERVICES[srv_id].admin);
     cmd.add_cmd_i(aspect);
-    for (AdminParams::const_iterator it=params.begin();
-         it != params.end(); ++it)
+    for (AdminParams::const_iterator it=params.begin(); it != params.end(); ++it)
     {
       if (it->first.empty() || *it->first.rbegin() != '=')
       {
