@@ -210,6 +210,9 @@ def prepare_train_steps(config):
         ('libsvm', 'build LibSVM'),
         ('fit', 'fit'),
       )),
+    train_step(
+      'deduplicate_feature_indexes',
+      'Remove fully duplicated feature indexes'),
     train_step('save_feature_indexes', 'Save selected feature indexes'),
     train_step(
       'release_selection_validation',
@@ -273,6 +276,9 @@ def ssp_ctr_train_steps(
         ('libsvm', 'build LibSVM'),
         ('fit', 'fit independent model'),
       )),
+    train_step(
+      'deduplicate_feature_indexes',
+      'Remove fully duplicated feature indexes'),
     train_step('save_feature_indexes', 'Save selected feature indexes'),
     train_step(
       'release_selection_validation',
@@ -393,6 +399,9 @@ def campaign_train_steps(
         ('inputs', 'build LibSVM and stable baseline'),
         ('fit', 'fit independent model'),
       )),
+    train_step(
+      'deduplicate_feature_indexes',
+      'Remove fully duplicated feature indexes'),
     train_step('save_feature_indexes', 'Save selected feature indexes'),
     train_step(
       'release_selection_validation',
@@ -911,6 +920,81 @@ def generate_libsvm(
       check=True,
       stdin=input_file,
       stdout=output_file)
+
+
+def deduplicate_feature_indexes(
+    svm_files,
+    feature_indexes,
+    work_dir,
+    dropped_features_file=None,
+    early_dropped_features_file=None,
+):
+  svm_files = [pathlib.Path(path) for path in svm_files]
+  feature_indexes = {int(index) for index in feature_indexes}
+  if not svm_files:
+    raise ValueError('At least one LibSVM file is required for deduplication')
+  if not feature_indexes:
+    raise ValueError('At least one feature index is required for deduplication')
+
+  work_dir = pathlib.Path(work_dir)
+  work_dir.mkdir(parents=True, exist_ok=True)
+  dropped_features_file = (
+    pathlib.Path(dropped_features_file)
+    if dropped_features_file is not None else None)
+  early_dropped_features_file = (
+    pathlib.Path(early_dropped_features_file)
+    if early_dropped_features_file is not None else None)
+  with tempfile.TemporaryDirectory(
+      dir=str(work_dir), prefix='feature-deduplicator.') as temp_dir_name:
+    temp_dir = pathlib.Path(temp_dir_name)
+    svm_file = temp_dir / 'source.libsvm'
+    with svm_file.open('wb') as output_file:
+      for source_file in svm_files:
+        with source_file.open('rb') as input_file:
+          shutil.copyfileobj(input_file, output_file)
+
+    input_indexes_file = temp_dir / 'input.feature-indexes'
+    with input_indexes_file.open('w') as output_file:
+      for feature_index in sorted(feature_indexes):
+        output_file.write(str(feature_index) + '\n')
+    output_indexes_file = temp_dir / 'output.feature-indexes'
+    output_dropped_features_file = temp_dir / 'dropped.feature-indexes'
+    command = [
+      'FeatureDeduplicator',
+      '--svm-file',
+      str(svm_file),
+      '--feature-indexes-file',
+      str(input_indexes_file),
+      '--output-feature-indexes-file',
+      str(output_indexes_file),
+      '--dropped-features-file',
+      str(output_dropped_features_file),
+    ]
+    if early_dropped_features_file is not None:
+      command.extend([
+        '--early-dropped-features-file',
+        str(early_dropped_features_file),
+      ])
+    subprocess.run(command, check=True)
+
+    result = set()
+    with output_indexes_file.open() as input_file:
+      for line in input_file:
+        value = line.strip()
+        if value:
+          result.add(int(value))
+    if not result:
+      raise RuntimeError('Feature deduplication produced no feature indexes')
+
+    if dropped_features_file is not None:
+      dropped_features_file.parent.mkdir(parents=True, exist_ok=True)
+      os.replace(output_dropped_features_file, dropped_features_file)
+
+  logger.info(
+    'Feature deduplication removed %d fully duplicated indexes; %d remain',
+    len(feature_indexes) - len(result),
+    len(result))
+  return result
 
 
 def stream_libsvm_chunks(
@@ -2082,6 +2166,8 @@ def generate_model_(config, in_progress_model):
       dir=str(work_dir),
       prefix='ctr-model-cycle.') as cycle_dir_name:
     cycle_dir = pathlib.Path(cycle_dir_name)
+    common_dropped_feature_indexes_file = (
+      cycle_dir / 'RImpressionTrain.feature-indexes.dropped')
     selection_validation_files, _ = prepare_validation_libsvm_sets(
       exporter,
       cycle_dir,
@@ -2128,6 +2214,13 @@ def generate_model_(config, in_progress_model):
       fit_steps=config.selection_fit_steps,
       on_fit_start=selection_fit_start,
       on_fit_end=selection_fit_end)
+    with in_progress_model.train_step(
+        'prepare', 'deduplicate_feature_indexes'):
+      feature_indexes = deduplicate_feature_indexes(
+        selection_validation_files,
+        feature_indexes,
+        cycle_dir,
+        dropped_features_file=common_dropped_feature_indexes_file)
     with in_progress_model.train_step('prepare', 'save_feature_indexes'):
       with feature_indexes_file.open('w') as output_file:
         for feature_index in sorted(feature_indexes):
@@ -2447,6 +2540,14 @@ def generate_model_(config, in_progress_model):
       on_fit_start=ssp_ctr_selection_fit_start,
       on_fit_end=ssp_ctr_selection_fit_end)
     with in_progress_model.train_step(
+        'common_ssp_ctr', 'deduplicate_feature_indexes'):
+      ssp_ctr_feature_indexes = deduplicate_feature_indexes(
+        ssp_ctr_selection_validation_files,
+        ssp_ctr_feature_indexes,
+        cycle_dir,
+        dropped_features_file=(
+          cycle_dir / 'RImpressionTrain.ssp-ctr.feature-indexes.dropped'))
+    with in_progress_model.train_step(
         'common_ssp_ctr', 'save_feature_indexes'):
       with ssp_ctr_feature_indexes_file.open('w') as output_file:
         for feature_index in sorted(ssp_ctr_feature_indexes):
@@ -2681,6 +2782,17 @@ def generate_model_(config, in_progress_model):
             fit_steps=campaign_selection_fit_steps,
             on_fit_start=selection_fit_start,
             on_fit_end=selection_fit_end))
+        with in_progress_model.train_step(
+            campaign_model_name, 'deduplicate_feature_indexes'):
+          campaign_feature_indexes = deduplicate_feature_indexes(
+            (svm_file for svm_file, _ in campaign_selection_validation_inputs),
+            campaign_feature_indexes,
+            cycle_dir,
+            dropped_features_file=(
+              cycle_dir / (
+                'campaign-' + str(campaign_id) +
+                '.feature-indexes.dropped')),
+            early_dropped_features_file=common_dropped_feature_indexes_file)
         campaign_feature_indexes_file = cycle_dir / (
           'campaign-' + str(campaign_id) + '.feature-indexes')
         with in_progress_model.train_step(

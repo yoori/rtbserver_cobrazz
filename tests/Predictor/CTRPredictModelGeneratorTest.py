@@ -67,6 +67,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertIn('feature_selection_export_001', step_ids)
     self.assertIn('feature_selection_libsvm_001', step_ids)
     self.assertIn('feature_selection_fit_001', step_ids)
+    self.assertIn('deduplicate_feature_indexes', step_ids)
     self.assertIn('selection_validation_libsvm_001', step_ids)
     self.assertNotIn('common_validation_libsvm_001', step_ids)
     self.assertNotIn('aligned_validation_denoise_libsvm_001', step_ids)
@@ -328,6 +329,57 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual(1, feature_statistics.total_impressions)
       self.assertEqual(1, feature_statistics.total_clicks)
       self.assertEqual((1, 1), feature_statistics.get(1))
+
+  def test_deduplicate_feature_indexes_merges_sources_and_preserves_drops(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      source_files = [
+        work_dir / 'first.libsvm',
+        work_dir / 'second.libsvm',
+      ]
+      source_files[0].write_text('0 1:1 2:1\n')
+      source_files[1].write_text('1 1:2 2:2 3:1\n')
+      dropped_file = work_dir / 'dropped'
+      early_dropped_file = work_dir / 'early-dropped'
+      early_dropped_file.write_text('1\n')
+      calls = []
+
+      def run(command, check):
+        self.assertTrue(check)
+        self.assertEqual('FeatureDeduplicator', command[0])
+        calls.append(command)
+        source_path = pathlib.Path(
+          command[command.index('--svm-file') + 1])
+        self.assertEqual(
+          '0 1:1 2:1\n1 1:2 2:2 3:1\n',
+          source_path.read_text())
+        indexes_path = pathlib.Path(
+          command[command.index('--feature-indexes-file') + 1])
+        self.assertEqual('1\n2\n3\n', indexes_path.read_text())
+        pathlib.Path(
+          command[command.index('--output-feature-indexes-file') + 1]
+        ).write_text('1\n3\n')
+        pathlib.Path(
+          command[command.index('--dropped-features-file') + 1]
+        ).write_text('2\n')
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE.subprocess,
+          'run',
+          side_effect=run):
+        result = TRAINER_MODULE.deduplicate_feature_indexes(
+          source_files,
+          {1, 2, 3},
+          work_dir,
+          dropped_features_file=dropped_file,
+          early_dropped_features_file=early_dropped_file)
+
+      self.assertEqual({1, 3}, result)
+      self.assertEqual('2\n', dropped_file.read_text())
+      self.assertEqual(1, len(calls))
+      self.assertEqual(
+        str(early_dropped_file),
+        calls[0][calls[0].index('--early-dropped-features-file') + 1])
 
   def test_feature_statistics_merges_chunks(self):
     with tempfile.TemporaryDirectory() as temp_dir:
