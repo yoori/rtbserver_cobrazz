@@ -15,6 +15,7 @@ SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SOURCE_ROOT / 'lib'))
 
 from rtbserver_utils.CatBoostTrainer import CatBoostTrainer
+from rtbserver_utils.CTRModelTraits import section_value
 from rtbserver_utils.CatBoostModelEvaluator import (
   ctr_threshold_statistics,
   evaluate_model,
@@ -281,15 +282,35 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual(
         '2026-08-24T12:45:00Z',
         traits['models'][2]['train_end'])
+      prepare_traits = json.loads(
+        (result_dir / traits['prepare']['artifact']).read_text())
       self.assertEqual(
         '2026-08-24T12:05:00Z',
-        traits['prepare']['train_steps'][0]['ended'])
+        section_value(
+          prepare_traits,
+          'processing_steps')[0]['ended'])
+      common_traits = json.loads(
+        (result_dir / traits['models'][0]['artifact']).read_text())
+      self.assertEqual(2, common_traits['artifact_version'])
+      self.assertEqual([
+        'properties',
+        'feature_groups',
+        'datasets',
+        'ctr_thresholds',
+        'training_report',
+        'feature_importance',
+      ], [section['id'] for section in common_traits['sections']])
+      self.assertNotIn('properties', common_traits)
+      self.assertNotIn('features_importance', common_traits)
       self.assertEqual(
         [{'train_logloss': 0.1}, {'val_logloss': 0.2}],
-        traits['models'][0]['properties'])
+        section_value(common_traits, 'properties'))
+      ssp_traits = json.loads(
+        (result_dir / traits['models'][3]['artifact']).read_text())
       self.assertEqual(
         [{'ssp_ctr_logloss': 0.0125}],
-        traits['models'][3]['properties'])
+        section_value(ssp_traits, 'properties'))
+      self.assertNotIn('properties', traits['models'][0])
 
   def test_save_campaign_manager_model(self):
     with tempfile.TemporaryDirectory() as temp_dir:

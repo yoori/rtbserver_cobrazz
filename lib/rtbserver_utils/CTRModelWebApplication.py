@@ -9,6 +9,11 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from rtbserver_utils.CTRModelRepository import ModelNotFound
+from rtbserver_utils.CTRModelTraits import (
+  SECTION_SPECS_BY_ID,
+  section_value,
+  traits_sections,
+)
 
 
 def json_dumps(value):
@@ -467,6 +472,187 @@ def render_train_steps(traits):
     ''.join(items) + '</ol></section>')
 
 
+def render_traits_sections(
+    traits,
+    component_name='model',
+  post_processing=False,
+):
+  sections = traits_sections(traits)
+
+  rendered_sections = []
+  for section in sections:
+    section_id = section.get('id')
+    title = section.get('title') or section_id
+    data = section.get('data')
+    if not isinstance(data, dict):
+      data = {}
+    specification = SECTION_SPECS_BY_ID.get(section_id)
+    content = ''
+    if specification is not None:
+      _, legacy_field, data_field = specification
+      default_value = {} if section_id == 'datasets' else []
+      section_value_data = data.get(data_field, default_value)
+      if section_id == 'datasets':
+        if not isinstance(section_value_data, dict):
+          section_value_data = {}
+      elif not isinstance(section_value_data, list):
+        section_value_data = []
+      section_traits = {
+        legacy_field: section_value_data,
+        'status': traits.get('status'),
+      }
+      if section_id == 'processing_steps':
+        content = render_train_steps(section_traits)
+      elif section_id == 'properties':
+        content = render_properties(section_traits)
+      elif section_id == 'feature_groups':
+        content = (
+          '<section class="model-section feature-groups-section">'
+          '<h3>Feature groups</h3><p>' +
+          render_feature_groups(section_traits[legacy_field]) +
+          '</p></section>')
+      elif section_id == 'datasets':
+        content = render_dataset_sizes(section_traits)
+      elif section_id == 'ctr_thresholds':
+        content = render_ctr_thresholds(section_traits)
+      elif section_id == 'training_report':
+        content = render_logloss_history(section_traits)
+      elif section_id == 'feature_importance':
+        content = (
+          '<section class="model-section feature-section">'
+          '<div class="section-title"><div><h3>Feature importance</h3>'
+          '<p>Relative contribution reported by this component.</p>'
+          '</div></div>' +
+          render_feature_importance(section_traits, component_name) +
+          '</section>')
+      elif section_id == 'post_processing_results':
+        content = render_post_processing_index({
+          **traits,
+          'targets': section_value_data,
+        })
+      if not content:
+        empty_messages = {
+          'processing_steps': 'No processing steps.',
+          'properties': 'No properties.',
+          'datasets': 'No dataset statistics.',
+          'ctr_thresholds': 'No CTR threshold results.',
+          'training_report': 'No training report.',
+        }
+        content = (
+          '<p class="empty-state section-empty">' +
+          empty_messages.get(section_id, 'No data.') + '</p>')
+    else:
+      content = (
+        '<pre class="section-json">' + html_text(json_dumps(data)) +
+        '</pre>')
+    if content:
+      rendered_sections.append((str(section_id), str(title), content))
+
+  if not rendered_sections:
+    return ''
+
+  status = traits.get('status')
+  preferred_open = (
+    'processing_steps'
+    if status in ('planned', 'training', 'interrupted') else
+    'post_processing_results'
+    if post_processing else
+    'properties')
+  if not any(item[0] == preferred_open for item in rendered_sections):
+    preferred_open = rendered_sections[0][0]
+
+  return '<div class="report-sections">' + ''.join(
+    '<details class="report-section" data-report-section '
+    'data-section-id="' + html_text(section_id) + '"' +
+    (' open' if section_id == preferred_open else '') + '>'
+    '<summary><span>' + html_text(title) + '</span>'
+    '<span class="report-section-toggle" aria-hidden="true"></span>'
+    '</summary><div class="report-section-content">' + content +
+    '</div></details>'
+    for section_id, title, content in rendered_sections
+  ) + '</div>'
+
+
+def render_post_processing_target(traits):
+  target = traits.get('target')
+  if not isinstance(target, dict):
+    target = {}
+  label = 'Campaign ' + str(
+    target.get('db_campaign_id', traits.get('name', '-')))
+  campaign_name = target.get('campaign_name')
+  if campaign_name:
+    label += ' — ' + str(campaign_name)
+  rows = []
+  for evaluation in traits.get('evaluations', []):
+    if not isinstance(evaluation, dict):
+      continue
+    model_name = str(evaluation.get('model', '-'))
+    prediction = str(evaluation.get('prediction', '-'))
+    alpha = evaluation.get('alpha')
+    logloss = evaluation.get(
+      'runtime_logloss',
+      evaluation.get('logloss'))
+    unit_logloss = evaluation.get('unit_weight_logloss')
+    rows.append(
+      '<tr><td><code>' + html_text(model_name) + '</code></td>'
+      '<td><code>' + html_text(prediction) + '</code></td>'
+      '<td class="metric">' + (
+        html_text(metric_decimal_text(alpha)) if alpha is not None else '-') +
+      '</td><td class="metric">' + (
+        html_text(metric_decimal_text(logloss))
+        if logloss is not None else '-') +
+      '</td><td class="metric">' + (
+        html_text(metric_decimal_text(unit_logloss))
+        if unit_logloss is not None else '-') + '</td></tr>')
+  dataset = traits.get('dataset')
+  if not isinstance(dataset, dict):
+    dataset = {}
+  table = (
+    '<div class="table-scroll"><table class="post-processing-table">'
+    '<thead><tr><th>Model</th><th>Prediction</th><th>Alpha</th>'
+    '<th>Runtime logloss</th><th>Alpha = 1 logloss</th></tr></thead>'
+    '<tbody>' + ''.join(rows) + '</tbody></table></div>'
+    if rows else
+    '<p class="empty-state">Evaluation has not completed yet.</p>')
+  return (
+    '<section class="post-processing-result"><header>'
+    '<h3>' + html_text(label) + '</h3>'
+    '<p>' + str(dataset.get('rows', traits.get('rows', 0))) + ' rows · ' +
+    str(dataset.get('clicks', traits.get('clicks', 0))) + ' clicks</p>'
+    '</header>' + table + '</section>')
+
+
+def render_post_processing_index(traits):
+  targets = [
+    target
+    for target in traits.get('targets', [])
+    if isinstance(target, dict) and isinstance(target.get('name'), str)
+  ]
+  if not targets:
+    return '<p class="empty-state">No campaign evaluation targets.</p>'
+  links = []
+  for index, target in enumerate(targets):
+    label = 'Campaign ' + str(target.get('db_campaign_id', target['name']))
+    if target.get('campaign_name'):
+      label += ' — ' + str(target['campaign_name'])
+    links.append(
+      '<a class="post-processing-target-link" data-target="' +
+      html_text(target['name']) + '" href="#post-processing-' +
+      html_text(target['name'].replace('_', '-')) + '"' +
+      (' aria-current="page"' if index == 0 else '') +
+      ' title="' + html_text(label) + '"><span>' + html_text(label) +
+      '</span><small>' + html_text(target.get('status', 'planned')) +
+      '</small></a>')
+  return (
+    '<div class="post-processing-workspace">'
+    '<nav class="post-processing-target-nav" '
+    'aria-label="Post-processing campaign datasets">' + ''.join(links) +
+    '</nav><div class="post-processing-target-detail" '
+    'data-post-processing-detail>'
+    '<p class="empty-state">Loading campaign evaluation…</p>'
+    '</div></div>')
+
+
 def render_model_component(component_name, traits, selected=False):
   labels = {
     'common': 'Common',
@@ -488,10 +674,21 @@ def render_model_component(component_name, traits, selected=False):
     'stable_common': (
       'Published model trained with out-of-fold campaign correction as baseline.'),
   }
-  feature_groups = traits.get('feature_groups', [])
+  feature_groups = section_value(traits, 'feature_groups', [])
+  if not isinstance(feature_groups, list):
+    feature_groups = []
+  features_importance = section_value(traits, 'feature_importance', [])
+  if not isinstance(features_importance, list):
+    features_importance = []
   prepare = traits.get('kind') == 'prepare'
+  post_processing = traits.get('kind') == 'post_processing'
+  artifact_loaded = (
+    not traits.get('artifact') or traits.get('_artifact_loaded') is True)
   campaign_name = traits.get('campaign_name')
-  label = 'Prepare' if prepare else labels.get(component_name, component_name)
+  label = (
+    'Prepare' if prepare else
+    'Post processing' if post_processing else
+    labels.get(component_name, component_name))
   if traits.get('kind') == 'campaign':
     label = (
       'Campaign ' + str(traits.get('db_campaign_id', component_name)) +
@@ -501,6 +698,9 @@ def render_model_component(component_name, traits, selected=False):
     description = 'Campaign residual trained over common stable.'
   if prepare:
     description = 'Dataset preparation and feature selection.'
+  if post_processing:
+    description = (
+      'Independent per-campaign holdouts evaluated by every trained model.')
   badges = []
   if traits.get('runtime') or traits.get('published'):
     badges.append('<span class="component-published">Runtime</span>')
@@ -513,7 +713,9 @@ def render_model_component(component_name, traits, selected=False):
   article_state = '' if selected else ' hidden'
   header_and_meta = (
     '<article class="model-component" id="component-' +
-    html_text(component_name.replace('_', '-')) + '"' + article_state + '>'
+    html_text(component_name.replace('_', '-')) + '" data-component="' +
+    html_text(component_name) + '" data-loaded="' +
+    ('true' if artifact_loaded else 'false') + '"' + article_state + '>'
     '<header class="component-header"><div><span class="eyebrow">' +
     ('Training phase' if prepare else 'Model component') + '</span>'
     '<h2>' + html_text(label) + '</h2>'
@@ -540,27 +742,23 @@ def render_model_component(component_name, traits, selected=False):
     html_text(traits.get('weight', '-')) + '</code></dd></div>'
     '<div><dt>Feature groups</dt><dd>' + str(len(feature_groups)) + '</dd></div>'
     '<div><dt>Ranked features</dt><dd>' +
-    str(len(traits.get('features_importance', []))) + '</dd></div></dl>')
-  train_steps = render_train_steps(traits)
-  if prepare:
-    return header_and_meta + train_steps + '</article>'
-  if not traits.get('file'):
-    return header_and_meta + train_steps + '</article>'
+    str(traits.get(
+      'features_importance_count',
+      len(features_importance))) + '</dd></div></dl>')
+  if not artifact_loaded:
+    return (
+      header_and_meta +
+      '<p class="component-loading">Loading artifact…</p></article>')
   return (
-    header_and_meta + train_steps +
-    render_properties(traits) +
-    '<section class="component-section"><h3>Feature groups</h3><p>' +
-    render_feature_groups(feature_groups) + '</p></section>' +
-    render_dataset_sizes(traits) +
-    render_ctr_thresholds(traits) +
-    render_logloss_history(traits) +
-    '<section class="model-section feature-section"><div class="section-title">'
-    '<div><h3>Feature importance</h3>'
-    '<p>Relative contribution reported by this component.</p></div></div>' +
-    render_feature_importance(traits, component_name) + '</section></article>')
+    header_and_meta +
+    render_traits_sections(
+      traits,
+      component_name,
+      post_processing=post_processing) +
+    '</article>')
 
 
-def render_model_collection(components, prepare=None):
+def render_model_collection(components, prepare=None, post_processing=None):
   component_items = [
     (name, traits)
     for name, traits in components.items()
@@ -571,7 +769,12 @@ def render_model_collection(components, prepare=None):
     prepare_traits = dict(prepare)
     prepare_traits['kind'] = 'prepare'
     prepare_items.append(('prepare', prepare_traits))
-  all_items = prepare_items + component_items
+  post_processing_items = []
+  if isinstance(post_processing, dict):
+    post_processing_traits = dict(post_processing)
+    post_processing_traits['kind'] = 'post_processing'
+    post_processing_items.append(('post_processing', post_processing_traits))
+  all_items = prepare_items + component_items + post_processing_items
   if not all_items:
     return ''
 
@@ -601,6 +804,7 @@ def render_model_collection(components, prepare=None):
     current = ' aria-current="page"' if selected else ''
     campaign = traits.get('kind') == 'campaign'
     prepare_link = traits.get('kind') == 'prepare'
+    post_processing_link = traits.get('kind') == 'post_processing'
     campaign_name = traits.get('campaign_name')
     if campaign:
       label = 'Campaign ' + str(traits.get('db_campaign_id', name))
@@ -608,6 +812,8 @@ def render_model_collection(components, prepare=None):
         label += ' — ' + str(campaign_name)
     elif prepare_link:
       label = 'Prepare'
+    elif post_processing_link:
+      label = 'Post processing'
     else:
       label = name.replace('_', ' ')
     link_class = 'component-link component-link-campaign' if campaign else 'component-link'
@@ -616,6 +822,7 @@ def render_model_collection(components, prepare=None):
       '<a class="' + link_class + '" data-model="' + html_text((
         name + ' ' + str(traits.get('db_campaign_id', '')) +
         ' ' + str(campaign_name or '')).lower()) +
+      '" data-component="' + html_text(name) +
       '" data-status="' + html_text(traits.get('status', '')) +
       '" data-runtime="' + ('true' if traits.get('runtime') else 'false') +
       '" href="#component-' + html_text(name.replace('_', '-')) + '"' +
@@ -662,6 +869,8 @@ def render_model_collection(components, prepare=None):
     render_group('Prepare', prepare_items, 'prepare') +
     render_group('Core models', common_items, 'core') +
     render_group('Campaign models', campaign_items, 'campaign') +
+    render_group(
+      'Post processing', post_processing_items, 'post_processing') +
     '</aside><section class="component-detail">' +
     ''.join(
       render_model_component(name, traits, name == selected_name)
@@ -708,8 +917,15 @@ def render_model_details(properties):
       '<div><dt>Interrupted models</dt><dd>' +
       str(summary.get('interrupted_models_count', 0)) + '</dd></div></dl>')
     prepare = traits.get('prepare')
-    if components or isinstance(prepare, dict):
-      details += render_model_collection(components, prepare)
+    post_processing = traits.get('post_processing')
+    if (
+        components or
+        isinstance(prepare, dict) or
+        isinstance(post_processing, dict)):
+      details += render_model_collection(
+        components,
+        prepare,
+        post_processing)
     return details
 
   model_id = summary['id']
@@ -733,12 +949,14 @@ def render_model_details(properties):
       'dataset_sizes',
       'ctr_thresholds',
       'properties',
+      'sections',
       'status',
       'train_start',
       'train_end',
       'components',
       'models',
-      'prepare')
+      'prepare',
+      'post_processing')
   }
   extra_traits_html = ''
   if extra_traits:
@@ -770,22 +988,22 @@ def render_model_details(properties):
     '<section class="model-section"><h2>Runtime feature groups</h2><p>' +
     render_feature_groups(feature_groups) + '</p></section>')
 
-  if components or isinstance(traits.get('prepare'), dict):
+  if (
+      components or
+      isinstance(traits.get('prepare'), dict) or
+      isinstance(traits.get('post_processing'), dict)):
     return (
       details_prefix +
-      render_model_collection(components, traits.get('prepare')) +
+      render_model_collection(
+        components,
+        traits.get('prepare'),
+        traits.get('post_processing')) +
       extra_traits_html)
 
   return (
-    details_prefix
-    + render_properties(traits)
-    + render_dataset_sizes(traits)
-    + render_ctr_thresholds(traits)
-    + render_logloss_history(traits) +
-    '<section class="model-section feature-section"><div class="section-title">'
-    '<div><h2>Feature importance</h2>'
-    '<p>Relative contribution reported by the trained model.</p></div></div>'
-    + render_feature_importance(traits) + '</section>' + extra_traits_html)
+    details_prefix +
+    render_traits_sections(traits) +
+    extra_traits_html)
 
 
 def render_index_page(models, selected_properties=None):
@@ -901,6 +1119,7 @@ def render_index_page(models, selected_properties=None):
     .component-link-campaign span { font-size: 12px; }
     .component-nav a small { color: var(--muted); font-size: 10px; }
     .component-detail { min-width: 0; }
+    .component-loading { padding: 24px 0; color: var(--muted); }
     .model-component { margin: 0; padding: 28px; border: 1px solid var(--line);
       scroll-margin-top: 20px; }
     [hidden] { display: none !important; }
@@ -922,6 +1141,32 @@ def render_index_page(models, selected_properties=None):
     .component-meta div { padding: 16px 16px 16px 0; }
     .component-meta dt { color: var(--muted); font-size: 12px; }
     .component-meta dd { margin: 4px 0 0; }
+    .report-sections { display: grid; gap: 10px; padding-top: 22px; }
+    .report-section { border: 1px solid var(--line); background: #fff; }
+    .report-section > summary { display: flex; align-items: center;
+      justify-content: space-between; gap: 16px; padding: 15px 17px;
+      cursor: pointer; font-size: 15px; font-weight: 700;
+      list-style: none; user-select: none; }
+    .report-section > summary::-webkit-details-marker { display: none; }
+    .report-section > summary:hover { background: var(--panel); }
+    .report-section-toggle { width: 9px; height: 9px;
+      border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+      transform: rotate(45deg); transition: transform 120ms ease; }
+    .report-section[open] .report-section-toggle { transform: rotate(225deg); }
+    .report-section-content { border-top: 1px solid var(--line); }
+    .report-section-content > .model-section,
+    .report-section-content > .component-section { padding: 20px 18px;
+      border-bottom: 0; }
+    .report-section-content > .train-steps-section > h3,
+    .report-section-content > .properties-section > h3,
+    .report-section-content > .feature-groups-section > h3,
+    .report-section-content > .dataset-section > h2,
+    .report-section-content > .threshold-section .section-title h2,
+    .report-section-content > .logloss-section .section-title h2,
+    .report-section-content > .feature-section .section-title h3 {
+      display: none; }
+    .section-empty { margin: 0; padding: 18px; }
+    .section-json { margin: 0; padding: 18px; overflow: auto; }
     .component-section { padding: 22px 0; border-bottom: 1px solid var(--line); }
     .component-section h3, .model-component h3 { margin: 0; font-size: 16px; }
     .train-steps { display: grid; gap: 0; margin: 18px 0 0; padding: 0;
@@ -960,6 +1205,24 @@ def render_index_page(models, selected_properties=None):
     .logloss-table { max-width: 620px; }
     .dataset-table { margin-top: 18px; max-width: 620px; }
     .properties-table { margin-top: 18px; max-width: 620px; }
+    .post-processing-workspace { display: grid;
+      grid-template-columns: 240px minmax(0, 1fr); gap: 22px; padding-top: 22px; }
+    .post-processing-target-nav { display: grid; align-content: start; gap: 3px;
+      max-height: 60vh; overflow: auto; border: 1px solid var(--line);
+      background: var(--panel); padding: 8px; }
+    .post-processing-target-link { display: grid;
+      grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 9px 8px;
+      border-left: 3px solid transparent; color: inherit; text-decoration: none; }
+    .post-processing-target-link:hover { background: #e9edef; }
+    .post-processing-target-link[aria-current="page"] {
+      border-left-color: var(--accent); background: var(--selected); }
+    .post-processing-target-link span { overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; font-size: 12px; }
+    .post-processing-target-link small { color: var(--muted); font-size: 10px; }
+    .post-processing-target-detail { min-width: 0; }
+    .post-processing-result header { padding-bottom: 14px; }
+    .post-processing-result header p { margin: 6px 0 0; color: var(--muted); }
+    .post-processing-table { min-width: 760px; }
     .threshold-table { margin-top: 18px; max-width: 900px; }
     .feature-tools { display: grid; grid-template-columns: auto minmax(220px, 440px) 1fr;
       gap: 12px; align-items: center; margin: 20px 0 12px; }
@@ -989,6 +1252,8 @@ def render_index_page(models, selected_properties=None):
       .component-workspace { grid-template-columns: 1fr; }
       .component-sidebar { position: static; max-height: none; }
       .component-group { max-height: 250px; overflow: auto; }
+      .post-processing-workspace { grid-template-columns: 1fr; }
+      .post-processing-target-nav { max-height: 240px; }
     }
     @media (max-width: 820px) {
       .shell { height: auto; min-height: 100vh; grid-template-columns: 1fr;
@@ -1015,15 +1280,67 @@ def render_index_page(models, selected_properties=None):
     <main''' + main_attributes + '>' + content + r'''</main>
   </div>
   <script>
+    const reportSectionStoragePrefix = 'ctr-model-viewer:sections:v1:';
+
+    const reportSectionComponent = section =>
+      section.closest('.model-component')?.dataset.component || 'model';
+
+    const reportSectionIdentity = section =>
+      reportSectionComponent(section) + ':' + section.dataset.sectionId;
+
+    const reportSectionStorageKey = section => {
+      const main = section.closest('#model-details');
+      return reportSectionStoragePrefix + encodeURIComponent(
+        main?.dataset.modelId || '') + ':' + encodeURIComponent(
+        reportSectionComponent(section));
+    };
+
+    const readReportSectionState = key => {
+      try {
+        const value = JSON.parse(sessionStorage.getItem(key) || '{}');
+        return value && typeof value === 'object' ? value : {};
+      } catch (error) {
+        return {};
+      }
+    };
+
+    const writeReportSectionState = (key, value) => {
+      try {
+        sessionStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        // Storage may be disabled; native details behavior still works.
+      }
+    };
+
+    const initializeReportSections = (root = document) => {
+      for (const section of root.querySelectorAll('[data-report-section]')) {
+        if (section.dataset.bound === 'true') {
+          continue;
+        }
+        section.dataset.bound = 'true';
+        const storageKey = reportSectionStorageKey(section);
+        const storedState = readReportSectionState(storageKey);
+        if (Object.prototype.hasOwnProperty.call(
+            storedState, section.dataset.sectionId)) {
+          section.open = Boolean(storedState[section.dataset.sectionId]);
+        }
+        section.addEventListener('toggle', () => {
+          const currentState = readReportSectionState(storageKey);
+          currentState[section.dataset.sectionId] = section.open;
+          writeReportSectionState(storageKey, currentState);
+        });
+      }
+    };
+
     const initializeFeatureFilters = (root = document) => {
       for (const filter of root.querySelectorAll('.feature-filter')) {
         if (filter.dataset.bound === 'true') {
           continue;
         }
         filter.dataset.bound = 'true';
-        const table = document.getElementById(filter.dataset.table);
+        const table = root.querySelector('#' + filter.dataset.table);
         const rows = Array.from(table.querySelectorAll('tbody tr'));
-        const count = document.getElementById(filter.dataset.count);
+        const count = root.querySelector('#' + filter.dataset.count);
         const applyFilter = () => {
         const query = filter.value.trim().toLowerCase();
         let visible = 0;
@@ -1040,6 +1357,123 @@ def render_index_page(models, selected_properties=None):
       }
     };
 
+    const initializePostProcessing = (root = document) => {
+      const pendingLoads = [];
+      for (const detail of root.querySelectorAll('[data-post-processing-detail]')) {
+        const workspace = detail.closest('.post-processing-workspace');
+        if (!workspace || workspace.dataset.bound === 'true') {
+          continue;
+        }
+        workspace.dataset.bound = 'true';
+        const links = Array.from(
+          workspace.querySelectorAll('.post-processing-target-link'));
+        const main = detail.closest('#model-details');
+        const loadTarget = async link => {
+          const targetName = link.dataset.target;
+          detail.dataset.loadingTarget = targetName;
+          for (const item of links) {
+            if (item === link) {
+              item.setAttribute('aria-current', 'page');
+            } else {
+              item.removeAttribute('aria-current');
+            }
+          }
+          detail.innerHTML = '<p class="empty-state">Loading campaign evaluation…</p>';
+          try {
+            const response = await fetch(
+              '/models/' + encodeURIComponent(main.dataset.modelId) +
+              '/post-processing/' + encodeURIComponent(targetName),
+              {cache: 'no-store', headers: {'Accept': 'text/html'}});
+            if (!response.ok) {
+              throw new Error('HTTP ' + response.status);
+            }
+            const responseHtml = await response.text();
+            if (detail.dataset.loadingTarget === targetName) {
+              detail.innerHTML = responseHtml;
+            }
+          } catch (error) {
+            if (detail.dataset.loadingTarget === targetName) {
+              detail.textContent = 'Unable to load campaign evaluation: ' + error;
+            }
+          }
+        };
+        for (const link of links) {
+          link.addEventListener('click', event => {
+            event.preventDefault();
+            loadTarget(link);
+          });
+        }
+        const selected = links.find(
+          link => main._postProcessingTarget &&
+            link.dataset.target === main._postProcessingTarget) ||
+          links.find(link => link.getAttribute('aria-current') === 'page') ||
+          links[0];
+        if (selected) {
+          pendingLoads.push(loadTarget(selected));
+        }
+        const targetNav = workspace.querySelector('.post-processing-target-nav');
+        if (targetNav && main._postProcessingScroll) {
+          targetNav.scrollTop = main._postProcessingScroll;
+        }
+      }
+      return Promise.all(pendingLoads);
+    };
+
+    const componentLoads = new WeakMap();
+
+    const loadComponentArtifact = async (root, link) => {
+      const article = root.querySelector(link.hash);
+      if (!article) {
+        return;
+      }
+      if (article.dataset.loaded === 'loading') {
+        return componentLoads.get(article);
+      }
+      if (article.dataset.loaded !== 'false') {
+        await initializePostProcessing(root);
+        return;
+      }
+      article.dataset.loaded = 'loading';
+      const main = article.closest('#model-details');
+      const load = (async () => {
+        try {
+          const response = await fetch(
+            '/models/' + encodeURIComponent(main.dataset.modelId) +
+            '/components/' + encodeURIComponent(link.dataset.component),
+            {cache: 'no-store', headers: {'Accept': 'text/html'}});
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+          const template = document.createElement('template');
+          template.innerHTML = (await response.text()).trim();
+          const replacement = template.content.firstElementChild;
+          if (!replacement) {
+            throw new Error('Empty component response');
+          }
+          replacement.hidden = link.getAttribute('aria-current') !== 'page';
+          article.replaceWith(replacement);
+          if (main._featureFilterState) {
+            for (const filter of replacement.querySelectorAll('.feature-filter')) {
+              if (main._featureFilterState.has(filter.id)) {
+                filter.value = main._featureFilterState.get(filter.id);
+              }
+            }
+          }
+          initializeReportSections(replacement);
+          initializeFeatureFilters(replacement);
+          await initializePostProcessing(replacement);
+        } catch (error) {
+          article.dataset.loaded = 'false';
+          const loading = article.querySelector('.component-loading');
+          if (loading) {
+            loading.textContent = 'Unable to load artifact: ' + error;
+          }
+        }
+      })();
+      componentLoads.set(article, load);
+      return load;
+    };
+
     const initializeComponentWorkspace = (
         root = document,
         preferredHash = window.location.hash) => {
@@ -1049,10 +1483,10 @@ def render_index_page(models, selected_properties=None):
       }
       componentFilter.dataset.bound = 'true';
       const links = Array.from(root.querySelectorAll('.component-link'));
-      const articles = Array.from(root.querySelectorAll('.model-component'));
-      const statusFilter = document.getElementById('component-status-filter');
-      const count = document.getElementById('component-count');
+      const statusFilter = root.querySelector('#component-status-filter');
+      const count = root.querySelector('#component-count');
       const groups = Array.from(root.querySelectorAll('.component-group'));
+      let selectedComponentLoad = Promise.resolve();
 
       const selectComponent = (link, updateHash = true) => {
         for (const item of links) {
@@ -1062,12 +1496,14 @@ def render_index_page(models, selected_properties=None):
             item.removeAttribute('aria-current');
           }
         }
-        for (const article of articles) {
+        for (const article of root.querySelectorAll('.model-component')) {
           article.hidden = '#' + article.id !== link.hash;
         }
         if (updateHash) {
           history.replaceState(null, '', link.hash);
         }
+        selectedComponentLoad = loadComponentArtifact(root, link);
+        return selectedComponentLoad;
       };
 
       const applyComponentFilter = () => {
@@ -1098,7 +1534,7 @@ def render_index_page(models, selected_properties=None):
           if (firstVisible) {
             selectComponent(firstVisible, false);
           } else {
-            for (const article of articles) {
+            for (const article of root.querySelectorAll('.model-component')) {
               article.hidden = true;
             }
           }
@@ -1119,10 +1555,18 @@ def render_index_page(models, selected_properties=None):
         selectComponent(hashLink, false);
       }
       applyComponentFilter();
+      const selectedLink = links.find(
+        link => link.getAttribute('aria-current') === 'page');
+      if (selectedLink) {
+        selectedComponentLoad = loadComponentArtifact(root, selectedLink);
+      }
+      return selectedComponentLoad;
     };
 
+    initializeReportSections();
     initializeFeatureFilters();
     initializeComponentWorkspace();
+    initializePostProcessing();
 
     const refreshInterval = 5000;
     const retryInterval = 15000;
@@ -1160,22 +1604,36 @@ def render_index_page(models, selected_properties=None):
       const selectedComponent = main.querySelector(
         '.component-link[aria-current="page"]');
       const componentSidebar = main.querySelector('.component-sidebar');
+      const selectedPostProcessingTarget = main.querySelector(
+        '.post-processing-target-link[aria-current="page"]');
+      const postProcessingNav = main.querySelector(
+        '.post-processing-target-nav');
       return {
         componentHash: selectedComponent ? selectedComponent.hash : '',
         componentFilter: main.querySelector('#component-filter')?.value || '',
         componentStatus: (
           main.querySelector('#component-status-filter')?.value || 'all'),
         componentScroll: componentSidebar?.scrollTop || 0,
+        postProcessingTarget: (
+          selectedPostProcessingTarget?.dataset.target || ''),
+        postProcessingScroll: postProcessingNav?.scrollTop || 0,
         featureFilters: new Map(Array.from(
           main.querySelectorAll('.feature-filter'),
           filter => [filter.id, filter.value])),
+        reportSections: new Map(Array.from(
+          main.querySelectorAll('[data-report-section]'),
+          section => [reportSectionIdentity(section), section.open])),
+        modelListScroll: document.querySelector('.sidebar')?.scrollTop || 0,
         mainScroll: main.scrollTop,
         windowX: window.scrollX,
         windowY: window.scrollY,
       };
     };
 
-    const restoreUiState = (main, state) => {
+    const prepareUiState = async (main, state) => {
+      main._featureFilterState = state.featureFilters;
+      main._postProcessingTarget = state.postProcessingTarget;
+      main._postProcessingScroll = state.postProcessingScroll;
       const componentFilter = main.querySelector('#component-filter');
       const statusFilter = main.querySelector('#component-status-filter');
       if (componentFilter) {
@@ -1189,11 +1647,30 @@ def render_index_page(models, selected_properties=None):
           filter.value = state.featureFilters.get(filter.id);
         }
       }
+      initializeReportSections(main);
       initializeFeatureFilters(main);
-      initializeComponentWorkspace(main, state.componentHash);
+      await initializeComponentWorkspace(main, state.componentHash);
+      for (const section of main.querySelectorAll('[data-report-section]')) {
+        const identity = reportSectionIdentity(section);
+        if (state.reportSections.has(identity)) {
+          section.open = state.reportSections.get(identity);
+        }
+      }
+    };
+
+    const restoreScrollState = (main, state) => {
       const componentSidebar = main.querySelector('.component-sidebar');
       if (componentSidebar) {
         componentSidebar.scrollTop = state.componentScroll;
+      }
+      const postProcessingNav = main.querySelector(
+        '.post-processing-target-nav');
+      if (postProcessingNav) {
+        postProcessingNav.scrollTop = state.postProcessingScroll;
+      }
+      const modelListSidebar = document.querySelector('.sidebar');
+      if (modelListSidebar) {
+        modelListSidebar.scrollTop = state.modelListScroll;
       }
       main.scrollTop = state.mainScroll;
       window.scrollTo(state.windowX, state.windowY);
@@ -1247,6 +1724,7 @@ def render_index_page(models, selected_properties=None):
             nextMain.dataset.stateSignature) {
           const state = uiState(currentMain);
           const importedMain = document.importNode(nextMain, true);
+          await prepareUiState(importedMain, state);
           currentMain.replaceWith(importedMain);
 
           const currentList = document.getElementById('model-list-container');
@@ -1261,7 +1739,8 @@ def render_index_page(models, selected_properties=None):
               '/?model=' + encodeURIComponent(modelId) +
                 window.location.hash);
           }
-          restoreUiState(importedMain, state);
+          restoreScrollState(importedMain, state);
+          requestAnimationFrame(() => restoreScrollState(importedMain, state));
         }
         updateRefreshMessage('Up to date · next refresh in 5 s');
         scheduleRefresh(refreshInterval);
@@ -1354,6 +1833,26 @@ def create_application(repository):
         offset,
         limit,
         component))
+
+  @application.get(
+    '/models/{model_id}/components/{component}',
+    include_in_schema=False)
+  async def model_component(model_id: str, component: str):
+    traits = call_repository(
+      repository.component_traits,
+      model_id,
+      component)
+    return HTMLResponse(render_model_component(component, traits, True))
+
+  @application.get(
+    '/models/{model_id}/post-processing/{target_name}',
+    include_in_schema=False)
+  async def post_processing_target(model_id: str, target_name: str):
+    traits = call_repository(
+      repository.post_processing_target,
+      model_id,
+      target_name)
+    return HTMLResponse(render_post_processing_target(traits))
 
   @application.get('/models/{model_id}/config')
   async def model_config(model_id: str):

@@ -17,6 +17,7 @@ import tempfile
 import time
 
 from rtbserver_utils.CatBoostTrainer import CatBoostTrainer
+from rtbserver_utils.CTRModelTraits import traits_with_sections
 from rtbserver_utils.CTRPredictModelGeneratorConfig import load_config
 from rtbserver_utils.PostgresFeatureNameResolver import PostgresFeatureNameResolver
 from rtbserver_utils.RImpressionTrainExporter import RImpressionTrainExporter
@@ -130,6 +131,49 @@ def train_step(step_id, title):
     'started': None,
     'ended': None,
   }
+
+
+TRAITS_ARTIFACT_FIELDS = frozenset((
+  'ctr_thresholds',
+  'dataset_sizes',
+  'feature_groups',
+  'features_importance',
+  'logloss_history',
+  'properties',
+  'sections',
+  'targets',
+  'train_steps',
+))
+
+
+def traits_manifest_entry(traits, artifact):
+  result = {
+    key: value
+    for key, value in traits.items()
+    if key not in TRAITS_ARTIFACT_FIELDS
+  }
+  result['artifact'] = artifact
+  for field in (
+      'feature_groups', 'features_importance', 'targets', 'train_steps'):
+    value = traits.get(field)
+    if isinstance(value, list):
+      result[field + '_count'] = len(value)
+  current_step = next((
+    step
+    for step in traits.get('train_steps', [])
+    if (
+      isinstance(step, dict) and
+      step.get('started') is not None and
+      step.get('ended') is None)
+  ), None)
+  if current_step is None:
+    result.pop('current_step', None)
+  else:
+    result['current_step'] = {
+      key: current_step.get(key)
+      for key in ('id', 'title', 'started')
+    }
+  return result
 
 
 def indexed_train_steps(prefix, title, count, actions):
@@ -253,6 +297,7 @@ def ssp_ctr_train_steps(
         ('fit', 'fit and validate'),
       )),
     train_step('save_feature_dictionary', 'Save feature dictionary'),
+    train_step('save_model', 'Save Common SSP CTR model'),
     train_step('finalize_metrics', 'Finalize Common SSP CTR metrics'),
     train_step('release_validation', 'Release SSP CTR validation files'),
   ]
@@ -372,8 +417,27 @@ def campaign_train_steps(
         ('fit', 'fit and validate'),
       )),
     train_step('save_feature_dictionary', 'Save feature dictionary'),
+    train_step('save_model', 'Save campaign residual model'),
     train_step('finalize_metrics', 'Finalize residual metrics and weight'),
   ]
+
+
+def post_processing_train_steps(campaigns):
+  result = []
+  for campaign_id, _, _ in campaigns:
+    prefix = 'campaign_' + str(campaign_id)
+    title = 'Campaign ' + str(campaign_id)
+    for action_id, action_title in (
+        ('export', 'export independent holdout'),
+        ('common', 'evaluate common models'),
+        ('denoise', 'evaluate common + denoise'),
+        ('ssp_ctr', 'evaluate Common SSP CTR'),
+        ('campaigns', 'evaluate campaign models'),
+        ('save', 'save evaluation artifact')):
+      result.append(train_step(
+        prefix + '_' + action_id,
+        title + ': ' + action_title))
+  return result
 
 
 def fit_step_callbacks(progress, section, prefix):
@@ -442,7 +506,32 @@ class InProgressModel:
     self.model_root = pathlib.Path(model_root)
     self.path = self.model_root / ('~' + self.model_id)
     self.traits = None
-    self.prepare_steps = [dict(step) for step in (prepare_steps or [])]
+    self.prepare = {
+      'artifact_version': 2,
+      'type': 'prepare',
+      'name': 'prepare',
+      'kind': 'prepare',
+      'status': 'planned',
+      'train_steps': [dict(step) for step in (prepare_steps or [])],
+    }
+    prepare_owner_step = (
+      self.prepare['train_steps'][-1]
+      if self.prepare['train_steps'] else None)
+    self.prepare['artifact_owner'] = {
+      'section': 'prepare',
+      'step_id': (
+        prepare_owner_step.get('id')
+        if prepare_owner_step is not None else None),
+    }
+    if prepare_owner_step is not None:
+      prepare_owner_step['artifacts'] = [{
+        'type': 'prepare_report',
+        'path': 'traits/prepare.json',
+      }]
+    self.models = []
+    self.models_by_name = {}
+    self.post_processing = None
+    self.dirty_artifacts = set()
 
   def __enter__(self):
     self.model_root.mkdir(parents=True, exist_ok=True)
@@ -452,15 +541,15 @@ class InProgressModel:
         "Model directory already exists: '" + str(result_path) + "'")
     self.path.mkdir()
     try:
+      (self.path / 'traits' / 'models').mkdir(parents=True)
+      (self.path / 'traits' / 'post_processing').mkdir(parents=True)
       self.traits = {
+        'traits_version': 2,
         'status': 'in_progress',
         'train_start': self.train_start_text,
         'pid': os.getpid(),
-        'prepare': {
-          'status': 'planned',
-          'train_steps': self.prepare_steps,
-        },
       }
+      self.dirty_artifacts.add('prepare')
       self.write_traits_()
     except Exception:
       shutil.rmtree(self.path, ignore_errors=True)
@@ -468,17 +557,74 @@ class InProgressModel:
     return self
 
   def publish_model_plan(self, models, **plan_traits):
-    self.traits['models'] = [dict(model) for model in models]
+    self.models = [dict(model) for model in models]
+    for model in self.models:
+      model.setdefault('artifact_version', 2)
+      model.setdefault('type', 'model')
+      artifact_path = 'traits/models/' + model['name'] + '.json'
+      owner_step = next((
+        step
+        for step in reversed(model.get('train_steps', []))
+        if isinstance(step, dict) and step.get('id') == 'finalize_metrics'
+      ), None)
+      model['artifact_owner'] = {
+        'section': 'model',
+        'name': model['name'],
+        'step_id': owner_step.get('id') if owner_step is not None else None,
+      }
+      if owner_step is not None:
+        owner_step['artifacts'] = [{
+          'type': 'model_report',
+          'path': artifact_path,
+        }]
+    self.models_by_name = {
+      model['name']: model
+      for model in self.models
+    }
+    if len(self.models_by_name) != len(self.models):
+      raise ValueError('In-progress model names must be unique')
     campaign_models = [
       model
-      for model in models
+      for model in self.models
       if model.get('kind') == 'campaign'
     ]
     self.traits['model_plan'] = {
-      'models': len(models),
+      'models': len(self.models),
       'campaign_models': len(campaign_models),
       **plan_traits,
     }
+    self.dirty_artifacts.update(self.models_by_name)
+    self.write_traits_()
+
+  def publish_post_processing_plan(self, train_steps, targets):
+    self.post_processing = {
+      'artifact_version': 2,
+      'type': 'post_processing',
+      'name': 'post_processing',
+      'kind': 'post_processing',
+      'status': 'planned',
+      'artifact_revision': 0,
+      'artifact_owner': {'section': 'post_processing'},
+      'train_steps': [dict(step) for step in train_steps],
+      'targets': [dict(target) for target in targets],
+    }
+    for target in self.post_processing['targets']:
+      self.write_json_atomic_(self.path / target['artifact'], {
+        'artifact_version': 2,
+        'type': 'post_processing_campaign',
+        'name': target['name'],
+        'status': 'planned',
+        'target': {
+          key: target.get(key)
+          for key in (
+            'db_campaign_id',
+            'runtime_campaign_group_id',
+            'campaign_name')
+        },
+        'dataset': {},
+        'evaluations': [],
+      })
+    self.dirty_artifacts.add('post_processing')
     self.write_traits_()
 
   def start_models(self, *model_names):
@@ -503,15 +649,56 @@ class InProgressModel:
       skip_reason=reason)
 
   def model_traits(self, model_name):
-    for model in self.traits.get('models', []):
-      if model.get('name') == model_name:
-        return model
-    raise KeyError('Unknown in-progress model: ' + model_name)
+    try:
+      return self.models_by_name[model_name]
+    except KeyError:
+      raise KeyError('Unknown in-progress model: ' + model_name) from None
+
+  def prepare_traits(self):
+    return self.prepare
 
   def complete_prepare(self):
-    prepare = self.traits['prepare']
-    prepare['status'] = 'completed'
-    prepare['train_end'] = utc_now_text()
+    self.prepare['status'] = 'completed'
+    self.prepare['train_end'] = utc_now_text()
+    self.dirty_artifacts.add('prepare')
+    self.write_traits_()
+
+  def start_post_processing(self):
+    if self.post_processing is None:
+      raise RuntimeError('Post-processing plan is not published')
+    timestamp = utc_now_text()
+    self.post_processing.update(status='training', train_start=timestamp)
+    self.dirty_artifacts.add('post_processing')
+    self.write_traits_()
+    return timestamp
+
+  def complete_post_processing(self):
+    if self.post_processing is None:
+      raise RuntimeError('Post-processing plan is not published')
+    timestamp = utc_now_text()
+    self.post_processing.update(status='completed', train_end=timestamp)
+    self.dirty_artifacts.add('post_processing')
+    self.write_traits_()
+    return timestamp
+
+  def write_post_processing_target(self, target_name, traits):
+    if self.post_processing is None:
+      raise RuntimeError('Post-processing plan is not published')
+    target = next((
+      item
+      for item in self.post_processing['targets']
+      if item.get('name') == target_name
+    ), None)
+    if target is None:
+      raise KeyError('Unknown post-processing target: ' + target_name)
+    self.write_json_atomic_(
+      self.path / target['artifact'],
+      traits_with_sections(traits))
+    for field in ('status', 'started', 'ended', 'rows', 'clicks'):
+      if field in traits:
+        target[field] = traits[field]
+    self.post_processing['artifact_revision'] += 1
+    self.dirty_artifacts.add('post_processing')
     self.write_traits_()
 
   @contextlib.contextmanager
@@ -534,6 +721,7 @@ class InProgressModel:
       if target.get('status') == 'planned':
         target['status'] = 'training'
         target['train_start'] = timestamp
+    self.mark_section_dirty_(section)
     self.write_traits_()
     return timestamp
 
@@ -544,6 +732,7 @@ class InProgressModel:
       if step.get('started') is None:
         raise RuntimeError("Training step '" + step_id + "' was not started")
       step['ended'] = timestamp
+    self.mark_section_dirty_(section)
     self.write_traits_()
     return timestamp
 
@@ -552,13 +741,24 @@ class InProgressModel:
       step = self.find_step_(target, step_id)
       step['started'] = None
       step['ended'] = None
+    self.mark_section_dirty_(section)
     self.write_traits_()
 
   def step_targets_(self, section):
     if section == 'prepare':
-      return [self.traits['prepare']]
+      return [self.prepare]
+    if section == 'post_processing':
+      if self.post_processing is None:
+        raise KeyError('Post-processing plan is not published')
+      return [self.post_processing]
     model_names = (section,) if isinstance(section, str) else section
     return [self.model_traits(name) for name in model_names]
+
+  def mark_section_dirty_(self, section):
+    if isinstance(section, str):
+      self.dirty_artifacts.add(section)
+    else:
+      self.dirty_artifacts.update(section)
 
   @staticmethod
   def find_step_(target, step_id):
@@ -570,7 +770,7 @@ class InProgressModel:
   def update_models_(self, model_names, **values):
     model_names = set(model_names)
     found_names = set()
-    for model in self.traits.get('models', []):
+    for model in self.models:
       if model.get('name') in model_names:
         model.update(values)
         found_names.add(model['name'])
@@ -578,12 +778,47 @@ class InProgressModel:
     if missing_names:
       raise KeyError(
         'Unknown in-progress models: ' + ', '.join(sorted(missing_names)))
+    self.dirty_artifacts.update(model_names)
     self.write_traits_()
 
   def write_traits_(self):
-    temporary_file = self.path / '.traits.json.tmp'
-    CatBoostTrainer.write_json_(temporary_file, self.traits)
-    os.replace(temporary_file, self.path / 'traits.json')
+    for section in sorted(self.dirty_artifacts):
+      if section == 'prepare':
+        artifact = self.prepare
+        relative_path = 'traits/prepare.json'
+      elif section == 'post_processing':
+        artifact = self.post_processing
+        relative_path = 'traits/post_processing/index.json'
+      else:
+        artifact = self.model_traits(section)
+        relative_path = 'traits/models/' + section + '.json'
+      if artifact is not None:
+        self.write_json_atomic_(
+          self.path / relative_path,
+          traits_with_sections(artifact))
+    self.dirty_artifacts.clear()
+
+    self.traits['prepare'] = traits_manifest_entry(
+      self.prepare,
+      'traits/prepare.json')
+    if self.models:
+      self.traits['models'] = [
+        traits_manifest_entry(
+          model,
+          'traits/models/' + model['name'] + '.json')
+        for model in self.models
+      ]
+    if self.post_processing is not None:
+      self.traits['post_processing'] = traits_manifest_entry(
+        self.post_processing,
+        'traits/post_processing/index.json')
+    self.write_json_atomic_(self.path / 'traits.json', self.traits)
+
+  @staticmethod
+  def write_json_atomic_(path, value):
+    temporary_file = path.parent / ('.' + path.name + '.tmp')
+    CatBoostTrainer.write_json_(temporary_file, value)
+    os.replace(temporary_file, path)
 
   def __exit__(self, exception_type, exception_value, traceback):
     if exception_type is None:
@@ -596,14 +831,37 @@ class InProgressModel:
     self.traits['status'] = 'interrupted'
     self.traits['train_end'] = train_end
     self.traits['interruption_reason'] = exception_type.__name__
-    prepare = self.traits.get('prepare')
-    if isinstance(prepare, dict) and prepare.get('status') == 'training':
-      prepare['status'] = 'interrupted'
-      prepare['train_end'] = train_end
-    for model in self.traits.get('models', []):
+    if self.prepare.get('status') == 'training':
+      self.prepare['status'] = 'interrupted'
+      self.prepare['train_end'] = train_end
+      self.dirty_artifacts.add('prepare')
+    for model in self.models:
       if model.get('status') == 'training':
         model['status'] = 'interrupted'
         model['train_end'] = train_end
+        self.dirty_artifacts.add(model['name'])
+    if (
+        self.post_processing is not None and
+        self.post_processing.get('status') == 'training'):
+      self.post_processing['status'] = 'interrupted'
+      self.post_processing['train_end'] = train_end
+      for target in self.post_processing.get('targets', []):
+        if target.get('status') != 'training':
+          continue
+        target['status'] = 'interrupted'
+        target['ended'] = train_end
+        artifact_path = self.path / target['artifact']
+        try:
+          with artifact_path.open() as input_file:
+            artifact = json.load(input_file)
+          artifact['status'] = 'interrupted'
+          artifact['ended'] = train_end
+          self.write_json_atomic_(artifact_path, artifact)
+        except (OSError, TypeError, ValueError):
+          logger.exception(
+            'Failed to persist interrupted post-processing target %s',
+            target.get('name'))
+      self.dirty_artifacts.add('post_processing')
     try:
       self.write_traits_()
     except Exception:
@@ -1306,6 +1564,229 @@ def remove_training_inputs(inputs):
         pass
 
 
+def evaluate_campaign_holdout(
+    exporter,
+    work_dir,
+    campaign_id,
+    campaign_name,
+    date_from,
+    date_to,
+    rows,
+    offset_rows,
+    common_features_config_file,
+    correction_features_config_file,
+    campaign_features_config_file,
+    ssp_ctr_features_config_file,
+    common_feature_indexes_file,
+    common_model_file,
+    correction_model_file,
+    stable_model_file,
+    ssp_ctr_model_file,
+    common_trainer,
+    correction_trainer,
+    campaign_trainer,
+    ssp_ctr_trainer,
+    campaign_models,
+    progress,
+):
+  target_name = 'campaign_' + str(campaign_id)
+  step_prefix = target_name
+  artifact = {
+    'artifact_version': 2,
+    'type': 'post_processing_campaign',
+    'name': target_name,
+    'status': 'training',
+    'started': utc_now_text(),
+    'target': {
+      'db_campaign_id': campaign_id,
+      'runtime_campaign_group_id': campaign_id,
+      'campaign_name': campaign_name,
+    },
+    'dataset': {
+      'role': 'independent_holdout',
+      'used_for_training': False,
+      'rows': rows,
+      'clicks': 0,
+      'date_from': date_from,
+      'date_to': date_to,
+      'offset_rows': offset_rows,
+    },
+    'evaluations': [],
+  }
+
+  def refresh_artifact():
+    artifact['train_steps'] = [
+      dict(step)
+      for step in progress.post_processing.get('train_steps', [])
+      if step.get('id', '').startswith(step_prefix + '_')
+    ]
+    progress.write_post_processing_target(target_name, artifact)
+
+  refresh_artifact()
+  condition = (
+    '(' + exporter.validation_condition() + ') AND (' +
+    exporter.campaign_condition(campaign_id) + ')')
+  csv_chunks = exporter.export_chunks(
+    work_dir,
+    target_name + '-post-processing',
+    rows,
+    rows,
+    date_from,
+    date_to,
+    condition,
+    offset_rows=offset_rows)
+  csv_iterator = iter(csv_chunks)
+  owned_files = []
+  try:
+    with progress.train_step(
+        'post_processing', step_prefix + '_export'):
+      csv_file, exported_rows = next(csv_iterator)
+      if exported_rows != rows:
+        raise RuntimeError(
+          'Post-processing holdout for campaign ' + str(campaign_id) +
+          ' contains ' + str(exported_rows) + ' rows, expected ' + str(rows))
+    refresh_artifact()
+
+    common_svm = work_dir / (target_name + '-post-common.libsvm')
+    common_stats_file = work_dir / (target_name + '-post-common.stats')
+    common_baseline = work_dir / (target_name + '-post-common.baseline')
+    stable_baseline = work_dir / (target_name + '-post-stable.baseline')
+    owned_files.extend((
+      common_svm,
+      common_stats_file,
+      common_baseline,
+      stable_baseline,
+    ))
+    with progress.train_step(
+        'post_processing', step_prefix + '_common'):
+      generate_libsvm(
+        csv_file,
+        common_svm,
+        common_features_config_file,
+        feature_indexes_file=common_feature_indexes_file,
+        feature_stats_file=common_stats_file)
+      statistics = FeatureStatistics()
+      statistics.add_file(common_stats_file)
+      artifact['dataset']['clicks'] = statistics.total_clicks
+      artifact['clicks'] = statistics.total_clicks
+      artifact['rows'] = rows
+      artifact['evaluations'].append({
+        'model': 'common',
+        'prediction': 'sigmoid(common)',
+        'logloss': common_trainer.evaluate_model_(
+          common_model_file,
+          common_svm)['Logloss'],
+      })
+      stable_logloss = common_trainer.evaluate_model_(
+        stable_model_file,
+        common_svm)['Logloss']
+      common_trainer.predict_raw_(
+        common_model_file,
+        common_svm,
+        common_baseline)
+      common_trainer.predict_raw_(
+        stable_model_file,
+        common_svm,
+        stable_baseline)
+    remove_files((common_svm, common_stats_file))
+    refresh_artifact()
+
+    correction_svm = work_dir / (target_name + '-post-denoise.libsvm')
+    owned_files.append(correction_svm)
+    with progress.train_step(
+        'post_processing', step_prefix + '_denoise'):
+      generate_libsvm(
+        csv_file,
+        correction_svm,
+        correction_features_config_file)
+      artifact['evaluations'].extend((
+        {
+          'model': 'common_denoise',
+          'prediction': 'sigmoid(common + common_denoise)',
+          'logloss': correction_trainer.evaluate_model_(
+            correction_model_file,
+            correction_svm,
+            common_baseline)['Logloss'],
+        },
+        {
+          'model': 'common_stable',
+          'prediction': 'sigmoid(common_stable)',
+          'logloss': stable_logloss,
+        },
+      ))
+    remove_files((correction_svm, common_baseline))
+    refresh_artifact()
+
+    ssp_ctr_svm = work_dir / (target_name + '-post-ssp-ctr.libsvm')
+    owned_files.append(ssp_ctr_svm)
+    with progress.train_step(
+        'post_processing', step_prefix + '_ssp_ctr'):
+      generate_libsvm(
+        csv_file,
+        ssp_ctr_svm,
+        ssp_ctr_features_config_file)
+      artifact['evaluations'].append({
+        'model': 'common_ssp_ctr',
+        'prediction': 'sigmoid(common_ssp_ctr)',
+        'logloss': ssp_ctr_trainer.evaluate_model_(
+          ssp_ctr_model_file,
+          ssp_ctr_svm)['Logloss'],
+      })
+    remove_files((ssp_ctr_svm,))
+    refresh_artifact()
+
+    campaign_svm = work_dir / (target_name + '-post-campaign.libsvm')
+    owned_files.append(campaign_svm)
+    with progress.train_step(
+        'post_processing', step_prefix + '_campaigns'):
+      generate_libsvm(
+        csv_file,
+        campaign_svm,
+        campaign_features_config_file)
+      for model_entry in campaign_models:
+        weight = float(model_entry['traits']['weight'])
+        evaluations = campaign_trainer.evaluate_prediction_weights_(
+          model_entry['evaluation_model_file'],
+          campaign_svm,
+          stable_baseline,
+          (weight, 1.0))
+        artifact['evaluations'].append({
+          'model': model_entry['name'],
+          'prediction': (
+            'sigmoid(common_stable + alpha * ' +
+            model_entry['name'] + ')'),
+          'alpha': weight,
+          'runtime_logloss': evaluations[0]['Logloss'],
+          'unit_weight_logloss': evaluations[1]['Logloss'],
+        })
+        refresh_artifact()
+    remove_files((campaign_svm, stable_baseline))
+
+    with progress.train_step(
+        'post_processing', step_prefix + '_save'):
+      artifact['status'] = 'completed'
+      artifact['ended'] = utc_now_text()
+      artifact['produced_by_step'] = step_prefix + '_save'
+      refresh_artifact()
+    save_step = next((
+      step
+      for step in progress.post_processing['train_steps']
+      if step.get('id') == step_prefix + '_save'
+    ), None)
+    if save_step is not None:
+      save_step['artifacts'] = [{
+        'type': 'post_processing_report',
+        'path': 'traits/post_processing/' + target_name + '.json',
+      }]
+    refresh_artifact()
+    return artifact
+  finally:
+    close = getattr(csv_iterator, 'close', None)
+    if close is not None:
+      close()
+    remove_files(owned_files)
+
+
 def dataset_size(statistics):
   return {
     'rows': sum(item.total_impressions for item in statistics),
@@ -1489,6 +1970,20 @@ def generate_model_(config, in_progress_model):
     min_campaign_model_imps=config.min_campaign_model_imps,
     ssp_ctr_training_rows=available_ssp_ctr_training_rows,
     ssp_ctr_validation_rows=available_ssp_ctr_validation_rows)
+  in_progress_model.publish_post_processing_plan(
+    post_processing_train_steps(eligible_campaigns),
+    [
+      {
+        'name': 'campaign_' + str(campaign_id),
+        'status': 'planned',
+        'db_campaign_id': campaign_id,
+        'runtime_campaign_group_id': campaign_id,
+        'campaign_name': campaign_names.get(campaign_id),
+        'artifact': (
+          'traits/post_processing/campaign_' + str(campaign_id) + '.json'),
+      }
+      for campaign_id, _, _ in eligible_campaigns
+    ])
   validation_rows = min(
     config.validation_set_rows,
     available_validation_rows // validation_sets)
@@ -1772,9 +2267,12 @@ def generate_model_(config, in_progress_model):
     }
 
     stable_model_file = cycle_dir / 'common-stable.cbm'
+    correction_model_file = cycle_dir / 'common-denoise.cbm'
     with in_progress_model.train_step(
         ('common_denoise', 'common_stable'),
         'save_model'):
+      aligned_models['campaign_correction']['model'].save_model(
+        str(correction_model_file))
       aligned_models['stable_common']['model'].save_model(
         str(stable_model_file))
     with in_progress_model.train_step(
@@ -1961,6 +2459,9 @@ def generate_model_(config, in_progress_model):
       with ssp_ctr_dictionary_file.open('wb') as output_file:
         for line in sorted(ssp_ctr_dictionary_lines):
           output_file.write(line)
+    ssp_ctr_model_file = cycle_dir / 'common-ssp-ctr.cbm'
+    with in_progress_model.train_step('common_ssp_ctr', 'save_model'):
+      ssp_ctr_model.save_model(str(ssp_ctr_model_file))
     with in_progress_model.train_step(
         'common_ssp_ctr', 'finalize_metrics'):
       ssp_ctr_event_logloss = exporter.ssp_ctr_logloss(
@@ -2192,6 +2693,13 @@ def generate_model_(config, in_progress_model):
           with campaign_dictionary_file.open('wb') as output_file:
             for line in sorted(campaign_dictionary_lines):
               output_file.write(line)
+        campaign_evaluation_model_file = cycle_dir / (
+          campaign_model_name + '.cbm')
+        with in_progress_model.train_step(
+            campaign_model_name,
+            'save_model'):
+          campaign_result['model'].save_model(
+            str(campaign_evaluation_model_file))
         campaign_dataset_sizes = {
           'train': dataset_size([campaign_statistics]),
           'test': dataset_size(
@@ -2242,6 +2750,8 @@ def generate_model_(config, in_progress_model):
           'logloss_history': campaign_result['logloss_history'],
           'dataset_sizes': campaign_dataset_sizes,
           'ctr_thresholds': campaign_result['ctr_thresholds'],
+          'evaluation_model_file': campaign_evaluation_model_file,
+          'validation_rows': campaign_validation_rows,
           'traits': {
             'kind': 'campaign',
             'runtime': campaign_weight > 0,
@@ -2271,6 +2781,38 @@ def generate_model_(config, in_progress_model):
       finally:
         remove_training_inputs(campaign_selection_validation_inputs)
         remove_training_inputs(campaign_validation_inputs)
+
+    in_progress_model.start_post_processing()
+    for campaign_entry in campaign_model_entries:
+      campaign_traits = campaign_entry['traits']
+      campaign_validation_rows = campaign_entry['validation_rows']
+      evaluate_campaign_holdout(
+        exporter=exporter,
+        work_dir=cycle_dir,
+        campaign_id=campaign_traits['db_campaign_id'],
+        campaign_name=campaign_traits.get('campaign_name'),
+        date_from=date_from,
+        date_to=date_to,
+        rows=campaign_validation_rows * config.final_test_sets,
+        offset_rows=(
+          config.selection_validation_sets +
+          config.training_validation_sets) * campaign_validation_rows,
+        common_features_config_file=features_config_file,
+        correction_features_config_file=correction_features_config_file,
+        campaign_features_config_file=campaign_features_config_file,
+        ssp_ctr_features_config_file=ssp_ctr_features_config_file,
+        common_feature_indexes_file=feature_indexes_file,
+        common_model_file=common_model_file,
+        correction_model_file=correction_model_file,
+        stable_model_file=stable_model_file,
+        ssp_ctr_model_file=ssp_ctr_model_file,
+        common_trainer=trainer,
+        correction_trainer=correction_trainer,
+        campaign_trainer=campaign_model_trainer,
+        ssp_ctr_trainer=ssp_ctr_trainer,
+        campaign_models=campaign_model_entries,
+        progress=in_progress_model)
+    in_progress_model.complete_post_processing()
 
     model_entries = [
       {
@@ -2386,7 +2928,8 @@ def generate_model_(config, in_progress_model):
       staging_dir=in_progress_model.path,
       algorithm_id=in_progress_model.model_id,
       feature_name_resolver=feature_name_resolver,
-      prepare=in_progress_model.traits['prepare'],
+      prepare=in_progress_model.prepare_traits(),
+      post_processing=in_progress_model.post_processing,
       train_start=in_progress_model.train_start_text,
       train_end=train_end)
     logger.info('Generated CampaignManager model in %s', result_dir)

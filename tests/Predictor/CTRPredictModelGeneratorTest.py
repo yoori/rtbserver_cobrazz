@@ -12,6 +12,8 @@ import unittest.mock
 
 SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SOURCE_ROOT / 'lib'))
+from rtbserver_utils.CTRModelTraits import section_value
+
 MODULE_FILE = SOURCE_ROOT / 'bin' / 'CTRPredictModelGenerator.py'
 SPEC = importlib.util.spec_from_file_location(
   'ctr_predict_model_generator', MODULE_FILE)
@@ -399,19 +401,37 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         self.assertEqual('2026-08-24T16:00:00Z', campaign['train_start'])
         self.assertEqual('2026-08-24T16:05:00Z', campaign['train_end'])
         self.assertEqual('campaign_123.cbm', campaign['file'])
+        campaign_artifact_file = in_progress.path / campaign['artifact']
+        campaign_artifact = TRAINER_MODULE.json.loads(
+          campaign_artifact_file.read_text())
+        self.assertEqual([
+          'feature_groups',
+          'training_report',
+          'feature_importance',
+        ], [section['id'] for section in campaign_artifact['sections']])
+        self.assertNotIn('features_importance', campaign_artifact)
+        self.assertNotIn('logloss_history', campaign_artifact)
         self.assertEqual(
           'campaign:123',
-          campaign['features_importance'][0]['feature'])
+          section_value(
+            campaign_artifact,
+            'feature_importance')[0]['feature'])
         self.assertEqual(
           decimal.Decimal('0.00008901938322533171'),
-          TRAINER_MODULE.json.loads(
-            traits_file.read_text(),
-            parse_float=decimal.Decimal)['models'][1][
-              'features_importance'][0]['score'])
+          section_value(
+            TRAINER_MODULE.json.loads(
+              campaign_artifact_file.read_text(),
+              parse_float=decimal.Decimal),
+            'feature_importance')[0]['score'])
         self.assertIn(
           '"yes_share": 1.250000',
-          traits_file.read_text())
-        self.assertEqual(0.2, campaign['logloss_history'][0]['test'])
+          campaign_artifact_file.read_text())
+        self.assertEqual(
+          0.2,
+          section_value(
+            campaign_artifact,
+            'training_report')[0]['test'])
+        self.assertEqual(2, campaign_artifact['artifact_version'])
         self.assertFalse((in_progress.path / '.traits.json.tmp').exists())
 
       self.assertFalse(in_progress.path.exists())
@@ -446,7 +466,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
                 TRAINER_MODULE.train_step('fit_001', 'Fit 1/1'),
               ],
             }])
-            in_progress.traits['models'][0]['features_importance'] = [{
+            in_progress.model_traits('common')['features_importance'] = [{
               'score': decimal.Decimal('0.00008901938322533171'),
             }]
             with in_progress.train_step('common', 'fit_001'):
@@ -461,12 +481,15 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual('interrupted', traits['models'][0]['status'])
       self.assertEqual(
         decimal.Decimal('0.00008901938322533171'),
-        TRAINER_MODULE.json.loads(
-          (in_progress.path / 'traits.json').read_text(),
-          parse_float=decimal.Decimal)['models'][0][
-            'features_importance'][0]['score'])
+        section_value(
+          TRAINER_MODULE.json.loads(
+            (in_progress.path / traits['models'][0]['artifact']).read_text(),
+            parse_float=decimal.Decimal),
+          'feature_importance')[0]['score'])
       self.assertEqual('2026-08-24T16:05:00Z', traits['models'][0]['train_end'])
-      step = traits['models'][0]['train_steps'][0]
+      model_traits = TRAINER_MODULE.json.loads(
+        (in_progress.path / traits['models'][0]['artifact']).read_text())
+      step = section_value(model_traits, 'processing_steps')[0]
       self.assertEqual('2026-08-24T16:00:00Z', step['started'])
       self.assertIsNone(step['ended'])
 
@@ -500,9 +523,219 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
         traits = TRAINER_MODULE.json.loads(
           (in_progress.path / 'traits.json').read_text())
-        step = traits['prepare']['train_steps'][0]
+        prepare_traits = TRAINER_MODULE.json.loads(
+          (in_progress.path / traits['prepare']['artifact']).read_text())
+        step = section_value(prepare_traits, 'processing_steps')[0]
         self.assertEqual('2026-08-24T16:00:00Z', step['started'])
         self.assertEqual('2026-08-24T16:05:00Z', step['ended'])
+
+  def test_post_processing_results_are_sharded_from_manifest(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      with TRAINER_MODULE.InProgressModel(model_root) as in_progress:
+        in_progress.publish_post_processing_plan(
+          [TRAINER_MODULE.train_step(
+            'campaign_123_save',
+            'Campaign 123: save evaluation artifact')],
+          [{
+            'name': 'campaign_123',
+            'status': 'planned',
+            'db_campaign_id': 123,
+            'campaign_name': 'Campaign name',
+            'artifact': 'traits/post_processing/campaign_123.json',
+          }])
+        in_progress.write_post_processing_target('campaign_123', {
+          'name': 'campaign_123',
+          'status': 'completed',
+          'rows': 1000,
+          'clicks': 2,
+          'evaluations': [{
+            'model': 'common_stable',
+            'logloss': 0.0123,
+          }],
+        })
+
+        manifest = TRAINER_MODULE.json.loads(
+          (in_progress.path / 'traits.json').read_text())
+        self.assertNotIn('targets', manifest['post_processing'])
+        self.assertEqual(1, manifest['post_processing']['targets_count'])
+        index = TRAINER_MODULE.json.loads(
+          (in_progress.path / manifest['post_processing']['artifact'])
+          .read_text())
+        targets = section_value(index, 'post_processing_results')
+        self.assertNotIn('evaluations', targets[0])
+        target = TRAINER_MODULE.json.loads(
+          (in_progress.path / targets[0]['artifact']).read_text())
+        self.assertEqual(0.0123, target['evaluations'][0]['logloss'])
+
+  def test_campaign_holdout_records_absolute_logloss_for_every_model(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      csv_file = temp_path / 'holdout.csv'
+      csv_file.write_text('label\n1\n0\n0\n')
+
+      class Exporter:
+        @staticmethod
+        def validation_condition():
+          return 'validation'
+
+        @staticmethod
+        def campaign_condition(campaign_id):
+          return 'campaign_id = ' + str(campaign_id)
+
+        @staticmethod
+        def export_chunks(*args, **kwargs):
+          del args, kwargs
+
+          def chunks():
+            yield csv_file, 3
+
+          return chunks()
+
+      class Trainer:
+        @staticmethod
+        def evaluate_model_(model_file, svm_file, baseline_file=None):
+          del model_file, svm_file, baseline_file
+          return {'Logloss': 0.01}
+
+        @staticmethod
+        def predict_raw_(model_file, svm_file, output_file):
+          del model_file, svm_file
+          output_file.write_text('0\n0\n0\n')
+
+        @staticmethod
+        def evaluate_prediction_weights_(
+            model_file,
+            svm_file,
+            baseline_file,
+            weights,
+        ):
+          del model_file, svm_file, baseline_file
+          return [
+            {'weight': weight, 'Logloss': 0.02 + index / 100}
+            for index, weight in enumerate(weights)
+          ]
+
+      def fake_generate_libsvm(
+          csv_file,
+          svm_file,
+          features_config_file,
+          dictionary_file=None,
+          feature_indexes_file=None,
+          feature_stats_file=None,
+      ):
+        del (
+          csv_file,
+          features_config_file,
+          dictionary_file,
+          feature_indexes_file)
+        svm_file.write_text('0 1:0\n0 1:0\n1 1:0\n')
+        if feature_stats_file is not None:
+          feature_stats_file.write_text('0,3,1\n')
+
+      with TRAINER_MODULE.InProgressModel(temp_path / 'models') as progress:
+        campaigns = [(123, 100000, 3)]
+        progress.publish_post_processing_plan(
+          TRAINER_MODULE.post_processing_train_steps(campaigns),
+          [{
+            'name': 'campaign_123',
+            'status': 'planned',
+            'db_campaign_id': 123,
+            'campaign_name': 'Campaign name',
+            'artifact': 'traits/post_processing/campaign_123.json',
+          }])
+        progress.start_post_processing()
+        campaign_models = [
+          {
+            'name': 'campaign_123',
+            'evaluation_model_file': temp_path / 'campaign_123.cbm',
+            'traits': {'weight': 0.4},
+          },
+          {
+            'name': 'campaign_456',
+            'evaluation_model_file': temp_path / 'campaign_456.cbm',
+            'traits': {'weight': 0.7},
+          },
+        ]
+        with unittest.mock.patch.object(
+            TRAINER_MODULE,
+            'generate_libsvm',
+            side_effect=fake_generate_libsvm):
+          result = TRAINER_MODULE.evaluate_campaign_holdout(
+            exporter=Exporter(),
+            work_dir=temp_path,
+            campaign_id=123,
+            campaign_name='Campaign name',
+            date_from='2026-08-01',
+            date_to='2026-08-27',
+            rows=3,
+            offset_rows=6,
+            common_features_config_file=temp_path / 'common.json',
+            correction_features_config_file=temp_path / 'denoise.json',
+            campaign_features_config_file=temp_path / 'campaign.json',
+            ssp_ctr_features_config_file=temp_path / 'ssp.json',
+            common_feature_indexes_file=temp_path / 'indexes',
+            common_model_file=temp_path / 'common.cbm',
+            correction_model_file=temp_path / 'denoise.cbm',
+            stable_model_file=temp_path / 'stable.cbm',
+            ssp_ctr_model_file=temp_path / 'ssp.cbm',
+            common_trainer=Trainer(),
+            correction_trainer=Trainer(),
+            campaign_trainer=Trainer(),
+            ssp_ctr_trainer=Trainer(),
+            campaign_models=campaign_models,
+            progress=progress)
+
+        self.assertEqual(6, len(result['evaluations']))
+        self.assertEqual(1, result['dataset']['clicks'])
+        self.assertEqual(
+          {'common', 'common_denoise', 'common_stable', 'common_ssp_ctr',
+           'campaign_123', 'campaign_456'},
+          {item['model'] for item in result['evaluations']})
+        self.assertFalse(any(
+          'gain' in item
+          for item in result['evaluations']))
+        self.assertEqual(
+          0.02,
+          result['evaluations'][4]['runtime_logloss'])
+        self.assertEqual(
+          0.03,
+          result['evaluations'][4]['unit_weight_logloss'])
+
+  def test_interrupted_post_processing_target_is_persisted(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      with self.assertRaisesRegex(RuntimeError, 'post processing failed'):
+        with TRAINER_MODULE.InProgressModel(model_root) as progress:
+          progress.publish_post_processing_plan(
+            [TRAINER_MODULE.train_step(
+              'campaign_123_campaigns',
+              'Campaign 123: evaluate campaign models')],
+            [{
+              'name': 'campaign_123',
+              'status': 'planned',
+              'db_campaign_id': 123,
+              'artifact': 'traits/post_processing/campaign_123.json',
+            }])
+          progress.start_post_processing()
+          progress.write_post_processing_target('campaign_123', {
+            'name': 'campaign_123',
+            'status': 'training',
+            'evaluations': [],
+          })
+          raise RuntimeError('post processing failed')
+
+      manifest = TRAINER_MODULE.json.loads(
+        (progress.path / 'traits.json').read_text())
+      index = TRAINER_MODULE.json.loads(
+        (progress.path / manifest['post_processing']['artifact']).read_text())
+      targets = section_value(index, 'post_processing_results')
+      target = TRAINER_MODULE.json.loads(
+        (progress.path / targets[0]['artifact']).read_text())
+      self.assertEqual('interrupted', manifest['status'])
+      self.assertEqual('interrupted', index['status'])
+      self.assertEqual('interrupted', targets[0]['status'])
+      self.assertEqual('interrupted', target['status'])
 
   def test_prepare_validation_sets_streams_csv_and_collects_dataset_sizes(self):
     with tempfile.TemporaryDirectory() as temp_dir:

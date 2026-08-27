@@ -14,6 +14,8 @@ import sys
 import tempfile
 from catboost import CatBoostClassifier, Pool
 
+from rtbserver_utils.CTRModelTraits import traits_with_sections
+
 
 class CatBoostTrainer(object):
   DICTIONARY_FEATURE_NAMES = {
@@ -1091,6 +1093,41 @@ class CatBoostTrainer(object):
     }
 
   @staticmethod
+  def evaluate_prediction_weights_(
+      model_file,
+      svm_file,
+      baseline_file,
+      prediction_weights,
+  ):
+    weights = [float(weight) for weight in prediction_weights]
+    if not weights:
+      raise ValueError('At least one prediction weight is required')
+    result = subprocess.run(
+      [
+        sys.executable,
+        '-m',
+        'rtbserver_utils.CatBoostModelEvaluator',
+        '--model-file',
+        str(model_file),
+        '--svm-file',
+        str(svm_file),
+        '--baseline-file',
+        str(baseline_file),
+        '--prediction-weights',
+        ','.join(str(weight) for weight in weights),
+      ],
+      check=True,
+      capture_output=True,
+      text=True)
+    evaluations = json.loads(result.stdout).get('weighted_logloss')
+    if not isinstance(evaluations, list) or len(evaluations) != len(weights):
+      raise ValueError('Prediction weight evaluation count mismatch')
+    for index, evaluation in enumerate(evaluations):
+      if float(evaluation.get('weight')) != weights[index]:
+        raise ValueError('Prediction weight evaluation mismatch')
+    return evaluations
+
+  @staticmethod
   def predict_raw_(
       model_file,
       svm_file,
@@ -1280,6 +1317,7 @@ class CatBoostTrainer(object):
       train_start=None,
       train_end=None,
       prepare=None,
+      post_processing=None,
   ):
     required_models = (
       'common',
@@ -1320,6 +1358,11 @@ class CatBoostTrainer(object):
       'common_stable': 'model.cbm',
     }
     try:
+      traits_models_dir = staging_dir / 'traits' / 'models'
+      traits_models_dir.mkdir(parents=True, exist_ok=True)
+      (staging_dir / 'traits' / 'post_processing').mkdir(
+        parents=True,
+        exist_ok=True)
       traits_models = []
       unresolved_feature_items = []
       runtime_models = []
@@ -1343,6 +1386,8 @@ class CatBoostTrainer(object):
         features = model_description['feature_groups']
         features_importance = model_description['features_importance']
         model_traits = {
+          'artifact_version': 2,
+          'type': 'model',
           'name': name,
           **entry.get('traits', {}),
           'file': file_name,
@@ -1383,11 +1428,47 @@ class CatBoostTrainer(object):
           if name is not None:
             item['name'] = name
 
+      traits_model_summaries = []
+      for model_traits in traits_models:
+        name = model_traits['name']
+        artifact_path = 'traits/models/' + name + '.json'
+        owner_step = next((
+          step
+          for step in reversed(model_traits.get('train_steps', []))
+          if isinstance(step, dict) and step.get('id') == 'finalize_metrics'
+        ), None)
+        model_traits['artifact_owner'] = {
+          'section': 'model',
+          'name': name,
+          'step_id': (
+            owner_step.get('id') if owner_step is not None else None),
+        }
+        if owner_step is not None:
+          artifacts = owner_step.setdefault('artifacts', [])
+          if not any(
+              isinstance(item, dict) and item.get('path') == artifact_path
+              for item in artifacts):
+            artifacts.append({
+              'type': 'model_report',
+              'path': artifact_path,
+            })
+        artifact_file = staging_dir / artifact_path
+        artifact_temp_file = artifact_file.parent / (
+          '.' + artifact_file.name + '.tmp')
+        self.write_json_(
+          artifact_temp_file,
+          traits_with_sections(model_traits))
+        os.replace(artifact_temp_file, artifact_file)
+        traits_model_summaries.append(self.traits_manifest_entry_(
+          model_traits,
+          artifact_path))
+
       self.write_campaign_manager_models_config_(
         staging_dir / 'config.json',
         algorithm_id,
         runtime_models)
       traits = {
+        'traits_version': 2,
         'status': 'published',
         'train_start': train_start,
         'train_end': train_end,
@@ -1395,10 +1476,55 @@ class CatBoostTrainer(object):
           'published_model': 'common_stable',
           'correction_oof_strategy': 'expanding_window_hash_partitions',
         },
-        'models': traits_models,
+        'models': traits_model_summaries,
       }
       if prepare is not None:
-        traits['prepare'] = prepare
+        prepare.setdefault('artifact_version', 2)
+        prepare.setdefault('type', 'prepare')
+        prepare_steps = prepare.get('train_steps', [])
+        prepare_owner_step = next((
+          step
+          for step in reversed(prepare_steps)
+          if isinstance(step, dict)
+        ), None)
+        prepare['artifact_owner'] = {
+          'section': 'prepare',
+          'step_id': (
+            prepare_owner_step.get('id')
+            if prepare_owner_step is not None else None),
+        }
+        if prepare_owner_step is not None:
+          prepare_artifacts = prepare_owner_step.setdefault('artifacts', [])
+          if not any(
+              isinstance(item, dict) and
+              item.get('path') == 'traits/prepare.json'
+              for item in prepare_artifacts):
+            prepare_artifacts.append({
+              'type': 'prepare_report',
+              'path': 'traits/prepare.json',
+            })
+        prepare_artifact = staging_dir / 'traits' / 'prepare.json'
+        prepare_temp = prepare_artifact.parent / (
+          '.' + prepare_artifact.name + '.tmp')
+        self.write_json_(prepare_temp, traits_with_sections(prepare))
+        os.replace(prepare_temp, prepare_artifact)
+        traits['prepare'] = self.traits_manifest_entry_(
+          prepare,
+          'traits/prepare.json')
+      if post_processing is not None:
+        post_processing.setdefault('artifact_version', 2)
+        post_processing.setdefault('type', 'post_processing')
+        post_processing_artifact = (
+          staging_dir / 'traits' / 'post_processing' / 'index.json')
+        post_processing_temp = post_processing_artifact.parent / (
+          '.' + post_processing_artifact.name + '.tmp')
+        self.write_json_(
+          post_processing_temp,
+          traits_with_sections(post_processing))
+        os.replace(post_processing_temp, post_processing_artifact)
+        traits['post_processing'] = self.traits_manifest_entry_(
+          post_processing,
+          'traits/post_processing/index.json')
       traits_temp_file = staging_dir / '.traits.json.tmp'
       self.write_json_(traits_temp_file, traits)
       os.replace(traits_temp_file, staging_dir / 'traits.json')
@@ -1407,6 +1533,32 @@ class CatBoostTrainer(object):
       shutil.rmtree(staging_dir, ignore_errors=True)
       raise
     return result_dir
+
+  @staticmethod
+  def traits_manifest_entry_(traits, artifact):
+    artifact_fields = frozenset((
+      'ctr_thresholds',
+      'dataset_sizes',
+      'feature_groups',
+      'features_importance',
+      'logloss_history',
+      'properties',
+      'sections',
+      'targets',
+      'train_steps',
+    ))
+    result = {
+      key: value
+      for key, value in traits.items()
+      if key not in artifact_fields
+    }
+    result['artifact'] = artifact
+    for field in (
+        'feature_groups', 'features_importance', 'targets', 'train_steps'):
+      value = traits.get(field)
+      if isinstance(value, list):
+        result[field + '_count'] = len(value)
+    return result
 
   def describe_model(
       self,

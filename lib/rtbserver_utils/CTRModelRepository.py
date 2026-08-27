@@ -3,6 +3,8 @@ import json
 import os
 import pathlib
 
+from rtbserver_utils.CTRModelTraits import section_value
+
 
 class ModelNotFound(Exception):
   pass
@@ -105,6 +107,10 @@ class CTRModelRepository:
     if not isinstance(published_traits, dict):
       published_traits = traits
     feature_importance = published_traits.get('features_importance', [])
+    features_importance_count = published_traits.get(
+      'features_importance_count')
+    if not isinstance(features_importance_count, int):
+      features_importance_count = len(feature_importance)
     return {
       'id': model_id,
       'status': 'published',
@@ -114,7 +120,7 @@ class CTRModelRepository:
       'method': model.get('method') if model else None,
       'feature_groups': feature_groups,
       'feature_groups_count': len(feature_groups),
-      'features_importance_count': len(feature_importance),
+      'features_importance_count': features_importance_count,
       'component_names': list(components),
       'components_count': len(trait_models) or len(components),
       'model_names': list(trait_models_by_name),
@@ -139,6 +145,95 @@ class CTRModelRepository:
       'traits': self.read_json_(model_path / 'traits.json'),
     }
 
+  def component_traits(self, model_id, component):
+    model_path, traits = self.model_directory_and_traits_(model_id)
+    source = None
+    if component == 'prepare':
+      source = traits.get('prepare')
+    elif component == 'post_processing':
+      source = traits.get('post_processing')
+    else:
+      trait_models = traits.get('models')
+      if isinstance(trait_models, list):
+        source = next((
+          item
+          for item in trait_models
+          if isinstance(item, dict) and item.get('name') == component
+        ), None)
+      if source is None:
+        components = traits.get('components')
+        if isinstance(components, dict):
+          source = components.get(component)
+    if not isinstance(source, dict):
+      raise ModelNotFound("Unknown model component '" + component + "'")
+
+    artifact_path = source.get('artifact')
+    if not isinstance(artifact_path, str):
+      return dict(source)
+    artifact = self.read_artifact_(model_path, artifact_path)
+    if not isinstance(artifact, dict):
+      raise RuntimeError(
+        "Model artifact '" + artifact_path + "' must contain an object")
+    result = {
+      **artifact,
+      **source,
+      '_artifact_loaded': True,
+    }
+    if component == 'post_processing' and result.get('status') == 'interrupted':
+      targets = section_value(
+        result,
+        'post_processing_results')
+      if isinstance(targets, list):
+        interrupted_targets = [
+          {
+            **target,
+            **(
+              {'status': 'interrupted'}
+              if (
+                isinstance(target, dict) and
+                target.get('status') == 'training') else {}),
+          }
+          if isinstance(target, dict) else target
+          for target in targets
+        ]
+        if 'targets' in result:
+          result['targets'] = interrupted_targets
+        else:
+          for section in result.get('sections', []):
+            if (
+                isinstance(section, dict) and
+                section.get('id') == 'post_processing_results' and
+                isinstance(section.get('data'), dict)):
+              section['data']['targets'] = interrupted_targets
+              break
+    return result
+
+  def post_processing_target(self, model_id, target_name):
+    model_path, _ = self.model_directory_and_traits_(model_id)
+    post_processing = self.component_traits(model_id, 'post_processing')
+    targets = section_value(
+      post_processing,
+      'post_processing_results')
+    if not isinstance(targets, list):
+      raise ModelNotFound('Post-processing results are not available')
+    target = next((
+      item
+      for item in targets
+      if isinstance(item, dict) and item.get('name') == target_name
+    ), None)
+    if target is None:
+      raise ModelNotFound(
+        "Unknown post-processing target '" + target_name + "'")
+    artifact_path = target.get('artifact')
+    if not isinstance(artifact_path, str):
+      return dict(target)
+    artifact = self.read_artifact_(model_path, artifact_path)
+    if not isinstance(artifact, dict):
+      raise RuntimeError(
+        "Post-processing artifact '" + artifact_path +
+        "' must contain an object")
+    return {**artifact, **target}
+
   def features(self, model_id, offset, limit, component=None):
     model_path = self.model_path(model_id)
     traits = self.read_json_(model_path / 'traits.json')
@@ -157,7 +252,7 @@ class CTRModelRepository:
         component = training_pipeline.get('published_model', 'common_stable')
       if component not in models_by_name:
         raise ModelNotFound("Unknown model component '" + component + "'")
-      source_traits = models_by_name[component]
+      source_traits = self.component_traits(model_id, component)
     components = traits.get('components')
     if not isinstance(trait_models, list) and component is not None:
       if not isinstance(components, dict) or component not in components:
@@ -172,7 +267,12 @@ class CTRModelRepository:
       source_traits = components.get(published_component, {})
     if not isinstance(source_traits, dict):
       source_traits = {}
-    features = source_traits.get('features_importance', [])
+    features = section_value(
+      source_traits,
+      'feature_importance',
+      [])
+    if not isinstance(features, list):
+      features = []
     return {
       'model_id': model_id,
       'component': component,
@@ -259,7 +359,43 @@ class CTRModelRepository:
         for model in models:
           if isinstance(model, dict) and model.get('status') == 'training':
             model['status'] = 'interrupted'
+      post_processing = traits.get('post_processing')
+      if (
+          isinstance(post_processing, dict) and
+          post_processing.get('status') == 'training'):
+        post_processing['status'] = 'interrupted'
     return traits
+
+  def model_directory_and_traits_(self, model_id):
+    training_traits = self.training_status_(model_id)
+    if training_traits is not None:
+      return self.model_root / model_id, training_traits
+    model_path = self.model_path(model_id)
+    return model_path, self.read_json_(model_path / 'traits.json')
+
+  @classmethod
+  def read_artifact_(cls, model_path, artifact_path):
+    relative_path = pathlib.PurePosixPath(artifact_path)
+    if (
+        relative_path.is_absolute() or
+        not relative_path.parts or
+        any(part in ('', '.', '..') for part in relative_path.parts)):
+      raise ModelNotFound('Invalid model artifact path')
+    model_root = model_path.resolve()
+    unresolved_path = model_path / pathlib.Path(*relative_path.parts)
+    current_path = model_path
+    for part in relative_path.parts:
+      current_path = current_path / part
+      if current_path.is_symlink():
+        raise ModelNotFound('Invalid model artifact path')
+    path = unresolved_path.resolve()
+    try:
+      path.relative_to(model_root)
+    except ValueError:
+      raise ModelNotFound('Invalid model artifact path') from None
+    if not path.is_file():
+      raise ModelNotFound("Model artifact '" + artifact_path + "' not found")
+    return cls.read_json_(path)
 
   @staticmethod
   def process_alive_(pid):

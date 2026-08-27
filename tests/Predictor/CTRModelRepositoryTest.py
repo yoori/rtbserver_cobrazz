@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.12
 
+import decimal
 import json
 import os
 import pathlib
@@ -12,6 +13,7 @@ SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SOURCE_ROOT / 'lib'))
 
 from rtbserver_utils.CTRModelRepository import CTRModelRepository, ModelNotFound
+from rtbserver_utils.CTRModelTraits import section_value, traits_with_sections
 
 
 class CTRModelRepositoryTest(unittest.TestCase):
@@ -226,6 +228,85 @@ class CTRModelRepositoryTest(unittest.TestCase):
       campaign_features = repository.features(
         '20260825.120000', 0, 100, 'campaign_123')
       self.assertEqual('ccid:4', campaign_features['items'][0]['feature'])
+
+  def test_reads_manifest_artifacts_lazily(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = pathlib.Path(temp_dir)
+      model_dir = self.create_model(root, '20260826.120000')
+      (model_dir / 'traits' / 'models').mkdir(parents=True)
+      (model_dir / 'traits' / 'post_processing').mkdir()
+      stable_artifact = 'traits/models/common_stable.json'
+      (model_dir / stable_artifact).write_text(json.dumps(traits_with_sections({
+        'name': 'common_stable',
+        'kind': 'common_stable',
+        'features_importance': [{
+          'score': 3,
+          'feature': 'tag:3',
+        }],
+        'properties': [{'val_logloss': 0.01}],
+        'train_steps': [],
+      })))
+      post_index = 'traits/post_processing/index.json'
+      target_artifact = 'traits/post_processing/campaign_123.json'
+      (model_dir / post_index).write_text(json.dumps(traits_with_sections({
+        'name': 'post_processing',
+        'kind': 'post_processing',
+        'targets': [{
+          'name': 'campaign_123',
+          'artifact': target_artifact,
+        }],
+      })))
+      (model_dir / target_artifact).write_text(json.dumps({
+        'name': 'campaign_123',
+        'evaluations': [{
+          'model': 'common_stable',
+          'logloss': 0.0123,
+        }],
+      }))
+      (model_dir / 'traits.json').write_text(json.dumps({
+        'traits_version': 2,
+        'status': 'published',
+        'training_pipeline': {'published_model': 'common_stable'},
+        'models': [{
+          'name': 'common_stable',
+          'kind': 'common_stable',
+          'artifact': stable_artifact,
+          'features_importance_count': 1,
+        }],
+        'post_processing': {
+          'name': 'post_processing',
+          'kind': 'post_processing',
+          'artifact': post_index,
+          'targets_count': 1,
+        },
+      }))
+      repository = CTRModelRepository(root)
+
+      properties = repository.model_properties('20260826.120000')
+      self.assertNotIn(
+        'features_importance',
+        properties['traits']['models'][0])
+      self.assertEqual(
+        1,
+        properties['summary']['features_importance_count'])
+      stable = repository.component_traits(
+        '20260826.120000',
+        'common_stable')
+      self.assertEqual(
+        decimal.Decimal('0.01'),
+        section_value(stable, 'properties')[0]['val_logloss'])
+      features = repository.features(
+        '20260826.120000',
+        0,
+        10,
+        'common_stable')
+      self.assertEqual('tag:3', features['items'][0]['feature'])
+      target = repository.post_processing_target(
+        '20260826.120000',
+        'campaign_123')
+      self.assertEqual(
+        decimal.Decimal('0.0123'),
+        target['evaluations'][0]['logloss'])
 
   def test_rejects_path_traversal_and_symlinks(self):
     with tempfile.TemporaryDirectory() as temp_dir:

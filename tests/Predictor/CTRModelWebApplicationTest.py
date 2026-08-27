@@ -33,6 +33,8 @@ from rtbserver_utils.CTRModelWebApplication import (
   duration_text,
   feature_importance_item,
   render_index_page,
+  render_post_processing_index,
+  render_post_processing_target,
 )
 
 
@@ -116,6 +118,16 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('Logloss history', page)
     self.assertIn('Train Logloss', page)
     self.assertIn('Test Logloss', page)
+    self.assertIn('data-section-id="properties"', page)
+    self.assertIn('data-section-id="datasets"', page)
+    self.assertIn('data-section-id="ctr_thresholds"', page)
+    self.assertIn('data-section-id="training_report"', page)
+    self.assertIn('data-section-id="feature_importance"', page)
+    self.assertIn('CTR threshold checking', page)
+    self.assertIn(
+      "reportSectionStoragePrefix = 'ctr-model-viewer:sections:v1:'",
+      page)
+    self.assertIn('sessionStorage.setItem(key, JSON.stringify(value));', page)
     self.assertIn('0.012300000', page)
     self.assertIn('class="chart-line train"', page)
     self.assertIn('class="chart-line test"', page)
@@ -196,7 +208,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('class="component-sidebar"', page)
     self.assertIn('href="#component-stable-common" aria-current="page"', page)
     self.assertIn(
-      '<article class="model-component" id="component-common" hidden>',
+      'id="component-common" data-component="common" data-loaded="true" hidden>',
       page)
 
   def test_renders_flat_models_and_campaign_name(self):
@@ -275,6 +287,58 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('main { min-width: 0; height: 100%; overflow-y: auto;', page)
     self.assertIn('.shell { height: auto; min-height: 100vh;', page)
 
+  def test_manifest_components_are_rendered_as_lazy_artifacts(self):
+    properties = self.model_properties([])
+    properties['summary']['components_count'] = 1
+    properties['traits'] = {
+      'training_pipeline': {'published_model': 'common_stable'},
+      'models': [{
+        'name': 'common_stable',
+        'kind': 'common_stable',
+        'status': 'completed',
+        'runtime': True,
+        'file': 'model.cbm',
+        'artifact': 'traits/models/common_stable.json',
+        'features_importance_count': 42,
+      }],
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('data-loaded="false"', page)
+    self.assertIn('Loading artifact…', page)
+    self.assertIn('<dt>Ranked features</dt><dd>42</dd>', page)
+    self.assertIn('/components/', page)
+
+  def test_renders_explicit_artifact_sections_in_declared_order(self):
+    properties = self.model_properties([])
+    properties['traits'] = {
+      'artifact_version': 2,
+      'sections': [
+        {
+          'id': 'training_report',
+          'title': 'First report',
+          'data': {
+            'history': [
+              {'step': 1, 'train': 0.02, 'test': 0.03},
+            ],
+          },
+        },
+        {
+          'id': 'properties',
+          'title': 'Second properties',
+          'data': {'items': [{'val_logloss': 0.03}]},
+        },
+      ],
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertLess(page.index('First report'), page.index('Second properties'))
+    self.assertIn('data-section-id="training_report"', page)
+    self.assertIn('data-section-id="properties"', page)
+    self.assertIn('0.030000', page)
+
   def test_renders_in_progress_model_with_only_train_start(self):
     properties = {
       'summary': {
@@ -299,9 +363,28 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn("cache: 'no-store'", page)
     self.assertIn("document.addEventListener('visibilitychange'", page)
     self.assertIn("modelId.startsWith('~')", page)
-    self.assertIn('restoreUiState(importedMain, state);', page)
+    self.assertIn('await prepareUiState(importedMain, state);', page)
+    self.assertIn('restoreScrollState(importedMain, state);', page)
+    self.assertIn(
+      'requestAnimationFrame(() => restoreScrollState(importedMain, state));',
+      page)
     self.assertIn('mainScroll: main.scrollTop', page)
     self.assertIn('main.scrollTop = state.mainScroll;', page)
+    self.assertIn(
+      "modelListScroll: document.querySelector('.sidebar')?.scrollTop || 0",
+      page)
+    self.assertIn(
+      'modelListSidebar.scrollTop = state.modelListScroll;',
+      page)
+    self.assertIn(
+      "main.querySelectorAll('[data-report-section]')",
+      page)
+    self.assertIn(
+      'section => [reportSectionIdentity(section), section.open]',
+      page)
+    self.assertLess(
+      page.index('await prepareUiState(importedMain, state);'),
+      page.index('currentMain.replaceWith(importedMain);'))
     self.assertNotIn('Train end', page)
     self.assertNotIn('Feature importance', page)
     self.assertNotIn('>Config<', page)
@@ -490,6 +573,44 @@ class CTRModelWebApplicationTest(unittest.TestCase):
         '2026-08-24T15:56:00Z',
         '2026-08-24T16:58:03Z'))
     self.assertEqual('', duration_text('invalid', 'invalid'))
+
+  def test_renders_post_processing_logloss_without_gain(self):
+    index = render_post_processing_index({
+      'targets': [{
+        'name': 'campaign_123',
+        'db_campaign_id': 123,
+        'campaign_name': 'Full campaign name',
+        'status': 'completed',
+      }],
+    })
+    self.assertIn('Full campaign name', index)
+    self.assertIn('data-target="campaign_123"', index)
+
+    target = render_post_processing_target({
+      'target': {
+        'db_campaign_id': 123,
+        'campaign_name': 'Full campaign name',
+      },
+      'dataset': {'rows': 1000, 'clicks': 2},
+      'evaluations': [
+        {
+          'model': 'common_stable',
+          'prediction': 'sigmoid(common_stable)',
+          'logloss': 0.0123,
+        },
+        {
+          'model': 'campaign_456',
+          'prediction': 'sigmoid(common_stable + alpha * campaign_456)',
+          'alpha': 0.4,
+          'runtime_logloss': 0.0119,
+          'unit_weight_logloss': 0.013,
+        },
+      ],
+    })
+    self.assertIn('1000 rows · 2 clicks', target)
+    self.assertIn('0.011900', target)
+    self.assertIn('0.013000', target)
+    self.assertNotIn('gain', target.lower())
 
   def test_invalid_scores_do_not_break_bar_scale(self):
     for score in ('invalid', 'NaN', 'Infinity'):
