@@ -96,31 +96,32 @@ namespace AdServer
         const RequestInfoManagerStatsImpl_var& rim_stats_impl)
         /*throw(Exception)*/;
 
-      Generics::ConstSmartMemBuf_var
-      get_profile(const AdServer::Commons::RequestId& request_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile(AdServer::Commons::RequestId request_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_campaign_reach_profile(
-        const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_campaign_reach_profile(
+        AdServer::Commons::UserId user_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_action_profile(const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_action_profile(AdServer::Commons::UserId user_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_passback_profile(const AdServer::Commons::RequestId& request_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_passback_profile(AdServer::Commons::RequestId request_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_fraud_protection_profile(
-        const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_fraud_protection_profile(
+        AdServer::Commons::UserId user_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_site_reach_profile(const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_site_reach_profile(AdServer::Commons::UserId user_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_tag_request_group_profile(
-        const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_tag_request_group_profile(
+        AdServer::Commons::UserId user_id);
 
-      void clear_expired(bool synchronous) noexcept;
+      AdServer::Commons::Awaitable<void>
+      co_clear_expired(bool synchronous);
 
       void get_controllable_chunks(
         ChunkIdList& chunk_ids,
@@ -246,7 +247,8 @@ namespace AdServer
       resolve_campaign_servers_() /*throw(Exception, eh::Exception)*/;
 
       template<typename ContainerPtrHolderType, typename KeyType>
-      Generics::ConstSmartMemBuf_var get_profile_(
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile_(
         const char* FUN,
         const ContainerPtrHolderType& container_ptr,
         const KeyType& id);

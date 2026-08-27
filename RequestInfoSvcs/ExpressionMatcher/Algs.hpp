@@ -1,13 +1,12 @@
 #pragma once
 
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
 #include "ColoReachProcessor.hpp"
 
-namespace AdServer
+namespace AdServer::RequestInfoSvcs
 {
-namespace RequestInfoSvcs
-{
-  typedef std::list<ColoReachProcessor::ColoReachInfo> ColoReachInfoList;
+  using ColoReachInfoList = Generics::MonoList<ColoReachProcessor::ColoReachInfo>;
 
   template <typename ReaderIteratorType>
   void
@@ -20,26 +19,25 @@ namespace RequestInfoSvcs
     ReaderIteratorType end,
     bool update_only_passed_id)
   {
-    std::map<unsigned long, Generics::Time> isp_create_time_map;
-    for(ReaderIteratorType it = begin; it != end; ++it)
+    Generics::MonoAllocatorArena arena;
+    Generics::MonoMap<unsigned long, Generics::Time> isp_create_time_map(&arena);
+    for (ReaderIteratorType it = begin; it != end; ++it)
     {
       if (update_only_passed_id && ((*it).id() != colo_id))
       {
         continue;
       }
-      isp_create_time_map[(*it).id()] =
-        Generics::Time((*it).create_time());
+      isp_create_time_map[(*it).id()] = Generics::Time((*it).create_time());
     }
 
-    std::map<unsigned long, ColoReachProcessor::ColoReachInfo*>
-       colo_reach_info_map;
+    Generics::MonoMap<unsigned long, ColoReachProcessor::ColoReachInfo*>
+      colo_reach_info_map(&arena);
 
     // Suppose no possible colo_id == ULONG_MAX
     unsigned long prev_id = ULONG_MAX;
-    typedef AdServer::RequestInfoSvcs::IdAppearanceList IdAppearanceList;
-    for(IdAppearanceList::const_iterator it =
-          collected_data.colocations.begin();
-          it != collected_data.colocations.end(); ++it)
+    using IdAppearanceList = AdServer::RequestInfoSvcs::IdAppearanceList;
+    for (IdAppearanceList::const_iterator it = collected_data.colocations.begin();
+      it != collected_data.colocations.end(); ++it)
     {
       if (update_only_passed_id && (it->id != colo_id))
       {
@@ -49,11 +47,8 @@ namespace RequestInfoSvcs
       if (it->id != prev_id)
       {
         prev_id = it->id;
-        isp_colo_reach_info_list.push_back(
-          ColoReachProcessor::ColoReachInfo());
-
+        isp_colo_reach_info_list.push_back(ColoReachProcessor::ColoReachInfo());
         colo_reach_info_map[prev_id] = &(isp_colo_reach_info_list.back());
-
         colo_reach_info_map[prev_id]->household = household;
 
         if (isp_create_time_map.count(prev_id))
@@ -73,10 +68,8 @@ namespace RequestInfoSvcs
     // Suppose ad_colocations and merge_colocations subset of colocations,
     //   so all id possible in ad_colocations and merge_colocations
     //   already present in colo_reach_info_map.
-    typedef AdServer::RequestInfoSvcs::IdAppearanceList IdAppearanceList;
-    for(IdAppearanceList::const_iterator it =
-          collected_data.ad_colocations.begin();
-          it != collected_data.ad_colocations.end(); ++it)
+    for (IdAppearanceList::const_iterator it = collected_data.ad_colocations.begin();
+      it != collected_data.ad_colocations.end(); ++it)
     {
       if (update_only_passed_id && (it->id != colo_id))
       {
@@ -93,9 +86,8 @@ namespace RequestInfoSvcs
       }
     }
 
-    for(IdAppearanceList::const_iterator it =
-          collected_data.merge_colocations.begin();
-          it != collected_data.merge_colocations.end(); ++it)
+    for (IdAppearanceList::const_iterator it = collected_data.merge_colocations.begin();
+      it != collected_data.merge_colocations.end(); ++it)
     {
       if (update_only_passed_id && (it->id != colo_id))
       {
@@ -112,5 +104,4 @@ namespace RequestInfoSvcs
       }
     }
   }
-}
 }

@@ -181,7 +181,7 @@ namespace
   co_process_record(
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     const ProcessFun& process_fun,
-    const RecordType& record)
+    RecordType& record)
   {
     co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
     co_await process_fun.co_process(record);
@@ -311,6 +311,7 @@ namespace AdServer::RequestInfoSvcs
       const char* folder,
       unsigned int priority,
       const Generics::Time& check_period,
+      std::shared_ptr<Commons::ExecutorPool> processing_executor_pool,
       RequestOperationProcessor* request_operation_processor,
       RequestInfoManagerStatsImpl* proc_stat_impl)
       noexcept;
@@ -332,7 +333,8 @@ namespace AdServer::RequestInfoSvcs
     virtual unsigned long
     log_index_() noexcept;
 
-  protected:
+  private:
+    std::shared_ptr<Commons::ExecutorPool> processing_executor_pool_;
     RequestOperationLoader_var request_operation_loader_;
   };
 
@@ -450,8 +452,7 @@ namespace AdServer::RequestInfoSvcs
       {
         try
         {
-          AdServer::LogProcessing::FileStore file_store(
-            DIR_, DEFAULT_ERROR_DIR);
+          AdServer::LogProcessing::FileStore file_store(DIR_, DEFAULT_ERROR_DIR);
           file_store.store(file->full_path(), name_info.processed_lines_count);
         }
         catch (const eh::Exception& store_ex)
@@ -467,8 +468,8 @@ namespace AdServer::RequestInfoSvcs
       {
         ostr << FUN << ": exception on getting eldest file :" << ex.what();
       }
-      log_errors_->report_error(
-        Generics::ActiveObjectCallback::ERROR, ostr.str());
+
+      log_errors_->report_error(Generics::ActiveObjectCallback::ERROR, ostr.str());
     }
   }
 
@@ -589,7 +590,7 @@ namespace AdServer::RequestInfoSvcs
       process_timer.start();
     }
 
-    typename LogTraitsType::CollectorType::const_iterator it = collector.begin();
+    typename LogTraitsType::CollectorType::iterator it = collector.begin();
     std::advance(it, name_info.processed_lines_count);
     bool terminated = false;
     WindowedRecordTasks tasks(RECORD_PROCESS_WINDOW_SIZE);
@@ -600,7 +601,7 @@ namespace AdServer::RequestInfoSvcs
       name_info.processed_lines_count += completed_count;
     };
 
-    for(; it != collector.end(); ++it)
+    for (; it != collector.end(); ++it)
     {
       if (!processing_state_->interrupter->active())
       {
@@ -637,16 +638,14 @@ namespace AdServer::RequestInfoSvcs
 
   template <typename LogTraitsType, typename ProcessFun>
   const char*
-  LogRecordFetcher<LogTraitsType, ProcessFun>::log_base_name_()
-    noexcept
+  LogRecordFetcher<LogTraitsType, ProcessFun>::log_base_name_() noexcept
   {
     return LogTraitsType::log_base_name();
   }
 
   template <typename LogTraitsType, typename ProcessFun>
   unsigned long
-  LogRecordFetcher<LogTraitsType, ProcessFun>::log_index_()
-    noexcept
+  LogRecordFetcher<LogTraitsType, ProcessFun>::log_index_() noexcept
   {
     return Type2Index<LogTraitsType>::result;
   }
@@ -658,6 +657,7 @@ namespace AdServer::RequestInfoSvcs
     const char* folder,
     unsigned int priority,
     const Generics::Time& check_period,
+    std::shared_ptr<Commons::ExecutorPool> processing_executor_pool,
     RequestOperationProcessor* request_operation_processor,
     RequestInfoManagerStatsImpl* proc_stat_impl)
     noexcept
@@ -668,8 +668,8 @@ namespace AdServer::RequestInfoSvcs
         priority,
         check_period,
         proc_stat_impl),
-      request_operation_loader_(
-        new RequestOperationLoader(request_operation_processor))
+      processing_executor_pool_(std::move(processing_executor_pool)),
+      request_operation_loader_(new RequestOperationLoader(request_operation_processor))
   {}
 
   bool
@@ -678,22 +678,21 @@ namespace AdServer::RequestInfoSvcs
     LogProcessing::FileReceiver::FileGuard* file)
     /*throw(eh::Exception)*/
   {
-    return request_operation_loader_->process_file(
+    return Commons::sync_wait(request_operation_loader_->co_process_file(
       name_info.processed_lines_count,
       file->full_path().c_str(),
-      processing_state_->interrupter);
+      processing_state_->interrupter,
+      processing_executor_pool_));
   }
 
   const char*
-  RequestOperationFetcher::log_base_name_()
-    noexcept
+  RequestOperationFetcher::log_base_name_() noexcept
   {
     return "RequestOperation";
   }
 
   unsigned long
-  RequestOperationFetcher::log_index_()
-    noexcept
+  RequestOperationFetcher::log_index_() noexcept
   {
     return 0;
   }
@@ -773,10 +772,8 @@ namespace AdServer::RequestInfoSvcs
       request_info.country = req.country_code();
       request_info.referer = req.referer();
 
-      for(AdServer::LogProcessing::UserPropertyList::const_iterator
-            it = req.user_props().begin();
-          it != req.user_props().end();
-          ++it)
+      for (AdServer::LogProcessing::UserPropertyList::const_iterator it = req.user_props().begin();
+        it != req.user_props().end(); ++it)
       {
         if (it->first == "ClientVersion")
         {
@@ -825,7 +822,7 @@ namespace AdServer::RequestInfoSvcs
         request_info.tag_left_offset = req.tag_left_offset().get();
       }
 
-      for(LogProcessing::RequestData::CmpChannelList::const_iterator
+      for (LogProcessing::RequestData::CmpChannelList::const_iterator
           cmp_ch_it = req.cmp_channel_list().begin();
         cmp_ch_it != req.cmp_channel_list().end(); ++cmp_ch_it)
       {
@@ -979,7 +976,7 @@ namespace AdServer::RequestInfoSvcs
         request_info.tag_left_offset = req.tag_left_offset().get();
       }
 
-      for(LogProcessing::RequestData::CmpChannelList::const_iterator
+      for (LogProcessing::RequestData::CmpChannelList::const_iterator
           cmp_ch_it = req.cmp_channel_list().begin();
         cmp_ch_it != req.cmp_channel_list().end(); ++cmp_ch_it)
       {
@@ -1005,8 +1002,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.url = req.referer();
       request_info.ip_address = req.ip_address();
       request_info.user_channels.assign(
-        req.history_channel_list().begin(),
-        req.history_channel_list().end());
+        req.history_channel_list().begin(), req.history_channel_list().end());
       request_info.ctr_algorithm_id = req.ctr_algorithm_id();
       request_info.referer_hash = req.full_referer_hash();
       request_info.viewability = -1;
@@ -1042,8 +1038,7 @@ namespace AdServer::RequestInfoSvcs
         act_(act)
     {}
 
-    void operator()(const AdServer::LogProcessing::ClickData& req)
-      const
+    void operator()(const AdServer::LogProcessing::ClickData& req) const
     {
       UnmergedClickProcessor::ClickInfo click_info;
       click_info.time = req.time().time();
@@ -1051,7 +1046,6 @@ namespace AdServer::RequestInfoSvcs
       click_info.referer = req.referrer().get();
 
       click_processor_->process_click(click_info);
-
       request_processor_->process_action(act_, req.time().time(), req.request_id());
     }
 
@@ -1075,10 +1069,8 @@ namespace AdServer::RequestInfoSvcs
 
   struct ImpressionRecordProcessor
   {
-    ImpressionRecordProcessor(
-      RequestContainerProcessor* request_container_processor)
-      : request_processor_(
-          ReferenceCounting::add_ref(request_container_processor))
+    ImpressionRecordProcessor(RequestContainerProcessor* request_container_processor)
+      : request_processor_(ReferenceCounting::add_ref(request_container_processor))
     {}
 
     void operator()(
@@ -1113,6 +1105,7 @@ namespace AdServer::RequestInfoSvcs
           // pub_revenue.sys_impression = *req.pub_sys_revenue();
           impression_info.pub_revenue = pub_revenue;
         }
+
         request_processor_->process_impression(impression_info);
       }
     }
@@ -1138,13 +1131,12 @@ namespace AdServer::RequestInfoSvcs
         if (req.pub_revenue().present())
         {
           ImpressionInfo::PubRevenue pub_revenue;
-          pub_revenue.revenue_type = (
-            req.pub_revenue_type() == 'P' ?
-            AdServer::CampaignSvcs::RT_SHARE :
-            AdServer::CampaignSvcs::RT_ABSOLUTE);
+          pub_revenue.revenue_type = (req.pub_revenue_type() == 'P' ?
+            AdServer::CampaignSvcs::RT_SHARE : AdServer::CampaignSvcs::RT_ABSOLUTE);
           pub_revenue.impression = *req.pub_revenue();
           impression_info.pub_revenue = pub_revenue;
         }
+
         co_await request_processor_->co_process_impression(impression_info);
       }
     }
@@ -1155,15 +1147,12 @@ namespace AdServer::RequestInfoSvcs
 
   struct AdvertiserActionRecordProcessor
   {
-    AdvertiserActionRecordProcessor(
-      AdvActionProcessor* adv_action_processor)
-      : adv_action_processor_(
-          ReferenceCounting::add_ref(adv_action_processor))
+    AdvertiserActionRecordProcessor(AdvActionProcessor* adv_action_processor)
+      : adv_action_processor_(ReferenceCounting::add_ref(adv_action_processor))
     {}
 
     void operator()(
-      const AdServer::LogProcessing::
-      AdvertiserActionTraits::CollectorType::DataT& req)
+      const AdServer::LogProcessing::AdvertiserActionTraits::CollectorType::DataT& req)
       const
     {
       if (req.action_id().present())
@@ -1197,8 +1186,7 @@ namespace AdServer::RequestInfoSvcs
         adv_action_info.user_id = req.user_id();
         adv_action_info.time = req.time().time();
 
-        for(auto ccg_it = req.ccg_ids().begin();
-            ccg_it != req.ccg_ids().end(); ++ccg_it)
+        for (auto ccg_it = req.ccg_ids().begin(); ccg_it != req.ccg_ids().end(); ++ccg_it)
         {
           adv_action_info.ccg_id = *ccg_it;
           adv_action_processor_->process_adv_action(adv_action_info);
@@ -1288,97 +1276,69 @@ namespace AdServer::RequestInfoSvcs
   /** TagRequestRecordProcessor */
   struct TagRequestRecordProcessor
   {
-    TagRequestRecordProcessor(
-      TagRequestProcessor* tag_request_processor)
-      : tag_request_processor_(
-          ReferenceCounting::add_ref(tag_request_processor))
+    using DataT = LogProcessing::TagRequestTraits::CollectorType::DataT;
+
+    TagRequestRecordProcessor(TagRequestProcessor* tag_request_processor)
+      : tag_request_processor_(ReferenceCounting::add_ref(tag_request_processor))
     {}
 
     void
-    operator ()(const LogProcessing::TagRequestTraits::CollectorType::DataT& req) const
+    operator ()(DataT& req) const
     {
-      TagRequestInfo tag_request_info;
-      tag_request_info.time = req.time().time();
-      tag_request_info.isp_time = req.isp_time().time();
-      tag_request_info.colo_id = req.colo_id();
-      tag_request_info.tag_id = req.tag_id();
-      tag_request_info.size_id = req.size_id().present() ? *req.size_id() : 0;
-      tag_request_info.ext_tag_id = req.ext_tag_id();
-      tag_request_info.referer = req.referer();
-      tag_request_info.urls = req.urls();
-      tag_request_info.referer_hash = req.full_referer_hash();
-
-      tag_request_info.user_status = req.user_status();
-      tag_request_info.country = req.country();
-      tag_request_info.request_id = req.passback_request_id();
-      tag_request_info.floor_cost = req.floor_cost();
-
-      if (req.opt_in_section().present())
-      {
-        tag_request_info.user_id = req.opt_in_section().get().user_id();
-        tag_request_info.ad_shown = req.opt_in_section().get().ad_shown();
-        tag_request_info.user_agent = new Commons::StringHolder(
-          req.opt_in_section().get().user_agent());
-        if (!tag_request_info.user_id.is_null())
-        {
-          tag_request_info.site_id = req.opt_in_section().get().site_id();
-          tag_request_info.page_load_id = req.opt_in_section().get().page_load_id();
-          tag_request_info.profile_referer = req.opt_in_section().get().profile_referer();
-        }
-      }
-      else
-      {
-        tag_request_info.site_id = 0;
-        tag_request_info.ad_shown = false;
-        tag_request_info.profile_referer = false;
-      }
-
+      TagRequestInfo tag_request_info = make_tag_request_info_(req);
       tag_request_processor_->process_tag_request(tag_request_info);
     }
 
     Commons::Awaitable<void>
-    co_process(const LogProcessing::TagRequestTraits::CollectorType::DataT& req) const
+    co_process(DataT& req) const
     {
-      TagRequestInfo tag_request_info;
-      tag_request_info.time = req.time().time();
-      tag_request_info.isp_time = req.isp_time().time();
-      tag_request_info.colo_id = req.colo_id();
-      tag_request_info.tag_id = req.tag_id();
-      tag_request_info.size_id = req.size_id().present() ? *req.size_id() : 0;
-      tag_request_info.ext_tag_id = req.ext_tag_id();
-      tag_request_info.referer = req.referer();
-      tag_request_info.urls = req.urls();
-      tag_request_info.referer_hash = req.full_referer_hash();
-
-      tag_request_info.user_status = req.user_status();
-      tag_request_info.country = req.country();
-      tag_request_info.request_id = req.passback_request_id();
-      tag_request_info.floor_cost = req.floor_cost();
-
-      if (req.opt_in_section().present())
-      {
-        tag_request_info.user_id = req.opt_in_section().get().user_id();
-        tag_request_info.ad_shown = req.opt_in_section().get().ad_shown();
-        tag_request_info.user_agent = new Commons::StringHolder(req.opt_in_section().get().user_agent());
-        if (!tag_request_info.user_id.is_null())
-        {
-          tag_request_info.site_id = req.opt_in_section().get().site_id();
-          tag_request_info.page_load_id = req.opt_in_section().get().page_load_id();
-          tag_request_info.profile_referer = req.opt_in_section().get().profile_referer();
-        }
-      }
-      else
-      {
-        tag_request_info.site_id = 0;
-        tag_request_info.ad_shown = false;
-        tag_request_info.profile_referer = false;
-      }
-
-      co_await tag_request_processor_->co_process_tag_request(
-        tag_request_info);
+      TagRequestInfo tag_request_info = make_tag_request_info_(req);
+      co_await tag_request_processor_->co_process_tag_request(tag_request_info);
     }
 
   private:
+    static TagRequestInfo
+    make_tag_request_info_(DataT& req)
+    {
+      TagRequestInfo tag_request_info{};
+      tag_request_info.time = req.time_.time();
+      tag_request_info.isp_time = req.isp_time_.time();
+      tag_request_info.colo_id = req.colo_id_;
+      tag_request_info.tag_id = req.tag_id_;
+      tag_request_info.size_id = req.size_id_.present() ? *req.size_id_ : 0;
+      tag_request_info.ext_tag_id = std::move(req.ext_tag_id_.get());
+      tag_request_info.referer = std::move(static_cast<std::string&>(req.referer_));
+      tag_request_info.urls = std::move(req.urls_);
+      tag_request_info.referer_hash = req.full_referer_hash_;
+
+      tag_request_info.user_status = req.user_status_;
+      tag_request_info.country = std::move(req.country_.get());
+      tag_request_info.request_id = req.passback_request_id_;
+      tag_request_info.floor_cost = req.floor_cost_;
+
+      if (req.opt_in_section_.present())
+      {
+        auto& opt_in_section = req.opt_in_section_.get();
+        tag_request_info.user_id = opt_in_section.user_id_;
+        tag_request_info.ad_shown = opt_in_section.ad_shown_;
+        tag_request_info.user_agent = std::move(opt_in_section.user_agent_);
+
+        if (!tag_request_info.user_agent.in())
+        {
+          tag_request_info.user_agent = new Commons::StringHolder(std::string());
+        }
+
+        if (!tag_request_info.user_id.is_null())
+        {
+          tag_request_info.site_id = opt_in_section.site_id_;
+          tag_request_info.page_load_id = opt_in_section.page_load_id_;
+          tag_request_info.profile_referer = opt_in_section.profile_referer_;
+        }
+      }
+
+      return tag_request_info;
+    }
+
     TagRequestProcessor_var tag_request_processor_;
   };
 
@@ -1503,6 +1463,7 @@ namespace AdServer::RequestInfoSvcs
       in_logs.request_operation.dir.c_str(),
       in_logs.request_operation.priority,
       check_period,
+      processing_executor_pool_,
       request_operation_processor,
       proc_stat_impl));
 
@@ -1521,7 +1482,7 @@ namespace AdServer::RequestInfoSvcs
     FileReceiverFacade::FileReceiversInitializer file_receivers;
     std::vector<std::size_t> priorities(LogTypesCount);
 
-    for(LogFetchers::const_iterator fetcher_it = log_fetchers_.begin();
+    for (LogFetchers::const_iterator fetcher_it = log_fetchers_.begin();
       fetcher_it != log_fetchers_.end(); ++fetcher_it)
     {
       file_receivers.emplace_back(fetcher_it->first, fetcher_it->second->file_receiver());
@@ -1565,9 +1526,9 @@ namespace AdServer::RequestInfoSvcs
         fetcher_it->second->process(file.file_guard);
       }
     }
-    catch (FileReceiverFacade::Interrupted&)
+    catch (const FileReceiverFacade::Interrupted&)
     {}
-    catch (eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": got eh::Exception: " << ex.what();

@@ -2,6 +2,7 @@
 
 #include <list>
 #include <map>
+#include <new>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -28,7 +29,6 @@ namespace AdServer
     typedef std::vector<unsigned long> ChannelIdArray;
     typedef std::set<unsigned long> ChannelIdSet;
     typedef std::set<Commons::ImmutableString> StringSet;
-    typedef std::map<unsigned long, unsigned long> ChannelActionMap;
 
     struct SizeChannel
     {
@@ -97,21 +97,21 @@ namespace AdServer
         struct AdSlot
         {
           AdSlot() = default;
-          AdSlot(const AdSlot&) = default;
+          AdSlot(const AdSlot&) = delete;
           AdSlot(AdSlot&&) noexcept = default;
-          AdSlot& operator=(const AdSlot&) = default;
+          AdSlot& operator=(const AdSlot&) = delete;
           AdSlot& operator=(AdSlot&&) noexcept = default;
 
           RevenueDecimal avg_revenue; // ecpm normalized to one action cost
-          ChannelIdSet imp_channels;
+          ChannelIdArray imp_channels; // sorted, unique
         };
 
         struct AdBidSlot: public AdSlot
         {
           AdBidSlot() = default;
-          AdBidSlot(const AdBidSlot&) = default;
+          AdBidSlot(const AdBidSlot&) = delete;
           AdBidSlot(AdBidSlot&&) noexcept = default;
-          AdBidSlot& operator=(const AdBidSlot&) = default;
+          AdBidSlot& operator=(const AdBidSlot&) = delete;
           AdBidSlot& operator=(AdBidSlot&&) noexcept = default;
 
           RevenueDecimal max_avg_revenue;
@@ -129,6 +129,20 @@ namespace AdServer
             ad_request(false)
         {}
 
+        MatchInfo(const MatchInfo&) = delete;
+        MatchInfo& operator=(const MatchInfo&) = delete;
+        MatchInfo(MatchInfo&&) noexcept = default;
+        MatchInfo& operator=(MatchInfo&& source) noexcept
+        {
+          if (this != &source)
+          {
+            this->~MatchInfo();
+            new (this) MatchInfo(std::move(source));
+          }
+
+          return *this;
+        }
+
         AdServer::Commons::UserId user_id;
         Generics::Time time;
         Generics::Time isp_time;
@@ -137,8 +151,7 @@ namespace AdServer
 
         typedef AdServer::Commons::Optional<ChannelIdArray> ChannelIdVectorOptional;
         ChannelIdVectorOptional triggered_expression_channels; // sorted
-        ChannelIdSet triggered_cpm_expression_channels;
-        ChannelActionMap channel_actions;
+        ChannelIdArray triggered_cpm_expression_channels; // sorted, unique
 
         bool merge_request;
 
@@ -198,6 +211,11 @@ namespace AdServer
             impop_ecpm(0),
             auction_type(CampaignSvcs::AT_MAX_ECPM)
         {}
+
+        InventoryInfo(const InventoryInfo&) = delete;
+        InventoryInfo& operator=(const InventoryInfo&) = delete;
+        InventoryInfo(InventoryInfo&&) noexcept = default;
+        InventoryInfo& operator=(InventoryInfo&&) noexcept = default;
 
         struct ChannelImpCounter
         {

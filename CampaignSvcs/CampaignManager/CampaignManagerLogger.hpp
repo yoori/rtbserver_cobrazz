@@ -292,7 +292,7 @@ namespace AdServer::CampaignSvcs
       Commons::Optional<unsigned long> full_referer_hash;
       Commons::Optional<unsigned long> short_referer_hash;
       std::string referer;
-      std::list<std::string> urls;
+      AdServer::LogProcessing::StringArray urls;
       bool profile_referer;
 
       KeywordIdList hit_keywords;

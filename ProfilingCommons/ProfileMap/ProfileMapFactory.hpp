@@ -124,7 +124,7 @@ namespace ProfilingCommons
         ReferenceCounting::SmartPtr<
           AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =
             new TransactionProfileMap<KeyType>(
-              rocksdb_map,
+              rocksdb_map.in(),
               max_waiters);
 
         composite_active_object->add_child_object(rocksdb_map.in());

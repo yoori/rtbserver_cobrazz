@@ -41,6 +41,18 @@ namespace
 typedef ColoReachProcessor::ColoReachInfo ColoReachInfo;
 typedef std::list<ColoReachInfo> ColoReachInfoList;
 
+ColoReachInfo
+clone_colo_reach_info(const ColoReachInfo& source)
+{
+  ColoReachInfo result;
+  result.create_time = source.create_time;
+  result.household = source.household;
+  result.colocations = source.colocations;
+  result.ad_colocations = source.ad_colocations;
+  result.merge_colocations = source.merge_colocations;
+  return result;
+}
+
 struct UserColoReachTestProcessor:
   public virtual ColoReachProcessor,
   public virtual ReferenceCounting::AtomicImpl
@@ -51,7 +63,7 @@ struct UserColoReachTestProcessor:
     /*throw(ColoReachProcessor::Exception)*/
   {
     Sync::PosixGuard lock(mutex_gmt_);
-    result_gmt_.push_back(request_info);
+    result_gmt_.push_back(clone_colo_reach_info(request_info));
   }
 
   virtual void
@@ -60,7 +72,7 @@ struct UserColoReachTestProcessor:
     /*throw(ColoReachProcessor::Exception)*/
   {
     Sync::PosixGuard lock(mutex_isp_);
-    result_isp_.push_back(request_info);
+    result_isp_.push_back(clone_colo_reach_info(request_info));
   }
 
   const ColoReachInfoList&
@@ -311,7 +323,7 @@ struct TestCreateDateISPTimeZoneLogging: public TestBase
           Generics::Time::ZERO,
           1));
 
-      l.push_back(reach_info);
+      l.push_back(std::move(reach_info));
     }
 
     {
@@ -325,7 +337,7 @@ struct TestCreateDateISPTimeZoneLogging: public TestBase
           Algs::round_to_day(ri2.isp_time),
           Generics::Time::ZERO,
           1));
-      l.push_back(reach_info);
+      l.push_back(std::move(reach_info));
     }
 
     return true;
@@ -385,7 +397,7 @@ struct TestLastAppearanceDateBound: public TestBase
       reach_info.create_time = Algs::round_to_day(TIME1);
       reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME1), Generics::Time::ZERO, 1));
 
-      l.push_back(reach_info);
+      l.push_back(std::move(reach_info));
     }
 
     {
@@ -395,7 +407,7 @@ struct TestLastAppearanceDateBound: public TestBase
       // Note: last_appear limited by 31 day, not today - 32.
       reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME2), Algs::round_to_day(TIME2) - Generics::Time::ONE_DAY*31, 1));
 
-      l.push_back(reach_info);
+      l.push_back(std::move(reach_info));
     }
 
     {
@@ -407,7 +419,7 @@ struct TestLastAppearanceDateBound: public TestBase
         // Note: last_appear limited by 31 day on revert
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME2), Algs::round_to_day(TIME2) - Generics::Time::ONE_DAY*31, -1));
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME1), Generics::Time::ZERO, -1));
-        l.push_back(reach_info);
+        l.push_back(std::move(reach_info));
       }
       {
         // update old records with new create date
@@ -416,7 +428,7 @@ struct TestLastAppearanceDateBound: public TestBase
         // Note: last_appear limited by 31 day on resave
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME2), Algs::round_to_day(TIME2) - Generics::Time::ONE_DAY*31, 1));
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME1), Generics::Time::ZERO, 1));
-        l.push_back(reach_info);
+        l.push_back(std::move(reach_info));
       }
       {
         // Add new record for the current request.
@@ -425,7 +437,7 @@ struct TestLastAppearanceDateBound: public TestBase
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME1), Generics::Time::ZERO, -1));
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME3), Generics::Time::ZERO, 1));
         reach_info.colocations.push_back(IdAppearance(1, Algs::round_to_day(TIME1), Algs::round_to_day(TIME3), 1));
-        l.push_back(reach_info);
+        l.push_back(std::move(reach_info));
       }
     }
 
@@ -479,4 +491,3 @@ int main(int argc, char** argv) noexcept
 
   return -1;
 }
-

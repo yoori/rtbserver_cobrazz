@@ -46,9 +46,8 @@ namespace AdServer
           rocksdb_processor = {})
       /*throw(Exception)*/;
 
-    Generics::ConstSmartMemBuf_var
-    get_profile(const AdServer::Commons::UserId& user_id)
-      /*throw(Exception)*/;
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_profile(const AdServer::Commons::UserId& user_id);
 
     virtual void
     process_tag_request(const TagRequestInfo&)
@@ -58,6 +57,9 @@ namespace AdServer
     co_process_tag_request(const TagRequestInfo&);
 
     void clear_expired() /*throw(Exception)*/;
+
+    AdServer::Commons::Awaitable<void>
+    co_clear_expired();
 
   protected:
     virtual ~UserTagRequestMergeContainer() noexcept {}

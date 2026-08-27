@@ -336,10 +336,10 @@ save_load_test()
         fit != files.end(); ++fit)
     {
       unsigned long lines = 0;
-      loader->process_file(
+      AdServer::Commons::sync_wait(loader->co_process_file(
         lines,
         fit->c_str(),
-        0);
+        nullptr));
     }
 
     // check counter

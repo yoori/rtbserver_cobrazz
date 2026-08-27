@@ -21,9 +21,7 @@ namespace
   const unsigned long MAX_TAGS_IN_GROUP = 20;
 }
 
-namespace AdServer
-{
-namespace RequestInfoSvcs
+namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
@@ -66,7 +64,7 @@ namespace RequestInfoSvcs
       long count_to_erase = tag_groups_size > KEEP_MAX_GROUPS ?
         KEEP_MAX_GROUPS - tag_groups_size : 0;
 
-      while(erase_it != tag_groups.end() &&
+      while (erase_it != tag_groups.end() &&
         (erase_it->max_time() < keep_time.tv_sec || count_to_erase > 0))
       {
         ++erase_it;
@@ -96,14 +94,13 @@ namespace RequestInfoSvcs
        *       left.referer_hash == right.referer_hash &&
        *       (time condition)
        */
-      if(tag_request_info.page_load_id.present() &&
-        *tag_request_info.page_load_id)
+      if (tag_request_info.page_load_id.present() && *tag_request_info.page_load_id)
       {
         for(UserTagRequestMergeProfileWriter::tag_groups_Container::
               reverse_iterator change_git = tag_groups.rbegin();
             change_git != tag_groups.rend(); ++change_git)
         {
-          if((change_git->page_load_id() == *tag_request_info.page_load_id ||
+          if ((change_git->page_load_id() == *tag_request_info.page_load_id ||
                 (change_git->page_load_id() == 0 &&
                 change_git->referer_hash() == referer_hash &&
                 (tag_request_info.time + merge_by_time_bound).tv_sec >=
@@ -122,16 +119,16 @@ namespace RequestInfoSvcs
       else
       {
         for(UserTagRequestMergeProfileWriter::tag_groups_Container::
-              reverse_iterator change_git = tag_groups.rbegin();
-            change_git != tag_groups.rend(); ++change_git)
+            reverse_iterator change_git = tag_groups.rbegin();
+          change_git != tag_groups.rend(); ++change_git)
         {
-          if(change_git->max_time() + merge_by_time_bound.tv_sec <
+          if (change_git->max_time() + merge_by_time_bound.tv_sec <
              tag_request_info.time.tv_sec)
           {
             break;
           }
 
-          if(change_git->referer_hash() == referer_hash &&
+          if (change_git->referer_hash() == referer_hash &&
              (tag_request_info.time + merge_by_time_bound).tv_sec >=
                change_git->min_time() &&
              change_git->site_id() == tag_request_info.site_id &&
@@ -144,16 +141,16 @@ namespace RequestInfoSvcs
         }
       }
 
-      if(target_git != tag_groups.rend())
+      if (target_git != tag_groups.rend())
       {
         // change exists group
-        if(tag_request_info.time.tv_sec > target_git->max_time() &&
+        if (tag_request_info.time.tv_sec > target_git->max_time() &&
            target_git != tag_groups.rbegin())
         {
           // find new position for changed max_time
-          UserTagRequestMergeProfileWriter::tag_groups_Container::
-            iterator ins_it = target_git.base();
-          while(ins_it != tag_groups.end() &&
+          UserTagRequestMergeProfileWriter::tag_groups_Container::iterator ins_it =
+            target_git.base();
+          while (ins_it != tag_groups.end() &&
             ins_it->max_time() < tag_request_info.time.tv_sec)
           {
             ++ins_it;
@@ -175,7 +172,7 @@ namespace RequestInfoSvcs
           (tag_request_info.ad_shown ? 1 : 0);
         tag_group_info_list.rbegin()->rollback = false;
 
-        if(target_git->tags().size() + 1 < MAX_TAGS_IN_GROUP)
+        if (target_git->tags().size() + 1 < MAX_TAGS_IN_GROUP)
         {
           target_git->tags().push_back(tag_request_info.tag_id);
           target_git->ad_shown() |= (tag_request_info.ad_shown ? 1 : 0);
@@ -183,8 +180,7 @@ namespace RequestInfoSvcs
             target_git->min_time(), static_cast<uint32_t>(tag_request_info.time.tv_sec));
           target_git->max_time() = std::max(
             target_git->max_time(), static_cast<uint32_t>(tag_request_info.time.tv_sec));
-          if(tag_request_info.page_load_id.present() &&
-            *tag_request_info.page_load_id)
+          if (tag_request_info.page_load_id.present() && *tag_request_info.page_load_id)
           {
             target_git->page_load_id() = *tag_request_info.page_load_id;
           }
@@ -197,10 +193,9 @@ namespace RequestInfoSvcs
       else
       {
         // create new group
-        UserTagRequestMergeProfileWriter::tag_groups_Container::
-          reverse_iterator ins_it = tag_groups.rbegin();
-        while(ins_it != tag_groups.rend() &&
-          ins_it->max_time() > tag_request_info.time.tv_sec)
+        UserTagRequestMergeProfileWriter::tag_groups_Container::reverse_iterator ins_it =
+          tag_groups.rbegin();
+        while (ins_it != tag_groups.rend() && ins_it->max_time() > tag_request_info.time.tv_sec)
         {
           ++ins_it;
         }
@@ -224,8 +219,7 @@ namespace RequestInfoSvcs
     }
   }
 
-  const Generics::Time UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME =
-    Generics::Time::ONE_DAY;
+  const Generics::Time UserTagRequestMergeContainer::DEFAULT_EXPIRE_TIME = Generics::Time::ONE_DAY;
 
   UserTagRequestMergeContainer::UserTagRequestMergeContainer(
     Logging::Logger* logger,
@@ -245,11 +239,8 @@ namespace RequestInfoSvcs
     try
     {
       auto user_map = open_rocksdb_transaction_profile_map<
-        AdServer::Commons::UserId,
-        UserIdToString>(
-          rocksdb_path,
-          expire_time_,
-          std::move(rocksdb_processor));
+        AdServer::Commons::UserId, UserIdToString>(
+          rocksdb_path, expire_time_, std::move(rocksdb_processor));
       user_map_ = user_map.map;
       add_child_object(user_map.active_object);
     }
@@ -263,15 +254,13 @@ namespace RequestInfoSvcs
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  UserTagRequestMergeContainer::get_profile(
-    const AdServer::Commons::UserId& user_id)
-    /*throw(Exception)*/
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserTagRequestMergeContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {
-    static const char* FUN = "UserTagRequestMergeContainer::get_profile()";
+    static const char* FUN = "UserTagRequestMergeContainer::co_get_profile()";
     try
     {
-      return user_map_->get_profile(user_id);
+      co_return co_await user_map_->co_get_profile(user_id);
     }
     catch(const eh::Exception& ex)
     {
@@ -283,22 +272,19 @@ namespace RequestInfoSvcs
   }
 
   void
-  UserTagRequestMergeContainer::process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  UserTagRequestMergeContainer::process_tag_request(const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
   {
     static const char* FUN = "UserTagRequestMergeContainer::process_tag_request()";
 
-    if(tag_request_info.user_id.is_null() ||
-       !tag_request_info.tag_id)
+    if (tag_request_info.user_id.is_null() || !tag_request_info.tag_id)
     {
       return;
     }
 
     TagRequestGroupProcessor::TagRequestGroupInfoList tag_request_group_info_list;
 
-    if(!tag_request_info.referer_hash.present() &&
-       !tag_request_info.page_load_id.present())
+    if (!tag_request_info.referer_hash.present() && !tag_request_info.page_load_id.present())
     {
       // don't save group into profile - it can't be merged with some other request
       tag_request_group_info_list.push_back(TagRequestGroupProcessor::TagRequestGroupInfo());
@@ -306,16 +292,14 @@ namespace RequestInfoSvcs
     }
     else
     {
-      process_tag_request_trans_(
-        tag_request_group_info_list,
-        tag_request_info);
+      process_tag_request_trans_(tag_request_group_info_list, tag_request_info);
     }
 
     try
     {
       for(TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
-            tag_request_group_info_list.begin();
-          it != tag_request_group_info_list.end(); ++it)
+          tag_request_group_info_list.begin();
+        it != tag_request_group_info_list.end(); ++it)
       {
         tag_request_group_processor_->process_tag_request_group(*it);
       }
@@ -327,55 +311,43 @@ namespace RequestInfoSvcs
       throw TagRequestProcessor::Exception(ostr);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed request: " << std::endl;
       tag_request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::TAG_REQUEST_MERGE_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::TAG_REQUEST_MERGE_CONTAINER);
     }
   }
 
   AdServer::Commons::Awaitable<void>
-  UserTagRequestMergeContainer::co_process_tag_request(
-    const TagRequestInfo& tag_request_info)
+  UserTagRequestMergeContainer::co_process_tag_request(const TagRequestInfo& tag_request_info)
   {
-    static const char* FUN =
-      "UserTagRequestMergeContainer::co_process_tag_request()";
+    static const char* FUN = "UserTagRequestMergeContainer::co_process_tag_request()";
 
-    if(tag_request_info.user_id.is_null() ||
-       !tag_request_info.tag_id)
+    if (tag_request_info.user_id.is_null() || !tag_request_info.tag_id)
     {
       co_return;
     }
 
-    TagRequestGroupProcessor::TagRequestGroupInfoList
-      tag_request_group_info_list;
+    TagRequestGroupProcessor::TagRequestGroupInfoList tag_request_group_info_list;
 
-    if(!tag_request_info.referer_hash.present() &&
-       !tag_request_info.page_load_id.present())
+    if (!tag_request_info.referer_hash.present() && !tag_request_info.page_load_id.present())
     {
-      tag_request_group_info_list.push_back(
-        TagRequestGroupProcessor::TagRequestGroupInfo());
-      fill_tag_group_info(
-        *tag_request_group_info_list.rbegin(),
-        tag_request_info);
+      tag_request_group_info_list.push_back(TagRequestGroupProcessor::TagRequestGroupInfo());
+      fill_tag_group_info(*tag_request_group_info_list.rbegin(), tag_request_info);
     }
     else
     {
-      co_await co_process_tag_request_trans_(
-        tag_request_group_info_list,
-        tag_request_info);
+      co_await co_process_tag_request_trans_(tag_request_group_info_list, tag_request_info);
     }
 
     try
     {
       for(TagRequestGroupProcessor::TagRequestGroupInfoList::const_iterator it =
-            tag_request_group_info_list.begin();
-          it != tag_request_group_info_list.end(); ++it)
+          tag_request_group_info_list.begin();
+        it != tag_request_group_info_list.end(); ++it)
       {
         tag_request_group_processor_->process_tag_request_group(*it);
       }
@@ -387,15 +359,13 @@ namespace RequestInfoSvcs
       throw TagRequestProcessor::Exception(ostr);
     }
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
       ostr << FUN << ": Processed request: " << std::endl;
       tag_request_info.print(ostr, "  ");
 
-      logger_->log(ostr.str(),
-        Logging::Logger::TRACE,
-        Aspect::TAG_REQUEST_MERGE_CONTAINER);
+      logger_->log(ostr.str(), Logging::Logger::TRACE, Aspect::TAG_REQUEST_MERGE_CONTAINER);
     }
   }
 
@@ -410,15 +380,12 @@ namespace RequestInfoSvcs
     {
       UserTagRequestMergeProfileWriter user_profile_writer;
 
-      UserMap::Transaction_var transaction =
-        user_map_->get_transaction(tag_request_info.user_id);
+      UserMap::Transaction_var transaction = user_map_->get_transaction(tag_request_info.user_id);
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
       {
@@ -442,9 +409,7 @@ namespace RequestInfoSvcs
 
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
 
-      transaction->save_profile(
-        Generics::transfer_membuf(new_mem_buf),
-        tag_request_info.time);
+      transaction->save_profile(Generics::transfer_membuf(new_mem_buf), tag_request_info.time);
     }
     catch(const eh::Exception& ex)
     {
@@ -456,13 +421,11 @@ namespace RequestInfoSvcs
 
   AdServer::Commons::Awaitable<void>
   UserTagRequestMergeContainer::co_process_tag_request_trans_(
-    TagRequestGroupProcessor::TagRequestGroupInfoList&
-      tag_request_group_info_list,
+    TagRequestGroupProcessor::TagRequestGroupInfoList& tag_request_group_info_list,
     const TagRequestInfo& tag_request_info)
     /*throw(Exception)*/
   {
-    static const char* FUN =
-      "UserTagRequestMergeContainer::co_process_tag_request_trans_()";
+    static const char* FUN = "UserTagRequestMergeContainer::co_process_tag_request_trans_()";
 
     try
     {
@@ -470,19 +433,15 @@ namespace RequestInfoSvcs
 
       UserMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(tag_request_info.user_id);
-      Generics::ConstSmartMemBuf_var mem_buf =
-        co_await transaction->co_get_profile();
+      Generics::ConstSmartMemBuf_var mem_buf = co_await transaction->co_get_profile();
 
-      if(mem_buf.in())
+      if (mem_buf.in())
       {
-        user_profile_writer.init(
-          mem_buf->membuf().data(),
-          mem_buf->membuf().size());
+        user_profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
       {
-        user_profile_writer.version() =
-          CURRENT_USER_TAG_REQUEST_PROFILE_VERSION;
+        user_profile_writer.version() = CURRENT_USER_TAG_REQUEST_PROFILE_VERSION;
       }
 
       insert_tag_request(
@@ -518,5 +477,11 @@ namespace RequestInfoSvcs
     Generics::Time now = Generics::Time::get_time_of_day();
     user_map_->clear_expired(now - expire_time_);
   }
-} /* namespace RequestInfoSvcs */
-} /* namespace AdServer */
+
+  AdServer::Commons::Awaitable<void>
+  UserTagRequestMergeContainer::co_clear_expired()
+  {
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    co_await user_map_->co_clear_expired(now - expire_time_);
+  }
+} /* namespace AdServer::RequestInfoSvcs */

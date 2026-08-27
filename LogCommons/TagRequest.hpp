@@ -14,749 +14,16 @@
 
 namespace AdServer::LogProcessing
 {
-  class TagRequestData_V_3_3
+  struct TagRequestData
   {
-  protected:
-    typedef Aux_::StringIoWrapper StringT;
+    using StringT = Aux_::StringIoWrapper;
 
-  public:
-    class OptInSection
+    struct OptInSection
     {
-      class Data: public ReferenceCounting::AtomicImpl
-      {
-      public:
-        Data()
-        :
-          site_id(),
-          isp_time(),
-          user_id(),
-          page_load_id(),
-          ad_shown(),
-          profile_referer()
-        {
-        }
-
-        bool operator==(const Data& rhs) const
-        {
-          return &rhs == this ||
-            (site_id == rhs.site_id &&
-             isp_time == rhs.isp_time &&
-             user_id == rhs.user_id &&
-             page_load_id == rhs.page_load_id &&
-             ad_shown == rhs.ad_shown &&
-             profile_referer == rhs.profile_referer);
-        }
-
-        std::uint32_t site_id;
-        SecondsTimestamp isp_time;
-        UserId user_id;
-        OptionalUInt64 page_load_id;
-        bool ad_shown;
-        bool profile_referer;
-
-      protected:
-        virtual
-        ~Data() noexcept = default;
-      };
-
-      typedef ReferenceCounting::SmartPtr<Data> DataPtr;
-
-    public:
-      OptInSection(): data_(new Data) {}
-
-      OptInSection(
-        std::uint32_t site_id,
-        const SecondsTimestamp& isp_time,
-        const UserId& user_id,
-        const OptionalUInt64& page_load_id,
-        bool ad_shown,
-        bool profile_referer
-      )
-      :
-        data_(new Data)
-      {
-        data_->site_id = site_id;
-        data_->isp_time = isp_time;
-        data_->user_id = user_id;
-        data_->page_load_id = page_load_id;
-        data_->ad_shown = ad_shown;
-        data_->profile_referer = profile_referer;
-      }
-
-      bool operator==(const OptInSection& rhs) const
-      {
-        return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
-      }
-
-      std::uint32_t site_id() const
-      {
-        return data_->site_id;
-      }
-
-      const SecondsTimestamp& isp_time() const
-      {
-        return data_->isp_time;
-      }
-
-      const UserId& user_id() const
-      {
-        return data_->user_id;
-      }
-
-      const OptionalUInt64& page_load_id() const
-      {
-        return data_->page_load_id;
-      }
-
-      bool ad_shown() const
-      {
-        return data_->ad_shown;
-      }
-
-      bool profile_referer() const
-      {
-        return data_->profile_referer;
-      }
-
-      friend FixedBufStream<TabCategory>&
-      operator>>(FixedBufStream<TabCategory>& is, OptInSection& opt_in_sect);
-
-      // FXIME: remove
-      /*
-      friend std::istream&
-      operator>>(std::istream& is, OptInSection& opt_in_sect);
-      */
-
-      friend std::ostream&
-      operator<<(std::ostream& os, const OptInSection& opt_in_sect);
-
-      void invariant() const /*throw(eh::Exception)*/
-      {
-        /*
-        if (data_->user_id.is_null())
-        {
-          Stream::Error es;
-          es << "PassbackSection::invariant(): user_id must not be NULL";
-          throw ConstraintViolation(es);
-        }
-        */
-      }
-
-    private:
-      DataPtr data_;
-    };
-
-    typedef OptionalValue<OptInSection> OptInSectionOptional;
-
-    TagRequestData_V_3_3() noexcept
-    :
-      time_(),
-      colo_id_(),
-      tag_id_(),
-      size_id_(),
-      ext_tag_id_(),
-      referer_(),
-      full_referer_hash_(),
-      user_status_(),
-      country_(),
-      passback_request_id_(),
-      floor_cost_(FixedNumber::ZERO),
-      opt_in_section_()
-    {
-    }
-
-    TagRequestData_V_3_3(
-      const SecondsTimestamp& time,
-      std::uint32_t colo_id,
-      std::uint32_t tag_id,
-      const OptionalUInt32& size_id,
-      const StringT& ext_tag_id,
-      const StringT& referer,
-      const OptionalUInt64& full_referer_hash,
-      char user_status,
-      const std::string& country,
-      const RequestId& passback_request_id,
-      const FixedNumber& floor_cost,
-      const OptInSectionOptional& opt_in_section
-    )
-    :
-      time_(time),
-      colo_id_(colo_id),
-      tag_id_(tag_id),
-      size_id_(size_id),
-      ext_tag_id_(ext_tag_id),
-      referer_(referer),
-      full_referer_hash_(full_referer_hash),
-      user_status_(user_status),
-      country_(country),
-      passback_request_id_(passback_request_id),
-      floor_cost_(floor_cost),
-      opt_in_section_(opt_in_section),
-      random_(Generics::safe_rand())
-    {
-      invariant();
-      country_.get().resize(2);
-    }
-
-    bool operator==(const TagRequestData_V_3_3& data) const
-    {
-      if (this == &data)
-      {
-        return true;
-      }
-      return time_ == data.time_ &&
-        colo_id_ == data.colo_id_ &&
-        tag_id_ == data.tag_id_ &&
-        size_id_ == data.size_id_ &&
-        referer_ == data.referer_ &&
-        ext_tag_id_ == data.ext_tag_id_ &&
-        full_referer_hash_ == data.full_referer_hash_ &&
-        user_status_ == data.user_status_ &&
-        country_ == data.country_ &&
-        passback_request_id_ == data.passback_request_id_ &&
-        floor_cost_ == data.floor_cost_ &&
-        opt_in_section_ == data.opt_in_section_;
-    }
-
-    const SecondsTimestamp& time() const
-    {
-      return time_;
-    }
-
-    std::uint32_t colo_id() const
-    {
-      return colo_id_;
-    }
-
-    std::uint32_t tag_id() const
-    {
-      return tag_id_;
-    }
-
-    const OptionalUInt32& size_id() const
-    {
-      return size_id_;
-    }
-
-    const std::string& ext_tag_id() const
-    {
-      return ext_tag_id_.get();
-    }
-
-    const StringT& referer() const
-    {
-      return referer_;
-    }
-
-    const OptionalUInt64& full_referer_hash() const noexcept
-    {
-      return full_referer_hash_;
-    }
-
-    char user_status() const
-    {
-      return user_status_;
-    }
-
-    const std::string& country() const
-    {
-      return country_.get();
-    }
-
-    const RequestId& passback_request_id() const
-    {
-      return passback_request_id_;
-    }
-
-    const FixedNumber& floor_cost() const
-    {
-      return floor_cost_;
-    }
-
-    const OptInSectionOptional& opt_in_section() const
-    {
-      return opt_in_section_;
-    }
-
-    unsigned long distrib_hash() const
-    {
-      if (opt_in_section_.present())
-      {
-        return user_id_distribution_hash(opt_in_section_.get().user_id());
-      }
-      if (!passback_request_id_.is_null())
-      {
-        return AdServer::Commons::uuid_distribution_hash(passback_request_id_);
-      }
-      return random_;
-    }
-
-    friend
-    FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is, TagRequestData_V_3_3& data)
-      /*throw(eh::Exception)*/;
-
-  private:
-    void invariant() const /*throw(eh::Exception)*/
-    {
-      if (!colo_id_)
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_3::invariant(): colo_id_ must be > 0";
-        throw ConstraintViolation(es);
-      }
-      if (referer_.empty())
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_3::invariant(): referer_ must be non-empty";
-        throw ConstraintViolation(es);
-      }
-      if (!is_valid_user_status(user_status_))
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_3::invariant(): user_status_ "
-          "has invalid value '" << user_status_ << '\'';
-        throw ConstraintViolation(es);
-      }
-      if (opt_in_section_.present())
-      {
-        opt_in_section_.get().invariant();
-      }
-    }
-
-    SecondsTimestamp time_;
-    std::uint32_t colo_id_;
-    std::uint32_t tag_id_;
-    OptionalUInt32 size_id_;
-    StringIoWrapperOptional ext_tag_id_;
-    StringT referer_;
-    OptionalUInt64 full_referer_hash_;
-    char user_status_;
-    StringIoWrapperOptional country_;
-    RequestId passback_request_id_;
-    FixedNumber floor_cost_;
-    OptInSectionOptional opt_in_section_;
-    unsigned long random_;
-  };
-
-  typedef SeqCollector<TagRequestData_V_3_3, true> TagRequestCollector_V_3_3;
-
-  class TagRequestData_V_3_5
-  {
-  protected:
-    typedef Aux_::StringIoWrapper StringT;
-
-  public:
-    class OptInSection
-    {
-      class Data: public ReferenceCounting::AtomicImpl
-      {
-      public:
-        Data()
-        :
-          site_id(),
-          isp_time(),
-          user_id(),
-          page_load_id(),
-          ad_shown(),
-          profile_referer(),
-          user_agent(new AdServer::Commons::StringHolder(""))
-        {
-        }
-
-        bool operator==(const Data& rhs) const
-        {
-          return &rhs == this ||
-            (site_id == rhs.site_id &&
-             isp_time == rhs.isp_time &&
-             user_id == rhs.user_id &&
-             page_load_id == rhs.page_load_id &&
-             ad_shown == rhs.ad_shown &&
-             profile_referer == rhs.profile_referer &&
-             user_agent->str() == rhs.user_agent->str());
-        }
-
-        std::uint32_t site_id;
-        SecondsTimestamp isp_time;
-        UserId user_id;
-        OptionalUInt64 page_load_id;
-        bool ad_shown;
-        bool profile_referer;
-        Commons::StringHolder_var user_agent;
-
-      protected:
-        virtual
-        ~Data() noexcept = default;
-      };
-
-      typedef ReferenceCounting::SmartPtr<Data> DataPtr;
-
-      static const std::size_t MAX_USER_AGENT_LEN_ = 4000;
-
-    public:
-      OptInSection(): data_(new Data) {}
-
-      OptInSection(
-        std::uint32_t site_id,
-        const SecondsTimestamp& isp_time,
-        const UserId& user_id,
-        const OptionalUInt64& page_load_id,
-        bool ad_shown,
-        bool profile_referer,
-        const Commons::StringHolder_var& user_agent
-      )
-      :
-        data_(new Data)
-      {
-        data_->site_id = site_id;
-        data_->isp_time = isp_time;
-        data_->user_id = user_id;
-        data_->page_load_id = page_load_id;
-        data_->ad_shown = ad_shown;
-        data_->profile_referer = profile_referer;
-        if (user_agent.in())
-        {
-          data_->user_agent = user_agent;
-          if (data_->user_agent->str().length() > MAX_USER_AGENT_LEN_)
-          {
-            std::string tmp;
-            trim(tmp, data_->user_agent->str(), MAX_USER_AGENT_LEN_);
-            data_->user_agent = new Commons::StringHolder(std::move(tmp));
-          }
-        }
-        else
-        {
-          data_->user_agent = new Commons::StringHolder(std::string());
-        }
-      }
-
-      bool operator==(const OptInSection& rhs) const
-      {
-        return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
-      }
-
-      std::uint32_t site_id() const
-      {
-        return data_->site_id;
-      }
-
-      const SecondsTimestamp& isp_time() const
-      {
-        return data_->isp_time;
-      }
-
-      const UserId& user_id() const
-      {
-        return data_->user_id;
-      }
-
-      const OptionalUInt64& page_load_id() const
-      {
-        return data_->page_load_id;
-      }
-
-      bool ad_shown() const
-      {
-        return data_->ad_shown;
-      }
-
-      bool profile_referer() const
-      {
-        return data_->profile_referer;
-      }
-
-      const std::string& user_agent() const
-      {
-        return data_->user_agent->str();
-      }
-
-      friend FixedBufStream<TabCategory>&
-      operator>>(FixedBufStream<TabCategory>& is, OptInSection& opt_in_sect);
-
-      friend std::ostream&
-      operator<<(std::ostream& os, const OptInSection& opt_in_sect);
-
-      void invariant() const /*throw(eh::Exception)*/
-      {
-        /*
-        if (data_->user_id.is_null())
-        {
-          Stream::Error es;
-          es << "PassbackSection::invariant(): user_id must not be NULL";
-          throw ConstraintViolation(es);
-        }
-        */
-      }
-
-    private:
-      DataPtr data_;
-    };
-
-    typedef OptionalValue<OptInSection> OptInSectionOptional;
-
-    TagRequestData_V_3_5() noexcept
-    :
-      time_(),
-      colo_id_(),
-      tag_id_(),
-      size_id_(),
-      ext_tag_id_(),
-      referer_(),
-      full_referer_hash_(),
-      user_status_(),
-      country_(),
-      passback_request_id_(),
-      floor_cost_(FixedNumber::ZERO),
-      urls_(),
-      opt_in_section_()
-    {
-    }
-
-    TagRequestData_V_3_5(
-      const SecondsTimestamp& time,
-      std::uint32_t colo_id,
-      std::uint32_t tag_id,
-      const OptionalUInt32& size_id,
-      const StringT& ext_tag_id,
-      const StringT& referer,
-      const OptionalUInt64& full_referer_hash,
-      char user_status,
-      const std::string& country,
-      const RequestId& passback_request_id,
-      const FixedNumber& floor_cost,
-      const StringList& urls,
-      const OptInSectionOptional& opt_in_section
-    )
-    :
-      time_(time),
-      colo_id_(colo_id),
-      tag_id_(tag_id),
-      size_id_(size_id),
-      ext_tag_id_(ext_tag_id),
-      referer_(referer),
-      full_referer_hash_(full_referer_hash),
-      user_status_(user_status),
-      country_(country),
-      passback_request_id_(passback_request_id),
-      floor_cost_(floor_cost),
-      urls_(urls),
-      opt_in_section_(opt_in_section),
-      random_(Generics::safe_rand())
-    {
-      invariant();
-      country_.get().resize(2);
-    }
-
-    bool operator==(const TagRequestData_V_3_5& data) const
-    {
-      if (this == &data)
-      {
-        return true;
-      }
-      return time_ == data.time_ &&
-        colo_id_ == data.colo_id_ &&
-        tag_id_ == data.tag_id_ &&
-        size_id_ == data.size_id_ &&
-        referer_ == data.referer_ &&
-        ext_tag_id_ == data.ext_tag_id_ &&
-        full_referer_hash_ == data.full_referer_hash_ &&
-        user_status_ == data.user_status_ &&
-        country_ == data.country_ &&
-        passback_request_id_ == data.passback_request_id_ &&
-        floor_cost_ == data.floor_cost_ &&
-        urls_ == data.urls_ &&
-        opt_in_section_ == data.opt_in_section_;
-    }
-
-    const SecondsTimestamp& time() const
-    {
-      return time_;
-    }
-
-    std::uint32_t colo_id() const
-    {
-      return colo_id_;
-    }
-
-    std::uint32_t tag_id() const
-    {
-      return tag_id_;
-    }
-
-    const OptionalUInt32& size_id() const
-    {
-      return size_id_;
-    }
-
-    const std::string& ext_tag_id() const
-    {
-      return ext_tag_id_.get();
-    }
-
-    const StringT& referer() const
-    {
-      return referer_;
-    }
-
-    const OptionalUInt64& full_referer_hash() const noexcept
-    {
-      return full_referer_hash_;
-    }
-
-    char user_status() const
-    {
-      return user_status_;
-    }
-
-    const std::string& country() const
-    {
-      return country_.get();
-    }
-
-    const RequestId& passback_request_id() const
-    {
-      return passback_request_id_;
-    }
-
-    const FixedNumber& floor_cost() const
-    {
-      return floor_cost_;
-    }
-
-    const StringList& urls() const
-    {
-      return urls_;
-    }
-
-    const OptInSectionOptional& opt_in_section() const
-    {
-      return opt_in_section_;
-    }
-
-    unsigned long distrib_hash() const
-    {
-      if (opt_in_section_.present())
-      {
-        return user_id_distribution_hash(opt_in_section_.get().user_id());
-      }
-      if (!passback_request_id_.is_null())
-      {
-        return AdServer::Commons::uuid_distribution_hash(passback_request_id_);
-      }
-      return random_;
-    }
-
-    friend
-    FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is, TagRequestData_V_3_5& data)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagRequestData_V_3_5& data)
-      /*throw(eh::Exception)*/;
-
-  private:
-    void invariant() const /*throw(eh::Exception)*/
-    {
-      if (!colo_id_)
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_5::invariant(): colo_id_ must be > 0";
-        throw ConstraintViolation(es);
-      }
-      if (referer_.empty())
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_5::invariant(): referer_ must be non-empty";
-        throw ConstraintViolation(es);
-      }
-      if (!is_valid_user_status(user_status_))
-      {
-        Stream::Error es;
-        es << "TagRequestData_V_3_5::invariant(): user_status_ "
-          "has invalid value '" << user_status_ << '\'';
-        throw ConstraintViolation(es);
-      }
-      if (opt_in_section_.present())
-      {
-        opt_in_section_.get().invariant();
-      }
-    }
-
-    SecondsTimestamp time_;
-    std::uint32_t colo_id_;
-    std::uint32_t tag_id_;
-    OptionalUInt32 size_id_;
-    StringIoWrapperOptional ext_tag_id_;
-    StringT referer_;
-    OptionalUInt64 full_referer_hash_;
-    char user_status_;
-    StringIoWrapperOptional country_;
-    RequestId passback_request_id_;
-    FixedNumber floor_cost_;
-    StringList urls_;
-    OptInSectionOptional opt_in_section_;
-    unsigned long random_;
-  };
-
-  typedef SeqCollector<TagRequestData_V_3_5, true> TagRequestCollector_V_3_5;
-
-  class TagRequestData
-  {
-  protected:
-    typedef Aux_::StringIoWrapper StringT;
-
-  public:
-    class OptInSection
-    {
-      class Data: public ReferenceCounting::AtomicImpl
-      {
-      public:
-        Data()
-        :
-          site_id(),
-          user_id(),
-          page_load_id(),
-          ad_shown(),
-          profile_referer(),
-          user_agent()
-        {
-        }
-
-        bool operator==(const Data& rhs) const
-        {
-          return &rhs == this ||
-            (site_id == rhs.site_id &&
-             user_id == rhs.user_id &&
-             page_load_id == rhs.page_load_id &&
-             ad_shown == rhs.ad_shown &&
-             profile_referer == rhs.profile_referer &&
-             ((!user_agent.in() && !rhs.user_agent.in()) ||
-               (user_agent.in() && rhs.user_agent.in() &&
-                 user_agent->str() == rhs.user_agent->str()))
-             );
-        }
-
-        std::uint32_t site_id;
-        UserId user_id;
-        OptionalUInt64 page_load_id;
-        bool ad_shown;
-        bool profile_referer;
-        Commons::StringHolder_var user_agent;
-
-      protected:
-        virtual
-        ~Data() noexcept = default;
-      };
-
-      typedef ReferenceCounting::SmartPtr<Data> DataPtr;
-
       static const std::size_t MAX_USER_AGENT_LEN_ = 4000;
       static const std::string EMPTY_STRING_;
 
-    public:
-      OptInSection(): data_(new Data) {}
+      OptInSection() = default;
 
       OptInSection(
         std::uint32_t site_id,
@@ -764,93 +31,64 @@ namespace AdServer::LogProcessing
         const OptionalUInt64& page_load_id,
         bool ad_shown,
         bool profile_referer,
-        const Commons::StringHolder_var& user_agent
-      )
-      :
-        data_(new Data)
+        const Commons::StringHolder_var& user_agent)
+        : site_id_(site_id),
+          user_id_(user_id),
+          page_load_id_(page_load_id),
+          ad_shown_(ad_shown),
+          profile_referer_(profile_referer),
+          user_agent_(user_agent)
       {
-        data_->site_id = site_id;
-        data_->user_id = user_id;
-        data_->page_load_id = page_load_id;
-        data_->ad_shown = ad_shown;
-        data_->profile_referer = profile_referer;
-        if (user_agent.in())
+        if (user_agent_.in() && user_agent_->str().length() > MAX_USER_AGENT_LEN_)
         {
-          data_->user_agent = user_agent;
-          if (data_->user_agent->str().length() > MAX_USER_AGENT_LEN_)
-          {
-            std::string tmp;
-            trim(tmp, data_->user_agent->str(), MAX_USER_AGENT_LEN_);
-            data_->user_agent = new Commons::StringHolder(std::move(tmp));
-          }
+          std::string tmp;
+          trim(tmp, user_agent_->str(), MAX_USER_AGENT_LEN_);
+          user_agent_ = new Commons::StringHolder(std::move(tmp));
         }
-        else
-        {
-          data_->user_agent = Commons::StringHolder_var();
-        }
-      }
-
-      OptInSection(
-        const TagRequestData_V_3_3::OptInSection& opt_in_section
-      )
-      :
-        data_(new Data)
-      {
-        data_->site_id = opt_in_section.site_id();
-        data_->user_id = opt_in_section.user_id();
-        data_->page_load_id = opt_in_section.page_load_id();
-        data_->ad_shown = opt_in_section.ad_shown();
-        data_->profile_referer = opt_in_section.profile_referer();
-      }
-
-      OptInSection(
-        const TagRequestData_V_3_5::OptInSection& opt_in_section
-      )
-      :
-        data_(new Data)
-      {
-        data_->site_id = opt_in_section.site_id();
-        data_->user_id = opt_in_section.user_id();
-        data_->page_load_id = opt_in_section.page_load_id();
-        data_->ad_shown = opt_in_section.ad_shown();
-        data_->profile_referer = opt_in_section.profile_referer();
       }
 
       bool operator==(const OptInSection& rhs) const
       {
-        return &rhs == this || data_ == rhs.data_ || *data_ == *rhs.data_;
+        return &rhs == this ||
+          (site_id_ == rhs.site_id_ &&
+           user_id_ == rhs.user_id_ &&
+           page_load_id_ == rhs.page_load_id_ &&
+           ad_shown_ == rhs.ad_shown_ &&
+           profile_referer_ == rhs.profile_referer_ &&
+           ((!user_agent_.in() && !rhs.user_agent_.in()) ||
+             (user_agent_.in() && rhs.user_agent_.in() &&
+               user_agent_->str() == rhs.user_agent_->str())));
       }
 
       std::uint32_t site_id() const
       {
-        return data_->site_id;
+        return site_id_;
       }
 
       const UserId& user_id() const
       {
-        return data_->user_id;
+        return user_id_;
       }
 
       const OptionalUInt64& page_load_id() const
       {
-        return data_->page_load_id;
+        return page_load_id_;
       }
 
       bool ad_shown() const
       {
-        return data_->ad_shown;
+        return ad_shown_;
       }
 
       bool profile_referer() const
       {
-        return data_->profile_referer;
+        return profile_referer_;
       }
 
       const std::string&
-      user_agent() const
+      user_agent() const &
       {
-        return data_->user_agent.in() ?
-          data_->user_agent->str() : EMPTY_STRING_;
+        return user_agent_.in() ? user_agent_->str() : EMPTY_STRING_;
       }
 
       friend FixedBufStream<TabCategory>&
@@ -859,23 +97,15 @@ namespace AdServer::LogProcessing
       friend std::ostream&
       operator<<(std::ostream& os, const OptInSection& opt_in_sect);
 
-      void invariant() const /*throw(eh::Exception)*/
-      {
-        /*
-        if (data_->user_id.is_null())
-        {
-          Stream::Error es;
-          es << "PassbackSection::invariant(): user_id must not be NULL";
-          throw ConstraintViolation(es);
-        }
-        */
-      }
-
-    private:
-      DataPtr data_;
+      std::uint32_t site_id_{};
+      UserId user_id_;
+      OptionalUInt64 page_load_id_;
+      bool ad_shown_{};
+      bool profile_referer_{};
+      Commons::StringHolder_var user_agent_;
     };
 
-    typedef OptionalValue<OptInSection> OptInSectionOptional;
+    using OptInSectionOptional = OptionalValue<OptInSection>;
 
     TagRequestData() noexcept
       : time_(),
@@ -893,8 +123,7 @@ namespace AdServer::LogProcessing
         floor_cost_(FixedNumber::ZERO),
         urls_(),
         opt_in_section_()
-    {
-    }
+    {}
 
     TagRequestData(const TagRequestData&) = delete;
     TagRequestData& operator=(const TagRequestData&) = delete;
@@ -916,7 +145,7 @@ namespace AdServer::LogProcessing
       const std::string& country,
       const RequestId& passback_request_id,
       const FixedNumber& floor_cost,
-      StringList urls,
+      StringArray urls,
       OptInSectionOptional opt_in_section)
       : time_(time),
         isp_time_(isp_time),
@@ -934,56 +163,6 @@ namespace AdServer::LogProcessing
         urls_(std::move(urls)),
         opt_in_section_(std::move(opt_in_section)),
         random_(Generics::safe_rand())
-    {
-      invariant();
-      country_.get().resize(2);
-    }
-
-    TagRequestData(const TagRequestData_V_3_3& data)
-    :
-      time_(data.time()),
-      isp_time_(data.opt_in_section().present() ?
-        data.opt_in_section().get().isp_time() : data.time()),
-      test_request_(),
-      colo_id_(data.colo_id()),
-      tag_id_(data.tag_id()),
-      size_id_(data.size_id()),
-      ext_tag_id_(data.ext_tag_id()),
-      referer_(data.referer()),
-      full_referer_hash_(data.full_referer_hash()),
-      user_status_(data.user_status()),
-      country_(data.country()),
-      passback_request_id_(data.passback_request_id()),
-      floor_cost_(FixedNumber::ZERO),
-      urls_(),
-      opt_in_section_(data.opt_in_section().present() ?
-        data.opt_in_section().get() : OptInSectionOptional()),
-      random_(Generics::safe_rand())
-    {
-      invariant();
-      country_.get().resize(2);
-    }
-
-    TagRequestData(const TagRequestData_V_3_5& data)
-    :
-      time_(data.time()),
-      isp_time_(data.opt_in_section().present() ?
-        data.opt_in_section().get().isp_time() : data.time()),
-      test_request_(),
-      colo_id_(data.colo_id()),
-      tag_id_(data.tag_id()),
-      size_id_(data.size_id()),
-      ext_tag_id_(data.ext_tag_id()),
-      referer_(data.referer()),
-      full_referer_hash_(data.full_referer_hash()),
-      user_status_(data.user_status()),
-      country_(data.country()),
-      passback_request_id_(data.passback_request_id()),
-      floor_cost_(data.floor_cost()),
-      urls_(data.urls()),
-      opt_in_section_(data.opt_in_section().present() ?
-        data.opt_in_section().get() : OptInSectionOptional()),
-      random_(Generics::safe_rand())
     {
       invariant();
       country_.get().resize(2);
@@ -1042,12 +221,12 @@ namespace AdServer::LogProcessing
       return size_id_;
     }
 
-    const std::string& ext_tag_id() const
+    const std::string& ext_tag_id() const &
     {
       return ext_tag_id_.get();
     }
 
-    const StringT& referer() const
+    const StringT& referer() const &
     {
       return referer_;
     }
@@ -1062,7 +241,7 @@ namespace AdServer::LogProcessing
       return user_status_;
     }
 
-    const std::string& country() const
+    const std::string& country() const &
     {
       return country_.get();
     }
@@ -1077,12 +256,12 @@ namespace AdServer::LogProcessing
       return floor_cost_;
     }
 
-    const StringList& urls() const
+    const StringArray& urls() const &
     {
       return urls_;
     }
 
-    const OptInSectionOptional& opt_in_section() const
+    const OptInSectionOptional& opt_in_section() const &
     {
       return opt_in_section_;
     }
@@ -1093,6 +272,7 @@ namespace AdServer::LogProcessing
       {
         return user_id_distribution_hash(opt_in_section_.get().user_id());
       }
+
       if (!passback_request_id_.is_null())
       {
         return AdServer::Commons::uuid_distribution_hash(passback_request_id_);
@@ -1136,12 +316,9 @@ namespace AdServer::LogProcessing
           "has invalid value '" << user_status_ << '\'';
         throw ConstraintViolation(es);
       }
-      if (opt_in_section_.present())
-      {
-        opt_in_section_.get().invariant();
-      }
     }
 
+  public:
     SecondsTimestamp time_;
     SecondsTimestamp isp_time_;
     bool test_request_;
@@ -1155,9 +332,11 @@ namespace AdServer::LogProcessing
     StringIoWrapperOptional country_;
     RequestId passback_request_id_;
     FixedNumber floor_cost_;
-    StringList urls_;
+    StringArray urls_;
     OptInSectionOptional opt_in_section_;
-    unsigned long random_;
+
+  private:
+    unsigned long random_{Generics::safe_rand()};
   };
 
   typedef SeqCollector<TagRequestData, true> TagRequestCollector;
@@ -1165,15 +344,6 @@ namespace AdServer::LogProcessing
   struct TagRequestTraits: LogDefaultTraits<TagRequestCollector, false, false>
   {
     typedef MoveSeqDistributeStrategy<TagRequestTraits> DistributeStrategyType;
-
-    template <typename Functor>
-    static
-    void
-    for_each_old(Functor& f) /*throw(eh::Exception)*/
-    {
-      f.template operator()<TagRequestCollector_V_3_3>("3.3");
-      f.template operator()<TagRequestCollector_V_3_5>("3.5");
-    }
 
     typedef GenericLogIoHelperImpl<TagRequestTraits> IoHelperType;
   };

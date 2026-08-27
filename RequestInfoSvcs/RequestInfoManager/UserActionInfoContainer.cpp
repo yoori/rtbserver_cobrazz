@@ -592,6 +592,24 @@ namespace RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserActionInfoContainer::co_get_profile(
+    const AdServer::Commons::UserId& user_id)
+  {
+    static const char* FUN = "UserActionInfoContainer::co_get_profile()";
+    try
+    {
+      co_return co_await user_map_->co_get_profile(user_id);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't get profile for id = " << user_id <<
+        ". Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
+    }
+  }
+
   void
   UserActionInfoContainer::process_impression_(
     const RequestInfo& request_info,
@@ -1129,6 +1147,13 @@ namespace RequestInfoSvcs
   {
     Generics::Time now = Generics::Time::get_time_of_day();
     user_map_->clear_expired(now - expire_time_);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserActionInfoContainer::co_clear_expired_actions()
+  {
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    co_await user_map_->co_clear_expired(now - expire_time_);
   }
 
   void

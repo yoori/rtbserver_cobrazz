@@ -102,11 +102,13 @@ namespace AdServer
           rocksdb_processor = {})
         /*throw(Exception)*/;
 
-      Generics::ConstSmartMemBuf_var
-      get_profile(const AdServer::Commons::UserId& user_id)
-        /*throw(Exception)*/;
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile(const AdServer::Commons::UserId& user_id);
 
       void clear_expired() /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_clear_expired();
 
       bool config_initialized() const noexcept;
 

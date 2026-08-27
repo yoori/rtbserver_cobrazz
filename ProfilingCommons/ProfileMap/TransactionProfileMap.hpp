@@ -1,18 +1,11 @@
-/**
- * @file TransactionProfileMap.hpp
- */
-
 #pragma once
 
 #include <utility>
 
 #include "TransactionMap.hpp"
 #include "ProfileMap.hpp"
-#include "DelegateProfileMap.hpp"
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   template <typename KeyType>
   class TransactionProfileMap;
@@ -107,7 +100,7 @@ namespace ProfilingCommons
    */
   template <typename KeyType>
   class TransactionProfileMap:
-    public virtual DelegateProfileMap<KeyType>,
+    public virtual AsyncProfileMapToProfileMap<KeyType>,
     public virtual AsyncProfileMap<KeyType>,
     public virtual ReferenceCounting::AtomicImpl,
     protected virtual TransactionMap<KeyType, ProfileTransactionImpl<KeyType> >
@@ -132,10 +125,10 @@ namespace ProfilingCommons
       Transaction_var;
 
   public:
-    TransactionProfileMap(ProfileMap<KeyType>* base_map,
+    TransactionProfileMap(
+      AsyncProfileMap<KeyType>* base_map,
       unsigned long max_waiters = 0,
-      bool create_transaction_on_get = false)
-      noexcept;
+      bool create_transaction_on_get = false);
 
     virtual bool
     check_profile(const KeyType& key) const
@@ -229,11 +222,10 @@ namespace ProfilingCommons
       OperationPriority op_priority = ProfilingCommons::OP_RUNTIME);
 
   protected:
-    virtual ~TransactionProfileMap() noexcept {}
+    virtual ~TransactionProfileMap() noexcept;
 
   private:
-    typedef typename BaseTransactionMapType::TransactionHolder
-      TransactionHolder;
+    using TransactionHolder = typename BaseTransactionMapType::TransactionHolder;
 
   private:
     virtual Transaction_var
@@ -241,10 +233,7 @@ namespace ProfilingCommons
       TransactionHolder* holder,
       const KeyType& key,
       const OperationPriority& arg)
-      /*throw(eh::Exception)*/
-    {
-      return new ProfileTransactionImplType(*this, holder, key, arg);
-    }
+      /*throw(eh::Exception)*/;
 
     virtual Transaction_var
     create_transaction_impl_(
@@ -252,15 +241,7 @@ namespace ProfilingCommons
       const KeyType& key,
       const OperationPriority& arg,
       AdServer::Commons::AsyncMutex::Guard&& guard)
-      /*throw(eh::Exception)*/
-    {
-      return new ProfileTransactionImplType(
-        *this,
-        holder,
-        key,
-        arg,
-        std::move(guard));
-    }
+      /*throw(eh::Exception)*/;
 
     Generics::ConstSmartMemBuf_var
     get_profile_i_(
@@ -291,19 +272,33 @@ namespace ProfilingCommons
     AsyncProfileMap<KeyType>*
     async_delegate_map_() const noexcept;
 
+    using SelfVar = ReferenceCounting::SmartPtr<TransactionProfileMap<KeyType>>;
+
+    static AdServer::Commons::StartableAwaitable<void>
+    co_save_profile_async_(
+      SelfVar self,
+      KeyType key,
+      Generics::ConstSmartMemBuf_var profile,
+      Generics::Time now,
+      typename AsyncProfileMap<KeyType>::SaveCallback callback);
+
+    static AdServer::Commons::StartableAwaitable<void>
+    co_remove_profile_async_(
+      SelfVar self,
+      KeyType key,
+      OperationPriority op_priority,
+      typename AsyncProfileMap<KeyType>::RemoveCallback callback);
+
   private:
     const bool create_transaction_on_get_;
   };
-}
 }
 
 //
 // Implementations
 //
 
-namespace AdServer
-{
-namespace ProfilingCommons
+namespace AdServer::ProfilingCommons
 {
   /* ProfileTransactionImpl class */
   template <typename KeyType>
@@ -341,8 +336,7 @@ namespace ProfilingCommons
 
   template <typename KeyType>
   Generics::ConstSmartMemBuf_var
-  ProfileTransactionImpl<KeyType>::get_profile(
-    Generics::Time* last_access_time)
+  ProfileTransactionImpl<KeyType>::get_profile(Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     return profile_map_.get_profile_i_(key_, last_access_time);
@@ -350,8 +344,7 @@ namespace ProfilingCommons
 
   template <typename KeyType>
   Generics::SmartMemBuf_var
-  ProfileTransactionImpl<KeyType>::get_own_profile(
-    Generics::Time* last_access_time)
+  ProfileTransactionImpl<KeyType>::get_own_profile(Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
     return profile_map_.get_own_profile_i_(key_, last_access_time);
@@ -374,14 +367,17 @@ namespace ProfilingCommons
     const Generics::Time& now)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    if(auto* async_map = profile_map_.async_delegate_map_())
-    {
-      async_map->save_profile_async(key_, mem_buf, now);
-    }
-    else
-    {
-      profile_map_.save_profile_i_(key_, mem_buf, now, op_priority_);
-    }
+    ReferenceCounting::SmartPtr<ProfileTransactionImpl<KeyType>> transaction =
+      ReferenceCounting::add_ref(this);
+    profile_map_.async_delegate_map_()->save_profile_async(
+      key_,
+      mem_buf,
+      now,
+      [transaction = std::move(transaction)](
+        std::optional<std::string>) mutable noexcept
+      {
+        transaction.reset();
+      });
   }
 
   template <typename KeyType>
@@ -397,15 +393,9 @@ namespace ProfilingCommons
   ProfileTransactionImpl<KeyType>::co_get_profile(
     std::optional<Generics::Time> last_access_time)
   {
-    if(auto* async_map = profile_map_.async_delegate_map_())
-    {
-      co_return co_await async_map->co_get_profile(key_, last_access_time);
-    }
-
-    Generics::Time access_time;
-    co_return profile_map_.get_profile_i_(
+    co_return co_await profile_map_.async_delegate_map_()->co_get_profile(
       key_,
-      last_access_time ? &access_time : nullptr);
+      last_access_time);
   }
 
   template <typename KeyType>
@@ -413,17 +403,9 @@ namespace ProfilingCommons
   ProfileTransactionImpl<KeyType>::co_get_own_profile(
     std::optional<Generics::Time> last_access_time)
   {
-    if(auto* async_map = profile_map_.async_delegate_map_())
-    {
-      co_return co_await async_map->co_get_own_profile(
-        key_,
-        last_access_time);
-    }
-
-    Generics::Time access_time;
-    co_return profile_map_.get_own_profile_i_(
+    co_return co_await profile_map_.async_delegate_map_()->co_get_own_profile(
       key_,
-      last_access_time ? &access_time : nullptr);
+      last_access_time);
   }
 
   template <typename KeyType>
@@ -432,14 +414,10 @@ namespace ProfilingCommons
     const Generics::ConstSmartMemBuf* mem_buf,
     const Generics::Time& now)
   {
-    if(auto* async_map = profile_map_.async_delegate_map_())
-    {
-      co_await async_map->co_save_profile(key_, mem_buf, now);
-    }
-    else
-    {
-      profile_map_.save_profile_i_(key_, mem_buf, now, op_priority_);
-    }
+    co_await profile_map_.async_delegate_map_()->co_save_profile(
+      key_,
+      mem_buf,
+      now);
     co_return true;
   }
 
@@ -447,32 +425,59 @@ namespace ProfilingCommons
   AdServer::Commons::StartableAwaitable<bool>
   ProfileTransactionImpl<KeyType>::co_remove_profile()
   {
-    if(auto* async_map = profile_map_.async_delegate_map_())
-    {
-      co_return co_await async_map->co_remove_profile(key_, op_priority_);
-    }
-
-    co_return profile_map_.remove_profile_i_(key_, op_priority_);
+    co_return co_await profile_map_.async_delegate_map_()->co_remove_profile(
+      key_,
+      op_priority_);
   }
 
   template <typename KeyType>
   TransactionProfileMap<KeyType>::
-  TransactionProfileMap(ProfileMap<KeyType>* base_map,
+  TransactionProfileMap(
+    AsyncProfileMap<KeyType>* base_map,
     unsigned long max_waiters,
     bool create_transaction_on_get)
-    noexcept
-    : DelegateProfileMap<KeyType>(base_map),
+    : AsyncProfileMapToProfileMap<KeyType>(base_map),
       BaseTransactionMapType(max_waiters),
       create_transaction_on_get_(create_transaction_on_get)
   {}
 
   template <typename KeyType>
+  TransactionProfileMap<KeyType>::~TransactionProfileMap() noexcept = default;
+
+  template <typename KeyType>
+  typename TransactionProfileMap<KeyType>::Transaction_var
+  TransactionProfileMap<KeyType>::create_transaction_impl_(
+    TransactionHolder* holder,
+    const KeyType& key,
+    const OperationPriority& arg)
+    /*throw(eh::Exception)*/
+  {
+    return new ProfileTransactionImplType(*this, holder, key, arg);
+  }
+
+  template <typename KeyType>
+  typename TransactionProfileMap<KeyType>::Transaction_var
+  TransactionProfileMap<KeyType>::create_transaction_impl_(
+    TransactionHolder* holder,
+    const KeyType& key,
+    const OperationPriority& arg,
+    AdServer::Commons::AsyncMutex::Guard&& guard)
+    /*throw(eh::Exception)*/
+  {
+    return new ProfileTransactionImplType(
+      *this,
+      holder,
+      key,
+      arg,
+      std::move(guard));
+  }
+
+  template <typename KeyType>
   bool
-  TransactionProfileMap<KeyType>::check_profile(
-    const KeyType& key) const
+  TransactionProfileMap<KeyType>::check_profile(const KeyType& key) const
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return this->no_add_ref_delegate_map_()->check_profile(key);
+    return AsyncProfileMapToProfileMap<KeyType>::check_profile(key);
   }
 
   template <typename KeyType>
@@ -488,8 +493,7 @@ namespace ProfilingCommons
     }
     else
     {
-      return this->no_add_ref_delegate_map_()->get_profile(
-        key, last_access_time);
+      return AsyncProfileMapToProfileMap<KeyType>::get_profile(key, last_access_time);
     }
   }
 
@@ -502,13 +506,11 @@ namespace ProfilingCommons
   {
     if(create_transaction_on_get_)
     {
-      return this->get_transaction(key, false)->get_own_profile(
-        last_access_time);
+      return this->get_transaction(key, false)->get_own_profile(last_access_time);
     }
     else
     {
-      return this->no_add_ref_delegate_map_()->get_own_profile(
-        key, last_access_time);
+      return AsyncProfileMapToProfileMap<KeyType>::get_own_profile(key, last_access_time);
     }
   }
 
@@ -538,8 +540,7 @@ namespace ProfilingCommons
   AsyncProfileMap<KeyType>*
   TransactionProfileMap<KeyType>::async_delegate_map_() const noexcept
   {
-    return dynamic_cast<AsyncProfileMap<KeyType>*>(
-      this->no_add_ref_delegate_map_());
+    return this->async_profile_map();
   }
 
   template <typename KeyType>
@@ -548,23 +549,7 @@ namespace ProfilingCommons
     const Generics::Time& expire_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    if(auto* async_map = async_delegate_map_())
-    {
-      std::promise<void> promise;
-      std::future<void> future = promise.get_future();
-
-      async_map->clear_expired_async(
-        expire_time,
-        [&promise]()
-        {
-          promise.set_value();
-        });
-
-      future.get();
-      return;
-    }
-
-    DelegateProfileMap<KeyType>::clear_expired(expire_time);
+    AsyncProfileMapToProfileMap<KeyType>::clear_expired(expire_time);
   }
 
   template <typename KeyType>
@@ -573,31 +558,7 @@ namespace ProfilingCommons
     const KeyType& key,
     typename AsyncProfileMap<KeyType>::CheckCallback callback) const
   {
-    if(auto* async_map = async_delegate_map_())
-    {
-      async_map->check_profile_async(key, std::move(callback));
-      return;
-    }
-
-    bool result = false;
-    std::optional<std::string> error;
-    try
-    {
-      result = check_profile(key);
-    }
-    catch(const std::exception& ex)
-    {
-      error = ex.what();
-    }
-    catch(...)
-    {
-      error = "unknown check error";
-    }
-
-    if(callback)
-    {
-      callback(result, std::move(error));
-    }
+    async_delegate_map_()->check_profile_async(key, std::move(callback));
   }
 
   template <typename KeyType>
@@ -607,38 +568,10 @@ namespace ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    if(auto* async_map = async_delegate_map_())
-    {
-      return async_map->get_profile_async(
-        key,
-        std::move(callback),
-        last_access_time);
-    }
-
-    Generics::ConstSmartMemBuf_var result;
-    std::optional<std::string> error;
-    try
-    {
-      Generics::Time access_time;
-      result = get_profile(
-        key,
-        last_access_time ? &access_time : nullptr);
-    }
-    catch(const std::exception& ex)
-    {
-      error = ex.what();
-    }
-    catch(...)
-    {
-      error = "unknown get error";
-    }
-
-    if(callback)
-    {
-      callback(result, std::move(error));
-    }
-
-    return result;
+    return async_delegate_map_()->get_profile_async(
+      key,
+      std::move(callback),
+      last_access_time);
   }
 
   template <typename KeyType>
@@ -648,52 +581,27 @@ namespace ProfilingCommons
     typename AsyncProfileMap<KeyType>::GetOwnCallback callback,
     std::optional<Generics::Time> last_access_time)
   {
-    if(auto* async_map = async_delegate_map_())
-    {
-      return async_map->get_own_profile_async(
-        key,
-        std::move(callback),
-        last_access_time);
-    }
-
-    Generics::SmartMemBuf_var result;
-    std::optional<std::string> error;
-    try
-    {
-      Generics::Time access_time;
-      result = get_own_profile(
-        key,
-        last_access_time ? &access_time : nullptr);
-    }
-    catch(const std::exception& ex)
-    {
-      error = ex.what();
-    }
-    catch(...)
-    {
-      error = "unknown get own error";
-    }
-
-    if(callback)
-    {
-      callback(std::move(result), std::move(error));
-    }
-
-    return result;
+    return async_delegate_map_()->get_own_profile_async(
+      key,
+      std::move(callback),
+      last_access_time);
   }
 
   template <typename KeyType>
-  void
-  TransactionProfileMap<KeyType>::save_profile_async(
-    const KeyType& key,
-    const Generics::ConstSmartMemBuf* mem_buf,
-    const Generics::Time& now,
+  AdServer::Commons::StartableAwaitable<void>
+  TransactionProfileMap<KeyType>::co_save_profile_async_(
+    SelfVar self,
+    KeyType key,
+    Generics::ConstSmartMemBuf_var profile,
+    Generics::Time now,
     typename AsyncProfileMap<KeyType>::SaveCallback callback)
   {
+    Transaction_var transaction;
     std::optional<std::string> error;
     try
     {
-      save_profile(key, mem_buf, now);
+      transaction = co_await self->co_get_transaction(key, false, OP_RUNTIME);
+      co_await transaction->co_save_profile(profile.in(), now);
     }
     catch(const std::exception& ex)
     {
@@ -704,6 +612,8 @@ namespace ProfilingCommons
       error = "unknown save error";
     }
 
+    transaction.reset();
+
     if(callback)
     {
       callback(std::move(error));
@@ -711,17 +621,20 @@ namespace ProfilingCommons
   }
 
   template <typename KeyType>
-  void
-  TransactionProfileMap<KeyType>::remove_profile_async(
-    const KeyType& key,
+  AdServer::Commons::StartableAwaitable<void>
+  TransactionProfileMap<KeyType>::co_remove_profile_async_(
+    SelfVar self,
+    KeyType key,
     OperationPriority op_priority,
     typename AsyncProfileMap<KeyType>::RemoveCallback callback)
   {
+    Transaction_var transaction;
     bool result = false;
     std::optional<std::string> error;
     try
     {
-      result = remove_profile(key, op_priority);
+      transaction = co_await self->co_get_transaction(key, false, op_priority);
+      result = co_await transaction->co_remove_profile();
     }
     catch(const std::exception& ex)
     {
@@ -732,6 +645,8 @@ namespace ProfilingCommons
       error = "unknown remove error";
     }
 
+    transaction.reset();
+
     if(callback)
     {
       callback(result, std::move(error));
@@ -740,27 +655,41 @@ namespace ProfilingCommons
 
   template <typename KeyType>
   void
+  TransactionProfileMap<KeyType>::save_profile_async(
+    const KeyType& key,
+    const Generics::ConstSmartMemBuf* mem_buf,
+    const Generics::Time& now,
+    typename AsyncProfileMap<KeyType>::SaveCallback callback)
+  {
+    Generics::ConstSmartMemBuf_var profile(ReferenceCounting::add_ref(mem_buf));
+    auto operation = co_save_profile_async_(
+      ReferenceCounting::add_ref(this),
+      key,
+      std::move(profile),
+      now,
+      std::move(callback));
+    operation.start_detached({});
+  }
+
+  template <typename KeyType>
+  void
+  TransactionProfileMap<KeyType>::remove_profile_async(
+    const KeyType& key,
+    OperationPriority op_priority,
+    typename AsyncProfileMap<KeyType>::RemoveCallback callback)
+  {
+    auto operation = co_remove_profile_async_(
+      ReferenceCounting::add_ref(this), key, op_priority, std::move(callback));
+    operation.start_detached({});
+  }
+
+  template <typename KeyType>
+  void
   TransactionProfileMap<KeyType>::clear_expired_async(
     const Generics::Time& expire_time,
     typename AsyncProfileMap<KeyType>::CompleteCallback complete)
   {
-    if(auto* async_map = async_delegate_map_())
-    {
-      async_map->clear_expired_async(expire_time, std::move(complete));
-      return;
-    }
-
-    try
-    {
-      this->clear_expired(expire_time);
-    }
-    catch(...)
-    {}
-
-    if(complete)
-    {
-      complete();
-    }
+    async_delegate_map_()->clear_expired_async(expire_time, std::move(complete));
   }
 
   template <typename KeyType>
@@ -771,12 +700,7 @@ namespace ProfilingCommons
     OperationPriority op_priority)
     /*throw(MaxWaitersReached, Exception)*/
   {
-    this->no_add_ref_delegate_map_()->wait_preconditions(key, op_priority);
-
-    return BaseTransactionMapType::get_transaction(
-      key,
-      check_max_waiters,
-      op_priority);
+    return BaseTransactionMapType::get_transaction(key, check_max_waiters, op_priority);
   }
 
   template <typename KeyType>
@@ -787,12 +711,8 @@ namespace ProfilingCommons
     bool check_max_waiters,
     OperationPriority op_priority)
   {
-    this->no_add_ref_delegate_map_()->wait_preconditions(key, op_priority);
-
     co_return co_await BaseTransactionMapType::co_get_transaction(
-      key,
-      check_max_waiters,
-      op_priority);
+      key, check_max_waiters, op_priority);
   }
 
   template <typename KeyType>
@@ -802,8 +722,7 @@ namespace ProfilingCommons
     Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return this->no_add_ref_delegate_map_()->get_profile(
-      key, last_access_time);
+    return AsyncProfileMapToProfileMap<KeyType>::get_profile(key, last_access_time);
   }
 
   template <typename KeyType>
@@ -813,7 +732,7 @@ namespace ProfilingCommons
     Generics::Time* last_access_time)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return this->no_add_ref_delegate_map_()->get_own_profile(
+    return AsyncProfileMapToProfileMap<KeyType>::get_own_profile(
       key, last_access_time);
   }
 
@@ -826,7 +745,11 @@ namespace ProfilingCommons
     OperationPriority op_priority)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    this->no_add_ref_delegate_map_()->save_profile(key, mem_buf, now, op_priority);
+    AsyncProfileMapToProfileMap<KeyType>::save_profile(
+      key,
+      mem_buf,
+      now,
+      op_priority);
   }
 
   template <typename KeyType>
@@ -836,7 +759,8 @@ namespace ProfilingCommons
     OperationPriority op_priority)
     /*throw(typename ProfileMap<KeyType>::Exception)*/
   {
-    return this->no_add_ref_delegate_map_()->remove_profile(key, op_priority);
+    return AsyncProfileMapToProfileMap<KeyType>::remove_profile(
+      key,
+      op_priority);
   }
-}
 }

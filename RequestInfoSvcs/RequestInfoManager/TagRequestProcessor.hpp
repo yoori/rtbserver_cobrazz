@@ -27,7 +27,7 @@ namespace RequestInfoSvcs
     std::string ext_tag_id;
     char user_status;
     std::string referer;
-    AdServer::LogProcessing::StringList urls;
+    AdServer::LogProcessing::StringArray urls;
     AdServer::Commons::Optional<unsigned long> referer_hash;
 
     Generics::Time isp_time;

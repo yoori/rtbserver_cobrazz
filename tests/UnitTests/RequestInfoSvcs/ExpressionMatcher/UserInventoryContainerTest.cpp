@@ -56,6 +56,30 @@ namespace
 typedef std::list<InventoryActionProcessor::InventoryInfo>
   InventoryInfoList;
 
+InventoryActionProcessor::InventoryInfo
+clone_inventory_info(const InventoryActionProcessor::InventoryInfo& source)
+{
+  InventoryActionProcessor::InventoryInfo result;
+  result.time = source.time;
+  result.isp_time = source.isp_time;
+  result.placement_colo_time = source.placement_colo_time;
+  result.colo_id = source.colo_id;
+  result.total_appear_channels = source.total_appear_channels;
+  result.active_appear_channels = source.active_appear_channels;
+  result.display_appears = source.display_appears;
+  result.text_appears = source.text_appears;
+  result.display_imps = source.display_imps;
+  result.text_imps = source.text_imps;
+  result.country_code = source.country_code;
+  result.impop_ecpm = source.impop_ecpm;
+  result.impop_channels = source.impop_channels;
+  result.sizes = source.sizes;
+  result.disappear_channel_ecpms = source.disappear_channel_ecpms;
+  result.appear_channel_ecpms = source.appear_channel_ecpms;
+  result.auction_type = source.auction_type;
+  return result;
+}
+
 struct NullInvProcessor:
   public virtual InventoryActionProcessor,
   public virtual ReferenceCounting::AtomicImpl
@@ -84,14 +108,14 @@ public:
   process_request(const InventoryInfo& inv_info)
     /*throw(InventoryActionProcessor::Exception)*/
   {
-    result_.push_back(inv_info);
+    result_.push_back(clone_inventory_info(inv_info));
   }
 
   void
   process_user(const InventoryUserInfo& inv_info)
     /*throw(InventoryActionProcessor::Exception)*/
   {
-    result_.push_back(inv_info);
+    result_.emplace_back(inv_info);
   }
 
   const InventoryInfoList&
@@ -345,7 +369,7 @@ public:
       match_info.country_code = "RU";
       match_info.cost_threshold = RevenueDecimal(false, 20, 0);
       match_info.triggered_expression_channels->push_back(1);
-      match_info.triggered_cpm_expression_channels.insert(1);
+      match_info.triggered_cpm_expression_channels.push_back(1);
 
       process_match_request(cont, match_info);
     }
@@ -361,8 +385,8 @@ public:
 
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
 
       process_match_request(cont, match_info);
     }
@@ -375,9 +399,9 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
       match_info.triggered_expression_channels->push_back(3);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
-      match_info.triggered_cpm_expression_channels.insert(3);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
+      match_info.triggered_cpm_expression_channels.push_back(3);
 
       process_match_request(cont, match_info);
     }
@@ -391,15 +415,15 @@ public:
       match_info.country_code = "RU";
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 10, 0);
-      display_ad.imp_channels.insert(2);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(2);
+      match_info.display_ad = std::move(display_ad);
 
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
       match_info.triggered_expression_channels->push_back(3);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
-      match_info.triggered_cpm_expression_channels.insert(3);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
+      match_info.triggered_cpm_expression_channels.push_back(3);
 
       process_match_request(cont, match_info);
     }
@@ -431,7 +455,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test2"), 1));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #1
@@ -471,7 +495,7 @@ public:
         ChannelECPM(AdServer::Commons::ImmutableString("test2"),
           1, 20 * CPM_FACTOR));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #2
@@ -485,7 +509,7 @@ public:
       inv_info.total_appear_channels.push_back(3);
       inv_info.active_appear_channels.push_back(3);
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #3
@@ -514,7 +538,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test2"), 3));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     return true;
@@ -545,7 +569,7 @@ public:
       match_info.country_code = "RU";
       match_info.cost_threshold = RevenueDecimal(false, 20, 0);
       match_info.triggered_expression_channels->push_back(1);
-      match_info.triggered_cpm_expression_channels.insert(1);
+      match_info.triggered_cpm_expression_channels.push_back(1);
 
       process_match_request(cont, match_info);
     }
@@ -560,8 +584,8 @@ public:
 
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
 
       process_match_request(cont, match_info);
     }
@@ -590,7 +614,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 1));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     {
@@ -621,7 +645,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 2));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     return true;
@@ -652,11 +676,11 @@ public:
       match_info.cost_threshold = RevenueDecimal(false, 10, 0);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 10, 0);
-      display_ad.imp_channels.insert(1);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(1);
+      match_info.display_ad = std::move(display_ad);
 
       match_info.triggered_expression_channels->push_back(1);
-      match_info.triggered_cpm_expression_channels.insert(1);
+      match_info.triggered_cpm_expression_channels.push_back(1);
 
       process_match_request(cont, match_info);
     }
@@ -670,13 +694,13 @@ public:
       match_info.cost_threshold = RevenueDecimal(false, 20, 0);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 20, 0);
-      display_ad.imp_channels.insert(2);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(2);
+      match_info.display_ad = std::move(display_ad);
 
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
 
       process_match_request(cont, match_info);
     }
@@ -690,13 +714,13 @@ public:
       match_info.cost_threshold = RevenueDecimal(false, 10, 0);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
-      display_ad.imp_channels.insert(2);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(2);
+      match_info.display_ad = std::move(display_ad);
 
       match_info.triggered_expression_channels->push_back(1);
       match_info.triggered_expression_channels->push_back(2);
-      match_info.triggered_cpm_expression_channels.insert(1);
-      match_info.triggered_cpm_expression_channels.insert(2);
+      match_info.triggered_cpm_expression_channels.push_back(1);
+      match_info.triggered_cpm_expression_channels.push_back(2);
 
       process_match_request(cont, match_info);
     }
@@ -725,7 +749,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 1));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #1
@@ -750,7 +774,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 2));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     { // #2
@@ -773,7 +797,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 2));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     return true;
@@ -803,10 +827,10 @@ public:
       match_info.country_code = "RU";
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 20, 0);
-      display_ad.imp_channels.insert(1);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(1);
+      match_info.display_ad = std::move(display_ad);
       match_info.triggered_expression_channels->push_back(1);
-      match_info.triggered_cpm_expression_channels.insert(1);
+      match_info.triggered_cpm_expression_channels.push_back(1);
 
       process_match_request(cont, match_info);
     }
@@ -862,7 +886,7 @@ public:
       inv_info.appear_channel_ecpms.push_back(
         SizeChannel(AdServer::Commons::ImmutableString("test"), 1));
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     {
@@ -876,7 +900,7 @@ public:
       inv_info.total_appear_channels.push_back(3);
 
 
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     return true;
@@ -976,14 +1000,14 @@ public:
         simple_etalon("2008-01-05"));
       inv_info.total_appear_channels.push_back(1);
       inv_info.active_appear_channels.push_back(1);
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     {
       InventoryActionProcessor::InventoryInfo inv_info(
         simple_etalon("2008-01-06", ""));
       inv_info.total_appear_channels.push_back(1);
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     inv_info_list.push_back(simple_etalon("2008-01-05"));
@@ -993,14 +1017,14 @@ public:
         simple_etalon("2008-01-08"));
       inv_info.active_appear_channels.push_back(1);
       inv_info.total_appear_channels.push_back(1);
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     {
       InventoryActionProcessor::InventoryInfo inv_info(
         simple_etalon("2008-01-09", ""));
       inv_info.total_appear_channels.push_back(1);
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     }
 
     return true;
@@ -1031,8 +1055,8 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
-      display_ad.imp_channels.insert(1);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(1);
+      match_info.display_ad = std::move(display_ad);
       process_match_request(cont, match_info);
       date += Generics::Time::ONE_DAY;
     }
@@ -1042,11 +1066,12 @@ public:
     match_info.triggered_expression_channels->push_back(2);
     MatchRequestProcessor::MatchInfo::AdSlot display_ad;
     display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
-    display_ad.imp_channels.insert(2);
-    match_info.display_ad = display_ad;
+    display_ad.imp_channels.push_back(2);
+    match_info.display_ad = std::move(display_ad);
     process_match_request(cont, match_info);
 
-    Generics::ConstSmartMemBuf_var mem_buf = cont->get_profile(TEST_UID);
+    Generics::ConstSmartMemBuf_var mem_buf = AdServer::Commons::sync_wait(
+      cont->co_get_profile(TEST_UID));
     UserChannelInventoryProfileReader profile_reader(
       mem_buf->membuf().data(),
       mem_buf->membuf().size());
@@ -1069,7 +1094,7 @@ public:
       inv_info.total_appear_channels.push_back(1);
       inv_info.active_appear_channels.push_back(1);
       inv_info.auction_type = CampaignSvcs::AT_MAX_ECPM;
-      inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
       date += Generics::Time::ONE_DAY;
     }
 
@@ -1102,8 +1127,8 @@ public:
       match_info.triggered_expression_channels->push_back(1);
       MatchRequestProcessor::MatchInfo::AdSlot display_ad;
       display_ad.avg_revenue = RevenueDecimal(false, 15, 0);
-      display_ad.imp_channels.insert(1);
-      match_info.display_ad = display_ad;
+      display_ad.imp_channels.push_back(1);
+      match_info.display_ad = std::move(display_ad);
       process_match_request(cont, match_info);
     }
 
@@ -1123,7 +1148,7 @@ public:
     inv_info.total_appear_channels.push_back(1);
     inv_info.active_appear_channels.push_back(1);
     inv_info.auction_type = CampaignSvcs::AT_MAX_ECPM;
-    inv_info_list.push_back(inv_info);
+      inv_info_list.push_back(std::move(inv_info));
     return true;
   }
 
@@ -1175,7 +1200,7 @@ perf_test()
     for(unsigned long channel_id = 1; channel_id < 10000; ++channel_id)
     {
       match_info.triggered_expression_channels->push_back(channel_id);
-      match_info.triggered_cpm_expression_channels.insert(channel_id);
+      match_info.triggered_cpm_expression_channels.push_back(channel_id);
     }
 
     Generics::CPUTimer timer;
@@ -1254,7 +1279,7 @@ perf_test2()
           channel_id < i * 100 + 100; ++channel_id)
       {
         match_info.triggered_expression_channels->push_back(channel_id);
-        match_info.triggered_cpm_expression_channels.insert(channel_id);
+        match_info.triggered_cpm_expression_channels.push_back(channel_id);
       }
     }
 
@@ -1329,7 +1354,7 @@ main(int argc, char** argv) noexcept
         match_info.country_code = "RU";
         match_info.cost_threshold = RevenueDecimal(false, 20, 0);
         match_info.triggered_expression_channels->push_back(1);
-        match_info.triggered_cpm_expression_channels.insert(1);
+        match_info.triggered_cpm_expression_channels.push_back(1);
 
         process_match_request(inv_container, match_info);
       }

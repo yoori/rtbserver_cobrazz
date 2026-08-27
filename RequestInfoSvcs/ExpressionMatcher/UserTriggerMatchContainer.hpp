@@ -204,16 +204,11 @@ namespace AdServer::RequestInfoSvcs
       const Commons::RequestId& request_id,
       const Generics::Time& time);
 
-    Generics::ConstSmartMemBuf_var
-    get_user_profile(const AdServer::Commons::UserId& user_id)
-      /*throw(Exception)*/;
-
     AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
     co_get_user_profile(const AdServer::Commons::UserId& user_id);
 
-    Generics::ConstSmartMemBuf_var
-    get_request_profile(const AdServer::Commons::RequestId& request_id)
-      /*throw(Exception)*/;
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_request_profile(const AdServer::Commons::RequestId& request_id);
 
     void clear_expired() /*throw(Exception)*/;
 

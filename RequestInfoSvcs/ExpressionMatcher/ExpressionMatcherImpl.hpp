@@ -79,25 +79,28 @@ namespace AdServer
         ProcStatImpl* proc_stat_impl)
         /*throw(Exception)*/;
 
-      Generics::ConstSmartMemBuf_var
-      get_inventory_profile(
-        const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_inventory_profile(
+        AdServer::Commons::UserId user_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_user_trigger_match_profile(
-        const AdServer::Commons::UserId& user_id,
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_user_trigger_match_profile(
+        AdServer::Commons::UserId user_id,
         bool temporary_user);
 
-      Generics::ConstSmartMemBuf_var
-      get_request_trigger_match_profile(
-        const AdServer::Commons::RequestId& request_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_request_trigger_match_profile(
+        AdServer::Commons::RequestId request_id);
 
-      Generics::ConstSmartMemBuf_var
-      get_household_colo_reach_profile(
-        const AdServer::Commons::UserId& user_id);
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_household_colo_reach_profile(
+        AdServer::Commons::UserId user_id);
 
       void
       run_daily_processing(bool sync);
+
+      AdServer::Commons::Awaitable<void>
+      co_run_daily_processing(bool sync);
 
       AdServer::Commons::StartableAwaitable<void>
       co_consider_click(
@@ -294,8 +297,8 @@ namespace AdServer
         typename ContainerPtrHolderType,
         typename KeyType,
         typename GetProfileAdapterType>
-      Generics::ConstSmartMemBuf_var
-      get_profile_(
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile_(
         const char* FUN,
         const ContainerPtrHolderType& container_ptr_holder,
         const KeyType& id,

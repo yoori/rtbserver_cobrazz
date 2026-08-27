@@ -285,6 +285,13 @@ namespace ProfilingCommons
   {}
 
   template<typename KeyType>
+  AsyncProfileMap<KeyType>*
+  AsyncProfileMapToProfileMap<KeyType>::async_profile_map() const noexcept
+  {
+    return async_profile_map_.in();
+  }
+
+  template<typename KeyType>
   bool
   AsyncProfileMapToProfileMap<KeyType>::check_profile(
     const KeyType& key) const

@@ -12,22 +12,17 @@ namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
-    constexpr char expression_matcher_grpc_aspect[] =
-      "ExpressionMatcherGrpc";
+    constexpr char expression_matcher_grpc_aspect[] = "ExpressionMatcherGrpc";
 
     namespace Proto = adserver::request_info_svcs::expression_matcher;
 
     void
-    pack_profile(
-      const Generics::ConstSmartMemBuf* profile,
-      Proto::ProfileResponse& response)
+    pack_profile(const Generics::ConstSmartMemBuf* profile, Proto::ProfileResponse& response)
     {
       response.set_found(profile != nullptr);
       if(profile)
       {
-        response.set_profile(
-          profile->membuf().data(),
-          profile->membuf().size());
+        response.set_profile(profile->membuf().data(), profile->membuf().size());
       }
     }
   }
@@ -48,102 +43,95 @@ namespace AdServer::RequestInfoSvcs
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_inventory_profile),
-        MAKE_GRPC_CALL(
+          get_inventory_profile,
+          co_get_inventory_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::UserTriggerMatchProfileRequest,
           Proto::ProfileResponse,
-          get_user_trigger_match_profile),
-        MAKE_GRPC_CALL(
+          get_user_trigger_match_profile,
+          co_get_user_trigger_match_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_request_trigger_match_profile),
-        MAKE_GRPC_CALL(
+          get_request_trigger_match_profile,
+          co_get_request_trigger_match_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_household_colo_reach_profile),
-        MAKE_GRPC_CALL(
+          get_household_colo_reach_profile,
+          co_get_household_colo_reach_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::RunDailyProcessingRequest,
           Proto::RunDailyProcessingResponse,
-          run_daily_processing));
+          run_daily_processing,
+          co_run_daily_processing));
     }
 
-    void
-    get_inventory_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_inventory_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return expression_matcher_->get_inventory_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        expression_matcher_->co_get_inventory_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_trigger_match_profile(
-      const Proto::UserTriggerMatchProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_trigger_match_profile(
+      Proto::UserTriggerMatchProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return expression_matcher_->get_user_trigger_match_profile(
-            AdServer::Commons::UserId(request.user_id()),
-            request.temporary_user());
-        },
+      co_await co_execute_profile_request_(
+        expression_matcher_->co_get_user_trigger_match_profile(
+          AdServer::Commons::UserId(request.user_id()),
+          request.temporary_user()),
         response,
         status);
     }
 
-    void
-    get_request_trigger_match_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_request_trigger_match_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return expression_matcher_->get_request_trigger_match_profile(
-            AdServer::Commons::RequestId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        expression_matcher_->co_get_request_trigger_match_profile(
+          AdServer::Commons::RequestId(request.id())),
         response,
         status);
     }
 
-    void
-    get_household_colo_reach_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_household_colo_reach_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return expression_matcher_->get_household_colo_reach_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        expression_matcher_->co_get_household_colo_reach_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    run_daily_processing(
-      const Proto::RunDailyProcessingRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_run_daily_processing(
+      Proto::RunDailyProcessingRequest&& request,
       Proto::RunDailyProcessingResponse&,
       grpc::Status& status) const
     {
       try
       {
-        expression_matcher_->run_daily_processing(request.synchronous());
+        co_await expression_matcher_->co_run_daily_processing(request.synchronous());
         status = grpc::Status::OK;
       }
       catch(const ExpressionMatcherImpl::NotReady& ex)
@@ -157,16 +145,15 @@ namespace AdServer::RequestInfoSvcs
     }
 
   private:
-    template<typename Getter>
-    static void
-    execute_profile_request_(
-      Getter&& getter,
+    static AdServer::Commons::StartableAwaitable<void>
+    co_execute_profile_request_(
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operation,
       Proto::ProfileResponse& response,
       grpc::Status& status)
     {
       try
       {
-        const Generics::ConstSmartMemBuf_var profile = getter();
+        const Generics::ConstSmartMemBuf_var profile = co_await std::move(operation);
         pack_profile(profile.in(), response);
         status = grpc::Status::OK;
       }

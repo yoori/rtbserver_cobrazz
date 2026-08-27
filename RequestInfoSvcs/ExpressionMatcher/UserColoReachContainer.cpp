@@ -1,4 +1,5 @@
 #include <Logger/ActiveObjectCallback.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>
 
@@ -63,22 +64,21 @@ namespace AdServer
       }
     }
 
-    Generics::ConstSmartMemBuf_var
-    UserColoReachContainer::get_profile(
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    UserColoReachContainer::co_get_profile(
       const AdServer::Commons::UserId& user_id)
-      /*throw(Exception)*/
     {
-      static const char* FUN = "UserColoReachContainer::get_profile()";
+      static const char* FUN = "UserColoReachContainer::co_get_profile()";
 
       try
       {
-        return user_map_->get_profile(user_id);
+        co_return co_await user_map_->co_get_profile(user_id);
       }
-      catch(const eh::Exception& e)
+      catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN << ": Can't get profile. Caught eh::Exception: " <<
-          e.what();
+          ex.what();
         throw Exception(ostr);
       }
     }
@@ -98,8 +98,9 @@ namespace AdServer
 
       if(!request_info.user_id.is_null())
       {
-        ColoReachInfoList gmt_colo_reach_info_list;
-        ColoReachInfoList isp_colo_reach_info_list;
+        Generics::MonoAllocatorArena arena;
+        ColoReachInfoList gmt_colo_reach_info_list(&arena);
+        ColoReachInfoList isp_colo_reach_info_list(&arena);
 
         try
         {
@@ -433,8 +434,8 @@ namespace AdServer
           isp_colo_reach_info.create_time = isp_create_date;
           isp_colo_reach_info.household = HOUSEHOLD_;
 
-          gmt_colo_reach_info_list.push_back(gmt_colo_reach_info);
-          isp_colo_reach_info_list.push_back(isp_colo_reach_info);
+          gmt_colo_reach_info_list.push_back(std::move(gmt_colo_reach_info));
+          isp_colo_reach_info_list.push_back(std::move(isp_colo_reach_info));
 
           if(colo_appeared)
           {
@@ -479,7 +480,7 @@ namespace AdServer
       }
       catch(const PlainTypes::CorruptedStruct& ex)
       {
-        transaction->remove_profile();
+        co_await transaction->co_remove_profile();
 
         Stream::Error ostr;
         ostr << FUN << ": Caught PlainTypes::CorruptedStruct: " << ex.what();

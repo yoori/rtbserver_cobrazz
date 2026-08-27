@@ -310,36 +310,36 @@ namespace AdServer::RequestInfoSvcs
   ExpressionMatcherImpl::~ExpressionMatcherImpl() noexcept
   {}
 
-  struct GetProfileAdapter
+  struct CoGetProfileAdapter
   {
     template<typename ContainerPtrHolderType, typename KeyType>
-    Generics::ConstSmartMemBuf_var operator()(
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operator()(
       ContainerPtrHolderType* container,
       const KeyType& key) const
     {
-      return container->get_profile(key);
+      co_return co_await container->co_get_profile(key);
     }
   };
 
-  struct GetUserProfileAdapter
+  struct CoGetUserProfileAdapter
   {
     template<typename ContainerPtrHolderType, typename KeyType>
-    Generics::ConstSmartMemBuf_var operator()(
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operator()(
       ContainerPtrHolderType* container,
       const KeyType& key) const
     {
-      return container->get_user_profile(key);
+      co_return co_await container->co_get_user_profile(key);
     }
   };
 
-  struct GetRequestProfileAdapter
+  struct CoGetRequestProfileAdapter
   {
     template<typename ContainerPtrHolderType, typename KeyType>
-    Generics::ConstSmartMemBuf_var operator()(
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operator()(
       ContainerPtrHolderType* container,
       const KeyType& key) const
     {
-      return container->get_request_profile(key);
+      co_return co_await container->co_get_request_profile(key);
     }
   };
 
@@ -347,8 +347,8 @@ namespace AdServer::RequestInfoSvcs
     typename ContainerPtrHolderType,
     typename KeyType,
     typename GetProfileAdapterType>
-  Generics::ConstSmartMemBuf_var
-  ExpressionMatcherImpl::get_profile_(
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_profile_(
     const char* FUN,
     const ContainerPtrHolderType& container_ptr_holder,
     const KeyType& id,
@@ -363,7 +363,7 @@ namespace AdServer::RequestInfoSvcs
         throw NotReady("Container is not ready");
       }
 
-      return get_profile_adapter(container.in(), id);
+      co_return co_await get_profile_adapter(container.in(), id);
     }
     catch (const NotReady&)
     {
@@ -377,67 +377,72 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  ExpressionMatcherImpl::get_inventory_profile(const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_inventory_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "ExpressionMatcherImpl::get_inventory_profile()";
+    static const char* FUN =
+      "ExpressionMatcherImpl::co_get_inventory_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       user_inventory_container_,
       user_id,
-      GetProfileAdapter());
+      CoGetProfileAdapter());
   }
 
-  Generics::ConstSmartMemBuf_var
-  ExpressionMatcherImpl::get_user_trigger_match_profile(
-    const AdServer::Commons::UserId& user_id,
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_user_trigger_match_profile(
+    AdServer::Commons::UserId user_id,
     bool temporary_user)
   {
-    static const char* FUN = "ExpressionMatcherImpl::get_user_trigger_match_profile()";
+    static const char* FUN =
+      "ExpressionMatcherImpl::co_get_user_trigger_match_profile()";
 
     if (!temporary_user)
     {
-      return get_profile_(
+      co_return co_await co_get_profile_(
         FUN,
         user_trigger_match_container_,
         user_id,
-        GetUserProfileAdapter());
+        CoGetUserProfileAdapter());
     }
     else
     {
-      return get_profile_(
+      co_return co_await co_get_profile_(
         FUN,
         temp_user_trigger_match_container_,
         user_id,
-        GetUserProfileAdapter());
+        CoGetUserProfileAdapter());
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  ExpressionMatcherImpl::get_request_trigger_match_profile(
-    const AdServer::Commons::RequestId& request_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_request_trigger_match_profile(
+    AdServer::Commons::RequestId request_id)
   {
-    static const char* FUN = "ExpressionMatcherImpl::get_request_trigger_match_profile()";
+    static const char* FUN =
+      "ExpressionMatcherImpl::co_get_request_trigger_match_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       user_trigger_match_container_,
       request_id,
-      GetRequestProfileAdapter());
+      CoGetRequestProfileAdapter());
   }
 
-  Generics::ConstSmartMemBuf_var
-  ExpressionMatcherImpl::get_household_colo_reach_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_household_colo_reach_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "ExpressionMatcherImpl::get_household_colo_reach_profile()";
+    static const char* FUN =
+      "ExpressionMatcherImpl::co_get_household_colo_reach_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       household_colo_reach_container_,
       user_id,
-      GetProfileAdapter());
+      CoGetProfileAdapter());
   }
 
   void ExpressionMatcherImpl::load_data_() noexcept
@@ -898,8 +903,7 @@ namespace AdServer::RequestInfoSvcs
           request_settings.provide_overlap_channel_ids = false;
 
           for (unsigned long portion = 0;
-            portion < PORTIONS_NUMBER && !(interrupted = !active());
-            ++portion)
+            portion < PORTIONS_NUMBER && !(interrupted = !active()); ++portion)
           {
             // update expressions
             CampaignSvcs::ExpressionChannelsInfo_var expression_channels_info;
@@ -912,10 +916,8 @@ namespace AdServer::RequestInfoSvcs
 
             for (CORBA::ULong i = 0; i < expression_channels.length(); ++i)
             {
-              CampaignSvcs::ExpressionChannelBase_var new_channel =
-                CampaignSvcs::unpack_channel(
-                  expression_channels[i],
-                  new_config->expression_channels);
+              CampaignSvcs::ExpressionChannelBase_var new_channel = CampaignSvcs::unpack_channel(
+                expression_channels[i], new_config->expression_channels);
               const unsigned long CHANNEL_ID = new_channel->params().channel_id;
               new_config->all_channels.insert(CHANNEL_ID);
 
@@ -1361,6 +1363,13 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::Awaitable<void>
+  ExpressionMatcherImpl::co_run_daily_processing(bool sync)
+  {
+    co_await AdServer::Commons::ExecutorPool::yield(processing_executor_pool_);
+    run_daily_processing(sync);
+  }
+
   AdServer::Commons::StartableAwaitable<void>
   ExpressionMatcherImpl::co_process_request_basic_channels_record(
     const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
@@ -1434,15 +1443,10 @@ namespace AdServer::RequestInfoSvcs
           channel_matcher_->process_request(
             std::move(history_channels),
             result_channels,
-            &cpm_expression_channels,
-            &match_info.channel_actions);
+            &cpm_expression_channels);
 
-          match_info.triggered_cpm_expression_channels.insert(
-            cpm_expression_channels.begin(),
-            cpm_expression_channels.end());
-          match_info.triggered_expression_channels.fill();
-          match_info.triggered_expression_channels->assign(
-            result_channels.begin(), result_channels.end());
+          match_info.triggered_cpm_expression_channels = std::move(cpm_expression_channels);
+          match_info.triggered_expression_channels.fill() = std::move(result_channels);
         }
 
         match_info.user_id = record.user_id();
@@ -1482,25 +1486,31 @@ namespace AdServer::RequestInfoSvcs
             {
               MatchRequestProcessor::MatchInfo::AdSlot display_ad;
               display_ad.avg_revenue = ad_request_props.display_ad_shown().get().revenue();
-              std::copy(
+              display_ad.imp_channels.assign(
                 ad_request_props.display_ad_shown().get().impression_channels().begin(),
-                ad_request_props.display_ad_shown().get().impression_channels().end(),
-                std::inserter(display_ad.imp_channels, display_ad.imp_channels.begin()));
-              match_info.display_ad = display_ad;
+                ad_request_props.display_ad_shown().get().impression_channels().end());
+              std::sort(display_ad.imp_channels.begin(), display_ad.imp_channels.end());
+              display_ad.imp_channels.erase(
+                std::unique(display_ad.imp_channels.begin(), display_ad.imp_channels.end()),
+                display_ad.imp_channels.end());
+              match_info.display_ad = std::move(display_ad);
             }
 
+            match_info.text_ads.reserve(ad_request_props.text_ad_shown().size());
             for (RBCRecord::AdBidSlotImpressionList::const_iterator text_imp_it =
                 ad_request_props.text_ad_shown().begin();
-              text_imp_it != ad_request_props.text_ad_shown().end();
-              ++text_imp_it)
+              text_imp_it != ad_request_props.text_ad_shown().end(); ++text_imp_it)
             {
               MatchRequestProcessor::MatchInfo::AdBidSlot text_ad;
               text_ad.avg_revenue = text_imp_it->revenue();
               text_ad.max_avg_revenue = text_imp_it->revenue_bid();
-              std::copy(
+              text_ad.imp_channels.assign(
                 text_imp_it->impression_channels().begin(),
-                text_imp_it->impression_channels().end(),
-                std::inserter(text_ad.imp_channels, text_ad.imp_channels.begin()));
+                text_imp_it->impression_channels().end());
+              std::sort(text_ad.imp_channels.begin(), text_ad.imp_channels.end());
+              text_ad.imp_channels.erase(
+                std::unique(text_ad.imp_channels.begin(), text_ad.imp_channels.end()),
+                text_ad.imp_channels.end());
               match_info.text_ads.push_back(std::move(text_ad));
             }
           }
@@ -1526,7 +1536,7 @@ namespace AdServer::RequestInfoSvcs
         }
 
         if ((!record.user_id().is_null() && user_trigger_match_container) ||
-           (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
+          (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
         {
           UserTriggerMatchContainer::RequestInfo request_info(processing_arena);
           request_info.time = match_info.placement_colo_time;
@@ -1536,33 +1546,25 @@ namespace AdServer::RequestInfoSvcs
             for (auto cht_it = match_request->page_trigger_channels().begin();
               cht_it != match_request->page_trigger_channels().end(); ++cht_it)
             {
-              request_info.add_page_match(
-                cht_it->channel_id,
-                cht_it->channel_trigger_id);
+              request_info.add_page_match(cht_it->channel_id, cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->search_trigger_channels().begin();
               cht_it != match_request->search_trigger_channels().end(); ++cht_it)
             {
-              request_info.add_search_match(
-                cht_it->channel_id,
-                cht_it->channel_trigger_id);
+              request_info.add_search_match(cht_it->channel_id, cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->url_trigger_channels().begin();
               cht_it != match_request->url_trigger_channels().end(); ++cht_it)
             {
-              request_info.add_url_match(
-                cht_it->channel_id,
-                cht_it->channel_trigger_id);
+              request_info.add_url_match(cht_it->channel_id, cht_it->channel_trigger_id);
             }
 
             for (auto cht_it = match_request->url_keyword_trigger_channels().begin();
               cht_it != match_request->url_keyword_trigger_channels().end(); ++cht_it)
             {
-              request_info.add_url_keyword_match(
-                cht_it->channel_id,
-                cht_it->channel_trigger_id);
+              request_info.add_url_keyword_match(cht_it->channel_id, cht_it->channel_trigger_id);
             }
           }
 
@@ -2134,8 +2136,7 @@ namespace AdServer::RequestInfoSvcs
           Aspect::EXPRESSION_MATCHER) << FUN <<
           ": Daily task scheduled for '" <<
           tm.get_gm_time() << "' start time of prev task '" <<
-          (state ? state->start_time :
-           Generics::Time::ZERO).get_gm_time() << "'";
+          (state ? state->start_time : Generics::Time::ZERO).get_gm_time() << "'";
       }
       catch (const eh::Exception& ex)
       {
@@ -2182,6 +2183,7 @@ namespace AdServer::RequestInfoSvcs
       std::advance(e, i ? block_size : block_size + length % blocks);
       chunk_array[i].users.splice(chunk_array[i].users.begin(), state.users, b, e);
     }
+
     return length;
   }
 

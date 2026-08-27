@@ -325,15 +325,14 @@ namespace RequestInfoSvcs
   UserFraudProtectionContainer::~UserFraudProtectionContainer() noexcept
   {}
 
-  Generics::ConstSmartMemBuf_var
-  UserFraudProtectionContainer::get_profile(
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserFraudProtectionContainer::co_get_profile(
     const AdServer::Commons::UserId& user_id)
-    /*throw(Exception)*/
   {
-    static const char* FUN = "UserFraudProtectionContainer::get_profile()";
+    static const char* FUN = "UserFraudProtectionContainer::co_get_profile()";
     try
     {
-      return user_map_->get_profile(user_id);
+      co_return co_await user_map_->co_get_profile(user_id);
     }
     catch(const eh::Exception& ex)
     {
@@ -1059,6 +1058,13 @@ namespace RequestInfoSvcs
   {
     Generics::Time now = Generics::Time::get_time_of_day();
     user_map_->clear_expired(now - expire_time_);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  UserFraudProtectionContainer::co_clear_expired()
+  {
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    co_await user_map_->co_clear_expired(now - expire_time_);
   }
 } /* namespace RequestInfoSvcs */
 } /* namespace AdServer */

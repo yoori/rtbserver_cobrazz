@@ -229,6 +229,10 @@ namespace ProfilingCommons
     void
     clear_expired(const Generics::Time& expire_time) override;
 
+  protected:
+    AsyncProfileMap<KeyType>*
+    async_profile_map() const noexcept;
+
   private:
     ReferenceCounting::SmartPtr<
       AsyncProfileMap<KeyType>,

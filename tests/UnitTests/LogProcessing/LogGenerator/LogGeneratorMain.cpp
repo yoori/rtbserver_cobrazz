@@ -1194,7 +1194,7 @@ struct Filler
         "US",
         TEST_REQUEST_ID,
         FixedNumber("123.321"),
-        StringList { "URL_1", "URL_2" },
+        StringArray { "URL_1", "URL_2" },
         TagRequestCollector::DataT::OptInSectionOptional());
     };
 
@@ -1214,7 +1214,7 @@ struct Filler
         "US",
         TEST_REQUEST_ID,
         FixedNumber("123.321"),
-        StringList { "URL_1", "URL_2" },
+        StringArray { "URL_1", "URL_2" },
         opt_in_sect_opt);
     };
 

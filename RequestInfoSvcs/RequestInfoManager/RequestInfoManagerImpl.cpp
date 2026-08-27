@@ -80,13 +80,11 @@ namespace Aspect
   char CLEAR_EXPIRED_DATA[] = "RequestInfoManager:ClearExpiredData";
 }
 
-namespace AdServer{
-namespace RequestInfoSvcs{
-
+namespace AdServer::RequestInfoSvcs
+{
   LogProcessing::LogFlushTraits
   read_flush_policy(
-    const xsd::AdServer::Configuration::LogFlushPolicyType&
-      log_flush_policy,
+    const xsd::AdServer::Configuration::LogFlushPolicyType& log_flush_policy,
     const char* default_path)
   {
     AdServer::LogProcessing::LogFlushTraits res;
@@ -100,8 +98,7 @@ namespace RequestInfoSvcs{
   LogProcessing::LogFlushTraits*
   read_flush_policy(
     const xsd::cxx::tree::optional<
-      xsd::AdServer::Configuration::LogFlushPolicyType>&
-      log_flush_policy,
+      xsd::AdServer::Configuration::LogFlushPolicyType>& log_flush_policy,
     const char* default_path,
     LogProcessing::LogFlushTraits& res)
   {
@@ -123,8 +120,7 @@ namespace RequestInfoSvcs{
 
     UserFraudDeactivator(
       Logging::Logger* logger,
-      const xsd::AdServer::Configuration::RequestInfoManagerUserInfoType&
-        user_info_config)
+      const xsd::AdServer::Configuration::RequestInfoManagerUserInfoType& user_info_config)
       /*throw(Exception)*/;
 
     virtual void
@@ -139,8 +135,7 @@ namespace RequestInfoSvcs{
   protected:
     Logging::Logger_var logger_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
-      user_info_matcher_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient> user_info_matcher_;
   };
 
   /**
@@ -177,7 +172,7 @@ namespace RequestInfoSvcs{
       stage = "resolve campaign servers";
       campaign_servers_ = resolve_campaign_servers_();
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't " << stage << ": " << ex.what();
@@ -190,7 +185,7 @@ namespace RequestInfoSvcs{
       add_child_object(scheduler_.in());
       add_child_object(rocksdb_processor_);
     }
-    catch(const Generics::CompositeActiveObject::Exception& ex)
+    catch (const Generics::CompositeActiveObject::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": caught CompositeActiveObject::Exception: " << ex.what();
@@ -205,7 +200,7 @@ namespace RequestInfoSvcs{
         request_info_manager_config_.UserInfo());
       add_child_object(user_fraud_deactivator_.in());
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init UserFraudDeactivator: " << ex.what();
@@ -216,7 +211,7 @@ namespace RequestInfoSvcs{
     {
       processing_distributor_ = new CompositeRequestActionProcessor();
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't instantiate processing distributor. "
@@ -227,7 +222,7 @@ namespace RequestInfoSvcs{
     const xsd::AdServer::Configuration::OutLogsType&
       lp_config = request_info_manager_config_.LogProcessing().OutLogs();
 
-    if(lp_config.RequestOperation().present())
+    if (lp_config.RequestOperation().present())
     {
       try
       {
@@ -257,11 +252,10 @@ namespace RequestInfoSvcs{
           0,
           request_operation_saver_);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Can't instantiate request operation saver: " <<
-          ex.what();
+        ostr << FUN << ": Can't instantiate request operation saver: " << ex.what();
         throw Exception(ostr);
       }
     }
@@ -295,10 +289,9 @@ namespace RequestInfoSvcs{
         consider_request_traits);
       add_child_object(expression_matcher_notifier_.in());
 
-      processing_distributor_->add_child_processor(
-        expression_matcher_notifier_);
+      processing_distributor_->add_child_processor(expression_matcher_notifier_);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init ExpressionMatcherNotifier: " << ex.what();
@@ -403,7 +396,7 @@ namespace RequestInfoSvcs{
       processing_distributor_->add_child_processor(
         request_out_logger_);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init RequestOutLogger: " << ex.what();
@@ -466,7 +459,7 @@ namespace RequestInfoSvcs{
         0, // task runner
         this)));
 
-      if(request_info_manager_config_.Billing().present())
+      if (request_info_manager_config_.Billing().present())
       {
         task_runner_->enqueue_task(Task_var(new LoadTask(
           load_data_state,
@@ -481,14 +474,14 @@ namespace RequestInfoSvcs{
         load_data_state->billing_processor_loaded = true;
       }
 
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         logger_->sstream(Logging::Logger::TRACE,
           Aspect::REQUEST_INFO_MANAGER) <<
           "LoadTask's was enqueued.";
       }
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't instantiate object. Caught eh::Exception: " << ex.what();
@@ -503,13 +496,13 @@ namespace RequestInfoSvcs{
       deactivate_object();
       wait_object();
     }
-    catch(...)
+    catch (...)
     {}
   }
 
   template<typename ContainerPtrHolderType, typename KeyType>
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_profile_(
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_profile_(
     const char* FUN,
     const ContainerPtrHolderType& container_ptr_holder,
     const KeyType& id)
@@ -518,122 +511,134 @@ namespace RequestInfoSvcs{
     {
       auto container = container_ptr_holder.get();
 
-      if(!container.in())
+      if (!container.in())
       {
         throw NotReady("Container is not ready");
       }
 
-      return container->get_profile(id);
+      co_return co_await container->co_get_profile(id);
     }
-    catch(const NotReady&)
+    catch (const NotReady&)
     {
       throw;
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN <<
-        ": Can't get profile. Caught eh::Exception: " << ex.what();
+      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_profile(
-    const AdServer::Commons::RequestId& request_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_profile(AdServer::Commons::RequestId request_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       request_info_container_,
       request_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_user_campaign_reach_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_user_campaign_reach_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_user_campaign_reach_profile()";
+    static const char* FUN =
+      "RequestInfoManagerImpl::co_get_user_campaign_reach_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       user_campaign_reach_container_,
       user_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_user_action_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_user_action_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_user_action_profile()";
+    static const char* FUN =
+      "RequestInfoManagerImpl::co_get_user_action_profile()";
 
-    return get_profile_(
-      FUN,
-      user_action_info_container_,
-      user_id);
+    co_return co_await co_get_profile_(FUN, user_action_info_container_, user_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_user_fraud_protection_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_user_fraud_protection_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_user_fraud_protection_profile()";
+    static const char* FUN =
+      "RequestInfoManagerImpl::co_get_user_fraud_protection_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       user_fraud_protection_container_,
       user_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_user_site_reach_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_user_site_reach_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_user_site_reach_profile()";
+    static const char* FUN =
+      "RequestInfoManagerImpl::co_get_user_site_reach_profile()";
 
-    return get_profile_(
-      FUN,
-      user_site_reach_container_,
-      user_id);
+    co_return co_await co_get_profile_(FUN, user_site_reach_container_, user_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_user_tag_request_group_profile(
-    const AdServer::Commons::UserId& user_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_user_tag_request_group_profile(
+    AdServer::Commons::UserId user_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_user_tag_request_group_profile()";
+    static const char* FUN =
+      "RequestInfoManagerImpl::co_get_user_tag_request_group_profile()";
 
-    return get_profile_(
+    co_return co_await co_get_profile_(
       FUN,
       user_tag_request_merge_container_,
       user_id);
   }
 
-  Generics::ConstSmartMemBuf_var
-  RequestInfoManagerImpl::get_passback_profile(
-    const AdServer::Commons::RequestId& request_id)
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  RequestInfoManagerImpl::co_get_passback_profile(
+    AdServer::Commons::RequestId request_id)
   {
-    static const char* FUN = "RequestInfoManagerImpl::get_passback_profile()";
+    static const char* FUN = "RequestInfoManagerImpl::co_get_passback_profile()";
 
-    return get_profile_(
-      FUN,
-      passback_container_,
-      request_id);
+    co_return co_await co_get_profile_(FUN, passback_container_, request_id);
   }
 
-  void
-  RequestInfoManagerImpl::clear_expired(bool synchronous) noexcept
+  AdServer::Commons::Awaitable<void>
+  RequestInfoManagerImpl::co_clear_expired(bool synchronous)
   {
-    if(synchronous)
-    {
-      clear_expired_data_(false);
-    }
-    else
+    if (!synchronous)
     {
       Task_var clear_task = new ClearExpiredDataTask(*task_runner_, this, false);
       task_runner_->enqueue_task(clear_task);
+      co_return;
     }
+
+    logger_->log(
+      String::SubString("Cleanup expired data task started"),
+      Logging::Logger::INFO,
+      Aspect::CLEAR_EXPIRED_DATA);
+
+    co_await request_info_container_.get()->co_clear_expired_requests();
+    co_await user_action_info_container_.get()->co_clear_expired_actions();
+    co_await user_campaign_reach_container_.get()->co_clear_expired_users();
+    co_await user_fraud_protection_container_.get()->co_clear_expired();
+    co_await passback_container_.get()->co_clear_expired_requests();
+    co_await user_site_reach_container_.get()->co_clear_expired_users();
+    if (auto container = user_tag_request_merge_container_.get())
+    {
+      co_await container->co_clear_expired();
+    }
+
+    logger_->log(
+      String::SubString("Cleanup expired data finished"),
+      Logging::Logger::INFO,
+      Aspect::CLEAR_EXPIRED_DATA);
   }
 
   void
@@ -652,27 +657,22 @@ namespace RequestInfoSvcs{
       CompositeTagRequestProcessor_var tag_request_processor =
         new CompositeTagRequestProcessor();
 
-      tag_request_processor->add_child_processor(
-        user_site_reach_container_.get());
-      tag_request_processor->add_child_processor(
-        passback_container_.get());
-      tag_request_processor->add_child_processor(
-        request_out_logger_);
-      if(user_tag_request_merge_container_.get())
+      tag_request_processor->add_child_processor(user_site_reach_container_.get());
+      tag_request_processor->add_child_processor(passback_container_.get());
+      tag_request_processor->add_child_processor(request_out_logger_);
+      if (user_tag_request_merge_container_.get())
       {
-        tag_request_processor->add_child_processor(
-          user_tag_request_merge_container_.get());
+        tag_request_processor->add_child_processor(user_tag_request_merge_container_.get());
       }
 
-      if(request_info_manager_config_.Profiling().present())
+      if (request_info_manager_config_.Profiling().present())
       {
         TagRequestProfiler::AddressList profiler_addresses;
         const xsd::AdServer::Configuration::ProfilingType&
           profiling_config = *request_info_manager_config_.Profiling();
         for(xsd::AdServer::Configuration::ProfilingType::Endpoint_sequence::
-              const_iterator it = profiling_config.Endpoint().begin();
-            it != profiling_config.Endpoint().end();
-            ++it)
+            const_iterator it = profiling_config.Endpoint().begin();
+          it != profiling_config.Endpoint().end(); ++it)
         {
           profiler_addresses.push_back(it->url());
         }
@@ -696,18 +696,14 @@ namespace RequestInfoSvcs{
       CompositeAdvActionProcessor_var adv_action_processor =
         new CompositeAdvActionProcessor();
 
-      adv_action_processor->add_child_processor(
-        user_action_info_container_.get());
-      adv_action_processor->add_child_processor(
-        request_out_logger_);
+      adv_action_processor->add_child_processor(user_action_info_container_.get());
+      adv_action_processor->add_child_processor(request_out_logger_);
 
       CompositeRequestContainerProcessor_var request_container_processor =
         new CompositeRequestContainerProcessor();
 
-      request_container_processor->add_child_processor(
-        request_info_container_.get());
-      request_container_processor->add_child_processor(
-        request_out_logger_);
+      request_container_processor->add_child_processor(request_info_container_.get());
+      request_container_processor->add_child_processor(request_out_logger_);
 
       const xsd::AdServer::Configuration::InLogsType&
         lp_config = request_info_manager_config_.LogProcessing().InLogs();
@@ -730,17 +726,17 @@ namespace RequestInfoSvcs{
         lp_config.threads(),
         rim_stats_impl_);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-                       Aspect::REQUEST_INFO_MANAGER,
-                       "ADS-IMPL-3008") << FUN <<
+      logger_->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::REQUEST_INFO_MANAGER,
+        "ADS-IMPL-3008") << FUN <<
         ": Can't init logs loader. Caught eh::Exception: " << ex.what();
     }
 
     logger_->log(
-      String::SubString(
-        "Request chunks loaded & Request logs loader inited."),
+      String::SubString("Request chunks loaded & Request logs loader inited."),
       Logging::Logger::TRACE,
       Aspect::REQUEST_INFO_MANAGER);
 
@@ -750,7 +746,7 @@ namespace RequestInfoSvcs{
       // activate object because main active object already active
       add_child_object(request_log_loader_.in());
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
@@ -775,14 +771,13 @@ namespace RequestInfoSvcs{
   bool
   RequestInfoManagerImpl::load_user_fraud_protection_chunk_files_() noexcept
   {
-    static const char* FUN =
-      "RequestInfoManagerImpl::load_user_fraud_protection_chunk_files_()";
+    static const char* FUN = "RequestInfoManagerImpl::load_user_fraud_protection_chunk_files_()";
 
-    if(!user_fraud_protection_container_.get().in())
+    if (!user_fraud_protection_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -793,15 +788,12 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserFraudProtectionChunksConfig();
 
-          const std::string user_fraud_protection_rocksdb_path =
-            chunks_config.chunks_root();
-
           UserFraudProtectionContainer_var user_fraud_protection_container =
             new UserFraudProtectionContainer(
               logger_,
               0, // will be linked to request_info_container_.get()->proxy()
               user_fraud_deactivator_,
-              user_fraud_protection_rocksdb_path.c_str(),
+              chunks_config.chunks_root().c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 DEFAULT_FRAUD_PROFILE_EXPIRE_TIME,
@@ -812,13 +804,12 @@ namespace RequestInfoSvcs{
 
           add_child_object(user_fraud_protection_container.in());
 
-          processing_distributor_->add_child_processor(
-            user_fraud_protection_container);
+          processing_distributor_->add_child_processor(user_fraud_protection_container);
 
           user_fraud_protection_container_ = user_fraud_protection_container;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -836,11 +827,11 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::load_user_action_info_chunk_files_()";
 
-    if(!user_action_info_container_.get().in())
+    if (!user_action_info_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -851,14 +842,11 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserActionChunksConfig();
 
-          const std::string user_action_info_rocksdb_path =
-            chunks_config.chunks_root();
-
           UserActionInfoContainer_var user_action_info_container =
             new UserActionInfoContainer(
               logger_,
               0, // will be linked to request_info_container_.get()->proxy(),
-              user_action_info_rocksdb_path.c_str(),
+              chunks_config.chunks_root().c_str(),
               request_info_manager_config_.action_ignore_time().present() ?
                 Generics::Time(*request_info_manager_config_.action_ignore_time()) :
                 DEFAULT_ACTION_IGNORE_TIME,
@@ -877,7 +865,7 @@ namespace RequestInfoSvcs{
           return true;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -897,11 +885,11 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::load_user_campaign_reach_chunk_files_()";
 
-    if(!user_campaign_reach_container_.get().in())
+    if (!user_campaign_reach_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -912,14 +900,11 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserCampaignReachChunksConfig();
 
-          const std::string user_campaign_reach_rocksdb_path =
-            chunks_config.chunks_root();
-
           UserCampaignReachContainer_var user_campaign_reach_container =
             new UserCampaignReachContainer(
               logger_,
               request_out_logger_.in(),
-              user_campaign_reach_rocksdb_path.c_str(),
+              chunks_config.chunks_root().c_str(),
               chunks_config.expire_time().present() ?
                 Generics::Time(*chunks_config.expire_time()) :
                 USER_CAMPAIGN_REACH_DEFAULT_EXPIRE_TIME,
@@ -927,13 +912,12 @@ namespace RequestInfoSvcs{
 
           add_child_object(user_campaign_reach_container.in());
 
-          processing_distributor_->add_child_processor(
-            user_campaign_reach_container);
+          processing_distributor_->add_child_processor(user_campaign_reach_container);
 
           user_campaign_reach_container_ = user_campaign_reach_container;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -951,11 +935,11 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::load_request_chunk_files_()";
 
-    if(!request_info_container_.get().in())
+    if (!request_info_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -965,7 +949,7 @@ namespace RequestInfoSvcs{
         const xsd::AdServer::Configuration::ChunksConfigType&
           chunks_config = request_info_manager_config_.ChunksConfig();
 
-        if(!request_info_manager_config_.BidChunksConfig().present())
+        if (!request_info_manager_config_.BidChunksConfig().present())
         {
           throw Exception("BidChunksConfig is required for request profile storage");
         }
@@ -993,7 +977,7 @@ namespace RequestInfoSvcs{
 
         request_info_container_ = request_info_container;
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -1010,11 +994,11 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::init_passback_container_()";
 
-    if(!passback_container_.get().in())
+    if (!passback_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -1042,7 +1026,7 @@ namespace RequestInfoSvcs{
           return true;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         std::ostringstream ostr;
         ostr << FUN << ": Can't load passback chunk files: " << ex.what();
@@ -1065,11 +1049,11 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::init_user_site_reach_container_()";
 
-    if(!user_site_reach_container_.get().in())
+    if (!user_site_reach_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -1080,8 +1064,7 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::ChunksConfigType&
             chunks_config = request_info_manager_config_.UserSiteReachChunksConfig();
 
-          const std::string user_site_reach_rocksdb_path =
-            chunks_config.chunks_root();
+          const std::string user_site_reach_rocksdb_path = chunks_config.chunks_root();
 
           UserSiteReachContainer_var user_site_reach_container =
             new UserSiteReachContainer(
@@ -1100,7 +1083,7 @@ namespace RequestInfoSvcs{
           return true;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         std::ostringstream ostr;
         ostr << FUN << ": Can't load site reach chunk files: " << ex.what();
@@ -1123,16 +1106,16 @@ namespace RequestInfoSvcs{
     static const char* FUN =
       "RequestInfoManagerImpl::init_user_tag_request_merge_container_()";
 
-    if(!request_info_manager_config_.TagRequestGroupingConfig().present())
+    if (!request_info_manager_config_.TagRequestGroupingConfig().present())
     {
       return true;
     }
 
-    if(!user_tag_request_merge_container_.get().in())
+    if (!user_tag_request_merge_container_.get().in())
     {
       try
       {
-        if(logger_->log_level() >= Logging::Logger::TRACE)
+        if (logger_->log_level() >= Logging::Logger::TRACE)
         {
           logger_->sstream(Logging::Logger::TRACE,
             Aspect::REQUEST_INFO_MANAGER) <<
@@ -1161,7 +1144,7 @@ namespace RequestInfoSvcs{
           return true;
         }
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         std::ostringstream ostr;
         ostr << FUN << ": Can't load tag request group chunk files: " << ex.what();
@@ -1185,7 +1168,7 @@ namespace RequestInfoSvcs{
 
     try
     {
-      if(logger_->log_level() >= Logging::Logger::TRACE)
+      if (logger_->log_level() >= Logging::Logger::TRACE)
       {
         logger_->sstream(Logging::Logger::TRACE,
           Aspect::REQUEST_INFO_MANAGER) <<
@@ -1201,8 +1184,7 @@ namespace RequestInfoSvcs{
         const std::string host = grpc_ref.host().present() ?
           std::string(*grpc_ref.host()) :
           std::string("localhost");
-        billing_server_refs.emplace_back(
-          host + ":" + std::to_string(grpc_ref.port()));
+        billing_server_refs.emplace_back(host + ":" + std::to_string(grpc_ref.port()));
       }
 
       BillingProcessor_var billing_processor = new BillingProcessor(
@@ -1224,7 +1206,7 @@ namespace RequestInfoSvcs{
 
       return true;
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": Can't init billing processor: " << ex.what();
@@ -1246,7 +1228,7 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "RequestInfoManagerImpl::load_data_()";
 
-    if((this->*load_data)())
+    if ((this->*load_data)())
     {
       bool prev_fully_loaded;
       bool new_fully_loaded;
@@ -1258,7 +1240,7 @@ namespace RequestInfoSvcs{
         new_fully_loaded = load_data_state->fully_loaded_i();
       }
 
-      if(!prev_fully_loaded && new_fully_loaded)
+      if (!prev_fully_loaded && new_fully_loaded)
       {
         // enqueue fraud rules update task
         task_runner_->enqueue_task(Task_var(new UpdateFraudRulesTask(
@@ -1282,7 +1264,7 @@ namespace RequestInfoSvcs{
           msg,
           Generics::Time::get_time_of_day() + CHUNKS_RELOAD_PERIOD);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         std::ostringstream ostr;
         ostr << FUN << ": Can't schedule chunks reloading task. "
@@ -1304,7 +1286,7 @@ namespace RequestInfoSvcs{
 
     const Generics::Time LOGS_DUMP_ERROR_RESCHEDULE_PERIOD(2);
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->sstream(Logging::Logger::TRACE,
         Aspect::REQUEST_INFO_MANAGER) << FUN << ": Flush logs.";
@@ -1316,10 +1298,9 @@ namespace RequestInfoSvcs{
     {
       next_flush = request_out_logger_->flush_if_required();
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
-      next_flush = Generics::Time::get_time_of_day() +
-        LOGS_DUMP_ERROR_RESCHEDULE_PERIOD;
+      next_flush = Generics::Time::get_time_of_day() + LOGS_DUMP_ERROR_RESCHEDULE_PERIOD;
 
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
@@ -1327,14 +1308,14 @@ namespace RequestInfoSvcs{
         ": Can't flush logs. Caught eh::Exception: " << ex.what();
     }
 
-    if(next_flush != Generics::Time::ZERO)
+    if (next_flush != Generics::Time::ZERO)
     {
       try
       {
         Task_var msg = new FlushLogsTask(*task_runner_, this);
         scheduler_->schedule(msg, next_flush);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -1368,8 +1349,7 @@ namespace RequestInfoSvcs{
         campaign_server_refs.end());
 
       return CampaignServerPoolPtr(
-        new CampaignServerPool(
-          pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+        new CampaignServerPool(pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
     }
     catch (const CORBA::SystemException& e)
     {
@@ -1419,7 +1399,7 @@ namespace RequestInfoSvcs{
             UserFraudProtectionContainer::Config::FraudRule rule;
             rule.limit = fraud_conds[fraud_i].limit;
             rule.period = CorbaAlgs::unpack_time(fraud_conds[fraud_i].period);
-            if(fraud_conds[fraud_i].type == 'I')
+            if (fraud_conds[fraud_i].type == 'I')
             {
               config->imp_rules.add_rule(rule);
             }
@@ -1436,14 +1416,14 @@ namespace RequestInfoSvcs{
 
           user_fraud_protection_container_.get()->config(config);
 
-          if(logger_->log_level() >= Logging::Logger::TRACE)
+          if (logger_->log_level() >= Logging::Logger::TRACE)
           {
             logger_->stream(Logging::Logger::TRACE,
               Aspect::REQUEST_INFO_MANAGER) << "Fraud rules updated.";
           }
           break;
         }
-        catch(const AdServer::CampaignSvcs::CampaignServer::NotReady&)
+        catch (const AdServer::CampaignSvcs::CampaignServer::NotReady&)
         {
           Stream::Error ostr;
           ostr << FUN << ": CampaignServer not ready.";
@@ -1451,7 +1431,7 @@ namespace RequestInfoSvcs{
           logger_->stream(Logging::Logger::NOTICE,
             Aspect::REQUEST_INFO_MANAGER) << ostr.str();
         }
-        catch(const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
+        catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
           Stream::Error ostr;
           ostr << FUN <<
@@ -1461,7 +1441,7 @@ namespace RequestInfoSvcs{
           logger_->stream(Logging::Logger::EMERGENCY,
             Aspect::REQUEST_INFO_MANAGER) << ostr.str();
         }
-        catch(const CORBA::SystemException& ex)
+        catch (const CORBA::SystemException& ex)
         {
           Stream::Error ostr;
           ostr << FUN <<
@@ -1473,13 +1453,13 @@ namespace RequestInfoSvcs{
         }
       } // for (;;)
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER) << FUN << ": eh::Exception caught: " << e.what();
     }
 
-    if(loop_update)
+    if (loop_update)
     {
       try
       {
@@ -1487,7 +1467,7 @@ namespace RequestInfoSvcs{
           Task_var(new UpdateFraudRulesTask(task_runner_, this)),
           Generics::Time::get_time_of_day() + UPDATE_FRAUD_RULES_PERIOD);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->stream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -1497,7 +1477,7 @@ namespace RequestInfoSvcs{
       }
     }
 
-    if(fraud_rules_first_time_inited)
+    if (fraud_rules_first_time_inited)
     {
       start_logs_processing_();
     }
@@ -1524,12 +1504,12 @@ namespace RequestInfoSvcs{
       user_fraud_protection_container_.get()->clear_expired();
       passback_container_.get()->clear_expired_requests();
       user_site_reach_container_.get()->clear_expired_users();
-      if(user_tag_request_merge_container_.get())
+      if (user_tag_request_merge_container_.get())
       {
         user_tag_request_merge_container_.get()->clear_expired();
       }
 
-      if(logger_->log_level() >= Logging::Logger::INFO)
+      if (logger_->log_level() >= Logging::Logger::INFO)
       {
         Stream::Error ostr;
         ostr << "Cleanup expired data finished";
@@ -1539,7 +1519,7 @@ namespace RequestInfoSvcs{
           Aspect::CLEAR_EXPIRED_DATA);
       }
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       logger_->sstream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
@@ -1547,12 +1527,11 @@ namespace RequestInfoSvcs{
         ": eh::Exception caught: " << e.what();
     }
 
-    if(reschedule)
+    if (reschedule)
     {
       try
       {
-        Generics::Time tm =
-          Generics::Time::get_time_of_day() + Generics::Time::ONE_MINUTE*30;
+        Generics::Time tm = Generics::Time::get_time_of_day() + Generics::Time::ONE_MINUTE*30;
 
         Task_var msg = new ClearExpiredDataTask(*task_runner_, this, true);
         scheduler_->schedule(msg, tm);
@@ -1563,7 +1542,7 @@ namespace RequestInfoSvcs{
           "' start time of prev task '" <<
           start_time.get_gm_time() << "'";
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         logger_->sstream(Logging::Logger::EMERGENCY,
           Aspect::REQUEST_INFO_MANAGER,
@@ -1610,8 +1589,7 @@ namespace RequestInfoSvcs{
     InLog& in_log)
     noexcept
   {
-    in_log.dir = config.path().present() ? config.path()->c_str() :
-      (log_root + default_in_dir);
+    in_log.dir = config.path().present() ? config.path()->c_str() : (log_root + default_in_dir);
     in_log.priority = config.priority();
   }
 
@@ -1633,10 +1611,9 @@ namespace RequestInfoSvcs{
       AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient::UserInfoControllerRefs
         user_info_controller_refs;
 
-      if(user_info_config.BatchingOptions().present())
+      if (user_info_config.BatchingOptions().present())
       {
-        batching_options =
-          Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
+        batching_options = Config::read_xsd_grpc_options(*user_info_config.BatchingOptions());
       }
 
       for(const auto& group : user_info_config.UserInfoControllerGroup())
@@ -1647,7 +1624,7 @@ namespace RequestInfoSvcs{
         {
           user_info_controller_ref_group.emplace_back(endpoint);
         }
-        if(!user_info_controller_ref_group.empty())
+        if (!user_info_controller_ref_group.empty())
         {
           user_info_controller_refs.emplace_back(
             std::move(user_info_controller_ref_group));
@@ -1666,7 +1643,7 @@ namespace RequestInfoSvcs{
       user_info_matcher_ = client;
       add_child_object(client);
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN <<
@@ -1684,7 +1661,7 @@ namespace RequestInfoSvcs{
   {
     static const char* FUN = "UserFraudDeactivator::detected_fraud_user()";
 
-    if(logger_->log_level() >= Logging::Logger::TRACE)
+    if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->sstream(Logging::Logger::TRACE,
         Aspect::REQUEST_INFO_MANAGER) <<
@@ -1700,14 +1677,14 @@ namespace RequestInfoSvcs{
         ::GrpcAlgs::pack_user_id(user_id),
         ::GrpcAlgs::pack_time(deactivate_time));
     }
-    catch(const AdServer::UserInfoSvcs::GrpcAlgs::NotReady&)
+    catch (const AdServer::UserInfoSvcs::GrpcAlgs::NotReady&)
     {
       logger_->stream(Logging::Logger::NOTICE,
         Aspect::REQUEST_INFO_MANAGER) << FUN <<
         ": Can't mark user as fraud. "
         "Caught UserInfoSvcs::GrpcAlgs::NotReady.";
     }
-    catch(const AdServer::UserInfoSvcs::GrpcAlgs::Exception& e)
+    catch (const AdServer::UserInfoSvcs::GrpcAlgs::Exception& e)
     {
       logger_->stream(Logging::Logger::EMERGENCY,
         Aspect::REQUEST_INFO_MANAGER,
@@ -1716,5 +1693,4 @@ namespace RequestInfoSvcs{
         "Caught UserInfoSvcs::GrpcAlgs::Exception: " << e.what();
     }
   }
-} /* RequestInfoSvcs */
-} /* AdServer */
+} /* AdServer::RequestInfoSvcs */

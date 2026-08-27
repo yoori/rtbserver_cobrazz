@@ -58,21 +58,20 @@ namespace RequestInfoSvcs
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  PassbackContainer::get_profile(
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  PassbackContainer::co_get_profile(
     const AdServer::Commons::RequestId& request_id)
-    /*throw(Exception)*/
   {
-    static const char* FUN = "PassbackContainer::get_profile()";
+    static const char* FUN = "PassbackContainer::co_get_profile()";
     try
     {
-      return passback_map_->get_profile(request_id);
+      co_return co_await passback_map_->co_get_profile(request_id);
     }
-    catch(const eh::Exception& e)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't get_ profile for id = " << request_id <<
-        ". Caught eh::Exception: " << e.what();
+      ostr << FUN << ": Can't get profile for id = " << request_id <<
+        ". Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -524,6 +523,13 @@ namespace RequestInfoSvcs
   {
     Generics::Time now = Generics::Time::get_time_of_day();
     passback_map_->clear_expired(now - expire_time_);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  PassbackContainer::co_clear_expired_requests()
+  {
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    co_await passback_map_->co_clear_expired(now - expire_time_);
   }
 }
 }

@@ -48,173 +48,167 @@ namespace AdServer::RequestInfoSvcs
     static auto grpc_calls()
     {
       return std::make_tuple(
-        MAKE_GRPC_CALL(
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_profile),
-        MAKE_GRPC_CALL(
+          get_profile,
+          co_get_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_user_campaign_reach_profile),
-        MAKE_GRPC_CALL(
+          get_user_campaign_reach_profile,
+          co_get_user_campaign_reach_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_user_action_profile),
-        MAKE_GRPC_CALL(
+          get_user_action_profile,
+          co_get_user_action_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_passback_profile),
-        MAKE_GRPC_CALL(
+          get_passback_profile,
+          co_get_passback_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_user_fraud_protection_profile),
-        MAKE_GRPC_CALL(
+          get_user_fraud_protection_profile,
+          co_get_user_fraud_protection_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_user_site_reach_profile),
-        MAKE_GRPC_CALL(
+          get_user_site_reach_profile,
+          co_get_user_site_reach_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ProfileRequest,
           Proto::ProfileResponse,
-          get_user_tag_request_group_profile),
-        MAKE_GRPC_CALL(
+          get_user_tag_request_group_profile,
+          co_get_user_tag_request_group_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::ClearExpiredRequest,
           Proto::ClearExpiredResponse,
-          clear_expired));
+          clear_expired,
+          co_clear_expired));
     }
 
-    void
-    get_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_profile(
-            AdServer::Commons::RequestId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_profile(
+          AdServer::Commons::RequestId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_campaign_reach_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_campaign_reach_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_user_campaign_reach_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_user_campaign_reach_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_action_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_action_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_user_action_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_user_action_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    get_passback_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_passback_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_passback_profile(
-            AdServer::Commons::RequestId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_passback_profile(
+          AdServer::Commons::RequestId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_fraud_protection_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_fraud_protection_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_user_fraud_protection_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_user_fraud_protection_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_site_reach_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_site_reach_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_user_site_reach_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_user_site_reach_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    get_user_tag_request_group_profile(
-      const Proto::ProfileRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_tag_request_group_profile(
+      Proto::ProfileRequest&& request,
       Proto::ProfileResponse& response,
       grpc::Status& status) const
     {
-      execute_profile_request_(
-        [&request, this]
-        {
-          return request_info_manager_->get_user_tag_request_group_profile(
-            AdServer::Commons::UserId(request.id()));
-        },
+      co_await co_execute_profile_request_(
+        request_info_manager_->co_get_user_tag_request_group_profile(
+          AdServer::Commons::UserId(request.id())),
         response,
         status);
     }
 
-    void
-    clear_expired(
-      const Proto::ClearExpiredRequest& request,
+    AdServer::Commons::StartableAwaitable<void>
+    co_clear_expired(
+      Proto::ClearExpiredRequest&& request,
       Proto::ClearExpiredResponse&,
       grpc::Status& status) const
     {
-      request_info_manager_->clear_expired(request.synchronous());
-      status = grpc::Status::OK;
+      try
+      {
+        co_await request_info_manager_->co_clear_expired(request.synchronous());
+        status = grpc::Status::OK;
+      }
+      catch(const eh::Exception& ex)
+      {
+        status = grpc::Status(grpc::StatusCode::INTERNAL, ex.what());
+      }
     }
 
   private:
-    template<typename Getter>
-    static void
-    execute_profile_request_(
-      Getter&& getter,
+    static AdServer::Commons::StartableAwaitable<void>
+    co_execute_profile_request_(
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operation,
       Proto::ProfileResponse& response,
       grpc::Status& status)
     {
       try
       {
-        const Generics::ConstSmartMemBuf_var profile = getter();
+        const Generics::ConstSmartMemBuf_var profile =
+          co_await std::move(operation);
         pack_profile(profile.in(), response);
         status = grpc::Status::OK;
       }

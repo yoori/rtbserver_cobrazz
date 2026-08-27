@@ -130,9 +130,8 @@ namespace AdServer
           rocksdb_processor = {})
         /*throw(Exception)*/;
 
-      Generics::ConstSmartMemBuf_var
-      get_profile(const AdServer::Commons::RequestId& request_id)
-        /*throw(Exception)*/;
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile(const AdServer::Commons::RequestId& request_id);
 
       virtual void
       process_tag_request(const TagRequestInfo&)
@@ -153,6 +152,9 @@ namespace AdServer
         const Generics::Time& impression_time);
 
       void clear_expired_requests() /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_clear_expired_requests();
 
     protected:
       virtual ~PassbackContainer() noexcept {}

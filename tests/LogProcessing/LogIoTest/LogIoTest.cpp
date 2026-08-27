@@ -1575,7 +1575,7 @@ int main(int argc, char **argv)
         "RUS",
         RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
         FixedNumber("123.123"),
-        StringList { "URL_1", "URL_2" },
+        StringArray { "URL_1", "URL_2" },
         TagRequestCollector::DataT::OptInSectionOptional());
     };
 
@@ -1615,7 +1615,7 @@ int main(int argc, char **argv)
         "RUS",
         RequestId("PPPPPPPPPPPPPPPPPPPPPA.."),
         FixedNumber("123.321"),
-        StringList { "URL_1", "URL_2", "URL_3" },
+        StringArray { "URL_1", "URL_2", "URL_3" },
         opt_in_sect_opt);
     };
 

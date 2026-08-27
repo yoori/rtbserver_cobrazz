@@ -20,6 +20,12 @@ namespace RequestInfoSvcs
 
     struct ColoReachInfo
     {
+      ColoReachInfo() = default;
+      ColoReachInfo(const ColoReachInfo&) = delete;
+      ColoReachInfo& operator=(const ColoReachInfo&) = delete;
+      ColoReachInfo(ColoReachInfo&&) noexcept = default;
+      ColoReachInfo& operator=(ColoReachInfo&&) noexcept = default;
+
       Generics::Time create_time;
       bool household;
       AdServer::RequestInfoSvcs::IdAppearanceList colocations;

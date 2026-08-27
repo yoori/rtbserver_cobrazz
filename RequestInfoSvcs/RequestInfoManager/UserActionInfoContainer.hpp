@@ -54,7 +54,13 @@ namespace AdServer
       get_profile(const AdServer::Commons::RequestId& request_id)
         /*throw(Exception)*/;
 
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile(const AdServer::Commons::RequestId& request_id);
+
       void clear_expired_actions() /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_clear_expired_actions();
 
       /** AdvActionProcessor interface */
       virtual void process_adv_action(

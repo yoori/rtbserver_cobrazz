@@ -10,6 +10,7 @@
 #include <Logger/Logger.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 #include <Commons/Algs.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
@@ -66,8 +67,8 @@ namespace AdServer::RequestInfoSvcs
         rocksdb_processor = {})
       /*throw(Exception)*/;
 
-    Generics::ConstSmartMemBuf_var
-    get_profile(const AdServer::Commons::UserId& user_id) /*throw(Exception)*/;
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_profile(const AdServer::Commons::UserId& user_id);
 
     void
     clear_expired_users() /*throw(Exception)*/;
@@ -89,27 +90,16 @@ namespace AdServer::RequestInfoSvcs
     void
     all_users(UserIdList& users) /*throw(Exception)*/;
 
-    void
-    save_profile_(
-      const AdServer::Commons::UserId& user_id,
-      const Generics::ConstSmartMemBuf* profile,
-      const Generics::Time& time)
-      /*throw(Exception)*/;
-
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
 
-    typedef AdServer::ProfilingCommons::ChunkedProfileMap<
+    using UserInventoryInfoMap = AdServer::ProfilingCommons::ChunkedProfileMap<
       UserId,
       AdServer::ProfilingCommons::TransactionProfileMap<UserId>,
-      unsigned long (*)(const Generics::Uuid& uuid) >
-    UserInventoryInfoMap;
+      unsigned long (*)(const Generics::Uuid& uuid) >;
 
-    typedef ReferenceCounting::SmartPtr<UserInventoryInfoMap>
-      UserInventoryInfoMap_var;
-
-    typedef std::list<ColoReachProcessor::ColoReachInfo>
-      ColoReachInfoList;
+    using UserInventoryInfoMap_var = ReferenceCounting::SmartPtr<UserInventoryInfoMap>;
+    using ColoReachInfoList = Generics::MonoList<ColoReachProcessor::ColoReachInfo>;
 
   private:
     virtual

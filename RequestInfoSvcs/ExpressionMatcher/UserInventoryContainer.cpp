@@ -306,10 +306,14 @@ namespace AdServer::RequestInfoSvcs
       res_impop_no_imp_channel_list,
     InventoryActionProcessor::InventoryInfo::ChannelImpAppearInfo& appears,
     const ChannelIdArray& triggered_channels,
-    const ChannelIdSet& impression_channels,
+    const ChannelIdArray& impression_channels,
     bool impression)
     /*throw(PlainTypes::CorruptedStruct)*/
   {
+    using TempChannelIdArray = Generics::MonoVector<unsigned long>;
+
+    Generics::MonoAllocatorArena arena;
+
     {
       // search channels that not present in any set
       ChannelInventoryDayWriter::display_imp_channel_list_Container::
@@ -358,7 +362,7 @@ namespace AdServer::RequestInfoSvcs
         const ChannelInventoryDayWriter::display_imp_channel_list_Container&
           imp_channel_list = res_imp_channel_list;
 
-        ChannelIdArray imp_appear_channels;
+        TempChannelIdArray imp_appear_channels(&arena);
         imp_appear_channels.reserve(impression_channels.size());
 
         std::set_difference(
@@ -400,7 +404,7 @@ namespace AdServer::RequestInfoSvcs
         new_imp_other_channel_list.reserve(
           imp_other_channel_list.size() + triggered_channels.size());
 
-        ChannelIdArray impression_other_channels;
+        TempChannelIdArray impression_other_channels(&arena);
         impression_other_channels.reserve(triggered_channels.size());
 
         std::set_difference(
@@ -410,7 +414,7 @@ namespace AdServer::RequestInfoSvcs
           impression_channels.end(),
           std::back_inserter(impression_other_channels));
 
-        ChannelIdArray imp_other_appear_channels;
+        TempChannelIdArray imp_other_appear_channels(&arena);
         imp_other_appear_channels.reserve(impression_other_channels.size());
 
         std::set_difference(
@@ -450,7 +454,7 @@ namespace AdServer::RequestInfoSvcs
       ChannelInventoryDayWriter::display_impop_no_imp_channel_list_Container
         new_impop_no_imp_channel_list;
 
-      ChannelIdArray impop_no_imp_appear_channels;
+      TempChannelIdArray impop_no_imp_appear_channels(&arena);
       impop_no_imp_appear_channels.reserve(triggered_channels.size());
 
       std::set_difference(
@@ -575,7 +579,7 @@ namespace AdServer::RequestInfoSvcs
         inv_info.display_appears,
         triggered_expression_channels,
         inv_request_info.display_ad.present() ?
-          inv_request_info.display_ad->imp_channels : ChannelIdSet(),
+          inv_request_info.display_ad->imp_channels : ChannelIdArray(),
         inv_request_info.display_ad.present() || !inv_request_info.text_ads.empty());
 
       // TO OPTIMIZE
@@ -592,7 +596,7 @@ namespace AdServer::RequestInfoSvcs
           inv_info.text_appears,
           triggered_expression_channels,
           text_ad_it != inv_request_info.text_ads.end() ?
-            text_ad_it->imp_channels : ChannelIdSet(),
+            text_ad_it->imp_channels : ChannelIdArray(),
           inv_request_info.display_ad.present() || text_ad_it != inv_request_info.text_ads.end());
 
         if (text_ad_it != inv_request_info.text_ads.end())
@@ -752,20 +756,20 @@ namespace AdServer::RequestInfoSvcs
   UserInventoryInfoContainer::~UserInventoryInfoContainer() noexcept
   {}
 
-  Generics::ConstSmartMemBuf_var
-  UserInventoryInfoContainer::get_profile(const AdServer::Commons::UserId& user_id)
-    /*throw(Exception)*/
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserInventoryInfoContainer::co_get_profile(
+    const AdServer::Commons::UserId& user_id)
   {
-    static const char* FUN = "UserInventoryInfoContainer::get_profile()";
+    static const char* FUN = "UserInventoryInfoContainer::co_get_profile()";
 
     try
     {
-      return user_map_->get_profile(user_id);
+      co_return co_await user_map_->co_get_profile(user_id);
     }
-    catch (const eh::Exception& e)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << e.what();
+      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }
@@ -777,8 +781,9 @@ namespace AdServer::RequestInfoSvcs
 
     bool delegate_inventory_processing = false;
     InventoryActionProcessor::InventoryInfo inv_info;
-    ColoReachInfoList gmt_colo_reach_info_list;
-    ColoReachInfoList isp_colo_reach_info_list;
+    Generics::MonoAllocatorArena arena;
+    ColoReachInfoList gmt_colo_reach_info_list(&arena);
+    ColoReachInfoList isp_colo_reach_info_list(&arena);
 
     try
     {
@@ -865,7 +870,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      Generics::ConstSmartMemBuf_var mem_buf = get_profile(user_id);
+      Generics::ConstSmartMemBuf_var mem_buf = user_map_->get_profile(user_id);
 
       if (mem_buf.in())
       {
@@ -943,28 +948,6 @@ namespace AdServer::RequestInfoSvcs
         users.push_back(user_id);
       },
       std::function<void(void)>());
-  }
-
-
-  void
-  UserInventoryInfoContainer::save_profile_(
-    const AdServer::Commons::UserId& user_id,
-    const Generics::ConstSmartMemBuf* profile,
-    const Generics::Time& time)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "UserInventoryInfoContainer::save_profile()";
-
-    try
-    {
-      user_map_->save_profile(user_id, profile, time);
-    }
-    catch (const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't save profile. Caught eh::Exception: " << e.what();
-      throw Exception(ostr);
-    }
   }
 
   AdServer::Commons::Awaitable<void>
@@ -1401,8 +1384,8 @@ namespace AdServer::RequestInfoSvcs
         isp_colo_reach_info.create_time = isp_create_date;
         isp_colo_reach_info.household = false;
 
-        gmt_colo_reach_info_list.push_back(gmt_colo_reach_info);
-        isp_colo_reach_info_list.push_back(isp_colo_reach_info);
+        gmt_colo_reach_info_list.push_back(std::move(gmt_colo_reach_info));
+        isp_colo_reach_info_list.push_back(std::move(isp_colo_reach_info));
 
         if (colo_appeared)
         {
@@ -1490,7 +1473,7 @@ namespace AdServer::RequestInfoSvcs
     }
     catch (const PlainTypes::CorruptedStruct& ex)
     {
-      transaction->remove_profile();
+      co_await transaction->co_remove_profile();
 
       Stream::Error ostr;
       ostr << FUN << ": Caught PlainTypes::CorruptedStruct: " << ex.what();
@@ -1701,8 +1684,10 @@ namespace AdServer::RequestInfoSvcs
         for (auto ch_it = triggered_expression_channels.begin();
           ch_it != triggered_expression_channels.end(); ++ch_it)
         {
-          if (request_info.display_ad->imp_channels.find(*ch_it) ==
-            request_info.display_ad->imp_channels.end())
+          if (!std::binary_search(
+              request_info.display_ad->imp_channels.begin(),
+              request_info.display_ad->imp_channels.end(),
+              *ch_it))
           {
             inv_info.display_imps.imp_other_channels.emplace_back(
               *ch_it,
@@ -1746,7 +1731,7 @@ namespace AdServer::RequestInfoSvcs
         for (auto text_ad_it = request_info.text_ads.begin();
           text_ad_it != request_info.text_ads.end(); ++text_ad_it)
         {
-          for (ChannelIdSet::const_iterator imp_ch_it = text_ad_it->imp_channels.begin();
+          for (ChannelIdArray::const_iterator imp_ch_it = text_ad_it->imp_channels.begin();
             imp_ch_it != text_ad_it->imp_channels.end();
             ++imp_ch_it)
           {

@@ -904,7 +904,9 @@ namespace AdServer::RequestInfoSvcs
               Generics::Time::ZERO,
               false);
 
-          request_maps_.emplace(chunk_id, new RequestProfileMap(rocksdb_map));
+          request_maps_.emplace(
+            chunk_id,
+            new RequestProfileMap(rocksdb_map.in()));
           add_child_object(rocksdb_map.in());
         }
       }
@@ -932,25 +934,6 @@ namespace AdServer::RequestInfoSvcs
     config_ = ReferenceCounting::add_ref(config);
   }
 
-  Generics::ConstSmartMemBuf_var
-  UserTriggerMatchContainer::get_user_profile(
-    const AdServer::Commons::UserId& user_id)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "UserTriggerMatchContainer::get_user_profile()";
-
-    try
-    {
-      return user_map_->get_profile(user_id);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << e.what();
-      throw Exception(ostr);
-    }
-  }
-
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   UserTriggerMatchContainer::co_get_user_profile(const AdServer::Commons::UserId& user_id)
   {
@@ -968,11 +951,12 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
-  Generics::ConstSmartMemBuf_var
-  UserTriggerMatchContainer::get_request_profile(const AdServer::Commons::RequestId& request_id)
-    /*throw(Exception)*/
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  UserTriggerMatchContainer::co_get_request_profile(
+    const AdServer::Commons::RequestId& request_id)
   {
-    static const char* FUN = "UserTriggerMatchContainer::get_request_profile()";
+    static const char* FUN =
+      "UserTriggerMatchContainer::co_get_request_profile()";
 
     if (request_maps_.empty())
     {
@@ -985,18 +969,20 @@ namespace AdServer::RequestInfoSvcs
     {
       for (const auto& request_map_entry : request_maps_)
       {
-        Generics::ConstSmartMemBuf_var profile = request_map_entry.second->get_profile(request_id);
+        Generics::ConstSmartMemBuf_var profile =
+          co_await request_map_entry.second->co_get_profile(request_id);
         if (profile.in())
         {
-          return profile;
+          co_return profile;
         }
       }
-      return {};
+
+      co_return Generics::ConstSmartMemBuf_var{};
     }
-    catch(const eh::Exception& e)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << e.what();
+      ostr << FUN << ": Can't get profile. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
   }

@@ -60,12 +60,14 @@ namespace AdServer
           rocksdb_processor = {})
         /*throw(Exception)*/;
 
-      Generics::ConstSmartMemBuf_var
-      get_profile(const AdServer::Commons::RequestId& request_id)
-        /*throw(Exception)*/;
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile(const AdServer::Commons::RequestId& request_id);
 
       void
       clear_expired_requests() /*throw(Exception)*/;
+
+      AdServer::Commons::Awaitable<void>
+      co_clear_expired_requests();
 
       /** RequestContainerProcessor interface */
       virtual void
@@ -366,6 +368,9 @@ namespace AdServer
 
       Generics::ConstSmartMemBuf_var
       get_profile_(const AdServer::Commons::RequestId& request_id);
+
+      AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+      co_get_profile_(const AdServer::Commons::RequestId& request_id);
 
       static void
       save_profile_(
