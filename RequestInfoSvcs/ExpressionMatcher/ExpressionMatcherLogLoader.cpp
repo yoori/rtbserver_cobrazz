@@ -1,11 +1,8 @@
 #include <algorithm>
-#include <condition_variable>
-#include <mutex>
-#include <optional>
-#include <vector>
 
 #include <Commons/DelegateActiveObject.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
+#include <Commons/OrderedAsyncTaskWindow.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <ProfilingCommons/FileReader.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/ConsiderMessages.hpp>
@@ -18,140 +15,7 @@ namespace AdServer::RequestInfoSvcs
   {
     const std::size_t FILE_READER_BUFFER_SIZE = 1024 * 1024;
     const std::size_t RECORD_PROCESS_WINDOW_SIZE = 1024;
-    const unsigned int RECORD_PROCESS_WAKE_PERCENT = 10;
     const char DEFAULT_ERROR_DIR[] = "Error";
-
-    class WindowedRecordTasks
-    {
-    private:
-      struct State
-      {
-        std::mutex lock;
-        std::condition_variable cond;
-        std::optional<std::exception_ptr> exception;
-        std::vector<unsigned char> completed;
-        std::size_t committed;
-        std::size_t started = 0;
-        std::size_t in_flight = 0;
-        std::size_t completed_since_wait = 0;
-        std::size_t wake_threshold;
-        bool failed = false;
-      };
-
-    public:
-      WindowedRecordTasks(std::size_t first_sequence, std::size_t window_size)
-        : window_size_(window_size ? window_size : 1),
-          state_(std::make_shared<State>())
-      {
-        state_->committed = first_sequence;
-        state_->started = first_sequence;
-        state_->completed.resize(window_size_);
-        state_->wake_threshold = std::max<std::size_t>(
-          1,
-          window_size_ * RECORD_PROCESS_WAKE_PERCENT / 100);
-      }
-
-      ~WindowedRecordTasks()
-      {
-        std::unique_lock<std::mutex> lock(state_->lock);
-        state_->cond.wait(lock, [this] { return state_->in_flight == 0; });
-      }
-
-      void
-      start(std::size_t sequence, AdServer::Commons::StartableAwaitable<void> operation)
-      {
-        {
-          std::lock_guard<std::mutex> guard(state_->lock);
-          state_->started = std::max(state_->started, sequence + 1);
-          ++state_->in_flight;
-        }
-
-        operation.start_detached(
-          [state = state_, sequence](std::optional<std::exception_ptr> exception) mutable noexcept
-          {
-            std::lock_guard<std::mutex> guard(state->lock);
-            if (exception)
-            {
-              if (!state->exception)
-              {
-                state->exception = std::move(exception);
-              }
-              state->failed = true;
-            }
-            else
-            {
-              state->completed[sequence % state->completed.size()] = 1;
-              while (state->completed[ state->committed % state->completed.size()] != 0)
-              {
-                state->completed[state->committed % state->completed.size()] = 0;
-                ++state->committed;
-              }
-            }
-
-            ++state->completed_since_wait;
-            --state->in_flight;
-            if (state->failed || state->in_flight == 0 ||
-              state->completed_since_wait >= state->wake_threshold)
-            {
-              state->cond.notify_one();
-            }
-          });
-      }
-
-      bool
-      full() const
-      {
-        std::lock_guard<std::mutex> guard(state_->lock);
-        return state_->started - state_->committed >= window_size_;
-      }
-
-      std::size_t
-      wait_progress()
-      {
-        std::unique_lock<std::mutex> lock(state_->lock);
-        state_->cond.wait(
-          lock,
-          [this]
-          {
-            return state_->failed || state_->in_flight == 0 ||
-              state_->completed_since_wait >= state_->wake_threshold;
-          });
-
-        if (state_->failed)
-        {
-          state_->cond.wait(lock, [this] { return state_->in_flight == 0; });
-        }
-        state_->completed_since_wait = 0;
-        return state_->committed;
-      }
-
-      std::size_t
-      drain()
-      {
-        std::unique_lock<std::mutex> lock(state_->lock);
-        state_->cond.wait(lock, [this] { return state_->in_flight == 0; });
-        return state_->committed;
-      }
-
-      void
-      rethrow_exception()
-      {
-        std::optional<std::exception_ptr> exception;
-        {
-          std::lock_guard<std::mutex> guard(state_->lock);
-          exception = std::move(state_->exception);
-        }
-
-        if (exception)
-        {
-          std::rethrow_exception(std::move(*exception));
-        }
-      }
-
-    private:
-      const std::size_t window_size_;
-      std::shared_ptr<State> state_;
-    };
 
     AdServer::Commons::StartableAwaitable<void>
     co_process_request_basic_channels_record(
@@ -439,7 +303,9 @@ namespace AdServer::RequestInfoSvcs
 
     std::size_t sequence = 0;
     processed_lines_count = name_info.processed_lines_count;
-    WindowedRecordTasks tasks(name_info.processed_lines_count, RECORD_PROCESS_WINDOW_SIZE);
+    Commons::OrderedAsyncTaskWindow tasks(
+      name_info.processed_lines_count,
+      RECORD_PROCESS_WINDOW_SIZE);
     bool terminated = false;
 
     for (auto coll_it = collector.begin(); coll_it != collector.end(); ++coll_it)
@@ -458,6 +324,12 @@ namespace AdServer::RequestInfoSvcs
           break;
         }
 
+        while (tasks.full())
+        {
+          processed_lines_count = tasks.wait_progress();
+          tasks.rethrow_exception();
+        }
+
         tasks.start(
           sequence,
           co_process_request_basic_channels_record(
@@ -465,12 +337,6 @@ namespace AdServer::RequestInfoSvcs
             request_basic_channels_processor_,
             coll_it->first,
             *record_it));
-
-        if (tasks.full())
-        {
-          processed_lines_count = tasks.wait_progress();
-          tasks.rethrow_exception();
-        }
       }
 
       if (terminated)
@@ -509,7 +375,9 @@ namespace AdServer::RequestInfoSvcs
     uint32_t message_size = 0;
     std::size_t sequence = 0;
     processed_lines_count = name_info.processed_lines_count;
-    WindowedRecordTasks tasks(name_info.processed_lines_count, RECORD_PROCESS_WINDOW_SIZE);
+    Commons::OrderedAsyncTaskWindow tasks(
+      name_info.processed_lines_count,
+      RECORD_PROCESS_WINDOW_SIZE);
     bool terminated = false;
 
     while (file_reader.read(&message_size, sizeof(message_size)) != 0)
@@ -531,6 +399,12 @@ namespace AdServer::RequestInfoSvcs
 
       if (sequence >= name_info.processed_lines_count)
       {
+        while (tasks.full())
+        {
+          processed_lines_count = tasks.wait_progress();
+          tasks.rethrow_exception();
+        }
+
         if (log_type == LogType::ConsiderClick)
         {
           ConsiderClickReader reader(membuf.data(), message_size);
@@ -555,12 +429,6 @@ namespace AdServer::RequestInfoSvcs
               AdServer::Commons::RequestId(reader.request_id()),
               Generics::Time(reader.time()),
               ChannelIdSet(reader.channels().begin(), reader.channels().end())));
-        }
-
-        if (tasks.full())
-        {
-          processed_lines_count = tasks.wait_progress();
-          tasks.rethrow_exception();
         }
       }
 

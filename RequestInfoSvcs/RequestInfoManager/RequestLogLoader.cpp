@@ -3,12 +3,8 @@
  */
 
 #include <algorithm>
-#include <atomic>
-#include <condition_variable>
 #include <coroutine>
 #include <memory>
-#include <mutex>
-#include <optional>
 #include <utility>
 
 #include "RequestInfoManagerStats.hpp"
@@ -19,6 +15,7 @@
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/DelegateActiveObject.hpp>
 #include <Commons/ExecutorPool.hpp>
+#include <Commons/OrderedAsyncTaskWindow.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
@@ -34,144 +31,6 @@ namespace
   const char DEFAULT_ERROR_DIR[] = "Error";
   const unsigned long FETCH_FILES_LIMIT = 50000;
   const std::size_t RECORD_PROCESS_WINDOW_SIZE = 1024;
-  const unsigned int RECORD_PROCESS_WAKE_PERCENT = 10;
-
-  class WindowedRecordTasks
-  {
-  private:
-    struct State
-    {
-      std::mutex wait_lock;
-      std::condition_variable cond;
-
-      std::mutex exception_lock;
-      std::optional<std::exception_ptr> exception;
-
-      std::atomic_bool failed{false};
-      std::atomic_size_t in_flight{0};
-      std::atomic_size_t completed_since_wait{0};
-      std::size_t wake_threshold = 1;
-    };
-
-  public:
-    explicit WindowedRecordTasks(std::size_t window_size)
-      : window_size_(window_size ? window_size : 1),
-        state_(std::make_shared<State>())
-    {
-      state_->wake_threshold = std::max<std::size_t>(
-        1,
-        window_size_ * RECORD_PROCESS_WAKE_PERCENT / 100);
-    }
-
-    void
-    start(AdServer::Commons::StartableAwaitable<void> operation)
-    {
-      state_->in_flight.fetch_add(1, std::memory_order_acq_rel);
-
-      operation.start_detached(
-        [state = state_](std::optional<std::exception_ptr> exception) mutable noexcept
-        {
-          if (exception)
-          {
-            {
-              std::lock_guard<std::mutex> guard(state->exception_lock);
-              if (!state->exception)
-              {
-                state->exception = std::move(exception);
-              }
-            }
-            state->failed.store(true, std::memory_order_release);
-          }
-
-          const std::size_t completed_since_wait = state->completed_since_wait.fetch_add(
-            1, std::memory_order_acq_rel) + 1;
-          const std::size_t in_flight = state->in_flight.fetch_sub(
-            1, std::memory_order_acq_rel) - 1;
-
-          const bool notify =
-            state->failed.load(std::memory_order_acquire) ||
-            in_flight == 0 || completed_since_wait >= state->wake_threshold;
-
-          if (notify)
-          {
-            state->cond.notify_one();
-          }
-        });
-    }
-
-    bool
-    full() const
-    {
-      return state_->in_flight.load(std::memory_order_acquire) >= window_size_;
-    }
-
-    std::size_t
-    wait_progress()
-    {
-      std::unique_lock<std::mutex> lock(state_->wait_lock);
-      state_->cond.wait(
-        lock,
-        [this]
-        {
-          return state_->in_flight.load(std::memory_order_acquire) == 0 ||
-            state_->failed.load(std::memory_order_acquire) ||
-            state_->completed_since_wait.load(std::memory_order_acquire) >= state_->wake_threshold;
-        });
-
-      if (state_->failed.load(std::memory_order_acquire))
-      {
-        state_->cond.wait(
-          lock,
-          [this]
-          {
-            return state_->in_flight.load(std::memory_order_acquire) == 0;
-          });
-      }
-
-      return take_completed_i_();
-    }
-
-    std::size_t drain()
-    {
-      std::unique_lock<std::mutex> lock(state_->wait_lock);
-      state_->cond.wait(
-        lock,
-        [this]
-        {
-          return state_->in_flight.load(std::memory_order_acquire) == 0;
-        });
-      return take_completed_i_();
-    }
-
-    void
-    rethrow_exception()
-    {
-      std::optional<std::exception_ptr> exception;
-
-      {
-        std::lock_guard<std::mutex> guard(state_->exception_lock);
-        if (state_->exception)
-        {
-          exception = std::move(state_->exception);
-        }
-      }
-
-      if (exception)
-      {
-        std::rethrow_exception(std::move(*exception));
-      }
-    }
-
-  private:
-    std::size_t take_completed_i_()
-    {
-      return state_->completed_since_wait.exchange(0, std::memory_order_acq_rel);
-    }
-
-  private:
-    const std::size_t window_size_;
-    std::shared_ptr<State> state_;
-  };
 
   template<typename ProcessFun, typename RecordType>
   AdServer::Commons::StartableAwaitable<void>
@@ -582,15 +441,18 @@ namespace AdServer::RequestInfoSvcs
     typename LogTraitsType::CollectorType::iterator it = collector.begin();
     std::advance(it, name_info.processed_lines_count);
     bool terminated = false;
-    WindowedRecordTasks tasks(RECORD_PROCESS_WINDOW_SIZE);
+    std::size_t sequence = name_info.processed_lines_count;
+    Commons::OrderedAsyncTaskWindow tasks(
+      name_info.processed_lines_count,
+      RECORD_PROCESS_WINDOW_SIZE);
 
-    auto commit_completed = [&stats, &name_info](std::size_t completed_count)
+    auto commit_completed = [&stats, &name_info](std::size_t committed)
     {
-      stats.processed_records += completed_count;
-      name_info.processed_lines_count += completed_count;
+      stats.processed_records += committed - name_info.processed_lines_count;
+      name_info.processed_lines_count = committed;
     };
 
-    for (; it != collector.end(); ++it)
+    for (; it != collector.end(); ++it, ++sequence)
     {
       if (!processing_state_->interrupter->active())
       {
@@ -598,13 +460,15 @@ namespace AdServer::RequestInfoSvcs
         break;
       }
 
-      tasks.start(co_process_record(processing_executor_pool_, process_fun_, *it));
-
-      if (tasks.full())
+      while (tasks.full())
       {
         commit_completed(tasks.wait_progress());
         tasks.rethrow_exception();
       }
+
+      tasks.start(
+        sequence,
+        co_process_record(processing_executor_pool_, process_fun_, *it));
     }
 
     commit_completed(tasks.drain());

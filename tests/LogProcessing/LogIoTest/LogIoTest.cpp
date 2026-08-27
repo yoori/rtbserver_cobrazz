@@ -1023,7 +1023,7 @@ int main(int argc, char **argv)
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(),
-        "source/external id 2"
+        ""
       );
 
     RequestBasicChannelsCollector::DataT::DataT

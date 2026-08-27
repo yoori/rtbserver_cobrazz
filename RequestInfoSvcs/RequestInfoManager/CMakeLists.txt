@@ -143,6 +143,7 @@ add_library(RequestLogLoader SHARED
 
 target_link_libraries(RequestLogLoader
   PRIVATE
+    Commons
     Generics
     LogCommons
     ProfilingCommons
