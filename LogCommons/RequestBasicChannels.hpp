@@ -658,7 +658,8 @@ namespace AdServer::LogProcessing
       const UserId& user_id,
       const UserId& temporary_user_id,
       MatchOptional&& match_request,
-      AdRequestPropsOptional&& ad_request)
+      AdRequestPropsOptional&& ad_request,
+      const std::string& external_id)
       : holder_(
           new DataHolder(
             user_type,
@@ -666,6 +667,7 @@ namespace AdServer::LogProcessing
             temporary_user_id,
             std::move(match_request),
             std::move(ad_request),
+            external_id,
             Generics::safe_rand()
           )
         )
@@ -679,7 +681,8 @@ namespace AdServer::LogProcessing
         holder_->user_id == data.holder_->user_id &&
         holder_->temporary_user_id == data.holder_->temporary_user_id &&
         holder_->match_request == data.holder_->match_request &&
-        holder_->ad_request == data.holder_->ad_request);
+        holder_->ad_request == data.holder_->ad_request &&
+        holder_->external_id == data.holder_->external_id);
     }
 
     char user_type() const
@@ -705,6 +708,11 @@ namespace AdServer::LogProcessing
     const AdRequestPropsOptional& ad_request() const
     {
       return holder_->ad_request;
+    }
+
+    const std::string& external_id() const
+    {
+      return holder_->external_id;
     }
 
     unsigned long distrib_hash() const
@@ -743,6 +751,7 @@ namespace AdServer::LogProcessing
           temporary_user_id(),
           match_request(),
           ad_request(),
+          external_id(),
           random()
       {}
 
@@ -752,12 +761,14 @@ namespace AdServer::LogProcessing
         const UserId& temporary_user_id_val,
         MatchOptional&& match_request_val,
         const AdRequestPropsOptional& ad_request_val,
+        const std::string& external_id_val,
         unsigned long random_val)
         : user_type(user_type_val),
           user_id(user_id_val),
           temporary_user_id(temporary_user_id_val),
           match_request(std::move(match_request_val)),
           ad_request(ad_request_val),
+          external_id(external_id_val),
           random(random_val)
       {
         if (ad_request.present())
@@ -773,7 +784,8 @@ namespace AdServer::LogProcessing
         ar & user_id;
         ar & temporary_user_id;
         ar & match_request;
-        ar ^ ad_request;
+        ar & ad_request;
+        ar ^ external_id;
       }
 
       void invariant() const /*throw(ConstraintViolation)*/
@@ -792,6 +804,7 @@ namespace AdServer::LogProcessing
       UserId temporary_user_id;
       MatchOptional match_request;
       AdRequestPropsOptional ad_request;
+      SpacesString external_id;
       unsigned long random;
 
     private:
@@ -828,8 +841,9 @@ namespace AdServer::LogProcessing
       DistributeStrategyType;
 
     template <class FUNCTOR_>
-    static void for_each_old(FUNCTOR_&) /*throw(eh::Exception)*/
+    static void for_each_old(FUNCTOR_& functor) /*throw(eh::Exception)*/
     {
+      functor.support_current("3.4");
     }
 
     typedef GenericLogIoHelperImpl<RequestBasicChannelsTraits> IoHelperType;

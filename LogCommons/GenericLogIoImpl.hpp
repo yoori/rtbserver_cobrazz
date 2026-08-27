@@ -900,6 +900,12 @@ namespace AdServer::LogProcessing
         owner_->add_loader_(version, new PreviousVersionLoaderT(owner_->collector_));
       }
 
+      void
+      support_current(const char* version) /*throw(eh::Exception)*/
+      {
+        owner_->add_loader_(version, new typename Traits::LoaderType(owner_->collector_));
+      }
+
     private:
       ThisType* owner_;
     };

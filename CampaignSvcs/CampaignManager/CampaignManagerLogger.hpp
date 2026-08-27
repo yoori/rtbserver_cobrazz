@@ -266,6 +266,7 @@ namespace AdServer::CampaignSvcs
       AdServer::Commons::UserId household_id;
       AdServer::Commons::UserId user_id;
       AdServer::Commons::UserId merged_user_id;
+      std::string external_id;
       Commons::Optional<AdServer::Commons::UserId> request_user_id;
       Commons::Optional<AdServer::CampaignSvcs::UserStatus> request_user_status;
 

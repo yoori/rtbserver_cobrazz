@@ -120,7 +120,8 @@ namespace
       LP::UserId("hSUsEk05T-m8PafRng8v6w.."),
       LP::UserId(),
       LP::RequestBasicChannelsInnerData::MatchOptional(std::move(match)),
-      LP::RequestBasicChannelsInnerData::AdRequestPropsOptional());
+      LP::RequestBasicChannelsInnerData::AdRequestPropsOptional(),
+      "source/synthetic external id");
   }
 
   LP::RequestBasicChannelsInnerData
@@ -169,7 +170,8 @@ namespace
       LP::UserId("hSUsEk05T-m8PafRng8v6w.."),
       LP::UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
       Record::MatchOptional(),
-      Record::AdRequestPropsOptional(ad_request_optional));
+      Record::AdRequestPropsOptional(ad_request_optional),
+      "source/ad external id");
   }
 
   std::size_t

@@ -170,6 +170,7 @@ namespace AdServer::CampaignSvcs
     request_info.user_status = static_cast<UserStatus>(common_info.user_status);
     request_info.user_id = common_info.user_id;
     request_info.request_id = common_info.request_id;
+    request_info.external_id = common_info.external_user_id;
     request_info.referer = common_info.referer;
     request_info.urls.assign(common_info.urls.begin(), common_info.urls.end());
 

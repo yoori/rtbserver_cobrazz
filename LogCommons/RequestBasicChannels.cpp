@@ -17,7 +17,7 @@ namespace AdServer::LogProcessing
 
   template <> const char* RequestBasicChannelsTraits::B::signature_ = "RequestBasicChannels";
 
-  template <> const char* RequestBasicChannelsTraits::B::current_version_ = "3.4";
+  template <> const char* RequestBasicChannelsTraits::B::current_version_ = "3.5";
 
   namespace
   {
@@ -779,7 +779,8 @@ namespace AdServer::LogProcessing
     out << data.holder_->user_type << '\t'
       << data.holder_->user_id << '\t'
       << data.holder_->temporary_user_id << '\t'
-      << data.holder_->match_request << '\t' << data.holder_->ad_request;
+      << data.holder_->match_request << '\t'
+      << data.holder_->ad_request << '\t' << data.holder_->external_id;
     return out;
   }
 } // namespace AdServer::LogProcessing

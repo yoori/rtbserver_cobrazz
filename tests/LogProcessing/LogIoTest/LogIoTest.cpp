@@ -1011,7 +1011,8 @@ int main(int argc, char **argv)
 //        UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         RequestBasicChannelsCollector::DataT::DataT::MatchOptional(),
-        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt)
+        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt),
+        "source/external id 1"
       );
 
     RequestBasicChannelsCollector::DataT::DataT
@@ -1021,7 +1022,8 @@ int main(int argc, char **argv)
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         make_match_request(),
-        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional()
+        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(),
+        "source/external id 2"
       );
 
     RequestBasicChannelsCollector::DataT::DataT
@@ -1030,7 +1032,8 @@ int main(int argc, char **argv)
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         UserId("hSUsEk05T-m8PafRng8v6w.."),
         make_match_request(),
-        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt)
+        RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt),
+        "source/external id 3"
       );
     RequestBasicChannelsCollector::DataT::DataT
       inner_data4(
@@ -1039,7 +1042,8 @@ int main(int argc, char **argv)
         UserId("hSUsEk05T-m8PafRng8v6w.."),
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(
-          ad_request_empty_sizes_opt)
+          ad_request_empty_sizes_opt),
+        "source/external id 4"
       );
 
     auto make_data = [&]()
