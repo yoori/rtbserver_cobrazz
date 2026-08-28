@@ -42,6 +42,20 @@ for individual subdirectories.
 - Use `RequestInfoSvcs/RequestInfoManager/UserFraudProtectionContainer.cpp` as a formatting
   reference when the rules above do not settle a C++ formatting question.
 
+## Intrusive Reference Counting
+
+1. Treat a raw pointer parameter as borrowed. If an object stores it in an owning member, the
+   receiving object must call `ReferenceCounting::add_ref()` at that ownership boundary. Do not
+   call `add_ref()` when the pointer is used only for the duration of the call.
+2. When returning an existing object or placing it into a new owning holder or container, call
+   `ReferenceCounting::add_ref()`. Pass the result directly to the new owner; a bare `add_ref()`
+   whose result is not adopted leaks a reference.
+3. Do not call `add_ref()` for a newly created or transferred reference. Adopt `new T` directly,
+   and transfer an existing reference with `retn()` or move semantics.
+4. Copying one owning holder to another already creates a reference. Do not add another explicit
+   reference for an ordinary holder copy. Use an explicit `add_ref()` only when crossing a raw
+   pointer API or converting holder types through a raw pointer that the destination adopts.
+
 ## Verification
 
 - Review the complete diff for style violations before finishing.
