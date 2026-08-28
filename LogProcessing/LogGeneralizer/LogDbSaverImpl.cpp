@@ -347,7 +347,8 @@ namespace AdServer::LogProcessing
           if (!do_save_(connection, it->first, it->second))
           {
             err_oss << __PRETTY_FUNCTION__
-              << ": Error: Can't save data to database (sdate = " << it->first << ')';
+              << ": Error: Can't save data to database (sdate = "
+              << it->first.sdate() << ')';
           }
         }
       }
@@ -436,7 +437,8 @@ namespace AdServer::LogProcessing
         if (!do_save_(connection, it->first, it->second))
         {
           err_oss << __PRETTY_FUNCTION__
-            << ": Error: Can't save data to database (sdate = " << it->first << ") ";
+            << ": Error: Can't save data to database (sdate = "
+            << it->first.sdate() << ") ";
         }
       }
 
@@ -511,7 +513,8 @@ namespace AdServer::LogProcessing
           if (!do_save_(connection, it->first, it->second))
           {
             err_oss << __PRETTY_FUNCTION__
-              << ": Error: Can't save data to database (sdate = " << it->first << ')';
+              << ": Error: Can't save data to database (sdate = "
+              << it->first.sdate() << ')';
           }
         }
       }
@@ -599,7 +602,7 @@ namespace AdServer::LogProcessing
         if (!do_save_(connection, it->first, it->second))
         {
           err_oss << __PRETTY_FUNCTION__ << ": Error: Can't save data to "
-                  << "database (sdate = " << it->first << ") ";
+                  << "database (sdate = " << it->first.sdate() << ") ";
         }
       }
 
@@ -780,7 +783,7 @@ namespace AdServer::LogProcessing
           if (!do_save_(connection, it->first, it->second))
           {
             err_oss << __PRETTY_FUNCTION__ << ": Error: Can't save data to "
-                    << "database (sdate = " << it->first << ')';
+                    << "database (sdate = " << it->first.sdate() << ')';
           }
         }
       }
@@ -869,7 +872,7 @@ namespace AdServer::LogProcessing
         if (!do_save_(connection, it->first, it->second))
         {
           err_oss << __PRETTY_FUNCTION__ << ": Error: Can't save data to "
-            "database (sdate = " << it->first << ") ";
+            "database (sdate = " << it->first.sdate() << ") ";
         }
       }
 
@@ -944,7 +947,7 @@ namespace AdServer::LogProcessing
           if (!do_save_(connection, it->first, it->second))
           {
             err_oss << __PRETTY_FUNCTION__ << ": Error: Can't save data to "
-              "database (sdate = " << it->first << ')';
+              "database (sdate = " << it->first.sdate() << ')';
           }
         }
       }
@@ -1033,7 +1036,7 @@ namespace AdServer::LogProcessing
         if (!do_save_(connection, it->first, it->second))
         {
           err_oss << __PRETTY_FUNCTION__ << ": Error: Can't save data to "
-            "database (sdate = " << it->first << ") ";
+            "database (sdate = " << it->first.sdate() << ") ";
         }
       }
 

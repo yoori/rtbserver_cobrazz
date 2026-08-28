@@ -13,6 +13,7 @@
 #include <string_view>
 #include <vector>
 
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
 
 namespace
@@ -330,7 +331,7 @@ namespace
   verify_ad_request_parser()
   {
     const auto expected = make_ad_request_record();
-    std::ostringstream output;
+    LP::BufferWriter output;
     output << expected << '\n';
     const std::string serialized = output.str();
 
@@ -356,7 +357,7 @@ namespace
   run_synthetic(const Options& options)
   {
     const auto expected = make_synthetic_record(options.triggers);
-    std::ostringstream output;
+    LP::BufferWriter output;
     output << expected << '\n';
     const std::string serialized = output.str();
 
