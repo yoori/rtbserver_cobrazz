@@ -77,8 +77,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ChannelPerformanceInnerKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelPerformanceInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelPerformanceInnerKey& key);
 
   private:
     void calc_hash_()
@@ -179,8 +179,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ChannelPerformanceInnerData& data);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelPerformanceInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelPerformanceInnerData& data);
 
   public:
     //
@@ -278,8 +278,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ChannelPerformanceKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelPerformanceKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelPerformanceKey& key)
       /*throw(eh::Exception)*/;
 
   private:

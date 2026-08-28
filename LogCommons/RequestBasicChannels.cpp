@@ -377,12 +377,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestBasicChannelsKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.time_ << '\n' << key.isp_time_ << '\n' << key.colo_id_;
-    return os;
+    out << key.time_ << '\n' << key.isp_time_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<SlashCategory>&
@@ -590,37 +590,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::TriggerMatch& match)
-  {
-    os << match.channel_id << TRIGGER_MATCH_SEP;
-    os << match.channel_trigger_id;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const RequestBasicChannelsInnerData::TriggerMatch& match)
   {
     out << match.channel_id << TRIGGER_MATCH_SEP << match.channel_trigger_id;
     return out;
-  }
-
-  std::ostream&
-  operator<<(
-    std::ostream& os,
-    const RequestBasicChannelsInnerData::TriggerMatchArray& trigger_matches)
-  {
-    if (!trigger_matches.empty())
-    {
-      char SEP[2] = { ',' };
-      output_sequence(os, trigger_matches, SEP);
-    }
-    else
-    {
-      os << '-';
-    }
-
-    return os;
   }
 
   BufferWriter&
@@ -631,28 +605,11 @@ namespace AdServer::LogProcessing
     return write_sequence_(out, trigger_matches, ',');
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::AdSlotImpression& ad_imp)
-  {
-    os << ad_imp.data_->revenue << ASI_SEP1;
-    os << ad_imp.data_->impression_channels;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const RequestBasicChannelsInnerData::AdSlotImpression& ad_imp)
   {
     out << ad_imp.revenue() << ASI_SEP1 << ad_imp.impression_channels();
     return out;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::AdBidSlotImpression& absi)
-  {
-    os << absi.data_->revenue << ABSI_SEP1;
-    os << absi.data_->revenue_bid << ABSI_SEP1;
-    os << absi.data_->impression_channels;
-    return os;
   }
 
   BufferWriter&
@@ -663,43 +620,12 @@ namespace AdServer::LogProcessing
     return out;
   }
 
-  std::ostream&
-  operator<<(
-    std::ostream& os,
-    const RequestBasicChannelsInnerData::AdBidSlotImpressionList& absi_list)
-  {
-    if (!absi_list.empty())
-    {
-      char SEP[2] = { ABSI_SEP2 };
-      output_sequence(os, absi_list, SEP);
-    }
-    else
-    {
-      os << '-';
-    }
-    return os;
-  }
-
   BufferWriter&
   operator<<(
     BufferWriter& out,
     const RequestBasicChannelsInnerData::AdBidSlotImpressionList& absi_list)
   {
     return write_sequence_(out, absi_list, ABSI_SEP2);
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::AdRequestProps& ad_req)
-  {
-    os << ad_req.data_->sizes << '\t';
-    os << ad_req.data_->country_code << '\t';
-    os << ad_req.data_->max_text_ads << '\t';
-    os << ad_req.data_->text_ad_cost_threshold << '\t';
-    os << ad_req.data_->display_ad_shown << '\t';
-    os << ad_req.data_->text_ad_shown << '\t';
-    os << ad_req.data_->ad_select << '\t';
-    os << put_auction_type(ad_req.data_->auction_type);
-    return os;
   }
 
   BufferWriter&
@@ -715,19 +641,6 @@ namespace AdServer::LogProcessing
     return out;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::AdSelectProps& ad_select)
-    /*throw(eh::Exception)*/
-  {
-    os << ad_select.data_->tag_id << AD_SELECT_FIELD_SEPARATOR;
-    os << ad_select.data_->size << AD_SELECT_FIELD_SEPARATOR;
-    os << ad_select.data_->format << AD_SELECT_FIELD_SEPARATOR;
-    os << ad_select.data_->test_request << AD_SELECT_FIELD_SEPARATOR;
-    os << ad_select.data_->profiling_available << AD_SELECT_FIELD_SEPARATOR;
-    os << ad_select.data_->full_freq_caps;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const RequestBasicChannelsInnerData::AdSelectProps& ad_select)
   {
@@ -739,17 +652,6 @@ namespace AdServer::LogProcessing
     return out;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData::Match& match_request)
-  {
-    os << match_request.data_->history_channels << '\t';
-    os << match_request.data_->page_trigger_channels << '\t';
-    os << match_request.data_->search_trigger_channels << '\t';
-    os << match_request.data_->url_trigger_channels << '\t';
-    os << match_request.data_->url_keyword_trigger_channels;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const RequestBasicChannelsInnerData::Match& match_request)
   {
@@ -759,16 +661,6 @@ namespace AdServer::LogProcessing
       << match_request.url_trigger_channels() << '\t'
       << match_request.url_keyword_trigger_channels();
     return out;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const RequestBasicChannelsInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    BufferWriter writer(512);
-    writer << data;
-    writer.write_to(os);
-    return os;
   }
 
   BufferWriter&

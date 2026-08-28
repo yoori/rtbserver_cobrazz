@@ -416,10 +416,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CreativeStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CreativeStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const CreativeStatInnerData& data)
       /*throw(eh::Exception)*/;
@@ -466,10 +462,6 @@ namespace AdServer::LogProcessing
 
     friend std::istream&
     operator>>(std::istream& is, CreativeStatKey& key);
-
-    friend std::ostream&
-    operator<<(std::ostream& os, const CreativeStatKey& key)
-      /*throw(eh::Exception)*/;
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const CreativeStatKey& key)

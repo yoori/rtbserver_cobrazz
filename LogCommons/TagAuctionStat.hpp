@@ -58,11 +58,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
       /*throw(eh::Exception)*/;
@@ -111,11 +106,6 @@ namespace AdServer::LogProcessing
     friend
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, TagAuctionStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&
@@ -167,11 +157,6 @@ namespace AdServer::LogProcessing
     friend
     std::istream&
     operator>>(std::istream& is, TagAuctionStatKey& key) /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagAuctionStatKey& key)
-      /*throw(eh::Exception)*/;
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const TagAuctionStatKey& key)

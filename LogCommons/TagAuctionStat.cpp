@@ -23,14 +23,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.pub_sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const TagAuctionStatKey& key)
     /*throw(eh::Exception)*/
@@ -49,15 +41,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.tag_id_ << '\t';
-    os << key.auction_ccg_count_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const TagAuctionStatInnerKey& key)
     /*throw(eh::Exception)*/
@@ -72,14 +55,6 @@ namespace AdServer::LogProcessing
   {
     is >> data.requests_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const TagAuctionStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.requests_;
-    return os;
   }
 
   BufferWriter&

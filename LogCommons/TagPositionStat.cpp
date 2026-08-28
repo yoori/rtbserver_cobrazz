@@ -21,14 +21,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const TagPositionStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const TagPositionStatKey& key)
     /*throw(eh::Exception)*/
@@ -50,18 +42,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const TagPositionStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.tag_id_ << '\t';
-    os << key.top_offset_ << '\t';
-    os << key.left_offset_ << '\t';
-    os << key.visibility_ << '\t';
-    os << key.test_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const TagPositionStatInnerKey& key)
     /*throw(eh::Exception)*/
@@ -80,16 +60,6 @@ namespace AdServer::LogProcessing
     is >> data.imps_;
     is >> data.clicks_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const TagPositionStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.requests_ << '\t';
-    os << data.imps_ << '\t';
-    os << data.clicks_;
-    return os;
   }
 
   BufferWriter&

@@ -72,9 +72,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, DeviceChannelCountStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const DeviceChannelCountStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const DeviceChannelCountStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -154,9 +153,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, DeviceChannelCountStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const DeviceChannelCountStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const DeviceChannelCountStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -205,9 +203,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, DeviceChannelCountStatKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const DeviceChannelCountStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const DeviceChannelCountStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

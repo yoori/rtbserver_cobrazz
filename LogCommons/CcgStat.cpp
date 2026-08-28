@@ -34,13 +34,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ReachStatKey& key)
-  {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const ReachStatKey& key)
   {
@@ -53,13 +46,6 @@ namespace AdServer::LogProcessing
   {
     is >> key.id_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const ReachStatInnerKey& key)
-  {
-    os << key.id_;
-    return os;
   }
 
   BufferWriter&
@@ -83,13 +69,6 @@ namespace AdServer::LogProcessing
   {
     is >> data.auctions_lost_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const CcgStatInnerData& data)
-  {
-    os << data.auctions_lost_;
-    return os;
   }
 
   BufferWriter&
@@ -140,13 +119,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcStatInnerData& data)
-  {
-    os << data.auctions_lost_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const CcStatInnerData& data)
   {
@@ -163,12 +135,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const AdvertiserUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const AdvertiserUserStatInnerKey& key)
   {
-    os << key.adv_account_id_ << '\t';
-    os << key.last_appearance_date_;
-    return os;
+    out << key.adv_account_id_ << '\t';
+    out << key.last_appearance_date_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -180,13 +152,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const AdvertiserUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const AdvertiserUserStatInnerData& data)
   {
-    os << data.unique_users_ << '\t';
-    os << data.text_unique_users_ << '\t';
-    os << data.display_unique_users_;
-    return os;
+    out << data.unique_users_ << '\t';
+    out << data.text_unique_users_ << '\t';
+    out << data.display_unique_users_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&

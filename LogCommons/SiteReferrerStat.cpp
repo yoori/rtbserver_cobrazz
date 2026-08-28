@@ -1,5 +1,6 @@
 
 #include "SiteReferrerStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -20,12 +21,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteReferrerStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteReferrerStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -44,16 +45,16 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteReferrerStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteReferrerStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.user_status_ << '\t';
-    os << key.tag_id_ << '\t';
-    os << key.ext_tag_id_ << '\t';
-    os << key.host_;
-    return os;
+    out << key.user_status_ << '\t';
+    out << key.tag_id_ << '\t';
+    out << key.ext_tag_id_ << '\t';
+    out << key.host_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -76,24 +77,24 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteReferrerStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteReferrerStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.requests_ << '\t';
-    os << data.imps_ << '\t';
-    os << data.clicks_ << '\t';
-    os << data.passbacks_ << '\t';
-    os << data.bids_won_count_ << '\t';
-    os << data.bids_lost_count_ << '\t';
-    os << data.no_bid_count_ << '\t';
-    os << data.floor_won_cost_ << '\t';
-    os << data.floor_lost_cost_ << '\t';
-    os << data.floor_no_bid_cost_ << '\t';
-    os << data.bid_won_amount_ << '\t';
-    os << data.bid_lost_amount_ << '\t';
-    os << data.cost_;
-    return os;
+    out << data.requests_ << '\t';
+    out << data.imps_ << '\t';
+    out << data.clicks_ << '\t';
+    out << data.passbacks_ << '\t';
+    out << data.bids_won_count_ << '\t';
+    out << data.bids_lost_count_ << '\t';
+    out << data.no_bid_count_ << '\t';
+    out << data.floor_won_cost_ << '\t';
+    out << data.floor_lost_cost_ << '\t';
+    out << data.floor_no_bid_cost_ << '\t';
+    out << data.bid_won_amount_ << '\t';
+    out << data.bid_lost_amount_ << '\t';
+    out << data.cost_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&

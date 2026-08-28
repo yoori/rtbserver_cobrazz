@@ -257,6 +257,35 @@ namespace AdServer::LogProcessing
     return out;
   }
 
+  template <std::size_t Precision>
+  BufferWriter&
+  operator<<(BufferWriter& out, const FixedPrecisionDouble<Precision>& value)
+  {
+    char buffer[Precision + 384];
+    const int size = std::snprintf(
+      buffer,
+      sizeof(buffer),
+      "%.*f",
+      static_cast<int>(Precision),
+      value.value());
+    if (size > 0 && static_cast<std::size_t>(size) < sizeof(buffer))
+    {
+      out.append(std::string_view(buffer, size));
+    }
+    return out;
+  }
+
+  template <typename Object>
+  BufferWriter&
+  operator<<(BufferWriter& out, const EmptyHolder<Object>& value)
+  {
+    if (value.get().empty())
+    {
+      return out << EmptyHolder<Object>::NULL_MARKER;
+    }
+    return out << value.get();
+  }
+
   template <typename Value, typename OptionalValueTraits>
   BufferWriter&
   operator<<(BufferWriter& out, const OptionalValue<Value, OptionalValueTraits>& value)
@@ -270,6 +299,12 @@ namespace AdServer::LogProcessing
       out << OptionalValueTraits::NULL_MARKER;
     }
     return out;
+  }
+
+  inline BufferWriter&
+  operator<<(BufferWriter& out, CampaignSvcs::AuctionType value)
+  {
+    return out << CampaignSvcs::put_auction_type(value);
   }
 
   template <typename Value>

@@ -1,5 +1,6 @@
 
 #include "CcUserStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -23,13 +24,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcUserStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CcUserStatKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.adv_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.adv_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -46,14 +47,14 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CcUserStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.cc_id_ << '\t';
-    os << key.last_appearance_date_;
-    return os;
+    out << key.cc_id_ << '\t';
+    out << key.last_appearance_date_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -64,12 +65,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CcUserStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.unique_users_;
-    return os;
+    out << data.unique_users_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

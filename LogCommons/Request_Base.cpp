@@ -1,8 +1,32 @@
 #include "Request_Base.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
 {
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestData_V_3_4::CmpChannel& cmp_channel)
+  {
+    BufferOutputArchive<Aux_::NoInvariants, ':'> archive(out);
+    archive << cmp_channel;
+    return out;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestData_V_3_4::Revenue& revenue)
+  {
+    SimpleBufferTabOutputArchive archive(out);
+    archive << revenue;
+    return out;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserProperty& property)
+  {
+    out << property.first << '=' << property.second;
+    return out;
+  }
 
   FixedBufStream<CommaCategory>&
   operator>>(FixedBufStream<CommaCategory>& is, UserProperty& property) /*throw(eh::Exception)*/

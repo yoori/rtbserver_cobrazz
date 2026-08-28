@@ -62,11 +62,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, UserAgentStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const UserAgentStatInnerKey& key)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const UserAgentStatInnerKey& key)
       /*throw(eh::Exception)*/;
@@ -149,11 +144,6 @@ namespace AdServer::LogProcessing
     friend
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, UserAgentStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const UserAgentStatInnerData& data)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&

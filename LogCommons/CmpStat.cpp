@@ -1,5 +1,6 @@
 
 #include "CmpStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -27,12 +28,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CmpStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CmpStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.adv_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.adv_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -61,26 +62,26 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CmpStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CmpStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant_();
-    os << key.publisher_account_id_ << '\t';
-    os << key.tag_id_ << '\t';
-    os << key.size_id_ << '\t';
-    os << key.country_code_ << '\t';
-    os << key.currency_exchange_id_ << '\t';
-    os << key.delivery_threshold_ << '\t';
-    os << key.adv_account_id_ << '\t';
-    os << key.campaign_id_ << '\t';
-    os << key.ccg_id_ << '\t';
-    os << key.cc_id_ << '\t';
-    os << key.channel_id_ << '\t';
-    os << key.channel_rate_id_ << '\t';
-    os << key.fraud_ << '\t';
-    os << key.walled_garden_;
-    return os;
+    out << key.publisher_account_id_ << '\t';
+    out << key.tag_id_ << '\t';
+    out << key.size_id_ << '\t';
+    out << key.country_code_ << '\t';
+    out << key.currency_exchange_id_ << '\t';
+    out << key.delivery_threshold_ << '\t';
+    out << key.adv_account_id_ << '\t';
+    out << key.campaign_id_ << '\t';
+    out << key.ccg_id_ << '\t';
+    out << key.cc_id_ << '\t';
+    out << key.channel_id_ << '\t';
+    out << key.channel_rate_id_ << '\t';
+    out << key.fraud_ << '\t';
+    out << key.walled_garden_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -99,17 +100,17 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CmpStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CmpStatInnerData& data)
     /*throw(eh::Exception)*/
   {
     data.invariant_();
-    os << data.imps_ << '\t';
-    os << data.clicks_ << '\t';
-    os << data.cmp_amount_ << '\t';
-    os << data.adv_amount_cmp_ << '\t';
-    os << data.cmp_sys_amount_;
-    return os;
+    out << data.imps_ << '\t';
+    out << data.clicks_ << '\t';
+    out << data.cmp_amount_ << '\t';
+    out << data.adv_amount_cmp_ << '\t';
+    out << data.cmp_sys_amount_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&

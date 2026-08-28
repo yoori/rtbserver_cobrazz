@@ -251,9 +251,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteReferrerStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteReferrerStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -563,9 +562,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteReferrerStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteReferrerStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -627,9 +625,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, SiteReferrerStatKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteReferrerStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteReferrerStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

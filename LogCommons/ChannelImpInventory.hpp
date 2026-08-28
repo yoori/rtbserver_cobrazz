@@ -60,8 +60,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelImpInventoryInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelImpInventoryInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -258,8 +258,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelImpInventoryInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelImpInventoryInnerData& data)
       /*throw(eh::Exception)*/;
 
   public:
@@ -549,8 +549,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, ChannelImpInventoryKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelImpInventoryKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelImpInventoryKey& key)
       /*throw(eh::Exception)*/;
 
   private:

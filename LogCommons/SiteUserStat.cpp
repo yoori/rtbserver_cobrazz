@@ -1,5 +1,6 @@
 
 #include "SiteUserStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/CollectorBundle.hpp>
 #include <LogCommons/LogCommons.ipp>
 
@@ -24,12 +25,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteUserStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteUserStatKey& key)
   {
     key.invariant();
-    os << key.isp_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.isp_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -45,13 +46,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteUserStatInnerKey& key)
   {
     key.invariant();
-    os << key.site_id_ << '\t';
-    os << key.last_appearance_date_;
-    return os;
+    out << key.site_id_ << '\t';
+    out << key.last_appearance_date_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -61,11 +62,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteUserStatInnerData& data)
   {
-    os << data.unique_users_;
-    return os;
+    out << data.unique_users_;
+    return out;
   }
 
   void

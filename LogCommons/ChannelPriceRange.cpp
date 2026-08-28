@@ -1,5 +1,6 @@
 
 #include "ChannelPriceRange.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -35,23 +36,23 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPriceRangeInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelPriceRangeInnerKey& key)
     /*throw(eh::Exception)*/
   {
-    os << Aux_::StringIoWrapper(key.creative_size_.str()) << '\t';
+    out << Aux_::StringIoWrapper(key.creative_size_.str()) << '\t';
     if (key.country_code_.empty())
     {
-      os << "-\t";
+      out << "-\t";
     }
     else
     {
-      os << Aux_::StringIoWrapper(key.country_code_.str()) << '\t';
+      out << Aux_::StringIoWrapper(key.country_code_.str()) << '\t';
     }
-    os << key.channel_id_ << '\t';
-    os << key.ecpm_ << '\t';
-    os << key.colo_id_;
-    return os;
+    out << key.channel_id_ << '\t';
+    out << key.ecpm_ << '\t';
+    out << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -63,11 +64,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPriceRangeInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelPriceRangeInnerData& data)
     /*throw(eh::Exception)*/
   {
-    return os << data.unique_users_count_ << '\t' << data.impops_;
+    return out << data.unique_users_count_ << '\t' << data.impops_;
   }
 
 } // namespace AdServer::LogProcessing

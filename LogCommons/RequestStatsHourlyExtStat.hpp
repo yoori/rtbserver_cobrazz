@@ -278,9 +278,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, RequestStatsHourlyExtInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const RequestStatsHourlyExtInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const RequestStatsHourlyExtInnerKey& key)
       /*throw(eh::Exception)*/;
 
     template <class ARCHIVE_>
@@ -626,9 +625,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, RequestStatsHourlyExtInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const RequestStatsHourlyExtInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const RequestStatsHourlyExtInnerData& data)
       /*throw(eh::Exception)*/;
 
     template <class ARCHIVE_>
@@ -732,9 +730,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, RequestStatsHourlyExtKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const RequestStatsHourlyExtKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const RequestStatsHourlyExtKey& key)
       /*throw(eh::Exception)*/;
 
   private:

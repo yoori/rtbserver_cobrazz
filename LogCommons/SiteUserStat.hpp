@@ -53,9 +53,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, SiteUserStatInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteUserStatInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteUserStatInnerKey& key);
 
   private:
     void calc_hash_()
@@ -121,9 +120,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, SiteUserStatInnerData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteUserStatInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteUserStatInnerData& data);
 
   private:
     long unique_users_;
@@ -170,9 +168,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, SiteUserStatKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SiteUserStatKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteUserStatKey& key);
 
   private:
     void calc_hash_()

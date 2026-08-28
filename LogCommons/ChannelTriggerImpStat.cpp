@@ -1,5 +1,6 @@
 
 #include "ChannelTriggerImpStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,12 +25,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelTriggerImpStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelTriggerImpStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -47,15 +48,15 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelTriggerImpStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelTriggerImpStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.channel_trigger_id_ << '\t';
-    os << key.channel_id_ << '\t';
-    os << key.type_;
-    return os;
+    out << key.channel_trigger_id_ << '\t';
+    out << key.channel_id_ << '\t';
+    out << key.type_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -85,14 +86,14 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelTriggerImpStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelTriggerImpStatInnerData& data)
     /*throw(eh::Exception)*/
   {
     data.invariant();
-    os << data.approximated_imps_ << '\t';
-    os << data.approximated_clicks_;
-    return os;
+    out << data.approximated_imps_ << '\t';
+    out << data.approximated_clicks_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

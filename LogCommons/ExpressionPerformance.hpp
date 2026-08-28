@@ -60,9 +60,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ExpressionPerformanceInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ExpressionPerformanceInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ExpressionPerformanceInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -148,9 +147,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ExpressionPerformanceInnerData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ExpressionPerformanceInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ExpressionPerformanceInnerData& data);
 
   private:
     unsigned long imps_verified_;
@@ -199,8 +197,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, ExpressionPerformanceKey& key);
 
-    friend
-    std::ostream& operator<<(std::ostream& os, const ExpressionPerformanceKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ExpressionPerformanceKey& key)
       /*throw(eh::Exception)*/;
 
   private:

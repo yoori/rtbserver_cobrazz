@@ -1,5 +1,6 @@
 
 #include "ChannelOverlapUserStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,13 +25,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelOverlapUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelOverlapUserStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.channel1_id_ << '\t';
-    os << key.channel2_id_;
-    return os;
+    out << key.channel1_id_ << '\t';
+    out << key.channel2_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -41,12 +42,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelOverlapUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelOverlapUserStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.unique_users_;
-    return os;
+    out << data.unique_users_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

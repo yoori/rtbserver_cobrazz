@@ -149,8 +149,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUserStatInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ColoUserStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -408,8 +408,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUserStatInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ColoUserStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -462,8 +462,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, ColoUserStatKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUserStatKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ColoUserStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

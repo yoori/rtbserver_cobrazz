@@ -63,10 +63,6 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ReachStatInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ReachStatInnerKey& key);
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const ReachStatInnerKey& key);
 
@@ -211,10 +207,6 @@ namespace AdServer::LogProcessing
     friend
     std::istream&
     operator>>(std::istream& is, ReachStatKey& key);
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ReachStatKey& key);
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const ReachStatKey& key);
@@ -375,10 +367,6 @@ namespace AdServer::LogProcessing
     friend
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, CcgStatInnerData& data);
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcgStatInnerData& data);
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const CcgStatInnerData& data);
@@ -585,10 +573,6 @@ namespace AdServer::LogProcessing
     friend
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, CcStatInnerData& data);
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcStatInnerData& data);
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const CcStatInnerData& data);
@@ -827,9 +811,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, AdvertiserUserStatInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const AdvertiserUserStatInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const AdvertiserUserStatInnerKey& key);
 
   private:
     void calc_hash_()
@@ -914,9 +897,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, AdvertiserUserStatInnerData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const AdvertiserUserStatInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const AdvertiserUserStatInnerData& data);
 
   private:
     long unique_users_;

@@ -127,9 +127,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, PageLoadsDailyStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const PageLoadsDailyStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const PageLoadsDailyStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -270,9 +269,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, PageLoadsDailyStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const PageLoadsDailyStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const PageLoadsDailyStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -331,9 +329,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, PageLoadsDailyStatKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const PageLoadsDailyStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const PageLoadsDailyStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

@@ -1,5 +1,6 @@
 
 #include "ColoUpdateStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -25,12 +26,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUpdateStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUpdateStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.colo_id_;
-    return os;
+    out << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -42,13 +43,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUpdateStatData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUpdateStatData& data)
   {
-    os << data.last_channels_update_ << '\t';
-    os << data.last_campaigns_update_ << '\t';
-    os << data.version_;
-    return os;
+    out << data.last_channels_update_ << '\t';
+    out << data.last_campaigns_update_ << '\t';
+    out << static_cast<const StringIoWrapperOptional&>(data.version_);
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

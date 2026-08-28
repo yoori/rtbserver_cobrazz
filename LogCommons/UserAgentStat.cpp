@@ -20,15 +20,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const UserAgentStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    key.invariant();
-    os << Aux_::StringIoWrapper(key.user_agent_->str());
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const UserAgentStatInnerKey& key)
     /*throw(eh::Exception)*/
@@ -47,16 +38,6 @@ namespace AdServer::LogProcessing
     is >> data.holder_->channels;
     is >> data.holder_->platforms;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const UserAgentStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.requests_ << '\t';
-    os << data.holder_->channels << '\t';
-    os << data.holder_->platforms;
-    return os;
   }
 
   BufferWriter&

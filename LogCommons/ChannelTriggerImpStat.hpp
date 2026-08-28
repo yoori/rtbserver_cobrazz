@@ -164,8 +164,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerImpStatInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerImpStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -259,8 +259,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerImpStatInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerImpStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -314,8 +314,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, ChannelTriggerImpStatKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerImpStatKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerImpStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

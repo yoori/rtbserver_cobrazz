@@ -1,5 +1,6 @@
 
 #include "AdRequestLogger.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -54,11 +55,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const GenericAdRequestData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const GenericAdRequestData& data)
     /*throw(eh::Exception)*/
   {
-    return os << data.time_ << '\t' << data.request_id_;
+    return out << data.time_ << '\t' << data.request_id_;
   }
 
   FixedBufStream<TabCategory>&
@@ -96,22 +97,22 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const AdvertiserActionData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const AdvertiserActionData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.time_ << '\t';
-    os << data.user_id_ << '\t';
-    os << data.request_id_ << '\t';
-    os << data.action_id_ << '\t';
-    os << data.device_channel_id_ << '\t';
-    os << data.action_request_id_ << '\t';
-    os << data.ccg_ids_ << '\t';
-    os << data.referrer_ << '\t';
-    os << data.order_id_ << '\t';
-    os << data.ip_address_ << '\t';
-    os << data.cur_value_;
-    return os;
+    out << data.time_ << '\t';
+    out << data.user_id_ << '\t';
+    out << data.request_id_ << '\t';
+    out << data.action_id_ << '\t';
+    out << data.device_channel_id_ << '\t';
+    out << data.action_request_id_ << '\t';
+    out << data.ccg_ids_ << '\t';
+    out << data.referrer_ << '\t';
+    out << data.order_id_ << '\t';
+    out << data.ip_address_ << '\t';
+    out << data.cur_value_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -125,11 +126,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionOpportunityData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ActionOpportunityData& data)
     /*throw(eh::Exception)*/
   {
-    return os << data.time << '\t' << data.user_id << '\t' << data.cid << '\t' << data.request_id;
+    return out << data.time << '\t' << data.user_id << '\t'
+      << data.cid << '\t' << data.request_id;
   }
 
   FixedBufStream<TabCategory>&
@@ -141,13 +143,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const PassbackOpportunityData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const PassbackOpportunityData& data)
     /*throw(eh::Exception)*/
   {
-    TabOutputArchive oa(os);
-    oa << data;
-    return os;
+    BufferTabOutputArchive archive(out);
+    archive << data;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -160,11 +162,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ClickData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ClickData& data)
     /*throw(eh::Exception)*/
   {
-    return os << data.time_ << '\t' << data.request_id_ << '\t' << data.referrer_;
+    return out << data.time_ << '\t' << data.request_id_ << '\t'
+      << data.referrer_;
   }
 
   FixedBufStream<TabCategory>&
@@ -241,12 +244,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ImpressionData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ImpressionData& data)
     /*throw(eh::Exception)*/
   {
     data.invariant();
-    return os << data.time_ << '\t' <<
+    return out << data.time_ << '\t' <<
       data.request_id_ << '\t' <<
       data.user_id_ << '\t' <<
       data.referrer_ << '\t' <<

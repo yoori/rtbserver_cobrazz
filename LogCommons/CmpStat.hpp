@@ -408,8 +408,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CmpStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CmpStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const CmpStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -552,8 +552,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CmpStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CmpStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const CmpStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -617,8 +617,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, CmpStatKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CmpStatKey& key) /*throw(eh::Exception)*/;
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const CmpStatKey& key) /*throw(eh::Exception)*/;
 
   private:
     void calc_hash_()

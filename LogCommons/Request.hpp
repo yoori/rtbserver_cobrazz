@@ -1211,9 +1211,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const RequestData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const RequestData& data)
       /*throw(eh::Exception)*/;
 
     DataHolder_var holder_;

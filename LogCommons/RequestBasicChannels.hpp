@@ -65,8 +65,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, RequestBasicChannelsKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const RequestBasicChannelsKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const RequestBasicChannelsKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -157,8 +157,8 @@ namespace AdServer::LogProcessing
       friend FixedBufStream<TabCategory>&
       operator>>(FixedBufStream<TabCategory>&, AdSlotImpression&);
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const AdSlotImpression& ad_imp);
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const AdSlotImpression& ad_imp);
 
     private:
       DataPtr data_;
@@ -236,8 +236,8 @@ namespace AdServer::LogProcessing
       friend FixedBufStream<SlashCategory>&
       operator>>(FixedBufStream<SlashCategory>&, AdBidSlotImpression&);
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const AdBidSlotImpression& absi);
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const AdBidSlotImpression& absi);
 
     private:
       DataPtr data_;
@@ -296,8 +296,8 @@ namespace AdServer::LogProcessing
       operator>>(FixedBufStream<TabCategory>&, AdSelectProps&)
         /*throw(eh::Exception)*/;
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const AdSelectProps& ad_select_props)
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const AdSelectProps& ad_select_props)
         /*throw(eh::Exception)*/;
 
     public:
@@ -512,8 +512,8 @@ namespace AdServer::LogProcessing
       friend FixedBufStream<TabCategory>&
       operator>>(FixedBufStream<TabCategory>& is, AdRequestProps& value);
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const AdRequestProps& ad_req);
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const AdRequestProps& ad_req);
 
     private:
       static const size_t max_country_code_size_ = 2;
@@ -642,8 +642,8 @@ namespace AdServer::LogProcessing
       friend FixedBufStream<TabCategory>&
       operator>>(FixedBufStream<TabCategory>& is, Match& match);
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const Match& match);
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const Match& match);
 
     private:
       DataPtr data_;
@@ -731,10 +731,6 @@ namespace AdServer::LogProcessing
 
     friend std::istream&
     operator>>(std::istream& is, RequestBasicChannelsInnerData& data)
-      /*throw(eh::Exception)*/;
-
-    friend std::ostream&
-    operator<<(std::ostream& os, const RequestBasicChannelsInnerData& data)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&

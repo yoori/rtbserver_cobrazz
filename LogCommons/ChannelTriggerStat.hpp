@@ -160,8 +160,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ChannelTriggerStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -232,8 +232,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ChannelTriggerStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -288,8 +288,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ChannelTriggerStatKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelTriggerStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelTriggerStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

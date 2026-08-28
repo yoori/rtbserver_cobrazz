@@ -59,9 +59,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ChannelOverlapUserStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelOverlapUserStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelOverlapUserStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -119,9 +118,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ChannelOverlapUserStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelOverlapUserStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelOverlapUserStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:

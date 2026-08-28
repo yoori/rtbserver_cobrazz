@@ -23,14 +23,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const PassbackStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const PassbackStatKey& key)
     /*throw(eh::Exception)*/
@@ -53,18 +45,6 @@ namespace AdServer::LogProcessing
       key.calc_hash_();
     }
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const PassbackStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    key.invariant();
-    os << key.user_status_ << '\t';
-    os << key.country_code_ << '\t';
-    os << key.tag_id_ << '\t';
-    os << key.size_id_;
-    return os;
   }
 
   BufferWriter&
@@ -98,14 +78,6 @@ namespace AdServer::LogProcessing
   {
     is >> data.requests_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const PassbackStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.requests_;
-    return os;
   }
 
   BufferWriter&

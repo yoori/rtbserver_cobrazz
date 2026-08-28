@@ -8,6 +8,8 @@
 #include <string>
 #include <string_view>
 
+#include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+
 #include "LogCommons.hpp"
 
 namespace AdServer::LogProcessing
@@ -191,9 +193,20 @@ namespace AdServer::LogProcessing
   BufferWriter&
   operator<<(BufferWriter& out, const Generics::SimpleDecimal<Base, TOTAL, FRACTION>& value);
 
+  template <std::size_t Precision>
+  BufferWriter&
+  operator<<(BufferWriter& out, const FixedPrecisionDouble<Precision>& value);
+
+  template <typename Object>
+  BufferWriter&
+  operator<<(BufferWriter& out, const EmptyHolder<Object>& value);
+
   template <typename Value, typename OptionalValueTraits>
   BufferWriter&
   operator<<(BufferWriter& out, const OptionalValue<Value, OptionalValueTraits>& value);
+
+  BufferWriter&
+  operator<<(BufferWriter& out, CampaignSvcs::AuctionType value);
 
   template <typename Value>
   BufferWriter&

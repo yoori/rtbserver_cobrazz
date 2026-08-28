@@ -1,5 +1,6 @@
 
 #include "ChannelHitStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,12 +25,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelHitStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelHitStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -39,11 +40,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelHitStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelHitStatInnerKey& key)
   {
-    os << key.channel_id_;
-    return os;
+    out << key.channel_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -57,15 +58,15 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelHitStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelHitStatInnerData& data)
   {
-    os << data.hits_ << '\t';
-    os << data.hits_urls_ << '\t';
-    os << data.hits_kws_ << '\t';
-    os << data.hits_search_kws_ << '\t';
-    os << data.hits_url_kws_;
-    return os;
+    out << data.hits_ << '\t';
+    out << data.hits_urls_ << '\t';
+    out << data.hits_kws_ << '\t';
+    out << data.hits_search_kws_ << '\t';
+    out << data.hits_url_kws_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&

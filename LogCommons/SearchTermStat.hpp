@@ -52,11 +52,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, SearchTermStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SearchTermStatInnerKey& key)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const SearchTermStatInnerKey& key)
       /*throw(eh::Exception)*/;
@@ -126,11 +121,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, SearchTermStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SearchTermStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const SearchTermStatInnerData& data)
       /*throw(eh::Exception)*/;
@@ -180,11 +170,6 @@ namespace AdServer::LogProcessing
     friend
     std::istream&
     operator>>(std::istream& is, SearchTermStatKey& key)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const SearchTermStatKey& key)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&

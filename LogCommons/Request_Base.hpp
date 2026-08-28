@@ -146,6 +146,9 @@ namespace AdServer::LogProcessing
     return os;
   }
 
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestData_V_3_4::CmpChannel& cmp_channel);
+
   inline
   FixedBufStream<TabCategory>&
   operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_4::Revenue& revenue)
@@ -164,6 +167,9 @@ namespace AdServer::LogProcessing
     return os;
   }
 
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestData_V_3_4::Revenue& revenue);
+
   FixedBufStream<CommaCategory>&
   operator>>(FixedBufStream<CommaCategory>& is, UserProperty& property) /*throw(eh::Exception)*/;
 
@@ -174,5 +180,8 @@ namespace AdServer::LogProcessing
     os << property.first << '=' << property.second;
     return os;
   }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserProperty& property);
 
 } // namespace AdServer::LogProcessing

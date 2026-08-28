@@ -1,5 +1,6 @@
 
 #include "CampaignUserStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -28,12 +29,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CampaignUserStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CampaignUserStatKey& key)
   {
     key.invariant();
-    os << key.adv_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.adv_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -49,13 +50,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CampaignUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CampaignUserStatInnerKey& key)
   {
     key.invariant();
-    os << key.cmp_id_ << '\t';
-    os << key.last_appearance_date_;
-    return os;
+    out << key.cmp_id_ << '\t';
+    out << key.last_appearance_date_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -65,11 +66,11 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CampaignUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CampaignUserStatInnerData& data)
   {
-    os << data.unique_users_;
-    return os;
+    out << data.unique_users_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

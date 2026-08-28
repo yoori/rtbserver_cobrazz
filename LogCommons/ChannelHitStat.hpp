@@ -40,8 +40,8 @@ namespace AdServer::LogProcessing
     friend FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ChannelHitStatInnerKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelHitStatInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelHitStatInnerKey& key);
 
   private:
     std::uint32_t channel_id_;
@@ -228,8 +228,8 @@ namespace AdServer::LogProcessing
     friend FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ChannelHitStatInnerData& data);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelHitStatInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelHitStatInnerData& data);
 
   private:
     unsigned long hits_;
@@ -279,8 +279,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ChannelHitStatKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ChannelHitStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelHitStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

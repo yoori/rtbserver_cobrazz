@@ -1,5 +1,6 @@
 
 #include "Request.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -32,13 +33,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestData& data)
     /*throw(eh::Exception)*/
   {
-    TabOutputArchive oa(os);
-    oa << *data.holder_;
-    return os;
+    BufferTabOutputArchive archive(out);
+    archive << *data.holder_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

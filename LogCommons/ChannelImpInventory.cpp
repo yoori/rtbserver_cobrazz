@@ -1,5 +1,6 @@
 
 #include "ChannelImpInventory.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,12 +25,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelImpInventoryKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelImpInventoryKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   inline
@@ -44,14 +45,14 @@ namespace AdServer::LogProcessing
   }
 
   inline
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelImpInventoryData::DataT::Counter& cntr)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelImpInventoryData::DataT::Counter& cntr)
     /*throw(eh::Exception)*/
   {
-    os << cntr.imps << '\t';
-    os << cntr.user_count << '\t';
-    os << cntr.value;
-    return os;
+    out << cntr.imps << '\t';
+    out << cntr.user_count << '\t';
+    out << cntr.value;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -71,13 +72,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelImpInventoryInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelImpInventoryInnerKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.channel_id_ << '\t';
-    os << key.ccg_type();
-    return os;
+    out << key.channel_id_ << '\t';
+    out << key.ccg_type();
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -90,13 +91,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelImpInventoryInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelImpInventoryInnerData& data)
     /*throw(eh::Exception)*/
   {
-    SimpleTabOutputArchive oa(os);
+    SimpleBufferTabOutputArchive oa(out);
     oa << data;
-    return os;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

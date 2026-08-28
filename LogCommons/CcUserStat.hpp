@@ -60,8 +60,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcUserStatInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcUserStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -135,8 +135,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcUserStatInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcUserStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -186,8 +186,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, CcUserStatKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcUserStatKey& key) /*throw(eh::Exception)*/;
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcUserStatKey& key) /*throw(eh::Exception)*/;
 
   private:
     void calc_hash_()

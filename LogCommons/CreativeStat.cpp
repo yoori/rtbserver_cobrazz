@@ -935,14 +935,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CreativeStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.sdate_ << '\n' << key.adv_sdate_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const CreativeStatKey& key)
     /*throw(eh::Exception)*/
@@ -976,15 +968,6 @@ namespace AdServer::LogProcessing
     TokenizerInputArchive<Aux_::NoInvariants> ia(is);
     ia >> data;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const CreativeStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    SimpleTabOutputArchive oa(os);
-    oa << data;
-    return os;
   }
 
   BufferWriter&

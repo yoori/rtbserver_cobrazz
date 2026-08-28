@@ -1,4 +1,5 @@
 #include "UserProperties.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -29,25 +30,25 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const UserPropertiesKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserPropertiesKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.sdate_ << '\t';
-    os << key.isp_sdate_ << '\t';
-    os << key.colo_id_ << '\t';
-    os << key.user_status_ << '\t';
-    os << Aux_::StringIoWrapper(key.property_name_.text()) << '\t';
+    out << key.sdate_ << '\t';
+    out << key.isp_sdate_ << '\t';
+    out << key.colo_id_ << '\t';
+    out << key.user_status_ << '\t';
+    out << Aux_::StringIoWrapper(key.property_name_.text()) << '\t';
     if (key.property_value_.empty())
     {
-      os << '-';
+      out << '-';
     }
     else
     {
-      os << Aux_::StringIoWrapper(key.property_value_);
+      out << Aux_::StringIoWrapper(key.property_value_);
     }
-    return os;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -62,15 +63,15 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const UserPropertiesData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const UserPropertiesData& data)
   {
-    os << data.profiling_requests_ << '\t';
-    os << data.requests_ << '\t';
-    os << data.imps_unverified_ << '\t';
-    os << data.imps_verified_ << '\t';
-    os << data.clicks_ << '\t';
-    os << data.actions_;
-    return os;
+    out << data.profiling_requests_ << '\t';
+    out << data.requests_ << '\t';
+    out << data.imps_unverified_ << '\t';
+    out << data.imps_verified_ << '\t';
+    out << data.clicks_ << '\t';
+    out << data.actions_;
+    return out;
   }
 } // namespace AdServer::LogProcessing

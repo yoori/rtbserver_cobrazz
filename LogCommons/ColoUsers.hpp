@@ -67,9 +67,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ColoUsersKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUsersKey& key) /*throw(eh::Exception)*/;
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ColoUsersKey& key) /*throw(eh::Exception)*/;
 
   private:
     void calc_hash_()
@@ -175,9 +174,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ColoUsersData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUsersData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ColoUsersData& data);
 
   private:
     unsigned long users_count_;

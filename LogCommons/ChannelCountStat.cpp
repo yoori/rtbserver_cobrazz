@@ -1,5 +1,6 @@
 
 #include "ChannelCountStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -19,12 +20,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelCountStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelCountStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.isp_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.isp_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -41,14 +42,14 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelCountStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelCountStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.channel_type_ << '\t';
-    os << key.channel_count_;
-    return os;
+    out << key.channel_type_ << '\t';
+    out << key.channel_count_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -59,12 +60,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelCountStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelCountStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.users_count_;
-    return os;
+    out << data.users_count_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

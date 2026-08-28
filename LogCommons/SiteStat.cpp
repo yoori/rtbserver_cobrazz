@@ -1,5 +1,6 @@
 
 #include "SiteStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,13 +25,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteStatKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.isp_sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.isp_sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -45,13 +46,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.site_id_;
-    return os;
+    out << key.site_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -63,13 +64,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SiteStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.daily_reach_ << '\t';
-    os << data.monthly_reach_;
-    return os;
+    out << data.daily_reach_ << '\t';
+    out << data.monthly_reach_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

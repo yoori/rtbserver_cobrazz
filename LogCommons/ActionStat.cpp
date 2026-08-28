@@ -1,5 +1,6 @@
 
 #include "ActionStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -59,12 +60,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ActionStatKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -77,13 +78,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ActionStatInnerKey& key)
   {
-    os << key.action_request_id_ << '\t';
-    os << key.request_id_ << '\t';
-    os << key.cc_id_;
-    return os;
+    out << key.action_request_id_ << '\t';
+    out << key.request_id_ << '\t';
+    out << key.cc_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -104,20 +105,20 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ActionStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.holder_->action_id << '\t';
-    os << data.holder_->tag_id << '\t';
-    os << data.holder_->order_id << '\t';
-    os << data.holder_->country_code << '\t';
-    os << data.holder_->referrer << '\t';
-    os << data.holder_->imp_date << '\t';
-    os << data.holder_->click_date << '\t';
-    os << data.holder_->cur_value<< '\t';
-    os << data.holder_->device_channel_id;
-    return os;
+    out << data.holder_->action_id << '\t';
+    out << data.holder_->tag_id << '\t';
+    out << data.holder_->order_id << '\t';
+    out << data.holder_->country_code << '\t';
+    out << data.holder_->referrer << '\t';
+    out << data.holder_->imp_date << '\t';
+    out << data.holder_->click_date << '\t';
+    out << data.holder_->cur_value << '\t';
+    out << data.holder_->device_channel_id;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

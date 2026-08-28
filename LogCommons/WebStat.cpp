@@ -23,15 +23,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const WebStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    key.invariant_();
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const WebStatKey& key)
     /*throw(eh::Exception)*/
@@ -86,25 +77,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const WebStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    key.invariant_();
-    os << key.ct_ << '\t';
-    os << key.curct_ << '\t';
-    os << key.browser_ << '\t';
-    os << key.os_ << '\t';
-    os << key.source_ << '\t';
-    os << key.web_operation_id_ << '\t';
-    os << key.result_ << '\t';
-    os << key.user_status_ << '\t';
-    os << key.test_ << '\t';
-    os << key.tag_id_ << '\t';
-    os << key.cc_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const WebStatInnerKey& key)
     /*throw(eh::Exception)*/
@@ -127,14 +99,6 @@ namespace AdServer::LogProcessing
   {
     is >> data.count_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const WebStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.count_;
-    return os;
   }
 
   BufferWriter&

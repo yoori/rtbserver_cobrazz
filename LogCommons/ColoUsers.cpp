@@ -1,5 +1,6 @@
 
 #include "ColoUsers.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,16 +25,16 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUsersKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUsersKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.sdate_ << '\t';
-    os << key.isp_sdate_ << '\t';
-    os << key.colo_id_ << '\t';
-    os << key.created_;
-    return os;
+    out << key.sdate_ << '\t';
+    out << key.isp_sdate_ << '\t';
+    out << key.colo_id_ << '\t';
+    out << key.created_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -47,15 +48,15 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUsersData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUsersData& data)
   {
-    os << data.users_count_ << '\t';
-    os << data.weekly_users_count_ << '\t';
-    os << data.monthly_users_count_ << '\t';
-    os << data.daily_network_users_count_ << '\t';
-    os << data.monthly_network_users_count_;
-    return os;
+    out << data.users_count_ << '\t';
+    out << data.weekly_users_count_ << '\t';
+    out << data.monthly_users_count_ << '\t';
+    out << data.daily_network_users_count_ << '\t';
+    out << data.monthly_network_users_count_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

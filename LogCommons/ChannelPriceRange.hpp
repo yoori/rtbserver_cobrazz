@@ -96,8 +96,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelPriceRangeInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelPriceRangeInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -171,8 +171,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelPriceRangeInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const ChannelPriceRangeInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:

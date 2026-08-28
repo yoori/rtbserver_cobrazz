@@ -113,9 +113,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, UserPropertiesKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const UserPropertiesKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const UserPropertiesKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -239,9 +238,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, UserPropertiesData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const UserPropertiesData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const UserPropertiesData& data);
 
   private:
     long profiling_requests_;

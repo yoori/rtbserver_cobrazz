@@ -74,7 +74,7 @@ namespace AdServer::LogProcessing
       operator>>(FixedBufStream<TabCategory>& is,
         GenericAdRequestData& data) /*throw(eh::Exception)*/;
 
-    friend std::ostream& operator<<(std::ostream& os,
+    friend BufferWriter& operator<<(BufferWriter& out,
       const GenericAdRequestData& data) /*throw(eh::Exception)*/;
   };
 
@@ -361,8 +361,8 @@ namespace AdServer::LogProcessing
       operator>>(FixedBufStream<TabCategory>& is, AdvertiserActionData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const AdvertiserActionData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const AdvertiserActionData& data)
       /*throw(eh::Exception)*/;
   };
 
@@ -409,7 +409,7 @@ namespace AdServer::LogProcessing
       operator>>(FixedBufStream<TabCategory>& is, ActionOpportunityData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream& operator<<(std::ostream& os,
+    friend BufferWriter& operator<<(BufferWriter& out,
       const ActionOpportunityData& data) /*throw(eh::Exception)*/;
   };
 
@@ -519,8 +519,8 @@ namespace AdServer::LogProcessing
       operator >>(FixedBufStream<TabCategory>& is, PassbackOpportunityData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator <<(std::ostream& os, const PassbackOpportunityData& data)
+    friend BufferWriter&
+    operator <<(BufferWriter& out, const PassbackOpportunityData& data)
       /*throw(eh::Exception)*/;
   };
 
@@ -599,8 +599,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ClickData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ClickData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ClickData& data)
       /*throw(eh::Exception)*/;
   };
 
@@ -1277,8 +1277,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ImpressionData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ImpressionData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ImpressionData& data)
       /*throw(eh::Exception)*/;
 
     SecondsTimestamp time_;

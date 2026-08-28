@@ -1,5 +1,6 @@
 
 #include "ExpressionPerformance.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -19,12 +20,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ExpressionPerformanceKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ExpressionPerformanceKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -39,14 +40,14 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ExpressionPerformanceInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ExpressionPerformanceInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.cc_id_ << '\t';
-    os << Aux_::StringIoWrapper(key.expression_);
-    return os;
+    out << key.cc_id_ << '\t';
+    out << Aux_::StringIoWrapper(key.expression_);
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -58,13 +59,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ExpressionPerformanceInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ExpressionPerformanceInnerData& data)
   {
-    os << data.imps_verified_ << '\t';
-    os << data.clicks_ << '\t';
-    os << data.actions_;
-    return os;
+    out << data.imps_verified_ << '\t';
+    out << data.clicks_ << '\t';
+    out << data.actions_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

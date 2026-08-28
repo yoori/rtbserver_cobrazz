@@ -394,8 +394,8 @@ namespace AdServer::LogProcessing
     friend FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ActionStatInnerKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ActionStatInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ActionStatInnerKey& key);
 
   private:
     void calc_hash_()
@@ -565,8 +565,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ActionStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ActionStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ActionStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -672,8 +672,8 @@ namespace AdServer::LogProcessing
     friend std::istream&
     operator>>(std::istream& is, ActionStatKey& key);
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const ActionStatKey& key) /*throw(eh::Exception)*/;
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ActionStatKey& key) /*throw(eh::Exception)*/;
 
   private:
     void calc_hash_()

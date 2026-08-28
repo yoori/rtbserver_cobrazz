@@ -341,11 +341,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, WebStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const WebStatInnerKey& key)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const WebStatInnerKey& key)
       /*throw(eh::Exception)*/;
@@ -433,11 +428,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, WebStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const WebStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const WebStatInnerData& data)
       /*throw(eh::Exception)*/;
@@ -487,11 +477,6 @@ namespace AdServer::LogProcessing
     friend
     std::istream&
     operator>>(std::istream& is, WebStatKey& key);
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const WebStatKey& key)
-      /*throw(eh::Exception)*/;
 
     friend BufferWriter&
     operator<<(BufferWriter& out, const WebStatKey& key)

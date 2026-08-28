@@ -27,18 +27,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const TagRequestData::OptInSection& opt_in_sect)
-  {
-    os << opt_in_sect.site_id_ << '\t';
-    os << opt_in_sect.user_id_ << '\t';
-    os << opt_in_sect.page_load_id_ << '\t';
-    os << opt_in_sect.ad_shown_ << '\t';
-    os << opt_in_sect.profile_referer_ << '\t';
-    os << StringIoWrapperOptional(opt_in_sect.user_agent());
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const TagRequestData::OptInSection& opt_in_sect)
   {
@@ -79,16 +67,6 @@ namespace AdServer::LogProcessing
 
     data.invariant();
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const TagRequestData& data)
-    /*throw(eh::Exception)*/
-  {
-    BufferWriter writer(512);
-    writer << data;
-    writer.write_to(os);
-    return os;
   }
 
   BufferWriter&

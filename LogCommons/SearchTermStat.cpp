@@ -26,14 +26,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SearchTermStatKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const SearchTermStatKey& key)
     /*throw(eh::Exception)*/
@@ -52,15 +44,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const SearchTermStatInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    key.invariant_();
-    os << key.search_term_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const SearchTermStatInnerKey& key)
     /*throw(eh::Exception)*/
@@ -76,14 +59,6 @@ namespace AdServer::LogProcessing
   {
     is >> data.hits_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const SearchTermStatInnerData& data)
-    /*throw(eh::Exception)*/
-  {
-    os << data.hits_;
-    return os;
   }
 
   BufferWriter&

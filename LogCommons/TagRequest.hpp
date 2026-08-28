@@ -94,8 +94,8 @@ namespace AdServer::LogProcessing
       friend FixedBufStream<TabCategory>&
       operator>>(FixedBufStream<TabCategory>& is, OptInSection& opt_in_sect);
 
-      friend std::ostream&
-      operator<<(std::ostream& os, const OptInSection& opt_in_sect);
+      friend BufferWriter&
+      operator<<(BufferWriter& out, const OptInSection& opt_in_sect);
 
       std::uint32_t site_id_{};
       UserId user_id_;
@@ -281,11 +281,6 @@ namespace AdServer::LogProcessing
 
     friend FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, TagRequestData& opt_in_sect)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagRequestData& data)
       /*throw(eh::Exception)*/;
 
     friend

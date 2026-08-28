@@ -1,5 +1,6 @@
 
 #include "ChannelPerformance.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -33,12 +34,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelPerformanceKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -71,13 +72,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelPerformanceInnerKey& key)
   {
-    os << key.channel_id_ << '\t';
-    os << key.ccg_id_ << '\t';
-    os << StringIoWrapperOptional(key.tag_size_.str());
-    return os;
+    out << key.channel_id_ << '\t';
+    out << key.ccg_id_ << '\t';
+    out << StringIoWrapperOptional(key.tag_size_.str());
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -114,16 +115,16 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ChannelPerformanceInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ChannelPerformanceInnerData& data)
   {
     data.invariant();
-    os << data.requests_ << '\t';
-    os << data.imps_ << '\t';
-    os << data.clicks_ << '\t';
-    os << data.actions_ << '\t';
-    os << data.revenue_;
-    return os;
+    out << data.requests_ << '\t';
+    out << data.imps_ << '\t';
+    out << data.clicks_ << '\t';
+    out << data.actions_ << '\t';
+    out << data.revenue_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

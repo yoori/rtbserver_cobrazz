@@ -58,8 +58,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CcgSelectionFailureStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CcgSelectionFailureStatInnerKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const CcgSelectionFailureStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -115,8 +115,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CcgSelectionFailureStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const CcgSelectionFailureStatInnerData& data)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const CcgSelectionFailureStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:

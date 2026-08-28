@@ -39,9 +39,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUpdateStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ColoUpdateStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -156,9 +155,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ColoUpdateStatData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ColoUpdateStatData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ColoUpdateStatData& data);
 
   private:
     OptionalSecondsTimestamp last_channels_update_;

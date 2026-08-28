@@ -188,11 +188,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagPositionStatInnerKey& key)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const TagPositionStatInnerKey& key)
       /*throw(eh::Exception)*/;
@@ -273,11 +268,6 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, TagPositionStatInnerData& data)
       /*throw(eh::Exception)*/;
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagPositionStatInnerData& data)
-      /*throw(eh::Exception)*/;
-
     friend BufferWriter&
     operator<<(BufferWriter& out, const TagPositionStatInnerData& data)
       /*throw(eh::Exception)*/;
@@ -328,11 +318,6 @@ namespace AdServer::LogProcessing
     friend
     std::istream&
     operator>>(std::istream& is, TagPositionStatKey& key)
-      /*throw(eh::Exception)*/;
-
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const TagPositionStatKey& key)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&

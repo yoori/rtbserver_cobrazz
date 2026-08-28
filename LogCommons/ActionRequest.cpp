@@ -20,14 +20,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionRequestKey& key)
-    /*throw(eh::Exception)*/
-  {
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const ActionRequestKey& key)
     /*throw(eh::Exception)*/
@@ -47,15 +39,6 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ActionRequestInnerKey& key)
-    /*throw(eh::Exception)*/
-  {
-    TabOutputArchive oa(os);
-    oa << *key.holder_;
-    return os;
-  }
-
   BufferWriter&
   operator<<(BufferWriter& out, const ActionRequestInnerKey& key)
     /*throw(eh::Exception)*/
@@ -71,14 +54,6 @@ namespace AdServer::LogProcessing
     is >> data.action_request_count_;
     is >> data.cur_value_;
     return is;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const ActionRequestInnerData& data)
-  {
-    os << data.action_request_count_ << '\t';
-    os << data.cur_value_;
-    return os;
   }
 
   BufferWriter&

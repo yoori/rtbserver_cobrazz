@@ -65,9 +65,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ChannelInventoryEstimationStatInnerKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelInventoryEstimationStatInnerKey& key);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelInventoryEstimationStatInnerKey& key);
 
   private:
     void calc_hash_()
@@ -148,9 +147,8 @@ namespace AdServer::LogProcessing
     FixedBufStream<TabCategory>&
     operator>>(FixedBufStream<TabCategory>& is, ChannelInventoryEstimationStatInnerData& data);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelInventoryEstimationStatInnerData& data);
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelInventoryEstimationStatInnerData& data);
 
   private:
     FixedNum users_regular_;
@@ -198,9 +196,8 @@ namespace AdServer::LogProcessing
     std::istream&
     operator>>(std::istream& is, ChannelInventoryEstimationStatKey& key);
 
-    friend
-    std::ostream&
-    operator<<(std::ostream& os, const ChannelInventoryEstimationStatKey& key)
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const ChannelInventoryEstimationStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

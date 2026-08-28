@@ -1,5 +1,6 @@
 
 #include "RequestStatsHourlyExtStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -24,12 +25,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestStatsHourlyExtKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestStatsHourlyExtKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.sdate_ << '\n' << key.adv_sdate_;
-    return os;
+    out << key.sdate_ << '\n' << key.adv_sdate_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -41,13 +42,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestStatsHourlyExtInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestStatsHourlyExtInnerKey& key)
     /*throw(eh::Exception)*/
   {
-    TabOutputArchive oa(os);
-    oa << key;
-    return os;
+    BufferTabOutputArchive archive(out);
+    archive << key;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -59,13 +60,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const RequestStatsHourlyExtInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const RequestStatsHourlyExtInnerData& data)
     /*throw(eh::Exception)*/
   {
-    SimpleTabOutputArchive oa(os);
-    oa << data;
-    return os;
+    SimpleBufferTabOutputArchive archive(out);
+    archive << data;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

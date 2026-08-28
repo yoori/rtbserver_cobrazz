@@ -1,5 +1,6 @@
 
 #include "ColoUserStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/CollectorBundle.hpp>
 #include <LogCommons/LogCommons.ipp>
 
@@ -28,13 +29,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUserStatKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUserStatKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.sdate_ << '\n' << key.colo_id_;
-    return os;
+    out << key.sdate_ << '\n' << key.colo_id_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -51,14 +52,14 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUserStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUserStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     key.invariant();
-    os << key.create_date_ << '\t';
-    os << key.last_appearance_date_;
-    return os;
+    out << key.create_date_ << '\t';
+    out << key.last_appearance_date_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -86,15 +87,15 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const ColoUserStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const ColoUserStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.unique_users_ << '\t';
-    os << data.network_unique_users_ << '\t';
-    os << data.profiling_unique_users_ << '\t';
-    os << data.unique_hids_;
-    return os;
+    out << data.unique_users_ << '\t';
+    out << data.network_unique_users_ << '\t';
+    out << data.profiling_unique_users_ << '\t';
+    out << data.unique_hids_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&

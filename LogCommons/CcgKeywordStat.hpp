@@ -79,8 +79,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcgKeywordStatInnerKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcgKeywordStatInnerKey& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -273,8 +273,8 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcgKeywordStatInnerData& data)
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcgKeywordStatInnerData& data)
       /*throw(eh::Exception)*/;
 
   private:
@@ -336,8 +336,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, CcgKeywordStatKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CcgKeywordStatKey& key)
+    BufferWriter&
+    operator<<(BufferWriter& out, const CcgKeywordStatKey& key)
       /*throw(eh::Exception)*/;
 
   private:

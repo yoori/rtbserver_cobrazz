@@ -1,5 +1,6 @@
 
 #include "CcgSelectionFailureStat.hpp"
+#include <LogCommons/BufferWriter.hpp>
 #include <LogCommons/LogCommons.ipp>
 
 namespace AdServer::LogProcessing
@@ -19,13 +20,13 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcgSelectionFailureStatInnerKey& key)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CcgSelectionFailureStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
-    os << key.ccg_id_ << '\t';
-    os << key.combination_mask_;
-    return os;
+    out << key.ccg_id_ << '\t';
+    out << key.combination_mask_;
+    return out;
   }
 
   FixedBufStream<TabCategory>&
@@ -36,12 +37,12 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  std::ostream&
-  operator<<(std::ostream& os, const CcgSelectionFailureStatInnerData& data)
+  BufferWriter&
+  operator<<(BufferWriter& out, const CcgSelectionFailureStatInnerData& data)
     /*throw(eh::Exception)*/
   {
-    os << data.requests_;
-    return os;
+    out << data.requests_;
+    return out;
   }
 
 } // namespace AdServer::LogProcessing

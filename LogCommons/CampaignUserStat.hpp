@@ -60,8 +60,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CampaignUserStatInnerKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CampaignUserStatInnerKey& key);
+    BufferWriter&
+    operator<<(BufferWriter& out, const CampaignUserStatInnerKey& key);
 
   private:
     void calc_hash_()
@@ -133,8 +133,8 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, CampaignUserStatInnerData& data);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CampaignUserStatInnerData& data);
+    BufferWriter&
+    operator<<(BufferWriter& out, const CampaignUserStatInnerData& data);
 
   private:
     long unique_users_;
@@ -183,8 +183,8 @@ namespace AdServer::LogProcessing
     operator>>(std::istream& is, CampaignUserStatKey& key);
 
     friend
-    std::ostream&
-    operator<<(std::ostream& os, const CampaignUserStatKey& key);
+    BufferWriter&
+    operator<<(BufferWriter& out, const CampaignUserStatKey& key);
 
   private:
     void calc_hash_()
