@@ -635,35 +635,50 @@ namespace AdServer::RequestInfoSvcs
         return;
       }
 
-      CollectorT::DataT data;
-      data.prepare_adding(triggers_count);
+      PoolObject_var pool_object = get_object();
+      const CollectorT::KeyT key(isp_time, colo_id);
 
-      add_hits_(data, 'U', url_triggers);
-      add_hits_(data, 'P', page_triggers);
-      add_hits_(data, 'S', search_triggers);
-      add_hits_(data, 'R', url_keyword_triggers);
-
-      add_record(CollectorT::KeyT(isp_time, colo_id), std::move(data));
+      add_hits_(pool_object.in(), key, 'U', url_triggers);
+      add_hits_(pool_object.in(), key, 'P', page_triggers);
+      add_hits_(pool_object.in(), key, 'S', search_triggers);
+      add_hits_(pool_object.in(), key, 'R', url_keyword_triggers);
     }
 
   protected:
     ~ChannelTriggerStatLogger() noexcept override = default;
 
   private:
+    class HitCounter
+    {
+    public:
+      explicit HitCounter(char type) noexcept
+        : type_(type)
+      {}
+
+      std::pair<CollectorT::DataT::KeyT, CollectorT::DataT::DataT>
+      operator()(
+        const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatch& trigger) const
+      {
+        return std::make_pair(
+          CollectorT::DataT::KeyT(trigger.channel_trigger_id, trigger.channel_id, type_),
+          CollectorT::DataT::DataT(1));
+      }
+
+    private:
+      const char type_;
+    };
+
     static void
     add_hits_(
-      CollectorT::DataT& data,
+      PoolObject* pool_object,
+      const CollectorT::KeyT& key,
       char type,
       const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatchArray& triggers)
       /*throw(eh::Exception)*/
     {
-      const CollectorT::DataT::DataT inner_data(1);
-
-      for (const auto& trigger : triggers)
+      if (!triggers.empty())
       {
-        data.add(
-          CollectorT::DataT::KeyT(trigger.channel_trigger_id, trigger.channel_id, type),
-          inner_data);
+        pool_object->add_record(key, make_transform_range(triggers, HitCounter(type)));
       }
     }
   };
@@ -714,22 +729,9 @@ namespace AdServer::RequestInfoSvcs
       add_channel_masks_(channel_masks, search_triggers, SEARCH_MASK);
       add_channel_masks_(channel_masks, url_keyword_triggers, URL_KEYWORD_MASK);
 
-      CollectorT::DataT data;
-      data.prepare_adding(channel_masks.size());
-
-      for (const auto& [channel_id, mask] : channel_masks)
-      {
-        data.add(
-          CollectorT::DataT::KeyT(channel_id),
-          CollectorT::DataT::DataT(
-            1,
-            mask & URL_MASK ? 1 : 0,
-            mask & PAGE_MASK ? 1 : 0,
-            mask & SEARCH_MASK ? 1 : 0,
-            mask & URL_KEYWORD_MASK ? 1 : 0));
-      }
-
-      add_record(CollectorT::KeyT(isp_time, colo_id), std::move(data));
+      add_record(
+        CollectorT::KeyT(isp_time, colo_id),
+        make_transform_range(channel_masks, ChannelCounter()));
     }
 
   protected:
@@ -745,6 +747,24 @@ namespace AdServer::RequestInfoSvcs
     };
 
     using ChannelMaskMap = Generics::MonoUnorderedMap<std::uint32_t, std::uint8_t>;
+
+    class ChannelCounter
+    {
+    public:
+      std::pair<CollectorT::DataT::KeyT, CollectorT::DataT::DataT>
+      operator()(const ChannelMaskMap::value_type& channel_mask) const
+      {
+        const auto& [channel_id, mask] = channel_mask;
+        return std::make_pair(
+          CollectorT::DataT::KeyT(channel_id),
+          CollectorT::DataT::DataT(
+            1,
+            mask & URL_MASK ? 1 : 0,
+            mask & PAGE_MASK ? 1 : 0,
+            mask & SEARCH_MASK ? 1 : 0,
+            mask & URL_KEYWORD_MASK ? 1 : 0));
+      }
+    };
 
     static void
     add_channel_masks_(

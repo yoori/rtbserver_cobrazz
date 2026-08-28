@@ -56,22 +56,24 @@ namespace AdServer::RequestInfoSvcs
       friend class MatchSizePolicy;
 
     public:
-      MatchKeyHashAdapter()
-      {}
-
-      MatchKeyHashAdapter(MatchKeyHolder* match_key_holder)
-        : holder_(ReferenceCounting::add_ref(match_key_holder))
+      explicit MatchKeyHashAdapter(const ChannelIdArray& history_channels)
+        : history_channels_(&history_channels)
       {
         Generics::Murmur32v3Hasher hasher(0);
 
-        for (auto ch_it = holder_->history_channels.begin();
-          ch_it != holder_->history_channels.end(); ++ch_it)
+        for (auto ch_it = history_channels.begin(); ch_it != history_channels.end(); ++ch_it)
         {
           hasher.add(&*ch_it, sizeof(*ch_it));
         }
 
         hash_ = hasher.finalize();
       }
+
+      MatchKeyHashAdapter(MatchKeyHolder* match_key_holder, std::size_t hash)
+        : holder_(ReferenceCounting::add_ref(match_key_holder)),
+          history_channels_(&holder_->history_channels),
+          hash_(hash)
+      {}
 
       size_t
       hash() const noexcept
@@ -83,15 +85,19 @@ namespace AdServer::RequestInfoSvcs
       operator==(const MatchKeyHashAdapter& right)
         const noexcept
       {
+        const ChannelIdArray& history_channels = *history_channels_;
+        const ChannelIdArray& right_history_channels = *right.history_channels_;
         return hash_ == right.hash_ &&
-          holder_->history_channels.size() == right.holder_->history_channels.size() &&
-          std::equal(holder_->history_channels.begin(),
-            holder_->history_channels.end(),
-            right.holder_->history_channels.begin());
+          history_channels.size() == right_history_channels.size() &&
+          std::equal(
+            history_channels.begin(),
+            history_channels.end(),
+            right_history_channels.begin());
       }
 
     protected:
       MatchKeyHolder_var holder_;
+      const ChannelIdArray* history_channels_;
       size_t hash_;
     };
 
@@ -146,7 +152,7 @@ namespace AdServer::RequestInfoSvcs
       operator()(const MatchKeyHashAdapter& key, const MatchResultHolder_var& value) const noexcept
       {
         return sizeof(void*) +
-          sizeof(unsigned long) * key.holder_->history_channels.size() +
+          sizeof(unsigned long) * key.history_channels_->size() +
           sizeof(void*) +
           sizeof(unsigned long) * value->match_result->result_channels.size() +
           sizeof(unsigned long) * value->match_result->result_estimate_channels.size();
@@ -304,14 +310,14 @@ namespace AdServer::RequestInfoSvcs
     {
       Generics::Time now = Generics::Time::ZERO; //Generics::Time::get_time_of_day();
 
-      MatchCache::MatchKeyHolder_var match_key_holder(
-        new MatchKeyHolder(std::move(history_channels)));
-      MatchCache::MatchKeyHashAdapter match_key_hash_adapter(match_key_holder);
-
-      MatchResult_var match_result = match_cache->get(match_key_hash_adapter, now);
+      MatchCache::MatchKeyHashAdapter lookup_key(history_channels);
+      MatchResult_var match_result = match_cache->get(lookup_key, now);
 
       if (!match_result)
       {
+        MatchCache::MatchKeyHolder_var match_key_holder(
+          new MatchKeyHolder(std::move(history_channels)));
+        MatchCache::MatchKeyHashAdapter cache_key(match_key_holder, lookup_key.hash());
         ChannelIdSet local_result_channels;
         ChannelIdSet local_result_estimate_channels;
         ChannelActionMap local_result_channel_actions;
@@ -340,7 +346,7 @@ namespace AdServer::RequestInfoSvcs
           local_result_estimate_channels,
           local_result_channel_actions);
 
-        match_cache->insert(match_key_hash_adapter, match_result, now);
+        match_cache->insert(cache_key, match_result, now);
       }
 
       result_channels = match_result->result_channels;
