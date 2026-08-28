@@ -205,7 +205,11 @@ namespace AdServer::ProfilingCommons
     try
     {
       processor_->register_map_(*this);
-      submission_gate_.activate_object();
+      {
+        Sync::PosixGuard guard(error_lock_);
+        stopping_ = false;
+        submission_gate_.activate_object();
+      }
     }
     catch(...)
     {
@@ -221,7 +225,12 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::deactivate_object_()
   {
-    submission_gate_.deactivate_object();
+    {
+      Sync::PosixGuard guard(error_lock_);
+      stopping_ = true;
+      submission_gate_.deactivate_object();
+    }
+
     if (owns_processor_)
     {
       processor_->deactivate_object();
@@ -912,6 +921,8 @@ namespace AdServer::ProfilingCommons
       error_generation = background_error_generation_;
     }
 
+    submission_gate_.wait_object();
+    processor_->wait_pending_operations_(*this);
     const auto resume_status = db_->Resume();
     std::string error;
 
@@ -919,6 +930,11 @@ namespace AdServer::ProfilingCommons
       Sync::PosixGuard guard(error_lock_);
       if (error_generation == background_error_generation_ && resume_status.ok())
       {
+        if (!stopping_)
+        {
+          submission_gate_.activate_object();
+        }
+
         background_error_.clear();
         background_error_probe_in_progress_ = false;
         has_background_error_.store(false, std::memory_order_release);
@@ -953,6 +969,7 @@ namespace AdServer::ProfilingCommons
       ++background_error_generation_;
       background_error_probe_in_progress_ = false;
       has_background_error_.store(true, std::memory_order_release);
+      submission_gate_.deactivate_object();
     }
   }
 

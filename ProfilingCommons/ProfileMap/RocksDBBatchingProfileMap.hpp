@@ -212,6 +212,7 @@ namespace AdServer::ProfilingCommons
     mutable Generics::Time background_error_retry_at_;
     mutable std::uint64_t background_error_generation_ = 0;
     mutable bool background_error_probe_in_progress_ = false;
+    bool stopping_ = true;
   };
 
   inline bool

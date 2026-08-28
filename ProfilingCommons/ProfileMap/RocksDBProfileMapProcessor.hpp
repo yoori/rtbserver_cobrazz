@@ -99,7 +99,7 @@ namespace AdServer::ProfilingCommons
 
     bool enqueue_operations_(const ProfileMapImpl& map_impl, Operations&& operations);
 
-    void wait_pending_operations_(ProfileMapImpl& map_impl);
+    void wait_pending_operations_(const ProfileMapImpl& map_impl);
 
     void worker_loop_() noexcept;
 

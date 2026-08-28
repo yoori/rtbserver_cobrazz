@@ -2,6 +2,7 @@
 
 #include <rocksdb/cache.h>
 #include <rocksdb/filter_policy.h>
+#include <rocksdb/listener.h>
 #include <rocksdb/table.h>
 
 #include <cstddef>
@@ -12,6 +13,22 @@ namespace AdServer::ProfilingCommons
 {
   namespace
   {
+    class ManualNoSpaceRecoveryListener final : public rocksdb::EventListener
+    {
+    public:
+      void
+      OnErrorRecoveryBegin(
+        rocksdb::BackgroundErrorReason,
+        rocksdb::Status background_error,
+        bool* auto_recovery) override
+      {
+        if (background_error.IsNoSpace())
+        {
+          *auto_recovery = false;
+        }
+      }
+    };
+
     constexpr std::size_t BLOCK_CACHE_SIZE = 1024ULL * 1024 * 1024;
     constexpr std::uint64_t BLOCK_SIZE = 8 * 1024;
     constexpr std::size_t WRITE_BUFFER_SIZE = 256ULL * 1024 * 1024;
@@ -28,6 +45,12 @@ namespace AdServer::ProfilingCommons
         0.25);
 
       return cache;
+    }
+
+    std::shared_ptr<rocksdb::EventListener> manual_no_space_recovery_listener()
+    {
+      static const auto listener = std::make_shared<ManualNoSpaceRecoveryListener>();
+      return listener;
     }
   }
 
@@ -46,6 +69,7 @@ namespace AdServer::ProfilingCommons
     options.max_background_jobs = 4;
     options.bytes_per_sync = SYNC_EVERY_BYTES;
     options.wal_bytes_per_sync = SYNC_EVERY_BYTES;
+    options.listeners.emplace_back(manual_no_space_recovery_listener());
 
     rocksdb::BlockBasedTableOptions table_options;
     table_options.block_cache = block_cache();

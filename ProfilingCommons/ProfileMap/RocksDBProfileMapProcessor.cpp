@@ -132,16 +132,10 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBProfileMapProcessor::wait_unregister_map_(ProfileMapImpl& map_impl)
   {
-    MapQueue& map_queue = map_impl.processor_queue_;
-    const ReadyState state = map_queue.flush_pending();
-    if (apply_ready_(map_queue, state))
-    {
-      ready_cond_.notify_all();
-    }
-
-    map_queue.wait_drained();
+    wait_pending_operations_(map_impl);
 
     std::lock_guard guard(ready_lock_);
+    MapQueue& map_queue = map_impl.processor_queue_;
     const auto it = registrations_.find(&map_queue);
     if (it == registrations_.end())
     {
@@ -190,9 +184,16 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  RocksDBProfileMapProcessor::wait_pending_operations_(ProfileMapImpl& map_impl)
+  RocksDBProfileMapProcessor::wait_pending_operations_(const ProfileMapImpl& map_impl)
   {
-    map_impl.processor_queue_.wait_pending();
+    MapQueue& map_queue = map_impl.processor_queue_;
+    const ReadyState state = map_queue.flush_pending();
+    if (apply_ready_(map_queue, state))
+    {
+      ready_cond_.notify_all();
+    }
+
+    map_queue.wait_pending();
   }
 
   void
