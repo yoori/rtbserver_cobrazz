@@ -413,6 +413,8 @@ namespace AdServer::CampaignSvcs
         const CTRGenerator::CalculateParams& calc_params)
         noexcept
       {
+        add_hash_fun(hash_adapter, calc_params);
+
         CTRGenerator::FeatureDictionary local_dictionary;
 
         next_calculator_->fill_dictionary(
@@ -588,7 +590,7 @@ namespace AdServer::CampaignSvcs
             CTRGenerator::FeatureDictionary local_dictionary;
 
             next_calculator_->fill_dictionary(
-              hash_adapter,
+              hash_adapter_copy,
               local_dictionary,
               global_dictionary,
               calc_params);
@@ -752,7 +754,7 @@ namespace AdServer::CampaignSvcs
           CTRGenerator::FeatureDictionary local_dictionary;
 
           next_calculator_->fill_dictionary(
-            hash_adapter,
+            hash_adapter_copy,
             local_dictionary,
             global_dictionary,
             calc_params);
