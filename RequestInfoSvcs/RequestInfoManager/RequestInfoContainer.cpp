@@ -1,7 +1,7 @@
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignBilling.hpp>
 
@@ -1594,23 +1594,17 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      using RocksDBMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
+      auto profile_map = AdServer::ProfilingCommons::ProfileMapFactory::open_rocksdb_map<
         AdServer::Commons::RequestId,
-        UuidToString>;
-
-      ReferenceCounting::SmartPtr<RocksDBMap> profile_map_impl =
-        rocksdb_processor ?
-          new RocksDBMap(
-            std::move(rocksdb_processor),
-            request_profile_path,
-            expire_time_,
-            128,
-            Generics::Time::ZERO) :
-          new RocksDBMap(request_profile_path, expire_time_, 2, 128, Generics::Time::ZERO);
-
-      profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
-        AdServer::Commons::RequestId>(profile_map_impl.in());
-      add_child_object(profile_map_impl.in());
+        UuidToString>(
+          request_profile_path,
+          AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(expire_time_),
+          0,
+          false,
+          2,
+          std::move(rocksdb_processor));
+      profile_map_ = profile_map.first;
+      add_child_object(profile_map.second);
     }
     catch(const eh::Exception& ex)
     {

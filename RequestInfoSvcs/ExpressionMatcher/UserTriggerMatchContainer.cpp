@@ -848,11 +848,6 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        using RocksDBRequestProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<
-          AdServer::Commons::RequestId,
-          AdServer::ProfilingCommons::KeyAccessorStringAdapter<
-            AdServer::ProfilingCommons::RequestIdAccessor>>;
-
         if (!rocksdb_processor)
         {
           rocksdb_processor = std::make_shared<
@@ -863,17 +858,20 @@ namespace AdServer::RequestInfoSvcs
         for (const auto& [chunk_id, chunk_folder] : chunk_folders)
         {
           const std::string rocksdb_path = chunk_folder + "/" + request_file_prefix;
-          ReferenceCounting::SmartPtr<RocksDBRequestProfileMap> rocksdb_map =
-            new RocksDBRequestProfileMap(
-              rocksdb_processor,
-              String::SubString(rocksdb_path.c_str()),
-              request_level_map_traits.expire_time,
-              128,
-              Generics::Time::ZERO,
-              false);
+          auto request_map = AdServer::ProfilingCommons::ProfileMapFactory::open_rocksdb_map<
+            AdServer::Commons::RequestId,
+            AdServer::ProfilingCommons::KeyAccessorStringAdapter<
+              AdServer::ProfilingCommons::RequestIdAccessor>>(
+              String::SubString(rocksdb_path),
+              AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+                request_level_map_traits.expire_time),
+              0,
+              false,
+              2,
+              rocksdb_processor);
 
-          request_maps_.emplace(chunk_id, new RequestProfileMap(rocksdb_map.in()));
-          add_child_object(rocksdb_map.in());
+          request_maps_.emplace(chunk_id, request_map.first);
+          add_child_object(request_map.second);
         }
       }
       catch(const eh::Exception& ex)

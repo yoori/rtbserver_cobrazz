@@ -3,9 +3,10 @@
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 
+#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserFraudProtectionProfile.hpp>
 
-#include "RocksDBProfileMapUtils.hpp"
 #include "UserFraudProtectionContainer.hpp"
 
 namespace Aspect
@@ -288,11 +289,17 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      auto user_map = open_rocksdb_transaction_profile_map<
-        AdServer::Commons::UserId, UserIdToString>(
-          rocksdb_path, expire_time_, std::move(rocksdb_processor));
-      user_map_ = user_map.map;
-      add_child_object(user_map.active_object);
+      auto user_map = ProfilingCommons::ProfileMapFactory::open_rocksdb_map<
+        AdServer::Commons::UserId,
+        ProfilingCommons::KeyAccessorStringAdapter<ProfilingCommons::UserIdAccessor>>(
+          String::SubString(rocksdb_path),
+          ProfilingCommons::ProfileMapFactory::ProfileMapTraits(expire_time_),
+          0,
+          false,
+          2,
+          std::move(rocksdb_processor));
+      user_map_ = user_map.first;
+      add_child_object(user_map.second);
     }
     catch(const eh::Exception& ex)
     {

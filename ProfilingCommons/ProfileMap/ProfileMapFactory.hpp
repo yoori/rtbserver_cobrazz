@@ -60,6 +60,52 @@ namespace AdServer::ProfilingCommons
       const char* chunks_prefix = "Chunk")
       /*throw(eh::Exception)*/;
 
+    template<typename KeyType, typename KeyAdapterType>
+    static
+    std::pair<
+      ReferenceCounting::SmartPtr<TransactionProfileMap<KeyType>>,
+      Generics::ActiveObject_var>
+    open_rocksdb_map(
+      const String::SubString& rocksdb_path,
+      const ProfileMapTraits& profile_map_traits,
+      unsigned long max_waiters = 0,
+      bool disable_wal = false,
+      unsigned long workers_count = 2,
+      std::shared_ptr<RocksDBProfileMapProcessor> processor = {})
+      /*throw(eh::Exception)*/
+    {
+      using RocksDBMap = RocksDBBatchingProfileMap<KeyType, KeyAdapterType>;
+      using TransactionMap = TransactionProfileMap<KeyType>;
+
+      ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map;
+      if (processor)
+      {
+        rocksdb_map = new RocksDBMap(
+          std::move(processor),
+          rocksdb_path,
+          profile_map_traits.expire_time,
+          128,
+          Generics::Time::ZERO,
+          disable_wal);
+      }
+      else
+      {
+        rocksdb_map = new RocksDBMap(
+          rocksdb_path,
+          profile_map_traits.expire_time,
+          workers_count,
+          128,
+          Generics::Time::ZERO,
+          disable_wal);
+      }
+
+      ReferenceCounting::SmartPtr<TransactionMap> profile_map =
+        new TransactionMap(rocksdb_map.in(), max_waiters);
+      Generics::ActiveObject_var active_object = rocksdb_map.retn();
+
+      return std::make_pair(std::move(profile_map), std::move(active_object));
+    }
+
     template<typename KeyType,
       typename KeyAccessorType,
       typename KeyHashType>
@@ -82,14 +128,10 @@ namespace AdServer::ProfilingCommons
       std::shared_ptr<RocksDBProfileMapProcessor> processor = {})
       /*throw(eh::Exception)*/
     {
-      typedef ChunkedProfileMap<
+      using ProfileMapType = ChunkedProfileMap<
         KeyType,
         AdServer::ProfilingCommons::TransactionProfileMap<KeyType>,
-        KeyHashType> ProfileMapType;
-      typedef RocksDBBatchingProfileMap<
-        KeyType,
-        KeyAccessorStringAdapter<KeyAccessorType> >
-        RocksDBMap;
+        KeyHashType>;
 
       typename ProfileMapType::ChunkIdToProfileMap chunks;
       Generics::CompositeActiveObject_var composite_active_object =
@@ -109,21 +151,17 @@ namespace AdServer::ProfilingCommons
         {
           rocksdb_path += rocksdb_path_suffix;
         }
-        ReferenceCounting::SmartPtr<RocksDBMap> rocksdb_map =
-          new RocksDBMap(
-            processor,
-            String::SubString(rocksdb_path.c_str()),
-            profile_map_traits.expire_time,
-            128,
-            Generics::Time::ZERO,
-            disable_wal);
 
-        ReferenceCounting::SmartPtr<
-          AdServer::ProfilingCommons::TransactionProfileMap<KeyType> > base_map =
-            new TransactionProfileMap<KeyType>(rocksdb_map.in(), max_waiters);
+        auto profile_map = open_rocksdb_map<KeyType, KeyAccessorStringAdapter<KeyAccessorType>>(
+          String::SubString(rocksdb_path),
+          profile_map_traits,
+          max_waiters,
+          disable_wal,
+          workers_count,
+          processor);
 
-        composite_active_object->add_child_object(rocksdb_map.in());
-        chunks.insert(std::make_pair(chunk_folder_it->first, base_map));
+        chunks.emplace(chunk_folder_it->first, profile_map.first);
+        composite_active_object->add_child_object(profile_map.second);
       }
 
       Generics::ActiveObject_var active_object = composite_active_object;

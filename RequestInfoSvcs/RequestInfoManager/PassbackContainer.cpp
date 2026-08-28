@@ -2,10 +2,11 @@
  * @file PassbackContainer.cpp
  */
 #include <eh/Exception.hpp>
+#include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/PassbackProfile.hpp>
 
 #include "PassbackContainer.hpp"
-#include "RocksDBProfileMapUtils.hpp"
 
 namespace Aspect
 {
@@ -37,11 +38,17 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      auto passback_map = open_rocksdb_transaction_profile_map<
+      auto passback_map = ProfilingCommons::ProfileMapFactory::open_rocksdb_map<
         RequestIdTransactionHashAdapter,
-        RequestIdToString>(passback_rocksdb_path, expire_time_, std::move(rocksdb_processor));
-      passback_map_ = passback_map.map;
-      add_child_object(passback_map.active_object);
+        ProfilingCommons::KeyAccessorStringAdapter<ProfilingCommons::RequestIdAccessor>>(
+          String::SubString(passback_rocksdb_path),
+          ProfilingCommons::ProfileMapFactory::ProfileMapTraits(expire_time_),
+          0,
+          false,
+          2,
+          std::move(rocksdb_processor));
+      passback_map_ = passback_map.first;
+      add_child_object(passback_map.second);
     }
     catch(const eh::Exception& ex)
     {
