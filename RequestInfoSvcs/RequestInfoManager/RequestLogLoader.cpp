@@ -466,9 +466,7 @@ namespace AdServer::RequestInfoSvcs
         tasks.rethrow_exception();
       }
 
-      tasks.start(
-        sequence,
-        co_process_record(processing_executor_pool_, process_fun_, *it));
+      tasks.start(sequence, co_process_record(processing_executor_pool_, process_fun_, *it));
     }
 
     commit_completed(tasks.drain());

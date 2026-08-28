@@ -20,20 +20,15 @@ namespace AdServer::Commons
 
     ~OrderedAsyncTaskWindow();
 
-    void
-    start(std::size_t sequence, StartableAwaitable<void> operation);
+    void start(std::size_t sequence, StartableAwaitable<void> operation);
 
-    bool
-    full() const;
+    bool full() const;
 
-    std::size_t
-    wait_progress();
+    std::size_t wait_progress();
 
-    std::size_t
-    drain();
+    std::size_t drain();
 
-    void
-    rethrow_exception();
+    void rethrow_exception();
 
   private:
     struct State;

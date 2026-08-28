@@ -28,15 +28,13 @@ namespace
         : state_(std::move(state))
       {}
 
-      bool
-      await_ready() const noexcept
+      bool await_ready() const noexcept
       {
         std::lock_guard<std::mutex> guard(state_->lock);
         return state_->ready;
       }
 
-      bool
-      await_suspend(std::coroutine_handle<> handle) noexcept
+      bool await_suspend(std::coroutine_handle<> handle) noexcept
       {
         std::lock_guard<std::mutex> guard(state_->lock);
         if (state_->ready)
@@ -48,8 +46,7 @@ namespace
         return true;
       }
 
-      void
-      await_resume() const noexcept
+      void await_resume() const noexcept
       {}
 
     private:
@@ -60,14 +57,12 @@ namespace
       : state_(std::make_shared<State>())
     {}
 
-    Awaiter
-    wait() const
+    Awaiter wait() const
     {
       return Awaiter(state_);
     }
 
-    void
-    set()
+    void set()
     {
       std::coroutine_handle<> waiter;
       {
@@ -96,8 +91,7 @@ namespace
     }
   }
 
-  bool
-  check_equal(std::size_t actual, std::size_t expected, const char* message)
+  bool check_equal(std::size_t actual, std::size_t expected, const char* message)
   {
     if (actual == expected)
     {
@@ -109,8 +103,7 @@ namespace
   }
 }
 
-int
-main()
+int main()
 {
   {
     AdServer::Commons::OrderedAsyncTaskWindow window(10, 4, 25);

@@ -2166,8 +2166,7 @@ def generate_model_(config, in_progress_model):
       dir=str(work_dir),
       prefix='ctr-model-cycle.') as cycle_dir_name:
     cycle_dir = pathlib.Path(cycle_dir_name)
-    common_dropped_feature_indexes_file = (
-      cycle_dir / 'RImpressionTrain.feature-indexes.dropped')
+    common_dropped_feature_indexes_file = cycle_dir / 'RImpressionTrain.feature-indexes.dropped'
     selection_validation_files, _ = prepare_validation_libsvm_sets(
       exporter,
       cycle_dir,
@@ -2214,8 +2213,7 @@ def generate_model_(config, in_progress_model):
       fit_steps=config.selection_fit_steps,
       on_fit_start=selection_fit_start,
       on_fit_end=selection_fit_end)
-    with in_progress_model.train_step(
-        'prepare', 'deduplicate_feature_indexes'):
+    with in_progress_model.train_step('prepare', 'deduplicate_feature_indexes'):
       feature_indexes = deduplicate_feature_indexes(
         selection_validation_files,
         feature_indexes,
@@ -2539,14 +2537,12 @@ def generate_model_(config, in_progress_model):
       fit_steps=ssp_ctr_selection_fit_steps,
       on_fit_start=ssp_ctr_selection_fit_start,
       on_fit_end=ssp_ctr_selection_fit_end)
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'deduplicate_feature_indexes'):
+    with in_progress_model.train_step('common_ssp_ctr', 'deduplicate_feature_indexes'):
       ssp_ctr_feature_indexes = deduplicate_feature_indexes(
         ssp_ctr_selection_validation_files,
         ssp_ctr_feature_indexes,
         cycle_dir,
-        dropped_features_file=(
-          cycle_dir / 'RImpressionTrain.ssp-ctr.feature-indexes.dropped'))
+        dropped_features_file=cycle_dir / 'RImpressionTrain.ssp-ctr.feature-indexes.dropped')
     with in_progress_model.train_step(
         'common_ssp_ctr', 'save_feature_indexes'):
       with ssp_ctr_feature_indexes_file.open('w') as output_file:
@@ -2782,16 +2778,13 @@ def generate_model_(config, in_progress_model):
             fit_steps=campaign_selection_fit_steps,
             on_fit_start=selection_fit_start,
             on_fit_end=selection_fit_end))
-        with in_progress_model.train_step(
-            campaign_model_name, 'deduplicate_feature_indexes'):
+        with in_progress_model.train_step(campaign_model_name, 'deduplicate_feature_indexes'):
           campaign_feature_indexes = deduplicate_feature_indexes(
             (svm_file for svm_file, _ in campaign_selection_validation_inputs),
             campaign_feature_indexes,
             cycle_dir,
-            dropped_features_file=(
-              cycle_dir / (
-                'campaign-' + str(campaign_id) +
-                '.feature-indexes.dropped')),
+            dropped_features_file=cycle_dir / (
+              'campaign-' + str(campaign_id) + '.feature-indexes.dropped'),
             early_dropped_features_file=common_dropped_feature_indexes_file)
         campaign_feature_indexes_file = cycle_dir / (
           'campaign-' + str(campaign_id) + '.feature-indexes')

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -23,8 +24,7 @@ namespace
   const std::uint64_t HASH_SEED_2 = 0x13198a2e03707344ULL;
 }
 
-Application_::FeatureIndexes
-Application_::read_feature_indexes_(const char* file_name)
+Application_::FeatureIndexes Application_::read_feature_indexes_(const char* file_name)
 {
   std::ifstream input(file_name);
   if (!input)
@@ -43,6 +43,7 @@ Application_::read_feature_indexes_(const char* file_name)
     {
       continue;
     }
+
     const auto last = line.find_last_not_of(" \t\r");
     const std::string value = line.substr(first, last - first + 1);
     std::uint32_t index = 0;
@@ -53,13 +54,14 @@ Application_::read_feature_indexes_(const char* file_name)
       ostr << "Invalid feature index '" << value << "' in '" << file_name << "'";
       throw Exception(ostr);
     }
+
     result.insert(index);
   }
+
   return result;
 }
 
-std::uint32_t
-Application_::parse_index_(const std::string& token)
+std::uint32_t Application_::parse_index_(const std::string& token)
 {
   const auto separator = token.find(':');
   if (separator == std::string::npos || separator == 0)
@@ -68,6 +70,7 @@ Application_::parse_index_(const std::string& token)
     ostr << "Invalid LibSVM feature token '" << token << "'";
     throw Exception(ostr);
   }
+
   const std::string value = token.substr(0, separator);
   std::uint32_t index = 0;
   const auto parsed = std::from_chars(value.data(), value.data() + value.size(), index);
@@ -77,11 +80,11 @@ Application_::parse_index_(const std::string& token)
     ostr << "Invalid LibSVM feature index '" << value << "'";
     throw Exception(ostr);
   }
+
   return index;
 }
 
-std::uint32_t
-Application_::parse_value_bits_(const std::string& token)
+std::uint32_t Application_::parse_value_bits_(const std::string& token)
 {
   const auto separator = token.find(':');
   const std::string value = token.substr(separator + 1);
@@ -94,17 +97,18 @@ Application_::parse_value_bits_(const std::string& token)
     ostr << "Invalid LibSVM feature value '" << value << "'";
     throw Exception(ostr);
   }
+
   if (parsed == 0.0F)
   {
     return 0;
   }
+
   std::uint32_t bits = 0;
   std::memcpy(&bits, &parsed, sizeof(bits));
   return bits;
 }
 
-std::uint64_t
-Application_::mix_(std::uint64_t value) noexcept
+std::uint64_t Application_::mix_(std::uint64_t value) noexcept
 {
   value ^= value >> 30;
   value *= 0xbf58476d1ce4e5b9ULL;
@@ -176,6 +180,7 @@ Application_::calculate_fingerprints_(
     {
       continue;
     }
+
     const auto values = parse_row_(line, feature_indexes);
     for (const auto& item : values)
     {
@@ -184,8 +189,10 @@ Application_::calculate_fingerprints_(
         update_fingerprint_(states[item.first], rows, item.second);
       }
     }
+
     ++rows;
   }
+
   for (auto& item : states)
   {
     item.second.fingerprint.first = mix_(item.second.fingerprint.first ^ rows);
@@ -256,12 +263,14 @@ Application_::verify_groups_and_choose_dropped_(
         break;
       }
     }
+
     if (canonical == 0)
     {
       // choose_dropped_features_ always leaves one representative for a
       // duplicate group, but keep this guard if that policy changes later.
       continue;
     }
+
     for (const unsigned long index : group_item.second)
     {
       canonical_by_member[index] = canonical;
@@ -288,6 +297,7 @@ Application_::verify_groups_and_choose_dropped_(
     {
       continue;
     }
+
     const auto values = parse_row_(line, verification_indexes);
     for (auto& item : equal)
     {
@@ -305,19 +315,21 @@ Application_::verify_groups_and_choose_dropped_(
         dropped.erase(item.first);
       }
     }
+
     ++current_row;
   }
+
   if (current_row != rows)
   {
     Stream::Error ostr;
     ostr << "LibSVM row count changed between passes: " << current_row << " != " << rows;
     throw Exception(ostr);
   }
+
   return dropped;
 }
 
-void
-Application_::write_feature_indexes_(const char* file_name, const FeatureIndexes& indexes)
+void Application_::write_feature_indexes_(const char* file_name, const FeatureIndexes& indexes)
 {
   std::ofstream output(file_name);
   if (!output)
@@ -326,24 +338,24 @@ Application_::write_feature_indexes_(const char* file_name, const FeatureIndexes
     ostr << "Can't open output feature indexes file '" << file_name << "'";
     throw Exception(ostr);
   }
+
   for (const unsigned long index : indexes)
   {
     output << index << '\n';
   }
 }
 
-void
-Application_::write_dropped_features_(const char* file_name, const FeatureIndexes& indexes)
+void Application_::write_dropped_features_(const char* file_name, const FeatureIndexes& indexes)
 {
   if (file_name == nullptr || file_name[0] == '\0')
   {
     return;
   }
+
   write_feature_indexes_(file_name, indexes);
 }
 
-void
-Application_::main(int& argc, char** argv)
+void Application_::main(int& argc, char** argv)
 {
   Generics::AppUtils::CheckOption opt_help;
   Generics::AppUtils::StringOption opt_svm_file;
@@ -370,6 +382,7 @@ Application_::main(int& argc, char** argv)
     std::cout << USAGE << std::endl;
     return;
   }
+
   if (!opt_svm_file.installed() || opt_svm_file->empty() ||
       !opt_feature_indexes_file.installed() ||
       opt_feature_indexes_file->empty())
@@ -409,6 +422,7 @@ Application_::main(int& argc, char** argv)
   {
     kept.erase(index);
   }
+
   if (opt_output_feature_indexes_file.installed() && !opt_output_feature_indexes_file->empty())
   {
     write_feature_indexes_(opt_output_feature_indexes_file->c_str(), kept);
@@ -420,6 +434,7 @@ Application_::main(int& argc, char** argv)
       std::cout << index << '\n';
     }
   }
+
   write_dropped_features_(
     opt_dropped_features_file.installed() &&
     !opt_dropped_features_file->empty()
@@ -439,5 +454,6 @@ int main(int argc, char** argv)
     std::cerr << ex.what() << std::endl;
     return 1;
   }
+
   return 0;
 }

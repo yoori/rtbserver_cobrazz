@@ -348,20 +348,16 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         self.assertTrue(check)
         self.assertEqual('FeatureDeduplicator', command[0])
         calls.append(command)
-        source_path = pathlib.Path(
-          command[command.index('--svm-file') + 1])
+        source_path = pathlib.Path(command[command.index('--svm-file') + 1])
         self.assertEqual(
           '0 1:1 2:1\n1 1:2 2:2 3:1\n',
           source_path.read_text())
-        indexes_path = pathlib.Path(
-          command[command.index('--feature-indexes-file') + 1])
+        indexes_path = pathlib.Path(command[command.index('--feature-indexes-file') + 1])
         self.assertEqual('1\n2\n3\n', indexes_path.read_text())
         pathlib.Path(
           command[command.index('--output-feature-indexes-file') + 1]
         ).write_text('1\n3\n')
-        pathlib.Path(
-          command[command.index('--dropped-features-file') + 1]
-        ).write_text('2\n')
+        pathlib.Path(command[command.index('--dropped-features-file') + 1]).write_text('2\n')
 
       with unittest.mock.patch.object(
           TRAINER_MODULE.subprocess,

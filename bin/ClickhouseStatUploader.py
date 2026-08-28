@@ -82,7 +82,7 @@ R_GEO_CREATE_TABLE_QUERY = (
   "region String, "
   "city String"
   ") ENGINE = ReplacingMergeTree "
-  "ORDER BY (date, ip, source)"
+  "ORDER BY (date, ip, source, type, country, region, city)"
 )
 
 

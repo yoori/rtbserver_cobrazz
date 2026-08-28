@@ -11,10 +11,7 @@ namespace AdServer::Commons
 {
   struct OrderedAsyncTaskWindow::State
   {
-    State(
-      std::size_t first_sequence,
-      std::size_t window_size,
-      unsigned int wake_percent)
+    State(std::size_t first_sequence, std::size_t window_size, unsigned int wake_percent)
       : completed(window_size),
         committed(first_sequence),
         started(first_sequence),
@@ -47,10 +44,7 @@ namespace AdServer::Commons
     state_->cond.wait(lock, [this] { return state_->in_flight == 0; });
   }
 
-  void
-  OrderedAsyncTaskWindow::start(
-    std::size_t sequence,
-    StartableAwaitable<void> operation)
+  void OrderedAsyncTaskWindow::start(std::size_t sequence, StartableAwaitable<void> operation)
   {
     {
       std::lock_guard<std::mutex> guard(state_->lock);
@@ -92,15 +86,13 @@ namespace AdServer::Commons
       });
   }
 
-  bool
-  OrderedAsyncTaskWindow::full() const
+  bool OrderedAsyncTaskWindow::full() const
   {
     std::lock_guard<std::mutex> guard(state_->lock);
     return state_->started - state_->committed >= window_size_;
   }
 
-  std::size_t
-  OrderedAsyncTaskWindow::wait_progress()
+  std::size_t OrderedAsyncTaskWindow::wait_progress()
   {
     std::unique_lock<std::mutex> lock(state_->lock);
     state_->cond.wait(
@@ -120,16 +112,14 @@ namespace AdServer::Commons
     return state_->committed;
   }
 
-  std::size_t
-  OrderedAsyncTaskWindow::drain()
+  std::size_t OrderedAsyncTaskWindow::drain()
   {
     std::unique_lock<std::mutex> lock(state_->lock);
     state_->cond.wait(lock, [this] { return state_->in_flight == 0; });
     return state_->committed;
   }
 
-  void
-  OrderedAsyncTaskWindow::rethrow_exception()
+  void OrderedAsyncTaskWindow::rethrow_exception()
   {
     std::optional<std::exception_ptr> exception;
     {
