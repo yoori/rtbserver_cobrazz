@@ -122,12 +122,11 @@ namespace AdServer::RequestInfoSvcs
   template<typename LogTraitsType>
   class CampaignReachLoggerAdapter:
     public CampaignReachLoggerBase,
-    public AdServer::LogProcessing::LogHolderPool<LogTraitsType>,
+    public AdServer::LogProcessing::LogHolderSharded<LogTraitsType>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef AdServer::LogProcessing::LogHolderPool<LogTraitsType>
-      LogHolder;
+    using LogHolder = AdServer::LogProcessing::LogHolderSharded<LogTraitsType>;
 
     CampaignReachLoggerAdapter(
       const LogProcessing::LogFlushTraits& flush_traits,
@@ -200,13 +199,15 @@ namespace AdServer::RequestInfoSvcs
   template<typename LogTraitsType>
   class RequestLoggerAdapter:
     public RequestLoggerBase,
-    public AdServer::LogProcessing::LogHolderPool<LogTraitsType>,
+    public AdServer::LogProcessing::LogHolderSharded<LogTraitsType>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using LogHolder = AdServer::LogProcessing::LogHolderSharded<LogTraitsType>;
+
     RequestLoggerAdapter(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<LogTraitsType>(flush_traits)
+      : LogHolder(flush_traits)
     {}
 
     virtual const char* name() noexcept = 0;
@@ -355,14 +356,12 @@ namespace AdServer::RequestInfoSvcs
    * UserPropertiesLogger
    */
   class UserPropertiesLogger:
-    public RequestLoggerAdapter<
-      AdServer::LogProcessing::UserPropertiesTraits>
+    public RequestLoggerAdapter<AdServer::LogProcessing::UserPropertiesTraits>
   {
   public:
     UserPropertiesLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : RequestLoggerAdapter<
-          AdServer::LogProcessing::UserPropertiesTraits>(flush_traits),
+      : RequestLoggerAdapter<AdServer::LogProcessing::UserPropertiesTraits>(flush_traits),
         STAT_UNVERIFIED_IMP_ONE_(0, 0, 1 /*imps_unverified*/, 0, 0, 0),
         STAT_VERIFIED_IMP_ONE_(0, 0, 0, 1 /*imps_verified*/, 0, 0),
         STAT_CLICK_ONE_(0, 0, 0, 0, 1, 0),
@@ -1494,14 +1493,14 @@ namespace AdServer::RequestInfoSvcs
   /** PassbackStatLogger */
   class PassbackStatLogger:
     public virtual PassbackProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPool<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::PassbackStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
     PassbackStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::PassbackStatTraits>(flush_traits)
     {}
 
@@ -1543,14 +1542,14 @@ namespace AdServer::RequestInfoSvcs
    */
   class SiteUserStatLogger:
     public virtual SiteReachLoggerBase,
-    public virtual AdServer::LogProcessing::LogHolderPool<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::SiteUserStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
     SiteUserStatLogger(const LogProcessing::LogFlushTraits& flush_traits, unsigned long colo_id)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::SiteUserStatTraits>(flush_traits),
         colo_id_(colo_id)
     {}
@@ -2345,14 +2344,14 @@ namespace AdServer::RequestInfoSvcs
    */
   class PageLoadsDailyStatLogger:
     public virtual TagRequestGroupProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPool<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::PageLoadsDailyStatTraits>,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
     PageLoadsDailyStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::PageLoadsDailyStatTraits>(flush_traits),
         ONE_PAGE_LOAD_(1, 0),
         ONE_PAGE_LOAD_ROLLBACK_(-1, 0),

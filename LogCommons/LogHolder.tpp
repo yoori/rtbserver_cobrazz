@@ -480,312 +480,17 @@ namespace AdServer::LogProcessing
   }
 
   template<typename LogTraitsType, typename SavePolicy>
-  class LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder:
-    public Generics::Last<ReferenceCounting::AtomicImpl>
-  {
-  public:
-    ContainerHolder();
-
-    void
-    get_object(LogHolderList& holders);
-
-    void
-    release_object(LogHolderList& holders);
-
-    bool
-    empty() const;
-
-    LogHolderPoolObject_var
-    collect();
-
-  protected:
-    virtual ~ContainerHolder() noexcept;
-
-  protected:
-    typedef Sync::Policy::PosixThread SyncPolicy;
-
-    _Atomic_word index_;
-    SyncPolicy::Mutex lock_;
-    LogHolderList holders_;
-  };
-
-  template<typename LogTraitsType, typename SavePolicy>
-  struct LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject:
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    typedef typename LogTraitsType::CollectorType CollectorT;
-
-    LogHolderPoolObject(int index_val);
-
-    const int index;
-    CollectorT collector;
-
-  protected:
-    virtual ~LogHolderPoolObject() noexcept;
-  };
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::
-  ContainerHolder()
-    : index_(0)
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  bool
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::empty() const
-  {
-    return holders_.empty();
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::
-  ~ContainerHolder() noexcept = default;
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject::
-  LogHolderPoolObject(int index_val)
-    : index(index_val)
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject::
-  ~LogHolderPoolObject() noexcept = default;
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::PoolObjectBase::PoolObjectBase(
-    const ContainerHolder_var& container_holder)
-    : container_holder_(container_holder)
-  {
-    container_holder_->get_object(holders_);
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::PoolObjectBase::
-  ~PoolObjectBase() noexcept
-  {
-    try
-    {
-      container_holder_->release_object(holders_);
-    }
-    catch (const eh::Exception& e)
-    {
-      std::cerr << "PoolObjectBase::~PoolObjectBase<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << e.what() << std::endl;
-    }
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  inline
-  void
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::get_object(
-    typename LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderList& holders)
-  {
-    {
-      SyncPolicy::WriteGuard guard(lock_);
-      if (!holders_.empty())
-      {
-        holders.splice(holders.begin(), holders_, holders_.begin());
-      }
-    }
-
-    if (holders.empty())
-    {
-      int index = __gnu_cxx::__exchange_and_add(&index_, 1);
-      holders.push_back(new LogHolderPoolObject(index));
-    }
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  inline
-  void
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::release_object(
-    typename LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderList& holders)
-  {
-    int index = (*holders.begin())->index;
-
-    {
-      SyncPolicy::WriteGuard guard(lock_);
-
-      auto it = holders_.begin();
-      auto it_end = holders_.end();
-
-      while (it != it_end && (*it)->index < index)
-      {
-        ++it;
-      }
-
-      holders_.splice(it, holders);
-    }
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  inline
-  typename LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject_var
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder::collect()
-  {
-    typename LogHolderList::iterator it = holders_.begin();
-    typename LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolObject_var& collector = *it;
-
-    while (++it != holders_.end())
-    {
-      collector->collector.merge(std::move((*it)->collector));
-      (*it)->collector.clear();
-    }
-
-    return collector;
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::LogHolderPoolBase(
-    const LogFlushTraits& flush_traits,
-    const SavePolicy& save_policy)
-    /*throw(eh::Exception)*/
-    : flush_traits_(flush_traits),
-      save_policy_(save_policy),
-      container_holder_(new ContainerHolder())
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::~LogHolderPoolBase() noexcept
-  {
-    try
-    {
-      if (!container_holder_->empty())
-      {
-        LogHolderPoolObject_var collector = container_holder_->collect();
-        save_log(flush_traits_, save_policy_, collector->collector);
-      }
-    }
-    catch (const eh::Exception& ex)
-    {
-      std::cerr << "LogHolderPoolBase::~LogHolderPoolBase<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "eh::Exception caught: " << ex.what() << std::endl;
-    }
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  Generics::Time
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::flush_if_required(const Generics::Time& now)
-    /*throw(eh::Exception)*/
-  {
-    try
-    {
-      ContainerHolder_var container_holder(new ContainerHolder());
-
-      {
-        SyncPolicy::WriteGuard guard(lock_);
-
-        if (flush_time_ + flush_traits_.period > now)
-        {
-          return flush_time_ + flush_traits_.period;
-        }
-
-        container_holder_.swap(container_holder);
-        flush_time_ = now;
-      }
-
-      LastContainerHolder_var last_container_holder(container_holder.retn());
-      if (last_container_holder->empty())
-      {
-        return now + flush_traits_.period;
-      }
-
-      LogHolderPoolObject_var collector = last_container_holder->collect();
-
-      if (flush_traits_.out_dir.empty())
-      {
-        return Generics::Time::ZERO;
-      }
-
-      save_log(flush_traits_, save_policy_, collector->collector);
-
-      return now + flush_traits_.period;
-    }
-    catch (const AdServer::LogProcessing::LogSaver::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << "LogHolderPoolBase::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " <<
-        "AdServer::LogProcessing::LogSaver::Exception caught: " << ex.what();
-      throw Exception(ostr);
-    }
-    catch (const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << "LogHolderPoolBase::flush_if_required<'" <<
-        LogTraitsType::log_base_name() << "'>(): " << "eh::Exception caught: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  inline
-  typename LogHolderPoolBase<LogTraitsType, SavePolicy>::ContainerHolder_var
-  LogHolderPoolBase<LogTraitsType, SavePolicy>::get_container_holder_() const /*throw(eh::Exception)*/
-  {
-    typename SyncPolicy::ReadGuard guard(this->lock_);
-    return this->container_holder_;
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  template<typename... Args>
-  void
-  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::add_record(Args&&... args)
-  {
-    (*this->holders_.begin())->collector.add(std::forward<Args>(args)...);
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::PoolObject(
-    const typename Base::ContainerHolder_var& container_holder)
-    : Base::PoolObjectBase(container_holder)
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPool<LogTraitsType, SavePolicy>::PoolObject::~PoolObject() noexcept = default;
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPool<LogTraitsType, SavePolicy>::LogHolderPool(
-    const LogFlushTraits& flush_traits,
-    const SavePolicy& save_policy)
-    /*throw(eh::Exception)*/
-    : LogHolderPoolBase<LogTraitsType, SavePolicy>(flush_traits, save_policy)
-  {}
-
-  template<typename LogTraitsType, typename SavePolicy>
-  template<typename... Args>
-  void
-  LogHolderPool<LogTraitsType, SavePolicy>::add_record(Args&&... args)
-  {
-    PoolObject_var pool_object = get_object();
-    pool_object->add_record(std::forward<Args>(args)...);
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  typename LogHolderPool<LogTraitsType, SavePolicy>::PoolObject_var
-  LogHolderPool<LogTraitsType, SavePolicy>::get_object()
-  {
-    return new PoolObject(this->get_container_holder_());
-  }
-
-  template<typename LogTraitsType, typename SavePolicy>
-  LogHolderPool<LogTraitsType, SavePolicy>::~LogHolderPool() noexcept = default;
-
-  template<typename LogTraitsType, typename SavePolicy>
   LogHolderSharded<LogTraitsType, SavePolicy>::LogHolderSharded(
     const LogFlushTraits& flush_traits,
     const SavePolicy& save_policy,
-    unsigned long pool_shards)
+    unsigned long shards_count)
     /*throw(eh::Exception)*/
     : flush_traits_(flush_traits),
       save_policy_(save_policy)
   {
-    const unsigned long shards_count = pool_shards ? pool_shards : 1;
-    shards_.reserve(shards_count);
-    for (unsigned long i = 0; i < shards_count; ++i)
+    const unsigned long actual_shards_count = shards_count ? shards_count : 1;
+    shards_.reserve(actual_shards_count);
+    for (unsigned long i = 0; i < actual_shards_count; ++i)
     {
       shards_.emplace_back(std::make_shared<Shard>());
     }
@@ -799,6 +504,16 @@ namespace AdServer::LogProcessing
     Shard_var shard = get_shard_();
     std::lock_guard<std::mutex> guard(shard->lock);
     shard->collector.add(std::forward<Args>(args)...);
+  }
+
+  template<typename LogTraitsType, typename SavePolicy>
+  template<typename Function>
+  void
+  LogHolderSharded<LogTraitsType, SavePolicy>::add_records(Function&& function)
+  {
+    Shard_var shard = get_shard_();
+    std::lock_guard<std::mutex> guard(shard->lock);
+    std::forward<Function>(function)(shard->collector);
   }
 
   template<typename LogTraitsType, typename SavePolicy>

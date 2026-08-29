@@ -152,20 +152,19 @@ namespace AdServer::RequestInfoSvcs
     template <typename LogProcessingTraits>
     class ColoUserStatLoggerT:
       public virtual ColoReachProcessor,
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         LogProcessingTraits>
     {
     protected:
-      typedef AdServer::LogProcessing::LogHolderPool<
-        LogProcessingTraits> Base;
-      typedef typename Base::CollectorT CollectorT;
+      using Base = AdServer::LogProcessing::LogHolderSharded<LogProcessingTraits>;
+      using CollectorT = typename Base::CollectorT;
       typedef typename CollectorT::DataT DataT;
       typedef typename DataT::KeyT KeyT;
 
     public:
       ColoUserStatLoggerT(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(LoggerException)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             LogProcessingTraits>(flush_traits)
       {}
 

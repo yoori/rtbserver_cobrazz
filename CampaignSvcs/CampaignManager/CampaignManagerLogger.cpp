@@ -580,7 +580,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** RequestBasicChannelsLogger */
-    class RequestBasicChannelsLogger: public virtual AdServer::LogProcessing::LogHolderPool<
+    class RequestBasicChannelsLogger: public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::RequestBasicChannelsTraits,
       AdServer::LogProcessing::DistributionSavePolicy<
         AdServer::LogProcessing::RequestBasicChannelsTraits>>
@@ -590,7 +590,7 @@ namespace AdServer::CampaignSvcs
 
       RequestBasicChannelsLogger(const RequestBasicChannelsFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::RequestBasicChannelsTraits,
             AdServer::LogProcessing::DistributionSavePolicy<
               AdServer::LogProcessing::RequestBasicChannelsTraits> >(
@@ -649,7 +649,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** WebStatLogger */
-    class WebStatLogger: public AdServer::LogProcessing::LogHolderPool<
+    class WebStatLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::WebStatTraits>
     {
     public:
@@ -657,7 +657,7 @@ namespace AdServer::CampaignSvcs
 
       WebStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::WebStatTraits>(flush_traits)
       {}
 
@@ -696,7 +696,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** CreativeStatLogger */
-    class CreativeStatLogger: public virtual AdServer::LogProcessing::LogHolderPool<
+    class CreativeStatLogger: public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::CreativeStatTraits>
     {
     public:
@@ -859,7 +859,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** ActionRequestLogger */
-    class ActionRequestLogger: public AdServer::LogProcessing::LogHolderPool<
+    class ActionRequestLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ActionRequestTraits>
     {
     public:
@@ -867,7 +867,7 @@ namespace AdServer::CampaignSvcs
 
       ActionRequestLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::ActionRequestTraits>(flush_traits)
       {}
 
@@ -906,7 +906,7 @@ namespace AdServer::CampaignSvcs
     };
 
     /** PassbackStatLogger */
-    class PassbackStatLogger: public AdServer::LogProcessing::LogHolderPool<
+    class PassbackStatLogger: public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::PassbackStatTraits>
     {
     public:
@@ -914,7 +914,7 @@ namespace AdServer::CampaignSvcs
 
       PassbackStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(eh::Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::PassbackStatTraits>(flush_traits)
       {}
 
@@ -967,7 +967,7 @@ namespace AdServer::CampaignSvcs
 
     /** TagPositionStatLogger */
     class TagPositionStatLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::TagPositionStatTraits>
     {
     public:
@@ -975,7 +975,7 @@ namespace AdServer::CampaignSvcs
 
       TagPositionStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::TagPositionStatTraits>(flush_traits),
           ONE_REQUEST_(1, 0, 0)
       {}
@@ -996,7 +996,7 @@ namespace AdServer::CampaignSvcs
 
     /** CcgStatLogger */
     class CcgStatLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::CcgStatTraits>
     {
     public:
@@ -1004,7 +1004,7 @@ namespace AdServer::CampaignSvcs
 
       CcgStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::CcgStatTraits>(flush_traits),
           STAT_LOST_AUCTION_ONE_(1)
       {}
@@ -1025,7 +1025,7 @@ namespace AdServer::CampaignSvcs
 
     /** CcStatLogger */
     class CcStatLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::CcStatTraits>
     {
     public:
@@ -1033,7 +1033,7 @@ namespace AdServer::CampaignSvcs
 
       CcStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::CcStatTraits>(flush_traits),
           STAT_LOST_AUCTION_ONE_(1)
       {}
@@ -1054,7 +1054,7 @@ namespace AdServer::CampaignSvcs
 
     /** SearchTermStatLogger */
     class SearchTermStatLogger:
-      public AdServer::LogProcessing::LogHolderPool<
+      public AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::SearchTermStatTraits>
     {
     public:
@@ -1062,7 +1062,7 @@ namespace AdServer::CampaignSvcs
 
       SearchTermStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::SearchTermStatTraits>(flush_traits),
           STAT_HITS_ONE_(1)
       {}
@@ -1088,7 +1088,7 @@ namespace AdServer::CampaignSvcs
 
     /** SearchEngineStatLogger */
     class SearchEngineStatLogger:
-      public AdServer::LogProcessing::LogHolderPool<
+      public AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::SearchEngineStatTraits>
     {
     public:
@@ -1096,7 +1096,7 @@ namespace AdServer::CampaignSvcs
 
       SearchEngineStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::SearchEngineStatTraits>(flush_traits),
           STAT_HITS_ONE_(1, 0),
           STAT_EMPTY_PAGE_HITS_ONE_(1, 1)
@@ -1124,7 +1124,7 @@ namespace AdServer::CampaignSvcs
 
     /** TagAuctionStatLogger */
     class TagAuctionStatLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::TagAuctionStatTraits>
     {
     public:
@@ -1132,7 +1132,7 @@ namespace AdServer::CampaignSvcs
 
       TagAuctionStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::TagAuctionStatTraits>(flush_traits),
           STAT_REQUEST_ONE_(1)
       {}
@@ -1183,7 +1183,7 @@ namespace AdServer::CampaignSvcs
 
     /** UserAgentStatLogger */
     class UserAgentStatLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::UserAgentStatTraits>
     {
     public:
@@ -1191,7 +1191,7 @@ namespace AdServer::CampaignSvcs
 
       UserAgentStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/
-        : AdServer::LogProcessing::LogHolderPool<
+        : AdServer::LogProcessing::LogHolderSharded<
             AdServer::LogProcessing::UserAgentStatTraits>(flush_traits)
       {}
 
@@ -1800,7 +1800,7 @@ namespace AdServer::CampaignSvcs
     CreativeStatLogger::CreativeStatLogger(
       const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(eh::Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::CreativeStatTraits>(flush_traits),
         THRESHOLD_ONE_(false, 1, 0),
         STAT_REQUESTS_INCREMENT_(

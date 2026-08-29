@@ -9,7 +9,7 @@ namespace AdServer::UserInfoSvcs
 {
   /** UserInfoManagerLogger::HistoryOptimizationStatLogger */
   class UserInfoManagerLogger::HistoryOptimizationStatLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelCountStatTraits>
   {
   public:
@@ -17,7 +17,7 @@ namespace AdServer::UserInfoSvcs
 
     HistoryOptimizationStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(Exception)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelCountStatTraits>(flush_traits)
     {}
 

@@ -12,7 +12,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Stream/MemoryStream.hpp>
 #include <Generics/Time.hpp>
-#include <Generics/LastPtr.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
@@ -176,98 +175,6 @@ namespace AdServer::LogProcessing
     LogHolderList child_log_holders_;
   };
 
-  template <
-    typename LogTraitsType,
-    typename SavePolicy = DefaultSavePolicy<LogTraitsType> >
-  class LogHolderPoolBase:
-    public virtual LogHolder,
-    public virtual ReferenceCounting::AtomicImpl
-  {
-  public:
-    virtual Generics::Time flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
-
-  protected:
-    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-    class ContainerHolder;
-    struct LogHolderPoolObject;
-
-    typedef ReferenceCounting::SmartPtr<ContainerHolder> ContainerHolder_var;
-    typedef Generics::LastPtr<ContainerHolder> LastContainerHolder_var;
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
-    typedef ReferenceCounting::SmartPtr<LogHolderPoolObject> LogHolderPoolObject_var;
-    typedef std::list<LogHolderPoolObject_var> LogHolderList;
-
-    class PoolObjectBase: public ReferenceCounting::AtomicImpl
-    {
-    protected:
-      PoolObjectBase(const ContainerHolder_var& container_holder);
-
-      virtual
-      ~PoolObjectBase() noexcept;
-
-      ContainerHolder_var container_holder_;
-      LogHolderList holders_;
-    };
-
-  protected:
-    LogHolderPoolBase(
-      const LogFlushTraits& flush_traits,
-      const SavePolicy& save_policy = SavePolicy())
-      /*throw(eh::Exception)*/;
-
-    virtual ~LogHolderPoolBase() noexcept;
-
-    ContainerHolder_var get_container_holder_() const /*throw(eh::Exception)*/;
-
-  protected:
-    const LogFlushTraits flush_traits_;
-    SavePolicy save_policy_;
-    mutable SyncPolicy::Mutex lock_;
-    ContainerHolder_var container_holder_;
-    Generics::Time flush_time_;
-  };
-
-  template <
-    typename LogTraitsType,
-    typename SavePolicy = DefaultSavePolicy<LogTraitsType> >
-  class LogHolderPool: public LogHolderPoolBase<LogTraitsType, SavePolicy>
-  {
-  public:
-    class PoolObject;
-
-    typedef typename LogTraitsType::CollectorType CollectorT;
-    typedef LogHolderPoolBase<LogTraitsType, SavePolicy> Base;
-    typedef ReferenceCounting::SmartPtr<PoolObject> PoolObject_var;
-
-    class PoolObject: public Base::PoolObjectBase
-    {
-    public:
-      template<typename... Args>
-      void
-      add_record(Args&&... args);
-
-    protected:
-      friend PoolObject_var LogHolderPool::get_object();
-
-      PoolObject(const typename Base::ContainerHolder_var& container_holder);
-
-      virtual
-      ~PoolObject() noexcept;
-    };
-
-    LogHolderPool(const LogFlushTraits& flush_traits, const SavePolicy& save_policy = SavePolicy())
-      /*throw(eh::Exception)*/;
-
-    template<typename... Args>
-    void add_record(Args&&... args);
-
-    PoolObject_var get_object();
-
-  protected:
-    virtual ~LogHolderPool() noexcept;
-  };
-
   // LogHolderPortioned
   template <
     typename LogTraitsType,
@@ -373,12 +280,16 @@ namespace AdServer::LogProcessing
     LogHolderSharded(
       const LogFlushTraits& flush_traits,
       const SavePolicy& save_policy = SavePolicy(),
-      unsigned long pool_shards = 16)
+      unsigned long shards_count = 16)
       /*throw(eh::Exception)*/;
 
     template<typename... Args>
     void
     add_record(Args&&... args);
+
+    template<typename Function>
+    void
+    add_records(Function&& function);
 
     Generics::Time
     flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;

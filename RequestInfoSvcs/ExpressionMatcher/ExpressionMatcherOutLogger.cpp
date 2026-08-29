@@ -36,7 +36,8 @@ namespace AdServer::RequestInfoSvcs
    * ExpressionMatcherOutLogger::ChannelInventoryLogger
    */
   class ExpressionMatcherOutLogger::ChannelInventoryLogger:
-    public AdServer::LogProcessing::LogHolderPool<AdServer::LogProcessing::ChannelInventoryTraits>
+    public AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::ChannelInventoryTraits>
   {
   public:
     typedef AdServer::LogProcessing::ChannelInventoryInnerKey ChannelInventoryInnerKey;
@@ -50,7 +51,7 @@ namespace AdServer::RequestInfoSvcs
       const RevenueDecimal& simple_factor,
       const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelInventoryTraits>(flush_traits),
         placement_colo_id_(placement_colo_id),
         users_simpl_factor_(simple_factor)
@@ -132,7 +133,7 @@ namespace AdServer::RequestInfoSvcs
    */
   template<bool SAMPLING_FLAG>
   class ExpressionMatcherOutLogger::ChannelImpInventoryLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelImpInventoryTraits>,
     public IProcessRequest
   {
@@ -266,7 +267,7 @@ namespace AdServer::RequestInfoSvcs
 
     void
     add_inv_typed_appear_record_(
-      PoolObject* pool_object,
+      CollectorT& collector,
       const LogProcessing::ChannelImpInventoryCollector::KeyT& ch_inv_key,
       const InventoryInfo::ChannelImpAppearInfo& appears,
       const OneUserAppearCounter<OneImpopUserAppearCounter>& one_impop_user_appear_counter,
@@ -277,7 +278,7 @@ namespace AdServer::RequestInfoSvcs
 
     void
     add_inv_typed_imps_record_(
-      PoolObject* pool_object,
+      CollectorT& collector,
       const LogProcessing::ChannelImpInventoryCollector::KeyT& ch_inv_key,
       const InventoryInfo::ChannelImpInfo& imps,
       const ImpChannelsCounter& imp_channel_counter,
@@ -290,13 +291,13 @@ namespace AdServer::RequestInfoSvcs
    * ChannelActivityLogger
    */
   class ExpressionMatcherOutLogger::ChannelActivityLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelInventoryTraits>
   {
   public:
     ChannelActivityLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelInventoryTraits>(flush_traits)
     {};
 
@@ -336,7 +337,7 @@ namespace AdServer::RequestInfoSvcs
    * ExpressionMatcherOutLogger::ChannelPriceRangeLogger
    */
   class ExpressionMatcherOutLogger::ChannelPriceRangeLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelPriceRangeTraits>
   {
   public:
@@ -442,7 +443,7 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::LogProcessing::LogFlushTraits& flush_traits,
       unsigned long placement_colo_id)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelPriceRangeTraits>(flush_traits),
         users_simpl_factor_(simplify_factor),
         double_users_simpl_factor_(static_cast<double>(
@@ -482,15 +483,17 @@ namespace AdServer::RequestInfoSvcs
           placement_colo_id_,
           InnerData(-double_users_simpl_factor_, 0));
 
-        PoolObject_var pool_object = get_object();
+        add_records(
+          [&](CollectorT& collector)
+          {
+            collector.add(
+              inv_info.placement_colo_time,
+              make_transform_range(inv_info.appear_channel_ecpms, appear_channel_counter));
 
-        pool_object->add_record(
-          inv_info.placement_colo_time,
-          make_transform_range(inv_info.appear_channel_ecpms, appear_channel_counter));
-
-        pool_object->add_record(
-          inv_info.placement_colo_time,
-          make_transform_range(inv_info.disappear_channel_ecpms, disappear_channel_counter));
+            collector.add(
+              inv_info.placement_colo_time,
+              make_transform_range(inv_info.disappear_channel_ecpms, disappear_channel_counter));
+          });
       }
 
       if (!inv_info.impop_channels.empty())
@@ -499,21 +502,23 @@ namespace AdServer::RequestInfoSvcs
           0,
           ulong_users_simpl_factor_); // FIXME: double_users_simpl_factor_ should be used
 
-        PoolObject_var pool_object = get_object();
+        add_records(
+          [&](CollectorT& collector)
+          {
+            for (auto size_it = inv_info.sizes.begin(); size_it != inv_info.sizes.end(); ++size_it)
+            {
+              const ChannelCounter channel_counter(
+                *size_it,
+                inv_info.country_code,
+                impop_ecpm,
+                inv_info.colo_id,
+                impop_inner_data);
 
-        for (auto size_it = inv_info.sizes.begin(); size_it != inv_info.sizes.end(); ++size_it)
-        {
-          const ChannelCounter channel_counter(
-            *size_it,
-            inv_info.country_code,
-            impop_ecpm,
-            inv_info.colo_id,
-            impop_inner_data);
-
-          pool_object->add_record(
-            inv_info.isp_time,
-            make_transform_range(inv_info.impop_channels, channel_counter));
-        }
+              collector.add(
+                inv_info.isp_time,
+                make_transform_range(inv_info.impop_channels, channel_counter));
+            }
+          });
       }
     }
 
@@ -538,7 +543,7 @@ namespace AdServer::RequestInfoSvcs
    */
   class ExpressionMatcherOutLogger::ChannelPerformanceLogger:
     public virtual MatchRequestProcessor,
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelPerformanceTraits>
   {
   private:
@@ -569,7 +574,7 @@ namespace AdServer::RequestInfoSvcs
       long users_simpl_factor,
       const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelPerformanceTraits>(flush_traits),
         STAT_REQUEST_ONE_(users_simpl_factor)
     {}
@@ -602,13 +607,13 @@ namespace AdServer::RequestInfoSvcs
    * ExpressionMatcherOutLogger::ChannelTriggerStatLogger
    */
   class ExpressionMatcherOutLogger::ChannelTriggerStatLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelTriggerStatTraits>
   {
   public:
     ChannelTriggerStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelTriggerStatTraits>(flush_traits)
     {}
 
@@ -635,13 +640,16 @@ namespace AdServer::RequestInfoSvcs
         return;
       }
 
-      PoolObject_var pool_object = get_object();
       const CollectorT::KeyT key(isp_time, colo_id);
 
-      add_hits_(pool_object.in(), key, 'U', url_triggers);
-      add_hits_(pool_object.in(), key, 'P', page_triggers);
-      add_hits_(pool_object.in(), key, 'S', search_triggers);
-      add_hits_(pool_object.in(), key, 'R', url_keyword_triggers);
+      add_records(
+        [&](CollectorT& collector)
+        {
+          add_hits_(collector, key, 'U', url_triggers);
+          add_hits_(collector, key, 'P', page_triggers);
+          add_hits_(collector, key, 'S', search_triggers);
+          add_hits_(collector, key, 'R', url_keyword_triggers);
+        });
     }
 
   protected:
@@ -670,7 +678,7 @@ namespace AdServer::RequestInfoSvcs
 
     static void
     add_hits_(
-      PoolObject* pool_object,
+      CollectorT& collector,
       const CollectorT::KeyT& key,
       char type,
       const AdServer::LogProcessing::RequestBasicChannelsInnerData::TriggerMatchArray& triggers)
@@ -678,7 +686,7 @@ namespace AdServer::RequestInfoSvcs
     {
       if (!triggers.empty())
       {
-        pool_object->add_record(key, make_transform_range(triggers, HitCounter(type)));
+        collector.add(key, make_transform_range(triggers, HitCounter(type)));
       }
     }
   };
@@ -687,13 +695,13 @@ namespace AdServer::RequestInfoSvcs
    * ExpressionMatcherOutLogger::ChannelHitStatLogger
    */
   class ExpressionMatcherOutLogger::ChannelHitStatLogger:
-    public AdServer::LogProcessing::LogHolderPool<
+    public AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelHitStatTraits>
   {
   public:
     ChannelHitStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits)
     {}
 
@@ -786,7 +794,7 @@ namespace AdServer::RequestInfoSvcs
    */
   class ExpressionMatcherOutLogger::ChannelTriggerImpLogger:
     public virtual TriggerActionProcessor,
-    public virtual AdServer::LogProcessing::LogHolderPool<
+    public virtual AdServer::LogProcessing::LogHolderSharded<
       AdServer::LogProcessing::ChannelTriggerImpStatTraits>
   {
   public:
@@ -794,7 +802,7 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::LogProcessing::LogFlushTraits& flush_traits,
       unsigned long colo_id)
       /*throw(LoggerException)*/
-      : AdServer::LogProcessing::LogHolderPool<
+      : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelTriggerImpStatTraits>(flush_traits),
         colo_id_(colo_id)
     {}
@@ -1065,7 +1073,7 @@ namespace AdServer::RequestInfoSvcs
     const RevenueDecimal& simplify_factor,
     const AdServer::LogProcessing::LogFlushTraits& flush_traits)
     /*throw(LoggerException)*/
-    : AdServer::LogProcessing::LogHolderPool<
+    : AdServer::LogProcessing::LogHolderSharded<
         AdServer::LogProcessing::ChannelImpInventoryTraits>(flush_traits),
       placement_colo_id_(placement_colo_id),
       DISPLAY_ONE_IMPOP_USER_APPEAR_COUNTER_(CCGType::DISPLAY, simplify_factor),
@@ -1090,61 +1098,63 @@ namespace AdServer::RequestInfoSvcs
     const InventoryInfo& inv_info)
     /*throw(eh::Exception)*/
   {
-    PoolObject_var pool_object = get_object();
+    add_records(
+      [&](CollectorT& collector)
+      {
+        if (!inv_info.display_appears.empty() || !inv_info.text_appears.empty())
+        {
+          // log user counters for placement colo id (colocation configuration)
+          const LogProcessing::ChannelImpInventoryCollector::KeyT ch_inv_key(
+            inv_info.placement_colo_time, placement_colo_id_);
 
-    if (!inv_info.display_appears.empty() || !inv_info.text_appears.empty())
-    {
-      // log user counters for placement colo id (colocation configuration)
-      const LogProcessing::ChannelImpInventoryCollector::KeyT ch_inv_key(
-        inv_info.placement_colo_time, placement_colo_id_);
+          add_inv_typed_appear_record_(
+            collector,
+            ch_inv_key,
+            inv_info.display_appears,
+            DISPLAY_ONE_IMPOP_USER_APPEAR_COUNTER_,
+            DISPLAY_ONE_IMP_USER_APPEAR_COUNTER_,
+            DISPLAY_ONE_IMP_OTHER_USER_APPEAR_COUNTER_,
+            DISPLAY_ONE_IMPOP_NO_IMP_USER_APPEAR_COUNTER_);
 
-      add_inv_typed_appear_record_(
-        pool_object,
-        ch_inv_key,
-        inv_info.display_appears,
-        DISPLAY_ONE_IMPOP_USER_APPEAR_COUNTER_,
-        DISPLAY_ONE_IMP_USER_APPEAR_COUNTER_,
-        DISPLAY_ONE_IMP_OTHER_USER_APPEAR_COUNTER_,
-        DISPLAY_ONE_IMPOP_NO_IMP_USER_APPEAR_COUNTER_);
+          add_inv_typed_appear_record_(
+            collector,
+            ch_inv_key,
+            inv_info.text_appears,
+            TEXT_ONE_IMPOP_USER_APPEAR_COUNTER_,
+            TEXT_ONE_IMP_USER_APPEAR_COUNTER_,
+            TEXT_ONE_IMP_OTHER_USER_APPEAR_COUNTER_,
+            TEXT_ONE_IMPOP_NO_IMP_USER_APPEAR_COUNTER_);
+        }
 
-      add_inv_typed_appear_record_(
-        pool_object,
-        ch_inv_key,
-        inv_info.text_appears,
-        TEXT_ONE_IMPOP_USER_APPEAR_COUNTER_,
-        TEXT_ONE_IMP_USER_APPEAR_COUNTER_,
-        TEXT_ONE_IMP_OTHER_USER_APPEAR_COUNTER_,
-        TEXT_ONE_IMPOP_NO_IMP_USER_APPEAR_COUNTER_);
-    }
+        if (!inv_info.display_imps.empty() || !inv_info.text_imps.empty())
+        {
+          // impressions for request defined colo id
+          const LogProcessing::ChannelImpInventoryCollector::KeyT ch_inv_key(
+            inv_info.isp_time, inv_info.colo_id);
 
-    if (!inv_info.display_imps.empty() || !inv_info.text_imps.empty())
-    {
-      // impressions for request defined colo id
-      const LogProcessing::ChannelImpInventoryCollector::KeyT ch_inv_key(
-        inv_info.isp_time, inv_info.colo_id);
+          add_inv_typed_imps_record_(
+            collector,
+            ch_inv_key,
+            inv_info.display_imps,
+            DISPLAY_IMP_CHANNEL_COUNTER_,
+            DISPLAY_IMP_OTHER_IMP_AND_REVENUE_COUNTER_,
+            DISPLAY_NO_IMPOPS_IMP_AND_REVENUE_COUNTER_);
 
-      add_inv_typed_imps_record_(
-        pool_object,
-        ch_inv_key,
-        inv_info.display_imps,
-        DISPLAY_IMP_CHANNEL_COUNTER_,
-        DISPLAY_IMP_OTHER_IMP_AND_REVENUE_COUNTER_,
-        DISPLAY_NO_IMPOPS_IMP_AND_REVENUE_COUNTER_);
-
-      add_inv_typed_imps_record_(
-        pool_object,
-        ch_inv_key,
-        inv_info.text_imps,
-        TEXT_IMP_CHANNEL_COUNTER_,
-        TEXT_IMP_OTHER_IMP_AND_REVENUE_COUNTER_,
-        TEXT_NO_IMPOPS_IMP_AND_REVENUE_COUNTER_);
-    }
+          add_inv_typed_imps_record_(
+            collector,
+            ch_inv_key,
+            inv_info.text_imps,
+            TEXT_IMP_CHANNEL_COUNTER_,
+            TEXT_IMP_OTHER_IMP_AND_REVENUE_COUNTER_,
+            TEXT_NO_IMPOPS_IMP_AND_REVENUE_COUNTER_);
+        }
+      });
   }
 
   template<bool SAMPLING_FLAG>
   void
   ExpressionMatcherOutLogger::ChannelImpInventoryLogger<SAMPLING_FLAG>::add_inv_typed_appear_record_(
-    PoolObject* pool_object,
+    CollectorT& collector,
     const LogProcessing::ChannelImpInventoryCollector::KeyT& ch_inv_key,
     const InventoryInfo::ChannelImpAppearInfo& appears,
     const OneUserAppearCounter<OneImpopUserAppearCounter>& one_impop_user_appear_counter,
@@ -1153,19 +1163,19 @@ namespace AdServer::RequestInfoSvcs
     const OneUserAppearCounter<OneImpopNoImpUserAppearCounter>& one_impop_no_imp_user_appear_counter) const
     /*throw(eh::Exception)*/
   {
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(appears.impop_appear_channels, one_impop_user_appear_counter));
 
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(appears.imp_appear_channels, one_imp_user_appear_counter));
 
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(appears.imp_other_appear_channels, one_imp_other_user_appear_counter));
 
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(
         appears.impop_no_imp_appear_channels,
@@ -1175,7 +1185,7 @@ namespace AdServer::RequestInfoSvcs
   template<bool SAMPLING_FLAG>
   void
   ExpressionMatcherOutLogger::ChannelImpInventoryLogger<SAMPLING_FLAG>::add_inv_typed_imps_record_(
-    PoolObject* pool_object,
+    CollectorT& collector,
     const LogProcessing::ChannelImpInventoryCollector::KeyT& ch_inv_key,
     const InventoryInfo::ChannelImpInfo& imps,
     const ImpChannelsCounter& imp_channel_counter,
@@ -1183,15 +1193,15 @@ namespace AdServer::RequestInfoSvcs
     const ChannelImpCounter<NoImpopsImpsAndRevenueCounter>& no_impops_imp_and_revenue_counter) const
     /*throw(eh::Exception)*/
   {
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(imps.imp_channels, imp_channel_counter));
 
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(imps.imp_other_channels, imp_other_imp_and_revenue_counter));
 
-    pool_object->add_record(
+    collector.add(
       ch_inv_key,
       make_transform_range(imps.impop_no_imp_channels, no_impops_imp_and_revenue_counter));
   }
