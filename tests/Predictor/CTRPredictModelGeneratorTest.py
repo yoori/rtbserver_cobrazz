@@ -227,6 +227,38 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       10,
       TRAINER_MODULE.scaled_fit_iterations(10, 30, 30))
 
+  def test_repeated_partitioned_chunks_restart_after_source_exhaustion(self):
+    class Exporter:
+      def __init__(self):
+        self.calls = 0
+
+      def export_partitioned_chunks(self, *args, **kwargs):
+        del args, kwargs
+        self.calls += 1
+        call = self.calls
+
+        def chunks():
+          yield 'chunk-' + str(call), call
+
+        return chunks()
+
+    exporter = Exporter()
+    repeated = TRAINER_MODULE.repeat_partitioned_chunks(
+      exporter,
+      pathlib.Path('/tmp'),
+      'training',
+      1,
+      1,
+      1,
+      'from',
+      'to')
+
+    self.assertEqual(
+      [('chunk-1', 1), ('chunk-2', 2), ('chunk-3', 3)],
+      [next(repeated), next(repeated), next(repeated)])
+    repeated.close()
+    self.assertEqual(3, exporter.calls)
+
   def test_campaign_correction_config_is_separate_and_campaign_conditioned(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       work_dir = pathlib.Path(temp_dir)

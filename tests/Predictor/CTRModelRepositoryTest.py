@@ -121,6 +121,19 @@ class CTRModelRepositoryTest(unittest.TestCase):
         interrupted['traits']['models'][0]['status'])
       self.assertEqual('20260823.120000', repository.latest_model_id())
 
+  def test_sorts_training_and_published_models_without_tilde_prefix(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = pathlib.Path(temp_dir)
+      self.create_model(root, '20260825.120000')
+      self.create_in_progress_model(root, '~20260824.155515', pid=os.getpid())
+
+      repository = CTRModelRepository(root)
+
+      self.assertEqual([
+        '20260825.120000',
+        '~20260824.155515',
+      ], repository.all_model_ids())
+
   def test_returns_properties_and_paginated_features(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       root = pathlib.Path(temp_dir)

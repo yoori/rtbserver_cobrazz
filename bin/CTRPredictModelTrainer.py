@@ -1152,6 +1152,60 @@ def remove_files(file_paths):
       pass
 
 
+def repeat_partitioned_chunks(
+    exporter,
+    output_dir,
+    file_prefix,
+    max_rows,
+    chunk_rows,
+    partition_count,
+    date_from,
+    date_to,
+    condition=None,
+    label='click',
+    order='DESC',
+):
+  """Stream the same bounded source repeatedly without retaining chunks.
+
+  ``export_partitioned_chunks`` removes each CSV after it is consumed.  This
+  wrapper starts a fresh export when one pass over the source is exhausted,
+  allowing the CatBoost fit loop to continue for its configured number of
+  steps even when the source contains fewer rows than one nominal training
+  window.
+  """
+  if max_rows <= 0:
+    raise ValueError('max_rows must be positive')
+  if chunk_rows <= 0:
+    raise ValueError('chunk_rows must be positive')
+  if partition_count <= 0:
+    raise ValueError('partition_count must be positive')
+
+  cycle = 0
+  while True:
+    chunks = exporter.export_partitioned_chunks(
+      output_dir,
+      file_prefix + '-cycle-' + str(cycle).zfill(3),
+      max_rows,
+      chunk_rows,
+      partition_count,
+      date_from,
+      date_to,
+      condition,
+      label=label,
+      order=order)
+    emitted = False
+    try:
+      for chunk in chunks:
+        emitted = True
+        yield chunk
+    finally:
+      chunks.close()
+    if not emitted:
+      raise RuntimeError(
+        'Partitioned export returned no rows while repeating training data')
+    cycle += 1
+
+
 def prepare_validation_libsvm_sets(
     exporter,
     work_dir,
@@ -2157,10 +2211,11 @@ def generate_model_(config, in_progress_model):
     available_ssp_ctr_training_rows,
     config.selection_chunk_rows,
     config.selection_fit_steps)
-  ssp_ctr_training_fit_steps = campaign_fit_steps(
+  ssp_ctr_training_source_steps = campaign_fit_steps(
     available_ssp_ctr_training_rows,
     config.main_chunk_rows,
     config.training_fit_steps)
+  ssp_ctr_training_fit_steps = config.training_fit_steps
   in_progress_model.publish_model_plan(
     [
       {
@@ -2213,10 +2268,7 @@ def generate_model_(config, in_progress_model):
               training_impressions,
               config.selection_chunk_rows,
               config.selection_fit_steps),
-            campaign_fit_steps(
-              training_impressions,
-              config.main_chunk_rows,
-              config.training_fit_steps)),
+            config.training_fit_steps),
           'eligible_training_impressions': training_impressions,
           'validation_impressions': validation_impressions,
         }
@@ -2266,7 +2318,7 @@ def generate_model_(config, in_progress_model):
     config.selection_chunk_rows * ssp_ctr_selection_fit_steps)
   ssp_ctr_training_rows = min(
     available_ssp_ctr_training_rows,
-    config.main_chunk_rows * ssp_ctr_training_fit_steps)
+    config.main_chunk_rows * ssp_ctr_training_source_steps)
   logger.info(
     'Using rows: selection=%d, training=%d, validation=%d x %d',
     selection_rows,
@@ -2315,7 +2367,8 @@ def generate_model_(config, in_progress_model):
       progress_section='prepare',
       progress_prefix='selection_validation')
 
-    selection_csv_chunks = exporter.export_partitioned_chunks(
+    selection_csv_chunks = repeat_partitioned_chunks(
+      exporter,
       cycle_dir,
       'selection',
       selection_rows,
@@ -2417,7 +2470,8 @@ def generate_model_(config, in_progress_model):
     dictionary_lines = set()
     feature_statistics = FeatureStatistics()
     training_chunk_statistics = []
-    training_csv_chunks = exporter.export_partitioned_chunks(
+    training_csv_chunks = repeat_partitioned_chunks(
+      exporter,
       cycle_dir,
       'training',
       training_rows,
@@ -2522,7 +2576,8 @@ def generate_model_(config, in_progress_model):
       training_validation_end:]
     correction_final_inputs = correction_validation_inputs[
       :training_validation_end]
-    aligned_csv_chunks = exporter.export_partitioned_chunks(
+    aligned_csv_chunks = repeat_partitioned_chunks(
+      exporter,
       cycle_dir,
       'aligned-training',
       training_rows,
@@ -2678,7 +2733,8 @@ def generate_model_(config, in_progress_model):
       progress_prefix='ssp_selection_validation',
       condition=ssp_ctr_condition,
       label='ssp_ctr')
-    ssp_ctr_selection_csv_chunks = exporter.export_partitioned_chunks(
+    ssp_ctr_selection_csv_chunks = repeat_partitioned_chunks(
+      exporter,
       cycle_dir,
       'ssp-ctr-selection',
       ssp_ctr_selection_rows,
@@ -2751,12 +2807,13 @@ def generate_model_(config, in_progress_model):
       label='ssp_ctr')
     ssp_ctr_dictionary_lines = set()
     ssp_ctr_training_counter = RowCounter()
-    ssp_ctr_training_csv_chunks = exporter.export_partitioned_chunks(
+    ssp_ctr_training_csv_chunks = repeat_partitioned_chunks(
+      exporter,
       cycle_dir,
       'ssp-ctr-training',
       ssp_ctr_training_rows,
       config.main_chunk_rows,
-      ssp_ctr_training_fit_steps,
+      ssp_ctr_training_source_steps,
       date_from,
       date_to,
       '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
@@ -2777,10 +2834,7 @@ def generate_model_(config, in_progress_model):
       in_progress_model,
       'common_ssp_ctr',
       'ssp_training')
-    ssp_ctr_training_fit_iterations = scaled_fit_iterations(
-      config.fit_iterations,
-      config.training_fit_steps,
-      ssp_ctr_training_fit_steps)
+    ssp_ctr_training_fit_iterations = config.fit_iterations
     (
       ssp_ctr_model,
       ssp_ctr_logloss_history,
@@ -2863,24 +2917,22 @@ def generate_model_(config, in_progress_model):
         eligible_impressions,
         config.selection_chunk_rows,
         config.selection_fit_steps)
-      campaign_training_fit_steps = campaign_fit_steps(
+      campaign_training_source_steps = campaign_fit_steps(
         eligible_impressions,
         config.main_chunk_rows,
         config.training_fit_steps)
+      campaign_training_fit_steps = config.training_fit_steps
       campaign_selection_fit_iterations = scaled_fit_iterations(
         config.fit_iterations,
         config.selection_fit_steps,
         campaign_selection_fit_steps)
-      campaign_training_fit_iterations = scaled_fit_iterations(
-        config.fit_iterations,
-        config.training_fit_steps,
-        campaign_training_fit_steps)
+      campaign_training_fit_iterations = config.fit_iterations
       campaign_selection_rows = min(
         eligible_impressions,
         config.selection_chunk_rows * campaign_selection_fit_steps)
       campaign_training_rows = min(
         eligible_impressions,
-        config.main_chunk_rows * campaign_training_fit_steps)
+        config.main_chunk_rows * campaign_training_source_steps)
       campaign_validation_rows = min(
         config.validation_set_rows,
         available_campaign_validation_rows // campaign_validation_sets)
@@ -2924,7 +2976,8 @@ def generate_model_(config, in_progress_model):
               (config.training_validation_sets + config.final_test_sets) *
               campaign_validation_rows),
             progress_prefix='campaign_selection_validation'))
-        campaign_selection_csv_chunks = exporter.export_partitioned_chunks(
+        campaign_selection_csv_chunks = repeat_partitioned_chunks(
+          exporter,
           cycle_dir,
           'campaign-' + str(campaign_id) + '-feature-selection',
           campaign_selection_rows,
@@ -3010,12 +3063,13 @@ def generate_model_(config, in_progress_model):
         campaign_dictionary_lines = set()
         campaign_statistics = FeatureStatistics()
         campaign_chunk_statistics = []
-        campaign_csv_chunks = exporter.export_partitioned_chunks(
+        campaign_csv_chunks = repeat_partitioned_chunks(
+          exporter,
           cycle_dir,
           'campaign-' + str(campaign_id) + '-training',
           campaign_training_rows,
           config.main_chunk_rows,
-          campaign_training_fit_steps,
+          campaign_training_source_steps,
           date_from,
           date_to,
           '(' + campaign_condition + ') AND (' + training_time_condition + ')',
