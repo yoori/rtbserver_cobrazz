@@ -815,28 +815,38 @@ namespace AdServer::LogProcessing
         return is;
       }
 
-      if (std::memchr(token.data(), Aux_::EscapeChar::ESC_CHAR, token.size()) == nullptr)
+      const char* escape = static_cast<const char*>(
+        std::memchr(token.data(), Aux_::EscapeChar::ESC_CHAR, token.size()));
+      if (escape == nullptr)
       {
         value.assign(token.data(), token.size());
         return is;
       }
 
+      if (token.end() - escape < 3)
+      {
+        is.setstate(std::ios_base::failbit);
+        return is;
+      }
+
       std::string str;
-      str.reserve(token.size());
-      for (const char* ptr = token.data(); ptr != token.end(); ++ptr)
+      str.reserve(token.size() - 2);
+      str.assign(token.data(), escape - token.data());
+      for (const char* ptr = escape; ptr != token.end(); ++ptr)
       {
         char ch = *ptr;
         if (ch == Aux_::EscapeChar::ESC_CHAR)
         {
+          if (token.end() - ptr < 3)
+          {
+            is.setstate(std::ios_base::failbit);
+            return is;
+          }
+
           unsigned result = 0;
           for (std::size_t i = 0; i < 2; ++i)
           {
             ch = *++ptr;
-            if (ptr == token.end())
-            {
-              is.setstate(std::ios_base::failbit);
-              return is;
-            }
             unsigned digit = ch - '0';
             if (digit > 9)
             {
