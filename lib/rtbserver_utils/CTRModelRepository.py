@@ -30,19 +30,24 @@ class CTRModelRepository:
         for path in self.model_root.iterdir()
         if self.is_published_model_(path)
       ),
+      key=self.model_id_sort_key_,
       reverse=True)
 
   def all_model_ids(self):
     if not self.model_root.is_dir():
       return []
-    training_ids = sorted(
-      (
-        path.name
-        for path in self.model_root.iterdir()
-        if self.training_status_(path.name) is not None
-      ),
-      reverse=True)
-    return training_ids + self.model_ids()
+    model_ids = [
+      path.name
+      for path in self.model_root.iterdir()
+      if (
+        self.training_status_(path.name) is not None or
+        self.is_published_model_(path))
+    ]
+    return sorted(model_ids, key=self.model_id_sort_key_, reverse=True)
+
+  @staticmethod
+  def model_id_sort_key_(model_id):
+    return model_id.removeprefix('~')
 
   def latest_model_id(self):
     model_ids = self.model_ids()
