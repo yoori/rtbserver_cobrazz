@@ -67,7 +67,30 @@ class FeatureStatisticsStub:
     }.get(index, (0, 0))
 
 
+class FeaturePredictionStatisticsStub:
+  total_rows = 100
+  total_predicted_ctr = 0.5
+
+  def get(self, index):
+    return {
+      2: (20, 0.2),
+    }.get(index, (0, 0.0))
+
+
 class CatBoostTrainerTest(unittest.TestCase):
+  def test_feature_prediction_statistics_group_predictions_by_feature(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      svm_file = pathlib.Path(temp_dir) / 'features.libsvm'
+      svm_file.write_text('0 2:1 3:1\n1 2:1\n')
+      statistics = CatBoostTrainer.FeaturePredictionStatistics()
+
+      statistics.add(svm_file, [0.1, 0.3])
+
+      self.assertEqual(2, statistics.total_rows)
+      self.assertAlmostEqual(0.4, statistics.total_predicted_ctr)
+      self.assertEqual((2, 0.4), statistics.get(2))
+      self.assertEqual((1, 0.1), statistics.get(3))
+
   def test_real_catboost_baseline_survives_continued_training(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)
@@ -108,8 +131,15 @@ class CatBoostTrainerTest(unittest.TestCase):
         prediction_weights=[0, 0.5, 1])
 
       self.assertGreater(first_metrics['Logloss'], 0)
+      self.assertGreater(first_metrics['RMSE'], 0)
+      self.assertGreater(first_metrics['MAE'], 0)
+      self.assertGreater(first_metrics['peak_rss_bytes'], 0)
       self.assertGreater(second_metrics['Logloss'], 0)
+      self.assertGreater(second_metrics['RMSE'], 0)
+      self.assertGreater(second_metrics['MAE'], 0)
       self.assertGreater(evaluation['Logloss'], 0)
+      self.assertGreater(evaluation['RMSE'], 0)
+      self.assertGreater(evaluation['MAE'], 0)
       self.assertEqual(
         [0, 0.5, 1],
         [item['weight'] for item in weighted_evaluation['weighted_logloss']])
@@ -180,6 +210,12 @@ class CatBoostTrainerTest(unittest.TestCase):
             'name': 'common',
             'trainer': common_trainer,
             'model': ModelStub(),
+            'logloss_history': [{
+              'step': 1,
+              'train': 0.1,
+              'test': 0.2,
+              'peak_rss_bytes': 1610612736,
+            }],
             'dataset_sizes': {'train': {'rows': 10, 'clicks': 1}},
             'traits': {
               'kind': 'common',
@@ -236,6 +272,16 @@ class CatBoostTrainerTest(unittest.TestCase):
         algorithm_id='aligned_catboost',
         prepare={
           'status': 'completed',
+          'dataset_sizes': {
+            'ssp_ctr': {'rows': 100, 'clicks': 2},
+          },
+          'ctr_thresholds': [{
+            'ctr_goal': 0.0,
+            'impressions': 100,
+            'clicks': 2,
+            'actual_ctr': 0.02,
+            'average_predicted_ctr': 0.03,
+          }],
           'train_steps': [{
             'id': 'export_001',
             'title': 'Export 1/1',
@@ -266,6 +312,7 @@ class CatBoostTrainerTest(unittest.TestCase):
         'campaign_123.campaigns',
         algorithm['models'][1]['campaigns_whitelist_file'])
       traits = json.loads((result_dir / 'traits.json').read_text())
+      self.assertNotIn('researching', traits)
       self.assertEqual([
         'common',
         'common_denoise',
@@ -289,6 +336,9 @@ class CatBoostTrainerTest(unittest.TestCase):
         section_value(
           prepare_traits,
           'processing_steps')[0]['ended'])
+      self.assertEqual(
+        100,
+        section_value(prepare_traits, 'ctr_thresholds')[0]['impressions'])
       common_traits = json.loads(
         (result_dir / traits['models'][0]['artifact']).read_text())
       self.assertEqual(2, common_traits['artifact_version'])
@@ -303,7 +353,11 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertNotIn('properties', common_traits)
       self.assertNotIn('features_importance', common_traits)
       self.assertEqual(
-        [{'train_logloss': 0.1}, {'val_logloss': 0.2}],
+        [
+          {'train_logloss': 0.1},
+          {'val_logloss': 0.2},
+          {'peak_rss_bytes': 1610612736},
+        ],
         section_value(common_traits, 'properties'))
       ssp_traits = json.loads(
         (result_dir / traits['models'][3]['artifact']).read_text())
@@ -487,20 +541,43 @@ class CatBoostTrainerTest(unittest.TestCase):
       _, traits = trainer.model_traits_(
         ModelStub([0, 1]),
         feature_dictionary,
-        FeatureStatisticsStub())
+        FeatureStatisticsStub(),
+        FeaturePredictionStatisticsStub())
 
       self.assertEqual(1, len(traits))
       self.assertEqual(20, traits[0]['yes_share'])
       self.assertEqual('0.2', format(traits[0]['yes_ctr'], 'f'))
       self.assertEqual('0.075', format(traits[0]['no_ctr'], 'f'))
+      self.assertEqual('0.01', format(
+        traits[0]['yes_predicted_ctr'], 'f'))
+      self.assertEqual('0.00375', format(
+        traits[0]['no_predicted_ctr'], 'f'))
 
       traits_file = temp_path / 'traits.json'
       trainer.write_model_traits_(
         traits_file,
         traits,
         logloss_history=[
-          {'step': 1, 'train': 0.0123, 'test': 0.0203},
-          {'step': 2, 'train': 0.0119, 'test': 0.0056},
+          {
+            'step': 1,
+            'train': 0.0123,
+            'test': 0.0203,
+            'peak_rss_bytes': 1073741824,
+            'train_rmse': 0.1234,
+            'val_rmse': 0.2345,
+            'train_mae': 0.1134,
+            'val_mae': 0.2245,
+          },
+          {
+            'step': 2,
+            'train': 0.0119,
+            'test': 0.0056,
+            'peak_rss_bytes': 2147483648,
+            'train_rmse': 0.1134,
+            'val_rmse': 0.2245,
+            'train_mae': 0.1034,
+            'val_mae': 0.2145,
+          },
         ],
         dataset_sizes={
           'train': {'rows': 1000000, 'clicks': 2000},
@@ -513,16 +590,40 @@ class CatBoostTrainerTest(unittest.TestCase):
           'clicks': 390,
           'actual_ctr': 0.00195,
           'average_predicted_ctr': 0.0021,
-        }])
+        }],
+        peak_rss_bytes=2147483648)
       written_traits = json.loads(traits_file.read_text())
       written_trait = written_traits['features_importance'][0]
       self.assertEqual(20, written_trait['yes_share'])
       self.assertEqual(0.2, written_trait['yes_ctr'])
       self.assertEqual(0.075, written_trait['no_ctr'])
+      self.assertEqual(0.01, written_trait['yes_predicted_ctr'])
+      self.assertEqual(0.00375, written_trait['no_predicted_ctr'])
       self.assertEqual([
-        {'step': 1, 'train': 0.0123, 'test': 0.0203},
-        {'step': 2, 'train': 0.0119, 'test': 0.0056},
+        {
+          'step': 1,
+          'train': 0.0123,
+          'test': 0.0203,
+          'peak_rss_bytes': 1073741824,
+          'train_rmse': 0.1234,
+          'val_rmse': 0.2345,
+          'train_mae': 0.1134,
+          'val_mae': 0.2245,
+        },
+        {
+          'step': 2,
+          'train': 0.0119,
+          'test': 0.0056,
+          'peak_rss_bytes': 2147483648,
+          'train_rmse': 0.1134,
+          'val_rmse': 0.2245,
+          'train_mae': 0.1034,
+          'val_mae': 0.2145,
+        },
       ], written_traits['logloss_history'])
+      self.assertEqual(
+        [{'peak_rss_bytes': 2147483648}],
+        written_traits['properties'])
       self.assertEqual({
         'train': {'rows': 1000000, 'clicks': 2000},
         'test': {'rows': 300000, 'clicks': 570},
@@ -708,7 +809,8 @@ class CatBoostTrainerTest(unittest.TestCase):
           command[command.index('--loss-function') + 1])
         metrics_file = pathlib.Path(
           command[command.index('--metrics-file') + 1])
-        metrics_file.write_text('{"Logloss": 0.125}\n')
+        metrics_file.write_text(
+          '{"Logloss": 0.125, "peak_rss_bytes": 1073741824}\n')
 
       with unittest.mock.patch(
           'rtbserver_utils.CatBoostTrainer.subprocess.run',
@@ -718,7 +820,11 @@ class CatBoostTrainerTest(unittest.TestCase):
           output_model,
           10)
 
-      self.assertEqual({'Logloss': 0.125}, metrics)
+      self.assertEqual({
+        'Logloss': 0.125,
+        'peak_rss_bytes': 1073741824,
+      }, metrics)
+      self.assertEqual(1073741824, trainer.peak_rss_bytes)
       self.assertFalse(pathlib.Path(str(output_model) + '.metrics.json').exists())
 
   def test_fit_sequence_stops_after_consecutive_non_improving_steps(self):
@@ -731,7 +837,10 @@ class CatBoostTrainerTest(unittest.TestCase):
       def train_chunk(chunk, output_model, iterations, initial_model):
         trained_chunks.append(chunk)
         pathlib.Path(output_model).write_text(str(len(trained_chunks)))
-        return {'Logloss': len(trained_chunks) / 10}
+        return {
+          'Logloss': len(trained_chunks) / 10,
+          'peak_rss_bytes': len(trained_chunks) * 1024,
+        }
 
       def evaluate_model_sets(model_file, validation_files):
         return {'Logloss': next(losses), 'sets': []}
@@ -753,10 +862,20 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual('2', best_model.read_text())
       self.assertEqual(7, len(history))
       self.assertEqual(
-        {'step': 1, 'train': 0.1, 'test': 1.0},
+        {
+          'step': 1,
+          'train': 0.1,
+          'test': 1.0,
+          'peak_rss_bytes': 1024,
+        },
         history[0])
       self.assertEqual(
-        {'step': 7, 'train': 0.7, 'test': 0.95},
+        {
+          'step': 7,
+          'train': 0.7,
+          'test': 0.95,
+          'peak_rss_bytes': 7168,
+        },
         history[-1])
 
   def test_aligned_training_uses_previous_correction_as_stable_baseline(self):

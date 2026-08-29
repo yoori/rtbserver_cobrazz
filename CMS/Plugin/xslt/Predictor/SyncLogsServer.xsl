@@ -32,7 +32,7 @@
 
   <xsl:variable
     name="service-config"
-    select="$predictor-path/configuration/cfg:predictor"/>
+    select="$predictor-path/configuration/cfg:ctrPredictModelGenerator"/>
 
 
   <xsl:variable name="workspace-root"><xsl:value-of select="$env-config/@workspace_root"/>

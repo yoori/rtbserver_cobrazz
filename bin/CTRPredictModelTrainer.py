@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.12
 
 import argparse
+import bisect
 import contextlib
 import csv
 import datetime
@@ -25,6 +26,10 @@ from rtbserver_utils.SignalInterruptHandler import SignalInterruptHandler
 
 
 logger = logging.getLogger(__name__)
+
+
+CTR_THRESHOLD_GOALS = tuple(
+  index / 1000.0 for index in range(31))
 
 
 def utc_now_text():
@@ -207,6 +212,7 @@ def prepare_train_steps(config):
       config.selection_fit_steps,
       (
         ('export', 'export dataset'),
+        ('thresholds', 'calculate SSP CTR thresholds'),
         ('libsvm', 'build LibSVM'),
         ('fit', 'fit'),
       )),
@@ -218,7 +224,6 @@ def prepare_train_steps(config):
       'release_selection_validation',
       'Release feature selection validation files'),
   ]
-
 
 def common_train_steps(config):
   validation_sets = (
@@ -365,6 +370,19 @@ def final_model_properties(logloss_history, **extra_properties):
     {'train_logloss': float(final_metrics['train'])},
     {'val_logloss': float(final_metrics['test'])},
   ]
+  if 'train_rmse' in final_metrics:
+    properties.append({'train_rmse': float(final_metrics['train_rmse'])})
+  if 'val_rmse' in final_metrics:
+    properties.append({'val_rmse': float(final_metrics['val_rmse'])})
+  if 'train_mae' in final_metrics:
+    properties.append({'train_mae': float(final_metrics['train_mae'])})
+  if 'val_mae' in final_metrics:
+    properties.append({'val_mae': float(final_metrics['val_mae'])})
+  peak_rss_bytes = max(
+    (int(item.get('peak_rss_bytes', 0)) for item in logloss_history),
+    default=0)
+  if peak_rss_bytes:
+    properties.append({'peak_rss_bytes': peak_rss_bytes})
   properties.extend(
     {name: float(value)}
     for name, value in extra_properties.items())
@@ -664,9 +682,16 @@ class InProgressModel:
   def prepare_traits(self):
     return self.prepare
 
-  def complete_prepare(self):
-    self.prepare['status'] = 'completed'
-    self.prepare['train_end'] = utc_now_text()
+  def complete_prepare(self, **traits):
+    self.prepare.update(
+      traits,
+      status='completed',
+      train_end=utc_now_text())
+    self.dirty_artifacts.add('prepare')
+    self.write_traits_()
+
+  def update_prepare(self, **values):
+    self.prepare.update(values)
     self.dirty_artifacts.add('prepare')
     self.write_traits_()
 
@@ -1010,6 +1035,7 @@ def stream_libsvm_chunks(
     progress_prefix=None,
     row_counter=None,
     chunk_statistics=None,
+    csv_chunk_callback=None,
 ):
   csv_iterator = iter(csv_chunks)
   svm_file = None
@@ -1039,6 +1065,18 @@ def stream_libsvm_chunks(
         row_count)
       if row_counter is not None:
         row_counter.add(row_count)
+      # Consumers may inspect the exported CSV before the chunk generator
+      # releases and removes it after the LibSVM conversion.
+      thresholds_step = (
+        progress_prefix + '_thresholds_' + step_number
+        if progress_prefix and csv_chunk_callback is not None else None)
+      context = (
+        progress.train_step(progress_section, thresholds_step)
+        if progress is not None and csv_chunk_callback is not None
+        else contextlib.nullcontext())
+      with context:
+        if csv_chunk_callback is not None:
+          csv_chunk_callback(csv_file, row_count)
       svm_file = work_dir / (
         file_prefix + '-' + str(chunk_index).zfill(3) + '.libsvm')
       if dictionary_lines is not None:
@@ -1907,6 +1945,99 @@ def dataset_fit_size(statistics):
   return size
 
 
+def ssp_ctr_threshold_statistics(csv_file):
+  bucket_count = len(CTR_THRESHOLD_GOALS) + 1
+  impressions = [0] * bucket_count
+  clicks = [0.0] * bucket_count
+  predicted_ctr_sums = [0.0] * bucket_count
+  total_rows = 0
+  total_clicks = 0.0
+  with pathlib.Path(csv_file).open(newline='') as input_file:
+    reader = csv.DictReader(input_file)
+    if reader.fieldnames is None:
+      raise RuntimeError('SSP CTR export returned no CSV header')
+    for field in ('label', 'SSP_CTR'):
+      if field not in reader.fieldnames:
+        raise RuntimeError(
+          "SSP CTR export is missing '" + field + "' column")
+    for row in reader:
+      ssp_ctr_text = row.get('SSP_CTR')
+      if ssp_ctr_text is None or not ssp_ctr_text.strip():
+        continue
+      try:
+        predicted_ctr = float(ssp_ctr_text)
+        label = float(row['label'])
+      except (KeyError, TypeError, ValueError):
+        raise RuntimeError(
+          'SSP CTR export contains an invalid label or SSP_CTR') from None
+      if not math.isfinite(predicted_ctr) or not math.isfinite(label):
+        raise RuntimeError(
+          'SSP CTR export contains a non-finite label or SSP_CTR')
+      bucket = bisect.bisect_left(CTR_THRESHOLD_GOALS, predicted_ctr)
+      impressions[bucket] += 1
+      clicks[bucket] += label
+      predicted_ctr_sums[bucket] += predicted_ctr
+      total_rows += 1
+      total_clicks += label
+
+  for index in range(bucket_count - 2, -1, -1):
+    impressions[index] += impressions[index + 1]
+    clicks[index] += clicks[index + 1]
+    predicted_ctr_sums[index] += predicted_ctr_sums[index + 1]
+  return {
+    'rows': total_rows,
+    'clicks': int(round(total_clicks)),
+    'ctr_thresholds': [
+      {
+        'ctr_goal': ctr_goal,
+        'impressions': impressions[index + 1],
+        'clicks': int(round(clicks[index + 1])),
+        'predicted_ctr_sum': predicted_ctr_sums[index + 1],
+      }
+      for index, ctr_goal in enumerate(CTR_THRESHOLD_GOALS)
+    ],
+  }
+
+
+def add_ctr_thresholds(aggregate, chunk):
+  if aggregate is None:
+    aggregate = [
+      {
+        'ctr_goal': item['ctr_goal'],
+        'impressions': 0,
+        'clicks': 0,
+        'predicted_ctr_sum': 0.0,
+      }
+      for item in chunk
+    ]
+  if len(aggregate) != len(chunk):
+    raise ValueError('CTR threshold count mismatch')
+  for aggregate_item, chunk_item in zip(aggregate, chunk):
+    if aggregate_item['ctr_goal'] != chunk_item['ctr_goal']:
+      raise ValueError('CTR threshold mismatch')
+    aggregate_item['impressions'] += chunk_item['impressions']
+    aggregate_item['clicks'] += chunk_item['clicks']
+    aggregate_item['predicted_ctr_sum'] += chunk_item['predicted_ctr_sum']
+  return aggregate
+
+
+def finalize_ctr_thresholds(aggregate):
+  return [
+    {
+      'ctr_goal': item['ctr_goal'],
+      'impressions': item['impressions'],
+      'clicks': item['clicks'],
+      'actual_ctr': (
+        item['clicks'] / item['impressions']
+        if item['impressions'] else None),
+      'average_predicted_ctr': (
+        item['predicted_ctr_sum'] / item['impressions']
+        if item['impressions'] else None),
+    }
+    for item in aggregate
+  ]
+
+
 def add_training_dataset_properties(history, chunk_statistics):
   for item, statistics in zip(history, chunk_statistics):
     size = dataset_fit_size([statistics])
@@ -2115,6 +2246,7 @@ def generate_model_(config, in_progress_model):
       }
       for campaign_id, _, _ in eligible_campaigns
     ])
+
   validation_rows = min(
     config.validation_set_rows,
     available_validation_rows // validation_sets)
@@ -2193,6 +2325,33 @@ def generate_model_(config, in_progress_model):
       date_to,
       training_time_condition,
       order='ASC')
+    selection_ssp_ctr_thresholds = None
+    selection_ssp_ctr_rows = 0
+    selection_ssp_ctr_clicks = 0
+
+    def collect_selection_ssp_ctr(csv_file, row_count):
+      nonlocal selection_ssp_ctr_thresholds
+      nonlocal selection_ssp_ctr_rows
+      nonlocal selection_ssp_ctr_clicks
+      del row_count
+      chunk_result = ssp_ctr_threshold_statistics(csv_file)
+      if chunk_result['rows'] == 0:
+        return
+      selection_ssp_ctr_rows += chunk_result['rows']
+      selection_ssp_ctr_clicks += chunk_result['clicks']
+      selection_ssp_ctr_thresholds = add_ctr_thresholds(
+        selection_ssp_ctr_thresholds,
+        chunk_result['ctr_thresholds'])
+      in_progress_model.update_prepare(
+        ctr_thresholds=finalize_ctr_thresholds(
+          selection_ssp_ctr_thresholds),
+        dataset_sizes={
+          'ssp_ctr': {
+            'rows': selection_ssp_ctr_rows,
+            'clicks': selection_ssp_ctr_clicks,
+          },
+        })
+
     selection_svm_chunks = stream_libsvm_chunks(
       selection_csv_chunks,
       cycle_dir,
@@ -2200,7 +2359,8 @@ def generate_model_(config, in_progress_model):
       features_config_file,
       progress=in_progress_model,
       progress_section='prepare',
-      progress_prefix='feature_selection')
+      progress_prefix='feature_selection',
+      csv_chunk_callback=collect_selection_ssp_ctr)
     selection_fit_start, selection_fit_end = fit_step_callbacks(
       in_progress_model,
       'prepare',
@@ -2227,7 +2387,9 @@ def generate_model_(config, in_progress_model):
     with in_progress_model.train_step(
         'prepare', 'release_selection_validation'):
       remove_files(selection_validation_files)
-    in_progress_model.complete_prepare()
+    in_progress_model.complete_prepare(properties=[{
+      'peak_rss_bytes': trainer.peak_rss_bytes,
+    }])
 
     core_validation_sets = (
       config.training_validation_sets + config.final_test_sets)
@@ -2313,11 +2475,16 @@ def generate_model_(config, in_progress_model):
       common_model.save_model(str(common_model_file))
     with in_progress_model.train_step('common', 'finalize_metrics'):
       common_dataset_sizes = dict(common_dataset_sizes)
+      common_prediction_statistics = (
+        CatBoostTrainer.collect_feature_prediction_statistics(
+          common_model_file,
+          common_validation_files[:training_validation_end]))
       common_model_description = trainer.describe_model(
         common_model,
         common_dictionary_file,
         feature_statistics,
-        feature_name_resolver)
+        feature_name_resolver,
+        common_prediction_statistics)
       common_properties = final_model_properties(common_logloss_history)
     common_train_end = in_progress_model.complete_model(
       'common',
@@ -2443,16 +2610,26 @@ def generate_model_(config, in_progress_model):
         'finalize_metrics'):
       stable_dataset_sizes = dict(stable_dataset_sizes)
       correction_dataset_sizes = dict(correction_dataset_sizes)
+      correction_prediction_statistics = (
+        CatBoostTrainer.collect_feature_prediction_statistics(
+          correction_model_file,
+          correction_final_inputs))
+      stable_prediction_statistics = (
+        CatBoostTrainer.collect_feature_prediction_statistics(
+          stable_model_file,
+          common_validation_files[:training_validation_end]))
       correction_model_description = correction_trainer.describe_model(
         aligned_models['campaign_correction']['model'],
         correction_dictionary_file,
         correction_statistics,
-        feature_name_resolver)
+        feature_name_resolver,
+        correction_prediction_statistics)
       stable_model_description = trainer.describe_model(
         aligned_models['stable_common']['model'],
         stable_dictionary_file,
         stable_statistics,
-        feature_name_resolver)
+        feature_name_resolver,
+        stable_prediction_statistics)
       correction_properties = final_model_properties(
         aligned_models['campaign_correction']['logloss_history'])
       stable_properties = final_model_properties(
@@ -2643,10 +2820,15 @@ def generate_model_(config, in_progress_model):
         ssp_ctr_validation_rows * config.final_test_sets,
         exporter.validation_condition(),
         0)
+      ssp_ctr_prediction_statistics = (
+        CatBoostTrainer.collect_feature_prediction_statistics(
+          ssp_ctr_model_file,
+          ssp_ctr_validation_files[:config.final_test_sets]))
       ssp_ctr_model_description = ssp_ctr_trainer.describe_model(
         ssp_ctr_model,
         ssp_ctr_dictionary_file,
-        feature_name_resolver=feature_name_resolver)
+        feature_name_resolver=feature_name_resolver,
+        feature_prediction_statistics=ssp_ctr_prediction_statistics)
       ssp_ctr_properties = final_model_properties(
         ssp_ctr_logloss_history,
         ssp_ctr_logloss=ssp_ctr_event_logloss)
@@ -2901,11 +3083,17 @@ def generate_model_(config, in_progress_model):
             campaign_model_name,
             'finalize_metrics'):
           campaign_weight = campaign_result['weight']
+          campaign_prediction_statistics = (
+            CatBoostTrainer.collect_feature_prediction_statistics(
+              campaign_evaluation_model_file,
+              campaign_validation_inputs[:campaign_training_validation_end],
+              campaign_weight))
           campaign_model_description = campaign_model_trainer.describe_model(
             campaign_result['model'],
             campaign_dictionary_file,
             campaign_statistics,
-            feature_name_resolver)
+            feature_name_resolver,
+            campaign_prediction_statistics)
           campaign_properties = final_model_properties(
             campaign_result['logloss_history'])
         campaign_train_end = in_progress_model.complete_model(

@@ -395,7 +395,11 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
             selection_chunk_rows="7000000"
             main_chunk_rows="10000000"
             validation_set_rows="200000"
-            data_delay="86400"/>
+            data_delay="86400">
+            <syncServer>
+              <networkParams port="[% PORT_BASE + 68 %]"/>
+            </syncServer>
+          </ctrPredictModelGenerator>
         </configuration>
       </service>
 

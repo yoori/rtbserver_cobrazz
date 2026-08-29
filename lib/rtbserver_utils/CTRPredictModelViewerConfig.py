@@ -1,4 +1,5 @@
 import json
+import urllib.parse
 
 
 class Config:
@@ -7,6 +8,7 @@ class Config:
     self.model_root = None
     self.web_host = '0.0.0.0'
     self.web_port = None
+    self.url_path = '/'
 
   def init_json(self, config_json):
     def required_string(name):
@@ -17,6 +19,7 @@ class Config:
 
     self.pid_file = required_string('pid_file')
     self.model_root = required_string('model_root')
+    self.url_path = self.normalize_url_path(config_json.get('url_path', '/'))
 
     web_server = config_json.get('web_server')
     if not isinstance(web_server, dict):
@@ -32,6 +35,16 @@ class Config:
       raise ValueError("Configuration value 'web_server.host' must be non-empty")
     if self.web_port <= 0 or self.web_port > 65535:
       raise ValueError('web_server.port must be in range 1..65535')
+
+  @staticmethod
+  def normalize_url_path(value):
+    if not isinstance(value, str) or not value.startswith('/'):
+      raise ValueError("Configuration value 'url_path' must be an absolute path")
+    parsed = urllib.parse.urlsplit(value)
+    if parsed.netloc or parsed.scheme or parsed.query or parsed.fragment:
+      raise ValueError("Configuration value 'url_path' must not contain query or fragment")
+    path = parsed.path.rstrip('/')
+    return path + '/' if path else '/'
 
 
 def load_config(file_name):

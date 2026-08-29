@@ -40,6 +40,25 @@ def html_text(value):
   return html.escape(str(value), quote=True)
 
 
+def normalize_url_path(url_path):
+  if (
+      not isinstance(url_path, str) or
+      not url_path.startswith('/') or
+      url_path.startswith('//')):
+    raise ValueError('url_path must be an absolute path')
+  path = url_path.rstrip('/')
+  return path + '/' if path else '/'
+
+
+def application_url(url_path, path=''):
+  url_path = normalize_url_path(url_path)
+  if not path:
+    return url_path
+  if path.startswith('?'):
+    return url_path + path
+  return url_path + path.lstrip('/')
+
+
 def decimal_text(value):
   try:
     return format(decimal.Decimal(str(value)), 'f')
@@ -70,6 +89,21 @@ def timestamp_text(value):
   if result.endswith('Z'):
     result = result[:-1]
   return result
+
+
+def byte_size_text(value):
+  try:
+    size = int(value)
+  except (TypeError, ValueError):
+    return '-'
+  if size < 0:
+    return '-'
+  amount = decimal.Decimal(size)
+  units = ('B', 'KiB', 'MiB', 'GiB', 'TiB')
+  for unit in units:
+    if amount < 1024 or unit == units[-1]:
+      return format(amount, '.2f') + ' ' + unit
+    amount /= 1024
 
 
 def duration_text(started, ended):
@@ -112,6 +146,8 @@ def feature_importance_item(item):
       'yes_share_text': '-',
       'yes_ctr_text': '-',
       'no_ctr_text': '-',
+      'yes_predicted_ctr_text': '-',
+      'no_predicted_ctr_text': '-',
     }
 
   if 'score' in item and 'feature' in item:
@@ -146,10 +182,16 @@ def feature_importance_item(item):
     'no_ctr_text': (
       metric_decimal_text(item['no_ctr'])
       if 'no_ctr' in item else '-'),
+    'yes_predicted_ctr_text': (
+      metric_decimal_text(item['yes_predicted_ctr'])
+      if 'yes_predicted_ctr' in item else '-'),
+    'no_predicted_ctr_text': (
+      metric_decimal_text(item['no_predicted_ctr'])
+      if 'no_predicted_ctr' in item else '-'),
   }
 
 
-def render_model_list(models, selected_model_id):
+def render_model_list(models, selected_model_id, url_path='/'):
   if not models:
     return '<p class="empty-list">No models</p>'
 
@@ -159,7 +201,9 @@ def render_model_list(models, selected_model_id):
     selected = model_id == selected_model_id
     class_name = 'model-link selected' if selected else 'model-link'
     current = ' aria-current="page"' if selected else ''
-    url = '/?model=' + urllib.parse.quote(model_id, safe='')
+    url = application_url(
+      url_path,
+      '?model=' + urllib.parse.quote(model_id, safe=''))
     if model.get('status') in ('in_progress', 'interrupted'):
       status = model['status']
       status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
@@ -211,9 +255,24 @@ def render_logloss_history(traits):
         except (KeyError, TypeError, ValueError):
           pass
       try:
+        entry['peak_rss_bytes'] = int(item['peak_rss_bytes'])
+      except (KeyError, TypeError, ValueError):
+        pass
+      try:
         entry['train_ctr'] = decimal.Decimal(str(item['train_ctr']))
       except (KeyError, TypeError, ValueError, decimal.InvalidOperation):
         pass
+      for field in (
+          'train_rmse',
+          'val_rmse',
+          'train_mae',
+          'val_mae'):
+        try:
+          value = decimal.Decimal(str(item[field]))
+          if value.is_finite():
+            entry[field] = value
+        except (KeyError, TypeError, ValueError, decimal.InvalidOperation):
+          pass
       history.append(entry)
 
   if not history:
@@ -260,6 +319,7 @@ def render_logloss_history(traits):
   test_points = ' '.join(
     coordinates(index, item['test'])
     for index, item in enumerate(history))
+  has_peak_rss = any('peak_rss_bytes' in item for item in history)
   rows = ''.join(
     '<tr><td>' + str(item['step']) + '</td>'
     '<td class="metric">' + html_text(format(item['train'], '.9f')) + '</td>'
@@ -272,6 +332,17 @@ def render_logloss_history(traits):
        if 'train_ctr' in item else '-') + '</td>'
      if any(field in item for field in ('train_rows', 'train_clicks', 'train_ctr'))
      else '') +
+    ('<td class="metric">' + html_text(
+      byte_size_text(item.get('peak_rss_bytes'))) + '</td>'
+     if has_peak_rss else '') +
+    (''.join(
+      '<td class="metric">' + html_text(
+        metric_decimal_text(item[field]) if field in item else '-') + '</td>'
+      for field in ('train_rmse', 'val_rmse', 'train_mae', 'val_mae'))
+     if any(
+       field in item
+       for field in ('train_rmse', 'val_rmse', 'train_mae', 'val_mae'))
+     else '') +
     '</tr>'
     for item in history)
 
@@ -281,6 +352,14 @@ def render_logloss_history(traits):
   dataset_headers = (
     '<th>Train rows</th><th>Train clicks</th><th>Train CTR</th>'
     if has_dataset_stats else '')
+  peak_rss_header = '<th>Peak RSS</th>' if has_peak_rss else ''
+  has_additional_metrics = any(
+    field in item for item in history
+    for field in ('train_rmse', 'val_rmse', 'train_mae', 'val_mae'))
+  additional_metric_headers = (
+    '<th>Train RMSE</th><th>Validation RMSE</th>'
+    '<th>Train MAE</th><th>Validation MAE</th>'
+    if has_additional_metrics else '')
 
   return (
     '<section class="model-section logloss-section">'
@@ -300,7 +379,8 @@ def render_logloss_history(traits):
     '</svg></div>'
     '<div class="table-scroll"><table class="logloss-table">'
     '<thead><tr><th>Step</th><th>Train Logloss</th><th>Test Logloss</th>' +
-    dataset_headers + '</tr></thead>'
+    dataset_headers + peak_rss_header + additional_metric_headers +
+    '</tr></thead>'
     '<tbody>' + rows + '</tbody></table></div></section>')
 
 
@@ -311,6 +391,7 @@ def render_dataset_sizes(traits):
 
   rows = []
   for name, label in (
+      ('ssp_ctr', 'SSP CTR'),
       ('train', 'Train'),
       ('test', 'Test'),
       ('final_test', 'Final test')):
@@ -356,9 +437,13 @@ def render_properties(traits):
     if not isinstance(item, dict):
       continue
     for name, value in item.items():
+      value_text = (
+        byte_size_text(value)
+        if name == 'peak_rss_bytes' else
+        metric_decimal_text(value))
       rows.append(
         '<tr><td><code>' + html_text(name) + '</code></td>'
-        '<td class="metric">' + html_text(metric_decimal_text(value)) +
+        '<td class="metric">' + html_text(value_text) +
         '</td></tr>')
   if not rows:
     return ''
@@ -431,6 +516,10 @@ def render_feature_importance(traits, component_name='model'):
       '<td class="metric">' + html_text(item['yes_share_text']) + '</td>'
       '<td class="metric">' + html_text(item['yes_ctr_text']) + '</td>'
       '<td class="metric">' + html_text(item['no_ctr_text']) + '</td>'
+      '<td class="metric">' + html_text(
+        item['yes_predicted_ctr_text']) + '</td>'
+      '<td class="metric">' + html_text(
+        item['no_predicted_ctr_text']) + '</td>'
       '</tr>')
 
   if not rows:
@@ -454,7 +543,8 @@ def render_feature_importance(traits, component_name='model'):
     '</div>'
     '<div class="table-scroll"><table id="' + table_id + '">'
     '<thead><tr><th>#</th><th>Score</th><th>Feature</th><th>Name</th>'
-    '<th>Yes share, %</th><th>Yes CTR</th><th>No CTR</th></tr></thead>'
+    '<th>Yes share, %</th><th>Yes CTR</th><th>No CTR</th>'
+    '<th>Yes predicted CTR</th><th>No predicted CTR</th></tr></thead>'
     '<tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 
@@ -680,7 +770,7 @@ def render_post_processing_index(traits):
     '</div></div>')
 
 
-def render_model_component(component_name, traits, selected=False):
+def render_model_component(component_name, traits, selected=False, url_path='/'):
   labels = {
     'common': 'Common',
     'common_denoise': 'Common denoise',
@@ -744,7 +834,8 @@ def render_model_component(component_name, traits, selected=False):
     html_text(component_name) + '" data-loaded="' +
     ('true' if artifact_loaded else 'false') + '"' + article_state + '>'
     '<header class="component-header"><div><span class="eyebrow">' +
-    ('Training phase' if prepare else 'Model component') + '</span>'
+    ('Training phase' if prepare else 'Model component') +
+    '</span>'
     '<h2>' + html_text(label) + '</h2>'
     '<p>' + html_text(description) + '</p></div>' +
     '<div class="component-badges">' + ''.join(badges) + '</div></header>'
@@ -785,7 +876,12 @@ def render_model_component(component_name, traits, selected=False):
     '</article>')
 
 
-def render_model_collection(components, prepare=None, post_processing=None):
+def render_model_collection(
+    components,
+    prepare=None,
+    post_processing=None,
+    url_path='/',
+):
   component_items = [
     (name, traits)
     for name, traits in components.items()
@@ -860,7 +956,7 @@ def render_model_collection(components, prepare=None, post_processing=None):
   common_items = [
     item
     for item in component_items
-    if item[1].get('kind') not in ('campaign', 'prepare')
+    if item[1].get('kind') != 'campaign'
   ]
   campaign_items = [
     item
@@ -900,12 +996,16 @@ def render_model_collection(components, prepare=None, post_processing=None):
       'Post processing', post_processing_items, 'post_processing') +
     '</aside><section class="component-detail">' +
     ''.join(
-      render_model_component(name, traits, name == selected_name)
-      for name, traits in all_items) +
+      render_model_component(
+        name,
+        traits,
+        name == selected_name,
+        url_path)
+    for name, traits in all_items) +
     '</section></div>')
 
 
-def render_model_details(properties):
+def render_model_details(properties, url_path='/'):
   summary = properties['summary']
   traits = properties.get('traits', {})
   if summary.get('status') in ('in_progress', 'interrupted'):
@@ -952,7 +1052,8 @@ def render_model_details(properties):
       details += render_model_collection(
         components,
         prepare,
-        post_processing)
+        post_processing,
+        url_path)
     return details
 
   model_id = summary['id']
@@ -996,8 +1097,14 @@ def render_model_details(properties):
     '<div><span class="eyebrow">Selected model</span>'
     '<h1>' + html_text(model_id) + '</h1></div>'
     '<nav class="model-actions" aria-label="Model resources">'
-    '<a href="/models/' + urllib.parse.quote(model_id, safe='') + '/config">Config</a>'
-    '<a href="/models/' + urllib.parse.quote(model_id, safe='') + '/traits">Traits</a>'
+    '<a href="' + application_url(
+      url_path,
+      'models/' + urllib.parse.quote(model_id, safe='') + '/config') +
+    '">Config</a>'
+    '<a href="' + application_url(
+      url_path,
+      'models/' + urllib.parse.quote(model_id, safe='') + '/traits') +
+    '">Traits</a>'
     '</nav></header>'
     '<dl class="model-meta">'
     '<div><dt>Algorithm</dt><dd>' + html_text(summary.get('algorithm_id') or '-') + '</dd></div>'
@@ -1024,7 +1131,8 @@ def render_model_details(properties):
       render_model_collection(
         components,
         traits.get('prepare'),
-        traits.get('post_processing')) +
+        traits.get('post_processing'),
+        url_path) +
       extra_traits_html)
 
   return (
@@ -1033,7 +1141,8 @@ def render_model_details(properties):
     extra_traits_html)
 
 
-def render_index_page(models, selected_properties=None):
+def render_index_page(models, selected_properties=None, url_path='/'):
+  url_path = normalize_url_path(url_path)
   selected_model_id = (
     selected_properties['summary']['id']
     if selected_properties else None)
@@ -1050,7 +1159,7 @@ def render_index_page(models, selected_properties=None):
     html_text(selected_model_status or '') + '" data-state-signature="' +
     state_signature + '"')
   content = (
-    render_model_details(selected_properties)
+    render_model_details(selected_properties, url_path)
     if selected_properties else
     '<div class="welcome"><h1>CTR models</h1>'
     '<p>Select a model to inspect its training status or published traits.</p>'
@@ -1302,11 +1411,19 @@ def render_index_page(models, selected_properties=None):
       <div class="brand"><strong>CTR Models</strong><span>Predict model registry</span></div>
       <h2>Models</h2>
       <div id="model-list-container">''' + render_model_list(
-        models, selected_model_id) + r'''</div>
-    </aside>
+      models, selected_model_id, url_path) + r'''</div>
+  </aside>
     <main''' + main_attributes + '>' + content + r'''</main>
   </div>
   <script>
+    const applicationUrlPath = ''' + json.dumps(url_path) + r''';
+    const applicationUrl = path => {
+      if (!path) {
+        return applicationUrlPath;
+      }
+      return applicationUrlPath + (
+        path.startsWith('?') ? path : path.replace(/^\/+/, ''));
+    };
     const reportSectionStoragePrefix = 'ctr-model-viewer:sections:v1:';
 
     const reportSectionComponent = section =>
@@ -1408,8 +1525,9 @@ def render_index_page(models, selected_properties=None):
           detail.innerHTML = '<p class="empty-state">Loading campaign evaluation…</p>';
           try {
             const response = await fetch(
-              '/models/' + encodeURIComponent(main.dataset.modelId) +
-              '/post-processing/' + encodeURIComponent(targetName),
+              applicationUrl(
+                'models/' + encodeURIComponent(main.dataset.modelId) +
+                '/post-processing/' + encodeURIComponent(targetName)),
               {cache: 'no-store', headers: {'Accept': 'text/html'}});
             if (!response.ok) {
               throw new Error('HTTP ' + response.status);
@@ -1467,8 +1585,9 @@ def render_index_page(models, selected_properties=None):
       const load = (async () => {
         try {
           const response = await fetch(
-            '/models/' + encodeURIComponent(main.dataset.modelId) +
-            '/components/' + encodeURIComponent(link.dataset.component),
+            applicationUrl(
+              'models/' + encodeURIComponent(main.dataset.modelId) +
+              '/components/' + encodeURIComponent(link.dataset.component)),
             {cache: 'no-store', headers: {'Accept': 'text/html'}});
           if (!response.ok) {
             throw new Error('HTTP ' + response.status);
@@ -1708,7 +1827,7 @@ def render_index_page(models, selected_properties=None):
     };
 
     const fetchModelPage = modelId => fetch(
-      '/?model=' + encodeURIComponent(modelId),
+      applicationUrl('?model=' + encodeURIComponent(modelId)),
       {
         cache: 'no-store',
         headers: {'Accept': 'text/html'},
@@ -1769,8 +1888,9 @@ def render_index_page(models, selected_properties=None):
             history.replaceState(
               null,
               '',
-              '/?model=' + encodeURIComponent(modelId) +
-                window.location.hash);
+              applicationUrl(
+                '?model=' + encodeURIComponent(modelId) +
+                window.location.hash));
           }
           restoreScrollState(importedMain, state);
           requestAnimationFrame(() => restoreScrollState(importedMain, state));
@@ -1803,10 +1923,19 @@ def render_index_page(models, selected_properties=None):
 '''
 
 
-def create_application(repository):
+def create_application(repository, url_path='/'):
+  url_path = normalize_url_path(url_path)
   application = FastAPI(
     title='CTR Predict Model Generator',
     default_response_class=DecimalJSONResponse)
+
+  def get(path, **kwargs):
+    def decorator(fun):
+      application.get(path, **kwargs)(fun)
+      if url_path != '/':
+        application.get(url_path.rstrip('/') + path, **kwargs)(fun)
+      return fun
+    return decorator
 
   def call_repository(fun, *args):
     try:
@@ -1816,11 +1945,11 @@ def create_application(repository):
     except RuntimeError as error:
       raise HTTPException(status_code=500, detail=str(error))
 
-  @application.get('/health')
+  @get('/health')
   async def health():
     return DecimalJSONResponse({'status': 'ok'})
 
-  @application.get('/', include_in_schema=False)
+  @get('/', include_in_schema=False)
   async def root(model_id: str | None = Query(default=None, alias='model')):
     model_ids = repository.all_model_ids()
     summaries = [
@@ -1830,9 +1959,10 @@ def create_application(repository):
     selected_properties = (
       call_repository(repository.model_properties, model_id)
       if model_id is not None else None)
-    return HTMLResponse(render_index_page(summaries, selected_properties))
+    return HTMLResponse(
+      render_index_page(summaries, selected_properties, url_path))
 
-  @application.get('/models')
+  @get('/models')
   async def models():
     return DecimalJSONResponse({
       'items': [
@@ -1841,18 +1971,18 @@ def create_application(repository):
       ],
     })
 
-  @application.get('/models/latest')
+  @get('/models/latest')
   async def latest_model():
     model_id = call_repository(repository.latest_model_id)
     return DecimalJSONResponse(
       call_repository(repository.model_properties, model_id))
 
-  @application.get('/models/{model_id}')
+  @get('/models/{model_id}')
   async def model(model_id: str):
     return DecimalJSONResponse(
       call_repository(repository.model_properties, model_id))
 
-  @application.get('/models/{model_id}/features')
+  @get('/models/{model_id}/features')
   async def model_features(
       model_id: str,
       offset: int = Query(default=0, ge=0),
@@ -1867,7 +1997,7 @@ def create_application(repository):
         limit,
         component))
 
-  @application.get(
+  @get(
     '/models/{model_id}/components/{component}',
     include_in_schema=False)
   async def model_component(model_id: str, component: str):
@@ -1875,9 +2005,10 @@ def create_application(repository):
       repository.component_traits,
       model_id,
       component)
-    return HTMLResponse(render_model_component(component, traits, True))
+    return HTMLResponse(
+      render_model_component(component, traits, True, url_path))
 
-  @application.get(
+  @get(
     '/models/{model_id}/post-processing/{target_name}',
     include_in_schema=False)
   async def post_processing_target(model_id: str, target_name: str):
@@ -1887,12 +2018,12 @@ def create_application(repository):
       target_name)
     return HTMLResponse(render_post_processing_target(traits))
 
-  @application.get('/models/{model_id}/config')
+  @get('/models/{model_id}/config')
   async def model_config(model_id: str):
     path = call_repository(repository.model_file, model_id, 'config.json')
     return FileResponse(path, media_type='application/json')
 
-  @application.get('/models/{model_id}/traits')
+  @get('/models/{model_id}/traits')
   async def model_traits(model_id: str):
     path = call_repository(repository.model_file, model_id, 'traits.json')
     return FileResponse(path, media_type='application/json')

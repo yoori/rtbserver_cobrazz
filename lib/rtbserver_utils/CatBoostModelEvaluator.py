@@ -93,8 +93,12 @@ def evaluate_model(
     dtype=numpy.float64)
   logloss = numpy.mean(
     numpy.logaddexp(0, raw_predictions) - labels * raw_predictions)
+  predictions = numpy.exp(-numpy.logaddexp(0, -raw_predictions))
+  errors = predictions - labels
   result = {
     'Logloss': float(logloss),
+    'RMSE': float(numpy.sqrt(numpy.mean(errors ** 2))),
+    'MAE': float(numpy.mean(numpy.abs(errors))),
   }
   if prediction_weights is not None:
     if baseline is None:
@@ -111,7 +115,6 @@ def evaluate_model(
       for weight in prediction_weights
     ]
   if include_ctr_thresholds:
-    predictions = numpy.exp(-numpy.logaddexp(0, -raw_predictions))
     result['ctr_thresholds'] = ctr_threshold_statistics(predictions, labels)
   return result
 

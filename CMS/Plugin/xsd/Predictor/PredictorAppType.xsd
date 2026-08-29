@@ -140,6 +140,7 @@
   <xsd:complexType name="CTRPredictModelGeneratorType">
     <xsd:sequence>
       <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="syncServer" type="SyncServerType" minOccurs="0" maxOccurs="1"/>
     </xsd:sequence>
     <xsd:attribute name="generate_period" type="xsd:positiveInteger" use="optional" default="86400"/>
     <xsd:attribute name="selection_chunk_rows" type="xsd:positiveInteger" use="optional" default="7000000"/>
@@ -161,6 +162,7 @@
     <xsd:sequence>
       <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1"/>
     </xsd:sequence>
+    <xsd:attribute name="url_path" type="xsd:string" use="optional" default="/"/>
   </xsd:complexType>
 
 </xsd:schema>

@@ -272,6 +272,40 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       {'ssp_ctr_logloss': 0.125},
     ], properties)
 
+  def test_final_model_properties_include_rmse_from_best_checkpoint(self):
+    properties = TRAINER_MODULE.final_model_properties([
+      {
+        'step': 1,
+        'train': 0.5,
+        'test': 0.4,
+        'train_rmse': 0.25,
+        'val_rmse': 0.35,
+        'train_mae': 0.2,
+        'val_mae': 0.3,
+        'peak_rss_bytes': 3221225472,
+      },
+      {
+        'step': 2,
+        'train': 0.3,
+        'test': 0.2,
+        'train_rmse': 0.15,
+        'val_rmse': 0.2,
+        'train_mae': 0.1,
+        'val_mae': 0.15,
+        'peak_rss_bytes': 2147483648,
+      },
+    ])
+
+    self.assertEqual([
+      {'train_logloss': 0.3},
+      {'val_logloss': 0.2},
+      {'train_rmse': 0.15},
+      {'val_rmse': 0.2},
+      {'train_mae': 0.1},
+      {'val_mae': 0.15},
+      {'peak_rss_bytes': 3221225472},
+    ], properties)
+
   def test_stream_libsvm_chunks_removes_processed_files(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       work_dir = pathlib.Path(temp_dir)
@@ -283,6 +317,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       feature_indexes_file.write_text('1\n')
       dictionary_lines = set()
       feature_statistics = TRAINER_MODULE.FeatureStatistics()
+      callback_files = []
 
       def csv_chunks():
         try:
@@ -316,7 +351,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           features_config_file,
           feature_indexes_file,
           dictionary_lines,
-          feature_statistics)
+          feature_statistics,
+          csv_chunk_callback=lambda path, rows: callback_files.append(
+            (path, rows, path.exists())))
         svm_file = next(chunks)
         self.assertTrue(csv_file.exists())
         self.assertTrue(svm_file.exists())
@@ -328,6 +365,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual({b'1,"device:Mobile"\n'}, dictionary_lines)
       self.assertEqual(1, feature_statistics.total_impressions)
       self.assertEqual(1, feature_statistics.total_clicks)
+      self.assertEqual([(csv_file, 1, True)], callback_files)
       self.assertEqual((1, 1), feature_statistics.get(1))
 
   def test_deduplicate_feature_indexes_merges_sources_and_preserves_drops(self):
@@ -394,6 +432,53 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual((7, 2), statistics.get(1))
       self.assertEqual((7, 2), statistics.get(2))
       self.assertEqual((0, 0), statistics.get(3))
+
+  def test_ssp_ctr_threshold_statistics(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      csv_file = pathlib.Path(temp_dir) / 'selection.csv'
+      csv_file.write_text(
+        'label,SSP_CTR\n'
+        '1,0.0005\n'
+        '0,0.001\n'
+        '1,0.0011\n'
+        '0,0.03\n'
+        '1,0.031\n'
+        '1,\n')
+
+      result = TRAINER_MODULE.ssp_ctr_threshold_statistics(csv_file)
+
+      self.assertEqual(5, result['rows'])
+      self.assertEqual(3, result['clicks'])
+      self.assertEqual(0.0, result['ctr_thresholds'][0]['ctr_goal'])
+      self.assertEqual(5, result['ctr_thresholds'][0]['impressions'])
+      self.assertEqual(3, result['ctr_thresholds'][0]['clicks'])
+      self.assertAlmostEqual(
+        0.0636,
+        result['ctr_thresholds'][0]['predicted_ctr_sum'])
+      self.assertEqual(0.001, result['ctr_thresholds'][1]['ctr_goal'])
+      self.assertEqual(3, result['ctr_thresholds'][1]['impressions'])
+      self.assertEqual(2, result['ctr_thresholds'][1]['clicks'])
+      self.assertAlmostEqual(
+        0.0621,
+        result['ctr_thresholds'][1]['predicted_ctr_sum'])
+      aggregate = TRAINER_MODULE.add_ctr_thresholds(
+        None,
+        result['ctr_thresholds'])
+      aggregate = TRAINER_MODULE.add_ctr_thresholds(
+        aggregate,
+        result['ctr_thresholds'])
+      finalized = TRAINER_MODULE.finalize_ctr_thresholds(aggregate)
+      self.assertEqual(10, finalized[0]['impressions'])
+      self.assertEqual(6, finalized[0]['clicks'])
+      self.assertAlmostEqual(0.01272, finalized[0]['average_predicted_ctr'])
+
+  def test_prepare_feature_selection_steps_include_ssp_ctr_thresholds(self):
+    config = MODULE.Config()
+
+    steps = TRAINER_MODULE.prepare_train_steps(config)
+    ids = [step['id'] for step in steps]
+
+    self.assertIn('feature_selection_thresholds_001', ids)
 
   def test_in_progress_model_uses_traits_and_is_removed(self):
     with tempfile.TemporaryDirectory() as temp_dir:

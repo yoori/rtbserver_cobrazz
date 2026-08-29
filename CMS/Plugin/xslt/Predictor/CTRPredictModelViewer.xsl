@@ -28,6 +28,9 @@
     select="$viewer-config/cfg:networkParams/@port"/><xsl:if
     test="count($viewer-config/cfg:networkParams/@port) = 0"><xsl:value-of
     select="$def-ctr-predict-model-viewer-port"/></xsl:if></xsl:variable>
+  <xsl:variable name="url-path"><xsl:value-of
+    select="$viewer-config/@url_path"/><xsl:if
+    test="count($viewer-config/@url_path) = 0"><xsl:text>/</xsl:text></xsl:if></xsl:variable>
 
 {
   "pid_file": "<xsl:value-of select="concat($workspace-root, '/run/CTRPredictModelViewer.pid')"/>",
@@ -35,7 +38,8 @@
   "web_server": {
     "host": "0.0.0.0",
     "port": <xsl:value-of select="$web-port"/>
-  }
+  },
+  "url_path": "<xsl:value-of select="$url-path"/>"
 }
 </xsl:template>
 

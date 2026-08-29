@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import numpy
 from catboost import CatBoostClassifier, Pool
 
 from rtbserver_utils.CTRModelTraits import traits_with_sections
@@ -33,6 +34,37 @@ class CatBoostTrainer(object):
 
   features_size: int = None
 
+  class FeaturePredictionStatistics:
+    def __init__(self):
+      self.total_rows = 0
+      self.total_predicted_ctr = 0.0
+      self.features = {}
+
+    def add(self, svm_file, predictions):
+      row_count = 0
+      with pathlib.Path(svm_file).open() as input_file:
+        for line, prediction in zip(input_file, predictions):
+          value = float(prediction)
+          self.total_predicted_ctr += value
+          indexes = set()
+          for token in line.split()[1:]:
+            index_text = token.split(':', 1)[0]
+            index = int(index_text)
+            if index <= 0 or index in indexes:
+              continue
+            indexes.add(index)
+            rows, predicted_sum = self.features.get(index, (0, 0.0))
+            self.features[index] = (rows + 1, predicted_sum + value)
+          row_count += 1
+          self.total_rows += 1
+      if row_count != len(predictions):
+        raise ValueError(
+          'Prediction row count does not match SVM file: ' +
+          str(len(predictions)) + ' != ' + str(row_count))
+
+    def get(self, index):
+      return self.features.get(index, (0, 0.0))
+
   def __init__(
       self,
       features_dimension=None,
@@ -45,6 +77,7 @@ class CatBoostTrainer(object):
     self.train_dir = train_dir
     self.loss_function = loss_function
     self.include_ctr_thresholds = include_ctr_thresholds
+    self.peak_rss_bytes = 0
     self.features = None
     if features_config_file is not None:
       config_dimension, self.features = self.read_features_config_(
@@ -482,6 +515,19 @@ class CatBoostTrainer(object):
               'step': step,
               'train': correction_train_metrics['Logloss'],
               'test': correction_logloss,
+              **({
+                'peak_rss_bytes': correction_train_metrics['peak_rss_bytes'],
+              } if 'peak_rss_bytes' in correction_train_metrics else {}),
+              **({
+                'train_rmse': correction_train_metrics['RMSE'],
+                'val_rmse': correction_metrics['RMSE'],
+                'train_mae': correction_train_metrics['MAE'],
+                'val_mae': correction_metrics['MAE'],
+              } if (
+                  'RMSE' in correction_train_metrics and
+                  'RMSE' in correction_metrics and
+                  'MAE' in correction_train_metrics and
+                  'MAE' in correction_metrics) else {}),
             })
             print(
               'Campaign correction: validation=' +
@@ -532,6 +578,19 @@ class CatBoostTrainer(object):
             'step': step,
             'train': stable_train_metrics['Logloss'],
             'test': stable_logloss,
+            **({
+              'peak_rss_bytes': stable_train_metrics['peak_rss_bytes'],
+            } if 'peak_rss_bytes' in stable_train_metrics else {}),
+            **({
+              'train_rmse': stable_train_metrics['RMSE'],
+              'val_rmse': stable_metrics['RMSE'],
+              'train_mae': stable_train_metrics['MAE'],
+              'val_mae': stable_metrics['MAE'],
+            } if (
+                'RMSE' in stable_train_metrics and
+                'RMSE' in stable_metrics and
+                'MAE' in stable_train_metrics and
+                'MAE' in stable_metrics) else {}),
           })
           trained_steps = step
           print(
@@ -700,6 +759,19 @@ class CatBoostTrainer(object):
           'step': step,
           'train': train_metrics['Logloss'],
           'test': logloss,
+          **({
+            'peak_rss_bytes': train_metrics['peak_rss_bytes'],
+          } if 'peak_rss_bytes' in train_metrics else {}),
+          **({
+            'train_rmse': train_metrics['RMSE'],
+            'val_rmse': metrics['RMSE'],
+            'train_mae': train_metrics['MAE'],
+            'val_mae': metrics['MAE'],
+          } if (
+              'RMSE' in train_metrics and
+              'RMSE' in metrics and
+              'MAE' in train_metrics and
+              'MAE' in metrics) else {}),
         })
         trained_steps = step
         print(
@@ -887,6 +959,19 @@ class CatBoostTrainer(object):
           'step': step,
           'train': train_metrics['Logloss'],
           'test': logloss,
+          **({
+            'peak_rss_bytes': train_metrics['peak_rss_bytes'],
+          } if 'peak_rss_bytes' in train_metrics else {}),
+          **({
+            'train_rmse': train_metrics['RMSE'],
+            'val_rmse': metrics['RMSE'],
+            'train_mae': train_metrics['MAE'],
+            'val_mae': metrics['MAE'],
+          } if (
+              'RMSE' in train_metrics and
+              'RMSE' in metrics and
+              'MAE' in train_metrics and
+              'MAE' in metrics) else {}),
         })
         print(
           description + ': validation=' +
@@ -930,10 +1015,15 @@ class CatBoostTrainer(object):
         model_file,
         svm_file,
         baseline_file))
-    return {
+    result = {
       'Logloss': sum(metric['Logloss'] for metric in metrics) / len(metrics),
       'sets': metrics,
     }
+    if metrics and all('RMSE' in metric for metric in metrics):
+      result['RMSE'] = sum(metric['RMSE'] for metric in metrics) / len(metrics)
+    if metrics and all('MAE' in metric for metric in metrics):
+      result['MAE'] = sum(metric['MAE'] for metric in metrics) / len(metrics)
+    return result
 
   @staticmethod
   def model_feature_indexes_(model_file):
@@ -993,7 +1083,10 @@ class CatBoostTrainer(object):
     try:
       subprocess.run(command, check=True)
       with metrics_file.open() as input_file:
-        return json.load(input_file)
+        metrics = json.load(input_file)
+      peak_rss_bytes = int(metrics.get('peak_rss_bytes', 0))
+      self.peak_rss_bytes = max(self.peak_rss_bytes, peak_rss_bytes)
+      return metrics
     finally:
       try:
         metrics_file.unlink()
@@ -1182,6 +1275,43 @@ class CatBoostTrainer(object):
       text=True)
 
   @staticmethod
+  def collect_feature_prediction_statistics(
+      model_file,
+      svm_files,
+      prediction_weight=1.0,
+  ):
+    model = CatBoostClassifier()
+    model.load_model(str(pathlib.Path(model_file).resolve()))
+    result = CatBoostTrainer.FeaturePredictionStatistics()
+    for item in svm_files:
+      if isinstance(item, (tuple, list)):
+        svm_file, baseline_file = item
+      else:
+        svm_file, baseline_file = item, None
+      svm_path = pathlib.Path(svm_file).resolve()
+      pool = Pool('libsvm://' + str(svm_path))
+      raw_predictions = numpy.asarray(
+        model.predict(pool, prediction_type='RawFormulaVal'),
+        dtype=numpy.float64).reshape(-1) * prediction_weight
+      if baseline_file is not None:
+        baseline = numpy.atleast_1d(numpy.loadtxt(
+          pathlib.Path(baseline_file).resolve(),
+          dtype=numpy.float64))
+        if baseline.shape != raw_predictions.shape:
+          raise ValueError(
+            'Baseline row count does not match evaluation pool: ' +
+            str(baseline.shape[0]) + ' != ' + str(raw_predictions.shape[0]))
+        raw_predictions += baseline
+      predictions = numpy.empty_like(raw_predictions)
+      positive = raw_predictions >= 0
+      predictions[positive] = 1 / (1 + numpy.exp(-raw_predictions[positive]))
+      negative = ~positive
+      exp_predictions = numpy.exp(raw_predictions[negative])
+      predictions[negative] = exp_predictions / (1 + exp_predictions)
+      result.add(svm_path, predictions)
+    return result
+
+  @staticmethod
   def aggregate_ctr_thresholds_(evaluations):
     if not evaluations:
       return []
@@ -1297,7 +1427,8 @@ class CatBoostTrainer(object):
         dataset_sizes,
         ctr_thresholds,
         train_start,
-        train_end)
+        train_end,
+        self.peak_rss_bytes)
       os.replace(traits_temp_file, traits_file)
       os.rename(staging_dir, result_dir)
     except Exception:
@@ -1397,6 +1528,20 @@ class CatBoostTrainer(object):
           'dataset_sizes': entry.get('dataset_sizes', {}),
           'ctr_thresholds': entry.get('ctr_thresholds', []),
         }
+        peak_rss_bytes = self.peak_rss_from_history_(
+          model_traits['logloss_history'])
+        if peak_rss_bytes:
+          properties = model_traits.get('properties', [])
+          if not isinstance(properties, list):
+            properties = []
+          if not any(
+              isinstance(item, dict) and 'peak_rss_bytes' in item
+              for item in properties):
+            properties = [
+              *properties,
+              {'peak_rss_bytes': peak_rss_bytes},
+            ]
+          model_traits['properties'] = properties
         traits_models.append(model_traits)
 
         campaign_id = model_traits.get('db_campaign_id')
@@ -1560,17 +1705,29 @@ class CatBoostTrainer(object):
         result[field + '_count'] = len(value)
     return result
 
+  @staticmethod
+  def peak_rss_from_history_(history):
+    return max(
+      (
+        int(item.get('peak_rss_bytes', 0))
+        for item in history
+        if isinstance(item, dict)
+      ),
+      default=0)
+
   def describe_model(
       self,
       model,
       feature_dictionary_file,
       feature_statistics=None,
       feature_name_resolver=None,
+      feature_prediction_statistics=None,
   ):
     features, features_importance = self.model_traits_(
       model,
       feature_dictionary_file,
-      feature_statistics)
+      feature_statistics,
+      feature_prediction_statistics)
     if feature_name_resolver is not None and features_importance:
       feature_names = feature_name_resolver.resolve(
         [item['feature'] for item in features_importance])
@@ -1588,6 +1745,7 @@ class CatBoostTrainer(object):
       model,
       feature_dictionary_file,
       feature_statistics=None,
+      feature_prediction_statistics=None,
   ):
     feature_importance = [
       (index, float(score))
@@ -1625,11 +1783,14 @@ class CatBoostTrainer(object):
           'score': score,
           'feature': feature_name,
         }
-        if feature_statistics is not None:
+        if (
+            feature_statistics is not None or
+            feature_prediction_statistics is not None):
           self.add_feature_statistics_(
             trait,
             feature_statistics,
-            index + 1)
+            index + 1,
+            feature_prediction_statistics)
         traits.append(trait)
 
     features = [
@@ -1640,21 +1801,36 @@ class CatBoostTrainer(object):
     return features, traits
 
   @staticmethod
-  def add_feature_statistics_(trait, feature_statistics, feature_index):
-    total_impressions = feature_statistics.total_impressions
-    total_clicks = feature_statistics.total_clicks
-    yes_impressions, yes_clicks = feature_statistics.get(feature_index)
-    no_impressions = total_impressions - yes_impressions
-    no_clicks = total_clicks - yes_clicks
-
+  def add_feature_statistics_(
+      trait,
+      feature_statistics,
+      feature_index,
+      feature_prediction_statistics=None,
+  ):
     def ratio(numerator, denominator):
       if denominator == 0:
         return decimal.Decimal(0)
-      return decimal.Decimal(numerator) / decimal.Decimal(denominator)
+      return decimal.Decimal(str(numerator)) / decimal.Decimal(denominator)
 
-    trait['yes_share'] = ratio(yes_impressions * 100, total_impressions)
-    trait['yes_ctr'] = ratio(yes_clicks, yes_impressions)
-    trait['no_ctr'] = ratio(no_clicks, no_impressions)
+    if feature_statistics is not None:
+      total_impressions = feature_statistics.total_impressions
+      total_clicks = feature_statistics.total_clicks
+      yes_impressions, yes_clicks = feature_statistics.get(feature_index)
+      no_impressions = total_impressions - yes_impressions
+      no_clicks = total_clicks - yes_clicks
+      trait['yes_share'] = ratio(yes_impressions * 100, total_impressions)
+      trait['yes_ctr'] = ratio(yes_clicks, yes_impressions)
+      trait['no_ctr'] = ratio(no_clicks, no_impressions)
+
+    if feature_prediction_statistics is not None:
+      yes_rows, yes_predicted_sum = feature_prediction_statistics.get(
+        feature_index)
+      no_rows = feature_prediction_statistics.total_rows - yes_rows
+      no_predicted_sum = (
+        feature_prediction_statistics.total_predicted_ctr -
+        yes_predicted_sum)
+      trait['yes_predicted_ctr'] = ratio(yes_predicted_sum, yes_rows)
+      trait['no_predicted_ctr'] = ratio(no_predicted_sum, no_rows)
 
   @classmethod
   def feature_signature_(cls, feature_name):
@@ -1868,6 +2044,7 @@ class CatBoostTrainer(object):
       ctr_thresholds=None,
       train_start=None,
       train_end=None,
+      peak_rss_bytes=None,
   ):
     with traits_file.open('w') as output:
       output.write('{\n  "features_importance": [')
@@ -1883,7 +2060,12 @@ class CatBoostTrainer(object):
         if 'name' in item:
           output.write(',\n      "name": ' + json.dumps(
             item['name'], ensure_ascii=False))
-        for field in ('yes_share', 'yes_ctr', 'no_ctr'):
+        for field in (
+            'yes_share',
+            'yes_ctr',
+            'no_ctr',
+            'yes_predicted_ctr',
+            'no_predicted_ctr'):
           if field in item:
             output.write(
               ',\n      "' + field + '": ' +
@@ -1902,13 +2084,24 @@ class CatBoostTrainer(object):
             format(decimal.Decimal(str(item['train'])), 'f') + ',\n')
           history_fields = [
             ('test', format(decimal.Decimal(str(item['test'])), 'f'))]
-          for field in ('train_rows', 'train_clicks', 'train_ctr'):
+          for field in (
+              'train_rows',
+              'train_clicks',
+              'peak_rss_bytes',
+              'train_ctr',
+              'train_rmse',
+              'val_rmse',
+              'train_mae',
+              'val_mae'):
             if field in item:
               value = item[field]
-              history_fields.append((
-                field,
-                str(int(value)) if field != 'train_ctr' else
-                format(decimal.Decimal(str(value)), 'f')))
+              history_fields.append(
+                (
+                  field,
+                  str(int(value))
+                  if field in (
+                    'train_rows', 'train_clicks', 'peak_rss_bytes') else
+                  format(decimal.Decimal(str(value)), 'f')))
           for field_index, (field, value) in enumerate(history_fields):
             output.write(
               ('      "' + field + '": ' + value +
@@ -1947,6 +2140,11 @@ class CatBoostTrainer(object):
             output.write(',\n' if field == 'actual_ctr' else '\n')
           output.write('    }')
         output.write('\n  ]' if ctr_thresholds else ']')
+
+      if peak_rss_bytes:
+        output.write(
+          ',\n  "properties": [{"peak_rss_bytes": ' +
+          str(int(peak_rss_bytes)) + '}]')
 
       if train_start is not None:
         output.write(',\n  "status": "published"')

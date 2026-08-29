@@ -36,6 +36,28 @@ class CTRPredictModelViewerTest(unittest.TestCase):
     self.assertEqual('/var/lib/ctr-models', config.model_root)
     self.assertEqual('127.0.0.1', config.web_host)
     self.assertEqual(18080, config.web_port)
+    self.assertEqual('/', config.url_path)
+
+  def test_url_path(self):
+    config = Config()
+    config.init_json({
+      'pid_file': '/var/run/ctr-viewer.pid',
+      'model_root': '/var/lib/ctr-models',
+      'url_path': '/ctr',
+      'web_server': {'port': 8080},
+    })
+
+    self.assertEqual('/ctr/', config.url_path)
+
+  def test_url_path_must_be_absolute_without_query(self):
+    config = Config()
+    with self.assertRaisesRegex(ValueError, 'url_path'):
+      config.init_json({
+        'pid_file': '/var/run/ctr-viewer.pid',
+        'model_root': '/var/lib/ctr-models',
+        'url_path': 'ctr',
+        'web_server': {'port': 8080},
+      })
 
   def test_default_host(self):
     config = Config()
@@ -70,6 +92,7 @@ class CTRPredictModelViewerTest(unittest.TestCase):
     config.model_root = '/var/lib/ctr-models'
     config.web_host = '127.0.0.1'
     config.web_port = 18080
+    config.url_path = '/'
     repository = unittest.mock.MagicMock()
     application = unittest.mock.MagicMock()
 
@@ -90,7 +113,7 @@ class CTRPredictModelViewerTest(unittest.TestCase):
       '/var/run/ctr-viewer.pid',
       'CTRPredictModelViewer')
     repository_factory.assert_called_once_with('/var/lib/ctr-models')
-    application_factory.assert_called_once_with(repository)
+    application_factory.assert_called_once_with(repository, '/')
     uvicorn_run.assert_called_once_with(
       application,
       host='127.0.0.1',

@@ -57,8 +57,26 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       'traits': {
         'features_importance': features_importance,
         'logloss_history': [
-          {'step': 1, 'train': '0.0123', 'test': '0.0203'},
-          {'step': 2, 'train': '0.0119', 'test': '0.0056'},
+          {
+            'step': 1,
+            'train': '0.0123',
+            'test': '0.0203',
+            'peak_rss_bytes': 1610612736,
+            'train_rmse': '0.123456789',
+            'val_rmse': '0.234567891',
+            'train_mae': '0.098765432',
+            'val_mae': '0.198765432',
+          },
+          {
+            'step': 2,
+            'train': '0.0119',
+            'test': '0.0056',
+            'peak_rss_bytes': 2147483648,
+            'train_rmse': '0.113456789',
+            'val_rmse': '0.224567891',
+            'train_mae': '0.088765432',
+            'val_mae': '0.188765432',
+          },
         ],
         'dataset_sizes': {
           'train': {'rows': 1000000, 'clicks': 2001},
@@ -68,6 +86,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
         'properties': [
           {'train_logloss': '0.0119'},
           {'val_logloss': '0.0056'},
+          {'peak_rss_bytes': 2147483648},
         ],
         'ctr_thresholds': [
           {
@@ -97,6 +116,8 @@ class CTRModelWebApplicationTest(unittest.TestCase):
       'yes_share': decimal.Decimal('12.5123456789'),
       'yes_ctr': decimal.Decimal('0.004123987'),
       'no_ctr': decimal.Decimal('0.001987654'),
+      'yes_predicted_ctr': decimal.Decimal('0.003456789'),
+      'no_predicted_ctr': decimal.Decimal('0.002345678'),
     }])
 
     page = render_index_page([properties['summary']], properties)
@@ -114,10 +135,26 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('12.512345', page)
     self.assertIn('0.004123', page)
     self.assertIn('0.001987', page)
+    self.assertIn('Yes predicted CTR', page)
+    self.assertIn('No predicted CTR', page)
+    self.assertIn('0.003456', page)
+    self.assertIn('0.002345', page)
     self.assertNotIn('12.512346', page)
     self.assertIn('Logloss history', page)
     self.assertIn('Train Logloss', page)
     self.assertIn('Test Logloss', page)
+    self.assertIn('Train RMSE', page)
+    self.assertIn('Validation RMSE', page)
+    self.assertIn('0.123456', page)
+    self.assertIn('0.234567', page)
+    self.assertIn('Train MAE', page)
+    self.assertIn('Validation MAE', page)
+    self.assertIn('0.098765', page)
+    self.assertIn('0.198765', page)
+    self.assertIn('<th>Peak RSS</th>', page)
+    self.assertIn('1.50 GiB', page)
+    self.assertIn('<code>peak_rss_bytes</code>', page)
+    self.assertIn('2.00 GiB', page)
     self.assertIn('data-section-id="properties"', page)
     self.assertIn('data-section-id="datasets"', page)
     self.assertIn('data-section-id="ctr_thresholds"', page)
@@ -405,6 +442,16 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           'status': 'completed',
           'train_start': '2026-08-24T15:55:15Z',
           'train_end': '2026-08-24T15:59:00Z',
+          'dataset_sizes': {
+            'ssp_ctr': {'rows': 300000000, 'clicks': 600000},
+          },
+          'ctr_thresholds': [{
+            'ctr_goal': 0,
+            'impressions': 299000000,
+            'clicks': 599000,
+            'actual_ctr': 0.002,
+            'average_predicted_ctr': 0.003,
+          }],
           'train_steps': [
             {
               'id': 'feature_selection_export_001',
@@ -489,6 +536,9 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('Models within bundle', page)
     self.assertIn('data-component-group="prepare"', page)
     self.assertIn('<h3>Prepare<span>1</span></h3>', page)
+    self.assertIn('CTR threshold calibration', page)
+    self.assertIn('<td>SSP CTR</td>', page)
+    self.assertIn('299000000', page)
     self.assertIn('Feature selection: export dataset 1/10', page)
     self.assertIn(
       'Feature selection: export dataset 1/10 : 1m 00s',
@@ -651,12 +701,17 @@ class CTRModelWebApplicationTest(unittest.TestCase):
         if model_id != properties['summary']['id']:
           raise AssertionError('Unexpected model id')
 
-    application = create_application(Repository())
+    application = create_application(Repository(), '/ctr/')
     route = next(route for route in application.routes if route.path == '/')
     response = asyncio.run(route.endpoint(model_id=properties['summary']['id']))
 
     self.assertEqual('text/html', response.media_type)
     self.assertIn(b'Account/Tag', response.body)
+    route_paths = {route.path for route in application.routes}
+    self.assertIn('/ctr/', route_paths)
+    self.assertIn('/ctr/models', route_paths)
+    self.assertIn(b'applicationUrlPath = "/ctr/"', response.body)
+    self.assertIn(b'/ctr/?model=', response.body)
 
 
 if __name__ == '__main__':

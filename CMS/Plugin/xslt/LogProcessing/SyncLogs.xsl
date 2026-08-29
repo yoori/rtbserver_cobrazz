@@ -330,7 +330,7 @@
 
       <!-- Predictor sync log server -->
       <xsl:variable name="predictor-path"
-          select="$be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]"/>
+          select="$be-cluster-path/service[@descriptor = $ctr-predict-model-generator-descriptor]"/>
 
       <xsl:variable name="predictor-hosts">
         <xsl:for-each select="$predictor-path">

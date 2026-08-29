@@ -1,6 +1,7 @@
 import argparse
 import json
 import pathlib
+import resource
 
 import numpy
 from catboost import CatBoostClassifier, Pool, sum_models
@@ -48,12 +49,27 @@ def train_chunk(
   logloss = learn_metrics.get(loss_function, [])
   if not logloss:
     raise RuntimeError('CatBoost did not return train Logloss')
-  metrics = {'Logloss': float(logloss[-1])}
+  probabilities = numpy.asarray(
+    model.predict(train_pool, prediction_type='Probability'),
+    dtype=numpy.float64)
+  if probabilities.ndim == 2:
+    probabilities = probabilities[:, 1]
+  else:
+    probabilities = probabilities.reshape(-1)
+  labels = numpy.asarray(train_pool.get_label(), dtype=numpy.float64)
+  errors = probabilities - labels
+  metrics = {
+    'Logloss': float(logloss[-1]),
+    'RMSE': float(numpy.sqrt(numpy.mean(errors ** 2))),
+    'MAE': float(numpy.mean(numpy.abs(errors))),
+  }
   if merge_model is not None:
     previous_model = CatBoostClassifier()
     previous_model.load_model(str(pathlib.Path(merge_model).resolve()))
     model = sum_models([previous_model, model])
   model.save_model(str(pathlib.Path(output_model).resolve()))
+  metrics['peak_rss_bytes'] = int(
+    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
   if metrics_file is not None:
     with pathlib.Path(metrics_file).open('w') as output:
       json.dump(metrics, output)

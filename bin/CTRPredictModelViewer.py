@@ -15,7 +15,7 @@ def run_service(config):
   with PidFile(config.pid_file, 'CTRPredictModelViewer'):
     repository = CTRModelRepository(config.model_root)
     uvicorn.run(
-      create_application(repository),
+      create_application(repository, config.url_path),
       host=config.web_host,
       port=config.web_port,
       workers=1,
