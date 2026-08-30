@@ -145,6 +145,7 @@ class RImpressionTrainExporter(object):
       activity_period,
       min_impressions,
       training_extra_condition=None,
+      validation_extra_condition=None,
   ):
     if activity_period <= 0:
       raise ValueError('activity_period must be positive')
@@ -156,6 +157,10 @@ class RImpressionTrainExporter(object):
         '(' + training_condition + ') AND (' +
         training_extra_condition + ')')
     validation_condition = self.validation_condition()
+    if validation_extra_condition is not None:
+      validation_condition = (
+        '(' + validation_condition + ') AND (' +
+        validation_extra_condition + ')')
     query = (
       'SELECT campaign_id, '
         'countIf(' + training_condition + ') AS training_impressions, '
@@ -414,10 +419,23 @@ class RImpressionTrainExporter(object):
       raise ValueError('validation_rows must be positive')
     validation_partitions = len(cls.VALIDATION_PARTITIONS)
     training_partitions = cls.SOURCE_PARTITIONS - validation_partitions
-    return max(
-      math.ceil(training_rows * cls.SOURCE_PARTITIONS / training_partitions),
+    return (
+      math.ceil(training_rows * cls.SOURCE_PARTITIONS / training_partitions) +
       math.ceil(
         validation_rows * cls.SOURCE_PARTITIONS / validation_partitions))
+
+  @classmethod
+  def fit_row_counts(cls, training_rows, validation_rows, source_rows):
+    if source_rows <= 0:
+      raise ValueError('source_rows must be positive')
+    required_source_rows = cls.required_source_rows(
+      training_rows,
+      validation_rows)
+    if source_rows >= required_source_rows:
+      return training_rows, validation_rows
+    return (
+      training_rows * source_rows // required_source_rows,
+      validation_rows * source_rows // required_source_rows)
 
   @classmethod
   def _source_partition_expression(cls):

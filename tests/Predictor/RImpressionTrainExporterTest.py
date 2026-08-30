@@ -216,7 +216,9 @@ class RImpressionTrainExporterTest(unittest.TestCase):
         '2026-07-01',
         '2026-08-25 00:00:00',
         14 * 24 * 60 * 60,
-        100000)
+        100000,
+        training_extra_condition="timestamp < '2026-08-20'",
+        validation_extra_condition="timestamp >= '2026-08-20'")
 
     self.assertEqual([
       (123, 100001, 2041),
@@ -227,6 +229,8 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn('1209600', query)
     self.assertIn('HAVING training_impressions > 100000', query)
     self.assertIn('AS validation_impressions', query)
+    self.assertIn("timestamp < '2026-08-20'", query)
+    self.assertIn("timestamp >= '2026-08-20'", query)
     self.assertIn('campaign_id IN (', query)
     self.assertEqual(2, query.count('campaign_id > 0'))
 
@@ -275,8 +279,24 @@ class RImpressionTrainExporterTest(unittest.TestCase):
 
   def test_required_source_rows_accounts_for_validation_partitions(self):
     self.assertEqual(
-      306122449,
+      396122449,
       RImpressionTrainExporter.required_source_rows(300000000, 1800000))
+
+  def test_fit_row_counts_scales_training_and_validation_together(self):
+    self.assertEqual(
+      (150000000, 900000),
+      RImpressionTrainExporter.fit_row_counts(
+        300000000,
+        1800000,
+        198061225))
+
+  def test_fit_row_counts_keeps_requested_sizes_when_source_is_sufficient(self):
+    self.assertEqual(
+      (300000000, 1800000),
+      RImpressionTrainExporter.fit_row_counts(
+        300000000,
+        1800000,
+        396122449))
 
 
 if __name__ == '__main__':

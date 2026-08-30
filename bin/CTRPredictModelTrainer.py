@@ -2151,20 +2151,32 @@ def generate_model_(config, in_progress_model):
     date_from, date_to = exporter.find_date_range(
       source_rows,
       config.data_delay)
-  validation_window_rows = config.validation_set_rows * validation_sets
+  with in_progress_model.train_step('prepare', 'fit_row_counts'):
+    available_source_rows = exporter.count_rows(date_from, date_to)
+  _, validation_window_rows = exporter.fit_row_counts(
+    max(selection_rows, training_rows),
+    validation_rows_total,
+    available_source_rows)
+  validation_window_rows -= validation_window_rows % validation_sets
+  if validation_window_rows == 0:
+    raise RuntimeError(
+      'Not enough rows to create temporally disjoint training and validation '
+      'sets')
   validation_cutoff = exporter.ordered_slice_min_timestamp(
     date_from,
     date_to,
     validation_window_rows,
     exporter.validation_condition())
   training_time_condition = "timestamp < '" + validation_cutoff + "'"
+  validation_time_condition = "timestamp >= '" + validation_cutoff + "'"
   with in_progress_model.train_step('prepare', 'select_campaigns'):
     eligible_campaign_candidates = exporter.eligible_campaigns(
       date_from,
       date_to,
       config.campaign_model_activity_period,
       config.min_campaign_model_imps,
-      training_extra_condition=training_time_condition)
+      training_extra_condition=training_time_condition,
+      validation_extra_condition=validation_time_condition)
   campaign_validation_sets = (
     config.selection_validation_sets +
     config.training_validation_sets +
@@ -2194,7 +2206,8 @@ def generate_model_(config, in_progress_model):
     available_validation_rows = exporter.count_rows(
       date_from,
       date_to,
-      exporter.validation_condition())
+      '(' + exporter.validation_condition() + ') AND (' +
+      validation_time_condition + ')')
     available_ssp_ctr_training_rows = exporter.count_rows(
       date_from,
       date_to,
@@ -2204,7 +2217,7 @@ def generate_model_(config, in_progress_model):
       date_from,
       date_to,
       '(' + exporter.validation_condition() + ') AND (' +
-      ssp_ctr_condition + ')')
+      ssp_ctr_condition + ') AND (' + validation_time_condition + ')')
   if available_ssp_ctr_training_rows == 0:
     raise RuntimeError('No SSP CTR rows are available for training')
   ssp_ctr_selection_fit_steps = campaign_fit_steps(
@@ -2356,7 +2369,7 @@ def generate_model_(config, in_progress_model):
       cycle_dir,
       'selection-validation',
       features_config_file,
-      date_from,
+      validation_cutoff,
       date_to,
       validation_rows,
       config.selection_validation_sets,
@@ -2454,7 +2467,7 @@ def generate_model_(config, in_progress_model):
         cycle_dir,
         'common-validation',
         features_config_file,
-        date_from,
+        validation_cutoff,
         date_to,
         validation_rows,
         core_validation_sets,
@@ -2721,7 +2734,7 @@ def generate_model_(config, in_progress_model):
       cycle_dir,
       'ssp-ctr-selection-validation',
       ssp_ctr_features_config_file,
-      date_from,
+      validation_cutoff,
       date_to,
       ssp_ctr_validation_rows,
       config.selection_validation_sets,
@@ -2794,7 +2807,7 @@ def generate_model_(config, in_progress_model):
       cycle_dir,
       'ssp-ctr-validation',
       ssp_ctr_features_config_file,
-      date_from,
+      validation_cutoff,
       date_to,
       ssp_ctr_validation_rows,
       ssp_ctr_core_validation_sets,
@@ -2869,7 +2882,7 @@ def generate_model_(config, in_progress_model):
     with in_progress_model.train_step(
         'common_ssp_ctr', 'finalize_metrics'):
       ssp_ctr_event_logloss = exporter.ssp_ctr_logloss(
-        date_from,
+        validation_cutoff,
         date_to,
         ssp_ctr_validation_rows * config.final_test_sets,
         exporter.validation_condition(),
@@ -2967,7 +2980,7 @@ def generate_model_(config, in_progress_model):
             feature_indexes_file,
             stable_model_file,
             trainer,
-            date_from,
+            validation_cutoff,
             date_to,
             campaign_validation_rows,
             config.selection_validation_sets,
@@ -3052,7 +3065,7 @@ def generate_model_(config, in_progress_model):
             feature_indexes_file,
             stable_model_file,
             trainer,
-            date_from,
+            validation_cutoff,
             date_to,
             campaign_validation_rows,
             final_campaign_validation_sets,
