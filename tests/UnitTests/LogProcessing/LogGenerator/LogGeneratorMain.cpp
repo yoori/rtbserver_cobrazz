@@ -1059,7 +1059,8 @@ struct Filler
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         RequestBasicChannelsCollector::DataT::DataT::MatchOptional(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt),
-        "source/external id 1"
+        "source/external id 1",
+        "https://example.test/referer/1"
       );
 
     RequestBasicChannelsCollector::DataT::DataT
@@ -1069,7 +1070,8 @@ struct Filler
         UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(),
-        "source/external id 2"
+        "source/external id 2",
+        "https://example.test/referer/2"
       );
 
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)

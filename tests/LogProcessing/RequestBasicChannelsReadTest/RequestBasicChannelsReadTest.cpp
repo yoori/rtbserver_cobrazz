@@ -122,7 +122,8 @@ namespace
       LP::UserId(),
       LP::RequestBasicChannelsInnerData::MatchOptional(std::move(match)),
       LP::RequestBasicChannelsInnerData::AdRequestPropsOptional(),
-      "source/synthetic external id");
+      "source/synthetic external id",
+      "https://example.test/synthetic?value=1");
   }
 
   LP::RequestBasicChannelsInnerData
@@ -172,7 +173,8 @@ namespace
       LP::UserId("PPPPPPPPPPPPPPPPPPPPPA.."),
       Record::MatchOptional(),
       Record::AdRequestPropsOptional(ad_request_optional),
-      "source/ad external id");
+      "source/ad external id",
+      "");
   }
 
   std::size_t
@@ -266,7 +268,14 @@ namespace
 
     std::istringstream input(replace_field(record, PAGE_TRIGGER_CHANNELS_FIELD, value));
     LP::RequestBasicChannelsInnerData data;
-    if (!(input >> data))
+    try
+    {
+      if (!(input >> data))
+      {
+        return false;
+      }
+    }
+    catch (const eh::Exception&)
     {
       return false;
     }

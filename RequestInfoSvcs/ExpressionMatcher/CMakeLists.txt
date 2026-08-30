@@ -91,6 +91,21 @@ target_link_libraries(UserColoReachContainer
     ProfilingCommons
 )
 
+add_library(UserNavigationContainer STATIC
+  UserNavigationContainer.cpp
+)
+
+target_link_libraries(UserNavigationContainer
+  PRIVATE
+    UserNavigationProfilePST
+    Commons
+    Generics
+    Logger
+    ProfileMap
+    ProfileMapRocksDB
+    ProfilingCommons
+)
+
 add_executable(ExpressionMatcher
   ExpressionMatcherGrpc.cpp
   ExpressionMatcherLogLoader.cpp
@@ -106,6 +121,7 @@ target_link_libraries(ExpressionMatcher
     PkgConfig::Jemalloc
     UserColoReachContainer
     UserInventoryContainer
+    UserNavigationContainer
     UserTriggerMatchContainer
     ExpressionChannelMatcher
     ExpressionChannel

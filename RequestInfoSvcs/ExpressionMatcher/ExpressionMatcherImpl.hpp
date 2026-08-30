@@ -1,7 +1,9 @@
 #pragma once
 
 #include <eh/Exception.hpp>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
 #include <Logger/Logger.hpp>
@@ -25,6 +27,7 @@
 
 #include "ChannelMatcher.hpp"
 #include "UserInventoryContainer.hpp"
+#include "UserNavigationContainer.hpp"
 #include "UserTriggerMatchContainer.hpp"
 #include "UserColoReachContainer.hpp"
 #include "ExpressionMatcherOutLogger.hpp"
@@ -88,6 +91,11 @@ namespace AdServer::RequestInfoSvcs
 
     AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
     co_get_household_colo_reach_profile(AdServer::Commons::UserId user_id);
+
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+    co_get_user_navigation_profile(
+      AdServer::Commons::UserId user_id,
+      std::optional<std::uint32_t> date);
 
     void
     run_daily_processing(bool sync);
@@ -357,6 +365,7 @@ namespace AdServer::RequestInfoSvcs
       UserInventoryInfoContainer* user_inventory_container,
       UserTriggerMatchContainer* user_trigger_match_container,
       UserTriggerMatchContainer* temp_user_trigger_match_container,
+      UserNavigationContainer* user_navigation_container,
       UserColoReachContainer* household_colo_reach_container,
       const AdServer::LogProcessing::
         RequestBasicChannelsCollector::KeyT& key,
@@ -397,6 +406,8 @@ namespace AdServer::RequestInfoSvcs
     UserTriggerMatchProfileProvider_var user_trigger_match_profile_provider_;
     ReferenceCounting::PtrHolder<UserTriggerMatchContainer_var>
       user_trigger_match_container_;
+    ReferenceCounting::PtrHolder<UserNavigationContainer_var>
+      user_navigation_container_;
     ReferenceCounting::PtrHolder<UserColoReachContainer_var>
       household_colo_reach_container_;
     ExpressionMatcherOutLogger_var expression_matcher_out_logger_;

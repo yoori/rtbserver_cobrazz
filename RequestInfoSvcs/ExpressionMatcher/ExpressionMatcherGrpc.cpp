@@ -1,5 +1,7 @@
 #include "ExpressionMatcherGrpc.hpp"
 
+#include <cstdint>
+#include <optional>
 #include <utility>
 
 #include <grpcpp/grpcpp.h>
@@ -64,6 +66,11 @@ namespace AdServer::RequestInfoSvcs
           get_household_colo_reach_profile,
           co_get_household_colo_reach_profile),
         MAKE_GRPC_CORO_CALL(
+          Proto::UserNavigationProfileRequest,
+          Proto::ProfileResponse,
+          get_user_navigation_profile,
+          co_get_user_navigation_profile),
+        MAKE_GRPC_CORO_CALL(
           Proto::RunDailyProcessingRequest,
           Proto::RunDailyProcessingResponse,
           run_daily_processing,
@@ -118,6 +125,22 @@ namespace AdServer::RequestInfoSvcs
       co_await co_execute_profile_request_(
         expression_matcher_->co_get_household_colo_reach_profile(
           AdServer::Commons::UserId(request.id())),
+        response,
+        status);
+    }
+
+    AdServer::Commons::StartableAwaitable<void>
+    co_get_user_navigation_profile(
+      Proto::UserNavigationProfileRequest&& request,
+      Proto::ProfileResponse& response,
+      grpc::Status& status) const
+    {
+      co_await co_execute_profile_request_(
+        expression_matcher_->co_get_user_navigation_profile(
+          AdServer::Commons::UserId(request.user_id()),
+          request.has_date() ?
+            std::optional<std::uint32_t>(request.date()) :
+            std::nullopt),
         response,
         status);
     }

@@ -9,5 +9,6 @@ add_pst(UserFraudProtectionProfilePST  UserFraudProtectionProfile.pst ${PST_DIRE
 add_pst(PassbackProfilePST  PassbackProfile.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)
 add_pst(UserTagRequestMergeProfilePST  UserTagRequestMergeProfile.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)
 add_pst(UserTriggerMatchProfilePST  UserTriggerMatchProfile.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)
+add_pst(UserNavigationProfilePST  UserNavigationProfile.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)
 add_pst(RequestTriggerMatchProfilePST  RequestTriggerMatchProfile.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)
 add_pst(ConsiderMessagesPST  ConsiderMessages.pst ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoCommons)

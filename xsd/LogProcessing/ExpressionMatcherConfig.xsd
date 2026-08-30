@@ -90,6 +90,14 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="UserNavigationChunksConfig" type="LevelChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            user navigation history chunks config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="TriggerImpsConfig" type="TriggerImpsConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>

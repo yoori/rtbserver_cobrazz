@@ -338,6 +338,23 @@ namespace AdServer::RequestInfoSvcs
     }
   };
 
+  struct CoGetUserNavigationProfileAdapter
+  {
+    explicit CoGetUserNavigationProfileAdapter(std::optional<std::uint32_t> date_val)
+      : date(std::move(date_val))
+    {}
+
+    template<typename ContainerPtrHolderType, typename KeyType>
+    AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var> operator()(
+      ContainerPtrHolderType* container,
+      const KeyType& key) const
+    {
+      co_return co_await container->co_get_profile(key, date);
+    }
+
+    std::optional<std::uint32_t> date;
+  };
+
   template<
     typename ContainerPtrHolderType,
     typename KeyType,
@@ -434,6 +451,20 @@ namespace AdServer::RequestInfoSvcs
       CoGetProfileAdapter());
   }
 
+  AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
+  ExpressionMatcherImpl::co_get_user_navigation_profile(
+    AdServer::Commons::UserId user_id,
+    std::optional<std::uint32_t> date)
+  {
+    static const char* FUN = "ExpressionMatcherImpl::co_get_user_navigation_profile()";
+
+    co_return co_await co_get_profile_(
+      FUN,
+      user_navigation_container_,
+      user_id,
+      CoGetUserNavigationProfileAdapter(std::move(date)));
+  }
+
   void ExpressionMatcherImpl::load_data_() noexcept
   {
     try
@@ -517,6 +548,39 @@ namespace AdServer::RequestInfoSvcs
         Aspect::EXPRESSION_MATCHER,
         "ADS-IMPL-4023") << FUN <<
         ": caught Exception on creating UserInventoryInfoContainer: " << ex.what();
+    }
+
+    try
+    {
+      AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap chunk_navigation_folders;
+
+      AdServer::ProfilingCommons::ProfileMapFactory::fetch_chunk_folders(
+        chunk_navigation_folders,
+        expression_matcher_config_.UserNavigationChunksConfig().chunks_root().c_str(),
+        "Chunk");
+
+      if (!user_navigation_container_.get().in())
+      {
+        const auto& chunks_config = expression_matcher_config_.UserNavigationChunksConfig();
+        UserNavigationContainer_var user_navigation_container = new UserNavigationContainer(
+          logger(),
+          chunks_config.chunks_number(),
+          chunk_navigation_folders,
+          chunks_config.chunks_prefix().c_str(),
+          fill_level_map_traits_(chunks_config),
+          rocksdb_processor_);
+
+        add_child_object(user_navigation_container.in(), true);
+        user_navigation_container_ = user_navigation_container;
+      }
+    }
+    catch (const UserNavigationContainer::Exception& ex)
+    {
+      logger()->sstream(
+        Logging::Logger::EMERGENCY,
+        Aspect::EXPRESSION_MATCHER,
+        "ADS-IMPL-4023") << FUN <<
+        ": caught Exception on creating UserNavigationContainer: " << ex.what();
     }
 
     if (expression_matcher_config_.TriggerImpsConfig().present())
@@ -677,6 +741,7 @@ namespace AdServer::RequestInfoSvcs
     }
 
     if (!user_inventory_container_.get().in() ||
+       !user_navigation_container_.get().in() ||
        (expression_matcher_config_.TriggerImpsConfig().present() && (
          !user_trigger_match_container_.get().in() ||
          !temp_user_trigger_match_container_.get().in())))
@@ -1355,6 +1420,7 @@ namespace AdServer::RequestInfoSvcs
       temp_user_trigger_match_container_.get();
 
     UserInventoryInfoContainer_var user_inventory_container = user_inventory_container_.get();
+    UserNavigationContainer_var user_navigation_container = user_navigation_container_.get();
     UserColoReachContainer_var household_colo_reach_container =
       household_colo_reach_container_.get();
 
@@ -1362,6 +1428,7 @@ namespace AdServer::RequestInfoSvcs
       user_inventory_container,
       user_trigger_match_container,
       temp_user_trigger_match_container,
+      user_navigation_container,
       household_colo_reach_container,
       key,
       record);
@@ -1387,6 +1454,7 @@ namespace AdServer::RequestInfoSvcs
     UserInventoryInfoContainer* user_inventory_container,
     UserTriggerMatchContainer* user_trigger_match_container,
     UserTriggerMatchContainer* temp_user_trigger_match_container,
+    UserNavigationContainer* user_navigation_container,
     UserColoReachContainer* household_colo_reach_container,
     const AdServer::LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const AdServer::LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
@@ -1490,6 +1558,17 @@ namespace AdServer::RequestInfoSvcs
         }
 
         co_await user_inventory_container->co_process_match_request(match_info);
+
+        if (user_navigation_container &&
+          !record.user_id().is_null() &&
+          !record.referer().empty())
+        {
+          UserNavigationContainer::RequestInfo navigation_request_info;
+          navigation_request_info.user_id = record.user_id();
+          navigation_request_info.time = key.time();
+          navigation_request_info.url = record.referer();
+          co_await user_navigation_container->co_process_request(navigation_request_info);
+        }
 
         expression_matcher_out_logger_->process_match_request(match_info);
 
@@ -1649,6 +1728,7 @@ namespace AdServer::RequestInfoSvcs
       temp_user_trigger_match_container_.get();
     UserColoReachContainer_var household_colo_reach_container =
       household_colo_reach_container_.get();
+    UserNavigationContainer_var user_navigation_container = user_navigation_container_.get();
 
     if (user_inventory_container.in())
     {
@@ -1710,6 +1790,23 @@ namespace AdServer::RequestInfoSvcs
           Aspect::EXPRESSION_MATCHER,
           "ADS-IMPL-4020") << FUN <<
           ": Can't clear expired household users from UserColoReachContainer, "
+          "eh::Exception caught: " << ex.what();
+      }
+    }
+
+    if (user_navigation_container.in())
+    {
+      try
+      {
+        user_navigation_container->clear_expired();
+      }
+      catch (const eh::Exception& ex)
+      {
+        logger()->sstream(
+          Logging::Logger::EMERGENCY,
+          Aspect::EXPRESSION_MATCHER,
+          "ADS-IMPL-4020") << FUN <<
+          ": Can't clear expired users from UserNavigationContainer, "
           "eh::Exception caught: " << ex.what();
       }
     }

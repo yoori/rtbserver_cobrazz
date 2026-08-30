@@ -1,4 +1,5 @@
 add_subdirectory(LogProcessing)
+add_subdirectory(RequestInfoSvcs)
 add_subdirectory(Commons)
 add_subdirectory(CampaignManager)
 add_subdirectory(Frontends)

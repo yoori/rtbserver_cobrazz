@@ -280,6 +280,15 @@
       days_to_keep="{$inventory_days_to_keep}"
       expire_time="2592000"/>
 
+    <cfg:UserNavigationChunksConfig chunks_prefix="UserNavigation"
+      rw_buffer_size="10485760"
+      rwlevel_max_size="{$rwlevel-max-size}"
+      max_undumped_size="{$max-undumped-size}"
+      max_levels0="20"
+      chunks_root="{$chunks-root}"
+      chunks_number="{$distrib-count}"
+      expire_time="2592000"/>
+
     <xsl:if test="count($colo-config/cfg:channelTriggerImpStats/@enable) = 0 or
       count($colo-config/cfg:channelTriggerImpStats[@enable = 'true']) > 0 or
       count($colo-config/cfg:channelTriggerImpStats[@enable = '1']) > 0">

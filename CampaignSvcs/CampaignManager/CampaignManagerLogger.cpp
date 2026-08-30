@@ -1399,6 +1399,7 @@ namespace AdServer::CampaignSvcs
           AdServer::Commons::UserId(), // temporary user id
           CollectorT::DataT::DataT::MatchOptional(),
           CollectorT::DataT::DataT::AdRequestPropsOptional(),
+          std::string(),
           std::string());
 
         CollectorT::DataT data;
@@ -1464,6 +1465,7 @@ namespace AdServer::CampaignSvcs
           AdServer::Commons::UserId(), // temporary user id
           std::move(match_request),
           CollectorT::DataT::DataT::AdRequestPropsOptional(),
+          std::string(),
           std::string());
 
         CollectorT::DataT data;
@@ -1546,7 +1548,8 @@ namespace AdServer::CampaignSvcs
               null_id_, // temporary user id
               std::move(match_request),
               CollectorT::DataT::DataT::AdRequestPropsOptional(),
-              request_info.external_id));
+              request_info.external_id,
+              request_info.referer));
         }
 
         CollectorT::DataT::DataT::AdRequestPropsOptional ad_request_opt;
@@ -1651,7 +1654,8 @@ namespace AdServer::CampaignSvcs
             temporary_user_id,
             std::move(match_request),
             std::move(ad_request_opt),
-            request_info.external_id));
+            request_info.external_id,
+            request_info.referer));
 
         add_record(std::move(key), std::move(data));
       }

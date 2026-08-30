@@ -1,0 +1,34 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  struct NavigationDescriptor
+  {
+    uint date;
+    string url;
+    uint64 count;
+  };
+
+  autoreader NavigationReader<NavigationDescriptor>;
+
+  autowriter NavigationWriter<NavigationDescriptor>;
+
+  struct UserNavigationProfileDescriptor
+  {
+    uint version;
+    array<NavigationDescriptor> navigations;
+  };
+
+  reader UserNavigationProfileReader<UserNavigationProfileDescriptor>
+  {
+    version;
+    array<NavigationReader> navigations;
+  };
+
+  writer UserNavigationProfileWriter<UserNavigationProfileDescriptor>
+  {
+    version;
+    array<NavigationWriter> navigations;
+  };
+}
+}

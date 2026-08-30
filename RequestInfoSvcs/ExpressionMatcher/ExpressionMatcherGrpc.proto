@@ -14,6 +14,8 @@ service ExpressionMatcherGrpc {
     returns (ProfileResponse);
   rpc get_request_trigger_match_profile(ProfileRequest) returns (ProfileResponse);
   rpc get_household_colo_reach_profile(ProfileRequest) returns (ProfileResponse);
+  rpc get_user_navigation_profile(UserNavigationProfileRequest)
+    returns (ProfileResponse);
   rpc run_daily_processing(RunDailyProcessingRequest)
     returns (RunDailyProcessingResponse);
 }
@@ -25,6 +27,11 @@ message ProfileRequest {
 message UserTriggerMatchProfileRequest {
   string user_id = 1;
   bool temporary_user = 2;
+}
+
+message UserNavigationProfileRequest {
+  string user_id = 1;
+  uint32 date = 2 [features.field_presence = EXPLICIT];
 }
 
 message ProfileResponse {
