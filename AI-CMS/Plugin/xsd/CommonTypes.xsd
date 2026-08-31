@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            targetNamespace="http://www.adintelligence.net/xsd/AI/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AI/Configuration"
+            elementFormDefault="qualified">
+  <xsd:import schemaLocation="cms-commons.xsd"
+              namespace="http://foros.com/cms/commonTypes"/>
+
+  <xsd:simpleType name="NonEmptyString">
+    <xsd:restriction base="xsd:string">
+      <xsd:minLength value="1"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ShellValue">
+    <xsd:restriction base="xsd:string">
+      <xsd:minLength value="1"/>
+      <xsd:pattern value="[A-Za-z0-9_./:@+-]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="ZoneManagementType">
+    <xsd:sequence>
+      <xsd:element name="private_key" type="cms:Text" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="user_name" type="ShellValue" default="aduser"/>
+    <xsd:attribute name="user_group" type="ShellValue" default="adgroup"/>
+    <xsd:attribute name="ssh_key" type="ShellValue"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DevelParamsType">
+    <xsd:attribute name="autorestart_state_root" type="NonEmptyString"/>
+  </xsd:complexType>
+</xsd:schema>

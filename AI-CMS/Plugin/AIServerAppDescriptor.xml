@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://foros.com/cms/applicationDescriptor ./xsd/application.xsd"
+             xmlns="http://foros.com/cms/applicationDescriptor"
+             type="AIServer"
+             description="AI services cluster"
+             version="1.0.0.0"
+             configSchema="xsd/AppConfig.xsd">
+  <makeConfig>
+    <exec executable="AIServerConf.sh">
+      <arg value="${COLOXMLPATH}"/>
+      <arg value="${NODEXPATH}"/>
+      <arg value="${BUILDROOT}"/>
+      <arg value="${PLUGINROOT}"/>
+      <arg value="${VERSION}"/>
+      <arg value="${RELEASE}"/>
+    </exec>
+  </makeConfig>
+
+  <configRpmSpec rpmName="foros-config-server-ai-${COLO_NAME}">
+    <exec executable="AIServerSpec.sh">
+      <arg value="${COLOXMLPATH}"/>
+      <arg value="${NODEXPATH}"/>
+      <arg value="${PLUGINROOT}"/>
+      <arg value="${SPECPATH}"/>
+      <arg value="${PACKAGENAME}"/>
+      <arg value="${BUILDROOT}"/>
+      <arg value="${VERSION}"/>
+      <arg value="${RELEASE}"/>
+    </exec>
+  </configRpmSpec>
+
+  <serviceGroup id="2"
+                type="AICluster"
+                configSchema="xsd/AIClusterApp.xsd"
+                minOccurs="1"
+                maxOccurs="1">
+    <service type="AIAgent"
+             configSchema="xsd/AIAgentApp.xsd"
+             minOccurs="1"
+             maxOccurs="1"
+             minHostOccurs="1"
+             maxHostOccurs="1"/>
+    <service type="SegmentGenerator"
+             configSchema="xsd/SegmentGeneratorApp.xsd"
+             minOccurs="1"
+             maxOccurs="1"
+             minHostOccurs="1"
+             maxHostOccurs="1"/>
+  </serviceGroup>
+</application>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AI/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AI/Configuration"
+            elementFormDefault="qualified">
+  <xsd:include schemaLocation="CommonTypes.xsd"/>
+
+  <xsd:element name="cluster">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="environment">
+          <xsd:complexType>
+            <xsd:attribute name="workspace_root" type="ShellValue"
+                           default="/u01/foros/server-ai/var"/>
+            <xsd:attribute name="config_root" type="ShellValue"
+                           default="/opt/foros/server-ai/etc"/>
+            <xsd:attribute name="server_root" type="ShellValue"
+                           default="/opt/foros/server-ai"/>
+            <xsd:attribute name="server_bin_root" type="ShellValue"/>
+            <xsd:attribute name="dacs_root" type="ShellValue"/>
+            <xsd:attribute name="cuda_visible_devices" type="ShellValue"/>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

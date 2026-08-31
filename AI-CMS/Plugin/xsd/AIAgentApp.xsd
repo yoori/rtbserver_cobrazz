@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AI/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AI/Configuration"
+            elementFormDefault="qualified">
+  <xsd:include schemaLocation="CommonTypes.xsd"/>
+
+  <xsd:element name="aiAgent">
+    <xsd:complexType>
+      <xsd:attribute name="model" type="ShellValue" default="qwen3"/>
+      <xsd:attribute name="model_package" type="ShellValue"
+                     default="foros-ollama-model-qwen3"/>
+      <xsd:attribute name="model_dir" type="ShellValue"
+                     default="/u01/foros/server-ai/models/ollama/qwen3"/>
+      <xsd:attribute name="ollama_binary" type="ShellValue"
+                     default="/opt/foros/ollama/bin/ollama"/>
+      <xsd:attribute name="listen_host" type="ShellValue" default="0.0.0.0"/>
+      <xsd:attribute name="port" type="xsd:positiveInteger" default="11434"/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
