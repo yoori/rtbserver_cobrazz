@@ -195,6 +195,7 @@ def prepare_train_steps(config):
   return [
     train_step('prepare_feature_configs', 'Prepare feature configurations'),
     train_step('find_date_range', 'Determine source date range'),
+    train_step('fit_row_counts', 'Fit row counts to available source data'),
     train_step('select_campaigns', 'Select eligible campaigns'),
     train_step('resolve_campaign_names', 'Resolve campaign names'),
     train_step('count_available_rows', 'Count available rows'),

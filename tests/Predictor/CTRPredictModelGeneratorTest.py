@@ -64,6 +64,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     prepare_steps = TRAINER_MODULE.prepare_train_steps(config)
     step_ids = {step['id'] for step in prepare_steps}
 
+    self.assertIn('fit_row_counts', step_ids)
     self.assertIn('feature_selection_export_001', step_ids)
     self.assertIn('feature_selection_libsvm_001', step_ids)
     self.assertIn('feature_selection_fit_001', step_ids)
