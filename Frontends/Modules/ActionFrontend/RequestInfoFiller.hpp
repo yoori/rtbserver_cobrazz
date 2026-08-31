@@ -45,6 +45,8 @@ namespace AdServer::Action
     AdServer::Commons::Optional<AdServer::CampaignSvcs::RevenueDecimal> value;
     AdServer::CampaignSvcs::UserStatus user_status;
     std::string referer;
+    std::string page_words;
+    std::string full_text_words;
     bool test_request;
     bool log_as_test;
     std::string peer_ip;

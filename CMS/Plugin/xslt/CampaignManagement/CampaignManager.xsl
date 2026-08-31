@@ -172,6 +172,10 @@
       test="count($colo-config/cfg:inventoryStats/@simplifying) = 0"><xsl:value-of
       select="$inventory-users-percentage"/></xsl:if></xsl:variable>
 
+    <xsl:variable name="user-navigation-sampling"><xsl:value-of
+      select="$colo-config/cfg:userNavigation/@sampling"/><xsl:if
+      test="count($colo-config/cfg:userNavigation/@sampling) = 0">100</xsl:if></xsl:variable>
+
     <xsl:variable name="campaign-manager-port"><xsl:value-of select="$campaign-manager-config/cfg:networkParams/@port"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@port) = 0">
         <xsl:value-of select="$def-campaign-manager-port"/>
@@ -486,6 +490,7 @@
 
     <cfg:Logging
       inventory_users_percentage="{$inventory-users-percentage}"
+      user_navigation_sampling="{$user-navigation-sampling}"
       use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}" >
 
       <xsl:attribute name="threads"><xsl:value-of select="$stat-config/@threads"/>

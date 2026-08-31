@@ -2596,6 +2596,7 @@ namespace AdServer::CampaignSvcs
       info.referer = source.referer();
       info.log_click = source.log_click();
       info.ctr = unpack_revenue_decimal(source.ctr());
+      info.page_keywords = source.page_keywords();
       for (const auto& token : source.tokens())
       {
         info.tokens.set_value(token.name(), token.value());
@@ -2658,6 +2659,7 @@ namespace AdServer::CampaignSvcs
       info.referer = source.referer();
       info.viewability = source.viewability();
       info.action_name = source.action_name();
+      info.page_keywords = source.page_keywords();
 
       const auto result = co_await core_->co_verify_impression(info);
       for (const auto& creative : result)
@@ -2718,6 +2720,7 @@ namespace AdServer::CampaignSvcs
       info.platform_ids = unpack_ids(source.platform_ids());
       info.peer_ip = source.peer_ip();
       unpack_geo_info_seq(source.location(), info.location);
+      info.page_keywords = source.page_keywords();
 
       core_->action_taken(info);
       result_status = ::grpc::Status::OK;

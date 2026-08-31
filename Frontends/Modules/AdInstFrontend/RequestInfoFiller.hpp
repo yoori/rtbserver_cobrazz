@@ -84,6 +84,8 @@ namespace AdServer::Instantiate
     FrontendCommons::CoordLocation_var coord_location;
     AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
     std::string referer;
+    std::string page_words;
+    std::string full_text_words;
     std::string security_token;
     std::string pub_impr_track_url;
     std::string preclick_url;

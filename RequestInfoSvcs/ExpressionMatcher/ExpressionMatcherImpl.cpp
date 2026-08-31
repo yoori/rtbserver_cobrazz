@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include <Commons/Algs.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -13,6 +15,7 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserInfoManip.hpp>
 
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
@@ -59,6 +62,29 @@ namespace
 
     return hash % SAMPLING_RESOLUTION < static_cast<unsigned long>(
       percentage * (SAMPLING_RESOLUTION / 100.0));
+  }
+
+  void
+  append_page_keywords_(
+    std::vector<std::string_view>& navigation_urls,
+    std::string_view page_keywords)
+  {
+    while (!page_keywords.empty())
+    {
+      const std::size_t separator = page_keywords.find(' ');
+      const std::string_view keyword = page_keywords.substr(0, separator);
+      if (!keyword.empty())
+      {
+        navigation_urls.push_back(keyword);
+      }
+
+      if (separator == std::string_view::npos)
+      {
+        break;
+      }
+
+      page_keywords.remove_prefix(separator + 1);
+    }
   }
 }
 
@@ -1449,6 +1475,44 @@ namespace AdServer::RequestInfoSvcs
       expression_matcher_config_.inventory_users_percentage());
   }
 
+  bool
+  ExpressionMatcherImpl::check_user_navigation_sampling_(const UserId& user_id) const noexcept
+  {
+    return !user_id.is_null() && check_percentage_sampling_(
+      AdServer::Commons::user_id_sampling_hash(user_id),
+      expression_matcher_config_.user_navigation_sampling());
+  }
+
+  AdServer::Commons::Awaitable<void>
+  ExpressionMatcherImpl::process_user_navigation_(
+    UserNavigationContainer* user_navigation_container,
+    const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+    const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
+  {
+    if (!user_navigation_container || !check_user_navigation_sampling_(record.user_id()))
+    {
+      co_return;
+    }
+
+    std::vector<std::string_view> navigation_urls;
+    if (!record.referer().empty())
+    {
+      navigation_urls.push_back(record.referer());
+    }
+
+    append_page_keywords_(navigation_urls, record.page_keywords());
+    if (navigation_urls.empty())
+    {
+      co_return;
+    }
+
+    UserNavigationContainer::RequestInfo navigation_request_info;
+    navigation_request_info.user_id = record.user_id();
+    navigation_request_info.time = key.time();
+    navigation_request_info.urls = std::move(navigation_urls);
+    co_await user_navigation_container->co_process_request(navigation_request_info);
+  }
+
   AdServer::Commons::Awaitable<void>
   ExpressionMatcherImpl::process_request_basic_channels_record_(
     UserInventoryInfoContainer* user_inventory_container,
@@ -1466,6 +1530,12 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
+      if (record.user_type() == 'N')
+      {
+        co_await process_user_navigation_(user_navigation_container, key, record);
+        co_return;
+      }
+
       if (record.user_type() != 'H')
       {
         /* process one request */
@@ -1559,16 +1629,7 @@ namespace AdServer::RequestInfoSvcs
 
         co_await user_inventory_container->co_process_match_request(match_info);
 
-        if (user_navigation_container &&
-          !record.user_id().is_null() &&
-          !record.referer().empty())
-        {
-          UserNavigationContainer::RequestInfo navigation_request_info;
-          navigation_request_info.user_id = record.user_id();
-          navigation_request_info.time = key.time();
-          navigation_request_info.url = record.referer();
-          co_await user_navigation_container->co_process_request(navigation_request_info);
-        }
+        co_await process_user_navigation_(user_navigation_container, key, record);
 
         expression_matcher_out_logger_->process_match_request(match_info);
 

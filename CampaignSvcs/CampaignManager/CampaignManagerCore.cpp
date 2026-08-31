@@ -2941,6 +2941,26 @@ namespace AdServer::CampaignSvcs
         result = true;
       }
 
+      if (click_info.log_click)
+      {
+        try
+        {
+          CampaignManagerLogger::NavigationInfo navigation_info;
+          navigation_info.time = click_time;
+          navigation_info.colo_id = click_info.colo_id;
+          navigation_info.user_id = !click_info.match_user_id.is_null() ?
+            click_info.match_user_id : click_info.cookie_user_id;
+          navigation_info.referer = click_info.referer;
+          navigation_info.page_keywords = click_info.page_keywords;
+          campaign_manager_logger_->process_navigation(navigation_info);
+        }
+        catch (const CampaignManagerLogger::Exception& ex)
+        {
+          logger_->sstream(Logging::Logger::NOTICE, Aspect::CAMPAIGN_MANAGER) <<
+            FUN << ": Can't log click navigation: " << ex.what();
+        }
+      }
+
       if (!click_info.request_id.is_null() && click_info.log_click)
       {
         try
@@ -3841,6 +3861,22 @@ namespace AdServer::CampaignSvcs
     VerifyImpressionResult impression_result_info;
     impression_result_info.resize(impression_info.creatives.size());
 
+    try
+    {
+      CampaignManagerLogger::NavigationInfo navigation_info;
+      navigation_info.time = imp_time;
+      navigation_info.colo_id = campaign_manager_config_.colocation_id();
+      navigation_info.user_id = impression_info.user_id;
+      navigation_info.referer = impression_info.referer;
+      navigation_info.page_keywords = impression_info.page_keywords;
+      campaign_manager_logger_->process_navigation(navigation_info);
+    }
+    catch(const eh::Exception& ex)
+    {
+      logger_->sstream(Logging::Logger::NOTICE, Aspect::CAMPAIGN_MANAGER) <<
+        FUN << ": Can't log impression navigation: " << ex.what();
+    }
+
     for (std::size_t i = 0; i < impression_info.creatives.size(); ++i)
     {
       const Creative* creative = 0;
@@ -4008,6 +4044,14 @@ namespace AdServer::CampaignSvcs
         adv_action_info.ccg_ids.push_back(*action_info.campaign_id);
       }
 
+      CampaignManagerLogger::NavigationInfo navigation_info;
+      navigation_info.time = action_info.time;
+      navigation_info.colo_id = adv_action_info.colo_id;
+      navigation_info.user_id = action_info.user_id;
+      navigation_info.referer = action_info.referer;
+      navigation_info.page_keywords = action_info.page_keywords;
+      navigation_info.log_as_test = action_info.log_as_test;
+      campaign_manager_logger_->process_navigation(navigation_info);
       campaign_manager_logger_->process_action(adv_action_info);
     }
     catch (const eh::Exception& e)

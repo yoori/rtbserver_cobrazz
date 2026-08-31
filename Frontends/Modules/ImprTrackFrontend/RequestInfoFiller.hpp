@@ -70,6 +70,8 @@ namespace AdServer::ImprTrack
     std::string cohort;
     AdServer::CampaignSvcs::UserStatus user_status;
     std::string referer;
+    std::string page_words;
+    std::string full_text_words;
     AccountIdList pubpixel_accounts;
     long viewability;
     bool skip;

@@ -13,6 +13,10 @@ add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp
 )
 
+add_executable(UserInfoManipTest
+  UserInfoManipTest.cpp
+)
+
 target_link_libraries(AsyncMutexTest
   PRIVATE
     Commons
@@ -27,6 +31,11 @@ target_link_libraries(FastSchedulerPerfTest
   PRIVATE
     Commons
     Generics
+)
+
+target_link_libraries(UserInfoManipTest
+  PRIVATE
+    Commons
 )
 
 target_include_directories(AsyncMutexTest

@@ -1,15 +1,24 @@
 #pragma once
 
+#include <cstdint>
+#include <string_view>
+
 #include <Generics/Uuid.hpp>
 #include <Generics/CRC.hpp>
 #include <Generics/Hash.hpp>
 
 namespace AdServer::Commons
 {
-  typedef Generics::Uuid UserId;
-  typedef Generics::Uuid RequestId;
+  using UserId = Generics::Uuid;
+  using RequestId = Generics::Uuid;
 
   extern const UserId PROBE_USER_ID;
+
+  std::uint32_t
+  user_id_sampling_hash(std::string_view encoded_user_id) noexcept;
+
+  std::uint32_t
+  user_id_sampling_hash(const UserId& user_id) noexcept;
 
   inline
   unsigned long

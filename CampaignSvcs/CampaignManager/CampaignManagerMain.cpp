@@ -708,6 +708,9 @@ CampaignManagerApp_::read_logging_config(
     log_params.request_basic_channels.inventory_users_percentage =
       config.inventory_users_percentage();
 
+    log_params.request_basic_channels.user_navigation_sampling =
+      config.user_navigation_sampling();
+
     log_params.request_basic_channels.distrib_count = config.distrib_count();
 
     log_params.request_basic_channels.dump_channel_triggers =

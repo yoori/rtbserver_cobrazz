@@ -30,6 +30,8 @@ namespace AdServer::Request::Param
   const String::SubString CLICK_RATE("cr");
   const String::SubString TOKEN_PREFIX("t.");
   const String::SubString BID_TIME("bt");
+  const String::SubString PAGE_KEYWORDS("kw");
+  const String::SubString FULL_TEXT_WORDS("ft");
 
   // debug params
   const String::SubString DEBUG_CURRENT_TIME("debug-time");
@@ -506,6 +508,11 @@ namespace AdServer
 
     add_processor_(false, true, Request::Param::BID_TIME,
       new FrontendCommons::UnixTimeParamProcessor<RequestInfo>(&RequestInfo::bid_time));
+
+    add_processor_(true, true, Request::Param::PAGE_KEYWORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
+    add_processor_(true, true, Request::Param::FULL_TEXT_WORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::full_text_words));
 
     add_processor_(false, true, Request::Param::DEBUG_CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(&RequestInfo::request_time));

@@ -660,7 +660,8 @@ namespace AdServer::LogProcessing
       MatchOptional&& match_request,
       AdRequestPropsOptional&& ad_request,
       const std::string& external_id,
-      const std::string& referer)
+      const std::string& referer,
+      const std::string& page_keywords)
       : holder_(
           new DataHolder(
             user_type,
@@ -670,6 +671,7 @@ namespace AdServer::LogProcessing
             std::move(ad_request),
             external_id,
             referer,
+            page_keywords,
             Generics::safe_rand()
           )
         )
@@ -685,7 +687,8 @@ namespace AdServer::LogProcessing
         holder_->match_request == data.holder_->match_request &&
         holder_->ad_request == data.holder_->ad_request &&
         holder_->external_id.get() == data.holder_->external_id.get() &&
-        holder_->referer.get() == data.holder_->referer.get());
+        holder_->referer.get() == data.holder_->referer.get() &&
+        holder_->page_keywords.get() == data.holder_->page_keywords.get());
     }
 
     char user_type() const
@@ -723,6 +726,11 @@ namespace AdServer::LogProcessing
       return holder_->referer.get();
     }
 
+    const std::string& page_keywords() const
+    {
+      return holder_->page_keywords.get();
+    }
+
     unsigned long distrib_hash() const
     {
       using AdServer::Commons::uuid_distribution_hash;
@@ -757,6 +765,7 @@ namespace AdServer::LogProcessing
           ad_request(),
           external_id(),
           referer(),
+          page_keywords(),
           random()
       {}
 
@@ -768,6 +777,7 @@ namespace AdServer::LogProcessing
         const AdRequestPropsOptional& ad_request_val,
         const std::string& external_id_val,
         const std::string& referer_val,
+        const std::string& page_keywords_val,
         unsigned long random_val)
         : user_type(user_type_val),
           user_id(user_id_val),
@@ -776,6 +786,7 @@ namespace AdServer::LogProcessing
           ad_request(ad_request_val),
           external_id(external_id_val),
           referer(referer_val),
+          page_keywords(page_keywords_val),
           random(random_val)
       {
         if (ad_request.present())
@@ -794,6 +805,7 @@ namespace AdServer::LogProcessing
         ar & ad_request;
         ar & external_id;
         ar & referer;
+        ar & page_keywords;
       }
 
       void invariant() const /*throw(ConstraintViolation)*/
@@ -814,6 +826,7 @@ namespace AdServer::LogProcessing
       AdRequestPropsOptional ad_request;
       EmptyHolder<SpacesString> external_id;
       EmptyHolder<SpacesString> referer;
+      EmptyHolder<SpacesString> page_keywords;
       unsigned long random;
 
     private:
@@ -822,7 +835,7 @@ namespace AdServer::LogProcessing
 
       bool user_type_is_valid_() const
       {
-        return user_type == 'H' || user_type == 'P' || user_type == 'A';
+        return user_type == 'H' || user_type == 'P' || user_type == 'A' || user_type == 'N';
       }
     };
 

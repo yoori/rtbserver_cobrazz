@@ -546,6 +546,7 @@ message ClickInfo {
   bool log_click = 15;
   DecimalInfo ctr = 16;
   repeated TokenInfo tokens = 17;
+  bytes page_keywords = 18;
 }
 
 message TrackCreativeResultInfo {
@@ -566,6 +567,7 @@ message ImpressionInfo {
   bytes referer = 10;
   int64 viewability = 11;
   bytes action_name = 12;
+  bytes page_keywords = 13;
 }
 
 message ImpressionResultInfo {
@@ -593,6 +595,7 @@ message ActionInfo {
   repeated uint64 platform_ids = 13;
   bytes peer_ip = 14;
   repeated GeoInfo location = 15;
+  bytes page_keywords = 16;
 }
 
 message ConsiderPassbackRequest {

@@ -360,6 +360,14 @@ namespace AdServer::RequestInfoSvcs
     bool
     check_sampling_(const UserId& user_id) const noexcept;
 
+    bool
+    check_user_navigation_sampling_(const UserId& user_id) const noexcept;
+
+    AdServer::Commons::Awaitable<void> process_user_navigation_(
+      UserNavigationContainer* user_navigation_container,
+      const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+      const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record);
+
     AdServer::Commons::Awaitable<void>
     process_request_basic_channels_record_(
       UserInventoryInfoContainer* user_inventory_container,

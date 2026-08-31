@@ -123,7 +123,8 @@ namespace
       LP::RequestBasicChannelsInnerData::MatchOptional(std::move(match)),
       LP::RequestBasicChannelsInnerData::AdRequestPropsOptional(),
       "source/synthetic external id",
-      "https://example.test/synthetic?value=1");
+      "https://example.test/synthetic?value=1",
+      "keyword1 keyword2");
   }
 
   LP::RequestBasicChannelsInnerData
@@ -174,6 +175,7 @@ namespace
       Record::MatchOptional(),
       Record::AdRequestPropsOptional(ad_request_optional),
       "source/ad external id",
+      "",
       "");
   }
 
@@ -363,6 +365,31 @@ namespace
   }
 
   void
+  verify_navigation_record()
+  {
+    using Record = LP::RequestBasicChannelsInnerData;
+
+    const Record expected(
+      'N',
+      LP::UserId("hSUsEk05T-m8PafRng8v6w.."),
+      LP::UserId(),
+      Record::MatchOptional(),
+      Record::AdRequestPropsOptional(),
+      "",
+      "https://example.test/navigation",
+      "navigation keyword");
+    LP::BufferWriter output;
+    output << expected << '\n';
+
+    Record restored;
+    std::istringstream input(output.str());
+    if (!(input >> restored) || !(restored == expected))
+    {
+      throw std::runtime_error("RBC navigation round-trip failed");
+    }
+  }
+
+  void
   run_synthetic(const Options& options)
   {
     const auto expected = make_synthetic_record(options.triggers);
@@ -373,6 +400,7 @@ namespace
     verify_history_channel_parser(serialized);
     verify_trigger_match_parser(serialized);
     verify_ad_request_parser();
+    verify_navigation_record();
 
     {
       LP::RequestBasicChannelsInnerData restored;

@@ -30,6 +30,7 @@ namespace AdServer::CampaignSvcs
   struct RequestBasicChannelsFlushTraits: public AdServer::LogProcessing::LogFlushTraits
   {
     double inventory_users_percentage;
+    double user_navigation_sampling = 100.0;
     unsigned long distrib_count;
     bool dump_channel_triggers;
     bool adrequest_anonymize;
@@ -162,6 +163,16 @@ namespace AdServer::CampaignSvcs
       Generics::Time time;
       AdServer::Commons::RequestId request_id;
       UserIdHashMod user_id_hash_mod;
+    };
+
+    struct NavigationInfo
+    {
+      Generics::Time time;
+      unsigned long colo_id = 0;
+      AdServer::Commons::UserId user_id;
+      std::string referer;
+      std::string page_keywords;
+      bool log_as_test = false;
     };
 
     struct ImpressionInfo: public ActionInfo
@@ -641,6 +652,9 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/;
 
     void process_action(const AdvActionInfo& action_info)
+      /*throw(Exception)*/;
+
+    void process_navigation(const NavigationInfo& navigation_info)
       /*throw(Exception)*/;
 
     void process_oo_operation(

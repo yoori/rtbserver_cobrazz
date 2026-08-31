@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -30,7 +31,7 @@ namespace AdServer::RequestInfoSvcs
     {
       AdServer::Commons::UserId user_id;
       Generics::Time time;
-      std::string_view url;
+      std::vector<std::string_view> urls;
     };
 
     UserNavigationContainer(

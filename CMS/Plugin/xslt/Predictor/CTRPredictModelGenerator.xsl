@@ -21,10 +21,15 @@
     select="$cluster-path/configuration/cfg:cluster/cfg:environment"/>
   <xsl:variable name="central-config"
     select="$cluster-path/configuration/cfg:cluster/cfg:central"/>
+  <xsl:variable name="colo-config"
+    select="$cluster-path/configuration/cfg:cluster"/>
   <xsl:variable name="generator-config"
     select="$predictor-path/configuration/cfg:ctrPredictModelGenerator"/>
   <xsl:variable name="clickhouse-config"
     select="$xpath/../service[@descriptor = 'AdCluster/BackendSubCluster/ClickhouseUploader']/configuration/cfg:clickhouseUploader"/>
+  <xsl:variable name="user-navigation-sampling-value"><xsl:value-of
+    select="$colo-config/cfg:userNavigation/@sampling"/><xsl:if
+    test="count($colo-config/cfg:userNavigation/@sampling) = 0">100</xsl:if></xsl:variable>
   <xsl:variable name="workspace-root"><xsl:value-of
     select="$env-config/@workspace_root"/><xsl:if
     test="count($env-config/@workspace_root) = 0"><xsl:value-of
@@ -60,6 +65,7 @@
     test="count($generator-config/@campaign_model_activity_period) = 0">1209600</xsl:if>,
   "min_campaign_model_imps": <xsl:value-of select="$generator-config/@min_campaign_model_imps"/><xsl:if
     test="count($generator-config/@min_campaign_model_imps) = 0">100000</xsl:if>,
+  "user_navigation_sampling": <xsl:value-of select="$user-navigation-sampling-value"/>,
   "data_delay": <xsl:value-of select="$generator-config/@data_delay"/>
 }
 </xsl:template>

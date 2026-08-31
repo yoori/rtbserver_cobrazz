@@ -56,6 +56,13 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name="userNavigation" type="UserNavigationType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            User navigation collection parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element name="channelTriggerImpStats" type="ChannelTriggerImpStatsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
@@ -1258,6 +1265,16 @@
     <xsd:attribute name="distrib_count" type="xsd:nonNegativeInteger" use="optional" default="4">
       <xsd:annotation>
         <xsd:documentation>Development option.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserNavigationType">
+    <xsd:attribute name="sampling" type="xsd:decimal" use="optional" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percentage of users whose navigation data is collected.
+        </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>

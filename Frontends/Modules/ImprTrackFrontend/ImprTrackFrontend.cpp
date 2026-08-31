@@ -410,6 +410,16 @@ namespace AdServer::ImprTrack
           verify_impression_info.set_request_type(request_info.request_type);
           verify_impression_info.set_user_id(GrpcAlgs::pack_user_id(request_info.actual_user_id));
           verify_impression_info.set_referer(request_info.referer);
+          verify_impression_info.set_page_keywords(request_info.full_text_words);
+          if (!request_info.page_words.empty())
+          {
+            if (!verify_impression_info.page_keywords().empty())
+            {
+              verify_impression_info.mutable_page_keywords()->append(" ");
+            }
+
+            verify_impression_info.mutable_page_keywords()->append(request_info.page_words);
+          }
           verify_impression_info.set_viewability(request_info.viewability);
           verify_impression_info.set_action_name(request_info.action_name);
 

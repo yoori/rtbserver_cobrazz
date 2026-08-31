@@ -130,7 +130,14 @@ namespace AdServer::RequestInfoSvcs
   {
     static const char* FUN = "UserNavigationContainer::co_process_request()";
 
-    if (request_info.user_id.is_null() || request_info.url.empty())
+    if (request_info.user_id.is_null() ||
+      std::none_of(
+        request_info.urls.begin(),
+        request_info.urls.end(),
+        [](std::string_view url) noexcept
+        {
+          return !url.empty();
+        }))
     {
       co_return;
     }
@@ -209,32 +216,40 @@ namespace AdServer::RequestInfoSvcs
 
       if (request_date >= oldest_date)
       {
-        const NavigationKey key{request_date, request_info.url};
-        const auto navigation = std::lower_bound(
-          navigations.begin(),
-          navigations.end(),
-          key,
-          NavigationLess());
-
-        if (navigation != navigations.end() &&
-          navigation->date() == request_date &&
-          std::string_view(navigation->url()) == request_info.url)
+        for (const std::string_view url : request_info.urls)
         {
-          if (navigation->count() != std::numeric_limits<std::uint64_t>::max())
+          if (url.empty())
           {
-            ++navigation->count();
+            continue;
           }
-        }
-        else
-        {
-          NavigationWriter new_navigation;
-          new_navigation.date() = request_date;
-          new_navigation.url().assign(request_info.url.data(), request_info.url.size());
-          new_navigation.count() = 1;
-          navigations.insert(navigation, std::move(new_navigation));
-        }
 
-        profile_changed = true;
+          const NavigationKey key{request_date, url};
+          const auto navigation = std::lower_bound(
+            navigations.begin(),
+            navigations.end(),
+            key,
+            NavigationLess());
+
+          if (navigation != navigations.end() &&
+            navigation->date() == request_date &&
+            std::string_view(navigation->url()) == url)
+          {
+            if (navigation->count() != std::numeric_limits<std::uint64_t>::max())
+            {
+              ++navigation->count();
+            }
+          }
+          else
+          {
+            NavigationWriter new_navigation;
+            new_navigation.date() = request_date;
+            new_navigation.url().assign(url.data(), url.size());
+            new_navigation.count() = 1;
+            navigations.insert(navigation, std::move(new_navigation));
+          }
+
+          profile_changed = true;
+        }
       }
 
       if (profile_changed)

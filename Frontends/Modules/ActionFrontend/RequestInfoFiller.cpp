@@ -45,6 +45,8 @@ namespace AdServer::Action::Request::Context
   const String::SubString ORDER_ID("orderid");
   const String::SubString ACTION_VALUE("value");
   const String::SubString EXTERNAL_ID("fid");
+  const String::SubString PAGE_KEYWORDS("kw");
+  const String::SubString FULL_TEXT_WORDS("ft");
 
   /* debug params */
   const String::SubString IP_ADDRESS("debug.ip");
@@ -169,6 +171,10 @@ namespace AdServer::Action
         AdServer::CampaignSvcs::RevenueDecimal>(&RequestInfo::value, false));
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::external_user_id));
+    add_processor_(true, true, Request::Context::PAGE_KEYWORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
+    add_processor_(true, true, Request::Context::FULL_TEXT_WORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::full_text_words));
 
     add_processor_(true, true, Request::Context::TEST_REQUEST,
       new FrontendCommons::TestRequestParamProcessor<RequestInfo>());

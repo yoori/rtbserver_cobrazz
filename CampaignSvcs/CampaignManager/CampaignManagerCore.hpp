@@ -224,6 +224,7 @@ namespace AdServer::CampaignSvcs
       IdArray platform_ids;
       std::string peer_ip;
       std::vector<GeoInfo> location;
+      std::string page_keywords;
     };
 
     struct ClickRequest
@@ -245,6 +246,7 @@ namespace AdServer::CampaignSvcs
       bool log_click = false;
       RevenueDecimal ctr = RevenueDecimal::ZERO;
       TokenValueMap tokens;
+      std::string page_keywords;
     };
 
     struct ClickResult
@@ -279,6 +281,7 @@ namespace AdServer::CampaignSvcs
       std::string referer;
       long viewability = 0;
       std::string action_name;
+      std::string page_keywords;
     };
 
     struct TrackCreativeResultInfo

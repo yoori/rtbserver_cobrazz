@@ -43,6 +43,10 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="user-navigation-sampling-value"><xsl:value-of
+      select="$colo-config/cfg:userNavigation/@sampling"/><xsl:if
+      test="count($colo-config/cfg:userNavigation/@sampling) = 0">100</xsl:if></xsl:variable>
+
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
     <xsl:variable name="expression-matcher-port">
@@ -160,6 +164,7 @@
     pid_file="{concat($workspace-root, '/run/ExpressionMatcher.pid')}"
     update_period="{$update-period}"
     inventory_users_percentage="{$inventory-users-percentage-value}"
+    user_navigation_sampling="{$user-navigation-sampling-value}"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
     colo_id="{$colo-id}"
     service_index="{count(exsl:node-set(

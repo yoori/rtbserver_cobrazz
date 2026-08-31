@@ -56,6 +56,8 @@ namespace AdServer::ClickFE
 
     // headers
     std::string referer;
+    std::string page_words;
+    std::string full_text_words;
     std::string peer_ip;
 
     AdServer::CampaignSvcs::UserStatus user_status;

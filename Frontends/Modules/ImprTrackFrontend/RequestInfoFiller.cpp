@@ -33,6 +33,8 @@ namespace AdServer::ImprTrack
 
       const String::SubString CUSTOM_ACTION_NAME("nm");
       const String::SubString BID_TIME("bt");
+      const String::SubString PAGE_KEYWORDS("kw");
+      const String::SubString FULL_TEXT_WORDS("ft");
 
       const String::SubString REDIRECT_URL("r");
 
@@ -562,6 +564,11 @@ namespace AdServer::ImprTrack
 
     add_processor_(false, true, Param::DATA,
       new FrontendCommons::DataParamProcessor<RequestInfo>(param_processors_));
+
+    add_processor_(true, true, Param::PAGE_KEYWORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
+    add_processor_(true, true, Param::FULL_TEXT_WORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::full_text_words));
 
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,

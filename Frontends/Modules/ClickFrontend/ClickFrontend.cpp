@@ -546,6 +546,16 @@ namespace AdServer
         click_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
         click_info.set_request_id(GrpcAlgs::pack_request_id(request_info.request_id));
         click_info.set_referer(request_info.referer);
+        click_info.set_page_keywords(request_info.full_text_words);
+        if (!request_info.page_words.empty())
+        {
+          if (!click_info.page_keywords().empty())
+          {
+            click_info.mutable_page_keywords()->append(" ");
+          }
+
+          click_info.mutable_page_keywords()->append(request_info.page_words);
+        }
         click_info.set_log_click(true);
         click_info.mutable_ctr()->set_value(GrpcAlgs::pack_decimal(request_info.ctr));
         click_info.set_match_user_id(GrpcAlgs::pack_user_id(request_info.match_user_id));

@@ -650,6 +650,18 @@ namespace AdServer::Instantiate
         click_info.set_request_id(inst_ad_result.request_ids(0));
       }
       click_info.set_referer(request_info.referer);
+      click_info.set_match_user_id(GrpcAlgs::pack_user_id(
+        !request_info.user_id.is_null() ? request_info.user_id : request_info.track_user_id));
+      click_info.set_page_keywords(request_info.full_text_words);
+      if (!request_info.page_words.empty())
+      {
+        if (!click_info.page_keywords().empty())
+        {
+          click_info.mutable_page_keywords()->append(" ");
+        }
+
+        click_info.mutable_page_keywords()->append(request_info.page_words);
+      }
 
       adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
         click_url_request;

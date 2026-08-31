@@ -70,6 +70,8 @@ namespace AdServer::Instantiate
     const String::SubString USER_ID("u");
     const String::SubString PUBLISHER_PIXEL_ACCOUNT_IDS("paid");
     const String::SubString DATA("d");
+    const String::SubString PAGE_KEYWORDS("kw");
+    const String::SubString FULL_TEXT_WORDS("ft");
 
     const String::SubString LOCATION_NAME("loc.name");
     const String::SubString LOCATION_COORD("loc.coord");
@@ -293,6 +295,10 @@ namespace AdServer::Instantiate
         UserIdController::TEMPORARY));
     add_processor_(false, true, Request::Context::BID_TIME,
       new FrontendCommons::UnixTimeParamProcessor<RequestInfo>(&RequestInfo::bid_time));
+    add_processor_(true, true, Request::Context::PAGE_KEYWORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::page_words));
+    add_processor_(true, true, Request::Context::FULL_TEXT_WORDS,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::full_text_words));
 
     add_processor_(true, false, Request::Header::REM_HOST,
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::peer_ip));

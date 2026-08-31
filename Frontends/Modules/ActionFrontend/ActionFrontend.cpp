@@ -990,6 +990,16 @@ namespace AdServer::Action
       }
 
       verify_action_info.set_referer(request_info.referer);
+      verify_action_info.set_page_keywords(request_info.full_text_words);
+      if (!request_info.page_words.empty())
+      {
+        if (!verify_action_info.page_keywords().empty())
+        {
+          verify_action_info.mutable_page_keywords()->append(" ");
+        }
+
+        verify_action_info.mutable_page_keywords()->append(request_info.page_words);
+      }
       if (request_info.value.present())
       {
         verify_action_info.mutable_action_value()->set_value(
