@@ -5,7 +5,15 @@ import json
 import os
 import pathlib
 import signal
+import sys
 import time
+
+
+TORCH_SITE_PACKAGES = pathlib.Path(os.environ.get(
+  'AI_TORCH_SITE_PACKAGES',
+  '/u01/foros/server-ai/python3.12-torch/site-packages'))
+if TORCH_SITE_PACKAGES.is_dir():
+  sys.path.insert(0, str(TORCH_SITE_PACKAGES))
 
 import torch
 

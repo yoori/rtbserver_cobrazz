@@ -88,7 +88,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn("WHERE timestamp >= '2026-08-12'", calls[1][-1])
     self.assertIn("timestamp < '2026-08-13 12:00:00'", calls[1][-1])
     self.assertIn('ORDER BY timestamp DESC', calls[1][-1])
-    self.assertIn("ifNull(ssp_tag_id, '') AS SSP_Tag_ID", calls[1][-1])
+    for field in ('url', 'etag', 'geo_ch', 'user_ch', 'ssp_tag_id'):
+      self.assertIn(
+        "replaceAll(replaceAll(ifNull(" + field +
+        ", ''), char(13), ' '), char(10), ' ')",
+        calls[1][-1])
+    self.assertIn("char(10), ' ') AS SSP_Tag_ID", calls[1][-1])
     self.assertIn("ifNull(toString(ssp_ctr), '') AS SSP_CTR", calls[1][-1])
     self.assertIn(
       "ifNull(toString(ssp_viewability), '') AS SSP_Viewability",

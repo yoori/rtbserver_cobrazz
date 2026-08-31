@@ -1,0 +1,112 @@
+{
+  "data": {
+    "windows_seconds": [60, 300, 3600, 86400, 604800],
+    "n_values": [1, 2, 3, 5, 10],
+    "batch_size": 128,
+    "batch_workers": 4,
+    "ready_batches": 8,
+    "batch_start_method": "fork"
+  },
+  "model": {
+    "candidates": 20,
+    "context_size": 0,
+    "aggregation": "softmax_max",
+    "activation_boundary": 0.5,
+    "choice_initial_logit": 2.0,
+    "membership": {
+      "initialization": "frequency",
+      "initial_urls_per_candidate": 1,
+      "unselected_logit": -2.0,
+      "selected_logit": 1.0,
+      "logit_std": 0.25
+    },
+    "forest": {
+      "trees": 32,
+      "depth": 5,
+      "features_per_node": 16,
+      "feature_initial_logit": 2.0,
+      "bootstrap": "poisson",
+      "bootstrap_loss": 1.0,
+      "seed": 19
+    }
+  },
+  "loss": {
+    "sparsity": 0.001,
+    "binarization": 0.001,
+    "diversity": 0.001,
+    "duplicate_existing": 0.001,
+    "duplicate_threshold": 0.95,
+    "diversity_pairs": 256
+  },
+  "training": {
+    "discovery_epochs": 5,
+    "structuring_epochs": 5,
+    "learning_rate": 0.005,
+    "weight_decay": 0.0,
+    "device": "cpu",
+    "seed": 17
+  },
+  "synthetic": {
+    "samples": 4000,
+    "users": 400,
+    "urls": 200,
+    "true_segments": 10,
+    "existing_channels": 8,
+    "events_per_user": 80,
+    "segment_activation_probability": 0.15,
+    "horizon_seconds": 1209600,
+    "validation_fraction": 0.2,
+    "seed": 23
+  },
+  "temperatures": {
+    "url": {
+      "start": 0.5,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "window": {
+      "start": 0.75,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "threshold": {
+      "start": 0.75,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "activation": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "aggregation": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "forest_feature": {
+      "start": 0.5,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "forest_split": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    }
+  }
+}

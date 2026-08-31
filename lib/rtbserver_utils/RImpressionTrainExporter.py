@@ -492,19 +492,19 @@ class RImpressionTrainExporter(object):
       + label_expression + " AS label, "
       "timestamp, "
       "device AS Device, "
-      "url AS Link, "
+      + cls._single_line('url') + " AS Link, "
       "publisher_id AS Publisher, "
       "tag_id AS Tag, "
-      "etag AS ETag, "
+      + cls._single_line('etag') + " AS ETag, "
       "campaign_id AS Campaign, "
       "ccg_id AS Group, "
       "ccid AS CCID, "
-      "geo_ch AS GeoCh, "
-      "user_ch AS UserCh, "
+      + cls._single_line('geo_ch') + " AS GeoCh, "
+      + cls._single_line('user_ch') + " AS UserCh, "
         "size_id AS SizeID, "
         "colo_id AS Colo, "
         "campaign_freq AS Campaign_Freq, "
-        "ifNull(ssp_tag_id, '') AS SSP_Tag_ID, "
+        + cls._single_line('ssp_tag_id') + " AS SSP_Tag_ID, "
         "ifNull(toString(ssp_ctr), '') AS SSP_CTR, "
         "ifNull(toString(ssp_viewability), '') AS SSP_Viewability, "
         "ifNull(toString(ssp_vtr), '') AS SSP_VTR "
@@ -519,6 +519,12 @@ class RImpressionTrainExporter(object):
       'LIMIT ' + str(train_rows) +
       ((' OFFSET ' + str(offset_rows)) if offset_rows else '') +
       ' FORMAT CSVWithNames')
+
+  @staticmethod
+  def _single_line(expression):
+    return (
+      "replaceAll(replaceAll(ifNull(" + expression +
+      ", ''), char(13), ' '), char(10), ' ')")
 
   @classmethod
   def _ssp_ctr_logloss_query(

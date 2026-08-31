@@ -16,6 +16,8 @@ rm -rf "$TOPDIR"
 mkdir -p "$TOPDIR"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
 tar \
+  --exclude='*/__pycache__' \
+  --exclude='*.py[co]' \
   --transform "s,^,foros-server-ai-$VERSION/," \
   -C "$SOURCE_ROOT" \
   -czf "$TOPDIR/SOURCES/foros-server-ai-$VERSION.tar.gz" \
