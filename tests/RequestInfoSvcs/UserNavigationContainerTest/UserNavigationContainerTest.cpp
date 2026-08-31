@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <unistd.h>
@@ -36,7 +37,21 @@ namespace
     UserNavigationContainer::RequestInfo request_info;
     request_info.user_id = user_id;
     request_info.time = time;
-    request_info.url = url;
+    request_info.urls.push_back(url);
+    AdServer::Commons::sync_wait(container->co_process_request(request_info));
+  }
+
+  void
+  process(
+    UserNavigationContainer* container,
+    const AdServer::Commons::UserId& user_id,
+    const Generics::Time& time,
+    std::vector<std::string_view> urls)
+  {
+    UserNavigationContainer::RequestInfo request_info;
+    request_info.user_id = user_id;
+    request_info.time = time;
+    request_info.urls = std::move(urls);
     AdServer::Commons::sync_wait(container->co_process_request(request_info));
   }
 
@@ -138,6 +153,7 @@ main()
     process(container, user_id, today - Generics::Time::ONE_DAY * 30, "https://edge.example/");
     process(container, user_id, today - Generics::Time::ONE_DAY * 31, "https://old.example/");
     process(container, user_id, today, "");
+    process(container, user_id, today, {"keyword2", "", "keyword1", "keyword2"});
 
     check_profile(
       container,
@@ -146,7 +162,9 @@ main()
         {today - Generics::Time::ONE_DAY * 30, "https://edge.example/", 1},
         {today - Generics::Time::ONE_DAY, "https://a.example/", 1},
         {today - Generics::Time::ONE_DAY, "https://z.example/", 1},
-        {today, "https://b.example/", 2}
+        {today, "https://b.example/", 2},
+        {today, "keyword1", 1},
+        {today, "keyword2", 2}
       });
 
     check_profile(

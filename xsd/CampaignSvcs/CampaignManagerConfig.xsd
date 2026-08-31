@@ -604,6 +604,14 @@
       </xsd:annotation>
     </xsd:attribute>
 
+    <xsd:attribute name="user_navigation_sampling" type="xsd:decimal" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percentage of users whose navigation data is written to RequestBasicChannels.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
     <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="required">
       <xsd:annotation>
         <xsd:documentation>Defines distribution counter.</xsd:documentation>
