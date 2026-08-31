@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
+
 #include <eh/Exception.hpp>
 #include <Generics/Singleton.hpp>
 
@@ -28,6 +31,11 @@ protected:
   void print_request_trigger_match(Client& expression_matcher, const char* request_id) noexcept;
 
   void print_household_colo_reach(Client& expression_matcher, const char* user_id) noexcept;
+
+  void print_user_navigation(
+    Client& expression_matcher,
+    const char* user_id,
+    std::optional<std::uint32_t> date) noexcept;
 };
 
 using Application = Generics::Singleton<Application_>;

@@ -51,6 +51,12 @@
         <xsl:value-of select="$def-expression-matcher-port"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="expression-matcher-monitoring-port">
+      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$expression-matcher-port + 600"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="grpc-max-batch-delay-us"><xsl:value-of
       select="$expression-matcher-config/@grpc_max_batch_delay_us"/>
       <xsl:if test="count($expression-matcher-config/@grpc_max_batch_delay_us) = 0">
@@ -169,6 +175,10 @@
 
       <cfg:Endpoint host="*" port="{$expression-matcher-port}"/>
     </cfg:GrpcConfig>
+
+    <cfg:HttpConfig process_threads="4">
+      <cfg:Endpoint host="*" port="{$expression-matcher-monitoring-port}"/>
+    </cfg:HttpConfig>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">

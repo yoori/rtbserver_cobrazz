@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <locale.h>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -23,6 +24,7 @@
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfileUtils.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserTriggerMatchProfile.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserTriggerMatchProfileUtils.hpp>
+#include <RequestInfoSvcs/RequestInfoCommons/UserNavigationProfile.hpp>
 
 namespace
 {
@@ -31,12 +33,13 @@ namespace
   const char USAGE[] =
     "[OPTIONS] ( help | print | print-est | daily-process | "
       "print-user-trigger-match | print-request-trigger-match | "
-      "print-household-colo-reach )\n"
+      "print-household-colo-reach | print-user-navigation )\n"
     "OPTIONS:\n"
     "  -r, --ref, --expression-matcher : ExpressionMatcher gRPC endpoint.\n"
     "  -i, --id, --user-id : user id (for print command).\n"
     "  -s, --sync : do daily processing synchronously.\n"
     "  -t, --temporary : print temporary user trigger profile.\n"
+    "  -d, --date : upper UTC date boundary in YYYY-MM-DD format.\n"
     "\n"
     "NOTES:\n"
     "  if uid value starts with symbol '-' escape it with '\\'\n"
@@ -322,6 +325,55 @@ Application_::print_household_colo_reach(
 }
 
 void
+Application_::print_user_navigation(
+  Client& expression_matcher,
+  const char* user_id_str,
+  std::optional<std::uint32_t> date) noexcept
+{
+  try
+  {
+    AdServer::Commons::UserId user_id(user_id_str);
+    Proto::UserNavigationProfileRequest request;
+    request.set_user_id(user_id_str);
+    if (date.has_value())
+    {
+      request.set_date(*date);
+    }
+
+    const auto response = sync_call<Proto::ProfileResponse>(
+      [&expression_matcher, &request](auto callback)
+      {
+        expression_matcher.get_user_navigation_profile(request, std::move(callback));
+      });
+    if (!response)
+    {
+      return;
+    }
+
+    if (!response->found())
+    {
+      std::cout << "Profile not found." << std::endl;
+      return;
+    }
+
+    const std::string& profile = response->profile();
+    const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
+      profile.data(),
+      profile.size());
+    std::cout << "date\turl\tcount" << std::endl;
+    for (const auto navigation : reader.navigations())
+    {
+      std::cout << Generics::Time(navigation.date()).get_gm_time().format("%F") << '\t' <<
+        navigation.url() << '\t' << navigation.count() << std::endl;
+    }
+  }
+  catch(const eh::Exception& ex)
+  {
+    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
+  }
+}
+
+void
 Application_::main(int& argc, char** argv) noexcept
 {
   try
@@ -334,6 +386,7 @@ Application_::main(int& argc, char** argv) noexcept
     Generics::AppUtils::CheckOption opt_help;
     Generics::AppUtils::CheckOption opt_sync;
     Generics::AppUtils::CheckOption opt_temporary;
+    Generics::AppUtils::Option<std::string> opt_date;
     Generics::AppUtils::Option<std::string> opt_expression_matcher;
     Generics::AppUtils::Option<std::string> opt_user_id;
     Generics::AppUtils::Args args(-1);
@@ -360,6 +413,10 @@ Application_::main(int& argc, char** argv) noexcept
       Generics::AppUtils::equal_name("temporary") ||
         Generics::AppUtils::short_name("t"),
       opt_temporary);
+    args.add(
+      Generics::AppUtils::equal_name("date") ||
+        Generics::AppUtils::short_name("d"),
+      opt_date);
     args.parse(argc - 1, argv + 1);
 
     const Generics::AppUtils::Args::CommandList& commands = args.commands();
@@ -375,6 +432,7 @@ Application_::main(int& argc, char** argv) noexcept
        command != "print-user-trigger-match" &&
        command != "print-request-trigger-match" &&
        command != "print-household-colo-reach" &&
+       command != "print-user-navigation" &&
        command != "daily-process")
     {
       std::cout << "Unknown command '" << command << "'. See usage:\n" << USAGE << std::endl;
@@ -434,6 +492,16 @@ Application_::main(int& argc, char** argv) noexcept
     else if (command == "print-request-trigger-match")
     {
       print_request_trigger_match(expression_matcher, id.c_str());
+    }
+    else if (command == "print-user-navigation")
+    {
+      std::optional<std::uint32_t> date;
+      if (opt_date.installed())
+      {
+        date = static_cast<std::uint32_t>(Generics::Time(*opt_date, "%Y-%m-%d").tv_sec);
+      }
+
+      print_user_navigation(expression_matcher, id.c_str(), date);
     }
     else
     {

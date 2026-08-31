@@ -108,6 +108,7 @@ target_link_libraries(UserNavigationContainer
 
 add_executable(ExpressionMatcher
   ExpressionMatcherGrpc.cpp
+  ExpressionMatcherHttp.cpp
   ExpressionMatcherLogLoader.cpp
   ExpressionMatcherImpl.cpp
   ExpressionMatcherMain.cpp
@@ -141,6 +142,7 @@ target_link_libraries(ExpressionMatcher
     Commons
     CORBAConfig
     HTTP
+    HttpServer
     ProfilingCommons
     SNMPAgent
     ProfileMap

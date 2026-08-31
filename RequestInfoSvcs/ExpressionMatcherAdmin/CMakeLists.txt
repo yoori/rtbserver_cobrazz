@@ -8,5 +8,6 @@ target_link_libraries(ExpressionMatcherAdmin
     Logger
     UtilCommons
     ExpressionMatcherGrpcClient
+    UserNavigationProfilePST
     Threads::Threads
 )
