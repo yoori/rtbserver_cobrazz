@@ -886,6 +886,22 @@ namespace AdServer::RequestInfoSvcs
   UserTriggerMatchContainer::~UserTriggerMatchContainer() noexcept
   {}
 
+  unsigned long UserTriggerMatchContainer::user_profile_size() const noexcept
+  {
+    return user_map_->size();
+  }
+
+  unsigned long UserTriggerMatchContainer::request_profile_size() const noexcept
+  {
+    unsigned long size = 0;
+    for (const auto& request_map : request_maps_)
+    {
+      size += request_map.second->size();
+    }
+
+    return size;
+  }
+
   UserTriggerMatchContainer::Config_var
   UserTriggerMatchContainer::config() const noexcept
   {

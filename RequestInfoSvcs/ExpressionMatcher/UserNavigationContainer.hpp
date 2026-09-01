@@ -54,6 +54,8 @@ namespace AdServer::RequestInfoSvcs
     void
     clear_expired();
 
+    unsigned long profile_size() const noexcept;
+
   private:
     ~UserNavigationContainer() noexcept override = default;
 

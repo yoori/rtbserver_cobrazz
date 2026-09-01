@@ -736,6 +736,11 @@ namespace AdServer::RequestInfoSvcs
   UserInventoryInfoContainer::~UserInventoryInfoContainer() noexcept
   {}
 
+  unsigned long UserInventoryInfoContainer::profile_size() const noexcept
+  {
+    return user_map_->size();
+  }
+
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   UserInventoryInfoContainer::co_get_profile(const AdServer::Commons::UserId& user_id)
   {

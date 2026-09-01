@@ -427,6 +427,45 @@ namespace AdServer::RequestInfoSvcs
       CoGetProfileAdapter());
   }
 
+  ExpressionMatcherImpl::ProfileSizes ExpressionMatcherImpl::profile_sizes() const noexcept
+  {
+    ProfileSizes result;
+
+    const auto user_inventory_container = user_inventory_container_.get();
+    if (user_inventory_container.in())
+    {
+      result.user_inventory = user_inventory_container->profile_size();
+    }
+
+    const auto user_navigation_container = user_navigation_container_.get();
+    if (user_navigation_container.in())
+    {
+      result.user_navigation = user_navigation_container->profile_size();
+    }
+
+    const auto user_trigger_match_container = user_trigger_match_container_.get();
+    if (user_trigger_match_container.in())
+    {
+      result.user_trigger_match = user_trigger_match_container->user_profile_size();
+      result.request_trigger_match = user_trigger_match_container->request_profile_size();
+    }
+
+    const auto temp_user_trigger_match_container = temp_user_trigger_match_container_.get();
+    if (temp_user_trigger_match_container.in())
+    {
+      result.temporary_user_trigger_match =
+        temp_user_trigger_match_container->user_profile_size();
+    }
+
+    const auto household_colo_reach_container = household_colo_reach_container_.get();
+    if (household_colo_reach_container.in())
+    {
+      result.household_colo_reach = household_colo_reach_container->profile_size();
+    }
+
+    return result;
+  }
+
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   ExpressionMatcherImpl::co_get_user_trigger_match_profile(
     AdServer::Commons::UserId user_id,

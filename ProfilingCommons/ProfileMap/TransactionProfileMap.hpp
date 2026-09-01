@@ -200,6 +200,8 @@ namespace AdServer::ProfilingCommons
         typename AsyncProfileMap<KeyType>::CompleteCallback())
       override;
 
+    unsigned long size() const noexcept override;
+
     Transaction_var
     get_transaction(
       const KeyType& key,
@@ -651,6 +653,12 @@ namespace AdServer::ProfilingCommons
     typename AsyncProfileMap<KeyType>::CompleteCallback complete)
   {
     async_delegate_map_()->clear_expired_async(expire_time, std::move(complete));
+  }
+
+  template <typename KeyType>
+  unsigned long TransactionProfileMap<KeyType>::size() const noexcept
+  {
+    return async_delegate_map_()->size();
   }
 
   template <typename KeyType>

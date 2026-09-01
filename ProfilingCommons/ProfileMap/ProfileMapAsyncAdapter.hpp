@@ -196,6 +196,11 @@ namespace AdServer::ProfilingCommons
         });
     }
 
+    unsigned long size() const noexcept override
+    {
+      return profile_map_->size();
+    }
+
   protected:
     ~ProfileMapAsyncAdapter() noexcept override = default;
 

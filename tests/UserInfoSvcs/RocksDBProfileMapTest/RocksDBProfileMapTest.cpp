@@ -702,6 +702,12 @@ main(int argc, char** argv)
 
     reporter_thread.join();
     const auto profile_map_stats = map->stats();
+    const auto profile_map_size = map->size();
+    if (*opt_count != 0 && profile_map_size == 0)
+    {
+      std::cerr << "profile map size is zero after writes" << std::endl;
+      error_count.fetch_add(1, std::memory_order_relaxed);
+    }
 
     if (batch_map)
     {
@@ -735,6 +741,7 @@ main(int argc, char** argv)
       ", avg_latency: " << format_stat_float(total_avg_latency_us) << "us" <<
       ", avg_batch_size: " << format_stat_float(avg_batch_size(profile_map_stats)) <<
       ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us" <<
+      ", profiles: " << profile_map_size <<
       ", mode: " << *opt_mode <<
       ", disable_wal: " << (*opt_disable_wal != 0 ? 1 : 0) << ", path: " << *opt_path << std::endl;
 

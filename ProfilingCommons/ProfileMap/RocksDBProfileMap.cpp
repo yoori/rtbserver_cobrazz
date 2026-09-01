@@ -335,10 +335,15 @@ namespace AdServer::ProfilingCommons
     }
   }
 
-  unsigned long
-  RocksDBProfileMapImpl::size() const noexcept
+  unsigned long RocksDBProfileMapImpl::size() const noexcept
   {
-    return 1;
+    std::uint64_t size = 0;
+    if (!db_->GetIntProperty(rocksdb::DB::Properties::kEstimateNumKeys, &size))
+    {
+      return 0;
+    }
+
+    return static_cast<unsigned long>(size);
   }
 
   unsigned long

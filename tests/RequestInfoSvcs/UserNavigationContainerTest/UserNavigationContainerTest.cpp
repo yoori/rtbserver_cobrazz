@@ -177,6 +177,11 @@ main()
       },
       static_cast<std::uint32_t>((today - Generics::Time::ONE_DAY).tv_sec));
 
+    if (container->profile_size() == 0)
+    {
+      throw std::runtime_error("Profile map size is zero");
+    }
+
     container->deactivate_object();
     container->wait_object();
     container.reset();

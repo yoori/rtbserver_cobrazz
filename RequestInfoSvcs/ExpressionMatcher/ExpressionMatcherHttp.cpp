@@ -232,6 +232,38 @@ namespace AdServer::RequestInfoSvcs
   }
 
   AdServer::Commons::HttpServer::HttpServer::Handler
+  make_expression_matcher_stats_http_handler(ExpressionMatcherImpl* expression_matcher)
+  {
+    ExpressionMatcherImpl_var expression_matcher_holder(
+      ReferenceCounting::add_ref(expression_matcher));
+    return [expression_matcher_holder = std::move(expression_matcher_holder)](
+      const HttpServer::Request& request)
+    {
+      if (request.method != "GET")
+      {
+        return error_response(405, "only GET is supported");
+      }
+
+      const auto sizes = expression_matcher_holder->profile_sizes();
+      std::string body;
+      {
+        AdServer::Commons::JsonFormatter json(body);
+        json.add_number("user_inventory_profiles", sizes.user_inventory);
+        json.add_number("user_navigation_profiles", sizes.user_navigation);
+        json.add_number("user_trigger_match_profiles", sizes.user_trigger_match);
+        json.add_number(
+          "temporary_user_trigger_match_profiles",
+          sizes.temporary_user_trigger_match);
+        json.add_number("request_trigger_match_profiles", sizes.request_trigger_match);
+        json.add_number("household_colo_reach_profiles", sizes.household_colo_reach);
+      }
+      body += '\n';
+
+      return HttpServer::Response{200, "application/json", std::move(body)};
+    };
+  }
+
+  AdServer::Commons::HttpServer::HttpServer::Handler
   make_user_navigation_profile_http_handler(ExpressionMatcherImpl* expression_matcher)
   {
     ExpressionMatcherImpl_var expression_matcher_holder(

@@ -209,6 +209,10 @@ namespace AdServer::RequestInfoSvcs
 
     void clear_expired() /*throw(Exception)*/;
 
+    unsigned long user_profile_size() const noexcept;
+
+    unsigned long request_profile_size() const noexcept;
+
   protected:
     virtual
     ~UserTriggerMatchContainer() noexcept;

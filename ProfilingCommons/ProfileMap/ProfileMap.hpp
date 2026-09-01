@@ -149,6 +149,8 @@ namespace AdServer::ProfilingCommons
       CompleteCallback complete = CompleteCallback())
       /*throw(Exception)*/ = 0;
 
+    virtual unsigned long size() const noexcept = 0;
+
     AdServer::Commons::Awaitable<bool>
     co_check_profile(const KeyType& key) const;
 

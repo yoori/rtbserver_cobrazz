@@ -70,6 +70,16 @@ namespace AdServer::RequestInfoSvcs
     DECLARE_EXCEPTION(InvalidArgument, Exception);
     DECLARE_EXCEPTION(NotReady, Exception);
 
+    struct ProfileSizes
+    {
+      unsigned long user_inventory = 0;
+      unsigned long user_navigation = 0;
+      unsigned long user_trigger_match = 0;
+      unsigned long temporary_user_trigger_match = 0;
+      unsigned long request_trigger_match = 0;
+      unsigned long household_colo_reach = 0;
+    };
+
     typedef xsd::AdServer::Configuration::ExpressionMatcherConfigType
       ExpressionMatcherConfig;
 
@@ -96,6 +106,8 @@ namespace AdServer::RequestInfoSvcs
     co_get_user_navigation_profile(
       AdServer::Commons::UserId user_id,
       std::optional<std::uint32_t> date);
+
+    ProfileSizes profile_sizes() const noexcept;
 
     void
     run_daily_processing(bool sync);

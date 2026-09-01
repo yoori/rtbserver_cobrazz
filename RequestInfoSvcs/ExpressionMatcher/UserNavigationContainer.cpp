@@ -76,6 +76,11 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
+  unsigned long UserNavigationContainer::profile_size() const noexcept
+  {
+    return user_map_->size();
+  }
+
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   UserNavigationContainer::co_get_profile(
     const AdServer::Commons::UserId& user_id,

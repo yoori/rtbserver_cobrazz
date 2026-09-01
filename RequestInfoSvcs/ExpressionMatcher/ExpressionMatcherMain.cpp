@@ -173,6 +173,10 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
           config().HttpConfig()->Endpoint().port(),
           config().HttpConfig()->process_threads());
       http_server->add_handler(
+        "/stats",
+        AdServer::RequestInfoSvcs::make_expression_matcher_stats_http_handler(
+          expression_matcher_impl_.in()));
+      http_server->add_handler(
         "/get_user_navigation_profile",
         AdServer::RequestInfoSvcs::make_user_navigation_profile_http_handler(
           expression_matcher_impl_.in()));

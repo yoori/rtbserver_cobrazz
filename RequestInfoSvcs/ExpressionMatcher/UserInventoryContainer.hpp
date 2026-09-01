@@ -87,6 +87,8 @@ namespace AdServer::RequestInfoSvcs
     void
     all_users(UserIdList& users) /*throw(Exception)*/;
 
+    unsigned long profile_size() const noexcept;
+
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
 

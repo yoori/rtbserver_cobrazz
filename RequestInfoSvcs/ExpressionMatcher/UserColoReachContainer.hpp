@@ -52,6 +52,8 @@ namespace AdServer::RequestInfoSvcs
 
     void clear_expired() /*throw(Exception)*/;
 
+    unsigned long profile_size() const noexcept;
+
   protected:
     using ColoReachInfoList = Generics::MonoList<ColoReachProcessor::ColoReachInfo>;
 
