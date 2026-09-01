@@ -4,13 +4,20 @@ import time
 
 
 class TrainingProgressReporter:
-  def __init__(self, total_batches, interval_seconds=10.0, output=None, clock=None):
+  def __init__(
+      self,
+      total_batches,
+      interval_seconds=10.0,
+      output=None,
+      clock=None,
+      callback=None):
     if interval_seconds <= 0:
       raise ValueError('progress reporting interval must be positive')
     self.total_batches = total_batches
     self.interval_seconds = interval_seconds
     self.output = output if output is not None else sys.stdout
     self.clock = clock if clock is not None else time.monotonic
+    self.callback = callback
     self.started_at = None
     self.last_report_at = None
     self.batch_wait_started_at = None
@@ -83,4 +90,6 @@ class TrainingProgressReporter:
 
   def _report(self, final, now=None):
     record = self.snapshot(final, now)
+    if self.callback is not None:
+      self.callback(record)
     print(json.dumps(record, sort_keys=True), file=self.output, flush=True)

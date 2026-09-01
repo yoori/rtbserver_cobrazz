@@ -9,6 +9,10 @@ add_executable(OrderedAsyncTaskWindowTest
   OrderedAsyncTaskWindowTest.cpp
 )
 
+add_executable(StartableAwaitableTest
+  StartableAwaitableTest.cpp
+)
+
 add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp
 )
@@ -23,6 +27,11 @@ target_link_libraries(AsyncMutexTest
 )
 
 target_link_libraries(OrderedAsyncTaskWindowTest
+  PRIVATE
+    Commons
+)
+
+target_link_libraries(StartableAwaitableTest
   PRIVATE
     Commons
 )

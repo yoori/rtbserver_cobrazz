@@ -37,7 +37,7 @@ test -s "$CONFIG_OUT_DIR/environment.sh" || {
   exit 1
 }
 
-for SERVICE in AIAgent SegmentGenerator; do
+for SERVICE in AIAgent SegmentGenerator SegmentModelViewer; do
   SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = 'AICluster/$SERVICE']"
   SERVICE_COUNT=$(
     "$EXEC/XPathGetValue.sh" \
@@ -54,13 +54,20 @@ for SERVICE in AIAgent SegmentGenerator; do
     for HOST in $HOSTS; do
       HOST_OUT_DIR="$CONFIG_OUT_DIR/$HOST"
       mkdir -p "$HOST_OUT_DIR"
-      if [ "$SERVICE" = AIAgent ]; then
-        XSL=AIAgent.xsl
-        OUT=AIAgentConfig.sh
-      else
-        XSL=SegmentGenerator.xsl
-        OUT=SegmentGeneratorConfig.json
-      fi
+      case "$SERVICE" in
+        AIAgent)
+          XSL=AIAgent.xsl
+          OUT=AIAgentConfig.sh
+          ;;
+        SegmentGenerator)
+          XSL=SegmentGenerator.xsl
+          OUT=SegmentGeneratorConfig.json
+          ;;
+        SegmentModelViewer)
+          XSL=SegmentModelViewer.xsl
+          OUT=SegmentModelViewerConfig.json
+          ;;
+      esac
       "$EXEC/XsltTransformer.sh" \
         --var XPATH "$CURRENT_XPATH" \
         --var HOST "$HOST" \

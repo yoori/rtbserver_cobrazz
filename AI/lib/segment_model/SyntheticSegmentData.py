@@ -75,6 +75,10 @@ class SyntheticBatchBuilder:
   def batches_per_epoch(self):
     return int(math.ceil(len(self.sample_indices) / self.batch_size))
 
+  def label_statistics(self):
+    labels = self.dataset.labels[self.sample_indices]
+    return len(labels), float(numpy.sum(labels, dtype=numpy.float64))
+
   def __call__(self, request):
     generator = numpy.random.default_rng(self.seed + request.epoch)
     shuffled = generator.permutation(self.sample_indices)

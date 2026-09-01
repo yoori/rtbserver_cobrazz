@@ -57,6 +57,9 @@
         <xsl:for-each select="$cluster/service[@descriptor = 'AICluster/SegmentGenerator']">
           <Service name="ai-SegmentGenerator" type="AICluster::SegmentGenerator" host="{@host}"/>
         </xsl:for-each>
+        <xsl:for-each select="$cluster/service[@descriptor = 'AICluster/SegmentModelViewer']">
+          <Service name="ai-SegmentModelViewer" type="AICluster::SegmentModelViewer" host="{@host}"/>
+        </xsl:for-each>
       </Services>
     </AIServer>
   </xsl:template>

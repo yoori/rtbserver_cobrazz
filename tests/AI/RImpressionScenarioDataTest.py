@@ -68,6 +68,23 @@ def test_scenario():
 
 
 class RImpressionScenarioDataTest(unittest.TestCase):
+  def test_label_statistics_use_only_the_builder_range(self):
+    scenario = test_scenario()
+    builder = RImpressionBatchBuilder(
+      scenario,
+      [86400],
+      'http://unused-clickhouse',
+      'http://unused-expression-matcher',
+      range_begin=2,
+      range_end=6)
+    with mock.patch(
+        'segment_model.RImpressionScenarioData.ClickHouseClient.execute',
+        return_value=b'4\t1\n') as execute:
+      self.assertEqual((4, 1), builder.label_statistics())
+    query = execute.call_args.args[0]
+    self.assertIn('impression_id >= 2', query)
+    self.assertIn('impression_id < 6', query)
+
   def test_history_counts_use_only_events_before_impression(self):
     impression = int(datetime.datetime(
       2026, 1, 3, 12, tzinfo=datetime.timezone.utc).timestamp())
@@ -179,7 +196,7 @@ class RImpressionScenarioDataTest(unittest.TestCase):
       },
       'model': {
         'candidates': 2,
-        'membership': {'initialization': 'random'},
+        'membership': {'initialization': 'random_single_seed'},
       },
     })
     with tempfile.TemporaryDirectory() as cache_dir, mock.patch(

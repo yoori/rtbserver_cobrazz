@@ -2,6 +2,11 @@ import dataclasses
 
 import torch
 
+from .CandidateDuplicate import candidate_pairs
+from .CandidateDuplicate import centered_activation_similarity
+from .CandidateDuplicate import duplicate_margin_loss
+from .CandidateDuplicate import soft_jaccard_similarity
+
 
 @dataclasses.dataclass
 class SegmentLoss:
@@ -9,50 +14,62 @@ class SegmentLoss:
   ctr: torch.Tensor
   sparsity: torch.Tensor
   binarization: torch.Tensor
-  diversity: torch.Tensor
+  url_duplicate: torch.Tensor
+  activation_duplicate: torch.Tensor
   duplicate_existing: torch.Tensor
 
 
-def segment_model_loss(output, labels, config, regularization_scale=1.0):
+def segment_model_loss(
+    output,
+    labels,
+    config,
+    regularization_scale=1.0,
+    duplicate_regularization_scale=1.0):
   if not 0 <= regularization_scale <= 1:
     raise ValueError('regularization_scale must be inside [0, 1]')
+  if not 0 <= duplicate_regularization_scale <= 1:
+    raise ValueError('duplicate_regularization_scale must be inside [0, 1]')
   ctr = torch.nn.functional.binary_cross_entropy_with_logits(output.logits, labels)
-  url_gates = output.segment_output.active_url_gates
-  window_gates = output.segment_output.window_gates
-  threshold_gates = output.segment_output.threshold_gates
+  candidate_mask = output.candidate_mask
+  url_gates = output.segment_output.active_url_gates[candidate_mask]
+  activations = output.segment_output.activations[:, candidate_mask]
+  window_gates = output.segment_output.window_gates[candidate_mask]
+  threshold_gates = output.segment_output.threshold_gates[candidate_mask]
   sparsity = torch.mean(url_gates)
   binarization = (
     torch.mean(url_gates * (1.0 - url_gates)) +
     torch.mean(window_gates * (1.0 - window_gates)) +
     torch.mean(threshold_gates * (1.0 - threshold_gates)))
-  diversity = _diversity_loss(url_gates, config.loss.diversity_pairs)
+  url_duplicate = url_gates.new_zeros(())
+  activation_duplicate = url_gates.new_zeros(())
+  duplicate_enabled = (
+    duplicate_regularization_scale > 0 and
+    (config.loss.url_duplicate > 0 or config.loss.activation_duplicate > 0))
+  if duplicate_enabled:
+    pairs = candidate_pairs(url_gates.shape[0], config.loss.duplicate_pairs, url_gates.device)
+    if config.loss.url_duplicate > 0:
+      url_duplicate = duplicate_margin_loss(
+        soft_jaccard_similarity(url_gates, pairs),
+        config.loss.duplicate_jaccard_margin)
+    if config.loss.activation_duplicate > 0:
+      activation_duplicate = duplicate_margin_loss(
+        centered_activation_similarity(activations, pairs),
+        config.loss.duplicate_activation_margin)
   duplicate_existing = output.relations.duplicate_loss
   total = (
     ctr +
     regularization_scale * (
       config.loss.sparsity * sparsity +
       config.loss.binarization * binarization +
-      config.loss.diversity * diversity +
-      config.loss.duplicate_existing * duplicate_existing))
+      config.loss.duplicate_existing * duplicate_existing) +
+    duplicate_regularization_scale * (
+      config.loss.url_duplicate * url_duplicate +
+      config.loss.activation_duplicate * activation_duplicate))
   return SegmentLoss(
     total,
     ctr,
     sparsity,
     binarization,
-    diversity,
+    url_duplicate,
+    activation_duplicate,
     duplicate_existing)
-
-
-def _diversity_loss(url_gates, sampled_pairs):
-  candidates = url_gates.shape[0]
-  if candidates < 2 or sampled_pairs <= 0:
-    return url_gates.new_zeros(())
-  first = torch.randint(0, candidates, (sampled_pairs,), device=url_gates.device)
-  offset = torch.randint(1, candidates, (sampled_pairs,), device=url_gates.device)
-  second = (first + offset) % candidates
-  similarity = torch.nn.functional.cosine_similarity(
-    url_gates[first],
-    url_gates[second],
-    dim=1,
-    eps=1e-8)
-  return torch.mean(similarity.square())

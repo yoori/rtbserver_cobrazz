@@ -15,27 +15,36 @@
     "activation_boundary": 0.5,
     "choice_initial_logit": 2.0,
     "membership": {
-      "initialization": "random",
+      "initialization": "random_single_seed",
       "initial_urls_per_candidate": 1,
-      "unselected_logit": -0.5,
-      "selected_logit": 0.5,
+      "unselected_logit": -2.0,
+      "selected_logit": 1.0,
       "logit_std": 0.05
     },
     "forest": {
       "trees": 32,
       "depth": 4,
       "features_per_node": 4,
-      "feature_initial_logit": 2.0,
+      "feature_logit_std": 0.001,
+      "leaf_logit_std": 0.001,
       "seed": 19
     }
   },
   "loss": {
     "sparsity": 0.0001,
     "binarization": 0.001,
-    "diversity": 0.001,
+    "url_duplicate": 0.1,
+    "activation_duplicate": 0.01,
     "duplicate_existing": 0.0,
     "duplicate_threshold": 0.95,
-    "diversity_pairs": 64
+    "duplicate_jaccard_margin": 0.8,
+    "duplicate_activation_margin": 0.9,
+    "duplicate_pairs": 64,
+    "duplicate_regularization_start_epoch": 5,
+    "duplicate_regularization_ramp_epochs": 15,
+    "enable_candidate_reseed": false,
+    "candidate_reseed_jaccard_threshold": 0.95,
+    "candidate_reseed_activation_threshold": 0.98
   },
   "training": {
     "discovery_epochs": 5,
@@ -47,6 +56,18 @@
     "weight_decay": 0.0,
     "device": "cuda",
     "seed": 17
+  },
+  "candidate_opening": {
+    "enabled": false,
+    "mode": "fixed",
+    "first_active_candidates": 1,
+    "open_every_epochs": 20,
+    "previous_candidate_lr_mode": "reduced",
+    "previous_candidate_lr_multiplier": 0.1,
+    "url_temperature_floor": 0.5,
+    "joint_finetune_epochs": 0,
+    "joint_finetune_lr_multiplier": 0.1,
+    "reset_forest_on_candidate_open": false
   },
   "temperatures": {
     "url": {

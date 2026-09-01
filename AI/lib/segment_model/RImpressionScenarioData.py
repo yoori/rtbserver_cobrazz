@@ -71,6 +71,23 @@ class RImpressionBatchBuilder:
   def batches_per_epoch(self):
     return self.batches
 
+  def label_statistics(self):
+    client = ClickHouseClient(
+      self.clickhouse_url,
+      self.clickhouse_user,
+      self.clickhouse_password,
+      self.http_timeout)
+    query = (
+      'SELECT count(), countIf(click_timestamp IS NOT NULL) '
+      'FROM RImpression '
+      'WHERE impression_id >= ' + str(self.range_begin) + ' '
+      'AND impression_id < ' + str(self.range_end) + ' '
+      'FORMAT TabSeparated')
+    values = client.execute(query).decode('utf-8').strip().split('\t')
+    if len(values) != 2 or int(values[0]) != self.range_end - self.range_begin:
+      raise RuntimeError('ClickHouse returned invalid training label statistics')
+    return int(values[0]), int(values[1])
+
   def __call__(self, request):
     if not 0 <= request.batch_index < self.batches:
       raise ValueError('batch index is outside the configured RImpression range')

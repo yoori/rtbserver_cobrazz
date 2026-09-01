@@ -29,12 +29,14 @@ class DifferentiableSegmentLayer(torch.nn.Module):
     if membership_config is None:
       membership_config = MembershipConfig()
     self.membership = DenseSegmentMembership(candidates, urls, membership_config)
-    self.window_logits = torch.nn.Parameter(torch.zeros(candidates, len(windows_seconds)))
-    self.threshold_logits = torch.nn.Parameter(torch.zeros(candidates, len(n_values)))
+    self.window_logits = self._choice_logits(candidates, len(windows_seconds))
+    self.threshold_logits = self._choice_logits(candidates, len(n_values))
     with torch.no_grad():
-      window_indices = (torch.randperm(candidates) % len(windows_seconds)).unsqueeze(1)
-      self.window_logits.scatter_(1, window_indices, choice_initial_logit)
-      self.threshold_logits[:, 0] = choice_initial_logit
+      if self.window_logits is not None:
+        window_indices = (torch.randperm(candidates) % len(windows_seconds)).unsqueeze(1)
+        self.window_logits.scatter_(1, window_indices, choice_initial_logit)
+      if self.threshold_logits is not None:
+        self.threshold_logits[:, 0] = choice_initial_logit
     self.register_buffer('windows_seconds', torch.as_tensor(windows_seconds, dtype=torch.long))
     self.register_buffer('n_values', torch.as_tensor(n_values, dtype=torch.float32))
 
@@ -43,8 +45,8 @@ class DifferentiableSegmentLayer(torch.nn.Module):
     active_url_gates = url_gates
     if history_url_ids is not None:
       active_url_gates = url_gates[:, history_url_ids]
-    window_gates = torch.softmax(self.window_logits / temperatures['window'], dim=1)
-    threshold_gates = torch.softmax(self.threshold_logits / temperatures['threshold'], dim=1)
+    window_gates = self.window_gates(temperatures['window'])
+    threshold_gates = self.threshold_gates(temperatures['threshold'])
     segment_counts = self._aggregate(
       history_counts,
       active_url_gates,
@@ -65,8 +67,8 @@ class DifferentiableSegmentLayer(torch.nn.Module):
     selected_urls = self.membership.hard_gates()
     if history_url_ids is not None:
       selected_urls = selected_urls[:, history_url_ids]
-    window_indices = torch.argmax(self.window_logits, dim=1)
-    threshold_indices = torch.argmax(self.threshold_logits, dim=1)
+    window_indices = self.selected_window_indices()
+    threshold_indices = self.selected_threshold_indices()
     result = []
     for segment_index in range(self.candidates):
       url_mask = selected_urls[segment_index]
@@ -84,6 +86,32 @@ class DifferentiableSegmentLayer(torch.nn.Module):
       threshold = self.n_values[threshold_indices[segment_index]]
       result.append((selected_count >= threshold).to(history_counts.dtype))
     return torch.stack(result, dim=1)
+
+  def window_gates(self, temperature):
+    if self.window_logits is None:
+      return self.membership.url_logits.new_ones((self.candidates, 1))
+    return torch.softmax(self.window_logits / temperature, dim=1)
+
+  def threshold_gates(self, temperature):
+    if self.threshold_logits is None:
+      return self.membership.url_logits.new_ones((self.candidates, 1))
+    return torch.softmax(self.threshold_logits / temperature, dim=1)
+
+  def selected_window_indices(self):
+    if self.window_logits is None:
+      return self.windows_seconds.new_zeros(self.candidates)
+    return torch.argmax(self.window_logits, dim=1)
+
+  def selected_threshold_indices(self):
+    if self.threshold_logits is None:
+      return self.windows_seconds.new_zeros(self.candidates)
+    return torch.argmax(self.threshold_logits, dim=1)
+
+  @staticmethod
+  def _choice_logits(candidates, choices):
+    if choices == 1:
+      return None
+    return torch.nn.Parameter(torch.zeros(candidates, choices))
 
   def _aggregate(self, history_counts, url_gates, aggregation_temperature):
     if history_counts.ndim != 3:

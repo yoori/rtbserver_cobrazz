@@ -47,5 +47,11 @@
              maxOccurs="1"
              minHostOccurs="1"
              maxHostOccurs="1"/>
+    <service type="SegmentModelViewer"
+             configSchema="xsd/SegmentModelViewerApp.xsd"
+             minOccurs="1"
+             maxOccurs="1"
+             minHostOccurs="1"
+             maxHostOccurs="1"/>
   </serviceGroup>
 </application>

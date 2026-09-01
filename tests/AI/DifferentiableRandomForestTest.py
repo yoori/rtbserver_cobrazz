@@ -13,6 +13,28 @@ TORCH_AVAILABLE = importlib.util.find_spec('torch') is not None
 
 @unittest.skipUnless(TORCH_AVAILABLE, 'PyTorch is not installed in the source environment')
 class DifferentiableRandomForestTest(unittest.TestCase):
+  def test_initializes_unbiased_feature_selectors_and_small_leaf_noise(self):
+    import torch
+    from segment_model.DifferentiableRandomForest import DifferentiableRandomForest
+    from segment_model.SegmentModelConfig import ForestConfig
+
+    forest = DifferentiableRandomForest(
+      4,
+      ForestConfig(
+        trees=3,
+        depth=2,
+        features_per_node=4,
+        feature_logit_std=1e-3,
+        leaf_logit_std=1e-3,
+        seed=1))
+    self.assertGreater(float(torch.std(forest.feature_logits)), 0.0)
+    self.assertLess(float(torch.max(torch.abs(forest.feature_logits))), 0.01)
+    self.assertGreater(float(torch.std(forest.leaf_logits)), 0.0)
+    self.assertLess(float(torch.max(torch.abs(forest.leaf_logits))), 0.01)
+    importance = forest.feature_importance(1.0)
+    self.assertEqual((4,), tuple(importance.shape))
+    self.assertAlmostEqual(1.0, float(torch.sum(importance)), places=6)
+
   def test_routes_gradients_through_tree_levels(self):
     import torch
     from segment_model.DifferentiableRandomForest import DifferentiableRandomForest
@@ -60,6 +82,51 @@ class DifferentiableRandomForestTest(unittest.TestCase):
       forest.leaf_logits[0] = torch.tensor([-2.0, 2.0])
     logits = forest(torch.tensor([[0.0], [1.0]]), 0.1, 0.1, hard=True)
     self.assertEqual([-2.0, 2.0], logits.tolist())
+
+  def test_excludes_unavailable_features_from_soft_and_hard_selection(self):
+    import torch
+    from segment_model.DifferentiableRandomForest import DifferentiableRandomForest
+    from segment_model.SegmentModelConfig import ForestConfig
+
+    forest = DifferentiableRandomForest(
+      2,
+      ForestConfig(trees=1, depth=1, features_per_node=2, seed=1),
+      binary_features=2)
+    with torch.no_grad():
+      forest.feature_logits.copy_(torch.where(
+        forest.feature_indices == 1,
+        torch.tensor(10.0),
+        torch.tensor(-10.0)))
+    availability = torch.tensor([True, False])
+    importance = forest.feature_importance(1.0, availability)
+    self.assertEqual([1.0, 0.0], importance.tolist())
+    self.assertEqual([[0]], forest.selected_feature_indices(availability).tolist())
+    logits = forest(
+      torch.tensor([[1.0, 1.0]]),
+      1.0,
+      0.1,
+      feature_availability=availability)
+    self.assertTrue(torch.isfinite(logits).all())
+
+  def test_node_without_available_features_is_a_finite_no_op_split(self):
+    import torch
+    from segment_model.DifferentiableRandomForest import DifferentiableRandomForest
+    from segment_model.SegmentModelConfig import ForestConfig
+
+    forest = DifferentiableRandomForest(
+      2,
+      ForestConfig(trees=1, depth=1, features_per_node=1, seed=1),
+      binary_features=2)
+    availability = torch.zeros(2, dtype=torch.bool)
+    logits = forest(
+      torch.ones((1, 2)),
+      1.0,
+      0.1,
+      hard=True,
+      feature_availability=availability)
+    self.assertTrue(torch.isfinite(logits).all())
+    self.assertEqual([[-1]], forest.selected_feature_indices(availability).tolist())
+    self.assertEqual(0.0, float(torch.sum(forest.feature_importance(1.0, availability))))
 
   def test_learns_ctr_from_the_expected_fixed_segment(self):
     import torch

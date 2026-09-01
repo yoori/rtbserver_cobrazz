@@ -45,7 +45,8 @@ class ForestConfig:
   trees: int = 32
   depth: int = 5
   features_per_node: int = 16
-  feature_initial_logit: float = 2.0
+  feature_logit_std: float = 1e-3
+  leaf_logit_std: float = 1e-3
   seed: int = 19
 
 
@@ -64,10 +65,18 @@ class ModelConfig:
 class LossConfig:
   sparsity: float = 1e-3
   binarization: float = 1e-3
-  diversity: float = 1e-3
+  url_duplicate: float = 0.1
+  activation_duplicate: float = 0.01
   duplicate_existing: float = 1e-3
   duplicate_threshold: float = 0.95
-  diversity_pairs: int = 256
+  duplicate_jaccard_margin: float = 0.8
+  duplicate_activation_margin: float = 0.9
+  duplicate_pairs: int = 256
+  duplicate_regularization_start_epoch: int = 5
+  duplicate_regularization_ramp_epochs: int = 15
+  enable_candidate_reseed: bool = False
+  candidate_reseed_jaccard_threshold: float = 0.95
+  candidate_reseed_activation_threshold: float = 0.98
 
 
 @dataclasses.dataclass(frozen=True)
@@ -81,6 +90,20 @@ class TrainingConfig:
   weight_decay: float = 0.0
   device: str = 'cpu'
   seed: int = 17
+
+
+@dataclasses.dataclass(frozen=True)
+class CandidateOpeningConfig:
+  enabled: bool = False
+  mode: str = 'fixed'
+  first_active_candidates: int = 1
+  open_every_epochs: int = 20
+  previous_candidate_lr_mode: str = 'reduced'
+  previous_candidate_lr_multiplier: float = 0.1
+  url_temperature_floor: float = 0.5
+  joint_finetune_epochs: int = 0
+  joint_finetune_lr_multiplier: float = 0.1
+  reset_forest_on_candidate_open: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -104,6 +127,8 @@ class SegmentModelConfig:
   model: ModelConfig = dataclasses.field(default_factory=ModelConfig)
   loss: LossConfig = dataclasses.field(default_factory=LossConfig)
   training: TrainingConfig = dataclasses.field(default_factory=TrainingConfig)
+  candidate_opening: CandidateOpeningConfig = dataclasses.field(
+    default_factory=CandidateOpeningConfig)
   synthetic: SyntheticConfig = dataclasses.field(default_factory=SyntheticConfig)
   url_temperature: TemperatureSchedule = dataclasses.field(default_factory=TemperatureSchedule)
   window_temperature: TemperatureSchedule = dataclasses.field(
@@ -145,6 +170,9 @@ class SegmentModelConfig:
       model=_make_model_config(value.pop('model', {})),
       loss=_make_dataclass(LossConfig, value.pop('loss', {})),
       training=_make_dataclass(TrainingConfig, value.pop('training', {})),
+      candidate_opening=_make_dataclass(
+        CandidateOpeningConfig,
+        value.pop('candidate_opening', {})),
       synthetic=_make_dataclass(SyntheticConfig, value.pop('synthetic', {})),
       **{
         name + '_temperature': _make_dataclass(TemperatureSchedule, temperatures.get(name, {}))
@@ -183,14 +211,34 @@ class SegmentModelConfig:
       raise ValueError('activation_boundary must not be negative')
     if self.model.membership.initial_urls_per_candidate <= 0:
       raise ValueError('initial_urls_per_candidate must be positive')
-    if self.model.membership.initialization not in ('frequency', 'random'):
-      raise ValueError("membership initialization must be 'frequency' or 'random'")
+    membership_modes = (
+      'frequency',
+      'random_single_seed',
+      'symmetric_with_noise',
+      'random_multi_seed',
+    )
+    if self.model.membership.initialization not in membership_modes:
+      raise ValueError('unsupported membership initialization')
+    if (
+        self.model.membership.initialization == 'random_single_seed' and
+        self.model.membership.initial_urls_per_candidate != 1):
+      raise ValueError('random_single_seed requires one initial URL per candidate')
+    if (
+        self.model.membership.initialization == 'random_multi_seed' and
+        self.model.membership.initial_urls_per_candidate < 2):
+      raise ValueError('random_multi_seed requires at least two initial URLs per candidate')
     if self.model.membership.logit_std < 0:
       raise ValueError('membership logit_std must not be negative')
+    if (
+        self.model.membership.initialization != 'symmetric_with_noise' and
+        self.model.membership.selected_logit <= self.model.membership.unselected_logit):
+      raise ValueError('selected_logit must be greater than unselected_logit')
     if self.model.forest.trees <= 0 or self.model.forest.depth <= 0:
       raise ValueError('forest trees and depth must be positive')
     if self.model.forest.features_per_node <= 0:
       raise ValueError('forest features_per_node must be positive')
+    if self.model.forest.feature_logit_std < 0 or self.model.forest.leaf_logit_std < 0:
+      raise ValueError('forest initialization standard deviations must not be negative')
     if self.training.discovery_epochs <= 0 or self.training.structuring_epochs <= 0:
       raise ValueError('both training stages must contain at least one epoch')
     scheduled_epochs = self.training.discovery_epochs + self.training.structuring_epochs
@@ -200,9 +248,67 @@ class SegmentModelConfig:
       raise ValueError('early_stopping_patience must be positive')
     if self.training.early_stopping_min_delta < 0:
       raise ValueError('early_stopping_min_delta must not be negative')
-    for field in dataclasses.fields(self.loss):
-      if getattr(self.loss, field.name) < 0:
-        raise ValueError('loss coefficients must not be negative')
+    opening = self.candidate_opening
+    if opening.mode != 'fixed':
+      raise ValueError("candidate opening mode must be 'fixed'")
+    if not 1 <= opening.first_active_candidates <= self.model.candidates:
+      raise ValueError('first_active_candidates must be inside the candidate range')
+    if opening.open_every_epochs <= 0:
+      raise ValueError('open_every_epochs must be positive')
+    if opening.previous_candidate_lr_mode not in ('full', 'reduced'):
+      raise ValueError("previous candidate LR mode must be 'full' or 'reduced'")
+    lr_multipliers = (
+      opening.previous_candidate_lr_multiplier,
+      opening.joint_finetune_lr_multiplier,
+    )
+    if any(not 0 < value <= 1 for value in lr_multipliers):
+      raise ValueError('candidate learning-rate multipliers must be inside (0, 1]')
+    if opening.url_temperature_floor <= 0:
+      raise ValueError('candidate opening URL temperature floor must be positive')
+    if opening.joint_finetune_epochs < 0:
+      raise ValueError('joint_finetune_epochs must not be negative')
+    if opening.reset_forest_on_candidate_open:
+      raise ValueError('reset_forest_on_candidate_open is not implemented')
+    if opening.enabled:
+      all_open_epoch = (
+        self.model.candidates - opening.first_active_candidates
+      ) * opening.open_every_epochs
+      required_epochs = all_open_epoch + opening.joint_finetune_epochs
+      if self.training.max_epochs <= required_epochs:
+        raise ValueError('max_epochs must include training after candidate opening')
+    loss_weights = (
+      self.loss.sparsity,
+      self.loss.binarization,
+      self.loss.url_duplicate,
+      self.loss.activation_duplicate,
+      self.loss.duplicate_existing,
+    )
+    if any(value < 0 for value in loss_weights):
+      raise ValueError('loss coefficients must not be negative')
+    margins = (
+      self.loss.duplicate_threshold,
+      self.loss.duplicate_jaccard_margin,
+      self.loss.duplicate_activation_margin,
+      self.loss.candidate_reseed_jaccard_threshold,
+      self.loss.candidate_reseed_activation_threshold,
+    )
+    if any(not 0 <= value <= 1 for value in margins):
+      raise ValueError('duplicate margins and thresholds must be inside [0, 1]')
+    if self.loss.duplicate_pairs < 0:
+      raise ValueError('duplicate_pairs must not be negative')
+    if (
+        self.loss.duplicate_regularization_start_epoch < 0 or
+        self.loss.duplicate_regularization_ramp_epochs < 0):
+      raise ValueError('duplicate regularization schedule must not be negative')
+    duplicate_regularization_enabled = (
+      self.loss.url_duplicate > 0 or self.loss.activation_duplicate > 0)
+    duplicate_schedule_end = (
+      self.loss.duplicate_regularization_start_epoch +
+      self.loss.duplicate_regularization_ramp_epochs)
+    if (
+        (duplicate_regularization_enabled or self.loss.enable_candidate_reseed) and
+        self.training.max_epochs <= duplicate_schedule_end):
+      raise ValueError('max_epochs must include an epoch after duplicate regularization warm-up')
     if not 0 < self.synthetic.segment_activation_probability < 1:
       raise ValueError('segment_activation_probability must be between zero and one')
     if self.synthetic.urls < 2 or self.synthetic.users <= 0 or self.synthetic.samples <= 1:

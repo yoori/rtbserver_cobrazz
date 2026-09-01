@@ -43,11 +43,12 @@ def extract_segment_rules(model, urls, url_bucket_ids=None, hard_activations=Non
                           existing_channels=None, existing_channel_ids=None,
                           relation_threshold=0.9):
   url_logits = model.segment_layer.membership.url_logits.detach().cpu().numpy()
-  window_indices = model.segment_layer.window_logits.detach().argmax(dim=1).cpu().numpy()
-  threshold_indices = model.segment_layer.threshold_logits.detach().argmax(dim=1).cpu().numpy()
+  window_indices = model.segment_layer.selected_window_indices().cpu().numpy()
+  threshold_indices = model.segment_layer.selected_threshold_indices().cpu().numpy()
   windows = model.segment_layer.windows_seconds.detach().cpu().numpy()
   n_values = model.segment_layer.n_values.detach().cpu().numpy()
-  selected_features = model.forest.selected_feature_indices().detach().cpu().numpy()
+  selected_features = model.forest.selected_feature_indices(
+    model.forest_feature_availability()).detach().cpu().numpy()
   if url_bucket_ids is None:
     url_bucket_ids = numpy.arange(len(urls), dtype=numpy.int64)
   else:

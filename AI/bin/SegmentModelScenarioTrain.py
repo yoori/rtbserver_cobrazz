@@ -20,6 +20,7 @@ from segment_model.RImpressionScenarioData import make_rimpression_scenario_sour
 from segment_model.ScenarioDefinition import SegmentModelScenario
 from segment_model.ScenarioSeeder import seed_scenario
 from segment_model.SegmentModelConfig import SegmentModelConfig
+from segment_model.SegmentModelPublication import SegmentModelPublication
 from segment_model.SegmentModelTrainer import SegmentModelTrainer
 
 
@@ -28,7 +29,10 @@ def main():
     description='Train the URL segment model from a ClickHouse/ExpressionMatcher scenario.')
   parser.add_argument('--config', required=True)
   parser.add_argument('--scenario', required=True)
-  parser.add_argument('--output-dir', required=True)
+  output_group = parser.add_mutually_exclusive_group(required=True)
+  output_group.add_argument('--output-dir')
+  output_group.add_argument('--repository-root')
+  parser.add_argument('--model-id')
   parser.add_argument('--clickhouse-url', default='http://localhost:8123')
   parser.add_argument('--clickhouse-user', default='default')
   parser.add_argument('--clickhouse-password', default='')
@@ -56,6 +60,18 @@ def main():
   config = SegmentModelConfig.from_json(args.config)
   scenario = SegmentModelScenario.from_json(args.scenario)
   _validate_model_scenario(config, scenario)
+  publication = None
+  output_dir = args.output_dir
+  if args.repository_root:
+    publication = SegmentModelPublication(
+      args.repository_root,
+      args.model_id,
+      {
+        'training_kind': 'scenario',
+        'scenario': pathlib.Path(args.scenario).stem,
+      })
+    publication.start()
+    output_dir = publication.training_path
   if args.seed_rimpression:
     clickhouse_client = ClickHouseClient(
       args.clickhouse_url,
@@ -65,7 +81,7 @@ def main():
     seed_scenario(clickhouse_client, scenario, args.seed_chunk_rows, reset=True)
   cache_dir = args.batch_cache_dir
   if cache_dir is None:
-    cache_dir = str(pathlib.Path(args.output_dir) / 'batch-cache')
+    cache_dir = str(pathlib.Path(output_dir) / 'batch-cache')
   source = make_rimpression_scenario_source(
     config,
     scenario,
@@ -83,10 +99,22 @@ def main():
     source.training_builder,
     source.validation_builder,
     source.final_test_builder)
-  history = trainer.train(args.output_dir)
-  metrics, rules = trainer.evaluate()
-  trainer.save(args.output_dir, history, metrics, rules)
-  _write_scenario(pathlib.Path(args.output_dir), scenario)
+  try:
+    history = trainer.train(
+      output_dir,
+      publication.update_progress if publication else None)
+    metrics, rules = trainer.evaluate()
+    trainer.save(output_dir, history, metrics, rules)
+    _write_scenario(pathlib.Path(output_dir), scenario)
+    if publication:
+      output_dir = publication.publish({
+        'epochs_completed': len(history),
+        'segments_count': len(rules),
+      })
+  except BaseException as error:
+    if publication:
+      publication.interrupt(str(error))
+    raise
   result = {
     'metrics': metrics,
     'segments': [rule.to_dict() for rule in rules],
@@ -94,7 +122,7 @@ def main():
   }
   if not args.print_details:
     result = {
-      'output_dir': args.output_dir,
+      'output_dir': str(output_dir),
       'soft_ctr': metrics['soft_ctr'],
       'hard_ctr': metrics['hard_ctr'],
       'soft_hard': metrics['soft_hard'],
@@ -107,8 +135,8 @@ def main():
 def _validate_model_scenario(config, scenario):
   if config.model.context_size:
     raise ValueError('scenario test requires model.context_size=0')
-  if config.model.membership.initialization != 'random':
-    raise ValueError('streaming scenario training requires random membership initialization')
+  if config.model.membership.initialization == 'frequency':
+    raise ValueError('streaming scenario training does not support frequency initialization')
   for segment in scenario.expected_segments:
     if segment.window_seconds not in config.data.windows_seconds:
       raise ValueError('expected segment window is missing from model windows_seconds')

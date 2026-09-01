@@ -1,6 +1,6 @@
 Name: foros-server-ai
 Version: %{version}
-Release: ssv8%{?dist}
+Release: ssv9%{?dist}
 Summary: Foros AI services
 License: Commercial
 Group: System Environment/Daemons
@@ -18,6 +18,7 @@ Requires: postgresql
 Requires: python3.12
 Requires: python3.12dist(numpy)
 Requires: python3.12dist(torch)
+Requires: python3.12-fastapi-uvicorn
 Requires: util-linux
 
 %description
@@ -50,6 +51,7 @@ install -m 0755 AI/bin/AIAgent.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/ClusterDataMcp.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/WebToolsMcp.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentGenerator.py %{buildroot}/opt/foros/server-ai/bin/
+install -m 0755 AI/bin/SegmentModelViewer.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelEvaluate.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelExtract.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelScenarioSeed.py %{buildroot}/opt/foros/server-ai/bin/

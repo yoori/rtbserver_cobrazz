@@ -18,6 +18,7 @@ class EarlyStoppingTest(unittest.TestCase):
 
     from segment_model.SegmentModelConfig import SegmentModelConfig
     from segment_model.SegmentModelTrainer import SegmentModelTrainer
+    from segment_model.SegmentModelTrainer import ValidationResult
     from segment_model.SyntheticSegmentData import generate_synthetic_dataset
 
     config = SegmentModelConfig.from_dict({
@@ -32,6 +33,10 @@ class EarlyStoppingTest(unittest.TestCase):
       'model': {
         'candidates': 1,
         'forest': {'trees': 1, 'depth': 1, 'features_per_node': 1},
+      },
+      'loss': {
+        'url_duplicate': 0.0,
+        'activation_duplicate': 0.0,
       },
       'training': {
         'discovery_epochs': 1,
@@ -65,7 +70,7 @@ class EarlyStoppingTest(unittest.TestCase):
         name: value.detach().cpu().clone()
         for name, value in trainer.model.state_dict().items()
       })
-      return next(validation_losses)
+      return ValidationResult(next(validation_losses), torch.zeros(1), torch.zeros((1, 1)), 1)
 
     trainer._validation_loss = validation_loss
     history = trainer.train()

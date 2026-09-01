@@ -13,6 +13,17 @@ TORCH_AVAILABLE = importlib.util.find_spec('torch') is not None
 
 @unittest.skipUnless(TORCH_AVAILABLE, 'PyTorch is not installed in the source environment')
 class SegmentLayerTest(unittest.TestCase):
+  def test_single_window_and_threshold_are_constants(self):
+    from segment_model.DifferentiableSegmentLayer import DifferentiableSegmentLayer
+
+    layer = DifferentiableSegmentLayer(2, 3, [60], [1], 'softmax_max')
+    self.assertIsNone(layer.window_logits)
+    self.assertIsNone(layer.threshold_logits)
+    self.assertNotIn('window_logits', dict(layer.named_parameters()))
+    self.assertNotIn('threshold_logits', dict(layer.named_parameters()))
+    self.assertEqual([[1.0], [1.0]], layer.window_gates(0.5).tolist())
+    self.assertEqual([[1.0], [1.0]], layer.threshold_gates(0.5).tolist())
+
   def test_hard_activation_uses_max_url_count(self):
     import torch
     from segment_model.DifferentiableSegmentLayer import DifferentiableSegmentLayer

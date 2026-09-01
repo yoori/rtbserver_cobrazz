@@ -10,7 +10,8 @@
   <xsl:variable name="service" select="dyn:evaluate($XPATH)"/>
   <xsl:variable name="environment" select="$service/../configuration/cfg:cluster/cfg:environment"/>
   <xsl:template match="/">{
-  "pid_file": "<xsl:choose><xsl:when test="$environment/@workspace_root"><xsl:value-of select="$environment/@workspace_root"/></xsl:when><xsl:otherwise>/u01/foros/server-ai/var</xsl:otherwise></xsl:choose>/run/SegmentGenerator.pid"
+  "pid_file": "<xsl:choose><xsl:when test="$environment/@workspace_root"><xsl:value-of select="$environment/@workspace_root"/></xsl:when><xsl:otherwise>/u01/foros/server-ai/var</xsl:otherwise></xsl:choose>/run/SegmentGenerator.pid",
+  "model_root": "<xsl:choose><xsl:when test="$environment/@workspace_root"><xsl:value-of select="$environment/@workspace_root"/></xsl:when><xsl:otherwise>/u01/foros/server-ai/var</xsl:otherwise></xsl:choose>/log/SegmentGenerator/Models"
 }
 </xsl:template>
 </xsl:stylesheet>

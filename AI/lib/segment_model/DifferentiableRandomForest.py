@@ -26,18 +26,12 @@ class DifferentiableRandomForest(torch.nn.Module):
     self.feature_logits = torch.nn.Parameter(torch.zeros(self.trees, self.nodes, features_per_node))
     self.split_thresholds = torch.nn.Parameter(torch.empty(self.trees, self.nodes))
     self.leaf_logits = torch.nn.Parameter(torch.zeros(self.trees, self.leaves))
-    torch.nn.init.normal_(self.feature_logits, std=0.05)
-    with torch.no_grad():
-      selected_features = torch.randint(features_per_node, (self.trees, self.nodes, 1))
-      initial_logits = torch.full_like(
-        selected_features,
-        config.feature_initial_logit,
-        dtype=torch.float32)
-      self.feature_logits.scatter_add_(2, selected_features, initial_logits)
+    torch.nn.init.normal_(self.feature_logits, std=config.feature_logit_std)
+    torch.nn.init.normal_(self.leaf_logits, std=config.leaf_logit_std)
     torch.nn.init.uniform_(self.split_thresholds, 0.25, 0.75)
 
   def forward(self, features, feature_temperature, split_temperature, hard=False,
-              return_tree_logits=False):
+              return_tree_logits=False, feature_availability=None):
     if features.ndim != 2 or features.shape[1] != self.input_features:
       raise ValueError('forest features have an unexpected shape')
     candidates = features[:, self.feature_indices]
@@ -50,7 +44,11 @@ class DifferentiableRandomForest(torch.nn.Module):
     else:
       option_right = torch.sigmoid(
         (candidates - thresholds[None, :, :, :]) / split_temperature)
-    feature_gates = self._feature_gates(features.dtype, feature_temperature, hard)
+    feature_gates = self._feature_gates(
+      features.dtype,
+      feature_temperature,
+      hard,
+      feature_availability)
     right = torch.sum(option_right * feature_gates[None, :, :, :], dim=3)
     path_probabilities = features.new_ones((features.shape[0], self.trees, 1))
     node_offset = 0
@@ -68,16 +66,52 @@ class DifferentiableRandomForest(torch.nn.Module):
       return logits, tree_logits
     return logits
 
-  def _feature_gates(self, dtype, feature_temperature, hard):
+  def _feature_gates(self, dtype, feature_temperature, hard, feature_availability=None):
+    availability = self._feature_availability(feature_availability)
+    local_availability = availability[self.feature_indices]
+    masked_logits = self.feature_logits.masked_fill(~local_availability, -torch.inf)
+    has_available_feature = torch.any(local_availability, dim=2, keepdim=True)
+    safe_logits = torch.where(has_available_feature, masked_logits, torch.zeros_like(masked_logits))
     if hard:
-      selected_indices = torch.argmax(self.feature_logits, dim=2)
+      selected_indices = torch.argmax(safe_logits, dim=2)
       gates = torch.nn.functional.one_hot(
         selected_indices,
         num_classes=self.feature_logits.shape[2]).to(dtype)
+      return gates * local_availability.to(dtype)
     else:
-      gates = torch.softmax(self.feature_logits / feature_temperature, dim=2)
-    return gates
+      gates = torch.softmax(safe_logits / feature_temperature, dim=2)
+      return gates * local_availability.to(dtype)
 
-  def selected_feature_indices(self):
-    local_indices = torch.argmax(self.feature_logits, dim=2, keepdim=True)
-    return torch.gather(self.feature_indices, 2, local_indices).squeeze(2)
+  def selected_feature_indices(self, feature_availability=None):
+    gates = self._feature_gates(
+      self.feature_logits.dtype,
+      1.0,
+      True,
+      feature_availability)
+    local_indices = torch.argmax(gates, dim=2, keepdim=True)
+    selected = torch.gather(self.feature_indices, 2, local_indices).squeeze(2)
+    return torch.where(torch.any(gates > 0, dim=2), selected, torch.full_like(selected, -1))
+
+  def feature_importance(self, feature_temperature, feature_availability=None):
+    gates = self._feature_gates(
+      self.feature_logits.dtype,
+      feature_temperature,
+      False,
+      feature_availability)
+    importance = gates.new_zeros(self.input_features)
+    importance.scatter_add_(0, self.feature_indices.reshape(-1), gates.reshape(-1))
+    return importance / (self.trees * self.nodes)
+
+  def _feature_availability(self, feature_availability):
+    if feature_availability is None:
+      return torch.ones(
+        self.input_features,
+        dtype=torch.bool,
+        device=self.feature_logits.device)
+    availability = torch.as_tensor(
+      feature_availability,
+      dtype=torch.bool,
+      device=self.feature_logits.device)
+    if availability.shape != (self.input_features,):
+      raise ValueError('forest feature availability has an unexpected shape')
+    return availability

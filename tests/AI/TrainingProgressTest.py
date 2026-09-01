@@ -40,6 +40,29 @@ class TrainingProgressTest(unittest.TestCase):
     self.assertEqual(3.0, final['training_compute_seconds'])
     self.assertTrue(final['final'])
 
+  def test_sends_same_records_to_callback(self):
+    clock = FakeClock()
+    output = io.StringIO()
+    callback_records = []
+    reporter = TrainingProgressReporter(
+      1,
+      interval_seconds=1.0,
+      output=output,
+      clock=clock,
+      callback=callback_records.append)
+    reporter.start()
+    reporter.set_position('structuring', 4)
+    reporter.begin_training_compute()
+    clock.advance(2.0)
+    reporter.end_training_compute()
+    reporter.close()
+
+    output_records = [
+      json.loads(line)
+      for line in output.getvalue().splitlines()
+    ]
+    self.assertEqual(output_records, callback_records)
+
 
 class FakeClock:
   def __init__(self):
