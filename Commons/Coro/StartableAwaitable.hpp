@@ -278,10 +278,20 @@ namespace AdServer::Commons
   inline ResultType
   sync_wait(StartableAwaitable<ResultType> awaitable)
   {
-    std::promise<void> promise;
-    auto future = promise.get_future();
-    awaitable.start([&promise](std::optional<std::exception_ptr>) mutable { promise.set_value(); });
-    future.get();
+    using CompletionResult = std::optional<std::exception_ptr>;
+    auto promise = std::make_shared<std::promise<CompletionResult>>();
+    auto future = promise->get_future();
+    awaitable.start(
+      [promise = std::move(promise)](CompletionResult exception) mutable
+      {
+        promise->set_value(std::move(exception));
+      });
+    auto exception = future.get();
+    if (exception)
+    {
+      std::rethrow_exception(std::move(*exception));
+    }
+
     return awaitable.await_resume();
   }
 
@@ -418,10 +428,20 @@ namespace AdServer::Commons
   inline void
   sync_wait(StartableAwaitable<void> awaitable)
   {
-    std::promise<void> promise;
-    auto future = promise.get_future();
-    awaitable.start([&promise](std::optional<std::exception_ptr>) mutable { promise.set_value(); });
-    future.get();
+    using CompletionResult = std::optional<std::exception_ptr>;
+    auto promise = std::make_shared<std::promise<CompletionResult>>();
+    auto future = promise->get_future();
+    awaitable.start(
+      [promise = std::move(promise)](CompletionResult exception) mutable
+      {
+        promise->set_value(std::move(exception));
+      });
+    auto exception = future.get();
+    if (exception)
+    {
+      std::rethrow_exception(std::move(*exception));
+    }
+
     awaitable.await_resume();
   }
 }
