@@ -1,4 +1,5 @@
 import json
+import math
 import pathlib
 
 
@@ -20,7 +21,10 @@ class Config:
     self.fit_iterations = 10
     self.training_patience = 5
     self.campaign_model_activity_period = 14 * 24 * 60 * 60
-    self.min_campaign_model_imps = 100000
+    self.min_campaign_training_impressions = 100000
+    self.min_campaign_validation_impressions = 100000
+    self.min_campaign_validation_clicks = 100
+    self.user_navigation_sampling = 100.0
     self.data_delay = None
 
   def init_json(self, config_json):
@@ -55,9 +59,21 @@ class Config:
     self.campaign_model_activity_period = int(config_json.get(
       'campaign_model_activity_period',
       14 * 24 * 60 * 60))
-    self.min_campaign_model_imps = int(config_json.get(
-      'min_campaign_model_imps',
+    self.min_campaign_training_impressions = int(config_json.get(
+      'min_campaign_training_impressions',
       100000))
+    self.min_campaign_validation_impressions = int(config_json.get(
+      'min_campaign_validation_impressions',
+      100000))
+    self.min_campaign_validation_clicks = int(config_json.get(
+      'min_campaign_validation_clicks',
+      100))
+    try:
+      self.user_navigation_sampling = float(
+        config_json.get('user_navigation_sampling', 100.0))
+    except (TypeError, ValueError):
+      raise ValueError(
+        'user_navigation_sampling must be a number from 0 to 100')
     try:
       self.data_delay = int(config_json['data_delay'])
     except (KeyError, TypeError, ValueError):
@@ -83,11 +99,19 @@ class Config:
         'fit_iterations',
         'training_patience',
         'campaign_model_activity_period',
-        'min_campaign_model_imps'):
+        'min_campaign_training_impressions',
+        'min_campaign_validation_impressions',
+        'min_campaign_validation_clicks'):
       if getattr(self, name) <= 0:
         raise ValueError(name + ' must be positive')
     if self.data_delay <= 0:
       raise ValueError('data_delay must be positive')
+    if (
+        not math.isfinite(self.user_navigation_sampling) or
+        self.user_navigation_sampling < 0 or
+        self.user_navigation_sampling > 100):
+      raise ValueError(
+        'user_navigation_sampling must be a number from 0 to 100')
 
   def model_root(self):
     return pathlib.Path(

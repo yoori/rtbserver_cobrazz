@@ -1,0 +1,87 @@
+services:
+  clickhouse:
+    image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:24.8}
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    ports:
+      - "127.0.0.1:${CLICKHOUSE_PORT:-18123}:8123"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+
+  expression-matcher:
+    image: ${PYTHON_IMAGE:-python:3.12-slim}
+    command:
+      - python
+      - /workspace/AI/bin/SegmentModelScenarioServer.py
+      - --scenario
+      - /config/scenario.json
+      - --port
+      - "8080"
+      - --processes
+      - "8"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8080/health')
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    ports:
+      - "127.0.0.1:${EXPRESSION_MATCHER_PORT:-18080}:8080"
+    volumes:
+      - ../..:/workspace:ro
+      - ./scenarios/${SCENARIO_FILE:-UnionScenario.json}:/config/scenario.json:ro
+
+  trainer:
+    image: ${TRAINER_IMAGE:-pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime}
+    command:
+      - python
+      - /workspace/AI/bin/SegmentModelScenarioTrain.py
+      - --config
+      - /config/model.json
+      - --scenario
+      - /config/scenario.json
+      - --output-dir
+      - /output
+      - --clickhouse-url
+      - http://clickhouse:8123
+      - --expression-matcher-url
+      - http://expression-matcher:8080
+      - --source-batch-rows
+      - "4096"
+      - --profile-workers
+      - "32"
+      - --seed-rimpression
+      - --seed-chunk-rows
+      - "100000"
+    environment:
+      NO_PROXY: clickhouse,expression-matcher,localhost,127.0.0.1
+    depends_on:
+      expression-matcher:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 2gb
+    volumes:
+      - ../..:/workspace:ro
+      - ./${MODEL_CONFIG_FILE:-ScenarioModelConfig.json}:/config/model.json:ro
+      - ./scenarios/${SCENARIO_FILE:-UnionScenario.json}:/config/scenario.json:ro
+      - ./output:/output
+
+volumes:
+  clickhouse-data:

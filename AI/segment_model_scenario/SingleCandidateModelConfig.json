@@ -1,0 +1,88 @@
+{
+  "data": {
+    "windows_seconds": [86400],
+    "n_values": [1],
+    "url_buckets": 1000000,
+    "batch_size": 4096,
+    "batch_workers": 8,
+    "ready_batches": 16,
+    "batch_start_method": "forkserver"
+  },
+  "model": {
+    "candidates": 1,
+    "context_size": 0,
+    "aggregation": "softmax_max",
+    "activation_boundary": 0.5,
+    "choice_initial_logit": 2.0,
+    "membership": {
+      "initialization": "random",
+      "initial_urls_per_candidate": 1,
+      "unselected_logit": -0.5,
+      "selected_logit": 0.5,
+      "logit_std": 0.05
+    },
+    "forest": {
+      "trees": 32,
+      "depth": 4,
+      "features_per_node": 1,
+      "feature_initial_logit": 2.0,
+      "seed": 19
+    }
+  },
+  "loss": {
+    "sparsity": 0.0001,
+    "binarization": 0.001,
+    "diversity": 0.0,
+    "duplicate_existing": 0.0,
+    "duplicate_threshold": 0.95,
+    "diversity_pairs": 0
+  },
+  "training": {
+    "discovery_epochs": 5,
+    "structuring_epochs": 5,
+    "max_epochs": 10000,
+    "early_stopping_patience": 20,
+    "early_stopping_min_delta": 0.000001,
+    "learning_rate": 0.005,
+    "weight_decay": 0.0,
+    "device": "cuda",
+    "seed": 17
+  },
+  "temperatures": {
+    "url": {
+      "start": 1.0,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "activation": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "aggregation": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "forest_feature": {
+      "start": 0.5,
+      "end": 0.1,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    },
+    "forest_split": {
+      "start": 0.5,
+      "end": 0.05,
+      "schedule": "exponential",
+      "start_progress": 0.4,
+      "end_progress": 1.0
+    }
+  }
+}

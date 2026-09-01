@@ -31,11 +31,18 @@ class SegmentCTRModel(torch.nn.Module):
     self.relation_layer = SegmentRelationLayer(config.loss.duplicate_threshold)
     self.forest = DifferentiableRandomForest(
       config.model.candidates + config.model.context_size,
-      config.model.forest)
+      config.model.forest,
+      binary_features=config.model.candidates)
     self.existing_channels = existing_channels
 
-  def forward(self, history_counts, existing_channels, context_features, temperatures):
-    segment_output = self.segment_layer(history_counts, temperatures)
+  def forward(
+      self,
+      history_counts,
+      existing_channels,
+      context_features,
+      temperatures,
+      history_url_ids=None):
+    segment_output = self.segment_layer(history_counts, temperatures, history_url_ids)
     relations = self.relation_layer(segment_output.activations, existing_channels)
     forest_features = torch.cat((segment_output.activations, context_features), dim=1)
     logits, tree_logits = self.forest(
@@ -45,8 +52,13 @@ class SegmentCTRModel(torch.nn.Module):
       return_tree_logits=True)
     return SegmentModelOutput(logits, tree_logits, segment_output, relations)
 
-  def hard_segment_logits(self, history_counts, context_features, temperatures):
-    activations = self.segment_layer.hard_activations(history_counts)
+  def hard_segment_logits(
+      self,
+      history_counts,
+      context_features,
+      temperatures,
+      history_url_ids=None):
+    activations = self.segment_layer.hard_activations(history_counts, history_url_ids)
     return self.segment_logits(activations, context_features, temperatures)
 
   def segment_logits(self, activations, context_features, temperatures):

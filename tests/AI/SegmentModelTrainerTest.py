@@ -26,6 +26,7 @@ class SegmentModelTrainerTest(unittest.TestCase):
       'data': {
         'windows_seconds': [10, 100],
         'n_values': [1, 2],
+        'url_buckets': 32,
         'batch_size': 8,
         'batch_workers': 1,
         'ready_batches': 2,
@@ -41,6 +42,8 @@ class SegmentModelTrainerTest(unittest.TestCase):
       'training': {
         'discovery_epochs': 1,
         'structuring_epochs': 1,
+        'max_epochs': 4,
+        'early_stopping_patience': 2,
         'seed': 5,
       },
       'synthetic': {
@@ -51,14 +54,16 @@ class SegmentModelTrainerTest(unittest.TestCase):
         'existing_channels': 2,
         'events_per_user': 10,
         'horizon_seconds': 1000,
-        'validation_fraction': 0.25,
+        'validation_fraction': 0.125,
+        'final_test_fraction': 0.125,
         'seed': 7,
       },
     })
     dataset = generate_synthetic_dataset(config)
     trainer = SegmentModelTrainer(config, dataset)
     frequencies = numpy.sum(dataset.history_counts[dataset.train_indices, :, -1], axis=0)
-    expected_urls = set(numpy.argsort(-frequencies)[:config.model.candidates].tolist())
+    ranking = dataset.history_url_ids[numpy.argsort(-frequencies, kind='stable')]
+    expected_urls = set(ranking[:config.model.candidates].tolist())
     initial_logits = trainer.model.segment_layer.membership.url_logits.detach().cpu().numpy()
     selected_urls = set(numpy.flatnonzero(numpy.any(initial_logits > 0, axis=0)).tolist())
     self.assertEqual(expected_urls, selected_urls)
@@ -67,12 +72,19 @@ class SegmentModelTrainerTest(unittest.TestCase):
       metrics, rules = trainer.evaluate()
       trainer.save(output_dir, history, metrics, rules)
       artifacts = {path.name for path in pathlib.Path(output_dir).iterdir()}
-    self.assertEqual(['discovery', 'structuring'], [record['stage'] for record in history])
+    self.assertEqual('discovery', history[0]['stage'])
+    self.assertTrue(all(record['stage'] == 'structuring' for record in history[1:]))
+    self.assertEqual(0.0, history[0]['regularization_scale'])
+    self.assertGreater(history[1]['regularization_scale'], 0.0)
+    self.assertEqual(config.url_temperature.start, history[0]['temperatures']['url'])
+    self.assertTrue(all('validation_loss' in record for record in history))
     self.assertTrue(finite_metrics(metrics))
     self.assertIn('checkpoint-discovery.pt', artifacts)
-    self.assertIn('checkpoint-structuring.pt', artifacts)
+    self.assertIn('checkpoint-best.pt', artifacts)
     self.assertIn('segments.json', artifacts)
     self.assertIn('synthetic-ground-truth.json', artifacts)
+    self.assertIn('training-summary.json', artifacts)
+    self.assertIn('url-bucket-dictionary.json', artifacts)
 
 
 if __name__ == '__main__':

@@ -62,7 +62,9 @@ class RImpressionTrainExporterTest(unittest.TestCase):
 
     with tempfile.TemporaryDirectory() as temp_dir:
       output_file = pathlib.Path(temp_dir) / 'RImpressionTrain.csv'
-      exporter = RImpressionTrainExporter('-h click00 --port 9000')
+      exporter = RImpressionTrainExporter(
+        '-h click00 --port 9000',
+        user_navigation_sampling=1.5)
       current_time = datetime.datetime(
         2026, 8, 14, 12, 0, 0, tzinfo=datetime.timezone.utc)
       with mock.patch(
@@ -85,8 +87,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       '9000',
     ])
     self.assertIn("WHERE timestamp < '2026-08-13 12:00:00'", calls[0][-1])
+    sampling_condition = (
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 15000')
+    self.assertIn(sampling_condition, calls[0][-1])
     self.assertIn("WHERE timestamp >= '2026-08-12'", calls[1][-1])
     self.assertIn("timestamp < '2026-08-13 12:00:00'", calls[1][-1])
+    self.assertIn(sampling_condition, calls[1][-1])
     self.assertIn('ORDER BY timestamp DESC', calls[1][-1])
     for field in ('url', 'etag', 'geo_ch', 'user_ch', 'ssp_tag_id'):
       self.assertIn(
@@ -110,6 +116,19 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     ):
       with self.assertRaisesRegex(RuntimeError, 'contains no rows'):
         exporter.export('/tmp/unused-RImpressionTrain.csv', 100, 86400)
+
+  def test_sampling_condition(self):
+    self.assertIsNone(RImpressionTrainExporter('').sampling_condition())
+    self.assertEqual(
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 12500',
+      RImpressionTrainExporter(
+        '',
+        user_navigation_sampling=1.25).sampling_condition())
+    self.assertEqual(
+      '0',
+      RImpressionTrainExporter('', user_navigation_sampling=0).sampling_condition())
+    with self.assertRaisesRegex(ValueError, 'user_navigation_sampling'):
+      RImpressionTrainExporter('', user_navigation_sampling=100.1)
 
   def test_failed_export_preserves_previous_sample(self):
     responses = [
@@ -139,7 +158,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       b'1,Mobile\n',
       b'0,Tablet\n',
     ])
-    exporter = RImpressionTrainExporter('')
+    exporter = RImpressionTrainExporter('', user_navigation_sampling=1.5)
 
     with tempfile.TemporaryDirectory() as temp_dir, mock.patch(
         'rtbserver_utils.RImpressionTrainExporter.subprocess.Popen',
@@ -165,6 +184,9 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       self.assertFalse(second_path.exists())
       self.assertEqual(0, process.return_code)
       query = popen.call_args.args[0][-1]
+      self.assertIn(
+        'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 15000',
+        query)
       self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
       self.assertLess(
         query.index('ORDER BY timestamp DESC'),
@@ -208,12 +230,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
 
     self.assertEqual(set(range(2, 100)), source_partitions)
 
-  def test_selects_active_campaigns_above_strict_impression_threshold(self):
+  def test_selects_active_campaigns_at_campaign_thresholds(self):
     result = subprocess.CompletedProcess(
       [],
       0,
-      stdout='123\t100001\t2041\n456\t250000\t5102\n')
-    exporter = RImpressionTrainExporter('')
+      stdout='123\t100000\t100000\t100\n456\t250000\t120000\t240\n')
+    exporter = RImpressionTrainExporter('', user_navigation_sampling=1.5)
     with mock.patch(
         'rtbserver_utils.RImpressionTrainExporter.subprocess.run',
         return_value=result) as run:
@@ -222,22 +244,32 @@ class RImpressionTrainExporterTest(unittest.TestCase):
         '2026-08-25 00:00:00',
         14 * 24 * 60 * 60,
         100000,
+        100000,
+        100,
         training_extra_condition="timestamp < '2026-08-20'",
         validation_extra_condition="timestamp >= '2026-08-20'")
 
     self.assertEqual([
-      (123, 100001, 2041),
-      (456, 250000, 5102),
+      (123, 100000, 100000, 100),
+      (456, 250000, 120000, 240),
     ], campaigns)
     query = run.call_args.args[0][-1]
     self.assertIn('subtractSeconds(', query)
     self.assertIn('1209600', query)
-    self.assertIn('HAVING training_impressions > 100000', query)
+    self.assertIn('HAVING training_impressions >= 100000', query)
     self.assertIn('AS validation_impressions', query)
+    self.assertIn('AS validation_clicks', query)
+    self.assertIn('AND validation_impressions >= 100000', query)
+    self.assertIn('AND validation_clicks >= 100', query)
+    self.assertIn('click_timestamp IS NOT NULL', query)
     self.assertIn("timestamp < '2026-08-20'", query)
     self.assertIn("timestamp >= '2026-08-20'", query)
     self.assertIn('campaign_id IN (', query)
     self.assertEqual(2, query.count('campaign_id > 0'))
+    self.assertEqual(
+      2,
+      query.count(
+        'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 15000'))
 
   def test_campaign_condition_uses_database_campaign_id(self):
     self.assertEqual(
@@ -260,7 +292,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
 
   def test_ssp_ctr_logloss_uses_actual_clicks_on_ordered_slice(self):
     result = subprocess.CompletedProcess([], 0, stdout='0.012345\n')
-    exporter = RImpressionTrainExporter('')
+    exporter = RImpressionTrainExporter('', user_navigation_sampling=1.5)
     with mock.patch(
         'rtbserver_utils.RImpressionTrainExporter.subprocess.run',
         return_value=result,
@@ -277,10 +309,36 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn('click_timestamp IS NOT NULL AS clicked', query)
     self.assertIn('assumeNotNull(ssp_ctr) AS score', query)
     self.assertIn('ssp_ctr IS NOT NULL', query)
+    self.assertIn(
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 15000',
+      query)
     self.assertIn('sipHash64(request_id) % 100 IN (0,1)', query)
     self.assertIn('greatest(least(score, 1 - 1e-15), 1e-15)', query)
     self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
     self.assertIn('LIMIT 300 OFFSET 600', query)
+
+  def test_sampling_applies_to_count_and_ordered_slice(self):
+    responses = [
+      subprocess.CompletedProcess([], 0, stdout='42\n'),
+      subprocess.CompletedProcess([], 0, stdout='2026-08-01 12:00:00\n'),
+    ]
+    exporter = RImpressionTrainExporter('', user_navigation_sampling=1.5)
+    with mock.patch(
+        'rtbserver_utils.RImpressionTrainExporter.subprocess.run',
+        side_effect=responses,
+    ) as run:
+      self.assertEqual(42, exporter.count_rows('2026-08-01', '2026-08-02'))
+      self.assertEqual(
+        '2026-08-01 12:00:00',
+        exporter.ordered_slice_min_timestamp(
+          '2026-08-01',
+          '2026-08-02',
+          10))
+
+    sampling_condition = (
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 15000')
+    for call in run.call_args_list:
+      self.assertIn(sampling_condition, call.args[0][-1])
 
   def test_required_source_rows_accounts_for_validation_partitions(self):
     self.assertEqual(

@@ -63,8 +63,12 @@
     test="count($generator-config/@training_patience) = 0">5</xsl:if>,
   "campaign_model_activity_period": <xsl:value-of select="$generator-config/@campaign_model_activity_period"/><xsl:if
     test="count($generator-config/@campaign_model_activity_period) = 0">1209600</xsl:if>,
-  "min_campaign_model_imps": <xsl:value-of select="$generator-config/@min_campaign_model_imps"/><xsl:if
-    test="count($generator-config/@min_campaign_model_imps) = 0">100000</xsl:if>,
+  "min_campaign_training_impressions": <xsl:value-of select="$generator-config/@min_campaign_training_impressions"/><xsl:if
+    test="count($generator-config/@min_campaign_training_impressions) = 0">100000</xsl:if>,
+  "min_campaign_validation_impressions": <xsl:value-of select="$generator-config/@min_campaign_validation_impressions"/><xsl:if
+    test="count($generator-config/@min_campaign_validation_impressions) = 0">100000</xsl:if>,
+  "min_campaign_validation_clicks": <xsl:value-of select="$generator-config/@min_campaign_validation_clicks"/><xsl:if
+    test="count($generator-config/@min_campaign_validation_clicks) = 0">100</xsl:if>,
   "user_navigation_sampling": <xsl:value-of select="$user-navigation-sampling-value"/>,
   "data_delay": <xsl:value-of select="$generator-config/@data_delay"/>
 }

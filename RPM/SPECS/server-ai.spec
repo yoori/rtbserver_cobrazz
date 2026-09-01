@@ -1,6 +1,6 @@
 Name: foros-server-ai
 Version: %{version}
-Release: ssv4%{?dist}
+Release: ssv8%{?dist}
 Summary: Foros AI services
 License: Commercial
 Group: System Environment/Daemons
@@ -10,8 +10,11 @@ AutoReqProv: no
 BuildRequires: gcc-c++
 Requires: bash
 Requires: coreutils
+Requires: curl
 Requires: foros-ollama >= 0.33.2
+Requires: foros-playwright-mcp >= 0.0.79
 Requires: perl-interpreter
+Requires: postgresql
 Requires: python3.12
 Requires: python3.12dist(numpy)
 Requires: python3.12dist(torch)
@@ -36,11 +39,16 @@ g++ \
 rm -rf %{buildroot}
 install -d %{buildroot}/opt/foros/server-ai/bin
 install -d %{buildroot}/opt/foros/server-ai/conf
+install -d %{buildroot}/opt/foros/server-ai/conf/segment_model_scenario/scenarios
 install -d %{buildroot}/opt/foros/server-ai/DACS/AICluster
+install -d %{buildroot}/opt/foros/server-ai/lib/ai_agent
 install -d %{buildroot}/opt/foros/server-ai/lib/segment_model
 install -m 0755 AIPackageInfo %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/aiserver.pl %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/AIAgent.sh %{buildroot}/opt/foros/server-ai/bin/
+install -m 0755 AI/bin/AIAgent.py %{buildroot}/opt/foros/server-ai/bin/
+install -m 0755 AI/bin/ClusterDataMcp.py %{buildroot}/opt/foros/server-ai/bin/
+install -m 0755 AI/bin/WebToolsMcp.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentGenerator.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelEvaluate.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelExtract.py %{buildroot}/opt/foros/server-ai/bin/
@@ -49,8 +57,13 @@ install -m 0755 AI/bin/SegmentModelScenarioServer.py %{buildroot}/opt/foros/serv
 install -m 0755 AI/bin/SegmentModelScenarioTrain.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0755 AI/bin/SegmentModelTrain.py %{buildroot}/opt/foros/server-ai/bin/
 install -m 0644 AI/conf/SegmentModelConfig.example.json %{buildroot}/opt/foros/server-ai/conf/
+install -m 0644 AI/segment_model_scenario/*ModelConfig.json \
+  %{buildroot}/opt/foros/server-ai/conf/segment_model_scenario/
+install -m 0644 AI/segment_model_scenario/scenarios/*.json \
+  %{buildroot}/opt/foros/server-ai/conf/segment_model_scenario/scenarios/
 install -m 0644 AI/lib/segment_model/*.py %{buildroot}/opt/foros/server-ai/lib/segment_model/
 install -m 0644 AI/lib/segment_model/README.md %{buildroot}/opt/foros/server-ai/lib/segment_model/
+install -m 0644 AI/lib/ai_agent/*.py %{buildroot}/opt/foros/server-ai/lib/ai_agent/
 install -m 0644 DACS/AICluster/*.pm %{buildroot}/opt/foros/server-ai/DACS/AICluster/
 
 %files

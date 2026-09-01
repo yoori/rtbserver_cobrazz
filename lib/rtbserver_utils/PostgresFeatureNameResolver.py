@@ -60,10 +60,19 @@ class PostgresFeatureNameResolver:
       WHERE cc.cc_id = ANY(%s)
     ''',
     'channel': '''
+      WITH requested_ids AS (
+        SELECT unnest(%s::integer[]) AS entity_id
+      )
       SELECT channel.channel_id, account.name, channel.name
-      FROM channel
+      FROM requested_ids
+      JOIN channel ON channel.channel_id = requested_ids.entity_id
       LEFT JOIN account USING (account_id)
-      WHERE channel.channel_id = ANY(%s)
+
+      UNION ALL
+
+      SELECT platform.platform_id, NULL::text, platform.name
+      FROM requested_ids
+      JOIN platform ON platform.platform_id = requested_ids.entity_id
     ''',
     'geochannel': '''
       WITH RECURSIVE geochannel_paths AS (

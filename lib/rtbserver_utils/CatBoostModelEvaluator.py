@@ -10,10 +10,11 @@ CTR_GOALS = numpy.arange(31, dtype=numpy.float64) / 1000
 
 
 def ctr_threshold_statistics(predictions, labels):
+  total_impressions = int(predictions.size)
   bucket_indexes = numpy.searchsorted(
     CTR_GOALS,
     predictions,
-    side='left')
+    side='right')
   bucket_count = len(CTR_GOALS) + 1
   impressions = numpy.bincount(
     bucket_indexes,
@@ -36,6 +37,7 @@ def ctr_threshold_statistics(predictions, labels):
       'impressions': int(impressions[index + 1]),
       'clicks': int(round(clicks[index + 1])),
       'predicted_ctr_sum': float(predicted_ctr_sums[index + 1]),
+      'total_impressions': total_impressions,
     }
     for index, ctr_goal in enumerate(CTR_GOALS)
   ]

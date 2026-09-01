@@ -468,9 +468,12 @@ def render_ctr_thresholds(traits):
       continue
     actual_ctr = item.get('actual_ctr')
     average_predicted_ctr = item.get('average_predicted_ctr')
+    share = item.get('share')
     rows.append(
       '<tr><td class="metric">' + format(ctr_goal, '.3f') + '</td>'
       '<td class="metric">' + str(impressions) + '</td>'
+      '<td class="metric">' + (
+        metric_decimal_text(share) if share is not None else '-') + '</td>'
       '<td class="metric">' + str(clicks) + '</td>'
       '<td class="metric">' + (
         metric_decimal_text(actual_ctr) if actual_ctr is not None else '-') +
@@ -485,10 +488,11 @@ def render_ctr_thresholds(traits):
   return (
     '<section class="model-section threshold-section">'
     '<div class="section-title"><div><h2>CTR threshold calibration</h2>'
-    '<p>Final-test rows where predicted CTR is greater than CTR goal.</p>'
+    '<p>Final-test rows where predicted CTR is greater than or equal to '
+    'CTR goal.</p>'
     '</div></div><div class="table-scroll">'
     '<table class="threshold-table"><thead><tr><th>CTR goal</th>'
-    '<th>Impressions</th><th>Clicks</th><th>Actual CTR</th>'
+    '<th>Impressions</th><th>Share, %</th><th>Clicks</th><th>Actual CTR</th>'
     '<th>Average predicted CTR</th></tr></thead><tbody>' +
     ''.join(rows) + '</tbody></table></div></section>')
 

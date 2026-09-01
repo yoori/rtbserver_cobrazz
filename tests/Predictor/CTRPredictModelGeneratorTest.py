@@ -51,6 +51,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(10000000, config.main_chunk_rows)
     self.assertEqual(10, config.selection_fit_steps)
     self.assertEqual(30, config.training_fit_steps)
+    self.assertEqual(100.0, config.user_navigation_sampling)
     self.assertEqual(
       70000000,
       config.selection_chunk_rows * config.selection_fit_steps)
@@ -133,7 +134,10 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'selection_patience': 2,
       'training_patience': 6,
       'campaign_model_activity_period': 604800,
-      'min_campaign_model_imps': 250000,
+      'min_campaign_training_impressions': 250000,
+      'min_campaign_validation_impressions': 120000,
+      'min_campaign_validation_clicks': 150,
+      'user_navigation_sampling': 1.25,
       'data_delay': 86400,
     })
 
@@ -152,8 +156,22 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertFalse(hasattr(config, 'selection_patience'))
     self.assertEqual(6, config.training_patience)
     self.assertEqual(604800, config.campaign_model_activity_period)
-    self.assertEqual(250000, config.min_campaign_model_imps)
+    self.assertEqual(250000, config.min_campaign_training_impressions)
+    self.assertEqual(120000, config.min_campaign_validation_impressions)
+    self.assertEqual(150, config.min_campaign_validation_clicks)
+    self.assertEqual(1.25, config.user_navigation_sampling)
     self.assertEqual(86400, config.data_delay)
+
+  def test_invalid_user_navigation_sampling(self):
+    config = MODULE.Config()
+    with self.assertRaisesRegex(ValueError, 'user_navigation_sampling'):
+      config.init_json({
+        'pid_file': '/tmp/ctr-generator.pid',
+        'workspace_root': '/tmp/ctr-generator',
+        'postgres_conn': 'host=postdb00 dbname=stat',
+        'user_navigation_sampling': 101,
+        'data_delay': 86400,
+      })
 
   def test_required_workspace_root(self):
     config = MODULE.Config()
@@ -206,7 +224,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     config = MODULE.Config()
 
     self.assertEqual(14 * 24 * 60 * 60, config.campaign_model_activity_period)
-    self.assertEqual(100000, config.min_campaign_model_imps)
+    self.assertEqual(100000, config.min_campaign_training_impressions)
+    self.assertEqual(100000, config.min_campaign_validation_impressions)
+    self.assertEqual(100, config.min_campaign_validation_clicks)
 
   def test_campaign_fit_steps_keep_chunks_near_the_row_limit(self):
     self.assertEqual(
@@ -485,14 +505,17 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual(0.0, result['ctr_thresholds'][0]['ctr_goal'])
       self.assertEqual(5, result['ctr_thresholds'][0]['impressions'])
       self.assertEqual(3, result['ctr_thresholds'][0]['clicks'])
+      self.assertEqual(
+        5,
+        result['ctr_thresholds'][0]['total_impressions'])
       self.assertAlmostEqual(
         0.0636,
         result['ctr_thresholds'][0]['predicted_ctr_sum'])
       self.assertEqual(0.001, result['ctr_thresholds'][1]['ctr_goal'])
-      self.assertEqual(3, result['ctr_thresholds'][1]['impressions'])
+      self.assertEqual(4, result['ctr_thresholds'][1]['impressions'])
       self.assertEqual(2, result['ctr_thresholds'][1]['clicks'])
       self.assertAlmostEqual(
-        0.0621,
+        0.0631,
         result['ctr_thresholds'][1]['predicted_ctr_sum'])
       aggregate = TRAINER_MODULE.add_ctr_thresholds(
         None,
@@ -503,7 +526,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       finalized = TRAINER_MODULE.finalize_ctr_thresholds(aggregate)
       self.assertEqual(10, finalized[0]['impressions'])
       self.assertEqual(6, finalized[0]['clicks'])
+      self.assertEqual(100, finalized[0]['share'])
       self.assertAlmostEqual(0.01272, finalized[0]['average_predicted_ctr'])
+      self.assertEqual(80, finalized[1]['share'])
 
   def test_prepare_feature_selection_steps_include_ssp_ctr_thresholds(self):
     config = MODULE.Config()
@@ -816,7 +841,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           feature_stats_file.write_text('0,3,1\n')
 
       with TRAINER_MODULE.InProgressModel(temp_path / 'models') as progress:
-        campaigns = [(123, 100000, 3)]
+        campaigns = [(123, 100000, 100000, 100)]
         progress.publish_post_processing_plan(
           TRAINER_MODULE.post_processing_train_steps(campaigns),
           [{

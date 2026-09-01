@@ -30,7 +30,11 @@ sub start
         "kill -0 \$pid 2>/dev/null && " .
         "NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost " .
           "OLLAMA_HOST=http://127.0.0.1:\$AI_PORT " .
-          "\"\$AI_OLLAMA_BIN\" show \"\$AI_MODEL\" >/dev/null 2>&1 && exit 0; " .
+          "\"\$AI_OLLAMA_BIN\" show \"\$AI_MODEL\" >/dev/null 2>&1 && " .
+          "curl -fsS http://127.0.0.1:\$AI_AGENT_PORT/health " .
+            ">/dev/null 2>&1 && " .
+          "curl -fsS http://127.0.0.1:\$AI_CLUSTER_AGENT_PORT/health " .
+            ">/dev/null 2>&1 && exit 0; " .
       "sleep 1; " .
     "done; " .
     "cat \${workspace_root}/run/AIAgent.out >&2 2>/dev/null || true; " .
@@ -56,7 +60,9 @@ sub is_alive
     "kill -0 \$pid 2>/dev/null || exit 1; " .
     "NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost " .
       "OLLAMA_HOST=http://127.0.0.1:\$AI_PORT " .
-      "\"\$AI_OLLAMA_BIN\" show \"\$AI_MODEL\" >/dev/null 2>&1");
+      "\"\$AI_OLLAMA_BIN\" show \"\$AI_MODEL\" >/dev/null 2>&1 && " .
+      "curl -fsS http://127.0.0.1:\$AI_AGENT_PORT/health >/dev/null 2>&1 && " .
+      "curl -fsS http://127.0.0.1:\$AI_CLUSTER_AGENT_PORT/health >/dev/null 2>&1");
 }
 
 1;

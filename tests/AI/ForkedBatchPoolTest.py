@@ -21,6 +21,7 @@ class TestBatchBuilder:
     existing = 1.0 if request.include_existing_channels else 0.0
     return SegmentBatch(
       history_counts=numpy.full((1, 1, 1), value, dtype=numpy.float32),
+      history_url_ids=numpy.asarray([0], dtype=numpy.int64),
       existing_channels=numpy.full((1, 1), existing, dtype=numpy.float32),
       context_features=numpy.empty((1, 0), dtype=numpy.float32),
       labels=numpy.zeros(1, dtype=numpy.float32),

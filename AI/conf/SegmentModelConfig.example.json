@@ -2,6 +2,7 @@
   "data": {
     "windows_seconds": [60, 300, 3600, 86400, 604800],
     "n_values": [1, 2, 3, 5, 10],
+    "url_buckets": 1000000,
     "batch_size": 128,
     "batch_workers": 4,
     "ready_batches": 8,
@@ -25,8 +26,6 @@
       "depth": 5,
       "features_per_node": 16,
       "feature_initial_logit": 2.0,
-      "bootstrap": "poisson",
-      "bootstrap_loss": 1.0,
       "seed": 19
     }
   },
@@ -41,6 +40,9 @@
   "training": {
     "discovery_epochs": 5,
     "structuring_epochs": 5,
+    "max_epochs": 10000,
+    "early_stopping_patience": 20,
+    "early_stopping_min_delta": 0.000001,
     "learning_rate": 0.005,
     "weight_decay": 0.0,
     "device": "cpu",
@@ -55,7 +57,8 @@
     "events_per_user": 80,
     "segment_activation_probability": 0.15,
     "horizon_seconds": 1209600,
-    "validation_fraction": 0.2,
+    "validation_fraction": 0.1,
+    "final_test_fraction": 0.1,
     "seed": 23
   },
   "temperatures": {

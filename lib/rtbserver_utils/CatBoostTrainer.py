@@ -1327,6 +1327,7 @@ class CatBoostTrainer(object):
       impressions = 0
       clicks = 0
       predicted_ctr_sum = 0.0
+      total_impressions = 0
       for evaluation in evaluations:
         threshold = evaluation['ctr_thresholds'][index]
         if threshold['ctr_goal'] != ctr_goal:
@@ -1334,10 +1335,14 @@ class CatBoostTrainer(object):
         impressions += threshold['impressions']
         clicks += threshold['clicks']
         predicted_ctr_sum += threshold['predicted_ctr_sum']
+        total_impressions += threshold['total_impressions']
       result.append({
         'ctr_goal': ctr_goal,
         'impressions': impressions,
         'clicks': clicks,
+        'share': (
+          impressions * 100 / total_impressions
+          if total_impressions else None),
         'actual_ctr': clicks / impressions if impressions else None,
         'average_predicted_ctr': (
           predicted_ctr_sum / impressions if impressions else None),
@@ -2131,13 +2136,14 @@ class CatBoostTrainer(object):
           output.write(
             '      "impressions": ' + str(item['impressions']) + ',\n')
           output.write('      "clicks": ' + str(item['clicks']) + ',\n')
-          for field in ('actual_ctr', 'average_predicted_ctr'):
+          for field in ('share', 'actual_ctr', 'average_predicted_ctr'):
             output.write('      "' + field + '": ')
-            value = item[field]
+            value = item.get(field)
             output.write(
               'null' if value is None else
               format(decimal.Decimal(str(value)), 'f'))
-            output.write(',\n' if field == 'actual_ctr' else '\n')
+            output.write(
+              '\n' if field == 'average_predicted_ctr' else ',\n')
           output.write('    }')
         output.write('\n  ]' if ctr_thresholds else ']')
 

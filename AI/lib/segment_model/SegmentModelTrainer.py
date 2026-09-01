@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import json
 import pathlib
@@ -16,18 +17,25 @@ from .SegmentModelMetrics import soft_hard_metrics
 from .SegmentRuleExtractor import extract_segment_rules
 from .SyntheticSegmentData import SyntheticBatchBuilder
 from .TemperatureScheduler import TemperatureScheduler
+from .TrainingProgress import TrainingProgressReporter
 
 
 class SegmentModelTrainer:
-  def __init__(self, config, dataset):
+  def __init__(self, config, dataset, training_builder=None, validation_builder=None,
+               final_test_builder=None):
     self.config = config
     self.dataset = dataset
+    self.training_builder = training_builder
+    self.validation_builder = validation_builder
+    self.final_test_builder = final_test_builder
+    self.training_summary = None
+    self.result_temperature_progress = 1.0
     torch.manual_seed(config.training.seed)
     numpy.random.seed(config.training.seed)
     self.device = torch.device(config.training.device)
     self.model = SegmentCTRModel(
       config,
-      len(dataset.urls),
+      config.data.url_buckets,
       dataset.existing_channels.shape[1]).to(self.device)
     self._initialize_membership()
     self.optimizer = torch.optim.AdamW(
@@ -52,64 +60,154 @@ class SegmentModelTrainer:
       checkpoint_dir = pathlib.Path(checkpoint_dir)
       checkpoint_dir.mkdir(parents=True, exist_ok=True)
       _write_json(checkpoint_dir / 'config.json', dataclasses.asdict(self.config))
-    builder = SyntheticBatchBuilder(
-      self.dataset,
-      self.dataset.train_indices,
-      self.config.data.batch_size,
-      self.config.training.seed)
-    total_epochs = self.config.training.discovery_epochs + self.config.training.structuring_epochs
-    total_batches = total_epochs * builder.batches_per_epoch
+    builder = self.training_builder
+    if builder is None:
+      builder = SyntheticBatchBuilder(
+        self.dataset,
+        self.dataset.train_indices,
+        self.config.data.batch_size,
+        self.config.training.seed)
+    validation_builder = self.validation_builder
+    if validation_builder is None:
+      validation_builder = SyntheticBatchBuilder(
+        self.dataset,
+        self.dataset.validation_indices,
+        self.config.data.batch_size,
+        self.config.training.seed + 100000)
+    structuring_batches = self.config.training.structuring_epochs * builder.batches_per_epoch
+    total_batches = self.config.training.max_epochs * builder.batches_per_epoch
     completed_batches = 0
     history = []
-    for stage, epochs, include_existing in (
-        ('discovery', self.config.training.discovery_epochs, False),
-        ('structuring', self.config.training.structuring_epochs, True),
-    ):
-      requests = (
-        BatchRequest(epoch, batch_index, include_existing)
-        for epoch in range(epochs)
-        for batch_index in range(builder.batches_per_epoch)
-      )
-      stage_epoch = 0
-      epoch_values = []
-      with ForkedBatchPool(
-          builder,
-          requests,
-          self.config.data.batch_workers,
-          self.config.data.ready_batches,
-          self.config.data.batch_start_method) as batches:
-        for batch_index, batch in enumerate(batches):
-          epoch = batch_index // builder.batches_per_epoch
-          if epoch != stage_epoch:
-            self._record_epoch(history, stage, stage_epoch, epoch_values)
-            stage_epoch = epoch
-            epoch_values = []
-          progress = completed_batches / max(1, total_batches - 1)
-          epoch_values.append(self._train_batch(batch, self.temperatures(progress)))
-          completed_batches += 1
-      self._record_epoch(history, stage, stage_epoch, epoch_values)
-      if checkpoint_dir is not None:
-        self._save_checkpoint(checkpoint_dir / ('checkpoint-' + stage + '.pt'), stage)
+    best_model_state = None
+    best_optimizer_state = None
+    best_validation_loss = float('inf')
+    best_epoch = None
+    best_temperature_progress = None
+    epochs_without_improvement = 0
+    stopped_early = False
+    progress_reporter = TrainingProgressReporter(total_batches)
+    progress_reporter.start()
+    try:
+      for epoch in range(self.config.training.max_epochs):
+        include_existing = epoch >= self.config.training.discovery_epochs
+        stage = 'structuring' if include_existing else 'discovery'
+        requests = (
+          BatchRequest(epoch, batch_index, include_existing)
+          for batch_index in range(builder.batches_per_epoch)
+        )
+        epoch_values = []
+        with ForkedBatchPool(
+            builder,
+            requests,
+            self.config.data.batch_workers,
+            self.config.data.ready_batches,
+            self.config.data.batch_start_method,
+            progress_reporter.maybe_report) as batches:
+          batch_iterator = iter(batches)
+          for batch_index in range(builder.batches_per_epoch):
+            progress_reporter.set_position(stage, epoch)
+            progress_reporter.begin_batch_wait()
+            try:
+              batch = next(batch_iterator)
+            finally:
+              progress_reporter.end_batch_wait()
+            training_progress = _structuring_progress(
+              epoch,
+              batch_index,
+              builder.batches_per_epoch,
+              self.config.training.discovery_epochs,
+              structuring_batches)
+            regularization_scale = training_progress if include_existing else 0.0
+            progress_reporter.begin_training_compute()
+            try:
+              result = self._train_batch(
+                batch,
+                self.temperatures(training_progress),
+                regularization_scale)
+            except BaseException:
+              progress_reporter.end_training_compute(completed=False)
+              raise
+            else:
+              progress_reporter.end_training_compute()
+            progress_reporter.maybe_report()
+            epoch_values.append(result)
+            completed_batches += 1
+        validation_loss = self._validation_loss(
+          validation_builder,
+          epoch,
+          include_existing,
+          self.temperatures(training_progress),
+          progress_reporter.maybe_report)
+        improved = (
+          validation_loss <
+          best_validation_loss - self.config.training.early_stopping_min_delta)
+        if improved:
+          best_validation_loss = validation_loss
+          best_epoch = epoch
+          best_temperature_progress = training_progress
+          best_model_state = _state_to_cpu(self.model.state_dict())
+          best_optimizer_state = _state_to_cpu(self.optimizer.state_dict())
+          epochs_without_improvement = 0
+        else:
+          epochs_without_improvement += 1
+        self._record_epoch(
+          history,
+          stage,
+          epoch,
+          epoch_values,
+          validation_loss,
+          best_validation_loss,
+          epochs_without_improvement,
+          improved)
+        if checkpoint_dir is not None and epoch + 1 == self.config.training.discovery_epochs:
+          self._save_checkpoint(checkpoint_dir / 'checkpoint-discovery.pt', 'discovery')
+        if epochs_without_improvement >= self.config.training.early_stopping_patience:
+          stopped_early = True
+          break
+    finally:
+      progress_reporter.close()
+    if best_model_state is None:
+      raise RuntimeError('training did not produce a validation checkpoint')
+    self.model.load_state_dict(best_model_state)
+    self.optimizer.load_state_dict(best_optimizer_state)
+    self.result_temperature_progress = best_temperature_progress
+    self.training_summary = {
+      'max_epochs': self.config.training.max_epochs,
+      'epochs_completed': len(history),
+      'stopped_early': stopped_early,
+      'patience': self.config.training.early_stopping_patience,
+      'min_delta': self.config.training.early_stopping_min_delta,
+      'best_epoch': best_epoch,
+      'best_validation_loss': best_validation_loss,
+      'best_temperatures': self.temperatures(best_temperature_progress),
+    }
+    if checkpoint_dir is not None:
+      self._save_checkpoint(checkpoint_dir / 'checkpoint-best.pt', 'best-validation')
     return history
 
   def evaluate(self):
     self.model.eval()
-    rules = extract_segment_rules(self.model, self.dataset.urls)
+    rules = extract_segment_rules(
+      self.model,
+      self.dataset.urls,
+      self.dataset.url_bucket_ids)
     hard_segment_layer = HardSegmentLayer(
       rules,
-      len(self.dataset.urls),
+      self.config.data.url_buckets,
       self.config.data.windows_seconds,
       self.config.model.aggregation).to(self.device)
-    builder = SyntheticBatchBuilder(
-      self.dataset,
-      self.dataset.validation_indices,
-      self.config.data.batch_size,
-      self.config.training.seed + 100000)
+    builder = self.final_test_builder
+    if builder is None:
+      builder = SyntheticBatchBuilder(
+        self.dataset,
+        self.dataset.final_test_indices,
+        self.config.data.batch_size,
+        self.config.training.seed + 200000)
     requests = (
       BatchRequest(0, batch_index, True)
       for batch_index in range(builder.batches_per_epoch)
     )
-    temperatures = self.temperatures(1.0)
+    temperatures = self.temperatures(self.result_temperature_progress)
     labels = []
     soft_probabilities = []
     hard_probabilities = []
@@ -117,6 +215,8 @@ class SegmentModelTrainer:
     hard_activations = []
     existing_channels = []
     sample_indices = []
+    group_ids = []
+    variant_ids = []
     with torch.no_grad(), ForkedBatchPool(
         builder,
         requests,
@@ -125,8 +225,8 @@ class SegmentModelTrainer:
         self.config.data.batch_start_method) as batches:
       for batch in batches:
         tensors = self._batch_tensors(batch)
-        output = self.model(*tensors[:3], temperatures)
-        hard = hard_segment_layer(tensors[0])
+        output = self.model(*tensors[:3], temperatures, tensors[4])
+        hard = hard_segment_layer(tensors[0], tensors[4])
         hard_logits = self.model.segment_logits(hard, tensors[2], temperatures)
         labels.append(tensors[3].cpu().numpy())
         soft_probabilities.append(torch.sigmoid(output.logits).cpu().numpy())
@@ -135,6 +235,10 @@ class SegmentModelTrainer:
         hard_activations.append(hard.cpu().numpy())
         existing_channels.append(tensors[1].cpu().numpy())
         sample_indices.append(batch.sample_indices)
+        if batch.group_ids is not None:
+          group_ids.append(batch.group_ids)
+        if batch.variant_ids is not None:
+          variant_ids.append(batch.variant_ids)
     labels = numpy.concatenate(labels)
     soft_probabilities = numpy.concatenate(soft_probabilities)
     hard_probabilities = numpy.concatenate(hard_probabilities)
@@ -146,6 +250,7 @@ class SegmentModelTrainer:
     rules = extract_segment_rules(
       self.model,
       self.dataset.urls,
+      self.dataset.url_bucket_ids,
       hard_activations,
       existing_channels,
       existing_channel_ids)
@@ -156,13 +261,23 @@ class SegmentModelTrainer:
       'recovery': match_segment_rules(rules, self.dataset.true_rules),
       'diagnostics': self._diagnostics(rules, soft_activations),
     }
-    if self.dataset.group_ids is not None:
+    if group_ids or self.dataset.group_ids is not None:
+      evaluated_group_ids = (
+        numpy.concatenate(group_ids)
+        if group_ids else self.dataset.group_ids[sample_indices])
+      evaluated_variant_ids = None
+      if variant_ids:
+        evaluated_variant_ids = numpy.concatenate(variant_ids)
+      elif self.dataset.variant_ids is not None:
+        evaluated_variant_ids = self.dataset.variant_ids[sample_indices]
       metrics['groups'] = _group_metrics(
         labels,
         soft_probabilities,
         hard_probabilities,
-        self.dataset.group_ids[sample_indices],
-        self.dataset.group_names)
+        evaluated_group_ids,
+        self.dataset.group_names,
+        evaluated_variant_ids,
+        self.dataset.group_variant_names)
     return metrics, rules
 
   def temperatures(self, progress):
@@ -171,12 +286,16 @@ class SegmentModelTrainer:
       for name, scheduler in self.temperature_schedulers.items()
     }
 
-  def _train_batch(self, batch, temperatures):
+  def _train_batch(self, batch, temperatures, regularization_scale=1.0):
     self.model.train()
     tensors = self._batch_tensors(batch)
     self.optimizer.zero_grad(set_to_none=True)
-    output = self.model(*tensors[:3], temperatures)
-    loss = segment_model_loss(output, tensors[3], self.config)
+    output = self.model(*tensors[:3], temperatures, tensors[4])
+    loss = segment_model_loss(
+      output,
+      tensors[3],
+      self.config,
+      regularization_scale)
     loss.total.backward()
     self.optimizer.step()
     return {
@@ -186,6 +305,7 @@ class SegmentModelTrainer:
       },
       'average_segment_activation': output.segment_output.activations.detach().mean(
         dim=0).cpu().tolist(),
+      'regularization_scale': regularization_scale,
       'temperatures': temperatures,
     }
 
@@ -195,14 +315,24 @@ class SegmentModelTrainer:
       torch.from_numpy(batch.existing_channels).to(self.device),
       torch.from_numpy(batch.context_features).to(self.device),
       torch.from_numpy(batch.labels).to(self.device),
+      torch.from_numpy(batch.history_url_ids).to(self.device),
     )
 
   def _initialize_membership(self):
     membership_config = self.config.model.membership
-    if membership_config.initialization == 'random':
-      return
-    frequencies = numpy.sum(self.dataset.history_counts[self.dataset.train_indices, :, -1], axis=0)
-    url_ranking = numpy.argsort(-frequencies, kind='stable')
+    observed_buckets = numpy.asarray(self.dataset.history_url_ids, dtype=numpy.int64)
+    if not len(observed_buckets):
+      raise ValueError('URL bucket dictionary must not be empty')
+    if membership_config.initialization == 'frequency' and self.dataset.history_counts is None:
+      raise ValueError('frequency membership initialization requires materialized training data')
+    if membership_config.initialization == 'frequency':
+      frequencies = numpy.sum(
+        self.dataset.history_counts[self.dataset.train_indices, :, -1],
+        axis=0)
+      url_ranking = observed_buckets[numpy.argsort(-frequencies, kind='stable')]
+    else:
+      generator = numpy.random.default_rng(self.config.training.seed)
+      url_ranking = generator.permutation(observed_buckets)
     selected_count = self.config.model.candidates * membership_config.initial_urls_per_candidate
     selected_urls = numpy.resize(url_ranking, selected_count).reshape(
       self.config.model.candidates,
@@ -227,10 +357,17 @@ class SegmentModelTrainer:
     _write_json(output_dir / 'synthetic-ground-truth.json', self.ground_truth())
     _write_json(output_dir / 'vocabulary.json', {
       'urls': self.dataset.urls,
+      'url_buckets': self.config.data.url_buckets,
       'existing_channel_ids': [rule.channel_id for rule in self.dataset.existing_rules],
+    })
+    _write_json(output_dir / 'url-bucket-dictionary.json', {
+      str(bucket): urls
+      for bucket, urls in sorted(self.dataset.url_bucket_dictionary.items())
     })
     if self.dataset.source_metadata is not None:
       _write_json(output_dir / 'source.json', self.dataset.source_metadata)
+    if self.training_summary is not None:
+      _write_json(output_dir / 'training-summary.json', self.training_summary)
 
   def ground_truth(self):
     return [
@@ -253,13 +390,54 @@ class SegmentModelTrainer:
     }, temporary_file)
     temporary_file.replace(checkpoint_file)
 
-  def _record_epoch(self, history, stage, epoch, values):
-    record = _epoch_record(stage, epoch, values)
+  def _record_epoch(self, history, stage, epoch, values, validation_loss,
+                    best_validation_loss, epochs_without_improvement, improved):
+    record = _epoch_record(
+      stage,
+      epoch,
+      values,
+      validation_loss,
+      best_validation_loss,
+      epochs_without_improvement,
+      improved)
     history.append(record)
     print(json.dumps(record, sort_keys=True), flush=True)
 
+  def _validation_loss(
+      self,
+      builder,
+      epoch,
+      include_existing_channels,
+      temperatures,
+      wait_callback=None):
+    self.model.eval()
+    requests = (
+      BatchRequest(epoch, batch_index, include_existing_channels)
+      for batch_index in range(builder.batches_per_epoch)
+    )
+    total_loss = 0.0
+    rows = 0
+    with torch.no_grad(), ForkedBatchPool(
+        builder,
+        requests,
+        self.config.data.batch_workers,
+        self.config.data.ready_batches,
+        self.config.data.batch_start_method,
+        wait_callback) as batches:
+      for batch in batches:
+        tensors = self._batch_tensors(batch)
+        output = self.model(*tensors[:3], temperatures, tensors[4])
+        total_loss += float(torch.nn.functional.binary_cross_entropy_with_logits(
+          output.logits,
+          tensors[3],
+          reduction='sum').cpu())
+        rows += len(batch.labels)
+    if not rows:
+      raise RuntimeError('validation dataset is empty')
+    return total_loss / rows
+
   def _diagnostics(self, rules, soft_activations):
-    temperatures = self.temperatures(1.0)
+    temperatures = self.temperatures(self.result_temperature_progress)
     with torch.no_grad():
       url_gates = self.model.segment_layer.membership.gates(temperatures['url']).cpu().numpy()
       window_gates = torch.softmax(
@@ -276,14 +454,17 @@ class SegmentModelTrainer:
         similarity = len(hard_sets[first] & hard_sets[second]) / len(union) if union else 1.0
         highly_similar += int(similarity >= 0.9)
     candidate_diagnostics = []
+    observed_gates = url_gates[:, self.dataset.url_bucket_ids]
+    regularized_gates = url_gates[:, self.dataset.history_url_ids]
     for candidate, rule in enumerate(rules):
-      top_url_ids = numpy.argsort(-url_gates[candidate])[:10]
+      top_url_ids = numpy.argsort(-observed_gates[candidate])[:10]
       candidate_diagnostics.append({
         'segment_id': candidate,
         'top_url_gates': [
           {
             'url': self.dataset.urls[int(url_id)],
-            'gate': float(url_gates[candidate, url_id]),
+            'bucket_id': int(self.dataset.url_bucket_ids[url_id]),
+            'gate': float(observed_gates[candidate, url_id]),
           }
           for url_id in top_url_ids
         ],
@@ -304,17 +485,33 @@ class SegmentModelTrainer:
       'average_urls_per_extracted_segment': float(numpy.mean(extracted_sizes)),
       'empty_segments': int(sum(size == 0 for size in extracted_sizes)),
       'highly_similar_segment_pairs': highly_similar,
-      'url_gate_fraction_near_zero': float(numpy.mean(url_gates <= 0.1)),
-      'url_gate_fraction_near_one': float(numpy.mean(url_gates >= 0.9)),
-      'url_gate_fraction_ambiguous': float(numpy.mean((url_gates > 0.1) & (url_gates < 0.9))),
+      'url_gate_fraction_near_zero': float(numpy.mean(regularized_gates <= 0.1)),
+      'url_gate_fraction_near_one': float(numpy.mean(regularized_gates >= 0.9)),
+      'url_gate_fraction_ambiguous': float(numpy.mean(
+        (regularized_gates > 0.1) & (regularized_gates < 0.9))),
       'candidates': candidate_diagnostics,
     }
 
 
-def _epoch_record(stage, epoch, values):
+def _structuring_progress(epoch, batch_index, batches_per_epoch, discovery_epochs,
+                          structuring_batches):
+  if epoch < discovery_epochs:
+    return 0.0
+  if structuring_batches <= 1:
+    return 1.0
+  completed = (epoch - discovery_epochs) * batches_per_epoch + batch_index
+  return min(completed / (structuring_batches - 1), 1.0)
+
+
+def _epoch_record(stage, epoch, values, validation_loss, best_validation_loss,
+                  epochs_without_improvement, improved):
   return {
     'stage': stage,
     'epoch': epoch,
+    'validation_loss': validation_loss,
+    'best_validation_loss': best_validation_loss,
+    'epochs_without_improvement': epochs_without_improvement,
+    'best': improved,
     **{
       name: float(numpy.mean([value[name] for value in values]))
       for name in values[0]
@@ -327,26 +524,68 @@ def _epoch_record(stage, epoch, values):
   }
 
 
+def _state_to_cpu(value):
+  if isinstance(value, torch.Tensor):
+    return value.detach().cpu().clone()
+  if isinstance(value, dict):
+    return {key: _state_to_cpu(item) for key, item in value.items()}
+  if isinstance(value, list):
+    return [_state_to_cpu(item) for item in value]
+  if isinstance(value, tuple):
+    return tuple(_state_to_cpu(item) for item in value)
+  return copy.deepcopy(value)
+
+
 def _write_json(output_file, value):
   temporary_file = output_file.with_name(output_file.name + '.tmp')
   temporary_file.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n', encoding='utf-8')
   temporary_file.replace(output_file)
 
 
-def _group_metrics(labels, soft_probabilities, hard_probabilities, group_ids, group_names):
+def _group_metrics(
+  labels,
+  soft_probabilities,
+  hard_probabilities,
+  group_ids,
+  group_names,
+  variant_ids=None,
+  group_variant_names=()):
   result = {}
   for group_id, group_name in enumerate(group_names):
     selected = group_ids == group_id
-    group_labels = labels[selected]
-    group_soft = soft_probabilities[selected]
-    group_hard = hard_probabilities[selected]
-    result[group_name] = {
-      'rows': int(numpy.sum(selected)),
-      'clicks': int(numpy.sum(group_labels)),
-      'actual_ctr': float(numpy.mean(group_labels)),
-      'average_soft_ctr': float(numpy.mean(group_soft)),
-      'average_hard_ctr': float(numpy.mean(group_hard)),
-      'soft_ctr': ctr_metrics(group_labels, group_soft),
-      'hard_ctr': ctr_metrics(group_labels, group_hard),
-    }
+    group_result = _prediction_metrics(
+      labels[selected],
+      soft_probabilities[selected],
+      hard_probabilities[selected])
+    if variant_ids is not None:
+      group_result['variants'] = {}
+      for variant_id, variant_name in enumerate(group_variant_names[group_id]):
+        variant_selected = selected & (variant_ids == variant_id)
+        group_result['variants'][variant_name] = _prediction_metrics(
+          labels[variant_selected],
+          soft_probabilities[variant_selected],
+          hard_probabilities[variant_selected])
+    result[group_name] = group_result
   return result
+
+
+def _prediction_metrics(labels, soft_probabilities, hard_probabilities):
+  if not len(labels):
+    return {
+      'rows': 0,
+      'clicks': 0,
+      'actual_ctr': None,
+      'average_soft_ctr': None,
+      'average_hard_ctr': None,
+      'soft_ctr': None,
+      'hard_ctr': None,
+    }
+  return {
+    'rows': len(labels),
+    'clicks': int(numpy.sum(labels)),
+    'actual_ctr': float(numpy.mean(labels)),
+    'average_soft_ctr': float(numpy.mean(soft_probabilities)),
+    'average_hard_ctr': float(numpy.mean(hard_probabilities)),
+    'soft_ctr': ctr_metrics(labels, soft_probabilities),
+    'hard_ctr': ctr_metrics(labels, hard_probabilities),
+  }

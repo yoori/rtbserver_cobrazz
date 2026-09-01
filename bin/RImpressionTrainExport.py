@@ -44,7 +44,9 @@ def main():
     raise ValueError(
       "Configuration value 'data_delay' must be a positive integer")
 
-  exporter = RImpressionTrainExporter(config.get('clickhouse_conn', ''))
+  exporter = RImpressionTrainExporter(
+    config.get('clickhouse_conn', ''),
+    user_navigation_sampling=config.get('user_navigation_sampling', 100))
   date_from = exporter.export(args.output, export_rows, data_delay)
   print(
     'output=' + args.output +

@@ -33,6 +33,7 @@ class MembershipConfig:
 class DataConfig:
   windows_seconds: tuple = (60, 300, 3600, 86400, 604800)
   n_values: tuple = (1, 2, 3, 5, 10)
+  url_buckets: int = 1000000
   batch_size: int = 128
   batch_workers: int = 2
   ready_batches: int = 4
@@ -45,8 +46,6 @@ class ForestConfig:
   depth: int = 5
   features_per_node: int = 16
   feature_initial_logit: float = 2.0
-  bootstrap: str = 'poisson'
-  bootstrap_loss: float = 1.0
   seed: int = 19
 
 
@@ -75,6 +74,9 @@ class LossConfig:
 class TrainingConfig:
   discovery_epochs: int = 5
   structuring_epochs: int = 5
+  max_epochs: int = 10000
+  early_stopping_patience: int = 20
+  early_stopping_min_delta: float = 1e-6
   learning_rate: float = 5e-3
   weight_decay: float = 0.0
   device: str = 'cpu'
@@ -91,7 +93,8 @@ class SyntheticConfig:
   events_per_user: int = 80
   segment_activation_probability: float = 0.15
   horizon_seconds: int = 1209600
-  validation_fraction: float = 0.2
+  validation_fraction: float = 0.1
+  final_test_fraction: float = 0.1
   seed: int = 23
 
 
@@ -162,6 +165,8 @@ class SegmentModelConfig:
       raise ValueError('n_values must contain positive values')
     if tuple(sorted(set(self.data.n_values))) != self.data.n_values:
       raise ValueError('n_values must be strictly increasing')
+    if self.data.url_buckets <= 0:
+      raise ValueError('url_buckets must be positive')
     if self.data.batch_size <= 0 or self.data.batch_workers <= 0:
       raise ValueError('batch_size and batch_workers must be positive')
     if self.data.ready_batches < self.data.batch_workers:
@@ -186,12 +191,15 @@ class SegmentModelConfig:
       raise ValueError('forest trees and depth must be positive')
     if self.model.forest.features_per_node <= 0:
       raise ValueError('forest features_per_node must be positive')
-    if self.model.forest.bootstrap not in ('none', 'poisson'):
-      raise ValueError("forest bootstrap must be 'none' or 'poisson'")
-    if self.model.forest.bootstrap_loss < 0:
-      raise ValueError('forest bootstrap_loss must not be negative')
     if self.training.discovery_epochs <= 0 or self.training.structuring_epochs <= 0:
       raise ValueError('both training stages must contain at least one epoch')
+    scheduled_epochs = self.training.discovery_epochs + self.training.structuring_epochs
+    if self.training.max_epochs < scheduled_epochs:
+      raise ValueError('max_epochs must cover discovery and temperature structuring epochs')
+    if self.training.early_stopping_patience <= 0:
+      raise ValueError('early_stopping_patience must be positive')
+    if self.training.early_stopping_min_delta < 0:
+      raise ValueError('early_stopping_min_delta must not be negative')
     for field in dataclasses.fields(self.loss):
       if getattr(self.loss, field.name) < 0:
         raise ValueError('loss coefficients must not be negative')
@@ -203,6 +211,10 @@ class SegmentModelConfig:
       raise ValueError('synthetic event and channel counts must not be negative')
     if not 0 < self.synthetic.validation_fraction < 1:
       raise ValueError('validation_fraction must be between zero and one')
+    if not 0 < self.synthetic.final_test_fraction < 1:
+      raise ValueError('final_test_fraction must be between zero and one')
+    if self.synthetic.validation_fraction + self.synthetic.final_test_fraction >= 1:
+      raise ValueError('validation and final-test fractions must leave training samples')
     if self.synthetic.horizon_seconds <= self.data.windows_seconds[-1]:
       raise ValueError('synthetic horizon_seconds must exceed the largest window')
     for field in dataclasses.fields(self):

@@ -11,13 +11,23 @@ import tempfile
 class RImpressionTrainExporter(object):
   SOURCE_PARTITIONS = 100
   VALIDATION_PARTITIONS = (0, 1)
+  SAMPLING_RESOLUTION = 1000000
 
-  def __init__(self, clickhouse_conn, logger=None):
+  def __init__(self, clickhouse_conn, logger=None, user_navigation_sampling=100):
     self._command = [
       'clickhouse-client',
       *shlex.split(clickhouse_conn),
     ]
     self._logger = logger or logging.getLogger(__name__)
+    try:
+      self._user_navigation_sampling = float(user_navigation_sampling)
+    except (TypeError, ValueError):
+      raise ValueError('user_navigation_sampling must be a number from 0 to 100')
+    if (
+        not math.isfinite(self._user_navigation_sampling) or
+        self._user_navigation_sampling < 0 or
+        self._user_navigation_sampling > 100):
+      raise ValueError('user_navigation_sampling must be a number from 0 to 100')
 
   def export(self, output_file, train_rows, data_delay):
     if train_rows <= 0:
@@ -47,7 +57,11 @@ class RImpressionTrainExporter(object):
         subprocess.run(
           self._command + [
             '--query',
-            self._export_query(date_from, date_to, train_rows),
+            self._export_query(
+              date_from,
+              date_to,
+              train_rows,
+              self._sampled_condition()),
           ],
           check=True,
           stdout=temporary_file)
@@ -77,7 +91,10 @@ class RImpressionTrainExporter(object):
     result = subprocess.run(
       self._command + [
         '--query',
-        self._count_query(date_from, date_to, condition),
+        self._count_query(
+          date_from,
+          date_to,
+          self._sampled_condition(condition)),
       ],
       check=True,
       capture_output=True,
@@ -88,6 +105,7 @@ class RImpressionTrainExporter(object):
       self, date_from, date_to, rows, condition=None):
     if rows <= 0:
       raise ValueError('rows must be positive')
+    condition = self._sampled_condition(condition)
     query = (
       'SELECT min(timestamp) FROM ('
       'SELECT timestamp FROM RImpression '
@@ -127,7 +145,7 @@ class RImpressionTrainExporter(object):
           date_from,
           date_to,
           rows,
-          condition,
+          self._sampled_condition(condition),
           offset_rows),
       ],
       check=True,
@@ -143,14 +161,20 @@ class RImpressionTrainExporter(object):
       date_from,
       date_to,
       activity_period,
-      min_impressions,
+      min_training_impressions,
+      min_validation_impressions,
+      min_validation_clicks,
       training_extra_condition=None,
       validation_extra_condition=None,
   ):
     if activity_period <= 0:
       raise ValueError('activity_period must be positive')
-    if min_impressions <= 0:
-      raise ValueError('min_impressions must be positive')
+    for name, value in (
+        ('min_training_impressions', min_training_impressions),
+        ('min_validation_impressions', min_validation_impressions),
+        ('min_validation_clicks', min_validation_clicks)):
+      if value <= 0:
+        raise ValueError(name + ' must be positive')
     training_condition = self.training_condition()
     if training_extra_condition is not None:
       training_condition = (
@@ -161,23 +185,35 @@ class RImpressionTrainExporter(object):
       validation_condition = (
         '(' + validation_condition + ') AND (' +
         validation_extra_condition + ')')
+    sampling_condition = self.sampling_condition()
+    sampling_clause = (
+      'AND (' + sampling_condition + ') '
+      if sampling_condition is not None else '')
     query = (
       'SELECT campaign_id, '
         'countIf(' + training_condition + ') AS training_impressions, '
-        'countIf(' + validation_condition + ') AS validation_impressions '
+        'countIf(' + validation_condition + ') AS validation_impressions, '
+        'countIf((' + validation_condition + ') AND '
+          'click_timestamp IS NOT NULL) AS validation_clicks '
       'FROM RImpression '
       "WHERE timestamp >= '" + date_from + "' "
         "AND timestamp < '" + date_to + "' "
+        + sampling_clause +
         'AND campaign_id > 0 '
         'AND campaign_id IN ('
           'SELECT campaign_id FROM RImpression '
           'WHERE timestamp >= subtractSeconds('
           "toDateTime('" + date_to + "'), " + str(activity_period) + ') '
           "AND timestamp < '" + date_to + "' "
+          + sampling_clause +
           'AND campaign_id > 0 '
           'GROUP BY campaign_id) '
       'GROUP BY campaign_id '
-      'HAVING training_impressions > ' + str(min_impressions) + ' '
+      'HAVING training_impressions >= ' +
+        str(min_training_impressions) + ' '
+        'AND validation_impressions >= ' +
+        str(min_validation_impressions) + ' '
+        'AND validation_clicks >= ' + str(min_validation_clicks) + ' '
       'ORDER BY campaign_id')
     result = subprocess.run(
       self._command + ['--query', query],
@@ -186,12 +222,17 @@ class RImpressionTrainExporter(object):
       text=True)
     campaigns = []
     for line in result.stdout.splitlines():
-      campaign_id, training_impressions, validation_impressions = (
-        line.split('\t'))
+      (
+        campaign_id,
+        training_impressions,
+        validation_impressions,
+        validation_clicks,
+      ) = line.split('\t')
       campaigns.append((
         int(campaign_id),
         int(training_impressions),
         int(validation_impressions),
+        int(validation_clicks),
       ))
     return campaigns
 
@@ -224,7 +265,7 @@ class RImpressionTrainExporter(object):
           date_from,
           date_to,
           max_rows,
-          condition,
+          self._sampled_condition(condition),
           offset_rows,
           label,
           order),
@@ -370,6 +411,17 @@ class RImpressionTrainExporter(object):
     return cls._source_partition_expression() + ' IN (' + ','.join(
       str(partition) for partition in source_partitions) + ')'
 
+  def sampling_condition(self):
+    if self._user_navigation_sampling >= 100:
+      return None
+    if self._user_navigation_sampling <= 0:
+      return '0'
+    threshold = int(
+      self._user_navigation_sampling * (self.SAMPLING_RESOLUTION / 100.0))
+    return (
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % ' +
+      str(self.SAMPLING_RESOLUTION) + ' < ' + str(threshold))
+
   def export_partitioned_chunks(
       self,
       output_dir,
@@ -442,12 +494,14 @@ class RImpressionTrainExporter(object):
     return 'sipHash64(request_id) % ' + str(cls.SOURCE_PARTITIONS)
 
   def _find_date_from(self, train_rows, date_to):
+    sampling_condition = self.sampling_condition()
     result = subprocess.run(
       self._command + [
         '--query',
         (
           'SELECT toDate(timestamp), count(*) FROM RImpression '
           "WHERE timestamp < '" + date_to + "' "
+          + (('AND (' + sampling_condition + ') ') if sampling_condition else '') +
           'GROUP BY toDate(timestamp) ORDER BY toDate(timestamp) DESC'),
       ],
       check=True,
@@ -467,6 +521,14 @@ class RImpressionTrainExporter(object):
     if date_from is None:
       raise RuntimeError('RImpression contains no rows')
     return date_from
+
+  def _sampled_condition(self, condition=None):
+    sampling_condition = self.sampling_condition()
+    if sampling_condition is None:
+      return condition
+    if condition is None:
+      return sampling_condition
+    return '(' + sampling_condition + ') AND (' + condition + ')'
 
   @classmethod
   def _export_query(

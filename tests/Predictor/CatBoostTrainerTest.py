@@ -278,6 +278,7 @@ class CatBoostTrainerTest(unittest.TestCase):
           'ctr_thresholds': [{
             'ctr_goal': 0.0,
             'impressions': 100,
+            'share': 100.0,
             'clicks': 2,
             'actual_ctr': 0.02,
             'average_predicted_ctr': 0.03,
@@ -587,6 +588,7 @@ class CatBoostTrainerTest(unittest.TestCase):
         ctr_thresholds=[{
           'ctr_goal': 0,
           'impressions': 200000,
+          'share': 100,
           'clicks': 390,
           'actual_ctr': 0.00195,
           'average_predicted_ctr': 0.0021,
@@ -632,26 +634,28 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual([{
         'ctr_goal': 0,
         'impressions': 200000,
+        'share': 100,
         'clicks': 390,
         'actual_ctr': 0.00195,
         'average_predicted_ctr': 0.0021,
       }], written_traits['ctr_thresholds'])
 
-  def test_ctr_threshold_statistics_use_strict_greater_than(self):
+  def test_ctr_threshold_statistics_include_equal_predictions(self):
     statistics = ctr_threshold_statistics(
       numpy.asarray([0, 0.0005, 0.001, 0.0011, 0.03, 0.031]),
       numpy.asarray([1, 0, 1, 1, 0, 1]))
 
     self.assertEqual(0, statistics[0]['ctr_goal'])
-    self.assertEqual(5, statistics[0]['impressions'])
-    self.assertEqual(3, statistics[0]['clicks'])
+    self.assertEqual(6, statistics[0]['impressions'])
+    self.assertEqual(4, statistics[0]['clicks'])
     self.assertAlmostEqual(0.0636, statistics[0]['predicted_ctr_sum'])
+    self.assertEqual(6, statistics[0]['total_impressions'])
     self.assertEqual(0.001, statistics[1]['ctr_goal'])
-    self.assertEqual(3, statistics[1]['impressions'])
-    self.assertEqual(2, statistics[1]['clicks'])
-    self.assertAlmostEqual(0.0621, statistics[1]['predicted_ctr_sum'])
+    self.assertEqual(4, statistics[1]['impressions'])
+    self.assertEqual(3, statistics[1]['clicks'])
+    self.assertAlmostEqual(0.0631, statistics[1]['predicted_ctr_sum'])
     self.assertEqual(0.03, statistics[30]['ctr_goal'])
-    self.assertEqual(1, statistics[30]['impressions'])
+    self.assertEqual(2, statistics[30]['impressions'])
     self.assertEqual(1, statistics[30]['clicks'])
 
   def test_ctr_threshold_statistics_are_aggregated_across_sets(self):
@@ -662,6 +666,7 @@ class CatBoostTrainerTest(unittest.TestCase):
           'impressions': 100,
           'clicks': 2,
           'predicted_ctr_sum': 3,
+          'total_impressions': 200,
         }],
       },
       {
@@ -670,6 +675,7 @@ class CatBoostTrainerTest(unittest.TestCase):
           'impressions': 300,
           'clicks': 6,
           'predicted_ctr_sum': 5,
+          'total_impressions': 600,
         }],
       },
     ]
@@ -678,6 +684,7 @@ class CatBoostTrainerTest(unittest.TestCase):
       'ctr_goal': 0,
       'impressions': 400,
       'clicks': 8,
+      'share': 50,
       'actual_ctr': 0.02,
       'average_predicted_ctr': 0.02,
     }], CatBoostTrainer.aggregate_ctr_thresholds_(evaluations))
@@ -958,6 +965,7 @@ class CatBoostTrainerTest(unittest.TestCase):
           'impressions': 1,
           'clicks': 0,
           'predicted_ctr_sum': 0.1,
+          'total_impressions': 1,
         }],
       }
       correction_trainer.train_chunk_ = correction_train

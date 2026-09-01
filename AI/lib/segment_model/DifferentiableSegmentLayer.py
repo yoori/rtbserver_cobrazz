@@ -11,6 +11,7 @@ class SegmentLayerOutput:
   activations: torch.Tensor
   selected_counts: torch.Tensor
   url_gates: torch.Tensor
+  active_url_gates: torch.Tensor
   window_gates: torch.Tensor
   threshold_gates: torch.Tensor
 
@@ -37,11 +38,17 @@ class DifferentiableSegmentLayer(torch.nn.Module):
     self.register_buffer('windows_seconds', torch.as_tensor(windows_seconds, dtype=torch.long))
     self.register_buffer('n_values', torch.as_tensor(n_values, dtype=torch.float32))
 
-  def forward(self, history_counts, temperatures):
+  def forward(self, history_counts, temperatures, history_url_ids=None):
     url_gates = self.membership.gates(temperatures['url'])
+    active_url_gates = url_gates
+    if history_url_ids is not None:
+      active_url_gates = url_gates[:, history_url_ids]
     window_gates = torch.softmax(self.window_logits / temperatures['window'], dim=1)
     threshold_gates = torch.softmax(self.threshold_logits / temperatures['threshold'], dim=1)
-    segment_counts = self._aggregate(history_counts, url_gates, temperatures['aggregation'])
+    segment_counts = self._aggregate(
+      history_counts,
+      active_url_gates,
+      temperatures['aggregation'])
     selected_counts = torch.sum(segment_counts * window_gates.unsqueeze(0), dim=2)
     thresholds = threshold_gates @ self.n_values
     activation_margin = selected_counts - thresholds.unsqueeze(0) + self.activation_boundary
@@ -50,11 +57,14 @@ class DifferentiableSegmentLayer(torch.nn.Module):
       activations,
       selected_counts,
       url_gates,
+      active_url_gates,
       window_gates,
       threshold_gates)
 
-  def hard_activations(self, history_counts):
+  def hard_activations(self, history_counts, history_url_ids=None):
     selected_urls = self.membership.hard_gates()
+    if history_url_ids is not None:
+      selected_urls = selected_urls[:, history_url_ids]
     window_indices = torch.argmax(self.window_logits, dim=1)
     threshold_indices = torch.argmax(self.threshold_logits, dim=1)
     result = []
@@ -78,8 +88,8 @@ class DifferentiableSegmentLayer(torch.nn.Module):
   def _aggregate(self, history_counts, url_gates, aggregation_temperature):
     if history_counts.ndim != 3:
       raise ValueError('history_counts must have shape [batch, urls, windows]')
-    if history_counts.shape[1] != self.urls:
-      raise ValueError('history_counts URL dimension does not match membership')
+    if history_counts.shape[1] != url_gates.shape[1]:
+      raise ValueError('history_counts URL dimension does not match active URL gates')
     if self.aggregation == 'sum':
       return torch.einsum('buw,su->bsw', history_counts, url_gates)
     gated_counts = history_counts[:, None, :, :] * url_gates[None, :, :, None]

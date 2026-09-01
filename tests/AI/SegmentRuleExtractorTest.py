@@ -42,6 +42,33 @@ class SegmentRuleExtractorTest(unittest.TestCase):
     self.assertEqual(300, rule.window_seconds)
     self.assertEqual(1, rule.min_visits)
 
+  def test_expands_a_selected_hash_bucket_to_all_observed_urls(self):
+    import torch
+    from segment_model.SegmentCTRModel import SegmentCTRModel
+    from segment_model.SegmentModelConfig import SegmentModelConfig
+    from segment_model.SegmentRuleExtractor import extract_segment_rules
+
+    config = SegmentModelConfig.from_dict({
+      'data': {
+        'windows_seconds': [60],
+        'n_values': [1],
+        'url_buckets': 3,
+        'batch_workers': 1,
+        'ready_batches': 1,
+      },
+      'model': {
+        'candidates': 1,
+        'forest': {'trees': 1, 'depth': 1, 'features_per_node': 1},
+      },
+      'synthetic': {'true_segments': 1},
+    })
+    model = SegmentCTRModel(config, 3, 0)
+    with torch.no_grad():
+      model.segment_layer.membership.url_logits[0] = torch.tensor([-2.0, 2.0, -2.0])
+    rule = extract_segment_rules(model, ['a.com', 'b.com', 'c.com'], [1, 1, 2])[0]
+    self.assertEqual(['a.com', 'b.com'], rule.urls)
+    self.assertEqual((1,), rule.url_bucket_ids)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -450,7 +450,7 @@ def campaign_train_steps(
 
 def post_processing_train_steps(campaigns):
   result = []
-  for campaign_id, _, _ in campaigns:
+  for campaign_id, _, _, _ in campaigns:
     prefix = 'campaign_' + str(campaign_id)
     title = 'Campaign ' + str(campaign_id)
     for action_id, action_title in (
@@ -2028,7 +2028,7 @@ def ssp_ctr_threshold_statistics(csv_file):
       if not math.isfinite(predicted_ctr) or not math.isfinite(label):
         raise RuntimeError(
           'SSP CTR export contains a non-finite label or SSP_CTR')
-      bucket = bisect.bisect_left(CTR_THRESHOLD_GOALS, predicted_ctr)
+      bucket = bisect.bisect_right(CTR_THRESHOLD_GOALS, predicted_ctr)
       impressions[bucket] += 1
       clicks[bucket] += label
       predicted_ctr_sums[bucket] += predicted_ctr
@@ -2048,6 +2048,7 @@ def ssp_ctr_threshold_statistics(csv_file):
         'impressions': impressions[index + 1],
         'clicks': int(round(clicks[index + 1])),
         'predicted_ctr_sum': predicted_ctr_sums[index + 1],
+        'total_impressions': total_rows,
       }
       for index, ctr_goal in enumerate(CTR_THRESHOLD_GOALS)
     ],
@@ -2062,6 +2063,7 @@ def add_ctr_thresholds(aggregate, chunk):
         'impressions': 0,
         'clicks': 0,
         'predicted_ctr_sum': 0.0,
+        'total_impressions': 0,
       }
       for item in chunk
     ]
@@ -2073,6 +2075,7 @@ def add_ctr_thresholds(aggregate, chunk):
     aggregate_item['impressions'] += chunk_item['impressions']
     aggregate_item['clicks'] += chunk_item['clicks']
     aggregate_item['predicted_ctr_sum'] += chunk_item['predicted_ctr_sum']
+    aggregate_item['total_impressions'] += chunk_item['total_impressions']
   return aggregate
 
 
@@ -2082,6 +2085,9 @@ def finalize_ctr_thresholds(aggregate):
       'ctr_goal': item['ctr_goal'],
       'impressions': item['impressions'],
       'clicks': item['clicks'],
+      'share': (
+        item['impressions'] * 100 / item['total_impressions']
+        if item['total_impressions'] else None),
       'actual_ctr': (
         item['clicks'] / item['impressions']
         if item['impressions'] else None),
@@ -2137,7 +2143,10 @@ def generate_model_(config, in_progress_model):
     work_dir / 'RImpressionTrain.ssp-ctr.feature-indexes')
 
   logger.debug('Loading data from ClickHouse')
-  exporter = RImpressionTrainExporter(config.clickhouse_conn, logger)
+  exporter = RImpressionTrainExporter(
+    config.clickhouse_conn,
+    logger=logger,
+    user_navigation_sampling=config.user_navigation_sampling)
   validation_sets = (
     config.selection_validation_sets +
     config.training_validation_sets +
@@ -2175,7 +2184,9 @@ def generate_model_(config, in_progress_model):
       date_from,
       date_to,
       config.campaign_model_activity_period,
-      config.min_campaign_model_imps,
+      config.min_campaign_training_impressions,
+      config.min_campaign_validation_impressions,
+      config.min_campaign_validation_clicks,
       training_extra_condition=training_time_condition,
       validation_extra_condition=validation_time_condition)
   campaign_validation_sets = (
@@ -2188,15 +2199,18 @@ def generate_model_(config, in_progress_model):
     if campaign[2] >= campaign_validation_sets
   ]
   logger.info(
-    'Selected %d of %d active campaigns with more than %d training '
-    'impressions and enough validation rows',
+    'Selected %d of %d threshold-qualified active campaigns with at least '
+    '%d training impressions, %d validation impressions, %d validation '
+    'clicks and enough rows for all validation sets',
     len(eligible_campaigns),
     len(eligible_campaign_candidates),
-    config.min_campaign_model_imps)
+    config.min_campaign_training_impressions,
+    config.min_campaign_validation_impressions,
+    config.min_campaign_validation_clicks)
   with in_progress_model.train_step('prepare', 'resolve_campaign_names'):
     feature_name_resolver = PostgresFeatureNameResolver(config.postgres_conn)
     campaign_names = feature_name_resolver.resolve_campaign_names(
-      campaign_id for campaign_id, _, _ in eligible_campaigns)
+      campaign_id for campaign_id, _, _, _ in eligible_campaigns)
   ssp_ctr_condition = exporter.ssp_ctr_condition()
   with in_progress_model.train_step('prepare', 'count_available_rows'):
     available_training_rows = exporter.count_rows(
@@ -2285,8 +2299,14 @@ def generate_model_(config, in_progress_model):
             config.training_fit_steps),
           'eligible_training_impressions': training_impressions,
           'validation_impressions': validation_impressions,
+          'validation_clicks': validation_clicks,
         }
-        for campaign_id, training_impressions, validation_impressions
+        for (
+          campaign_id,
+          training_impressions,
+          validation_impressions,
+          validation_clicks,
+        )
         in eligible_campaigns
       ],
     ],
@@ -2295,7 +2315,11 @@ def generate_model_(config, in_progress_model):
     date_to=date_to,
     training_cutoff=validation_cutoff,
     campaign_model_activity_period=config.campaign_model_activity_period,
-    min_campaign_model_imps=config.min_campaign_model_imps,
+    min_campaign_training_impressions=(
+      config.min_campaign_training_impressions),
+    min_campaign_validation_impressions=(
+      config.min_campaign_validation_impressions),
+    min_campaign_validation_clicks=config.min_campaign_validation_clicks,
     ssp_ctr_training_rows=available_ssp_ctr_training_rows,
     ssp_ctr_validation_rows=available_ssp_ctr_validation_rows)
   in_progress_model.publish_post_processing_plan(
@@ -2310,7 +2334,7 @@ def generate_model_(config, in_progress_model):
         'artifact': (
           'traits/post_processing/campaign_' + str(campaign_id) + '.json'),
       }
-      for campaign_id, _, _ in eligible_campaigns
+      for campaign_id, _, _, _ in eligible_campaigns
     ])
 
   validation_rows = min(
@@ -2923,16 +2947,17 @@ def generate_model_(config, in_progress_model):
     campaign_model_entries = []
     for (
         campaign_id,
-        eligible_impressions,
+        eligible_training_impressions,
         available_campaign_validation_rows,
+        available_campaign_validation_clicks,
     ) in eligible_campaigns:
       campaign_condition = exporter.campaign_condition(campaign_id)
       campaign_selection_fit_steps = campaign_fit_steps(
-        eligible_impressions,
+        eligible_training_impressions,
         config.selection_chunk_rows,
         config.selection_fit_steps)
       campaign_training_source_steps = campaign_fit_steps(
-        eligible_impressions,
+        eligible_training_impressions,
         config.main_chunk_rows,
         config.training_fit_steps)
       campaign_training_fit_steps = config.training_fit_steps
@@ -2942,10 +2967,10 @@ def generate_model_(config, in_progress_model):
         campaign_selection_fit_steps)
       campaign_training_fit_iterations = config.fit_iterations
       campaign_selection_rows = min(
-        eligible_impressions,
+        eligible_training_impressions,
         config.selection_chunk_rows * campaign_selection_fit_steps)
       campaign_training_rows = min(
-        eligible_impressions,
+        eligible_training_impressions,
         config.main_chunk_rows * campaign_training_source_steps)
       campaign_validation_rows = min(
         config.validation_set_rows,
@@ -3203,7 +3228,9 @@ def generate_model_(config, in_progress_model):
             'db_campaign_id': campaign_id,
             'runtime_campaign_group_id': campaign_id,
             'campaign_name': campaign_names.get(campaign_id),
-            'eligible_training_impressions': eligible_impressions,
+            'eligible_training_impressions': eligible_training_impressions,
+            'validation_impressions': available_campaign_validation_rows,
+            'validation_clicks': available_campaign_validation_clicks,
             'selection_rows': campaign_selection_rows,
             'selection_models': campaign_selection_fit_steps,
             'selection_model_iterations': campaign_selection_fit_iterations,

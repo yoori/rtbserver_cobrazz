@@ -4,6 +4,7 @@ import math
 import numpy
 
 from .SegmentModelData import SegmentBatch
+from .UrlHash import url_bucket
 
 
 @dataclasses.dataclass(frozen=True)
@@ -41,6 +42,9 @@ class ExistingChannelRule:
 @dataclasses.dataclass
 class SyntheticDataset:
   urls: list
+  url_bucket_ids: numpy.ndarray
+  history_url_ids: numpy.ndarray
+  url_bucket_dictionary: dict
   events: list
   impressions: list
   history_counts: numpy.ndarray
@@ -52,8 +56,11 @@ class SyntheticDataset:
   existing_rules: list
   train_indices: numpy.ndarray
   validation_indices: numpy.ndarray
+  final_test_indices: numpy.ndarray
   group_ids: numpy.ndarray = None
   group_names: tuple = ()
+  variant_ids: numpy.ndarray = None
+  group_variant_names: tuple = ()
   source_metadata: dict = None
 
 
@@ -78,6 +85,7 @@ class SyntheticBatchBuilder:
       existing_channels = numpy.zeros_like(existing_channels)
     return SegmentBatch(
       history_counts=numpy.ascontiguousarray(self.dataset.history_counts[indices]),
+      history_url_ids=self.dataset.history_url_ids,
       existing_channels=numpy.ascontiguousarray(existing_channels),
       context_features=numpy.ascontiguousarray(self.dataset.context_features[indices]),
       labels=numpy.ascontiguousarray(self.dataset.labels[indices]),
@@ -106,14 +114,18 @@ def generate_synthetic_dataset(config):
   users = users[order]
   timestamps = timestamps[order]
   events, events_by_user = _generate_events(generator, config, users, timestamps, true_rules)
-  history_counts = _build_history_counts(
+  url_history_counts = _build_history_counts(
     users,
     timestamps,
     events_by_user,
     config.synthetic.urls,
     windows)
-  true_activations = _activate_rules(history_counts, true_rules, windows)
-  existing_channels = _activate_rules(history_counts, existing_rules, windows)
+  true_activations = _activate_rules(url_history_counts, true_rules, windows)
+  existing_channels = _activate_rules(url_history_counts, existing_rules, windows)
+  history_counts, history_url_ids, url_bucket_ids, url_bucket_dictionary = _hash_history_counts(
+    url_history_counts,
+    urls,
+    config.data.url_buckets)
   context_shape = (config.synthetic.samples, config.model.context_size)
   context_features = generator.normal(0.0, 1.0, size=context_shape).astype(numpy.float32)
   logits = numpy.full(config.synthetic.samples, -3.5, dtype=numpy.float64)
@@ -129,9 +141,16 @@ def generate_synthetic_dataset(config):
     for index in range(config.synthetic.samples)
   ]
   validation_size = max(1, int(config.synthetic.samples * config.synthetic.validation_fraction))
-  split = config.synthetic.samples - validation_size
+  final_test_size = max(1, int(config.synthetic.samples * config.synthetic.final_test_fraction))
+  validation_begin = config.synthetic.samples - validation_size - final_test_size
+  final_test_begin = config.synthetic.samples - final_test_size
+  if validation_begin <= 0:
+    raise ValueError('synthetic validation and final-test ranges leave no training samples')
   return SyntheticDataset(
     urls=urls,
+    url_bucket_ids=url_bucket_ids,
+    history_url_ids=history_url_ids,
+    url_bucket_dictionary=url_bucket_dictionary,
     events=events,
     impressions=impressions,
     history_counts=history_counts,
@@ -141,8 +160,9 @@ def generate_synthetic_dataset(config):
     timestamps=timestamps,
     true_rules=true_rules,
     existing_rules=existing_rules,
-    train_indices=numpy.arange(0, split, dtype=numpy.int64),
-    validation_indices=numpy.arange(split, config.synthetic.samples, dtype=numpy.int64))
+    train_indices=numpy.arange(0, validation_begin, dtype=numpy.int64),
+    validation_indices=numpy.arange(validation_begin, final_test_begin, dtype=numpy.int64),
+    final_test_indices=numpy.arange(final_test_begin, config.synthetic.samples, dtype=numpy.int64))
 
 
 def _generate_true_rules(generator, config, windows, n_values):
@@ -232,3 +252,17 @@ def _activate_rules(history_counts, rules, windows):
     counts = history_counts[:, list(rule.url_ids), window_index[rule.window_seconds]]
     result[:, rule_index] = (numpy.max(counts, axis=1) >= rule.min_visits).astype(numpy.float32)
   return result
+
+
+def _hash_history_counts(history_counts, urls, buckets):
+  bucket_by_url = numpy.asarray([url_bucket(url, buckets) for url in urls], dtype=numpy.int64)
+  active_buckets = numpy.unique(bucket_by_url)
+  position_by_bucket = {int(bucket): index for index, bucket in enumerate(active_buckets)}
+  result = numpy.zeros(
+    (history_counts.shape[0], len(active_buckets), history_counts.shape[2]),
+    dtype=numpy.float32)
+  dictionary = {}
+  for url_index, (url, bucket) in enumerate(zip(urls, bucket_by_url)):
+    result[:, position_by_bucket[int(bucket)], :] += history_counts[:, url_index, :]
+    dictionary.setdefault(int(bucket), []).append(url)
+  return result, active_buckets, bucket_by_url, dictionary

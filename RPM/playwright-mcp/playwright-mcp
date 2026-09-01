@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT=/opt/foros/playwright-mcp
+export PLAYWRIGHT_BROWSERS_PATH=0
+
+browsers=(
+  "$ROOT"/lib/node_modules/playwright-core/.local-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell
+)
+if [ "${#browsers[@]}" -ne 1 ] || [ ! -x "${browsers[0]}" ]; then
+  echo "Playwright Chromium executable is not available" >&2
+  exit 1
+fi
+
+exec "$ROOT/node/bin/node" \
+  "$ROOT/lib/node_modules/@playwright/mcp/cli.js" \
+  --executable-path "${browsers[0]}" \
+  "$@"

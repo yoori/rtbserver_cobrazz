@@ -154,7 +154,9 @@
     <xsd:attribute name="fit_iterations" type="xsd:positiveInteger" use="optional" default="10"/>
     <xsd:attribute name="training_patience" type="xsd:positiveInteger" use="optional" default="5"/>
     <xsd:attribute name="campaign_model_activity_period" type="xsd:positiveInteger" use="optional" default="1209600"/>
-    <xsd:attribute name="min_campaign_model_imps" type="xsd:positiveInteger" use="optional" default="100000"/>
+    <xsd:attribute name="min_campaign_training_impressions" type="xsd:positiveInteger" use="optional" default="100000"/>
+    <xsd:attribute name="min_campaign_validation_impressions" type="xsd:positiveInteger" use="optional" default="100000"/>
+    <xsd:attribute name="min_campaign_validation_clicks" type="xsd:positiveInteger" use="optional" default="100"/>
     <xsd:attribute name="data_delay" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 

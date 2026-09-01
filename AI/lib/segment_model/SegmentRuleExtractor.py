@@ -24,11 +24,13 @@ class SegmentRule:
   predictor_weight: float | None = None
   forest_split_count: int = 0
   relations: list = dataclasses.field(default_factory=list)
+  url_bucket_ids: tuple = ()
 
   def to_dict(self):
     return {
       'segment_id': self.segment_id,
       'urls': self.urls,
+      'url_bucket_ids': list(self.url_bucket_ids),
       'window_seconds': self.window_seconds,
       'min_visits': self.min_visits,
       'predictor_weight': self.predictor_weight,
@@ -37,20 +39,29 @@ class SegmentRule:
     }
 
 
-def extract_segment_rules(model, urls, hard_activations=None, existing_channels=None,
-                          existing_channel_ids=None, relation_threshold=0.9):
+def extract_segment_rules(model, urls, url_bucket_ids=None, hard_activations=None,
+                          existing_channels=None, existing_channel_ids=None,
+                          relation_threshold=0.9):
   url_logits = model.segment_layer.membership.url_logits.detach().cpu().numpy()
   window_indices = model.segment_layer.window_logits.detach().argmax(dim=1).cpu().numpy()
   threshold_indices = model.segment_layer.threshold_logits.detach().argmax(dim=1).cpu().numpy()
   windows = model.segment_layer.windows_seconds.detach().cpu().numpy()
   n_values = model.segment_layer.n_values.detach().cpu().numpy()
   selected_features = model.forest.selected_feature_indices().detach().cpu().numpy()
+  if url_bucket_ids is None:
+    url_bucket_ids = numpy.arange(len(urls), dtype=numpy.int64)
+  else:
+    url_bucket_ids = numpy.asarray(url_bucket_ids, dtype=numpy.int64)
+  if len(url_bucket_ids) != len(urls):
+    raise ValueError('URL list and bucket-id list must have equal sizes')
   relation_values = None
   if hard_activations is not None and existing_channels is not None:
     relation_values = _relation_values(hard_activations, existing_channels)
   rules = []
   for segment_id in range(url_logits.shape[0]):
-    url_ids = tuple(numpy.flatnonzero(url_logits[segment_id] > 0).tolist())
+    selected = url_logits[segment_id, url_bucket_ids] > 0
+    url_ids = tuple(numpy.flatnonzero(selected).tolist())
+    selected_bucket_ids = tuple(sorted(set(url_bucket_ids[selected].tolist())))
     relations = []
     if relation_values is not None:
       for channel_index in range(relation_values[0].shape[1]):
@@ -73,7 +84,8 @@ def extract_segment_rules(model, urls, hard_activations=None, existing_channels=
       window_seconds=int(windows[window_indices[segment_id]]),
       min_visits=int(n_values[threshold_indices[segment_id]]),
       forest_split_count=int(numpy.sum(selected_features == segment_id)),
-      relations=relations))
+      relations=relations,
+      url_bucket_ids=selected_bucket_ids))
   return rules
 
 

@@ -32,11 +32,12 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
         rows = [(428449, None, 'Russia/Dagestan/khamamatyurt')]
       elif 'FROM creativesize' in query:
         rows = [(761, None, '320 x 480')]
-      elif 'FROM channel' in query:
+      elif 'WITH requested_ids AS' in query:
         rows = [
           (614065, 'Channel account', 'Channel'),
           (614066, None, 'Device'),
           (427124, None, 'Khakass'),
+          (1156234, None, 'Linux'),
         ]
       else:
         rows = []
@@ -52,6 +53,7 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
       'device:614066',
       'geochannel:428449',
       'channel:427124',
+      'channel:1156234',
       'size:761',
       'campaignfreqlog:3',
     ]
@@ -71,6 +73,7 @@ class PostgresFeatureNameResolverTest(unittest.TestCase):
       'device:614066': 'Device',
       'geochannel:428449': 'Russia/Dagestan/khamamatyurt',
       'channel:427124': 'Khakass',
+      'channel:1156234': 'Linux',
       'size:761': '320 x 480',
     }, result)
 

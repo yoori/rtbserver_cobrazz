@@ -16,12 +16,14 @@ class BatchRequest:
 @dataclasses.dataclass
 class SegmentBatch:
   history_counts: numpy.ndarray
+  history_url_ids: numpy.ndarray
   existing_channels: numpy.ndarray
   context_features: numpy.ndarray
   labels: numpy.ndarray
   sample_indices: numpy.ndarray
   timestamps: numpy.ndarray = None
   group_ids: numpy.ndarray = None
+  variant_ids: numpy.ndarray = None
 
 
 @dataclasses.dataclass
@@ -43,7 +45,14 @@ def _batch_worker(batch_builder, task_queue, ready_queue):
 
 
 class ForkedBatchPool:
-  def __init__(self, batch_builder, requests, workers=2, ready_batches=4, start_method='fork'):
+  def __init__(
+      self,
+      batch_builder,
+      requests,
+      workers=2,
+      ready_batches=4,
+      start_method='fork',
+      wait_callback=None):
     if workers <= 0:
       raise ValueError('workers must be positive')
     if ready_batches < workers:
@@ -53,6 +62,7 @@ class ForkedBatchPool:
     self.workers = workers
     self.ready_batches = ready_batches
     self.context = multiprocessing.get_context(start_method)
+    self.wait_callback = wait_callback
     self.task_queue = None
     self.ready_queue = None
     self.processes = []
@@ -105,6 +115,8 @@ class ForkedBatchPool:
         request, result = self.ready_queue.get(timeout=1.0)
         break
       except queue.Empty:
+        if self.wait_callback is not None:
+          self.wait_callback()
         failed = [process for process in self.processes if not process.is_alive()]
         if failed:
           self.close()

@@ -13,8 +13,9 @@ class HardSegmentLayer(torch.nn.Module):
     for rule_index, rule in enumerate(rules):
       if rule.window_seconds not in window_indices:
         raise ValueError('rule contains an unsupported time window')
-      if rule.url_ids:
-        url_masks[rule_index, list(rule.url_ids)] = True
+      selected_buckets = rule.url_bucket_ids if rule.url_bucket_ids else rule.url_ids
+      if selected_buckets:
+        url_masks[rule_index, list(selected_buckets)] = True
       selected_windows[rule_index] = window_indices[rule.window_seconds]
       thresholds[rule_index] = rule.min_visits
     self.aggregation = aggregation
@@ -22,12 +23,17 @@ class HardSegmentLayer(torch.nn.Module):
     self.register_buffer('selected_windows', selected_windows)
     self.register_buffer('thresholds', thresholds)
 
-  def forward(self, history_counts):
-    if history_counts.ndim != 3 or history_counts.shape[1] != self.url_masks.shape[1]:
+  def forward(self, history_counts, history_url_ids=None):
+    if history_counts.ndim != 3:
       raise ValueError('history_counts have an unexpected shape')
+    url_masks = self.url_masks
+    if history_url_ids is not None:
+      url_masks = url_masks[:, history_url_ids]
+    if history_counts.shape[1] != url_masks.shape[1]:
+      raise ValueError('history_counts do not match active URL buckets')
     activations = []
-    for segment_index in range(self.url_masks.shape[0]):
-      url_mask = self.url_masks[segment_index]
+    for segment_index in range(url_masks.shape[0]):
+      url_mask = url_masks[segment_index]
       if not torch.any(url_mask):
         activations.append(history_counts.new_zeros(history_counts.shape[0]))
         continue

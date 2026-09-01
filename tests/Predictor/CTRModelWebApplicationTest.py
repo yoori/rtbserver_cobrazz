@@ -92,6 +92,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           {
             'ctr_goal': '0',
             'impressions': 200000,
+            'share': '100',
             'clicks': 390,
             'actual_ctr': '0.00195',
             'average_predicted_ctr': '0.002104321',
@@ -99,6 +100,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           {
             'ctr_goal': '0.001',
             'impressions': 150000,
+            'share': '75',
             'clicks': 350,
             'actual_ctr': '0.002333333333',
             'average_predicted_ctr': '0.002671234',
@@ -180,6 +182,8 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('0.011900', page)
     self.assertIn('0.005600', page)
     self.assertIn('CTR threshold calibration', page)
+    self.assertIn('<th>Share, %</th>', page)
+    self.assertIn('75.000000', page)
     self.assertIn('Actual CTR', page)
     self.assertIn('Average predicted CTR', page)
     self.assertIn('0.001950', page)

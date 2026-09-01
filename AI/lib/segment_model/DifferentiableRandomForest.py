@@ -2,9 +2,12 @@ import torch
 
 
 class DifferentiableRandomForest(torch.nn.Module):
-  def __init__(self, input_features, config):
+  def __init__(self, input_features, config, binary_features=0):
     super().__init__()
+    if not 0 <= binary_features <= input_features:
+      raise ValueError('binary_features must be inside the input feature range')
     self.input_features = input_features
+    self.binary_features = binary_features
     self.trees = config.trees
     self.depth = config.depth
     self.nodes = 2 ** config.depth - 1
@@ -19,6 +22,7 @@ class DifferentiableRandomForest(torch.nn.Module):
           input_features,
           generator=generator)[:features_per_node]
     self.register_buffer('feature_indices', feature_indices)
+    self.global_bias = torch.nn.Parameter(torch.zeros(()))
     self.feature_logits = torch.nn.Parameter(torch.zeros(self.trees, self.nodes, features_per_node))
     self.split_thresholds = torch.nn.Parameter(torch.empty(self.trees, self.nodes))
     self.leaf_logits = torch.nn.Parameter(torch.zeros(self.trees, self.leaves))
@@ -31,18 +35,23 @@ class DifferentiableRandomForest(torch.nn.Module):
         dtype=torch.float32)
       self.feature_logits.scatter_add_(2, selected_features, initial_logits)
     torch.nn.init.uniform_(self.split_thresholds, 0.25, 0.75)
-    torch.nn.init.normal_(self.leaf_logits, std=0.05)
 
   def forward(self, features, feature_temperature, split_temperature, hard=False,
               return_tree_logits=False):
     if features.ndim != 2 or features.shape[1] != self.input_features:
       raise ValueError('forest features have an unexpected shape')
-    selected = self._selected_features(features, feature_temperature, hard)
-    thresholds = self.split_thresholds
+    candidates = features[:, self.feature_indices]
+    thresholds = torch.where(
+      self.feature_indices < self.binary_features,
+      self.split_thresholds.new_tensor(0.5),
+      self.split_thresholds[:, :, None])
     if hard:
-      right = (selected >= thresholds[None, :, :]).to(features.dtype)
+      option_right = (candidates >= thresholds[None, :, :, :]).to(features.dtype)
     else:
-      right = torch.sigmoid((selected - thresholds[None, :, :]) / split_temperature)
+      option_right = torch.sigmoid(
+        (candidates - thresholds[None, :, :, :]) / split_temperature)
+    feature_gates = self._feature_gates(features.dtype, feature_temperature, hard)
+    right = torch.sum(option_right * feature_gates[None, :, :, :], dim=3)
     path_probabilities = features.new_ones((features.shape[0], self.trees, 1))
     node_offset = 0
     for level in range(self.depth):
@@ -54,21 +63,20 @@ class DifferentiableRandomForest(torch.nn.Module):
       ), dim=3).reshape(features.shape[0], self.trees, -1)
       node_offset += nodes_at_level
     tree_logits = torch.sum(path_probabilities * self.leaf_logits[None, :, :], dim=2)
-    logits = torch.mean(tree_logits, dim=1)
+    logits = self.global_bias + torch.sum(tree_logits, dim=1)
     if return_tree_logits:
       return logits, tree_logits
     return logits
 
-  def _selected_features(self, features, feature_temperature, hard):
-    candidates = features[:, self.feature_indices]
+  def _feature_gates(self, dtype, feature_temperature, hard):
     if hard:
       selected_indices = torch.argmax(self.feature_logits, dim=2)
       gates = torch.nn.functional.one_hot(
         selected_indices,
-        num_classes=self.feature_logits.shape[2]).to(features.dtype)
+        num_classes=self.feature_logits.shape[2]).to(dtype)
     else:
       gates = torch.softmax(self.feature_logits / feature_temperature, dim=2)
-    return torch.sum(candidates * gates[None, :, :, :], dim=3)
+    return gates
 
   def selected_feature_indices(self):
     local_indices = torch.argmax(self.feature_logits, dim=2, keepdim=True)

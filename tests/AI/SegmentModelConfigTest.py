@@ -30,8 +30,11 @@ class SegmentModelConfigTest(unittest.TestCase):
     })
     self.assertEqual((10, 60), config.data.windows_seconds)
     self.assertEqual(3, config.model.forest.trees)
-    self.assertEqual('poisson', config.model.forest.bootstrap)
     self.assertEqual('linear', config.url_temperature.schedule)
+    self.assertEqual(1000000, config.data.url_buckets)
+    self.assertEqual(10000, config.training.max_epochs)
+    self.assertEqual(20, config.training.early_stopping_patience)
+    self.assertEqual(1e-6, config.training.early_stopping_min_delta)
 
   def test_rejects_too_small_ready_queue(self):
     with self.assertRaisesRegex(ValueError, 'ready_batches'):

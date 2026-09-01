@@ -20,6 +20,20 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="ShellValueList">
+    <xsd:restriction base="xsd:string">
+      <xsd:minLength value="1"/>
+      <xsd:pattern value="[A-Za-z0-9_.,*/:@+-]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ShellConnectionString">
+    <xsd:restriction base="xsd:string">
+      <xsd:minLength value="1"/>
+      <xsd:pattern value="[A-Za-z0-9_ ./=:@+-]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="ZoneManagementType">
     <xsd:sequence>
       <xsd:element name="private_key" type="cms:Text" minOccurs="0"/>
