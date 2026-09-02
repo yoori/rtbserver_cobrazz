@@ -162,6 +162,7 @@ class CatBoostTrainer(object):
       fit_steps=None,
       on_fit_start=None,
       on_fit_end=None,
+      ignored_feature_indexes=None,
   ):
     temp_parent = None if work_dir is None else str(pathlib.Path(work_dir))
     with tempfile.TemporaryDirectory(
@@ -174,7 +175,8 @@ class CatBoostTrainer(object):
         pathlib.Path(temp_dir),
         fit_steps,
         on_fit_start,
-        on_fit_end)
+        on_fit_end,
+        ignored_feature_indexes)
 
   def select_feature_indexes_from_chunks_(
       self,
@@ -185,6 +187,7 @@ class CatBoostTrainer(object):
       fit_steps,
       on_fit_start=None,
       on_fit_end=None,
+      ignored_feature_indexes=None,
   ):
     if not validation_paths:
       raise ValueError('At least one feature selection validation set is required')
@@ -192,6 +195,12 @@ class CatBoostTrainer(object):
       raise ValueError('fit_iterations must be positive')
     if fit_steps is not None and fit_steps <= 0:
       raise ValueError('fit_steps must be positive')
+    ignored_feature_indexes = {
+      int(index)
+      for index in (ignored_feature_indexes or ())
+    }
+    if any(index <= 0 for index in ignored_feature_indexes):
+      raise ValueError('Ignored LibSVM feature indexes must be positive')
 
     # Selection models are intentionally independent.  A growing boosting
     # model tends to keep using the feature representation found on its first
@@ -217,11 +226,14 @@ class CatBoostTrainer(object):
           baseline_file = None
         model_path = model_dir / (
           'model-' + str(step).zfill(3) + '.cbm')
+        train_options = {'baseline_file': baseline_file}
+        if ignored_feature_indexes:
+          train_options['ignored_feature_indexes'] = ignored_feature_indexes
         train_metrics = self.train_chunk_(
           svm_file,
           model_path,
           fit_iterations,
-          baseline_file=baseline_file)
+          **train_options)
         validation_metrics = self.evaluate_model_sets_(
           model_path,
           validation_paths)
@@ -1056,6 +1068,7 @@ class CatBoostTrainer(object):
       initial_model=None,
       baseline_file=None,
       merge_model=None,
+      ignored_feature_indexes=None,
   ):
     metrics_file = pathlib.Path(str(output_model) + '.metrics.json')
     command = [
@@ -1077,6 +1090,8 @@ class CatBoostTrainer(object):
       command.extend(['--baseline-file', str(baseline_file)])
     if merge_model is not None:
       command.extend(['--merge-model', str(merge_model)])
+    for feature_index in sorted(ignored_feature_indexes or ()):
+      command.extend(['--ignored-feature-index', str(feature_index)])
     command.extend(['--loss-function', self.loss_function])
     if self.train_dir is not None:
       command.extend(['--train-dir', str(self.train_dir)])

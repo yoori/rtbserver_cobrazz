@@ -218,6 +218,9 @@ def prepare_train_steps(config):
         ('fit', 'fit'),
       )),
     train_step(
+      'prune_correlated_feature_indexes',
+      'Remove highly correlated feature indexes'),
+    train_step(
       'deduplicate_feature_indexes',
       'Remove fully duplicated feature indexes'),
     train_step('save_feature_indexes', 'Save selected feature indexes'),
@@ -282,6 +285,9 @@ def ssp_ctr_train_steps(
         ('libsvm', 'build LibSVM'),
         ('fit', 'fit independent model'),
       )),
+    train_step(
+      'prune_correlated_feature_indexes',
+      'Remove highly correlated feature indexes'),
     train_step(
       'deduplicate_feature_indexes',
       'Remove fully duplicated feature indexes'),
@@ -419,6 +425,9 @@ def campaign_train_steps(
         ('fit', 'fit independent model'),
       )),
     train_step(
+      'prune_correlated_feature_indexes',
+      'Remove highly correlated feature indexes'),
+    train_step(
       'deduplicate_feature_indexes',
       'Remove fully duplicated feature indexes'),
     train_step('save_feature_indexes', 'Save selected feature indexes'),
@@ -476,6 +485,18 @@ def fit_step_callbacks(progress, section, prefix):
     progress.end_train_step(
       section,
       prefix + '_fit_' + str(step).zfill(3))
+
+  return start, end
+
+
+def repeated_step_callbacks(progress, section, step_id):
+  def start(unused_step):
+    del unused_step
+    progress.start_train_step(section, step_id)
+
+  def end(unused_step):
+    del unused_step
+    progress.end_train_step(section, step_id)
 
   return start, end
 
@@ -1020,6 +1041,126 @@ def deduplicate_feature_indexes(
     'Feature deduplication removed %d fully duplicated indexes; %d remain',
     len(feature_indexes) - len(result),
     len(result))
+  return result
+
+
+def prune_correlated_feature_indexes(
+    svm_files,
+    feature_indexes,
+    work_dir,
+    correlation_threshold,
+):
+  svm_files = [pathlib.Path(path) for path in svm_files]
+  feature_indexes = {int(index) for index in feature_indexes}
+  if not svm_files:
+    raise ValueError('At least one LibSVM file is required for correlation pruning')
+  if not feature_indexes:
+    raise ValueError('At least one feature index is required for correlation pruning')
+  if (
+      not math.isfinite(correlation_threshold) or
+      correlation_threshold <= 0 or
+      correlation_threshold > 1):
+    raise ValueError('Correlation threshold must be a number from 0 to 1')
+
+  work_dir = pathlib.Path(work_dir)
+  work_dir.mkdir(parents=True, exist_ok=True)
+  with tempfile.TemporaryDirectory(
+      dir=str(work_dir), prefix='feature-correlation-pruner.') as temp_dir_name:
+    temp_dir = pathlib.Path(temp_dir_name)
+    input_indexes_file = temp_dir / 'input.feature-indexes'
+    with input_indexes_file.open('w') as output_file:
+      for feature_index in sorted(feature_indexes):
+        output_file.write(str(feature_index) + '\n')
+    output_indexes_file = temp_dir / 'output.feature-indexes'
+    command = ['FeatureCorrelationPruner']
+    for svm_file in svm_files:
+      command.extend(['--svm-file', str(svm_file)])
+    command.extend([
+      '--feature-indexes-file',
+      str(input_indexes_file),
+      '--correlation-threshold',
+      str(correlation_threshold),
+      '--output-feature-indexes-file',
+      str(output_indexes_file),
+    ])
+    subprocess.run(command, check=True)
+
+    result = set()
+    with output_indexes_file.open() as input_file:
+      for line in input_file:
+        value = line.strip()
+        if value:
+          result.add(int(value))
+    if not result:
+      raise RuntimeError('Correlation pruning produced no feature indexes')
+
+  logger.info(
+    'Correlation pruning at %.6f removed %d indexes; %d remain',
+    correlation_threshold,
+    len(feature_indexes) - len(result),
+    len(result))
+  return result
+
+
+def select_uncorrelated_feature_indexes(
+    trainer,
+    chunks_factory,
+    validation_paths,
+    fit_iterations,
+    work_dir,
+    fit_steps,
+    max_selection_steps,
+    correlation_threshold,
+    on_fit_start=None,
+    on_fit_end=None,
+    on_prune_start=None,
+    on_prune_end=None,
+):
+  if max_selection_steps <= 0:
+    raise ValueError('max_selection_steps must be positive')
+
+  validation_paths = list(validation_paths)
+  correlation_svm_files = [
+    item[0] if isinstance(item, (tuple, list)) else item
+    for item in validation_paths
+  ]
+  black_list = set()
+  result = set()
+  for selection_step in range(1, max_selection_steps + 1):
+    selected_indexes = trainer.select_feature_indexes_from_chunks(
+      chunks_factory(selection_step),
+      validation_paths,
+      fit_iterations=fit_iterations,
+      work_dir=work_dir,
+      fit_steps=fit_steps,
+      on_fit_start=on_fit_start,
+      on_fit_end=on_fit_end,
+      ignored_feature_indexes=black_list)
+    unexpected_indexes = selected_indexes & black_list
+    if unexpected_indexes:
+      raise RuntimeError(
+        'CatBoost selected ignored feature indexes: ' +
+        ', '.join(str(index) for index in sorted(unexpected_indexes)))
+    if on_prune_start is not None:
+      on_prune_start(selection_step)
+    result = prune_correlated_feature_indexes(
+      correlation_svm_files,
+      selected_indexes,
+      work_dir,
+      correlation_threshold)
+    if on_prune_end is not None:
+      on_prune_end(selection_step)
+    newly_dropped = selected_indexes - result
+    logger.info(
+      'Feature selection pass %d/%d selected %d indexes and added %d to BLACK_LIST',
+      selection_step,
+      max_selection_steps,
+      len(selected_indexes),
+      len(newly_dropped))
+    if not newly_dropped:
+      break
+    black_list.update(newly_dropped)
+
   return result
 
 
@@ -2405,17 +2546,6 @@ def generate_model_(config, in_progress_model):
       progress_section='prepare',
       progress_prefix='selection_validation')
 
-    selection_csv_chunks = repeat_partitioned_chunks(
-      exporter,
-      cycle_dir,
-      'selection',
-      selection_rows,
-      config.selection_chunk_rows,
-      config.selection_fit_steps,
-      date_from,
-      date_to,
-      training_time_condition,
-      order='ASC')
     selection_ssp_ctr_thresholds = None
     selection_ssp_ctr_rows = 0
     selection_ssp_ctr_clicks = 0
@@ -2443,27 +2573,50 @@ def generate_model_(config, in_progress_model):
           },
         })
 
-    selection_svm_chunks = stream_libsvm_chunks(
-      selection_csv_chunks,
-      cycle_dir,
-      'selection',
-      features_config_file,
-      progress=in_progress_model,
-      progress_section='prepare',
-      progress_prefix='feature_selection',
-      csv_chunk_callback=collect_selection_ssp_ctr)
+    def selection_chunks(selection_step):
+      selection_csv_chunks = repeat_partitioned_chunks(
+        exporter,
+        cycle_dir,
+        'selection',
+        selection_rows,
+        config.selection_chunk_rows,
+        config.selection_fit_steps,
+        date_from,
+        date_to,
+        training_time_condition,
+        order='ASC')
+      return stream_libsvm_chunks(
+        selection_csv_chunks,
+        cycle_dir,
+        'selection',
+        features_config_file,
+        progress=in_progress_model,
+        progress_section='prepare',
+        progress_prefix='feature_selection',
+        csv_chunk_callback=(
+          collect_selection_ssp_ctr if selection_step == 1 else None))
+
     selection_fit_start, selection_fit_end = fit_step_callbacks(
       in_progress_model,
       'prepare',
       'feature_selection')
-    feature_indexes = trainer.select_feature_indexes_from_chunks(
-      selection_svm_chunks,
+    correlation_start, correlation_end = repeated_step_callbacks(
+      in_progress_model,
+      'prepare',
+      'prune_correlated_feature_indexes')
+    feature_indexes = select_uncorrelated_feature_indexes(
+      trainer,
+      selection_chunks,
       selection_validation_files,
-      fit_iterations=config.fit_iterations,
-      work_dir=cycle_dir,
-      fit_steps=config.selection_fit_steps,
-      on_fit_start=selection_fit_start,
-      on_fit_end=selection_fit_end)
+      config.fit_iterations,
+      cycle_dir,
+      config.selection_fit_steps,
+      config.max_feature_selection_steps,
+      config.feature_correlation_threshold,
+      selection_fit_start,
+      selection_fit_end,
+      correlation_start,
+      correlation_end)
     with in_progress_model.train_step('prepare', 'deduplicate_feature_indexes'):
       feature_indexes = deduplicate_feature_indexes(
         selection_validation_files,
@@ -2771,26 +2924,29 @@ def generate_model_(config, in_progress_model):
       progress_prefix='ssp_selection_validation',
       condition=ssp_ctr_condition,
       label='ssp_ctr')
-    ssp_ctr_selection_csv_chunks = repeat_partitioned_chunks(
-      exporter,
-      cycle_dir,
-      'ssp-ctr-selection',
-      ssp_ctr_selection_rows,
-      config.selection_chunk_rows,
-      ssp_ctr_selection_fit_steps,
-      date_from,
-      date_to,
-      '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
-      label='ssp_ctr',
-      order='ASC')
-    ssp_ctr_selection_svm_chunks = stream_libsvm_chunks(
-      ssp_ctr_selection_csv_chunks,
-      cycle_dir,
-      'ssp-ctr-selection',
-      ssp_ctr_features_config_file,
-      progress=in_progress_model,
-      progress_section='common_ssp_ctr',
-      progress_prefix='ssp_feature_selection')
+    def ssp_ctr_selection_chunks(unused_selection_step):
+      del unused_selection_step
+      ssp_ctr_selection_csv_chunks = repeat_partitioned_chunks(
+        exporter,
+        cycle_dir,
+        'ssp-ctr-selection',
+        ssp_ctr_selection_rows,
+        config.selection_chunk_rows,
+        ssp_ctr_selection_fit_steps,
+        date_from,
+        date_to,
+        '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
+        label='ssp_ctr',
+        order='ASC')
+      return stream_libsvm_chunks(
+        ssp_ctr_selection_csv_chunks,
+        cycle_dir,
+        'ssp-ctr-selection',
+        ssp_ctr_features_config_file,
+        progress=in_progress_model,
+        progress_section='common_ssp_ctr',
+        progress_prefix='ssp_feature_selection')
+
     ssp_ctr_selection_fit_start, ssp_ctr_selection_fit_end = (
       fit_step_callbacks(
         in_progress_model,
@@ -2800,20 +2956,32 @@ def generate_model_(config, in_progress_model):
       config.fit_iterations,
       config.selection_fit_steps,
       ssp_ctr_selection_fit_steps)
-    ssp_ctr_feature_indexes = ssp_ctr_trainer.select_feature_indexes_from_chunks(
-      ssp_ctr_selection_svm_chunks,
+    ssp_ctr_correlation_start, ssp_ctr_correlation_end = (
+      repeated_step_callbacks(
+        in_progress_model,
+        'common_ssp_ctr',
+        'prune_correlated_feature_indexes'))
+    ssp_ctr_feature_indexes = select_uncorrelated_feature_indexes(
+      ssp_ctr_trainer,
+      ssp_ctr_selection_chunks,
       ssp_ctr_selection_validation_files,
-      fit_iterations=ssp_ctr_selection_fit_iterations,
-      work_dir=cycle_dir,
-      fit_steps=ssp_ctr_selection_fit_steps,
-      on_fit_start=ssp_ctr_selection_fit_start,
-      on_fit_end=ssp_ctr_selection_fit_end)
-    with in_progress_model.train_step('common_ssp_ctr', 'deduplicate_feature_indexes'):
+      ssp_ctr_selection_fit_iterations,
+      cycle_dir,
+      ssp_ctr_selection_fit_steps,
+      config.max_feature_selection_steps,
+      config.feature_correlation_threshold,
+      ssp_ctr_selection_fit_start,
+      ssp_ctr_selection_fit_end,
+      ssp_ctr_correlation_start,
+      ssp_ctr_correlation_end)
+    with in_progress_model.train_step(
+        'common_ssp_ctr', 'deduplicate_feature_indexes'):
       ssp_ctr_feature_indexes = deduplicate_feature_indexes(
         ssp_ctr_selection_validation_files,
         ssp_ctr_feature_indexes,
         cycle_dir,
-        dropped_features_file=cycle_dir / 'RImpressionTrain.ssp-ctr.feature-indexes.dropped')
+        dropped_features_file=cycle_dir /
+        'RImpressionTrain.ssp-ctr.feature-indexes.dropped')
     with in_progress_model.train_step(
         'common_ssp_ctr', 'save_feature_indexes'):
       with ssp_ctr_feature_indexes_file.open('w') as output_file:
@@ -3015,44 +3183,56 @@ def generate_model_(config, in_progress_model):
               (config.training_validation_sets + config.final_test_sets) *
               campaign_validation_rows),
             progress_prefix='campaign_selection_validation'))
-        campaign_selection_csv_chunks = repeat_partitioned_chunks(
-          exporter,
-          cycle_dir,
-          'campaign-' + str(campaign_id) + '-feature-selection',
-          campaign_selection_rows,
-          config.selection_chunk_rows,
-          campaign_selection_fit_steps,
-          date_from,
-          date_to,
-          '(' + campaign_condition + ') AND (' + training_time_condition + ')',
-          order='ASC')
-        campaign_selection_chunks = stream_campaign_chunks(
-          campaign_selection_csv_chunks,
-          cycle_dir,
-          campaign_id,
-          features_config_file,
-          campaign_features_config_file,
-          feature_indexes_file,
-          stable_model_file,
-          trainer,
-          None,
-          None,
-          in_progress_model,
-          progress_prefix='campaign_feature_selection')
+        def campaign_selection_chunks(unused_selection_step):
+          del unused_selection_step
+          campaign_selection_csv_chunks = repeat_partitioned_chunks(
+            exporter,
+            cycle_dir,
+            'campaign-' + str(campaign_id) + '-feature-selection',
+            campaign_selection_rows,
+            config.selection_chunk_rows,
+            campaign_selection_fit_steps,
+            date_from,
+            date_to,
+            '(' + campaign_condition + ') AND (' + training_time_condition + ')',
+            order='ASC')
+          return stream_campaign_chunks(
+            campaign_selection_csv_chunks,
+            cycle_dir,
+            campaign_id,
+            features_config_file,
+            campaign_features_config_file,
+            feature_indexes_file,
+            stable_model_file,
+            trainer,
+            None,
+            None,
+            in_progress_model,
+            progress_prefix='campaign_feature_selection')
+
         selection_fit_start, selection_fit_end = fit_step_callbacks(
           in_progress_model,
           campaign_model_name,
           'campaign_feature_selection')
-        campaign_feature_indexes = (
-          campaign_model_trainer.select_feature_indexes_from_chunks(
-            campaign_selection_chunks,
-            campaign_selection_validation_inputs,
-            fit_iterations=campaign_selection_fit_iterations,
-            work_dir=cycle_dir,
-            fit_steps=campaign_selection_fit_steps,
-            on_fit_start=selection_fit_start,
-            on_fit_end=selection_fit_end))
-        with in_progress_model.train_step(campaign_model_name, 'deduplicate_feature_indexes'):
+        correlation_start, correlation_end = repeated_step_callbacks(
+          in_progress_model,
+          campaign_model_name,
+          'prune_correlated_feature_indexes')
+        campaign_feature_indexes = select_uncorrelated_feature_indexes(
+          campaign_model_trainer,
+          campaign_selection_chunks,
+          campaign_selection_validation_inputs,
+          campaign_selection_fit_iterations,
+          cycle_dir,
+          campaign_selection_fit_steps,
+          config.max_feature_selection_steps,
+          config.feature_correlation_threshold,
+          selection_fit_start,
+          selection_fit_end,
+          correlation_start,
+          correlation_end)
+        with in_progress_model.train_step(
+            campaign_model_name, 'deduplicate_feature_indexes'):
           campaign_feature_indexes = deduplicate_feature_indexes(
             (svm_file for svm_file, _ in campaign_selection_validation_inputs),
             campaign_feature_indexes,

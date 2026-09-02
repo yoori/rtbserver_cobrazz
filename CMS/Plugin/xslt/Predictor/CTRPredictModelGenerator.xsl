@@ -55,6 +55,12 @@
     test="count($generator-config/@final_test_sets) = 0">3</xsl:if>,
   "selection_fit_steps": <xsl:value-of select="$generator-config/@selection_fit_steps"/><xsl:if
     test="count($generator-config/@selection_fit_steps) = 0">10</xsl:if>,
+  "max_feature_selection_steps": <xsl:value-of
+    select="$generator-config/@max_feature_selection_steps"/><xsl:if
+    test="count($generator-config/@max_feature_selection_steps) = 0">3</xsl:if>,
+  "feature_correlation_threshold": <xsl:value-of
+    select="$generator-config/@feature_correlation_threshold"/><xsl:if
+    test="count($generator-config/@feature_correlation_threshold) = 0">0.98</xsl:if>,
   "training_fit_steps": <xsl:value-of select="$generator-config/@training_fit_steps"/><xsl:if
     test="count($generator-config/@training_fit_steps) = 0">30</xsl:if>,
   "fit_iterations": <xsl:value-of select="$generator-config/@fit_iterations"/><xsl:if

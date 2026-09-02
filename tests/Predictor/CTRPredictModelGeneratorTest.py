@@ -50,6 +50,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(7000000, config.selection_chunk_rows)
     self.assertEqual(10000000, config.main_chunk_rows)
     self.assertEqual(10, config.selection_fit_steps)
+    self.assertEqual(3, config.max_feature_selection_steps)
+    self.assertEqual(0.98, config.feature_correlation_threshold)
     self.assertEqual(30, config.training_fit_steps)
     self.assertEqual(100.0, config.user_navigation_sampling)
     self.assertEqual(
@@ -69,6 +71,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertIn('feature_selection_export_001', step_ids)
     self.assertIn('feature_selection_libsvm_001', step_ids)
     self.assertIn('feature_selection_fit_001', step_ids)
+    self.assertIn('prune_correlated_feature_indexes', step_ids)
     self.assertIn('deduplicate_feature_indexes', step_ids)
     self.assertIn('selection_validation_libsvm_001', step_ids)
     self.assertNotIn('common_validation_libsvm_001', step_ids)
@@ -95,6 +98,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertIn(
       'campaign_selection_validation_inputs_001',
       campaign_step_ids)
+    self.assertIn('prune_correlated_feature_indexes', campaign_step_ids)
     self.assertIn('campaign_feature_selection_fit_002', campaign_step_ids)
     self.assertNotIn('campaign_feature_selection_fit_003', campaign_step_ids)
     self.assertIn('campaign_training_fit_003', campaign_step_ids)
@@ -107,6 +111,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         training_fit_steps=3)
     }
     self.assertIn('ssp_selection_validation_libsvm_001', ssp_ctr_step_ids)
+    self.assertIn('prune_correlated_feature_indexes', ssp_ctr_step_ids)
     self.assertIn('ssp_feature_selection_fit_002', ssp_ctr_step_ids)
     self.assertNotIn('ssp_feature_selection_fit_003', ssp_ctr_step_ids)
     self.assertIn('ssp_training_fit_003', ssp_ctr_step_ids)
@@ -129,6 +134,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'training_validation_sets': 3,
       'final_test_sets': 4,
       'selection_fit_steps': 7,
+      'max_feature_selection_steps': 4,
+      'feature_correlation_threshold': 0.975,
       'training_fit_steps': 12,
       'fit_iterations': 8,
       'selection_patience': 2,
@@ -151,6 +158,8 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(3, config.training_validation_sets)
     self.assertEqual(4, config.final_test_sets)
     self.assertEqual(7, config.selection_fit_steps)
+    self.assertEqual(4, config.max_feature_selection_steps)
+    self.assertEqual(0.975, config.feature_correlation_threshold)
     self.assertEqual(12, config.training_fit_steps)
     self.assertEqual(8, config.fit_iterations)
     self.assertFalse(hasattr(config, 'selection_patience'))
@@ -170,6 +179,17 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         'workspace_root': '/tmp/ctr-generator',
         'postgres_conn': 'host=postdb00 dbname=stat',
         'user_navigation_sampling': 101,
+        'data_delay': 86400,
+      })
+
+  def test_invalid_feature_correlation_threshold(self):
+    config = MODULE.Config()
+    with self.assertRaisesRegex(ValueError, 'feature_correlation_threshold'):
+      config.init_json({
+        'pid_file': '/tmp/ctr-generator.pid',
+        'workspace_root': '/tmp/ctr-generator',
+        'postgres_conn': 'host=postdb00 dbname=stat',
+        'feature_correlation_threshold': 1.01,
         'data_delay': 86400,
       })
 
@@ -467,6 +487,150 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual(
         str(early_dropped_file),
         calls[0][calls[0].index('--early-dropped-features-file') + 1])
+
+  def test_prune_correlated_feature_indexes_passes_all_sources(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      source_files = [work_dir / 'first.libsvm', work_dir / 'second.libsvm']
+      for source_file in source_files:
+        source_file.write_text('0 1:1\n')
+
+      def run(command, check):
+        self.assertTrue(check)
+        self.assertEqual('FeatureCorrelationPruner', command[0])
+        self.assertEqual(2, command.count('--svm-file'))
+        self.assertEqual(
+          [str(path) for path in source_files],
+          [
+            command[index + 1]
+            for index, value in enumerate(command)
+            if value == '--svm-file'
+          ])
+        self.assertEqual(
+          '0.98',
+          command[command.index('--correlation-threshold') + 1])
+        indexes_file = pathlib.Path(
+          command[command.index('--feature-indexes-file') + 1])
+        self.assertEqual('1\n2\n3\n', indexes_file.read_text())
+        output_file = pathlib.Path(
+          command[command.index('--output-feature-indexes-file') + 1])
+        output_file.write_text('1\n3\n')
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE.subprocess,
+          'run',
+          side_effect=run):
+        result = TRAINER_MODULE.prune_correlated_feature_indexes(
+          source_files,
+          {1, 2, 3},
+          work_dir,
+          0.98)
+
+      self.assertEqual({1, 3}, result)
+
+  def test_feature_selection_repeats_with_correlation_black_list(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      validation_svm = work_dir / 'validation.libsvm'
+      validation_baseline = work_dir / 'validation.baseline'
+      selections = iter(({1, 2, 3}, {1, 3, 4}))
+      ignored_indexes = []
+      factory_steps = []
+      callback_events = []
+
+      class Trainer:
+        @staticmethod
+        def select_feature_indexes_from_chunks(
+            chunks,
+            validation_paths,
+            **options,
+        ):
+          self.assertEqual([validation_svm], list(chunks))
+          self.assertEqual(
+            [(validation_svm, validation_baseline)],
+            validation_paths)
+          ignored_indexes.append(set(options['ignored_feature_indexes']))
+          return next(selections)
+
+      def chunks_factory(step):
+        factory_steps.append(step)
+        return iter((validation_svm,))
+
+      prune_results = iter(({1, 3}, {1, 3, 4}))
+      prune_calls = []
+
+      def prune(svm_files, feature_indexes, prune_work_dir, threshold):
+        prune_calls.append((svm_files, set(feature_indexes), threshold))
+        self.assertEqual(work_dir, prune_work_dir)
+        return next(prune_results)
+
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'prune_correlated_feature_indexes',
+          side_effect=prune):
+        result = TRAINER_MODULE.select_uncorrelated_feature_indexes(
+          Trainer(),
+          chunks_factory,
+          [(validation_svm, validation_baseline)],
+          fit_iterations=10,
+          work_dir=work_dir,
+          fit_steps=3,
+          max_selection_steps=3,
+          correlation_threshold=0.98,
+          on_prune_start=lambda step: callback_events.append(('start', step)),
+          on_prune_end=lambda step: callback_events.append(('end', step)))
+
+      self.assertEqual({1, 3, 4}, result)
+      self.assertEqual([1, 2], factory_steps)
+      self.assertEqual([set(), {2}], ignored_indexes)
+      self.assertEqual([
+        ([validation_svm], {1, 2, 3}, 0.98),
+        ([validation_svm], {1, 3, 4}, 0.98),
+      ], prune_calls)
+      self.assertEqual([
+        ('start', 1),
+        ('end', 1),
+        ('start', 2),
+        ('end', 2),
+      ], callback_events)
+
+  def test_feature_selection_stops_at_configured_pass_limit(self):
+    selections = iter(({1, 2}, {1, 3}, {1, 4}))
+    ignored_indexes = []
+    factory_steps = []
+
+    class Trainer:
+      @staticmethod
+      def select_feature_indexes_from_chunks(
+          chunks,
+          validation_paths,
+          **options,
+      ):
+        del chunks, validation_paths
+        ignored_indexes.append(set(options['ignored_feature_indexes']))
+        return next(selections)
+
+    def chunks_factory(step):
+      factory_steps.append(step)
+      return iter(())
+
+    with unittest.mock.patch.object(
+        TRAINER_MODULE,
+        'prune_correlated_feature_indexes',
+        side_effect=({1}, {1})):
+      result = TRAINER_MODULE.select_uncorrelated_feature_indexes(
+        Trainer(),
+        chunks_factory,
+        ['validation.libsvm'],
+        fit_iterations=10,
+        work_dir='.',
+        fit_steps=3,
+        max_selection_steps=2,
+        correlation_threshold=0.98)
+
+    self.assertEqual({1}, result)
+    self.assertEqual([1, 2], factory_steps)
+    self.assertEqual([set(), {2}], ignored_indexes)
 
   def test_feature_statistics_merges_chunks(self):
     with tempfile.TemporaryDirectory() as temp_dir:

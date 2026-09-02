@@ -17,11 +17,15 @@ def train_chunk(
     baseline_file=None,
     merge_model=None,
     loss_function='Logloss',
+    ignored_feature_indexes=None,
 ):
   if baseline_file is not None and initial_model is not None:
     raise ValueError(
       'CatBoost does not support baseline together with initial_model; '
       'use merge_model for residual continuation')
+  ignored_feature_indexes = set(ignored_feature_indexes or ())
+  if any(index <= 0 for index in ignored_feature_indexes):
+    raise ValueError('Ignored LibSVM feature indexes must be positive')
   train_pool = Pool('libsvm://' + str(pathlib.Path(svm_file).resolve()))
   if baseline_file is not None:
     baseline = numpy.atleast_1d(numpy.loadtxt(
@@ -38,6 +42,7 @@ def train_chunk(
     depth=6,
     loss_function=loss_function,
     allow_const_label=True,
+    ignored_features=[index - 1 for index in sorted(ignored_feature_indexes)],
     verbose=0,
     train_dir=train_dir,
     use_best_model=False)
@@ -88,6 +93,8 @@ def main():
   parser.add_argument('--baseline-file')
   parser.add_argument('--merge-model')
   parser.add_argument('--loss-function', default='Logloss')
+  parser.add_argument(
+    '--ignored-feature-index', action='append', default=[], type=int)
   args = parser.parse_args()
   train_chunk(
     args.svm_file,
@@ -98,7 +105,8 @@ def main():
     args.metrics_file,
     args.baseline_file,
     args.merge_model,
-    args.loss_function)
+    args.loss_function,
+    args.ignored_feature_index)
 
 
 if __name__ == '__main__':

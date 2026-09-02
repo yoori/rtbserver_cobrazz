@@ -150,6 +150,10 @@
     <xsd:attribute name="training_validation_sets" type="xsd:positiveInteger" use="optional" default="3"/>
     <xsd:attribute name="final_test_sets" type="xsd:positiveInteger" use="optional" default="3"/>
     <xsd:attribute name="selection_fit_steps" type="xsd:positiveInteger" use="optional" default="10"/>
+    <xsd:attribute
+      name="max_feature_selection_steps" type="xsd:positiveInteger" use="optional" default="3"/>
+    <xsd:attribute
+      name="feature_correlation_threshold" type="xsd:double" use="optional" default="0.98"/>
     <xsd:attribute name="training_fit_steps" type="xsd:positiveInteger" use="optional" default="30"/>
     <xsd:attribute name="fit_iterations" type="xsd:positiveInteger" use="optional" default="10"/>
     <xsd:attribute name="training_patience" type="xsd:positiveInteger" use="optional" default="5"/>

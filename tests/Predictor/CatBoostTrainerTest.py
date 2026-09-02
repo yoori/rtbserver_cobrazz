@@ -20,6 +20,7 @@ from rtbserver_utils.CatBoostModelEvaluator import (
   ctr_threshold_statistics,
   evaluate_model,
 )
+from rtbserver_utils.CatBoostModelFeatures import used_feature_indexes
 from rtbserver_utils.CatBoostTrainChunk import train_chunk
 
 
@@ -166,6 +167,26 @@ class CatBoostTrainerTest(unittest.TestCase):
 
       self.assertGreater(metrics['Logloss'], 0)
       self.assertTrue(model_file.is_file())
+
+  def test_real_catboost_ignores_one_based_libsvm_feature_indexes(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      svm_file = temp_path / 'ignored-feature.libsvm'
+      svm_file.write_text('\n'.join(
+        str(index % 2) +
+        ' 1:' + str(index % 2) +
+        ' 2:' + str((index // 2) % 2) +
+        ' 4:0'
+        for index in range(20)) + '\n')
+      model_file = temp_path / 'model.cbm'
+
+      train_chunk(
+        svm_file,
+        model_file,
+        iterations=2,
+        ignored_feature_indexes={2})
+
+      self.assertNotIn(2, used_feature_indexes(model_file))
 
   def test_real_catboost_accepts_ssp_ctr_soft_labels(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -814,6 +835,13 @@ class CatBoostTrainerTest(unittest.TestCase):
         self.assertEqual(
           'Logloss',
           command[command.index('--loss-function') + 1])
+        self.assertEqual(
+          ['7', '11'],
+          [
+            command[index + 1]
+            for index, value in enumerate(command)
+            if value == '--ignored-feature-index'
+          ])
         metrics_file = pathlib.Path(
           command[command.index('--metrics-file') + 1])
         metrics_file.write_text(
@@ -825,7 +853,8 @@ class CatBoostTrainerTest(unittest.TestCase):
         metrics = trainer.train_chunk_(
           temp_path / 'train.libsvm',
           output_model,
-          10)
+          10,
+          ignored_feature_indexes={11, 7})
 
       self.assertEqual({
         'Logloss': 0.125,
@@ -1158,6 +1187,43 @@ class CatBoostTrainerTest(unittest.TestCase):
       self.assertEqual(chunks[:3], trained_chunks)
       self.assertEqual([None, None, None], initial_models)
       self.assertEqual({1, 2, 3}, indexes)
+
+  def test_feature_selection_passes_ignored_indexes_to_each_model(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      trainer = CatBoostTrainer(features_dimension=4)
+      ignored_indexes = []
+
+      def train_chunk(
+          svm_file,
+          output_model,
+          iterations,
+          baseline_file=None,
+          ignored_feature_indexes=None,
+      ):
+        del svm_file, iterations, baseline_file
+        ignored_indexes.append(set(ignored_feature_indexes))
+        pathlib.Path(output_model).write_text('model')
+        return {'Logloss': 0.2}
+
+      trainer.train_chunk_ = train_chunk
+      trainer.evaluate_model_sets_ = lambda model_file, validation_paths: {
+        'Logloss': 0.1,
+        'sets': validation_paths,
+      }
+      trainer.model_feature_indexes_ = lambda model_file: {1}
+      chunks = [temp_path / 'chunk-1', temp_path / 'chunk-2']
+
+      indexes = trainer.select_feature_indexes_from_chunks_(
+        chunks,
+        [temp_path / 'validation'],
+        fit_iterations=1,
+        work_dir=temp_path,
+        fit_steps=2,
+        ignored_feature_indexes={7, 11})
+
+      self.assertEqual([{7, 11}, {7, 11}], ignored_indexes)
+      self.assertEqual({1}, indexes)
 
   def test_residual_feature_selection_uses_independent_baselines(self):
     with tempfile.TemporaryDirectory() as temp_dir:

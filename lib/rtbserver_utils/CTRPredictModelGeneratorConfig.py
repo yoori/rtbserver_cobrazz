@@ -17,6 +17,8 @@ class Config:
     self.training_validation_sets = 3
     self.final_test_sets = 3
     self.selection_fit_steps = 10
+    self.max_feature_selection_steps = 3
+    self.feature_correlation_threshold = 0.98
     self.training_fit_steps = 30
     self.fit_iterations = 10
     self.training_patience = 5
@@ -52,6 +54,10 @@ class Config:
     self.final_test_sets = int(config_json.get('final_test_sets', 3))
     self.selection_fit_steps = int(
       config_json.get('selection_fit_steps', 10))
+    self.max_feature_selection_steps = int(
+      config_json.get('max_feature_selection_steps', 3))
+    self.feature_correlation_threshold = float(
+      config_json.get('feature_correlation_threshold', 0.98))
     self.training_fit_steps = int(
       config_json.get('training_fit_steps', 30))
     self.fit_iterations = int(config_json.get('fit_iterations', 10))
@@ -95,6 +101,7 @@ class Config:
         'training_validation_sets',
         'final_test_sets',
         'selection_fit_steps',
+        'max_feature_selection_steps',
         'training_fit_steps',
         'fit_iterations',
         'training_patience',
@@ -104,6 +111,12 @@ class Config:
         'min_campaign_validation_clicks'):
       if getattr(self, name) <= 0:
         raise ValueError(name + ' must be positive')
+    if (
+        not math.isfinite(self.feature_correlation_threshold) or
+        self.feature_correlation_threshold <= 0 or
+        self.feature_correlation_threshold > 1):
+      raise ValueError(
+        'feature_correlation_threshold must be a number from 0 to 1')
     if self.data_delay <= 0:
       raise ValueError('data_delay must be positive')
     if (
