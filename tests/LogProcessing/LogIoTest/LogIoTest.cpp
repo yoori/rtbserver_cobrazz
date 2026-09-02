@@ -1013,7 +1013,8 @@ int main(int argc, char **argv)
         RequestBasicChannelsCollector::DataT::DataT::MatchOptional(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt),
         "source/external id 1",
-        "https://example.test/referer/1"
+        "https://example.test/referer/1",
+        "page keyword 1"
       );
 
     RequestBasicChannelsCollector::DataT::DataT
@@ -1025,7 +1026,8 @@ int main(int argc, char **argv)
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(),
         "",
-        "https://example.test/referer/2"
+        "https://example.test/referer/2",
+        "page keyword 2"
       );
 
     RequestBasicChannelsCollector::DataT::DataT
@@ -1036,7 +1038,8 @@ int main(int argc, char **argv)
         make_match_request(),
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(ad_request_opt),
         "source/external id 3",
-        "https://example.test/referer/3"
+        "https://example.test/referer/3",
+        "page keyword 3"
       );
     RequestBasicChannelsCollector::DataT::DataT
       inner_data4(
@@ -1047,7 +1050,8 @@ int main(int argc, char **argv)
         RequestBasicChannelsCollector::DataT::DataT::AdRequestPropsOptional(
           ad_request_empty_sizes_opt),
         "source/external id 4",
-        "https://example.test/referer/4"
+        "https://example.test/referer/4",
+        "page keyword 4"
       );
 
     auto make_data = [&]()

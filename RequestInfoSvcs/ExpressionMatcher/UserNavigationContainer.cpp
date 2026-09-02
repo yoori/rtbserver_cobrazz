@@ -88,6 +88,11 @@ namespace AdServer::RequestInfoSvcs
   {
     static const char* FUN = "UserNavigationContainer::co_get_profile()";
 
+    if (!user_map_->dispose_profile(user_id))
+    {
+      co_return Generics::ConstSmartMemBuf_var();
+    }
+
     try
     {
       Generics::ConstSmartMemBuf_var profile = co_await user_map_->co_get_profile(user_id);
