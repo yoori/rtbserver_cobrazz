@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            targetNamespace="http://www.adintelligence.net/xsd/AI/Configuration"
-            xmlns="http://www.adintelligence.net/xsd/AI/Configuration"
-            elementFormDefault="qualified">
-  <xsd:element name="segmentGenerator">
-    <xsd:complexType/>
-  </xsd:element>
-</xsd:schema>
