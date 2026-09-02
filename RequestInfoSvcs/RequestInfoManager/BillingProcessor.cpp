@@ -1803,13 +1803,17 @@ namespace AdServer::RequestInfoSvcs
     for (std::string& endpoint : billing_server_refs)
     {
       std::string client_endpoint = endpoint;
+      auto client =
+        std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
+          client_endpoint,
+          grpc_executor,
+          coalesce_runner);
+
+      add_child_object(client);
       billing_servers_holder_->billing_servers.push_back(
         BillingServerArrayHolder::BillingServerObject(
           std::move(endpoint),
-          std::make_shared<AdServer::CampaignSvcs::BillingServerGrpcAsyncBatchingClient>(
-            client_endpoint,
-            grpc_executor,
-            coalesce_runner)));
+          std::move(client)));
     }
   }
 
