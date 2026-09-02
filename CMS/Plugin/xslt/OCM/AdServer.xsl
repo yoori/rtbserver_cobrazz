@@ -252,10 +252,14 @@
           <xsl:with-param name="service-type" select="'AdServer::LogProcessing::SyncLogsServer'"/>
         </xsl:call-template>
 
-        <xsl:if test="count($be-cluster-path/service[@descriptor = $ctr-predict-model-generator-descriptor]) > 0">
+        <xsl:if test="count($be-cluster-path/service[
+            @descriptor = $ctr-predict-model-generator-descriptor or
+            @descriptor = $clickhouse-uploader-descriptor]) > 0">
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"
-              select="$be-cluster-path/service[@descriptor = $ctr-predict-model-generator-descriptor]"/>
+              select="$be-cluster-path/service[
+                @descriptor = $ctr-predict-model-generator-descriptor or
+                @descriptor = $clickhouse-uploader-descriptor]"/>
             <xsl:with-param name="service-name" select="'be-Predictor-SyncLogsServer'"/>
             <xsl:with-param name="service-type" select="'AdServer::Predictor::SyncLogsServer'"/>
           </xsl:call-template>

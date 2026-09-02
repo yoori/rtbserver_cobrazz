@@ -341,6 +341,30 @@
         </xsl:for-each>
       </xsl:variable>
 
+      <!-- Research logs are consumed locally by ClickhouseUploader. -->
+      <xsl:variable name="clickhouse-uploader-path"
+          select="$be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]"/>
+
+      <xsl:variable name="clickhouse-uploader-hosts">
+        <xsl:for-each select="$clickhouse-uploader-path">
+          <xsl:call-template name="GetHosts">
+            <xsl:with-param name="hosts" select="@host"/>
+            <xsl:with-param name="error-prefix" select="'ClickhouseUploader'"/>
+          </xsl:call-template>
+        </xsl:for-each>
+      </xsl:variable>
+
+      <xsl:variable name="research-sync-logs-host">
+        <xsl:value-of select="exsl:node-set($clickhouse-uploader-hosts)/host[1]"/>
+        <xsl:if test="count(exsl:node-set($clickhouse-uploader-hosts)/host) = 0">
+          <xsl:value-of select="$colo-config/cfg:predictorConfig/cfg:ref/@host"/>
+        </xsl:if>
+      </xsl:variable>
+
+      <xsl:variable name="research-sync-logs-port">
+        <xsl:value-of select="$def-predictor-sync-logs-server-port"/>
+      </xsl:variable>
+
       <xsl:variable name="predictor-sync-logs-port">
         <xsl:choose>
           <xsl:when test="count($predictor-path) != 0">
@@ -1189,7 +1213,7 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="count($predictor-sync-logs-host) > 0">
+    <xsl:if test="count($research-sync-logs-host) > 0">
       <cfg:FeedRouteGroup
         local_copy_command="/bin/echo"
         local_copy_command_type="rsync"
@@ -1206,10 +1230,10 @@
         $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -a]]><xsl:if
             test="not($is-frontend-service-host)">z</xsl:if><xsl:value-of
             select="$rsync-no-checksum-option"/><![CDATA[ -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of
-            select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a]]><xsl:if
+            select="$research-sync-logs-host"/>:<xsl:value-of select="$research-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a]]><xsl:if
             test="not($is-frontend-service-host)">z</xsl:if><xsl:value-of
             select="$rsync-no-checksum-option"/><![CDATA[ -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
-            select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
+            select="$research-sync-logs-host"/>:<xsl:value-of select="$research-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
             select="$research-command-postfix"/></xsl:attribute>
 
           <cfg:Route type="RoundRobin">
@@ -1271,7 +1295,7 @@
         </cfg:FeedRouteGroup>
       </xsl:if>
 
-      <xsl:if test="count($predictor-sync-logs-host) &gt; 0 and $campaign-manager-ram-enabled">
+      <xsl:if test="count($research-sync-logs-host) &gt; 0 and $campaign-manager-ram-enabled">
         <cfg:FeedRouteGroup
           pool_threads="4"
           check_logs_period="1"
@@ -1288,9 +1312,9 @@
             select="$def-research-stat-receiver-port"/></xsl:if><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/><![CDATA[##DST_PATH## || true) && ]]></xsl:for-each><xsl:if test="$predictor-path//cfg:syncServer/@enable_backup = 'true' or
           $predictor-path//cfg:syncServer/@enable_backup = '1'"><![CDATA[(/usr/bin/rsync -a]]><xsl:value-of
               select="$rsync-no-checksum-option"/><![CDATA[ -t --timeout=55 --log-format=%f ##SRC_PATH##  rsync://]]><xsl:value-of
-              select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a]]><xsl:value-of
+              select="$research-sync-logs-host"/>:<xsl:value-of select="$research-sync-logs-port"/><![CDATA[/backup##DST_PATH## || true) && ]]></xsl:if><![CDATA[/usr/bin/rsync -a]]><xsl:value-of
               select="$rsync-no-checksum-option"/><![CDATA[ -t --timeout=55 --log-format=%f --delete-after ##SRC_PATH## rsync://]]><xsl:value-of
-              select="$predictor-sync-logs-host"/>:<xsl:value-of select="$predictor-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
+              select="$research-sync-logs-host"/>:<xsl:value-of select="$research-sync-logs-port"/><![CDATA[/]]><xsl:value-of select="$research-stat-receiver-path"/>##DST_PATH##<xsl:value-of
               select="$research-command-postfix"/></xsl:attribute>
 
           <cfg:Route type="RoundRobin">
