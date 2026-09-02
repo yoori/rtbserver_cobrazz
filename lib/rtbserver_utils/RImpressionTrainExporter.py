@@ -194,7 +194,7 @@ class RImpressionTrainExporter(object):
         'countIf(' + training_condition + ') AS training_impressions, '
         'countIf(' + validation_condition + ') AS validation_impressions, '
         'countIf((' + validation_condition + ') AND '
-          'click_timestamp IS NOT NULL) AS validation_clicks '
+          '(' + self._click_condition(date_from) + ')) AS validation_clicks '
       'FROM RImpression '
       "WHERE timestamp >= '" + date_from + "' "
         "AND timestamp < '" + date_to + "' "
@@ -544,7 +544,7 @@ class RImpressionTrainExporter(object):
     if order not in ('ASC', 'DESC'):
       raise ValueError("Unsupported export order: '" + str(order) + "'")
     if label == 'click':
-      label_expression = 'If(click_timestamp IS NOT NULL, 1, 0)'
+      label_expression = 'If(' + cls._click_condition(date_from) + ', 1, 0)'
     elif label == 'ssp_ctr':
       label_expression = 'assumeNotNull(ssp_ctr)'
     else:
@@ -605,7 +605,7 @@ class RImpressionTrainExporter(object):
     return (
       'SELECT avg(if (clicked, -log(' + score + '), '
         '-log1p(-' + score + '))) FROM ('
-        'SELECT click_timestamp IS NOT NULL AS clicked, '
+        'SELECT (' + cls._click_condition(date_from) + ') AS clicked, '
           'assumeNotNull(ssp_ctr) AS score '
         'FROM RImpression '
         "WHERE timestamp >= '" + date_from + "' "
@@ -614,6 +614,14 @@ class RImpressionTrainExporter(object):
         'ORDER BY timestamp DESC, request_id DESC '
         'LIMIT ' + str(rows) +
         ((' OFFSET ' + str(offset_rows)) if offset_rows else '') + ')')
+
+  @staticmethod
+  def _click_condition(date_from):
+    return (
+      'click_timestamp IS NOT NULL OR request_id IN ('
+      'SELECT request_id FROM RImpression '
+      'WHERE timestamp IS NULL AND click_timestamp IS NOT NULL '
+      "AND click_timestamp >= toDateTime('" + date_from + "'))")
 
   @staticmethod
   def _count_query(date_from, date_to, condition=None):

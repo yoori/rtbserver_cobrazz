@@ -105,6 +105,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       "ifNull(toString(ssp_viewability), '') AS SSP_Viewability",
       calls[1][-1])
     self.assertIn("ifNull(toString(ssp_vtr), '') AS SSP_VTR", calls[1][-1])
+    self.assertIn(
+      'If(click_timestamp IS NOT NULL OR request_id IN ('
+      'SELECT request_id FROM RImpression '
+      'WHERE timestamp IS NULL AND click_timestamp IS NOT NULL '
+      "AND click_timestamp >= toDateTime('2026-08-12')), 1, 0) AS label",
+      calls[1][-1])
     self.assertIn('LIMIT 100 FORMAT CSVWithNames', calls[1][-1])
 
   def test_empty_table(self):
@@ -261,7 +267,11 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn('AS validation_clicks', query)
     self.assertIn('AND validation_impressions >= 100000', query)
     self.assertIn('AND validation_clicks >= 100', query)
-    self.assertIn('click_timestamp IS NOT NULL', query)
+    self.assertIn(
+      'request_id IN (SELECT request_id FROM RImpression '
+      'WHERE timestamp IS NULL AND click_timestamp IS NOT NULL '
+      "AND click_timestamp >= toDateTime('2026-07-01'))",
+      query)
     self.assertIn("timestamp < '2026-08-20'", query)
     self.assertIn("timestamp >= '2026-08-20'", query)
     self.assertIn('campaign_id IN (', query)
@@ -286,6 +296,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       'ssp_ctr')
 
     self.assertIn('assumeNotNull(ssp_ctr) AS label', query)
+    self.assertNotIn('request_id IN (SELECT request_id', query)
     self.assertIn('AND (ssp_ctr IS NOT NULL)', query)
     self.assertIn('ORDER BY timestamp DESC, request_id DESC', query)
     self.assertIn('LIMIT 100 OFFSET 7 FORMAT CSVWithNames', query)
@@ -306,7 +317,12 @@ class RImpressionTrainExporterTest(unittest.TestCase):
 
     self.assertEqual(0.012345, value)
     query = run.call_args.args[0][-1]
-    self.assertIn('click_timestamp IS NOT NULL AS clicked', query)
+    self.assertIn(
+      '(click_timestamp IS NOT NULL OR request_id IN ('
+      'SELECT request_id FROM RImpression '
+      'WHERE timestamp IS NULL AND click_timestamp IS NOT NULL '
+      "AND click_timestamp >= toDateTime('2026-08-01'))) AS clicked",
+      query)
     self.assertIn('assumeNotNull(ssp_ctr) AS score', query)
     self.assertIn('ssp_ctr IS NOT NULL', query)
     self.assertIn(
