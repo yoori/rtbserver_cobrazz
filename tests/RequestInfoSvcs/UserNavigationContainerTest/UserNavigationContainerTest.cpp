@@ -185,6 +185,42 @@ main()
     container->deactivate_object();
     container->wait_object();
     container.reset();
+
+    std::filesystem::create_directories(root / "Unowned" / "Chunk_0_2");
+    chunk_folders.clear();
+    AdServer::ProfilingCommons::ProfileMapFactory::fetch_chunk_folders(
+      chunk_folders,
+      (root / "Unowned").c_str(),
+      "Chunk");
+    container = new UserNavigationContainer(
+      logger,
+      2,
+      chunk_folders,
+      "UserNavigation",
+      AdServer::ProfilingCommons::LevelMapTraits(
+        AdServer::ProfilingCommons::LevelMapTraits::BLOCK_RUNTIME,
+        1024 * 1024,
+        1024 * 1024,
+        2 * 1024 * 1024,
+        20,
+        Generics::Time::ONE_DAY * 30));
+    container->activate_object();
+
+    AdServer::Commons::UserId unowned_user_id;
+    do
+    {
+      unowned_user_id = AdServer::Commons::UserId::create_random_based();
+    }
+    while (AdServer::Commons::uuid_distribution_hash(unowned_user_id) % 2 == 0);
+
+    if (AdServer::Commons::sync_wait(get_profile(container, unowned_user_id)).in())
+    {
+      throw std::runtime_error("Unowned chunk returned a profile");
+    }
+
+    container->deactivate_object();
+    container->wait_object();
+    container.reset();
     std::filesystem::remove_all(root);
     std::cout << "UserNavigationContainerTest: OK" << std::endl;
     return 0;
