@@ -214,7 +214,10 @@ namespace AdServer::LogProcessing
                   configuration_->host_check_period());
                 break;
               case ST_BY_NUMBER:
-                destination_host_router = new RouteByNumberHelper(feed_type, dest_hosts);
+                destination_host_router = new RouteByNumberHelper(
+                  feed_type,
+                  dest_hosts,
+                  configuration_->host_check_period());
                 break;
               case ST_HASH:
                 if (!file_it->pattern().present())
@@ -224,7 +227,8 @@ namespace AdServer::LogProcessing
                 destination_host_router = new RouteHashHelper(
                   feed_type,
                   dest_hosts,
-                  file_it->pattern()->c_str());
+                  file_it->pattern()->c_str(),
+                  configuration_->host_check_period());
                 break;
               case ST_DEFINITEHASH:
                 if (!file_it->pattern().present())
@@ -236,7 +240,8 @@ namespace AdServer::LogProcessing
                   hosts_route.destination().c_str(),
                   cluster_config.definite_hash_schema().c_str(),
                   file_it->pattern()->c_str(),
-                  Generics::Time(10));
+                  Generics::Time(10),
+                  configuration_->host_check_period());
                 break;
               case ST_FROM_FILE_NAME:
                 if (!it->pattern().present())
@@ -245,7 +250,8 @@ namespace AdServer::LogProcessing
                 }
                 destination_host_router = new RouteHostFromFileNameHelper(
                   feed_type,
-                  it->pattern()->c_str());
+                  it->pattern()->c_str(),
+                  configuration_->host_check_period());
                 break;
               }
 

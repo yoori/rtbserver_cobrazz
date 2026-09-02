@@ -7,6 +7,7 @@
 #include <Generics/TaskRunner.hpp>
 
 #include <LogProcessing/SyncLogs/FeedRouteProcessor.hpp>
+#include <LogProcessing/SyncLogs/RouteHelpers.hpp>
 
 namespace
 {
@@ -121,6 +122,27 @@ namespace
     TaskState& state_;
   };
 
+  class FixedRouteHelper final:
+    public AdServer::LogProcessing::RouteBasicHelper,
+    public ReferenceCounting::AtomicImpl
+  {
+  public:
+    explicit FixedRouteHelper(unsigned long host_check_period)
+      : RouteBasicHelper(
+          AdServer::LogProcessing::ST_DEFINITEHASH,
+          host_check_period)
+    {}
+
+    std::string
+    get_dest_host(const char*) override
+    {
+      return "destination";
+    }
+
+  protected:
+    ~FixedRouteHelper() noexcept override = default;
+  };
+
   class Fixture
   {
   public:
@@ -227,6 +249,55 @@ namespace
       all_overdue_completed && next_fresh_waits_for_soft_slot &&
       all_fresh_completed && fresh_state.max_active() == SOFT_THREADS;
   }
+
+  bool
+  test_destination_host_backoff()
+  {
+    using AdServer::LogProcessing::RouteBasicHelper;
+    using AdServer::LogProcessing::RouteBasicHelper_var;
+
+    RouteBasicHelper_var delayed_route_helper = new FixedRouteHelper(60);
+    const auto delayed_failure = delayed_route_helper->get_destination("file");
+    delayed_route_helper->bad_host(delayed_failure);
+
+    try
+    {
+      delayed_route_helper->get_destination("file");
+      return false;
+    }
+    catch (const RouteBasicHelper::NotReady&)
+    {}
+
+    RouteBasicHelper_var route_helper = new FixedRouteHelper(0);
+    const auto failed = route_helper->get_destination("file");
+    const auto stale = route_helper->get_destination("file");
+
+    route_helper->bad_host(failed);
+    const auto failed_probe = route_helper->get_destination("file");
+    if (!failed_probe.probe)
+    {
+      return false;
+    }
+    route_helper->bad_host(failed_probe);
+
+    const auto successful_probe = route_helper->get_destination("file");
+    if (!successful_probe.probe)
+    {
+      return false;
+    }
+
+    try
+    {
+      route_helper->get_destination("file");
+      return false;
+    }
+    catch (const RouteBasicHelper::NotReady&)
+    {}
+
+    route_helper->good_host(successful_probe);
+    route_helper->bad_host(stale);
+    return !route_helper->get_destination("file").probe;
+  }
 }
 
 int
@@ -244,6 +315,7 @@ main()
   run("fresh files use soft limit", test_fresh_files_use_soft_limit);
   run("overdue files use hard limit", test_overdue_files_use_hard_limit);
   run("scheduler returns to soft limit", test_scheduler_returns_to_soft_limit);
+  run("destination host backoff", test_destination_host_backoff);
 
   return success ? 0 : 1;
 }

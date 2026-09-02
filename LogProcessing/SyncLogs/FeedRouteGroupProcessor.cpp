@@ -156,7 +156,10 @@ namespace AdServer::LogProcessing
       if (commit_mode)
       {
         FixedRouteBasicHelper_var host_from_name_route_helper =
-          new RouteHostFromFileNameHelper(ST_FROM_FILE_NAME, COMMIT_FILE_FIND_PATTERN);
+          new RouteHostFromFileNameHelper(
+            ST_FROM_FILE_NAME,
+            COMMIT_FILE_FIND_PATTERN,
+            destination_host_router->host_check_period());
         commit_mover = new FeedRouteMover(
           error_logger,
           host_checker,

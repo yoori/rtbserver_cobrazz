@@ -1,6 +1,11 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
+#include <map>
+#include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -40,28 +45,74 @@ namespace AdServer::LogProcessing
     DECLARE_EXCEPTION(NotAvailable, Exception);
     DECLARE_EXCEPTION(NotReady, Exception);
 
-    RouteBasicHelper(SchedType feed_type)
+    struct Destination
+    {
+      explicit Destination(std::string host_val = std::string())
+        : host(std::move(host_val)),
+          recovery_generation(0),
+          probe(false)
+      {}
+
+      std::string host;
+      std::uint64_t recovery_generation;
+      bool probe;
+    };
+
+    RouteBasicHelper(
+      SchedType feed_type,
+      unsigned long host_check_period)
       noexcept;
+
+    Destination
+    get_destination(const char* src_file)
+      /*throw(NotAvailable, NotReady)*/;
 
     virtual std::string
     get_dest_host(const char* src_file)
       /*throw(NotAvailable, NotReady)*/ = 0;
 
-    virtual void bad_host(const std::string& host) noexcept;
+    virtual void bad_host(const Destination& destination) noexcept;
+
+    void good_host(const Destination& destination) noexcept;
 
     SchedType feed_type() const noexcept;
+
+    unsigned long host_check_period() const noexcept;
 
   protected:
     virtual ~RouteBasicHelper() noexcept {}
 
+  private:
+    struct HostState
+    {
+      HostState()
+        : unavailable(false),
+          probing(false),
+          recovery_generation(0),
+          retry_at(0)
+      {}
+
+      bool unavailable;
+      bool probing;
+      std::uint64_t recovery_generation;
+      Generics::Time retry_at;
+    };
+
+    using HostStateMap = std::map<std::string, HostState>;
+
   protected:
     const SchedType feed_type_;
+
+  private:
+    const unsigned long host_check_period_;
+    std::mutex host_states_lock_;
+    HostStateMap host_states_;
+    std::atomic<std::size_t> unavailable_host_count_;
+    std::atomic<std::uint64_t> recovery_generation_;
   };
 
-  typedef ReferenceCounting::QualPtr<RouteBasicHelper>
-    RouteBasicHelper_var;
-  typedef ReferenceCounting::FixedPtr<RouteBasicHelper>
-    FixedRouteBasicHelper_var;
+  using RouteBasicHelper_var = ReferenceCounting::QualPtr<RouteBasicHelper>;
+  using FixedRouteBasicHelper_var = ReferenceCounting::FixedPtr<RouteBasicHelper>;
 
   class RouteRoundRobinHelper:
     public RouteBasicHelper,
@@ -78,7 +129,7 @@ namespace AdServer::LogProcessing
     get_dest_host(const char* src_file)
       /*throw(NotAvailable)*/;
 
-    virtual void bad_host(const std::string& host) noexcept;
+    virtual void bad_host(const Destination& destination) noexcept;
 
   protected:
     virtual ~RouteRoundRobinHelper() noexcept {};
@@ -95,7 +146,6 @@ namespace AdServer::LogProcessing
     mutable SyncPolicy::Mutex lock_;
     DestMap dst_map_;
     DestMap::const_iterator dst_it_;
-    const unsigned long host_check_period_;
   };
 
   class RouteByNumberHelper:
@@ -103,7 +153,10 @@ namespace AdServer::LogProcessing
     public ReferenceCounting::AtomicImpl
   {
   public:
-    RouteByNumberHelper(SchedType feed_type, const StringList& dst_hosts)
+    RouteByNumberHelper(
+      SchedType feed_type,
+      const StringList& dst_hosts,
+      unsigned long host_check_period)
       /*throw(Exception)*/;
 
     virtual std::string
@@ -147,7 +200,8 @@ namespace AdServer::LogProcessing
     RouteHashHelper(
       SchedType feed_type,
       const StringList& dst_hosts,
-      const char* src_file_name_regexp)
+      const char* src_file_name_regexp,
+      unsigned long host_check_period)
       /*throw(Exception)*/;
 
     virtual std::string
@@ -171,7 +225,8 @@ namespace AdServer::LogProcessing
       const char* config_file,
       const char* config_file_schema,
       const char* src_file_name_regexp,
-      const Generics::Time& distr_reload_period)
+      const Generics::Time& distr_reload_period,
+      unsigned long host_check_period)
       noexcept;
 
     virtual std::string
@@ -199,7 +254,11 @@ namespace AdServer::LogProcessing
     public ReferenceCounting::AtomicImpl
   {
   public:
-    RouteHostFromFileNameHelper(SchedType feed_type, const char* src_file_name_regexp) noexcept;
+    RouteHostFromFileNameHelper(
+      SchedType feed_type,
+      const char* src_file_name_regexp,
+      unsigned long host_check_period)
+      noexcept;
 
     virtual std::string
     get_dest_host(const char* src_file) noexcept;
@@ -215,9 +274,14 @@ namespace AdServer::LogProcessing
 namespace AdServer::LogProcessing
 {
   inline
-  RouteBasicHelper::RouteBasicHelper(SchedType feed_type)
+  RouteBasicHelper::RouteBasicHelper(
+    SchedType feed_type,
+    unsigned long host_check_period)
     noexcept
-    : feed_type_(feed_type)
+    : feed_type_(feed_type),
+      host_check_period_(host_check_period),
+      unavailable_host_count_(0),
+      recovery_generation_(0)
   {
   }
 
@@ -225,6 +289,12 @@ namespace AdServer::LogProcessing
   SchedType RouteBasicHelper::feed_type() const noexcept
   {
     return feed_type_;
+  }
+
+  inline
+  unsigned long RouteBasicHelper::host_check_period() const noexcept
+  {
+    return host_check_period_;
   }
 
 }

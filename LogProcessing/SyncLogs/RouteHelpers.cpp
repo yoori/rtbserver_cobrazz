@@ -16,8 +16,112 @@ namespace AdServer::LogProcessing
   //
   // RouteBasicHelper
   //
-  void RouteBasicHelper::bad_host(const std::string& /*host*/) noexcept
-  {}
+  RouteBasicHelper::Destination
+  RouteBasicHelper::get_destination(const char* src_file)
+    /*throw(NotAvailable, NotReady)*/
+  {
+    Destination destination(get_dest_host(src_file));
+
+    if (destination.host.empty())
+    {
+      return destination;
+    }
+
+    if (unavailable_host_count_.load() == 0)
+    {
+      destination.recovery_generation = recovery_generation_.load();
+      return destination;
+    }
+
+    std::lock_guard<std::mutex> guard(host_states_lock_);
+    destination.recovery_generation = recovery_generation_.load();
+
+    const auto it = host_states_.find(destination.host);
+    if (it == host_states_.end() || !it->second.unavailable)
+    {
+      return destination;
+    }
+
+    HostState& state = it->second;
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    if (!state.probing && state.retry_at <= now)
+    {
+      state.probing = true;
+      destination.probe = true;
+      return destination;
+    }
+
+    Stream::Error ostr;
+    ostr << "destination host '" << destination.host <<
+      "' is temporarily unavailable.";
+    throw NotReady(ostr);
+  }
+
+  void
+  RouteBasicHelper::bad_host(const Destination& destination) noexcept
+  {
+    if (destination.host.empty())
+    {
+      return;
+    }
+
+    try
+    {
+      const Generics::Time retry_at =
+        Generics::Time::get_time_of_day() + host_check_period_;
+      std::lock_guard<std::mutex> guard(host_states_lock_);
+      HostState& state = host_states_[destination.host];
+
+      if (destination.recovery_generation < state.recovery_generation)
+      {
+        return;
+      }
+
+      if (!state.unavailable)
+      {
+        state.unavailable = true;
+        state.probing = false;
+        state.retry_at = retry_at;
+        unavailable_host_count_.fetch_add(1);
+      }
+      else if (destination.probe && state.probing)
+      {
+        state.probing = false;
+        state.retry_at = retry_at;
+      }
+    }
+    catch (...)
+    {}
+  }
+
+  void
+  RouteBasicHelper::good_host(const Destination& destination) noexcept
+  {
+    if (!destination.probe)
+    {
+      return;
+    }
+
+    try
+    {
+      std::lock_guard<std::mutex> guard(host_states_lock_);
+      const auto it = host_states_.find(destination.host);
+      if (it == host_states_.end() ||
+          !it->second.unavailable ||
+          !it->second.probing)
+      {
+        return;
+      }
+
+      HostState& state = it->second;
+      state.recovery_generation = recovery_generation_.fetch_add(1) + 1;
+      state.unavailable = false;
+      state.probing = false;
+      unavailable_host_count_.fetch_sub(1);
+    }
+    catch (...)
+    {}
+  }
 
   //
   // RouteRoundRobinHelper
@@ -37,9 +141,9 @@ namespace AdServer::LogProcessing
   }
 
   void
-  RouteRoundRobinHelper::bad_host(const std::string& host) noexcept
+  RouteRoundRobinHelper::bad_host(const Destination& destination) noexcept
   {
-    DestMap::iterator fnd = dst_map_.find(host);
+    DestMap::iterator fnd = dst_map_.find(destination.host);
     if (fnd != dst_map_.end())
     {
       Generics::Time now = Generics::Time::get_time_of_day();
@@ -55,8 +159,7 @@ namespace AdServer::LogProcessing
     const StringList& dst_hosts,
     unsigned long host_check_period)
     /*throw(Exception)*/
-    : RouteBasicHelper(feed_type),
-      host_check_period_(host_check_period)
+    : RouteBasicHelper(feed_type, host_check_period)
   {
     fill_dst_hosts_(dst_hosts);
     dst_it_ = dst_map_.begin();
@@ -80,7 +183,7 @@ namespace AdServer::LogProcessing
             cur_time = Generics::Time::get_time_of_day();
           }
 
-          if (dst_it_->second.last_check_time + host_check_period_ <= cur_time)
+          if (dst_it_->second.last_check_time + host_check_period() <= cur_time)
           {
             dst_it_->second.available = true;
           }
@@ -107,9 +210,12 @@ namespace AdServer::LogProcessing
   //
   // RouteByNumberHelper
   //
-  RouteByNumberHelper::RouteByNumberHelper(SchedType feed_type, const StringList& dst_hosts)
+  RouteByNumberHelper::RouteByNumberHelper(
+    SchedType feed_type,
+    const StringList& dst_hosts,
+    unsigned long host_check_period)
     /*throw(Exception)*/
-    : RouteBasicHelper(feed_type)
+    : RouteBasicHelper(feed_type, host_check_period)
   {
     std::copy(dst_hosts.begin(), dst_hosts.end(), std::back_insert_iterator<DestHosts>(dst_hosts_));
   }
@@ -193,9 +299,10 @@ namespace AdServer::LogProcessing
   RouteHashHelper::RouteHashHelper(
     SchedType feed_type,
     const StringList& dst_hosts,
-    const char* src_file_name_regexp)
+    const char* src_file_name_regexp,
+    unsigned long host_check_period)
     /*throw(Exception)*/
-    : RouteByNumberHelper(feed_type, dst_hosts),
+    : RouteByNumberHelper(feed_type, dst_hosts, host_check_period),
       FileHashDeterminer(src_file_name_regexp)
   {}
 
@@ -229,9 +336,10 @@ namespace AdServer::LogProcessing
     const char* config_file,
     const char* config_file_schema,
     const char* src_file_name_regexp,
-    const Generics::Time& distr_reload_period)
+    const Generics::Time& distr_reload_period,
+    unsigned long host_check_period)
     noexcept
-    : RouteBasicHelper(feed_type),
+    : RouteBasicHelper(feed_type, host_check_period),
       FileHashDeterminer(src_file_name_regexp),
       config_file_(config_file),
       config_file_schema_(config_file_schema),
@@ -299,9 +407,10 @@ namespace AdServer::LogProcessing
   //
   RouteHostFromFileNameHelper::RouteHostFromFileNameHelper(
     SchedType feed_type,
-    const char* src_file_name_regexp)
+    const char* src_file_name_regexp,
+    unsigned long host_check_period)
     noexcept
-    : RouteBasicHelper(feed_type),
+    : RouteBasicHelper(feed_type, host_check_period),
       src_file_name_regexp_(std::string(src_file_name_regexp))
   {}
 

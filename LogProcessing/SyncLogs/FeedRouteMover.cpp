@@ -70,6 +70,7 @@ namespace AdServer::LogProcessing
     }
 
     bool moved = false;
+    RouteBasicHelper::Destination destination;
 
     for (unsigned long try_number = 0;
         try_number < tries_per_file_ && !moved && active();
@@ -77,7 +78,8 @@ namespace AdServer::LogProcessing
     {
       try
       {
-        file_route_params.dst_host = route_helper_->get_dest_host(src_file);
+        destination = route_helper_->get_destination(src_file);
+        file_route_params.dst_host = destination.host;
 
         if (dst_host)
         {
@@ -134,10 +136,11 @@ namespace AdServer::LogProcessing
         }
 
         moved = true;
+        route_helper_->good_host(destination);
       }
       catch (const eh::Exception& ex)
       {
-        route_helper_->bad_host(file_route_params.dst_host);
+        route_helper_->bad_host(destination);
 
         Stream::Error ostr;
         ostr << "Can't sync '" << file_route_params.src_file_path <<

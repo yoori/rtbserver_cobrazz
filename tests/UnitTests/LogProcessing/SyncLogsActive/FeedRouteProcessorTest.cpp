@@ -240,7 +240,7 @@ namespace
   public:
     AttemptFailedRouteHelper(std::size_t fail_attempt_repeats)
       /*throw(Exception)*/
-      : RouteBasicHelper(ST_ROUND_ROBIN),
+      : RouteBasicHelper(ST_ROUND_ROBIN, 0),
         fail_attempt_repeats_(fail_attempt_repeats),
         attempt_num_(0)
     {}
@@ -259,7 +259,7 @@ namespace
     }
 
     virtual void
-    bad_host(const std::string&) noexcept
+    bad_host(const Destination&) noexcept
     {}
 
   protected:
