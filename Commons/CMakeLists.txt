@@ -19,6 +19,7 @@ add_library(Commons SHARED
   PidFileGuard.cpp
   ActivityGate.cpp
   AsyncMutex.cpp
+  Coro/Utils.cpp
   OrderedAsyncTaskWindow.cpp
   CountActiveObject.cpp
   ZmqConfig.cpp

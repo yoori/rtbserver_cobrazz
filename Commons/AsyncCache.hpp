@@ -283,50 +283,71 @@ namespace AdServer::Commons
           workers = workers_
         ](typename AsyncCacheAwaiter<Cache, Args...>::Value result) mutable
         {
-          auto complete =
-            [
-              state = std::move(state),
-              result = std::move(result)
-            ]() mutable
+          auto complete = [state](Value* result, std::exception_ptr exception) mutable
+          {
+            std::coroutine_handle<> handle;
+            CoroutineResumeScheduler resume_scheduler;
             {
-              std::coroutine_handle<> handle;
-              CoroutineResumeScheduler resume_scheduler;
+              std::lock_guard<std::mutex> guard(state->lock);
+              if (state->cancelled || state->completed)
               {
-                std::lock_guard<std::mutex> guard(state->lock);
-                if (state->cancelled)
-                {
-                  return;
-                }
+                return;
+              }
 
-                state->result = std::move(result);
-                state->completed = true;
-                if (state->suspended)
+              if (exception)
+              {
+                state->exception = std::move(exception);
+              }
+              else
+              {
+                try
                 {
-                  handle = state->handle;
-                  resume_scheduler = state->resume_scheduler;
+                  state->result = std::move(*result);
+                }
+                catch (...)
+                {
+                  state->exception = std::current_exception();
                 }
               }
 
-              if (handle)
+              state->completed = true;
+              if (state->suspended)
               {
-                if (resume_scheduler)
-                {
-                  resume_scheduler(handle);
-                }
-                else
-                {
-                  resume_coroutine(handle);
-                }
+                handle = state->handle;
+                resume_scheduler = state->resume_scheduler;
               }
-            };
+            }
 
-          if (workers)
+            if (handle)
+            {
+              if (resume_scheduler)
+              {
+                resume_scheduler(handle);
+              }
+              else
+              {
+                resume_coroutine(handle);
+              }
+            }
+          };
+
+          if (!workers)
           {
-            workers->post(std::move(complete));
+            complete(&result, {});
+            return;
           }
-          else
+
+          try
           {
-            complete();
+            workers->post(
+              [complete, result = std::move(result)]() mutable
+              {
+                complete(&result, {});
+              });
+          }
+          catch (...)
+          {
+            complete(nullptr, std::current_exception());
           }
         };
 

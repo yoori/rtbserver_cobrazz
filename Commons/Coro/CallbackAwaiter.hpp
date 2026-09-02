@@ -116,7 +116,14 @@ namespace AdServer::Commons
       start_callback_(
         [state](CallbackArgs... callback_args) mutable
         {
-          state->result = StoredResult(std::forward<CallbackArgs>(callback_args)...);
+          try
+          {
+            state->result = StoredResult(std::forward<CallbackArgs>(callback_args)...);
+          }
+          catch (...)
+          {
+            state->exception.emplace(std::current_exception());
+          }
 
           const auto previous_status = state->status.exchange(
             State::Status::S_COMPLETED,
@@ -128,7 +135,7 @@ namespace AdServer::Commons
         }
       );
     }
-    catch(...)
+    catch (...)
     {
       state->exception.emplace(std::current_exception());
       const auto previous_status = state->status.exchange(

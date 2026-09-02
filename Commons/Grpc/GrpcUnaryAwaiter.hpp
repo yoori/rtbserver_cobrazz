@@ -1,15 +1,18 @@
 #pragma once
 
+#include <atomic>
 #include <coroutine>
 #include <exception>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 
 #include <grpcpp/support/status.h>
 
+#include <Commons/Coro/Utils.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/Grpc/ResponseHolder.hpp>
 
@@ -36,8 +39,8 @@ namespace AdServer::Grpc
     bool
     await_ready() const noexcept;
 
-    void
-    await_suspend(std::coroutine_handle<> handle) noexcept;
+    bool
+    await_suspend(std::coroutine_handle<> handle);
 
     ResultType
     await_resume();
@@ -45,7 +48,16 @@ namespace AdServer::Grpc
   private:
     struct State
     {
-      grpc::Status status;
+      enum class Status
+      {
+        Running,
+        Suspended,
+        Completed
+      };
+
+      std::mutex lock;
+      std::atomic<Status> status{Status::Running};
+      grpc::Status grpc_status;
       ResponseHolder<ResponseType> response_holder;
       std::optional<std::exception_ptr> exception;
     };
@@ -101,36 +113,93 @@ namespace AdServer::Grpc
     typename RequestType,
     typename ResponseType,
     typename ResultType>
-  void
+  bool
   GrpcUnaryAwaiter<
     AsyncClientType,
     RequestType,
     ResponseType,
-    ResultType>::await_suspend(std::coroutine_handle<> handle) noexcept
+    ResultType>::await_suspend(std::coroutine_handle<> handle)
   {
     auto state = state_;
     auto client = client_;
     auto executor_pool = executor_pool_;
+    auto complete =
+      [state, executor_pool, handle](
+        const grpc::Status* status,
+        ResponseHolder<ResponseType>* response_holder,
+        std::exception_ptr exception) mutable
+      {
+        typename State::Status previous_status;
+        {
+          std::lock_guard<std::mutex> guard(state->lock);
+          if (state->status.load(std::memory_order_acquire) == State::Status::Completed)
+          {
+            return;
+          }
+
+          if (exception)
+          {
+            state->exception.emplace(std::move(exception));
+          }
+          else
+          {
+            try
+            {
+              state->grpc_status = *status;
+              state->response_holder = std::move(*response_holder);
+            }
+            catch (...)
+            {
+              state->exception.emplace(std::current_exception());
+            }
+          }
+
+          previous_status = state->status.exchange(
+            State::Status::Completed,
+            std::memory_order_acq_rel);
+        }
+
+        if (previous_status != State::Status::Suspended)
+        {
+          return;
+        }
+
+        try
+        {
+          executor_pool->post(
+            [handle]() mutable
+            {
+              AdServer::Commons::resume_coroutine(handle);
+            });
+        }
+        catch (...)
+        {
+          AdServer::Commons::resume_coroutine(handle);
+        }
+      };
+
     try
     {
-      auto callback_state = state;
-      auto callback_executor_pool = executor_pool;
       (client.get()->*method_)(
         request_,
-        [state = std::move(callback_state),
-         executor_pool = std::move(callback_executor_pool),
-         handle](const grpc::Status& status, ResponseHolder<ResponseType>&& response_holder) mutable
+        [complete](
+          const grpc::Status& status,
+          ResponseHolder<ResponseType>&& response_holder) mutable
         {
-          state->status = status;
-          state->response_holder = std::move(response_holder);
-          executor_pool->post([handle]() mutable { handle.resume(); });
+          complete(&status, &response_holder, {});
         });
     }
-    catch(...)
+    catch (...)
     {
-      state->exception.emplace(std::current_exception());
-      executor_pool->post([handle]() mutable { handle.resume(); });
+      complete(nullptr, nullptr, std::current_exception());
     }
+
+    auto expected_status = State::Status::Running;
+    return state->status.compare_exchange_strong(
+      expected_status,
+      State::Status::Suspended,
+      std::memory_order_acq_rel,
+      std::memory_order_acquire);
   }
 
   template<
@@ -152,7 +221,7 @@ namespace AdServer::Grpc
 
     if (!state_->response_holder)
     {
-      if (state_->status.ok())
+      if (state_->grpc_status.ok())
       {
         throw std::logic_error(default_response_error_);
       }
@@ -162,7 +231,7 @@ namespace AdServer::Grpc
 
     const auto& response = state_->response_holder.get();
     return {
-      std::move(state_->status),
+      std::move(state_->grpc_status),
       std::move(state_->response_holder),
       response};
   }

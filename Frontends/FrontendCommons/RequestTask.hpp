@@ -45,7 +45,7 @@ namespace FrontendCommons
     await_resume();
 
     void
-    start_detached(FCGI::BaseHttpResponseWriter_var response_writer) noexcept;
+    start_detached(FCGI::BaseHttpResponseWriter_var response_writer);
 
     struct promise_type
     {

@@ -89,10 +89,16 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::YieldAwaiter::await_suspend(std::coroutine_handle<> handle) noexcept
+  ExecutorPool::YieldAwaiter::await_suspend(std::coroutine_handle<> handle)
   {
     const auto context_index = executor_pool_->get_next_context_index();
-    executor_pool_->dispatch([handle]() mutable { resume_coroutine(handle); }, context_index);
+    auto executor_pool = executor_pool_;
+    executor_pool_->dispatch(
+      [executor_pool = std::move(executor_pool), handle]() mutable
+      {
+        executor_pool->resume_(handle);
+      },
+      context_index);
   }
 
   void
@@ -116,13 +122,14 @@ namespace AdServer::Commons
   }
 
   void
-  ExecutorPool::RescheduleAwaiter::await_suspend(std::coroutine_handle<> handle) noexcept
+  ExecutorPool::RescheduleAwaiter::await_suspend(std::coroutine_handle<> handle)
   {
     const auto context_index = executor_pool_->get_next_context_index();
+    auto executor_pool = executor_pool_;
     executor_pool_->io_service(context_index).post(
-      [handle]() mutable
+      [executor_pool = std::move(executor_pool), handle]() mutable
       {
-        resume_coroutine(handle);
+        executor_pool->resume_(handle);
       });
   }
 
@@ -154,7 +161,7 @@ namespace AdServer::Commons
       resume_scheduler =
         [this, context_index](std::coroutine_handle<> handle)
         {
-          dispatch([handle]() mutable { resume_coroutine(handle); }, context_index);
+          schedule_resume_(handle, context_index);
         };
     }
     else
@@ -162,7 +169,7 @@ namespace AdServer::Commons
       resume_scheduler =
         [this](std::coroutine_handle<> handle)
         {
-          dispatch([handle]() mutable { resume_coroutine(handle); });
+          schedule_resume_(handle);
         };
     }
 
@@ -174,8 +181,10 @@ namespace AdServer::Commons
       {
         io_service.run();
       }
-      catch(...)
-      {}
+      catch (...)
+      {
+        report_exception_(std::current_exception());
+      }
     }
 
     current_executor_pool_ = nullptr;
@@ -202,5 +211,64 @@ namespace AdServer::Commons
   ExecutorPool::io_service(ContextIndex context_index) noexcept
   {
     return *contexts_[context_index].io_service;
+  }
+
+  void
+  ExecutorPool::resume_(std::coroutine_handle<> handle) noexcept
+  {
+    try
+    {
+      resume_coroutine(handle);
+    }
+    catch (...)
+    {
+      report_exception_(std::current_exception());
+    }
+  }
+
+  void
+  ExecutorPool::schedule_resume_(
+    std::coroutine_handle<> handle,
+    std::optional<ContextIndex> context_index) noexcept
+  {
+    try
+    {
+      dispatch(
+        [this, handle]() mutable
+        {
+          resume_(handle);
+        },
+        context_index);
+    }
+    catch (...)
+    {
+      report_exception_(std::current_exception());
+      resume_(handle);
+    }
+  }
+
+  void
+  ExecutorPool::report_exception_(std::exception_ptr exception) noexcept
+  {
+    auto callback = SINGLE_JOB_->callback();
+    if (!callback)
+    {
+      return;
+    }
+
+    try
+    {
+      std::rethrow_exception(std::move(exception));
+    }
+    catch (const std::exception& ex)
+    {
+      callback->critical(String::SubString(ex.what()), "EXECUTOR-POOL");
+    }
+    catch (...)
+    {
+      callback->critical(
+        String::SubString("Unknown exception in ExecutorPool"),
+        "EXECUTOR-POOL");
+    }
   }
 }

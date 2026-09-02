@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coroutine>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <atomic>
@@ -57,7 +58,7 @@ namespace AdServer::Commons
       await_ready() const noexcept;
 
       void
-      await_suspend(std::coroutine_handle<> handle) noexcept;
+      await_suspend(std::coroutine_handle<> handle);
 
       void
       await_resume() const noexcept;
@@ -78,7 +79,7 @@ namespace AdServer::Commons
       await_ready() const noexcept;
 
       void
-      await_suspend(std::coroutine_handle<> handle) noexcept;
+      await_suspend(std::coroutine_handle<> handle);
 
       void
       await_resume() const noexcept;
@@ -115,6 +116,17 @@ namespace AdServer::Commons
 
     IoService&
     io_service(ContextIndex context_index) noexcept;
+
+    void
+    resume_(std::coroutine_handle<> handle) noexcept;
+
+    void
+    schedule_resume_(
+      std::coroutine_handle<> handle,
+      std::optional<ContextIndex> context_index = std::nullopt) noexcept;
+
+    void
+    report_exception_(std::exception_ptr exception) noexcept;
 
     std::vector<Context> contexts_;
     std::atomic_size_t post_index_{0};

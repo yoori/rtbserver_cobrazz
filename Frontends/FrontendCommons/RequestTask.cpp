@@ -74,7 +74,7 @@ namespace FrontendCommons
   }
 
   void
-  RequestTask::start_detached(FCGI::BaseHttpResponseWriter_var response_writer) noexcept
+  RequestTask::start_detached(FCGI::BaseHttpResponseWriter_var response_writer)
   {
     if (handle_)
     {

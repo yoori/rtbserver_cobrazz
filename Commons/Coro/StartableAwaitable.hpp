@@ -30,7 +30,7 @@ namespace AdServer::Commons
     void start(Completion completion);
     void start_detached(Completion completion);
     bool await_ready() const noexcept;
-    void await_suspend(std::coroutine_handle<> continuation) noexcept;
+    void await_suspend(std::coroutine_handle<> continuation);
     ResultType await_resume();
 
   private:
@@ -55,7 +55,7 @@ namespace AdServer::Commons
     void start(Completion completion);
     void start_detached(Completion completion);
     bool await_ready() const noexcept;
-    void await_suspend(std::coroutine_handle<> continuation) noexcept;
+    void await_suspend(std::coroutine_handle<> continuation);
     void await_resume();
 
   private:
@@ -178,7 +178,7 @@ namespace AdServer::Commons
 
   template<typename ResultType>
   inline void
-  StartableAwaitable<ResultType>::await_suspend(std::coroutine_handle<> continuation) noexcept
+  StartableAwaitable<ResultType>::await_suspend(std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
@@ -233,7 +233,7 @@ namespace AdServer::Commons
     auto completion = std::move(promise.completion);
     if (completion)
     {
-      completion(std::move(promise.exception));
+      completion(promise.exception);
     }
     else if (promise.continuation)
     {
@@ -349,7 +349,7 @@ namespace AdServer::Commons
   }
 
   inline void
-  StartableAwaitable<void>::await_suspend(std::coroutine_handle<> continuation) noexcept
+  StartableAwaitable<void>::await_suspend(std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
@@ -391,7 +391,7 @@ namespace AdServer::Commons
     auto completion = std::move(promise.completion);
     if (completion)
     {
-      completion(std::move(promise.exception));
+      completion(promise.exception);
     }
     else if (promise.continuation)
     {
