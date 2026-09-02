@@ -195,17 +195,22 @@ BIDCOST_PREDICTOR_MERGER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_C
 
 CTR_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
   "count($CTR_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
-if [ $CTR_MODEL_GENERATOR_COUNT -ne 0 ]
+CLICKHOUSE_UPLOADER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($CLICKHOUSE_UPLOADER_XPATH)" --plugin-root $PLUGIN_ROOT`
+if [ $CTR_MODEL_GENERATOR_COUNT -ne 0 -o $CLICKHOUSE_UPLOADER_COUNT -ne 0 ]
 then
   $EXEC/ServiceConf.sh \
-    --services-xpath "$CTR_MODEL_GENERATOR_XPATH" \
+    --services-xpath "$CTR_MODEL_GENERATOR_XPATH | $CLICKHOUSE_UPLOADER_XPATH" \
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/SyncLogsServer.xsl \
     --out-file conf/predictor_synclogs_server.conf \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"
+fi
 
+if [ $CTR_MODEL_GENERATOR_COUNT -ne 0 ]
+then
   $EXEC/ServiceConf.sh \
     --services-xpath "$CTR_MODEL_GENERATOR_XPATH" \
     --app-xml $APP_XML \
