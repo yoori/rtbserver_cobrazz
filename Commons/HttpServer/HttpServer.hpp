@@ -35,7 +35,8 @@ namespace AdServer::Commons::HttpServer
 
     using Handler = std::function<Response(const Request&)>;
 
-    HttpServer(std::string host, unsigned short port, unsigned long threads);
+    HttpServer(
+      std::string host, unsigned short port, unsigned long threads, bool keep_alive = false);
 
     ~HttpServer() noexcept override;
 
@@ -55,6 +56,7 @@ namespace AdServer::Commons::HttpServer
     const std::string host_;
     const unsigned short port_;
     const unsigned long threads_;
+    const bool keep_alive_;
 
     std::mutex handlers_lock_;
     std::map<std::string, Handler> handlers_;

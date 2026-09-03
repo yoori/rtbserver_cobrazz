@@ -48,6 +48,13 @@ namespace AdServer::Commons::HttpServer
 
     void start()
     {
+      read_request_();
+    }
+
+  private:
+    void read_request_()
+    {
+      request_ = {};
       stream_.expires_after(std::chrono::seconds(30));
       http::async_read(
         stream_,
@@ -62,7 +69,6 @@ namespace AdServer::Commons::HttpServer
         });
     }
 
-  private:
     void write_response_()
     {
       HttpServer::Request app_request;
@@ -77,7 +83,7 @@ namespace AdServer::Commons::HttpServer
         request_.version());
       response->set(http::field::server, "AdServer");
       response->set(http::field::content_type, app_response.content_type);
-      response->keep_alive(false);
+      response->keep_alive(server_->keep_alive_ && request_.keep_alive());
       response->body() = app_response.body;
       response->prepare_payload();
 
@@ -87,10 +93,22 @@ namespace AdServer::Commons::HttpServer
         [
           self = shared_from_this(),
           response
-        ](const boost::system::error_code&, std::size_t)
+        ](const boost::system::error_code& ec, std::size_t)
         {
-          boost::system::error_code ec;
-          self->stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
+          if (ec)
+          {
+            return;
+          }
+
+          if (response->need_eof())
+          {
+            boost::system::error_code shutdown_ec;
+            self->stream_.socket().shutdown(tcp::socket::shutdown_send, shutdown_ec);
+          }
+          else
+          {
+            self->read_request_();
+          }
         });
     }
 
@@ -101,10 +119,12 @@ namespace AdServer::Commons::HttpServer
     HttpServer* const server_;
   };
 
-  HttpServer::HttpServer(std::string host, unsigned short port, unsigned long threads)
+  HttpServer::HttpServer(
+    std::string host, unsigned short port, unsigned long threads, bool keep_alive)
     : host_(std::move(host)),
       port_(port),
       threads_(std::max<unsigned long>(1, threads)),
+      keep_alive_(keep_alive),
       impl_(new Impl())
   {}
 

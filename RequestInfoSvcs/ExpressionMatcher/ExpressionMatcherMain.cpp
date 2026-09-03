@@ -171,7 +171,8 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
             *config().HttpConfig()->Endpoint().host() :
             "0.0.0.0",
           config().HttpConfig()->Endpoint().port(),
-          config().HttpConfig()->process_threads());
+          config().HttpConfig()->process_threads(),
+          true);
       http_server->add_handler(
         "/stats",
         AdServer::RequestInfoSvcs::make_expression_matcher_stats_http_handler(
