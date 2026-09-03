@@ -11,6 +11,11 @@
 #include <Generics/Singleton.hpp>
 #include <Generics/Time.hpp>
 
+namespace AdServer::ProfilingCommons
+{
+  class FileWriter;
+}
+
 class Application_
 {
 public:
@@ -32,7 +37,7 @@ protected:
 
   void
   generate_svm_(
-    std::ostream& out,
+    AdServer::ProfilingCommons::FileWriter& out,
     std::istream& in,
     const char* config_file,
     const char* feature_columns_str,
@@ -43,7 +48,8 @@ protected:
     const char* name_dictionary_file,
     const char* feature_indexes_file,
     const char* feature_stats_file,
-    bool catboost_model);
+    bool catboost_model,
+    bool add_zero_feature);
 
   void
   generate_ctr_(

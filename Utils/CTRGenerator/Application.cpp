@@ -1,13 +1,18 @@
+#include <algorithm>
+#include <charconv>
+#include <cstdio>
 #include <list>
 #include <vector>
 #include <iterator>
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 #include <limits>
 #include <cstdint>
 
 #include <arpa/inet.h>
+#include <unistd.h>
+
+#include <boost/unordered/unordered_flat_map.hpp>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/BitAlgs.hpp>
@@ -37,11 +42,39 @@ namespace
       "<RESULT WEIGHT FILE>\n"
     "CTRGenerator generate-svm <FEATURE CONFIG JSON> <FEATURE COLUMNS> "
       "[--model=xgboost|catboost] [--feature-indexes-file=<FILE>] "
-      "[--feature-stats=<FILE>]\n"
+      "[--feature-stats=<FILE>] [--no-add-zero-feature]\n"
     "\n"
     "CTRGenerator generate-xgb-ctr <XGB MODEL FILE> <FEATURE CONFIG JSON> "
       "<FEATURE COLUMNS>\n"
     "CTRGenerator generate-ctr <CONFIG DIR> <FEATURE COLUMNS> [LINE]\n";
+
+  template<typename Number>
+  void append_number(std::string& output, Number value)
+  {
+    char buffer[64];
+    const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value);
+    if (result.ec != std::errc())
+    {
+      throw Application_::Exception("Failed to format a number");
+    }
+    output.append(buffer, result.ptr);
+  }
+
+  void append_number(std::string& output, float value)
+  {
+    char buffer[64];
+    const int size = std::snprintf(
+      buffer,
+      sizeof(buffer),
+      "%.*g",
+      std::numeric_limits<float>::max_digits10,
+      static_cast<double>(value));
+    if (size <= 0 || static_cast<std::size_t>(size) >= sizeof(buffer))
+    {
+      throw Application_::Exception("Failed to format a floating-point number");
+    }
+    output.append(buffer, size);
+  }
 }
 
 // Application
@@ -66,6 +99,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::StringOption opt_feature_indexes_file;
   Generics::AppUtils::StringOption opt_feature_stats_file;
   Generics::AppUtils::CheckOption opt_out_hashes;
+  Generics::AppUtils::CheckOption opt_no_add_zero_feature;
   Generics::AppUtils::Args args(-1);
 
   args.add(Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"), opt_help);
@@ -95,6 +129,10 @@ Application_::main(int& argc, char** argv)
   args.add(Generics::AppUtils::equal_name("feature-indexes-file"), opt_feature_indexes_file);
 
   args.add(Generics::AppUtils::equal_name("feature-stats"), opt_feature_stats_file);
+
+  args.add(
+    Generics::AppUtils::equal_name("no-add-zero-feature"),
+    opt_no_add_zero_feature);
 
   args.parse(argc - 1, argv + 1);
 
@@ -164,6 +202,8 @@ Application_::main(int& argc, char** argv)
       std::getline(std::cin, feature_columns);
     }
 
+    std::cin.tie(nullptr);
+
     bool catboost_model;
     if (*opt_model == "catboost")
     {
@@ -180,8 +220,9 @@ Application_::main(int& argc, char** argv)
       throw Exception(ostr);
     }
 
+    AdServer::ProfilingCommons::FileWriter svm_writer(STDOUT_FILENO, 10 * 1024 * 1024);
     generate_svm_(
-      std::cout,
+      svm_writer,
       std::cin,
       config_data_file.c_str(),
       feature_columns.c_str(),
@@ -192,7 +233,9 @@ Application_::main(int& argc, char** argv)
       opt_name_dictionary->c_str(),
       opt_feature_indexes_file->c_str(),
       opt_feature_stats_file->c_str(),
-      catboost_model);
+      catboost_model,
+      !opt_no_add_zero_feature.enabled());
+    svm_writer.close();
   }
   else if (command == "generate-xgb-ctr")
   {
@@ -451,7 +494,7 @@ Application_::load_dictionary_(std::map<std::string, std::string>& dict, const c
 
 void
 Application_::generate_svm_(
-  std::ostream& out,
+  AdServer::ProfilingCommons::FileWriter& out,
   std::istream& in,
   const char* config_file,
   const char* feature_columns_str,
@@ -462,7 +505,8 @@ Application_::generate_svm_(
   const char* name_dictionary_file_path,
   const char* feature_indexes_file_path,
   const char* feature_stats_file_path,
-  bool catboost_model)
+  bool catboost_model,
+  bool add_zero_feature)
 {
   using namespace xsd::AdServer;
 
@@ -627,6 +671,10 @@ Application_::generate_svm_(
   unsigned long line_i = 0;
   std::vector<std::string> feature_column_values;
   feature_column_values.reserve(feature_columns.size());
+  std::string result_line;
+  result_line.reserve(4096);
+  boost::unordered_flat_map<unsigned long, float> hash_values;
+  std::vector<std::pair<unsigned long, float>> ordered_hashes;
   while (!in.eof())
   {
     // parse line
@@ -731,12 +779,9 @@ Application_::generate_svm_(
     CTRGenerator::Calculation ctr_calculation;
     ctr_generator.calculate(ctr_calculation, calc_params);
 
-    // output hashes
-    std::ostringstream res_line_ostr;
-    res_line_ostr <<
-      std::setprecision(std::numeric_limits<float>::max_digits10) << label;
-
-    std::map<unsigned long, float> ordered_hashes;
+    result_line.clear();
+    result_line.append(label);
+    hash_values.clear();
 
     for (auto hash_it = ctr_calculation.hashes.begin();
       hash_it != ctr_calculation.hashes.end(); ++hash_it)
@@ -745,9 +790,18 @@ Application_::generate_svm_(
       const uint32_t svm_index = index + 1;
       if (allowed_feature_indexes.empty() || allowed_feature_indexes[svm_index])
       {
-        ordered_hashes[svm_index] = hash_it->second;
+        hash_values[svm_index] = hash_it->second;
       }
     }
+
+    ordered_hashes.assign(hash_values.begin(), hash_values.end());
+    std::sort(
+      ordered_hashes.begin(),
+      ordered_hashes.end(),
+      [](const auto& left, const auto& right)
+      {
+        return left.first < right.first;
+      });
 
     if (!feature_stats.empty())
     {
@@ -762,14 +816,21 @@ Application_::generate_svm_(
       }
     }
 
-    if (catboost_model && line_i == 0 && ordered_hashes.find(features_size) == ordered_hashes.end())
+    if (
+      catboost_model &&
+      add_zero_feature &&
+      line_i == 0 &&
+      hash_values.find(features_size) == hash_values.end())
     {
-      ordered_hashes[features_size] = 0;
+      ordered_hashes.emplace_back(features_size, 0);
     }
 
-    for (auto hash_it = ordered_hashes.begin(); hash_it != ordered_hashes.end(); ++hash_it)
+    for (const auto& hash : ordered_hashes)
     {
-      res_line_ostr << ' ' << hash_it->first << ":" << hash_it->second;
+      result_line.push_back(' ');
+      append_number(result_line, hash.first);
+      result_line.push_back(':');
+      append_number(result_line, hash.second);
     }
 
     if (dict_table.get())
@@ -778,8 +839,8 @@ Application_::generate_svm_(
       ctr_generator.fill_dictionary(*dict_table, calc_params);
     }
 
-    // push line to output
-    out << res_line_ostr.str() << std::endl;
+    result_line.push_back('\n');
+    out.write(result_line.data(), result_line.size());
     ++line_i;
   }
 
