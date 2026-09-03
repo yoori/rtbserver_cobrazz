@@ -2,6 +2,7 @@
 
 import decimal
 import importlib.util
+import os
 import pathlib
 import signal
 import sys
@@ -49,6 +50,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
     self.assertEqual(7000000, config.selection_chunk_rows)
     self.assertEqual(10000000, config.main_chunk_rows)
+    self.assertEqual(1, config.ctr_generator_workers)
     self.assertEqual(10, config.selection_fit_steps)
     self.assertEqual(3, config.max_feature_selection_steps)
     self.assertEqual(0.98, config.feature_correlation_threshold)
@@ -130,6 +132,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       'selection_chunk_rows': 70,
       'main_chunk_rows': 90,
       'validation_set_rows': 20,
+      'ctr_generator_workers': 6,
       'selection_validation_sets': 2,
       'training_validation_sets': 3,
       'final_test_sets': 4,
@@ -154,6 +157,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual(70, config.selection_chunk_rows)
     self.assertEqual(90, config.main_chunk_rows)
     self.assertEqual(20, config.validation_set_rows)
+    self.assertEqual(6, config.ctr_generator_workers)
     self.assertEqual(2, config.selection_validation_sets)
     self.assertEqual(3, config.training_validation_sets)
     self.assertEqual(4, config.final_test_sets)
@@ -190,6 +194,17 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         'workspace_root': '/tmp/ctr-generator',
         'postgres_conn': 'host=postdb00 dbname=stat',
         'feature_correlation_threshold': 1.01,
+        'data_delay': 86400,
+      })
+
+  def test_invalid_ctr_generator_workers(self):
+    config = MODULE.Config()
+    with self.assertRaisesRegex(ValueError, 'ctr_generator_workers'):
+      config.init_json({
+        'pid_file': '/tmp/ctr-generator.pid',
+        'workspace_root': '/tmp/ctr-generator',
+        'postgres_conn': 'host=postdb00 dbname=stat',
+        'ctr_generator_workers': 0,
         'data_delay': 86400,
       })
 
@@ -405,7 +420,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           dictionary_file=None,
           indexes_file=None,
           stats_file=None,
+          workers=1,
       ):
+        self.assertEqual(1, workers)
         self.assertEqual(csv_file, input_file)
         self.assertEqual(features_config_file, config_file)
         self.assertEqual(feature_indexes_file, indexes_file)
@@ -440,6 +457,74 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual(1, feature_statistics.total_clicks)
       self.assertEqual([(csv_file, 1, True)], callback_files)
       self.assertEqual((1, 1), feature_statistics.get(1))
+
+  def test_generate_libsvm_parallel_matches_serial_and_merges_artifacts(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      work_dir = pathlib.Path(temp_dir)
+      executable = work_dir / 'CTRGenerator'
+      executable.write_text(
+        '#!' + sys.executable + '\n'
+        'import pathlib\n'
+        'import sys\n'
+        'args = sys.argv[1:]\n'
+        'explicit_header = len(args) > 2 and not args[2].startswith("--")\n'
+        'if not explicit_header:\n'
+        '  sys.stdin.readline()\n'
+        'rows = [line.rstrip("\\n") for line in sys.stdin if line.strip()]\n'
+        'no_zero = "--no-add-zero-feature" in args\n'
+        'for index, row in enumerate(rows):\n'
+        '  label, value = row.split(",")\n'
+        '  suffix = "" if no_zero or index else " 16:0"\n'
+        '  print(label + " 1:" + value + suffix)\n'
+        'for argument in args:\n'
+        '  if argument.startswith("--dictionary="):\n'
+        '    path = pathlib.Path(argument.split("=", 1)[1])\n'
+        '    values = sorted({row.split(",")[1] for row in rows})\n'
+        '    path.write_text("".join("1,value:" + value + "\\n" for value in values))\n'
+        '  if argument.startswith("--feature-stats="):\n'
+        '    path = pathlib.Path(argument.split("=", 1)[1])\n'
+        '    clicks = sum(row.startswith("1,") for row in rows)\n'
+        '    count = len(rows)\n'
+        '    path.write_text(f"0,{count},{clicks}\\n1,{count},{clicks}\\n")\n')
+      executable.chmod(0o755)
+      csv_file = work_dir / 'source.csv'
+      csv_file.write_text(
+        'label,value\n' + ''.join(
+          str(index % 2) + ',' + str(index % 11) + '\n'
+          for index in range(101)))
+      features_config_file = work_dir / 'features.json'
+      features_config_file.write_text('{"features_dimension":4}\n')
+      serial_svm = work_dir / 'serial.libsvm'
+      parallel_svm = work_dir / 'parallel.libsvm'
+      serial_dictionary = work_dir / 'serial.features'
+      parallel_dictionary = work_dir / 'parallel.features'
+      serial_stats = work_dir / 'serial.stats'
+      parallel_stats = work_dir / 'parallel.stats'
+      environment = {
+        'PATH': str(work_dir) + os.pathsep + os.environ['PATH'],
+      }
+      with unittest.mock.patch.dict(os.environ, environment):
+        TRAINER_MODULE.generate_libsvm(
+          csv_file,
+          serial_svm,
+          features_config_file,
+          serial_dictionary,
+          feature_stats_file=serial_stats)
+        TRAINER_MODULE.generate_libsvm(
+          csv_file,
+          parallel_svm,
+          features_config_file,
+          parallel_dictionary,
+          feature_stats_file=parallel_stats,
+          workers=8)
+
+      self.assertEqual(serial_svm.read_bytes(), parallel_svm.read_bytes())
+      self.assertEqual(
+        serial_dictionary.read_bytes(),
+        parallel_dictionary.read_bytes())
+      self.assertEqual(serial_stats.read_bytes(), parallel_stats.read_bytes())
+      dictionary_lines = parallel_dictionary.read_text().splitlines()
+      self.assertEqual(sorted(set(dictionary_lines)), dictionary_lines)
 
   def test_deduplicate_feature_indexes_merges_sources_and_preserves_drops(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -994,7 +1079,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           dictionary_file=None,
           feature_indexes_file=None,
           feature_stats_file=None,
+          workers=1,
       ):
+        del workers
         del (
           csv_file,
           features_config_file,
@@ -1147,7 +1234,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           dictionary_file=None,
           feature_indexes_file=None,
           feature_stats_file=None,
+          workers=1,
       ):
+        del workers
         self.assertIn(input_file, csv_files)
         self.assertEqual(features_config_file, config_file)
         self.assertIsNone(dictionary_file)
@@ -1238,7 +1327,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           dictionary_file=None,
           feature_indexes_file=None,
           feature_stats_file=None,
+          workers=1,
       ):
+        del workers
         del dictionary_file, feature_indexes_file
         self.assertIn(input_file, csv_files)
         self.assertEqual(correction_config, config_file)
@@ -1339,7 +1430,9 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           dictionary_file=None,
           feature_indexes_file=None,
           feature_stats_file=None,
+          workers=1,
       ):
+        del workers
         del input_file, dictionary_file
         output_file.write_text('1 1:1\n')
         if config_file == stable_config:

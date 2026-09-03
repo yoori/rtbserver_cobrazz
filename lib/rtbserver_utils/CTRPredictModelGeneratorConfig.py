@@ -13,6 +13,7 @@ class Config:
     self.selection_chunk_rows = 7000000
     self.main_chunk_rows = 10000000
     self.validation_set_rows = 200000
+    self.ctr_generator_workers = 1
     self.selection_validation_sets = 3
     self.training_validation_sets = 3
     self.final_test_sets = 3
@@ -47,6 +48,8 @@ class Config:
       config_json.get('main_chunk_rows', 10000000))
     self.validation_set_rows = int(
       config_json.get('validation_set_rows', 200000))
+    self.ctr_generator_workers = int(
+      config_json.get('ctr_generator_workers', 1))
     self.selection_validation_sets = int(
       config_json.get('selection_validation_sets', 3))
     self.training_validation_sets = int(
@@ -100,6 +103,7 @@ class Config:
         'selection_validation_sets',
         'training_validation_sets',
         'final_test_sets',
+        'ctr_generator_workers',
         'selection_fit_steps',
         'max_feature_selection_steps',
         'training_fit_steps',

@@ -2,6 +2,7 @@
 
 import argparse
 import bisect
+import concurrent.futures
 import contextlib
 import csv
 import datetime
@@ -948,7 +949,11 @@ def generate_libsvm(
     dictionary_file=None,
     feature_indexes_file=None,
     feature_stats_file=None,
+    workers=1,
 ):
+  if workers <= 0:
+    raise ValueError('CTRGenerator workers must be positive')
+
   command = [
     'CTRGenerator',
     'generate-svm',
@@ -961,12 +966,166 @@ def generate_libsvm(
     command.append('--feature-indexes-file=' + str(feature_indexes_file))
   if feature_stats_file is not None:
     command.append('--feature-stats=' + str(feature_stats_file))
-  with csv_file.open() as input_file, svm_file.open('w') as output_file:
-    subprocess.run(
+  if workers == 1:
+    with csv_file.open() as input_file, svm_file.open('w') as output_file:
+      subprocess.run(
+        command,
+        check=True,
+        stdin=input_file,
+        stdout=output_file)
+    return
+
+  feature_columns, ranges = csv_data_ranges(csv_file, workers)
+  if len(ranges) <= 1:
+    with csv_file.open() as input_file, svm_file.open('w') as output_file:
+      subprocess.run(
+        command,
+        check=True,
+        stdin=input_file,
+        stdout=output_file)
+    return
+
+  logger.info(
+    'Running CTRGenerator with %d workers for %s',
+    len(ranges),
+    csv_file)
+  with tempfile.TemporaryDirectory(
+      dir=str(svm_file.parent),
+      prefix=svm_file.name + '.parts.') as temp_dir_name:
+    temp_dir = pathlib.Path(temp_dir_name)
+    svm_parts = [
+      temp_dir / ('part-' + str(index).zfill(3) + '.libsvm')
+      for index in range(len(ranges))
+    ]
+    dictionary_parts = (
+      [part.with_suffix('.features') for part in svm_parts]
+      if dictionary_file is not None else None)
+    stats_parts = (
+      [part.with_suffix('.stats') for part in svm_parts]
+      if feature_stats_file is not None else None)
+
+    def run_part(index):
+      part_command = command[:3] + [feature_columns] + command[3:]
+      part_command.append('--no-add-zero-feature')
+      if dictionary_parts is not None:
+        part_command = [
+          argument for argument in part_command
+          if not argument.startswith('--dictionary=')
+        ]
+        part_command.append('--dictionary=' + str(dictionary_parts[index]))
+      if stats_parts is not None:
+        part_command = [
+          argument for argument in part_command
+          if not argument.startswith('--feature-stats=')
+        ]
+        part_command.append('--feature-stats=' + str(stats_parts[index]))
+      run_ctr_generator_range(
+        part_command,
+        csv_file,
+        ranges[index][0],
+        ranges[index][1],
+        svm_parts[index])
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=len(ranges)) as executor:
+      futures = [executor.submit(run_part, index) for index in range(len(ranges))]
+      for future in futures:
+        future.result()
+
+    merge_libsvm_parts(svm_parts, svm_file, features_config_file)
+    if dictionary_parts is not None:
+      environment = os.environ.copy()
+      environment['LC_ALL'] = 'C'
+      subprocess.run(
+        [
+          'sort',
+          '-u',
+          '-o',
+          str(dictionary_file),
+          *(str(part) for part in dictionary_parts),
+        ],
+        check=True,
+        env=environment)
+    if stats_parts is not None:
+      statistics = FeatureStatistics()
+      for stats_part in stats_parts:
+        statistics.add_file(stats_part)
+      with feature_stats_file.open('w') as output_file:
+        output_file.write(
+          '0,' + str(statistics.total_impressions) + ',' +
+          str(statistics.total_clicks) + '\n')
+        for index in sorted(statistics.features):
+          impressions, clicks = statistics.features[index]
+          output_file.write(
+            str(index) + ',' + str(impressions) + ',' + str(clicks) + '\n')
+
+
+def csv_data_ranges(csv_file, workers):
+  file_size = csv_file.stat().st_size
+  with csv_file.open('rb') as input_file:
+    feature_columns = input_file.readline().rstrip(b'\r\n').decode()
+    data_start = input_file.tell()
+    if data_start >= file_size:
+      return feature_columns, []
+
+    boundaries = [data_start]
+    data_size = file_size - data_start
+    for index in range(1, workers):
+      boundary = data_start + data_size * index // workers
+      input_file.seek(boundary - 1)
+      if input_file.read(1) != b'\n':
+        input_file.seek(boundary)
+        input_file.readline()
+        boundary = input_file.tell()
+      if boundaries[-1] < boundary < file_size:
+        boundaries.append(boundary)
+    boundaries.append(file_size)
+  return feature_columns, list(zip(boundaries, boundaries[1:]))
+
+
+def run_ctr_generator_range(command, csv_file, start, end, svm_part):
+  with csv_file.open('rb') as input_file, svm_part.open('wb') as output_file:
+    input_file.seek(start)
+    process = subprocess.Popen(
       command,
-      check=True,
-      stdin=input_file,
+      stdin=subprocess.PIPE,
       stdout=output_file)
+    try:
+      position = start
+      while position < end:
+        data = input_file.read(min(1024 * 1024, end - position))
+        if not data:
+          break
+        process.stdin.write(data)
+        position += len(data)
+      process.stdin.close()
+      return_code = process.wait()
+    except BaseException:
+      process.kill()
+      process.wait()
+      raise
+    if return_code != 0:
+      raise subprocess.CalledProcessError(return_code, command)
+
+
+def merge_libsvm_parts(svm_parts, svm_file, features_config_file):
+  with features_config_file.open() as input_file:
+    features_size = 1 << int(json.load(input_file)['features_dimension'])
+  first_line = True
+  with svm_file.open('wb') as output_file:
+    for svm_part in svm_parts:
+      with svm_part.open('rb') as input_file:
+        if first_line:
+          line = input_file.readline()
+          if line:
+            feature_prefix = str(features_size).encode() + b':'
+            if not any(
+                token.startswith(feature_prefix)
+                for token in line.rstrip(b'\n').split(b' ')[1:]):
+              line = line.rstrip(b'\n') + b' ' + feature_prefix + b'0\n'
+            output_file.write(line)
+            first_line = False
+        shutil.copyfileobj(input_file, output_file)
 
 
 def deduplicate_feature_indexes(
@@ -1178,6 +1337,7 @@ def stream_libsvm_chunks(
     row_counter=None,
     chunk_statistics=None,
     csv_chunk_callback=None,
+    workers=1,
 ):
   csv_iterator = iter(csv_chunks)
   svm_file = None
@@ -1240,7 +1400,8 @@ def stream_libsvm_chunks(
           features_config_file,
           dictionary_file,
           feature_indexes_file,
-          feature_stats_file)
+          feature_stats_file,
+          workers=workers)
       if dictionary_file is not None:
         with dictionary_file.open('rb') as input_file:
           dictionary_lines.update(input_file)
@@ -1365,6 +1526,7 @@ def prepare_validation_libsvm_sets(
     progress_prefix=None,
     condition=None,
     label='click',
+    workers=1,
 ):
   validation_files = []
   validation_statistics = []
@@ -1419,7 +1581,8 @@ def prepare_validation_libsvm_sets(
           svm_file,
           features_config_file,
           feature_indexes_file=feature_indexes_file,
-          feature_stats_file=feature_stats_file)
+          feature_stats_file=feature_stats_file,
+          workers=workers)
       validation_files.append(svm_file)
       if feature_stats_file is not None:
         statistics = FeatureStatistics()
@@ -1457,6 +1620,7 @@ def prepare_denoise_validation_sets(
     validation_sets,
     validation_offset_rows,
     progress=None,
+    workers=1,
 ):
   if len(common_validation_files) != validation_sets:
     raise ValueError(
@@ -1516,7 +1680,8 @@ def prepare_denoise_validation_sets(
           csv_file,
           correction_file,
           correction_features_config_file,
-          feature_stats_file=feature_stats_file)
+          feature_stats_file=feature_stats_file,
+          workers=workers)
       statistics = FeatureStatistics()
       statistics.add_file(feature_stats_file)
       feature_stats_file.unlink()
@@ -1567,6 +1732,7 @@ def stream_aligned_chunks(
     progress=None,
     stable_chunk_statistics=None,
     correction_chunk_statistics=None,
+    workers=1,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
@@ -1625,13 +1791,15 @@ def stream_aligned_chunks(
           common_features_config_file,
           stable_dictionary,
           common_feature_indexes_file,
-          stable_stats)
+          stable_stats,
+          workers=workers)
         generate_libsvm(
           csv_file,
           correction_svm,
           correction_features_config_file,
           correction_dictionary,
-          feature_stats_file=correction_stats)
+          feature_stats_file=correction_stats,
+          workers=workers)
         with stable_dictionary.open('rb') as input_file:
           stable_dictionary_lines.update(input_file)
         with correction_dictionary.open('rb') as input_file:
@@ -1689,6 +1857,7 @@ def prepare_campaign_validation_sets(
     campaign_feature_indexes_file=None,
     validation_offset_rows=0,
     progress_prefix='campaign_validation',
+    workers=1,
 ):
   svm_files = []
   baseline_files = []
@@ -1748,13 +1917,15 @@ def prepare_campaign_validation_sets(
           csv_file,
           stable_svm,
           stable_features_config_file,
-          feature_indexes_file=stable_feature_indexes_file)
+          feature_indexes_file=stable_feature_indexes_file,
+          workers=workers)
         generate_libsvm(
           csv_file,
           campaign_svm,
           campaign_features_config_file,
           feature_indexes_file=campaign_feature_indexes_file,
-          feature_stats_file=stats_file)
+          feature_stats_file=stats_file,
+          workers=workers)
         current_statistics = FeatureStatistics()
         current_statistics.add_file(stats_file)
         stable_trainer.predict_raw_(
@@ -1793,6 +1964,7 @@ def stream_campaign_chunks(
     campaign_feature_indexes_file=None,
     progress_prefix='campaign_training',
     chunk_statistics=None,
+    workers=1,
 ):
   csv_iterator = iter(csv_chunks)
   current_files = []
@@ -1851,14 +2023,16 @@ def stream_campaign_chunks(
           csv_file,
           stable_svm,
           stable_features_config_file,
-          feature_indexes_file=stable_feature_indexes_file)
+          feature_indexes_file=stable_feature_indexes_file,
+          workers=workers)
         generate_libsvm(
           csv_file,
           campaign_svm,
           campaign_features_config_file,
           dictionary_file=dictionary_file,
           feature_indexes_file=campaign_feature_indexes_file,
-          feature_stats_file=stats_file)
+          feature_stats_file=stats_file,
+          workers=workers)
         if dictionary_file is not None:
           with dictionary_file.open('rb') as input_file:
             dictionary_lines.update(input_file)
@@ -1928,6 +2102,7 @@ def evaluate_campaign_holdout(
     ssp_ctr_trainer,
     campaign_models,
     progress,
+    workers=1,
 ):
   target_name = 'campaign_' + str(campaign_id)
   step_prefix = target_name
@@ -2004,7 +2179,8 @@ def evaluate_campaign_holdout(
         common_svm,
         common_features_config_file,
         feature_indexes_file=common_feature_indexes_file,
-        feature_stats_file=common_stats_file)
+        feature_stats_file=common_stats_file,
+        workers=workers)
       statistics = FeatureStatistics()
       statistics.add_file(common_stats_file)
       artifact['dataset']['clicks'] = statistics.total_clicks
@@ -2038,7 +2214,8 @@ def evaluate_campaign_holdout(
       generate_libsvm(
         csv_file,
         correction_svm,
-        correction_features_config_file)
+        correction_features_config_file,
+        workers=workers)
       artifact['evaluations'].extend((
         {
           'model': 'common_denoise',
@@ -2064,7 +2241,8 @@ def evaluate_campaign_holdout(
       generate_libsvm(
         csv_file,
         ssp_ctr_svm,
-        ssp_ctr_features_config_file)
+        ssp_ctr_features_config_file,
+        workers=workers)
       artifact['evaluations'].append({
         'model': 'common_ssp_ctr',
         'prediction': 'sigmoid(common_ssp_ctr)',
@@ -2082,7 +2260,8 @@ def evaluate_campaign_holdout(
       generate_libsvm(
         csv_file,
         campaign_svm,
-        campaign_features_config_file)
+        campaign_features_config_file,
+        workers=workers)
       for model_entry in campaign_models:
         weight = float(model_entry['traits']['weight'])
         evaluations = campaign_trainer.evaluate_prediction_weights_(
@@ -2544,7 +2723,8 @@ def generate_model_(config, in_progress_model):
         validation_rows),
       progress=in_progress_model,
       progress_section='prepare',
-      progress_prefix='selection_validation')
+      progress_prefix='selection_validation',
+      workers=config.ctr_generator_workers)
 
     selection_ssp_ctr_thresholds = None
     selection_ssp_ctr_rows = 0
@@ -2594,7 +2774,8 @@ def generate_model_(config, in_progress_model):
         progress_section='prepare',
         progress_prefix='feature_selection',
         csv_chunk_callback=(
-          collect_selection_ssp_ctr if selection_step == 1 else None))
+          collect_selection_ssp_ctr if selection_step == 1 else None),
+        workers=config.ctr_generator_workers)
 
     selection_fit_start, selection_fit_end = fit_step_callbacks(
       in_progress_model,
@@ -2654,7 +2835,8 @@ def generate_model_(config, in_progress_model):
         collect_statistics=True,
         progress=in_progress_model,
         progress_section='common',
-        progress_prefix='common_validation'))
+        progress_prefix='common_validation',
+        workers=config.ctr_generator_workers))
     # Validation files are exported newest first: final_test is the newest
     # holdout, test is the next newest holdout.  Training consumes older rows.
     training_validation_end = config.final_test_sets
@@ -2683,7 +2865,8 @@ def generate_model_(config, in_progress_model):
       progress=in_progress_model,
       progress_section='common',
       progress_prefix='training',
-      chunk_statistics=training_chunk_statistics)
+      chunk_statistics=training_chunk_statistics,
+      workers=config.ctr_generator_workers)
     common_fit_start, common_fit_end = fit_step_callbacks(
       in_progress_model,
       'common',
@@ -2762,7 +2945,8 @@ def generate_model_(config, in_progress_model):
         validation_rows,
         core_validation_sets,
         core_validation_offset_rows,
-        in_progress_model))
+        in_progress_model,
+        workers=config.ctr_generator_workers))
     correction_training_inputs = correction_validation_inputs[
       training_validation_end:]
     correction_final_inputs = correction_validation_inputs[
@@ -2792,7 +2976,8 @@ def generate_model_(config, in_progress_model):
       correction_statistics,
       in_progress_model,
       stable_chunk_statistics,
-      correction_chunk_statistics)
+      correction_chunk_statistics,
+      workers=config.ctr_generator_workers)
     aligned_fit_start, aligned_fit_end = fit_step_callbacks(
       in_progress_model,
       ('common_denoise', 'common_stable'),
@@ -2923,7 +3108,8 @@ def generate_model_(config, in_progress_model):
       progress_section='common_ssp_ctr',
       progress_prefix='ssp_selection_validation',
       condition=ssp_ctr_condition,
-      label='ssp_ctr')
+      label='ssp_ctr',
+      workers=config.ctr_generator_workers)
     def ssp_ctr_selection_chunks(unused_selection_step):
       del unused_selection_step
       ssp_ctr_selection_csv_chunks = repeat_partitioned_chunks(
@@ -2945,7 +3131,8 @@ def generate_model_(config, in_progress_model):
         ssp_ctr_features_config_file,
         progress=in_progress_model,
         progress_section='common_ssp_ctr',
-        progress_prefix='ssp_feature_selection')
+        progress_prefix='ssp_feature_selection',
+        workers=config.ctr_generator_workers)
 
     ssp_ctr_selection_fit_start, ssp_ctr_selection_fit_end = (
       fit_step_callbacks(
@@ -3010,7 +3197,8 @@ def generate_model_(config, in_progress_model):
       progress_section='common_ssp_ctr',
       progress_prefix='ssp_validation',
       condition=ssp_ctr_condition,
-      label='ssp_ctr')
+      label='ssp_ctr',
+      workers=config.ctr_generator_workers)
     ssp_ctr_dictionary_lines = set()
     ssp_ctr_training_counter = RowCounter()
     ssp_ctr_training_csv_chunks = repeat_partitioned_chunks(
@@ -3035,7 +3223,8 @@ def generate_model_(config, in_progress_model):
       progress=in_progress_model,
       progress_section='common_ssp_ctr',
       progress_prefix='ssp_training',
-      row_counter=ssp_ctr_training_counter)
+      row_counter=ssp_ctr_training_counter,
+      workers=config.ctr_generator_workers)
     ssp_ctr_fit_start, ssp_ctr_fit_end = fit_step_callbacks(
       in_progress_model,
       'common_ssp_ctr',
@@ -3182,7 +3371,8 @@ def generate_model_(config, in_progress_model):
             validation_offset_rows=(
               (config.training_validation_sets + config.final_test_sets) *
               campaign_validation_rows),
-            progress_prefix='campaign_selection_validation'))
+            progress_prefix='campaign_selection_validation',
+            workers=config.ctr_generator_workers))
         def campaign_selection_chunks(unused_selection_step):
           del unused_selection_step
           campaign_selection_csv_chunks = repeat_partitioned_chunks(
@@ -3208,7 +3398,8 @@ def generate_model_(config, in_progress_model):
             None,
             None,
             in_progress_model,
-            progress_prefix='campaign_feature_selection')
+            progress_prefix='campaign_feature_selection',
+            workers=config.ctr_generator_workers)
 
         selection_fit_start, selection_fit_end = fit_step_callbacks(
           in_progress_model,
@@ -3278,7 +3469,8 @@ def generate_model_(config, in_progress_model):
             in_progress_model,
             campaign_feature_indexes_file=campaign_feature_indexes_file,
             validation_offset_rows=(
-              0)))
+              0),
+            workers=config.ctr_generator_workers))
         campaign_dictionary_lines = set()
         campaign_statistics = FeatureStatistics()
         campaign_chunk_statistics = []
@@ -3306,7 +3498,8 @@ def generate_model_(config, in_progress_model):
           campaign_statistics,
           in_progress_model,
           campaign_feature_indexes_file=campaign_feature_indexes_file,
-          chunk_statistics=campaign_chunk_statistics)
+          chunk_statistics=campaign_chunk_statistics,
+          workers=config.ctr_generator_workers)
         campaign_training_validation_end = config.final_test_sets
         campaign_fit_start, campaign_fit_end = fit_step_callbacks(
           in_progress_model,
@@ -3462,7 +3655,8 @@ def generate_model_(config, in_progress_model):
         campaign_trainer=campaign_model_trainer,
         ssp_ctr_trainer=ssp_ctr_trainer,
         campaign_models=campaign_model_entries,
-        progress=in_progress_model)
+        progress=in_progress_model,
+        workers=config.ctr_generator_workers)
     in_progress_model.complete_post_processing()
 
     model_entries = [

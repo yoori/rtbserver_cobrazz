@@ -47,6 +47,9 @@
     test="count($generator-config/@main_chunk_rows) = 0">10000000</xsl:if>,
   "validation_set_rows": <xsl:value-of select="$generator-config/@validation_set_rows"/><xsl:if
     test="count($generator-config/@validation_set_rows) = 0">200000</xsl:if>,
+  "ctr_generator_workers": <xsl:value-of
+    select="$generator-config/@ctr_generator_workers"/><xsl:if
+    test="count($generator-config/@ctr_generator_workers) = 0">1</xsl:if>,
   "selection_validation_sets": <xsl:value-of select="$generator-config/@selection_validation_sets"/><xsl:if
     test="count($generator-config/@selection_validation_sets) = 0">3</xsl:if>,
   "training_validation_sets": <xsl:value-of select="$generator-config/@training_validation_sets"/><xsl:if

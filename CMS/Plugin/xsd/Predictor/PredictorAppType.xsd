@@ -146,6 +146,8 @@
     <xsd:attribute name="selection_chunk_rows" type="xsd:positiveInteger" use="optional" default="7000000"/>
     <xsd:attribute name="main_chunk_rows" type="xsd:positiveInteger" use="optional" default="10000000"/>
     <xsd:attribute name="validation_set_rows" type="xsd:positiveInteger" use="optional" default="200000"/>
+    <xsd:attribute
+      name="ctr_generator_workers" type="xsd:positiveInteger" use="optional" default="1"/>
     <xsd:attribute name="selection_validation_sets" type="xsd:positiveInteger" use="optional" default="3"/>
     <xsd:attribute name="training_validation_sets" type="xsd:positiveInteger" use="optional" default="3"/>
     <xsd:attribute name="final_test_sets" type="xsd:positiveInteger" use="optional" default="3"/>
