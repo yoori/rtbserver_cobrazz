@@ -3,6 +3,7 @@ add_executable(RocksDBBatchingProfileMapPerfTest
 
 target_link_libraries(RocksDBBatchingProfileMapPerfTest
   PRIVATE
+    Commons
     Generics
     ProfileMapRocksDB
 )
