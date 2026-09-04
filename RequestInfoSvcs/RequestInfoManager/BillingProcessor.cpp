@@ -1644,6 +1644,24 @@ namespace AdServer::RequestInfoSvcs
         agg_it->request()->ctr << '\t' <<
         agg_it->request()->imps.str() << '\t' << agg_it->request()->clicks.str();
     }
+
+    file.flush();
+
+    if (!file)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": failed to flush file '" << file_path << "'";
+      throw Exception(ostr);
+    }
+
+    file.close();
+
+    if (!file)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": failed to close file '" << file_path << "'";
+      throw Exception(ostr);
+    }
   }
 
   void
@@ -1931,11 +1949,7 @@ namespace AdServer::RequestInfoSvcs
     add_child_object(scheduler_.in());
     add_child_object(task_runner_.in());
     add_child_object(request_pool_.in());
-    if (Generics::RefCountableActiveObject* active_request_sender =
-      dynamic_cast<Generics::RefCountableActiveObject*>(request_sender))
-    {
-      add_child_object(active_request_sender);
-    }
+    add_child_object(request_sender);
 
     // init context
     Sender::Context_var context(new Sender::Context());

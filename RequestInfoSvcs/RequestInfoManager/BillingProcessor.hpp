@@ -102,7 +102,7 @@ namespace AdServer::RequestInfoSvcs
 
     typedef std::vector<Request_var> RequestArray;
 
-    struct RequestSender: public virtual ReferenceCounting::AtomicImpl
+    struct RequestSender: public Generics::RefCountableCompositeActiveObject
     {
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(ServerUnreachable, Exception);
@@ -118,9 +118,7 @@ namespace AdServer::RequestInfoSvcs
 
     typedef ReferenceCounting::SmartPtr<RequestSender> RequestSender_var;
 
-    class BillingServerRequestSender:
-      public RequestSender,
-      public Generics::CompositeActiveObject
+    class BillingServerRequestSender: public RequestSender
     {
     public:
       BillingServerRequestSender(
