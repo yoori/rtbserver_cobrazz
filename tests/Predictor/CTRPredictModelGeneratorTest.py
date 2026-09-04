@@ -105,19 +105,14 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertNotIn('campaign_feature_selection_fit_003', campaign_step_ids)
     self.assertIn('campaign_training_fit_003', campaign_step_ids)
     self.assertNotIn('campaign_training_fit_004', campaign_step_ids)
-    ssp_ctr_step_ids = {
+    self.assertFalse(any('ssp' in step_id for step_id in step_ids))
+    post_processing_ids = {
       step['id']
-      for step in TRAINER_MODULE.ssp_ctr_train_steps(
-        config,
-        selection_fit_steps=2,
-        training_fit_steps=3)
+      for step in TRAINER_MODULE.post_processing_train_steps([
+        (123, 1000, 100, 10),
+      ])
     }
-    self.assertIn('ssp_selection_validation_libsvm_001', ssp_ctr_step_ids)
-    self.assertIn('prune_correlated_feature_indexes', ssp_ctr_step_ids)
-    self.assertIn('ssp_feature_selection_fit_002', ssp_ctr_step_ids)
-    self.assertNotIn('ssp_feature_selection_fit_003', ssp_ctr_step_ids)
-    self.assertIn('ssp_training_fit_003', ssp_ctr_step_ids)
-    self.assertIn('finalize_metrics', ssp_ctr_step_ids)
+    self.assertNotIn('campaign_123_ssp_ctr', post_processing_ids)
     self.assertTrue(all(step['started'] is None for step in prepare_steps))
     self.assertTrue(all(step['ended'] is None for step in prepare_steps))
 
@@ -332,18 +327,6 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
         ['campaign', 'userch'],
         correction_config['features'])
       self.assertNotIn(['userch'], correction_config['features'])
-
-  def test_common_ssp_ctr_config_uses_request_features_without_target(self):
-    features = TRAINER_MODULE.SSP_CTR_FEATURE_CONFIG['features']
-
-    self.assertIn(['publisher'], features)
-    self.assertIn(['ssp_tag_id'], features)
-    self.assertIn(['ssp_viewability'], features)
-    self.assertIn(['ssp_vtr'], features)
-    self.assertNotIn(['ssp_ctr'], features)
-    self.assertNotIn(['campaign'], features)
-    self.assertNotIn(['group'], features)
-    self.assertNotIn(['ccid'], features)
 
   def test_final_model_properties_use_best_validation_checkpoint(self):
     properties = TRAINER_MODULE.final_model_properties(
@@ -735,57 +718,13 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertEqual((7, 2), statistics.get(2))
       self.assertEqual((0, 0), statistics.get(3))
 
-  def test_ssp_ctr_threshold_statistics(self):
-    with tempfile.TemporaryDirectory() as temp_dir:
-      csv_file = pathlib.Path(temp_dir) / 'selection.csv'
-      csv_file.write_text(
-        'label,SSP_CTR\n'
-        '1,0.0005\n'
-        '0,0.001\n'
-        '1,0.0011\n'
-        '0,0.03\n'
-        '1,0.031\n'
-        '1,\n')
-
-      result = TRAINER_MODULE.ssp_ctr_threshold_statistics(csv_file)
-
-      self.assertEqual(5, result['rows'])
-      self.assertEqual(3, result['clicks'])
-      self.assertEqual(0.0, result['ctr_thresholds'][0]['ctr_goal'])
-      self.assertEqual(5, result['ctr_thresholds'][0]['impressions'])
-      self.assertEqual(3, result['ctr_thresholds'][0]['clicks'])
-      self.assertEqual(
-        5,
-        result['ctr_thresholds'][0]['total_impressions'])
-      self.assertAlmostEqual(
-        0.0636,
-        result['ctr_thresholds'][0]['predicted_ctr_sum'])
-      self.assertEqual(0.001, result['ctr_thresholds'][1]['ctr_goal'])
-      self.assertEqual(4, result['ctr_thresholds'][1]['impressions'])
-      self.assertEqual(2, result['ctr_thresholds'][1]['clicks'])
-      self.assertAlmostEqual(
-        0.0631,
-        result['ctr_thresholds'][1]['predicted_ctr_sum'])
-      aggregate = TRAINER_MODULE.add_ctr_thresholds(
-        None,
-        result['ctr_thresholds'])
-      aggregate = TRAINER_MODULE.add_ctr_thresholds(
-        aggregate,
-        result['ctr_thresholds'])
-      finalized = TRAINER_MODULE.finalize_ctr_thresholds(aggregate)
-      self.assertEqual(10, finalized[0]['impressions'])
-      self.assertEqual(6, finalized[0]['clicks'])
-      self.assertEqual(100, finalized[0]['share'])
-      self.assertAlmostEqual(0.01272, finalized[0]['average_predicted_ctr'])
-      self.assertEqual(80, finalized[1]['share'])
-
-  def test_prepare_feature_selection_steps_include_ssp_ctr_thresholds(self):
+  def test_prepare_feature_selection_steps_exclude_research_thresholds(self):
     config = MODULE.Config()
 
     steps = TRAINER_MODULE.prepare_train_steps(config)
     ids = [step['id'] for step in steps]
 
-    self.assertIn('feature_selection_thresholds_001', ids)
+    self.assertNotIn('feature_selection_thresholds_001', ids)
 
   def test_in_progress_model_uses_traits_and_is_removed(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -1131,23 +1070,20 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
             common_features_config_file=temp_path / 'common.json',
             correction_features_config_file=temp_path / 'denoise.json',
             campaign_features_config_file=temp_path / 'campaign.json',
-            ssp_ctr_features_config_file=temp_path / 'ssp.json',
             common_feature_indexes_file=temp_path / 'indexes',
             common_model_file=temp_path / 'common.cbm',
             correction_model_file=temp_path / 'denoise.cbm',
             stable_model_file=temp_path / 'stable.cbm',
-            ssp_ctr_model_file=temp_path / 'ssp.cbm',
             common_trainer=Trainer(),
             correction_trainer=Trainer(),
             campaign_trainer=Trainer(),
-            ssp_ctr_trainer=Trainer(),
             campaign_models=campaign_models,
             progress=progress)
 
-        self.assertEqual(6, len(result['evaluations']))
+        self.assertEqual(5, len(result['evaluations']))
         self.assertEqual(1, result['dataset']['clicks'])
         self.assertEqual(
-          {'common', 'common_denoise', 'common_stable', 'common_ssp_ctr',
+          {'common', 'common_denoise', 'common_stable',
            'campaign_123', 'campaign_456'},
           {item['model'] for item in result['evaluations']})
         self.assertFalse(any(
@@ -1155,10 +1091,10 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           for item in result['evaluations']))
         self.assertEqual(
           0.02,
-          result['evaluations'][4]['runtime_logloss'])
+          result['evaluations'][3]['runtime_logloss'])
         self.assertEqual(
           0.03,
-          result['evaluations'][4]['unit_weight_logloss'])
+          result['evaluations'][3]['unit_weight_logloss'])
 
   def test_interrupted_post_processing_target_is_persisted(self):
     with tempfile.TemporaryDirectory() as temp_dir:

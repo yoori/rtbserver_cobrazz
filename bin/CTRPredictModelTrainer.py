@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.12
 
 import argparse
-import bisect
 import concurrent.futures
 import contextlib
 import csv
@@ -27,10 +26,6 @@ from rtbserver_utils.SignalInterruptHandler import SignalInterruptHandler
 
 
 logger = logging.getLogger(__name__)
-
-
-CTR_THRESHOLD_GOALS = tuple(
-  index / 1000.0 for index in range(31))
 
 
 def utc_now_text():
@@ -106,27 +101,6 @@ CAMPAIGN_MODEL_FEATURE_CONFIG = {
     ['ssp_vtr'],
   ],
 }
-
-SSP_CTR_FEATURE_CONFIG = {
-  'features_dimension': 14,
-  'features': [
-    ['publisher'],
-    ['tag'],
-    ['etag'],
-    ['url'],
-    ['sizeid'],
-    ['wd'],
-    ['hour'],
-    ['device'],
-    ['colo'],
-    ['geoch'],
-    ['userch'],
-    ['ssp_tag_id'],
-    ['ssp_viewability'],
-    ['ssp_vtr'],
-  ],
-}
-
 
 def train_step(step_id, title):
   return {
@@ -214,7 +188,6 @@ def prepare_train_steps(config):
       config.selection_fit_steps,
       (
         ('export', 'export dataset'),
-        ('thresholds', 'calculate SSP CTR thresholds'),
         ('libsvm', 'build LibSVM'),
         ('fit', 'fit'),
       )),
@@ -255,68 +228,6 @@ def common_train_steps(config):
     train_step('save_feature_dictionary', 'Save feature dictionary'),
     train_step('save_model', 'Save common model'),
     train_step('finalize_metrics', 'Finalize common metrics'),
-  ]
-
-
-def ssp_ctr_train_steps(
-    config,
-    selection_fit_steps=None,
-    training_fit_steps=None,
-):
-  if selection_fit_steps is None:
-    selection_fit_steps = config.selection_fit_steps
-  if training_fit_steps is None:
-    training_fit_steps = config.training_fit_steps
-  validation_sets = config.training_validation_sets + config.final_test_sets
-  return [
-    *indexed_train_steps(
-      'ssp_selection_validation',
-      'SSP CTR feature selection validation dataset',
-      config.selection_validation_sets,
-      (
-        ('export', 'export'),
-        ('libsvm', 'build LibSVM'),
-      )),
-    *indexed_train_steps(
-      'ssp_feature_selection',
-      'SSP CTR feature selection',
-      selection_fit_steps,
-      (
-        ('export', 'export dataset'),
-        ('libsvm', 'build LibSVM'),
-        ('fit', 'fit independent model'),
-      )),
-    train_step(
-      'prune_correlated_feature_indexes',
-      'Remove highly correlated feature indexes'),
-    train_step(
-      'deduplicate_feature_indexes',
-      'Remove fully duplicated feature indexes'),
-    train_step('save_feature_indexes', 'Save selected feature indexes'),
-    train_step(
-      'release_selection_validation',
-      'Release SSP CTR feature selection validation files'),
-    *indexed_train_steps(
-      'ssp_validation',
-      'SSP CTR validation dataset',
-      validation_sets,
-      (
-        ('export', 'export'),
-        ('libsvm', 'build LibSVM'),
-      )),
-    *indexed_train_steps(
-      'ssp_training',
-      'Common SSP CTR training',
-      training_fit_steps,
-      (
-        ('export', 'export dataset'),
-        ('libsvm', 'build LibSVM'),
-        ('fit', 'fit and validate'),
-      )),
-    train_step('save_feature_dictionary', 'Save feature dictionary'),
-    train_step('save_model', 'Save Common SSP CTR model'),
-    train_step('finalize_metrics', 'Finalize Common SSP CTR metrics'),
-    train_step('release_validation', 'Release SSP CTR validation files'),
   ]
 
 
@@ -467,7 +378,6 @@ def post_processing_train_steps(campaigns):
         ('export', 'export independent holdout'),
         ('common', 'evaluate common models'),
         ('denoise', 'evaluate common + denoise'),
-        ('ssp_ctr', 'evaluate Common SSP CTR'),
         ('campaigns', 'evaluate campaign models'),
         ('save', 'save evaluation artifact')):
       result.append(train_step(
@@ -544,13 +454,20 @@ class RowCounter:
 
 
 class InProgressModel:
-  def __init__(self, model_root, train_start=None, prepare_steps=None):
+  def __init__(
+      self,
+      model_root,
+      train_start=None,
+      prepare_steps=None,
+      model_suffix='',
+      root_traits=None,
+  ):
     if train_start is None:
       train_start = datetime.datetime.now(datetime.timezone.utc)
     self.train_start = train_start.replace(microsecond=0)
     self.train_start_text = (
       self.train_start.isoformat().replace('+00:00', 'Z'))
-    self.model_id = self.train_start.strftime('%Y%m%d.%H%M%S')
+    self.model_id = self.train_start.strftime('%Y%m%d.%H%M%S') + model_suffix
     self.model_root = pathlib.Path(model_root)
     self.path = self.model_root / ('~' + self.model_id)
     self.traits = None
@@ -580,6 +497,7 @@ class InProgressModel:
     self.models_by_name = {}
     self.post_processing = None
     self.dirty_artifacts = set()
+    self.root_traits = dict(root_traits or {})
 
   def __enter__(self):
     self.model_root.mkdir(parents=True, exist_ok=True)
@@ -592,6 +510,7 @@ class InProgressModel:
       (self.path / 'traits' / 'models').mkdir(parents=True)
       (self.path / 'traits' / 'post_processing').mkdir(parents=True)
       self.traits = {
+        **self.root_traits,
         'traits_version': 2,
         'status': 'in_progress',
         'train_start': self.train_start_text,
@@ -2090,16 +2009,13 @@ def evaluate_campaign_holdout(
     common_features_config_file,
     correction_features_config_file,
     campaign_features_config_file,
-    ssp_ctr_features_config_file,
     common_feature_indexes_file,
     common_model_file,
     correction_model_file,
     stable_model_file,
-    ssp_ctr_model_file,
     common_trainer,
     correction_trainer,
     campaign_trainer,
-    ssp_ctr_trainer,
     campaign_models,
     progress,
     workers=1,
@@ -2234,25 +2150,6 @@ def evaluate_campaign_holdout(
     remove_files((correction_svm, common_baseline))
     refresh_artifact()
 
-    ssp_ctr_svm = work_dir / (target_name + '-post-ssp-ctr.libsvm')
-    owned_files.append(ssp_ctr_svm)
-    with progress.train_step(
-        'post_processing', step_prefix + '_ssp_ctr'):
-      generate_libsvm(
-        csv_file,
-        ssp_ctr_svm,
-        ssp_ctr_features_config_file,
-        workers=workers)
-      artifact['evaluations'].append({
-        'model': 'common_ssp_ctr',
-        'prediction': 'sigmoid(common_ssp_ctr)',
-        'logloss': ssp_ctr_trainer.evaluate_model_(
-          ssp_ctr_model_file,
-          ssp_ctr_svm)['Logloss'],
-      })
-    remove_files((ssp_ctr_svm,))
-    refresh_artifact()
-
     campaign_svm = work_dir / (target_name + '-post-campaign.libsvm')
     owned_files.append(campaign_svm)
     with progress.train_step(
@@ -2320,105 +2217,6 @@ def dataset_fit_size(statistics):
   return size
 
 
-def ssp_ctr_threshold_statistics(csv_file):
-  bucket_count = len(CTR_THRESHOLD_GOALS) + 1
-  impressions = [0] * bucket_count
-  clicks = [0.0] * bucket_count
-  predicted_ctr_sums = [0.0] * bucket_count
-  total_rows = 0
-  total_clicks = 0.0
-  with pathlib.Path(csv_file).open(newline='') as input_file:
-    reader = csv.DictReader(input_file)
-    if reader.fieldnames is None:
-      raise RuntimeError('SSP CTR export returned no CSV header')
-    for field in ('label', 'SSP_CTR'):
-      if field not in reader.fieldnames:
-        raise RuntimeError(
-          "SSP CTR export is missing '" + field + "' column")
-    for row in reader:
-      ssp_ctr_text = row.get('SSP_CTR')
-      if ssp_ctr_text is None or not ssp_ctr_text.strip():
-        continue
-      try:
-        predicted_ctr = float(ssp_ctr_text)
-        label = float(row['label'])
-      except (KeyError, TypeError, ValueError):
-        raise RuntimeError(
-          'SSP CTR export contains an invalid label or SSP_CTR') from None
-      if not math.isfinite(predicted_ctr) or not math.isfinite(label):
-        raise RuntimeError(
-          'SSP CTR export contains a non-finite label or SSP_CTR')
-      bucket = bisect.bisect_right(CTR_THRESHOLD_GOALS, predicted_ctr)
-      impressions[bucket] += 1
-      clicks[bucket] += label
-      predicted_ctr_sums[bucket] += predicted_ctr
-      total_rows += 1
-      total_clicks += label
-
-  for index in range(bucket_count - 2, -1, -1):
-    impressions[index] += impressions[index + 1]
-    clicks[index] += clicks[index + 1]
-    predicted_ctr_sums[index] += predicted_ctr_sums[index + 1]
-  return {
-    'rows': total_rows,
-    'clicks': int(round(total_clicks)),
-    'ctr_thresholds': [
-      {
-        'ctr_goal': ctr_goal,
-        'impressions': impressions[index + 1],
-        'clicks': int(round(clicks[index + 1])),
-        'predicted_ctr_sum': predicted_ctr_sums[index + 1],
-        'total_impressions': total_rows,
-      }
-      for index, ctr_goal in enumerate(CTR_THRESHOLD_GOALS)
-    ],
-  }
-
-
-def add_ctr_thresholds(aggregate, chunk):
-  if aggregate is None:
-    aggregate = [
-      {
-        'ctr_goal': item['ctr_goal'],
-        'impressions': 0,
-        'clicks': 0,
-        'predicted_ctr_sum': 0.0,
-        'total_impressions': 0,
-      }
-      for item in chunk
-    ]
-  if len(aggregate) != len(chunk):
-    raise ValueError('CTR threshold count mismatch')
-  for aggregate_item, chunk_item in zip(aggregate, chunk):
-    if aggregate_item['ctr_goal'] != chunk_item['ctr_goal']:
-      raise ValueError('CTR threshold mismatch')
-    aggregate_item['impressions'] += chunk_item['impressions']
-    aggregate_item['clicks'] += chunk_item['clicks']
-    aggregate_item['predicted_ctr_sum'] += chunk_item['predicted_ctr_sum']
-    aggregate_item['total_impressions'] += chunk_item['total_impressions']
-  return aggregate
-
-
-def finalize_ctr_thresholds(aggregate):
-  return [
-    {
-      'ctr_goal': item['ctr_goal'],
-      'impressions': item['impressions'],
-      'clicks': item['clicks'],
-      'share': (
-        item['impressions'] * 100 / item['total_impressions']
-        if item['total_impressions'] else None),
-      'actual_ctr': (
-        item['clicks'] / item['impressions']
-        if item['impressions'] else None),
-      'average_predicted_ctr': (
-        item['predicted_ctr_sum'] / item['impressions']
-        if item['impressions'] else None),
-    }
-    for item in aggregate
-  ]
-
-
 def add_training_dataset_properties(history, chunk_statistics):
   for item, statistics in zip(history, chunk_statistics):
     size = dataset_fit_size([statistics])
@@ -2449,18 +2247,11 @@ def generate_model_(config, in_progress_model):
       work_dir,
       CAMPAIGN_MODEL_FEATURE_CONFIG,
       'CTRGeneratorCampaignModelConfig.json')
-    ssp_ctr_features_config_file = prepare_features_config(
-      work_dir,
-      SSP_CTR_FEATURE_CONFIG,
-      'CTRGeneratorCommonSSPCTRConfig.json')
   common_dictionary_file = work_dir / 'RImpressionTrain.common.features'
   correction_dictionary_file = (
     work_dir / 'RImpressionTrain.campaign-correction.features')
   stable_dictionary_file = work_dir / 'RImpressionTrain.stable-common.features'
   feature_indexes_file = work_dir / 'RImpressionTrain.feature-indexes'
-  ssp_ctr_dictionary_file = work_dir / 'RImpressionTrain.ssp-ctr.features'
-  ssp_ctr_feature_indexes_file = (
-    work_dir / 'RImpressionTrain.ssp-ctr.feature-indexes')
 
   logger.debug('Loading data from ClickHouse')
   exporter = RImpressionTrainExporter(
@@ -2531,7 +2322,6 @@ def generate_model_(config, in_progress_model):
     feature_name_resolver = PostgresFeatureNameResolver(config.postgres_conn)
     campaign_names = feature_name_resolver.resolve_campaign_names(
       campaign_id for campaign_id, _, _, _ in eligible_campaigns)
-  ssp_ctr_condition = exporter.ssp_ctr_condition()
   with in_progress_model.train_step('prepare', 'count_available_rows'):
     available_training_rows = exporter.count_rows(
       date_from,
@@ -2543,27 +2333,6 @@ def generate_model_(config, in_progress_model):
       date_to,
       '(' + exporter.validation_condition() + ') AND (' +
       validation_time_condition + ')')
-    available_ssp_ctr_training_rows = exporter.count_rows(
-      date_from,
-      date_to,
-      '(' + exporter.training_condition() + ') AND (' +
-      ssp_ctr_condition + ') AND (' + training_time_condition + ')')
-    available_ssp_ctr_validation_rows = exporter.count_rows(
-      date_from,
-      date_to,
-      '(' + exporter.validation_condition() + ') AND (' +
-      ssp_ctr_condition + ') AND (' + validation_time_condition + ')')
-  if available_ssp_ctr_training_rows == 0:
-    raise RuntimeError('No SSP CTR rows are available for training')
-  ssp_ctr_selection_fit_steps = campaign_fit_steps(
-    available_ssp_ctr_training_rows,
-    config.selection_chunk_rows,
-    config.selection_fit_steps)
-  ssp_ctr_training_source_steps = campaign_fit_steps(
-    available_ssp_ctr_training_rows,
-    config.main_chunk_rows,
-    config.training_fit_steps)
-  ssp_ctr_training_fit_steps = config.training_fit_steps
   in_progress_model.publish_model_plan(
     [
       {
@@ -2588,18 +2357,6 @@ def generate_model_(config, in_progress_model):
         'status': 'planned',
         'train_steps': aligned_train_steps(
           config, 'Stable common training'),
-      },
-      {
-        'name': 'common_ssp_ctr',
-        'kind': 'common_ssp_ctr',
-        'runtime': False,
-        'status': 'planned',
-        'eligible_training_impressions': available_ssp_ctr_training_rows,
-        'validation_impressions': available_ssp_ctr_validation_rows,
-        'train_steps': ssp_ctr_train_steps(
-          config,
-          ssp_ctr_selection_fit_steps,
-          ssp_ctr_training_fit_steps),
       },
       *[
         {
@@ -2639,9 +2396,7 @@ def generate_model_(config, in_progress_model):
       config.min_campaign_training_impressions),
     min_campaign_validation_impressions=(
       config.min_campaign_validation_impressions),
-    min_campaign_validation_clicks=config.min_campaign_validation_clicks,
-    ssp_ctr_training_rows=available_ssp_ctr_training_rows,
-    ssp_ctr_validation_rows=available_ssp_ctr_validation_rows)
+    min_campaign_validation_clicks=config.min_campaign_validation_clicks)
   in_progress_model.publish_post_processing_plan(
     post_processing_train_steps(eligible_campaigns),
     [
@@ -2664,30 +2419,13 @@ def generate_model_(config, in_progress_model):
     raise RuntimeError('Not enough rows to create validation sets')
   if available_training_rows == 0:
     raise RuntimeError('No rows are available for training')
-  ssp_ctr_validation_rows = min(
-    config.validation_set_rows,
-    available_ssp_ctr_validation_rows // validation_sets)
-  if ssp_ctr_validation_rows == 0:
-    raise RuntimeError('Not enough SSP CTR rows to create validation sets')
   selection_rows = min(selection_rows, available_training_rows)
   training_rows = min(training_rows, available_training_rows)
-  ssp_ctr_selection_rows = min(
-    available_ssp_ctr_training_rows,
-    config.selection_chunk_rows * ssp_ctr_selection_fit_steps)
-  ssp_ctr_training_rows = min(
-    available_ssp_ctr_training_rows,
-    config.main_chunk_rows * ssp_ctr_training_source_steps)
   logger.info(
     'Using rows: selection=%d, training=%d, validation=%d x %d',
     selection_rows,
     training_rows,
     validation_rows,
-    validation_sets)
-  logger.info(
-    'Using SSP CTR rows: selection=%d, training=%d, validation=%d x %d',
-    ssp_ctr_selection_rows,
-    ssp_ctr_training_rows,
-    ssp_ctr_validation_rows,
     validation_sets)
 
   trainer = CatBoostTrainer(
@@ -2699,11 +2437,6 @@ def generate_model_(config, in_progress_model):
   campaign_model_trainer = CatBoostTrainer(
     features_config_file=campaign_features_config_file,
     train_dir=work_dir / 'catboost_info' / 'campaign-model')
-  ssp_ctr_trainer = CatBoostTrainer(
-    features_config_file=ssp_ctr_features_config_file,
-    train_dir=work_dir / 'catboost_info' / 'common-ssp-ctr',
-    loss_function='CrossEntropy',
-    include_ctr_thresholds=False)
   with tempfile.TemporaryDirectory(
       dir=str(work_dir),
       prefix='ctr-model-cycle.') as cycle_dir_name:
@@ -2726,34 +2459,8 @@ def generate_model_(config, in_progress_model):
       progress_prefix='selection_validation',
       workers=config.ctr_generator_workers)
 
-    selection_ssp_ctr_thresholds = None
-    selection_ssp_ctr_rows = 0
-    selection_ssp_ctr_clicks = 0
-
-    def collect_selection_ssp_ctr(csv_file, row_count):
-      nonlocal selection_ssp_ctr_thresholds
-      nonlocal selection_ssp_ctr_rows
-      nonlocal selection_ssp_ctr_clicks
-      del row_count
-      chunk_result = ssp_ctr_threshold_statistics(csv_file)
-      if chunk_result['rows'] == 0:
-        return
-      selection_ssp_ctr_rows += chunk_result['rows']
-      selection_ssp_ctr_clicks += chunk_result['clicks']
-      selection_ssp_ctr_thresholds = add_ctr_thresholds(
-        selection_ssp_ctr_thresholds,
-        chunk_result['ctr_thresholds'])
-      in_progress_model.update_prepare(
-        ctr_thresholds=finalize_ctr_thresholds(
-          selection_ssp_ctr_thresholds),
-        dataset_sizes={
-          'ssp_ctr': {
-            'rows': selection_ssp_ctr_rows,
-            'clicks': selection_ssp_ctr_clicks,
-          },
-        })
-
-    def selection_chunks(selection_step):
+    def selection_chunks(unused_selection_step):
+      del unused_selection_step
       selection_csv_chunks = repeat_partitioned_chunks(
         exporter,
         cycle_dir,
@@ -2773,8 +2480,6 @@ def generate_model_(config, in_progress_model):
         progress=in_progress_model,
         progress_section='prepare',
         progress_prefix='feature_selection',
-        csv_chunk_callback=(
-          collect_selection_ssp_ctr if selection_step == 1 else None),
         workers=config.ctr_generator_workers)
 
     selection_fit_start, selection_fit_end = fit_step_callbacks(
@@ -3090,216 +2795,6 @@ def generate_model_(config, in_progress_model):
       properties=stable_properties,
       dataset_sizes=stable_dataset_sizes,
       ctr_thresholds=aligned_models['stable_common']['ctr_thresholds'])
-
-    ssp_ctr_train_start = in_progress_model.start_models('common_ssp_ctr')
-    ssp_ctr_selection_validation_files, _ = prepare_validation_libsvm_sets(
-      exporter,
-      cycle_dir,
-      'ssp-ctr-selection-validation',
-      ssp_ctr_features_config_file,
-      validation_cutoff,
-      date_to,
-      ssp_ctr_validation_rows,
-      config.selection_validation_sets,
-      validation_offset_rows=(
-        (config.training_validation_sets + config.final_test_sets) *
-        ssp_ctr_validation_rows),
-      progress=in_progress_model,
-      progress_section='common_ssp_ctr',
-      progress_prefix='ssp_selection_validation',
-      condition=ssp_ctr_condition,
-      label='ssp_ctr',
-      workers=config.ctr_generator_workers)
-    def ssp_ctr_selection_chunks(unused_selection_step):
-      del unused_selection_step
-      ssp_ctr_selection_csv_chunks = repeat_partitioned_chunks(
-        exporter,
-        cycle_dir,
-        'ssp-ctr-selection',
-        ssp_ctr_selection_rows,
-        config.selection_chunk_rows,
-        ssp_ctr_selection_fit_steps,
-        date_from,
-        date_to,
-        '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
-        label='ssp_ctr',
-        order='ASC')
-      return stream_libsvm_chunks(
-        ssp_ctr_selection_csv_chunks,
-        cycle_dir,
-        'ssp-ctr-selection',
-        ssp_ctr_features_config_file,
-        progress=in_progress_model,
-        progress_section='common_ssp_ctr',
-        progress_prefix='ssp_feature_selection',
-        workers=config.ctr_generator_workers)
-
-    ssp_ctr_selection_fit_start, ssp_ctr_selection_fit_end = (
-      fit_step_callbacks(
-        in_progress_model,
-        'common_ssp_ctr',
-        'ssp_feature_selection'))
-    ssp_ctr_selection_fit_iterations = scaled_fit_iterations(
-      config.fit_iterations,
-      config.selection_fit_steps,
-      ssp_ctr_selection_fit_steps)
-    ssp_ctr_correlation_start, ssp_ctr_correlation_end = (
-      repeated_step_callbacks(
-        in_progress_model,
-        'common_ssp_ctr',
-        'prune_correlated_feature_indexes'))
-    ssp_ctr_feature_indexes = select_uncorrelated_feature_indexes(
-      ssp_ctr_trainer,
-      ssp_ctr_selection_chunks,
-      ssp_ctr_selection_validation_files,
-      ssp_ctr_selection_fit_iterations,
-      cycle_dir,
-      ssp_ctr_selection_fit_steps,
-      config.max_feature_selection_steps,
-      config.feature_correlation_threshold,
-      ssp_ctr_selection_fit_start,
-      ssp_ctr_selection_fit_end,
-      ssp_ctr_correlation_start,
-      ssp_ctr_correlation_end)
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'deduplicate_feature_indexes'):
-      ssp_ctr_feature_indexes = deduplicate_feature_indexes(
-        ssp_ctr_selection_validation_files,
-        ssp_ctr_feature_indexes,
-        cycle_dir,
-        dropped_features_file=cycle_dir /
-        'RImpressionTrain.ssp-ctr.feature-indexes.dropped')
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'save_feature_indexes'):
-      with ssp_ctr_feature_indexes_file.open('w') as output_file:
-        for feature_index in sorted(ssp_ctr_feature_indexes):
-          output_file.write(str(feature_index) + '\n')
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'release_selection_validation'):
-      remove_files(ssp_ctr_selection_validation_files)
-      ssp_ctr_selection_validation_files = []
-
-    ssp_ctr_core_validation_sets = (
-      config.training_validation_sets + config.final_test_sets)
-    ssp_ctr_core_validation_offset_rows = 0
-    ssp_ctr_validation_files, _ = prepare_validation_libsvm_sets(
-      exporter,
-      cycle_dir,
-      'ssp-ctr-validation',
-      ssp_ctr_features_config_file,
-      validation_cutoff,
-      date_to,
-      ssp_ctr_validation_rows,
-      ssp_ctr_core_validation_sets,
-      validation_offset_rows=ssp_ctr_core_validation_offset_rows,
-      feature_indexes_file=ssp_ctr_feature_indexes_file,
-      progress=in_progress_model,
-      progress_section='common_ssp_ctr',
-      progress_prefix='ssp_validation',
-      condition=ssp_ctr_condition,
-      label='ssp_ctr',
-      workers=config.ctr_generator_workers)
-    ssp_ctr_dictionary_lines = set()
-    ssp_ctr_training_counter = RowCounter()
-    ssp_ctr_training_csv_chunks = repeat_partitioned_chunks(
-      exporter,
-      cycle_dir,
-      'ssp-ctr-training',
-      ssp_ctr_training_rows,
-      config.main_chunk_rows,
-      ssp_ctr_training_source_steps,
-      date_from,
-      date_to,
-      '(' + ssp_ctr_condition + ') AND (' + training_time_condition + ')',
-      label='ssp_ctr',
-      order='ASC')
-    ssp_ctr_training_svm_chunks = stream_libsvm_chunks(
-      ssp_ctr_training_csv_chunks,
-      cycle_dir,
-      'ssp-ctr-training',
-      ssp_ctr_features_config_file,
-      ssp_ctr_feature_indexes_file,
-      ssp_ctr_dictionary_lines,
-      progress=in_progress_model,
-      progress_section='common_ssp_ctr',
-      progress_prefix='ssp_training',
-      row_counter=ssp_ctr_training_counter,
-      workers=config.ctr_generator_workers)
-    ssp_ctr_fit_start, ssp_ctr_fit_end = fit_step_callbacks(
-      in_progress_model,
-      'common_ssp_ctr',
-      'ssp_training')
-    ssp_ctr_training_fit_iterations = config.fit_iterations
-    (
-      ssp_ctr_model,
-      ssp_ctr_logloss_history,
-      ssp_ctr_thresholds,
-    ) = ssp_ctr_trainer.train_from_chunks(
-      ssp_ctr_training_svm_chunks,
-      ssp_ctr_validation_files[config.final_test_sets:],
-      ssp_ctr_validation_files[:config.final_test_sets],
-      fit_iterations=ssp_ctr_training_fit_iterations,
-      patience=config.training_patience,
-      work_dir=cycle_dir,
-      fit_steps=ssp_ctr_training_fit_steps,
-      on_fit_start=ssp_ctr_fit_start,
-      on_fit_end=ssp_ctr_fit_end)
-    ssp_ctr_dataset_sizes = {
-      'train': {'rows': ssp_ctr_training_counter.rows},
-      'test': {
-        'rows': ssp_ctr_validation_rows * config.training_validation_sets,
-      },
-      'final_test': {
-        'rows': ssp_ctr_validation_rows * config.final_test_sets,
-      },
-    }
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'save_feature_dictionary'):
-      with ssp_ctr_dictionary_file.open('wb') as output_file:
-        for line in sorted(ssp_ctr_dictionary_lines):
-          output_file.write(line)
-    ssp_ctr_model_file = cycle_dir / 'common-ssp-ctr.cbm'
-    with in_progress_model.train_step('common_ssp_ctr', 'save_model'):
-      ssp_ctr_model.save_model(str(ssp_ctr_model_file))
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'finalize_metrics'):
-      ssp_ctr_event_logloss = exporter.ssp_ctr_logloss(
-        validation_cutoff,
-        date_to,
-        ssp_ctr_validation_rows * config.final_test_sets,
-        exporter.validation_condition(),
-        0)
-      ssp_ctr_prediction_statistics = (
-        CatBoostTrainer.collect_feature_prediction_statistics(
-          ssp_ctr_model_file,
-          ssp_ctr_validation_files[:config.final_test_sets]))
-      ssp_ctr_model_description = ssp_ctr_trainer.describe_model(
-        ssp_ctr_model,
-        ssp_ctr_dictionary_file,
-        feature_name_resolver=feature_name_resolver,
-        feature_prediction_statistics=ssp_ctr_prediction_statistics)
-      ssp_ctr_properties = final_model_properties(
-        ssp_ctr_logloss_history,
-        ssp_ctr_logloss=ssp_ctr_event_logloss)
-    with in_progress_model.train_step(
-        'common_ssp_ctr', 'release_validation'):
-      remove_files(ssp_ctr_validation_files)
-      ssp_ctr_validation_files = []
-    ssp_ctr_train_end = in_progress_model.complete_model(
-      'common_ssp_ctr',
-      file='common_ssp_ctr.cbm',
-      **ssp_ctr_model_description,
-      logloss_history=ssp_ctr_logloss_history,
-      properties=ssp_ctr_properties,
-      dataset_sizes=ssp_ctr_dataset_sizes,
-      ctr_thresholds=ssp_ctr_thresholds,
-      selection_rows=ssp_ctr_selection_rows,
-      selection_models=ssp_ctr_selection_fit_steps,
-      selection_model_iterations=ssp_ctr_selection_fit_iterations,
-      selected_feature_indexes=len(ssp_ctr_feature_indexes),
-      training_rows_limit=ssp_ctr_training_rows,
-      training_fit_steps=ssp_ctr_training_fit_steps,
-      training_fit_iterations=ssp_ctr_training_fit_iterations)
 
     campaign_model_entries = []
     for (
@@ -3644,16 +3139,13 @@ def generate_model_(config, in_progress_model):
         common_features_config_file=features_config_file,
         correction_features_config_file=correction_features_config_file,
         campaign_features_config_file=campaign_features_config_file,
-        ssp_ctr_features_config_file=ssp_ctr_features_config_file,
         common_feature_indexes_file=feature_indexes_file,
         common_model_file=common_model_file,
         correction_model_file=correction_model_file,
         stable_model_file=stable_model_file,
-        ssp_ctr_model_file=ssp_ctr_model_file,
         common_trainer=trainer,
         correction_trainer=correction_trainer,
         campaign_trainer=campaign_model_trainer,
-        ssp_ctr_trainer=ssp_ctr_trainer,
         campaign_models=campaign_model_entries,
         progress=in_progress_model,
         workers=config.ctr_generator_workers)
@@ -3730,36 +3222,6 @@ def generate_model_(config, in_progress_model):
           'train_start': aligned_train_start,
           'train_end': stable_train_end,
           'train_steps': in_progress_model.model_traits('common_stable')[
-            'train_steps'],
-        },
-      },
-      {
-        'name': 'common_ssp_ctr',
-        'trainer': ssp_ctr_trainer,
-        'model': ssp_ctr_model,
-        'feature_dictionary_file': ssp_ctr_dictionary_file,
-        'model_description': ssp_ctr_model_description,
-        'logloss_history': ssp_ctr_logloss_history,
-        'dataset_sizes': ssp_ctr_dataset_sizes,
-        'ctr_thresholds': ssp_ctr_thresholds,
-        'traits': {
-          'kind': 'common_ssp_ctr',
-          'runtime': False,
-          'metrics_prediction': 'sigmoid(common_ssp_ctr)',
-          'target': 'ssp_ctr',
-          'loss_function': 'CrossEntropy',
-          'properties': ssp_ctr_properties,
-          'selection_rows': ssp_ctr_selection_rows,
-          'selection_models': ssp_ctr_selection_fit_steps,
-          'selection_model_iterations': ssp_ctr_selection_fit_iterations,
-          'selected_feature_indexes': len(ssp_ctr_feature_indexes),
-          'training_rows_limit': ssp_ctr_training_rows,
-          'training_fit_steps': ssp_ctr_training_fit_steps,
-          'training_fit_iterations': ssp_ctr_training_fit_iterations,
-          'status': 'completed',
-          'train_start': ssp_ctr_train_start,
-          'train_end': ssp_ctr_train_end,
-          'train_steps': in_progress_model.model_traits('common_ssp_ctr')[
             'train_steps'],
         },
       },

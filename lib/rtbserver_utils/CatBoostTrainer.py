@@ -1395,6 +1395,8 @@ class CatBoostTrainer(object):
       ctr_thresholds=None,
       train_start=None,
       train_end=None,
+      extra_traits=None,
+      model_description=None,
   ):
     if self.features is None:
       raise ValueError(
@@ -1424,11 +1426,12 @@ class CatBoostTrainer(object):
         raise ValueError("Invalid model staging directory: '" +
                          str(staging_dir) + "'")
     try:
-      model_description = self.describe_model(
-        model,
-        feature_dictionary_file,
-        feature_statistics,
-        feature_name_resolver)
+      if model_description is None:
+        model_description = self.describe_model(
+          model,
+          feature_dictionary_file,
+          feature_statistics,
+          feature_name_resolver)
       model.drop_unused_features()
       model.save_model(str(staging_dir / 'model.cbm'))
       features = model_description['feature_groups']
@@ -1449,6 +1452,11 @@ class CatBoostTrainer(object):
         train_start,
         train_end,
         self.peak_rss_bytes)
+      if extra_traits:
+        with traits_temp_file.open() as input_file:
+          traits = json.load(input_file, parse_float=decimal.Decimal)
+        traits.update(extra_traits)
+        self.write_json_(traits_temp_file, traits)
       os.replace(traits_temp_file, traits_file)
       os.rename(staging_dir, result_dir)
     except Exception:

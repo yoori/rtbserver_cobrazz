@@ -33,6 +33,7 @@ from rtbserver_utils.CTRModelWebApplication import (
   duration_text,
   feature_importance_item,
   render_index_page,
+  render_model_list,
   render_post_processing_index,
   render_post_processing_target,
 )
@@ -192,6 +193,19 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('tag, geoch + userch', page)
     self.assertIn('&quot;logloss&quot;:0.125', page)
     self.assertIn('aria-current="page"', page)
+
+  def test_model_list_marks_research_models(self):
+    page = render_model_list([{
+      'id': '20260903.142521.SSP-CTR-CHECK',
+      'status': 'published',
+      'model_type': 'research',
+      'algorithm_id': 'ssp_ctr_check',
+      'features_importance_count': 14,
+    }], None)
+
+    self.assertIn('20260903.142521.SSP-CTR-CHECK', page)
+    self.assertIn('<span>Research</span>', page)
+    self.assertNotIn('<span>ssp_ctr_check</span>', page)
 
   def test_renders_legacy_traits_format(self):
     properties = self.model_properties([{

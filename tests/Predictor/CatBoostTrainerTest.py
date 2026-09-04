@@ -475,6 +475,43 @@ class CatBoostTrainerTest(unittest.TestCase):
         expected_prediction,
         saved_model.predict_proba(features))
 
+  def test_save_campaign_manager_model_accepts_research_traits(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      temp_path = pathlib.Path(temp_dir)
+      feature_config = temp_path / 'features.json'
+      feature_config.write_text(json.dumps({
+        'features_dimension': 14,
+        'features': [['publisher']],
+      }))
+      trainer = CatBoostTrainer(features_config_file=feature_config)
+
+      result_dir = trainer.save_campaign_manager_model(
+        ModelStub(),
+        temp_path / 'CTRResearch',
+        timestamp='20260903.142521.SSP-CTR-CHECK',
+        algorithm_id='ssp_ctr_check',
+        train_start='2026-09-03T14:25:21Z',
+        train_end='2026-09-03T15:25:21Z',
+        extra_traits={
+          'model_type': 'research',
+          'research_type': 'common_ssp_ctr',
+          'parent_model_id': '20260903.120000',
+        },
+        model_description={
+          'feature_groups': [['publisher']],
+          'features_importance': [],
+        })
+
+      with (result_dir / 'traits.json').open() as input_file:
+        traits = json.load(input_file)
+      self.assertEqual('research', traits['model_type'])
+      self.assertEqual('common_ssp_ctr', traits['research_type'])
+      self.assertEqual('20260903.120000', traits['parent_model_id'])
+      self.assertEqual(
+        'ssp_ctr_check',
+        json.loads((result_dir / 'config.json').read_text())[
+          'algorithms'][0]['id'])
+
   def test_dictionary_filters_features_and_generates_traits(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       temp_path = pathlib.Path(temp_dir)

@@ -134,6 +134,47 @@ class CTRModelRepositoryTest(unittest.TestCase):
         '~20260824.155515',
       ], repository.all_model_ids())
 
+  def test_combines_research_models_without_changing_latest_production(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = pathlib.Path(temp_dir)
+      production_root = root / 'CTRConfig'
+      research_root = root / 'CTRResearch'
+      production_root.mkdir()
+      research_root.mkdir()
+      self.create_model(production_root, '20260903.120000')
+      research = self.create_model(
+        research_root,
+        '20260903.142521.SSP-CTR-CHECK')
+      traits = json.loads((research / 'traits.json').read_text())
+      traits.update({
+        'model_type': 'research',
+        'research_type': 'common_ssp_ctr',
+        'parent_model_id': '20260903.120000',
+      })
+      (research / 'traits.json').write_text(json.dumps(traits))
+
+      repository = CTRModelRepository(production_root, research_root)
+
+      self.assertEqual([
+        '20260903.142521.SSP-CTR-CHECK',
+        '20260903.120000',
+      ], repository.all_model_ids())
+      self.assertEqual(['20260903.120000'], repository.model_ids())
+      self.assertEqual('20260903.120000', repository.latest_model_id())
+      summary = repository.model_summary(
+        '20260903.142521.SSP-CTR-CHECK')
+      self.assertEqual('research', summary['model_type'])
+      self.assertEqual('common_ssp_ctr', summary['research_type'])
+      self.assertEqual('20260903.120000', summary['parent_model_id'])
+      self.assertEqual(
+        research,
+        repository.model_path('20260903.142521.SSP-CTR-CHECK'))
+      self.assertEqual(
+        research / 'model.cbm',
+        repository.model_file(
+          '20260903.142521.SSP-CTR-CHECK',
+          'model.cbm'))
+
   def test_returns_properties_and_paginated_features(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       root = pathlib.Path(temp_dir)

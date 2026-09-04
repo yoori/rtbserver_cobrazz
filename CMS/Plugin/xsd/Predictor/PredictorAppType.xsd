@@ -166,6 +166,12 @@
     <xsd:attribute name="data_delay" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
+  <xsd:complexType name="CTRResearchModelGeneratorType">
+    <xsd:complexContent>
+      <xsd:extension base="CTRPredictModelGeneratorType"/>
+    </xsd:complexContent>
+  </xsd:complexType>
+
   <xsd:complexType name="CTRPredictModelViewerType">
     <xsd:sequence>
       <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1"/>

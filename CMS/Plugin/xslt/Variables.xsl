@@ -85,6 +85,8 @@
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
 <xsl:variable name="ctr-predict-model-generator-descriptor"
   select="'AdCluster/BackendSubCluster/CTRPredictModelGenerator'"/>
+<xsl:variable name="ctr-research-model-generator-descriptor"
+  select="'AdCluster/BackendSubCluster/CTRResearchModelGenerator'"/>
 <xsl:variable name="ctr-predict-model-viewer-descriptor"
   select="'AdCluster/BackendSubCluster/CTRPredictModelViewer'"/>
 <xsl:variable name="bidcost-predictor-merger-descriptor"

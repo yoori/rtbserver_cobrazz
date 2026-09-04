@@ -13,7 +13,9 @@ from rtbserver_utils.PidFile import PidFile
 
 def run_service(config):
   with PidFile(config.pid_file, 'CTRPredictModelViewer'):
-    repository = CTRModelRepository(config.model_root)
+    repository = CTRModelRepository(
+      config.model_root,
+      config.research_model_root)
     uvicorn.run(
       create_application(repository, config.url_path),
       host=config.web_host,

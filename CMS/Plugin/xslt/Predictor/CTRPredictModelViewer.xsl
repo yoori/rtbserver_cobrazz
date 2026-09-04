@@ -35,6 +35,8 @@
 {
   "pid_file": "<xsl:value-of select="concat($workspace-root, '/run/CTRPredictModelViewer.pid')"/>",
   "model_root": "<xsl:value-of select="concat($workspace-root, '/log/Predictor/CTRConfig')"/>",
+  "research_model_root": "<xsl:value-of
+    select="concat($workspace-root, '/log/Predictor/CTRResearch')"/>",
   "web_server": {
     "host": "0.0.0.0",
     "port": <xsl:value-of select="$web-port"/>

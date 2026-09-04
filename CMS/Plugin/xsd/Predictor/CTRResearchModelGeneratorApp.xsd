@@ -1,0 +1,13 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:include schemaLocation="./PredictorAppType.xsd"/>
+
+  <xsd:element name="ctrResearchModelGenerator"
+               type="CTRResearchModelGeneratorType"/>
+
+</xsd:schema>

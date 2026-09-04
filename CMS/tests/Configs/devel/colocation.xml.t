@@ -404,6 +404,21 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       </service>
 
       <service
+        descriptor="AdCluster/BackendSubCluster/CTRResearchModelGenerator"
+        name="CTRResearchModelGenerator$NAME_POSTFIX"
+        host="$HOST">
+        <configuration>
+          <ctrResearchModelGenerator
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            generate_period="86400"
+            selection_chunk_rows="7000000"
+            main_chunk_rows="10000000"
+            validation_set_rows="200000"
+            data_delay="86400"/>
+        </configuration>
+      </service>
+
+      <service
         descriptor="AdCluster/BackendSubCluster/CTRPredictModelViewer"
         name="CTRPredictModelViewer$NAME_POSTFIX"
         host="$HOST">

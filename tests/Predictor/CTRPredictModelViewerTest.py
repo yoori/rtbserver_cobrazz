@@ -26,6 +26,7 @@ class CTRPredictModelViewerTest(unittest.TestCase):
     config.init_json({
       'pid_file': '/var/run/ctr-viewer.pid',
       'model_root': '/var/lib/ctr-models',
+      'research_model_root': '/var/lib/ctr-research',
       'web_server': {
         'host': '127.0.0.1',
         'port': 18080,
@@ -34,6 +35,7 @@ class CTRPredictModelViewerTest(unittest.TestCase):
 
     self.assertEqual('/var/run/ctr-viewer.pid', config.pid_file)
     self.assertEqual('/var/lib/ctr-models', config.model_root)
+    self.assertEqual('/var/lib/ctr-research', config.research_model_root)
     self.assertEqual('127.0.0.1', config.web_host)
     self.assertEqual(18080, config.web_port)
     self.assertEqual('/', config.url_path)
@@ -90,6 +92,7 @@ class CTRPredictModelViewerTest(unittest.TestCase):
     config = unittest.mock.MagicMock()
     config.pid_file = '/var/run/ctr-viewer.pid'
     config.model_root = '/var/lib/ctr-models'
+    config.research_model_root = '/var/lib/ctr-research'
     config.web_host = '127.0.0.1'
     config.web_port = 18080
     config.url_path = '/'
@@ -112,7 +115,9 @@ class CTRPredictModelViewerTest(unittest.TestCase):
     pid_file.assert_called_once_with(
       '/var/run/ctr-viewer.pid',
       'CTRPredictModelViewer')
-    repository_factory.assert_called_once_with('/var/lib/ctr-models')
+    repository_factory.assert_called_once_with(
+      '/var/lib/ctr-models',
+      '/var/lib/ctr-research')
     application_factory.assert_called_once_with(repository, '/')
     uvicorn_run.assert_called_once_with(
       application,

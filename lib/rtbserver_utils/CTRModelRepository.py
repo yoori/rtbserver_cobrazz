@@ -18,8 +18,13 @@ class CTRModelRepository:
     'campaign-correction.cbm',
   )
 
-  def __init__(self, model_root):
+  def __init__(self, model_root, research_model_root=None):
     self.model_root = pathlib.Path(model_root)
+    self.model_roots = [self.model_root]
+    if research_model_root is not None:
+      research_model_root = pathlib.Path(research_model_root)
+      if research_model_root != self.model_root:
+        self.model_roots.append(research_model_root)
 
   def model_ids(self):
     if not self.model_root.is_dir():
@@ -34,15 +39,15 @@ class CTRModelRepository:
       reverse=True)
 
   def all_model_ids(self):
-    if not self.model_root.is_dir():
-      return []
-    model_ids = [
+    model_ids = {
       path.name
-      for path in self.model_root.iterdir()
+      for model_root in self.model_roots
+      if model_root.is_dir()
+      for path in model_root.iterdir()
       if (
         self.training_status_(path.name) is not None or
         self.is_published_model_(path))
-    ]
+    }
     return sorted(model_ids, key=self.model_id_sort_key_, reverse=True)
 
   @staticmethod
@@ -69,6 +74,9 @@ class CTRModelRepository:
       return {
         'id': model_id,
         'status': training_status['status'],
+        'model_type': training_status.get('model_type', 'production'),
+        'research_type': training_status.get('research_type'),
+        'parent_model_id': training_status.get('parent_model_id'),
         'train_start': training_status['train_start'],
         'train_end': training_status.get('train_end'),
         'models_count': len(models),
@@ -119,6 +127,9 @@ class CTRModelRepository:
     return {
       'id': model_id,
       'status': 'published',
+      'model_type': traits.get('model_type', 'production'),
+      'research_type': traits.get('research_type'),
+      'parent_model_id': traits.get('parent_model_id'),
       'train_start': traits.get('train_start'),
       'train_end': traits.get('train_end'),
       'algorithm_id': algorithm.get('id') if algorithm else None,
@@ -311,15 +322,16 @@ class CTRModelRepository:
   def model_path(self, model_id):
     if not isinstance(model_id, str) or not model_id or model_id.startswith('~'):
       raise ModelNotFound('Invalid model id')
-    model_path = self.model_root / model_id
-    try:
-      if model_path.resolve().parent != self.model_root.resolve():
-        raise ModelNotFound('Invalid model id')
-    except FileNotFoundError:
-      raise ModelNotFound("Model '" + model_id + "' not found")
-    if not self.is_published_model_(model_path):
-      raise ModelNotFound("Model '" + model_id + "' not found")
-    return model_path
+    for model_root in self.model_roots:
+      model_path = model_root / model_id
+      try:
+        if model_path.resolve().parent != model_root.resolve():
+          raise ModelNotFound('Invalid model id')
+      except FileNotFoundError:
+        continue
+      if self.is_published_model_(model_path):
+        return model_path
+    raise ModelNotFound("Model '" + model_id + "' not found")
 
   def is_published_model_(self, path):
     return (
@@ -334,17 +346,10 @@ class CTRModelRepository:
         not model_id.startswith('~') or
         len(model_id) == 1):
       return None
-    path = self.model_root / model_id
-    try:
-      if path.resolve().parent != self.model_root.resolve():
-        return None
-    except FileNotFoundError:
-      return None
-    if not path.is_dir() or path.is_symlink():
+    path = self.training_path_(model_id)
+    if path is None:
       return None
     traits_file = path / 'traits.json'
-    if not traits_file.is_file():
-      return None
     try:
       traits = self.read_json_(traits_file)
       pid = int(traits.get('pid', 0))
@@ -374,9 +379,24 @@ class CTRModelRepository:
   def model_directory_and_traits_(self, model_id):
     training_traits = self.training_status_(model_id)
     if training_traits is not None:
-      return self.model_root / model_id, training_traits
+      return self.training_path_(model_id), training_traits
     model_path = self.model_path(model_id)
     return model_path, self.read_json_(model_path / 'traits.json')
+
+  def training_path_(self, model_id):
+    for model_root in self.model_roots:
+      path = model_root / model_id
+      try:
+        if path.resolve().parent != model_root.resolve():
+          return None
+      except FileNotFoundError:
+        continue
+      if (
+          path.is_dir() and
+          not path.is_symlink() and
+          (path / 'traits.json').is_file()):
+        return path
+    return None
 
   @classmethod
   def read_artifact_(cls, model_path, artifact_path):

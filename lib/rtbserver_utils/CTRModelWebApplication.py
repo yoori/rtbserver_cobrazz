@@ -207,16 +207,21 @@ def render_model_list(models, selected_model_id, url_path='/'):
     if model.get('status') in ('in_progress', 'interrupted'):
       status = model['status']
       status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
+      scope_label = (
+        'Research' if model.get('model_type') == 'research' else
+        str(model.get('campaign_models_count', 0)) + ' campaign models')
       details = (
         '<span class="model-status ' + status + '">' + status_label + '</span>'
         '<span>Started ' + html_text(timestamp_text(
           model.get('train_start'))) + '</span>'
-        '<span>' + str(model.get('campaign_models_count', 0)) +
-        ' campaign models</span>')
+        '<span>' + scope_label + '</span>')
     else:
       components_count = model.get('components_count', 0)
+      model_type = model.get('model_type', 'production')
       details = (
-        '<span>' + html_text(model.get('algorithm_id') or 'unknown') + '</span>'
+        '<span>' + html_text(
+          'Research' if model_type == 'research' else
+          model.get('algorithm_id') or 'unknown') + '</span>'
         '<span>' + (
           str(components_count) + ' components' if components_count else
           str(model.get('features_importance_count', 0)) + ' features') +
