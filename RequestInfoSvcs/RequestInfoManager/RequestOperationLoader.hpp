@@ -45,10 +45,6 @@ namespace AdServer::RequestInfoSvcs
       ProfilingCommons::FileReader& file_reader,
       Generics::MemBuf& membuf);
 
-    void
-    skip_change_request_user_id_(ProfilingCommons::FileReader& file_reader)
-      /*throw(Exception)*/;
-
     Commons::Awaitable<void>
     co_read_impression_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
 

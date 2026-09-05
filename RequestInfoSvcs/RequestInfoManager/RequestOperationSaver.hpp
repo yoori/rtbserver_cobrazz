@@ -65,10 +65,6 @@ namespace AdServer::RequestInfoSvcs
       unsigned long op,
       Generics::MemBuf&& mem_buf)
       /*throw(eh::Exception)*/;
-
-    FileHolderGuard_var
-    get_file_holder_(const AdServer::Commons::UserId& user_id)
-      /*throw(eh::Exception)*/;
   };
 
   using RequestOperationSaver_var = ReferenceCounting::SmartPtr<RequestOperationSaver>;

@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 
+#include <Commons/Coro/StartableAwaitable.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
@@ -21,6 +22,12 @@ namespace
 {
   using Processor = AdServer::ProfilingCommons::RocksDBProfileMapProcessor;
   using ProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+
+  AdServer::Commons::StartableAwaitable<void>
+  co_get_profile(ProfileMap& profile_map, const std::string& key)
+  {
+    co_await profile_map.co_get_profile(key);
+  }
 
   Generics::ConstSmartMemBuf_var
   make_profile(const std::string& value)
@@ -196,11 +203,76 @@ main()
       throw std::runtime_error("wait_unregister returned before callbacks completed");
     }
 
+    std::atomic<unsigned long> rejected_callbacks{0};
+    const auto count_rejected = [&rejected_callbacks](const std::optional<std::string>& error)
+    {
+      if (!error)
+      {
+        throw std::runtime_error("rejected async operation completed without error");
+      }
+      rejected_callbacks.fetch_add(1, std::memory_order_relaxed);
+    };
+    auto rejected_profile = make_profile("rejected");
+    first->check_profile_async(
+      "rejected",
+      [&count_rejected](bool, std::optional<std::string> error)
+      {
+        count_rejected(error);
+      });
+    first->get_profile_async(
+      "rejected",
+      [&count_rejected](Generics::ConstSmartMemBuf_var, std::optional<std::string> error)
+      {
+        count_rejected(error);
+      });
+    first->get_own_profile_async(
+      "rejected",
+      [&count_rejected](Generics::SmartMemBuf_var, std::optional<std::string> error)
+      {
+        count_rejected(error);
+      });
+    first->save_profile_async(
+      "rejected",
+      rejected_profile.in(),
+      Generics::Time::get_time_of_day(),
+      [&count_rejected](std::optional<std::string> error)
+      {
+        count_rejected(error);
+      });
+    first->remove_profile_async(
+      "rejected",
+      AdServer::ProfilingCommons::OP_RUNTIME,
+      [&count_rejected](bool, std::optional<std::string> error)
+      {
+        count_rejected(error);
+      });
+    if (rejected_callbacks.load(std::memory_order_relaxed) != 5)
+    {
+      throw std::runtime_error("rejected async operations didn't complete callbacks");
+    }
+
+    bool rejected_coroutine = false;
+    try
+    {
+      AdServer::Commons::sync_wait(co_get_profile(*first, "rejected"));
+    }
+    catch(const eh::Exception&)
+    {
+      rejected_coroutine = true;
+    }
+
+    if (!rejected_coroutine)
+    {
+      throw std::runtime_error("rejected coroutine operation didn't receive an error");
+    }
+
     bool rejected = false;
     try
     {
-      auto profile = make_profile("rejected");
-      first->save_profile_async("rejected", profile.in(), Generics::Time::get_time_of_day());
+      first->save_profile_async(
+        "rejected",
+        rejected_profile.in(),
+        Generics::Time::get_time_of_day());
     }
     catch(const eh::Exception&)
     {

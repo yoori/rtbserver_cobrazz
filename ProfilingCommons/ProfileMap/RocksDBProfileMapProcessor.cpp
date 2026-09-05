@@ -149,11 +149,18 @@ namespace AdServer::ProfilingCommons
   bool
   RocksDBProfileMapProcessor::enqueue_operation_(
     const ProfileMapImpl& map_impl,
-    Operation&& operation)
+    Operation& operation)
   {
+    auto submission_guard = map_impl.submission_gate_.enter();
+    if (!submission_guard)
+    {
+      return false;
+    }
+
     Operations operations;
     operations.emplace_back(std::move(operation));
-    return enqueue_operations_(map_impl, std::move(operations));
+    enqueue_operations_i_(map_impl, std::move(operations));
+    return true;
   }
 
   bool
@@ -172,6 +179,15 @@ namespace AdServer::ProfilingCommons
       return false;
     }
 
+    enqueue_operations_i_(map_impl, std::move(operations));
+    return true;
+  }
+
+  void
+  RocksDBProfileMapProcessor::enqueue_operations_i_(
+    const ProfileMapImpl& map_impl,
+    Operations&& operations)
+  {
     MapQueue& map_queue = map_impl.processor_queue_;
     auto result = map_queue.enqueue(std::move(operations));
     add_operation_counts_(result.counts);
@@ -179,8 +195,6 @@ namespace AdServer::ProfilingCommons
     {
       ready_cond_.notify_one();
     }
-
-    return true;
   }
 
   void
@@ -227,13 +241,13 @@ namespace AdServer::ProfilingCommons
       }
       catch(const eh::Exception& ex)
       {
-        map_impl->notify_failed_operations_(batch, ex.what());
         map_impl->set_background_error_(ex.what());
+        map_impl->notify_failed_operations_(batch, ex.what());
       }
       catch(...)
       {
-        map_impl->notify_failed_operations_(batch, "unknown background error");
         map_impl->set_background_error_("unknown background error");
+        map_impl->notify_failed_operations_(batch, "unknown background error");
       }
       batch_timer.stop();
 

@@ -277,19 +277,16 @@ namespace AdServer::ProfilingCommons
     const std::string& key,
     CheckCallback callback) const
   {
-    check_background_error_();
-
     Operation operation;
     operation.type = OT_CHECK;
     operation.key = key;
-    operation.check_callback = std::move(callback);
-
-    if (!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (callback)
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::check_profile_async(): "
-        "object isn't active");
+      operation.check_callback = std::move(callback);
     }
+    enqueue_async_operation_(
+      std::move(operation),
+      "RocksDBBatchingProfileMapImpl::check_profile_async()");
   }
 
   Generics::ConstSmartMemBuf_var
@@ -356,19 +353,16 @@ namespace AdServer::ProfilingCommons
   {
     static_cast<void>(last_access_time);
 
-    check_background_error_();
-
     Operation operation;
     operation.type = OT_GET;
     operation.key = key;
-    operation.get_callback = std::move(callback);
-
-    if (!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (callback)
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::get_profile_async(): "
-        "object isn't active");
+      operation.get_callback = std::move(callback);
     }
+    enqueue_async_operation_(
+      std::move(operation),
+      "RocksDBBatchingProfileMapImpl::get_profile_async()");
 
     return Generics::ConstSmartMemBuf_var();
   }
@@ -381,19 +375,16 @@ namespace AdServer::ProfilingCommons
   {
     static_cast<void>(last_access_time);
 
-    check_background_error_();
-
     Operation operation;
     operation.type = OT_GET;
     operation.key = key;
-    operation.get_own_callback = std::move(callback);
-
-    if (!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (callback)
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::get_own_profile_async(): "
-        "object isn't active");
+      operation.get_own_callback = std::move(callback);
     }
+    enqueue_async_operation_(
+      std::move(operation),
+      "RocksDBBatchingProfileMapImpl::get_own_profile_async()");
 
     return Generics::SmartMemBuf_var();
   }
@@ -433,30 +424,31 @@ namespace AdServer::ProfilingCommons
   {
     static const char* FUN = "RocksDBBatchingProfileMapImpl::save_profile_async()";
 
-    check_background_error_();
-
-    if (!profile)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": null profile for key='" << key << "'";
-      throw ProfileMap<std::string>::Exception(ostr.str());
-    }
-
     Operation operation;
     operation.type = OT_SAVE;
     operation.key = key;
-    operation.profile = ReferenceCounting::add_ref(profile);
     if (callback)
     {
       operation.save_callback = std::move(callback);
     }
 
-    if (!processor_->enqueue_operation_(*this, std::move(operation)))
+    if (!profile)
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::save_profile_async(): "
-        "object isn't active");
+      Stream::Error ostr;
+      ostr << FUN << ": null profile for key='" << key << "'";
+      const std::string error = ostr.str().str();
+      if (notify_failed_operation_(operation, error))
+      {
+        return;
+      }
+
+      throw ProfileMap<std::string>::Exception(error);
     }
+
+    operation.profile = ReferenceCounting::add_ref(profile);
+    enqueue_async_operation_(
+      std::move(operation),
+      "RocksDBBatchingProfileMapImpl::save_profile_async()");
   }
 
   bool
@@ -489,8 +481,6 @@ namespace AdServer::ProfilingCommons
     OperationPriority,
     RemoveCallback callback)
   {
-    check_background_error_();
-
     Operation operation;
     operation.type = OT_REMOVE;
     operation.key = key;
@@ -498,13 +488,9 @@ namespace AdServer::ProfilingCommons
     {
       operation.remove_callback = std::move(callback);
     }
-
-    if (!processor_->enqueue_operation_(*this, std::move(operation)))
-    {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::remove_profile_async(): "
-        "object isn't active");
-    }
+    enqueue_async_operation_(
+      std::move(operation),
+      "RocksDBBatchingProfileMapImpl::remove_profile_async()");
   }
 
   void
@@ -689,15 +675,15 @@ namespace AdServer::ProfilingCommons
         {
           if (not_found)
           {
-            (*operation.check_callback)(false, std::nullopt);
+            notify_check_operation_(operation, false, std::nullopt);
           }
           else if (!status.ok())
           {
-            (*operation.check_callback)(false, status.ToString());
+            notify_check_operation_(operation, false, status.ToString());
           }
           else
           {
-            (*operation.check_callback)(true, std::nullopt);
+            notify_check_operation_(operation, true, std::nullopt);
           }
         }
 
@@ -705,17 +691,22 @@ namespace AdServer::ProfilingCommons
         {
           if (not_found)
           {
-            (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), std::nullopt);
+            notify_get_operation_(operation, Generics::ConstSmartMemBuf_var(), std::nullopt);
           }
           else if (!status.ok())
           {
-            (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), status.ToString());
+            notify_get_operation_(
+              operation,
+              Generics::ConstSmartMemBuf_var(),
+              status.ToString());
           }
           else
           {
-            (*operation.get_callback)(
-              Generics::ConstSmartMemBuf_var(
-                new Generics::ConstSmartMemBuf(user_value.data(), user_value.size())),
+            Generics::ConstSmartMemBuf_var profile(
+              new Generics::ConstSmartMemBuf(user_value.data(), user_value.size()));
+            notify_get_operation_(
+              operation,
+              std::move(profile),
               std::nullopt);
           }
         }
@@ -724,23 +715,34 @@ namespace AdServer::ProfilingCommons
         {
           if (not_found)
           {
-            (*operation.get_own_callback)(Generics::SmartMemBuf_var(), std::nullopt);
+            notify_get_own_operation_(operation, Generics::SmartMemBuf_var(), std::nullopt);
           }
           else if (!status.ok())
           {
-            (*operation.get_own_callback)(Generics::SmartMemBuf_var(), status.ToString());
+            notify_get_own_operation_(
+              operation,
+              Generics::SmartMemBuf_var(),
+              status.ToString());
           }
           else
           {
-            (*operation.get_own_callback)(
-              Generics::SmartMemBuf_var(
-                new Generics::SmartMemBuf(user_value.data(), user_value.size())),
+            Generics::SmartMemBuf_var profile(
+              new Generics::SmartMemBuf(user_value.data(), user_value.size()));
+            notify_get_own_operation_(
+              operation,
+              std::move(profile),
               std::nullopt);
           }
         }
       }
+      catch(const std::exception& ex)
+      {
+        notify_failed_operation_(operation, ex.what());
+      }
       catch(...)
-      {}
+      {
+        notify_failed_operation_(operation, "unknown read completion error");
+      }
 
       ++operation_key_index_it;
     }
@@ -833,41 +835,147 @@ namespace AdServer::ProfilingCommons
   }
 
   void
+  RocksDBBatchingProfileMapImpl::enqueue_async_operation_(
+    Operation operation,
+    const char* function_name) const
+  {
+    try
+    {
+      check_background_error_();
+    }
+    catch(const eh::Exception& ex)
+    {
+      if (notify_failed_operation_(operation, ex.what()))
+      {
+        return;
+      }
+
+      throw;
+    }
+
+    if (processor_->enqueue_operation_(*this, operation))
+    {
+      return;
+    }
+
+    const std::string error = std::string(function_name) + ": object isn't active";
+    if (!notify_failed_operation_(operation, error))
+    {
+      throw ProfileMap<std::string>::Exception(error);
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_check_operation_(
+    Operation& operation,
+    bool result,
+    std::optional<std::string> error) noexcept
+  {
+    auto callback = std::move(*operation.check_callback);
+    operation.check_callback.reset();
+    try
+    {
+      callback(result, std::move(error));
+    }
+    catch(...)
+    {}
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_get_operation_(
+    Operation& operation,
+    Generics::ConstSmartMemBuf_var profile,
+    std::optional<std::string> error) noexcept
+  {
+    auto callback = std::move(*operation.get_callback);
+    operation.get_callback.reset();
+    try
+    {
+      callback(std::move(profile), std::move(error));
+    }
+    catch(...)
+    {}
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_get_own_operation_(
+    Operation& operation,
+    Generics::SmartMemBuf_var profile,
+    std::optional<std::string> error) noexcept
+  {
+    auto callback = std::move(*operation.get_own_callback);
+    operation.get_own_callback.reset();
+    try
+    {
+      callback(std::move(profile), std::move(error));
+    }
+    catch(...)
+    {}
+  }
+
+  bool
+  RocksDBBatchingProfileMapImpl::notify_failed_operation_(
+    Operation& operation,
+    const std::string& error) noexcept
+  {
+    try
+    {
+      if (operation.check_callback)
+      {
+        auto callback = std::move(*operation.check_callback);
+        operation.check_callback.reset();
+        callback(false, error);
+        return true;
+      }
+
+      if (operation.get_callback)
+      {
+        auto callback = std::move(*operation.get_callback);
+        operation.get_callback.reset();
+        callback(Generics::ConstSmartMemBuf_var(), error);
+        return true;
+      }
+
+      if (operation.get_own_callback)
+      {
+        auto callback = std::move(*operation.get_own_callback);
+        operation.get_own_callback.reset();
+        callback(Generics::SmartMemBuf_var(), error);
+        return true;
+      }
+
+      if (operation.save_callback)
+      {
+        auto callback = std::move(*operation.save_callback);
+        operation.save_callback.reset();
+        callback(error);
+        return true;
+      }
+
+      if (operation.remove_callback)
+      {
+        auto callback = std::move(*operation.remove_callback);
+        operation.remove_callback.reset();
+        callback(false, error);
+        return true;
+      }
+    }
+    catch(...)
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  void
   RocksDBBatchingProfileMapImpl::notify_failed_operations_(
     Operations& operations,
     const std::string& error) noexcept
   {
     for (auto& operation : operations)
     {
-      try
-      {
-        if (operation.check_callback)
-        {
-          (*operation.check_callback)(false, error);
-        }
-
-        if (operation.get_callback)
-        {
-          (*operation.get_callback)(Generics::ConstSmartMemBuf_var(), error);
-        }
-
-        if (operation.get_own_callback)
-        {
-          (*operation.get_own_callback)(Generics::SmartMemBuf_var(), error);
-        }
-
-        if (operation.save_callback)
-        {
-          (*operation.save_callback)(error);
-        }
-
-        if (operation.remove_callback)
-        {
-          (*operation.remove_callback)(false, error);
-        }
-      }
-      catch(...)
-      {}
+      notify_failed_operation_(operation, error);
     }
   }
 

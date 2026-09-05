@@ -2,6 +2,7 @@
 
 #include <RequestInfoSvcs/RequestInfoCommons/RequestOperationProfile.hpp>
 
+#include <cstring>
 #include <utility>
 
 #include "Compatibility/RequestOperationImpressionProfileAdapter.hpp"
@@ -114,14 +115,26 @@ namespace AdServer::RequestInfoSvcs
     operation_writer.version() = 0;
     operation_writer.user_id() = new_user_id.to_string();
     operation_writer.request_id() = request_id.to_string();
-    Generics::SmartMemBuf_var op_mem_buf(new Generics::SmartMemBuf(operation_writer.size()));
-    operation_writer.save(op_mem_buf->membuf().data(), op_mem_buf->membuf().size());
+    const uint32_t change_profile_size = operation_writer.size();
+    const uint32_t request_profile_size = request_profile->membuf().size();
+    const std::size_t operation_size =
+      sizeof(change_profile_size) + change_profile_size +
+      sizeof(request_profile_size) + request_profile_size;
+    Generics::MemBuf op_mem_buf(operation_size);
+    char* current = static_cast<char*>(op_mem_buf.data());
 
-    FileHolderGuard_var file_holder_guard = get_file_holder_(new_user_id);
-    uint32_t op_index = RequestOperationLoader::OP_CHANGE;
-    file_holder_guard->write(&op_index, sizeof(op_index));
-    file_holder_guard->write(op_mem_buf->membuf());
-    file_holder_guard->write(request_profile->membuf());
+    std::memcpy(current, &change_profile_size, sizeof(change_profile_size));
+    current += sizeof(change_profile_size);
+    operation_writer.save(current, change_profile_size);
+    current += change_profile_size;
+    std::memcpy(current, &request_profile_size, sizeof(request_profile_size));
+    current += sizeof(request_profile_size);
+    std::memcpy(current, request_profile->membuf().data(), request_profile_size);
+
+    write_operation_(
+      new_user_id,
+      RequestOperationLoader::OP_CHANGE,
+      std::move(op_mem_buf));
   }
 
   void
@@ -135,13 +148,5 @@ namespace AdServer::RequestInfoSvcs
       AdServer::LogProcessing::user_id_distribution_hash(user_id),
       op,
       std::move(mem_buf));
-  }
-
-  RequestOperationSaver::FileHolderGuard_var
-  RequestOperationSaver::get_file_holder_(const AdServer::Commons::UserId& user_id)
-    /*throw(eh::Exception)*/
-  {
-    return MessageSaver::get_file_holder_(
-      AdServer::LogProcessing::user_id_distribution_hash(user_id));
   }
 }

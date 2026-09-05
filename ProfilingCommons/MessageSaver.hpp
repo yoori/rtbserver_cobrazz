@@ -170,6 +170,8 @@ namespace AdServer::ProfilingCommons
     process_queued_operation_(const QueuedOperation& operation)
       /*throw(eh::Exception)*/;
 
+    void complete_pending_operations_(unsigned long operations_count) noexcept;
+
     void
     wait_pending_operations_() const noexcept;
 

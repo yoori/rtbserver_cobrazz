@@ -1,5 +1,7 @@
 #include <RequestInfoSvcs/RequestInfoCommons/RequestOperationProfile.hpp>
 
+#include <cstring>
+
 #include "Compatibility/RequestOperationImpressionProfileAdapter.hpp"
 #include "RequestOperationLoader.hpp"
 
@@ -54,7 +56,7 @@ namespace AdServer::RequestInfoSvcs
         }
         else
         {
-          skip_change_request_user_id_(file_reader);
+          skip_single_buffer_operation_(file_reader);
         }
       }
       else if (op_index == OP_IMPRESSION)
@@ -136,30 +138,46 @@ namespace AdServer::RequestInfoSvcs
       throw Exception(ostr);
     }
 
-    RequestOperationChangeUserReader op_reader(membuf.data(), op_size);
-
-    uint32_t request_profile_size;
-
-    if (file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
-       sizeof(request_profile_size))
+    const char* current = static_cast<const char*>(membuf.data());
+    std::size_t remaining_size = op_size;
+    if (remaining_size < sizeof(uint32_t))
     {
       Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file on 'change request' "
-        "request profile size reading";
+      ostr << FUN << ": invalid 'change request' operation size";
+      throw Exception(ostr);
+    }
+
+    uint32_t change_profile_size;
+    std::memcpy(&change_profile_size, current, sizeof(change_profile_size));
+    current += sizeof(change_profile_size);
+    remaining_size -= sizeof(change_profile_size);
+
+    if (remaining_size < change_profile_size + sizeof(uint32_t))
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": invalid 'change request' profile size";
+      throw Exception(ostr);
+    }
+
+    RequestOperationChangeUserReader op_reader(current, change_profile_size);
+    current += change_profile_size;
+    remaining_size -= change_profile_size;
+
+    uint32_t request_profile_size;
+    std::memcpy(&request_profile_size, current, sizeof(request_profile_size));
+    current += sizeof(request_profile_size);
+    remaining_size -= sizeof(request_profile_size);
+
+    if (remaining_size != request_profile_size)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": invalid request profile size in 'change request' operation";
       throw Exception(ostr);
     }
 
     Generics::SmartMemBuf_var request_profile_membuf(
       new Generics::SmartMemBuf(request_profile_size));
-
-    if (file_reader.read(request_profile_membuf->membuf().data(), request_profile_size) !=
-         request_profile_size)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file on 'change request' "
-        "request profile reading";
-      throw Exception(ostr);
-    }
+    std::memcpy(request_profile_membuf->membuf().data(), current, request_profile_size);
 
     try
     {
@@ -172,46 +190,6 @@ namespace AdServer::RequestInfoSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  RequestOperationLoader::skip_change_request_user_id_(ProfilingCommons::FileReader& file_reader)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "RequestOperationLoader::skip_change_request_user_id_()";
-
-    uint32_t op_size;
-
-    if (file_reader.read(&op_size, sizeof(op_size)) != sizeof(op_size))
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file";
-      throw Exception(ostr);
-    }
-
-    if (file_reader.skip(op_size) != op_size)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file";
-      throw Exception(ostr);
-    }
-
-    uint32_t request_profile_size;
-
-    if (file_reader.read(&request_profile_size, sizeof(request_profile_size)) !=
-       sizeof(request_profile_size))
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file";
-      throw Exception(ostr);
-    }
-
-    if (file_reader.skip(request_profile_size) != request_profile_size)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": unexpected end of file";
       throw Exception(ostr);
     }
   }

@@ -221,10 +221,7 @@ namespace AdServer::ProfilingCommons
     }
     catch(...)
     {
-      if (pending_operations_.fetch_sub(1, std::memory_order_acq_rel) == 1)
-      {
-        pending_cond_.notify_all();
-      }
+      complete_pending_operations_(1);
       throw;
     }
 
@@ -448,12 +445,7 @@ namespace AdServer::ProfilingCommons
           operations.pop_front();
         }
 
-        if (pending_operations_.fetch_sub(
-             operations_count,
-             std::memory_order_acq_rel) == operations_count)
-        {
-          pending_cond_.notify_all();
-        }
+        complete_pending_operations_(operations_count);
       }
 
       if (!write_workers_active_object_->active() &&
@@ -472,6 +464,18 @@ namespace AdServer::ProfilingCommons
     FileHolderGuard_var file_holder_guard = get_file_holder_i_(operation.chunk_i);
     file_holder_guard->write(&operation.op_index, sizeof(operation.op_index));
     file_holder_guard->write(operation.membuf);
+  }
+
+  void
+  MessageSaver::complete_pending_operations_(unsigned long operations_count) noexcept
+  {
+    std::lock_guard<std::mutex> lock(pending_cond_lock_);
+    if (pending_operations_.fetch_sub(
+        operations_count,
+        std::memory_order_acq_rel) == operations_count)
+    {
+      pending_cond_.notify_all();
+    }
   }
 
   void

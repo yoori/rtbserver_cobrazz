@@ -178,7 +178,27 @@ namespace AdServer::ProfilingCommons
 
     void process_write_batch_(Operations& batch, BatchScratch& scratch);
 
-    void notify_failed_operations_(Operations& operations, const std::string& error) noexcept;
+    void enqueue_async_operation_(Operation operation, const char* function_name) const;
+
+    static void notify_check_operation_(
+      Operation& operation,
+      bool result,
+      std::optional<std::string> error) noexcept;
+
+    static void notify_get_operation_(
+      Operation& operation,
+      Generics::ConstSmartMemBuf_var profile,
+      std::optional<std::string> error) noexcept;
+
+    static void notify_get_own_operation_(
+      Operation& operation,
+      Generics::SmartMemBuf_var profile,
+      std::optional<std::string> error) noexcept;
+
+    static bool notify_failed_operation_(Operation& operation, const std::string& error) noexcept;
+
+    static void notify_failed_operations_(Operations& operations, const std::string& error)
+      noexcept;
 
     bool direct_check_profile_(const std::string& key) const;
 

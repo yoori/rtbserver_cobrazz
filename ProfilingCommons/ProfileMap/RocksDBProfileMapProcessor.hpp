@@ -95,9 +95,11 @@ namespace AdServer::ProfilingCommons
 
     void wait_unregister_map_(ProfileMapImpl& map_impl);
 
-    bool enqueue_operation_(const ProfileMapImpl& map_impl, Operation&& operation);
+    bool enqueue_operation_(const ProfileMapImpl& map_impl, Operation& operation);
 
     bool enqueue_operations_(const ProfileMapImpl& map_impl, Operations&& operations);
+
+    void enqueue_operations_i_(const ProfileMapImpl& map_impl, Operations&& operations);
 
     void wait_pending_operations_(const ProfileMapImpl& map_impl);
 
