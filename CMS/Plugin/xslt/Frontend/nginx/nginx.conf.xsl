@@ -438,7 +438,7 @@ http {
       }
 
       # Bidding
-      location ~ ^/(bid|google|openrtb|adxml|directnative|dao)$ {
+      location ~ ^/(bid|google|openrtb|adfox|adxml|directnative|dao)$ {
         fastcgi_pass fastcgi_rtbbackend;
         fastcgi_keep_conn on;
 
@@ -655,7 +655,7 @@ http {
       }
 
       # Bidding
-      location ~ ^/(bid|google|openrtb|adxml|directnative|dao)$ {
+      location ~ ^/(bid|google|openrtb|adfox|adxml|directnative|dao)$ {
         fastcgi_pass fastcgi_rtbbackend;
         fastcgi_keep_conn on;
 

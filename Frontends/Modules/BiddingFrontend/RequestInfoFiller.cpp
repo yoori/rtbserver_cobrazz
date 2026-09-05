@@ -871,6 +871,7 @@ namespace AdServer::Bidding
       enable_profile_referer_(enable_profile_referer),
       account_traits_(account_traits),
       adxml_request_info_filler_(new AdXmlRequestInfoFiller(this)),
+      adfox_request_info_filler_(new AdfoxRequestInfoFiller(this)),
       openrtb_devicetype_mapping_({
         {0, "Unknown"},
         {1, "Mobile/Tablet - General"},
@@ -914,6 +915,12 @@ namespace AdServer::Bidding
   RequestInfoFiller::adxml_request_info_filler() noexcept
   {
     return adxml_request_info_filler_.get();
+  }
+
+  AdfoxRequestInfoFiller*
+  RequestInfoFiller::adfox_request_info_filler() noexcept
+  {
+    return adfox_request_info_filler_.get();
   }
 
   bool
@@ -1646,7 +1653,7 @@ namespace AdServer::Bidding
     auto source_it = sources_.find(source_id);
     if (source_it != sources_.end())
     {
-      if (request_info.publisher_account_ids.empty())
+      if (request_info.publisher_account_ids.empty() && source_it->second.default_account_id)
       {
         request_info.publisher_account_ids.resize(1);
         request_info.publisher_account_ids[0] = *(source_it->second.default_account_id);
@@ -3187,6 +3194,37 @@ namespace AdServer::Bidding
         }
       }
     }
+  }
+
+  void
+  RequestInfoFiller::fill_by_user_id_cookie(
+    RequestInfo& request_info,
+    std::string_view signed_user_id) const noexcept
+  {
+    if (signed_user_id.empty())
+    {
+      return;
+    }
+
+    try
+    {
+      if (signed_user_id == AdServer::Commons::PROBE_USER_ID.to_string())
+      {
+        request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_PROBE);
+        return;
+      }
+
+      const Generics::SignedUuid signed_id =
+        common_module_->user_id_controller()->verify(signed_user_id);
+      if (!signed_id.uuid().is_null())
+      {
+        request_info.user_id = signed_id.uuid();
+        request_info.track_user_id = signed_id.uuid();
+        request_info.user_status = static_cast<std::size_t>(AdServer::CampaignSvcs::US_OPTIN);
+      }
+    }
+    catch (...)
+    {}
   }
 
   bool

@@ -211,6 +211,8 @@ namespace AdServer::Bidding
       result =
         FrontendCommons::find_uri(config_->GoogleUriList().Uri(), uri, found_uri) ||
         FrontendCommons::find_uri(config_->OpenRtbUriList().Uri(), uri, found_uri) ||
+        (config_->AdfoxUriList().present() &&
+         FrontendCommons::find_uri(config_->AdfoxUriList()->Uri(), uri, found_uri)) ||
         (config_->AdXmlUriList().present() &&
          FrontendCommons::find_uri(config_->AdXmlUriList()->Uri(), uri, found_uri)) ||
         (config_->ClickStarUriList().present() &&
@@ -562,6 +564,11 @@ namespace AdServer::Bidding
         core_params.campaign_manager = campaign_manager_;
         core_params.channel_client = channel_client_;
         fill_uri_list(core_params.google_uris, config_->GoogleUriList().Uri());
+        if (config_->AdfoxUriList().present())
+        {
+          fill_uri_list(core_params.adfox_uris, config_->AdfoxUriList()->Uri());
+        }
+
         if (config_->AdXmlUriList().present())
         {
           fill_uri_list(core_params.adxml_uris, config_->AdXmlUriList()->Uri());

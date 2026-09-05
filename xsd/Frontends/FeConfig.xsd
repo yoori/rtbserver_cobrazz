@@ -395,6 +395,9 @@
 
       <xsd:element name="OpenRtbUriList" type="UriListType"/>
 
+      <xsd:element name="AdfoxUriList" type="UriListType"
+        minOccurs="0" maxOccurs="1"/>
+
       <xsd:element name="AdXmlUriList" type="UriListType"
         minOccurs="0" maxOccurs="1"/>
 

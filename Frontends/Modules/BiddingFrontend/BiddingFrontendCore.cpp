@@ -1,4 +1,5 @@
 #include "AdJsonBidRequestState.hpp"
+#include "AdfoxHeaderBiddingRequestState.hpp"
 #include "AdXmlBidRequestState.hpp"
 #include "BidRequestState.hpp"
 #include "ClickStarBidRequestState.hpp"
@@ -681,6 +682,7 @@ namespace AdServer::Bidding
       campaign_manager_(params.campaign_manager),
       channel_client_(params.channel_client),
       google_uris_(params.google_uris),
+      adfox_uris_(params.adfox_uris),
       adxml_uris_(params.adxml_uris),
       clickstar_uris_(params.clickstar_uris),
       dao_uris_(params.dao_uris),
@@ -824,6 +826,14 @@ namespace AdServer::Bidding
           response_writer,
           start_process_time));
       }
+      else if (request_type == RequestType::Adfox)
+      {
+        request_task.reset(new AdfoxHeaderBiddingRequestState(
+          this,
+          request_holder,
+          response_writer,
+          start_process_time));
+      }
       else if (request_type == RequestType::AdXml)
       {
         request_task.reset(new AdXmlBidRequestState(
@@ -947,6 +957,10 @@ namespace AdServer::Bidding
     if (find_uri(google_uris_, uri))
     {
       return RequestType::Google;
+    }
+    else if (find_uri(adfox_uris_, uri))
+    {
+      return RequestType::Adfox;
     }
     else if (find_uri(adxml_uris_, uri))
     {

@@ -606,6 +606,7 @@ namespace
       params.campaign_manager = campaign_manager;
       params.channel_client = channel_client;
       params.google_uris = {"/google"};
+      params.adfox_uris = {"/adfox"};
       params.adxml_uris = {"/adxml"};
       params.clickstar_uris = {"/clickstar"};
       params.dao_uris = {"/dao"};

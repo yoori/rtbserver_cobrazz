@@ -35,6 +35,7 @@
 #include "JsonParamProcessor.hpp"
 
 #include "AdXmlRequestInfoFiller.hpp"
+#include "AdfoxRequestInfoFiller.hpp"
 
 namespace AdServer::Bidding
 {
@@ -498,6 +499,8 @@ namespace AdServer::Bidding
 
   class RequestInfoFiller: public FrontendCommons::HTTPExceptions
   {
+    friend class AdfoxRequestInfoFiller;
+
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -557,6 +560,9 @@ namespace AdServer::Bidding
 
     AdXmlRequestInfoFiller*
     adxml_request_info_filler() noexcept;
+
+    AdfoxRequestInfoFiller*
+    adfox_request_info_filler() noexcept;
 
     void
     fill(
@@ -704,6 +710,10 @@ namespace AdServer::Bidding
       const
       noexcept;
 
+    void
+    fill_by_user_id_cookie(RequestInfo& request_info, std::string_view signed_user_id)
+      const noexcept;
+
     bool
     use_external_user_id_(std::string_view external_user_id)
       const noexcept;
@@ -784,6 +794,7 @@ namespace AdServer::Bidding
     const AccountTraitsById account_traits_;
 
     std::unique_ptr<AdXmlRequestInfoFiller> adxml_request_info_filler_;
+    std::unique_ptr<AdfoxRequestInfoFiller> adfox_request_info_filler_;
 
     const OpenRtbEnumNameMap openrtb_devicetype_mapping_;
     const OpenRtbEnumNameMap openrtb_video_placement_mapping_;

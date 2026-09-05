@@ -78,6 +78,7 @@ namespace AdServer::Bidding
       std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
         channel_client;
       UriList google_uris;
+      UriList adfox_uris;
       UriList adxml_uris;
       UriList clickstar_uris;
       UriList dao_uris;
@@ -273,6 +274,7 @@ namespace AdServer::Bidding
     enum class RequestType
     {
       Google,
+      Adfox,
       AdXml,
       ClickStar,
       Dao,
@@ -320,6 +322,7 @@ namespace AdServer::Bidding
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcCoroClient>
       channel_client_coro_;
     UriList google_uris_;
+    UriList adfox_uris_;
     UriList adxml_uris_;
     UriList clickstar_uris_;
     UriList dao_uris_;

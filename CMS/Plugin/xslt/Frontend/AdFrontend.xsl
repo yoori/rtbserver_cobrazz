@@ -1229,6 +1229,10 @@
         <cfg:Uri path="/openrtb"/>
       </cfg:OpenRtbUriList>
 
+      <cfg:AdfoxUriList>
+        <cfg:Uri path="/adfox"/>
+      </cfg:AdfoxUriList>
+
       <cfg:AdXmlUriList>
         <cfg:Uri path="/adxml"/>
       </cfg:AdXmlUriList>
