@@ -376,13 +376,14 @@ namespace AdServer::Frontends
         Generics::CompositeMetricsProvider_var metrics = composite_metrics_provider_;
         http_server_->add_handler(
           "/stats",
-          [metrics](const AdServer::Commons::HttpServer::HttpServer::Request&)
+          [metrics](AdServer::Commons::HttpServer::HttpServer::Request)
           {
-            return AdServer::Commons::HttpServer::HttpServer::Response{
-              200,
-              "application/json",
-              dump_stats_json(metrics)
-            };
+            return AdServer::Commons::HttpServer::make_ready_response(
+              AdServer::Commons::HttpServer::HttpServer::Response{
+                200,
+                "application/json",
+                dump_stats_json(metrics)
+              });
           });
 
         add_child_object(http_server_);

@@ -437,18 +437,19 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
       http_server->add_handler(
         "/stats",
         [user_bind_server_core, grpc_adapter](
-          const AdServer::Commons::HttpServer::HttpServer::Request&)
+          AdServer::Commons::HttpServer::HttpServer::Request)
         {
           std::string body = "{";
           bool first = true;
           append_user_bind_server_stats(body, first, user_bind_server_core.in(), grpc_adapter.in());
 
           body += "}\n";
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::move(body)
-          };
+          return AdServer::Commons::HttpServer::make_ready_response(
+            AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              std::move(body)
+            });
         });
       add_child_object(http_server);
     }

@@ -27,6 +27,18 @@ namespace AdServer::Commons::HttpServer
       const auto pos = target.find('?');
       return pos == std::string::npos ? target : target.substr(0, pos);
     }
+
+    struct ServerLifecycle final
+    {
+      std::mutex lock;
+      bool stopping = true;
+    };
+  }
+
+  AdServer::Commons::StartableAwaitable<HttpServer::Response>
+  make_ready_response(HttpServer::Response response)
+  {
+    co_return response;
   }
 
   struct HttpServer::Impl
@@ -36,15 +48,20 @@ namespace AdServer::Commons::HttpServer
     asio::io_context io_context;
     std::unique_ptr<tcp::acceptor> acceptor;
     std::unique_ptr<WorkGuard> work_guard;
+    std::shared_ptr<ServerLifecycle> lifecycle = std::make_shared<ServerLifecycle>();
   };
 
   class Session final:
     public std::enable_shared_from_this<Session>
   {
   public:
-    Session(tcp::socket&& socket, HttpServer* server)
+    Session(
+      tcp::socket&& socket,
+      HttpServer* server,
+      std::shared_ptr<ServerLifecycle> lifecycle)
       : stream_(std::move(socket)),
-        server_(server)
+        server_(server),
+        lifecycle_(std::move(lifecycle))
     {}
 
     void start()
@@ -65,12 +82,81 @@ namespace AdServer::Commons::HttpServer
         {
           if (!ec)
           {
-            self->write_response_();
+            self->handle_request_();
           }
         });
     }
 
-    void write_response_()
+    struct PendingRequest
+    {
+      explicit PendingRequest(
+        HttpServer* server_val,
+        std::shared_ptr<Session> session_val,
+        AdServer::Commons::StartableAwaitable<HttpServer::Response> operation_val)
+        : server(ReferenceCounting::add_ref(server_val)),
+          session(std::move(session_val)),
+          operation(std::move(operation_val))
+      {}
+
+      HttpServer_var server;
+      std::shared_ptr<Session> session;
+      AdServer::Commons::StartableAwaitable<HttpServer::Response> operation;
+    };
+
+    static void
+    process_request_(
+      std::shared_ptr<Session> self,
+      AdServer::Commons::StartableAwaitable<HttpServer::Response> operation)
+    {
+      auto pending_request = std::make_shared<PendingRequest>(
+        self->server_,
+        std::move(self),
+        std::move(operation));
+      const auto executor = pending_request->session->stream_.get_executor();
+      const auto lifecycle = pending_request->session->lifecycle_;
+      pending_request->operation.start(
+        [
+          pending_request,
+          executor,
+          lifecycle
+        ](std::optional<std::exception_ptr> exception) mutable
+        {
+          HttpServer::Response response;
+          try
+          {
+            if (exception)
+            {
+              std::rethrow_exception(std::move(*exception));
+            }
+            response = pending_request->operation.await_resume();
+          }
+          catch (...)
+          {
+            response = {
+              500,
+              "application/json",
+              "{\"error\":\"internal error\"}\n"
+            };
+          }
+
+          std::lock_guard<std::mutex> lock(lifecycle->lock);
+          if (!lifecycle->stopping)
+          {
+            auto session = pending_request->session;
+            asio::post(
+              executor,
+              [
+                session = std::move(session),
+                response = std::move(response)
+              ]() mutable
+              {
+                session->write_response_(std::move(response));
+              });
+          }
+        });
+    }
+
+    void handle_request_()
     {
       HttpServer::Request app_request;
       app_request.method = std::string(request_.method_string());
@@ -78,7 +164,11 @@ namespace AdServer::Commons::HttpServer
       app_request.path = extract_path(app_request.target);
       app_request.body = request_.body();
 
-      const auto app_response = server_->handle_request_(app_request);
+      process_request_(shared_from_this(), server_->handle_request_(std::move(app_request)));
+    }
+
+    void write_response_(HttpServer::Response app_response)
+    {
       auto response = std::make_shared<http::response<http::string_body>>(
         static_cast<http::status>(app_response.status),
         request_.version());
@@ -119,6 +209,7 @@ namespace AdServer::Commons::HttpServer
     beast::flat_buffer buffer_;
     http::request<http::string_body> request_;
     HttpServer* const server_;
+    const std::shared_ptr<ServerLifecycle> lifecycle_;
   };
 
   HttpServer::HttpServer(
@@ -143,6 +234,8 @@ namespace AdServer::Commons::HttpServer
   HttpServer::activate_object_()
   {
     impl_->io_context.restart();
+    impl_->lifecycle = std::make_shared<ServerLifecycle>();
+    impl_->lifecycle->stopping = false;
 
     boost::system::error_code ec;
     const auto address =
@@ -195,6 +288,11 @@ namespace AdServer::Commons::HttpServer
   void
   HttpServer::deactivate_object_()
   {
+    {
+      std::lock_guard<std::mutex> lock(impl_->lifecycle->lock);
+      impl_->lifecycle->stopping = true;
+    }
+
     boost::system::error_code ec;
     if (impl_->acceptor)
     {
@@ -230,7 +328,10 @@ namespace AdServer::Commons::HttpServer
       {
         if (!ec)
         {
-          std::make_shared<Session>(std::move(*socket), this)->start();
+          std::make_shared<Session>(
+            std::move(*socket),
+            this,
+            impl_->lifecycle)->start();
         }
 
         if (active() && ec != asio::error::operation_aborted && ec != asio::error::bad_descriptor)
@@ -240,8 +341,8 @@ namespace AdServer::Commons::HttpServer
       });
   }
 
-  HttpServer::Response
-  HttpServer::handle_request_(const Request& request) noexcept
+  AdServer::Commons::StartableAwaitable<HttpServer::Response>
+  HttpServer::handle_request_(Request request)
   {
     Handler handler;
     {
@@ -255,24 +356,24 @@ namespace AdServer::Commons::HttpServer
 
     if (!handler)
     {
-      return {
+      return make_ready_response({
         404,
         "application/json",
         "{\"error\":\"not found\"}\n"
-      };
+      });
     }
 
     try
     {
-      return handler(request);
+      return handler(std::move(request));
     }
     catch (...)
     {
-      return {
+      return make_ready_response({
         500,
         "application/json",
         "{\"error\":\"internal error\"}\n"
-      };
+      });
     }
   }
 }

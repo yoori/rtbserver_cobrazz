@@ -194,18 +194,19 @@ BillingServerApp_::main(int argc, char** argv)
         4);
       http_server->add_handler(
         "/stats",
-        [grpc_adapter](const AdServer::Commons::HttpServer::HttpServer::Request&)
+        [grpc_adapter](AdServer::Commons::HttpServer::HttpServer::Request)
         {
           std::string body = "{";
           bool first = true;
           append_billing_server_stats(body, first, grpc_adapter.in());
 
           body += "}\n";
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::move(body)
-          };
+          return AdServer::Commons::HttpServer::make_ready_response(
+            AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              std::move(body)
+            });
         });
       add_child_object(http_server);
     }

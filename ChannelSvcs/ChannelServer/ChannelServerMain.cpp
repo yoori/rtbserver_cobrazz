@@ -239,7 +239,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         [
           server_core = server_core_,
           grpc_adapter = grpc_adapter_
-        ](const AdServer::Commons::HttpServer::HttpServer::Request&)
+        ](AdServer::Commons::HttpServer::HttpServer::Request)
         {
           AdServer::ChannelSvcs::ChannelServerStats stats;
           server_core->get_stats(stats);
@@ -283,11 +283,12 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           }
           body += "}\n";
 
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::move(body)
-          };
+          return AdServer::Commons::HttpServer::make_ready_response(
+            AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              std::move(body)
+            });
         });
     }
 

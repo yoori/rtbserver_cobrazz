@@ -229,6 +229,54 @@ namespace AdServer::RequestInfoSvcs
       body += '\n';
       return body;
     }
+
+    AdServer::Commons::StartableAwaitable<HttpServer::Response>
+    co_handle_user_navigation_profile(
+      ExpressionMatcherImpl_var expression_matcher,
+      HttpServer::Request request)
+    {
+      if (request.method != "POST")
+      {
+        co_return error_response(405, "only POST is supported");
+      }
+
+      UserNavigationHttpRequest parsed_request;
+      std::vector<AdServer::Commons::UserId> user_ids;
+      try
+      {
+        parsed_request = parse_request(request.body);
+        user_ids.reserve(parsed_request.user_ids.size());
+        for (const auto& user_id : parsed_request.user_ids)
+        {
+          user_ids.emplace_back(user_id);
+        }
+      }
+      catch (const std::exception& ex)
+      {
+        co_return error_response(400, ex.what());
+      }
+
+      try
+      {
+        const auto results = co_await co_get_profiles(
+          expression_matcher.in(),
+          std::move(user_ids),
+          parsed_request.date);
+        co_return HttpServer::Response{
+          200,
+          "application/json",
+          format_response(parsed_request.user_ids, results)
+        };
+      }
+      catch (const ExpressionMatcherImpl::NotReady& ex)
+      {
+        co_return error_response(503, ex.what());
+      }
+      catch (const std::exception& ex)
+      {
+        co_return error_response(500, ex.what());
+      }
+    }
   }
 
   AdServer::Commons::HttpServer::HttpServer::Handler
@@ -237,11 +285,12 @@ namespace AdServer::RequestInfoSvcs
     ExpressionMatcherImpl_var expression_matcher_holder(
       ReferenceCounting::add_ref(expression_matcher));
     return [expression_matcher_holder = std::move(expression_matcher_holder)](
-      const HttpServer::Request& request)
+      HttpServer::Request request)
     {
       if (request.method != "GET")
       {
-        return error_response(405, "only GET is supported");
+        return AdServer::Commons::HttpServer::make_ready_response(
+          error_response(405, "only GET is supported"));
       }
 
       const auto sizes = expression_matcher_holder->profile_sizes();
@@ -259,7 +308,8 @@ namespace AdServer::RequestInfoSvcs
       }
       body += '\n';
 
-      return HttpServer::Response{200, "application/json", std::move(body)};
+      return AdServer::Commons::HttpServer::make_ready_response(
+        HttpServer::Response{200, "application/json", std::move(body)});
     };
   }
 
@@ -269,49 +319,11 @@ namespace AdServer::RequestInfoSvcs
     ExpressionMatcherImpl_var expression_matcher_holder(
       ReferenceCounting::add_ref(expression_matcher));
     return [expression_matcher_holder = std::move(expression_matcher_holder)](
-      const HttpServer::Request& request)
+      HttpServer::Request request)
     {
-      if (request.method != "POST")
-      {
-        return error_response(405, "only POST is supported");
-      }
-
-      UserNavigationHttpRequest parsed_request;
-      std::vector<AdServer::Commons::UserId> user_ids;
-      try
-      {
-        parsed_request = parse_request(request.body);
-        user_ids.reserve(parsed_request.user_ids.size());
-        for (const auto& user_id : parsed_request.user_ids)
-        {
-          user_ids.emplace_back(user_id);
-        }
-      }
-      catch (const std::exception& ex)
-      {
-        return error_response(400, ex.what());
-      }
-
-      try
-      {
-        const auto results = AdServer::Commons::sync_wait(co_get_profiles(
-          expression_matcher_holder.in(),
-          std::move(user_ids),
-          parsed_request.date));
-        return HttpServer::Response{
-          200,
-          "application/json",
-          format_response(parsed_request.user_ids, results)
-        };
-      }
-      catch (const ExpressionMatcherImpl::NotReady& ex)
-      {
-        return error_response(503, ex.what());
-      }
-      catch (const std::exception& ex)
-      {
-        return error_response(500, ex.what());
-      }
+      return co_handle_user_navigation_profile(
+        expression_matcher_holder,
+        std::move(request));
     };
   }
 }

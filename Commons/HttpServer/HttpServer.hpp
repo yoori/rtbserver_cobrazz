@@ -12,6 +12,8 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
+#include <Commons/Coro/StartableAwaitable.hpp>
+
 namespace AdServer::Commons::HttpServer
 {
   class HttpServer final:
@@ -33,7 +35,7 @@ namespace AdServer::Commons::HttpServer
       std::string body;
     };
 
-    using Handler = std::function<Response(const Request&)>;
+    using Handler = std::function<StartableAwaitable<Response>(Request)>;
 
     HttpServer(
       std::string host, unsigned short port, unsigned long threads, bool keep_alive = false);
@@ -48,7 +50,7 @@ namespace AdServer::Commons::HttpServer
     void wait_object_() override;
 
     void do_accept_();
-    Response handle_request_(const Request& request) noexcept;
+    StartableAwaitable<Response> handle_request_(Request request);
 
   private:
     friend class Session;
@@ -66,6 +68,9 @@ namespace AdServer::Commons::HttpServer
     struct Impl;
     std::unique_ptr<Impl> impl_;
   };
+
+  StartableAwaitable<HttpServer::Response>
+  make_ready_response(HttpServer::Response response);
 
   using HttpServer_var = ReferenceCounting::SmartPtr<HttpServer>;
 }

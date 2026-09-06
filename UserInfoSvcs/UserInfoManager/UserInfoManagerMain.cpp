@@ -185,7 +185,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       http_server->add_handler(
         "/stats",
         [user_info_manager_core = user_info_manager_core_, grpc_adapter](
-          const AdServer::Commons::HttpServer::HttpServer::Request&)
+          AdServer::Commons::HttpServer::HttpServer::Request)
         {
           const auto stats = grpc_adapter ?
             grpc_adapter->stats() :
@@ -270,11 +270,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
               std::to_string(async_mutex_stats.max_waiters) +
               "}\n";
 
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::move(body)
-          };
+          return AdServer::Commons::HttpServer::make_ready_response(
+            AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              std::move(body)
+            });
         });
       add_child_object(http_server);
     }

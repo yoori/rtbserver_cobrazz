@@ -500,7 +500,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           grpc_adapter,
           campaign_manager_core,
           campaign_manager_logger
-        ](const AdServer::Commons::HttpServer::HttpServer::Request&)
+        ](AdServer::Commons::HttpServer::HttpServer::Request)
         {
           std::string body = "{";
           bool first = true;
@@ -513,11 +513,12 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
 
           body += "}\n";
 
-          return AdServer::Commons::HttpServer::HttpServer::Response{
-            200,
-            "application/json",
-            std::move(body)
-          };
+          return AdServer::Commons::HttpServer::make_ready_response(
+            AdServer::Commons::HttpServer::HttpServer::Response{
+              200,
+              "application/json",
+              std::move(body)
+            });
         });
 
       active_objects->add_child_object(http_server.in());

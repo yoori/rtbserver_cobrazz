@@ -17,6 +17,10 @@ add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp
 )
 
+add_executable(HttpServerAsyncTest
+  HttpServerAsyncTest.cpp
+)
+
 add_executable(UserInfoManipTest
   UserInfoManipTest.cpp
 )
@@ -40,6 +44,12 @@ target_link_libraries(FastSchedulerPerfTest
   PRIVATE
     Commons
     Generics
+)
+
+target_link_libraries(HttpServerAsyncTest
+  PRIVATE
+    Commons
+    HttpServer
 )
 
 target_link_libraries(UserInfoManipTest
