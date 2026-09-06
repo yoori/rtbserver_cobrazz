@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <charconv>
 #include <chrono>
 #include <cstddef>
@@ -377,12 +378,18 @@ namespace
       Record::AdRequestPropsOptional(),
       "",
       "https://example.test/navigation",
-      "navigation keyword");
+      "rtbfirst\nrtbsecond\r\nrtbthird");
     LP::BufferWriter output;
     output << expected << '\n';
+    const std::string serialized = output.str();
+    if (serialized.find("rtbfirst^0Artbsecond^0D^0Artbthird") == std::string::npos ||
+      std::count(serialized.begin(), serialized.end(), '\n') != 1)
+    {
+      throw std::runtime_error("RBC page keywords whitespace escaping failed");
+    }
 
     Record restored;
-    std::istringstream input(output.str());
+    std::istringstream input(serialized);
     if (!(input >> restored) || !(restored == expected))
     {
       throw std::runtime_error("RBC navigation round-trip failed");

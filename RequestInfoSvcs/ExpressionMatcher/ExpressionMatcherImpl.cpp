@@ -69,14 +69,19 @@ namespace
     std::vector<std::string_view>& navigation_urls,
     std::string_view page_keywords)
   {
+    constexpr std::string_view WHITESPACE = " \t\n\r\f\v";
     while (!page_keywords.empty())
     {
-      const std::size_t separator = page_keywords.find(' ');
-      const std::string_view keyword = page_keywords.substr(0, separator);
-      if (!keyword.empty())
+      const std::size_t keyword_begin = page_keywords.find_first_not_of(WHITESPACE);
+      if (keyword_begin == std::string_view::npos)
       {
-        navigation_urls.push_back(keyword);
+        break;
       }
+
+      page_keywords.remove_prefix(keyword_begin);
+      const std::size_t separator = page_keywords.find_first_of(WHITESPACE);
+      const std::string_view keyword = page_keywords.substr(0, separator);
+      navigation_urls.push_back(keyword);
 
       if (separator == std::string_view::npos)
       {

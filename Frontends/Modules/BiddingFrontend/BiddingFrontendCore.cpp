@@ -323,7 +323,7 @@ namespace AdServer::Bidding
       target.set_only_display_ad(source.only_display_ad);
       target.set_search_engine_id(source.search_engine_id);
       target.set_search_words(source.search_words);
-      target.set_page_keywords_present(source.page_keywords_present);
+      target.set_page_keywords_present(!source.keywords.empty());
       target.set_preview_ccid(source.preview_ccid);
       target.mutable_ad_slots()->Reserve(source.ad_slots.size());
       for (std::size_t i = 0; i < source.ad_slots.size(); ++i)
@@ -377,7 +377,7 @@ namespace AdServer::Bidding
         pack_tokens(src.tokens, dst->mutable_tokens());
       }
       target.set_need_debug_info(source.need_debug_info);
-      target.set_page_keywords(source.page_keywords);
+      target.set_page_keywords(source.keywords);
       target.set_url_keywords(source.url_keywords);
     }
 
