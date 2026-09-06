@@ -110,12 +110,16 @@ namespace AdServer::ProfilingCommons
     const char* output_file_prefix,
     unsigned long chunks_count,
     const Generics::Time& flush_period,
-    unsigned long threads_count)
+    unsigned long threads_count,
+    FileController* file_controller,
+    bool disable_caching)
     : logger_(ReferenceCounting::add_ref(logger)),
       output_dir_(output_dir),
       output_file_prefix_(output_file_prefix),
       flush_period_(flush_period),
       write_workers_count_(normalize_write_workers(chunks_count, threads_count)),
+      file_controller_(ReferenceCounting::add_ref(file_controller)),
+      disable_caching_(disable_caching),
       callback_(new Logging::ActiveObjectCallbackImpl(
         logger,
         "ActiveObject",
@@ -314,7 +318,12 @@ namespace AdServer::ProfilingCommons
     file_holder.file_name = files.first;
     file_holder.tmp_file_name = files.second;
     file_holder.file_writer.reset(
-      new AdServer::ProfilingCommons::FileWriter(file_holder.tmp_file_name.c_str(), 1024*1024));
+      new AdServer::ProfilingCommons::FileWriter(
+        file_holder.tmp_file_name.c_str(),
+        1024*1024,
+        false,
+        disable_caching_,
+        file_controller_.in()));
   }
 
   void
@@ -469,11 +478,11 @@ namespace AdServer::ProfilingCommons
   void
   MessageSaver::complete_pending_operations_(unsigned long operations_count) noexcept
   {
-    std::lock_guard<std::mutex> lock(pending_cond_lock_);
     if (pending_operations_.fetch_sub(
         operations_count,
         std::memory_order_acq_rel) == operations_count)
     {
+      std::lock_guard<std::mutex> lock(pending_cond_lock_);
       pending_cond_.notify_all();
     }
   }

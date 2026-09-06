@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-#include <Commons/LockMap.hpp>
-#include <ProfilingCommons/FileController.hpp>
-#include <ProfilingCommons/FileWriter.hpp>
+#include <ProfilingCommons/MessageSaver.hpp>
 
 #include "UserOperationProcessor.hpp"
 
@@ -11,7 +8,9 @@ namespace AdServer::UserInfoSvcs
 {
   class UserOperationSaver:
     public UserOperationProcessor,
-    public Generics::RefCountableCompositeActiveObject
+    public virtual Generics::RefCountableActiveObject,
+    public virtual ReferenceCounting::AtomicImpl,
+    protected ProfilingCommons::MessageSaver
   {
   public:
     enum
@@ -28,11 +27,11 @@ namespace AdServer::UserInfoSvcs
 
   public:
     UserOperationSaver(
-      Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
       const char* output_files_path,
       const char* output_file_prefix,
       unsigned long chunks_number,
+      const Generics::Time& flush_period,
       ProfilingCommons::FileController* file_controller,
       UserOperationProcessor* next_processor)
       /*throw(Exception)*/;
@@ -123,104 +122,23 @@ namespace AdServer::UserInfoSvcs
       /*throw(ChunkNotFound, UserOperationProcessor::Exception)*/;
 
     // ActiveObject interface
-    virtual void
-    wait_object()
-      /*throw(Generics::ActiveObject::Exception, eh::Exception)*/;
-
     void
-    rotate() noexcept;
-
-  protected:
-    typedef Sync::Policy::PosixThreadRW SyncPolicy;
-
-    typedef std::list<Generics::ConstSmartMemBuf_var>
-      ConstSmartMemBufList;
-
-    struct SaveQueue: public ReferenceCounting::AtomicImpl
-    {
-      unsigned long chunk_id;
-      ConstSmartMemBufList bufs;
-
-    protected:
-      virtual ~SaveQueue() noexcept {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<SaveQueue>
-      SaveQueue_var;
-
-    typedef std::vector<SaveQueue_var> SaveQueueArray;
-
-    typedef std::list<SaveQueue_var> SaveQueueList;
-
-    struct QueueHolder: public ReferenceCounting::AtomicImpl
-    {
-      mutable Sync::Condition cond;
-      //mutable Sync::PosixMutex lock;
-      SaveQueueArray queues;
-      SaveQueueList non_empty_queues;
-
-    protected:
-      virtual ~QueueHolder() noexcept {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<QueueHolder>
-      QueueHolder_var;
-
-    struct File:
-      public ReferenceCounting::AtomicImpl,
-      public ProfilingCommons::FileWriter
-    {
-    public:
-      File(
-        const char* file_path,
-        const char* file_name,
-        ProfilingCommons::FileController* file_controller)
-        /*throw(UserOperationSaver::Exception)*/;
-
-    protected:
-      virtual ~File() noexcept; // rename result file
-
-    protected:
-      const std::string tmp_file_name_;
-      const std::string file_name_;
-    };
-
-    typedef ReferenceCounting::SmartPtr<File> File_var;
-    typedef std::map<unsigned long, File_var> FileMap;
-    typedef AdServer::Commons::StrictLockMap<unsigned long> FileLockMap;
-
-    struct FilesHolder: public ReferenceCounting::AtomicImpl
-    {
-      FileLockMap file_lock;
-      SyncPolicy::Mutex files_lock;
-      FileMap files;
-
-    protected:
-      virtual ~FilesHolder() noexcept {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<FilesHolder>
-      FilesHolder_var;
-
-    class Dumper;
+    wait_object()
+      override
+      /*throw(Generics::ActiveObject::Exception, eh::Exception)*/;
 
   protected:
     virtual ~UserOperationSaver() noexcept {}
 
-    template<typename WriterType>
-    void
-    save_(const AdServer::Commons::UserId& user_id, const WriterType& writer)
-      noexcept;
+    template <typename WriterType>
+    void save_(
+      const AdServer::Commons::UserId& user_id,
+      unsigned long op_index,
+      const WriterType& writer);
 
   private:
-    Logging::Logger_var logger_;
-    const unsigned long chunks_count_;
-    QueueHolder_var queue_holder_;
-    FilesHolder_var files_holder_;
-
     UserOperationProcessor_var next_processor_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserOperationSaver>
-    UserOperationSaver_var;
+  using UserOperationSaver_var = ReferenceCounting::SmartPtr<UserOperationSaver>;
 }

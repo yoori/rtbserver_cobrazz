@@ -1,318 +1,32 @@
-#include <LogCommons/LogCommons.hpp>
 #include <UserInfoSvcs/UserInfoCommons/UserOperationProfiles.hpp>
+
+#include <utility>
 
 #include "Compatibility/UserOperationProfilesAdapter.hpp"
 #include "UserOperationSaver.hpp"
 
-namespace Aspect
-{
-  const char USER_OPERATION_SAVER[] = "UserOperationSaver";
-}
-
 namespace AdServer::UserInfoSvcs
 {
-  // UserOperationSaver::Dumper
-  class UserOperationSaver::Dumper: public Generics::ActiveObjectCommonImpl
-  {
-  public:
-    Dumper(
-      Generics::ActiveObjectCallback* callback,
-      Logging::Logger* logger,
-      const char* output_dir,
-      const char* file_prefix,
-      unsigned long chunks_count,
-      QueueHolder* queue_holder,
-      FilesHolder* files_holder,
-      ProfilingCommons::FileController* file_controller)
-      noexcept;
-
-  protected:
-    class Job: public Generics::ActiveObjectCommonImpl::SingleJob
-    {
-    public:
-      Job(
-        Generics::ActiveObjectCallback* callback,
-        Logging::Logger* logger,
-        const char* output_dir,
-        const char* file_prefix,
-        unsigned long chunks_count,
-        QueueHolder* queue_holder,
-        FilesHolder* files_holder,
-        ProfilingCommons::FileController* file_controller)
-        noexcept;
-
-      virtual void
-      work() noexcept;
-
-      virtual void
-      terminate() noexcept;
-
-    protected:
-      virtual ~Job() noexcept
-      {}
-
-      void
-      dump_queues_(UserOperationSaver::SaveQueueList& dump_queues)
-        noexcept;
-
-      void
-      dump_queue_(unsigned long chunk_i, ConstSmartMemBufList& bufs)
-        noexcept;
-
-    protected:
-      Logging::Logger_var logger_;
-      const std::string output_dir_;
-      const std::string output_file_prefix_;
-      const unsigned long chunks_count_;
-      QueueHolder_var queue_holder_;
-      FilesHolder_var files_holder_;
-      ProfilingCommons::FileController_var file_controller_;
-    };
-  };
-
-  // UserOperationSaver::File impl
-  UserOperationSaver::File::File(
-    const char* res_file,
-    const char* tmp_file,
-    ProfilingCommons::FileController* file_controller)
-    /*throw(UserOperationSaver::Exception)*/
-  try
-    : ProfilingCommons::FileWriter(
-        tmp_file,
-        1024*1024,
-        false, // not append
-        true, // disable caching
-        file_controller),
-      tmp_file_name_(tmp_file),
-      file_name_(res_file)
-  {}
-  catch(const eh::Exception& ex)
-  {
-    Stream::Error ostr;
-    ostr << "UserOperationSaver::File::File(): " << ex.what();
-    throw UserOperationSaver::Exception(ostr);
-  }
-
-  UserOperationSaver::File::~File() noexcept
-  {
-    FileWriter::close();
-    ::rename(tmp_file_name_.c_str(), file_name_.c_str());
-  }
-
-  // UserOperationSaver::Dumper
-  UserOperationSaver::Dumper::Dumper(
-    Generics::ActiveObjectCallback* callback,
-    Logging::Logger* logger,
-    const char* output_dir,
-    const char* output_file_prefix,
-    unsigned long chunks_number,
-    QueueHolder* queue_holder,
-    FilesHolder* files_holder,
-    ProfilingCommons::FileController* file_controller)
-    noexcept
-    : Generics::ActiveObjectCommonImpl(
-        SingleJob_var(new Job(
-          callback,
-          logger,
-          output_dir,
-          output_file_prefix,
-          chunks_number,
-          queue_holder,
-          files_holder,
-          file_controller)),
-        1)
-  {}
-
-  // UserOperationSaver::Dumper::Job
-  UserOperationSaver::Dumper::Job::Job(
-    Generics::ActiveObjectCallback* callback,
-    Logging::Logger* logger,
-    const char* output_dir,
-    const char* file_prefix,
-    unsigned long chunks_count,
-    QueueHolder* queue_holder,
-    FilesHolder* files_holder,
-    ProfilingCommons::FileController* file_controller)
-    noexcept
-    : SingleJob(callback),
-      logger_(ReferenceCounting::add_ref(logger)),
-      output_dir_(output_dir),
-      output_file_prefix_(file_prefix),
-      chunks_count_(chunks_count),
-      queue_holder_(ReferenceCounting::add_ref(queue_holder)),
-      files_holder_(ReferenceCounting::add_ref(files_holder)),
-      file_controller_(ReferenceCounting::add_ref(file_controller))
-  {}
-
-  void
-  UserOperationSaver::Dumper::Job::work() noexcept
-  {
-    SaveQueueArray empty_queues;
-    SaveQueueList dump_queues;
-
-    {
-      empty_queues.resize(chunks_count_);
-
-      unsigned long chunk_id = 0;
-      for (SaveQueueArray::iterator it = empty_queues.begin();
-        it != empty_queues.end(); ++it, ++chunk_id)
-      {
-        *it = new SaveQueue();
-        (*it)->chunk_id = chunk_id;
-      }
-    }
-
-    while (!is_terminating())
-    {
-      {
-        Sync::ConditionalGuard guard(queue_holder_->cond);
-
-        if (!queue_holder_->non_empty_queues.empty())
-        {
-          for (SaveQueueList::const_iterator it = queue_holder_->non_empty_queues.begin();
-              it != queue_holder_->non_empty_queues.end(); ++it)
-          {
-            queue_holder_->queues[(*it)->chunk_id].swap(empty_queues[(*it)->chunk_id]);
-          }
-
-          dump_queues.splice(dump_queues.begin(), queue_holder_->non_empty_queues);
-        }
-
-        if (dump_queues.empty() && !is_terminating())
-        {
-          guard.wait();
-        }
-      }
-
-      // do dump
-      dump_queues_(dump_queues);
-      dump_queues.clear();
-    }
-
-    // do last dump before stop
-    dump_queues_(dump_queues);
-  }
-
-  void
-  UserOperationSaver::Dumper::Job::terminate()
-    noexcept
-  {
-    Sync::ConditionalGuard guard(queue_holder_->cond);
-    queue_holder_->cond.broadcast();
-  }
-
-  void
-  UserOperationSaver::Dumper::Job::dump_queues_(UserOperationSaver::SaveQueueList& dump_queues)
-    noexcept
-  {
-    for (UserOperationSaver::SaveQueueList::iterator it = dump_queues.begin();
-        it != dump_queues.end(); ++it)
-    {
-      assert(it->in());
-
-      if (!(*it)->bufs.empty())
-      {
-        dump_queue_((*it)->chunk_id, (*it)->bufs);
-        (*it)->bufs.clear();
-      }
-    }
-  }
-
-  void
-  UserOperationSaver::Dumper::Job::dump_queue_(unsigned long chunk_i, ConstSmartMemBufList& bufs)
-    noexcept
-  {
-    static const char* FUN = "UserOperationSaver::Dumper::Job::dump_queue_()";
-
-    try
-    {
-      File_var target_file;
-      bool file_created = false;
-      FileLockMap::WriteGuard file_lock = files_holder_->file_lock.write_lock(chunk_i);
-
-      {
-        SyncPolicy::WriteGuard lock(files_holder_->files_lock);
-        FileMap::iterator it = files_holder_->files.find(chunk_i);
-        if (it != files_holder_->files.end())
-        {
-          target_file = it->second;
-        }
-      }
-
-      if (!target_file.in())
-      {
-        LogProcessing::LogFileNameInfo file_name_info(output_file_prefix_);
-        file_name_info.distrib_count = chunks_count_;
-        file_name_info.distrib_index = chunk_i;
-        LogProcessing::StringPair files =
-          LogProcessing::make_log_file_name_pair(file_name_info, output_dir_);
-        target_file = new File(files.first.c_str(), files.second.c_str(), file_controller_);
-        file_created = true;
-      }
-
-      if (file_created)
-      {
-        SyncPolicy::WriteGuard lock(files_holder_->files_lock);
-        files_holder_->files.insert(std::make_pair(chunk_i, target_file));
-      }
-
-      while (!bufs.empty())
-      {
-        const Generics::ConstSmartMemBuf_var& save_buf = bufs.front();
-        uint32_t buf_size = save_buf->membuf().size();
-        target_file->write(reinterpret_cast<const char*>(&buf_size), sizeof(buf_size));
-        target_file->write(save_buf->membuf().get<char>(), buf_size);
-        bufs.pop_front();
-      }
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught eh::Exception: " << ex.what();
-      logger_->log(ostr.str(), Logging::Logger::ERROR, Aspect::USER_OPERATION_SAVER);
-    }
-  }
-
-
-  // UserOperationSaver
   UserOperationSaver::UserOperationSaver(
-    Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const char* output_dir,
     const char* output_file_prefix,
     unsigned long chunks_number,
+    const Generics::Time& flush_period,
     ProfilingCommons::FileController* file_controller,
     UserOperationProcessor* next_processor)
     /*throw(Exception)*/
-    : logger_(ReferenceCounting::add_ref(logger)),
-      chunks_count_(chunks_number),
-      queue_holder_(new QueueHolder()),
-      files_holder_(new FilesHolder()),
+    : MessageSaver(
+        logger,
+        output_dir,
+        output_file_prefix,
+        chunks_number,
+        flush_period,
+        1,
+        file_controller,
+        true),
       next_processor_(ReferenceCounting::add_ref(next_processor))
-  {
-    queue_holder_->queues.resize(chunks_number);
-
-    unsigned long chunk_i = 0;
-    for (SaveQueueArray::iterator it = queue_holder_->queues.begin();
-        it != queue_holder_->queues.end(); ++it, ++chunk_i)
-    {
-      SaveQueue_var new_queue = new SaveQueue();
-      new_queue->chunk_id = chunk_i;
-      *it = new_queue;
-    }
-
-    Generics::ActiveObject_var dump_thread = new Dumper(
-      callback,
-      logger,
-      output_dir,
-      output_file_prefix,
-      chunks_number,
-      queue_holder_,
-      files_holder_,
-      file_controller);
-
-    add_child_object(dump_thread.in());
-  }
+  {}
 
   AdServer::Commons::StartableAwaitable<bool>
   UserOperationSaver::co_remove_user_profile(const UserId& user_id)
@@ -331,7 +45,7 @@ namespace AdServer::UserInfoSvcs
       fraud_operation_writer.version() = FRAUD_OPERATION_PROFILE_VERSION;
       fraud_operation_writer.user_id() = user_id.to_string();
       fraud_operation_writer.fraud_time() = now.tv_sec;
-      save_(user_id, fraud_operation_writer);
+      save_(user_id, UO_FRAUD, fraud_operation_writer);
     }
 
     co_return co_await next_processor_->co_fraud_user(user_id, now);
@@ -423,7 +137,7 @@ namespace AdServer::UserInfoSvcs
         match_operation_writer.coord_data().push_back(cdw);
       }
 
-      save_(channel_match_info.user_id, match_operation_writer);
+      save_(channel_match_info.user_id, UO_MATCH, match_operation_writer);
     }
 
     co_return co_await next_processor_->co_match(
@@ -486,7 +200,7 @@ namespace AdServer::UserInfoSvcs
         merge_freq_cap_profile.data(),
         merge_freq_cap_profile.size());
 
-      save_(request_params.user_id, merge_operation_writer);
+      save_(request_params.user_id, UO_MERGE, merge_operation_writer);
     }
 
     co_return co_await next_processor_->co_merge(
@@ -530,7 +244,7 @@ namespace AdServer::UserInfoSvcs
         merge_history_profile.data(),
         merge_history_profile.size());
 
-      save_(user_id, merge_operation_writer);
+      save_(user_id, UO_MERGE, merge_operation_writer);
     }
 
     co_return co_await next_processor_->co_exchange_merge(
@@ -586,7 +300,7 @@ namespace AdServer::UserInfoSvcs
         profile_writer.seq_orders().push_back(seq_order);
       }
 
-      save_(user_id, profile_writer);
+      save_(user_id, UO_FC_UPDATE, profile_writer);
     }
 
     co_return co_await next_processor_->co_update_freq_caps(
@@ -623,7 +337,7 @@ namespace AdServer::UserInfoSvcs
         exclude_pubpixel_accounts.end(),
         std::back_inserter(profile_writer.publisher_accounts()));
 
-      save_(user_id, profile_writer);
+      save_(user_id, UO_FC_CONFIRM, profile_writer);
     }
 
     co_return co_await next_processor_->co_confirm_freq_caps(
@@ -657,60 +371,26 @@ namespace AdServer::UserInfoSvcs
       op_priority);
   }
 
-  template<typename WriterType>
+  template <typename WriterType>
   void
-  UserOperationSaver::save_(const AdServer::Commons::UserId& user_id, const WriterType& writer)
-    noexcept
+  UserOperationSaver::save_(
+    const AdServer::Commons::UserId& user_id,
+    unsigned long op_index,
+    const WriterType& writer)
   {
-    Generics::SmartMemBuf_var new_membuf(new Generics::SmartMemBuf(writer.size()));
-    writer.save(new_membuf->membuf().data(), new_membuf->membuf().size());
-
-    const unsigned long chunk_i = AdServer::Commons::uuid_distribution_hash(
-      user_id) % chunks_count_;
-
-    ConstSmartMemBufList new_mem_buf_list;
-    new_mem_buf_list.push_back(Generics::transfer_membuf(new_membuf));
-
-    bool signal_queue;
-
-    {
-      Sync::ConditionalGuard guard(queue_holder_->cond);
-
-      const SaveQueue_var& queue = queue_holder_->queues[chunk_i];
-
-      if ((signal_queue = queue->bufs.empty()))
-      {
-        queue_holder_->non_empty_queues.push_back(queue);
-      }
-
-      queue->bufs.splice(queue->bufs.end(), new_mem_buf_list);
-    }
-
-    if (signal_queue)
-    {
-      queue_holder_->cond.signal();
-    }
+    Generics::MemBuf membuf(writer.size());
+    writer.save(membuf.data(), membuf.size());
+    write_operation(
+      AdServer::Commons::uuid_distribution_hash(user_id),
+      op_index,
+      std::move(membuf));
   }
 
   void
   UserOperationSaver::wait_object()
     /*throw(Generics::ActiveObject::Exception, eh::Exception)*/
   {
-    Generics::CompositeActiveObject::wait_object();
-    // dump files on waiting (not on destruct)
-    rotate();
-  }
-
-  void
-  UserOperationSaver::rotate() noexcept
-  {
-    FileMap files;
-
-    {
-      SyncPolicy::WriteGuard lock(files_holder_->files_lock);
-      files.swap(files_holder_->files);
-    }
-
-    // dump files by destructors
+    MessageSaver::wait_object();
+    flush();
   }
 }

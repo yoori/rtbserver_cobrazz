@@ -50,6 +50,7 @@ target_link_libraries(UserInfoContainer
     ProfileMapRocksDB
     ChannelMatcher
     LogCommons
+    MessageSaver
     UserFreqCapProfile
     UserOperationProfilesPST
     UserBaseProfileAdapter

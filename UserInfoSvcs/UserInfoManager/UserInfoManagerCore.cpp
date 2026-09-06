@@ -1581,19 +1581,18 @@ namespace AdServer::UserInfoSvcs
       if (user_info_manager_config_.UserOperationsBackup().present())
       {
         user_operation_saver_ = new UserOperationSaver(
-          callback_, logger(),
+          logger(),
           user_info_manager_config_.UserOperationsBackup()->dir().c_str(),
           user_info_manager_config_.UserOperationsBackup()->file_prefix()
             .c_str(),
-          storage_config.common_chunks_number(), file_controller_,
+          storage_config.common_chunks_number(),
+          Generics::Time(user_info_manager_config_.UserOperationsBackup()->rotate_period()),
+          file_controller_,
           user_info_container);
 
         user_info_container_dependent_active_object_->add_child_object(user_operation_saver_.in());
 
         user_operation_processor = user_operation_saver_;
-
-        Task_var msg = new RotateUserOperationsBackupTask(this, 0);
-        task_runner_->enqueue_task(msg);
       }
       else
       {
@@ -1764,30 +1763,6 @@ namespace AdServer::UserInfoSvcs
     {
       logger_->stream(Logging::Logger::TRACE, Aspect::USER_INFO_MANAGER) <<
         "UpdateChannelsConfigTask has finished.";
-    }
-  }
-
-  void
-  UserInfoManagerCore::rotate_user_operations_backup_() noexcept
-  {
-    static const char* FUN = "UserInfoManagerCore::rotate_user_operations_backup_()";
-
-    user_operation_saver_->rotate();
-
-    try
-    {
-      Task_var msg = new RotateUserOperationsBackupTask(this, task_runner_);
-
-      scheduler_->schedule(
-        msg,
-        Generics::Time::get_time_of_day() +
-          user_info_manager_config_.UserOperationsBackup()->rotate_period());
-    }
-    catch (const eh::Exception& ex)
-    {
-      logger_->stream(Logging::Logger::EMERGENCY, Aspect::USER_INFO_MANAGER, "ADS-IMPL-52") <<
-        FUN << ": Can't schedule user operations backup rotate task. "
-        "Caught eh::Exception: " << ex.what();
     }
   }
 

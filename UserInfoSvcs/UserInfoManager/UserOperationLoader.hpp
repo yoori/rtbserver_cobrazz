@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <eh/Exception.hpp>
 
 #include <Generics/TaskRunner.hpp>
@@ -47,7 +49,7 @@ namespace AdServer::UserInfoSvcs
     {}
 
     virtual void
-    read_operation_(Generics::SmartMemBuf* smart_mem_buf)
+    read_operation_(std::uint32_t op_index, Generics::SmartMemBuf* smart_mem_buf)
       /*throw(eh::Exception)*/ = 0;
 
   private:
@@ -95,7 +97,7 @@ namespace AdServer::UserInfoSvcs
     {}
 
     virtual void
-    read_operation_(Generics::SmartMemBuf* smart_mem_buf)
+    read_operation_(std::uint32_t op_index, Generics::SmartMemBuf* smart_mem_buf)
       /*throw(eh::Exception)*/;
 
     void read_fraud_operation_(const Generics::MemBuf& mem_buf)

@@ -8,6 +8,7 @@
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 
@@ -87,6 +88,7 @@ namespace AdServer::Commons::HttpServer
       response->body() = app_response.body;
       response->prepare_payload();
 
+      stream_.expires_after(std::chrono::seconds(30));
       http::async_write(
         stream_,
         *response,
@@ -218,7 +220,7 @@ namespace AdServer::Commons::HttpServer
   void
   HttpServer::do_accept_()
   {
-    auto socket = std::make_shared<tcp::socket>(impl_->io_context);
+    auto socket = std::make_shared<tcp::socket>(asio::make_strand(impl_->io_context));
     impl_->acceptor->async_accept(
       *socket,
       [

@@ -82,8 +82,9 @@ namespace AdServer::ProfilingCommons
 
     if (fd_own_ && fd_ >= 0)
     {
-      ::close(fd_);
+      const int fd = fd_;
       fd_ = -1;
+      file_controller_->close(fd);
     }
   }
 

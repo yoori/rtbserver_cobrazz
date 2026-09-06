@@ -311,20 +311,6 @@ namespace AdServer::UserInfoSvcs
       UserInfoManagerCore* user_info_manager_impl_;
     };
 
-    class RotateUserOperationsBackupTask: public TaskBase
-    {
-    public:
-      RotateUserOperationsBackupTask(
-        UserInfoManagerCore* user_info_manager_impl,
-        Generics::TaskRunner* task_runner)
-        noexcept;
-
-      virtual void execute() noexcept;
-
-    protected:
-      UserInfoManagerCore* user_info_manager_impl_;
-    };
-
     class DeleteOldProfilesTask : public TaskBase
     {
     public:
@@ -398,8 +384,6 @@ namespace AdServer::UserInfoSvcs
     void load_chunk_files_() noexcept;
 
     void update_config_() noexcept;
-
-    void rotate_user_operations_backup_() noexcept;
 
     void load_user_operations_() noexcept;
 
@@ -524,24 +508,6 @@ namespace AdServer::UserInfoSvcs
     noexcept
   {
     user_info_manager_impl_->update_config_();
-  }
-
-  inline
-  UserInfoManagerCore::
-  RotateUserOperationsBackupTask::RotateUserOperationsBackupTask(
-    UserInfoManagerCore* user_info_manager_impl,
-    Generics::TaskRunner* task_runner)
-    noexcept
-    : TaskBase(task_runner),
-      user_info_manager_impl_(user_info_manager_impl)
-  {}
-
-  inline
-  void
-  UserInfoManagerCore::RotateUserOperationsBackupTask::execute()
-    noexcept
-  {
-    user_info_manager_impl_->rotate_user_operations_backup_();
   }
 
   // UserInfoManagerCore::DeleteOldProfilesTask

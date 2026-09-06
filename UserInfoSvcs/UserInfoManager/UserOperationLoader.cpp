@@ -84,10 +84,9 @@ namespace AdServer::UserInfoSvcs
 
         while (true)
         {
-          uint32_t record_size = 0;
-          file_stream.read(reinterpret_cast<char*>(&record_size), 4);
-
-          if (file_stream.eof())
+          uint32_t op_index = 0;
+          file_stream.read(reinterpret_cast<char*>(&op_index), sizeof(op_index));
+          if (file_stream.eof() && file_stream.gcount() == 0)
           {
             break;
           }
@@ -95,7 +94,24 @@ namespace AdServer::UserInfoSvcs
           if (file_stream.fail())
           {
             Stream::Error ostr;
-            ostr << "Reading failed";
+            ostr << "Operation type reading failed";
+            throw Exception(ostr);
+          }
+
+          if (op_index <= UserOperationSaver::UO_REMOVE ||
+            op_index > UserOperationSaver::UO_FC_CONFIRM)
+          {
+            Stream::Error ostr;
+            ostr << "Unknown operation index: " << op_index;
+            throw Exception(ostr);
+          }
+
+          uint32_t record_size = 0;
+          file_stream.read(reinterpret_cast<char*>(&record_size), sizeof(record_size));
+          if (file_stream.fail())
+          {
+            Stream::Error ostr;
+            ostr << "Record size reading failed";
             throw Exception(ostr);
           }
 
@@ -111,7 +127,7 @@ namespace AdServer::UserInfoSvcs
 
           if (processed_records >= file_name_info.processed_lines_count)
           {
-            read_operation_(smart_mem_buf.in());
+            read_operation_(op_index, smart_mem_buf.in());
             ++processed_lines_count;
           }
 
@@ -253,39 +269,56 @@ namespace AdServer::UserInfoSvcs
 namespace AdServer::UserInfoSvcs
 {
   void
-  InternalOperationRecordFetcher::read_operation_(Generics::SmartMemBuf* smart_mem_buf)
+  InternalOperationRecordFetcher::read_operation_(
+    std::uint32_t op_index,
+    Generics::SmartMemBuf* smart_mem_buf)
     /*throw(eh::Exception)*/
   {
     static const char* FUN = "InternalOperationRecordFetcher::read_operation_()";
+
+    if (smart_mem_buf->membuf().size() < UserOperationTypeReader::FIXED_SIZE)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": operation profile is too short";
+      throw Exception(ostr);
+    }
 
     UserOperationTypeReader profile_type_reader(
       smart_mem_buf->membuf().data(), UserOperationTypeReader::FIXED_SIZE);
     Generics::MemBuf& mem_buf = smart_mem_buf->membuf();
 
-    if (profile_type_reader.operation_type() == UserOperationSaver::UO_FRAUD)
+    if (profile_type_reader.operation_type() != op_index)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": operation type mismatch: header=" << op_index <<
+        ", profile=" << profile_type_reader.operation_type();
+      throw Exception(ostr);
+    }
+
+    if (op_index == UserOperationSaver::UO_FRAUD)
     {
       read_fraud_operation_(mem_buf);
     }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_MATCH)
+    else if (op_index == UserOperationSaver::UO_MATCH)
     {
       read_match_operation_(smart_mem_buf);
     }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_MERGE)
+    else if (op_index == UserOperationSaver::UO_MERGE)
     {
       read_merge_operation_(smart_mem_buf);
     }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_FC_UPDATE)
+    else if (op_index == UserOperationSaver::UO_FC_UPDATE)
     {
       read_fc_update_operation_(smart_mem_buf);
     }
-    else if (profile_type_reader.operation_type() == UserOperationSaver::UO_FC_CONFIRM)
+    else if (op_index == UserOperationSaver::UO_FC_CONFIRM)
     {
       read_fc_confirm_operation_(smart_mem_buf);
     }
     else
     {
       Stream::Error ostr;
-      ostr << FUN << ": unknown operation: " << profile_type_reader.operation_type();
+      ostr << FUN << ": unknown operation: " << op_index;
       throw Exception(ostr);
     }
   }

@@ -43,7 +43,9 @@ namespace AdServer::ProfilingCommons
       const char* file_prefix,
       unsigned long chunks_count,
       const Generics::Time& flush_period,
-      unsigned long threads_count);
+      unsigned long threads_count,
+      FileController* file_controller = nullptr,
+      bool disable_caching = false);
 
     void
     flush(FileNameList* dumped_files = 0)
@@ -187,6 +189,8 @@ namespace AdServer::ProfilingCommons
     const std::string output_file_prefix_;
     const Generics::Time flush_period_;
     const unsigned long write_workers_count_;
+    FileController_var file_controller_;
+    const bool disable_caching_;
 
     Generics::ActiveObjectCallback_var callback_;
     WriteWorkers_var write_workers_active_object_;
