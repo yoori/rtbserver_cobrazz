@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -42,6 +43,10 @@ namespace AdServer::UserInfoSvcs
       std::uint64_t batch_total = 0;
       std::uint64_t batch_total_time = 0;
       std::uint64_t batch_in_progress = 0;
+      std::uint64_t call_inflight = 0;
+      std::optional<Generics::Time> min_time_of_request_in_progress;
+      AdServer::Grpc::GrpcServiceBase::BatchStreamReadStatsSnapshot
+        grpc_batch_stream_read_stats;
       AdServer::Grpc::GrpcServiceBase::LifecycleStatsSnapshot
         grpc_lifecycle_stats;
     };

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <Commons/Algs.hpp>
+#include <Commons/AsyncMutex.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
@@ -469,6 +470,28 @@ namespace AdServer::RequestInfoSvcs
     }
 
     return result;
+  }
+
+  ExpressionMatcherImpl::ProcessingDiagnostics
+  ExpressionMatcherImpl::processing_diagnostics() const noexcept
+  {
+    const auto rocksdb_stats = rocksdb_processor_->stats();
+    const auto executor_stats = processing_executor_pool_->stats();
+    const auto mutex_stats = AdServer::Commons::AsyncMutex::stats();
+
+    return ProcessingDiagnostics{
+      rocksdb_stats.pending_operations,
+      rocksdb_stats.active_workers,
+      rocksdb_stats.failed_batch_total,
+      rocksdb_stats.failed_operation_total,
+      rocksdb_stats.failed_callback_expected,
+      rocksdb_stats.failed_callback_completed,
+      executor_stats.resumes_scheduled,
+      executor_stats.resumes_executed,
+      executor_stats.resume_schedule_failures,
+      mutex_stats.current_waiters,
+      mutex_stats.max_waiters
+    };
   }
 
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>

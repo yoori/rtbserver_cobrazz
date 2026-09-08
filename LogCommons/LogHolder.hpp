@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -216,6 +217,13 @@ namespace AdServer::LogProcessing
     typedef ReferenceCounting::SmartPtr<Portion> Portion_var;
     typedef std::vector<Portion_var> PortionArray;
 
+    struct DumpState
+    {
+      Sync::Semaphore semaphore{0};
+      std::mutex lock;
+      std::exception_ptr exception;
+    };
+
     class DumpTask:
       public Generics::Task,
       public ReferenceCounting::AtomicImpl
@@ -224,7 +232,7 @@ namespace AdServer::LogProcessing
       DumpTask(
         LogHolderPortioned<LogTraitsType, SavePolicy>* log_holder,
         Portion_var portion,
-        Sync::Semaphore& sema);
+        std::shared_ptr<DumpState> dump_state);
 
       virtual void
       execute() noexcept;
@@ -235,7 +243,7 @@ namespace AdServer::LogProcessing
     protected:
       LogHolderPortioned<LogTraitsType, SavePolicy>* log_holder_;
       Portion_var portion_;
-      Sync::Semaphore& sema_;
+      const std::shared_ptr<DumpState> dump_state_;
     };
 
   protected:

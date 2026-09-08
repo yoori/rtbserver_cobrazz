@@ -30,6 +30,14 @@ namespace AdServer::ProfilingCommons
       std::uint64_t read_batch_total_time = 0;
       std::uint64_t write_batch_total = 0;
       std::uint64_t write_batch_total_time = 0;
+      std::uint64_t failed_batch_total = 0;
+      std::uint64_t failed_operation_total = 0;
+      std::uint64_t failed_callback_expected = 0;
+      std::uint64_t failed_callback_completed = 0;
+      std::uint64_t workers = 0;
+      std::uint64_t queue_count = 0;
+      std::uint64_t pending_operations = 0;
+      std::uint64_t active_workers = 0;
     };
 
     explicit RocksDBProfileMapProcessor(
@@ -139,6 +147,10 @@ namespace AdServer::ProfilingCommons
     std::atomic<std::uint64_t> read_batch_total_time_{0};
     std::atomic<std::uint64_t> write_batch_total_{0};
     std::atomic<std::uint64_t> write_batch_total_time_{0};
+    std::atomic<std::uint64_t> failed_batch_total_{0};
+    std::atomic<std::uint64_t> failed_operation_total_{0};
+    std::atomic<std::uint64_t> failed_callback_expected_{0};
+    std::atomic<std::uint64_t> failed_callback_completed_{0};
 
     std::vector<std::thread> workers_;
   };

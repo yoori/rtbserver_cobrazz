@@ -84,6 +84,12 @@ namespace AdServer::ProfilingCommons
       std::optional<ReadyState> ready_state;
     };
 
+    struct Stats final
+    {
+      std::uint64_t pending_operations = 0;
+      std::uint64_t active_workers = 0;
+    };
+
     RocksDBBatchingProcessorQueue(
       unsigned long batch_size,
       const Generics::Time& max_delay,
@@ -111,6 +117,8 @@ namespace AdServer::ProfilingCommons
     void wait_drained();
 
     bool drained() const noexcept;
+
+    Stats stats() const noexcept;
 
     static bool is_write_operation(OperationType type) noexcept;
 

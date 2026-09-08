@@ -80,6 +80,21 @@ namespace AdServer::RequestInfoSvcs
       unsigned long household_colo_reach = 0;
     };
 
+    struct ProcessingDiagnostics
+    {
+      std::uint64_t rocksdb_pending_operations = 0;
+      std::uint64_t rocksdb_active_workers = 0;
+      std::uint64_t rocksdb_failed_batches = 0;
+      std::uint64_t rocksdb_failed_operations = 0;
+      std::uint64_t rocksdb_failed_callbacks_expected = 0;
+      std::uint64_t rocksdb_failed_callbacks_completed = 0;
+      std::uint64_t executor_resumes_scheduled = 0;
+      std::uint64_t executor_resumes_executed = 0;
+      std::uint64_t executor_resume_schedule_failures = 0;
+      std::uint64_t async_mutex_current_waiters = 0;
+      std::uint64_t async_mutex_max_waiters = 0;
+    };
+
     typedef xsd::AdServer::Configuration::ExpressionMatcherConfigType
       ExpressionMatcherConfig;
 
@@ -108,6 +123,8 @@ namespace AdServer::RequestInfoSvcs
       std::optional<std::uint32_t> date);
 
     ProfileSizes profile_sizes() const noexcept;
+
+    ProcessingDiagnostics processing_diagnostics() const noexcept;
 
     void
     run_daily_processing(bool sync);

@@ -8,6 +8,7 @@
 #include <Logger/FileLogger.hpp>
 #include <Logger/SimpleLogger.hpp>
 #include <Logger/Syslog.hpp>
+#include <Commons/AsyncMutex.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/PidFileGuard.hpp>
@@ -35,6 +36,37 @@ namespace
     body += name;
     body += "\":";
     body += std::to_string(value);
+  }
+
+  void
+  append_json_time_stat(
+    std::string& body,
+    bool& first,
+    const char* name,
+    const std::optional<Generics::Time>& value)
+  {
+    if (first)
+    {
+      first = false;
+    }
+    else
+    {
+      body += ',';
+    }
+
+    body += '"';
+    body += name;
+    body += "\":";
+    if (value)
+    {
+      body += '"';
+      body += value->gm_ft();
+      body += '"';
+    }
+    else
+    {
+      body += "null";
+    }
   }
 
   void
@@ -85,6 +117,10 @@ namespace
     append_json_stat(body, first, "rdb_read_batch_total_time", stats.read_batch_total_time);
     append_json_stat(body, first, "rdb_write_batch_total", stats.write_batch_total);
     append_json_stat(body, first, "rdb_write_batch_total_time", stats.write_batch_total_time);
+    append_json_stat(body, first, "rdb_workers", stats.workers);
+    append_json_stat(body, first, "rdb_queue_count", stats.queue_count);
+    append_json_stat(body, first, "rdb_pending_operations", stats.pending_operations);
+    append_json_stat(body, first, "rdb_active_workers", stats.active_workers);
   }
 
   void fill_shutdown_signals_(sigset_t& signals)
@@ -313,8 +349,67 @@ namespace
       append_json_stat(body, first, "batch_total", grpc_stats.batch_total);
       append_json_stat(body, first, "batch_total_time", grpc_stats.batch_total_time);
       append_json_stat(body, first, "batch_in_progress", grpc_stats.batch_in_progress);
+      append_json_stat(body, first, "call_inflight", grpc_stats.call_inflight);
+      append_json_time_stat(
+        body,
+        first,
+        "min_time_of_request_in_progress",
+        grpc_stats.min_time_of_request_in_progress);
+      const auto& read_stats = grpc_stats.grpc_batch_stream_read_stats;
+      append_json_stat(
+        body,
+        first,
+        "grpc_batch_read_ahead_enabled",
+        read_stats.read_ahead_enabled);
+      append_json_stat(
+        body,
+        first,
+        "grpc_batch_read_max_requests_in_progress",
+        read_stats.max_requests_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "grpc_batch_read_requests_in_progress",
+        read_stats.requests_in_progress);
+      append_json_stat(
+        body,
+        first,
+        "grpc_batch_read_reservations",
+        read_stats.read_reservations);
+      append_json_stat(
+        body,
+        first,
+        "grpc_batch_read_waiting_streams",
+        read_stats.waiting_streams);
       append_grpc_lifecycle_stats(body, first, grpc_stats.grpc_lifecycle_stats);
     }
+
+    const auto async_mutex_stats = AdServer::Commons::AsyncMutex::stats();
+    append_json_stat(
+      body,
+      first,
+      "async_mutex_lock_attempts",
+      async_mutex_stats.lock_attempts);
+    append_json_stat(
+      body,
+      first,
+      "async_mutex_immediate_locks",
+      async_mutex_stats.immediate_locks);
+    append_json_stat(
+      body,
+      first,
+      "async_mutex_contended_locks",
+      async_mutex_stats.contended_locks);
+    append_json_stat(
+      body,
+      first,
+      "async_mutex_current_waiters",
+      async_mutex_stats.current_waiters);
+    append_json_stat(
+      body,
+      first,
+      "async_mutex_max_waiters",
+      async_mutex_stats.max_waiters);
   }
 }
 

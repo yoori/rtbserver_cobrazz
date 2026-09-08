@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coroutine>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -21,6 +22,13 @@ namespace AdServer::Commons
   {
   public:
     using ContextIndex = std::size_t;
+
+    struct Stats
+    {
+      std::uint64_t resumes_scheduled = 0;
+      std::uint64_t resumes_executed = 0;
+      std::uint64_t resume_schedule_failures = 0;
+    };
 
     enum class ResumeStrategy
     {
@@ -45,6 +53,9 @@ namespace AdServer::Commons
 
     bool
     running_in_this_thread() const noexcept;
+
+    Stats
+    stats() const noexcept;
 
     void
     schedule(const Generics::Time& timeout, std::function<void()> task);
@@ -131,6 +142,9 @@ namespace AdServer::Commons
     std::vector<Context> contexts_;
     std::atomic_size_t post_index_{0};
     std::atomic_size_t work_index_{0};
+    std::atomic<std::uint64_t> resumes_scheduled_{0};
+    std::atomic<std::uint64_t> resumes_executed_{0};
+    std::atomic<std::uint64_t> resume_schedule_failures_{0};
     ResumeStrategy resume_strategy_;
     std::string thread_name_;
 

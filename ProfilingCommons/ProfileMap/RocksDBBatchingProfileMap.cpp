@@ -814,22 +814,12 @@ namespace AdServer::ProfilingCommons
     {
       if (operation.save_callback)
       {
-        try
-        {
-          (*operation.save_callback)(std::nullopt);
-        }
-        catch(...)
-        {}
+        notify_save_operation_(operation, std::nullopt);
       }
 
       if (operation.remove_callback)
       {
-        try
-        {
-          (*operation.remove_callback)(true, std::nullopt);
-        }
-        catch(...)
-        {}
+        notify_remove_operation_(operation, true, std::nullopt);
       }
     }
   }
@@ -873,12 +863,7 @@ namespace AdServer::ProfilingCommons
   {
     auto callback = std::move(*operation.check_callback);
     operation.check_callback.reset();
-    try
-    {
-      callback(result, std::move(error));
-    }
-    catch(...)
-    {}
+    callback(result, std::move(error));
   }
 
   void
@@ -889,12 +874,7 @@ namespace AdServer::ProfilingCommons
   {
     auto callback = std::move(*operation.get_callback);
     operation.get_callback.reset();
-    try
-    {
-      callback(std::move(profile), std::move(error));
-    }
-    catch(...)
-    {}
+    callback(std::move(profile), std::move(error));
   }
 
   void
@@ -905,67 +885,65 @@ namespace AdServer::ProfilingCommons
   {
     auto callback = std::move(*operation.get_own_callback);
     operation.get_own_callback.reset();
-    try
-    {
-      callback(std::move(profile), std::move(error));
-    }
-    catch(...)
-    {}
+    callback(std::move(profile), std::move(error));
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_save_operation_(
+    Operation& operation,
+    std::optional<std::string> error) noexcept
+  {
+    auto callback = std::move(*operation.save_callback);
+    operation.save_callback.reset();
+    callback(std::move(error));
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_remove_operation_(
+    Operation& operation,
+    bool result,
+    std::optional<std::string> error) noexcept
+  {
+    auto callback = std::move(*operation.remove_callback);
+    operation.remove_callback.reset();
+    callback(result, std::move(error));
   }
 
   bool
   RocksDBBatchingProfileMapImpl::notify_failed_operation_(
     Operation& operation,
-    const std::string& error) noexcept
+    const std::string& error) const noexcept
   {
-    try
+    if (!(operation.check_callback || operation.get_callback || operation.get_own_callback ||
+      operation.save_callback || operation.remove_callback))
     {
-      if (operation.check_callback)
-      {
-        auto callback = std::move(*operation.check_callback);
-        operation.check_callback.reset();
-        callback(false, error);
-        return true;
-      }
-
-      if (operation.get_callback)
-      {
-        auto callback = std::move(*operation.get_callback);
-        operation.get_callback.reset();
-        callback(Generics::ConstSmartMemBuf_var(), error);
-        return true;
-      }
-
-      if (operation.get_own_callback)
-      {
-        auto callback = std::move(*operation.get_own_callback);
-        operation.get_own_callback.reset();
-        callback(Generics::SmartMemBuf_var(), error);
-        return true;
-      }
-
-      if (operation.save_callback)
-      {
-        auto callback = std::move(*operation.save_callback);
-        operation.save_callback.reset();
-        callback(error);
-        return true;
-      }
-
-      if (operation.remove_callback)
-      {
-        auto callback = std::move(*operation.remove_callback);
-        operation.remove_callback.reset();
-        callback(false, error);
-        return true;
-      }
-    }
-    catch(...)
-    {
-      return true;
+      return false;
     }
 
-    return false;
+    processor_->failed_callback_expected_.fetch_add(1, std::memory_order_relaxed);
+    if (operation.check_callback)
+    {
+      notify_check_operation_(operation, false, error);
+    }
+    else if (operation.get_callback)
+    {
+      notify_get_operation_(operation, Generics::ConstSmartMemBuf_var(), error);
+    }
+    else if (operation.get_own_callback)
+    {
+      notify_get_own_operation_(operation, Generics::SmartMemBuf_var(), error);
+    }
+    else if (operation.save_callback)
+    {
+      notify_save_operation_(operation, error);
+    }
+    else
+    {
+      notify_remove_operation_(operation, false, error);
+    }
+
+    processor_->failed_callback_completed_.fetch_add(1, std::memory_order_relaxed);
+    return true;
   }
 
   void

@@ -1,4 +1,5 @@
 add_subdirectory(LogIoTest)
+add_subdirectory(LogHolderPortionedTest)
 add_subdirectory(PrimaryDumpTest)
 add_subdirectory(RequestBasicChannelsReadTest)
 add_subdirectory(SyncLogsMoveTaskSchedulerTest)

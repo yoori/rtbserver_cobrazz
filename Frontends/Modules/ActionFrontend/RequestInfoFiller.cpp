@@ -102,9 +102,47 @@ namespace AdServer::Action
     const String::SubString AMP("*amp*");
     const String::SubString EQL("*eql*");
 
-    const String::SubString UTM_TERM_1("?utm_term=");
-    const String::SubString UTM_TERM_2("&utm_term=");
-    const String::SubString UTM_TERM_3(".utm_term=");
+    const String::SubString UTM_UID[] = {
+      String::SubString("?utm_uid="),
+      String::SubString("&utm_uid="),
+      String::SubString(".utm_uid=")};
+
+    const String::SubString UTM_TERM[] = {
+      String::SubString("?utm_term="),
+      String::SubString("&utm_term="),
+      String::SubString(".utm_term=")};
+
+    template<std::size_t Size>
+    bool
+    extract_utm_value(
+      std::string& value,
+      const String::SubString& referer,
+      const String::SubString (&markers)[Size])
+    {
+      String::SubString::SizeType start_pos = String::SubString::NPOS;
+      for (const auto& marker : markers)
+      {
+        const String::SubString::SizeType marker_pos = referer.find(marker);
+        if (marker_pos != String::SubString::NPOS)
+        {
+          start_pos = marker_pos + marker.size();
+          break;
+        }
+      }
+
+      if (start_pos == String::SubString::NPOS)
+      {
+        return false;
+      }
+
+      const String::SubString::SizeType end_pos = referer.find('&', start_pos);
+      const String::SubString encoded_value = referer.substr(
+        start_pos,
+        end_pos == String::SubString::NPOS ?
+          String::SubString::NPOS : end_pos - start_pos);
+      String::StringManip::mime_url_decode(encoded_value, value);
+      return true;
+    }
   }
 
   // RequestInfoFiller
@@ -423,7 +461,7 @@ namespace AdServer::Action
         request_info.external_user_id[22] == '.' && request_info.external_user_id[23] == '.' &&
         request_info.external_user_id[24] == '/'))
     {
-      if (parse_utm_term_(request_info, request_info.external_user_id))
+      if (parse_utm_uid_(request_info, request_info.external_user_id))
       {
         request_info.external_user_id.clear();
       }
@@ -457,39 +495,25 @@ namespace AdServer::Action
       request_info.short_external_id.swap(short_external_id);
     }
 
-    // parse referer for utm_term
+    // Prefer utm_uid, but accept a valid legacy value from utm_term.
     {
-      String::SubString ref(request_info.referer);
-      String::SubString::SizeType utm_term_pos1 = ref.find(UTM_TERM_1);
-      String::SubString::SizeType utm_term_pos2 = ref.find(UTM_TERM_2);
-      String::SubString::SizeType utm_term_pos3 = ref.find(UTM_TERM_3);
-      String::SubString::SizeType start_pos = String::SubString::NPOS;
-      if (utm_term_pos1 != String::SubString::NPOS)
-      {
-        start_pos = utm_term_pos1 + UTM_TERM_1.size();
-      }
-      else if (utm_term_pos2 != String::SubString::NPOS)
-      {
-        start_pos = utm_term_pos2 + UTM_TERM_2.size();
-      }
-      else if (utm_term_pos3 != String::SubString::NPOS)
-      {
-        start_pos = utm_term_pos3 + UTM_TERM_3.size();
-      }
+      const String::SubString referer(request_info.referer);
+      std::string utm_uid;
+      bool parsed = extract_utm_value(
+        utm_uid,
+        referer,
+        UTM_UID) && parse_utm_uid_(request_info, utm_uid);
 
-      if (start_pos != String::SubString::NPOS)
+      if (!parsed)
       {
-        String::SubString::SizeType end_pos = ref.find('&', start_pos);
-
-        String::SubString utm_term = ref.substr(
-          start_pos,
-          end_pos == String::SubString::NPOS ? String::SubString::NPOS :
-            end_pos - start_pos);
-
-        std::string decoded_utm_term;
-        String::StringManip::mime_url_decode(utm_term, decoded_utm_term);
-
-        parse_utm_term_(request_info, decoded_utm_term);
+        std::string utm_term;
+        if (extract_utm_value(
+              utm_term,
+              referer,
+              UTM_TERM))
+        {
+          parse_utm_uid_(request_info, utm_term);
+        }
       }
     }
 
@@ -521,38 +545,44 @@ namespace AdServer::Action
   }
 
   bool
-  RequestInfoFiller::parse_utm_term_(RequestInfo& request_info, const String::SubString& utm_term)
+  RequestInfoFiller::parse_utm_uid_(RequestInfo& request_info, const String::SubString& utm_uid)
     noexcept
   {
-    // fill utm_resolved_user_id, utm_cookie_user_id
-    String::SubString::SizeType slash_pos = utm_term.find('/');
+    Commons::UserId resolved_user_id;
+    Commons::UserId cookie_user_id;
+    std::string ifa;
+    bool has_resolved_user_id = false;
+    bool has_cookie_user_id = false;
+    bool has_ifa = false;
+
+    String::SubString::SizeType slash_pos = utm_uid.find('/');
 
     if (slash_pos == String::SubString::NPOS)
     {
       try
       {
-        request_info.utm_resolved_user_id = Commons::UserId(utm_term);
+        resolved_user_id = Commons::UserId(utm_uid);
+        has_resolved_user_id = true;
       }
       catch(const eh::Exception&)
       {
-        // ignore invalid user ids in utm_term
         return false;
       }
     }
     else
     {
-      String::SubString u1 = utm_term.substr(0, slash_pos);
-      String::SubString u2 = utm_term.substr(slash_pos + 1);
+      String::SubString u1 = utm_uid.substr(0, slash_pos);
+      String::SubString u2 = utm_uid.substr(slash_pos + 1);
 
       if (!u1.empty())
       {
         try
         {
-          request_info.utm_resolved_user_id = Commons::UserId(u1);
+          resolved_user_id = Commons::UserId(u1);
+          has_resolved_user_id = true;
         }
         catch(const eh::Exception&)
         {
-          // ignore invalid user ids in utm_term
           return false;
         }
       }
@@ -576,21 +606,37 @@ namespace AdServer::Action
         {
           try
           {
-            request_info.utm_cookie_user_id = Commons::UserId(utm_cookie_user_id_str);
+            cookie_user_id = Commons::UserId(utm_cookie_user_id_str);
+            has_cookie_user_id = true;
           }
           catch(const eh::Exception&)
           {
-            // ignore invalid user ids in utm_term
             return false;
           }
         }
 
         if (!ifa_str.empty())
         {
-          request_info.ifa = FrontendCommons::normalize_ifa(
+          ifa = FrontendCommons::normalize_ifa(
             std::string_view(ifa_str.data(), ifa_str.size()));
+          has_ifa = true;
         }
       }
+    }
+
+    if (has_resolved_user_id)
+    {
+      request_info.utm_resolved_user_id = resolved_user_id;
+    }
+
+    if (has_cookie_user_id)
+    {
+      request_info.utm_cookie_user_id = cookie_user_id;
+    }
+
+    if (has_ifa)
+    {
+      request_info.ifa = std::move(ifa);
     }
 
     return true;

@@ -56,6 +56,16 @@ namespace AdServer::Commons
     return current_executor_pool_ == this && current_io_service_;
   }
 
+  ExecutorPool::Stats
+  ExecutorPool::stats() const noexcept
+  {
+    return Stats{
+      resumes_scheduled_.load(std::memory_order_relaxed),
+      resumes_executed_.load(std::memory_order_relaxed),
+      resume_schedule_failures_.load(std::memory_order_relaxed)
+    };
+  }
+
   ExecutorPool::ContextIndex
   ExecutorPool::get_next_context_index() noexcept
   {
@@ -231,18 +241,22 @@ namespace AdServer::Commons
     std::coroutine_handle<> handle,
     std::optional<ContextIndex> context_index) noexcept
   {
+    resumes_scheduled_.fetch_add(1, std::memory_order_relaxed);
     try
     {
       dispatch(
         [this, handle]() mutable
         {
+          resumes_executed_.fetch_add(1, std::memory_order_relaxed);
           resume_(handle);
         },
         context_index);
     }
     catch (...)
     {
+      resume_schedule_failures_.fetch_add(1, std::memory_order_relaxed);
       report_exception_(std::current_exception());
+      resumes_executed_.fetch_add(1, std::memory_order_relaxed);
       resume_(handle);
     }
   }

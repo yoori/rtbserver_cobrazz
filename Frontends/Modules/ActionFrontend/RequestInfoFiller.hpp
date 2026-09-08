@@ -113,7 +113,7 @@ namespace AdServer::Action
       noexcept;
 
     static bool
-    parse_utm_term_(RequestInfo& request_info, const String::SubString& utm_term)
+    parse_utm_uid_(RequestInfo& request_info, const String::SubString& utm_uid)
       noexcept;
 
   private:

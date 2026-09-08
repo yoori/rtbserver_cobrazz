@@ -294,6 +294,7 @@ namespace AdServer::RequestInfoSvcs
       }
 
       const auto sizes = expression_matcher_holder->profile_sizes();
+      const auto diagnostics = expression_matcher_holder->processing_diagnostics();
       std::string body;
       {
         AdServer::Commons::JsonFormatter json(body);
@@ -305,6 +306,31 @@ namespace AdServer::RequestInfoSvcs
           sizes.temporary_user_trigger_match);
         json.add_number("request_trigger_match_profiles", sizes.request_trigger_match);
         json.add_number("household_colo_reach_profiles", sizes.household_colo_reach);
+        json.add_number(
+          "rocksdb_pending_operations",
+          diagnostics.rocksdb_pending_operations);
+        json.add_number("rocksdb_active_workers", diagnostics.rocksdb_active_workers);
+        json.add_number("rocksdb_failed_batches", diagnostics.rocksdb_failed_batches);
+        json.add_number("rocksdb_failed_operations", diagnostics.rocksdb_failed_operations);
+        json.add_number(
+          "rocksdb_failed_callbacks_expected",
+          diagnostics.rocksdb_failed_callbacks_expected);
+        json.add_number(
+          "rocksdb_failed_callbacks_completed",
+          diagnostics.rocksdb_failed_callbacks_completed);
+        json.add_number(
+          "executor_resumes_scheduled",
+          diagnostics.executor_resumes_scheduled);
+        json.add_number(
+          "executor_resumes_executed",
+          diagnostics.executor_resumes_executed);
+        json.add_number(
+          "executor_resume_schedule_failures",
+          diagnostics.executor_resume_schedule_failures);
+        json.add_number(
+          "async_mutex_current_waiters",
+          diagnostics.async_mutex_current_waiters);
+        json.add_number("async_mutex_max_waiters", diagnostics.async_mutex_max_waiters);
       }
       body += '\n';
 

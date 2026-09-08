@@ -343,6 +343,15 @@ namespace AdServer::ProfilingCommons
     return empty_i_() && active_workers_.load(std::memory_order_acquire) == 0;
   }
 
+  RocksDBBatchingProcessorQueue::Stats
+  RocksDBBatchingProcessorQueue::stats() const noexcept
+  {
+    return {
+      pending_operations_.load(std::memory_order_relaxed),
+      active_workers_.load(std::memory_order_relaxed)
+    };
+  }
+
   void
   RocksDBBatchingProcessorQueue::account_operation_(OperationCounts& counts, OperationType type)
     const noexcept

@@ -33,17 +33,38 @@ namespace AdServer::ProfilingCommons
   RocksDBProfileMapProcessor::Stats
   RocksDBProfileMapProcessor::stats() const noexcept
   {
-    return {
-      check_total_.load(std::memory_order_relaxed),
-      get_total_.load(std::memory_order_relaxed),
-      touch_total_.load(std::memory_order_relaxed),
-      save_total_.load(std::memory_order_relaxed),
-      remove_total_.load(std::memory_order_relaxed),
-      read_batch_total_.load(std::memory_order_relaxed),
-      read_batch_total_time_.load(std::memory_order_relaxed),
-      write_batch_total_.load(std::memory_order_relaxed),
-      write_batch_total_time_.load(std::memory_order_relaxed)
-    };
+    Stats result;
+    result.check_total = check_total_.load(std::memory_order_relaxed);
+    result.get_total = get_total_.load(std::memory_order_relaxed);
+    result.touch_total = touch_total_.load(std::memory_order_relaxed);
+    result.save_total = save_total_.load(std::memory_order_relaxed);
+    result.remove_total = remove_total_.load(std::memory_order_relaxed);
+    result.read_batch_total = read_batch_total_.load(std::memory_order_relaxed);
+    result.read_batch_total_time = read_batch_total_time_.load(std::memory_order_relaxed);
+    result.write_batch_total = write_batch_total_.load(std::memory_order_relaxed);
+    result.write_batch_total_time = write_batch_total_time_.load(std::memory_order_relaxed);
+    result.failed_batch_total = failed_batch_total_.load(std::memory_order_relaxed);
+    result.failed_operation_total = failed_operation_total_.load(std::memory_order_relaxed);
+    result.failed_callback_expected = failed_callback_expected_.load(std::memory_order_relaxed);
+    result.failed_callback_completed = failed_callback_completed_.load(std::memory_order_relaxed);
+    result.workers = workers_count_;
+
+    try
+    {
+      std::lock_guard guard(ready_lock_);
+      result.queue_count = registrations_.size();
+      for (const auto& [_, registration] : registrations_)
+      {
+        const auto queue_stats = registration->queue.stats();
+        result.pending_operations += queue_stats.pending_operations;
+        result.active_workers += queue_stats.active_workers;
+      }
+    }
+    catch (...)
+    {
+    }
+
+    return result;
   }
 
   void
@@ -242,11 +263,15 @@ namespace AdServer::ProfilingCommons
       catch(const eh::Exception& ex)
       {
         map_impl->set_background_error_(ex.what());
+        failed_batch_total_.fetch_add(1, std::memory_order_relaxed);
+        failed_operation_total_.fetch_add(batch.size(), std::memory_order_relaxed);
         map_impl->notify_failed_operations_(batch, ex.what());
       }
       catch(...)
       {
         map_impl->set_background_error_("unknown background error");
+        failed_batch_total_.fetch_add(1, std::memory_order_relaxed);
+        failed_operation_total_.fetch_add(batch.size(), std::memory_order_relaxed);
         map_impl->notify_failed_operations_(batch, "unknown background error");
       }
       batch_timer.stop();

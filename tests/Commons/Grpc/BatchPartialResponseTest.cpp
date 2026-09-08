@@ -162,6 +162,53 @@ namespace
     bool completed_ = false;
   };
 
+  class TestReadWaiter final:
+    public AdServer::Grpc::GrpcServiceBase::BatchStreamReadLimiter::Waiter
+  {
+  public:
+    void start_read_from_limiter() noexcept override
+    {
+      started = true;
+    }
+
+    bool started = false;
+  };
+
+  void test_read_limiter_stats()
+  {
+    using ReadLimiter = AdServer::Grpc::GrpcServiceBase::BatchStreamReadLimiter;
+    ReadLimiter limiter(ReadLimiter::Options(true, 2));
+
+    auto stats = limiter.stats();
+    assert(stats.read_ahead_enabled);
+    assert(stats.max_requests_in_progress == 2);
+    assert(stats.requests_in_progress == 0);
+    assert(stats.read_reservations == 0);
+    assert(stats.waiting_streams == 0);
+
+    assert(limiter.reserve_read_or_enqueue(std::make_shared<TestReadWaiter>()));
+    stats = limiter.stats();
+    assert(stats.read_reservations == 1);
+
+    limiter.complete_read_reservation(2);
+    auto waiter = std::make_shared<TestReadWaiter>();
+    assert(!limiter.reserve_read_or_enqueue(waiter));
+    stats = limiter.stats();
+    assert(stats.requests_in_progress == 2);
+    assert(stats.read_reservations == 0);
+    assert(stats.waiting_streams == 1);
+
+    limiter.complete_requests(2);
+    stats = limiter.stats();
+    assert(waiter->started);
+    assert(stats.requests_in_progress == 0);
+    assert(stats.read_reservations == 1);
+    assert(stats.waiting_streams == 0);
+
+    limiter.cancel_read_reservation();
+    assert(limiter.stats().read_reservations == 0);
+  }
+
   void add_item(BatchRequest& batch, const std::uint64_t request_id, const std::uint64_t delay_us)
   {
     BatchRequest request;
@@ -270,6 +317,8 @@ namespace
 
 int main()
 {
+  test_read_limiter_stats();
+
   Generics::ActiveObjectCallback_var callback(new NullActiveObjectCallback());
   auto executor_pool = std::make_shared<AdServer::Commons::ExecutorPool>(
     callback,

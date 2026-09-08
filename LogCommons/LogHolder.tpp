@@ -209,10 +209,10 @@ namespace AdServer::LogProcessing
   LogHolderPortioned<LogTraitsType, SavePolicy>::DumpTask::DumpTask(
     LogHolderPortioned<LogTraitsType, SavePolicy>* log_holder,
     Portion_var portion,
-    Sync::Semaphore& sema)
+    std::shared_ptr<DumpState> dump_state)
       : log_holder_(log_holder),
         portion_(std::move(portion)),
-        sema_(sema)
+        dump_state_(std::move(dump_state))
   {}
 
   template<typename LogTraitsType, typename SavePolicy>
@@ -220,7 +220,7 @@ namespace AdServer::LogProcessing
   {
     if (portion_)
     {
-      sema_.release();
+      dump_state_->semaphore.release();
     }
   }
 
@@ -228,13 +228,24 @@ namespace AdServer::LogProcessing
   void
   LogHolderPortioned<LogTraitsType, SavePolicy>::DumpTask::execute() noexcept
   {
-    if (!portion_->collector.empty())
+    try
     {
-      save_log(log_holder_->flush_traits_, log_holder_->save_policy_, portion_->collector);
+      if (!portion_->collector.empty())
+      {
+        save_log(log_holder_->flush_traits_, log_holder_->save_policy_, portion_->collector);
+      }
+    }
+    catch (...)
+    {
+      std::lock_guard<std::mutex> guard(dump_state_->lock);
+      if (!dump_state_->exception)
+      {
+        dump_state_->exception = std::current_exception();
+      }
     }
 
     portion_ = Portion_var();
-    sema_.release();
+    dump_state_->semaphore.release();
   }
 
   template<typename LogTraitsType, typename SavePolicy>
@@ -272,21 +283,33 @@ namespace AdServer::LogProcessing
       if (task_runner_)
       {
         int dump_portions_num = 0;
-        Sync::Semaphore sema(0);
+        auto dump_state = std::make_shared<DumpState>();
 
         for (auto portion_it = dump_portions.begin(); portion_it != dump_portions.end(); ++portion_it)
         {
           if (!(*portion_it)->collector.empty())
           {
             ++dump_portions_num;
-            task_runner_->enqueue_task(Generics::Task_var(new DumpTask(this, *portion_it, sema)));
+            task_runner_->enqueue_task(
+              Generics::Task_var(new DumpTask(this, *portion_it, dump_state)));
           }
         }
 
         // wait all dump tasks (task runner can't be deactivated
         for (int i = 0; i < dump_portions_num; ++i)
         {
-          sema.acquire();
+          dump_state->semaphore.acquire();
+        }
+
+        std::exception_ptr exception;
+        {
+          std::lock_guard<std::mutex> guard(dump_state->lock);
+          exception = dump_state->exception;
+        }
+
+        if (exception)
+        {
+          std::rethrow_exception(std::move(exception));
         }
       }
       else

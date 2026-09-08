@@ -353,6 +353,19 @@ namespace AdServer::Grpc
     return read_ahead_enabled_;
   }
 
+  GrpcServiceBase::BatchStreamReadStatsSnapshot
+  GrpcServiceBase::BatchStreamReadLimiter::stats() const
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    return {
+      read_ahead_enabled_,
+      max_requests_in_progress_,
+      requests_in_progress_,
+      read_reservations_,
+      waiters_.size()
+    };
+  }
+
   bool
   GrpcServiceBase::BatchStreamReadLimiter::reserve_read_or_enqueue(WaiterPtr waiter)
   {
@@ -521,6 +534,12 @@ namespace AdServer::Grpc
   GrpcServiceBase::inprogress_stats() const
   {
     return inprogress_stats_->snapshot();
+  }
+
+  GrpcServiceBase::BatchStreamReadStatsSnapshot
+  GrpcServiceBase::batch_stream_read_stats() const
+  {
+    return batch_stream_read_limiter_.stats();
   }
 
   GrpcServiceBase::LifecycleStatsSnapshot

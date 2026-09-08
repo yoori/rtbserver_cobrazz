@@ -725,6 +725,8 @@ namespace AdServer::UserInfoSvcs
   UserBindServerGrpc::Stats
   UserBindServerGrpc::stats() const noexcept
   {
+    const auto inprogress_stats = impl_->service().inprogress_stats();
+    const auto batch_stream_read_stats = impl_->service().batch_stream_read_stats();
     const auto lifecycle_stats = impl_->service().lifecycle_stats();
     return Stats{
       stats_->call_total.load(std::memory_order_relaxed),
@@ -745,6 +747,9 @@ namespace AdServer::UserInfoSvcs
       stats_->batch_total.load(std::memory_order_relaxed),
       stats_->batch_total_time.load(std::memory_order_relaxed),
       stats_->batch_in_progress.load(std::memory_order_relaxed),
+      inprogress_stats.call_inflight,
+      inprogress_stats.min_time_of_request_in_progress,
+      batch_stream_read_stats,
       lifecycle_stats
     };
   }

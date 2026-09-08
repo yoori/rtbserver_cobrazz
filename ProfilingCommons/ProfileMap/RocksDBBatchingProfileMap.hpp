@@ -195,10 +195,20 @@ namespace AdServer::ProfilingCommons
       Generics::SmartMemBuf_var profile,
       std::optional<std::string> error) noexcept;
 
-    static bool notify_failed_operation_(Operation& operation, const std::string& error) noexcept;
+    static void notify_save_operation_(
+      Operation& operation,
+      std::optional<std::string> error) noexcept;
 
-    static void notify_failed_operations_(Operations& operations, const std::string& error)
-      noexcept;
+    static void notify_remove_operation_(
+      Operation& operation,
+      bool result,
+      std::optional<std::string> error) noexcept;
+
+    bool
+    notify_failed_operation_(Operation& operation, const std::string& error) const noexcept;
+
+    void
+    notify_failed_operations_(Operations& operations, const std::string& error) noexcept;
 
     bool direct_check_profile_(const std::string& key) const;
 

@@ -1,5 +1,6 @@
 #include <atomic>
 #include <chrono>
+#include <csignal>
 #include <condition_variable>
 #include <cstdlib>
 #include <filesystem>
@@ -10,18 +11,45 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <thread>
 
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <Commons/AsyncMutex.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
+#include <Commons/ExecutorPool.hpp>
+#include <Commons/OrderedAsyncTaskWindow.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
+#include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
 namespace
 {
   using Processor = AdServer::ProfilingCommons::RocksDBProfileMapProcessor;
   using ProfileMap = AdServer::ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+  using TransactionKey = Generics::StringHashAdapter;
+  using TransactionBaseMap =
+    AdServer::ProfilingCommons::RocksDBBatchingProfileMap<TransactionKey>;
+  using TransactionMap = AdServer::ProfilingCommons::TransactionProfileMap<TransactionKey>;
+  using TransactionMap_var = ReferenceCounting::SmartPtr<TransactionMap>;
+
+  class NullActiveObjectCallback final:
+    public virtual Generics::ActiveObjectCallback,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    void
+    report_error(Severity, const String::SubString&, const char* = nullptr) noexcept override
+    {}
+
+  protected:
+    ~NullActiveObjectCallback() noexcept override = default;
+  };
 
   AdServer::Commons::StartableAwaitable<void>
   co_get_profile(ProfileMap& profile_map, const std::string& key)
@@ -70,6 +98,222 @@ namespace
     }
     return result;
   }
+
+  AdServer::Commons::StartableAwaitable<void>
+  co_update_profile(
+    std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
+    TransactionMap& transaction_map,
+    Generics::ConstSmartMemBuf_var profile,
+    std::atomic<unsigned long>& transactions_acquired,
+    std::atomic<unsigned long>& reads_completed,
+    std::atomic<unsigned long>& saves_started,
+    std::atomic<unsigned long>& failures,
+    std::atomic<unsigned long>& injected_io_errors)
+  {
+    try
+    {
+      co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
+      auto transaction = co_await transaction_map.co_get_transaction(
+        TransactionKey("shared"), false);
+      transactions_acquired.fetch_add(1, std::memory_order_relaxed);
+      co_await transaction->co_get_profile();
+      reads_completed.fetch_add(1, std::memory_order_relaxed);
+      saves_started.fetch_add(1, std::memory_order_relaxed);
+      co_await transaction->co_save_profile(profile.in());
+    }
+    catch (const std::exception& ex)
+    {
+      if (std::string_view(ex.what()).find("File too large") != std::string_view::npos)
+      {
+        injected_io_errors.fetch_add(1, std::memory_order_relaxed);
+      }
+      failures.fetch_add(1, std::memory_order_relaxed);
+      throw;
+    }
+    catch (...)
+    {
+      failures.fetch_add(1, std::memory_order_relaxed);
+      throw;
+    }
+  }
+
+  [[noreturn]] void
+  run_write_failure_test_child(const std::filesystem::path& path)
+  {
+    try
+    {
+      if (std::signal(SIGXFSZ, SIG_IGN) == SIG_ERR)
+      {
+        throw std::runtime_error("can't ignore SIGXFSZ");
+      }
+
+      auto processor = std::make_shared<Processor>(1);
+      processor->activate_object();
+      auto profile_map = std::make_unique<TransactionBaseMap>(
+        processor,
+        String::SubString(path.string()),
+        Generics::Time::ZERO,
+        128,
+        Generics::Time(0, 200000),
+        false);
+      profile_map->activate_object();
+      TransactionMap_var transaction_map = new TransactionMap(profile_map.get());
+      Generics::ActiveObjectCallback_var callback(new NullActiveObjectCallback());
+      auto executor_pool = std::make_shared<AdServer::Commons::ExecutorPool>(
+        callback,
+        4,
+        AdServer::Commons::ExecutorPool::ResumeStrategy::AnyContext,
+        "rdb-failure");
+      executor_pool->activate_object();
+
+      // Limit is process-wide, so the failure is isolated in this watchdog-controlled child.
+      struct rlimit original_limit;
+      if (::getrlimit(RLIMIT_FSIZE, &original_limit) != 0)
+      {
+        throw std::runtime_error("getrlimit(RLIMIT_FSIZE) failed");
+      }
+
+      struct rlimit failure_limit = original_limit;
+      failure_limit.rlim_cur = 1;
+      if (::setrlimit(RLIMIT_FSIZE, &failure_limit) != 0)
+      {
+        throw std::runtime_error("setrlimit(RLIMIT_FSIZE) failed");
+      }
+
+      constexpr unsigned long operation_count = 1024;
+      std::atomic<unsigned long> transactions_acquired{0};
+      std::atomic<unsigned long> reads_completed{0};
+      std::atomic<unsigned long> saves_started{0};
+      std::atomic<unsigned long> failures{0};
+      std::atomic<unsigned long> injected_io_errors{0};
+      const auto initial_mutex_stats = AdServer::Commons::AsyncMutex::stats();
+      auto profile = make_profile(std::string(4096, 'x'));
+      AdServer::Commons::OrderedAsyncTaskWindow window(0, operation_count);
+
+      for (unsigned long i = 0; i < operation_count; ++i)
+      {
+        window.start(
+          i,
+          co_update_profile(
+            executor_pool,
+            *transaction_map,
+            profile,
+            transactions_acquired,
+            reads_completed,
+            saves_started,
+            failures,
+            injected_io_errors));
+      }
+
+      window.wait_progress();
+      bool operation_failed = false;
+      try
+      {
+        window.rethrow_exception();
+      }
+      catch (const eh::Exception&)
+      {
+        operation_failed = true;
+      }
+
+      if (::setrlimit(RLIMIT_FSIZE, &original_limit) != 0)
+      {
+        throw std::runtime_error("can't restore RLIMIT_FSIZE");
+      }
+
+      const auto mutex_stats = AdServer::Commons::AsyncMutex::stats();
+      const auto processor_stats = processor->stats();
+      const auto executor_stats = executor_pool->stats();
+      if (!operation_failed || failures.load(std::memory_order_relaxed) != operation_count)
+      {
+        throw std::runtime_error("not all failed coroutines completed");
+      }
+
+      if (injected_io_errors.load(std::memory_order_relaxed) != operation_count)
+      {
+        throw std::runtime_error("coroutines didn't receive the injected I/O error");
+      }
+
+      if (transactions_acquired.load(std::memory_order_relaxed) != operation_count ||
+        reads_completed.load(std::memory_order_relaxed) != 1 ||
+        saves_started.load(std::memory_order_relaxed) != 1)
+      {
+        throw std::runtime_error("unexpected transaction failure path");
+      }
+
+      if (mutex_stats.current_waiters != initial_mutex_stats.current_waiters ||
+        mutex_stats.contended_locks - initial_mutex_stats.contended_locks != operation_count - 1)
+      {
+        throw std::runtime_error("transaction mutex waiters weren't released");
+      }
+
+      if (processor_stats.get_total != 1 || processor_stats.save_total != 1 ||
+        processor_stats.write_batch_total != 1 || processor_stats.pending_operations != 0 ||
+        processor_stats.active_workers != 0 || processor_stats.failed_batch_total != 1 ||
+        processor_stats.failed_operation_total != 1 ||
+        processor_stats.failed_callback_expected != operation_count ||
+        processor_stats.failed_callback_completed != operation_count)
+      {
+        throw std::runtime_error("unexpected processor state after injected write failure");
+      }
+
+      if (executor_stats.resumes_scheduled == 0 ||
+        executor_stats.resumes_scheduled != executor_stats.resumes_executed ||
+        executor_stats.resume_schedule_failures != 0)
+      {
+        throw std::runtime_error("executor didn't run all scheduled coroutine resumes");
+      }
+
+      // A failed RocksDB stays in background-error state until its retry period expires.
+      ::_exit(0);
+    }
+    catch (const std::exception& ex)
+    {
+      std::cerr << "write failure test child: " << ex.what() << std::endl;
+      ::_exit(1);
+    }
+  }
+
+  void
+  run_write_failure_test(const std::filesystem::path& path)
+  {
+    const pid_t child = ::fork();
+    if (child == -1)
+    {
+      throw std::runtime_error("fork failed");
+    }
+
+    if (child == 0)
+    {
+      run_write_failure_test_child(path);
+    }
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    int status = 0;
+    while (std::chrono::steady_clock::now() < deadline)
+    {
+      const pid_t result = ::waitpid(child, &status, WNOHANG);
+      if (result == child)
+      {
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+        {
+          throw std::runtime_error("write failure test child failed");
+        }
+        return;
+      }
+
+      if (result == -1)
+      {
+        throw std::runtime_error("waitpid failed");
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    ::kill(child, SIGKILL);
+    ::waitpid(child, &status, 0);
+    throw std::runtime_error("write failure callbacks timed out");
+  }
 }
 
 int
@@ -90,6 +334,8 @@ main()
 
   try
   {
+    run_write_failure_test(root / "write-failure");
+
     processor->activate_object();
     first = std::make_unique<ProfileMap>(
       processor,
@@ -107,6 +353,14 @@ main()
       true);
     first->activate_object();
     second->activate_object();
+
+    const auto initial_processor_stats = processor->stats();
+    if (initial_processor_stats.workers != 1 || initial_processor_stats.queue_count != 2 ||
+      initial_processor_stats.pending_operations != 0 ||
+      initial_processor_stats.active_workers != 0)
+    {
+      throw std::runtime_error("initial processor queue stats mismatch");
+    }
 
     for (unsigned int i = 0; i < 100 && rdb_batch_thread_count() != 1; ++i)
     {
@@ -132,6 +386,11 @@ main()
       isolation_profile.in(),
       Generics::Time::get_time_of_day());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    if (processor->stats().pending_operations == 0)
+    {
+      throw std::runtime_error("pending operation is missing from processor stats");
+    }
 
     const auto enqueue_started = std::chrono::steady_clock::now();
     second->save_profile_async(
@@ -339,7 +598,11 @@ main()
       first_processor_stats.write_batch_total == 0 ||
       first_processor_stats.write_batch_total >
         first_processor_stats.save_total + first_processor_stats.remove_total ||
-      first_processor_stats.write_batch_total_time == 0)
+      first_processor_stats.write_batch_total_time == 0 ||
+      first_processor_stats.workers != 1 ||
+      first_processor_stats.queue_count != 0 ||
+      first_processor_stats.pending_operations != 0 ||
+      first_processor_stats.active_workers != 0)
     {
       throw std::runtime_error("first processor stats mismatch");
     }
@@ -473,7 +736,11 @@ main()
       second_processor_stats.read_batch_total_time == 0 ||
       second_processor_stats.write_batch_total == 0 ||
       second_processor_stats.write_batch_total > second_processor_stats.save_total ||
-      second_processor_stats.write_batch_total_time == 0)
+      second_processor_stats.write_batch_total_time == 0 ||
+      second_processor_stats.workers != 4 ||
+      second_processor_stats.queue_count != 0 ||
+      second_processor_stats.pending_operations != 0 ||
+      second_processor_stats.active_workers != 0)
     {
       throw std::runtime_error("second processor stats mismatch");
     }

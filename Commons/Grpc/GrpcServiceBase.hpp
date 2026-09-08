@@ -259,6 +259,15 @@ namespace AdServer::Grpc
       std::uint64_t batch_stream_call_live = 0;
     };
 
+    struct BatchStreamReadStatsSnapshot
+    {
+      bool read_ahead_enabled = false;
+      std::size_t max_requests_in_progress = 0;
+      std::size_t requests_in_progress = 0;
+      std::size_t read_reservations = 0;
+      std::size_t waiting_streams = 0;
+    };
+
     class InprogressStats final
     {
     public:
@@ -312,6 +321,8 @@ namespace AdServer::Grpc
 
       bool read_ahead_enabled() const noexcept;
 
+      BatchStreamReadStatsSnapshot stats() const;
+
       bool reserve_read_or_enqueue(WaiterPtr waiter);
       void complete_read_reservation(std::size_t requests) noexcept;
       void cancel_read_reservation() noexcept;
@@ -343,6 +354,8 @@ namespace AdServer::Grpc
     void stop_finishing_requests() noexcept;
 
     InprogressStatsSnapshot inprogress_stats() const;
+
+    BatchStreamReadStatsSnapshot batch_stream_read_stats() const;
 
     LifecycleStatsSnapshot lifecycle_stats() const noexcept;
 

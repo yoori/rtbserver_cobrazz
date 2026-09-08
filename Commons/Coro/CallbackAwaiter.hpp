@@ -74,7 +74,7 @@ namespace AdServer::Commons
     };
 
     static void
-    resume_(const std::shared_ptr<State>& state);
+    resume_(const std::shared_ptr<State>& state) noexcept;
 
     std::shared_ptr<State> state_;
     StartCallback start_callback_;
@@ -114,7 +114,7 @@ namespace AdServer::Commons
     try
     {
       start_callback_(
-        [state](CallbackArgs... callback_args) mutable
+        [state](CallbackArgs... callback_args) mutable noexcept
         {
           try
           {
@@ -187,7 +187,7 @@ namespace AdServer::Commons
 
   template<typename... CallbackArgs>
   void
-  CallbackAwaiter<CallbackArgs...>::resume_(const std::shared_ptr<State>& state)
+  CallbackAwaiter<CallbackArgs...>::resume_(const std::shared_ptr<State>& state) noexcept
   {
     if (state->resume_scheduler)
     {
