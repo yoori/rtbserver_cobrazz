@@ -92,6 +92,7 @@ main(int argc, char** argv)
         endpoint.port,
         128,
         0,
+        1,
         *opt_max_sequential_ops,
         response_sleep_ms);
     server->activate_object();

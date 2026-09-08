@@ -150,7 +150,8 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
           *config().GrpcConfig().Endpoint().host() :
           "0.0.0.0",
         config().GrpcConfig().Endpoint().port(),
-        config().GrpcConfig().cq_threads());
+        config().GrpcConfig().cq_threads(),
+        config().GrpcConfig().threads_per_cq());
 
     auto active_objects = std::make_shared<Generics::CompositeActiveObject>(false, false);
     auto active_objects_shutdown_guard = AdServer::Commons::make_scope_guard(

@@ -116,6 +116,12 @@
         <xsl:value-of select="4"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="user-info-manager-grpc-threads-per-cq">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_threads_per_cq"/>
+      <xsl:if test="not($user-info-manager-config/cfg:networkParams/@grpc_threads_per_cq)">
+        <xsl:value-of select="1"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="user-info-manager-grpc-max-sequential-ops">
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_max_sequential_ops"/>
       <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
@@ -186,6 +192,7 @@
 
     <cfg:GrpcConfig process_threads="{$user-info-manager-grpc-process-threads}"
       cq_threads="{$user-info-manager-grpc-cq-threads}"
+      threads_per_cq="{$user-info-manager-grpc-threads-per-cq}"
       max_sequential_ops="{$user-info-manager-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>

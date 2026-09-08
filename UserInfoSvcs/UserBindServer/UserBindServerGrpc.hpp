@@ -58,6 +58,7 @@ namespace AdServer::UserInfoSvcs
       unsigned int bind_port,
       std::size_t process_threads = 32,
       std::size_t cq_threads = 16,
+      std::size_t threads_per_cq = 1,
       std::size_t max_sequential_ops = 0,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 

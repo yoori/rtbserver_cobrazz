@@ -34,6 +34,11 @@
         <xsd:documentation>UserBindServer gRPC completion queue threads.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_threads_per_cq" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>UserBindServer gRPC workers per completion queue.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="grpc_max_sequential_ops" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>UserBindServer gRPC maximum sequential operations per lane.</xsd:documentation>

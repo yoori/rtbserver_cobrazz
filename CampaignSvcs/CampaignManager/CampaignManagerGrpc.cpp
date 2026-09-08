@@ -2821,6 +2821,7 @@ namespace AdServer::CampaignSvcs
     std::string_view bind_address,
     unsigned int bind_port,
     std::size_t cq_threads,
+    std::size_t threads_per_cq,
     std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
@@ -2830,6 +2831,7 @@ namespace AdServer::CampaignSvcs
         campaign_manager_grpc_aspect,
         bind_address_,
         cq_threads,
+        threads_per_cq,
         std::make_unique<ServiceImpl>(core, executor_pool_, max_sequential_ops, stats_)))
   {
     add_child_object(impl_);

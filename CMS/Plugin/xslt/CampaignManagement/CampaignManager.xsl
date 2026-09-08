@@ -188,6 +188,12 @@
       <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_process_threads"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_process_threads) = 0">32</xsl:if>
     </xsl:variable>
+    <xsl:variable name="campaign-manager-grpc-threads-per-cq">
+      <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_threads_per_cq"/>
+      <xsl:if test="not($campaign-manager-config/cfg:networkParams/@grpc_threads_per_cq)">
+        <xsl:value-of select="1"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="campaign-manager-grpc-max-sequential-ops">
       <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_max_sequential_ops"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
@@ -334,6 +340,7 @@
     <cfg:GrpcConfig
       process_threads="{$campaign-manager-grpc-process-threads}"
       cq_threads="4"
+      threads_per_cq="{$campaign-manager-grpc-threads-per-cq}"
       max_sequential_ops="{$campaign-manager-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
     </cfg:GrpcConfig>

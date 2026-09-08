@@ -222,6 +222,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
           configuration_->GrpcConfig()->Endpoint().port(),
           configuration_->GrpcConfig()->process_threads(),
           configuration_->GrpcConfig()->cq_threads(),
+          configuration_->GrpcConfig()->threads_per_cq(),
           static_cast<std::size_t>(configuration_->GrpcConfig()->max_sequential_ops())));
     }
 

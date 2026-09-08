@@ -67,6 +67,7 @@ namespace AdServer::UserInfoSvcs
       unsigned int bind_port,
       std::size_t process_threads = 16,
       std::size_t cq_threads = 16,
+      std::size_t threads_per_cq = 1,
       std::size_t max_sequential_ops = 0);
 
     Stats stats() const noexcept;

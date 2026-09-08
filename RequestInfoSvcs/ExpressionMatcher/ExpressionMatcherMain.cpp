@@ -156,7 +156,8 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         *config().GrpcConfig().Endpoint().host() :
         "0.0.0.0",
       config().GrpcConfig().Endpoint().port(),
-      config().GrpcConfig().cq_threads());
+      config().GrpcConfig().cq_threads(),
+      config().GrpcConfig().threads_per_cq());
 
     active_objects_ = std::make_shared<Generics::CompositeActiveObject>(false, false);
     active_objects_->add_child_object(expression_matcher_impl_.in());

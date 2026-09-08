@@ -36,7 +36,8 @@ namespace AdServer::Grpc
       Logging::Logger* logger,
       std::string_view aspect,
       std::string_view bind_address,
-      std::size_t threads,
+      std::size_t completion_queue_count,
+      std::size_t threads_per_completion_queue,
       std::unique_ptr<ServiceImplType> service);
 
     ServiceImplType& service() noexcept
@@ -62,7 +63,8 @@ namespace AdServer::Grpc
     Logging::Logger_var logger_;
     const std::string aspect_;
     const std::string bind_address_;
-    const std::size_t threads_;
+    const std::size_t completion_queue_count_;
+    const std::size_t threads_per_completion_queue_;
     std::unique_ptr<ServiceImplType> service_;
     std::unique_ptr<::grpc::Server> server_;
     std::vector<std::unique_ptr<::grpc::ServerCompletionQueue>> completion_queues_;
@@ -75,12 +77,15 @@ namespace AdServer::Grpc
     Logging::Logger* logger,
     std::string_view aspect,
     std::string_view bind_address,
-    std::size_t threads,
+    std::size_t completion_queue_count,
+    std::size_t threads_per_completion_queue,
     std::unique_ptr<ServiceImplType> service)
     : logger_(ReferenceCounting::add_ref(logger)),
       aspect_(aspect),
       bind_address_(bind_address),
-      threads_(std::max<std::size_t>(1, threads)),
+      completion_queue_count_(std::max<std::size_t>(1, completion_queue_count)),
+      threads_per_completion_queue_(
+        std::max<std::size_t>(1, threads_per_completion_queue)),
       service_(std::move(service))
   {}
 
@@ -93,9 +98,8 @@ namespace AdServer::Grpc
     builder.AddListeningPort(bind_address_, ::grpc::InsecureServerCredentials());
     service_->register_services(builder);
 
-    const auto completion_queues_count = threads_;
-    completion_queues_.reserve(completion_queues_count);
-    for (std::size_t i = 0; i < completion_queues_count; ++i)
+    completion_queues_.reserve(completion_queue_count_);
+    for (std::size_t i = 0; i < completion_queue_count_; ++i)
     {
       completion_queues_.emplace_back(builder.AddCompletionQueue());
     }
@@ -116,14 +120,17 @@ namespace AdServer::Grpc
     }
     service_->start(raw_completion_queues);
 
-    workers_.reserve(completion_queues_.size());
+    workers_.reserve(completion_queues_.size() * threads_per_completion_queue_);
     for (auto& completion_queue : completion_queues_)
     {
       auto* completion_queue_ptr = completion_queue.get();
-      workers_.emplace_back([this, completion_queue_ptr]() {
-        AdServer::Commons::set_current_thread_name("grpc-server");
-        process_queue_loop_(completion_queue_ptr);
-      });
+      for (std::size_t i = 0; i < threads_per_completion_queue_; ++i)
+      {
+        workers_.emplace_back([this, completion_queue_ptr]() {
+          AdServer::Commons::set_current_thread_name("grpc-server");
+          process_queue_loop_(completion_queue_ptr);
+        });
+      }
     }
 
     if (completion_queues_.empty())
@@ -137,7 +144,9 @@ namespace AdServer::Grpc
     if (logger_)
     {
       logger_->sstream(Logging::Logger::NOTICE, aspect_.c_str()) <<
-        "gRPC endpoint started at " << bind_address_ << ", threads = " << threads_;
+        "gRPC endpoint started at " << bind_address_ <<
+        ", completion queues = " << completion_queue_count_ <<
+        ", threads per completion queue = " << threads_per_completion_queue_;
     }
   }
 

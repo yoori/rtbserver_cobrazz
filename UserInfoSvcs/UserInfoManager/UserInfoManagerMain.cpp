@@ -168,6 +168,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         config().GrpcConfig()->Endpoint().port(),
         static_cast<std::size_t>(config().GrpcConfig()->process_threads()),
         static_cast<std::size_t>(config().GrpcConfig()->cq_threads()),
+        static_cast<std::size_t>(config().GrpcConfig()->threads_per_cq()),
         static_cast<std::size_t>(config().GrpcConfig()->max_sequential_ops()));
       add_child_object(grpc_adapter);
     }

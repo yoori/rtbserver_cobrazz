@@ -1312,6 +1312,7 @@ namespace AdServer::UserInfoSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
+    std::size_t threads_per_cq,
     std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       max_sequential_ops_(resolve_max_sequential_ops_(max_sequential_ops)),
@@ -1327,6 +1328,7 @@ namespace AdServer::UserInfoSvcs
         user_info_manager_grpc_aspect,
         bind_address_,
         cq_threads != 0 ? cq_threads : 16,
+        threads_per_cq,
         std::make_unique<ServiceImpl>(
           std::move(user_info_manager),
           executor_pool_,

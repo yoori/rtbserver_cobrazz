@@ -479,6 +479,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         "0.0.0.0",
         campaign_manager_config_->GrpcConfig()->Endpoint().port(),
         campaign_manager_config_->GrpcConfig()->cq_threads(),
+        campaign_manager_config_->GrpcConfig()->threads_per_cq(),
         campaign_manager_config_->GrpcConfig()->max_sequential_ops());
       active_objects->add_child_object(non_owning_active_object(grpc_adapter.in()));
     }

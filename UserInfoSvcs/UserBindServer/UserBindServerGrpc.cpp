@@ -695,6 +695,7 @@ namespace AdServer::UserInfoSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
+    std::size_t threads_per_cq,
     std::size_t max_sequential_ops,
     std::shared_ptr<std::atomic_uint> response_sleep_ms)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
@@ -711,6 +712,7 @@ namespace AdServer::UserInfoSvcs
         user_bind_server_grpc_aspect,
         bind_address_,
         cq_threads != 0 ? cq_threads : 16,
+        threads_per_cq,
         std::make_unique<ServiceImpl>(
           core,
           executor_pool_,

@@ -75,6 +75,12 @@
       <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_process_threads"/>
       <xsl:if test="count($channel-server-config/cfg:networkParams/@grpc_process_threads) = 0">32</xsl:if>
     </xsl:variable>
+    <xsl:variable name="channel-server-grpc-threads-per-cq">
+      <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_threads_per_cq"/>
+      <xsl:if test="not($channel-server-config/cfg:networkParams/@grpc_threads_per_cq)">
+        <xsl:value-of select="1"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="channel-server-grpc-max-sequential-ops">
       <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_max_sequential_ops"/>
       <xsl:if test="count($channel-server-config/cfg:networkParams/@grpc_max_sequential_ops) = 0">4</xsl:if>
@@ -141,6 +147,7 @@
     <cfg:GrpcConfig
       process_threads="{$channel-server-grpc-process-threads}"
       cq_threads="4"
+      threads_per_cq="{$channel-server-grpc-threads-per-cq}"
       max_sequential_ops="{$channel-server-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$channel-server-grpc-port}"/>
     </cfg:GrpcConfig>

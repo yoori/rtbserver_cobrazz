@@ -69,13 +69,15 @@ namespace AdServer::UserInfoSvcs
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port,
-    std::size_t grpc_threads)
+    std::size_t cq_threads,
+    std::size_t threads_per_cq)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       impl_(std::make_shared<Impl>(
         logger,
         user_info_controller2_grpc_aspect,
         bind_address_,
-        grpc_threads,
+        cq_threads,
+        threads_per_cq,
         std::make_unique<ServiceImpl>(controller)))
   {
     add_child_object(impl_);

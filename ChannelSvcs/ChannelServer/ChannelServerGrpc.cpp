@@ -783,6 +783,7 @@ namespace AdServer::ChannelSvcs
     unsigned int bind_port,
     std::size_t process_threads,
     std::size_t cq_threads,
+    std::size_t threads_per_cq,
     std::size_t max_sequential_ops)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
       stats_(std::make_shared<AtomicStats>()),
@@ -797,6 +798,7 @@ namespace AdServer::ChannelSvcs
         channel_server_grpc_aspect,
         bind_address_,
         cq_threads != 0 ? cq_threads : 16,
+        threads_per_cq,
         std::make_unique<ServiceImpl>(
           std::move(core),
           executor_pool_,

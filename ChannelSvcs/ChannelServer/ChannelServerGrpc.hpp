@@ -49,6 +49,7 @@ namespace AdServer::ChannelSvcs
       unsigned int bind_port,
       std::size_t process_threads,
       std::size_t cq_threads,
+      std::size_t threads_per_cq,
       std::size_t max_sequential_ops);
 
     Stats stats() const noexcept;
