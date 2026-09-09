@@ -996,6 +996,8 @@ namespace AdServer::ProfilingCommons
 
     RocksDBProfileMapProcessor::CacheLookupResult cache_result;
     RocksDBProfileMapProcessor::CacheWriteTicket cache_ticket;
+    Operation cached_write_completion;
+    cached_write_completion.type = operation.type;
     bool cache_hit = false;
     try
     {
@@ -1008,11 +1010,29 @@ namespace AdServer::ProfilingCommons
       else if (operation.type == OT_SAVE || operation.type == OT_REMOVE)
       {
         cache_ticket = processor_->cache_publish_(*this, operation);
+        if (cache_ticket.state.write_revision != 0)
+        {
+          // The cache is authoritative after queue admission. The worker only
+          // persists the operation and reports later failures as background errors.
+          cached_write_completion.save_callback = std::move(operation.save_callback);
+          cached_write_completion.remove_callback = std::move(operation.remove_callback);
+          operation.save_callback.reset();
+          operation.remove_callback.reset();
+        }
       }
 
       if (!cache_hit)
       {
         processor_->enqueue_operation_i_(*this, operation);
+        submission_guard.reset();
+        if (cached_write_completion.save_callback)
+        {
+          notify_save_operation_(cached_write_completion, std::nullopt);
+        }
+        else if (cached_write_completion.remove_callback)
+        {
+          notify_remove_operation_(cached_write_completion, true, std::nullopt);
+        }
         return;
       }
 
@@ -1028,7 +1048,9 @@ namespace AdServer::ProfilingCommons
     {
       processor_->cache_cancel_(cache_ticket);
       submission_guard.reset();
-      if (!notify_failed_operation_(operation, ex.what()))
+      const bool cached_write_notified =
+        notify_failed_operation_(cached_write_completion, ex.what());
+      if (!notify_failed_operation_(operation, ex.what()) && !cached_write_notified)
       {
         throw;
       }
@@ -1039,7 +1061,9 @@ namespace AdServer::ProfilingCommons
       processor_->cache_cancel_(cache_ticket);
       submission_guard.reset();
       const std::string error = std::string(function_name) + ": unknown enqueue error";
-      if (!notify_failed_operation_(operation, error))
+      const bool cached_write_notified =
+        notify_failed_operation_(cached_write_completion, error);
+      if (!notify_failed_operation_(operation, error) && !cached_write_notified)
       {
         throw ProfileMap<std::string>::Exception(error);
       }

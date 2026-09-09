@@ -9,6 +9,10 @@ add_executable(OrderedAsyncTaskWindowTest
   OrderedAsyncTaskWindowTest.cpp
 )
 
+add_executable(ExecutorPoolTest
+  ExecutorPoolTest.cpp
+)
+
 add_executable(StartableAwaitableTest
   StartableAwaitableTest.cpp
 )
@@ -31,6 +35,11 @@ target_link_libraries(AsyncMutexTest
 )
 
 target_link_libraries(OrderedAsyncTaskWindowTest
+  PRIVATE
+    Commons
+)
+
+target_link_libraries(ExecutorPoolTest
   PRIVATE
     Commons
 )

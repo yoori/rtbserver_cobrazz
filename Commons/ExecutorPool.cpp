@@ -13,12 +13,16 @@ namespace AdServer::Commons
     Generics::ActiveObjectCallback* callback,
     unsigned long threads,
     ResumeStrategy resume_strategy,
-    std::string thread_name)
+    std::string thread_name,
+    unsigned long threads_per_context)
     : DelegateActiveObject(callback, threads ? threads : 1, 1024 * 1024)
     , resume_strategy_(resume_strategy)
     , thread_name_(std::move(thread_name))
   {
-    const auto context_count = threads ? threads : 1;
+    const auto thread_count = threads ? threads : 1;
+    const auto effective_threads_per_context = threads_per_context ? threads_per_context : 1;
+    const auto context_count =
+      (thread_count + effective_threads_per_context - 1) / effective_threads_per_context;
     contexts_.reserve(context_count);
     for (unsigned long i = 0; i < context_count; ++i)
     {

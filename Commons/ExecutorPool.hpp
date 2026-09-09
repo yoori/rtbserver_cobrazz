@@ -40,7 +40,8 @@ namespace AdServer::Commons
       Generics::ActiveObjectCallback* callback,
       unsigned long threads,
       ResumeStrategy resume_strategy,
-      std::string thread_name = "asio-pool");
+      std::string thread_name = "asio-pool",
+      unsigned long threads_per_context = 4);
 
     void
     post(std::function<void()> task);

@@ -482,6 +482,15 @@ namespace AdServer::RequestInfoSvcs
     const auto mutex_stats = AdServer::Commons::AsyncMutex::stats();
 
     return ProcessingDiagnostics{
+      rocksdb_stats.check_total,
+      rocksdb_stats.get_total,
+      rocksdb_stats.touch_total,
+      rocksdb_stats.save_total,
+      rocksdb_stats.remove_total,
+      rocksdb_stats.read_batch_total,
+      rocksdb_stats.read_batch_total_time,
+      rocksdb_stats.write_batch_total,
+      rocksdb_stats.write_batch_total_time,
       rocksdb_stats.pending_operations,
       rocksdb_stats.active_workers,
       rocksdb_stats.failed_batch_total,

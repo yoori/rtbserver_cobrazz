@@ -149,7 +149,7 @@ namespace
         throw std::runtime_error("can't ignore SIGXFSZ");
       }
 
-      auto processor = std::make_shared<Processor>(1, 32, 64 * 1024);
+      auto processor = std::make_shared<Processor>(1, 32, 0);
       processor->activate_object();
       auto profile_map = std::make_unique<TransactionBaseMap>(
         processor,
@@ -370,10 +370,11 @@ namespace
     }
 
     const auto pending_stats = processor->stats();
-    if (pending_stats.cache_hits == 0 || pending_stats.cache_entries != 1 ||
-      pending_stats.cache_limit != cache_limit)
+    if (saves_completed.load(std::memory_order_relaxed) != 1 ||
+      pending_stats.pending_operations == 0 || pending_stats.cache_hits == 0 ||
+      pending_stats.cache_entries != 1 || pending_stats.cache_limit != cache_limit)
     {
-      throw std::runtime_error("cache stats don't contain the pending save");
+      throw std::runtime_error("cached save wasn't completed on queue admission");
     }
 
     if (!wait_count(completion_condition, completion_lock, saves_completed, 1))
@@ -403,10 +404,25 @@ namespace
       throw std::runtime_error("shared cache mixed different profile maps");
     }
 
-    profile_map->remove_profile_async("cached-key");
+    std::atomic<unsigned long> removes_completed{0};
+    profile_map->remove_profile_async(
+      "cached-key",
+      AdServer::ProfilingCommons::OP_RUNTIME,
+      [&](bool result, std::optional<std::string> error)
+      {
+        if (result && !error)
+        {
+          removes_completed.fetch_add(1, std::memory_order_relaxed);
+        }
+      });
     if (profile_map->check_profile("cached-key"))
     {
       throw std::runtime_error("pending remove wasn't visible through cache");
+    }
+
+    if (removes_completed.load(std::memory_order_relaxed) != 1)
+    {
+      throw std::runtime_error("cached remove wasn't completed on queue admission");
     }
 
     constexpr unsigned long writer_count = 8;
@@ -501,10 +517,22 @@ namespace
       throw std::runtime_error("cached eviction writes failed");
     }
 
-    const auto cache_stats = processor->stats();
-    if (cache_stats.cache_size > cache_limit || cache_stats.cache_evictions == 0)
+    const auto persistence_deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    auto cache_stats = processor->stats();
+    while ((cache_stats.pending_operations != 0 || cache_stats.active_workers != 0) &&
+      std::chrono::steady_clock::now() < persistence_deadline)
     {
-      throw std::runtime_error("cache limit wasn't enforced");
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      cache_stats = processor->stats();
+    }
+
+    if (cache_stats.pending_operations != 0 || cache_stats.active_workers != 0 ||
+      cache_stats.cache_size > cache_limit || cache_stats.cache_evictions == 0 ||
+      saves_completed.load(std::memory_order_relaxed) != 1 ||
+      removes_completed.load(std::memory_order_relaxed) != 1)
+    {
+      throw std::runtime_error("cached writes weren't persisted exactly once");
     }
 
     profile_map->deactivate_object();

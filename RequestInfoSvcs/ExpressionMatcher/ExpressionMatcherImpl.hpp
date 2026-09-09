@@ -82,6 +82,15 @@ namespace AdServer::RequestInfoSvcs
 
     struct ProcessingDiagnostics
     {
+      std::uint64_t rocksdb_check_operations = 0;
+      std::uint64_t rocksdb_get_operations = 0;
+      std::uint64_t rocksdb_touch_operations = 0;
+      std::uint64_t rocksdb_save_operations = 0;
+      std::uint64_t rocksdb_remove_operations = 0;
+      std::uint64_t rocksdb_read_batches = 0;
+      std::uint64_t rocksdb_read_batch_time_us = 0;
+      std::uint64_t rocksdb_write_batches = 0;
+      std::uint64_t rocksdb_write_batch_time_us = 0;
       std::uint64_t rocksdb_pending_operations = 0;
       std::uint64_t rocksdb_active_workers = 0;
       std::uint64_t rocksdb_failed_batches = 0;

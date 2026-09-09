@@ -309,6 +309,19 @@ namespace AdServer::RequestInfoSvcs
           sizes.temporary_user_trigger_match);
         json.add_number("request_trigger_match_profiles", sizes.request_trigger_match);
         json.add_number("household_colo_reach_profiles", sizes.household_colo_reach);
+        json.add_number("rocksdb_check_operations", diagnostics.rocksdb_check_operations);
+        json.add_number("rocksdb_get_operations", diagnostics.rocksdb_get_operations);
+        json.add_number("rocksdb_touch_operations", diagnostics.rocksdb_touch_operations);
+        json.add_number("rocksdb_save_operations", diagnostics.rocksdb_save_operations);
+        json.add_number("rocksdb_remove_operations", diagnostics.rocksdb_remove_operations);
+        json.add_number("rocksdb_read_batches", diagnostics.rocksdb_read_batches);
+        json.add_number(
+          "rocksdb_read_batch_time_us",
+          diagnostics.rocksdb_read_batch_time_us);
+        json.add_number("rocksdb_write_batches", diagnostics.rocksdb_write_batches);
+        json.add_number(
+          "rocksdb_write_batch_time_us",
+          diagnostics.rocksdb_write_batch_time_us);
         json.add_number(
           "rocksdb_pending_operations",
           diagnostics.rocksdb_pending_operations);
