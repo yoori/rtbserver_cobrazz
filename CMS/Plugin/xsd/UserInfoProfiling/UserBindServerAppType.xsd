@@ -104,6 +104,14 @@
       </xsd:annotation>
     </xsd:attribute>
 
+    <xsd:attribute name="rocksdb_cache_size" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Shared RocksDB profile cache limit in bytes. Zero disables the cache.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
     <xsd:attribute name="numa_node" type="xsd:nonNegativeInteger" use="optional"/>
   </xsd:complexType>
 </xsd:schema>

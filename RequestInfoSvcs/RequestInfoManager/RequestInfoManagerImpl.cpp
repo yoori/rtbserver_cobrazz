@@ -158,7 +158,9 @@ namespace AdServer::RequestInfoSvcs
       scheduler_(new Generics::Planner(callback_)),
       task_runner_(new Generics::TaskRunner(callback_, 7)),
       rocksdb_processor_(std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
-        request_info_manager_config.rocksdb_batching_threads())),
+        request_info_manager_config.rocksdb_batching_threads(),
+        32,
+        request_info_manager_config.rocksdb_cache_size())),
       request_info_manager_config_(request_info_manager_config),
       rim_stats_impl_(rim_stats_impl)
   {

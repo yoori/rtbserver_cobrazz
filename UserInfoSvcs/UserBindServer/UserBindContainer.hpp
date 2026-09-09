@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -46,7 +47,8 @@ namespace AdServer::UserInfoSvcs
       bool load_slave,
       unsigned long partition_index, // instance partition number (first or second part of cluster)
       unsigned long partitions_number,
-      unsigned long rocksdb_batching_threads = 2)
+      unsigned long rocksdb_batching_threads = 2,
+      std::size_t rocksdb_cache_size = 0)
       /*throw(Exception)*/;
 
     static void

@@ -136,6 +136,10 @@
       <xsl:value-of select="$user-bind-server-config/@rocksdb_batching_threads"/>
       <xsl:if test="count($user-bind-server-config/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
+    <xsl:variable name="rocksdb-cache-size">
+      <xsl:value-of select="$user-bind-server-config/@rocksdb_cache_size"/>
+      <xsl:if test="count($user-bind-server-config/@rocksdb_cache_size) = 0">0</xsl:if>
+    </xsl:variable>
 
     <cfg:Storage portions="1024"
       chunks_root="{$chunks-root}"
@@ -145,7 +149,8 @@
       dump_period="{$user-bind-server-config/@user_dump_period}"
       expire_time="{$user-bind-server-config/@user_seen_expire_time}"
       bound_expire_time="{$user-bind-server-config/@user_expire_time}"
-      rocksdb_batching_threads="{$rocksdb-batching-threads}">
+      rocksdb_batching_threads="{$rocksdb-batching-threads}"
+      rocksdb_cache_size="{$rocksdb-cache-size}">
       <xsl:attribute name="user_bind_keep_mode">
         <xsl:value-of select="$colo-config/cfg:userProfiling/@user_bind_keep_mode"/>
         <xsl:if test="count($colo-config/cfg:userProfiling/@user_bind_keep_mode)

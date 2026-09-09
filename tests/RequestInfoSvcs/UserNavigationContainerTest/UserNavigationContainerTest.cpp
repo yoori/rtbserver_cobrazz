@@ -13,6 +13,8 @@
 #include <Commons/Algs.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Logger/Logger.hpp>
+#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
+#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfile_v1.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/UserNavigationContainer.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserNavigationProfile.hpp>
 
@@ -65,6 +67,54 @@ namespace
   }
 
   void
+  check_profile_data(
+    const Generics::ConstSmartMemBuf* profile,
+    const std::vector<ExpectedNavigation>& expected)
+  {
+    const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
+      profile->membuf().data(),
+      profile->membuf().size());
+
+    std::size_t expected_days = 0;
+    std::optional<Generics::Time> previous_date;
+    for (const auto& navigation : expected)
+    {
+      if (!previous_date.has_value() || *previous_date != navigation.date)
+      {
+        ++expected_days;
+        previous_date = navigation.date;
+      }
+    }
+
+    if (reader.days().size() != expected_days)
+    {
+      throw std::runtime_error("Unexpected navigation day count");
+    }
+
+    auto expected_navigation = expected.begin();
+    for (const auto day : reader.days())
+    {
+      for (const auto navigation : day.navigations())
+      {
+        if (expected_navigation == expected.end() ||
+          day.date() != expected_navigation->date.tv_sec ||
+          navigation.url() != expected_navigation->url ||
+          navigation.count() != expected_navigation->count)
+        {
+          throw std::runtime_error("Unexpected navigation entry");
+        }
+
+        ++expected_navigation;
+      }
+    }
+
+    if (expected_navigation != expected.end())
+    {
+      throw std::runtime_error("Unexpected navigation count");
+    }
+  }
+
+  void
   check_profile(
     UserNavigationContainer* container,
     const AdServer::Commons::UserId& user_id,
@@ -78,37 +128,65 @@ namespace
       throw std::runtime_error("Profile is absent");
     }
 
+    check_profile_data(profile, expected);
+  }
+
+  void
+  check_v1_adapter()
+  {
+    AdServer::RequestInfoSvcs_v1::UserNavigationProfileWriter old_profile;
+    old_profile.version() = 1;
+    for (const auto& navigation_info : std::vector<ExpectedNavigation>{
+      {Generics::Time(10), "a", 1},
+      {Generics::Time(10), "b", 2},
+      {Generics::Time(20), "c", 3}})
+    {
+      AdServer::RequestInfoSvcs_v1::NavigationWriter navigation;
+      navigation.date() = navigation_info.date.tv_sec;
+      navigation.url() = navigation_info.url;
+      navigation.count() = navigation_info.count;
+      old_profile.navigations().push_back(std::move(navigation));
+    }
+
+    Generics::SmartMemBuf_var old_mem_buf(new Generics::SmartMemBuf(old_profile.size()));
+    old_profile.save(old_mem_buf->membuf().data(), old_mem_buf->membuf().size());
+
+    const AdServer::RequestInfoSvcs::UserNavigationProfileAdapter adapter;
+    const Generics::ConstSmartMemBuf_var old_const_mem_buf =
+      Generics::transfer_membuf(old_mem_buf);
+    const Generics::ConstSmartMemBuf_var profile = adapter(old_const_mem_buf.in());
     const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
       profile->membuf().data(),
       profile->membuf().size());
-    if (reader.navigations().size() != expected.size())
+    if (reader.version() !=
+        AdServer::RequestInfoSvcs::CURRENT_USER_NAVIGATION_PROFILE_VERSION ||
+      reader.days().size() != 2)
     {
-      throw std::runtime_error("Unexpected navigation count");
+      throw std::runtime_error("Unexpected adapted profile structure");
     }
 
-    auto navigation = reader.navigations().begin();
-    for (const auto& expected_navigation : expected)
-    {
-      if ((*navigation).date() != expected_navigation.date.tv_sec ||
-        (*navigation).url() != expected_navigation.url ||
-        (*navigation).count() != expected_navigation.count)
+    check_profile_data(
+      profile,
       {
-        throw std::runtime_error("Unexpected navigation entry");
-      }
-
-      ++navigation;
-    }
+        {Generics::Time(10), "a", 1},
+        {Generics::Time(10), "b", 2},
+        {Generics::Time(20), "c", 3}
+      });
   }
 }
 
 int
 main()
 {
+  constexpr std::size_t USER_NAVIGATIONS_LIMIT = 4;
+
   const std::filesystem::path root = std::filesystem::temp_directory_path() /
     ("UserNavigationContainerTest-" + std::to_string(::getpid()));
 
   try
   {
+    check_v1_adapter();
+
     std::filesystem::remove_all(root);
     std::filesystem::create_directories(root / "Chunk_0_1");
 
@@ -131,7 +209,8 @@ main()
           1024 * 1024,
           2 * 1024 * 1024,
           20,
-          Generics::Time::ONE_DAY * 30));
+          Generics::Time::ONE_DAY * 30),
+        USER_NAVIGATIONS_LIMIT);
     container->activate_object();
 
     const AdServer::Commons::UserId user_id =
@@ -159,8 +238,6 @@ main()
       container,
       user_id,
       {
-        {today - Generics::Time::ONE_DAY * 30, "https://edge.example/", 1},
-        {today - Generics::Time::ONE_DAY, "https://a.example/", 1},
         {today - Generics::Time::ONE_DAY, "https://z.example/", 1},
         {today, "https://b.example/", 2},
         {today, "keyword1", 1},
@@ -171,8 +248,6 @@ main()
       container,
       user_id,
       {
-        {today - Generics::Time::ONE_DAY * 30, "https://edge.example/", 1},
-        {today - Generics::Time::ONE_DAY, "https://a.example/", 1},
         {today - Generics::Time::ONE_DAY, "https://z.example/", 1}
       },
       static_cast<std::uint32_t>((today - Generics::Time::ONE_DAY).tv_sec));
@@ -203,7 +278,8 @@ main()
         1024 * 1024,
         2 * 1024 * 1024,
         20,
-        Generics::Time::ONE_DAY * 30));
+        Generics::Time::ONE_DAY * 30),
+      USER_NAVIGATIONS_LIMIT);
     container->activate_object();
 
     AdServer::Commons::UserId unowned_user_id;

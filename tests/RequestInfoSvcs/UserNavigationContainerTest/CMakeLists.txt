@@ -5,6 +5,8 @@ add_executable(UserNavigationContainerTest
 target_link_libraries(UserNavigationContainerTest
   PRIVATE
     UserNavigationContainer
+    UserNavigationProfileAdapter
+    UserNavigationProfile_v1PST
     UserNavigationProfilePST
     Commons
     Generics

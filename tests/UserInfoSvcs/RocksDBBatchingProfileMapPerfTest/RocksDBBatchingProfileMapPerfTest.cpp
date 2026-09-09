@@ -35,6 +35,7 @@ namespace
     std::size_t batching_threads = 1;
     std::size_t enqueue_buckets = 32;
     std::size_t key_count = 0;
+    std::size_t cache_size = 0;
     Mode mode = Mode::READ_WRITE;
     bool disable_wal = false;
   };
@@ -72,6 +73,7 @@ namespace
       << "  --batching-threads <N>  RocksDB batching worker threads count (default: 1)\n"
       << "  --enqueue-buckets <N>   producer queue buckets count (default: 32)\n"
       << "  --key-count <N>         hot keys count (default: --threads)\n"
+      << "  --cache-size <N>        profile cache size in bytes (default: 0)\n"
       << "  --mode <MODE>           read, write, or read-write (default: read-write)\n"
       << "  --disable-wal  disable RocksDB WAL for writes\n";
   }
@@ -87,6 +89,7 @@ namespace
     Option<unsigned long> opt_batching_threads(1);
     Option<unsigned long> opt_enqueue_buckets(32);
     Option<unsigned long> opt_key_count(0);
+    Option<unsigned long> opt_cache_size(0);
     StringOption opt_mode("read-write");
     CheckOption opt_disable_wal;
     CheckOption opt_help;
@@ -98,6 +101,7 @@ namespace
     args.add(equal_name("batching-threads"), opt_batching_threads);
     args.add(equal_name("enqueue-buckets"), opt_enqueue_buckets);
     args.add(equal_name("key-count"), opt_key_count);
+    args.add(equal_name("cache-size"), opt_cache_size);
     args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("disable-wal"), opt_disable_wal);
     args.add(equal_name("help") || short_name("h"), opt_help);
@@ -117,6 +121,7 @@ namespace
     options.batching_threads = *opt_batching_threads;
     options.enqueue_buckets = *opt_enqueue_buckets;
     options.key_count = *opt_key_count;
+    options.cache_size = *opt_cache_size;
     options.disable_wal = opt_disable_wal.enabled();
 
     if (options.data_root.empty())
@@ -239,7 +244,8 @@ main(int argc, char** argv)
       128,
       Generics::Time::ZERO,
       options.disable_wal,
-      options.enqueue_buckets);
+      options.enqueue_buckets,
+      options.cache_size);
     profile_map.activate_object();
 
     for (std::size_t key_index = 0; key_index < options.key_count; ++key_index)
@@ -353,6 +359,7 @@ main(int argc, char** argv)
       << "batching_threads=" << options.batching_threads << '\n'
       << "enqueue_buckets=" << options.enqueue_buckets << '\n'
       << "key_count=" << options.key_count << '\n'
+      << "cache_size=" << options.cache_size << '\n'
       << "mode=" << mode_name(options.mode) << '\n'
       << "disable_wal=" << options.disable_wal << '\n'
       << "operations=" << options.count << '\n'

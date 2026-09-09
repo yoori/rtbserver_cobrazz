@@ -71,6 +71,14 @@
       select="$expression-matcher-config/@rocksdb_batching_threads"/>
       <xsl:if test="count($expression-matcher-config/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
+    <xsl:variable name="rocksdb-cache-size"><xsl:value-of
+      select="$expression-matcher-config/@rocksdb_cache_size"/>
+      <xsl:if test="count($expression-matcher-config/@rocksdb_cache_size) = 0">0</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="user-navigations-limit"><xsl:value-of
+      select="$expression-matcher-config/@user_navigations_limit"/>
+      <xsl:if test="count($expression-matcher-config/@user_navigations_limit) = 0">40000</xsl:if>
+    </xsl:variable>
 
     <exsl:document href="expressionMatcher.port"
       method="text" omit-xml-declaration="yes"
@@ -165,7 +173,9 @@
     update_period="{$update-period}"
     inventory_users_percentage="{$inventory-users-percentage-value}"
     user_navigation_sampling="{$user-navigation-sampling-value}"
+    user_navigations_limit="{$user-navigations-limit}"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
+    rocksdb_cache_size="{$rocksdb-cache-size}"
     colo_id="{$colo-id}"
     service_index="{count(exsl:node-set(
       $expression-matcher-host-port-sorted-set)/host[. = $HOST]/preceding-sibling::host)}"

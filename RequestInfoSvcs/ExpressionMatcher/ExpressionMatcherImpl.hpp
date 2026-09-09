@@ -88,6 +88,12 @@ namespace AdServer::RequestInfoSvcs
       std::uint64_t rocksdb_failed_operations = 0;
       std::uint64_t rocksdb_failed_callbacks_expected = 0;
       std::uint64_t rocksdb_failed_callbacks_completed = 0;
+      std::uint64_t rocksdb_cache_limit = 0;
+      std::uint64_t rocksdb_cache_size = 0;
+      std::uint64_t rocksdb_cache_entries = 0;
+      std::uint64_t rocksdb_cache_hits = 0;
+      std::uint64_t rocksdb_cache_misses = 0;
+      std::uint64_t rocksdb_cache_evictions = 0;
       std::uint64_t executor_resumes_scheduled = 0;
       std::uint64_t executor_resumes_executed = 0;
       std::uint64_t executor_resume_schedule_failures = 0;

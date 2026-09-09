@@ -2,6 +2,7 @@
 #include <chrono>
 #include <csignal>
 #include <condition_variable>
+#include <cstring>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -13,6 +14,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -147,7 +149,7 @@ namespace
         throw std::runtime_error("can't ignore SIGXFSZ");
       }
 
-      auto processor = std::make_shared<Processor>(1);
+      auto processor = std::make_shared<Processor>(1, 32, 64 * 1024);
       processor->activate_object();
       auto profile_map = std::make_unique<TransactionBaseMap>(
         processor,
@@ -252,7 +254,8 @@ namespace
         processor_stats.active_workers != 0 || processor_stats.failed_batch_total != 1 ||
         processor_stats.failed_operation_total != 1 ||
         processor_stats.failed_callback_expected != operation_count ||
-        processor_stats.failed_callback_completed != operation_count)
+        processor_stats.failed_callback_completed != operation_count ||
+        processor_stats.cache_entries != 0)
       {
         throw std::runtime_error("unexpected processor state after injected write failure");
       }
@@ -314,6 +317,243 @@ namespace
     ::waitpid(child, &status, 0);
     throw std::runtime_error("write failure callbacks timed out");
   }
+
+  void
+  run_cache_test(const std::filesystem::path& path)
+  {
+    constexpr std::size_t cache_limit = 16 * 1024;
+    auto processor = std::make_shared<Processor>(1, 8, cache_limit);
+    processor->activate_object();
+    auto profile_map = std::make_unique<ProfileMap>(
+      processor,
+      String::SubString(path.string()),
+      Generics::Time::ZERO,
+      128,
+      Generics::Time(0, 200000),
+      true);
+    auto second_profile_map = std::make_unique<ProfileMap>(
+      processor,
+      String::SubString(path.string() + "-second"),
+      Generics::Time::ZERO,
+      128,
+      Generics::Time(0, 200000),
+      true);
+    profile_map->activate_object();
+    second_profile_map->activate_object();
+
+    std::mutex completion_lock;
+    std::condition_variable completion_condition;
+    std::atomic<unsigned long> saves_completed{0};
+    auto profile = make_profile("cached-before-rocksdb-write");
+    profile_map->save_profile_async(
+      "cached-key",
+      profile.in(),
+      Generics::Time::get_time_of_day(),
+      [&](std::optional<std::string> error)
+      {
+        if (error)
+        {
+          return;
+        }
+        saves_completed.fetch_add(1, std::memory_order_relaxed);
+        completion_condition.notify_all();
+      });
+
+    const auto cached = profile_map->get_profile("cached-key");
+    if (!cached || cached->membuf().size() != profile->membuf().size() ||
+      std::memcmp(
+        cached->membuf().data(),
+        profile->membuf().data(),
+        profile->membuf().size()) != 0)
+    {
+      throw std::runtime_error("pending save wasn't visible through cache");
+    }
+
+    const auto pending_stats = processor->stats();
+    if (pending_stats.cache_hits == 0 || pending_stats.cache_entries != 1 ||
+      pending_stats.cache_limit != cache_limit)
+    {
+      throw std::runtime_error("cache stats don't contain the pending save");
+    }
+
+    if (!wait_count(completion_condition, completion_lock, saves_completed, 1))
+    {
+      throw std::runtime_error("cached save timed out");
+    }
+
+    auto second_profile = make_profile("second-map-value");
+    second_profile_map->save_profile(
+      "cached-key",
+      second_profile.in(),
+      Generics::Time::get_time_of_day());
+    const auto first_cached = profile_map->get_profile("cached-key");
+    const auto second_cached = second_profile_map->get_profile("cached-key");
+    if (!first_cached || !second_cached ||
+      first_cached->membuf().size() != profile->membuf().size() ||
+      second_cached->membuf().size() != second_profile->membuf().size() ||
+      std::memcmp(
+        first_cached->membuf().data(),
+        profile->membuf().data(),
+        profile->membuf().size()) != 0 ||
+      std::memcmp(
+        second_cached->membuf().data(),
+        second_profile->membuf().data(),
+        second_profile->membuf().size()) != 0)
+    {
+      throw std::runtime_error("shared cache mixed different profile maps");
+    }
+
+    profile_map->remove_profile_async("cached-key");
+    if (profile_map->check_profile("cached-key"))
+    {
+      throw std::runtime_error("pending remove wasn't visible through cache");
+    }
+
+    constexpr unsigned long writer_count = 8;
+    constexpr unsigned long writes_per_writer = 100;
+    constexpr unsigned long concurrent_writes = writer_count * writes_per_writer;
+    std::atomic<unsigned long> concurrent_completed{0};
+    std::atomic<unsigned long> concurrent_errors{0};
+    std::vector<std::thread> writers;
+    writers.reserve(writer_count);
+    for (unsigned long writer = 0; writer < writer_count; ++writer)
+    {
+      writers.emplace_back(
+        [&, writer]()
+        {
+          for (unsigned long write = 0; write < writes_per_writer; ++write)
+          {
+            auto write_profile = make_profile(
+              "writer-" + std::to_string(writer) + "-" + std::to_string(write));
+            try
+            {
+              profile_map->save_profile_async(
+                "concurrent-key",
+                write_profile.in(),
+                Generics::Time::get_time_of_day(),
+                [&](std::optional<std::string> error)
+                {
+                  if (error)
+                  {
+                    concurrent_errors.fetch_add(1, std::memory_order_relaxed);
+                  }
+                  concurrent_completed.fetch_add(1, std::memory_order_relaxed);
+                  completion_condition.notify_all();
+                });
+            }
+            catch (...)
+            {
+              concurrent_errors.fetch_add(1, std::memory_order_relaxed);
+              concurrent_completed.fetch_add(1, std::memory_order_relaxed);
+              completion_condition.notify_all();
+            }
+          }
+        });
+    }
+
+    for (auto& writer : writers)
+    {
+      writer.join();
+    }
+
+    const auto concurrent_cached = profile_map->get_profile("concurrent-key");
+    if (!concurrent_cached)
+    {
+      throw std::runtime_error("concurrent writes disappeared from cache");
+    }
+    const std::string concurrent_expected(
+      static_cast<const char*>(concurrent_cached->membuf().data()),
+      concurrent_cached->membuf().size());
+
+    if (!wait_count(
+      completion_condition,
+      completion_lock,
+      concurrent_completed,
+      concurrent_writes) ||
+      concurrent_errors.load(std::memory_order_relaxed) != 0)
+    {
+      throw std::runtime_error("concurrent cached writes failed");
+    }
+
+    std::atomic<unsigned long> eviction_completed{0};
+    std::atomic<unsigned long> eviction_errors{0};
+    for (unsigned long i = 0; i < 64; ++i)
+    {
+      auto large_profile = make_profile(std::string(1024, static_cast<char>('a' + i % 26)));
+      profile_map->save_profile_async(
+        "eviction-key-" + std::to_string(i),
+        large_profile.in(),
+        Generics::Time::get_time_of_day(),
+        [&](std::optional<std::string> error)
+        {
+          if (error)
+          {
+            eviction_errors.fetch_add(1, std::memory_order_relaxed);
+          }
+          eviction_completed.fetch_add(1, std::memory_order_relaxed);
+          completion_condition.notify_all();
+        });
+    }
+
+    if (!wait_count(completion_condition, completion_lock, eviction_completed, 64) ||
+      eviction_errors.load(std::memory_order_relaxed) != 0)
+    {
+      throw std::runtime_error("cached eviction writes failed");
+    }
+
+    const auto cache_stats = processor->stats();
+    if (cache_stats.cache_size > cache_limit || cache_stats.cache_evictions == 0)
+    {
+      throw std::runtime_error("cache limit wasn't enforced");
+    }
+
+    profile_map->deactivate_object();
+    profile_map->wait_object();
+    profile_map.reset();
+
+    auto reopened_profile_map = std::make_unique<ProfileMap>(
+      processor,
+      String::SubString(path.string()),
+      Generics::Time::ZERO,
+      128,
+      Generics::Time::ZERO,
+      true);
+    reopened_profile_map->activate_object();
+    const auto concurrent_persisted = reopened_profile_map->get_profile("concurrent-key");
+    if (!concurrent_persisted ||
+      concurrent_persisted->membuf().size() != concurrent_expected.size() ||
+      std::memcmp(
+        concurrent_persisted->membuf().data(),
+        concurrent_expected.data(),
+        concurrent_expected.size()) != 0)
+    {
+      throw std::runtime_error("cache and persistent state diverged after concurrent writes");
+    }
+    reopened_profile_map->deactivate_object();
+    reopened_profile_map->wait_object();
+    reopened_profile_map.reset();
+
+    auto surviving_profile = make_profile("surviving-map-value");
+    second_profile_map->save_profile(
+      "surviving-key",
+      surviving_profile.in(),
+      Generics::Time::get_time_of_day());
+    if (processor->stats().cache_entries == 0)
+    {
+      throw std::runtime_error("unregistering one map cleared the shared cache");
+    }
+
+    second_profile_map->deactivate_object();
+    second_profile_map->wait_object();
+    second_profile_map.reset();
+    if (processor->stats().cache_entries != 0)
+    {
+      throw std::runtime_error("unregistered map remained in cache");
+    }
+
+    processor->deactivate_object();
+    processor->wait_object();
+  }
 }
 
 int
@@ -334,7 +574,16 @@ main()
 
   try
   {
+    const auto disabled_cache_stats = processor->stats();
+    if (disabled_cache_stats.cache_limit != 0 || disabled_cache_stats.cache_size != 0 ||
+      disabled_cache_stats.cache_entries != 0 || disabled_cache_stats.cache_hits != 0 ||
+      disabled_cache_stats.cache_misses != 0 || disabled_cache_stats.cache_evictions != 0)
+    {
+      throw std::runtime_error("cache isn't disabled by default");
+    }
+
     run_write_failure_test(root / "write-failure");
+    run_cache_test(root / "cache");
 
     processor->activate_object();
     first = std::make_unique<ProfileMap>(
@@ -515,7 +764,7 @@ main()
     {
       AdServer::Commons::sync_wait(co_get_profile(*first, "rejected"));
     }
-    catch(const eh::Exception&)
+    catch (const eh::Exception&)
     {
       rejected_coroutine = true;
     }
@@ -533,7 +782,7 @@ main()
         rejected_profile.in(),
         Generics::Time::get_time_of_day());
     }
-    catch(const eh::Exception&)
+    catch (const eh::Exception&)
     {
       rejected = true;
     }
@@ -754,7 +1003,7 @@ main()
     std::cout << "RocksDBProfileMapProcessorTest: PASS" << std::endl;
     return 0;
   }
-  catch(const std::exception& ex)
+  catch (const std::exception& ex)
   {
     if (first && first->active())
     {

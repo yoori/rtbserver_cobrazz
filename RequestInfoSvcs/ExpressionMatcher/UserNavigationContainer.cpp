@@ -1,37 +1,58 @@
 #include "UserNavigationContainer.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 
+#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserNavigationProfile.hpp>
 
 namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
-    constexpr std::uint32_t CURRENT_USER_NAVIGATION_PROFILE_VERSION = 1;
     const Generics::Time NAVIGATION_HISTORY_PERIOD = Generics::Time::ONE_DAY * 30;
-
-    struct NavigationKey
-    {
-      std::uint32_t date;
-      std::string_view url;
-    };
 
     struct NavigationLess
     {
-      bool
-      operator()(const NavigationWriter& left, const NavigationKey& right) const noexcept
+      bool operator()(const NavigationWriter& left, std::string_view right) const noexcept
       {
-        if (left.date() != right.date)
-        {
-          return left.date() < right.date;
-        }
-
-        return std::string_view(left.url()) < right.url;
+        return std::string_view(left.url()) < right;
       }
     };
+
+    std::size_t
+    navigation_count(const UserNavigationProfileWriter::days_Container& days) noexcept
+    {
+      std::size_t result = 0;
+      for (const auto& day : days)
+      {
+        result += day.navigations().size();
+      }
+      return result;
+    }
+
+    void
+    erase_oldest_navigations(
+      UserNavigationProfileWriter::days_Container& days,
+      std::size_t erase_count)
+    {
+      auto first_day = days.begin();
+      while (first_day != days.end() && erase_count >= first_day->navigations().size())
+      {
+        erase_count -= first_day->navigations().size();
+        ++first_day;
+      }
+      days.erase(days.begin(), first_day);
+
+      if (erase_count != 0)
+      {
+        auto& navigations = days.front().navigations();
+        navigations.erase(navigations.begin(), navigations.begin() + erase_count);
+      }
+    }
   }
 
   UserNavigationContainer::UserNavigationContainer(
@@ -40,10 +61,12 @@ namespace AdServer::RequestInfoSvcs
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* file_prefix,
     const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+    std::size_t user_navigations_limit,
     std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
       rocksdb_processor)
     : logger_(ReferenceCounting::add_ref(logger)),
-      expire_time_(user_level_map_traits.expire_time)
+      expire_time_(user_level_map_traits.expire_time),
+      user_navigations_limit_(user_navigations_limit)
   {
     static const char* FUN = "UserNavigationContainer::UserNavigationContainer()";
 
@@ -96,7 +119,13 @@ namespace AdServer::RequestInfoSvcs
     try
     {
       Generics::ConstSmartMemBuf_var profile = co_await user_map_->co_get_profile(user_id);
-      if (!profile.in() || !date.has_value())
+      if (!profile.in())
+      {
+        co_return profile;
+      }
+      profile = UserNavigationProfileAdapter()(profile.in());
+
+      if (!date.has_value())
       {
         co_return profile;
       }
@@ -104,22 +133,22 @@ namespace AdServer::RequestInfoSvcs
       UserNavigationProfileWriter profile_writer;
       profile_writer.init(profile->membuf().data(), profile->membuf().size());
 
-      auto& navigations = profile_writer.navigations();
+      auto& days = profile_writer.days();
       const auto first_after_date = std::upper_bound(
-        navigations.begin(),
-        navigations.end(),
+        days.begin(),
+        days.end(),
         *date,
-        [](std::uint32_t requested_date, const NavigationWriter& navigation) noexcept
+        [](std::uint32_t requested_date, const NavigationDayWriter& day) noexcept
         {
-          return requested_date < navigation.date();
+          return requested_date < day.date();
         });
 
-      if (first_after_date == navigations.end())
+      if (first_after_date == days.end())
       {
         co_return profile;
       }
 
-      navigations.erase(first_after_date, navigations.end());
+      days.erase(first_after_date, days.end());
       Generics::SmartMemBuf_var filtered_profile(
         new Generics::SmartMemBuf(profile_writer.size()));
       profile_writer.save(
@@ -204,6 +233,7 @@ namespace AdServer::RequestInfoSvcs
       UserNavigationProfileWriter profile_writer;
       if (mem_buf.in())
       {
+        mem_buf = UserNavigationProfileAdapter()(mem_buf.in());
         profile_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
       }
       else
@@ -211,21 +241,53 @@ namespace AdServer::RequestInfoSvcs
         profile_writer.version() = CURRENT_USER_NAVIGATION_PROFILE_VERSION;
       }
 
-      auto& navigations = profile_writer.navigations();
+      auto& days = profile_writer.days();
       const auto first_actual = std::lower_bound(
-        navigations.begin(),
-        navigations.end(),
+        days.begin(),
+        days.end(),
         oldest_date,
-        [](const NavigationWriter& navigation, std::uint32_t date) noexcept
+        [](const NavigationDayWriter& day, std::uint32_t date) noexcept
         {
-          return navigation.date() < date;
+          return day.date() < date;
         });
 
-      bool profile_changed = first_actual != navigations.begin();
-      navigations.erase(navigations.begin(), first_actual);
+      bool profile_changed = first_actual != days.begin();
+      days.erase(days.begin(), first_actual);
 
       if (request_date >= oldest_date)
       {
+        auto day = days.end();
+        if (days.empty() || days.back().date() < request_date)
+        {
+          NavigationDayWriter new_day;
+          new_day.date() = request_date;
+          days.push_back(std::move(new_day));
+          day = std::prev(days.end());
+        }
+        else if (days.back().date() == request_date)
+        {
+          day = std::prev(days.end());
+        }
+        else
+        {
+          day = std::lower_bound(
+            days.begin(),
+            days.end(),
+            request_date,
+            [](const NavigationDayWriter& left, std::uint32_t right) noexcept
+            {
+              return left.date() < right;
+            });
+
+          if (day == days.end() || day->date() != request_date)
+          {
+            NavigationDayWriter new_day;
+            new_day.date() = request_date;
+            day = days.insert(day, std::move(new_day));
+          }
+        }
+
+        auto& navigations = day->navigations();
         for (const std::string_view url : request_info.urls)
         {
           if (url.empty())
@@ -233,15 +295,13 @@ namespace AdServer::RequestInfoSvcs
             continue;
           }
 
-          const NavigationKey key{request_date, url};
           const auto navigation = std::lower_bound(
             navigations.begin(),
             navigations.end(),
-            key,
+            url,
             NavigationLess());
 
           if (navigation != navigations.end() &&
-            navigation->date() == request_date &&
             std::string_view(navigation->url()) == url)
           {
             if (navigation->count() != std::numeric_limits<std::uint64_t>::max())
@@ -252,7 +312,6 @@ namespace AdServer::RequestInfoSvcs
           else
           {
             NavigationWriter new_navigation;
-            new_navigation.date() = request_date;
             new_navigation.url().assign(url.data(), url.size());
             new_navigation.count() = 1;
             navigations.insert(navigation, std::move(new_navigation));
@@ -260,6 +319,13 @@ namespace AdServer::RequestInfoSvcs
 
           profile_changed = true;
         }
+      }
+
+      const std::size_t navigations_size = navigation_count(days);
+      if (navigations_size > user_navigations_limit_)
+      {
+        erase_oldest_navigations(days, navigations_size - user_navigations_limit_);
+        profile_changed = true;
       }
 
       if (profile_changed)

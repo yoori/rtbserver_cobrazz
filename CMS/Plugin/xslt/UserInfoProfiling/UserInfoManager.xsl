@@ -177,6 +177,12 @@
     <xsl:variable name="rocksdb-batching-threads"><xsl:value-of select="$user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads"/>
       <xsl:if test="count($user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
+    <xsl:variable name="rocksdb-cache-size">
+      <xsl:value-of
+        select="$user-info-manager-config/cfg:matchParams/@rocksdb_cache_size"/>
+      <xsl:if
+        test="count($user-info-manager-config/cfg:matchParams/@rocksdb_cache_size) = 0">0</xsl:if>
+    </xsl:variable>
 
     <xsl:variable name="global-secure-params" select="$colo-config/cfg:secureParams"/>
 
@@ -187,6 +193,9 @@
     <xsl:attribute name="use_add_profile_on_match"><xsl:value-of select="$use-add-profile-on-match"/></xsl:attribute>
     <xsl:attribute name="history_optimization_period"><xsl:value-of select="$history-optimization-period"/></xsl:attribute>
     <xsl:attribute name="rocksdb_batching_threads"><xsl:value-of select="$rocksdb-batching-threads"/></xsl:attribute>
+    <xsl:attribute name="rocksdb_cache_size">
+      <xsl:value-of select="$rocksdb-cache-size"/>
+    </xsl:attribute>
     <xsl:attribute name="root_dir"><xsl:value-of select="$root-dir"/></xsl:attribute>
     <xsl:attribute name="colo_id"><xsl:value-of select="$colo-id"/></xsl:attribute>
 

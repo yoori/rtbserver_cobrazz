@@ -53,12 +53,16 @@ namespace AdServer::UserInfoSvcs
     bool /*load_slave*/,
     unsigned long /*partition_index*/, // instance partition number (first or second part of cluster)
     unsigned long /*partitions_number*/,
-    unsigned long rocksdb_batching_threads)
+    unsigned long rocksdb_batching_threads,
+    std::size_t rocksdb_cache_size)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_chunks_number_(common_chunks_number),
       rocksdb_processor_(std::make_shared<
-        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(rocksdb_batching_threads))
+        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
+          rocksdb_batching_threads,
+          32,
+          rocksdb_cache_size))
   {
     rocksdb_processor_->activate_object();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -71,7 +72,8 @@ namespace AdServer::ProfilingCommons
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false,
-      unsigned long enqueue_buckets_count = 32);
+      unsigned long enqueue_buckets_count = 32,
+      std::size_t cache_size = 0);
 
     RocksDBBatchingProfileMapImpl(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -176,9 +178,32 @@ namespace AdServer::ProfilingCommons
 
     void process_read_batch_(Operations& batch, BatchScratch& scratch);
 
+    void prepare_multiget_(Operations& batch, BatchScratch& scratch);
+
+    void prepare_read_profiles_(
+      BatchScratch& scratch,
+      const Generics::Time& now,
+      const Generics::Time& touch_period);
+
+    void enqueue_ttl_touches_(BatchScratch& scratch);
+
+    void cancel_ttl_touches_(BatchScratch& scratch) noexcept;
+
+    void notify_read_results_(Operations& batch, BatchScratch& scratch);
+
     void process_write_batch_(Operations& batch, BatchScratch& scratch);
 
     void enqueue_async_operation_(Operation operation, const char* function_name) const;
+
+    void enqueue_cache_touch_(
+      const Generics::StringHashAdapter& key,
+      const Generics::ConstSmartMemBuf_var& profile,
+      std::uint64_t touch_revision) const noexcept;
+
+    static void notify_cache_read_(
+      Operation& operation,
+      Generics::ConstSmartMemBuf_var profile,
+      bool profile_found);
 
     static void notify_check_operation_(
       Operation& operation,
@@ -228,6 +253,7 @@ namespace AdServer::ProfilingCommons
     const std::shared_ptr<RocksDBProfileMapProcessor> processor_;
     mutable AdServer::Commons::ActivityGate submission_gate_;
     mutable ProcessorQueue processor_queue_;
+    std::atomic<std::uint64_t> processor_registration_id_{0};
     bool owns_processor_;
 
     std::unique_ptr<rocksdb::DBWithTTL> db_;
@@ -266,7 +292,8 @@ namespace AdServer::ProfilingCommons
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false,
-      unsigned long enqueue_buckets_count = 32);
+      unsigned long enqueue_buckets_count = 32,
+      std::size_t cache_size = 0);
 
     RocksDBBatchingProfileMap(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -371,7 +398,8 @@ namespace AdServer::ProfilingCommons
     unsigned long batch_size,
     const Generics::Time& max_delay,
     bool disable_wal,
-    unsigned long enqueue_buckets_count)
+    unsigned long enqueue_buckets_count,
+    std::size_t cache_size)
     : impl_(new RocksDBBatchingProfileMapImpl(
         path,
         expire_time,
@@ -379,7 +407,8 @@ namespace AdServer::ProfilingCommons
         batch_size,
         max_delay,
         disable_wal,
-        enqueue_buckets_count))
+        enqueue_buckets_count,
+        cache_size))
   {}
 
   template<typename KeyType, typename KeyAdapterType>

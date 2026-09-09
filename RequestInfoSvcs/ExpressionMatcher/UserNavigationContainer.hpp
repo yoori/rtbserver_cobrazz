@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -40,6 +41,7 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* file_prefix,
       const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
+      std::size_t user_navigations_limit,
       std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
         rocksdb_processor = {});
 
@@ -71,6 +73,7 @@ namespace AdServer::RequestInfoSvcs
 
     Logging::Logger_var logger_;
     Generics::Time expire_time_;
+    const std::size_t user_navigations_limit_;
     UserNavigationMap_var user_map_;
   };
 

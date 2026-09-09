@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <list>
 #include <map>
@@ -80,7 +81,8 @@ namespace AdServer::UserInfoSvcs
       unsigned long max_base_profile_waiters,
       unsigned long max_temp_profile_waiters,
       unsigned long max_freqcap_profile_waiters,
-      unsigned long rocksdb_batching_threads)
+      unsigned long rocksdb_batching_threads,
+      std::size_t rocksdb_cache_size)
       /*throw(Exception)*/;
 
     AdServer::Commons::StartableAwaitable<bool>

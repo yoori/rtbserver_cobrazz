@@ -293,13 +293,17 @@ namespace AdServer::UserInfoSvcs
     unsigned long max_base_profile_waiters,
     unsigned long max_temp_profile_waiters,
     unsigned long max_freqcap_profile_waiters,
-    unsigned long rocksdb_batching_threads)
+    unsigned long rocksdb_batching_threads,
+    std::size_t rocksdb_cache_size)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
       profile_request_timeout_(profile_request_timeout),
       rocksdb_processor_(std::make_shared<
-        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(rocksdb_batching_threads)),
+        AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
+          rocksdb_batching_threads,
+          32,
+          rocksdb_cache_size)),
       time_offset_(Generics::Time::ZERO),
       profile_avg_statistic_(avg_statistic),
       ad_channels_count_(0),

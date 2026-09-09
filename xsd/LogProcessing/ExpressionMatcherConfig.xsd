@@ -174,12 +174,21 @@
       </xsd:annotation>
     </xsd:attribute>
 
+    <xsd:attribute name="user_navigations_limit" type="xsd:positiveInteger" default="40000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum number of navigation records stored per user.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
     <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
 
     <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true"/>
     <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
     <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
+    <xsd:attribute name="rocksdb_cache_size" type="xsd:nonNegativeInteger" default="0"/>
   </xsd:complexType>
 
   <xsd:complexType name="ExpressionMatcherGrpcGroupType">

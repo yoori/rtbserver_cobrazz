@@ -201,10 +201,10 @@ CTR_RESEARCH_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpat
   "count($CTR_RESEARCH_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
 CLICKHOUSE_UPLOADER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
   "count($CLICKHOUSE_UPLOADER_XPATH)" --plugin-root $PLUGIN_ROOT`
-if [ $CTR_MODEL_GENERATOR_COUNT -ne 0 -o $CLICKHOUSE_UPLOADER_COUNT -ne 0 ]
+if [ $CLICKHOUSE_UPLOADER_COUNT -ne 0 ]
 then
   $EXEC/ServiceConf.sh \
-    --services-xpath "$CTR_MODEL_GENERATOR_XPATH | $CLICKHOUSE_UPLOADER_XPATH" \
+    --services-xpath "$CLICKHOUSE_UPLOADER_XPATH" \
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/SyncLogsServer.xsl \
     --out-file conf/predictor_synclogs_server.conf \

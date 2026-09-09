@@ -1,3 +1,5 @@
+add_subdirectory(Compatibility)
+
 set(EXPRESSION_MATCHER_GRPC_PROTO_DIR ${PB_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher)
 set(EXPRESSION_MATCHER_GRPC_PROTO ExpressionMatcherGrpc.proto)
 
@@ -97,6 +99,7 @@ add_library(UserNavigationContainer STATIC
 
 target_link_libraries(UserNavigationContainer
   PRIVATE
+    UserNavigationProfileAdapter
     UserNavigationProfilePST
     Commons
     Generics

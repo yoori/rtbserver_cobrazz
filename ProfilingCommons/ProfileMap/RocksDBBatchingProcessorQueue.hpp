@@ -22,6 +22,8 @@
 #include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
 
+#include "RocksDBProfileMapCache.hpp"
+
 namespace AdServer::ProfilingCommons
 {
   class RocksDBBatchingProcessorQueue final
@@ -52,6 +54,7 @@ namespace AdServer::ProfilingCommons
       Generics::Time enqueue_time;
       Generics::StringHashAdapter key;
       Generics::ConstSmartMemBuf_var profile;
+      RocksDBProfileMapCache::OperationState cache;
       std::optional<CheckCallback> check_callback;
       std::optional<GetCallback> get_callback;
       std::optional<GetOwnCallback> get_own_callback;

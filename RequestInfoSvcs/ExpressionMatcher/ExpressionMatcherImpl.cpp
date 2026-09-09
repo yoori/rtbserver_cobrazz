@@ -178,7 +178,9 @@ namespace AdServer::RequestInfoSvcs
           *expression_matcher_config.Storage().min_free_space() : 0)),
       rocksdb_processor_(
         std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
-          expression_matcher_config.rocksdb_batching_threads())),
+          expression_matcher_config.rocksdb_batching_threads(),
+          32,
+          expression_matcher_config.rocksdb_cache_size())),
       callback_(new Logging::ActiveObjectCallbackImpl(init_logger,
         "AdServer::CampaignSvcs::ExpressionMatcherImpl",
         Aspect::EXPRESSION_MATCHER, "ADS-IMPL-4016")),
@@ -486,6 +488,12 @@ namespace AdServer::RequestInfoSvcs
       rocksdb_stats.failed_operation_total,
       rocksdb_stats.failed_callback_expected,
       rocksdb_stats.failed_callback_completed,
+      rocksdb_stats.cache_limit,
+      rocksdb_stats.cache_size,
+      rocksdb_stats.cache_entries,
+      rocksdb_stats.cache_hits,
+      rocksdb_stats.cache_misses,
+      rocksdb_stats.cache_evictions,
       executor_stats.resumes_scheduled,
       executor_stats.resumes_executed,
       executor_stats.resume_schedule_failures,
@@ -661,6 +669,7 @@ namespace AdServer::RequestInfoSvcs
           chunk_navigation_folders,
           chunks_config.chunks_prefix().c_str(),
           fill_level_map_traits_(chunks_config),
+          expression_matcher_config_.user_navigations_limit(),
           rocksdb_processor_);
 
         add_child_object(user_navigation_container.in(), true);

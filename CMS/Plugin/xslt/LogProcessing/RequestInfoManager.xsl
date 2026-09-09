@@ -51,6 +51,10 @@
     select="$request-info-manager-config/@rocksdb_batching_threads"/>
     <xsl:if test="count($request-info-manager-config/@rocksdb_batching_threads) = 0">16</xsl:if>
   </xsl:variable>
+  <xsl:variable name="rocksdb-cache-size"><xsl:value-of
+    select="$request-info-manager-config/@rocksdb_cache_size"/>
+    <xsl:if test="count($request-info-manager-config/@rocksdb_cache_size) = 0">0</xsl:if>
+  </xsl:variable>
   <xsl:variable name="request-info-manager-host-port-set">
     <xsl:for-each select="$be-cluster-path/service[@descriptor = $request-info-manager-descriptor]">
       <xsl:variable name="request-info-manager-host-subset">
@@ -159,6 +163,7 @@
     distrib_count="24"
     action_ignore_time="{$ignore-action-time-value}"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
+    rocksdb_cache_size="{$rocksdb-cache-size}"
     use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}">
 
     <cfg:GrpcConfig>

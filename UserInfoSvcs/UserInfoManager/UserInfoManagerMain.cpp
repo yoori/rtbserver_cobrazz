@@ -68,6 +68,12 @@ namespace
     append_json_stat(body, "rdb_read_batch_total_time", stats.read_batch_total_time);
     append_json_stat(body, "rdb_write_batch_total", stats.write_batch_total);
     append_json_stat(body, "rdb_write_batch_total_time", stats.write_batch_total_time);
+    append_json_stat(body, "rdb_cache_limit", stats.cache_limit);
+    append_json_stat(body, "rdb_cache_size", stats.cache_size);
+    append_json_stat(body, "rdb_cache_entries", stats.cache_entries);
+    append_json_stat(body, "rdb_cache_hits", stats.cache_hits);
+    append_json_stat(body, "rdb_cache_misses", stats.cache_misses);
+    append_json_stat(body, "rdb_cache_evictions", stats.cache_evictions);
   }
 }
 

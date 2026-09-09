@@ -148,12 +148,26 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="user_navigations_limit" type="xsd:positiveInteger" default="40000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum number of navigation records stored per user.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="grpc_max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>gRPC batching max delay, in microseconds.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
+    <xsd:attribute name="rocksdb_cache_size" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Shared RocksDB profile cache limit in bytes. Zero disables the cache.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="ExpressionMatcherStatLoggingType">

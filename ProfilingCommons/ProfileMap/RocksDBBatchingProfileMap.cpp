@@ -34,7 +34,11 @@ namespace AdServer::ProfilingCommons
     std::vector<rocksdb::PinnableSlice> values;
     std::vector<rocksdb::Status> statuses;
     std::vector<unsigned char> value_expired;
-    std::vector<unsigned char> touch_allowed;
+    std::vector<unsigned char> touch_required;
+    std::vector<unsigned char> profile_required;
+    std::vector<Operation*> key_operations;
+    std::vector<Generics::ConstSmartMemBuf_var> read_profiles;
+    std::vector<std::uint64_t> touch_revisions;
     std::vector<Operation*> latest_operations;
     rocksdb::WriteBatch write_batch;
   };
@@ -132,9 +136,13 @@ namespace AdServer::ProfilingCommons
     unsigned long batch_size,
     const Generics::Time& max_delay,
     bool disable_wal,
-    unsigned long enqueue_buckets_count)
+    unsigned long enqueue_buckets_count,
+    std::size_t cache_size)
     : RocksDBBatchingProfileMapImpl(
-        std::make_shared<RocksDBProfileMapProcessor>(workers_count, enqueue_buckets_count),
+        std::make_shared<RocksDBProfileMapProcessor>(
+          workers_count,
+          enqueue_buckets_count,
+          cache_size),
         path,
         expire_time,
         batch_size,
@@ -211,7 +219,7 @@ namespace AdServer::ProfilingCommons
         submission_gate_.activate_object();
       }
     }
-    catch(...)
+    catch (...)
     {
       if (owns_processor_)
       {
@@ -559,14 +567,34 @@ namespace AdServer::ProfilingCommons
     logical_read_operations_.fetch_add(batch.size(), std::memory_order_relaxed);
     physical_read_operations_.fetch_add(1, std::memory_order_relaxed);
 
+    prepare_multiget_(batch, scratch);
+
+    const Generics::Time now = Generics::Time::get_time_of_day();
+    const Generics::Time touch_period(expire_time_.tv_sec / 4);
+    prepare_read_profiles_(scratch, now, touch_period);
+
+    if (touch_period > Generics::Time::ZERO)
+    {
+      enqueue_ttl_touches_(scratch);
+    }
+
+    notify_read_results_(batch, scratch);
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::prepare_multiget_(Operations& batch, BatchScratch& scratch)
+  {
     auto& key_indexes = scratch.key_indexes;
-    // map batch input index to MultiGet request index
     auto& operation_key_indexes = scratch.operation_key_indexes;
     auto& keys = scratch.keys;
     auto& values = scratch.values;
     auto& statuses = scratch.statuses;
     auto& value_expired = scratch.value_expired;
-    auto& touch_allowed = scratch.touch_allowed;
+    auto& touch_required = scratch.touch_required;
+    auto& profile_required = scratch.profile_required;
+    auto& key_operations = scratch.key_operations;
+    auto& read_profiles = scratch.read_profiles;
+    auto& touch_revisions = scratch.touch_revisions;
 
     key_indexes.clear();
     operation_key_indexes.clear();
@@ -574,11 +602,16 @@ namespace AdServer::ProfilingCommons
     values.clear();
     statuses.clear();
     value_expired.clear();
-    touch_allowed.clear();
+    touch_required.clear();
+    profile_required.clear();
+    key_operations.clear();
+    read_profiles.clear();
+    touch_revisions.clear();
 
     key_indexes.reserve(batch.size());
     operation_key_indexes.reserve(batch.size());
     keys.reserve(batch.size());
+    key_operations.reserve(batch.size());
 
     for (auto& operation : batch)
     {
@@ -589,6 +622,7 @@ namespace AdServer::ProfilingCommons
       {
         operation_key_indexes.emplace_back(next_key_index);
         keys.emplace_back(key.text().data(), key.text().size());
+        key_operations.emplace_back(&operation);
       }
       else
       {
@@ -612,64 +646,151 @@ namespace AdServer::ProfilingCommons
       statuses.data());
 
     value_expired.assign(keys.size(), 0);
-    touch_allowed.assign(keys.size(), 0);
+    touch_required.assign(keys.size(), 0);
+    profile_required.assign(keys.size(), 0);
+    read_profiles.assign(keys.size(), Generics::ConstSmartMemBuf_var());
+    touch_revisions.assign(keys.size(), 0);
 
-    const Generics::Time now = Generics::Time::get_time_of_day();
-    for (std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+    auto operation_key_index_it = operation_key_indexes.begin();
+    for (const auto& operation : batch)
+    {
+      const std::size_t key_index = *operation_key_index_it;
+      if (operation.get_callback || operation.get_own_callback)
+      {
+        touch_required[key_index] = 1;
+      }
+
+      if (operation.get_callback)
+      {
+        profile_required[key_index] = 1;
+      }
+      ++operation_key_index_it;
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::prepare_read_profiles_(
+    BatchScratch& scratch,
+    const Generics::Time& now,
+    const Generics::Time& touch_period)
+  {
+    auto& values = scratch.values;
+    auto& statuses = scratch.statuses;
+    auto& value_expired = scratch.value_expired;
+    auto& touch_required = scratch.touch_required;
+    auto& profile_required = scratch.profile_required;
+    auto& key_operations = scratch.key_operations;
+    auto& read_profiles = scratch.read_profiles;
+    auto& touch_revisions = scratch.touch_revisions;
+
+    const std::size_t keys_count = scratch.keys.size();
+    for (std::size_t key_index = 0; key_index < keys_count; ++key_index)
     {
       if (statuses[key_index].ok() && ttl_expired(values[key_index], now, expire_time_))
       {
         value_expired[key_index] = 1;
       }
-    }
 
-    auto operation_key_index_it = operation_key_indexes.begin();
-    for (const auto& operation : batch)
-    {
-      if (operation.get_callback || operation.get_own_callback)
+      const bool value_available = statuses[key_index].ok() && !value_expired[key_index];
+      touch_required[key_index] = value_available && touch_required[key_index] &&
+        should_touch_ttl(values[key_index], now, touch_period);
+      if (value_available &&
+        (key_operations[key_index]->cache.read_miss ||
+          profile_required[key_index] || touch_required[key_index]))
       {
-        touch_allowed[*operation_key_index_it] = 1;
+        const std::string_view user_value = ttl_user_value(values[key_index]);
+        read_profiles[key_index] = Generics::ConstSmartMemBuf_var(
+          new Generics::ConstSmartMemBuf(user_value.data(), user_value.size()));
       }
-      ++operation_key_index_it;
     }
 
-    const Generics::Time touch_period(expire_time_.tv_sec / 4);
-
-    if (touch_period > Generics::Time::ZERO)
+    for (std::size_t key_index = 0; key_index < keys_count; ++key_index)
     {
-      Operations touch_operations;
-
-      for (std::size_t key_index = 0; key_index < keys.size(); ++key_index)
+      if (!read_profiles[key_index])
       {
-        if (touch_allowed[key_index] &&
-          statuses[key_index].ok() &&
-          !value_expired[key_index] &&
-          should_touch_ttl(values[key_index], now, touch_period))
+        continue;
+      }
+
+      const auto write_time = ttl_write_time(values[key_index]);
+      const Generics::Time profile_write_time = write_time ? *write_time : now;
+      touch_revisions[key_index] = processor_->cache_fill_(
+        *this,
+        *key_operations[key_index],
+        read_profiles[key_index],
+        profile_write_time,
+        touch_required[key_index]);
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::enqueue_ttl_touches_(BatchScratch& scratch)
+  {
+    Operations touch_operations;
+    try
+    {
+      for (std::size_t key_index = 0; key_index < scratch.keys.size(); ++key_index)
+      {
+        if (!scratch.touch_required[key_index])
         {
-          const std::string_view value = ttl_user_value(values[key_index]);
-          Operation touch_operation;
-          touch_operation.type = OT_TOUCH;
-          touch_operation.key.assign(
-            std::string_view(keys[key_index].data(), keys[key_index].size()));
-          touch_operation.profile = Generics::ConstSmartMemBuf_var(
-            new Generics::ConstSmartMemBuf(value.data(), value.size()));
-          touch_operations.emplace_back(std::move(touch_operation));
+          continue;
         }
+
+        const Operation& source_operation = *scratch.key_operations[key_index];
+        const std::uint64_t touch_revision = scratch.touch_revisions[key_index];
+        if (source_operation.cache.read_miss && touch_revision == 0)
+        {
+          continue;
+        }
+
+        Operation touch_operation;
+        touch_operation.type = OT_TOUCH;
+        touch_operation.key = source_operation.key;
+        touch_operation.profile = scratch.read_profiles[key_index];
+        touch_operation.cache.touch_revision = touch_revision;
+        touch_operations.emplace_back(std::move(touch_operation));
       }
 
-      processor_->enqueue_operations_(*this, std::move(touch_operations));
+      if (!processor_->enqueue_operations_(*this, std::move(touch_operations)))
+      {
+        cancel_ttl_touches_(scratch);
+      }
     }
+    catch (...)
+    {
+      cancel_ttl_touches_(scratch);
+      throw;
+    }
+  }
 
-    operation_key_index_it = operation_key_indexes.begin();
+  void
+  RocksDBBatchingProfileMapImpl::cancel_ttl_touches_(BatchScratch& scratch) noexcept
+  {
+    for (std::size_t key_index = 0; key_index < scratch.keys.size(); ++key_index)
+    {
+      const std::uint64_t touch_revision = scratch.touch_revisions[key_index];
+      if (touch_revision != 0 && scratch.touch_required[key_index])
+      {
+        processor_->cache_cancel_touch_(
+          *this,
+          scratch.key_operations[key_index]->key,
+          touch_revision);
+      }
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_read_results_(
+    Operations& batch,
+    BatchScratch& scratch)
+  {
+    auto operation_key_index_it = scratch.operation_key_indexes.begin();
     for (auto& operation : batch)
     {
       try
       {
         const std::size_t key_index = *operation_key_index_it;
-        const auto& status = statuses[key_index];
-        const auto& value = values[key_index];
-        const bool not_found = status.IsNotFound() || value_expired[key_index];
-        const std::string_view user_value = ttl_user_value(value);
+        const auto& status = scratch.statuses[key_index];
+        const bool not_found = status.IsNotFound() || scratch.value_expired[key_index];
 
         if (operation.check_callback)
         {
@@ -702,11 +823,9 @@ namespace AdServer::ProfilingCommons
           }
           else
           {
-            Generics::ConstSmartMemBuf_var profile(
-              new Generics::ConstSmartMemBuf(user_value.data(), user_value.size()));
             notify_get_operation_(
               operation,
-              std::move(profile),
+              scratch.read_profiles[key_index],
               std::nullopt);
           }
         }
@@ -726,8 +845,10 @@ namespace AdServer::ProfilingCommons
           }
           else
           {
-            Generics::SmartMemBuf_var profile(
-              new Generics::SmartMemBuf(user_value.data(), user_value.size()));
+            const std::string_view user_value = ttl_user_value(scratch.values[key_index]);
+            Generics::SmartMemBuf_var profile(new Generics::SmartMemBuf(
+              user_value.data(),
+              user_value.size()));
             notify_get_own_operation_(
               operation,
               std::move(profile),
@@ -735,11 +856,11 @@ namespace AdServer::ProfilingCommons
           }
         }
       }
-      catch(const std::exception& ex)
+      catch (const std::exception& ex)
       {
         notify_failed_operation_(operation, ex.what());
       }
-      catch(...)
+      catch (...)
       {
         notify_failed_operation_(operation, "unknown read completion error");
       }
@@ -776,7 +897,13 @@ namespace AdServer::ProfilingCommons
       else
       {
         Operation*& current_operation = latest_operations[it->second];
-        if (operation.type != OT_TOUCH || current_operation->type == OT_TOUCH)
+        const bool operation_is_touch = operation.type == OT_TOUCH;
+        const bool current_is_touch = current_operation->type == OT_TOUCH;
+        if ((!operation_is_touch && current_is_touch) ||
+          (operation_is_touch == current_is_touch &&
+            (operation.cache.write_revision == 0 ||
+              current_operation->cache.write_revision == 0 ||
+              current_operation->cache.write_revision < operation.cache.write_revision)))
         {
           current_operation = &operation;
         }
@@ -785,6 +912,11 @@ namespace AdServer::ProfilingCommons
 
     for (const auto* operation : latest_operations)
     {
+      if (!processor_->cache_requires_write_(*this, *operation))
+      {
+        continue;
+      }
+
       if (operation->type == OT_SAVE || operation->type == OT_TOUCH)
       {
         write_batch.Put(
@@ -802,12 +934,20 @@ namespace AdServer::ProfilingCommons
     rocksdb::WriteOptions write_options;
     write_options.disableWAL = disable_wal_;
 
-    const auto status = db_->Write(write_options, &write_batch);
-    if (!status.ok())
+    if (write_batch.Count() != 0)
     {
-      throw ProfileMap<std::string>::Exception(
-        "RocksDBBatchingProfileMapImpl::process_write_batch_(): " +
-        status.ToString());
+      const auto status = db_->Write(write_options, &write_batch);
+      if (!status.ok())
+      {
+        throw ProfileMap<std::string>::Exception(
+          "RocksDBBatchingProfileMapImpl::process_write_batch_(): " +
+          status.ToString());
+      }
+    }
+
+    for (const auto& operation : batch)
+    {
+      processor_->cache_complete_(*this, operation);
     }
 
     for (auto& operation : batch)
@@ -833,7 +973,7 @@ namespace AdServer::ProfilingCommons
     {
       check_background_error_();
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       if (notify_failed_operation_(operation, ex.what()))
       {
@@ -843,15 +983,128 @@ namespace AdServer::ProfilingCommons
       throw;
     }
 
-    if (processor_->enqueue_operation_(*this, operation))
+    auto submission_guard = submission_gate_.enter();
+    if (!submission_guard)
     {
+      const std::string error = std::string(function_name) + ": object isn't active";
+      if (!notify_failed_operation_(operation, error))
+      {
+        throw ProfileMap<std::string>::Exception(error);
+      }
       return;
     }
 
-    const std::string error = std::string(function_name) + ": object isn't active";
-    if (!notify_failed_operation_(operation, error))
+    RocksDBProfileMapProcessor::CacheLookupResult cache_result;
+    RocksDBProfileMapProcessor::CacheWriteTicket cache_ticket;
+    bool cache_hit = false;
+    try
     {
-      throw ProfileMap<std::string>::Exception(error);
+      if (operation.type == OT_CHECK || operation.type == OT_GET)
+      {
+        cache_result = processor_->cache_lookup_(*this, operation, operation.type == OT_GET);
+        cache_hit = cache_result.type == RocksDBProfileMapProcessor::CacheResultType::PROFILE ||
+          cache_result.type == RocksDBProfileMapProcessor::CacheResultType::NOT_FOUND;
+      }
+      else if (operation.type == OT_SAVE || operation.type == OT_REMOVE)
+      {
+        cache_ticket = processor_->cache_publish_(*this, operation);
+      }
+
+      if (!cache_hit)
+      {
+        processor_->enqueue_operation_i_(*this, operation);
+        return;
+      }
+
+      if (cache_result.touch)
+      {
+        enqueue_cache_touch_(
+          operation.key,
+          cache_result.profile,
+          cache_result.touch_revision);
+      }
+    }
+    catch (const std::exception& ex)
+    {
+      processor_->cache_cancel_(cache_ticket);
+      submission_guard.reset();
+      if (!notify_failed_operation_(operation, ex.what()))
+      {
+        throw;
+      }
+      return;
+    }
+    catch (...)
+    {
+      processor_->cache_cancel_(cache_ticket);
+      submission_guard.reset();
+      const std::string error = std::string(function_name) + ": unknown enqueue error";
+      if (!notify_failed_operation_(operation, error))
+      {
+        throw ProfileMap<std::string>::Exception(error);
+      }
+      return;
+    }
+
+    processor_->account_cache_hit_(operation.type);
+    logical_read_operations_.fetch_add(1, std::memory_order_relaxed);
+    submission_guard.reset();
+
+    const bool profile_found =
+      cache_result.type == RocksDBProfileMapProcessor::CacheResultType::PROFILE;
+    notify_cache_read_(operation, std::move(cache_result.profile), profile_found);
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::enqueue_cache_touch_(
+    const Generics::StringHashAdapter& key,
+    const Generics::ConstSmartMemBuf_var& profile,
+    std::uint64_t touch_revision) const noexcept
+  {
+    try
+    {
+      Operation touch_operation;
+      touch_operation.type = OT_TOUCH;
+      touch_operation.key = key;
+      touch_operation.profile = profile;
+      touch_operation.cache.touch_revision = touch_revision;
+      processor_->enqueue_operation_i_(*this, touch_operation);
+    }
+    catch (...)
+    {
+      processor_->cache_cancel_touch_(*this, key, touch_revision);
+    }
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::notify_cache_read_(
+    Operation& operation,
+    Generics::ConstSmartMemBuf_var profile,
+    bool profile_found)
+  {
+    if (operation.check_callback)
+    {
+      notify_check_operation_(operation, profile_found, std::nullopt);
+    }
+
+    if (operation.get_callback)
+    {
+      notify_get_operation_(
+        operation,
+        profile_found ? std::move(profile) : Generics::ConstSmartMemBuf_var(),
+        std::nullopt);
+    }
+
+    if (operation.get_own_callback)
+    {
+      Generics::SmartMemBuf_var own_profile;
+      if (profile_found)
+      {
+        own_profile = Generics::SmartMemBuf_var(new Generics::SmartMemBuf(
+          profile->membuf().data(),
+          profile->membuf().size()));
+      }
+      notify_get_own_operation_(operation, std::move(own_profile), std::nullopt);
     }
   }
 

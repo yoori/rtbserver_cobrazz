@@ -121,6 +121,12 @@ namespace
     append_json_stat(body, first, "rdb_queue_count", stats.queue_count);
     append_json_stat(body, first, "rdb_pending_operations", stats.pending_operations);
     append_json_stat(body, first, "rdb_active_workers", stats.active_workers);
+    append_json_stat(body, first, "rdb_cache_limit", stats.cache_limit);
+    append_json_stat(body, first, "rdb_cache_size", stats.cache_size);
+    append_json_stat(body, first, "rdb_cache_entries", stats.cache_entries);
+    append_json_stat(body, first, "rdb_cache_hits", stats.cache_hits);
+    append_json_stat(body, first, "rdb_cache_misses", stats.cache_misses);
+    append_json_stat(body, first, "rdb_cache_evictions", stats.cache_evictions);
   }
 
   void fill_shutdown_signals_(sigset_t& signals)
@@ -253,6 +259,7 @@ namespace
     }
     core_config.storage.portions = config.Storage().portions();
     core_config.storage.rocksdb_batching_threads = config.Storage().rocksdb_batching_threads();
+    core_config.storage.rocksdb_cache_size = config.Storage().rocksdb_cache_size();
     core_config.storage.load_slave = config.Storage().user_bind_keep_mode() == "keep slave";
 
     core_config.bind_request_storage.prefix = config.BindRequestStorage().prefix();

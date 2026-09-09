@@ -606,6 +606,7 @@ namespace AdServer::Frontends
       signal_active_object.wait_object();
       deactivate_object();
       wait_object();
+
       logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
       XMLUtility::terminate();
     }

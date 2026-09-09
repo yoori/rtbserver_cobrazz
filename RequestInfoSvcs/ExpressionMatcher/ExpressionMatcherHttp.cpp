@@ -214,14 +214,17 @@ namespace AdServer::RequestInfoSvcs
             const UserNavigationProfileReader profile(
               results[i].profile->membuf().data(),
               results[i].profile->membuf().size());
-            for (const auto navigation : profile.navigations())
+            for (const auto day : profile.days())
             {
-              AdServer::Commons::JsonObject navigation_json(navigations.add_object());
-              navigation_json.add_escaped_string(
-                "date",
-                Generics::Time(navigation.date()).get_gm_time().format("%F"));
-              navigation_json.add_escaped_string("url", navigation.url());
-              navigation_json.add_number("count", navigation.count());
+              for (const auto navigation : day.navigations())
+              {
+                AdServer::Commons::JsonObject navigation_json(navigations.add_object());
+                navigation_json.add_escaped_string(
+                  "date",
+                  Generics::Time(day.date()).get_gm_time().format("%F"));
+                navigation_json.add_escaped_string("url", navigation.url());
+                navigation_json.add_number("count", navigation.count());
+              }
             }
           }
         }
@@ -318,6 +321,12 @@ namespace AdServer::RequestInfoSvcs
         json.add_number(
           "rocksdb_failed_callbacks_completed",
           diagnostics.rocksdb_failed_callbacks_completed);
+        json.add_number("rocksdb_cache_limit", diagnostics.rocksdb_cache_limit);
+        json.add_number("rocksdb_cache_size", diagnostics.rocksdb_cache_size);
+        json.add_number("rocksdb_cache_entries", diagnostics.rocksdb_cache_entries);
+        json.add_number("rocksdb_cache_hits", diagnostics.rocksdb_cache_hits);
+        json.add_number("rocksdb_cache_misses", diagnostics.rocksdb_cache_misses);
+        json.add_number("rocksdb_cache_evictions", diagnostics.rocksdb_cache_evictions);
         json.add_number(
           "executor_resumes_scheduled",
           diagnostics.executor_resumes_scheduled);

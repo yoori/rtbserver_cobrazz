@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -41,6 +42,7 @@ namespace AdServer::UserInfoSvcs
       std::optional<Generics::Time> dump_period;
       unsigned long portions = 0;
       unsigned long rocksdb_batching_threads = 2;
+      std::size_t rocksdb_cache_size = 0;
       bool load_slave = false;
     };
 

@@ -126,6 +126,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
+    <xsd:attribute name="rocksdb_cache_size" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Shared RocksDB profile cache limit in bytes. Zero disables the cache.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="RequestInfoManagerProfilingParamsType">

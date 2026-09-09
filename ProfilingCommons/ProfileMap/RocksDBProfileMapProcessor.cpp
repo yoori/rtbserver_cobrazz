@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <chrono>
+#include <utility>
 
 #include <Commons/ThreadName.hpp>
 
+#include "RocksDBProfileMapCache.hpp"
 #include "RocksDBProfileMapProcessor.hpp"
 
 namespace AdServer::ProfilingCommons
@@ -17,10 +19,16 @@ namespace AdServer::ProfilingCommons
 
   RocksDBProfileMapProcessor::RocksDBProfileMapProcessor(
     unsigned long workers_count,
-    unsigned long enqueue_buckets_count)
+    unsigned long enqueue_buckets_count,
+    std::size_t cache_size,
+    unsigned long cache_portions_count)
     : workers_count_(std::max(1UL, workers_count)),
-      enqueue_buckets_count_(std::max(1UL, enqueue_buckets_count))
-  {}
+      enqueue_buckets_count_(std::max(1UL, enqueue_buckets_count)),
+      cache_size_(cache_size),
+      cache_(cache_size == 0 ? nullptr :
+        std::make_unique<RocksDBProfileMapCache>(cache_size, cache_portions_count))
+  {
+  }
 
   RocksDBProfileMapProcessor::~RocksDBProfileMapProcessor() noexcept
   {
@@ -48,6 +56,16 @@ namespace AdServer::ProfilingCommons
     result.failed_callback_expected = failed_callback_expected_.load(std::memory_order_relaxed);
     result.failed_callback_completed = failed_callback_completed_.load(std::memory_order_relaxed);
     result.workers = workers_count_;
+    result.cache_limit = cache_size_;
+    if (cache_)
+    {
+      const auto cache_stats = cache_->stats();
+      result.cache_size = cache_stats.size;
+      result.cache_entries = cache_stats.entries;
+      result.cache_hits = cache_stats.hits;
+      result.cache_misses = cache_stats.misses;
+      result.cache_evictions = cache_stats.evictions;
+    }
 
     try
     {
@@ -84,7 +102,7 @@ namespace AdServer::ProfilingCommons
         workers_.emplace_back(&RocksDBProfileMapProcessor::worker_loop_, this);
       }
     }
-    catch(...)
+    catch (...)
     {
       {
         std::lock_guard guard(ready_lock_);
@@ -146,7 +164,11 @@ namespace AdServer::ProfilingCommons
           "RocksDBProfileMapProcessor::register_map_(): map is already registered");
       }
 
-      registrations_.emplace(&map_queue, std::make_unique<Registration>(map_impl, map_queue));
+      const std::uint64_t registration_id = ++next_registration_id_;
+      registrations_.emplace(
+        &map_queue,
+        std::make_unique<Registration>(map_impl, map_queue, registration_id));
+      map_impl.processor_registration_id_.store(registration_id, std::memory_order_release);
     }
   }
 
@@ -155,16 +177,26 @@ namespace AdServer::ProfilingCommons
   {
     wait_pending_operations_(map_impl);
 
-    std::lock_guard guard(ready_lock_);
     MapQueue& map_queue = map_impl.processor_queue_;
-    const auto it = registrations_.find(&map_queue);
-    if (it == registrations_.end())
+    std::uint64_t registration_id = 0;
     {
-      return;
+      std::lock_guard guard(ready_lock_);
+      const auto it = registrations_.find(&map_queue);
+      if (it == registrations_.end())
+      {
+        return;
+      }
+
+      registration_id = it->second->id;
+      remove_from_ready_i_(*it->second);
+      registrations_.erase(it);
+      map_impl.processor_registration_id_.store(0, std::memory_order_release);
     }
 
-    remove_from_ready_i_(*it->second);
-    registrations_.erase(it);
+    if (registration_id != 0)
+    {
+      cache_remove_map_(registration_id);
+    }
   }
 
   bool
@@ -182,6 +214,16 @@ namespace AdServer::ProfilingCommons
     operations.emplace_back(std::move(operation));
     enqueue_operations_i_(map_impl, std::move(operations));
     return true;
+  }
+
+  void
+  RocksDBProfileMapProcessor::enqueue_operation_i_(
+    const ProfileMapImpl& map_impl,
+    Operation& operation)
+  {
+    Operations operations;
+    operations.emplace_back(std::move(operation));
+    enqueue_operations_i_(map_impl, std::move(operations));
   }
 
   bool
@@ -260,18 +302,26 @@ namespace AdServer::ProfilingCommons
       {
         map_impl->process_batch_(batch, *scratch);
       }
-      catch(const eh::Exception& ex)
+      catch (const eh::Exception& ex)
       {
         map_impl->set_background_error_(ex.what());
         failed_batch_total_.fetch_add(1, std::memory_order_relaxed);
         failed_operation_total_.fetch_add(batch.size(), std::memory_order_relaxed);
+        for (const auto& operation : batch)
+        {
+          cache_fail_(*map_impl, operation);
+        }
         map_impl->notify_failed_operations_(batch, ex.what());
       }
-      catch(...)
+      catch (...)
       {
         map_impl->set_background_error_("unknown background error");
         failed_batch_total_.fetch_add(1, std::memory_order_relaxed);
         failed_operation_total_.fetch_add(batch.size(), std::memory_order_relaxed);
+        for (const auto& operation : batch)
+        {
+          cache_fail_(*map_impl, operation);
+        }
         map_impl->notify_failed_operations_(batch, "unknown background error");
       }
       batch_timer.stop();
@@ -448,5 +498,207 @@ namespace AdServer::ProfilingCommons
     {
       remove_total_.fetch_add(counts.remove, std::memory_order_relaxed);
     }
+  }
+
+  RocksDBProfileMapProcessor::CacheLookupResult
+  RocksDBProfileMapProcessor::cache_lookup_(
+    const ProfileMapImpl& map_impl,
+    Operation& operation,
+    bool allow_touch)
+  {
+    if (!cache_)
+    {
+      return {};
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    if (map_id == 0)
+    {
+      return {};
+    }
+
+    return cache_->lookup(
+      map_id,
+      operation.key,
+      map_impl.expire_time_,
+      operation.cache,
+      allow_touch);
+  }
+
+  RocksDBProfileMapProcessor::CacheWriteTicket
+  RocksDBProfileMapProcessor::cache_publish_(
+    const ProfileMapImpl& map_impl,
+    Operation& operation)
+  {
+    CacheWriteTicket ticket;
+    if (!cache_)
+    {
+      return ticket;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    if (map_id != 0)
+    {
+      ticket.map_id = map_id;
+      ticket.key = operation.key;
+      cache_->publish(
+        map_id,
+        operation.key,
+        operation.profile,
+        operation.type == MapQueue::OT_REMOVE,
+        operation.cache);
+      ticket.state = operation.cache;
+    }
+
+    return ticket;
+  }
+
+  void
+  RocksDBProfileMapProcessor::cache_cancel_(const CacheWriteTicket& ticket) noexcept
+  {
+    if (!cache_ || ticket.state.write_revision == 0)
+    {
+      return;
+    }
+
+    cache_->cancel(ticket.map_id, ticket.key, ticket.state);
+  }
+
+  bool
+  RocksDBProfileMapProcessor::cache_requires_write_(
+    const ProfileMapImpl& map_impl,
+    const Operation& operation) noexcept
+  {
+    if (!cache_ ||
+      (operation.cache.write_revision == 0 && operation.cache.touch_revision == 0))
+    {
+      return true;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    return map_id == 0 || cache_->requires_write(
+      map_id,
+      operation.key,
+      operation.cache,
+      operation.type == MapQueue::OT_TOUCH);
+  }
+
+  void
+  RocksDBProfileMapProcessor::cache_complete_(
+    const ProfileMapImpl& map_impl,
+    const Operation& operation) noexcept
+  {
+    if (!cache_ ||
+      (operation.cache.write_revision == 0 && operation.cache.touch_revision == 0))
+    {
+      return;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    if (map_id != 0)
+    {
+      cache_->complete(
+        map_id,
+        operation.key,
+        operation.cache,
+        operation.type == MapQueue::OT_TOUCH);
+    }
+  }
+
+  void
+  RocksDBProfileMapProcessor::cache_fail_(
+    const ProfileMapImpl& map_impl,
+    const Operation& operation) noexcept
+  {
+    if (!cache_ ||
+      (operation.cache.write_revision == 0 && operation.cache.touch_revision == 0))
+    {
+      return;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    if (map_id != 0)
+    {
+      cache_->fail(
+        map_id,
+        operation.key,
+        operation.cache,
+        operation.type == MapQueue::OT_TOUCH);
+    }
+  }
+
+  std::uint64_t
+  RocksDBProfileMapProcessor::cache_fill_(
+    const ProfileMapImpl& map_impl,
+    const Operation& operation,
+    Generics::ConstSmartMemBuf_var profile,
+    const Generics::Time& write_time,
+    bool schedule_touch) noexcept
+  {
+    if (!cache_)
+    {
+      return 0;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    return map_id == 0 ? 0 :
+      cache_->fill(
+        map_id,
+        operation.key,
+        operation.cache,
+        std::move(profile),
+        write_time,
+        schedule_touch);
+  }
+
+  void
+  RocksDBProfileMapProcessor::cache_cancel_touch_(
+    const ProfileMapImpl& map_impl,
+    const Generics::StringHashAdapter& key,
+    std::uint64_t touch_revision) noexcept
+  {
+    if (!cache_ || touch_revision == 0)
+    {
+      return;
+    }
+
+    const std::uint64_t map_id =
+      map_impl.processor_registration_id_.load(std::memory_order_acquire);
+    if (map_id != 0)
+    {
+      cache_->cancel_touch(map_id, key, touch_revision);
+    }
+  }
+
+  void RocksDBProfileMapProcessor::cache_remove_map_(std::uint64_t map_id) noexcept
+  {
+    if (cache_)
+    {
+      cache_->remove_map(map_id);
+    }
+  }
+
+  void
+  RocksDBProfileMapProcessor::account_cache_hit_(MapQueue::OperationType type) noexcept
+  {
+    MapQueue::OperationCounts counts;
+    switch (type)
+    {
+      case MapQueue::OT_CHECK:
+        counts.check = 1;
+        break;
+      case MapQueue::OT_GET:
+        counts.get = 1;
+        break;
+      default:
+        return;
+    }
+    add_operation_counts_(counts);
   }
 }
