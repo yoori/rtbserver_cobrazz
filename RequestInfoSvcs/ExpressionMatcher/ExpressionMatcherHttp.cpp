@@ -337,6 +337,15 @@ namespace AdServer::RequestInfoSvcs
           "executor_resume_schedule_failures",
           diagnostics.executor_resume_schedule_failures);
         json.add_number(
+          "async_mutex_lock_attempts",
+          diagnostics.async_mutex_lock_attempts);
+        json.add_number(
+          "async_mutex_immediate_locks",
+          diagnostics.async_mutex_immediate_locks);
+        json.add_number(
+          "async_mutex_contended_locks",
+          diagnostics.async_mutex_contended_locks);
+        json.add_number(
           "async_mutex_current_waiters",
           diagnostics.async_mutex_current_waiters);
         json.add_number("async_mutex_max_waiters", diagnostics.async_mutex_max_waiters);

@@ -63,6 +63,7 @@ namespace AdServer::Commons
     private:
       AsyncMutex& mutex_;
       Waiter waiter_;
+      bool enqueued_ = false;
     };
 
     AsyncMutex() noexcept = default;
@@ -84,7 +85,6 @@ namespace AdServer::Commons
     static void update_max_waiters_(std::uint64_t value) noexcept;
 
   private:
-    static std::atomic<std::uint64_t> lock_attempts_;
     static std::atomic<std::uint64_t> immediate_locks_;
     static std::atomic<std::uint64_t> contended_locks_;
     static std::atomic<std::uint64_t> current_waiters_;

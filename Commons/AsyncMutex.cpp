@@ -6,7 +6,6 @@
 
 namespace AdServer::Commons
 {
-  std::atomic<std::uint64_t> AsyncMutex::lock_attempts_{0};
   std::atomic<std::uint64_t> AsyncMutex::immediate_locks_{0};
   std::atomic<std::uint64_t> AsyncMutex::contended_locks_{0};
   std::atomic<std::uint64_t> AsyncMutex::current_waiters_{0};
@@ -58,7 +57,10 @@ namespace AdServer::Commons
 
   AsyncMutex::ScopedLockAwaiter::~ScopedLockAwaiter() noexcept
   {
-    mutex_.cancel_(waiter_);
+    if (enqueued_)
+    {
+      mutex_.cancel_(waiter_);
+    }
   }
 
   bool
@@ -70,12 +72,14 @@ namespace AdServer::Commons
   bool
   AsyncMutex::ScopedLockAwaiter::await_suspend(std::coroutine_handle<> handle)
   {
-    return mutex_.try_lock_or_enqueue_(waiter_, handle);
+    enqueued_ = mutex_.try_lock_or_enqueue_(waiter_, handle);
+    return enqueued_;
   }
 
   AsyncMutex::Guard
   AsyncMutex::ScopedLockAwaiter::await_resume() noexcept
   {
+    enqueued_ = false;
     return Guard(&mutex_);
   }
 
@@ -88,10 +92,12 @@ namespace AdServer::Commons
   AsyncMutex::Stats
   AsyncMutex::stats() noexcept
   {
+    const auto immediate_locks = immediate_locks_.load(std::memory_order_relaxed);
+    const auto contended_locks = contended_locks_.load(std::memory_order_relaxed);
     return Stats{
-      lock_attempts_.load(std::memory_order_relaxed),
-      immediate_locks_.load(std::memory_order_relaxed),
-      contended_locks_.load(std::memory_order_relaxed),
+      immediate_locks + contended_locks,
+      immediate_locks,
+      contended_locks,
       current_waiters_.load(std::memory_order_relaxed),
       max_waiters_.load(std::memory_order_relaxed)
     };
@@ -112,8 +118,6 @@ namespace AdServer::Commons
     ScopedLockAwaiter::Waiter& waiter,
     std::coroutine_handle<> handle)
   {
-    lock_attempts_.fetch_add(1, std::memory_order_relaxed);
-
     std::lock_guard<std::mutex> guard(mutex_);
     if (!locked_)
     {

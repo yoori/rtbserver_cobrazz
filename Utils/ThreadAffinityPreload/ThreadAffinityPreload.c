@@ -699,6 +699,41 @@ apply_current_thread_affinity(const char* thread_name)
   return result == 0;
 }
 
+static int
+apply_current_thread_cpu_set()
+{
+  pthread_once(&init_once, init_config);
+
+  if (config.mode == MODE_DISABLED || config.cpu_count == 0)
+  {
+    return 0;
+  }
+
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  for (unsigned int i = 0; i < config.cpu_count; ++i)
+  {
+    CPU_SET(config.cpus[i], &cpu_set);
+  }
+
+  const int result = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
+
+  if (config.verbose)
+  {
+    write_literal("thread-affinity-preload: tid=");
+    write_uint((uint64_t)current_tid());
+    write_literal(" cpu-set");
+    if (result != 0)
+    {
+      write_literal(" error=");
+      write_uint((uint64_t)result);
+    }
+    write_literal("\n");
+  }
+
+  return result == 0;
+}
+
 static void
 release_current_thread_affinity()
 {
@@ -741,7 +776,11 @@ thread_start_wrapper(void* arg)
   void* start_arg = context->arg;
   free(context);
 
-  if (config.mode != MODE_ROUND_ROBIN_BY_NAME)
+  if (config.mode == MODE_ROUND_ROBIN_BY_NAME)
+  {
+    apply_current_thread_cpu_set();
+  }
+  else
   {
     apply_current_thread_affinity("");
   }
@@ -766,7 +805,7 @@ pthread_create(
     }
   }
 
-  if (config.mode != MODE_ROUND_ROBIN_ALL)
+  if (config.mode != MODE_ROUND_ROBIN_ALL && config.mode != MODE_ROUND_ROBIN_BY_NAME)
   {
     return real_pthread_create(thread, attr, start_routine, arg);
   }

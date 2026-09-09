@@ -97,6 +97,9 @@ namespace AdServer::RequestInfoSvcs
       std::uint64_t executor_resumes_scheduled = 0;
       std::uint64_t executor_resumes_executed = 0;
       std::uint64_t executor_resume_schedule_failures = 0;
+      std::uint64_t async_mutex_lock_attempts = 0;
+      std::uint64_t async_mutex_immediate_locks = 0;
+      std::uint64_t async_mutex_contended_locks = 0;
       std::uint64_t async_mutex_current_waiters = 0;
       std::uint64_t async_mutex_max_waiters = 0;
     };

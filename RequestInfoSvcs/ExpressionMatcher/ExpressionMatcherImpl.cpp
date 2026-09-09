@@ -497,6 +497,9 @@ namespace AdServer::RequestInfoSvcs
       executor_stats.resumes_scheduled,
       executor_stats.resumes_executed,
       executor_stats.resume_schedule_failures,
+      mutex_stats.lock_attempts,
+      mutex_stats.immediate_locks,
+      mutex_stats.contended_locks,
       mutex_stats.current_waiters,
       mutex_stats.max_waiters
     };
