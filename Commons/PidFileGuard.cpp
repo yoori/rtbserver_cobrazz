@@ -1,10 +1,14 @@
 #include "PidFileGuard.hpp"
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <mutex>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utility>
+#include <vector>
 
 #include <Stream/MemoryStream.hpp>
 
@@ -12,6 +16,66 @@ namespace AdServer::Commons
 {
   namespace
   {
+    struct PidFile
+    {
+      std::string path;
+      std::string pid;
+    };
+
+    struct ProcessExitCleanup
+    {
+      std::mutex lock;
+      std::vector<PidFile> pid_files;
+      bool enabled = false;
+    };
+
+    ProcessExitCleanup& process_exit_cleanup() noexcept
+    {
+      static ProcessExitCleanup cleanup;
+      return cleanup;
+    }
+
+    void unlink_pid_file(const std::string& path, const std::string& pid) noexcept
+    {
+      std::ifstream stream(path);
+      std::string current_pid;
+      stream >> current_pid;
+      if (current_pid == pid)
+      {
+        ::unlink(path.c_str());
+      }
+    }
+
+    void cleanup_pid_files() noexcept
+    {
+      ProcessExitCleanup& cleanup = process_exit_cleanup();
+      std::lock_guard guard(cleanup.lock);
+      for (const PidFile& pid_file : cleanup.pid_files)
+      {
+        unlink_pid_file(pid_file.path, pid_file.pid);
+      }
+    }
+
+    bool register_pid_file(const std::string& path, const std::string& pid) noexcept
+    {
+      ProcessExitCleanup& cleanup = process_exit_cleanup();
+      std::lock_guard guard(cleanup.lock);
+      if (!cleanup.enabled)
+      {
+        return false;
+      }
+
+      try
+      {
+        cleanup.pid_files.push_back(PidFile{path, pid});
+        return true;
+      }
+      catch (...)
+      {
+        return false;
+      }
+    }
+
     void create_directories(const std::string& path)
     {
       if (path.empty())
@@ -68,6 +132,16 @@ namespace AdServer::Commons
     }
   }
 
+  void PidFileGuard::enable_process_exit_cleanup() noexcept
+  {
+    ProcessExitCleanup& cleanup = process_exit_cleanup();
+    std::lock_guard guard(cleanup.lock);
+    if (!cleanup.enabled && std::atexit(cleanup_pid_files) == 0)
+    {
+      cleanup.enabled = true;
+    }
+  }
+
   PidFileGuard::PidFileGuard(std::string path)
     : path_(std::move(path)),
       pid_(std::to_string(::getpid()))
@@ -107,16 +181,15 @@ namespace AdServer::Commons
         path_ << "': " << std::strerror(error);
       throw Exception(ostr);
     }
+
+    process_exit_cleanup_ = register_pid_file(path_, pid_);
   }
 
   PidFileGuard::~PidFileGuard() noexcept
   {
-    std::ifstream stream(path_);
-    std::string current_pid;
-    stream >> current_pid;
-    if (current_pid == pid_)
+    if (!process_exit_cleanup_)
     {
-      ::unlink(path_.c_str());
+      unlink_pid_file(path_, pid_);
     }
   }
 }

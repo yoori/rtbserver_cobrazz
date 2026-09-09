@@ -447,6 +447,8 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
 
 int main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   ChannelServerApp_* app = 0;
   try
   {

@@ -1039,6 +1039,8 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
 int
 main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   try
   {
     CampaignManagerApp_ app;

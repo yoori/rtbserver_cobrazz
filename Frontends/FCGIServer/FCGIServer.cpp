@@ -633,6 +633,8 @@ namespace AdServer::Frontends
 int
 main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   AdServer::Frontends::FCGIServer* app = 0;
 
   try

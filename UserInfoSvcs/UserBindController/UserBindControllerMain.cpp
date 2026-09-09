@@ -160,6 +160,8 @@ UserBindControllerApp_::main(int& argc, char** argv) noexcept
 int
 main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   sigset_t signals;
   sigemptyset(&signals);
   sigaddset(&signals, SIGINT);

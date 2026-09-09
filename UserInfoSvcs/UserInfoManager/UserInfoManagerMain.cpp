@@ -312,6 +312,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 int
 main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   UserInfoManagerApp_* app = 0;
 
   try

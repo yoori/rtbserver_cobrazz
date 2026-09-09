@@ -237,6 +237,8 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
 int
 main(int argc, char** argv)
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
   const char FUN[] = "::main()";
   RequestInfoManagerApp_* app = 0;
 
