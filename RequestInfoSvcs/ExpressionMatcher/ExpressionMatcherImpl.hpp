@@ -398,6 +398,11 @@ namespace AdServer::RequestInfoSvcs
 
     AdServer::Commons::StartableAwaitable<void>
     co_process_request_basic_channels_record(
+      UserInventoryInfoContainer* user_inventory_container,
+      UserTriggerMatchContainer* user_trigger_match_container,
+      UserTriggerMatchContainer* temp_user_trigger_match_container,
+      UserNavigationContainer* user_navigation_container,
+      UserColoReachContainer* household_colo_reach_container,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
       const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record) override;
 

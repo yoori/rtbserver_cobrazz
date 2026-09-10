@@ -1356,6 +1356,11 @@ namespace AdServer::RequestInfoSvcs
           log_loader_ = new ExpressionMatcherLogLoader(
             this,
             this,
+            user_inventory_container_.get(),
+            user_trigger_match_container_.get(),
+            temp_user_trigger_match_container_.get(),
+            user_navigation_container_.get(),
+            household_colo_reach_container_.get(),
             task_runner_,
             scheduler_,
             logger(),
@@ -1525,19 +1530,14 @@ namespace AdServer::RequestInfoSvcs
 
   AdServer::Commons::StartableAwaitable<void>
   ExpressionMatcherImpl::co_process_request_basic_channels_record(
+    UserInventoryInfoContainer* user_inventory_container,
+    UserTriggerMatchContainer* user_trigger_match_container,
+    UserTriggerMatchContainer* temp_user_trigger_match_container,
+    UserNavigationContainer* user_navigation_container,
+    UserColoReachContainer* household_colo_reach_container,
     const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
   {
-    UserTriggerMatchContainer_var user_trigger_match_container =
-      user_trigger_match_container_.get();
-    UserTriggerMatchContainer_var temp_user_trigger_match_container =
-      temp_user_trigger_match_container_.get();
-
-    UserInventoryInfoContainer_var user_inventory_container = user_inventory_container_.get();
-    UserNavigationContainer_var user_navigation_container = user_navigation_container_.get();
-    UserColoReachContainer_var household_colo_reach_container =
-      household_colo_reach_container_.get();
-
     co_await process_request_basic_channels_record_(
       user_inventory_container,
       user_trigger_match_container,

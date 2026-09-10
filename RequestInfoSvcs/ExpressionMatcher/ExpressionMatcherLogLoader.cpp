@@ -18,17 +18,6 @@ namespace AdServer::RequestInfoSvcs
     const char DEFAULT_ERROR_DIR[] = "Error";
 
     AdServer::Commons::StartableAwaitable<void>
-    co_process_request_basic_channels_record(
-      std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
-      RequestBasicChannelsProcessor* processor,
-      const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
-      const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
-    {
-      co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
-      co_await processor->co_process_request_basic_channels_record(key, record);
-    }
-
-    AdServer::Commons::StartableAwaitable<void>
     co_process_click(
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       ConsiderInterface* processor,
@@ -62,6 +51,11 @@ namespace AdServer::RequestInfoSvcs
   ExpressionMatcherLogLoader::ExpressionMatcherLogLoader(
     ConsiderInterface* consider_interface,
     RequestBasicChannelsProcessor* request_basic_channels_processor,
+    UserInventoryInfoContainer* user_inventory_container,
+    UserTriggerMatchContainer* user_trigger_match_container,
+    UserTriggerMatchContainer* temp_user_trigger_match_container,
+    UserNavigationContainer* user_navigation_container,
+    UserColoReachContainer* household_colo_reach_container,
     Generics::TaskRunner* task_runner,
     Generics::Planner* scheduler,
     Logging::Logger* logger,
@@ -73,6 +67,11 @@ namespace AdServer::RequestInfoSvcs
     noexcept
     : consider_interface_(consider_interface),
       request_basic_channels_processor_(request_basic_channels_processor),
+      user_inventory_container_(user_inventory_container),
+      user_trigger_match_container_(user_trigger_match_container),
+      temp_user_trigger_match_container_(temp_user_trigger_match_container),
+      user_navigation_container_(user_navigation_container),
+      household_colo_reach_container_(household_colo_reach_container),
       task_runner_(ReferenceCounting::add_ref(task_runner)),
       scheduler_(ReferenceCounting::add_ref(scheduler)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -286,6 +285,22 @@ namespace AdServer::RequestInfoSvcs
     }
   }
 
+  AdServer::Commons::StartableAwaitable<void>
+  ExpressionMatcherLogLoader::co_process_request_basic_channels_record_(
+    const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
+    const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
+  {
+    co_await AdServer::Commons::ExecutorPool::reschedule(processing_executor_pool_);
+    co_await request_basic_channels_processor_->co_process_request_basic_channels_record(
+      user_inventory_container_,
+      user_trigger_match_container_,
+      temp_user_trigger_match_container_,
+      user_navigation_container_,
+      household_colo_reach_container_,
+      key,
+      record);
+  }
+
   bool
   ExpressionMatcherLogLoader::process_request_basic_channels_file_(
     LogProcessing::FileReceiver::FileGuard* file_ptr,
@@ -332,11 +347,7 @@ namespace AdServer::RequestInfoSvcs
 
         tasks.start(
           sequence,
-          co_process_request_basic_channels_record(
-            processing_executor_pool_,
-            request_basic_channels_processor_,
-            coll_it->first,
-            *record_it));
+          co_process_request_basic_channels_record_(coll_it->first, *record_it));
       }
 
       if (terminated)
