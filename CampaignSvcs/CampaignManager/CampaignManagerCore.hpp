@@ -1013,6 +1013,7 @@ namespace AdServer::CampaignSvcs
     class FlushLogsTaskMessage;
     class CheckConfigTaskMessage;
     class UpdateCTRProviderTask;
+    class UpdateVTRProviderTask;
     class UpdateConvRateProviderTask;
     class UpdateBidCostProviderTask;
 
@@ -1245,6 +1246,8 @@ namespace AdServer::CampaignSvcs
 
     Generics::Time update_ctr_provider() noexcept;
 
+    Generics::Time update_vtr_provider() noexcept;
+
     Generics::Time update_conv_rate_provider() noexcept;
 
     Generics::Time update_bid_cost_provider() noexcept;
@@ -1424,6 +1427,7 @@ namespace AdServer::CampaignSvcs
     BillingStateContainer_var check_billing_state_container_;
     BillingStateContainer_var confirm_billing_state_container_;
     ReferenceCounting::PtrHolder<CTR::ConstCTRProviderImpl_var> ctr_provider_;
+    ReferenceCounting::PtrHolder<CTR::ConstCTRProviderImpl_var> vtr_provider_;
     ReferenceCounting::PtrHolder<CTR::ConstCTRProviderImpl_var> conv_rate_provider_;
     ReferenceCounting::PtrHolder<ConstBidCostProvider_var> bid_cost_provider_;
 

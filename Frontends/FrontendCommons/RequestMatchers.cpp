@@ -218,7 +218,7 @@ namespace FrontendCommons
             }
 
             // should decode here specific encoding if parsed string isn't UTF-8
-            if (String::UTF8Handler::is_correct_utf8_string(match_result.c_str()) != 0)
+            if (String::UTF8Handler::is_correct_utf8_string(match_result))
             {
               if (!(*it)->charset.empty())
               {
@@ -261,7 +261,7 @@ namespace FrontendCommons
             {
               std::string buf;
               Language::Trigger::normalize_phrase(match_result, buf, segmentor);
-              if (String::UTF8Handler::is_correct_utf8_string(buf.c_str()) == 0)
+              if (!String::UTF8Handler::is_correct_utf8_string(buf))
               {
                 match_result.swap(buf);
                 return true;

@@ -348,6 +348,7 @@ namespace
     Table::Column("max_pub_share", Table::Column::TEXT),
     Table::Column("bid_strategy", Table::Column::TEXT),
     Table::Column("min_ctr_goal", Table::Column::TEXT),
+    Table::Column("min_vtr_goal", Table::Column::TEXT),
     Table::Column("commision", Table::Column::TEXT),
     Table::Column("flags", Table::Column::TEXT),
     Table::Column("marketplace", Table::Column::TEXT)
@@ -1164,6 +1165,7 @@ namespace
       row.add_field(decimal_value(campaign.max_pub_share()));
       row.add_field(bid_strategy_string(campaign.bid_strategy()));
       row.add_field(decimal_value(campaign.min_ctr_goal()));
+      row.add_field(decimal_value(campaign.min_vtr_goal()));
       row.add_field(decimal_value(campaign.commision()));
       row.add_field(campaign_flags_string(campaign.flags()));
       row.add_field(std::string(1, static_cast<char>(campaign.marketplace())));

@@ -18,6 +18,7 @@
 #include <Commons/OrderedAsyncTaskWindow.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
+#include <LogCommons/PostClickAction.hpp>
 #include <LogCommons/TagRequest.hpp>
 
 /*
@@ -991,6 +992,33 @@ namespace AdServer::RequestInfoSvcs
     RequestContainerProcessor_var request_processor_;
   };
 
+  struct PostClickActionRecordProcessor
+  {
+    explicit PostClickActionRecordProcessor(
+      RequestContainerProcessor* request_container_processor)
+      : request_processor_(ReferenceCounting::add_ref(request_container_processor))
+    {}
+
+    void operator()(
+      const AdServer::LogProcessing::PostClickActionTraits::CollectorType::DataT& req) const
+    {
+      request_processor_->process_click_post_action(
+        req.request_id(),
+        PostActionInfo(req.time().time(), req.action_name(), req.action_value()));
+    }
+
+    Commons::Awaitable<void> co_process(
+      const AdServer::LogProcessing::PostClickActionTraits::CollectorType::DataT& req) const
+    {
+      co_await request_processor_->co_process_click_post_action(
+        req.request_id(),
+        PostActionInfo(req.time().time(), req.action_name(), req.action_value()));
+    }
+
+  private:
+    RequestContainerProcessor_var request_processor_;
+  };
+
   struct AdvertiserActionRecordProcessor
   {
     AdvertiserActionRecordProcessor(AdvActionProcessor* adv_action_processor)
@@ -1274,6 +1302,15 @@ namespace AdServer::RequestInfoSvcs
         unmerged_click_processor,
         request_container_processor,
         RequestContainerProcessor::AT_CLICK),
+      proc_stat_impl);
+
+    log_fetchers_[PostClickActionLogType] = make_fetcher<PostClickActionTraits>(
+      log_errors_callback_,
+      processing_state_,
+      in_logs.post_click_action,
+      check_period,
+      processing_executor_pool_,
+      PostClickActionRecordProcessor(request_container_processor),
       proc_stat_impl);
 
     log_fetchers_[AdvertiserActionLogType] = make_fetcher<AdvertiserActionTraits>(

@@ -2705,6 +2705,7 @@ namespace AdServer::CampaignSvcs
         QC_END_USER_GROUP_ID,
         QC_BID_STRATEGY,
         QC_MIN_CTR_GOAL,
+        QC_MIN_VTR_GOAL,
         QC_ECPM,
         QC_ECPM_FOR_MAXBID,
         QC_FLIGHT_RATE_TYPE,
@@ -2765,6 +2766,8 @@ namespace AdServer::CampaignSvcs
             "cmp.user_sample_group_end, "
             "cmp.bid_strategy, "
             "GREATEST(COALESCE(cmp.min_ctr_goal, 0), COALESCE(ccg.min_ctr_goal, 0)) / 100, "
+            "GREATEST(COALESCE(campaign.min_vtr_goal, 0), "
+              "COALESCE(ccg.min_vtr_goal, 0)) / 100, "
             "cmp.ecpm, "
             "round(ccgrate.cpa * 100 /  cer.rate, 8), "
             "flight.rate_type, "
@@ -3028,6 +3031,8 @@ namespace AdServer::CampaignSvcs
                 ostr << "unexpected bid strategy value '" << bid_strategy_sym << "'";
                 throw InvalidObject(ostr);
               }
+
+              campaign->min_vtr_goal = rs->get_decimal<RevenueDecimal>(QC_MIN_VTR_GOAL);
 
               campaign->start_user_group_id = rs->get_number<unsigned long>(QC_START_USER_GROUP_ID);
               campaign->end_user_group_id = rs->get_number<unsigned long>(QC_END_USER_GROUP_ID);

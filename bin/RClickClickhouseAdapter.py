@@ -37,6 +37,7 @@ if __name__ == "__main__":
     ('win_price', None),
     ('viewability', None),
     ('click_timestamp', 0),
+    ('page_keywords', None),
   ]
 
   writer = csv.writer(sys.stdout)
@@ -47,5 +48,7 @@ if __name__ == "__main__":
       it = iter(csv.reader(infile))
       next(it)  # skip header - it contains problem
       for row in it:
-        writer.writerow([(row[field_index] if field_index is not None else '') for _, field_index in field_filling])
-
+        writer.writerow([
+          row[field_index] if field_index is not None else ''
+          for _, field_index in field_filling
+        ])

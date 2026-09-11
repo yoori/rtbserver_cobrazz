@@ -491,6 +491,35 @@ namespace AdServer::CampaignSvcs
   }
 
   Generics::Time
+  CampaignManagerCore::update_vtr_provider() noexcept
+  {
+    static const char* FUN = "CampaignManagerCore::update_vtr_provider()";
+
+    if (campaign_manager_config_.VTRConfig().present())
+    {
+      try
+      {
+        vtr_provider_ = update_ctr_rate_provider_(
+          vtr_provider_.get().in(),
+          campaign_manager_config_.VTRConfig()->capture_root(),
+          campaign_manager_config_.VTRConfig()->root(),
+          Generics::Time(campaign_manager_config_.VTRConfig()->expire_timeout()));
+      }
+      catch(const eh::Exception& e)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": eh::Exception caught: " << e.what();
+        callback_->critical(ostr.str(), "ADS-IMPL-5091");
+      }
+
+      return Generics::Time::get_time_of_day() +
+        campaign_manager_config_.VTRConfig()->check_period();
+    }
+
+    return Generics::Time::ZERO;
+  }
+
+  Generics::Time
   CampaignManagerCore::update_conv_rate_provider() noexcept
   {
     static const char* FUN = "CampaignManagerCore::update_conv_rate_provider()";

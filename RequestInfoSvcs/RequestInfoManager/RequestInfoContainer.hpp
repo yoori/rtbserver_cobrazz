@@ -117,6 +117,16 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const PostActionInfo& action_info);
 
+    void
+    process_click_post_action(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_post_action(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
     RequestContainerProcessor_var
     proxy() noexcept;
 
@@ -182,6 +192,7 @@ namespace AdServer::RequestInfoSvcs
 
       AdvCustomActionInfoList custom_actions;
       std::vector<PostActionInfo> process_post_imp_actions;
+      std::vector<PostActionInfo> process_post_click_actions;
       AdServer::Commons::UserId move_request_user_id;
       AdServer::Commons::RequestId move_request_id;
       Generics::ConstSmartMemBuf_var move_request_profile;
@@ -190,6 +201,7 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::Optional<ImpressionInfo> move_impression_info;
       std::vector<MoveActionInfo> move_actions; // AT_CLICK,AT_ACTION,AT_FRAUD_ROLLBACK
       std::vector<MovePostActionInfo> move_post_imp_actions;
+      std::vector<MovePostActionInfo> move_post_click_actions;
     };
 
     class Transaction: public ReferenceCounting::AtomicImpl
@@ -273,6 +285,18 @@ namespace AdServer::RequestInfoSvcs
       const PostActionInfo& action_info,
       bool move_enabled);
 
+    void
+    process_click_post_action_(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info,
+      bool move_enabled);
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_post_action_(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info,
+      bool move_enabled);
+
     bool
     process_request_buf_(
       Generics::ConstSmartMemBuf_var& mem_buf,
@@ -341,6 +365,16 @@ namespace AdServer::RequestInfoSvcs
 
     static bool
     process_impression_post_action_buf_(
+      Generics::ConstSmartMemBuf_var& mem_buf,
+      RequestProcessDelegate& request_process_delegate,
+      Generics::Time* last_event_time,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info,
+      bool move_enabled)
+      /*throw(Exception)*/;
+
+    static bool
+    process_click_post_action_buf_(
       Generics::ConstSmartMemBuf_var& mem_buf,
       RequestProcessDelegate& request_process_delegate,
       Generics::Time* last_event_time,

@@ -203,11 +203,13 @@ namespace AdServer::CampaignSvcs
   CampaignSelector::CampaignSelector(
     const CampaignIndex* campaign_selection_index,
     const CTR::CTRProvider* ctr_provider,
+    const CTR::CTRProvider* vtr_provider,
     const CTR::CTRProvider* conv_rate_provider,
     Generics::MonoAllocatorArena* arena)
     : campaign_selection_index_(campaign_selection_index),
       campaign_config_(campaign_selection_index->get_campaign_config()),
       ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
+      vtr_provider_(ReferenceCounting::add_ref(vtr_provider)),
       conv_rate_provider_(ReferenceCounting::add_ref(conv_rate_provider)),
       arena_(arena)
   {}
@@ -382,6 +384,23 @@ namespace AdServer::CampaignSvcs
     return campaign_ecpm >= min_ecpm && campaign_ecpm >= tag_pricing->cpm;
   }
 
+  bool
+  CampaignSelector::check_min_vtr_(
+    const Campaign* campaign,
+    const Creative* creative,
+    const CTR::CTRProvider::CalculationContext* vtr_calculation_context)
+    noexcept
+  {
+    if (campaign->min_vtr_goal == RevenueDecimal::ZERO || !vtr_calculation_context)
+    {
+      return true;
+    }
+
+    RevenueDecimal vtr = RevenueDecimal::ZERO;
+    return vtr_calculation_context->check_rate(creative, &vtr) &&
+      vtr >= campaign->min_vtr_goal;
+  }
+
   void
   CampaignSelector::filter_creatives_(
     CampaignIndex::ConstCreativePtrList& available_creatives,
@@ -516,6 +535,7 @@ namespace AdServer::CampaignSvcs
     const CampaignSelectParams& request_params,
     const Tag* tag,
     const CTR::CTRProvider::Calculation* ctr_calculation,
+    const CTR::CTRProvider::Calculation* vtr_calculation,
     const CTR::CTRProvider::Calculation* conv_rate_calculation,
     const ChannelIdHashSet& matched_channels,
     const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
@@ -523,7 +543,7 @@ namespace AdServer::CampaignSvcs
     const
     noexcept
   {
-    if (ctr_calculation == 0)
+    if (ctr_calculation == 0 && vtr_calculation == 0)
     {
       get_all_display_campaign_candidates_(
         result_campaign_candidates,
@@ -537,8 +557,6 @@ namespace AdServer::CampaignSvcs
 
       return;
     }
-
-    assert(ctr_calculation);
 
     CTRWeightedCampaignHolderList unknown_ctr_campaign_candidates(arena_);
     CTRWeightedCampaignHolderList known_ctr_campaign_candidates(arena_);
@@ -573,8 +591,9 @@ namespace AdServer::CampaignSvcs
 
         if (!available_creatives.empty()) // any creative can be selected
         {
-          if ((*cmp_it)->campaign->use_ctr() ||
-            (*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL)
+          if (ctr_calculation && (
+              (*cmp_it)->campaign->use_ctr() ||
+              (*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL))
           {
             unknown_ctr_campaign_candidates.emplace_back(
               WeightedCampaignPtr(new WeightedCampaign(
@@ -593,6 +612,12 @@ namespace AdServer::CampaignSvcs
           else
           {
             RevenueDecimal current_ecpm = default_campaign_ecpm_(tag, (*cmp_it)->campaign);
+
+            if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+              (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
+            {
+              continue;
+            }
 
             if (check_min_ecpm && !check_min_ecpm_(
                  (*cmp_it)->tag_pricing,
@@ -634,8 +659,17 @@ namespace AdServer::CampaignSvcs
       tag_size_it != request_params.tag_sizes.end();
       ++tag_size_it)
     {
-      CTR::CTRProvider::CalculationContext_var ctr_calculation_context =
-        ctr_calculation->create_context(tag_size_it->second);
+      CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
+      if (ctr_calculation)
+      {
+        ctr_calculation_context = ctr_calculation->create_context(tag_size_it->second);
+      }
+
+      CTR::CTRProvider::CalculationContext_var vtr_calculation_context;
+      if (vtr_calculation)
+      {
+        vtr_calculation_context = vtr_calculation->create_context(tag_size_it->second);
+      }
 
       CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
       if (conv_rate_calculation)
@@ -675,6 +709,15 @@ namespace AdServer::CampaignSvcs
                conv_rate_calculation_context->check_rate(
                  *creative_it, &conv_rate, &rate_creative_dependent))
             {
+              if (!check_min_vtr_(
+                  wit->weighted_campaign->campaign,
+                  *creative_it,
+                  vtr_calculation_context))
+              {
+                rate_checked = !rate_creative_dependent;
+                continue;
+              }
+
               RevenueDecimal ctr = ctr_calculation_context->get_ctr(*creative_it);
 
               RevenueDecimal ecpm = wit->weighted_campaign->campaign->use_ctr() ?
@@ -748,8 +791,14 @@ namespace AdServer::CampaignSvcs
                 conv_rate_calculation_context->check_rate(
                   *creative_it, &conv_rate, &rate_creative_dependent))
             {
-              wit->cur_creatives.push_back(
-                SizedCreativeHolder(tag_size_it->second, *creative_it, conv_rate));
+              if (check_min_vtr_(
+                  wit->weighted_campaign->campaign,
+                  *creative_it,
+                  vtr_calculation_context))
+              {
+                wit->cur_creatives.push_back(
+                  SizedCreativeHolder(tag_size_it->second, *creative_it, conv_rate));
+              }
             }
 
             rate_checked = !rate_creative_dependent;
@@ -1155,13 +1204,14 @@ namespace AdServer::CampaignSvcs
     const CampaignSelectParams& request_params,
     const Tag* tag,
     const CTR::CTRProvider::Calculation* ctr_calculation,
+    const CTR::CTRProvider::Calculation* vtr_calculation,
     const CTR::CTRProvider::Calculation* conv_rate_calculation,
     const ChannelIdHashSet& matched_channels,
     const CampaignIndex::CampaignSelectionCellPtrList& campaign_list)
     const
     noexcept
   {
-    if (ctr_calculation == 0 && auction_type == AT_MAX_ECPM)
+    if (ctr_calculation == 0 && vtr_calculation == 0 && auction_type == AT_MAX_ECPM)
     {
       WeightedCampaignList random_select_campaigns(arena_);
 
@@ -1206,6 +1256,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         matched_channels,
         campaign_list,
@@ -2524,6 +2575,7 @@ namespace AdServer::CampaignSvcs
     const CampaignSelectParams& request_params,
     const Tag* tag,
     const CTR::CTRProvider::Calculation* ctr_calculation,
+    const CTR::CTRProvider::Calculation* vtr_calculation,
     const CTR::CTRProvider::Calculation* conv_rate_calculation,
     const Tag::SizeMap& tag_sizes,
     const ChannelIdHashSet& matched_channels,
@@ -2558,6 +2610,7 @@ namespace AdServer::CampaignSvcs
       request_params,
       tag,
       ctr_calculation,
+      vtr_calculation,
       conv_rate_calculation,
       matched_channels,
       wg_display_check_campaigns,
@@ -2592,6 +2645,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         matched_channels,
         display_check_campaigns,
@@ -2781,6 +2835,7 @@ namespace AdServer::CampaignSvcs
     const CampaignSelectParams& request_params,
     const Tag* tag,
     const CTR::CTRProvider::Calculation* ctr_calculation,
+    const CTR::CTRProvider::Calculation* vtr_calculation,
     const CTR::CTRProvider::Calculation* conv_rate_calculation,
     const Tag::SizeMap& tag_sizes,
     const ChannelIdHashSet& matched_channels,
@@ -2816,6 +2871,7 @@ namespace AdServer::CampaignSvcs
       request_params,
       tag,
       ctr_calculation,
+      vtr_calculation,
       conv_rate_calculation,
       matched_channels,
       wg_display_check_campaigns,
@@ -2852,6 +2908,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         matched_channels,
         display_check_campaigns,
@@ -3106,6 +3163,7 @@ namespace AdServer::CampaignSvcs
     const Tag* tag,
     const Tag::SizeMap& tag_sizes,
     const CTR::CTRProvider::Calculation* ctr_calculation,
+    const CTR::CTRProvider::Calculation* vtr_calculation,
     const CTR::CTRProvider::Calculation* conv_rate_calculation,
     const ChannelIdHashSet& channels,
     const CampaignKeywordMap& hit_keywords,
@@ -3136,6 +3194,7 @@ namespace AdServer::CampaignSvcs
       request_params,
       tag,
       ctr_calculation,
+      vtr_calculation,
       conv_rate_calculation,
       channels,
       wg_display_check_campaigns);
@@ -3152,6 +3211,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         channels,
         display_check_campaigns);
@@ -3356,12 +3416,18 @@ namespace AdServer::CampaignSvcs
 
     // create ctr calculation context
     CTR::CTRProvider::Calculation_var ctr_calculation;
+    CTR::CTRProvider::Calculation_var vtr_calculation;
     CTR::CTRProvider::Calculation_var conv_rate_calculation;
 
     if (ctr_provider_.in())
     {
       ctr_calculation = ctr_provider_->create_calculation(request_params_ptr);
       select_result.ctr_calculation = ctr_calculation;
+    }
+
+    if (vtr_provider_.in())
+    {
+      vtr_calculation = vtr_provider_->create_calculation(request_params_ptr);
     }
 
     if (conv_rate_provider_.in())
@@ -3412,6 +3478,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         request_params.tag_sizes,
         channels,
@@ -3443,6 +3510,7 @@ namespace AdServer::CampaignSvcs
         tag,
         request_params.tag_sizes,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         channels,
         hit_keywords,
@@ -3458,6 +3526,7 @@ namespace AdServer::CampaignSvcs
         request_params,
         tag,
         ctr_calculation,
+        vtr_calculation,
         conv_rate_calculation,
         request_params.tag_sizes,
         channels,

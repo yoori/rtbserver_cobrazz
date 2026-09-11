@@ -326,7 +326,10 @@ namespace AdServer::CampaignSvcs
       CCG_CREATIVE_OPTIMIZATION = 0x20
     };
 
-    CampaignDef(): eval_status('A') {}
+    CampaignDef()
+      : eval_status('A'),
+        min_vtr_goal(RevenueDecimal::ZERO)
+    {}
 
     bool operator==(const CampaignDef& right) const noexcept;
 
@@ -406,6 +409,7 @@ namespace AdServer::CampaignSvcs
     unsigned long seq_set_rotate_imps;
     BidStrategy bid_strategy;
     RevenueDecimal min_ctr_goal;
+    RevenueDecimal min_vtr_goal;
 
     unsigned long initial_contract_id;
 
@@ -2035,6 +2039,7 @@ namespace AdServer::CampaignSvcs
       delivery_coef == right.delivery_coef &&
       bid_strategy == right.bid_strategy &&
       min_ctr_goal == right.min_ctr_goal &&
+      min_vtr_goal == right.min_vtr_goal &&
       initial_contract_id == right.initial_contract_id &&
       sites.size() == right.sites.size() &&
       creatives.size() == right.creatives.size() &&

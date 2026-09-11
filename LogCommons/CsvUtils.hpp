@@ -74,7 +74,7 @@ namespace AdServer::LogProcessing
     static inline void
     encode(std::string& encoded, const std::string& str) /*throw(eh::Exception)*/
     {
-      if (String::UTF8Handler::is_correct_utf8_string(str.c_str()) == 0)
+      if (String::UTF8Handler::is_correct_utf8_string(str) == nullptr)
       {
         undisplayable_mime_encode(encoded, str, UNDISPLAYABLE);
       }

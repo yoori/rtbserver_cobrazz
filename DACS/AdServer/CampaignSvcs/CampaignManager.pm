@@ -76,6 +76,8 @@ sub start
     "mkdir -p \${log_root}/CampaignManager/Out/TagPositionStat_ && " .
     "mkdir -p \${log_root}/CampaignManager/In/CTRConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/CapturedCTRConfig && " .
+    "mkdir -p \${log_root}/CampaignManager/In/VTRConfig && " .
+    "mkdir -p \${log_root}/CampaignManager/In/CapturedVTRConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/ConvRateConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/CapturedConvRateConfig && " .
     "mkdir -p \${log_root}/CampaignManager/In/BidCostConfig && " .

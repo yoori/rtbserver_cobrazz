@@ -51,6 +51,20 @@ namespace AdServer::RequestInfoSvcs
       const PostActionInfo& action_info);
 
     virtual void
+    process_click_post_action(
+      const AdServer::Commons::UserId& /*new_user_id*/,
+      const AdServer::Commons::RequestId& /*request_id*/,
+      const PostActionInfo& /*action_info*/)
+      /*throw(Exception)*/
+    {}
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info);
+
+    virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
@@ -98,6 +112,16 @@ namespace AdServer::RequestInfoSvcs
     const PostActionInfo& action_info)
   {
     process_impression_post_action(new_user_id, request_id, action_info);
+    co_return;
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  RequestOperationProcessor::co_process_click_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    process_click_post_action(new_user_id, request_id, action_info);
     co_return;
   }
 

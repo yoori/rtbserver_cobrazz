@@ -11,9 +11,11 @@ sub start
 
   my $command =
     "mkdir -p \${log_root}/Predictor/CTRConfig && " .
+    "mkdir -p \${log_root}/Predictor/VTRConfig && " .
     "mkdir -p \${log_root}/Predictor/ConvConfig && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchBid && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchImpression && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostClick && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchClick && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchAction && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchWebStat && " .

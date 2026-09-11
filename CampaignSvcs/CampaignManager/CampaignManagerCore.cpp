@@ -70,6 +70,15 @@ namespace AdServer::CampaignSvcs
     virtual void execute() noexcept;
   };
 
+  class CampaignManagerCore::UpdateVTRProviderTask: public TaskMessage
+  {
+  public:
+    UpdateVTRProviderTask(CampaignManagerCore* manager, Generics::TaskRunner* task_runner)
+      /*throw(eh::Exception)*/;
+
+    virtual void execute() noexcept;
+  };
+
   class CampaignManagerCore::UpdateConvRateProviderTask: public TaskMessage
   {
   public:
@@ -156,6 +165,34 @@ namespace AdServer::CampaignSvcs
     {
       Stream::Error ostr;
       ostr << FUN << ": exception caught while enqueueing update CTR task: " << e.what();
+      manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
+    }
+  }
+
+  CampaignManagerCore::UpdateVTRProviderTask::UpdateVTRProviderTask(
+    CampaignManagerCore* manager,
+    Generics::TaskRunner* task_runner)
+    : TaskMessage(manager, task_runner)
+  {}
+
+  void
+  CampaignManagerCore::UpdateVTRProviderTask::execute() noexcept
+  {
+    static const char* FUN = "CampaignManagerCore::UpdateVTRProviderTask::execute()";
+
+    try
+    {
+      const Generics::Time tm = manager_->update_vtr_provider();
+      if (tm != Generics::Time::ZERO)
+      {
+        TaskMessage_var msg = new UpdateVTRProviderTask(manager_, manager_->task_runner_);
+        manager_->scheduler_->schedule(msg, tm);
+      }
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": exception caught while enqueueing update VTR task: " << e.what();
       manager_->callback_->critical(ostr.str(), "ADS-IMPL-5092");
     }
   }
@@ -773,6 +810,9 @@ namespace AdServer::CampaignSvcs
 
       update_task_runner_->enqueue_task(TaskMessage_var(
         new UpdateCTRProviderTask(this, update_task_runner_)));
+
+      update_task_runner_->enqueue_task(TaskMessage_var(
+        new UpdateVTRProviderTask(this, update_task_runner_)));
 
       update_task_runner_->enqueue_task(TaskMessage_var(
         new UpdateConvRateProviderTask(this, update_task_runner_)));
@@ -3229,6 +3269,7 @@ namespace AdServer::CampaignSvcs
     CampaignSelector campaign_selector(
       &config_index,
       ctr_provider_.get(),
+      vtr_provider_.get(),
       conv_rate_provider_.get(),
       request_params.resource());
     CampaignSelectParams_var campaign_select_params_ptr(new CampaignSelectParams(

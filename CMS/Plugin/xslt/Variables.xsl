@@ -83,6 +83,8 @@
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
+<xsl:variable name="yandex-post-click-importer-descriptor"
+  select="'AdCluster/BackendSubCluster/YandexPostClickImporter'"/>
 <xsl:variable name="ctr-predict-model-generator-descriptor"
   select="'AdCluster/BackendSubCluster/CTRPredictModelGenerator'"/>
 <xsl:variable name="ctr-research-model-generator-descriptor"

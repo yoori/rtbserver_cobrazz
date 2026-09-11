@@ -577,6 +577,33 @@ namespace AdServer::Bidding
       kw_fmt.add_keyword_owned(std::move(oss));
     }
 
+    void
+    record_invalid_utf8_keyword_field(
+      std::vector<std::string_view>& fields,
+      std::string_view field)
+    {
+      if (std::find(fields.begin(), fields.end(), field) == fields.end())
+      {
+        fields.push_back(field);
+      }
+    }
+
+    template<typename KeywordFormatterType>
+    bool
+    accept_external_keyword(
+      std::string_view value,
+      std::vector<std::string_view>& invalid_fields,
+      std::string_view field)
+    {
+      if (KeywordFormatterType::is_valid_external_keyword(value))
+      {
+        return true;
+      }
+
+      record_invalid_utf8_keyword_field(invalid_fields, field);
+      return false;
+    }
+
     bool
     try_parse_float_(float& result, const std::string_view value) noexcept
     {
@@ -1766,20 +1793,33 @@ namespace AdServer::Bidding
 
     parse_openrtb_request_(request_info, context, held_bid_request);
 
-    BasicKeywordFormatter<Generics::MonoString> kw_fmt(
-      request_info.source_id,
+    using OpenRtbKeywordFormatter = BasicKeywordFormatter<Generics::MonoString>;
+    std::vector<std::string_view> invalid_utf8_keyword_fields;
+    const std::string_view source_id(
+      request_info.source_id.data(),
+      request_info.source_id.size());
+    const std::string_view keyword_source_id =
+      accept_external_keyword<OpenRtbKeywordFormatter>(
+        source_id,
+        invalid_utf8_keyword_fields,
+        "source_id") ? source_id : std::string_view();
+    OpenRtbKeywordFormatter kw_fmt(
+      keyword_source_id,
       request_info.arena());
 
     kw_fmt.add_keyword(MatchKeywords::FULL_REQ);
 
-    if (!request_info.source_id.empty())
+    if (!keyword_source_id.empty())
     {
       kw_fmt.add_dict_keyword(MatchKeywords::REQ, std::string_view());
     }
 
     if (context.user)
     {
-      kw_fmt.add_keyword(context.user_keywords);
+      if (!kw_fmt.add_external_keyword(context.user_keywords))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "user.keywords");
+      }
 
       if (context.user_yob)
       {
@@ -1799,6 +1839,19 @@ namespace AdServer::Bidding
       // process segments
       for (auto it = context.segments.begin(); it != context.segments.end(); ++it)
       {
+        const bool valid_id = accept_external_keyword<OpenRtbKeywordFormatter>(
+          it->id,
+          invalid_utf8_keyword_fields,
+          "user.data.segment.id");
+        const bool valid_value = accept_external_keyword<OpenRtbKeywordFormatter>(
+          it->value,
+          invalid_utf8_keyword_fields,
+          "user.data.segment.value");
+        if (!valid_id || !valid_value)
+        {
+          continue;
+        }
+
         // add <id>x<value with replaced chars>
         const std::string_view id = norm_keyword_ext_(request_info, it->id);
         const std::string_view value = norm_keyword_ext_(request_info, it->value);
@@ -1819,23 +1872,37 @@ namespace AdServer::Bidding
       if (request_info.additional_info.tagid.empty() && !ad_slot_it->tagid.empty())
       {
         request_info.additional_info.tagid = ad_slot_it->tagid;
-        kw_fmt.add_dict_keyword_norm_spaces(
-          MatchKeywords::SSP_TAG_ID,
-          request_info.additional_info.tagid);
+        if (!kw_fmt.add_external_dict_keyword_norm_spaces(
+            MatchKeywords::SSP_TAG_ID,
+            request_info.additional_info.tagid))
+        {
+          record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "imp.tagid");
+        }
       }
 
       for (auto metric_it = ad_slot_it->metrics.begin(); metric_it != ad_slot_it->metrics.end();
         ++metric_it)
       {
-        const std::string_view type = norm_keyword_ext_(request_info, metric_it->type);
-        const std::string_view value = norm_keyword_ext_(request_info, metric_it->value);
-        std::string keyword;
-        keyword.reserve(9 + type.size() + 1 + value.size());
-        keyword += "rtbmetric";
-        keyword.append(type.data(), type.size());
-        keyword += 'x';
-        keyword.append(value.data(), value.size());
-        kw_fmt.add_keyword_owned(std::move(keyword));
+        const bool valid_type = accept_external_keyword<OpenRtbKeywordFormatter>(
+          metric_it->type,
+          invalid_utf8_keyword_fields,
+          "imp.metric.type");
+        const bool valid_value = accept_external_keyword<OpenRtbKeywordFormatter>(
+          metric_it->value,
+          invalid_utf8_keyword_fields,
+          "imp.metric.value");
+        if (valid_type && valid_value)
+        {
+          const std::string_view type = norm_keyword_ext_(request_info, metric_it->type);
+          const std::string_view value = norm_keyword_ext_(request_info, metric_it->value);
+          std::string keyword;
+          keyword.reserve(9 + type.size() + 1 + value.size());
+          keyword += "rtbmetric";
+          keyword.append(type.data(), type.size());
+          keyword += 'x';
+          keyword.append(value.data(), value.size());
+          kw_fmt.add_keyword_owned(std::move(keyword));
+        }
 
         float metric_value = 0.0f;
         if (try_parse_float_(metric_value, metric_it->value))
@@ -1868,50 +1935,110 @@ namespace AdServer::Bidding
 
     if (context.site_content || context.app_content)
     {
-      kw_fmt.add_keyword(context.content_keywords);
-      kw_fmt.add_keyword(context.content_title);
-      kw_fmt.add_keyword(context.content_series);
-      kw_fmt.add_keyword(context.content_season);
-
-      kw_fmt.add_cat_list(context.content_cat, true);
-      kw_fmt.add_keyword_list(context.content_producer_name);
+      if (!kw_fmt.add_external_keyword(context.content_keywords))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "content.keywords");
+      }
+      if (!kw_fmt.add_external_keyword(context.content_title))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "content.title");
+      }
+      if (!kw_fmt.add_external_keyword(context.content_series))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "content.series");
+      }
+      if (!kw_fmt.add_external_keyword(context.content_season))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "content.season");
+      }
+      if (!kw_fmt.add_external_cat_list(context.content_cat, true))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "content.cat");
+      }
+      if (!kw_fmt.add_external_keyword_list(context.content_producer_name))
+      {
+        record_invalid_utf8_keyword_field(
+          invalid_utf8_keyword_fields,
+          "content.producer.name");
+      }
     }
 
     if (context.app_publisher || context.site_publisher)
     {
-      kw_fmt.add_keyword(context.publisher_name);
-      kw_fmt.add_cat_list(context.publisher_cat, true);
+      if (!kw_fmt.add_external_keyword(context.publisher_name))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "publisher.name");
+      }
+      if (!kw_fmt.add_external_cat_list(context.publisher_cat, true))
+      {
+        record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "publisher.cat");
+      }
     }
 
     if (!context.language.empty())
     {
-      const std::string_view language = norm_keyword_ext_(request_info, context.language);
-      std::string keyword;
-      keyword.reserve(11 + language.size());
-      keyword += "rtblanguage";
-      keyword.append(language.data(), language.size());
-      kw_fmt.add_keyword_owned(std::move(keyword));
+      if (accept_external_keyword<OpenRtbKeywordFormatter>(
+          context.language,
+          invalid_utf8_keyword_fields,
+          "device.language"))
+      {
+        const std::string_view language = norm_keyword_ext_(request_info, context.language);
+        std::string keyword;
+        keyword.reserve(11 + language.size());
+        keyword += "rtblanguage";
+        keyword.append(language.data(), language.size());
+        kw_fmt.add_keyword_owned(std::move(keyword));
+      }
     }
 
     if (!context.carrier.empty())
     {
-      const std::string_view carrier = norm_keyword_ext_(request_info, context.carrier);
-      std::string keyword;
-      keyword.reserve(10 + carrier.size());
-      keyword += "rtbcarrier";
-      keyword.append(carrier.data(), carrier.size());
-      kw_fmt.add_keyword_owned(std::move(keyword));
+      if (accept_external_keyword<OpenRtbKeywordFormatter>(
+          context.carrier,
+          invalid_utf8_keyword_fields,
+          "device.carrier"))
+      {
+        const std::string_view carrier = norm_keyword_ext_(request_info, context.carrier);
+        std::string keyword;
+        keyword.reserve(10 + carrier.size());
+        keyword += "rtbcarrier";
+        keyword.append(carrier.data(), carrier.size());
+        kw_fmt.add_keyword_owned(std::move(keyword));
+      }
     }
 
-    kw_fmt.add_keyword(context.site_keywords);
-    kw_fmt.add_keyword(context.app_keywords);
-
-    kw_fmt.add_cat_list(context.site_pagecat, true);
-    kw_fmt.add_cat_list(context.site_sectioncat, true);
-    kw_fmt.add_cat_list(context.site_cat, true);
-    kw_fmt.add_cat_list(context.app_pagecat, true);
-    kw_fmt.add_cat_list(context.app_sectioncat, true);
-    kw_fmt.add_cat_list(context.app_cat, true);
+    if (!kw_fmt.add_external_keyword(context.site_keywords))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "site.keywords");
+    }
+    if (!kw_fmt.add_external_keyword(context.app_keywords))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "app.keywords");
+    }
+    if (!kw_fmt.add_external_cat_list(context.site_pagecat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "site.pagecat");
+    }
+    if (!kw_fmt.add_external_cat_list(context.site_sectioncat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "site.sectioncat");
+    }
+    if (!kw_fmt.add_external_cat_list(context.site_cat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "site.cat");
+    }
+    if (!kw_fmt.add_external_cat_list(context.app_pagecat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "app.pagecat");
+    }
+    if (!kw_fmt.add_external_cat_list(context.app_sectioncat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "app.sectioncat");
+    }
+    if (!kw_fmt.add_external_cat_list(context.app_cat, true))
+    {
+      record_invalid_utf8_keyword_field(invalid_utf8_keyword_fields, "app.cat");
+    }
 
     if (context.external_user_id.empty() && (
          request_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
@@ -1950,7 +2077,7 @@ namespace AdServer::Bidding
     {
       kw_fmt.add_keyword(MatchKeywords::FULL_NO_ID);
 
-      if (!request_info.source_id.empty())
+      if (!keyword_source_id.empty())
       {
         kw_fmt.add_dict_keyword(MatchKeywords::NO_ID, std::string_view());
       }
@@ -1968,7 +2095,11 @@ namespace AdServer::Bidding
 
     fill_openrtb_geo_(request_info, context);
 
-    if (!request_info.peer_ip.empty())
+    if (!request_info.peer_ip.empty() &&
+      accept_external_keyword<OpenRtbKeywordFormatter>(
+        request_info.peer_ip,
+        invalid_utf8_keyword_fields,
+        "device.ip"))
     {
       kw_fmt.add_ip(request_info.peer_ip);
     }
@@ -2752,7 +2883,14 @@ namespace AdServer::Bidding
         // add deal id's as keywords
         for (auto deal_it = slot_it->deals.begin(); deal_it != slot_it->deals.end(); ++deal_it)
         {
-          kw_fmt.add_dict_keyword_norm_spaces(MatchKeywords::DEAL_ID, deal_it->id);
+          if (!kw_fmt.add_external_dict_keyword_norm_spaces(
+              MatchKeywords::DEAL_ID,
+              deal_it->id))
+          {
+            record_invalid_utf8_keyword_field(
+              invalid_utf8_keyword_fields,
+              "imp.pmp.deals.id");
+          }
         }
 
         if (slot_it->video_placement.has_value())
@@ -2840,6 +2978,18 @@ namespace AdServer::Bidding
     kw_fmt.assign_to(keywords);
 
     add_special_keywords_(keywords, request_info, &context, context.app_id);
+
+    if (!invalid_utf8_keyword_fields.empty())
+    {
+      Stream::Error ostr;
+      ostr << "RequestInfoFiller::fill_by_openrtb_request(): ignored invalid UTF-8 in keyword "
+        "fields:";
+      for (const std::string_view field : invalid_utf8_keyword_fields)
+      {
+        ostr << ' ' << field;
+      }
+      logger_->log(ostr.str(), Logging::Logger::WARNING, Aspect::BIDDING_FRONTEND);
+    }
 
     // push eids to request_info
     for (auto it = context.user_eids.begin(); it != context.user_eids.end(); ++it)

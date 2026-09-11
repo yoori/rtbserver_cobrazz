@@ -16,6 +16,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/In/Impression/Intermediate && " .
     "mkdir -p \${log_root}/RequestInfoManager/In/Click && " .
     "mkdir -p \${log_root}/RequestInfoManager/In/Click/Intermediate && " .
+    "mkdir -p \${log_root}/RequestInfoManager/In/PostClickAction && " .
+    "mkdir -p \${log_root}/RequestInfoManager/In/PostClickAction/Intermediate && " .
     "mkdir -p \${log_root}/RequestInfoManager/In/PassbackImpression && " .
     "mkdir -p \${log_root}/RequestInfoManager/In/PassbackImpression/Intermediate && " .
     "mkdir -p \${log_root}/RequestInfoManager/In/AdvertiserAction && " .
@@ -26,6 +28,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/In/RequestOperation/Intermediate && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/CCGKeywordStat && " .
@@ -72,6 +76,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchImpression_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchClick && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchClick_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostClick && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostClick_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/RequestOperation && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/RequestOperation_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ConsiderAction && " .

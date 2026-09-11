@@ -2224,6 +2224,9 @@ namespace AdServer::CampaignSvcs
         campaign->set_min_ctr_goal(min_ctr);
       }
 
+      campaign->min_vtr_goal = CorbaAlgs::unpack_decimal<RevenueDecimal>(
+        campaign_info.min_vtr_goal);
+
       convert_interval_sequence(campaign->weekly_run_intervals, campaign_info.weekly_run_intervals);
 
       CorbaAlgs::convert_sequence(campaign_info.sites, campaign->sites);

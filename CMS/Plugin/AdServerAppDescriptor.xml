@@ -103,6 +103,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="YandexPostClickImporter"
+        configSchema="xsd/LogProcessing/YandexPostClickImporterApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="DictionaryProvider"
         configSchema="xsd/ChannelServing/DictionaryProviderApp.xsd"
         minOccurs="0"

@@ -69,6 +69,16 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const PostActionInfo& action_info);
 
+    void
+    process_click_post_action(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_post_action(
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
   protected:
     virtual ~CompositeRequestContainerProcessor() noexcept {}
 
@@ -219,6 +229,28 @@ namespace AdServer::RequestInfoSvcs
         ++it)
     {
       co_await (*it)->co_process_impression_post_action(request_id, action_info);
+    }
+  }
+
+  inline void
+  CompositeRequestContainerProcessor::process_click_post_action(
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    for (auto& processor : child_processors_)
+    {
+      processor->process_click_post_action(request_id, action_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestContainerProcessor::co_process_click_post_action(
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    for (auto& processor : child_processors_)
+    {
+      co_await processor->co_process_click_post_action(request_id, action_info);
     }
   }
 

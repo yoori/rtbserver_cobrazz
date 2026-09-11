@@ -9,6 +9,7 @@
 
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
+#include <String/UTF8Handler.hpp>
 
 #include <Generics/MonoAllocator.hpp>
 
@@ -120,6 +121,12 @@ namespace AdServer::Bidding
       return !keywords_non_empty_;
     }
 
+    static bool
+    is_valid_external_keyword(std::string_view keyword) noexcept
+    {
+      return !String::UTF8Handler::is_correct_utf8_string(keyword);
+    }
+
     void
     add_cat(std::string_view cat, bool open_rtb = false)
     {
@@ -152,6 +159,18 @@ namespace AdServer::Bidding
       add_cat(std::string_view(cat.data(), cat.size()), open_rtb);
     }
 
+    bool
+    add_external_cat(std::string_view cat, bool open_rtb = false)
+    {
+      if (!is_valid_external_keyword(cat))
+      {
+        return false;
+      }
+
+      add_cat(cat, open_rtb);
+      return true;
+    }
+
     template <typename CategoryStringContainerType>
     void
     add_cat_list(const CategoryStringContainerType& cat_list, bool open_rtb = false)
@@ -161,6 +180,21 @@ namespace AdServer::Bidding
       {
         add_cat(*l_iter, open_rtb);
       }
+    }
+
+    template <typename CategoryStringContainerType>
+    bool
+    add_external_cat_list(const CategoryStringContainerType& cat_list, bool open_rtb = false)
+    {
+      bool result = true;
+      for (const auto& cat : cat_list)
+      {
+        if (!add_external_cat(std::string_view(cat.data(), cat.size()), open_rtb))
+        {
+          result = false;
+        }
+      }
+      return result;
     }
 
     void
@@ -313,6 +347,21 @@ namespace AdServer::Bidding
       }
     }
 
+    bool
+    add_external_dict_keyword_norm_spaces(
+      std::string_view dict_name,
+      std::string_view keyword,
+      bool add_rtb_prefix = true)
+    {
+      if (!is_valid_external_keyword(keyword))
+      {
+        return false;
+      }
+
+      add_dict_keyword_norm_spaces(dict_name, keyword, add_rtb_prefix);
+      return true;
+    }
+
     template <typename ValueType>
     void
     add_rtb_keyword(std::string_view dict_name, const ValueType& keyword)
@@ -329,6 +378,18 @@ namespace AdServer::Bidding
     add_keyword(std::string_view kw)
     {
       add_(std::string_view(), std::string_view(), kw, false);
+    }
+
+    bool
+    add_external_keyword(std::string_view keyword)
+    {
+      if (!is_valid_external_keyword(keyword))
+      {
+        return false;
+      }
+
+      add_keyword(keyword);
+      return true;
     }
 
     void
@@ -391,6 +452,21 @@ namespace AdServer::Bidding
           add_keyword(std::string_view(l_iter->data(), l_iter->size()));
         }
       }
+    }
+
+    template <typename ValueStringContainerType>
+    bool
+    add_external_keyword_list(const ValueStringContainerType& keywords)
+    {
+      bool result = true;
+      for (const auto& keyword : keywords)
+      {
+        if (!add_external_keyword(std::string_view(keyword.data(), keyword.size())))
+        {
+          result = false;
+        }
+      }
+      return result;
     }
 
   protected:

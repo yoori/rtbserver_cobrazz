@@ -91,13 +91,33 @@ namespace AdServer::RequestInfoSvcs
     const PostActionInfo& action_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
-    RequestOperationActionWriter operation_writer;
-    operation_writer.version() = 0;
-    operation_writer.action_type() = 0;
+    write_post_action_operation_(user_id, request_id, action_info, false);
+  }
+
+  void
+  RequestOperationSaver::process_click_post_action(
+    const AdServer::Commons::UserId& user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    write_post_action_operation_(user_id, request_id, action_info, true);
+  }
+
+  void
+  RequestOperationSaver::write_post_action_operation_(
+    const AdServer::Commons::UserId& user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info,
+    bool click_action)
+  {
+    RequestOperationPostActionWriter operation_writer;
+    operation_writer.version() = 1;
+    operation_writer.action_type() = click_action ? 1 : 0;
     operation_writer.time() = action_info.time.tv_sec;
     operation_writer.request_id() = request_id.to_string();
     operation_writer.user_id() = user_id.to_string();
     operation_writer.action_name() = action_info.name;
+    operation_writer.action_value() = action_info.value;
 
     Generics::MemBuf op_mem_buf(operation_writer.size());
     operation_writer.save(op_mem_buf.data(), op_mem_buf.size());

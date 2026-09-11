@@ -155,6 +155,7 @@ namespace AdServer::LogProcessing
     FixedNumberList model_ctrs;
 
     FixedNumber win_price;
+    std::string page_keywords;
     std::string additional_info;
   };
 
@@ -171,7 +172,8 @@ namespace AdServer::LogProcessing
         "URL,Publisher,Tag,ETag,Campaign,Group,CCID,GeoCh,"
         "UserCh,#ImpCh,#BidPrice,#BidFloor,"
         "#AlgorithmID,SizeID,Colo,#PredictedCTR,"
-        "Campaign_Freq,#CRAlgorithmID,#PredictedCR,#WinPrice,#Viewability,#AdditionalInfo";
+        "Campaign_Freq,#CRAlgorithmID,#PredictedCR,#WinPrice,#Viewability,"
+        "#PageKeywords,#AdditionalInfo";
     }
 
     static std::ostream&
@@ -206,6 +208,7 @@ namespace AdServer::LogProcessing
       os << data.tag_visibility << ',';
       os << data.win_price << ',';
       os << data.tag_predicted_viewability << ',';
+      write_string_as_csv(os, data.page_keywords) << ',';
       write_string_as_csv(os, data.additional_info);
       return os;
     }
@@ -266,6 +269,42 @@ namespace AdServer::LogProcessing
       write_optional_value_as_csv(os, data.action_id()) << ',';
       write_optional_string_as_csv(os, data.order_id()) << ',';
       os << data.cur_value();
+      return os;
+    }
+  };
+
+  struct ResearchPostClickData
+  {
+    RequestId request_id;
+    bool landing_bounced = false;
+    unsigned long landing_session_time = 0;
+    unsigned long landing_page_views = 0;
+    bool landing_is_new_user = false;
+  };
+
+  using ResearchPostClickCollector = SeqCollector<ResearchPostClickData>;
+
+  struct ResearchPostClickTraits:
+    LogDefaultTraits<ResearchPostClickCollector, false, false>
+  {
+    static const char* csv_base_name()
+    {
+      return "RPostClick";
+    }
+
+    static const char* csv_header()
+    {
+      return "RequestID,LandingBounced,LandingSessionTime,LandingPageViews,LandingIsNewUser";
+    }
+
+    static std::ostream&
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
+    {
+      os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
+      os << data.landing_bounced << ',';
+      os << data.landing_session_time << ',';
+      os << data.landing_page_views << ',';
+      os << data.landing_is_new_user;
       return os;
     }
   };

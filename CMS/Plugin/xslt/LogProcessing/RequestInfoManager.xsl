@@ -313,6 +313,7 @@
         <cfg:Request priority="2"/>
         <cfg:Impression priority="2"/>
         <cfg:Click priority="2"/>
+        <cfg:PostClickAction priority="2"/>
         <cfg:AdvertiserAction priority="2"/>
         <cfg:PassbackImpression priority="1"/>
         <cfg:TagRequest priority="1"/>
@@ -347,6 +348,7 @@
           select="$full-cluster-path//service[@descriptor = $clickhouse-uploader-descriptor]"/>
 
         <cfg:CreativeStat period="{$flush-logs-period}"/>
+        <cfg:PostClickStat period="{$flush-logs-period}"/>
         <cfg:UserProperties period="{$flush-logs-period}"/>
         <cfg:ChannelPerformance period="{$flush-logs-period}"/>
         <cfg:SiteChannelStat period="{$flush-logs-period}"/>
@@ -373,6 +375,7 @@
           </xsl:if>
           <cfg:ResearchImpression period="{$flush-logs-period}"/>
           <cfg:ResearchClick period="{$flush-logs-period}"/>
+          <cfg:ResearchPostClick period="{$flush-logs-period}"/>
           <cfg:BidCostStat period="{$flush-logs-period}"/>
         </xsl:if>
         <cfg:RequestOperation chunks_count="24" period="{$flush-logs-period}"/>

@@ -30,6 +30,7 @@
 #include <LogCommons/ExpressionPerformance.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
+#include <LogCommons/PostClickStat.hpp>
 #include <LogCommons/SearchEngineStat.hpp>
 #include <LogCommons/SearchTermStat.hpp>
 #include <LogCommons/SiteReferrerStat.hpp>
@@ -391,6 +392,7 @@ namespace AdServer::LogProcessing
   };
 
   typedef Aux_::BaseLogTraitsHelper<CreativeStatTraits> CreativeStatExtTraits;
+  typedef Aux_::BaseLogTraitsHelper<PostClickStatTraits> PostClickStatExtTraits;
 
   class CreativeStatDbSaver;
   class CreativeStatPgCsvSaver;
@@ -400,6 +402,8 @@ namespace AdServer::LogProcessing
   class CmpStatPgCsvSaver;
   class DeferredCmpStatDbSaver;
   class DeferredCmpStatPgCsvSaver;
+  class PostClickStatDbSaver;
+  class DeferredPostClickStatDbSaver;
 
   struct CustomCreativeStatExtTraits: public Aux_::BaseLogTraitsHelper<
     CreativeStatCsvTraits,
@@ -415,6 +419,20 @@ namespace AdServer::LogProcessing
   {
     typedef DeferredCreativeStatDbSaver DbSaverType;
     typedef DeferredCreativeStatPgCsvSaver PgCsvSaverType;
+  };
+
+  struct CustomPostClickStatExtTraits: public Aux_::BaseLogTraitsHelper<
+    PostClickStatTraits,
+    Aux_::NoConvertion,
+    Aux_::RejectDeferredFiles>
+  {
+    using DbSaverType = PostClickStatDbSaver;
+  };
+
+  struct DeferredPostClickStatExtTraits:
+    public Aux_::BaseLogTraitsHelper<PostClickStatTraits>
+  {
+    using DbSaverType = DeferredPostClickStatDbSaver;
   };
 
   typedef Aux_::BaseLogTraitsHelper<ExpressionPerformanceCsvTraits>

@@ -135,6 +135,8 @@ namespace AdServer::LogProcessing
       (db_enabled() ? 1 : 0);
     num_threads += calc_max_number_of_threads(config.CreativeStat()) +
       (db_enabled() ? 1 : 0);
+    num_threads += calc_max_number_of_threads(config.PostClickStat()) +
+      (db_enabled() ? 1 : 0);
 
     num_threads += calc_max_number_of_threads(config.WebStat());
 

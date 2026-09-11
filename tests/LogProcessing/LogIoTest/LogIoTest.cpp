@@ -51,6 +51,7 @@
 #include <LogCommons/SiteStat.hpp>
 #include <LogCommons/SiteUserStat.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
+#include <LogCommons/PostClickStat.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogProcessing/LogGeneralizer/LogTypeCsvTraits.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
@@ -858,6 +859,49 @@ int main(int argc, char **argv)
     collector.add(key1, data);
     collector.add(key2, data);
     LogIoTester<CreativeStatTraits>(dump_on_fail).test(collector);
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
+
+  try
+  {
+    PostClickStatCollector collector;
+    PostClickStatCollector::DataT data;
+    CreativeStatInnerKey creative_key(
+      1,
+      10,
+      2,
+      OptionalUInt32(3),
+      "RU",
+      20,
+      30,
+      40,
+      1,
+      2,
+      3,
+      4,
+      5,
+      CreativeStatInnerKey::DeliveryThresholdT("0.19999"),
+      1,
+      1,
+      false,
+      false,
+      false,
+      'U',
+      CreativeStatInnerKey::GeoChannelIdOptional(),
+      CreativeStatInnerKey::DeviceChannelIdOptional(),
+      111,
+      true,
+      66);
+    data.add(
+      PostClickStatInnerKey(
+        std::move(creative_key),
+        17,
+        DayTimestamp(TEST_TIME)),
+      PostClickStatInnerData(1, 1, 42, 3, 0, 1));
+    collector.add(
+      PostClickStatCollector::KeyT(TEST_TIME, TEST_TIME),
+      std::move(data));
+    LogIoTester<PostClickStatTraits>(dump_on_fail).test(collector);
   }
   HANDLE_EXCEPTIONS(exitcode, 1);
 

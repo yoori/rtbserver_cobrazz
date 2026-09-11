@@ -44,6 +44,12 @@ namespace AdServer::RequestInfoSvcs
       const PostActionInfo& action_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
+    void
+    process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
     virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,
@@ -65,6 +71,13 @@ namespace AdServer::RequestInfoSvcs
       unsigned long op,
       Generics::MemBuf&& mem_buf)
       /*throw(eh::Exception)*/;
+
+    void
+    write_post_action_operation_(
+      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info,
+      bool click_action);
   };
 
   using RequestOperationSaver_var = ReferenceCounting::SmartPtr<RequestOperationSaver>;

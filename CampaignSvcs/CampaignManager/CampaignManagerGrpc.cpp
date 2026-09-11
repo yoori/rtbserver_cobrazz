@@ -975,6 +975,7 @@ namespace AdServer::CampaignSvcs
       target.set_bid_strategy(source.bid_strategy);
       pack_revenue_decimal(source.min_ctr_goal(), *target.mutable_min_ctr_goal());
       target.set_timestamp(pack_time(source.timestamp));
+      pack_revenue_decimal(source.min_vtr_goal, *target.mutable_min_vtr_goal());
     }
 
     void

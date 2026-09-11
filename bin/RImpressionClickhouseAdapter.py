@@ -41,6 +41,7 @@ if __name__ == "__main__":
     ('ssp_ctr', None),
     ('ssp_viewability', None),
     ('ssp_vtr', None),
+    ('page_keywords', None),
   ]
   additional_info_field_map = {
     'ssp_tag_id': 'ssp_tag_id',
@@ -58,6 +59,7 @@ if __name__ == "__main__":
       next(it)  # skip header - it contains problem
       for row in it:
         additional_info = {}
+        page_keywords = row[29] if len(row) >= 31 else ''
         if row:
           additional_info_raw = row[-1].strip()
           if additional_info_raw:
@@ -66,7 +68,12 @@ if __name__ == "__main__":
             except json.JSONDecodeError:
               additional_info = {}
 
-        writer.writerow([
-          row[field_index] if field_index is not None else additional_info.get(additional_info_field_map[field_name], '')
-          for field_name, field_index in field_filling
-        ])
+        values = []
+        for field_name, field_index in field_filling:
+          if field_index is not None:
+            values.append(row[field_index])
+          elif field_name == 'page_keywords':
+            values.append(page_keywords)
+          else:
+            values.append(additional_info.get(additional_info_field_map[field_name], ''))
+        writer.writerow(values)

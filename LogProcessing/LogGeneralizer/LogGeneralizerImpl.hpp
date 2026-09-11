@@ -203,6 +203,13 @@ namespace AdServer::LogProcessing
     )
       /*throw(eh::Exception)*/;
 
+    template <class LogProcTraits>
+    void
+    init_deferrable_log_proc_info(
+      const PostgresConnectionFactoryImpl_var& pg_conn_factory,
+      const LogProcessingParamsDeferrableTypeOptional& log_proc_params)
+      /*throw(eh::Exception)*/;
+
     class CheckLogsCondition
     {
     public:

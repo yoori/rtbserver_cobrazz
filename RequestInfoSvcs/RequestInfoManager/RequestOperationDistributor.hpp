@@ -52,6 +52,18 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const PostActionInfo& action_info);
 
+    void
+    process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
     virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,

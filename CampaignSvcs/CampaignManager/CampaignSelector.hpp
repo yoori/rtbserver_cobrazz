@@ -141,6 +141,7 @@ namespace AdServer::CampaignSvcs
     CampaignSelector(
       const CampaignIndex* campaign_index,
       const CTR::CTRProvider* ctr_provider,
+      const CTR::CTRProvider* vtr_provider,
       const CTR::CTRProvider* conv_rate_provider,
       Generics::MonoAllocatorArena* arena);
 
@@ -206,6 +207,7 @@ namespace AdServer::CampaignSvcs
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* vtr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const Tag::SizeMap& tag_sizes,
       const ChannelIdHashSet& channels,
@@ -222,6 +224,7 @@ namespace AdServer::CampaignSvcs
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* vtr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const Tag::SizeMap& tag_sizes,
       const ChannelIdHashSet& matched_channels,
@@ -240,6 +243,7 @@ namespace AdServer::CampaignSvcs
       const Tag* tag,
       const Tag::SizeMap& tag_sizes,
       const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* vtr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& channels,
       const CampaignKeywordMap& hit_keywords,
@@ -270,6 +274,7 @@ namespace AdServer::CampaignSvcs
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* vtr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
@@ -309,6 +314,7 @@ namespace AdServer::CampaignSvcs
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* vtr_calculation,
       const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& candidates)
@@ -524,10 +530,18 @@ namespace AdServer::CampaignSvcs
       const RevenueDecimal& min_ecpm,
       const RevenueDecimal& campaign_ecpm);
 
+    static bool
+    check_min_vtr_(
+      const Campaign* campaign,
+      const Creative* creative,
+      const CTR::CTRProvider::CalculationContext* vtr_calculation_context)
+      noexcept;
+
   private:
     const CampaignIndex* campaign_selection_index_;
     ConstCampaignConfigPtr campaign_config_;
     CTR::ConstCTRProvider_var ctr_provider_;
+    CTR::ConstCTRProvider_var vtr_provider_;
     CTR::ConstCTRProvider_var conv_rate_provider_;
     Generics::MonoAllocatorArena* arena_;
   };

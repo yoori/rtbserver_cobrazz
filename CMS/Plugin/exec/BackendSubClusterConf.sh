@@ -26,6 +26,7 @@ LOG_GENERALIZER_DESCR=$BACKEND_CLUSTER/LogGeneralizer
 LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
 CLICKHOUSE_UPLOADER_DESCR=$BACKEND_CLUSTER/ClickhouseUploader
+YANDEX_POST_CLICK_IMPORTER_DESCR=$BACKEND_CLUSTER/YandexPostClickImporter
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
 
 LOCAL_PROXY_DESCR=AdCluster/BackendSubCluster/LocalProxy
@@ -83,6 +84,7 @@ SYNC_PROCESSING_XPATH="$CLUSTER_XPATH/..//service["\
 "@descriptor = '$LOG_GENERALIZER_DESCR' or "\
 "@descriptor = '$EXPRESSION_MATCHER_DESCR' or "\
 "@descriptor = '$REQUEST_INFO_MANAGER_DESCR' or "\
+"@descriptor = '$YANDEX_POST_CLICK_IMPORTER_DESCR' or "\
 "@descriptor = '$USER_INFO_MANAGER_DESCR' or "\
 "@descriptor = '$STAT_RECEIVER_DESCR']"
 
@@ -139,6 +141,19 @@ $EXEC/ServiceConf.sh \
   --app-xml $APP_XML \
   --xsl $XSLT_ROOT/LogProcessing/ClickhouseUploader.xsl \
   --out-file ClickhouseUploaderConfig.json \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
+## configure YandexPostClickImporter
+YANDEX_POST_CLICK_IMPORTER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$YANDEX_POST_CLICK_IMPORTER_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$YANDEX_POST_CLICK_IMPORTER_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/LogProcessing/YandexPostClickImporter.xsl \
+  --out-file YandexPostClickImporterConfig.json \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT
 

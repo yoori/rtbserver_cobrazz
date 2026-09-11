@@ -458,10 +458,10 @@ namespace RequestInfoSvcs
     viewability;
 
     ctr;
-    array<PostActionWriter> post_imp_pending_actions;
-    post_imp_done_actions;
-    array<PostActionWriter> post_click_pending_actions;
-    post_click_done_actions;
+    array<PostActionWriter>(cpp_vector) post_imp_pending_actions;
+    (cpp_vector) post_imp_done_actions;
+    array<PostActionWriter>(cpp_vector) post_click_pending_actions;
+    (cpp_vector) post_click_done_actions;
 
     campaign_freq;
     referer_hash;

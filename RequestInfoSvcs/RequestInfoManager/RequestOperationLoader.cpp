@@ -320,15 +320,58 @@ namespace AdServer::RequestInfoSvcs
         throw Exception("unexpected end of file");
       }
 
-      RequestOperationActionReader op_reader(membuf.data(), op_size);
+      RequestOperationVersionReader version_reader(membuf.data(), op_size);
+      AdServer::Commons::UserId user_id;
+      AdServer::Commons::RequestId request_id;
+      PostActionInfo action_info;
+      unsigned long action_type = 0;
+      if (version_reader.version() == 0)
+      {
+        RequestOperationActionReader op_reader(membuf.data(), op_size);
+        user_id = op_reader.user_id()[0] ?
+          AdServer::Commons::UserId(op_reader.user_id()) :
+          AdServer::Commons::UserId();
+        request_id = AdServer::Commons::RequestId(op_reader.request_id());
+        action_info = PostActionInfo(
+          Generics::Time(op_reader.time()),
+          op_reader.action_name(),
+          std::string());
+        action_type = op_reader.action_type();
+      }
+      else if (version_reader.version() == 1)
+      {
+        RequestOperationPostActionReader op_reader(membuf.data(), op_size);
+        user_id = op_reader.user_id()[0] ?
+          AdServer::Commons::UserId(op_reader.user_id()) :
+          AdServer::Commons::UserId();
+        request_id = AdServer::Commons::RequestId(op_reader.request_id());
+        action_info = PostActionInfo(
+          Generics::Time(op_reader.time()),
+          op_reader.action_name(),
+          op_reader.action_value());
+        action_type = op_reader.action_type();
+      }
+      else
+      {
+        Stream::Error ostr;
+        ostr << "unsupported post action version " << version_reader.version();
+        throw Exception(ostr);
+      }
 
-      const AdServer::Commons::UserId user_id = op_reader.user_id()[0] ?
-        AdServer::Commons::UserId(op_reader.user_id()) :
-        AdServer::Commons::UserId();
-      co_await request_operation_processor_->co_process_impression_post_action(
-        user_id,
-        AdServer::Commons::RequestId(op_reader.request_id()),
-        PostActionInfo(Generics::Time(op_reader.time()), op_reader.action_name()));
+      if (action_type == 1)
+      {
+        co_await request_operation_processor_->co_process_click_post_action(
+          user_id,
+          request_id,
+          action_info);
+      }
+      else
+      {
+        co_await request_operation_processor_->co_process_impression_post_action(
+          user_id,
+          request_id,
+          action_info);
+      }
     }
     catch(const eh::Exception& ex)
     {

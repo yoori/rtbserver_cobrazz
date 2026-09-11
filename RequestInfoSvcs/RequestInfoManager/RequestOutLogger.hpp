@@ -40,6 +40,7 @@ namespace AdServer::RequestInfoSvcs
       Logging::Logger* logger,
       Generics::ActiveObjectCallback* callback,
       const LogProcessing::LogFlushTraits& creative_stat_flush,
+      const LogProcessing::LogFlushTraits& post_click_stat_flush,
       const LogProcessing::LogFlushTraits& user_properties_flush,
       const LogProcessing::LogFlushTraits& channel_performance_flush,
       const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -61,6 +62,7 @@ namespace AdServer::RequestInfoSvcs
       const LogProcessing::LogFlushTraits* research_bid_flush,
       const LogProcessing::LogFlushTraits* research_impression_flush,
       const LogProcessing::LogFlushTraits* research_click_flush,
+      const LogProcessing::LogFlushTraits* research_post_click_flush,
       const LogProcessing::LogFlushTraits* bid_cost_stat_flush,
       Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting,
       unsigned long colo_id)
@@ -125,6 +127,12 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::RequestId&,
       const PostActionInfo&)
       /*throw(RequestContainerProcessor::Exception)*/
+    {}
+
+    void
+    process_click_post_action(
+      const AdServer::Commons::RequestId&,
+      const PostActionInfo&) override
     {}
 
     // CampaignReachProcessor

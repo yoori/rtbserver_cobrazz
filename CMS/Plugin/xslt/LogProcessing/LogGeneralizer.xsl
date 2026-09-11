@@ -249,6 +249,17 @@
       </xsl:call-template>
 
       <xsl:call-template name="OutputLogsConfigs">
+        <xsl:with-param name="list" select="'PostClickStat'"/>
+        <xsl:with-param name="check-logs-period" select="$check-logs-period"/>
+        <xsl:with-param name="flush-logs-period" select="$flush-logs-period"/>
+        <xsl:with-param name="flush-logs-size" select="$flush-logs-size"/>
+        <xsl:with-param name="stat-node" select="$stat-config"/>
+        <xsl:with-param name="upload-tasks" select="$max-upload-task-count"/>
+        <xsl:with-param name="deferred-period" select="$check-deferred-logs-period"/>
+        <xsl:with-param name="distrib_count" select="$distrib_count"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="OutputLogsConfigs">
         <xsl:with-param name="list" select="'SearchTermStat'"/>
         <xsl:with-param name="check-logs-period" select="$check-logs-period"/>
         <xsl:with-param name="flush-logs-period" select="$flush-logs-period"/>

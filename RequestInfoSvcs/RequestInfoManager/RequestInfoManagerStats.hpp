@@ -12,6 +12,7 @@ namespace AdServer::LogProcessing
   class ClickTraits;
   class ImpressionTraits;
   class PassbackImpressionTraits;
+  class PostClickActionTraits;
   class RequestTraits;
   class TagRequestTraits;
 }
@@ -29,7 +30,7 @@ namespace AdServer::RequestInfoSvcs
     /// The number of columns in MIB table of all logs stats
     static const std::size_t LOG_VARS_COUNT = 5;
     /// The number of records in MIB table of all logs stats
-    static const std::size_t LOG_COUNT = 6;
+    static const std::size_t LOG_COUNT = 7;
     static const char* LOG_CORBA_NAMES[LOG_COUNT];
   };
 
@@ -56,9 +57,13 @@ namespace AdServer::RequestInfoSvcs
   {
     enum { result = 4 };
   };
-  template <> struct Type2Index<LogProcessing::TagRequestTraits>
+  template <> struct Type2Index<LogProcessing::PostClickActionTraits>
   {
     enum { result = 5 };
+  };
+  template <> struct Type2Index<LogProcessing::TagRequestTraits>
+  {
+    enum { result = 6 };
   };
 
 

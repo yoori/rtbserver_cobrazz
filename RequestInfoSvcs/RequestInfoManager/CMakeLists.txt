@@ -57,6 +57,15 @@ target_link_libraries(PassbackContainer
     ProfileMapRocksDB
 )
 
+add_library(PostClickActionValue STATIC
+  PostClickActionValue.cpp
+)
+
+target_link_libraries(PostClickActionValue
+  PRIVATE
+    Commons
+)
+
 add_library(RequestInfoContainer SHARED
   RequestInfoContainer.cpp
 )
@@ -66,6 +75,7 @@ target_link_libraries(RequestInfoContainer
     Generics
     Commons
     CampaignBilling
+    PostClickActionValue
     ProfileMapRocksDB
     RequestProfilePST
     RequestInfoManagerCompatibility
@@ -170,6 +180,7 @@ add_library(RequestOutLogger STATIC
 target_link_libraries(RequestOutLogger
   PRIVATE
     LogCommons
+    PostClickActionValue
 )
 
 add_library(TagRequestProfiler STATIC

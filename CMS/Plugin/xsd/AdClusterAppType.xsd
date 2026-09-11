@@ -267,6 +267,20 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="vtr_path" type="NoLeadingTrailingSpaces" default="vtr">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source path for VTR configs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="vtr_expire_timeout" type="xsd:positiveInteger" default="86400">
+      <xsd:annotation>
+        <xsd:documentation>
+          VTR algorithms expiry timeout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="conv_path" type="NoLeadingTrailingSpaces" default="conv">
       <xsd:annotation>
         <xsd:documentation>

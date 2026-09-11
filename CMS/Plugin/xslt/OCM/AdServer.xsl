@@ -354,6 +354,15 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="$be-cluster-path/service[
+            @descriptor = $yandex-post-click-importer-descriptor]"/>
+        <xsl:with-param name="service-name" select="'lp-YandexPostClickImporter'"/>
+        <xsl:with-param name="service-type"
+          select="'AdServer::LogProcessing::YandexPostClickImporter'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
           select="$be-cluster-path/service[@descriptor = $dictionary-provider-descriptor]"/>
         <xsl:with-param name="service-name" select="'be-DictionaryProvider'"/>
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::DictionaryProvider'"/>

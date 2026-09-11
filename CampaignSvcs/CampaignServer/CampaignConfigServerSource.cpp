@@ -970,6 +970,8 @@ namespace AdServer::CampaignSvcs
       campaign->bid_strategy = static_cast<BidStrategy>(campaign_info.bid_strategy);
       campaign->min_ctr_goal = CorbaAlgs::unpack_decimal<RevenueDecimal>(
         campaign_info.min_ctr_goal);
+      campaign->min_vtr_goal = CorbaAlgs::unpack_decimal<RevenueDecimal>(
+        campaign_info.min_vtr_goal);
 
       campaign->timestamp = CorbaAlgs::unpack_time(campaign_info.timestamp);
 

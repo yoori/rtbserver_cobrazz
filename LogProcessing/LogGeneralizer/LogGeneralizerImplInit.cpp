@@ -72,6 +72,14 @@ namespace AdServer::LogProcessing
         DeferredLogPgCsvProcessorType;
   };
 
+  struct PostClickStatProcTraits: ProcTraits<PostClickStatProcessor>
+  {
+    using DeferrableLogProcessorType = GenericLogProcessorImpl<
+      CustomPostClickStatExtTraits,
+      LogVersionManager2<CustomPostClickStatExtTraits>>;
+    using DeferredLogProcessorType = CustomLogProcessorImpl<DeferredPostClickStatExtTraits>;
+  };
+
   /// Write CSV when db_enabled()
   typedef ProcTraits<
     ChannelOverlapUserStatProcessor2, ChannelOverlapUserStatProcessor>
@@ -215,6 +223,77 @@ namespace AdServer::LogProcessing
     move_deferred_logs_task->deliver();
   }
 
+  template <class LogProcTraits>
+  void
+  LogGeneralizerImpl::init_deferrable_log_proc_info(
+    const PostgresConnectionFactoryImpl_var& pg_conn_factory,
+    const LogProcessingParamsDeferrableTypeOptional& log_proc_params)
+    /*throw(eh::Exception)*/
+  {
+    if (!log_proc_params.present())
+    {
+      return;
+    }
+
+    const CollectorBundleParams bundle_params =
+    {
+      log_proc_params.get().max_size(),
+    };
+
+    using Traits = typename LogProcTraits::LogProcessorType::Traits;
+    using DeferrableTraits = typename LogProcTraits::DeferrableLogProcessorType::Traits;
+    using DeferredTraits = typename LogProcTraits::DeferredLogProcessorType::Traits;
+    using LogProcessor = typename LogProcTraits::DeferrableLogProcessorType;
+    using DeferredLogProcessor = typename LogProcTraits::DeferredLogProcessorType;
+
+    std::string in_dir = in_logs_dir_ + Traits::log_base_name();
+    std::string out_dir = out_logs_dir_ + Traits::log_base_name();
+    LogProcThreadInfo_var context = ProcessingContexts::create<DeferrableTraits>(
+      log_proc_params,
+      in_dir,
+      logger_,
+      task_runner_,
+      scheduler_,
+      callback_,
+      proc_stat_impl_);
+
+    std::string deferred_in_dir = in_dir + "/" + DEFERRED_DIR;
+    LogProcThreadInfo_var deferred_context = ProcessingContexts::create<DeferredTraits>(
+      log_proc_params,
+      deferred_in_dir,
+      logger_,
+      task_runner_,
+      scheduler_,
+      callback_,
+      proc_stat_impl_);
+
+    context->log_processor = new LogProcessor(
+      in_dir,
+      new typename LogProcessor::LogVersionManagerT(
+        context,
+        out_dir,
+        log_generalizer_stat_map_bundle_,
+        pg_conn_factory,
+        bundle_params),
+      context->logger,
+      proc_stat_impl_,
+      fr_interrupter_);
+
+    deferred_context->log_processor = new DeferredLogProcessor(
+      deferred_context,
+      deferred_in_dir,
+      out_dir,
+      pg_conn_factory,
+      bundle_params,
+      proc_stat_impl_,
+      fr_interrupter_,
+      log_generalizer_stat_map_bundle_);
+
+    Task_var move_deferred_logs_task(
+      new MoveLogsTask(this, context, deferred_context));
+    move_deferred_logs_task->deliver();
+  }
+
   void
   LogGeneralizerImpl::apply_log_proc_config_(
     const LogProcessingType &config,
@@ -285,12 +364,18 @@ namespace AdServer::LogProcessing
       init_deferrable_log_proc_info<CmpStatProcTraits>(pg_conn_factory, config.CMPStat());
 
       init_deferrable_log_proc_info<CreativeStatProcTraits>(pg_conn_factory, config.CreativeStat());
+
+      init_deferrable_log_proc_info<PostClickStatProcTraits>(
+        pg_conn_factory,
+        config.PostClickStat());
     }
     else
     {
       init_log_proc_info_<CmpStatProcTraits>(config.CMPStat());
 
       init_log_proc_info_<CreativeStatProcTraits>(config.CreativeStat());
+
+      init_log_proc_info_<PostClickStatProcTraits>(config.PostClickStat());
     }
 
     /// Write in CSV when db_enabled()

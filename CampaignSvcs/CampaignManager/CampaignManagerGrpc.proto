@@ -919,6 +919,7 @@ message ConfigCampaign {
   uint64 bid_strategy = 40;
   DecimalInfo min_ctr_goal = 41;
   bytes timestamp = 42;
+  DecimalInfo min_vtr_goal = 43;
 }
 
 message ConfigAdaptedCampaign {

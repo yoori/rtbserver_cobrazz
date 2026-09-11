@@ -85,6 +85,28 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
+  RequestOperationDistributor::process_click_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    get_request_operation_processor_(new_user_id)->process_click_post_action(
+      new_user_id,
+      request_id,
+      action_info);
+  }
+
+  AdServer::Commons::Awaitable<void>
+  RequestOperationDistributor::co_process_click_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    co_await get_request_operation_processor_(new_user_id)->
+      co_process_click_post_action(new_user_id, request_id, action_info);
+  }
+
+  void
   RequestOperationDistributor::change_request_user_id(
     const AdServer::Commons::UserId& new_user_id,
     const AdServer::Commons::RequestId& request_id,

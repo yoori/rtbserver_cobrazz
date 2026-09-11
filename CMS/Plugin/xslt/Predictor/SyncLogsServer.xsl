@@ -78,6 +78,12 @@ path = <xsl:value-of select="$workspace-root"/>/log/Predictor/CTRConfig
 use chroot = false
 read only = true
 
+[vtr]
+comment = AdServer VTR config
+path = <xsl:value-of select="$workspace-root"/>/log/Predictor/VTRConfig
+use chroot = false
+read only = true
+
 [conv]
 comment = AdServer Conv config
 path = <xsl:value-of select="$workspace-root"/>/log/Predictor/ConvConfig

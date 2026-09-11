@@ -55,6 +55,18 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const PostActionInfo& action_info);
 
+    void
+    process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
+    AdServer::Commons::Awaitable<void>
+    co_process_click_post_action(
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info) override;
+
     virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,
@@ -176,6 +188,30 @@ namespace AdServer::RequestInfoSvcs
         new_user_id,
         request_id,
         action_info);
+    }
+  }
+
+  inline void
+  CompositeRequestOperationProcessor::process_click_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    for (auto& processor : child_processors_)
+    {
+      processor->process_click_post_action(new_user_id, request_id, action_info);
+    }
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  CompositeRequestOperationProcessor::co_process_click_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    for (auto& processor : child_processors_)
+    {
+      co_await processor->co_process_click_post_action(new_user_id, request_id, action_info);
     }
   }
 

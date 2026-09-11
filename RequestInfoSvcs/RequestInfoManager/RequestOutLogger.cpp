@@ -11,6 +11,7 @@
 #include <LogCommons/CcgStat.hpp>
 #include <LogCommons/ActionStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
+#include <LogCommons/PostClickStat.hpp>
 #include <LogCommons/CmpStat.hpp>
 #include <LogCommons/ChannelImpInventory.hpp>
 #include <LogCommons/SiteUserStat.hpp>
@@ -29,6 +30,7 @@
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/ResearchLogs.hpp>
 
+#include "PostClickActionValue.hpp"
 #include "RequestOutLogger.hpp"
 
 namespace
@@ -75,6 +77,43 @@ namespace AdServer::RequestInfoSvcs
   {
     const RevenueDecimal CPM_MULTILPIER = RevenueDecimal (1000, 0);
     const RevenueDecimal REVENUE_ONE(false, 1, 0);
+
+    LogProcessing::CreativeStatInnerKey
+    make_creative_stat_inner_key(const RequestInfo& request_info)
+    {
+      return LogProcessing::CreativeStatInnerKey(
+        request_info.colo_id,
+        request_info.publisher_account_id,
+        request_info.tag_id,
+        request_info.size_id ?
+          LogProcessing::OptionalUInt32(request_info.size_id) :
+          LogProcessing::OptionalUInt32(),
+        request_info.country,
+        request_info.adv_account_id,
+        request_info.campaign_id,
+        request_info.ccg_id,
+        request_info.cc_id,
+        request_info.adv_revenue.rate_id,
+        request_info.isp_revenue.rate_id,
+        request_info.pub_revenue.rate_id,
+        request_info.currency_exchange_id,
+        request_info.tag_delivery_threshold,
+        request_info.num_shown,
+        request_info.position,
+        request_info.test_request,
+        request_info.fraud == RequestInfo::RS_FRAUD,
+        request_info.walled_garden,
+        request_info.user_status,
+        request_info.geo_channel_id ?
+          LogProcessing::OptionalValue<unsigned long>(request_info.geo_channel_id) :
+          LogProcessing::OptionalValue<unsigned long>(),
+        request_info.device_channel_id ?
+          LogProcessing::OptionalValue<unsigned long>(request_info.device_channel_id) :
+          LogProcessing::OptionalValue<unsigned long>(),
+        request_info.ctr_reset_id,
+        request_info.hid_profile,
+        request_info.viewability);
+    }
   }
 
   //
@@ -297,6 +336,23 @@ namespace AdServer::RequestInfoSvcs
       }
     }
 
+    void
+    process_post_click_action(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      try
+      {
+        process_post_click_action_impl(request_info, action_info);
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << name() << "::process_post_click_action(): eh::Exception caught: " << ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
     virtual void
     process_custom_action(
       const RequestInfo& request_info,
@@ -339,6 +395,13 @@ namespace AdServer::RequestInfoSvcs
 
     virtual void
     process_post_imp_action_impl(
+      const RequestInfo&,
+      const PostActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/
+    {}
+
+    virtual void
+    process_post_click_action_impl(
       const RequestInfo&,
       const PostActionInfo&)
       /*throw(RequestActionProcessor::Exception)*/
@@ -624,36 +687,7 @@ namespace AdServer::RequestInfoSvcs
     {
       CollectorT::KeyT key(ri.time, ri.adv_time);
       CollectorT::DataT add_data;
-      CollectorT::DataT::KeyT inner_key(
-        ri.colo_id,
-        ri.publisher_account_id,
-        ri.tag_id,
-        ri.size_id ? LogProcessing::OptionalUInt32(ri.size_id) : LogProcessing::OptionalUInt32(),
-        ri.country,
-        ri.adv_account_id,
-        ri.campaign_id,
-        ri.ccg_id,
-        ri.cc_id,
-        ri.adv_revenue.rate_id,
-        ri.isp_revenue.rate_id,
-        ri.pub_revenue.rate_id,
-        ri.currency_exchange_id,
-        ri.tag_delivery_threshold,
-        ri.num_shown,
-        ri.position,
-        ri.test_request,
-        ri.fraud == RequestInfo::RS_FRAUD,
-        ri.walled_garden,
-        ri.user_status,
-        ri.geo_channel_id ?
-          LogProcessing::OptionalValue<unsigned long>(ri.geo_channel_id) :
-          LogProcessing::OptionalValue<unsigned long>(),
-        ri.device_channel_id ?
-          LogProcessing::OptionalValue<unsigned long>(ri.device_channel_id) :
-          LogProcessing::OptionalValue<unsigned long>(),
-        ri.ctr_reset_id,
-        ri.hid_profile,
-        ri.viewability);
+      CollectorT::DataT::KeyT inner_key = make_creative_stat_inner_key(ri);
 
       add_data.add(inner_key, data);
       add_record(key, add_data);
@@ -2687,6 +2721,7 @@ namespace AdServer::RequestInfoSvcs
           data.conv_rate_algorithm_id = info.conv_rate_algorithm_id;
           data.predicted_conv_rate = info.conv_rate;
           data.tag_predicted_viewability = info.viewability;
+          data.page_keywords = info.page_keywords;
           data.additional_info = info.additional_info;
 
           if (info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
@@ -2783,6 +2818,102 @@ namespace AdServer::RequestInfoSvcs
     }
   };
 
+  class ResearchPostClickLogger:
+    public virtual RequestActionProcessor,
+    public virtual AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::ResearchPostClickTraits,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<
+        AdServer::LogProcessing::ResearchPostClickTraits>>,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    explicit ResearchPostClickLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : AdServer::LogProcessing::LogHolderSharded<
+          AdServer::LogProcessing::ResearchPostClickTraits,
+          AdServer::LogProcessing::SimpleCsvSavePolicy<
+            AdServer::LogProcessing::ResearchPostClickTraits>>(flush_traits)
+    {}
+
+    void process_request(const RequestInfo&, const ProcessingState&) override {}
+    void process_impression(const RequestInfo&, const ImpressionInfo&, const ProcessingState&) override {}
+    void process_click(const RequestInfo&, const ProcessingState&) override {}
+    void process_action(const RequestInfo&) override {}
+
+    void
+    process_post_click_action(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      if (request_info.test_request || action_info.name != "landing")
+      {
+        return;
+      }
+
+      CollectorT::DataT data;
+      data.request_id = request_info.request_id;
+      const auto value = parse_post_click_action_value(action_info.value);
+      data.landing_bounced = value.landing_bounced;
+      data.landing_session_time = value.landing_session_time;
+      data.landing_page_views = value.landing_page_views;
+      data.landing_is_new_user = value.landing_is_new_user;
+      add_record(std::move(data));
+    }
+  };
+
+  class PostClickStatLogger:
+    public RequestLoggerAdapter<AdServer::LogProcessing::PostClickStatTraits>
+  {
+  public:
+    explicit PostClickStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::PostClickStatTraits>(flush_traits)
+    {}
+
+    const char* name() noexcept override
+    {
+      return "PostClickStatLogger";
+    }
+
+  private:
+    void process_request_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_impression_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_click_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_action_impl(const RequestInfo&) override {}
+
+    void
+    process_post_click_action_impl(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      if (request_info.test_request || action_info.name != "landing")
+      {
+        return;
+      }
+
+      const auto value = parse_post_click_action_value(action_info.value);
+      CollectorT::DataT data;
+      data.add(
+        CollectorT::DataT::KeyT(
+          make_creative_stat_inner_key(request_info),
+          value.yandex_ref_id,
+          LogProcessing::DayTimestamp(value.yandex_event_date)),
+        CollectorT::DataT::DataT(
+          1,
+          value.landing_bounced ? 1 : 0,
+          value.landing_session_time,
+          value.landing_page_views,
+          value.landing_is_new_user ? 1 : 0,
+          value.yandex_reporting_comparable ? 1 : 0));
+
+      const Generics::Time advertiser_time_offset =
+        request_info.adv_time - request_info.time;
+      add_record(
+        CollectorT::KeyT(
+          action_info.time,
+          action_info.time + advertiser_time_offset),
+        std::move(data));
+    }
+  };
+
   /**
    * RequestOutLogger
    */
@@ -2790,6 +2921,7 @@ namespace AdServer::RequestInfoSvcs
     Logging::Logger* logger,
     Generics::ActiveObjectCallback* callback,
     const LogProcessing::LogFlushTraits& creative_stat_flush,
+    const LogProcessing::LogFlushTraits& post_click_stat_flush,
     const LogProcessing::LogFlushTraits& user_properties_flush,
     const LogProcessing::LogFlushTraits& channel_performance_flush,
     const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -2811,6 +2943,7 @@ namespace AdServer::RequestInfoSvcs
     const LogProcessing::LogFlushTraits* research_bid_flush,
     const LogProcessing::LogFlushTraits* research_impression_flush,
     const LogProcessing::LogFlushTraits* research_click_flush,
+    const LogProcessing::LogFlushTraits* research_post_click_flush,
     const LogProcessing::LogFlushTraits* bid_cost_stat_flush,
     Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting,
     unsigned long colo_id)
@@ -2823,6 +2956,9 @@ namespace AdServer::RequestInfoSvcs
       new UserPropertiesLogger(user_properties_flush)).in());
 
     add_request_logger_(RequestLoggerBase_var(new CreativeStatLogger(creative_stat_flush)).in());
+
+    add_request_logger_(RequestLoggerBase_var(
+      new PostClickStatLogger(post_click_stat_flush)).in());
 
     add_request_logger_(RequestLoggerBase_var(
       new ChannelPerformanceLogger(channel_performance_flush)).in());
@@ -2944,6 +3080,14 @@ namespace AdServer::RequestInfoSvcs
     else
     {
       research_click_logger_ = new NullUnmergedClickProcessor;
+    }
+
+    if (research_post_click_flush)
+    {
+      ReferenceCounting::SmartPtr<ResearchPostClickLogger> research_post_click_logger =
+        new ResearchPostClickLogger(*research_post_click_flush);
+      request_loggers_.push_back(research_post_click_logger);
+      add_child_log_holder(research_post_click_logger);
     }
 
     dump_task_runner_->activate_object();

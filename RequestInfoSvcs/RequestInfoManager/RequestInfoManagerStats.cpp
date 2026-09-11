@@ -16,6 +16,7 @@ namespace AdServer::RequestInfoSvcs
     "impression.",
     "passbackImpression.",
     "request.",
+    "postClickAction.",
     "tagRequest.",
   };
 

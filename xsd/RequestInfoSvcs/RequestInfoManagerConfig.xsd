@@ -224,6 +224,7 @@
       <xsd:element name="Request" type="InLogType"/>
       <xsd:element name="Impression" type="InLogType"/>
       <xsd:element name="Click" type="InLogType"/>
+      <xsd:element name="PostClickAction" type="InLogType"/>
       <xsd:element name="AdvertiserAction" type="InLogType"/>
       <xsd:element name="PassbackImpression" type="InLogType"/>
       <xsd:element name="TagRequest" type="InLogType"/>
@@ -262,6 +263,7 @@
   <xsd:complexType name="OutLogsType">
     <xsd:sequence>
       <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
+      <xsd:element name="PostClickStat" type="LogFlushPolicyType"/>
       <xsd:element name="UserProperties" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
       <xsd:element name="SiteChannelStat" type="LogFlushPolicyType"/>
@@ -288,6 +290,7 @@
       <xsd:element name="ResearchBid" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchImpression" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchClick" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ResearchPostClick" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="BidCostStat" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
 
       <xsd:element name="RequestOperation" type="RequestOperationFlushPolicyType"

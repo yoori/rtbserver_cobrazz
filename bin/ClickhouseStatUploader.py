@@ -9,10 +9,22 @@ import json
 import argparse
 import typing
 import datetime
+import hashlib
 import re
+import shlex
 import shutil
+import subprocess
 import atexit
 import jinja2
+
+
+class Migration(typing.NamedTuple):
+  migration_id: int
+  name: str
+  query: str
+
+  def checksum(self):
+    return hashlib.sha256(self.query.encode('utf-8')).hexdigest()
 
 
 R_IMPRESSION_CREATE_TABLE_QUERY = (
@@ -47,7 +59,22 @@ R_IMPRESSION_CREATE_TABLE_QUERY = (
   "ssp_tag_id SimpleAggregateFunction(any, Nullable(String)), "
   "ssp_ctr SimpleAggregateFunction(any, Nullable(Float64)), "
   "ssp_viewability SimpleAggregateFunction(any, Nullable(Float64)), "
-  "ssp_vtr SimpleAggregateFunction(any, Nullable(Float64))"
+  "ssp_vtr SimpleAggregateFunction(any, Nullable(Float64)), "
+  "page_keywords SimpleAggregateFunction(any, Nullable(String))"
+  ") ENGINE = AggregatingMergeTree "
+  "PARTITION BY sipHash64(request_id) % 100 "
+  "ORDER BY request_id "
+  "SETTINGS index_granularity = 8192, parts_to_throw_insert = 16000"
+)
+
+
+R_POST_CLICK_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS RPostClick ("
+  "request_id String, "
+  "landing_bounced SimpleAggregateFunction(any, Nullable(UInt8)), "
+  "landing_session_time SimpleAggregateFunction(any, Nullable(UInt64)), "
+  "landing_page_views SimpleAggregateFunction(any, Nullable(UInt64)), "
+  "landing_is_new_user SimpleAggregateFunction(any, Nullable(UInt8))"
   ") ENGINE = AggregatingMergeTree "
   "PARTITION BY sipHash64(request_id) % 100 "
   "ORDER BY request_id "
@@ -102,6 +129,27 @@ BID_COST_CREATE_TABLE_QUERY = (
 )
 
 
+MIGRATIONS_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS ClickhouseUploaderMigrations ("
+  "migration_id UInt32, "
+  "name String, "
+  "checksum FixedString(64), "
+  "applied_at DateTime64(3, 'UTC') DEFAULT now64(3)"
+  ") ENGINE = ReplacingMergeTree(applied_at) "
+  "ORDER BY migration_id"
+)
+
+
+MIGRATIONS = (
+  Migration(
+    1,
+    'rimpression_add_page_keywords',
+    "ALTER TABLE RImpression ADD COLUMN IF NOT EXISTS page_keywords "
+    "SimpleAggregateFunction(any, Nullable(String))",
+  ),
+)
+
+
 class Config(object):
   clickhouse_conn: str = None
   pid_file: str = None
@@ -115,6 +163,111 @@ class Config(object):
     self.check_roots = config_json.get('check_roots', [])
     self.error_root = config_json.get('error_root', None)
     self.batch = config_json.get('batch', 1000)
+
+
+class ClickhouseQueryExecutor(object):
+  def __init__(self, clickhouse_conn, logger = None):
+    self.command = ['clickhouse-client'] + shlex.split(clickhouse_conn)
+    self.logger = logger
+
+  def execute(self, query):
+    if self.logger:
+      self.logger.debug("Execute ClickHouse query: " + query.splitlines()[0])
+
+    result = subprocess.run(
+      self.command,
+      input = query,
+      text = True,
+      capture_output = True)
+    if result.returncode != 0:
+      raise Exception(
+        "ClickHouse query failed with code " + str(result.returncode) + ": " +
+        result.stderr.strip())
+
+    return result.stdout
+
+
+class ClickhouseMigrationRunner(object):
+  def __init__(self, executor, logger = None, migrations = MIGRATIONS):
+    self.executor = executor
+    self.logger = logger
+    self.migrations = migrations
+
+  def run(self):
+    self._validate_migrations()
+    self.executor.execute(MIGRATIONS_CREATE_TABLE_QUERY)
+    applied_migrations = self._load_applied_migrations()
+    known_migration_ids = {migration.migration_id for migration in self.migrations}
+
+    for migration_id in applied_migrations:
+      if migration_id not in known_migration_ids:
+        raise Exception("Unknown applied ClickHouse migration: " + str(migration_id))
+
+    for migration in self.migrations:
+      checksum = migration.checksum()
+      applied_migration = applied_migrations.get(migration.migration_id)
+      if applied_migration:
+        if applied_migration['name'] != migration.name:
+          raise Exception(
+            "ClickHouse migration name mismatch for id " + str(migration.migration_id))
+
+        if applied_migration['checksum'] != checksum:
+          raise Exception(
+            "ClickHouse migration checksum mismatch for id " + str(migration.migration_id))
+
+        continue
+
+      if self.logger:
+        self.logger.info(
+          "Apply ClickHouse migration " + str(migration.migration_id) + ": " + migration.name)
+      self.executor.execute(migration.query)
+      self._record_migration(migration, checksum)
+
+  def _validate_migrations(self):
+    previous_id = 0
+    migration_names = set()
+    for migration in self.migrations:
+      if migration.migration_id <= previous_id:
+        raise Exception("ClickHouse migrations must have increasing positive ids")
+
+      if migration.name in migration_names:
+        raise Exception("Duplicate ClickHouse migration name: " + migration.name)
+
+      previous_id = migration.migration_id
+      migration_names.add(migration.name)
+
+  def _load_applied_migrations(self):
+    query = (
+      "SELECT migration_id, name, checksum "
+      "FROM ClickhouseUploaderMigrations FINAL "
+      "ORDER BY migration_id FORMAT JSONEachRow")
+    output = self.executor.execute(query)
+    applied_migrations = {}
+    for line in output.splitlines():
+      if not line:
+        continue
+
+      record = json.loads(line)
+      migration_id = int(record['migration_id'])
+      if migration_id in applied_migrations:
+        raise Exception("Duplicate applied ClickHouse migration: " + str(migration_id))
+      applied_migrations[migration_id] = record
+
+    return applied_migrations
+
+  def _record_migration(self, migration, checksum):
+    applied_at = datetime.datetime.now(datetime.timezone.utc).strftime(
+      '%Y-%m-%d %H:%M:%S.%f')[:-3]
+    record = json.dumps({
+      'migration_id': migration.migration_id,
+      'name': migration.name,
+      'checksum': checksum,
+      'applied_at': applied_at,
+    })
+    query = (
+      "INSERT INTO ClickhouseUploaderMigrations "
+      "(migration_id, name, checksum, applied_at) FORMAT JSONEachRow\n" + record)
+    self.executor.execute(query)
 
 
 class SignalInterruptHandler(object):
@@ -234,7 +387,9 @@ class ClickhouseCsvUploader(object) :
         for process_file in process_files:
           os.unlink(process_file)
       else :
-        message = "Error on upload " + " ".join(process_files) + ": command_line = '" + command_line + "'"
+        message = (
+          "Error on upload " + " ".join(process_files) +
+          ": command_line = '" + command_line + "'")
         if self.raise_on_upload_error:
           raise Exception(message)
         else :
@@ -260,6 +415,16 @@ class RImpressionUploader(ClickhouseCsvUploader) :
       'RImpression',
       logger = logger,
       create_table_query = R_IMPRESSION_CREATE_TABLE_QUERY)
+
+
+class RPostClickUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'RPostClickClickhouseAdapter.py',
+      'RPostClick',
+      logger = logger,
+      create_table_query = R_POST_CLICK_CREATE_TABLE_QUERY)
 
 
 """
@@ -414,6 +579,7 @@ def main() :
 
   processors = {}
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
+  processors['RPostClick'] = RPostClickUploader(config, logger = logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
   processors['RAction'] = RActionUploader(config, logger = logger)
   processors['Geo'] = GeoUploader(config, logger = logger)
@@ -421,6 +587,9 @@ def main() :
 
   for processor in processors.values():
     processor.init_storage()
+
+  migration_executor = ClickhouseQueryExecutor(config.clickhouse_conn, logger = logger)
+  ClickhouseMigrationRunner(migration_executor, logger = logger).run()
 
   with SignalInterruptHandler(
     [ signal.SIGINT, signal.SIGUSR1, signal.SIGHUP ],

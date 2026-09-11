@@ -586,6 +586,21 @@
         </xsl:choose>
       </xsl:attribute>
     </cfg:CTRConfig>
+    <cfg:VTRConfig root="{concat($log-root,'/In/VTRConfig')}"
+      capture_root="{concat($log-root,'/In/CapturedVTRConfig')}"
+      check_period="60">
+      <xsl:attribute name="expire_timeout">
+        <xsl:choose>
+          <xsl:when test="count(
+            $colo-config/cfg:predictorConfig/cfg:CTRConfig/@vtr_expire_timeout) =
+            0">86400</xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of
+              select="$colo-config/cfg:predictorConfig/cfg:CTRConfig/@vtr_expire_timeout"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
+    </cfg:VTRConfig>
     <cfg:ConvRateConfig root="{concat($log-root,'/In/ConvRateConfig')}"
       capture_root="{concat($log-root,'/In/CapturedConvRateConfig')}"
       check_period="60"

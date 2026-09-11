@@ -27,6 +27,7 @@
 #undef private
 
 #include <Frontends/Modules/BiddingFrontend/RequestInfoFiller.hpp>
+#include <String/UTF8Handler.hpp>
 
 namespace
 {
@@ -480,6 +481,37 @@ namespace
         request_info.ad_slots.front().ext_tag_id + "'");
     }
   }
+
+  void
+  verify_invalid_utf8_is_ignored(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    std::string request =
+      R"({"id":"1","imp":[{"id":"1","banner":{"w":300,"h":250}}],)"
+      R"("user":{"gender":"bad)";
+    request.push_back(static_cast<char>(0xC0));
+    request += R"(","keywords":"bad)";
+    request.push_back(static_cast<char>(0xC0));
+    request += R"("}})";
+
+    Generics::MonoAllocatorArena arena;
+    AdServer::Bidding::RequestInfo request_info;
+    AdServer::Bidding::JsonProcessingContext context(arena);
+    request_info.current_time = Generics::Time::get_time_of_day();
+
+    filler.fill_by_openrtb_request(request_info, context, std::move(request));
+    if (context.user_keywords.empty())
+    {
+      throw std::runtime_error("invalid OpenRTB keyword was removed during parsing");
+    }
+    if (context.user_gender.empty())
+    {
+      throw std::runtime_error("invalid non-keyword OpenRTB field was removed during parsing");
+    }
+    if (String::UTF8Handler::is_correct_utf8_string(request_info.keywords))
+    {
+      throw std::runtime_error("invalid OpenRTB UTF-8 was propagated to page keywords");
+    }
+  }
 }
 
 extern "C"
@@ -556,6 +588,7 @@ main(int argc, char** argv)
       account_traits);
 
     verify_ext_tag_id_is_single_line(filler);
+    verify_invalid_utf8_is_ignored(filler);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();

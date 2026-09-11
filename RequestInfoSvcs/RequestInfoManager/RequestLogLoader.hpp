@@ -53,6 +53,7 @@ namespace AdServer::RequestInfoSvcs
     InLog request;
     InLog impression;
     InLog click;
+    InLog post_click_action;
     InLog advertiser_action;
     InLog passback_impression;
     InLog tag_request;
@@ -125,6 +126,7 @@ namespace AdServer::RequestInfoSvcs
       RequestLogType = 0,
       ImpressionLogType,
       ClickLogType,
+      PostClickActionLogType,
       AdvertiserActionLogType,
       PassbackImpressionLogType,
       TagRequestLogType,

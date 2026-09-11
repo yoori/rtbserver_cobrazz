@@ -39,6 +39,8 @@ add_library(LogCommons SHARED
   LogCommons.cpp
   PageLoadsDailyStat.cpp
   PassbackStat.cpp
+  PostClickAction.cpp
+  PostClickStat.cpp
   PrimaryDump.cpp
   Request.cpp
   RequestBasicChannels.cpp

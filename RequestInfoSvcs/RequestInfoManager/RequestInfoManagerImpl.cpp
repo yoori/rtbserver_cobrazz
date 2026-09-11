@@ -38,6 +38,7 @@ namespace
   const unsigned long UPDATE_FRAUD_RULES_PERIOD = 60;
 
   const char CREATIVE_STAT_OUT_DIR[] = "CreativeStat";
+  const char POST_CLICK_STAT_OUT_DIR[] = "PostClickStat";
   const char USER_PROPERTIES_OUT_DIR[] = "UserProperties";
   const char CHANNEL_PERFORMANCE_OUT_DIR[] = "ChannelPerformance";
   const char SITE_CHANNEL_STAT_OUT_DIR[] = "SiteChannelStat";
@@ -67,6 +68,7 @@ namespace
   const char RESEARCH_BID_OUT_DIR[] = "ResearchBid";
   const char RESEARCH_IMPRESSION_OUT_DIR[] = "ResearchImpression";
   const char RESEARCH_CLICK_OUT_DIR[] = "ResearchClick";
+  const char RESEARCH_POST_CLICK_OUT_DIR[] = "ResearchPostClick";
 
   const char CONSIDER_ACTION_OUT_DIR[] = "ConsiderAction";
   const char CONSIDER_CLICK_OUT_DIR[] = "ConsiderClick";
@@ -311,6 +313,7 @@ namespace AdServer::RequestInfoSvcs
       LogProcessing::LogFlushTraits research_bid_flush;
       LogProcessing::LogFlushTraits research_impression_flush;
       LogProcessing::LogFlushTraits research_click_flush;
+      LogProcessing::LogFlushTraits research_post_click_flush;
       LogProcessing::LogFlushTraits bid_cost_stat_flush;
 
       request_out_logger_ =
@@ -318,6 +321,9 @@ namespace AdServer::RequestInfoSvcs
           logger_,
           callback_,
           read_flush_policy(lp_config.CreativeStat(), (log_root + CREATIVE_STAT_OUT_DIR).c_str()),
+          read_flush_policy(
+            lp_config.PostClickStat(),
+            (log_root + POST_CLICK_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.UserProperties(),
             (log_root + USER_PROPERTIES_OUT_DIR).c_str()),
@@ -373,6 +379,10 @@ namespace AdServer::RequestInfoSvcs
             lp_config.ResearchClick(),
             (log_root + RESEARCH_CLICK_OUT_DIR).c_str(),
             research_click_flush),
+          read_flush_policy(
+            lp_config.ResearchPostClick(),
+            (log_root + RESEARCH_POST_CLICK_OUT_DIR).c_str(),
+            research_post_click_flush),
           read_flush_policy(
             lp_config.BidCostStat(),
             (log_root + BID_COST_STAT_OUT_DIR).c_str(),
@@ -1491,6 +1501,7 @@ namespace AdServer::RequestInfoSvcs
     const char REQUEST_IN_DIR[] = "Request";
     const char IMPRESSION_IN_DIR[] = "Impression";
     const char CLICK_IN_DIR[] = "Click";
+    const char POST_CLICK_ACTION_IN_DIR[] = "PostClickAction";
     const char ADVERTISER_ACTION_IN_DIR[] = "AdvertiserAction";
     const char PASSBACK_IMPRESSION_IN_DIR[] = "PassbackImpression";
     const char TAG_REQUEST_IN_DIR[] = "TagRequest";
@@ -1503,6 +1514,11 @@ namespace AdServer::RequestInfoSvcs
     init_(lp_config.Request(), log_root, REQUEST_IN_DIR, in_logs.request);
     init_(lp_config.Impression(), log_root, IMPRESSION_IN_DIR, in_logs.impression);
     init_(lp_config.Click(), log_root, CLICK_IN_DIR, in_logs.click);
+    init_(
+      lp_config.PostClickAction(),
+      log_root,
+      POST_CLICK_ACTION_IN_DIR,
+      in_logs.post_click_action);
     init_(lp_config.AdvertiserAction(), log_root, ADVERTISER_ACTION_IN_DIR, in_logs.advertiser_action);
     init_(lp_config.PassbackImpression(), log_root, PASSBACK_IMPRESSION_IN_DIR, in_logs.passback_impression);
     init_(lp_config.TagRequest(), log_root, TAG_REQUEST_IN_DIR, in_logs.tag_request);

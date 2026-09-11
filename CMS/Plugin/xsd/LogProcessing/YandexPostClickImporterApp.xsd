@@ -1,0 +1,40 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:element name="yandexPostClickImporter" type="YandexPostClickImporterConfigType"/>
+
+  <xsd:complexType name="YandexPostClickImporterClickHouseType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="8123"/>
+    <xsd:attribute name="database" type="xsd:string" use="optional" default="default"/>
+    <xsd:attribute name="user" type="xsd:string" use="optional" default="default"/>
+    <xsd:attribute name="pass" type="xsd:string" use="optional" default=""/>
+    <xsd:attribute name="secure" type="xsd:boolean" use="optional" default="false"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="YandexPostClickImporterPostgresType">
+    <xsd:attribute name="connection_string" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="YandexPostClickImporterConfigType">
+    <xsd:sequence>
+      <xsd:element name="clickhouse"
+        type="YandexPostClickImporterClickHouseType"/>
+      <xsd:element name="postgres"
+        type="YandexPostClickImporterPostgresType" minOccurs="0"/>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="period" type="xsd:positiveInteger" use="optional" default="3600"/>
+    <xsd:attribute name="days" type="xsd:positiveInteger" use="optional" default="4"/>
+    <xsd:attribute name="sources" type="xsd:string" use="required"/>
+    <xsd:attribute name="attribution" type="xsd:string" use="optional" default="lastsign"/>
+    <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="optional" default="24"/>
+    <xsd:attribute name="request_timeout" type="xsd:positiveInteger" use="optional" default="60"/>
+  </xsd:complexType>
+</xsd:schema>

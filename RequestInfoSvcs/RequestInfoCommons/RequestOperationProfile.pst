@@ -46,5 +46,19 @@ namespace RequestInfoSvcs
 
   autoreader RequestOperationActionReader<RequestOperationActionDescriptor>;
   autowriter RequestOperationActionWriter<RequestOperationActionDescriptor>;
+
+  struct RequestOperationPostActionDescriptor
+  {
+    uint version;
+    uint action_type;
+    uint time;
+    string request_id;
+    string user_id;
+    string action_name;
+    string action_value;
+  };
+
+  autoreader RequestOperationPostActionReader<RequestOperationPostActionDescriptor>;
+  autowriter RequestOperationPostActionWriter<RequestOperationPostActionDescriptor>;
 }
 }

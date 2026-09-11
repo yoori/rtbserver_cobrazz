@@ -95,6 +95,13 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="VTRConfig" type="CTRConfigType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>VTR config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="ConvRateConfig" type="CTRConfigType" minOccurs="0"
         maxOccurs="1">
         <xsd:annotation>

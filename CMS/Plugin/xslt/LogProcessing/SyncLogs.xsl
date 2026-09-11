@@ -409,6 +409,18 @@
         </xsl:choose>
       </xsl:variable>
 
+      <xsl:variable name="predictor-vtr-path">
+        <xsl:choose>
+          <xsl:when test="count(exsl:node-set($predictor-hosts)/host) > 0">vtr</xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$colo-config/cfg:predictorConfig/cfg:CTRConfig/@vtr_path"/>
+            <xsl:if
+              test="count($colo-config/cfg:predictorConfig/cfg:CTRConfig/@vtr_path) = 0"
+              >vtr</xsl:if>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+
       <xsl:variable name="predictor-bid-cost-path">
         <xsl:choose>
           <xsl:when test="count(exsl:node-set($predictor-hosts)/host) > 0">bid_cost</xsl:when>
@@ -477,6 +489,16 @@
           <xsl:with-param name="service-path"
             select="$be-cluster-path/service[@descriptor = $request-info-manager-descriptor]"/>
           <xsl:with-param name="error-prefix" select="'LogGeneralizer hosts resolving'"/>
+        </xsl:call-template>
+      </xsl:variable>
+
+      <xsl:variable name="yandex-post-click-importer-hosts">
+        <xsl:call-template name="HostsStringGenerator">
+          <xsl:with-param name="service-path"
+            select="$be-cluster-path/service[
+              @descriptor = $yandex-post-click-importer-descriptor]"/>
+          <xsl:with-param name="error-prefix"
+            select="'YandexPostClickImporter hosts resolving'"/>
         </xsl:call-template>
       </xsl:variable>
 
@@ -586,6 +608,7 @@
         <xsl:variable name="request-info-manager-route2">
           <dirs>
             <dir>CreativeStat</dir>
+            <dir>PostClickStat</dir>
             <dir>UserProperties</dir>
             <dir>ChannelPerformance</dir>
             <dir>ExpressionPerformance</dir>
@@ -703,6 +726,22 @@
           <xsl:with-param name="source-hosts" select="$campaign-manager-hosts"/>
           <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
           <xsl:with-param name="dirs" select="$request-info-manager-route1"/>
+          <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
+        </xsl:call-template>
+
+        <xsl:variable name="yandex-post-click-route">
+          <dirs>
+            <dir>PostClickAction</dir>
+          </dirs>
+        </xsl:variable>
+
+        <xsl:call-template name="Route">
+          <xsl:with-param name="type" select="'Hash'"/>
+          <xsl:with-param name="source-path-base" select="'YandexPostClickImporter/'"/>
+          <xsl:with-param name="destination-path-base" select="'/RequestInfoManager/In/'"/>
+          <xsl:with-param name="source-hosts" select="$yandex-post-click-importer-hosts"/>
+          <xsl:with-param name="destination-hosts" select="$request-info-manager-hosts"/>
+          <xsl:with-param name="dirs" select="$yandex-post-click-route"/>
           <xsl:with-param name="pattern" select="'.*\.##HASH##'"/>
         </xsl:call-template>
 
@@ -1250,6 +1289,10 @@
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchClick</xsl:attribute>
             </cfg:files>
             <cfg:files>
+              <xsl:attribute name="source">RequestInfoManager/Out/ResearchPostClick/RPostClick_*</xsl:attribute>
+              <xsl:attribute name="destination"><![CDATA[/]]>ResearchPostClick</xsl:attribute>
+            </cfg:files>
+            <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/ResearchAction/RAction_*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchAction</xsl:attribute>
             </cfg:files>
@@ -1486,6 +1529,11 @@
             <cfg:files>
               <xsl:attribute name="source"><![CDATA[/]]><xsl:value-of select="$predictor-ctr-path"/><![CDATA[/]]></xsl:attribute>
               <xsl:attribute name="destination">CampaignManager/In/CTRConfig</xsl:attribute>
+            </cfg:files>
+            <cfg:files>
+              <xsl:attribute name="source"><![CDATA[/]]><xsl:value-of
+                select="$predictor-vtr-path"/><![CDATA[/]]></xsl:attribute>
+              <xsl:attribute name="destination">CampaignManager/In/VTRConfig</xsl:attribute>
             </cfg:files>
             <cfg:files>
               <xsl:attribute name="source"><![CDATA[/]]><xsl:value-of select="$predictor-conv-path"/><![CDATA[/]]></xsl:attribute>

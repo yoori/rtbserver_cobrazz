@@ -1,1 +1,2 @@
 add_subdirectory(UserNavigationContainerTest)
+add_subdirectory(PostClickActionValueTest)
