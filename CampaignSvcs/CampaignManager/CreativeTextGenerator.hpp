@@ -91,6 +91,7 @@ namespace AdServer::CampaignSvcs::CreativeTokens
   const std::string PUBLISHER_ID("PUBID");
 
   const std::string REQUEST_ID("REQUESTID");
+  const std::string CLICK_METRIKA_PARAMS("CLICKMETRIKAPARAMS");
   const std::string GREQUESTID("GREQUESTID");
 
   const std::string HTTPS_SAFE("HTTPS_SAFE");

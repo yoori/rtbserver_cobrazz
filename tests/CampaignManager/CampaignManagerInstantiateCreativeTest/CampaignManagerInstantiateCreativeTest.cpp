@@ -235,8 +235,8 @@ namespace
     R"bsfm(on(){pix2_track('##CRADVTRACKPIXELFQ4=##');},timesfm1);setTimeout(functi)bsfm"
     R"bsfm(on(){pix2_track('##CRADVTRACKPIXELMP4=##');},timesfm2);setTimeout(functi)bsfm"
     R"bsfm(on(){pix2_track('##CRADVTRACKPIXELTQ4=##');},timesfm3);setTimeout(functi)bsfm"
-    R"bsfm(on(){pix2_track('##CRADVTRACKPIXELCOMPLETE4=##');},timesfm4);</script></)bsfm"
-    R"bsfm(body></html>)bsfm";
+    R"bsfm(on(){pix2_track('##CRADVTRACKPIXELCOMPLETE4=##');},timesfm4);</script>)bsfm"
+    R"bsfm(##CRCLICK##</body></html>)bsfm";
 
   struct Options
   {
@@ -445,8 +445,12 @@ namespace
     Fixture fixture;
 
     fixture.campaign_config = new CampaignConfig();
+    TokenSet click_token_relations;
+    click_token_relations.insert(CreativeTokens::CLICK_METRIKA_PARAMS);
+    fixture.campaign_config->token_processors[1] =
+      new BaseTokenProcessor(CreativeTokens::ADV_CLICK_URL.c_str(), click_token_relations);
     fixture.campaign_config->default_click_token_processor =
-      BaseTokenProcessor::default_token_processor(CreativeTokens::ADV_CLICK_URL.c_str());
+      new BaseTokenProcessor(CreativeTokens::ADV_CLICK_URL.c_str(), click_token_relations);
 
     Currency_var currency(new Currency());
     currency->currency_id = 1;
@@ -556,7 +560,9 @@ namespace
       1,
       "html",
       "1",
-      OptionValue(1, "https://advertiser.example/landing"),
+      OptionValue(
+        1,
+        "https://advertiser.example/landing?##CLICKMETRIKAPARAMS##"),
       "advertiser.example",
       "advertiser.example",
       categories);
@@ -673,6 +679,22 @@ namespace
     if (creative_body.find(expected_tag_token) == std::string::npos)
     {
       throw std::runtime_error("system TAGID token was not instantiated");
+    }
+
+    const std::string expected_click_metrika_params =
+      std::string("utm_term=") + fixture.request_info.request_id.to_string() +
+      "&utm_content=ccid:" + String::StringManip::IntToStr(
+        fixture.creative->ccid).str().str();
+    if (creative_body.find(expected_click_metrika_params) == std::string::npos)
+    {
+      throw std::runtime_error("system CLICKMETRIKAPARAMS token was not instantiated");
+    }
+
+    const std::string expected_click_url =
+      "https://advertiser.example/landing?" + expected_click_metrika_params;
+    if (creative_body.find(expected_click_url) == std::string::npos)
+    {
+      throw std::runtime_error("CLICKMETRIKAPARAMS was not instantiated in CRCLICK");
     }
 
     checksum.fetch_add(

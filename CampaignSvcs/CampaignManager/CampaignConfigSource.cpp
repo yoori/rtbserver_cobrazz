@@ -50,6 +50,7 @@ namespace
     namespace CreativeTokens = AdServer::CampaignSvcs::CreativeTokens;
 
     return name == CreativeTokens::REQUEST_ID ||
+      name == CreativeTokens::CLICK_METRIKA_PARAMS ||
       name == CreativeTokens::CCID ||
       name == CreativeTokens::ADVERTISER_ID ||
       name == CreativeTokens::CGID ||
@@ -1989,6 +1990,10 @@ namespace AdServer::CampaignSvcs
       co.type = co_info.type;
 
       CorbaAlgs::convert_sequence(co_info.token_relations, co.token_relations);
+      if (co.token == CreativeTokens::ADV_CLICK_URL)
+      {
+        co.token_relations.insert(CreativeTokens::CLICK_METRIKA_PARAMS);
+      }
 
       if (co.type == 'L')
       {
@@ -2032,6 +2037,7 @@ namespace AdServer::CampaignSvcs
     default_click_token_relations.insert(CreativeTokens::RANDOM);
     default_click_token_relations.insert(CreativeTokens::CGID);
     default_click_token_relations.insert(CreativeTokens::CID);
+    default_click_token_relations.insert(CreativeTokens::CLICK_METRIKA_PARAMS);
 
     new_config.default_click_token_processor =
       new BaseTokenProcessor(CreativeTokens::ADV_CLICK_URL.c_str(), default_click_token_relations);

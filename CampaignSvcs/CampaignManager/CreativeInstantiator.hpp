@@ -125,6 +125,7 @@ namespace AdServer::CampaignSvcs
       const CampaignConfig& campaign_config,
       const OptionValue& click_url,
       std::string& result_click_url,
+      const AdServer::Commons::RequestId& request_id,
       const unsigned long* colo_id,
       const Tag* tag,
       const Tag::Size* tag_size,

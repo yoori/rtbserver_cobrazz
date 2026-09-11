@@ -2896,6 +2896,7 @@ namespace AdServer::CampaignSvcs
               *config,
               click_url,
               redirect,
+              click_info.request_id,
               colocation ? &colocation->colo_id : 0,
               tag,
               tag_size,

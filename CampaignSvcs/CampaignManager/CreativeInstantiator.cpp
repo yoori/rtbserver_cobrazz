@@ -463,6 +463,7 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig& campaign_config,
     const OptionValue& click_url,
     std::string& result_click_url,
+    const AdServer::Commons::RequestId& request_id,
     const unsigned long* colo_id,
     const Tag* tag,
     const Tag::Size* tag_size,
@@ -499,6 +500,9 @@ namespace AdServer::CampaignSvcs
       {
         args.insert(creative->tokens.begin(), creative->tokens.end());
 
+        args[CreativeTokens::CLICK_METRIKA_PARAMS] = OptionValue(
+          0,
+          InstantiateAd::format_click_metrika_params(request_id, creative->ccid));
         args[CreativeTokens::CCID] = OptionValue(0, IntToStr(creative->ccid));
         args[CreativeTokens::ADVERTISER_ID] = OptionValue(
           0,
@@ -1576,6 +1580,7 @@ namespace AdServer::CampaignSvcs
             CreativeParams* const creative_params_ptr = &creative_params;
             const TokenValueMap* const ext_tokens = &request_result_params.ext_tokens;
             const Tag::Size* const tag_size = ad_selection_result.tag_size;
+            const AdServer::Commons::RequestId request_id = select_params.request_id;
 
             creative_args_data.click_url_initializer =
               [this,
@@ -1586,6 +1591,7 @@ namespace AdServer::CampaignSvcs
                 tag_size,
                 creative,
                 campaign_keyword,
+                request_id,
                 ext_tokens](InstantiateAd::InstantiateAdContext::CreativeArgsData& data)
               {
                 assert(data.click_params);
@@ -1596,6 +1602,7 @@ namespace AdServer::CampaignSvcs
                   *campaign_config,
                   click_url_in,
                   creative_params_ptr->click_url,
+                  request_id,
                   colo_id ? &*colo_id : nullptr,
                   tag,
                   tag_size,
@@ -1627,6 +1634,7 @@ namespace AdServer::CampaignSvcs
               &CreativeTokens::PRECLICK0,
               &CreativeTokens::PRECLICKF0,
               &CreativeTokens::REQUEST_ID,
+              &CreativeTokens::CLICK_METRIKA_PARAMS,
               &CreativeTokens::CCID,
               &CreativeTokens::ADVERTISER_ID,
               &CreativeTokens::CGID,
@@ -2391,6 +2399,7 @@ namespace AdServer::CampaignSvcs
             campaign_config,
             click_url_in,
             creative_params.click_url, /* out */
+            cs_it->request_id,
             &colo_id,
             ad_selection_result.tag,
             ad_selection_result.tag_size,

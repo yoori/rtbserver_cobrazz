@@ -86,6 +86,24 @@ namespace AdServer::CampaignSvcs::InstantiateAd
     }
   }
 
+  std::string
+  format_click_metrika_params(
+    const AdServer::Commons::RequestId& request_id,
+    unsigned long ccid)
+  {
+    const std::string request_id_str = request_id.to_string();
+    const std::string ccid_str = to_string(ccid);
+
+    std::string result;
+    result.reserve(
+      sizeof("utm_term=&utm_content=ccid:") - 1 + request_id_str.size() + ccid_str.size());
+    result += "utm_term=";
+    result += request_id_str;
+    result += "&utm_content=ccid:";
+    result += ccid_str;
+    return result;
+  }
+
   InstantiateAdCreativeArgsProvider::InstantiateAdCreativeArgsProvider(
     std::shared_ptr<const InstantiateAdCreativeArgsManager> manager,
     std::shared_ptr<InstantiateAdContext> context,
@@ -244,6 +262,21 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         }
 
         return data->select_params->request_id.to_string();
+      });
+
+    add_processor(
+      CreativeTokens::CLICK_METRIKA_PARAMS,
+      [](const InstantiateAdCreativeArgsProvider& provider)
+        -> std::optional<std::string> {
+        const auto& data = provider.context().creative_args_data;
+        if (!data || !data->select_params || !data->creative)
+        {
+          return std::nullopt;
+        }
+
+        return format_click_metrika_params(
+          data->select_params->request_id,
+          data->creative->ccid);
       });
 
     add_processor(
