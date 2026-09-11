@@ -52,7 +52,9 @@ namespace AdServer::RequestInfoSvcs
     co_read_action_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
 
     Commons::Awaitable<void>
-    co_read_request_action_(ProfilingCommons::FileReader& file_reader, Generics::MemBuf& membuf);
+    co_read_request_action_(
+      ProfilingCommons::FileReader& file_reader,
+      Generics::MemBuf& membuf);
 
     void
     skip_single_buffer_operation_(ProfilingCommons::FileReader& file_reader)

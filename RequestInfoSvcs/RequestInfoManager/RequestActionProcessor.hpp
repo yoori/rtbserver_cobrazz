@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <string_view>
 #include <vector>
 #include <Generics/Time.hpp>
 #include <Commons/Algs.hpp>
@@ -396,6 +397,7 @@ namespace AdServer::RequestInfoSvcs
     RevenueDecimal pub_cost_coef;
     unsigned long at_flags;
     std::string additional_info;
+    std::string page_keywords;
 
     Revenue delta_adv_revenue;
 
@@ -489,22 +491,23 @@ namespace AdServer::RequestInfoSvcs
 
   typedef std::list<AdvCustomActionInfo> AdvCustomActionInfoList;
 
-  struct RequestPostActionInfo
+  struct PostActionInfo
   {
-    RequestPostActionInfo()
-    {}
+    PostActionInfo() = default;
 
-    RequestPostActionInfo(const Generics::Time& time_val, const String::SubString& action_name_val)
-      noexcept
+    PostActionInfo(
+      const Generics::Time& time_val,
+      std::string_view name_val,
+      std::string_view value_val = {})
       : time(time_val),
-        action_name(action_name_val.str())
+        name(name_val),
+        value(value_val)
     {}
 
     Generics::Time time;
-    std::string action_name;
+    std::string name;
+    std::string value;
   };
-
-  typedef std::list<RequestPostActionInfo> RequestPostActionInfoList;
 
   /**
    * RequestActionProcessor
@@ -560,12 +563,20 @@ namespace AdServer::RequestInfoSvcs
     co_process_custom_action(const RequestInfo&, const AdvCustomActionInfo&);
 
     virtual void
-    process_request_post_action(const RequestInfo&, const RequestPostActionInfo&)
+    process_post_imp_action(const RequestInfo&, const PostActionInfo&)
       /*throw(Exception)*/
     {};
 
     virtual AdServer::Commons::Awaitable<void>
-    co_process_request_post_action(const RequestInfo&, const RequestPostActionInfo&);
+    co_process_post_imp_action(const RequestInfo&, const PostActionInfo&);
+
+    virtual void
+    process_post_click_action(const RequestInfo&, const PostActionInfo&)
+      /*throw(Exception)*/
+    {};
+
+    virtual AdServer::Commons::Awaitable<void>
+    co_process_post_click_action(const RequestInfo&, const PostActionInfo&);
 
   protected:
     virtual ~RequestActionProcessor() noexcept {}
@@ -632,13 +643,13 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(Exception)*/ = 0;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
   protected:
     virtual ~RequestContainerProcessor() noexcept {}
@@ -798,11 +809,20 @@ namespace AdServer::RequestInfoSvcs
   }
 
   inline AdServer::Commons::Awaitable<void>
-  RequestActionProcessor::co_process_request_post_action(
+  RequestActionProcessor::co_process_post_imp_action(
     const RequestInfo& request_info,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
-    process_request_post_action(request_info, request_post_action_info);
+    process_post_imp_action(request_info, action_info);
+    co_return;
+  }
+
+  inline AdServer::Commons::Awaitable<void>
+  RequestActionProcessor::co_process_post_click_action(
+    const RequestInfo& request_info,
+    const PostActionInfo& action_info)
+  {
+    process_post_click_action(request_info, action_info);
     co_return;
   }
 
@@ -842,9 +862,9 @@ namespace AdServer::RequestInfoSvcs
   inline AdServer::Commons::Awaitable<void>
   RequestContainerProcessor::co_process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
-    process_impression_post_action(request_id, request_post_action_info);
+    process_impression_post_action(request_id, action_info);
     co_return;
   }
 
@@ -1111,7 +1131,9 @@ namespace AdServer::RequestInfoSvcs
       space << "conv_rate_algorithm_id: " << conv_rate_algorithm_id << std::endl <<
       space << "conv_rate: " << conv_rate << std::endl << space << "model_conv_rates: ";
     Algs::print(out, model_conv_rates.begin(), model_conv_rates.end());
-    out << std::endl << space << "additional_info: " << additional_info;
+    out << std::endl <<
+      space << "additional_info: " << additional_info << std::endl <<
+      space << "page_keywords: " << page_keywords;
 
     return out;
   }

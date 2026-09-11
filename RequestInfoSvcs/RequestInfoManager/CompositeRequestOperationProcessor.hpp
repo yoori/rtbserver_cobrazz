@@ -46,15 +46,14 @@ namespace AdServer::RequestInfoSvcs
     process_impression_post_action(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const AdServer::RequestInfoSvcs::RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const AdServer::RequestInfoSvcs::RequestPostActionInfo&
-        request_post_action_info);
+      const PostActionInfo& action_info);
 
     virtual void
     change_request_user_id(
@@ -118,39 +117,6 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  CompositeRequestOperationProcessor::process_impression_post_action(
-    const AdServer::Commons::UserId& new_user_id,
-    const AdServer::Commons::RequestId& request_id,
-    const AdServer::RequestInfoSvcs::RequestPostActionInfo& request_post_action_info)
-    /*throw(Exception)*/
-  {
-    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
-        it != child_processors_.end();
-        ++it)
-    {
-      (*it)->process_impression_post_action(new_user_id, request_id, request_post_action_info);
-    }
-  }
-
-  AdServer::Commons::Awaitable<void>
-  CompositeRequestOperationProcessor::co_process_impression_post_action(
-    const AdServer::Commons::UserId& new_user_id,
-    const AdServer::Commons::RequestId& request_id,
-    const AdServer::RequestInfoSvcs::RequestPostActionInfo&
-      request_post_action_info)
-  {
-    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
-        it != child_processors_.end();
-        ++it)
-    {
-      co_await (*it)->co_process_impression_post_action(
-        new_user_id,
-        request_id,
-        request_post_action_info);
-    }
-  }
-
-  void
   CompositeRequestOperationProcessor::process_action(
     const AdServer::Commons::UserId& new_user_id,
     RequestContainerProcessor::ActionType action_type,
@@ -178,6 +144,38 @@ namespace AdServer::RequestInfoSvcs
         ++it)
     {
       co_await (*it)->co_process_action(new_user_id, action_type, time, request_id);
+    }
+  }
+
+  void
+  CompositeRequestOperationProcessor::process_impression_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+    /*throw(Exception)*/
+  {
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      (*it)->process_impression_post_action(new_user_id, request_id, action_info);
+    }
+  }
+
+  AdServer::Commons::Awaitable<void>
+  CompositeRequestOperationProcessor::co_process_impression_post_action(
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
+  {
+    for (RequestOperationProcessorList::iterator it = child_processors_.begin();
+        it != child_processors_.end();
+        ++it)
+    {
+      co_await (*it)->co_process_impression_post_action(
+        new_user_id,
+        request_id,
+        action_info);
     }
   }
 

@@ -41,16 +41,16 @@ namespace AdServer::RequestInfoSvcs
 
     virtual void
     process_impression_post_action(
-      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
-      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
     virtual void
     change_request_user_id(

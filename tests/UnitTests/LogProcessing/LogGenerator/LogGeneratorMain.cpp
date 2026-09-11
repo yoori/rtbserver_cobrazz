@@ -814,7 +814,8 @@ struct Filler
         FixedNum("0.1"), // adv_commission
         FixedNum("0.13"), // pub_cost_coef
         0, // flags
-        "" // additional_info
+        "", // additional_info
+        "rtbreq\nrtbplatformlinux" // page_keywords
       );
     };
 
@@ -904,7 +905,8 @@ struct Filler
         FixedNum("0.1"), // adv_commission
         FixedNum("0.13"), // pub_cost_coef
         0, // flags
-        "" // additional_info
+        "", // additional_info
+        "page keyword" // page_keywords
       );
     };
 

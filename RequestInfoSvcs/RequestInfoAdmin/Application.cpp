@@ -296,9 +296,12 @@ struct NullProcessor :
   {}
 
   virtual void
-  process_impression_post_action(const AdServer::Commons::RequestId&, const RequestPostActionInfo&)
+  process_impression_post_action(
+    const AdServer::Commons::RequestId&,
+    const PostActionInfo&)
     /*throw(Exception)*/
   {}
+
 };
 
 typedef ReferenceCounting::SmartPtr<NullProcessor>

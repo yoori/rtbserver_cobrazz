@@ -250,10 +250,13 @@ public:
 
   virtual void
   process_impression_post_action(
-    const AdServer::Commons::RequestId& /*request_id*/,
-    const AdServer::RequestInfoSvcs::RequestPostActionInfo& /*request_post_action_info*/)
+    const AdServer::Commons::RequestId&,
+    const PostActionInfo&)
     /*throw(Exception)*/
-  {}
+  {
+    Guard lock(lock_);
+    ++processed_actions_;
+  }
 
   std::size_t requests() const noexcept
   {
@@ -371,19 +374,19 @@ public:
   {}
 
   virtual void
+  process_impression_post_action(
+    const AdServer::Commons::UserId&,
+    const AdServer::Commons::RequestId&,
+    const PostActionInfo&)
+    /*throw(Exception)*/
+  {}
+
+  virtual void
   process_action(
     const AdServer::Commons::UserId& /*new_user_id*/,
     RequestContainerProcessor::ActionType /*action_type*/,
     const Generics::Time&,
     const AdServer::Commons::RequestId& /*request_id*/)
-    /*throw(Exception)*/
-  {}
-
-  virtual void
-  process_impression_post_action(
-    const AdServer::Commons::UserId&,
-    const AdServer::Commons::RequestId&,
-    const AdServer::RequestInfoSvcs::RequestPostActionInfo&)
     /*throw(Exception)*/
   {}
 

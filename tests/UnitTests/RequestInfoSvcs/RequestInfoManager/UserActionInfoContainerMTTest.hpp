@@ -105,13 +105,6 @@ struct TestProcessor :
     }
   }
 
-  virtual void
-  process_impression_post_action(
-    const AdServer::Commons::RequestId&,
-    const AdServer::RequestInfoSvcs::RequestPostActionInfo&)
-    /*throw(Exception)*/
-  {}
-
   void
   clear() noexcept
   {

@@ -17,6 +17,8 @@ namespace AdServer::LogProcessing
     StringIO<Aux_::ConvertSpacesSeparators, ','> > UserProperty;
   typedef std::list<UserProperty> UserPropertyList;
 
+  class RequestData_V_3_7_2;
+
   class RequestData
   {
   public:
@@ -129,7 +131,8 @@ namespace AdServer::LogProcessing
       const FixedNum& adv_commission,
       const FixedNum& pub_cost_coef,
       unsigned long at_flags,
-      const std::string& additional_info)
+      const std::string& additional_info,
+      const std::string& page_keywords)
       : holder_(new DataHolder(
           time,
           isp_time,
@@ -210,7 +213,8 @@ namespace AdServer::LogProcessing
           adv_commission,
           pub_cost_coef,
           at_flags,
-          additional_info
+          additional_info,
+          page_keywords
         ))
     {}
 
@@ -295,7 +299,8 @@ namespace AdServer::LogProcessing
           data.adv_commission(),
           data.pub_cost_coef(),
           data.at_flags(),
-          ""
+          "", // additional_info
+          "" // page_keywords
         ))
     {}
 
@@ -727,6 +732,12 @@ namespace AdServer::LogProcessing
       return holder_->additional_info.get();
     }
 
+    const std::string&
+    page_keywords() const
+    {
+      return holder_->page_keywords.get();
+    }
+
   private:
     struct DataHolder: public ReferenceCounting::AtomicImpl
     {
@@ -812,7 +823,8 @@ namespace AdServer::LogProcessing
         const FixedNum& adv_commission_val,
         const FixedNum& pub_cost_coef_val,
         unsigned long at_flags_val,
-        const StringIoWrapperOptional& additional_info_val)
+        const StringIoWrapperOptional& additional_info_val,
+        const StringIoWrapperOptional& page_keywords_val)
         : time(time_val),
           isp_time(isp_time_val),
           pub_time(pub_time_val),
@@ -892,7 +904,8 @@ namespace AdServer::LogProcessing
           adv_commission(adv_commission_val),
           pub_cost_coef(pub_cost_coef_val),
           at_flags(at_flags_val),
-          additional_info(additional_info_val)
+          additional_info(additional_info_val),
+          page_keywords(page_keywords_val)
       {}
 
       bool
@@ -976,11 +989,20 @@ namespace AdServer::LogProcessing
           self_service_commission == data.self_service_commission &&
           adv_commission == data.adv_commission &&
           pub_cost_coef == data.pub_cost_coef &&
-          at_flags == data.at_flags && additional_info.get() == data.additional_info.get();
+          at_flags == data.at_flags &&
+          additional_info.get() == data.additional_info.get() &&
+          page_keywords.get() == data.page_keywords.get();
       }
 
       template <class ARCHIVE_>
       void serialize(ARCHIVE_& ar)
+      {
+        serialize_v_3_7_2(ar);
+        ar ^ page_keywords;
+      }
+
+      template <class ARCHIVE_>
+      void serialize_v_3_7_2(ARCHIVE_& ar)
       {
         ar & time;
         ar & isp_time;
@@ -1061,7 +1083,7 @@ namespace AdServer::LogProcessing
         ar & adv_commission;
         ar & pub_cost_coef;
         ar & at_flags;
-        ar ^ additional_info;
+        ar & additional_info;
       }
 
       void invariant() const /*throw(ConstraintViolation)*/
@@ -1185,6 +1207,7 @@ namespace AdServer::LogProcessing
       FixedNum pub_cost_coef;
       unsigned long at_flags;
       StringIoWrapperOptional additional_info;
+      StringIoWrapperOptional page_keywords;
 
   private:
       virtual ~DataHolder() noexcept {}
@@ -1215,23 +1238,74 @@ namespace AdServer::LogProcessing
     operator<<(BufferWriter& out, const RequestData& data)
       /*throw(eh::Exception)*/;
 
+    friend class RequestData_V_3_7_2;
+
+    void read_v_3_7_2_(FixedBufStream<TabCategory>& is);
+
     DataHolder_var holder_;
   };
+
+  // 3.7.2 records end after additional_info, so page_keywords stays empty.
+  class RequestData_V_3_7_2
+  {
+  public:
+    RequestData_V_3_7_2() noexcept = default;
+    RequestData_V_3_7_2(const RequestData_V_3_7_2&) = delete;
+    RequestData_V_3_7_2& operator=(const RequestData_V_3_7_2&) = delete;
+    RequestData_V_3_7_2(RequestData_V_3_7_2&&) noexcept = default;
+    RequestData_V_3_7_2& operator=(RequestData_V_3_7_2&&) noexcept = default;
+
+    RequestData into_current() noexcept
+    {
+      return std::move(data_);
+    }
+
+  private:
+    void read_(FixedBufStream<TabCategory>& is)
+    {
+      data_.read_v_3_7_2_(is);
+    }
+
+    RequestData data_;
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_7_2& data)
+      /*throw(eh::Exception)*/;
+  };
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_7_2& data)
+    /*throw(eh::Exception)*/;
 
   FixedBufStream<CommaCategory>&
   operator>>(FixedBufStream<CommaCategory>& is, UserProperty& property) /*throw(eh::Exception)*/;
 
-    typedef SeqCollector<RequestData, true> RequestCollector;
+  using RequestCollector_V_3_7_2 = SeqCollector<RequestData_V_3_7_2, true>;
+  using RequestCollector = SeqCollector<RequestData, true>;
 
   struct RequestTraits: LogDefaultTraits<RequestCollector, false, false>
   {
     template <class T>
     static void for_each_old(T& obj) /*throw(eh::Exception)*/
     {
+      obj.template support<RequestCollector_V_3_7_2, false>("3.7.2");
       obj.template support<RequestCollector_V_3_7_1, false>("3.7.1");
     }
 
     typedef MoveSeqDistributeStrategy<RequestTraits> DistributeStrategyType;
+
+    static
+    RequestCollector
+    convert_collector(RequestCollector_V_3_7_2& old_collector)
+    {
+      RequestCollector collector;
+      for (auto& old_data : old_collector)
+      {
+        collector.add(old_data.into_current());
+      }
+      return collector;
+    }
 
     static
     RequestCollector

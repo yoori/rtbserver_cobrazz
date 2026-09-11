@@ -715,6 +715,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.pub_cost_coef = req.pub_cost_coef();
       request_info.at_flags = req.at_flags();
       request_info.additional_info = req.additional_info();
+      request_info.page_keywords = req.page_keywords();
 
       request_processor_->process_request(request_info);
     }
@@ -866,6 +867,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.pub_cost_coef = req.pub_cost_coef();
       request_info.at_flags = req.at_flags();
       request_info.additional_info = req.additional_info();
+      request_info.page_keywords = req.page_keywords();
 
       co_await request_processor_->co_process_request(request_info);
     }
@@ -928,32 +930,31 @@ namespace AdServer::RequestInfoSvcs
       {
         request_processor_->process_impression_post_action(
           req.request_id(),
-          RequestPostActionInfo(req.time().time(), req.action_name()));
+          PostActionInfo(req.time().time(), req.action_name()));
+        return;
       }
-      else
+
+      ImpressionInfo impression_info;
+      impression_info.request_id = req.request_id();
+      impression_info.time = req.time().time();
+      impression_info.verify_impression = (req.request_type() == 'T');
+      impression_info.user_id = req.user_id();
+      impression_info.viewability = req.viewability();
+
+      // pub_sys_revenue not used
+      if (req.pub_revenue().present() /*&& req.pub_sys_revenue().present()*/)
       {
-        ImpressionInfo impression_info;
-        impression_info.request_id = req.request_id();
-        impression_info.time = req.time().time();
-        impression_info.verify_impression = (req.request_type() == 'T');
-        impression_info.user_id = req.user_id();
-        impression_info.viewability = req.viewability();
-
-        // pub_sys_revenue not used
-        if (req.pub_revenue().present() /*&& req.pub_sys_revenue().present()*/)
-        {
-          ImpressionInfo::PubRevenue pub_revenue;
-          pub_revenue.revenue_type = (
-            req.pub_revenue_type() == 'P' ?
-            AdServer::CampaignSvcs::RT_SHARE :
-            AdServer::CampaignSvcs::RT_ABSOLUTE);
-          pub_revenue.impression = *req.pub_revenue();
-          // pub_revenue.sys_impression = *req.pub_sys_revenue();
-          impression_info.pub_revenue = pub_revenue;
-        }
-
-        request_processor_->process_impression(impression_info);
+        ImpressionInfo::PubRevenue pub_revenue;
+        pub_revenue.revenue_type = (
+          req.pub_revenue_type() == 'P' ?
+          AdServer::CampaignSvcs::RT_SHARE :
+          AdServer::CampaignSvcs::RT_ABSOLUTE);
+        pub_revenue.impression = *req.pub_revenue();
+        // pub_revenue.sys_impression = *req.pub_sys_revenue();
+        impression_info.pub_revenue = pub_revenue;
       }
+
+      request_processor_->process_impression(impression_info);
     }
 
     Commons::Awaitable<void>
@@ -963,28 +964,27 @@ namespace AdServer::RequestInfoSvcs
       {
         co_await request_processor_->co_process_impression_post_action(
           req.request_id(),
-          RequestPostActionInfo(req.time().time(), req.action_name()));
+          PostActionInfo(req.time().time(), req.action_name()));
+        co_return;
       }
-      else
+
+      ImpressionInfo impression_info;
+      impression_info.request_id = req.request_id();
+      impression_info.time = req.time().time();
+      impression_info.verify_impression = (req.request_type() == 'T');
+      impression_info.user_id = req.user_id();
+      impression_info.viewability = req.viewability();
+
+      if (req.pub_revenue().present())
       {
-        ImpressionInfo impression_info;
-        impression_info.request_id = req.request_id();
-        impression_info.time = req.time().time();
-        impression_info.verify_impression = (req.request_type() == 'T');
-        impression_info.user_id = req.user_id();
-        impression_info.viewability = req.viewability();
-
-        if (req.pub_revenue().present())
-        {
-          ImpressionInfo::PubRevenue pub_revenue;
-          pub_revenue.revenue_type = (req.pub_revenue_type() == 'P' ?
-            AdServer::CampaignSvcs::RT_SHARE : AdServer::CampaignSvcs::RT_ABSOLUTE);
-          pub_revenue.impression = *req.pub_revenue();
-          impression_info.pub_revenue = pub_revenue;
-        }
-
-        co_await request_processor_->co_process_impression(impression_info);
+        ImpressionInfo::PubRevenue pub_revenue;
+        pub_revenue.revenue_type = (req.pub_revenue_type() == 'P' ?
+          AdServer::CampaignSvcs::RT_SHARE : AdServer::CampaignSvcs::RT_ABSOLUTE);
+        pub_revenue.impression = *req.pub_revenue();
+        impression_info.pub_revenue = pub_revenue;
       }
+
+      co_await request_processor_->co_process_impression(impression_info);
     }
 
   private:

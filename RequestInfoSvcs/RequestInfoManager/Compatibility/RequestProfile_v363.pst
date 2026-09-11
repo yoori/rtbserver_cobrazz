@@ -1,6 +1,6 @@
 namespace AdServer
 {
-namespace RequestInfoSvcs
+namespace RequestInfoSvcs_v363
 {
   struct RequestInfoRevenueDescriptor
   {
@@ -40,16 +40,6 @@ namespace RequestInfoSvcs
 
   autoreader NonconsideredCustomActionReader<NonconsideredCustomActionDescriptor>;
   autowriter NonconsideredCustomActionWriter<NonconsideredCustomActionDescriptor>;
-
-  struct PostActionDescriptor
-  {
-    string name;
-    uint time;
-    string value;
-  };
-
-  autoreader PostActionReader<PostActionDescriptor>;
-  autowriter PostActionWriter<PostActionDescriptor>;
 
   struct RequestInfoProfileVersionDescriptor
   {
@@ -139,7 +129,6 @@ namespace RequestInfoSvcs
     string os_version;
     string country;
     string referer;
-    string page_keywords;
 
     uint enabled_notice;
     uint enabled_impression_tracking;
@@ -177,10 +166,7 @@ namespace RequestInfoSvcs
 
     string ctr;
 
-    array<PostActionDescriptor> post_imp_pending_actions;
-    array<string> post_imp_done_actions;
-    array<PostActionDescriptor> post_click_pending_actions;
-    array<string> post_click_done_actions;
+    array<string> post_impression_actions;
 
     uint campaign_freq;
     uint referer_hash;
@@ -281,7 +267,6 @@ namespace RequestInfoSvcs
     os_version;
     country;
     referer;
-    page_keywords;
 
     enabled_notice;
     enabled_impression_tracking;
@@ -318,10 +303,7 @@ namespace RequestInfoSvcs
     viewability;
 
     ctr;
-    array<PostActionReader> post_imp_pending_actions;
-    post_imp_done_actions;
-    array<PostActionReader> post_click_pending_actions;
-    post_click_done_actions;
+    post_impression_actions;
 
     campaign_freq;
     referer_hash;
@@ -421,7 +403,6 @@ namespace RequestInfoSvcs
     os_version;
     country;
     referer;
-    page_keywords;
 
     enabled_notice;
     enabled_impression_tracking;
@@ -458,10 +439,7 @@ namespace RequestInfoSvcs
     viewability;
 
     ctr;
-    array<PostActionWriter> post_imp_pending_actions;
-    post_imp_done_actions;
-    array<PostActionWriter> post_click_pending_actions;
-    post_click_done_actions;
+    post_impression_actions;
 
     campaign_freq;
     referer_hash;

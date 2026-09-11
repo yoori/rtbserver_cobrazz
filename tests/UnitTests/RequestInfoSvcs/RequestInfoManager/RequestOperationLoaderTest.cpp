@@ -35,6 +35,7 @@ public:
         impressions(0),
         clicks(0),
         actions(0),
+        post_actions(0),
         change_requests(0)
     {}
 
@@ -43,11 +44,13 @@ public:
       unsigned long impressions_val,
       unsigned long clicks_val,
       unsigned long actions_val,
+      unsigned long post_actions_val,
       unsigned long change_requests_val)
       : errors(errors_val),
         impressions(impressions_val),
         clicks(clicks_val),
         actions(actions_val),
+        post_actions(post_actions_val),
         change_requests(change_requests_val)
     {}
 
@@ -57,7 +60,9 @@ public:
       return errors == right.errors &&
         impressions == right.impressions &&
         clicks == right.clicks &&
-        actions == right.actions && change_requests == right.change_requests;
+        actions == right.actions &&
+        post_actions == right.post_actions &&
+        change_requests == right.change_requests;
     }
 
     std::ostream&
@@ -65,7 +70,10 @@ public:
     {
       out << "(err=" << errors <<
         ",imp=" << impressions <<
-        ",clk=" << clicks << ",act=" << actions << ",change-req=" << change_requests << ")";
+        ",clk=" << clicks <<
+        ",act=" << actions <<
+        ",post-act=" << post_actions <<
+        ",change-req=" << change_requests << ")";
       return out;
     }
 
@@ -73,6 +81,7 @@ public:
     unsigned long impressions;
     unsigned long clicks;
     unsigned long actions;
+    unsigned long post_actions;
     unsigned long change_requests;
   };
 
@@ -155,11 +164,21 @@ public:
 
   virtual void
   process_impression_post_action(
-    const AdServer::Commons::UserId&,
-    const AdServer::Commons::RequestId&,
-    const RequestPostActionInfo&)
+    const AdServer::Commons::UserId& new_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const PostActionInfo& action_info)
     /*throw(Exception)*/
-  {}
+  {
+    if (new_user_id != user_id_ || request_id != request_id_ ||
+      action_info.time != time_ || action_info.name != "vstart" ||
+      !action_info.value.empty())
+    {
+      counter_.errors += 1;
+      std::cerr << "process_impression_post_action: incorrect action" << std::endl;
+    }
+
+    counter_.post_actions += 1;
+  }
 
   virtual void
   change_request_user_id(
@@ -283,6 +302,8 @@ save_load_test()
       32,
       Generics::Time(100000),
       1);
+    Generics::ActiveObject* active_saver = saver;
+    active_saver->activate_object();
 
     for (unsigned long i = 0; i < 10; ++i)
     {
@@ -296,6 +317,14 @@ save_load_test()
         RequestContainerProcessor::AT_CLICK,
         test_processor->etalon_time(),
         test_processor->etalon_request_id());
+    }
+
+    for (unsigned long i = 0; i < 10; ++i)
+    {
+      saver->process_impression_post_action(
+        test_processor->etalon_user_id(),
+        test_processor->etalon_request_id(),
+        PostActionInfo(test_processor->etalon_time(), "vstart"));
     }
 
     for (unsigned long i = 0; i < 10; ++i)
@@ -317,6 +346,8 @@ save_load_test()
 
     RequestOperationSaver::FileNameList files;
     saver->flush(&files);
+    active_saver->deactivate_object();
+    active_saver->wait_object();
 
     RequestOperationLoader_var loader = new RequestOperationLoader(test_processor);
 
@@ -328,7 +359,7 @@ save_load_test()
     }
 
     // check counter
-    RequestOperationProcessorImpl::Counter etalon_counter(0, 10, 10, 10, 10);
+    RequestOperationProcessorImpl::Counter etalon_counter(0, 10, 10, 10, 10, 10);
 
     if (!(test_processor->counter() == etalon_counter))
     {

@@ -233,6 +233,7 @@ namespace AdServer::RequestInfoSvcs
     request_info.os_version = request_reader.os_version();
     request_info.country = request_reader.country();
     request_info.referer = request_reader.referer();
+    request_info.page_keywords = request_reader.page_keywords();
 
     request_info.enabled_notice = (request_reader.enabled_notice() & ENABLED_NOTICE);
     request_info.disabled_pub_cost_check =
@@ -501,6 +502,7 @@ namespace AdServer::RequestInfoSvcs
     request_writer.os_version() = request_info.os_version;
     request_writer.country() = request_info.country;
     request_writer.referer() = request_info.referer;
+    request_writer.page_keywords() = request_info.page_keywords;
 
     request_writer.enabled_notice() =
       (request_info.enabled_notice ? ENABLED_NOTICE : 0) |
@@ -1012,6 +1014,7 @@ namespace AdServer::RequestInfoSvcs
     request_writer.os_version() = "";
     request_writer.country() = "";
     request_writer.referer() = "";
+    request_writer.page_keywords() = "";
 
     request_writer.enabled_notice() = 0;
     request_writer.enabled_impression_tracking() = 0;
@@ -1095,13 +1098,13 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestContainerProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
     void detach() noexcept;
 
@@ -1156,14 +1159,14 @@ namespace AdServer::RequestInfoSvcs
     process_impression_post_action(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
     virtual void
     change_request_user_id(
@@ -1319,27 +1322,27 @@ namespace AdServer::RequestInfoSvcs
   void
   RequestInfoContainer::ProxyImpl::process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     RequestInfoContainer_var owner = lock_owner_();
 
     if (owner.in())
     {
-      owner->process_impression_post_action(request_id, request_post_action_info);
+      owner->process_impression_post_action(request_id, action_info);
     }
   }
 
   AdServer::Commons::Awaitable<void>
   RequestInfoContainer::ProxyImpl::co_process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
     RequestInfoContainer_var owner = lock_owner_();
 
     if (owner.in())
     {
-      co_await owner->co_process_impression_post_action(request_id, request_post_action_info);
+      co_await owner->co_process_impression_post_action(request_id, action_info);
     }
   }
 
@@ -1453,9 +1456,9 @@ namespace AdServer::RequestInfoSvcs
 
   void
   RequestInfoContainer::RequestOperationProxy::process_impression_post_action(
-    const AdServer::Commons::UserId&, // new_user_id
+    const AdServer::Commons::UserId&,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
     RequestInfoContainer_var owner = lock_owner_();
@@ -1464,8 +1467,7 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        // already moved operation will disable second moving
-        owner->process_impression_post_action_(request_id, request_post_action_info, false);
+        owner->process_impression_post_action_(request_id, action_info, false);
       }
       catch(const eh::Exception& ex)
       {
@@ -1478,7 +1480,7 @@ namespace AdServer::RequestInfoSvcs
   RequestInfoContainer::RequestOperationProxy::co_process_impression_post_action(
     const AdServer::Commons::UserId&,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
     RequestInfoContainer_var owner = lock_owner_();
 
@@ -1488,7 +1490,7 @@ namespace AdServer::RequestInfoSvcs
       {
         co_await owner->co_process_impression_post_action_(
           request_id,
-          request_post_action_info,
+          action_info,
           false);
       }
       catch(const eh::Exception& ex)
@@ -1822,24 +1824,23 @@ namespace AdServer::RequestInfoSvcs
   void
   RequestInfoContainer::process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     process_impression_post_action_(
       request_id,
-      request_post_action_info,
-      request_operation_processor_ // move enabled if processor present
-      );
+      action_info,
+      request_operation_processor_);
   }
 
   AdServer::Commons::Awaitable<void>
   RequestInfoContainer::co_process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
     co_await co_process_impression_post_action_(
       request_id,
-      request_post_action_info,
+      action_info,
       request_operation_processor_);
   }
 
@@ -2088,14 +2089,13 @@ namespace AdServer::RequestInfoSvcs
   void
   RequestInfoContainer::process_impression_post_action_(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info,
+    const PostActionInfo& action_info,
     bool move_enabled)
     /*throw(Exception)*/
   {
     static const char* FUN = "RequestInfoContainer::process_impression_post_action_()";
 
     RequestProcessDelegate request_process_delegate;
-    bool save_profile = false;
     Generics::Time last_event_time;
 
     try
@@ -2103,20 +2103,18 @@ namespace AdServer::RequestInfoSvcs
       Transaction_var transaction = get_transaction_(request_id);
       Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
 
-      save_profile = process_impression_post_action_buf_(
-        mem_buf,
-        request_process_delegate,
-        &last_event_time,
-        request_id,
-        request_post_action_info,
-        move_enabled);
-
-      if (save_profile)
+      if (process_impression_post_action_buf_(
+          mem_buf,
+          request_process_delegate,
+          &last_event_time,
+          request_id,
+          action_info,
+          move_enabled))
       {
         save_profile_(
           transaction,
           mem_buf,
-          std::max(request_post_action_info.time, last_event_time));
+          std::max(action_info.time, last_event_time));
       }
     }
     catch(const eh::Exception& ex)
@@ -2130,13 +2128,12 @@ namespace AdServer::RequestInfoSvcs
   AdServer::Commons::Awaitable<void>
   RequestInfoContainer::co_process_impression_post_action_(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info,
+    const PostActionInfo& action_info,
     bool move_enabled)
   {
     static const char* FUN = "RequestInfoContainer::co_process_impression_post_action_()";
 
     RequestProcessDelegate request_process_delegate;
-    bool save_profile = false;
     Generics::Time last_event_time;
 
     try
@@ -2144,20 +2141,18 @@ namespace AdServer::RequestInfoSvcs
       Transaction_var transaction = co_await co_get_transaction_(request_id);
       Generics::ConstSmartMemBuf_var mem_buf = co_await co_get_profile_(transaction);
 
-      save_profile = process_impression_post_action_buf_(
-        mem_buf,
-        request_process_delegate,
-        &last_event_time,
-        request_id,
-        request_post_action_info,
-        move_enabled);
-
-      if (save_profile)
+      if (process_impression_post_action_buf_(
+          mem_buf,
+          request_process_delegate,
+          &last_event_time,
+          request_id,
+          action_info,
+          move_enabled))
       {
         co_await co_save_profile_(
           transaction,
           mem_buf,
-          std::max(request_post_action_info.time, last_event_time));
+          std::max(action_info.time, last_event_time));
       }
     }
     catch(const eh::Exception& ex)
@@ -2195,8 +2190,6 @@ namespace AdServer::RequestInfoSvcs
       unsigned long click_non_considered = 0;
       */
       bool request_processed_on_sender = false;
-      RequestInfoProfileWriter::post_impression_actions_Container post_impression_actions;
-
       {
         RequestInfoProfileReader new_request_reader(
           request_profile->membuf().data(),
@@ -2230,8 +2223,6 @@ namespace AdServer::RequestInfoSvcs
           request_writer.click_non_considered() += request_writer.click_done();
           request_writer.click_done() = 0;
         }
-
-        post_impression_actions.swap(request_writer.post_impression_actions());
 
 #       ifdef DEBUG_OUTPUT_
         std::cerr << "RequestInfoContainer::change_request_user_id_(): "
@@ -2375,23 +2366,6 @@ namespace AdServer::RequestInfoSvcs
           false);
       }
 
-      if (!post_impression_actions.empty())
-      {
-        for (auto it = post_impression_actions.begin();
-          it != post_impression_actions.end(); ++it)
-        {
-          save_profile |= process_impression_post_action_buf_(
-            mem_buf,
-            request_process_delegate,
-            0, // last_event_time
-            request_id,
-            RequestPostActionInfo(
-              Generics::Time(request_reader.time()),
-              *it),
-            false);
-        }
-      }
-
       for (unsigned long act_i = 0;
           act_i < request_reader.actions_non_considered(); ++act_i)
       {
@@ -2439,9 +2413,6 @@ namespace AdServer::RequestInfoSvcs
       Transaction_var transaction = co_await co_get_transaction_(request_id);
 
       bool request_processed_on_sender = false;
-      RequestInfoProfileWriter::post_impression_actions_Container
-        post_impression_actions;
-
       {
         RequestInfoProfileReader new_request_reader(
           request_profile->membuf().data(),
@@ -2473,8 +2444,6 @@ namespace AdServer::RequestInfoSvcs
           request_writer.click_non_considered() += request_writer.click_done();
           request_writer.click_done() = 0;
         }
-
-        post_impression_actions.swap(request_writer.post_impression_actions());
 
         if (request_writer.actions_done())
         {
@@ -2721,16 +2690,12 @@ namespace AdServer::RequestInfoSvcs
           *adv_action_it);
       }
 
-      for (auto request_post_act_it =
-            request_process_delegate.process_post_impression_actions.begin();
-        request_post_act_it != request_process_delegate.process_post_impression_actions.end();
-        ++request_post_act_it)
+      for (const auto& action_info : request_process_delegate.process_post_imp_actions)
       {
         assert(request_process_delegate.request_info.present());
-
-        request_processor_->process_request_post_action(
+        request_processor_->process_post_imp_action(
           *request_process_delegate.request_info,
-          *request_post_act_it);
+          action_info);
       }
 
       // move operations
@@ -2771,15 +2736,14 @@ namespace AdServer::RequestInfoSvcs
             it->request_id);
         }
 
-        for (auto it = request_process_delegate.move_impression_post_actions.begin();
-          it != request_process_delegate.move_impression_post_actions.end();
-          ++it)
+        for (const auto& action_info : request_process_delegate.move_post_imp_actions)
         {
           request_operation_processor_->process_impression_post_action(
             request_process_delegate.move_request_user_id,
-            it->request_id,
-            *it);
+            action_info.request_id,
+            action_info.action_info);
         }
+
       }
     }
     catch(const eh::Exception& ex)
@@ -2940,16 +2904,12 @@ namespace AdServer::RequestInfoSvcs
           *adv_action_it);
       }
 
-      for (auto request_post_act_it =
-            request_process_delegate.process_post_impression_actions.begin();
-        request_post_act_it != request_process_delegate.process_post_impression_actions.end();
-        ++request_post_act_it)
+      for (const auto& action_info : request_process_delegate.process_post_imp_actions)
       {
         assert(request_process_delegate.request_info.present());
-
-        co_await request_processor_->co_process_request_post_action(
+        co_await request_processor_->co_process_post_imp_action(
           *request_process_delegate.request_info,
-          *request_post_act_it);
+          action_info);
       }
 
       if (request_process_delegate.move_request_profile.in())
@@ -2989,16 +2949,14 @@ namespace AdServer::RequestInfoSvcs
             it->request_id);
         }
 
-        for (auto it = request_process_delegate.move_impression_post_actions.begin();
-          it != request_process_delegate.move_impression_post_actions.end();
-          ++it)
+        for (const auto& action_info : request_process_delegate.move_post_imp_actions)
         {
-          co_await request_operation_processor_->
-            co_process_impression_post_action(
-              request_process_delegate.move_request_user_id,
-              it->request_id,
-              *it);
+          co_await request_operation_processor_->co_process_impression_post_action(
+            request_process_delegate.move_request_user_id,
+            action_info.request_id,
+            action_info.action_info);
         }
+
       }
     }
     catch(const eh::Exception& ex)
@@ -3552,7 +3510,6 @@ namespace AdServer::RequestInfoSvcs
     bool save_profile = false;
     bool delegate_process_click = false;
     unsigned long delegate_duplicate_impressions = 0;
-    RequestPostActionInfoList delegate_process_post_impression_actions;
     bool move_request = false;
 
     assert(!impression_info.request_id.is_null());
@@ -3663,14 +3620,26 @@ namespace AdServer::RequestInfoSvcs
             delegate_process_click = request_reader.click_non_considered() > 0;
             delegate_duplicate_impressions = request_writer.impression_non_considered();
 
-            for (auto act_it = request_writer.post_impression_actions().begin();
-              act_it != request_writer.post_impression_actions().end(); ++act_it)
+            for (const auto& pending_action : request_writer.post_imp_pending_actions())
             {
-              delegate_process_post_impression_actions.push_back(
-                RequestPostActionInfo(impression_info.time, *act_it));
-            }
+              const auto done_it = std::find(
+                request_writer.post_imp_done_actions().begin(),
+                request_writer.post_imp_done_actions().end(),
+                pending_action.name());
 
-            request_writer.post_impression_actions().clear();
+              if (done_it == request_writer.post_imp_done_actions().end())
+              {
+                // The v363 adapter uses zero when the original event time is unavailable.
+                const Generics::Time action_time = pending_action.time() == 0 ?
+                  impression_info.time : Generics::Time(pending_action.time());
+                request_process_delegate.process_post_imp_actions.emplace_back(
+                  action_time,
+                  pending_action.name(),
+                  pending_action.value());
+                request_writer.post_imp_done_actions().push_back(pending_action.name());
+              }
+            }
+            request_writer.post_imp_pending_actions().clear();
 
             if (request_reader.click_non_considered() > 0)
             {
@@ -3840,21 +3809,6 @@ namespace AdServer::RequestInfoSvcs
         impression_info.request_id,
         impression_info.time,
         move_enabled);
-    }
-
-    if (!delegate_process_post_impression_actions.empty())
-    {
-      for (auto it = delegate_process_post_impression_actions.begin();
-        it != delegate_process_post_impression_actions.end(); ++it)
-      {
-        save_profile |= process_impression_post_action_buf_(
-          mem_buf,
-          request_process_delegate,
-          0, // last event
-          impression_info.request_id,
-          *it,
-          move_enabled);
-      }
     }
 
     return save_profile;
@@ -4167,22 +4121,24 @@ namespace AdServer::RequestInfoSvcs
     RequestProcessDelegate& request_process_delegate,
     Generics::Time* last_event,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info,
+    const PostActionInfo& action_info,
     bool move_enabled)
     /*throw(Exception)*/
   {
     static const char* FUN = "RequestInfoContainer::process_impression_post_action_buf_()";
 
-    bool save_profile = true;
+    bool save_profile = false;
+    bool init_profile = true;
 
     try
     {
       RequestInfoProfileWriter request_writer;
-      bool init_profile = true;
 
       if (mem_buf.in())
       {
-        RequestInfoProfileReader request_reader(mem_buf->membuf().data(), mem_buf->membuf().size());
+        RequestInfoProfileReader request_reader(
+          mem_buf->membuf().data(),
+          mem_buf->membuf().size());
 
         if (last_event)
         {
@@ -4194,66 +4150,67 @@ namespace AdServer::RequestInfoSvcs
           if (move_enabled)
           {
             init_profile = false;
-            save_profile = false;
             request_process_delegate.move_request_user_id =
               AdServer::Commons::UserId(request_reader.user_id());
-            request_process_delegate.move_impression_post_actions.push_back(
-              MoveRequestPostActionInfo(request_id, request_post_action_info));
+            request_process_delegate.move_post_imp_actions.emplace_back(
+              request_id,
+              action_info);
           }
-          // if move disabled (operation already moved over moved profile)
-          // skip old profile
         }
         else
         {
           init_profile = false;
-
           request_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
 
-          auto ins_it = std::lower_bound(
-            request_writer.post_impression_actions().begin(),
-            request_writer.post_impression_actions().end(),
-            request_post_action_info.action_name);
+          const auto done_it = std::find(
+            request_writer.post_imp_done_actions().begin(),
+            request_writer.post_imp_done_actions().end(),
+            action_info.name);
+          const auto pending_it = std::find_if(
+            request_writer.post_imp_pending_actions().begin(),
+            request_writer.post_imp_pending_actions().end(),
+            [&action_info](const auto& pending_action)
+            {
+              return pending_action.name() == action_info.name;
+            });
 
-          bool ignore_action = (
-            ins_it != request_writer.post_impression_actions().end() &&
-            *ins_it == request_post_action_info.action_name);
-
-          if (!ignore_action)
+          if (done_it == request_writer.post_imp_done_actions().end() &&
+            pending_it == request_writer.post_imp_pending_actions().end())
           {
-            save_profile = true;
-
-            request_writer.post_impression_actions().insert(
-              ins_it,
-              request_post_action_info.action_name);
-
             if (request_reader.impression_verified())
             {
-              if (!request_process_delegate.request_info.present())
-              {
-                convert_request_reader_to_request_info(
-                  request_process_delegate.request_info.fill(),
-                  request_reader);
+              request_writer.post_imp_done_actions().push_back(action_info.name);
 
-                request_process_delegate.request_info->request_id = request_id;
-              }
-
-              request_process_delegate.process_post_impression_actions.push_back(
-                request_post_action_info);
+              convert_request_reader_to_request_info(
+                request_process_delegate.request_info.fill(),
+                request_reader);
+              request_process_delegate.request_info->request_id = request_id;
+              request_process_delegate.process_post_imp_actions.push_back(action_info);
             }
+            else
+            {
+              PostActionWriter pending_action;
+              pending_action.name() = action_info.name;
+              pending_action.time() = action_info.time.tv_sec;
+              pending_action.value() = action_info.value;
+              request_writer.post_imp_pending_actions().push_back(pending_action);
+            }
+
+            save_profile = true;
           }
-          else
-          {
-            save_profile = false;
-          }
-        } // request_reader.fraud() != RS_MOVED
+        }
       }
 
-      if (init_profile) // profile don't exists or must be skipped
+      if (init_profile)
       {
-        // create action stub - if request and impression will be received log it
         create_empty_stub(request_writer);
 
-        request_writer.post_impression_actions().push_back(request_post_action_info.action_name);
+        PostActionWriter pending_action;
+        pending_action.name() = action_info.name;
+        pending_action.time() = action_info.time.tv_sec;
+        pending_action.value() = action_info.value;
+        request_writer.post_imp_pending_actions().push_back(pending_action);
+        save_profile = true;
       }
 
       if (save_profile)

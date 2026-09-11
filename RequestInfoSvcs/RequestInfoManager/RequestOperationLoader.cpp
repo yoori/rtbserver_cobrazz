@@ -322,16 +322,13 @@ namespace AdServer::RequestInfoSvcs
 
       RequestOperationActionReader op_reader(membuf.data(), op_size);
 
-      Generics::Time time(op_reader.time());
-      AdServer::Commons::RequestId request_id(op_reader.request_id());
-
-      co_await request_operation_processor_->
-        co_process_impression_post_action(
-          op_reader.user_id()[0] ?
-            AdServer::Commons::UserId(op_reader.user_id()) :
-            AdServer::Commons::UserId(),
-          request_id,
-          RequestPostActionInfo(time, String::SubString(op_reader.action_name())));
+      const AdServer::Commons::UserId user_id = op_reader.user_id()[0] ?
+        AdServer::Commons::UserId(op_reader.user_id()) :
+        AdServer::Commons::UserId();
+      co_await request_operation_processor_->co_process_impression_post_action(
+        user_id,
+        AdServer::Commons::RequestId(op_reader.request_id()),
+        PostActionInfo(Generics::Time(op_reader.time()), op_reader.action_name()));
     }
     catch(const eh::Exception& ex)
     {

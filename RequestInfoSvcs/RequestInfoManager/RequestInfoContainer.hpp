@@ -109,13 +109,13 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestContainerProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
     RequestContainerProcessor_var
     proxy() noexcept;
@@ -146,16 +146,17 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::RequestId request_id;
     };
 
-    struct MoveRequestPostActionInfo: public RequestPostActionInfo
+    struct MovePostActionInfo
     {
-      MoveRequestPostActionInfo(
+      MovePostActionInfo(
         const AdServer::Commons::RequestId& request_id_val,
-        const RequestPostActionInfo& request_post_action_info)
-        : RequestPostActionInfo(request_post_action_info),
-          request_id(request_id_val)
+        const PostActionInfo& action_info_val)
+        : request_id(request_id_val),
+          action_info(action_info_val)
       {}
 
       AdServer::Commons::RequestId request_id;
+      PostActionInfo action_info;
     };
 
     struct RequestProcessDelegate
@@ -180,8 +181,7 @@ namespace AdServer::RequestInfoSvcs
       std::list<RequestInfo::RequestState> process_rollback_clicks;
 
       AdvCustomActionInfoList custom_actions;
-      RequestPostActionInfoList process_post_impression_actions;
-
+      std::vector<PostActionInfo> process_post_imp_actions;
       AdServer::Commons::UserId move_request_user_id;
       AdServer::Commons::RequestId move_request_id;
       Generics::ConstSmartMemBuf_var move_request_profile;
@@ -189,7 +189,7 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::Optional<ImpressionInfo> move_notice_info;
       AdServer::Commons::Optional<ImpressionInfo> move_impression_info;
       std::vector<MoveActionInfo> move_actions; // AT_CLICK,AT_ACTION,AT_FRAUD_ROLLBACK
-      std::vector<MoveRequestPostActionInfo> move_impression_post_actions;
+      std::vector<MovePostActionInfo> move_post_imp_actions;
     };
 
     class Transaction: public ReferenceCounting::AtomicImpl
@@ -263,14 +263,14 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action_(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info,
+      const PostActionInfo& action_info,
       bool move_enabled)
       /*throw(Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action_(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info,
+      const PostActionInfo& action_info,
       bool move_enabled);
 
     bool
@@ -343,9 +343,9 @@ namespace AdServer::RequestInfoSvcs
     process_impression_post_action_buf_(
       Generics::ConstSmartMemBuf_var& mem_buf,
       RequestProcessDelegate& request_process_delegate,
-      Generics::Time* last_event,
+      Generics::Time* last_event_time,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info,
+      const PostActionInfo& action_info,
       bool move_enabled)
       /*throw(Exception)*/;
 

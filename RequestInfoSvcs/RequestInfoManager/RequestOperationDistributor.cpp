@@ -65,23 +65,23 @@ namespace AdServer::RequestInfoSvcs
   RequestOperationDistributor::process_impression_post_action(
     const AdServer::Commons::UserId& new_user_id,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
     get_request_operation_processor_(new_user_id)->process_impression_post_action(
       new_user_id,
       request_id,
-      request_post_action_info);
+      action_info);
   }
 
   AdServer::Commons::Awaitable<void>
   RequestOperationDistributor::co_process_impression_post_action(
     const AdServer::Commons::UserId& new_user_id,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
     co_await get_request_operation_processor_(new_user_id)->
-      co_process_impression_post_action(new_user_id, request_id, request_post_action_info);
+      co_process_impression_post_action(new_user_id, request_id, action_info);
   }
 
   void

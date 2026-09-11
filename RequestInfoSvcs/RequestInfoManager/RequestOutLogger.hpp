@@ -91,7 +91,11 @@ namespace AdServer::RequestInfoSvcs
       /*throw(RequestActionProcessor::Exception)*/;
 
     virtual void
-    process_request_post_action(const RequestInfo&, const RequestPostActionInfo&)
+    process_post_imp_action(const RequestInfo&, const PostActionInfo&)
+      /*throw(RequestActionProcessor::Exception)*/;
+
+    virtual void
+    process_post_click_action(const RequestInfo&, const PostActionInfo&)
       /*throw(RequestActionProcessor::Exception)*/;
 
     // RequestContainerProcessor
@@ -119,7 +123,7 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId&,
-      const RequestPostActionInfo&)
+      const PostActionInfo&)
       /*throw(RequestContainerProcessor::Exception)*/
     {}
 

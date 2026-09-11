@@ -82,6 +82,7 @@ namespace AdServer::RequestInfoSvcs
       Table::Column("browser_version", Table::Column::TEXT),
       Table::Column("os_version", Table::Column::TEXT),
       Table::Column("country", Table::Column::TEXT),
+      Table::Column("page_keywords", Table::Column::TEXT),
       Table::Column("cmp_channels", Table::Column::TEXT),
 
       Table::Column("enabled_notice", Table::Column::NUMBER),
@@ -108,7 +109,10 @@ namespace AdServer::RequestInfoSvcs
       Table::Column("fraud_time", Table::Column::TEXT),
       Table::Column("fraud", Table::Column::NUMBER),
 
-      Table::Column("post_impression_actions", Table::Column::TEXT),
+      Table::Column("post_imp_pending_actions", Table::Column::TEXT),
+      Table::Column("post_imp_done_actions", Table::Column::TEXT),
+      Table::Column("post_click_pending_actions", Table::Column::TEXT),
+      Table::Column("post_click_done_actions", Table::Column::TEXT),
 
       Table::Column("campaign_freq", Table::Column::NUMBER),
       Table::Column("referer_hash", Table::Column::NUMBER),
@@ -157,6 +161,25 @@ namespace AdServer::RequestInfoSvcs
     {
       std::ostringstream ostr;
       Algs::print(ostr, cont.begin(), cont.end());
+      return ostr.str();
+    }
+
+    template<typename SeqType>
+    std::string
+    post_actions_to_string(const SeqType& actions)
+    {
+      std::ostringstream ostr;
+      for (auto it = actions.begin(); it != actions.end(); ++it)
+      {
+        if (it != actions.begin())
+        {
+          ostr << ' ';
+        }
+
+        ostr << "[ name = " << (*it).name() << ", time = " << (*it).time()
+          << ", value = " << (*it).value() << " ]";
+      }
+
       return ostr.str();
     }
   }
@@ -264,6 +287,7 @@ namespace AdServer::RequestInfoSvcs
     row.add_field(reader.browser_version());
     row.add_field(reader.os_version());
     row.add_field(reader.country());
+    row.add_field(reader.page_keywords());
 
     std::ostringstream cmp_channels_ostr;
     for (RequestInfoProfileReader::cmp_channels_Container::const_iterator
@@ -307,7 +331,10 @@ namespace AdServer::RequestInfoSvcs
     row.add_field(Generics::Time(reader.fraud_time()).gm_ft());
     row.add_field(reader.fraud());
 
-    row.add_field(array_to_string(reader.post_impression_actions()));
+    row.add_field(post_actions_to_string(reader.post_imp_pending_actions()));
+    row.add_field(array_to_string(reader.post_imp_done_actions()));
+    row.add_field(post_actions_to_string(reader.post_click_pending_actions()));
+    row.add_field(array_to_string(reader.post_click_done_actions()));
 
     row.add_field(reader.campaign_freq());
     row.add_field(reader.referer_hash());

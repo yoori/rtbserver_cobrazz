@@ -2220,7 +2220,9 @@ namespace AdServer::CampaignSvcs
               ad_info.adv_commission,
               ad_info.pub_cost_coef,
               ad_info.at_flags,
-              request_info.additional_info
+              request_info.additional_info,
+              request_info.page_keywords.in() ?
+                request_info.page_keywords->str() : EMPTY_USER_NAVIGATION_DATA
               );
 
             add_record(std::move(data));

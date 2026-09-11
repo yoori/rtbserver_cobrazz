@@ -1364,7 +1364,8 @@ int main(int argc, char **argv)
         RequestData::FixedNum("0.1"), // adv_commission
         RequestData::FixedNum("0.13"), // pub_cost_coef
         0, // flags
-        "" // additional_info
+        "{\"source\":\"test\"}", // additional_info
+        "rtbreq\nrtbplatformlinux" // page_keywords
       );
     };
 
@@ -1450,7 +1451,8 @@ int main(int argc, char **argv)
         RequestData::FixedNum("0.1"), // adv_commission
         RequestData::FixedNum("0.13"), // pub_cost_coef
         0, // flags
-        "" // additional_info
+        "", // additional_info
+        "page keyword" // page_keywords
       );
     };
 
@@ -1465,6 +1467,33 @@ int main(int argc, char **argv)
     collector.add(make_data2());
 #endif
     LogIoTester<RequestTraits>(dump_on_fail).test(collector);
+
+    {
+      auto old_data = make_data1();
+      BufferWriter writer;
+      writer << old_data;
+      std::string old_record = writer.str();
+      const std::size_t page_keywords_separator = old_record.rfind('\t');
+      if (page_keywords_separator == std::string::npos)
+      {
+        throw LogIoTester<RequestTraits>::Exception(
+          "Request 3.7.2 compatibility test: malformed current record");
+      }
+      old_record.resize(page_keywords_separator);
+
+      std::istringstream old_log("Request\t3.7.2\n" + old_record + "\n");
+      RequestCollector restored_collector;
+      RequestTraits::IoHelperType io_helper(restored_collector);
+      io_helper.load(old_log);
+
+      if (restored_collector.size() != 1 ||
+        restored_collector.begin()->additional_info() != "{\"source\":\"test\"}" ||
+        !restored_collector.begin()->page_keywords().empty())
+      {
+        throw LogIoTester<RequestTraits>::Exception(
+          "Request 3.7.2 compatibility test: invalid converted record");
+      }
+    }
 #if 0
     RequestCollector collector1 = collector, collector2 = collector;
     typedef LogIoProxy<RequestTraits> LogIoProxyT;

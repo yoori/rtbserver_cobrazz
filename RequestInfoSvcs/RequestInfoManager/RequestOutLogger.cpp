@@ -280,6 +280,24 @@ namespace AdServer::RequestInfoSvcs
     }
 
     virtual void
+    process_post_imp_action(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info)
+      /*throw(RequestActionProcessor::Exception)*/
+    {
+      try
+      {
+        process_post_imp_action_impl(request_info, action_info);
+      }
+      catch(const eh::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << name() << "::process_post_imp_action(): eh::Exception caught: " << ex.what();
+        throw RequestActionProcessor::Exception(ostr);
+      }
+    }
+
+    virtual void
     process_custom_action(
       const RequestInfo& request_info,
       const AdvCustomActionInfo& adv_custom_action_info)
@@ -288,24 +306,6 @@ namespace AdServer::RequestInfoSvcs
       try
       {
         process_custom_action_impl(request_info, adv_custom_action_info);
-      }
-      catch (const eh::Exception &ex)
-      {
-        Stream::Error ostr;
-        ostr << name() << "::process_action(): eh::Exception caught: " << ex.what();
-        throw RequestActionProcessor::Exception(ostr);
-      }
-    }
-
-    virtual void
-    process_request_post_action(
-      const RequestInfo& request_info,
-      const RequestPostActionInfo& request_post_action_info)
-      /*throw(RequestActionProcessor::Exception)*/
-    {
-      try
-      {
-        process_request_post_action_impl(request_info, request_post_action_info);
       }
       catch (const eh::Exception &ex)
       {
@@ -338,9 +338,9 @@ namespace AdServer::RequestInfoSvcs
       /*throw(eh::Exception)*/ = 0;
 
     virtual void
-    process_request_post_action_impl(
-      const RequestInfo& /*request_info*/,
-      const RequestPostActionInfo& /*request_post_action_info*/)
+    process_post_imp_action_impl(
+      const RequestInfo&,
+      const PostActionInfo&)
       /*throw(RequestActionProcessor::Exception)*/
     {}
 
@@ -1834,7 +1834,10 @@ namespace AdServer::RequestInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
     static const LogProcessing::FixedNumber&
-    fzero_() { return LogProcessing::FixedNumber::ZERO; }
+    fzero_()
+    {
+      return LogProcessing::FixedNumber::ZERO;
+    }
 
   public:
     CampaignReferrerStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
@@ -1843,81 +1846,55 @@ namespace AdServer::RequestInfoSvcs
     {
       action_data_.insert(
         std::make_pair("vstart", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vview", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vq1", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vmid", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vq3", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vcomplete", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vskip", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vpause", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vmute", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vunmute", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vresume", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("vfullscreen", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
       action_data_.insert(
         std::make_pair("verror", CollectorT::DataT::DataT(
-          0, // imps
-          0, // clicks
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
           fzero_(), fzero_(), fzero_(), fzero_(), fzero_(), fzero_())));
     }
 
@@ -1990,15 +1967,18 @@ namespace AdServer::RequestInfoSvcs
     {}
 
     virtual void
-    process_request_post_action_impl(
-      const RequestInfo& ri,
-      const RequestPostActionInfo& request_post_action_info)
+    process_post_imp_action_impl(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info)
       /*throw(RequestActionProcessor::Exception)*/
     {
-      auto it = action_data_.find(request_post_action_info.action_name);
+      const auto it = action_data_.find(action_info.name);
       if (it != action_data_.end())
       {
-        add_request_info_record_(ri, ProcessingState(RequestInfo::RS_NORMAL), it->second);
+        add_request_info_record_(
+          request_info,
+          ProcessingState(RequestInfo::RS_NORMAL),
+          it->second);
       }
     }
 
@@ -2008,11 +1988,10 @@ namespace AdServer::RequestInfoSvcs
     {}
 
   private:
-    typedef Generics::GnuHashTable<
+    using ActionNameDataMap = Generics::GnuHashTable<
       Generics::StringHashAdapter,
-      CollectorT::DataT::DataT> ActionNameDataMap;
+      CollectorT::DataT::DataT>;
 
-  private:
     static std::string
     normalize_referer_(const String::SubString& referer)
     {
@@ -2169,12 +2148,6 @@ namespace AdServer::RequestInfoSvcs
     process_action_impl(const RequestInfo&)
       /*throw(RequestActionProcessor::Exception)*/
     {}
-
-    virtual void
-    process_request_post_action_impl(const RequestInfo&, const RequestPostActionInfo&)
-      /*throw(RequestActionProcessor::Exception)*/
-    {
-    }
 
   protected:
     virtual
@@ -2596,9 +2569,9 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId&,
-      const RequestPostActionInfo&)
+      const PostActionInfo&)
       /*throw(RequestContainerProcessor::Exception)*/
-    {};
+    {}
 
   private:
     const Commons::LogReferrer::Setting log_referrer_setting_;
@@ -2641,9 +2614,10 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId&,
-      const RequestPostActionInfo&)
+      const PostActionInfo&)
       /*throw(RequestContainerProcessor::Exception)*/
-    {};
+    {}
+
   };
 
   /**
@@ -3061,15 +3035,28 @@ namespace AdServer::RequestInfoSvcs
   }
 
   void
-  RequestOutLogger::process_request_post_action(
+  RequestOutLogger::process_post_imp_action(
     const RequestInfo& request_info,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestActionProcessor::Exception)*/
   {
     for (RequestActionProcessorList::iterator it = request_loggers_.begin();
         it != request_loggers_.end(); ++it)
     {
-      (*it)->process_request_post_action(request_info, request_post_action_info);
+      (*it)->process_post_imp_action(request_info, action_info);
+    }
+  }
+
+  void
+  RequestOutLogger::process_post_click_action(
+    const RequestInfo& request_info,
+    const PostActionInfo& action_info)
+    /*throw(RequestActionProcessor::Exception)*/
+  {
+    for (RequestActionProcessorList::iterator it = request_loggers_.begin();
+        it != request_loggers_.end(); ++it)
+    {
+      (*it)->process_post_click_action(request_info, action_info);
     }
   }
 

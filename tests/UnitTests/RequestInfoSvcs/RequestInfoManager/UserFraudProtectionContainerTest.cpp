@@ -100,11 +100,6 @@ struct TestProcessor:
     noexcept
   {}
 
-  virtual void
-  process_impression_post_action(const AdServer::Commons::RequestId&, const RequestPostActionInfo&)
-    /*throw(Exception)*/
-  {}
-
   void
   clear() noexcept
   {

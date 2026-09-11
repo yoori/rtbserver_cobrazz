@@ -88,20 +88,24 @@ namespace AdServer::RequestInfoSvcs
   RequestOperationSaver::process_impression_post_action(
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestOperationProcessor::Exception)*/
   {
     RequestOperationActionWriter operation_writer;
     operation_writer.version() = 0;
     operation_writer.action_type() = 0;
-    operation_writer.time() = request_post_action_info.time.tv_sec;
+    operation_writer.time() = action_info.time.tv_sec;
     operation_writer.request_id() = request_id.to_string();
     operation_writer.user_id() = user_id.to_string();
-    operation_writer.action_name() = request_post_action_info.action_name;
+    operation_writer.action_name() = action_info.name;
+
     Generics::MemBuf op_mem_buf(operation_writer.size());
     operation_writer.save(op_mem_buf.data(), op_mem_buf.size());
 
-    write_operation_(user_id, RequestOperationLoader::OP_REQUEST_ACTION, std::move(op_mem_buf));
+    write_operation_(
+      user_id,
+      RequestOperationLoader::OP_REQUEST_ACTION,
+      std::move(op_mem_buf));
   }
 
   void

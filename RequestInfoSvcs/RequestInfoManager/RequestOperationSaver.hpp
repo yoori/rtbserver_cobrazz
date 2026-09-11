@@ -41,7 +41,7 @@ namespace AdServer::RequestInfoSvcs
     process_impression_post_action(
       const AdServer::Commons::UserId& new_user_id,
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestOperationProcessor::Exception)*/;
 
     virtual void

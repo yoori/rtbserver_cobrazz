@@ -674,20 +674,17 @@ namespace
     }
 
     virtual void
-    process_request_post_action(
-      const AdServer::Commons::UserId&,
-      const AdServer::Commons::RequestId&,
-      const RequestPostActionInfo&)
-      /*throw(Exception)*/
-    {}
-
-    virtual void
     process_impression_post_action(
-      const AdServer::Commons::UserId&,
-      const AdServer::Commons::RequestId&,
-      const AdServer::RequestInfoSvcs::RequestPostActionInfo&)
+      const AdServer::Commons::UserId& new_user_id,
+      const AdServer::Commons::RequestId& request_id,
+      const PostActionInfo& action_info)
       /*throw(Exception)*/
-    {}
+    {
+      delegate_processor_->process_impression_post_action(
+        new_user_id,
+        request_id,
+        action_info);
+    }
 
     virtual void
     change_request_user_id(

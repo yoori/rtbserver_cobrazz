@@ -6,4 +6,5 @@ target_link_libraries(logProcessingLogIoTest
   PRIVATE
     Generics
     LogCommons
+    RequestCompatibility
 )

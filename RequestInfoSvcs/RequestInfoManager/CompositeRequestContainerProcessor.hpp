@@ -61,13 +61,13 @@ namespace AdServer::RequestInfoSvcs
     virtual void
     process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info)
+      const PostActionInfo& action_info)
       /*throw(RequestContainerProcessor::Exception)*/;
 
     virtual AdServer::Commons::Awaitable<void>
     co_process_impression_post_action(
       const AdServer::Commons::RequestId& request_id,
-      const RequestPostActionInfo& request_post_action_info);
+      const PostActionInfo& action_info);
 
   protected:
     virtual ~CompositeRequestContainerProcessor() noexcept {}
@@ -198,27 +198,28 @@ namespace AdServer::RequestInfoSvcs
   inline void
   CompositeRequestContainerProcessor::process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
     /*throw(RequestContainerProcessor::Exception)*/
   {
     for (RequestContainerProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      (*it)->process_impression_post_action(request_id, request_post_action_info);
+      (*it)->process_impression_post_action(request_id, action_info);
     }
   }
 
   inline AdServer::Commons::Awaitable<void>
   CompositeRequestContainerProcessor::co_process_impression_post_action(
     const AdServer::Commons::RequestId& request_id,
-    const RequestPostActionInfo& request_post_action_info)
+    const PostActionInfo& action_info)
   {
     for (RequestContainerProcessorList::iterator it = child_processors_.begin();
         it != child_processors_.end();
         ++it)
     {
-      co_await (*it)->co_process_impression_post_action(request_id, request_post_action_info);
+      co_await (*it)->co_process_impression_post_action(request_id, action_info);
     }
   }
+
 }
