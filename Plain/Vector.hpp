@@ -99,13 +99,14 @@ namespace PlainTypes
     const unsigned char* buf_ptr = buf_poses.first;
     const unsigned char* end_buf_ptr = buf_poses.second;
 
-    this->reserve((end_buf_ptr - buf_ptr) / ElementType::FIXED_SIZE);
+    const auto elements_count = (end_buf_ptr - buf_ptr) / ElementType::FIXED_SIZE;
+    this->resize(elements_count);
 
-    for (; buf_ptr < end_buf_ptr; buf_ptr += ElementType::FIXED_SIZE)
+    for (auto& element : *this)
     {
-      this->push_back(ElementType());
       // header bounds checked call unsafe_init for performance
-      this->back().unsafe_init(buf_ptr, size);
+      element.unsafe_init(buf_ptr, size);
+      buf_ptr += ElementType::FIXED_SIZE;
     }
   }
 
