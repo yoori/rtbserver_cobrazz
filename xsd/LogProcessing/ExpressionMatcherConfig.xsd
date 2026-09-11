@@ -182,6 +182,14 @@
       </xsd:annotation>
     </xsd:attribute>
 
+    <xsd:attribute name="user_navigation_period_days" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of days stored in one user navigation profile.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
     <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
 
     <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true"/>

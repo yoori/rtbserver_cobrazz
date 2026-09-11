@@ -682,6 +682,7 @@ namespace AdServer::RequestInfoSvcs
           chunks_config.chunks_prefix().c_str(),
           fill_level_map_traits_(chunks_config),
           expression_matcher_config_.user_navigations_limit(),
+          expression_matcher_config_.user_navigation_period_days(),
           rocksdb_processor_);
 
         add_child_object(user_navigation_container.in(), true);

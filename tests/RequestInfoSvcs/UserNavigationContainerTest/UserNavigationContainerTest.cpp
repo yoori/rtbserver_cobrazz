@@ -173,12 +173,74 @@ namespace
         {Generics::Time(20), "c", 3}
       });
   }
+
+  void
+  save_legacy_profile(
+    const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+    const AdServer::Commons::UserId& user_id,
+    const Generics::Time& date)
+  {
+    auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
+      open_rocksdb_chunked_map<
+        AdServer::Commons::UserId,
+        AdServer::ProfilingCommons::UserIdAccessor,
+        unsigned long (*)(const Generics::Uuid&)>(
+          1,
+          chunk_folders,
+          "UserNavigation",
+          AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+            Generics::Time::ONE_DAY * 30),
+          AdServer::Commons::uuid_distribution_hash);
+    user_map.second->activate_object();
+
+    AdServer::RequestInfoSvcs::UserNavigationProfileWriter profile;
+    profile.version() = AdServer::RequestInfoSvcs::CURRENT_USER_NAVIGATION_PROFILE_VERSION;
+    AdServer::RequestInfoSvcs::NavigationDayWriter day;
+    day.date() = date.tv_sec;
+    AdServer::RequestInfoSvcs::NavigationWriter navigation;
+    navigation.url() = "legacy";
+    navigation.count() = 1;
+    day.navigations().push_back(std::move(navigation));
+    profile.days().push_back(std::move(day));
+
+    Generics::SmartMemBuf_var mem_buf(new Generics::SmartMemBuf(profile.size()));
+    profile.save(mem_buf->membuf().data(), mem_buf->membuf().size());
+    const Generics::ConstSmartMemBuf_var const_mem_buf = Generics::transfer_membuf(mem_buf);
+    user_map.first->save_profile(user_id, const_mem_buf.in(), date);
+
+    user_map.second->deactivate_object();
+    user_map.second->wait_object();
+  }
+
+  bool
+  legacy_profile_exists(
+    const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+    const AdServer::Commons::UserId& user_id)
+  {
+    auto user_map = AdServer::ProfilingCommons::ProfileMapFactory::
+      open_rocksdb_chunked_map<
+        AdServer::Commons::UserId,
+        AdServer::ProfilingCommons::UserIdAccessor,
+        unsigned long (*)(const Generics::Uuid&)>(
+          1,
+          chunk_folders,
+          "UserNavigation",
+          AdServer::ProfilingCommons::ProfileMapFactory::ProfileMapTraits(
+            Generics::Time::ONE_DAY * 30),
+          AdServer::Commons::uuid_distribution_hash);
+    user_map.second->activate_object();
+    const bool result = user_map.first->check_profile(user_id);
+    user_map.second->deactivate_object();
+    user_map.second->wait_object();
+    return result;
+  }
 }
 
 int
 main()
 {
   constexpr std::size_t USER_NAVIGATIONS_LIMIT = 4;
+  constexpr unsigned long USER_NAVIGATION_PERIOD_DAYS = 10;
 
   const std::filesystem::path root = std::filesystem::temp_directory_path() /
     ("UserNavigationContainerTest-" + std::to_string(::getpid()));
@@ -196,6 +258,11 @@ main()
       root.c_str(),
       "Chunk");
 
+    const AdServer::Commons::UserId legacy_user_id =
+      AdServer::Commons::UserId::create_random_based();
+    const Generics::Time today = Algs::round_to_day(Generics::Time::get_time_of_day());
+    save_legacy_profile(chunk_folders, legacy_user_id, today);
+
     Logging::Logger_var logger = new Logging::Null::Logger;
     AdServer::RequestInfoSvcs::UserNavigationContainer_var container =
       new UserNavigationContainer(
@@ -210,14 +277,18 @@ main()
           2 * 1024 * 1024,
           20,
           Generics::Time::ONE_DAY * 30),
-        USER_NAVIGATIONS_LIMIT);
+        USER_NAVIGATIONS_LIMIT,
+        USER_NAVIGATION_PERIOD_DAYS);
     container->activate_object();
 
     const AdServer::Commons::UserId user_id =
       AdServer::Commons::UserId::create_random_based();
     const AdServer::Commons::UserId empty_user_id =
       AdServer::Commons::UserId::create_random_based();
-    const Generics::Time today = Algs::round_to_day(Generics::Time::get_time_of_day());
+
+    check_profile(container, legacy_user_id, {{today, "legacy", 1}});
+    process(container, legacy_user_id, today, "legacy");
+    check_profile(container, legacy_user_id, {{today, "legacy", 2}});
 
     process(container, empty_user_id, today, "");
     if (AdServer::Commons::sync_wait(get_profile(container, empty_user_id)).in())
@@ -252,6 +323,40 @@ main()
       },
       static_cast<std::uint32_t>((today - Generics::Time::ONE_DAY).tv_sec));
 
+    const AdServer::Commons::UserId period_user_id =
+      AdServer::Commons::UserId::create_random_based();
+    const Generics::Time period = Generics::Time::ONE_DAY * USER_NAVIGATION_PERIOD_DAYS;
+    const Generics::Time current_period_start(today.tv_sec / period.tv_sec * period.tv_sec);
+
+    process(
+      container,
+      period_user_id,
+      current_period_start - Generics::Time::ONE_DAY * 21,
+      std::vector<std::string_view>{"a", "b"});
+    process(container, period_user_id, current_period_start - Generics::Time::ONE_DAY * 11, "c");
+    process(container, period_user_id, current_period_start - Generics::Time::ONE_DAY, "d");
+    process(container, period_user_id, current_period_start, "e");
+
+    check_profile(
+      container,
+      period_user_id,
+      {
+        {current_period_start - Generics::Time::ONE_DAY * 21, "b", 1},
+        {current_period_start - Generics::Time::ONE_DAY * 11, "c", 1},
+        {current_period_start - Generics::Time::ONE_DAY, "d", 1},
+        {current_period_start, "e", 1}
+      });
+
+    check_profile(
+      container,
+      period_user_id,
+      {
+        {current_period_start - Generics::Time::ONE_DAY * 21, "b", 1},
+        {current_period_start - Generics::Time::ONE_DAY * 11, "c", 1},
+        {current_period_start - Generics::Time::ONE_DAY, "d", 1}
+      },
+      static_cast<std::uint32_t>((current_period_start - Generics::Time::ONE_DAY).tv_sec));
+
     if (container->profile_size() == 0)
     {
       throw std::runtime_error("Profile map size is zero");
@@ -260,6 +365,11 @@ main()
     container->deactivate_object();
     container->wait_object();
     container.reset();
+
+    if (legacy_profile_exists(chunk_folders, legacy_user_id))
+    {
+      throw std::runtime_error("Legacy profile was not removed after migration");
+    }
 
     std::filesystem::create_directories(root / "Unowned" / "Chunk_0_2");
     chunk_folders.clear();
@@ -279,7 +389,8 @@ main()
         2 * 1024 * 1024,
         20,
         Generics::Time::ONE_DAY * 30),
-      USER_NAVIGATIONS_LIMIT);
+      USER_NAVIGATIONS_LIMIT,
+      USER_NAVIGATION_PERIOD_DAYS);
     container->activate_object();
 
     AdServer::Commons::UserId unowned_user_id;

@@ -174,6 +174,7 @@
     inventory_users_percentage="{$inventory-users-percentage-value}"
     user_navigation_sampling="{$user-navigation-sampling-value}"
     user_navigations_limit="{$user-navigations-limit}"
+    user_navigation_period_days="10"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
     rocksdb_cache_size="{$rocksdb-cache-size}"
     colo_id="{$colo-id}"
