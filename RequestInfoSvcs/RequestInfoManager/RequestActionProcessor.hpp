@@ -6,6 +6,7 @@
 #include <Generics/Time.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/Coro/Awaitable.hpp>
+#include <Commons/ExpectedPostActions.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
@@ -398,6 +399,8 @@ namespace AdServer::RequestInfoSvcs
     unsigned long at_flags;
     std::string additional_info;
     std::string page_keywords;
+    std::shared_ptr<const std::vector<std::string>> expected_post_actions =
+      empty_expected_post_actions();
 
     Revenue delta_adv_revenue;
 
@@ -1154,7 +1157,9 @@ namespace AdServer::RequestInfoSvcs
     Algs::print(out, model_conv_rates.begin(), model_conv_rates.end());
     out << std::endl <<
       space << "additional_info: " << additional_info << std::endl <<
-      space << "page_keywords: " << page_keywords;
+      space << "page_keywords: " << page_keywords << std::endl <<
+      space << "expected_post_actions: ";
+    Algs::print(out, expected_post_actions->begin(), expected_post_actions->end());
 
     return out;
   }

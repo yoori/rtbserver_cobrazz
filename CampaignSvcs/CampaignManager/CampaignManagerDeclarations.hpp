@@ -9,6 +9,7 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Generics/MonoAllocator.hpp>
+#include <Commons/ExpectedPostActions.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include "CampaignConfig.hpp"
@@ -128,6 +129,7 @@ namespace AdServer::CampaignSvcs
         tag_size(init.tag_size),
         ctr_calculation(init.ctr_calculation),
         conv_rate_calculation(init.conv_rate_calculation),
+        expected_post_actions(init.expected_post_actions),
         selected_campaigns(
           init.selected_campaigns,
           Generics::MonoAllocator<CampaignSelectionData>{arena_.get()}),
@@ -159,6 +161,8 @@ namespace AdServer::CampaignSvcs
     const Tag::Size* tag_size;
     CTR::CTRProvider::Calculation_var ctr_calculation;
     CTR::CTRProvider::Calculation_var conv_rate_calculation;
+    std::shared_ptr<const std::vector<std::string>> expected_post_actions =
+      empty_expected_post_actions();
     CampaignSelectionDataList selected_campaigns;
 
     FreqCapIdArray freq_caps;

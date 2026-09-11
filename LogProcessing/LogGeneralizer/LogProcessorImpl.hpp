@@ -13,7 +13,9 @@ namespace AdServer::LogProcessing
 
   typedef GenericLogProcessorImpl<CreativeStatExtTraits> CreativeStatProcessor;
 
-  using PostClickStatProcessor = GenericLogProcessorImpl<PostClickStatExtTraits>;
+  using PostClickStatProcessor = GenericLogProcessorImpl<
+    PostClickStatExtTraits,
+    LogVersionManager3<PostClickStatExtTraits>>;
 
   typedef GenericLogProcessorImpl<ColoUserStatExtTraits>
     ColoUserStatProcessor;

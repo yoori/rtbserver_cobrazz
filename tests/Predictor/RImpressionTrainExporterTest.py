@@ -8,7 +8,10 @@ import tempfile
 import unittest
 from unittest import mock
 
-from rtbserver_utils.RImpressionTrainExporter import RImpressionTrainExporter
+from rtbserver_utils.RImpressionTrainExporter import (
+  RImpressionTrainExporter,
+  RImpressionVTRTrainExporter,
+)
 
 
 class RImpressionTrainExporterTest(unittest.TestCase):
@@ -135,6 +138,29 @@ class RImpressionTrainExporterTest(unittest.TestCase):
       RImpressionTrainExporter('', user_navigation_sampling=0).sampling_condition())
     with self.assertRaisesRegex(ValueError, 'user_navigation_sampling'):
       RImpressionTrainExporter('', user_navigation_sampling=100.1)
+
+  def test_vtr_exporter_requires_expected_view_and_labels_video_view(self):
+    exporter = RImpressionVTRTrainExporter(
+      '',
+      user_navigation_sampling=1.25)
+
+    sampling_condition = exporter.sampling_condition()
+    self.assertIn(
+      'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 12500',
+      sampling_condition)
+    self.assertIn("has(expected_post_actions, 'vview')", sampling_condition)
+
+    query = exporter._export_query(
+      '2026-09-01',
+      '2026-09-02',
+      100,
+      exporter._sampled_condition())
+    self.assertIn("has(expected_post_actions, 'vview')", query)
+    self.assertIn(
+      'request_id IN (SELECT request_id FROM RPostImpression '
+      'WHERE video_view_timestamp IS NOT NULL '
+      "AND video_view_timestamp >= toDateTime('2026-09-01'))",
+      query)
 
   def test_failed_export_preserves_previous_sample(self):
     responses = [

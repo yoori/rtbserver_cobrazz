@@ -2222,7 +2222,8 @@ namespace AdServer::CampaignSvcs
               ad_info.at_flags,
               request_info.additional_info,
               request_info.page_keywords.in() ?
-                request_info.page_keywords->str() : EMPTY_USER_NAVIGATION_DATA
+                request_info.page_keywords->str() : EMPTY_USER_NAVIGATION_DATA,
+              ad_info.expected_post_actions
               );
 
             add_record(std::move(data));

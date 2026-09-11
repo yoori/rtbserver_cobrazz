@@ -117,6 +117,29 @@ namespace AdServer::CampaignSvcs::CreativeTokens
   const std::string GEO_REGION("GEO_REGION");
   const std::string SSP_DEVICETYPE("SSP_DEVICETYPE");
   const std::string SSP_VIDEO_PLACEMENT("SSP_VIDEO_PLACEMENT");
+
+  struct VideoPostActionToken
+  {
+    const char* token;
+    const char* action_name;
+  };
+
+  inline constexpr VideoPostActionToken VIDEO_POST_ACTION_TOKENS[] =
+  {
+    {"TRACKVIDEOSTART", "vstart"},
+    {"TRACKVIDEOVIEW", "vview"},
+    {"TRACKVIDEOQ1", "vq1"},
+    {"TRACKVIDEOMID", "vmid"},
+    {"TRACKVIDEOQ3", "vq3"},
+    {"TRACKVIDEOCOMPLETE", "vcomplete"},
+    {"TRACKVIDEOSKIP", "vskip"},
+    {"TRACKVIDEOPAUSE", "vpause"},
+    {"TRACKVIDEOMUTE", "vmute"},
+    {"TRACKVIDEOUNMUTE", "vunmute"},
+    {"TRACKVIDEORESUME", "vresume"},
+    {"TRACKVIDEOFULLSCREEN", "vfullscreen"},
+    {"TRACKVIDEOERROR", "verror"}
+  };
 }
 
 namespace AdServer::CampaignSvcs

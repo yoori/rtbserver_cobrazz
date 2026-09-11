@@ -50,16 +50,4 @@ namespace AdServer::LogProcessing
     DeferredCmpStat
   );
 
-  DECLARE_NESTED_LOG_DB_SAVER_EXT_2(
-    PostClickStat,
-    CustomPostClickStat,
-    LogGeneralizerStatMapBundle_var
-  );
-
-  DECLARE_NESTED_LOG_DB_SAVER_EXT_2_USING_PREFIX(
-    PostClickStatTraits,
-    LogGeneralizerStatMapBundle_var,
-    DeferredPostClickStat
-  );
-
 } // namespace AdServer::LogProcessing

@@ -72,13 +72,7 @@ namespace AdServer::LogProcessing
         DeferredLogPgCsvProcessorType;
   };
 
-  struct PostClickStatProcTraits: ProcTraits<PostClickStatProcessor>
-  {
-    using DeferrableLogProcessorType = GenericLogProcessorImpl<
-      CustomPostClickStatExtTraits,
-      LogVersionManager2<CustomPostClickStatExtTraits>>;
-    using DeferredLogProcessorType = CustomLogProcessorImpl<DeferredPostClickStatExtTraits>;
-  };
+  using PostClickStatProcTraits = ProcTraits<PostClickStatProcessor>;
 
   /// Write CSV when db_enabled()
   typedef ProcTraits<
@@ -364,19 +358,15 @@ namespace AdServer::LogProcessing
       init_deferrable_log_proc_info<CmpStatProcTraits>(pg_conn_factory, config.CMPStat());
 
       init_deferrable_log_proc_info<CreativeStatProcTraits>(pg_conn_factory, config.CreativeStat());
-
-      init_deferrable_log_proc_info<PostClickStatProcTraits>(
-        pg_conn_factory,
-        config.PostClickStat());
     }
     else
     {
       init_log_proc_info_<CmpStatProcTraits>(config.CMPStat());
 
       init_log_proc_info_<CreativeStatProcTraits>(config.CreativeStat());
-
-      init_log_proc_info_<PostClickStatProcTraits>(config.PostClickStat());
     }
+
+    init_log_proc_info_<PostClickStatProcTraits>(config.PostClickStat());
 
     /// Write in CSV when db_enabled()
     init_log_proc_info_<ChannelOverlapUserStatProcTraits>(config.ChannelOverlapUserStat());

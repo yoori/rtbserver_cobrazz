@@ -60,7 +60,9 @@ R_IMPRESSION_CREATE_TABLE_QUERY = (
   "ssp_ctr SimpleAggregateFunction(any, Nullable(Float64)), "
   "ssp_viewability SimpleAggregateFunction(any, Nullable(Float64)), "
   "ssp_vtr SimpleAggregateFunction(any, Nullable(Float64)), "
-  "page_keywords SimpleAggregateFunction(any, Nullable(String))"
+  "page_keywords SimpleAggregateFunction(any, Nullable(String)), "
+  "expected_post_actions "
+  "SimpleAggregateFunction(groupUniqArrayArray, Array(String))"
   ") ENGINE = AggregatingMergeTree "
   "PARTITION BY sipHash64(request_id) % 100 "
   "ORDER BY request_id "
@@ -71,10 +73,34 @@ R_IMPRESSION_CREATE_TABLE_QUERY = (
 R_POST_CLICK_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS RPostClick ("
   "request_id String, "
+  "landing_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
   "landing_bounced SimpleAggregateFunction(any, Nullable(UInt8)), "
   "landing_session_time SimpleAggregateFunction(any, Nullable(UInt64)), "
   "landing_page_views SimpleAggregateFunction(any, Nullable(UInt64)), "
   "landing_is_new_user SimpleAggregateFunction(any, Nullable(UInt8))"
+  ") ENGINE = AggregatingMergeTree "
+  "PARTITION BY sipHash64(request_id) % 100 "
+  "ORDER BY request_id "
+  "SETTINGS index_granularity = 8192, parts_to_throw_insert = 16000"
+)
+
+
+R_POST_IMPRESSION_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS RPostImpression ("
+  "request_id String, "
+  "video_start_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_view_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_q1_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_mid_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_q3_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_complete_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_skip_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_pause_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_mute_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_unmute_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_resume_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_fullscreen_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "video_error_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC')))"
   ") ENGINE = AggregatingMergeTree "
   "PARTITION BY sipHash64(request_id) % 100 "
   "ORDER BY request_id "
@@ -130,14 +156,18 @@ BID_COST_CREATE_TABLE_QUERY = (
 
 
 MIGRATIONS_CREATE_TABLE_QUERY = (
-  "CREATE TABLE IF NOT EXISTS ClickhouseUploaderMigrations ("
+  "CREATE TABLE IF NOT EXISTS Migrations ("
+  "component String, "
   "migration_id UInt32, "
   "name String, "
   "checksum FixedString(64), "
   "applied_at DateTime64(3, 'UTC') DEFAULT now64(3)"
   ") ENGINE = ReplacingMergeTree(applied_at) "
-  "ORDER BY migration_id"
+  "ORDER BY (component, migration_id)"
 )
+
+
+MIGRATION_COMPONENT = 'ClickhouseStatUploader'
 
 
 MIGRATIONS = (
@@ -146,6 +176,12 @@ MIGRATIONS = (
     'rimpression_add_page_keywords',
     "ALTER TABLE RImpression ADD COLUMN IF NOT EXISTS page_keywords "
     "SimpleAggregateFunction(any, Nullable(String))",
+  ),
+  Migration(
+    2,
+    'rimpression_add_expected_post_actions',
+    "ALTER TABLE RImpression ADD COLUMN IF NOT EXISTS expected_post_actions "
+    "SimpleAggregateFunction(groupUniqArrayArray, Array(String))",
   ),
 )
 
@@ -188,10 +224,16 @@ class ClickhouseQueryExecutor(object):
 
 
 class ClickhouseMigrationRunner(object):
-  def __init__(self, executor, logger = None, migrations = MIGRATIONS):
+  def __init__(
+      self,
+      executor,
+      logger = None,
+      migrations = MIGRATIONS,
+      component = MIGRATION_COMPONENT):
     self.executor = executor
     self.logger = logger
     self.migrations = migrations
+    self.component = component
 
   def run(self):
     self._validate_migrations()
@@ -237,9 +279,11 @@ class ClickhouseMigrationRunner(object):
       migration_names.add(migration.name)
 
   def _load_applied_migrations(self):
+    component = self.component.replace('\\', '\\\\').replace("'", "\\'")
     query = (
       "SELECT migration_id, name, checksum "
-      "FROM ClickhouseUploaderMigrations FINAL "
+      "FROM Migrations FINAL "
+      "WHERE component = '" + component + "' "
       "ORDER BY migration_id FORMAT JSONEachRow")
     output = self.executor.execute(query)
     applied_migrations = {}
@@ -259,14 +303,15 @@ class ClickhouseMigrationRunner(object):
     applied_at = datetime.datetime.now(datetime.timezone.utc).strftime(
       '%Y-%m-%d %H:%M:%S.%f')[:-3]
     record = json.dumps({
+      'component': self.component,
       'migration_id': migration.migration_id,
       'name': migration.name,
       'checksum': checksum,
       'applied_at': applied_at,
     })
     query = (
-      "INSERT INTO ClickhouseUploaderMigrations "
-      "(migration_id, name, checksum, applied_at) FORMAT JSONEachRow\n" + record)
+      "INSERT INTO Migrations "
+      "(component, migration_id, name, checksum, applied_at) FORMAT JSONEachRow\n" + record)
     self.executor.execute(query)
 
 
@@ -427,6 +472,16 @@ class RPostClickUploader(ClickhouseCsvUploader) :
       create_table_query = R_POST_CLICK_CREATE_TABLE_QUERY)
 
 
+class RPostImpressionUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'RPostImpressionClickhouseAdapter.py',
+      'RPostImpression',
+      logger = logger,
+      create_table_query = R_POST_IMPRESSION_CREATE_TABLE_QUERY)
+
+
 """
 RClickUploader: uploaded for RImpression logs.
 """
@@ -579,6 +634,7 @@ def main() :
 
   processors = {}
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
+  processors['RPostImpression'] = RPostImpressionUploader(config, logger = logger)
   processors['RPostClick'] = RPostClickUploader(config, logger = logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
   processors['RAction'] = RActionUploader(config, logger = logger)

@@ -1,13 +1,34 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <sys/stat.h>
 #include <String/TextTemplate.hpp>
 
 #include "CreativeTemplate.hpp"
+#include "CreativeTextGenerator.hpp"
 
 namespace
 {
   const Generics::Time UPDATE_PERIOD(60); // 1 min
+
+  bool
+  read_file_state(
+    const char* file,
+    AdServer::CampaignSvcs::CreativeTemplateFactory::State& state) noexcept
+  {
+    struct stat file_stat;
+    if (::stat(file, &file_stat) != 0)
+    {
+      state.initialized = false;
+      return false;
+    }
+
+    state.modification_time = file_stat.st_mtim.tv_sec;
+    state.modification_time_nanoseconds = file_stat.st_mtim.tv_nsec;
+    state.file_size = file_stat.st_size;
+    state.initialized = true;
+    return true;
+  }
 }
 
 namespace AdServer::CampaignSvcs
@@ -80,6 +101,9 @@ namespace AdServer::CampaignSvcs
     key_used(const String::SubString& key) const
       noexcept;
 
+    const std::shared_ptr<const std::vector<std::string>>&
+    expected_post_actions() const noexcept override;
+
   protected:
     virtual ~TextTemplate() noexcept
     {}
@@ -87,6 +111,7 @@ namespace AdServer::CampaignSvcs
   protected:
     String::TextTemplate::IStream text_template_;
     String::TextTemplate::Keys keys_;
+    std::shared_ptr<const std::vector<std::string>> expected_post_actions_;
   };
 
   /**
@@ -119,6 +144,18 @@ namespace AdServer::CampaignSvcs
       String::TextTemplate::DefaultValue default_cont(&null_args);
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
       text_template_.keys(encoder, keys_);
+
+      std::vector<std::string> expected_post_actions;
+      for (const auto& post_action : CreativeTokens::VIDEO_POST_ACTION_TOKENS)
+      {
+        if (keys_.find(post_action.token) != keys_.end())
+        {
+          expected_post_actions.emplace_back(post_action.action_name);
+        }
+      }
+      expected_post_actions_ = expected_post_actions.empty() ?
+        empty_expected_post_actions() :
+        std::make_shared<const std::vector<std::string>>(std::move(expected_post_actions));
     }
     catch(const eh::Exception& ex)
     {
@@ -183,6 +220,12 @@ namespace AdServer::CampaignSvcs
     return keys_.find(key.str()) != keys_.end();
   }
 
+  const std::shared_ptr<const std::vector<std::string>>&
+  TextTemplate::expected_post_actions() const noexcept
+  {
+    return expected_post_actions_;
+  }
+
   void
   Template::get_keys(String::TextTemplate::Keys& keys, const String::SubString& text)
     noexcept
@@ -215,7 +258,8 @@ namespace AdServer::CampaignSvcs
       Template::InvalidTemplate,
       ImplementationException)*/
   {
-    state = Generics::Time::get_time_of_day();
+    state.check_time = Generics::Time::get_time_of_day();
+    read_file_state(creative_template_handler.file.c_str(), state);
 
     if (creative_template_handler.type == CreativeTemplateFactory::Handler::CTT_TEXT)
     {
@@ -239,22 +283,36 @@ namespace AdServer::CampaignSvcs
     const Handler& /*handler*/, const State& state) const
     /*throw(Template::InvalidTemplate, ImplementationException)*/
   {
-    return Generics::Time::get_time_of_day() - Generics::Time(state) >
-      UPDATE_PERIOD;
+    return Generics::Time::get_time_of_day() - state.check_time > UPDATE_PERIOD;
   }
 
   Template*
   CreativeTemplateFactory::update(Template* templ, const Handler& handler, State& state) const
   {
-    state = Generics::Time::get_time_of_day();
+    State current_state;
+    current_state.check_time = Generics::Time::get_time_of_day();
+    if (!read_file_state(handler.file.c_str(), current_state))
+    {
+      state.check_time = current_state.check_time;
+      return ReferenceCounting::add_ref(templ);
+    }
+
+    if (state.same_file(current_state))
+    {
+      state.check_time = current_state.check_time;
+      return ReferenceCounting::add_ref(templ);
+    }
 
     try
     {
-      return create(handler, state);
+      Template_var result = create(handler, current_state);
+      state = current_state;
+      return result.retn();
     }
     catch(const Template::FileNotExists&)
     {
       /* keep old template state if file disappeared */
+      state.check_time = current_state.check_time;
       return ReferenceCounting::add_ref(templ);
     }
   }

@@ -61,6 +61,7 @@ namespace AdServer::RequestInfoSvcs
       const LogProcessing::LogFlushTraits* research_action_flush,
       const LogProcessing::LogFlushTraits* research_bid_flush,
       const LogProcessing::LogFlushTraits* research_impression_flush,
+      const LogProcessing::LogFlushTraits* research_post_impression_flush,
       const LogProcessing::LogFlushTraits* research_click_flush,
       const LogProcessing::LogFlushTraits* research_post_click_flush,
       const LogProcessing::LogFlushTraits* bid_cost_stat_flush,

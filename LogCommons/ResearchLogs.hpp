@@ -156,6 +156,8 @@ namespace AdServer::LogProcessing
 
     FixedNumber win_price;
     std::string page_keywords;
+    std::shared_ptr<const std::vector<std::string>> expected_post_actions =
+      empty_expected_post_actions();
     std::string additional_info;
   };
 
@@ -173,7 +175,7 @@ namespace AdServer::LogProcessing
         "UserCh,#ImpCh,#BidPrice,#BidFloor,"
         "#AlgorithmID,SizeID,Colo,#PredictedCTR,"
         "Campaign_Freq,#CRAlgorithmID,#PredictedCR,#WinPrice,#Viewability,"
-        "#PageKeywords,#AdditionalInfo";
+        "#PageKeywords,#ExpectedPostActions,#AdditionalInfo";
     }
 
     static std::ostream&
@@ -209,6 +211,9 @@ namespace AdServer::LogProcessing
       os << data.win_price << ',';
       os << data.tag_predicted_viewability << ',';
       write_string_as_csv(os, data.page_keywords) << ',';
+      std::ostringstream expected_post_actions;
+      output_sequence(expected_post_actions, *data.expected_post_actions);
+      write_string_as_csv(os, expected_post_actions.str()) << ',';
       write_string_as_csv(os, data.additional_info);
       return os;
     }
@@ -276,6 +281,7 @@ namespace AdServer::LogProcessing
   struct ResearchPostClickData
   {
     RequestId request_id;
+    OptionalSecondsTimestamp landing_timestamp;
     bool landing_bounced = false;
     unsigned long landing_session_time = 0;
     unsigned long landing_page_views = 0;
@@ -294,17 +300,52 @@ namespace AdServer::LogProcessing
 
     static const char* csv_header()
     {
-      return "RequestID,LandingBounced,LandingSessionTime,LandingPageViews,LandingIsNewUser";
+      return
+        "RequestID,LandingTimestamp,LandingBounced,LandingSessionTime,"
+        "LandingPageViews,LandingIsNewUser";
     }
 
     static std::ostream&
     write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
     {
       os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
+      write_optional_date_as_csv(os, data.landing_timestamp) << ',';
       os << data.landing_bounced << ',';
       os << data.landing_session_time << ',';
       os << data.landing_page_views << ',';
       os << data.landing_is_new_user;
+      return os;
+    }
+  };
+
+  struct ResearchPostImpressionData
+  {
+    SecondsTimestamp time;
+    RequestId request_id;
+    std::string action_name;
+  };
+
+  using ResearchPostImpressionCollector = SeqCollector<ResearchPostImpressionData>;
+
+  struct ResearchPostImpressionTraits:
+    LogDefaultTraits<ResearchPostImpressionCollector, false, false>
+  {
+    static const char* csv_base_name()
+    {
+      return "RPostImpression";
+    }
+
+    static const char* csv_header()
+    {
+      return "Timestamp,RequestID,ActionName";
+    }
+
+    static std::ostream&
+    write_data_as_csv(std::ostream& os, const BaseTraits::CollectorType::DataT& data)
+    {
+      write_date_as_csv(os, data.time) << ',';
+      os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
+      write_string_as_csv(os, data.action_name);
       return os;
     }
   };

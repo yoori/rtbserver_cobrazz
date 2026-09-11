@@ -815,7 +815,8 @@ struct Filler
         FixedNum("0.13"), // pub_cost_coef
         0, // flags
         "", // additional_info
-        "rtbreq\nrtbplatformlinux" // page_keywords
+        "rtbreq\nrtbplatformlinux", // page_keywords
+        std::make_shared<const StringArray>(StringArray{"vstart", "vview"})
       );
     };
 
@@ -906,7 +907,8 @@ struct Filler
         FixedNum("0.13"), // pub_cost_coef
         0, // flags
         "", // additional_info
-        "page keyword" // page_keywords
+        "page keyword", // page_keywords
+        AdServer::empty_expected_post_actions() // expected_post_actions
       );
     };
 

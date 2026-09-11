@@ -68,7 +68,6 @@
   "out_dir": "<xsl:value-of select="$workspace-root"/>/log/YandexPostClickImporter/Out",
   "log_dir": "<xsl:value-of select="$workspace-root"/>/log/YandexPostClickImporter/Log",
   "days": <xsl:value-of select="$days"/>,
-  "sources": "<xsl:value-of select="$config/@sources"/>",
   "attribution": "<xsl:value-of select="$attribution"/>",
   "chunks_count": <xsl:value-of select="$chunks-count"/>,
   "request_timeout": <xsl:value-of select="$request-timeout"/>,

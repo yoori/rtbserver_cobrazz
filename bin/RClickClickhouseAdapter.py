@@ -38,6 +38,7 @@ if __name__ == "__main__":
     ('viewability', None),
     ('click_timestamp', 0),
     ('page_keywords', None),
+    ('expected_post_actions', None),
   ]
 
   writer = csv.writer(sys.stdout)
@@ -49,6 +50,7 @@ if __name__ == "__main__":
       next(it)  # skip header - it contains problem
       for row in it:
         writer.writerow([
-          row[field_index] if field_index is not None else ''
-          for _, field_index in field_filling
+          row[field_index] if field_index is not None else
+          ('[]' if field_name == 'expected_post_actions' else '')
+          for field_name, field_index in field_filling
         ])

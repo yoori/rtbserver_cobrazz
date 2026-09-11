@@ -632,3 +632,23 @@ class RImpressionTrainExporter(object):
     if condition is not None:
       query += 'AND (' + condition + ')'
     return query
+
+
+class RImpressionVTRTrainExporter(RImpressionTrainExporter):
+  EXPECTED_VIEW_CONDITION = "has(expected_post_actions, 'vview')"
+
+  def sampling_condition(self):
+    sampling_condition = super().sampling_condition()
+    if sampling_condition is None:
+      return self.EXPECTED_VIEW_CONDITION
+    return (
+      '(' + sampling_condition + ') AND (' +
+      self.EXPECTED_VIEW_CONDITION + ')')
+
+  @staticmethod
+  def _click_condition(date_from):
+    return (
+      'request_id IN ('
+      'SELECT request_id FROM RPostImpression '
+      'WHERE video_view_timestamp IS NOT NULL '
+      "AND video_view_timestamp >= toDateTime('" + date_from + "'))")

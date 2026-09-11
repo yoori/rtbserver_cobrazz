@@ -52,6 +52,7 @@
 #include <LogCommons/SiteUserStat.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/ResearchLogs.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogProcessing/LogGeneralizer/LogTypeCsvTraits.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
@@ -406,6 +407,77 @@ int main(int argc, char **argv)
 #if LOGIOTEST_PRODUCE_LARGER_FILES
   const unsigned max_iterations = 100000;
 #endif
+
+  try
+  {
+    ResearchImpressionData data{};
+    data.bid_cost = RequestData::FixedNum::ZERO;
+    data.floor_cost = RequestData::FixedNum::ZERO;
+    data.predicted_ctr = RequestData::FixedNum::ZERO;
+    data.predicted_conv_rate = RequestData::FixedNum::ZERO;
+    data.win_price = FixedNumber::ZERO;
+    data.expected_post_actions =
+      std::make_shared<const StringArray>(StringArray{"vstart", "vview"});
+
+    std::ostringstream output;
+    ResearchImpressionTraits::write_data_as_csv(output, data);
+    if (output.str().find(",\"vstart,vview\",") == std::string::npos)
+    {
+      throw LogIoTester<ResearchImpressionTraits>::Exception(
+        "ResearchImpression expected post actions serialization failed");
+    }
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
+
+  try
+  {
+    ResearchPostImpressionData data;
+    data.time = Generics::Time(42);
+    data.request_id = RequestId("PPPPPPPPPPPPPPPPPPPPPA..");
+    data.action_name = "vview";
+
+    std::ostringstream output;
+    ResearchPostImpressionTraits::write_data_as_csv(output, data);
+    const std::string expected =
+      "1970-01-01 00:00:42,PPPPPPPPPPPPPPPPPPPPPA..,vview";
+    if (output.str() != expected)
+    {
+      throw LogIoTester<ResearchPostImpressionTraits>::Exception(
+        "ResearchPostImpression CSV serialization failed");
+    }
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
+
+  try
+  {
+    ResearchPostClickData data;
+    data.request_id = RequestId("PPPPPPPPPPPPPPPPPPPPPA..");
+    data.landing_timestamp = SecondsTimestamp(Generics::Time(42));
+    data.landing_bounced = true;
+    data.landing_session_time = 17;
+    data.landing_page_views = 3;
+
+    std::ostringstream output;
+    ResearchPostClickTraits::write_data_as_csv(output, data);
+    const std::string expected =
+      "PPPPPPPPPPPPPPPPPPPPPA..,1970-01-01 00:00:42,1,17,3,0";
+    if (output.str() != expected)
+    {
+      throw LogIoTester<ResearchPostClickTraits>::Exception(
+        "ResearchPostClick CSV serialization failed");
+    }
+
+    ResearchPostClickData missed_data;
+    missed_data.request_id = RequestId("PPPPPPPPPPPPPPPPPPPPPA..");
+    output.str("");
+    ResearchPostClickTraits::write_data_as_csv(output, missed_data);
+    if (output.str() != "PPPPPPPPPPPPPPPPPPPPPA..,,0,0,0,0")
+    {
+      throw LogIoTester<ResearchPostClickTraits>::Exception(
+        "ResearchPostClick empty timestamp serialization failed");
+    }
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
 
   try
   {
@@ -1325,6 +1397,8 @@ int main(int argc, char **argv)
     AdServer::LogProcessing::FixedNumberList model_ctrs2;
     model_ctrs2.push_back(AdServer::LogProcessing::FixedNumber(false, 12, 34000000));
     model_ctrs2.push_back(AdServer::LogProcessing::FixedNumber(false, 56, 78000000));
+    const auto expected_post_actions =
+      std::make_shared<const StringArray>(StringArray{"vstart", "vview"});
 
     auto make_data1 = [&]()
     {
@@ -1409,7 +1483,8 @@ int main(int argc, char **argv)
         RequestData::FixedNum("0.13"), // pub_cost_coef
         0, // flags
         "{\"source\":\"test\"}", // additional_info
-        "rtbreq\nrtbplatformlinux" // page_keywords
+        "rtbreq\nrtbplatformlinux", // page_keywords
+        expected_post_actions
       );
     };
 
@@ -1496,7 +1571,8 @@ int main(int argc, char **argv)
         RequestData::FixedNum("0.13"), // pub_cost_coef
         0, // flags
         "", // additional_info
-        "page keyword" // page_keywords
+        "page keyword", // page_keywords
+        AdServer::empty_expected_post_actions() // expected_post_actions
       );
     };
 
@@ -1507,6 +1583,11 @@ int main(int argc, char **argv)
       collector.add(make_data2());
     }
 #else
+    if (make_data1().expected_post_actions_ptr() != expected_post_actions)
+    {
+      throw LogIoTester<RequestTraits>::Exception(
+        "Request expected post actions pointer was not preserved");
+    }
     collector.add(make_data1());
     collector.add(make_data2());
 #endif
@@ -1517,6 +1598,27 @@ int main(int argc, char **argv)
       BufferWriter writer;
       writer << old_data;
       std::string old_record = writer.str();
+      const std::size_t expected_actions_separator = old_record.rfind('\t');
+      if (expected_actions_separator == std::string::npos)
+      {
+        throw LogIoTester<RequestTraits>::Exception(
+          "Request 3.7.3 compatibility test: malformed current record");
+      }
+      old_record.resize(expected_actions_separator);
+
+      std::istringstream old_log_373("Request\t3.7.3\n" + old_record + "\n");
+      RequestCollector restored_collector_373;
+      RequestTraits::IoHelperType io_helper_373(restored_collector_373);
+      io_helper_373.load(old_log_373);
+
+      if (restored_collector_373.size() != 1 ||
+        restored_collector_373.begin()->page_keywords() != "rtbreq\nrtbplatformlinux" ||
+        !restored_collector_373.begin()->expected_post_actions().empty())
+      {
+        throw LogIoTester<RequestTraits>::Exception(
+          "Request 3.7.3 compatibility test: invalid converted record");
+      }
+
       const std::size_t page_keywords_separator = old_record.rfind('\t');
       if (page_keywords_separator == std::string::npos)
       {
@@ -1532,7 +1634,8 @@ int main(int argc, char **argv)
 
       if (restored_collector.size() != 1 ||
         restored_collector.begin()->additional_info() != "{\"source\":\"test\"}" ||
-        !restored_collector.begin()->page_keywords().empty())
+        !restored_collector.begin()->page_keywords().empty() ||
+        !restored_collector.begin()->expected_post_actions().empty())
       {
         throw LogIoTester<RequestTraits>::Exception(
           "Request 3.7.2 compatibility test: invalid converted record");

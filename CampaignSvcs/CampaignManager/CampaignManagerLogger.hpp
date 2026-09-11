@@ -422,6 +422,8 @@ namespace AdServer::CampaignSvcs
       RevenueDecimal ctr;
       std::string conv_rate_algorithm_id;
       RevenueDecimal conv_rate;
+      std::shared_ptr<const std::vector<std::string>> expected_post_actions =
+        empty_expected_post_actions();
       unsigned long campaign_imps;
       CTRList model_ctrs;
       RevenueDecimal adv_commission;

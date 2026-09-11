@@ -138,6 +138,10 @@ class Config:
     return pathlib.Path(
       self.workspace_root) / 'log' / 'Predictor' / 'CTRResearch'
 
+  def vtr_model_root(self):
+    return pathlib.Path(
+      self.workspace_root) / 'log' / 'Predictor' / 'VTRConfig'
+
 
 def load_config(file_name):
   with open(file_name, 'r') as file:

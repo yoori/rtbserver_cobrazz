@@ -255,7 +255,6 @@
         <xsl:with-param name="flush-logs-size" select="$flush-logs-size"/>
         <xsl:with-param name="stat-node" select="$stat-config"/>
         <xsl:with-param name="upload-tasks" select="$max-upload-task-count"/>
-        <xsl:with-param name="deferred-period" select="$check-deferred-logs-period"/>
         <xsl:with-param name="distrib_count" select="$distrib_count"/>
       </xsl:call-template>
 

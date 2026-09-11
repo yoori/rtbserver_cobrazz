@@ -8,6 +8,7 @@
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Generics/CRC.hpp>
 
+#include <string_view>
 #include <utility>
 
 namespace AdServer::CampaignSvcs::InstantiateAd
@@ -461,6 +462,28 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         return std::optional<std::string>(
           provider.context().request_result_params->track_pixel_url);
       });
+
+    for (const auto& post_action : CreativeTokens::VIDEO_POST_ACTION_TOKENS)
+    {
+      add_processor(
+        post_action.token,
+        [action_name = std::string_view(post_action.action_name)](
+          const InstantiateAdRequestArgsProvider& provider) {
+          const auto& track_pixel_url =
+            provider.context().request_result_params->track_pixel_url;
+          if (track_pixel_url.empty())
+          {
+            return std::optional<std::string>(std::string());
+          }
+
+          std::string action_url;
+          action_url.reserve(track_pixel_url.size() + action_name.size() + 8);
+          action_url = track_pixel_url;
+          action_url += "&t=c&nm=";
+          action_url += action_name;
+          return std::optional<std::string>(std::move(action_url));
+        });
+    }
 
     add_processor(
       CreativeTokens::TRACKHTMLURL,

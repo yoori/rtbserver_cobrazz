@@ -63,6 +63,29 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       300000000,
       config.main_chunk_rows * config.training_fit_steps)
 
+  def test_vtr_model_root_is_separate(self):
+    config = MODULE.Config()
+    config.workspace_root = '/var/lib/predictor'
+
+    self.assertEqual(
+      pathlib.Path('/var/lib/predictor/log/Predictor/VTRConfig'),
+      config.vtr_model_root())
+
+  def test_run_once_generates_ctr_then_vtr(self):
+    calls = []
+    with (
+        unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'generate_model',
+          side_effect=lambda unused_config: calls.append('ctr')),
+        unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'generate_vtr_model',
+          side_effect=lambda unused_config: calls.append('vtr'))):
+      TRAINER_MODULE.run_service(MODULE.Config(), True)
+
+    self.assertEqual(['ctr', 'vtr'], calls)
+
   def test_training_plan_has_granular_steps_and_completion_timestamp(self):
     config = MODULE.Config()
 
@@ -1436,7 +1459,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     self.assertEqual('--config=/tmp/config.json', command[2])
     self.assertEqual('--run-once', command[3])
 
-  def test_supervisor_starts_only_trainer(self):
+  def test_supervisor_starts_production_trainer(self):
     process = unittest.mock.MagicMock()
     process.poll.return_value = 1
     with (

@@ -36,4 +36,11 @@ namespace AdServer::LogProcessing
   ResearchPostClickTraits::B::signature_ = "<UNDEFINED>";
   template <> const char*
   ResearchPostClickTraits::B::current_version_ = "<UNDEFINED>";
+
+  template <> const char*
+  ResearchPostImpressionTraits::B::base_name_ = "<UNDEFINED>";
+  template <> const char*
+  ResearchPostImpressionTraits::B::signature_ = "<UNDEFINED>";
+  template <> const char*
+  ResearchPostImpressionTraits::B::current_version_ = "<UNDEFINED>";
 } // namespace AdServer::LogProcessing

@@ -67,6 +67,7 @@ namespace
   const char RESEARCH_ACTION_OUT_DIR[] = "ResearchAction";
   const char RESEARCH_BID_OUT_DIR[] = "ResearchBid";
   const char RESEARCH_IMPRESSION_OUT_DIR[] = "ResearchImpression";
+  const char RESEARCH_POST_IMPRESSION_OUT_DIR[] = "ResearchPostImpression";
   const char RESEARCH_CLICK_OUT_DIR[] = "ResearchClick";
   const char RESEARCH_POST_CLICK_OUT_DIR[] = "ResearchPostClick";
 
@@ -312,6 +313,7 @@ namespace AdServer::RequestInfoSvcs
       LogProcessing::LogFlushTraits research_action_flush;
       LogProcessing::LogFlushTraits research_bid_flush;
       LogProcessing::LogFlushTraits research_impression_flush;
+      LogProcessing::LogFlushTraits research_post_impression_flush;
       LogProcessing::LogFlushTraits research_click_flush;
       LogProcessing::LogFlushTraits research_post_click_flush;
       LogProcessing::LogFlushTraits bid_cost_stat_flush;
@@ -375,6 +377,10 @@ namespace AdServer::RequestInfoSvcs
             lp_config.ResearchImpression(),
             (log_root + RESEARCH_IMPRESSION_OUT_DIR).c_str(),
             research_impression_flush),
+          read_flush_policy(
+            lp_config.ResearchPostImpression(),
+            (log_root + RESEARCH_POST_IMPRESSION_OUT_DIR).c_str(),
+            research_post_impression_flush),
           read_flush_policy(
             lp_config.ResearchClick(),
             (log_root + RESEARCH_CLICK_OUT_DIR).c_str(),

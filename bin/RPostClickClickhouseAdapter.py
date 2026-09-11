@@ -13,6 +13,7 @@ if __name__ == '__main__':
   writer = csv.writer(sys.stdout)
   writer.writerow([
     'request_id',
+    'landing_timestamp',
     'landing_bounced',
     'landing_session_time',
     'landing_page_views',

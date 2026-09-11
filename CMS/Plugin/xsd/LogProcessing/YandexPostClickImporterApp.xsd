@@ -22,6 +22,20 @@
     <xsd:attribute name="connection_string" type="xsd:string" use="required"/>
   </xsd:complexType>
 
+  <xsd:simpleType name="YandexPostClickImporterAttributionType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="first"/>
+      <xsd:enumeration value="last"/>
+      <xsd:enumeration value="lastsign"/>
+      <xsd:enumeration value="last_yandex_direct_click"/>
+      <xsd:enumeration value="cross_device_first"/>
+      <xsd:enumeration value="cross_device_last"/>
+      <xsd:enumeration value="cross_device_last_significant"/>
+      <xsd:enumeration value="cross_device_last_yandex_direct_click"/>
+      <xsd:enumeration value="automatic"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="YandexPostClickImporterConfigType">
     <xsd:sequence>
       <xsd:element name="clickhouse"
@@ -32,8 +46,8 @@
     </xsd:sequence>
     <xsd:attribute name="period" type="xsd:positiveInteger" use="optional" default="3600"/>
     <xsd:attribute name="days" type="xsd:positiveInteger" use="optional" default="4"/>
-    <xsd:attribute name="sources" type="xsd:string" use="required"/>
-    <xsd:attribute name="attribution" type="xsd:string" use="optional" default="lastsign"/>
+    <xsd:attribute name="attribution" type="YandexPostClickImporterAttributionType"
+      use="optional" default="lastsign"/>
     <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="optional" default="24"/>
     <xsd:attribute name="request_timeout" type="xsd:positiveInteger" use="optional" default="60"/>
   </xsd:complexType>

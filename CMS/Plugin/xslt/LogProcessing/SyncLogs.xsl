@@ -1148,6 +1148,8 @@
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/CreativeStat/RequestStatsHourly_*"
               destination="/csvlistener/"/>
+            <cfg:files source="LogGeneralizer/Out/PostClickStat/CCGPostClickStatsHourly_*"
+              destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStats_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelHitStat/ChannelInventory_*"
@@ -1283,6 +1285,13 @@
             <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/ResearchImpression/RImpression_*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchImpression</xsl:attribute>
+            </cfg:files>
+            <cfg:files>
+              <xsl:attribute name="source">
+                <xsl:text>RequestInfoManager/Out/ResearchPostImpression/</xsl:text>
+                <xsl:text>RPostImpression_*</xsl:text>
+              </xsl:attribute>
+              <xsl:attribute name="destination"><![CDATA[/]]>ResearchPostImpression</xsl:attribute>
             </cfg:files>
             <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/ResearchClick/RClick_*</xsl:attribute>

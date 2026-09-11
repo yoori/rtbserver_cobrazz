@@ -1397,6 +1397,9 @@ namespace AdServer::CampaignSvcs
         instantiate_info,
         template_descr.track_impressions ?
           &request_context->consider_pub_pixel_accounts() : nullptr);
+
+      ad_selection_result.expected_post_actions = request_result_params.track_pixel_url.empty() ?
+        empty_expected_post_actions() : creative_template->expected_post_actions();
     }
 
     request_context->signed_request_id_provider = [this, &request_params]() {

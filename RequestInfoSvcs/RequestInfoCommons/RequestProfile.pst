@@ -140,6 +140,7 @@ namespace RequestInfoSvcs
     string country;
     string referer;
     string page_keywords;
+    array<string> expected_post_actions;
 
     uint enabled_notice;
     uint enabled_impression_tracking;
@@ -282,6 +283,7 @@ namespace RequestInfoSvcs
     country;
     referer;
     page_keywords;
+    expected_post_actions;
 
     enabled_notice;
     enabled_impression_tracking;
@@ -422,6 +424,7 @@ namespace RequestInfoSvcs
     country;
     referer;
     page_keywords;
+    (cpp_vector) expected_post_actions;
 
     enabled_notice;
     enabled_impression_tracking;

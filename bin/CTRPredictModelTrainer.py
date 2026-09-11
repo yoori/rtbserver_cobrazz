@@ -21,7 +21,10 @@ from rtbserver_utils.CatBoostTrainer import CatBoostTrainer
 from rtbserver_utils.CTRModelTraits import traits_with_sections
 from rtbserver_utils.CTRPredictModelGeneratorConfig import load_config
 from rtbserver_utils.PostgresFeatureNameResolver import PostgresFeatureNameResolver
-from rtbserver_utils.RImpressionTrainExporter import RImpressionTrainExporter
+from rtbserver_utils.RImpressionTrainExporter import (
+  RImpressionTrainExporter,
+  RImpressionVTRTrainExporter,
+)
 from rtbserver_utils.SignalInterruptHandler import SignalInterruptHandler
 
 
@@ -2232,10 +2235,29 @@ def generate_model(config):
     return generate_model_(config, in_progress_model)
 
 
-def generate_model_(config, in_progress_model):
+def generate_vtr_model(config):
+  with InProgressModel(
+      config.vtr_model_root(),
+      prepare_steps=prepare_train_steps(config),
+      root_traits={'objective': 'vtr'}) as in_progress_model:
+    return generate_model_(
+      config,
+      in_progress_model,
+      exporter_class=RImpressionVTRTrainExporter,
+      work_dir_name='VTRPredictModelGenerator',
+      output_dir=config.vtr_model_root())
+
+
+def generate_model_(
+    config,
+    in_progress_model,
+    exporter_class=RImpressionTrainExporter,
+    work_dir_name='CTRPredictModelGenerator',
+    output_dir=None,
+):
   workspace_root = pathlib.Path(config.workspace_root)
-  work_dir = workspace_root / 'CTRPredictModelGenerator'
-  output_dir = config.model_root()
+  work_dir = workspace_root / work_dir_name
+  output_dir = pathlib.Path(output_dir or config.model_root())
   work_dir.mkdir(parents=True, exist_ok=True)
   with in_progress_model.train_step('prepare', 'prepare_feature_configs'):
     features_config_file = prepare_features_config(work_dir)
@@ -2254,7 +2276,7 @@ def generate_model_(config, in_progress_model):
   feature_indexes_file = work_dir / 'RImpressionTrain.feature-indexes'
 
   logger.debug('Loading data from ClickHouse')
-  exporter = RImpressionTrainExporter(
+  exporter = exporter_class(
     config.clickhouse_conn,
     logger=logger,
     user_navigation_sampling=config.user_navigation_sampling)
@@ -3255,6 +3277,7 @@ def wait_for_period(interrupter, period):
 def run_service(config, run_once):
   if run_once:
     generate_model(config)
+    generate_vtr_model(config)
     return
 
   with SignalInterruptHandler(
@@ -3267,6 +3290,12 @@ def run_service(config, run_once):
         logger.info('CTR model generation completed')
       except Exception:
         logger.exception('CTR model generation failed')
+      try:
+        logger.info('Starting VTR model generation')
+        generate_vtr_model(config)
+        logger.info('VTR model generation completed')
+      except Exception:
+        logger.exception('VTR model generation failed')
       wait_for_period(interrupter, config.generate_period)
 
 

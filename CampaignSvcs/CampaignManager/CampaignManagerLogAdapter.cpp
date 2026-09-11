@@ -685,6 +685,7 @@ namespace AdServer::CampaignSvcs
         ad_info.ctr = cs_data->ctr;
         assert(cs_data->conv_rate.is_nonnegative());
         ad_info.conv_rate = cs_data->conv_rate;
+        ad_info.expected_post_actions = ad_selection_result.expected_post_actions;
         ad_info.campaign_imps = cs_data->campaign_imps;
 
         fill_responded_channel_info_(ad_info, *cs_data, channels);

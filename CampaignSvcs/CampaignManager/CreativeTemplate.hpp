@@ -3,6 +3,8 @@
 #include <list>
 #include <set>
 #include <map>
+#include <cstdint>
+#include <vector>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -13,6 +15,8 @@
 #include <String/TextTemplate.hpp>
 #include <Generics/CRC.hpp>
 #include <Generics/GnuHashTable.hpp>
+
+#include <Commons/ExpectedPostActions.hpp>
 
 #include "CreativeTemplateArgs.hpp"
 
@@ -67,6 +71,9 @@ namespace AdServer::CampaignSvcs
     key_used(const String::SubString& key) const
       noexcept = 0;
 
+    virtual const std::shared_ptr<const std::vector<std::string>>&
+    expected_post_actions() const noexcept = 0;
+
     static void
     get_keys(String::TextTemplate::Keys& keys, const String::SubString& text)
       noexcept;
@@ -81,7 +88,22 @@ namespace AdServer::CampaignSvcs
   class CreativeTemplateFactory
   {
   public:
-    typedef Generics::Time State;
+    struct State
+    {
+      Generics::Time check_time;
+      std::uint64_t modification_time = 0;
+      std::uint64_t modification_time_nanoseconds = 0;
+      std::uint64_t file_size = 0;
+      bool initialized = false;
+
+      bool same_file(const State& right) const noexcept
+      {
+        return initialized && right.initialized &&
+          modification_time == right.modification_time &&
+          modification_time_nanoseconds == right.modification_time_nanoseconds &&
+          file_size == right.file_size;
+      }
+    };
 
     struct Handler
     {

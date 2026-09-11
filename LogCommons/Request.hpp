@@ -9,6 +9,7 @@
 #include <LogCommons/Compatibility/Request_Base.hpp>
 #include <LogCommons/Compatibility/Request_v371.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+#include <Commons/ExpectedPostActions.hpp>
 
 namespace AdServer::LogProcessing
 {
@@ -18,6 +19,7 @@ namespace AdServer::LogProcessing
   typedef std::list<UserProperty> UserPropertyList;
 
   class RequestData_V_3_7_2;
+  class RequestData_V_3_7_3;
 
   class RequestData
   {
@@ -132,7 +134,8 @@ namespace AdServer::LogProcessing
       const FixedNum& pub_cost_coef,
       unsigned long at_flags,
       const std::string& additional_info,
-      const std::string& page_keywords)
+      const std::string& page_keywords,
+      std::shared_ptr<const std::vector<std::string>> expected_post_actions)
       : holder_(new DataHolder(
           time,
           isp_time,
@@ -214,7 +217,8 @@ namespace AdServer::LogProcessing
           pub_cost_coef,
           at_flags,
           additional_info,
-          page_keywords
+          page_keywords,
+          std::move(expected_post_actions)
         ))
     {}
 
@@ -300,7 +304,8 @@ namespace AdServer::LogProcessing
           data.pub_cost_coef(),
           data.at_flags(),
           "", // additional_info
-          "" // page_keywords
+          "", // page_keywords
+          empty_expected_post_actions() // expected_post_actions
         ))
     {}
 
@@ -738,10 +743,22 @@ namespace AdServer::LogProcessing
       return holder_->page_keywords.get();
     }
 
+    const StringArray&
+    expected_post_actions() const
+    {
+      return *holder_->expected_post_actions;
+    }
+
+    const std::shared_ptr<const std::vector<std::string>>&
+    expected_post_actions_ptr() const
+    {
+      return holder_->expected_post_actions;
+    }
+
   private:
     struct DataHolder: public ReferenceCounting::AtomicImpl
     {
-      DataHolder() {}
+      DataHolder() : expected_post_actions(empty_expected_post_actions()) {}
 
       DataHolder(
         const SecondsTimestamp& time_val,
@@ -824,7 +841,8 @@ namespace AdServer::LogProcessing
         const FixedNum& pub_cost_coef_val,
         unsigned long at_flags_val,
         const StringIoWrapperOptional& additional_info_val,
-        const StringIoWrapperOptional& page_keywords_val)
+        const StringIoWrapperOptional& page_keywords_val,
+        std::shared_ptr<const std::vector<std::string>> expected_post_actions_val)
         : time(time_val),
           isp_time(isp_time_val),
           pub_time(pub_time_val),
@@ -905,7 +923,9 @@ namespace AdServer::LogProcessing
           pub_cost_coef(pub_cost_coef_val),
           at_flags(at_flags_val),
           additional_info(additional_info_val),
-          page_keywords(page_keywords_val)
+          page_keywords(page_keywords_val),
+          expected_post_actions(expected_post_actions_val ?
+            std::move(expected_post_actions_val) : empty_expected_post_actions())
       {}
 
       bool
@@ -991,11 +1011,20 @@ namespace AdServer::LogProcessing
           pub_cost_coef == data.pub_cost_coef &&
           at_flags == data.at_flags &&
           additional_info.get() == data.additional_info.get() &&
-          page_keywords.get() == data.page_keywords.get();
+          page_keywords.get() == data.page_keywords.get() &&
+          *expected_post_actions == *data.expected_post_actions;
       }
 
       template <class ARCHIVE_>
       void serialize(ARCHIVE_& ar)
+      {
+        serialize_v_3_7_2(ar);
+        ar & page_keywords;
+        ar ^ *expected_post_actions;
+      }
+
+      template <class ARCHIVE_>
+      void serialize_v_3_7_3(ARCHIVE_& ar)
       {
         serialize_v_3_7_2(ar);
         ar ^ page_keywords;
@@ -1208,6 +1237,7 @@ namespace AdServer::LogProcessing
       unsigned long at_flags;
       StringIoWrapperOptional additional_info;
       StringIoWrapperOptional page_keywords;
+      std::shared_ptr<const std::vector<std::string>> expected_post_actions;
 
   private:
       virtual ~DataHolder() noexcept {}
@@ -1239,10 +1269,41 @@ namespace AdServer::LogProcessing
       /*throw(eh::Exception)*/;
 
     friend class RequestData_V_3_7_2;
+    friend class RequestData_V_3_7_3;
 
     void read_v_3_7_2_(FixedBufStream<TabCategory>& is);
+    void read_v_3_7_3_(FixedBufStream<TabCategory>& is);
 
     DataHolder_var holder_;
+  };
+
+  // 3.7.3 records end after page_keywords, so expected_post_actions stays empty.
+  class RequestData_V_3_7_3
+  {
+  public:
+    RequestData_V_3_7_3() noexcept = default;
+    RequestData_V_3_7_3(const RequestData_V_3_7_3&) = delete;
+    RequestData_V_3_7_3& operator=(const RequestData_V_3_7_3&) = delete;
+    RequestData_V_3_7_3(RequestData_V_3_7_3&&) noexcept = default;
+    RequestData_V_3_7_3& operator=(RequestData_V_3_7_3&&) noexcept = default;
+
+    RequestData into_current() noexcept
+    {
+      return std::move(data_);
+    }
+
+  private:
+    void read_(FixedBufStream<TabCategory>& is)
+    {
+      data_.read_v_3_7_3_(is);
+    }
+
+    RequestData data_;
+
+    friend
+    FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_7_3& data)
+      /*throw(eh::Exception)*/;
   };
 
   // 3.7.2 records end after additional_info, so page_keywords stays empty.
@@ -1278,10 +1339,15 @@ namespace AdServer::LogProcessing
   operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_7_2& data)
     /*throw(eh::Exception)*/;
 
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, RequestData_V_3_7_3& data)
+    /*throw(eh::Exception)*/;
+
   FixedBufStream<CommaCategory>&
   operator>>(FixedBufStream<CommaCategory>& is, UserProperty& property) /*throw(eh::Exception)*/;
 
   using RequestCollector_V_3_7_2 = SeqCollector<RequestData_V_3_7_2, true>;
+  using RequestCollector_V_3_7_3 = SeqCollector<RequestData_V_3_7_3, true>;
   using RequestCollector = SeqCollector<RequestData, true>;
 
   struct RequestTraits: LogDefaultTraits<RequestCollector, false, false>
@@ -1289,11 +1355,24 @@ namespace AdServer::LogProcessing
     template <class T>
     static void for_each_old(T& obj) /*throw(eh::Exception)*/
     {
+      obj.template support<RequestCollector_V_3_7_3, false>("3.7.3");
       obj.template support<RequestCollector_V_3_7_2, false>("3.7.2");
       obj.template support<RequestCollector_V_3_7_1, false>("3.7.1");
     }
 
     typedef MoveSeqDistributeStrategy<RequestTraits> DistributeStrategyType;
+
+    static
+    RequestCollector
+    convert_collector(RequestCollector_V_3_7_3& old_collector)
+    {
+      RequestCollector collector;
+      for (auto& old_data : old_collector)
+      {
+        collector.add(old_data.into_current());
+      }
+      return collector;
+    }
 
     static
     RequestCollector

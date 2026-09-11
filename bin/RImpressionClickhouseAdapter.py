@@ -42,6 +42,7 @@ if __name__ == "__main__":
     ('ssp_viewability', None),
     ('ssp_vtr', None),
     ('page_keywords', None),
+    ('expected_post_actions', None),
   ]
   additional_info_field_map = {
     'ssp_tag_id': 'ssp_tag_id',
@@ -60,6 +61,7 @@ if __name__ == "__main__":
       for row in it:
         additional_info = {}
         page_keywords = row[29] if len(row) >= 31 else ''
+        expected_post_actions = row[30] if len(row) >= 32 else ''
         if row:
           additional_info_raw = row[-1].strip()
           if additional_info_raw:
@@ -74,6 +76,9 @@ if __name__ == "__main__":
             values.append(row[field_index])
           elif field_name == 'page_keywords':
             values.append(page_keywords)
+          elif field_name == 'expected_post_actions':
+            actions = expected_post_actions.split(',') if expected_post_actions else []
+            values.append("['" + "','".join(actions) + "']" if actions else '[]')
           else:
             values.append(additional_info.get(additional_info_field_map[field_name], ''))
         writer.writerow(values)

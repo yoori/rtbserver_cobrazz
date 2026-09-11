@@ -14,15 +14,14 @@ import psycopg2
 import requests
 
 from ServiceUtilsPy.Context import Context
-from ServiceUtilsPy.Service import Service
+from ServiceUtilsPy.Service import Service, StopService
 
 
 REPORTING_SYNC_TABLE = 'YandexPostClickReportingSync'
 LOGS_SYNC_TABLE = 'YandexPostClickLogsSync'
 LOG_REQUESTS_TABLE = 'YandexPostClickLogRequests'
-ESTIMATION_TABLE = 'adserver.ccgpostclickestimationstatshourly'
-DAY_STATUS_TABLE = 'adserver.yandexpostclickdaystatus'
-EXACT_PROGRESS_TABLE = 'adserver.yandexpostclickexactprogress'
+UPSERT_ESTIMATION_FUNCTION = 'adserver.upsert_yandex_metrika_post_click_estimation'
+UPDATE_IMPORT_STATUS_FUNCTION = 'adserver.update_yandex_metrika_import_status'
 
 INTERNAL_CLICKHOUSE_DDL = (
   f"""
@@ -79,8 +78,20 @@ ORDER BY (ymref_id, event_date)
 )
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
+REPORTING_PAGE_SIZE = 100000
 REQUEST_ID_RE = re.compile(r'^[A-Za-z0-9_-]{22}\.\.$')
 CCID_RE = re.compile(r'(?:^|[;&])ccid:(\d+)(?:$|[;&])')
+ATTRIBUTIONS = frozenset((
+  'first',
+  'last',
+  'lastsign',
+  'last_yandex_direct_click',
+  'cross_device_first',
+  'cross_device_last',
+  'cross_device_last_significant',
+  'cross_device_last_yandex_direct_click',
+  'automatic',
+))
 LOG_FIELDS = (
   'ym:s:visitID',
   'ym:s:date',
@@ -89,7 +100,6 @@ LOG_FIELDS = (
   'ym:s:visitDuration',
   'ym:s:pageViews',
   'ym:s:isNewUser',
-  'ym:s:<attribution>UTMSource',
   'ym:s:<attribution>UTMTerm',
   'ym:s:<attribution>UTMContent',
 )
@@ -164,7 +174,7 @@ class YandexApi:
         'date2': event_date.isoformat(),
         'fields': fields,
         'source': 'visits',
-        'attribution': attribution,
+        'attribution': attribution.upper(),
       },
       headers=self.headers,
       timeout=self.timeout)
@@ -201,8 +211,7 @@ class Application(Service):
   def __init__(self):
     super().__init__()
     self.args_parser.add_argument('--days', type=int)
-    self.args_parser.add_argument('--sources', nargs='+')
-    self.args_parser.add_argument('--attribution')
+    self.args_parser.add_argument('--attribution', choices=sorted(ATTRIBUTIONS))
     self.args_parser.add_argument('--pg-dsn')
     self.args_parser.add_argument('--ch-host')
     self.args_parser.add_argument('--ch-port', type=int)
@@ -218,18 +227,14 @@ class Application(Service):
   def on_start(self):
     super().on_start()
     self.days = self.params.get('days', 4)
-    sources = self.params.get('sources', ['genius', 'pml', 'pharmatic'])
-    if isinstance(sources, str):
-      sources = [source.strip() for source in sources.split(',')]
-    self.sources = {source for source in sources if source}
-    self.attribution = self.params.get('attribution', 'lastsign')
+    self.attribution = self.params.get('attribution', 'lastsign').lower()
     self.chunks_count = self.params.get('chunks_count', 24)
     self.request_timeout = self.params.get('request_timeout', 60.0)
     if self.days < 2:
       raise ValueError('days must be at least 2')
 
-    if not self.sources:
-      raise ValueError('sources must not be empty')
+    if self.attribution not in ATTRIBUTIONS:
+      raise ValueError(f'unsupported attribution: {self.attribution}')
 
     if self.chunks_count <= 0:
       raise ValueError('chunks_count must be positive')
@@ -261,6 +266,7 @@ class Application(Service):
         cursor.execute(
           "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A'")
         references = tuple(cursor.fetchall())
+      self.pg.commit()
     except Exception as ex:
       self.print_(0, f'Unable to load Yandex Metrika references: {ex}')
       self._reset_connections()
@@ -272,6 +278,8 @@ class Application(Service):
         api = YandexApi(token, counter_id, self.request_timeout)
         reporting = self._load_reporting(ymref_id, api)
         self._process_logs(ymref_id, api, reporting)
+      except StopService:
+        raise
       except Exception as ex:
         self.print_(0, f'Unable to import Yandex Metrika reference {ymref_id}: {ex}')
         self._reset_connections()
@@ -283,19 +291,25 @@ class Application(Service):
 
   def _reset_connections(self):
     if self.pg is not None:
+      pg = self.pg
+      self.pg = None
       try:
-        self.pg.rollback()
-        self.pg.close()
+        pg.rollback()
       except Exception:
         pass
-      self.pg = None
+
+      try:
+        pg.close()
+      except Exception:
+        pass
 
     if self.ch is not None:
+      ch = self.ch
+      self.ch = None
       try:
-        self.ch.close()
+        ch.close()
       except Exception:
         pass
-      self.ch = None
 
   def _connect(self):
     if self.pg is None or self.pg.closed:
@@ -310,8 +324,7 @@ class Application(Service):
         password=self.params.get('ch_pass', ''),
         secure=self.params.get('ch_secure', False))
 
-  def _reporting_page(self, api, source, date1, date2, offset):
-    source_dimension = 'ym:s:<attribution>UTMSource'
+  def _reporting_page(self, api, date1, date2, offset):
     content_dimension = 'ym:s:<attribution>UTMContent'
     term_dimension = 'ym:s:<attribution>UTMTerm'
     return api.reporting({
@@ -325,12 +338,11 @@ class Application(Service):
       'accuracy': 'full',
       'timezone': '+00:00',
       'filters': (
-        f"{source_dimension}=='{source}' AND "
         f"{content_dimension}=@'ccid:' AND "
         f"{term_dimension}=~'^[A-Za-z0-9_-]{{22}}\\.\\.$'"),
       'attribution': self.attribution,
       'offset': offset,
-      'limit': 100000,
+      'limit': REPORTING_PAGE_SIZE,
     })
 
   def _load_reporting(self, ymref_id, api):
@@ -339,39 +351,42 @@ class Application(Service):
     rows = {}
     unsampled = True
 
-    for source in self.sources:
-      offset = 1
-      while True:
-        result = self._reporting_page(api, source, date1, today, offset)
-        sampled = bool(result.get('sampled', False))
-        unsampled = unsampled and not sampled
-        sample_share = float(result.get('sample_share', 1.0))
-        data = result.get('data', [])
-        for item in data:
-          ccid = parse_ccid(decode_dimension(item, 1))
-          if ccid is None:
-            continue
+    offset = 1
+    while True:
+      result = self._reporting_page(api, date1, today, offset)
+      sampled = bool(result.get('sampled', False))
+      unsampled = unsampled and not sampled
+      sample_share = float(result.get('sample_share', 1.0))
+      data = result.get('data', [])
+      for item in data:
+        ccid = parse_ccid(decode_dimension(item, 1))
+        if ccid is None:
+          continue
 
-          hour = datetime.datetime.fromisoformat(decode_dimension(item, 0))
-          if hour.tzinfo is None:
-            hour = hour.replace(tzinfo=datetime.timezone.utc)
-          else:
-            hour = hour.astimezone(datetime.timezone.utc)
-          hour = hour.replace(minute=0, second=0, microsecond=0)
-          metrics = parse_reporting_metrics(item['metrics'])
-          key = (hour, ccid)
-          current = rows.setdefault(key, [0, 0, 0.0, 0, 0, False, 1.0])
-          current[0] += metrics[0]
-          current[1] += metrics[1]
-          current[2] += float(metrics[2])
-          current[3] += metrics[3]
-          current[4] += metrics[4]
-          current[5] = current[5] or sampled
-          current[6] = min(current[6], sample_share)
+        hour = datetime.datetime.fromisoformat(decode_dimension(item, 0))
+        if hour.tzinfo is None:
+          hour = hour.replace(tzinfo=datetime.timezone.utc)
+        else:
+          hour = hour.astimezone(datetime.timezone.utc)
+        hour = hour.replace(minute=0, second=0, microsecond=0)
+        metrics = parse_reporting_metrics(item['metrics'])
+        key = (hour, ccid)
+        current = rows.setdefault(key, [0, 0, 0.0, 0, 0, False, 1.0])
+        current[0] += metrics[0]
+        current[1] += metrics[1]
+        current[2] += float(metrics[2])
+        current[3] += metrics[3]
+        current[4] += metrics[4]
+        current[5] = current[5] or sampled
+        current[6] = min(current[6], sample_share)
 
-        if len(data) < 100000:
-          break
-        offset += len(data)
+      total_rows = result.get('total_rows')
+      if total_rows is not None and offset - 1 + len(data) >= int(total_rows):
+        break
+
+      if not data or len(data) < REPORTING_PAGE_SIZE:
+        break
+      offset += len(data)
 
     old_rows = {
       (row[0], int(row[1])): tuple(row[2:])
@@ -409,31 +424,15 @@ class Application(Service):
     return {'rows': rows, 'unsampled': unsampled}
 
   def _upsert_estimation(self, rows):
-    statement = f"""
-INSERT INTO {ESTIMATION_TABLE}
-  (ymref_id, sdate, cc_id, visits, visits_with_bounce, session_time_sum,
-   page_views, new_user_visits, sampled, sample_share, updated_at)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())
-ON CONFLICT (ymref_id, sdate, cc_id) DO UPDATE SET
-  visits = EXCLUDED.visits,
-  visits_with_bounce = EXCLUDED.visits_with_bounce,
-  session_time_sum = EXCLUDED.session_time_sum,
-  page_views = EXCLUDED.page_views,
-  new_user_visits = EXCLUDED.new_user_visits,
-  sampled = EXCLUDED.sampled,
-  sample_share = EXCLUDED.sample_share,
-  updated_at = now()
-"""
+    statement = f"SELECT {UPSERT_ESTIMATION_FUNCTION}(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     with self.pg.cursor() as cursor:
-      cursor.executemany(statement, [
-        (ymref_id, row[1], row[2], *row[3:10])
-        for row in rows
-      ])
+      cursor.executemany(statement, [tuple(row[:10]) for row in rows])
     self.pg.commit()
 
   def _process_logs(self, ymref_id, api, reporting):
     today = datetime.datetime.now(datetime.timezone.utc).date()
     for age in range(1, self.days):
+      self.verify_running()
       event_date = today - datetime.timedelta(days=age)
       request_state = self._log_request_state(ymref_id, event_date)
       if request_state is None or request_state[1] in TERMINAL_LOG_REQUEST_STATUSES:
@@ -451,6 +450,7 @@ ON CONFLICT (ymref_id, sdate, cc_id) DO UPDATE SET
 
       records = []
       for part in log_request.get('parts', []):
+        self.verify_running()
         text = api.download_log_part(request_id, int(part['part_number']))
         records.extend(self._parse_log_part(ymref_id, text, event_date))
 
@@ -470,15 +470,11 @@ ON CONFLICT (ymref_id, sdate, cc_id) DO UPDATE SET
 
       api.clean_log_request(request_id)
       self._save_log_request(ymref_id, event_date, request_id, 'cleaned')
-      self._update_day_status(ymref_id, event_date, reporting)
+      self._update_import_status(ymref_id, event_date, reporting)
 
   def _parse_log_part(self, ymref_id, text, event_date):
     records = []
     for row in csv.DictReader(text.splitlines(), delimiter='\t'):
-      source = self._field(row, 'UTMSource')
-      if source not in self.sources:
-        continue
-
       request_id = urllib.parse.unquote_plus(self._field(row, 'UTMTerm'))
       if not REQUEST_ID_RE.fullmatch(request_id):
         continue
@@ -567,7 +563,7 @@ ON CONFLICT (ymref_id, sdate, cc_id) DO UPDATE SET
         datetime.datetime.now(datetime.timezone.utc))],
       column_names=('ymref_id', 'event_date', 'request_id', 'status', 'version'))
 
-  def _update_day_status(self, ymref_id, event_date, reporting):
+  def _update_import_status(self, ymref_id, event_date, reporting):
     reporting_visits = sum(
       values[0] for (hour, _), values in reporting['rows'].items()
       if hour.date() == event_date)
@@ -575,39 +571,15 @@ ON CONFLICT (ymref_id, sdate, cc_id) DO UPDATE SET
       f"SELECT countIf(reporting_comparable) FROM {LOGS_SYNC_TABLE} FINAL "
       "WHERE ymref_id = %(ymref_id)s AND event_date = %(event_date)s",
       parameters={'ymref_id': ymref_id, 'event_date': event_date}).result_rows[0][0])
-    equal = reporting['unsampled'] and reporting_visits == logs_visits
-
     with self.pg.cursor() as cursor:
       cursor.execute(
-        f"SELECT equal_runs, state FROM {DAY_STATUS_TABLE} "
-        "WHERE ymref_id = %s AND sdate = %s FOR UPDATE",
-        (ymref_id, event_date))
-      previous = cursor.fetchone()
-      equal_runs = (previous[0] if previous and equal else 0) + (1 if equal else 0)
-      state = 'READY' if equal_runs >= 2 else 'ESTIMATED'
-      if previous and previous[1] == 'EXACT':
-        state = 'EXACT'
-
-      if state == 'READY':
-        cursor.execute(
-          f"SELECT visits FROM {EXACT_PROGRESS_TABLE} "
-          "WHERE ymref_id = %s AND sdate = %s",
-          (ymref_id, event_date))
-        progress = cursor.fetchone()
-        if (progress[0] if progress else 0) >= logs_visits:
-          state = 'EXACT'
-
-      cursor.execute(f"""
-INSERT INTO {DAY_STATUS_TABLE}
-  (ymref_id, sdate, state, reporting_visits, logs_visits, equal_runs, updated_at)
-VALUES (%s, %s, %s, %s, %s, %s, now())
-ON CONFLICT (ymref_id, sdate) DO UPDATE SET
-  state = EXCLUDED.state,
-  reporting_visits = EXCLUDED.reporting_visits,
-  logs_visits = EXCLUDED.logs_visits,
-  equal_runs = EXCLUDED.equal_runs,
-  updated_at = now()
-""", (ymref_id, event_date, state, reporting_visits, logs_visits, equal_runs))
+        f"SELECT {UPDATE_IMPORT_STATUS_FUNCTION}(%s, %s, %s, %s, %s)",
+        (
+          ymref_id,
+          event_date,
+          reporting_visits,
+          logs_visits,
+          reporting['unsampled']))
     self.pg.commit()
 
 

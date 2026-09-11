@@ -289,6 +289,8 @@
       <xsd:element name="ResearchAction" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchBid" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchImpression" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ResearchPostImpression" type="LogFlushPolicyType"
+        minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchClick" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ResearchPostClick" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="BidCostStat" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>

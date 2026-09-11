@@ -277,6 +277,11 @@ namespace AdServer::RequestInfoSvcs
     request_info.country = request_reader.country();
     request_info.referer = request_reader.referer();
     request_info.page_keywords = request_reader.page_keywords();
+    const auto& expected_post_actions = request_reader.expected_post_actions();
+    request_info.expected_post_actions = expected_post_actions.empty() ?
+      empty_expected_post_actions() :
+      std::make_shared<const std::vector<std::string>>(
+        expected_post_actions.begin(), expected_post_actions.end());
 
     request_info.enabled_notice = (request_reader.enabled_notice() & ENABLED_NOTICE);
     request_info.disabled_pub_cost_check =
@@ -546,6 +551,8 @@ namespace AdServer::RequestInfoSvcs
     request_writer.country() = request_info.country;
     request_writer.referer() = request_info.referer;
     request_writer.page_keywords() = request_info.page_keywords;
+    request_writer.expected_post_actions().assign(
+      request_info.expected_post_actions->begin(), request_info.expected_post_actions->end());
 
     request_writer.enabled_notice() =
       (request_info.enabled_notice ? ENABLED_NOTICE : 0) |
@@ -1058,6 +1065,7 @@ namespace AdServer::RequestInfoSvcs
     request_writer.country() = "";
     request_writer.referer() = "";
     request_writer.page_keywords() = "";
+    request_writer.expected_post_actions().clear();
 
     request_writer.enabled_notice() = 0;
     request_writer.enabled_impression_tracking() = 0;

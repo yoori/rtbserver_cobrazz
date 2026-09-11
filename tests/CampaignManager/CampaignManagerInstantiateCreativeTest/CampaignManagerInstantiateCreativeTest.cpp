@@ -403,9 +403,42 @@ namespace
     }
 
     out.write(TEMPLATE_BODY, sizeof(TEMPLATE_BODY) - 1);
+    out << "##TRACKVIDEOSTART####TRACKVIDEOVIEW##";
     if (!out)
     {
       throw std::runtime_error("can't write template file: " + path.string());
+    }
+  }
+
+  void
+  test_template_reload(const std::filesystem::path& path)
+  {
+    write_template_file(path);
+
+    CreativeTemplateFactory factory;
+    CreativeTemplateFactory::Handler handler(
+      path.c_str(), CreativeTemplateFactory::Handler::CTT_TEXT);
+    CreativeTemplateFactory::State state;
+    Template_var initial = factory.create(handler, state);
+    Template_var unchanged = factory.update(initial, handler, state);
+    if (unchanged.in() != initial.in())
+    {
+      throw std::runtime_error("unchanged creative template was reloaded");
+    }
+
+    std::ofstream out(path, std::ios::binary | std::ios::app);
+    out << "##TRACKVIDEOCOMPLETE##";
+    out.close();
+    if (!out)
+    {
+      throw std::runtime_error("can't update template file: " + path.string());
+    }
+
+    Template_var updated = factory.update(initial, handler, state);
+    const std::vector<std::string> expected{"vstart", "vview", "vcomplete"};
+    if (updated.in() == initial.in() || *updated->expected_post_actions() != expected)
+    {
+      throw std::runtime_error("changed creative template was not reloaded");
     }
   }
 
@@ -593,7 +626,7 @@ namespace
       template_path.c_str(),
       CreativeTemplateFactory::Handler::CTT_TEXT,
       "text/html;charset=utf-8",
-      false,
+      true,
       template_tokens,
       template_hidden_tokens,
       Generics::Time::get_time_of_day());
@@ -695,6 +728,20 @@ namespace
     if (creative_body.find(expected_click_url) == std::string::npos)
     {
       throw std::runtime_error("CLICKMETRIKAPARAMS was not instantiated in CRCLICK");
+    }
+
+    const std::vector<std::string> expected_post_actions{"vstart", "vview"};
+    if (*ad_selection_result.expected_post_actions != expected_post_actions)
+    {
+      throw std::runtime_error("expected post actions were not detected from template tokens");
+    }
+
+    for (const auto& action_name : expected_post_actions)
+    {
+      if (creative_body.find("&t=c&nm=" + action_name) == std::string::npos)
+      {
+        throw std::runtime_error("post action token was not instantiated: " + action_name);
+      }
     }
 
     checksum.fetch_add(
@@ -803,6 +850,8 @@ main(int argc, char** argv)
     const Options options = parse_options(argc, argv);
     const std::filesystem::path template_path =
       std::filesystem::path(options.template_root) / "instantiate-template.txt";
+    test_template_reload(
+      std::filesystem::path(options.template_root) / "reload-template.txt");
     write_template_file(template_path);
 
     CreativeInstantiator::CreativeInstantiate creative_instantiate = make_creative_instantiate();

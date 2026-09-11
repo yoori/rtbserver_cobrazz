@@ -74,6 +74,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchBid_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchImpression && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchImpression_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostImpression && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostImpression_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchClick && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchClick_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostClick && " .

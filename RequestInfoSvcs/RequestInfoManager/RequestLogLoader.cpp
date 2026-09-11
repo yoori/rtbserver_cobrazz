@@ -717,6 +717,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.at_flags = req.at_flags();
       request_info.additional_info = req.additional_info();
       request_info.page_keywords = req.page_keywords();
+      request_info.expected_post_actions = req.expected_post_actions_ptr();
 
       request_processor_->process_request(request_info);
     }
@@ -869,6 +870,7 @@ namespace AdServer::RequestInfoSvcs
       request_info.at_flags = req.at_flags();
       request_info.additional_info = req.additional_info();
       request_info.page_keywords = req.page_keywords();
+      request_info.expected_post_actions = req.expected_post_actions_ptr();
 
       co_await request_processor_->co_process_request(request_info);
     }

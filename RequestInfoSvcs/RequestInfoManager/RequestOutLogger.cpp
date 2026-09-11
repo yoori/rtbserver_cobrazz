@@ -2722,6 +2722,7 @@ namespace AdServer::RequestInfoSvcs
           data.predicted_conv_rate = info.conv_rate;
           data.tag_predicted_viewability = info.viewability;
           data.page_keywords = info.page_keywords;
+          data.expected_post_actions = info.expected_post_actions;
           data.additional_info = info.additional_info;
 
           if (info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
@@ -2851,6 +2852,7 @@ namespace AdServer::RequestInfoSvcs
 
       CollectorT::DataT data;
       data.request_id = request_info.request_id;
+      data.landing_timestamp = LogProcessing::SecondsTimestamp(action_info.time);
       const auto value = parse_post_click_action_value(action_info.value);
       data.landing_bounced = value.landing_bounced;
       data.landing_session_time = value.landing_session_time;
@@ -2858,6 +2860,75 @@ namespace AdServer::RequestInfoSvcs
       data.landing_is_new_user = value.landing_is_new_user;
       add_record(std::move(data));
     }
+  };
+
+  class ResearchPostImpressionLogger:
+    public virtual RequestActionProcessor,
+    public virtual AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::ResearchPostImpressionTraits,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<
+        AdServer::LogProcessing::ResearchPostImpressionTraits>>,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    explicit ResearchPostImpressionLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : AdServer::LogProcessing::LogHolderSharded<
+          AdServer::LogProcessing::ResearchPostImpressionTraits,
+          AdServer::LogProcessing::SimpleCsvSavePolicy<
+            AdServer::LogProcessing::ResearchPostImpressionTraits>>(flush_traits)
+    {
+      action_names_.insert("vstart");
+      action_names_.insert("vview");
+      action_names_.insert("vq1");
+      action_names_.insert("vmid");
+      action_names_.insert("vq3");
+      action_names_.insert("vcomplete");
+      action_names_.insert("vskip");
+      action_names_.insert("vpause");
+      action_names_.insert("vmute");
+      action_names_.insert("vunmute");
+      action_names_.insert("vresume");
+      action_names_.insert("vfullscreen");
+      action_names_.insert("verror");
+    }
+
+    void process_request(const RequestInfo&, const ProcessingState&) override {}
+    void
+    process_impression(
+      const RequestInfo&,
+      const ImpressionInfo&,
+      const ProcessingState&) override
+    {}
+    void process_click(const RequestInfo&, const ProcessingState&) override {}
+    void process_action(const RequestInfo&) override {}
+
+    void
+    process_post_imp_action(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      if (request_info.test_request)
+      {
+        return;
+      }
+
+      if (action_names_.find(action_info.name) == action_names_.end())
+      {
+        return;
+      }
+
+      Data data;
+      data.time = action_info.time;
+      data.request_id = request_info.request_id;
+      data.action_name = action_info.name;
+      add_record(std::move(data));
+    }
+
+  private:
+    using Data = AdServer::LogProcessing::ResearchPostImpressionData;
+    using ActionNameSet = Generics::GnuHashSet<Generics::StringHashAdapter>;
+
+    ActionNameSet action_names_;
   };
 
   class PostClickStatLogger:
@@ -2942,6 +3013,7 @@ namespace AdServer::RequestInfoSvcs
     const LogProcessing::LogFlushTraits* research_action_flush,
     const LogProcessing::LogFlushTraits* research_bid_flush,
     const LogProcessing::LogFlushTraits* research_impression_flush,
+    const LogProcessing::LogFlushTraits* research_post_impression_flush,
     const LogProcessing::LogFlushTraits* research_click_flush,
     const LogProcessing::LogFlushTraits* research_post_click_flush,
     const LogProcessing::LogFlushTraits* bid_cost_stat_flush,
@@ -3080,6 +3152,15 @@ namespace AdServer::RequestInfoSvcs
     else
     {
       research_click_logger_ = new NullUnmergedClickProcessor;
+    }
+
+    if (research_post_impression_flush)
+    {
+      ReferenceCounting::SmartPtr<ResearchPostImpressionLogger>
+        research_post_impression_logger = new ResearchPostImpressionLogger(
+          *research_post_impression_flush);
+      request_loggers_.push_back(research_post_impression_logger);
+      add_child_log_holder(research_post_impression_logger);
     }
 
     if (research_post_click_flush)

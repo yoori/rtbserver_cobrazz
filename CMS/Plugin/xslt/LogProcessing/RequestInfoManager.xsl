@@ -374,6 +374,7 @@
             <cfg:ResearchBid period="{$flush-logs-period}"/>
           </xsl:if>
           <cfg:ResearchImpression period="{$flush-logs-period}"/>
+          <cfg:ResearchPostImpression period="{$flush-logs-period}"/>
           <cfg:ResearchClick period="{$flush-logs-period}"/>
           <cfg:ResearchPostClick period="{$flush-logs-period}"/>
           <cfg:BidCostStat period="{$flush-logs-period}"/>
