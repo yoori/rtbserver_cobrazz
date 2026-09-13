@@ -169,6 +169,11 @@ MIGRATIONS_CREATE_TABLE_QUERY = (
 
 MIGRATION_COMPONENT = 'ClickhouseStatUploader'
 
+CHECK_PERIOD = 60
+WORKER_STOP_TIMEOUT = 10
+WORKER_STOP_POLL_PERIOD = 0.1
+STOP_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGUSR1, signal.SIGHUP)
+
 
 MIGRATIONS = (
   Migration(
@@ -333,7 +338,6 @@ class SignalInterruptHandler(object):
       self._original_handlers[sig] = signal.getsignal(sig)
 
     def handler(signum, frame):
-      self.release()
       self._interrupted = True
 
       for handler in self._handlers :
@@ -537,6 +541,7 @@ def check_stat_files(
     config = None,
     logger = None,
     processors = None,
+    check_roots = None,
 ) :
   def file_date(full_file):
     file_name = os.path.basename(full_file)
@@ -548,7 +553,11 @@ def check_stat_files(
   def upload_files(processor, files_to_process, log_date):
     processor.process(files_to_process, log_date)
 
-  for check_root in config.check_roots :
+  roots = config.check_roots if check_roots is None else check_roots
+  for check_root in roots :
+    if interrupter.interrupted():
+      return
+
     logger.debug("Check root '" + check_root + "'")
     if not os.path.isdir(check_root):
       logger.debug("Skip missing root '" + check_root + "'")
@@ -559,6 +568,9 @@ def check_stat_files(
     processing_groups: typing.Dict[str, typing.Dict[str, typing.List]] = {}
 
     for check_file in check_files :
+      if interrupter.interrupted():
+        return
+
       logger.debug("Check file '" + check_file + "'")
       check_file_parts = check_file.replace('_', '.').split('.')
       if len(check_file_parts) > 0 :
@@ -578,6 +590,9 @@ def check_stat_files(
             try :
               upload_files(processor, files_to_process, log_date)
             except Exception as e :
+              if interrupter.interrupted():
+                return
+
               logger.exception("error on upload " + " ".join(files_to_process) + ": " + str(e))
               if config.error_root:
                 for full_file in files_to_process:
@@ -585,17 +600,216 @@ def check_stat_files(
             processing_groups[prefix][log_date] = []
 
     for prefix, date_groups in processing_groups.items():
+      if interrupter.interrupted():
+        return
+
       processor = processors[prefix]
       for log_date, process_files_list in date_groups.items():
+        if interrupter.interrupted():
+          return
+
         if not process_files_list:
           continue
         try :
           upload_files(processor, process_files_list, log_date)
         except Exception as e :
+          if interrupter.interrupted():
+            return
+
           logger.exception("error on upload " + " ".join(process_files_list) + ": " + str(e))
           if config.error_root:
             for full_file in process_files_list:
               shutil.move(full_file, config.error_root)
+
+
+def sleep_until(interrupter, deadline):
+  while not interrupter.interrupted():
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+      return
+    time.sleep(min(remaining, 1))
+
+
+def run_route_worker(check_root, signal_mask, ready_fd, config, logger, processors):
+  os.setsid()
+  with SignalInterruptHandler(STOP_SIGNALS) as interrupter:
+    os.write(ready_fd, b'1')
+    os.close(ready_fd)
+    signal.pthread_sigmask(signal.SIG_SETMASK, signal_mask)
+    while not interrupter.interrupted():
+      scan_started_at = time.monotonic()
+      try:
+        logger.debug("To check stats route: " + check_root)
+        check_stat_files(
+          interrupter,
+          config = config,
+          logger = logger,
+          processors = processors,
+          check_roots = [check_root])
+        logger.debug("From check stats route: " + check_root)
+      except Exception as e:
+        logger.error("Route exception for '" + check_root + "': " + str(e))
+
+      sleep_until(interrupter, scan_started_at + CHECK_PERIOD)
+
+
+def fork_route_worker(check_root, config, logger, processors, workers):
+  ready_read_fd, ready_write_fd = os.pipe()
+  try:
+    signal_mask = signal.pthread_sigmask(signal.SIG_BLOCK, STOP_SIGNALS)
+  except Exception:
+    os.close(ready_read_fd)
+    os.close(ready_write_fd)
+    raise
+
+  try:
+    pid = os.fork()
+  except Exception:
+    os.close(ready_read_fd)
+    os.close(ready_write_fd)
+    signal.pthread_sigmask(signal.SIG_SETMASK, signal_mask)
+    raise
+
+  if pid == 0:
+    os.close(ready_read_fd)
+    exit_code = 0
+    try:
+      run_route_worker(
+        check_root, signal_mask, ready_write_fd, config, logger, processors)
+    except BaseException:
+      logger.exception("Route worker failed for '" + check_root + "'")
+      exit_code = 1
+    finally:
+      try:
+        os.close(ready_write_fd)
+      except OSError:
+        pass
+      os._exit(exit_code)
+
+  os.close(ready_write_fd)
+  try:
+    ready = os.read(ready_read_fd, 1)
+    if ready != b'1':
+      _, status = os.waitpid(pid, 0)
+      raise Exception(
+        "Route worker failed to start for '" + check_root +
+        "' with status " + str(status))
+
+    workers[pid] = check_root
+  finally:
+    os.close(ready_read_fd)
+    signal.pthread_sigmask(signal.SIG_SETMASK, signal_mask)
+
+  return pid
+
+
+def signal_worker_groups(worker_groups, signum, logger):
+  for worker_group in worker_groups:
+    try:
+      os.killpg(worker_group, signum)
+    except ProcessLookupError:
+      pass
+    except OSError as e:
+      logger.error(
+        "Can't send signal " + str(signum) + " to worker group " +
+        str(worker_group) + ": " + str(e))
+
+
+def signal_worker_processes(worker_pids, signum, logger):
+  for worker_pid in worker_pids:
+    try:
+      os.kill(worker_pid, signum)
+    except ProcessLookupError:
+      pass
+    except OSError as e:
+      logger.error(
+        "Can't send signal " + str(signum) + " to worker " +
+        str(worker_pid) + ": " + str(e))
+
+
+def process_group_exists(process_group):
+  try:
+    os.killpg(process_group, 0)
+    return True
+  except ProcessLookupError:
+    return False
+  except PermissionError:
+    return True
+
+
+def shutdown_route_workers(workers, worker_groups, logger, timeout = WORKER_STOP_TIMEOUT):
+  remaining_workers = set(workers)
+  remaining_groups = set(worker_groups)
+  signal_worker_groups(remaining_groups, signal.SIGTERM, logger)
+  deadline = time.monotonic() + timeout
+
+  while (remaining_workers or remaining_groups) and time.monotonic() < deadline:
+    for pid in list(remaining_workers):
+      try:
+        waited_pid, _ = os.waitpid(pid, os.WNOHANG)
+      except ChildProcessError:
+        waited_pid = pid
+      if waited_pid == pid:
+        remaining_workers.remove(pid)
+
+    remaining_groups = {
+      process_group for process_group in remaining_groups
+      if process_group_exists(process_group)
+    }
+    if remaining_workers or remaining_groups:
+      time.sleep(WORKER_STOP_POLL_PERIOD)
+
+  if remaining_groups:
+    logger.warning("Force stop worker groups: " + ", ".join(map(str, remaining_groups)))
+    signal_worker_groups(remaining_groups, signal.SIGKILL, logger)
+
+  if remaining_workers:
+    signal_worker_processes(remaining_workers, signal.SIGKILL, logger)
+
+  for pid in remaining_workers:
+    try:
+      os.waitpid(pid, 0)
+    except ChildProcessError:
+      pass
+
+
+def run_route_workers(config, logger, processors):
+  workers = {}
+  stopping_groups = set()
+
+  def stop_workers(signum, frame):
+    del signum, frame
+    stopping_groups.update(workers)
+    signal_worker_groups(stopping_groups, signal.SIGTERM, logger)
+
+  with SignalInterruptHandler(STOP_SIGNALS, stop_workers) as interrupter:
+    try:
+      for check_root in config.check_roots:
+        if interrupter.interrupted():
+          break
+        fork_route_worker(check_root, config, logger, processors, workers)
+
+      while workers and not interrupter.interrupted():
+        try:
+          pid, status = os.waitpid(-1, 0)
+        except InterruptedError:
+          continue
+
+        check_root = workers.pop(pid, None)
+        if check_root is None:
+          continue
+
+        if interrupter.interrupted():
+          stopping_groups.add(pid)
+          break
+
+        signal_worker_groups([pid], signal.SIGKILL, logger)
+        logger.error(
+          "Route worker exited for '" + check_root + "' with status " + str(status))
+        fork_route_worker(check_root, config, logger, processors, workers)
+    finally:
+      stopping_groups.update(workers)
+      shutdown_route_workers(workers, stopping_groups, logger)
 
 
 def main() :
@@ -647,20 +861,7 @@ def main() :
   migration_executor = ClickhouseQueryExecutor(config.clickhouse_conn, logger = logger)
   ClickhouseMigrationRunner(migration_executor, logger = logger).run()
 
-  with SignalInterruptHandler(
-    [ signal.SIGINT, signal.SIGUSR1, signal.SIGHUP ],
-    handler = None) as interrupter:
-    while not interrupter.interrupted():
-      try:
-        logger.debug("To check stats: " + str(config.check_roots))
-        check_stat_files(interrupter, config = config, logger = logger, processors = processors)
-        logger.debug("From check stats")
-        for i in range(60):
-          if interrupter.interrupted():
-            break
-          time.sleep(1)
-      except Exception as e:
-        logger.error("Global exception: " + str(e))
+  run_route_workers(config, logger, processors)
 
 if __name__ == '__main__':
   main()
