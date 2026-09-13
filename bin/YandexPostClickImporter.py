@@ -22,6 +22,7 @@ LOGS_SYNC_TABLE = 'YandexPostClickLogsSync'
 LOG_REQUESTS_TABLE = 'YandexPostClickLogRequests'
 UPSERT_ESTIMATION_FUNCTION = 'adserver.upsert_yandex_metrika_post_click_estimation'
 UPDATE_IMPORT_STATUS_FUNCTION = 'adserver.update_yandex_metrika_import_status'
+YANDEX_METRIKA_SOURCE = 'Yandex Metrika'
 
 INTERNAL_CLICKHOUSE_DDL = (
   f"""
@@ -264,7 +265,9 @@ class Application(Service):
       self._connect()
       with self.pg.cursor() as cursor:
         cursor.execute(
-          "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A'")
+          "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef "
+          "WHERE status = 'A' AND source = %s",
+          (YANDEX_METRIKA_SOURCE,))
         references = tuple(cursor.fetchall())
       self.pg.commit()
     except Exception as ex:
@@ -275,9 +278,11 @@ class Application(Service):
     for ymref_id, token, counter_id in references:
       self.verify_running()
       try:
+        self._mark_fetch_time(ymref_id, 'last_fetch_try_time')
         api = YandexApi(token, counter_id, self.request_timeout)
         reporting = self._load_reporting(ymref_id, api)
         self._process_logs(ymref_id, api, reporting)
+        self._mark_fetch_time(ymref_id, 'last_success_fetch_time')
       except StopService:
         raise
       except Exception as ex:
@@ -288,6 +293,16 @@ class Application(Service):
         except Exception as reconnect_ex:
           self.print_(0, f'Unable to reconnect import storage: {reconnect_ex}')
           return
+
+  def _mark_fetch_time(self, ymref_id, column):
+    if column not in ('last_fetch_try_time', 'last_success_fetch_time'):
+      raise ValueError(f'unsupported fetch time column: {column}')
+
+    with self.pg.cursor() as cursor:
+      cursor.execute(
+        f'UPDATE YandexMetrikaRef SET {column} = now() WHERE ymref_id = %s',
+        (ymref_id,))
+    self.pg.commit()
 
   def _reset_connections(self):
     if self.pg is not None:

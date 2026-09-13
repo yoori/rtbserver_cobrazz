@@ -281,6 +281,152 @@ class YandexPostClickImporterTest(unittest.TestCase):
     )])
     self.assertEqual(self.application.pg.commits, 1)
 
+  def test_mark_fetch_time_updates_requested_column(self):
+    calls = []
+
+    class Cursor:
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+      def execute(self, query, parameters):
+        calls.append((query, parameters))
+
+    class Pg:
+      def __init__(self):
+        self.commits = 0
+
+      def cursor(self):
+        return Cursor()
+
+      def commit(self):
+        self.commits += 1
+
+    self.application.pg = Pg()
+    self.application._mark_fetch_time(17, 'last_fetch_try_time')
+    self.application._mark_fetch_time(17, 'last_success_fetch_time')
+
+    self.assertEqual(calls, [
+      (
+        'UPDATE YandexMetrikaRef SET last_fetch_try_time = now() WHERE ymref_id = %s',
+        (17,),
+      ),
+      (
+        'UPDATE YandexMetrikaRef SET last_success_fetch_time = now() WHERE ymref_id = %s',
+        (17,),
+      ),
+    ])
+    self.assertEqual(self.application.pg.commits, 2)
+
+  def test_mark_fetch_time_rejects_unknown_column(self):
+    with self.assertRaises(ValueError):
+      self.application._mark_fetch_time(17, 'token')
+
+  def test_on_timer_filters_source_and_marks_try_then_success(self):
+    calls = []
+
+    class Cursor:
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+      def execute(self, query, parameters):
+        calls.append(('select', query, parameters))
+
+      def fetchall(self):
+        return [(17, 'secret', 123)]
+
+    class Pg:
+      def __init__(self):
+        self.commits = 0
+
+      def cursor(self):
+        return Cursor()
+
+      def commit(self):
+        self.commits += 1
+
+    self.application.pg = Pg()
+    self.application.request_timeout = 11
+    self.application._connect = lambda: None
+    self.application.verify_running = lambda: None
+    self.application._mark_fetch_time = (
+      lambda ymref_id, column: calls.append(('mark', ymref_id, column)))
+    self.application._load_reporting = (
+      lambda ymref_id, api: calls.append(('reporting', ymref_id, api.counter_id)) or {})
+    self.application._process_logs = (
+      lambda ymref_id, api, reporting: calls.append(('logs', ymref_id, api.counter_id)))
+
+    self.application.on_timer()
+
+    self.assertEqual(
+      calls[0],
+      (
+        'select',
+        "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef "
+        "WHERE status = 'A' AND source = %s",
+        (IMPORTER.YANDEX_METRIKA_SOURCE,),
+      ))
+    self.assertEqual(calls[1:], [
+      ('mark', 17, 'last_fetch_try_time'),
+      ('reporting', 17, 123),
+      ('logs', 17, 123),
+      ('mark', 17, 'last_success_fetch_time'),
+    ])
+    self.assertEqual(self.application.pg.commits, 1)
+
+  def test_on_timer_does_not_mark_success_after_failed_import(self):
+    calls = []
+
+    class Cursor:
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+      def execute(self, query, parameters):
+        pass
+
+      def fetchall(self):
+        return [(17, 'secret', 123)]
+
+    class Pg:
+      def cursor(self):
+        return Cursor()
+
+      def commit(self):
+        pass
+
+    def fail_reporting(ymref_id, api):
+      calls.append(('reporting', ymref_id))
+      raise RuntimeError('test failure')
+
+    self.application.pg = Pg()
+    self.application.request_timeout = 11
+    self.application._connect = lambda: calls.append(('connect',))
+    self.application._reset_connections = lambda: calls.append(('reset',))
+    self.application.verify_running = lambda: None
+    self.application.print_ = lambda level, message: calls.append(('error', level))
+    self.application._mark_fetch_time = (
+      lambda ymref_id, column: calls.append(('mark', ymref_id, column)))
+    self.application._load_reporting = fail_reporting
+
+    self.application.on_timer()
+
+    self.assertEqual(calls, [
+      ('connect',),
+      ('mark', 17, 'last_fetch_try_time'),
+      ('reporting', 17),
+      ('error', 0),
+      ('reset',),
+      ('connect',),
+    ])
+
   def test_parse_log_part(self):
     records = self.application._parse_log_part(17, log_part(), self.event_date)
 

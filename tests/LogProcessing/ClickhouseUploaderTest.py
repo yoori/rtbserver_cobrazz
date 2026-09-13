@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -237,6 +238,138 @@ class ClickhouseAdapterTest(unittest.TestCase):
       self.assertIn(
         field + " SimpleAggregateFunction(any, Nullable(DateTime('UTC')))",
         query)
+
+
+class InterrupterStub:
+  def __init__(self):
+    self.was_interrupted = False
+
+  def interrupt(self):
+    self.was_interrupted = True
+
+  def interrupted(self):
+    return self.was_interrupted
+
+
+class RouteWorkerTest(unittest.TestCase):
+  def test_interrupted_batch_is_not_moved_to_error(self):
+    interrupter = InterrupterStub()
+
+    class InterruptingProcessor:
+      def process(self, process_files, log_date):
+        del process_files, log_date
+        interrupter.interrupt()
+        raise Exception('interrupted')
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+      check_root = pathlib.Path(temp_dir) / 'input'
+      error_root = pathlib.Path(temp_dir) / 'error'
+      check_root.mkdir()
+      error_root.mkdir()
+      input_file = check_root / 'RImpression_20260913120000-000000-000001.csv'
+      input_file.write_text('header\n')
+      config = CLICKHOUSE_UPLOADER.Config()
+      config.batch = 1
+      config.check_roots = [str(check_root)]
+      config.error_root = str(error_root)
+
+      CLICKHOUSE_UPLOADER.check_stat_files(
+        interrupter,
+        config = config,
+        logger = mock.Mock(),
+        processors = {'RImpression': InterruptingProcessor()})
+
+      self.assertTrue(input_file.exists())
+      self.assertEqual(list(error_root.iterdir()), [])
+
+  def test_graceful_shutdown_signals_and_reaps_worker(self):
+    logger = mock.Mock()
+    with mock.patch.object(CLICKHOUSE_UPLOADER.os, 'killpg') as killpg:
+      with mock.patch.object(
+          CLICKHOUSE_UPLOADER.os, 'waitpid', return_value = (101, 0)) as waitpid:
+        with mock.patch.object(
+            CLICKHOUSE_UPLOADER, 'process_group_exists', return_value = False):
+          with mock.patch.object(CLICKHOUSE_UPLOADER.time, 'monotonic', return_value = 0):
+            CLICKHOUSE_UPLOADER.shutdown_route_workers(
+              {101: '/input'}, {101}, logger, timeout = 1)
+
+    killpg.assert_called_once_with(101, CLICKHOUSE_UPLOADER.signal.SIGTERM)
+    waitpid.assert_called_once_with(101, CLICKHOUSE_UPLOADER.os.WNOHANG)
+
+  def test_forked_route_worker_is_ready_in_own_process_group(self):
+    config = CLICKHOUSE_UPLOADER.Config()
+    workers = {}
+    with tempfile.TemporaryDirectory() as temp_dir:
+      check_root = str(pathlib.Path(temp_dir) / 'missing')
+      worker_pid = CLICKHOUSE_UPLOADER.fork_route_worker(
+        check_root, config, mock.Mock(), {}, workers)
+      try:
+        self.assertEqual(workers, {worker_pid: check_root})
+        self.assertEqual(CLICKHOUSE_UPLOADER.os.getpgid(worker_pid), worker_pid)
+      finally:
+        CLICKHOUSE_UPLOADER.shutdown_route_workers(
+          workers, set(workers), mock.Mock(), timeout = 2)
+
+  def test_shutdown_terminates_complete_worker_process_group(self):
+    ready_read_fd, ready_write_fd = CLICKHOUSE_UPLOADER.os.pipe()
+    worker_pid = CLICKHOUSE_UPLOADER.os.fork()
+    if worker_pid == 0:
+      CLICKHOUSE_UPLOADER.os.close(ready_read_fd)
+      try:
+        CLICKHOUSE_UPLOADER.os.setsid()
+        child_process = subprocess.Popen(['sleep', '60'])
+        CLICKHOUSE_UPLOADER.os.write(ready_write_fd, b'1')
+        CLICKHOUSE_UPLOADER.os.close(ready_write_fd)
+        while True:
+          CLICKHOUSE_UPLOADER.signal.pause()
+      except BaseException:
+        CLICKHOUSE_UPLOADER.os._exit(1)
+
+    CLICKHOUSE_UPLOADER.os.close(ready_write_fd)
+    try:
+      self.assertEqual(CLICKHOUSE_UPLOADER.os.read(ready_read_fd, 1), b'1')
+      CLICKHOUSE_UPLOADER.shutdown_route_workers(
+        {worker_pid: '/input'}, {worker_pid}, mock.Mock(), timeout = 2)
+      self.assertFalse(CLICKHOUSE_UPLOADER.process_group_exists(worker_pid))
+    finally:
+      CLICKHOUSE_UPLOADER.os.close(ready_read_fd)
+      try:
+        CLICKHOUSE_UPLOADER.os.killpg(worker_pid, CLICKHOUSE_UPLOADER.signal.SIGKILL)
+      except ProcessLookupError:
+        pass
+      try:
+        CLICKHOUSE_UPLOADER.os.waitpid(worker_pid, 0)
+      except ChildProcessError:
+        pass
+
+  def test_shutdown_force_kills_and_reaps_stuck_workers(self):
+    logger = mock.Mock()
+    workers = {101: '/first', 102: '/second'}
+    with mock.patch.object(CLICKHOUSE_UPLOADER.os, 'killpg') as killpg:
+      with mock.patch.object(CLICKHOUSE_UPLOADER.os, 'kill') as kill_process:
+        with mock.patch.object(
+            CLICKHOUSE_UPLOADER.os,
+            'waitpid',
+            side_effect = lambda pid, options: (pid, options)) as waitpid:
+          with mock.patch.object(CLICKHOUSE_UPLOADER.time, 'monotonic', return_value = 0):
+            CLICKHOUSE_UPLOADER.shutdown_route_workers(
+              workers, set(workers), logger, timeout = 0)
+
+    expected_signals = {
+      (101, CLICKHOUSE_UPLOADER.signal.SIGTERM),
+      (102, CLICKHOUSE_UPLOADER.signal.SIGTERM),
+      (101, CLICKHOUSE_UPLOADER.signal.SIGKILL),
+      (102, CLICKHOUSE_UPLOADER.signal.SIGKILL),
+    }
+    actual_signals = {call.args for call in killpg.call_args_list}
+    self.assertEqual(actual_signals, expected_signals)
+    self.assertEqual(
+      {call.args for call in kill_process.call_args_list},
+      {
+        (101, CLICKHOUSE_UPLOADER.signal.SIGKILL),
+        (102, CLICKHOUSE_UPLOADER.signal.SIGKILL),
+      })
+    self.assertEqual(waitpid.call_count, 2)
 
 
 if __name__ == '__main__':

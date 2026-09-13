@@ -37,6 +37,8 @@ INSERT INTO YandexMetrikaStats(ymref_id, time, utm_source, utm_content, utm_term
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
+YANDEX_METRIKA_SOURCE = "Yandex Metrika"
+
 
 class ClickItem:
     def __init__(self, api_item):
@@ -106,7 +108,10 @@ class Application(Service):
             if self.ch_client is None:
                 self.ch_client = clickhouse_driver.Client(host=self.params["ch_host"])
 
-            self.cursor.execute("SELECT ymref_id,token,metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
+            self.cursor.execute(
+                "SELECT ymref_id,token,metrika_id FROM YandexMetrikaRef "
+                "WHERE status = 'A' AND source = %s;",
+                (YANDEX_METRIKA_SOURCE,))
             for ymref_id, token, metrica_id in tuple(self.cursor.fetchall()):
                 self.cursor.execute(f"SELECT action_id FROM yandexmetrikaaction WHERE ymref_id='{ymref_id}';")
                 action_to_ccg = {}
@@ -316,4 +321,3 @@ class Application(Service):
 if __name__ == "__main__":
     service = Application()
     service.run()
-
