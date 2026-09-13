@@ -971,7 +971,14 @@ namespace AdServer::ProfilingCommons
   {
     try
     {
-      check_background_error_();
+      if (is_write_operation_(operation.type))
+      {
+        check_background_error_();
+      }
+      else
+      {
+        throw_background_error_();
+      }
     }
     catch (const eh::Exception& ex)
     {
@@ -1253,6 +1260,22 @@ namespace AdServer::ProfilingCommons
     }
 
     return true;
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::throw_background_error_() const
+  {
+    if (!has_background_error_.load(std::memory_order_acquire))
+    {
+      return;
+    }
+
+    Sync::PosixGuard guard(error_lock_);
+    if (has_background_error_.load(std::memory_order_relaxed))
+    {
+      throw ProfileMap<std::string>::Exception(
+        "RocksDBBatchingProfileMapImpl background error: " + background_error_);
+    }
   }
 
   void

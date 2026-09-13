@@ -239,6 +239,8 @@ namespace AdServer::ProfilingCommons
 
     static bool is_write_operation_(OperationType type) noexcept;
 
+    void throw_background_error_() const;
+
     void check_background_error_() const;
 
     void set_background_error_(const std::string& error) noexcept;
