@@ -32,7 +32,7 @@
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.21
-%define __rocksdb_ver_req       11.1.1-ssv4.el8
+%define __rocksdb_ver_req       11.8.1-ssv5.el8
 %define __folly_ver_req         2024.01.08.00-ssv2.el8
 %define __jemalloc_ver_req      5.3.0-ssv1.el8
 %define __boost_package         boost185
@@ -41,7 +41,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv656%{?dist}
+Release: ssv658%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons

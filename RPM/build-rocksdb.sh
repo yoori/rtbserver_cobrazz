@@ -6,8 +6,8 @@
 # create build/RPMS folder - all built packages will be duplicated here
 RES_TMP=build/TMP/
 RES_RPMS=build/RPMS/
-VERSION=${VERSION:-11.1.1}
-RELEASE=${RELEASE:-ssv4}
+VERSION=${VERSION:-11.8.1}
+RELEASE=${RELEASE:-ssv5}
 BOOST_PACKAGE_NAME=${BOOST_PACKAGE_NAME:-boost185}
 BOOST_DEVEL_PACKAGE_NAME=${BOOST_DEVEL_PACKAGE_NAME:-${BOOST_PACKAGE_NAME}-devel}
 BOOST_PREFIX=${BOOST_PREFIX:-/opt/foros/${BOOST_PACKAGE_NAME}}
@@ -51,9 +51,8 @@ Release: %{_release}%{?dist}
 Summary: A Persistent Key-Value Store for Flash and RAM Storage
 Group:   Development/Libraries/C and C++
 License: BSD-2-Clause
-URL:     https://github.com/facebook/rocksdb
-#Source0: rocksdb-%{_version}.tar.gz
-Source0: https://github.com/facebook/rocksdb/archive/v%{_version}.tar.gz
+URL:     https://github.com/yoori/rocksdb
+Source0: https://github.com/yoori/rocksdb/archive/refs/tags/v%{_version}-%{_release}.tar.gz
 BuildRequires: autoconf automake libtool curl make
 BuildRequires: gcc-c++
 BuildRequires: gcc-toolset-10-gcc-c++
@@ -79,29 +78,7 @@ This package contains headers and libraries required to build applications
 using RocksDB.
 
 %prep
-%setup -q -n rocksdb-%{_version}
-find . -type f \
-  \( -name '*.cc' -o -name '*.h' \) \
-  -exec perl -pi -e 's#folly/coro/#folly/experimental/coro/#g' {} +
-perl -0pi -e '
-  s#co_withExecutor\(
-    \s*&range->context\(\)->executor\(\),
-    \s*
-  #folly::coro::co_viaIfAsync(
-    folly::getKeepAliveToken(&range->context()->executor()), #gx
-' \
-  db/version_set.cc
-sed -i '/int ret = io_uring_queue_init(kIoUringDepth, new_io_uring, flags);/a\
-  if (ret == -EINVAL) {\
-    ret = io_uring_queue_init(kIoUringDepth, new_io_uring, 0);\
-  }' env/io_posix.h
-sed -i '2260,2262c\
-  options.include_memtables =\
-      ((include_flags & SizeApproximationFlags::INCLUDE_MEMTABLES) !=\
-       SizeApproximationFlags::NONE);\
-  options.include_files =\
-      ((include_flags & SizeApproximationFlags::INCLUDE_FILES) !=\
-       SizeApproximationFlags::NONE);' include/rocksdb/db.h
+%setup -q -n rocksdb-%{_version}-%{_release}
 
 %build
 env \
