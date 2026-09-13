@@ -17,7 +17,7 @@ from rtbserver_utils.CTRModelTraits import section_value, traits_with_sections
 
 
 class CTRModelRepositoryTest(unittest.TestCase):
-  def create_model(self, root, model_id, score=1.0):
+  def create_model(self, root, model_id, score=1.0, objective=None):
     model_dir = root / model_id
     model_dir.mkdir()
     (model_dir / 'model.cbm').write_bytes(b'model')
@@ -30,7 +30,7 @@ class CTRModelRepositoryTest(unittest.TestCase):
         }],
       }],
     }))
-    (model_dir / 'traits.json').write_text(json.dumps({
+    traits = {
       'train_start': '2026-08-22T12:00:00Z',
       'train_end': '2026-08-22T13:30:00Z',
       'features_importance': [{
@@ -38,7 +38,10 @@ class CTRModelRepositoryTest(unittest.TestCase):
         'feature': 'channel:1',
         'name': 'Account/Channel',
       }],
-    }))
+    }
+    if objective is not None:
+      traits['objective'] = objective
+    (model_dir / 'traits.json').write_text(json.dumps(traits))
     return model_dir
 
   def create_in_progress_model(self, root, model_id, pid=None, models=None):
@@ -174,6 +177,32 @@ class CTRModelRepositoryTest(unittest.TestCase):
         repository.model_file(
           '20260903.142521.SSP-CTR-CHECK',
           'model.cbm'))
+
+  def test_combines_ctr_research_and_vtr_models(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = pathlib.Path(temp_dir)
+      ctr_root = root / 'CTRConfig'
+      research_root = root / 'CTRResearch'
+      vtr_root = root / 'VTRConfig'
+      ctr_root.mkdir()
+      research_root.mkdir()
+      vtr_root.mkdir()
+      self.create_model(ctr_root, '20260903.120000.CTR', objective='ctr')
+      self.create_model(
+        research_root,
+        '20260903.130000.SSP-CTR-CHECK',
+        objective='ctr')
+      self.create_model(vtr_root, '20260903.140000.VTR', objective='vtr')
+
+      repository = CTRModelRepository(ctr_root, research_root, vtr_root)
+
+      self.assertEqual([
+        '20260903.140000.VTR',
+        '20260903.130000.SSP-CTR-CHECK',
+        '20260903.120000.CTR',
+      ], repository.all_model_ids())
+      self.assertEqual(
+        'vtr', repository.model_summary('20260903.140000.VTR')['objective'])
 
   def test_returns_properties_and_paginated_features(self):
     with tempfile.TemporaryDirectory() as temp_dir:

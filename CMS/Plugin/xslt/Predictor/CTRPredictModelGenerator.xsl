@@ -24,7 +24,13 @@
   <xsl:variable name="colo-config"
     select="$cluster-path/configuration/cfg:cluster"/>
   <xsl:variable name="generator-config"
-    select="$predictor-path/configuration/cfg:ctrPredictModelGenerator"/>
+    select="$predictor-path/configuration/cfg:ctrPredictModelGenerator |
+      $predictor-path/configuration/cfg:vtrPredictModelGenerator"/>
+  <xsl:variable name="model-name"><xsl:choose>
+    <xsl:when test="count($generator-config[self::cfg:vtrPredictModelGenerator]) > 0"
+      >VTR</xsl:when>
+    <xsl:otherwise>CTR</xsl:otherwise>
+  </xsl:choose></xsl:variable>
   <xsl:variable name="clickhouse-config"
     select="$xpath/../service[@descriptor = 'AdCluster/BackendSubCluster/ClickhouseUploader']/configuration/cfg:clickhouseUploader"/>
   <xsl:variable name="user-navigation-sampling-value"><xsl:value-of
@@ -35,7 +41,8 @@
     test="count($env-config/@workspace_root) = 0"><xsl:value-of
     select="$def-workspace-root"/></xsl:if></xsl:variable>
 {
-  "pid_file": "<xsl:value-of select="concat($workspace-root, '/run/CTRPredictModelGenerator.pid')"/>",
+  "pid_file": "<xsl:value-of
+    select="concat($workspace-root, '/run/', $model-name, 'PredictModelGenerator.pid')"/>",
   "workspace_root": "<xsl:value-of select="$workspace-root"/>",
   "clickhouse_conn": "<xsl:value-of select="$clickhouse-config/@clickhouse_conn"/>",
   "postgres_conn": "<xsl:value-of select="$central-config/cfg:pgConnection/@connection_string"/>",

@@ -269,6 +269,18 @@
           </xsl:call-template>
         </xsl:if>
         <xsl:if test="count($be-cluster-path/service[
+            @descriptor = $vtr-predict-model-generator-descriptor]) > 0">
+          <xsl:call-template name="AddOneOnHostService">
+            <xsl:with-param name="serv-path"
+              select="$be-cluster-path/service[
+                @descriptor = $vtr-predict-model-generator-descriptor]"/>
+            <xsl:with-param
+              name="service-name" select="'be-Predictor-VTRPredictModelGenerator'"/>
+            <xsl:with-param
+              name="service-type" select="'AdServer::Predictor::VTRPredictModelGenerator'"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="count($be-cluster-path/service[
             @descriptor = $ctr-research-model-generator-descriptor]) > 0">
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"

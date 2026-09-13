@@ -18,13 +18,14 @@ class CTRModelRepository:
     'campaign-correction.cbm',
   )
 
-  def __init__(self, model_root, research_model_root=None):
+  def __init__(self, model_root, research_model_root=None, vtr_model_root=None):
     self.model_root = pathlib.Path(model_root)
     self.model_roots = [self.model_root]
-    if research_model_root is not None:
-      research_model_root = pathlib.Path(research_model_root)
-      if research_model_root != self.model_root:
-        self.model_roots.append(research_model_root)
+    for additional_root in (research_model_root, vtr_model_root):
+      if additional_root is not None:
+        additional_root = pathlib.Path(additional_root)
+        if additional_root not in self.model_roots:
+          self.model_roots.append(additional_root)
 
   def model_ids(self):
     if not self.model_root.is_dir():
@@ -74,6 +75,7 @@ class CTRModelRepository:
       return {
         'id': model_id,
         'status': training_status['status'],
+        'objective': training_status.get('objective', 'ctr'),
         'model_type': training_status.get('model_type', 'production'),
         'research_type': training_status.get('research_type'),
         'parent_model_id': training_status.get('parent_model_id'),
@@ -127,6 +129,7 @@ class CTRModelRepository:
     return {
       'id': model_id,
       'status': 'published',
+      'objective': traits.get('objective', 'ctr'),
       'model_type': traits.get('model_type', 'production'),
       'research_type': traits.get('research_type'),
       'parent_model_id': traits.get('parent_model_id'),

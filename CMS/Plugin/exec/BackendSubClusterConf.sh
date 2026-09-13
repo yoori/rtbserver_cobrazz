@@ -205,6 +205,8 @@ let "EXIT_CODE|=$?"
 
 ## configure predictor services
 CTR_MODEL_GENERATOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRPredictModelGenerator']"
+VTR_MODEL_GENERATOR_XPATH=\
+"$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/VTRPredictModelGenerator']"
 CTR_RESEARCH_MODEL_GENERATOR_XPATH=\
 "$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRResearchModelGenerator']"
 CTR_MODEL_VIEWER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_CLUSTER/CTRPredictModelViewer']"
@@ -212,6 +214,8 @@ BIDCOST_PREDICTOR_MERGER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$BACKEND_C
 
 CTR_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
   "count($CTR_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
+VTR_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
+  "count($VTR_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
 CTR_RESEARCH_MODEL_GENERATOR_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
   "count($CTR_RESEARCH_MODEL_GENERATOR_XPATH)" --plugin-root $PLUGIN_ROOT`
 CLICKHOUSE_UPLOADER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath \
@@ -235,6 +239,18 @@ then
     --app-xml $APP_XML \
     --xsl $XSLT_ROOT/Predictor/CTRPredictModelGenerator.xsl \
     --out-file CTRPredictModelGeneratorConfig.json \
+    --out-dir $OUT_DIR \
+    --plugin-root $PLUGIN_ROOT
+  let "EXIT_CODE|=$?"
+fi
+
+if [ $VTR_MODEL_GENERATOR_COUNT -ne 0 ]
+then
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$VTR_MODEL_GENERATOR_XPATH" \
+    --app-xml $APP_XML \
+    --xsl $XSLT_ROOT/Predictor/CTRPredictModelGenerator.xsl \
+    --out-file VTRPredictModelGeneratorConfig.json \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"

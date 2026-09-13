@@ -207,8 +207,11 @@ def render_model_list(models, selected_model_id, url_path='/'):
     if model.get('status') in ('in_progress', 'interrupted'):
       status = model['status']
       status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
+      objective_label = str(model.get('objective', 'ctr')).upper()
       scope_label = (
-        'Research' if model.get('model_type') == 'research' else
+        objective_label + ' research'
+        if model.get('model_type') == 'research' else
+        objective_label + ' · ' +
         str(model.get('campaign_models_count', 0)) + ' campaign models')
       details = (
         '<span class="model-status ' + status + '">' + status_label + '</span>'
@@ -218,10 +221,12 @@ def render_model_list(models, selected_model_id, url_path='/'):
     else:
       components_count = model.get('components_count', 0)
       model_type = model.get('model_type', 'production')
+      objective_label = str(model.get('objective', 'ctr')).upper()
       details = (
         '<span>' + html_text(
-          'Research' if model_type == 'research' else
-          model.get('algorithm_id') or 'unknown') + '</span>'
+          objective_label + ' · ' + (
+            'Research' if model_type == 'research' else
+            model.get('algorithm_id') or 'unknown')) + '</span>'
         '<span>' + (
           str(components_count) + ' components' if components_count else
           str(model.get('features_importance_count', 0)) + ' features') +

@@ -240,6 +240,7 @@ def latest_production_model_id(config):
 def generate_model(config):
   parent_model_id = latest_production_model_id(config)
   root_traits = {
+    'objective': 'ctr',
     'model_type': 'research',
     'research_type': 'common_ssp_ctr',
   }

@@ -1,4 +1,5 @@
 add_subdirectory(CampaignManagerLoggerPerfTest)
+add_subdirectory(CTRConfigFolderTest)
 add_subdirectory(CTRModelPredictPerfTest)
 add_subdirectory(InstantiateAdArgsTest)
 add_subdirectory(InitCreativeTokensPerfTest)

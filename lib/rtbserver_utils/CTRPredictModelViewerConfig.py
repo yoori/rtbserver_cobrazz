@@ -7,6 +7,7 @@ class Config:
     self.pid_file = None
     self.model_root = None
     self.research_model_root = None
+    self.vtr_model_root = None
     self.web_host = '0.0.0.0'
     self.web_port = None
     self.url_path = '/'
@@ -21,12 +22,11 @@ class Config:
     self.pid_file = required_string('pid_file')
     self.model_root = required_string('model_root')
     self.research_model_root = config_json.get('research_model_root')
-    if (
-        self.research_model_root is not None and
-        (not isinstance(self.research_model_root, str) or
-         not self.research_model_root)):
-      raise ValueError(
-        "Configuration value 'research_model_root' must be non-empty")
+    self.vtr_model_root = config_json.get('vtr_model_root')
+    for name in ('research_model_root', 'vtr_model_root'):
+      value = getattr(self, name)
+      if value is not None and (not isinstance(value, str) or not value):
+        raise ValueError("Configuration value '" + name + "' must be non-empty")
     self.url_path = self.normalize_url_path(config_json.get('url_path', '/'))
 
     web_server = config_json.get('web_server')

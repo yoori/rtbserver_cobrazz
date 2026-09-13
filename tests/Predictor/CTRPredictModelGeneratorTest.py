@@ -71,20 +71,46 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       pathlib.Path('/var/lib/predictor/log/Predictor/VTRConfig'),
       config.vtr_model_root())
 
-  def test_run_once_generates_ctr_then_vtr(self):
-    calls = []
+  def test_run_once_generates_only_selected_target(self):
+    config = MODULE.Config()
+    with unittest.mock.patch.object(
+        TRAINER_MODULE, 'generate_target_model') as generate_target_model:
+      TRAINER_MODULE.run_service(config, True, 'vtr')
+
+    generate_target_model.assert_called_once()
+    self.assertIs(config, generate_target_model.call_args.args[0])
+    self.assertEqual('vtr', generate_target_model.call_args.args[1].name)
+
+  def test_training_targets_use_distinct_suffixes_and_roots(self):
+    config = MODULE.Config()
+    config.workspace_root = '/var/lib/predictor'
+
+    ctr_target = TRAINER_MODULE.training_target('ctr')
+    vtr_target = TRAINER_MODULE.training_target('vtr')
+
+    self.assertEqual('.CTR', ctr_target.model_suffix)
+    self.assertEqual('.VTR', vtr_target.model_suffix)
+    self.assertEqual(config.model_root(), ctr_target.model_root(config))
+    self.assertEqual(config.vtr_model_root(), vtr_target.model_root(config))
+
+  def test_target_suffix_is_used_for_in_progress_model(self):
+    config = MODULE.Config()
+    config.workspace_root = '/var/lib/predictor'
+    progress = unittest.mock.MagicMock()
     with (
         unittest.mock.patch.object(
-          TRAINER_MODULE,
-          'generate_model',
-          side_effect=lambda unused_config: calls.append('ctr')),
+          TRAINER_MODULE, 'InProgressModel') as in_progress_model,
         unittest.mock.patch.object(
-          TRAINER_MODULE,
-          'generate_vtr_model',
-          side_effect=lambda unused_config: calls.append('vtr'))):
-      TRAINER_MODULE.run_service(MODULE.Config(), True)
+          TRAINER_MODULE, 'generate_model_') as generate_model):
+      in_progress_model.return_value.__enter__.return_value = progress
+      TRAINER_MODULE.generate_target_model(
+        config, TRAINER_MODULE.training_target('vtr'))
 
-    self.assertEqual(['ctr', 'vtr'], calls)
+    self.assertEqual(
+      '.VTR', in_progress_model.call_args.kwargs['model_suffix'])
+    self.assertEqual(
+      {'objective': 'vtr'}, in_progress_model.call_args.kwargs['root_traits'])
+    generate_model.assert_called_once()
 
   def test_training_plan_has_granular_steps_and_completion_timestamp(self):
     config = MODULE.Config()
@@ -1453,11 +1479,27 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
     command = MODULE.child_command(
       'CTRPredictModelTrainer.py',
       '/tmp/config.json',
+      'vtr',
       run_once=True)
 
     self.assertTrue(command[1].endswith('/bin/CTRPredictModelTrainer.py'))
     self.assertEqual('--config=/tmp/config.json', command[2])
-    self.assertEqual('--run-once', command[3])
+    self.assertEqual('--objective=vtr', command[3])
+    self.assertEqual('--run-once', command[4])
+
+  def test_vtr_service_uses_own_pid_label(self):
+    config = unittest.mock.MagicMock()
+    config.pid_file = '/var/run/vtr-generator.pid'
+    with (
+        unittest.mock.patch.object(
+          MODULE, 'load_config', return_value=config),
+        unittest.mock.patch.object(MODULE, 'PidFile') as pid_file,
+        unittest.mock.patch.object(MODULE, 'run_once') as run_once):
+      MODULE.run_service('/tmp/config.json', True, 'vtr')
+
+    pid_file.assert_called_once_with(
+      '/var/run/vtr-generator.pid', 'VTRPredictModelGenerator')
+    run_once.assert_called_once_with('/tmp/config.json', 'vtr')
 
   def test_supervisor_starts_production_trainer(self):
     process = unittest.mock.MagicMock()
@@ -1469,13 +1511,14 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           return_value=process) as start_child,
         unittest.mock.patch.object(MODULE, 'stop_children') as stop_children):
       with self.assertRaisesRegex(RuntimeError, 'trainer exited'):
-        MODULE.supervise('/tmp/config.json')
+        MODULE.supervise('/tmp/config.json', 'ctr')
 
     start_child.assert_called_once()
     self.assertEqual('trainer', start_child.call_args.args[0])
     self.assertTrue(
       start_child.call_args.args[1][1].endswith(
         '/bin/CTRPredictModelTrainer.py'))
+    self.assertEqual('--objective=ctr', start_child.call_args.args[1][3])
     stop_children.assert_called_once_with([('trainer', process)])
 
 

@@ -87,6 +87,8 @@
   select="'AdCluster/BackendSubCluster/YandexPostClickImporter'"/>
 <xsl:variable name="ctr-predict-model-generator-descriptor"
   select="'AdCluster/BackendSubCluster/CTRPredictModelGenerator'"/>
+<xsl:variable name="vtr-predict-model-generator-descriptor"
+  select="'AdCluster/BackendSubCluster/VTRPredictModelGenerator'"/>
 <xsl:variable name="ctr-research-model-generator-descriptor"
   select="'AdCluster/BackendSubCluster/CTRResearchModelGenerator'"/>
 <xsl:variable name="ctr-predict-model-viewer-descriptor"

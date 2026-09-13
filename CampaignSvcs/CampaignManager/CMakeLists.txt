@@ -59,6 +59,15 @@ set_target_properties(CTRProviderCore PROPERTIES OUTPUT_NAME CTRProvider)
 
 add_library(CTRProvider ALIAS CTRProviderCore)
 
+add_library(CTRConfigSelector STATIC
+  CTRConfigSelector.cpp
+)
+
+target_link_libraries(CTRConfigSelector
+  PRIVATE
+    Generics
+)
+
 add_library(CTRProviderImplLib SHARED
   CTRProviderImpl.cpp
   CTR/FTRLCTREvaluator.cpp
@@ -78,6 +87,7 @@ target_link_libraries(CTRProviderImplLib
     xgboost::xgboost
     Vanga::DTree
     catboost::model
+    CTRConfigSelector
 )
 
 add_library(CampaignConfig SHARED

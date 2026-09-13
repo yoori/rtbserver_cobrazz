@@ -5,9 +5,7 @@
 #include <Generics/MMap.hpp>
 #include <Generics/Singleton.hpp>
 #include <Generics/Rand.hpp>
-#include <Generics/DirSelector.hpp>
 #include <Generics/BitAlgs.hpp>
-#include <String/RegEx.hpp>
 #include <Commons/DecimalUtils.hpp>
 #include <Commons/FastJsonParser.hpp>
 #include <ProfilingCommons/FileReader.hpp>
@@ -21,6 +19,7 @@
 #include "CTR/XGBoostCTREvaluator.hpp"
 
 #include "CTRProviderImpl.hpp"
+#include "CTRConfigSelector.hpp"
 
 static_assert(
   std::numeric_limits<float>::is_iec559,
@@ -60,8 +59,6 @@ namespace AdServer::CampaignSvcs::CTR
     };
 
     const String::SubString JSON_CONFIG_FILE_NAME("config.json");
-
-    const String::SubString CTR_CONFIG_FOLDER_NAME_REGEXP("\\d{8}\\.\\d{6}");
 
     constexpr std::size_t CTR_CALCULATION_ARENA_INITIAL_SIZE = 4096;
 
@@ -737,41 +734,6 @@ namespace AdServer::CampaignSvcs::CTR
     {
       return left.first < right.first;
     }
-  };
-
-  // CTRConfigSelector
-  struct CTRConfigSelector
-  {
-    CTRConfigSelector()
-      : reg_exp_(CTR_CONFIG_FOLDER_NAME_REGEXP)
-    {}
-
-    bool
-    operator ()(const char* full_path, const struct stat& file_stat) noexcept
-    {
-      if (S_ISDIR(file_stat.st_mode))
-      {
-        String::RegEx::Result sub_strs;
-
-        String::SubString file_name(Generics::DirSelect::file_name(full_path));
-
-        if (reg_exp_.search(sub_strs, file_name) &&
-          (assert(!sub_strs.empty()), sub_strs[0].length() == file_name.size()))
-        {
-          if (result_folder < file_name)
-          {
-            file_name.assign_to(result_folder);
-          }
-        }
-      }
-
-      return false; // check only top dirs
-    }
-
-    std::string result_folder;
-
-  protected:
-    String::RegEx reg_exp_;
   };
 
   // CTRProviderImpl::AlgsRef
@@ -1540,30 +1502,7 @@ namespace AdServer::CampaignSvcs::CTR
     const String::SubString& check_root)
     /*throw(Exception)*/
   {
-    const char FOLDER_NAME_FORMAT[] = "%Y%m%d.%H%M%S";
-    CTRConfigSelector ctr_config_selector;
-
-    std::string check_root_s = check_root.str();
-
-    Generics::DirSelect::directory_selector(
-      check_root_s.c_str(),
-      ctr_config_selector,
-      "*",
-      Generics::DirSelect::DSF_NON_RECURSIVE | Generics::DirSelect::DSF_ALL_FILES);
-
-    if (!ctr_config_selector.result_folder.empty())
-    {
-      config_root = check_root_s + "/" + ctr_config_selector.result_folder;
-      try
-      {
-        return Generics::Time(ctr_config_selector.result_folder, FOLDER_NAME_FORMAT);
-      }
-      catch(const eh::Exception&)
-      {}
-    }
-
-    config_root.clear();
-    return Generics::Time::ZERO;
+    return select_latest_config(config_root, check_root);
   }
 
   void

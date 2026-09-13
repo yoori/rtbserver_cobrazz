@@ -37,6 +37,8 @@
   "model_root": "<xsl:value-of select="concat($workspace-root, '/log/Predictor/CTRConfig')"/>",
   "research_model_root": "<xsl:value-of
     select="concat($workspace-root, '/log/Predictor/CTRResearch')"/>",
+  "vtr_model_root": "<xsl:value-of
+    select="concat($workspace-root, '/log/Predictor/VTRConfig')"/>",
   "web_server": {
     "host": "0.0.0.0",
     "port": <xsl:value-of select="$web-port"/>

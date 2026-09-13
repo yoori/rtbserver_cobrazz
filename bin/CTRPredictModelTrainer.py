@@ -31,6 +31,41 @@ from rtbserver_utils.SignalInterruptHandler import SignalInterruptHandler
 logger = logging.getLogger(__name__)
 
 
+class TrainingTarget:
+  def __init__(self, name, model_suffix, exporter_class, model_root_method, work_dir_name):
+    self.name = name
+    self.model_suffix = model_suffix
+    self.exporter_class = exporter_class
+    self.model_root_method = model_root_method
+    self.work_dir_name = work_dir_name
+
+  def model_root(self, config):
+    return getattr(config, self.model_root_method)()
+
+
+TRAINING_TARGETS = {
+  'ctr': TrainingTarget(
+    'ctr',
+    '.CTR',
+    RImpressionTrainExporter,
+    'model_root',
+    'CTRPredictModelGenerator'),
+  'vtr': TrainingTarget(
+    'vtr',
+    '.VTR',
+    RImpressionVTRTrainExporter,
+    'vtr_model_root',
+    'VTRPredictModelGenerator'),
+}
+
+
+def training_target(name):
+  try:
+    return TRAINING_TARGETS[name]
+  except KeyError:
+    raise ValueError("Unsupported training objective: '" + str(name) + "'") from None
+
+
 def utc_now_text():
   return (
     datetime.datetime.now(datetime.timezone.utc)
@@ -2229,23 +2264,26 @@ def add_training_dataset_properties(history, chunk_statistics):
 
 
 def generate_model(config):
-  with InProgressModel(
-      config.model_root(),
-      prepare_steps=prepare_train_steps(config)) as in_progress_model:
-    return generate_model_(config, in_progress_model)
+  return generate_target_model(config, training_target('ctr'))
 
 
 def generate_vtr_model(config):
+  return generate_target_model(config, training_target('vtr'))
+
+
+def generate_target_model(config, target):
+  model_root = target.model_root(config)
   with InProgressModel(
-      config.vtr_model_root(),
+      model_root,
       prepare_steps=prepare_train_steps(config),
-      root_traits={'objective': 'vtr'}) as in_progress_model:
+      model_suffix=target.model_suffix,
+      root_traits={'objective': target.name}) as in_progress_model:
     return generate_model_(
       config,
       in_progress_model,
-      exporter_class=RImpressionVTRTrainExporter,
-      work_dir_name='VTRPredictModelGenerator',
-      output_dir=config.vtr_model_root())
+      exporter_class=target.exporter_class,
+      work_dir_name=target.work_dir_name,
+      output_dir=model_root)
 
 
 def generate_model_(
@@ -3274,10 +3312,14 @@ def wait_for_period(interrupter, period):
     time.sleep(min(remaining, 0.1))
 
 
-def run_service(config, run_once):
+def run_service(config, run_once, objective='ctr'):
+  target = training_target(objective)
+
+  def generate():
+    generate_target_model(config, target)
+
   if run_once:
-    generate_model(config)
-    generate_vtr_model(config)
+    generate()
     return
 
   with SignalInterruptHandler(
@@ -3285,26 +3327,22 @@ def run_service(config, run_once):
       handler=None) as interrupter:
     while not interrupter.interrupted():
       try:
-        logger.info('Starting CTR model generation')
-        generate_model(config)
-        logger.info('CTR model generation completed')
+        logger.info('Starting %s model generation', target.name.upper())
+        generate()
+        logger.info('%s model generation completed', target.name.upper())
       except Exception:
-        logger.exception('CTR model generation failed')
-      try:
-        logger.info('Starting VTR model generation')
-        generate_vtr_model(config)
-        logger.info('VTR model generation completed')
-      except Exception:
-        logger.exception('VTR model generation failed')
+        logger.exception('%s model generation failed', target.name.upper())
       wait_for_period(interrupter, config.generate_period)
 
 
 def main():
-  parser = argparse.ArgumentParser(description='CTR model trainer.')
+  parser = argparse.ArgumentParser(description='Predict model trainer.')
   parser.add_argument('--config', required=True, help='JSON configuration file.')
+  parser.add_argument(
+    '--objective', choices=tuple(TRAINING_TARGETS), default='ctr')
   parser.add_argument('--run-once', action='store_true')
   args = parser.parse_args()
-  run_service(load_config(args.config), args.run_once)
+  run_service(load_config(args.config), args.run_once, args.objective)
 
 
 if __name__ == '__main__':
@@ -3314,5 +3352,5 @@ if __name__ == '__main__':
   try:
     main()
   except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError):
-    logger.exception('CTR model trainer failed')
+    logger.exception('Predict model trainer failed')
     sys.exit(1)

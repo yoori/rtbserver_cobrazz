@@ -19,11 +19,15 @@ logger = logging.getLogger(__name__)
 CHILD_STOP_TIMEOUT = 10.0
 
 
-def child_command(script_name, config_file, run_once=False):
+OBJECTIVES = ('ctr', 'vtr')
+
+
+def child_command(script_name, config_file, objective='ctr', run_once=False):
   command = [
     sys.executable,
     str(pathlib.Path(__file__).resolve().with_name(script_name)),
     '--config=' + str(config_file),
+    '--objective=' + objective,
   ]
   if run_once:
     command.append('--run-once')
@@ -60,11 +64,11 @@ def stop_children(processes, timeout=CHILD_STOP_TIMEOUT):
       logger.error('Failed to reap child pid=%d', process.pid)
 
 
-def supervise(config_file):
+def supervise(config_file, objective='ctr'):
   commands = [
     (
       'trainer',
-      child_command('CTRPredictModelTrainer.py', config_file),
+      child_command('CTRPredictModelTrainer.py', config_file, objective),
     ),
   ]
   processes = []
@@ -85,10 +89,11 @@ def supervise(config_file):
       stop_children(processes)
 
 
-def run_once(config_file):
+def run_once(config_file, objective='ctr'):
   process = start_child(
     'trainer',
-    child_command('CTRPredictModelTrainer.py', config_file, run_once=True))
+    child_command(
+      'CTRPredictModelTrainer.py', config_file, objective, run_once=True))
   with SignalInterruptHandler(
       [signal.SIGINT, signal.SIGTERM, signal.SIGUSR1, signal.SIGHUP],
       handler=None) as interrupter:
@@ -102,21 +107,23 @@ def run_once(config_file):
     raise RuntimeError('trainer exited with code ' + str(return_code))
 
 
-def run_service(config_file, run_once_mode):
+def run_service(config_file, run_once_mode, objective='ctr'):
   config = load_config(config_file)
-  with PidFile(config.pid_file, 'CTRPredictModelGenerator'):
+  service_name = objective.upper() + 'PredictModelGenerator'
+  with PidFile(config.pid_file, service_name):
     if run_once_mode:
-      run_once(config_file)
+      run_once(config_file, objective)
     else:
-      supervise(config_file)
+      supervise(config_file, objective)
 
 
 def main():
-  parser = argparse.ArgumentParser(description='CTR model generator service.')
+  parser = argparse.ArgumentParser(description='Predict model generator service.')
   parser.add_argument('--config', required=True, help='JSON configuration file.')
+  parser.add_argument('--objective', choices=OBJECTIVES, default='ctr')
   parser.add_argument('--run-once', action='store_true')
   args = parser.parse_args()
-  run_service(args.config, args.run_once)
+  run_service(args.config, args.run_once, args.objective)
 
 
 if __name__ == '__main__':
@@ -126,5 +133,5 @@ if __name__ == '__main__':
   try:
     main()
   except (OSError, RuntimeError, ValueError, subprocess.SubprocessError):
-    logger.exception('CTR model generator service failed')
+    logger.exception('Predict model generator service failed')
     sys.exit(1)

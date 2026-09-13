@@ -204,8 +204,19 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     }], None)
 
     self.assertIn('20260903.142521.SSP-CTR-CHECK', page)
-    self.assertIn('<span>Research</span>', page)
+    self.assertIn('<span>CTR · Research</span>', page)
     self.assertNotIn('<span>ssp_ctr_check</span>', page)
+
+  def test_model_list_marks_vtr_models(self):
+    page = render_model_list([{
+      'id': '20260903.150000.VTR',
+      'status': 'published',
+      'objective': 'vtr',
+      'algorithm_id': 'catboost',
+      'features_importance_count': 14,
+    }], None)
+
+    self.assertIn('<span>VTR · catboost</span>', page)
 
   def test_renders_legacy_traits_format(self):
     properties = self.model_properties([{

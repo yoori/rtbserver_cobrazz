@@ -135,6 +135,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="VTRPredictModelGenerator"
+        configSchema="xsd/Predictor/VTRPredictModelGeneratorApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="CTRResearchModelGenerator"
         configSchema="xsd/Predictor/CTRResearchModelGeneratorApp.xsd"
         minOccurs="0"
