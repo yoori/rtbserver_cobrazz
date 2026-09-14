@@ -469,6 +469,8 @@ namespace AdServer::CampaignSvcs
     const Tag::Size* tag_size,
     const Creative* creative,
     const CampaignKeywordBase* campaign_keyword,
+    const AdServer::Commons::UserId* resolved_user_id,
+    const AdServer::Commons::UserId* cookie_user_id,
     const TokenValueMap& tokens)
     /*throw(CreativeOptionsProblem, eh::Exception)*/
   {
@@ -499,22 +501,7 @@ namespace AdServer::CampaignSvcs
       if (creative)
       {
         args.insert(creative->tokens.begin(), creative->tokens.end());
-
-        std::string resolved_user_id;
-        std::string cookie_user_id;
-        tokens.get_argument(
-          String::SubString(CreativeTokens::UNSIGNEDUID),
-          resolved_user_id);
-        tokens.get_argument(
-          String::SubString(CreativeTokens::UNSIGNEDCOOKIEUID),
-          cookie_user_id);
-        args[CreativeTokens::CLICK_METRIKA_PARAMS] = OptionValue(
-          0,
-          InstantiateAd::format_click_metrika_params(
-            request_id,
-            creative->ccid,
-            resolved_user_id,
-            cookie_user_id));
+        args.erase(CreativeTokens::CLICK_METRIKA_PARAMS);
         args[CreativeTokens::CCID] = OptionValue(0, IntToStr(creative->ccid));
         args[CreativeTokens::ADVERTISER_ID] = OptionValue(
           0,
@@ -557,10 +544,26 @@ namespace AdServer::CampaignSvcs
         token_processor = campaign_config.default_click_token_processor;
       }
 
+      auto metrika_context = std::make_shared<InstantiateAd::InstantiateAdContext>();
+      auto& metrika_data = metrika_context->creative_args_data.emplace();
+      metrika_data.request_id = request_id;
+      metrika_data.creative = creative;
+      if (resolved_user_id)
+      {
+        metrika_data.resolved_user_id = *resolved_user_id;
+      }
+
+      if (cookie_user_id)
+      {
+        metrika_data.cookie_user_id = *cookie_user_id;
+      }
+
+      const auto metrika_args = creative_args_manager_->create_provider(metrika_context, nullptr);
+      const TokenOptionValueProvider token_values(metrika_args.get(), args);
       std::string click_url_str;
 
       token_processor->instantiate(
-        args,
+        token_values,
         campaign_config.token_processors,
         CreativeInstantiateRule(),
         CreativeInstantiateArgs(),
@@ -1543,8 +1546,9 @@ namespace AdServer::CampaignSvcs
             std::make_shared<InstantiateAd::InstantiateAdContext>(*request_context);
           creative_context->creative_args_data.emplace();
           auto& creative_args_data = *creative_context->creative_args_data;
-          creative_args_data.select_params = &select_params;
           creative_args_data.creative = creative;
+          creative_args_data.request_id = select_params.request_id;
+          creative_args_data.resolved_user_id = request_params.track_user_id;
 
           if (select_params.campaign->keyword_based() && select_params.campaign_keyword.in())
           {
@@ -1596,6 +1600,7 @@ namespace AdServer::CampaignSvcs
             const TokenValueMap* const ext_tokens = &request_result_params.ext_tokens;
             const Tag::Size* const tag_size = ad_selection_result.tag_size;
             const AdServer::Commons::RequestId request_id = select_params.request_id;
+            const AdServer::Commons::UserId resolved_user_id = request_params.track_user_id;
 
             creative_args_data.click_url_initializer =
               [this,
@@ -1607,6 +1612,7 @@ namespace AdServer::CampaignSvcs
                 creative,
                 campaign_keyword,
                 request_id,
+                resolved_user_id,
                 ext_tokens](InstantiateAd::InstantiateAdContext::CreativeArgsData& data)
               {
                 assert(data.click_params);
@@ -1623,6 +1629,8 @@ namespace AdServer::CampaignSvcs
                   tag_size,
                   creative,
                   campaign_keyword.in() ? campaign_keyword.in() : nullptr,
+                  &resolved_user_id,
+                  nullptr,
                   *ext_tokens);
               };
           }
@@ -2420,6 +2428,8 @@ namespace AdServer::CampaignSvcs
             ad_selection_result.tag_size,
             creative,
             ckw.in() ? ckw.in() : 0,
+            &request_params.track_user_id,
+            nullptr,
             request_result_params.ext_tokens);
         }
 

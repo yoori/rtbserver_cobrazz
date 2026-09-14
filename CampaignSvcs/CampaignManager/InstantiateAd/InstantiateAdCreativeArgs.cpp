@@ -263,12 +263,12 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
-        if (!data || !data->select_params)
+        if (!data)
         {
           return std::nullopt;
         }
 
-        return data->select_params->request_id.to_string();
+        return data->request_id.to_string();
       });
 
     add_processor(
@@ -276,23 +276,21 @@ namespace AdServer::CampaignSvcs::InstantiateAd
       [](const InstantiateAdCreativeArgsProvider& provider)
         -> std::optional<std::string> {
         const auto& data = provider.context().creative_args_data;
-        if (!data || !data->select_params || !data->creative)
+        if (!data || !data->creative)
         {
           return std::nullopt;
         }
 
-        std::string resolved_user_id;
-        if (provider.context().request_params &&
-          !provider.context().request_params->track_user_id.is_null())
-        {
-          resolved_user_id = provider.context().request_params->track_user_id.to_string();
-        }
+        const std::string resolved_user_id = data->resolved_user_id.is_null() ?
+          std::string() : data->resolved_user_id.to_string();
+        const std::string cookie_user_id = data->cookie_user_id.is_null() ?
+          std::string() : data->cookie_user_id.to_string();
 
         return format_click_metrika_params(
-          data->select_params->request_id,
+          data->request_id,
           data->creative->ccid,
           resolved_user_id,
-          std::string_view());
+          cookie_user_id);
       });
 
     add_processor(

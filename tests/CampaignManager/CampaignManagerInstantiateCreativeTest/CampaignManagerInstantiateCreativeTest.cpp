@@ -735,12 +735,6 @@ namespace
     const AdServer::Commons::UserId cookie_user_id =
       AdServer::Commons::UserId::create_random_based();
     TokenValueMap click_tokens;
-    click_tokens.set_value(
-      CreativeTokens::UNSIGNEDUID,
-      fixture.request_info.track_user_id.to_string());
-    click_tokens.set_value(
-      CreativeTokens::UNSIGNEDCOOKIEUID,
-      cookie_user_id.to_string());
     std::string click_url;
     creative_instantiator.instantiate_click_url(
       *fixture.campaign_config,
@@ -752,6 +746,8 @@ namespace
       fixture.tag_size,
       fixture.creative,
       nullptr,
+      &fixture.request_info.track_user_id,
+      &cookie_user_id,
       click_tokens);
     const std::string expected_click_time_url =
       std::string("https://advertiser.example/landing?utm_term=r:") +

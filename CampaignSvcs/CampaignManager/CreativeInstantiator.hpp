@@ -131,6 +131,8 @@ namespace AdServer::CampaignSvcs
       const Tag::Size* tag_size,
       const Creative* creative,
       const CampaignKeywordBase* campaign_keyword,
+      const AdServer::Commons::UserId* resolved_user_id,
+      const AdServer::Commons::UserId* cookie_user_id,
       const TokenValueMap& tokens)
       /*throw(CreativeOptionsProblem, eh::Exception)*/;
 

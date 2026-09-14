@@ -2942,6 +2942,8 @@ namespace AdServer::CampaignSvcs
               tag_size,
               creative,
               ckw,
+              &click_info.match_user_id,
+              &click_info.cookie_user_id,
               click_info.tokens);
           }
           catch(const eh::Exception& ex)

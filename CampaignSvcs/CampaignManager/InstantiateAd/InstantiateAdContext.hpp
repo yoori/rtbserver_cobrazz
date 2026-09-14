@@ -31,8 +31,10 @@ namespace AdServer::CampaignSvcs
         void
         init_click_urls();
 
-        const CampaignSelectionData* select_params = nullptr;
         const Creative* creative = nullptr;
+        AdServer::Commons::RequestId request_id;
+        AdServer::Commons::UserId resolved_user_id;
+        AdServer::Commons::UserId cookie_user_id;
         std::string keyword;
         std::optional<CampaignManagerCore::ClickParams> click_params;
         std::string click_url_prefix;
