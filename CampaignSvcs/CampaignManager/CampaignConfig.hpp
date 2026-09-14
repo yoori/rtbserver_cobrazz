@@ -865,6 +865,11 @@ namespace AdServer::CampaignSvcs::AdInstances
       return ccg_rate_type == CR_CPC;
     }
 
+    bool use_ctr_goal() const noexcept
+    {
+      return int_min_ctr_goal() > 0;
+    }
+
     bool is_active() const noexcept
     {
       return (status == 'A' || status == 'V') &&

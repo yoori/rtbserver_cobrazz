@@ -4,6 +4,18 @@
 
 namespace AdServer::LogProcessing
 {
+  namespace Detail
+  {
+    inline std::size_t
+    log_holder_thread_index() noexcept
+    {
+      static std::atomic<std::size_t> next_thread_index{0};
+      static thread_local const std::size_t thread_index =
+        next_thread_index.fetch_add(1, std::memory_order_relaxed);
+      return thread_index;
+    }
+  }
+
   inline
   LogHolder::~LogHolder() noexcept = default;
 
@@ -515,7 +527,7 @@ namespace AdServer::LogProcessing
     shards_.reserve(actual_shards_count);
     for (unsigned long i = 0; i < actual_shards_count; ++i)
     {
-      shards_.emplace_back(std::make_shared<Shard>());
+      shards_.emplace_back(std::make_unique<Shard>());
     }
   }
 
@@ -524,9 +536,9 @@ namespace AdServer::LogProcessing
   void
   LogHolderSharded<LogTraitsType, SavePolicy>::add_record(Args&&... args)
   {
-    Shard_var shard = get_shard_();
-    std::lock_guard<std::mutex> guard(shard->lock);
-    shard->collector.add(std::forward<Args>(args)...);
+    Shard& shard = get_shard_();
+    std::lock_guard<std::mutex> guard(shard.lock);
+    shard.collector.add(std::forward<Args>(args)...);
   }
 
   template<typename LogTraitsType, typename SavePolicy>
@@ -534,18 +546,17 @@ namespace AdServer::LogProcessing
   void
   LogHolderSharded<LogTraitsType, SavePolicy>::add_records(Function&& function)
   {
-    Shard_var shard = get_shard_();
-    std::lock_guard<std::mutex> guard(shard->lock);
-    std::forward<Function>(function)(shard->collector);
+    Shard& shard = get_shard_();
+    std::lock_guard<std::mutex> guard(shard.lock);
+    std::forward<Function>(function)(shard.collector);
   }
 
   template<typename LogTraitsType, typename SavePolicy>
-  typename LogHolderSharded<LogTraitsType, SavePolicy>::Shard_var
+  typename LogHolderSharded<LogTraitsType, SavePolicy>::Shard&
   LogHolderSharded<LogTraitsType, SavePolicy>::get_shard_() const noexcept
   {
-    const std::size_t shard_index =
-      next_shard_.fetch_add(1, std::memory_order_relaxed) % shards_.size();
-    return shards_[shard_index];
+    const std::size_t shard_index = Detail::log_holder_thread_index() % shards_.size();
+    return *shards_[shard_index];
   }
 
   template<typename LogTraitsType, typename SavePolicy>

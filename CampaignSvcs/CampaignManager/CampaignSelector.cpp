@@ -593,7 +593,7 @@ namespace AdServer::CampaignSvcs
         {
           if (ctr_calculation && (
               (*cmp_it)->campaign->use_ctr() ||
-              (*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL))
+              (*cmp_it)->campaign->use_ctr_goal()))
           {
             unknown_ctr_campaign_candidates.emplace_back(
               WeightedCampaignPtr(new WeightedCampaign(
@@ -613,7 +613,7 @@ namespace AdServer::CampaignSvcs
           {
             RevenueDecimal current_ecpm = default_campaign_ecpm_(tag, (*cmp_it)->campaign);
 
-            if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+            if ((*cmp_it)->campaign->use_ctr_goal() &&
               (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
             {
               continue;
@@ -725,7 +725,7 @@ namespace AdServer::CampaignSvcs
                   wit->weighted_campaign->campaign->click_sys_revenue,
                   RevenueDecimal::mul(ctr, ECPM_FACTOR, Generics::DMR_FLOOR),
                   Generics::DMR_FLOOR) :
-                // CPM campaign with BS_MIN_CTR_GOAL
+                // CPM campaign with CTR goal
                 default_campaign_ecpm_(tag, wit->weighted_campaign->campaign);
 
               // select creative with max ecpm for all auction types
@@ -734,7 +734,7 @@ namespace AdServer::CampaignSvcs
                    wit->weighted_campaign->tag_pricing,
                    request_params.min_ecpm,
                    ecpm)) &&
-                 (wit->weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
+                 (!wit->weighted_campaign->campaign->use_ctr_goal() ||
                   ctr >= wit->weighted_campaign->campaign->min_ctr_goal()))
               {
                 if (ecpm > wit->weighted_campaign->ecpm)
@@ -894,7 +894,7 @@ namespace AdServer::CampaignSvcs
           continue;
         }
 
-        if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+        if ((*cmp_it)->campaign->use_ctr_goal() &&
            (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
         {
           continue;
@@ -991,7 +991,7 @@ namespace AdServer::CampaignSvcs
           break;
         }
 
-        if ((*cmp_it)->campaign->bid_strategy == BS_MIN_CTR_GOAL &&
+        if ((*cmp_it)->campaign->use_ctr_goal() &&
            (*cmp_it)->campaign->ctr < (*cmp_it)->campaign->min_ctr_goal())
         {
           continue;
@@ -2420,10 +2420,10 @@ namespace AdServer::CampaignSvcs
     for (WeightedCampaignKeywordList::const_iterator cmp_it = text_campaigns.begin();
         cmp_it != text_campaigns.end(); ++cmp_it)
     {
-      // filter campaign with BS_MIN_CTR_GOAL if algo isn't default
-      if (cmp_it->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
+      // filter campaign with CTR goal if algo isn't default
+      if (!cmp_it->campaign->use_ctr_goal() ||
          ctr_calculation_context ||
-         cmp_it->campaign->ctr > cmp_it->campaign->min_ctr_goal())
+         cmp_it->campaign->ctr >= cmp_it->campaign->min_ctr_goal())
       {
         if (cmp_it->creative == 0)
         {
@@ -2469,7 +2469,7 @@ namespace AdServer::CampaignSvcs
 
             if ((ctr_calculation_context && (
                  cmp_it->campaign->use_ctr() ||
-                 cmp_it->campaign->bid_strategy == BS_MIN_CTR_GOAL)) ||
+                 cmp_it->campaign->use_ctr_goal())) ||
                conv_rate_calculation_context)
             {
               CampaignIndex::ConstCreativePtrList max_ecpm_available_creatives;
@@ -2494,7 +2494,7 @@ namespace AdServer::CampaignSvcs
                     RevenueDecimal ctr = ctr_calculation_context->get_ctr(*cr_it);
 
                     if (ctr >= max_ctr && (
-                         cmp_it->campaign->bid_strategy != BS_MIN_CTR_GOAL ||
+                         !cmp_it->campaign->use_ctr_goal() ||
                          ctr >= cmp_it->campaign->min_ctr_goal()))
                     {
                       // for candidates with equal ctr select candidate with highest conv_rate
@@ -3581,7 +3581,7 @@ namespace AdServer::CampaignSvcs
       {
         if (request_params.need_debug_info ||
           (!weighted_campaign->campaign->use_ctr() &&
-            weighted_campaign->campaign->bid_strategy != BS_MIN_CTR_GOAL))
+            !weighted_campaign->campaign->use_ctr_goal()))
         {
           weighted_campaign->ctr = ctr_calculation_context->get_ctr(weighted_campaign->creative);
         }
@@ -3592,7 +3592,7 @@ namespace AdServer::CampaignSvcs
           it != result_weighted_campaign_keywords->end(); ++it)
         {
           if (request_params.need_debug_info ||
-            (!it->campaign->use_ctr() && it->campaign->bid_strategy != BS_MIN_CTR_GOAL))
+            (!it->campaign->use_ctr() && !it->campaign->use_ctr_goal()))
           {
             it->ctr = ctr_calculation_context->get_ctr(it->creative);
           }

@@ -3014,16 +3014,16 @@ namespace AdServer::CampaignSvcs
 
               campaign->max_pub_share = rs->get_decimal<RevenueDecimal>(QC_MAX_PUB_SHARE);
 
+              campaign->min_ctr_goal = rs->get_decimal<RevenueDecimal>(QC_MIN_CTR_GOAL);
+
               char bid_strategy_sym = rs->get_char(QC_BID_STRATEGY);
               if (bid_strategy_sym == 'R')
               {
                 campaign->bid_strategy = BS_MAX_REACH;
-                campaign->min_ctr_goal = RevenueDecimal::ZERO;
               }
               else if (bid_strategy_sym == 'C')
               {
                 campaign->bid_strategy = BS_MIN_CTR_GOAL;
-                campaign->min_ctr_goal = rs->get_decimal<RevenueDecimal>(QC_MIN_CTR_GOAL);
               }
               else
               {

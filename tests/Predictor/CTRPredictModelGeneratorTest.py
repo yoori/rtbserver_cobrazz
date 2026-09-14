@@ -880,7 +880,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
 
       self.assertFalse(in_progress.path.exists())
 
-  def test_interrupted_model_is_preserved_with_current_phase(self):
+  def test_failed_model_is_preserved_with_current_phase(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       model_root = pathlib.Path(temp_dir)
       train_start = TRAINER_MODULE.datetime.datetime(
@@ -919,10 +919,11 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       self.assertTrue(in_progress.path.is_dir())
       traits = TRAINER_MODULE.json.loads(
         (in_progress.path / 'traits.json').read_text())
-      self.assertEqual('interrupted', traits['status'])
+      self.assertEqual('failed', traits['status'])
       self.assertEqual('2026-08-24T16:05:00Z', traits['train_end'])
-      self.assertEqual('RuntimeError', traits['interruption_reason'])
-      self.assertEqual('interrupted', traits['models'][0]['status'])
+      self.assertEqual('RuntimeError', traits['failure_reason'])
+      self.assertNotIn('interruption_reason', traits)
+      self.assertEqual('failed', traits['models'][0]['status'])
       self.assertEqual(
         decimal.Decimal('0.00008901938322533171'),
         section_value(
@@ -936,6 +937,36 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       step = section_value(model_traits, 'processing_steps')[0]
       self.assertEqual('2026-08-24T16:00:00Z', step['started'])
       self.assertIsNone(step['ended'])
+
+  def test_interrupted_model_is_preserved_for_process_interrupt(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      model_root = pathlib.Path(temp_dir)
+      with unittest.mock.patch.object(
+          TRAINER_MODULE,
+          'utc_now_text',
+          side_effect=[
+            '2026-08-24T16:00:00Z',
+            '2026-08-24T16:05:00Z',
+          ]):
+        with self.assertRaises(KeyboardInterrupt):
+          with TRAINER_MODULE.InProgressModel(model_root) as in_progress:
+            in_progress.publish_model_plan([{
+              'name': 'common',
+              'kind': 'common',
+              'status': 'planned',
+              'train_steps': [
+                TRAINER_MODULE.train_step('fit_001', 'Fit 1/1'),
+              ],
+            }])
+            with in_progress.train_step('common', 'fit_001'):
+              raise KeyboardInterrupt()
+
+      traits = TRAINER_MODULE.json.loads(
+        (in_progress.path / 'traits.json').read_text())
+      self.assertEqual('interrupted', traits['status'])
+      self.assertEqual('KeyboardInterrupt', traits['interruption_reason'])
+      self.assertNotIn('failure_reason', traits)
+      self.assertEqual('interrupted', traits['models'][0]['status'])
 
   def test_completed_training_step_records_started_and_ended(self):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -1145,7 +1176,7 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
           0.03,
           result['evaluations'][3]['unit_weight_logloss'])
 
-  def test_interrupted_post_processing_target_is_persisted(self):
+  def test_failed_post_processing_target_is_persisted(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       model_root = pathlib.Path(temp_dir)
       with self.assertRaisesRegex(RuntimeError, 'post processing failed'):
@@ -1175,10 +1206,10 @@ class CTRPredictModelGeneratorTest(unittest.TestCase):
       targets = section_value(index, 'post_processing_results')
       target = TRAINER_MODULE.json.loads(
         (progress.path / targets[0]['artifact']).read_text())
-      self.assertEqual('interrupted', manifest['status'])
-      self.assertEqual('interrupted', index['status'])
-      self.assertEqual('interrupted', targets[0]['status'])
-      self.assertEqual('interrupted', target['status'])
+      self.assertEqual('failed', manifest['status'])
+      self.assertEqual('failed', index['status'])
+      self.assertEqual('failed', targets[0]['status'])
+      self.assertEqual('failed', target['status'])
 
   def test_prepare_validation_sets_streams_csv_and_collects_dataset_sizes(self):
     with tempfile.TemporaryDirectory() as temp_dir:

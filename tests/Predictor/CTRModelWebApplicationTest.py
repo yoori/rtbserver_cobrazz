@@ -640,6 +640,50 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('2026-08-24 16:05:00', page)
     self.assertNotIn('>Config<', page)
 
+  def test_renders_failed_training_and_model_phase(self):
+    properties = {
+      'summary': {
+        'id': '~20260824.155515.VTR',
+        'status': 'failed',
+        'train_start': '2026-08-24T15:55:15Z',
+        'train_end': '2026-08-24T16:05:00Z',
+        'models_count': 1,
+        'campaign_models_count': 0,
+        'completed_models_count': 0,
+        'interrupted_models_count': 0,
+        'failed_models_count': 1,
+      },
+      'config': {},
+      'traits': {
+        'status': 'failed',
+        'failure_reason': 'RuntimeError',
+        'models': [{
+          'name': 'common',
+          'kind': 'common',
+          'status': 'failed',
+          'train_start': '2026-08-24T16:00:00Z',
+          'train_end': '2026-08-24T16:05:00Z',
+          'train_steps': [{
+            'id': 'training_fit_001',
+            'title': 'Training: fit 1/30',
+            'started': '2026-08-24T16:03:00Z',
+            'ended': None,
+          }],
+        }],
+      },
+    }
+
+    page = render_index_page([properties['summary']], properties)
+
+    self.assertIn('Training failed', page)
+    self.assertNotIn('Training interrupted', page)
+    self.assertNotIn('data-refresh-message>Live updates every 5 s', page)
+    self.assertIn('<dt>Failed models</dt><dd>1</dd>', page)
+    self.assertIn('<dt>Failure reason</dt><dd>RuntimeError</dd>', page)
+    self.assertIn('component-status-failed', page)
+    self.assertIn('train-step-failed', page)
+    self.assertIn('<option value="failed">Failed</option>', page)
+
   def test_formats_completed_step_duration(self):
     self.assertEqual(
       '7s',

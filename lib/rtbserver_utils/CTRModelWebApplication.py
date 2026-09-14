@@ -204,9 +204,13 @@ def render_model_list(models, selected_model_id, url_path='/'):
     url = application_url(
       url_path,
       '?model=' + urllib.parse.quote(model_id, safe=''))
-    if model.get('status') in ('in_progress', 'interrupted'):
+    if model.get('status') in ('in_progress', 'interrupted', 'failed'):
       status = model['status']
-      status_label = 'In progress' if status == 'in_progress' else 'Interrupted'
+      status_label = {
+        'in_progress': 'In progress',
+        'interrupted': 'Interrupted',
+        'failed': 'Failed',
+      }[status]
       objective_label = str(model.get('objective', 'ctr')).upper()
       scope_label = (
         objective_label + ' research'
@@ -576,7 +580,7 @@ def render_train_steps(traits):
     if ended:
       step_status = 'completed'
     elif started:
-      step_status = 'interrupted' if status == 'interrupted' else 'active'
+      step_status = status if status in ('interrupted', 'failed') else 'active'
     else:
       step_status = 'pending'
     title = str(step.get('title') or step.get('id') or '-')
@@ -685,7 +689,7 @@ def render_traits_sections(
   status = traits.get('status')
   preferred_open = (
     'processing_steps'
-    if status in ('planned', 'training', 'interrupted') else
+    if status in ('planned', 'training', 'interrupted', 'failed') else
     'post_processing_results'
     if post_processing else
     'properties')
@@ -916,7 +920,7 @@ def render_model_collection(
     return ''
 
   selected_name = None
-  for status in ('training', 'interrupted'):
+  for status in ('training', 'failed', 'interrupted'):
     selected_name = next((
       name
       for name, traits in all_items
@@ -999,6 +1003,7 @@ def render_model_collection(
     '<option value="planned">Planned</option>'
     '<option value="training">Training</option>'
     '<option value="completed">Completed</option>'
+    '<option value="failed">Failed</option>'
     '<option value="interrupted">Interrupted</option>'
     '<option value="runtime">Runtime</option></select>'
     '<output id="component-count">' + str(len(all_items)) + ' of ' +
@@ -1022,8 +1027,13 @@ def render_model_collection(
 def render_model_details(properties, url_path='/'):
   summary = properties['summary']
   traits = properties.get('traits', {})
-  if summary.get('status') in ('in_progress', 'interrupted'):
-    interrupted = summary['status'] == 'interrupted'
+  if summary.get('status') in ('in_progress', 'interrupted', 'failed'):
+    status = summary['status']
+    status_label = {
+      'in_progress': 'Training in progress',
+      'interrupted': 'Training interrupted',
+      'failed': 'Training failed',
+    }[status]
     trait_models = traits.get('models')
     components = {
       item['name']: item
@@ -1035,20 +1045,28 @@ def render_model_details(properties, url_path='/'):
       train_end = (
         '<div><dt>Train end</dt><dd>' +
         html_text(timestamp_text(summary['train_end'])) + '</dd></div>')
-    live_status = '' if interrupted else (
+    reason_field = 'failure_reason' if status == 'failed' else 'interruption_reason'
+    reason_label = 'Failure reason' if status == 'failed' else 'Interruption reason'
+    reason = ''
+    if status != 'in_progress' and traits.get(reason_field):
+      reason = (
+        '<div><dt>' + reason_label + '</dt><dd>' +
+        html_text(traits[reason_field]) + '</dd></div>')
+    live_status = '' if status != 'in_progress' else (
       '<div class="training-live" role="status" aria-live="polite">'
       '<span class="training-live-marker" aria-hidden="true"></span>'
       '<span data-refresh-message>Live updates every 5 s</span></div>')
     details = (
       '<header class="model-header">'
       '<div><span class="eyebrow">' +
-      ('Training interrupted' if interrupted else 'Training in progress') +
+      status_label +
       '</span><h1>' + html_text(summary['id']) + '</h1></div>' +
       live_status + '</header>'
       '<dl class="model-meta training-meta">'
       '<div><dt>Train start</dt><dd>' +
       html_text(timestamp_text(summary.get('train_start'))) + '</dd></div>' +
       train_end +
+      reason +
       '<div><dt>Planned models</dt><dd>' +
       str(summary.get('models_count', 0)) + '</dd></div>'
       '<div><dt>Campaign models</dt><dd>' +
@@ -1056,7 +1074,9 @@ def render_model_details(properties, url_path='/'):
       '<div><dt>Completed models</dt><dd>' +
       str(summary.get('completed_models_count', 0)) + '</dd></div>'
       '<div><dt>Interrupted models</dt><dd>' +
-      str(summary.get('interrupted_models_count', 0)) + '</dd></div></dl>')
+      str(summary.get('interrupted_models_count', 0)) + '</dd></div>'
+      '<div><dt>Failed models</dt><dd>' +
+      str(summary.get('failed_models_count', 0)) + '</dd></div></dl>')
     prepare = traits.get('prepare')
     post_processing = traits.get('post_processing')
     if (
@@ -1216,7 +1236,8 @@ def render_index_page(models, selected_properties=None, url_path='/'):
     .model-link strong { font-size: 14px; }
     .model-link span { color: var(--muted); font-size: 12px; }
     .model-link .in-progress { color: var(--score); font-weight: 700; }
-    .model-link .interrupted { color: #b42318; font-weight: 700; }
+    .model-link .interrupted { color: #925500; font-weight: 700; }
+    .model-link .failed { color: #b42318; font-weight: 700; }
     .training-live { display: inline-flex; align-items: center; gap: 8px;
       color: var(--muted); font-size: 12px; white-space: nowrap; }
     .training-live-marker { width: 8px; height: 8px; border-radius: 50%;
@@ -1285,7 +1306,8 @@ def render_index_page(models, selected_properties=None, url_path='/'):
       font-size: 12px; font-weight: 700; }
     .component-status-training { color: #925500; background: #fff1d6; }
     .component-status-completed { color: var(--accent); background: var(--selected); }
-    .component-status-interrupted { color: #b42318; background: #fee4e2; }
+    .component-status-interrupted { color: #925500; background: #fff1d6; }
+    .component-status-failed { color: #b42318; background: #fee4e2; }
     .component-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       margin: 0; border-bottom: 1px solid var(--line); }
     .component-meta div { padding: 16px 16px 16px 0; }
@@ -1334,8 +1356,11 @@ def render_index_page(models, selected_properties=None, url_path='/'):
     .train-step-active { color: var(--ink); font-weight: 700; }
     .train-step-active .train-step-marker { border-color: var(--score);
       background: var(--score); box-shadow: 0 0 0 3px #fff1d6; }
-    .train-step-interrupted { color: #b42318; font-weight: 700; }
-    .train-step-interrupted .train-step-marker { border-color: #b42318;
+    .train-step-interrupted { color: #925500; font-weight: 700; }
+    .train-step-interrupted .train-step-marker { border-color: #925500;
+      background: #925500; box-shadow: 0 0 0 3px #fff1d6; }
+    .train-step-failed { color: #b42318; font-weight: 700; }
+    .train-step-failed .train-step-marker { border-color: #b42318;
       background: #b42318; box-shadow: 0 0 0 3px #fee4e2; }
     .feature-groups { color: var(--ink); font-family: ui-monospace, monospace; }
     .section-title p { margin: 5px 0 0; }

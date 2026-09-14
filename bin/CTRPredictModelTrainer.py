@@ -839,46 +839,51 @@ class InProgressModel:
     if not self.path.is_dir():
       return
 
+    failed = issubclass(exception_type, Exception)
+    terminal_status = 'failed' if failed else 'interrupted'
     train_end = utc_now_text()
-    self.traits['status'] = 'interrupted'
+    self.traits['status'] = terminal_status
     self.traits['train_end'] = train_end
-    self.traits['interruption_reason'] = exception_type.__name__
+    reason_field = 'failure_reason' if failed else 'interruption_reason'
+    self.traits[reason_field] = exception_type.__name__
     if self.prepare.get('status') == 'training':
-      self.prepare['status'] = 'interrupted'
+      self.prepare['status'] = terminal_status
       self.prepare['train_end'] = train_end
       self.dirty_artifacts.add('prepare')
     for model in self.models:
       if model.get('status') == 'training':
-        model['status'] = 'interrupted'
+        model['status'] = terminal_status
         model['train_end'] = train_end
         self.dirty_artifacts.add(model['name'])
     if (
         self.post_processing is not None and
         self.post_processing.get('status') == 'training'):
-      self.post_processing['status'] = 'interrupted'
+      self.post_processing['status'] = terminal_status
       self.post_processing['train_end'] = train_end
       for target in self.post_processing.get('targets', []):
         if target.get('status') != 'training':
           continue
-        target['status'] = 'interrupted'
+        target['status'] = terminal_status
         target['ended'] = train_end
         artifact_path = self.path / target['artifact']
         try:
           with artifact_path.open() as input_file:
             artifact = json.load(input_file)
-          artifact['status'] = 'interrupted'
+          artifact['status'] = terminal_status
           artifact['ended'] = train_end
           self.write_json_atomic_(artifact_path, artifact)
         except (OSError, TypeError, ValueError):
           logger.exception(
-            'Failed to persist interrupted post-processing target %s',
+            'Failed to persist %s post-processing target %s',
+            terminal_status,
             target.get('name'))
       self.dirty_artifacts.add('post_processing')
     try:
       self.write_traits_()
     except Exception:
       logger.exception(
-        'Failed to persist interrupted model status in %s',
+        'Failed to persist %s model status in %s',
+        terminal_status,
         self.path)
 
 

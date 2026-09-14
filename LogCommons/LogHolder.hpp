@@ -282,8 +282,7 @@ namespace AdServer::LogProcessing
       CollectorT collector;
     };
 
-    typedef std::shared_ptr<Shard> Shard_var;
-    typedef std::vector<Shard_var> ShardArray;
+    using ShardArray = std::vector<std::unique_ptr<Shard>>;
 
     LogHolderSharded(
       const LogFlushTraits& flush_traits,
@@ -303,7 +302,7 @@ namespace AdServer::LogProcessing
     flush_if_required(const Generics::Time& now) /*throw(eh::Exception)*/;
 
   protected:
-    Shard_var
+    Shard&
     get_shard_() const noexcept;
 
     virtual
@@ -315,7 +314,6 @@ namespace AdServer::LogProcessing
     mutable std::mutex lock_;
     Generics::Time flush_time_;
     ShardArray shards_;
-    mutable std::atomic<std::size_t> next_shard_{0};
   };
 }
 

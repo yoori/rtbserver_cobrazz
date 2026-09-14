@@ -137,6 +137,34 @@ class CTRModelRepositoryTest(unittest.TestCase):
         '~20260824.155515',
       ], repository.all_model_ids())
 
+  def test_preserves_explicit_failed_training(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      root = pathlib.Path(temp_dir)
+      model_dir = self.create_in_progress_model(
+        root,
+        '~20260824.155515',
+        pid=99999999,
+        models=[{
+          'name': 'common',
+          'kind': 'common',
+          'status': 'failed',
+        }])
+      traits_path = model_dir / 'traits.json'
+      traits = json.loads(traits_path.read_text())
+      traits.update(
+        status='failed',
+        train_end='2026-08-24T16:05:00Z',
+        failure_reason='RuntimeError')
+      traits_path.write_text(json.dumps(traits))
+
+      repository = CTRModelRepository(root)
+
+      properties = repository.model_properties('~20260824.155515')
+      self.assertEqual('failed', properties['summary']['status'])
+      self.assertEqual(1, properties['summary']['failed_models_count'])
+      self.assertEqual(0, properties['summary']['interrupted_models_count'])
+      self.assertEqual('RuntimeError', properties['traits']['failure_reason'])
+
   def test_combines_research_models_without_changing_latest_production(self):
     with tempfile.TemporaryDirectory() as temp_dir:
       root = pathlib.Path(temp_dir)

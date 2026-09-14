@@ -91,6 +91,10 @@ class CTRModelRepository:
           1
           for model in models
           if isinstance(model, dict) and model.get('status') == 'interrupted'),
+        'failed_models_count': sum(
+          1
+          for model in models
+          if isinstance(model, dict) and model.get('status') == 'failed'),
       }
 
     model_path = self.model_path(model_id)
@@ -198,16 +202,17 @@ class CTRModelRepository:
       **source,
       '_artifact_loaded': True,
     }
-    if component == 'post_processing' and result.get('status') == 'interrupted':
+    terminal_status = result.get('status')
+    if component == 'post_processing' and terminal_status in ('interrupted', 'failed'):
       targets = section_value(
         result,
         'post_processing_results')
       if isinstance(targets, list):
-        interrupted_targets = [
+        terminal_targets = [
           {
             **target,
             **(
-              {'status': 'interrupted'}
+              {'status': terminal_status}
               if (
                 isinstance(target, dict) and
                 target.get('status') == 'training') else {}),
@@ -216,14 +221,14 @@ class CTRModelRepository:
           for target in targets
         ]
         if 'targets' in result:
-          result['targets'] = interrupted_targets
+          result['targets'] = terminal_targets
         else:
           for section in result.get('sections', []):
             if (
                 isinstance(section, dict) and
                 section.get('id') == 'post_processing_results' and
                 isinstance(section.get('data'), dict)):
-              section['data']['targets'] = interrupted_targets
+              section['data']['targets'] = terminal_targets
               break
     return result
 
@@ -359,7 +364,7 @@ class CTRModelRepository:
       train_start = traits['train_start']
     except (KeyError, TypeError, ValueError, RuntimeError):
       return None
-    if traits.get('status') not in ('in_progress', 'interrupted'):
+    if traits.get('status') not in ('in_progress', 'interrupted', 'failed'):
       return None
     if traits.get('status') == 'in_progress' and not self.process_alive_(pid):
       traits['status'] = 'interrupted'
