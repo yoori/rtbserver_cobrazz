@@ -41,6 +41,7 @@ add_library(LogCommons SHARED
   PassbackStat.cpp
   PostClickAction.cpp
   PostClickStat.cpp
+  PostImpStat.cpp
   PrimaryDump.cpp
   Request.cpp
   RequestBasicChannels.cpp

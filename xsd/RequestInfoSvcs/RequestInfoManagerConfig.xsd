@@ -264,6 +264,7 @@
     <xsd:sequence>
       <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
       <xsd:element name="PostClickStat" type="LogFlushPolicyType"/>
+      <xsd:element name="PostImpStat" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="UserProperties" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
       <xsd:element name="SiteChannelStat" type="LogFlushPolicyType"/>

@@ -12,6 +12,7 @@
 #include <LogCommons/ActionStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/CmpStat.hpp>
 #include <LogCommons/ChannelImpInventory.hpp>
 #include <LogCommons/SiteUserStat.hpp>
@@ -2975,13 +2976,38 @@ namespace AdServer::RequestInfoSvcs
           value.landing_is_new_user ? 1 : 0,
           value.yandex_reporting_comparable ? 1 : 0));
 
-      const Generics::Time advertiser_time_offset =
-        request_info.adv_time - request_info.time;
       add_record(
         CollectorT::KeyT(
-          action_info.time,
-          action_info.time + advertiser_time_offset),
+          request_info.time,
+          request_info.adv_time),
         std::move(data));
+    }
+  };
+
+  class PostImpStatLogger:
+    public RequestLoggerAdapter<AdServer::LogProcessing::PostImpStatTraits>
+  {
+  public:
+    explicit PostImpStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::PostImpStatTraits>(flush_traits) {}
+    const char* name() noexcept override { return "PostImpStatLogger"; }
+  private:
+    void process_request_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_impression_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_click_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_action_impl(const RequestInfo&) override {}
+    void process_post_click_action_impl(const RequestInfo&, const PostActionInfo&) override {}
+    void process_post_imp_action_impl(const RequestInfo& ri, const PostActionInfo& ai) override
+    {
+      if (ri.test_request) return;
+      static const char* names[] = {"vstart","vview","vq1","vmid","vq3","vcomplete","vskip","vpause","vmute","vunmute","vresume","vfullscreen","verror"};
+      unsigned index = 13;
+      for (unsigned i=0;i<13;++i) if (ai.name == names[i]) { index = i; break; }
+      if (index == 13) return;
+      const Generics::Time offset = ri.adv_time - ri.time;
+      CollectorT::DataT data;
+      data.add(make_creative_stat_inner_key(ri), CollectorT::DataT::DataT(index));
+      add_record(CollectorT::KeyT(ri.time, ri.time + offset), std::move(data));
     }
   };
 
@@ -2993,6 +3019,7 @@ namespace AdServer::RequestInfoSvcs
     Generics::ActiveObjectCallback* callback,
     const LogProcessing::LogFlushTraits& creative_stat_flush,
     const LogProcessing::LogFlushTraits& post_click_stat_flush,
+    const LogProcessing::LogFlushTraits& post_imp_stat_flush,
     const LogProcessing::LogFlushTraits& user_properties_flush,
     const LogProcessing::LogFlushTraits& channel_performance_flush,
     const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -3031,6 +3058,8 @@ namespace AdServer::RequestInfoSvcs
 
     add_request_logger_(RequestLoggerBase_var(
       new PostClickStatLogger(post_click_stat_flush)).in());
+    add_request_logger_(RequestLoggerBase_var(
+      new PostImpStatLogger(post_imp_stat_flush)).in());
 
     add_request_logger_(RequestLoggerBase_var(
       new ChannelPerformanceLogger(channel_performance_flush)).in());

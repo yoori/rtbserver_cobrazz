@@ -21,6 +21,7 @@ sub start
        "mkdir -p \${log_root}/LogGeneralizer/In/CreativeStat/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/CreativeStat/Deferred/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/PostClickStat/Intermediate && " .
+       "mkdir -p \${log_root}/LogGeneralizer/In/PostImpStat/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/PostClickStat/Deferred/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/OptOutStat/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/SiteReferrerStat/Intermediate && " .
@@ -79,6 +80,7 @@ sub start
        "mkdir -p \${log_root}/LogGeneralizer/Out/CreativeStat && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/CreativeStat_ && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/PostClickStat && " .
+       "mkdir -p \${log_root}/LogGeneralizer/Out/PostImpStat && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/PostClickStat_ && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/OptOutStat && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/OptOutStat_ && " .

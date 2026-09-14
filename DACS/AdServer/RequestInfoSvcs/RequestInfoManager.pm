@@ -30,6 +30,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostImpStat && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostImpStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/CCGKeywordStat && " .

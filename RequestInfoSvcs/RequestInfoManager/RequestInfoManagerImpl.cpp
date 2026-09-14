@@ -39,6 +39,7 @@ namespace
 
   const char CREATIVE_STAT_OUT_DIR[] = "CreativeStat";
   const char POST_CLICK_STAT_OUT_DIR[] = "PostClickStat";
+  const char POST_IMP_STAT_OUT_DIR[] = "PostImpStat";
   const char USER_PROPERTIES_OUT_DIR[] = "UserProperties";
   const char CHANNEL_PERFORMANCE_OUT_DIR[] = "ChannelPerformance";
   const char SITE_CHANNEL_STAT_OUT_DIR[] = "SiteChannelStat";
@@ -316,6 +317,7 @@ namespace AdServer::RequestInfoSvcs
       LogProcessing::LogFlushTraits research_post_impression_flush;
       LogProcessing::LogFlushTraits research_click_flush;
       LogProcessing::LogFlushTraits research_post_click_flush;
+      LogProcessing::LogFlushTraits post_imp_stat_flush;
       LogProcessing::LogFlushTraits bid_cost_stat_flush;
 
       request_out_logger_ =
@@ -326,6 +328,9 @@ namespace AdServer::RequestInfoSvcs
           read_flush_policy(
             lp_config.PostClickStat(),
             (log_root + POST_CLICK_STAT_OUT_DIR).c_str()),
+          read_flush_policy(
+            lp_config.PostImpStat(),
+            (log_root + POST_IMP_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.UserProperties(),
             (log_root + USER_PROPERTIES_OUT_DIR).c_str()),

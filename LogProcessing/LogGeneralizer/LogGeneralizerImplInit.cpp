@@ -73,6 +73,7 @@ namespace AdServer::LogProcessing
   };
 
   using PostClickStatProcTraits = ProcTraits<PostClickStatProcessor>;
+  using PostImpStatProcTraits = ProcTraits<PostImpStatProcessor>;
 
   /// Write CSV when db_enabled()
   typedef ProcTraits<
@@ -367,6 +368,7 @@ namespace AdServer::LogProcessing
     }
 
     init_log_proc_info_<PostClickStatProcTraits>(config.PostClickStat());
+    init_log_proc_info_<PostImpStatProcTraits>(config.PostImpStat());
 
     /// Write in CSV when db_enabled()
     init_log_proc_info_<ChannelOverlapUserStatProcTraits>(config.ChannelOverlapUserStat());

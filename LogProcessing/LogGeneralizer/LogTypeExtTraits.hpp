@@ -31,6 +31,7 @@
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/SearchEngineStat.hpp>
 #include <LogCommons/SearchTermStat.hpp>
 #include <LogCommons/SiteReferrerStat.hpp>
@@ -393,6 +394,7 @@ namespace AdServer::LogProcessing
 
   typedef Aux_::BaseLogTraitsHelper<CreativeStatTraits> CreativeStatExtTraits;
   using PostClickStatExtTraits = Aux_::BaseLogTraitsHelper<PostClickStatCsvTraits>;
+  using PostImpStatExtTraits = Aux_::BaseLogTraitsHelper<PostImpStatCsvTraits>;
 
   class CreativeStatDbSaver;
   class CreativeStatPgCsvSaver;
