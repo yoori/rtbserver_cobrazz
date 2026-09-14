@@ -648,6 +648,7 @@ namespace
       "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) "
       "Gecko/20100101 Firefox/73.0";
     fixture.request_info.user_status = US_OPTIN;
+    fixture.request_info.track_user_id = AdServer::Commons::UserId::create_random_based();
     fixture.request_info.tokens.push_back(
       CampaignManagerCore::TokenInfo{CreativeTokens::TAGID, "bad-tag"});
 
@@ -715,7 +716,8 @@ namespace
     }
 
     const std::string expected_click_metrika_params =
-      std::string("utm_term=") + fixture.request_info.request_id.to_string() +
+      std::string("utm_term=r:") + fixture.request_info.request_id.to_string() +
+      "%3Bu1:" + fixture.request_info.track_user_id.to_string() + "%3Bu2:" +
       "&utm_content=ccid:" + String::StringManip::IntToStr(
         fixture.creative->ccid).str().str();
     if (creative_body.find(expected_click_metrika_params) == std::string::npos)
@@ -728,6 +730,38 @@ namespace
     if (creative_body.find(expected_click_url) == std::string::npos)
     {
       throw std::runtime_error("CLICKMETRIKAPARAMS was not instantiated in CRCLICK");
+    }
+
+    const AdServer::Commons::UserId cookie_user_id =
+      AdServer::Commons::UserId::create_random_based();
+    TokenValueMap click_tokens;
+    click_tokens.set_value(
+      CreativeTokens::UNSIGNEDUID,
+      fixture.request_info.track_user_id.to_string());
+    click_tokens.set_value(
+      CreativeTokens::UNSIGNEDCOOKIEUID,
+      cookie_user_id.to_string());
+    std::string click_url;
+    creative_instantiator.instantiate_click_url(
+      *fixture.campaign_config,
+      fixture.creative->click_url,
+      click_url,
+      fixture.request_info.request_id,
+      &fixture.colocation->colo_id,
+      fixture.tag,
+      fixture.tag_size,
+      fixture.creative,
+      nullptr,
+      click_tokens);
+    const std::string expected_click_time_url =
+      std::string("https://advertiser.example/landing?utm_term=r:") +
+      fixture.request_info.request_id.to_string() + "%3Bu1:" +
+      fixture.request_info.track_user_id.to_string() + "%3Bu2:" +
+      cookie_user_id.to_string() + "&utm_content=ccid:" +
+      String::StringManip::IntToStr(fixture.creative->ccid).str().str();
+    if (click_url != expected_click_time_url)
+    {
+      throw std::runtime_error("CLICKMETRIKAPARAMS did not include click-time user IDs");
     }
 
     const std::vector<std::string> expected_post_actions{"vstart", "vview"};

@@ -116,6 +116,10 @@ namespace AdServer::Action
     parse_utm_uid_(RequestInfo& request_info, const String::SubString& utm_uid)
       noexcept;
 
+    static bool
+    parse_metrika_utm_term_(RequestInfo& request_info, const String::SubString& utm_term)
+      noexcept;
+
   private:
     Logging::Logger_var logger_;
 

@@ -9,7 +9,9 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   std::string
   format_click_metrika_params(
     const AdServer::Commons::RequestId& request_id,
-    unsigned long ccid);
+    unsigned long ccid,
+    std::string_view resolved_user_id,
+    std::string_view cookie_user_id);
 
   class InstantiateAdCreativeArgsManager;
 

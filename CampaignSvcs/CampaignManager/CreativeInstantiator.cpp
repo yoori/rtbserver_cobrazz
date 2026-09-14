@@ -500,9 +500,21 @@ namespace AdServer::CampaignSvcs
       {
         args.insert(creative->tokens.begin(), creative->tokens.end());
 
+        std::string resolved_user_id;
+        std::string cookie_user_id;
+        tokens.get_argument(
+          String::SubString(CreativeTokens::UNSIGNEDUID),
+          resolved_user_id);
+        tokens.get_argument(
+          String::SubString(CreativeTokens::UNSIGNEDCOOKIEUID),
+          cookie_user_id);
         args[CreativeTokens::CLICK_METRIKA_PARAMS] = OptionValue(
           0,
-          InstantiateAd::format_click_metrika_params(request_id, creative->ccid));
+          InstantiateAd::format_click_metrika_params(
+            request_id,
+            creative->ccid,
+            resolved_user_id,
+            cookie_user_id));
         args[CreativeTokens::CCID] = OptionValue(0, IntToStr(creative->ccid));
         args[CreativeTokens::ADVERTISER_ID] = OptionValue(
           0,

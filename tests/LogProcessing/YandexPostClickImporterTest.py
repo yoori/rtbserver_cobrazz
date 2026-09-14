@@ -7,6 +7,7 @@ import pathlib
 import sys
 import tempfile
 import types
+import urllib.parse
 import unittest
 
 
@@ -25,6 +26,9 @@ def load_importer():
 
 IMPORTER = load_importer()
 REQUEST_ID = 'AAAAAAAAAAAAAAAAAAAAAA..'
+USER_ID = 'BBBBBBBBBBBBBBBBBBBBBB..'
+COOKIE_USER_ID = 'CCCCCCCCCCCCCCCCCCCCCC..'
+METRIKA_TERM = f'r:{REQUEST_ID};u1:{USER_ID};u2:{COOKIE_USER_ID}'
 
 
 def log_part(request_id=REQUEST_ID, content='ccid:2527264'):
@@ -67,6 +71,12 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertNotIn('UTMSource', params['filters'])
     self.assertIn("ym:s:<attribution>UTMContent=@'ccid:'", params['filters'])
     self.assertIn("ym:s:<attribution>UTMTerm=~", params['filters'])
+    self.assertIn('r(:|', params['filters'])
+    self.assertIn('u1(:|', params['filters'])
+    self.assertIn('u2(:|', params['filters'])
+    self.assertIn('%3[Bb]', params['filters'])
+    self.assertIn('%253[Bb]', params['filters'])
+    self.assertIn('%253[Aa]', params['filters'])
 
   def test_logs_api_contract(self):
     calls = []
@@ -112,6 +122,21 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(IMPORTER.parse_ccid('key:value;ccid:17&other:value'), 17)
     self.assertIsNone(IMPORTER.parse_ccid('prefix-ccid:17'))
     self.assertIsNone(IMPORTER.parse_ccid(''))
+
+  def test_parse_metrika_request_id(self):
+    self.assertEqual(IMPORTER.parse_metrika_request_id(REQUEST_ID), REQUEST_ID)
+    self.assertEqual(IMPORTER.parse_metrika_request_id(METRIKA_TERM), REQUEST_ID)
+    self.assertEqual(
+      IMPORTER.parse_metrika_request_id(METRIKA_TERM.replace(';', '%3B')),
+      REQUEST_ID)
+    encoded_term = urllib.parse.quote_plus(METRIKA_TERM.replace(';', '%3B'))
+    self.assertEqual(IMPORTER.parse_metrika_request_id(encoded_term), REQUEST_ID)
+    self.assertEqual(
+      IMPORTER.parse_metrika_request_id(f'r:{REQUEST_ID};u1:;u2:'),
+      REQUEST_ID)
+    self.assertIsNone(
+      IMPORTER.parse_metrika_request_id(f'r:{REQUEST_ID};u1:invalid;u2:'))
+    self.assertIsNone(IMPORTER.parse_metrika_request_id('invalid'))
 
   def test_request_chunk(self):
     self.assertEqual(IMPORTER.request_chunk(REQUEST_ID, 24), 0)
@@ -281,7 +306,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     )])
     self.assertEqual(self.application.pg.commits, 1)
 
-  def test_mark_fetch_time_updates_requested_column(self):
+  def test_mark_fetch_time_calls_database_function(self):
     calls = []
 
     class Cursor:
@@ -305,24 +330,24 @@ class YandexPostClickImporterTest(unittest.TestCase):
         self.commits += 1
 
     self.application.pg = Pg()
-    self.application._mark_fetch_time(17, 'last_fetch_try_time')
-    self.application._mark_fetch_time(17, 'last_success_fetch_time')
+    self.application._mark_fetch_time(17, False)
+    self.application._mark_fetch_time(17, True)
 
     self.assertEqual(calls, [
       (
-        'UPDATE YandexMetrikaRef SET last_fetch_try_time = now() WHERE ymref_id = %s',
-        (17,),
+        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
+        (17, False),
       ),
       (
-        'UPDATE YandexMetrikaRef SET last_success_fetch_time = now() WHERE ymref_id = %s',
-        (17,),
+        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
+        (17, True),
       ),
     ])
     self.assertEqual(self.application.pg.commits, 2)
 
-  def test_mark_fetch_time_rejects_unknown_column(self):
+  def test_mark_fetch_time_rejects_non_boolean_success(self):
     with self.assertRaises(ValueError):
-      self.application._mark_fetch_time(17, 'token')
+      self.application._mark_fetch_time(17, None)
 
   def test_on_timer_filters_source_and_marks_try_then_success(self):
     calls = []
@@ -372,10 +397,10 @@ class YandexPostClickImporterTest(unittest.TestCase):
         (IMPORTER.YANDEX_METRIKA_SOURCE,),
       ))
     self.assertEqual(calls[1:], [
-      ('mark', 17, 'last_fetch_try_time'),
+      ('mark', 17, False),
       ('reporting', 17, 123),
       ('logs', 17, 123),
-      ('mark', 17, 'last_success_fetch_time'),
+      ('mark', 17, True),
     ])
     self.assertEqual(self.application.pg.commits, 1)
 
@@ -420,7 +445,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
     self.assertEqual(calls, [
       ('connect',),
-      ('mark', 17, 'last_fetch_try_time'),
+      ('mark', 17, False),
       ('reporting', 17),
       ('error', 0),
       ('reset',),
@@ -447,6 +472,15 @@ class YandexPostClickImporterTest(unittest.TestCase):
       'yandex_event_date': '2026-09-10',
       'yandex_reporting_comparable': True,
     })
+
+  def test_parse_log_part_with_metrika_term(self):
+    records = self.application._parse_log_part(
+      17,
+      log_part(request_id=METRIKA_TERM.replace(';', '%3B')),
+      self.event_date)
+
+    self.assertEqual(len(records), 1)
+    self.assertEqual(records[0][3], REQUEST_ID)
 
   def test_logs_request_id_does_not_depend_on_ccid(self):
     records = self.application._parse_log_part(

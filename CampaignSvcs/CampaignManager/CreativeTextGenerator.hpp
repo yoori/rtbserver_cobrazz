@@ -30,6 +30,7 @@ namespace AdServer::CampaignSvcs::CreativeTokens
   const std::string REFERER_DOMAIN("DOMAIN");
   const std::string REFERER_DOMAIN_HASH("DOMAIN_HASH");
   const std::string UNSIGNEDUID("UNSIGNEDUID");
+  const std::string UNSIGNEDCOOKIEUID("UNSIGNEDCOOKIEUID");
   const std::string USER_STATUS("USERSTATUS");
   const std::string ORIGLINK("ORIGLINK");
   const std::string REFERER_KW_MATCH("REFERER-KW-MATCH");

@@ -495,7 +495,7 @@ namespace AdServer::Action
       request_info.short_external_id.swap(short_external_id);
     }
 
-    // Prefer utm_uid, but accept a valid legacy value from utm_term.
+    // Prefer utm_uid, but accept Metrika and legacy values from utm_term.
     {
       const String::SubString referer(request_info.referer);
       std::string utm_uid;
@@ -512,7 +512,10 @@ namespace AdServer::Action
               referer,
               UTM_TERM))
         {
-          parse_utm_uid_(request_info, utm_term);
+          if (!parse_metrika_utm_term_(request_info, utm_term))
+          {
+            parse_utm_uid_(request_info, utm_term);
+          }
         }
       }
     }
@@ -542,6 +545,79 @@ namespace AdServer::Action
         request_info.referer.clear();
       }
     }
+  }
+
+  bool
+  RequestInfoFiller::parse_metrika_utm_term_(
+    RequestInfo& request_info,
+    const String::SubString& utm_term)
+    noexcept
+  {
+    constexpr std::string_view REQUEST_PREFIX = "r:";
+    constexpr std::string_view USER_ID_MARKER = ";u1:";
+    constexpr std::string_view COOKIE_USER_ID_MARKER = ";u2:";
+    std::string decoded_utm_term;
+    String::SubString value_part = utm_term;
+    for (unsigned int level = 0; level < 2 &&
+      value_part.find('%') != String::SubString::NPOS; ++level)
+    {
+      try
+      {
+        std::string next_value;
+        String::StringManip::mime_url_decode(value_part, next_value);
+        decoded_utm_term.swap(next_value);
+        value_part = String::SubString(decoded_utm_term);
+      }
+      catch(const eh::Exception&)
+      {
+        return false;
+      }
+    }
+
+    const std::string_view value(value_part.data(), value_part.size());
+
+    if (value.compare(0, REQUEST_PREFIX.size(), REQUEST_PREFIX) != 0)
+    {
+      return false;
+    }
+
+    const std::size_t user_id_pos = value.find(USER_ID_MARKER, REQUEST_PREFIX.size());
+    if (user_id_pos == std::string_view::npos)
+    {
+      return false;
+    }
+
+    const std::size_t cookie_user_id_pos =
+      value.find(COOKIE_USER_ID_MARKER, user_id_pos + USER_ID_MARKER.size());
+    if (cookie_user_id_pos == std::string_view::npos)
+    {
+      return false;
+    }
+
+    try
+    {
+      const std::string request_id(value.substr(
+        REQUEST_PREFIX.size(),
+        user_id_pos - REQUEST_PREFIX.size()));
+      if (Commons::RequestId(request_id).is_null())
+      {
+        return false;
+      }
+    }
+    catch(const eh::Exception&)
+    {
+      return false;
+    }
+
+    const std::size_t user_id_start = user_id_pos + USER_ID_MARKER.size();
+    const std::size_t cookie_user_id_start =
+      cookie_user_id_pos + COOKIE_USER_ID_MARKER.size();
+    std::string utm_uid;
+    utm_uid.reserve(value.size() - user_id_start);
+    utm_uid.append(value.substr(user_id_start, cookie_user_id_pos - user_id_start));
+    utm_uid += '/';
+    utm_uid.append(value.substr(cookie_user_id_start));
+    return parse_utm_uid_(request_info, String::SubString(utm_uid));
   }
 
   bool

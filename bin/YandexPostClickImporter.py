@@ -80,7 +80,17 @@ ORDER BY (ymref_id, event_date)
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
 REPORTING_PAGE_SIZE = 100000
-REQUEST_ID_RE = re.compile(r'^[A-Za-z0-9_-]{22}\.\.$')
+REQUEST_ID_PATTERN = r'[A-Za-z0-9_-]{22}\.\.'
+USER_ID_PATTERN = rf'({REQUEST_ID_PATTERN})?'
+COLON_PATTERN = r'(:|%3[Aa]|%253[Aa])'
+TERM_SEPARATOR_PATTERN = r'(;|%3[Bb]|%253[Bb])'
+REQUEST_ID_RE = re.compile(rf'^{REQUEST_ID_PATTERN}$')
+METRIKA_TERM_RE = re.compile(
+  rf'^r:({REQUEST_ID_PATTERN});u1:{USER_ID_PATTERN};u2:{USER_ID_PATTERN}$')
+REPORTING_TERM_PATTERN = (
+  rf'^({REQUEST_ID_PATTERN}|r{COLON_PATTERN}{REQUEST_ID_PATTERN}'
+  rf'{TERM_SEPARATOR_PATTERN}u1{COLON_PATTERN}{USER_ID_PATTERN}'
+  rf'{TERM_SEPARATOR_PATTERN}u2{COLON_PATTERN}{USER_ID_PATTERN})$')
 CCID_RE = re.compile(r'(?:^|[;&])ccid:(\d+)(?:$|[;&])')
 ATTRIBUTIONS = frozenset((
   'first',
@@ -117,6 +127,20 @@ TERMINAL_LOG_REQUEST_STATUSES = {
 def parse_ccid(value):
   match = CCID_RE.search(value or '')
   return int(match.group(1)) if match else None
+
+
+def parse_metrika_request_id(value):
+  value = value or ''
+  for _ in range(2):
+    decoded_value = urllib.parse.unquote_plus(value)
+    if decoded_value == value:
+      break
+    value = decoded_value
+
+  match = METRIKA_TERM_RE.fullmatch(value)
+  if match:
+    return match.group(1)
+  return value if REQUEST_ID_RE.fullmatch(value) else None
 
 
 def decode_dimension(item, index):
@@ -278,11 +302,11 @@ class Application(Service):
     for ymref_id, token, counter_id in references:
       self.verify_running()
       try:
-        self._mark_fetch_time(ymref_id, 'last_fetch_try_time')
+        self._mark_fetch_time(ymref_id, False)
         api = YandexApi(token, counter_id, self.request_timeout)
         reporting = self._load_reporting(ymref_id, api)
         self._process_logs(ymref_id, api, reporting)
-        self._mark_fetch_time(ymref_id, 'last_success_fetch_time')
+        self._mark_fetch_time(ymref_id, True)
       except StopService:
         raise
       except Exception as ex:
@@ -294,14 +318,14 @@ class Application(Service):
           self.print_(0, f'Unable to reconnect import storage: {reconnect_ex}')
           return
 
-  def _mark_fetch_time(self, ymref_id, column):
-    if column not in ('last_fetch_try_time', 'last_success_fetch_time'):
-      raise ValueError(f'unsupported fetch time column: {column}')
+  def _mark_fetch_time(self, ymref_id, success):
+    if not isinstance(success, bool):
+      raise ValueError('success must be boolean')
 
     with self.pg.cursor() as cursor:
       cursor.execute(
-        f'UPDATE YandexMetrikaRef SET {column} = now() WHERE ymref_id = %s',
-        (ymref_id,))
+        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
+        (ymref_id, success))
     self.pg.commit()
 
   def _reset_connections(self):
@@ -354,7 +378,7 @@ class Application(Service):
       'timezone': '+00:00',
       'filters': (
         f"{content_dimension}=@'ccid:' AND "
-        f"{term_dimension}=~'^[A-Za-z0-9_-]{{22}}\\.\\.$'"),
+        f"{term_dimension}=~'{REPORTING_TERM_PATTERN}'"),
       'attribution': self.attribution,
       'offset': offset,
       'limit': REPORTING_PAGE_SIZE,
@@ -490,8 +514,8 @@ class Application(Service):
   def _parse_log_part(self, ymref_id, text, event_date):
     records = []
     for row in csv.DictReader(text.splitlines(), delimiter='\t'):
-      request_id = urllib.parse.unquote_plus(self._field(row, 'UTMTerm'))
-      if not REQUEST_ID_RE.fullmatch(request_id):
+      request_id = parse_metrika_request_id(self._field(row, 'UTMTerm'))
+      if request_id is None:
         continue
 
       visit_id = int(self._field(row, 'visitID'))

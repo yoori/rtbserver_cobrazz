@@ -89,16 +89,23 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   std::string
   format_click_metrika_params(
     const AdServer::Commons::RequestId& request_id,
-    unsigned long ccid)
+    unsigned long ccid,
+    std::string_view resolved_user_id,
+    std::string_view cookie_user_id)
   {
     const std::string request_id_str = request_id.to_string();
     const std::string ccid_str = to_string(ccid);
 
     std::string result;
     result.reserve(
-      sizeof("utm_term=&utm_content=ccid:") - 1 + request_id_str.size() + ccid_str.size());
-    result += "utm_term=";
+      sizeof("utm_term=r:%3Bu1:%3Bu2:&utm_content=ccid:") - 1 + request_id_str.size() +
+        resolved_user_id.size() + cookie_user_id.size() + ccid_str.size());
+    result += "utm_term=r:";
     result += request_id_str;
+    result += "%3Bu1:";
+    result.append(resolved_user_id.data(), resolved_user_id.size());
+    result += "%3Bu2:";
+    result.append(cookie_user_id.data(), cookie_user_id.size());
     result += "&utm_content=ccid:";
     result += ccid_str;
     return result;
@@ -274,9 +281,18 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           return std::nullopt;
         }
 
+        std::string resolved_user_id;
+        if (provider.context().request_params &&
+          !provider.context().request_params->track_user_id.is_null())
+        {
+          resolved_user_id = provider.context().request_params->track_user_id.to_string();
+        }
+
         return format_click_metrika_params(
           data->select_params->request_id,
-          data->creative->ccid);
+          data->creative->ccid,
+          resolved_user_id,
+          std::string_view());
       });
 
     add_processor(

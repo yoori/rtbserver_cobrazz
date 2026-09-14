@@ -14,6 +14,8 @@
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 
+#include <CampaignSvcs/CampaignManager/CreativeTextGenerator.hpp>
+
 #include <Frontends/FrontendCommons/Cookies.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
@@ -571,7 +573,7 @@ namespace AdServer
         if (!request_info.cookie_user_id.is_null())
         {
           auto* token = click_info.add_tokens();
-          token->set_name("UNSIGNEDCOOKIEUID");
+          token->set_name(CampaignSvcs::CreativeTokens::UNSIGNEDCOOKIEUID);
           token->set_value(request_info.cookie_user_id.to_string());
         }
 
