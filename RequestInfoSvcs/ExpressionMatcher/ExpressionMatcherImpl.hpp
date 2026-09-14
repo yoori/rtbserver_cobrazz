@@ -154,13 +154,15 @@ namespace AdServer::RequestInfoSvcs
     co_consider_click(
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::RequestId& request_id,
-      const Generics::Time& time) override;
+      const Generics::Time& time,
+      const Generics::Time& placement_colo_time_offset) override;
 
     AdServer::Commons::StartableAwaitable<void>
     co_consider_impression(
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::RequestId& request_id,
       const Generics::Time& time,
+      const Generics::Time& placement_colo_time_offset,
       const ChannelIdSet& channels) override;
 
   protected:
@@ -323,22 +325,6 @@ namespace AdServer::RequestInfoSvcs
       ~LoadDataTask() noexcept = default;
     };
 
-    class PlacementColo : public ReferenceCounting::AtomicImpl
-    {
-    public:
-      Generics::Time time_offset;
-
-      PlacementColo(const Generics::Time time) noexcept
-        : time_offset(time)
-      {}
-
-    protected:
-      virtual
-      ~PlacementColo() noexcept = default;
-    };
-
-    typedef ReferenceCounting::SmartPtr<PlacementColo> PlacementColo_var;
-
   private:
     template<
       typename ContainerPtrHolderType,
@@ -403,6 +389,7 @@ namespace AdServer::RequestInfoSvcs
       UserTriggerMatchContainer* temp_user_trigger_match_container,
       UserNavigationContainer* user_navigation_container,
       UserColoReachContainer* household_colo_reach_container,
+      Generics::Time placement_colo_time_offset,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
       const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record) override;
 
@@ -427,6 +414,7 @@ namespace AdServer::RequestInfoSvcs
       UserTriggerMatchContainer* temp_user_trigger_match_container,
       UserNavigationContainer* user_navigation_container,
       UserColoReachContainer* household_colo_reach_container,
+      Generics::Time placement_colo_time_offset,
       const AdServer::LogProcessing::
         RequestBasicChannelsCollector::KeyT& key,
       const AdServer::LogProcessing::
@@ -485,7 +473,7 @@ namespace AdServer::RequestInfoSvcs
     StatsCounters stats_;
 
     ExpressionMatcherLogLoader_var log_loader_;
-    ReferenceCounting::PtrHolder<PlacementColo_var> placement_colo_;
+    std::shared_ptr<PlacementColoHolder> placement_colo_holder_;
   };
 
   typedef ReferenceCounting::SmartPtr<ExpressionMatcherImpl>

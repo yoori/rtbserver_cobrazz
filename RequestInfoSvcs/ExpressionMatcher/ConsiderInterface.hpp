@@ -17,13 +17,15 @@ namespace AdServer::RequestInfoSvcs
     co_consider_click(
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::RequestId& request_id,
-      const Generics::Time& time) = 0;
+      const Generics::Time& time,
+      const Generics::Time& placement_colo_time_offset) = 0;
 
     virtual AdServer::Commons::StartableAwaitable<void>
     co_consider_impression(
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::RequestId& request_id,
       const Generics::Time& time,
+      const Generics::Time& placement_colo_time_offset,
       const ChannelIdSet& channels) = 0;
   };
 }

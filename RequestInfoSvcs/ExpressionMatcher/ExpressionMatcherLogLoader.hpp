@@ -5,6 +5,7 @@
 
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
+#include <ReferenceCounting/PtrHolder.hpp>
 
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -15,6 +16,22 @@
 
 namespace AdServer::RequestInfoSvcs
 {
+  class PlacementColo : public ReferenceCounting::AtomicImpl
+  {
+  public:
+    explicit PlacementColo(Generics::Time time) noexcept
+      : time_offset(time)
+    {}
+
+    const Generics::Time time_offset;
+
+  protected:
+    ~PlacementColo() noexcept override = default;
+  };
+
+  using PlacementColo_var = ReferenceCounting::SmartPtr<PlacementColo>;
+  using PlacementColoHolder = ReferenceCounting::PtrHolder<PlacementColo_var>;
+
   class UserColoReachContainer;
   class UserInventoryInfoContainer;
   class UserNavigationContainer;
@@ -34,6 +51,7 @@ namespace AdServer::RequestInfoSvcs
       UserTriggerMatchContainer* temp_user_trigger_match_container,
       UserNavigationContainer* user_navigation_container,
       UserColoReachContainer* household_colo_reach_container,
+      Generics::Time placement_colo_time_offset,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
       const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record) = 0;
 
@@ -83,6 +101,7 @@ namespace AdServer::RequestInfoSvcs
       UserTriggerMatchContainer* temp_user_trigger_match_container,
       UserNavigationContainer* user_navigation_container,
       UserColoReachContainer* household_colo_reach_container,
+      std::shared_ptr<PlacementColoHolder> placement_colo_holder,
       Generics::TaskRunner* task_runner,
       Generics::Planner* scheduler,
       Logging::Logger* logger,
@@ -106,6 +125,7 @@ namespace AdServer::RequestInfoSvcs
     UserTriggerMatchContainer* temp_user_trigger_match_container_;
     UserNavigationContainer* user_navigation_container_;
     UserColoReachContainer* household_colo_reach_container_;
+    std::shared_ptr<PlacementColoHolder> placement_colo_holder_;
     Generics::TaskRunner_var task_runner_;
     Generics::Planner_var scheduler_;
     Logging::Logger_var logger_;
@@ -134,12 +154,14 @@ namespace AdServer::RequestInfoSvcs
 
     AdServer::Commons::StartableAwaitable<void>
     co_process_request_basic_channels_record_(
+      Generics::Time placement_colo_time_offset,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
       const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record);
 
     bool
     process_request_basic_channels_file_(
       LogProcessing::FileReceiver::FileGuard* file_ptr,
+      Generics::Time placement_colo_time_offset,
       std::size_t& processed_lines_count)
       /*throw(eh::Exception)*/;
 
@@ -147,6 +169,7 @@ namespace AdServer::RequestInfoSvcs
     process_binary_file_(
       LogProcessing::FileReceiver::FileGuard* file_ptr,
       LogType log_type,
+      Generics::Time placement_colo_time_offset,
       std::size_t& processed_lines_count)
       /*throw(eh::Exception)*/;
 

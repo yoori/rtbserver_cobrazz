@@ -203,7 +203,8 @@ namespace AdServer::RequestInfoSvcs
       daily_processing_task_runner_(new Generics::TaskRunner(callback_,
         expression_matcher_config_.DailyProcessing().thread_pool_size())),
       scheduler_(new Generics::Planner(callback_)),
-      proc_stat_impl_(ReferenceCounting::add_ref(proc_stat_impl))
+      proc_stat_impl_(ReferenceCounting::add_ref(proc_stat_impl)),
+      placement_colo_holder_(std::make_shared<PlacementColoHolder>())
   {
     static const char* FUN = "ExpressionMatcherImpl::ExpressionMatcherImpl()";
 
@@ -1176,7 +1177,7 @@ namespace AdServer::RequestInfoSvcs
           const CampaignSvcs::CampaignServer::ColocationPropInfo_var placement_colo_props =
             campaign_server->get_colocation_prop(expression_matcher_config_.colo_id());
 
-          placement_colo_ = new PlacementColo(
+          *placement_colo_holder_ = new PlacementColo(
             placement_colo_props->found ?
               CorbaAlgs::unpack_time(placement_colo_props->time_offset) :
               Generics::Time());
@@ -1362,6 +1363,7 @@ namespace AdServer::RequestInfoSvcs
             temp_user_trigger_match_container_.get(),
             user_navigation_container_.get(),
             household_colo_reach_container_.get(),
+            placement_colo_holder_,
             task_runner_,
             scheduler_,
             logger(),
@@ -1417,6 +1419,7 @@ namespace AdServer::RequestInfoSvcs
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::RequestId& request_id,
     const Generics::Time& time,
+    const Generics::Time& placement_colo_time_offset,
     const ChannelIdSet& channels)
   {
     static const char* FUN = "ExpressionMatcherImpl::co_consider_impression()";
@@ -1431,7 +1434,7 @@ namespace AdServer::RequestInfoSvcs
         UserTriggerMatchContainer::ImpressionInfo triggers_imp;
         triggers_imp.user_id = user_id;
         triggers_imp.request_id = request_id;
-        triggers_imp.time = time + placement_colo_.get()->time_offset;
+        triggers_imp.time = time + placement_colo_time_offset;
         triggers_imp.channels = channels;
 
         co_await user_trigger_match_container->co_process_impression(triggers_imp);
@@ -1448,7 +1451,8 @@ namespace AdServer::RequestInfoSvcs
   ExpressionMatcherImpl::co_consider_click(
     const AdServer::Commons::UserId& user_id,
     const AdServer::Commons::RequestId& request_id,
-    const Generics::Time& time)
+    const Generics::Time& time,
+    const Generics::Time& placement_colo_time_offset)
   {
     static const char* FUN = "ExpressionMatcherImpl::co_consider_click()";
 
@@ -1462,7 +1466,7 @@ namespace AdServer::RequestInfoSvcs
         co_await user_trigger_match_container->co_process_click(
           user_id,
           request_id,
-          time + placement_colo_.get()->time_offset);
+          time + placement_colo_time_offset);
       }
     }
     catch (const eh::Exception& ex)
@@ -1536,6 +1540,7 @@ namespace AdServer::RequestInfoSvcs
     UserTriggerMatchContainer* temp_user_trigger_match_container,
     UserNavigationContainer* user_navigation_container,
     UserColoReachContainer* household_colo_reach_container,
+    Generics::Time placement_colo_time_offset,
     const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
   {
@@ -1545,6 +1550,7 @@ namespace AdServer::RequestInfoSvcs
       temp_user_trigger_match_container,
       user_navigation_container,
       household_colo_reach_container,
+      placement_colo_time_offset,
       key,
       record);
   }
@@ -1609,6 +1615,7 @@ namespace AdServer::RequestInfoSvcs
     UserTriggerMatchContainer* temp_user_trigger_match_container,
     UserNavigationContainer* user_navigation_container,
     UserColoReachContainer* household_colo_reach_container,
+    Generics::Time placement_colo_time_offset,
     const AdServer::LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const AdServer::LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
     /*throw(Exception)*/
@@ -1654,7 +1661,7 @@ namespace AdServer::RequestInfoSvcs
           !record.temporary_user_id().is_null();
         match_info.time = key.time();
         match_info.isp_time = key.isp_time();
-        match_info.placement_colo_time = match_info.time + placement_colo_.get()->time_offset;
+        match_info.placement_colo_time = match_info.time + placement_colo_time_offset;
         match_info.colo_id = key.colo_id();
         match_info.max_text_ads = 0;
 
@@ -2136,7 +2143,7 @@ namespace AdServer::RequestInfoSvcs
 
     const Generics::Time now_date(now.get_gm_time().get_date());
     const Generics::Time placement_colo_now_date(
-      (now + placement_colo_.get()->time_offset).get_gm_time().get_date());
+      (now + placement_colo_holder_->get()->time_offset).get_gm_time().get_date());
 
     unsigned long processed_user_count = 0;
 
@@ -2290,7 +2297,8 @@ namespace AdServer::RequestInfoSvcs
     {
       try
       {
-        const Generics::Time placement_colo_time_offset = placement_colo_.get()->time_offset;
+        const Generics::Time placement_colo_time_offset =
+          placement_colo_holder_->get()->time_offset;
         // all logic in placement colo time
         const Generics::Time now = Generics::Time::get_time_of_day() + placement_colo_time_offset;
 

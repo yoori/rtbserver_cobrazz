@@ -23,10 +23,15 @@ namespace AdServer::RequestInfoSvcs
       ConsiderInterface* processor,
       AdServer::Commons::UserId user_id,
       AdServer::Commons::RequestId request_id,
-      Generics::Time time)
+      Generics::Time time,
+      Generics::Time placement_colo_time_offset)
     {
       co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
-      co_await processor->co_consider_click(user_id, request_id, time);
+      co_await processor->co_consider_click(
+        user_id,
+        request_id,
+        time,
+        placement_colo_time_offset);
     }
 
     AdServer::Commons::StartableAwaitable<void>
@@ -36,10 +41,16 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::UserId user_id,
       AdServer::Commons::RequestId request_id,
       Generics::Time time,
+      Generics::Time placement_colo_time_offset,
       ChannelIdSet channels)
     {
       co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
-      co_await processor->co_consider_impression(user_id, request_id, time, channels);
+      co_await processor->co_consider_impression(
+        user_id,
+        request_id,
+        time,
+        placement_colo_time_offset,
+        channels);
     }
   }
 
@@ -56,6 +67,7 @@ namespace AdServer::RequestInfoSvcs
     UserTriggerMatchContainer* temp_user_trigger_match_container,
     UserNavigationContainer* user_navigation_container,
     UserColoReachContainer* household_colo_reach_container,
+    std::shared_ptr<PlacementColoHolder> placement_colo_holder,
     Generics::TaskRunner* task_runner,
     Generics::Planner* scheduler,
     Logging::Logger* logger,
@@ -72,6 +84,7 @@ namespace AdServer::RequestInfoSvcs
       temp_user_trigger_match_container_(temp_user_trigger_match_container),
       user_navigation_container_(user_navigation_container),
       household_colo_reach_container_(household_colo_reach_container),
+      placement_colo_holder_(std::move(placement_colo_holder)),
       task_runner_(ReferenceCounting::add_ref(task_runner)),
       scheduler_(ReferenceCounting::add_ref(scheduler)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -189,18 +202,32 @@ namespace AdServer::RequestInfoSvcs
 
       if (file.file_guard)
       {
+        const Generics::Time placement_colo_time_offset =
+          placement_colo_holder_->get()->time_offset;
+
         switch (file.type)
         {
         case LogType::RequestBasicChannels:
-          terminated = process_request_basic_channels_file_(file.file_guard, processed_lines_count);
+          terminated = process_request_basic_channels_file_(
+            file.file_guard,
+            placement_colo_time_offset,
+            processed_lines_count);
           break;
 
         case LogType::ConsiderClick:
-          terminated = process_binary_file_(file.file_guard, file.type, processed_lines_count);
+          terminated = process_binary_file_(
+            file.file_guard,
+            file.type,
+            placement_colo_time_offset,
+            processed_lines_count);
           break;
 
         case LogType::ConsiderImpression:
-          terminated = process_binary_file_(file.file_guard, file.type, processed_lines_count);
+          terminated = process_binary_file_(
+            file.file_guard,
+            file.type,
+            placement_colo_time_offset,
+            processed_lines_count);
           break;
         }
 
@@ -287,6 +314,7 @@ namespace AdServer::RequestInfoSvcs
 
   AdServer::Commons::StartableAwaitable<void>
   ExpressionMatcherLogLoader::co_process_request_basic_channels_record_(
+    Generics::Time placement_colo_time_offset,
     const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
   {
@@ -297,6 +325,7 @@ namespace AdServer::RequestInfoSvcs
       temp_user_trigger_match_container_,
       user_navigation_container_,
       household_colo_reach_container_,
+      placement_colo_time_offset,
       key,
       record);
   }
@@ -304,6 +333,7 @@ namespace AdServer::RequestInfoSvcs
   bool
   ExpressionMatcherLogLoader::process_request_basic_channels_file_(
     LogProcessing::FileReceiver::FileGuard* file_ptr,
+    Generics::Time placement_colo_time_offset,
     std::size_t& processed_lines_count)
     /*throw(eh::Exception)*/
   {
@@ -347,7 +377,10 @@ namespace AdServer::RequestInfoSvcs
 
         tasks.start(
           sequence,
-          co_process_request_basic_channels_record_(coll_it->first, *record_it));
+          co_process_request_basic_channels_record_(
+            placement_colo_time_offset,
+            coll_it->first,
+            *record_it));
       }
 
       if (terminated)
@@ -371,6 +404,7 @@ namespace AdServer::RequestInfoSvcs
   ExpressionMatcherLogLoader::process_binary_file_(
     LogProcessing::FileReceiver::FileGuard* file_ptr,
     LogType log_type,
+    Generics::Time placement_colo_time_offset,
     std::size_t& processed_lines_count)
     /*throw(eh::Exception)*/
   {
@@ -426,7 +460,8 @@ namespace AdServer::RequestInfoSvcs
               consider_interface_,
               AdServer::Commons::UserId(reader.user_id()),
               AdServer::Commons::RequestId(reader.request_id()),
-              Generics::Time(reader.time())));
+              Generics::Time(reader.time()),
+              placement_colo_time_offset));
         }
         else
         {
@@ -439,6 +474,7 @@ namespace AdServer::RequestInfoSvcs
               AdServer::Commons::UserId(reader.user_id()),
               AdServer::Commons::RequestId(reader.request_id()),
               Generics::Time(reader.time()),
+              placement_colo_time_offset,
               ChannelIdSet(reader.channels().begin(), reader.channels().end())));
         }
       }
