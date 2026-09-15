@@ -3019,7 +3019,7 @@ namespace AdServer::RequestInfoSvcs
     Generics::ActiveObjectCallback* callback,
     const LogProcessing::LogFlushTraits& creative_stat_flush,
     const LogProcessing::LogFlushTraits& post_click_stat_flush,
-    const LogProcessing::LogFlushTraits& post_imp_stat_flush,
+    const LogProcessing::LogFlushTraits* post_imp_stat_flush,
     const LogProcessing::LogFlushTraits& user_properties_flush,
     const LogProcessing::LogFlushTraits& channel_performance_flush,
     const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -3058,8 +3058,12 @@ namespace AdServer::RequestInfoSvcs
 
     add_request_logger_(RequestLoggerBase_var(
       new PostClickStatLogger(post_click_stat_flush)).in());
-    add_request_logger_(RequestLoggerBase_var(
-      new PostImpStatLogger(post_imp_stat_flush)).in());
+
+    if (post_imp_stat_flush)
+    {
+      add_request_logger_(RequestLoggerBase_var(
+        new PostImpStatLogger(*post_imp_stat_flush)).in());
+    }
 
     add_request_logger_(RequestLoggerBase_var(
       new ChannelPerformanceLogger(channel_performance_flush)).in());

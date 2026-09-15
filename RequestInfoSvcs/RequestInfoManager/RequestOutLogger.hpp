@@ -41,7 +41,7 @@ namespace AdServer::RequestInfoSvcs
       Generics::ActiveObjectCallback* callback,
       const LogProcessing::LogFlushTraits& creative_stat_flush,
       const LogProcessing::LogFlushTraits& post_click_stat_flush,
-      const LogProcessing::LogFlushTraits& post_imp_stat_flush,
+      const LogProcessing::LogFlushTraits* post_imp_stat_flush,
       const LogProcessing::LogFlushTraits& user_properties_flush,
       const LogProcessing::LogFlushTraits& channel_performance_flush,
       const LogProcessing::LogFlushTraits& expression_performance_flush,

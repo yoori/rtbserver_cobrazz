@@ -330,7 +330,8 @@ namespace AdServer::RequestInfoSvcs
             (log_root + POST_CLICK_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.PostImpStat(),
-            (log_root + POST_IMP_STAT_OUT_DIR).c_str()),
+            (log_root + POST_IMP_STAT_OUT_DIR).c_str(),
+            post_imp_stat_flush),
           read_flush_policy(
             lp_config.UserProperties(),
             (log_root + USER_PROPERTIES_OUT_DIR).c_str()),
