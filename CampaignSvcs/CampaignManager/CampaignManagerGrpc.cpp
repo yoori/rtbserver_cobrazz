@@ -455,6 +455,7 @@ namespace AdServer::CampaignSvcs
     {
       target.time = unpack_time(source.time());
       target.request_id = unpack_request_id(source.request_id());
+      target.debug_request_id = unpack_request_id(source.debug_request_id());
       target.creative_instantiate_type = source.creative_instantiate_type();
       target.request_type = source.request_type();
       target.random = source.random();

@@ -370,6 +370,7 @@ namespace AdServer::CampaignSvcs
     public:
       Generics::Time time;
       AdServer::Commons::RequestId request_id;
+      AdServer::Commons::RequestId debug_request_id;
       std::string creative_instantiate_type;
       unsigned long request_type = 0;
       unsigned long random = 0;

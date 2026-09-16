@@ -512,6 +512,40 @@ namespace
       throw std::runtime_error("invalid OpenRTB UTF-8 was propagated to page keywords");
     }
   }
+
+  void
+  verify_debug_params(const AdServer::Bidding::RequestInfoFiller& filler)
+  {
+    constexpr const char REQUEST_ID[] = "PPPPPPPPPPPPPPPPPPPPPA..";
+    const Generics::Time expected_time(
+      String::SubString("2026-09-16 12:34:56"),
+      "%Y-%m-%d %H:%M:%S");
+
+    FCGI::HttpRequest request;
+    HTTP::ParamList params;
+    HTTP::Param request_id_param;
+    request_id_param.name = "debug.request_id";
+    request_id_param.value = REQUEST_ID;
+    params.push_back(std::move(request_id_param));
+    HTTP::Param time_param;
+    time_param.name = "debug.time";
+    time_param.value = "2026-09-16 12:34:56";
+    params.push_back(std::move(time_param));
+    request.set_params(std::move(params));
+
+    AdServer::Bidding::RequestInfo request_info;
+    filler.fill(request_info, request, Generics::Time::ZERO);
+
+    if (request_info.debug_request_id != AdServer::Commons::RequestId(REQUEST_ID))
+    {
+      throw std::runtime_error("debug.request_id was not parsed");
+    }
+
+    if (request_info.current_time != expected_time)
+    {
+      throw std::runtime_error("debug.time was not parsed");
+    }
+  }
 }
 
 extern "C"
@@ -589,6 +623,7 @@ main(int argc, char** argv)
 
     verify_ext_tag_id_is_single_line(filler);
     verify_invalid_utf8_is_ignored(filler);
+    verify_debug_params(filler);
 
     const auto started_at = std::chrono::steady_clock::now();
     const CpuTimes cpu_started = current_cpu_times();

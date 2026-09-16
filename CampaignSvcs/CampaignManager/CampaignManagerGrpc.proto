@@ -288,6 +288,7 @@ message CommonAdRequestInfo {
   bool set_cookie = 32;
   bytes passback_type = 33;
   bytes passback_url = 34;
+  bytes debug_request_id = 35;
 }
 
 message ContextAdRequestInfo {

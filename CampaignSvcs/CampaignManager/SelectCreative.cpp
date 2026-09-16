@@ -8,6 +8,14 @@
 
 namespace
 {
+  AdServer::Commons::RequestId
+  make_bid_request_id(const AdServer::Commons::RequestId& debug_request_id)
+  {
+    return debug_request_id.is_null() ?
+      AdServer::Commons::RequestId::create_random_based() :
+      debug_request_id;
+  }
+
   AdServer::CampaignSvcs::CreativeInstantiator::Config
   make_creative_instantiator_config(
     const AdServer::CampaignSvcs::CampaignManagerCore::CampaignManagerConfig&
@@ -74,7 +82,7 @@ namespace AdServer::CampaignSvcs
     select_params.ecpm = weighted_campaign.ecpm;
     select_params.ctr = weighted_campaign.ctr;
     select_params.conv_rate = weighted_campaign.conv_rate;
-    select_params.request_id = Commons::RequestId::create_random_based();
+    select_params.request_id = make_bid_request_id(request_params.common_info->debug_request_id);
 
     ad_selection_result.selected_campaigns.push_back(select_params);
 
@@ -191,7 +199,7 @@ namespace AdServer::CampaignSvcs
 
       select_params.actual_cpc = kw_it->actual_cpc;
       select_params.track_impr = true;
-      select_params.request_id = Commons::RequestId::create_random_based();
+      select_params.request_id = make_bid_request_id(request_params.common_info->debug_request_id);
 
       ad_selection_result.selected_campaigns.push_back(select_params);
     }

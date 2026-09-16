@@ -209,6 +209,7 @@ namespace AdServer::Bidding
     {
       target.set_time(GrpcAlgs::pack_time(source.time));
       target.set_request_id(GrpcAlgs::pack_request_id(source.request_id));
+      target.set_debug_request_id(GrpcAlgs::pack_request_id(source.debug_request_id));
       target.set_creative_instantiate_type(source.creative_instantiate_type);
       target.set_request_type(source.request_type);
       target.set_random(source.random);

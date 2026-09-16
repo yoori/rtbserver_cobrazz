@@ -434,6 +434,7 @@ namespace AdServer::Bidding
     unsigned long short_referer_hash = 0;
 
     Generics::Time current_time;
+    AdServer::Commons::RequestId debug_request_id;
     Generics::MonoString source_id;
     unsigned long debug_ccg;
     AccountIdArray publisher_account_ids;

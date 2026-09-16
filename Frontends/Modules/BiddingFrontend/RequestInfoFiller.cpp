@@ -56,6 +56,7 @@ namespace Request::Context
 namespace Request::Debug
 {
   const std::string_view EXPECTED_CCG("debug.ccg");
+  const std::string_view REQUEST_ID("debug.request_id");
   const std::string_view CURRENT_TIME("debug.time");
   const std::string_view ADSLOTS_SIZE("debug.size");
   const std::string_view AD_SLOT("debug.adslot");
@@ -3067,6 +3068,9 @@ namespace AdServer::Bidding
       Request::Context::REQUIRE_DEBUG_INFO,
       new FrontendCommons::StringParamProcessor<RequestInfo, Generics::MonoString>(
         &RequestInfo::require_debug_info));
+    add_param_processor_(
+      Request::Debug::REQUEST_ID,
+      new FrontendCommons::RequestIdParamProcessor<RequestInfo>(&RequestInfo::debug_request_id));
     add_param_processor_(
       Request::Debug::CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(
