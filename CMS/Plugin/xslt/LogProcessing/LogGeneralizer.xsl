@@ -249,7 +249,7 @@
       </xsl:call-template>
 
       <xsl:call-template name="OutputLogsConfigs">
-        <xsl:with-param name="list" select="'PostClickStat'"/>
+        <xsl:with-param name="list" select="'PostClickStat PostImpStat'"/>
         <xsl:with-param name="check-logs-period" select="$check-logs-period"/>
         <xsl:with-param name="flush-logs-period" select="$flush-logs-period"/>
         <xsl:with-param name="flush-logs-size" select="$flush-logs-size"/>

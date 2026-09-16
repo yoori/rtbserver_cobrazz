@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<colo:colocation
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration">
+  <host name="fe" hostName="frontend.example"/>
+  <application>
+    <serviceGroup descriptor="AdCluster">
+      <configuration>
+        <cfg:cluster>
+          <cfg:environment cpu_affinity="auto"/>
+        </cfg:cluster>
+      </configuration>
+      <serviceGroup descriptor="AdCluster/FrontendSubCluster">
+        <configuration>
+          <cfg:frontendCluster>
+            <cfg:channelServer>
+              <cfg:networkParams grpc_process_threads="6" grpc_threads_per_cq="2"/>
+            </cfg:channelServer>
+          </cfg:frontendCluster>
+        </configuration>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+          host="fe">
+          <configuration>
+            <cfg:campaignManager numa_node="1">
+              <cfg:networkParams grpc_process_threads="3" grpc_threads_per_cq="2"/>
+              <cfg:statLogging threads="2"/>
+            </cfg:campaignManager>
+          </configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelServer" host="fe"/>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoManager" host="fe">
+          <configuration>
+            <cfg:userInfoManager numa_node="1">
+              <cfg:networkParams
+                grpc_process_threads="5"
+                grpc_cq_threads="3"
+                grpc_threads_per_cq="2"/>
+              <cfg:matchParams rocksdb_batching_threads="7"/>
+            </cfg:userInfoManager>
+          </configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" host="fe">
+          <configuration>
+            <cfg:userBindServer numa_node="0" rocksdb_batching_threads="8">
+              <cfg:networkParams
+                grpc_process_threads="4"
+                grpc_cq_threads="2"
+                grpc_threads_per_cq="3"/>
+            </cfg:userBindServer>
+          </configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/HttpFrontend" host="fe">
+          <configuration>
+            <cfg:frontend>
+              <cfg:rtbFCGI1NetworkParams accept_threads="2"/>
+              <cfg:rtbConfig grpc_coalesce_threads="5" numa_node="0"/>
+              <cfg:clickModule threads="41"/>
+              <cfg:impressionModule threads="42"/>
+              <cfg:actionModule threads="40"/>
+              <cfg:biddingModule threads="7" interrupt_threads="3"/>
+              <cfg:userBindModule threads="43"/>
+            </cfg:frontend>
+          </configuration>
+        </service>
+      </serviceGroup>
+    </serviceGroup>
+  </application>
+</colo:colocation>

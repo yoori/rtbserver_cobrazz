@@ -1387,6 +1387,21 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="monitoring_influxdb_url" type="xsd:anyURI" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          InfluxDB endpoint for automatic cluster monitoring.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="monitoring_influxdb_database" type="NoLeadingTrailingSpaces"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          InfluxDB database for automatic cluster monitoring.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="mib_root" type="NoLeadingTrailingSpaces" use="optional">
       <xsd:annotation>
         <xsd:documentation>

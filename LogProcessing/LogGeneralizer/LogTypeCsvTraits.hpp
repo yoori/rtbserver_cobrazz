@@ -1141,8 +1141,8 @@ namespace AdServer::LogProcessing
         creative_key.position() << ',' << bool_to_char(creative_key.test()) << ',' <<
         bool_to_char(creative_key.fraud()) << ',' <<
         bool_to_char(creative_key.walled_garden()) << ',' << creative_key.user_status() << ',';
-      write_optional_value_as_csv(os, creative_key.geo_channel_id()) << ',';
-      write_optional_value_as_csv(os, creative_key.device_channel_id()) << ',';
+      write_optional_value_as_csv(os, creative_key.geo_channel_id(), "0") << ',';
+      write_optional_value_as_csv(os, creative_key.device_channel_id(), "0") << ',';
       os << creative_key.ctr_reset_id() << ',' << bool_to_char(creative_key.hid_profile()) << ',' <<
         creative_key.viewability();
       for (unsigned i = 0; i < 13; ++i)

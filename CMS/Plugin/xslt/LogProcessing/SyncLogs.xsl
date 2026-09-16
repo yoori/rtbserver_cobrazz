@@ -609,6 +609,7 @@
           <dirs>
             <dir>CreativeStat</dir>
             <dir>PostClickStat</dir>
+            <dir>PostImpStat</dir>
             <dir>UserProperties</dir>
             <dir>ChannelPerformance</dir>
             <dir>ExpressionPerformance</dir>
@@ -1149,6 +1150,8 @@
             <cfg:files source="LogGeneralizer/Out/CreativeStat/RequestStatsHourly_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/PostClickStat/CCGPostClickStatsHourly_*"
+              destination="/csvlistener/"/>
+            <cfg:files source="LogGeneralizer/Out/PostImpStat/PostImpStatsHourly_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStats_*"
               destination="/csvlistener/"/>

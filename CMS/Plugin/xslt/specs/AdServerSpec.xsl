@@ -162,7 +162,7 @@ rm %{__setup_dir}/backup/server-<xsl:value-of select="$colo-name"/>-* >/dev/null
 cp %{__setup_dir}/server-<xsl:value-of select="$colo-name"/>-* %{__setup_dir}/backup/ >/dev/null 2>/dev/null ||:
 </xsl:if>
 
-%_sbindir/groupadd -r -f -g 506 <xsl:value-of select="$user"/> >/dev/null ||:
+%_sbindir/groupadd -r -f -g 506 <xsl:value-of select="$group"/> >/dev/null ||:
 %_sbindir/useradd -r -m -c 'ad products operation account' -u 506 -g <xsl:value-of
   select="concat($group, ' ', $user)"/> >/dev/null 2>/dev/null ||:
 
@@ -233,7 +233,7 @@ foros server autostart configuration
 %pre <xsl:value-of select="$prefix"/>local-mgr
 rm %{__setup_dir}/backup/server-<xsl:value-of select="$colo-name"/>-* >/dev/null 2>/dev/null ||:
 cp %{__setup_dir}/server-<xsl:value-of select="$colo-name"/>-* %{__setup_dir}/backup/ >/dev/null 2>/dev/null ||:
-%_sbindir/groupadd -r -f -g 506 <xsl:value-of select="$user"/> >/dev/null ||:
+%_sbindir/groupadd -r -f -g 506 <xsl:value-of select="$group"/> >/dev/null ||:
 %_sbindir/useradd -r -m -c 'ad products operation account' -u 506 -g <xsl:value-of
   select="concat($group, ' ', $user)"/> >/dev/null 2>/dev/null ||:
 
@@ -382,6 +382,8 @@ EOF
 
 cat > %{buildroot}/usr/lib/tmpfiles.d/]]><xsl:value-of select="$ram-fs"/><![CDATA[.conf <<'EOF'
 d /dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[ 0755 root root -
+d /dev/]]><xsl:value-of select="$ram-fs"/><![CDATA[/log 0755 ]]><xsl:value-of
+  select="$user-name"/><xsl:text> </xsl:text><xsl:value-of select="$user-group"/><![CDATA[ -
 EOF]]>
 </xsl:if>
 
@@ -697,7 +699,6 @@ USER=<xsl:value-of select="$user-name"/>
 
 <xsl:if test="$ram-enabled">
 systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
-systemd-tmpfiles --create /usr/lib/tmpfiles.d/<xsl:value-of select="$ram-fs"/>.conf &gt;/dev/null 2&gt;&amp;1 ||:
 if mountpoint -q /dev/<xsl:value-of select="$ram-fs"/>; then
   if [ "$(findmnt -n -o FSTYPE --target /dev/<xsl:value-of select="$ram-fs"/>)" = tmpfs ]; then
     mount -o remount,size=<xsl:value-of select="$ram-size"/> /dev/<xsl:value-of select="$ram-fs"/> ||:
@@ -707,9 +708,8 @@ if mountpoint -q /dev/<xsl:value-of select="$ram-fs"/>; then
 else
   systemctl enable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
 fi
-if test -d /dev/<xsl:value-of select="$ram-fs"/>/log; then
-  chown %{__user}:%{__group} /dev/<xsl:value-of select="$ram-fs"/>/log ||:
-fi
+systemd-tmpfiles --create /usr/lib/tmpfiles.d/<xsl:value-of
+  select="$ram-fs"/>.conf &gt;/dev/null 2&gt;&amp;1 ||:
 </xsl:if>
 
 <xsl:if test="$public-key-defined">

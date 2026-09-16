@@ -67,6 +67,33 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE|=$?"
 
+if [ -n "$SERVICES_HOSTS" ]
+then
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$CLUSTER_XPATH" \
+    --service-hosts "$SERVICES_HOSTS" \
+    --app-xml $APP_XML \
+    --xsl $PLUGIN_ROOT/xslt/LogProcessing/StatCollector.xsl \
+    --out-file StatCollectorConfig.json \
+    --out-dir $OUT_DIR \
+    --out-dir-suffix "$OUT_DIR_SUFFIX" \
+    --plugin-root $PLUGIN_ROOT
+
+  let "EXIT_CODE|=$?"
+
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$CLUSTER_XPATH" \
+    --service-hosts "$SERVICES_HOSTS" \
+    --app-xml $APP_XML \
+    --xsl $PLUGIN_ROOT/xslt/LogProcessing/Telegraf.xsl \
+    --out-file Telegraf.conf \
+    --out-dir $OUT_DIR \
+    --out-dir-suffix "$OUT_DIR_SUFFIX" \
+    --plugin-root $PLUGIN_ROOT
+
+  let "EXIT_CODE|=$?"
+fi
+
 # Backend subcluster configuration
 BACKEND_CLUSTER_DESCR=AdCluster/BackendSubCluster
 BE_CLUSTER_XPATH="$CLUSTER_XPATH/serviceGroup[@descriptor = '$BACKEND_CLUSTER_DESCR']"

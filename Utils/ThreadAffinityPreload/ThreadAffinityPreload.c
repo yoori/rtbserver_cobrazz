@@ -24,6 +24,7 @@ enum Mode
 };
 
 #define THREAD_TYPE_STATE_COUNT 128
+#define AFFINITY_MAP_ENTRY_COUNT 256
 
 struct Config
 {
@@ -36,7 +37,17 @@ struct Config
   int restrict_to_original_cpu_set;
   int numa_node;
   int numa_node_set;
+  int affinity_map_available;
   int verbose;
+};
+
+struct AffinityMapEntry
+{
+  int used;
+  int numa_node;
+  char name[16];
+  uint64_t positions[CPU_SETSIZE];
+  unsigned int position_count;
 };
 
 struct ThreadTypeState
@@ -47,6 +58,7 @@ struct ThreadTypeState
   char name[16];
   uint64_t base;
   uint64_t next;
+  int affinity_map_entry;
 };
 
 struct StartContext
@@ -64,6 +76,8 @@ static struct Config config;
 static uint64_t next_cpu_index = 0;
 static pthread_mutex_t thread_type_states_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct ThreadTypeState thread_type_states[THREAD_TYPE_STATE_COUNT];
+static struct AffinityMapEntry affinity_map_entries[AFFINITY_MAP_ENTRY_COUNT];
+static unsigned int affinity_map_entry_count = 0;
 static __thread int current_thread_cpu = -1;
 static PthreadCreate real_pthread_create = NULL;
 static PthreadSetname real_pthread_setname = NULL;
@@ -186,6 +200,127 @@ parse_uint_value(const char** pos_ptr, int* value)
   *value = (int)result;
   *pos_ptr = pos;
   return 1;
+}
+
+static char*
+trim_right(char* value)
+{
+  char* end = value + strlen(value);
+  while (end > value && isspace((unsigned char)end[-1]))
+  {
+    --end;
+  }
+  *end = '\0';
+  return value;
+}
+
+static int
+parse_position_list(char* value, struct AffinityMapEntry* entry)
+{
+  const char* pos = value;
+  while (1)
+  {
+    int abstract_cpu = 0;
+    if (!parse_uint_value(&pos, &abstract_cpu))
+    {
+      return 0;
+    }
+
+    if (entry->position_count >= CPU_SETSIZE)
+    {
+      return 0;
+    }
+    entry->positions[entry->position_count++] = (uint64_t)abstract_cpu;
+
+    pos = skip_spaces(pos);
+    if (*pos == '\0')
+    {
+      return entry->position_count != 0;
+    }
+
+    if (*pos != ',')
+    {
+      return 0;
+    }
+    ++pos;
+  }
+}
+
+static int
+load_affinity_map(const char* path)
+{
+  if (!path || *skip_spaces(path) == '\0')
+  {
+    return 0;
+  }
+
+  FILE* file = fopen(path, "r");
+  if (!file)
+  {
+    return 0;
+  }
+
+  char line[8192];
+  while (fgets(line, sizeof(line), file))
+  {
+    char* pool = (char*)skip_spaces(line);
+    if (*pool == '\0' || *pool == '#')
+    {
+      continue;
+    }
+
+    char* numa_node_text = strchr(pool, '\t');
+    if (!numa_node_text)
+    {
+      fclose(file);
+      return 0;
+    }
+    *numa_node_text++ = '\0';
+    trim_right(pool);
+
+    char* positions_text = strchr(numa_node_text, '\t');
+    if (!positions_text)
+    {
+      fclose(file);
+      return 0;
+    }
+    *positions_text++ = '\0';
+    trim_right(numa_node_text);
+    trim_right(positions_text);
+
+    if (affinity_map_entry_count >= AFFINITY_MAP_ENTRY_COUNT)
+    {
+      fclose(file);
+      return 0;
+    }
+
+    int numa_node = 0;
+    const char* numa_node_pos = numa_node_text;
+    if (!parse_uint_value(&numa_node_pos, &numa_node) || *skip_spaces(numa_node_pos) != '\0')
+    {
+      fclose(file);
+      return 0;
+    }
+
+    struct AffinityMapEntry* entry = &affinity_map_entries[affinity_map_entry_count];
+    memset(entry, 0, sizeof(*entry));
+    entry->used = 1;
+    entry->numa_node = numa_node;
+
+    const size_t name_size = strnlen(pool, sizeof(entry->name) - 1);
+    memcpy(entry->name, pool, name_size);
+    entry->name[name_size] = '\0';
+
+    if (!parse_position_list(positions_text, entry))
+    {
+      fclose(file);
+      return 0;
+    }
+    ++affinity_map_entry_count;
+  }
+
+  fclose(file);
+  return affinity_map_entry_count != 0;
 }
 
 static void
@@ -517,6 +652,36 @@ parse_affinity_cpus(const char* value)
   return cpu_spec ? parse_cpu_list_value(cpu_spec) : 0;
 }
 
+static int
+find_affinity_map_entry(const char* name, int numa_node)
+{
+  if (!config.affinity_map_available)
+  {
+    return -1;
+  }
+
+  for (unsigned int i = 0; i < affinity_map_entry_count; ++i)
+  {
+    const struct AffinityMapEntry* entry = &affinity_map_entries[i];
+    if (!entry->used)
+    {
+      continue;
+    }
+
+    if (config.numa_node_set && entry->numa_node != numa_node)
+    {
+      continue;
+    }
+
+    if (strncmp(entry->name, name ? name : "", sizeof(entry->name)) == 0)
+    {
+      return (int)i;
+    }
+  }
+
+  return -1;
+}
+
 static struct ThreadTypeState*
 get_thread_type_state(const char* name, int numa_node)
 {
@@ -565,6 +730,7 @@ get_thread_type_state(const char* name, int numa_node)
     ((uint64_t)(uint32_t)(numa_node + 1) << 48) ^
     (uintptr_t)free_state);
   free_state->next = 0;
+  free_state->affinity_map_entry = find_affinity_map_entry(name, numa_node);
 
   pthread_mutex_unlock(&thread_type_states_lock);
   return free_state;
@@ -578,6 +744,13 @@ next_cpu_index_for_name(const char* name)
   if (!state)
   {
     return __atomic_fetch_add(&next_cpu_index, 1, __ATOMIC_RELAXED);
+  }
+
+  if (state->affinity_map_entry >= 0)
+  {
+    const struct AffinityMapEntry* entry = &affinity_map_entries[state->affinity_map_entry];
+    const uint64_t next = __atomic_fetch_add(&state->next, 1, __ATOMIC_RELAXED);
+    return entry->positions[next % entry->position_count];
   }
 
   return state->base +
@@ -619,6 +792,7 @@ init_config()
     config.auto_cpus = 1;
     init_auto_cpus();
   }
+  config.affinity_map_available = load_affinity_map(getenv("ADS_THREAD_AFFINITY_MAP"));
   shuffle_auto_cpus();
 
   real_pthread_create = (PthreadCreate)dlsym(RTLD_NEXT, "pthread_create");

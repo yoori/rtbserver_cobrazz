@@ -100,10 +100,13 @@ sub prepare_ram_log_dirs
 
 sub thread_affinity_env
 {
-  my ($config_file, $config_element) = @_;
+  my ($config_file, $config_element, $service) = @_;
+  my $affinity_file = $config_file;
+  $affinity_file =~ s{/[^/]*$}{/$service.cpu_aff};
 
   return
     "ADS_THREAD_AFFINITY=round_robin_by_name " .
+    "ADS_THREAD_AFFINITY_MAP=\"$affinity_file\" " .
     "ADS_THREAD_AFFINITY_CPUS=\"(n:\$(sed -n 's/.*<cfg:" .
       $config_element .
       "[^>]*numa_node=\"\\([0-9][0-9]*\\)\".*/\\1/p' " .

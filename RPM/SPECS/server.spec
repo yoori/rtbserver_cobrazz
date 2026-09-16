@@ -38,6 +38,7 @@
 %define __boost_package         boost185
 %define __boost_ver_req         1.85.0-ssv1.el8
 %define __clickhouse_ver_req    25.3.14.14-1
+%define __telegraf_ver_req      1.38.1
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
@@ -80,6 +81,7 @@ Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
 BuildRequires: libevent-devel = 2.1.8
 Requires: libevent = %__libevent_ver_req
+Requires: foros-telegraf >= %__telegraf_ver_req
 %if "%{?__type:%{__type}}%{!?__type:0}" == "central"
 Conflicts: foros-server-remote-debuginfo
 Conflicts: foros-server-central-debuginfo < %{version}

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <boost/unordered/unordered_flat_map.hpp>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <future>
@@ -196,6 +197,13 @@ namespace AdServer::ProfilingCommons
 
   RocksDBBatchingProfileMapImpl::~RocksDBBatchingProfileMapImpl() noexcept
   {
+    recovery_stopping_.store(true, std::memory_order_release);
+    recovery_cond_.notify_all();
+    if (recovery_thread_.joinable())
+    {
+      recovery_thread_.join();
+    }
+
     if (db_)
     {
       db_->Close();
@@ -218,9 +226,22 @@ namespace AdServer::ProfilingCommons
         stopping_ = false;
         submission_gate_.activate_object();
       }
+      recovery_stopping_.store(false, std::memory_order_release);
+      recovery_thread_ = std::thread(
+        [this]() noexcept
+        {
+          background_error_recovery_loop_();
+        });
     }
     catch (...)
     {
+      recovery_stopping_.store(true, std::memory_order_release);
+      recovery_cond_.notify_all();
+      if (recovery_thread_.joinable())
+      {
+        recovery_thread_.join();
+      }
+
       if (owns_processor_)
       {
         processor_->deactivate_object();
@@ -233,6 +254,9 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::deactivate_object_()
   {
+    recovery_stopping_.store(true, std::memory_order_release);
+    recovery_cond_.notify_all();
+
     {
       Sync::PosixGuard guard(error_lock_);
       stopping_ = true;
@@ -248,6 +272,11 @@ namespace AdServer::ProfilingCommons
   void
   RocksDBBatchingProfileMapImpl::wait_object_()
   {
+    if (recovery_thread_.joinable())
+    {
+      recovery_thread_.join();
+    }
+
     submission_gate_.wait_object();
     processor_->wait_unregister_map_(*this);
     if (owns_processor_)
@@ -1356,6 +1385,44 @@ namespace AdServer::ProfilingCommons
       background_error_probe_in_progress_ = false;
       has_background_error_.store(true, std::memory_order_release);
       submission_gate_.deactivate_object();
+    }
+
+    recovery_cond_.notify_all();
+  }
+
+  void
+  RocksDBBatchingProfileMapImpl::background_error_recovery_loop_() noexcept
+  {
+    while (!recovery_stopping_.load(std::memory_order_acquire))
+    {
+      try
+      {
+        check_background_error_();
+      }
+      catch (...)
+      {}
+
+      std::unique_lock<std::mutex> lock(recovery_lock_);
+      if (has_background_error_.load(std::memory_order_acquire))
+      {
+        recovery_cond_.wait_for(
+          lock,
+          std::chrono::microseconds(BACKGROUND_ERROR_RETRY_PERIOD.microseconds()),
+          [this]()
+          {
+            return recovery_stopping_.load(std::memory_order_acquire);
+          });
+      }
+      else
+      {
+        recovery_cond_.wait(
+          lock,
+          [this]()
+          {
+            return recovery_stopping_.load(std::memory_order_acquire) ||
+              has_background_error_.load(std::memory_order_acquire);
+          });
+      }
     }
   }
 

@@ -24,7 +24,8 @@ sub start
        "{ ".
          AdServer::Functions::thread_affinity_env(
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml",
-           "ChannelServerConfig") .
+           "ChannelServerConfig",
+           "ChannelServer") .
          "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} ChannelServer " .
            "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ChannelServer.xml > " .
            "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}ChannelServer.out 2>&1 < /dev/null ; " .

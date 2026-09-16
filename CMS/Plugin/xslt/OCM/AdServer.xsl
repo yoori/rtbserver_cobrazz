@@ -227,6 +227,12 @@
     <xsl:variable name="count-uim-clusters"
       select="count($cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor])"/>
 
+    <xsl:call-template name="AddOneOnHostService">
+      <xsl:with-param name="serv-path" select="$cluster-path//service"/>
+      <xsl:with-param name="service-name" select="'lp-Telegraf'"/>
+      <xsl:with-param name="service-type" select="'AdServer::LogProcessing::Telegraf'"/>
+    </xsl:call-template>
+
     <xsl:if test="count($be-cluster-path) > 0">
 
       <xsl:variable

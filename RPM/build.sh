@@ -24,7 +24,7 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build epel-rpm-macros || \
+yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build epel-rpm-macros cpio || \
   { echo "can't install RPM build packages" >&2 ; exit 1 ; }
 
 # create folders for RPM build environment
@@ -38,6 +38,8 @@ rm -f "$DSP_SPEC_FILE"
 # download sources from git tag, pack and pass to sources dir
 echo "to download sources from dev branch"
 RPM_SOURCES_DIR=`rpm -E %_sourcedir`
+
+bash RPM/build-telegraf.sh
 
 
 # create tag and push it to repo

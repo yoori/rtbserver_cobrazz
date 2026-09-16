@@ -349,6 +349,7 @@
 
         <cfg:CreativeStat period="{$flush-logs-period}"/>
         <cfg:PostClickStat period="{$flush-logs-period}"/>
+        <cfg:PostImpStat period="{$flush-logs-period}"/>
         <cfg:UserProperties period="{$flush-logs-period}"/>
         <cfg:ChannelPerformance period="{$flush-logs-period}"/>
         <cfg:SiteChannelStat period="{$flush-logs-period}"/>

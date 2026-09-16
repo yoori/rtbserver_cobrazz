@@ -32,7 +32,8 @@ sub start
    "{ ".
      AdServer::Functions::thread_affinity_env(
        "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserInfoManagerConfig.xml",
-       "UserInfoManagerConfig") .
+       "UserInfoManagerConfig",
+       "UserInfoManager") .
      "setsid -f \${CONTROL_CPU_AFFINITY} \${VALGRIND_PREFIX} UserInfoManager " .
        "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserInfoManagerConfig.xml > " .
        "\${workspace_root}/${AdServer::Path::OUT_FILE_BASE}UserInfoManager.out 2>&1 < /dev/null ; " .

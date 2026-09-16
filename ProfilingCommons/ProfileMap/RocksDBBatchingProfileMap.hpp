@@ -1,11 +1,14 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 
 #include <String/SubString.hpp>
 
@@ -245,6 +248,8 @@ namespace AdServer::ProfilingCommons
 
     void set_background_error_(const std::string& error) noexcept;
 
+    void background_error_recovery_loop_() noexcept;
+
   private:
     const std::string path_;
     const Generics::Time expire_time_;
@@ -271,6 +276,11 @@ namespace AdServer::ProfilingCommons
     mutable std::uint64_t background_error_generation_ = 0;
     mutable bool background_error_probe_in_progress_ = false;
     bool stopping_ = true;
+
+    std::atomic<bool> recovery_stopping_{true};
+    mutable std::mutex recovery_lock_;
+    mutable std::condition_variable recovery_cond_;
+    std::thread recovery_thread_;
   };
 
   inline bool

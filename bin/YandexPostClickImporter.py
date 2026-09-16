@@ -80,7 +80,7 @@ ORDER BY (ymref_id, event_date)
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
 REPORTING_PAGE_SIZE = 100000
-REQUEST_ID_PATTERN = r'[A-Za-z0-9_-]{22}\.\.'
+REQUEST_ID_PATTERN = r'[A-Za-z0-9_-]{22}[.][.]'
 USER_ID_PATTERN = rf'({REQUEST_ID_PATTERN})?'
 COLON_PATTERN = r'(:|%3[Aa]|%253[Aa])'
 TERM_SEPARATOR_PATTERN = r'(;|%3[Bb]|%253[Bb])'
@@ -427,14 +427,18 @@ class Application(Service):
         break
       offset += len(data)
 
-    old_rows = {
-      (row[0], int(row[1])): tuple(row[2:])
-      for row in self.ch.query(
+    old_rows = {}
+    for row in self.ch.query(
         f"SELECT hour, ccid, visits, visits_with_bounce, session_time_sum, "
         f"page_views, new_user_visits, sampled, sample_share FROM {REPORTING_SYNC_TABLE} FINAL "
         "WHERE ymref_id = %(ymref_id)s AND hour >= %(date1)s",
-        parameters={'ymref_id': ymref_id, 'date1': date1}).result_rows
-    }
+        parameters={'ymref_id': ymref_id, 'date1': date1}).result_rows:
+      hour = row[0]
+      if hour.tzinfo is None:
+        hour = hour.replace(tzinfo=datetime.timezone.utc)
+      else:
+        hour = hour.astimezone(datetime.timezone.utc)
+      old_rows[(hour, int(row[1]))] = tuple(row[2:])
     changed = []
     version = datetime.datetime.now(datetime.timezone.utc)
     for (hour, ccid), values in rows.items():
@@ -563,17 +567,23 @@ class Application(Service):
       return []
 
     with Context(self, out_dir=self.post_click_dir) as context:
+      writers = {}
       for _, _, event_time, request_id, payload, _ in new_records:
         chunk = request_chunk(request_id, self.chunks_count)
-        writer = context.files.get_line_writer(
-          key=chunk,
-          name=lambda chunk=chunk:
-            f'PostClickAction.{context.fname_seed}.{self.chunks_count}.{chunk}')
+        writer = writers.get(chunk)
+        if writer is None:
+          writer = context.files.get_line_writer(
+            key=chunk,
+            name=lambda chunk=chunk:
+              f'PostClickAction.{context.fname_seed}.{self.chunks_count}.{chunk}')
+          writers[chunk] = writer
         if writer.first:
           writer.write_line(POST_CLICK_ACTION_VERSION)
         writer.write_line(
           event_time.strftime('%Y-%m-%d_%H:%M:%S') + '\t' + request_id +
           '\tlanding\t' + payload)
+      for writer in writers.values():
+        writer.write('\n')
 
     published_at = datetime.datetime.now(datetime.timezone.utc)
     return [

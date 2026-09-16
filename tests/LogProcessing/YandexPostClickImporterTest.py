@@ -77,6 +77,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertIn('%3[Bb]', params['filters'])
     self.assertIn('%253[Bb]', params['filters'])
     self.assertIn('%253[Aa]', params['filters'])
+    self.assertIn('[.][.]', params['filters'])
+    self.assertNotIn(r'\.\.', params['filters'])
 
   def test_logs_api_contract(self):
     calls = []
@@ -194,7 +196,10 @@ class YandexPostClickImporterTest(unittest.TestCase):
         self.inserted = []
 
       def query(self, query, parameters):
-        return types.SimpleNamespace(result_rows=[])
+        return types.SimpleNamespace(result_rows=[(
+          datetime.datetime(2026, 9, 10, 12),
+          1, 3, 1, 24.0, 4, 1, False, 1.0,
+        )])
 
       def insert(self, table, rows, column_names):
         self.inserted.append((table, rows, column_names))
@@ -217,7 +222,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(result['rows'][(hour1, 1)][:5], [3, 1, 24.0, 4, 1])
     self.assertEqual(result['rows'][(hour2, 2)][:5], [4, 1, 8.0, 5, 2])
     self.assertFalse(result['unsampled'])
-    self.assertEqual(len(upserted), 2)
+    self.assertEqual(len(upserted), 1)
+    self.assertEqual(upserted[0][1:3], (hour2, 2))
     self.assertEqual(len(self.application.ch.inserted), 1)
 
   def test_update_import_status_uses_postgres_function(self):
@@ -582,7 +588,9 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       output_files = tuple(pathlib.Path(self.application.post_click_dir).iterdir())
       self.assertEqual(len(output_files), 1)
-      lines = output_files[0].read_text().splitlines()
+      output = output_files[0].read_text()
+      self.assertTrue(output.endswith('\n'))
+      lines = output.splitlines()
       self.assertEqual(lines[0], IMPORTER.POST_CLICK_ACTION_VERSION)
       self.assertEqual(lines[1].split('\t')[1:3], [REQUEST_ID, 'landing'])
 

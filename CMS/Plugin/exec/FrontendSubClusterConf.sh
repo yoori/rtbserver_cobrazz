@@ -362,6 +362,40 @@ then
 
 fi
 
+CPU_AFFINITY_MODE_XPATH="$CLUSTER_XPATH/../configuration/cfg:cluster"
+CPU_AFFINITY_MODE_XPATH="$CPU_AFFINITY_MODE_XPATH/cfg:environment/@cpu_affinity"
+CPU_AFFINITY_MODE=`$EXEC/XPathGetValue.sh \
+  --xml "$APP_XML" \
+  --xpath "$CPU_AFFINITY_MODE_XPATH" \
+  --plugin-root "$PLUGIN_ROOT"`
+
+if [ "$CPU_AFFINITY_MODE" = "auto" ]
+then
+  CPU_AFFINITY_SERVICES_XPATH="$CAMPAIGN_MANAGER_XPATH | $CHANNEL_SERVER_XPATH | \
+    $USER_INFO_MANAGER_XPATH | $USER_BIND_SERVER_SERVICE_XPATH | $HTTP_FRONTEND_XPATH"
+  CPU_AFFINITY_HOSTS=`$EXEC/GetHosts.sh \
+    --app-xml "$APP_XML" \
+    --host-service-xpath "$CPU_AFFINITY_SERVICES_XPATH" \
+    --plugin-root "$PLUGIN_ROOT"`
+
+  for host in $CPU_AFFINITY_HOSTS
+  do
+    CPU_AFFINITY_POOLS_FILE="$OUT_DIR/$host/CpuAffinityPools.tsv"
+
+    $EXEC/XsltTransformer.sh \
+      --var XPATH "$CLUSTER_XPATH" \
+      --var HOST "$host" \
+      --app-xml "$APP_XML" \
+      --xsl "$XSLT_ROOT/CpuAffinityPools.xsl" \
+      --out-file "$CPU_AFFINITY_POOLS_FILE" &&
+    $EXEC/bin/GenerateCpuAffinity.py \
+      --output-dir "$OUT_DIR/$host" \
+      "$CPU_AFFINITY_POOLS_FILE"
+
+    let "EXIT_CODE|=$?"
+  done
+fi
+
 $EXEC/FrontendSubClusterCurrentEnvConf.sh \
   "$APP_XML" \
   "$CLUSTER_XPATH" \

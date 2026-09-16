@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <String/SubString.hpp>
 #include <Logger/Logger.hpp>
@@ -52,6 +53,7 @@
 #include <LogCommons/SiteUserStat.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/ResearchLogs.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogProcessing/LogGeneralizer/LogTypeCsvTraits.hpp>
@@ -974,6 +976,52 @@ int main(int argc, char **argv)
       PostClickStatCollector::KeyT(TEST_TIME, TEST_TIME),
       std::move(data));
     LogIoTester<PostClickStatTraits>(dump_on_fail).test(collector);
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
+
+  try
+  {
+    PostImpStatCollector collector;
+    PostImpStatCollector::DataT data;
+    const CreativeStatInnerKey creative_key(
+      1, 10, 2, OptionalUInt32(3), "RU", 20, 30, 40, 1, 2, 3, 4, 5,
+      CreativeStatInnerKey::DeliveryThresholdT("0.19999"), 1, 1, false, false, false, 'U',
+      CreativeStatInnerKey::GeoChannelIdOptional(),
+      CreativeStatInnerKey::DeviceChannelIdOptional(), 111, true, 66);
+    PostImpStatInnerData counters;
+    for (unsigned i = 0; i < 13; ++i)
+    {
+      for (unsigned j = 0; j <= i; ++j)
+      {
+        counters += PostImpStatInnerData(i);
+      }
+    }
+    data.add(creative_key, counters);
+    const PostImpStatCollector::KeyT key(TEST_TIME, TEST_TIME);
+    collector.add(key, data);
+    LogIoTester<PostImpStatTraits>(dump_on_fail).test(collector);
+
+    std::ostringstream csv;
+    PostImpStatCsvTraits::write_as_csv(csv, key, creative_key, counters);
+    std::istringstream input(csv.str());
+    std::vector<std::string> fields;
+    for (std::string field; std::getline(input, field, ',');)
+    {
+      fields.push_back(field);
+    }
+
+    if (fields.size() != 40 || fields[22] != "0" || fields[23] != "0")
+    {
+      throw LogIoTester<PostImpStatTraits>::Exception(
+        "PostImpStat CSV needs 40 fields and zero optional channel IDs");
+    }
+    for (unsigned i = 0; i < 13; ++i)
+    {
+      if (fields[27 + i] != std::to_string(i + 1))
+      {
+        throw LogIoTester<PostImpStatTraits>::Exception("PostImpStat CSV counter order/value mismatch");
+      }
+    }
   }
   HANDLE_EXCEPTIONS(exitcode, 1);
 
