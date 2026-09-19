@@ -108,6 +108,12 @@
       <xsl:value-of select="$def-request-info-manager-port"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="request-info-manager-monitoring-port">
+    <xsl:value-of select="$request-info-manager-config/cfg:networkParams/@monitoring_port"/>
+    <xsl:if test="count($request-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$request-info-manager-port + 600"/>
+    </xsl:if>
+  </xsl:variable>
 
   <exsl:document href="requestInfoManager.port"
     method="text" omit-xml-declaration="yes"
@@ -199,6 +205,10 @@
 
       <cfg:Endpoint host="*" port="{$request-info-manager-port}"/>
     </cfg:GrpcConfig>
+
+    <cfg:HttpConfig process_threads="4">
+      <cfg:Endpoint host="*" port="{$request-info-manager-monitoring-port}"/>
+    </cfg:HttpConfig>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">

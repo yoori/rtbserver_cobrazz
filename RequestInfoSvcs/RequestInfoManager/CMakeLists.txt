@@ -83,6 +83,7 @@ target_link_libraries(RequestInfoContainer
 
 add_executable(RequestInfoManager
   RequestInfoManagerGrpc.cpp
+  RequestInfoManagerHttp.cpp
   RequestInfoManagerMain.cpp
   RequestInfoManagerImpl.cpp
   RequestLogLoader.cpp
@@ -104,6 +105,7 @@ target_link_libraries(RequestInfoManager
     RequestInfoManagerGrpcProto
     Commons
     HTTP
+    HttpServer
     Logger
     CORBAConfig
     RequestInfoManagerConfigXSD

@@ -86,6 +86,8 @@ namespace AdServer::RequestInfoSvcs
 
     typedef std::list<unsigned long> ChunkIdList;
 
+    using RocksDBStats = ProfilingCommons::RocksDBProfileMapProcessor::Stats;
+
   public:
     RequestInfoManagerImpl(
       Generics::ActiveObjectCallback* callback,
@@ -117,6 +119,8 @@ namespace AdServer::RequestInfoSvcs
 
     AdServer::Commons::Awaitable<void>
     co_clear_expired(bool synchronous);
+
+    RocksDBStats rocksdb_stats() const noexcept;
 
     void get_controllable_chunks(ChunkIdList& chunk_ids, unsigned long& common_chunks_number)
       /*throw(Exception)*/;

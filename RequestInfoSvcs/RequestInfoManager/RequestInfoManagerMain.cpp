@@ -5,11 +5,13 @@
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/PidFileGuard.hpp>
 #include <Commons/ScopeGuard.hpp>
 #include <Commons/SignalActiveObject.hpp>
 
 #include "RequestInfoManagerMain.hpp"
+#include "RequestInfoManagerHttp.hpp"
 #include "RequestInfoManagerStats.hpp"
 #include "RequestInfoManagerStatsAgent.hpp"
 
@@ -166,6 +168,24 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
 
     active_objects->add_child_object(request_info_manager_impl.in());
     active_objects->add_child_object(grpc_adapter.in());
+
+    if (config().HttpConfig().present())
+    {
+      AdServer::Commons::HttpServer::HttpServer_var http_server =
+        new AdServer::Commons::HttpServer::HttpServer(
+          config().HttpConfig()->Endpoint().host().present() &&
+            *config().HttpConfig()->Endpoint().host() != "*" ?
+            *config().HttpConfig()->Endpoint().host() :
+            "0.0.0.0",
+          config().HttpConfig()->Endpoint().port(),
+          config().HttpConfig()->process_threads(),
+          true);
+      http_server->add_handler(
+        "/stats",
+        AdServer::RequestInfoSvcs::make_request_info_manager_stats_http_handler(
+          request_info_manager_impl.in()));
+      active_objects->add_child_object(http_server.in());
+    }
 
     AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects->activate_object();

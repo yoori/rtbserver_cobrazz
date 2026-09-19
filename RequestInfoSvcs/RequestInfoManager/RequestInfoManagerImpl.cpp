@@ -513,6 +513,12 @@ namespace AdServer::RequestInfoSvcs
     {}
   }
 
+  RequestInfoManagerImpl::RocksDBStats
+  RequestInfoManagerImpl::rocksdb_stats() const noexcept
+  {
+    return rocksdb_processor_->stats();
+  }
+
   template<typename ContainerPtrHolderType, typename KeyType>
   AdServer::Commons::Awaitable<Generics::ConstSmartMemBuf_var>
   RequestInfoManagerImpl::co_get_profile_(
