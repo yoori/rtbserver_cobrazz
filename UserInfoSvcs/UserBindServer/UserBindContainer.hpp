@@ -48,7 +48,11 @@ namespace AdServer::UserInfoSvcs
       unsigned long partition_index, // instance partition number (first or second part of cluster)
       unsigned long partitions_number,
       unsigned long rocksdb_batching_threads = 2,
-      std::size_t rocksdb_cache_size = 0)
+      std::size_t rocksdb_cache_size = 0,
+      int compaction_threads = 32,
+      int per_compaction_threads = 4,
+      int flush_threads = 32,
+      int max_mem_tables = 6)
       /*throw(Exception)*/;
 
     static void

@@ -181,7 +181,12 @@ namespace AdServer::ProfilingCommons
     }
 
     rocksdb::Options options;
-    configure_rocksdb_profile_map_options(options);
+    configure_rocksdb_profile_map_options(
+      options,
+      processor_->compaction_threads_,
+      processor_->per_compaction_threads_,
+      processor_->flush_threads_,
+      processor_->max_mem_tables_);
 
     rocksdb::DBWithTTL* db = nullptr;
     const auto status = rocksdb::DBWithTTL::Open(options, path_.c_str(), &db, expire_time.tv_sec);

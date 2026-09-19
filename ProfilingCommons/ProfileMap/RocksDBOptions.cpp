@@ -55,18 +55,24 @@ namespace AdServer::ProfilingCommons
   }
 
   void
-  configure_rocksdb_profile_map_options(rocksdb::Options& options)
+  configure_rocksdb_profile_map_options(
+    rocksdb::Options& options,
+    int compaction_threads,
+    int per_compaction_threads,
+    int flush_threads,
+    int max_mem_tables)
   {
-    options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
     options.create_if_missing = true;
     options.compression = rocksdb::kNoCompression;
     options.target_file_size_multiplier = 2;
+    options.max_background_compactions = compaction_threads;
+    options.max_background_flushes = flush_threads;
+    options.max_subcompactions = per_compaction_threads;
 
     options.write_buffer_size = WRITE_BUFFER_SIZE;
-    options.max_write_buffer_number = 4;
+    options.max_write_buffer_number = max_mem_tables;
     options.target_file_size_base = TARGET_FILE_SIZE_BASE;
-    options.max_background_jobs = 4;
     options.bytes_per_sync = SYNC_EVERY_BYTES;
     options.wal_bytes_per_sync = SYNC_EVERY_BYTES;
     options.listeners.emplace_back(manual_no_space_recovery_listener());

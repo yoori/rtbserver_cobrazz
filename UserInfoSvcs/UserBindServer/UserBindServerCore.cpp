@@ -405,7 +405,11 @@ namespace AdServer::UserInfoSvcs
         config_.partition_index,
         config_.partitions_number,
         config_.storage.rocksdb_batching_threads,
-        config_.storage.rocksdb_cache_size);
+        config_.storage.rocksdb_cache_size,
+        config_.storage.compaction_threads,
+        config_.storage.per_compaction_threads,
+        config_.storage.flush_threads,
+        config_.storage.max_mem_tables);
       UserBindProcessor_var user_bind_processor = user_bind_container;
 
       UserBindProcessor_var result_user_bind_processor;

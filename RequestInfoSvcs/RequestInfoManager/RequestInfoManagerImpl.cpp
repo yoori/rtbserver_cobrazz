@@ -164,7 +164,12 @@ namespace AdServer::RequestInfoSvcs
       rocksdb_processor_(std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
         request_info_manager_config.rocksdb_batching_threads(),
         32,
-        request_info_manager_config.rocksdb_cache_size())),
+        request_info_manager_config.rocksdb_cache_size(),
+        256,
+        request_info_manager_config.compaction_threads(),
+        request_info_manager_config.per_compaction_threads(),
+        request_info_manager_config.flush_threads(),
+        request_info_manager_config.max_mem_tables())),
       request_info_manager_config_(request_info_manager_config),
       rim_stats_impl_(rim_stats_impl)
   {

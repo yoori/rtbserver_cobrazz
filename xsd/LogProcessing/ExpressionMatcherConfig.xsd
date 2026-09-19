@@ -197,6 +197,10 @@
     <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
     <xsd:attribute name="rocksdb_batching_threads" type="xsd:positiveInteger" default="16"/>
     <xsd:attribute name="rocksdb_cache_size" type="xsd:nonNegativeInteger" default="0"/>
+    <xsd:attribute name="compaction_threads" type="xsd:positiveInteger" default="32"/>
+    <xsd:attribute name="per_compaction_threads" type="xsd:positiveInteger" default="4"/>
+    <xsd:attribute name="flush_threads" type="xsd:positiveInteger" default="32"/>
+    <xsd:attribute name="max_mem_tables" type="xsd:positiveInteger" default="6"/>
   </xsd:complexType>
 
   <xsd:complexType name="ExpressionMatcherGrpcGroupType">

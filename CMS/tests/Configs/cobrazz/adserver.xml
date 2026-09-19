@@ -1257,7 +1257,13 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
               <configuration:threadParams min="100"/>
               <configuration:updateParams update_period="300"/>
               <configuration:profilesCleanupParams life_time="15" temp_life_time="30" clean_time="00:01" clean_user_profiles="false"/>
-              <configuration:matchParams session_timeout="30" repeat_trigger_timeout="60"/>
+              <configuration:matchParams
+                session_timeout="30"
+                repeat_trigger_timeout="60"
+                compaction_threads="32"
+                per_compaction_threads="4"
+                flush_threads="32"
+                max_mem_tables="6"/>
               <configuration:storage min_free_space="0" max_add_undumped_size="300" max_temp_undumped_size="3072" max_history_undumped_size="2048" max_base_undumped_size="2048" max_freq_cap_undumped_size="3072"/>
             </configuration:userInfoManager></configuration>
         </service>
@@ -1295,7 +1301,15 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
             </configuration:channelController2></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" name="UserBindServer" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
-          <configuration><configuration:userBindServer user_dump_period="28800" user_seen_expire_time="604800" bind_request_expire_time="2073600" user_expire_time="62208000">
+          <configuration><configuration:userBindServer
+              user_dump_period="28800"
+              user_seen_expire_time="604800"
+              bind_request_expire_time="2073600"
+              user_expire_time="62208000"
+              compaction_threads="32"
+              per_compaction_threads="4"
+              flush_threads="32"
+              max_mem_tables="6">
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
               <configuration:threadParams min="100"/>
             </configuration:userBindServer></configuration>
@@ -1387,7 +1401,13 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
               <configuration:threadParams min="100"/>
               <configuration:updateParams update_period="300"/>
               <configuration:profilesCleanupParams life_time="15" temp_life_time="30" clean_time="00:01" clean_user_profiles="false"/>
-              <configuration:matchParams session_timeout="30" repeat_trigger_timeout="60"/>
+              <configuration:matchParams
+                session_timeout="30"
+                repeat_trigger_timeout="60"
+                compaction_threads="32"
+                per_compaction_threads="4"
+                flush_threads="32"
+                max_mem_tables="6"/>
               <configuration:storage min_free_space="0" max_add_undumped_size="300" max_temp_undumped_size="3072" max_history_undumped_size="2048" max_base_undumped_size="2048" max_freq_cap_undumped_size="3072"/>
             </configuration:userInfoManager></configuration>
         </service>
@@ -1425,7 +1445,15 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
             </configuration:channelController2></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" name="UserBindServer" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
-          <configuration><configuration:userBindServer user_dump_period="28800" user_seen_expire_time="604800" bind_request_expire_time="2073600" user_expire_time="62208000">
+          <configuration><configuration:userBindServer
+              user_dump_period="28800"
+              user_seen_expire_time="604800"
+              bind_request_expire_time="2073600"
+              user_expire_time="62208000"
+              compaction_threads="32"
+              per_compaction_threads="4"
+              flush_threads="32"
+              max_mem_tables="6">
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
               <configuration:threadParams min="100"/>
             </configuration:userBindServer></configuration>
@@ -1518,8 +1546,11 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
 
         <service descriptor="AdCluster/BackendSubCluster/ExpressionMatcher" name="ExpressionMatcher" host="adbe01 adbe02 adbe03 adbe04 adbe05 adbe06">
           <configuration>
-	    <configuration:expressionMatcher enable_channel_overlap_stats="false" positive_triggers_group_size="1" negative_triggers_group_size="0"
-	      max_trigger_visits="0" channel_match_cache_size="2147483648">
+            <configuration:expressionMatcher enable_channel_overlap_stats="false"
+              positive_triggers_group_size="1" negative_triggers_group_size="0"
+              max_trigger_visits="0" channel_match_cache_size="2147483648"
+              compaction_threads="32" per_compaction_threads="4"
+              flush_threads="32" max_mem_tables="6">
 	      <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600"
                 error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
 	      <configuration:threadParams min="50"/>
@@ -1531,7 +1562,9 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
 	  </configuration>
         </service>
         <service descriptor="AdCluster/BackendSubCluster/RequestInfoManager" name="RequestInfoManager" host="adbe01 adbe02 adbe03 adbe04 adbe05 adbe06">
-          <configuration><configuration:requestInfoManager>
+          <configuration><configuration:requestInfoManager
+              compaction_threads="32" per_compaction_threads="4"
+              flush_threads="32" max_mem_tables="6">
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
               <configuration:processing threads="160" cache_blocks="1000"/>
               <configuration:profiling sending_window="3600" max_pool_size="40000000"/>

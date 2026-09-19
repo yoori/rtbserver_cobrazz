@@ -1,6 +1,9 @@
 #include <algorithm>
 #include <chrono>
+#include <stdexcept>
 #include <utility>
+
+#include <rocksdb/env.h>
 
 #include <Commons/ThreadName.hpp>
 
@@ -22,12 +25,47 @@ namespace AdServer::ProfilingCommons
     unsigned long enqueue_buckets_count,
     std::size_t cache_size,
     unsigned long cache_portions_count)
+    : RocksDBProfileMapProcessor(
+        workers_count,
+        enqueue_buckets_count,
+        cache_size,
+        cache_portions_count,
+        32,
+        4,
+        32,
+        6)
+  {
+  }
+
+  RocksDBProfileMapProcessor::RocksDBProfileMapProcessor(
+    unsigned long workers_count,
+    unsigned long enqueue_buckets_count,
+    std::size_t cache_size,
+    unsigned long cache_portions_count,
+    int compaction_threads,
+    int per_compaction_threads,
+    int flush_threads,
+    int max_mem_tables)
     : workers_count_(std::max(1UL, workers_count)),
       enqueue_buckets_count_(std::max(1UL, enqueue_buckets_count)),
       cache_size_(cache_size),
+      compaction_threads_(compaction_threads),
+      per_compaction_threads_(per_compaction_threads),
+      flush_threads_(flush_threads),
+      max_mem_tables_(max_mem_tables),
       cache_(cache_size == 0 ? nullptr :
         std::make_unique<RocksDBProfileMapCache>(cache_size, cache_portions_count))
   {
+    if (compaction_threads_ <= 0 || per_compaction_threads_ <= 0 || flush_threads_ <= 0 ||
+      max_mem_tables_ < 2)
+    {
+      throw std::invalid_argument(
+        "RocksDB thread counts must be positive and max mem tables must be at least two");
+    }
+
+    auto* env = rocksdb::Env::Default();
+    env->SetBackgroundThreads(compaction_threads_, rocksdb::Env::LOW);
+    env->SetBackgroundThreads(flush_threads_, rocksdb::Env::HIGH);
   }
 
   RocksDBProfileMapProcessor::~RocksDBProfileMapProcessor() noexcept

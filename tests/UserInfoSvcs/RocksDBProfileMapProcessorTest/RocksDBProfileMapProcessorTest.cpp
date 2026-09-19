@@ -20,6 +20,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <rocksdb/env.h>
+
 #include <Commons/AsyncMutex.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -27,6 +29,7 @@
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBOptions.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
@@ -64,6 +67,34 @@ namespace
   {
     return Generics::ConstSmartMemBuf_var(
       new Generics::ConstSmartMemBuf(value.data(), value.size()));
+  }
+
+  void
+  run_background_threads_configuration_test(const std::filesystem::path& root)
+  {
+    rocksdb::Options options;
+    AdServer::ProfilingCommons::configure_rocksdb_profile_map_options(options, 12, 4, 2, 7);
+    if (options.max_background_compactions != 12 || options.max_background_flushes != 2 ||
+      options.max_subcompactions != 4 || options.max_write_buffer_number != 7)
+    {
+      throw std::runtime_error("RocksDB background job configuration mismatch");
+    }
+
+    auto processor = std::make_shared<Processor>(1, 32, 0, 256, 12, 4, 2, 7);
+    ProfileMap profile_map(
+      processor,
+      String::SubString(root.string()),
+      Generics::Time::ZERO,
+      32,
+      Generics::Time::ZERO,
+      true);
+
+    auto* env = rocksdb::Env::Default();
+    if (env->GetBackgroundThreads(rocksdb::Env::LOW) != 12 ||
+      env->GetBackgroundThreads(rocksdb::Env::HIGH) != 2)
+    {
+      throw std::runtime_error("RocksDB background thread configuration mismatch");
+    }
   }
 
   bool
@@ -596,12 +627,21 @@ main()
   }
   const std::filesystem::path root(root_name);
 
-  auto processor = std::make_shared<Processor>(1);
+  std::shared_ptr<Processor> processor;
   std::unique_ptr<ProfileMap> first;
   std::unique_ptr<ProfileMap> second;
 
   try
   {
+    run_background_threads_configuration_test(root / "background-threads");
+    processor = std::make_shared<Processor>(1);
+    auto* env = rocksdb::Env::Default();
+    if (env->GetBackgroundThreads(rocksdb::Env::LOW) != 32 ||
+      env->GetBackgroundThreads(rocksdb::Env::HIGH) != 32)
+    {
+      throw std::runtime_error("default RocksDB background thread configuration mismatch");
+    }
+
     const auto disabled_cache_stats = processor->stats();
     if (disabled_cache_stats.cache_limit != 0 || disabled_cache_stats.cache_size != 0 ||
       disabled_cache_stats.cache_entries != 0 || disabled_cache_stats.cache_hits != 0 ||
@@ -1045,7 +1085,7 @@ main()
       second->wait_object();
     }
 
-    if (processor->active())
+    if (processor && processor->active())
     {
       processor->deactivate_object();
       processor->wait_object();

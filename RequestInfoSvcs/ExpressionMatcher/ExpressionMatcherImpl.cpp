@@ -180,7 +180,12 @@ namespace AdServer::RequestInfoSvcs
         std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
           expression_matcher_config.rocksdb_batching_threads(),
           32,
-          expression_matcher_config.rocksdb_cache_size())),
+          expression_matcher_config.rocksdb_cache_size(),
+          256,
+          expression_matcher_config.compaction_threads(),
+          expression_matcher_config.per_compaction_threads(),
+          expression_matcher_config.flush_threads(),
+          expression_matcher_config.max_mem_tables())),
       callback_(new Logging::ActiveObjectCallbackImpl(init_logger,
         "AdServer::CampaignSvcs::ExpressionMatcherImpl",
         Aspect::EXPRESSION_MATCHER, "ADS-IMPL-4016")),

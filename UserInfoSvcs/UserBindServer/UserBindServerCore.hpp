@@ -43,6 +43,10 @@ namespace AdServer::UserInfoSvcs
       unsigned long portions = 0;
       unsigned long rocksdb_batching_threads = 2;
       std::size_t rocksdb_cache_size = 0;
+      int compaction_threads = 32;
+      int per_compaction_threads = 4;
+      int flush_threads = 32;
+      int max_mem_tables = 6;
       bool load_slave = false;
     };
 

@@ -177,6 +177,26 @@
     <xsl:variable name="rocksdb-batching-threads"><xsl:value-of select="$user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads"/>
       <xsl:if test="count($user-info-manager-config/cfg:matchParams/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
+    <xsl:variable name="compaction-threads"><xsl:value-of
+      select="$user-info-manager-config/cfg:matchParams/@compaction_threads"/>
+      <xsl:if test="count(
+        $user-info-manager-config/cfg:matchParams/@compaction_threads) = 0">32</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="per-compaction-threads"><xsl:value-of
+      select="$user-info-manager-config/cfg:matchParams/@per_compaction_threads"/>
+      <xsl:if test="count(
+        $user-info-manager-config/cfg:matchParams/@per_compaction_threads) = 0">4</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="flush-threads"><xsl:value-of
+      select="$user-info-manager-config/cfg:matchParams/@flush_threads"/>
+      <xsl:if test="count(
+        $user-info-manager-config/cfg:matchParams/@flush_threads) = 0">32</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="max-mem-tables"><xsl:value-of
+      select="$user-info-manager-config/cfg:matchParams/@max_mem_tables"/>
+      <xsl:if test="count(
+        $user-info-manager-config/cfg:matchParams/@max_mem_tables) = 0">6</xsl:if>
+    </xsl:variable>
     <xsl:variable name="rocksdb-cache-size">
       <xsl:value-of
         select="$user-info-manager-config/cfg:matchParams/@rocksdb_cache_size"/>
@@ -193,6 +213,18 @@
     <xsl:attribute name="use_add_profile_on_match"><xsl:value-of select="$use-add-profile-on-match"/></xsl:attribute>
     <xsl:attribute name="history_optimization_period"><xsl:value-of select="$history-optimization-period"/></xsl:attribute>
     <xsl:attribute name="rocksdb_batching_threads"><xsl:value-of select="$rocksdb-batching-threads"/></xsl:attribute>
+    <xsl:attribute name="compaction_threads">
+      <xsl:value-of select="$compaction-threads"/>
+    </xsl:attribute>
+    <xsl:attribute name="per_compaction_threads">
+      <xsl:value-of select="$per-compaction-threads"/>
+    </xsl:attribute>
+    <xsl:attribute name="flush_threads">
+      <xsl:value-of select="$flush-threads"/>
+    </xsl:attribute>
+    <xsl:attribute name="max_mem_tables">
+      <xsl:value-of select="$max-mem-tables"/>
+    </xsl:attribute>
     <xsl:attribute name="rocksdb_cache_size">
       <xsl:value-of select="$rocksdb-cache-size"/>
     </xsl:attribute>

@@ -294,7 +294,11 @@ namespace AdServer::UserInfoSvcs
     unsigned long max_temp_profile_waiters,
     unsigned long max_freqcap_profile_waiters,
     unsigned long rocksdb_batching_threads,
-    std::size_t rocksdb_cache_size)
+    std::size_t rocksdb_cache_size,
+    int compaction_threads,
+    int per_compaction_threads,
+    int flush_threads,
+    int max_mem_tables)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
@@ -303,7 +307,12 @@ namespace AdServer::UserInfoSvcs
         AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
           rocksdb_batching_threads,
           32,
-          rocksdb_cache_size)),
+          rocksdb_cache_size,
+          256,
+          compaction_threads,
+          per_compaction_threads,
+          flush_threads,
+          max_mem_tables)),
       time_offset_(Generics::Time::ZERO),
       profile_avg_statistic_(avg_statistic),
       ad_channels_count_(0),

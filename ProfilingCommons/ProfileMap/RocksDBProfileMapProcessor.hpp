@@ -54,6 +54,16 @@ namespace AdServer::ProfilingCommons
       std::size_t cache_size = 0,
       unsigned long cache_portions_count = 256);
 
+    RocksDBProfileMapProcessor(
+      unsigned long workers_count,
+      unsigned long enqueue_buckets_count,
+      std::size_t cache_size,
+      unsigned long cache_portions_count,
+      int compaction_threads,
+      int per_compaction_threads,
+      int flush_threads,
+      int max_mem_tables);
+
     ~RocksDBProfileMapProcessor() noexcept override;
 
     Stats stats() const noexcept;
@@ -187,6 +197,10 @@ namespace AdServer::ProfilingCommons
     const unsigned long workers_count_;
     const unsigned long enqueue_buckets_count_;
     const std::size_t cache_size_;
+    const int compaction_threads_;
+    const int per_compaction_threads_;
+    const int flush_threads_;
+    const int max_mem_tables_;
 
     mutable std::mutex ready_lock_;
     mutable std::condition_variable ready_cond_;

@@ -136,6 +136,26 @@
       <xsl:value-of select="$user-bind-server-config/@rocksdb_batching_threads"/>
       <xsl:if test="count($user-bind-server-config/@rocksdb_batching_threads) = 0">16</xsl:if>
     </xsl:variable>
+    <xsl:variable name="compaction-threads">
+      <xsl:value-of select="$user-bind-server-config/@compaction_threads"/>
+      <xsl:if
+        test="count($user-bind-server-config/@compaction_threads) = 0">32</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="per-compaction-threads">
+      <xsl:value-of select="$user-bind-server-config/@per_compaction_threads"/>
+      <xsl:if
+        test="count($user-bind-server-config/@per_compaction_threads) = 0">4</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="flush-threads">
+      <xsl:value-of select="$user-bind-server-config/@flush_threads"/>
+      <xsl:if
+        test="count($user-bind-server-config/@flush_threads) = 0">32</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="max-mem-tables">
+      <xsl:value-of select="$user-bind-server-config/@max_mem_tables"/>
+      <xsl:if
+        test="count($user-bind-server-config/@max_mem_tables) = 0">6</xsl:if>
+    </xsl:variable>
     <xsl:variable name="rocksdb-cache-size">
       <xsl:value-of select="$user-bind-server-config/@rocksdb_cache_size"/>
       <xsl:if test="count($user-bind-server-config/@rocksdb_cache_size) = 0">0</xsl:if>
@@ -150,6 +170,10 @@
       expire_time="{$user-bind-server-config/@user_seen_expire_time}"
       bound_expire_time="{$user-bind-server-config/@user_expire_time}"
       rocksdb_batching_threads="{$rocksdb-batching-threads}"
+      compaction_threads="{$compaction-threads}"
+      per_compaction_threads="{$per-compaction-threads}"
+      flush_threads="{$flush-threads}"
+      max_mem_tables="{$max-mem-tables}"
       rocksdb_cache_size="{$rocksdb-cache-size}">
       <xsl:attribute name="user_bind_keep_mode">
         <xsl:value-of select="$colo-config/cfg:userProfiling/@user_bind_keep_mode"/>

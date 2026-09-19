@@ -82,7 +82,11 @@ namespace AdServer::UserInfoSvcs
       unsigned long max_temp_profile_waiters,
       unsigned long max_freqcap_profile_waiters,
       unsigned long rocksdb_batching_threads,
-      std::size_t rocksdb_cache_size)
+      std::size_t rocksdb_cache_size,
+      int compaction_threads,
+      int per_compaction_threads,
+      int flush_threads,
+      int max_mem_tables)
       /*throw(Exception)*/;
 
     AdServer::Commons::StartableAwaitable<bool>

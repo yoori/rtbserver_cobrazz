@@ -51,6 +51,26 @@
     select="$request-info-manager-config/@rocksdb_batching_threads"/>
     <xsl:if test="count($request-info-manager-config/@rocksdb_batching_threads) = 0">16</xsl:if>
   </xsl:variable>
+  <xsl:variable name="compaction-threads"><xsl:value-of
+    select="$request-info-manager-config/@compaction_threads"/>
+    <xsl:if
+      test="count($request-info-manager-config/@compaction_threads) = 0">32</xsl:if>
+  </xsl:variable>
+  <xsl:variable name="per-compaction-threads"><xsl:value-of
+    select="$request-info-manager-config/@per_compaction_threads"/>
+    <xsl:if
+      test="count($request-info-manager-config/@per_compaction_threads) = 0">4</xsl:if>
+  </xsl:variable>
+  <xsl:variable name="flush-threads"><xsl:value-of
+    select="$request-info-manager-config/@flush_threads"/>
+    <xsl:if
+      test="count($request-info-manager-config/@flush_threads) = 0">32</xsl:if>
+  </xsl:variable>
+  <xsl:variable name="max-mem-tables"><xsl:value-of
+    select="$request-info-manager-config/@max_mem_tables"/>
+    <xsl:if
+      test="count($request-info-manager-config/@max_mem_tables) = 0">6</xsl:if>
+  </xsl:variable>
   <xsl:variable name="rocksdb-cache-size"><xsl:value-of
     select="$request-info-manager-config/@rocksdb_cache_size"/>
     <xsl:if test="count($request-info-manager-config/@rocksdb_cache_size) = 0">0</xsl:if>
@@ -163,6 +183,10 @@
     distrib_count="24"
     action_ignore_time="{$ignore-action-time-value}"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"
+    compaction_threads="{$compaction-threads}"
+    per_compaction_threads="{$per-compaction-threads}"
+    flush_threads="{$flush-threads}"
+    max_mem_tables="{$max-mem-tables}"
     rocksdb_cache_size="{$rocksdb-cache-size}"
     use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}">
 

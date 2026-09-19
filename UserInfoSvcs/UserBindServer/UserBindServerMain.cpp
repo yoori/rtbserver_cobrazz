@@ -260,6 +260,11 @@ namespace
     core_config.storage.portions = config.Storage().portions();
     core_config.storage.rocksdb_batching_threads = config.Storage().rocksdb_batching_threads();
     core_config.storage.rocksdb_cache_size = config.Storage().rocksdb_cache_size();
+    core_config.storage.compaction_threads = config.Storage().compaction_threads();
+    core_config.storage.per_compaction_threads =
+      config.Storage().per_compaction_threads();
+    core_config.storage.flush_threads = config.Storage().flush_threads();
+    core_config.storage.max_mem_tables = config.Storage().max_mem_tables();
     core_config.storage.load_slave = config.Storage().user_bind_keep_mode() == "keep slave";
 
     core_config.bind_request_storage.prefix = config.BindRequestStorage().prefix();
