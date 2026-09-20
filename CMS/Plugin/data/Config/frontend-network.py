@@ -233,6 +233,9 @@ def remember_ownership(config, host, current, defaults, before, state):
   owned['config'] = config
   owned['sysctl_written'].update({k: str(v) for k, v in sysctls(host, current).items()})
   expected = route_args(config, host, defaults)
+  if expected and not owned['routes']:
+    identity = route_identity(' '.join(expected))
+    owned['default_restore'] = [r for r in defaults if route_identity(r) != identity]
   if expected and ' '.join(expected) not in owned['routes']:
     owned['routes'].append(' '.join(expected))
   # Journal before any mutation, including a first apply that may fail halfway through.
