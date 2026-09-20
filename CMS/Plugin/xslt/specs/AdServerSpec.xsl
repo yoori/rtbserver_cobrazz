@@ -328,9 +328,8 @@ Requires(preun): systemd
 Requires(postun): systemd
 </xsl:if>
 <xsl:if test="$frontend-network">
-Requires: python3, iproute, procps-ng, iptables
-Requires: /usr/sbin/arptables-save
-Requires: /usr/sbin/arptables-restore
+Requires: python3, iproute, procps-ng, iptables, iptables-arptables
+Requires(posttrans): systemd
 %define frontend_network_unit foros-frontend-network-<xsl:value-of select="$colo-name"/>.service
 %define frontend_network_tool /usr/libexec/foros-frontend-network-<xsl:value-of
   select="$colo-name"/>
@@ -698,8 +697,9 @@ EOF]]>
 %preun
 <xsl:if test="$frontend-network">
 if [ "$1" -eq 0 ]; then
-  systemctl disable %{frontend_network_unit} &gt;/dev/null 2&gt;&amp;1 ||:
-  echo 'Frontend addresses and ARP protection retained; remove them in a controlled migration.'
+  systemctl stop %{frontend_network_unit} || exit 1
+  %{frontend_network_tool} remove <xsl:value-of select="$colo-name"/> || exit 1
+  systemctl disable %{frontend_network_unit} || exit 1
 fi
 </xsl:if>
 <xsl:if test="$ram-enabled">
@@ -737,8 +737,6 @@ USER=<xsl:value-of select="$user-name"/>
 
 <xsl:if test="$frontend-network">
 systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
-# Never activate or reload networking as a side effect of a configuration RPM upgrade.
-echo 'Frontend network manifest installed. Migrate legacy setup, then check and activate explicitly.'
 </xsl:if>
 
 <xsl:if test="$ram-enabled">
@@ -777,6 +775,11 @@ fi
 </xsl:if>
 
 sysctl -p /etc/sysctl.d/adserver.conf
+
+<xsl:if test="$frontend-network">
+%posttrans
+%{frontend_network_tool} install <xsl:value-of select="$colo-name"/> || exit 1
+</xsl:if>
 
 %changelog
 </xsl:template>

@@ -9,7 +9,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/libexec/foros-frontend-network-@COLO@ apply @COLO@
 ExecReload=/usr/libexec/foros-frontend-network-@COLO@ apply @COLO@
-# No ExecStop: keep ARP protection while addresses exist, including during shutdown.
+# No ExecStop: retain protection on shutdown/restart. Final RPM erase runs explicit removal.
 TimeoutStartSec=120
 
 [Install]
