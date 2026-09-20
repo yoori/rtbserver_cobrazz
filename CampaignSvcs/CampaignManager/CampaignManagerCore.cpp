@@ -2942,6 +2942,7 @@ namespace AdServer::CampaignSvcs
               tag_size,
               creative,
               ckw,
+              click_info.user_id_hash_mod,
               &click_info.match_user_id,
               &click_info.cookie_user_id,
               click_info.tokens);

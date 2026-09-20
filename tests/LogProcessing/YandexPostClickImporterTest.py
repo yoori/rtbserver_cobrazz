@@ -28,7 +28,10 @@ IMPORTER = load_importer()
 REQUEST_ID = 'AAAAAAAAAAAAAAAAAAAAAA..'
 USER_ID = 'BBBBBBBBBBBBBBBBBBBBBB..'
 COOKIE_USER_ID = 'CCCCCCCCCCCCCCCCCCCCCC..'
-METRIKA_TERM = f'r:{REQUEST_ID};u1:{USER_ID};u2:{COOKIE_USER_ID}'
+DISTRIBUTION_HASH = 137
+LEGACY_METRIKA_TERM = f'r:{REQUEST_ID};u1:{USER_ID};u2:{COOKIE_USER_ID}'
+METRIKA_TERM = (
+  f'r:{REQUEST_ID};h:{DISTRIBUTION_HASH};u1:{USER_ID};u2:{COOKIE_USER_ID}')
 
 
 def log_part(request_id=REQUEST_ID, content='ccid:2527264'):
@@ -50,6 +53,12 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
   def test_reporting_api_contract(self):
     class Api:
+      def timezone(self):
+        return datetime.timezone(datetime.timedelta(hours=3))
+
+      def reporting_timezone(self):
+        return '+03:00'
+
       def reporting(self, params):
         return params
 
@@ -67,11 +76,13 @@ class YandexPostClickImporterTest(unittest.TestCase):
       params['dimensions'],
       'ym:s:dateTime,ym:s:<attribution>UTMContent')
     self.assertEqual(params['accuracy'], 'full')
+    self.assertEqual(params['timezone'], '+03:00')
     self.assertEqual(params['attribution'], 'lastsign')
     self.assertNotIn('UTMSource', params['filters'])
     self.assertIn("ym:s:<attribution>UTMContent=@'ccid:'", params['filters'])
     self.assertIn("ym:s:<attribution>UTMTerm=~", params['filters'])
     self.assertIn('r(:|', params['filters'])
+    self.assertIn('h(:|', params['filters'])
     self.assertIn('u1(:|', params['filters'])
     self.assertIn('u2(:|', params['filters'])
     self.assertIn('%3[Bb]', params['filters'])
@@ -119,6 +130,46 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(headers, {'Authorization': 'OAuth secret'})
     self.assertEqual(timeout, 17)
 
+  def test_reporting_timezone_uses_counter_offset_and_caches_it(self):
+    calls = []
+
+    class Response:
+      def raise_for_status(self):
+        pass
+
+      def json(self):
+        return {'counter': {'time_zone_offset': 180}}
+
+    def get(url, headers, timeout):
+      calls.append((url, headers, timeout))
+      return Response()
+
+    old_get = getattr(IMPORTER.requests, 'get', None)
+    IMPORTER.requests.get = get
+    try:
+      api = IMPORTER.YandexApi('secret', 123, 17)
+      self.assertEqual(api.reporting_timezone(), '+03:00')
+      self.assertEqual(api.reporting_timezone(), '+03:00')
+      self.assertEqual(api.timezone().utcoffset(None), datetime.timedelta(hours=3))
+    finally:
+      if old_get is None:
+        del IMPORTER.requests.get
+      else:
+        IMPORTER.requests.get = old_get
+
+    self.assertEqual(calls, [(
+      'https://api-metrika.yandex.net/management/v1/counter/123',
+      {'Authorization': 'OAuth secret'},
+      17,
+    )])
+
+  def test_format_timezone_offset(self):
+    self.assertEqual(IMPORTER.format_timezone_offset(0), '+00:00')
+    self.assertEqual(IMPORTER.format_timezone_offset(330), '+05:30')
+    self.assertEqual(IMPORTER.format_timezone_offset(-210), '-03:30')
+    with self.assertRaises(ValueError):
+      IMPORTER.format_timezone_offset(24 * 60)
+
   def test_parse_ccid(self):
     self.assertEqual(IMPORTER.parse_ccid('ccid:2527264'), 2527264)
     self.assertEqual(IMPORTER.parse_ccid('key:value;ccid:17&other:value'), 17)
@@ -140,6 +191,27 @@ class YandexPostClickImporterTest(unittest.TestCase):
       IMPORTER.parse_metrika_request_id(f'r:{REQUEST_ID};u1:invalid;u2:'))
     self.assertIsNone(IMPORTER.parse_metrika_request_id('invalid'))
 
+  def test_parse_metrika_distribution_hash(self):
+    self.assertEqual(
+      IMPORTER.parse_metrika_term(METRIKA_TERM),
+      (REQUEST_ID, DISTRIBUTION_HASH))
+    self.assertEqual(
+      IMPORTER.parse_metrika_term(METRIKA_TERM.replace(';', '%3B')),
+      (REQUEST_ID, DISTRIBUTION_HASH))
+    encoded_term = urllib.parse.quote_plus(METRIKA_TERM.replace(';', '%3B'))
+    self.assertEqual(
+      IMPORTER.parse_metrika_term(encoded_term),
+      (REQUEST_ID, DISTRIBUTION_HASH))
+
+  def test_legacy_metrika_term_uses_resolved_user_id_hash(self):
+    self.assertEqual(
+      IMPORTER.parse_metrika_term(LEGACY_METRIKA_TERM),
+      (REQUEST_ID, IMPORTER.user_id_distribution_hash(USER_ID)))
+    self.assertEqual(
+      IMPORTER.parse_metrika_term(f'r:{REQUEST_ID};u1:;u2:'),
+      (REQUEST_ID, None))
+    self.assertEqual(IMPORTER.parse_metrika_term(REQUEST_ID), (REQUEST_ID, None))
+
   def test_request_chunk(self):
     self.assertEqual(IMPORTER.request_chunk(REQUEST_ID, 24), 0)
 
@@ -152,6 +224,12 @@ class YandexPostClickImporterTest(unittest.TestCase):
     class Api:
       def __init__(self):
         self.offsets = []
+
+      def timezone(self):
+        return datetime.timezone(datetime.timedelta(hours=3))
+
+      def reporting_timezone(self):
+        return '+03:00'
 
       def reporting(self, params):
         self.offsets.append(params['offset'])
@@ -194,10 +272,12 @@ class YandexPostClickImporterTest(unittest.TestCase):
     class Ch:
       def __init__(self):
         self.inserted = []
+        self.parameters = None
 
       def query(self, query, parameters):
+        self.parameters = parameters
         return types.SimpleNamespace(result_rows=[(
-          datetime.datetime(2026, 9, 10, 12),
+          datetime.datetime(2026, 9, 10, 9),
           1, 3, 1, 24.0, 4, 1, False, 1.0,
         )])
 
@@ -216,14 +296,21 @@ class YandexPostClickImporterTest(unittest.TestCase):
     finally:
       IMPORTER.REPORTING_PAGE_SIZE = old_page_size
 
-    hour1 = datetime.datetime(2026, 9, 10, 12, tzinfo=datetime.timezone.utc)
-    hour2 = datetime.datetime(2026, 9, 10, 13, tzinfo=datetime.timezone.utc)
+    hour1 = datetime.datetime(2026, 9, 10, 9, tzinfo=datetime.timezone.utc)
+    hour2 = datetime.datetime(2026, 9, 10, 10, tzinfo=datetime.timezone.utc)
     self.assertEqual(api.offsets, [1, 3])
     self.assertEqual(result['rows'][(hour1, 1)][:5], [3, 1, 24.0, 4, 1])
     self.assertEqual(result['rows'][(hour2, 2)][:5], [4, 1, 8.0, 5, 2])
     self.assertFalse(result['unsampled'])
     self.assertEqual(result['date1'], datetime.date(2026, 9, 10))
     self.assertEqual(result['date2'], datetime.date(2026, 9, 10))
+    self.assertEqual(result['timezone'].utcoffset(None), datetime.timedelta(hours=3))
+    self.assertEqual(
+      self.application.ch.parameters['range_start'],
+      datetime.datetime(2026, 9, 9, 21, tzinfo=datetime.timezone.utc))
+    self.assertEqual(
+      self.application.ch.parameters['range_end'],
+      datetime.datetime(2026, 9, 10, 21, tzinfo=datetime.timezone.utc))
     self.assertEqual(len(upserted), 1)
     self.assertEqual(upserted[0][1:3], (hour2, 2))
     self.assertEqual(len(self.application.ch.inserted), 1)
@@ -261,11 +348,15 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application.ch = Ch()
     reporting = {
       'rows': {
-        (datetime.datetime(2026, 9, 10, 10), 1): (3, 0, 0, 0, 0),
-        (datetime.datetime(2026, 9, 10, 11), 2): (5, 0, 0, 0, 0),
-        (datetime.datetime(2026, 9, 9, 11), 2): (100, 0, 0, 0, 0),
+        (datetime.datetime(2026, 9, 9, 22, tzinfo=datetime.timezone.utc), 1):
+          (3, 0, 0, 0, 0),
+        (datetime.datetime(2026, 9, 10, 11, tzinfo=datetime.timezone.utc), 2):
+          (5, 0, 0, 0, 0),
+        (datetime.datetime(2026, 9, 9, 11, tzinfo=datetime.timezone.utc), 2):
+          (100, 0, 0, 0, 0),
       },
       'unsampled': True,
+      'timezone': datetime.timezone(datetime.timedelta(hours=3)),
     }
 
     self.application._update_import_status(17, self.event_date, reporting)
@@ -464,12 +555,14 @@ class YandexPostClickImporterTest(unittest.TestCase):
     records = self.application._parse_log_part(17, log_part(), self.event_date)
 
     self.assertEqual(len(records), 1)
-    visit_id, event_date, event_time, request_id, payload, comparable = records[0]
+    visit_id, event_date, event_time, request_id, distribution_hash, payload, comparable = \
+      records[0]
     self.assertEqual(visit_id, 123)
     self.assertEqual(event_date, self.event_date)
     self.assertEqual(event_time, datetime.datetime(
       2026, 9, 10, 9, 34, 56, tzinfo=datetime.timezone.utc))
     self.assertEqual(request_id, REQUEST_ID)
+    self.assertIsNone(distribution_hash)
     self.assertTrue(comparable)
     self.assertEqual(json.loads(payload), {
       'landing_bounced': True,
@@ -489,6 +582,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
     self.assertEqual(len(records), 1)
     self.assertEqual(records[0][3], REQUEST_ID)
+    self.assertEqual(records[0][4], DISTRIBUTION_HASH)
 
   def test_logs_request_id_does_not_depend_on_ccid(self):
     records = self.application._parse_log_part(
@@ -497,8 +591,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
       self.event_date)
 
     self.assertEqual(len(records), 1)
-    self.assertFalse(records[0][5])
-    self.assertFalse(json.loads(records[0][4])['yandex_reporting_comparable'])
+    self.assertFalse(records[0][6])
+    self.assertFalse(json.loads(records[0][5])['yandex_reporting_comparable'])
 
   def test_filters_invalid_request_id(self):
     self.assertEqual(
@@ -507,6 +601,51 @@ class YandexPostClickImporterTest(unittest.TestCase):
         log_part(request_id='invalid'),
         self.event_date),
       [])
+
+  def test_log_watermark_includes_rows_without_request_id(self):
+    records, watermark = self.application._parse_log_part_with_watermark(
+      17,
+      log_part(request_id='invalid'),
+      self.event_date)
+
+    self.assertEqual(records, [])
+    self.assertEqual(
+      watermark,
+      datetime.datetime(2026, 9, 10, 9, 34, 56, tzinfo=datetime.timezone.utc))
+
+  def test_advance_logs_watermark_uses_twelve_hour_delay(self):
+    calls = []
+
+    class Cursor:
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+      def execute(self, query, parameters):
+        calls.append((query, parameters))
+
+    class Pg:
+      def __init__(self):
+        self.commits = 0
+
+      def cursor(self):
+        return Cursor()
+
+      def commit(self):
+        self.commits += 1
+
+    self.application.pg = Pg()
+    event_time = datetime.datetime(2026, 9, 10, 9, 34, 56, tzinfo=datetime.timezone.utc)
+
+    self.application._advance_logs_watermark(17, event_time)
+
+    self.assertEqual(calls, [(
+      'SELECT adserver.advance_yandex_metrika_logs_watermark(%s, %s)',
+      (17, datetime.date(2026, 9, 10)),
+    )])
+    self.assertEqual(self.application.pg.commits, 1)
 
   def test_process_logs_publishes_once_across_repeated_exports(self):
     class Ch:
@@ -554,6 +693,9 @@ class YandexPostClickImporterTest(unittest.TestCase):
         self.cleaned = []
         self.next_request_id = 100
 
+      def timezone(self):
+        return datetime.timezone.utc
+
       def create_log_request(self, event_date, attribution):
         request_id = self.next_request_id
         self.next_request_id += 1
@@ -568,7 +710,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
         }
 
       def download_log_part(self, request_id, part_number):
-        return log_part()
+        return log_part(request_id=METRIKA_TERM)
 
       def clean_log_request(self, request_id):
         self.cleaned.append(request_id)
@@ -580,6 +722,9 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application.chunks_count = 24
     self.application.print_ = lambda *args, **kwargs: None
     updated = []
+    watermarks = []
+    self.application._advance_logs_watermark = (
+      lambda ymref_id, event_time: watermarks.append((ymref_id, event_time)))
     self.application._update_import_status = (
       lambda ymref_id, event_date, reporting:
         updated.append((ymref_id, event_date)))
@@ -599,6 +744,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       output_files = tuple(pathlib.Path(self.application.post_click_dir).iterdir())
       self.assertEqual(len(output_files), 1)
+      self.assertTrue(output_files[0].name.endswith(f'.24.{DISTRIBUTION_HASH % 24}'))
       output = output_files[0].read_text()
       self.assertTrue(output.endswith('\n'))
       lines = output.splitlines()
@@ -609,6 +755,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(api.cleaned, [100, 101])
     self.assertEqual(len(self.application.ch.logs), 1)
     self.assertEqual(len(updated), 2)
+    self.assertEqual(len(watermarks), 2)
 
   def test_process_logs_finishes_request_outside_date_window(self):
     old_date = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=10)
@@ -658,6 +805,9 @@ class YandexPostClickImporterTest(unittest.TestCase):
         self.cleaned = []
         self.polls = []
 
+      def timezone(self):
+        return datetime.timezone.utc
+
       def create_log_request(self, event_date, attribution):
         self.created.append(event_date)
         return {'request_id': 101, 'status': 'created'}
@@ -685,6 +835,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application.chunks_count = 24
     self.application.print_ = lambda *args, **kwargs: None
     updated = []
+    watermarks = []
     reporting_calls = []
     self.application._load_reporting = (
       lambda ymref_id, api, date1, date2:
@@ -697,6 +848,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application._update_import_status = (
       lambda ymref_id, event_date, reporting:
         updated.append((ymref_id, event_date)))
+    self.application._advance_logs_watermark = (
+      lambda ymref_id, event_time: watermarks.append((ymref_id, event_time)))
     api = Api()
 
     with tempfile.TemporaryDirectory() as directory:
@@ -728,6 +881,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(len(self.application.ch.logs), 1)
     self.assertEqual(reporting_calls, [(17, old_date, old_date)])
     self.assertEqual(updated, [(17, old_date)])
+    self.assertEqual(len(watermarks), 1)
 
   def test_reset_connections_closes_postgres_after_rollback_error(self):
     class Pg:

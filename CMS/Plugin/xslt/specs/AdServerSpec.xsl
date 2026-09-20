@@ -294,6 +294,9 @@ BuildRoot: <xsl:value-of select="$BUILD_ROOT"/>
       cfg:environment/@ram_fs)[1])"/>
 <xsl:variable name="ram-enabled"
   select="number($ram-size) &gt; 0 and string-length($ram-fs) &gt; 0"/>
+<xsl:variable name="frontend-network"
+  select="$app-path/serviceGroup[@descriptor = $ad-cluster-descriptor]/
+    configuration/cfg:cluster/cfg:frontendNetwork"/>
 
 <xsl:variable name="requires">
   <xsl:choose>
@@ -319,10 +322,19 @@ BuildRoot: <xsl:value-of select="$BUILD_ROOT"/>
 Requires: <xsl:value-of select="$requires"/>
 </xsl:if>
 
-<xsl:if test="$ram-enabled">
+<xsl:if test="$ram-enabled or $frontend-network">
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
+</xsl:if>
+<xsl:if test="$frontend-network">
+Requires: python3, iproute, procps-ng, iptables
+Requires: /usr/sbin/arptables-save
+Requires: /usr/sbin/arptables-restore
+%define frontend_network_unit foros-frontend-network-<xsl:value-of select="$colo-name"/>.service
+%define frontend_network_tool /usr/libexec/foros-frontend-network-<xsl:value-of
+  select="$colo-name"/>
+%define frontend_network_config /etc/foros/frontend-network/<xsl:value-of select="$colo-name"/>.json
 </xsl:if>
 
 <xsl:if test="$autorestart = 'true' or $autorestart = '1'">
@@ -359,8 +371,20 @@ popd
 
 mkdir -p %{buildroot}/etc/sysctl.d/
 mkdir -p %{buildroot}/etc/security/limits.d/
-install --mode 644 %{__plugin_root}/data/Config/adserver_sysctl.conf %{buildroot}/etc/sysctl.d/adserver.conf
-install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/security/limits.d/91-aduser.conf
+install --mode 644 %{__plugin_root}/data/Config/adserver_sysctl.conf \
+  %{buildroot}/etc/sysctl.d/adserver.conf
+install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf \
+  %{buildroot}/etc/security/limits.d/91-aduser.conf
+
+<xsl:if test="$frontend-network">
+install -D -m 755 %{__plugin_root}/data/Config/frontend-network.py \
+  %{buildroot}%{frontend_network_tool}
+mkdir -p %{buildroot}/usr/lib/systemd/system
+sed 's/@COLO@/<xsl:value-of select="$colo-name"/>/g' \
+  %{__plugin_root}/data/Config/frontend-network.service \
+  &gt; %{buildroot}/usr/lib/systemd/system/%{frontend_network_unit}
+chmod 644 %{buildroot}/usr/lib/systemd/system/%{frontend_network_unit}
+</xsl:if>
 
 <xsl:if test="$ram-enabled">
 mkdir -p %{buildroot}/usr/lib/systemd/system
@@ -661,12 +685,23 @@ EOF]]>
 %defattr(-, root, root)
 /etc/sysctl.d/adserver.conf
 /etc/security/limits.d/91-aduser.conf
+<xsl:if test="$frontend-network">
+%{frontend_network_tool}
+%{frontend_network_config}
+/usr/lib/systemd/system/%{frontend_network_unit}
+</xsl:if>
 <xsl:if test="$ram-enabled">
 /usr/lib/systemd/system/dev-<xsl:value-of select="$ram-fs"/>.mount
 /usr/lib/tmpfiles.d/<xsl:value-of select="$ram-fs"/>.conf
 </xsl:if>
 
 %preun
+<xsl:if test="$frontend-network">
+if [ "$1" -eq 0 ]; then
+  systemctl disable %{frontend_network_unit} &gt;/dev/null 2&gt;&amp;1 ||:
+  echo 'Frontend addresses and ARP protection retained; remove them in a controlled migration.'
+fi
+</xsl:if>
 <xsl:if test="$ram-enabled">
 if [ "$1" -eq 0 ]; then
   systemctl disable --now dev-<xsl:value-of select="$ram-fs"/>.mount &gt;/dev/null 2&gt;&amp;1 ||:
@@ -674,6 +709,9 @@ fi
 </xsl:if>
 
 %postun
+<xsl:if test="$frontend-network">
+systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
+</xsl:if>
 <xsl:if test="$public-key-defined">
 # change authorized_keys back
 sed -i '/%{__begin_tag}/,/%{__end_tag}/d' /home/%{__user}/.ssh/authorized_keys 2&gt;/dev/null ||:
@@ -696,6 +734,12 @@ rm -rf %{buildroot}
 %post
 
 USER=<xsl:value-of select="$user-name"/>
+
+<xsl:if test="$frontend-network">
+systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:
+# Never activate or reload networking as a side effect of a configuration RPM upgrade.
+echo 'Frontend network manifest installed. Migrate legacy setup, then check and activate explicitly.'
+</xsl:if>
 
 <xsl:if test="$ram-enabled">
 systemctl daemon-reload &gt;/dev/null 2&gt;&amp;1 ||:

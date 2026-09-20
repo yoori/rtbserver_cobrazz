@@ -554,6 +554,7 @@ namespace AdServer::Action
     noexcept
   {
     constexpr std::string_view REQUEST_PREFIX = "r:";
+    constexpr std::string_view DISTRIBUTION_HASH_MARKER = ";h:";
     constexpr std::string_view USER_ID_MARKER = ";u1:";
     constexpr std::string_view COOKIE_USER_ID_MARKER = ";u2:";
     std::string decoded_utm_term;
@@ -594,11 +595,39 @@ namespace AdServer::Action
       return false;
     }
 
+    std::size_t request_id_end = user_id_pos;
+    const std::size_t distribution_hash_pos =
+      value.find(DISTRIBUTION_HASH_MARKER, REQUEST_PREFIX.size());
+    if (distribution_hash_pos != std::string_view::npos)
+    {
+      if (distribution_hash_pos > user_id_pos)
+      {
+        return false;
+      }
+
+      const std::size_t distribution_hash_start =
+        distribution_hash_pos + DISTRIBUTION_HASH_MARKER.size();
+      if (distribution_hash_start > user_id_pos)
+      {
+        return false;
+      }
+
+      const std::string_view distribution_hash = value.substr(
+        distribution_hash_start,
+        user_id_pos - distribution_hash_start);
+      if (distribution_hash.empty() ||
+        distribution_hash.find_first_not_of("0123456789") != std::string_view::npos)
+      {
+        return false;
+      }
+      request_id_end = distribution_hash_pos;
+    }
+
     try
     {
       const std::string request_id(value.substr(
         REQUEST_PREFIX.size(),
-        user_id_pos - REQUEST_PREFIX.size()));
+        request_id_end - REQUEST_PREFIX.size()));
       if (Commons::RequestId(request_id).is_null())
       {
         return false;

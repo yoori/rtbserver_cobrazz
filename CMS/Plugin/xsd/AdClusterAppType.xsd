@@ -40,6 +40,8 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="frontendNetwork" type="FrontendNetworkType" minOccurs="0"/>
+
       <xsd:element name="Cookies" type="CookiesType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
@@ -968,7 +970,37 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:simpleType name="FrontendIPv4Address">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[0-9]{1,3}(\.[0-9]{1,3}){3}"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="FrontendNetworkType">
+    <xsd:sequence>
+      <xsd:element name="defaultRoute" minOccurs="0">
+        <xsd:complexType>
+          <xsd:attribute name="gateway" type="FrontendIPv4Address" use="required"/>
+          <xsd:attribute name="onlink" type="xsd:boolean" default="false"/>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="host" maxOccurs="unbounded">
+        <xsd:complexType>
+          <xsd:attribute name="name" type="xsd:token" use="required"/>
+          <xsd:attribute name="interface" type="xsd:token" use="required"/>
+          <xsd:attribute name="arp_source_ip" type="FrontendIPv4Address" use="required"/>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
   <xsd:complexType name="VirtualServerType">
+    <xsd:annotation>
+      <xsd:documentation>
+        externalAddress supplies frontendNetwork addresses and TCP redirects.
+        Ports are not repeated.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:sequence>
       <xsd:element name="adservingDomain"
         type="AdservingDomainType" minOccurs="0" maxOccurs="unbounded">
@@ -1020,6 +1052,8 @@
       </xsd:element>
     </xsd:sequence>
 
+    <xsd:attribute name="externalAddress" type="FrontendIPv4Address"/>
+    <xsd:attribute name="enable" type="xsd:boolean" default="true"/>
     <xsd:attribute name="port" type="xsd:positiveInteger" default="80">
       <xsd:annotation>
         <xsd:documentation>
@@ -1144,6 +1178,7 @@
       </xsd:element>
     </xsd:sequence>
 
+    <xsd:attribute name="externalAddress" type="FrontendIPv4Address"/>
     <xsd:attribute name="port" type="xsd:positiveInteger" default="443">
       <xsd:annotation>
         <xsd:documentation>

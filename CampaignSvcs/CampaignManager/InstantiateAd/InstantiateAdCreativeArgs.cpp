@@ -90,18 +90,27 @@ namespace AdServer::CampaignSvcs::InstantiateAd
   format_click_metrika_params(
     const AdServer::Commons::RequestId& request_id,
     unsigned long ccid,
+    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod,
     std::string_view resolved_user_id,
     std::string_view cookie_user_id)
   {
     const std::string request_id_str = request_id.to_string();
     const std::string ccid_str = to_string(ccid);
+    const std::string user_id_hash_mod_str = user_id_hash_mod.present() ?
+      to_string(*user_id_hash_mod) : std::string();
 
     std::string result;
     result.reserve(
-      sizeof("utm_term=r:%3Bu1:%3Bu2:&utm_content=ccid:") - 1 + request_id_str.size() +
-        resolved_user_id.size() + cookie_user_id.size() + ccid_str.size());
+      sizeof("utm_term=r:%3Bh:%3Bu1:%3Bu2:&utm_content=ccid:") - 1 +
+        request_id_str.size() + user_id_hash_mod_str.size() + resolved_user_id.size() +
+        cookie_user_id.size() + ccid_str.size());
     result += "utm_term=r:";
     result += request_id_str;
+    if (user_id_hash_mod.present())
+    {
+      result += "%3Bh:";
+      result += user_id_hash_mod_str;
+    }
     result += "%3Bu1:";
     result.append(resolved_user_id.data(), resolved_user_id.size());
     result += "%3Bu2:";
@@ -289,6 +298,9 @@ namespace AdServer::CampaignSvcs::InstantiateAd
         return format_click_metrika_params(
           data->request_id,
           data->creative->ccid,
+          provider.context().inst_params ?
+            provider.context().inst_params->user_id_hash_mod :
+            AdServer::Commons::Optional<unsigned long>(),
           resolved_user_id,
           cookie_user_id);
       });

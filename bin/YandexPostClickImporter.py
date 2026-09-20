@@ -22,6 +22,7 @@ LOGS_SYNC_TABLE = 'YandexPostClickLogsSync'
 LOG_REQUESTS_TABLE = 'YandexPostClickLogRequests'
 UPSERT_ESTIMATION_FUNCTION = 'adserver.upsert_yandex_metrika_post_click_estimation'
 UPDATE_IMPORT_STATUS_FUNCTION = 'adserver.update_yandex_metrika_import_status'
+ADVANCE_LOGS_WATERMARK_FUNCTION = 'adserver.advance_yandex_metrika_logs_watermark'
 YANDEX_METRIKA_SOURCE = 'Yandex Metrika'
 
 INTERNAL_CLICKHOUSE_DDL = (
@@ -80,15 +81,21 @@ ORDER BY (ymref_id, event_date)
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
 REPORTING_PAGE_SIZE = 100000
+LOGS_READY_DELAY = datetime.timedelta(hours=12)
+LOGS_TIMEZONE = datetime.timezone(datetime.timedelta(hours=3))
+USER_ID_DISTRIBUTION_MOD = 1000
 REQUEST_ID_PATTERN = r'[A-Za-z0-9_-]{22}[.][.]'
 USER_ID_PATTERN = rf'({REQUEST_ID_PATTERN})?'
 COLON_PATTERN = r'(:|%3[Aa]|%253[Aa])'
 TERM_SEPARATOR_PATTERN = r'(;|%3[Bb]|%253[Bb])'
 REQUEST_ID_RE = re.compile(rf'^{REQUEST_ID_PATTERN}$')
 METRIKA_TERM_RE = re.compile(
-  rf'^r:({REQUEST_ID_PATTERN});u1:{USER_ID_PATTERN};u2:{USER_ID_PATTERN}$')
+  rf'^r:(?P<request_id>{REQUEST_ID_PATTERN});'
+  rf'(?:h:(?P<distribution_hash>[0-9]+);)?'
+  rf'u1:(?P<user_id>{USER_ID_PATTERN});u2:{USER_ID_PATTERN}$')
 REPORTING_TERM_PATTERN = (
   rf'^({REQUEST_ID_PATTERN}|r{COLON_PATTERN}{REQUEST_ID_PATTERN}'
+  rf'({TERM_SEPARATOR_PATTERN}h{COLON_PATTERN}[0-9]+)?'
   rf'{TERM_SEPARATOR_PATTERN}u1{COLON_PATTERN}{USER_ID_PATTERN}'
   rf'{TERM_SEPARATOR_PATTERN}u2{COLON_PATTERN}{USER_ID_PATTERN})$')
 CCID_RE = re.compile(r'(?:^|[;&])ccid:(\d+)(?:$|[;&])')
@@ -129,7 +136,7 @@ def parse_ccid(value):
   return int(match.group(1)) if match else None
 
 
-def parse_metrika_request_id(value):
+def parse_metrika_term(value):
   value = value or ''
   for _ in range(2):
     decoded_value = urllib.parse.unquote_plus(value)
@@ -139,8 +146,18 @@ def parse_metrika_request_id(value):
 
   match = METRIKA_TERM_RE.fullmatch(value)
   if match:
-    return match.group(1)
-  return value if REQUEST_ID_RE.fullmatch(value) else None
+    distribution_hash = match.group('distribution_hash')
+    if distribution_hash is None and match.group('user_id'):
+      distribution_hash = user_id_distribution_hash(match.group('user_id'))
+    elif distribution_hash is not None:
+      distribution_hash = int(distribution_hash)
+    return match.group('request_id'), distribution_hash
+  return (value, None) if REQUEST_ID_RE.fullmatch(value) else None
+
+
+def parse_metrika_request_id(value):
+  term = parse_metrika_term(value)
+  return term[0] if term else None
 
 
 def decode_dimension(item, index):
@@ -163,15 +180,40 @@ def parse_reporting_metrics(metrics):
   )
 
 
-def request_chunk(request_id, chunks_count):
-  raw = base64.urlsafe_b64decode(request_id[:-2] + '==')
+def format_timezone_offset(offset_minutes):
+  offset_minutes = int(offset_minutes)
+  if abs(offset_minutes) >= 24 * 60:
+    raise ValueError('counter timezone offset must be less than 24 hours')
+  sign = '-' if offset_minutes < 0 else '+'
+  hours, minutes = divmod(abs(offset_minutes), 60)
+  return f'{sign}{hours:02d}:{minutes:02d}'
+
+
+def parse_log_event_time(value):
+  event_time = datetime.datetime.fromisoformat(value)
+  if event_time.tzinfo is None:
+    # Logs API documents dateTimeUTC as a fixed UTC+3 value.
+    event_time = event_time.replace(tzinfo=LOGS_TIMEZONE)
+  return event_time.astimezone(datetime.timezone.utc)
+
+
+def uuid_distribution_hash(value):
+  raw = base64.urlsafe_b64decode(value[:-2] + '==')
   crc = 0
   for byte in raw:
     crc ^= byte << 24
     for _ in range(8):
       crc = ((crc << 1) ^ 0x04C11DB7) & 0xffffffff if crc & 0x80000000 else \
         (crc << 1) & 0xffffffff
-  return crc % chunks_count
+  return crc
+
+
+def user_id_distribution_hash(user_id):
+  return uuid_distribution_hash(user_id) % USER_ID_DISTRIBUTION_MOD
+
+
+def request_chunk(request_id, chunks_count):
+  return uuid_distribution_hash(request_id) % chunks_count
 
 
 class YandexApi:
@@ -179,6 +221,27 @@ class YandexApi:
     self.counter_id = counter_id
     self.timeout = timeout
     self.headers = {'Authorization': 'OAuth ' + token}
+    self._reporting_timezone = None
+    self._timezone = None
+
+  def _load_timezone(self):
+    if self._timezone is None:
+      response = requests.get(
+        f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}',
+        headers=self.headers,
+        timeout=self.timeout)
+      response.raise_for_status()
+      offset_minutes = int(response.json()['counter']['time_zone_offset'])
+      self._reporting_timezone = format_timezone_offset(offset_minutes)
+      self._timezone = datetime.timezone(datetime.timedelta(minutes=offset_minutes))
+
+  def reporting_timezone(self):
+    self._load_timezone()
+    return self._reporting_timezone
+
+  def timezone(self):
+    self._load_timezone()
+    return self._timezone
 
   def reporting(self, params):
     response = requests.get(
@@ -375,7 +438,7 @@ class Application(Service):
       'date2': date2.isoformat(),
       'group': 'hour',
       'accuracy': 'full',
-      'timezone': '+00:00',
+      'timezone': api.reporting_timezone(),
       'filters': (
         f"{content_dimension}=@'ccid:' AND "
         f"{term_dimension}=~'{REPORTING_TERM_PATTERN}'"),
@@ -385,7 +448,8 @@ class Application(Service):
     })
 
   def _load_reporting(self, ymref_id, api, date1=None, date2=None):
-    today = datetime.datetime.now(datetime.timezone.utc).date()
+    timezone = api.timezone()
+    today = datetime.datetime.now(timezone).date()
     if date1 is None:
       date1 = today - datetime.timedelta(days=self.days - 1)
     if date2 is None:
@@ -410,9 +474,8 @@ class Application(Service):
 
         hour = datetime.datetime.fromisoformat(decode_dimension(item, 0))
         if hour.tzinfo is None:
-          hour = hour.replace(tzinfo=datetime.timezone.utc)
-        else:
-          hour = hour.astimezone(datetime.timezone.utc)
+          hour = hour.replace(tzinfo=timezone)
+        hour = hour.astimezone(datetime.timezone.utc)
         hour = hour.replace(minute=0, second=0, microsecond=0)
         metrics = parse_reporting_metrics(item['metrics'])
         key = (hour, ccid)
@@ -433,16 +496,21 @@ class Application(Service):
         break
       offset += len(data)
 
+    range_start = datetime.datetime.combine(date1, datetime.time(), timezone)
+    range_end = datetime.datetime.combine(
+      date2 + datetime.timedelta(days=1),
+      datetime.time(),
+      timezone)
     old_rows = {}
     for row in self.ch.query(
         f"SELECT hour, ccid, visits, visits_with_bounce, session_time_sum, "
         f"page_views, new_user_visits, sampled, sample_share FROM {REPORTING_SYNC_TABLE} FINAL "
-        "WHERE ymref_id = %(ymref_id)s AND hour >= %(date1)s "
-        "AND hour < addDays(%(date2)s, 1)",
+        "WHERE ymref_id = %(ymref_id)s AND hour >= %(range_start)s "
+        "AND hour < %(range_end)s",
         parameters={
           'ymref_id': ymref_id,
-          'date1': date1,
-          'date2': date2,
+          'range_start': range_start.astimezone(datetime.timezone.utc),
+          'range_end': range_end.astimezone(datetime.timezone.utc),
         }).result_rows:
       hour = row[0]
       if hour.tzinfo is None:
@@ -480,6 +548,7 @@ class Application(Service):
       'unsampled': unsampled,
       'date1': date1,
       'date2': date2,
+      'timezone': timezone,
     }
 
   def _upsert_estimation(self, rows):
@@ -495,7 +564,7 @@ class Application(Service):
       self._process_log_request(ymref_id, event_date, request_id, api, reporting)
       handled_dates.add(event_date)
 
-    today = datetime.datetime.now(datetime.timezone.utc).date()
+    today = datetime.datetime.now(api.timezone()).date()
     for age in range(1, self.days):
       self.verify_running()
       event_date = today - datetime.timedelta(days=age)
@@ -525,10 +594,14 @@ class Application(Service):
       reporting = self._load_reporting(ymref_id, api, event_date, event_date)
 
     records = []
+    watermark = None
     for part in log_request.get('parts', []):
       self.verify_running()
       text = api.download_log_part(request_id, int(part['part_number']))
-      records.extend(self._parse_log_part(ymref_id, text, event_date))
+      part_records, part_watermark = self._parse_log_part_with_watermark(ymref_id, text, event_date)
+      records.extend(part_records)
+      if part_watermark is not None and (watermark is None or part_watermark > watermark):
+        watermark = part_watermark
 
     published = self._publish_post_click_actions(ymref_id, event_date, records)
     if published:
@@ -546,6 +619,8 @@ class Application(Service):
 
     api.clean_log_request(request_id)
     self._save_log_request(ymref_id, event_date, request_id, 'cleaned')
+    if watermark is not None:
+      self._advance_logs_watermark(ymref_id, watermark)
     self._update_import_status(ymref_id, event_date, reporting)
 
   def _pending_log_requests(self, ymref_id):
@@ -560,19 +635,22 @@ class Application(Service):
     ]
 
   def _parse_log_part(self, ymref_id, text, event_date):
+    return self._parse_log_part_with_watermark(ymref_id, text, event_date)[0]
+
+  def _parse_log_part_with_watermark(self, ymref_id, text, event_date):
     records = []
+    watermark = None
     for row in csv.DictReader(text.splitlines(), delimiter='\t'):
-      request_id = parse_metrika_request_id(self._field(row, 'UTMTerm'))
-      if request_id is None:
+      event_time = parse_log_event_time(self._field(row, 'dateTimeUTC'))
+      if watermark is None or event_time > watermark:
+        watermark = event_time
+
+      metrika_term = parse_metrika_term(self._field(row, 'UTMTerm'))
+      if metrika_term is None:
         continue
+      request_id, distribution_hash = metrika_term
 
       visit_id = int(self._field(row, 'visitID'))
-      event_time = datetime.datetime.fromisoformat(self._field(row, 'dateTimeUTC'))
-      if event_time.tzinfo is None:
-        # Logs API documents dateTimeUTC as a fixed UTC+3 value.
-        event_time = event_time.replace(
-          tzinfo=datetime.timezone(datetime.timedelta(hours=3)))
-      event_time = event_time.astimezone(datetime.timezone.utc)
       reporting_comparable = parse_ccid(self._field(row, 'UTMContent')) is not None
       payload = json.dumps({
         'landing_bounced': parse_bool(self._field(row, 'bounce')),
@@ -584,8 +662,16 @@ class Application(Service):
         'yandex_reporting_comparable': reporting_comparable,
       }, separators=(',', ':'), sort_keys=True)
       records.append(
-        (visit_id, event_date, event_time, request_id, payload, reporting_comparable))
-    return records
+        (
+          visit_id,
+          event_date,
+          event_time,
+          request_id,
+          distribution_hash,
+          payload,
+          reporting_comparable,
+        ))
+    return records, watermark
 
   @staticmethod
   def _field(row, suffix):
@@ -612,8 +698,9 @@ class Application(Service):
 
     with Context(self, out_dir=self.post_click_dir) as context:
       writers = {}
-      for _, _, event_time, request_id, payload, _ in new_records:
-        chunk = request_chunk(request_id, self.chunks_count)
+      for _, _, event_time, request_id, distribution_hash, payload, _ in new_records:
+        chunk = distribution_hash % self.chunks_count if distribution_hash is not None else \
+          request_chunk(request_id, self.chunks_count)
         writer = writers.get(chunk)
         if writer is None:
           writer = context.files.get_line_writer(
@@ -639,7 +726,7 @@ class Application(Service):
         int.from_bytes(hashlib.blake2b(payload.encode(), digest_size=8).digest(), 'big'),
         reporting_comparable,
         published_at)
-      for visit_id, date, _, request_id, payload, reporting_comparable in new_records
+      for visit_id, date, _, request_id, _, payload, reporting_comparable in new_records
     ]
 
   def _log_request_state(self, ymref_id, event_date):
@@ -656,10 +743,20 @@ class Application(Service):
         datetime.datetime.now(datetime.timezone.utc))],
       column_names=('ymref_id', 'event_date', 'request_id', 'status', 'version'))
 
+  def _advance_logs_watermark(self, ymref_id, event_time):
+    ready_before_date = (
+      event_time.astimezone(LOGS_TIMEZONE) - LOGS_READY_DELAY).date()
+    with self.pg.cursor() as cursor:
+      cursor.execute(
+        f"SELECT {ADVANCE_LOGS_WATERMARK_FUNCTION}(%s, %s)",
+        (ymref_id, ready_before_date))
+    self.pg.commit()
+
   def _update_import_status(self, ymref_id, event_date, reporting):
+    timezone = reporting.get('timezone', datetime.timezone.utc)
     reporting_visits = sum(
       values[0] for (hour, _), values in reporting['rows'].items()
-      if hour.date() == event_date)
+      if hour.astimezone(timezone).date() == event_date)
     logs_visits = int(self.ch.query(
       f"SELECT countIf(reporting_comparable) FROM {LOGS_SYNC_TABLE} FINAL "
       "WHERE ymref_id = %(ymref_id)s AND event_date = %(event_date)s",

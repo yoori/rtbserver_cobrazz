@@ -27,6 +27,14 @@ OUT_DIR=$3/opt/foros/server/etc/$OUT_DIR_SUFFIX
 
 WORKSPACE_OUT_DIR=$BUILD_DIR/u01/foros/server/var
 
+FRONTEND_NETWORK_XPATH="$CLUSTER_XPATH/configuration/cfg:cluster/cfg:frontendNetwork"
+FRONTEND_NETWORK_COUNT=$("$EXEC/XPathGetValue.sh" --xml "$APP_XML" \
+  --xpath "count($FRONTEND_NETWORK_XPATH)" --plugin-root "$PLUGIN_ROOT")
+if [ "$FRONTEND_NETWORK_COUNT" != 0 ]; then
+  python3 "$EXEC/FrontendNetworkConf.py" --xml "$APP_XML" --xpath "$CLUSTER_XPATH" \
+    --plugin "$PLUGIN_ROOT" --output "$BUILD_DIR" --colo "$COLOCATION_NAME" || exit 1
+fi
+
 mkdir -p $WORKSPACE_OUT_DIR/sync
 mkdir -p $WORKSPACE_OUT_DIR/www
 

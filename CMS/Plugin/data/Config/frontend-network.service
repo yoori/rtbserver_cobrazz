@@ -1,0 +1,16 @@
+[Unit]
+Description=FOROS frontend network (@COLO@)
+Wants=network-online.target
+After=network-online.target systemd-sysctl.service
+ConditionPathExists=/etc/foros/frontend-network/@COLO@.json
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/foros-frontend-network-@COLO@ apply @COLO@
+ExecReload=/usr/libexec/foros-frontend-network-@COLO@ apply @COLO@
+# No ExecStop: keep ARP protection while addresses exist, including during shutdown.
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

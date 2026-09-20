@@ -469,6 +469,7 @@ namespace AdServer::CampaignSvcs
     const Tag::Size* tag_size,
     const Creative* creative,
     const CampaignKeywordBase* campaign_keyword,
+    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod,
     const AdServer::Commons::UserId* resolved_user_id,
     const AdServer::Commons::UserId* cookie_user_id,
     const TokenValueMap& tokens)
@@ -545,6 +546,8 @@ namespace AdServer::CampaignSvcs
       }
 
       auto metrika_context = std::make_shared<InstantiateAd::InstantiateAdContext>();
+      const InstantiateParams metrika_inst_params(user_id_hash_mod);
+      metrika_context->inst_params = &metrika_inst_params;
       auto& metrika_data = metrika_context->creative_args_data.emplace();
       metrika_data.request_id = request_id;
       metrika_data.creative = creative;
@@ -1601,6 +1604,7 @@ namespace AdServer::CampaignSvcs
             const Tag::Size* const tag_size = ad_selection_result.tag_size;
             const AdServer::Commons::RequestId request_id = select_params.request_id;
             const AdServer::Commons::UserId resolved_user_id = request_params.track_user_id;
+            const auto user_id_hash_mod = inst_params.user_id_hash_mod;
 
             creative_args_data.click_url_initializer =
               [this,
@@ -1613,6 +1617,7 @@ namespace AdServer::CampaignSvcs
                 campaign_keyword,
                 request_id,
                 resolved_user_id,
+                user_id_hash_mod,
                 ext_tokens](InstantiateAd::InstantiateAdContext::CreativeArgsData& data)
               {
                 assert(data.click_params);
@@ -1629,6 +1634,7 @@ namespace AdServer::CampaignSvcs
                   tag_size,
                   creative,
                   campaign_keyword.in() ? campaign_keyword.in() : nullptr,
+                  user_id_hash_mod,
                   &resolved_user_id,
                   nullptr,
                   *ext_tokens);
@@ -2428,6 +2434,7 @@ namespace AdServer::CampaignSvcs
             ad_selection_result.tag_size,
             creative,
             ckw.in() ? ckw.in() : 0,
+            inst_params.user_id_hash_mod,
             &request_params.track_user_id,
             nullptr,
             request_result_params.ext_tokens);

@@ -717,8 +717,8 @@ namespace
 
     const std::string expected_click_metrika_params =
       std::string("utm_term=r:") + fixture.request_info.request_id.to_string() +
-      "%3Bu1:" + fixture.request_info.track_user_id.to_string() + "%3Bu2:" +
-      "&utm_content=ccid:" + String::StringManip::IntToStr(
+      "%3Bh:12345%3Bu1:" + fixture.request_info.track_user_id.to_string() +
+      "%3Bu2:&utm_content=ccid:" + String::StringManip::IntToStr(
         fixture.creative->ccid).str().str();
     if (creative_body.find(expected_click_metrika_params) == std::string::npos)
     {
@@ -746,12 +746,13 @@ namespace
       fixture.tag_size,
       fixture.creative,
       nullptr,
+      fixture.instantiate_params.user_id_hash_mod,
       &fixture.request_info.track_user_id,
       &cookie_user_id,
       click_tokens);
     const std::string expected_click_time_url =
       std::string("https://advertiser.example/landing?utm_term=r:") +
-      fixture.request_info.request_id.to_string() + "%3Bu1:" +
+      fixture.request_info.request_id.to_string() + "%3Bh:12345%3Bu1:" +
       fixture.request_info.track_user_id.to_string() + "%3Bu2:" +
       cookie_user_id.to_string() + "&utm_content=ccid:" +
       String::StringManip::IntToStr(fixture.creative->ccid).str().str();
