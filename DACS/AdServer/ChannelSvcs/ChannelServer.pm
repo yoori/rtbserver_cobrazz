@@ -16,10 +16,7 @@ sub start
        "mkdir -p \${log_root}/ChannelServer/Out/ColoUpdateStat && " .
        "mkdir -p \${log_root}/ChannelServer/Out/ColoUpdateStat_ && " .
        "mkdir -p \${workspace_root}/run && " .
-       "if test -e $pid_file; then " .
-         "pid=`cat $pid_file`; " .
-         "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
-       "fi && " .
+    AdServer::Functions::pidfile_start_guard($pid_file, "ChannelServer") . " && " .
        "export MALLOC_CONF=narenas:64,background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000 && " .
        "{ ".
          AdServer::Functions::thread_affinity_env(
@@ -37,21 +34,14 @@ sub start
 sub stop
 {
   my ($host, $descr) = @_;
-
-  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "ChannelServer");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
-  my $command =
-    "test -e $pid_file || exit 1 && " .
-    "pid=`cat $pid_file` && " .
-    "kill -0 \$pid 2>/dev/null || exit 1; " .
-    "exit 0";
-
-  return AdServer::Functions::execute_command($host, $descr, $command);
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "ChannelServer"));
 }
 
 sub db_status

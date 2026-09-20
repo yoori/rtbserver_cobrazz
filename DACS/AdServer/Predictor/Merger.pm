@@ -5,6 +5,8 @@ use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
 
+my $pid_file = "\${workspace_root}/run/predictor_merger.pid";
+
 sub start
 {
   my ($host, $descr) = @_;
@@ -19,37 +21,23 @@ sub start
       "--pid-file-path=\${workspace_root}/run/predictor_merger.pid start " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}PredictorMerger.out 2>&1 < /dev/null & }";
 
+  $command = AdServer::Functions::pidfile_start_guard($pid_file, "PredictorMerger.pl") .
+    " && " . $command;
+
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
 sub stop
 {
   my ($host, $descr) = @_;
-
-  my $command =
-    "PredictorMerger.pl " .
-    "--pid-file-path=\${workspace_root}/run/predictor_merger.pid stop " .
-    " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}PredictorMerger.out 2>&1";
-
-  return AdServer::Functions::execute_command($host, $descr, $command);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "PredictorMerger.pl");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
-  my $command =
-    "test -e \${workspace_root}/run/predictor_merger.pid || exit 1 && " .
-    "kill -0 \`cat \${workspace_root}/run/predictor_merger.pid\` 2>/dev/null" .
-    " || exit 1 && exit 0 ";
-
-  my $res = AdServer::Functions::execute_command($host, $descr, $command);
-
-  if ($res != 0)
-  {
-    return 1;
-  }
-  return 0;
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "PredictorMerger.pl"));
 }
 
 1;

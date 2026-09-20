@@ -94,7 +94,7 @@ class StatCollectorTest(unittest.TestCase):
       (process_path / 'cmdline').write_bytes(
         b'/opt/foros/server/bin/RequestInfoManager\0--config\0')
       (process_path / 'stat').write_text(
-        '1000 (RequestInfoManager) S 0 0 0 0 0 0 0 0 0 0 25 10')
+        '1000 (RequestInfoManager) S 0 0 0 0 0 0 0 0 0 0 25 10 0 0 0 0 0 0 0 0 100')
       proc_stat_path = proc_root / 'stat'
       proc_stat_path.write_text('cpu  100 0 50 100 25 0 0 0 0 0\n')
 
@@ -102,7 +102,8 @@ class StatCollectorTest(unittest.TestCase):
         {'processes': [{'service': 'RequestInfoManager', 'command': 'RequestInfoManager'}]},
         proc_root = str(proc_root),
         proc_stat_path = str(proc_stat_path),
-        clock_ticks = 10)
+        clock_ticks = 10,
+        page_size = 4096)
 
     self.assertEqual(metrics, [
       'rtb_cpu_time,scope=process,service=RequestInfoManager,mode=user '
@@ -111,6 +112,8 @@ class StatCollectorTest(unittest.TestCase):
         'process_count=1i,collection_success=1i,cpu_time_seconds_total=1.0',
       'rtb_threads,scope=process,service=RequestInfoManager '
         'process_count=1i,thread_count=1i,collection_success=1i',
+      'rtb_rss,scope=process,service=RequestInfoManager '
+        'process_count=1i,rss_bytes=409600i,collection_success=1i',
       'rtb_cpu_time,scope=host,mode=iowait '
         'cpu_time_seconds_total=2.5,collection_success=1i',
     ])
@@ -135,7 +138,7 @@ class StatCollectorTest(unittest.TestCase):
       (process_path / 'task' / '1001').mkdir(parents = True)
       (process_path / 'task' / '1002').mkdir(parents = True)
       (process_path / 'stat').write_text(
-        '1001 (FCGIServer) S 0 0 0 0 0 0 0 0 0 0 30 20')
+        '1001 (FCGIServer) S 0 0 0 0 0 0 0 0 0 0 30 20 0 0 0 0 0 0 0 0 40')
       other_instance_root = pathlib.Path(temporary_directory) / 'config' / 'other-colo'
       other_instance_root.mkdir(parents = True)
       other_config_path = other_instance_root / 'FCGITrackServerConfig.xml'
@@ -147,7 +150,7 @@ class StatCollectorTest(unittest.TestCase):
       (other_process_path / 'exe').symlink_to(binary_path)
       (other_process_path / 'task' / '1002').mkdir(parents = True)
       (other_process_path / 'stat').write_text(
-        '1002 (FCGIServer) S 0 0 0 0 0 0 0 0 0 0 10 20')
+        '1002 (FCGIServer) S 0 0 0 0 0 0 0 0 0 0 10 20 0 0 0 0 0 0 0 0 70')
       proc_stat_path = proc_root / 'stat'
       proc_stat_path.write_text('cpu  100 0 50 100 25 0 0 0 0 0\n')
 
@@ -159,7 +162,8 @@ class StatCollectorTest(unittest.TestCase):
         },
         proc_root = str(proc_root),
         proc_stat_path = str(proc_stat_path),
-        clock_ticks = 10)
+        clock_ticks = 10,
+        page_size = 4096)
 
     self.assertEqual(metrics, [
       'rtb_cpu_time,scope=process,service=FCGIAdServer,mode=user '
@@ -168,6 +172,8 @@ class StatCollectorTest(unittest.TestCase):
         'process_count=1i,collection_success=1i,cpu_time_seconds_total=2.0',
       'rtb_threads,scope=process,service=FCGIAdServer '
         'process_count=1i,thread_count=2i,collection_success=1i',
+      'rtb_rss,scope=process,service=FCGIAdServer '
+        'process_count=1i,rss_bytes=163840i,collection_success=1i',
       'rtb_cpu_time,scope=host,mode=iowait '
         'cpu_time_seconds_total=2.5,collection_success=1i',
     ])

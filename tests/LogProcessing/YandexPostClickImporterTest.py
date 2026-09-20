@@ -212,7 +212,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     old_page_size = IMPORTER.REPORTING_PAGE_SIZE
     IMPORTER.REPORTING_PAGE_SIZE = 2
     try:
-      result = self.application._load_reporting(17, api)
+      result = self.application._load_reporting(17, api, self.event_date, self.event_date)
     finally:
       IMPORTER.REPORTING_PAGE_SIZE = old_page_size
 
@@ -222,6 +222,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(result['rows'][(hour1, 1)][:5], [3, 1, 24.0, 4, 1])
     self.assertEqual(result['rows'][(hour2, 2)][:5], [4, 1, 8.0, 5, 2])
     self.assertFalse(result['unsampled'])
+    self.assertEqual(result['date1'], datetime.date(2026, 9, 10))
+    self.assertEqual(result['date2'], datetime.date(2026, 9, 10))
     self.assertEqual(len(upserted), 1)
     self.assertEqual(upserted[0][1:3], (hour2, 2))
     self.assertEqual(len(self.application.ch.inserted), 1)
@@ -514,6 +516,15 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       def query(self, query, parameters):
         if f'FROM {IMPORTER.LOG_REQUESTS_TABLE}' in query:
+          if 'event_date = %(event_date)s' not in query:
+            rows = [
+              (event_date, request_id, status)
+              for (ymref_id, event_date), (request_id, status) in
+                self.request_states.items()
+              if ymref_id == parameters['ymref_id']
+            ]
+            return types.SimpleNamespace(result_rows=rows)
+
           key = (parameters['ymref_id'], parameters['event_date'])
           state = self.request_states.get(key)
           return types.SimpleNamespace(result_rows=[state] if state else [])
@@ -598,6 +609,125 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(api.cleaned, [100, 101])
     self.assertEqual(len(self.application.ch.logs), 1)
     self.assertEqual(len(updated), 2)
+
+  def test_process_logs_finishes_request_outside_date_window(self):
+    old_date = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=10)
+
+    class Ch:
+      def __init__(self):
+        self.request_states = {(17, old_date): (100, 'created')}
+        self.logs = []
+
+      def query(self, query, parameters):
+        if f'FROM {IMPORTER.LOG_REQUESTS_TABLE}' in query:
+          if 'event_date = %(event_date)s' not in query:
+            rows = [
+              (event_date, request_id, status)
+              for (ymref_id, event_date), (request_id, status) in
+                self.request_states.items()
+              if ymref_id == parameters['ymref_id']
+            ]
+            return types.SimpleNamespace(result_rows=rows)
+
+          key = (parameters['ymref_id'], parameters['event_date'])
+          state = self.request_states.get(key)
+          return types.SimpleNamespace(result_rows=[state] if state else [])
+
+        if 'SELECT visit_id' in query:
+          rows = [
+            (row[1],) for row in self.logs
+            if row[0] == parameters['ymref_id'] and
+              row[2] == parameters['event_date']
+          ]
+          return types.SimpleNamespace(result_rows=rows)
+
+        raise AssertionError(query)
+
+      def insert(self, table, rows, column_names):
+        if table == IMPORTER.LOG_REQUESTS_TABLE:
+          for row in rows:
+            self.request_states[(row[0], row[1])] = (row[2], row[3])
+        elif table == IMPORTER.LOGS_SYNC_TABLE:
+          self.logs.extend(rows)
+        else:
+          raise AssertionError(table)
+
+    class Api:
+      def __init__(self):
+        self.created = []
+        self.cleaned = []
+        self.polls = []
+
+      def create_log_request(self, event_date, attribution):
+        self.created.append(event_date)
+        return {'request_id': 101, 'status': 'created'}
+
+      def get_log_request(self, request_id):
+        self.polls.append(request_id)
+        if request_id == 100 and self.polls.count(request_id) > 1:
+          return {
+            'request_id': request_id,
+            'status': 'processed',
+            'parts': [{'part_number': 0}],
+          }
+        return {'request_id': request_id, 'status': 'created'}
+
+      def download_log_part(self, request_id, part_number):
+        return log_part()
+
+      def clean_log_request(self, request_id):
+        self.cleaned.append(request_id)
+
+    self.application.days = 2
+    self.application.running = True
+    self.application.print_line = 0
+    self.application.ch = Ch()
+    self.application.chunks_count = 24
+    self.application.print_ = lambda *args, **kwargs: None
+    updated = []
+    reporting_calls = []
+    self.application._load_reporting = (
+      lambda ymref_id, api, date1, date2:
+        reporting_calls.append((ymref_id, date1, date2)) or {
+          'rows': {},
+          'unsampled': True,
+          'date1': date1,
+          'date2': date2,
+        })
+    self.application._update_import_status = (
+      lambda ymref_id, event_date, reporting:
+        updated.append((ymref_id, event_date)))
+    api = Api()
+
+    with tempfile.TemporaryDirectory() as directory:
+      self.application.in_dir = None
+      self.application.out_dir = None
+      self.application.markers_dir = None
+      self.application.tmp_dir = str(pathlib.Path(directory) / 'tmp')
+      self.application.post_click_dir = str(pathlib.Path(directory) / 'out')
+      pathlib.Path(self.application.tmp_dir).mkdir()
+      pathlib.Path(self.application.post_click_dir).mkdir()
+
+      today = datetime.datetime.now(datetime.timezone.utc).date()
+      reporting = {
+        'rows': {},
+        'unsampled': True,
+        'date1': today - datetime.timedelta(days=1),
+        'date2': today,
+      }
+      self.application._process_logs(17, api, reporting)
+      self.application._process_logs(17, api, reporting)
+
+      output_files = tuple(pathlib.Path(self.application.post_click_dir).iterdir())
+      self.assertEqual(len(output_files), 1)
+
+    self.assertEqual(api.cleaned, [100])
+    self.assertEqual(len(api.created), 1)
+    self.assertEqual(api.polls.count(100), 2)
+    self.assertEqual(self.application.ch.request_states[(17, old_date)], (100, 'cleaned'))
+    self.assertEqual(len(self.application.ch.logs), 1)
+    self.assertEqual(reporting_calls, [(17, old_date, old_date)])
+    self.assertEqual(updated, [(17, old_date)])
 
   def test_reset_connections_closes_postgres_after_rollback_error(self):
     class Pg:

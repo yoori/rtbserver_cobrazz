@@ -13,10 +13,7 @@ sub start
 
   my $command =
     "mkdir -p \${workspace_root}/run && " .
-    "if test -e $pid_file; then " .
-      "pid=`cat $pid_file`; " .
-      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
-    "fi && " .
+    AdServer::Functions::pidfile_start_guard($pid_file, "CTRPredictModelViewer.py") . " && " .
     "{ " .
       "setsid -f CTRPredictModelViewer.py " .
         "--config=\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CTRPredictModelViewerConfig.json " .
@@ -29,20 +26,14 @@ sub start
 sub stop
 {
   my ($host, $descr) = @_;
-
-  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "CTRPredictModelViewer.py");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
   return AdServer::Functions::execute_command(
-    $host,
-    $descr,
-    "test -e $pid_file || exit 1 && " .
-    "pid=`cat $pid_file` && " .
-    "kill -0 \$pid 2>/dev/null || exit 1; exit 0");
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "CTRPredictModelViewer.py"));
 }
 
 1;

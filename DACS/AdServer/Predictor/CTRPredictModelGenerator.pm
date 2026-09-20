@@ -13,10 +13,7 @@ sub start_objective
   my $command =
     "mkdir -p \${workspace_root}/run && " .
     "mkdir -p \${workspace_root}/${model_name}PredictModelGenerator && " .
-    "if test -e $pid_file; then " .
-      "pid=`cat $pid_file`; " .
-      "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
-    "fi && " .
+    AdServer::Functions::pidfile_start_guard($pid_file, "CTRPredictModelGenerator.py") . " && " .
     "{ " .
       "setsid -f CTRPredictModelGenerator.py " .
         "--config=\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/" .
@@ -34,7 +31,8 @@ sub stop_objective
   my ($host, $descr, $model_name) = @_;
   my $pid_file = "\${workspace_root}/run/${model_name}PredictModelGenerator.pid";
 
-  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file);
+  return AdServer::Functions::stop_by_pidfile(
+    $host, $descr, $pid_file, "CTRPredictModelGenerator.py");
 }
 
 sub is_alive_objective
@@ -45,9 +43,7 @@ sub is_alive_objective
   return AdServer::Functions::execute_command(
     $host,
     $descr,
-    "test -e $pid_file || exit 1 && " .
-    "pid=`cat $pid_file` && " .
-    "kill -0 \$pid 2>/dev/null || exit 1; exit 0");
+    AdServer::Functions::pidfile_is_alive($pid_file, "CTRPredictModelGenerator.py"));
 }
 
 sub start

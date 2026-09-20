@@ -11,10 +11,7 @@ sub start
 
   my $command =
    "mkdir -p \${log_root}/UserBindController \${workspace_root}/run && " .
-   "if test -e $pid_file; then " .
-     "pid=`cat $pid_file`; " .
-     "kill -0 \$pid 2>/dev/null && exit 1 || rm -f $pid_file; " .
-   "fi && " .
+    AdServer::Functions::pidfile_start_guard($pid_file, "UserBindController") . " && " .
    "{ " .
    "setsid -f \${VALGRIND_PREFIX} UserBindController " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/UserBindController.xml > " .
@@ -27,21 +24,14 @@ sub start
 sub stop
 {
   my ($host, $descr) = @_;
-
-  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "UserBindController");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
-  my $command =
-    "test -e $pid_file || exit 1 && " .
-    "pid=`cat $pid_file` && " .
-    "kill -0 \$pid 2>/dev/null || exit 1; " .
-    "exit 0";
-
-  return AdServer::Functions::execute_command($host, $descr, $command);
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "UserBindController"));
 }
 
 1;

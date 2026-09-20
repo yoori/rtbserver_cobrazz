@@ -6,6 +6,8 @@ use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
 
+my $pid_file = "\${workspace_root}/run/nginx3.pid";
+
 sub start
 {
   my ($host, $descr) = @_;
@@ -18,35 +20,23 @@ sub start
       "-p \${workspace_root}/log/nginx3/ " .
       ">> \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}nginx3.out 2>&1";
 
+  $command = AdServer::Functions::pidfile_start_guard($pid_file, "/usr/sbin/nginx") .
+    " && " . $command;
+
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
 
 sub stop
 {
   my ($host, $descr) = @_;
-
-  Utils::Functions::init_environment();
-
-  my $command =
-    "/usr/sbin/nginx -c \${config_root}/${AdServer::Path::XML_FILE_BASE}$host/conf3/nginx.conf -s stop " .
-    " >> \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}nginx3.out 2>&1";
-
-  return AdServer::Functions::execute_command($host, $descr, $command);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "/usr/sbin/nginx");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
-  my $environment_dir = Utils::Functions::init_environment();
-
-  my $command =
-    "source $environment_dir/environment.sh && " .
-    "pid=`cat \${workspace_root}/run/nginx3.pid 2>/dev/null`; test -n \"\$pid\" && test \"`ps -p \$pid -o comm= 2>/dev/null`\" = nginx";
-
-  my $ret = Utils::Functions::safe_system($command);
-
-  return $ret == 0;
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "/usr/sbin/nginx"));
 }
 
 1;

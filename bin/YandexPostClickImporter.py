@@ -384,15 +384,21 @@ class Application(Service):
       'limit': REPORTING_PAGE_SIZE,
     })
 
-  def _load_reporting(self, ymref_id, api):
+  def _load_reporting(self, ymref_id, api, date1=None, date2=None):
     today = datetime.datetime.now(datetime.timezone.utc).date()
-    date1 = today - datetime.timedelta(days=self.days - 1)
+    if date1 is None:
+      date1 = today - datetime.timedelta(days=self.days - 1)
+    if date2 is None:
+      date2 = today
+    if date1 > date2:
+      raise ValueError('reporting date1 must not be after date2')
+
     rows = {}
     unsampled = True
 
     offset = 1
     while True:
-      result = self._reporting_page(api, date1, today, offset)
+      result = self._reporting_page(api, date1, date2, offset)
       sampled = bool(result.get('sampled', False))
       unsampled = unsampled and not sampled
       sample_share = float(result.get('sample_share', 1.0))
@@ -431,8 +437,13 @@ class Application(Service):
     for row in self.ch.query(
         f"SELECT hour, ccid, visits, visits_with_bounce, session_time_sum, "
         f"page_views, new_user_visits, sampled, sample_share FROM {REPORTING_SYNC_TABLE} FINAL "
-        "WHERE ymref_id = %(ymref_id)s AND hour >= %(date1)s",
-        parameters={'ymref_id': ymref_id, 'date1': date1}).result_rows:
+        "WHERE ymref_id = %(ymref_id)s AND hour >= %(date1)s "
+        "AND hour < addDays(%(date2)s, 1)",
+        parameters={
+          'ymref_id': ymref_id,
+          'date1': date1,
+          'date2': date2,
+        }).result_rows:
       hour = row[0]
       if hour.tzinfo is None:
         hour = hour.replace(tzinfo=datetime.timezone.utc)
@@ -464,7 +475,12 @@ class Application(Service):
           'sample_share',
           'version'))
 
-    return {'rows': rows, 'unsampled': unsampled}
+    return {
+      'rows': rows,
+      'unsampled': unsampled,
+      'date1': date1,
+      'date2': date2,
+    }
 
   def _upsert_estimation(self, rows):
     statement = f"SELECT {UPSERT_ESTIMATION_FUNCTION}(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -473,10 +489,19 @@ class Application(Service):
     self.pg.commit()
 
   def _process_logs(self, ymref_id, api, reporting):
+    handled_dates = set()
+    for event_date, request_id in self._pending_log_requests(ymref_id):
+      self.verify_running()
+      self._process_log_request(ymref_id, event_date, request_id, api, reporting)
+      handled_dates.add(event_date)
+
     today = datetime.datetime.now(datetime.timezone.utc).date()
     for age in range(1, self.days):
       self.verify_running()
       event_date = today - datetime.timedelta(days=age)
+      if event_date in handled_dates:
+        continue
+
       request_state = self._log_request_state(ymref_id, event_date)
       if request_state is None or request_state[1] in TERMINAL_LOG_REQUEST_STATUSES:
         log_request = api.create_log_request(event_date, self.attribution)
@@ -485,35 +510,54 @@ class Application(Service):
       else:
         request_id = request_state[0]
 
-      log_request = api.get_log_request(request_id)
-      status = log_request['status']
-      self._save_log_request(ymref_id, event_date, request_id, status)
-      if status != 'processed':
-        continue
+      self._process_log_request(ymref_id, event_date, request_id, api, reporting)
 
-      records = []
-      for part in log_request.get('parts', []):
-        self.verify_running()
-        text = api.download_log_part(request_id, int(part['part_number']))
-        records.extend(self._parse_log_part(ymref_id, text, event_date))
+  def _process_log_request(self, ymref_id, event_date, request_id, api, reporting):
+    log_request = api.get_log_request(request_id)
+    status = log_request['status']
+    self._save_log_request(ymref_id, event_date, request_id, status)
+    if status != 'processed':
+      return
 
-      published = self._publish_post_click_actions(ymref_id, event_date, records)
-      if published:
-        self.ch.insert(
-          LOGS_SYNC_TABLE,
-          published,
-          column_names=(
-            'ymref_id',
-            'visit_id',
-            'event_date',
-            'request_id',
-            'payload_hash',
-            'reporting_comparable',
-            'published_at'))
+    date1 = reporting.get('date1')
+    date2 = reporting.get('date2')
+    if date1 is not None and date2 is not None and not date1 <= event_date <= date2:
+      reporting = self._load_reporting(ymref_id, api, event_date, event_date)
 
-      api.clean_log_request(request_id)
-      self._save_log_request(ymref_id, event_date, request_id, 'cleaned')
-      self._update_import_status(ymref_id, event_date, reporting)
+    records = []
+    for part in log_request.get('parts', []):
+      self.verify_running()
+      text = api.download_log_part(request_id, int(part['part_number']))
+      records.extend(self._parse_log_part(ymref_id, text, event_date))
+
+    published = self._publish_post_click_actions(ymref_id, event_date, records)
+    if published:
+      self.ch.insert(
+        LOGS_SYNC_TABLE,
+        published,
+        column_names=(
+          'ymref_id',
+          'visit_id',
+          'event_date',
+          'request_id',
+          'payload_hash',
+          'reporting_comparable',
+          'published_at'))
+
+    api.clean_log_request(request_id)
+    self._save_log_request(ymref_id, event_date, request_id, 'cleaned')
+    self._update_import_status(ymref_id, event_date, reporting)
+
+  def _pending_log_requests(self, ymref_id):
+    rows = self.ch.query(
+      f"SELECT event_date, request_id, status FROM {LOG_REQUESTS_TABLE} FINAL "
+      "WHERE ymref_id = %(ymref_id)s ORDER BY event_date",
+      parameters={'ymref_id': ymref_id}).result_rows
+    return [
+      (row[0], int(row[1]))
+      for row in rows
+      if row[2] not in TERMINAL_LOG_REQUEST_STATUSES
+    ]
 
   def _parse_log_part(self, ymref_id, text, event_date):
     records = []

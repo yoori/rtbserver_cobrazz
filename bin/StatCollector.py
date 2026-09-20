@@ -189,7 +189,7 @@ def collect_queue(queue, now):
   }
 
 
-def process_cpu_ticks(pid_path):
+def process_cpu_ticks_and_rss_pages(pid_path):
   with open(os.path.join(pid_path, 'stat'), 'r') as source:
     process_stat = source.read()
 
@@ -198,10 +198,10 @@ def process_cpu_ticks(pid_path):
     raise OSError('invalid process stat data')
 
   fields = process_stat[close_parenthesis + 1:].split()
-  if len(fields) <= 12:
+  if len(fields) <= 21:
     raise OSError('incomplete process stat data')
 
-  return int(fields[11]), int(fields[12])
+  return int(fields[11]), int(fields[12]), int(fields[21])
 
 
 def normalize_command(command):
@@ -276,7 +276,7 @@ def process_thread_count(pid_path):
   return sum(1 for entry in os.scandir(os.path.join(pid_path, 'task')) if entry.is_dir())
 
 
-def collect_process_metrics(config, proc_root, clock_ticks):
+def collect_process_metrics(config, proc_root, clock_ticks, page_size):
   process_stats = {}
   services_by_command = {}
   for process in config['processes']:
@@ -284,6 +284,7 @@ def collect_process_metrics(config, proc_root, clock_ticks):
     command = normalize_command(process['command'])
     process_stats.setdefault(service, {
       'process_count': 0,
+      'rss_pages': 0,
       'system_cpu_ticks': 0,
       'thread_collection_success': 1,
       'thread_count': 0,
@@ -302,7 +303,7 @@ def collect_process_metrics(config, proc_root, clock_ticks):
 
     try:
       command = process_command(entry.path)
-      user_ticks, system_ticks = process_cpu_ticks(entry.path)
+      user_ticks, system_ticks, rss_pages = process_cpu_ticks_and_rss_pages(entry.path)
     except (OSError, ValueError):
       continue
 
@@ -321,12 +322,14 @@ def collect_process_metrics(config, proc_root, clock_ticks):
     for service in services:
       stats = process_stats.setdefault(service, {
         'process_count': 0,
+        'rss_pages': 0,
         'system_cpu_ticks': 0,
         'thread_collection_success': 1,
         'thread_count': 0,
         'user_cpu_ticks': 0,
       })
       stats['process_count'] += 1
+      stats['rss_pages'] += rss_pages
       stats['system_cpu_ticks'] += system_ticks
       stats['user_cpu_ticks'] += user_ticks
       if thread_count is None:
@@ -364,6 +367,15 @@ def collect_process_metrics(config, proc_root, clock_ticks):
         'collection_success': stats['thread_collection_success'],
       }))
 
+    metrics.append(format_metric(
+      'rtb_rss',
+      {'scope': 'process', 'service': service},
+      {
+        'process_count': stats['process_count'],
+        'rss_bytes': stats['rss_pages'] * page_size,
+        'collection_success': 1,
+      }))
+
   return metrics
 
 
@@ -383,11 +395,14 @@ def collect_cpu_metrics(
     config,
     proc_root = '/proc',
     proc_stat_path = '/proc/stat',
-    clock_ticks = None):
+    clock_ticks = None,
+    page_size = None):
   if clock_ticks is None:
     clock_ticks = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+  if page_size is None:
+    page_size = os.sysconf('SC_PAGE_SIZE')
 
-  metrics = collect_process_metrics(config, proc_root, clock_ticks)
+  metrics = collect_process_metrics(config, proc_root, clock_ticks, page_size)
 
   try:
     iowait_cpu_ticks = host_iowait_cpu_ticks(proc_stat_path)

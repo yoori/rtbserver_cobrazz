@@ -23,24 +23,59 @@ sub process_control_is_alive
     $descr);
 }
 
-sub stop_by_pidfile
+sub pid_matches_executable
 {
-  my ($host, $descr, $pid_file) = @_;
+  my ($executable) = @_;
+  die "Invalid executable name" unless $executable =~ /\A[A-Za-z0-9_.\/-]+\z/;
 
-  my $command =
-    "test -e $pid_file || exit 0 && " .
-    "pid=`cat $pid_file` && " .
-    "{ kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; } && " .
-    "kill -TERM \$pid 2>/dev/null || true; " .
+  # A stale PID can refer to another executable or even to one of its threads.
+  return
+    "( case \"\$pid\" in ''|*[!0-9]*|0) exit 1;; esac; " .
+    "kill -0 \"\$pid\" 2>/dev/null || exit 1; " .
+    "resolved=\$(command -v $executable) || exit 1; " .
+    "test -f \"\$resolved\" && test -x \"\$resolved\" || exit 1; " .
+    "perl -Mthreads -Mthreads::shared -MUtils::Functions -e " .
+      "'exit(Utils::Functions::pid_matches_executable(\@ARGV) ? 0 : 1)' " .
+      "-- \"\$pid\" \"\$resolved\" )";
+}
+
+sub pidfile_is_alive
+{
+  my ($pid_file, $executable) = @_;
+  return "( pid=\$(cat \"$pid_file\" 2>/dev/null) && " .
+    pid_matches_executable($executable) . " )";
+}
+
+sub pidfile_start_guard
+{
+  my ($pid_file, $executable) = @_;
+  return "if test -e \"$pid_file\"; then " .
+    pidfile_is_alive($pid_file, $executable) .
+    " && exit 1; rm -f \"$pid_file\" || exit 1; fi";
+}
+
+sub stop_pidfile_command
+{
+  my ($pid_file, $executable) = @_;
+  my $alive = pid_matches_executable($executable);
+  return
+    "( test -e \"$pid_file\" || exit 0; " .
+    "pid=\$(cat \"$pid_file\") || exit 1; " .
+    "{ $alive || { rm -f \"$pid_file\"; exit 0; }; }; " .
+    "kill -TERM \"\$pid\" 2>/dev/null || true; " .
     "for i in `seq 1 60`; do " .
-      "test -e $pid_file || exit 0; " .
-      "kill -0 \$pid 2>/dev/null || { rm -f $pid_file; exit 0; }; " .
+      "test -e \"$pid_file\" || exit 0; " .
+      "$alive || { rm -f \"$pid_file\"; exit 0; }; " .
       "sleep 1; " .
     "done; " .
-    "kill -9 \$pid 2>/dev/null || true; " .
-    "test -e $pid_file && rm -f $pid_file || true";
+    "$alive && kill -9 \"\$pid\" 2>/dev/null || true; " .
+    "test -e \"$pid_file\" && rm -f \"$pid_file\" || true )";
+}
 
-  return execute_command($host, $descr, $command);
+sub stop_by_pidfile
+{
+  my ($host, $descr, $pid_file, $executable) = @_;
+  return execute_command($host, $descr, stop_pidfile_command($pid_file, $executable));
 }
 
 sub execute_command
