@@ -369,7 +369,6 @@ def main():
   if host is None:
     if (state / 'applied.json').exists() or (state / 'ownership.json').exists():
       raise ValueError('Previously managed host removed from manifest; migrate explicitly')
-    print('Not a frontendNetwork host; skipping activation.')
     return
   addresses = validate(config, host)
   if args.action == 'install':
