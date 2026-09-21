@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.12
 
+import csv
 import datetime
 import importlib.util
 import json
@@ -276,10 +277,18 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       def query(self, query, parameters):
         self.parameters = parameters
-        return types.SimpleNamespace(result_rows=[(
-          datetime.datetime(2026, 9, 10, 9),
-          1, 3, 1, 24.0, 4, 1, False, 1.0,
-        )])
+        return types.SimpleNamespace(result_rows=[
+          (
+            datetime.datetime(2026, 9, 10, 9),
+            1, 3, 1, 24.0, 4, 1, False, 1.0,
+            datetime.datetime(2026, 9, 10, 10),
+          ),
+          (
+            datetime.datetime(2026, 9, 10, 11),
+            3, 2, 1, 12.5, 4, 2, True, 0.5,
+            datetime.datetime(2026, 9, 10, 12),
+          ),
+        ])
 
       def insert(self, table, rows, column_names):
         self.inserted.append((table, rows, column_names))
@@ -287,8 +296,9 @@ class YandexPostClickImporterTest(unittest.TestCase):
     api = Api()
     self.application.days = 2
     self.application.ch = Ch()
-    upserted = []
-    self.application._upsert_estimation = lambda rows: upserted.extend(rows)
+    published = []
+    self.application._publish_estimation_deltas = (
+      lambda rows, batch_id: published.extend(rows))
     old_page_size = IMPORTER.REPORTING_PAGE_SIZE
     IMPORTER.REPORTING_PAGE_SIZE = 2
     try:
@@ -311,9 +321,15 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(
       self.application.ch.parameters['range_end'],
       datetime.datetime(2026, 9, 10, 21, tzinfo=datetime.timezone.utc))
-    self.assertEqual(len(upserted), 1)
-    self.assertEqual(upserted[0][1:3], (hour2, 2))
+    self.assertEqual(len(published), 2)
+    self.assertEqual(published[0][1:8], (hour2, 2, 4, 1, 8.0, 5, 2))
+    hour3 = datetime.datetime(2026, 9, 10, 11, tzinfo=datetime.timezone.utc)
+    self.assertEqual(published[1][:10], (
+      17, hour3, 3, -2, -1, -12.5, -4, -2, False, 1.0))
+    self.assertIsInstance(published[1][10], datetime.datetime)
     self.assertEqual(len(self.application.ch.inserted), 1)
+    changed = self.application.ch.inserted[0][1]
+    self.assertEqual(changed[1][1:10], (hour3, 3, 0, 0, 0.0, 0, 0, False, 1.0))
 
   def test_update_import_status_uses_postgres_function(self):
     calls = []
@@ -367,43 +383,62 @@ class YandexPostClickImporterTest(unittest.TestCase):
     )])
     self.assertEqual(self.application.pg.commits, 1)
 
-  def test_upsert_estimation_uses_postgres_function(self):
-    calls = []
-
-    class Cursor:
-      def __enter__(self):
-        return self
-
-      def __exit__(self, exc_type, exc_value, traceback):
-        return False
-
-      def executemany(self, query, parameters):
-        calls.append((query, parameters))
-
-    class Pg:
-      def __init__(self):
-        self.commits = 0
-
-      def cursor(self):
-        return Cursor()
-
-      def commit(self):
-        self.commits += 1
-
-    self.application.pg = Pg()
+  def test_publish_estimation_deltas_writes_merger_csv(self):
     hour = datetime.datetime(2026, 9, 10, 12, tzinfo=datetime.timezone.utc)
-    version = datetime.datetime(2026, 9, 11, 1, tzinfo=datetime.timezone.utc)
+    self.application.running = True
+    self.application.print_line = 0
+    self.application.print_ = lambda *args, **kwargs: None
 
-    self.application._upsert_estimation([
-      (17, hour, 2527264, 10, 3, 45.5, 17, 4, False, 1.0, version),
-    ])
+    with tempfile.TemporaryDirectory() as directory:
+      self.application.in_dir = None
+      self.application.out_dir = None
+      self.application.markers_dir = None
+      self.application.tmp_dir = str(pathlib.Path(directory) / 'tmp')
+      self.application.estimation_dir = str(pathlib.Path(directory) / 'out')
+      pathlib.Path(self.application.tmp_dir).mkdir()
+      pathlib.Path(self.application.estimation_dir).mkdir()
 
-    self.assertEqual(calls, [(
-      'SELECT adserver.upsert_yandex_metrika_post_click_estimation('
-      '%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-      [(17, hour, 2527264, 10, 3, 45.5, 17, 4, False, 1.0)],
-    )])
-    self.assertEqual(self.application.pg.commits, 1)
+      version = datetime.datetime(2026, 9, 11, 1, tzinfo=datetime.timezone.utc)
+      rows = [(17, hour, 2527264, -10, -3, -45.5, -17, -4, True, 0.5, version)]
+      batch_id = 'a' * 64
+      self.application._publish_estimation_deltas(rows, batch_id)
+      first = next(pathlib.Path(self.application.estimation_dir).iterdir())
+      content = list(csv.reader(first.read_text().splitlines()))
+
+      self.assertRegex(first.name, r'^YandexPostClickEstimationStats_[0-9-]+[.]csv$')
+      self.assertEqual(tuple(content[0]), IMPORTER.ESTIMATION_HEADER)
+      self.assertEqual(content[1][0], batch_id)
+      self.assertEqual(content[1][1:], [
+        '17',
+        '2026-09-10T12:00:00+00:00',
+        '2527264',
+        '-10',
+        '-3',
+        '-45.5',
+        '-17',
+        '-4',
+        'true',
+        '0.5',
+        '2026-09-11T01:00:00+00:00',
+      ])
+
+  def test_estimation_batch_id_depends_on_previous_snapshot_version(self):
+    transition = [(
+      17,
+      '2026-09-10T12:00:00+00:00',
+      2527264,
+      '2026-09-11T01:00:00+00:00',
+      1, 0, 5.0, 1, 1, False, 1.0,
+      2, 0, 10.0, 2, 1, False, 1.0,
+    )]
+    later = [transition[0][:3] + ('2026-09-11T02:00:00+00:00',) + transition[0][4:]]
+
+    self.assertEqual(
+      self.application._estimation_batch_id(transition),
+      self.application._estimation_batch_id(transition))
+    self.assertNotEqual(
+      self.application._estimation_batch_id(transition),
+      self.application._estimation_batch_id(later))
 
   def test_mark_fetch_time_calls_database_function(self):
     calls = []

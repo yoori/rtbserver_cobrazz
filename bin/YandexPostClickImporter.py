@@ -4,6 +4,7 @@ import base64
 import csv
 import datetime
 import hashlib
+import io
 import json
 import os
 import re
@@ -20,7 +21,6 @@ from ServiceUtilsPy.Service import Service, StopService
 REPORTING_SYNC_TABLE = 'YandexPostClickReportingSync'
 LOGS_SYNC_TABLE = 'YandexPostClickLogsSync'
 LOG_REQUESTS_TABLE = 'YandexPostClickLogRequests'
-UPSERT_ESTIMATION_FUNCTION = 'adserver.upsert_yandex_metrika_post_click_estimation'
 UPDATE_IMPORT_STATUS_FUNCTION = 'adserver.update_yandex_metrika_import_status'
 ADVANCE_LOGS_WATERMARK_FUNCTION = 'adserver.advance_yandex_metrika_logs_watermark'
 YANDEX_METRIKA_SOURCE = 'Yandex Metrika'
@@ -80,6 +80,20 @@ ORDER BY (ymref_id, event_date)
 )
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
+ESTIMATION_HEADER = (
+  'batch_id',
+  'ymref_id',
+  'sdate',
+  'cc_id',
+  'visits_delta',
+  'visits_with_bounce_delta',
+  'session_time_sum_delta',
+  'page_views_delta',
+  'new_user_visits_delta',
+  'sampled',
+  'sample_share',
+  'reporting_version',
+)
 REPORTING_PAGE_SIZE = 100000
 LOGS_READY_DELAY = datetime.timedelta(hours=12)
 LOGS_TIMEZONE = datetime.timezone(datetime.timedelta(hours=3))
@@ -336,6 +350,8 @@ class Application(Service):
 
     self.post_click_dir = os.path.join(self.out_dir, 'PostClickAction')
     os.makedirs(self.post_click_dir, exist_ok=True)
+    self.estimation_dir = os.path.join(self.out_dir, 'YandexPostClickEstimationStat')
+    os.makedirs(self.estimation_dir, exist_ok=True)
     self._connect()
     for statement in INTERNAL_CLICKHOUSE_DDL:
       self.ch.command(statement)
@@ -502,9 +518,11 @@ class Application(Service):
       datetime.time(),
       timezone)
     old_rows = {}
+    old_versions = {}
     for row in self.ch.query(
         f"SELECT hour, ccid, visits, visits_with_bounce, session_time_sum, "
-        f"page_views, new_user_visits, sampled, sample_share FROM {REPORTING_SYNC_TABLE} FINAL "
+        f"page_views, new_user_visits, sampled, sample_share, version "
+        f"FROM {REPORTING_SYNC_TABLE} FINAL "
         "WHERE ymref_id = %(ymref_id)s AND hour >= %(range_start)s "
         "AND hour < %(range_end)s",
         parameters={
@@ -517,16 +535,49 @@ class Application(Service):
         hour = hour.replace(tzinfo=datetime.timezone.utc)
       else:
         hour = hour.astimezone(datetime.timezone.utc)
-      old_rows[(hour, int(row[1]))] = tuple(row[2:])
+      key = (hour, int(row[1]))
+      old_rows[key] = tuple(row[2:9])
+      old_version = row[9]
+      if old_version.tzinfo is None:
+        old_version = old_version.replace(tzinfo=datetime.timezone.utc)
+      else:
+        old_version = old_version.astimezone(datetime.timezone.utc)
+      old_versions[key] = old_version
     changed = []
+    deltas = []
+    transitions = []
+    empty = (0, 0, 0.0, 0, 0, False, 1.0)
     version = datetime.datetime.now(datetime.timezone.utc)
-    for (hour, ccid), values in rows.items():
-      comparable = tuple(values)
-      if old_rows.get((hour, ccid)) != comparable:
-        changed.append((ymref_id, hour, ccid, *values, version))
+    for hour, ccid in sorted(set(rows) | set(old_rows)):
+      current = tuple(rows.get((hour, ccid), empty))
+      previous = tuple(old_rows.get((hour, ccid), empty))
+      if current != previous:
+        previous_version = old_versions.get((hour, ccid))
+        changed.append((ymref_id, hour, ccid, *current, version))
+        transitions.append((
+          ymref_id,
+          hour.isoformat(),
+          ccid,
+          previous_version.isoformat() if previous_version is not None else None,
+          *previous,
+          *current,
+        ))
+        deltas.append((
+          ymref_id,
+          hour,
+          ccid,
+          current[0] - previous[0],
+          current[1] - previous[1],
+          current[2] - previous[2],
+          current[3] - previous[3],
+          current[4] - previous[4],
+          current[5],
+          current[6],
+          version,
+        ))
 
     if changed:
-      self._upsert_estimation(changed)
+      self._publish_estimation_deltas(deltas, self._estimation_batch_id(transitions))
       self.ch.insert(
         REPORTING_SYNC_TABLE,
         changed,
@@ -551,11 +602,35 @@ class Application(Service):
       'timezone': timezone,
     }
 
-  def _upsert_estimation(self, rows):
-    statement = f"SELECT {UPSERT_ESTIMATION_FUNCTION}(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    with self.pg.cursor() as cursor:
-      cursor.executemany(statement, [tuple(row[:10]) for row in rows])
-    self.pg.commit()
+  @staticmethod
+  def _csv_line(values):
+    output = io.StringIO(newline='')
+    csv.writer(output, lineterminator='').writerow(values)
+    return output.getvalue()
+
+  @staticmethod
+  def _estimation_batch_id(transitions):
+    return hashlib.sha256(
+      json.dumps(transitions, separators=(',', ':')).encode()).hexdigest()
+
+  def _publish_estimation_deltas(self, rows, batch_id):
+    with Context(self, out_dir=self.estimation_dir) as context:
+      file_id = context.fname_seed.replace('.', '-')
+      writer = context.files.get_line_writer(
+        name=f'YandexPostClickEstimationStats_{file_id}.csv')
+      writer.write_line(self._csv_line(ESTIMATION_HEADER))
+      for row in rows:
+        writer.write_line(self._csv_line((
+          batch_id,
+          row[0],
+          row[1].isoformat(),
+          row[2],
+          *row[3:8],
+          str(bool(row[8])).lower(),
+          row[9],
+          row[10].isoformat(),
+        )))
+      writer.write('\n')
 
   def _process_logs(self, ymref_id, api, reporting):
     handled_dates = set()

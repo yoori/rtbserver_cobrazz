@@ -1226,6 +1226,20 @@
             </cfg:hosts>
           </cfg:Route>
 
+          <xsl:if test="string-length($yandex-post-click-importer-hosts) > 0">
+            <cfg:Route type="RoundRobin">
+              <cfg:files destination="/csvlistener/">
+                <xsl:attribute name="source"><xsl:value-of
+                  select="concat('YandexPostClickImporter/Out/YandexPostClickEstimationStat/',
+                    'YandexPostClickEstimationStats_*')"/></xsl:attribute>
+              </cfg:files>
+              <cfg:hosts destination="-non-used-hostname">
+                <xsl:attribute name="source"><xsl:value-of
+                  select="$yandex-post-click-importer-hosts"/></xsl:attribute>
+              </cfg:hosts>
+            </cfg:Route>
+          </xsl:if>
+
           <xsl:if test="string-length($stat-receiver-hosts) > 0">
             <cfg:Route type="RoundRobin">
               <cfg:files source="StatReceiver/Out/ExtStat/*" destination="/csvlistener/"/>
