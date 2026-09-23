@@ -609,6 +609,12 @@ class YandexPostClickImporterTest(unittest.TestCase):
       'yandex_reporting_comparable': True,
     })
 
+  def test_post_click_action_name_is_unique_per_visit(self):
+    self.assertEqual(IMPORTER.format_post_click_action_name(17, 123), 'landing:17-123')
+    self.assertNotEqual(
+      IMPORTER.format_post_click_action_name(17, 123),
+      IMPORTER.format_post_click_action_name(17, 124))
+
   def test_parse_log_part_with_metrika_term(self):
     records = self.application._parse_log_part(
       17,
@@ -784,7 +790,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
       self.assertTrue(output.endswith('\n'))
       lines = output.splitlines()
       self.assertEqual(lines[0], IMPORTER.POST_CLICK_ACTION_VERSION)
-      self.assertEqual(lines[1].split('\t')[1:3], [REQUEST_ID, 'landing'])
+      self.assertEqual(lines[1].split('\t')[1:3], [REQUEST_ID, 'landing:17-123'])
 
     self.assertEqual(len(api.created), 2)
     self.assertEqual(api.cleaned, [100, 101])

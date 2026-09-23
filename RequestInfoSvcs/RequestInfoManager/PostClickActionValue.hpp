@@ -7,6 +7,9 @@
 
 namespace AdServer::RequestInfoSvcs
 {
+  std::string_view
+  post_click_action_type(std::string_view action_name) noexcept;
+
   struct PostClickActionValue
   {
     bool landing_bounced = false;

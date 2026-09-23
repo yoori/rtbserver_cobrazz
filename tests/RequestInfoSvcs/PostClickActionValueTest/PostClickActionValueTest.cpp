@@ -9,6 +9,7 @@
 namespace
 {
   using AdServer::RequestInfoSvcs::parse_post_click_action_value;
+  using AdServer::RequestInfoSvcs::post_click_action_type;
 
   void
   expect_error(std::string_view value)
@@ -31,6 +32,14 @@ main()
 {
   try
   {
+    if (post_click_action_type("landing") != "landing" ||
+        post_click_action_type("landing:17-123") != "landing" ||
+        post_click_action_type("custom:value:part") != "custom" ||
+        !post_click_action_type(":suffix").empty())
+    {
+      throw std::runtime_error("Post-click action type mismatch");
+    }
+
     const auto value = parse_post_click_action_value(
       R"({"landing_bounced":true,"landing_session_time":17,)"
       R"("landing_page_views":3,"landing_is_new_user":false})");

@@ -2339,7 +2339,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      if (action_info.name == "landing")
+      if (post_click_action_type(action_info.name) == "landing")
       {
         parse_post_click_action_value(action_info.value);
       }
@@ -2379,7 +2379,7 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      if (action_info.name == "landing")
+      if (post_click_action_type(action_info.name) == "landing")
       {
         parse_post_click_action_value(action_info.value);
       }

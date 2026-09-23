@@ -6,6 +6,12 @@
 
 namespace AdServer::RequestInfoSvcs
 {
+  std::string_view
+  post_click_action_type(std::string_view action_name) noexcept
+  {
+    return action_name.substr(0, action_name.find(':'));
+  }
+
   namespace
   {
     using Parser = AdServer::Commons::FastJsonParser<>;

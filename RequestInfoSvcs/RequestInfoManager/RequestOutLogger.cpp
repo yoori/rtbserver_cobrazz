@@ -2846,7 +2846,7 @@ namespace AdServer::RequestInfoSvcs
       const RequestInfo& request_info,
       const PostActionInfo& action_info) override
     {
-      if (request_info.test_request || action_info.name != "landing")
+      if (request_info.test_request || post_click_action_type(action_info.name) != "landing")
       {
         return;
       }
@@ -2956,7 +2956,7 @@ namespace AdServer::RequestInfoSvcs
       const RequestInfo& request_info,
       const PostActionInfo& action_info) override
     {
-      if (request_info.test_request || action_info.name != "landing")
+      if (request_info.test_request || post_click_action_type(action_info.name) != "landing")
       {
         return;
       }

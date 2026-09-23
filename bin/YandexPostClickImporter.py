@@ -150,6 +150,10 @@ def parse_ccid(value):
   return int(match.group(1)) if match else None
 
 
+def format_post_click_action_name(ymref_id, visit_id):
+  return f'landing:{ymref_id}-{visit_id}'
+
+
 def parse_metrika_term(value):
   value = value or ''
   for _ in range(2):
@@ -773,7 +777,7 @@ class Application(Service):
 
     with Context(self, out_dir=self.post_click_dir) as context:
       writers = {}
-      for _, _, event_time, request_id, distribution_hash, payload, _ in new_records:
+      for visit_id, _, event_time, request_id, distribution_hash, payload, _ in new_records:
         chunk = distribution_hash % self.chunks_count if distribution_hash is not None else \
           request_chunk(request_id, self.chunks_count)
         writer = writers.get(chunk)
@@ -785,9 +789,10 @@ class Application(Service):
           writers[chunk] = writer
         if writer.first:
           writer.write_line(POST_CLICK_ACTION_VERSION)
+        action_name = format_post_click_action_name(ymref_id, visit_id)
         writer.write_line(
           event_time.strftime('%Y-%m-%d_%H:%M:%S') + '\t' + request_id +
-          '\tlanding\t' + payload)
+          '\t' + action_name + '\t' + payload)
       for writer in writers.values():
         writer.write('\n')
 
