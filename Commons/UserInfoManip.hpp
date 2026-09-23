@@ -20,6 +20,26 @@ namespace AdServer::Commons
   std::uint32_t
   user_id_sampling_hash(const UserId& user_id) noexcept;
 
+  inline constexpr unsigned long SAMPLING_RESOLUTION = 1000000;
+
+  inline
+  bool
+  check_percentage_sampling(unsigned long hash, double percentage) noexcept
+  {
+    if (percentage >= 100)
+    {
+      return true;
+    }
+
+    if (percentage <= 0)
+    {
+      return false;
+    }
+
+    return hash % SAMPLING_RESOLUTION <
+      static_cast<unsigned long>(percentage * (SAMPLING_RESOLUTION / 100.0));
+  }
+
   inline
   unsigned long
   uuid_distribution_hash(const Generics::Uuid& uuid) noexcept

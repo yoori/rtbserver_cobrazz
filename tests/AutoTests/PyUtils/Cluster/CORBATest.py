@@ -363,7 +363,7 @@ class CampaignManager(CORBAProcess):
   <cfg:CampaignServerCorbaRef name="CampaignServer">
    <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
   </cfg:CampaignServerCorbaRef>
-  <cfg:Logging inventory_users_percentage="100" distrib_count="4" use_referrer_site_referrer_stats="empty">
+  <cfg:Logging inventory_sampling="100" distrib_count="4" use_referrer_site_referrer_stats="empty">
    <cfg:RequestBasicChannels dump_channel_triggers="true" flush_period="10" adrequest_anonymize="false"/>
    <cfg:OptOutStat flush_period="10"/>
    <cfg:CreativeStat flush_period="10"/>
@@ -658,7 +658,7 @@ class ExpressionMatcher(CORBAProcess):
  xmlns:colo="http://www.foros.com/cms/colocation"
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/LogProcessing/ExpressionMatcherConfig.xsd">
  <cfg:ExpressionMatcherConfig log_root="%(LOGROOT)s"
-  update_period="10" inventory_users_percentage="100"
+  update_period="10" inventory_sampling="100"
   colo_id="%(COLO_ID)i" service_index="0">
   <cfg:GrpcConfig cq_threads="%(THREADING_POOL)i">
    <cfg:Endpoint host="*" port="%(EXPRESSIONMATCHER_PORT)i"/>

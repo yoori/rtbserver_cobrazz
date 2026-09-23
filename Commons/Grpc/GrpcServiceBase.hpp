@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <coroutine>
 #include <cstddef>
@@ -284,13 +285,17 @@ namespace AdServer::Grpc
         std::uint64_t call_inflight = 0;
       };
 
-      void recalculate_min_time_() noexcept;
+      static constexpr std::size_t SHARD_COUNT = 64;
 
-      std::atomic<std::uint64_t> next_receiver_id_{1};
-      mutable std::mutex lock_;
-      std::unordered_map<std::uint64_t, Request> requests_;
-      std::uint64_t call_inflight_ = 0;
-      std::optional<Generics::Time> min_time_of_request_in_progress_;
+      struct alignas(64) Shard
+      {
+        mutable std::mutex lock;
+        std::unordered_map<std::uint64_t, Request> requests;
+        std::uint64_t next_receiver_id = 1;
+        std::uint64_t call_inflight = 0;
+      };
+
+      std::array<Shard, SHARD_COUNT> shards_;
     };
 
     class BatchStreamReadLimiter final

@@ -496,7 +496,7 @@
     </xsl:variable>
 
     <cfg:Logging
-      inventory_users_percentage="{$inventory-users-percentage}"
+      inventory_sampling="{$inventory-users-percentage}"
       user_navigation_sampling="{$user-navigation-sampling}"
       use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}" >
 

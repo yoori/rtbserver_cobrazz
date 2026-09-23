@@ -399,9 +399,6 @@ namespace AdServer::RequestInfoSvcs
     bool
     check_sampling_(const UserId& user_id) const noexcept;
 
-    bool
-    check_user_navigation_sampling_(const UserId& user_id) const noexcept;
-
     AdServer::Commons::Awaitable<void> process_user_navigation_(
       UserNavigationContainer* user_navigation_container,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,

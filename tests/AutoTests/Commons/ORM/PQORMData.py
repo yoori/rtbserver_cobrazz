@@ -1811,7 +1811,7 @@ channeltriggerstats.fields = [
     ORMFloat        ('approximated_clicks',           'approximated_clicks'),
     ORMFloat        ('approximated_imps',             'approximated_imps'),
     ORMInt          ('channel_id',                    'channel_id'),
-    ORMInt          ('hits',                          'hits'),
+    ORMFloat        ('hits',                          'hits'),
   ]
 
 channeltriggerstatstotal = Object('channeltriggerstatstotal', 'Channeltriggerstatstotal', False)

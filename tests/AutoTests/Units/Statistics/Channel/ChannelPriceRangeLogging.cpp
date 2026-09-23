@@ -3,7 +3,7 @@
 
 REFLECT_UNIT(ChannelPriceRangeLogging) ("Statistics", AUTO_TEST_SLOW);
 
-//ATTENTION! inventory_users_percentage must be 100 for this test
+//ATTENTION! inventory_sampling must be 100 for this test
 //Before running test modify files ExpressionMatcherConfig.xml &
 //CampaignManageConfigr.xml
 
@@ -1085,4 +1085,3 @@ ChannelPriceRangeLogging::add_stats(
     diffs_container.push_back(Diff().user_count(stats[i].user_count).impops(stats[i].impops));
   }
 }
-

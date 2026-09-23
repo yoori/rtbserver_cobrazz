@@ -198,18 +198,25 @@ namespace AdServer::LogProcessing
   class ChannelTriggerStatInnerData
   {
   public:
+    using FixedNum = AdServer::LogProcessing::FixedNumber;
+
     ChannelTriggerStatInnerData()
     :
-      hits_()
+      hits_(FixedNum::ZERO)
+    {
+    }
+
+    explicit
+    ChannelTriggerStatInnerData(const FixedNum& hits)
+    :
+      hits_(hits)
     {
     }
 
     explicit
     ChannelTriggerStatInnerData(unsigned long hits)
-    :
-      hits_(hits)
-    {
-    }
+      : hits_(false, hits, 0)
+    {}
 
     bool operator==(const ChannelTriggerStatInnerData& rhs) const
     {
@@ -223,7 +230,7 @@ namespace AdServer::LogProcessing
       return *this;
     }
 
-    unsigned long hits() const
+    const FixedNum& hits() const
     {
       return hits_;
     }
@@ -239,13 +246,13 @@ namespace AdServer::LogProcessing
   private:
     void invariant() const /*throw(eh::Exception)*/
     {
-      if (!hits_)
+      if (hits_ == FixedNum::ZERO)
       {
-        throw ConstraintViolation("ChannelTriggerStatInnerData::invariant(): " "hits_ must be > 0");
+        throw ConstraintViolation("ChannelTriggerStatInnerData::invariant(): hits_ must be > 0");
       }
     }
 
-    unsigned long hits_;
+    FixedNum hits_;
   };
 
   struct ChannelTriggerStatKey

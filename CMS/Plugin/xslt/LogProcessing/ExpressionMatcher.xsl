@@ -191,7 +191,7 @@
     log_root="{concat($workspace-root, '/log/ExpressionMatcher')}"
     pid_file="{concat($workspace-root, '/run/ExpressionMatcher.pid')}"
     update_period="{$update-period}"
-    inventory_users_percentage="{$inventory-users-percentage-value}"
+    inventory_sampling="{$inventory-users-percentage-value}"
     user_navigation_sampling="{$user-navigation-sampling-value}"
     user_navigations_limit="{$user-navigations-limit}"
     user_navigation_period_days="10"

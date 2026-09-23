@@ -611,10 +611,13 @@ namespace AdServer::RequestInfoSvcs
       AdServer::LogProcessing::ChannelTriggerStatTraits>
   {
   public:
-    ChannelTriggerStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+    ChannelTriggerStatLogger(
+      const AdServer::LogProcessing::LogFlushTraits& flush_traits,
+      const RevenueDecimal& channel_hits_factor)
       /*throw(LoggerException)*/
       : AdServer::LogProcessing::LogHolderSharded<
-          AdServer::LogProcessing::ChannelTriggerStatTraits>(flush_traits)
+          AdServer::LogProcessing::ChannelTriggerStatTraits>(flush_traits),
+        channel_hits_factor_(channel_hits_factor)
     {}
 
     void
@@ -660,7 +663,13 @@ namespace AdServer::RequestInfoSvcs
     {
     public:
       explicit HitCounter(char type) noexcept
-        : type_(type)
+        : type_(type),
+          channel_hits_factor_(RevenueDecimal::ZERO)
+      {}
+
+      HitCounter(char type, const RevenueDecimal& channel_hits_factor) noexcept
+        : type_(type),
+          channel_hits_factor_(channel_hits_factor)
       {}
 
       std::pair<CollectorT::DataT::KeyT, CollectorT::DataT::DataT>
@@ -669,14 +678,15 @@ namespace AdServer::RequestInfoSvcs
       {
         return std::make_pair(
           CollectorT::DataT::KeyT(trigger.channel_trigger_id, trigger.channel_id, type_),
-          CollectorT::DataT::DataT(1));
+          CollectorT::DataT::DataT(channel_hits_factor_));
       }
 
     private:
       const char type_;
+      RevenueDecimal channel_hits_factor_;
     };
 
-    static void
+    void
     add_hits_(
       CollectorT& collector,
       const CollectorT::KeyT& key,
@@ -686,9 +696,11 @@ namespace AdServer::RequestInfoSvcs
     {
       if (!triggers.empty())
       {
-        collector.add(key, make_transform_range(triggers, HitCounter(type)));
+        collector.add(key, make_transform_range(triggers, HitCounter(type, channel_hits_factor_)));
       }
     }
+
+    RevenueDecimal channel_hits_factor_;
   };
 
   /**
@@ -699,10 +711,13 @@ namespace AdServer::RequestInfoSvcs
       AdServer::LogProcessing::ChannelHitStatTraits>
   {
   public:
-    ChannelHitStatLogger(const AdServer::LogProcessing::LogFlushTraits& flush_traits)
+    ChannelHitStatLogger(
+      const AdServer::LogProcessing::LogFlushTraits& flush_traits,
+      const RevenueDecimal& channel_hits_factor)
       /*throw(LoggerException)*/
       : AdServer::LogProcessing::LogHolderSharded<
-          AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits)
+          AdServer::LogProcessing::ChannelHitStatTraits>(flush_traits),
+        channel_hits_factor_(channel_hits_factor)
     {}
 
     void
@@ -739,7 +754,7 @@ namespace AdServer::RequestInfoSvcs
 
       add_record(
         CollectorT::KeyT(isp_time, colo_id),
-        make_transform_range(channel_masks, ChannelCounter()));
+        make_transform_range(channel_masks, ChannelCounter(channel_hits_factor_)));
     }
 
   protected:
@@ -759,6 +774,10 @@ namespace AdServer::RequestInfoSvcs
     class ChannelCounter
     {
     public:
+      explicit ChannelCounter(const RevenueDecimal& channel_hits_factor) noexcept
+        : channel_hits_factor_(channel_hits_factor)
+      {}
+
       std::pair<CollectorT::DataT::KeyT, CollectorT::DataT::DataT>
       operator()(const ChannelMaskMap::value_type& channel_mask) const
       {
@@ -766,12 +785,15 @@ namespace AdServer::RequestInfoSvcs
         return std::make_pair(
           CollectorT::DataT::KeyT(channel_id),
           CollectorT::DataT::DataT(
-            1,
-            mask & URL_MASK ? 1 : 0,
-            mask & PAGE_MASK ? 1 : 0,
-            mask & SEARCH_MASK ? 1 : 0,
-            mask & URL_KEYWORD_MASK ? 1 : 0));
+            channel_hits_factor_,
+            mask & URL_MASK ? channel_hits_factor_ : RevenueDecimal::ZERO,
+            mask & PAGE_MASK ? channel_hits_factor_ : RevenueDecimal::ZERO,
+            mask & SEARCH_MASK ? channel_hits_factor_ : RevenueDecimal::ZERO,
+            mask & URL_KEYWORD_MASK ? channel_hits_factor_ : RevenueDecimal::ZERO));
       }
+
+    private:
+      RevenueDecimal channel_hits_factor_;
     };
 
     static void
@@ -787,6 +809,8 @@ namespace AdServer::RequestInfoSvcs
         it->second |= mask;
       }
     }
+
+    RevenueDecimal channel_hits_factor_;
   };
 
   /**
@@ -800,11 +824,13 @@ namespace AdServer::RequestInfoSvcs
   public:
     ChannelTriggerImpLogger(
       const AdServer::LogProcessing::LogFlushTraits& flush_traits,
-      unsigned long colo_id)
+      unsigned long colo_id,
+      const RevenueDecimal& user_trigger_match_factor)
       /*throw(LoggerException)*/
       : AdServer::LogProcessing::LogHolderSharded<
           AdServer::LogProcessing::ChannelTriggerImpStatTraits>(flush_traits),
-        colo_id_(colo_id)
+        colo_id_(colo_id),
+        user_trigger_match_factor_(user_trigger_match_factor)
     {}
 
     virtual void
@@ -843,9 +869,13 @@ namespace AdServer::RequestInfoSvcs
 
         for (MatchCountMap::const_iterator mit = matches.begin(); mit != matches.end(); ++mit)
         {
+          RevenueDecimal approximated_imps = RevenueDecimal::mul(
+            mit->second,
+            user_trigger_match_factor_,
+            Generics::DMR_ROUND);
           add_data.add(
             CollectorT::DataT::KeyT(mit->first.channel_trigger_id, mit->first.channel_id, type),
-            CollectorT::DataT::DataT(mit->second, RevenueDecimal::ZERO));
+            CollectorT::DataT::DataT(approximated_imps, RevenueDecimal::ZERO));
         }
 
         add_record(key, add_data);
@@ -861,9 +891,13 @@ namespace AdServer::RequestInfoSvcs
 
         for (MatchCountMap::const_iterator mit = matches.begin(); mit != matches.end(); ++mit)
         {
+          RevenueDecimal approximated_clicks = RevenueDecimal::mul(
+            mit->second,
+            user_trigger_match_factor_,
+            Generics::DMR_ROUND);
           add_data.add(
             CollectorT::DataT::KeyT(mit->first.channel_trigger_id, mit->first.channel_id, type),
-            CollectorT::DataT::DataT(RevenueDecimal::ZERO, mit->second));
+            CollectorT::DataT::DataT(RevenueDecimal::ZERO, approximated_clicks));
         }
 
         add_record(key, add_data);
@@ -872,6 +906,7 @@ namespace AdServer::RequestInfoSvcs
 
   private:
     const unsigned long colo_id_;
+    RevenueDecimal user_trigger_match_factor_;
   };
 
   /**
@@ -881,6 +916,8 @@ namespace AdServer::RequestInfoSvcs
     Logging::Logger* logger,
     unsigned long colo_id,
     const RevenueDecimal& simplify_factor,
+    const RevenueDecimal& user_trigger_match_factor,
+    const RevenueDecimal& channel_hits_factor,
     const AdServer::LogProcessing::LogFlushTraits& channel_inventory_flush,
     const AdServer::LogProcessing::LogFlushTraits& channel_imp_inventory_flush,
     const AdServer::LogProcessing::LogFlushTraits& channel_price_range_flush,
@@ -931,13 +968,20 @@ namespace AdServer::RequestInfoSvcs
       channel_performance_flush);
     add_child_log_holder(channel_performance_logger_);
 
-    channel_hit_stat_logger_ = new ChannelHitStatLogger(channel_hit_stat_flush);
+    channel_hit_stat_logger_ = new ChannelHitStatLogger(
+      channel_hit_stat_flush,
+      channel_hits_factor);
     add_child_log_holder(channel_hit_stat_logger_);
 
-    channel_trigger_stat_logger_ = new ChannelTriggerStatLogger(channel_trigger_stat_flush);
+    channel_trigger_stat_logger_ = new ChannelTriggerStatLogger(
+      channel_trigger_stat_flush,
+      channel_hits_factor);
     add_child_log_holder(channel_trigger_stat_logger_);
 
-    channel_trigger_imp_logger_ = new ChannelTriggerImpLogger(channel_trigger_imp_flush, colo_id);
+    channel_trigger_imp_logger_ = new ChannelTriggerImpLogger(
+      channel_trigger_imp_flush,
+      colo_id,
+      user_trigger_match_factor);
     add_child_log_holder(channel_trigger_imp_logger_);
 
     global_colo_user_stat_logger_ = new GlobalColoUserStatLogger(global_colo_user_stat_flush);

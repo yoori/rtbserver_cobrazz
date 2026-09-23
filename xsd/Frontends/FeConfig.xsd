@@ -618,7 +618,7 @@
        </xsd:annotation>
     </xsd:attribute>
 
-    <xsd:attribute name="inventory_users_percentage" type="xsd:decimal" use="required">
+    <xsd:attribute name="inventory_sampling" type="xsd:decimal" use="required">
        <xsd:annotation>
          <xsd:documentation>
          </xsd:documentation>

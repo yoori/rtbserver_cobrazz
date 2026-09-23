@@ -285,53 +285,52 @@ namespace AdServer::Grpc
     const std::uint64_t call_inflight,
     const Generics::Time& read_time)
   {
-    const auto receiver_id = next_receiver_id_.fetch_add(1, std::memory_order_relaxed);
-
-    std::lock_guard<std::mutex> lock(lock_);
-    requests_.emplace(receiver_id, Request{read_time, call_inflight});
-    call_inflight_ += call_inflight;
-    if (!min_time_of_request_in_progress_ || read_time < *min_time_of_request_in_progress_)
-    {
-      min_time_of_request_in_progress_ = read_time;
-    }
-
+    static std::atomic<std::size_t> next_shard{0};
+    thread_local const auto shard_index =
+      next_shard.fetch_add(1, std::memory_order_relaxed) % SHARD_COUNT;
+    auto& shard = shards_[shard_index];
+    std::lock_guard<std::mutex> lock(shard.lock);
+    const auto receiver_id = shard.next_receiver_id++ * SHARD_COUNT + shard_index;
+    shard.requests.emplace(receiver_id, Request{read_time, call_inflight});
+    shard.call_inflight += call_inflight;
     return receiver_id;
   }
 
   void
   GrpcServiceBase::InprogressStats::remove(const std::uint64_t receiver_id) noexcept
   {
-    std::lock_guard<std::mutex> lock(lock_);
-    const auto it = requests_.find(receiver_id);
-    if (it == requests_.end())
+    auto& shard = shards_[receiver_id % SHARD_COUNT];
+    std::lock_guard<std::mutex> lock(shard.lock);
+    const auto it = shard.requests.find(receiver_id);
+    if (it == shard.requests.end())
     {
       return;
     }
 
-    call_inflight_ -= it->second.call_inflight;
-    requests_.erase(it);
-    recalculate_min_time_();
+    shard.call_inflight -= it->second.call_inflight;
+    shard.requests.erase(it);
   }
 
   GrpcServiceBase::InprogressStatsSnapshot
   GrpcServiceBase::InprogressStats::snapshot() const
   {
-    std::lock_guard<std::mutex> lock(lock_);
-    return InprogressStatsSnapshot{call_inflight_, min_time_of_request_in_progress_};
-  }
-
-  void
-  GrpcServiceBase::InprogressStats::recalculate_min_time_() noexcept
-  {
-    min_time_of_request_in_progress_.reset();
-    for (const auto& [_, request] : requests_)
+    InprogressStatsSnapshot result;
+    // Lock one shard at a time: statistics need not represent a single instant across shards.
+    for (const auto& shard : shards_)
     {
-      if (!min_time_of_request_in_progress_ ||
-        request.read_time < *min_time_of_request_in_progress_)
+      std::lock_guard<std::mutex> lock(shard.lock);
+      result.call_inflight += shard.call_inflight;
+      for (const auto& [_, request] : shard.requests)
       {
-        min_time_of_request_in_progress_ = request.read_time;
+        if (!result.min_time_of_request_in_progress ||
+          request.read_time < *result.min_time_of_request_in_progress)
+        {
+          result.min_time_of_request_in_progress = request.read_time;
+        }
       }
     }
+
+    return result;
   }
 
   // GrpcServiceBase::BatchStreamReadLimiter impl

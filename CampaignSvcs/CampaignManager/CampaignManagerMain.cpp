@@ -707,11 +707,17 @@ CampaignManagerApp_::read_logging_config(
       config.RequestBasicChannels().get(),
       log_params.request_basic_channels);
 
-    log_params.request_basic_channels.inventory_users_percentage =
-      config.inventory_users_percentage();
+    log_params.request_basic_channels.inventory_sampling =
+      config.inventory_sampling();
 
     log_params.request_basic_channels.user_navigation_sampling =
       config.user_navigation_sampling();
+
+    log_params.request_basic_channels.user_trigger_match_sampling =
+      config.user_trigger_match_sampling();
+
+    log_params.request_basic_channels.channel_hits_sampling =
+      config.channel_hits_sampling();
 
     log_params.request_basic_channels.distrib_count = config.distrib_count();
 

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <list>
 #include <mutex>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -492,9 +493,15 @@ namespace AdServer::ProfilingCommons
 
     static std::size_t entry_size_(const Entry& entry) noexcept
     {
-      const std::size_t profile_size = entry.profile ? entry.profile->membuf().size() : 0;
-      return sizeof(Entry) + 2 * sizeof(Key) +
-        2 * entry.lru_it->key.text().size() + profile_size;
+      const auto& key = entry.lru_it->key.text();
+      const std::size_t key_storage_size = key.capacity() > std::string().capacity() ?
+        2 * (key.capacity() + 1) : 0;
+      const std::size_t profile_size = entry.profile ?
+        sizeof(Generics::ConstSmartMemBuf) + entry.profile->membuf().capacity() : 0;
+      // The flat map reserves at least one extra bucket per seven entries.
+      const std::size_t map_entry_size = sizeof(Entries::value_type);
+      return map_entry_size + map_entry_size / 7 + sizeof(Key) +
+        2 * sizeof(void*) + key_storage_size + profile_size;
     }
 
     void update_size_i_(Entry& entry) noexcept

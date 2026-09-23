@@ -141,22 +141,24 @@ namespace AdServer::LogProcessing
   class ChannelHitStatInnerData
   {
   public:
+    using FixedNum = AdServer::LogProcessing::FixedNumber;
+
     ChannelHitStatInnerData()
     :
-      hits_(),
-      hits_urls_(),
-      hits_kws_(),
-      hits_search_kws_(),
-      hits_url_kws_()
+      hits_(FixedNum::ZERO),
+      hits_urls_(FixedNum::ZERO),
+      hits_kws_(FixedNum::ZERO),
+      hits_search_kws_(FixedNum::ZERO),
+      hits_url_kws_(FixedNum::ZERO)
     {
     }
 
     ChannelHitStatInnerData(
-      unsigned long hits,
-      unsigned long hits_urls,
-      unsigned long hits_kws,
-      unsigned long hits_search_kws,
-      unsigned long hits_url_kws
+      const FixedNum& hits,
+      const FixedNum& hits_urls,
+      const FixedNum& hits_kws,
+      const FixedNum& hits_search_kws,
+      const FixedNum& hits_url_kws
     )
     :
       hits_(hits),
@@ -166,6 +168,19 @@ namespace AdServer::LogProcessing
       hits_url_kws_(hits_url_kws)
     {
     }
+
+    ChannelHitStatInnerData(
+      unsigned long hits,
+      unsigned long hits_urls,
+      unsigned long hits_kws,
+      unsigned long hits_search_kws,
+      unsigned long hits_url_kws)
+      : hits_(false, hits, 0),
+        hits_urls_(false, hits_urls, 0),
+        hits_kws_(false, hits_kws, 0),
+        hits_search_kws_(false, hits_search_kws, 0),
+        hits_url_kws_(false, hits_url_kws, 0)
+    {}
 
     ChannelHitStatInnerData(const ChannelHitStatInnerData_V_1_0& data)
     :
@@ -200,27 +215,27 @@ namespace AdServer::LogProcessing
       return *this;
     }
 
-    unsigned long hits() const
+    const FixedNum& hits() const
     {
       return hits_;
     }
 
-    unsigned long hits_urls() const
+    const FixedNum& hits_urls() const
     {
       return hits_urls_;
     }
 
-    unsigned long hits_kws() const
+    const FixedNum& hits_kws() const
     {
       return hits_kws_;
     }
 
-    unsigned long hits_search_kws() const
+    const FixedNum& hits_search_kws() const
     {
       return hits_search_kws_;
     }
 
-    unsigned long hits_url_kws() const
+    const FixedNum& hits_url_kws() const
     {
       return hits_url_kws_;
     }
@@ -232,11 +247,11 @@ namespace AdServer::LogProcessing
     operator<<(BufferWriter& out, const ChannelHitStatInnerData& data);
 
   private:
-    unsigned long hits_;
-    unsigned long hits_urls_;
-    unsigned long hits_kws_;
-    unsigned long hits_search_kws_;
-    unsigned long hits_url_kws_;
+    FixedNum hits_;
+    FixedNum hits_urls_;
+    FixedNum hits_kws_;
+    FixedNum hits_search_kws_;
+    FixedNum hits_url_kws_;
   };
 
   struct ChannelHitStatKey

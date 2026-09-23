@@ -80,6 +80,15 @@ namespace AdServer::LogProcessing
   public:
     typedef AdServer::LogProcessing::FixedNumber FixedNum;
 
+    enum SamplingMask: unsigned long
+    {
+      SM_INVENTORY = 1,
+      SM_USER_NAVIGATION = 2,
+      SM_USER_TRIGGER_MATCH = 4,
+      SM_CHANNEL_HITS = 8,
+      SM_ALL = SM_INVENTORY | SM_USER_NAVIGATION | SM_USER_TRIGGER_MATCH | SM_CHANNEL_HITS
+    };
+
     struct TriggerMatch
     {
       TriggerMatch(): channel_id(), channel_trigger_id() {}
@@ -661,7 +670,8 @@ namespace AdServer::LogProcessing
       AdRequestPropsOptional&& ad_request,
       const std::string& external_id,
       const std::string& referer,
-      const std::string& page_keywords)
+      const std::string& page_keywords,
+      unsigned long sampling_mask = SM_ALL)
       : holder_(
           new DataHolder(
             user_type,
@@ -672,6 +682,7 @@ namespace AdServer::LogProcessing
             external_id,
             referer,
             page_keywords,
+            sampling_mask,
             Generics::safe_rand()
           )
         )
@@ -688,7 +699,8 @@ namespace AdServer::LogProcessing
         holder_->ad_request == data.holder_->ad_request &&
         holder_->external_id.get() == data.holder_->external_id.get() &&
         holder_->referer.get() == data.holder_->referer.get() &&
-        holder_->page_keywords.get() == data.holder_->page_keywords.get());
+        holder_->page_keywords.get() == data.holder_->page_keywords.get() &&
+        holder_->sampling_mask == data.holder_->sampling_mask);
     }
 
     char user_type() const
@@ -731,6 +743,16 @@ namespace AdServer::LogProcessing
       return holder_->page_keywords.get();
     }
 
+    unsigned long sampling_mask() const noexcept
+    {
+      return holder_->sampling_mask;
+    }
+
+    bool sampling_enabled(SamplingMask mask) const noexcept
+    {
+      return (holder_->sampling_mask & mask) != 0;
+    }
+
     unsigned long distrib_hash() const
     {
       using AdServer::Commons::uuid_distribution_hash;
@@ -766,6 +788,7 @@ namespace AdServer::LogProcessing
           external_id(),
           referer(),
           page_keywords(),
+          sampling_mask(SM_ALL),
           random()
       {}
 
@@ -778,6 +801,7 @@ namespace AdServer::LogProcessing
         const std::string& external_id_val,
         const std::string& referer_val,
         const std::string& page_keywords_val,
+        unsigned long sampling_mask_val,
         unsigned long random_val)
         : user_type(user_type_val),
           user_id(user_id_val),
@@ -787,6 +811,7 @@ namespace AdServer::LogProcessing
           external_id(external_id_val),
           referer(referer_val),
           page_keywords(page_keywords_val),
+          sampling_mask(sampling_mask_val),
           random(random_val)
       {
         if (ad_request.present())
@@ -806,6 +831,7 @@ namespace AdServer::LogProcessing
         ar & external_id;
         ar & referer;
         ar & page_keywords;
+        ar & sampling_mask;
       }
 
       void invariant() const /*throw(ConstraintViolation)*/
@@ -827,6 +853,7 @@ namespace AdServer::LogProcessing
       EmptyHolder<SpacesString> external_id;
       EmptyHolder<SpacesString> referer;
       EmptyHolder<SpacesString> page_keywords;
+      unsigned long sampling_mask;
       unsigned long random;
 
     private:

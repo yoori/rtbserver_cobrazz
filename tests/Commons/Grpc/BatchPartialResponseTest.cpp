@@ -20,6 +20,100 @@ namespace
   using BatchResponse = adserver::grpc::BatchResponse;
   using Clock = std::chrono::steady_clock;
 
+  void test_inprogress_stats()
+  {
+    AdServer::Grpc::GrpcServiceBase::InprogressStats stats;
+    auto snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 0);
+    assert(!snapshot.min_time_of_request_in_progress);
+
+    const auto later = stats.add(3, Generics::Time(20));
+    const auto earlier = stats.add(2, Generics::Time(10));
+    const auto same_time = stats.add(4, Generics::Time(10));
+    snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 9);
+    assert(snapshot.min_time_of_request_in_progress == Generics::Time(10));
+
+    stats.remove(earlier);
+    stats.remove(earlier);
+    snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 7);
+    assert(snapshot.min_time_of_request_in_progress == Generics::Time(10));
+
+    stats.remove(same_time);
+    snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 3);
+    assert(snapshot.min_time_of_request_in_progress == Generics::Time(20));
+
+    stats.remove(later);
+    snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 0);
+    assert(!snapshot.min_time_of_request_in_progress);
+  }
+
+  void test_inprogress_stats_cross_thread_removal()
+  {
+    AdServer::Grpc::GrpcServiceBase::InprogressStats stats;
+    constexpr std::size_t thread_count = 80;
+    constexpr std::size_t requests_per_thread = 32;
+    std::vector<std::uint64_t> ids(thread_count * requests_per_thread);
+    std::vector<std::thread> threads;
+    for (std::size_t thread = 0; thread < thread_count; ++thread)
+    {
+      threads.emplace_back([&, thread]
+      {
+        for (std::size_t i = 0; i < requests_per_thread; ++i)
+        {
+          ids[thread * requests_per_thread + i] = stats.add(2, Generics::Time(10 + i));
+        }
+      });
+    }
+
+    for (auto& thread : threads)
+    {
+      thread.join();
+    }
+
+    std::sort(ids.begin(), ids.end());
+    assert(std::adjacent_find(ids.begin(), ids.end()) == ids.end());
+    auto snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == ids.size() * 2);
+    assert(snapshot.min_time_of_request_in_progress == Generics::Time(10));
+
+    threads.clear();
+    std::atomic<bool> done{false};
+    std::thread reader([&]
+    {
+      while (!done.load(std::memory_order_relaxed))
+      {
+        const auto current = stats.snapshot();
+        assert(current.call_inflight <= ids.size() * 2);
+        assert(bool(current.min_time_of_request_in_progress) == (current.call_inflight != 0));
+      }
+    });
+    for (std::size_t thread = 0; thread < 8; ++thread)
+    {
+      threads.emplace_back([&, thread]
+      {
+        for (std::size_t i = thread; i < ids.size(); i += 8)
+        {
+          stats.remove(ids[i]);
+        }
+      });
+    }
+
+    for (auto& thread : threads)
+    {
+      thread.join();
+    }
+
+    done.store(true, std::memory_order_relaxed);
+    reader.join();
+    snapshot = stats.snapshot();
+    assert(snapshot.call_inflight == 0);
+    assert(!snapshot.min_time_of_request_in_progress);
+  }
+
   class NullActiveObjectCallback final:
     public virtual Generics::ActiveObjectCallback,
     public virtual ReferenceCounting::AtomicImpl
@@ -317,6 +411,8 @@ namespace
 
 int main()
 {
+  test_inprogress_stats();
+  test_inprogress_stats_cross_thread_removal();
   test_read_limiter_stats();
 
   Generics::ActiveObjectCallback_var callback(new NullActiveObjectCallback());

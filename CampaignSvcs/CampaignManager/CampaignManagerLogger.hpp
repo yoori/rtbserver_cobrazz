@@ -29,8 +29,10 @@ namespace AdServer::CampaignSvcs
 {
   struct RequestBasicChannelsFlushTraits: public AdServer::LogProcessing::LogFlushTraits
   {
-    double inventory_users_percentage;
+    double inventory_sampling;
     double user_navigation_sampling = 100.0;
+    double user_trigger_match_sampling = 100.0;
+    double channel_hits_sampling = 100.0;
     unsigned long distrib_count;
     bool dump_channel_triggers;
     bool adrequest_anonymize;

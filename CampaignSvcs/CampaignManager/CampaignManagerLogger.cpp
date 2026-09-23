@@ -37,6 +37,7 @@
 #include <LogCommons/LogHolder.hpp>
 
 #include <Commons/Algs.hpp>
+#include <Commons/UserInfoManip.hpp>
 
 #include "CampaignManagerLogger.hpp"
 #include "CampaignManagerLogAdapter.hpp"
@@ -72,25 +73,7 @@ namespace
 
   const char REQUEST_BASIC_CHANNELS_LOGGER[] = "RequestBasicChannelsLogger";
   const char REQUEST_LOGGER[] = "RequestLogger";
-  const unsigned long SAMPLING_RESOLUTION = 1000000;
   const std::string EMPTY_USER_NAVIGATION_DATA;
-
-  bool
-  check_percentage_sampling_(unsigned long hash, double percentage) noexcept
-  {
-    if (percentage >= 100)
-    {
-      return true;
-    }
-
-    if (percentage <= 0)
-    {
-      return false;
-    }
-
-    return hash % SAMPLING_RESOLUTION <
-      static_cast<unsigned long>(percentage * (SAMPLING_RESOLUTION / 100.0));
-  }
 
   const char IMPRESSION_LOGGER[] = "ImpressionLogger";
   const char CLICK_LOGGER[] = "ClickLogger";
@@ -599,8 +582,10 @@ namespace AdServer::CampaignSvcs
               AdServer::LogProcessing::DistributionSavePolicy<
                 AdServer::LogProcessing::RequestBasicChannelsTraits>
                 (flush_traits.distrib_count)),
-          inventory_users_percentage_(flush_traits.inventory_users_percentage),
+          inventory_sampling_(flush_traits.inventory_sampling),
           user_navigation_sampling_(flush_traits.user_navigation_sampling),
+          user_trigger_match_sampling_(flush_traits.user_trigger_match_sampling),
+          channel_hits_sampling_(flush_traits.channel_hits_sampling),
           dump_channel_triggers_(flush_traits.dump_channel_triggers),
           adrequest_anonymize_(flush_traits.adrequest_anonymize)
       {}
@@ -638,10 +623,15 @@ namespace AdServer::CampaignSvcs
         const CampaignManagerLogger::AdRequestSelectionInfo* ad_request_selection_info) const
         noexcept;
 
-      bool need_dump_channels_(const CampaignManagerLogger::RequestInfo& request_info) const
+      unsigned long sampling_hash_(
+        const AdServer::Commons::UserId& user_id,
+        const AdServer::Commons::RequestId& request_id) const
         noexcept;
 
-      bool need_dump_user_navigation_(const AdServer::Commons::UserId& user_id) const
+      unsigned long sampling_mask_(
+        const AdServer::Commons::UserId& user_id,
+        const AdServer::Commons::RequestId& request_id,
+        bool dump_triggers) const
         noexcept;
 
       void add_record_(
@@ -650,8 +640,10 @@ namespace AdServer::CampaignSvcs
         /*throw(Exception)*/;
 
     private:
-      double inventory_users_percentage_;
+      double inventory_sampling_;
       double user_navigation_sampling_;
+      double user_trigger_match_sampling_;
+      double channel_hits_sampling_;
       bool dump_channel_triggers_;
       bool adrequest_anonymize_;
       AdServer::Commons::UserId null_id_;
@@ -1400,6 +1392,15 @@ namespace AdServer::CampaignSvcs
 
       try
       {
+        const unsigned long sampling_mask = sampling_mask_(
+          user_id,
+          AdServer::Commons::RequestId(),
+          false);
+        if (sampling_mask == 0)
+        {
+          return;
+        }
+
         CollectorT::KeyT key(time, time + time_offset, colo_id);
 
         const CollectorT::DataT::DataT inner_data(
@@ -1410,7 +1411,8 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::DataT::AdRequestPropsOptional(),
           std::string(),
           std::string(),
-          std::string());
+          std::string(),
+          sampling_mask);
 
         CollectorT::DataT data;
         data.add(inner_data);
@@ -1459,9 +1461,28 @@ namespace AdServer::CampaignSvcs
           match_request_info.match_info.channels.begin(),
           match_request_info.match_info.channels.end());
 
+        const bool has_triggers =
+          dump_channel_triggers_ && !match_request_info.match_info.page_triggers.empty();
+        const unsigned long sampling_mask = sampling_mask_(
+          match_request_info.user_id,
+          AdServer::Commons::RequestId(),
+          has_triggers);
+        const bool dump_channels =
+          (sampling_mask & CollectorT::DataT::DataT::SM_INVENTORY) != 0;
+        const bool dump_triggers =
+          (sampling_mask & (CollectorT::DataT::DataT::SM_USER_TRIGGER_MATCH |
+            CollectorT::DataT::DataT::SM_CHANNEL_HITS)) != 0;
+
+        if (sampling_mask == 0)
+        {
+          return;
+        }
+
         CollectorT::DataT::DataT::Match match_request(
-          std::move(history_channels),
-          dump_channel_triggers_ ?
+          dump_channels ?
+            std::move(history_channels) :
+            AdServer::LogProcessing::NumberArray(),
+          dump_triggers ?
             match_request_info.match_info.page_triggers :
             CollectorT::DataT::DataT::TriggerMatchArray(), // page trigger channels
           CollectorT::DataT::DataT::TriggerMatchArray(), // search trigger channels
@@ -1477,7 +1498,8 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::DataT::AdRequestPropsOptional(),
           std::string(),
           std::string(),
-          std::string());
+          std::string(),
+          sampling_mask);
 
         CollectorT::DataT data;
         data.add(inner_data);
@@ -1512,29 +1534,64 @@ namespace AdServer::CampaignSvcs
          (request_info.user_status == US_TEMPORARY && dump_channel_triggers_));
     }
 
-    bool
-    RequestBasicChannelsLogger::need_dump_channels_(
-      const CampaignManagerLogger::RequestInfo& request_info)
-      const
+    unsigned long
+    RequestBasicChannelsLogger::sampling_hash_(
+      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::RequestId& request_id) const
       noexcept
     {
-      return (!request_info.user_id.is_null() ?
-        check_percentage_sampling_(request_info.user_id.hash(), inventory_users_percentage_) :
-        check_percentage_sampling_(request_info.request_id.hash(), inventory_users_percentage_)) &&
-        !adrequest_anonymize_;
+      return !user_id.is_null() ?
+        AdServer::Commons::user_id_sampling_hash(user_id) :
+        request_id.hash();
     }
 
-    bool
-    RequestBasicChannelsLogger::need_dump_user_navigation_(
-      const AdServer::Commons::UserId& user_id)
+    unsigned long
+    RequestBasicChannelsLogger::sampling_mask_(
+      const AdServer::Commons::UserId& user_id,
+      const AdServer::Commons::RequestId& request_id,
+      bool dump_triggers)
       const
       noexcept
     {
-      return !user_id.is_null() &&
-        check_percentage_sampling_(
-          AdServer::Commons::user_id_sampling_hash(user_id),
-          user_navigation_sampling_) &&
-        !adrequest_anonymize_;
+      using DataT = CollectorT::DataT::DataT;
+
+      if (adrequest_anonymize_)
+      {
+        return 0;
+      }
+
+      const unsigned long sampling_hash = sampling_hash_(user_id, request_id);
+      unsigned long sampling_mask = 0;
+
+      if (AdServer::Commons::check_percentage_sampling(
+        sampling_hash,
+        inventory_sampling_))
+      {
+        sampling_mask |= DataT::SM_INVENTORY;
+      }
+
+      if (!user_id.is_null() && AdServer::Commons::check_percentage_sampling(
+        sampling_hash,
+        user_navigation_sampling_))
+      {
+        sampling_mask |= DataT::SM_USER_NAVIGATION;
+      }
+
+      if (!user_id.is_null() && dump_triggers && AdServer::Commons::check_percentage_sampling(
+        sampling_hash,
+        user_trigger_match_sampling_))
+      {
+        sampling_mask |= DataT::SM_USER_TRIGGER_MATCH;
+      }
+
+      if (dump_triggers && AdServer::Commons::check_percentage_sampling(
+        sampling_hash,
+        channel_hits_sampling_))
+      {
+        sampling_mask |= DataT::SM_CHANNEL_HITS;
+      }
+
+      return sampling_mask;
     }
 
     void
@@ -1543,7 +1600,11 @@ namespace AdServer::CampaignSvcs
       /*throw(Exception)*/
     {
       if (navigation_info.log_as_test ||
-        !need_dump_user_navigation_(navigation_info.user_id) ||
+        navigation_info.user_id.is_null() ||
+        adrequest_anonymize_ ||
+        !AdServer::Commons::check_percentage_sampling(
+          sampling_hash_(navigation_info.user_id, AdServer::Commons::RequestId()),
+          user_navigation_sampling_) ||
         (navigation_info.referer.empty() && navigation_info.page_keywords.empty()))
       {
         return;
@@ -1563,7 +1624,8 @@ namespace AdServer::CampaignSvcs
           CollectorT::DataT::DataT::AdRequestPropsOptional(),
           std::string(),
           navigation_info.referer,
-          navigation_info.page_keywords));
+          navigation_info.page_keywords,
+          CollectorT::DataT::DataT::SM_USER_NAVIGATION));
       add_record(std::move(key), std::move(data));
     }
 
@@ -1580,7 +1642,21 @@ namespace AdServer::CampaignSvcs
         CollectorT::KeyT key(request_info.time, request_info.isp_time, request_info.colo_id);
 
         CollectorT::DataT data;
-        const bool dump_channels = need_dump_channels_(request_info);
+        const bool has_triggers =
+          dump_channel_triggers_ &&
+          (!request_info.page_triggers.empty() ||
+            !request_info.search_triggers.empty() ||
+            !request_info.url_triggers.empty() ||
+            !request_info.url_keyword_triggers.empty());
+        const unsigned long sampling_mask = sampling_mask_(
+          request_info.user_id,
+          request_info.request_id,
+          has_triggers);
+        const bool dump_channels =
+          (sampling_mask & CollectorT::DataT::DataT::SM_INVENTORY) != 0;
+        const bool dump_triggers =
+          (sampling_mask & (CollectorT::DataT::DataT::SM_USER_TRIGGER_MATCH |
+            CollectorT::DataT::DataT::SM_CHANNEL_HITS)) != 0;
 
         if (!request_info.household_id.is_null())
         {
@@ -1604,12 +1680,23 @@ namespace AdServer::CampaignSvcs
               CollectorT::DataT::DataT::AdRequestPropsOptional(),
               request_info.external_id,
               EMPTY_USER_NAVIGATION_DATA,
-              EMPTY_USER_NAVIGATION_DATA));
+              EMPTY_USER_NAVIGATION_DATA,
+              CollectorT::DataT::DataT::SM_ALL));
+        }
+
+        if (sampling_mask == 0)
+        {
+          if (!request_info.household_id.is_null())
+          {
+            add_record(std::move(key), std::move(data));
+          }
+
+          return;
         }
 
         CollectorT::DataT::DataT::AdRequestPropsOptional ad_request_opt;
 
-        if (ad_selection_info)
+        if (ad_selection_info && dump_channels)
         {
           CollectorT::DataT::DataT::AdSlotImpressionOptional display_ad_shown;
           CollectorT::DataT::DataT::AdBidSlotImpressionList text_ad_shown;
@@ -1685,9 +1772,8 @@ namespace AdServer::CampaignSvcs
           temporary_user_id = request_info.merged_user_id;
         }
 
-        const bool dump_triggers = dump_channel_triggers_;
         const bool dump_navigation = !user_id.is_null() &&
-          need_dump_user_navigation_(request_info.user_id);
+          (sampling_mask & CollectorT::DataT::DataT::SM_USER_NAVIGATION);
         const std::string& page_keywords = dump_navigation && request_info.page_keywords.in() ?
           request_info.page_keywords->str() : EMPTY_USER_NAVIGATION_DATA;
 
@@ -1715,7 +1801,8 @@ namespace AdServer::CampaignSvcs
             std::move(ad_request_opt),
             request_info.external_id,
             dump_navigation ? request_info.referer : EMPTY_USER_NAVIGATION_DATA,
-            page_keywords));
+            page_keywords,
+            sampling_mask));
 
         add_record(std::move(key), std::move(data));
       }

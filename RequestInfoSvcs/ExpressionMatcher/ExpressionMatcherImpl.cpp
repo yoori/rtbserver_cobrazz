@@ -44,25 +44,19 @@ namespace
   const char COLO_USER_STAT_OUT_DIR[] = "ColoUserStat";
 
   const unsigned long MAX_CHANNEL_LEVEL = 20;
-  const unsigned long SAMPLING_RESOLUTION = 1000000;
 
   typedef const String::AsciiStringManip::Char1Category<','> Sep;
 
-  bool
-  check_percentage_sampling_(unsigned long hash, double percentage) noexcept
+  AdServer::RequestInfoSvcs::RevenueDecimal
+  sampling_factor(double sampling)
   {
-    if (percentage >= 100)
-    {
-      return true;
-    }
-
-    if (percentage <= 0)
-    {
-      return false;
-    }
-
-    return hash % SAMPLING_RESOLUTION < static_cast<unsigned long>(
-      percentage * (SAMPLING_RESOLUTION / 100.0));
+    AdServer::RequestInfoSvcs::RevenueDecimal reminder;
+    return sampling != 0 ?
+      AdServer::RequestInfoSvcs::RevenueDecimal::div(
+        AdServer::RequestInfoSvcs::RevenueDecimal(false, 100, 0),
+        AdServer::RequestInfoSvcs::RevenueDecimal(sampling),
+        reminder) :
+      AdServer::RequestInfoSvcs::RevenueDecimal::ZERO;
   }
 
   void
@@ -246,16 +240,12 @@ namespace AdServer::RequestInfoSvcs
       const xsd::AdServer::Configuration::OutLogsType&
         lp_config = expression_matcher_config_.LogProcessing().OutLogs();
 
-      const double inventory_users_percentage =
-        expression_matcher_config_.inventory_users_percentage();
-      RevenueDecimal div_simpl_factor_reminder;
-      RevenueDecimal simpl_factor =
-        inventory_users_percentage != 0 ?
-        RevenueDecimal::div(
-          RevenueDecimal(false, 100, 0),
-          RevenueDecimal(inventory_users_percentage),
-          div_simpl_factor_reminder) :
-        RevenueDecimal::ZERO;
+      const double inventory_sampling = expression_matcher_config_.inventory_sampling();
+      RevenueDecimal simpl_factor = sampling_factor(inventory_sampling);
+      RevenueDecimal user_trigger_match_factor =
+        sampling_factor(expression_matcher_config_.user_trigger_match_sampling());
+      RevenueDecimal channel_hits_factor =
+        sampling_factor(expression_matcher_config_.channel_hits_sampling());
 
       const std::string log_root = lp_config.log_root();
 
@@ -263,6 +253,8 @@ namespace AdServer::RequestInfoSvcs
         logger(),
         expression_matcher_config_.colo_id(),
         simpl_factor,
+        user_trigger_match_factor,
+        channel_hits_factor,
         read_flush_policy(
           lp_config.ChannelInventory(),
           (log_root + CHANNEL_INVENTORY_OUT_DIR).c_str(),
@@ -1570,17 +1562,9 @@ namespace AdServer::RequestInfoSvcs
   bool
   ExpressionMatcherImpl::check_sampling_(const UserId& user_id) const noexcept
   {
-    return user_id.is_null() || check_percentage_sampling_(
-      user_id.hash(),
-      expression_matcher_config_.inventory_users_percentage());
-  }
-
-  bool
-  ExpressionMatcherImpl::check_user_navigation_sampling_(const UserId& user_id) const noexcept
-  {
-    return !user_id.is_null() && check_percentage_sampling_(
+    return user_id.is_null() || AdServer::Commons::check_percentage_sampling(
       AdServer::Commons::user_id_sampling_hash(user_id),
-      expression_matcher_config_.user_navigation_sampling());
+      expression_matcher_config_.inventory_sampling());
   }
 
   AdServer::Commons::Awaitable<void>
@@ -1589,7 +1573,9 @@ namespace AdServer::RequestInfoSvcs
     const LogProcessing::RequestBasicChannelsCollector::KeyT& key,
     const LogProcessing::RequestBasicChannelsCollector::DataT::DataT& record)
   {
-    if (!user_navigation_container || !check_user_navigation_sampling_(record.user_id()))
+    using RBCRecord = LogProcessing::RequestBasicChannelsCollector::DataT::DataT;
+
+    if (!user_navigation_container || !record.sampling_enabled(RBCRecord::SM_USER_NAVIGATION))
     {
       co_return;
     }
@@ -1642,7 +1628,7 @@ namespace AdServer::RequestInfoSvcs
         /* process one request */
         Generics::MonoAllocatorArena processing_arena;
         MatchRequestProcessor::MatchInfo match_info;
-        const bool sampling_flag = check_sampling_(record.user_id());
+        const bool sampling_flag = record.sampling_enabled(RBCRecord::SM_INVENTORY);
 
         if (record.match_request().present() && sampling_flag)
         {
@@ -1739,18 +1725,22 @@ namespace AdServer::RequestInfoSvcs
 
         if (match_request)
         {
-          expression_matcher_out_logger_->process_channel_hit_stat(
-            key.isp_time(),
-            key.colo_id(),
-            *match_request);
-          expression_matcher_out_logger_->process_channel_trigger_stat(
-            key.isp_time(),
-            key.colo_id(),
-            *match_request);
+          if (record.sampling_enabled(RBCRecord::SM_CHANNEL_HITS))
+          {
+            expression_matcher_out_logger_->process_channel_hit_stat(
+              key.isp_time(),
+              key.colo_id(),
+              *match_request);
+            expression_matcher_out_logger_->process_channel_trigger_stat(
+              key.isp_time(),
+              key.colo_id(),
+              *match_request);
+          }
         }
 
-        if ((!record.user_id().is_null() && user_trigger_match_container) ||
-          (!record.temporary_user_id().is_null() && temp_user_trigger_match_container))
+        if (record.sampling_enabled(RBCRecord::SM_USER_TRIGGER_MATCH) &&
+          ((!record.user_id().is_null() && user_trigger_match_container) ||
+            (!record.temporary_user_id().is_null() && temp_user_trigger_match_container)))
         {
           UserTriggerMatchContainer::RequestInfo request_info(processing_arena);
           request_info.time = match_info.placement_colo_time;

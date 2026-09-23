@@ -30,6 +30,7 @@
 #include <Generics/Time.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBBatchingProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBOptions.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapCache.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 
@@ -67,6 +68,34 @@ namespace
   {
     return Generics::ConstSmartMemBuf_var(
       new Generics::ConstSmartMemBuf(value.data(), value.size()));
+  }
+
+  void
+  run_cache_accounting_test()
+  {
+    using Cache = AdServer::ProfilingCommons::RocksDBProfileMapCache;
+    const auto profile = make_profile("small");
+    const std::size_t limit = 2 * profile->membuf().capacity();
+    Cache cache(limit, 1);
+
+    for (unsigned long i = 0; i < 3; ++i)
+    {
+      Cache::OperationState state;
+      state.read_miss = true;
+      cache.fill(
+        1,
+        Generics::StringHashAdapter("key-" + std::to_string(i)),
+        state,
+        make_profile("small"),
+        Generics::Time::get_time_of_day(),
+        false);
+    }
+
+    const auto stats = cache.stats();
+    if (stats.entries != 1 || stats.evictions != 2 || stats.size > limit)
+    {
+      throw std::runtime_error("small profiles exceeded cache memory limit");
+    }
   }
 
   void
@@ -651,6 +680,7 @@ main()
     }
 
     run_write_failure_test(root / "write-failure");
+    run_cache_accounting_test();
     run_cache_test(root / "cache");
 
     processor->activate_object();

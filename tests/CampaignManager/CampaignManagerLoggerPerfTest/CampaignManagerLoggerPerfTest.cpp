@@ -161,7 +161,7 @@ namespace
     init_flush_traits(params.web_stat, options.log_root, "WebStat");
     init_flush_traits(params.research_web_stat, options.log_root, "ResearchWebStat");
 
-    params.request_basic_channels.inventory_users_percentage = 100.0;
+    params.request_basic_channels.inventory_sampling = 100.0;
     params.request_basic_channels.distrib_count = 24;
     params.request_basic_channels.dump_channel_triggers = true;
     params.request_basic_channels.adrequest_anonymize = false;

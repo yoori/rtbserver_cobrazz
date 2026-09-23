@@ -603,7 +603,7 @@
       </xsd:element>
     </xsd:sequence>
 
-    <xsd:attribute name="inventory_users_percentage" type="xsd:decimal" use="required">
+    <xsd:attribute name="inventory_sampling" type="xsd:decimal" use="required">
       <xsd:annotation>
         <xsd:documentation>Percentage of users, that take part in collection
           of ChannelInventory statistics.
@@ -615,6 +615,22 @@
       <xsd:annotation>
         <xsd:documentation>
           Percentage of users whose navigation data is written to RequestBasicChannels.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="user_trigger_match_sampling" type="xsd:decimal" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percentage of users whose trigger match state is stored.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="channel_hits_sampling" type="xsd:decimal" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percentage of requests used for ChannelTriggerStat and ChannelHitStat.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

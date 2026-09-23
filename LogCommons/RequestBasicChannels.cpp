@@ -674,7 +674,9 @@ namespace AdServer::LogProcessing
       << data.holder_->match_request << '\t'
       << data.holder_->ad_request << '\t'
       << data.holder_->external_id << '\t'
-      << data.holder_->referer << '\t' << data.holder_->page_keywords;
+      << data.holder_->referer << '\t'
+      << data.holder_->page_keywords << '\t'
+      << data.holder_->sampling_mask;
     return out;
   }
 } // namespace AdServer::LogProcessing

@@ -38,6 +38,8 @@ namespace AdServer::RequestInfoSvcs
       Logging::Logger* logger,
       unsigned long colo_id,
       const RevenueDecimal& simplify_factor,
+      const RevenueDecimal& user_trigger_match_factor,
+      const RevenueDecimal& channel_hits_factor,
       const AdServer::LogProcessing::LogFlushTraits& channel_inventory_flush,
       const AdServer::LogProcessing::LogFlushTraits& channel_imp_inventory_flush,
       const AdServer::LogProcessing::LogFlushTraits& channel_price_range_flush,
