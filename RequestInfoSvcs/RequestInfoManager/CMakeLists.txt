@@ -54,6 +54,7 @@ target_link_libraries(PassbackContainer
     Generics
     Commons
     PassbackProfilePST
+    PassbackProfile_v33PST
     ProfileMapRocksDB
 )
 

@@ -155,6 +155,34 @@ BID_COST_CREATE_TABLE_QUERY = (
 )
 
 
+SITE_REFERRER_STATS_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS SiteReferrerStats ("
+  "sdate Date, "
+  "colo_id UInt32, "
+  "site_id UInt32, "
+  "tag_id UInt32, "
+  "ext_tag_id String, "
+  "url String, "
+  "user_status FixedString(1), "
+  "requests UInt64, "
+  "imps UInt64, "
+  "clicks UInt64, "
+  "passbacks UInt64, "
+  "bids_won_count UInt64, "
+  "bids_lost_count Int64, "
+  "no_bid_count UInt64, "
+  "floor_won_cost Decimal(38, 8), "
+  "floor_lost_cost Decimal(38, 8), "
+  "floor_no_bid_cost Decimal(38, 8), "
+  "bid_won_amount Decimal(38, 8), "
+  "bid_lost_amount Decimal(38, 8), "
+  "cost Decimal(38, 8)"
+  ") ENGINE = SummingMergeTree "
+  "PARTITION BY toYYYYMM(sdate) "
+  "ORDER BY (site_id, sdate, tag_id, url, ext_tag_id, user_status, colo_id)"
+)
+
+
 MIGRATIONS_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS Migrations ("
   "component String, "
@@ -536,6 +564,16 @@ class BidCostUploader(ClickhouseCsvUploader) :
       create_table_query = BID_COST_CREATE_TABLE_QUERY)
 
 
+class SiteReferrerStatsUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'SiteReferrerStatsClickhouseAdapter.py',
+      'SiteReferrerStats',
+      logger = logger,
+      create_table_query = SITE_REFERRER_STATS_CREATE_TABLE_QUERY)
+
+
 def check_stat_files(
     interrupter,
     config = None,
@@ -854,6 +892,7 @@ def main() :
   processors['RAction'] = RActionUploader(config, logger = logger)
   processors['Geo'] = GeoUploader(config, logger = logger)
   processors['BidCost'] = BidCostUploader(config, logger = logger)
+  processors['SiteReferrerStats-2'] = SiteReferrerStatsUploader(config, logger = logger)
 
   for processor in processors.values():
     processor.init_storage()

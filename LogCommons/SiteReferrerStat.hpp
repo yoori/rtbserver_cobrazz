@@ -168,10 +168,10 @@ namespace AdServer::LogProcessing
     unsigned long clicks_;
   };
 
-  class SiteReferrerStatInnerKey
+  class SiteReferrerStatInnerKey_V_3_3
   {
   public:
-    SiteReferrerStatInnerKey()
+    SiteReferrerStatInnerKey_V_3_3()
     :
       user_status_(),
       tag_id_(),
@@ -181,7 +181,7 @@ namespace AdServer::LogProcessing
     {
     }
 
-    SiteReferrerStatInnerKey(
+    SiteReferrerStatInnerKey_V_3_3(
       char user_status,
       std::uint32_t tag_id,
       const String::SubString& ext_tag_id,
@@ -198,7 +198,7 @@ namespace AdServer::LogProcessing
       calc_hash_();
     }
 
-    SiteReferrerStatInnerKey(const SiteReferrerStatInnerKey_V_3_1& key)
+    SiteReferrerStatInnerKey_V_3_3(const SiteReferrerStatInnerKey_V_3_1& key)
       /*throw(eh::Exception)*/
     :
       user_status_(key.user_status()),
@@ -210,7 +210,7 @@ namespace AdServer::LogProcessing
       calc_hash_();
     }
 
-    bool operator==(const SiteReferrerStatInnerKey& rhs) const
+    bool operator==(const SiteReferrerStatInnerKey_V_3_3& rhs) const
     {
       if (&rhs == this)
       {
@@ -248,11 +248,11 @@ namespace AdServer::LogProcessing
 
     friend
     FixedBufStream<TabCategory>&
-    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey& key)
+    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey_V_3_3& key)
       /*throw(eh::Exception)*/;
 
     friend BufferWriter&
-    operator<<(BufferWriter& out, const SiteReferrerStatInnerKey& key)
+    operator<<(BufferWriter& out, const SiteReferrerStatInnerKey_V_3_3& key)
       /*throw(eh::Exception)*/;
 
   private:
@@ -277,6 +277,127 @@ namespace AdServer::LogProcessing
     }
 
     char user_status_;
+    std::uint32_t tag_id_;
+    EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
+    EmptyHolder<Aux_::StringIoWrapper> host_;
+    size_t hash_;
+  };
+
+  class SiteReferrerStatInnerKey
+  {
+  public:
+    SiteReferrerStatInnerKey()
+      : user_status_(), site_id_(), tag_id_(), ext_tag_id_(), host_(), hash_()
+    {}
+
+    SiteReferrerStatInnerKey(
+      char user_status,
+      std::uint32_t site_id,
+      std::uint32_t tag_id,
+      const String::SubString& ext_tag_id,
+      const String::SubString& host)
+      : user_status_(user_status),
+        site_id_(site_id),
+        tag_id_(tag_id),
+        ext_tag_id_(ext_tag_id.str()),
+        host_(host.str()),
+        hash_()
+    {
+      calc_hash_();
+    }
+
+    SiteReferrerStatInnerKey(const SiteReferrerStatInnerKey_V_3_3& key)
+      : user_status_(key.user_status()),
+        site_id_(),
+        tag_id_(key.tag_id()),
+        ext_tag_id_(key.ext_tag_id()),
+        host_(key.url()),
+        hash_()
+    {
+      calc_hash_();
+    }
+
+    SiteReferrerStatInnerKey(const SiteReferrerStatInnerKey_V_3_1& key)
+      : user_status_(key.user_status()),
+        site_id_(),
+        tag_id_(key.tag_id()),
+        ext_tag_id_(""),
+        host_(key.url()),
+        hash_()
+    {
+      calc_hash_();
+    }
+
+    bool operator==(const SiteReferrerStatInnerKey& rhs) const
+    {
+      return &rhs == this ||
+        (user_status_ == rhs.user_status_ &&
+         site_id_ == rhs.site_id_ &&
+         tag_id_ == rhs.tag_id_ &&
+         ext_tag_id_.get() == rhs.ext_tag_id_.get() &&
+         host_.get() == rhs.host_.get());
+    }
+
+    char user_status() const
+    {
+      return user_status_;
+    }
+
+    std::uint32_t site_id() const
+    {
+      return site_id_;
+    }
+
+    std::uint32_t tag_id() const
+    {
+      return tag_id_;
+    }
+
+    const std::string& ext_tag_id() const
+    {
+      return ext_tag_id_.get();
+    }
+
+    const std::string& url() const
+    {
+      return host_.get();
+    }
+
+    size_t hash() const
+    {
+      return hash_;
+    }
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey& key);
+
+    friend BufferWriter&
+    operator<<(BufferWriter& out, const SiteReferrerStatInnerKey& key);
+
+  private:
+    void calc_hash_()
+    {
+      Generics::Murmur64Hash hasher(hash_);
+      hash_add(hasher, site_id_);
+      hash_add(hasher, tag_id_);
+      hash_add(hasher, ext_tag_id_.get());
+      hash_add(hasher, host_.get());
+      hash_add(hasher, user_status_);
+    }
+
+    void invariant() const
+    {
+      if (!is_valid_user_status(user_status_))
+      {
+        Stream::Error es;
+        es << "SiteReferrerStatInnerKey::invariant(): user_status_ "
+          "has invalid value '" << user_status_ << '\'';
+        throw ConstraintViolation(es);
+      }
+    }
+
+    char user_status_;
+    std::uint32_t site_id_;
     std::uint32_t tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
     EmptyHolder<Aux_::StringIoWrapper> host_;
@@ -655,7 +776,7 @@ namespace AdServer::LogProcessing
           > SiteReferrerStatCollector_V_3_1;
 
   typedef SiteReferrerStatKey SiteReferrerStatKey_V_3_2;
-  typedef SiteReferrerStatInnerKey SiteReferrerStatInnerKey_V_3_2;
+  typedef SiteReferrerStatInnerKey_V_3_3 SiteReferrerStatInnerKey_V_3_2;
 
   typedef StatCollector<
             SiteReferrerStatKey_V_3_2,
@@ -666,6 +787,16 @@ namespace AdServer::LogProcessing
               true
             >
           > SiteReferrerStatCollector_V_3_2;
+
+  typedef StatCollector<
+            SiteReferrerStatKey,
+            StatCollector<
+              SiteReferrerStatInnerKey_V_3_3,
+              SiteReferrerStatInnerData,
+              false,
+              true
+            >
+          > SiteReferrerStatCollector_V_3_3;
 
   typedef StatCollector<
             SiteReferrerStatKey,
@@ -687,6 +818,7 @@ namespace AdServer::LogProcessing
       f.template operator()<SiteReferrerStatCollector_V_3_1>("3.1");
       // V3.2 is packed
       f.template operator()<SiteReferrerStatCollector_V_3_2, true>("3.2");
+      f.template operator()<SiteReferrerStatCollector_V_3_3>("3.3");
     }
   };
 } // namespace AdServer::LogProcessing

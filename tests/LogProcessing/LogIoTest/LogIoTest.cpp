@@ -1293,12 +1293,13 @@ int main(int argc, char **argv)
     typedef SiteReferrerStatCollector::DataT::KeyT KeyType;
     for (unsigned i = 0; i < max_iterations; ++i)
     {
-      data.add(KeyType('U', i + 1, String::SubString("EXT_TAG_ID 1"),
+      data.add(KeyType('U', 123, i + 1, String::SubString("EXT_TAG_ID 1"),
         String::SubString("www.test.com")), inner_data);
     }
 #else
     SiteReferrerStatCollector::DataT::KeyT
-      inner_key('U', 567, String::SubString("EXT_TAG_ID 1"), String::SubString("www.testhost.com"));
+      inner_key('U', 123, 567, String::SubString("EXT_TAG_ID 1"),
+        String::SubString("www.testhost.com"));
     data.add(inner_key, inner_data);
 #endif
     collector.add(key1, data);
@@ -1776,6 +1777,7 @@ int main(int argc, char **argv)
         false, // test_request
         1,
         2,
+        100,
         11,
         "",
         "www.referer1.com",
@@ -1796,6 +1798,7 @@ int main(int argc, char **argv)
         true, // test_request
         1,
         2,
+        100,
         OptionalUInt32(),
         "EXT TAG ID #1",
         "www.referer2.com",
@@ -1816,6 +1819,7 @@ int main(int argc, char **argv)
         false, // test_request
         1,
         2,
+        100,
         22,
         "EXT_TAG_ID_#2",
         "www.referer3.com",

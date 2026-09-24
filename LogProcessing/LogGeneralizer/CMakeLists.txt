@@ -12,6 +12,7 @@ add_library(LogGeneralizerLib STATIC
   LogDbSaverImpl.cpp
   DbConnectionFactory.cpp
   ProcessingContexts.cpp
+  SiteReferrerStatCsvSaver.cpp
 )
 
 target_link_libraries(LogGeneralizerLib

@@ -44,6 +44,7 @@
 #include <LogCommons/CampaignReferrerStat.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 #include "LogTypeCsvTraits.hpp"
+#include "SiteReferrerStatCsvSaver.hpp"
 #include "ThreadLogSaverImpl.hpp"
 
 namespace AdServer::LogProcessing
@@ -424,8 +425,11 @@ namespace AdServer::LogProcessing
   typedef Aux_::BaseLogTraitsHelper<ExpressionPerformanceCsvTraits>
     ExpressionPerformanceExtTraits;
 
-  typedef Aux_::BaseLogTraitsHelper<SiteReferrerStatCsvTraits>
-    SiteReferrerStatExtTraits;
+  struct SiteReferrerStatExtTraits:
+    public Aux_::BaseLogTraitsHelper<SiteReferrerStatCsvTraits>
+  {
+    using CsvSaverType = SiteReferrerStatCsvSaver;
+  };
 
   typedef Aux_::BaseLogTraitsHelper<UserPropertiesCsvTraits>
     UserPropertiesExtTraits;

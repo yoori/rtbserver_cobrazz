@@ -14,6 +14,8 @@
 
 namespace AdServer::LogProcessing
 {
+  class TagRequestData_V_3_5a;
+
   struct TagRequestData
   {
     using StringT = Aux_::StringIoWrapper;
@@ -113,6 +115,7 @@ namespace AdServer::LogProcessing
         test_request_(),
         colo_id_(),
         tag_id_(),
+        site_id_(),
         size_id_(),
         ext_tag_id_(),
         referer_(),
@@ -137,6 +140,7 @@ namespace AdServer::LogProcessing
       bool test_request,
       std::uint32_t colo_id,
       std::uint32_t tag_id,
+      std::uint32_t site_id,
       const OptionalUInt32& size_id,
       const StringT& ext_tag_id,
       const StringT& referer,
@@ -152,6 +156,7 @@ namespace AdServer::LogProcessing
         test_request_(test_request),
         colo_id_(colo_id),
         tag_id_(tag_id),
+        site_id_(site_id),
         size_id_(size_id),
         ext_tag_id_(ext_tag_id),
         referer_(referer),
@@ -179,6 +184,7 @@ namespace AdServer::LogProcessing
         test_request_ == data.test_request_ &&
         colo_id_ == data.colo_id_ &&
         tag_id_ == data.tag_id_ &&
+        site_id_ == data.site_id_ &&
         size_id_ == data.size_id_ &&
         referer_ == data.referer_ &&
         ext_tag_id_ == data.ext_tag_id_ &&
@@ -213,6 +219,11 @@ namespace AdServer::LogProcessing
     std::uint32_t tag_id() const
     {
       return tag_id_;
+    }
+
+    std::uint32_t site_id() const
+    {
+      return site_id_;
     }
 
     const OptionalUInt32& size_id() const
@@ -314,12 +325,18 @@ namespace AdServer::LogProcessing
       }
     }
 
+    void read_v_3_5a_(FixedBufStream<TabCategory>& is);
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, TagRequestData_V_3_5a& data);
+
   public:
     SecondsTimestamp time_;
     SecondsTimestamp isp_time_;
     bool test_request_;
     std::uint32_t colo_id_;
     std::uint32_t tag_id_;
+    std::uint32_t site_id_;
     OptionalUInt32 size_id_;
     StringIoWrapperOptional ext_tag_id_;
     StringT referer_;
@@ -335,10 +352,43 @@ namespace AdServer::LogProcessing
     unsigned long random_{Generics::safe_rand()};
   };
 
+  class TagRequestData_V_3_5a
+  {
+  public:
+    TagRequestData into_current()
+    {
+      return std::move(data_);
+    }
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, TagRequestData_V_3_5a& data);
+
+  private:
+    TagRequestData data_;
+  };
+
   typedef SeqCollector<TagRequestData, true> TagRequestCollector;
+  using TagRequestCollector_V_3_5a = SeqCollector<TagRequestData_V_3_5a, true>;
 
   struct TagRequestTraits: LogDefaultTraits<TagRequestCollector, false, false>
   {
+    template <class T>
+    static void for_each_old(T& obj)
+    {
+      obj.template support<TagRequestCollector_V_3_5a, false>("3.5a");
+    }
+
+    static TagRequestCollector
+    convert_collector(TagRequestCollector_V_3_5a& old_collector)
+    {
+      TagRequestCollector collector;
+      for (auto& old_data : old_collector)
+      {
+        collector.add(old_data.into_current());
+      }
+      return collector;
+    }
+
     typedef MoveSeqDistributeStrategy<TagRequestTraits> DistributeStrategyType;
 
     typedef GenericLogIoHelperImpl<TagRequestTraits> IoHelperType;

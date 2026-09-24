@@ -239,6 +239,24 @@ class ClickhouseAdapterTest(unittest.TestCase):
         field + " SimpleAggregateFunction(any, Nullable(DateTime('UTC')))",
         query)
 
+  def test_site_referrer_stats_adapter_skips_headers(self):
+    first = ['2026-09-23'] + [str(index) for index in range(1, 20)]
+    second = ['2026-09-24'] + [str(index) for index in range(20, 39)]
+
+    output = self.run_adapter(
+      'SiteReferrerStatsClickhouseAdapter.py',
+      [first, second])
+
+    self.assertEqual(output, [first, second])
+
+  def test_site_referrer_stats_table_is_partitioned_and_summed(self):
+    query = CLICKHOUSE_UPLOADER.SITE_REFERRER_STATS_CREATE_TABLE_QUERY
+    self.assertIn('CREATE TABLE IF NOT EXISTS SiteReferrerStats', query)
+    self.assertIn('site_id UInt32', query)
+    self.assertIn('ENGINE = SummingMergeTree', query)
+    self.assertIn('PARTITION BY toYYYYMM(sdate)', query)
+    self.assertIn('ORDER BY (site_id, sdate, tag_id', query)
+
 
 class InterrupterStub:
   def __init__(self):

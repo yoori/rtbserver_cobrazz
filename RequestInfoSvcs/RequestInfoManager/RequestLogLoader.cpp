@@ -1181,6 +1181,7 @@ namespace AdServer::RequestInfoSvcs
       tag_request_info.isp_time = req.isp_time_.time();
       tag_request_info.colo_id = req.colo_id_;
       tag_request_info.tag_id = req.tag_id_;
+      tag_request_info.site_id = req.site_id_;
       tag_request_info.size_id = req.size_id_.present() ? *req.size_id_ : 0;
       tag_request_info.ext_tag_id = std::move(req.ext_tag_id_.get());
       tag_request_info.referer = std::move(static_cast<std::string&>(req.referer_));
@@ -1206,7 +1207,6 @@ namespace AdServer::RequestInfoSvcs
 
         if (!tag_request_info.user_id.is_null())
         {
-          tag_request_info.site_id = opt_in_section.site_id_;
           tag_request_info.page_load_id = opt_in_section.page_load_id_;
           tag_request_info.profile_referer = opt_in_section.profile_referer_;
         }

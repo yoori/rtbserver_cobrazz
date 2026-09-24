@@ -1105,7 +1105,7 @@ struct Filler
     typedef SiteReferrerStatCollector::DataT::KeyT KeyType;
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
-      data.add(KeyType('U', i, String::SubString("EXT_TAG_ID 1"),
+      data.add(KeyType('U', 123, i, String::SubString("EXT_TAG_ID 1"),
         String::SubString("www.testhost.com")), inner_data);
     }
     collector.add(key1, data);
@@ -1169,6 +1169,7 @@ struct Filler
         false, // test_request
         1,
         2,
+        100,
         11,
         "",
         "www.referer1.com",
@@ -1189,6 +1190,7 @@ struct Filler
         false, // test_request
         1,
         2,
+        100,
         22,
         "EXT_TAG_ID",
         "www.referer1.com",

@@ -8,7 +8,7 @@ namespace AdServer::LogProcessing
 
   template <> const char* SiteReferrerStatTraits::B::base_name_ = "SiteReferrerStat";
   template <> const char* SiteReferrerStatTraits::B::signature_ = "SiteReferrerStat";
-  template <> const char* SiteReferrerStatTraits::B::current_version_ = "3.3";
+  template <> const char* SiteReferrerStatTraits::B::current_version_ = "3.4";
 
   std::istream&
   operator>>(std::istream& is, SiteReferrerStatKey& key)
@@ -30,10 +30,37 @@ namespace AdServer::LogProcessing
   }
 
   FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey_V_3_3& key)
+  {
+    is >> key.user_status_;
+    is >> key.tag_id_;
+    is >> key.ext_tag_id_;
+    is >> key.host_;
+    if (is)
+    {
+      key.invariant();
+      key.calc_hash_();
+    }
+    return is;
+  }
+
+  BufferWriter&
+  operator<<(BufferWriter& out, const SiteReferrerStatInnerKey_V_3_3& key)
+  {
+    key.invariant();
+    out << key.user_status_ << '\t';
+    out << key.tag_id_ << '\t';
+    out << key.ext_tag_id_ << '\t';
+    out << key.host_;
+    return out;
+  }
+
+  FixedBufStream<TabCategory>&
   operator>>(FixedBufStream<TabCategory>& is, SiteReferrerStatInnerKey& key)
     /*throw(eh::Exception)*/
   {
     is >> key.user_status_;
+    is >> key.site_id_;
     is >> key.tag_id_;
     is >> key.ext_tag_id_;
     is >> key.host_;
@@ -51,6 +78,7 @@ namespace AdServer::LogProcessing
   {
     key.invariant();
     out << key.user_status_ << '\t';
+    out << key.site_id_ << '\t';
     out << key.tag_id_ << '\t';
     out << key.ext_tag_id_ << '\t';
     out << key.host_;

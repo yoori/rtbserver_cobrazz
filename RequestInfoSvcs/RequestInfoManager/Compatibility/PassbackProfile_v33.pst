@@ -1,15 +1,7 @@
 namespace AdServer
 {
-namespace RequestInfoSvcs
+namespace RequestInfoSvcs_v33
 {
-  /** PassbackInfo */
-  struct PassbackInfoVersionDescriptor
-  {
-    uint version;
-  };
-
-  autoreader PassbackInfoVersionReader<PassbackInfoVersionDescriptor>;
-
   struct PassbackInfoDescriptor
   {
     uint version;
@@ -24,11 +16,8 @@ namespace RequestInfoSvcs
     uint time;
     uint done;
     uint verified;
-    uint site_id;
   };
 
   autoreader PassbackInfoReader<PassbackInfoDescriptor>;
-
-  autowriter PassbackInfoWriter<PassbackInfoDescriptor>;
 }
 }

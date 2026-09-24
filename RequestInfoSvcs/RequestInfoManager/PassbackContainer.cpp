@@ -5,6 +5,7 @@
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/PassbackProfile.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/Compatibility/PassbackProfile_v33.hpp>
 
 #include "PassbackContainer.hpp"
 
@@ -17,7 +18,39 @@ namespace AdServer::RequestInfoSvcs
 {
   namespace
   {
-    const unsigned long CURRENT_PASSBACK_PROFILE_VERSION = 33;
+    const unsigned long CURRENT_PASSBACK_PROFILE_VERSION = 34;
+
+    void
+    init_passback_writer(
+      PassbackInfoWriter& writer,
+      const Generics::ConstSmartMemBuf_var& buffer)
+    {
+      PassbackInfoVersionReader version_reader(
+        buffer->membuf().data(), buffer->membuf().size());
+
+      if (version_reader.version() >= CURRENT_PASSBACK_PROFILE_VERSION)
+      {
+        writer.init(buffer->membuf().data(), buffer->membuf().size());
+        return;
+      }
+
+      RequestInfoSvcs_v33::PassbackInfoReader old_reader(
+        buffer->membuf().data(), buffer->membuf().size());
+      writer.init_default();
+      writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
+      writer.request_id() = old_reader.request_id();
+      writer.tag_id() = old_reader.tag_id();
+      writer.size_id() = old_reader.size_id();
+      writer.colo_id() = old_reader.colo_id();
+      writer.country() = old_reader.country();
+      writer.ext_tag_id() = old_reader.ext_tag_id();
+      writer.referer() = old_reader.referer();
+      writer.user_status() = old_reader.user_status();
+      writer.time() = old_reader.time();
+      writer.done() = old_reader.done();
+      writer.verified() = old_reader.verified();
+      writer.site_id() = 0;
+    }
   }
 
   const Generics::Time
@@ -136,7 +169,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (mem_buf.in())
         {
-          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
+          init_passback_writer(passback_writer, mem_buf);
 
           if (passback_writer.verified() && !passback_writer.done())
           {
@@ -145,6 +178,7 @@ namespace AdServer::RequestInfoSvcs
             passback_info.user_status = tag_request_info.user_status;
             passback_info.colo_id = tag_request_info.colo_id;
             passback_info.country = tag_request_info.country;
+            passback_info.site_id = tag_request_info.site_id;
             passback_info.tag_id = tag_request_info.tag_id;
             passback_info.size_id = tag_request_info.size_id;
             passback_info.ext_tag_id = tag_request_info.ext_tag_id;
@@ -155,6 +189,7 @@ namespace AdServer::RequestInfoSvcs
             passback_writer.time() = tag_request_info.time.tv_sec;
 
             passback_writer.user_status() = tag_request_info.user_status;
+            passback_writer.site_id() = tag_request_info.site_id;
             passback_writer.tag_id() = tag_request_info.tag_id;
             passback_writer.size_id() = tag_request_info.size_id;
             passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
@@ -172,6 +207,7 @@ namespace AdServer::RequestInfoSvcs
           passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
           passback_writer.request_id() = tag_request_info.request_id.to_string();
           passback_writer.user_status() = tag_request_info.user_status;
+          passback_writer.site_id() = tag_request_info.site_id;
           passback_writer.tag_id() = tag_request_info.tag_id;
           passback_writer.size_id() = tag_request_info.size_id;
           passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
@@ -248,7 +284,7 @@ namespace AdServer::RequestInfoSvcs
 
       if (mem_buf.in())
       {
-        passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
+        init_passback_writer(passback_writer, mem_buf);
 
         if (passback_writer.verified() && !passback_writer.done())
         {
@@ -258,6 +294,7 @@ namespace AdServer::RequestInfoSvcs
           passback_info.user_status = tag_request_info.user_status;
           passback_info.colo_id = tag_request_info.colo_id;
           passback_info.country = tag_request_info.country;
+          passback_info.site_id = tag_request_info.site_id;
           passback_info.tag_id = tag_request_info.tag_id;
           passback_info.size_id = tag_request_info.size_id;
           passback_info.ext_tag_id = tag_request_info.ext_tag_id;
@@ -272,6 +309,7 @@ namespace AdServer::RequestInfoSvcs
 
           // save passback traits - only for debug
           passback_writer.user_status() = tag_request_info.user_status;
+          passback_writer.site_id() = tag_request_info.site_id;
           passback_writer.tag_id() = tag_request_info.tag_id;
           passback_writer.size_id() = tag_request_info.size_id;
           passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
@@ -290,6 +328,7 @@ namespace AdServer::RequestInfoSvcs
         passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
         passback_writer.request_id() = tag_request_info.request_id.to_string();
         passback_writer.user_status() = tag_request_info.user_status;
+        passback_writer.site_id() = tag_request_info.site_id;
         passback_writer.tag_id() = tag_request_info.tag_id;
         passback_writer.size_id() = tag_request_info.size_id;
         passback_writer.ext_tag_id() = tag_request_info.ext_tag_id;
@@ -339,7 +378,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (mem_buf.in())
         {
-          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
+          init_passback_writer(passback_writer, mem_buf);
 
           if (!passback_writer.verified())
           {
@@ -350,6 +389,7 @@ namespace AdServer::RequestInfoSvcs
             process_passback_info.time = impression_time;
             process_passback_info.colo_id = passback_writer.colo_id();
             process_passback_info.country = passback_writer.country();
+            process_passback_info.site_id = passback_writer.site_id();
             process_passback_info.tag_id = passback_writer.tag_id();
             process_passback_info.size_id = passback_writer.size_id();
             process_passback_info.ext_tag_id = passback_writer.ext_tag_id();
@@ -364,6 +404,7 @@ namespace AdServer::RequestInfoSvcs
           passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
           passback_writer.request_id() = request_id.to_string();
           passback_writer.user_status() = '-';
+          passback_writer.site_id() = 0;
           passback_writer.tag_id() = 0;
           passback_writer.size_id() = 0;
           passback_writer.colo_id() = 0;
@@ -425,7 +466,7 @@ namespace AdServer::RequestInfoSvcs
 
         if (mem_buf.in())
         {
-          passback_writer.init(mem_buf->membuf().data(), mem_buf->membuf().size());
+          init_passback_writer(passback_writer, mem_buf);
 
           if (!passback_writer.verified())
           {
@@ -434,6 +475,7 @@ namespace AdServer::RequestInfoSvcs
             process_passback_info.time = impression_time;
             process_passback_info.colo_id = passback_writer.colo_id();
             process_passback_info.country = passback_writer.country();
+            process_passback_info.site_id = passback_writer.site_id();
             process_passback_info.tag_id = passback_writer.tag_id();
             process_passback_info.size_id = passback_writer.size_id();
             process_passback_info.ext_tag_id = passback_writer.ext_tag_id();
@@ -447,6 +489,7 @@ namespace AdServer::RequestInfoSvcs
           passback_writer.version() = CURRENT_PASSBACK_PROFILE_VERSION;
           passback_writer.request_id() = request_id.to_string();
           passback_writer.user_status() = '-';
+          passback_writer.site_id() = 0;
           passback_writer.tag_id() = 0;
           passback_writer.size_id() = 0;
           passback_writer.colo_id() = 0;

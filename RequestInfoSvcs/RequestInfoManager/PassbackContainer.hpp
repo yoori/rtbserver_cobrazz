@@ -33,7 +33,7 @@ namespace AdServer::RequestInfoSvcs
     {
       // verified passback info
       PassbackInfo()
-        : colo_id(0), tag_id(0), size_id(0)
+        : colo_id(0), site_id(0), tag_id(0), size_id(0)
       {}
 
       bool operator==(const PassbackInfo& right) const;
@@ -44,6 +44,7 @@ namespace AdServer::RequestInfoSvcs
       Generics::Time time;
       unsigned long colo_id;
       std::string country;
+      unsigned long site_id;
       unsigned long tag_id;
       unsigned long size_id;
       std::string ext_tag_id;
@@ -197,6 +198,7 @@ namespace AdServer::RequestInfoSvcs
       time == right.time &&
       colo_id == right.colo_id &&
       country == right.country &&
+      site_id == right.site_id &&
       tag_id == right.tag_id && ext_tag_id == right.ext_tag_id && referer == right.referer;
   }
 
@@ -208,6 +210,7 @@ namespace AdServer::RequestInfoSvcs
       prefix << "time = " << time.get_gm_time() << std::endl <<
       prefix << "colo_id = " << colo_id << std::endl <<
       prefix << "country = " << country << std::endl <<
+      prefix << "site_id = " << site_id << std::endl <<
       prefix << "tag_id = " << tag_id << std::endl <<
       prefix << "size_id = " << size_id << std::endl <<
       prefix << "ext_tag_id = " << ext_tag_id << std::endl <<

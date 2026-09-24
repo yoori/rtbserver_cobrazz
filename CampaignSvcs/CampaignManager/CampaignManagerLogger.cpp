@@ -2539,6 +2539,7 @@ namespace AdServer::CampaignSvcs
             false, // FIXME: test_request
             request_info.colo_id,
             0, // tag_id
+            0, // site_id
             AdServer::LogProcessing::OptionalUInt32(), // FIXME: size_id
             "", // ext_tag_id
             request_info.referer.empty() ?
@@ -2602,6 +2603,7 @@ namespace AdServer::CampaignSvcs
             false, // FIXME: test_request
             request_info.colo_id,
             ad_ri.tag_id,
+            ad_ri.site_id,
             ad_ri.size_id,
             ad_ri.ext_tag_id,
             request_info.referer.empty() ?

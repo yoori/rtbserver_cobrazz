@@ -1335,6 +1335,16 @@
             </cfg:hosts>
           </cfg:Route>
 
+          <cfg:Route type="RoundRobin">
+            <cfg:files
+              source="LogGeneralizer/Out/SiteReferrerStat/SiteReferrerStats-2_*"
+              destination="/SiteReferrerStats"/>
+            <cfg:hosts destination="-non-used-hostname">
+              <xsl:attribute name="source"><xsl:value-of
+                select="$log-generalizer-hosts"/></xsl:attribute>
+            </cfg:hosts>
+          </cfg:Route>
+
           <xsl:if test="string-length($http-frontend-hosts) > 0">
             <cfg:Route type="RoundRobin">
               <cfg:files destination="/Geo">

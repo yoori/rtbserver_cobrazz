@@ -8,7 +8,7 @@ namespace AdServer::LogProcessing
 {
   template <> const char* TagRequestTraits::B::base_name_ = "TagRequest";
   template <> const char* TagRequestTraits::B::signature_ = "TagRequest";
-  template <> const char* TagRequestTraits::B::current_version_ = "3.5a";
+  template <> const char* TagRequestTraits::B::current_version_ = "3.5b";
 
   const std::string
   TagRequestData::OptInSection::EMPTY_STRING_ = std::string();
@@ -47,6 +47,7 @@ namespace AdServer::LogProcessing
     is >> data.test_request_;
     is >> data.colo_id_;
     is >> data.tag_id_;
+    is >> data.site_id_;
     is >> data.size_id_;
     is >> data.ext_tag_id_;
     is >> data.referer_;
@@ -69,6 +70,42 @@ namespace AdServer::LogProcessing
     return is;
   }
 
+  void
+  TagRequestData::read_v_3_5a_(FixedBufStream<TabCategory>& is)
+  {
+    is >> time_;
+    is >> isp_time_;
+    is >> test_request_;
+    is >> colo_id_;
+    is >> tag_id_;
+    is >> size_id_;
+    is >> ext_tag_id_;
+    is >> referer_;
+    is >> full_referer_hash_;
+    is >> user_status_;
+    is >> country_;
+    is >> passback_request_id_;
+    is >> floor_cost_;
+
+    String::SubString token = is.read_token();
+    if (is.good())
+    {
+      parse_string_list(token, urls_, ' ');
+    }
+
+    opt_in_section_ = OptInSectionOptional();
+    is >> opt_in_section_;
+    site_id_ = opt_in_section_.present() ? opt_in_section_.get().site_id() : 0;
+    invariant();
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, TagRequestData_V_3_5a& data)
+  {
+    data.data_.read_v_3_5a_(is);
+    return is;
+  }
+
   BufferWriter&
   operator<<(BufferWriter& out, const TagRequestData& data)
     /*throw(eh::Exception)*/
@@ -80,6 +117,7 @@ namespace AdServer::LogProcessing
       << data.test_request_ << '\t'
       << data.colo_id_ << '\t'
       << data.tag_id_ << '\t'
+      << data.site_id_ << '\t'
       << data.size_id_ << '\t'
       << data.ext_tag_id_ << '\t'
       << data.referer_ << '\t'

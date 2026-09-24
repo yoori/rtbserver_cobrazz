@@ -26,6 +26,10 @@ add_pst(RequestOperationImpressionProfile_v0PST
   RequestOperationImpressionProfile_v0.pst
   ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoManager/Compatibility)
 
+add_pst(PassbackProfile_v33PST
+  PassbackProfile_v33.pst
+  ${PST_DIRECTORY}/RequestInfoSvcs/RequestInfoManager/Compatibility)
+
 add_library(RequestInfoManagerCompatibility SHARED
   RequestProfileAdapter.cpp
   RequestOperationImpressionProfileAdapter.cpp

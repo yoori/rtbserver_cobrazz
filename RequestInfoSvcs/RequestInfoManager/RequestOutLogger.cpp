@@ -1681,6 +1681,7 @@ namespace AdServer::RequestInfoSvcs
         data.add(
           CollectorT::DataT::KeyT(
             tag_request_info.user_status,
+            tag_request_info.site_id,
             tag_request_info.tag_id,
             tag_request_info.ext_tag_id,
             normalize_referer_(tag_request_info.referer)),
@@ -1794,6 +1795,7 @@ namespace AdServer::RequestInfoSvcs
         data.add(
           CollectorT::DataT::KeyT(
             pi.user_status,
+            pi.site_id,
             pi.tag_id,
             pi.ext_tag_id,
             normalize_referer_(pi.referer)),
@@ -1838,6 +1840,7 @@ namespace AdServer::RequestInfoSvcs
           data.add(
             CollectorT::DataT::KeyT(
               ri.user_status,
+              ri.site_id,
               ri.tag_id,
               ri.ext_tag_id,
               normalize_referer_(ri.referer)),

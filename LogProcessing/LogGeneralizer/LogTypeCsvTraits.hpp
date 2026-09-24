@@ -1618,6 +1618,41 @@ namespace AdServer::LogProcessing
     }
   };
 
+  struct SiteReferrerStat2CsvTraits: SiteReferrerStatTraits
+  {
+    static const char* csv_base_name() { return "SiteReferrerStats-2"; }
+
+    static const char* csv_header()
+    {
+      return "sdate,colo_id,"
+        "site_id,tag_id,ext_tag_id,url,user_status,"
+        "requests,imps,clicks,passbacks,"
+        "bids_won_count,bids_lost_count,no_bid_count,floor_won_cost,"
+        "floor_lost_cost,floor_no_bid_cost,bid_won_amount,bid_lost_amount,cost";
+    }
+
+    static std::ostream&
+    write_as_csv(
+      std::ostream& os,
+      const BaseTraits::CollectorType::KeyT& key,
+      const BaseTraits::CollectorType::DataT::KeyT& inner_key,
+      const BaseTraits::CollectorType::DataT::DataT& data)
+    {
+      write_date_as_csv(os, key.sdate()) << ',' << key.colo_id() << ',';
+      os << inner_key.site_id() << ',' << inner_key.tag_id() << ',';
+      write_string_as_csv(os, MimeCoder<>()(inner_key.ext_tag_id(), 50)) << ',';
+      write_string_as_csv(os, inner_key.url()) << ',';
+      os << inner_key.user_status() << ',';
+      return os << data.requests() << ',' << data.imps() << ','
+        << data.clicks() << ',' << data.passbacks() << ','
+        << data.bids_won_count() << ',' << data.bids_lost_count() << ','
+        << data.no_bid_count() << ',' << data.floor_won_cost() << ','
+        << data.floor_lost_cost() << ',' << data.floor_no_bid_cost() << ','
+        << data.bid_won_amount() << ',' << data.bid_lost_amount() << ','
+        << data.cost();
+    }
+  };
+
   struct SiteUserStatCsvTraits: SiteUserStatTraits
   {
     static const char* csv_base_name() { return "SiteUserStats"; }
