@@ -1,0 +1,3 @@
+add_executable(KeywordFormatterTest KeywordFormatterTest.cpp)
+target_link_libraries(KeywordFormatterTest PRIVATE Generics String)
+target_include_directories(KeywordFormatterTest PRIVATE ${CMAKE_SOURCE_DIR})

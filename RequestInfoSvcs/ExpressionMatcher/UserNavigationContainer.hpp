@@ -34,6 +34,7 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::UserId user_id;
       Generics::Time time;
       std::vector<std::string_view> urls;
+      std::vector<std::string_view> page_keywords;
     };
 
     UserNavigationContainer(

@@ -1,14 +1,7 @@
 namespace AdServer
 {
-namespace RequestInfoSvcs
+namespace RequestInfoSvcs_v2
 {
-  struct UserNavigationProfileVersionDescriptor
-  {
-    uint version;
-  };
-
-  autoreader UserNavigationProfileVersionReader<UserNavigationProfileVersionDescriptor>;
-
   struct NavigationDescriptor
   {
     string url;
@@ -16,37 +9,24 @@ namespace RequestInfoSvcs
   };
 
   autoreader NavigationReader<NavigationDescriptor>;
-
   autowriter NavigationWriter<NavigationDescriptor>;
-
-  struct PageKeywordDescriptor
-  {
-    string keyword;
-    uint64 count;
-  };
-
-  autoreader PageKeywordReader<PageKeywordDescriptor>;
-  autowriter PageKeywordWriter<PageKeywordDescriptor>;
 
   struct NavigationDayDescriptor
   {
     uint date;
     array<NavigationDescriptor> navigations;
-    array<PageKeywordDescriptor> page_keywords;
   };
 
   reader NavigationDayReader<NavigationDayDescriptor>
   {
     date;
     array<NavigationReader> navigations;
-    array<PageKeywordReader> page_keywords;
   };
 
   writer NavigationDayWriter<NavigationDayDescriptor>
   {
     date;
     array<NavigationWriter>(cpp_vector) navigations;
-    array<PageKeywordWriter>(cpp_vector) page_keywords;
   };
 
   struct UserNavigationProfileDescriptor

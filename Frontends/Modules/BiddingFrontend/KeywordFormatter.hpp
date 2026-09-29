@@ -480,7 +480,9 @@ namespace AdServer::Bidding
       char value_str[40];
       size_t value_str_size = String::StringManip::int_to_str(value, value_str, sizeof(value_str));
 
-      add_(param_name, short_rtb_name, std::string_view(value_str, value_str_size), add_rtb_prefix);
+      const auto value_view = store_owned_(make_string_(
+        std::string_view(value_str, value_str_size), arena_.get()));
+      add_(param_name, short_rtb_name, value_view, add_rtb_prefix);
     }
 
     template<

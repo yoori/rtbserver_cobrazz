@@ -1,4 +1,5 @@
 #include "ExpressionMatcherHttp.hpp"
+#include "UserNavigationProfileJson.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -208,24 +209,16 @@ namespace AdServer::RequestInfoSvcs
           AdServer::Commons::JsonObject profile_json(profiles.add_object());
           profile_json.add_escaped_string("user_id", user_ids[i]);
           profile_json.add_boolean("found", results[i].profile.in() != nullptr);
-          AdServer::Commons::JsonObject navigations(profile_json.add_array("navigations"));
           if (results[i].profile.in())
           {
             const UserNavigationProfileReader profile(
               results[i].profile->membuf().data(),
               results[i].profile->membuf().size());
-            for (const auto day : profile.days())
-            {
-              for (const auto navigation : day.navigations())
-              {
-                AdServer::Commons::JsonObject navigation_json(navigations.add_object());
-                navigation_json.add_escaped_string(
-                  "date",
-                  Generics::Time(day.date()).get_gm_time().format("%F"));
-                navigation_json.add_escaped_string("url", navigation.url());
-                navigation_json.add_number("count", navigation.count());
-              }
-            }
+            append_navigation_json(profile_json, &profile);
+          }
+          else
+          {
+            append_navigation_json(profile_json, nullptr);
           }
         }
       }

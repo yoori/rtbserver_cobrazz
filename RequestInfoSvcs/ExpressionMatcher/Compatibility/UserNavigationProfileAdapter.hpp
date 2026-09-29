@@ -7,7 +7,7 @@
 
 namespace AdServer::RequestInfoSvcs
 {
-  constexpr std::uint32_t CURRENT_USER_NAVIGATION_PROFILE_VERSION = 2;
+  constexpr std::uint32_t CURRENT_USER_NAVIGATION_PROFILE_VERSION = 3;
 
   struct UserNavigationProfileAdapter
   {

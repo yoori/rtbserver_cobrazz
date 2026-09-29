@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iterator>
 #include <limits>
+#include <type_traits>
 
 #include <Commons/Coro/SetAwaitable.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
@@ -18,13 +19,23 @@ namespace AdServer::RequestInfoSvcs
     const Generics::Time NAVIGATION_HISTORY_PERIOD = Generics::Time::ONE_DAY * 30;
     constexpr std::uint64_t SECONDS_IN_DAY = 86400;
 
-    struct NavigationLess
+    template<typename Entry>
+    auto& navigation_value(Entry& entry) noexcept
     {
-      bool operator()(const NavigationWriter& left, std::string_view right) const noexcept
+      if constexpr (std::is_same_v<std::remove_cv_t<Entry>, NavigationWriter>)
       {
-        return std::string_view(left.url()) < right;
+        return entry.url();
       }
-    };
+      else
+      {
+        return entry.keyword();
+      }
+    }
+
+    std::size_t day_size(const NavigationDayWriter& day) noexcept
+    {
+      return day.navigations().size() + day.page_keywords().size();
+    }
 
     std::size_t
     navigation_count(const UserNavigationProfileWriter::days_Container& days) noexcept
@@ -32,7 +43,7 @@ namespace AdServer::RequestInfoSvcs
       std::size_t result = 0;
       for (const auto& day : days)
       {
-        result += day.navigations().size();
+        result += day_size(day);
       }
       return result;
     }
@@ -43,9 +54,9 @@ namespace AdServer::RequestInfoSvcs
       std::size_t erase_count)
     {
       auto first_day = days.begin();
-      while (first_day != days.end() && erase_count >= first_day->navigations().size())
+      while (first_day != days.end() && erase_count >= day_size(*first_day))
       {
-        erase_count -= first_day->navigations().size();
+        erase_count -= day_size(*first_day);
         ++first_day;
       }
       days.erase(days.begin(), first_day);
@@ -53,7 +64,24 @@ namespace AdServer::RequestInfoSvcs
       if (erase_count != 0)
       {
         auto& navigations = days.front().navigations();
-        navigations.erase(navigations.begin(), navigations.begin() + erase_count);
+        auto& keywords = days.front().page_keywords();
+        std::size_t url_count = 0, keyword_count = 0;
+        // Preserve the old within-day lexical eviction order across both collections.
+        while (erase_count--)
+        {
+          if (keyword_count == keywords.size() ||
+            (url_count < navigations.size() &&
+              navigations[url_count].url() < keywords[keyword_count].keyword()))
+          {
+            ++url_count;
+          }
+          else
+          {
+            ++keyword_count;
+          }
+        }
+        navigations.erase(navigations.begin(), navigations.begin() + url_count);
+        keywords.erase(keywords.begin(), keywords.begin() + keyword_count);
       }
     }
 
@@ -63,24 +91,22 @@ namespace AdServer::RequestInfoSvcs
       return right > max - left ? max : left + right;
     }
 
-    void
-    merge_navigations(
-      NavigationDayWriter::navigations_Container& target,
-      NavigationDayWriter::navigations_Container& source)
+    template<typename Entries>
+    void merge_navigations(Entries& target, Entries& source)
     {
-      NavigationDayWriter::navigations_Container merged;
+      Entries merged;
       merged.reserve(target.size() + source.size());
 
       auto target_it = target.begin();
       auto source_it = source.begin();
       while (target_it != target.end() && source_it != source.end())
       {
-        if (target_it->url() < source_it->url())
+        if (navigation_value(*target_it) < navigation_value(*source_it))
         {
           merged.push_back(std::move(*target_it));
           ++target_it;
         }
-        else if (source_it->url() < target_it->url())
+        else if (navigation_value(*source_it) < navigation_value(*target_it))
         {
           merged.push_back(std::move(*source_it));
           ++source_it;
@@ -137,8 +163,41 @@ namespace AdServer::RequestInfoSvcs
         else
         {
           merge_navigations(target_day->navigations(), source_day.navigations());
+          merge_navigations(target_day->page_keywords(), source_day.page_keywords());
         }
       }
+    }
+
+    template<typename Entries>
+    bool update_navigations(Entries& entries, const std::vector<std::string_view>& values)
+    {
+      bool changed = false;
+      for (const std::string_view value : values)
+      {
+        if (value.empty())
+        {
+          continue;
+        }
+        const auto entry = std::lower_bound(
+          entries.begin(), entries.end(), value,
+          [](const auto& left, std::string_view right) noexcept
+          {
+            return std::string_view(navigation_value(left)) < right;
+          });
+        if (entry != entries.end() && navigation_value(*entry) == value)
+        {
+          entry->count() = add_saturated(entry->count(), 1);
+        }
+        else
+        {
+          typename Entries::value_type new_entry;
+          navigation_value(new_entry).assign(value.data(), value.size());
+          new_entry.count() = 1;
+          entries.insert(entry, std::move(new_entry));
+        }
+        changed = true;
+      }
+      return changed;
     }
   }
 
@@ -467,14 +526,11 @@ namespace AdServer::RequestInfoSvcs
   {
     static const char* FUN = "UserNavigationContainer::co_process_request()";
 
+    const auto nonempty = [](std::string_view value) noexcept { return !value.empty(); };
     if (request_info.user_id.is_null() ||
-      std::none_of(
-        request_info.urls.begin(),
-        request_info.urls.end(),
-        [](std::string_view url) noexcept
-        {
-          return !url.empty();
-        }))
+      (std::none_of(request_info.urls.begin(), request_info.urls.end(), nonempty) &&
+        std::none_of(
+          request_info.page_keywords.begin(), request_info.page_keywords.end(), nonempty)))
     {
       co_return;
     }
@@ -590,37 +646,8 @@ namespace AdServer::RequestInfoSvcs
         }
       }
 
-      auto& navigations = day->navigations();
-      for (const std::string_view url : request_info.urls)
-      {
-        if (url.empty())
-        {
-          continue;
-        }
-
-        const auto navigation = std::lower_bound(
-          navigations.begin(),
-          navigations.end(),
-          url,
-          NavigationLess());
-
-        if (navigation != navigations.end() && std::string_view(navigation->url()) == url)
-        {
-          if (navigation->count() != std::numeric_limits<std::uint64_t>::max())
-          {
-            ++navigation->count();
-          }
-        }
-        else
-        {
-          NavigationWriter new_navigation;
-          new_navigation.url().assign(url.data(), url.size());
-          new_navigation.count() = 1;
-          navigations.insert(navigation, std::move(new_navigation));
-        }
-
-        profile_changed = true;
-      }
+      profile_changed |= update_navigations(day->navigations(), request_info.urls);
+      profile_changed |= update_navigations(day->page_keywords(), request_info.page_keywords);
 
       const std::size_t navigations_size = navigation_count(days);
       if (navigations_size > user_navigations_limit_)

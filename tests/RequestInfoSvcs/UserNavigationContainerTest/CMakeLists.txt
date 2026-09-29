@@ -7,6 +7,7 @@ target_link_libraries(UserNavigationContainerTest
     UserNavigationContainer
     UserNavigationProfileAdapter
     UserNavigationProfile_v1PST
+    UserNavigationProfile_v2PST
     UserNavigationProfilePST
     Commons
     Generics

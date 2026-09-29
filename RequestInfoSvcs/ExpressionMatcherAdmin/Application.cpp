@@ -360,13 +360,18 @@ Application_::print_user_navigation(
     const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
       profile.data(),
       profile.size());
-    std::cout << "date\turl\tcount" << std::endl;
+    std::cout << "date\ttype\tvalue\tcount" << std::endl;
     for (const auto day : reader.days())
     {
       for (const auto navigation : day.navigations())
       {
         std::cout << Generics::Time(day.date()).get_gm_time().format("%F") << '\t' <<
-          navigation.url() << '\t' << navigation.count() << std::endl;
+          "U\t" << navigation.url() << '\t' << navigation.count() << std::endl;
+      }
+      for (const auto keyword : day.page_keywords())
+      {
+        std::cout << Generics::Time(day.date()).get_gm_time().format("%F") << '\t' <<
+          "P\t" << keyword.keyword() << '\t' << keyword.count() << std::endl;
       }
     }
   }

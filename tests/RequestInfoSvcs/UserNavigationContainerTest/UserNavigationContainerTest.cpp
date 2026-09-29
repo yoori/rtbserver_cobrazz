@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -15,7 +16,9 @@
 #include <Logger/Logger.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfile_v1.hpp>
+#include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfile_v2.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/UserNavigationContainer.hpp>
+#include <RequestInfoSvcs/ExpressionMatcher/UserNavigationProfileJson.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserNavigationProfile.hpp>
 
 namespace
@@ -69,24 +72,24 @@ namespace
   void
   check_profile_data(
     const Generics::ConstSmartMemBuf* profile,
-    const std::vector<ExpectedNavigation>& expected)
+    const std::vector<ExpectedNavigation>& expected,
+    const std::vector<ExpectedNavigation>& expected_keywords = {})
   {
     const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
       profile->membuf().data(),
       profile->membuf().size());
 
-    std::size_t expected_days = 0;
-    std::optional<Generics::Time> previous_date;
+    std::set<std::uint32_t> expected_days;
     for (const auto& navigation : expected)
     {
-      if (!previous_date.has_value() || *previous_date != navigation.date)
-      {
-        ++expected_days;
-        previous_date = navigation.date;
-      }
+      expected_days.insert(navigation.date.tv_sec);
+    }
+    for (const auto& keyword : expected_keywords)
+    {
+      expected_days.insert(keyword.date.tv_sec);
     }
 
-    if (reader.days().size() != expected_days)
+    if (reader.days().size() != expected_days.size())
     {
       throw std::runtime_error("Unexpected navigation day count");
     }
@@ -112,6 +115,24 @@ namespace
     {
       throw std::runtime_error("Unexpected navigation count");
     }
+    auto expected_keyword = expected_keywords.begin();
+    for (const auto day : reader.days())
+    {
+      for (const auto keyword : day.page_keywords())
+      {
+        if (expected_keyword == expected_keywords.end() ||
+          day.date() != expected_keyword->date.tv_sec ||
+          keyword.keyword() != expected_keyword->url || keyword.count() != expected_keyword->count)
+        {
+          throw std::runtime_error("Unexpected page keyword entry");
+        }
+        ++expected_keyword;
+      }
+    }
+    if (expected_keyword != expected_keywords.end())
+    {
+      throw std::runtime_error("Unexpected page keyword count");
+    }
   }
 
   void
@@ -119,7 +140,8 @@ namespace
     UserNavigationContainer* container,
     const AdServer::Commons::UserId& user_id,
     const std::vector<ExpectedNavigation>& expected,
-    std::optional<std::uint32_t> date = std::nullopt)
+    std::optional<std::uint32_t> date = std::nullopt,
+    const std::vector<ExpectedNavigation>& expected_keywords = {})
   {
     const Generics::ConstSmartMemBuf_var profile = AdServer::Commons::sync_wait(
       get_profile(container, user_id, date));
@@ -128,7 +150,7 @@ namespace
       throw std::runtime_error("Profile is absent");
     }
 
-    check_profile_data(profile, expected);
+    check_profile_data(profile, expected, expected_keywords);
   }
 
   void
@@ -139,7 +161,9 @@ namespace
     for (const auto& navigation_info : std::vector<ExpectedNavigation>{
       {Generics::Time(10), "a", 1},
       {Generics::Time(10), "b", 2},
-      {Generics::Time(20), "c", 3}})
+      {Generics::Time(10), "rtbyob\x01", 7},
+      {Generics::Time(20), "c", 3},
+      {Generics::Time(20), "poadnoref", 9}})
     {
       AdServer::RequestInfoSvcs_v1::NavigationWriter navigation;
       navigation.date() = navigation_info.date.tv_sec;
@@ -171,7 +195,105 @@ namespace
         {Generics::Time(10), "a", 1},
         {Generics::Time(10), "b", 2},
         {Generics::Time(20), "c", 3}
+      },
+      {
+        {Generics::Time(10), "rtbyob\x01", 7},
+        {Generics::Time(20), "poadnoref", 9}
       });
+  }
+
+  void check_v2_adapter()
+  {
+    AdServer::RequestInfoSvcs_v2::UserNavigationProfileWriter old_profile;
+    old_profile.version() = 2;
+    AdServer::RequestInfoSvcs_v2::NavigationDayWriter day;
+    day.date() = 10;
+    const std::vector<ExpectedNavigation> old_entries = {
+      {Generics::Time(10), "https://rtb.example/", 1},
+      {Generics::Time(10), "ordinary-keyword", 2},
+      {Generics::Time(10), "poadnoref", 3},
+      {Generics::Time(10), "rtbyob\x01", 4}};
+    for (const auto& entry : old_entries)
+    {
+      AdServer::RequestInfoSvcs_v2::NavigationWriter navigation;
+      navigation.url() = entry.url;
+      navigation.count() = entry.count;
+      day.navigations().push_back(std::move(navigation));
+    }
+    old_profile.days().push_back(std::move(day));
+    Generics::SmartMemBuf_var buffer(new Generics::SmartMemBuf(old_profile.size()));
+    old_profile.save(buffer->membuf().data(), buffer->membuf().size());
+    const auto old_buffer = Generics::transfer_membuf(buffer);
+    const AdServer::RequestInfoSvcs::UserNavigationProfileAdapter adapter;
+    const auto converted = adapter(old_buffer.in());
+    check_profile_data(converted, {old_entries[0], old_entries[1]},
+      {old_entries[2], old_entries[3]});
+    const AdServer::RequestInfoSvcs::UserNavigationProfileReader reader(
+      converted->membuf().data(), converted->membuf().size());
+    std::string json;
+    {
+      AdServer::Commons::JsonFormatter root(json);
+      AdServer::Commons::JsonObject object(root.add_object("profile"));
+      AdServer::RequestInfoSvcs::append_navigation_json(object, &reader);
+    }
+    const std::size_t keyword_position = json.find("\"page_keywords\"");
+    if (keyword_position == std::string::npos ||
+      json.substr(0, keyword_position).find("poadnoref") != std::string::npos ||
+      json.substr(keyword_position).find("ordinary-keyword") != std::string::npos ||
+      json.find("\"keyword\": \"poadnoref\"") == std::string::npos ||
+      json.find("rtbyob\\u0001") == std::string::npos)
+    {
+      throw std::runtime_error("HTTP profile lost types or JSON escaping: " + json);
+    }
+    json.clear();
+    {
+      AdServer::Commons::JsonFormatter root(json);
+      AdServer::Commons::JsonObject object(root.add_object("profile"));
+      AdServer::RequestInfoSvcs::append_navigation_json(object, nullptr);
+    }
+    if (json != "{\"profile\": {\"version\": 3, \"urls\": [], \"page_keywords\": []}}")
+    {
+      throw std::runtime_error("Unexpected empty HTTP profile: " + json);
+    }
+    const auto repeated = adapter(converted.in());
+    if (repeated.in() != converted.in())
+    {
+      throw std::runtime_error("Current profile was unnecessarily converted");
+    }
+  }
+
+  void check_typed_profile(UserNavigationContainer* container, const Generics::Time& current_day)
+  {
+    const Generics::Time today = current_day - Generics::Time::ONE_DAY;
+    UserNavigationContainer::RequestInfo request;
+    request.user_id = AdServer::Commons::UserId::create_random_based();
+    request.time = today - Generics::Time::ONE_DAY;
+    request.urls = {"rtb.example", "same", ""};
+    request.page_keywords = {"plain-keyword", "same", ""};
+    AdServer::Commons::sync_wait(container->co_process_request(request));
+    request.urls.clear();
+    request.page_keywords = {"same"};
+    AdServer::Commons::sync_wait(container->co_process_request(request));
+    auto profile = AdServer::Commons::sync_wait(get_profile(container, request.user_id));
+    check_profile_data(profile,
+      {{request.time, "rtb.example", 1}, {request.time, "same", 1}},
+      {{request.time, "plain-keyword", 1}, {request.time, "same", 2}});
+
+    request.time = today;
+    request.page_keywords = {"new"};
+    AdServer::Commons::sync_wait(container->co_process_request(request));
+    profile = AdServer::Commons::sync_wait(get_profile(container, request.user_id));
+    check_profile_data(profile,
+      {{today - Generics::Time::ONE_DAY, "rtb.example", 1},
+       {today - Generics::Time::ONE_DAY, "same", 1}},
+      {{today - Generics::Time::ONE_DAY, "same", 2}, {today, "new", 1}});
+
+    request.time = today + Generics::Time::ONE_DAY;
+    request.page_keywords = {"a", "b", "c", "d"};
+    AdServer::Commons::sync_wait(container->co_process_request(request));
+    profile = AdServer::Commons::sync_wait(get_profile(container, request.user_id));
+    check_profile_data(profile, {}, {{request.time, "a", 1}, {request.time, "b", 1},
+      {request.time, "c", 1}, {request.time, "d", 1}});
   }
 
   void
@@ -193,14 +315,18 @@ namespace
           AdServer::Commons::uuid_distribution_hash);
     user_map.second->activate_object();
 
-    AdServer::RequestInfoSvcs::UserNavigationProfileWriter profile;
-    profile.version() = AdServer::RequestInfoSvcs::CURRENT_USER_NAVIGATION_PROFILE_VERSION;
-    AdServer::RequestInfoSvcs::NavigationDayWriter day;
+    AdServer::RequestInfoSvcs_v2::UserNavigationProfileWriter profile;
+    profile.version() = 2;
+    AdServer::RequestInfoSvcs_v2::NavigationDayWriter day;
     day.date() = date.tv_sec;
-    AdServer::RequestInfoSvcs::NavigationWriter navigation;
+    AdServer::RequestInfoSvcs_v2::NavigationWriter navigation;
     navigation.url() = "legacy";
     navigation.count() = 1;
     day.navigations().push_back(std::move(navigation));
+    AdServer::RequestInfoSvcs_v2::NavigationWriter keyword;
+    keyword.url() = "poadlegacy";
+    keyword.count() = 5;
+    day.navigations().push_back(std::move(keyword));
     profile.days().push_back(std::move(day));
 
     Generics::SmartMemBuf_var mem_buf(new Generics::SmartMemBuf(profile.size()));
@@ -248,6 +374,7 @@ main()
   try
   {
     check_v1_adapter();
+    check_v2_adapter();
 
     std::filesystem::remove_all(root);
     std::filesystem::create_directories(root / "Chunk_0_1");
@@ -281,14 +408,18 @@ main()
         USER_NAVIGATION_PERIOD_DAYS);
     container->activate_object();
 
+    check_typed_profile(container, today);
+
     const AdServer::Commons::UserId user_id =
       AdServer::Commons::UserId::create_random_based();
     const AdServer::Commons::UserId empty_user_id =
       AdServer::Commons::UserId::create_random_based();
 
-    check_profile(container, legacy_user_id, {{today, "legacy", 1}});
+    check_profile(container, legacy_user_id, {{today, "legacy", 1}}, std::nullopt,
+      {{today, "poadlegacy", 5}});
     process(container, legacy_user_id, today, "legacy");
-    check_profile(container, legacy_user_id, {{today, "legacy", 2}});
+    check_profile(container, legacy_user_id, {{today, "legacy", 2}}, std::nullopt,
+      {{today, "poadlegacy", 5}});
 
     process(container, empty_user_id, today, "");
     if (AdServer::Commons::sync_wait(get_profile(container, empty_user_id)).in())

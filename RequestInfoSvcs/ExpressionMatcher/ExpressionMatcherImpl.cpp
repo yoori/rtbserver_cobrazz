@@ -1580,22 +1580,20 @@ namespace AdServer::RequestInfoSvcs
       co_return;
     }
 
-    std::vector<std::string_view> navigation_urls;
+    UserNavigationContainer::RequestInfo navigation_request_info;
     if (!record.referer().empty())
     {
-      navigation_urls.push_back(record.referer());
+      navigation_request_info.urls.push_back(record.referer());
     }
 
-    append_page_keywords_(navigation_urls, record.page_keywords());
-    if (navigation_urls.empty())
+    append_page_keywords_(navigation_request_info.page_keywords, record.page_keywords());
+    if (navigation_request_info.urls.empty() && navigation_request_info.page_keywords.empty())
     {
       co_return;
     }
 
-    UserNavigationContainer::RequestInfo navigation_request_info;
     navigation_request_info.user_id = record.user_id();
     navigation_request_info.time = key.time();
-    navigation_request_info.urls = std::move(navigation_urls);
     co_await user_navigation_container->co_process_request(navigation_request_info);
   }
 
