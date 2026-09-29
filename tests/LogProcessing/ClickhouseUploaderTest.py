@@ -249,6 +249,43 @@ class ClickhouseAdapterTest(unittest.TestCase):
 
     self.assertEqual(output, [first, second])
 
+  def test_channel_trigger_adapters_preserve_both_metrics_and_file_identity(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      files = []
+      for name, header, row in (
+          ('ChannelTriggerStatsCH_20260929000000.csv',
+           ['sdate', 'colo_id', 'channel_trigger_id', 'trigger_type', 'hits', 'channel_id'],
+           ['2026-09-29', '1', '42', 'U', '17', '7']),
+          ('ChannelTriggerImpStatsCH_20260929000000.csv',
+           ['sdate', 'colo_id', 'channel_trigger_id', 'trigger_type',
+            'approximated_imps', 'approximated_clicks', 'channel_id'],
+           ['2026-09-29', '1', '42', 'U', '2.25', '1.50', '7'])):
+        filename = pathlib.Path(temp_dir) / name
+        with filename.open('w', newline = '') as output:
+          writer = csv.writer(output)
+          writer.writerow(header)
+          writer.writerow(row)
+        files.append(str(filename))
+
+      result = subprocess.run(
+        [sys.executable, str(REPOSITORY_ROOT / 'bin' /
+                         'ChannelTriggerStatsClickhouseAdapter.py')] + files,
+        universal_newlines = True, capture_output = True, check = True)
+
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    self.assertEqual(rows[0][4:8], ['7', '17', '0', '0'])
+    self.assertEqual(rows[1][4:8], ['7', '0', '2.25', '1.50'])
+    self.assertEqual(rows[0][-2:], [pathlib.Path(files[0]).name, '1'])
+    self.assertEqual(rows[1][-2:], [pathlib.Path(files[1]).name, '1'])
+
+  def test_channel_trigger_table_deduplicates_retried_source_rows(self):
+    query = CLICKHOUSE_UPLOADER.CHANNEL_TRIGGER_STATS_CREATE_TABLE_QUERY
+    self.assertIn('ReplacingMergeTree', query)
+    self.assertIn('source_file, source_row)', query)
+    self.assertIn('hits Decimal(38, 8)', query)
+    self.assertIn('approximated_imps Decimal(38, 8)', query)
+    self.assertIn('approximated_clicks Decimal(38, 8)', query)
+
   def test_site_referrer_stats_table_is_partitioned_and_summed(self):
     query = CLICKHOUSE_UPLOADER.SITE_REFERRER_STATS_CREATE_TABLE_QUERY
     self.assertIn('CREATE TABLE IF NOT EXISTS SiteReferrerStats', query)

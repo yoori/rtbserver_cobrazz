@@ -58,7 +58,9 @@
     "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/Geo')"/>",
     "<xsl:value-of select="concat($workspace-root, '/log/Predictor/ResearchLogs/BidCostStat')"/>",
     "<xsl:value-of
-      select="concat($workspace-root, '/log/Predictor/ResearchLogs/SiteReferrerStats')"/>"
+      select="concat($workspace-root, '/log/Predictor/ResearchLogs/SiteReferrerStats')"/>",
+    "<xsl:value-of
+      select="concat($workspace-root, '/log/Predictor/ResearchLogs/ChannelTriggerStats')"/>"
   ],
   "error_root": "<xsl:value-of select="concat($workspace-root, '/log/ClickhouseUploader/Error')"/>",
   "batch": <xsl:value-of select="$batch"/>

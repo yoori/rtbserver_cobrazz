@@ -183,6 +183,25 @@ SITE_REFERRER_STATS_CREATE_TABLE_QUERY = (
 )
 
 
+CHANNEL_TRIGGER_STATS_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS ChannelTriggerStats ("
+  "sdate Date, "
+  "colo_id UInt32, "
+  "channel_trigger_id UInt64, "
+  "trigger_type FixedString(1), "
+  "channel_id UInt64, "
+  "hits Decimal(38, 8), "
+  "approximated_imps Decimal(38, 8), "
+  "approximated_clicks Decimal(38, 8), "
+  "source_file String, "
+  "source_row UInt32"
+  ") ENGINE = ReplacingMergeTree "
+  "PARTITION BY toYYYYMM(sdate) "
+  "ORDER BY (sdate, channel_id, channel_trigger_id, trigger_type, "
+  "colo_id, source_file, source_row)"
+)
+
+
 MIGRATIONS_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS Migrations ("
   "component String, "
@@ -440,7 +459,7 @@ class ClickhouseCsvUploader(object) :
     })
     try :
       self.logger.debug("To create target table: " + command_line)
-      ret_code = os.system(command_line)
+      ret_code = os.system('/bin/bash -o pipefail -c ' + shlex.quote(command_line))
       self.logger.debug("From create target table: " + str(ret_code))
       if ret_code != 0 :
         raise Exception("Error on create target table: command_line = '" + command_line + "'")
@@ -572,6 +591,16 @@ class SiteReferrerStatsUploader(ClickhouseCsvUploader) :
       'SiteReferrerStats',
       logger = logger,
       create_table_query = SITE_REFERRER_STATS_CREATE_TABLE_QUERY)
+
+
+class ChannelTriggerStatsUploader(ClickhouseCsvUploader) :
+  def __init__(self, config, logger = None) :
+    super().__init__(
+      config,
+      'ChannelTriggerStatsClickhouseAdapter.py',
+      'ChannelTriggerStats',
+      logger = logger,
+      create_table_query = CHANNEL_TRIGGER_STATS_CREATE_TABLE_QUERY)
 
 
 def check_stat_files(
@@ -893,8 +922,11 @@ def main() :
   processors['Geo'] = GeoUploader(config, logger = logger)
   processors['BidCost'] = BidCostUploader(config, logger = logger)
   processors['SiteReferrerStats-2'] = SiteReferrerStatsUploader(config, logger = logger)
+  channel_trigger_uploader = ChannelTriggerStatsUploader(config, logger = logger)
+  processors['ChannelTriggerStatsCH'] = channel_trigger_uploader
+  processors['ChannelTriggerImpStatsCH'] = channel_trigger_uploader
 
-  for processor in processors.values():
+  for processor in set(processors.values()):
     processor.init_storage()
 
   migration_executor = ClickhouseQueryExecutor(config.clickhouse_conn, logger = logger)

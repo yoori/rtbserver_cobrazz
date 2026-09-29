@@ -277,4 +277,90 @@ namespace AdServer::LogProcessing
     }
   }
 
+  template <class PrimaryTraits, class CopyTraits>
+  class DualLogCsvSaverImpl:
+    virtual public LogSaverBaseImpl<typename PrimaryTraits::CollectorBundleType>
+  {
+    using BaseType = LogSaverBaseImpl<typename PrimaryTraits::CollectorBundleType>;
+
+  public:
+    using CollectorBundleType = typename PrimaryTraits::CollectorBundleType;
+    using Spillover_var = typename BaseType::Spillover_var;
+    using CollectorFilterT = typename PrimaryTraits::CollectorFilterType;
+    using Exception = typename BaseType::Exception;
+    DECLARE_EXCEPTION(CsvException, Exception);
+
+    DualLogCsvSaverImpl(const std::string& path, CollectorFilterT* collector_filter)
+      : BaseType(collector_filter), path_(path)
+    {}
+
+    void save(const Spillover_var& data) override
+    {
+      BaseType::collector_filter_->filter(data->collector);
+      if (data->collector.empty())
+      {
+        return;
+      }
+
+      StringPair primary;
+      StringPair copy;
+      try
+      {
+        primary = write_temp_<PrimaryTraits>(data->collector);
+        copy = write_temp_<CopyTraits>(data->collector);
+        publish_(primary);
+        publish_(copy);
+      }
+      catch (...)
+      {
+        unlink(primary.second.c_str());
+        unlink(copy.second.c_str());
+        unlink(primary.first.c_str());
+        unlink(copy.first.c_str());
+        throw;
+      }
+    }
+
+  protected:
+    ~DualLogCsvSaverImpl() noexcept override = default;
+
+  private:
+    template <class Traits>
+    StringPair write_temp_(const typename BaseType::CollectorT& collector)
+    {
+      LogFileNameInfo name_info(Traits::csv_base_name());
+      name_info.format = LogFileNameInfo::LFNF_CSV;
+      StringPair names = make_log_file_name_pair(name_info, path_);
+      std::ofstream output(names.second.c_str());
+      if (!output)
+      {
+        throw CsvException("Failed to open temporary CSV file");
+      }
+
+      output << Traits::csv_header() << '\n';
+      for (auto it = collector.begin(); it != collector.end(); ++it)
+      {
+        CsvWrite<Traits>::impl(output, it);
+      }
+      output.flush();
+      if (!output)
+      {
+        unlink(names.second.c_str());
+        throw CsvException("Failed to write temporary CSV file");
+      }
+      return names;
+    }
+
+    void publish_(const StringPair& names)
+    {
+      if (std::rename(names.second.c_str(), names.first.c_str()))
+      {
+        eh::throw_errno_exception<CsvException>("Failed to publish CSV file '",
+          names.second, "' as '", names.first, "'");
+      }
+    }
+
+    const std::string path_;
+  };
+
 } // namespace AdServer::LogProcessing

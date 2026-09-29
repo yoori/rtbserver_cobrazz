@@ -635,20 +635,20 @@ class RImpressionTrainExporter(object):
 
 
 class RImpressionVTRTrainExporter(RImpressionTrainExporter):
-  EXPECTED_VIEW_CONDITION = "has(expected_post_actions, 'vview')"
+  EXPECTED_COMPLETE_CONDITION = "has(expected_post_actions, 'vcomplete')"
 
   def sampling_condition(self):
     sampling_condition = super().sampling_condition()
     if sampling_condition is None:
-      return self.EXPECTED_VIEW_CONDITION
+      return self.EXPECTED_COMPLETE_CONDITION
     return (
       '(' + sampling_condition + ') AND (' +
-      self.EXPECTED_VIEW_CONDITION + ')')
+      self.EXPECTED_COMPLETE_CONDITION + ')')
 
   @staticmethod
   def _click_condition(date_from):
     return (
       'request_id IN ('
       'SELECT request_id FROM RPostImpression '
-      'WHERE video_view_timestamp IS NOT NULL '
-      "AND video_view_timestamp >= toDateTime('" + date_from + "'))")
+      'WHERE video_complete_timestamp IS NOT NULL '
+      "AND video_complete_timestamp >= toDateTime('" + date_from + "'))")

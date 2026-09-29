@@ -339,11 +339,19 @@ namespace AdServer::LogProcessing
   typedef Aux_::BaseLogTraitsHelper<ChannelOverlapUserStatCsvTraits>
     ChannelOverlapUserStatExtTraits;
 
-  typedef Aux_::BaseLogTraitsHelper<ChannelTriggerImpStatCsvTraits>
-    ChannelTriggerImpStatExtTraits;
+  struct ChannelTriggerImpStatExtTraits:
+    public Aux_::BaseLogTraitsHelper<ChannelTriggerImpStatCsvTraits>
+  {
+    using CsvSaverType = DualLogCsvSaverImpl<ChannelTriggerImpStatCsvTraits,
+      ChannelTriggerImpStatClickhouseCsvTraits>;
+  };
 
-  typedef Aux_::BaseLogTraitsHelper<ChannelTriggerStatCsvTraits>
-    ChannelTriggerStatExtTraits;
+  struct ChannelTriggerStatExtTraits:
+    public Aux_::BaseLogTraitsHelper<ChannelTriggerStatCsvTraits>
+  {
+    using CsvSaverType = DualLogCsvSaverImpl<ChannelTriggerStatCsvTraits,
+      ChannelTriggerStatClickhouseCsvTraits>;
+  };
 
   typedef Aux_::BaseLogTraitsHelper<DeviceChannelCountStatCsvTraits>
     DeviceChannelCountStatExtTraits;

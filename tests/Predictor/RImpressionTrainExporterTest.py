@@ -139,7 +139,7 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     with self.assertRaisesRegex(ValueError, 'user_navigation_sampling'):
       RImpressionTrainExporter('', user_navigation_sampling=100.1)
 
-  def test_vtr_exporter_requires_expected_view_and_labels_video_view(self):
+  def test_vtr_exporter_requires_expected_complete_and_labels_video_complete(self):
     exporter = RImpressionVTRTrainExporter(
       '',
       user_navigation_sampling=1.25)
@@ -148,18 +148,18 @@ class RImpressionTrainExporterTest(unittest.TestCase):
     self.assertIn(
       'uid IS NOT NULL AND CRC32(assumeNotNull(uid)) % 1000000 < 12500',
       sampling_condition)
-    self.assertIn("has(expected_post_actions, 'vview')", sampling_condition)
+    self.assertIn("has(expected_post_actions, 'vcomplete')", sampling_condition)
 
     query = exporter._export_query(
       '2026-09-01',
       '2026-09-02',
       100,
       exporter._sampled_condition())
-    self.assertIn("has(expected_post_actions, 'vview')", query)
+    self.assertIn("has(expected_post_actions, 'vcomplete')", query)
     self.assertIn(
       'request_id IN (SELECT request_id FROM RPostImpression '
-      'WHERE video_view_timestamp IS NOT NULL '
-      "AND video_view_timestamp >= toDateTime('2026-09-01'))",
+      'WHERE video_complete_timestamp IS NOT NULL '
+      "AND video_complete_timestamp >= toDateTime('2026-09-01'))",
       query)
 
   def test_failed_export_preserves_previous_sample(self):

@@ -914,6 +914,11 @@ namespace AdServer::LogProcessing
     }
   };
 
+  struct ChannelTriggerImpStatClickhouseCsvTraits: ChannelTriggerImpStatCsvTraits
+  {
+    static const char* csv_base_name() { return "ChannelTriggerImpStatsCH"; }
+  };
+
   struct ChannelTriggerStatCsvTraits: ChannelTriggerStatTraits
   {
     static const char* csv_base_name() { return "ChannelTriggerStats-2"; }
@@ -937,6 +942,11 @@ namespace AdServer::LogProcessing
 
       return os;
     }
+  };
+
+  struct ChannelTriggerStatClickhouseCsvTraits: ChannelTriggerStatCsvTraits
+  {
+    static const char* csv_base_name() { return "ChannelTriggerStatsCH"; }
   };
 
   struct CmpStatCsvTraits: CmpStatTraits
@@ -1054,7 +1064,7 @@ namespace AdServer::LogProcessing
 
   struct PostClickStatCsvTraits: PostClickStatTraits
   {
-    static const char* csv_base_name() { return "CCGPostClickStatsHourly"; }
+    static const char* csv_base_name() { return "PostClickStatsHourly"; }
 
     static const char* csv_header()
     {

@@ -1151,6 +1151,8 @@
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/PostClickStat/CCGPostClickStatsHourly_*"
               destination="/csvlistener/"/>
+            <cfg:files source="LogGeneralizer/Out/PostClickStat/PostClickStatsHourly_*"
+              destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/PostImpStat/PostImpStatsHourly_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStats_*"
@@ -1339,6 +1341,19 @@
             <cfg:files
               source="LogGeneralizer/Out/SiteReferrerStat/SiteReferrerStats-2_*"
               destination="/SiteReferrerStats"/>
+            <cfg:hosts destination="-non-used-hostname">
+              <xsl:attribute name="source"><xsl:value-of
+                select="$log-generalizer-hosts"/></xsl:attribute>
+            </cfg:hosts>
+          </cfg:Route>
+
+          <cfg:Route type="RoundRobin">
+            <cfg:files
+              source="LogGeneralizer/Out/ChannelTriggerStat/ChannelTriggerStatsCH_*"
+              destination="/ChannelTriggerStats"/>
+            <cfg:files
+              source="LogGeneralizer/Out/ChannelTriggerImpStat/ChannelTriggerImpStatsCH_*"
+              destination="/ChannelTriggerStats"/>
             <cfg:hosts destination="-non-used-hostname">
               <xsl:attribute name="source"><xsl:value-of
                 select="$log-generalizer-hosts"/></xsl:attribute>
