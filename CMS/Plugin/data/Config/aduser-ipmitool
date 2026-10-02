@@ -1,0 +1,2 @@
+# Allow the Telegraf-owned StatCollector to read instantaneous DCMI power only.
+aduser ALL=(root) NOPASSWD: /usr/bin/ipmitool dcmi power reading

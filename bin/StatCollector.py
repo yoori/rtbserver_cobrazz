@@ -3,13 +3,16 @@
 import argparse
 import json
 import os
+import re
 import signal
 import stat
+import subprocess
 import sys
 import time
 
 
 DEFAULT_PERIOD_SECONDS = 60
+IPMITOOL_PATH = '/usr/bin/ipmitool'
 STOP_REQUESTED = False
 
 
@@ -420,6 +423,43 @@ def collect_cpu_metrics(
   return metrics
 
 
+def collect_power_metrics(
+    ipmitool_path = IPMITOOL_PATH,
+    command_runner = subprocess.run,
+    executable_exists = os.path.isfile):
+  if not executable_exists(ipmitool_path):
+    return []
+
+  try:
+    result = command_runner(
+      ['/usr/bin/sudo', '-n', ipmitool_path, 'dcmi', 'power', 'reading'],
+      stdout = subprocess.PIPE,
+      stderr = subprocess.DEVNULL,
+      text = True,
+      timeout = 15)
+  except (OSError, subprocess.SubprocessError):
+    return []
+
+  if result.returncode:
+    return []
+
+  match = None
+  for line in result.stdout.splitlines():
+    match = re.match(r'^Instantaneous power reading:\s*(\d+)\s+Watts\b', line)
+    if match:
+      break
+  if match is None:
+    return []
+
+  return [format_metric(
+    'rtb_power',
+    {'source': 'ipmi'},
+    {
+      'watts': int(match.group(1)),
+      'collection_success': 1,
+    })]
+
+
 def collect(config, now = None, error_stream = None):
   if now is None:
     now = time.time()
@@ -445,6 +485,7 @@ def collect(config, now = None, error_stream = None):
 
   if config.get('processes') or config.get('process_roots'):
     metrics.extend(collect_cpu_metrics(config))
+  metrics.extend(collect_power_metrics())
   return metrics
 
 

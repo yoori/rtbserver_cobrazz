@@ -6,6 +6,7 @@ import pathlib
 import tempfile
 import unittest
 from contextlib import redirect_stderr
+from unittest import mock
 
 
 REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -42,7 +43,8 @@ class StatCollectorTest(unittest.TestCase):
       (queue_path / 'direct.log').write_bytes(b'direct')
       (intermediate_path / 'queued.log').write_bytes(b'queued')
 
-      metrics = STAT_COLLECTOR.collect(self.config_for(queue_path), now = 1000)
+      with mock.patch.object(STAT_COLLECTOR, 'collect_power_metrics', return_value = []):
+        metrics = STAT_COLLECTOR.collect(self.config_for(queue_path), now = 1000)
 
     self.assertEqual(len(metrics), 1)
     metric = metrics[0]
@@ -57,8 +59,9 @@ class StatCollectorTest(unittest.TestCase):
     errors = io.StringIO()
     config = self.config_for(pathlib.Path('/missing/queue'))
 
-    with redirect_stderr(errors):
-      metrics = STAT_COLLECTOR.collect(config)
+    with mock.patch.object(STAT_COLLECTOR, 'collect_power_metrics', return_value = []):
+      with redirect_stderr(errors):
+        metrics = STAT_COLLECTOR.collect(config)
 
     self.assertEqual(
       metrics,
@@ -74,6 +77,40 @@ class StatCollectorTest(unittest.TestCase):
     self.assertEqual(
       line,
       'rtb_queue,service=Request\\ Info,queue=Click\\,Retry file_count=1i')
+
+  def test_collects_ipmi_power(self):
+    commands = []
+
+    def command_runner(command, **kwargs):
+      commands.append((command, kwargs))
+      return type('Result', (), {
+        'returncode': 0,
+        'stdout': (
+          'Instantaneous power reading:                     321 Watts\n'
+          'Minimum during sampling period:                 312 Watts\n'),
+      })()
+
+    metrics = STAT_COLLECTOR.collect_power_metrics(
+      command_runner = command_runner,
+      executable_exists = lambda path: path == '/usr/bin/ipmitool')
+
+    self.assertEqual(commands[0][0], [
+      '/usr/bin/sudo', '-n', '/usr/bin/ipmitool', 'dcmi', 'power', 'reading'])
+    self.assertEqual(commands[0][1]['timeout'], 15)
+    self.assertEqual(
+      metrics,
+      ['rtb_power,source=ipmi watts=321i,collection_success=1i'])
+
+  def test_skips_ipmi_power_when_ipmitool_is_not_installed(self):
+    def command_runner(command, **kwargs):
+      del command, kwargs
+      self.fail('ipmitool must not run when it is absent')
+
+    self.assertEqual(
+      STAT_COLLECTOR.collect_power_metrics(
+        command_runner = command_runner,
+        executable_exists = lambda path: False),
+      [])
 
   def test_rejects_invalid_period(self):
     with tempfile.TemporaryDirectory() as temporary_directory:

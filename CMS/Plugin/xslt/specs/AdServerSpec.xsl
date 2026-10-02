@@ -370,10 +370,13 @@ popd
 
 mkdir -p %{buildroot}/etc/sysctl.d/
 mkdir -p %{buildroot}/etc/security/limits.d/
+mkdir -p %{buildroot}/etc/sudoers.d/
 install --mode 644 %{__plugin_root}/data/Config/adserver_sysctl.conf \
   %{buildroot}/etc/sysctl.d/adserver.conf
 install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf \
   %{buildroot}/etc/security/limits.d/91-aduser.conf
+install --mode 440 %{__plugin_root}/data/Config/aduser-ipmitool \
+  %{buildroot}/etc/sudoers.d/aduser-ipmitool
 
 <xsl:if test="$frontend-network">
 install -D -m 755 %{__plugin_root}/data/Config/frontend-network.py \
@@ -684,6 +687,7 @@ EOF]]>
 %defattr(-, root, root)
 /etc/sysctl.d/adserver.conf
 /etc/security/limits.d/91-aduser.conf
+/etc/sudoers.d/aduser-ipmitool
 <xsl:if test="$frontend-network">
 %{frontend_network_tool}
 %{frontend_network_config}
