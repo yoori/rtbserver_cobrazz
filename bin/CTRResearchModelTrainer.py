@@ -44,7 +44,8 @@ logger = logging.getLogger(__name__)
 RESEARCH_SUFFIX = '.SSP-CTR-CHECK'
 
 CTR_THRESHOLD_GOALS = tuple(
-  index / 1000.0 for index in range(31))
+  index / 1000.0 for index in range(31)) + tuple(
+    index / 100.0 for index in range(4, 101))
 
 SSP_CTR_FEATURE_CONFIG = {
   'features_dimension': 14,

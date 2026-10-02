@@ -6,7 +6,10 @@ import numpy
 from catboost import CatBoostClassifier, Pool
 
 
-CTR_GOALS = numpy.arange(31, dtype=numpy.float64) / 1000
+CTR_GOALS = numpy.concatenate((
+  numpy.arange(31, dtype=numpy.float64) / 1000,
+  numpy.arange(4, 101, dtype=numpy.float64) / 100,
+))
 
 
 def ctr_threshold_statistics(predictions, labels):

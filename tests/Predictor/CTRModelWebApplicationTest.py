@@ -163,7 +163,7 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertIn('data-section-id="ctr_thresholds"', page)
     self.assertIn('data-section-id="training_report"', page)
     self.assertIn('data-section-id="feature_importance"', page)
-    self.assertIn('CTR threshold checking', page)
+    self.assertIn('Prediction threshold checking', page)
     self.assertIn(
       "reportSectionStoragePrefix = 'ctr-model-viewer:sections:v1:'",
       page)
@@ -395,6 +395,17 @@ class CTRModelWebApplicationTest(unittest.TestCase):
           'title': 'Second properties',
           'data': {'items': [{'val_logloss': 0.03}]},
         },
+        {
+          'id': 'ctr_thresholds',
+          'title': 'CTR threshold checking',
+          'data': {
+            'thresholds': [{
+              'ctr_goal': 0.04,
+              'impressions': 10,
+              'clicks': 1,
+            }],
+          },
+        },
       ],
     }
 
@@ -403,6 +414,8 @@ class CTRModelWebApplicationTest(unittest.TestCase):
     self.assertLess(page.index('First report'), page.index('Second properties'))
     self.assertIn('data-section-id="training_report"', page)
     self.assertIn('data-section-id="properties"', page)
+    self.assertIn('Prediction threshold checking', page)
+    self.assertNotIn('CTR threshold checking', page)
     self.assertIn('0.030000', page)
 
   def test_renders_in_progress_model_with_only_train_start(self):

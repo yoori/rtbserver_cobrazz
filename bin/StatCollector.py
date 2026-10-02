@@ -445,7 +445,7 @@ def collect_power_metrics(
 
   match = None
   for line in result.stdout.splitlines():
-    match = re.match(r'^Instantaneous power reading:\s*(\d+)\s+Watts\b', line)
+    match = re.match(r'^\s*Instantaneous power reading:\s*(\d+)\s+Watts\b', line)
     if match:
       break
   if match is None:

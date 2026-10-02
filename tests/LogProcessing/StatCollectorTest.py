@@ -86,7 +86,7 @@ class StatCollectorTest(unittest.TestCase):
       return type('Result', (), {
         'returncode': 0,
         'stdout': (
-          'Instantaneous power reading:                     321 Watts\n'
+          '    Instantaneous power reading:                 321 Watts\n'
           'Minimum during sampling period:                 312 Watts\n'),
       })()
 

@@ -5,7 +5,7 @@ SECTION_SPECS = (
   ('datasets', 'Datasets', 'dataset_sizes', 'datasets'),
   (
     'ctr_thresholds',
-    'CTR threshold checking',
+    'Prediction threshold checking',
     'ctr_thresholds',
     'thresholds',
   ),

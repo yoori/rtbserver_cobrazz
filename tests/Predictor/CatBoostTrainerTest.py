@@ -715,6 +715,10 @@ class CatBoostTrainerTest(unittest.TestCase):
     self.assertEqual(0.03, statistics[30]['ctr_goal'])
     self.assertEqual(2, statistics[30]['impressions'])
     self.assertEqual(1, statistics[30]['clicks'])
+    self.assertEqual(128, len(statistics))
+    self.assertEqual(0.04, statistics[31]['ctr_goal'])
+    self.assertEqual(0, statistics[31]['impressions'])
+    self.assertEqual(1.0, statistics[-1]['ctr_goal'])
 
   def test_ctr_threshold_statistics_are_aggregated_across_sets(self):
     evaluations = [

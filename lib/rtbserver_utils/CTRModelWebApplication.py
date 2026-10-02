@@ -622,6 +622,8 @@ def render_traits_sections(
     if not isinstance(data, dict):
       data = {}
     specification = SECTION_SPECS_BY_ID.get(section_id)
+    if section_id == 'ctr_thresholds' and specification is not None:
+      title = specification[0]
     content = ''
     if specification is not None:
       _, legacy_field, data_field = specification
