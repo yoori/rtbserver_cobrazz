@@ -13,6 +13,15 @@ sub start
 
   my $command =
     "mkdir -p \${workspace_root}/run && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchImpression && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostImpression && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostClick && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchClick && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchAction && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/Geo && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/BidCostStat && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/SiteReferrerStats && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ChannelTriggerStats && " .
     "mkdir -p \${workspace_root}/log/ClickhouseUploader/Error && " .
     AdServer::Functions::pidfile_start_guard($pid_file, "ClickhouseStatUploader.py") . " && " .
     "{ " .
