@@ -50,6 +50,8 @@ namespace AdServer::LogProcessing
     PostClickStatInnerData(
       std::uint64_t visits,
       std::uint64_t visits_with_bounce,
+      std::uint64_t visits_robot,
+      std::uint64_t visits_robot_available,
       std::uint64_t session_time_sum,
       std::uint64_t page_views,
       std::uint64_t new_user_visits,
@@ -63,6 +65,8 @@ namespace AdServer::LogProcessing
 
     std::uint64_t visits() const noexcept;
     std::uint64_t visits_with_bounce() const noexcept;
+    std::uint64_t visits_robot() const noexcept;
+    std::uint64_t visits_robot_available() const noexcept;
     std::uint64_t session_time_sum() const noexcept;
     std::uint64_t page_views() const noexcept;
     std::uint64_t new_user_visits() const noexcept;
@@ -77,6 +81,8 @@ namespace AdServer::LogProcessing
   private:
     std::uint64_t visits_;
     std::uint64_t visits_with_bounce_;
+    std::uint64_t visits_robot_;
+    std::uint64_t visits_robot_available_;
     std::uint64_t session_time_sum_;
     std::uint64_t page_views_;
     std::uint64_t new_user_visits_;

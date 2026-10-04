@@ -971,7 +971,7 @@ int main(int argc, char **argv)
         std::move(creative_key),
         17,
         DayTimestamp(TEST_TIME)),
-      PostClickStatInnerData(1, 1, 42, 3, 0, 1));
+      PostClickStatInnerData(1, 1, 1, 1, 42, 3, 0, 1));
     collector.add(
       PostClickStatCollector::KeyT(TEST_TIME, TEST_TIME),
       std::move(data));
@@ -989,7 +989,7 @@ int main(int argc, char **argv)
       CreativeStatInnerKey::GeoChannelIdOptional(),
       CreativeStatInnerKey::DeviceChannelIdOptional(), 111, true, 66);
     PostImpStatInnerData counters;
-    for (unsigned i = 0; i < 13; ++i)
+    for (unsigned i = 0; i < 14; ++i)
     {
       for (unsigned j = 0; j <= i; ++j)
       {
@@ -1010,12 +1010,12 @@ int main(int argc, char **argv)
       fields.push_back(field);
     }
 
-    if (fields.size() != 40 || fields[22] != "0" || fields[23] != "0")
+    if (fields.size() != 41 || fields[22] != "0" || fields[23] != "0")
     {
       throw LogIoTester<PostImpStatTraits>::Exception(
-        "PostImpStat CSV needs 40 fields and zero optional channel IDs");
+        "PostImpStat CSV needs 41 fields and zero optional channel IDs");
     }
-    for (unsigned i = 0; i < 13; ++i)
+    for (unsigned i = 0; i < 14; ++i)
     {
       if (fields[27 + i] != std::to_string(i + 1))
       {

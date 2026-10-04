@@ -24,6 +24,7 @@ if __name__ == '__main__':
     ('vresume', 'video_resume_timestamp'),
     ('vfullscreen', 'video_fullscreen_timestamp'),
     ('verror', 'video_error_timestamp'),
+    ('visibility', 'visibility_timestamp'),
   )
   action_indexes = {
     action_name: index

@@ -403,7 +403,7 @@ namespace
     }
 
     out.write(TEMPLATE_BODY, sizeof(TEMPLATE_BODY) - 1);
-    out << "##TRACKVIDEOSTART####TRACKVIDEOVIEW##";
+    out << "##TRACKVIDEOSTART####TRACKVIDEOVIEW####TRACKVISIBILITY##";
     if (!out)
     {
       throw std::runtime_error("can't write template file: " + path.string());
@@ -435,7 +435,7 @@ namespace
     }
 
     Template_var updated = factory.update(initial, handler, state);
-    const std::vector<std::string> expected{"vstart", "vview", "vcomplete"};
+    const std::vector<std::string> expected{"vstart", "vview", "vcomplete", "visibility"};
     if (updated.in() == initial.in() || *updated->expected_post_actions() != expected)
     {
       throw std::runtime_error("changed creative template was not reloaded");
@@ -761,7 +761,7 @@ namespace
       throw std::runtime_error("CLICKMETRIKAPARAMS did not include click-time user IDs");
     }
 
-    const std::vector<std::string> expected_post_actions{"vstart", "vview"};
+    const std::vector<std::string> expected_post_actions{"vstart", "vview", "visibility"};
     if (*ad_selection_result.expected_post_actions != expected_post_actions)
     {
       throw std::runtime_error("expected post actions were not detected from template tokens");

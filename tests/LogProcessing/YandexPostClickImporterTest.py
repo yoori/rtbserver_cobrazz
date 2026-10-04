@@ -309,8 +309,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     hour1 = datetime.datetime(2026, 9, 10, 9, tzinfo=datetime.timezone.utc)
     hour2 = datetime.datetime(2026, 9, 10, 10, tzinfo=datetime.timezone.utc)
     self.assertEqual(api.offsets, [1, 3])
-    self.assertEqual(result['rows'][(hour1, 1)][:5], [3, 1, 24.0, 4, 1])
-    self.assertEqual(result['rows'][(hour2, 2)][:5], [4, 1, 8.0, 5, 2])
+    self.assertEqual(result['rows'][(hour1, 1)][:7], [3, 1, 0, 0, 24.0, 4, 1])
+    self.assertEqual(result['rows'][(hour2, 2)][:7], [4, 1, 0, 0, 8.0, 5, 2])
     self.assertFalse(result['unsampled'])
     self.assertEqual(result['date1'], datetime.date(2026, 9, 10))
     self.assertEqual(result['date2'], datetime.date(2026, 9, 10))
@@ -322,14 +322,14 @@ class YandexPostClickImporterTest(unittest.TestCase):
       self.application.ch.parameters['range_end'],
       datetime.datetime(2026, 9, 10, 21, tzinfo=datetime.timezone.utc))
     self.assertEqual(len(published), 2)
-    self.assertEqual(published[0][1:8], (hour2, 2, 4, 1, 8.0, 5, 2))
+    self.assertEqual(published[0][1:10], (hour2, 2, 4, 1, 0, 0, 8.0, 5, 2))
     hour3 = datetime.datetime(2026, 9, 10, 11, tzinfo=datetime.timezone.utc)
-    self.assertEqual(published[1][:10], (
-      17, hour3, 3, -2, -1, -12.5, -4, -2, False, 1.0))
-    self.assertIsInstance(published[1][10], datetime.datetime)
+    self.assertEqual(published[1][:11], (
+      17, hour3, 3, -2, -1, 0, 0, -12.5, -4, -2, False))
+    self.assertIsInstance(published[1][10], bool)
     self.assertEqual(len(self.application.ch.inserted), 1)
     changed = self.application.ch.inserted[0][1]
-    self.assertEqual(changed[1][1:10], (hour3, 3, 0, 0, 0.0, 0, 0, False, 1.0))
+    self.assertEqual(changed[1][1:12], (hour3, 3, 0, 0, 0, 0, 0.0, 0, 0, False, 1.0))
 
   def test_update_import_status_uses_postgres_function(self):
     calls = []
@@ -399,7 +399,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
       pathlib.Path(self.application.estimation_dir).mkdir()
 
       version = datetime.datetime(2026, 9, 11, 1, tzinfo=datetime.timezone.utc)
-      rows = [(17, hour, 2527264, -10, -3, -45.5, -17, -4, True, 0.5, version)]
+      rows = [(17, hour, 2527264, -10, -3, -1, -2, -45.5, -17, -4, True, 0.5, version)]
       batch_id = 'a' * 64
       self.application._publish_estimation_deltas(rows, batch_id)
       first = next(pathlib.Path(self.application.estimation_dir).iterdir())
@@ -414,6 +414,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
         '2527264',
         '-10',
         '-3',
+        '-1',
+        '-2',
         '-45.5',
         '-17',
         '-4',

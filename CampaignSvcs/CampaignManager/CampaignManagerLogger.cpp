@@ -1658,41 +1658,8 @@ namespace AdServer::CampaignSvcs
           (sampling_mask & (CollectorT::DataT::DataT::SM_USER_TRIGGER_MATCH |
             CollectorT::DataT::DataT::SM_CHANNEL_HITS)) != 0;
 
-        if (!request_info.household_id.is_null())
-        {
-          // household record
-          CollectorT::DataT::DataT::Match match_request(
-            AdServer::LogProcessing::NumberArray(
-              request_info.hid_history_channels.begin(),
-              request_info.hid_history_channels.end()),
-            CollectorT::DataT::DataT::TriggerMatchArray(), // page trigger channels
-            CollectorT::DataT::DataT::TriggerMatchArray(), // search trigger channels
-            CollectorT::DataT::DataT::TriggerMatchArray(), // url trigger channels
-            CollectorT::DataT::DataT::TriggerMatchArray() // url keyword trigger channels
-          );
-
-          data.add(
-            CollectorT::DataT::DataT(
-              'H',
-              request_info.household_id,
-              null_id_, // temporary user id
-              std::move(match_request),
-              CollectorT::DataT::DataT::AdRequestPropsOptional(),
-              request_info.external_id,
-              EMPTY_USER_NAVIGATION_DATA,
-              EMPTY_USER_NAVIGATION_DATA,
-              CollectorT::DataT::DataT::SM_ALL));
-        }
-
         if (sampling_mask == 0)
-        {
-          if (!request_info.household_id.is_null())
-          {
-            add_record(std::move(key), std::move(data));
-          }
-
           return;
-        }
 
         CollectorT::DataT::DataT::AdRequestPropsOptional ad_request_opt;
 

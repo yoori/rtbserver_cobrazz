@@ -119,13 +119,13 @@ namespace AdServer::CampaignSvcs::CreativeTokens
   const std::string SSP_DEVICETYPE("SSP_DEVICETYPE");
   const std::string SSP_VIDEO_PLACEMENT("SSP_VIDEO_PLACEMENT");
 
-  struct VideoPostActionToken
+  struct PostActionToken
   {
     const char* token;
     const char* action_name;
   };
 
-  inline constexpr VideoPostActionToken VIDEO_POST_ACTION_TOKENS[] =
+  inline constexpr PostActionToken POST_ACTION_TOKENS[] =
   {
     {"TRACKVIDEOSTART", "vstart"},
     {"TRACKVIDEOVIEW", "vview"},
@@ -139,7 +139,8 @@ namespace AdServer::CampaignSvcs::CreativeTokens
     {"TRACKVIDEOUNMUTE", "vunmute"},
     {"TRACKVIDEORESUME", "vresume"},
     {"TRACKVIDEOFULLSCREEN", "vfullscreen"},
-    {"TRACKVIDEOERROR", "verror"}
+    {"TRACKVIDEOERROR", "verror"},
+    {"TRACKVISIBILITY", "visibility"}
   };
 }
 

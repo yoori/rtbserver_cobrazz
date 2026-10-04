@@ -67,7 +67,7 @@
 
 {
   "measurement": "rtb_queue",
-  "period_seconds": 60,
+  "period_seconds": 30,
   "queues": [
     <xsl:if test="$expression-matcher-on-host">
       <xsl:call-template name="queue">

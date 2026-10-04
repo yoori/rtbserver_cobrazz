@@ -47,6 +47,14 @@
       select="$colo-config/cfg:userNavigation/@sampling"/><xsl:if
       test="count($colo-config/cfg:userNavigation/@sampling) = 0">100</xsl:if></xsl:variable>
 
+    <xsl:variable name="user-trigger-match-sampling-value"><xsl:value-of
+      select="$colo-config/cfg:inventoryStats/@user_trigger_match_sampling"/><xsl:if
+      test="count($colo-config/cfg:inventoryStats/@user_trigger_match_sampling) = 0">100</xsl:if></xsl:variable>
+
+    <xsl:variable name="channel-hits-sampling-value"><xsl:value-of
+      select="$colo-config/cfg:inventoryStats/@channel_hits_sampling"/><xsl:if
+      test="count($colo-config/cfg:inventoryStats/@channel_hits_sampling) = 0">100</xsl:if></xsl:variable>
+
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
     <xsl:variable name="expression-matcher-port">
@@ -193,6 +201,8 @@
     update_period="{$update-period}"
     inventory_sampling="{$inventory-users-percentage-value}"
     user_navigation_sampling="{$user-navigation-sampling-value}"
+    user_trigger_match_sampling="{$user-trigger-match-sampling-value}"
+    channel_hits_sampling="{$channel-hits-sampling-value}"
     user_navigations_limit="{$user-navigations-limit}"
     user_navigation_period_days="10"
     rocksdb_batching_threads="{$rocksdb-batching-threads}"

@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS {REPORTING_SYNC_TABLE}
   ccid UInt64,
   visits UInt64,
   visits_with_bounce UInt64,
+  visits_robot UInt64,
+  visits_robot_available UInt64,
   session_time_sum Float64,
   page_views UInt64,
   new_user_visits UInt64,
@@ -44,6 +46,14 @@ CREATE TABLE IF NOT EXISTS {REPORTING_SYNC_TABLE}
 ENGINE = ReplacingMergeTree(version)
 PARTITION BY toYYYYMM(hour)
 ORDER BY (ymref_id, hour, ccid)
+""",
+  f"""
+ALTER TABLE {REPORTING_SYNC_TABLE}
+  ADD COLUMN IF NOT EXISTS visits_robot UInt64 AFTER visits_with_bounce
+""",
+  f"""
+ALTER TABLE {REPORTING_SYNC_TABLE}
+  ADD COLUMN IF NOT EXISTS visits_robot_available UInt64 AFTER visits_robot
 """,
   f"""
 CREATE TABLE IF NOT EXISTS {LOGS_SYNC_TABLE}
@@ -87,6 +97,8 @@ ESTIMATION_HEADER = (
   'cc_id',
   'visits_delta',
   'visits_with_bounce_delta',
+  'visits_robot_delta',
+  'visits_robot_available_delta',
   'session_time_sum_delta',
   'page_views_delta',
   'new_user_visits_delta',
@@ -135,6 +147,7 @@ LOG_FIELDS = (
   'ym:s:<attribution>UTMTerm',
   'ym:s:<attribution>UTMContent',
 )
+ROBOT_LOG_FIELD = 'ym:s:isRobotPro'
 
 TERMINAL_LOG_REQUEST_STATUSES = {
   'canceled',
@@ -270,9 +283,11 @@ class YandexApi:
     response.raise_for_status()
     return response.json()
 
-  def create_log_request(self, event_date, attribution):
+  def create_log_request(self, event_date, attribution, include_robot=False):
     fields = ','.join(
       field.replace('<attribution>', attribution) for field in LOG_FIELDS)
+    if include_robot:
+      fields += ',' + ROBOT_LOG_FIELD
     response = requests.post(
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/logrequests',
       params={
@@ -286,6 +301,26 @@ class YandexApi:
       timeout=self.timeout)
     response.raise_for_status()
     return response.json()['log_request']
+
+  def evaluate_log_fields(self, event_date, attribution, include_robot=False):
+    fields = ','.join(
+      field.replace('<attribution>', attribution) for field in LOG_FIELDS)
+    if include_robot:
+      fields += ',' + ROBOT_LOG_FIELD
+    response = requests.get(
+      f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/'
+      'logrequests/evaluate',
+      params={
+        'date1': event_date.isoformat(),
+        'date2': event_date.isoformat(),
+        'fields': fields,
+        'source': 'visits',
+        'attribution': attribution.upper(),
+      },
+      headers=self.headers,
+      timeout=self.timeout)
+    response.raise_for_status()
+    return response.json().get('log_request_evaluation', {}).get('possible', False)
 
   def get_log_request(self, request_id):
     response = requests.get(
@@ -336,6 +371,7 @@ class Application(Service):
     self.attribution = self.params.get('attribution', 'lastsign').lower()
     self.chunks_count = self.params.get('chunks_count', 24)
     self.request_timeout = self.params.get('request_timeout', 60.0)
+    self._robot_metric_available = {}
     if self.days < 2:
       raise ValueError('days must be at least 2')
 
@@ -499,14 +535,14 @@ class Application(Service):
         hour = hour.replace(minute=0, second=0, microsecond=0)
         metrics = parse_reporting_metrics(item['metrics'])
         key = (hour, ccid)
-        current = rows.setdefault(key, [0, 0, 0.0, 0, 0, False, 1.0])
+        current = rows.setdefault(key, [0, 0, 0, 0, 0.0, 0, 0, False, 1.0])
         current[0] += metrics[0]
         current[1] += metrics[1]
-        current[2] += float(metrics[2])
-        current[3] += metrics[3]
-        current[4] += metrics[4]
-        current[5] = current[5] or sampled
-        current[6] = min(current[6], sample_share)
+        current[4] += float(metrics[2])
+        current[5] += metrics[3]
+        current[6] += metrics[4]
+        current[7] = current[7] or sampled
+        current[8] = min(current[8], sample_share)
 
       total_rows = result.get('total_rows')
       if total_rows is not None and offset - 1 + len(data) >= int(total_rows):
@@ -524,8 +560,9 @@ class Application(Service):
     old_rows = {}
     old_versions = {}
     for row in self.ch.query(
-        f"SELECT hour, ccid, visits, visits_with_bounce, session_time_sum, "
-        f"page_views, new_user_visits, sampled, sample_share, version "
+        f"SELECT hour, ccid, visits, visits_with_bounce, visits_robot, "
+        f"visits_robot_available, session_time_sum, page_views, new_user_visits, "
+        f"sampled, sample_share, version "
         f"FROM {REPORTING_SYNC_TABLE} FINAL "
         "WHERE ymref_id = %(ymref_id)s AND hour >= %(range_start)s "
         "AND hour < %(range_end)s",
@@ -540,8 +577,12 @@ class Application(Service):
       else:
         hour = hour.astimezone(datetime.timezone.utc)
       key = (hour, int(row[1]))
-      old_rows[key] = tuple(row[2:9])
-      old_version = row[9]
+      if len(row) >= 12:
+        old_rows[key] = tuple(row[2:11])
+        old_version = row[11]
+      else:
+        old_rows[key] = (row[2], row[3], 0, 0, row[4], row[5], row[6], row[7], row[8])
+        old_version = row[9]
       if old_version.tzinfo is None:
         old_version = old_version.replace(tzinfo=datetime.timezone.utc)
       else:
@@ -550,7 +591,7 @@ class Application(Service):
     changed = []
     deltas = []
     transitions = []
-    empty = (0, 0, 0.0, 0, 0, False, 1.0)
+    empty = (0, 0, 0, 0, 0.0, 0, 0, False, 1.0)
     version = datetime.datetime.now(datetime.timezone.utc)
     for hour, ccid in sorted(set(rows) | set(old_rows)):
       current = tuple(rows.get((hour, ccid), empty))
@@ -575,8 +616,10 @@ class Application(Service):
           current[2] - previous[2],
           current[3] - previous[3],
           current[4] - previous[4],
-          current[5],
-          current[6],
+          current[5] - previous[5],
+          current[6] - previous[6],
+          current[7],
+          current[8],
           version,
         ))
 
@@ -591,6 +634,8 @@ class Application(Service):
           'ccid',
           'visits',
           'visits_with_bounce',
+          'visits_robot',
+          'visits_robot_available',
           'session_time_sum',
           'page_views',
           'new_user_visits',
@@ -624,7 +669,16 @@ class Application(Service):
         name=f'YandexPostClickEstimationStats_{file_id}.csv')
       writer.write_line(self._csv_line(ESTIMATION_HEADER))
       for row in rows:
-        writer.write_line(self._csv_line((
+        values = (
+          batch_id,
+          row[0],
+          row[1].isoformat(),
+          row[2],
+          *row[3:10],
+          str(bool(row[10])).lower(),
+          row[11],
+          row[12].isoformat(),
+        ) if len(row) >= 13 else (
           batch_id,
           row[0],
           row[1].isoformat(),
@@ -633,7 +687,8 @@ class Application(Service):
           str(bool(row[8])).lower(),
           row[9],
           row[10].isoformat(),
-        )))
+        )
+        writer.write_line(self._csv_line(values))
       writer.write('\n')
 
   def _process_logs(self, ymref_id, api, reporting):
@@ -652,13 +707,33 @@ class Application(Service):
 
       request_state = self._log_request_state(ymref_id, event_date)
       if request_state is None or request_state[1] in TERMINAL_LOG_REQUEST_STATUSES:
-        log_request = api.create_log_request(event_date, self.attribution)
+        include_robot = self._is_robot_metric_available(api, event_date)
+        try:
+          log_request = api.create_log_request(
+            event_date, self.attribution, include_robot=include_robot)
+        except TypeError:
+          log_request = api.create_log_request(event_date, self.attribution)
         request_id = int(log_request['request_id'])
         self._save_log_request(ymref_id, event_date, request_id, log_request['status'])
       else:
         request_id = request_state[0]
 
       self._process_log_request(ymref_id, event_date, request_id, api, reporting)
+
+  def _is_robot_metric_available(self, api, event_date):
+    counter_id = getattr(api, 'counter_id', None)
+    cache = getattr(self, '_robot_metric_available', None)
+    if cache is None:
+      cache = self._robot_metric_available = {}
+    if counter_id in cache:
+      return cache[counter_id]
+    try:
+      available = bool(api.evaluate_log_fields(
+        event_date, self.attribution, include_robot=True))
+    except Exception:
+      available = False
+    cache[counter_id] = available
+    return available
 
   def _process_log_request(self, ymref_id, event_date, request_id, api, reporting):
     log_request = api.get_log_request(request_id)
@@ -731,7 +806,9 @@ class Application(Service):
 
       visit_id = int(self._field(row, 'visitID'))
       reporting_comparable = parse_ccid(self._field(row, 'UTMContent')) is not None
-      payload = json.dumps({
+      robot_value = self._optional_field(row, 'isRobotPro')
+      robot_available = robot_value is not None and robot_value != ''
+      payload_data = {
         'landing_bounced': parse_bool(self._field(row, 'bounce')),
         'landing_session_time': int(self._field(row, 'visitDuration')),
         'landing_page_views': int(self._field(row, 'pageViews')),
@@ -739,7 +816,12 @@ class Application(Service):
         'yandex_ref_id': ymref_id,
         'yandex_event_date': event_date.isoformat(),
         'yandex_reporting_comparable': reporting_comparable,
-      }, separators=(',', ':'), sort_keys=True)
+      }
+      if robot_available:
+        payload_data.update(
+          landing_is_robot=parse_bool(robot_value),
+          landing_robot_available=True)
+      payload = json.dumps(payload_data, separators=(',', ':'), sort_keys=True)
       records.append(
         (
           visit_id,
@@ -758,6 +840,13 @@ class Application(Service):
       if name.endswith(suffix):
         return value or ''
     raise KeyError('Yandex Logs API field is missing: ' + suffix)
+
+  @staticmethod
+  def _optional_field(row, suffix):
+    for name, value in row.items():
+      if name.endswith(suffix):
+        return value or ''
+    return None
 
   def _publish_post_click_actions(self, ymref_id, event_date, records):
     processed = {

@@ -4,11 +4,11 @@ namespace AdServer::LogProcessing
 {
   template <> const char* PostImpStatTraits::B::base_name_ = "PostImpStat";
   template <> const char* PostImpStatTraits::B::signature_ = "PostImpStat";
-  template <> const char* PostImpStatTraits::B::current_version_ = "1.0";
+  template <> const char* PostImpStatTraits::B::current_version_ = "1.1";
   FixedBufStream<TabCategory>&
   operator>>(FixedBufStream<TabCategory>& is, PostImpStatInnerData& data)
   {
-    for (unsigned i = 0; i < 13; ++i)
+    for (unsigned i = 0; i < 14; ++i)
     {
       is >> data.values_[i];
     }
@@ -18,7 +18,7 @@ namespace AdServer::LogProcessing
   BufferWriter&
   operator<<(BufferWriter& out, const PostImpStatInnerData& data)
   {
-    for (unsigned i = 0; i < 13; ++i)
+    for (unsigned i = 0; i < 14; ++i)
     {
       if (i)
       {

@@ -396,9 +396,6 @@ namespace AdServer::RequestInfoSvcs
     void
     request_basic_channels_file_processed(const Generics::Time& timestamp) noexcept override;
 
-    bool
-    check_sampling_(const UserId& user_id) const noexcept;
-
     AdServer::Commons::Awaitable<void> process_user_navigation_(
       UserNavigationContainer* user_navigation_container,
       const LogProcessing::RequestBasicChannelsCollector::KeyT& key,

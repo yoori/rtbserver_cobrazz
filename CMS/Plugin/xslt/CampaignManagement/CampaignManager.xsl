@@ -176,6 +176,14 @@
       select="$colo-config/cfg:userNavigation/@sampling"/><xsl:if
       test="count($colo-config/cfg:userNavigation/@sampling) = 0">100</xsl:if></xsl:variable>
 
+    <xsl:variable name="user-trigger-match-sampling"><xsl:value-of
+      select="$colo-config/cfg:inventoryStats/@user_trigger_match_sampling"/><xsl:if
+      test="count($colo-config/cfg:inventoryStats/@user_trigger_match_sampling) = 0">100</xsl:if></xsl:variable>
+
+    <xsl:variable name="channel-hits-sampling"><xsl:value-of
+      select="$colo-config/cfg:inventoryStats/@channel_hits_sampling"/><xsl:if
+      test="count($colo-config/cfg:inventoryStats/@channel_hits_sampling) = 0">100</xsl:if></xsl:variable>
+
     <xsl:variable name="campaign-manager-port"><xsl:value-of select="$campaign-manager-config/cfg:networkParams/@port"/>
       <xsl:if test="count($campaign-manager-config/cfg:networkParams/@port) = 0">
         <xsl:value-of select="$def-campaign-manager-port"/>
@@ -498,6 +506,8 @@
     <cfg:Logging
       inventory_sampling="{$inventory-users-percentage}"
       user_navigation_sampling="{$user-navigation-sampling}"
+      user_trigger_match_sampling="{$user-trigger-match-sampling}"
+      channel_hits_sampling="{$channel-hits-sampling}"
       use_referrer_site_referrer_stats="{$use-referrer-site-referrer-stats}" >
 
       <xsl:attribute name="threads"><xsl:value-of select="$stat-config/@threads"/>

@@ -1073,7 +1073,8 @@ namespace AdServer::LogProcessing
         "site_rate_id,currency_exchange_id,delivery_threshold,num_shown,position,"
         "test,fraud,walled_garden,user_status,geo_channel_id,device_channel_id,"
         "ctr_reset_id,hid_profile,viewability,visits,visits_with_bounce,"
-        "session_time_sum,page_views,new_user_visits,ymref_id,yandex_event_date,"
+        "visits_robot,visits_robot_available,session_time_sum,page_views,new_user_visits,"
+        "ymref_id,yandex_event_date,"
         "reporting_visits";
     }
 
@@ -1103,7 +1104,8 @@ namespace AdServer::LogProcessing
       write_optional_value_as_csv(os, creative_key.device_channel_id(), "0") << ',';
       os << creative_key.ctr_reset_id() << ',' << bool_to_char(creative_key.hid_profile()) <<
         ',' << creative_key.viewability() << ',' << data.visits() << ',' <<
-        data.visits_with_bounce() << ',' << data.session_time_sum() << ',' <<
+        data.visits_with_bounce() << ',' << data.visits_robot() << ',' <<
+        data.visits_robot_available() << ',' << data.session_time_sum() << ',' <<
         data.page_views() << ',' << data.new_user_visits() << ',' <<
         inner_key.yandex_ref_id() << ',';
       write_date_as_csv(os, inner_key.yandex_event_date()) << ',';
@@ -1127,7 +1129,7 @@ namespace AdServer::LogProcessing
         "test,fraud,walled_garden,user_status,geo_channel_id,device_channel_id,"
         "ctr_reset_id,hid_profile,viewability,video_start,video_view,video_q1,"
         "video_mid,video_q3,video_complete,video_skip,video_pause,video_mute,"
-        "video_unmute,video_resume,video_fullscreen,video_error";
+        "video_unmute,video_resume,video_fullscreen,video_error,visibility";
     }
 
     static std::ostream& write_as_csv(
@@ -1155,7 +1157,7 @@ namespace AdServer::LogProcessing
       write_optional_value_as_csv(os, creative_key.device_channel_id(), "0") << ',';
       os << creative_key.ctr_reset_id() << ',' << bool_to_char(creative_key.hid_profile()) << ',' <<
         creative_key.viewability();
-      for (unsigned i = 0; i < 13; ++i)
+      for (unsigned i = 0; i < 14; ++i)
       {
         os << ',' << data.value(i);
       }

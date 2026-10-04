@@ -16,6 +16,8 @@ namespace AdServer::RequestInfoSvcs
     std::uint64_t landing_session_time = 0;
     std::uint64_t landing_page_views = 0;
     bool landing_is_new_user = false;
+    bool landing_is_robot = false;
+    bool landing_robot_available = false;
     std::uint64_t yandex_ref_id = 0;
     Generics::Time yandex_event_date;
     bool yandex_reporting_comparable = false;

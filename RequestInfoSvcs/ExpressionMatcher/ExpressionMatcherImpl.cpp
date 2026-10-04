@@ -1559,14 +1559,6 @@ namespace AdServer::RequestInfoSvcs
     stats_.set_last_processed_timestamp(timestamp);
   }
 
-  bool
-  ExpressionMatcherImpl::check_sampling_(const UserId& user_id) const noexcept
-  {
-    return user_id.is_null() || AdServer::Commons::check_percentage_sampling(
-      AdServer::Commons::user_id_sampling_hash(user_id),
-      expression_matcher_config_.inventory_sampling());
-  }
-
   AdServer::Commons::Awaitable<void>
   ExpressionMatcherImpl::process_user_navigation_(
     UserNavigationContainer* user_navigation_container,
@@ -1789,7 +1781,9 @@ namespace AdServer::RequestInfoSvcs
           stats_.inc_not_optedin_user_processed();
         }
       }
-      else if (household_colo_reach_container && !record.user_id().is_null())
+      else if (household_colo_reach_container &&
+        !record.user_id().is_null() &&
+        record.sampling_enabled(RBCRecord::SM_INVENTORY))
       {
         UserColoReachContainer::RequestInfo request_info;
         request_info.user_id = record.user_id();
@@ -2154,9 +2148,7 @@ namespace AdServer::RequestInfoSvcs
 
         Generics::Time last_process_time;
 
-        // check_sampling_ process case when sampling changed and
-        // user that sampled present in container
-        bool need_process = check_sampling_(*user_it) &&
+        bool need_process =
           user_inventory_container->get_last_daily_processing_time(*user_it, last_process_time) &&
           (last_process_time.get_gm_time().get_date() != now_date);
 

@@ -90,6 +90,8 @@ namespace AdServer::LogProcessing
   PostClickStatInnerData::PostClickStatInnerData() noexcept
     : visits_(0),
       visits_with_bounce_(0),
+      visits_robot_(0),
+      visits_robot_available_(0),
       session_time_sum_(0),
       page_views_(0),
       new_user_visits_(0),
@@ -99,12 +101,16 @@ namespace AdServer::LogProcessing
   PostClickStatInnerData::PostClickStatInnerData(
     std::uint64_t visits,
     std::uint64_t visits_with_bounce,
+    std::uint64_t visits_robot,
+    std::uint64_t visits_robot_available,
     std::uint64_t session_time_sum,
     std::uint64_t page_views,
     std::uint64_t new_user_visits,
     std::uint64_t reporting_visits) noexcept
     : visits_(visits),
       visits_with_bounce_(visits_with_bounce),
+      visits_robot_(visits_robot),
+      visits_robot_available_(visits_robot_available),
       session_time_sum_(session_time_sum),
       page_views_(page_views),
       new_user_visits_(new_user_visits),
@@ -116,6 +122,8 @@ namespace AdServer::LogProcessing
   {
     return visits_ == rhs.visits_ &&
       visits_with_bounce_ == rhs.visits_with_bounce_ &&
+      visits_robot_ == rhs.visits_robot_ &&
+      visits_robot_available_ == rhs.visits_robot_available_ &&
       session_time_sum_ == rhs.session_time_sum_ &&
       page_views_ == rhs.page_views_ &&
       new_user_visits_ == rhs.new_user_visits_ &&
@@ -127,6 +135,8 @@ namespace AdServer::LogProcessing
   {
     visits_ += rhs.visits_;
     visits_with_bounce_ += rhs.visits_with_bounce_;
+    visits_robot_ += rhs.visits_robot_;
+    visits_robot_available_ += rhs.visits_robot_available_;
     session_time_sum_ += rhs.session_time_sum_;
     page_views_ += rhs.page_views_;
     new_user_visits_ += rhs.new_user_visits_;
@@ -142,6 +152,16 @@ namespace AdServer::LogProcessing
   std::uint64_t PostClickStatInnerData::visits_with_bounce() const noexcept
   {
     return visits_with_bounce_;
+  }
+
+  std::uint64_t PostClickStatInnerData::visits_robot() const noexcept
+  {
+    return visits_robot_;
+  }
+
+  std::uint64_t PostClickStatInnerData::visits_robot_available() const noexcept
+  {
+    return visits_robot_available_;
   }
 
   std::uint64_t PostClickStatInnerData::session_time_sum() const noexcept
@@ -169,6 +189,8 @@ namespace AdServer::LogProcessing
   {
     is >> data.visits_;
     is >> data.visits_with_bounce_;
+    is >> data.visits_robot_;
+    is >> data.visits_robot_available_;
     is >> data.session_time_sum_;
     is >> data.page_views_;
     is >> data.new_user_visits_;
@@ -181,6 +203,8 @@ namespace AdServer::LogProcessing
   {
     out << data.visits_ << '\t';
     out << data.visits_with_bounce_ << '\t';
+    out << data.visits_robot_ << '\t';
+    out << data.visits_robot_available_ << '\t';
     out << data.session_time_sum_ << '\t';
     out << data.page_views_ << '\t';
     out << data.new_user_visits_ << '\t';

@@ -3,6 +3,8 @@
  */
 #include <HTTP/UrlAddress.hpp>
 
+#include <cstdlib>
+
 #include <LogCommons/UserProperties.hpp>
 #include <LogCommons/CreativeStat.hpp>
 #include <LogCommons/ChannelPerformance.hpp>
@@ -2894,6 +2896,7 @@ namespace AdServer::RequestInfoSvcs
       action_names_.insert("vresume");
       action_names_.insert("vfullscreen");
       action_names_.insert("verror");
+      action_names_.insert("visibility");
     }
 
     void process_request(const RequestInfo&, const ProcessingState&) override {}
@@ -2974,6 +2977,8 @@ namespace AdServer::RequestInfoSvcs
         CollectorT::DataT::DataT(
           1,
           value.landing_bounced ? 1 : 0,
+          value.landing_is_robot ? 1 : 0,
+          value.landing_robot_available ? 1 : 0,
           value.landing_session_time,
           value.landing_page_views,
           value.landing_is_new_user ? 1 : 0,
@@ -3003,10 +3008,28 @@ namespace AdServer::RequestInfoSvcs
     void process_post_imp_action_impl(const RequestInfo& ri, const PostActionInfo& ai) override
     {
       if (ri.test_request) return;
-      static const char* names[] = {"vstart","vview","vq1","vmid","vq3","vcomplete","vskip","vpause","vmute","vunmute","vresume","vfullscreen","verror"};
-      unsigned index = 13;
-      for (unsigned i=0;i<13;++i) if (ai.name == names[i]) { index = i; break; }
-      if (index == 13) return;
+      static const char* names[] = {
+        "vstart", "vview", "vq1", "vmid", "vq3", "vcomplete", "vskip",
+        "vpause", "vmute", "vunmute", "vresume", "vfullscreen", "verror", "visibility"};
+      unsigned index = 14;
+      for (unsigned i = 0; i < 14; ++i)
+      {
+        if (ai.name == names[i])
+        {
+          index = i;
+          break;
+        }
+      }
+      if (index == 14) return;
+      if (index == 13)
+      {
+        char* end = nullptr;
+        const double value = std::strtod(ai.value.c_str(), &end);
+        if (end == ai.value.c_str() || value <= 0)
+        {
+          return;
+        }
+      }
       const Generics::Time offset = ri.adv_time - ri.time;
       CollectorT::DataT data;
       data.add(make_creative_stat_inner_key(ri), CollectorT::DataT::DataT(index));

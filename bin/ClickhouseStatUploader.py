@@ -100,7 +100,8 @@ R_POST_IMPRESSION_CREATE_TABLE_QUERY = (
   "video_unmute_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
   "video_resume_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
   "video_fullscreen_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
-  "video_error_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC')))"
+  "video_error_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC'))), "
+  "visibility_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC')))"
   ") ENGINE = AggregatingMergeTree "
   "PARTITION BY sipHash64(request_id) % 100 "
   "ORDER BY request_id "
@@ -234,6 +235,12 @@ MIGRATIONS = (
     'rimpression_add_expected_post_actions',
     "ALTER TABLE RImpression ADD COLUMN IF NOT EXISTS expected_post_actions "
     "SimpleAggregateFunction(groupUniqArrayArray, Array(String))",
+  ),
+  Migration(
+    3,
+    'rpostimpression_add_visibility',
+    "ALTER TABLE RPostImpression ADD COLUMN IF NOT EXISTS visibility_timestamp "
+    "SimpleAggregateFunction(any, Nullable(DateTime('UTC')))",
   ),
 )
 

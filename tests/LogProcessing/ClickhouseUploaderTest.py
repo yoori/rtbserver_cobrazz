@@ -212,6 +212,7 @@ class ClickhouseAdapterTest(unittest.TestCase):
       'video_resume_timestamp',
       'video_fullscreen_timestamp',
       'video_error_timestamp',
+      'visibility_timestamp',
     ]
     timestamp = '2026-09-11 12:00:00'
     output = self.run_adapter(
@@ -234,7 +235,8 @@ class ClickhouseAdapterTest(unittest.TestCase):
         'video_mid_timestamp', 'video_q3_timestamp', 'video_complete_timestamp',
         'video_skip_timestamp', 'video_pause_timestamp', 'video_mute_timestamp',
         'video_unmute_timestamp', 'video_resume_timestamp',
-        'video_fullscreen_timestamp', 'video_error_timestamp'):
+        'video_fullscreen_timestamp', 'video_error_timestamp',
+        'visibility_timestamp'):
       self.assertIn(
         field + " SimpleAggregateFunction(any, Nullable(DateTime('UTC')))",
         query)

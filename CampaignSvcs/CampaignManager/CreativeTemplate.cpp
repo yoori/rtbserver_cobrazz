@@ -146,7 +146,7 @@ namespace AdServer::CampaignSvcs
       text_template_.keys(encoder, keys_);
 
       std::vector<std::string> expected_post_actions;
-      for (const auto& post_action : CreativeTokens::VIDEO_POST_ACTION_TOKENS)
+      for (const auto& post_action : CreativeTokens::POST_ACTION_TOKENS)
       {
         if (keys_.find(post_action.token) != keys_.end())
         {

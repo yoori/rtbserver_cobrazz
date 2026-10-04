@@ -97,6 +97,8 @@ class StatCollectorTest(unittest.TestCase):
     self.assertEqual(commands[0][0], [
       '/usr/bin/sudo', '-n', '/usr/bin/ipmitool', 'dcmi', 'power', 'reading'])
     self.assertEqual(commands[0][1]['timeout'], 15)
+    self.assertTrue(commands[0][1]['universal_newlines'])
+    self.assertNotIn('text', commands[0][1])
     self.assertEqual(
       metrics,
       ['rtb_power,source=ipmi watts=321i,collection_success=1i'])

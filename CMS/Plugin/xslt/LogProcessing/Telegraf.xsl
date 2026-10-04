@@ -53,7 +53,7 @@
 
 [[inputs.execd]]
   command = [
-    "/usr/bin/python3",
+    "/usr/bin/python3.12",
     "<xsl:value-of select="concat($server-root, '/bin/StatCollector.py')"/>",
     "--config",
     "<xsl:value-of select="concat($config-dir, '/StatCollectorConfig.json')"/>",

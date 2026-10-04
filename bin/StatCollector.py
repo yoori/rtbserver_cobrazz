@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.12
 
 import argparse
 import json
@@ -11,7 +11,7 @@ import sys
 import time
 
 
-DEFAULT_PERIOD_SECONDS = 60
+DEFAULT_PERIOD_SECONDS = 30
 IPMITOOL_PATH = '/usr/bin/ipmitool'
 STOP_REQUESTED = False
 
@@ -435,7 +435,7 @@ def collect_power_metrics(
       ['/usr/bin/sudo', '-n', ipmitool_path, 'dcmi', 'power', 'reading'],
       stdout = subprocess.PIPE,
       stderr = subprocess.DEVNULL,
-      text = True,
+      universal_newlines = True,
       timeout = 15)
   except (OSError, subprocess.SubprocessError):
     return []

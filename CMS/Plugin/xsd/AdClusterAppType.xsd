@@ -1311,6 +1311,20 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="user_trigger_match_sampling" type="xsd:decimal" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percent of users, which is used for calculating UserTriggerMatch statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_hits_sampling" type="xsd:decimal" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percent of users, which is used for calculating channel hit statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="distrib_count" type="xsd:nonNegativeInteger" use="optional" default="4">
       <xsd:annotation>
         <xsd:documentation>Development option.</xsd:documentation>

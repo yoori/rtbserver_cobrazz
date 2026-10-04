@@ -463,7 +463,7 @@ namespace AdServer::CampaignSvcs::InstantiateAd
           provider.context().request_result_params->track_pixel_url);
       });
 
-    for (const auto& post_action : CreativeTokens::VIDEO_POST_ACTION_TOKENS)
+    for (const auto& post_action : CreativeTokens::POST_ACTION_TOKENS)
     {
       add_processor(
         post_action.token,

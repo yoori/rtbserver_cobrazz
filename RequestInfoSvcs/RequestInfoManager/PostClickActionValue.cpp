@@ -24,11 +24,14 @@ namespace AdServer::RequestInfoSvcs
       NEW_USER = 8,
       YANDEX_REF_ID = 16,
       YANDEX_EVENT_DATE = 32,
-      YANDEX_REPORTING_COMPARABLE = 64
+      YANDEX_REPORTING_COMPARABLE = 64,
+      ROBOT = 128,
+      ROBOT_AVAILABLE = 256
     };
 
     constexpr unsigned int ALL_FIELDS = 15;
     constexpr unsigned int YANDEX_FIELDS = 112;
+    constexpr unsigned int ROBOT_FIELDS = 384;
 
     struct ParseContext
     {
@@ -47,7 +50,8 @@ namespace AdServer::RequestInfoSvcs
       process_integer(int64_t value, std::string_view, void* context) const override
       {
         if (field_ == Field::BOUNCED || field_ == Field::NEW_USER ||
-            field_ == Field::YANDEX_REPORTING_COMPARABLE)
+            field_ == Field::YANDEX_REPORTING_COMPARABLE || field_ == Field::ROBOT ||
+            field_ == Field::ROBOT_AVAILABLE)
         {
           if (value != 0 && value != 1)
           {
@@ -66,7 +70,8 @@ namespace AdServer::RequestInfoSvcs
       process_bool(bool value, std::string_view, void* context) const override
       {
         if (field_ != Field::BOUNCED && field_ != Field::NEW_USER &&
-            field_ != Field::YANDEX_REPORTING_COMPARABLE)
+            field_ != Field::YANDEX_REPORTING_COMPARABLE && field_ != Field::ROBOT &&
+            field_ != Field::ROBOT_AVAILABLE)
         {
           throw Parser::UnexpectedType("Post-click numeric metric must be an integer");
         }
@@ -100,6 +105,12 @@ namespace AdServer::RequestInfoSvcs
             break;
           case Field::NEW_USER:
             parse_context.value.landing_is_new_user = value != 0;
+            break;
+          case Field::ROBOT:
+            parse_context.value.landing_is_robot = value != 0;
+            break;
+          case Field::ROBOT_AVAILABLE:
+            parse_context.value.landing_robot_available = value != 0;
             break;
           case Field::YANDEX_REF_ID:
             parse_context.value.yandex_ref_id = value;
@@ -153,6 +164,12 @@ namespace AdServer::RequestInfoSvcs
         "landing_is_new_user",
         std::make_shared<FieldProcessor>(Field::NEW_USER));
       processors.add_processor(
+        "landing_is_robot",
+        std::make_shared<FieldProcessor>(Field::ROBOT));
+      processors.add_processor(
+        "landing_robot_available",
+        std::make_shared<FieldProcessor>(Field::ROBOT_AVAILABLE));
+      processors.add_processor(
         "yandex_ref_id",
         std::make_shared<FieldProcessor>(Field::YANDEX_REF_ID));
       processors.add_processor(
@@ -183,6 +200,12 @@ namespace AdServer::RequestInfoSvcs
           (context.fields & YANDEX_FIELDS) != YANDEX_FIELDS)
       {
         throw Parser::ParseError("Post-click action value contains incomplete Yandex metadata");
+      }
+
+      if ((context.fields & ROBOT_FIELDS) != 0 &&
+          (context.fields & ROBOT_FIELDS) != ROBOT_FIELDS)
+      {
+        throw Parser::ParseError("Post-click action contains incomplete robot metadata");
       }
     }
 
