@@ -391,9 +391,14 @@ namespace AdServer::CampaignSvcs
     const CTR::CTRProvider::CalculationContext* vtr_calculation_context)
     noexcept
   {
-    if (campaign->min_vtr_goal == RevenueDecimal::ZERO || !vtr_calculation_context)
+    if (campaign->min_vtr_goal == RevenueDecimal::ZERO)
     {
       return true;
+    }
+
+    if (!vtr_calculation_context)
+    {
+      return false;
     }
 
     RevenueDecimal vtr = RevenueDecimal::ZERO;

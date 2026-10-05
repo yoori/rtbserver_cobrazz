@@ -1,3 +1,7 @@
+#include <filesystem>
+#include <system_error>
+#include <unistd.h>
+
 #include "CTRProvider.hpp"
 
 namespace AdServer::CampaignSvcs::CTR
@@ -7,6 +11,23 @@ namespace AdServer::CampaignSvcs::CTR
   CTRProvider::Calculation::~Calculation() noexcept = default;
 
   CTRProvider::CalculationContext::~CalculationContext() noexcept = default;
+
+  void
+  CTRProvider::remove_config_paths(
+    const std::list<std::string>& config_files,
+    const std::list<std::string>& config_directories) noexcept
+  {
+    for (const std::string& file : config_files)
+    {
+      ::unlink(file.c_str());
+    }
+
+    for (const std::string& directory : config_directories)
+    {
+      std::error_code error;
+      std::filesystem::remove_all(directory, error);
+    }
+  }
 
   FeatureNameResolver::FeatureNameResolver() noexcept
   {}

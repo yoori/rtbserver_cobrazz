@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+#include <string>
 #include <string_view>
 
 #include <eh/Exception.hpp>
@@ -111,6 +113,11 @@ namespace AdServer::CampaignSvcs::CTR
     };
 
   public:
+    static void
+    remove_config_paths(
+      const std::list<std::string>& config_files,
+      const std::list<std::string>& config_directories) noexcept;
+
     virtual Calculation_var
     create_calculation(const CampaignSelectParams* request_params) const noexcept = 0;
 

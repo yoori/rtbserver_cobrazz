@@ -1,11 +1,14 @@
 #pragma once
 
+#include <array>
+#include <utility>
 #include <vector>
 #include <map>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <iostream>
 #include <eh/Exception.hpp>
 #include <Generics/HashTableAdapters.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -361,26 +364,59 @@ namespace AdServer::ChannelSvcs
       TMI_UID = 0x02
     };
 
-    TriggerMatchItem() noexcept : flags(0), weight(0){};
+    explicit TriggerMatchItem(Generics::MonoAllocatorArena& arena) noexcept
+      : TriggerMatchItem(arena, std::make_index_sequence<CT_MAX>())
+    {}
 
-    typedef IdVector value_type;
+    using value_type = Generics::MonoVector<IdType>;
 
-    unsigned int flags;
-    unsigned int weight;
-    value_type trigger_ids[CT_MAX];
+    unsigned int flags = 0;
+    unsigned int weight = 0;
+    std::array<value_type, CT_MAX> trigger_ids;
+
+  private:
+    template<std::size_t... Indexes>
+    TriggerMatchItem(Generics::MonoAllocatorArena& arena, std::index_sequence<Indexes...>) noexcept
+      : trigger_ids{(static_cast<void>(Indexes), value_type(&arena))...}
+    {}
   };
 
-  typedef std::map<unsigned int, TriggerMatchItem> TriggerMatchData;
+  using TriggerMatchData = Generics::MonoMap<unsigned int, TriggerMatchItem>;
 
-  class TriggerMatchRes: public TriggerMatchData
+  struct TriggerMatchArena
+  {
+    Generics::MonoAllocatorFixedArena<4096> storage;
+  };
+
+  // The arena must outlive the map and its nested vectors.
+  class TriggerMatchRes:
+    private TriggerMatchArena,
+    public TriggerMatchData
   {
   public:
-    TriggerMatchRes()
+    TriggerMatchRes() noexcept : TriggerMatchData(&storage.arena())
+    {}
+
+    TriggerMatchRes(const TriggerMatchRes&) = delete;
+    TriggerMatchRes& operator=(const TriggerMatchRes&) = delete;
+    TriggerMatchRes(TriggerMatchRes&&) = delete;
+    TriggerMatchRes& operator=(TriggerMatchRes&&) = delete;
+
+    TriggerMatchItem& operator[](unsigned int channel_id)
     {
+      return try_emplace(channel_id, storage.arena()).first->second;
+    }
+
+    void clear() noexcept
+    {
+      TriggerMatchData::clear();
+      storage.release();
       memset(count_channels, 0, sizeof(count_channels));
     }
-  public:
-    size_t count_channels[CT_MAX + 1];
+
+    void swap(TriggerMatchRes&) = delete;
+
+    size_t count_channels[CT_MAX + 1]{};
   };
 
   class ChannelChunk:

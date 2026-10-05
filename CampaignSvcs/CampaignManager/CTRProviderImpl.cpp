@@ -247,16 +247,7 @@ namespace AdServer::CampaignSvcs::CTR
   void
   RemoveConfigTask::execute() noexcept
   {
-    for (FileList::const_iterator fit = config_files_.begin(); fit != config_files_.end(); ++fit)
-    {
-      ::unlink(fit->c_str());
-    }
-
-    for (FileList::const_iterator fit = config_directories_.begin();
-      fit != config_directories_.end(); ++fit)
-    {
-      ::rmdir(fit->c_str());
-    }
+    CTRProvider::remove_config_paths(config_files_, config_directories_);
   }
 
   namespace
