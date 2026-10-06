@@ -108,6 +108,15 @@ def merge_table(saved, chains, jumps, additions, remove=False):
                    jumps + existing + additions + ['COMMIT', ''])
 
 
+def save_table(tool, table):
+  saved = run(tool + '-save', *(['-t', table] if tool == 'iptables' else []))
+  if saved:
+    return saved + '\n'
+  if tool == 'arptables' and table == 'filter':
+    return '*filter\n:INPUT ACCEPT\n:OUTPUT ACCEPT\n'
+  raise ValueError('Empty saved firewall table: ' + tool + ' ' + table)
+
+
 def sysctls(host, current=()):
   interface = host['interface']
   values = {'net.ipv4.conf.all.arp_ignore': 2, 'net.ipv4.conf.all.arp_announce': 2,
@@ -125,9 +134,10 @@ def preflight(config, host, addresses, previous):
   interface = host['interface']
   if '(nf_tables)' not in run('arptables', '--version'):
     raise ValueError('This implementation requires the transactional arptables nft backend')
-  current = json.loads(run('ip', '-j', '-4', 'address', 'show'))
-  if not any(link['ifname'] == interface for link in current):
+  links = json.loads(run('ip', '-j', 'link', 'show'))
+  if not any(link['ifname'] == interface for link in links):
     raise ValueError('Missing interface: ' + interface)
+  current = json.loads(run('ip', '-j', '-4', 'address', 'show'))
   local = [(link['ifname'], addr) for link in current for addr in link.get('addr_info', [])]
   if sum(addr['local'] == host['arp_source_ip'] for device, addr in local) != 1:
     raise ValueError('ARP source must be assigned to exactly one interface on this host')
@@ -393,7 +403,7 @@ def main():
     arp, nat = rules(config, host, prefix)
     images = []
     for tool, table, entries in (('arptables', 'filter', arp), ('iptables', 'nat', nat)):
-      saved = run(tool + '-save', *(['-t', table] if tool == 'iptables' else [])) + '\n'
+      saved = save_table(tool, table)
       images.append((tool, saved, merge_table(saved, *entries)))
     run('iptables-restore', '--test', data=images[1][2])
     for key in sysctls(host, current):
