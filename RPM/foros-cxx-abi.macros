@@ -1,0 +1,6 @@
+# Bump the ABI generation and rebuild C++ dependencies when this profile changes incompatibly.
+%global foros_cxx_abi 2
+%global foros_gcc_toolset 10
+%global foros_cxx_standard 20
+%global foros_cxx11_abi 1
+%global foros_toolchain_root /opt/rh/gcc-toolset-%{foros_gcc_toolset}/root/usr

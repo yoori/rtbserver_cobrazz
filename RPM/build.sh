@@ -47,6 +47,7 @@ bash RPM/build-telegraf.sh
 #git push origin --tags
 # get spec from tag
 cp RPM/SPECS/server.spec "$DSP_SPEC_FILE"
+cp RPM/foros-cxx-abi.macros "$RPM_SOURCES_DIR/"
 
 #git archive --format tar.gz --output "$RPM_SOURCES_DIR/stream-dsp-$VERSION.tar.gz" dev
 rm -rf "$RES_TMP/foros-server-$VERSION"

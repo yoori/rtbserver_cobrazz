@@ -1,3 +1,5 @@
+%include %{_sourcedir}/foros-cxx-abi.macros
+
 %if %{?__target:1}%{!?__target:0}
 %define _target_cpu             %{__target}
 %endif
@@ -42,13 +44,14 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv679%{?dist}
+Release: ssv680%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
 
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Source0: foros-server-%{version}.tar.gz
+Source1: foros-cxx-abi.macros
 AutoReq: no
 
 %ifnarch noarch
@@ -69,7 +72,7 @@ BuildRequires: ace-tao-devel >= %__ace_ver_req
 Requires: ace-tao = %__ace_ver_req
 BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
-BuildRequires: gcc-toolset-10-gcc-c++
+BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
 Requires: foros-geoip >= 1.0.0.0
@@ -174,8 +177,8 @@ Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect pyt
 Requires: python3.12-fastapi-uvicorn
 Requires: clickhouse-client = %{__clickhouse_ver_req}
 
-BuildRequires: xgboost-devel
-Requires: xgboost
+BuildRequires: xgboost-devel(cxx-abi)%{?_isa} = %{foros_cxx_abi}
+Requires: xgboost(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 BuildRequires: gtest-devel = 1.12.1
 Requires: gtest = 1.12.1
 
@@ -246,8 +249,8 @@ mkdir -p %{__product}/%{__osbe_build_dir}
 
 %build
 %ifnarch noarch
-export CC=/opt/rh/gcc-toolset-10/root/usr/bin/gcc
-export CXX=/opt/rh/gcc-toolset-10/root/usr/bin/g++
+export CC=%{foros_toolchain_root}/bin/gcc
+export CXX=%{foros_toolchain_root}/bin/g++
 
 pushd unixcommons
 #osbe
@@ -258,6 +261,12 @@ popd
 pushd %{__product}
 product_root=`pwd`
 cd %{__osbe_build_dir}
+# Keep the package ABI contract in sync with the standard selected by the source tree.
+if ! grep -Eq '^set\(CMAKE_CXX_STANDARD +%{foros_cxx_standard}\)$' cmake/SetupEnvironment.cmake; then
+  echo 'Server C++ standard differs from RPM/foros-cxx-abi.macros' >&2
+  exit 1
+fi
+export CXX="$CXX -D_GLIBCXX_USE_CXX11_ABI=%{foros_cxx11_abi}"
 cmake -DUNIXCOMMONS=$(pwd)/../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
 %{__make} %{_smp_mflags} VERBOSE=1
 popd
