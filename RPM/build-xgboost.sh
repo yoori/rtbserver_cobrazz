@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VERSION=2.0.2
-RELEASE=ssv4
+RELEASE=ssv5
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 PROJECT_DIR=$(dirname -- "$SCRIPT_DIR")
 TOPDIR="$PROJECT_DIR/build/xgboost-rpm/$VERSION-$RELEASE"

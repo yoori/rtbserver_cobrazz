@@ -1,6 +1,6 @@
 %include %{_sourcedir}/foros-cxx-abi.macros
 %{!?xgboost_version:%global xgboost_version 2.0.2}
-%{!?xgboost_release:%global xgboost_release ssv4}
+%{!?xgboost_release:%global xgboost_release ssv5}
 
 Name: xgboost
 Version: %{xgboost_version}
@@ -12,6 +12,7 @@ Source0: xgboost-%{version}.tar.gz
 Source1: foros-cxx-abi.macros
 Source2: xgboost-filesystem-provider.cpp
 Source3: xgboost-abi-smoke.cpp
+Source4: xgboost-devel-smoke.cpp
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
 BuildRequires: cmake >= 3.18
 BuildRequires: make
@@ -61,13 +62,16 @@ for dir in common data c_api gbm; do
   mkdir -p %{buildroot}%{_includedir}/xgboost/$dir
   cp src/$dir/*.h %{buildroot}%{_includedir}/xgboost/$dir/
 done
+cp -a rabit/include/rabit %{buildroot}%{_includedir}/
 
 %check
 # Load a filesystem-using DSO before XGBoost, reproducing the server's symbol interposition.
 CXX=%{foros_toolchain_root}/bin/g++
 flags="-std=c++%{foros_cxx_standard} -D_GLIBCXX_USE_CXX11_ABI=%{foros_cxx11_abi}"
 $CXX $flags -fPIC -shared %{SOURCE2} -o build/libxgboost-filesystem-provider.so
-$CXX $flags %{SOURCE3} -Iinclude -Lbuild -lxgboost-filesystem-provider \
+$CXX $flags -Wno-deprecated-declarations -fsyntax-only \
+  -I%{buildroot}%{_includedir} %{SOURCE4}
+$CXX $flags %{SOURCE3} -I%{buildroot}%{_includedir} -Lbuild -lxgboost-filesystem-provider \
   -L%{buildroot}%{_libdir} -lxgboost -Wl,-rpath,'$ORIGIN' -o build/xgboost-abi-smoke
 LD_LIBRARY_PATH=%{buildroot}%{_libdir}:"$PWD/build" build/xgboost-abi-smoke
 
@@ -82,6 +86,7 @@ LD_LIBRARY_PATH=%{buildroot}%{_libdir}:"$PWD/build" build/xgboost-abi-smoke
 %files devel
 %{_includedir}/xgboost
 %{_includedir}/dmlc
+%{_includedir}/rabit
 %{_libdir}/libdmlc.a
 %{_libdir}/cmake/dmlc
 %{_libdir}/cmake/xgboost

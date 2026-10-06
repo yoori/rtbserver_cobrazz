@@ -44,7 +44,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv680%{?dist}
+Release: ssv681%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -177,6 +177,7 @@ Requires: python3.12-minio python3.12-catboost python3.12-clickhouse-connect pyt
 Requires: python3.12-fastapi-uvicorn
 Requires: clickhouse-client = %{__clickhouse_ver_req}
 
+BuildRequires: xgboost-devel%{?_isa} >= 2.0.2-ssv5
 BuildRequires: xgboost-devel(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 Requires: xgboost(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 BuildRequires: gtest-devel = 1.12.1
