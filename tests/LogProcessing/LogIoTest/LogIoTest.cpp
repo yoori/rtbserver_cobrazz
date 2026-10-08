@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,7 @@
 #include <LogCommons/SiteUserStat.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostClickConvStat.hpp>
 #include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/ResearchLogs.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
@@ -967,15 +969,97 @@ int main(int argc, char **argv)
       true,
       66);
     data.add(
-      PostClickStatInnerKey(
-        std::move(creative_key),
-        17,
-        DayTimestamp(TEST_TIME)),
+      PostClickStatInnerKey(creative_key, 17),
       PostClickStatInnerData(1, 1, 1, 1, 42, 3, 0, 1));
     collector.add(
       PostClickStatCollector::KeyT(TEST_TIME, TEST_TIME),
       std::move(data));
     LogIoTester<PostClickStatTraits>(dump_on_fail).test(collector);
+
+    BufferWriter legacy;
+    legacy << "PostClickStat\t1.0\n" << CreativeStatKey(TEST_TIME, TEST_TIME) << '\n';
+    for (const auto* date : {"2026-09-10", "2026-09-11"})
+    {
+      legacy << PostClickStatInnerKey(creative_key, 17) << '\t' << date << '\t'
+        << PostClickStatInnerData(1, 1, 1, 1, 42, 3, 0, 1) << '\n';
+    }
+    legacy << '\n';
+    std::istringstream input(legacy.str());
+    PostClickStatCollector restored;
+    GenericLogIoHelperImpl<PostClickStatTraits> helper(restored);
+    helper.load(input);
+    if (restored.size() != 1 || restored.begin()->second.size() != 1 ||
+      restored.begin()->second.begin()->second.visits() != 2 ||
+      restored.begin()->second.begin()->first.external_metrics_connection_type_id() != 1)
+    {
+      throw std::runtime_error("Legacy PostClickStat dates were not merged");
+    }
+
+    BufferWriter legacy_connections;
+    legacy_connections << "PostClickStat\t1.1\n" << CreativeStatKey(TEST_TIME, TEST_TIME) << '\n';
+    for (const auto connection_id : {17ULL, 999999ULL})
+    {
+      legacy_connections << creative_key << '\t' << connection_id << '\t'
+        << PostClickStatInnerData(1, 1, 1, 1, 42, 3, 0, 1) << '\n';
+    }
+    legacy_connections << '\n';
+    std::istringstream connections_input(legacy_connections.str());
+    PostClickStatCollector typed_connections;
+    GenericLogIoHelperImpl<PostClickStatTraits> connections_helper(typed_connections);
+    connections_helper.load(connections_input);
+    if (typed_connections.begin()->second.size() != 1 ||
+      typed_connections.begin()->second.begin()->second.visits() != 2 ||
+      typed_connections.begin()->second.begin()->first.external_metrics_connection_type_id() != 1)
+    {
+      throw std::runtime_error("Legacy connection IDs were not merged into the Yandex type");
+    }
+    std::ostringstream csv;
+    const auto& item = *restored.begin()->second.begin();
+    PostClickStatCsvTraits::write_as_csv(csv, restored.begin()->first, item.first, item.second);
+    const std::string csv_header = PostClickStatCsvTraits::csv_header();
+    const auto csv_row = csv.str();
+    if (csv_header.find("source_date") != std::string::npos ||
+      std::count(csv_row.begin(), csv_row.end(), ',') != 35)
+    {
+      throw std::runtime_error("Unexpected PostClickStat CSV format");
+    }
+
+    PostClickConvStatCollector conversions;
+    PostClickConvStatInnerCollector conversion_data;
+    conversion_data.add(PostClickConvStatInnerKey(creative_key, 17, "ym_111_222"),
+      PostClickConvStatInnerData(1, 2));
+    conversions.add(CreativeStatKey(TEST_TIME, TEST_TIME), conversion_data);
+    LogIoTester<PostClickConvStatTraits>(dump_on_fail).test(conversions);
+    BufferWriter legacy_conversions;
+    legacy_conversions << "PostClickConvStat\t1.0\n"
+      << CreativeStatKey(TEST_TIME, TEST_TIME) << '\n';
+    for (const auto connection_id : {17ULL, 999999ULL})
+    {
+      legacy_conversions << creative_key << '\t' << connection_id << "\tym_111_222\t"
+        << PostClickConvStatInnerData(1, 2) << '\n';
+    }
+    legacy_conversions << '\n';
+    std::istringstream conversions_input(legacy_conversions.str());
+    PostClickConvStatCollector typed_conversions;
+    GenericLogIoHelperImpl<PostClickConvStatTraits> conversions_helper(typed_conversions);
+    conversions_helper.load(conversions_input);
+    if (typed_conversions.begin()->second.size() != 1 ||
+      typed_conversions.begin()->second.begin()->second.goals() != 4 ||
+      typed_conversions.begin()->second.begin()->first.external_metrics_connection_type_id() != 1)
+    {
+      throw std::runtime_error("Legacy conversion connections were not merged into connector type");
+    }
+    std::ostringstream conversion_csv;
+    const auto& conversion_item = *conversion_data.begin();
+    PostClickConvStatCsvTraits::write_as_csv(conversion_csv, CreativeStatKey(TEST_TIME, TEST_TIME),
+      conversion_item.first, conversion_item.second);
+    const std::string conversion_header = PostClickConvStatCsvTraits::csv_header();
+    const auto conversion_row = conversion_csv.str();
+    if (conversion_header.find("source_date") != std::string::npos ||
+      std::count(conversion_row.begin(), conversion_row.end(), ',') != 30)
+    {
+      throw std::runtime_error("Unexpected PostClickConvStat CSV format");
+    }
   }
   HANDLE_EXCEPTIONS(exitcode, 1);
 

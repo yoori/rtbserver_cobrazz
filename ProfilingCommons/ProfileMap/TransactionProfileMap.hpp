@@ -200,6 +200,14 @@ namespace AdServer::ProfilingCommons
         typename AsyncProfileMap<KeyType>::CompleteCallback())
       override;
 
+    void
+    process_keys_from(
+      const std::optional<KeyType>& start,
+      const std::function<bool(const KeyType&)>& process_key) override
+    {
+      this->async_profile_map()->process_keys_from(start, process_key);
+    }
+
     unsigned long size() const noexcept override;
 
     Transaction_var

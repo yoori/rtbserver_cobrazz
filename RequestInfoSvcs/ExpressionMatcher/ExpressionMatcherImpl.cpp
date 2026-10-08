@@ -576,6 +576,17 @@ namespace AdServer::RequestInfoSvcs
       CoGetUserNavigationProfileAdapter(std::move(date)));
   }
 
+  UserNavigationContainer::KeysPage
+  ExpressionMatcherImpl::get_user_navigation_keys(std::string_view position, std::size_t limit)
+  {
+    const auto container = user_navigation_container_.get();
+    if (!container.in())
+    {
+      throw NotReady("user navigation container is not ready");
+    }
+    return container->get_user_navigation_keys(position, limit);
+  }
+
   void ExpressionMatcherImpl::load_data_() noexcept
   {
     try

@@ -1,21 +1,24 @@
 #pragma once
 
-#include<vector>
-#include<string>
-#include<list>
-#include<map>
-#include<set>
-#include<eh/Exception.hpp>
-#include<String/SubString.hpp>
-#include<Generics/Time.hpp>
-#include<Generics/Uuid.hpp>
-#include<Generics/GnuHashTable.hpp>
-#include<Language/BLogic/NormalizeTrigger.hpp>
-#include<ChannelSvcs/ChannelCommons/Lexeme.hpp>
+#include <vector>
+#include <algorithm>
+#include <boost/unordered/unordered_flat_set.hpp>
+#include <string>
+#include <list>
+#include <map>
+#include <set>
+
+#include <eh/Exception.hpp>
+#include <String/SubString.hpp>
+#include <Generics/Time.hpp>
+#include <Generics/MonoAllocator.hpp>
+#include <Generics/Uuid.hpp>
+#include <Generics/GnuHashTable.hpp>
+#include <Language/BLogic/NormalizeTrigger.hpp>
+#include <ChannelSvcs/ChannelCommons/Lexeme.hpp>
 
 namespace AdServer::ChannelSvcs
 {
-
   typedef unsigned int IdType;
   typedef std::vector<IdType> IdVector;
   typedef std::list<IdType> IdList;
@@ -45,17 +48,13 @@ namespace AdServer::ChannelSvcs
 
   struct SoftTriggerWord
   {
-    SoftTriggerWord() {}
+    SoftTriggerWord() = default;
 
-    SoftTriggerWord(SoftTriggerWord&& init)
-    {
-      std::swap(channel_trigger_id, init.channel_trigger_id);
-      trigger.swap(init.trigger);
-    }
+    SoftTriggerWord(SoftTriggerWord&& init) noexcept = default;
 
     void swap(SoftTriggerWord& word) noexcept;
 
-    IdType channel_trigger_id;
+    IdType channel_trigger_id = 0;
     std::string trigger;
 
   private:
@@ -84,6 +83,52 @@ namespace AdServer::ChannelSvcs
     std::string uids_trigger;
   };
 
+  using MatchWordSet = Generics::MonoUnorderedSet<Generics::StringViewHashAdapter,
+    Generics::HashFunForHashAdapter<Generics::StringViewHashAdapter>>;
+
+  using MatchWordVector = Generics::MonoVector<Generics::StringViewHashAdapter>;
+
+  class PreparedMatchWords
+  {
+  public:
+    explicit PreparedMatchWords(Generics::MonoAllocatorArena* arena) noexcept;
+
+    void reserve(std::size_t capacity);
+
+    void insert(const Generics::StringViewHashAdapter& word);
+
+    template<typename Iterator>
+    void insert(Iterator first, Iterator last);
+
+    std::size_t size() const noexcept;
+
+    const MatchWordSet& words() const noexcept;
+
+    const MatchWordVector& candidates() const noexcept;
+
+  private:
+    MatchWordSet words_;
+    MatchWordVector candidates_;
+  };
+
+  struct MatchWords:
+    public boost::unordered_flat_set<Generics::StringViewHashAdapter,
+      Generics::HashFunForHashAdapter<Generics::StringViewHashAdapter>>
+  {
+    struct Sequence
+    {
+      std::vector<std::size_t> positions;
+      std::size_t max_length;
+    };
+
+    std::string data_holder_;//uses for memory allocation of SubStrings
+    std::vector<Sequence> deferred_sequences;
+    bool use_keyword_hooks = true;
+  };
+}
+
+namespace AdServer::ChannelSvcs
+{
   inline
   const MergeAtom& MergeAtom::operator=(IdType in) noexcept
   {
@@ -103,10 +148,46 @@ namespace AdServer::ChannelSvcs
     return id;
   }
 
-  struct MatchWords:
-    public Generics::GnuHashSet<Generics::SubStringHashAdapter>
-  {
-    std::string data_holder_;//uses for memory allocation of SubStrings
-  };
+  inline PreparedMatchWords::PreparedMatchWords(Generics::MonoAllocatorArena* arena) noexcept
+    : words_(arena), candidates_(arena)
+  {}
 
+  inline void PreparedMatchWords::reserve(std::size_t capacity)
+  {
+    words_.reserve(capacity);
+    candidates_.reserve(capacity ? std::max(capacity, std::size_t{8}) : 0);
+  }
+
+  inline void PreparedMatchWords::insert(const Generics::StringViewHashAdapter& word)
+  {
+    const auto inserted = words_.insert(word);
+    if (inserted.second)
+    {
+      candidates_.push_back(word);
+    }
+  }
+
+  template<typename Iterator>
+  inline void PreparedMatchWords::insert(Iterator first, Iterator last)
+  {
+    for (; first != last; ++first)
+    {
+      insert(*first);
+    }
+  }
+
+  inline std::size_t PreparedMatchWords::size() const noexcept
+  {
+    return candidates_.size();
+  }
+
+  inline const MatchWordSet& PreparedMatchWords::words() const noexcept
+  {
+    return words_;
+  }
+
+  inline const MatchWordVector& PreparedMatchWords::candidates() const noexcept
+  {
+    return candidates_;
+  }
 }

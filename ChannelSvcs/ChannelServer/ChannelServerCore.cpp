@@ -1,3 +1,4 @@
+#include <optional>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -881,7 +882,6 @@ namespace AdServer::ChannelSvcs
     try
     {
       Generics::Timer timer;
-      static MatchBreakSeparators separators;
       timer.start();
       if (state_ == UpdateData::US_ZERO)
       {
@@ -903,56 +903,35 @@ namespace AdServer::ChannelSvcs
         (query.statuses[0] == 'A' || query.statuses[1] == 'A' ? MF_ACTIVE : MF_NONE) |
         (query.statuses[0] == 'I' || query.statuses[1] == 'I' ? MF_INACTIVE : MF_NONE);
 
-      AdServer::ChannelSvcs::MatchWords phrases[CT_MAX];
-      AdServer::ChannelSvcs::MatchWords additional_url_keywords;
+      KeywordInput phrases[CT_MAX];
+      KeywordInput additional_url_keywords;
       MatchUrls url_words, additional_url_words;
-      //parsing urls
-      ChannelContainer::match_parse_urls(
-        String::SubString(query.first_url),
-        String::SubString(query.first_url_words),
-        ports_,
-        query.non_strict_url_match,
-        url_words,
-        phrases[CT_URL_KEYWORDS],
-        logger(),
-        segmentor_);
-      ChannelContainer::match_parse_urls(
-        String::SubString(query.urls),
-        String::SubString(query.urls_words),
-        ports_,
-        query.non_strict_url_match,
-        additional_url_words,
-        additional_url_keywords,
-        logger(),
-        segmentor_);
+      const auto url_limit = query.non_strict_url_match ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ;
+      if (ChannelContainer::match_parse_urls(
+        query.first_url, ports_, query.non_strict_url_match, url_words, logger()))
+      {
+        phrases[CT_URL_KEYWORDS] = {query.first_url_words, PM_NO_SIMPLIFY, "\n", url_limit};
+      }
 
-      StringVector exact_phrases;
-      parse_keywords(
-        String::SubString(query.swords),
-        phrases[CT_SEARCH],
-        match_flags & MF_NONSTRICTKW ? PM_SIMPLIFY : PM_NO_SIMPLIFY,
-        match_flags & MF_NONSTRICTKW ? nullptr : &separators,
-        match_flags & MF_NONSTRICTKW ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ,
-        &exact_phrases,//exact match
-        match_flags & MF_NONSTRICTKW ? segmentor_ : 0);
-      parse_keywords(
-        String::SubString(query.pwords),
-        phrases[CT_PAGE],
-        (query.simplify_page || match_flags & MF_NONSTRICTKW) ?
-        PM_SIMPLIFY : PM_NO_SIMPLIFY,
-        match_flags & MF_NONSTRICTKW ? nullptr : &separators,
-        match_flags & MF_NONSTRICTKW ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ,
-        0,//exact match
-        (query.simplify_page || match_flags & MF_NONSTRICTKW ? segmentor_ : 0));
-
-      phrases[CT_URL_KEYWORDS].insert(exact_phrases.begin(), exact_phrases.end());
+      if (ChannelContainer::match_parse_urls(
+        query.urls, ports_, query.non_strict_url_match, additional_url_words, logger()))
+      {
+        additional_url_keywords = {query.urls_words, PM_NO_SIMPLIFY, "\n", url_limit};
+      }
+      const bool nonstrict = match_flags & MF_NONSTRICTKW;
+      const std::string_view separators = nonstrict ? "" : ",\n";
+      const auto word_limit = nonstrict ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ;
+      phrases[CT_SEARCH] = {query.swords, nonstrict ? PM_SIMPLIFY : PM_NO_SIMPLIFY,
+        separators, word_limit, nonstrict ? segmentor_ : nullptr};
+      const bool simplify_page = query.simplify_page || nonstrict;
+      phrases[CT_PAGE] = {query.pwords, simplify_page ? PM_SIMPLIFY : PM_NO_SIMPLIFY,
+        separators, word_limit, simplify_page ? segmentor_ : nullptr};
 
       container_->match(
         url_words,
         additional_url_words,
         phrases,
         additional_url_keywords,
-        exact_phrases,
         uid,
         match_flags,
         res);
@@ -961,7 +940,7 @@ namespace AdServer::ChannelSvcs
       timer.stop();
       if (statistic_logger_)
       {
-        log_parsed_input_(url_words, phrases, exact_phrases, *logstr);
+        log_parsed_input_(url_words, phrases, *logstr);
         log_result_(res, timer.elapsed_time(), *logstr);
         statistic_logger_->log(logstr->str(), Logging::Logger::DEBUG, ASPECT);
       }
@@ -1379,14 +1358,20 @@ namespace AdServer::ChannelSvcs
   }
 
   void ChannelServerCore::log_parsed_input_(
-    const MatchUrls& url_words,
-    const MatchWords match_words[CT_MAX],
-    const StringVector& exact_words,
-    std::ostream& ostr)
+    const MatchUrls& url_words, const KeywordInput inputs[CT_MAX], std::ostream& ostr)
     /*throw(eh::Exception)*/
   {
+    Generics::MonoAllocatorFixedArena<4096> arena;
+    std::optional<PreparedMatchWords> prepared[CT_MAX];
+    MatchWordVector exact(&arena.arena());
+    for (std::size_t type = 0; type < CT_MAX; ++type)
+    {
+      auto& words = prepared[type].emplace(&arena.arena());
+      prepare_keywords(inputs[type], words, nullptr, type == CT_SEARCH ? &exact : nullptr);
+    }
+    prepared[CT_URL_KEYWORDS]->insert(exact.begin(), exact.end());
     ostr << "::pu:";
-    for (MatchUrls::const_iterator it = url_words.begin(); it != url_words.end(); ++it)
+    for (auto it = url_words.begin(); it != url_words.end(); ++it)
     {
       if (it != url_words.begin())
       {
@@ -1394,37 +1379,22 @@ namespace AdServer::ChannelSvcs
       }
       ostr << it->prefix << it->postfix;
     }
-    ostr << "::pp:";
-    for (MatchWords::const_iterator it = match_words[CT_PAGE].begin();
-       it != match_words[CT_PAGE].end(); ++it)
+    const auto print_words = [&](const char* label, const MatchWordVector& words)
     {
-      if (it != match_words[CT_PAGE].begin())
+      ostr << label;
+      for (auto it = words.begin(); it != words.end(); ++it)
       {
-        ostr << ',';
+        if (it != words.begin())
+        {
+          ostr << ',';
+        }
+        ostr << it->text();
       }
-      ostr << it->text();
-    }
-    ostr << "::ps:";
-    for (MatchWords::const_iterator it = match_words[CT_SEARCH].begin();
-       it != match_words[CT_SEARCH].end(); ++it)
-    {
-      if (it != match_words[CT_SEARCH].begin())
-      {
-        ostr << ',';
-      }
-      ostr << it->text();
-    }
-    ostr << "::pr:";
-    for (MatchWords::const_iterator it = match_words[CT_URL_KEYWORDS].begin();
-       it != match_words[CT_URL_KEYWORDS].end(); ++it)
-    {
-      if (it != match_words[CT_URL_KEYWORDS].begin())
-      {
-        ostr << ',';
-      }
-      ostr << it->text();
-    }
-    trace_sequence("::pe:", exact_words, ostr);
+    };
+    print_words("::pp:", prepared[CT_PAGE]->candidates());
+    print_words("::ps:", prepared[CT_SEARCH]->candidates());
+    print_words("::pr:", prepared[CT_URL_KEYWORDS]->candidates());
+    print_words("::pe:", exact);
   }
 
   void ChannelServerCore::fill_result_(

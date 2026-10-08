@@ -1,6 +1,8 @@
 #pragma once
 
 #include<string>
+#include <ChannelSvcs/ChannelCommons/KeywordInput.hpp>
+#include <ChannelSvcs/ChannelCommons/KeywordPrefixIndex.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Constants.hpp>
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
@@ -36,17 +38,17 @@ namespace AdServer::ChannelSvcs
     out << '.' << std::endl;
   }
 
-  enum ParseMode
-  {
-    PM_SIMPLIFY,
-    PM_NO_SIMPLIFY
-  };
+  // Input text must outlive the prepared views; transformed text is stored on the output arena.
+  void prepare_keywords(
+    const KeywordInput& input, PreparedMatchWords& output, const KeywordPrefixIndex* prefixes,
+    MatchWordVector* exact_words = nullptr);
 
   void build_combination(
-    const std::vector<size_t>& positions,
-    AdServer::ChannelSvcs::MatchWords& match_words,
-    size_t max_seq_length)
-    noexcept;
+    const std::vector<size_t>& positions, MatchWords& match_words, size_t max_seq_length,
+    const KeywordPrefixIndex* prefixes = nullptr) noexcept;
+
+  void prepare_keywords(
+    const MatchWords& input, PreparedMatchWords& output, const KeywordPrefixIndex* prefixes);
 
   template<typename SEPARATOR>
   void parse_keywords(
@@ -56,70 +58,83 @@ namespace AdServer::ChannelSvcs
     const SEPARATOR* separators = nullptr,//additional separators
     size_t seq_length = Commons::DEFAULT_MAX_HARD_WORD_SEQ,
     StringVector* exact_words = 0,
-    const Language::Segmentor::SegmentorInterface* segmentor = 0)
+    const Language::Segmentor::SegmentorInterface* segmentor = 0,
+    const KeywordPrefixIndex* prefixes = nullptr,
+    bool defer_combinations = false)
     noexcept
+  {
+    try
     {
-      try
+      String::SubString token, parsed_token;
+      std::vector<size_t> positions;
+      std::string subword;
+      bool make_split;
+      match_words.data_holder_.reserve(in.length() * 4 + 2);
+      String::StringManip::Splitter<SEPARATOR>
+        splitter(!separators ? String::SubString() : in);
+      //should be enough memory for any result of parsing
+      //only one allocation
+      if (!separators)
       {
-        String::SubString token, parsed_token;
-        std::vector<size_t> positions;
-        std::string subword;
-        bool make_split;
-        match_words.data_holder_.reserve(in.length() * 4 + 2);
-        String::StringManip::Splitter<SEPARATOR>
-          splitter(!separators ? String::SubString() : in);
-        //should be enough memory for any result of parsing
-        //only one allocation
-        if (!separators)
+        make_split = true;
+        token = in;
+      }
+      else
+      {
+        make_split = splitter.get_token(token);
+      }
+      while (make_split)
+      {
+        if (mode == PM_SIMPLIFY)
         {
-          make_split = true;
-          token = in;
+          Language::Trigger::normalize_phrase(token, subword, segmentor);
+          token = subword;
+        }
+        String::StringManip::Splitter<MatchSeparators> splitter2(token);
+        positions.push_back(match_words.data_holder_.length());
+        while (splitter2.get_token(parsed_token))
+        {
+          if (parsed_token.length() <= TriggerParser::TriggerParser::MAX_TRIGGER_LENGTH)
+          {
+            match_words.data_holder_.append(parsed_token.data(), parsed_token.length());
+            match_words.data_holder_.push_back(' ');
+            positions.push_back(match_words.data_holder_.length());
+          }
+          else if (exact_words)
+          {
+            exact_words->clear();
+            exact_words = nullptr;
+          }
+        }
+
+        if (exact_words)
+        {
+          auto it = positions.begin();
+          auto pos = *it;
+          for (++it; it != positions.end(); ++it)
+          {
+            exact_words->emplace_back(match_words.data_holder_, pos, *it - pos - 1);
+            pos = *it;
+          }
+        }
+
+        if (defer_combinations)
+        {
+          if (positions.size() > 1)
+          {
+            match_words.deferred_sequences.push_back({std::move(positions), seq_length});
+          }
         }
         else
         {
-          make_split = splitter.get_token(token);
+          build_combination(positions, match_words, seq_length, prefixes);
         }
-        while (make_split)
-        {
-          if (mode == PM_SIMPLIFY)
-          {
-            Language::Trigger::normalize_phrase(token, subword, segmentor);
-            token = subword;
-          }
-          String::StringManip::Splitter<MatchSeparators> splitter2(token);
-          positions.push_back(match_words.data_holder_.length());
-          while (splitter2.get_token(parsed_token))
-          {
-            if (parsed_token.length() <= TriggerParser::TriggerParser::MAX_TRIGGER_LENGTH)
-            {
-              match_words.data_holder_.append(parsed_token.data(), parsed_token.length());
-              match_words.data_holder_.push_back(' ');
-              positions.push_back(match_words.data_holder_.length());
-            }
-            else if (exact_words)
-            {
-              exact_words->clear();
-              exact_words = nullptr;
-            }
-          }
-
-          if (exact_words)
-          {
-            auto it = positions.begin();
-            auto pos = *it;
-            for (++it; it != positions.end(); ++it)
-            {
-              exact_words->emplace_back(match_words.data_holder_, pos, *it - pos - 1);
-              pos = *it;
-            }
-          }
-          build_combination(positions, match_words, seq_length);
-          positions.clear();
-          make_split = splitter.get_token(token);
-        }
-      }
-      catch(const eh::Exception& e)
-      {
+        positions.clear();
+        make_split = splitter.get_token(token);
       }
     }
+    catch (const eh::Exception& e)
+    {
+    }
+  }
 }

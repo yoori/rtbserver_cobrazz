@@ -165,7 +165,8 @@ namespace AdServer
               numeric_warn = false;
             }
           }
-          match_words[ChannelSvcs::CT_PAGE].insert(it_part->part);
+          match_words[ChannelSvcs::CT_PAGE].insert(Generics::StringViewHashAdapter(
+            std::string_view(it_part->part.data(), it_part->part.size())));
         }
 
         if (stop_it != dict_.end())

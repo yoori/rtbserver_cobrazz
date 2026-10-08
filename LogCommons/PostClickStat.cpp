@@ -1,22 +1,55 @@
 #include "PostClickStat.hpp"
 
+#include <utility>
+#include <Commons/ExternalMetrics.hpp>
+
 #include "BufferWriter.hpp"
 
 namespace AdServer::LogProcessing
 {
   template <> const char* PostClickStatTraits::B::base_name_ = "PostClickStat";
   template <> const char* PostClickStatTraits::B::signature_ = "PostClickStat";
-  template <> const char* PostClickStatTraits::B::current_version_ = "1.0";
+  template <> const char* PostClickStatTraits::B::current_version_ = "2.0";
+
+  PostClickStatTraits::CollectorType
+  PostClickStatTraits::convert_collector(const PostClickStatCollector_V_1_0& old_collector)
+  {
+    CollectorType collector;
+    for (const auto& [key, old_data] : old_collector)
+    {
+      CollectorType::DataT data;
+      for (const auto& [old_key, value] : old_data)
+      {
+        data.add(old_key.current_key(), value);
+      }
+      collector.add(key, data);
+    }
+    return collector;
+  }
+
+  PostClickStatTraits::CollectorType
+  PostClickStatTraits::convert_collector(const PostClickStatCollector_V_1_1& old_collector)
+  {
+    CollectorType collector;
+    for (const auto& [key, old_data] : old_collector)
+    {
+      CollectorType::DataT data;
+      for (const auto& [old_key, value] : old_data)
+      {
+        data.add(old_key.current_key(), value);
+      }
+      collector.add(key, data);
+    }
+    return collector;
+  }
 
   PostClickStatInnerKey::PostClickStatInnerKey() noexcept = default;
 
   PostClickStatInnerKey::PostClickStatInnerKey(
     CreativeStatInnerKey creative_key,
-    std::uint64_t yandex_ref_id,
-    const DayTimestamp& yandex_event_date)
+    std::uint64_t external_metrics_connection_type_id)
     : creative_key_(std::move(creative_key)),
-      yandex_ref_id_(yandex_ref_id),
-      yandex_event_date_(yandex_event_date)
+      external_metrics_connection_type_id_(external_metrics_connection_type_id)
   {
     calc_hash_();
   }
@@ -25,8 +58,7 @@ namespace AdServer::LogProcessing
   PostClickStatInnerKey::operator==(const PostClickStatInnerKey& rhs) const noexcept
   {
     return creative_key_ == rhs.creative_key_ &&
-      yandex_ref_id_ == rhs.yandex_ref_id_ &&
-      yandex_event_date_ == rhs.yandex_event_date_;
+      external_metrics_connection_type_id_ == rhs.external_metrics_connection_type_id_;
   }
 
   const CreativeStatInnerKey&
@@ -36,15 +68,9 @@ namespace AdServer::LogProcessing
   }
 
   std::uint64_t
-  PostClickStatInnerKey::yandex_ref_id() const noexcept
+  PostClickStatInnerKey::external_metrics_connection_type_id() const noexcept
   {
-    return yandex_ref_id_;
-  }
-
-  const DayTimestamp&
-  PostClickStatInnerKey::yandex_event_date() const noexcept
-  {
-    return yandex_event_date_;
+    return external_metrics_connection_type_id_;
   }
 
   std::size_t
@@ -57,6 +83,10 @@ namespace AdServer::LogProcessing
   PostClickStatInnerKey::invariant() const
   {
     creative_key_.invariant();
+    if (external_metrics_connection_type_id_ > Commons::MAX_METRICS_CONNECTION_TYPE)
+    {
+      throw ConstraintViolation("Invalid external metrics connection type");
+    }
   }
 
   void
@@ -64,16 +94,14 @@ namespace AdServer::LogProcessing
   {
     Generics::Murmur64Hash hasher(hash_);
     hash_add(hasher, creative_key_.hash());
-    hash_add(hasher, yandex_ref_id_);
-    hash_add(hasher, yandex_event_date_.time().tv_sec);
+    hash_add(hasher, external_metrics_connection_type_id_);
   }
 
   FixedBufStream<TabCategory>&
   operator>>(FixedBufStream<TabCategory>& is, PostClickStatInnerKey& key)
   {
     is >> key.creative_key_;
-    is >> key.yandex_ref_id_;
-    is >> key.yandex_event_date_;
+    is >> key.external_metrics_connection_type_id_;
     key.invariant();
     key.calc_hash_();
     return is;
@@ -83,8 +111,51 @@ namespace AdServer::LogProcessing
   operator<<(BufferWriter& out, const PostClickStatInnerKey& key)
   {
     key.invariant();
-    return out << key.creative_key_ << '\t' << key.yandex_ref_id_ << '\t' <<
-      key.yandex_event_date_;
+    return out << key.creative_key_ << '\t' << key.external_metrics_connection_type_id_;
+  }
+
+  PostClickStatInnerKey PostClickStatInnerKey_V_1_1::current_key() const
+  {
+    return PostClickStatInnerKey(creative_key(), external_metrics_connection_type_id() ?
+      Commons::YANDEX_METRIKA : Commons::INTERNAL_METRICS);
+  }
+
+  void PostClickStatInnerKey_V_1_1::invariant() const
+  {
+    creative_key().invariant();
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, PostClickStatInnerKey_V_1_1& key)
+  {
+    CreativeStatInnerKey creative;
+    std::uint64_t connection_id = 0;
+    is >> creative >> connection_id;
+    static_cast<PostClickStatInnerKey&>(key) = PostClickStatInnerKey(creative, connection_id);
+    key.invariant();
+    return is;
+  }
+
+  bool PostClickStatInnerKey_V_1_0::operator==(const PostClickStatInnerKey_V_1_0& rhs)
+    const noexcept
+  {
+    return PostClickStatInnerKey::operator==(rhs) && source_date_ == rhs.source_date_;
+  }
+
+  std::size_t PostClickStatInnerKey_V_1_0::hash() const noexcept
+  {
+    return hash_;
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, PostClickStatInnerKey_V_1_0& key)
+  {
+    is >> static_cast<PostClickStatInnerKey_V_1_1&>(key);
+    is >> key.source_date_;
+    Generics::Murmur64Hash hasher(key.hash_);
+    hash_add(hasher, key.PostClickStatInnerKey::hash());
+    hash_add(hasher, key.source_date_.time().tv_sec);
+    return is;
   }
 
   PostClickStatInnerData::PostClickStatInnerData() noexcept

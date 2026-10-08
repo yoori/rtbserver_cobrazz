@@ -23,6 +23,7 @@
 #include "ChannelServerTypes.hpp"
 #include "ContainerMatchers.hpp"
 #include "SoftMatcher.hpp"
+#include "UrlPrefixIndex.hpp"
 
 namespace AdServer::ChannelSvcs
 {
@@ -125,12 +126,15 @@ namespace AdServer::ChannelSvcs
   {
     std::string prefix;
     std::string postfix;
+    // For a lazy branch, prefix owns host + path + query + optional exact marker.
+    std::size_t branch_host_size = 0;
+    std::size_t branch_path_end = 0;
   };
 
   using TriggerMapType = boost::unordered_flat_map<
-    Generics::SubStringHashAdapter,
+    Generics::StringViewHashAdapter,
     TriggerAtom_var,
-    HashAdapterHash<Generics::SubStringHashAdapter>>;
+    HashAdapterHash<Generics::StringViewHashAdapter>>;
 
   using UidMapType = boost::unordered_flat_map<
     Generics::Uuid, UidAtom_var, HashAdapterHash<Generics::Uuid>>;
@@ -438,14 +442,23 @@ namespace AdServer::ChannelSvcs
     void match_url(const MatchUrl& url, unsigned int flags, TriggerMatchRes& res) const
       /*throw(eh::Exception)*/;
 
+    void match_url(
+      const MatchUrl& url, const Generics::StringViewHashAdapter& key,
+      unsigned int flags, TriggerMatchRes& res) const
+      /*throw(eh::Exception)*/;
+
+    void match_url(
+      std::string_view postfix, const Generics::StringViewHashAdapter& key,
+      unsigned int flags, TriggerMatchRes& res) const;
+
     void match_words(
-      const Generics::SubStringHashAdapter& phrase,
-      const MatchWords& words,
-      const StringVector* exact_words,
+      const Generics::StringViewHashAdapter& phrase,
+      const MatchWordSet& words,
+      const MatchWordVector* exact_words,
       MatchType type,
       unsigned int flags,
       TriggerMatchRes& res,
-      MatcherVarsSet* must_match)
+      MatchRequestMatchers* must_match)
       const
       /*throw(eh::Exception)*/;
 
@@ -463,7 +476,8 @@ namespace AdServer::ChannelSvcs
       MatcherVarsSet* removed_url_matchers,
       MatcherVarsSet* removed_page_keyword_matchers,
       MatcherVarsSet* removed_url_keyword_matchers,
-      MatcherVarsSet* removed_search_keyword_matchers)
+      MatcherVarsSet* removed_search_keyword_matchers,
+      UrlPrefixIndex& url_prefixes)
       /*throw(Exception)*/;
 
     /* merge 2 vectors to a new one
@@ -549,7 +563,8 @@ namespace AdServer::ChannelSvcs
       TriggerMap& res,
       AddItemMap& added,
       RemovedType& removed_ids,
-      MatcherVarsSet* removed_matchers)
+      MatcherVarsSet* removed_matchers,
+      UrlPrefixIndex* url_prefixes = nullptr)
       noexcept;
 
     static size_t match_cell_(
@@ -693,6 +708,9 @@ namespace AdServer::ChannelSvcs
     public ReferenceCounting::AtomicImpl,
     public std::vector<ChannelChunk_var>
   {
+  public:
+    UrlPrefixIndex url_prefixes;
+
   protected:
     virtual
     ~ChannelChunkArray() noexcept

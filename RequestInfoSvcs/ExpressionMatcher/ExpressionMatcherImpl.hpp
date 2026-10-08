@@ -140,6 +140,9 @@ namespace AdServer::RequestInfoSvcs
       AdServer::Commons::UserId user_id,
       std::optional<std::uint32_t> date);
 
+    UserNavigationContainer::KeysPage
+    get_user_navigation_keys(std::string_view position, std::size_t limit);
+
     ProfileSizes profile_sizes() const noexcept;
 
     ProcessingDiagnostics processing_diagnostics() const noexcept;

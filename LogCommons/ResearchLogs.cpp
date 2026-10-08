@@ -2,6 +2,10 @@
 
 namespace AdServer::LogProcessing
 {
+  template <> const char* ResearchPostConvClickTraits::B::base_name_ = "<UNDEFINED>";
+  template <> const char* ResearchPostConvClickTraits::B::signature_ = "<UNDEFINED>";
+  template <> const char* ResearchPostConvClickTraits::B::current_version_ = "<UNDEFINED>";
+
   template <> const char*
   ResearchBidTraits::B::base_name_ = "<UNDEFINED>";
   template <> const char*

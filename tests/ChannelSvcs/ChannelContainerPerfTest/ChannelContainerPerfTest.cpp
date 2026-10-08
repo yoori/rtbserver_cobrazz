@@ -27,6 +27,8 @@ namespace
     fs::path segments;
     std::string url;
     std::uint64_t iterations = 0;
+    bool keyword_hooks = true;
+    bool legacy_keywords = false;
   };
 
   std::uint64_t parse_number(const std::string& text)
@@ -65,9 +67,17 @@ namespace
       {
         options.iterations = parse_number(value);
       }
+      else if (name == "--keyword-hooks" && (value == "on" || value == "off"))
+      {
+        options.keyword_hooks = value == "on";
+      }
+      else if (name == "--keyword-input" && (value == "raw" || value == "legacy"))
+      {
+        options.legacy_keywords = value == "legacy";
+      }
       else
       {
-        throw std::runtime_error("Unknown option: " + name);
+        throw std::runtime_error("Unknown option or value: " + name + " " + value);
       }
     }
 
@@ -214,7 +224,8 @@ int main(int argc, char** argv)
 {
   if (argc == 2 && std::string(argv[1]) == "--help")
   {
-    std::cout << "Usage: ChannelContainerPerfTest --segments DIR --url URL --iterations N\n";
+    std::cout << "Usage: ChannelContainerPerfTest --segments DIR --url URL --iterations N "
+      "[--keyword-hooks on|off] [--keyword-input raw|legacy]\n";
     return 0;
   }
 
@@ -225,22 +236,20 @@ int main(int argc, char** argv)
     load_segments(container, options.segments);
 
     const HTTP::BrowserAddress address{String::SubString(options.url)};
-    std::string url_keywords;
-    Language::Trigger::normalize_phrase(
-      HTTP::keywords_from_http_address(address.url()), url_keywords, nullptr);
+    const auto url_keywords = HTTP::keywords_from_http_address(address.url());
     CS::MatchUrls urls;
     const CS::MatchUrls additional_urls;
-    CS::MatchWords words[CS::CT_MAX];
-    const CS::MatchWords additional_words;
-    const CS::StringVector exact_words;
+    CS::KeywordInput inputs[CS::CT_MAX];
+    inputs[CS::CT_URL_KEYWORDS] = {std::string_view(url_keywords), CS::PM_SIMPLIFY, "\n"};
+    inputs[CS::CT_URL_KEYWORDS].use_keyword_hooks = options.keyword_hooks;
+    const CS::KeywordInput additional_input;
     const Generics::Uuid uid;
-    CS::ChannelContainer::match_parse_urls(
-      address.url(), url_keywords, {80, 443}, false, urls, words[CS::CT_URL_KEYWORDS],
-      nullptr, nullptr);
+    CS::ChannelContainer::match_parse_refer(address.url(), {80, 443}, false, urls, nullptr);
     if (urls.empty())
     {
       throw std::runtime_error("URL produced no match candidates");
     }
+
 
     std::uint64_t matched_channels = 0;
     std::cout << "iterations: " << options.iterations << "\nmatch loop starting\n" << std::flush;
@@ -249,9 +258,24 @@ int main(int argc, char** argv)
     for (std::uint64_t i = 0; i < options.iterations; ++i)
     {
       CS::TriggerMatchRes result;
-      container.match(
-        urls, additional_urls, words, additional_words, exact_words, uid,
-        CS::MF_ACTIVE | CS::MF_BLACK_LIST, result);
+      if (options.legacy_keywords)
+      {
+        CS::MatchWords words[CS::CT_MAX];
+        std::string normalized;
+        Language::Trigger::normalize_phrase(url_keywords, normalized, nullptr);
+        String::AsciiStringManip::SepNL separators;
+        CS::parse_keywords(String::SubString(normalized), words[CS::CT_URL_KEYWORDS],
+          CS::PM_NO_SIMPLIFY, &separators, AdServer::Commons::DEFAULT_MAX_HARD_WORD_SEQ,
+          nullptr, nullptr, nullptr, true);
+        words[CS::CT_URL_KEYWORDS].use_keyword_hooks = options.keyword_hooks;
+        container.match(urls, additional_urls, words, {}, {}, uid,
+          CS::MF_ACTIVE | CS::MF_BLACK_LIST, result);
+      }
+      else
+      {
+        container.match(urls, additional_urls, inputs, additional_input, uid,
+          CS::MF_ACTIVE | CS::MF_BLACK_LIST, result);
+      }
       matched_channels += result.size();
     }
 
@@ -259,6 +283,7 @@ int main(int argc, char** argv)
     const auto wall = std::chrono::duration<double>(
       std::chrono::steady_clock::now() - wall_start).count();
     std::cout << std::fixed << std::setprecision(6)
+      << "keyword_input: " << (options.legacy_keywords ? "legacy" : "raw") << '\n'
       << "cpu_seconds: " << cpu << '\n'
       << "wall_seconds: " << wall << '\n'
       << "cpu_us_per_match: " << cpu * 1e6 / options.iterations << '\n'

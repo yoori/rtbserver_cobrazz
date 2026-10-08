@@ -383,6 +383,7 @@
 
         <cfg:CreativeStat period="{$flush-logs-period}"/>
         <cfg:PostClickStat period="{$flush-logs-period}"/>
+        <cfg:PostClickConvStat period="{$flush-logs-period}"/>
         <cfg:PostImpStat period="{$flush-logs-period}"/>
         <cfg:UserProperties period="{$flush-logs-period}"/>
         <cfg:ChannelPerformance period="{$flush-logs-period}"/>
@@ -412,6 +413,7 @@
           <cfg:ResearchPostImpression period="{$flush-logs-period}"/>
           <cfg:ResearchClick period="{$flush-logs-period}"/>
           <cfg:ResearchPostClick period="{$flush-logs-period}"/>
+          <cfg:ResearchPostConvClick period="{$flush-logs-period}"/>
           <cfg:BidCostStat period="{$flush-logs-period}"/>
         </xsl:if>
         <cfg:RequestOperation chunks_count="24" period="{$flush-logs-period}"/>

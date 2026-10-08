@@ -85,6 +85,15 @@ R_POST_CLICK_CREATE_TABLE_QUERY = (
 )
 
 
+R_POST_CONV_CLICK_CREATE_TABLE_QUERY = (
+  "CREATE TABLE IF NOT EXISTS RPostConvClick ("
+  "request_id String, timestamp DateTime('UTC'), conversion_name String, action_name String, "
+  "visits UInt64, goals UInt64, external_metrics_connection_type_id UInt16, source_date Date"
+  ") ENGINE = ReplacingMergeTree "
+  "PARTITION BY toYYYYMM(source_date) ORDER BY (request_id, action_name)"
+)
+
+
 R_POST_IMPRESSION_CREATE_TABLE_QUERY = (
   "CREATE TABLE IF NOT EXISTS RPostImpression ("
   "request_id String, "
@@ -530,6 +539,31 @@ class RPostClickUploader(ClickhouseCsvUploader) :
       create_table_query = R_POST_CLICK_CREATE_TABLE_QUERY)
 
 
+class RPostConvClickUploader(ClickhouseCsvUploader):
+  def __init__(self, config, logger=None):
+    super().__init__(
+      config, 'RPostConvClickClickhouseAdapter.py', 'RPostConvClick', logger=logger,
+      create_table_query=R_POST_CONV_CLICK_CREATE_TABLE_QUERY)
+
+  def init_storage(self):
+    super().init_storage()
+    executor = ClickhouseQueryExecutor(self.clickhouse_conn, logger=self.logger)
+    columns = {row['name']: row for row in map(json.loads, executor.execute(
+      'DESCRIBE TABLE RPostConvClick FORMAT JSONEachRow').splitlines())}
+    old = 'external_metrics_connection_id'
+    new = 'external_metrics_connection_type_id'
+    if old not in columns:
+      return
+    if new not in columns:
+      executor.execute(f'ALTER TABLE RPostConvClick ADD COLUMN {new} UInt16 '
+        f'DEFAULT if({old} = 0, 0, 1) AFTER goals')
+    if new not in columns or old in columns[new].get('default_expression', ''):
+      executor.execute(f'ALTER TABLE RPostConvClick MATERIALIZE COLUMN {new} '
+        'SETTINGS mutations_sync = 2')
+      executor.execute(f'ALTER TABLE RPostConvClick MODIFY COLUMN {new} REMOVE DEFAULT')
+    executor.execute(f'ALTER TABLE RPostConvClick DROP COLUMN {old}')
+
+
 class RPostImpressionUploader(ClickhouseCsvUploader) :
   def __init__(self, config, logger = None) :
     super().__init__(
@@ -924,6 +958,7 @@ def main() :
   processors['RImpression'] = RImpressionUploader(config, logger = logger)
   processors['RPostImpression'] = RPostImpressionUploader(config, logger = logger)
   processors['RPostClick'] = RPostClickUploader(config, logger = logger)
+  processors['RPostConvClick'] = RPostConvClickUploader(config, logger=logger)
   processors['RClick'] = RClickUploader(config, logger = logger)
   processors['RAction'] = RActionUploader(config, logger = logger)
   processors['Geo'] = GeoUploader(config, logger = logger)

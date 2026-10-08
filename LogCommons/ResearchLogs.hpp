@@ -318,6 +318,41 @@ namespace AdServer::LogProcessing
     }
   };
 
+  struct ResearchPostConvClickData
+  {
+    RequestId request_id;
+    SecondsTimestamp time;
+    std::string conversion_name;
+    std::string action_name;
+    std::uint64_t visits = 0;
+    std::uint64_t goals = 0;
+    std::uint64_t external_metrics_connection_type_id = 0;
+    DayTimestamp source_date;
+  };
+
+  using ResearchPostConvClickCollector = SeqCollector<ResearchPostConvClickData>;
+  struct ResearchPostConvClickTraits:
+    LogDefaultTraits<ResearchPostConvClickCollector, false, false>
+  {
+    static const char* csv_base_name() { return "RPostConvClick"; }
+    static const char* csv_header()
+    {
+      return "RequestID,Timestamp,ConversionName,ActionName,Visits,Goals,"
+        "ExternalMetricsConnectionTypeID,SourceDate";
+    }
+
+    static std::ostream& write_data_as_csv(std::ostream& os, const ResearchPostConvClickData& data)
+    {
+      os << static_cast<const UuidIoCsvWrapper&>(data.request_id) << ',';
+      write_date_as_csv(os, data.time) << ',';
+      write_string_as_csv(os, data.conversion_name) << ',';
+      write_string_as_csv(os, data.action_name) << ',';
+      os << data.visits << ',' << data.goals << ','
+        << data.external_metrics_connection_type_id << ',';
+      return write_date_as_csv(os, data.source_date);
+    }
+  };
+
   struct ResearchPostImpressionData
   {
     SecondsTimestamp time;

@@ -45,10 +45,10 @@ namespace AdServer::UnitTests
         it != match_words[ChannelSvcs::CT_PAGE].end() &&
         matched_words.size() < count_hard; ++it)
     {
-      const String::SubString& current = it->text();
+      const std::string_view current = it->text();
       if (current.find(' ') != std::string::npos)
       {
-        matched_words.push_back(current.str());
+        matched_words.emplace_back(current);
       }
     }
     it_stop = it;
@@ -63,20 +63,20 @@ namespace AdServer::UnitTests
     for (;it != match_words[ChannelSvcs::CT_PAGE].end() &&
         matched_words.size() < count_soft + count_hard; ++it)
     {
-      const String::SubString& current = it->text();
+      const std::string_view current = it->text();
       if (current.find(' ') == std::string::npos)
       {
-        matched_words.push_back(current.str());
+        matched_words.emplace_back(current);
       }
     }
     for (it = match_words[ChannelSvcs::CT_PAGE].begin();
         it != it_stop &&
         matched_words.size() < count_soft + count_hard; ++it)
     {
-      const String::SubString& current = it->text();
+      const std::string_view current = it->text();
       if (current.find(' ') == std::string::npos)
       {
-        matched_words.push_back(current.str());
+        matched_words.emplace_back(current);
       }
     }
 
@@ -357,7 +357,7 @@ namespace AdServer::UnitTests
               it != match_words[ChannelSvcs::CT_PAGE].end(); ++it)
           {
             count++;
-            const String::SubString& current = it->text();
+            const std::string_view current = it->text();
             std::cout << count << " : " << current << std::endl;
           }
         }

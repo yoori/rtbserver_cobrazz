@@ -61,16 +61,67 @@ main()
     const auto yandex_value = parse_post_click_action_value(
       R"({"landing_bounced":false,"landing_session_time":42,)"
       R"("landing_page_views":5,"landing_is_new_user":true,)"
-      R"("yandex_ref_id":17,"yandex_event_date":"2026-09-10",)"
-      R"("yandex_reporting_comparable":true})");
-    if (yandex_value.yandex_ref_id != 17 ||
-        yandex_value.yandex_event_date != Generics::Time(
+      R"("external_metrics_connection_id":17,"source_date":"2026-09-10",)"
+      R"("reporting_comparable":true})");
+    const auto typed = parse_post_click_action_value(
+      R"({"landing_bounced":false,"landing_session_time":42,)"
+      R"("landing_page_views":5,"landing_is_new_user":true,)"
+      R"("external_metrics_connection_type_id":2,"source_date":"2026-09-10"})");
+    if (typed.external_metrics_connection_type_id != 2)
+    {
+      throw std::runtime_error("Connector type was interpreted as a connection ID");
+    }
+
+    const auto goal = AdServer::RequestInfoSvcs::parse_post_click_conversion(
+      "ym_111_9:g:2026-09-10:123:12",
+      R"({"external_metrics_connection_type_id":1,"source_date":"2026-09-10",)"
+      R"("visits":0,"goals":1})");
+    const auto old_goal = AdServer::RequestInfoSvcs::parse_post_click_conversion(
+      "ym_111_9:g:2026-09-10:123:12",
+      R"({"external_metrics_connection_id":999999,"source_date":"2026-09-10",)"
+      R"("visits":0,"goals":1})");
+    if (goal.external_metrics_connection_type_id != 1 || goal.visits != 0 || goal.goals != 1 ||
+      old_goal.external_metrics_connection_type_id != 1)
+    {
+      throw std::runtime_error("Named conversion connector type mismatch");
+    }
+    expect_error(
+      R"({"landing_bounced":false,"landing_session_time":42,)"
+      R"("landing_page_views":5,"landing_is_new_user":true,)"
+      R"("external_metrics_connection_type_id":32768,"source_date":"2026-09-10"})");
+    if (yandex_value.external_metrics_connection_type_id != 1 ||
+        yandex_value.source_date != Generics::Time(
           String::SubString("2026-09-10"), "%Y-%m-%d", true) ||
-        !yandex_value.yandex_reporting_comparable)
+        !yandex_value.reporting_comparable)
     {
       throw std::runtime_error("Parsed Yandex post-click metadata mismatch");
     }
 
+    const auto external = parse_post_click_action_value(
+      R"({"landing_bounced":false,"landing_session_time":1,)"
+      R"("landing_page_views":1,"landing_is_new_user":false,)"
+      R"("external_metrics_connection_id":18,"source_date":"2026-09-10"})");
+    if (external.external_metrics_connection_type_id != 1 ||
+      value.external_metrics_connection_type_id != 0)
+    {
+      throw std::runtime_error("Generic external/internal connection mismatch");
+    }
+
+    const auto legacy = parse_post_click_action_value(
+      R"({"landing_bounced":false,"landing_session_time":1,)"
+      R"("landing_page_views":1,"landing_is_new_user":false,)"
+      R"("yandex_ref_id":17,"yandex_event_date":"2026-09-10",)"
+      R"("yandex_reporting_comparable":true})");
+    if (legacy.external_metrics_connection_type_id != 1 || !legacy.reporting_comparable)
+    {
+      throw std::runtime_error("Legacy pending profile cannot be read");
+    }
+
+    expect_error(
+      R"({"landing_bounced":false,"landing_session_time":1,)"
+      R"("landing_page_views":1,"landing_is_new_user":false,)"
+      R"("yandex_ref_id":17,"external_metrics_connection_id":18,)"
+      R"("source_date":"2026-09-10"})");
     expect_error(R"({"landing_bounced":true})");
     expect_error(
       R"({"landing_bounced":true,"landing_bounced":false,)"
@@ -85,17 +136,17 @@ main()
     expect_error(
       R"({"landing_bounced":false,"landing_session_time":1,)"
       R"("landing_page_views":1,"landing_is_new_user":false,)"
-      R"("yandex_ref_id":17})");
+      R"("external_metrics_connection_id":17})");
     expect_error(
       R"({"landing_bounced":false,"landing_session_time":1,)"
       R"("landing_page_views":1,"landing_is_new_user":false,)"
-      R"("yandex_ref_id":17,"yandex_event_date":"invalid",)"
-      R"("yandex_reporting_comparable":true})");
+      R"("external_metrics_connection_id":17,"source_date":"invalid",)"
+      R"("reporting_comparable":true})");
     expect_error(
       R"({"landing_bounced":false,"landing_session_time":1,)"
       R"("landing_page_views":1,"landing_is_new_user":false,)"
-      R"("yandex_ref_id":-1,"yandex_event_date":"2026-09-10",)"
-      R"("yandex_reporting_comparable":true})");
+      R"("external_metrics_connection_id":-1,"source_date":"2026-09-10",)"
+      R"("reporting_comparable":true})");
     expect_error("not-json");
   }
   catch (const std::exception& ex)

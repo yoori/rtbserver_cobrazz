@@ -38,7 +38,7 @@ namespace AdServer::ChannelSvcs
     return out;
   }
 
-  bool SoftMatcher::match_exact(const StringVector& words) const
+  bool SoftMatcher::match_exact(const MatchWordVector& words) const
     /*throw(eh::Exception)*/
   {
     // for exact triggers arrays words_ and simple_words_ are equal length
@@ -47,7 +47,7 @@ namespace AdServer::ChannelSvcs
     {
       return false;
     }
-    StringVector::const_iterator word_it = words.begin();
+    MatchWordVector::const_iterator word_it = words.begin();
     LexemesPtrVector::const_iterator it = words_.begin();
     SubHashVector::const_iterator simple_it = simple_words_.begin();
     for (; word_it != words.end(); ++it, ++word_it, ++simple_it)
@@ -58,7 +58,8 @@ namespace AdServer::ChannelSvcs
         for (LexemeData::Forms::const_iterator i = (*it)->forms.begin();
             i != (*it)->forms.end(); ++i)
         {
-          if (*i == *word_it)
+          const auto form = i->text();
+          if (std::string_view(form.data(), form.size()) == word_it->text())
           {
             match = true;
             break;
@@ -67,7 +68,8 @@ namespace AdServer::ChannelSvcs
       }
       else
       {
-        match = (*simple_it == *word_it);
+        const auto word = simple_it->text();
+        match = (std::string_view(word.data(), word.size()) == word_it->text());
       }
 
       if (!match)
@@ -78,7 +80,7 @@ namespace AdServer::ChannelSvcs
     return true;
   }
 
-  bool SoftMatcher::match(const MatchWords& words, bool soft_match) const
+  bool SoftMatcher::match(const MatchWordSet& words, bool soft_match) const
     /*throw(eh::Exception)*/
   {
     if (soft_match)
@@ -91,10 +93,10 @@ namespace AdServer::ChannelSvcs
       return false;
     }
     bool match = true;
-    MatchWords::const_iterator m_it = words.end();
+    MatchWordSet::const_iterator m_it = words.end();
     for (SubHashVector::const_iterator it = simple_words_.begin(); it != simple_words_.end(); ++it)
     {
-      m_it = words.find(*it);
+      m_it = words.find(Generics::StringViewHashAdapter(it->hash(), std::string_view(*it)));
       match = (m_it != words.end());
       if (!match)
       {
@@ -110,7 +112,7 @@ namespace AdServer::ChannelSvcs
         for (LexemeData::Forms::const_iterator i = (*it)->forms.begin();
           i != (*it)->forms.end(); ++i)
         {
-          m_it = words.find(*i);
+          m_it = words.find(Generics::StringViewHashAdapter(i->hash(), std::string_view(*i)));
           if (m_it != words.end())
           {
             match = true;
@@ -173,6 +175,33 @@ namespace AdServer::ChannelSvcs
     return container;
   }
 
+
+  void SoftMatcher::get_keyword_parts(std::vector<std::string_view>& parts) const
+  {
+    SubStringVector serialized_parts;
+    Serialization::get_parts(trigger_, serialized_parts);
+    for (const auto& part : serialized_parts)
+    {
+      parts.emplace_back(part.data(), part.size());
+    }
+    const auto append_forms = [&](const Lexeme_var& lexeme)
+    {
+      if (lexeme)
+      {
+        for (const auto& form : lexeme->forms)
+        {
+          parts.emplace_back(form.text().data(), form.text().size());
+        }
+      }
+    };
+    append_forms(main_lexem_);
+    for (const auto& lexeme : words_)
+    {
+      append_forms(lexeme);
+    }
+    std::sort(parts.begin(), parts.end());
+    parts.erase(std::unique(parts.begin(), parts.end()), parts.end());
+  }
 
   SoftMatcher::SoftMatcher(unsigned short lang, std::string& trigger)
     noexcept

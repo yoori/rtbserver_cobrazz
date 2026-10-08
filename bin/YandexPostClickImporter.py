@@ -16,20 +16,21 @@ import requests
 
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.Service import Service, StopService
+from rtbserver_utils.ExternalMetricsResidual import ResidualPublisher, DDL as RESIDUAL_DDL
+from rtbserver_utils.ExternalMetricsTypes import YANDEX_METRIKA
+from rtbserver_utils.YandexPostClickConversions import (
+  ConversionImporter, DDL as CONVERSION_DDL, GOAL_FIELDS)
 
 
-REPORTING_SYNC_TABLE = 'YandexPostClickReportingSync'
-LOGS_SYNC_TABLE = 'YandexPostClickLogsSync'
-LOG_REQUESTS_TABLE = 'YandexPostClickLogRequests'
-UPDATE_IMPORT_STATUS_FUNCTION = 'adserver.update_yandex_metrika_import_status'
-ADVANCE_LOGS_WATERMARK_FUNCTION = 'adserver.advance_yandex_metrika_logs_watermark'
-YANDEX_METRIKA_SOURCE = 'Yandex Metrika'
+REPORTING_SYNC_TABLE = 'YandexPostClickReportingSyncV3'
+LOGS_SYNC_TABLE = 'YandexPostClickLogsSyncV3'
+LOG_REQUESTS_TABLE = 'YandexPostClickLogRequestsV3'
 
 INTERNAL_CLICKHOUSE_DDL = (
   f"""
 CREATE TABLE IF NOT EXISTS {REPORTING_SYNC_TABLE}
 (
-  ymref_id UInt64,
+  metrika_id UInt64,
   hour DateTime('UTC'),
   ccid UInt64,
   visits UInt64,
@@ -45,7 +46,7 @@ CREATE TABLE IF NOT EXISTS {REPORTING_SYNC_TABLE}
 )
 ENGINE = ReplacingMergeTree(version)
 PARTITION BY toYYYYMM(hour)
-ORDER BY (ymref_id, hour, ccid)
+ORDER BY (metrika_id, hour, ccid)
 """,
   f"""
 ALTER TABLE {REPORTING_SYNC_TABLE}
@@ -58,17 +59,17 @@ ALTER TABLE {REPORTING_SYNC_TABLE}
   f"""
 CREATE TABLE IF NOT EXISTS {LOGS_SYNC_TABLE}
 (
-  ymref_id UInt64,
+  metrika_id UInt64,
   visit_id UInt64,
-  event_date Date,
+  source_date Date,
   request_id String,
   payload_hash UInt64,
   reporting_comparable UInt8,
   published_at DateTime64(3, 'UTC')
 )
 ENGINE = ReplacingMergeTree(published_at)
-PARTITION BY toYYYYMM(event_date)
-ORDER BY (ymref_id, visit_id)
+PARTITION BY toYYYYMM(source_date)
+ORDER BY (metrika_id, source_date, visit_id)
 """,
   f"""
 ALTER TABLE {LOGS_SYNC_TABLE}
@@ -77,37 +78,20 @@ ALTER TABLE {LOGS_SYNC_TABLE}
   f"""
 CREATE TABLE IF NOT EXISTS {LOG_REQUESTS_TABLE}
 (
-  ymref_id UInt64,
-  event_date Date,
+  metrika_id UInt64,
+  source_date Date,
   request_id UInt64,
   status LowCardinality(String),
   version DateTime64(3, 'UTC')
 )
 ENGINE = ReplacingMergeTree(version)
-PARTITION BY toYYYYMM(event_date)
-ORDER BY (ymref_id, event_date)
+PARTITION BY toYYYYMM(source_date)
+ORDER BY (metrika_id, source_date, request_id)
 """,
 )
 
 POST_CLICK_ACTION_VERSION = 'PostClickAction\t1.0'
-ESTIMATION_HEADER = (
-  'batch_id',
-  'ymref_id',
-  'sdate',
-  'cc_id',
-  'visits_delta',
-  'visits_with_bounce_delta',
-  'visits_robot_delta',
-  'visits_robot_available_delta',
-  'session_time_sum_delta',
-  'page_views_delta',
-  'new_user_visits_delta',
-  'sampled',
-  'sample_share',
-  'reporting_version',
-)
 REPORTING_PAGE_SIZE = 100000
-LOGS_READY_DELAY = datetime.timedelta(hours=12)
 LOGS_TIMEZONE = datetime.timezone(datetime.timedelta(hours=3))
 USER_ID_DISTRIBUTION_MOD = 1000
 REQUEST_ID_PATTERN = r'[A-Za-z0-9_-]{22}[.][.]'
@@ -146,7 +130,7 @@ LOG_FIELDS = (
   'ym:s:isNewUser',
   'ym:s:<attribution>UTMTerm',
   'ym:s:<attribution>UTMContent',
-)
+) + GOAL_FIELDS
 ROBOT_LOG_FIELD = 'ym:s:isRobotPro'
 
 TERMINAL_LOG_REQUEST_STATUSES = {
@@ -163,8 +147,8 @@ def parse_ccid(value):
   return int(match.group(1)) if match else None
 
 
-def format_post_click_action_name(ymref_id, visit_id):
-  return f'landing:{ymref_id}-{visit_id}'
+def format_post_click_action_name(metrika_id, visit_id):
+  return f'landing:ym_{metrika_id}-{visit_id}'
 
 
 def parse_metrika_term(value):
@@ -255,6 +239,13 @@ class YandexApi:
     self._reporting_timezone = None
     self._timezone = None
 
+  def goals(self):
+    response = requests.get(
+      f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/goals',
+      params={'useDeleted': 'true'}, headers=self.headers, timeout=self.timeout)
+    response.raise_for_status()
+    return response.json()['goals']
+
   def _load_timezone(self):
     if self._timezone is None:
       response = requests.get(
@@ -284,8 +275,7 @@ class YandexApi:
     return response.json()
 
   def create_log_request(self, event_date, attribution, include_robot=False):
-    fields = ','.join(
-      field.replace('<attribution>', attribution) for field in LOG_FIELDS)
+    fields = ','.join(field.replace('<attribution>', attribution) for field in LOG_FIELDS)
     if include_robot:
       fields += ',' + ROBOT_LOG_FIELD
     response = requests.post(
@@ -303,8 +293,7 @@ class YandexApi:
     return response.json()['log_request']
 
   def evaluate_log_fields(self, event_date, attribution, include_robot=False):
-    fields = ','.join(
-      field.replace('<attribution>', attribution) for field in LOG_FIELDS)
+    fields = ','.join(field.replace('<attribution>', attribution) for field in LOG_FIELDS)
     if include_robot:
       fields += ',' + ROBOT_LOG_FIELD
     response = requests.get(
@@ -324,7 +313,8 @@ class YandexApi:
 
   def get_log_request(self, request_id):
     response = requests.get(
-      f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/logrequest/{request_id}',
+      f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/'
+      f'logrequest/{request_id}',
       headers=self.headers,
       timeout=self.timeout)
     response.raise_for_status()
@@ -352,6 +342,7 @@ class Application(Service):
   def __init__(self):
     super().__init__()
     self.args_parser.add_argument('--days', type=int)
+    self.args_parser.add_argument('--logs-expiry-hours', type=int)
     self.args_parser.add_argument('--attribution', choices=sorted(ATTRIBUTIONS))
     self.args_parser.add_argument('--pg-dsn')
     self.args_parser.add_argument('--ch-host')
@@ -372,6 +363,9 @@ class Application(Service):
     self.chunks_count = self.params.get('chunks_count', 24)
     self.request_timeout = self.params.get('request_timeout', 60.0)
     self._robot_metric_available = {}
+    self.logs_expiry_hours = self.params.get('logs_expiry_hours', 72)
+    if self.logs_expiry_hours <= 0:
+      raise ValueError('logs_expiry_hours must be positive')
     if self.days < 2:
       raise ValueError('days must be at least 2')
 
@@ -393,8 +387,15 @@ class Application(Service):
     self.estimation_dir = os.path.join(self.out_dir, 'YandexPostClickEstimationStat')
     os.makedirs(self.estimation_dir, exist_ok=True)
     self._connect()
-    for statement in INTERNAL_CLICKHOUSE_DDL:
+    for statement in INTERNAL_CLICKHOUSE_DDL + RESIDUAL_DDL:
       self.ch.command(statement)
+    for statement in CONVERSION_DDL:
+      self.ch.command(statement)
+    self._migrate_clickhouse()
+    self.residual = ResidualPublisher(self)
+    self.residual.drain()
+    self.conversions = ConversionImporter(
+      self, parse_metrika_term, parse_log_event_time, request_chunk)
 
   def on_stop(self):
     if self.pg is not None:
@@ -403,14 +404,22 @@ class Application(Service):
       self.ch.close()
     super().on_stop()
 
+  def _migrate_clickhouse(self):
+    from rtbserver_utils.YandexPostClickMigration import migrate
+    migrate(self)
+
   def on_timer(self):
     try:
       self._connect()
+      self.residual.finalize()
       with self.pg.cursor() as cursor:
         cursor.execute(
-          "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef "
-          "WHERE status = 'A' AND source = %s",
-          (YANDEX_METRIKA_SOURCE,))
+          "SELECT c.external_metrics_connection_id, y.token, y.metrika_id, c.status "
+          "FROM externalmetricsconnection c JOIN externalmetricsconnectionyandexmetrika y "
+          "USING (external_metrics_connection_id) "
+          "WHERE c.external_metrics_connection_type_id = %s "
+          "ORDER BY c.external_metrics_connection_id",
+          (YANDEX_METRIKA,))
         references = tuple(cursor.fetchall())
       self.pg.commit()
     except Exception as ex:
@@ -418,33 +427,49 @@ class Application(Service):
       self._reset_connections()
       return
 
-    for ymref_id, token, counter_id in references:
+    counters = {}
+    for connection_id, token, counter_id, status in references:
+      counters.setdefault(int(counter_id), []).append((connection_id, token, status))
+    for counter_id, connections in counters.items():
       self.verify_running()
-      try:
-        self._mark_fetch_time(ymref_id, False)
-        api = YandexApi(token, counter_id, self.request_timeout)
-        reporting = self._load_reporting(ymref_id, api)
-        self._process_logs(ymref_id, api, reporting)
-        self._mark_fetch_time(ymref_id, True)
-      except StopService:
-        raise
-      except Exception as ex:
-        self.print_(0, f'Unable to import Yandex Metrika reference {ymref_id}: {ex}')
-        self._reset_connections()
+      active = [(connection_id, token) for connection_id, token, status in connections
+        if status == 'A']
+      candidates = active or [(connections[0][0], connections[0][1])]
+      for connection_id, token in candidates:
         try:
-          self._connect()
-        except Exception as reconnect_ex:
-          self.print_(0, f'Unable to reconnect import storage: {reconnect_ex}')
-          return
+          if active:
+            self._mark_fetch_time(connection_id, False)
+          api = YandexApi(token, counter_id, self.request_timeout)
+          self.residual.bootstrap(counter_id, api.timezone)
+          self.residual.finalize()
+          if not active:
+            break
+          reporting = self._load_reporting(counter_id, api)
+          self.conversions.prepare(api)
+          self._process_logs(counter_id, api, reporting)
+          self.residual.reconcile(counter_id, api, reporting)
+          self._mark_fetch_time(connection_id, True)
+          break
+        except StopService:
+          raise
+        except Exception as ex:
+          self.print_(0, f'Unable to import Yandex counter {counter_id} '
+            f'via connection {connection_id}: {ex}')
+          self._reset_connections()
+          try:
+            self._connect()
+          except Exception as reconnect_ex:
+            self.print_(0, f'Unable to reconnect import storage: {reconnect_ex}')
+            return
 
-  def _mark_fetch_time(self, ymref_id, success):
+  def _mark_fetch_time(self, connection_id, success):
     if not isinstance(success, bool):
       raise ValueError('success must be boolean')
 
     with self.pg.cursor() as cursor:
       cursor.execute(
-        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
-        (ymref_id, success))
+        'SELECT adserver.update_external_metrics_connection_fetch_time(%s, %s)',
+        (connection_id, success))
     self.pg.commit()
 
   def _reset_connections(self):
@@ -472,6 +497,13 @@ class Application(Service):
   def _connect(self):
     if self.pg is None or self.pg.closed:
       self.pg = psycopg2.connect(self.params['pg_dsn'])
+      with self.pg.cursor() as cursor:
+        cursor.execute('SELECT pg_try_advisory_lock(741902, 1)')
+        locked = cursor.fetchone()[0]
+      self.pg.commit()
+      if not locked:
+        self.pg.close()
+        raise RuntimeError('Another external metrics importer is already running')
 
     if self.ch is None:
       self.ch = clickhouse_connect.get_client(
@@ -503,7 +535,7 @@ class Application(Service):
       'limit': REPORTING_PAGE_SIZE,
     })
 
-  def _load_reporting(self, ymref_id, api, date1=None, date2=None):
+  def _load_reporting(self, metrika_id, api, date1=None, date2=None):
     timezone = api.timezone()
     today = datetime.datetime.now(timezone).date()
     if date1 is None:
@@ -514,6 +546,7 @@ class Application(Service):
       raise ValueError('reporting date1 must not be after date2')
 
     rows = {}
+    source_dates = {}
     unsampled = True
 
     offset = 1
@@ -531,10 +564,12 @@ class Application(Service):
         hour = datetime.datetime.fromisoformat(decode_dimension(item, 0))
         if hour.tzinfo is None:
           hour = hour.replace(tzinfo=timezone)
+        source_date = hour.astimezone(timezone).date()
         hour = hour.astimezone(datetime.timezone.utc)
         hour = hour.replace(minute=0, second=0, microsecond=0)
         metrics = parse_reporting_metrics(item['metrics'])
         key = (hour, ccid)
+        source_dates[key] = source_date
         current = rows.setdefault(key, [0, 0, 0, 0, 0.0, 0, 0, False, 1.0])
         current[0] += metrics[0]
         current[1] += metrics[1]
@@ -552,99 +587,33 @@ class Application(Service):
         break
       offset += len(data)
 
-    range_start = datetime.datetime.combine(date1, datetime.time(), timezone)
-    range_end = datetime.datetime.combine(
-      date2 + datetime.timedelta(days=1),
-      datetime.time(),
-      timezone)
-    old_rows = {}
-    old_versions = {}
-    for row in self.ch.query(
-        f"SELECT hour, ccid, visits, visits_with_bounce, visits_robot, "
-        f"visits_robot_available, session_time_sum, page_views, new_user_visits, "
-        f"sampled, sample_share, version "
-        f"FROM {REPORTING_SYNC_TABLE} FINAL "
-        "WHERE ymref_id = %(ymref_id)s AND hour >= %(range_start)s "
-        "AND hour < %(range_end)s",
-        parameters={
-          'ymref_id': ymref_id,
-          'range_start': range_start.astimezone(datetime.timezone.utc),
-          'range_end': range_end.astimezone(datetime.timezone.utc),
-        }).result_rows:
-      hour = row[0]
-      if hour.tzinfo is None:
-        hour = hour.replace(tzinfo=datetime.timezone.utc)
-      else:
-        hour = hour.astimezone(datetime.timezone.utc)
-      key = (hour, int(row[1]))
-      if len(row) >= 12:
-        old_rows[key] = tuple(row[2:11])
-        old_version = row[11]
-      else:
-        old_rows[key] = (row[2], row[3], 0, 0, row[4], row[5], row[6], row[7], row[8])
-        old_version = row[9]
-      if old_version.tzinfo is None:
-        old_version = old_version.replace(tzinfo=datetime.timezone.utc)
-      else:
-        old_version = old_version.astimezone(datetime.timezone.utc)
-      old_versions[key] = old_version
-    changed = []
-    deltas = []
-    transitions = []
-    empty = (0, 0, 0, 0, 0.0, 0, 0, False, 1.0)
     version = datetime.datetime.now(datetime.timezone.utc)
-    for hour, ccid in sorted(set(rows) | set(old_rows)):
-      current = tuple(rows.get((hour, ccid), empty))
-      previous = tuple(old_rows.get((hour, ccid), empty))
-      if current != previous:
-        previous_version = old_versions.get((hour, ccid))
-        changed.append((ymref_id, hour, ccid, *current, version))
-        transitions.append((
-          ymref_id,
-          hour.isoformat(),
-          ccid,
-          previous_version.isoformat() if previous_version is not None else None,
-          *previous,
-          *current,
-        ))
-        deltas.append((
-          ymref_id,
-          hour,
-          ccid,
-          current[0] - previous[0],
-          current[1] - previous[1],
-          current[2] - previous[2],
-          current[3] - previous[3],
-          current[4] - previous[4],
-          current[5] - previous[5],
-          current[6] - previous[6],
-          current[7],
-          current[8],
-          version,
-        ))
-
-    if changed:
-      self._publish_estimation_deltas(deltas, self._estimation_batch_id(transitions))
-      self.ch.insert(
-        REPORTING_SYNC_TABLE,
-        changed,
-        column_names=(
-          'ymref_id',
-          'hour',
-          'ccid',
-          'visits',
-          'visits_with_bounce',
-          'visits_robot',
-          'visits_robot_available',
-          'session_time_sum',
-          'page_views',
-          'new_user_visits',
-          'sampled',
-          'sample_share',
-          'version'))
+    range_start = datetime.datetime.combine(date1, datetime.time(), timezone)
+    range_end = datetime.datetime.combine(date2 + datetime.timedelta(days=1),
+      datetime.time(), timezone)
+    previous = self.ch.query(
+      f'SELECT hour, ccid FROM {REPORTING_SYNC_TABLE} FINAL '
+      'WHERE metrika_id = %(id)s '
+      'AND hour >= %(range_start)s AND hour < %(range_end)s', parameters={
+        'id': metrika_id,
+        'range_start': range_start.astimezone(datetime.timezone.utc).replace(minute=0),
+        'range_end': range_end.astimezone(datetime.timezone.utc).replace(minute=0),
+      }).result_rows
+    snapshot = dict(rows)
+    for record in previous:
+      hour = record[0].replace(tzinfo=datetime.timezone.utc)
+      snapshot.setdefault((hour, int(record[1])), [0, 0, 0, 0, 0.0, 0, 0, False, 1.0])
+    if snapshot:
+      self.ch.insert(REPORTING_SYNC_TABLE, [
+        (metrika_id, hour, ccid, *values, version)
+        for (hour, ccid), values in snapshot.items()], column_names=(
+          'metrika_id', 'hour', 'ccid', 'visits', 'visits_with_bounce',
+          'visits_robot', 'visits_robot_available', 'session_time_sum', 'page_views',
+          'new_user_visits', 'sampled', 'sample_share', 'version'))
 
     return {
       'rows': rows,
+      'source_dates': source_dates,
       'unsampled': unsampled,
       'date1': date1,
       'date2': date2,
@@ -654,58 +623,24 @@ class Application(Service):
   @staticmethod
   def _csv_line(values):
     output = io.StringIO(newline='')
-    csv.writer(output, lineterminator='').writerow(values)
-    return output.getvalue()
+    csv.writer(output, lineterminator='\n').writerow(values)
+    return output.getvalue()[:-1]
 
-  @staticmethod
-  def _estimation_batch_id(transitions):
-    return hashlib.sha256(
-      json.dumps(transitions, separators=(',', ':')).encode()).hexdigest()
-
-  def _publish_estimation_deltas(self, rows, batch_id):
-    with Context(self, out_dir=self.estimation_dir) as context:
-      file_id = context.fname_seed.replace('.', '-')
-      writer = context.files.get_line_writer(
-        name=f'YandexPostClickEstimationStats_{file_id}.csv')
-      writer.write_line(self._csv_line(ESTIMATION_HEADER))
-      for row in rows:
-        values = (
-          batch_id,
-          row[0],
-          row[1].isoformat(),
-          row[2],
-          *row[3:10],
-          str(bool(row[10])).lower(),
-          row[11],
-          row[12].isoformat(),
-        ) if len(row) >= 13 else (
-          batch_id,
-          row[0],
-          row[1].isoformat(),
-          row[2],
-          *row[3:8],
-          str(bool(row[8])).lower(),
-          row[9],
-          row[10].isoformat(),
-        )
-        writer.write_line(self._csv_line(values))
-      writer.write('\n')
-
-  def _process_logs(self, ymref_id, api, reporting):
+  def _process_logs(self, metrika_id, api, reporting):
     handled_dates = set()
-    for event_date, request_id in self._pending_log_requests(ymref_id):
+    for event_date, request_id in self._pending_log_requests(metrika_id):
       self.verify_running()
-      self._process_log_request(ymref_id, event_date, request_id, api, reporting)
+      self._process_log_request(metrika_id, event_date, request_id, api, reporting)
       handled_dates.add(event_date)
 
     today = datetime.datetime.now(api.timezone()).date()
-    for age in range(1, self.days):
+    for age in range(1, max(self.days, (self.logs_expiry_hours + 23) // 24 + 1)):
       self.verify_running()
       event_date = today - datetime.timedelta(days=age)
       if event_date in handled_dates:
         continue
 
-      request_state = self._log_request_state(ymref_id, event_date)
+      request_state = self._log_request_state(metrika_id, event_date)
       if request_state is None or request_state[1] in TERMINAL_LOG_REQUEST_STATUSES:
         include_robot = self._is_robot_metric_available(api, event_date)
         try:
@@ -714,11 +649,11 @@ class Application(Service):
         except TypeError:
           log_request = api.create_log_request(event_date, self.attribution)
         request_id = int(log_request['request_id'])
-        self._save_log_request(ymref_id, event_date, request_id, log_request['status'])
+        self._save_log_request(metrika_id, event_date, request_id, log_request['status'])
       else:
         request_id = request_state[0]
 
-      self._process_log_request(ymref_id, event_date, request_id, api, reporting)
+      self._process_log_request(metrika_id, event_date, request_id, api, reporting)
 
   def _is_robot_metric_available(self, api, event_date):
     counter_id = getattr(api, 'counter_id', None)
@@ -735,63 +670,70 @@ class Application(Service):
     cache[counter_id] = available
     return available
 
-  def _process_log_request(self, ymref_id, event_date, request_id, api, reporting):
+  def _process_log_request(self, metrika_id, event_date, request_id, api, reporting):
     log_request = api.get_log_request(request_id)
     status = log_request['status']
-    self._save_log_request(ymref_id, event_date, request_id, status)
+    self._save_log_request(metrika_id, event_date, request_id, status)
     if status != 'processed':
       return
 
     date1 = reporting.get('date1')
     date2 = reporting.get('date2')
     if date1 is not None and date2 is not None and not date1 <= event_date <= date2:
-      reporting = self._load_reporting(ymref_id, api, event_date, event_date)
+      reporting = self._load_reporting(metrika_id, api, event_date, event_date)
 
     records = []
+    ccids = {}
     watermark = None
     for part in log_request.get('parts', []):
       self.verify_running()
       text = api.download_log_part(request_id, int(part['part_number']))
-      part_records, part_watermark = self._parse_log_part_with_watermark(ymref_id, text, event_date)
+      part_records, part_watermark = self._parse_log_part_with_watermark(
+        metrika_id, text, event_date)
       records.extend(part_records)
+      for row in csv.DictReader(text.splitlines(), delimiter='\t'):
+        ccid = parse_ccid(self._field(row, 'UTMContent'))
+        if ccid is not None:
+          ccids[int(self._field(row, 'visitID'))] = ccid
+      self.conversions.process(metrika_id, event_date, text)
       if part_watermark is not None and (watermark is None or part_watermark > watermark):
         watermark = part_watermark
 
-    published = self._publish_post_click_actions(ymref_id, event_date, records)
+    published = self._publish_post_click_actions(metrika_id, event_date, records)
     if published:
       self.ch.insert(
         LOGS_SYNC_TABLE,
         published,
         column_names=(
-          'ymref_id',
+          'metrika_id',
           'visit_id',
-          'event_date',
+          'source_date',
           'request_id',
           'payload_hash',
           'reporting_comparable',
           'published_at'))
 
+    self.residual.remember(metrika_id, records, ccids, api.timezone())
+    self.residual.reconcile(metrika_id, api, reporting)
     api.clean_log_request(request_id)
-    self._save_log_request(ymref_id, event_date, request_id, 'cleaned')
-    if watermark is not None:
-      self._advance_logs_watermark(ymref_id, watermark)
-    self._update_import_status(ymref_id, event_date, reporting)
+    self._save_log_request(metrika_id, event_date, request_id, 'cleaned')
 
-  def _pending_log_requests(self, ymref_id):
+  def _pending_log_requests(self, metrika_id):
     rows = self.ch.query(
-      f"SELECT event_date, request_id, status FROM {LOG_REQUESTS_TABLE} FINAL "
-      "WHERE ymref_id = %(ymref_id)s ORDER BY event_date",
-      parameters={'ymref_id': ymref_id}).result_rows
+      f"SELECT source_date, request_id, status FROM {LOG_REQUESTS_TABLE} FINAL "
+      "WHERE metrika_id = %(metrika_id)s "
+      "ORDER BY source_date",
+      parameters={'metrika_id': metrika_id}).result_rows
     return [
       (row[0], int(row[1]))
       for row in rows
       if row[2] not in TERMINAL_LOG_REQUEST_STATUSES
     ]
 
-  def _parse_log_part(self, ymref_id, text, event_date):
-    return self._parse_log_part_with_watermark(ymref_id, text, event_date)[0]
+  def _parse_log_part(self, metrika_id, text, event_date):
+    return self._parse_log_part_with_watermark(metrika_id, text, event_date)[0]
 
-  def _parse_log_part_with_watermark(self, ymref_id, text, event_date):
+  def _parse_log_part_with_watermark(self, metrika_id, text, event_date):
     records = []
     watermark = None
     for row in csv.DictReader(text.splitlines(), delimiter='\t'):
@@ -813,9 +755,9 @@ class Application(Service):
         'landing_session_time': int(self._field(row, 'visitDuration')),
         'landing_page_views': int(self._field(row, 'pageViews')),
         'landing_is_new_user': parse_bool(self._field(row, 'isNewUser')),
-        'yandex_ref_id': ymref_id,
-        'yandex_event_date': event_date.isoformat(),
-        'yandex_reporting_comparable': reporting_comparable,
+        'external_metrics_connection_type_id': YANDEX_METRIKA,
+        'source_date': event_date.isoformat(),
+        'reporting_comparable': reporting_comparable,
       }
       if robot_available:
         payload_data.update(
@@ -848,13 +790,15 @@ class Application(Service):
         return value or ''
     return None
 
-  def _publish_post_click_actions(self, ymref_id, event_date, records):
+  def _publish_post_click_actions(self, metrika_id, event_date, records):
     processed = {
       int(row[0])
       for row in self.ch.query(
         f"SELECT visit_id FROM {LOGS_SYNC_TABLE} FINAL "
-        "WHERE ymref_id = %(ymref_id)s AND event_date = %(event_date)s",
-        parameters={'ymref_id': ymref_id, 'event_date': event_date}).result_rows
+        "WHERE metrika_id = %(metrika_id)s "
+        "AND source_date = %(event_date)s",
+        parameters={
+          'metrika_id': metrika_id, 'event_date': event_date}).result_rows
     }
     records_by_visit = {record[0]: record for record in records}
     new_records = [
@@ -878,7 +822,7 @@ class Application(Service):
           writers[chunk] = writer
         if writer.first:
           writer.write_line(POST_CLICK_ACTION_VERSION)
-        action_name = format_post_click_action_name(ymref_id, visit_id)
+        action_name = format_post_click_action_name(metrika_id, visit_id)
         writer.write_line(
           event_time.strftime('%Y-%m-%d_%H:%M:%S') + '\t' + request_id +
           '\t' + action_name + '\t' + payload)
@@ -888,7 +832,7 @@ class Application(Service):
     published_at = datetime.datetime.now(datetime.timezone.utc)
     return [
       (
-        ymref_id,
+        metrika_id,
         visit_id,
         date,
         request_id,
@@ -898,48 +842,23 @@ class Application(Service):
       for visit_id, date, _, request_id, _, payload, reporting_comparable in new_records
     ]
 
-  def _log_request_state(self, ymref_id, event_date):
+  def _log_request_state(self, metrika_id, event_date):
     rows = self.ch.query(
       f"SELECT request_id, status FROM {LOG_REQUESTS_TABLE} FINAL "
-      "WHERE ymref_id = %(ymref_id)s AND event_date = %(event_date)s",
-      parameters={'ymref_id': ymref_id, 'event_date': event_date}).result_rows
+      "WHERE metrika_id = %(metrika_id)s "
+      "AND source_date = %(event_date)s ORDER BY version DESC, request_id DESC LIMIT 1",
+      parameters={
+        'metrika_id': metrika_id, 'event_date': event_date}).result_rows
     return (int(rows[0][0]), rows[0][1]) if rows else None
 
-  def _save_log_request(self, ymref_id, event_date, request_id, status):
+  def _save_log_request(self, metrika_id, event_date, request_id, status):
     self.ch.insert(
       LOG_REQUESTS_TABLE,
-      [(ymref_id, event_date, request_id, status,
+      [(metrika_id, event_date, request_id, status,
         datetime.datetime.now(datetime.timezone.utc))],
-      column_names=('ymref_id', 'event_date', 'request_id', 'status', 'version'))
+      column_names=(
+        'metrika_id', 'source_date', 'request_id', 'status', 'version'))
 
-  def _advance_logs_watermark(self, ymref_id, event_time):
-    ready_before_date = (
-      event_time.astimezone(LOGS_TIMEZONE) - LOGS_READY_DELAY).date()
-    with self.pg.cursor() as cursor:
-      cursor.execute(
-        f"SELECT {ADVANCE_LOGS_WATERMARK_FUNCTION}(%s, %s)",
-        (ymref_id, ready_before_date))
-    self.pg.commit()
-
-  def _update_import_status(self, ymref_id, event_date, reporting):
-    timezone = reporting.get('timezone', datetime.timezone.utc)
-    reporting_visits = sum(
-      values[0] for (hour, _), values in reporting['rows'].items()
-      if hour.astimezone(timezone).date() == event_date)
-    logs_visits = int(self.ch.query(
-      f"SELECT countIf(reporting_comparable) FROM {LOGS_SYNC_TABLE} FINAL "
-      "WHERE ymref_id = %(ymref_id)s AND event_date = %(event_date)s",
-      parameters={'ymref_id': ymref_id, 'event_date': event_date}).result_rows[0][0])
-    with self.pg.cursor() as cursor:
-      cursor.execute(
-        f"SELECT {UPDATE_IMPORT_STATUS_FUNCTION}(%s, %s, %s, %s, %s)",
-        (
-          ymref_id,
-          event_date,
-          reporting_visits,
-          logs_visits,
-          reporting['unsampled']))
-    self.pg.commit()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <string_view>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <String/StringManip.hpp>
@@ -32,10 +33,10 @@ namespace AdServer::ChannelSvcs
     SoftMatcher(unsigned short lang, std::string& trigger)
       noexcept;
 
-    bool match(const MatchWords& words, bool soft_match) const
+    bool match(const MatchWordSet& words, bool soft_match) const
         /*throw(eh::Exception)*/;
 
-    bool match_exact(const StringVector& words) const
+    bool match_exact(const MatchWordVector& words) const
         /*throw(eh::Exception)*/;
 
     char trigger_type() const noexcept;
@@ -75,6 +76,8 @@ namespace AdServer::ChannelSvcs
 
     const Lexeme_var& matched_lexeme() const noexcept;
 
+    void get_keyword_parts(std::vector<std::string_view>& parts) const;
+
   protected:
     virtual
     ~SoftMatcher() noexcept
@@ -96,6 +99,7 @@ namespace AdServer::ChannelSvcs
     ReferenceCounting::PolicyAssert> SoftMatcher_var;
 
   typedef std::set<SoftMatcher_var> MatcherVarsSet;
+  using MatchRequestMatchers = Generics::MonoSet<SoftMatcher_var>;
 
 } // namespace AdServer::ChannelSvcs
 

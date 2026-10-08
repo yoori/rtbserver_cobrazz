@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ChannelSvcs/ChannelCommons/KeywordPrefixIndex.hpp>
+#include <ChannelSvcs/ChannelCommons/KeywordInput.hpp>
+
 #include <atomic>
 #include <map>
 #include <set>
@@ -284,6 +287,11 @@ namespace AdServer::ChannelSvcs
       std::ostream* ostr = 0)
       /*throw(Exception)*/;
 
+    void match(
+      const MatchUrls& url_words, const MatchUrls& additional_url_words,
+      const KeywordInput inputs[CT_MAX], const KeywordInput& additional_url_keywords,
+      const Generics::Uuid& uid, unsigned int flags, TriggerMatchRes& res);
+
     /*match channels for trigger */
     void match(
       const MatchUrls& url_words,
@@ -359,6 +367,14 @@ namespace AdServer::ChannelSvcs
         Logging::Logger* logger)
         /*throw(eh::Exception)*/;
 
+    using KeywordPrefixIndexes = std::array<KeywordPrefixIndex, CT_MAX>;
+
+    std::shared_ptr<const KeywordPrefixIndexes> keyword_prefixes() const;
+
+    static bool match_parse_urls(
+      std::string_view refer, const std::set<unsigned short>& allow_ports, bool soft_matching,
+      MatchUrls& urls, Logging::Logger* logger);
+
     static void match_parse_urls(
       const String::SubString& refer,
       const String::SubString& refer_words,
@@ -367,7 +383,9 @@ namespace AdServer::ChannelSvcs
       MatchUrls& url_words,
       MatchWords& url_keywords,
       Logging::Logger* logger,
-      const Language::Segmentor::SegmentorInterface* segmentor)
+      const Language::Segmentor::SegmentorInterface* segmentor,
+      const KeywordPrefixIndex* prefixes = nullptr,
+      bool defer_combinations = false)
       /*throw(eh::Exception)*/;
 
   private:
@@ -446,21 +464,26 @@ namespace AdServer::ChannelSvcs
       TriggerMatchRes& res)
       /*throw(Exception)*/;
 
+    template<typename Prepare>
+    void match_impl_(
+      const MatchUrls& url_words, const MatchUrls& additional_url_words,
+      const Generics::Uuid& uid, unsigned int flags, TriggerMatchRes& res, const Prepare& prepare);
+
     /* match words for triggers*/
     void match_words_(
-      const MatchWords& key_words,
-      const MatchWords& words,
+      const MatchWordVector& key_words,
+      const MatchWordSet& words,
       const ChannelChunkArray& array,
-      const StringVector* exact_words,
+      const MatchWordVector* exact_words,
       MatchType type,
       unsigned int flags,
       TriggerMatchRes& res,
-      MatcherVarsSet* already_matched = 0)
+      MatchRequestMatchers* already_matched = 0)
       /*throw(Exception)*/;
 
     /* match non strict words for triggers*/
     void match_ns_words_(
-      const MatchWords& words,
+      const PreparedMatchWords& words,
       const ChannelChunkArray& array,
       MatchType type,
       unsigned int flags,
@@ -508,6 +531,8 @@ namespace AdServer::ChannelSvcs
     mutable Mutex_ lock_ns_map_;
     const unsigned long count_chunks_;
     ChannelChunkArray_var chunks_;//chunks
+    std::shared_ptr<const KeywordPrefixIndexes> keyword_prefixes_ =
+      std::make_shared<KeywordPrefixIndexes>();
     NSTriggerMapType ns_trigger_map_;//map triggers to NSTriggerAtom
     NSUrlMapType ns_url_map_;//map domain name to vector of matchers
     CCGMap_var ccgs_;

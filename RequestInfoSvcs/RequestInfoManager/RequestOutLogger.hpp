@@ -67,7 +67,9 @@ namespace AdServer::RequestInfoSvcs
       const LogProcessing::LogFlushTraits* research_post_click_flush,
       const LogProcessing::LogFlushTraits* bid_cost_stat_flush,
       Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting,
-      unsigned long colo_id)
+      unsigned long colo_id,
+      const LogProcessing::LogFlushTraits* post_click_conv_stat_flush = nullptr,
+      const LogProcessing::LogFlushTraits* research_post_conv_click_flush = nullptr)
       /*throw(Exception)*/;
 
     virtual Generics::Time flush_if_required(

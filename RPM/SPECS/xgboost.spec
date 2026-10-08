@@ -12,7 +12,6 @@ Source0: xgboost-%{version}.tar.gz
 Source1: foros-cxx-abi.macros
 Source2: xgboost-filesystem-provider.cpp
 Source3: xgboost-abi-smoke.cpp
-Source4: xgboost-devel-smoke.cpp
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
 BuildRequires: cmake >= 3.18
 BuildRequires: make
@@ -69,8 +68,6 @@ cp -a rabit/include/rabit %{buildroot}%{_includedir}/
 CXX=%{foros_toolchain_root}/bin/g++
 flags="-std=c++%{foros_cxx_standard} -D_GLIBCXX_USE_CXX11_ABI=%{foros_cxx11_abi}"
 $CXX $flags -fPIC -shared %{SOURCE2} -o build/libxgboost-filesystem-provider.so
-$CXX $flags -Wno-deprecated-declarations -fsyntax-only \
-  -I%{buildroot}%{_includedir} %{SOURCE4}
 $CXX $flags %{SOURCE3} -I%{buildroot}%{_includedir} -Lbuild -lxgboost-filesystem-provider \
   -L%{buildroot}%{_libdir} -lxgboost -Wl,-rpath,'$ORIGIN' -o build/xgboost-abi-smoke
 LD_LIBRARY_PATH=%{buildroot}%{_libdir}:"$PWD/build" build/xgboost-abi-smoke

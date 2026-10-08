@@ -403,6 +403,7 @@ namespace AdServer::LogProcessing
 
   typedef Aux_::BaseLogTraitsHelper<CreativeStatTraits> CreativeStatExtTraits;
   using PostClickStatExtTraits = Aux_::BaseLogTraitsHelper<PostClickStatCsvTraits>;
+  using PostClickConvStatExtTraits = Aux_::BaseLogTraitsHelper<PostClickConvStatCsvTraits>;
   using PostImpStatExtTraits = Aux_::BaseLogTraitsHelper<PostImpStatCsvTraits>;
 
   class CreativeStatDbSaver;

@@ -10,6 +10,8 @@ import tempfile
 import types
 import urllib.parse
 import unittest
+from contextlib import nullcontext
+from unittest.mock import Mock, patch
 
 
 REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -17,6 +19,7 @@ REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 def load_importer():
   sys.path.insert(0, str(REPOSITORY_ROOT / 'lib'))
+  sys.path.insert(0, str(REPOSITORY_ROOT / 'bin'))
   sys.modules.setdefault('requests', types.ModuleType('requests'))
   module_path = REPOSITORY_ROOT / 'bin' / 'YandexPostClickImporter.py'
   spec = importlib.util.spec_from_file_location('YandexPostClickImporter', module_path)
@@ -50,7 +53,27 @@ class YandexPostClickImporterTest(unittest.TestCase):
   def setUp(self):
     self.application = object.__new__(IMPORTER.Application)
     self.application.attribution = 'lastsign'
+    self.application.conversions = Mock(spec=IMPORTER.ConversionImporter)
+    self.application.logs_expiry_hours = 24
+    self.application.residual = types.SimpleNamespace(
+      bootstrap=lambda *args: None, finalize=lambda: None,
+      remember=lambda *args: None, reconcile=lambda *args: None)
     self.event_date = datetime.date(2026, 9, 10)
+
+  def test_start_always_initializes_conversions(self):
+    with tempfile.TemporaryDirectory() as directory:
+      with patch('ServiceUtilsPy.Service.signal.signal'), patch.object(
+          sys, 'argv', ['YandexPostClickImporter', '--out-dir', directory]):
+        app = IMPORTER.Application()
+        app._connect = Mock()
+        app._migrate_clickhouse = Mock()
+        app.ch = Mock()
+        with patch.object(IMPORTER, 'ResidualPublisher'):
+          app.on_start()
+      self.assertIsInstance(app.conversions, IMPORTER.ConversionImporter)
+      self.assertEqual(app.conversions.app, app)
+      self.assertTrue(pathlib.Path(app.conversions.names_dir).is_dir())
+      self.assertEqual(app.logs_expiry_hours, 72)
 
   def test_reporting_api_contract(self):
     class Api:
@@ -128,8 +151,24 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertNotIn('UTMSource', params['fields'])
     self.assertIn('ym:s:lastsignUTMTerm', params['fields'])
     self.assertIn('ym:s:lastsignUTMContent', params['fields'])
+    for field in ('ym:s:goalsID', 'ym:s:goalsSerialNumber', 'ym:s:goalsDateTime'):
+      self.assertIn(field, params['fields'].split(','))
     self.assertEqual(headers, {'Authorization': 'OAuth secret'})
     self.assertEqual(timeout, 17)
+
+  def test_logs_evaluation_always_includes_goals(self):
+    response = Mock()
+    response.json.return_value = {'log_request_evaluation': {'possible': True}}
+    api = IMPORTER.YandexApi('secret', 123, 17)
+    with patch.object(IMPORTER.requests, 'get', return_value=response, create=True) as get:
+      for include_robot in (False, True):
+        with self.subTest(include_robot=include_robot):
+          self.assertTrue(api.evaluate_log_fields(
+            self.event_date, 'lastsign', include_robot=include_robot))
+          fields = get.call_args.kwargs['params']['fields'].split(',')
+          for field in ('ym:s:goalsID', 'ym:s:goalsSerialNumber', 'ym:s:goalsDateTime'):
+            self.assertIn(field, fields)
+          self.assertEqual('ym:s:isRobotPro' in fields, include_robot)
 
   def test_reporting_timezone_uses_counter_offset_and_caches_it(self):
     calls = []
@@ -315,132 +354,13 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(result['date1'], datetime.date(2026, 9, 10))
     self.assertEqual(result['date2'], datetime.date(2026, 9, 10))
     self.assertEqual(result['timezone'].utcoffset(None), datetime.timedelta(hours=3))
-    self.assertEqual(
-      self.application.ch.parameters['range_start'],
-      datetime.datetime(2026, 9, 9, 21, tzinfo=datetime.timezone.utc))
-    self.assertEqual(
-      self.application.ch.parameters['range_end'],
-      datetime.datetime(2026, 9, 10, 21, tzinfo=datetime.timezone.utc))
-    self.assertEqual(len(published), 2)
-    self.assertEqual(published[0][1:10], (hour2, 2, 4, 1, 0, 0, 8.0, 5, 2))
-    hour3 = datetime.datetime(2026, 9, 10, 11, tzinfo=datetime.timezone.utc)
-    self.assertEqual(published[1][:11], (
-      17, hour3, 3, -2, -1, 0, 0, -12.5, -4, -2, False))
-    self.assertIsInstance(published[1][10], bool)
+    self.assertEqual(published, [])
     self.assertEqual(len(self.application.ch.inserted), 1)
-    changed = self.application.ch.inserted[0][1]
-    self.assertEqual(changed[1][1:12], (hour3, 3, 0, 0, 0, 0, 0.0, 0, 0, False, 1.0))
-
-  def test_update_import_status_uses_postgres_function(self):
-    calls = []
-
-    class Cursor:
-      def __enter__(self):
-        return self
-
-      def __exit__(self, exc_type, exc_value, traceback):
-        return False
-
-      def execute(self, query, parameters):
-        calls.append((query, parameters))
-
-    class Pg:
-      def __init__(self):
-        self.commits = 0
-
-      def cursor(self):
-        return Cursor()
-
-      def commit(self):
-        self.commits += 1
-
-    class Ch:
-      def query(self, query, parameters):
-        self.query_text = query
-        self.parameters = parameters
-        return types.SimpleNamespace(result_rows=[(7,)])
-
-    self.application.pg = Pg()
-    self.application.ch = Ch()
-    reporting = {
-      'rows': {
-        (datetime.datetime(2026, 9, 9, 22, tzinfo=datetime.timezone.utc), 1):
-          (3, 0, 0, 0, 0),
-        (datetime.datetime(2026, 9, 10, 11, tzinfo=datetime.timezone.utc), 2):
-          (5, 0, 0, 0, 0),
-        (datetime.datetime(2026, 9, 9, 11, tzinfo=datetime.timezone.utc), 2):
-          (100, 0, 0, 0, 0),
-      },
-      'unsampled': True,
-      'timezone': datetime.timezone(datetime.timedelta(hours=3)),
-    }
-
-    self.application._update_import_status(17, self.event_date, reporting)
-
-    self.assertEqual(calls, [(
-      'SELECT adserver.update_yandex_metrika_import_status(%s, %s, %s, %s, %s)',
-      (17, self.event_date, 8, 7, True),
-    )])
-    self.assertEqual(self.application.pg.commits, 1)
-
-  def test_publish_estimation_deltas_writes_merger_csv(self):
-    hour = datetime.datetime(2026, 9, 10, 12, tzinfo=datetime.timezone.utc)
-    self.application.running = True
-    self.application.print_line = 0
-    self.application.print_ = lambda *args, **kwargs: None
-
-    with tempfile.TemporaryDirectory() as directory:
-      self.application.in_dir = None
-      self.application.out_dir = None
-      self.application.markers_dir = None
-      self.application.tmp_dir = str(pathlib.Path(directory) / 'tmp')
-      self.application.estimation_dir = str(pathlib.Path(directory) / 'out')
-      pathlib.Path(self.application.tmp_dir).mkdir()
-      pathlib.Path(self.application.estimation_dir).mkdir()
-
-      version = datetime.datetime(2026, 9, 11, 1, tzinfo=datetime.timezone.utc)
-      rows = [(17, hour, 2527264, -10, -3, -1, -2, -45.5, -17, -4, True, 0.5, version)]
-      batch_id = 'a' * 64
-      self.application._publish_estimation_deltas(rows, batch_id)
-      first = next(pathlib.Path(self.application.estimation_dir).iterdir())
-      content = list(csv.reader(first.read_text().splitlines()))
-
-      self.assertRegex(first.name, r'^YandexPostClickEstimationStats_[0-9-]+[.]csv$')
-      self.assertEqual(tuple(content[0]), IMPORTER.ESTIMATION_HEADER)
-      self.assertEqual(content[1][0], batch_id)
-      self.assertEqual(content[1][1:], [
-        '17',
-        '2026-09-10T12:00:00+00:00',
-        '2527264',
-        '-10',
-        '-3',
-        '-1',
-        '-2',
-        '-45.5',
-        '-17',
-        '-4',
-        'true',
-        '0.5',
-        '2026-09-11T01:00:00+00:00',
-      ])
-
-  def test_estimation_batch_id_depends_on_previous_snapshot_version(self):
-    transition = [(
-      17,
-      '2026-09-10T12:00:00+00:00',
-      2527264,
-      '2026-09-11T01:00:00+00:00',
-      1, 0, 5.0, 1, 1, False, 1.0,
-      2, 0, 10.0, 2, 1, False, 1.0,
-    )]
-    later = [transition[0][:3] + ('2026-09-11T02:00:00+00:00',) + transition[0][4:]]
-
-    self.assertEqual(
-      self.application._estimation_batch_id(transition),
-      self.application._estimation_batch_id(transition))
-    self.assertNotEqual(
-      self.application._estimation_batch_id(transition),
-      self.application._estimation_batch_id(later))
+    snapshot = self.application.ch.inserted[0][1]
+    self.assertEqual(len(snapshot), 3)
+    self.assertEqual(snapshot[0][1:10], (hour1, 1, 3, 1, 0, 0, 24.0, 4, 1))
+    self.assertEqual(snapshot[1][1:10], (hour2, 2, 4, 1, 0, 0, 8.0, 5, 2))
+    self.assertEqual(snapshot[2][3:10], (0, 0, 0, 0, 0.0, 0, 0))
 
   def test_mark_fetch_time_calls_database_function(self):
     calls = []
@@ -471,11 +391,11 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
     self.assertEqual(calls, [
       (
-        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
+        'SELECT adserver.update_external_metrics_connection_fetch_time(%s, %s)',
         (17, False),
       ),
       (
-        'SELECT adserver.update_yandex_metrika_ref_fetch_time(%s, %s)',
+        'SELECT adserver.update_external_metrics_connection_fetch_time(%s, %s)',
         (17, True),
       ),
     ])
@@ -485,7 +405,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       self.application._mark_fetch_time(17, None)
 
-  def test_on_timer_filters_source_and_marks_try_then_success(self):
+  def test_on_timer_deduplicates_counter_across_accounts(self):
     calls = []
 
     class Cursor:
@@ -499,7 +419,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
         calls.append(('select', query, parameters))
 
       def fetchall(self):
-        return [(17, 'secret', 123)]
+        return [(17, 'secret', 123, 'A'), (18, 'another-token', 123, 'A')]
 
     class Pg:
       def __init__(self):
@@ -516,11 +436,11 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application._connect = lambda: None
     self.application.verify_running = lambda: None
     self.application._mark_fetch_time = (
-      lambda ymref_id, column: calls.append(('mark', ymref_id, column)))
+      lambda connection_id, column: calls.append(('mark', connection_id, column)))
     self.application._load_reporting = (
-      lambda ymref_id, api: calls.append(('reporting', ymref_id, api.counter_id)) or {})
+      lambda connection_id, api: calls.append(('reporting', connection_id, api.counter_id)) or {})
     self.application._process_logs = (
-      lambda ymref_id, api, reporting: calls.append(('logs', ymref_id, api.counter_id)))
+      lambda connection_id, api, reporting: calls.append(('logs', connection_id, api.counter_id)))
 
     self.application.on_timer()
 
@@ -528,17 +448,22 @@ class YandexPostClickImporterTest(unittest.TestCase):
       calls[0],
       (
         'select',
-        "SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef "
-        "WHERE status = 'A' AND source = %s",
-        (IMPORTER.YANDEX_METRIKA_SOURCE,),
+        "SELECT c.external_metrics_connection_id, y.token, y.metrika_id, c.status "
+        "FROM externalmetricsconnection c JOIN externalmetricsconnectionyandexmetrika y "
+        "USING (external_metrics_connection_id) "
+        "WHERE c.external_metrics_connection_type_id = %s "
+        "ORDER BY c.external_metrics_connection_id",
+        (IMPORTER.YANDEX_METRIKA,),
       ))
     self.assertEqual(calls[1:], [
       ('mark', 17, False),
-      ('reporting', 17, 123),
-      ('logs', 17, 123),
+      ('reporting', 123, 123),
+      ('logs', 123, 123),
       ('mark', 17, True),
     ])
     self.assertEqual(self.application.pg.commits, 1)
+    self.application.conversions.prepare.assert_called_once()
+    self.assertEqual(self.application.conversions.prepare.call_args.args[0].counter_id, 123)
 
   def test_on_timer_does_not_mark_success_after_failed_import(self):
     calls = []
@@ -554,7 +479,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
         pass
 
       def fetchall(self):
-        return [(17, 'secret', 123)]
+        return [(17, 'secret', 123, 'A')]
 
     class Pg:
       def cursor(self):
@@ -563,8 +488,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
       def commit(self):
         pass
 
-    def fail_reporting(ymref_id, api):
-      calls.append(('reporting', ymref_id))
+    def fail_reporting(connection_id, api):
+      calls.append(('reporting', connection_id))
       raise RuntimeError('test failure')
 
     self.application.pg = Pg()
@@ -574,7 +499,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.application.verify_running = lambda: None
     self.application.print_ = lambda level, message: calls.append(('error', level))
     self.application._mark_fetch_time = (
-      lambda ymref_id, column: calls.append(('mark', ymref_id, column)))
+      lambda connection_id, column: calls.append(('mark', connection_id, column)))
     self.application._load_reporting = fail_reporting
 
     self.application.on_timer()
@@ -582,11 +507,35 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(calls, [
       ('connect',),
       ('mark', 17, False),
-      ('reporting', 17),
+      ('reporting', 123),
       ('error', 0),
       ('reset',),
       ('connect',),
     ])
+
+  def test_on_timer_tries_another_token_for_the_same_counter(self):
+    calls = []
+    cursor = types.SimpleNamespace(execute=lambda *args: None,
+      fetchall=lambda: [(17, 'expired', 123, 'A'), (18, 'working', 123, 'A')])
+    self.application.pg = types.SimpleNamespace(
+      cursor=lambda: nullcontext(cursor), commit=lambda: None)
+    self.application.request_timeout = 11
+    self.application.verify_running = lambda: None
+    self.application._connect = lambda: None
+    self.application._reset_connections = lambda: None
+    self.application.print_ = lambda *args: None
+    self.application._mark_fetch_time = lambda *args: calls.append(('mark', *args))
+    self.application._process_logs = lambda counter, *args: calls.append(('logs', counter))
+    def reporting(counter, api):
+      if api.headers['Authorization'] == 'OAuth expired':
+        raise RuntimeError('expired token')
+      calls.append(('reporting', counter))
+      return {}
+    self.application._load_reporting = reporting
+    self.application.on_timer()
+    self.assertEqual(calls, [
+      ('mark', 17, False), ('mark', 18, False), ('reporting', 123),
+      ('logs', 123), ('mark', 18, True)])
 
   def test_parse_log_part(self):
     records = self.application._parse_log_part(17, log_part(), self.event_date)
@@ -606,13 +555,26 @@ class YandexPostClickImporterTest(unittest.TestCase):
       'landing_session_time': 42,
       'landing_page_views': 3,
       'landing_is_new_user': False,
-      'yandex_ref_id': 17,
-      'yandex_event_date': '2026-09-10',
-      'yandex_reporting_comparable': True,
+      'external_metrics_connection_type_id': 1,
+      'source_date': '2026-09-10',
+      'reporting_comparable': True,
     })
 
+  def test_processed_logs_always_reach_conversion_importer(self):
+    text = log_part()
+    api = types.SimpleNamespace(
+      get_log_request=lambda request: {'status': 'processed', 'parts': [{'part_number': 0}]},
+      download_log_part=lambda request, part: text,
+      timezone=lambda: datetime.timezone.utc, clean_log_request=Mock())
+    self.application.verify_running = Mock()
+    self.application._save_log_request = Mock()
+    self.application._publish_post_click_actions = Mock(return_value=[])
+    self.application._process_log_request(17, self.event_date, 100, api, {})
+    self.application.conversions.process.assert_called_once_with(17, self.event_date, text)
+    api.clean_log_request.assert_called_once_with(100)
+
   def test_post_click_action_name_is_unique_per_visit(self):
-    self.assertEqual(IMPORTER.format_post_click_action_name(17, 123), 'landing:17-123')
+    self.assertEqual(IMPORTER.format_post_click_action_name(17, 123), 'landing:ym_17-123')
     self.assertNotEqual(
       IMPORTER.format_post_click_action_name(17, 123),
       IMPORTER.format_post_click_action_name(17, 124))
@@ -635,7 +597,7 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
     self.assertEqual(len(records), 1)
     self.assertFalse(records[0][6])
-    self.assertFalse(json.loads(records[0][5])['yandex_reporting_comparable'])
+    self.assertFalse(json.loads(records[0][5])['reporting_comparable'])
 
   def test_filters_invalid_request_id(self):
     self.assertEqual(
@@ -656,40 +618,6 @@ class YandexPostClickImporterTest(unittest.TestCase):
       watermark,
       datetime.datetime(2026, 9, 10, 9, 34, 56, tzinfo=datetime.timezone.utc))
 
-  def test_advance_logs_watermark_uses_twelve_hour_delay(self):
-    calls = []
-
-    class Cursor:
-      def __enter__(self):
-        return self
-
-      def __exit__(self, exc_type, exc_value, traceback):
-        return False
-
-      def execute(self, query, parameters):
-        calls.append((query, parameters))
-
-    class Pg:
-      def __init__(self):
-        self.commits = 0
-
-      def cursor(self):
-        return Cursor()
-
-      def commit(self):
-        self.commits += 1
-
-    self.application.pg = Pg()
-    event_time = datetime.datetime(2026, 9, 10, 9, 34, 56, tzinfo=datetime.timezone.utc)
-
-    self.application._advance_logs_watermark(17, event_time)
-
-    self.assertEqual(calls, [(
-      'SELECT adserver.advance_yandex_metrika_logs_watermark(%s, %s)',
-      (17, datetime.date(2026, 9, 10)),
-    )])
-    self.assertEqual(self.application.pg.commits, 1)
-
   def test_process_logs_publishes_once_across_repeated_exports(self):
     class Ch:
       def __init__(self):
@@ -698,23 +626,23 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       def query(self, query, parameters):
         if f'FROM {IMPORTER.LOG_REQUESTS_TABLE}' in query:
-          if 'event_date = %(event_date)s' not in query:
+          if 'source_date = %(event_date)s' not in query:
             rows = [
               (event_date, request_id, status)
-              for (ymref_id, event_date), (request_id, status) in
+              for (connection_id, event_date), (request_id, status) in
                 self.request_states.items()
-              if ymref_id == parameters['ymref_id']
+              if connection_id == parameters['metrika_id']
             ]
             return types.SimpleNamespace(result_rows=rows)
 
-          key = (parameters['ymref_id'], parameters['event_date'])
+          key = (parameters['metrika_id'], parameters['event_date'])
           state = self.request_states.get(key)
           return types.SimpleNamespace(result_rows=[state] if state else [])
 
         if 'SELECT visit_id' in query:
           rows = [
             (row[1],) for row in self.logs
-            if row[0] == parameters['ymref_id'] and
+            if row[0] == parameters['metrika_id'] and
               row[2] == parameters['event_date']
           ]
           return types.SimpleNamespace(result_rows=rows)
@@ -767,10 +695,10 @@ class YandexPostClickImporterTest(unittest.TestCase):
     updated = []
     watermarks = []
     self.application._advance_logs_watermark = (
-      lambda ymref_id, event_time: watermarks.append((ymref_id, event_time)))
+      lambda connection_id, event_time: watermarks.append((connection_id, event_time)))
     self.application._update_import_status = (
-      lambda ymref_id, event_date, reporting:
-        updated.append((ymref_id, event_date)))
+      lambda connection_id, event_date, reporting:
+        updated.append((connection_id, event_date)))
     api = Api()
 
     with tempfile.TemporaryDirectory() as directory:
@@ -792,13 +720,13 @@ class YandexPostClickImporterTest(unittest.TestCase):
       self.assertTrue(output.endswith('\n'))
       lines = output.splitlines()
       self.assertEqual(lines[0], IMPORTER.POST_CLICK_ACTION_VERSION)
-      self.assertEqual(lines[1].split('\t')[1:3], [REQUEST_ID, 'landing:17-123'])
+      self.assertEqual(lines[1].split('\t')[1:3], [REQUEST_ID, 'landing:ym_17-123'])
 
     self.assertEqual(len(api.created), 2)
     self.assertEqual(api.cleaned, [100, 101])
     self.assertEqual(len(self.application.ch.logs), 1)
-    self.assertEqual(len(updated), 2)
-    self.assertEqual(len(watermarks), 2)
+    self.assertEqual(updated, [])
+    self.assertEqual(watermarks, [])
 
   def test_process_logs_finishes_request_outside_date_window(self):
     old_date = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=10)
@@ -810,23 +738,23 @@ class YandexPostClickImporterTest(unittest.TestCase):
 
       def query(self, query, parameters):
         if f'FROM {IMPORTER.LOG_REQUESTS_TABLE}' in query:
-          if 'event_date = %(event_date)s' not in query:
+          if 'source_date = %(event_date)s' not in query:
             rows = [
               (event_date, request_id, status)
-              for (ymref_id, event_date), (request_id, status) in
+              for (connection_id, event_date), (request_id, status) in
                 self.request_states.items()
-              if ymref_id == parameters['ymref_id']
+              if connection_id == parameters['metrika_id']
             ]
             return types.SimpleNamespace(result_rows=rows)
 
-          key = (parameters['ymref_id'], parameters['event_date'])
+          key = (parameters['metrika_id'], parameters['event_date'])
           state = self.request_states.get(key)
           return types.SimpleNamespace(result_rows=[state] if state else [])
 
         if 'SELECT visit_id' in query:
           rows = [
             (row[1],) for row in self.logs
-            if row[0] == parameters['ymref_id'] and
+            if row[0] == parameters['metrika_id'] and
               row[2] == parameters['event_date']
           ]
           return types.SimpleNamespace(result_rows=rows)
@@ -881,18 +809,18 @@ class YandexPostClickImporterTest(unittest.TestCase):
     watermarks = []
     reporting_calls = []
     self.application._load_reporting = (
-      lambda ymref_id, api, date1, date2:
-        reporting_calls.append((ymref_id, date1, date2)) or {
+      lambda connection_id, api, date1, date2:
+        reporting_calls.append((connection_id, date1, date2)) or {
           'rows': {},
           'unsampled': True,
           'date1': date1,
           'date2': date2,
         })
     self.application._update_import_status = (
-      lambda ymref_id, event_date, reporting:
-        updated.append((ymref_id, event_date)))
+      lambda connection_id, event_date, reporting:
+        updated.append((connection_id, event_date)))
     self.application._advance_logs_watermark = (
-      lambda ymref_id, event_time: watermarks.append((ymref_id, event_time)))
+      lambda connection_id, event_time: watermarks.append((connection_id, event_time)))
     api = Api()
 
     with tempfile.TemporaryDirectory() as directory:
@@ -923,8 +851,8 @@ class YandexPostClickImporterTest(unittest.TestCase):
     self.assertEqual(self.application.ch.request_states[(17, old_date)], (100, 'cleaned'))
     self.assertEqual(len(self.application.ch.logs), 1)
     self.assertEqual(reporting_calls, [(17, old_date, old_date)])
-    self.assertEqual(updated, [(17, old_date)])
-    self.assertEqual(len(watermarks), 1)
+    self.assertEqual(updated, [])
+    self.assertEqual(watermarks, [])
 
   def test_reset_connections_closes_postgres_after_rollback_error(self):
     class Pg:

@@ -182,6 +182,10 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         "/get_user_navigation_profile",
         AdServer::RequestInfoSvcs::make_user_navigation_profile_http_handler(
           expression_matcher_impl_.in()));
+      http_server->add_handler(
+        "/user_navigation_keys",
+        AdServer::RequestInfoSvcs::make_user_navigation_keys_http_handler(
+          expression_matcher_impl_.in()));
       active_objects_->add_child_object(http_server.in());
     }
 

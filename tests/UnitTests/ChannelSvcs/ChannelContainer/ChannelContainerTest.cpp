@@ -225,7 +225,7 @@ namespace AdServer::Testing
             {
               debug << ',';
             }
-            const String::SubString& value = it->text();
+            const std::string_view value = it->text();
             debug << value;
           }
           debug << ".";

@@ -73,6 +73,7 @@ namespace AdServer::LogProcessing
   };
 
   using PostClickStatProcTraits = ProcTraits<PostClickStatProcessor>;
+  using PostClickConvStatProcTraits = ProcTraits<PostClickConvStatProcessor>;
   using PostImpStatProcTraits = ProcTraits<PostImpStatProcessor>;
 
   /// Write CSV when db_enabled()
@@ -368,6 +369,7 @@ namespace AdServer::LogProcessing
     }
 
     init_log_proc_info_<PostClickStatProcTraits>(config.PostClickStat());
+    init_log_proc_info_<PostClickConvStatProcTraits>(config.PostClickConvStat());
     init_log_proc_info_<PostImpStatProcTraits>(config.PostImpStat());
 
     /// Write in CSV when db_enabled()

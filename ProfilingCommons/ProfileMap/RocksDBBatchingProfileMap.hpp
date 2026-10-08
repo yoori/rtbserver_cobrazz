@@ -146,6 +146,11 @@ namespace AdServer::ProfilingCommons
       std::function<void(void)> process_complete)
       /*throw(Exception)*/ override;
 
+    void
+    process_keys_from(
+      const std::optional<std::string>& start,
+      const std::function<bool(const std::string&)>& process_key);
+
     unsigned long
     size() const noexcept override;
 
@@ -380,6 +385,11 @@ namespace AdServer::ProfilingCommons
       std::function<void(void)> process_complete)
       /*throw(Exception)*/ override;
 
+    void
+    process_keys_from(
+      const std::optional<KeyType>& start,
+      const std::function<bool(const KeyType&)>& process_key) override;
+
     unsigned long
     size() const noexcept override;
 
@@ -557,6 +567,23 @@ namespace AdServer::ProfilingCommons
         process_key(key_adapter_.template key_from_string<KeyType>(key));
       },
       std::move(process_complete));
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  RocksDBBatchingProfileMap<KeyType, KeyAdapterType>::process_keys_from(
+    const std::optional<KeyType>& start,
+    const std::function<bool(const KeyType&)>& process_key)
+  {
+    std::optional<std::string> serialized_start;
+    if (start)
+    {
+      serialized_start = key_adapter_(*start);
+    }
+    impl_->process_keys_from(serialized_start, [this, &process_key](const std::string& key)
+    {
+      return process_key(key_adapter_.template key_from_string<KeyType>(key));
+    });
   }
 
   template<typename KeyType, typename KeyAdapterType>

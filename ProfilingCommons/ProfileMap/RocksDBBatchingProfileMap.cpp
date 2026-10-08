@@ -578,6 +578,41 @@ namespace AdServer::ProfilingCommons
   }
 
   void
+  RocksDBBatchingProfileMapImpl::process_keys_from(
+    const std::optional<std::string>& start,
+    const std::function<bool(const std::string&)>& process_key)
+  {
+    static const char* FUN = "RocksDBBatchingProfileMapImpl::process_keys_from()";
+
+    check_background_error_();
+
+    std::unique_ptr<rocksdb::Iterator> it(db_->NewIterator(rocksdb::ReadOptions()));
+    if (start)
+    {
+      it->Seek(*start);
+    }
+    else
+    {
+      it->SeekToFirst();
+    }
+    for (; it->Valid(); it->Next())
+    {
+      if (!process_key(it->key().ToString()))
+      {
+        break;
+      }
+    }
+
+    const auto status = it->status();
+    if (!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't iterate DB '" << path_ << "': " << status.ToString();
+      throw ProfileMap<std::string>::Exception(ostr.str());
+    }
+  }
+
+  void
   RocksDBBatchingProfileMapImpl::process_batch_(Operations& batch, BatchScratch& scratch)
   {
     if (batch.empty())

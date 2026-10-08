@@ -16,6 +16,8 @@ namespace AdServer::LogProcessing
   using PostClickStatProcessor = GenericLogProcessorImpl<
     PostClickStatExtTraits,
     LogVersionManager3<PostClickStatExtTraits>>;
+  using PostClickConvStatProcessor = GenericLogProcessorImpl<
+    PostClickConvStatExtTraits, LogVersionManager3<PostClickConvStatExtTraits>>;
   using PostImpStatProcessor = GenericLogProcessorImpl<
     PostImpStatExtTraits,
     LogVersionManager3<PostImpStatExtTraits>>;

@@ -82,12 +82,11 @@ namespace AdServer::ChannelSvcs
   {
     for (TriggerMap::const_iterator i(map.begin()); i != map.end(); ++i)
     {
-      ostr << "'" << static_cast<String::SubString>(i->first).str() << "' -> ";
+      ostr << "'" << i->first.text() << "' -> ";
       for (SoftVector::const_iterator soft_it(i->second->begin());
         soft_it != i->second->end(); ++soft_it)
       {
-        ostr << ": '" << static_cast<String::SubString>(i->first).str() << "' "
-          << soft_it->matcher << " ";
+        ostr << ": '" << i->first.text() << "' " << soft_it->matcher << " ";
         for (auto it = soft_it->begin(); it != soft_it->end(); ++it)
         {
           if (it != soft_it->begin())
@@ -129,9 +128,10 @@ namespace AdServer::ChannelSvcs
     noexcept
   {
     unsigned int res = 1;
+    const Generics::StringViewHashAdapter key(std::string_view(word.data(), word.size()));
 
     {
-      TriggerMap::const_iterator it = page_keyword_map_->find(word);
+      TriggerMap::const_iterator it = page_keyword_map_->find(key);
       if (it != page_keyword_map_->end())
       {
         res += it->second->size() * Commons::DEFAULT_MAX_HARD_WORD_SEQ;
@@ -145,7 +145,7 @@ namespace AdServer::ChannelSvcs
     }
 
     {
-      TriggerMap::const_iterator it = url_keyword_map_->find(word);
+      TriggerMap::const_iterator it = url_keyword_map_->find(key);
       if (it != url_keyword_map_->end())
       {
         res += it->second->size() * Commons::DEFAULT_MAX_HARD_WORD_SEQ;
@@ -159,7 +159,7 @@ namespace AdServer::ChannelSvcs
     }
 
     {
-      TriggerMap::const_iterator it = search_keyword_map_->find(word);
+      TriggerMap::const_iterator it = search_keyword_map_->find(key);
       if (it != search_keyword_map_->end())
       {
         res += it->second->size() * Commons::DEFAULT_MAX_HARD_WORD_SEQ;
@@ -178,13 +178,26 @@ namespace AdServer::ChannelSvcs
   void ChannelChunk::match_url(const MatchUrl& url, unsigned int flags, TriggerMatchRes& res) const
     /*throw(eh::Exception)*/
   {
-    //dump_map(std::cout, *url_map_var_);
-    TriggerMap::const_iterator fnd = url_map_var_->find(url.prefix);
+    match_url(url, Generics::StringViewHashAdapter(url.prefix), flags, res);
+  }
+
+  void ChannelChunk::match_url(
+    const MatchUrl& url, const Generics::StringViewHashAdapter& key,
+    unsigned int flags, TriggerMatchRes& res) const
+  {
+    match_url(std::string_view(url.postfix), key, flags, res);
+  }
+
+  void ChannelChunk::match_url(
+    std::string_view request_postfix, const Generics::StringViewHashAdapter& key,
+    unsigned int flags, TriggerMatchRes& res) const
+  {
+    TriggerMap::const_iterator fnd = url_map_var_->find(key);
     if (fnd != url_map_var_->end())
     {
       const SoftVector& vector = *fnd->second;
-      bool match_exact = (*url.postfix.rbegin() == '"');
-      size_t length = url.postfix.length() - (match_exact ? 1 : 0);
+      bool match_exact = !request_postfix.empty() && request_postfix.back() == '"';
+      size_t length = request_postfix.size() - (match_exact ? 1 : 0);
       size_t comp_length;
       for (SoftVector::const_iterator it = vector.begin(); it != vector.end(); ++it)
       {
@@ -203,7 +216,7 @@ namespace AdServer::ChannelSvcs
           comp_length = postfix.length();
         }
 
-        if (postfix.compare(0, comp_length, url.postfix, 0, comp_length) == 0)
+        if (std::string_view(postfix.data(), comp_length) == request_postfix.substr(0, comp_length))
         {
           res.count_channels[CT_URL] += match_cell_(
             *match_info_ptr_,
@@ -273,13 +286,13 @@ namespace AdServer::ChannelSvcs
   }
 
   void ChannelChunk::match_words(
-    const Generics::SubStringHashAdapter& phrase,
-    const MatchWords& words,
-    const StringVector* exact_words,
+    const Generics::StringViewHashAdapter& phrase,
+    const MatchWordSet& words,
+    const MatchWordVector* exact_words,
     MatchType type,
     unsigned int flags,
     TriggerMatchRes& res,
-    MatcherVarsSet* must_match)
+    MatchRequestMatchers* must_match)
     const
     /*throw(eh::Exception)*/
   {
@@ -354,7 +367,9 @@ namespace AdServer::ChannelSvcs
     noexcept
   {
     const TriggerMap& check_trigger_map = get_trigger_map_(trigger_type);
-    TriggerMap::const_iterator fnd = check_trigger_map.find(phrase);
+    const std::string_view text(phrase.data(), phrase.size());
+    const Generics::StringViewHashAdapter lookup_key(text);
+    TriggerMap::const_iterator fnd = check_trigger_map.find(lookup_key);
 
     if (fnd != check_trigger_map.end())
     {
@@ -369,7 +384,7 @@ namespace AdServer::ChannelSvcs
          it->matcher->get_trigger() == trigger &&
          it->matcher->get_lang() == lang)
       {
-        key = fnd->first;
+        key.assign(fnd->first.text().data(), fnd->first.text().size());
         return it->matcher;
       }
     }
@@ -392,23 +407,25 @@ namespace AdServer::ChannelSvcs
     const SoftMatcher* matcher)
     noexcept
   {
+    const Generics::StringViewHashAdapter lookup_key(std::string_view(key.data(), key.size()));
     //check only existing of key, it is cheap
     char trigger_type = matcher->trigger_type();
     if (trigger_type == 'U')
     {
-      auto change_it = url_map_var_->find(key);
+      auto change_it = url_map_var_->find(lookup_key);
       if (change_it == url_map_var_->end())
       {
         return false;
       }
       removed_url_ids_.insert(channel_trigger_id);
-      add_item_url_map_[change_it->first];
+      add_item_url_map_[String::SubString(
+        change_it->first.text().data(), change_it->first.text().size())];
       //create key in update map for applying remove list
     }
     else if (trigger_type != 'D')
     {
       TriggerMap& trigger_map = get_trigger_map_(trigger_type);
-      auto change_it = trigger_map.find(key);
+      auto change_it = trigger_map.find(lookup_key);
       if (change_it == trigger_map.end())
       {
         return false;
@@ -422,7 +439,9 @@ namespace AdServer::ChannelSvcs
         {
           // create key in update map for applying remove list
           removed_ids.insert(channel_trigger_id);
-          add_map.insert(std::make_pair(change_it->first, SoftVector()));
+          add_map.emplace(
+            String::SubString(change_it->first.text().data(), change_it->first.text().size()),
+            SoftVector());
           return true;
         }
       }
@@ -652,21 +671,27 @@ namespace AdServer::ChannelSvcs
     TriggerMap& res,
     AddItemMap& added,
     RemovedType& removed_ids,
-    MatcherVarsSet* removed_matchers)
+    MatcherVarsSet* removed_matchers,
+    UrlPrefixIndex* url_prefixes)
     noexcept
   {
     while (!added.empty())
     {
       auto it = added.begin();
-      const String::SubString& key = it->first;
+      const std::string_view key(it->first.data(), it->first.size());
+      const Generics::StringViewHashAdapter lookup_key(key);
       SoftVector& new_vec = it->second;
-      auto res_it = res.find(key);
+      auto res_it = res.find(lookup_key);
       if (res_it == res.end())
       {
         assert (!new_vec.empty());
-        TriggerAtom_var& value = res[key];
+        TriggerAtom_var& value = res[lookup_key];
         value = new TriggerAtom;
         value->swap(new_vec);
+        if (url_prefixes)
+        {
+          url_prefixes->add(key);
+        }
       }
       else
       {
@@ -680,12 +705,19 @@ namespace AdServer::ChannelSvcs
         else
         { //it was removed items, need remove key and setup it again, because
           //it could be removed with matchers
+          if (temp->empty() && url_prefixes)
+          {
+            url_prefixes->remove(key);
+          }
           res.erase(res_it);
           if (!temp->empty())
           {
             String::SubString new_key;
-            assert(temp->begin()->matcher->find_token(key, new_key));
-            res[new_key] = temp;
+            [[maybe_unused]] const bool found = temp->begin()->matcher->find_token(
+              String::SubString(key.data(), key.size()), new_key);
+            assert(found);
+            res[Generics::StringViewHashAdapter(
+              lookup_key.hash(), std::string_view(new_key.data(), new_key.size()))] = temp;
           }
         }
       }
@@ -818,7 +850,8 @@ namespace AdServer::ChannelSvcs
     MatcherVarsSet* removed_url_matchers,
     MatcherVarsSet* removed_page_keyword_matchers,
     MatcherVarsSet* removed_url_keyword_matchers,
-    MatcherVarsSet* removed_search_keyword_matchers)
+    MatcherVarsSet* removed_search_keyword_matchers,
+    UrlPrefixIndex& url_prefixes)
     /*throw(Exception)*/
   {
     try
@@ -861,7 +894,8 @@ namespace AdServer::ChannelSvcs
         *in.url_map_var_,
         add_item_url_map_,
         removed_url_ids_,
-        removed_url_matchers);
+        removed_url_matchers,
+        &url_prefixes);
       apply_uid_map_update_(*in.uid_map_var_, add_item_uid_map_, updated_uid_channels);
     }
     catch(const eh::Exception& e)

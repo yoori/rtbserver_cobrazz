@@ -2343,6 +2343,10 @@ namespace AdServer::RequestInfoSvcs
       {
         parse_post_click_action_value(action_info.value);
       }
+      else if (is_post_click_conversion(action_info.name))
+      {
+        parse_post_click_conversion(action_info.name, action_info.value);
+      }
 
       Transaction_var transaction = get_transaction_(request_id);
       Generics::ConstSmartMemBuf_var mem_buf = get_profile_(transaction);
@@ -2382,6 +2386,10 @@ namespace AdServer::RequestInfoSvcs
       if (post_click_action_type(action_info.name) == "landing")
       {
         parse_post_click_action_value(action_info.value);
+      }
+      else if (is_post_click_conversion(action_info.name))
+      {
+        parse_post_click_conversion(action_info.name, action_info.value);
       }
 
       Transaction_var transaction = co_await co_get_transaction_(request_id);

@@ -1,11 +1,14 @@
 #include "UserNavigationContainer.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <limits>
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 
 #include <Commons/Coro/SetAwaitable.hpp>
@@ -312,6 +315,75 @@ namespace AdServer::RequestInfoSvcs
   unsigned long UserNavigationContainer::profile_size() const noexcept
   {
     return user_map_->size();
+  }
+
+  UserNavigationContainer::KeysPage
+  UserNavigationContainer::get_user_navigation_keys(std::string_view position, std::size_t limit)
+  {
+    if (limit == 0)
+    {
+      throw std::invalid_argument("limit must be positive");
+    }
+
+    std::size_t first_chunk = 0;
+    std::optional<AdServer::Commons::UserId> after_user;
+    if (!position.empty())
+    {
+      const auto separator = position.find(':');
+      if (separator == std::string_view::npos || separator == 0 ||
+        separator + 1 == position.size())
+      {
+        throw std::invalid_argument("invalid user navigation position");
+      }
+      const auto number = position.substr(0, separator);
+      const auto parsed = std::from_chars(
+        number.data(), number.data() + number.size(), first_chunk);
+      if (parsed.ec != std::errc() || parsed.ptr != number.data() + number.size() ||
+        first_chunk >= user_map_->chunks().size())
+      {
+        throw std::invalid_argument("invalid user navigation chunk position");
+      }
+      after_user.emplace(std::string(position.substr(separator + 1)));
+    }
+
+    KeysPage page;
+    page.keys.reserve(limit);
+    for (std::size_t chunk_id = first_chunk; chunk_id < user_map_->chunks().size(); ++chunk_id)
+    {
+      const auto& chunk = user_map_->chunks()[chunk_id];
+      if (!chunk.in())
+      {
+        continue;
+      }
+
+      std::optional<UserNavigationKey> start;
+      if (chunk_id == first_chunk && after_user)
+      {
+        start.emplace(*after_user, UserNavigationKey::LEGACY_PERIOD_ID);
+      }
+      std::optional<AdServer::Commons::UserId> previous_user =
+        chunk_id == first_chunk ? after_user : std::nullopt;
+      chunk->process_keys_from(start, [&](const UserNavigationKey& key)
+      {
+        if (previous_user && key.user_id == *previous_user)
+        {
+          return true;
+        }
+        previous_user = key.user_id;
+        page.keys.emplace_back(key.user_id.to_string());
+        if (page.keys.size() == limit)
+        {
+          page.end_position = std::to_string(chunk_id) + ":" + page.keys.back();
+          return false;
+        }
+        return true;
+      });
+      if (page.end_position)
+      {
+        break;
+      }
+    }
+    return page;
   }
 
   std::uint32_t UserNavigationContainer::navigation_period_id_(std::uint32_t date) const noexcept

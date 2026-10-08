@@ -32,6 +32,7 @@
 #include <LogCommons/PageLoadsDailyStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostClickConvStat.hpp>
 #include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/SearchEngineStat.hpp>
 #include <LogCommons/SearchTermStat.hpp>
@@ -1074,7 +1075,7 @@ namespace AdServer::LogProcessing
         "test,fraud,walled_garden,user_status,geo_channel_id,device_channel_id,"
         "ctr_reset_id,hid_profile,viewability,visits,visits_with_bounce,"
         "visits_robot,visits_robot_available,session_time_sum,page_views,new_user_visits,"
-        "ymref_id,yandex_event_date,"
+        "external_metrics_connection_type_id,"
         "reporting_visits";
     }
 
@@ -1107,9 +1108,53 @@ namespace AdServer::LogProcessing
         data.visits_with_bounce() << ',' << data.visits_robot() << ',' <<
         data.visits_robot_available() << ',' << data.session_time_sum() << ',' <<
         data.page_views() << ',' << data.new_user_visits() << ',' <<
-        inner_key.yandex_ref_id() << ',';
-      write_date_as_csv(os, inner_key.yandex_event_date()) << ',';
+        inner_key.external_metrics_connection_type_id() << ',';
       return os << data.reporting_visits();
+    }
+  };
+
+  struct PostClickConvStatCsvTraits: PostClickConvStatTraits
+  {
+    static const char* csv_base_name() { return "PostClickConvStatsHourly"; }
+
+    static const char* csv_header()
+    {
+      return "sdate,adv_sdate,colo_id,pub_account_id,tag_id,size_id,country_code,"
+        "adv_account_id,campaign_id,ccg_id,cc_id,ccg_rate_id,colo_rate_id,"
+        "site_rate_id,currency_exchange_id,delivery_threshold,num_shown,position,"
+        "test,fraud,walled_garden,user_status,geo_channel_id,device_channel_id,"
+        "ctr_reset_id,hid_profile,viewability,visits,goals,external_metrics_connection_type_id,"
+        "conversion_name";
+    }
+
+    static std::ostream&
+    write_as_csv(
+      std::ostream& os,
+      const BaseTraits::CollectorType::KeyT& key,
+      const BaseTraits::CollectorType::DataT::KeyT& inner_key,
+      const BaseTraits::CollectorType::DataT::DataT& data)
+    {
+      const auto& creative_key = inner_key.creative_key();
+      write_date_as_csv(os, key.sdate()) << ',';
+      write_date_as_csv(os, key.adv_sdate()) << ',';
+      os << creative_key.colo_id() << ',' << creative_key.publisher_account_id() << ',' <<
+        creative_key.tag_id() << ',';
+      write_optional_value_as_csv(os, creative_key.size_id(), "0") << ',';
+      write_string_as_csv(os, ToUpper()(creative_key.country_code()), "-") << ',';
+      os << creative_key.adv_account_id() << ',' << creative_key.campaign_id() << ',' <<
+        creative_key.ccg_id() << ',' << creative_key.cc_id() << ',' <<
+        creative_key.ccg_rate_id() << ',' << creative_key.colo_rate_id() << ',' <<
+        creative_key.site_rate_id() << ',' << creative_key.currency_exchange_id() << ',' <<
+        creative_key.delivery_threshold() << ',' << creative_key.num_shown() << ',' <<
+        creative_key.position() << ',' << bool_to_char(creative_key.test()) << ',' <<
+        bool_to_char(creative_key.fraud()) << ',' <<
+        bool_to_char(creative_key.walled_garden()) << ',' << creative_key.user_status() << ',';
+      write_optional_value_as_csv(os, creative_key.geo_channel_id(), "0") << ',';
+      write_optional_value_as_csv(os, creative_key.device_channel_id(), "0") << ',';
+      os << creative_key.ctr_reset_id() << ',' << bool_to_char(creative_key.hid_profile()) <<
+        ',' << creative_key.viewability() << ',' << data.visits() << ',' <<
+        data.goals() << ',' << inner_key.external_metrics_connection_type_id() << ',';
+      return write_string_as_csv(os, inner_key.conversion_name());
     }
   };
 

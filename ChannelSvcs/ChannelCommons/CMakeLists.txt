@@ -26,6 +26,8 @@ add_library(ChannelCommons SHARED
 )
 
 target_link_libraries(ChannelCommons
+  PUBLIC
+    Boost::headers
   PRIVATE
     Generics
     HTTP

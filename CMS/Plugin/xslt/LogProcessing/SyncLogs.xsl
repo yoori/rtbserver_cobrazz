@@ -609,6 +609,7 @@
           <dirs>
             <dir>CreativeStat</dir>
             <dir>PostClickStat</dir>
+            <dir>PostClickConvStat</dir>
             <dir>PostImpStat</dir>
             <dir>UserProperties</dir>
             <dir>ChannelPerformance</dir>
@@ -1153,6 +1154,8 @@
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/PostClickStat/PostClickStatsHourly_*"
               destination="/csvlistener/"/>
+            <cfg:files source="LogGeneralizer/Out/PostClickConvStat/PostClickConvStatsHourly_*"
+              destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/PostImpStat/PostImpStatsHourly_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStats_*"
@@ -1230,6 +1233,13 @@
 
           <xsl:if test="string-length($yandex-post-click-importer-hosts) > 0">
             <cfg:Route type="RoundRobin">
+              <cfg:files destination="/csvlistener/">
+                <xsl:attribute name="source"><xsl:value-of
+                  select="concat('YandexPostClickImporter/Out/YandexPostClickEstimationStat/',
+                    'ExternalPostClickEstimationStats_*')"/></xsl:attribute>
+              </cfg:files>
+              <cfg:files source="YandexPostClickImporter/Out/PostClickConvNames/PostClickConvNames_*"
+                destination="/csvlistener/"/>
               <cfg:files destination="/csvlistener/">
                 <xsl:attribute name="source"><xsl:value-of
                   select="concat('YandexPostClickImporter/Out/YandexPostClickEstimationStat/',
@@ -1319,6 +1329,12 @@
             <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/ResearchPostClick/RPostClick_*</xsl:attribute>
               <xsl:attribute name="destination"><![CDATA[/]]>ResearchPostClick</xsl:attribute>
+            </cfg:files>
+            <cfg:files>
+              <xsl:attribute name="source">
+                <xsl:text>RequestInfoManager/Out/ResearchPostConvClick/RPostConvClick_*</xsl:text>
+              </xsl:attribute>
+              <xsl:attribute name="destination">/ResearchPostConvClick</xsl:attribute>
             </cfg:files>
             <cfg:files>
               <xsl:attribute name="source">RequestInfoManager/Out/ResearchAction/RAction_*</xsl:attribute>

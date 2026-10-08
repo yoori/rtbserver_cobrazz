@@ -33,6 +33,9 @@
   <xsl:variable name="attribution"><xsl:value-of select="$config/@attribution"/>
     <xsl:if test="count($config/@attribution) = 0">lastsign</xsl:if>
   </xsl:variable>
+  <xsl:variable name="logs-expiry-hours"><xsl:value-of select="$config/@logs_expiry_hours"/>
+    <xsl:if test="count($config/@logs_expiry_hours) = 0">72</xsl:if>
+  </xsl:variable>
   <xsl:variable name="chunks-count"><xsl:value-of select="$config/@chunks_count"/>
     <xsl:if test="count($config/@chunks_count) = 0">24</xsl:if>
   </xsl:variable>
@@ -68,6 +71,7 @@
   "out_dir": "<xsl:value-of select="$workspace-root"/>/log/YandexPostClickImporter/Out",
   "log_dir": "<xsl:value-of select="$workspace-root"/>/log/YandexPostClickImporter/Log",
   "days": <xsl:value-of select="$days"/>,
+  "logs_expiry_hours": <xsl:value-of select="$logs-expiry-hours"/>,
   "attribution": "<xsl:value-of select="$attribution"/>",
   "chunks_count": <xsl:value-of select="$chunks-count"/>,
   "request_timeout": <xsl:value-of select="$request-timeout"/>,

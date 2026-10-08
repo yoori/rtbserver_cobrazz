@@ -317,10 +317,7 @@ namespace AdServer::ChannelSvcs
       noexcept;
 
     static void log_parsed_input_(
-      const MatchUrls& url_words,
-      const MatchWords match_words[CT_MAX],
-      const StringVector& exact_words,
-      std::ostream& ostr)
+      const MatchUrls& url_words, const KeywordInput inputs[CT_MAX], std::ostream& ostr)
       /*throw(eh::Exception)*/;
 
     static void log_result_(

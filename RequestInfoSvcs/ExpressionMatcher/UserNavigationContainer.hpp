@@ -53,6 +53,15 @@ namespace AdServer::RequestInfoSvcs
       const AdServer::Commons::UserId& user_id,
       std::optional<std::uint32_t> date = std::nullopt);
 
+    struct KeysPage
+    {
+      std::vector<std::string> keys;
+      std::optional<std::string> end_position;
+    };
+
+    KeysPage
+    get_user_navigation_keys(std::string_view position, std::size_t limit);
+
     AdServer::Commons::StartableAwaitable<void>
     co_process_request(const RequestInfo& request_info);
 

@@ -99,14 +99,14 @@ class ClickhouseMigrationRunnerTest(unittest.TestCase):
 
 
 class ClickhouseAdapterTest(unittest.TestCase):
-  def run_adapter(self, adapter_name, rows):
+  def run_adapter(self, adapter_name, rows, header=None):
     input_files = []
     with tempfile.TemporaryDirectory() as temp_dir:
       for index, row in enumerate(rows):
         input_path = pathlib.Path(temp_dir) / ('input-' + str(index) + '.csv')
         with input_path.open('w', newline = '') as output:
           writer = csv.writer(output)
-          writer.writerow(['header'])
+          writer.writerow(header or ['header'])
           writer.writerow(row)
         input_files.append(str(input_path))
 
@@ -196,6 +196,20 @@ class ClickhouseAdapterTest(unittest.TestCase):
     self.assertIn(
       "landing_timestamp SimpleAggregateFunction(any, Nullable(DateTime('UTC')))",
       CLICKHOUSE_UPLOADER.R_POST_CLICK_CREATE_TABLE_QUERY)
+
+  def test_rpostconvclick_adapter_distinguishes_legacy_connection_from_type(self):
+    for column, value, expected in (
+        ('ExternalMetricsConnectionID', '999999', '1'),
+        ('ExternalMetricsConnectionID', '0', '0'),
+        ('ExternalMetricsConnectionTypeID', '2', '2')):
+      with self.subTest(column=column, value=value):
+        output = self.run_adapter('RPostConvClickClickhouseAdapter.py', [
+          ['request', '2026-10-01 12:00:00', 'goal', 'goal:visit', '1', '0', value, '2026-10-01']],
+          header=['RequestID', 'Timestamp', 'ConversionName', 'ActionName', 'Visits', 'Goals',
+            column, 'SourceDate'])
+        row = dict(zip(output[0], output[1]))
+        self.assertEqual(row['external_metrics_connection_type_id'], expected)
+        self.assertNotIn('external_metrics_connection_id', row)
 
   def test_rpostimpression_adapter(self):
     fields = [

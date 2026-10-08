@@ -14,6 +14,7 @@
 #include <LogCommons/ActionStat.hpp>
 #include <LogCommons/PassbackStat.hpp>
 #include <LogCommons/PostClickStat.hpp>
+#include <LogCommons/PostClickConvStat.hpp>
 #include <LogCommons/PostImpStat.hpp>
 #include <LogCommons/CmpStat.hpp>
 #include <LogCommons/ChannelImpInventory.hpp>
@@ -2972,8 +2973,7 @@ namespace AdServer::RequestInfoSvcs
       data.add(
         CollectorT::DataT::KeyT(
           make_creative_stat_inner_key(request_info),
-          value.yandex_ref_id,
-          LogProcessing::DayTimestamp(value.yandex_event_date)),
+          value.external_metrics_connection_type_id),
         CollectorT::DataT::DataT(
           1,
           value.landing_bounced ? 1 : 0,
@@ -2982,7 +2982,100 @@ namespace AdServer::RequestInfoSvcs
           value.landing_session_time,
           value.landing_page_views,
           value.landing_is_new_user ? 1 : 0,
-          value.yandex_reporting_comparable ? 1 : 0));
+          value.reporting_comparable ? 1 : 0));
+
+      add_record(
+        CollectorT::KeyT(
+          request_info.time,
+          request_info.adv_time),
+        std::move(data));
+    }
+  };
+
+  class ResearchPostConvClickLogger:
+    public virtual RequestActionProcessor,
+    public virtual AdServer::LogProcessing::LogHolderSharded<
+      AdServer::LogProcessing::ResearchPostConvClickTraits,
+      AdServer::LogProcessing::SimpleCsvSavePolicy<
+        AdServer::LogProcessing::ResearchPostConvClickTraits>>,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+  public:
+    explicit ResearchPostConvClickLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : AdServer::LogProcessing::LogHolderSharded<
+          AdServer::LogProcessing::ResearchPostConvClickTraits,
+          AdServer::LogProcessing::SimpleCsvSavePolicy<
+            AdServer::LogProcessing::ResearchPostConvClickTraits>>(flush_traits)
+    {}
+
+    void process_request(const RequestInfo&, const ProcessingState&) override {}
+    void process_impression(const RequestInfo&, const ImpressionInfo&, const ProcessingState&)
+      override {}
+    void process_click(const RequestInfo&, const ProcessingState&) override {}
+    void process_action(const RequestInfo&) override {}
+
+    void
+    process_post_click_action(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      if (request_info.test_request || !is_post_click_conversion(action_info.name))
+      {
+        return;
+      }
+
+      CollectorT::DataT data;
+      data.request_id = request_info.request_id;
+      data.time = LogProcessing::SecondsTimestamp(action_info.time);
+      data.action_name = action_info.name;
+      data.conversion_name = std::string(post_click_action_type(action_info.name));
+      const auto value = parse_post_click_conversion(action_info.name, action_info.value);
+      data.visits = value.visits;
+      data.goals = value.goals;
+      data.external_metrics_connection_type_id = value.external_metrics_connection_type_id;
+      data.source_date = LogProcessing::DayTimestamp(
+        value.external_metrics_connection_type_id == 0 ? request_info.adv_time : value.source_date);
+      add_record(std::move(data));
+    }
+  };
+
+  class PostClickConvStatLogger:
+    public RequestLoggerAdapter<AdServer::LogProcessing::PostClickConvStatTraits>
+  {
+  public:
+    explicit PostClickConvStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      : RequestLoggerAdapter<AdServer::LogProcessing::PostClickConvStatTraits>(flush_traits)
+    {}
+
+    const char* name() noexcept override
+    {
+      return "PostClickConvStatLogger";
+    }
+
+  private:
+    void process_request_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_impression_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_click_impl(const RequestInfo&, const ProcessingState&) override {}
+    void process_action_impl(const RequestInfo&) override {}
+
+    void
+    process_post_click_action_impl(
+      const RequestInfo& request_info,
+      const PostActionInfo& action_info) override
+    {
+      if (request_info.test_request || !is_post_click_conversion(action_info.name))
+      {
+        return;
+      }
+
+      const auto value = parse_post_click_conversion(action_info.name, action_info.value);
+      CollectorT::DataT data;
+      data.add(
+        CollectorT::DataT::KeyT(
+          make_creative_stat_inner_key(request_info),
+          value.external_metrics_connection_type_id,
+          std::string(post_click_action_type(action_info.name))),
+        CollectorT::DataT::DataT(value.visits, value.goals));
 
       add_record(
         CollectorT::KeyT(
@@ -3071,12 +3164,28 @@ namespace AdServer::RequestInfoSvcs
     const LogProcessing::LogFlushTraits* research_post_click_flush,
     const LogProcessing::LogFlushTraits* bid_cost_stat_flush,
     Commons::LogReferrer::Setting site_referrer_stats_log_referrer_setting,
-    unsigned long colo_id)
+    unsigned long colo_id,
+    const LogProcessing::LogFlushTraits* post_click_conv_stat_flush,
+    const LogProcessing::LogFlushTraits* research_post_conv_click_flush)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       dump_task_runner_(new Generics::TaskRunner(callback, 16))
   {
     // request loggers
+    if (post_click_conv_stat_flush)
+    {
+      add_request_logger_(RequestLoggerBase_var(
+        new PostClickConvStatLogger(*post_click_conv_stat_flush)).in());
+    }
+
+    if (research_post_conv_click_flush)
+    {
+      ReferenceCounting::SmartPtr<ResearchPostConvClickLogger> conv_logger =
+        new ResearchPostConvClickLogger(*research_post_conv_click_flush);
+      request_loggers_.push_back(conv_logger);
+      add_child_log_holder(conv_logger);
+    }
+
     add_request_logger_(RequestLoggerBase_var(
       new UserPropertiesLogger(user_properties_flush)).in());
 

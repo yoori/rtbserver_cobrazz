@@ -322,6 +322,8 @@ namespace AdServer::RequestInfoSvcs
       LogProcessing::LogFlushTraits research_post_impression_flush;
       LogProcessing::LogFlushTraits research_click_flush;
       LogProcessing::LogFlushTraits research_post_click_flush;
+      LogProcessing::LogFlushTraits post_click_conv_stat_flush;
+      LogProcessing::LogFlushTraits research_post_conv_click_flush;
       LogProcessing::LogFlushTraits post_imp_stat_flush;
       LogProcessing::LogFlushTraits bid_cost_stat_flush;
 
@@ -406,7 +408,13 @@ namespace AdServer::RequestInfoSvcs
             bid_cost_stat_flush),
           Commons::LogReferrer::read_log_referrer_settings(
             request_info_manager_config_.use_referrer_site_referrer_stats()),
-	  request_info_manager_config_.colo_id());
+          request_info_manager_config_.colo_id(),
+          read_flush_policy(
+            lp_config.PostClickConvStat(), (log_root + "PostClickConvStat").c_str(),
+            post_click_conv_stat_flush),
+          read_flush_policy(
+            lp_config.ResearchPostConvClick(), (log_root + "ResearchPostConvClick").c_str(),
+            research_post_conv_click_flush));
 
       processing_distributor_->add_child_processor(request_out_logger_);
     }

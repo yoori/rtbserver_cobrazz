@@ -15,15 +15,13 @@ namespace AdServer::LogProcessing
 
     PostClickStatInnerKey(
       CreativeStatInnerKey creative_key,
-      std::uint64_t yandex_ref_id,
-      const DayTimestamp& yandex_event_date);
+      std::uint64_t external_metrics_connection_type_id);
 
     bool
     operator==(const PostClickStatInnerKey& rhs) const noexcept;
 
     const CreativeStatInnerKey& creative_key() const noexcept;
-    std::uint64_t yandex_ref_id() const noexcept;
-    const DayTimestamp& yandex_event_date() const noexcept;
+    std::uint64_t external_metrics_connection_type_id() const noexcept;
     std::size_t hash() const noexcept;
     void invariant() const;
 
@@ -37,8 +35,32 @@ namespace AdServer::LogProcessing
     void calc_hash_() noexcept;
 
     CreativeStatInnerKey creative_key_;
-    std::uint64_t yandex_ref_id_ = 0;
-    DayTimestamp yandex_event_date_;
+    std::uint64_t external_metrics_connection_type_id_ = 0;
+    std::size_t hash_ = 0;
+  };
+
+  // Keep old connection IDs distinct until conversion sums their type-level keys.
+  class PostClickStatInnerKey_V_1_1: public PostClickStatInnerKey
+  {
+  public:
+    PostClickStatInnerKey current_key() const;
+    void invariant() const;
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, PostClickStatInnerKey_V_1_1& key);
+  };
+
+  class PostClickStatInnerKey_V_1_0: public PostClickStatInnerKey_V_1_1
+  {
+  public:
+    bool operator==(const PostClickStatInnerKey_V_1_0& rhs) const noexcept;
+    std::size_t hash() const noexcept;
+
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, PostClickStatInnerKey_V_1_0& key);
+
+  private:
+    DayTimestamp source_date_;
     std::size_t hash_ = 0;
   };
 
@@ -96,6 +118,29 @@ namespace AdServer::LogProcessing
     true>;
   using PostClickStatCollector = StatCollector<CreativeStatKey, PostClickStatInnerCollector>;
 
+  using PostClickStatInnerCollector_V_1_1 =
+    StatCollector<PostClickStatInnerKey_V_1_1, PostClickStatInnerData, false, true>;
+  using PostClickStatCollector_V_1_1 =
+    StatCollector<CreativeStatKey, PostClickStatInnerCollector_V_1_1>;
+
+  using PostClickStatInnerCollector_V_1_0 =
+    StatCollector<PostClickStatInnerKey_V_1_0, PostClickStatInnerData, false, true>;
+  using PostClickStatCollector_V_1_0 =
+    StatCollector<CreativeStatKey, PostClickStatInnerCollector_V_1_0>;
+
   struct PostClickStatTraits: LogDefaultTraits<PostClickStatCollector>
-  {};
+  {
+    static CollectorType convert_collector(const PostClickStatCollector_V_1_0& old_collector);
+    static CollectorType convert_collector(const PostClickStatCollector_V_1_1& old_collector);
+
+    template <class Functor>
+    static void for_each_old(Functor& functor);
+  };
+
+  template <class Functor>
+  void PostClickStatTraits::for_each_old(Functor& functor)
+  {
+    functor.template support<PostClickStatCollector_V_1_0, true>("1.0");
+    functor.template support<PostClickStatCollector_V_1_1, true>("1.1");
+  }
 }

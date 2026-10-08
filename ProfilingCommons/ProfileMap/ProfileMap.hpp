@@ -110,6 +110,15 @@ namespace AdServer::ProfilingCommons
     using RemoveCallback = std::function<void(bool, std::optional<std::string> error)>;
     using CompleteCallback = std::function<void()>;
 
+    // A bounded, synchronous scan. Returning false stops iteration; start is inclusive.
+    virtual void
+    process_keys_from(
+      const std::optional<KeyType>&,
+      const std::function<bool(const KeyType&)>&)
+    {
+      throw typename ProfileMap<KeyType>::Exception("process_keys_from isn't supported");
+    }
+
     virtual void
     check_profile_async(const KeyType& key, CheckCallback callback) const
       /*throw(Exception)*/ = 0;

@@ -46,6 +46,8 @@
     </xsd:sequence>
     <xsd:attribute name="period" type="xsd:positiveInteger" use="optional" default="3600"/>
     <xsd:attribute name="days" type="xsd:positiveInteger" use="optional" default="4"/>
+    <xsd:attribute name="logs_expiry_hours" type="xsd:positiveInteger"
+      use="optional" default="72"/>
     <xsd:attribute name="attribution" type="YandexPostClickImporterAttributionType"
       use="optional" default="lastsign"/>
     <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="optional" default="24"/>

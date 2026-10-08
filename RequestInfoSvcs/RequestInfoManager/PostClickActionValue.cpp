@@ -1,8 +1,10 @@
 #include "PostClickActionValue.hpp"
 
 #include <memory>
+#include <regex>
 
 #include <Commons/FastJsonParser.hpp>
+#include <Commons/ExternalMetrics.hpp>
 
 namespace AdServer::RequestInfoSvcs
 {
@@ -22,35 +24,39 @@ namespace AdServer::RequestInfoSvcs
       SESSION_TIME = 2,
       PAGE_VIEWS = 4,
       NEW_USER = 8,
-      YANDEX_REF_ID = 16,
-      YANDEX_EVENT_DATE = 32,
-      YANDEX_REPORTING_COMPARABLE = 64,
+      CONNECTION_TYPE = 16,
+      SOURCE_DATE = 32,
+      REPORTING_COMPARABLE = 64,
       ROBOT = 128,
-      ROBOT_AVAILABLE = 256
+      ROBOT_AVAILABLE = 256,
+      VISITS = 512,
+      GOALS = 1024
     };
 
     constexpr unsigned int ALL_FIELDS = 15;
-    constexpr unsigned int YANDEX_FIELDS = 112;
+    constexpr unsigned int EXTERNAL_FIELDS = 48;
     constexpr unsigned int ROBOT_FIELDS = 384;
 
     struct ParseContext
     {
       PostClickActionValue value;
+      std::uint64_t visits = 0;
+      std::uint64_t goals = 0;
       unsigned int fields = 0;
     };
 
     class FieldProcessor final: public Parser::ValueProcessor
     {
     public:
-      explicit FieldProcessor(Field field) noexcept
-        : field_(field)
+      explicit FieldProcessor(Field field, bool legacy_connection = false) noexcept
+        : field_(field), legacy_connection_(legacy_connection)
       {}
 
       void
       process_integer(int64_t value, std::string_view, void* context) const override
       {
         if (field_ == Field::BOUNCED || field_ == Field::NEW_USER ||
-            field_ == Field::YANDEX_REPORTING_COMPARABLE || field_ == Field::ROBOT ||
+            field_ == Field::REPORTING_COMPARABLE || field_ == Field::ROBOT ||
             field_ == Field::ROBOT_AVAILABLE)
         {
           if (value != 0 && value != 1)
@@ -70,7 +76,7 @@ namespace AdServer::RequestInfoSvcs
       process_bool(bool value, std::string_view, void* context) const override
       {
         if (field_ != Field::BOUNCED && field_ != Field::NEW_USER &&
-            field_ != Field::YANDEX_REPORTING_COMPARABLE && field_ != Field::ROBOT &&
+            field_ != Field::REPORTING_COMPARABLE && field_ != Field::ROBOT &&
             field_ != Field::ROBOT_AVAILABLE)
         {
           throw Parser::UnexpectedType("Post-click numeric metric must be an integer");
@@ -112,18 +118,35 @@ namespace AdServer::RequestInfoSvcs
           case Field::ROBOT_AVAILABLE:
             parse_context.value.landing_robot_available = value != 0;
             break;
-          case Field::YANDEX_REF_ID:
-            parse_context.value.yandex_ref_id = value;
+          case Field::CONNECTION_TYPE:
+            if (legacy_connection_)
+            {
+              value = value ? Commons::YANDEX_METRIKA : Commons::INTERNAL_METRICS;
+            }
+
+            if (value > Commons::MAX_METRICS_CONNECTION_TYPE)
+            {
+              throw Parser::ParseError("Invalid external metrics connection type");
+            }
+
+            parse_context.value.external_metrics_connection_type_id = value;
             break;
-          case Field::YANDEX_REPORTING_COMPARABLE:
-            parse_context.value.yandex_reporting_comparable = value != 0;
+          case Field::REPORTING_COMPARABLE:
+            parse_context.value.reporting_comparable = value != 0;
             break;
-          case Field::YANDEX_EVENT_DATE:
+          case Field::SOURCE_DATE:
+            break;
+          case Field::VISITS:
+            parse_context.visits = value;
+            break;
+          case Field::GOALS:
+            parse_context.goals = value;
             break;
         }
       }
 
       Field field_;
+      bool legacy_connection_;
     };
 
     class EventDateProcessor final: public Parser::ValueProcessor
@@ -133,13 +156,13 @@ namespace AdServer::RequestInfoSvcs
       process_string(std::string_view value, std::string_view, void* context) const override
       {
         auto& parse_context = *static_cast<ParseContext*>(context);
-        const auto field_mask = static_cast<unsigned int>(Field::YANDEX_EVENT_DATE);
+        const auto field_mask = static_cast<unsigned int>(Field::SOURCE_DATE);
         if (parse_context.fields & field_mask)
         {
-          throw Parser::ParseError("Duplicate Yandex event date");
+          throw Parser::ParseError("Duplicate source date");
         }
 
-        parse_context.value.yandex_event_date = Generics::Time(
+        parse_context.value.source_date = Generics::Time(
           String::SubString(value.data(), value.size()),
           "%Y-%m-%d",
           true);
@@ -170,14 +193,24 @@ namespace AdServer::RequestInfoSvcs
         "landing_robot_available",
         std::make_shared<FieldProcessor>(Field::ROBOT_AVAILABLE));
       processors.add_processor(
-        "yandex_ref_id",
-        std::make_shared<FieldProcessor>(Field::YANDEX_REF_ID));
+        "external_metrics_connection_type_id",
+        std::make_shared<FieldProcessor>(Field::CONNECTION_TYPE));
       processors.add_processor(
-        "yandex_event_date",
+        "source_date",
         std::make_shared<EventDateProcessor>());
       processors.add_processor(
-        "yandex_reporting_comparable",
-        std::make_shared<FieldProcessor>(Field::YANDEX_REPORTING_COMPARABLE));
+        "reporting_comparable",
+        std::make_shared<FieldProcessor>(Field::REPORTING_COMPARABLE));
+      processors.add_processor("visits", std::make_shared<FieldProcessor>(Field::VISITS));
+      processors.add_processor("goals", std::make_shared<FieldProcessor>(Field::GOALS));
+      // Pending profiles and queued logs may still contain the pre-normalization names.
+      processors.add_processor("external_metrics_connection_id",
+        std::make_shared<FieldProcessor>(Field::CONNECTION_TYPE, true));
+      processors.add_processor("yandex_ref_id",
+        std::make_shared<FieldProcessor>(Field::CONNECTION_TYPE, true));
+      processors.add_processor("yandex_event_date", std::make_shared<EventDateProcessor>());
+      processors.add_processor("yandex_reporting_comparable",
+        std::make_shared<FieldProcessor>(Field::REPORTING_COMPARABLE));
       return Parser(std::move(processors));
     }
   }
@@ -196,10 +229,10 @@ namespace AdServer::RequestInfoSvcs
         throw Parser::ParseError("Post-click action value does not contain all landing metrics");
       }
 
-      if ((context.fields & YANDEX_FIELDS) != 0 &&
-          (context.fields & YANDEX_FIELDS) != YANDEX_FIELDS)
+      if ((context.fields & EXTERNAL_FIELDS) != 0 &&
+          (context.fields & EXTERNAL_FIELDS) != EXTERNAL_FIELDS)
       {
-        throw Parser::ParseError("Post-click action value contains incomplete Yandex metadata");
+        throw Parser::ParseError("Post-click action value contains incomplete external metadata");
       }
 
       if ((context.fields & ROBOT_FIELDS) != 0 &&
@@ -210,5 +243,43 @@ namespace AdServer::RequestInfoSvcs
     }
 
     return context.value;
+  }
+
+  bool is_post_click_conversion(std::string_view name) noexcept
+  {
+    return name.substr(0, 3) == "ym_";
+  }
+
+  PostClickConversionValue
+  parse_post_click_conversion(std::string_view name, std::string_view value)
+  {
+    static const Parser parser = make_parser();
+    static const std::regex name_pattern(
+      "ym_[1-9][0-9]*_[1-9][0-9]*:([vg]):([0-9]{4}-[0-9]{2}-[0-9]{2}):[0-9]+(:[0-9]+)?");
+    std::match_results<std::string_view::const_iterator> match;
+    if (!std::regex_match(name.begin(), name.end(), match, name_pattern) ||
+        (match[1] == "g") != match[3].matched)
+    {
+      throw Parser::ParseError("Invalid post-click conversion event name");
+    }
+
+    ParseContext context;
+    parser.parse(value, &context);
+    constexpr unsigned int REQUIRED = 16 | 32 | 512 | 1024;
+    if (context.fields != REQUIRED ||
+        context.value.external_metrics_connection_type_id != Commons::YANDEX_METRIKA ||
+        context.visits > 1 || context.goals > 1 || context.visits + context.goals != 1 ||
+        (match[1] == "v") != (context.visits == 1))
+    {
+      throw Parser::ParseError("Invalid post-click conversion metrics");
+    }
+
+    if (context.value.source_date.get_gm_time().format("%Y-%m-%d") != match[2].str())
+    {
+      throw Parser::ParseError("Post-click conversion event date mismatch");
+    }
+
+    return {context.visits, context.goals, context.value.external_metrics_connection_type_id,
+      context.value.source_date};
   }
 }

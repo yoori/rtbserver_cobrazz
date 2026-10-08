@@ -2,6 +2,7 @@
 #include "UserNavigationProfileJson.hpp"
 
 #include <cstdint>
+#include <charconv>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -142,6 +143,89 @@ namespace AdServer::RequestInfoSvcs
       }
 
       return request;
+    }
+
+    int
+    hex_digit(char value) noexcept
+    {
+      if (value >= '0' && value <= '9') return value - '0';
+      if (value >= 'a' && value <= 'f') return value - 'a' + 10;
+      if (value >= 'A' && value <= 'F') return value - 'A' + 10;
+      return -1;
+    }
+
+    std::string
+    decode_query_value(std::string_view value)
+    {
+      std::string decoded;
+      decoded.reserve(value.size());
+      for (std::size_t i = 0; i < value.size(); ++i)
+      {
+        if (value[i] == '%')
+        {
+          if (i + 2 >= value.size() || hex_digit(value[i + 1]) < 0 ||
+            hex_digit(value[i + 2]) < 0)
+          {
+            throw InvalidRequest("invalid query encoding");
+          }
+          decoded += static_cast<char>(
+            hex_digit(value[i + 1]) * 16 + hex_digit(value[i + 2]));
+          i += 2;
+        }
+        else
+        {
+          decoded += value[i] == '+' ? ' ' : value[i];
+        }
+      }
+      return decoded;
+    }
+
+    struct KeysRequest
+    {
+      std::string position;
+      std::size_t limit = 100000;
+    };
+
+    KeysRequest
+    parse_keys_request(std::string_view target)
+    {
+      KeysRequest result;
+      const auto question = target.find('?');
+      if (question == std::string_view::npos) return result;
+      target.remove_prefix(question + 1);
+      while (!target.empty())
+      {
+        const auto ampersand = target.find('&');
+        const auto part = target.substr(0, ampersand);
+        const auto equal = part.find('=');
+        if (equal == std::string_view::npos)
+        {
+          throw InvalidRequest("query parameter has no value");
+        }
+        const auto name = part.substr(0, equal);
+        const auto value = decode_query_value(part.substr(equal + 1));
+        if (name == "position")
+        {
+          result.position = value;
+        }
+        else if (name == "limit")
+        {
+          const auto parsed = std::from_chars(
+            value.data(), value.data() + value.size(), result.limit);
+          if (parsed.ec != std::errc() || parsed.ptr != value.data() + value.size() ||
+            result.limit == 0 || result.limit > 100000)
+          {
+            throw InvalidRequest("limit must be between 1 and 100000");
+          }
+        }
+        else
+        {
+          throw InvalidRequest("unknown query parameter");
+        }
+        if (ampersand == std::string_view::npos) break;
+        target.remove_prefix(ampersand + 1);
+      }
+      return result;
     }
 
     struct ProfileResult
@@ -374,6 +458,60 @@ namespace AdServer::RequestInfoSvcs
       return co_handle_user_navigation_profile(
         expression_matcher_holder,
         std::move(request));
+    };
+  }
+
+  AdServer::Commons::HttpServer::HttpServer::Handler
+  make_user_navigation_keys_http_handler(ExpressionMatcherImpl* expression_matcher)
+  {
+    ExpressionMatcherImpl_var expression_matcher_holder(
+      ReferenceCounting::add_ref(expression_matcher));
+    return [expression_matcher_holder = std::move(expression_matcher_holder)](
+      HttpServer::Request request)
+    {
+      if (request.method != "GET")
+      {
+        return AdServer::Commons::HttpServer::make_ready_response(
+          error_response(405, "only GET is supported"));
+      }
+      try
+      {
+        const auto parsed = parse_keys_request(request.target);
+        const auto page = expression_matcher_holder->get_user_navigation_keys(
+          parsed.position, parsed.limit);
+        std::string body;
+        {
+          AdServer::Commons::JsonFormatter root(body);
+          {
+            AdServer::Commons::JsonObject keys(root.add_array("keys"));
+            for (const auto& key : page.keys)
+            {
+              keys.add_escaped_string(key);
+            }
+          }
+          root.add_escaped_string("end_position", page.end_position.value_or(""));
+          root.add_boolean("done", !page.end_position.has_value());
+        }
+        body += '\n';
+        return AdServer::Commons::HttpServer::make_ready_response(
+          HttpServer::Response{200, "application/json", std::move(body)});
+      }
+      catch (const InvalidRequest& ex)
+      {
+        return AdServer::Commons::HttpServer::make_ready_response(error_response(400, ex.what()));
+      }
+      catch (const std::invalid_argument& ex)
+      {
+        return AdServer::Commons::HttpServer::make_ready_response(error_response(400, ex.what()));
+      }
+      catch (const ExpressionMatcherImpl::NotReady& ex)
+      {
+        return AdServer::Commons::HttpServer::make_ready_response(error_response(503, ex.what()));
+      }
+      catch (const std::exception& ex)
+      {
+        return AdServer::Commons::HttpServer::make_ready_response(error_response(500, ex.what()));
+      }
     };
   }
 }

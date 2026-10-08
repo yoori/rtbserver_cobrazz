@@ -1,4 +1,7 @@
 
+#include <string_view>
+#include <optional>
+
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -16,6 +19,15 @@ namespace AdServer::ChannelSvcs
   {
     const unsigned long PATH_DEPTH = 12;
     const std::string EMPTY_STRING;
+
+    std::size_t next_url_prefix(const MatchUrl& url, std::size_t length, std::size_t depth) noexcept
+    {
+      if (!url.branch_host_size || depth >= PATH_DEPTH)
+      {
+        return std::string_view::npos;
+      }
+      return std::string_view(url.prefix.data(), url.branch_path_end).find('/', length + 1);
+    }
   }
 
   /*
@@ -810,10 +822,13 @@ namespace AdServer::ChannelSvcs
 
       ChannelChunkArray_var chunks_array;
       ChannelChunkArray_var match_chunks;
+      std::shared_ptr<const KeywordPrefixIndexes> old_keyword_prefixes;
       {
         ReadGuard_ lock(lock_configuration_);
         match_chunks = ReferenceCounting::add_ref(chunks_);
+        old_keyword_prefixes = keyword_prefixes_;
       }
+      auto keyword_prefixes = std::make_shared<KeywordPrefixIndexes>(*old_keyword_prefixes);
       const ExcludeContainerType& removed_channels = add.get_removed();
       IdType channel_id = 0;
       bool reset_stat = false;
@@ -938,8 +953,52 @@ namespace AdServer::ChannelSvcs
             new_data->triggers.push_back(ChannelUpdateData::TriggerItem(
               add_it->first, add_it->second));
           }
-          old_data = new_data;
         }
+
+        // Only changed matcher references affect hooks; publish after the whole merge.
+        std::map<SoftMatcher*, std::ptrdiff_t> keyword_changes;
+        if (old_data)
+        {
+          for (const auto& trigger : old_data->triggers)
+          {
+            --keyword_changes[trigger.matcher.in()];
+          }
+        }
+
+        if (new_data)
+        {
+          for (const auto& trigger : new_data->triggers)
+          {
+            ++keyword_changes[trigger.matcher.in()];
+          }
+        }
+        for (const auto& [matcher, delta] : keyword_changes)
+        {
+          const char type = matcher->trigger_type();
+          if (!delta || (type != 'P' && type != 'R' && type != 'S'))
+          {
+            continue;
+          }
+          auto& prefixes = (*keyword_prefixes)[type == 'P' ? CT_PAGE :
+            type == 'R' ? CT_URL_KEYWORDS : CT_SEARCH];
+          std::vector<std::string_view> parts;
+          matcher->get_keyword_parts(parts);
+          for (auto remaining = delta; remaining != 0; remaining += delta > 0 ? -1 : 1)
+          {
+            for (const auto part : parts)
+            {
+              if (delta > 0)
+              {
+                prefixes.add(part);
+              }
+              else
+              {
+                prefixes.remove(part);
+              }
+            }
+          }
+        }
+        old_data = new_data;
         {
           WriteGuard_ lock(lock_update_data_);
           if (remove_channel)
@@ -975,38 +1034,30 @@ namespace AdServer::ChannelSvcs
         info_res = ReferenceCounting::add_ref(get_rules_());
       }
 
+      chunks_array = new ChannelChunkArray;
+      chunks_array->resize(count_chunks_);
+      chunks_array->url_prefixes = match_chunks->url_prefixes;
       for (unsigned int i = 0; i < count_chunks_; i++)
       {
-        chunks_array = new ChannelChunkArray;
-        chunks_array->resize(count_chunks_);
-        for (unsigned int j = 0; j < count_chunks_; j++)
-        {
-          if (i == j)
-          {
-            (*chunks_array)[j] = new ChannelChunk(info_res);
-            (*match_chunks)[i]->apply_update(
-              *((*chunks_array)[i]),
-              updated_uid_channels,
-              non_strict_ ? &removed_urls : nullptr,
-              non_strict_ ? &removed_page_keywords : nullptr,
-              non_strict_ ? &removed_url_keywords : nullptr,
-              non_strict_ ? &removed_search_keywords : nullptr);
-          }
-          else
-          {
-            (*chunks_array)[j] = ReferenceCounting::add_ref((*match_chunks)[j]);
-          }
-        }
-        match_chunks = chunks_array;
-        {
-          WriteGuard_ lock(lock_configuration_);
-          chunks_.swap(chunks_array); // destroy chunk outside lock
-        }
-
+        (*chunks_array)[i] = new ChannelChunk(info_res);
+        (*match_chunks)[i]->apply_update(
+          *((*chunks_array)[i]),
+          updated_uid_channels,
+          non_strict_ ? &removed_urls : nullptr,
+          non_strict_ ? &removed_page_keywords : nullptr,
+          non_strict_ ? &removed_url_keywords : nullptr,
+          non_strict_ ? &removed_search_keywords : nullptr,
+          chunks_array->url_prefixes);
         if (progress)
         {
           progress->set_progess(1);
         }
+      }
+      match_chunks = chunks_array;
+      {
+        WriteGuard_ lock(lock_configuration_);
+        chunks_.swap(chunks_array);
+        keyword_prefixes_ = std::move(keyword_prefixes);
       }
 
       if (progress)
@@ -1117,10 +1168,38 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
-      for (MatchUrls::const_iterator i = urls.begin(); i != urls.end(); ++i)
+      for (const auto& url : urls)
       {
-        ChannelChunk* chunk = array[calc_chunk_num_i_(String::SubString(i->prefix))];
-        chunk->match_url(*i, flags, res);
+        const std::string_view text(url.prefix);
+        auto length = url.branch_host_size ? url.branch_host_size : text.size();
+        std::size_t depth = 1;
+        while (true)
+        {
+          const Generics::StringViewHashAdapter key(text.substr(0, length));
+          const auto hints = array.url_prefixes.find(key.hash());
+          if (!hints.terminal && !hints.descendants)
+          {
+            break;
+          }
+
+          const auto next = next_url_prefix(url, length, depth);
+          if (hints.terminal)
+          {
+            const auto postfix = url.branch_host_size ? text.substr(length,
+              next == std::string_view::npos ? next : next - length) :
+              std::string_view(url.postfix);
+            ChannelChunk* chunk = array[calc_chunk_num_i_(key)];
+            chunk->match_url(postfix, key, flags, res);
+          }
+
+          if (!hints.descendants || next == std::string_view::npos)
+          {
+            break;
+          }
+
+          length = next;
+          ++depth;
+        }
       }
     }
     catch(const eh::Exception& e)
@@ -1141,6 +1220,34 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
+      if (std::any_of(urls.begin(), urls.end(),
+        [](const MatchUrl& url) { return url.branch_host_size != 0; }))
+      {
+        MatchUrls expanded;
+        for (const auto& url : urls)
+        {
+          const std::string_view text(url.prefix);
+          auto length = url.branch_host_size ? url.branch_host_size : text.size();
+          std::size_t depth = 1;
+          while (true)
+          {
+            const auto next = next_url_prefix(url, length, depth);
+            const auto postfix = url.branch_host_size ? text.substr(length,
+              next == std::string_view::npos ? next : next - length) :
+              std::string_view(url.postfix);
+            expanded.push_back({std::string(text.substr(0, length)), std::string(postfix)});
+            if (next == std::string_view::npos)
+            {
+              break;
+            }
+            length = next;
+            ++depth;
+          }
+        }
+        match_ns_urls_(expanded, array, flags, res);
+        return;
+      }
+
       MatchUrls additional_urls;
       {
         ReadGuard_ lock(lock_ns_map_);
@@ -1196,23 +1303,22 @@ namespace AdServer::ChannelSvcs
 
   /* match words for triggers*/
   void ChannelContainer::match_words_(
-    const MatchWords& key_words,
-    const MatchWords& words,
+    const MatchWordVector& key_words,
+    const MatchWordSet& words,
     const ChannelChunkArray& array,
-    const StringVector* exact_words,
+    const MatchWordVector* exact_words,
     MatchType type,
     unsigned int flags,
     TriggerMatchRes& res,
-    MatcherVarsSet* already_matched)
+    MatchRequestMatchers* already_matched)
     /*throw(Exception)*/
   {
     static const char* FN = "ChannelContainer::match_words_";
     try
     {
-      for (MatchWords::const_iterator i(key_words.begin()); i != key_words.end(); ++i)
+      for (const auto& current : key_words)
       {
-        const MatchWords::key_type& current = *i;
-        const ChannelChunk* chunk = array[calc_chunk_num_(i->hash(), array.size())];
+        const ChannelChunk* chunk = array[calc_chunk_num_(current.hash(), array.size())];
         chunk->match_words(current, words, exact_words, type, flags, res, already_matched);
       }
     }
@@ -1226,7 +1332,7 @@ namespace AdServer::ChannelSvcs
 
   /* match non strict words for triggers*/
   void ChannelContainer::match_ns_words_(
-    const MatchWords& words,
+    const PreparedMatchWords& words,
     const ChannelChunkArray& array,
     MatchType type,
     unsigned int flags,
@@ -1236,12 +1342,13 @@ namespace AdServer::ChannelSvcs
     static const char* FN = "ChannelContainer::match_ns_words_";
     try
     {
-      MatchWords key_words = words;
-      MatcherVarsSet matched;
-      for (MatchWords::const_iterator it(words.begin()); it != words.end(); ++it)
+      PreparedMatchWords key_words = words;
+      MatchRequestMatchers matched(words.words().get_allocator().arena());
+      for (const auto& word : words.candidates())
       {
         ReadGuard_ lock(lock_ns_map_);
-        NSTriggerMapType::const_iterator ns_it = ns_trigger_map_.find(it->text());
+        const auto text = word.text();
+        auto ns_it = ns_trigger_map_.find(String::SubString(text.data(), text.size()));
         if (ns_it != ns_trigger_map_.end())
         {
           for (NSTriggerAtom::const_iterator m_it = ns_it->second.begin();
@@ -1251,18 +1358,25 @@ namespace AdServer::ChannelSvcs
             const Lexeme_var& lexeme = (*m_it)->matched_lexeme();
             if (lexeme.in())
             {//any form from matched lexem is siutable
-              key_words.insert(lexeme->forms[0]);
+              const auto& form = lexeme->forms[0];
+              key_words.insert(
+                Generics::StringViewHashAdapter(form.hash(), std::string_view(form)));
             }
             else
             {//try all parts like keys
               SubStringVector parts;
               Serialization::get_parts((*m_it)->get_trigger(), parts);
-              key_words.insert(parts.begin(), parts.end());
+              for (const auto& part : parts)
+              {
+                key_words.insert(Generics::StringViewHashAdapter(
+                  std::string_view(part.data(), part.size())));
+              }
             }
           }
         }
       }
-      match_words_(key_words, words, array, nullptr, type, flags, res, &matched);
+      match_words_(key_words.candidates(), words.words(), array, nullptr, type, flags, res,
+        &matched);
     }
     catch(eh::Exception& e)
     {
@@ -1272,25 +1386,92 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  /*match channels for trigger */
   void ChannelContainer::match(
-    const MatchUrls& url_words,
-    const MatchUrls& additional_url_words,
-    const MatchWords match_words[CT_MAX],
-    const MatchWords& additional_url_keywords,
-    const StringVector& exact_words,
-    const Generics::Uuid& uid,
-    unsigned int flags,
+    const MatchUrls& url_words, const MatchUrls& additional_url_words,
+    const KeywordInput inputs[CT_MAX], const KeywordInput& additional_url_keywords,
+    const Generics::Uuid& uid, unsigned int flags, TriggerMatchRes& res)
+  {
+    match_impl_(url_words, additional_url_words, uid, flags, res,
+      [&](auto& prepared, auto& additional, auto& exact, const auto& prefixes)
+      {
+        if (!inputs[CT_SEARCH].text.empty())
+        {
+          prepare_keywords(inputs[CT_SEARCH], *prepared[CT_SEARCH],
+            flags & MF_NONSTRICTKW ? nullptr : &prefixes[CT_SEARCH], &exact);
+        }
+        prepared[CT_URL_KEYWORDS]->insert(exact.begin(), exact.end());
+        for (std::size_t type = 0; type < CT_MAX; ++type)
+        {
+          if (type != CT_SEARCH && !inputs[type].text.empty())
+          {
+            prepare_keywords(inputs[type], *prepared[type],
+              flags & MF_NONSTRICTKW ? nullptr : &prefixes[type]);
+          }
+        }
+        if (!additional_url_keywords.text.empty())
+        {
+          prepare_keywords(additional_url_keywords, additional,
+            flags & MF_NONSTRICTKW ? nullptr : &prefixes[CT_URL_KEYWORDS]);
+        }
+      });
+  }
+
+  void ChannelContainer::match(
+    const MatchUrls& url_words, const MatchUrls& additional_url_words,
+    const MatchWords match_words[CT_MAX], const MatchWords& additional_url_keywords,
+    const StringVector& exact_words, const Generics::Uuid& uid, unsigned int flags,
     TriggerMatchRes& res)
-    /*throw(Exception)*/
+  {
+    match_impl_(url_words, additional_url_words, uid, flags, res,
+      [&](auto& prepared, auto& additional, auto& exact, const auto& prefixes)
+      {
+        for (std::size_t type = 0; type < CT_MAX; ++type)
+        {
+          if (!match_words[type].empty() || !match_words[type].deferred_sequences.empty())
+          {
+            prepare_keywords(match_words[type], *prepared[type],
+              flags & MF_NONSTRICTKW ? nullptr : &prefixes[type]);
+          }
+        }
+        if (!additional_url_keywords.empty() || !additional_url_keywords.deferred_sequences.empty())
+        {
+          prepare_keywords(additional_url_keywords, additional,
+            flags & MF_NONSTRICTKW ? nullptr : &prefixes[CT_URL_KEYWORDS]);
+        }
+        exact.reserve(exact_words.size());
+        for (const auto& word : exact_words)
+        {
+          exact.emplace_back(word);
+        }
+      });
+  }
+
+  template<typename Prepare>
+  void ChannelContainer::match_impl_(
+    const MatchUrls& url_words, const MatchUrls& additional_url_words,
+    const Generics::Uuid& uid, unsigned int flags, TriggerMatchRes& res, const Prepare& prepare)
   {
     try
     {
       ChannelChunkArray_var chunk_array;
+      std::shared_ptr<const KeywordPrefixIndexes> prefixes;
       {
         ReadGuard_ lock(lock_configuration_);
         chunk_array = ReferenceCounting::add_ref(chunks_);
+        prefixes = keyword_prefixes_;
       }
+
+      Generics::MonoAllocatorFixedArena<4096> match_arena;
+      std::optional<PreparedMatchWords> prepared_words[CT_MAX];
+      const PreparedMatchWords* words[CT_MAX];
+      for (std::size_t type = 0; type < CT_MAX; ++type)
+      {
+        words[type] = &prepared_words[type].emplace(&match_arena.arena());
+      }
+      PreparedMatchWords prepared_additional(&match_arena.arena());
+      const PreparedMatchWords* additional_words = &prepared_additional;
+      MatchWordVector exact_words(&match_arena.arena());
+      prepare(prepared_words, prepared_additional, exact_words, *prefixes);
 
       if (flags & MF_NONSTRICTURL)
       {
@@ -1309,24 +1490,24 @@ namespace AdServer::ChannelSvcs
 
       if (flags & MF_NONSTRICTKW)
       {
-        match_ns_words_(match_words[CT_PAGE], *chunk_array, CT_PAGE, flags | MF_BLACK_LIST, res);
+        match_ns_words_(*words[CT_PAGE], *chunk_array, CT_PAGE, flags | MF_BLACK_LIST, res);
 
         match_ns_words_(
-          match_words[CT_URL_KEYWORDS],
+          *words[CT_URL_KEYWORDS],
           *chunk_array,
           CT_URL_KEYWORDS,
           flags | MF_BLACK_LIST,
           res);
 
         match_ns_words_(
-          additional_url_keywords,
+          *additional_words,
           *chunk_array,
           CT_URL_KEYWORDS,
           flags | MF_BLACK_LIST,
           res);
 
         match_ns_words_(
-          match_words[CT_SEARCH],
+          *words[CT_SEARCH],
           *chunk_array,
           CT_SEARCH,
           flags | MF_BLACK_LIST,
@@ -1335,8 +1516,8 @@ namespace AdServer::ChannelSvcs
       else
       {
         match_words_(
-          match_words[CT_PAGE],
-          match_words[CT_PAGE],
+          words[CT_PAGE]->candidates(),
+          words[CT_PAGE]->words(),
           *chunk_array,
           nullptr,
           CT_PAGE,
@@ -1344,8 +1525,8 @@ namespace AdServer::ChannelSvcs
           res);
 
         match_words_(
-          match_words[CT_URL_KEYWORDS],
-          match_words[CT_URL_KEYWORDS],
+          words[CT_URL_KEYWORDS]->candidates(),
+          words[CT_URL_KEYWORDS]->words(),
           *chunk_array,
           nullptr,
           CT_URL_KEYWORDS,
@@ -1353,8 +1534,8 @@ namespace AdServer::ChannelSvcs
           res);
 
         match_words_(
-          additional_url_keywords,
-          additional_url_keywords,
+          additional_words->candidates(),
+          additional_words->words(),
           *chunk_array,
           nullptr,
           CT_URL_KEYWORDS,
@@ -1362,8 +1543,8 @@ namespace AdServer::ChannelSvcs
           res);
 
         match_words_(
-          match_words[CT_SEARCH],
-          match_words[CT_SEARCH],
+          words[CT_SEARCH]->candidates(),
+          words[CT_SEARCH]->words(),
           *chunk_array,
           &exact_words,
           CT_SEARCH,
@@ -1525,6 +1706,46 @@ namespace AdServer::ChannelSvcs
     stats = stats_;
   }
 
+  std::shared_ptr<const ChannelContainer::KeywordPrefixIndexes>
+  ChannelContainer::keyword_prefixes() const
+  {
+    ReadGuard_ lock(lock_configuration_);
+    return keyword_prefixes_;
+  }
+
+  bool ChannelContainer::match_parse_urls(
+    std::string_view refer, const std::set<unsigned short>& allow_ports, bool soft_matching,
+    MatchUrls& urls, Logging::Logger* logger)
+  {
+    try
+    {
+      String::SubString text(refer.data(), refer.size());
+      String::StringManip::trim(text);
+      if (text.empty())
+      {
+        return false;
+      }
+      String::StringManip::Splitter<String::AsciiStringManip::SepNL> splitter(text);
+      String::SubString ref;
+      while (splitter.get_token(ref))
+      {
+        match_parse_refer(ref, allow_ports, soft_matching, urls, logger);
+      }
+      return true;
+    }
+    catch (const eh::Exception& e)
+    {
+      if (logger)
+      {
+        Stream::Error ostr;
+        ostr << __func__ << ": eh::Exception: " << e.what();
+        logger->log(ostr.str(), Logging::Logger::TRACE, ASPECT);
+      }
+      urls.clear();
+      return false;
+    }
+  }
+
   void ChannelContainer::match_parse_urls(
     const String::SubString& refer,
     const String::SubString& refer_words,
@@ -1533,7 +1754,9 @@ namespace AdServer::ChannelSvcs
     MatchUrls& url_words,
     MatchWords& url_keywords,
     Logging::Logger* logger,
-    const Language::Segmentor::SegmentorInterface* /*segmentor*/)
+    const Language::Segmentor::SegmentorInterface* /*segmentor*/,
+    const KeywordPrefixIndex* prefixes,
+    bool defer_combinations)
     /*throw(eh::Exception)*/
   {
     try
@@ -1558,7 +1781,8 @@ namespace AdServer::ChannelSvcs
           &sep_nl,//break by '\n'
           soft_matching ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ,
           0,//exact match
-          0);//segmentor used in Frontends for extracting keywords (ADSC-9812)
+          nullptr, // segmentor used in Frontends for extracting keywords (ADSC-9812)
+          prefixes, defer_combinations);
       }
     }
     catch(const eh::Exception& e)
@@ -1622,138 +1846,62 @@ namespace AdServer::ChannelSvcs
         return;
       }
 
-      bool added_www = false;
-      const char* pos;
-      size_t count, reserve, path_depth = 1;
-      size_t current_sub_pos = 0, count_rep, prev_sub_pos, start_index;
-      MatchUrls::iterator current, from;
-      MatchUrls::reverse_iterator rcurrent, rfrom;
-
-      count = std::count(host, host + host_len, '.');
-      reserve = count + 2;
-      count = std::min(
-        static_cast<unsigned long>(std::count(path, path + path_len, '/')),
-        PATH_DEPTH);
-      reserve += count * 2 - 1;
-      match_words.reserve(reserve);
-      current_sub_pos = host_len;
-      do
+      const auto start = match_words.size();
+      const std::string_view hostname(host, host_len);
+      for (auto dot = hostname.rfind('.');; dot = dot ? hostname.rfind('.', dot - 1) :
+        std::string_view::npos)
       {
-        pos = (const char*)memrchr(host, '.', current_sub_pos);
-        if (!pos)
+        match_words.push_back({std::string(hostname.substr(
+          dot == std::string_view::npos ? 0 : dot + 1)), "/"});
+        if (dot == std::string_view::npos)
         {
-          current_sub_pos = -1;
+          break;
         }
-        else
-        {
-          current_sub_pos = pos - host;
-        }
-        match_words.resize(match_words.size() + 1);
-        rcurrent = match_words.rbegin();
-        rcurrent->prefix.assign(host + current_sub_pos + 1, host_len - current_sub_pos - 1);
-        rcurrent->postfix.reserve(path_len + query_len + 1);
-        rcurrent->postfix.push_back('/');
       }
-      while (pos);
-
-      if (host_len < 5 || memcmp(host, "www.", 4) != 0)
+      const bool added_www = host_len < 5 || hostname.compare(0, 4, "www.") != 0;
+      if (added_www)
       {
-        added_www = true;
-        //add www.
-        match_words.resize(match_words.size() + 1);
-        rcurrent = match_words.rbegin();
-        rfrom = match_words.rbegin() + 1;
-        rcurrent->prefix.reserve(rfrom->prefix.size() + 4);
-        rcurrent->prefix.append("www.", 4);
-        rcurrent->prefix.append(rfrom->prefix);
-        rcurrent->postfix = rfrom->postfix;
+        match_words.push_back({"www." + std::string(hostname), "/"});
       }
-
-      current_sub_pos = 0;
 
       if (soft_matching)
       {
-        count_rep = match_words.size();//add path to all domains
-        for (current = match_words.begin(); current != match_words.end(); ++current)
+        for (auto i = start; i < match_words.size(); ++i)
         {
-          current->postfix.reserve(path_len + query_len + 1);
-          current->postfix.assign(path, path_len);
-        }
-      }
-      else
-      {
-        count_rep = 2;//add paths only to full domain name
-        //path for full domain name will be set below
-        rcurrent = match_words.rbegin();
-        rcurrent->postfix.clear();
-        ++rcurrent;
-        rcurrent->postfix.clear();
-        start_index = match_words.size() - count_rep;
-        prev_sub_pos = 0;
-        do
-        {
-          pos = (const char*)memchr(path + prev_sub_pos + 1, '/', path_len - prev_sub_pos - 1);
-          if (!pos || path_depth >= PATH_DEPTH)
+          auto& postfix = match_words[i].postfix;
+          postfix.assign(path, path_len);
+          if (query_len)
           {
-            current = match_words.begin() + start_index;
-            while (current != match_words.end())
-            {
-              current->postfix.append(path + prev_sub_pos, path_len - prev_sub_pos);
-              ++current;
-            }
+            postfix.push_back('?');
+            postfix.append(query, query_len);
           }
-          else
-          {
-            match_words.resize(match_words.size() + count_rep);
-            from = match_words.begin() + start_index;
-            current = from + count_rep;
-            current_sub_pos = pos - path;
-            while (current != match_words.end())
-            {
-              from->postfix.append(path + prev_sub_pos, current_sub_pos - prev_sub_pos);
-              current->prefix.reserve(from->prefix.size() + current_sub_pos - prev_sub_pos);
-              current->prefix.append(from->prefix);
-              current->prefix.append(path + prev_sub_pos, current_sub_pos - prev_sub_pos);
-              ++from;
-              ++current;
-            }
-            start_index += count_rep;
-            prev_sub_pos = current_sub_pos;
-          }
-          path_depth++;
         }
-        while (pos && path_depth <= PATH_DEPTH);
+        return;
       }
 
-      if (query_len)
+      const auto original = match_words.size() - (added_www ? 2 : 1);
+      for (auto i = match_words.size() - 2; i < match_words.size(); ++i)
       {
-        rcurrent = match_words.rbegin();
-        for (size_t i_cur = 0; i_cur < count_rep; i_cur++)
+        auto& branch = match_words[i];
+        branch.branch_host_size = branch.prefix.size();
+        branch.prefix.append(path, path_len);
+        if (!path_len)
         {
-          rcurrent->postfix.push_back('?');
-          rcurrent->postfix.append(query, query_len);
-          ++rcurrent;
+          branch.prefix.push_back('/');
         }
-      }
-
-      //hard matching of urls
-      if (!soft_matching)
-      {
-        rcurrent = match_words.rbegin();
-        if (added_www)
+        branch.branch_path_end = branch.prefix.size();
+        if (query_len)
         {
-          ++rcurrent;
+          branch.prefix.push_back('?');
+          branch.prefix.append(query, query_len);
         }
 
-        rcurrent->postfix.push_back('"');
+        if (i == original)
+        {
+          branch.prefix.push_back('"');
+        }
+        branch.postfix.clear();
       }
-      /*
-      std::cout << "reserve = " << reserve << ", size = " << match_words.size() << std::endl;
-      for (current = match_words.begin(); current!=match_words.end(); ++current)
-      {
-        std::cout << "\'" << current->prefix << '+'
-          << current->postfix << "\' "  <<  std::endl;
-      }*/
     }
     catch(const eh::Exception& e)
     {
