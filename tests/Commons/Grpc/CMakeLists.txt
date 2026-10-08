@@ -10,6 +10,10 @@ add_executable(BatchPartialResponseTest
   BatchPartialResponseTest.cpp
 )
 
+add_executable(BatchingTimerTest
+  BatchingTimerTest.cpp
+)
+
 target_link_libraries(RefPoolTest
   PRIVATE
     Commons
@@ -30,6 +34,9 @@ target_link_libraries(BatchPartialResponseTest
     Generics
     GrpcBatch
 )
+
+target_link_libraries(BatchingTimerTest PRIVATE Commons Generics GrpcBatch)
+target_include_directories(BatchingTimerTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 
 target_include_directories(RefPoolTest
   PRIVATE

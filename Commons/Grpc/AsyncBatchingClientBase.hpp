@@ -149,6 +149,8 @@ namespace AdServer::Grpc
     void schedule_stream_shrink_() noexcept;
     void shrink_idle_streams_() noexcept;
     bool can_process_timed_batch_() const noexcept;
+    bool can_process_timed_batch_i_() const noexcept;
+    bool resume_timing_coalesce_i_() noexcept;
     bool coalesce_timed_batch_(const Generics::Time& now) noexcept;
     void handle_stream_ready_(BatchingStreamBase* stream);
     void handle_stream_closed_(BatchingStreamBase* stream) noexcept;
@@ -167,22 +169,27 @@ namespace AdServer::Grpc
     const std::size_t max_streams_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<grpc::Channel> channel_;
-    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-      coalesce_runner_;
+    std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject> coalesce_runner_;
     BatchingQueuePtr batching_queue_;
+
+    mutable std::mutex streams_registry_lock_;
     std::unordered_map<BatchingStreamBase*, StreamHolderPtr> streams_;
     std::vector<StreamHolderPtr> draining_streams_;
     std::vector<BatchingStreamPtr> deferred_streams_;
-    mutable std::mutex streams_registry_lock_;
-    std::deque<StreamHolderPtr> available_streams_;
-    std::deque<BatchingStreamBase::PendingBatch> pending_batches_;
+
+    mutable std::mutex streams_lock_;
+    bool connecting_ = false;
     StreamHolderPtr connecting_stream_;
     std::optional<Generics::Time> last_connect_failure_time_;
-    bool connecting_ = false;
-    mutable std::mutex streams_lock_;
-    AdServer::Grpc::InflightLimiter inflight_limiter_;
+    std::deque<StreamHolderPtr> available_streams_;
+    std::deque<BatchingStreamBase::PendingBatch> pending_batches_;
+    bool timing_coalesce_waiting_ = false;
+
     std::shared_mutex coalesce_timer_lock_;
     std::optional<Generics::Time> coalesce_timer_deadline_;
+
+    AdServer::Grpc::InflightLimiter inflight_limiter_;
+
     ActivityGatePtr submission_gate_;
     ActivityGatePtr timing_coalesce_gate_;
     ActivityGatePtr stream_shrink_gate_;

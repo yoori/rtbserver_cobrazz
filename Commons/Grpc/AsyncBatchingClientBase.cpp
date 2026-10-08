@@ -176,6 +176,7 @@ namespace AdServer::Grpc
         pending_batches_.pop_front();
       }
       connecting_ = false;
+      timing_coalesce_waiting_ = false;
       connecting_stream_.reset();
       last_connect_failure_time_.reset();
     }
@@ -516,6 +517,7 @@ namespace AdServer::Grpc
 
       std::vector<BatchingStreamBase::PendingBatch> failed_batches;
       const auto failure_time = Generics::Time::get_time_of_day();
+      bool resume_coalesce = false;
 
       {
         std::lock_guard<std::mutex> lock(streams_lock_);
@@ -528,6 +530,12 @@ namespace AdServer::Grpc
           failed_batches.emplace_back(std::move(pending_batches_.front()));
           pending_batches_.pop_front();
         }
+        resume_coalesce = resume_timing_coalesce_i_();
+      }
+
+      if (resume_coalesce)
+      {
+        schedule_timing_coalesce_();
       }
 
       finish_batches_with_error_(
@@ -552,6 +560,7 @@ namespace AdServer::Grpc
 
       std::vector<BatchingStreamBase::PendingBatch> failed_batches;
       const auto failure_time = Generics::Time::get_time_of_day();
+      bool resume_coalesce = false;
 
       {
         std::lock_guard<std::mutex> lock(streams_lock_);
@@ -564,6 +573,12 @@ namespace AdServer::Grpc
           failed_batches.emplace_back(std::move(pending_batches_.front()));
           pending_batches_.pop_front();
         }
+        resume_coalesce = resume_timing_coalesce_i_();
+      }
+
+      if (resume_coalesce)
+      {
+        schedule_timing_coalesce_();
       }
 
       finish_batches_with_error_(
@@ -582,6 +597,7 @@ namespace AdServer::Grpc
 
     BatchingStreamBase::PendingBatch batch;
     bool start_connect = false;
+    bool resume_coalesce = false;
     std::vector<BatchingStreamBase::PendingBatch> failed_batches;
     const auto now = Generics::Time::get_time_of_day();
 
@@ -602,6 +618,12 @@ namespace AdServer::Grpc
           available_streams_.emplace_front(stream_holder);
         }
       }
+      resume_coalesce = resume_timing_coalesce_i_();
+    }
+
+    if (resume_coalesce)
+    {
+      schedule_timing_coalesce_();
     }
 
     finish_batches_with_error_(
@@ -700,6 +722,18 @@ namespace AdServer::Grpc
       {
         return;
       }
+    }
+
+    {
+      // Serialize suspension with stream transitions so a ready notification cannot be lost.
+      std::lock_guard<std::mutex> streams_lock(streams_lock_);
+      if (!can_process_timed_batch_i_())
+      {
+        timing_coalesce_waiting_ = true;
+        return;
+      }
+
+      timing_coalesce_waiting_ = false;
     }
 
     {
@@ -833,10 +867,14 @@ namespace AdServer::Grpc
     }
   }
 
-  bool
-  AsyncBatchingClientBase::can_process_timed_batch_() const noexcept
+  bool AsyncBatchingClientBase::can_process_timed_batch_() const noexcept
   {
     std::lock_guard<std::mutex> lock(streams_lock_);
+    return can_process_timed_batch_i_();
+  }
+
+  bool AsyncBatchingClientBase::can_process_timed_batch_i_() const noexcept
+  {
     if (!active())
     {
       return false;
@@ -853,6 +891,17 @@ namespace AdServer::Grpc
     }
 
     return up_streams_.load(std::memory_order_acquire) < max_streams_;
+  }
+
+  bool AsyncBatchingClientBase::resume_timing_coalesce_i_() noexcept
+  {
+    if (!timing_coalesce_waiting_ || !can_process_timed_batch_i_())
+    {
+      return false;
+    }
+
+    timing_coalesce_waiting_ = false;
+    return true;
   }
 
   bool
@@ -950,6 +999,7 @@ namespace AdServer::Grpc
 
     std::vector<BatchingStreamBase::PendingBatch> failed_batches;
     bool start_connect = false;
+    bool resume_coalesce = false;
     const auto failure_time = Generics::Time::get_time_of_day();
 
     {
@@ -973,6 +1023,12 @@ namespace AdServer::Grpc
       }
       up_streams_.fetch_sub(1, std::memory_order_acq_rel);
       start_connect = maybe_start_connect_for_pending_(failed_batches, failure_time);
+      resume_coalesce = resume_timing_coalesce_i_();
+    }
+
+    if (resume_coalesce)
+    {
+      schedule_timing_coalesce_();
     }
 
     finish_batches_with_error_(
@@ -1120,6 +1176,7 @@ namespace AdServer::Grpc
       available_streams_.clear();
       pending_batches_.clear();
       connecting_ = false;
+      timing_coalesce_waiting_ = false;
       connecting_stream_.reset();
       last_connect_failure_time_.reset();
     }
