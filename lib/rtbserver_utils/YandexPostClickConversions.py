@@ -55,7 +55,8 @@ def goal_events(row):
     return []
   if any(value is None for value in values):
     raise ValueError('Incomplete Logs API goal fields')
-  arrays = [ast.literal_eval(value) for value in values]
+  # Logs API TSV escapes the single quotes around DateTime array elements.
+  arrays = [ast.literal_eval(value.replace(r"\'", "'")) for value in values]
   if any(not isinstance(value, list) for value in arrays):
     raise ValueError('Logs API goal field must be an array')
   if len({len(value) for value in arrays}) != 1:

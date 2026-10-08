@@ -140,6 +140,42 @@ class YandexPostClickConversionsTest(unittest.TestCase):
     self.assertEqual(len(self.actions()), 3)
     self.assertEqual(len(self.csv_rows()), 2)
 
+  def test_logs_api_escaped_datetime_array(self):
+    row = dict(zip(conversions.GOAL_FIELDS, (
+      '[462803591]', '[1]', r"[\'2026-10-05 11:06:57\']")))
+    self.assertEqual(conversions.goal_events(row), [(462803591, 1, '2026-10-05 11:06:57')])
+
+  def test_escaped_timestamps_and_repeated_delivery(self):
+    self.importer.prepare(self.api)
+    self.importer.process(111, self.date, self.log().replace("'", r"\'"))
+    actions = self.actions()
+    self.assertEqual(len(actions), 3)
+    payloads = [json.loads(action.split('\t')[3]) for action in actions]
+    self.assertEqual(sum(payload['visits'] for payload in payloads), 1)
+    self.assertEqual(sum(payload['goals'] for payload in payloads), 2)
+    self.assertEqual({action.split('\t')[0] for action in actions}, {
+      '2026-09-10_09:34:56', '2026-09-10_09:35:00', '2026-09-10_09:36:00'})
+    self.assertEqual(len(self.app.ch.tables[conversions.VISITS_TABLE]), 1)
+    self.assertEqual(len(self.app.ch.tables[conversions.GOALS_SYNC_TABLE]), 2)
+    self.importer.process(111, self.date, self.log().replace("'", r"\'"))
+    self.importer.process(111, self.date, self.log())
+    self.assertEqual(len(self.actions()), 3)
+    self.assertEqual(len(self.app.ch.tables[conversions.VISITS_TABLE]), 1)
+    self.assertEqual(len(self.app.ch.tables[conversions.GOALS_SYNC_TABLE]), 2)
+
+  def test_empty_and_invalid_goal_arrays(self):
+    self.assertEqual(conversions.goal_events({}), [])
+    self.assertEqual(conversions.goal_events(dict.fromkeys(conversions.GOAL_FIELDS, '[]')), [])
+    with self.assertRaisesRegex(ValueError, 'Incomplete Logs API goal fields'):
+      conversions.goal_events({conversions.GOAL_FIELDS[0]: '[]'})
+    for values in (
+        ('[9]', '[1]', '[]'),
+        ('9', '[1]', r"[\'2026-10-05 11:06:57\']"),
+        ('[0]', '[1]', r"[\'2026-10-05 11:06:57\']"),
+        ('[9]', '[-1]', r"[\'2026-10-05 11:06:57\']")):
+      with self.subTest(values=values), self.assertRaises(ValueError):
+        conversions.goal_events(dict(zip(conversions.GOAL_FIELDS, values)))
+
   def test_unknown_goal_gets_fallback_without_renaming_known_goal(self):
     self.importer.prepare(self.api)
     self.importer.process(111, self.date, self.log(goal=99))
