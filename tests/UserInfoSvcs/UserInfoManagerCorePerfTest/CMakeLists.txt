@@ -23,11 +23,6 @@ target_link_libraries(UserInfoManagerCorePerfTest
     PkgConfig::Jemalloc
 )
 
-target_include_directories(UserInfoManagerCorePerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)
-
 target_compile_definitions(UserInfoManagerCorePerfTest
   PRIVATE
     USER_INFO_MANAGER_CONFIG_XSD="${CMAKE_SOURCE_DIR}/xsd/UserInfoSvcs/UserInfoManagerConfig.xsd"

@@ -7,8 +7,3 @@ target_link_libraries(RocksDBProfileMapProcessorTest
     Generics
     ProfileMapRocksDB
 )
-
-target_include_directories(RocksDBProfileMapProcessorTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

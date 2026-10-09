@@ -16,7 +16,9 @@ add_executable(BatchingTimerTest
 
 add_executable(DeferredClientDeletionTest DeferredClientDeletionTest.cpp)
 target_link_libraries(DeferredClientDeletionTest PRIVATE Commons Generics GrpcBatch Logger)
-target_include_directories(DeferredClientDeletionTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+
+add_executable(DrainCallbackLifetimeTest DrainCallbackLifetimeTest.cpp)
+target_link_libraries(DrainCallbackLifetimeTest PRIVATE Commons Generics GrpcBatch)
 
 target_link_libraries(RefPoolTest
   PRIVATE
@@ -40,19 +42,3 @@ target_link_libraries(BatchPartialResponseTest
 )
 
 target_link_libraries(BatchingTimerTest PRIVATE Commons Generics GrpcBatch)
-target_include_directories(BatchingTimerTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-
-target_include_directories(RefPoolTest
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-)
-
-target_include_directories(DistributedPartitionPoolTest
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-)
-
-target_include_directories(BatchPartialResponseTest
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-)

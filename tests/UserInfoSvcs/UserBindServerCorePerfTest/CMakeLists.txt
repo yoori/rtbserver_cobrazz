@@ -18,8 +18,3 @@ target_link_libraries(UserBindServerCorePerfTest
     Logger
     Sync
 )
-
-target_include_directories(UserBindServerCorePerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

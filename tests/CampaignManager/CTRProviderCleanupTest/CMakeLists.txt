@@ -11,11 +11,6 @@ target_link_libraries(CTRProviderCleanupTest
     Generics
 )
 
-target_include_directories(CTRProviderCleanupTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)
-
 add_custom_target(RunCTRProviderCleanupTest
   COMMAND $<TARGET_FILE:CTRProviderCleanupTest>
   DEPENDS CTRProviderCleanupTest

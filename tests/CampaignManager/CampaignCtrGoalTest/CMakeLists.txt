@@ -8,8 +8,3 @@ target_link_libraries(CampaignCtrGoalTest
     CampaignConfig
     HTTP
 )
-
-target_include_directories(CampaignCtrGoalTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

@@ -8,8 +8,3 @@ target_link_libraries(BiddingFrontendHashMapPerfTest
     Generics
     Boost::headers
 )
-
-target_include_directories(BiddingFrontendHashMapPerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

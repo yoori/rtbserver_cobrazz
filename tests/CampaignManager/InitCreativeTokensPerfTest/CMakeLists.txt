@@ -10,8 +10,3 @@ target_link_libraries(InitCreativeTokensPerfTest
     Generics
     HTTP
 )
-
-target_include_directories(InitCreativeTokensPerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

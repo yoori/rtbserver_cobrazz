@@ -3,11 +3,6 @@ add_executable(PmrTests
 
 find_library(TCMALLOC_LIBRARY tcmalloc REQUIRED)
 
-target_include_directories(PmrTests
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)
-
 target_link_libraries(PmrTests
   PRIVATE
     Generics

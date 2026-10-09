@@ -15,8 +15,3 @@ target_link_libraries(UserNavigationContainerTest
     ProfileMap
     ProfileMapRocksDB
 )
-
-target_include_directories(UserNavigationContainerTest
-  PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-)

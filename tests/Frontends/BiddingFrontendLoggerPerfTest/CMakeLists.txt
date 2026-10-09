@@ -9,8 +9,3 @@ target_link_libraries(BiddingFrontendLoggerPerfTest
     Generics
     Logger
 )
-
-target_include_directories(BiddingFrontendLoggerPerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

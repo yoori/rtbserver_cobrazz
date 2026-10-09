@@ -22,8 +22,3 @@ target_link_libraries(UserBindContainerTest
     ProfileMapRocksDB
     Sync
 )
-
-target_include_directories(UserBindContainerTest
-  PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../..
-)

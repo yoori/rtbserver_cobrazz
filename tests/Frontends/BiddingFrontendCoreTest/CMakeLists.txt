@@ -21,8 +21,3 @@ target_link_libraries(BiddingFrontendCoreTest
     UserInfoManagerGrpcClient
     UserIdController
 )
-
-target_include_directories(BiddingFrontendCoreTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

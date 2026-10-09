@@ -102,9 +102,16 @@ namespace AdServer::Grpc
       const char* parse_error_message);
 
   private:
+    friend struct AsyncBatchingClientBaseTestAccess;
+
     using BatchingStreamPtr = std::shared_ptr<AdServer::Grpc::BatchingStreamBase>;
     using BatchingQueuePtr = std::shared_ptr<AdServer::Grpc::BatchingQueue>;
-    struct StreamHolder;
+    struct StreamHolder
+    {
+      BatchingStreamPtr stream;
+      Generics::Time last_use = Generics::Time::get_time_of_day();
+    };
+
     using StreamHolderPtr = std::shared_ptr<StreamHolder>;
     using ActivityGatePtr = std::shared_ptr<AdServer::Commons::ActivityGate>;
     using BatchResponseCallback = std::function<void(const adserver::grpc::BatchResponseItem&)>;
@@ -118,6 +125,7 @@ namespace AdServer::Grpc
       std::string payload,
       BatchResponseCallback callback);
     StreamHolderPtr make_stream_();
+    BatchingStreamBase::DrainedCallback make_drain_callback_(std::weak_ptr<StreamHolder> holder);
     void process_batch_(
       BatchingStreamBase::PendingBatch&& batch,
       const Generics::Time& now,
@@ -191,6 +199,7 @@ namespace AdServer::Grpc
     AdServer::Grpc::InflightLimiter inflight_limiter_;
 
     ActivityGatePtr submission_gate_;
+    ActivityGatePtr drain_callbacks_gate_;
     ActivityGatePtr timing_coalesce_gate_;
     ActivityGatePtr stream_shrink_gate_;
     std::atomic<unsigned int> next_queue_index_{0};

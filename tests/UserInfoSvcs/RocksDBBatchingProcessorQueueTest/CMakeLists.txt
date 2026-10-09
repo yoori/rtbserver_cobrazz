@@ -6,8 +6,3 @@ target_link_libraries(RocksDBBatchingProcessorQueueTest
     Generics
     ProfileMapRocksDB
 )
-
-target_include_directories(RocksDBBatchingProcessorQueueTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

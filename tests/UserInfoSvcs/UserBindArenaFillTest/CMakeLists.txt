@@ -8,9 +8,3 @@ target_link_libraries(UserBindArenaFillTest
     UserBindServerGrpc
     protobuf::libprotobuf
 )
-
-target_include_directories(UserBindArenaFillTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-    ${PB_DIRECTORY}
-)

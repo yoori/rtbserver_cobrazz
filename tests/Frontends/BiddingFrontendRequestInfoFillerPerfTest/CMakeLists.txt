@@ -21,11 +21,6 @@ function(add_bidding_request_info_filler_perf_test target)
       UserIdController
   )
 
-  target_include_directories(${target}
-    PRIVATE
-      ${CMAKE_SOURCE_DIR}
-  )
-
   target_compile_definitions(${target}
     PRIVATE
       REQUEST_INFO_FILLER_TEST_NAME="${target}"

@@ -13,6 +13,4 @@ foreach(target ChannelContainerPerfTest TriggerMatchResTest UrlPrefixIndexTest)
       Generics
       HTTP
   )
-
-  target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR})
 endforeach()

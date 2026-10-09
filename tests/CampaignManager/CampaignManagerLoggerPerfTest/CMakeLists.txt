@@ -11,8 +11,3 @@ target_link_libraries(CampaignManagerLoggerPerfTest
     Generics
     ProcessControlIDL
 )
-
-target_include_directories(CampaignManagerLoggerPerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

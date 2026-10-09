@@ -7,8 +7,3 @@ target_link_libraries(RocksDBBatchingProfileMapPerfTest
     Generics
     ProfileMapRocksDB
 )
-
-target_include_directories(RocksDBBatchingProfileMapPerfTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-)

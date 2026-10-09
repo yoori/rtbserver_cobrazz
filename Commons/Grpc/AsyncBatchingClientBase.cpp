@@ -14,12 +14,6 @@
 
 namespace AdServer::Grpc
 {
-  struct AsyncBatchingClientBase::StreamHolder
-  {
-    BatchingStreamPtr stream;
-    Generics::Time last_use = Generics::Time::get_time_of_day();
-  };
-
   namespace
   {
     const char NO_ACTIVE_BATCHING_STREAMS_FORCED_SEND[] =
@@ -127,8 +121,10 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::activate_object_()
   {
+    drain_callbacks_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
     timing_coalesce_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
     stream_shrink_gate_ = std::make_shared<AdServer::Commons::ActivityGate>();
+    drain_callbacks_gate_->activate_object();
     submission_gate_->activate_object();
     timing_coalesce_gate_->activate_object();
     stream_shrink_gate_->activate_object();
@@ -145,6 +141,8 @@ namespace AdServer::Grpc
   void
   AsyncBatchingClientBase::deactivate_object_()
   {
+    assert(drain_callbacks_gate_);
+    drain_callbacks_gate_->deactivate_object();
     submission_gate_->deactivate_object();
     assert(timing_coalesce_gate_);
     timing_coalesce_gate_->deactivate_object();
@@ -158,6 +156,8 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::wait_object_()
   {
     submission_gate_->wait_object();
+    assert(drain_callbacks_gate_);
+    drain_callbacks_gate_->wait_object();
     wait_streams_();
     clear_deferred_streams_();
     Generics::CompositeActiveObject::wait_object_();
@@ -189,6 +189,7 @@ namespace AdServer::Grpc
     auto batches = batching_queue_->drain_all();
     finish_batches_with_error(batches, grpc::StatusCode::UNAVAILABLE, "inactive", endpoint_);
     clear_streams_();
+    drain_callbacks_gate_.reset();
     timing_coalesce_gate_.reset();
     stream_shrink_gate_.reset();
   }
@@ -282,7 +283,6 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::make_stream_()
   {
     auto stream_holder = std::make_shared<StreamHolder>();
-    std::weak_ptr<StreamHolder> weak_stream_holder = stream_holder;
     stream_holder->stream = std::make_shared<AdServer::Grpc::BatchingStreamBase>(
       channel_,
       endpoint_,
@@ -296,14 +296,28 @@ namespace AdServer::Grpc
       [this](auto* stream) noexcept { //< close callback.
         handle_stream_closed_(stream);
       },
-      [this, weak_stream_holder](auto* stream) noexcept { //< drain callback.
-        if (auto stream_holder = weak_stream_holder.lock())
+      make_drain_callback_(stream_holder),
+      options_);
+    return stream_holder;
+  }
+
+  BatchingStreamBase::DrainedCallback
+  AsyncBatchingClientBase::make_drain_callback_(std::weak_ptr<StreamHolder> holder)
+  {
+    return [this, gate = drain_callbacks_gate_, holder = std::move(holder)](auto* stream) noexcept
+      {
+        // The tag has left its gate; the client can already be stopping or destroyed.
+        auto guard = gate->enter();
+        if (!guard)
+        {
+          return;
+        }
+
+        if (auto stream_holder = holder.lock())
         {
           handle_stream_drained_(stream, stream_holder);
         }
-      },
-      options_);
-    return stream_holder;
+      };
   }
 
   void

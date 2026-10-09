@@ -45,9 +45,3 @@ target_link_libraries(InstantiateAdArgsTest
     Generics
     Sync
 )
-
-target_include_directories(InstantiateAdArgsTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-    ${Protobuf_INCLUDE_DIRS}
-)

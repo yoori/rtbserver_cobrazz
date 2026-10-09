@@ -44,9 +44,3 @@ target_link_libraries(CampaignManagerInstantiateCreativeTest
     Generics
     Sync
 )
-
-target_include_directories(CampaignManagerInstantiateCreativeTest
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}
-    ${Protobuf_INCLUDE_DIRS}
-)

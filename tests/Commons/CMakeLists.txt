@@ -14,7 +14,6 @@ add_executable(AsyncMutexPublicationTest
 
 target_link_libraries(AsyncMutexPublicationTest PRIVATE Boost::headers Threads::Threads)
 target_link_options(AsyncMutexPublicationTest PRIVATE "-Wl,--wrap=pthread_mutex_unlock")
-target_include_directories(AsyncMutexPublicationTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 add_executable(OrderedAsyncTaskWindowTest
   OrderedAsyncTaskWindowTest.cpp
@@ -75,9 +74,4 @@ target_link_libraries(HttpServerAsyncTest
 target_link_libraries(UserInfoManipTest
   PRIVATE
     Commons
-)
-
-target_include_directories(AsyncMutexTest
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../..
 )
