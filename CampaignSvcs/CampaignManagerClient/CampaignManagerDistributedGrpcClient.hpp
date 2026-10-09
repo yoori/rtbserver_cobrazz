@@ -167,6 +167,7 @@ namespace AdServer::CampaignSvcs
 
   private:
     const Generics::Time pool_timeout_;
+    std::shared_ptr<AdServer::Commons::DeferredDeletionQueue> deletion_queue_;
     std::vector<ClientHolderPtr> client_holders_;
     PoolPtr default_pool_;
     std::map<std::string, PoolPtr> service_index_pools_;

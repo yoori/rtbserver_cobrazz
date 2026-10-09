@@ -18,6 +18,7 @@ add_library(Commons SHARED
   PathManip.cpp
   PidFileGuard.cpp
   ActivityGate.cpp
+  DeferredDeletionQueue.cpp
   AsyncMutex.cpp
   Coro/Utils.cpp
   OrderedAsyncTaskWindow.cpp

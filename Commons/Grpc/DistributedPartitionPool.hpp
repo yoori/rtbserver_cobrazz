@@ -44,7 +44,8 @@ namespace AdServer::Grpc
 
   template<
     typename ClientType,
-    typename ControllerClientType = BasicControllerRefHolder>
+    typename ControllerClientType = BasicControllerRefHolder,
+    typename Deleter = std::default_delete<ClientType>>
   class DistributedPartitionPool:
     public Generics::CompositeActiveObject,
     public virtual AdServer::Grpc::Client
@@ -77,13 +78,11 @@ namespace AdServer::Grpc
     struct RefHolder
     {
       RefHolder(
-      std::string endpoint_val,
-      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
-      std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
-        coalesce_runner,
-      AdServer::Grpc::BatchingOptions batching_options);
-
-      ~RefHolder() noexcept;
+        std::string endpoint_val,
+        std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+        std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject> coalesce_runner,
+        AdServer::Grpc::BatchingOptions batching_options,
+        Deleter client_deleter);
 
       AdServer::Grpc::Stats stats() const noexcept;
 
@@ -113,7 +112,8 @@ namespace AdServer::Grpc
       PartitionIndex partition_index,
       ChunkIndex chunk_index,
       const Generics::Time& pool_timeout = Generics::Time::ONE_SECOND,
-      const Generics::Time& resolve_period = Generics::Time(10));
+      const Generics::Time& resolve_period = Generics::Time(10),
+      Deleter client_deleter = {});
 
     ~DistributedPartitionPool() noexcept override;
 
@@ -183,6 +183,7 @@ namespace AdServer::Grpc
     const Generics::Time resolve_period_;
     const ControllerRefArray controller_refs_;
     const AdServer::Grpc::BatchingOptions batching_options_;
+    const Deleter client_deleter_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner_;

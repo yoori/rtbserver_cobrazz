@@ -49,11 +49,17 @@ namespace AdServer::Commons
         : boost::intrusive::list_base_hook<
             boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
       {
+        ~Waiter() noexcept;
+
         std::coroutine_handle<> handle;
         CoroutineResumeScheduler resume_scheduler;
+        bool granted = false;
       };
 
       explicit ScopedLockAwaiter(AsyncMutex& mutex) noexcept;
+      ScopedLockAwaiter(const ScopedLockAwaiter&) = delete;
+      ScopedLockAwaiter& operator=(const ScopedLockAwaiter&) = delete;
+      // Destruction cancels a suspended wait; it must not race execution of the coroutine.
       ~ScopedLockAwaiter() noexcept;
 
       bool await_ready() const noexcept;

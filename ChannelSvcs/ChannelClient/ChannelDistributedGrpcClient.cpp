@@ -186,6 +186,9 @@ namespace AdServer::ChannelSvcs
 
   struct ChannelDistributedGrpcClient::ClientHolder
   {
+    using ClientDeleter =
+      AdServer::Commons::DeferredDeleter<Client, AdServer::Commons::ActiveObjectDeleter<Client>>;
+
     ClientHolder(
       std::string endpoint_val,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
@@ -193,28 +196,11 @@ namespace AdServer::ChannelSvcs
         coalesce_runner,
       AdServer::Grpc::BatchingOptions batching_options)
       : endpoint(std::move(endpoint_val)),
-        client(std::make_shared<Client>(
-          endpoint,
-          std::move(grpc_executor),
-          std::move(coalesce_runner),
-          std::move(batching_options)))
+        client(AdServer::Commons::make_shared_with_deleter<Client>(
+          ClientDeleter(grpc_executor->deletion_queue()),
+          endpoint, grpc_executor, std::move(coalesce_runner), std::move(batching_options)))
     {
       client->activate_object();
-    }
-
-    ~ClientHolder() noexcept
-    {
-      try
-      {
-        if (client->active())
-        {
-          client->deactivate_object();
-          client->wait_object();
-        }
-      }
-      catch (...)
-      {
-      }
     }
 
     const std::string endpoint;
@@ -559,12 +545,30 @@ namespace AdServer::ChannelSvcs
     deactivated_.store(true, std::memory_order_release);
     resolve_cond_.notify_all();
 
-    Generics::CompositeActiveObject::deactivate_object_();
+    task_runner_->deactivate_object();
+    task_runner_->wait_object();
 
     {
       std::unique_lock<std::shared_mutex> lock(pool_lock_);
       shutdown_pool_ = std::move(pool_);
-      shutdown_client_holders_ = std::move(current_client_holders_);
+      std::set<const ClientHolder*> seen_clients;
+      for (auto& holder : current_client_holders_)
+      {
+        if (seen_clients.insert(holder.get()).second)
+        {
+          shutdown_client_holders_.emplace_back(std::move(holder));
+        }
+      }
+
+      current_client_holders_.clear();
+      for (const auto& [endpoint, weak_holder] : client_holders_)
+      {
+        if (auto holder = weak_holder.lock(); holder && seen_clients.insert(holder.get()).second)
+        {
+          shutdown_client_holders_.emplace_back(std::move(holder));
+        }
+      }
+
       refs_state_.clear();
       client_holders_.clear();
     }
@@ -583,8 +587,6 @@ namespace AdServer::ChannelSvcs
   void
   ChannelDistributedGrpcClient::wait_object_()
   {
-    Generics::CompositeActiveObject::wait_object_();
-
     if (shutdown_pool_)
     {
       shutdown_pool_->wait_object();
@@ -594,8 +596,12 @@ namespace AdServer::ChannelSvcs
     for (const auto& client_holder : shutdown_client_holders_)
     {
       client_holder->client->wait_object();
+      ClientHolder::ClientDeleter::complete(client_holder->client);
     }
     shutdown_client_holders_.clear();
+    grpc_executor_->deletion_queue()->wait();
+    Generics::CompositeActiveObject::deactivate_object_();
+    Generics::CompositeActiveObject::wait_object_();
   }
 
   AdServer::Grpc::Stats

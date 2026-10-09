@@ -84,7 +84,7 @@ namespace AdServer::UserInfoSvcs
       "UserInfo",
       user_info_controller_refs,
       std::move(batching_options),
-      std::move(grpc_executor),
+      grpc_executor,
       std::move(coalesce_runner),
       logger,
       [this](ControllerClient& controller_client)
@@ -94,7 +94,8 @@ namespace AdServer::UserInfoSvcs
       &partition_hash_,
       &chunk_index_,
       DEFAULT_POOL_TIMEOUT,
-      DEFAULT_RESOLVE_PERIOD);
+      DEFAULT_RESOLVE_PERIOD,
+      ClientDeleter(grpc_executor->deletion_queue()));
     add_child_object(pool_);
   }
 

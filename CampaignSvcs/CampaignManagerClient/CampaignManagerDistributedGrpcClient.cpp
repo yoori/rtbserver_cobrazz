@@ -61,6 +61,9 @@ namespace AdServer::CampaignSvcs
 
   struct CampaignManagerDistributedGrpcClient::ClientHolder
   {
+    using ClientDeleter =
+      AdServer::Commons::DeferredDeleter<Client, AdServer::Commons::ActiveObjectDeleter<Client>>;
+
     ClientHolder(
       std::string endpoint_val,
       AdServer::Grpc::BatchingOptions batching_options,
@@ -69,28 +72,11 @@ namespace AdServer::CampaignSvcs
         coalesce_runner)
       : endpoint(std::move(endpoint_val)),
         name(endpoint),
-        client(std::make_shared<Client>(
-          endpoint,
-          std::move(grpc_executor),
-          std::move(coalesce_runner),
-          std::move(batching_options)))
+        client(AdServer::Commons::make_shared_with_deleter<Client>(
+          ClientDeleter(grpc_executor->deletion_queue()),
+          endpoint, grpc_executor, std::move(coalesce_runner), std::move(batching_options)))
     {
       client->activate_object();
-    }
-
-    ~ClientHolder() noexcept
-    {
-      try
-      {
-        if (client->active())
-        {
-          client->deactivate_object();
-          client->wait_object();
-        }
-      }
-      catch (...)
-      {
-      }
     }
 
     const std::string endpoint;
@@ -129,6 +115,7 @@ namespace AdServer::CampaignSvcs
       add_child_object(coalesce_runner);
     }
 
+    deletion_queue_ = effective_grpc_executor->deletion_queue();
     std::vector<ClientHolderPtr> default_refs;
     default_refs.reserve(campaign_manager_refs.size());
 
@@ -199,8 +186,6 @@ namespace AdServer::CampaignSvcs
     }
     default_pool_->deactivate_object();
 
-    Generics::CompositeActiveObject::deactivate_object_();
-
     for (const auto& client_holder : client_holders_)
     {
       client_holder->client->deactivate_object();
@@ -210,8 +195,6 @@ namespace AdServer::CampaignSvcs
   void
   CampaignManagerDistributedGrpcClient::wait_object_()
   {
-    Generics::CompositeActiveObject::wait_object_();
-
     for (auto& service_index_pool : service_index_pools_)
     {
       service_index_pool.second->wait_object();
@@ -221,7 +204,12 @@ namespace AdServer::CampaignSvcs
     for (const auto& client_holder : client_holders_)
     {
       client_holder->client->wait_object();
+      ClientHolder::ClientDeleter::complete(client_holder->client);
     }
+
+    deletion_queue_->wait();
+    Generics::CompositeActiveObject::deactivate_object_();
+    Generics::CompositeActiveObject::wait_object_();
   }
 
   AdServer::Grpc::Stats

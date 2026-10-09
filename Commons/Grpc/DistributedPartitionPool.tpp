@@ -2,49 +2,33 @@
 
 namespace AdServer::Grpc
 {
-  template<typename ClientType, typename ControllerClientType>
-  DistributedPartitionPool<ClientType, ControllerClientType>::RefHolder::RefHolder(
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::RefHolder::RefHolder(
     std::string endpoint_val,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       coalesce_runner,
-    AdServer::Grpc::BatchingOptions batching_options)
+    AdServer::Grpc::BatchingOptions batching_options,
+    Deleter client_deleter)
     : endpoint(std::move(endpoint_val)),
       name(endpoint),
-      client(std::make_shared<Client>(
-        endpoint,
-        std::move(grpc_executor),
-        std::move(coalesce_runner),
+      client(AdServer::Commons::make_shared_with_deleter<Client>(
+        std::move(client_deleter), endpoint, std::move(grpc_executor), std::move(coalesce_runner),
         std::move(batching_options)))
   {
     client->activate_object();
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  DistributedPartitionPool<ClientType, ControllerClientType>::RefHolder::~RefHolder() noexcept
-  {
-    try
-    {
-      if (client->active())
-      {
-        client->deactivate_object();
-        client->wait_object();
-      }
-    }
-    catch (...)
-    {
-    }
-  }
-
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   AdServer::Grpc::Stats
-  DistributedPartitionPool<ClientType, ControllerClientType>::RefHolder::stats() const noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::RefHolder::stats()
+    const noexcept
   {
     return static_cast<AdServer::Grpc::Client*>(client.get())->stats();
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  class DistributedPartitionPool<ClientType, ControllerClientType>::ResolvePartitionTask:
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  class DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::ResolvePartitionTask:
     public Generics::Task,
     public ReferenceCounting::AtomicImpl
   {
@@ -66,8 +50,8 @@ namespace AdServer::Grpc
     const unsigned long partition_index_;
   };
 
-  template<typename ClientType, typename ControllerClientType>
-  class DistributedPartitionPool<ClientType, ControllerClientType>::PeriodicResolveTask:
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  class DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::PeriodicResolveTask:
     public Generics::Task,
     public ReferenceCounting::AtomicImpl
   {
@@ -87,8 +71,8 @@ namespace AdServer::Grpc
     DistributedPartitionPool* owner_;
   };
 
-  template<typename ClientType, typename ControllerClientType>
-  DistributedPartitionPool<ClientType, ControllerClientType>::DistributedPartitionPool(
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::DistributedPartitionPool(
     std::string name,
     std::string log_aspect,
     ControllerRefArray controller_refs,
@@ -101,13 +85,15 @@ namespace AdServer::Grpc
     PartitionIndex partition_index,
     ChunkIndex chunk_index,
     const Generics::Time& pool_timeout,
-    const Generics::Time& resolve_period)
+    const Generics::Time& resolve_period,
+    Deleter client_deleter)
     : AdServer::Grpc::Client(this),
       name_(std::move(name)),
       pool_timeout_(pool_timeout),
       resolve_period_(resolve_period),
       controller_refs_(validate_controller_refs_(std::move(controller_refs), name_)),
       batching_options_(std::move(batching_options)),
+      client_deleter_(std::move(client_deleter)),
       grpc_executor_(std::move(grpc_executor)),
       coalesce_runner_(std::move(coalesce_runner)),
       resolver_(std::move(resolve_partition)),
@@ -145,13 +131,13 @@ namespace AdServer::Grpc
     }
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  DistributedPartitionPool<ClientType, ControllerClientType>::~DistributedPartitionPool() noexcept =
-    default;
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::~DistributedPartitionPool()
+    noexcept = default;
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::activate_object_()
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::activate_object_()
   {
     deactivated_.store(false, std::memory_order_release);
     Generics::CompositeActiveObject::activate_object_();
@@ -159,19 +145,26 @@ namespace AdServer::Grpc
     task_runner_->enqueue_task(Generics::Task_var(new PeriodicResolveTask(this)));
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::deactivate_object_()
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_object_()
   {
     deactivated_.store(true, std::memory_order_release);
     resolve_cond_.notify_all();
-    Generics::CompositeActiveObject::deactivate_object_();
+    task_runner_->deactivate_object();
+    task_runner_->wait_object();
     deactivate_partitions_();
+    if constexpr (requires { client_deleter_.wait(); })
+    {
+      client_deleter_.wait();
+    }
+
+    Generics::CompositeActiveObject::deactivate_object_();
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   AdServer::Grpc::Stats
-  DistributedPartitionPool<ClientType, ControllerClientType>::stats() const noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::stats() const noexcept
   {
     auto result = AdServer::Grpc::Client::stats();
     std::set<const RefHolder*> seen_refs;
@@ -201,9 +194,9 @@ namespace AdServer::Grpc
     return result;
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   AdServer::Grpc::Client::EndpointStats
-  DistributedPartitionPool<ClientType, ControllerClientType>::endpoint_stats()
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::endpoint_stats()
     const noexcept
   {
     std::vector<RefHolderPtr> ref_holders;
@@ -228,9 +221,11 @@ namespace AdServer::Grpc
     return result;
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  std::optional<typename DistributedPartitionPool<ClientType, ControllerClientType>::Ref>
-  DistributedPartitionPool<ClientType, ControllerClientType>::get_ref(const std::string& key) noexcept
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  std::optional<typename DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::Ref>
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::get_ref(
+    const std::string& key)
+    noexcept
   {
     try
     {
@@ -272,9 +267,9 @@ namespace AdServer::Grpc
     return std::nullopt;
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  std::optional<typename DistributedPartitionPool<ClientType, ControllerClientType>::Ref>
-  DistributedPartitionPool<ClientType, ControllerClientType>::get_any_ref() noexcept
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  std::optional<typename DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::Ref>
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::get_any_ref() noexcept
   {
     for (unsigned long i = 0; i < partition_holders_.size(); ++i)
     {
@@ -301,9 +296,9 @@ namespace AdServer::Grpc
     return std::nullopt;
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   std::optional<unsigned long>
-  DistributedPartitionPool<ClientType, ControllerClientType>::chunk_index(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::chunk_index(
     const std::string& key) noexcept
   {
     try
@@ -332,17 +327,18 @@ namespace AdServer::Grpc
     return std::nullopt;
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::try_to_reresolve_partition(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::try_to_reresolve_partition(
     unsigned long partition_index) noexcept
   {
     schedule_reresolve_partition_(partition_index, false);
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::resolve_all_partitions_() noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::resolve_all_partitions_()
+    noexcept
   {
     for (unsigned long i = 0; i < partition_holders_.size(); ++i)
     {
@@ -350,9 +346,10 @@ namespace AdServer::Grpc
     }
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::periodic_resolve_loop_() noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::periodic_resolve_loop_()
+    noexcept
   {
     while (!deactivated_.load(std::memory_order_acquire))
     {
@@ -369,9 +366,9 @@ namespace AdServer::Grpc
     }
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::wait_next_resolve_() noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::wait_next_resolve_() noexcept
   {
     std::unique_lock<std::mutex> lock(resolve_lock_);
     resolve_cond_.wait_for(
@@ -383,11 +380,10 @@ namespace AdServer::Grpc
       });
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::schedule_reresolve_partition_(
-    unsigned long partition_index,
-    bool force) noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::
+    schedule_reresolve_partition_(unsigned long partition_index, bool force) noexcept
   {
     if (partition_index >= partition_holders_.size() ||
       !begin_resolve_partition_(partition_index, force))
@@ -406,9 +402,9 @@ namespace AdServer::Grpc
     }
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::resolve_partition_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::resolve_partition_(
     unsigned long partition_index) noexcept
   {
     if (partition_index >= partition_holders_.size())
@@ -601,9 +597,9 @@ namespace AdServer::Grpc
     finish_resolve_partition_(partition_index, installed);
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::record_resolve_error_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::record_resolve_error_(
     unsigned long partition_index,
     const std::string& message,
     const char* source,
@@ -628,9 +624,9 @@ namespace AdServer::Grpc
     set_last_error(endpoint, grpc::StatusCode::UNAVAILABLE, message, source);
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   bool
-  DistributedPartitionPool<ClientType, ControllerClientType>::begin_resolve_partition_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::begin_resolve_partition_(
     unsigned long partition_index,
     bool force) noexcept
   {
@@ -655,9 +651,9 @@ namespace AdServer::Grpc
     return true;
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::finish_resolve_partition_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::finish_resolve_partition_(
     unsigned long partition_index,
     bool installed) noexcept
   {
@@ -674,9 +670,9 @@ namespace AdServer::Grpc
     partition_holders_[partition_index]->resolve_in_progress = false;
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  typename DistributedPartitionPool<ClientType, ControllerClientType>::PartitionPtr
-  DistributedPartitionPool<ClientType, ControllerClientType>::get_partition_(
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  typename DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::PartitionPtr
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::get_partition_(
     unsigned long partition_index) noexcept
   {
     PartitionPtr result;
@@ -693,9 +689,9 @@ namespace AdServer::Grpc
     return result;
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  typename DistributedPartitionPool<ClientType, ControllerClientType>::RefHolderPtr
-  DistributedPartitionPool<ClientType, ControllerClientType>::get_or_create_ref_holder_(
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  typename DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::RefHolderPtr
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::get_or_create_ref_holder_(
     const std::string& endpoint)
   {
     std::lock_guard<std::mutex> lock(ref_holders_lock_);
@@ -712,19 +708,35 @@ namespace AdServer::Grpc
         endpoint,
         grpc_executor_,
         coalesce_runner_,
-        batching_options_);
+        batching_options_,
+        client_deleter_);
       weak_ref_holder = ref_holder;
     }
     return ref_holder;
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::deactivate_partitions_() noexcept
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_partitions_()
+    noexcept
   {
     std::vector<PartitionPtr> partitions;
     std::vector<RefHolderPtr> ref_holders;
     std::set<const RefHolder*> seen_refs;
+
+    {
+      std::lock_guard<std::mutex> lock(ref_holders_lock_);
+      for (const auto& [endpoint, weak_ref] : ref_holders_)
+      {
+        if (auto ref = weak_ref.lock())
+        {
+          seen_refs.insert(ref.get());
+          ref_holders.emplace_back(std::move(ref));
+        }
+      }
+
+      ref_holders_.clear();
+    }
 
     for (auto& holder : partition_holders_)
     {
@@ -779,19 +791,20 @@ namespace AdServer::Grpc
       try
       {
         ref_holder->client->wait_object();
+        if constexpr (requires { Deleter::complete(ref_holder->client); })
+        {
+          Deleter::complete(ref_holder->client);
+        }
       }
       catch (...)
       {
       }
     }
-
-    std::lock_guard<std::mutex> lock(ref_holders_lock_);
-    ref_holders_.clear();
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::deactivate_partition_pools_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_partition_pools_(
     const PartitionPtr& partition) noexcept
   {
     if (!partition)
@@ -811,9 +824,9 @@ namespace AdServer::Grpc
     deactivate_pools_(pools);
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::deactivate_pools_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::deactivate_pools_(
     const std::vector<PoolPtr>& pools) noexcept
   {
     for (const auto& pool : pools)
@@ -839,9 +852,9 @@ namespace AdServer::Grpc
     }
   }
 
-  template<typename ClientType, typename ControllerClientType>
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
   void
-  DistributedPartitionPool<ClientType, ControllerClientType>::merge_stats_(
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::merge_stats_(
     AdServer::Grpc::Stats& result,
     const AdServer::Grpc::Stats& source) noexcept
   {
@@ -887,9 +900,9 @@ namespace AdServer::Grpc
     AdServer::Grpc::merge_last_error(result, source);
   }
 
-  template<typename ClientType, typename ControllerClientType>
-  typename DistributedPartitionPool<ClientType, ControllerClientType>::ControllerRefArray
-  DistributedPartitionPool<ClientType, ControllerClientType>::validate_controller_refs_(
+  template<typename ClientType, typename ControllerClientType, typename Deleter>
+  typename DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::ControllerRefArray
+  DistributedPartitionPool<ClientType, ControllerClientType, Deleter>::validate_controller_refs_(
     ControllerRefArray controller_refs,
     const std::string& name)
   {

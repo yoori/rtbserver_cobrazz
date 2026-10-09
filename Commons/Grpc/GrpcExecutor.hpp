@@ -15,6 +15,8 @@
 
 #include <Generics/ActiveObject.hpp>
 
+#include <Commons/DeferredDeletionQueue.hpp>
+
 namespace AdServer::Grpc
 {
   struct GrpcCompletionEvent
@@ -55,6 +57,8 @@ namespace AdServer::Grpc
 
     std::shared_ptr<CQ> queue(unsigned int index) noexcept;
 
+    std::shared_ptr<AdServer::Commons::DeferredDeletionQueue> deletion_queue() const noexcept;
+
     template<typename Functor>
     bool execute(Functor&& functor);
 
@@ -74,6 +78,7 @@ namespace AdServer::Grpc
 
     std::vector<CQHolder> holders_;
     std::string thread_name_;
+    const std::shared_ptr<AdServer::Commons::DeferredDeletionQueue> deletion_queue_;
   };
 }
 

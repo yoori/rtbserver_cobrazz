@@ -101,7 +101,10 @@ namespace AdServer::UserInfoSvcs
   private:
     using Client = UserInfoManagerGrpcAsyncBatchingClient;
     struct ControllerClient;
-    using Pool = AdServer::Grpc::BalancedDistributedPartitionPool<Client, ControllerClient>;
+    using ClientDeleter =
+      AdServer::Commons::DeferredDeleter<Client, AdServer::Commons::ActiveObjectDeleter<Client>>;
+    using Pool =
+      AdServer::Grpc::BalancedDistributedPartitionPool<Client, ControllerClient, ClientDeleter>;
     using PoolPtr = std::shared_ptr<Pool>;
 
     std::optional<Pool::Ref> get_ref_(const std::string& user_id) noexcept;

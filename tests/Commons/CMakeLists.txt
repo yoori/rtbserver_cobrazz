@@ -5,6 +5,17 @@ add_executable(AsyncMutexTest
   AsyncMutexTest.cpp
 )
 
+# Compile the implementation here so the linker can intercept its publication unlock.
+add_executable(AsyncMutexPublicationTest
+  AsyncMutexPublicationTest.cpp
+  ../../Commons/AsyncMutex.cpp
+  ../../Commons/Coro/Utils.cpp
+)
+
+target_link_libraries(AsyncMutexPublicationTest PRIVATE Boost::headers Threads::Threads)
+target_link_options(AsyncMutexPublicationTest PRIVATE "-Wl,--wrap=pthread_mutex_unlock")
+target_include_directories(AsyncMutexPublicationTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+
 add_executable(OrderedAsyncTaskWindowTest
   OrderedAsyncTaskWindowTest.cpp
 )

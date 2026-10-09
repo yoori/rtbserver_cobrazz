@@ -13,7 +13,8 @@ namespace AdServer::Grpc
   {}
 
   GrpcExecutor::GrpcExecutor(std::size_t workers_number, std::string thread_name)
-    : thread_name_(std::move(thread_name))
+    : thread_name_(std::move(thread_name)),
+      deletion_queue_(std::make_shared<AdServer::Commons::DeferredDeletionQueue>())
   {
     const auto safe_workers_number = std::max<std::size_t>(1, workers_number);
     holders_.reserve(safe_workers_number);
@@ -71,6 +72,7 @@ namespace AdServer::Grpc
   void
   GrpcExecutor::deactivate_object_()
   {
+    deletion_queue_->drain();
     for (auto& holder : holders_)
     {
       holder.queue->shutdown();
@@ -87,5 +89,13 @@ namespace AdServer::Grpc
         holder.thread.join();
       }
     }
+
+    deletion_queue_->wait();
+  }
+
+  std::shared_ptr<AdServer::Commons::DeferredDeletionQueue>
+  GrpcExecutor::deletion_queue() const noexcept
+  {
+    return deletion_queue_;
   }
 }

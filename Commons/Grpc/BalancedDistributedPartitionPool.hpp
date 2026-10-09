@@ -16,12 +16,13 @@ namespace AdServer::Grpc
 {
   template<
     typename ClientType,
-    typename ControllerClientType = BasicControllerRefHolder>
+    typename ControllerClientType = BasicControllerRefHolder,
+    typename Deleter = std::default_delete<ClientType>>
   class BalancedDistributedPartitionPool:
-    public DistributedPartitionPool<ClientType, ControllerClientType>
+    public DistributedPartitionPool<ClientType, ControllerClientType, Deleter>
   {
   private:
-    using Base = DistributedPartitionPool<ClientType, ControllerClientType>;
+    using Base = DistributedPartitionPool<ClientType, ControllerClientType, Deleter>;
 
   public:
     using ControllerRefArray = typename Base::ControllerRefArray;
@@ -43,7 +44,8 @@ namespace AdServer::Grpc
       PartitionHash partition_hash,
       ChunkIndex chunk_index,
       const Generics::Time& pool_timeout = Generics::Time::ONE_SECOND,
-      const Generics::Time& resolve_period = Generics::Time(10))
+      const Generics::Time& resolve_period = Generics::Time(10),
+      Deleter client_deleter = {})
       : BalancedDistributedPartitionPool(
           std::move(name),
           std::move(log_aspect),
@@ -56,7 +58,8 @@ namespace AdServer::Grpc
           std::move(partition_hash),
           std::move(chunk_index),
           pool_timeout,
-          resolve_period)
+          resolve_period,
+          std::move(client_deleter))
     {}
 
   private:
@@ -84,7 +87,8 @@ namespace AdServer::Grpc
       PartitionHash partition_hash,
       ChunkIndex chunk_index,
       const Generics::Time& pool_timeout,
-      const Generics::Time& resolve_period)
+      const Generics::Time& resolve_period,
+      Deleter client_deleter)
       : Base(
           std::move(name),
           std::move(log_aspect),
@@ -109,7 +113,8 @@ namespace AdServer::Grpc
           },
           std::move(chunk_index),
           pool_timeout,
-          resolve_period),
+          resolve_period,
+          std::move(client_deleter)),
         partition_hash_(std::move(partition_hash)),
         partition_weights_(controller_refs.size, 1)
     {
