@@ -21,6 +21,7 @@
 #include <google/protobuf/arena.h>
 
 #include <Commons/ActivityGate.hpp>
+#include <Commons/Coro/MonoStartableAwaitable.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Generics/MonoAllocator.hpp>
@@ -558,7 +559,8 @@ namespace AdServer::Grpc
       google::protobuf::Arena& response_arena,
       PublishedBatchState* published_state = nullptr) const;
 
-    AdServer::Commons::StartableAwaitable<void> co_handle_batch_chain_(
+    AdServer::Commons::MonoStartableAwaitable<void> co_handle_batch_chain_(
+      Generics::MonoAllocatorArena& batch_arena,
       BatchItemContext* item,
       google::protobuf::Arena& response_arena,
       PublishedBatchState* published_state,

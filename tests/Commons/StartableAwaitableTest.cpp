@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <array>
 #include <coroutine>
 #include <functional>
 #include <iostream>
@@ -134,6 +136,162 @@ namespace
     {
       throw std::runtime_error("unexpected tuple result");
     }
+  }
+
+  template<typename Function>
+  bool check_exception(Function&& function, std::string_view test_name);
+
+  struct PendingGroup
+  {
+    static constexpr std::size_t SIZE = 3;
+    std::array<std::function<void()>, SIZE> callbacks;
+    std::array<bool, SIZE> entered{};
+    std::array<bool, SIZE> destroyed{};
+    std::size_t synchronous_count = 0;
+  };
+
+  AdServer::Commons::StartableAwaitable<int>
+  make_pending_result(PendingGroup& group, std::size_t index)
+  {
+    struct Guard
+    {
+      ~Guard()
+      {
+        destroyed = true;
+      }
+
+      bool& destroyed;
+    } guard{group.destroyed[index]};
+    group.entered[index] = true;
+
+    if (index >= group.synchronous_count)
+    {
+      co_await AdServer::Commons::async_callback<>(
+        [&group, index](std::function<void()> callback)
+        {
+          group.callbacks[index] = std::move(callback);
+        });
+    }
+
+    co_return static_cast<int>(index);
+  }
+
+  AdServer::Commons::StartableAwaitable<void> make_pending_group(PendingGroup& group, bool tuple)
+  {
+    if (tuple)
+    {
+      const auto [first, second, third] = co_await AdServer::Commons::TupleAwaitable(
+        make_pending_result(group, 0), make_pending_result(group, 1),
+        make_pending_result(group, 2));
+      if (first != 0 || second != 1 || third != 2)
+      {
+        throw std::runtime_error("unexpected pending tuple result");
+      }
+    }
+    else
+    {
+      std::vector<AdServer::Commons::StartableAwaitable<int>> operations;
+      for (std::size_t i = 0; i < PendingGroup::SIZE; ++i)
+      {
+        operations.emplace_back(make_pending_result(group, i));
+      }
+
+      co_await AdServer::Commons::SetAwaitable(std::move(operations));
+    }
+  }
+
+  bool check_group_start_exception(
+    bool tuple, bool queue_starts, std::size_t failing_start, std::size_t synchronous_count = 0)
+  {
+    PendingGroup group;
+    group.synchronous_count = synchronous_count;
+    auto operation = make_pending_group(group, tuple);
+    std::vector<std::coroutine_handle<>> queued;
+    queued.reserve(PendingGroup::SIZE);
+    std::size_t attempts = 0;
+    unsigned int completions = 0;
+    std::optional<std::exception_ptr> completion_exception;
+    bool starting_parent = true;
+    const AdServer::Commons::CoroutineResumeScheduler scheduler =
+      [&](std::coroutine_handle<> handle)
+      {
+        if (std::exchange(starting_parent, false))
+        {
+          handle.resume();
+          return;
+        }
+
+        // Reject before accepting the handle; earlier starts may already have callbacks pending.
+        if (attempts++ == failing_start)
+        {
+          throw std::runtime_error(std::string(ERROR_MESSAGE));
+        }
+
+        if (queue_starts)
+        {
+          queued.push_back(handle);
+        }
+        else
+        {
+          handle.resume();
+        }
+      };
+    {
+      AdServer::Commons::ScopedCoroutineResumeQueue scope(scheduler);
+      operation.start([&](std::optional<std::exception_ptr> exception)
+      {
+        ++completions;
+        completion_exception = std::move(exception);
+      });
+    }
+
+    const auto started = std::min(failing_start, PendingGroup::SIZE);
+    if (queue_starts && started != 0 && completions != 0)
+    {
+      std::cerr << "group destroyed queued operations after start failure\n";
+      return false;
+    }
+
+    for (auto handle : queued)
+    {
+      AdServer::Commons::resume_coroutine(handle);
+    }
+
+    for (std::size_t i = 0; i < PendingGroup::SIZE; ++i)
+    {
+      if (group.entered[i] != (i < started) ||
+        group.destroyed[i] != (i < std::min(started, synchronous_count)))
+      {
+        std::cerr << "group destroyed a pending frame or started a branch after failure\n";
+        return false;
+      }
+    }
+
+    for (std::size_t i = started; i > synchronous_count; --i)
+    {
+      if (completions != 0 || !group.callbacks[i - 1])
+      {
+        std::cerr << "group didn't wait for every accepted operation\n";
+        return false;
+      }
+
+      group.callbacks[i - 1]();
+    }
+
+    if (completions != 1 || attempts != std::min(failing_start + 1, PendingGroup::SIZE))
+    {
+      std::cerr << "group completed or attempted a start an unexpected number of times\n";
+      return false;
+    }
+
+    if (failing_start < PendingGroup::SIZE)
+    {
+      return completion_exception && check_exception(
+        [&operation] { operation.await_resume(); }, "group start failure");
+    }
+
+    operation.await_resume();
+    return !completion_exception;
   }
 
   AdServer::Commons::StartableAwaitable<void>
@@ -403,6 +561,26 @@ main()
     !check_resume_coroutine_exception_safety())
   {
     return 1;
+  }
+
+  for (const bool tuple : {false, true})
+  {
+    for (const bool queue_starts : {false, true})
+    {
+      for (std::size_t failing_start = 0; failing_start <= PendingGroup::SIZE; ++failing_start)
+      {
+        if (!check_group_start_exception(tuple, queue_starts, failing_start))
+        {
+          return 1;
+        }
+      }
+
+      if (!check_group_start_exception(tuple, queue_starts, 1, 1) ||
+        !check_group_start_exception(tuple, queue_starts, 2, 1))
+      {
+        return 1;
+      }
+    }
   }
 
   std::cout << "StartableAwaitableTest: PASS\n";

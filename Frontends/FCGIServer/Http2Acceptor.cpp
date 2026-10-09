@@ -114,7 +114,7 @@ namespace AdServer::Frontends
     bool init_http2_();
     void submit_settings_();
     void process_request_(int32_t stream_id, StreamData& stream_data);
-    void submit_response_(int32_t stream_id, const Http2Response& response);
+    void submit_response_(int32_t stream_id, StreamData& stream_data);
     void reject_stream_(int32_t stream_id, StreamData& stream_data);
 
     void order_read_();
@@ -173,6 +173,8 @@ namespace AdServer::Frontends
     bool request_rejected = false;
 
     Http2Response response;
+    size_t response_offset = 0;
+    bool response_submitted = false;
   };
 
   class Http2RequestHolder final: public FCGI::HttpRequestHolder
@@ -401,19 +403,22 @@ namespace AdServer::Frontends
     nghttp2_data_source* source,
     void* /*user_data*/)
   {
-    const auto* body = static_cast<const std::shared_ptr<std::string>*>(source->ptr);
-    if (!body || !*body)
+    auto* stream_data = static_cast<StreamData*>(source->ptr);
+    if (!stream_data)
     {
       *data_flags = NGHTTP2_DATA_FLAG_EOF;
       return 0;
     }
 
-    const auto& body_ref = **body;
-    const size_t to_copy = std::min(length, body_ref.size());
-    std::memcpy(buf, body_ref.data(), to_copy);
-    *data_flags = NGHTTP2_DATA_FLAG_EOF;
-    delete body;
-    source->ptr = nullptr;
+    const auto& body = stream_data->response.body;
+    const size_t to_copy = std::min(length, body.size() - stream_data->response_offset);
+    std::memcpy(buf, body.data() + stream_data->response_offset, to_copy);
+    stream_data->response_offset += to_copy;
+    if (stream_data->response_offset == body.size())
+    {
+      *data_flags |= NGHTTP2_DATA_FLAG_EOF;
+    }
+
     return static_cast<ssize_t>(to_copy);
   }
 
@@ -601,7 +606,7 @@ namespace AdServer::Frontends
     stream_data.response.content_type = TEXT_PLAIN;
     stream_data.response.body = BAD_REQUEST_BODY;
 
-    submit_response_(stream_id, stream_data.response);
+    submit_response_(stream_id, stream_data);
 
     const int res = nghttp2_submit_rst_stream(
       session_,
@@ -617,9 +622,9 @@ namespace AdServer::Frontends
     }
   }
 
-  void
-  Http2Acceptor::Connection::submit_response_(int32_t stream_id, const Http2Response& response)
+  void Http2Acceptor::Connection::submit_response_(int32_t stream_id, StreamData& stream_data)
   {
+    const auto& response = stream_data.response;
     const std::string status_text = std::to_string(response.status);
 
     std::array<nghttp2_nv, 2> headers = {{
@@ -639,11 +644,11 @@ namespace AdServer::Frontends
       }
     }};
 
-    nghttp2_data_provider provider;
-    auto response_body = std::make_unique<std::shared_ptr<std::string>>(
-      std::make_shared<std::string>(response.body));
-    provider.source.ptr = response_body.get();
+    nghttp2_data_provider provider{};
+    // StreamData owns the body until stream close, including reset and connection teardown.
+    provider.source.ptr = &stream_data;
     provider.read_callback = data_source_read_callback_;
+    stream_data.response_offset = 0;
 
     const int res = nghttp2_submit_response(
       session_,
@@ -660,7 +665,7 @@ namespace AdServer::Frontends
       return;
     }
 
-    response_body.release();
+    stream_data.response_submitted = true;
   }
 
   void
@@ -673,7 +678,7 @@ namespace AdServer::Frontends
       [self, stream_id, response]()
       {
         auto it = self->streams_.find(stream_id);
-        if (it == self->streams_.end())
+        if (it == self->streams_.end() || it->second->response_submitted)
         {
           return;
         }
@@ -692,7 +697,7 @@ namespace AdServer::Frontends
         }
         stream_data->response.body = response->body();
 
-        self->submit_response_(stream_id, stream_data->response);
+        self->submit_response_(stream_id, *stream_data);
         self->flush_send_queue_();
       });
   }

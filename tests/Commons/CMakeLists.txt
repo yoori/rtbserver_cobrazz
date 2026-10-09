@@ -27,6 +27,9 @@ add_executable(StartableAwaitableTest
   StartableAwaitableTest.cpp
 )
 
+add_executable(MonoStartableAwaitableTest MonoStartableAwaitableTest.cpp)
+target_link_libraries(MonoStartableAwaitableTest PRIVATE Commons Generics)
+
 add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp
 )

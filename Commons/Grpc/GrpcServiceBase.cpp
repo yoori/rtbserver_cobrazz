@@ -27,7 +27,7 @@ namespace AdServer::Grpc
     explicit PreparedBatchChains(Generics::MonoAllocatorArena& arena) : operations(&arena)
     {}
 
-    Generics::MonoVector<AdServer::Commons::StartableAwaitable<void>> operations;
+    Generics::MonoVector<AdServer::Commons::MonoStartableAwaitable<void>> operations;
   };
 
   struct GrpcServiceBase::PublishedBatchState final
@@ -1197,7 +1197,7 @@ namespace AdServer::Grpc
       }
       else
       {
-        co_await AdServer::Commons::CooperativeGroup(
+        co_await AdServer::Commons::CooperativeGroup<AdServer::Commons::MonoStartableAwaitable<void>>(
           {operations.data(), operations.size()}, std::move(executor_pool));
       }
       operations.clear();
@@ -1256,7 +1256,7 @@ namespace AdServer::Grpc
       }
       else
       {
-        co_await AdServer::Commons::CooperativeGroup(
+        co_await AdServer::Commons::CooperativeGroup<AdServer::Commons::MonoStartableAwaitable<void>>(
           {operations.data(), operations.size()}, std::move(executor_pool));
       }
       operations.clear();
@@ -1362,14 +1362,15 @@ namespace AdServer::Grpc
           ordered[end - 1]->chain_next = ordered[end];
           ++end;
         }
-        operations.emplace_back(
-          co_handle_batch_chain_(ordered[begin], response_arena, published_state, lane_index));
+        operations.emplace_back(co_handle_batch_chain_(
+          batch_arena, ordered[begin], response_arena, published_state, lane_index));
         begin = end;
       }
     }
   }
 
-  AdServer::Commons::StartableAwaitable<void> GrpcServiceBase::co_handle_batch_chain_(
+  AdServer::Commons::MonoStartableAwaitable<void> GrpcServiceBase::co_handle_batch_chain_(
+    Generics::MonoAllocatorArena&,
     BatchItemContext* item,
     google::protobuf::Arena& response_arena,
     PublishedBatchState* published_state,

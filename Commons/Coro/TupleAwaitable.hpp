@@ -14,6 +14,7 @@
 
 namespace AdServer::Commons
 {
+  // A throwing start() must not submit the operation or invoke its completion.
   template<typename... CoroutineTypes>
   class TupleAwaitable final
   {
@@ -69,8 +70,7 @@ namespace AdServer::Commons
   }
 
   template<typename... CoroutineTypes>
-  bool
-  TupleAwaitable<CoroutineTypes...>::await_suspend(std::coroutine_handle<> continuation)
+  bool TupleAwaitable<CoroutineTypes...>::await_suspend(std::coroutine_handle<> continuation)
   {
     state_->continuation = continuation;
     if (const auto* scheduler = current_coroutine_resume_scheduler())
@@ -78,10 +78,25 @@ namespace AdServer::Commons
       state_->resume_scheduler = *scheduler;
     }
 
-    [&]<std::size_t... Indexes>(std::index_sequence<Indexes...>)
+    std::size_t started = 0;
+    try
     {
-      (start_operation_<Indexes>(), ...);
-    }(std::index_sequence_for<CoroutineTypes...>{});
+      [&]<std::size_t... Indexes>(std::index_sequence<Indexes...>)
+      {
+        ((start_operation_<Indexes>(), ++started), ...);
+      }(std::index_sequence_for<CoroutineTypes...>{});
+    }
+    catch (...)
+    {
+      std::lock_guard<std::mutex> guard(state_->lock);
+      if (!state_->exception)
+      {
+        state_->exception = std::current_exception();
+      }
+
+      // A rejected start has no completion; keep the accepted operations alive until they finish.
+      state_->remaining -= sizeof...(CoroutineTypes) - started;
+    }
 
     std::lock_guard<std::mutex> guard(state_->lock);
     if (state_->remaining == 0)

@@ -12,7 +12,10 @@
 
 namespace AdServer::Commons
 {
-  template<typename ResultType>
+  struct DefaultCoroutineFrameAllocator
+  {};
+
+  template<typename ResultType, typename FrameAllocator = DefaultCoroutineFrameAllocator>
   class StartableAwaitable
   {
   public:
@@ -37,8 +40,8 @@ namespace AdServer::Commons
     Handle handle_;
   };
 
-  template<>
-  class StartableAwaitable<void>
+  template<typename FrameAllocator>
+  class StartableAwaitable<void, FrameAllocator>
   {
   public:
     struct promise_type;
@@ -62,8 +65,8 @@ namespace AdServer::Commons
     Handle handle_;
   };
 
-  template<typename ResultType>
-  struct StartableAwaitable<ResultType>::promise_type
+  template<typename ResultType, typename FrameAllocator>
+  struct StartableAwaitable<ResultType, FrameAllocator>::promise_type : FrameAllocator
   {
     StartableAwaitable get_return_object() noexcept;
     std::suspend_always initial_suspend() const noexcept;
@@ -89,7 +92,8 @@ namespace AdServer::Commons
     bool destroy_on_completion = false;
   };
 
-  struct StartableAwaitable<void>::promise_type
+  template<typename FrameAllocator>
+  struct StartableAwaitable<void, FrameAllocator>::promise_type : FrameAllocator
   {
     StartableAwaitable get_return_object() noexcept;
     std::suspend_always initial_suspend() const noexcept;
@@ -111,24 +115,27 @@ namespace AdServer::Commons
     bool destroy_on_completion = false;
   };
 
-  template<typename ResultType>
-  ResultType sync_wait(StartableAwaitable<ResultType> awaitable);
+  template<typename ResultType, typename FrameAllocator>
+  ResultType sync_wait(StartableAwaitable<ResultType, FrameAllocator> awaitable);
 
-  void sync_wait(StartableAwaitable<void> awaitable);
+  template<typename FrameAllocator>
+  void sync_wait(StartableAwaitable<void, FrameAllocator> awaitable);
 
-  template<typename ResultType>
-  inline StartableAwaitable<ResultType>::StartableAwaitable(Handle handle) noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline StartableAwaitable<ResultType, FrameAllocator>::StartableAwaitable(Handle handle) noexcept
     : handle_(handle)
   {}
 
-  template<typename ResultType>
-  inline StartableAwaitable<ResultType>::StartableAwaitable(StartableAwaitable&& other) noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline
+  StartableAwaitable<ResultType, FrameAllocator>::StartableAwaitable(StartableAwaitable&& other)
+    noexcept
     : handle_(std::exchange(other.handle_, {}))
   {}
 
-  template<typename ResultType>
-  inline StartableAwaitable<ResultType>&
-  StartableAwaitable<ResultType>::operator=(StartableAwaitable&& other) noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline StartableAwaitable<ResultType, FrameAllocator>&
+  StartableAwaitable<ResultType, FrameAllocator>::operator=(StartableAwaitable&& other) noexcept
   {
     if (this != &other)
     {
@@ -142,8 +149,8 @@ namespace AdServer::Commons
     return *this;
   }
 
-  template<typename ResultType>
-  inline StartableAwaitable<ResultType>::~StartableAwaitable()
+  template<typename ResultType, typename FrameAllocator>
+  inline StartableAwaitable<ResultType, FrameAllocator>::~StartableAwaitable()
   {
     if (handle_)
     {
@@ -151,17 +158,15 @@ namespace AdServer::Commons
     }
   }
 
-  template<typename ResultType>
-  inline void
-  StartableAwaitable<ResultType>::start(Completion completion)
+  template<typename ResultType, typename FrameAllocator>
+  inline void StartableAwaitable<ResultType, FrameAllocator>::start(Completion completion)
   {
     handle_.promise().completion = std::move(completion);
     resume_coroutine(handle_);
   }
 
-  template<typename ResultType>
-  inline void
-  StartableAwaitable<ResultType>::start_detached(Completion completion)
+  template<typename ResultType, typename FrameAllocator>
+  inline void StartableAwaitable<ResultType, FrameAllocator>::start_detached(Completion completion)
   {
     const Handle handle = std::exchange(handle_, {});
     handle.promise().completion = std::move(completion);
@@ -169,24 +174,22 @@ namespace AdServer::Commons
     resume_coroutine(handle);
   }
 
-  template<typename ResultType>
-  inline bool
-  StartableAwaitable<ResultType>::await_ready() const noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline bool StartableAwaitable<ResultType, FrameAllocator>::await_ready() const noexcept
   {
     return !handle_ || handle_.done();
   }
 
-  template<typename ResultType>
-  inline void
-  StartableAwaitable<ResultType>::await_suspend(std::coroutine_handle<> continuation)
+  template<typename ResultType, typename FrameAllocator>
+  inline void StartableAwaitable<ResultType, FrameAllocator>::await_suspend(
+    std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
   }
 
-  template<typename ResultType>
-  inline ResultType
-  StartableAwaitable<ResultType>::await_resume()
+  template<typename ResultType, typename FrameAllocator>
+  inline ResultType StartableAwaitable<ResultType, FrameAllocator>::await_resume()
   {
     if (handle_.promise().exception)
     {
@@ -201,31 +204,31 @@ namespace AdServer::Commons
     return std::move(*handle_.promise().result);
   }
 
-  template<typename ResultType>
-  inline StartableAwaitable<ResultType>
-  StartableAwaitable<ResultType>::promise_type::get_return_object() noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline StartableAwaitable<ResultType, FrameAllocator>
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::get_return_object() noexcept
   {
     return StartableAwaitable(Handle::from_promise(*this));
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   inline std::suspend_always
-  StartableAwaitable<ResultType>::promise_type::initial_suspend() const noexcept
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::initial_suspend() const noexcept
   {
     return {};
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   inline bool
-  StartableAwaitable<ResultType>::promise_type::FinalAwaiter::await_ready()
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::FinalAwaiter::await_ready()
     const noexcept
   {
     return false;
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   inline void
-  StartableAwaitable<ResultType>::promise_type::FinalAwaiter::await_suspend(
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::FinalAwaiter::await_suspend(
     Handle handle) const noexcept
   {
     auto& promise = handle.promise();
@@ -246,37 +249,36 @@ namespace AdServer::Commons
     }
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   inline void
-  StartableAwaitable<ResultType>::promise_type::FinalAwaiter::await_resume()
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::FinalAwaiter::await_resume()
     const noexcept
   {}
 
-  template<typename ResultType>
-  inline typename StartableAwaitable<ResultType>::promise_type::FinalAwaiter
-  StartableAwaitable<ResultType>::promise_type::final_suspend() const noexcept
+  template<typename ResultType, typename FrameAllocator>
+  inline typename StartableAwaitable<ResultType, FrameAllocator>::promise_type::FinalAwaiter
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::final_suspend() const noexcept
   {
     return {};
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   template<typename ValueType>
   inline void
-  StartableAwaitable<ResultType>::promise_type::return_value(ValueType&& value)
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::return_value(ValueType&& value)
   {
     result.emplace(std::forward<ValueType>(value));
   }
 
-  template<typename ResultType>
+  template<typename ResultType, typename FrameAllocator>
   inline void
-  StartableAwaitable<ResultType>::promise_type::unhandled_exception() noexcept
+  StartableAwaitable<ResultType, FrameAllocator>::promise_type::unhandled_exception() noexcept
   {
     exception.emplace(std::current_exception());
   }
 
-  template<typename ResultType>
-  inline ResultType
-  sync_wait(StartableAwaitable<ResultType> awaitable)
+  template<typename ResultType, typename FrameAllocator>
+  inline ResultType sync_wait(StartableAwaitable<ResultType, FrameAllocator> awaitable)
   {
     using CompletionResult = std::optional<std::exception_ptr>;
     auto promise = std::make_shared<std::promise<CompletionResult>>();
@@ -295,16 +297,20 @@ namespace AdServer::Commons
     return awaitable.await_resume();
   }
 
-  inline StartableAwaitable<void>::StartableAwaitable(Handle handle) noexcept
+  template<typename FrameAllocator>
+  inline StartableAwaitable<void, FrameAllocator>::StartableAwaitable(Handle handle) noexcept
     : handle_(handle)
   {}
 
-  inline StartableAwaitable<void>::StartableAwaitable(StartableAwaitable&& other) noexcept
+  template<typename FrameAllocator>
+  inline StartableAwaitable<void, FrameAllocator>::StartableAwaitable(StartableAwaitable&& other)
+    noexcept
     : handle_(std::exchange(other.handle_, {}))
   {}
 
-  inline StartableAwaitable<void>&
-  StartableAwaitable<void>::operator=(StartableAwaitable&& other) noexcept
+  template<typename FrameAllocator>
+  inline StartableAwaitable<void, FrameAllocator>&
+  StartableAwaitable<void, FrameAllocator>::operator=(StartableAwaitable&& other) noexcept
   {
     if (this != &other)
     {
@@ -318,7 +324,8 @@ namespace AdServer::Commons
     return *this;
   }
 
-  inline StartableAwaitable<void>::~StartableAwaitable()
+  template<typename FrameAllocator>
+  inline StartableAwaitable<void, FrameAllocator>::~StartableAwaitable()
   {
     if (handle_)
     {
@@ -326,15 +333,15 @@ namespace AdServer::Commons
     }
   }
 
-  inline void
-  StartableAwaitable<void>::start(Completion completion)
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::start(Completion completion)
   {
     handle_.promise().completion = std::move(completion);
     resume_coroutine(handle_);
   }
 
-  inline void
-  StartableAwaitable<void>::start_detached(Completion completion)
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::start_detached(Completion completion)
   {
     const Handle handle = std::exchange(handle_, {});
     handle.promise().completion = std::move(completion);
@@ -342,21 +349,22 @@ namespace AdServer::Commons
     resume_coroutine(handle);
   }
 
-  inline bool
-  StartableAwaitable<void>::await_ready() const noexcept
+  template<typename FrameAllocator>
+  inline bool StartableAwaitable<void, FrameAllocator>::await_ready() const noexcept
   {
     return !handle_ || handle_.done();
   }
 
+  template<typename FrameAllocator>
   inline void
-  StartableAwaitable<void>::await_suspend(std::coroutine_handle<> continuation)
+  StartableAwaitable<void, FrameAllocator>::await_suspend(std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
     resume_coroutine(handle_);
   }
 
-  inline void
-  StartableAwaitable<void>::await_resume()
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::await_resume()
   {
     if (handle_.promise().exception)
     {
@@ -364,27 +372,31 @@ namespace AdServer::Commons
     }
   }
 
-  inline StartableAwaitable<void>
-  StartableAwaitable<void>::promise_type::get_return_object() noexcept
+  template<typename FrameAllocator>
+  inline StartableAwaitable<void, FrameAllocator>
+  StartableAwaitable<void, FrameAllocator>::promise_type::get_return_object() noexcept
   {
     return StartableAwaitable(Handle::from_promise(*this));
   }
 
+  template<typename FrameAllocator>
   inline std::suspend_always
-  StartableAwaitable<void>::promise_type::initial_suspend() const noexcept
+  StartableAwaitable<void, FrameAllocator>::promise_type::initial_suspend() const noexcept
   {
     return {};
   }
 
-  inline bool
-  StartableAwaitable<void>::promise_type::FinalAwaiter::await_ready()
+  template<typename FrameAllocator>
+  inline bool StartableAwaitable<void, FrameAllocator>::promise_type::FinalAwaiter::await_ready()
     const noexcept
   {
     return false;
   }
 
+  template<typename FrameAllocator>
   inline void
-  StartableAwaitable<void>::promise_type::FinalAwaiter::await_suspend(Handle handle) const noexcept
+  StartableAwaitable<void, FrameAllocator>::promise_type::FinalAwaiter::await_suspend(Handle handle)
+    const noexcept
   {
     auto& promise = handle.promise();
     const bool destroy_on_completion = promise.destroy_on_completion;
@@ -404,29 +416,30 @@ namespace AdServer::Commons
     }
   }
 
-  inline void
-  StartableAwaitable<void>::promise_type::FinalAwaiter::await_resume()
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::promise_type::FinalAwaiter::await_resume()
     const noexcept
   {}
 
-  inline StartableAwaitable<void>::promise_type::FinalAwaiter
-  StartableAwaitable<void>::promise_type::final_suspend() const noexcept
+  template<typename FrameAllocator>
+  inline typename StartableAwaitable<void, FrameAllocator>::promise_type::FinalAwaiter
+  StartableAwaitable<void, FrameAllocator>::promise_type::final_suspend() const noexcept
   {
     return {};
   }
 
-  inline void
-  StartableAwaitable<void>::promise_type::return_void() const noexcept
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::promise_type::return_void() const noexcept
   {}
 
-  inline void
-  StartableAwaitable<void>::promise_type::unhandled_exception() noexcept
+  template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::promise_type::unhandled_exception() noexcept
   {
     exception.emplace(std::current_exception());
   }
 
-  inline void
-  sync_wait(StartableAwaitable<void> awaitable)
+  template<typename FrameAllocator>
+  inline void sync_wait(StartableAwaitable<void, FrameAllocator> awaitable)
   {
     using CompletionResult = std::optional<std::exception_ptr>;
     auto promise = std::make_shared<std::promise<CompletionResult>>();

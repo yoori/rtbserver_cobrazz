@@ -684,7 +684,7 @@ namespace
     }
   }
 
-  void benchmark(const std::shared_ptr<Pool>& pool, Strategy strategy)
+  void benchmark(const std::shared_ptr<Pool>& pool, Strategy strategy, bool prepare_on_executor)
   {
     Service service(pool, strategy, true);
     Request request;
@@ -700,17 +700,34 @@ namespace
       auto& response = *google::protobuf::Arena::CreateMessage<Response>(&arena);
       ServiceBase::BatchProcessingHandle handle;
       std::promise<void> completion;
-      service.start_handle_batch_request(handle, request, response, [&](auto error)
+      const auto start_batch = [&]
       {
-        assert(!error);
-        completion.set_value();
-      });
+        service.start_handle_batch_request(handle, request, response, [&](auto error)
+        {
+          assert(!error);
+          completion.set_value();
+        });
+      };
+      if (prepare_on_executor)
+      {
+        std::promise<void> started;
+        pool->post([&]
+        {
+          start_batch();
+          started.set_value();
+        });
+        started.get_future().get();
+      }
+      else
+      {
+        start_batch();
+      }
       completion.get_future().get();
       assert(response.items_size() == request.items_size());
     }
     const auto elapsed = std::chrono::steady_clock::now() - start;
     std::cout << (strategy == Strategy::CooperativeByKey ? "cooperative" : "sequential") <<
-      " ns/item=" <<
+      (prepare_on_executor ? " prepare=executor" : " prepare=caller") << " ns/item=" <<
       std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count() /
         double(iterations * request.items_size()) << std::endl;
   }
@@ -723,8 +740,9 @@ int main(int argc, char** argv)
   pool->activate_object();
   if (argc == 2)
   {
-    benchmark(pool, std::string_view(argv[1]) == "cooperative" ?
-      Strategy::CooperativeByKey : Strategy::Sequential);
+    const std::string_view mode(argv[1]);
+    benchmark(pool, mode.starts_with("cooperative") ?
+      Strategy::CooperativeByKey : Strategy::Sequential, mode.ends_with("-executor"));
   }
   else
   {

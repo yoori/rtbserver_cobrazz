@@ -11,7 +11,7 @@ add_executable(BatchPartialResponseTest
 )
 
 add_executable(BatchCooperativeTest BatchCooperativeTest.cpp)
-target_link_libraries(BatchCooperativeTest PRIVATE Commons Generics GrpcBatch)
+target_link_libraries(BatchCooperativeTest PRIVATE PkgConfig::Jemalloc Commons Generics GrpcBatch)
 
 add_executable(BatchingTimerTest
   BatchingTimerTest.cpp

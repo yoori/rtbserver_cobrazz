@@ -12,10 +12,11 @@ namespace AdServer::Commons
 {
   // The caller owns the operation frames and keeps them alive until the group completes.
   // Children must honor the current resume scheduler rather than hop to another executor.
+  template<typename CoroutineType = StartableAwaitable<void>>
   class CooperativeGroup final
   {
   public:
-    using Operations = std::span<StartableAwaitable<void>>;
+    using Operations = std::span<CoroutineType>;
 
     CooperativeGroup(Operations operations, std::shared_ptr<ExecutorPool> executor_pool)
       : state_(std::make_shared<State>(operations, std::move(executor_pool)))
@@ -143,7 +144,7 @@ namespace AdServer::Commons
 
       void schedule()
       {
-        auto self = shared_from_this();
+        auto self = this->shared_from_this();
         if (executor_pool)
         {
           try
@@ -162,7 +163,7 @@ namespace AdServer::Commons
 
       void run(bool start)
       {
-        auto self = shared_from_this();
+        auto self = this->shared_from_this();
         bool notify = false;
         bool repost = false;
         {
