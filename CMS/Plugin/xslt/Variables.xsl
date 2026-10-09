@@ -184,7 +184,6 @@
 <!-- threadParams specific params -->
 <xsl:variable name="def-log-generalizer-threads" select="'10'"/>
 <xsl:variable name="def-request-info-manager-threads" select="'10'"/>
-<xsl:variable name="def-sync-logs-threads" select="'10'"/>
 <xsl:variable name="def-expression-matcher-threads" select="'10'"/>
 <xsl:variable name="def-campaign-server-threads" select="'10'"/>
 <xsl:variable name="def-campaign-manager-threads" select="'40'"/>
@@ -330,7 +329,6 @@
 <xsl:variable name="def-billing-server-grpc-port" select="$def-range-start + 432"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
 <!--xsl:variable name="def-log-delivering-port" select="concat($def-range-start, '112')"/-->
-<xsl:variable name="def-sync-logs-port" select="$def-range-start + 12"/>
 <xsl:variable name="def-expression-matcher-port" select="$def-range-start + 13"/>
 <xsl:variable name="def-sync-logs-server-port" select="$def-range-start + 14"/>
 <xsl:variable name="def-stat-receiver-port" select="$def-range-start + 15"/>
@@ -344,7 +342,6 @@
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="$def-range-start + 56"/>
-<xsl:variable name="def-proxy-sync-logs-port" select="$def-range-start + 62"/>
 <xsl:variable name="def-stunnel-server-internal-port" select="$def-range-start + 72"/>
 
 <!-- default secure params -->

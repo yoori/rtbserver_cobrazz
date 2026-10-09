@@ -1,5 +1,6 @@
 #include "UserBindServerCore.hpp"
 
+#include <exception>
 #include <utility>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
@@ -56,21 +57,6 @@ namespace AdServer::UserInfoSvcs
     core_->clear_user_bind_expired_(reschedule_);
   }
 
-  UserBindServerCore::ClearBindRequestExpiredTask::ClearBindRequestExpiredTask(
-    Generics::TaskRunner* task_runner,
-    UserBindServerCore* core,
-    bool reschedule) noexcept
-    : Generics::TaskGoal(task_runner),
-      core_(core),
-      reschedule_(reschedule)
-  {}
-
-  void
-  UserBindServerCore::ClearBindRequestExpiredTask::execute() noexcept
-  {
-    core_->clear_bind_request_expired_(reschedule_);
-  }
-
   UserBindServerCore::DumpUserBindTask::DumpUserBindTask(
     Generics::TaskRunner* task_runner,
     UserBindServerCore* core) noexcept
@@ -87,6 +73,15 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::UserBindServerCore(const Config& config, Logging::Logger* logger)
     : logger_(ReferenceCounting::add_ref(logger)),
       config_(config),
+      rocksdb_processor_(std::make_shared<ProfilingCommons::RocksDBProfileMapProcessor>(
+        config.storage.rocksdb_batching_threads,
+        32,
+        config.storage.rocksdb_cache_size,
+        256,
+        config.storage.compaction_threads,
+        config.storage.per_compaction_threads,
+        config.storage.flush_threads,
+        config.storage.max_mem_tables)),
       scheduler_(new Generics::Planner(
         Generics::ActiveObjectCallback_var(
           new Logging::ActiveObjectCallbackImpl(logger_, "", "UserBindServerCore")))),
@@ -95,14 +90,12 @@ namespace AdServer::UserInfoSvcs
           new Logging::ActiveObjectCallbackImpl(logger_, "", "UserBindServerCore")),
         2)),
       user_bind_container_(new UserBindProcessorHolder()),
-      rocksdb_stats_container_(new UserBindContainerHolder()),
       bind_request_container_(new BindRequestProcessorHolder()),
       chunks_number_(config.storage.common_chunks_number)
   {
     add_child_object(task_runner_);
     add_child_object(scheduler_);
     add_child_object(user_bind_container_);
-    add_child_object(rocksdb_stats_container_);
     add_child_object(bind_request_container_);
 
     AdServer::ProfilingCommons::ProfileMapFactory::fetch_chunk_folders(
@@ -116,8 +109,6 @@ namespace AdServer::UserInfoSvcs
     task_runner_->enqueue_task(Generics::Task_var(new LoadBindRequestTask(task_runner_, this)));
     task_runner_->enqueue_task(Generics::Task_var(
       new ClearUserBindExpiredTask(task_runner_, this, true)));
-    task_runner_->enqueue_task(Generics::Task_var(
-      new ClearBindRequestExpiredTask(task_runner_, this, true)));
   }
 
   UserBindServerCore::~UserBindServerCore()
@@ -135,6 +126,42 @@ namespace AdServer::UserInfoSvcs
     {
       logger_->sstream(Logging::Logger::ERROR, "UserBindServer") <<
         "UserBindServerCore::~UserBindServerCore(): Can't dump user binds";
+    }
+  }
+
+  void UserBindServerCore::activate_object_()
+  {
+    rocksdb_processor_->activate_object();
+    try
+    {
+      Generics::CompositeActiveObject::activate_object_();
+    }
+    catch (...)
+    {
+      rocksdb_processor_->deactivate_object();
+      rocksdb_processor_->wait_object();
+      throw;
+    }
+  }
+
+  void UserBindServerCore::wait_object_()
+  {
+    std::exception_ptr error;
+    try
+    {
+      // Keep the processor running until loaders and request accessors have finished.
+      Generics::CompositeActiveObject::wait_object_();
+    }
+    catch (...)
+    {
+      error = std::current_exception();
+    }
+
+    rocksdb_processor_->deactivate_object();
+    rocksdb_processor_->wait_object();
+    if (error)
+    {
+      std::rethrow_exception(error);
     }
   }
 
@@ -267,6 +294,10 @@ namespace AdServer::UserInfoSvcs
     {
       throw ChunkNotFound(ex.what());
     }
+    catch (const eh::Exception& ex)
+    {
+      throw Exception(ex.what());
+    }
   }
 
   UserBindServerCore::BindRequestInfo
@@ -275,8 +306,7 @@ namespace AdServer::UserInfoSvcs
     return AdServer::Commons::sync_wait(co_get_bind_request(id, timestamp));
   }
 
-  void
-  UserBindServerCore::add_bind_request(
+  Commons::StartableAwaitable<void> UserBindServerCore::co_add_bind_request(
     const std::string& id,
     const BindRequestInfo& bind_request_info,
     const Generics::Time& timestamp)
@@ -294,12 +324,25 @@ namespace AdServer::UserInfoSvcs
       BindRequestContainer::BindRequest bind_request;
       bind_request.bind_user_ids = bind_request_info.bind_user_ids;
 
-      bind_request_accessor->add_bind_request(String::SubString(id), bind_request, timestamp);
+      co_await bind_request_accessor->co_add_bind_request(
+        String::SubString(id), bind_request, timestamp);
     }
     catch(const BindRequestProcessor::ChunkNotFound& ex)
     {
       throw ChunkNotFound(ex.what());
     }
+    catch (const eh::Exception& ex)
+    {
+      throw Exception(ex.what());
+    }
+  }
+
+  void UserBindServerCore::add_bind_request(
+    const std::string& id,
+    const BindRequestInfo& bind_request,
+    const Generics::Time& timestamp)
+  {
+    Commons::sync_wait(co_add_bind_request(id, bind_request, timestamp));
   }
 
   UserBindServerCore::Source
@@ -335,10 +378,7 @@ namespace AdServer::UserInfoSvcs
   AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats
   UserBindServerCore::rocksdb_stats() const noexcept
   {
-    UserBindContainerHolder::Accessor container = rocksdb_stats_container_->get_accessor();
-    return container.get() ?
-      container->rocksdb_stats() :
-      AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats{};
+    return rocksdb_processor_->stats();
   }
 
   const UserBindContainer::ChunkPathMap&
@@ -373,12 +413,6 @@ namespace AdServer::UserInfoSvcs
     {
       user_bind_processor->dump();
     }
-
-    const BindRequestProcessor_var bind_request_processor = bind_request_container_->get_object();
-    if (bind_request_processor.in())
-    {
-      bind_request_processor->dump();
-    }
   }
 
   void
@@ -409,7 +443,8 @@ namespace AdServer::UserInfoSvcs
         config_.storage.compaction_threads,
         config_.storage.per_compaction_threads,
         config_.storage.flush_threads,
-        config_.storage.max_mem_tables);
+        config_.storage.max_mem_tables,
+        rocksdb_processor_);
       UserBindProcessor_var user_bind_processor = user_bind_container;
 
       UserBindProcessor_var result_user_bind_processor;
@@ -460,7 +495,6 @@ namespace AdServer::UserInfoSvcs
         add_child_object(user_bind_operation_loader);
       }
 
-      *rocksdb_stats_container_ = user_bind_container;
       *user_bind_container_ = result_user_bind_processor;
       reschedule = false;
     }
@@ -512,12 +546,11 @@ namespace AdServer::UserInfoSvcs
     try
     {
       BindRequestProcessor_var bind_request_processor = new BindRequestContainer(
-        logger_,
+        rocksdb_processor_,
         config_.bind_request_storage.common_chunks_number,
         chunks_,
         config_.bind_request_storage.prefix.c_str(),
-        config_.bind_request_storage.expire_time / 4,
-        config_.bind_request_storage.portions);
+        config_.bind_request_storage.expire_time);
       *bind_request_container_ = bind_request_processor;
       reschedule = false;
     }
@@ -570,36 +603,6 @@ namespace AdServer::UserInfoSvcs
     {
       scheduler_->schedule(
         Generics::Goal_var(new ClearUserBindExpiredTask(task_runner_, this, true)),
-        Generics::Time::get_time_of_day() + Generics::Time::ONE_MINUTE);
-    }
-  }
-
-  void
-  UserBindServerCore::clear_bind_request_expired_(bool reschedule) noexcept
-  {
-    static const char* FUN = "UserBindServerCore::clear_bind_request_expired_()";
-
-    BindRequestProcessorHolder::Accessor bind_request_accessor =
-      bind_request_container_->get_accessor();
-
-    try
-    {
-      if (bind_request_accessor.get())
-      {
-        Generics::Time now = Generics::Time::get_time_of_day();
-        bind_request_accessor->clear_expired(now - config_.bind_request_storage.expire_time);
-      }
-    }
-    catch(const eh::Exception& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        "UserBindServer") << FUN << ": Can't delete old bind requests: " << ex.what();
-    }
-
-    if (reschedule)
-    {
-      scheduler_->schedule(
-        Generics::Goal_var(new ClearBindRequestExpiredTask(task_runner_, this, true)),
         Generics::Time::get_time_of_day() + Generics::Time::ONE_MINUTE);
     }
   }

@@ -76,6 +76,7 @@ namespace AdServer::ImprTrack
     long viewability;
     bool skip;
     std::string action_name;
+    std::string action_value;
 
     std::string source_id;
 

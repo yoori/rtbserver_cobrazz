@@ -10,6 +10,9 @@ add_executable(BatchPartialResponseTest
   BatchPartialResponseTest.cpp
 )
 
+add_executable(BatchCooperativeTest BatchCooperativeTest.cpp)
+target_link_libraries(BatchCooperativeTest PRIVATE Commons Generics GrpcBatch)
+
 add_executable(BatchingTimerTest
   BatchingTimerTest.cpp
 )

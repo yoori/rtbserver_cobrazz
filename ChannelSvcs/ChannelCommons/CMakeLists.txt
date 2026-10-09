@@ -1,5 +1,5 @@
 add_idl(ChannelCommonsIDL ChannelCommons.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons NO_SERVANT)
-add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons VALUETYPE)
+add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons NO_SERVANT)
 add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons VALUETYPE)
 
 target_link_libraries(ChannelCommonsIDL
@@ -16,10 +16,7 @@ target_link_libraries(ChannelServerIDL
   PUBLIC
     CorbaTypesIDL
     ChannelCommonsIDL
-    ChannelUpdateBaseIDL
-    CorbaObjectRefIDL
 )
-add_dependencies(ChannelServerIDL CampaignServerIDL)
 
 add_library(ChannelCommons SHARED
   ChannelUtils.cpp ChannelUpdateStatLogger.cpp TriggerParser.cpp

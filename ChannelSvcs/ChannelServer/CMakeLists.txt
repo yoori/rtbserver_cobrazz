@@ -54,9 +54,7 @@ target_link_libraries(ChannelServerGrpcClient
 add_executable(ChannelServer
   ChannelServerVariant.cpp
   ChannelServerCore.cpp
-  ChannelServerCustomImpl.cpp
   ChannelServerGrpc.cpp
-  ChannelServerControlImpl.cpp
   ChannelUpdateImpl.cpp
   ChannelServerMain.cpp
 )

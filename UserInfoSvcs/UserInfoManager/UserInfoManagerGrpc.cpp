@@ -482,7 +482,12 @@ namespace AdServer::UserInfoSvcs
           match,
           co_match,
           true,
-          &ServiceImpl::hash_match),
+          &ServiceImpl::hash_match,
+          AdServer::Grpc::BatchExecutionStrategy::CooperativeByKey,
+          [](const pb::MatchRequest& request) -> std::string_view
+          {
+            return request.user_info().user_id();
+          }),
         MAKE_DISTRIBUTED_GRPC_CORO_CALL(
           pb::UpdateUserFreqCapsRequest,
           pb::UpdateUserFreqCapsResponse,

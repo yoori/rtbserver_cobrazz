@@ -117,6 +117,10 @@ namespace
     append_json_stat(body, first, "rdb_read_batch_total_time", stats.read_batch_total_time);
     append_json_stat(body, first, "rdb_write_batch_total", stats.write_batch_total);
     append_json_stat(body, first, "rdb_write_batch_total_time", stats.write_batch_total_time);
+    append_json_stat(body, first, "rdb_failed_batch_total", stats.failed_batch_total);
+    append_json_stat(body, first, "rdb_failed_operation_total", stats.failed_operation_total);
+    append_json_stat(body, first, "rdb_failed_callback_expected", stats.failed_callback_expected);
+    append_json_stat(body, first, "rdb_failed_callback_completed", stats.failed_callback_completed);
     append_json_stat(body, first, "rdb_workers", stats.workers);
     append_json_stat(body, first, "rdb_queue_count", stats.queue_count);
     append_json_stat(body, first, "rdb_pending_operations", stats.pending_operations);
@@ -272,7 +276,6 @@ namespace
       config.BindRequestStorage().common_chunks_number();
     core_config.bind_request_storage.expire_time =
       Generics::Time(config.BindRequestStorage().expire_time());
-    core_config.bind_request_storage.portions = config.BindRequestStorage().portions();
 
     if (config.OperationBackup().present())
     {

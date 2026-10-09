@@ -3952,7 +3952,8 @@ namespace AdServer::CampaignSvcs
               impression_info.user_id,
               impression_info.referer.c_str(),
               impression_info.viewability,
-              String::SubString(impression_info.action_name)));
+              String::SubString(impression_info.action_name),
+              String::SubString(impression_info.action_value)));
         }
         catch (const eh::Exception& e)
         {

@@ -5,7 +5,7 @@ use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
 
-my $sync_logs_port = "sync_logs_port";
+my $pid_file = "\${workspace_root}/run/SyncLogs.pid";
 
 sub start
 {
@@ -20,6 +20,8 @@ sub start
     "mkdir -p \${data_root}/WebwiseDiscover/common && " .
     "mkdir -p \${data_root}/WebwiseDiscover/templates && " .
     "mkdir -p \${data_root}/Discover/Customizations && " .
+    "mkdir -p \${workspace_root}/run && " .
+    AdServer::Functions::pidfile_start_guard($pid_file, "SyncLogs") . " && " .
     "ulimit -n 4096 && " .
     "{ \${VALGRIND_PREFIX} SyncLogs " .
     "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/SyncLogsConfig.xml" .
@@ -31,21 +33,14 @@ sub start
 sub stop
 {
   my ($host, $descr) = @_;
-
-  return AdServer::Functions::process_control_stop(
-    $host,
-    $sync_logs_port,
-    $descr);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "SyncLogs");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
-
-  return AdServer::Functions::process_control_is_alive(
-    $host,
-    $sync_logs_port,
-    $descr);
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "SyncLogs"));
 }
 
 1;

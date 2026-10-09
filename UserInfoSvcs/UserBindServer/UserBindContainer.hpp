@@ -52,7 +52,8 @@ namespace AdServer::UserInfoSvcs
       int compaction_threads = 32,
       int per_compaction_threads = 4,
       int flush_threads = 32,
-      int max_mem_tables = 6)
+      int max_mem_tables = 6,
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor = nullptr)
       /*throw(Exception)*/;
 
     static void
@@ -105,6 +106,7 @@ namespace AdServer::UserInfoSvcs
     const Logging::Logger_var logger_;
     const unsigned long common_chunks_number_;
     std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor_;
+    const bool owns_processor_;
     UserBindProcessorArray chunks_;
   };
 

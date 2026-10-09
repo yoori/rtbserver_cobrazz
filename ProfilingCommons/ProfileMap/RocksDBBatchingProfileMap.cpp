@@ -138,7 +138,8 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& max_delay,
     bool disable_wal,
     unsigned long enqueue_buckets_count,
-    std::size_t cache_size)
+    std::size_t cache_size,
+    bool extend_ttl_on_read)
     : RocksDBBatchingProfileMapImpl(
         std::make_shared<RocksDBProfileMapProcessor>(
           workers_count,
@@ -148,7 +149,8 @@ namespace AdServer::ProfilingCommons
         expire_time,
         batch_size,
         max_delay,
-        disable_wal)
+        disable_wal,
+        extend_ttl_on_read)
   {
     owns_processor_ = true;
   }
@@ -159,12 +161,14 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long batch_size,
     const Generics::Time& max_delay,
-    bool disable_wal)
+    bool disable_wal,
+    bool extend_ttl_on_read)
     : path_(path.str()),
       expire_time_(expire_time),
       batch_size_(std::max(1UL, batch_size)),
       max_delay_(max_delay),
       disable_wal_(disable_wal),
+      extend_ttl_on_read_(extend_ttl_on_read),
       processor_(std::move(processor)),
       processor_queue_(
         batch_size_,
@@ -288,7 +292,6 @@ namespace AdServer::ProfilingCommons
     {
       processor_->wait_object();
     }
-    check_background_error_();
   }
 
   bool
@@ -639,7 +642,7 @@ namespace AdServer::ProfilingCommons
     prepare_multiget_(batch, scratch);
 
     const Generics::Time now = Generics::Time::get_time_of_day();
-    const Generics::Time touch_period(expire_time_.tv_sec / 4);
+    const Generics::Time touch_period(extend_ttl_on_read_ ? expire_time_.tv_sec / 4 : 0);
     prepare_read_profiles_(scratch, now, touch_period);
 
     if (touch_period > Generics::Time::ZERO)

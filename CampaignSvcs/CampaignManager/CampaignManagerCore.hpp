@@ -281,6 +281,7 @@ namespace AdServer::CampaignSvcs
       std::string referer;
       long viewability = 0;
       std::string action_name;
+      std::string action_value;
       std::string page_keywords;
     };
 

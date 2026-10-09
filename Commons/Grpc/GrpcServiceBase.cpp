@@ -1,5 +1,6 @@
 #include "GrpcServiceBase.hpp"
 
+#include <Commons/Coro/CooperativeGroup.hpp>
 #include <Commons/Coro/Utils.hpp>
 #include <Commons/ExecutorPool.hpp>
 #include <Commons/FastScheduler.hpp>
@@ -21,14 +22,23 @@ namespace AdServer::Grpc
     }
   }
 
+  struct GrpcServiceBase::PreparedBatchChains final
+  {
+    explicit PreparedBatchChains(Generics::MonoAllocatorArena& arena) : operations(&arena)
+    {}
+
+    Generics::MonoVector<AdServer::Commons::StartableAwaitable<void>> operations;
+  };
+
   struct GrpcServiceBase::PublishedBatchState final
   {
     using Scheduler = AdServer::Commons::FastScheduler;
 
-    struct LaneProgress
+    struct ResponseBasket
     {
-      std::atomic<std::size_t> completed{0};
-      std::atomic<std::size_t> published{0};
+      std::mutex lock;
+      BatchItemContext* head = nullptr;
+      BatchItemContext* tail = nullptr;
     };
 
     PublishedBatchState(
@@ -42,6 +52,7 @@ namespace AdServer::Grpc
         response_arena(response_publisher_val.response_arena()),
         item_responses(&batch_arena),
         lanes(&batch_arena),
+        chains(&batch_arena),
         response_time_steps_us(&batch_arena),
         completion(std::move(completion_val))
     {
@@ -57,24 +68,41 @@ namespace AdServer::Grpc
 
     ~PublishedBatchState()
     {
-      if (lane_progress)
+      if (response_baskets)
       {
-        std::destroy_n(lane_progress, lanes.size());
+        std::destroy_n(response_baskets, lanes.size());
       }
     }
 
-    void initialize_lane_progress()
+    void initialize_response_baskets()
     {
       if (lanes.empty())
       {
         return;
       }
 
-      lane_progress = Generics::MonoAllocator<LaneProgress>(batch_arena).allocate(lanes.size());
+      response_baskets =
+        Generics::MonoAllocator<ResponseBasket>(batch_arena).allocate(lanes.size());
       for (std::size_t i = 0; i < lanes.size(); ++i)
       {
-        std::construct_at(lane_progress + i);
+        std::construct_at(response_baskets + i);
       }
+    }
+
+    void enqueue_response(const std::size_t lane_index, BatchItemContext& item) noexcept
+    {
+      auto& basket = response_baskets[lane_index];
+      std::lock_guard guard(basket.lock);
+      item.response_ready = true;
+      if (basket.tail)
+      {
+        basket.tail->ready_next = &item;
+      }
+      else
+      {
+        basket.head = &item;
+      }
+      basket.tail = &item;
     }
 
     void schedule_first_response(std::shared_ptr<PublishedBatchState> self)
@@ -95,6 +123,9 @@ namespace AdServer::Grpc
 
     void publish_ready() noexcept
     {
+      // A final completion must not overtake a timer which has detached ready responses.
+      // Producers only acquire their own basket lock, never this publication lock.
+      std::lock_guard publication_guard(publication_lock);
       const auto publisher = response_publisher.lock();
       if (!publisher)
       {
@@ -105,18 +136,15 @@ namespace AdServer::Grpc
 
       for (std::size_t lane_index = 0; lane_index < lanes.size(); ++lane_index)
       {
-        auto& progress = lane_progress[lane_index];
-        const auto end = progress.completed.load(std::memory_order_acquire);
-        auto begin = progress.published.load(std::memory_order_relaxed);
-        while (begin < end &&
-          !progress.published.compare_exchange_weak(
-            begin,
-            end,
-            std::memory_order_acq_rel,
-            std::memory_order_relaxed))
-        {}
+        auto& basket = response_baskets[lane_index];
+        BatchItemContext* ready;
+        {
+          std::lock_guard guard(basket.lock);
+          ready = std::exchange(basket.head, nullptr);
+          basket.tail = nullptr;
+        }
 
-        if (begin >= end)
+        if (!ready)
         {
           continue;
         }
@@ -127,10 +155,10 @@ namespace AdServer::Grpc
           response->set_batch_id(batch_id);
         }
 
-        auto& lane = lanes[lane_index];
-        for (std::size_t item_index = begin; item_index < end; ++item_index)
+        while (ready)
         {
-          response->mutable_items()->UnsafeArenaAddAllocated(lane[item_index].response_item);
+          response->mutable_items()->UnsafeArenaAddAllocated(ready->response_item);
+          ready = ready->ready_next;
         }
       }
 
@@ -160,15 +188,15 @@ namespace AdServer::Grpc
         }
 
         auto& lane = lanes[lane_index];
-        auto& progress = lane_progress[lane_index];
-        const auto completed_items = progress.completed.load(std::memory_order_acquire);
-        for (std::size_t item_index = completed_items; item_index < lane.size(); ++item_index)
+        for (auto& item : lane)
         {
-          auto* response_item = lane[item_index].response_item;
-          response_item->set_status_code(::grpc::StatusCode::INTERNAL);
-          response_item->set_status_message(status_message);
+          if (!item.response_ready)
+          {
+            item.response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+            item.response_item->set_status_message(status_message);
+            enqueue_response(lane_index, item);
+          }
         }
-        progress.completed.store(lane.size(), std::memory_order_release);
       }
 
       if (finished_lanes.fetch_add(1, std::memory_order_acq_rel) + 1 != lane_operations_count)
@@ -215,7 +243,9 @@ namespace AdServer::Grpc
     google::protobuf::Arena request_arena;
     Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses;
     Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes;
-    LaneProgress* lane_progress = nullptr;
+    Generics::MonoVector<PreparedBatchChains> chains;
+    ResponseBasket* response_baskets = nullptr;
+    std::mutex publication_lock;
     Generics::MonoVector<std::uint32_t> response_time_steps_us;
     const Generics::Time started_at = Generics::Time::get_time_of_day();
     Scheduler::Task timer_task;
@@ -786,6 +816,7 @@ namespace AdServer::Grpc
           item_responses(&batch_arena),
           heap_item_responses(&batch_arena),
           lanes(&batch_arena),
+          chains(&batch_arena),
           operations(&batch_arena),
           completion(std::move(completion_val))
       {}
@@ -803,6 +834,7 @@ namespace AdServer::Grpc
       Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses;
       Generics::MonoVector<std::unique_ptr<adserver::grpc::BatchResponseItem>> heap_item_responses;
       Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes;
+      Generics::MonoVector<PreparedBatchChains> chains;
       Generics::MonoVector<AdServer::Commons::StartableAwaitable<void>> operations;
       std::mutex lock;
       std::optional<std::exception_ptr> exception;
@@ -899,6 +931,9 @@ namespace AdServer::Grpc
       }
     }
 
+    prepare_batch_chains_(
+      state->chains, state->lanes, state->batch_arena, state->response_arena());
+
     state->operations.reserve(split);
     for (std::size_t i = 1; i < state->lanes.size(); ++i)
     {
@@ -910,6 +945,7 @@ namespace AdServer::Grpc
 
       state->operations.emplace_back(co_handle_batch_lane_(
         std::move(lane),
+        state->chains.empty() ? nullptr : &state->chains[i],
         executor_pool,
         true,
         state->response_arena()));
@@ -919,6 +955,7 @@ namespace AdServer::Grpc
     {
       state->operations.emplace_back(co_handle_batch_lane_(
         std::move(state->lanes[0]),
+        state->chains.empty() ? nullptr : &state->chains[0],
         executor_pool,
         false,
         state->response_arena()));
@@ -1085,7 +1122,9 @@ namespace AdServer::Grpc
       state->lanes[lane_index].emplace_back(std::move(batch_item));
     }
 
-    state->initialize_lane_progress();
+    prepare_batch_chains_(
+      state->chains, state->lanes, state->batch_arena, state->response_arena, state.get());
+    state->initialize_response_baskets();
     for (std::size_t lane_index = 0; lane_index < state->lanes.size(); ++lane_index)
     {
       if (state->lanes[lane_index].empty())
@@ -1140,16 +1179,31 @@ namespace AdServer::Grpc
     {
       if (reschedule)
       {
-        co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::reschedule(executor_pool);
       }
       else
       {
-        co_await AdServer::Commons::ExecutorPool::yield(std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::yield(executor_pool);
       }
     }
 
     auto& lane = state->lanes[lane_index];
-    auto& progress = state->lane_progress[lane_index];
+    if (!state->chains.empty() && !state->chains[lane_index].operations.empty())
+    {
+      auto& operations = state->chains[lane_index].operations;
+      if (operations.size() == 1)
+      {
+        co_await operations.front();
+      }
+      else
+      {
+        co_await AdServer::Commons::CooperativeGroup(
+          {operations.data(), operations.size()}, std::move(executor_pool));
+      }
+      operations.clear();
+      co_return;
+    }
+
     for (std::size_t item_index = 0; item_index < lane.size(); ++item_index)
     {
       auto& batch_item = lane[item_index];
@@ -1167,7 +1221,7 @@ namespace AdServer::Grpc
         }
       }
 
-      progress.completed.store(item_index + 1, std::memory_order_release);
+      state->enqueue_response(lane_index, batch_item);
     }
 
     co_return;
@@ -1176,6 +1230,7 @@ namespace AdServer::Grpc
   AdServer::Commons::StartableAwaitable<void>
   GrpcServiceBase::co_handle_batch_lane_(
     Generics::MonoVector<BatchItemContext> batch_items,
+    PreparedBatchChains* chains,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     bool reschedule,
     google::protobuf::Arena& response_arena) const
@@ -1184,12 +1239,28 @@ namespace AdServer::Grpc
     {
       if (reschedule)
       {
-        co_await AdServer::Commons::ExecutorPool::reschedule(std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::reschedule(executor_pool);
       }
       else
       {
-        co_await AdServer::Commons::ExecutorPool::yield(std::move(executor_pool));
+        co_await AdServer::Commons::ExecutorPool::yield(executor_pool);
       }
+    }
+
+    if (chains && !chains->operations.empty())
+    {
+      auto& operations = chains->operations;
+      if (operations.size() == 1)
+      {
+        co_await operations.front();
+      }
+      else
+      {
+        co_await AdServer::Commons::CooperativeGroup(
+          {operations.data(), operations.size()}, std::move(executor_pool));
+      }
+      operations.clear();
+      co_return;
     }
 
     for (auto& batch_item : batch_items)
@@ -1207,6 +1278,136 @@ namespace AdServer::Grpc
     }
 
     co_return;
+  }
+
+  void GrpcServiceBase::prepare_batch_chains_(
+    Generics::MonoVector<PreparedBatchChains>& chains,
+    Generics::MonoVector<Generics::MonoVector<BatchItemContext>>& lanes,
+    Generics::MonoAllocatorArena& batch_arena,
+    google::protobuf::Arena& response_arena,
+    PublishedBatchState* published_state) const
+  {
+    const auto method = [](const BatchItemContext* item) -> const BatchCoroMethod*
+    {
+      const auto* method = item->coro_item.method;
+      return method && method->strategy == BatchExecutionStrategy::CooperativeByKey ?
+        method : nullptr;
+    };
+
+    // Finish all arena allocations before starting any lane; batch_arena is not thread-safe.
+    Generics::MonoVector<BatchItemContext*> ordered(&batch_arena);
+    for (std::size_t lane_index = 0; lane_index < lanes.size(); ++lane_index)
+    {
+      auto& items = lanes[lane_index];
+      if (items.size() <= 1 || !std::any_of(items.begin(), items.end(), [&](const auto& item)
+      {
+        return method(&item) != nullptr;
+      }))
+      {
+        continue;
+      }
+
+      if (chains.empty())
+      {
+        chains.reserve(lanes.size());
+        for (std::size_t i = 0; i < lanes.size(); ++i)
+        {
+          chains.emplace_back(batch_arena);
+        }
+      }
+
+      ordered.clear();
+      ordered.reserve(items.size());
+      for (auto& item : items)
+      {
+        ordered.push_back(&item);
+      }
+
+      std::sort(ordered.begin(), ordered.end(), [&](const auto* left, const auto* right)
+      {
+        const auto* left_method = method(left);
+        const auto* right_method = method(right);
+        if (left_method != right_method)
+        {
+          return std::less<const BatchCoroMethod*>()(left_method, right_method);
+        }
+
+        if (left_method)
+        {
+          if (left->coro_item.hash != right->coro_item.hash)
+          {
+            return left->coro_item.hash < right->coro_item.hash;
+          }
+
+          const auto comparison = left->coro_item.key.compare(right->coro_item.key);
+          if (comparison != 0)
+          {
+            return comparison < 0;
+          }
+        }
+
+        return left < right;
+      });
+
+      auto& operations = chains[lane_index].operations;
+      operations.reserve(items.size());
+      for (std::size_t begin = 0; begin < ordered.size();)
+      {
+        std::size_t end = begin + 1;
+        const auto* chain_method = method(ordered[begin]);
+        while (end < ordered.size() && method(ordered[end]) == chain_method &&
+          (!chain_method || (ordered[end]->coro_item.hash == ordered[begin]->coro_item.hash &&
+            ordered[end]->coro_item.key == ordered[begin]->coro_item.key)))
+        {
+          ordered[end - 1]->chain_next = ordered[end];
+          ++end;
+        }
+        operations.emplace_back(
+          co_handle_batch_chain_(ordered[begin], response_arena, published_state, lane_index));
+        begin = end;
+      }
+    }
+  }
+
+  AdServer::Commons::StartableAwaitable<void> GrpcServiceBase::co_handle_batch_chain_(
+    BatchItemContext* item,
+    google::protobuf::Arena& response_arena,
+    PublishedBatchState* published_state,
+    const std::size_t lane_index) const
+  {
+    for (; item; item = item->chain_next)
+    {
+      if (item->request_item)
+      {
+        if (item->coro_item.method)
+        {
+          try
+          {
+            co_await item->coro_item.method->dispatch(
+              item->coro_item.request, *item->response_item, response_arena);
+          }
+          catch (const std::exception& ex)
+          {
+            item->response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+            item->response_item->set_status_message(ex.what());
+          }
+          catch (...)
+          {
+            item->response_item->set_status_code(::grpc::StatusCode::INTERNAL);
+            item->response_item->set_status_message("Unknown batch handler exception");
+          }
+        }
+        else
+        {
+          co_await co_handle_batch_item_(*item->request_item, *item->response_item, response_arena);
+        }
+      }
+
+      if (published_state)
+      {
+        published_state->enqueue_response(lane_index, *item);
+      }
+    }
   }
 
   AdServer::Commons::StartableAwaitable<void>

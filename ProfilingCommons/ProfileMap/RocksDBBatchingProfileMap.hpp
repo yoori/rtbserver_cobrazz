@@ -76,7 +76,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false,
       unsigned long enqueue_buckets_count = 32,
-      std::size_t cache_size = 0);
+      std::size_t cache_size = 0,
+      bool extend_ttl_on_read = true);
 
     RocksDBBatchingProfileMapImpl(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -84,7 +85,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
-      bool disable_wal = false);
+      bool disable_wal = false,
+      bool extend_ttl_on_read = true);
 
     ~RocksDBBatchingProfileMapImpl() noexcept override;
 
@@ -261,6 +263,7 @@ namespace AdServer::ProfilingCommons
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
     const bool disable_wal_;
+    const bool extend_ttl_on_read_;
 
     const std::shared_ptr<RocksDBProfileMapProcessor> processor_;
     mutable AdServer::Commons::ActivityGate submission_gate_;
@@ -310,7 +313,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& max_delay = Generics::Time::ZERO,
       bool disable_wal = false,
       unsigned long enqueue_buckets_count = 32,
-      std::size_t cache_size = 0);
+      std::size_t cache_size = 0,
+      bool extend_ttl_on_read = true);
 
     RocksDBBatchingProfileMap(
       std::shared_ptr<RocksDBProfileMapProcessor> processor,
@@ -318,7 +322,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long batch_size = 128,
       const Generics::Time& max_delay = Generics::Time::ZERO,
-      bool disable_wal = false);
+      bool disable_wal = false,
+      bool extend_ttl_on_read = true);
 
     bool
     check_profile(const KeyType& key) const override;
@@ -421,7 +426,8 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& max_delay,
     bool disable_wal,
     unsigned long enqueue_buckets_count,
-    std::size_t cache_size)
+    std::size_t cache_size,
+    bool extend_ttl_on_read)
     : impl_(new RocksDBBatchingProfileMapImpl(
         path,
         expire_time,
@@ -430,7 +436,8 @@ namespace AdServer::ProfilingCommons
         max_delay,
         disable_wal,
         enqueue_buckets_count,
-        cache_size))
+        cache_size,
+        extend_ttl_on_read))
   {}
 
   template<typename KeyType, typename KeyAdapterType>
@@ -440,14 +447,16 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long batch_size,
     const Generics::Time& max_delay,
-    bool disable_wal)
+    bool disable_wal,
+    bool extend_ttl_on_read)
     : impl_(new RocksDBBatchingProfileMapImpl(
         std::move(processor),
         path,
         expire_time,
         batch_size,
         max_delay,
-        disable_wal))
+        disable_wal,
+        extend_ttl_on_read))
   {}
 
   template<typename KeyType, typename KeyAdapterType>

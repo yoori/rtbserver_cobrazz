@@ -156,7 +156,6 @@
     </xsd:annotation>
     <xsd:attribute name="prefix" type="xsd:string" use="required"/>
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
-    <xsd:attribute name="portions" type="xsd:positiveInteger" use="required"/>
 
     <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
     <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>

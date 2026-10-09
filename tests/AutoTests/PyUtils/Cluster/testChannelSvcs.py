@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import time
+import base64
 from CORBATest import *
 from FunTest import tlog
 from Util import currentTime, time2str
@@ -11,7 +12,6 @@ from MockCampaignServer import CampaignServerTestMixin, SimpleChannelKey, \
 from MockChannelProxy import ChannelProxyTestMixin, TriggerVersion, ChannelById, TriggerInfo
 from SingleThread import SingleThread
 import AdServer.ChannelSvcs, ChannelServerUtils
-from AdServer.ChannelSvcs import ChannelServerBase
 
 
 class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
@@ -25,9 +25,9 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
     CampaignServerTestMixin.setUp( self )
     ChannelProxyTestMixin.setUp( self )
     self.__prepareConfig()
-    self.setUpServers(ChannelServer,
-                      ChannelController)
+    self.setUpServers(ChannelServer)
     self.startProc()
+    self.ChannelServer.configure_proxy()
 
   def tearDown( self ):
     self.tearDownServers()
@@ -83,10 +83,11 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
                             search_channels=[],
                             url_channels=[],
                             content_channels=[]):
-    gotPageChannels = [c.id for c in matchResult.matched_channels.page_channels]
-    gotSearchChannels = [c.id for c in matchResult.matched_channels.search_channels]
-    gotUrlChannels = [c.id for c in matchResult.matched_channels.url_channels]
-    gotContentChannels = [c.id for c in matchResult.content_channels]
+    matched = matchResult.get('matched_channels', {})
+    gotPageChannels = [int(c['id']) for c in matched.get('page_channels', [])]
+    gotSearchChannels = [int(c['id']) for c in matched.get('search_channels', [])]
+    gotUrlChannels = [int(c['id']) for c in matched.get('url_channels', [])]
+    gotContentChannels = [int(c['id']) for c in matchResult.get('content_channels', [])]
     tlog(10, "Got page channels: %s" % gotPageChannels)
     tlog(10, "Got search channels: %s" % gotSearchChannels)
     tlog(10, "Got url channels: %s" % gotUrlChannels)
@@ -109,30 +110,14 @@ class ChannelSvcs(CORBAFunTest, CampaignServerTestMixin, ChannelProxyTestMixin):
                                        'ChannelProxy_update_triggers'])
   def testMatch( self ):
     "match"
-    obj = self.ChannelServer.getObject("ChannelServer", AdServer.ChannelSvcs.ChannelServer)
-    query = ChannelServerBase.MatchQuery(
-      "req_id", # request_id
-      "",       # first_url
-      "",       # first_url_words
-      "",       # urls
-      "",       # urls_words
-      "word",   # pwords
-      "",       # swords
-      "",       # uid
-      "AD",     # statuses
-      False,    # non_strict_word_match
-      False,    # non_strict_url_match
-      False,    # non_strict_word_match
-      False,    # simplify_page
-      True      # fill_content
-      )
+    query = {'request_id': 'req_id', 'pwords': base64.b64encode('word'),
+             'statuses': base64.b64encode('AD'), 'fill_content': True}
     time.sleep(2)
-    self.__checkMatchingResult(obj.match(query),
+    self.__checkMatchingResult(self.ChannelServer.grpc('match', query),
                                page_channels=[10, 12],
                                content_channels=[10, 12])
 
 if __name__ == '__main__':
  main()
-
 
 

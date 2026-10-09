@@ -327,7 +327,24 @@ namespace
         throw std::runtime_error("executor didn't run all scheduled coroutine resumes");
       }
 
-      // A failed RocksDB stays in background-error state until its retry period expires.
+      // Stop while the write error is still stored, before the recovery retry period expires.
+      profile_map->deactivate_object();
+      profile_map->wait_object();
+      executor_pool->deactivate_object();
+      executor_pool->wait_object();
+      processor->deactivate_object();
+      processor->wait_object();
+
+      const auto stopped_stats = processor->stats();
+      if (stopped_stats.queue_count != 0 || stopped_stats.pending_operations != 0 ||
+        stopped_stats.active_workers != 0 ||
+        stopped_stats.failed_callback_completed != operation_count)
+      {
+        throw std::runtime_error("write failure shutdown didn't drain and unregister the map");
+      }
+
+      transaction_map.reset();
+      profile_map.reset();
       ::_exit(0);
     }
     catch (const std::exception& ex)

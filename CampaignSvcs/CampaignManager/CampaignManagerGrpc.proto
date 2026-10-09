@@ -569,6 +569,7 @@ message ImpressionInfo {
   int64 viewability = 11;
   bytes action_name = 12;
   bytes page_keywords = 13;
+  bytes action_value = 14;
 }
 
 message ImpressionResultInfo {

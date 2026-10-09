@@ -2,7 +2,6 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/DirSelector.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
 #include <Logger/SimpleLogger.hpp>
 #include <Logger/FileLogger.hpp>

@@ -135,17 +135,6 @@
     <xsl:variable name="sync-logs-config" select="$log-processing-config/cfg:syncLogs"/>
     <xsl:variable name="sync-logs-server-config" select="$log-processing-config/cfg:syncLogsServer"/>
 
-    <xsl:variable name="sync-logs-port">
-      <xsl:value-of select="$sync-logs-config/cfg:networkParams/@port"/>
-      <xsl:if test="count($sync-logs-config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$def-sync-logs-port"/>
-      </xsl:if>
-    </xsl:variable>
-
-    <exsl:document href="syncLogs.port"
-      method="text" omit-xml-declaration="yes"
-      >  ['syncLogs', <xsl:copy-of select="$sync-logs-port"/>],</exsl:document>
-
     <xsl:variable name="check-logs-period"><xsl:value-of select="$sync-logs-config/cfg:fileTransferring/@file_check_period"/>
       <xsl:if test="count($sync-logs-config/cfg:fileTransferring/@file_check_period) = 0">
         <xsl:value-of select="$def-check-logs-period"/>
@@ -201,6 +190,7 @@
         string-length($env-config/@ram_fs) &gt; 0"/>
 
   <cfg:SyncLogsConfig
+    pid_file="{concat($workspace-root, '/run/SyncLogs.pid')}"
     log_root="{$log-root-dir}"
     check_logs_period="{$check-logs-period}"
     host_check_period="{$host-check-period}"
@@ -295,18 +285,6 @@
         <xsl:message terminate="yes">SyncLogs: dataSourceRef undefined.</xsl:message>
       </xsl:when>
     </xsl:choose>
-
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$sync-logs-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($sync-logs-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-sync-logs-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*" port="{$sync-logs-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$sync-logs-config/cfg:logging"/>

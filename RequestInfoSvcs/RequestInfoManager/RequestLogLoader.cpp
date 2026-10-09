@@ -933,7 +933,7 @@ namespace AdServer::RequestInfoSvcs
       {
         request_processor_->process_impression_post_action(
           req.request_id(),
-          PostActionInfo(req.time().time(), req.action_name()));
+          PostActionInfo(req.time().time(), req.action_name(), req.action_value()));
         return;
       }
 
@@ -967,7 +967,7 @@ namespace AdServer::RequestInfoSvcs
       {
         co_await request_processor_->co_process_impression_post_action(
           req.request_id(),
-          PostActionInfo(req.time().time(), req.action_name()));
+          PostActionInfo(req.time().time(), req.action_name(), req.action_value()));
         co_return;
       }
 

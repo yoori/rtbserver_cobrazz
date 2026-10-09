@@ -20,6 +20,25 @@ namespace AdServer::CampaignSvcs
     const char CAMPAIGN_RATE_OPTS_FILE[] = "CampaignRateOpts";
 
     const ImpRevenueDecimal UNLIMITED_IMPS(false, 1000000, 0);
+
+    void close_dump_file(std::ofstream& file, const String::SubString& file_path)
+    {
+      file.flush();
+      if (!file)
+      {
+        Stream::Error ostr;
+        ostr << "failed to flush file '" << file_path << "'";
+        throw BillingContainer::Exception(ostr);
+      }
+
+      file.close();
+      if (!file)
+      {
+        Stream::Error ostr;
+        ostr << "failed to close file '" << file_path << "'";
+        throw BillingContainer::Exception(ostr);
+      }
+    }
   };
 
   // BillingContainer::InternalConfig
@@ -2753,7 +2772,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    file.close();
+    close_dump_file(file, file_path);
   }
 
   template<typename AmountMapType>
@@ -2853,7 +2872,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    file.close();
+    close_dump_file(file, file_path);
   }
 
   template<typename RateMapType>
@@ -2944,7 +2963,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    file.close();
+    close_dump_file(file, file_path);
   }
 
   template<typename RateOptMapType>
@@ -3032,7 +3051,7 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    file.close();
+    close_dump_file(file, file_path);
   }
 
   template<typename AmountMapType>

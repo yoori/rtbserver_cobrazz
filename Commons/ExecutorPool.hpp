@@ -43,8 +43,9 @@ namespace AdServer::Commons
       std::string thread_name = "asio-pool",
       unsigned long threads_per_context = 4);
 
-    void
-    post(std::function<void()> task);
+    void post(std::function<void()> task, std::optional<ContextIndex> context_index = std::nullopt);
+
+    std::optional<ContextIndex> current_context_index() const noexcept;
 
     void
     dispatch(std::function<void()> task, std::optional<ContextIndex> context_index = std::nullopt);

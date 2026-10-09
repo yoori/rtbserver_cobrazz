@@ -332,18 +332,6 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE|=$?"
 
-$EXEC/CurrentEnvGen.sh \
-  --service-name "sync_logs" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "/serviceGroup[@descriptor = '$LOG_PROCESSING_DESCR']/configuration/cfg:logProcessing/cfg:syncLogs" \
-  --services-xpath "$CLUSTER_XPATH" \
-  --out-dir $OUT_DIR \
-  --service-hosts "$SYNC_SERVICE_HOSTS" \
-  --out-file CurrentEnv/be.sh
-
-let "EXIT_CODE|=$?"
-
 ## configure StatReceiver
 STAT_RECEIVER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$STAT_RECEIVER_DESCR']"
 

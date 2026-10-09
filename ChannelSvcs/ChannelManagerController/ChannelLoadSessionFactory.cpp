@@ -18,7 +18,6 @@
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 
 #include "ChannelLoadSessionFactory.hpp"
-#include "ChannelSessionFactory.hpp"
 #include "ThreadHandlerTemplate.hpp"
 
 const char* ChannelLoadSessionFactoryImpl::ASPECT = "ChannelLoadSessionFactoryImpl";
@@ -84,4 +83,3 @@ void ChannelLoadSessionFactoryImpl::report_error(
     callback_->report_error(severity, ostr.str(), error_code);
   }
 }
-

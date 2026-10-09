@@ -55,7 +55,6 @@ namespace AdServer::UserInfoSvcs
       std::string prefix;
       unsigned long common_chunks_number = 0;
       Generics::Time expire_time;
-      unsigned long portions = 0;
     };
 
     struct OperationBackupConfig
@@ -146,9 +145,6 @@ namespace AdServer::UserInfoSvcs
     using UserBindProcessorHolder = AdServer::Commons::AccessActiveObject<UserBindProcessor_var>;
     using UserBindProcessorHolder_var = ReferenceCounting::SmartPtr<UserBindProcessorHolder>;
 
-    using UserBindContainerHolder = AdServer::Commons::AccessActiveObject<UserBindContainer_var>;
-    using UserBindContainerHolder_var = ReferenceCounting::SmartPtr<UserBindContainerHolder>;
-
     using BindRequestProcessorHolder =
       AdServer::Commons::AccessActiveObject<BindRequestProcessor_var>;
     using BindRequestProcessorHolder_var = ReferenceCounting::SmartPtr<BindRequestProcessorHolder>;
@@ -162,6 +158,11 @@ namespace AdServer::UserInfoSvcs
     co_get_bind_request(const std::string& id, const Generics::Time& timestamp);
 
     BindRequestInfo get_bind_request(const std::string& id, const Generics::Time& timestamp);
+
+    Commons::StartableAwaitable<void> co_add_bind_request(
+      const std::string& id,
+      const BindRequestInfo& bind_request,
+      const Generics::Time& timestamp);
 
     void add_bind_request(
       const std::string& id,
@@ -234,21 +235,6 @@ namespace AdServer::UserInfoSvcs
       bool reschedule_;
     };
 
-    class ClearBindRequestExpiredTask: public Generics::TaskGoal
-    {
-    public:
-      ClearBindRequestExpiredTask(
-        Generics::TaskRunner* task_runner,
-        UserBindServerCore* core,
-        bool reschedule) noexcept;
-
-      void execute() noexcept override;
-
-    private:
-      UserBindServerCore* core_;
-      bool reschedule_;
-    };
-
     class DumpUserBindTask: public Generics::TaskGoal
     {
     public:
@@ -260,19 +246,21 @@ namespace AdServer::UserInfoSvcs
       UserBindServerCore* core_;
     };
 
+    void activate_object_() override;
+    void wait_object_() override;
+
     void load_user_bind_() noexcept;
     void load_bind_request_() noexcept;
     void clear_user_bind_expired_(bool reschedule) noexcept;
-    void clear_bind_request_expired_(bool reschedule) noexcept;
     void dump_user_bind_() noexcept;
 
   private:
     const Logging::Logger_var logger_;
     const Config config_;
+    const std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> rocksdb_processor_;
     Generics::FixedPlanner_var scheduler_;
     Generics::FixedTaskRunner_var task_runner_;
     const UserBindProcessorHolder_var user_bind_container_;
-    const UserBindContainerHolder_var rocksdb_stats_container_;
     const BindRequestProcessorHolder_var bind_request_container_;
 
     UserBindContainer::ChunkPathMap chunks_;

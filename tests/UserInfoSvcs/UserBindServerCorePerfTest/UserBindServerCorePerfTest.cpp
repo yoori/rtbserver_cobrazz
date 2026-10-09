@@ -165,7 +165,6 @@ namespace
     config.bind_request_storage.prefix = "BindRequest";
     config.bind_request_storage.common_chunks_number = chunk_count;
     config.bind_request_storage.expire_time = Generics::Time(259200);
-    config.bind_request_storage.portions = 1024;
 
     config.bind_min_age = bind_min_age;
     config.max_bad_event = 10000;

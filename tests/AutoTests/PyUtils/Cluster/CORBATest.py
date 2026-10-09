@@ -1,8 +1,7 @@
 
-import sys, time, httplib, urllib, string, os.path, os, shutil, glob
+import sys, time, httplib, urllib, string, os.path, os, shutil, glob, json, subprocess
 
-import FunTest, OrbTestSuite, MockCampaignServer, MockChannelProxy, \
-       MockChannelController
+import FunTest, OrbTestSuite, MockCampaignServer, MockChannelProxy
 
 from TestComparison import ComparisonMixin
 from Logger import log, logException
@@ -45,13 +44,13 @@ class CORBAProcess(FunTest.Process):
     self.USERINFOMGR_PORT  = self.PORT_BASE + 1
     self.USERINFOCTRL_PORT = self.PORT_BASE + 2
     self.CHANNELSRV_PORT   = self.PORT_BASE + 3
+    self.CHANNELSRV_GRPC_PORT = self.PORT_BASE + 503
     self.CHANNELCTRL_PORT  = self.PORT_BASE + 4
     self.CHANNELPROXY_PORT = self.PORT_BASE + 5
     self.CAMPAIGNSRV_PORT  = self.PORT_BASE + 6
     self.CAMPAIGNMGR_PORT  = self.PORT_BASE + 7
     self.CHANNELSEARCHSVC_PORT  = self.PORT_BASE + 9
     self.LOGGENERALIZER_PORT  = self.PORT_BASE + 11
-    self.SYNCLOGS_PORT = self.PORT_BASE + 12
     self.EXPRESSIONMATCHER_PORT = self.PORT_BASE + 13
     self.REQUESTINFOMGR_PORT = self.PORT_BASE + 20
     self.AD_IMAGESRV_PORT = self.PORT_BASE + 80
@@ -86,7 +85,6 @@ class CORBAProcess(FunTest.Process):
     self.CAMPAIGN_SERVER_ID = 1
     self.CAMPAIGNSERVER_OBJECT_KEY = MockCampaignServer.ObjectKey
     self.CHANNELPROXY_OBJECT_KEY = MockChannelProxy.ObjectKey
-    self.CHANNELCRTL_OBJECT_KEY = MockChannelController.ObjectKey
     self.CHANNELPROXY_USED = False
 
   def createDirs( self, root, dirs):
@@ -473,11 +471,50 @@ class UserInfoManagerController(CORBAProcess):
       print >> f, exc
     f.close()
 
-class ChannelServer(CORBAProcess):
+class SignalProcess(CORBAProcess):
+
+  def start(self):
+    os.environ['workspace_root'] = self.tmpDir
+    FunTest.Process.start(self)
+    self.started = True
+    time.sleep(1)
+    return self.is_alive()
+
+  def stop(self):
+    if self.started:
+      FunTest.Process.stop(self)
+
+  def is_alive(self):
+    return self.started and self.proc.poll() is None
+
+
+class ChannelServer(SignalProcess):
 
   def __init__(  self, info, testName, opts=[] ):
     CORBAProcess.__init__(self, info, testName, opts,
                           outdirs = ['ColoUpdateStat', 'ColoUpdateStat_'])
+
+  def grpc(self, method, request):
+    client = os.path.join(self.info.workDir, self.srcDir, 'ChannelServerGrpcTestClient')
+    proc = subprocess.Popen(
+      [client, '%s:%d' % (self.HOST, self.CHANNELSRV_GRPC_PORT), method],
+      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = proc.communicate(json.dumps(request))
+    if proc.returncode:
+      raise RuntimeError('ChannelServer gRPC %s: %s' % (method, error))
+    return json.loads(output)
+
+  def configure_proxy(self):
+    return self.grpc('set_proxy_sources', {
+      'proxy_refs': ['corbaloc:iiop:%s:%d/%s' % (
+        self.HOST, self.CHANNELPROXY_PORT, self.CHANNELPROXY_OBJECT_KEY)],
+      'campaign_refs': ['corbaloc:iiop:%s:%d/%s' % (
+        self.HOST, self.CAMPAIGNSRV_PORT, self.CAMPAIGNSERVER_OBJECT_KEY)],
+      'count_chunks': self.CONFIG_COUNT_CHUNKS,
+      'colo': self.COLO_ID,
+      'check_sum': 43,
+      'version': self.VERSION,
+      'sources': range(self.CONFIG_COUNT_CHUNKS)})
 
   def writeCfgFile( self ):
     self.port = self.CHANNELSRV_PORT
@@ -489,17 +526,16 @@ class ChannelServer(CORBAProcess):
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xmlns:colo="http://www.foros.com/cms/colocation"
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/ChannelSvcs/ChannelServerConfig.xsd">
- <cfg:ChannelServerConfig country="ru" count_chunks="32" merge_size="1"
+ <cfg:ChannelServerConfig pid_file="%(LOGROOT)s/ChannelServer.pid" count_chunks="32" merge_size="1"
    update_period="%(CONFIG_UPDATE_PERIOD)i" log_root="%(LOGROOT)s/Out" service_index="1">
   <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
    <cfg:Endpoint host="*" port="%(CHANNELSRV_PORT)s">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="ChannelServerControl" name="ChannelServerControl"/>
-    <cfg:Object servant="ChannelServer" name="ChannelServer"/>
     <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>
-    <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
    </cfg:Endpoint>
   </cfg:CorbaConfig>
+  <cfg:GrpcConfig>
+   <cfg:Endpoint host="*" port="%(CHANNELSRV_GRPC_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:MatchOptions nonstrict="false">
    <cfg:AllowPort>80</cfg:AllowPort>
   </cfg:MatchOptions>
@@ -517,7 +553,7 @@ class ChannelServer(CORBAProcess):
       print >> f, exc
     f.close()
 
-class ChannelController(CORBAProcess):
+class ChannelController(SignalProcess):
 
   def __init__(  self, info, testName, opts=[] ):
     CORBAProcess.__init__(self, info, testName, opts)
@@ -531,35 +567,28 @@ class ChannelController(CORBAProcess):
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
  xmlns:colo="http://www.foros.com/cms/colocation"
- xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/ChannelSvcs/ChannelManagerControllerConfig.xsd">
- <cfg:ChannelControllerConfig count_chunks="%(CONFIG_COUNT_CHUNKS)i" source_id="1">
+ xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration
+ %(XSDDIR)s/ChannelSvcs/ChannelControllerConfig.xsd">
+ <cfg:ChannelControllerConfig count_chunks="%(CONFIG_COUNT_CHUNKS)i"
+   pid_file="%(LOGROOT)s/ChannelController.pid">
   <cfg:Primary control="true"/>
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(CHANNELCTRL_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="ChannelManagerController" name="ChannelManagerController"/>
-    <cfg:Object servant="ChannelClusterControl" name="ChannelClusterControl"/>
-    <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+  <cfg:GrpcConfig>
+   <cfg:Endpoint host="*" port="%(CHANNELCTRL_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:ColoSettings colo="%(COLO_ID)i" version="%(VERSION)s"/>""" % self.__dict__
-      if self.CHANNELPROXY_USED:
-        self.__writeChannelProxySource(f)
-      else:
-        self.__writeChannelDBSource(f)
-      print >> f, """<cfg:ControlGroup>
-   <cfg:ChannelHost>
-     <cfg:ChannelServerControlRef name="ChannelServerControl" ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ChannelServerControl"/>
-     <cfg:ChannelServerProcRef name="ChannelServerProc" ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ProcessControl"/>
-     <cfg:ChannelServerRef name="ChannelServer" ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ChannelServer"/>
-     <cfg:ChannelUpdateRef name="ChannelUpdate" ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ChannelUpdate"/>
-     <cfg:ChannelStatRef name="ProcessStatsControl" ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ProcessStatsControl"/>
-   </cfg:ChannelHost>
-  </cfg:ControlGroup>
+      self.__writeChannelDBSource(f)
+      print >> f, """
   <cfg:Logger filename="%(LOGROOT)s/ChannelController.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
   </cfg:Logger>
+  <cfg:ChannelServerGroup>
+   <cfg:ChannelServerHost>
+    <cfg:ChannelServerGrpcRef host="%(HOST)s" port="%(CHANNELSRV_GRPC_PORT)i"/>
+    <cfg:ChannelUpdateRef name="ChannelUpdate"
+      ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ChannelUpdate"/>
+   </cfg:ChannelServerHost>
+  </cfg:ChannelServerGroup>
  </cfg:ChannelControllerConfig>
 </cfg:AdConfiguration>""" % self.__dict__
     except Exception, exc:
@@ -575,19 +604,6 @@ class ChannelController(CORBAProcess):
        <cfg:PGConnection connection_string="host=%(PQ_HOST)s port=%(PQ_PORT)s dbname=%(PQ_DB)s user=%(PQ_USER)s password=%(PQ_DBPWD)s"/>
       </cfg:RegularSource>
     </cfg:ChannelSource>""" % self.__dict__
-
-  def __writeChannelProxySource( self, f ):
-    print >> f, """<cfg:ChannelSource>
-     <cfg:ProxySource>
-        <cfg:CampaignServerCorbaRef name="CampaignServer">
-          <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
-        </cfg:CampaignServerCorbaRef>
-        <cfg:ProxyRefs name="ChannelProxy">
-          <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CHANNELPROXY_PORT)i/%(CHANNELPROXY_OBJECT_KEY)s"/>
-        </cfg:ProxyRefs>
-      </cfg:ProxySource>
-    </cfg:ChannelSource>""" % self.__dict__
-
 
 class ChannelSearchService(CORBAProcess):
 
@@ -615,9 +631,9 @@ class ChannelSearchService(CORBAProcess):
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
   </cfg:Logger>
-  <cfg:ChannelManagerControllerRefs name="ChannelManagerControllers">
-    <cfg:Ref ref="corbaloc:iiop::%(HOST)s:%(CHANNELCTRL_PORT)i/%(CHANNELCRTL_OBJECT_KEY)s"/>
-  </cfg:ChannelManagerControllerRefs>
+  <cfg:ChannelControllerGroup>
+    <cfg:Endpoint>%(HOST)s:%(CHANNELCTRL_PORT)i</cfg:Endpoint>
+  </cfg:ChannelControllerGroup>
   <cfg:CampaignServerCorbaRef name="CampaignServer">
     <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
   </cfg:CampaignServerCorbaRef>
@@ -937,8 +953,21 @@ class SyncLogs(CORBAProcess):
   def __init__(  self, info, testName, opts=[] ):
     CORBAProcess.__init__(self, info, testName, opts)
 
+  def start( self ):
+    os.environ['workspace_root'] = self.tmpDir
+    FunTest.Process.start(self)
+    self.started = True
+    time.sleep(1)
+    return self.proc.poll() == None
+
+  def stop( self ):
+    if self.started:
+      FunTest.Process.stop(self)
+
+  def is_alive( self ):
+    return self.started and self.proc.poll() == None
+
   def writeCfgFile( self ):
-    self.port = self.SYNCLOGS_PORT
     f = file(self.cfgFilePath, 'w')
     try:
       print >> f, """<?xml version="1.0" encoding="utf-8"?>
@@ -947,12 +976,8 @@ class SyncLogs(CORBAProcess):
  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
  xmlns:colo="http://www.foros.com/cms/colocation"
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/LogProcessing/SyncLogsConfig.xsd">
- <cfg:SyncLogsConfig log_root="%(LOGROOT)s" check_logs_period="10" host_check_period="10" hostname="%(HOST)s">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(SYNCLOGS_PORT)s">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+ <cfg:SyncLogsConfig pid_file="%(LOGROOT)s/SyncLogs.pid" log_root="%(LOGROOT)s"
+  check_logs_period="10" host_check_period="10" hostname="%(HOST)s">
   <cfg:Logger filename="%(LOGROOT)s/SyncLogs.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>

@@ -58,11 +58,12 @@ namespace AdServer::UserInfoSvcs
     int compaction_threads,
     int per_compaction_threads,
     int flush_threads,
-    int max_mem_tables)
+    int max_mem_tables,
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_chunks_number_(common_chunks_number),
-      rocksdb_processor_(std::make_shared<
+      rocksdb_processor_(processor ? processor : std::make_shared<
         AdServer::ProfilingCommons::RocksDBProfileMapProcessor>(
           rocksdb_batching_threads,
           32,
@@ -71,9 +72,13 @@ namespace AdServer::UserInfoSvcs
           compaction_threads,
           per_compaction_threads,
           flush_threads,
-          max_mem_tables))
+          max_mem_tables)),
+      owns_processor_(!processor)
   {
-    rocksdb_processor_->activate_object();
+    if (owns_processor_)
+    {
+      rocksdb_processor_->activate_object();
+    }
 
     try
     {
@@ -100,8 +105,11 @@ namespace AdServer::UserInfoSvcs
     catch(...)
     {
       chunks_.clear();
-      rocksdb_processor_->deactivate_object();
-      rocksdb_processor_->wait_object();
+      if (owns_processor_)
+      {
+        rocksdb_processor_->deactivate_object();
+        rocksdb_processor_->wait_object();
+      }
       throw;
     }
   }
@@ -109,8 +117,11 @@ namespace AdServer::UserInfoSvcs
   UserBindContainer::~UserBindContainer() noexcept
   {
     chunks_.clear();
-    rocksdb_processor_->deactivate_object();
-    rocksdb_processor_->wait_object();
+    if (owns_processor_)
+    {
+      rocksdb_processor_->deactivate_object();
+      rocksdb_processor_->wait_object();
+    }
   }
 
   AdServer::ProfilingCommons::RocksDBProfileMapProcessor::Stats

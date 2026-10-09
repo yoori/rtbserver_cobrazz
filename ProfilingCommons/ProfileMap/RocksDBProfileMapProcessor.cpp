@@ -561,7 +561,7 @@ namespace AdServer::ProfilingCommons
       operation.key,
       map_impl.expire_time_,
       operation.cache,
-      allow_touch);
+      allow_touch && map_impl.extend_ttl_on_read_);
   }
 
   RocksDBProfileMapProcessor::CacheWriteTicket

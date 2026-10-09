@@ -21,11 +21,9 @@ target_link_libraries(UserInfoController
     UserInfoControllerGrpc
     UserInfoManagerGrpc
     UserInfoControllerConfigXSD
-    CORBACommons
     Commons
     Generics
     Logger
-    ProcessControlIDL
     Sync
     gRPC::grpc++
 )

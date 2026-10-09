@@ -30,7 +30,7 @@ namespace AdServer::LogProcessing
   template <> const char*
   ImpressionTraits::B::signature_ = "Impression";
   template <> const char*
-  ImpressionTraits::B::current_version_ = "3.5";
+  ImpressionTraits::B::current_version_ = "3.6";
 
   template <> const char*
   PassbackImpressionTraits::B::base_name_ = "PassbackImpression";
@@ -226,21 +226,32 @@ namespace AdServer::LogProcessing
     return is;
   }
 
-  FixedBufStream<TabCategory>&
-  operator>>(FixedBufStream<TabCategory>& is, ImpressionData& data)
-    /*throw(eh::Exception)*/
+  void ImpressionData::read_common_(FixedBufStream<TabCategory>& is)
   {
-    is >> data.time_;
-    is >> data.request_id_;
-    is >> data.user_id_;
-    is >> data.referrer_;
-    is >> data.pub_revenue_;
-    is >> data.pub_sys_revenue_;
-    is >> data.pub_revenue_type_;
-    is >> data.request_type_;
-    is >> data.viewability_;
-    is >> data.action_name_;
-    data.invariant();
+    is >> time_;
+    is >> request_id_;
+    is >> user_id_;
+    is >> referrer_;
+    is >> pub_revenue_;
+    is >> pub_sys_revenue_;
+    is >> pub_revenue_type_;
+    is >> request_type_;
+    is >> viewability_;
+    is >> action_name_;
+    invariant();
+  }
+
+  FixedBufStream<TabCategory>&
+  operator>>(FixedBufStream<TabCategory>& is, ImpressionData_V_3_5& data)
+  {
+    data.read_common_(is);
+    return is;
+  }
+
+  FixedBufStream<TabCategory>& operator>>(FixedBufStream<TabCategory>& is, ImpressionData& data)
+  {
+    data.read_common_(is);
+    is >> data.action_value_;
     return is;
   }
 
@@ -256,7 +267,8 @@ namespace AdServer::LogProcessing
       data.pub_revenue_ << '\t' <<
       data.pub_sys_revenue_ << '\t' <<
       data.pub_revenue_type_ << '\t' <<
-      data.request_type_ << '\t' << data.viewability_ << '\t' << data.action_name_;
+      data.request_type_ << '\t' << data.viewability_ << '\t' << data.action_name_ << '\t' <<
+      data.action_value_;
   }
 
 } // namespace AdServer::LogProcessing

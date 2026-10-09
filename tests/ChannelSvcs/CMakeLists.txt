@@ -1,1 +1,5 @@
 add_subdirectory(ChannelContainerPerfTest)
+
+add_executable(ChannelServerGrpcTestClient ChannelServerGrpcTestClient.cpp)
+target_link_libraries(ChannelServerGrpcTestClient
+  PRIVATE ChannelServerGrpc gRPC::grpc++ CORBACommons ChannelUpdateBaseIDL ProcessControlIDL)

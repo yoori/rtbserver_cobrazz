@@ -422,6 +422,7 @@ namespace AdServer::ImprTrack
           }
           verify_impression_info.set_viewability(request_info.viewability);
           verify_impression_info.set_action_name(request_info.action_name);
+          verify_impression_info.set_action_value(request_info.action_value);
 
           if (request_info.user_id_hash_mod.present())
           {

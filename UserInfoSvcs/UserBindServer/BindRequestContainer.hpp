@@ -1,83 +1,57 @@
 #pragma once
 
+#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include <eh/Exception.hpp>
-
-#include <ReferenceCounting/ReferenceCounting.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
-
-#include <Logger/Logger.hpp>
-#include <Generics/Time.hpp>
-#include <Generics/GnuHashTable.hpp>
-#include <Generics/HashTableAdapters.hpp>
-#include <Generics/Hash.hpp>
-
-#include <Commons/UserInfoManip.hpp>
-#include <Commons/LockMap.hpp>
-#include <Commons/Containers.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 
 #include "BindRequestChunk.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
-  class BindRequestContainer:
+  class BindRequestContainer final:
     public BindRequestProcessor,
-    public virtual ReferenceCounting::AtomicImpl
+    public ReferenceCounting::AtomicImpl
   {
   public:
     using ChunkPathMap = std::map<unsigned long, std::string>;
 
-  public:
     BindRequestContainer(
-      Logging::Logger* logger,
+      std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor,
       unsigned long common_chunks_number,
       const ChunkPathMap& chunk_folders,
       const char* file_prefix,
-      const Generics::Time& extend_time_period,
-      unsigned long portions_number)
-      /*throw(Exception)*/;
+      const Generics::Time& expire_time);
 
-    // BindRequestProcessor impl
-    virtual void
-    add_bind_request(
+    Commons::StartableAwaitable<void> co_add_bind_request(
       const String::SubString& id,
       const BindRequest& bind_request,
-      const Generics::Time& now)
-      /*throw(ChunkNotFound, Exception)*/;
+      const Generics::Time& now) override;
 
-    AdServer::Commons::StartableAwaitable<BindRequest>
-    co_get_bind_request(const String::SubString& external_id, const Generics::Time& now)
-      /*throw(ChunkNotFound, Exception)*/ override;
+    void add_bind_request(
+      const String::SubString& id,
+      const BindRequest& bind_request,
+      const Generics::Time& now) override;
 
-    BindRequest
-    get_bind_request(const String::SubString& external_id, const Generics::Time& now)
-      /*throw(ChunkNotFound, Exception)*/ override;
+    Commons::StartableAwaitable<BindRequest>
+    co_get_bind_request(const String::SubString& id, const Generics::Time& now) override;
 
-    virtual void
-    clear_expired(const Generics::Time& expire_time)
-      /*throw(Exception)*/;
+    BindRequest get_bind_request(const String::SubString& id, const Generics::Time& now) override;
 
-    virtual void
-    dump() /*throw(Exception)*/;
+    ProfilingCommons::RocksDBProfileMapProcessor::Stats rocksdb_stats() const noexcept;
 
   protected:
-    using ChunkArray = std::vector<BindRequestChunk_var>;
-
-  protected:
-    virtual
-    ~BindRequestContainer() noexcept;
-
-    BindRequestChunk_var
-    get_chunk_(const String::SubString& external_id)
-      const /*throw(ChunkNotFound)*/;
+    ~BindRequestContainer() noexcept override;
 
   private:
-    const Logging::Logger_var logger_;
+    BindRequestChunk_var get_chunk_(const String::SubString& id) const;
+
     const unsigned long common_chunks_number_;
-    ChunkArray chunks_;
+    std::shared_ptr<ProfilingCommons::RocksDBProfileMapProcessor> processor_;
+    std::vector<BindRequestChunk_var> chunks_;
   };
 
   using BindRequestContainer_var = ReferenceCounting::SmartPtr<BindRequestContainer>;
-
-} /* namespace AdServer::UserInfoSvcs */
+}

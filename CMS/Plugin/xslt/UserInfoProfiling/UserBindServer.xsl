@@ -182,8 +182,7 @@
       </xsl:attribute>
     </cfg:Storage>
 
-    <cfg:BindRequestStorage portions="1024"
-      chunks_root="{$chunks-root}"
+    <cfg:BindRequestStorage chunks_root="{$chunks-root}"
       common_chunks_number="{$chunks-count}"
       prefix="BindRequest"
       expire_time="{$user-bind-server-config/@bind_request_expire_time}"/>

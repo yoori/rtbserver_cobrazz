@@ -1,21 +1,5 @@
-add_idl(ChannelClusterControlIDL ChannelClusterControl.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
-target_link_libraries(ChannelClusterControlIDL
-  PUBLIC
-    ProcessControlIDL
-)
-
-add_idl(ChannelManagerControllerIDL ChannelManagerController.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController VALUETYPE)
-target_link_libraries(ChannelManagerControllerIDL
-  PUBLIC
-    ChannelCommonsIDL
-    ChannelUpdateBaseIDL
-    ChannelServerIDL
-)
-
 add_library(ChannelSessionFactory SHARED
   ChannelLoadSessionFactory.cpp
-  ChannelServerSessionFactory.cpp
-  ChannelSessionFactory.cpp
   ChannelLoadSessionImpl.cpp
 )
 target_link_libraries(ChannelSessionFactory
@@ -23,18 +7,5 @@ target_link_libraries(ChannelSessionFactory
     Generics
     Logger
     CORBACommons
-    ChannelManagerControllerIDL
-)
-add_dependencies(ChannelSessionFactory
-  ChannelCommons
-  ChannelClusterControlIDL)
-
-add_library(ChannelClusterControl SHARED
-  ChannelClusterControlImpl.cpp
-)
-target_link_libraries(ChannelClusterControl
-  PRIVATE
-    Generics
-    CORBACommons
-    ChannelClusterControlIDL
+    ChannelUpdateBaseIDL
 )

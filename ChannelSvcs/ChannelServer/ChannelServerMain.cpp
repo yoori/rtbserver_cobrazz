@@ -16,15 +16,11 @@
 
 #include "ChannelServerMain.hpp"
 #include "ChannelServerCore.hpp"
-#include "ChannelServerControlImpl.hpp"
 #include "ChannelUpdateImpl.hpp"
-//#include "ChannelServer.hpp"
 
 namespace
 {
   const char ASPECT[] = "ChannelServer";
-  const char CHANNEL_SERVER_OBJ_KEY[] = "ChannelServer";
-  const char CHANNEL_SERVER_CONTROL_OBJ_KEY[] = "ChannelServerControl";
   const char CHANNEL_UPDATE_OBJ_KEY[] = "ChannelUpdate";
 
   template<typename T>
@@ -195,19 +191,10 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   {
     server_core_ = std::make_shared<AdServer::ChannelSvcs::ChannelServerCore>(
       logger(), configuration_.get());
-    server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(server_core_);
-
-    AdServer::ChannelSvcs::ChannelServerControlImpl_var server_control_impl(
-      new AdServer::ChannelSvcs::ChannelServerControlImpl(server_core_));
-
     AdServer::ChannelSvcs::ChannelUpdateImpl_var update_impl(
       new AdServer::ChannelSvcs::ChannelUpdateImpl(server_core_));
 
-    corba_server_adapter_->add_binding(CHANNEL_SERVER_OBJ_KEY, server_impl_.in());
-
     corba_server_adapter_->add_binding(CHANNEL_UPDATE_OBJ_KEY, update_impl.in());
-
-    corba_server_adapter_->add_binding(CHANNEL_SERVER_CONTROL_OBJ_KEY, server_control_impl.in());
 
     if (configuration_->GrpcConfig().present())
     {

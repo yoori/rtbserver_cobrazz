@@ -469,7 +469,7 @@ namespace AdServer::UserInfoSvcs
         bind_request.bind_user_ids.push_back(request.bind_user_ids(i));
       }
 
-      core_->add_bind_request(
+      co_await core_->co_add_bind_request(
         request.request_id(),
         bind_request,
         GrpcAlgs::unpack_time(request.timestamp()));

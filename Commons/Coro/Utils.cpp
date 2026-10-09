@@ -2,11 +2,14 @@
 
 #include <deque>
 #include <exception>
+#include <utility>
 
 namespace AdServer::Commons
 {
   namespace
   {
+    thread_local const CoroutineResumeScheduler* resume_queue = nullptr;
+
     struct ResumeState final
     {
       std::deque<std::coroutine_handle<>> pending;
@@ -42,11 +45,27 @@ namespace AdServer::Commons
     };
   }
 
+  ScopedCoroutineResumeQueue::ScopedCoroutineResumeQueue(
+    const CoroutineResumeScheduler& scheduler) noexcept
+    : previous_(std::exchange(resume_queue, &scheduler))
+  {}
+
+  ScopedCoroutineResumeQueue::~ScopedCoroutineResumeQueue() noexcept
+  {
+    resume_queue = previous_;
+  }
+
   void
   resume_coroutine(std::coroutine_handle<> handle)
   {
     if (!handle)
     {
+      return;
+    }
+
+    if (resume_queue)
+    {
+      (*resume_queue)(handle);
       return;
     }
 

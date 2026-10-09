@@ -9,7 +9,6 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ServantImpl.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase_s.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 
 #include "ChannelServerCore.hpp"
 

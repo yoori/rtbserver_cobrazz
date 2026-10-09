@@ -2661,6 +2661,7 @@ namespace AdServer::CampaignSvcs
       info.referer = source.referer();
       info.viewability = source.viewability();
       info.action_name = source.action_name();
+      info.action_value = source.action_value();
       info.page_keywords = source.page_keywords();
 
       const auto result = co_await core_->co_verify_impression(info);

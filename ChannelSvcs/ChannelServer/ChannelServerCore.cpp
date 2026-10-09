@@ -37,7 +37,7 @@
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 //#include <ChannelSvcs/ChannelServer/ChannelServer_s.hpp>
 #include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
+#include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionFactory.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
@@ -112,15 +112,10 @@ namespace AdServer::ChannelSvcs
           server_config->MatchOptions().nonstrict())),
       queries_counter_(0)
   {
-    AdServer::ChannelSvcs::ChannelServerSessionFactory::init(
-      *state_holder_->c_adapter,
-      0,
-      &state_holder_->load_session_factory,
-      callback_,
-      0,
-      0,
-      10 // threads
-      );
+    state_holder_->load_session_factory = new ChannelLoadSessionFactoryImpl(10, callback_);
+    state_holder_->c_adapter->register_value_factory(
+      ChannelLoadSessionImpl::_tao_obv_static_repository_id(),
+      state_holder_->load_session_factory.in());
 
     try
     {

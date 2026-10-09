@@ -11,6 +11,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -53,6 +54,12 @@ namespace AdServer::Commons
 
 namespace AdServer::Grpc
 {
+  enum class BatchExecutionStrategy
+  {
+    Sequential,
+    CooperativeByKey
+  };
+
   template<typename ServiceImplType, typename AsyncServiceType>
   class GrpcBatchStreamCall;
 
@@ -134,6 +141,8 @@ namespace AdServer::Grpc
       Response&,
       ::grpc::Status&) const;
     using BatchHashFn = std::function<std::size_t(const Request&)>;
+    // Borrowed from the request; must remain valid until batch dispatch starts.
+    using BatchKeyFn = std::function<std::string_view(const Request&)>;
 
     RequestMethod request_method;
     Handler handler;
@@ -142,6 +151,8 @@ namespace AdServer::Grpc
     BatchHashFn batch_hash;
     bool distributed_batch = false;
     bool use_arena_for_response = true;
+    BatchExecutionStrategy batch_strategy = BatchExecutionStrategy::Sequential;
+    BatchKeyFn batch_key = {};
   };
 
   template<
@@ -183,7 +194,9 @@ namespace AdServer::Grpc
       Response>::Handler handler,
     std::string batch_full_method,
     bool use_arena_for_response,
-    HashFn hash_fn);
+    HashFn hash_fn,
+    BatchExecutionStrategy strategy = BatchExecutionStrategy::Sequential,
+    std::function<std::string_view(const Request&)> key_fn = {});
 
   template<
     typename ServiceImplType,
@@ -391,7 +404,9 @@ namespace AdServer::Grpc
         Request,
         Response>::BatchHashFn hash,
       bool distributed,
-      bool use_arena_for_response);
+      bool use_arena_for_response,
+      BatchExecutionStrategy strategy = BatchExecutionStrategy::Sequential,
+      std::function<std::string_view(const Request&)> key_fn = {});
 
     template<
       typename ServiceImplType,
@@ -446,6 +461,7 @@ namespace AdServer::Grpc
 
     struct BatchCoroMethod;
     struct PublishedBatchState;
+    struct PreparedBatchChains;
     class BatchRequestAwaiter;
 
     struct PreparedBatchCoroItem
@@ -454,6 +470,8 @@ namespace AdServer::Grpc
       void* request = nullptr;
       std::size_t hash = 0;
       bool hash_present = false;
+      // Used only to build chains, before dispatch moves the parsed request.
+      std::string_view key;
     };
 
     struct BatchItemContext
@@ -461,6 +479,9 @@ namespace AdServer::Grpc
       const adserver::grpc::BatchRequestItem* request_item = nullptr;
       adserver::grpc::BatchResponseItem* response_item = nullptr;
       PreparedBatchCoroItem coro_item;
+      BatchItemContext* chain_next = nullptr;
+      BatchItemContext* ready_next = nullptr;
+      bool response_ready = false;
     };
 
     using BatchCoroPrepareFn = std::function<bool(
@@ -479,6 +500,7 @@ namespace AdServer::Grpc
       BatchCoroPrepareFn prepare;
       BatchCoroDispatchFn dispatch;
       bool distributed = false;
+      BatchExecutionStrategy strategy = BatchExecutionStrategy::Sequential;
     };
 
     AdServer::Commons::StartableAwaitable<void>
@@ -517,6 +539,7 @@ namespace AdServer::Grpc
     AdServer::Commons::StartableAwaitable<void>
     co_handle_batch_lane_(
       Generics::MonoVector<BatchItemContext> batch_items,
+      PreparedBatchChains* chains,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule,
       google::protobuf::Arena& response_arena) const;
@@ -527,6 +550,19 @@ namespace AdServer::Grpc
       std::size_t lane_index,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule) const;
+
+    void prepare_batch_chains_(
+      Generics::MonoVector<PreparedBatchChains>& chains,
+      Generics::MonoVector<Generics::MonoVector<BatchItemContext>>& lanes,
+      Generics::MonoAllocatorArena& batch_arena,
+      google::protobuf::Arena& response_arena,
+      PublishedBatchState* published_state = nullptr) const;
+
+    AdServer::Commons::StartableAwaitable<void> co_handle_batch_chain_(
+      BatchItemContext* item,
+      google::protobuf::Arena& response_arena,
+      PublishedBatchState* published_state,
+      std::size_t lane_index) const;
 
     AdServer::Commons::StartableAwaitable<void>
     co_handle_batch_item_(
@@ -625,7 +661,9 @@ namespace AdServer::Grpc
         Response>::Handler handler,
       const char* batch_method_name,
       bool use_arena_for_response,
-      HashFn hash_fn);
+      HashFn hash_fn,
+      BatchExecutionStrategy strategy = BatchExecutionStrategy::Sequential,
+      std::function<std::string_view(const Request&)> key_fn = {});
 
     template<typename Request, typename Response>
     static GrpcCoroCall<ServiceImplType, AsyncServiceType, Request, Response>

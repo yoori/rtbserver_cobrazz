@@ -2184,6 +2184,49 @@ int main(int argc, char **argv)
       );
     collector.add(data);
     LogIoTester<ImpressionTraits>(dump_on_fail).test(collector);
+
+    for (const auto* value : {"", "62.5", "{\"value\":62.5,\"label\":\"a b\"}\t\n\\"})
+    {
+      ImpressionCollector actions;
+      const ImpressionData action(
+        TEST_TIME, TEST_USER_ID, TEST_USER_ID, "Referrer 1",
+        OptionalFixedNumber(), OptionalFixedNumber(), 'A', 'C', -1,
+        String::SubString("visibility"), AdServer::Commons::Optional<unsigned long>(),
+        String::SubString(value));
+      actions.add(action);
+      LogIoTester<ImpressionTraits>(dump_on_fail).test(actions);
+
+      BufferWriter encoded;
+      encoded << "Impression\t3.6\n" << action << '\n';
+      std::istringstream input(encoded.str());
+      ImpressionCollector restored;
+      ImpressionTraits::IoHelperType helper(restored);
+      helper.load(input);
+      if (restored.size() != 1 || restored.begin()->action_value() != value ||
+        restored.begin()->action_name() != "visibility" ||
+        restored.begin()->request_type() != 'C' || restored.begin()->viewability() != -1)
+      {
+        throw std::runtime_error("Impression action payload round trip failed");
+      }
+    }
+
+    for (const char type : {'T', 'N', 'C'})
+    {
+      BufferWriter legacy;
+      legacy << "Impression\t3.5\n" << SecondsTimestamp(TEST_TIME) << '\t' << TEST_USER_ID
+        << "\t-\t-\t-\t-\tA\t" << type << "\t66\tvisibility\n";
+      std::istringstream input(legacy.str());
+      ImpressionCollector restored;
+      ImpressionTraits::IoHelperType helper(restored);
+      helper.load(input);
+      if (restored.size() != 1 || !restored.begin()->action_value().empty() ||
+        restored.begin()->action_name() != "visibility" ||
+        restored.begin()->request_type() != type || restored.begin()->viewability() != 66 ||
+        restored.begin()->request_id() != TEST_USER_ID)
+      {
+        throw std::runtime_error("Legacy Impression 3.5 compatibility failed");
+      }
+    }
 #if 0
     typedef GenericLogIoHelperImpl<ImpressionTraits> LogIoHelperT;
     ImpressionCollector collector1;

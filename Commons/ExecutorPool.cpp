@@ -31,10 +31,25 @@ namespace AdServer::Commons
     }
   }
 
-  void
-  ExecutorPool::post(std::function<void()> task)
+  void ExecutorPool::post(std::function<void()> task, std::optional<ContextIndex> context_index)
   {
-    next_io_service().post(std::move(task));
+    (context_index ? io_service(*context_index) : next_io_service()).post(std::move(task));
+  }
+
+  std::optional<ExecutorPool::ContextIndex> ExecutorPool::current_context_index() const noexcept
+  {
+    if (current_executor_pool_ == this)
+    {
+      for (ContextIndex i = 0; i < contexts_.size(); ++i)
+      {
+        if (contexts_[i].io_service.get() == current_io_service_)
+        {
+          return i;
+        }
+      }
+    }
+
+    return std::nullopt;
   }
 
   void

@@ -101,20 +101,6 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE += $?"
 
-$EXEC/CurrentEnvGen.sh \
-  --def-port-add-prefix "proxy-" \
-  --service-name "sync_logs" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:cluster/cfg:syncLogs" \
-  --services-xpath "$CLUSTER_XPATH" \
-  --service-hosts "$SYNC_SERVICE_HOSTS" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$DACS_PBE_NAME
-
-
-let "EXIT_CODE += $?"
-
 ## configure STunnelServer
 STUNNEL_SERVER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$STUNNEL_SERVER_DESCR']"
 $EXEC/ServiceConf.sh \

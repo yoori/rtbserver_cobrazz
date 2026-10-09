@@ -44,13 +44,14 @@ target_link_libraries(UserBindServerGrpcClient
 
 # UserBindContainer
 target_link_libraries(UserBindContainer
+  PUBLIC
+    Commons
+    ProfileMapRocksDB
   PRIVATE
     Generics
     PrivacyFilter
-    Commons
     LogCommons
     ProfileMap
-    ProfileMapRocksDB
 )
 
 # UserBindOperationProfilePST

@@ -395,7 +395,8 @@ namespace AdServer::CampaignSvcs
     const AdServer::Commons::UserId& user_id_val,
     const char* referrer_val,
     int viewability_val,
-    const String::SubString& action_name_val)
+    const String::SubString& action_name_val,
+    const String::SubString& action_value_val)
     : ActionInfo(time_val, request_id_val, user_id_hash_mod_val),
       verify_type(verify_type_val),
       pub_imp_revenue_type(pub_imp_revenue_type_val),
@@ -403,7 +404,8 @@ namespace AdServer::CampaignSvcs
       user_id(user_id_val),
       referrer(referrer_val),
       viewability(viewability_val),
-      action_name(action_name_val.str())
+      action_name(action_name_val.str()),
+      action_value(action_value_val.str())
   {}
 
   CampaignManagerLogger::ClickInfo::ClickInfo(
@@ -2314,7 +2316,8 @@ namespace AdServer::CampaignSvcs
             impression_info.verify_type == RVT_NOTICE ? 'N' : 'C'),
           impression_info.viewability,
           impression_info.action_name,
-          impression_info.user_id_hash_mod));
+          impression_info.user_id_hash_mod,
+          impression_info.action_value));
       }
       catch(const eh::Exception& ex)
       {

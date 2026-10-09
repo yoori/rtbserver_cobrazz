@@ -74,7 +74,9 @@ namespace AdServer::Grpc
       Response>::Handler handler,
     std::string batch_full_method,
     bool use_arena_for_response,
-    HashFn hash_fn)
+    HashFn hash_fn,
+    BatchExecutionStrategy strategy,
+    std::function<std::string_view(const Request&)> key_fn)
   {
     using Call = GrpcCoroCall<
       ServiceImplType,
@@ -94,7 +96,9 @@ namespace AdServer::Grpc
       std::move(batch_full_method),
       std::move(batch_hash),
       true,
-      use_arena_for_response
+      use_arena_for_response,
+      strategy,
+      std::move(key_fn)
     };
   }
 
@@ -186,12 +190,19 @@ namespace AdServer::Grpc
       Request,
       Response>::BatchHashFn hash,
     bool distributed,
-    bool use_arena_for_response)
+    bool use_arena_for_response,
+    BatchExecutionStrategy strategy,
+    std::function<std::string_view(const Request&)> key_fn)
   {
+    if (strategy == BatchExecutionStrategy::CooperativeByKey && (!distributed || !hash || !key_fn))
+    {
+      throw std::invalid_argument("Cooperative batch method requires distribution, hash and key");
+    }
+
     batch_coro_methods_.emplace(
       std::move(full_method),
       BatchCoroMethod{
-        [hash = std::move(hash)](
+        [hash = std::move(hash), key_fn = std::move(key_fn)](
           const adserver::grpc::BatchRequestItem& batch_request,
           adserver::grpc::BatchResponseItem& batch_response,
           google::protobuf::Arena& request_arena,
@@ -210,6 +221,11 @@ namespace AdServer::Grpc
           {
             coro_item.hash = hash(*request);
             coro_item.hash_present = true;
+          }
+
+          if (key_fn)
+          {
+            coro_item.key = key_fn(*request);
           }
           return true;
         },
@@ -249,7 +265,8 @@ namespace AdServer::Grpc
             }
           }
         },
-        distributed
+        distributed,
+        strategy
       });
   }
 
@@ -306,7 +323,9 @@ namespace AdServer::Grpc
       },
       call.batch_hash,
       call.distributed_batch,
-      call.use_arena_for_response);
+      call.use_arena_for_response,
+      call.batch_strategy,
+      call.batch_key);
 
     if (!call.batch_handler)
     {
@@ -422,7 +441,9 @@ namespace AdServer::Grpc
         Response>::Handler handler,
       const char* batch_method_name,
       bool use_arena_for_response,
-      HashFn hash_fn)
+      HashFn hash_fn,
+      BatchExecutionStrategy strategy,
+      std::function<std::string_view(const Request&)> key_fn)
   {
     using Call = GrpcCoroCall<
       ServiceImplType,
@@ -444,7 +465,9 @@ namespace AdServer::Grpc
         std::string(),
       std::move(batch_hash),
       true,
-      use_arena_for_response
+      use_arena_for_response,
+      strategy,
+      std::move(key_fn)
     };
   }
 

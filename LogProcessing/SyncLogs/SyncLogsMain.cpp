@@ -1,51 +1,38 @@
 
-#include <eh/Errno.hpp>
 #include <eh/Exception.hpp>
-#include <String/StringManip.hpp>
+
+#include <iostream>
+#include <memory>
+
+#include <Logger/StreamLogger.hpp>
 #include <XMLUtility/Utility.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/SignalActiveObject.hpp>
 
 #include "SyncLogsMain.hpp"
 
 namespace
 {
   const char ASPECT[] = "SyncLogs";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
 SyncLogsApp_::SyncLogsApp_() /*throw(eh::Exception)*/
-  : AdServer::Commons::ProcessControlVarsLoggerImpl("SyncLogsApp_", ASPECT)
+  : Logging::LoggerCallbackHolder(
+      Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
+      "SyncLogsApp_",
+      ASPECT,
+      nullptr)
 {
 }
 
 void
-SyncLogsApp_::shutdown(CORBA::Boolean wait_for_completion)
-  noexcept
+SyncLogsApp_::main(int& argc, char** argv) noexcept
 {
-  ShutdownGuard guard(shutdown_lock_);
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
 
-  if (sync_logs_impl_.in() != 0)
-  {
-    sync_logs_impl_->deactivate_object();
-    sync_logs_impl_->wait_object();
-  }
-
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-SyncLogsApp_::is_alive()
-  noexcept
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
-}
-
-void
-SyncLogsApp_::main(int &argc, char **argv) noexcept
-{
   try
   {
     XMLUtility::initialize();
@@ -63,14 +50,12 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
     // Checking SyncLogs params
     if (argc < 2)
     {
-      const char *usage = "usage: SyncLogs <config_file>";
+      const char* usage = "usage: SyncLogs <config_file>";
 
       Stream::Error ostr;
       ostr << "config file or colocation config file is not specified\n" << usage;
       throw Exception(ostr);
     }
-
-    XMLUtility::initialize();
 
     /* parse configuration */
     try
@@ -90,24 +75,22 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
       throw Exception(ostr);
     }
 
-    // Creating synclogs servant
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(configuration_->pid_file()));
+
     sync_logs_impl_ =
       new AdServer::LogProcessing::SyncLogsImpl(callback(), logger(), *configuration_);
-    register_vars_controller();
 
-    // Initialization of CORBA
-    init_corba();
-
+    AdServer::Commons::SignalActiveObject signal_active_object;
     sync_logs_impl_->activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
+    signal_active_object.wait_object();
 
-    wait();
+    sync_logs_impl_->deactivate_object();
+    sync_logs_impl_->wait_object();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
-
-    XMLUtility::terminate();
   }
   catch (const Exception &ex)
   {
@@ -124,7 +107,7 @@ SyncLogsApp_::main(int &argc, char **argv) noexcept
 }
 
 void
-SyncLogsApp_::read_config(const char *filename, const char* argv0)
+SyncLogsApp_::read_config(const char* filename, const char* argv0)
   /*throw(Exception, eh::Exception)*/
 {
   const char FUN[] = "SyncLogsApp_::read_config()";
@@ -132,8 +115,8 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
   try
   {
     using namespace xsd::AdServer::Configuration;
-    typedef AdServer::LogProcessing::SyncLogsImpl::Configuration SyncLogsConfig;
-    typedef AdServer::LogProcessing::SyncLogsImpl::ConfigurationPtr SyncLogsConfigPtr;
+    using SyncLogsConfig = AdServer::LogProcessing::SyncLogsImpl::Configuration;
+    using SyncLogsConfigPtr = AdServer::LogProcessing::SyncLogsImpl::ConfigurationPtr;
 
     Config::ErrorHandler error_handler;
 
@@ -168,18 +151,6 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
       throw Exception(ostr);
     }
 
-    // Fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
-    }
-    catch(const eh::Exception &ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't read Corba Config. : " << ex.what();
-      throw Exception(ostr);
-    }
-
     try
     {
       logger(Config::LoggerConfigReader::create(configuration_->Logger(), argv0));
@@ -199,29 +170,12 @@ SyncLogsApp_::read_config(const char *filename, const char* argv0)
   }
 }
 
-void SyncLogsApp_::init_corba() /*throw(Exception)*/
-{
-  try
-  {
-    // init CORBA Server
-    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
-
-    shutdowner_ = corba_server_adapter_->shutdowner();
-
-    corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-  }
-  catch (const eh::Exception &ex)
-  {
-    Stream::Error ostr;
-    ostr << "SyncLogsApp_::init_corba(): " << "Can't init CorbaServerAdapter. : " << ex.what();
-    throw Exception(ostr);
-  }
-}
-
 int
 main(int argc, char** argv)
 {
-  SyncLogsApp_* app = 0;
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+
+  SyncLogsApp_* app = nullptr;
 
   try
   {
@@ -234,7 +188,7 @@ main(int argc, char** argv)
     return -1;
   }
 
-  if (app == 0)
+  if (app == nullptr)
   {
     std::cerr << "main(): Critical: got NULL application object.\n";
     return -1;

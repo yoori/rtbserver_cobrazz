@@ -49,12 +49,9 @@ class ClusterTest(CORBAFunTest):
     self.assert_(obj2.is_alive(), "CampaignManager must start")
     #
     self.assert_(self.ChannelServer.is_alive(), "ChannelServer must start")
-    obj4 = self.ChannelServer.getObject("ProcessControl", CORBACommons.IProcessControl)
-    self.assert_(obj4.is_alive(), "ChannelServer must start")
+    self.ChannelServer.grpc('check_configuration', {})
     #
     self.assert_(self.ChannelController.is_alive(), "ChannelController must start")
-    obj5 = self.ChannelController.getObject("ProcessControl", CORBACommons.IProcessControl)
-    self.assert_(obj5.is_alive(), "ChannelController must start")
     #
     self.assert_(self.UserInfoManager.is_alive(), "UserInfoManager must start")
     obj6 = self.UserInfoManager.getObject("ProcessControl", CORBACommons.IProcessControl)
@@ -81,8 +78,6 @@ class ClusterTest(CORBAFunTest):
     self.assert_(obj11.is_alive(), "LogGeneralizer must start")
     #
     self.assert_(self.SyncLogs.is_alive(), "SyncLogs must start")
-    obj12 = self.SyncLogs.getObject("ProcessControl", CORBACommons.IProcessControl)
-    self.assert_(obj12.is_alive(), "SyncLogs must start")
     #
 
 if __name__ == '__main__':

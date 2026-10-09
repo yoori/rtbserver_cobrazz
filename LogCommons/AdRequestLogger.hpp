@@ -1059,6 +1059,8 @@ namespace AdServer::LogProcessing
     unsigned long distribution_hash_;
   };
 
+  class ImpressionData_V_3_5;
+
   class ImpressionData
   {
   public:
@@ -1077,7 +1079,8 @@ namespace AdServer::LogProcessing
       char request_type,
       long viewability,
       const String::SubString& action_name,
-      const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod)
+      const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod,
+      const String::SubString& action_value = String::SubString())
     :
       time_(time),
       request_id_(request_id),
@@ -1089,6 +1092,7 @@ namespace AdServer::LogProcessing
       request_type_(request_type),
       viewability_(viewability),
       action_name_(action_name.str()),
+      action_value_(action_value.str()),
       distribution_hash_(request_distribution_hash(request_id, user_id_hash_mod))
     {}
 
@@ -1184,7 +1188,8 @@ namespace AdServer::LogProcessing
         pub_revenue_ == data.pub_revenue_ &&
         pub_sys_revenue_ == data.pub_sys_revenue_ &&
         pub_revenue_type_ == data.pub_revenue_type_ &&
-        request_type_ == data.request_type_ && action_name_.get() == data.action_name_.get();
+        request_type_ == data.request_type_ && action_name_.get() == data.action_name_.get() &&
+        action_value_.get() == data.action_value_.get();
     }
 
     const SecondsTimestamp& time() const
@@ -1238,6 +1243,11 @@ namespace AdServer::LogProcessing
       return action_name_.get();
     }
 
+    const std::string& action_value() const noexcept
+    {
+      return action_value_.get();
+    }
+
     unsigned long distrib_hash() const
     {
       return distribution_hash_;
@@ -1277,9 +1287,14 @@ namespace AdServer::LogProcessing
     operator>>(FixedBufStream<TabCategory>& is, ImpressionData& data)
       /*throw(eh::Exception)*/;
 
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ImpressionData_V_3_5& data);
+
     friend BufferWriter&
     operator<<(BufferWriter& out, const ImpressionData& data)
       /*throw(eh::Exception)*/;
+
+    void read_common_(FixedBufStream<TabCategory>& is);
 
     SecondsTimestamp time_;
     RequestId request_id_;
@@ -1291,7 +1306,15 @@ namespace AdServer::LogProcessing
     char request_type_;
     long viewability_;
     EmptyHolder<Aux_::StringIoWrapper> action_name_;
-    unsigned long distribution_hash_;
+    EmptyHolder<Aux_::StringIoWrapper> action_value_;
+    unsigned long distribution_hash_ = 0;
+  };
+
+  class ImpressionData_V_3_5: public ImpressionData
+  {
+  public:
+    friend FixedBufStream<TabCategory>&
+    operator>>(FixedBufStream<TabCategory>& is, ImpressionData_V_3_5& data);
   };
 
   typedef SeqCollector<ImpressionData_V_1_0, true> ImpressionCollector_V_1_0;
@@ -1304,7 +1327,9 @@ namespace AdServer::LogProcessing
 
   typedef SeqCollector<ImpressionData_V_3_3_1, true> ImpressionCollector_V_3_3_1;
 
-  typedef SeqCollector<ImpressionData, true> ImpressionCollector;
+  using ImpressionCollector_V_3_5 = SeqCollector<ImpressionData_V_3_5, true>;
+
+  using ImpressionCollector = SeqCollector<ImpressionData, true>;
 
   struct ImpressionTraits: LogDefaultTraits<ImpressionCollector, false, false, 1>
   {
@@ -1316,6 +1341,7 @@ namespace AdServer::LogProcessing
       f.template operator()<ImpressionCollector_V_3_2>("3.2");
       f.template operator()<ImpressionCollector_V_3_3>("3.3");
       f.template operator()<ImpressionCollector_V_3_3_1>("3.3.1");
+      f.template operator()<ImpressionCollector_V_3_5>("3.5");
     }
 
     typedef GenericLogIoHelperImpl<ImpressionTraits> IoHelperType;

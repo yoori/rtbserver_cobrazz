@@ -189,7 +189,8 @@ namespace AdServer::CampaignSvcs
         const AdServer::Commons::UserId& user_id_val,
         const char* referrer_val,
         int viewability_val,
-        const String::SubString& action_name_val);
+        const String::SubString& action_name_val,
+        const String::SubString& action_value_val = String::SubString());
 
       RequestVerificationType verify_type;
       RevenueType pub_imp_revenue_type;
@@ -198,6 +199,7 @@ namespace AdServer::CampaignSvcs
       std::string referrer;
       int viewability;
       std::string action_name;
+      std::string action_value;
     };
 
     struct ClickInfo: public ActionInfo

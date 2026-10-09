@@ -1,5 +1,10 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
+#include <Generics/Time.hpp>
+#include <String/SubString.hpp>
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
@@ -19,7 +24,11 @@ namespace AdServer::UserInfoSvcs
     };
 
   public:
-    // return previous state
+    virtual Commons::StartableAwaitable<void> co_add_bind_request(
+      const String::SubString& id,
+      const BindRequest& bind_request,
+      const Generics::Time& now) = 0;
+
     virtual void
     add_bind_request(
       const String::SubString& id,
@@ -35,13 +44,6 @@ namespace AdServer::UserInfoSvcs
     virtual BindRequest
     get_bind_request(const String::SubString& external_id, const Generics::Time& now)
       /*throw(ChunkNotFound, Exception)*/ = 0;
-
-    virtual void
-    clear_expired(const Generics::Time& expire_time)
-      /*throw(Exception)*/ = 0;
-
-    virtual void
-    dump() /*throw(Exception)*/ = 0;
   };
 
   using BindRequestProcessor_var = ReferenceCounting::SmartPtr<BindRequestProcessor>;

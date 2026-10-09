@@ -32,6 +32,7 @@ namespace AdServer::ImprTrack
       const String::SubString EXTERNAL_USER_ID("xid");
 
       const String::SubString CUSTOM_ACTION_NAME("nm");
+      const String::SubString CUSTOM_ACTION_VALUE("value");
       const String::SubString BID_TIME("bt");
       const String::SubString PAGE_KEYWORDS("kw");
       const String::SubString FULL_TEXT_WORDS("ft");
@@ -529,6 +530,8 @@ namespace AdServer::ImprTrack
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::source_id));
     add_processor_(false, true, Param::CUSTOM_ACTION_NAME,
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::action_name));
+    add_processor_(false, true, Param::CUSTOM_ACTION_VALUE,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::action_value));
     add_processor_(false, true, Param::REQUEST_TYPE, new VerifyTypeParamProcessor());
     add_processor_(false, true, Param::COLOCATION_ID,
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(&RequestInfo::colo_id));

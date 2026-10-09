@@ -28,12 +28,8 @@ target_link_libraries(SyncLogs
     Threads::Threads
     Generics
     Commons
-    CORBAConfig
-    CORBACommons
     LogCommons
     Logger
-    ProcessControlIDL
-    ProcessControlVars
     Sync
     SyncLogsConfigXSD
     XMLUtility

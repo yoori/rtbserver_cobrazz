@@ -9,7 +9,6 @@ from MockCampaignServer import CampaignServerTestMixin, CampaignServer, SimpleCh
      BehavParameter, BehavParamInfo
 from MockChannelProxy import ChannelProxyTestMixin, ChannelVersion, ChannelById, \
      ChannelProxy, CheckData, TriggerInfo
-from MockChannelController import ChannelManagerControllerTestMixin
 from FakeCallWrapper import ExceptionCallWrapper
 from omniORB import CORBA
 from MTValue import MTFlag
@@ -17,7 +16,7 @@ from MTValue import MTFlag
 import ChannelServerUtils,  AdServer.ChannelSvcs
 
 class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
-                                  ChannelProxyTestMixin, ChannelManagerControllerTestMixin):
+                                  ChannelProxyTestMixin):
   'ChannelServer fail calls'
 
   def setUp( self ):
@@ -109,12 +108,11 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
 
   def testCampaignServerSimpleChannelsFail( self ):
     'CampaignServer simple_channels fail'
-    obj = self.ChannelServer.getObject("ChannelServerControl",
-                                       AdServer.ChannelSvcs.ChannelServerControl)
-    source = ChannelServerUtils.createProxySource(self.MockChannelProxyIOR,
-                                                  [self.MockCampaignServerIOR],
-                                                  count_chunks = 4)
-    obj.set_proxy_sources(source, [0,1,2,3])
+    self.ChannelServer.grpc('set_proxy_sources', {
+      'proxy_refs': [self.MockChannelProxyIOR],
+      'campaign_refs': [self.MockCampaignServerIOR],
+      'count_chunks': 4, 'colo': 1, 'check_sum': 43, 'version': '1.2.3',
+      'sources': [0, 1, 2, 3]})
     self.simpleChannelWrapper.wait()
 
   def testChannelProxyCheckFail( self ):
@@ -148,5 +146,4 @@ class ChannelServersFailCallsTest(CORBAFunTest,  CampaignServerTestMixin,
 
 if __name__ == '__main__':
  main()
-
 

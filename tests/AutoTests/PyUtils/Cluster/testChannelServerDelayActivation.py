@@ -31,9 +31,9 @@ class ChannelServersDelayActivation(CORBAFunTest,
     ChannelProxyTestMixin.setUp( self )
     self.__prepareConfig()
 
-    self.setUpServers(ChannelServer,
-                      ChannelController)
+    self.setUpServers(ChannelServer)
     self.startProc()
+    self.ChannelServer.configure_proxy()
     self.channelServerObj = self.ChannelServer.getObject("ChannelUpdate",
                                                          ChannelUpdateCurrent)
   def __prepareConfig( self ):
@@ -262,7 +262,6 @@ class ChannelServersDelayActivation(CORBAFunTest,
 
 if __name__ == '__main__':
  main()
-
 
 
 

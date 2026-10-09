@@ -137,8 +137,6 @@
 
       <cfg:Endpoint host="*">
         <xsl:attribute name="port"><xsl:value-of select="$channel-server-port"/></xsl:attribute>
-        <cfg:Object servant="ChannelServerControl" name="ChannelServerControl"/>
-        <cfg:Object servant="ChannelServer" name="ChannelServer"/>
         <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>
         <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
       </cfg:Endpoint>

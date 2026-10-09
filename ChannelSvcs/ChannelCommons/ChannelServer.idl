@@ -1,18 +1,14 @@
 #ifndef AD_SERVER_CHANNEL_SERVER_IDL_
 #define AD_SERVER_CHANNEL_SERVER_IDL_
 
-#include <CORBACommons/CorbaObjectRef.idl>
-#include <Commons/CorbaTypes.idl>
-#include <CampaignSvcs/CampaignServer/CampaignServer.idl>
 #include <ChannelSvcs/ChannelCommons/ChannelCommons.idl>
-#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.idl>
 
 module AdServer
 {
   module ChannelSvcs
   {
 
-    abstract interface ChannelServerBase
+    module ChannelServerBase
     {
       struct ChannelAtom
       {
@@ -83,80 +79,8 @@ module AdServer
         boolean fill_content;
       };
 
-      void match(
-        in MatchQuery query,
-        out MatchResult result)
-        raises (ImplementationException, NotConfigured);
-
-      CCGKeywordSeq get_ccg_traits(in ChannelIdSeq ids)
-        raises (ImplementationException, NotConfigured);
-
-    };
-
-    interface ChannelServer
-    {
-      struct MatchResult
-      {
-        ChannelServerBase::TriggerMatchResult matched_channels;
-        ChannelServerBase::ContentChannelAtomSeq content_channels;
-        boolean no_adv;
-        boolean no_track;
-        TimeStamp match_time;
-      };
-
-      struct TraitsResult
-      {
-        ChannelServerBase::CCGKeywordSeq  ccg_keywords;
-        ChannelSvcs::CcgIdSeq neg_ccg;
-      };
-
-      void match(
-        in ChannelServerBase::MatchQuery query,
-        out MatchResult result)
-        raises (ImplementationException, NotConfigured);
-
-      void get_ccg_traits(in ChannelIdSeq ids, out TraitsResult result)
-        raises (ImplementationException, NotConfigured);
-
-
-    };
-
-    interface ChannelServerControl
-    {
-      typedef sequence<CORBACommons::CorbaObjectRefDef> CorbaObjectRefDefSeq;
-
-      struct DBSourceInfo
-      {
-        string pg_connection;
-
-        CorbaObjectRefDefSeq campaign_refs;
-        unsigned long count_chunks;
-        unsigned long colo;
-        unsigned long check_sum;
-        string version;
-      };
-
-      struct ProxySourceInfo
-      {
-        GroupLoadDescriptionSeq local_descriptor;
-        CorbaObjectRefDefSeq proxy_refs;
-        CorbaObjectRefDefSeq campaign_refs;
-        unsigned long count_chunks;
-        unsigned long colo;
-        unsigned long check_sum;
-        string version;
-      };
-
-      void set_sources(in DBSourceInfo db_info, in ChunkKeySeq sources)
-        raises (ImplementationException);
-
-      void set_proxy_sources(in ProxySourceInfo proxy_info, in ChunkKeySeq sources)
-        raises (ImplementationException);
-
-      unsigned long check_configuration();
     };
   };
 };
 
 #endif //AD_SERVER_CHANNEL_SERVER_IDL_
-

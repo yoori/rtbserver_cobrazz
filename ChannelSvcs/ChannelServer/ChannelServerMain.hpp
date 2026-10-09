@@ -17,7 +17,6 @@
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
 
 #include "ChannelServerCore.hpp"
-#include "ChannelServerCustomImpl.hpp"
 #include "ChannelServerGrpc.hpp"
 
 class ChannelServerApp_ :
@@ -50,7 +49,6 @@ private:
 
   ConfigPtr configuration_;
   AdServer::ChannelSvcs::ChannelServerCorePtr server_core_;
-  AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
   std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpc> grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;
   std::shared_ptr<Generics::CompositeActiveObject> active_objects_;
