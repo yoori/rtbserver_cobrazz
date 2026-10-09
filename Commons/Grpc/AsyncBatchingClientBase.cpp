@@ -320,6 +320,7 @@ namespace AdServer::Grpc
 
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
+
       if (!active())
       {
         fail_batch = true;
