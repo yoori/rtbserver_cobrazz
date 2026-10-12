@@ -127,24 +127,7 @@ namespace AdServer::Bidding
       return !String::UTF8Handler::is_correct_utf8_string(keyword);
     }
 
-    void
-    add_cat(std::string_view cat, bool open_rtb = false)
-    {
-      if (cat.empty())
-      {
-        return;
-      }
-
-      if (open_rtb)
-      {
-        add_(std::string_view(), std::string_view(), cat);
-      }
-
-      if (!open_rtb || !short_rtb_name_.empty())
-      {
-        add_(std::string_view(), short_rtb_name_, cat);
-      }
-    }
+    void add_cat(std::string_view cat, bool open_rtb = false);
 
     void
     add_cat(const std::string& cat, bool open_rtb = false)
@@ -676,6 +659,8 @@ namespace AdServer::Bidding
       add_part_view_(store_owned_(std::move(value)));
     }
 
+    static bool is_iab_category_(std::string_view cat) noexcept;
+
     std::shared_ptr<Generics::MonoAllocatorArena> arena_;
     PartArray parts_;
     OwnedPartArray owned_parts_;
@@ -685,6 +670,67 @@ namespace AdServer::Bidding
     inline static constexpr std::string_view CUSTOM_KEYWORD_SEPARATOR = "\n";
     inline static constexpr std::string_view RTB_PREFIX = "rtb";
   };
+
+  template<typename StringType>
+  bool BasicKeywordFormatter<StringType>::is_iab_category_(std::string_view cat) noexcept
+  {
+    if (cat.size() < 4 || (cat[0] != 'I' && cat[0] != 'i') ||
+      (cat[1] != 'A' && cat[1] != 'a') || (cat[2] != 'B' && cat[2] != 'b'))
+    {
+      return false;
+    }
+
+    bool need_digit = true;
+    for (const char value : cat.substr(3))
+    {
+      if (value >= '0' && value <= '9')
+      {
+        need_digit = false;
+      }
+      else if (value == '-' && !need_digit)
+      {
+        need_digit = true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    return !need_digit;
+  }
+
+  template<typename StringType>
+  void BasicKeywordFormatter<StringType>::add_cat(std::string_view cat, bool open_rtb)
+  {
+    if (cat.empty())
+    {
+      return;
+    }
+
+    if (open_rtb && cat.find('-') != std::string_view::npos && is_iab_category_(cat))
+    {
+      StringType normalized = make_string_(cat, arena_.get());
+      for (char& value : normalized)
+      {
+        if (value == '-')
+        {
+          value = 'x';
+        }
+      }
+      // The formatter retains views until assign_to(), so own the converted category.
+      cat = store_owned_(std::move(normalized));
+    }
+
+    if (open_rtb)
+    {
+      add_(std::string_view(), std::string_view(), cat);
+    }
+
+    if (!open_rtb || !short_rtb_name_.empty())
+    {
+      add_(std::string_view(), short_rtb_name_, cat);
+    }
+  }
 
   using KeywordFormatter = BasicKeywordFormatter<>;
 }

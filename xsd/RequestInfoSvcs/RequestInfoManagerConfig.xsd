@@ -149,7 +149,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1"/>
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType" minOccurs="1"/>
 
       <xsd:element name="UserInfo" type="RequestInfoManagerUserInfoType"/>
 

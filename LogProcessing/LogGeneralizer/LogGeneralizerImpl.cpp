@@ -5,7 +5,6 @@
 
 #include "ErrorCode.hpp"
 
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
 #include <LogCommons/LogCommons.ipp>
@@ -358,16 +357,15 @@ namespace AdServer::LogProcessing
     }
   }
 
-  void LogGeneralizerImpl::stop_stat_upload(CORBA::ULong client_id)
+  void LogGeneralizerImpl::stop_stat_upload(std::uint32_t client_id)
   {
     static const char FUNC[] = "AdServer::LogProcessing::LogGeneralizerImpl::"
                                "stop_stat_upload";
     if (!db_enabled())
     {
-      typedef AdServer::LogProcessing::LogGeneralizer::NotSupported NotSupported;
       Stream::Error es;
       es << FUNC << ": Operation is not supported";
-      CORBACommons::throw_desc<NotSupported>(es.str());
+      throw NotSupported(es);
     }
 
     Guard_ disable_upload_guard(start_stop_upload_lock_);
@@ -389,17 +387,15 @@ namespace AdServer::LogProcessing
     lgs_value->upload_stopped = true;
   }
 
-  void
-  LogGeneralizerImpl::start_stat_upload(CORBA::ULong client_id, CORBA::Boolean clear)
+  void LogGeneralizerImpl::start_stat_upload(std::uint32_t client_id, bool clear)
   {
     static const char FUNC[] = "AdServer::LogProcessing::LogGeneralizerImpl::"
                                "start_stat_upload";
     if (!db_enabled())
     {
-      typedef AdServer::LogProcessing::LogGeneralizer::NotSupported NotSupported;
       Stream::Error es;
       es << FUNC << ": Operation is not supported";
-      CORBACommons::throw_desc<NotSupported>(es.str());
+      throw NotSupported(es);
     }
 
     Guard_ enable_upload_guard(start_stop_upload_lock_);
@@ -413,11 +409,9 @@ namespace AdServer::LogProcessing
     LogGeneralizerStatMap::iterator lgsm_it = lgs_map.find(client_id);
     if (lgsm_it == lgs_map.end())
     {
-      typedef AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted
-        CollectionNotStarted;
       Stream::Error es;
       es << FUNC << ": Data collection is not started";
-      CORBACommons::throw_desc<CollectionNotStarted>(es.str());
+      throw CollectionNotStarted(es);
     }
 
     {
@@ -447,17 +441,15 @@ namespace AdServer::LogProcessing
     enable_upload_<DeferredCmpStatExtTraits>();
   }
 
-  StatInfo*
-  LogGeneralizerImpl::get_stat_info(CORBA::ULong client_id, CORBA::Boolean clear)
+  StatInfo LogGeneralizerImpl::get_stat_info(std::uint32_t client_id, bool clear)
   {
     static const char FUNC[] = "AdServer::LogProcessing::LogGeneralizerImpl::"
                                "get_stat_info";
     if (!db_enabled())
     {
-      typedef AdServer::LogProcessing::LogGeneralizer::NotSupported NotSupported;
       Stream::Error es;
       es << FUNC << ": Operation is not supported";
-      CORBACommons::throw_desc<NotSupported>(es.str());
+      throw NotSupported(es);
     }
 
     LogGeneralizerStatMapBundle &lgsm_bundle = *log_generalizer_stat_map_bundle_;
@@ -468,20 +460,18 @@ namespace AdServer::LogProcessing
     LogGeneralizerStatMap::const_iterator lgsm_it = lgs_map.find(client_id);
     if (lgsm_it == lgs_map.end())
     {
-      typedef AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted
-        CollectionNotStarted;
       Stream::Error es;
       es << FUNC << ": Data collection is not started";
-      CORBACommons::throw_desc<CollectionNotStarted>(es.str());
+      throw CollectionNotStarted(es);
     }
 
     LogGeneralizerStatValue &lgs_value = *lgsm_it->second;
 
     LogGeneralizerStatValue::GuardT lgsv_guard(lgs_value.lock);
 
-    StatInfo_var stat_info = new StatInfo;
-    CampaignStatSeq &cmp_stats = stat_info->campaign_stats;
-    cmp_stats.length(lgs_value.map.size());
+    StatInfo stat_info;
+    CampaignStatSeq &cmp_stats = stat_info.campaign_stats;
+    cmp_stats.resize(lgs_value.map.size());
     unsigned i = 0;
 
     for (CampaignStatMap::const_iterator cmp_map_it = lgs_value.map.begin();
@@ -489,21 +479,19 @@ namespace AdServer::LogProcessing
     {
       CampaignStatInfo &cmp_stat_info = cmp_stats[i];
 
-      cmp_stat_info.sdate = CorbaAlgs::pack_time(cmp_map_it->first.sdate());
-      cmp_stat_info.adv_sdate = CorbaAlgs::pack_time(cmp_map_it->first.adv_sdate());
+      cmp_stat_info.sdate = cmp_map_it->first.sdate();
+      cmp_stat_info.adv_sdate = cmp_map_it->first.adv_sdate();
       cmp_stat_info.adv_account_id = cmp_map_it->first.adv_account_id();
       cmp_stat_info.campaign_id = cmp_map_it->first.campaign_id();
       cmp_stat_info.ccg_id = cmp_map_it->first.ccg_id();
-      cmp_stat_info.adv_account_amount =
-        CorbaAlgs::pack_decimal(cmp_map_it->second.adv_account_amount);
-      cmp_stat_info.adv_amount = CorbaAlgs::pack_decimal(cmp_map_it->second.adv_amount);
-      cmp_stat_info.adv_comm_amount = CorbaAlgs::pack_decimal(cmp_map_it->second.adv_comm_amount);
-      cmp_stat_info.adv_payable_comm_amount =
-        CorbaAlgs::pack_decimal(cmp_map_it->second.adv_payable_comm_amount);
+      cmp_stat_info.adv_account_amount = cmp_map_it->second.adv_account_amount;
+      cmp_stat_info.adv_amount = cmp_map_it->second.adv_amount;
+      cmp_stat_info.adv_comm_amount = cmp_map_it->second.adv_comm_amount;
+      cmp_stat_info.adv_payable_comm_amount = cmp_map_it->second.adv_payable_comm_amount;
 
       CreativeStatSeq &crtv_stats = cmp_stat_info.creative_stats;
-      crtv_stats.length(cmp_map_it->second.creative_stats.size());
-      typedef CampaignStatValueDef::CreativeStatMap CreativeStatMapT;
+      crtv_stats.resize(cmp_map_it->second.creative_stats.size());
+      using CreativeStatMapT = CampaignStatValueDef::CreativeStatMap;
       const CreativeStatMapT &crtv_map = cmp_map_it->second.creative_stats;
       unsigned j = 0;
       for (CreativeStatMapT::const_iterator crtv_it = crtv_map.begin();
@@ -517,36 +505,35 @@ namespace AdServer::LogProcessing
       }
 
       PublisherAmountSeq &pub_amounts = cmp_stat_info.publisher_amounts;
-      pub_amounts.length(cmp_map_it->second.publisher_amounts.size());
-      typedef CampaignStatValueDef::PublisherAmountMap
-        PublisherAmountMapT;
+      pub_amounts.resize(cmp_map_it->second.publisher_amounts.size());
+      using PublisherAmountMapT = CampaignStatValueDef::PublisherAmountMap;
       const PublisherAmountMapT &pub_map = cmp_map_it->second.publisher_amounts;
       unsigned k = 0;
       for (PublisherAmountMapT::const_iterator pub_it = pub_map.begin();
         pub_it != pub_map.end(); ++pub_it, ++k)
       {
         pub_amounts[k].publisher_account_id = pub_it->first;
-        pub_amounts[k].adv_amount = CorbaAlgs::pack_decimal(pub_it->second);
+        pub_amounts[k].adv_amount = pub_it->second;
       }
 
       TagAmountSeq &tag_amounts = cmp_stat_info.tag_amounts;
-      tag_amounts.length(cmp_map_it->second.tag_amounts.size());
-      typedef CampaignStatValueDef::TagAmountMap TagAmountMapT;
+      tag_amounts.resize(cmp_map_it->second.tag_amounts.size());
+      using TagAmountMapT = CampaignStatValueDef::TagAmountMap;
       const TagAmountMapT &tag_map = cmp_map_it->second.tag_amounts;
       unsigned l = 0;
       for (TagAmountMapT::const_iterator tag_it = tag_map.begin();
         tag_it != tag_map.end(); ++tag_it, ++l)
       {
         tag_amounts[l].tag_id = tag_it->first;
-        tag_amounts[l].pub_isp_amount = CorbaAlgs::pack_decimal(tag_it->second.pub_isp_amount());
-        tag_amounts[l].adv_amount = CorbaAlgs::pack_decimal(tag_it->second.adv_amount());
-        tag_amounts[l].adv_comm_amount = CorbaAlgs::pack_decimal(tag_it->second.adv_comm_amount());
+        tag_amounts[l].pub_isp_amount = tag_it->second.pub_isp_amount();
+        tag_amounts[l].adv_amount = tag_it->second.adv_amount();
+        tag_amounts[l].adv_comm_amount = tag_it->second.adv_comm_amount();
       }
 
       // fill ctr reset stats
       CtrResetStatSeq& ctr_reset_stat_seq = cmp_stat_info.ctr_reset_stats;
-      ctr_reset_stat_seq.length(cmp_map_it->second.ctr_reset_stats.size());
-      CORBA::ULong ctr_reset_stat_i = 0;
+      ctr_reset_stat_seq.resize(cmp_map_it->second.ctr_reset_stats.size());
+      std::uint32_t ctr_reset_stat_i = 0;
       for (CampaignStatValueDef::CtrResetStatMap::
             const_iterator ctr_reset_stat_it = cmp_map_it->second.ctr_reset_stats.begin();
           ctr_reset_stat_it != cmp_map_it->second.ctr_reset_stats.end();
@@ -562,7 +549,7 @@ namespace AdServer::LogProcessing
       lgs_value.map.clear();
     }
 
-    return stat_info._retn();
+    return stat_info;
   }
 
   void

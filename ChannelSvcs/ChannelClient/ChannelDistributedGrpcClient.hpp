@@ -67,6 +67,22 @@ namespace AdServer::ChannelSvcs
       const adserver::channel_svcs::channel_server::SetProxySourcesRequest& request,
       SetProxySourcesCallback callback) override;
 
+    void check(
+      const adserver::channel_svcs::channel_server::CheckRequest& request,
+      CheckCallback callback) override;
+
+    void update_triggers(
+      const adserver::channel_svcs::channel_server::UpdateTriggersRequest& request,
+      UpdateTriggersCallback callback) override;
+
+    void update_all_ccg(
+      const adserver::channel_svcs::channel_server::UpdateAllCcgRequest& request,
+      UpdateAllCcgCallback callback) override;
+
+    void get_count_chunks(
+      const adserver::channel_svcs::channel_server::GetCountChunksRequest& request,
+      GetCountChunksCallback callback) override;
+
   private:
     using Client = ChannelServerGrpcAsyncBatchingClient;
     using ClientPtr = std::shared_ptr<Client>;

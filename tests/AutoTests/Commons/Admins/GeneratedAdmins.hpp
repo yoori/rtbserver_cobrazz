@@ -39,4 +39,3 @@
 #include <tests/AutoTests/Commons/Admins/ChannelCheckAdmin.hpp>
 #include <tests/AutoTests/Commons/Admins/CCGKeywordAdmin.hpp>
 #include <tests/AutoTests/Commons/Admins/TriggerAdmin.hpp>
-#include <tests/AutoTests/Commons/Admins/ChannelSearchAdmin.hpp>

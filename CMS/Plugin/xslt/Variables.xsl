@@ -35,7 +35,6 @@
 <xsl:variable name="xsd-campaign-server-update-params-type"
   select="document('../xsd/CampaignManagement/CampaignServerAppType.xsd')/xsd:schema/xsd:complexType[@name='CampaignServerUpdateParamsType']"/>
 
-<xsl:variable name="current-campaign-server-obj" select="'/CampaignServer_v360'"/>
 
 <!-- these services used in tr zone and must have unique version for all changes -->
 <xsl:variable name="app-version-num" select="translate($app-version, '0123456789.', '0123456789')"/>
@@ -82,6 +81,8 @@
 <xsl:variable name="log-generalizer-descriptor" select="'AdCluster/BackendSubCluster/LogGeneralizer'"/>
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
+<xsl:variable name="url-info-storage-descriptor"
+  select="'AdCluster/BackendSubCluster/UrlInfoStorage'"/>
 <xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
 <xsl:variable name="yandex-post-click-importer-descriptor"
   select="'AdCluster/BackendSubCluster/YandexPostClickImporter'"/>
@@ -101,7 +102,6 @@
 
 <xsl:variable name="channel-server-descriptor" select="'AdCluster/FrontendSubCluster/ChannelServer'"/>
 <xsl:variable name="channel-controller-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController'"/>
-<xsl:variable name="channel-search-service-descriptor" select="'AdCluster/FrontendSubCluster/ChannelSearchService'"/>
 
 <xsl:variable name="default-kafka-threads" select="'20'"/>
 <xsl:variable name="default-kafka-message-queue-size" select="'1000000'"/>
@@ -140,8 +140,6 @@
 <xsl:variable name="channel-server-log-path" select="'/log/ChannelServer/ChannelServer'"/>
 <xsl:variable name="channel-controller-log-level" select="$default-log-level"/>
 <xsl:variable name="channel-controller-log-path" select="'/log/ChannelController/ChannelController'"/>
-<xsl:variable name="channel-search-service-log-level" select="$default-log-level"/>
-<xsl:variable name="channel-search-service-log-path" select="'/log/ChannelSearchService/ChannelSearchService'"/>
 <xsl:variable name="sync-logs-log-level" select="$default-log-level"/>
 <xsl:variable name="def-sync-logs-server-log-level" select="'1'"/>
 <xsl:variable name="sync-logs-log-path" select="'/log/SyncLogs/SyncLogs'"/>
@@ -193,8 +191,6 @@
 <xsl:variable name="def-dictionary-provider-threads" select="'10'"/>
 <xsl:variable name="def-user-bind-server-threads" select="'40'"/>
 <xsl:variable name="def-user-bind-controller-threads" select="'40'"/>
-<xsl:variable name="def-channel-search-threads" select="'10'"/>
-<xsl:variable name="def-channel-server-threads" select="'40'"/>
 
 <!-- updateParams specific params -->
 <xsl:variable name="campaign-manager-update-period" select="'180'"/>
@@ -320,7 +316,6 @@
 <xsl:variable name="def-channel-controller-grpc-port" select="$def-range-start + 430"/>
 <xsl:variable name="def-campaign-server-port" select="$def-range-start + 6"/>
 <xsl:variable name="def-campaign-manager-port" select="$def-range-start + 7"/>
-<xsl:variable name="def-channel-search-service-port" select="$def-range-start + 9"/>
 <xsl:variable name="def-dictionary-provider-port" select="$def-range-start + 10"/>
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>
 <xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 35"/>
@@ -333,6 +328,8 @@
 <xsl:variable name="def-sync-logs-server-port" select="$def-range-start + 14"/>
 <xsl:variable name="def-stat-receiver-port" select="$def-range-start + 15"/>
 <xsl:variable name="def-request-info-manager-port" select="$def-range-start + 16"/>
+<xsl:variable name="def-url-info-storage-grpc-port" select="$def-range-start + 433"/>
+<xsl:variable name="def-url-info-storage-http-port" select="$def-range-start + 434"/>
 <xsl:variable name="def-stunnel-client-port" select="$def-range-start + 21"/>
 <xsl:variable name="def-predictor-sync-logs-server-port" select="$def-range-start + 68"/>
 
@@ -411,10 +408,6 @@
 <xsl:variable name="def-bidcost-predictor-merger-aggregate-period" select="3600"/>
 <xsl:variable name="def-bidcost-predictor-merger-analyze-days" select="180"/>
 <xsl:variable name="def-bidcost-predictor-merger-generate-model-period" select="86400"/>
-
-<!-- Predictor SVM generator defaults -->
-<xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>
-<xsl:variable name="predictor-svm-generator-log-path" select="'/log/Predictor/SVMGenerator'"/>
 
 <!-- CTR model viewer defaults -->
 <xsl:variable name="def-ctr-predict-model-viewer-port" select="$def-range-start + 70"/>

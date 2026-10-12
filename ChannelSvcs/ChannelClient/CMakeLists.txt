@@ -10,7 +10,6 @@ target_link_libraries(ChannelGrpcClient
     Logger
     ChannelControllerGrpc
     ChannelServerGrpcClient
-    ChannelServerIDL
 )
 
 target_include_directories(ChannelGrpcClient PUBLIC

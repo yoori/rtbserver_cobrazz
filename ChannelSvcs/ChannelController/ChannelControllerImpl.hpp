@@ -46,7 +46,6 @@ namespace AdServer::ChannelSvcs
     struct ChannelServerRef
     {
       std::string endpoint;
-      std::string update_ref;
       ChunkArray chunks;
       unsigned long check_sum = 0;
     };

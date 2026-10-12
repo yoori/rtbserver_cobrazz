@@ -113,7 +113,7 @@ target_link_libraries(CampaignConfigSource
     CORBACommons
     CampaignCommonsIDL
     CorbaTypesIDL
-    CampaignServerIDL
+    CampaignServerGrpc
     CampaignConfig
     CampaignIndex
     CreativeTemplateArgs
@@ -259,7 +259,7 @@ target_link_libraries(CampaignManager
     AdServerCommonsXSD
     CampaignManagerConfigXSD
     CampaignCommonsIDL
-    CampaignServerIDL
+    CampaignServerGrpc
     CorbaTypesIDL
     ProcessControlIDL
     CampaignTypes

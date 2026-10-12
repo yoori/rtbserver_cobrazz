@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <Commons/Grpc/GrpcExecutor.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelGrpcAlgs.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>

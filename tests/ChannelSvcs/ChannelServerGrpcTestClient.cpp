@@ -6,44 +6,11 @@
 
 #include <google/protobuf/util/json_util.h>
 #include <grpcpp/grpcpp.h>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
 
 namespace
 {
   namespace ChannelProto = adserver::channel_svcs::channel_server;
-
-  void check_corba_endpoints(const std::string& endpoint)
-  {
-    CORBACommons::CorbaClientAdapter_var adapter = new CORBACommons::CorbaClientAdapter();
-    const std::string prefix = "corbaloc:iiop:" + endpoint + "/";
-    CORBA::Object_var object = adapter->resolve_object(
-      CORBACommons::CorbaObjectRef((prefix + "ChannelUpdate").c_str()));
-    AdServer::ChannelSvcs::ChannelUpdate_var update =
-      AdServer::ChannelSvcs::ChannelUpdate::_narrow(object.in());
-    if (CORBA::is_nil(update.in()) || update->_non_existent())
-    {
-      throw std::runtime_error("ChannelUpdate is unavailable");
-    }
-
-    for (const char* name : {"ChannelServer", "ChannelServerControl"})
-    {
-      try
-      {
-        object = adapter->resolve_object(CORBACommons::CorbaObjectRef((prefix + name).c_str()));
-        if (!object->_non_existent())
-        {
-          throw std::runtime_error(std::string(name) + " CORBA endpoint still exists");
-        }
-      }
-      catch (const CORBA::OBJECT_NOT_EXIST&)
-      {
-      }
-    }
-
-    std::cout << "ChannelUpdate available; ChannelServer and ChannelServerControl absent\n";
-  }
 
   template<class Request, class Response, class Method>
   void call(ChannelProto::ChannelServerGrpc::Stub& stub, Method method)
@@ -89,12 +56,6 @@ int main(int argc, char** argv)
       throw std::runtime_error("Usage: ChannelServerGrpcTestClient HOST:PORT METHOD < request.json");
     }
 
-    if (std::string(argv[2]) == "check_corba_endpoints")
-    {
-      check_corba_endpoints(argv[1]);
-      return 0;
-    }
-
     grpc::ChannelArguments args;
     args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
     auto channel = grpc::CreateCustomChannel(argv[1], grpc::InsecureChannelCredentials(), args);
@@ -125,6 +86,26 @@ int main(int argc, char** argv)
       call<ChannelProto::SetProxySourcesRequest, ChannelProto::SetProxySourcesResponse>(
         *stub, &ChannelProto::ChannelServerGrpc::Stub::set_proxy_sources);
     }
+    else if (method == "check")
+    {
+      call<ChannelProto::CheckRequest, ChannelProto::CheckResponse>(
+        *stub, &ChannelProto::ChannelServerGrpc::Stub::check);
+    }
+    else if (method == "update_triggers")
+    {
+      call<ChannelProto::UpdateTriggersRequest, ChannelProto::UpdateTriggersResponse>(
+        *stub, &ChannelProto::ChannelServerGrpc::Stub::update_triggers);
+    }
+    else if (method == "update_all_ccg")
+    {
+      call<ChannelProto::UpdateAllCcgRequest, ChannelProto::UpdateAllCcgResponse>(
+        *stub, &ChannelProto::ChannelServerGrpc::Stub::update_all_ccg);
+    }
+    else if (method == "get_count_chunks")
+    {
+      call<ChannelProto::GetCountChunksRequest, ChannelProto::GetCountChunksResponse>(
+        *stub, &ChannelProto::ChannelServerGrpc::Stub::get_count_chunks);
+    }
     else
     {
       throw std::runtime_error("Unknown method: " + method);
@@ -133,11 +114,6 @@ int main(int argc, char** argv)
   catch (const std::exception& ex)
   {
     std::cerr << ex.what() << '\n';
-    return 1;
-  }
-  catch (const CORBA::Exception& ex)
-  {
-    std::cerr << ex << '\n';
     return 1;
   }
 }

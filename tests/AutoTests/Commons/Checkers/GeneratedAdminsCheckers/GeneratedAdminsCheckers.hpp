@@ -37,4 +37,3 @@
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/UserKeywordProfileChecker.hpp>
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/CCGKeywordChecker.hpp>
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/TriggerChecker.hpp>
-#include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/ChannelSearchChecker.hpp>

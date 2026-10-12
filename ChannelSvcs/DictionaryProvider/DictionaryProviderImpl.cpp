@@ -1,3 +1,4 @@
+#include <fstream>
 #include <xsd/ChannelSvcs/DictionaryProviderConfig.hpp>
 #include <Commons/Algs.hpp>
 
@@ -72,7 +73,7 @@ namespace AdServer::ChannelSvcs
     }
     try
     {
-      task_runned_.fetch_sub(1, std::memory_order_relaxed);
+      task_runned_.fetch_sub(1, std::memory_order_acq_rel);
     }
     catch(const eh::Exception& e)
     {
@@ -89,57 +90,54 @@ namespace AdServer::ChannelSvcs
     }
   }
 
-  ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-  DictionaryProviderImpl::get_lexemes(const char* language, const ::CORBACommons::StringSeq& words)
-  /*throw(ChannelSvcs::NotReady, ChannelSvcs::ImplementationException)*/
+  DictionaryProviderImpl::~DictionaryProviderImpl() noexcept = default;
+
+  grpc::Status DictionaryProviderImpl::get_lexemes(
+    grpc::ServerContext* context,
+    const adserver::channel_svcs::dictionary_provider::GetLexemesRequest* request,
+    adserver::channel_svcs::dictionary_provider::GetLexemesResponse* response)
   {
-    const long task_runned = task_runned_.load(std::memory_order_relaxed);
-    if (task_runned)
+    const long remaining = task_runned_.load(std::memory_order_acquire);
+    if (remaining)
     {
-      Stream::Error err;
-      err << "Not ready :" << task_runned << " tasks remained";
-      CORBACommons::throw_desc<ChannelSvcs::NotReady>(err.str());
+      return {grpc::StatusCode::UNAVAILABLE,
+        "DictionaryProvider not ready: " + std::to_string(remaining) + " tasks remained"};
     }
+
     try
     {
-      LexemeItemVector item_vector(words.length());
-      for (size_t i = 0; i < item_vector.size(); i++)
+      LexemeItemVector items(request->words_size());
+      for (std::size_t i = 0; i < items.size(); ++i)
       {
-        item_vector[i].word = words[i];
+        items[i].word = request->words(i).c_str();
       }
-      cont_.find_lexemes(language, item_vector);
-      AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq_var ret_value =
-        new ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq;
-      ret_value->length(item_vector.size());
-      for (size_t i = 0; i < item_vector.size(); i++)
+
+      cont_.find_lexemes(request->language().c_str(), items);
+      std::size_t index = 0;
+      for (const auto& item : items)
       {
-        if (!item_vector[i].forms.empty())
+        // Synchronous gRPC cancellation checks poll the completion queue.
+        if (index++ % 1024 == 0 && context->IsCancelled())
         {
-          (*ret_value)[i].forms.length( item_vector[i].forms.size() );
-          size_t j = 0;
+          return {grpc::StatusCode::CANCELLED, "Dictionary request cancelled"};
+        }
 
-          for (Forms::const_iterator it = item_vector[i].forms.begin();
-              it != item_vector[i].forms.end(); ++it, j++)
-          {
-            (*ret_value)[i].forms[j] << *it;
-          }
-
-          if (logger()->log_level() >= Logging::Logger::TRACE)
-          {
-            const Forms& forms = item_vector[i].forms;
-            Algs::print(logger()->sstream(Logging::Logger::TRACE, ASPECT) << "Matched lexeme: ", forms.begin(), forms.end());
-          }
+        auto* lexeme = response->add_lexemes();
+        for (const auto& form : item.forms)
+        {
+          lexeme->add_forms(form.data(), form.size());
         }
       }
-      return ret_value._retn();
+
+      return grpc::Status::OK;
     }
-    catch(const eh::Exception& e)
+    catch (const std::exception& error)
     {
-      Stream::Error err;
-      err << "ImplementationException: " << e.what();
-      CORBACommons::throw_desc<ChannelSvcs::ImplementationException>(err.str());
-      return 0;
+      return {grpc::StatusCode::INTERNAL, error.what()};
+    }
+    catch (...)
+    {
+      return {grpc::StatusCode::INTERNAL, "Dictionary lookup failed"};
     }
   }
-
 }

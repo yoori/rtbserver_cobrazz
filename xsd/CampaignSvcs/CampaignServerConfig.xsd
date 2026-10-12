@@ -32,6 +32,17 @@
     </xsd:sequence>
   </xsd:group>
 
+  <xsd:complexType name="LogGeneralizerGrpcEndpointType">
+    <xsd:attribute name="endpoint" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerGrpcRefsType">
+    <xsd:sequence>
+      <xsd:element name="Ref" type="LogGeneralizerGrpcEndpointType"
+        minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
   <xsd:complexType name="CampaignServerModeType">
     <xsd:annotation>
       <xsd:documentation>Sets Server mode options</xsd:documentation>
@@ -39,16 +50,16 @@
     <xsd:sequence>
       <xsd:choice>
         <xsd:group ref="PrimaryConnections"/>
-        <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType" maxOccurs="1">
+        <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType" maxOccurs="1">
           <xsd:annotation>
             <xsd:documentation>Defines refs to primary CampaignServer's </xsd:documentation>
           </xsd:annotation>
         </xsd:element>
       </xsd:choice>
 
-      <xsd:element name="LogGeneralizerCorbaRef" type="MultiCorbaObjectRefType" maxOccurs="1">
+      <xsd:element name="LogGeneralizerGrpcRefs" type="LogGeneralizerGrpcRefsType" maxOccurs="1">
         <xsd:annotation>
-          <xsd:documentation>Defines corba refs to LogGeneralizers</xsd:documentation>
+          <xsd:documentation>Defines gRPC endpoints of LogGeneralizers</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
@@ -71,7 +82,7 @@
       <xsd:documentation>Sets Proxy mode options</xsd:documentation>
     </xsd:annotation>
     <xsd:all>
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType">
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType">
         <xsd:annotation>
           <xsd:documentation>Defines refs to corba object CampaignServer</xsd:documentation>
         </xsd:annotation>
@@ -94,12 +105,6 @@
       <xsd:documentation>Campaign Server process runtime parameters.</xsd:documentation>
     </xsd:annotation>
     <xsd:sequence>
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
-        <xsd:annotation>
-          <xsd:documentation>Corba config.</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
       <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
@@ -108,6 +113,7 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="GrpcConfig" type="GrpcConfigType"/>
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
           <xsd:documentation>Sets logger options, such as log file name.</xsd:documentation>

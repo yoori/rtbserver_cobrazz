@@ -3,6 +3,7 @@ package AdServer::CampaignSvcs::CampaignServer;
 use strict;
 use AdServer::Functions;
 use AdServer::Path;
+use AdServer::DBAccess;
 
 
 my $pid_file = "\${workspace_root}/run/CampaignServer.pid";
@@ -41,7 +42,8 @@ sub is_alive
 sub db_status
 {
   my ($host, $descr) = @_;
-  return is_alive @_;
+  my $status = is_alive @_;
+  return $status == 1 ? AdServer::DBAccess::db_status($host, $descr, "CampaignServer") : $status;
 }
 
 1;

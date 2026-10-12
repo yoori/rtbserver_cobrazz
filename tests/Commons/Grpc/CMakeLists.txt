@@ -18,10 +18,22 @@ add_executable(BatchingTimerTest
 )
 
 add_executable(DeferredClientDeletionTest DeferredClientDeletionTest.cpp)
+add_executable(DbAccessTest DbAccessTest.cpp)
+target_link_libraries(DbAccessTest PRIVATE GrpcBatch)
 target_link_libraries(DeferredClientDeletionTest PRIVATE Commons Generics GrpcBatch Logger)
+
+add_executable(CampaignServerGrpcTest CampaignServerGrpcTest.cpp)
+target_link_libraries(CampaignServerGrpcTest PRIVATE CampaignServerGrpc Generics Logger)
 
 add_executable(DrainCallbackLifetimeTest DrainCallbackLifetimeTest.cpp)
 target_link_libraries(DrainCallbackLifetimeTest PRIVATE Commons Generics GrpcBatch)
+
+add_executable(InflightLimiterTest InflightLimiterTest.cpp)
+target_link_libraries(InflightLimiterTest PRIVATE Commons Generics GrpcBatch)
+target_link_options(InflightLimiterTest PRIVATE
+  "-Wl,--wrap=_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE"
+  "-Wl,--wrap=pthread_mutex_lock"
+)
 
 target_link_libraries(RefPoolTest
   PRIVATE

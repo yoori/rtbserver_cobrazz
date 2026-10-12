@@ -14,10 +14,10 @@
 #include <Commons/Postgres/ConnectionPool.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
-#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelUpdateTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/ChannelServer/ChannelServerTypes.hpp>
 
@@ -27,8 +27,6 @@
 
 namespace AdServer::ChannelSvcs
 {
-  typedef ChannelUpdateBase ChannelCurrent;
-
   typedef std::map<
     std::string, const Language::Segmentor::SegmentorInterface*> SegmMap;
 
@@ -61,25 +59,17 @@ namespace AdServer::ChannelSvcs
 
     struct UnmergedData
     {//holder of unmerged data
-      UnmergedData() noexcept : index_(0), data_(nullptr) {};
+      UnmergedData() noexcept;
 
-      bool empty() const noexcept
-      {
-        return data_.operator->() == nullptr;
-      }
+      bool empty() const noexcept;
 
-      void set_unmered_data(
-        ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_var result,
-        CORBA::ULong ind)
-        noexcept;
+      void set_unmered_data(ChannelUpdate::UpdateDataPtr result, size_t ind) noexcept;
 
-      ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData*
-      get_unmered_data(CORBA::ULong& index)
-        noexcept;
+      ChannelUpdate::UpdateDataPtr get_unmered_data(size_t& index) noexcept;
 
     private:
-      CORBA::ULong index_;
-      ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_var data_;
+      size_t index_;
+      ChannelUpdate::UpdateDataPtr data_;
     };
 
   public:
@@ -122,14 +112,9 @@ namespace AdServer::ChannelSvcs
 
     typedef std::set<unsigned long> CombinedChannel;
 
-    typedef
-      CORBACommons::ObjectPoolRefConfiguration ServerPoolConfig;
+    using ServerPoolConfig = AdServer::CampaignSvcs::CampaignServerPoolConfig;
 
-    typedef
-      CORBACommons::ObjectPool<
-        AdServer::CampaignSvcs::CampaignServer,
-        ServerPoolConfig>
-      CampaignServerPool;
+    using CampaignServerPool = AdServer::CampaignSvcs::CampaignServerPool;
 
     typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
 
@@ -331,14 +316,7 @@ namespace AdServer::ChannelSvcs
   class ChannelServerProxy: public ChannelServerVariantBase
   {
   public:
-    typedef
-      CORBACommons::ObjectPool<
-        AdServer::ChannelSvcs::ChannelUpdate,
-        ServerPoolConfig>
-      ChannelProxyPool;
-
-    typedef std::unique_ptr<ChannelProxyPool> ChannelProxyPoolPtr;
-    typedef std::unique_ptr<ChannelLoadSessionImpl> LoadSessionPtr;
+    using LoadSessionPtr = std::unique_ptr<ChannelLoadSessionImpl>;
 
     enum
     {
@@ -347,8 +325,8 @@ namespace AdServer::ChannelSvcs
     };
 
     ChannelServerProxy(
-      const ChannelSvcs::GroupLoadDescriptionSeq& servers,
-      const ServerPoolConfig& proxy_pool_config,
+      const GroupLoadDescription& servers,
+      const std::vector<std::string>& proxy_endpoints,
       const std::set<unsigned short>& ports,
       const std::vector<unsigned int>& sources,
       unsigned long count_chunks,
@@ -390,7 +368,8 @@ namespace AdServer::ChannelSvcs
   private:
     unsigned long priority_;
     unsigned long tries_;
-    ChannelProxyPoolPtr proxy_pool_;
+    unsigned long proxy_tries_;
+    LoadSessionPtr proxy_session_;
     LoadSessionPtr load_session_;
   };
 
@@ -469,103 +448,51 @@ namespace AdServer::ChannelSvcs
   void ChannelServerProxy::do_query_(const char* fn_name, Function func, Args&... args)
     /*throw(ChannelServerException::Exception)*/
   {
-    bool next_try;
-    bool exception;
-    unsigned long iter = 0;
-    bool log = false;
-    std::ostringstream ostr;
-    bool use_servers = priority_ == PRIORITY_SERVERS && tries_;
-    Generics::Timer timer;
-    do
+    std::ostringstream errors;
+    auto try_session = [&](ChannelLoadSessionImpl* session, unsigned long attempts)
     {
-      exception = false;
-      next_try = false;
-      try
+      for (unsigned long i = 0; session && i < attempts; ++i)
       {
-        timer.start();
-        if (use_servers)
+        try
         {
-          ++iter;
-          (&*load_session_->*func)(args...);
+          Generics::Timer timer;
+          timer.start();
+          (session->*func)(args...);
+          timer.stop();
+          logger_->sstream(Logging::Logger::DEBUG, ASPECT)
+            << fn_name << ": execute query time: " << timer.elapsed_time();
+          return true;
         }
-        else
+        catch (const ImplementationException& ex)
         {
-          ChannelProxyPool::ObjectHandlerType proxy = proxy_pool_->get_object();
-          try
-          {
-            (&*proxy->*func)(args...);
-          }
-          catch(const AdServer::ChannelSvcs::NotConfigured&)
-          {
-            throw;
-          }
-          catch(...)
-          {
-            proxy.release_bad(String::SubString(fn_name));
-            throw;
-          }
+          errors << fn_name << ": " << ex.what() << "; ";
         }
-        timer.stop();
-        logger_->sstream(Logging::Logger::DEBUG, ASPECT)
-          << fn_name << ": execute query time: " << timer.elapsed_time();
-      }
-      catch(const AdServer::ChannelSvcs::ImplementationException& e)
-      {
-        ostr << (log ? "; " : fn_name) << ": ImplementationException: " << e.description;
-        log = true;
-        exception = true;
-      }
-      catch(const AdServer::ChannelSvcs::NotConfigured& e)
-      {
-        ostr << (log ? "; " : fn_name) << ": NotConfigured" << e.description;
-        log = true;
-        exception = true;
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error err;
-        err << fn_name << ": CORBA::SystemException: " << e;
-        logger_->log(err.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-ICON-0");
-        exception = true;
-      }
-      catch(const eh::Exception& ex)
-      {
-        ostr << fn_name << ": eh::Exception: " << ex.what();
-        log = true;
-        exception = true;
+        catch (const NotConfigured& ex)
+        {
+          errors << fn_name << ": " << ex.what() << "; ";
+        }
+        catch (const eh::Exception& ex)
+        {
+          errors << fn_name << ": " << ex.what() << "; ";
+        }
       }
 
-      if (exception)
-      {
-        if (use_servers)
-        {
-          if (iter < tries_)
-          {
-            next_try = true;
-          }
-          else if (proxy_pool_.get() && priority_ == PRIORITY_SERVERS)
-          {
-            use_servers = false;
-            next_try = true;
-          }
-        }
-        else if (priority_ == PRIORITY_PROXY && tries_)
-        {
-          use_servers = true;
-          next_try = true;
-        }
-      }
-    }
-    while (next_try);
+      return false;
+    };
 
-    if (exception)
+    const bool success = priority_ == PRIORITY_SERVERS ?
+      (try_session(load_session_.get(), tries_) ||
+        try_session(proxy_session_.get(), proxy_tries_)) :
+      (try_session(proxy_session_.get(), proxy_tries_) ||
+        try_session(load_session_.get(), tries_));
+    if (!success)
     {
-      throw ChannelServerException::Exception(log ? ostr.str().c_str() : "");
+      throw ChannelServerException::Exception(errors.str().c_str());
     }
-    else if (log)
+
+    if (!errors.str().empty())
     {
-      logger_->log(String::SubString(ostr.str()), Logging::Logger::ERROR, ASPECT, "ADS-IMPL-15");
+      logger_->log(errors.str(), Logging::Logger::ERROR, ASPECT, "ADS-IMPL-15");
     }
   }
-
 }

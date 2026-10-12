@@ -41,31 +41,7 @@ namespace
   {
   public:
     Service(std::shared_ptr<Pool> pool, Strategy strategy, bool benchmark = false,
-      bool distinct_hashes = false)
-      : pool_(std::move(pool)), benchmark_(benchmark)
-    {
-      const auto hash = [benchmark, distinct_hashes](const Item& request) -> std::size_t
-      {
-        if (benchmark)
-        {
-          return std::hash<std::string>()(request.full_method());
-        }
-
-        // Exercise both full-hash collisions and distinct hashes mapped to the same lane.
-        return distinct_hashes ? 64 * static_cast<unsigned char>(request.full_method().front()) : 0;
-      };
-      const auto key = [](const Item& request) -> std::string_view
-      {
-        return request.full_method();
-      };
-      const auto handler = [this](Item&& request, Item& response, grpc::Status& status)
-      {
-        return handle(std::move(request), response, status);
-      };
-      register_batch_coro_method<Item, Item>(
-        "/test.Match", handler, hash, true, true, strategy, key);
-      register_batch_coro_method<Item, Item>("/test.Legacy", handler, hash, true, true);
-    }
+      bool distinct_hashes = false, bool use_arena_for_response = true);
 
     using ServiceBase::start_handle_batch_request;
 
@@ -105,6 +81,14 @@ namespace
     }
 
   private:
+    struct Handler
+    {
+      AdServer::Commons::StartableAwaitable<void>
+      handle(Item&& request, Item& response, grpc::Status& status) const;
+
+      Service* service;
+    };
+
     struct Segment
     {
       explicit Segment(Service& service) : service(service)
@@ -195,6 +179,8 @@ namespace
 
     const std::shared_ptr<Pool> pool_;
     const bool benchmark_;
+    const bool use_arena_for_response_;
+    Handler handler_{this};
     std::mutex lock_;
     std::condition_variable condition_;
     std::set<std::uint64_t> started_;
@@ -203,6 +189,50 @@ namespace
     std::atomic<unsigned> executing_{0};
     AdServer::Commons::AsyncMutex mutex_;
   };
+
+  Service::Service(std::shared_ptr<Pool> pool, Strategy strategy, bool benchmark,
+    bool distinct_hashes, bool use_arena_for_response)
+    : pool_(std::move(pool)), benchmark_(benchmark),
+      use_arena_for_response_(use_arena_for_response)
+  {
+    const auto hash = [benchmark, distinct_hashes](const Item& request) -> std::size_t
+    {
+      if (benchmark)
+      {
+        return std::hash<std::string>()(request.full_method());
+      }
+
+      // Exercise both full-hash collisions and distinct hashes mapped to the same lane.
+      return distinct_hashes ? 64 * static_cast<unsigned char>(request.full_method().front()) : 0;
+    };
+    const auto key = [](const Item& request) -> std::string_view
+    {
+      return request.full_method();
+    };
+    using Call = AdServer::Grpc::GrpcCoroCall<Handler, Handler, Item, Item>;
+    register_batch_method(&handler_, Call{
+      nullptr, &Handler::handle, nullptr, "/test.Match", hash, true,
+      use_arena_for_response, strategy, key});
+    register_batch_method(&handler_, Call{
+      nullptr, &Handler::handle, nullptr, "/test.Legacy", hash, true,
+      use_arena_for_response, Strategy::Sequential, {}});
+  }
+
+  AdServer::Commons::StartableAwaitable<void>
+  Service::Handler::handle(Item&& request, Item& response, grpc::Status& status) const
+  {
+    assert((response.GetArena() != nullptr) == service->use_arena_for_response_);
+    if (request.payload() == "sync_throw")
+    {
+      throw std::runtime_error("synchronous handler failure");
+    }
+
+    if (request.payload() == "status")
+    {
+      status = grpc::Status(grpc::StatusCode::PERMISSION_DENIED, "test status");
+    }
+    return service->handle(std::move(request), response, status);
+  }
 
   class Publisher final : public ServiceBase::BatchResponsePublisher,
     public std::enable_shared_from_this<Publisher>
@@ -315,9 +345,10 @@ namespace
   }
 
   void test_independent_keys(const std::shared_ptr<Pool>& pool, bool partial,
-    bool distinct_hashes = false)
+    bool distinct_hashes = false, bool use_arena_for_response = true)
   {
-    Service service(pool, Strategy::CooperativeByKey, false, distinct_hashes);
+    Service service(
+      pool, Strategy::CooperativeByKey, false, distinct_hashes, use_arena_for_response);
     Request request;
     request.set_batch_id(10);
     if (partial)
@@ -555,9 +586,10 @@ namespace
     }
   }
 
-  void test_full_response(const std::shared_ptr<Pool>& pool, bool single_key)
+  void test_full_response(const std::shared_ptr<Pool>& pool, bool single_key,
+    bool use_arena_for_response = true)
   {
-    Service service(pool, Strategy::CooperativeByKey);
+    Service service(pool, Strategy::CooperativeByKey, false, false, use_arena_for_response);
     Request request;
     add(request, 0, "a", "wait");
     add(request, 1, "a", "throw");
@@ -592,6 +624,53 @@ namespace
     {
       assert(item.status_code() ==
         (item.request_id() == 1 ? grpc::StatusCode::INTERNAL : grpc::StatusCode::OK));
+    }
+  }
+
+  void test_handler_status(const std::shared_ptr<Pool>& pool, bool use_arena_for_response,
+    Strategy strategy)
+  {
+    Service service(pool, strategy, false, false, use_arena_for_response);
+    Request request;
+    add(request, 0, "a", "wait");
+    add(request, 1, "a", "status");
+    add(request, 2, "a", "sync_throw");
+    add(request, 3, "a");
+    Response response;
+    ServiceBase::BatchProcessingHandle handle;
+    std::promise<void> completion;
+    auto future = completion.get_future();
+    service.start_handle_batch_request(handle, request, response, [&](auto error)
+    {
+      assert(!error);
+      completion.set_value();
+    });
+    assert(service.wait_started(0));
+    assert(!service.started(1));
+    service.release(0);
+    assert(future.wait_for(2s) == std::future_status::ready);
+    assert(response.items_size() == 4);
+    for (const auto& item : response.items())
+    {
+      if (item.request_id() == 1)
+      {
+        assert(item.status_code() == grpc::StatusCode::PERMISSION_DENIED);
+        assert(item.status_message() == "test status");
+        assert(item.payload().empty());
+      }
+      else if (item.request_id() == 2)
+      {
+        assert(item.status_code() == grpc::StatusCode::INTERNAL);
+        assert(item.status_message() == "synchronous handler failure");
+      }
+      else
+      {
+        assert(item.status_code() == grpc::StatusCode::OK);
+        assert(item.status_message().empty());
+        Item result;
+        assert(result.ParseFromString(item.payload()));
+        assert(result.request_id() == item.request_id());
+      }
     }
   }
 
@@ -749,6 +828,8 @@ int main(int argc, char** argv)
     test_independent_keys(pool, true);
     test_independent_keys(pool, false);
     test_independent_keys(pool, true, true);
+    test_independent_keys(pool, true, false, false);
+    test_independent_keys(pool, false, false, false);
     test_legacy_and_mixed(pool, Strategy::Sequential, false);
     test_legacy_and_mixed(pool, Strategy::CooperativeByKey, true);
     test_timer_completion_race(pool);
@@ -757,6 +838,13 @@ int main(int argc, char** argv)
     test_ready_queue_handoffs(pool);
     test_full_response(pool, true);
     test_full_response(pool, false);
+    test_full_response(pool, true, false);
+    test_full_response(pool, false, false);
+    for (bool use_arena : {false, true})
+    {
+      test_handler_status(pool, use_arena, Strategy::CooperativeByKey);
+      test_handler_status(pool, use_arena, Strategy::Sequential);
+    }
     test_multi_lane_batch(pool, true);
     test_multi_lane_batch(pool, false);
     for (unsigned i = 0; i < 20; ++i)

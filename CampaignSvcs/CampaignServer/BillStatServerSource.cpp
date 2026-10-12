@@ -12,18 +12,12 @@ namespace AdServer::CampaignSvcs
   BillStatServerSource::BillStatServerSource(
     Logging::Logger* logger,
     unsigned long server_id,
-    const CORBACommons::CorbaObjectRefList& campaign_server_refs)
-    noexcept
+    const std::vector<std::string>& campaign_server_refs)
     : logger_(ReferenceCounting::add_ref(logger)),
       server_id_(server_id)
   {
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-      new CORBACommons::CorbaClientAdapter());
-
     campaign_servers_.reset(new CampaignServerPool(
       campaign_server_refs,
-      corba_client_adapter,
-      CORBACommons::ChoosePolicyType::PT_PERSISTENT,
       Generics::Time(10) // timeout
       ));
   }

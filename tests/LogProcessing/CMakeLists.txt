@@ -4,3 +4,13 @@ add_subdirectory(PrimaryDumpTest)
 add_subdirectory(RequestBasicChannelsReadTest)
 add_subdirectory(SyncLogsMoveTaskSchedulerTest)
 add_subdirectory(UserPropertiesLoggerPerfTest)
+
+add_executable(LogGeneralizerHttpTest
+  LogGeneralizerHttpTest.cpp
+  ../../LogProcessing/LogGeneralizer/LogGeneralizerHttp.cpp
+)
+target_link_libraries(LogGeneralizerHttpTest PRIVATE HttpServer Commons Generics)
+
+add_executable(LogGeneralizerGrpcTest LogGeneralizerGrpcTest.cpp)
+target_link_libraries(LogGeneralizerGrpcTest
+  PRIVATE LogGeneralizerGrpc GrpcBatch CampaignConfigModifier Logger)

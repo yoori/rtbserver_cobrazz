@@ -30,6 +30,10 @@ add_executable(StartableAwaitableTest
 add_executable(MonoStartableAwaitableTest MonoStartableAwaitableTest.cpp)
 target_link_libraries(MonoStartableAwaitableTest PRIVATE Commons Generics)
 
+add_executable(CooperativeGroupTest CooperativeGroupTest.cpp)
+target_link_libraries(CooperativeGroupTest PRIVATE Commons)
+target_link_options(CooperativeGroupTest PRIVATE "-Wl,--wrap=pthread_mutex_lock")
+
 add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp
 )

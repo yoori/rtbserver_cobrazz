@@ -90,8 +90,8 @@
 
       <xsd:element name="Storage" type="UserInfoManagerStorageType"/>
 
-      <xsd:element name="CampaignServerCorbaRef"
-        type="MultiCorbaObjectRefType">
+      <xsd:element name="CampaignServerGrpcRefs"
+        type="CampaignServerGrpcRefsType">
         <xsd:annotation>
           <xsd:documentation>
             CampaignServer reference

@@ -1,6 +1,5 @@
 add_subdirectory(AdServerCommons)
 add_subdirectory(CampaignSvcs)
-add_subdirectory(ChannelSearchSvcs)
 add_subdirectory(ChannelSvcs)
 add_subdirectory(Controlling)
 add_subdirectory(Frontends)

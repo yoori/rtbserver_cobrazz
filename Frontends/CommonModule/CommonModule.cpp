@@ -143,7 +143,6 @@ namespace AdServer
     {
       parse_config_(common_config, domain_config);
       grpc_executor_threads_ = common_config->grpc_executor_threads();
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
       task_runner_ = new Generics::TaskRunner(callback(), 2);
       add_child_object(task_runner_);
       scheduler_ = new Generics::Planner(callback());
@@ -178,21 +177,18 @@ namespace AdServer
       domain_parser_ = new CampaignSvcs::DomainParser(*domain_config);
 
       // initialize campaign servers pool
-      CORBACommons::CorbaObjectRefList campaign_server_refs;
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        common_config->CampaignServerCorbaRef(),
-        campaign_server_refs);
+      std::vector<std::string> campaign_server_refs;
+      campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
+        common_config->CampaignServerGrpcRefs());
 
-      CampaignServerPoolConfig pool_config(corba_client_adapter_.in());
+      CampaignServerPoolConfig pool_config;
       pool_config.timeout = Generics::Time(common_config->update_period());
 
       std::copy(
         campaign_server_refs.begin(),
         campaign_server_refs.end(),
-        std::back_inserter(pool_config.iors_list));
-      campaign_servers_.reset(new CampaignServerPool(
-        pool_config,
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+        std::back_inserter(pool_config.endpoints));
+      campaign_servers_.reset(new CampaignServerPool(pool_config));
 
       UpdateTask_var msg = new UpdateTask(
         this,

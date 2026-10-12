@@ -48,18 +48,18 @@
       <xsl:value-of select="concat($workspace-root, '/run/DictionaryProvider.pid')"/>
     </xsl:attribute>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$service-config/cfg:threadParams/@min"/>
+    <cfg:GrpcConfig>
+      <xsl:attribute name="process_threads">
+        <xsl:value-of select="$service-config/cfg:threadParams/@min"/>
         <xsl:if test="count($service-config/cfg:threadParams/@min) = 0">
           <xsl:value-of select="$def-dictionary-provider-threads"/>
         </xsl:if>
       </xsl:attribute>
 
-      <cfg:Endpoint host="*">
+      <cfg:Endpoint host="0.0.0.0">
         <xsl:attribute name="port"><xsl:value-of select="$service-port"/></xsl:attribute>
-        <cfg:Object servant="DictionaryProvider" name="DictionaryProvider"/>
       </cfg:Endpoint>
-    </cfg:CorbaConfig>
+    </cfg:GrpcConfig>
 
     <cfg:Dictionary lang="en" file="/opt/foros/dictionaries/lexemes.en"/>
     <cfg:Dictionary lang="de" file="/opt/foros/dictionaries/lexemes.de"/>

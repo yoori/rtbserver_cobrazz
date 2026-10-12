@@ -459,7 +459,19 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = @top_srcdir@/CampaignSvcs @top_srcdir@/ChannelSearchSvcs @top_srcdir@/ChannelSvcs @top_srcdir@/Commons @top_srcdir@/Controlling @top_srcdir@/DiscoverSvcs @top_srcdir@/Frontends @top_srcdir@/LogCommons @top_srcdir@/LogProcessing @top_srcdir@/ProfilingCommons @top_srcdir@/RequestInfoSvcs @top_srcdir@/UserInfoSvcs @top_srcdir@/UtilCommons @top_srcdir@/tests
+INPUT                  = @top_srcdir@/CampaignSvcs \
+                         @top_srcdir@/ChannelSvcs \
+                         @top_srcdir@/Commons \
+                         @top_srcdir@/Controlling \
+                         @top_srcdir@/DiscoverSvcs \
+                         @top_srcdir@/Frontends \
+                         @top_srcdir@/LogCommons \
+                         @top_srcdir@/LogProcessing \
+                         @top_srcdir@/ProfilingCommons \
+                         @top_srcdir@/RequestInfoSvcs \
+                         @top_srcdir@/UserInfoSvcs \
+                         @top_srcdir@/UtilCommons \
+                         @top_srcdir@/tests
 
 # If the value of the INPUT tag contains directories, you can use the
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp

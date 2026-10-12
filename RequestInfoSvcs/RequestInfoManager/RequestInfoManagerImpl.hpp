@@ -24,7 +24,7 @@
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
@@ -232,12 +232,8 @@ namespace AdServer::RequestInfoSvcs
     typedef Sync::Policy::PosixThread SyncPolicy;
 
   private:
-    typedef CORBACommons::ObjectPoolRefConfiguration
-      CampaignServerPoolConfig;
-    typedef CORBACommons::ObjectPool<
-        AdServer::CampaignSvcs::CampaignServer,
-        CampaignServerPoolConfig>
-      CampaignServerPool;
+    using CampaignServerPoolConfig = AdServer::CampaignSvcs::CampaignServerPoolConfig;
+    using CampaignServerPool = AdServer::CampaignSvcs::CampaignServerPool;
     typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
 
     CampaignServerPoolPtr
@@ -297,7 +293,6 @@ namespace AdServer::RequestInfoSvcs
   private:
     Generics::ActiveObjectCallback_var callback_;
     Logging::Logger_var logger_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     const unsigned SERVICE_INDEX_;
     CampaignServerPoolPtr campaign_servers_;
 

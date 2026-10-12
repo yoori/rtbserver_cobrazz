@@ -12,15 +12,12 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ServantImpl.hpp>
 #include <HTTP/HttpAsync.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Commons/DbStateChanger.hpp>
 #include <LogCommons/FileReceiver.hpp>
 
-#include "LogGeneralizer.hpp"
-#include "LogGeneralizer_s.hpp"
+#include "LogGeneralizerTypes.hpp"
 
 #include "ProcStatImpl.hpp"
 #include "LogGeneralizerStatDef.hpp"
@@ -50,8 +47,7 @@ namespace AdServer::LogProcessing
 
   class LogGeneralizerImpl:
     public Generics::CompositeActiveObject,
-    public CORBACommons::ReferenceCounting::
-      ServantImpl<POA_AdServer::LogProcessing::LogGeneralizer>
+    public virtual ReferenceCounting::AtomicImpl
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -71,19 +67,9 @@ namespace AdServer::LogProcessing
 
     virtual bool get_db_state() /*throw(Commons::DbStateChanger::NotSupported)*/;
 
-    virtual void stop_stat_upload(CORBA::ULong client_id)
-      /*throw(AdServer::LogProcessing::LogGeneralizer::NotSupported,
-            AdServer::LogProcessing::LogGeneralizer::ImplementationException)*/;
-
-    virtual void start_stat_upload(CORBA::ULong client_id, CORBA::Boolean clear)
-      /*throw(AdServer::LogProcessing::LogGeneralizer::NotSupported,
-            AdServer::LogProcessing::LogGeneralizer::ImplementationException,
-            AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted)*/;
-
-    virtual StatInfo* get_stat_info(CORBA::ULong client_id, CORBA::Boolean clear)
-      /*throw(AdServer::LogProcessing::LogGeneralizer::NotSupported,
-            AdServer::LogProcessing::LogGeneralizer::ImplementationException,
-            AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted)*/;
+    void stop_stat_upload(std::uint32_t client_id);
+    void start_stat_upload(std::uint32_t client_id, bool clear);
+    StatInfo get_stat_info(std::uint32_t client_id, bool clear);
 
     virtual
     void

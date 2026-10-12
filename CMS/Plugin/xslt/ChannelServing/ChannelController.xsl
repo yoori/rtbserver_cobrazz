@@ -14,7 +14,7 @@
 <xsl:output method="xml" indent="yes" encoding="utf-8"/>
 
 <xsl:include href="../Functions.xsl"/>
-<xsl:include href="../CampaignManagement/CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="../CampaignManagement/CampaignServersGrpcRefs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="cluster_id" select="$CLUSTER_ID * 1024"/>
@@ -58,26 +58,6 @@
 
         <cfg:ChannelServerHost>
           <cfg:ChannelServerGrpcRef host="{.}" port="{$channel-server-grpc-port}"/>
-          <xsl:variable name="channel-server-corba-port">
-            <xsl:for-each select="$channel-servers">
-              <xsl:variable name="channel-server-config" select="configuration/cfg:channelServer"/>
-              <xsl:variable name="hosts-for-config">
-                <xsl:call-template name="GetHosts">
-                  <xsl:with-param name="hosts" select="@host"/>
-                  <xsl:with-param name="error-prefix" select="'ChannelController'"/>
-                </xsl:call-template>
-              </xsl:variable>
-              <xsl:for-each select="exsl:node-set($hosts-for-config)//host">
-                <xsl:if test=". = $this">
-                  <xsl:value-of select="$channel-server-config/cfg:networkParams/@port"/>
-                  <xsl:if test="count($channel-server-config/cfg:networkParams/@port) = 0">
-                    <xsl:value-of select="$def-channel-server-port"/>
-                  </xsl:if>
-                </xsl:if>
-              </xsl:for-each>
-            </xsl:for-each>
-          </xsl:variable>
-          <cfg:ChannelUpdateRef name="ChannelUpdate" ref="{concat('corbaloc:iiop:', ., ':', $channel-server-corba-port, '/ChannelUpdate')}"/>
         </cfg:ChannelServerHost>
       </xsl:if>
     </xsl:for-each>
@@ -167,7 +147,7 @@
             <xsl:message terminate="yes"> ChannelController(central mode): db connection undefined. </xsl:message>
           </xsl:if>
           <cfg:RegularSource>
-            <xsl:call-template name="CampaignServerCorbaRefs">
+            <xsl:call-template name="CampaignServerGrpcRefs">
               <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
               <xsl:with-param name="service-name" select="'ChannelController(central mode)'"/>
             </xsl:call-template>

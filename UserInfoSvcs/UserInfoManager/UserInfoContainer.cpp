@@ -78,6 +78,91 @@ namespace
 
 namespace AdServer::UserInfoSvcs
 {
+  UserInfoContainer::UserTransaction::UserTransaction(TransactionHolderBase* holder) noexcept
+    : TransactionBase(holder)
+  {}
+
+  UserInfoContainer::UserTransaction::UserTransaction(
+    TransactionHolderBase* holder, AdServer::Commons::AsyncMutex::Guard&& guard) noexcept
+    : TransactionBase(holder, std::move(guard))
+  {}
+
+  UserInfoContainer::UserTransaction::~UserTransaction() noexcept = default;
+
+  UserInfoContainer::UserTransactionMap::UserTransactionMap(unsigned long portions) noexcept
+    : TransactionMap(0, portions)
+  {}
+
+  UserInfoContainer::UserTransaction_var
+  UserInfoContainer::UserTransactionMap::create_transaction_impl_(
+    TransactionHolder* holder, const UserId&, const UserTransaction::ArgType&)
+  {
+    return new UserTransaction(holder);
+  }
+
+  UserInfoContainer::UserTransaction_var
+  UserInfoContainer::UserTransactionMap::create_transaction_impl_(
+    TransactionHolder* holder,
+    const UserId&,
+    const UserTransaction::ArgType&,
+    AdServer::Commons::AsyncMutex::Guard&& guard)
+  {
+    return new UserTransaction(holder, std::move(guard));
+  }
+
+  AdServer::Commons::StartableAwaitable<UserInfoContainer::UserTransaction_var>
+  UserInfoContainer::co_get_user_transaction_(
+    const UserId& user_id, bool temporary, bool check_max_waiters)
+  {
+    const auto start = std::chrono::steady_clock::now();
+    const auto collect_slow_transaction = [&]() noexcept
+    {
+      const std::uint64_t wait_us = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - start).count();
+      if (wait_us >= SLOW_TRANSACTION_THRESHOLD_US)
+      {
+        operation_state_collector_.add(
+          temporary ? ProfileType::TEMP : ProfileType::BASE, user_id, wait_us);
+      }
+    };
+
+    try
+    {
+      auto transaction = co_await user_transactions_.co_get_transaction(
+        user_id,
+        check_max_waiters,
+        AdServer::ProfilingCommons::OP_RUNTIME,
+        temporary ? max_temp_profile_waiters_ : max_base_profile_waiters_);
+      collect_slow_transaction();
+      co_return transaction;
+    }
+    catch (const UserTransactionMap::MaxWaitersReached& ex)
+    {
+      collect_slow_transaction();
+      throw MaxWaitersReached(ex.what());
+    }
+    catch (...)
+    {
+      collect_slow_transaction();
+      throw;
+    }
+  }
+
+  void UserInfoContainer::save_user_profile_async_(
+    UserProfileMap* profiles,
+    const UserId& user_id,
+    const Generics::ConstSmartMemBuf* profile,
+    const Generics::Time& now,
+    UserTransaction_var transaction)
+  {
+    // The coroutine may finish before the write; keep the lock for this user until completion.
+    profiles->save_profile_async(user_id, profile, now,
+      [transaction = std::move(transaction)](std::optional<std::string>) mutable noexcept
+      {
+        transaction.reset();
+      });
+  }
+
   bool
   UserInfoContainer::SlowTransactionKey::operator<(const SlowTransactionKey& rhs) const noexcept
   {
@@ -313,6 +398,9 @@ namespace AdServer::UserInfoSvcs
           per_compaction_threads,
           flush_threads,
           max_mem_tables)),
+      max_base_profile_waiters_(max_base_profile_waiters),
+      max_temp_profile_waiters_(max_temp_profile_waiters),
+      user_transactions_(1024 * std::max<std::size_t>(1, chunk_folders.size())),
       time_offset_(Generics::Time::ZERO),
       profile_avg_statistic_(avg_statistic),
       ad_channels_count_(0),
@@ -649,6 +737,7 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
+      auto user_transaction = co_await co_get_user_transaction_(user_id, false, false);
       auto remove_profile = [&user_id](
         UserProfileMap* profiles) -> AdServer::Commons::StartableAwaitable<bool>
       {
@@ -699,19 +788,8 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserProfileMap::Transaction_var base_profile_trans = co_await co_get_transaction_(
-        base_profiles_.in(),
-        user_id,
-        true, // check max waiters
-        AdServer::ProfilingCommons::OP_BACKGROUND);
-
-      UserProfileMap::Transaction_var add_profile_trans = co_await co_get_transaction_(
-        add_profiles_.in(),
-        user_id,
-        true, // check max waiters
-        AdServer::ProfilingCommons::OP_BACKGROUND);
-
-      SmartMemBuf_var add_buf = co_await add_profile_trans->co_get_own_profile();
+      auto user_transaction = co_await co_get_user_transaction_(user_id, false);
+      SmartMemBuf_var add_buf = co_await add_profiles_->co_get_own_profile(user_id);
 
       if (add_buf.in() && !other_base_profile_buf.empty())
       {
@@ -757,21 +835,27 @@ namespace AdServer::UserInfoSvcs
             *channel_rules,
             profile_match_params);
 
-          co_await add_profile_trans->co_remove_profile();
+          co_await add_profiles_->co_remove_profile(
+            user_id, AdServer::ProfilingCommons::OP_BACKGROUND);
 
           if (add_buf->membuf().size() != 0)
           {
-            base_profile_trans->save_profile_async(
+            save_user_profile_async_(
+              base_profiles_.in(),
+              user_id,
               Generics::transfer_membuf(Algs::copy_membuf(add_buf)),
-              now);
+              now,
+              user_transaction);
           }
 
           if (history_profile->membuf().size() != 0)
           {
-            history_profiles_->save_profile_async(
+            save_user_profile_async_(
+              history_profiles_.in(),
               user_id,
               Generics::transfer_membuf(Algs::copy_membuf(history_profile)),
-              now);
+              now,
+              user_transaction);
           }
 
           if (ho_info != 0 && add_buf->membuf().size() != 0)
@@ -849,7 +933,8 @@ namespace AdServer::UserInfoSvcs
       const UserId& user_id = request_params.user_id;
       bool temporary = request_params.temporary;
       bool merge_to_additional = false;
-      UserProfileMap::Transaction_var target_profile_trans;
+      UserTransaction_var user_transaction;
+      UserProfileMap* target_profiles = temporary ? temp_profiles_.in() : base_profiles_.in();
       UserProfileMap::Transaction_var target_history_profile_trans;
       SmartMemBuf_var target_profile;
       SmartMemBuf_var target_history_profile;
@@ -858,21 +943,8 @@ namespace AdServer::UserInfoSvcs
 
       try
       {
-        if (temporary)
-        {
-          target_profile_trans = co_await co_get_transaction_(temp_profiles_.in(),
-            user_id, true, op_priority);
-        }
-        else
-        {
-          target_profile_trans = co_await co_get_transaction_(base_profiles_.in(),
-            user_id, true, op_priority);
-        }
-
-        UserProfileMap::Transaction_var add_profile_trans =
-          co_await co_get_transaction_(add_profiles_.in(), user_id, true, op_priority);
-
-        target_profile = co_await add_profile_trans->co_get_own_profile();
+        user_transaction = co_await co_get_user_transaction_(user_id, temporary);
+        target_profile = co_await add_profiles_->co_get_own_profile(user_id);
 
         if ((!request_params.use_empty_profile &&
            last_colo_id != current_placement_colo_id &&
@@ -880,13 +952,13 @@ namespace AdServer::UserInfoSvcs
           target_profile.in())
         {
           /* if additional profile exist merge buffers to it */
-          target_profile_trans = add_profile_trans;
+          target_profiles = add_profiles_.in();
 
           merge_to_additional = true;
         }
         else
         {
-          target_profile = co_await target_profile_trans->co_get_own_profile();
+          target_profile = co_await target_profiles->co_get_own_profile(user_id);
         }
       }
       catch(const MaxWaitersReached&)
@@ -1169,9 +1241,12 @@ namespace AdServer::UserInfoSvcs
 
       if (target_profile->membuf().size() != 0)
       {
-        target_profile_trans->save_profile_async(
+        save_user_profile_async_(
+          target_profiles,
+          user_id,
           Generics::transfer_membuf(target_profile),
-          merge_time);
+          merge_time,
+          user_transaction);
       }
 
       if (result_freq_cap_profile)
@@ -1219,12 +1294,8 @@ namespace AdServer::UserInfoSvcs
 
     try
     {
-      UserProfileMap::Transaction_var base_profile_trans = co_await co_get_transaction_(
-        base_profiles_.in(),
-        user_id,
-        true,
-        AdServer::ProfilingCommons::OP_RUNTIME);
-      SmartMemBuf_var base_mem_buf = co_await base_profile_trans->co_get_own_profile();
+      auto user_transaction = co_await co_get_user_transaction_(user_id, false);
+      SmartMemBuf_var base_mem_buf = co_await base_profiles_->co_get_own_profile(user_id);
 
       if (base_mem_buf.in() == 0)
       {
@@ -1236,9 +1307,12 @@ namespace AdServer::UserInfoSvcs
 
       if (cm.fraud_user(now))
       {
-        base_profile_trans->save_profile_async(
+        save_user_profile_async_(
+          base_profiles_.in(),
+          user_id,
           Generics::transfer_membuf(base_mem_buf),
-          cm.last_request());
+          cm.last_request(),
+          user_transaction);
       }
 
       co_return true;
@@ -1297,34 +1371,27 @@ namespace AdServer::UserInfoSvcs
 
       UserProfileMap* base_profiles = temporary ? temp_profiles_.in() : base_profiles_.in();
 
-      UserProfileMap::Transaction_var base_profile_trans;
-      UserProfileMap::Transaction_var add_profile_trans;
+      auto user_transaction = co_await co_get_user_transaction_(user_id, temporary);
       SmartMemBuf_var base_mem_buf;
       SmartMemBuf_var add_mem_buf;
 
       if (use_add_profile_on_match_)
       {
-        auto [loaded_base_profile_trans, loaded_add_profile_trans] =
-          co_await AdServer::Commons::TupleAwaitable(
-            co_get_transaction_(base_profiles, user_id, true, op_priority),
-            co_get_transaction_(add_profiles_.in(), user_id, true, op_priority));
-
-        base_profile_trans = std::move(loaded_base_profile_trans);
-        add_profile_trans = std::move(loaded_add_profile_trans);
-
+        const auto get_profile = [&user_id](UserProfileMap* profiles)
+          -> AdServer::Commons::StartableAwaitable<SmartMemBuf_var>
+        {
+          co_return co_await profiles->co_get_own_profile(user_id);
+        };
         auto [loaded_base_mem_buf, loaded_add_mem_buf] =
           co_await AdServer::Commons::TupleAwaitable(
-            base_profile_trans->co_get_own_profile(),
-            add_profile_trans->co_get_own_profile());
+            get_profile(base_profiles), get_profile(add_profiles_.in()));
 
         base_mem_buf = std::move(loaded_base_mem_buf);
         add_mem_buf = std::move(loaded_add_mem_buf);
       }
       else
       {
-        base_profile_trans =
-          co_await co_get_transaction_(base_profiles, user_id, true, op_priority);
-        base_mem_buf = co_await base_profile_trans->co_get_own_profile();
+        base_mem_buf = co_await base_profiles->co_get_own_profile(user_id);
       }
 
       bool match_to_additional =
@@ -1367,7 +1434,7 @@ namespace AdServer::UserInfoSvcs
         {
           match_to_additional = false;
 
-          co_await add_profile_trans->co_remove_profile();
+          co_await add_profiles_->co_remove_profile(user_id, op_priority);
 
           Stream::Error ostr;
           ostr << FUN << ": Base profile from other colo did not received. "
@@ -1549,22 +1616,28 @@ namespace AdServer::UserInfoSvcs
         {
           if (add_mem_buf->membuf().empty())
           {
-            co_await add_profile_trans->co_remove_profile();
+            co_await add_profiles_->co_remove_profile(user_id, op_priority);
           }
           else
           {
-            add_profile_trans->save_profile_async(
+            save_user_profile_async_(
+              add_profiles_.in(),
+              user_id,
               Generics::transfer_membuf(add_mem_buf),
-              match_time);
+              match_time,
+              user_transaction);
           }
         }
 
         /* save profiles */
         if (base_mem_buf->membuf().size() != 0)
         {
-          base_profile_trans->save_profile_async(
+          save_user_profile_async_(
+            base_profiles,
+            user_id,
             Generics::transfer_membuf(base_mem_buf),
-            match_time);
+            match_time,
+            user_transaction);
         }
       }
 

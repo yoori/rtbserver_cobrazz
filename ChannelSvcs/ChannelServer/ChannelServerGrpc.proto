@@ -15,6 +15,10 @@ service ChannelServerGrpc {
     returns (CheckConfigurationResponse);
   rpc set_sources(SetSourcesRequest) returns (SetSourcesResponse);
   rpc set_proxy_sources(SetProxySourcesRequest) returns (SetProxySourcesResponse);
+  rpc check(CheckRequest) returns (CheckResponse);
+  rpc update_triggers(UpdateTriggersRequest) returns (UpdateTriggersResponse);
+  rpc update_all_ccg(UpdateAllCcgRequest) returns (UpdateAllCcgResponse);
+  rpc get_count_chunks(GetCountChunksRequest) returns (GetCountChunksResponse);
 }
 
 message ChannelAtom {
@@ -101,7 +105,9 @@ message SetSourcesRequest {
 message SetSourcesResponse {}
 
 message LocalLoadServer {
-  string channel_update_ref = 1;
+  reserved 1;
+  reserved channel_update_ref;
+  string endpoint = 4;
   repeated uint64 sources = 2;
   uint64 count_chunks = 3;
 }
@@ -112,7 +118,9 @@ message LocalLoadGroup {
 
 message SetProxySourcesRequest {
   repeated string campaign_refs = 1;
-  repeated string proxy_refs = 2;
+  reserved 2;
+  reserved proxy_refs;
+  repeated string proxy_endpoints = 9;
   repeated LocalLoadGroup local_groups = 3;
   uint64 count_chunks = 4;
   uint64 colo = 5;
@@ -122,3 +130,73 @@ message SetProxySourcesRequest {
 }
 
 message SetProxySourcesResponse {}
+
+message CheckRequest {
+  uint64 colo_id = 1;
+  string version = 2;
+  bytes master_stamp = 3;
+  repeated uint64 new_ids = 4;
+  bool use_only_list = 5;
+}
+
+message ChannelVersion {
+  uint64 id = 1;
+  uint64 size = 2;
+  bytes stamp = 3;
+}
+
+message CheckResponse {
+  bytes first_stamp = 1;
+  bytes master_stamp = 2;
+  repeated ChannelVersion versions = 3;
+  bool special_track = 4;
+  bool special_adv = 5;
+  int64 source_id = 6;
+  bytes max_time = 7;
+}
+
+message TriggerInfo {
+  uint64 channel_trigger_id = 1;
+  bytes trigger = 2;
+}
+
+message ChannelById {
+  uint64 channel_id = 1;
+  repeated TriggerInfo words = 2;
+  bytes stamp = 3;
+}
+
+message UpdateTriggersRequest {
+  repeated uint64 ids = 1;
+}
+
+message UpdateTriggersResponse {
+  int64 source_id = 1;
+  repeated ChannelById channels = 2;
+}
+
+message UpdateAllCcgRequest {
+  bytes master_stamp = 1;
+  uint64 start = 2;
+  uint64 limit = 3;
+  repeated uint64 channel_ids = 4;
+  bool use_only_list = 5;
+}
+
+message TriggerVersion {
+  uint64 id = 1;
+  bytes stamp = 2;
+}
+
+message UpdateAllCcgResponse {
+  uint64 start_id = 1;
+  repeated CcgKeyword keywords = 2;
+  repeated TriggerVersion deleted = 3;
+  int64 source_id = 4;
+}
+
+message GetCountChunksRequest {}
+
+message GetCountChunksResponse {
+  uint64 count_chunks = 1;
+}

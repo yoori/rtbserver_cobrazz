@@ -724,8 +724,8 @@ namespace AdServer::CampaignSvcs
       campaign_config_source_ = new CampaignConfigSource(
         logger,
         domain_parser_,
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          campaign_manager_config_.CampaignServerCorbaRef()),
+        AdServer::CampaignSvcs::campaign_server_endpoints(
+          campaign_manager_config_.CampaignServerGrpcRefs()),
         campaigns_types,
         campaign_manager_config_.Creative().creative_file_dir().c_str(),
         campaign_manager_config_.Creative().template_file_dir().c_str(),

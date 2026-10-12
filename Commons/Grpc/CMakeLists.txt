@@ -9,6 +9,8 @@ add_grpc_sources(
   ${PB_DIRECTORY}/Commons/Grpc)
 
 target_sources(GrpcBatch PRIVATE
+  DbAccess.cpp
+  DbAccess.hpp
   AsyncBatchingClientBase.cpp
   AsyncBatchingClientBase.hpp
   BatchingQueue.cpp

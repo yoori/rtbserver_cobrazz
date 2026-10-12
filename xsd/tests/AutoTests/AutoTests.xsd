@@ -67,7 +67,6 @@
     <xsd:enumeration value="AdFrontend"/>
     <xsd:enumeration value="ChannelServer"/>
     <xsd:enumeration value="ChannelController"/>
-    <xsd:enumeration value="ChannelSearchServer"/>
     <xsd:enumeration value="CampaignManager"/>
     <xsd:enumeration value="CampaignServer"/>
     <xsd:enumeration value="ExpressionMatcher"/>

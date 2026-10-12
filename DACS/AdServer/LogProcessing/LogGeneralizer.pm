@@ -4,14 +4,17 @@ use strict;
 use Utils::Functions;
 use AdServer::Functions;
 use AdServer::Path;
+use AdServer::DBAccess;
 
-my $service_port = "log_generalizer_port";
+my $pid_file = "\${workspace_root}/run/LogGeneralizer.pid";
 
 sub start
 {
   my ($host, $descr) = @_;
 
   my $command =
+       "mkdir -p \${workspace_root}/run && " .
+       AdServer::Functions::pidfile_start_guard($pid_file, "LogGeneralizer") . " && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/UserProperties/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/ChannelPerformance/Intermediate && " .
        "mkdir -p \${log_root}/LogGeneralizer/In/ExpressionPerformance/Intermediate && " .
@@ -175,34 +178,22 @@ sub stop
 {
   my ($host, $descr) = @_;
 
-  return AdServer::Functions::process_control_stop(
-    $host, $service_port, $descr);
+  return AdServer::Functions::stop_by_pidfile($host, $descr, $pid_file, "LogGeneralizer");
 }
 
 sub is_alive
 {
   my ($host, $descr) = @_;
 
-  return AdServer::Functions::process_control_is_alive(
-    $host,
-    $service_port,
-    $descr);
+  return AdServer::Functions::execute_command(
+    $host, $descr, AdServer::Functions::pidfile_is_alive($pid_file, "LogGeneralizer"));
 }
 
 sub db_status
 {
   my ($host, $descr) = @_;
   my $status = is_alive @_;
-  if ($status == 1)
-  {
-    Utils::Functions::process_control_any(
-      $host,
-      $service_port,
-      $host . "/" . ${AdServer::Path::ADSERVER_CURRENTENV_DIR},
-      "-control DB -1",
-      $descr);
-  }
-  return $status;
+  return $status == 1 ? AdServer::DBAccess::db_status($host, $descr, "LogGeneralizer") : $status;
 }
 
 1;

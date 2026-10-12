@@ -257,16 +257,13 @@ namespace
     std::cout << "request.statuses=" << request.statuses() << '\n';
   }
 
-  void
-  print_traits_result(const ChannelServerBase::CCGKeywordSeq& result)
+  void print_traits_result(const Proto::GetCcgTraitsResponse& result)
   {
-    for (CORBA::ULong i = 0; i < result.length(); ++i)
+    for (const auto& keyword : result.ccg_keywords())
     {
-      std::cout <<
-        result[i].ccg_keyword_id << '\t' <<
-        result[i].ccg_id << '\t' <<
-        result[i].channel_id << '\t' <<
-        result[i].click_url.in() << '\t' << result[i].original_keyword.in() << '\n';
+      std::cout << keyword.ccg_keyword_id() << '\t' << keyword.ccg_id() << '\t' <<
+        keyword.channel_id() << '\t' << keyword.click_url() << '\t' <<
+        keyword.original_keyword() << '\n';
     }
   }
 }
@@ -372,30 +369,22 @@ main(int argc, char** argv)
     }
     else if (commands.front() == "ccg_traits")
     {
-      ChannelIdSeq query;
-      std::vector<unsigned long> values;
+      Proto::GetCcgTraitsRequest request;
       String::StringManip::SplitComma tokenizer(*ids);
       String::SubString token;
       while (tokenizer.get_token(token))
       {
         unsigned long id = 0;
         String::StringManip::str_to_int(token, id);
-        values.push_back(id);
+        request.add_ids(id);
       }
-      query.length(values.size());
-      std::copy(values.begin(), values.end(), query.get_buffer());
-
-      Proto::GetCcgTraitsRequest request;
-      AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(query, request);
       const auto response =
         AdServer::Grpc::sync_call<Proto::GetCcgTraitsResponse>(
           [&](auto callback)
           {
             client->get_ccg_traits(request, std::move(callback));
           });
-      ChannelServerBase::CCGKeywordSeq_var corba_result =
-        AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(response);
-      print_traits_result(*corba_result);
+      print_traits_result(response);
     }
     else
     {

@@ -1,6 +1,3 @@
-#include <Commons/CorbaAlgs.hpp>
-#include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
-#include "UpdateContainer.hpp"
 #include "DictionaryMatcher.hpp"
 
 namespace AdServer::ChannelSvcs
@@ -8,191 +5,99 @@ namespace AdServer::ChannelSvcs
   const char* DictionaryMatcher::ASPECT = "DictionaryMatcher";
 
   DictionaryMatcher::DictionaryMatcher(
-    const CORBACommons::CorbaClientAdapter& adapter,
-    CORBACommons::CorbaObjectRefList& dictionary_server_refs,
-    Logging::Logger* logger)
-    /*throw(Exception)*/
-    : c_adapter_(adapter),
-      logger_(logger)
+    const std::vector<std::string>& endpoints, Logging::Logger* logger)
+    : dictionary_client_(endpoints), logger_(ReferenceCounting::add_ref(logger))
   {
-    static const char* FN = "DictionaryMatcher::DictionaryMatcher";
-    if (dictionary_server_refs.empty())
-    {
-      return;
-    }
-    try
-    {
-      DictionaryProviderPoolConfig pool_config(&c_adapter_);
-      pool_config.timeout = Generics::Time(10);
-      pool_config.iors_list.insert(
-        pool_config.iors_list.end(),
-        dictionary_server_refs.begin(),
-        dictionary_server_refs.end());
-      dictionary_pool_.reset(new DictionaryProviderPool(pool_config));
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FN << ": CORBA::SystemException "
-        "on resolving dictionary provider : " << e ;
-      throw Exception(ostr);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FN << ": eh::Exception : " << e.what();
-      throw Exception(ostr);
-    }
   }
 
-  static Stream::Error& print(const LexemeData& lexeme, Stream::Error& trace) noexcept
-  {
-    trace << " ";
-    for (LexemeData::Forms::const_iterator v_it = lexeme.forms.begin();
-        v_it != lexeme.forms.end(); ++v_it)
-    {
-      if (v_it != lexeme.forms.begin())
-      {
-        trace << ",";
-      }
-      trace << "'" <<  v_it->text().str() << "'";
-    }
-    trace << ".";
-    return trace;
-  }
+  DictionaryMatcher::~DictionaryMatcher() noexcept = default;
 
   void DictionaryMatcher::get_lexemes(const char* lang, LexemeCache& lexemes)
-    /*throw(Exception)*/
   {
-    if (!dictionary_pool_.get())
+    if (dictionary_client_.empty())
     {
       return;
     }
+
     try
     {
-      CORBACommons::StringSeq seq_words;
-      seq_words.length(lexemes.size());
-      CORBA::ULong count = 0;
-      for (auto it = lexemes.begin(); it != lexemes.end(); ++it)
+      std::vector<std::string> words;
+      words.reserve(lexemes.size());
+      for (const auto& entry : lexemes)
       {
-        seq_words[count++] << String::SubString(it->first.text());
+        words.emplace_back(entry.first.text());
       }
-      AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq_var lexemes_res =
-        query_dictionary_words_(lang, seq_words);
-      assert(seq_words.length() == lexemes_res->length());
-      for (CORBA::ULong i = 0; i < count; ++i)
+
+      const auto response = dictionary_client_.get_lexemes(lang, words);
+      for (std::size_t i = 0; i < words.size(); ++i)
       {
-        const AdServer::ChannelSvcs::DictionaryProvider::Lexeme& lex = lexemes_res[i];
-        if (lex.forms.length())
+        const auto& lexeme = response.lexemes(i);
+        if (lexeme.forms_size() == 0)
         {
-          Lexeme_var& lex_data = lexemes[String::SubString(seq_words[i])];
-          lex_data = new Lexeme;
-          size_t len_form = 0;
-          lex_data->forms.resize(lex.forms.length());
-          for (size_t j = 0; j < lex.forms.length(); ++j)
-          {
-            lex_data->forms[j] = String::SubString(lex.forms[j]);
-            len_form += lex_data->forms[j].text().length();
-          }
-          lex_data->data.reserve(len_form);
-          for (size_t j = 0; j < lex.forms.length(); ++j)
-          {
-            size_t start = lex_data->data.size();
-            lex_data->data.append(
-              lex_data->forms[j].text().data(),
-              lex_data->forms[j].text().length());
-            lex_data->forms[j] = String::SubString(
-              lex_data->data.c_str() + start,
-              lex_data->forms[j].text().length());
-          }
+          continue;
         }
+
+        Lexeme_var data = new Lexeme;
+        std::size_t total_size = 0;
+        for (const auto& form : lexeme.forms())
+        {
+          total_size += form.size();
+        }
+
+        data->data.reserve(total_size);
+        data->forms.reserve(lexeme.forms_size());
+        for (const auto& form : lexeme.forms())
+        {
+          const auto offset = data->data.size();
+          data->data.append(form);
+          data->forms.emplace_back(String::SubString(data->data.data() + offset, form.size()));
+        }
+
+        lexemes[String::SubString(words[i])] = std::move(data);
       }
+
       trace_result_(lang, lexemes);
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& error)
     {
-      Stream::Error ostr;
-      ostr << __func__ << ": eh::Exception : " << e.what();
-      throw Exception(ostr);
+      throw Exception(error.what());
     }
   }
 
-  void DictionaryMatcher::trace_result_(const char* lang, const LexemeCache& cache)
-    noexcept
+  void DictionaryMatcher::trace_result_(const char* lang, const LexemeCache& cache) noexcept
   {
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
-      for (auto it = cache.begin(); it != cache.end(); ++it)
+      for (const auto& entry : cache)
       {
         Stream::Error trace;
-        trace << lang << ": '" << it->first << "' :";
-        if (it->second)
+        trace << lang << ": '" << entry.first << "' :";
+        if (entry.second)
         {
-          print(*it->second, trace);
+          for (const auto& form : entry.second->forms)
+          {
+            trace << " '" << form.text() << "'";
+          }
         }
+
         logger_->log(trace.str(), Logging::Logger::TRACE, ASPECT);
       }
     }
   }
 
-  AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-  DictionaryMatcher::query_dictionary_words_(
-    const char* lang,
-    const CORBACommons::StringSeq& seq_words) const
-    /*throw(Exception)*/
-  {
-    try
-    {
-      DictionaryProviderPool::ObjectHandlerType dictionary_provider =
-        dictionary_pool_->get_object();
-      try
-      {
-        return dictionary_provider->get_lexemes(lang, seq_words);
-      }
-      catch(const ChannelSvcs::NotReady& e)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": NotReady :" << e.description;
-        dictionary_provider.release_bad(ostr.str());
-        throw Exception(ostr);
-      }
-      catch(const ChannelSvcs::ImplementationException& e)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": ImplementationException :" << e.description;
-        dictionary_provider.release_bad(ostr.str());
-        throw Exception(ostr);
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": CORBA::SystemException :" << ex;
-        dictionary_provider.release_bad(ostr.str());
-        throw Exception(ostr);
-      }
-    }
-    catch(const DictionaryProviderPool::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << __func__ << ": eh::Exception :" << e.what();
-      logger_->log(ostr.str(), Logging::Logger::WARNING, ASPECT, "ADS-ICON-10");
-      throw Exception(ostr);
-    }
-  }
-
   bool DictionaryMatcher::ready() const noexcept
   {
-    if (!dictionary_pool_.get())
+    if (dictionary_client_.empty())
     {
       return true;
     }
+
     try
     {
-      AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq_var res =
-        query_dictionary_words_("", CORBACommons::StringSeq());
+      dictionary_client_.get_lexemes("", {});
       return true;
     }
-    catch(const Exception&)
+    catch (const std::exception&)
     {
       return false;
     }

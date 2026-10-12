@@ -11,7 +11,6 @@
 #include <Logger/StreamLogger.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
@@ -41,12 +40,9 @@ private:
 
 private:
   void load_config_(const char* name) /*throw(Exception)*/;
-  void init_corba_() /*throw(Exception, CORBA::SystemException)*/;
+  void init_services_() /*throw(Exception)*/;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
-
   ConfigPtr configuration_;
   AdServer::ChannelSvcs::ChannelServerCorePtr server_core_;
   std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpc> grpc_adapter_;

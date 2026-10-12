@@ -114,7 +114,7 @@ target_link_libraries(RequestInfoManager
     PassbackContainer
     RequestInfoContainer
     UserInfoClient
-    CampaignServerIDL
+    CampaignServerGrpc
     LogCommons
     RequestCompatibility
     MessageSaver

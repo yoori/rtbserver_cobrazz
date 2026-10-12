@@ -11,9 +11,8 @@ target_link_libraries(ChannelContainer
   PUBLIC
     Boost::headers
   PRIVATE
-    CORBACommons
     ChannelCommons
-    DictionaryProviderIDL
+    DictionaryProviderGrpc
 )
 
 # ChannelServerGrpc
@@ -51,11 +50,15 @@ target_link_libraries(ChannelServerGrpcClient
     Sync
 )
 
+add_library(ChannelUpdateGrpcClient SHARED ChannelUpdateGrpcClient.cpp)
+target_link_libraries(ChannelUpdateGrpcClient
+  PUBLIC ChannelServerGrpc
+  PRIVATE Commons gRPC::grpc++)
+
 add_executable(ChannelServer
   ChannelServerVariant.cpp
   ChannelServerCore.cpp
   ChannelServerGrpc.cpp
-  ChannelUpdateImpl.cpp
   ChannelServerMain.cpp
 )
 
@@ -73,14 +76,12 @@ target_link_libraries(ChannelServer
     Postgres
     ChannelServerConfigXSD
     ChannelCommons
-    ChannelCommonsIDL
-    ChannelServerIDL
-    ChannelUpdateBaseIDL
-    CampaignServerIDL
+    CampaignServerGrpc
     CorbaTypesIDL
     BLogic
     ChannelContainer
     ChannelServerGrpc
+    ChannelUpdateGrpcClient
     ChannelSessionFactory
     Polyglot
     GenericSegmentor

@@ -23,7 +23,6 @@ FRONTEND_CLUSTER_DESCR=AdCluster/FrontendSubCluster
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
-CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
 USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
@@ -71,18 +70,6 @@ $EXEC/CurrentEnvGen.sh \
 
 let "EXIT_CODE|=$?"
 
-CHANNEL_SEARCH_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CHANNEL_SEARCH_SERVICE_DESCR']"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "channel_search_service" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:channelSearchService" \
-  --services-xpath "$CHANNEL_SEARCH_SERVICE_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$FE_CURRENT_NAME
-
-let "EXIT_CODE|=$?"
 
 USER_BIND_SERVER_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_BIND_SERVER_DESCR']"
 

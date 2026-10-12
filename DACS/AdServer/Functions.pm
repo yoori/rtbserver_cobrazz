@@ -3,26 +3,6 @@ package AdServer::Functions;
 use Utils::Functions;
 use AdServer::Path;
 
-sub process_control_stop
-{
-  my ($host, $port_var, $descr) = @_;
-  Utils::Functions::process_control_stop(
-    $host,
-    $port_var,
-    $host . "/" . ${AdServer::Path::ADSERVER_CURRENTENV_DIR},
-    $descr);
-}
-
-sub process_control_is_alive
-{
-  my ($host, $port_var, $descr) = @_;
-  return Utils::Functions::process_control_is_alive(
-    $host,
-    $port_var,
-    $host . "/" . ${AdServer::Path::ADSERVER_CURRENTENV_DIR},
-    $descr);
-}
-
 sub pid_matches_executable
 {
   my ($executable) = @_;

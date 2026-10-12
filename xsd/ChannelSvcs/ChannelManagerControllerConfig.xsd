@@ -96,7 +96,7 @@
 
   <xsd:complexType name="RegularSourceType">
     <xsd:sequence>
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType"/>
       <xsd:element name="PGConnection" type="PGConnectionType">
         <xsd:annotation>
           <xsd:documentation>Defines Postrgess connection string for accessing to AdServer database.</xsd:documentation>
@@ -112,7 +112,7 @@
 
   <xsd:complexType name="ProxySourceType">
     <xsd:sequence>
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType"/>
       <xsd:element name="ProxyRefs" type="MultiCorbaObjectRefType" minOccurs="0"/>
     </xsd:sequence>
     <xsd:attribute name="use_local_on_first_load" type="xsd:boolean" default="true"/>

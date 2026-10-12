@@ -44,13 +44,6 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="svmGenerator" type="SVMGeneratorType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-           SVM generator settings.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
     </xsd:sequence>
     <xsd:attribute name="log_days_to_keep" type="xsd:nonNegativeInteger" use="optional" default="90">
       <xsd:annotation>
@@ -123,18 +116,6 @@
         <xsd:documentation>Backup research logs</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-  </xsd:complexType>
-
-  <xsd:complexType name="SVMGeneratorType">
-    <xsd:sequence>
-      <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-           Network settings for running control.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:complexType name="CTRPredictModelGeneratorType">

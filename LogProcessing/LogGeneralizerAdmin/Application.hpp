@@ -3,7 +3,7 @@
 
 #include <eh/Exception.hpp>
 #include <Generics/Singleton.hpp>
-#include <LogProcessing/LogGeneralizer/LogGeneralizer.hpp>
+#include <LogProcessing/LogGeneralizer/LogGeneralizerGrpc.hpp>
 
 class Application
 {
@@ -16,60 +16,38 @@ public:
   virtual ~Application() noexcept;
 
   int run(int &argc, char **argv)
-    /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/;
+    /*throw(InvalidArgument, Exception, eh::Exception)*/;
 
   static Application* instance() /*throw(eh::Exception)*/;
 
 private:
-  typedef AdServer::LogProcessing::LogGeneralizer::NotSupported
-    LogGeneralizerNotSupported;
-
-  typedef AdServer::LogProcessing::LogGeneralizer::ImplementationException
-    LogGeneralizerImplementationException;
-
-  typedef AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted
-    LogGeneralizerCollectionNotStarted;
-
-  typedef AdServer::LogProcessing::StatInfo_var StatInfo_var;
-
-  typedef AdServer::LogProcessing::StatInfo StatInfo;
-
-  typedef AdServer::LogProcessing::CreativeStatInfo CreativeStatInfo;
-  typedef AdServer::LogProcessing::CreativeStatSeq CreativeStatSeq;
-  typedef AdServer::LogProcessing::PublisherAmountInfo PublisherAmountInfo;
-  typedef AdServer::LogProcessing::PublisherAmountSeq PublisherAmountSeq;
-  typedef AdServer::LogProcessing::TagAmountInfo TagAmountInfo;
-  typedef AdServer::LogProcessing::TagAmountSeq TagAmountSeq;
+  using StatInfo = AdServer::LogProcessing::StatInfo;
+  using CreativeStatInfo = AdServer::LogProcessing::CreativeStatInfo;
+  using CreativeStatSeq = AdServer::LogProcessing::CreativeStatSeq;
+  using PublisherAmountInfo = AdServer::LogProcessing::PublisherAmountInfo;
+  using PublisherAmountSeq = AdServer::LogProcessing::PublisherAmountSeq;
+  using TagAmountInfo = AdServer::LogProcessing::TagAmountInfo;
+  using TagAmountSeq = AdServer::LogProcessing::TagAmountSeq;
 
   int help()
-    /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/;
+    /*throw(InvalidArgument, Exception, eh::Exception)*/;
 
   void print_stat_info(const StatInfo &info)
-    /*throw(eh::Exception, CORBA::Exception)*/;
+    /*throw(eh::Exception)*/;
 
-  void
-  output_creative_stats(
-    std::ostream &os,
-    const CreativeStatSeq &creative_stats
-  ) /*throw(eh::Exception, CORBA::Exception)*/;
+  void output_creative_stats(std::ostream &os, const CreativeStatSeq &creative_stats)
+    /*throw(eh::Exception)*/;
 
-  void
-  output_publisher_amounts(
-    std::ostream &os,
-    const PublisherAmountSeq &publisher_amounts
-  ) /*throw(eh::Exception, CORBA::Exception)*/;
+  void output_publisher_amounts(std::ostream &os, const PublisherAmountSeq &publisher_amounts)
+    /*throw(eh::Exception)*/;
 
-  void
-  output_tag_amounts(
-    std::ostream &os,
-    const TagAmountSeq &tag_amounts
-  ) /*throw(eh::Exception, CORBA::Exception)*/;
+  void output_tag_amounts(std::ostream &os, const TagAmountSeq &tag_amounts)
+    /*throw(eh::Exception)*/;
 
-  CORBA::ORB_var orb_;
-  AdServer::LogProcessing::LogGeneralizer_var log_generalizer_;
+  std::unique_ptr<AdServer::LogProcessing::LogGeneralizerClient> log_generalizer_;
 };
 
-typedef Generics::Singleton<Application> AppSingleton;
+using AppSingleton = Generics::Singleton<Application>;
 
 inline
 Application*

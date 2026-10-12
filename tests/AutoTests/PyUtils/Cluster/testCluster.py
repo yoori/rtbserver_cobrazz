@@ -25,7 +25,6 @@ class ClusterTest(CORBAFunTest):
                         ChannelController, #
                         ExpressionMatcher, #
                         RequestInfoManager, #
-                        ChannelSearchService, #
                         LogGeneralizer, #
                         SyncLogs
                         ) #
@@ -69,13 +68,8 @@ class ClusterTest(CORBAFunTest):
     obj9 = self.RequestInfoManager.getObject("ProcessControl", CORBACommons.IProcessControl)
     self.assert_(obj9.is_alive(), "RequestInfoManager must start")
     #
-    self.assert_(self.ChannelSearchService.is_alive(), "ChannelSearchService must start")
-    obj10 = self.ChannelSearchService.getObject("ProcessControl", CORBACommons.IProcessControl)
-    self.assert_(obj10.is_alive(), "ChannelSearchService must start")
     #
     self.assert_(self.LogGeneralizer.is_alive(), "LogGeneralizer must start")
-    obj11 = self.LogGeneralizer.getObject("ProcessControl", CORBACommons.IProcessControl)
-    self.assert_(obj11.is_alive(), "LogGeneralizer must start")
     #
     self.assert_(self.SyncLogs.is_alive(), "SyncLogs must start")
     #

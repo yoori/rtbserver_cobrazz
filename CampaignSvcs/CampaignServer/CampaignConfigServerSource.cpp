@@ -66,7 +66,7 @@ namespace AdServer::CampaignSvcs
   CampaignConfigServerSource::CampaignConfigServerSource(
     Logging::Logger* logger,
     unsigned long server_id,
-    const CORBACommons::CorbaObjectRefList& campaign_server_refs,
+    const std::vector<std::string>& campaign_server_refs,
     unsigned long colo_id,
     const char* version,
     const char* campaign_statuses,
@@ -87,13 +87,8 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      /* init CORBA client adapter */
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
       campaign_servers_.reset(new CampaignServerPool(
         campaign_server_refs,
-        corba_client_adapter_,
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT,
         Generics::Time(10) // timeout
         ));
     }

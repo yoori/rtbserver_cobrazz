@@ -30,18 +30,17 @@ namespace AutoTest
   {
     ChannelManagerController = 4,
     ChannelServer = 5,
-    ChannelUpdate = 6,
-    ChannelSearch = 7
+    ChannelUpdate = 6
   };
 
   enum RequestInfoSrv
   {
-    RequestInfoManager = 8,
+    RequestInfoManager = 7,
   };
 
   enum ExpressionMatcherSrv
   {
-    ExpressionMatcher = 9
+    ExpressionMatcher = 8
   };
 
   /** srv_type_by_index

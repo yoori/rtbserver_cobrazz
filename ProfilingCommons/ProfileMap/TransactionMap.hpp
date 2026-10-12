@@ -7,6 +7,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -92,7 +93,8 @@ namespace AdServer::ProfilingCommons
     co_get_transaction(
       const KeyType& key,
       bool check_max_waiters = true,
-      const TransactionArgType& arg = TransactionArgType());
+      const TransactionArgType& arg = TransactionArgType(),
+      std::optional<unsigned long> max_waiters = std::nullopt);
 
     virtual ~TransactionMap() noexcept;
 
@@ -338,10 +340,15 @@ namespace AdServer::ProfilingCommons
   AdServer::Commons::StartableAwaitable<
     typename TransactionMap<KeyType, TransactionImplType>::Transaction_var>
   TransactionMap<KeyType, TransactionImplType>::
-  co_get_transaction(const KeyType& key, bool check_max_waiters, const TransactionArgType& arg)
+  co_get_transaction(
+    const KeyType& key,
+    bool check_max_waiters,
+    const TransactionArgType& arg,
+    std::optional<unsigned long> max_waiters)
   {
     static const char* FUN = "TransactionMap::co_get_transaction()";
 
+    const auto waiters_limit = max_waiters.value_or(max_waiters_);
     Portion* portion = get_portion_(key);
     TransactionHolder_var holder;
     unsigned long lock_count;
@@ -387,7 +394,7 @@ namespace AdServer::ProfilingCommons
         {
           holder = ReferenceCounting::add_ref(it->second);
           lock_count = it->second->lock_count_;
-          if (check_max_waiters && max_waiters_ != 0 && lock_count >= max_waiters_)
+          if (check_max_waiters && waiters_limit != 0 && lock_count >= waiters_limit)
           {
             max_waiters_reached = true;
           }
@@ -403,7 +410,7 @@ namespace AdServer::ProfilingCommons
       {
         Stream::Error ostr;
         ostr << FUN << ": already opened " << lock_count <<
-          " transactions, max waiters = " << max_waiters_;
+          " transactions, max waiters = " << waiters_limit;
         throw MaxWaitersReached(ostr);
       }
 

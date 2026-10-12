@@ -3,7 +3,6 @@
 #include<string>
 #include <ChannelSvcs/ChannelCommons/KeywordInput.hpp>
 #include <ChannelSvcs/ChannelCommons/KeywordPrefixIndex.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/Constants.hpp>
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelCommons.hpp>

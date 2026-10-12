@@ -36,9 +36,8 @@
     </xsl:variable>
     <xsl:for-each select="exsl:node-set($hosts)//host">
       <cfg:Ref>
-        <xsl:attribute name="ref">
-          <xsl:value-of
-            select="concat('corbaloc:iiop:', ., ':', $port, '/DictionaryProvider')"/>
+        <xsl:attribute name="endpoint">
+          <xsl:value-of select="concat(., ':', $port)"/>
         </xsl:attribute>
       </cfg:Ref>
     </xsl:for-each>
@@ -92,7 +91,7 @@
 
     <exsl:document href="channelServer.port"
       method="text" omit-xml-declaration="yes"
-      >  ['channelServer', <xsl:copy-of select="$channel-server-port"/>],</exsl:document>
+      >  ['channelServer', <xsl:copy-of select="$channel-server-grpc-port"/>],</exsl:document>
 
     <xsl:variable name="update-config" select="$channel-server-config/cfg:updateParams"/>
     <xsl:variable name="update-channels-period"><xsl:value-of select="$update-config/@period"/>
@@ -112,9 +111,6 @@
         <xsl:value-of select="$channel-server-update-memory-size"/>
       </xsl:if>
     </xsl:variable>
-    <xsl:variable name="have-channel-search">
-      <xsl:value-of select="count($fe-cluster-path/service[@descriptor = $channel-search-service-descriptor]) > 0"/>
-    </xsl:variable>
 
     <!-- start config generation -->
   <cfg:ChannelServerConfig
@@ -127,20 +123,6 @@
     <xsl:if test="string-length($channel-server-config/@numa_node) &gt; 0">
       <xsl:attribute name="numa_node"><xsl:value-of select="$channel-server-config/@numa_node"/></xsl:attribute>
     </xsl:if>
-
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$channel-server-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($channel-server-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-channel-server-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$channel-server-port"/></xsl:attribute>
-        <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>
-        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
 
     <cfg:GrpcConfig
       process_threads="{$channel-server-grpc-process-threads}"
@@ -156,16 +138,14 @@
 
     <xsl:choose>
       <xsl:when test="$channel-server-config/cfg:logging/@log_level > 7">
-        <cfg:MatchOptions>
+        <cfg:MatchOptions nonstrict="false">
             <xsl:attribute name="match_logger_file">
             <xsl:value-of select="$workspace-root"/>/log/ChannelServer/MatchLogger.trace</xsl:attribute>
-            <xsl:attribute name="nonstrict"><xsl:value-of select="$have-channel-search"/></xsl:attribute>
           <cfg:AllowPort>80</cfg:AllowPort>
         </cfg:MatchOptions>
       </xsl:when>
       <xsl:otherwise>
-        <cfg:MatchOptions>
-            <xsl:attribute name="nonstrict"><xsl:value-of select="$have-channel-search"/></xsl:attribute>
+        <cfg:MatchOptions nonstrict="false">
           <cfg:AllowPort>80</cfg:AllowPort>
         </cfg:MatchOptions>
       </xsl:otherwise>
@@ -173,7 +153,7 @@
 
     <xsl:if test="count($be-cluster-path/service[@descriptor = $dictionary-provider-descriptor or
                                                  @descriptor = 'AdProfilingCluster/BackendSubCluster/DictionaryProvider']) > 0">
-      <cfg:DictionaryRefs name="DictionaryProvider">
+      <cfg:DictionaryRefs>
         <xsl:call-template name="FillServicesRefs">
           <xsl:with-param name="services" select="$be-cluster-path/service[@descriptor = $dictionary-provider-descriptor or
                                                                            @descriptor = 'AdProfilingCluster/BackendSubCluster/DictionaryProvider']"/>

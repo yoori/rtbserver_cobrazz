@@ -16,15 +16,11 @@
 #include <Commons/SignalActiveObject.hpp>
 
 #include "CampaignServerMain.hpp"
-
-#include "Compatibility/CampaignServerImpl_v350.hpp"
+#include "CampaignServerGrpc.hpp"
 
 namespace
 {
   const char* ASPECT  = "CampaignServer";
-  const char* CAMPAIGN_SERVER_V350_OBJ_KEY = "CampaignServer_v350";
-
-  const char* CAMPAIGN_SERVER_OBJ_KEY = "CampaignServer_v360";
 
   template<typename T>
   std::shared_ptr<T>
@@ -46,6 +42,7 @@ void
 CampaignServerApp_::main(int& argc, char** argv) noexcept
 {
   std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+  AdServer::Commons::SignalActiveObject signal_active_object;
 
   try
   {
@@ -75,9 +72,6 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
       ostr << "Unknown Exception at parsing of config.";
       throw Exception(ostr);
     }
-
-    CORBACommons::CorbaServerAdapter_var corba_server_adapter =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
 
     AdServer::CampaignSvcs::ProcStatImpl_var proc_stat_impl =
       new AdServer::CampaignSvcs::ProcStatImpl;
@@ -143,25 +137,45 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
         }
       });
 
-    {
-      AdServer::CampaignSvcs::CampaignServerImpl_v350_var
-        campaign_server_impl_v350 =
-          new AdServer::CampaignSvcs::CampaignServerImpl_v350(logger(), campaign_server_impl.get());
-
-      corba_server_adapter->add_binding(
-        CAMPAIGN_SERVER_V350_OBJ_KEY, campaign_server_impl_v350.in());
-    }
-
-    corba_server_adapter->add_binding(CAMPAIGN_SERVER_OBJ_KEY, campaign_server_impl.get());
-
     active_objects->add_child_object(
       std::static_pointer_cast<Generics::ActiveObject>(campaign_server_impl));
-    active_objects->add_child_object(corba_server_adapter.in());
+    AdServer::CampaignSvcs::CampaignServerGrpcService campaign_service(*campaign_server_impl);
+    std::shared_ptr<AdServer::Grpc::DbAccessServer> db_access_server;
+    if (configuration_.grpc_config)
+    {
+      const auto& grpc_config = *configuration_.grpc_config;
+      const auto& endpoint = grpc_config.Endpoint();
+      const std::string host = endpoint.host().present() && endpoint.host().get() != "*" ?
+        endpoint.host().get() : "0.0.0.0";
+      const bool supported = configuration_.server_mode == Configuration::SM_SERVER;
+      db_access_server = std::make_shared<AdServer::Grpc::DbAccessServer>(
+        host + ":" + std::to_string(endpoint.port()), grpc_config.process_threads(),
+        [campaign_server_impl, supported]() -> std::optional<bool>
+        {
+          return supported ?
+            std::optional<bool>(campaign_server_impl->get_db_state()) : std::nullopt;
+        },
+        [campaign_server_impl](bool enabled) { campaign_server_impl->change_db_state(enabled); },
+        [campaign_server_impl](auto& response)
+        {
+          response.set_ready(campaign_server_impl->active());
+        }, std::vector<grpc::Service*>{&campaign_service});
+    }
+    auto db_access_shutdown_guard = AdServer::Commons::make_scope_guard([&]() noexcept
+    {
+      if (db_access_server)
+      {
+        db_access_server->deactivate_object();
+        db_access_server->wait_object();
+      }
+    });
 
-    AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects->activate_object();
+    if (db_access_server)
+    {
+      db_access_server->activate_object();
+    }
 
-    // Running orb loop
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
     signal_active_object.wait_object();
@@ -255,6 +269,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
     configuration_.log_root = configuration->log_root();
     configuration_.pid_file = configuration->pid_file();
+    configuration_.grpc_config = std::make_unique<GrpcConfigType>(configuration->GrpcConfig());
     configuration_.colo_update_flush_traits.period = 60;
 
     if (configuration->Logging().present())
@@ -282,18 +297,6 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
     configuration_.ecpm_update_period = configuration->ecpm_update_period();
     configuration_.bill_stat_update_period = Generics::Time(
       configuration->bill_stat_update_period());
-
-    // Fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(configuration->CorbaConfig(), corba_config_);
-    }
-    catch(const eh::Exception& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't read Corba Config: " << e.what();
-      throw Exception(ostr);
-    }
 
     try
     {
@@ -360,9 +363,8 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
       try
       {
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          proxy_mode.CampaignServerCorbaRef(),
-          configuration_.campaign_server_refs);
+        configuration_.campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
+          proxy_mode.CampaignServerGrpcRefs());
       }
       catch(const eh::Exception& e)
       {
@@ -400,9 +402,8 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
         configuration_.server_mode = Configuration::SM_PROXY;
         try
         {
-          Config::CorbaConfigReader::read_multi_corba_ref(
-            *server_mode->CampaignServerCorbaRef(),
-            configuration_.campaign_server_refs);
+          configuration_.campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
+            *server_mode->CampaignServerGrpcRefs());
         }
         catch(const eh::Exception& e)
         {
@@ -415,9 +416,10 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
 
       configuration_.stat_stamp_sync_period = Generics::Time(server_mode->stat_stamp_sync_period());
 
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        server_mode->LogGeneralizerCorbaRef(),
-        configuration_.stat_provider_refs);
+      for (const auto& ref : server_mode->LogGeneralizerGrpcRefs().Ref())
+      {
+        configuration_.stat_provider_refs.push_back(ref.endpoint());
+      }
     }
     else
     {

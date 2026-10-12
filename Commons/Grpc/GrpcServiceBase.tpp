@@ -199,6 +199,23 @@ namespace AdServer::Grpc
       throw std::invalid_argument("Cooperative batch method requires distribution, hash and key");
     }
 
+    // Both entry points share the registered callable; coroutine frames only borrow it.
+    auto shared_handler =
+      std::make_shared<const std::decay_t<Handler>>(std::forward<Handler>(handler));
+    BatchCoroChainFn make_chain;
+    if (strategy == BatchExecutionStrategy::CooperativeByKey)
+    {
+      make_chain = [handler = shared_handler, use_arena_for_response](
+        Generics::MonoAllocatorArena& batch_arena, BatchItemContext* item,
+        google::protobuf::Arena& response_arena, PublishedBatchState* published_state,
+        std::size_t lane_index)
+      {
+        return co_handle_typed_batch_chain_<Request, Response>(
+          batch_arena, item, response_arena, published_state, lane_index,
+          *handler, use_arena_for_response);
+      };
+    }
+
     batch_coro_methods_.emplace(
       std::move(full_method),
       BatchCoroMethod{
@@ -230,7 +247,7 @@ namespace AdServer::Grpc
           return true;
         },
         [
-          handler = std::forward<Handler>(handler),
+          handler = std::move(shared_handler),
           use_arena_for_response
         ](
           void* request_ptr,
@@ -243,7 +260,7 @@ namespace AdServer::Grpc
           if (use_arena_for_response)
           {
             auto* response = google::protobuf::Arena::Create<Response>(&response_arena);
-            co_await handler(std::move(request), *response, status);
+            co_await (*handler)(std::move(request), *response, status);
 
             batch_response.set_status_code(status.error_code());
             batch_response.set_status_message(status.error_message());
@@ -255,7 +272,7 @@ namespace AdServer::Grpc
           else
           {
             Response response;
-            co_await handler(std::move(request), response, status);
+            co_await (*handler)(std::move(request), response, status);
 
             batch_response.set_status_code(status.error_code());
             batch_response.set_status_message(status.error_message());
@@ -265,9 +282,70 @@ namespace AdServer::Grpc
             }
           }
         },
+        std::move(make_chain),
         distributed,
         strategy
       });
+  }
+
+  template<typename Request, typename Response, typename Handler>
+  AdServer::Commons::MonoStartableAwaitable<void> GrpcServiceBase::co_handle_typed_batch_chain_(
+    Generics::MonoAllocatorArena&,
+    BatchItemContext* item,
+    google::protobuf::Arena& response_arena,
+    PublishedBatchState* published_state,
+    const std::size_t lane_index,
+    const Handler& handler,
+    const bool use_arena_for_response)
+  {
+    for (; item; item = item->chain_next)
+    {
+      auto& batch_response = *item->response_item;
+      try
+      {
+        auto& request = *static_cast<Request*>(item->coro_item.request);
+        ::grpc::Status status;
+        if (use_arena_for_response)
+        {
+          auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
+          co_await handler(std::move(request), *response, status);
+
+          batch_response.set_status_code(status.error_code());
+          batch_response.set_status_message(status.error_message());
+          if (status.ok())
+          {
+            response->SerializeToString(batch_response.mutable_payload());
+          }
+        }
+        else
+        {
+          Response response;
+          co_await handler(std::move(request), response, status);
+
+          batch_response.set_status_code(status.error_code());
+          batch_response.set_status_message(status.error_message());
+          if (status.ok())
+          {
+            response.SerializeToString(batch_response.mutable_payload());
+          }
+        }
+      }
+      catch (const std::exception& ex)
+      {
+        batch_response.set_status_code(::grpc::StatusCode::INTERNAL);
+        batch_response.set_status_message(ex.what());
+      }
+      catch (...)
+      {
+        batch_response.set_status_code(::grpc::StatusCode::INTERNAL);
+        batch_response.set_status_message("Unknown batch handler exception");
+      }
+
+      if (published_state)
+      {
+        enqueue_batch_response_(published_state, lane_index, *item);
+      }
+    }
   }
 
   template<
@@ -319,7 +397,7 @@ namespace AdServer::Grpc
         Response& response,
         ::grpc::Status& status) -> AdServer::Commons::StartableAwaitable<void>
       {
-        co_await (service_impl->*handler)(std::move(request), response, status);
+        return (service_impl->*handler)(std::move(request), response, status);
       },
       call.batch_hash,
       call.distributed_batch,

@@ -3,6 +3,13 @@ add_idl(StatInfoIDL StatInfo.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer NO
 add_idl(CampaignServerIDL CampaignServer.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignServer)
 
 add_dependencies(StatInfoIDL CampaignCommonsIDL)
+add_grpc_sources(CampaignServerGrpc CampaignServer.proto
+  ${PB_DIRECTORY}/CampaignSvcs/CampaignServer)
+target_sources(CampaignServerGrpc PRIVATE
+  ../CampaignServerClient/CampaignServerClient.cpp
+  CampaignServerGrpc.cpp CampaignServerGrpcAlgs.cpp CampaignServerPool.cpp)
+target_link_libraries(CampaignServerGrpc PUBLIC CampaignServerIDL gRPC::grpc++ protobuf::libprotobuf)
+
 target_link_libraries(BillStatInfoIDL
   PUBLIC
     CorbaTypesIDL
@@ -26,7 +33,7 @@ target_link_libraries(BillStatServerSource
     Commons
     CORBACommons
     BillStatInfoIDL
-    CampaignServerIDL
+    CampaignServerGrpc
 )
 
 add_library(CampaignConfigModifier STATIC
@@ -41,7 +48,7 @@ target_link_libraries(CampaignConfigModifier
     Commons
     CORBACommons
     Postgres
-    LogGeneralizerIDL
+    LogGeneralizerGrpc
 )
 
 add_executable(CampaignServer
@@ -57,6 +64,7 @@ add_executable(CampaignServer
 
 target_link_libraries(CampaignServer
   PRIVATE
+    GrpcBatch
     LogCommons
     Commons
     CORBAConfig
@@ -66,8 +74,7 @@ target_link_libraries(CampaignServer
     CampaignConfigModifier
     CORBACommons
     CorbaTypesIDL
-    CampaignServerStubs_v350
-    CampaignServerIDL
+    CampaignServerGrpc
     StatInfoIDL
     AdServerCommonsXSD
     Generics
@@ -79,5 +86,3 @@ target_link_libraries(CampaignServer
     HostDistributionFileXSD
     ProcessControlIDL
 )
-
-add_subdirectory(Compatibility)

@@ -4,10 +4,8 @@ add_executable(LogGeneralizerAdmin
 
 target_link_libraries(LogGeneralizerAdmin
   PRIVATE
-    LogGeneralizerIDL
-    ProcessControlIDL
+    LogGeneralizerGrpc
     Threads::Threads
     Generics
-    CORBACommons
     UtilCommons
 )

@@ -93,6 +93,16 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:complexType name="CampaignServerGrpcRef">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Base port; gRPC defaults to port + 500.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional"/>
+  </xsd:complexType>
+
   <xsd:complexType name="SimpleCorbaRef">
     <xsd:sequence>
       <xsd:element name="secureParams" type="SecureSimpleCorbaRefParams" minOccurs="0" maxOccurs="1">

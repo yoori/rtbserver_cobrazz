@@ -1,55 +1,66 @@
-
 #include <eh/Exception.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
-#include <CORBACommons/StatsImpl.hpp>
+#include <Logger/StreamLogger.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/PidFileGuard.hpp>
+#include <Commons/ScopeGuard.hpp>
 
 #include "LogGeneralizerMain.hpp"
+#include "LogGeneralizerHttp.hpp"
 #include "ErrorCode.hpp"
 
 namespace
 {
   const char ASPECT[] = "LogGeneralizer";
-  const char LOG_GENERALIZER_OBJ_KEY[] = "LogGeneralizer";
-  const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-  const char PROCESS_STATS_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
 }
 
 LogGeneralizerApp_::LogGeneralizerApp_() /*throw(eh::Exception)*/
 :
-  AdServer::Commons::ProcessControlVarsLoggerImpl("LogGeneralizerApp_", ASPECT)
+  Logging::LoggerCallbackHolder(
+    Logging::Logger_var(new Logging::OStream::Logger(Logging::OStream::Config(std::cerr))),
+    "LogGeneralizerApp_", ASPECT, 0)
 {
 }
 
 void
-LogGeneralizerApp_::shutdown(CORBA::Boolean wait_for_completion)
-  /*throw(CORBA::SystemException)*/
+LogGeneralizerApp_::shutdown()
 {
   ShutdownGuard guard(shutdown_lock_);
 
-  if (log_generalizer_impl_.in())
+  if (shutdown_requested_)
+  {
+    return;
+  }
+
+  if (db_access_server_)
+  {
+    db_access_server_->deactivate_object();
+    db_access_server_->wait_object();
+  }
+
+  if (http_server_)
+  {
+    http_server_->deactivate_object();
+    http_server_->wait_object();
+  }
+
+  if (log_generalizer_impl_.in() && log_generalizer_impl_->active())
   {
     log_generalizer_impl_->deactivate_object();
     log_generalizer_impl_->wait_object();
   }
 
-  CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
-}
-
-CORBACommons::IProcessControl::ALIVE_STATUS
-LogGeneralizerApp_::is_alive() /*throw(CORBA::SystemException)*/
-{
-  return CORBACommons::ProcessControlImpl::is_alive();
+  shutdown_requested_ = true;
 }
 
 void
-LogGeneralizerApp_::main(int &argc, char **argv)
+LogGeneralizerApp_::main(int& argc, char** argv, AdServer::Commons::SignalActiveObject& signals)
   noexcept
 {
+  std::unique_ptr<AdServer::Commons::PidFileGuard> pid_file_guard;
+
   try
   {
     const char *usage = "usage: LogGeneralizer <config_file>";
@@ -115,47 +126,52 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       throw Exception(es);
     }
 
-    // fill corba_config
-    try
-    {
-      Config::CorbaConfigReader::read_config(config().CorbaConfig(), corba_config_);
-    }
-    catch (const eh::Exception &ex)
-    {
-      Stream::Error es;
-      es << "Can't read Corba Config. : " << ex.what();
-      throw Exception(es);
-    }
-
-    try
-    {
-      // init CORBA Server
-      corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
-
-      shutdowner_ = corba_server_adapter_->shutdowner();
-    }
-    catch (const eh::Exception &ex)
-    {
-      Stream::Error es;
-      es << "Can't init CorbaServerAdapter. : " << ex.what();
-      throw Exception(es);
-    }
+    pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
+      std::string(config().pid_file()));
 
     proc_stat_impl_ = new AdServer::LogProcessing::ProcStatImpl;
 
-    proc_stat_ctrl_ = new CORBACommons::ProcessStatsImpl(proc_stat_impl_);
+    if (config().HttpConfig().present())
+    {
+      const auto& http_config = config().HttpConfig().get();
+      const auto& endpoint = http_config.Endpoint();
+      const auto host = endpoint.host().present() && endpoint.host().get() != "*" ?
+        endpoint.host().get() : "0.0.0.0";
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        host, endpoint.port(), http_config.process_threads(), true);
+      http_server_->add_handler("/stats",
+        AdServer::LogProcessing::make_log_generalizer_stats_http_handler(proc_stat_impl_.in()));
+    }
 
     log_generalizer_impl_ =
       new AdServer::LogProcessing::LogGeneralizerImpl(callback(), logger(),
         config(), proc_stat_impl_);
 
     {
-      using namespace AdServer::Commons;
-      register_vars_controller();
-      add_var_processor(
-        DbStateProcessor::VAR_NAME,
-        new DbStateProcessor(new_simple_db_state_changer(log_generalizer_impl_))
-      );
+      grpc_service_ = std::make_unique<AdServer::LogProcessing::LogGeneralizerGrpcService>(
+        [this](auto id) { log_generalizer_impl_->stop_stat_upload(id); },
+        [this](auto id, bool clear) { log_generalizer_impl_->start_stat_upload(id, clear); },
+        [this](auto id, bool clear) { return log_generalizer_impl_->get_stat_info(id, clear); });
+      const auto& grpc_config = config().GrpcConfig();
+      const auto& endpoint = grpc_config.Endpoint();
+      const std::string host = endpoint.host().present() && endpoint.host().get() != "*" ?
+        endpoint.host().get() : "0.0.0.0";
+      db_access_server_ = std::make_shared<AdServer::Grpc::DbAccessServer>(
+        host + ":" + std::to_string(endpoint.port()), grpc_config.process_threads(),
+        [this]() -> std::optional<bool>
+        {
+          try
+          {
+            return log_generalizer_impl_->get_db_state();
+          }
+          catch (const AdServer::Commons::DbStateChanger::NotSupported&)
+          {
+            return std::nullopt;
+          }
+        },
+        [this](bool enabled) { log_generalizer_impl_->change_db_state(enabled); },
+        [this](auto& response) { response.set_ready(log_generalizer_impl_->active()); },
+        std::vector<grpc::Service*>{grpc_service_.get()});
     }
 
     if (config().SNMPConfig().present())
@@ -190,19 +206,36 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       }
     }
 
-    corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-    corba_server_adapter_->add_binding(PROCESS_STATS_CONTROL_OBJ_KEY, proc_stat_ctrl_.in());
-
-    corba_server_adapter_->add_binding(LOG_GENERALIZER_OBJ_KEY, log_generalizer_impl_.in());
+    auto shutdown_guard = AdServer::Commons::make_scope_guard([this]() noexcept
+    {
+      try
+      {
+        shutdown();
+      }
+      catch (...)
+      {
+        logger()->log(
+          String::SubString("Failed to stop LogGeneralizer"), Logging::Logger::EMERGENCY, ASPECT);
+      }
+    });
 
     log_generalizer_impl_->activate_object();
 
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running orb loop
-    corba_server_adapter_->run();
+    if (http_server_)
+    {
+      http_server_->activate_object();
+    }
 
-    wait();
+    if (db_access_server_)
+    {
+      db_access_server_->activate_object();
+    }
+
+    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
+    signals.wait_object();
+
+    shutdown();
+    shutdown_guard.release();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
 
   }
@@ -214,14 +247,6 @@ LogGeneralizerApp_::main(int &argc, char **argv)
       AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_0
 ) << "LogGeneralizerApp_::main(): Got LogGeneralizerApp_::Exception: " << ex.what();
   }
-  catch (const CORBA::SystemException &ex)
-  {
-    logger()->sstream(
-      Logging::Logger::EMERGENCY,
-      ASPECT,
-      AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_0
-) << "LogGeneralizerApp_::main(): Got CORBA::SystemException: " << ex;
-  }
   catch (const eh::Exception &ex)
   {
     logger()->sstream(
@@ -231,27 +256,14 @@ LogGeneralizerApp_::main(int &argc, char **argv)
 ) << "LogGeneralizerApp_::main(): Got eh::Exception: " << ex.what();
   }
 
-  /* references to servants in ORB must be destroyed before
-     destroying var pointers to them */
-  try
-  {
-    corba_server_adapter_.reset();
-    shutdowner_.reset();
-  }
-  catch (const CORBA::Exception &ex)
-  {
-    logger()->sstream(
-      Logging::Logger::EMERGENCY,
-      ASPECT,
-      AdServer::LogProcessing::LOG_GEN_IMPL_ERR_CODE_1
-    ) << "LogGeneralizerApp_::main(): Got CORBA::Exception while trying to "
-         "destroy ORB: " << ex;
-  }
 }
 
 int
 main(int argc, char **argv) noexcept
 {
+  AdServer::Commons::PidFileGuard::enable_process_exit_cleanup();
+  AdServer::Commons::SignalActiveObject signals;
+
   LogGeneralizerApp_ *app = 0;
 
   try
@@ -270,5 +282,5 @@ main(int argc, char **argv) noexcept
     return -1;
   }
 
-  app->main(argc, argv);
+  app->main(argc, argv, signals);
 }

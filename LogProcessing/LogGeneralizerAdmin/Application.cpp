@@ -7,7 +7,6 @@
 #include <String/StringManip.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/SimpleDecimal.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <UtilCommons/Table.hpp>
 
 #include "Application.hpp"
@@ -20,20 +19,20 @@ const char USAGE[] =
   "\tLogGeneralizerAdmin help\n\n"
   "Synopsis 2:\n"
   "\tLogGeneralizerAdmin stop-stat-upload "
-  " -r <log generalizer object reference> --client-id=<NUMBER>\n\n"
+  " -r <gRPC host:port> --client-id=<NUMBER>\n\n"
   "\tLogGeneralizerAdmin start-stat-upload "
-  " -r <log generalizer object reference> --client-id=<NUMBER>"
+  " -r <gRPC host:port> --client-id=<NUMBER>"
   " [--clear]\n\n"
   "\tLogGeneralizerAdmin get-stat-info "
-  " -r <log generalizer object reference> --client-id=<NUMBER>"
+  " -r <gRPC host:port> --client-id=<NUMBER>"
   " [--clear]\n\n"
   "Sample:\n"
   "\tLogGeneralizerAdmin stop-stat-upload"
-  " -r corbaloc:iiop:srv-dev.ocslab.com:18011/LogGeneralizer --client-id=1\n"
+  " -r localhost:10611 --client-id=1\n"
   "\tLogGeneralizerAdmin start-stat-upload"
-  " -r corbaloc:iiop:srv-dev.ocslab.com:18011/LogGeneralizer --client-id=1\n"
+  " -r localhost:10611 --client-id=1\n"
   "\tLogGeneralizerAdmin get-stat-info"
-  " -r corbaloc:iiop:srv-dev.ocslab.com:18011/LogGeneralizer --client-id=1"
+  " -r localhost:10611 --client-id=1"
   " --clear\n";
 
 const Table::Column STAT_INFO_TABLE_COLUMNS[] =
@@ -52,7 +51,7 @@ const Table::Column STAT_INFO_TABLE_COLUMNS[] =
   Table::Column("tag_amounts", Table::Column::TEXT)
 };
 
-typedef std::unique_ptr<Table> TablePtr;
+using TablePtr = std::unique_ptr<Table>;
 
 const char STOP_CMD[]     = "stop-stat-upload";
 const char START_CMD[]    = "start-stat-upload";
@@ -84,11 +83,6 @@ int main(int argc, char **argv)
     std::cerr << "LogGeneralizerAdmin: eh::Exception exception caught. "
       ":" << std::endl << ex.what() << std::endl;
   }
-  catch (const CORBA::Exception &ex)
-  {
-    std::cerr << "LogGeneralizerAdmin: CORBA::Exception exception caught. "
-      ":" << std::endl << ex << std::endl;
-  }
   catch (...)
   {
     std::cerr << "LogGeneralizerAdmin: unknown exception caught" << std::endl;
@@ -101,19 +95,11 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/
 {
 }
 
-Application::~Application() noexcept
-{
-  log_generalizer_ = 0;
-
-  if (!CORBA::is_nil(orb_))
-  {
-    orb_->destroy();
-  }
-}
+Application::~Application() noexcept = default;
 
 int
 Application::run(int &argc, char **argv)
-  /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/
+  /*throw(InvalidArgument, Exception, eh::Exception)*/
 {
   Generics::AppUtils::CheckOption opt_help;
   Generics::AppUtils::Option<std::string> opt_ref;
@@ -139,13 +125,6 @@ Application::run(int &argc, char **argv)
 
   args.parse(argc - 1, argv + 1);
 
-  orb_ = CORBA::ORB_init(argc, argv);
-
-  if (CORBA::is_nil(orb_))
-  {
-    throw Exception("CORBA::ORB_init failed");
-  }
-
   if (argc < 2)
   {
     throw InvalidArgument("Too few arguments");
@@ -163,9 +142,10 @@ Application::run(int &argc, char **argv)
 
   if (cmd == STOP_CMD || cmd == START_CMD || cmd == GET_INFO_CMD)
   {
-    if (!opt_ref.installed())
+    if (!opt_ref.installed() || !opt_id.installed())
     {
-      std::cout << "LogGeneralizer reference isn't defined." << std::endl << USAGE << std::endl;
+      std::cout << "LogGeneralizer endpoint and client-id are required."
+        << std::endl << USAGE << std::endl;
       return 1;
     }
 
@@ -174,34 +154,8 @@ Application::run(int &argc, char **argv)
       unsigned client_id = *opt_id;
       bool clear = opt_clear.enabled();
 
-      try
-      {
-        CORBA::Object_var obj = orb_->string_to_object(service_ref.c_str());
-
-        if (CORBA::is_nil(obj))
-        {
-          Stream::Error es;
-          es << "string_to_object() failed for service reference '" << service_ref << "'";
-          throw Exception(es);
-        }
-
-        log_generalizer_ = AdServer::LogProcessing::LogGeneralizer::_narrow(obj.in());
-
-        if (CORBA::is_nil(log_generalizer_))
-        {
-          Stream::Error es;
-          es << "AdServer::LogProcessing::LogGeneralizer::_narrow() failed "
-             "for service reference '" << service_ref << "'";
-          throw Exception(es);
-        }
-      }
-      catch (const CORBA::SystemException &ex)
-      {
-        Stream::Error es;
-        es << "Failed to resolve service reference '" << service_ref
-           << "'. CORBA::SystemException caught:\n" << ex;
-        throw Exception(es);
-      }
+      log_generalizer_ =
+        std::make_unique<AdServer::LogProcessing::LogGeneralizerClient>(service_ref);
 
       try
       {
@@ -215,35 +169,13 @@ Application::run(int &argc, char **argv)
         }
         else if (cmd == GET_INFO_CMD)
         {
-          StatInfo_var info = log_generalizer_->get_stat_info(client_id, clear);
+          const auto info = log_generalizer_->get_stat_info(client_id, clear);
           print_stat_info(info);
         }
       }
-      catch (const CORBA::SystemException &ex)
+      catch (const eh::Exception& ex)
       {
-        Stream::Error es;
-        es << "Operation failed: CORBA::SystemException caught:\n" << ex;
-        throw Exception(es);
-      }
-      catch (const LogGeneralizerNotSupported &ex)
-      {
-        Stream::Error es;
-        es << "Operation failed: LogGeneralizer::NotSupported " << "caught:\n" << ex.description;
-        throw Exception(es);
-      }
-      catch (const LogGeneralizerImplementationException &ex)
-      {
-        Stream::Error es;
-        es << "Operation failed: LogGeneralizer::ImplementationException "
-           << "caught:\n" << ex.description;
-        throw Exception(es);
-      }
-      catch (const LogGeneralizerCollectionNotStarted &ex)
-      {
-        Stream::Error es;
-        es << "Operation failed: LogGeneralizer::CollectionNotStarted "
-           << "caught:\n" << ex.description;
-        throw Exception(es);
+        throw Exception(std::string("LogGeneralizer operation failed: ") + ex.what());
       }
     }
   }
@@ -258,7 +190,7 @@ Application::run(int &argc, char **argv)
 
 int
 Application::help()
-  /*throw(InvalidArgument, Exception, eh::Exception, CORBA::Exception)*/
+  /*throw(InvalidArgument, Exception, eh::Exception)*/
 {
   std::cerr << USAGE << std::endl;
   return 0;
@@ -266,9 +198,9 @@ Application::help()
 
 void
 Application::output_creative_stats(std::ostream &os, const CreativeStatSeq &creative_stats)
-  /*throw(eh::Exception, CORBA::Exception)*/
+  /*throw(eh::Exception)*/
 {
-  for (size_t i = 0; i < creative_stats.length(); ++i)
+  for (size_t i = 0; i < creative_stats.size(); ++i)
   {
     if (i)
     {
@@ -282,36 +214,36 @@ Application::output_creative_stats(std::ostream &os, const CreativeStatSeq &crea
 
 void
 Application::output_publisher_amounts(std::ostream &os, const PublisherAmountSeq &publisher_amounts)
-  /*throw(eh::Exception, CORBA::Exception)*/
+  /*throw(eh::Exception)*/
 {
-  typedef Generics::SimpleDecimal<uint64_t, 18, 8> DecimalT;
-  for (size_t i = 0; i < publisher_amounts.length(); ++i)
+  using DecimalT = Generics::SimpleDecimal<uint64_t, 18, 8>;
+  for (size_t i = 0; i < publisher_amounts.size(); ++i)
   {
     if (i)
     {
       os << ", ";
     }
     const PublisherAmountInfo &pai = publisher_amounts[i];
-    DecimalT adv_amount = CorbaAlgs::unpack_decimal<DecimalT>(pai.adv_amount);
+    DecimalT adv_amount = pai.adv_amount;
     os << "[ " << pai.publisher_account_id << " : " << adv_amount << " ]";
   }
 }
 
 void
 Application::output_tag_amounts(std::ostream &os, const TagAmountSeq &tag_amounts)
-  /*throw(eh::Exception, CORBA::Exception)*/
+  /*throw(eh::Exception)*/
 {
-  typedef Generics::SimpleDecimal<uint64_t, 18, 8> DecimalT;
-  for (size_t i = 0; i < tag_amounts.length(); ++i)
+  using DecimalT = Generics::SimpleDecimal<uint64_t, 18, 8>;
+  for (size_t i = 0; i < tag_amounts.size(); ++i)
   {
     if (i)
     {
       os << ", ";
     }
     const TagAmountInfo &tai = tag_amounts[i];
-    DecimalT pub_isp_amount = CorbaAlgs::unpack_decimal<DecimalT>(tai.pub_isp_amount);
-    DecimalT adv_amount = CorbaAlgs::unpack_decimal<DecimalT>(tai.adv_amount);
-    DecimalT adv_comm_amount = CorbaAlgs::unpack_decimal<DecimalT>(tai.adv_comm_amount);
+    DecimalT pub_isp_amount = tai.pub_isp_amount;
+    DecimalT adv_amount = tai.adv_amount;
+    DecimalT adv_comm_amount = tai.adv_comm_amount;
     os << "[ " << tai.tag_id << " : " << pub_isp_amount << ", "
        << adv_amount << ", " << adv_comm_amount << " ]";
   }
@@ -319,7 +251,7 @@ Application::output_tag_amounts(std::ostream &os, const TagAmountSeq &tag_amount
 
 void
 Application::print_stat_info(const StatInfo &info)
-  /*throw(eh::Exception, CORBA::Exception)*/
+  /*throw(eh::Exception)*/
 {
   const size_t columns = sizeof(STAT_INFO_TABLE_COLUMNS) /
     sizeof(STAT_INFO_TABLE_COLUMNS[0]);
@@ -328,29 +260,26 @@ Application::print_stat_info(const StatInfo &info)
   {
     table->column(i, STAT_INFO_TABLE_COLUMNS[i]);
   }
-  typedef Generics::SimpleDecimal<uint64_t, 18, 8> DecimalT;
+  using DecimalT = Generics::SimpleDecimal<uint64_t, 18, 8>;
   using namespace AdServer::LogProcessing;
   const CampaignStatSeq &cmp_stat_seq = info.campaign_stats;
-  for (size_t i = 0; i < cmp_stat_seq.length(); ++i)
+  for (size_t i = 0; i < cmp_stat_seq.size(); ++i)
   {
     Table::Row row(table->columns());
-    const Generics::Time sdate = CorbaAlgs::unpack_time(cmp_stat_seq[i].sdate);
+    const Generics::Time sdate = cmp_stat_seq[i].sdate;
     row.add_field(sdate.get_gm_time().format("%F %H:%M"));
-    const Generics::Time adv_sdate = CorbaAlgs::unpack_time(cmp_stat_seq[i].adv_sdate);
+    const Generics::Time adv_sdate = cmp_stat_seq[i].adv_sdate;
     row.add_field(adv_sdate.get_gm_time().format("%F %H:%M"));
     row.add_field(cmp_stat_seq[i].adv_account_id);
     row.add_field(cmp_stat_seq[i].campaign_id);
     row.add_field(cmp_stat_seq[i].ccg_id);
-    const DecimalT adv_account_amount =
-      CorbaAlgs::unpack_decimal<DecimalT>(cmp_stat_seq[i].adv_account_amount);
+    const DecimalT adv_account_amount = cmp_stat_seq[i].adv_account_amount;
     row.add_field(adv_account_amount.str());
-    const DecimalT adv_amount = CorbaAlgs::unpack_decimal<DecimalT>(cmp_stat_seq[i].adv_amount);
+    const DecimalT adv_amount = cmp_stat_seq[i].adv_amount;
     row.add_field(adv_amount.str());
-    const DecimalT adv_comm_amount =
-      CorbaAlgs::unpack_decimal<DecimalT>(cmp_stat_seq[i].adv_comm_amount);
+    const DecimalT adv_comm_amount = cmp_stat_seq[i].adv_comm_amount;
     row.add_field(adv_comm_amount.str());
-    const DecimalT adv_payable_comm_amount =
-      CorbaAlgs::unpack_decimal<DecimalT>(cmp_stat_seq[i].adv_payable_comm_amount);
+    const DecimalT adv_payable_comm_amount = cmp_stat_seq[i].adv_payable_comm_amount;
     row.add_field(adv_payable_comm_amount.str());
     {
       std::ostringstream oss;
@@ -370,7 +299,7 @@ Application::print_stat_info(const StatInfo &info)
     table->add_row(row);
   }
   std::cout << std::endl;
-  std::cout << "Number of records: " << cmp_stat_seq.length() << std::endl;
+  std::cout << "Number of records: " << cmp_stat_seq.size() << std::endl;
   std::cout << std::endl;
   table->dump(std::cout);
 }

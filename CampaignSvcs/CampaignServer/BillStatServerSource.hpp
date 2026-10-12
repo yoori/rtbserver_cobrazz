@@ -19,8 +19,7 @@ namespace AdServer::CampaignSvcs
     BillStatServerSource(
       Logging::Logger* logger,
       unsigned long server_id,
-      const CORBACommons::CorbaObjectRefList& stat_providers)
-      noexcept;
+      const std::vector<std::string>& stat_providers);
 
     virtual Stat_var
     update(Stat* stat, const Generics::Time& now)

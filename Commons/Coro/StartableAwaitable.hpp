@@ -31,9 +31,10 @@ namespace AdServer::Commons
     ~StartableAwaitable();
 
     void start(Completion completion);
+    void start_inline(Completion completion);
     void start_detached(Completion completion);
     bool await_ready() const noexcept;
-    void await_suspend(std::coroutine_handle<> continuation);
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation);
     ResultType await_resume();
 
   private:
@@ -56,9 +57,10 @@ namespace AdServer::Commons
     ~StartableAwaitable();
 
     void start(Completion completion);
+    void start_inline(Completion completion);
     void start_detached(Completion completion);
     bool await_ready() const noexcept;
-    void await_suspend(std::coroutine_handle<> continuation);
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation);
     void await_resume();
 
   private:
@@ -74,7 +76,7 @@ namespace AdServer::Commons
     struct FinalAwaiter
     {
       bool await_ready() const noexcept;
-      void await_suspend(Handle handle) const noexcept;
+      std::coroutine_handle<> await_suspend(Handle handle) const noexcept;
       void await_resume() const noexcept;
     };
 
@@ -101,7 +103,7 @@ namespace AdServer::Commons
     struct FinalAwaiter
     {
       bool await_ready() const noexcept;
-      void await_suspend(Handle handle) const noexcept;
+      std::coroutine_handle<> await_suspend(Handle handle) const noexcept;
       void await_resume() const noexcept;
     };
 
@@ -166,6 +168,13 @@ namespace AdServer::Commons
   }
 
   template<typename ResultType, typename FrameAllocator>
+  inline void StartableAwaitable<ResultType, FrameAllocator>::start_inline(Completion completion)
+  {
+    handle_.promise().completion = std::move(completion);
+    handle_.resume();
+  }
+
+  template<typename ResultType, typename FrameAllocator>
   inline void StartableAwaitable<ResultType, FrameAllocator>::start_detached(Completion completion)
   {
     const Handle handle = std::exchange(handle_, {});
@@ -181,11 +190,17 @@ namespace AdServer::Commons
   }
 
   template<typename ResultType, typename FrameAllocator>
-  inline void StartableAwaitable<ResultType, FrameAllocator>::await_suspend(
+  inline std::coroutine_handle<> StartableAwaitable<ResultType, FrameAllocator>::await_suspend(
     std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
+    if (current_coroutine_symmetric_transfer_ref())
+    {
+      return handle_;
+    }
+
     resume_coroutine(handle_);
+    return std::noop_coroutine();
   }
 
   template<typename ResultType, typename FrameAllocator>
@@ -227,26 +242,36 @@ namespace AdServer::Commons
   }
 
   template<typename ResultType, typename FrameAllocator>
-  inline void
+  inline std::coroutine_handle<>
   StartableAwaitable<ResultType, FrameAllocator>::promise_type::FinalAwaiter::await_suspend(
     Handle handle) const noexcept
   {
     auto& promise = handle.promise();
     const bool destroy_on_completion = promise.destroy_on_completion;
     auto completion = std::move(promise.completion);
+    std::coroutine_handle<> next = std::noop_coroutine();
     if (completion)
     {
       completion(promise.exception);
     }
     else if (promise.continuation)
     {
-      resume_coroutine(promise.continuation);
+      if (current_coroutine_symmetric_transfer_ref())
+      {
+        next = promise.continuation;
+      }
+      else
+      {
+        resume_coroutine(promise.continuation);
+      }
     }
 
     if (destroy_on_completion)
     {
       handle.destroy();
     }
+
+    return next;
   }
 
   template<typename ResultType, typename FrameAllocator>
@@ -341,6 +366,13 @@ namespace AdServer::Commons
   }
 
   template<typename FrameAllocator>
+  inline void StartableAwaitable<void, FrameAllocator>::start_inline(Completion completion)
+  {
+    handle_.promise().completion = std::move(completion);
+    handle_.resume();
+  }
+
+  template<typename FrameAllocator>
   inline void StartableAwaitable<void, FrameAllocator>::start_detached(Completion completion)
   {
     const Handle handle = std::exchange(handle_, {});
@@ -356,11 +388,17 @@ namespace AdServer::Commons
   }
 
   template<typename FrameAllocator>
-  inline void
+  inline std::coroutine_handle<>
   StartableAwaitable<void, FrameAllocator>::await_suspend(std::coroutine_handle<> continuation)
   {
     handle_.promise().continuation = continuation;
+    if (current_coroutine_symmetric_transfer_ref())
+    {
+      return handle_;
+    }
+
     resume_coroutine(handle_);
+    return std::noop_coroutine();
   }
 
   template<typename FrameAllocator>
@@ -394,26 +432,36 @@ namespace AdServer::Commons
   }
 
   template<typename FrameAllocator>
-  inline void
+  inline std::coroutine_handle<>
   StartableAwaitable<void, FrameAllocator>::promise_type::FinalAwaiter::await_suspend(Handle handle)
     const noexcept
   {
     auto& promise = handle.promise();
     const bool destroy_on_completion = promise.destroy_on_completion;
     auto completion = std::move(promise.completion);
+    std::coroutine_handle<> next = std::noop_coroutine();
     if (completion)
     {
       completion(promise.exception);
     }
     else if (promise.continuation)
     {
-      resume_coroutine(promise.continuation);
+      if (current_coroutine_symmetric_transfer_ref())
+      {
+        next = promise.continuation;
+      }
+      else
+      {
+        resume_coroutine(promise.continuation);
+      }
     }
 
     if (destroy_on_completion)
     {
       handle.destroy();
     }
+
+    return next;
   }
 
   template<typename FrameAllocator>

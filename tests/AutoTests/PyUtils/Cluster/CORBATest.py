@@ -1,7 +1,7 @@
 
 import sys, time, httplib, urllib, string, os.path, os, shutil, glob, json, subprocess
 
-import FunTest, OrbTestSuite, MockCampaignServer, MockChannelProxy
+import FunTest, OrbTestSuite, MockCampaignServer
 
 from TestComparison import ComparisonMixin
 from Logger import log, logException
@@ -49,7 +49,6 @@ class CORBAProcess(FunTest.Process):
     self.CHANNELPROXY_PORT = self.PORT_BASE + 5
     self.CAMPAIGNSRV_PORT  = self.PORT_BASE + 6
     self.CAMPAIGNMGR_PORT  = self.PORT_BASE + 7
-    self.CHANNELSEARCHSVC_PORT  = self.PORT_BASE + 9
     self.LOGGENERALIZER_PORT  = self.PORT_BASE + 11
     self.EXPRESSIONMATCHER_PORT = self.PORT_BASE + 13
     self.REQUESTINFOMGR_PORT = self.PORT_BASE + 20
@@ -84,7 +83,6 @@ class CORBAProcess(FunTest.Process):
     self.STATEMENT_TIMEOUT = 600
     self.CAMPAIGN_SERVER_ID = 1
     self.CAMPAIGNSERVER_OBJECT_KEY = MockCampaignServer.ObjectKey
-    self.CHANNELPROXY_OBJECT_KEY = MockChannelProxy.ObjectKey
     self.CHANNELPROXY_USED = False
 
   def createDirs( self, root, dirs):
@@ -173,7 +171,7 @@ class CORBAProcess(FunTest.Process):
     return self.processControl.is_alive()
 
 
-class CampaignServer(CORBAProcess):
+class CampaignServer(SignalProcess):
 
   def __init__(  self, info, testName, opts=[] ):
     CORBAProcess.__init__(self, info, testName, opts,
@@ -191,17 +189,12 @@ class CampaignServer(CORBAProcess):
  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
  xmlns:colo="http://www.foros.com/cms/colocation"
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/CampaignSvcs/CampaignServerConfig.xsd">
- <cfg:CampaignServer log_root="%(LOGROOT)s/Out" config_update_period="%(CONFIG_UPDATE_PERIOD)i"
+ <cfg:CampaignServer pid_file="%(LOGROOT)s/CampaignServer.pid" bill_stat_update_period="60" log_root="%(LOGROOT)s/Out" config_update_period="%(CONFIG_UPDATE_PERIOD)i"
   ecpm_update_period="%(ECPM_UPDATE_PERIOD)i" server_id="%(CAMPAIGN_SERVER_ID)i"
   colo_id="%(COLO_ID)i" version="%(VERSION)s">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(CAMPAIGNSRV_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="CampaignServer" name="CampaignServer"/>
-    <cfg:Object servant="CampaignServer_v330" name="CampaignServer_v330"/>
-    <cfg:Object servant="CampaignServer_v340" name="CampaignServer_v340"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+  <cfg:GrpcConfig process_threads="%(THREADING_POOL)i">
+   <cfg:Endpoint host="*" port="%(CAMPAIGNSRV_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:Logger filename="%(LOGROOT)s/CampaignServer.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
@@ -211,9 +204,9 @@ class CampaignServer(CORBAProcess):
   </cfg:Logging>
   <cfg:ServerMode stat_stamp_sync_period="3600">
    <cfg:PGConnection connection_string="host=%(PQ_HOST)s port=%(PQ_PORT)s dbname=%(PQ_DB)s user=%(PQ_USER)s password=%(PQ_DBPWD)s"/>
-   <cfg:LogGeneralizerCorbaRef>
-     <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(LOGGENERALIZER_PORT)i/LogGeneralizer"/>
-   </cfg:LogGeneralizerCorbaRef>
+   <cfg:LogGeneralizerGrpcRefs>
+     <cfg:Ref endpoint="%(HOST)s:%(LOGGENERALIZER_PORT)i"/>
+   </cfg:LogGeneralizerGrpcRefs>
   </cfg:ServerMode>
  </cfg:CampaignServer>
 </cfg:AdConfiguration>
@@ -358,9 +351,9 @@ class CampaignManager(CORBAProcess):
     direct_instantiate_url="https://%(HOST)s:%(FE_PORT)i/services/inst?format=js&amp;"
   />
   </cfg:Creative>
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
-   <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
-  </cfg:CampaignServerCorbaRef>
+  <cfg:CampaignServerGrpcRefs>
+   <cfg:Ref endpoint="%(HOST)s:%(CAMPAIGNSRV_PORT)i"/>
+  </cfg:CampaignServerGrpcRefs>
   <cfg:Logging inventory_sampling="100" distrib_count="4" use_referrer_site_referrer_stats="empty">
    <cfg:RequestBasicChannels dump_channel_triggers="true" flush_period="10" adrequest_anonymize="false"/>
    <cfg:OptOutStat flush_period="10"/>
@@ -422,9 +415,9 @@ class UserInfoManager(CORBAProcess):
       common_chunks_number="10" chunks_root="%(USER_CACHE_ROOT)s"
       rw_buffer_size="10485760" rwlevel_max_size="104857600"
       max_undumped_size="262144000" max_levels0="20"/>
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
-   <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/CampaignServer"/>
-  </cfg:CampaignServerCorbaRef>
+  <cfg:CampaignServerGrpcRefs>
+   <cfg:Ref endpoint="%(HOST)s:%(CAMPAIGNSRV_PORT)i"/>
+  </cfg:CampaignServerGrpcRefs>
   <cfg:UserProfilesCleanup content_cleanup_time="43200" process_portion="100" start_time="00:01"/>
   <cfg:FreqCaps confirm_timeout="1"/>
  </cfg:UserInfoManagerConfig>
@@ -504,18 +497,6 @@ class ChannelServer(SignalProcess):
       raise RuntimeError('ChannelServer gRPC %s: %s' % (method, error))
     return json.loads(output)
 
-  def configure_proxy(self):
-    return self.grpc('set_proxy_sources', {
-      'proxy_refs': ['corbaloc:iiop:%s:%d/%s' % (
-        self.HOST, self.CHANNELPROXY_PORT, self.CHANNELPROXY_OBJECT_KEY)],
-      'campaign_refs': ['corbaloc:iiop:%s:%d/%s' % (
-        self.HOST, self.CAMPAIGNSRV_PORT, self.CAMPAIGNSERVER_OBJECT_KEY)],
-      'count_chunks': self.CONFIG_COUNT_CHUNKS,
-      'colo': self.COLO_ID,
-      'check_sum': 43,
-      'version': self.VERSION,
-      'sources': range(self.CONFIG_COUNT_CHUNKS)})
-
   def writeCfgFile( self ):
     self.port = self.CHANNELSRV_PORT
     f = file(self.cfgFilePath, 'w')
@@ -528,11 +509,6 @@ class ChannelServer(SignalProcess):
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/ChannelSvcs/ChannelServerConfig.xsd">
  <cfg:ChannelServerConfig pid_file="%(LOGROOT)s/ChannelServer.pid" count_chunks="32" merge_size="1"
    update_period="%(CONFIG_UPDATE_PERIOD)i" log_root="%(LOGROOT)s/Out" service_index="1">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(CHANNELSRV_PORT)s">
-    <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
   <cfg:GrpcConfig>
    <cfg:Endpoint host="*" port="%(CHANNELSRV_GRPC_PORT)i"/>
   </cfg:GrpcConfig>
@@ -585,8 +561,6 @@ class ChannelController(SignalProcess):
   <cfg:ChannelServerGroup>
    <cfg:ChannelServerHost>
     <cfg:ChannelServerGrpcRef host="%(HOST)s" port="%(CHANNELSRV_GRPC_PORT)i"/>
-    <cfg:ChannelUpdateRef name="ChannelUpdate"
-      ref="corbaloc:iiop:%(HOST)s:%(CHANNELSRV_PORT)i/ChannelUpdate"/>
    </cfg:ChannelServerHost>
   </cfg:ChannelServerGroup>
  </cfg:ChannelControllerConfig>
@@ -598,52 +572,12 @@ class ChannelController(SignalProcess):
   def __writeChannelDBSource( self, f ):
     print >> f, """<cfg:ChannelSource>
       <cfg:RegularSource>
-       <cfg:CampaignServerCorbaRef name="CampaignServer">
-         <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
-       </cfg:CampaignServerCorbaRef>
+       <cfg:CampaignServerGrpcRefs>
+         <cfg:Ref endpoint="%(HOST)s:%(CAMPAIGNSRV_PORT)i"/>
+       </cfg:CampaignServerGrpcRefs>
        <cfg:PGConnection connection_string="host=%(PQ_HOST)s port=%(PQ_PORT)s dbname=%(PQ_DB)s user=%(PQ_USER)s password=%(PQ_DBPWD)s"/>
       </cfg:RegularSource>
     </cfg:ChannelSource>""" % self.__dict__
-
-class ChannelSearchService(CORBAProcess):
-
-  def __init__(  self, info, testName, opts=[] ):
-    CORBAProcess.__init__(self, info, testName, opts)
-
-  def writeCfgFile( self ):
-    self.port = self.CHANNELSEARCHSVC_PORT
-    f = file(self.cfgFilePath, 'w')
-    try:
-      print >> f, """<?xml version="1.0" encoding="utf-8"?>
-<cfg:AdConfiguration
- xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
- xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xmlns:colo="http://www.foros.com/cms/colocation"
- xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/ChannelSearchSvcs/ChannelSearchServiceConfig.xsd">
- <cfg:ChannelSearchServiceConfig service_index="1">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(CHANNELSEARCHSVC_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="ChannelSearch" name="ChannelSearch"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
-  <cfg:Logger filename="%(LOGROOT)s/ChannelSearchService.log" log_level="%(LOGLEVEL)i">
-    <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
-    <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
-  </cfg:Logger>
-  <cfg:ChannelControllerGroup>
-    <cfg:Endpoint>%(HOST)s:%(CHANNELCTRL_PORT)i</cfg:Endpoint>
-  </cfg:ChannelControllerGroup>
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
-    <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
-  </cfg:CampaignServerCorbaRef>
- </cfg:ChannelSearchServiceConfig>
-</cfg:AdConfiguration>
-""" % self.__dict__
-    except Exception, exc:
-      print >> f, exc
-    f.close()
-
 
 class ExpressionMatcher(CORBAProcess):
   def __init__(  self, info, testName, opts=[] ):
@@ -683,9 +617,9 @@ class ExpressionMatcher(CORBAProcess):
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
    </cfg:Logger>
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
-    <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/CampaignServer_v340"/>
-  </cfg:CampaignServerCorbaRef>
+  <cfg:CampaignServerGrpcRefs>
+    <cfg:Ref endpoint="%(HOST)s:%(CAMPAIGNSRV_PORT)i"/>
+  </cfg:CampaignServerGrpcRefs>
    <cfg:ExpressionMatcherGroup>
       <cfg:ExpressionMatcherGrpcRef host="%(HOST)s" port="%(EXPRESSIONMATCHER_PORT)i"/>
     </cfg:ExpressionMatcherGroup>
@@ -841,9 +775,9 @@ class RequestInfoManager(CORBAProcess):
     <cfg:ConsiderRequest period="30"/>
    </cfg:OutLogs>
   </cfg:LogProcessing>
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
-    <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(CAMPAIGNSRV_PORT)i/%(CAMPAIGNSERVER_OBJECT_KEY)s"/>
-  </cfg:CampaignServerCorbaRef>
+  <cfg:CampaignServerGrpcRefs>
+    <cfg:Ref endpoint="%(HOST)s:%(CAMPAIGNSRV_PORT)i"/>
+  </cfg:CampaignServerGrpcRefs>
   <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
     <cfg:Ref ref="corbaloc:iiop:%(HOST)s:%(USERINFOCTRL_PORT)i/UserInfoManagerController"/>
   </cfg:UserInfoManagerControllerGroup>
@@ -853,7 +787,7 @@ class RequestInfoManager(CORBAProcess):
       print >> f, exc
     f.close()
 
-class LogGeneralizer(CORBAProcess):
+class LogGeneralizer(SignalProcess):
   def __init__(  self, info, testName, opts=[] ):
     dirs = ['ActionRequest', 'ActionStat', 'AdvertiserUserStat',
             'CCGKeywordStat', 'CCGStat', 'CCGUserStat', 'CCStat',
@@ -880,14 +814,11 @@ class LogGeneralizer(CORBAProcess):
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xmlns:colo="http://www.foros.com/cms/colocation"
  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration %(XSDDIR)s/LogProcessing/LogGeneralizerConfig.xsd">
- <cfg:LogGeneralizerConfig input_logs_dir="%(LOGROOT)s/In" output_logs_dir="%(LOGROOT)s/Out">
-  <cfg:CorbaConfig threading-pool="%(THREADING_POOL)i">
-   <cfg:Endpoint host="*" port="%(LOGGENERALIZER_PORT)i">
-    <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-    <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-    <cfg:Object servant="LogGeneralizer" name="LogGeneralizer"/>
-   </cfg:Endpoint>
-  </cfg:CorbaConfig>
+ <cfg:LogGeneralizerConfig pid_file="%(LOGROOT)s/LogGeneralizer.pid"
+   input_logs_dir="%(LOGROOT)s/In" output_logs_dir="%(LOGROOT)s/Out">
+  <cfg:GrpcConfig process_threads="%(THREADING_POOL)i">
+   <cfg:Endpoint host="*" port="%(LOGGENERALIZER_PORT)i"/>
+  </cfg:GrpcConfig>
   <cfg:Logger filename="%(LOGROOT)s/LogGeneralizer.log" log_level="%(LOGLEVEL)i">
     <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
     <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>

@@ -1,83 +1,92 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
-
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
-
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <mutex>
+#include <vector>
+#include <Logger/Logger.hpp>
+#include <Generics/Time.hpp>
+#include <CampaignSvcs/CampaignServerClient/CampaignServerClient.hpp>
 
 namespace AdServer::CampaignSvcs
 {
-  class CampaignServerPool: public CORBACommons::ObjectPool<
-    AdServer::CampaignSvcs::CampaignServer,
-    CORBACommons::ObjectPoolRefConfiguration>
+  template<class Refs>
+  std::vector<std::string> campaign_server_endpoints(const Refs& refs)
+  {
+    std::vector<std::string> result;
+    for (const auto& ref : refs.Ref())
+    {
+      result.push_back(ref.endpoint());
+    }
+
+    return result;
+  }
+
+  struct CampaignServerPoolConfig
+  {
+    std::vector<std::string> endpoints;
+    Generics::Time timeout = Generics::Time(10);
+  };
+
+  class CampaignServerPool
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    CampaignServerPool(
-      const CORBACommons::CorbaObjectRefList& campaign_server_refs,
-      const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-      CORBACommons::ChoosePolicyType::POLICY_TYPE policy =
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT,
-      const Generics::Time& bad_period = Generics::Time(10))
-      /*throw(Exception)*/;
+    class ObjectHandlerType
+    {
+    public:
+      CampaignServerClient* operator->() const noexcept;
+      void release_bad(const String::SubString& reason = String::SubString()) noexcept;
 
-  protected:
-    static CORBACommons::ObjectPoolRefConfiguration
-    generate_config_(
-      const CORBACommons::CorbaObjectRefList& campaign_server_refs,
-      const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-      const Generics::Time& bad_period)
-      noexcept;
+    private:
+      friend class CampaignServerPool;
+      ObjectHandlerType(CampaignServerPool& pool, std::size_t index) noexcept;
+      CampaignServerPool* pool_;
+      std::size_t index_;
+    };
+
+    explicit CampaignServerPool(const CampaignServerPoolConfig& config);
+    explicit CampaignServerPool(
+      const std::vector<std::string>& endpoints,
+      const Generics::Time& bad_period = Generics::Time(10));
+
+    ObjectHandlerType get_object(unsigned long key = 0);
+
+    template<class UserException>
+    ObjectHandlerType get_object(
+      Logging::Logger* logger, unsigned long severity, const char* aspect, const char* code,
+      unsigned long first_key = 0, unsigned long next_key = 0);
+
+  private:
+    void mark_bad_(std::size_t index, const String::SubString& reason) noexcept;
+
+    std::vector<std::unique_ptr<CampaignServerClient>> clients_;
+    std::vector<std::chrono::steady_clock::time_point> retry_at_;
+    std::vector<std::string> errors_;
+    const std::chrono::microseconds bad_period_;
+    std::mutex mutex_;
   };
 
-  typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
-}
+  using CampaignServerPoolPtr = std::unique_ptr<CampaignServerPool>;
 
-namespace AdServer::CampaignSvcs
-{
-  inline
-  CampaignServerPool::CampaignServerPool(
-    const CORBACommons::CorbaObjectRefList& campaign_server_refs,
-    const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-    CORBACommons::ChoosePolicyType::POLICY_TYPE policy,
-    const Generics::Time& bad_period)
-    /*throw(Exception)*/
-  try
-    : CORBACommons::ObjectPool<
-        AdServer::CampaignSvcs::CampaignServer,
-        CORBACommons::ObjectPoolRefConfiguration>(
-          generate_config_(campaign_server_refs, corba_client_adapter, bad_period),
-          policy)
-  {}
-  catch(const eh::Exception& ex)
+  template<class UserException>
+  CampaignServerPool::ObjectHandlerType CampaignServerPool::get_object(
+    Logging::Logger* logger, unsigned long severity, const char* aspect, const char* code,
+    unsigned long first_key, unsigned long /*next_key*/)
   {
-    static const char* FUN = "CampaignServerPool::CampaignServerPool()";
+    try
+    {
+      return get_object(first_key);
+    }
+    catch (const Exception& e)
+    {
+      if (logger)
+      {
+        logger->log(String::SubString(e.what()), severity, aspect, code);
+      }
 
-    Stream::Error ostr;
-    ostr << FUN << ": caught eh::Exception: " << ex.what();
-    throw Exception(ostr);
-  }
-
-  inline
-  CORBACommons::ObjectPoolRefConfiguration
-  CampaignServerPool::generate_config_(
-    const CORBACommons::CorbaObjectRefList& campaign_server_refs,
-    const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-    const Generics::Time& bad_period)
-    noexcept
-  {
-    CORBACommons::ObjectPoolRefConfiguration pool_config(corba_client_adapter);
-    pool_config.timeout = bad_period;
-
-    std::copy(
-      campaign_server_refs.begin(),
-      campaign_server_refs.end(),
-      std::back_inserter(pool_config.iors_list));
-
-    return pool_config;
+      throw UserException(e.what());
+    }
   }
 }

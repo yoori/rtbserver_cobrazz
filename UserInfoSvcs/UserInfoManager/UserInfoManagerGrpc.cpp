@@ -453,102 +453,7 @@ namespace AdServer::UserInfoSvcs
       add_grpc_service(&process_control_service_);
     }
 
-    static auto grpc_calls()
-    {
-      namespace pb = adserver::user_info_svcs::user_info_manager;
-      return std::make_tuple(
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::GetSourceRequest,
-          pb::GetSourceResponse,
-          get_source,
-          co_get_source,
-          true),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::GetMasterStampRequest,
-          pb::GetMasterStampResponse,
-          get_master_stamp,
-          co_get_master_stamp,
-          true),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::GetUserProfileRequest,
-          pb::GetUserProfileResponse,
-          get_user_profile,
-          co_get_user_profile,
-          true,
-          &ServiceImpl::hash_get_user_profile),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::MatchRequest,
-          pb::MatchResponse,
-          match,
-          co_match,
-          true,
-          &ServiceImpl::hash_match,
-          AdServer::Grpc::BatchExecutionStrategy::CooperativeByKey,
-          [](const pb::MatchRequest& request) -> std::string_view
-          {
-            return request.user_info().user_id();
-          }),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::UpdateUserFreqCapsRequest,
-          pb::UpdateUserFreqCapsResponse,
-          update_user_freq_caps,
-          co_update_user_freq_caps,
-          true,
-          &ServiceImpl::hash_update_user_freq_caps),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::ConfirmUserFreqCapsRequest,
-          pb::ConfirmUserFreqCapsResponse,
-          confirm_user_freq_caps,
-          co_confirm_user_freq_caps,
-          true,
-          &ServiceImpl::hash_confirm_user_freq_caps),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::FraudUserRequest,
-          pb::FraudUserResponse,
-          fraud_user,
-          co_fraud_user,
-          true,
-          &ServiceImpl::hash_fraud_user),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::RemoveUserProfileRequest,
-          pb::RemoveUserProfileResponse,
-          remove_user_profile,
-          co_remove_user_profile,
-          true,
-          &ServiceImpl::hash_remove_user_profile),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::MergeRequest,
-          pb::MergeResponse,
-          merge,
-          co_merge,
-          true,
-          &ServiceImpl::hash_merge),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::ConsiderPublishersOptinRequest,
-          pb::ConsiderPublishersOptinResponse,
-          consider_publishers_optin,
-          co_consider_publishers_optin,
-          true,
-          &ServiceImpl::hash_consider_publishers_optin),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::UimReadyRequest,
-          pb::UimReadyResponse,
-          uim_ready,
-          co_uim_ready,
-          true),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::GetProgressRequest,
-          pb::GetProgressResponse,
-          get_progress,
-          co_get_progress,
-          true),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          pb::ClearExpiredRequest,
-          pb::ClearExpiredResponse,
-          clear_expired,
-          co_clear_expired,
-          true));
-    }
+    static auto grpc_calls();
 
     AdServer::Commons::StartableAwaitable<void> co_get_source(
       adserver::user_info_svcs::user_info_manager::GetSourceRequest&&,
@@ -675,6 +580,9 @@ namespace AdServer::UserInfoSvcs
     static std::size_t hash_merge(
       const adserver::user_info_svcs::user_info_manager::MergeRequest& request);
 
+    static const std::string& key_merge(
+      const adserver::user_info_svcs::user_info_manager::MergeRequest& request);
+
     static std::size_t hash_consider_publishers_optin(
       const adserver::user_info_svcs::user_info_manager::ConsiderPublishersOptinRequest& request);
 
@@ -687,6 +595,122 @@ namespace AdServer::UserInfoSvcs
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool_;
     std::size_t max_sequential_ops_;
   };
+
+  auto UserInfoManagerGrpc::ServiceImpl::grpc_calls()
+  {
+    namespace pb = adserver::user_info_svcs::user_info_manager;
+    using Strategy = AdServer::Grpc::BatchExecutionStrategy;
+    const auto user_id_key = [](const auto& request) -> std::string_view
+    {
+      return request.user_id();
+    };
+    return std::make_tuple(
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetSourceRequest,
+        pb::GetSourceResponse,
+        get_source,
+        co_get_source,
+        true),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetMasterStampRequest,
+        pb::GetMasterStampResponse,
+        get_master_stamp,
+        co_get_master_stamp,
+        true),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetUserProfileRequest,
+        pb::GetUserProfileResponse,
+        get_user_profile,
+        co_get_user_profile,
+        true,
+        &ServiceImpl::hash_get_user_profile,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::MatchRequest,
+        pb::MatchResponse,
+        match,
+        co_match,
+        true,
+        &ServiceImpl::hash_match,
+        Strategy::CooperativeByKey,
+        [](const pb::MatchRequest& request) -> std::string_view
+        {
+          return request.user_info().user_id();
+        }),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::UpdateUserFreqCapsRequest,
+        pb::UpdateUserFreqCapsResponse,
+        update_user_freq_caps,
+        co_update_user_freq_caps,
+        true,
+        &ServiceImpl::hash_update_user_freq_caps,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::ConfirmUserFreqCapsRequest,
+        pb::ConfirmUserFreqCapsResponse,
+        confirm_user_freq_caps,
+        co_confirm_user_freq_caps,
+        true,
+        &ServiceImpl::hash_confirm_user_freq_caps,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::FraudUserRequest,
+        pb::FraudUserResponse,
+        fraud_user,
+        co_fraud_user,
+        true,
+        &ServiceImpl::hash_fraud_user,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::RemoveUserProfileRequest,
+        pb::RemoveUserProfileResponse,
+        remove_user_profile,
+        co_remove_user_profile,
+        true,
+        &ServiceImpl::hash_remove_user_profile,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::MergeRequest,
+        pb::MergeResponse,
+        merge,
+        co_merge,
+        true,
+        &ServiceImpl::hash_merge,
+        Strategy::CooperativeByKey,
+        &ServiceImpl::key_merge),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::ConsiderPublishersOptinRequest,
+        pb::ConsiderPublishersOptinResponse,
+        consider_publishers_optin,
+        co_consider_publishers_optin,
+        true,
+        &ServiceImpl::hash_consider_publishers_optin,
+        Strategy::CooperativeByKey,
+        user_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::UimReadyRequest,
+        pb::UimReadyResponse,
+        uim_ready,
+        co_uim_ready,
+        true),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetProgressRequest,
+        pb::GetProgressResponse,
+        get_progress,
+        co_get_progress,
+        true),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::ClearExpiredRequest,
+        pb::ClearExpiredResponse,
+        clear_expired,
+        co_clear_expired,
+        true));
+  }
 
   UserInfoManagerGrpc::ServiceImpl::ProcessControlService::
   ProcessControlService(const ServiceImpl& owner)
@@ -1300,7 +1324,14 @@ namespace AdServer::UserInfoSvcs
   UserInfoManagerGrpc::ServiceImpl::hash_merge(
     const adserver::user_info_svcs::user_info_manager::MergeRequest& request)
   {
-    return Generics::StringHashAdapter(request.user_info().user_id()).hash();
+    return Generics::SubStringHashAdapter(key_merge(request)).hash();
+  }
+
+  const std::string& UserInfoManagerGrpc::ServiceImpl::key_merge(
+    const adserver::user_info_svcs::user_info_manager::MergeRequest& request)
+  {
+    const auto& info = request.user_info();
+    return GrpcAlgs::unpack_user_id(info.user_id()).is_null() ? info.huser_id() : info.user_id();
   }
 
   std::size_t

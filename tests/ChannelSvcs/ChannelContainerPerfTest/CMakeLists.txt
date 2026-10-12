@@ -7,8 +7,6 @@ foreach(target ChannelContainerPerfTest TriggerMatchResTest UrlPrefixIndexTest)
     PRIVATE
       ChannelContainer
       ChannelCommons
-      CORBACommons
-      ProcessControlIDL
       BLogic
       Generics
       HTTP

@@ -1,9 +1,7 @@
-add_idl(LogGeneralizerIDL LogGeneralizer.idl ${IDL_DIRECTORY}/LogProcessing/LogGeneralizer)
-
-target_link_libraries(LogGeneralizerIDL
-  PUBLIC
-    CorbaTypesIDL
-)
+add_grpc_sources(LogGeneralizerGrpc LogGeneralizer.proto
+  ${PB_DIRECTORY}/LogProcessing/LogGeneralizer)
+target_sources(LogGeneralizerGrpc PRIVATE LogGeneralizerGrpc.cpp)
+target_link_libraries(LogGeneralizerGrpc PUBLIC gRPC::grpc++ protobuf::libprotobuf Generics)
 
 add_library(LogGeneralizerLib STATIC
   LogGeneralizerImplInit.cpp
@@ -17,22 +15,20 @@ add_library(LogGeneralizerLib STATIC
 
 target_link_libraries(LogGeneralizerLib
   PUBLIC
-    LogGeneralizerIDL
+    LogGeneralizerGrpc
     LogCommons
   PRIVATE
     Postgres
     Commons
-    CORBACommons
-    CorbaTypesIDL
     Generics
     HTTP
     Logger
-    ProcessControlIDL
     Sync
 )
 
 add_executable(LogGeneralizer
   LogGeneralizerMain.cpp
+  LogGeneralizerHttp.cpp
 )
 
 target_link_libraries(LogGeneralizer
@@ -41,12 +37,9 @@ target_link_libraries(LogGeneralizer
     Threads::Threads
     Generics
     Commons
-    CORBAConfig
-    CORBACommons
     Logger
-    ProcessControlIDL
-    StatsIDL
+    HttpServer
+    GrpcBatch
     LogGeneralizerConfigXSD
     SNMPAgent
-    ProcessControlVars
 )

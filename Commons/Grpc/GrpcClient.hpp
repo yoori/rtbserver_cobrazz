@@ -202,6 +202,9 @@ namespace AdServer::Grpc
     std::size_t count() const noexcept;
 
   private:
+    void notify_waiters_() noexcept;
+
+  private:
     std::mutex lock_;
     std::condition_variable cv_;
     std::atomic<std::size_t> inflight_count_{0};
@@ -476,14 +479,14 @@ namespace AdServer::Grpc
       return true;
     }
 
-    auto inflight_count = inflight_count_.load(std::memory_order_acquire);
+    auto inflight_count = inflight_count_.load(std::memory_order_seq_cst);
     while (inflight_count < *max_inflight_)
     {
       if (inflight_count_.compare_exchange_weak(
             inflight_count,
             inflight_count + count,
-            std::memory_order_acq_rel,
-            std::memory_order_acquire))
+            std::memory_order_seq_cst,
+            std::memory_order_seq_cst))
       {
         return true;
       }
@@ -512,9 +515,11 @@ namespace AdServer::Grpc
     }
 
     std::unique_lock lock(lock_);
-    waiters_count_.fetch_add(1, std::memory_order_acq_rel);
+    // SC orders registration and the predicate against release's decrement and waiter check,
+    // so both sides cannot miss each other's update.
+    waiters_count_.fetch_add(1, std::memory_order_seq_cst);
     cv_.wait(lock, [this, count] { return try_acquire(count); });
-    waiters_count_.fetch_sub(1, std::memory_order_acq_rel);
+    waiters_count_.fetch_sub(1, std::memory_order_seq_cst);
   }
 
   inline void
@@ -531,11 +536,19 @@ namespace AdServer::Grpc
       return;
     }
 
-    inflight_count_.fetch_sub(count, std::memory_order_acq_rel);
-    if (waiters_count_.load(std::memory_order_acquire) != 0)
+    inflight_count_.fetch_sub(count, std::memory_order_seq_cst);
+    if (waiters_count_.load(std::memory_order_seq_cst) != 0)
     {
-      cv_.notify_all();
+      notify_waiters_();
     }
+  }
+
+  // Keep the contended path's stack frame out of release().
+  [[gnu::noinline]] inline void InflightLimiter::notify_waiters_() noexcept
+  {
+    // A waiter may still be between its failed predicate and the actual wait.
+    std::lock_guard lock(lock_);
+    cv_.notify_all();
   }
 
   inline std::size_t

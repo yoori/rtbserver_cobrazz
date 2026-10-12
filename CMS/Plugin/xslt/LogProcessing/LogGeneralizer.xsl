@@ -132,6 +132,7 @@
   </xsl:variable>
 
   <cfg:LogGeneralizerConfig
+    pid_file="{$workspace-root}/run/LogGeneralizer.pid"
     input_logs_dir="{$workspace-root}/log/LogGeneralizer/In"
     output_logs_dir="{$workspace-root}/log/LogGeneralizer/Out">
 
@@ -142,9 +143,23 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="log-generalizer-grpc-port">
+      <xsl:call-template name="DbAccessGrpcPort">
+        <xsl:with-param name="network" select="$log-generalizer-config/cfg:networkParams"/>
+        <xsl:with-param name="port" select="$log-generalizer-port"/>
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:variable name="log-generalizer-monitoring-port">
+      <xsl:value-of select="$log-generalizer-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($log-generalizer-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$log-generalizer-port + 600"/>
+      </xsl:if>
+    </xsl:variable>
+
     <exsl:document href="logGeneralizer.port"
       method="text" omit-xml-declaration="yes"
-      >  ['logGeneralizer', <xsl:copy-of select="$log-generalizer-port"/>],</exsl:document>
+      >  ['logGeneralizer', <xsl:copy-of select="$log-generalizer-grpc-port"/>],</exsl:document>
 
     <xsl:variable name="log-generalizer-logging" select="$log-generalizer-config/cfg:logging"/>
     <xsl:variable name="log-level"><xsl:value-of select="$log-generalizer-logging/@log_level"/>
@@ -178,19 +193,21 @@
       </xsl:if>
     </xsl:variable>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$log-generalizer-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($log-generalizer-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-log-generalizer-threads"/>
-        </xsl:if>
+    <cfg:GrpcConfig>
+      <xsl:attribute name="process_threads">
+        <xsl:choose>
+          <xsl:when test="$log-generalizer-config/cfg:threadParams/@min">
+            <xsl:value-of select="$log-generalizer-config/cfg:threadParams/@min"/>
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="$def-log-generalizer-threads"/></xsl:otherwise>
+        </xsl:choose>
       </xsl:attribute>
+      <cfg:Endpoint host="*" port="{$log-generalizer-grpc-port}"/>
+    </cfg:GrpcConfig>
 
-      <cfg:Endpoint host="*" port="{$log-generalizer-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-        <cfg:Object servant="LogGeneralizer" name="LogGeneralizer"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
+    <cfg:HttpConfig process_threads="4">
+      <cfg:Endpoint host="*" port="{$log-generalizer-monitoring-port}"/>
+    </cfg:HttpConfig>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">

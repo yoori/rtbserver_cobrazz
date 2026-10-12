@@ -7,7 +7,6 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Generics/Hash.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
@@ -34,9 +33,9 @@ namespace
   unsigned long
   add_to_check_sum_(unsigned long check_sum, const std::string& value)
   {
-    Generics::CRC32Hash hash(check_sum, check_sum);
+    Generics::CRC32Hasher hash(check_sum);
     hash.add(value.c_str(), value.size());
-    return check_sum;
+    return hash.finalize();
   }
 
   std::string
@@ -141,14 +140,6 @@ namespace AdServer::ChannelSvcs
       {
         ChannelServerRef server;
         server.endpoint = endpoint_from_grpc_ref_(config_host.ChannelServerGrpcRef());
-        if (config_host.ChannelUpdateRef().present())
-        {
-          CORBACommons::CorbaObjectRef update_ref;
-          Config::CorbaConfigReader::read_corba_ref(
-            config_host.ChannelUpdateRef().get(),
-            update_ref);
-          server.update_ref = update_ref.object_ref;
-        }
         group.emplace_back(std::move(server));
       }
 
@@ -191,17 +182,24 @@ namespace AdServer::ChannelSvcs
       throw Exception("only regular channel source is supported");
     }
     const auto& regular_source = config_.ChannelSource().RegularSource().get();
-    CORBACommons::CorbaObjectRefList campaign_refs;
-    Config::CorbaConfigReader::read_multi_corba_ref(
-      regular_source.CampaignServerCorbaRef(),
-      campaign_refs);
+    const auto& campaign_refs = regular_source.CampaignServerGrpcRefs().Ref();
 
-    unsigned long check_sum = 0;
+    unsigned long check_sum = add_to_check_sum_(0, "channel-update-grpc-v1");
+    for (const auto& group : channel_server_groups_)
+    {
+      check_sum = add_to_check_sum_(check_sum, "group");
+      for (const auto& server : group)
+      {
+        check_sum = add_to_check_sum_(check_sum, server.endpoint);
+        check_sum = add_to_check_sum_(check_sum, chunks_to_string_(server.chunks));
+      }
+    }
+
     const std::string pg_connection = regular_source.PGConnection().connection_string();
     check_sum = add_to_check_sum_(check_sum, pg_connection);
     for (const auto& campaign_ref : campaign_refs)
     {
-      check_sum = add_to_check_sum_(check_sum, campaign_ref.object_ref);
+      check_sum = add_to_check_sum_(check_sum, campaign_ref.endpoint());
     }
 
     if (config_.ChannelSource().local_groups().present())
@@ -261,22 +259,14 @@ namespace AdServer::ChannelSvcs
 
           for (const auto& campaign_ref : campaign_refs)
           {
-            request.add_campaign_refs(campaign_ref.object_ref);
+            request.add_campaign_refs(campaign_ref.endpoint());
           }
 
           auto* local_pb_group = request.add_local_groups();
           for (const auto& local_server : local_group)
           {
-            if (local_server.update_ref.empty())
-            {
-              Stream::Error ostr;
-              ostr << FUN << ": ChannelServer " << local_server.endpoint <<
-                " doesn't have ChannelUpdateRef for local source";
-              throw Exception(ostr);
-            }
-
             auto* local_pb_server = local_pb_group->add_servers();
-            local_pb_server->set_channel_update_ref(local_server.update_ref);
+            local_pb_server->set_endpoint(local_server.endpoint);
             local_pb_server->set_count_chunks(config_.count_chunks());
             for (const auto chunk_id : local_server.chunks)
             {
@@ -315,7 +305,7 @@ namespace AdServer::ChannelSvcs
 
           for (const auto& campaign_ref : campaign_refs)
           {
-            request.add_campaign_refs(campaign_ref.object_ref);
+            request.add_campaign_refs(campaign_ref.endpoint());
           }
 
           for (const auto chunk_id : server.chunks)

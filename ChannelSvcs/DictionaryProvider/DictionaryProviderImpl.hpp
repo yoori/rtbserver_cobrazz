@@ -9,18 +9,14 @@
 #include <eh/Exception.hpp>
 
 #include <Logger/Logger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 #include <Sync/Semaphore.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ServantImpl.hpp>
-#include <CORBACommons/ObjectPool.hpp>
-
-#include <ChannelSvcs/ChannelCommons/ChannelCommons.hpp>
-#include <ChannelSvcs/DictionaryProvider/DictionaryProvider_s.hpp>
+#include <ChannelSvcs/DictionaryProvider/DictionaryProvider.grpc.pb.h>
 
 #include <xsd/ChannelSvcs/DictionaryProviderConfig.hpp>
 #include "DictionaryContainer.hpp"
@@ -32,33 +28,31 @@ namespace AdServer::ChannelSvcs
    */
   class DictionaryProviderImpl:
     public virtual Generics::CompositeActiveObject,
-    public virtual CORBACommons::ReferenceCounting::ServantImpl
-     <POA_AdServer::ChannelSvcs::DictionaryProvider>
+    public virtual ReferenceCounting::AtomicImpl,
+    public adserver::channel_svcs::dictionary_provider::DictionaryProvider::Service
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    typedef xsd::AdServer::Configuration::DictionaryProviderConfigType
-      DictionaryProviderConfig;
+    using DictionaryProviderConfig = xsd::AdServer::Configuration::DictionaryProviderConfigType;
 
     DictionaryProviderImpl(Logging::Logger* logger, const DictionaryProviderConfig* config)
       /*throw(Exception, eh::Exception)*/;
 
-    virtual ~DictionaryProviderImpl() noexcept {};
+    ~DictionaryProviderImpl() noexcept override;
 
     void load_dictionary_(const char* lang, const char* file_name) noexcept;
 
   public:
 
-    virtual
-      ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-      get_lexemes(const char * language, const ::CORBACommons::StringSeq& words)
-      /*throw(ChannelSvcs::NotReady,
-            ChannelSvcs::ImplementationException)*/;
+    grpc::Status get_lexemes(
+      grpc::ServerContext* context,
+      const adserver::channel_svcs::dictionary_provider::GetLexemesRequest* request,
+      adserver::channel_svcs::dictionary_provider::GetLexemesResponse* response) override;
 
   protected:
-    typedef Generics::TaskGoal TaskBase;
-    typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
+    using TaskBase = Generics::TaskGoal;
+    using Task_var = ReferenceCounting::SmartPtr<TaskBase>;
 
     class LoadTask: public TaskBase
     {
@@ -92,8 +86,7 @@ namespace AdServer::ChannelSvcs
     static const size_t MAX_LOAD_SIZE;
   };
 
-  typedef ReferenceCounting::SmartPtr<DictionaryProviderImpl>
-      DictionaryProviderImpl_var;
+  using DictionaryProviderImpl_var = ReferenceCounting::SmartPtr<DictionaryProviderImpl>;
 
 } // namespace AdServer::ChannelSvcs
 

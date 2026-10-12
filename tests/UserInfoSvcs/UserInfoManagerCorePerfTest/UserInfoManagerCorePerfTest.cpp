@@ -198,9 +198,9 @@ namespace
 
     out
       << "    </cfg:Storage>\n"
-      << "    <cfg:CampaignServerCorbaRef name=\"CampaignServer\">\n"
-      << "      <cfg:Ref ref=\"corbaloc:iiop:localhost:1/CampaignServer\"/>\n"
-      << "    </cfg:CampaignServerCorbaRef>\n"
+      << "    <cfg:CampaignServerGrpcRefs>\n"
+      << "      <cfg:Ref endpoint=\"localhost:1\"/>\n"
+      << "    </cfg:CampaignServerGrpcRefs>\n"
       << "    <cfg:FreqCaps confirm_timeout=\"1\"/>\n"
       << "  </cfg:UserInfoManagerConfig>\n" << "</cfg:AdConfiguration>\n";
 

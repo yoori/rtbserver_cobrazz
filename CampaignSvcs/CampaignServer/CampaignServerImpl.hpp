@@ -12,12 +12,9 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ServantImpl.hpp>
-
-#include <Commons/ProcessControlVarsImpl.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer_s.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignCommons_s.hpp>
+#include <Commons/DbStateChanger.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerApi.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include "CampaignConfig.hpp"
@@ -36,14 +33,14 @@ namespace AdServer::CampaignSvcs
 
   typedef ::ReferenceCounting::SmartPtr<ProcStatImpl> ProcStatImpl_var;
 
-  /** Implements corba interface CampaignServer
+  /** Implements the CampaignServer domain interface
    *  to stored configuration.
    *  Function to fill configuration was on inherited classes
    */
   class CampaignServerBaseImpl:
     public virtual Generics::CompositeActiveObject,
-    public virtual CORBACommons::ReferenceCounting::
-      ServantImpl<POA_AdServer::CampaignSvcs::CampaignServer>
+    public virtual ReferenceCounting::AtomicImpl,
+    public CampaignServerApi
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -572,7 +569,7 @@ namespace AdServer::CampaignSvcs
       const String::SubString& channel_statuses,
       const char* pg_connection_string,
       const Generics::Time& stat_stamp_sync_period,
-      const CORBACommons::CorbaObjectRefList& stat_providers,
+      const std::vector<std::string>& stat_providers,
       const Generics::Time& audience_expiration_time,
       const Generics::Time& pending_expire_time,
       bool enable_delivery_thresholds)
@@ -627,7 +624,7 @@ namespace AdServer::CampaignSvcs
       const LogFlushTraits& colo_update_flush_traits,
       unsigned long server_id,
       const String::SubString& channel_statuses,
-      const CORBACommons::CorbaObjectRefList& campaign_server_refs,
+      const std::vector<std::string>& campaign_server_refs,
       const char* campaigns_types,
       const char* countries,
       bool only_tags)

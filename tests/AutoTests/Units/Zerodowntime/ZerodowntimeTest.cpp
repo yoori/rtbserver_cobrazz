@@ -103,9 +103,6 @@ ZerodowntimeTest::set_up()
     AutoTest::equal_checker(channel_controllers_.size(), 2).check(),
     "The cluster should have 2 ChannelServerControllers");
 
-  FAIL_CONTEXT(
-    AutoTest::equal_checker(channel_search_servers_.size(), 2).check(),
-    "The cluster should have 2 ChannelSearchServers");
 
   FAIL_CONTEXT(
     AutoTest::equal_checker(user_info_managers_.size(), 2).check(),
@@ -443,20 +440,6 @@ ZerodowntimeTest::campaign_update_(
 }
 
 void
-ZerodowntimeTest::check_channel_search_(ClusterGroup group)
-{
-  FAIL_CONTEXT(
-      AutoTest::admin_checker(
-        AutoTest::ChannelSearchAdmin(
-          channel_search_servers_[group == CG_FE_2? 1: 0].address,
-          fetch_string("KWD/CTX"),
-          AutoTest::ChannelSearch),
-        AutoTest::ChannelSearchAdmin::Expected().
-          channel_id(fetch_string("CHANNEL/CTX"))).check(),
-      "ChannelSearchAdmin check");
-}
-
-void
 ZerodowntimeTest::precondition_(
   std::string& uid,
   std::ostream& user_profile,
@@ -580,9 +563,6 @@ ZerodowntimeTest::fe1_stop_()
   // User profiling work
   check_user_profiling_(CG_FE_2, "CC");
 
-  // Channel Search work
-  check_channel_search_(CG_FE_2);
-
   // Click & action
   check_click_and_actions_(1, CG_FE_2);
 
@@ -688,10 +668,6 @@ ZerodowntimeTest::fe1_start_()
     // User profiling work
     check_user_profiling_(CG_FE_1, "CC/D");
 
-    // Channel Search work
-    check_channel_search_(CG_FE_1);
-    check_channel_search_(CG_FE_2);
-
     // Campaign update
     DeleteGuard<CCGSite> guard(campaign_update_(CG_FE_1, "CCG/D", "CC/D"));
 
@@ -716,9 +692,6 @@ ZerodowntimeTest::fe2_stop_()
 
   // User profiling work
   check_user_profiling_(CG_FE_1, "CC/D");
-
-  // Channel Search work
-  check_channel_search_(CG_FE_1);
 
   // Click & action
   check_click_and_actions_(6, CG_FE_1);
@@ -767,10 +740,6 @@ ZerodowntimeTest::fe2_start_()
 
   // User profiling work
   check_user_profiling_(CG_FE_2, "CC/D");
-
-  // Channel Search work
-  check_channel_search_(CG_FE_1);
-  check_channel_search_(CG_FE_2);
 
   // Campaign update
   campaign_update_(CG_FE_2, "CCG/D", "CC/D");
@@ -865,4 +834,3 @@ ZerodowntimeTest::check_stats_()
       action_requests_));
 
 }
-

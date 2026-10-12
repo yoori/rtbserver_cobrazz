@@ -26,16 +26,9 @@ namespace AdServer::Commons
     class DrainGuard final
     {
     public:
-      explicit DrainGuard(bool& draining) noexcept
-        : draining_(draining)
-      {
-        draining_ = true;
-      }
+      explicit DrainGuard(bool& draining) noexcept;
 
-      ~DrainGuard() noexcept
-      {
-        draining_ = false;
-      }
+      ~DrainGuard() noexcept;
 
       DrainGuard(const DrainGuard&) = delete;
       DrainGuard& operator=(const DrainGuard&) = delete;
@@ -43,16 +36,29 @@ namespace AdServer::Commons
     private:
       bool& draining_;
     };
+
+    DrainGuard::DrainGuard(bool& draining) noexcept : draining_(draining)
+    {
+      draining_ = true;
+    }
+
+    DrainGuard::~DrainGuard() noexcept
+    {
+      draining_ = false;
+    }
   }
 
   ScopedCoroutineResumeQueue::ScopedCoroutineResumeQueue(
-    const CoroutineResumeScheduler& scheduler) noexcept
-    : previous_(std::exchange(resume_queue, &scheduler))
+    const CoroutineResumeScheduler& scheduler, bool symmetric_transfer) noexcept
+    : previous_(std::exchange(resume_queue, &scheduler)),
+      previous_transfer_(
+        std::exchange(current_coroutine_symmetric_transfer_ref(), symmetric_transfer))
   {}
 
   ScopedCoroutineResumeQueue::~ScopedCoroutineResumeQueue() noexcept
   {
     resume_queue = previous_;
+    current_coroutine_symmetric_transfer_ref() = previous_transfer_;
   }
 
   void

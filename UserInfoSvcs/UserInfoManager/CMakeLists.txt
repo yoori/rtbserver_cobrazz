@@ -74,7 +74,7 @@ target_link_libraries(UserInfoManager
     AdServerCommonsXSD
     Allocator
     CampaignCommonsIDL
-    CampaignServerIDL
+    CampaignServerGrpc
     Commons
     CorbaTypesIDL
     CORBACommons

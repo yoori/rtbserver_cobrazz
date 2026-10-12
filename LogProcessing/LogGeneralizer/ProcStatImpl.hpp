@@ -4,7 +4,7 @@
 #include <string>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
-#include <CORBACommons/StatsImpl.hpp>
+#include <Generics/Values.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
 

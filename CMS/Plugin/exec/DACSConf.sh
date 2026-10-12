@@ -59,7 +59,7 @@ $EXEC/ServiceConf.sh \
   --services-xpath "$CLUSTER_XPATH" \
   --app-xml $APP_XML \
   --xsl $XSLT_ROOT/DBAccess.xsl \
-  --out-file DBAccess.pm \
+  --out-file DBAccess.json \
   --service-hosts "$DB_ACCESS_HOSTS" \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT

@@ -14,9 +14,23 @@
   <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="LogGeneralizerNetworkParamsType">
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Business API and DBAccess gRPC port; defaults to port + 500.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>HTTP statistics port; defaults to port + 600.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
-        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+        <xsd:documentation>
+          Base for default gRPC and HTTP ports; no listener on this port.
+        </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -24,7 +38,7 @@
   <xsd:complexType name="LogGeneralizerThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>gRPC thread pool.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -48,7 +62,7 @@
       <xsd:element name="threadParams" type="LogGeneralizerThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            gRPC thread pool.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

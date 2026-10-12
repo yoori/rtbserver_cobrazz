@@ -9,6 +9,10 @@ for individual subdirectories.
 
 - Preserve the existing project style and do not reformat unrelated code.
 - Use two spaces for indentation. Do not use tabs for indentation.
+- Keep method implementations outside class and struct bodies, including constructors,
+  destructors, and methods of nested types. Keep declarations in the type definition; place
+  template and inline implementations below it in the header, and other implementations in
+  the source file. This is a source organization rule, not a request to disable compiler inlining.
 - Keep modified and newly added source lines within 100 characters.
 - Remove trailing whitespace from all source files that are modified.
 - Keep a construct on one line when the complete line fits within 100 characters. This applies to

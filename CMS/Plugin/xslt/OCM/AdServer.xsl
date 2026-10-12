@@ -365,6 +365,13 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="$be-cluster-path/service[@descriptor = $url-info-storage-descriptor]"/>
+        <xsl:with-param name="service-name" select="'be-UrlInfoStorage'"/>
+        <xsl:with-param name="service-type" select="'AdServer::RequestInfoSvcs::UrlInfoStorage'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
           select="$be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]"/>
         <xsl:with-param name="service-name" select="'lp-ClickhouseUploader'"/>
         <xsl:with-param name="service-type" select="'AdServer::LogProcessing::ClickhouseUploader'"/>
@@ -490,13 +497,6 @@
         <xsl:with-param name="service-type" select="'AdServer::CampaignSvcs::BillingServer'"/>
       </xsl:call-template>
 
-      <xsl:call-template name="AddService">
-        <xsl:with-param name="service-path"
-          select="./service[@descriptor = $channel-search-service-descriptor]"/>
-        <xsl:with-param name="service-name" select="concat('fe', $pos, '-ChannelSearchService')"/>
-        <xsl:with-param name="service-type"
-          select="'AdServer::ChannelSearchSvcs::ChannelSearchService'"/>
-      </xsl:call-template>
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
@@ -1267,7 +1267,6 @@
     serviceGroup[@descriptor = $ad-cluster-descriptor]/
     serviceGroup[@descriptor = $fe-cluster-descriptor][1]/service[
       @descriptor = $campaign-manager-descriptor or
-      @descriptor = $channel-search-service-descriptor or
       @descriptor = $user-info-manager-descriptor or
       @descriptor = $user-info-controller-descriptor]"/>
 
@@ -1275,7 +1274,6 @@
     serviceGroup[@descriptor = $ad-cluster-descriptor]/
     serviceGroup[@descriptor = $fe-cluster-descriptor][2]/service[
       @descriptor = $campaign-manager-descriptor or
-      @descriptor = $channel-search-service-descriptor or
       @descriptor = $user-info-manager-descriptor or
       @descriptor = $user-info-controller-descriptor]"/>
 
@@ -1978,14 +1976,6 @@
             <xsl:with-param name="masters" select="'AdServer::CampaignSvcs::CampaignServer
               AdServer::ChannelSvcs::ChannelServer'"/>
           </xsl:call-template>
-          <xsl:if test="count($adcluster-path/serviceGroup[@descriptor =
-            $fe-cluster-descriptor]/service[@descriptor = $channel-search-service-descriptor]) > 0">
-            <xsl:call-template name="AddDependence">
-              <xsl:with-param name="slaves" select="'AdServer::ChannelSearchSvcs::ChannelSearchService'"/>
-              <xsl:with-param name="masters" select=
-                "concat($campaign-manager-dep, $channel-controller-dep)"/>
-            </xsl:call-template>
-          </xsl:if>
           <xsl:if test="count($be-cluster-path/service[@descriptor = $dictionary-provider-descriptor]) > 0">
             <xsl:call-template name="AddDependence">
               <xsl:with-param name="masters" select="'AdServer::ChannelSvcs::DictionaryProvider'"/>
@@ -2082,12 +2072,6 @@
                AdServer::UserInfoSvcs::UserInfoManager
                AdServer::LogProcessing::ExpressionMatcher')"/>
         </xsl:call-template>
-        <xsl:if test="count($adcluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]/service[@descriptor = $channel-search-service-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="slaves" select="'AdServer::ChannelSearchSvcs::ChannelSearchService'"/>
-            <xsl:with-param name="masters" select="$campaign-manager-dep"/>
-          </xsl:call-template>
-        </xsl:if>
         <xsl:call-template name="AddDependence">
           <xsl:with-param name="masters" select="'AdServer::LogProcessing::LogGeneralizer'"/>
           <xsl:with-param name="slaves" select= "'AdServer::CampaignSvcs::CampaignServer'"/>

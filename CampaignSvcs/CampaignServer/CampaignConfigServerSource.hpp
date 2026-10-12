@@ -21,7 +21,7 @@ namespace AdServer::CampaignSvcs
     CampaignConfigServerSource(
       Logging::Logger* logger,
       unsigned long server_id,
-      const CORBACommons::CorbaObjectRefList& campaign_server_refs,
+      const std::vector<std::string>& campaign_server_refs,
       unsigned long colo_id,
       const char* version,
       const char* campaign_statuses,
@@ -143,7 +143,6 @@ namespace AdServer::CampaignSvcs
     bool only_tags_;
     unsigned long server_id_;
 
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     CampaignServerPoolPtr campaign_servers_;
 
     CampaignConfig_var campaign_config_;

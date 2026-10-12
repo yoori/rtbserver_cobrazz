@@ -7,16 +7,19 @@
 
 #include <SNMPAgent/SNMPAgentX.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/StatsImpl.hpp>
 
 #include <xsd/LogProcessing/LogGeneralizerConfig.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
+#include <Commons/Grpc/DbAccess.hpp>
+#include <Commons/SignalActiveObject.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include "LogGeneralizerImpl.hpp"
+#include "LogGeneralizerGrpc.hpp"
 #include "ProcStatImpl.hpp"
 
 class LogGeneralizerApp_:
-  public AdServer::Commons::ProcessControlVarsLoggerImpl
+  private Logging::LoggerCallbackHolder,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -25,22 +28,12 @@ public:
 public:
   LogGeneralizerApp_() /*throw(eh::Exception)*/;
 
-  void main(int &argc, char **argv) noexcept;
-
-protected:
-  //
-  // IDL:CORBACommons/IProcessControl/shutdown:1.0
-  //
-  virtual void shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/;
-
-  //
-  // IDL:CORBACommons/IProcessControl/is_alive:1.0
-  //
-  virtual CORBACommons::IProcessControl::ALIVE_STATUS
-  is_alive() /*throw(CORBA::SystemException)*/;
+  void main(int& argc, char** argv, AdServer::Commons::SignalActiveObject& signals) noexcept;
 
 private:
+  void shutdown();
+  using Logging::LoggerCallbackHolder::callback;
+  using Logging::LoggerCallbackHolder::logger;
   typedef xsd::AdServer::Configuration::LogGeneralizerConfigType
     LogGeneralizerConfigType;
 
@@ -53,16 +46,16 @@ private:
 
   const LogGeneralizerConfigType& config() const noexcept;
 
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
-
   ConfigPtr configuration_;
 
   ShutdownMutex shutdown_lock_;
+  bool shutdown_requested_ = false;
 
   AdServer::LogProcessing::LogGeneralizerImpl_var log_generalizer_impl_;
   AdServer::LogProcessing::ProcStatImpl_var proc_stat_impl_;
-  CORBACommons::POA_ProcessStatsControl_var proc_stat_ctrl_;
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
+  std::unique_ptr<AdServer::LogProcessing::LogGeneralizerGrpcService> grpc_service_;
+  std::shared_ptr<AdServer::Grpc::DbAccessServer> db_access_server_;
   SNMPAgentX::SNMPStatsImpl_var snmp_stat_impl_;
 };
 

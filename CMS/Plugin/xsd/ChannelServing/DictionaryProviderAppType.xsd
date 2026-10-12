@@ -16,7 +16,7 @@
   <xsd:complexType name="DictionaryProviderThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>gRPC thread pool.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -40,7 +40,7 @@
       <xsd:element name="threadParams" type="DictionaryProviderThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            gRPC thread pool.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

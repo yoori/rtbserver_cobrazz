@@ -18,7 +18,7 @@
 #include <GeoIP/IPMap.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/DomainParser.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
@@ -104,13 +104,9 @@ namespace AdServer
   private:
     typedef Sync::Policy::PosixThreadRW SyncPolicy;
 
-    typedef CORBACommons::ObjectPoolRefConfiguration
-      CampaignServerPoolConfig;
+    using CampaignServerPoolConfig = AdServer::CampaignSvcs::CampaignServerPoolConfig;
 
-    typedef CORBACommons::ObjectPool<
-      AdServer::CampaignSvcs::CampaignServer,
-      CampaignServerPoolConfig>
-      CampaignServerPool;
+    using CampaignServerPool = AdServer::CampaignSvcs::CampaignServerPool;
 
     typedef Configuration::CommonFeConfigurationType
       CommonFeConfiguration;
@@ -139,7 +135,6 @@ namespace AdServer
 
     Generics::TaskRunner_var task_runner_;
     Generics::Planner_var scheduler_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::Commons::BoostAsioContextRunActiveObject>
       grpc_coalesce_runner_;
     mutable std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;

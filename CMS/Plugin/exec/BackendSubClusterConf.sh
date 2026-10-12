@@ -25,6 +25,7 @@ EXPRESSION_MATCHER_DESCR=$BACKEND_CLUSTER/ExpressionMatcher
 LOG_GENERALIZER_DESCR=$BACKEND_CLUSTER/LogGeneralizer
 LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
+URL_INFO_STORAGE_DESCR=$BACKEND_CLUSTER/UrlInfoStorage
 CLICKHOUSE_UPLOADER_DESCR=$BACKEND_CLUSTER/ClickhouseUploader
 YANDEX_POST_CLICK_IMPORTER_DESCR=$BACKEND_CLUSTER/YandexPostClickImporter
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
@@ -363,6 +364,31 @@ $EXEC/ProcessHostFiles.sh \
   --out-dir $OUT_DIR \
   --cmd 'mkdir -p $HOST_DIR/cert' \
   --cmd 'cp $PLUGIN_ROOT/data/BackendSubCluster/cert/* $HOST_DIR/cert'
+
+let "EXIT_CODE|=$?"
+
+### UrlInfoStorage
+URL_INFO_STORAGE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$URL_INFO_STORAGE_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$URL_INFO_STORAGE_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/RequestInfoSvcs/UrlInfoStorage.xsl \
+  --out-file UrlInfoStorage.xml \
+  --out-dir-suffix "$OUT_DIR_SUFFIX" \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
+$EXEC/CurrentEnvGen.sh \
+  --service-name "url_info_storage" \
+  --plugin-root "$PLUGIN_ROOT" \
+  --app-xml $APP_XML \
+  --search-xpath "configuration/cfg:urlInfoStorage" \
+  --services-xpath "$URL_INFO_STORAGE_XPATH" \
+  --out-dir $OUT_DIR \
+  --out-file CurrentEnv/be.sh
 
 let "EXIT_CODE|=$?"
 

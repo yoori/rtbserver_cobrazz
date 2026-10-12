@@ -15,7 +15,7 @@
 
 <xsl:include href="../Functions.xsl"/>
 <xsl:include href="../UserIdBlackList.xsl"/>
-<xsl:include href="../CampaignManagement/CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="../CampaignManagement/CampaignServersGrpcRefs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -433,7 +433,7 @@
 
     <cfg:GeoIP path="/usr/share/GeoIP/ipv4.csv"/>
 
-    <xsl:call-template name="CampaignServerCorbaRefs">
+    <xsl:call-template name="CampaignServerGrpcRefs">
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="service-name" select="'AdFrontend'"/>
     </xsl:call-template>

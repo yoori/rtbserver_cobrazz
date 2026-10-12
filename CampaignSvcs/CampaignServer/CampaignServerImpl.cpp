@@ -3899,7 +3899,7 @@ namespace AdServer::CampaignSvcs
     const String::SubString& channel_statuses,
     const char* pg_connection_string,
     const Generics::Time& stat_stamp_sync_period,
-    const CORBACommons::CorbaObjectRefList& stat_providers,
+    const std::vector<std::string>& stat_providers,
     const Generics::Time& audience_expiration_time,
     const Generics::Time& pending_expire_time,
     bool enable_delivery_thresholds)
@@ -4189,7 +4189,7 @@ namespace AdServer::CampaignSvcs
     const LogFlushTraits& colo_update_flush_traits,
     unsigned long server_id,
     const String::SubString& channel_statuses,
-    const CORBACommons::CorbaObjectRefList& campaign_server_refs,
+    const std::vector<std::string>& campaign_server_refs,
     const char* campaign_statuses,
     const char* countries,
     bool only_tags)

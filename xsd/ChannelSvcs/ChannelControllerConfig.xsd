@@ -81,7 +81,7 @@
 
   <xsd:complexType name="ChannelControllerRegularSourceType">
     <xsd:sequence>
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType"/>
       <xsd:element name="PGConnection" type="PGConnectionType"/>
     </xsd:sequence>
   </xsd:complexType>
@@ -98,7 +98,7 @@
 
   <xsd:complexType name="ChannelControllerProxySourceType">
     <xsd:sequence>
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType"/>
       <xsd:element name="ProxyRefs" type="MultiCorbaObjectRefType" minOccurs="0"/>
     </xsd:sequence>
     <xsd:attribute name="use_local_on_first_load" type="xsd:boolean" default="true"/>
@@ -123,10 +123,6 @@
       <xsd:element name="ChannelServerGrpcRef"
         type="GrpcEndpointConfigType"
         minOccurs="1"
-        maxOccurs="1"/>
-      <xsd:element name="ChannelUpdateRef"
-        type="CorbaObjectRefType"
-        minOccurs="0"
         maxOccurs="1"/>
     </xsd:sequence>
   </xsd:complexType>

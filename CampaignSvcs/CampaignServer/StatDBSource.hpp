@@ -5,8 +5,7 @@
 #include <Logger/Logger.hpp>
 
 #include <Commons/Postgres/ConnectionPool.hpp>
-#include <Commons/CorbaObject.hpp>
-#include <LogProcessing/LogGeneralizer/LogGeneralizer.hpp>
+#include <LogProcessing/LogGeneralizer/LogGeneralizerGrpc.hpp>
 
 #include "StatSource.hpp"
 
@@ -23,20 +22,18 @@ namespace AdServer::CampaignSvcs
       Logging::Logger* logger,
       Commons::Postgres::ConnectionPool* pool,
       unsigned long server_id,
-      const CORBACommons::CorbaObjectRefList& stat_providers)
-      noexcept;
+      const std::vector<std::string>& stat_providers);
 
     virtual Stat_var
     update(Stat* stat, bool& full_synch_required, const Generics::Time& now)
       /*throw(Exception)*/;
 
   protected:
-    virtual ~StatDBSource() noexcept {}
+    virtual ~StatDBSource() noexcept;
 
   private:
-    typedef AdServer::Commons::CorbaObject<
-      AdServer::LogProcessing::LogGeneralizer> LogGeneralizerRef;
-    typedef std::list<LogGeneralizerRef> LogGeneralizerRefList;
+    using LogGeneralizerRefList =
+      std::vector<std::unique_ptr<AdServer::LogProcessing::LogGeneralizerClient>>;
 
   private:
     Stat_var

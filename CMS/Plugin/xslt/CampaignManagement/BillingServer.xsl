@@ -15,7 +15,7 @@
 <xsl:output method="xml" indent="yes" encoding="utf-8"/>
 
 <xsl:include href="../Functions.xsl"/>
-<xsl:include href="CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="CampaignServersGrpcRefs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -132,7 +132,7 @@
       <xsl:with-param name="default-log-level" select="$billing-server-log-level"/>
     </xsl:call-template>
 
-    <xsl:call-template name="CampaignServerCorbaRefs">
+    <xsl:call-template name="CampaignServerGrpcRefs">
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="service-name" select="'CampaignManager'"/>
     </xsl:call-template>

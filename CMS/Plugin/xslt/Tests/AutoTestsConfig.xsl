@@ -28,8 +28,6 @@
   <xsl:param name="campaign-manager-config"/>
   <xsl:param name="campaign-server-path"/>
   <xsl:param name="campaign-server-config"/>
-  <xsl:param name="channel-search-path"/>
-  <xsl:param name="channel-search-config"/>
   <xsl:param name="channel-server-path"/>
   <xsl:param name="channel-server-config"/>
   <xsl:param name="channel-controller-path"/>
@@ -56,13 +54,7 @@
     </xsl:if>
   </xsl:variable>
 
-  <xsl:variable name="channel-search-host">
-    <xsl:call-template name="ResolveHostName">
-      <xsl:with-param name="base-host" select="$channel-search-path/@host"/>
-    </xsl:call-template>
-  </xsl:variable>
 
-  <xsl:variable name="channel-search-port" select="$channel-search-config/cfg:networkParams/@port"/>
 
   <xsl:variable name="channel-server-host">
     <xsl:variable name="hosts">
@@ -74,7 +66,22 @@
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
 
-  <xsl:variable name="channel-server-port" select="$channel-server-config/cfg:networkParams/@port"/>
+  <xsl:variable name="channel-server-port">
+    <xsl:choose>
+      <xsl:when test="$channel-server-config/cfg:networkParams/@grpc_port">
+        <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_port"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:variable name="base-port">
+          <xsl:value-of select="$channel-server-config/cfg:networkParams/@port"/>
+          <xsl:if test="not($channel-server-config/cfg:networkParams/@port)">
+            <xsl:value-of select="$def-channel-server-port"/>
+          </xsl:if>
+        </xsl:variable>
+        <xsl:value-of select="$base-port + 500"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
 
 
   <xsl:variable name="channel-controller-host">
@@ -108,7 +115,19 @@
     <xsl:value-of select="exsl:node-set($hosts)//host[1]"/>
   </xsl:variable>
 
-  <xsl:variable name="campaign-server-port" select="$campaign-server-config/cfg:networkParams/@port"/>
+  <xsl:variable name="campaign-server-port">
+    <xsl:call-template name="DbAccessGrpcPort">
+      <xsl:with-param name="network" select="$campaign-server-config/cfg:networkParams"/>
+      <xsl:with-param name="port">
+        <xsl:choose>
+          <xsl:when test="$campaign-server-config/cfg:networkParams/@port">
+            <xsl:value-of select="$campaign-server-config/cfg:networkParams/@port"/>
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="$def-campaign-server-port"/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:variable>
 
 
   <xsl:variable name="expression-matcher-host">
@@ -179,12 +198,6 @@
       <xsl:attribute name="name">ChannelController</xsl:attribute>
       <xsl:attribute name="address">
         <xsl:value-of select="$channel-controller-host"/>:<xsl:value-of select="$channel-controller-port"/>
-      </xsl:attribute>
-    </Service>
-    <Service>
-      <xsl:attribute name="name">ChannelSearchServer</xsl:attribute>
-      <xsl:attribute name="address">
-        <xsl:value-of select="$channel-search-host"/>:<xsl:value-of select="$channel-search-port"/>
       </xsl:attribute>
     </Service>
     <Service>
@@ -272,9 +285,6 @@
     name="channel-controller-path"
     select="$fe-cluster-path/service[@descriptor = $channel-controller-descriptor]"/>
 
-  <xsl:variable
-    name="channel-search-path"
-    select="$fe-cluster-path/service[@descriptor = $channel-search-service-descriptor]"/>
 
   <xsl:variable
     name="campaign-manager-path"
@@ -314,9 +324,6 @@
        <xsl:message terminate="yes"> AutoTest: Can't find fe-cluster group </xsl:message>
     </xsl:when>
 
-    <xsl:when test="count($channel-search-path) = 0">
-       <xsl:message terminate="yes"> AutoTest: Can't find channel search service node </xsl:message>
-    </xsl:when>
 
     <xsl:when test="count($channel-server-path) = 0">
        <xsl:message terminate="yes"> AutoTest: Can't find channel server node </xsl:message>
@@ -369,9 +376,6 @@
     </xsl:choose>
  </xsl:variable>
 
-  <xsl:variable
-    name="channel-search-config"
-    select="$channel-search-path/configuration/cfg:channelSearchService"/>
 
   <xsl:variable
     name="channel-server-config"
@@ -458,8 +462,6 @@
       <xsl:with-param name="campaign-manager-config" select="$campaign-manager-config"/>
       <xsl:with-param name="campaign-server-path" select="$campaign-server-path"/>
       <xsl:with-param name="campaign-server-config" select="$campaign-server-config"/>
-      <xsl:with-param name="channel-search-path" select="$channel-search-path"/>
-      <xsl:with-param name="channel-search-config" select="$channel-search-config"/>
       <xsl:with-param name="channel-server-path" select="$channel-server-path"/>
       <xsl:with-param name="channel-server-config" select="$channel-server-config"/>
       <xsl:with-param name="channel-controller-path" select="$channel-controller-path"/>

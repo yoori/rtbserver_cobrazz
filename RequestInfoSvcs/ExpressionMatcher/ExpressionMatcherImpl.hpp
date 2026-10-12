@@ -426,7 +426,6 @@ namespace AdServer::RequestInfoSvcs
     logger() noexcept;
 
   private:
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
 
     AdServer::CampaignSvcs::CampaignServerPoolPtr campaign_pool_;
 

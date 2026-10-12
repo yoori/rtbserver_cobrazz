@@ -95,6 +95,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="UrlInfoStorage"
+        configSchema="xsd/RequestInfoSvcs/UrlInfoStorageApp.xsd"
+        minOccurs="1"
+        maxOccurs="1"
+        minHostOccurs="1"
+        maxHostOccurs="1"/>
+
+      <service
         type="ClickhouseUploader"
         configSchema="xsd/LogProcessing/ClickhouseUploaderApp.xsd"
         minOccurs="0"
@@ -200,13 +208,6 @@
         type="ChannelController"
         configSchema="xsd/ChannelServing/ChannelControllerApp.xsd"
         minOccurs="1"
-        maxOccurs="unbounded"
-        minHostOccurs="1"
-        maxHostOccurs="unbounded"/>
-
-      <service type="ChannelSearchService"
-        configSchema="xsd/ChannelServing/ChannelSearchServiceApp.xsd"
-        minOccurs="0"
         maxOccurs="unbounded"
         minHostOccurs="1"
         maxHostOccurs="unbounded"/>

@@ -25,6 +25,7 @@ message GetDbStateRequest {}
 
 message GetDbStateResponse {
   bool enabled = 1;
+  bool supported = 2 [features.field_presence = EXPLICIT];
 }
 
 message SetDbStateRequest {

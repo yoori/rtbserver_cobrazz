@@ -31,7 +31,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="campaignServerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="campaignServerRef" type="CampaignServerGrpcRef" minOccurs="0" maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
             CORBA references.

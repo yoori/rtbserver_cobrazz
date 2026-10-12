@@ -132,7 +132,7 @@ target_link_libraries(ExpressionMatcher
     ExpressionMatcherGrpcClient
     ExpressionMatcherGrpcProto
     CampaignCommonsIDL
-    CampaignServerIDL
+    CampaignServerGrpc
     CorbaTypesIDL
     CORBACommons
     ProcessControlIDL

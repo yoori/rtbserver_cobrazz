@@ -5,7 +5,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
-#include <Commons/CorbaTypes.hpp>
+#include <cstdint>
 #include <LogCommons/LogCommons.hpp>
 
 namespace AdServer::LogProcessing
@@ -323,8 +323,7 @@ namespace AdServer::LogProcessing
   typedef ReferenceCounting::SmartPtr<LogGeneralizerStatValue>
     LogGeneralizerStatValue_var;
 
-  typedef std::tr1::unordered_map<CORBA::ULong, LogGeneralizerStatValue_var>
-    LogGeneralizerStatMap;
+  using LogGeneralizerStatMap = std::tr1::unordered_map<std::uint32_t, LogGeneralizerStatValue_var>;
 
   struct LogGeneralizerStatMapBundle: public ReferenceCounting::AtomicImpl
   {

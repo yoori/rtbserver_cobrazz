@@ -175,13 +175,8 @@
 
     <xsd:sequence>
 
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
-        <xsd:annotation>
-          <xsd:documentation>
-            CorbaConfig for service
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
+      <xsd:element name="GrpcConfig" type="GrpcConfigType"/>
+      <xsd:element name="HttpConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1"/>
 
       <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
@@ -207,6 +202,7 @@
 
     </xsd:sequence>
 
+    <xsd:attribute name="pid_file" type="xsd:string" use="required"/>
     <xsd:attribute name="input_logs_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="output_logs_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="db_dump_timeout" type="xsd:positiveInteger"/>

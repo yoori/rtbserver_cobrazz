@@ -58,7 +58,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType">
+      <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType">
         <xsd:annotation>
           <xsd:documentation>Defines refs to corba object CampaignServer</xsd:documentation>
         </xsd:annotation>

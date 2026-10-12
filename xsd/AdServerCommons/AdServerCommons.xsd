@@ -12,6 +12,17 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:complexType name="CampaignServerGrpcEndpointType">
+    <xsd:attribute name="endpoint" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerGrpcRefsType">
+    <xsd:sequence>
+      <xsd:element name="Ref" type="CampaignServerGrpcEndpointType"
+        minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
   <!-- Oracle DBConnection -->
   <xsd:complexType name="DBConnectionType">
     <xsd:attribute name="db" type="xsd:string" use="required">

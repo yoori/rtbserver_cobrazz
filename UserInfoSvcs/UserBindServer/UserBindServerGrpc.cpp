@@ -169,44 +169,7 @@ namespace AdServer::UserInfoSvcs
       std::shared_ptr<AtomicStats> stats,
       std::shared_ptr<std::atomic_uint> response_sleep_ms = nullptr);
 
-    static auto grpc_calls()
-    {
-      return std::make_tuple(
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          adserver::user_info_svcs::user_bind::GetBindRequestRequest,
-          adserver::user_info_svcs::user_bind::GetBindRequestResponse,
-          get_bind_request,
-          co_get_bind_request,
-          true,
-          &ServiceImpl::hash_get_bind_request),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          adserver::user_info_svcs::user_bind::AddBindRequestRequest,
-          adserver::user_info_svcs::user_bind::AddBindRequestResponse,
-          add_bind_request,
-          co_add_bind_request,
-          true,
-          &ServiceImpl::hash_add_bind_request),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          adserver::user_info_svcs::user_bind::GetUserIdRequest,
-          adserver::user_info_svcs::user_bind::GetUserIdResponse,
-          get_user_id,
-          co_get_user_id,
-          false,
-          &ServiceImpl::hash_get_user_id),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          adserver::user_info_svcs::user_bind::AddUserIdRequest,
-          adserver::user_info_svcs::user_bind::AddUserIdResponse,
-          add_user_id,
-          co_add_user_id,
-          true,
-          &ServiceImpl::hash_add_user_id),
-        MAKE_DISTRIBUTED_GRPC_CORO_CALL(
-          adserver::user_info_svcs::user_bind::GetSourceRequest,
-          adserver::user_info_svcs::user_bind::GetSourceResponse,
-          get_source,
-          co_get_source,
-          true));
-    }
+    static auto grpc_calls();
 
     std::size_t distributed_batch_max_sequential_ops() const noexcept override;
 
@@ -279,6 +242,63 @@ namespace AdServer::UserInfoSvcs
   };
 
   // UserBindServerGrpc::ServiceImpl
+  auto UserBindServerGrpc::ServiceImpl::grpc_calls()
+  {
+    namespace pb = adserver::user_info_svcs::user_bind;
+    using Strategy = AdServer::Grpc::BatchExecutionStrategy;
+    const auto request_id_key = [](const auto& request) -> std::string_view
+    {
+      return request.request_id();
+    };
+    const auto external_id_key = [](const auto& request) -> std::string_view
+    {
+      return request.id();
+    };
+    return std::make_tuple(
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetBindRequestRequest,
+        pb::GetBindRequestResponse,
+        get_bind_request,
+        co_get_bind_request,
+        true,
+        &ServiceImpl::hash_get_bind_request,
+        Strategy::CooperativeByKey,
+        request_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::AddBindRequestRequest,
+        pb::AddBindRequestResponse,
+        add_bind_request,
+        co_add_bind_request,
+        true,
+        &ServiceImpl::hash_add_bind_request,
+        Strategy::CooperativeByKey,
+        request_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetUserIdRequest,
+        pb::GetUserIdResponse,
+        get_user_id,
+        co_get_user_id,
+        false,
+        &ServiceImpl::hash_get_user_id,
+        Strategy::CooperativeByKey,
+        external_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::AddUserIdRequest,
+        pb::AddUserIdResponse,
+        add_user_id,
+        co_add_user_id,
+        true,
+        &ServiceImpl::hash_add_user_id,
+        Strategy::CooperativeByKey,
+        external_id_key),
+      MAKE_DISTRIBUTED_GRPC_CORO_CALL(
+        pb::GetSourceRequest,
+        pb::GetSourceResponse,
+        get_source,
+        co_get_source,
+        true));
+  }
+
   UserBindServerGrpc::ServiceImpl::ServiceImpl(
     UserBindServerCore* core,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,

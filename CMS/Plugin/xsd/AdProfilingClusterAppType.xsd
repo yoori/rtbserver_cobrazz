@@ -83,7 +83,7 @@
 
   <xsd:complexType name="AdProfilingClusterRemoteConfigType">
     <xsd:sequence>
-      <xsd:element name="campaignServerRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="campaignServerRef" type="CampaignServerGrpcRef" minOccurs="1" maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
             CORBA reference to CampaignServer.

@@ -41,17 +41,12 @@ namespace AdServer::CampaignSvcs
       config_(config),
       billing_processor_(new BillingProcessorHolder())
   {
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter =
-      new CORBACommons::CorbaClientAdapter();
-
-    const CORBACommons::CorbaObjectRefList campaign_server_refs =
-      Config::CorbaConfigReader::read_multi_corba_ref(config.CampaignServerCorbaRef());
+    const std::vector<std::string> campaign_server_refs =
+      AdServer::CampaignSvcs::campaign_server_endpoints(config.CampaignServerGrpcRefs());
 
     campaign_servers_.reset(
       new AdServer::CampaignSvcs::CampaignServerPool(
         campaign_server_refs,
-        corba_client_adapter,
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT,
         Generics::Time(10) // bad period
         ));
 

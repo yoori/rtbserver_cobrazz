@@ -14,7 +14,7 @@
 <xsl:output method="xml" indent="yes" encoding="utf-8"/>
 
 <xsl:include href="../Functions.xsl"/>
-<xsl:include href="../CampaignManagement/CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="../CampaignManagement/CampaignServersGrpcRefs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="service-id" select="$SERVICE_ID"/>
@@ -254,7 +254,7 @@
       <xsl:with-param name="default-log-level" select="$expression-matcher-log-level"/>
     </xsl:call-template>
 
-    <xsl:call-template name="CampaignServerCorbaRefs">
+    <xsl:call-template name="CampaignServerGrpcRefs">
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="service-name" select="'ExpressionMatcher'"/>
     </xsl:call-template>

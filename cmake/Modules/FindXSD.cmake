@@ -30,7 +30,7 @@ function(add_xsd _target _xsdfile target_dir)
       --fwd-suffix -fwd.hpp
       --output-dir ${target_dir}
       ${SRC}
-    DEPENDS ${SRC}
+    DEPENDS ${SRC} ${PROJECT_SOURCE_DIR}/xsd/AdServerCommons/AdServerCommons.xsd ${PROJECT_SOURCE_DIR}/xsd/AdServerCommons/AdServerCommons.xsd
     VERBATIM
   )
 

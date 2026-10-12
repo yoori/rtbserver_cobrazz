@@ -1,0 +1,2 @@
+add_executable(UrlInfoStorageGrpcTest UrlInfoStorageGrpcTest.cpp)
+target_link_libraries(UrlInfoStorageGrpcTest PRIVATE UrlInfoStorageGrpcProto gRPC::grpc++)

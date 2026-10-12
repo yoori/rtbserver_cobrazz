@@ -10,7 +10,6 @@
     <Service address="http://srv-dev2.ocslab.com:12080" name="AdFrontend"/>
     <Service address="srv-dev2.ocslab.com:12003" name="ChannelServer"/>
     <Service address="srv-dev2.ocslab.com:12004" name="ChannelController"/>
-    <Service address="srv-dev2.ocslab.com:12009" name="ChannelSearchServer"/>
     <Service address="srv-dev2.ocslab.com:12007" name="CampaignManager"/>
     <Service address="srv-dev2.ocslab.com:12006" name="CampaignServer"/>
     <Service address="srv-dev2.ocslab.com:12013" name="ExpressionMatcher"/>
@@ -44,5 +43,4 @@
   <TemplatesIn path="../../../../../run/trunk/var/www/Templates/"/>
 
 </GeneralParams>
-
 

@@ -175,11 +175,10 @@ namespace AdServer::RequestInfoSvcs
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
-    const char* stage = "init CorbaClientAdapter";
+    const char* stage = "init";
 
     try
     {
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
       stage = "resolve campaign servers";
       campaign_servers_ = resolve_campaign_servers_();
     }
@@ -1314,22 +1313,21 @@ namespace AdServer::RequestInfoSvcs
 
     try
     {
-      CORBACommons::CorbaObjectRefList campaign_server_refs;
+      std::vector<std::string> campaign_server_refs;
 
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        request_info_manager_config_.CampaignServerCorbaRef(),
-        campaign_server_refs);
+      campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
+        request_info_manager_config_.CampaignServerGrpcRefs());
 
-      CampaignServerPoolConfig pool_config(corba_client_adapter_.in());
+      CampaignServerPoolConfig pool_config;
       pool_config.timeout = Generics::Time(10); // 10 sec
 
-      pool_config.iors_list.insert(
-        pool_config.iors_list.end(),
+      pool_config.endpoints.insert(
+        pool_config.endpoints.end(),
         campaign_server_refs.begin(),
         campaign_server_refs.end());
 
       return CampaignServerPoolPtr(
-        new CampaignServerPool(pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+        new CampaignServerPool(pool_config));
     }
     catch (const CORBA::SystemException& e)
     {

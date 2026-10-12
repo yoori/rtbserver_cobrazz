@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package adserver.log_processing.log_generalizer;
+
+message CreativeStatInfo
+{
+  uint32 cc_id = 1;
+  sint64 requests = 2;
+  sint64 impressions = 3;
+  sint64 clicks = 4;
+  sint64 actions = 5;
+}
+
+message PublisherAmountInfo
+{
+  uint32 publisher_account_id = 1;
+  string adv_amount = 2;
+}
+
+message TagAmountInfo
+{
+  uint32 tag_id = 1;
+  string pub_isp_amount = 2;
+  string adv_amount = 3;
+  string adv_comm_amount = 4;
+}
+
+message CtrResetStatInfo
+{
+  uint32 ctr_reset_id = 1;
+  uint64 impressions = 2;
+}
+
+message CampaignStatInfo
+{
+  bytes sdate = 1;
+  bytes adv_sdate = 2;
+  uint32 adv_account_id = 3;
+  uint32 campaign_id = 4;
+  uint32 ccg_id = 5;
+  string adv_account_amount = 6;
+  string adv_amount = 7;
+  string adv_comm_amount = 8;
+  string adv_payable_comm_amount = 9;
+  repeated CreativeStatInfo creative_stats = 10;
+  repeated PublisherAmountInfo publisher_amounts = 11;
+  repeated TagAmountInfo tag_amounts = 12;
+  repeated CtrResetStatInfo ctr_reset_stats = 13;
+}
+
+message StatInfo
+{
+  repeated CampaignStatInfo campaign_stats = 1;
+}
+
+message StatRequest
+{
+  uint32 client_id = 1;
+  bool clear = 2;
+}
+
+message Empty {}
+
+service LogGeneralizer
+{
+  rpc stop_stat_upload(StatRequest) returns (Empty);
+  rpc start_stat_upload(StatRequest) returns (Empty);
+  rpc get_stat_info(StatRequest) returns (StatInfo);
+}

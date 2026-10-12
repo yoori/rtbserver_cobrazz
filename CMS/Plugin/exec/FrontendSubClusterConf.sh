@@ -31,7 +31,6 @@ USER_INFO_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoController
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
-CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
 USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
@@ -132,17 +131,6 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE|=$?"
 
-CHANNEL_SEARCH_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CHANNEL_SEARCH_SERVICE_DESCR']"
-
-$EXEC/ServiceConf.sh \
-  --services-xpath "$CHANNEL_SEARCH_SERVICE_XPATH" \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/ChannelServing/ChannelSearchService.xsl \
-  --out-file ChannelSearchServiceConfig.xml \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE|=$?"
 
 ### UserBindServer
 USER_BIND_SERVER_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_BIND_SERVER_DESCR']"

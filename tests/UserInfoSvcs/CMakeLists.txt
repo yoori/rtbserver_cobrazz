@@ -9,6 +9,10 @@ add_subdirectory(RocksDBBatchingProcessorQueuePerfTest)
 add_subdirectory(RocksDBProfileMapProcessorTest)
 add_subdirectory(RocksDBBatchingProfileMapPerfTest)
 
+add_executable(UserInfoContainerTransactionTest UserInfoContainerTransactionTest.cpp)
+target_link_libraries(UserInfoContainerTransactionTest
+  PRIVATE UserInfoContainer Commons Generics Logger ProfileMapRocksDB)
+
 add_executable(UserBindContainerTest
   ../UnitTests/UserInfoSvcs/UserBindContainerTest/UserBindContainerTest.cpp
 )

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <variant>
 
 namespace AdServer::Grpc
 {
@@ -24,11 +25,91 @@ namespace AdServer::Grpc
 
   struct GrpcServiceBase::PreparedBatchChains final
   {
-    explicit PreparedBatchChains(Generics::MonoAllocatorArena& arena) : operations(&arena)
-    {}
+    explicit PreparedBatchChains(Generics::MonoAllocatorArena& arena);
 
     Generics::MonoVector<AdServer::Commons::MonoStartableAwaitable<void>> operations;
   };
+
+  GrpcServiceBase::PreparedBatchChains::PreparedBatchChains(Generics::MonoAllocatorArena& arena)
+    : operations(&arena)
+  {}
+
+  struct GrpcServiceBase::BatchLaneOperation final
+  {
+    using Sequential = AdServer::Commons::StartableAwaitable<void>;
+    using Group =
+      AdServer::Commons::CooperativeGroup<AdServer::Commons::MonoStartableAwaitable<void>>;
+
+    explicit BatchLaneOperation(Sequential operation_val);
+    BatchLaneOperation(Group::Operations operations,
+      std::shared_ptr<AdServer::Commons::ExecutorPool> pool, bool reschedule_val);
+
+    void start(BatchCompletion completion);
+
+    std::variant<Sequential, Group> operation;
+    bool reschedule = false;
+  };
+
+  GrpcServiceBase::BatchLaneOperation::BatchLaneOperation(Sequential operation_val)
+    : operation(std::move(operation_val))
+  {}
+
+  GrpcServiceBase::BatchLaneOperation::BatchLaneOperation(Group::Operations operations,
+    std::shared_ptr<AdServer::Commons::ExecutorPool> pool, bool reschedule_val)
+    : operation(std::in_place_type<Group>, operations, std::move(pool)),
+      reschedule(reschedule_val)
+  {}
+
+  void GrpcServiceBase::BatchLaneOperation::start(BatchCompletion completion)
+  {
+    if (auto* group = std::get_if<Group>(&operation))
+    {
+      group->start(std::move(completion), reschedule);
+    }
+    else
+    {
+      std::get<Sequential>(operation).start(std::move(completion));
+    }
+  }
+
+  struct GrpcServiceBase::DistributedBatchHandle final
+  {
+    DistributedBatchHandle(adserver::grpc::BatchResponse& response, BatchCompletion completion_val);
+
+    google::protobuf::Arena& response_arena() noexcept;
+
+    Generics::MonoAllocatorArena batch_arena;
+    google::protobuf::Arena request_arena;
+    google::protobuf::Arena fallback_response_arena;
+    adserver::grpc::BatchResponse& batch_response;
+    google::protobuf::Arena* const batch_response_arena;
+    Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses;
+    Generics::MonoVector<std::unique_ptr<adserver::grpc::BatchResponseItem>> heap_item_responses;
+    Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes;
+    Generics::MonoVector<PreparedBatchChains> chains;
+    Generics::MonoVector<BatchLaneOperation> operations;
+    std::mutex lock;
+    std::optional<std::exception_ptr> exception;
+    std::size_t remaining = 0;
+    BatchCompletion completion;
+  };
+
+  GrpcServiceBase::DistributedBatchHandle::DistributedBatchHandle(
+    adserver::grpc::BatchResponse& response, BatchCompletion completion_val)
+    : batch_response(response),
+      batch_response_arena(batch_response.GetArena()),
+      item_responses(&batch_arena),
+      heap_item_responses(&batch_arena),
+      lanes(&batch_arena),
+      chains(&batch_arena),
+      operations(&batch_arena),
+      completion(std::move(completion_val))
+  {}
+
+  google::protobuf::Arena& GrpcServiceBase::DistributedBatchHandle::response_arena() noexcept
+  {
+    return batch_response_arena ? *batch_response_arena : fallback_response_arena;
+  }
 
   struct GrpcServiceBase::PublishedBatchState final
   {
@@ -45,26 +126,7 @@ namespace AdServer::Grpc
       Scheduler& scheduler_val,
       const adserver::grpc::BatchRequest& request_val,
       BatchResponsePublisher& response_publisher_val,
-      BatchCompletion completion_val)
-      : scheduler(scheduler_val),
-        batch_id(request_val.batch_id()),
-        response_publisher(response_publisher_val.retain()),
-        response_arena(response_publisher_val.response_arena()),
-        item_responses(&batch_arena),
-        lanes(&batch_arena),
-        chains(&batch_arena),
-        response_time_steps_us(&batch_arena),
-        completion(std::move(completion_val))
-    {
-      response_time_steps_us.reserve(request_val.response_time_steps_us().size());
-      for (const auto step : request_val.response_time_steps_us())
-      {
-        if (step > 0 && (response_time_steps_us.empty() || step > response_time_steps_us.back()))
-        {
-          response_time_steps_us.emplace_back(step);
-        }
-      }
-    }
+      BatchCompletion completion_val);
 
     ~PublishedBatchState()
     {
@@ -244,6 +306,7 @@ namespace AdServer::Grpc
     Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses;
     Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes;
     Generics::MonoVector<PreparedBatchChains> chains;
+    Generics::MonoVector<BatchLaneOperation> operations;
     ResponseBasket* response_baskets = nullptr;
     std::mutex publication_lock;
     Generics::MonoVector<std::uint32_t> response_time_steps_us;
@@ -255,6 +318,32 @@ namespace AdServer::Grpc
     std::atomic<bool> completed{false};
     BatchCompletion completion;
   };
+
+  GrpcServiceBase::PublishedBatchState::PublishedBatchState(
+    Scheduler& scheduler_val,
+    const adserver::grpc::BatchRequest& request_val,
+    BatchResponsePublisher& response_publisher_val,
+    BatchCompletion completion_val)
+    : scheduler(scheduler_val),
+      batch_id(request_val.batch_id()),
+      response_publisher(response_publisher_val.retain()),
+      response_arena(response_publisher_val.response_arena()),
+      item_responses(&batch_arena),
+      lanes(&batch_arena),
+      chains(&batch_arena),
+      operations(&batch_arena),
+      response_time_steps_us(&batch_arena),
+      completion(std::move(completion_val))
+  {
+    response_time_steps_us.reserve(request_val.response_time_steps_us().size());
+    for (const auto step : request_val.response_time_steps_us())
+    {
+      if (step > 0 && (response_time_steps_us.empty() || step > response_time_steps_us.back()))
+      {
+        response_time_steps_us.emplace_back(step);
+      }
+    }
+  }
 
   class GrpcServiceBase::BatchRequestAwaiter final
   {
@@ -806,42 +895,6 @@ namespace AdServer::Grpc
     const std::size_t max_sequential_ops,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool) const
   {
-    struct DistributedBatchHandle final
-    {
-      DistributedBatchHandle(
-        adserver::grpc::BatchResponse& batch_response_val,
-        BatchCompletion completion_val)
-        : batch_response(batch_response_val),
-          batch_response_arena(batch_response.GetArena()),
-          item_responses(&batch_arena),
-          heap_item_responses(&batch_arena),
-          lanes(&batch_arena),
-          chains(&batch_arena),
-          operations(&batch_arena),
-          completion(std::move(completion_val))
-      {}
-
-      google::protobuf::Arena& response_arena() noexcept
-      {
-        return batch_response_arena ? *batch_response_arena : fallback_response_arena;
-      }
-
-      Generics::MonoAllocatorArena batch_arena;
-      google::protobuf::Arena request_arena;
-      google::protobuf::Arena fallback_response_arena;
-      adserver::grpc::BatchResponse& batch_response;
-      google::protobuf::Arena* const batch_response_arena;
-      Generics::MonoVector<adserver::grpc::BatchResponseItem*> item_responses;
-      Generics::MonoVector<std::unique_ptr<adserver::grpc::BatchResponseItem>> heap_item_responses;
-      Generics::MonoVector<Generics::MonoVector<BatchItemContext>> lanes;
-      Generics::MonoVector<PreparedBatchChains> chains;
-      Generics::MonoVector<AdServer::Commons::StartableAwaitable<void>> operations;
-      std::mutex lock;
-      std::optional<std::exception_ptr> exception;
-      std::size_t remaining = 0;
-      BatchCompletion completion;
-    };
-
     const std::size_t batch_size = static_cast<std::size_t>(batch_request.items_size());
     const std::size_t sequential_ops = std::max<std::size_t>(1, max_sequential_ops);
     const std::size_t lane_count = resolve_batch_lane_count(batch_size, sequential_ops);
@@ -935,30 +988,35 @@ namespace AdServer::Grpc
       state->chains, state->lanes, state->batch_arena, state->response_arena());
 
     state->operations.reserve(split);
-    for (std::size_t i = 1; i < state->lanes.size(); ++i)
+    const auto add_lane = [&](std::size_t index, bool reschedule)
     {
-      auto& lane = state->lanes[i];
+      auto& lane = state->lanes[index];
       if (lane.empty())
       {
-        continue;
+        return;
       }
 
-      state->operations.emplace_back(co_handle_batch_lane_(
-        std::move(lane),
-        state->chains.empty() ? nullptr : &state->chains[i],
-        executor_pool,
-        true,
-        state->response_arena()));
+      if (!state->chains.empty() && !state->chains[index].operations.empty())
+      {
+        auto& chains = state->chains[index].operations;
+        state->operations.emplace_back(
+          BatchLaneOperation::Group::Operations(chains.data(), chains.size()),
+          executor_pool, reschedule);
+      }
+      else
+      {
+        state->operations.emplace_back(co_handle_batch_lane_(
+          std::move(lane), executor_pool, reschedule, state->response_arena()));
+      }
+    };
+    for (std::size_t i = 1; i < state->lanes.size(); ++i)
+    {
+      add_lane(i, true);
     }
 
-    if (!state->lanes.empty() && !state->lanes[0].empty())
+    if (!state->lanes.empty())
     {
-      state->operations.emplace_back(co_handle_batch_lane_(
-        std::move(state->lanes[0]),
-        state->chains.empty() ? nullptr : &state->chains[0],
-        executor_pool,
-        false,
-        state->response_arena()));
+      add_lane(0, false);
     }
 
     auto finish_batch =
@@ -1125,6 +1183,7 @@ namespace AdServer::Grpc
     prepare_batch_chains_(
       state->chains, state->lanes, state->batch_arena, state->response_arena, state.get());
     state->initialize_response_baskets();
+    state->operations.reserve(split);
     for (std::size_t lane_index = 0; lane_index < state->lanes.size(); ++lane_index)
     {
       if (state->lanes[lane_index].empty())
@@ -1132,9 +1191,22 @@ namespace AdServer::Grpc
         continue;
       }
 
-      ++state->lane_operations_count;
+      const bool reschedule = !state->operations.empty();
+      if (!state->chains.empty() && !state->chains[lane_index].operations.empty())
+      {
+        auto& chains = state->chains[lane_index].operations;
+        state->operations.emplace_back(
+          BatchLaneOperation::Group::Operations(chains.data(), chains.size()),
+          executor_pool, reschedule);
+      }
+      else
+      {
+        state->operations.emplace_back(
+          co_handle_publish_batch_lane_(state.get(), lane_index, executor_pool, reschedule));
+      }
     }
 
+    state->lane_operations_count = state->operations.size();
     if (state->lane_operations_count == 0)
     {
       state->completed.store(true, std::memory_order_release);
@@ -1157,10 +1229,7 @@ namespace AdServer::Grpc
         continue;
       }
 
-      auto operation = co_handle_publish_batch_lane_(
-        state, lane_index, executor_pool, operation_index != 0);
-      ++operation_index;
-      operation.start_detached(
+      state->operations[operation_index++].start(
         [state, lane_index](std::optional<std::exception_ptr> exception) mutable noexcept
         {
           state->finish_lane(lane_index, std::move(exception));
@@ -1170,7 +1239,7 @@ namespace AdServer::Grpc
 
   AdServer::Commons::StartableAwaitable<void>
   GrpcServiceBase::co_handle_publish_batch_lane_(
-    std::shared_ptr<PublishedBatchState> state,
+    PublishedBatchState* state,
     const std::size_t lane_index,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     const bool reschedule) const
@@ -1188,22 +1257,6 @@ namespace AdServer::Grpc
     }
 
     auto& lane = state->lanes[lane_index];
-    if (!state->chains.empty() && !state->chains[lane_index].operations.empty())
-    {
-      auto& operations = state->chains[lane_index].operations;
-      if (operations.size() == 1)
-      {
-        co_await operations.front();
-      }
-      else
-      {
-        co_await AdServer::Commons::CooperativeGroup<AdServer::Commons::MonoStartableAwaitable<void>>(
-          {operations.data(), operations.size()}, std::move(executor_pool));
-      }
-      operations.clear();
-      co_return;
-    }
-
     for (std::size_t item_index = 0; item_index < lane.size(); ++item_index)
     {
       auto& batch_item = lane[item_index];
@@ -1230,7 +1283,6 @@ namespace AdServer::Grpc
   AdServer::Commons::StartableAwaitable<void>
   GrpcServiceBase::co_handle_batch_lane_(
     Generics::MonoVector<BatchItemContext> batch_items,
-    PreparedBatchChains* chains,
     std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
     bool reschedule,
     google::protobuf::Arena& response_arena) const
@@ -1245,22 +1297,6 @@ namespace AdServer::Grpc
       {
         co_await AdServer::Commons::ExecutorPool::yield(executor_pool);
       }
-    }
-
-    if (chains && !chains->operations.empty())
-    {
-      auto& operations = chains->operations;
-      if (operations.size() == 1)
-      {
-        co_await operations.front();
-      }
-      else
-      {
-        co_await AdServer::Commons::CooperativeGroup<AdServer::Commons::MonoStartableAwaitable<void>>(
-          {operations.data(), operations.size()}, std::move(executor_pool));
-      }
-      operations.clear();
-      co_return;
     }
 
     for (auto& batch_item : batch_items)
@@ -1299,7 +1335,7 @@ namespace AdServer::Grpc
     for (std::size_t lane_index = 0; lane_index < lanes.size(); ++lane_index)
     {
       auto& items = lanes[lane_index];
-      if (items.size() <= 1 || !std::any_of(items.begin(), items.end(), [&](const auto& item)
+      if (items.empty() || !std::any_of(items.begin(), items.end(), [&](const auto& item)
       {
         return method(&item) != nullptr;
       }))
@@ -1362,14 +1398,28 @@ namespace AdServer::Grpc
           ordered[end - 1]->chain_next = ordered[end];
           ++end;
         }
-        operations.emplace_back(co_handle_batch_chain_(
-          batch_arena, ordered[begin], response_arena, published_state, lane_index));
+        if (chain_method)
+        {
+          operations.emplace_back(chain_method->make_chain(
+            batch_arena, ordered[begin], response_arena, published_state, lane_index));
+        }
+        else
+        {
+          operations.emplace_back(co_handle_legacy_batch_chain_(
+            batch_arena, ordered[begin], response_arena, published_state, lane_index));
+        }
         begin = end;
       }
     }
   }
 
-  AdServer::Commons::MonoStartableAwaitable<void> GrpcServiceBase::co_handle_batch_chain_(
+  void GrpcServiceBase::enqueue_batch_response_(
+    PublishedBatchState* state, const std::size_t lane_index, BatchItemContext& item) noexcept
+  {
+    state->enqueue_response(lane_index, item);
+  }
+
+  AdServer::Commons::MonoStartableAwaitable<void> GrpcServiceBase::co_handle_legacy_batch_chain_(
     Generics::MonoAllocatorArena&,
     BatchItemContext* item,
     google::protobuf::Arena& response_arena,

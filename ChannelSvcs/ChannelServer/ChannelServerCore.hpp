@@ -13,18 +13,19 @@
 #include <eh/Exception.hpp>
 
 #include <Logger/Logger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 #include <Language/SegmentorCommons/SegmentorInterface.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Commons/DbStateChanger.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
+#include <ChannelSvcs/ChannelServer/ChannelUpdateGrpcClient.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerTypes.hpp>
 
@@ -202,8 +203,8 @@ namespace AdServer::ChannelSvcs
     {
       using ObjectRef = std::string;
 
-      ChannelSvcs::GroupLoadDescriptionSeq local_descriptor;
-      std::vector<ObjectRef> proxy_refs;
+      GroupLoadDescription local_descriptor;
+      std::vector<std::string> proxy_endpoints;
       std::vector<ObjectRef> campaign_refs;
       unsigned long count_chunks = 0;
       unsigned long colo = 0;

@@ -29,7 +29,7 @@ namespace AdServer::CampaignSvcs
     CampaignConfigSource(
       Logging::Logger* logger,
       DomainParser* domain_parser,
-      const CORBACommons::CorbaObjectRefList& campaign_server_refs,
+      const std::vector<std::string>& campaign_server_refs,
       const char* campaigns_types,
       const char* creative_file_dir,
       const char* template_file_dir,
@@ -390,7 +390,6 @@ namespace AdServer::CampaignSvcs
   private:
     Logging::Logger_var logger_;
     DomainParser_var domain_parser_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
 
     const std::string campaigns_types_;
     const std::string creative_file_dir_;

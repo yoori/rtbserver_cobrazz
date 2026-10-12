@@ -42,7 +42,7 @@ target_link_libraries(FCGIServer
     XMLUtility
     FrontendServerCommons
     CommonModule
-    CampaignServerIDL
+    CampaignServerGrpc
     ProcessControlIDL
     Commons
     CORBACommons

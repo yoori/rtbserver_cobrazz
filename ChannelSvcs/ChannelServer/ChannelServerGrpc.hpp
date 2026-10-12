@@ -35,6 +35,7 @@ namespace AdServer::ChannelSvcs
       std::uint64_t check_configuration_in_progress = 0;
       std::uint64_t set_sources_in_progress = 0;
       std::uint64_t set_proxy_sources_in_progress = 0;
+      std::uint64_t channel_update_in_progress = 0;
       std::uint64_t batch_total = 0;
       std::uint64_t batch_total_time = 0;
       std::uint64_t batch_in_progress = 0;
@@ -62,6 +63,8 @@ namespace AdServer::ChannelSvcs
     ~ChannelServerGrpc() noexcept;
 
   private:
+    void deactivate_object_() override;
+
     struct AtomicStats;
 
     const std::string bind_address_;

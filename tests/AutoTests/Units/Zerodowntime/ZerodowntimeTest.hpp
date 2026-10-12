@@ -33,7 +33,6 @@ public:
     BaseDBUnit(stat_var, task_name, params_var),
     campaign_managers_(get_config().get_services(CTE_CENTRAL, STE_CAMPAIGN_MANAGER)),
     channel_controllers_(get_config().get_services(CTE_CENTRAL, STE_CHANNEL_CONTROLLER)),
-    channel_search_servers_(get_config().get_services(CTE_CENTRAL, STE_CHANNEL_SEARCH_SERVER)),
     user_info_managers_(get_config().get_services(CTE_CENTRAL, STE_USER_INFO_MANAGER)),
     expression_matchers_(get_config().get_services(CTE_CENTRAL, STE_EXPRESSION_MATCHER)),
     no_db_(!stat_var.db_active())
@@ -61,7 +60,6 @@ private:
 
   GlobalConfig::ServiceList campaign_managers_;
   GlobalConfig::ServiceList channel_controllers_;
-  GlobalConfig::ServiceList channel_search_servers_;
   GlobalConfig::ServiceList user_info_managers_;
   GlobalConfig::ServiceList expression_matchers_;
 
@@ -101,8 +99,6 @@ private:
     const char* cc_name,
     bool no_db = false);
 
-  void
-  check_channel_search_(ClusterGroup group);
 
   void
   init_stats_();

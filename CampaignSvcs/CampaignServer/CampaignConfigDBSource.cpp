@@ -219,7 +219,7 @@ namespace AdServer::CampaignSvcs
     const String::SubString& channel_statuses,
     Commons::Postgres::Environment* pg_env,
     const Generics::Time& stat_stamp_sync_period,
-    const CORBACommons::CorbaObjectRefList& stat_providers,
+    const std::vector<std::string>& stat_providers,
     const Generics::Time& audience_expiration_time,
     const Generics::Time& pending_expire_time,
     bool enable_delivery_thresholds)

@@ -5,8 +5,6 @@ target_link_libraries(TriggerFilter
   PRIVATE
     Generics
     BLogic
-    CORBACommons
     ChannelCommons
     ChannelContainer
-    ProcessControlIDL
 )

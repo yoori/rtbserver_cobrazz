@@ -1,28 +1,12 @@
-add_idl(DictionaryProviderIDL DictionaryProvider.idl ${IDL_DIRECTORY}/ChannelSvcs/DictionaryProvider)
+add_grpc_sources(DictionaryProviderGrpc DictionaryProvider.proto
+  ${PB_DIRECTORY}/ChannelSvcs/DictionaryProvider)
+target_sources(DictionaryProviderGrpc PRIVATE
+  ../DictionaryProviderClient/DictionaryProviderClient.cpp)
+target_link_libraries(DictionaryProviderGrpc PUBLIC gRPC::grpc++ protobuf::libprotobuf)
 
-target_link_libraries(DictionaryProviderIDL
-  PUBLIC
-    CorbaTypesIDL
-    ChannelCommonsIDL
-)
+add_library(DictionaryProviderImpl SHARED DictionaryProviderImpl.cpp DictionaryContainer.cpp)
+target_link_libraries(DictionaryProviderImpl
+  PUBLIC DictionaryProviderGrpc DictionaryProviderConfigXSD Generics Logger Commons Sync)
 
-add_executable(DictionaryProvider
-
-  DictionaryProviderMain.cpp DictionaryProviderImpl.cpp DictionaryContainer.cpp
-)
-target_link_libraries(DictionaryProvider
-  PRIVATE
-    Generics
-    CORBACommons
-    AdServerCommonsXSD
-    DictionaryProviderConfigXSD
-    Commons
-    CORBAConfig
-    CorbaTypesIDL
-    DictionaryProviderIDL
-    ChannelCommons
-    ChannelCommonsIDL
-    Logger
-    ProcessControlIDL
-    Sync
-)
+add_executable(DictionaryProvider DictionaryProviderMain.cpp)
+target_link_libraries(DictionaryProvider PRIVATE DictionaryProviderImpl)

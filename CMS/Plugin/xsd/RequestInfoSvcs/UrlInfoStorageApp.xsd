@@ -1,0 +1,22 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified" version="1.0">
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+  <xsd:element name="urlInfoStorage" type="UrlInfoStorageConfigType"/>
+  <xsd:complexType name="UrlInfoStorageConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="UrlInfoStorageNetworkParamsType" minOccurs="0"/>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="rocksdb_workers" type="xsd:positiveInteger" default="2"/>
+    <xsd:attribute name="rocksdb_batch_size" type="xsd:positiveInteger" default="128"/>
+    <xsd:attribute name="grpc_cq_threads" type="xsd:positiveInteger" default="2"/>
+    <xsd:attribute name="grpc_threads_per_cq" type="xsd:positiveInteger" default="1"/>
+    <xsd:attribute name="http_threads" type="xsd:positiveInteger" default="2"/>
+  </xsd:complexType>
+  <xsd:complexType name="UrlInfoStorageNetworkParamsType">
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger"/>
+    <xsd:attribute name="http_port" type="xsd:positiveInteger"/>
+  </xsd:complexType>
+</xsd:schema>

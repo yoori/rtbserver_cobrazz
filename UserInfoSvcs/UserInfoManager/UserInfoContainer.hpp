@@ -57,6 +57,8 @@ namespace AdServer::UserInfoSvcs
     public UserOperationProcessor,
     public Generics::RefCountableCompositeActiveObject
   {
+    friend struct UserInfoContainerTestAccess;
+
   public:
     typedef UserOperationProcessor::Exception Exception;
     DECLARE_EXCEPTION(UserIsFraud, Exception);
@@ -224,6 +226,48 @@ namespace AdServer::UserInfoSvcs
     virtual ~UserInfoContainer() noexcept {};
 
   private:
+    class UserTransaction final: public AdServer::ProfilingCommons::TransactionBase
+    {
+    public:
+      using ArgType = AdServer::ProfilingCommons::OperationPriority;
+
+      explicit UserTransaction(TransactionHolderBase* holder) noexcept;
+      UserTransaction(TransactionHolderBase* holder, AdServer::Commons::AsyncMutex::Guard&& guard)
+        noexcept;
+
+    protected:
+      ~UserTransaction() noexcept override;
+    };
+
+    using UserTransaction_var = ReferenceCounting::SmartPtr<UserTransaction>;
+
+    class UserTransactionMap final:
+      public AdServer::ProfilingCommons::TransactionMap<UserId, UserTransaction>
+    {
+    public:
+      explicit UserTransactionMap(unsigned long portions) noexcept;
+
+    private:
+      UserTransaction_var create_transaction_impl_(
+        TransactionHolder* holder, const UserId& key, const UserTransaction::ArgType& arg) override;
+
+      UserTransaction_var create_transaction_impl_(
+        TransactionHolder* holder,
+        const UserId& key,
+        const UserTransaction::ArgType& arg,
+        AdServer::Commons::AsyncMutex::Guard&& guard) override;
+    };
+
+    AdServer::Commons::StartableAwaitable<UserTransaction_var>
+    co_get_user_transaction_(const UserId& user_id, bool temporary, bool check_max_waiters = true);
+
+    static void save_user_profile_async_(
+      UserProfileMap* profiles,
+      const UserId& user_id,
+      const Generics::ConstSmartMemBuf* profile,
+      const Generics::Time& now,
+      UserTransaction_var transaction);
+
     enum class ProfileType : unsigned char
     {
       BASE,
@@ -331,6 +375,10 @@ namespace AdServer::UserInfoSvcs
 
     std::shared_ptr<AdServer::ProfilingCommons::RocksDBProfileMapProcessor>
       rocksdb_processor_;
+
+    const unsigned long max_base_profile_waiters_;
+    const unsigned long max_temp_profile_waiters_;
+    UserTransactionMap user_transactions_;
 
     UserProfileMap_var base_profiles_;
     UserProfileMap_var temp_profiles_;

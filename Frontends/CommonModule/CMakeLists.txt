@@ -4,7 +4,7 @@ add_library(CommonModule SHARED
 
 target_link_libraries(CommonModule
   PRIVATE
-    CampaignServerIDL
+    CampaignServerGrpc
     Commons
     CORBAConfig
     RequestMatchers

@@ -34,7 +34,6 @@ enum ServiceTypeEnum
   STE_FRONTEND = ServiceEnum::AdFrontend,
   STE_CHANNEL_SERVER = ServiceEnum::ChannelServer,
   STE_CHANNEL_CONTROLLER = ServiceEnum::ChannelController,
-  STE_CHANNEL_SEARCH_SERVER = ServiceEnum::ChannelSearchServer,
   STE_CAMPAIGN_MANAGER = ServiceEnum::CampaignManager,
   STE_CAMPAIGN_SERVER = ServiceEnum::CampaignServer,
   STE_EXPRESSION_MATCHER = ServiceEnum::ExpressionMatcher,

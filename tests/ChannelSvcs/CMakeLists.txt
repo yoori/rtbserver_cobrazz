@@ -1,5 +1,17 @@
 add_subdirectory(ChannelContainerPerfTest)
 
+add_executable(DictionaryProviderGrpcTest DictionaryProviderGrpcTest.cpp)
+target_link_libraries(DictionaryProviderGrpcTest PRIVATE DictionaryProviderImpl ChannelContainer)
+
 add_executable(ChannelServerGrpcTestClient ChannelServerGrpcTestClient.cpp)
 target_link_libraries(ChannelServerGrpcTestClient
-  PRIVATE ChannelServerGrpc gRPC::grpc++ CORBACommons ChannelUpdateBaseIDL ProcessControlIDL)
+  PRIVATE ChannelServerGrpc gRPC::grpc++)
+
+add_executable(ChannelUpdateGrpcTest ChannelUpdateGrpcTest.cpp)
+target_link_libraries(ChannelUpdateGrpcTest
+  PRIVATE ChannelSessionFactory ChannelUpdateGrpcClient Logger
+    gRPC::grpc++)
+
+add_executable(ChannelClientInterfaceTest ChannelClientInterfaceTest.cpp)
+target_link_libraries(ChannelClientInterfaceTest
+  PRIVATE ChannelGrpcClient ChannelServerGrpcClient Commons Logger gRPC::grpc++)

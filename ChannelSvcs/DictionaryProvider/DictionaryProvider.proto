@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package adserver.channel_svcs.dictionary_provider;
+
+service DictionaryProvider
+{
+  rpc get_lexemes(GetLexemesRequest) returns (GetLexemesResponse);
+}
+
+message GetLexemesRequest
+{
+  string language = 1;
+  repeated string words = 2;
+}
+
+message Lexeme
+{
+  repeated string forms = 1;
+}
+
+message GetLexemesResponse
+{
+  // One entry per input word, in the same order; empty forms mean no match.
+  repeated Lexeme lexemes = 1;
+}

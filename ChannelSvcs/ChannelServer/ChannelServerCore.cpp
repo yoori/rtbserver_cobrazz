@@ -36,8 +36,6 @@
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateStatLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 //#include <ChannelSvcs/ChannelServer/ChannelServer_s.hpp>
-#include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionFactory.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
@@ -60,13 +58,7 @@ namespace AdServer::ChannelSvcs
 
   struct ChannelServerCoreState
   {
-    CORBACommons::CorbaClientAdapter_var c_adapter;
-    ChannelLoadSessionFactoryImpl_var load_session_factory;
     ChannelUpdateStatLogger_var update_stat_logger;
-
-    ChannelServerCoreState()
-      : c_adapter(new CORBACommons::CorbaClientAdapter())
-    {}
   };
 
   const char*
@@ -112,11 +104,6 @@ namespace AdServer::ChannelSvcs
           server_config->MatchOptions().nonstrict())),
       queries_counter_(0)
   {
-    state_holder_->load_session_factory = new ChannelLoadSessionFactoryImpl(10, callback_);
-    state_holder_->c_adapter->register_value_factory(
-      ChannelLoadSessionImpl::_tao_obv_static_repository_id(),
-      state_holder_->load_session_factory.in());
-
     try
     {
       if (server_config->reschedule_period().present())
@@ -151,14 +138,15 @@ namespace AdServer::ChannelSvcs
         statistic_logger_ = new Logging::File::Logger(std::move(config));
       }
 
-      CORBACommons::CorbaObjectRefList dictionary_server_refs;
       if (server_config->DictionaryRefs().present())
       {
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          server_config->DictionaryRefs().get(), dictionary_server_refs);
+        std::vector<std::string> dictionary_server_refs;
+        for (const auto& ref : server_config->DictionaryRefs()->Ref())
+        {
+          dictionary_server_refs.emplace_back(ref.endpoint());
+        }
 
-        dict_matcher_.reset(new DictionaryMatcher(
-            *state_holder_->c_adapter, dictionary_server_refs, logger()));
+        dict_matcher_.reset(new DictionaryMatcher(dictionary_server_refs, logger()));
       }
 
       update_cont_.reset(new UpdateContainer(container_.get(), dict_matcher_.get()));
@@ -685,12 +673,13 @@ namespace AdServer::ChannelSvcs
   {
     static const char* FN = "ChannelServerCore::update_triggers";
 
+    if (!ready())
+    {
+      throw ChannelServerCore::NotConfigured("not configured");
+    }
+
     try
     {
-      if (!ready())
-      {
-        throw ChannelServerCore::NotConfigured("not configured");
-      }
       Generics::Timer timer;
 
       timer.start();
@@ -1055,8 +1044,7 @@ namespace AdServer::ChannelSvcs
       }
 
       count_chunks_ = db_info.count_chunks;
-      ChannelServerVariantBase::ServerPoolConfig
-        pool_config(state_holder_->c_adapter.in());
+      ChannelServerVariantBase::ServerPoolConfig pool_config;
       pool_config.timeout = Generics::Time(
         std::min(update_period_, 10UL)); // 10 sec
       if (!db_info.campaign_refs.empty())
@@ -1070,7 +1058,7 @@ namespace AdServer::ChannelSvcs
             mes << "; ";
           }
           mes << db_info.campaign_refs[i];
-          pool_config.iors_list.emplace_back(db_info.campaign_refs[i].c_str());
+          pool_config.endpoints.emplace_back(db_info.campaign_refs[i].c_str());
         }
         logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
       }
@@ -1136,8 +1124,7 @@ namespace AdServer::ChannelSvcs
         ostr << source << ",";
       }
 
-      ChannelServerVariantBase::ServerPoolConfig
-        pool_config(state_holder_->c_adapter.in());
+      ChannelServerVariantBase::ServerPoolConfig pool_config;
       pool_config.timeout = Generics::Time(
         std::min(update_period_, 10UL)); // 10 sec
       if (!proxy_info.campaign_refs.empty())
@@ -1151,34 +1138,14 @@ namespace AdServer::ChannelSvcs
             mes << "; ";
           }
           mes << proxy_info.campaign_refs[i];
-          pool_config.iors_list.emplace_back(proxy_info.campaign_refs[i].c_str());
-        }
-        logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
-      }
-
-      ChannelServerVariantBase::ServerPoolConfig
-        proxy_pool_config(state_holder_->c_adapter.in());
-      proxy_pool_config.timeout = Generics::Time(
-        std::min(update_period_, 10UL)); // 10 sec
-      if (!proxy_info.proxy_refs.empty())
-      {
-        Stream::Error mes;
-        mes << "References to channel proxy: ";
-        for (size_t i = 0; i < proxy_info.proxy_refs.size(); ++i)
-        {
-          if (i != 0)
-          {
-            mes << "; ";
-          }
-          mes << proxy_info.proxy_refs[i];
-          proxy_pool_config.iors_list.emplace_back(proxy_info.proxy_refs[i].c_str());
+          pool_config.endpoints.emplace_back(proxy_info.campaign_refs[i].c_str());
         }
         logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
       }
 
       colo_ = proxy_info.colo;
       version_ = proxy_info.version;
-      if (logger()->log_level() >= Logging::Logger::TRACE && proxy_info.local_descriptor.length())
+      if (logger()->log_level() >= Logging::Logger::TRACE && !proxy_info.local_descriptor.empty())
       {
         Stream::Error mes;
         mes << "Local references: ";
@@ -1188,7 +1155,7 @@ namespace AdServer::ChannelSvcs
 
       new_variant_server_ = std::make_shared<ChannelServerProxy>(
         proxy_info.local_descriptor,
-        proxy_pool_config,
+        proxy_info.proxy_endpoints,
         ports_,
         vec_sources,
         proxy_info.count_chunks,
@@ -1199,6 +1166,7 @@ namespace AdServer::ChannelSvcs
         logger(),
         proxy_info.check_sum);
 
+      count_chunks_ = proxy_info.count_chunks;
       configuration_date_ = Generics::Time::get_time_of_day();
       if (state_ == UpdateData::US_ZERO)
       {
@@ -1315,20 +1283,20 @@ namespace AdServer::ChannelSvcs
   void ChannelServerCore::change_db_state(bool new_state)
     /*throw(eh::Exception)*/
   {
-    if (state_ == UpdateData::US_ZERO)
+    ChannelServerVariantBasePtr variant_server = get_source_of_data_();
+    if (!variant_server)
     {
       throw Exception("Not ready");
     }
-    ChannelServerVariantBasePtr variant_server = get_source_of_data_();
     variant_server->change_db_state(new_state);
   }
 
   bool ChannelServerCore::get_db_state()
     /*throw(Commons::DbStateChanger::NotSupported)*/
   {
-    if (state_ != UpdateData::US_ZERO)
+    ChannelServerVariantBasePtr variant_server = get_source_of_data_();
+    if (variant_server)
     {
-      ChannelServerVariantBasePtr variant_server = get_source_of_data_();
       try
       {
         return variant_server->get_db_state();
@@ -1338,7 +1306,7 @@ namespace AdServer::ChannelSvcs
         throw Commons::DbStateChanger::NotSupported("");
       }
     }
-    return false;
+    throw Exception("Not ready");
   }
 
   void ChannelServerCore::add_channels_(

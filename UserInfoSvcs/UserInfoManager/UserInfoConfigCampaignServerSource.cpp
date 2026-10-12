@@ -5,11 +5,11 @@
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/FreqCapManip.hpp>
+#include <Commons/FreqCap.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 
 #include "UserInfoManagerCore.hpp"
 
@@ -163,21 +163,13 @@ namespace
     Logging::Logger* logger,
     const xsd::AdServer::Configuration::UserInfoManagerConfigType& config)
   {
-    CORBACommons::CorbaObjectRefList campaign_server_refs;
-    Config::CorbaConfigReader::read_multi_corba_ref(
-      config.CampaignServerCorbaRef(),
-      campaign_server_refs);
-
-    std::vector<std::string> campaign_server_ref_strings;
-    campaign_server_ref_strings.reserve(campaign_server_refs.size());
-    for (const auto& campaign_server_ref : campaign_server_refs)
-    {
-      campaign_server_ref_strings.push_back(campaign_server_ref.object_ref);
-    }
+    std::vector<std::string> campaign_server_refs;
+    campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
+      config.CampaignServerGrpcRefs());
 
     return std::make_shared<AdServer::UserInfoSvcs::UserInfoConfigCampaignServerSource>(
       logger,
-      campaign_server_ref_strings,
+      campaign_server_refs,
       config.service_index(),
       Generics::Time(config.FreqCaps().confirm_timeout()));
   }
@@ -200,20 +192,12 @@ namespace AdServer::UserInfoSvcs
 
   struct UserInfoConfigCampaignServerSource::State
   {
-    typedef CORBACommons::ObjectPoolRefConfiguration CampaignServerPoolConfig;
-    typedef CORBACommons::ObjectPool<
-      CampaignSvcs::CampaignServer,
-      CampaignServerPoolConfig>
-      CampaignServerPool;
-    typedef std::unique_ptr<CampaignServerPool> CampaignServerPoolPtr;
+    using CampaignServerPoolConfig = AdServer::CampaignSvcs::CampaignServerPoolConfig;
+    using CampaignServerPool = AdServer::CampaignSvcs::CampaignServerPool;
+    using CampaignServerPoolPtr = std::unique_ptr<CampaignServerPool>;
 
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter;
     CampaignServerPoolPtr campaign_servers;
 
-    State()
-      : corba_client_adapter(new CORBACommons::CorbaClientAdapter())
-    {
-    }
   };
 
   UserInfoConfigCampaignServerSource::UserInfoConfigCampaignServerSource(
@@ -226,16 +210,16 @@ namespace AdServer::UserInfoSvcs
       service_index_(service_index),
       confirm_timeout_(confirm_timeout)
   {
-    State::CampaignServerPoolConfig pool_config(state_->corba_client_adapter.in());
+    State::CampaignServerPoolConfig pool_config;
     pool_config.timeout = Generics::Time(10); // 10 sec
 
     for (const auto& campaign_server_ref : campaign_server_refs)
     {
-      pool_config.iors_list.emplace_back(campaign_server_ref.c_str());
+      pool_config.endpoints.push_back(campaign_server_ref);
     }
 
     state_->campaign_servers.reset(
-      new State::CampaignServerPool(pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+      new State::CampaignServerPool(pool_config));
   }
 
   UserInfoConfigCampaignServerSource::~UserInfoConfigCampaignServerSource()

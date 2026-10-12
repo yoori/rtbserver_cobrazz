@@ -528,17 +528,6 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
         </configuration>
       </service>
 
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
-        name="ChannelSearchService$NAME_POSTFIX"
-        host="$HOST">
-        <configuration>
-          <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 9 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
-          </channelSearchService>
-        </configuration>
-      </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserBindServer"

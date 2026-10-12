@@ -8,23 +8,21 @@ namespace Aspect
 
 namespace AdServer::CampaignSvcs
 {
+  StatDBSource::~StatDBSource() noexcept = default;
+
   StatDBSource::StatDBSource(
     Logging::Logger* logger,
     Commons::Postgres::ConnectionPool* pool,
     unsigned long server_id,
-    const CORBACommons::CorbaObjectRefList& stat_provider_refs)
-    noexcept
+    const std::vector<std::string>& stat_provider_refs)
     : logger_(ReferenceCounting::add_ref(logger)),
       pg_pool_(ReferenceCounting::add_ref(pool)),
       server_id_(server_id)
   {
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter(
-      new CORBACommons::CorbaClientAdapter());
-
-    for (CORBACommons::CorbaObjectRefList::const_iterator ref_it = stat_provider_refs.begin();
-        ref_it != stat_provider_refs.end(); ++ref_it)
+    for (const auto& endpoint : stat_provider_refs)
     {
-      stat_providers_.push_back(LogGeneralizerRef(corba_client_adapter.in(), *ref_it));
+      stat_providers_.push_back(
+        std::make_unique<AdServer::LogProcessing::LogGeneralizerClient>(endpoint));
     }
   }
 
@@ -46,19 +44,12 @@ namespace AdServer::CampaignSvcs
         (*ref_it)->stop_stat_upload(server_id_);
       }
     }
-    catch(const LogGeneralizerRef::Exception& ex)
+    catch (const eh::Exception& ex)
     {
       full_synch_required = true;
 
       logger_->sstream(Logging::Logger::ERROR, Aspect::STAT_DB_SOURCE, "ADS-ICON-9") << __func__ <<
         ": can't do LogGeneralizer::stop_creative_stat_upload: " << ex.what();
-    }
-    catch(const CORBA::SystemException& ex)
-    {
-      full_synch_required = true;
-
-      logger_->sstream(Logging::Logger::ERROR, Aspect::STAT_DB_SOURCE, "ADS-ICON-9") << __func__ <<
-        ": can't do LogGeneralizer::stop_creative_stat_upload: " << ex;
     }
 
     bool db_update_success = false;
@@ -81,27 +72,19 @@ namespace AdServer::CampaignSvcs
       {
         (*ref_it)->start_stat_upload(server_id_, db_update_success);
       }
-      catch(const AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted&)
+      catch(const AdServer::LogProcessing::CollectionNotStarted&)
       {
         full_synch_required = true;
       }
-      catch(const LogGeneralizerRef::Exception& ex)
-      {
-        logger_->sstream(
-          Logging::Logger::ERROR,
-          Aspect::STAT_DB_SOURCE,
-          "ADS-IMPL-6069") << __func__ <<
-          ": can't do LogGeneralizer::start_creative_stat_upload: " << ex.what();
-      }
-      catch(const CORBA::SystemException& ex)
+      catch (const eh::Exception& ex)
       {
         full_synch_required = true;
 
         logger_->sstream(
           Logging::Logger::ERROR,
           Aspect::STAT_DB_SOURCE,
-          "ADS-ICON-9") << __func__ <<
-          ": can't do LogGeneralizer::start_creative_stat_upload: " << ex;
+          "ADS-IMPL-6069") << __func__ <<
+          ": can't do LogGeneralizer::start_creative_stat_upload: " << ex.what();
       }
     }
 

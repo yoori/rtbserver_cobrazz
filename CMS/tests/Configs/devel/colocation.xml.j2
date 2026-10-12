@@ -446,17 +446,6 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         </configuration>
       </service>
 
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
-        name="ChannelSearchService{{name_postfix}}"
-        host="{{host}}">
-        <configuration>
-          <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{{port_base + 9 }}"/>
-            <logging log_level="{{log_level}}" sys_log="{{sys_log}}"/>
-          </channelSearchService>
-        </configuration>
-      </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserBindServer"

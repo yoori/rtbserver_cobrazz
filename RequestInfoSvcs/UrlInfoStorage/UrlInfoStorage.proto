@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package adserver.request_info_svcs.url_info_storage;
+
+// Both methods are also registered with adserver.grpc.BatchTransport.
+service UrlInfoStorage
+{
+  rpc get_url_profile(GetUrlProfileRequest) returns (GetUrlProfileResponse);
+  rpc set_url_profile(SetUrlProfileRequest) returns (SetUrlProfileResponse);
+}
+
+message GetUrlProfileRequest
+{
+  string url = 1;
+}
+
+message GetUrlProfileResponse
+{
+  // An absent URL has an empty text, as does a stored empty profile.
+  string text = 1;
+}
+
+message SetUrlProfileRequest
+{
+  string url = 1;
+  string text = 2;
+}
+
+message SetUrlProfileResponse
+{
+}

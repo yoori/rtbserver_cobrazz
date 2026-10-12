@@ -1,11 +1,11 @@
 #pragma once
 
 #include <boost/unordered/unordered_flat_map.hpp>
-
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 #include <Generics/HashTableAdapters.hpp>
-#include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
+#include <Logger/Logger.hpp>
+#include <ChannelSvcs/ChannelCommons/Lexeme.hpp>
+#include <ChannelSvcs/ChannelCommons/Serialization.hpp>
+#include <ChannelSvcs/DictionaryProviderClient/DictionaryProviderClient.hpp>
 
 namespace AdServer::ChannelSvcs
 {
@@ -14,63 +14,39 @@ namespace AdServer::ChannelSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    using DictionaryProviderPoolConfig = CORBACommons::ObjectPoolRefConfiguration;
-
-    using DictionaryProviderPool = CORBACommons::ObjectPool<
-      AdServer::ChannelSvcs::DictionaryProvider, DictionaryProviderPoolConfig>;
-    using DictionaryProviderPoolPtr = std::unique_ptr<DictionaryProviderPool>;
-
     struct StringHashAdapterHash
     {
-      size_t
-      operator()(const Generics::StringHashAdapter& key) const noexcept
-      {
-        return key.hash();
-      }
+      size_t operator()(const Generics::StringHashAdapter& key) const noexcept;
     };
 
     using LexemeCache = boost::unordered_flat_map<
       Generics::StringHashAdapter, Lexeme_var, StringHashAdapterHash>;
 
-  public:
-    DictionaryMatcher(
-      const CORBACommons::CorbaClientAdapter& adapter,
-      CORBACommons::CorbaObjectRefList& dictionary_server_refs,
-      Logging::Logger* logger)
-      /*throw(Exception)*/;
+    DictionaryMatcher(const std::vector<std::string>& endpoints, Logging::Logger* logger);
+    virtual ~DictionaryMatcher() noexcept;
 
-    virtual ~DictionaryMatcher() noexcept {};
-
-    void get_lexemes(const char* lang, LexemeCache& lexemes)
-      /*throw(Exception)*/;
-
+    void get_lexemes(const char* lang, LexemeCache& lexemes);
     virtual bool ready() const noexcept;
-
-    static bool
-    is_lexemized(const char* trigger) noexcept;
+    static bool is_lexemized(const char* trigger) noexcept;
 
   private:
-    AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
-    query_dictionary_words_(const char* lang, const CORBACommons::StringSeq& seq_words) const
-      /*throw(Exception)*/;
+    void trace_result_(const char* lang, const LexemeCache& cache) noexcept;
 
-    void trace_result_(const char* lang, const LexemeCache& cache)
-      noexcept;
-
-  private:
     static const char* ASPECT;
-    const CORBACommons::CorbaClientAdapter& c_adapter_;
-    DictionaryProviderPoolPtr dictionary_pool_;
-    Logging::Logger* logger_;
+    DictionaryProviderClient dictionary_client_;
+    Logging::Logger_var logger_;
   };
-}
 
-namespace AdServer::ChannelSvcs
-{
-  inline
-  bool DictionaryMatcher::is_lexemized(const char* trigger) noexcept
+  inline size_t
+  DictionaryMatcher::StringHashAdapterHash::operator()(const Generics::StringHashAdapter& key)
+    const noexcept
   {
-    char trigger_type = Serialization::trigger_type(trigger);
-    return (trigger_type != 'U' && trigger_type != 'D');
+    return key.hash();
+  }
+
+  inline bool DictionaryMatcher::is_lexemized(const char* trigger) noexcept
+  {
+    const char type = Serialization::trigger_type(trigger);
+    return type != 'U' && type != 'D';
   }
 }

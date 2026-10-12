@@ -163,8 +163,7 @@ namespace AdServer::RequestInfoSvcs
     const ExpressionMatcherConfig& expression_matcher_config,
     ProcStatImpl* proc_stat_impl)
     /*throw(Exception)*/
-    : corba_client_adapter_(new CORBACommons::CorbaClientAdapter),
-      expression_matcher_config_(expression_matcher_config),
+    : expression_matcher_config_(expression_matcher_config),
       check_loggers_period_(0),
       daily_processing_loop_started_(false),
       file_controller_(new ProfilingCommons::PosixFileController(0,
@@ -319,11 +318,9 @@ namespace AdServer::RequestInfoSvcs
     try
     {
       campaign_pool_.reset(new AdServer::CampaignSvcs::CampaignServerPool(
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          expression_matcher_config_.CampaignServerCorbaRef()),
-        corba_client_adapter_,
-        CORBACommons::ChoosePolicyType::PT_PERSISTENT,
-        Generics::Time(expression_matcher_config_.update_period() / 2) // bad period
+        AdServer::CampaignSvcs::campaign_server_endpoints(
+          expression_matcher_config_.CampaignServerGrpcRefs()),
+        Generics::Time(std::max(1UL, expression_matcher_config_.update_period() / 2))
         ));
     }
     catch (eh::Exception& ex)

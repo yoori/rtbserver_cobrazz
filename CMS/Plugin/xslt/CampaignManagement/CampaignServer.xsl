@@ -21,9 +21,11 @@
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
 <xsl:variable name="server-id" select="$SERVICE_ID"/>
 
+<xsl:include href="CampaignServersGrpcRefs.xsl"/>
+
 <xsl:template name="PrimaryCampaignServers">
 
-  <cfg:CampaignServerCorbaRef name="CampaignServer">
+  <cfg:CampaignServerGrpcRefs>
     <xsl:variable name="masters">
       <xsl:for-each select="//service[@descriptor = $campaign-server-descriptor]">
 
@@ -43,12 +45,21 @@
           </xsl:call-template>
         </xsl:variable>
 
-        <xsl:variable name="port"><xsl:value-of select="$campaign-server-config/cfg:networkParams/@port"/>
-          <xsl:if test="count($campaign-server-config/cfg:networkParams/@port) = 0"><xsl:value-of
-            select="$def-campaign-server-port"/></xsl:if>
+        <xsl:variable name="port">
+          <xsl:call-template name="DbAccessGrpcPort">
+            <xsl:with-param name="network" select="$campaign-server-config/cfg:networkParams"/>
+            <xsl:with-param name="port">
+              <xsl:choose>
+                <xsl:when test="$campaign-server-config/cfg:networkParams/@port">
+                  <xsl:value-of select="$campaign-server-config/cfg:networkParams/@port"/>
+                </xsl:when>
+                <xsl:otherwise><xsl:value-of select="$def-campaign-server-port"/></xsl:otherwise>
+              </xsl:choose>
+            </xsl:with-param>
+          </xsl:call-template>
         </xsl:variable>
         <xsl:for-each select="exsl:node-set($hosts)/host">
-          <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':', $port, $current-campaign-server-obj)}"/>
+          <cfg:Ref endpoint="{concat(., ':', $port)}"/>
         </xsl:for-each>
       </xsl:if>
 
@@ -59,7 +70,7 @@
     </xsl:if>
     <xsl:copy-of select="$masters"/>
 
-  </cfg:CampaignServerCorbaRef>
+  </cfg:CampaignServerGrpcRefs>
 </xsl:template>
 
 <!-- CampaignServer config generate function (CENTRAL-OR-REMOTE-MODE, PROXY-MODE) -->
@@ -100,7 +111,10 @@
   </xsl:variable>
   <exsl:document href="campaignServer.port"
     method="text" omit-xml-declaration="yes"
-    >  ['campaignServer', <xsl:copy-of select="$campaign-server-port"/>],</exsl:document>
+    >  ['campaignServer', <xsl:call-template name="DbAccessGrpcPort">
+      <xsl:with-param name="network" select="$campaign-server-config/cfg:networkParams"/>
+      <xsl:with-param name="port" select="$campaign-server-port"/>
+    </xsl:call-template>],</exsl:document>
 
   <xsl:variable name="external-network-params" select="$campaign-server-config/cfg:externalNetworkParams"/>
   <xsl:variable name="global-secure-params" select="$colo-config/cfg:secureParams"/>
@@ -187,37 +201,10 @@
       </xsl:when>
     </xsl:choose>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$campaign-server-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($campaign-server-config/cfg:threadParams/@min) = 0">
-          <xsl:value-of select="$def-campaign-server-threads"/>
-        </xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*" port="{$campaign-server-port}">
-        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-        <cfg:Object servant="CampaignServer_v350" name="CampaignServer_v350"/>
-        <cfg:Object servant="CampaignServer_v360" name="CampaignServer_v360"/>
-        <cfg:Object servant="CampaignServer_v360" name="CampaignServer"/>
-      </cfg:Endpoint>
-      <xsl:if test="count($external-network-params) > 0">
-        <xsl:variable name="external-host">
-          <xsl:value-of select="$external-network-params/@host"/>
-        </xsl:variable>
-
-        <cfg:Endpoint host="{$external-host}" port="{$external-network-params/@port}">
-          <xsl:call-template name="ConvertSecureParams">
-            <xsl:with-param name="secure-node" select="$external-network-params/@secure"/>
-            <xsl:with-param name="global-secure-node" select="$global-secure-params"/>
-            <xsl:with-param name="config-root" select="$config-root"/>
-            <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
-          </xsl:call-template>
-
-          <cfg:Object servant="CampaignServer_v350" name="CampaignServer_v350"/>
-          <cfg:Object servant="CampaignServer_v360" name="CampaignServer_v360"/>
-        </cfg:Endpoint>
-      </xsl:if>
-    </cfg:CorbaConfig>
+    <xsl:if test="count($external-network-params) &gt; 0">
+      <xsl:message terminate="yes">CampaignServer: external CORBA listener is retired;
+        configure access to the gRPC endpoint explicitly.</xsl:message>
+    </xsl:if>
 
     <xsl:variable name="snmp-stats-enabled">
       <xsl:if test="count($colo-config/cfg:snmpStats) > 0">
@@ -236,6 +223,25 @@
       <cfg:SNMPConfig mib_dirs="{$mib-path}"
         index="{$colo-config/cfg:snmpStats/@oid_suffix}"/>
     </xsl:if>
+
+    <cfg:GrpcConfig>
+      <xsl:attribute name="process_threads">
+        <xsl:choose>
+          <xsl:when test="$campaign-server-config/cfg:threadParams/@min">
+            <xsl:value-of select="$campaign-server-config/cfg:threadParams/@min"/>
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="$def-campaign-server-threads"/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:attribute>
+      <cfg:Endpoint host="*">
+        <xsl:attribute name="port">
+          <xsl:call-template name="DbAccessGrpcPort">
+            <xsl:with-param name="network" select="$campaign-server-config/cfg:networkParams"/>
+            <xsl:with-param name="port" select="$campaign-server-port"/>
+          </xsl:call-template>
+        </xsl:attribute>
+      </cfg:Endpoint>
+    </cfg:GrpcConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$campaign-server-config/cfg:logging"/>
@@ -284,7 +290,7 @@
                 </xsl:otherwise>
               </xsl:choose>
 
-              <cfg:LogGeneralizerCorbaRef>
+              <cfg:LogGeneralizerGrpcRefs>
                 <xsl:for-each select="$be-cluster-path/service[@descriptor = $log-generalizer-descriptor]">
 
                   <xsl:variable name="port"><xsl:value-of select="configuration/cfg:logGeneralizer/cfg:networkParams/@port"/>
@@ -293,6 +299,13 @@
                     </xsl:if>
                   </xsl:variable>
 
+                  <xsl:variable name="grpc-port">
+                    <xsl:call-template name="DbAccessGrpcPort">
+                      <xsl:with-param name="network"
+                        select="configuration/cfg:logGeneralizer/cfg:networkParams"/>
+                      <xsl:with-param name="port" select="$port"/>
+                    </xsl:call-template>
+                  </xsl:variable>
                   <xsl:variable name="hosts">
                     <xsl:call-template name="GetHosts">
                       <xsl:with-param name="hosts" select="@host"/>
@@ -301,10 +314,10 @@
                   </xsl:variable>
 
                   <xsl:for-each select="exsl:node-set($hosts)/host">
-                    <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':', $port, '/LogGeneralizer')}"/>
+                    <cfg:Ref endpoint="{concat(., ':', $grpc-port)}"/>
                   </xsl:for-each>
                 </xsl:for-each>
-              </cfg:LogGeneralizerCorbaRef>
+              </cfg:LogGeneralizerGrpcRefs>
             </cfg:ServerMode>
           </xsl:when>
           <xsl:when test="count($remote-colo-config) > 0">
@@ -320,35 +333,13 @@
                 <xsl:otherwise>
                 <!-- Primary campaign server -->
 
-                <cfg:CampaignServerCorbaRef name="CampaignServer">
+                <cfg:CampaignServerGrpcRefs>
                 <xsl:for-each select="$remote-colo-config/cfg:campaignServerRef">
                   <xsl:variable name="campaign-server-host" select="@host"/>
 
-                  <cfg:Ref>
-                    <xsl:variable name="secure-params" select="cfg:secureParams"/>
-                    <xsl:choose>
-                      <xsl:when test="count($secure-params) > 0">
-                        <xsl:attribute name="ref">
-                          <xsl:value-of
-                            select="concat('corbaloc:ssliop:', $campaign-server-host, ':', @port, $current-campaign-server-obj)"/>
-                        </xsl:attribute>
-                        <xsl:call-template name="ConvertSecureParams">
-                          <xsl:with-param name="secure-node" select="'true'"/>
-                          <xsl:with-param name="global-secure-node" select="$global-secure-params"/>
-                          <xsl:with-param name="config-root" select="$config-root"/>
-                          <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
-                        </xsl:call-template>
-                      </xsl:when>
-                      <xsl:otherwise>
-                        <xsl:attribute name="ref">
-                          <xsl:value-of
-                            select="concat('corbaloc:iiop:', $campaign-server-host, ':', @port, $current-campaign-server-obj)"/>
-                        </xsl:attribute>
-                      </xsl:otherwise>
-                    </xsl:choose>
-                  </cfg:Ref>
+                  <xsl:call-template name="CampaignServerExplicitGrpcRef"/>
                 </xsl:for-each>
-                </cfg:CampaignServerCorbaRef>
+                </cfg:CampaignServerGrpcRefs>
 
                 </xsl:otherwise>
               </xsl:choose>
@@ -366,53 +357,27 @@
           <!-- version & colo_id isn't defined for proxy host,
             -  for disable ColoUpdateStat logging
             -->
-          <cfg:CampaignServerCorbaRef name="CampaignServer">
+          <cfg:CampaignServerGrpcRefs>
             <xsl:variable name="campaign-server-ref" select="$local-proxy-config/cfg:campaignServerRef |
               $remote-colo-config/cfg:campaignServerRef | $colo-config/cfg:campaignServerRef"/>
-            <xsl:variable name="campaign-servers">
-              <xsl:call-template name="GetServiceRefs">
-                <xsl:with-param name="services" select="//service[@descriptor = $campaign-server-descriptor]"/>
-                <xsl:with-param name="def-port" select="$def-campaign-server-port"/>
-                <xsl:with-param name="error-prefix" select="'CampaignServer'" />
-              </xsl:call-template>
-            </xsl:variable>
-            <xsl:if test="count($campaign-server-ref) = 0 and count(exsl:node-set($campaign-servers)) = 0">
-              <xsl:message terminate="yes"> CampaignServer: no one campaign server ref found. </xsl:message>
-            </xsl:if>
-
-            <xsl:variable
-              name="campaign-server-refs"
-              select="$campaign-server-ref[count($campaign-server-ref) > 0] |
-                      exsl:node-set($campaign-servers)[count($campaign-server-ref) = 0]//serviceRef"/>
-
-            <xsl:for-each select="$campaign-server-refs">
-              <xsl:variable name="campaign-server-host" select="@host"/>
-
-              <cfg:Ref>
-                <xsl:variable name="secure-params" select="cfg:secureParams"/>
-                <xsl:choose>
-                  <xsl:when test="count($secure-params) > 0">
-                    <xsl:attribute name="ref">
-                      <xsl:value-of
-                        select="concat('corbaloc:ssliop:', $campaign-server-host, ':', $campaign-server-ref/@port, $current-campaign-server-obj)"/>
-                    </xsl:attribute>
-                    <xsl:call-template name="ConvertSecureParams">
-                       <xsl:with-param name="secure-node" select="'true'"/>
-                       <xsl:with-param name="global-secure-node" select="$global-secure-params"/>
-                       <xsl:with-param name="config-root" select="$config-root"/>
-                       <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
-                    </xsl:call-template>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:attribute name="ref">
-                      <xsl:value-of
-                        select="concat('corbaloc:iiop:', $campaign-server-host, ':', @port, $current-campaign-server-obj)"/>
-                    </xsl:attribute>
-                  </xsl:otherwise>
-                </xsl:choose>
-              </cfg:Ref>
-            </xsl:for-each>
-          </cfg:CampaignServerCorbaRef>
+            <xsl:choose>
+              <xsl:when test="count($campaign-server-ref) &gt; 0">
+                <xsl:for-each select="$campaign-server-ref">
+                  <xsl:call-template name="CampaignServerExplicitGrpcRef"/>
+                </xsl:for-each>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:variable name="refs">
+                  <xsl:call-template name="CampaignServerGrpcRefs">
+                    <xsl:with-param name="campaign-servers"
+                      select="//service[@descriptor = $campaign-server-descriptor]"/>
+                    <xsl:with-param name="service-name" select="'CampaignServer proxy'"/>
+                  </xsl:call-template>
+                </xsl:variable>
+                <xsl:copy-of select="exsl:node-set($refs)/cfg:CampaignServerGrpcRefs/cfg:Ref"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </cfg:CampaignServerGrpcRefs>
         </cfg:ProxyMode>
       </xsl:when>
       <xsl:otherwise>
@@ -529,6 +494,20 @@
     </xsl:call-template>
   </cfg:AdConfiguration>
 
+</xsl:template>
+
+<xsl:template name="CampaignServerExplicitGrpcRef">
+  <xsl:if test="cfg:secureParams">
+    <xsl:message terminate="yes">CampaignServer: CORBA secureParams cannot be used for gRPC;
+      configure a protected gRPC endpoint explicitly.</xsl:message>
+  </xsl:if>
+  <xsl:variable name="port">
+    <xsl:call-template name="DbAccessGrpcPort">
+      <xsl:with-param name="network" select="."/>
+      <xsl:with-param name="port" select="@port"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <cfg:Ref endpoint="{concat(@host, ':', $port)}"/>
 </xsl:template>
 
 </xsl:stylesheet>

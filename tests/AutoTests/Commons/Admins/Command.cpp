@@ -20,7 +20,6 @@ namespace AutoTest
     { "ChannelManagerController", "ChannelAdmin", STE_CHANNEL_CONTROLLER },
     { "ChannelServer", "ChannelAdmin", STE_CHANNEL_SERVER },
     { "ChannelUpdate", "ChannelAdmin", STE_CHANNEL_SERVER },
-    { "ChannelSearch", "ChannelSearchAdmin", STE_CHANNEL_SEARCH_SERVER },
     { "RequestInfoManager", "RequestInfoAdmin", STE_REQUEST_INFO_MANAGER },
     { "ExpressionMatcher", "ExpressionMatcherAdmin", STE_EXPRESSION_MATCHER }
   };

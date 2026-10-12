@@ -13,6 +13,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -463,6 +464,8 @@ namespace AdServer::Grpc
     struct BatchCoroMethod;
     struct PublishedBatchState;
     struct PreparedBatchChains;
+    struct BatchLaneOperation;
+    struct DistributedBatchHandle;
     class BatchRequestAwaiter;
 
     struct PreparedBatchCoroItem
@@ -495,11 +498,15 @@ namespace AdServer::Grpc
         void*,
         adserver::grpc::BatchResponseItem&,
         google::protobuf::Arena&)>;
+    using BatchCoroChainFn = std::function<AdServer::Commons::MonoStartableAwaitable<void>(
+      Generics::MonoAllocatorArena&, BatchItemContext*, google::protobuf::Arena&,
+      PublishedBatchState*, std::size_t)>;
 
     struct BatchCoroMethod
     {
       BatchCoroPrepareFn prepare;
       BatchCoroDispatchFn dispatch;
+      BatchCoroChainFn make_chain;
       bool distributed = false;
       BatchExecutionStrategy strategy = BatchExecutionStrategy::Sequential;
     };
@@ -540,14 +547,13 @@ namespace AdServer::Grpc
     AdServer::Commons::StartableAwaitable<void>
     co_handle_batch_lane_(
       Generics::MonoVector<BatchItemContext> batch_items,
-      PreparedBatchChains* chains,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule,
       google::protobuf::Arena& response_arena) const;
 
     AdServer::Commons::StartableAwaitable<void>
     co_handle_publish_batch_lane_(
-      std::shared_ptr<PublishedBatchState> state,
+      PublishedBatchState* state,
       std::size_t lane_index,
       std::shared_ptr<AdServer::Commons::ExecutorPool> executor_pool,
       bool reschedule) const;
@@ -559,7 +565,20 @@ namespace AdServer::Grpc
       google::protobuf::Arena& response_arena,
       PublishedBatchState* published_state = nullptr) const;
 
-    AdServer::Commons::MonoStartableAwaitable<void> co_handle_batch_chain_(
+    template<typename Request, typename Response, typename Handler>
+    static AdServer::Commons::MonoStartableAwaitable<void> co_handle_typed_batch_chain_(
+      Generics::MonoAllocatorArena& batch_arena,
+      BatchItemContext* item,
+      google::protobuf::Arena& response_arena,
+      PublishedBatchState* published_state,
+      std::size_t lane_index,
+      const Handler& handler,
+      bool use_arena_for_response);
+
+    static void enqueue_batch_response_(
+      PublishedBatchState* state, std::size_t lane_index, BatchItemContext& item) noexcept;
+
+    AdServer::Commons::MonoStartableAwaitable<void> co_handle_legacy_batch_chain_(
       Generics::MonoAllocatorArena& batch_arena,
       BatchItemContext* item,
       google::protobuf::Arena& response_arena,

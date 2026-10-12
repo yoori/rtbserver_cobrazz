@@ -15,7 +15,7 @@
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelUpdateTypes.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -25,8 +25,6 @@
 namespace AdServer::ChannelSvcs
 {
   const char* ChannelServerVariantBase::ASPECT = "ChannelServerVariantBase";
-
-  typedef ::AdServer::ChannelSvcs::ChannelUpdateBase ChannelCurrent;
 
   ChannelServerVariantBase::ChannelServerVariantBase(
     const std::vector<unsigned int>& sources,
@@ -61,7 +59,7 @@ namespace AdServer::ChannelSvcs
       throw ChannelServerException::Exception(ostr);
     }
 
-    if (campaign_pool_config.iors_list.empty())
+    if (campaign_pool_config.endpoints.empty())
     {
       Stream::Error ostr;
       ostr << __func__ << ": empty list of CampaignServer references";
@@ -71,8 +69,7 @@ namespace AdServer::ChannelSvcs
     try
     {
       campaign_pool_ =
-        CampaignServerPoolPtr(new CampaignServerPool(
-          campaign_pool_config, CORBACommons::ChoosePolicyType::PT_PERSISTENT));
+        CampaignServerPoolPtr(new CampaignServerPool(campaign_pool_config));
 
     }
     catch(const eh::Exception& e)
@@ -1079,8 +1076,8 @@ namespace AdServer::ChannelSvcs
   }
 
   ChannelServerProxy::ChannelServerProxy(
-    const ChannelSvcs::GroupLoadDescriptionSeq& servers,
-    const ServerPoolConfig& proxy_pool_config,
+    const GroupLoadDescription& servers,
+    const std::vector<std::string>& proxy_endpoints,
     const std::set<unsigned short>& ports,
     const std::vector<unsigned int>& sources,
     unsigned long count_chunks,
@@ -1103,35 +1100,33 @@ namespace AdServer::ChannelSvcs
         logger,
         check_sum),
       priority_(priority),
-      tries_(servers.length()),
-      proxy_pool_(),
+      tries_(servers.size()),
+      proxy_tries_(proxy_endpoints.size()),
+      proxy_session_(),
       load_session_()
   {
-    if (proxy_pool_config.iors_list.empty() && !servers.length())
+    if (proxy_endpoints.empty() && servers.empty())
     {
-      Stream::Error ostr;
-      ostr << __func__ << ": empty list of ChannelProxy references";
-      throw ChannelServerException::Exception(ostr);
+      throw ChannelServerException::Exception("empty list of ChannelUpdate gRPC sources");
     }
 
-    if (servers.length())
+    if (!servers.empty())
     {
-      load_session_.reset(new ChannelLoadSessionImpl(servers, get_source_id()));
+      load_session_ = std::make_unique<ChannelLoadSessionImpl>(servers, get_source_id(), logger);
     }
 
-    if (!proxy_pool_config.iors_list.empty())
+    if (!proxy_endpoints.empty())
     {
-      try
+      GroupLoadDescription proxy_groups;
+      for (const auto& endpoint : proxy_endpoints)
       {
-        proxy_pool_.reset(
-          new ChannelProxyPool(proxy_pool_config, CORBACommons::ChoosePolicyType::PT_BAD_SWITCH));
+        ChannelLoadDescription server;
+        server.load_server = std::make_shared<ChannelUpdateGrpcClient>(endpoint);
+        proxy_groups.push_back({std::move(server)});
       }
-      catch(const eh::Exception& e)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": eh:Exception: " << e.what();
-        throw ChannelServerException::Exception(ostr);
-      }
+
+      proxy_session_ = std::make_unique<ChannelLoadSessionImpl>(
+        proxy_groups, get_source_id(), logger);
     }
 
     first_load_stamp_ = Generics::Time::ZERO;
@@ -1153,15 +1148,15 @@ namespace AdServer::ChannelSvcs
     }
 
     Generics::Timer timer, all_timer;
-    ChannelCurrent::UpdateData_var result;
+    ChannelUpdate::UpdateDataPtr result;
     const UpdateData::CheckContainerType& new_ids = data->container_ptr->get_new();
     UpdateData::CheckContainerType& check_ids = data->check_data;
     ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
     all_timer.start();
-    CORBA::ULong i = 0;
+    size_t i = 0;
     size_t count = 0;
     size_t calc_channel_size = 0;
-    ChannelIdSeq in;
+    ChannelIdList in;
 
     if (data->unmerged_data.empty())
     {
@@ -1183,11 +1178,11 @@ namespace AdServer::ChannelSvcs
       logger_->sstream(Logging::Logger::DEBUG, ASPECT)
         << "Use ids: " << count << " channels size: " << calc_channel_size;
 
-      in.length(count);
-      std::copy(check_ids.begin(), it, in.get_buffer());
+      in.resize(count);
+      std::copy(check_ids.begin(), it, in.begin());
 
-      typedef decltype(&ChannelUpdateBase::update_triggers) FuncType;
-      FuncType func_ptr = &ChannelUpdateBase::update_triggers;
+      using FuncType = decltype(&ChannelUpdateSource::update_triggers);
+      FuncType func_ptr = &ChannelUpdateSource::update_triggers;
       do_query_(__func__, func_ptr, in, result);
 
       if (result->source_id != get_source_id())
@@ -1200,16 +1195,16 @@ namespace AdServer::ChannelSvcs
       result = data->unmerged_data.get_unmered_data(i);
     }
 
-    ChannelCurrent::ChannelByIdSeq& channels = result->channels;
+    std::vector<ChannelUpdate::ChannelById>& channels = result->channels;
     unsigned long progress = data->progress->get_progress();
     Generics::Time parse_time;
-    if (channels.length())
+    if (channels.size())
     {
       TriggerList triggers;
-      for (; i < channels.length(); ++i)
+      for (; i < channels.size(); ++i)
       {
         size_t channel_size = 0;
-        ChannelCurrent::ChannelById& value = channels[i];
+        ChannelUpdate::ChannelById& value = channels[i];
         if (check_ids.find(value.channel_id) == check_ids.end())
         {
           Stream::Error oerr;
@@ -1218,22 +1213,22 @@ namespace AdServer::ChannelSvcs
           throw ChannelServerException::Exception(oerr);
         }
 
-        for (size_t j = 0; j < value.words.length(); ++j)
+        for (size_t j = 0; j < value.words.size(); ++j)
         {
           triggers.push_back(Trigger());
           Trigger& trigger = triggers.back();
           trigger.channel_trigger_id = value.words[j].channel_trigger_id;
           Serialization::get_trigger(
-            value.words[j].trigger.get_buffer(),
-            value.words[j].trigger.length(),
+            value.words[j].trigger.data(),
+            value.words[j].trigger.size(),
             trigger.trigger);
-          trigger.type = Serialization::trigger_type(value.words[j].trigger.get_buffer());
-          trigger.negative = Serialization::negative(value.words[j].trigger.get_buffer());
+          trigger.type = Serialization::trigger_type(value.words[j].trigger.data());
+          trigger.negative = Serialization::negative(value.words[j].trigger.data());
           channel_size += trigger.trigger.size();
         }
 
         MatchInfo& s_info = (*a_info_ptr)[value.channel_id];
-        s_info.db_stamp = CorbaAlgs::unpack_time(value.stamp);
+        s_info.db_stamp = value.stamp;
         s_info.stamp = s_info.db_stamp;
 
         if (data->merge_size != 0 &&
@@ -1280,16 +1275,16 @@ namespace AdServer::ChannelSvcs
       }
     }
 
-    if (i < channels.length())
+    if (i < channels.size())
     {
       logger_->sstream(Logging::Logger::NOTICE, ASPECT, "ADS-IMPL-47")
-        << "Save unparsed data " << i << "/" << channels.length()
+        << "Save unparsed data " << i << "/" << channels.size()
         << ", merge size = " << data->merge_size << ", first id = " << channels[i].channel_id;
-      data->unmerged_data.set_unmered_data(result, i);
+      data->unmerged_data.set_unmered_data(std::move(result), i);
     }
-    else if (i != in.length())
+    else if (i != in.size())
     {
-      for (count = 0; count < in.length(); ++count)
+      for (count = 0; count < in.size(); ++count)
       {
         if (check_ids.find(in[count]) != check_ids.end())
         {
@@ -1320,12 +1315,12 @@ namespace AdServer::ChannelSvcs
       data->new_ccg_map = new CCGMap;
     }
 
-    ChannelCurrent::PosCCGResult_var result;
-    ChannelCurrent::CCGQuery query;
-    query.master_stamp = CorbaAlgs::pack_time(data->old_master);
+    ChannelUpdate::PosCCGResultPtr result;
+    ChannelUpdate::CCGQuery query;
+    query.master_stamp = data->old_master;
     query.start = data->start_ccg_id;
     query.limit = limit;
-    query.channel_ids.length(info.size());
+    query.channel_ids.resize(info.size());
     query.use_only_list = data->old_ccg_map ? false : true;
 
     std::set<unsigned long> old_active;
@@ -1342,7 +1337,7 @@ namespace AdServer::ChannelSvcs
     size_t j = 0;
     const unsigned int mask_type = Channel::CH_PAGE | Channel::CH_SEARCH;
     for (ChannelIdToMatchInfo::const_iterator it = info.lower_bound(data->start_ccg_id);
-        it != info.end() && j < query.channel_ids.length();
+        it != info.end() && j < query.channel_ids.size();
         ++it)
     {
       const Channel& ch = it->second.channel;
@@ -1351,10 +1346,10 @@ namespace AdServer::ChannelSvcs
         query.channel_ids[j++] = ch.get_id();
       }
     }
-    query.channel_ids.length(j);
+    query.channel_ids.resize(j);
 
-    typedef decltype(&ChannelUpdateBase::update_all_ccg) FuncType;
-    FuncType func_ptr = &ChannelUpdateBase::update_all_ccg;
+    using FuncType = decltype(&ChannelUpdateSource::update_all_ccg);
+    FuncType func_ptr = &ChannelUpdateSource::update_all_ccg;
     do_query_(__func__, func_ptr, query, result);
 
     if (result->source_id != get_source_id())
@@ -1363,21 +1358,20 @@ namespace AdServer::ChannelSvcs
     }
 
     data->ccg_loaded = false;
-    if (result->keywords.length())
+    if (result->keywords.size())
     {
       CCGKeyword_var ccg_ptr;
-      for (size_t i = 0; i < result->keywords.length(); ++i)
+      for (size_t i = 0; i < result->keywords.size(); ++i)
       {
-        ChannelCurrent::CCGKeyword& keyword = result->keywords[i];
+        ChannelUpdate::CCGKeyword& keyword = result->keywords[i];
         if (is_my_id_(keyword.channel_id) && info.find(keyword.channel_id) != info.end())
         {
           ccg_ptr = new CCGKeyword;
           ccg_ptr->ccg_keyword_id = keyword.ccg_keyword_id;
           ccg_ptr->ccg_id = keyword.ccg_id;
           ccg_ptr->channel_id = keyword.channel_id;
-          ccg_ptr->max_cpc =
-            CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(keyword.max_cpc);
-          ccg_ptr->ctr = CorbaAlgs::unpack_decimal<CampaignSvcs::CTRDecimal>(keyword.ctr);
+          ccg_ptr->max_cpc = keyword.max_cpc;
+          ccg_ptr->ctr = keyword.ctr;
           ccg_ptr->click_url = keyword.click_url;
           ccg_ptr->original_keyword = keyword.original_keyword;
           data->new_ccg_map->activate(
@@ -1392,11 +1386,11 @@ namespace AdServer::ChannelSvcs
     }
     else
     {
-      for (size_t i = 0; i < result->deleted.length(); ++i)
+      for (size_t i = 0; i < result->deleted.size(); ++i)
       {
         data->new_ccg_map->deactivate(
           result->deleted[i].id,
-          CorbaAlgs::unpack_time(result->deleted[i].stamp),
+          result->deleted[i].stamp,
           data->old_ccg_map);
       }
 
@@ -1491,31 +1485,31 @@ namespace AdServer::ChannelSvcs
     }
 
     Generics::Timer all_timer;
-    ChannelCurrent::CheckData_var res;
+    ChannelUpdate::CheckDataPtr res;
     const UpdateData::CheckContainerType& new_ids = data->container_ptr->get_new();
     const UpdateData::CheckContainerType& up_ids = data->container_ptr->get_updated();
-    ChannelCurrent::CheckQuery query;
+    ChannelUpdate::CheckQuery query;
     all_timer.start();
     query.colo_id = colo_;
-    query.version << version_;
-    query.new_ids.length(new_ids.size() + up_ids.size());
-    std::copy(new_ids.begin(), new_ids.end(), query.new_ids.get_buffer());
-    std::copy(up_ids.begin(), up_ids.end(), query.new_ids.get_buffer() + new_ids.size());
+    query.version = version_;
+    query.new_ids.resize(new_ids.size() + up_ids.size());
+    std::copy(new_ids.begin(), new_ids.end(), query.new_ids.begin());
+    std::copy(up_ids.begin(), up_ids.end(), query.new_ids.begin() + new_ids.size());
     query.use_only_list = data->old_master == Generics::Time::ZERO;
 
     do
     {
-      query.master_stamp = CorbaAlgs::pack_time(data->old_master);
-      typedef decltype(&ChannelUpdateBase::check) FuncType;
-      FuncType func_ptr = &ChannelUpdateBase::check;
+      query.master_stamp = data->old_master;
+      using FuncType = decltype(&ChannelUpdateSource::check);
+      FuncType func_ptr = &ChannelUpdateSource::check;
       do_query_(__func__, func_ptr, query, res);
     }
     while (!check_source_(
       data,
       res->source_id,
-      CorbaAlgs::unpack_time(res->max_time),
-      CorbaAlgs::unpack_time(res->first_stamp),
-      CorbaAlgs::unpack_time(res->master_stamp)));
+      res->max_time,
+      res->first_stamp,
+      res->master_stamp));
 
     std::ostringstream ostr;
     UpdateData::CheckContainerType& check_ids = data->check_data;
@@ -1537,10 +1531,10 @@ namespace AdServer::ChannelSvcs
       check_ids.erase(c_special_track);
     }
 
-    for (size_t i = 0; i < res->versions.length(); ++i)
+    for (size_t i = 0; i < res->versions.size(); ++i)
     {
       id = res->versions[i].id;
-      time_value = CorbaAlgs::unpack_time(res->versions[i].stamp);
+      time_value = res->versions[i].stamp;
       fnd = a_info_ptr->find(id);
       if (fnd == a_info_ptr->end())
       {
@@ -1704,26 +1698,31 @@ namespace AdServer::ChannelSvcs
     return trace_out;
   }
 
-  void UpdateData::UnmergedData::set_unmered_data(
-    ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_var result,
-    CORBA::ULong ind)
+  UpdateData::UnmergedData::UnmergedData() noexcept : index_(0)
+  {
+  }
+
+  bool UpdateData::UnmergedData::empty() const noexcept
+  {
+    return !data_;
+  }
+
+  void UpdateData::UnmergedData::set_unmered_data(ChannelUpdate::UpdateDataPtr result, size_t ind)
     noexcept
   {
     index_ = ind;
-    data_ = result;
-    for (CORBA::ULong i = 0; i < index_; ++i)
+    data_ = std::move(result);
+    for (size_t i = 0; i < index_; ++i)
     {//try to free memory
-      AdServer::ChannelSvcs::ChannelCurrent::TriggerInfoSeq words;
+      std::vector<ChannelUpdate::TriggerInfo> words;
       (*data_).channels[i].words.swap(words);
     }
   }
 
-  ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData*
-  UpdateData::UnmergedData::get_unmered_data(CORBA::ULong& index)
-    noexcept
+  ChannelUpdate::UpdateDataPtr UpdateData::UnmergedData::get_unmered_data(size_t& index) noexcept
   {
     index = index_;
-    return data_._retn();
+    return std::move(data_);
   }
 
 } /* AdServer::ChannelSvcs */

@@ -1,4 +1,5 @@
 #include <eh/Exception.hpp>
+#include <tao/SystemException.h>
 
 #include <memory>
 
@@ -7,7 +8,6 @@
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
@@ -16,12 +16,10 @@
 
 #include "ChannelServerMain.hpp"
 #include "ChannelServerCore.hpp"
-#include "ChannelUpdateImpl.hpp"
 
 namespace
 {
   const char ASPECT[] = "ChannelServer";
-  const char CHANNEL_UPDATE_OBJ_KEY[] = "ChannelUpdate";
 
   template<typename T>
   std::shared_ptr<T>
@@ -159,59 +157,24 @@ void ChannelServerApp_::load_config_(const char* name) /*throw(Exception)*/
   }
 }
 
-void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)*/
+void ChannelServerApp_::init_services_() /*throw(Exception)*/
 {
-  //Fill corba_config
-  try
-  {
-    corba_config_.custom_reactor = false;
-    Config::CorbaConfigReader::read_config(configuration_->CorbaConfig(), corba_config_);
-  }
-  catch(const eh::Exception& e)
-  {
-    Stream::Error ostr;
-    ostr << "Can't read Corba Config. : " << e.what();
-    throw Exception(ostr);
-  }
-
-  try
-  {
-    // init CORBA Server
-    corba_server_adapter_ = new CORBACommons::CorbaServerAdapter(corba_config_);
-
-  }
-  catch(const eh::Exception& e)
-  {
-    Stream::Error ostr;
-    ostr << "Can't init CorbaServerAdapter. : " << e.what();
-    throw Exception(ostr);
-  }
-
   try
   {
     server_core_ = std::make_shared<AdServer::ChannelSvcs::ChannelServerCore>(
       logger(), configuration_.get());
-    AdServer::ChannelSvcs::ChannelUpdateImpl_var update_impl(
-      new AdServer::ChannelSvcs::ChannelUpdateImpl(server_core_));
-
-    corba_server_adapter_->add_binding(CHANNEL_UPDATE_OBJ_KEY, update_impl.in());
-
-    if (configuration_->GrpcConfig().present())
-    {
-      grpc_adapter_ = to_shared<AdServer::ChannelSvcs::ChannelServerGrpc>(
-        new AdServer::ChannelSvcs::ChannelServerGrpc(
-          server_core_,
-          logger(),
-          configuration_->GrpcConfig()->Endpoint().host().present() &&
-            *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
-            *configuration_->GrpcConfig()->Endpoint().host() :
-          "0.0.0.0",
-          configuration_->GrpcConfig()->Endpoint().port(),
-          configuration_->GrpcConfig()->process_threads(),
-          configuration_->GrpcConfig()->cq_threads(),
-          configuration_->GrpcConfig()->threads_per_cq(),
-          static_cast<std::size_t>(configuration_->GrpcConfig()->max_sequential_ops())));
-    }
+    const auto& grpc_config = configuration_->GrpcConfig();
+    grpc_adapter_ = to_shared<AdServer::ChannelSvcs::ChannelServerGrpc>(
+      new AdServer::ChannelSvcs::ChannelServerGrpc(
+        server_core_,
+        logger(),
+        grpc_config.Endpoint().host().present() && *grpc_config.Endpoint().host() != "*" ?
+          *grpc_config.Endpoint().host() : "0.0.0.0",
+        grpc_config.Endpoint().port(),
+        grpc_config.process_threads(),
+        grpc_config.cq_threads(),
+        grpc_config.threads_per_cq(),
+        static_cast<std::size_t>(grpc_config.max_sequential_ops())));
 
     if (configuration_->HttpConfig().present())
     {
@@ -259,6 +222,8 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
             body += std::to_string(grpc_stats.check_configuration_in_progress);
             body += ",\"set_sources_in_progress\":";
             body += std::to_string(grpc_stats.set_sources_in_progress);
+            append_json_stat_(
+              body, "channel_update_in_progress", grpc_stats.channel_update_in_progress);
             body += ",\"set_proxy_sources_in_progress\":";
             body += std::to_string(grpc_stats.set_proxy_sources_in_progress);
             body += ",\"batch_total\":";
@@ -292,12 +257,11 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     {
       active_objects_->add_child_object(http_server_.in());
     }
-    active_objects_->add_child_object(corba_server_adapter_.in());
   }
   catch(const AdServer::ChannelSvcs::ChannelServerCore::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "ChannelServerApp::init_corba_: "
+    ostr << "ChannelServerApp::init_services_: "
       "Catch ChannelServerCore::Exception on creating "
       " ChannelServer core. : " << e.what();
     throw Exception(ostr);
@@ -305,7 +269,7 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   catch(const eh::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "ChannelServerApp::init_corba_: "
+    ostr << "ChannelServerApp::init_services_: "
       "Catch eh::Exception on creating ChannelServer servants. "
       ": " << e.what();
     throw Exception(ostr);
@@ -346,8 +310,7 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     pid_file_guard = std::make_unique<AdServer::Commons::PidFileGuard>(
       std::string(configuration_->pid_file()));
 
-    //Initialization CORBA
-    init_corba_();
+    init_services_();
 
     AdServer::Commons::SignalActiveObject signal_active_object;
     active_objects_->activate_object();
@@ -412,23 +375,6 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
                   Logging::Logger::EMERGENCY,
                   ASPECT,
                   "ADS-IMPL-11");
-  }
-
-  /* references to servants in ORB must be destroyed before
-     destroying var pointer to its */
-  try
-  {
-    corba_server_adapter_.reset();
-  }
-  catch(const CORBA::Exception& ex)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
-      << FUN << "Got CORBA::Exception in destroy ORB. : \n" << ex;
-  }
-  catch(...)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
-      << FUN << "Got unknown exception in destroy ORB \n";
   }
 }
 

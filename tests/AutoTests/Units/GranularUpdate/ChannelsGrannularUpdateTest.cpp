@@ -6,7 +6,6 @@ namespace
 {
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::NSLookupRequest NSLookupRequest;
-  typedef AutoTest::ChannelSearchChecker ChannelSearchChecker;
   typedef AutoTest::ExpressionChannelChecker ExpressionChannelChecker;
   typedef AutoTest::MatchChecker MatchChecker;
 };
@@ -15,10 +14,6 @@ void
 ChannelsGrannularUpdateTest::set_up()
 {
   add_descr_phrase("Setup");
-
-  FAIL_CONTEXT(
-    AutoTest::predicate_checker(get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
-    "ChannelSearchServer must set in the XML configuration file");
 }
 
 void
@@ -76,17 +71,6 @@ ChannelsGrannularUpdateTest::page_channel()
 
   create_trigger(&chp, "Keyword1");
 
-  std::string page_id(strof(chp.id()));
-
-  ADD_WAIT_CHECKER(
-    "Search admin check",
-    ChannelSearchChecker(
-      this,
-      fetch_string("Keyword1"),
-      AutoTest::ChannelSearch,
-      ChannelSearchChecker::Expected().
-        channel_id(page_id)));
-
   ADD_WAIT_CHECKER(
     "Match check",
     MatchChecker(
@@ -111,17 +95,6 @@ ChannelsGrannularUpdateTest::search_channel()
 
   create_trigger(&chs, "Keyword3");
 
-  std::string search_id(strof(chs.id()));
-
-  ADD_WAIT_CHECKER(
-    "Search admin check",
-    ChannelSearchChecker(
-      this,
-      fetch_string("Keyword3"),
-      AutoTest::ChannelSearch,
-      ChannelSearchChecker::Expected().
-        channel_id(search_id)));
-
   ADD_WAIT_CHECKER(
     "Match check",
     MatchChecker(this, NSLookupRequest(). search(fetch_string("Keyword3")), chs.id_with_suffix()));
@@ -137,17 +110,6 @@ ChannelsGrannularUpdateTest::expression_channel()
   che.language.null();
   che.expression = strof(chp.id()) + "&" + strof(chs.id());
   FAIL_CONTEXT(AutoTest::predicate_checker(che.insert()), "Must create expression channel");
-
-  std::string expr_id(strof(che.id()));
-
-  ADD_WAIT_CHECKER(
-    "Search admin check",
-    ChannelSearchChecker(
-      this,
-      fetch_string("Keyword1"),
-      AutoTest::ChannelSearch,
-      AutoTest::ChannelSearchAdmin::Expected().
-        channel_id(expr_id)));
 
   std::string regexp = "\\(\\[" + strof(chp.id()) + "\\] & "  + "\\[" + strof(chs.id()) + "\\]\\)";
 

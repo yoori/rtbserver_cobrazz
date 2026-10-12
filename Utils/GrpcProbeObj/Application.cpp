@@ -1,5 +1,7 @@
 #include <chrono>
 #include <cstdlib>
+#include <cerrno>
+#include <limits>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -21,9 +23,11 @@ namespace
 
   bool parse_int(const char* value, int& result)
   {
+    errno = 0;
     char* end = nullptr;
     const long parsed = std::strtol(value, &end, 10);
-    if (!end || *end != '\0')
+    if (errno || end == value || *end != '\0' ||
+        parsed < std::numeric_limits<int>::min() || parsed > std::numeric_limits<int>::max())
     {
       return false;
     }
@@ -48,7 +52,7 @@ namespace
       }
       result += status.error_details();
     }
-    return result;
+    return std::to_string(static_cast<int>(status.error_code())) + ": " + result;
   }
 
   void print_error(const grpc::Status& status)
@@ -78,6 +82,11 @@ main(int argc, char** argv)
     }
   }
 
+  if (timeout_ms <= 0 || timeout_ms > 3600000)
+  {
+    return usage();
+  }
+
   grpc::ChannelArguments channel_args;
   channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
   auto channel = AdServer::Grpc::create_custom_channel(
@@ -105,31 +114,56 @@ main(int argc, char** argv)
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms));
 
+    pc::GetDbStateRequest get_request;
+    pc::GetDbStateResponse state;
+    const grpc::Status get_status = stub->get_db_state(&context, get_request, &state);
+    if (!get_status.ok())
+    {
+      print_error(get_status);
+      return 2;
+    }
+
+    if (state.has_supported() && !state.supported())
+    {
+      std::cout << "DB not applicable (no direct DB connection)\n";
+      return 0;
+    }
+
     if (db_state == -1)
     {
-      pc::GetDbStateRequest request;
-      pc::GetDbStateResponse response;
-      const grpc::Status status = stub->get_db_state(&context, request, &response);
-      if (!status.ok())
-      {
-        print_error(status);
-        return 2;
-      }
-
-      std::cout << (response.enabled() ? "DB enabled" : "DB disabled") << '\n';
-      return response.enabled() ? 0 : 1;
+      std::cout << (state.enabled() ? "DB enabled" : "DB disabled") << '\n';
+      return state.enabled() ? 0 : 1;
     }
 
     pc::SetDbStateRequest request;
     request.set_enabled(db_state != 0);
     pc::SetDbStateResponse response;
-    const grpc::Status status = stub->set_db_state(&context, request, &response);
+    grpc::ClientContext set_context;
+    set_context.set_deadline(context.deadline());
+    const grpc::Status status = stub->set_db_state(&set_context, request, &response);
     if (!status.ok())
     {
       print_error(status);
+      std::cout << "DB state is unconfirmed; query status before retrying\n";
       return 2;
     }
 
+    grpc::ClientContext verify_context;
+    verify_context.set_deadline(context.deadline());
+    const grpc::Status verified = stub->get_db_state(&verify_context, get_request, &state);
+    if (!verified.ok())
+    {
+      print_error(verified);
+      std::cout << "DB state is unconfirmed; query status before retrying\n";
+      return 2;
+    }
+
+    if ((state.has_supported() && !state.supported()) || state.enabled() != request.enabled())
+    {
+      std::cout << "DB state differs from requested state\n";
+      return 2;
+    }
+    std::cout << (state.enabled() ? "DB enabled" : "DB disabled") << '\n';
     return 0;
   }
 

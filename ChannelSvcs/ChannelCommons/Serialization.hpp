@@ -1,7 +1,6 @@
 #pragma once
 
 #include<string>
-#include<Commons/CorbaTypes.hpp>
 #include<ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 
 namespace AdServer::ChannelSvcs
@@ -101,17 +100,6 @@ namespace AdServer::ChannelSvcs
       /*throw(eh::Exception, BadFormatException)*/;
 
     static size_t get_reserve_size(const void* data) noexcept;
-
-    struct OctCorbaAllocator
-    {
-      OctCorbaAllocator(CORBACommons::OctSeq& oct_seq)
-        : oct_seq_(oct_seq) {};
-      void allocate(size_t size)
-      {
-        oct_seq_.length(size);
-      }
-      CORBACommons::OctSeq& oct_seq_;
-    };
 
     struct StringAllocator
     {

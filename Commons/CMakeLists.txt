@@ -1,14 +1,6 @@
 include(CheckCXXCompilerFlag)
 
-add_idl(CampaignFreqIDL CampaignFreq.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
-add_idl(CookieInfoPackIDL CookieInfoPack.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
 add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
-add_idl(FreqCapInfoIDL FreqCapInfo.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
-
-target_link_libraries(FreqCapInfoIDL
-  PUBLIC
-    CorbaTypesIDL
-)
 
 add_library(Commons SHARED
   SignalActiveObject.cpp
@@ -119,16 +111,6 @@ if (fast_json_parser_x86)
       AD_FAST_JSON_PARSER_HAS_AVX512BW)
   endif()
 endif()
-
-add_library(ProcessControlVars SHARED
-  ProcessControlVarsImpl.cpp
-)
-
-target_link_libraries(ProcessControlVars
-  PRIVATE
-    CORBACommons
-    Logger
-)
 
 add_subdirectory(Kafka)
 add_subdirectory(HttpServer)

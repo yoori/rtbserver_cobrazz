@@ -15,7 +15,6 @@
   <xsd:include schemaLocation="./AdClusterAppType.xsd"/>
   <xsd:include schemaLocation="./ChannelServing/ChannelServerAppType.xsd"/>
   <xsd:include schemaLocation="./ChannelServing/ChannelControllerAppType.xsd"/>
-  <xsd:include schemaLocation="./ChannelServing/ChannelSearchServiceAppType.xsd"/>
 
   <xsd:complexType name="FrontendClusterConfigType">
     <xsd:sequence>

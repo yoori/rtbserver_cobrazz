@@ -9,8 +9,7 @@
 #include <Logger/ActiveObjectCallback.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
-#include <CORBACommons/StatsImpl.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/Grpc/DbAccess.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <CampaignSvcs/CampaignServerConfig.hpp>
 
@@ -67,7 +66,7 @@ private:
 
     Logger logger;
 
-    CORBACommons::CorbaConfig corba_config;
+    std::unique_ptr<xsd::AdServer::Configuration::GrpcConfigType> grpc_config;
     AdServer::CampaignSvcs::LogFlushTraits colo_update_flush_traits;
 
     ServerMode server_mode;
@@ -75,13 +74,13 @@ private:
     /* Proxy mode conf */
     unsigned long colo_id;
     std::string version;
-    CORBACommons::CorbaObjectRefList campaign_server_refs;
+    std::vector<std::string> campaign_server_refs;
 
     /* Server mode conf */
     unsigned long server_id;
     std::string pg_connection_string;
     Generics::Time stat_stamp_sync_period;
-    CORBACommons::CorbaObjectRefList stat_provider_refs;
+    std::vector<std::string> stat_provider_refs;
 
     std::string channel_statuses;
     std::string campaign_statuses;
@@ -101,7 +100,6 @@ private:
 
 private:
   Configuration configuration_;
-  CORBACommons::CorbaConfig corba_config_;
 
 };
 

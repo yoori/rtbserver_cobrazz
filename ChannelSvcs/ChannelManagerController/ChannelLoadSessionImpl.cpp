@@ -1,9 +1,7 @@
-/**
- * ChannelServerSessionFactoryImpl
- */
-
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <algorithm>
+#include <climits>
+#include <set>
+#include <utility>
 #include <ChannelSvcs/ChannelManagerController/ThreadHandlerTemplate.hpp>
 #include "ChannelLoadSessionImpl.hpp"
 
@@ -12,8 +10,7 @@ namespace AdServer::ChannelSvcs
 
   struct Filter
   {
-    Filter(unsigned int* begin, unsigned int* end, unsigned int count) noexcept
-      : begin_(begin), end_(end), count_(count) {};
+    Filter(unsigned int* begin, unsigned int* end, unsigned int count) noexcept;
 
     bool operator()(unsigned int id) noexcept;
 
@@ -22,145 +19,79 @@ namespace AdServer::ChannelSvcs
     unsigned int count_;
   };
 
+  Filter::Filter(unsigned int* begin, unsigned int* end, unsigned int count) noexcept
+    : begin_(begin), end_(end), count_(count)
+  {
+  }
+
   bool Filter::operator()(unsigned int id) noexcept
   {
     return (std::find(begin_, end_, id % count_) == end_);
   }
 
-  /**
-   * ChannelLoadSessionImpl
-   * implementation of ChannelLoadSession valuetype
-   */
-
   ChannelLoadSessionImpl::ChannelLoadSessionImpl(
-    Generics::ActiveObjectCallback* callback,
-    Generics::TaskRunner* runner)
-    noexcept
-    : task_runner_(ReferenceCounting::add_ref(runner)),
-      callback_(ReferenceCounting::add_ref(callback)),
-      index_(0)
+    const GroupLoadDescription& servers, long source, Logging::Logger* logger)
+    : servers_(servers),
+      source_id_(source),
+      callback_(
+        new Logging::ActiveObjectCallbackImpl(logger, "ChannelLoadSession", "ChannelUpdate")),
+      task_runner_(new Generics::TaskRunner(callback_, 10))
   {
-  }
-
-  ChannelLoadSessionImpl::ChannelLoadSessionImpl(
-    const ChannelSvcs::GroupLoadDescriptionSeq& servers,
-    CORBA::ULong source)
-    /*throw(Exception)*/
-      : index_(0)
-  { // XXX-1
-    try
+    for (const auto& group : servers_)
     {
-      /*
-      ChannelSvcs::GroupLoadDescriptionSeq servers_copy(servers);
-      for (CORBA::ULong group_i = 0; group_i < servers_copy.length(); ++group_i)
+      if (group.empty())
       {
-        for (CORBA::ULong server_i = 0; server_i < servers_copy[group_i].length(); ++server_i)
-        {
-          auto& server = servers_copy[group_i][server_i];
-          server.load_server =
-            AdServer::ChannelSvcs::ChannelUpdateBase::_narrow(
-              static_cast<CORBA::Object*>(server.load_server.in()));
-        }
+        throw Exception("empty ChannelUpdate source group");
       }
 
-      load_servers(servers_copy);
-      */
-      load_servers(servers);
-      source_id(source);
+      for (const auto& server : group)
+      {
+        if (!server.load_server)
+        {
+          throw Exception("missing ChannelUpdate gRPC client");
+        }
+      }
     }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << __func__ << ": CORBA::SystemException. :" << e;
-      throw Exception(ostr);
-    }
-  }
 
-  ChannelLoadSessionImpl::ChannelLoadSessionImpl(ChannelLoadSessionImpl& init)
-      /*throw(eh::Exception, Exception)*/
-      : CORBA::ValueBase(),
-        CORBA::AbstractBase(),
-        AdServer::ChannelSvcs::ChannelUpdateBase(),
-        AdServer::ChannelSvcs::ChannelLoadSession(),
-        CORBA::DefaultValueRefCountBase(),
-        OBV_AdServer::ChannelSvcs::ChannelLoadSession(),
-        task_runner_(init.task_runner_),
-        callback_(init.callback_),
-        index_(0)
-  {
-    try
-    {
-      load_servers(init.load_servers());
-      source_id(init.source_id());
-    }
-    catch(CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << __func__ << ": CORBA::SystemException. :" << e;
-      throw Exception(ostr);
-    }
+    task_runner_->activate_object();
   }
 
   ChannelLoadSessionImpl::~ChannelLoadSessionImpl() noexcept
   {
-  }
-
-  CORBA::ValueBase* ChannelLoadSessionImpl::_copy_value()
-  {
-    try
-    {
-      return new ChannelLoadSessionImpl(*this);
-    }
-    catch(const Exception& e)
-    {
-      if (callback_)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": Exception: " << e.what();
-        callback_->critical(ostr.str());
-      }
-    }
-    catch(const eh::Exception& e)
-    {
-      if (callback_)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": eh::Exception: " << e.what();
-        callback_->critical(ostr.str());
-      }
-      throw;
-    }
-    return 0;
+    task_runner_->deactivate_object();
+    task_runner_->wait_object();
   }
 
   struct SmartCheck:
-    public Protected::BaseCaller<
-      ChannelCurrent::CheckData_var,
-      ChannelLoadDescription>
+    public Protected::BaseCaller<ChannelUpdate::CheckDataPtr, ChannelLoadDescription>
   {
-    SmartCheck(const char* name, size_t len) /*throw(eh::Exception)*/
-      : Protected::BaseCaller<
-        ChannelCurrent::CheckData_var,
-        ChannelLoadDescription> (name, len)
-    {};
+    SmartCheck(const char* name, size_t len);
 
-    const ChannelCurrent::CheckQuery* params;
+    const ChannelUpdate::CheckQuery* params;
 
-    void execute()
-      /*throw(AdServer::ChannelSvcs::ImplementationException,
-        AdServer::ChannelSvcs::NotConfigured,
-        CORBA::SystemException)*/;
+    void execute();
   };
 
-  void
-  SmartCheck::execute()
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured,
-      CORBA::SystemException)*/
+  SmartCheck::SmartCheck(const char* name, size_t len)
+    : Protected::BaseCaller<ChannelUpdate::CheckDataPtr, ChannelLoadDescription>(name, len)
   {
-    ChannelCurrent::CheckData_var result;
+  }
+
+  void SmartCheck::execute()
+  {
+    ChannelUpdate::CheckDataPtr result;
     ref_->load_server->check(*params, result);
     callback_->set_result(id_, result);
+  }
+
+  GroupLoadDescription& ChannelLoadSessionImpl::load_servers() noexcept
+  {
+    return servers_;
+  }
+
+  long ChannelLoadSessionImpl::source_id() const noexcept
+  {
+    return source_id_;
   }
 
   size_t ChannelLoadSessionImpl::get_item_() noexcept
@@ -175,31 +106,25 @@ namespace AdServer::ChannelSvcs
     if (index == index_)
     {
       index_++;
-      if (index_ == load_servers().length())
+      if (index_ == load_servers().size())
       {
         index_ = 0;
       }
     }
   }
 
-  //
-  // IDL:AdServer/ChannelSvcs/ChannelCurrent/check:1.0
-  //
-  void
-  ChannelLoadSessionImpl::check(
-    const ::AdServer::ChannelSvcs::ChannelCurrent::CheckQuery& query,
-    ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data)
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured)*/
+  void ChannelLoadSessionImpl::check(
+    const ChannelUpdate::CheckQuery& query, ChannelUpdate::CheckDataPtr& data)
   {
-    if (!load_servers().length())
+    if (load_servers().empty())
     {
-      throw AdServer::ChannelSvcs::NotConfigured();
+      throw NotConfigured("no ChannelUpdate sources");
     }
-    size_t index =  get_item_();
+
+    size_t index = get_item_();
     try
     {
-      size_t len = load_servers()[index].length();
+      size_t len = load_servers()[index].size();
       SmartCheck cquery(__func__, len);
       cquery.params = &query;
       Generics::Task_var task;
@@ -214,7 +139,7 @@ namespace AdServer::ChannelSvcs
         }
       }
       task->execute();
-      data = new ChannelCurrent::CheckData;
+      data = std::make_unique<ChannelUpdate::CheckData>();
       data->special_adv = false;
       data->special_track = false;
       size_t answer_len = 0;
@@ -227,30 +152,29 @@ namespace AdServer::ChannelSvcs
         bad_(index);
         ostr << __func__ << ": " << cquery.callback_->count_exception()
           << " ChannelServers are failed. : " << cquery.callback_->get_exception().str();
-        CORBACommons::throw_desc<
-          ChannelSvcs::ImplementationException>(ostr.str());
+        throw ImplementationException(ostr.str());
       }
-      for (size_t i = 0; i < len;i++)
+      for (size_t i = 0; i < len; i++)
       {
-        ChannelSvcs::ChannelCurrent::CheckData_var& value = results[i];
+        ChannelUpdate::CheckDataPtr& value = results[i];
         if (value)
         {
-          answer_len += value->versions.length();
-          temp = CorbaAlgs::unpack_time(value->master_stamp);
-          temp2 = CorbaAlgs::unpack_time(value->max_time);
+          answer_len += value->versions.size();
+          temp = value->master_stamp;
+          temp2 = value->max_time;
           if (first)
           {
             master = temp;
             max_time = temp2;
             data->source_id = value->source_id;
-            first_stamp = CorbaAlgs::unpack_time(value->first_stamp);
+            first_stamp = value->first_stamp;
             first = false;
           }
           else
           {
             master = std::min(master, temp);
             max_time = std::max(max_time, temp2);
-            first_stamp = std::max(first_stamp, CorbaAlgs::unpack_time(value->first_stamp));
+            first_stamp = std::max(first_stamp, value->first_stamp);
           }
 
           if (value->special_adv)
@@ -264,10 +188,10 @@ namespace AdServer::ChannelSvcs
           }
         }
       }
-      data->master_stamp = CorbaAlgs::pack_time(master);
-      data->first_stamp = CorbaAlgs::pack_time(first_stamp);
-      data->versions.length(answer_len);
-      data->max_time = CorbaAlgs::pack_time(max_time);
+      data->master_stamp = master;
+      data->first_stamp = first_stamp;
+      data->versions.resize(answer_len);
+      data->max_time = max_time;
       if (data->source_id < 0 && source_id() > 0)
       {
         data->source_id = source_id() + index;
@@ -278,156 +202,97 @@ namespace AdServer::ChannelSvcs
         size_t j = 0;
         for (size_t i = 0; i < len; i++)
         {
-          ChannelSvcs::ChannelCurrent::CheckData_var& value = results[i];
+          ChannelUpdate::CheckDataPtr& value = results[i];
           if (value)
           {
-            std::copy(value->versions.get_buffer(),
-                      value->versions.get_buffer() + value->versions.length(),
-                      data->versions.get_buffer() + j);
-            j += value->versions.length();
-            value = 0;
+            std::copy(value->versions.begin(), value->versions.end(), data->versions.begin() + j);
+            j += value->versions.size();
+            value.reset();
           }
         }
       }
     }
-    catch(const SmartCheck::Handler::Exception& e)
+    catch (const SmartCheck::Handler::Exception& e)
     {
       Stream::Error ostr;
       bad_(index);
       ostr << __func__ << ": SmartCheck::Handler::Exception: " << e.what();
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
+      throw ImplementationException(ostr.str());
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
       bad_(index);
       ostr << __func__ << ": eh::Exception: " << e.what();
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const AdServer::ChannelSvcs::NotConfigured& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": NotConfigured: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const ChannelSvcs::ImplementationException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": ImplementationException: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": CORBA::SystemException: " << e;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
+      throw ImplementationException(ostr.str());
     }
   }
 
-  ::CORBA::ULong ChannelLoadSessionImpl::get_count_chunks()
-    /*throw(AdServer::ChannelSvcs::ImplementationException)*/
+  std::uint32_t ChannelLoadSessionImpl::get_count_chunks()
   {
-    if (load_servers().length() == 1 && load_servers()[0].length() == 1)
+    if (load_servers().size() == 1 && load_servers()[0].size() == 1)
     {
       try
       {
         return load_servers()[0][0].load_server->get_count_chunks();
       }
-      catch(const AdServer::ChannelSvcs::ImplementationException& e)
+      catch (const ImplementationException& e)
       {
         Stream::Error ostr;
-        ostr << __func__ << ": ImplementationException: " << e.description;
-        CORBACommons::throw_desc<
-          ChannelSvcs::ImplementationException>(ostr.str());
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": CORBA::SystemException: " << e;
-        CORBACommons::throw_desc<
-          ChannelSvcs::ImplementationException>(ostr.str());
+        ostr << __func__ << ": ImplementationException: " << e.what();
+        throw ImplementationException(ostr.str());
       }
     }
-    throw AdServer::ChannelSvcs::ImplementationException
-      ("get_count_chunks not supported for multi server configuration");
+
+    throw ImplementationException("get_count_chunks not supported for multi server configuration");
   }
 
   struct UpdateTriggers:
-    public Protected::BaseCaller<
-      ChannelCurrent::UpdateData_var,
-      ChannelLoadDescription>
+    public Protected::BaseCaller<ChannelUpdate::UpdateDataPtr, ChannelLoadDescription>
   {
-    UpdateTriggers(const char* name, size_t len) /*throw(eh::Exception)*/
-      : Protected::BaseCaller<
-          ChannelCurrent::UpdateData_var,
-          ChannelLoadDescription> (name, len)
-    {}
+    UpdateTriggers(const char* name, size_t len);
 
-    void execute()
-      /*throw(AdServer::ChannelSvcs::ImplementationException,
-        AdServer::ChannelSvcs::NotConfigured,
-        CORBA::SystemException)*/;
+    void execute();
 
-    const ::AdServer::ChannelSvcs::ChannelIdSeq* ids_;
+    const ChannelIdList* ids_;
   };
 
-  void
-  UpdateTriggers::execute()
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured,
-      CORBA::SystemException)*/
+  UpdateTriggers::UpdateTriggers(const char* name, size_t len)
+    : Protected::BaseCaller<ChannelUpdate::UpdateDataPtr, ChannelLoadDescription>(name, len)
   {
-    AdServer::ChannelSvcs::ChannelIdSeq ids;
-    const ::AdServer::ChannelSvcs::ChannelIdSeq* ids_ptr;
+  }
+
+  void UpdateTriggers::execute()
+  {
+    ChannelIdList ids;
+    const ChannelIdList* ids_ptr;
     if (ref_->count_chunks)
     {
-      ids.length(ids_->length());
-      CORBA::ULong* end = std::remove_copy_if(
-        ids_->get_buffer(),
-        ids_->get_buffer() + ids_->length(),
-        ids.get_buffer(),
-        Filter(
-          ref_->chunks.get_buffer(),
-          ref_->chunks.get_buffer() + ref_->chunks.length(),
-          ref_->count_chunks));
-      ids.length(end - ids.get_buffer());
+      std::remove_copy_if(ids_->begin(), ids_->end(), std::back_inserter(ids),
+        Filter(ref_->chunks.data(), ref_->chunks.data() + ref_->chunks.size(), ref_->count_chunks));
       ids_ptr = &ids;
     }
     else
     {
       ids_ptr = ids_;
     }
-    AdServer::ChannelSvcs::ChannelCurrent::UpdateData_var res;
+    ChannelUpdate::UpdateDataPtr res;
     ref_->load_server->update_triggers(*ids_ptr, res);
     callback_->set_result(id_, res);
   }
 
-  //
-  // IDL:AdServer/ChannelSvcs/ChannelServerControl/update_triggers:1.0
-  //
-  void
-  ChannelLoadSessionImpl::update_triggers(
-    const ::AdServer::ChannelSvcs::ChannelIdSeq& ids,
-    ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_out result)
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured)*/
+  void ChannelLoadSessionImpl::update_triggers(
+    const ChannelIdList& ids, ChannelUpdate::UpdateDataPtr& result)
   {
-    if (!load_servers().length())
+    if (load_servers().empty())
     {
-      throw AdServer::ChannelSvcs::NotConfigured();
+      throw NotConfigured("no ChannelUpdate sources");
     }
+
     size_t index = get_item_();
     try
     {
-      size_t len = load_servers()[index].length();
+      size_t len = load_servers()[index].size();
       UpdateTriggers query(__func__, len);
       query.ids_ = &ids;
       Generics::Task_var task;
@@ -442,7 +307,7 @@ namespace AdServer::ChannelSvcs
         }
       }
       task->execute();
-      result = new AdServer::ChannelSvcs::ChannelCurrent::UpdateData;
+      result = std::make_unique<ChannelUpdate::UpdateData>();
       UpdateTriggers::Handler::ResultsVector& results = query.callback_->get_result();
       if (query.callback_->count_exception() > 0)
       {
@@ -450,8 +315,7 @@ namespace AdServer::ChannelSvcs
         bad_(index);
         ostr << __func__ << ": " << query.callback_->count_exception()
           << " ChannelServers are failed. : " << query.callback_->get_exception().str();
-        CORBACommons::throw_desc<
-          ChannelSvcs::ImplementationException>(ostr.str());
+        throw ImplementationException(ostr.str());
       }
       try
       {
@@ -459,25 +323,23 @@ namespace AdServer::ChannelSvcs
         size_t old_length = 0;
         for (size_t i = 0; i < len; i++)
         {
-          ChannelSvcs::ChannelCurrent::UpdateData_var& value = results[i];
+          ChannelUpdate::UpdateDataPtr& value = results[i];
           if (value)
           {
             result->source_id = value->source_id;
-            old_length += value->channels.length();
+            old_length += value->channels.size();
           }
         }
-        result->channels.length(old_length);
+        result->channels.resize(old_length);
         old_length = 0;
         for (size_t i = 0; i < len; i++)
         {
-          ChannelSvcs::ChannelCurrent::UpdateData_var& value = results[i];
-          if (value && value->channels.length())
+          ChannelUpdate::UpdateDataPtr& value = results[i];
+          if (value && value->channels.size())
           {
-            std::copy(
-                value->channels.get_buffer(),
-                value->channels.get_buffer() + value->channels.length(),
-                result->channels.get_buffer() + old_length);
-            old_length += value->channels.length();
+            std::move(value->channels.begin(), value->channels.end(),
+              result->channels.begin() + old_length);
+            old_length += value->channels.size();
           }
         }
 
@@ -486,115 +348,55 @@ namespace AdServer::ChannelSvcs
           result->source_id = source_id() + index;
         }
       }
-      catch(const eh::Exception& e)
+      catch (const eh::Exception& e)
       {
         bad_(index);
-        throw AdServer::ChannelSvcs::ImplementationException(e.what());
+        throw ImplementationException(e.what());
       }
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
       bad_(index);
       ostr << __func__ << ": eh::Exception: " << e.what();
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const AdServer::ChannelSvcs::NotConfigured& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": NotConfigured: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const AdServer::ChannelSvcs::ImplementationException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": ImplementationException: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": CORBA::SystemException: " << e;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
+      throw ImplementationException(ostr.str());
     }
   }
 
   struct UpdatePosCCG:
-    public Protected::BaseCaller<
-      ChannelCurrent::PosCCGResult_var,
-      ChannelLoadDescription>
+    public Protected::BaseCaller<ChannelUpdate::PosCCGResultPtr, ChannelLoadDescription>
   {
-    UpdatePosCCG(const char* name, size_t len) /*throw(eh::Exception)*/
-      : Protected::BaseCaller<
-          ChannelCurrent::PosCCGResult_var,
-          ChannelLoadDescription> (name, len)
-    {};
+    UpdatePosCCG(const char* name, size_t len);
 
-    void execute()
-      /*throw(AdServer::ChannelSvcs::ImplementationException,
-        AdServer::ChannelSvcs::NotConfigured,
-        CORBA::SystemException)*/;
+    void execute();
 
-    const AdServer::ChannelSvcs::ChannelCurrent::CCGQuery* in;
+    const ChannelUpdate::CCGQuery* in;
   };
 
-  void
-  UpdatePosCCG::execute()
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured,
-      CORBA::SystemException)*/
+  UpdatePosCCG::UpdatePosCCG(const char* name, size_t len)
+    : Protected::BaseCaller<ChannelUpdate::PosCCGResultPtr, ChannelLoadDescription>(name, len)
   {
-    AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var result;
+  }
 
-    {
-      /*
-      AdServer::ChannelSvcs::ChannelCurrent::CCGQuery debug_in;
-      debug_in.master_stamp = CorbaAlgs::pack_time(Generics::Time::get_time_of_day());
-      debug_in.start = 1;
-      debug_in.limit = 10000;
-      std::vector<unsigned long> channels_id;
-
-      for (int i = 0; i < 434686; ++i)
-      {
-        channels_id.emplace_back(i);
-      }
-
-      debug_in.channel_ids.length(channels_id.size());
-      std::copy(
-        channels_id.begin(),
-        channels_id.end(),
-        debug_in.channel_ids.get_buffer());
-      */
-
-      ref_->load_server->update_all_ccg(*in, result);
-      //ref_->load_server->update_all_ccg(debug_in, result);
-    }
-
+  void UpdatePosCCG::execute()
+  {
+    ChannelUpdate::PosCCGResultPtr result;
+    ref_->load_server->update_all_ccg(*in, result);
     callback_->set_result(id_, result);
   }
 
-  void
-  ChannelLoadSessionImpl::update_all_ccg(
-    const AdServer::ChannelSvcs::ChannelCurrent::CCGQuery& query_in,
-    AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_out result)
-    /*throw(AdServer::ChannelSvcs::ImplementationException,
-      AdServer::ChannelSvcs::NotConfigured)*/
+  void ChannelLoadSessionImpl::update_all_ccg(
+    const ChannelUpdate::CCGQuery& query_in, ChannelUpdate::PosCCGResultPtr& result)
   {
-    if (!load_servers().length())
+    if (load_servers().empty())
     {
-      throw AdServer::ChannelSvcs::NotConfigured();
+      throw NotConfigured("no ChannelUpdate sources");
     }
+
     size_t index = get_item_();
     try
     {
-      size_t len = load_servers()[index].length();
+      size_t len = load_servers()[index].size();
       UpdatePosCCG query(__func__, len);
       query.in = &query_in;
       Generics::Task_var task;
@@ -609,7 +411,7 @@ namespace AdServer::ChannelSvcs
         }
       }
       task->execute();
-      result = new AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult;
+      result = std::make_unique<ChannelUpdate::PosCCGResult>();
       UpdatePosCCG::Handler::ResultsVector& results = query.callback_->get_result();
 
       if (query.callback_->count_exception() > 0)
@@ -618,8 +420,7 @@ namespace AdServer::ChannelSvcs
         bad_(index);
         ostr << __func__ << ": " << query.callback_->count_exception()
           << " ChannelServers are failed. : " << query.callback_->get_exception().str();
-        CORBACommons::throw_desc<
-          ChannelSvcs::ImplementationException>(ostr.str());
+        throw ImplementationException(ostr.str());
       }
       size_t length_of_result[2] = {0, 0};
       unsigned long start_min = ULONG_MAX, start_max = query_in.start;
@@ -627,13 +428,13 @@ namespace AdServer::ChannelSvcs
       result->source_id = -1;
       for (size_t i = 0; i < len; i++)
       {
-        AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var& value = results[i];
+        ChannelUpdate::PosCCGResultPtr& value = results[i];
         result->source_id = value->source_id;
-        length_of_result[0] += value->keywords.length();
-        length_of_result[1] += value->deleted.length();
+        length_of_result[0] += value->keywords.size();
+        length_of_result[1] += value->deleted.size();
         start_min = std::min(static_cast<unsigned long>(value->start_id), start_min);
         start_max = std::max(static_cast<unsigned long>(value->start_id), start_max);
-        if (value->keywords.length() >= query_in.limit)
+        if (value->keywords.size() >= query_in.limit)
         {
           use_min = true;
         }
@@ -644,9 +445,9 @@ namespace AdServer::ChannelSvcs
         std::multiset<unsigned int> channels;
         for (size_t i = 0; i < len; i++)
         {
-          for (size_t j = 0; j < results[i]->keywords.length(); j++)
+          for (size_t j = 0; j < results[i]->keywords.size(); j++)
           {
-            AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw = results[i]->keywords[j];
+            ChannelUpdate::CCGKeyword& kw = results[i]->keywords[j];
             channels.insert(kw.channel_id);
           }
         }
@@ -663,20 +464,14 @@ namespace AdServer::ChannelSvcs
         result->start_id = start_max;
       }
 
-      if (length_of_result[0])
-      {
-        result->keywords.length(length_of_result[0]);
-      }
-      else
-      {
-        result->deleted.length(length_of_result[1]);
-      }
+      result->keywords.resize(length_of_result[0]);
+      result->deleted.resize(length_of_result[1]);
       length_of_result[0] = length_of_result[1] = 0;
       for (size_t i = 0; i < results.size(); i++)
       {
-        for (size_t j = 0; j < results[i]->keywords.length(); j++)
+        for (size_t j = 0; j < results[i]->keywords.size(); j++)
         {
-          AdServer::ChannelSvcs::ChannelCurrent::CCGKeyword& kw = results[i]->keywords[j];
+          ChannelUpdate::CCGKeyword& kw = results[i]->keywords[j];
           if (kw.channel_id < result->start_id)
           {
             result->keywords[length_of_result[0]++] = kw;
@@ -687,52 +482,25 @@ namespace AdServer::ChannelSvcs
           }
         }
 
-        if (result->deleted.length())
+        if (result->deleted.size())
         {
-          std::copy(
-            results[i]->deleted.get_buffer(),
-            results[i]->deleted.get_buffer() + results[i]->deleted.length(),
-            result->deleted.get_buffer() + length_of_result[1]);
-          length_of_result[1] += results[i]->deleted.length();
+          std::copy(results[i]->deleted.begin(), results[i]->deleted.end(),
+            result->deleted.begin() + length_of_result[1]);
+          length_of_result[1] += results[i]->deleted.size();
         }
       }
-      result->keywords.length(length_of_result[0]);
+      result->keywords.resize(length_of_result[0]);
       if (result->source_id < 0 && source_id() > 0)
       {
         result->source_id = source_id() + index;
       }
     }
-    catch(const eh::Exception& e)
+    catch (const eh::Exception& e)
     {
       Stream::Error ostr;
       bad_(index);
       ostr << __func__ << ": eh::Exception: " << e.what();
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const AdServer::ChannelSvcs::ImplementationException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": ImplementationException: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const AdServer::ChannelSvcs::NotConfigured& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": NotConfigured: " << e.description;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      bad_(index);
-      ostr << __func__ << ": CORBA::SystemException: " << e;
-      CORBACommons::throw_desc<
-        ChannelSvcs::ImplementationException>(ostr.str());
+      throw ImplementationException(ostr.str());
     }
   }
 

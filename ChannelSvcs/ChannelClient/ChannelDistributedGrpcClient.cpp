@@ -925,6 +925,54 @@ namespace AdServer::ChannelSvcs
       });
   }
 
+  void ChannelDistributedGrpcClient::check(
+    const adserver::channel_svcs::channel_server::CheckRequest&,
+    CheckCallback callback)
+  {
+    add_input_stats(1);
+    add_completed_stats(true);
+    using Response = adserver::channel_svcs::channel_server::CheckResponse;
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED,
+      "ChannelUpdate requires a source-aware ChannelUpdate client"),
+      AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
+  }
+
+  void ChannelDistributedGrpcClient::update_triggers(
+    const adserver::channel_svcs::channel_server::UpdateTriggersRequest&,
+    UpdateTriggersCallback callback)
+  {
+    add_input_stats(1);
+    add_completed_stats(true);
+    using Response = adserver::channel_svcs::channel_server::UpdateTriggersResponse;
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED,
+      "ChannelUpdate requires a source-aware ChannelUpdate client"),
+      AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
+  }
+
+  void ChannelDistributedGrpcClient::update_all_ccg(
+    const adserver::channel_svcs::channel_server::UpdateAllCcgRequest&,
+    UpdateAllCcgCallback callback)
+  {
+    add_input_stats(1);
+    add_completed_stats(true);
+    using Response = adserver::channel_svcs::channel_server::UpdateAllCcgResponse;
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED,
+      "ChannelUpdate requires a source-aware ChannelUpdate client"),
+      AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
+  }
+
+  void ChannelDistributedGrpcClient::get_count_chunks(
+    const adserver::channel_svcs::channel_server::GetCountChunksRequest&,
+    GetCountChunksCallback callback)
+  {
+    add_input_stats(1);
+    add_completed_stats(true);
+    using Response = adserver::channel_svcs::channel_server::GetCountChunksResponse;
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED,
+      "ChannelUpdate requires a source-aware ChannelUpdate client"),
+      AdServer::Grpc::ResponseHolder<Response>::make_value(Response()));
+  }
+
   std::optional<ChannelDistributedGrpcClient::Pool::Ref>
   ChannelDistributedGrpcClient::get_ref_() const noexcept
   {

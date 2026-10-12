@@ -1087,4 +1087,15 @@
   </xsl:attribute>
 </xsl:template>
 
+<xsl:template name="DbAccessGrpcPort">
+  <xsl:param name="network"/>
+  <xsl:param name="port"/>
+  <xsl:choose>
+    <xsl:when test="$network/@grpc_port">
+      <xsl:value-of select="$network/@grpc_port"/>
+    </xsl:when>
+    <xsl:otherwise><xsl:value-of select="$port + 500"/></xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 </xsl:stylesheet>

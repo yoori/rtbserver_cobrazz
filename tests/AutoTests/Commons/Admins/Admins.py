@@ -697,29 +697,4 @@ Admin('TriggerAdmin',
   string('stamp')
 ]
 
-# @class ChannelSearchAdmin
-# @brief ChannelSearchAdmin with aspect 'search'.
-# Examine channels loaded by AdServer.
-# ChannelSearchAdmin command call string:
-# ChannelSearchAdmin search -r corbaloc::$channel_search_server_host:$channel_search_server_port/ChannelSearch \
-#  --phrase <search phrase>
-
-Admin('ChannelSearchAdmin',
-      Cmd(('ChannelSearch', 'ChannelSrv'),
-          'search', [string('phrase', '--phrase=')]),
-      checker_name = 'ChannelSearchChecker').fields = [
-  string('channel_id')]
-
-# @class ChannelMatchAdmin
-# @brief ChannelAdmin with aspect 'match'.
-# Examine channels loaded by AdServer.
-# ChannelAdmin command call string:
-# ChannelAdmin search -r corbaloc::$channel_search_server_host:$channel_search_server_port/ChannelSearch \
-#  --phrase <search phrase>
-
-# Admin('ChannelMatchAdmin',
-#       Cmd(('ChannelManagerController', 'ChannelSrv'),
-#           'match', [string('trigger', ['-p', '-e', '-u'])],
-#           options = ['-d', '-f', '-l']))
-
 process_admins()
