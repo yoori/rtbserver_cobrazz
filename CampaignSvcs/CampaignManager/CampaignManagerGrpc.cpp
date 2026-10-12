@@ -9,7 +9,7 @@
 #include <string_view>
 #include <utility>
 
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Hostname.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 #include <Commons/Grpc/ProcessControl.grpc.pb.h>
@@ -101,31 +101,6 @@ namespace AdServer::CampaignSvcs
       const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
-    CORBACommons::OctSeq
-    unpack_oct_seq(const std::string& source)
-    {
-      CORBACommons::OctSeq result;
-      result.length(source.size());
-      for (CORBA::ULong i = 0; i < source.size(); ++i)
-      {
-        result[i] = static_cast<CORBA::Octet>(source[i]);
-      }
-      return result;
-    }
-
-    template<typename OctSeq>
-    std::string
-    pack_oct_seq(const OctSeq& source)
-    {
-      std::string result;
-      result.resize(source.length());
-      for (CORBA::ULong i = 0; i < source.length(); ++i)
-      {
-        result[i] = static_cast<char>(source[i]);
-      }
-      return result;
-    }
-
     Generics::Time
     unpack_time(const std::string& source)
     {
@@ -144,37 +119,37 @@ namespace AdServer::CampaignSvcs
     std::string
     pack_time(const Generics::Time& source)
     {
-      return pack_oct_seq(CorbaAlgs::pack_time(source));
+      return GrpcAlgs::pack_time(source);
     }
 
     AdServer::Commons::UserId
     unpack_user_id(const std::string& source)
     {
-      return CorbaAlgs::unpack_user_id(unpack_oct_seq(source));
+      return GrpcAlgs::unpack_user_id(source);
     }
 
     AdServer::Commons::RequestId
     unpack_request_id(const std::string& source)
     {
-      return CorbaAlgs::unpack_request_id(unpack_oct_seq(source));
+      return GrpcAlgs::unpack_request_id(source);
     }
 
     std::string
     pack_request_id(const AdServer::Commons::RequestId& source)
     {
-      return pack_oct_seq(CorbaAlgs::pack_request_id(source));
+      return GrpcAlgs::pack_request_id(source);
     }
 
     RevenueDecimal
     unpack_revenue_decimal(const pb::DecimalInfo& source)
     {
-      return CorbaAlgs::unpack_decimal<RevenueDecimal>(unpack_oct_seq(source.value()));
+      return GrpcAlgs::unpack_decimal<RevenueDecimal>(source.value());
     }
 
     void
     pack_revenue_decimal(const RevenueDecimal& source, pb::DecimalInfo& target)
     {
-      target.set_value(pack_oct_seq(CorbaAlgs::pack_decimal<RevenueDecimal>(source)));
+      target.set_value(GrpcAlgs::pack_decimal<RevenueDecimal>(source));
     }
 
     void
@@ -317,9 +292,9 @@ namespace AdServer::CampaignSvcs
     unpack_geo_coord_info(const pb::GeoCoordInfo& source)
     {
       return {
-        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.longitude())),
-        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.latitude())),
-        CorbaAlgs::unpack_decimal<CoordDecimal>(unpack_oct_seq(source.accuracy()))
+        GrpcAlgs::unpack_decimal<CoordDecimal>(source.longitude()),
+        GrpcAlgs::unpack_decimal<CoordDecimal>(source.latitude()),
+        GrpcAlgs::unpack_decimal<CoordDecimal>(source.accuracy())
       };
     }
 
@@ -2457,7 +2432,7 @@ namespace AdServer::CampaignSvcs
     try
     {
       CampaignManagerCore::PassbackRequest info;
-      info.request_id = CorbaAlgs::unpack_request_id(unpack_oct_seq(request.request_id()));
+      info.request_id = GrpcAlgs::unpack_request_id(request.request_id());
       info.time = unpack_time(request.time());
       if (request.has_user_id_hash_mod() && request.user_id_hash_mod().defined())
       {
@@ -2544,7 +2519,7 @@ namespace AdServer::CampaignSvcs
         request.os(),
         request.ct(),
         request.curct(),
-        CorbaAlgs::unpack_user_id(unpack_oct_seq(request.user_id())));
+        GrpcAlgs::unpack_user_id(request.user_id()));
       result_status = ::grpc::Status::OK;
     }
     catch(const CampaignManagerCore::NotReady& ex)
@@ -2767,10 +2742,9 @@ namespace AdServer::CampaignSvcs
       info.request_ids.reserve(request.request_ids_size());
       for (const auto& request_id : request.request_ids())
       {
-        info.request_ids.emplace_back(CorbaAlgs::unpack_request_id(unpack_oct_seq(request_id)));
+        info.request_ids.emplace_back(GrpcAlgs::unpack_request_id(request_id));
       }
-      info.global_request_id = CorbaAlgs::unpack_request_id(
-        unpack_oct_seq(request.global_request_id()));
+      info.global_request_id = GrpcAlgs::unpack_request_id(request.global_request_id());
       info.referer = request.referer();
       info.ip_address = request.ip_address();
       info.external_user_id = request.external_user_id();

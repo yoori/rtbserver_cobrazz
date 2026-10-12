@@ -6,7 +6,6 @@ function(add_bidding_request_info_filler_perf_test target)
     PRIVATE
       PkgConfig::Jemalloc
       BiddingFrontend
-      CampaignServerIDL
       CommonModule
       Commons
       CORBACommons

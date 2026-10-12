@@ -131,9 +131,7 @@ target_link_libraries(ExpressionMatcher
     ExpressionChannel
     ExpressionMatcherGrpcClient
     ExpressionMatcherGrpcProto
-    CampaignCommonsIDL
     CampaignServerGrpc
-    CorbaTypesIDL
     CORBACommons
     ProcessControlIDL
     ConsiderMessagesPST
@@ -143,7 +141,6 @@ target_link_libraries(ExpressionMatcher
     ExpressionMatcherConfigXSD
     LogCommons
     Commons
-    CORBAConfig
     HTTP
     HttpServer
     ProfilingCommons

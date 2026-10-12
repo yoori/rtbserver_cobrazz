@@ -23,7 +23,6 @@
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
 
 #include "CreativeTemplate.hpp"

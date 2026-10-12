@@ -5,7 +5,6 @@ target_link_libraries(BiddingFrontendCoreTest
   PRIVATE
     PkgConfig::Jemalloc
     BiddingFrontend
-    CampaignServerIDL
     Commons
     CommonModule
     CORBACommons

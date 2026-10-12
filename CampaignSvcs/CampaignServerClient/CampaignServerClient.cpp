@@ -81,7 +81,7 @@ namespace AdServer::CampaignSvcs
   {
     cs_rpc::need_configRequest request;
     request.set_req_timestamp(
-      reinterpret_cast<const char*>(req_timestamp.get_buffer()), req_timestamp.length());
+      reinterpret_cast<const char*>(req_timestamp.data()), req_timestamp.size());
     cs_rpc::need_configResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::need_config, request, response, timeout_);
     return response.value();
@@ -91,14 +91,14 @@ namespace AdServer::CampaignSvcs
   {
     cs_rpc::get_ecpmsRequest request;
     request.set_request_timestamp(
-      reinterpret_cast<const char*>(request_timestamp.get_buffer()), request_timestamp.length());
+      reinterpret_cast<const char*>(request_timestamp.data()), request_timestamp.size());
     cs_rpc::get_ecpmsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_ecpms, request, response, timeout_);
     auto result = std::make_unique<EcpmSeq>();
     try
     {
-      result->length(response.value_size());
-      for (CORBA::ULong i = 0; i < result->length(); ++i)
+      result->resize(response.value_size());
+      for (std::uint32_t i = 0; i < result->size(); ++i)
       {
         CampaignGrpc::unpack(response.value(i), (*result)[i]);
       }
@@ -257,8 +257,8 @@ namespace AdServer::CampaignSvcs
     auto result = std::make_unique<ColocationFlagsSeq>();
     try
     {
-      result->length(response.value_size());
-      for (CORBA::ULong i = 0; i < result->length(); ++i)
+      result->resize(response.value_size());
+      for (std::uint32_t i = 0; i < result->size(); ++i)
       {
         CampaignGrpc::unpack(response.value(i), (*result)[i]);
       }
@@ -275,7 +275,7 @@ namespace AdServer::CampaignSvcs
   {
     cs_rpc::detectorsRequest request;
     request.set_request_timestamp(
-      reinterpret_cast<const char*>(request_timestamp.get_buffer()), request_timestamp.length());
+      reinterpret_cast<const char*>(request_timestamp.data()), request_timestamp.size());
     cs_rpc::detectorsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::detectors, request, response, timeout_);
     auto result = std::make_unique<DetectorsConfig>();

@@ -3,9 +3,7 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Logger/Logger.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
-#include <Commons/CorbaObject.hpp>
 #include "CampaignServerPool.hpp"
 #include "BillStatSource.hpp"
 

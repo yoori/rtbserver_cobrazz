@@ -14,8 +14,7 @@
 
 #include <Commons/DbStateChanger.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServerApi.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 
 #include "CampaignConfig.hpp"
 #include "CampaignConfigDBSource.hpp"
@@ -75,7 +74,7 @@ namespace AdServer::CampaignSvcs
       /*throw(AdServer::CampaignSvcs::CampaignServer::ImplementationException,
         AdServer::CampaignSvcs::CampaignServer::NotReady)*/;
 
-    virtual CORBA::Boolean need_config(const TimestampInfo& req_timestamp)
+    virtual bool need_config(const TimestampInfo& req_timestamp)
       /*throw(AdServer::CampaignSvcs::CampaignServer::ImplementationException)*/;
 
     virtual EcpmSeq* get_ecpms(const TimestampInfo& request_timestamp)
@@ -111,7 +110,7 @@ namespace AdServer::CampaignSvcs
 
     virtual
     AdServer::CampaignSvcs::CampaignServer::PassbackInfo*
-    get_tag_passback(CORBA::ULong tag_id, const char* app_format)
+    get_tag_passback(std::uint32_t tag_id, const char* app_format)
       /*throw(AdServer::CampaignSvcs::CampaignServer::ImplementationException,
         AdServer::CampaignSvcs::CampaignServer::NotReady)*/;
 
@@ -141,7 +140,7 @@ namespace AdServer::CampaignSvcs
 
     virtual
     AdServer::CampaignSvcs::CampaignServer::ColocationPropInfo*
-    get_colocation_prop(CORBA::ULong colo_id)
+    get_colocation_prop(std::uint32_t colo_id)
       /*throw(AdServer::CampaignSvcs::CampaignServer::ImplementationException,
         AdServer::CampaignSvcs::CampaignServer::NotReady)*/;
 

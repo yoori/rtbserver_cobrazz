@@ -6,7 +6,6 @@ target_link_libraries(CommonModule
   PRIVATE
     CampaignServerGrpc
     Commons
-    CORBAConfig
     RequestMatchers
     DomainParser
     Geoip

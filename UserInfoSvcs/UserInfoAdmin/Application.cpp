@@ -19,7 +19,6 @@
 #include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
 
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>

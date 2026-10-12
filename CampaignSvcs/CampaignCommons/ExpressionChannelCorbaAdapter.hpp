@@ -1,9 +1,8 @@
 #pragma once
 
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 
 #include "ExpressionChannel.hpp"
 
@@ -27,7 +26,7 @@ namespace AdServer::CampaignSvcs
     channel_info.type = 'V';
     channel_info.status = 'A';
     channel_info.action_id = 0;
-    channel_info.timestamp = CorbaAlgs::pack_time(timestamp);
+    channel_info.timestamp = GrpcAlgs::pack_time(timestamp);
 
     channel_info.account_id = 0;
     channel_info.flags = 0;
@@ -41,10 +40,10 @@ namespace AdServer::CampaignSvcs
   {
     channel_info.channel_id = channel_params.channel_id;
     channel_info.type = channel_params.type;
-    channel_info.country_code << channel_params.country;
+    channel_info.country_code = channel_params.country;
     channel_info.status = channel_params.status;
     channel_info.action_id = channel_params.action_id;
-    channel_info.timestamp = CorbaAlgs::pack_time(channel_params.timestamp);
+    channel_info.timestamp = GrpcAlgs::pack_time(channel_params.timestamp);
 
     if (channel_params.common_params.in())
     {
@@ -52,7 +51,7 @@ namespace AdServer::CampaignSvcs
       channel_info.flags = channel_params.common_params->flags;
       channel_info.is_public = channel_params.common_params->is_public;
       channel_info.freq_cap_id = channel_params.common_params->freq_cap_id;
-      channel_info.language << channel_params.common_params->language;
+      channel_info.language = channel_params.common_params->language;
     }
     else
     {
@@ -64,7 +63,7 @@ namespace AdServer::CampaignSvcs
 
     if (channel_params.descriptive_params.in())
     {
-      channel_info.name << channel_params.descriptive_params->name;
+      channel_info.name = channel_params.descriptive_params->name;
       channel_info.parent_channel_id = channel_params.descriptive_params->parent_channel_id;
     }
     else
@@ -74,16 +73,15 @@ namespace AdServer::CampaignSvcs
 
     if (channel_params.discover_params.in())
     {
-      channel_info.discover_query << channel_params.discover_params->query;
-      channel_info.discover_annotation << channel_params.discover_params->annotation;
+      channel_info.discover_query = channel_params.discover_params->query;
+      channel_info.discover_annotation = channel_params.discover_params->annotation;
     }
 
     if (channel_params.cmp_params.in())
     {
       channel_info.channel_rate_id = channel_params.cmp_params->channel_rate_id;
-      channel_info.imp_revenue = CorbaAlgs::pack_decimal(channel_params.cmp_params->imp_revenue);
-      channel_info.click_revenue = CorbaAlgs::pack_decimal(
-        channel_params.cmp_params->click_revenue);
+      channel_info.imp_revenue = GrpcAlgs::pack_decimal(channel_params.cmp_params->imp_revenue);
+      channel_info.click_revenue = GrpcAlgs::pack_decimal(channel_params.cmp_params->click_revenue);
     }
     else
     {
@@ -101,7 +99,7 @@ namespace AdServer::CampaignSvcs
     channel_params.country = channel_info.country_code;
     channel_params.status = channel_info.status;
     channel_params.action_id = channel_info.action_id;
-    channel_params.timestamp = CorbaAlgs::unpack_time(channel_info.timestamp);
+    channel_params.timestamp = GrpcAlgs::unpack_time(channel_info.timestamp);
 
     ChannelParams::CommonParams_var common_params(new ChannelParams::CommonParams());
     common_params->account_id = channel_info.account_id;
@@ -124,8 +122,8 @@ namespace AdServer::CampaignSvcs
     {
       ChannelParams::DiscoverParams_var discover_params(
         new ChannelParams::DiscoverParams(
-          channel_info.discover_query,
-          channel_info.discover_annotation));
+          channel_info.discover_query.c_str(),
+          channel_info.discover_annotation.c_str()));
       channel_params.discover_params = discover_params;
     }
 
@@ -134,8 +132,8 @@ namespace AdServer::CampaignSvcs
       ChannelParams::CMPParams_var cmp_params(
         new ChannelParams::CMPParams(
           channel_info.channel_rate_id,
-          CorbaAlgs::unpack_decimal<RevenueDecimal>(channel_info.imp_revenue),
-          CorbaAlgs::unpack_decimal<RevenueDecimal>(channel_info.click_revenue)));
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(channel_info.imp_revenue),
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(channel_info.click_revenue)));
       channel_params.cmp_params = cmp_params;
     }
   }
@@ -172,8 +170,8 @@ namespace AdServer::CampaignSvcs
     }
     else
     {
-      expression_info.sub_channels.length(expression.sub_channels.size());
-      CORBA::ULong ei = 0;
+      expression_info.sub_channels.resize(expression.sub_channels.size());
+      std::uint32_t ei = 0;
       for (ExpressionChannel::Expression::ExpressionArray::const_iterator eit =
             expression.sub_channels.begin();
           eit != expression.sub_channels.end(); ++eit, ++ei)
@@ -210,7 +208,7 @@ namespace AdServer::CampaignSvcs
     }
     else
     {
-      for (CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
+      for (std::uint32_t ei = 0; ei < expression_info.sub_channels.size(); ++ei)
       {
         ExpressionChannel::Expression sub_expr;
         unpack_expression(sub_expr, expression_info.sub_channels[ei], channels);

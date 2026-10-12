@@ -1,5 +1,4 @@
 #include <eh/Exception.hpp>
-#include <tao/SystemException.h>
 
 #include <memory>
 
@@ -334,21 +333,6 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     {
       logger()->log(String::SubString("ChannelServerApp_::main(): "
                     "Got ChannelServerApp_::Exception."),
-                    Logging::Logger::EMERGENCY,
-                    ASPECT,
-                    "ADS-IMPL-11");
-    }
-  }
-  catch (const CORBA::SystemException& e)
-  {
-    try
-    {
-      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-11")
-        << FUN << "Got CORBA::SystemException. : \n" << e;
-    }
-    catch (...)
-    {
-      logger()->log(String::SubString("ChannelServerApp_::main(): " "Got unknown exception."),
                     Logging::Logger::EMERGENCY,
                     ASPECT,
                     "ADS-IMPL-11");

@@ -3,11 +3,8 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Logger/Logger.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include "CampaignConfig.hpp"
 

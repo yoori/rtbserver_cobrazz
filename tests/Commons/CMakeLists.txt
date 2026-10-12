@@ -1,6 +1,9 @@
 add_subdirectory(Grpc)
 add_subdirectory(PmrTests)
 
+add_executable(GrpcAlgsTest GrpcAlgsTest.cpp)
+target_link_libraries(GrpcAlgsTest PRIVATE Generics)
+
 add_executable(AsyncMutexTest
   AsyncMutexTest.cpp
 )

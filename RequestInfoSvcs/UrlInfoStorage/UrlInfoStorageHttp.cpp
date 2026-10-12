@@ -45,7 +45,7 @@ namespace AdServer::RequestInfoSvcs
     }
 
     Commons::StartableAwaitable<Value>
-    execute(UrlInfoStorage& storage, const Value& request, bool write, unsigned int& status)
+    execute(UrlInfoStorage& storage, const Value& request, int operation, unsigned int& status)
     {
       try
       {
@@ -56,7 +56,8 @@ namespace AdServer::RequestInfoSvcs
 
         for (const auto& field : request.struct_value().fields())
         {
-          if (field.first != "url" && !(write && field.first == "text"))
+          if (field.first != "url" && !(operation && field.first == "text") &&
+            !(operation == 2 && field.first == "expected"))
           {
             throw std::invalid_argument("unknown field: " + field.first);
           }
@@ -65,7 +66,12 @@ namespace AdServer::RequestInfoSvcs
         const auto& url = string_field(request, "url");
         Value result;
         auto& fields = *result.mutable_struct_value()->mutable_fields();
-        if (write)
+        if (operation == 2)
+        {
+          fields["updated"].set_bool_value(co_await storage.compare_exchange_url_profile(
+            url, string_field(request, "expected"), string_field(request, "text")));
+        }
+        else if (operation == 1)
         {
           co_await storage.set_url_profile(url, string_field(request, "text"));
         }
@@ -89,7 +95,7 @@ namespace AdServer::RequestInfoSvcs
     }
 
     Commons::StartableAwaitable<HttpServer::Response>
-    handle_request(UrlInfoStorage_var storage, HttpServer::Request request, bool write)
+    handle_request(UrlInfoStorage_var storage, HttpServer::Request request, int operation)
     {
       if (request.method != "POST")
       {
@@ -112,12 +118,12 @@ namespace AdServer::RequestInfoSvcs
         for (const auto& item : input.list_value().values())
         {
           unsigned int item_status = 200;
-          *values->Add() = co_await execute(*storage, item, write, item_status);
+          *values->Add() = co_await execute(*storage, item, operation, item_status);
         }
       }
       else
       {
-        output = co_await execute(*storage, input, write, status);
+        output = co_await execute(*storage, input, operation, status);
       }
 
       co_return HttpServer::Response{status, "application/json", to_json(output)};
@@ -134,6 +140,10 @@ namespace AdServer::RequestInfoSvcs
     server.add_handler("/set_url_profile", [holder](HttpServer::Request request)
     {
       return handle_request(holder, std::move(request), true);
+    });
+    server.add_handler("/compare_exchange_url_profile", [holder](HttpServer::Request request)
+    {
+      return handle_request(holder, std::move(request), 2);
     });
   }
 }

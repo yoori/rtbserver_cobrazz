@@ -5,7 +5,6 @@
 #include<Language/BLogic/NormalizeTrigger.hpp>
 #include <String/Tokenizer.hpp>
 #include <HTTP/UrlAddress.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <ChannelSvcs/ChannelServer/ChannelContainer.hpp>
 #include <ChannelSvcs/ChannelServer/UpdateContainer.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>

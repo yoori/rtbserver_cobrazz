@@ -1,3 +1,4 @@
+#include <Generics/Rand.hpp>
 #include <Frontends/FrontendCommons/Cookies.hpp>
 
 #include "RequestInfoFiller.hpp"

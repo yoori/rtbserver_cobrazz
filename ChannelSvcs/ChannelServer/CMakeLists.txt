@@ -67,7 +67,6 @@ target_link_libraries(ChannelServer
     PkgConfig::Jemalloc
     HTTP
     HttpServer
-    CORBAConfig
     CORBACommons
     Generics
     Logger
@@ -77,7 +76,6 @@ target_link_libraries(ChannelServer
     ChannelServerConfigXSD
     ChannelCommons
     CampaignServerGrpc
-    CorbaTypesIDL
     BLogic
     ChannelContainer
     ChannelServerGrpc

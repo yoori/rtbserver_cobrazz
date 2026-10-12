@@ -1,5 +1,4 @@
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 
 #include "ExecutionTimeTracer.hpp"
 #include "BillStatDBSource.hpp"

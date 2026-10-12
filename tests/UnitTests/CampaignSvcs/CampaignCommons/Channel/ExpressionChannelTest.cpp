@@ -9,7 +9,6 @@
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include <CampaignSvcs/CampaignServer/ExpressionChannelParser.hpp>
 #include <CampaignSvcs/CampaignServer/NonLinkedExpressionChannelCorbaAdapter.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/ChannelMatcher.hpp>
 
 using namespace AdServer::CampaignSvcs;

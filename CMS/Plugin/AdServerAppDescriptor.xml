@@ -97,7 +97,7 @@
       <service
         type="UrlInfoStorage"
         configSchema="xsd/RequestInfoSvcs/UrlInfoStorageApp.xsd"
-        minOccurs="1"
+        minOccurs="0"
         maxOccurs="1"
         minHostOccurs="1"
         maxHostOccurs="1"/>

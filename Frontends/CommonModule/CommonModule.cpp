@@ -1,11 +1,11 @@
+#include <memory>
 #include <Logger/StreamLogger.hpp>
 #include <iostream>
 #include <Language/GenericSegmentor/Polyglot.hpp>
 //#include <Language/ChineeseSegmentor/NLPIR.hpp>
 #include <Language/SegmentorManager/SegmentorManager.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include <unistd.h>
@@ -296,42 +296,42 @@ namespace AdServer
 
         try
         {
-          AdServer::CampaignSvcs::DetectorsConfig_var detectors =
-            campaign_server->detectors(CorbaAlgs::pack_time(matchers_timestamp_));
+          std::unique_ptr<AdServer::CampaignSvcs::DetectorsConfig> detectors(
+            campaign_server->detectors(GrpcAlgs::pack_time(matchers_timestamp_)));
 
-          if (CorbaAlgs::unpack_time(detectors->timestamp) > matchers_timestamp_)
+          if (GrpcAlgs::unpack_time(detectors->timestamp) > matchers_timestamp_)
           {
             FrontendCommons::UrlMatcher_var new_url_matcher(new FrontendCommons::UrlMatcher());
 
-            for (CORBA::ULong i = 0; i < detectors->engines.length(); ++i)
+            for (std::uint32_t i = 0; i < detectors->engines.size(); ++i)
             {
               const AdServer::CampaignSvcs::SearchEngineInfo& se = detectors->engines[i];
 
-              for (CORBA::ULong re_i = 0; re_i < se.regexps.length(); ++re_i)
+              for (std::uint32_t re_i = 0; re_i < se.regexps.size(); ++re_i)
               {
                 new_url_matcher->add_rule(
                   se.id,
-                  se.regexps[re_i].host_postfix,
-                  se.regexps[re_i].regexp,
+                  se.regexps[re_i].host_postfix.c_str(),
+                  se.regexps[re_i].regexp.c_str(),
                   se.regexps[re_i].decoding_depth,
-                  se.regexps[re_i].encoding,
-                  se.regexps[re_i].post_encoding);
+                  se.regexps[re_i].encoding.c_str(),
+                  se.regexps[re_i].post_encoding.c_str());
               }
             }
 
             FrontendCommons::WebBrowserMatcher_var new_web_browser_matcher(
               new FrontendCommons::WebBrowserMatcher());
 
-            for (CORBA::ULong i = 0; i < detectors->web_browsers.length(); ++i)
+            for (std::uint32_t i = 0; i < detectors->web_browsers.size(); ++i)
             {
               const AdServer::CampaignSvcs::WebBrowserInfo& info = detectors->web_browsers[i];
 
-              for (CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
+              for (std::uint32_t det_i = 0; det_i < info.detectors.size(); ++det_i)
               {
                 new_web_browser_matcher->add_rule(
                   String::SubString(info.name),
-                  info.detectors[det_i].marker,
-                  info.detectors[det_i].regexp,
+                  info.detectors[det_i].marker.c_str(),
+                  info.detectors[det_i].regexp.c_str(),
                   info.detectors[det_i].regexp_required,
                   info.detectors[det_i].priority);
               }
@@ -340,26 +340,26 @@ namespace AdServer
             FrontendCommons::PlatformMatcher_var new_platform_matcher(
               new FrontendCommons::PlatformMatcher());
 
-            for (CORBA::ULong i = 0; i < detectors->platforms.length(); ++i)
+            for (std::uint32_t i = 0; i < detectors->platforms.size(); ++i)
             {
               const AdServer::CampaignSvcs::PlatformInfo& info = detectors->platforms[i];
 
-              for (CORBA::ULong det_i = 0; det_i < info.detectors.length(); ++det_i)
+              for (std::uint32_t det_i = 0; det_i < info.detectors.size(); ++det_i)
               {
                 new_platform_matcher->add_rule(
                   info.platform_id,
                   String::SubString(info.name),
-                  info.type,
-                  info.detectors[det_i].use_name,
-                  info.detectors[det_i].marker,
-                  info.detectors[det_i].match_regexp,
-                  info.detectors[det_i].output_regexp,
+                  info.type.c_str(),
+                  info.detectors[det_i].use_name.c_str(),
+                  info.detectors[det_i].marker.c_str(),
+                  info.detectors[det_i].match_regexp.c_str(),
+                  info.detectors[det_i].output_regexp.c_str(),
                   info.detectors[det_i].priority);
               }
             }
 
             // create new search engine matcher for received rules
-            matchers_timestamp_ = CorbaAlgs::unpack_time(detectors->timestamp);
+            matchers_timestamp_ = GrpcAlgs::unpack_time(detectors->timestamp);
 
             SyncPolicy::WriteGuard lock(matchers_lock_);
             url_matcher_.swap(new_url_matcher);
@@ -367,13 +367,6 @@ namespace AdServer
             platform_matcher_.swap(new_platform_matcher);
           }
           return;
-        }
-        catch (const CORBA::SystemException& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught CORBA::SystemException: " << e;
-          campaign_server.release_bad(ostr.str());
-          logger()->log(ostr.str(), Logging::Logger::CRITICAL, Aspect::COMMON_MODULE, "ADS-ICON-6");
         }
         catch (const AdServer::CampaignSvcs::CampaignServer::NotReady& )
         {
@@ -385,7 +378,7 @@ namespace AdServer
         catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.description;
+          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.what();
           campaign_server.release_bad(ostr.str());
           logger()->log(ostr.str(), Logging::Logger::ERROR, Aspect::COMMON_MODULE, "ADS-IMPL-121");
         }
@@ -399,12 +392,13 @@ namespace AdServer
     }
   }
 
-  AdServer::CampaignSvcs::ColocationFlagsSeq_var
-  CommonModule::get_colocation_flags(unsigned service_index) /*throw(Exception)*/
+  std::unique_ptr<AdServer::CampaignSvcs::ColocationFlagsSeq>
+  CommonModule::get_colocation_flags(unsigned service_index)
+    /*throw(Exception)*/
   {
     static const char* FUN = "CommonModule::get_colocation_flags()";
 
-    AdServer::CampaignSvcs::ColocationFlagsSeq_var result;
+    std::unique_ptr<AdServer::CampaignSvcs::ColocationFlagsSeq> result;
 
     try
     {
@@ -421,14 +415,8 @@ namespace AdServer
 
         try
         {
-          result = campaign_server->get_colocation_flags();
+          result.reset(campaign_server->get_colocation_flags());
           return result;
-        }
-        catch (const CORBA::SystemException& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught CORBA::SystemException: " << e;
-          campaign_server.release_bad(ostr.str());
         }
         catch (const AdServer::CampaignSvcs::CampaignServer::NotReady& )
         {
@@ -437,7 +425,7 @@ namespace AdServer
         catch (const AdServer::CampaignSvcs::CampaignServer::ImplementationException& ex)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.description;
+          ostr << FUN << ": Caught CampaignServer::ImplementationException: " << ex.what();
           campaign_server.release_bad(ostr.str());
         }
       }

@@ -95,8 +95,6 @@ add_executable(RequestInfoManager
 target_link_libraries(RequestInfoManager
   PRIVATE
     PkgConfig::Jemalloc
-    CampaignCommonsIDL
-    CorbaTypesIDL
     CORBACommons
     Generics
     GrpcBatch
@@ -108,7 +106,6 @@ target_link_libraries(RequestInfoManager
     HTTP
     HttpServer
     Logger
-    CORBAConfig
     RequestInfoManagerConfigXSD
     BillingProcessor
     PassbackContainer

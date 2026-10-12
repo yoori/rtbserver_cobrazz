@@ -12,12 +12,11 @@
 #include <String/UTF8Case.hpp>
 #include <Generics/Uuid.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/FastJsonParser.hpp>
 
 #include <LogCommons/AdRequestLogger.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
 #include "CampaignManagerCore.hpp"
 #include "CampaignManagerDeclarations.hpp"

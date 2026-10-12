@@ -1,9 +1,7 @@
 #pragma once
 
-#include <Commons/CorbaAlgs.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include "NonLinkedExpressionChannel.hpp"
@@ -41,8 +39,8 @@ namespace AdServer::CampaignSvcs
   {
     expression_info.operation = expression.op;
     expression_info.channel_id = expression.channel_id;
-    expression_info.sub_channels.length(expression.sub_channels.size());
-    CORBA::ULong ei = 0;
+    expression_info.sub_channels.resize(expression.sub_channels.size());
+    std::uint32_t ei = 0;
     for (NonLinkedExpressionChannel::Expression::ExpressionArray::const_iterator eit =
           expression.sub_channels.begin();
         eit != expression.sub_channels.end(); ++eit, ++ei)
@@ -58,7 +56,7 @@ namespace AdServer::CampaignSvcs
   {
     expression.op = static_cast<NonLinkedExpressionChannel::Operation>(expression_info.operation);
     expression.channel_id = expression_info.channel_id;
-    for (CORBA::ULong ei = 0; ei < expression_info.sub_channels.length(); ++ei)
+    for (std::uint32_t ei = 0; ei < expression_info.sub_channels.size(); ++ei)
     {
       NonLinkedExpressionChannel::Expression sub_expr;
       unpack_non_linked_expression(sub_expr, expression_info.sub_channels[ei]);

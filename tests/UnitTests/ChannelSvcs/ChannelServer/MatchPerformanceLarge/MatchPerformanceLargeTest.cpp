@@ -8,7 +8,6 @@
 #include <Generics/Rand.hpp>
 #include <Generics/Time.hpp>
 #include <Stream/MemoryStream.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>

@@ -4,7 +4,7 @@
 #include <eh/Exception.hpp>
 #include <Generics/Values.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace AdServer

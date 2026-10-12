@@ -1,4 +1,5 @@
-#include <Commons/CorbaAlgs.hpp>
+#include <memory>
+#include <Commons/GrpcAlgs.hpp>
 
 #include "BillStatServerSource.hpp"
 
@@ -45,21 +46,10 @@ namespace AdServer::CampaignSvcs
 
         try
         {
-          AdServer::CampaignSvcs::BillStatInfo_var bill_stat = campaign_server->get_bill_stat();
+          std::unique_ptr<AdServer::CampaignSvcs::BillStatInfo> bill_stat(
+            campaign_server->get_bill_stat());
 
           return convert_update_(*bill_stat, now);
-        }
-        catch(const CORBA::SystemException& e)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught CORBA exception on update config: " << e;
-
-          campaign_server.release_bad(ostr.str());
-
-          logger_->log(ostr.str(),
-            Logging::Logger::ERROR,
-            Aspect::BILL_STAT_SERVER_SOURCE,
-            "ADS-ECON-6");
         }
         catch(const AdServer::CampaignSvcs::CampaignServer::NotReady& )
         {
@@ -104,7 +94,7 @@ namespace AdServer::CampaignSvcs
   {
     BillStatSource::Stat_var stat(new BillStatSource::Stat());
 
-    for (CORBA::ULong i = 0; i < update.accounts.length(); ++i)
+    for (std::uint32_t i = 0; i < update.accounts.size(); ++i)
     {
       auto& account_info = update.accounts[i];
       BillStatSource::Stat::Account new_account;
@@ -112,7 +102,7 @@ namespace AdServer::CampaignSvcs
       stat->accounts.insert(std::make_pair(account_info.account_id, new_account));
     }
 
-    for (CORBA::ULong i = 0; i < update.campaigns.length(); ++i)
+    for (std::uint32_t i = 0; i < update.campaigns.size(); ++i)
     {
       auto& campaign_info = update.campaigns[i];
       BillStatSource::Stat::Campaign new_campaign;
@@ -121,7 +111,7 @@ namespace AdServer::CampaignSvcs
       stat->campaigns.insert(std::make_pair(campaign_info.campaign_id, new_campaign));
     }
 
-    for (CORBA::ULong i = 0; i < update.ccgs.length(); ++i)
+    for (std::uint32_t i = 0; i < update.ccgs.size(); ++i)
     {
       auto& ccg_info = update.ccgs[i];
       BillStatSource::Stat::CCG new_ccg;
@@ -139,16 +129,16 @@ namespace AdServer::CampaignSvcs
     noexcept
   {
     amount_distribution.prev_days_amount =
-      CorbaAlgs::unpack_decimal<RevenueDecimal>(amount_distribution_info.prev_days_amount.amount);
-    amount_distribution.prev_day = CorbaAlgs::unpack_time(
+      GrpcAlgs::unpack_decimal<RevenueDecimal>(amount_distribution_info.prev_days_amount.amount);
+    amount_distribution.prev_day = GrpcAlgs::unpack_time(
       amount_distribution_info.prev_days_amount.day);
 
-    for (CORBA::ULong i = 0; i < amount_distribution_info.day_amounts.length(); ++i)
+    for (std::uint32_t i = 0; i < amount_distribution_info.day_amounts.size(); ++i)
     {
       auto& day_info = amount_distribution_info.day_amounts[i];
       amount_distribution.day_amounts.insert(std::make_pair(
-        CorbaAlgs::unpack_time(day_info.day),
-        CorbaAlgs::unpack_decimal<RevenueDecimal>(day_info.amount)));
+        GrpcAlgs::unpack_time(day_info.day),
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount)));
     }
   }
 
@@ -159,26 +149,26 @@ namespace AdServer::CampaignSvcs
     noexcept
   {
     amount_count_distribution.prev_days_amount =
-      CorbaAlgs::unpack_decimal<RevenueDecimal>(
+      GrpcAlgs::unpack_decimal<RevenueDecimal>(
         amount_count_distribution_info.prev_days_amount_count.amount);
     amount_count_distribution.prev_days_imps =
-      CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
+      GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
         amount_count_distribution_info.prev_days_amount_count.imps);
     amount_count_distribution.prev_days_clicks =
-      CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
+      GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
         amount_count_distribution_info.prev_days_amount_count.clicks);
-    amount_count_distribution.prev_day = CorbaAlgs::unpack_time(
+    amount_count_distribution.prev_day = GrpcAlgs::unpack_time(
       amount_count_distribution_info.prev_days_amount_count.day);
 
-    for (CORBA::ULong i = 0; i < amount_count_distribution_info.day_amount_counts.length(); ++i)
+    for (std::uint32_t i = 0; i < amount_count_distribution_info.day_amount_counts.size(); ++i)
     {
       auto& day_info = amount_count_distribution_info.day_amount_counts[i];
       amount_count_distribution.day_amount_counts.insert(std::make_pair(
-        CorbaAlgs::unpack_time(day_info.day),
+        GrpcAlgs::unpack_time(day_info.day),
         Stat::AmountCount(
-          CorbaAlgs::unpack_decimal<RevenueDecimal>(day_info.amount),
-          CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps),
-          CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount),
+          GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps),
+          GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
           ))
         );
     }

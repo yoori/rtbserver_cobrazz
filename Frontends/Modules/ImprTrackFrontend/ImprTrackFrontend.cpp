@@ -6,6 +6,7 @@
 
 #include <google/protobuf/arena.h>
 
+#include <Generics/Rand.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
 #include <String/AsciiStringManip.hpp>

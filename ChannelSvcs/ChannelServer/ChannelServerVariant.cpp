@@ -1,4 +1,5 @@
 
+#include <memory>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -9,15 +10,14 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/ArrayAutoPtr.hpp>
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Postgres/ResultSet.hpp>
 #include<Commons/Postgres/Lob.hpp>
 #include <ChannelSvcs/ChannelCommons/CommonTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateTypes.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
 #include "ChannelServerVariant.hpp"
 #include "ChannelServerCore.hpp"
@@ -183,12 +183,12 @@ namespace AdServer::ChannelSvcs
         throw ChannelServerException::NotReady("Empty sources");
       }
 
-      const CORBA::ULong COUNT_PORTIONS = 20;
-      AdServer::CampaignSvcs::ChannelServerChannelAnswer_var res;
-      CORBA::ULong portion = 0;
+      const std::uint32_t COUNT_PORTIONS = 20;
+      std::unique_ptr<AdServer::CampaignSvcs::ChannelServerChannelAnswer> res;
+      std::uint32_t portion = 0;
       AdServer::CampaignSvcs::CampaignServer::GetSimpleChannelsInfo settings;
       settings.portions_number = COUNT_PORTIONS;
-      settings.channel_statuses << String::SubString("AIW");
+      settings.channel_statuses = "AIW";
       ChannelIdToMatchInfo_var info_ptr = new ChannelIdToMatchInfo;
       for (;;)
       {
@@ -206,7 +206,7 @@ namespace AdServer::ChannelSvcs
           for (; portion < COUNT_PORTIONS; ++portion)
           {
             settings.portion = portion;
-            res = campaign_server->chsv_simple_channels(settings);
+            res.reset(campaign_server->chsv_simple_channels(settings));
             process_portion_(res->simple_channels, *info_ptr);
           }
           break;
@@ -214,7 +214,7 @@ namespace AdServer::ChannelSvcs
         catch(const AdServer::CampaignSvcs::CampaignServer::ImplementationException& e)
         {
           Stream::Error ostr;
-          ostr << FUN << ": CampaignServer::ImplementationException: " << e.description;
+          ostr << FUN << ": CampaignServer::ImplementationException: " << e.what();
           campaign_server.release_bad(ostr.str());
           logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT);
         }
@@ -222,17 +222,10 @@ namespace AdServer::ChannelSvcs
         {
           campaign_server.release_bad(String::SubString("CampaignServer is not ready"));
         }
-        catch (const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": caught CORBA::SystemException at get_channels(): " << ex;
-          campaign_server.release_bad(ostr.str());
-          logger_->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-ICON-1");
-        }
       }
 
       update_data->cost_limit =
-        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(res->cost_limit);
+        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(res->cost_limit);
       add_special_(c_special_track, *info_ptr);
       add_special_(c_special_adv, *info_ptr);
       update_data->info_ptr = info_ptr;
@@ -254,7 +247,7 @@ namespace AdServer::ChannelSvcs
     ChannelIdToMatchInfo& info)
     /*throw(eh::Exception)*/
   {
-    for (CORBA::ULong i = 0; i < channels.length(); ++i)
+    for (std::uint32_t i = 0; i < channels.size(); ++i)
     {
       if ((channels[i].channel_type == 'A' && channels[i].status != 'A') ||
           channels[i].channel_type == 'W' ||
@@ -273,7 +266,7 @@ namespace AdServer::ChannelSvcs
       {
         ch.mark_type(Channel::CT_BLACK_LIST);
       }
-      for (CORBA::ULong j = 0; j < channels[i].behave_info.length(); ++j)
+      for (std::uint32_t j = 0; j < channels[i].behave_info.size(); ++j)
       {
         size_t index_type;
         bool ignore = false;

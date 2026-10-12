@@ -7,16 +7,14 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
 #include <Logger/Logger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/LogProcessing/ExpressionMatcherConfig.hpp>

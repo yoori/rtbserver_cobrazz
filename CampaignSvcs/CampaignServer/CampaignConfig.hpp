@@ -11,11 +11,9 @@
 #include <Generics/SimpleDecimal.hpp>
 
 #include <Commons/GranularContainer.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/Algs.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignCommons_s.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -236,8 +234,8 @@ namespace AdServer::CampaignSvcs
       const char* version_id_val,
       char status_val,
       const SystemOptions& sys_options_val,
-      const CampaignSvcs_v360::OptionValueSeq& tokens_val = OptionValueSeq(),
-      const CampaignSvcs_v360::CreativeCategoryIdSeq& categories_val =
+      const CampaignSvcs::OptionValueSeq& tokens_val = OptionValueSeq(),
+      const CampaignSvcs::CreativeCategoryIdSeq& categories_val =
         CreativeCategoryIdSeq())
       /*throw(eh::Exception)*/;
 
@@ -1688,12 +1686,13 @@ namespace AdServer::CampaignSvcs
       initial_contract_id(0),
       sys_options(sys_options_val)
   {
-    for (CORBA::ULong token_i = 0; token_i < tokens_val.length(); ++token_i)
+    for (std::uint32_t token_i = 0; token_i < tokens_val.size(); ++token_i)
     {
-      tokens.insert(std::make_pair(tokens_val[token_i].option_id, tokens_val[token_i].value.in()));
+      tokens.insert(
+        std::make_pair(tokens_val[token_i].option_id, tokens_val[token_i].value.c_str()));
     }
 
-    CorbaAlgs::convert_sequence(categories_val, categories);
+    categories.insert(categories_val.begin(), categories_val.end());
   }
 
 

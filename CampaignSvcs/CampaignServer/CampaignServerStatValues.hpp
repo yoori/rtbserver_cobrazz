@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Generics/Time.hpp>
-#include <CORBACommons/StatsImpl.hpp>
+#include <Generics/Values.hpp>
 
 namespace AdServer::CampaignSvcs
 {

@@ -111,8 +111,6 @@ target_link_libraries(CampaignConfigSource
     Generics
     HTTP
     CORBACommons
-    CampaignCommonsIDL
-    CorbaTypesIDL
     CampaignServerGrpc
     CampaignConfig
     CampaignIndex
@@ -255,12 +253,9 @@ target_link_libraries(CampaignManager
     HttpServer
     CORBACommons
     Commons
-    CORBAConfig
     AdServerCommonsXSD
     CampaignManagerConfigXSD
-    CampaignCommonsIDL
     CampaignServerGrpc
-    CorbaTypesIDL
     ProcessControlIDL
     CampaignTypes
     ExpressionChannelIndex

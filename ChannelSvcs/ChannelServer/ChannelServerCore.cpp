@@ -29,14 +29,11 @@
 
 
 #include <Commons/Constants.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/PathManip.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateStatLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 //#include <ChannelSvcs/ChannelServer/ChannelServer_s.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>

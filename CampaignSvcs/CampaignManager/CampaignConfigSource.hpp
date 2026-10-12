@@ -2,12 +2,9 @@
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 #include <Generics/FileCache.hpp>
 
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include "DomainParser.hpp"
 #include "CampaignConfig.hpp"

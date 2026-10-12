@@ -229,11 +229,6 @@ BillingServerApp_::main(int argc, char** argv)
     logger()->sstream(Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-58") << FUN <<
       ": Got BillingServerApp_::Exception: " << e.what();
   }
-  catch(const CORBA::SystemException& e)
-  {
-    logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<
-      ": Got CORBA::SystemException: " << e;
-  }
   catch(const eh::Exception& e)
   {
     logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-59") << FUN <<

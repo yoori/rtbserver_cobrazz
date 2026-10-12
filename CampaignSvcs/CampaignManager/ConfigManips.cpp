@@ -6,13 +6,13 @@
 #include <Generics/Time.hpp>
 #include <Stream/MemoryStream.hpp>
 
-#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/PathManip.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include <CampaignSvcs/CampaignCommons/CorbaCampaignTypes.hpp>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
 #include "CampaignManagerCore.hpp"
 #include "CampaignManagerLogger.hpp"
@@ -605,27 +605,27 @@ namespace AdServer::CampaignSvcs
   {
     contract_info.contract_id = contract.contract_id;
 
-    contract_info.number << contract.number;
-    contract_info.date << contract.date;
-    contract_info.type << contract.type;
+    contract_info.number = contract.number;
+    contract_info.date = contract.date;
+    contract_info.type = contract.type;
     contract_info.vat_included = contract.vat_included;
     contract_info.parent_contract_id = contract.parent_contract ?
       contract.parent_contract->contract_id : 0;
 
-    contract_info.ord_contract_id << contract.ord_contract_id;
-    contract_info.ord_ado_id << contract.ord_ado_id;
-    contract_info.subject_type << contract.subject_type;
-    contract_info.action_type << contract.action_type;
+    contract_info.ord_contract_id = contract.ord_contract_id;
+    contract_info.ord_ado_id = contract.ord_ado_id;
+    contract_info.subject_type = contract.subject_type;
+    contract_info.action_type = contract.action_type;
     contract_info.agent_acting_for_publisher = contract.agent_acting_for_publisher;
 
-    contract_info.client_id << contract.client_id;
-    contract_info.client_name << contract.client_name;
-    contract_info.client_legal_form << contract.client_legal_form;
+    contract_info.client_id = contract.client_id;
+    contract_info.client_name = contract.client_name;
+    contract_info.client_legal_form = contract.client_legal_form;
 
-    contract_info.contractor_id << contract.contractor_id;
-    contract_info.contractor_name << contract.contractor_name;
-    contract_info.contractor_legal_form << contract.contractor_legal_form;
-    contract_info.timestamp = CorbaAlgs::pack_time(contract.timestamp);
+    contract_info.contractor_id = contract.contractor_id;
+    contract_info.contractor_name = contract.contractor_name;
+    contract_info.contractor_legal_form = contract.contractor_legal_form;
+    contract_info.timestamp = GrpcAlgs::pack_time(contract.timestamp);
   }
 
   void

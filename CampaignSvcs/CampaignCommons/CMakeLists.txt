@@ -1,10 +1,3 @@
-add_idl(CampaignCommonsIDL CampaignCommons.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignCommons NO_SERVANT)
-
-target_link_libraries(CampaignCommonsIDL
-  PUBLIC
-    CorbaTypesIDL
-)
-
 add_library(CampaignTypes SHARED
   CampaignTypes.cpp
 )

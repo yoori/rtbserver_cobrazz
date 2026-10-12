@@ -73,12 +73,9 @@ target_link_libraries(UserInfoManager
     PkgConfig::Jemalloc
     AdServerCommonsXSD
     Allocator
-    CampaignCommonsIDL
     CampaignServerGrpc
     Commons
-    CorbaTypesIDL
     CORBACommons
-    CORBAConfig
     Generics
     GrpcBatch
     HttpServer

@@ -3,6 +3,7 @@
 
 #include <string_view>
 #include <utility>
+#include <Generics/Rand.hpp>
 #include <Generics/Uuid.hpp>
 
 #include <google/protobuf/arena.h>

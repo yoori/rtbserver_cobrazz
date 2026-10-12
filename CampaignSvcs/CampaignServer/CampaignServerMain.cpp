@@ -7,7 +7,6 @@
 
 #include <Logger/StreamLogger.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/PathManip.hpp>
@@ -188,13 +187,6 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
     ostr << "CampaignServerApp_::main(): "
       "Got CampaignServerApp_::Exception: " << e.what();
     logger()->log(ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-150");
-  }
-  catch (const CORBA::SystemException& e)
-  {
-    Stream::Error ostr;
-    ostr << "CampaignServerApp_::main(): "
-      "Got CORBA::SystemException: " << e;
-    logger()->log(ostr.str(), Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-150");
   }
   catch (const eh::Exception& e)
   {

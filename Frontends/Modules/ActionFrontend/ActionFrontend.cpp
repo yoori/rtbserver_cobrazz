@@ -4,6 +4,7 @@
 #include <string_view>
 #include <utility>
 
+#include <Generics/Rand.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Logger/StreamLogger.hpp>

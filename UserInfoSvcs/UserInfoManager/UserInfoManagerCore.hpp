@@ -23,7 +23,6 @@
 #include <Commons/Coro/StartableAwaitable.hpp>
 #include <Commons/UserInfoManip.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <UserInfoSvcs/UserInfoCommons/ChannelMatcher.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>

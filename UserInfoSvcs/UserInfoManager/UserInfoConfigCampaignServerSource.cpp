@@ -1,14 +1,10 @@
+#include <memory>
 #include "UserInfoConfigCampaignServerSource.hpp"
 
 #include <list>
 #include <map>
 
-#include <Commons/CorbaAlgs.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/FreqCap.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
 
 #include "UserInfoManagerCore.hpp"
@@ -134,17 +130,17 @@ namespace
   void
   apply_freq_caps_(
     AdServer::UserInfoSvcs::FreqCapConfig& freq_cap_config,
-    const AdServer::CampaignSvcs_v360::FreqCapConfigInfo& freq_cap_config_info,
+    const AdServer::CampaignSvcs::FreqCapConfigInfo& freq_cap_config_info,
     const Generics::Time& confirm_timeout)
     noexcept
   {
     freq_cap_config.confirm_timeout = confirm_timeout;
-    const CORBA::ULong freq_caps_length = freq_cap_config_info.freq_caps.length();
+    const std::uint32_t freq_caps_length = freq_cap_config_info.freq_caps.size();
     freq_cap_config.freq_caps.reserve(freq_caps_length);
 
-    for (CORBA::ULong i = 0; i < freq_caps_length; ++i)
+    for (std::uint32_t i = 0; i < freq_caps_length; ++i)
     {
-      const AdServer::CampaignSvcs_v360::FreqCapInfo& fc = freq_cap_config_info.freq_caps[i];
+      const AdServer::CampaignSvcs::FreqCapInfo& fc = freq_cap_config_info.freq_caps[i];
       AdServer::Commons::FreqCap freq_cap;
       freq_cap.fc_id = fc.fc_id;
       freq_cap.lifelimit = fc.lifelimit;
@@ -154,8 +150,9 @@ namespace
       freq_cap_config.freq_caps.emplace(freq_cap.fc_id, freq_cap);
     }
 
-    freq_cap_config.campaign_ids.reserve(freq_cap_config_info.campaign_ids.length());
-    CorbaAlgs::convert_sequence(freq_cap_config_info.campaign_ids, freq_cap_config.campaign_ids);
+    freq_cap_config.campaign_ids.reserve(freq_cap_config_info.campaign_ids.size());
+    freq_cap_config.campaign_ids.insert(
+      freq_cap_config_info.campaign_ids.begin(), freq_cap_config_info.campaign_ids.end());
   }
 
   AdServer::UserInfoSvcs::UserInfoConfigSourcePtr
@@ -266,16 +263,16 @@ namespace AdServer::UserInfoSvcs
         for (unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
         {
           settings.portion = portion;
-          CampaignSvcs::BriefSimpleChannelAnswer_var channels_to_load =
-            campaign_server->brief_simple_channels(settings);
+          std::unique_ptr<CampaignSvcs::BriefSimpleChannelAnswer> channels_to_load(
+            campaign_server->brief_simple_channels(settings));
 
-          const CORBA::ULong simple_channels_length = channels_to_load->simple_channels.length();
+          const std::uint32_t simple_channels_length = channels_to_load->simple_channels.size();
           res_length += simple_channels_length;
           config.channels_config->channel_features.reserve(
             config.channels_config->channel_features.size() +
             simple_channels_length);
 
-          for (CORBA::ULong i = 0; i < simple_channels_length; ++i)
+          for (std::uint32_t i = 0; i < simple_channels_length; ++i)
           {
             const CampaignSvcs::BriefSimpleChannelKey& channel =
               channels_to_load->simple_channels[i];
@@ -284,22 +281,22 @@ namespace AdServer::UserInfoSvcs
               channel.channel_id,
               channel.discover,
               channel.behav_param_list_id,
-              channel.str_behav_param_list_id));
+              channel.str_behav_param_list_id.c_str()));
 
-            CorbaAlgs::convert_sequence(
-              channel.categories,
-              config.channels_config->channel_categories[channel.channel_id]);
+            auto& categories = config.channels_config->channel_categories[channel.channel_id];
+            categories.insert(
+              categories.end(), channel.categories.begin(), channel.categories.end());
 
             config.channels_config->channel_features.insert(std::make_pair(
               channel.channel_id,
               ChannelFeatures(channel.discover, channel.threshold)));
           }
 
-          for (CORBA::ULong i = 0; i < channels_to_load->behav_params.length(); ++i)
+          for (std::uint32_t i = 0; i < channels_to_load->behav_params.size(); ++i)
           {
             const CampaignSvcs::BriefBehavParamInfo& bpi = channels_to_load->behav_params[i];
 
-            if (bpi.bp_seq.length() != 0)
+            if (bpi.bp_seq.size() != 0)
             {
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
@@ -307,7 +304,7 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
-              for (CORBA::ULong j = 0; j < bpi.bp_seq.length(); ++j)
+              for (std::uint32_t j = 0; j < bpi.bp_seq.size(); ++j)
               {
                 const CampaignSvcs::BehavParameter& bp = bpi.bp_seq[j];
 
@@ -421,12 +418,12 @@ namespace AdServer::UserInfoSvcs
             }
           }
 
-          for (CORBA::ULong i = 0; i < channels_to_load->key_behav_params.length(); ++i)
+          for (std::uint32_t i = 0; i < channels_to_load->key_behav_params.size(); ++i)
           {
             const CampaignSvcs::BriefKeyBehavParamInfo& kbpi =
               channels_to_load->key_behav_params[i];
 
-            if (kbpi.bp_seq.length() != 0)
+            if (kbpi.bp_seq.size() != 0)
             {
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
@@ -434,7 +431,7 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
-              for (CORBA::ULong j = 0; j < kbpi.bp_seq.length(); ++j)
+              for (std::uint32_t j = 0; j < kbpi.bp_seq.size(); ++j)
               {
                 const CampaignSvcs::BehavParameter& bp = kbpi.bp_seq[j];
 
@@ -538,14 +535,16 @@ namespace AdServer::UserInfoSvcs
                 url_keyword_cip,
                 audience_cip);
 
-              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id, PAGE_CHANNEL)] = page_cip;
-              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id, URL_CHANNEL)] = url_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id, URL_KEYWORD_CHANNEL)] = url_keyword_cip;
+                kbpi.id.c_str(), PAGE_CHANNEL)] = page_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id, SEARCH_CHANNEL)] = search_cip;
+                kbpi.id.c_str(), URL_CHANNEL)] = url_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id, AUDIENCE_CHANNEL)] = audience_cip;
+                kbpi.id.c_str(), URL_KEYWORD_CHANNEL)] = url_keyword_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(
+                kbpi.id.c_str(), SEARCH_CHANNEL)] = search_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(
+                kbpi.id.c_str(), AUDIENCE_CHANNEL)] = audience_cip;
             }
           }
         }
@@ -652,7 +651,8 @@ namespace AdServer::UserInfoSvcs
             "ADS-IMPL-55");
         }
 
-        CampaignSvcs::FreqCapConfigInfo_var freq_cap_config_info = campaign_server->freq_caps();
+        std::unique_ptr<CampaignSvcs::FreqCapConfigInfo> freq_cap_config_info(
+          campaign_server->freq_caps());
 
         apply_freq_caps_(*config.freq_cap_config, *freq_cap_config_info, confirm_timeout_);
 
@@ -665,31 +665,19 @@ namespace AdServer::UserInfoSvcs
           Logging::Logger::NOTICE,
           Aspect::USER_INFO_MANAGER,
           "ADS-ICON-10") << FUN << ": Can't update channels configuration. "
-          "Campaign Server is not ready. Caught CampaignServer::NotReady: " << ex.description;
+          "Campaign Server is not ready. Caught CampaignServer::NotReady: " << ex.what();
       }
       catch (const CampaignSvcs::CampaignServer::ImplementationException& exc)
       {
         Stream::Error ostr;
         ostr << FUN << ": Can't update channels configuration. "
-          "Caught CampaignServer::ImplementationException: " << exc.description;
+          "Caught CampaignServer::ImplementationException: " << exc.what();
         campaign_server.release_bad(ostr.str());
         logger_->log(
           ostr.str(),
           Logging::Logger::EMERGENCY,
           Aspect::USER_INFO_MANAGER,
           "ADS-IMPL-56");
-      }
-      catch (const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't update channels configuration. "
-          "Caught CORBA::SystemException: " << ex;
-        campaign_server.release_bad(ostr.str());
-        logger_->log(
-          ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::USER_INFO_MANAGER,
-          "ADS-ICON-10");
       }
     }
   }

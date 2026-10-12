@@ -216,7 +216,7 @@ namespace
         case F::CPPTYPE_STRING:
         {
           const std::string value = field->type() == F::TYPE_BYTES ?
-            std::string(packed_sizes.at(key), '\x81') : "value-кириллица";
+            std::string(packed_sizes.at(key), '\x81') : std::string("value\0", 6) + "кириллица";
           if (repeated)
           {
             reflection->AddString(&message, field, value);
@@ -358,8 +358,8 @@ namespace
       native_fixture<CampaignConfigUpdateInfo, rpc::CampaignConfigUpdateInfo>());
     if (large_count)
     {
-      result->sizes.length(large_count);
-      for (CORBA::ULong i = 0; i < result->sizes.length(); ++i)
+      result->sizes.resize(large_count);
+      for (std::uint32_t i = 0; i < result->sizes.size(); ++i)
       {
         CampaignGrpc::unpack(fixture<rpc::SizeInfo>(), result->sizes[i]);
       }
@@ -371,16 +371,19 @@ namespace
   bool Source::need_config(const TimestampInfo& req_timestamp)
   {
     check();
-    require(req_timestamp.length() == 8 && req_timestamp[0] == 129, "request timestamp");
+    require(req_timestamp.size() == 8 && static_cast<unsigned char>(req_timestamp[0]) == 129,
+      "request timestamp");
     return true;
   }
 
   EcpmSeq* Source::get_ecpms(const TimestampInfo& request_timestamp)
   {
     check();
-    require(request_timestamp.length() == 8 && request_timestamp[0] == 129, "request timestamp");
+    require(request_timestamp.size() == 8 &&
+      static_cast<unsigned char>(request_timestamp[0]) == 129,
+      "request timestamp");
     auto result = std::make_unique<EcpmSeq>();
-    result->length(1);
+    result->resize(1);
     CampaignGrpc::unpack(fixture<rpc::CampaignEcpmInfo>(), (*result)[0]);
     return result.release();
   }
@@ -441,7 +444,7 @@ namespace
   {
     check();
     auto result = std::make_unique<ColocationFlagsSeq>();
-    result->length(1);
+    result->resize(1);
     CampaignGrpc::unpack(fixture<rpc::ColocationFlags>(), (*result)[0]);
     return result.release();
   }
@@ -449,7 +452,9 @@ namespace
   DetectorsConfig* Source::detectors(const TimestampInfo& request_timestamp)
   {
     check();
-    require(request_timestamp.length() == 8 && request_timestamp[0] == 129, "request timestamp");
+    require(request_timestamp.size() == 8 &&
+      static_cast<unsigned char>(request_timestamp[0]) == 129,
+      "request timestamp");
     return native_fixture<DetectorsConfig, rpc::DetectorsConfig>();
   }
 
@@ -494,17 +499,17 @@ namespace
 
     {
       TimestampInfo req_timestamp;
-      req_timestamp.length(8);
-      std::fill_n(req_timestamp.get_buffer(), 8, 129);
+      req_timestamp.resize(8);
+      std::fill_n(req_timestamp.data(), 8, 129);
       require(client.need_config(req_timestamp), "need_config");
     }
 
     {
       TimestampInfo request_timestamp;
-      request_timestamp.length(8);
-      std::fill_n(request_timestamp.get_buffer(), 8, 129);
+      request_timestamp.resize(8);
+      std::fill_n(request_timestamp.data(), 8, 129);
       std::unique_ptr<EcpmSeq> result(client.get_ecpms(request_timestamp));
-      require(result->length() == 1, "sequence response");
+      require(result->size() == 1, "sequence response");
       check_value<rpc::CampaignEcpmInfo>((*result)[0]);
     }
 
@@ -555,14 +560,14 @@ namespace
 
     {
       std::unique_ptr<ColocationFlagsSeq> result(client.get_colocation_flags());
-      require(result->length() == 1, "sequence response");
+      require(result->size() == 1, "sequence response");
       check_value<rpc::ColocationFlags>((*result)[0]);
     }
 
     {
       TimestampInfo request_timestamp;
-      request_timestamp.length(8);
-      std::fill_n(request_timestamp.get_buffer(), 8, 129);
+      request_timestamp.resize(8);
+      std::fill_n(request_timestamp.data(), 8, 129);
       std::unique_ptr<DetectorsConfig> result(client.detectors(request_timestamp));
       check_value<rpc::DetectorsConfig>(*result);
     }
@@ -616,6 +621,14 @@ int main(int argc, char** argv)
       throw std::runtime_error("Expected NotReady from unconfigured CampaignServer");
     }
 
+    const auto zero_time = std::string(8, '\0');
+    require(BriefBehavParamInfo{}.timestamp == zero_time, "Default behavior timestamp changed");
+    require(BriefKeyBehavParamInfo{}.timestamp == zero_time, "Default key timestamp changed");
+    require(BriefSimpleChannelAnswer{}.timezone_offset == zero_time,
+      "Default timezone changed");
+    require(BriefSimpleChannelAnswer{}.master_stamp == zero_time,
+      "Default master timestamp changed");
+
     roundtrip<AppFormatInfo, rpc::AppFormatInfo>();
     roundtrip<SizeInfo, rpc::SizeInfo>();
     roundtrip<CreativeOptionInfo, rpc::CreativeOptionInfo>();
@@ -631,6 +644,51 @@ int main(int argc, char** argv)
     roundtrip<CampaignEcpmInfo, rpc::CampaignEcpmInfo>();
     roundtrip<ExpressionInfo, rpc::ExpressionInfo>();
     roundtrip<ExpressionChannelInfo, rpc::ExpressionChannelInfo>();
+    {
+      auto source = fixture<rpc::ExpressionChannelInfo>();
+      source.set_channel_rate_id(0);
+      source.clear_imp_revenue();
+      source.clear_click_revenue();
+      ExpressionChannelInfo native;
+      CampaignGrpc::unpack(source, native);
+      require(native.imp_revenue.empty() && native.click_revenue.empty(),
+        "Channel without a rate must preserve absent revenues");
+      rpc::ExpressionChannelInfo restored;
+      CampaignGrpc::pack(native, restored);
+      require(source.SerializeAsString() == restored.SerializeAsString(),
+        "Channel without a rate roundtrip");
+
+      for (const auto rate_id : {0U, 1U})
+      {
+        for (const auto* field_name : {"imp_revenue", "click_revenue"})
+        {
+          for (const auto& invalid : {std::string(), std::string("x"), std::string(10, 'x')})
+          {
+            if (!rate_id && invalid.empty())
+            {
+              continue;
+            }
+
+            auto malformed = fixture<rpc::ExpressionChannelInfo>();
+            malformed.set_channel_rate_id(rate_id);
+            const auto* field = malformed.GetDescriptor()->FindFieldByName(field_name);
+            malformed.GetReflection()->SetString(&malformed, field, invalid);
+            bool rejected = false;
+            try
+            {
+              CampaignGrpc::unpack(malformed, native);
+            }
+            catch (const std::invalid_argument&)
+            {
+              rejected = true;
+            }
+
+            require(rejected, "Malformed channel revenue must be rejected");
+          }
+        }
+      }
+    }
+
     roundtrip<BehavioralParameterInfo, rpc::BehavioralParameterInfo>();
     roundtrip<WeeklyRunInterval, rpc::WeeklyRunInterval>();
     roundtrip<CampaignDeliveryLimitsInfo, rpc::CampaignDeliveryLimitsInfo>();
@@ -653,7 +711,7 @@ int main(int argc, char** argv)
     roundtrip<AccountInfo, rpc::AccountInfo>();
     roundtrip<CategoryChannelLocalizationInfo, rpc::CategoryChannelLocalizationInfo>();
     roundtrip<CategoryChannelInfo, rpc::CategoryChannelInfo>();
-    roundtrip<PriceRange, rpc::PriceRange>();
+    roundtrip<PriceRangeInfo, rpc::PriceRange>();
     roundtrip<BehavParameter, rpc::BehavParameter>();
     roundtrip<BehavParamInfo, rpc::BehavParamInfo>();
     roundtrip<KeyBehavParamInfo, rpc::KeyBehavParamInfo>();
@@ -761,7 +819,7 @@ int main(int argc, char** argv)
     }
     catch (const CampaignServer::ImplementationException& e)
     {
-      timed_out = std::string(e.description.in()).find("gRPC 4:") != std::string::npos;
+      timed_out = std::string(e.what()).find("gRPC 4:") != std::string::npos;
     }
 
     require(timed_out, "deadline propagation");
@@ -783,7 +841,7 @@ int main(int argc, char** argv)
       native_fixture<CampaignGetConfigSettings, rpc::CampaignGetConfigSettings>());
     source.large_count = 150000;
     std::unique_ptr<CampaignConfigUpdateInfo> large(client.get_config(*settings));
-    require(large->sizes.length() == 150000, "large response truncated");
+    require(large->sizes.size() == 150000, "large response truncated");
     rpc::CampaignConfigUpdateInfo wire;
     CampaignGrpc::pack(*large, wire);
     require(wire.ByteSizeLong() > 4 * 1024 * 1024, "large response must exceed 4 MiB");
@@ -840,10 +898,6 @@ int main(int argc, char** argv)
     require(unavailable, "unavailable endpoint");
     std::cout << "PASS: all campaign values, 17 RPCs, errors, deadlines, large responses, pool\n";
     return 0;
-  }
-  catch (const CORBA::Exception& e)
-  {
-    std::cerr << e << '\n';
   }
   catch (const std::exception& e)
   {

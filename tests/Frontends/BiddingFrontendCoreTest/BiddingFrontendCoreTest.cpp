@@ -396,10 +396,44 @@ namespace
     void set_proxy_sources(const CH::SetProxySourcesRequest&, SetProxySourcesCallback callback) override
     { print_mock_call("ChannelServer.set_proxy_sources"); callback(grpc::Status::OK, make_response_holder(CH::SetProxySourcesResponse{})); }
 
+    void check(const CH::CheckRequest&, CheckCallback callback) override;
+    void update_triggers(const CH::UpdateTriggersRequest&, UpdateTriggersCallback callback)
+      override;
+    void update_all_ccg(const CH::UpdateAllCcgRequest&, UpdateAllCcgCallback callback) override;
+    void get_count_chunks(const CH::GetCountChunksRequest&, GetCountChunksCallback callback)
+      override;
+
   private:
     CH::MatchResponse match_response_;
     CH::GetCcgTraitsResponse ccg_traits_response_;
   };
+
+  void MockChannelClient::check(const CH::CheckRequest&, CheckCallback callback)
+  {
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Unexpected ChannelServer.check"),
+      make_response_holder(CH::CheckResponse{}));
+  }
+
+  void MockChannelClient::update_triggers(
+    const CH::UpdateTriggersRequest&, UpdateTriggersCallback callback)
+  {
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Unexpected update_triggers RPC"),
+      make_response_holder(CH::UpdateTriggersResponse{}));
+  }
+
+  void
+  MockChannelClient::update_all_ccg(const CH::UpdateAllCcgRequest&, UpdateAllCcgCallback callback)
+  {
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Unexpected update_all_ccg RPC"),
+      make_response_holder(CH::UpdateAllCcgResponse{}));
+  }
+
+  void MockChannelClient::get_count_chunks(
+    const CH::GetCountChunksRequest&, GetCountChunksCallback callback)
+  {
+    callback(grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Unexpected get_count_chunks RPC"),
+      make_response_holder(CH::GetCountChunksResponse{}));
+  }
 
   class MockUserInfoClient final :
     public AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient

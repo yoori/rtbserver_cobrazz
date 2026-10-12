@@ -241,7 +241,7 @@ namespace AdServer::CampaignSvcs
         CampaignSelectionDataList::iterator select_params_it =
           ad_selection_result.selected_campaigns.begin();
 
-        CORBA::ULong i = 0;
+        std::uint32_t i = 0;
 
         for (CreativeParamsList::iterator creative_params_it = creative_params_list.begin();
           creative_params_it != creative_params_list.end();

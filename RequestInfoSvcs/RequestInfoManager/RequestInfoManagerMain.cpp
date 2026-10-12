@@ -212,23 +212,6 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
                     "ADS-IMPL-3003");
     }
   }
-  catch (const CORBA::SystemException& e)
-  {
-    try
-    {
-      logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-3004")
-        << "RequestInfoManagerApp_::main(): "
-          "Got CORBA::SystemException. : \n" << e;
-    }
-    catch (...)
-    {
-      logger()->log(String::SubString("RequestInfoManagerApp_::main(): "
-                    "Got CORBA::SystemException. : \n"),
-                    Logging::Logger::EMERGENCY,
-                    ASPECT,
-                    "ADS-IMPL-3003");
-    }
-  }
   catch (const eh::Exception& e)
   {
     try

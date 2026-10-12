@@ -146,10 +146,6 @@ main(int argc, char* argv[]) noexcept
         "BillingProcessorTest",
         ""));
 
-    CORBACommons::CorbaObjectRefList billing_server_refs;
-    billing_server_refs.push_back(CORBACommons::CorbaObjectRef());
-    billing_server_refs.push_back(CORBACommons::CorbaObjectRef());
-
     system("rm -r ./BillingProcessorTestDir/ 2>/dev/null ; mkdir -p ./BillingProcessorTestDir/");
 
     BillingProcessor_var billing_processor = new BillingProcessor(

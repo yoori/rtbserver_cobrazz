@@ -1,7 +1,5 @@
 include(CheckCXXCompilerFlag)
 
-add_idl(CorbaTypesIDL CorbaTypes.idl ${IDL_DIRECTORY}/Commons NO_SERVANT)
-
 add_library(Commons SHARED
   SignalActiveObject.cpp
   HostDistribution.cpp
@@ -42,17 +40,6 @@ target_link_libraries(Commons
   PRIVATE
     HostDistributionFileXSD
     Threads::Threads
-)
-
-add_library(CORBAConfig SHARED
-  CorbaConfig.cpp
-)
-
-target_link_libraries(CORBAConfig
-  PRIVATE
-    Commons
-    CORBACommons
-    AdServerCommonsXSD
 )
 
 set(fast_json_parser_x86 OFF)

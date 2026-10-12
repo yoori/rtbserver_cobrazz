@@ -47,7 +47,6 @@ target_link_libraries(BillingServer
     BillingServerGrpc
     HttpServer
     Commons
-    CORBAConfig
     CampaignServerGrpc
     AdServerCommonsXSD
     BillingServerConfigXSD

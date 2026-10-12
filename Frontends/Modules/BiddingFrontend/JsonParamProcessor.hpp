@@ -14,7 +14,6 @@
 #include <String/StringManip.hpp>
 
 #include <Commons/Containers.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <Generics/MonoAllocator.hpp>
 

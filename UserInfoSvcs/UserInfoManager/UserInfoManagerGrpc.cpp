@@ -13,7 +13,6 @@
 #include <utility>
 #include <vector>
 
-#include <Commons/CorbaAlgs.hpp>
 #include <Generics/MonoAllocator.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Hostname.hpp>
@@ -121,45 +120,24 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
-    template<typename Seq>
-    void bytes_to_seq_(const std::string& src, Seq& dst)
+    Generics::Uuid unpack_user_id_(const std::string& src)
     {
-      dst.length(src.size());
-      std::copy(src.begin(), src.end(), dst.get_buffer());
-    }
-
-    template<typename Seq>
-    std::string seq_to_bytes_(const Seq& src)
-    {
-      return std::string(
-        reinterpret_cast<const char*>(src.get_buffer()),
-        reinterpret_cast<const char*>(src.get_buffer() + src.length()));
-    }
-
-    AdServer::Commons::UserId unpack_user_id_(const std::string& src)
-    {
-      CORBACommons::UserIdInfo id;
-      bytes_to_seq_(src, id);
-      return CorbaAlgs::unpack_user_id(id);
+      return GrpcAlgs::unpack_user_id(src);
     }
 
     Generics::Time unpack_time_(const std::string& src)
     {
-      CORBACommons::TimestampInfo time;
-      bytes_to_seq_(src, time);
-      return CorbaAlgs::unpack_time(time);
+      return GrpcAlgs::unpack_time(src);
     }
 
     Generics::Uuid unpack_request_id_(const std::string& src)
     {
-      CORBACommons::RequestIdInfo request_id;
-      bytes_to_seq_(src, request_id);
-      return CorbaAlgs::unpack_request_id(request_id);
+      return GrpcAlgs::unpack_request_id(src);
     }
 
     std::string pack_time_(const Generics::Time& src)
     {
-      return seq_to_bytes_(CorbaAlgs::pack_time(src));
+      return GrpcAlgs::pack_time(src);
     }
 
     UserInfoManagerCore::ByteArray bytes_to_vector_(const std::string& src)

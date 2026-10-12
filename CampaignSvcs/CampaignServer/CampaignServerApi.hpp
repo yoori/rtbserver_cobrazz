@@ -1,12 +1,10 @@
 #pragma once
 
 #include <cstdint>
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
 namespace AdServer::CampaignSvcs
 {
-  // Domain interface; IDL value types remain until the separate native-types cleanup.
   class CampaignServerApi
   {
   public:

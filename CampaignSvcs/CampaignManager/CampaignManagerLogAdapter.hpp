@@ -4,9 +4,7 @@
 #include <HTTP/UrlAddress.hpp>
 
 #include <Commons/StringHolder.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/Constants.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include "CampaignManagerCore.hpp"
 #include "CampaignManagerDeclarations.hpp"
 #include "CampaignManagerLogger.hpp"

@@ -16,16 +16,12 @@
 #include <Generics/Time.hpp>
 #include <Generics/Values.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMapProcessor.hpp>
 

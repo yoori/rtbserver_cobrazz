@@ -10,7 +10,6 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Commons/Grpc/DbAccess.hpp>
-#include <Commons/CorbaConfig.hpp>
 #include <CampaignSvcs/CampaignServerConfig.hpp>
 
 #include "CampaignServerLogger.hpp"

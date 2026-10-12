@@ -2,7 +2,6 @@
 #include "ChannelServerCore.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include <tao/SystemException.h>
 
 #include <algorithm>
 #include <memory>
@@ -737,14 +736,6 @@ namespace AdServer::ChannelSvcs
     catch (const eh::Exception& ex)
     {
       result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, ex.what());
-    }
-    catch (const CORBA::SystemException& ex)
-    {
-      Stream::Error ostr;
-      ostr << ex;
-      const String::SubString error_substr = ostr.str();
-      const std::string error(error_substr.data(), error_substr.size());
-      result_status = AdServer::Grpc::error_status(::grpc::StatusCode::INTERNAL, error.c_str());
     }
     co_return;
   }

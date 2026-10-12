@@ -9,13 +9,11 @@
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/SimpleDecimal.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 
 #include <Commons/Postgres/ConnectionPool.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>

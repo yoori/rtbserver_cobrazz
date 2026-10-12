@@ -5,6 +5,7 @@
 
 #include <Generics/Time.hpp>
 
+#include "Containers.hpp"
 #include "UserInfoManip.hpp"
 
 namespace GrpcAlgs
@@ -96,5 +97,22 @@ namespace GrpcAlgs
       result.unpack(reinterpret_cast<const unsigned char*>(str.data()));
     }
     return result;
+  }
+
+  template<typename DecimalType>
+  std::string pack_optional_decimal(const AdServer::Commons::Optional<DecimalType>& value)
+  {
+    return value.present() ? pack_decimal(*value) : std::string();
+  }
+
+  template<typename DecimalType>
+  AdServer::Commons::Optional<DecimalType> unpack_optional_decimal(const std::string& value)
+  {
+    if (value.empty())
+    {
+      return {};
+    }
+
+    return AdServer::Commons::Optional<DecimalType>(unpack_decimal<DecimalType>(value));
   }
 }

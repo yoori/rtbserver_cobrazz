@@ -95,12 +95,27 @@ def generate_config(work, grpc_port, http_port):
   descriptor = ET.parse(ROOT / "CMS/Plugin/AdServerAppDescriptor.xml")
   services = [item for item in descriptor.iter() if item.get("type") == "UrlInfoStorage"]
   require(len(services) == 1, "CMS service descriptor missing")
+  require(services[0].get("minOccurs") == "0", "CMS requires optional UrlInfoStorage")
   require(services[0].get("maxOccurs") == services[0].get("maxHostOccurs") == "1",
     "CMS singleton limits missing")
   app_config = work / "app.xml"
   app_config.write_text('<urlInfoStorage xmlns="{}"/>'.format(NS))
   run(["xmllint", "--noout", "--schema",
     ROOT / "CMS/Plugin/xsd/RequestInfoSvcs/UrlInfoStorageApp.xsd", app_config])
+
+  fixture.write_text(cluster.replace(service, ""))
+  optional_output = work / "optional-output"
+  optional_output.mkdir()
+  plugin = ROOT / "CMS/Plugin"
+  options = ["--services-xpath", xpath, "--app-xml", fixture,
+    "--plugin-root", plugin, "--out-dir", optional_output]
+  run([plugin / "exec/ServiceConf.sh", *options, "--xsl", STYLE,
+    "--out-file", "UrlInfoStorage.xml"], cwd=work)
+  run([plugin / "exec/CurrentEnvGen.sh", *options, "--service-name", "url_info_storage",
+    "--search-xpath", "configuration/cfg:urlInfoStorage",
+    "--out-file", "CurrentEnv/be.sh"], cwd=work)
+  require(not list(optional_output.iterdir()), "CMS generated an absent service")
+  fixture.write_text(cluster)
   return config
 
 
@@ -137,6 +152,27 @@ def test_http(port):
 
   with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
     list(executor.map(roundtrip, range(32)))
+
+  cas_path = "/compare_exchange_url_profile"
+  require(http(port, cas_path, {"url": "cas", "expected": "", "text": "start"}) ==
+    (200, {"updated": True}), "CAS insert failed")
+  require(http(port, cas_path, {"url": "cas", "expected": "", "text": "stale"}) ==
+    (200, {"updated": False}), "CAS accepted stale write")
+
+  def compete(index):
+    return http(port, cas_path,
+      {"url": "cas", "expected": "start", "text": str(index)})[1]["updated"]
+
+  with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+    require(sum(executor.map(compete, range(64))) == 1, "CAS had multiple winners")
+  status, results = http(port, cas_path, [
+    {"url": "cas-batch", "expected": "", "text": "one"},
+    {"url": "cas-batch", "expected": "one", "text": "two"},
+    {"url": "cas-batch", "expected": "one", "text": "stale"},
+    {"url": "invalid"}])
+  require(status == 200 and results[:3] ==
+    [{"updated": True}, {"updated": True}, {"updated": False}] and
+    results[3]["status"] == 400, "CAS batch contract failed")
 
 
 def test():

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.pb.h>
 
 namespace AdServer::CampaignSvcs::CampaignGrpc
@@ -121,8 +120,8 @@ namespace AdServer::CampaignSvcs::CampaignGrpc
   void pack(const CategoryChannelInfo& source, rpc::CategoryChannelInfo& target);
   void unpack(const rpc::CategoryChannelInfo& source, CategoryChannelInfo& target);
 
-  void pack(const PriceRange& source, rpc::PriceRange& target);
-  void unpack(const rpc::PriceRange& source, PriceRange& target);
+  void pack(const PriceRangeInfo& source, rpc::PriceRange& target);
+  void unpack(const rpc::PriceRange& source, PriceRangeInfo& target);
 
   void pack(const BehavParameter& source, rpc::BehavParameter& target);
   void unpack(const rpc::BehavParameter& source, BehavParameter& target);

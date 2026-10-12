@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CampaignTypes.hpp"
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include "CampaignSvcsVersionAdapter.hpp"
+#include <Commons/GrpcAlgs.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
 
 namespace AdServer::CampaignSvcs
 {
@@ -45,8 +45,8 @@ namespace AdServer::CampaignSvcs
   fill_interval_sequence(SequenceType& target_seq, const Commons::IntervalSet<ValueType>& source)
     noexcept
   {
-    target_seq.length(source.size());
-    CORBA::ULong i = 0;
+    target_seq.resize(source.size());
+    std::uint32_t i = 0;
     for (typename Commons::IntervalSet<ValueType>::const_iterator sit =
           source.begin(); sit != source.end(); ++sit, ++i)
     {
@@ -61,7 +61,7 @@ namespace AdServer::CampaignSvcs
   convert_interval_sequence(Commons::IntervalSet<ValueType>& target, const SequenceType& source_seq)
     noexcept
   {
-    for (CORBA::ULong i = 0; i < source_seq.length(); ++i)
+    for (std::uint32_t i = 0; i < source_seq.size(); ++i)
     {
       target.insert(Commons::Interval<ValueType>(source_seq[i].min, source_seq[i].max));
     }
@@ -74,10 +74,10 @@ namespace AdServer::CampaignSvcs
     const CampaignDeliveryLimits& delivery_limits)
     noexcept
   {
-    delivery_info.date_start = CorbaAlgs::pack_time(delivery_limits.date_start);
-    delivery_info.date_end = CorbaAlgs::pack_time(delivery_limits.date_end);
-    delivery_info.budget = CorbaAlgs::pack_optional_decimal(delivery_limits.budget);
-    delivery_info.daily_budget = CorbaAlgs::pack_optional_decimal(delivery_limits.daily_budget);
+    delivery_info.date_start = GrpcAlgs::pack_time(delivery_limits.date_start);
+    delivery_info.date_end = GrpcAlgs::pack_time(delivery_limits.date_end);
+    delivery_info.budget = GrpcAlgs::pack_optional_decimal(delivery_limits.budget);
+    delivery_info.daily_budget = GrpcAlgs::pack_optional_decimal(delivery_limits.daily_budget);
     delivery_info.delivery_pacing = delivery_limits.delivery_pacing;
 
     if (delivery_limits.imps.has_value())
@@ -132,11 +132,11 @@ namespace AdServer::CampaignSvcs
     const CampaignDeliveryLimitsInfo& delivery_info)
     noexcept
   {
-    delivery_limits.date_start = CorbaAlgs::unpack_time(delivery_info.date_start);
-    delivery_limits.date_end = CorbaAlgs::unpack_time(delivery_info.date_end);
-    delivery_limits.budget = CorbaAlgs::unpack_optional_decimal<RevenueDecimal>(
+    delivery_limits.date_start = GrpcAlgs::unpack_time(delivery_info.date_start);
+    delivery_limits.date_end = GrpcAlgs::unpack_time(delivery_info.date_end);
+    delivery_limits.budget = GrpcAlgs::unpack_optional_decimal<RevenueDecimal>(
       delivery_info.budget);
-    delivery_limits.daily_budget = CorbaAlgs::unpack_optional_decimal<RevenueDecimal>(
+    delivery_limits.daily_budget = GrpcAlgs::unpack_optional_decimal<RevenueDecimal>(
       delivery_info.daily_budget);
     delivery_limits.delivery_pacing = delivery_info.delivery_pacing;
 
@@ -167,13 +167,13 @@ namespace AdServer::CampaignSvcs
   pack_option_value_map(OptionValueSeq& token_seq, const OptionValueMap& tokens)
     noexcept
   {
-    token_seq.length(tokens.size());
-    CORBA::ULong i = 0;
+    token_seq.resize(tokens.size());
+    std::uint32_t i = 0;
     for (OptionValueMap::const_iterator token_it = tokens.begin();
         token_it != tokens.end(); ++token_it, ++i)
     {
       token_seq[i].option_id = token_it->first;
-      token_seq[i].value << token_it->second;
+      token_seq[i].value = token_it->second;
     }
   }
 
@@ -182,9 +182,9 @@ namespace AdServer::CampaignSvcs
   unpack_option_value_map(OptionValueMap& tokens, const OptionValueSeq& token_seq)
     noexcept
   {
-    for (CORBA::ULong i = 0; i < token_seq.length(); ++i)
+    for (std::uint32_t i = 0; i < token_seq.size(); ++i)
     {
-      tokens[token_seq[i].option_id] = token_seq[i].value.in();
+      tokens[token_seq[i].option_id] = token_seq[i].value.c_str();
     }
   }
 }

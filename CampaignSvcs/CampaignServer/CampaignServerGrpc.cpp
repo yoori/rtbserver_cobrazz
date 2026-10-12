@@ -24,15 +24,15 @@ namespace AdServer::CampaignSvcs
       }
       catch (const CampaignServer::NotReady& e)
       {
-        return {grpc::StatusCode::FAILED_PRECONDITION, e.description.in()};
+        return {grpc::StatusCode::FAILED_PRECONDITION, e.what()};
       }
       catch (const CampaignServer::NotSupport& e)
       {
-        return {grpc::StatusCode::UNIMPLEMENTED, e.description.in()};
+        return {grpc::StatusCode::UNIMPLEMENTED, e.what()};
       }
       catch (const CampaignServer::ImplementationException& e)
       {
-        return {grpc::StatusCode::INTERNAL, e.description.in()};
+        return {grpc::StatusCode::INTERNAL, e.what()};
       }
       catch (const std::invalid_argument& e)
       {
@@ -88,11 +88,11 @@ namespace AdServer::CampaignSvcs
         throw std::invalid_argument("Invalid request timestamp");
       }
 
-      req_timestamp.length(8);
+      req_timestamp.resize(8);
       std::copy(
         request->req_timestamp().begin(),
         request->req_timestamp().end(),
-        req_timestamp.get_buffer());
+        req_timestamp.data());
       response->set_value(source_.need_config(req_timestamp));
     });
   }
@@ -109,13 +109,13 @@ namespace AdServer::CampaignSvcs
         throw std::invalid_argument("Invalid request timestamp");
       }
 
-      request_timestamp.length(8);
+      request_timestamp.resize(8);
       std::copy(
         request->request_timestamp().begin(),
         request->request_timestamp().end(),
-        request_timestamp.get_buffer());
+        request_timestamp.data());
       std::unique_ptr<EcpmSeq> value(source_.get_ecpms(request_timestamp));
-      for (CORBA::ULong i = 0; i < value->length(); ++i)
+      for (std::uint32_t i = 0; i < value->size(); ++i)
       {
         CampaignGrpc::pack((*value)[i], *response->add_value());
       }
@@ -219,7 +219,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<ColocationFlagsSeq> value(source_.get_colocation_flags());
-      for (CORBA::ULong i = 0; i < value->length(); ++i)
+      for (std::uint32_t i = 0; i < value->size(); ++i)
       {
         CampaignGrpc::pack((*value)[i], *response->add_value());
       }
@@ -238,11 +238,11 @@ namespace AdServer::CampaignSvcs
         throw std::invalid_argument("Invalid request timestamp");
       }
 
-      request_timestamp.length(8);
+      request_timestamp.resize(8);
       std::copy(
         request->request_timestamp().begin(),
         request->request_timestamp().end(),
-        request_timestamp.get_buffer());
+        request_timestamp.data());
       std::unique_ptr<DetectorsConfig> value(source_.detectors(request_timestamp));
       CampaignGrpc::pack(*value, *response->mutable_value());
     });

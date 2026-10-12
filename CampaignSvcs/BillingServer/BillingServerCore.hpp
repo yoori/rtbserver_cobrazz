@@ -14,9 +14,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
 
-#include <Commons/CorbaConfig.hpp>
 #include <Commons/AccessActiveObject.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
 

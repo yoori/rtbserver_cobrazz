@@ -1,3 +1,4 @@
+#include <memory>
 #include "ExpressionMatcherImpl.hpp"
 
 #include <fstream>
@@ -11,7 +12,6 @@
 #include <Commons/Algs.hpp>
 #include <Commons/AsyncMutex.hpp>
 #include <Commons/ConfigUtils.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/ExecutorPool.hpp>
@@ -320,7 +320,7 @@ namespace AdServer::RequestInfoSvcs
       campaign_pool_.reset(new AdServer::CampaignSvcs::CampaignServerPool(
         AdServer::CampaignSvcs::campaign_server_endpoints(
           expression_matcher_config_.CampaignServerGrpcRefs()),
-        Generics::Time(std::max(1UL, expression_matcher_config_.update_period() / 2))
+        Generics::Time(std::max<unsigned long>(1, expression_matcher_config_.update_period() / 2))
         ));
     }
     catch (eh::Exception& ex)
@@ -1059,7 +1059,7 @@ namespace AdServer::RequestInfoSvcs
         try
         {
           CampaignSvcs::CampaignServer::GetExpressionChannelsInfo request_settings;
-          request_settings.timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+          request_settings.timestamp = GrpcAlgs::pack_time(Generics::Time::ZERO);
           request_settings.portions_number = PORTIONS_NUMBER;
           request_settings.channel_types = "KBEGVTA";
           request_settings.channel_statuses = "AW";
@@ -1072,15 +1072,16 @@ namespace AdServer::RequestInfoSvcs
             portion < PORTIONS_NUMBER && !(interrupted = !active()); ++portion)
           {
             // update expressions
-            CampaignSvcs::ExpressionChannelsInfo_var expression_channels_info;
+            std::unique_ptr<CampaignSvcs::ExpressionChannelsInfo> expression_channels_info;
             request_settings.portion = portion;
-            expression_channels_info = campaign_server->get_expression_channels(request_settings);
+            expression_channels_info.reset(
+              campaign_server->get_expression_channels(request_settings));
 
             // fill expression channels index
             const CampaignSvcs::ExpressionChannelSeq& expression_channels =
               expression_channels_info->expression_channels;
 
-            for (CORBA::ULong i = 0; i < expression_channels.length(); ++i)
+            for (std::uint32_t i = 0; i < expression_channels.size(); ++i)
             {
               CampaignSvcs::ExpressionChannelBase_var new_channel = CampaignSvcs::unpack_channel(
                 expression_channels[i], new_config->expression_channels);
@@ -1108,12 +1109,12 @@ namespace AdServer::RequestInfoSvcs
             const CampaignSvcs::ChannelTriggersSeq& channels =
               expression_channels_info->activate_channel_triggers;
 
-            for (CORBA::ULong i = 0; i < channels.length(); ++i)
+            for (std::uint32_t i = 0; i < channels.size(); ++i)
             {
-              if (channels[i].page_triggers.length() ||
-                channels[i].search_triggers.length() ||
-                channels[i].url_triggers.length() ||
-                channels[i].url_keyword_triggers.length())
+              if (channels[i].page_triggers.size() ||
+                channels[i].search_triggers.size() ||
+                channels[i].url_triggers.size() ||
+                channels[i].url_keyword_triggers.size())
               {
                 UserTriggerMatchContainer::Config::ChannelInfo_var channel =
                   new UserTriggerMatchContainer::Config::ChannelInfo();
@@ -1127,25 +1128,25 @@ namespace AdServer::RequestInfoSvcs
                 channel->url_min_visits = channels[i].url_min_visits;
                 channel->url_keyword_min_visits = channels[i].url_keyword_min_visits;
 
-                channel->page_triggers.reserve(channels[i].page_triggers.length());
-                channel->search_triggers.reserve(channels[i].search_triggers.length());
-                channel->url_triggers.reserve(channels[i].url_triggers.length());
-                channel->url_keyword_triggers.reserve(channels[i].url_keyword_triggers.length());
+                channel->page_triggers.reserve(channels[i].page_triggers.size());
+                channel->search_triggers.reserve(channels[i].search_triggers.size());
+                channel->url_triggers.reserve(channels[i].url_triggers.size());
+                channel->url_keyword_triggers.reserve(channels[i].url_keyword_triggers.size());
                 std::copy(
-                  channels[i].page_triggers.get_buffer(),
-                  channels[i].page_triggers.get_buffer() + channels[i].page_triggers.length(),
+                  channels[i].page_triggers.data(),
+                  channels[i].page_triggers.data() + channels[i].page_triggers.size(),
                   std::back_inserter(channel->page_triggers));
                 std::copy(
-                  channels[i].search_triggers.get_buffer(),
-                  channels[i].search_triggers.get_buffer() + channels[i].search_triggers.length(),
+                  channels[i].search_triggers.data(),
+                  channels[i].search_triggers.data() + channels[i].search_triggers.size(),
                   std::back_inserter(channel->search_triggers));
                 std::copy(
-                  channels[i].url_triggers.get_buffer(),
-                  channels[i].url_triggers.get_buffer() + channels[i].url_triggers.length(),
+                  channels[i].url_triggers.data(),
+                  channels[i].url_triggers.data() + channels[i].url_triggers.size(),
                   std::back_inserter(channel->url_triggers));
                 std::copy(
-                  channels[i].url_keyword_triggers.get_buffer(),
-                  channels[i].url_keyword_triggers.get_buffer() + channels[i].url_keyword_triggers.length(),
+                  channels[i].url_keyword_triggers.data(),
+                  channels[i].url_keyword_triggers.data() + channels[i].url_keyword_triggers.size(),
                   std::back_inserter(channel->url_keyword_triggers));
 
                 if (load_trigger_match_config)
@@ -1161,7 +1162,7 @@ namespace AdServer::RequestInfoSvcs
               const CampaignSvcs::DeletedIdSeq& delete_simple_channels =
                 expression_channels_info->delete_simple_channels;
 
-              for (CORBA::ULong del_i = 0; del_i < delete_simple_channels.length(); ++del_i)
+              for (std::uint32_t del_i = 0; del_i < delete_simple_channels.size(); ++del_i)
               {
                 new_trigger_match_config->channels.erase(delete_simple_channels[del_i].id);
               }
@@ -1179,12 +1180,13 @@ namespace AdServer::RequestInfoSvcs
             }
           } // portions loop
 
-          const CampaignSvcs::CampaignServer::ColocationPropInfo_var placement_colo_props =
-            campaign_server->get_colocation_prop(expression_matcher_config_.colo_id());
+          const std::unique_ptr<CampaignSvcs::CampaignServer::ColocationPropInfo>
+            placement_colo_props(
+              campaign_server->get_colocation_prop(expression_matcher_config_.colo_id()));
 
           *placement_colo_holder_ = new PlacementColo(
             placement_colo_props->found ?
-              CorbaAlgs::unpack_time(placement_colo_props->time_offset) :
+              GrpcAlgs::unpack_time(placement_colo_props->time_offset) :
               Generics::Time());
 
           break;
@@ -1194,7 +1196,7 @@ namespace AdServer::RequestInfoSvcs
           Stream::Error ostr;
           ostr << FUN <<
             ": Can't update expression channels. "
-            "Caught CampaignServer::ImplementationException: " << ex.description;
+            "Caught CampaignServer::ImplementationException: " << ex.what();
           campaign_server.release_bad(ostr.str());
           logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
@@ -1209,17 +1211,6 @@ namespace AdServer::RequestInfoSvcs
             Logging::Logger::NOTICE,
             Aspect::EXPRESSION_MATCHER,
             "ADS-ICON-4001");
-        }
-        catch (const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN <<
-            ": Can't update expression channels. Caught CORBA::SystemException: " << ex;
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::EXPRESSION_MATCHER,
-            "ADS-ICON-4001");
-          campaign_server.release_bad(ostr.str());
         }
       } // for (;;)
 
@@ -2179,7 +2170,7 @@ namespace AdServer::RequestInfoSvcs
               Aspect::EXPRESSION_MATCHER_DAILY_CHECK,
               "ADS-IMPL-4019") << FUN <<
               ": Caught UserInfoSvcs::GrpcAlgs::Exception: " <<
-              ex.description;
+              ex.what();
             */
             users.unprocessed_users.push_back(*user_it);
           }

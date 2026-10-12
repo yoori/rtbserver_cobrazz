@@ -4,7 +4,6 @@
 
 #include <PrivacyFilter/Filter.hpp>
 
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/GrpcAlgs.hpp>
 
@@ -1309,32 +1308,12 @@ namespace AdServer::RequestInfoSvcs
   RequestInfoManagerImpl::resolve_campaign_servers_()
     /*throw(Exception, eh::Exception)*/
   {
-    static const char* FUN = "RequestInfoManagerImpl::resolve_campaign_servers_()";
+    CampaignServerPoolConfig pool_config;
+    pool_config.timeout = Generics::Time(10); // 10 sec
+    pool_config.endpoints = AdServer::CampaignSvcs::campaign_server_endpoints(
+      request_info_manager_config_.CampaignServerGrpcRefs());
 
-    try
-    {
-      std::vector<std::string> campaign_server_refs;
-
-      campaign_server_refs = AdServer::CampaignSvcs::campaign_server_endpoints(
-        request_info_manager_config_.CampaignServerGrpcRefs());
-
-      CampaignServerPoolConfig pool_config;
-      pool_config.timeout = Generics::Time(10); // 10 sec
-
-      pool_config.endpoints.insert(
-        pool_config.endpoints.end(),
-        campaign_server_refs.begin(),
-        campaign_server_refs.end());
-
-      return CampaignServerPoolPtr(
-        new CampaignServerPool(pool_config));
-    }
-    catch (const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": got CORBA::SystemException: " << e;
-      throw Exception(ostr);
-    }
+    return CampaignServerPoolPtr(new CampaignServerPool(pool_config));
   }
 
   bool
@@ -1360,21 +1339,21 @@ namespace AdServer::RequestInfoSvcs
 
         try
         {
-          AdServer::CampaignSvcs::FraudConditionConfig_var fraud_config_info =
-            campaign_server->fraud_conditions();
+          std::unique_ptr<AdServer::CampaignSvcs::FraudConditionConfig> fraud_config_info(
+            campaign_server->fraud_conditions());
 
           const AdServer::CampaignSvcs::FraudConditionSeq& fraud_conds = fraud_config_info->rules;
 
           UserFraudProtectionContainer::Config_var config(
             new UserFraudProtectionContainer::Config());
 
-          config->deactivate_period = CorbaAlgs::unpack_time(fraud_config_info->deactivate_period);
+          config->deactivate_period = GrpcAlgs::unpack_time(fraud_config_info->deactivate_period);
 
-          for (CORBA::ULong fraud_i = 0; fraud_i < fraud_conds.length(); ++fraud_i)
+          for (std::uint32_t fraud_i = 0; fraud_i < fraud_conds.size(); ++fraud_i)
           {
             UserFraudProtectionContainer::Config::FraudRule rule;
             rule.limit = fraud_conds[fraud_i].limit;
-            rule.period = CorbaAlgs::unpack_time(fraud_conds[fraud_i].period);
+            rule.period = GrpcAlgs::unpack_time(fraud_conds[fraud_i].period);
             if (fraud_conds[fraud_i].type == 'I')
             {
               config->imp_rules.add_rule(rule);
@@ -1411,18 +1390,9 @@ namespace AdServer::RequestInfoSvcs
           Stream::Error ostr;
           ostr << FUN <<
             ": Can't get session. Caught CampaignServer::ImplementationException: "
-            << ex.description;
+            << ex.what();
           campaign_server.release_bad(ostr.str());
           logger_->stream(Logging::Logger::EMERGENCY, Aspect::REQUEST_INFO_MANAGER) << ostr.str();
-        }
-        catch (const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << ": Can't get session. Caught CORBA::SystemException: " << ex;
-          campaign_server.release_bad(ostr.str());
-          logger_->stream(Logging::Logger::EMERGENCY,
-            Aspect::REQUEST_INFO_MANAGER,
-            "ADS-IMPL-3019") << ostr.str();
         }
       } // for (;;)
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <utility>
 
 #include <eh/Exception.hpp>
@@ -12,14 +13,11 @@
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 
 #include <GeoIP/IPMap.hpp>
 #include <Commons/BoostAsioContextRunActiveObject.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServerPool.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/DomainParser.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
@@ -96,8 +94,9 @@ namespace AdServer
         grpc_coalesce_runner)
       noexcept;
 
-    AdServer::CampaignSvcs::ColocationFlagsSeq_var
-    get_colocation_flags(unsigned service_index) /*throw(Exception)*/;
+    std::unique_ptr<AdServer::CampaignSvcs::ColocationFlagsSeq>
+    get_colocation_flags(unsigned service_index)
+      /*throw(Exception)*/;
 
     void set_config_file(const char* config_file) noexcept;
 
