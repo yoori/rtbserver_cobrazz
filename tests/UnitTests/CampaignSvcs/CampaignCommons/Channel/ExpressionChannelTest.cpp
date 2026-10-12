@@ -6,9 +6,9 @@
 #include <Commons/Algs.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
-#include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannelGrpc.hpp>
 #include <CampaignSvcs/CampaignServer/ExpressionChannelParser.hpp>
-#include <CampaignSvcs/CampaignServer/NonLinkedExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignServer/NonLinkedExpressionChannelGrpc.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/ChannelMatcher.hpp>
 
 using namespace AdServer::CampaignSvcs;

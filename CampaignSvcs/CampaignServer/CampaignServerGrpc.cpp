@@ -51,7 +51,7 @@ namespace AdServer::CampaignSvcs
     template<class Settings>
     void validate_portion(const Settings& settings)
     {
-      if (!settings.portions_number || settings.portion >= settings.portions_number)
+      if (!settings.portions_number() || settings.portion() >= settings.portions_number())
       {
         throw std::invalid_argument("Invalid campaign portion");
       }
@@ -68,11 +68,11 @@ namespace AdServer::CampaignSvcs
   {
     return invoke(context, [&]
     {
-      CampaignGetConfigSettings get_config_settings;
-      CampaignGrpc::unpack(request->get_config_settings(), get_config_settings);
+      const auto& get_config_settings = request->get_config_settings();
+      CampaignGrpc::validate(get_config_settings);
       validate_portion(get_config_settings);
       std::unique_ptr<CampaignConfigUpdateInfo> value(source_.get_config(get_config_settings));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -115,10 +115,7 @@ namespace AdServer::CampaignSvcs
         request->request_timestamp().end(),
         request_timestamp.data());
       std::unique_ptr<EcpmSeq> value(source_.get_ecpms(request_timestamp));
-      for (std::uint32_t i = 0; i < value->size(); ++i)
-      {
-        CampaignGrpc::pack((*value)[i], *response->add_value());
-      }
+      response->mutable_value()->Swap(value.get());
     });
   }
 
@@ -128,11 +125,11 @@ namespace AdServer::CampaignSvcs
   {
     return invoke(context, [&]
     {
-      CampaignServer::GetExpressionChannelsInfo params;
-      CampaignGrpc::unpack(request->params(), params);
+      const auto& params = request->params();
+      CampaignGrpc::validate(params);
       validate_portion(params);
       std::unique_ptr<ExpressionChannelsInfo> value(source_.get_expression_channels(params));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -144,7 +141,7 @@ namespace AdServer::CampaignSvcs
     {
       std::unique_ptr<CampaignServer::PassbackInfo> value(
         source_.get_tag_passback(request->tag_id(), request->app_format().c_str()));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -154,11 +151,11 @@ namespace AdServer::CampaignSvcs
   {
     return invoke(context, [&]
     {
-      CampaignServer::GetSimpleChannelsInfo params;
-      CampaignGrpc::unpack(request->params(), params);
+      const auto& params = request->params();
+      CampaignGrpc::validate(params);
       validate_portion(params);
       std::unique_ptr<BriefSimpleChannelAnswer> value(source_.brief_simple_channels(params));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -168,11 +165,11 @@ namespace AdServer::CampaignSvcs
   {
     return invoke(context, [&]
     {
-      CampaignServer::GetSimpleChannelsInfo params;
-      CampaignGrpc::unpack(request->params(), params);
+      const auto& params = request->params();
+      CampaignGrpc::validate(params);
       validate_portion(params);
       std::unique_ptr<SimpleChannelAnswer> value(source_.simple_channels(params));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -182,11 +179,11 @@ namespace AdServer::CampaignSvcs
   {
     return invoke(context, [&]
     {
-      CampaignServer::GetSimpleChannelsInfo params;
-      CampaignGrpc::unpack(request->params(), params);
+      const auto& params = request->params();
+      CampaignGrpc::validate(params);
       validate_portion(params);
       std::unique_ptr<ChannelServerChannelAnswer> value(source_.chsv_simple_channels(params));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -197,7 +194,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<FraudConditionConfig> value(source_.fraud_conditions());
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -208,7 +205,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<FreqCapConfigInfo> value(source_.freq_caps());
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -219,10 +216,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<ColocationFlagsSeq> value(source_.get_colocation_flags());
-      for (std::uint32_t i = 0; i < value->size(); ++i)
-      {
-        CampaignGrpc::pack((*value)[i], *response->add_value());
-      }
+      response->mutable_value()->Swap(value.get());
     });
   }
 
@@ -244,7 +238,7 @@ namespace AdServer::CampaignSvcs
         request->request_timestamp().end(),
         request_timestamp.data());
       std::unique_ptr<DetectorsConfig> value(source_.detectors(request_timestamp));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -265,7 +259,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<StatInfo> value(source_.get_stat());
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -276,7 +270,7 @@ namespace AdServer::CampaignSvcs
     return invoke(context, [&]
     {
       std::unique_ptr<BillStatInfo> value(source_.get_bill_stat());
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -288,7 +282,7 @@ namespace AdServer::CampaignSvcs
     {
       std::unique_ptr<CampaignServer::ColocationPropInfo> value(
         source_.get_colocation_prop(request->colo_id()));
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 
@@ -300,7 +294,7 @@ namespace AdServer::CampaignSvcs
     {
       std::unique_ptr<CampaignServer::DeliveryLimitConfigInfo> value(
         source_.get_delivery_limit_config());
-      CampaignGrpc::pack(*value, *response->mutable_value());
+      response->set_allocated_value(value.release());
     });
   }
 

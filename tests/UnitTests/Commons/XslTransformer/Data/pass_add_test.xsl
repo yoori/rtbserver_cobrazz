@@ -5,8 +5,7 @@
   xmlns:exsl="http://exslt.org/common"
   extension-element-prefixes="exsl"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
-  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration ../AdServer/ChannelSvcs/ChannelManagerControllerConfig.xsd">
+  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration">
 
 <xsl:output method="xml" indent="yes" encoding="Windows-1251"/>
 

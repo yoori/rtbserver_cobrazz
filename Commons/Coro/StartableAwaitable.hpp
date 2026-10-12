@@ -180,7 +180,7 @@ namespace AdServer::Commons
     const Handle handle = std::exchange(handle_, {});
     handle.promise().completion = std::move(completion);
     handle.promise().destroy_on_completion = true;
-    resume_coroutine(handle);
+    resume_detached_coroutine(handle);
   }
 
   template<typename ResultType, typename FrameAllocator>
@@ -378,7 +378,7 @@ namespace AdServer::Commons
     const Handle handle = std::exchange(handle_, {});
     handle.promise().completion = std::move(completion);
     handle.promise().destroy_on_completion = true;
-    resume_coroutine(handle);
+    resume_detached_coroutine(handle);
   }
 
   template<typename FrameAllocator>

@@ -36,12 +36,6 @@
   select="document('../xsd/CampaignManagement/CampaignServerAppType.xsd')/xsd:schema/xsd:complexType[@name='CampaignServerUpdateParamsType']"/>
 
 
-<!-- these services used in tr zone and must have unique version for all changes -->
-<xsl:variable name="app-version-num" select="translate($app-version, '0123456789.', '0123456789')"/>
-<xsl:variable name="current-campaign-manager-obj" select="concat('CampaignManager_v', $app-version-num)"/>
-<xsl:variable name="current-user-info-manager-obj" select="'UserInfoManager_v351'"/>
-<xsl:variable name="current-user-bind-server-obj" select="concat('UserBindServer_v', $app-version-num)"/>
-
 <xsl:variable name="colocation-name" select="/colo:colocation/@name"/>
 <xsl:variable name="colo-name" select="translate($colocation-name,
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ ',

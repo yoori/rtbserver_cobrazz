@@ -7,7 +7,7 @@
 
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
-#include <CampaignSvcs/CampaignCommons/CorbaCampaignTypes.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigGrpc.hpp>
 #include <CampaignSvcs/CampaignServer/BillStatServerSource.hpp>
 
 #include "BillingContainer.hpp"
@@ -412,43 +412,43 @@ namespace AdServer::CampaignSvcs
       DeliveryLimitConfigInfo& config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t acc_i = 0; acc_i < config.accounts.size(); ++acc_i)
+    for (int acc_i = 0; acc_i < config.accounts().size(); ++acc_i)
     {
-      auto& acc_info = config.accounts[acc_i];
+      auto& acc_info = config.accounts()[acc_i];
 
       BillingContainer::Config::Account res_account;
-      res_account.active = acc_info.active;
-      res_account.time_offset = GrpcAlgs::unpack_time(acc_info.time_offset);
-      res_account.budget = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.budget);
+      res_account.active = acc_info.active();
+      res_account.time_offset = GrpcAlgs::unpack_time(acc_info.time_offset());
+      res_account.budget = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.budget());
 
-      res_config.accounts.insert(std::make_pair(acc_info.account_id, res_account));
+      res_config.accounts.insert(std::make_pair(acc_info.account_id(), res_account));
     }
 
-    for (std::uint32_t campaign_i = 0; campaign_i < config.campaigns.size(); ++campaign_i)
+    for (int campaign_i = 0; campaign_i < config.campaigns().size(); ++campaign_i)
     {
-      auto& campaign_info = config.campaigns[campaign_i];
+      auto& campaign_info = config.campaigns()[campaign_i];
 
       BillingContainer::Config::Campaign res_campaign;
-      res_campaign.active = campaign_info.active;
-      res_campaign.time_offset = GrpcAlgs::unpack_time(campaign_info.time_offset);
-      unpack_delivery_limits(res_campaign, campaign_info.delivery_limits);
+      res_campaign.active = campaign_info.active();
+      res_campaign.time_offset = GrpcAlgs::unpack_time(campaign_info.time_offset());
+      unpack_delivery_limits(res_campaign, campaign_info.delivery_limits());
 
-      res_config.campaigns.insert(std::make_pair(campaign_info.campaign_id, res_campaign));
+      res_config.campaigns.insert(std::make_pair(campaign_info.campaign_id(), res_campaign));
     }
 
-    for (std::uint32_t ccg_i = 0; ccg_i < config.ccgs.size(); ++ccg_i)
+    for (int ccg_i = 0; ccg_i < config.ccgs().size(); ++ccg_i)
     {
-      auto& ccg_info = config.ccgs[ccg_i];
+      auto& ccg_info = config.ccgs()[ccg_i];
 
       BillingContainer::Config::CCG res_ccg;
-      res_ccg.active = ccg_info.active;
-      res_ccg.time_offset = GrpcAlgs::unpack_time(ccg_info.time_offset);
-      unpack_delivery_limits(res_ccg, ccg_info.delivery_limits);
-      res_ccg.campaign_id = ccg_info.campaign_id;
-      res_ccg.imp_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(ccg_info.imp_amount);
-      res_ccg.click_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(ccg_info.click_amount);
+      res_ccg.active = ccg_info.active();
+      res_ccg.time_offset = GrpcAlgs::unpack_time(ccg_info.time_offset());
+      unpack_delivery_limits(res_ccg, ccg_info.delivery_limits());
+      res_ccg.campaign_id = ccg_info.campaign_id();
+      res_ccg.imp_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(ccg_info.imp_amount());
+      res_ccg.click_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(ccg_info.click_amount());
 
-      res_config.ccgs.insert(std::make_pair(ccg_info.ccg_id, res_ccg));
+      res_config.ccgs.insert(std::make_pair(ccg_info.ccg_id(), res_ccg));
     }
   }
 

@@ -44,7 +44,7 @@
   <xsd:complexType name="CampaignManagerThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>Legacy thread setting; ignored.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -68,7 +68,7 @@
       <xsd:element name="threadParams" type="CampaignManagerThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            Legacy thread setting; ignored.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

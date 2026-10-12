@@ -1041,34 +1041,6 @@
 
 </xsl:template>
 
-<xsl:template name="GeneratePreStartRefList">
-  <xsl:param name="services"/>
-  <xsl:param name="service-config"/>
-  <xsl:param name="def-port"/>
-  <xsl:param name="obj-name"/>
-  <xsl:param name="services-name"/>
-
-  <xsl:for-each select="$services">
-    <xsl:variable name="config" select="dyn:evaluate($service-config)"/>
-    <xsl:variable name="port">
-      <xsl:value-of select="$config/cfg:networkParams/@port"/>
-      <xsl:if test="count($config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$def-port"/>
-      </xsl:if>
-    </xsl:variable>
-    <xsl:variable name="resolved-hosts">
-      <xsl:call-template name="GetHosts">
-        <xsl:with-param name="hosts" select="./@host"/>
-        <xsl:with-param name="error-prefix">OCM Config: <xsl:value-of
-          select="$services-name"/> hosts resolving</xsl:with-param>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:for-each select="exsl:node-set($resolved-hosts)//host">
-      <xsl:value-of select="."/>#corbaloc::localhost:<xsl:value-of
-        select="$port"/>/<xsl:value-of select="$obj-name"/>,</xsl:for-each>
-  </xsl:for-each>
-</xsl:template>
-
 <xsl:template name="GeneratePreStartGrpcRefList">
   <xsl:param name="services"/>
   <xsl:param name="service-config"/>

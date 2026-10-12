@@ -15,11 +15,9 @@ target_link_libraries(InstantiateAdArgsTest
     CampaignConfigSource
     HTTP
     HttpServer
-    CORBACommons
     Commons
     AdServerCommonsXSD
     CampaignManagerConfigXSD
-    ProcessControlIDL
     CampaignTypes
     ExpressionChannelIndex
     ExpressionChannel

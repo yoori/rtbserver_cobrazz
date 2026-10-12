@@ -6,23 +6,9 @@
 }
 
 {
-   TAO make_TSS_TYPE
-   Memcheck:Leak
-   fun:*nothrow_t*
-   fun:*make_TSS_TYPE*
-   fun:*ts_get*
-}
-
-{
    SSL_read returns uninitialized
    Memcheck:Value4
    fun:*ACE_SSL_SOCK_Stream*recv*
-}
-
-{
-   SSL_pending returns uninitialized
-   Memcheck:Cond
-   fun:*TAO*SSLIOP*Connection_Handler*pos_io_hook*
 }
 
 {

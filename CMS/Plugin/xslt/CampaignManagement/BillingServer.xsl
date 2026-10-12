@@ -108,16 +108,6 @@
       <xsl:if test="count($update-config/@max_stat_delay) = 0">604800</xsl:if>
     </xsl:attribute>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool"><xsl:value-of select="$billing-server-config/cfg:threadParams/@min"/>
-        <xsl:if test="count($billing-server-config/cfg:threadParams/@min) = 0">200</xsl:if>
-      </xsl:attribute>
-
-      <cfg:Endpoint host="*" port="{$billing-server-port}">
-        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
-
     <cfg:GrpcConfig cq_threads="4" max_sequential_ops="{$billing-server-grpc-max-sequential-ops}">
       <cfg:Endpoint host="*" port="{$billing-server-grpc-port}"/>
     </cfg:GrpcConfig>

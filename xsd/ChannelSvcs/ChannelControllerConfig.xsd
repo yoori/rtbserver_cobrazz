@@ -99,7 +99,6 @@
   <xsd:complexType name="ChannelControllerProxySourceType">
     <xsd:sequence>
       <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType"/>
-      <xsd:element name="ProxyRefs" type="MultiCorbaObjectRefType" minOccurs="0"/>
     </xsd:sequence>
     <xsd:attribute name="use_local_on_first_load" type="xsd:boolean" default="true"/>
   </xsd:complexType>

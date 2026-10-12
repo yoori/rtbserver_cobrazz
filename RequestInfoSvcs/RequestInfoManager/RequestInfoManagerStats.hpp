@@ -31,7 +31,7 @@ namespace AdServer::RequestInfoSvcs
     static const std::size_t LOG_VARS_COUNT = 5;
     /// The number of records in MIB table of all logs stats
     static const std::size_t LOG_COUNT = 7;
-    static const char* LOG_CORBA_NAMES[LOG_COUNT];
+    static const char* LOG_STAT_PREFIXES[LOG_COUNT];
   };
 
   template <typename T>
@@ -139,7 +139,7 @@ namespace AdServer::RequestInfoSvcs
     {
       for (std::size_t i = 0; i < StatNames::LOG_COUNT; ++i)
       {
-        FunctorWrapper<Functor> f(functor, StatNames::LOG_CORBA_NAMES[i]);
+        FunctorWrapper<Functor> f(functor, StatNames::LOG_STAT_PREFIXES[i]);
         stats_[i]->enumerate_all(f);
       }
     }

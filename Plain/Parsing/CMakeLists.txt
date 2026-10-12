@@ -1,6 +1,6 @@
-include_directories(${IDL_DIRECTORY}/Plain)
-add_yy(YYParser_yy YYParser.yy ${IDL_DIRECTORY}/Plain/Parsing)
-add_ll(YYScanner_ll YYScanner.ll  ${IDL_DIRECTORY}/Plain/Parsing)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
+add_yy(YYParser_yy YYParser.yy ${CMAKE_CURRENT_BINARY_DIR})
+add_ll(YYScanner_ll YYScanner.ll ${CMAKE_CURRENT_BINARY_DIR})
 
 add_dependencies(YYScanner_ll YYParser_yy)
 

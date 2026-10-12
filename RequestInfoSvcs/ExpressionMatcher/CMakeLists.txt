@@ -132,8 +132,6 @@ target_link_libraries(ExpressionMatcher
     ExpressionMatcherGrpcClient
     ExpressionMatcherGrpcProto
     CampaignServerGrpc
-    CORBACommons
-    ProcessControlIDL
     ConsiderMessagesPST
     RequestOperationProfilePST
     UserInfoClient

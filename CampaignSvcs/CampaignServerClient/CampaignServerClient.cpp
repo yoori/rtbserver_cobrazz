@@ -61,13 +61,18 @@ namespace AdServer::CampaignSvcs
     const CampaignGetConfigSettings& get_config_settings)
   {
     cs_rpc::get_configRequest request;
-    CampaignGrpc::pack(get_config_settings, *request.mutable_get_config_settings());
+    request.mutable_get_config_settings()->CopyFrom(get_config_settings);
     cs_rpc::get_configResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_config, request, response, timeout_);
-    auto result = std::make_unique<CampaignConfigUpdateInfo>();
+    auto result = std::unique_ptr<CampaignConfigUpdateInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -97,10 +102,10 @@ namespace AdServer::CampaignSvcs
     auto result = std::make_unique<EcpmSeq>();
     try
     {
-      result->resize(response.value_size());
-      for (std::uint32_t i = 0; i < result->size(); ++i)
+      result->Swap(response.mutable_value());
+      for (const auto& value : *result)
       {
-        CampaignGrpc::unpack(response.value(i), (*result)[i]);
+        CampaignGrpc::validate(value);
       }
     }
     catch (const std::exception& e)
@@ -115,14 +120,19 @@ namespace AdServer::CampaignSvcs
     const CampaignServer::GetExpressionChannelsInfo& params)
   {
     cs_rpc::get_expression_channelsRequest request;
-    CampaignGrpc::pack(params, *request.mutable_params());
+    request.mutable_params()->CopyFrom(params);
     cs_rpc::get_expression_channelsResponse response;
     call(
       *stub_, &cs_rpc::CampaignServer::Stub::get_expression_channels, request, response, timeout_);
-    auto result = std::make_unique<ExpressionChannelsInfo>();
+    auto result = std::unique_ptr<ExpressionChannelsInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -140,10 +150,15 @@ namespace AdServer::CampaignSvcs
     request.set_app_format(app_format);
     cs_rpc::get_tag_passbackResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_tag_passback, request, response, timeout_);
-    auto result = std::make_unique<CampaignServer::PassbackInfo>();
+    auto result = std::unique_ptr<CampaignServer::PassbackInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -157,13 +172,18 @@ namespace AdServer::CampaignSvcs
     const CampaignServer::GetSimpleChannelsInfo& params)
   {
     cs_rpc::brief_simple_channelsRequest request;
-    CampaignGrpc::pack(params, *request.mutable_params());
+    request.mutable_params()->CopyFrom(params);
     cs_rpc::brief_simple_channelsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::brief_simple_channels, request, response, timeout_);
-    auto result = std::make_unique<BriefSimpleChannelAnswer>();
+    auto result = std::unique_ptr<BriefSimpleChannelAnswer>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -177,13 +197,18 @@ namespace AdServer::CampaignSvcs
     const CampaignServer::GetSimpleChannelsInfo& params)
   {
     cs_rpc::simple_channelsRequest request;
-    CampaignGrpc::pack(params, *request.mutable_params());
+    request.mutable_params()->CopyFrom(params);
     cs_rpc::simple_channelsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::simple_channels, request, response, timeout_);
-    auto result = std::make_unique<SimpleChannelAnswer>();
+    auto result = std::unique_ptr<SimpleChannelAnswer>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -197,13 +222,18 @@ namespace AdServer::CampaignSvcs
     const CampaignServer::GetSimpleChannelsInfo& params)
   {
     cs_rpc::chsv_simple_channelsRequest request;
-    CampaignGrpc::pack(params, *request.mutable_params());
+    request.mutable_params()->CopyFrom(params);
     cs_rpc::chsv_simple_channelsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::chsv_simple_channels, request, response, timeout_);
-    auto result = std::make_unique<ChannelServerChannelAnswer>();
+    auto result = std::unique_ptr<ChannelServerChannelAnswer>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -218,10 +248,15 @@ namespace AdServer::CampaignSvcs
     cs_rpc::fraud_conditionsRequest request;
     cs_rpc::fraud_conditionsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::fraud_conditions, request, response, timeout_);
-    auto result = std::make_unique<FraudConditionConfig>();
+    auto result = std::unique_ptr<FraudConditionConfig>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -236,10 +271,15 @@ namespace AdServer::CampaignSvcs
     cs_rpc::freq_capsRequest request;
     cs_rpc::freq_capsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::freq_caps, request, response, timeout_);
-    auto result = std::make_unique<FreqCapConfigInfo>();
+    auto result = std::unique_ptr<FreqCapConfigInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -257,10 +297,10 @@ namespace AdServer::CampaignSvcs
     auto result = std::make_unique<ColocationFlagsSeq>();
     try
     {
-      result->resize(response.value_size());
-      for (std::uint32_t i = 0; i < result->size(); ++i)
+      result->Swap(response.mutable_value());
+      for (const auto& value : *result)
       {
-        CampaignGrpc::unpack(response.value(i), (*result)[i]);
+        CampaignGrpc::validate(value);
       }
     }
     catch (const std::exception& e)
@@ -278,10 +318,15 @@ namespace AdServer::CampaignSvcs
       reinterpret_cast<const char*>(request_timestamp.data()), request_timestamp.size());
     cs_rpc::detectorsResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::detectors, request, response, timeout_);
-    auto result = std::make_unique<DetectorsConfig>();
+    auto result = std::unique_ptr<DetectorsConfig>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -303,10 +348,15 @@ namespace AdServer::CampaignSvcs
     cs_rpc::get_statRequest request;
     cs_rpc::get_statResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_stat, request, response, timeout_);
-    auto result = std::make_unique<StatInfo>();
+    auto result = std::unique_ptr<StatInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -321,10 +371,15 @@ namespace AdServer::CampaignSvcs
     cs_rpc::get_bill_statRequest request;
     cs_rpc::get_bill_statResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_bill_stat, request, response, timeout_);
-    auto result = std::make_unique<BillStatInfo>();
+    auto result = std::unique_ptr<BillStatInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -341,10 +396,15 @@ namespace AdServer::CampaignSvcs
     request.set_colo_id(colo_id);
     cs_rpc::get_colocation_propResponse response;
     call(*stub_, &cs_rpc::CampaignServer::Stub::get_colocation_prop, request, response, timeout_);
-    auto result = std::make_unique<CampaignServer::ColocationPropInfo>();
+    auto result = std::unique_ptr<CampaignServer::ColocationPropInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {
@@ -361,10 +421,16 @@ namespace AdServer::CampaignSvcs
     call(
       *stub_, &cs_rpc::CampaignServer::Stub::get_delivery_limit_config,
       request, response, timeout_);
-    auto result = std::make_unique<CampaignServer::DeliveryLimitConfigInfo>();
+    auto result =
+      std::unique_ptr<CampaignServer::DeliveryLimitConfigInfo>(response.release_value());
     try
     {
-      CampaignGrpc::unpack(response.value(), *result);
+      if (!result)
+      {
+        throw std::invalid_argument("Missing CampaignServer response value");
+      }
+
+      CampaignGrpc::validate(*result);
     }
     catch (const std::exception& e)
     {

@@ -27,11 +27,6 @@
       <xsd:documentation>Billing Server process runtime parameters.</xsd:documentation>
     </xsd:annotation>
     <xsd:sequence>
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
-        <xsd:annotation>
-          <xsd:documentation>Corba config.</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
 
       <xsd:element name="GrpcConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
@@ -61,7 +56,7 @@
 
       <xsd:element name="CampaignServerGrpcRefs" type="CampaignServerGrpcRefsType">
         <xsd:annotation>
-          <xsd:documentation>Defines refs to corba object CampaignServer</xsd:documentation>
+          <xsd:documentation>CampaignServer gRPC endpoints.</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
 

@@ -27,10 +27,6 @@ namespace AdServer::CampaignSvcs
    *     1. parse expression with using ExpressionParser
    *     2. push result ExpressionChannel into collection
    *       it will be linked to ChannelHolder's from collection
-   * Filling of CORBA channel tree representation:
-   *   for each channel from collection call CorbaChannelConverter
-   * Filling channel tree from CORBA representation:
-   *   for each sequence element call CorbaChannelConverter
    */
   using ChannelId = unsigned long;
   using ChannelIdHashSet = Generics::MonoUnorderedSet<ChannelId>;

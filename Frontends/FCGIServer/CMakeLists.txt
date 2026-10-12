@@ -43,9 +43,7 @@ target_link_libraries(FCGIServer
     FrontendServerCommons
     CommonModule
     CampaignServerGrpc
-    ProcessControlIDL
     Commons
-    CORBACommons
     HTTP
     HttpServer
     Generics

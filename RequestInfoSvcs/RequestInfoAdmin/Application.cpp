@@ -5,7 +5,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
-#include <string_view>
+#include <string>
 #include <utility>
 
 #include <String/StringManip.hpp>
@@ -69,28 +69,6 @@ namespace
     "Sample:\n"
     "  RequestInfoAdmin print-request '\\-lgNQrDiQtOF50DRxzfdtA..'"
     " -r xen.ocslab.com:12116\n";
-
-  std::string
-  normalize_endpoint(std::string endpoint)
-  {
-    constexpr std::string_view corbaloc_prefix = "corbaloc::";
-    constexpr std::string_view iiop_prefix = "corbaloc:iiop:";
-    if (endpoint.compare(0, corbaloc_prefix.size(), corbaloc_prefix) == 0)
-    {
-      endpoint.erase(0, corbaloc_prefix.size());
-    }
-    else if (endpoint.compare(0, iiop_prefix.size(), iiop_prefix) == 0)
-    {
-      endpoint.erase(0, iiop_prefix.size());
-    }
-
-    const std::size_t object_key_pos = endpoint.find('/');
-    if (object_key_pos != std::string::npos)
-    {
-      endpoint.resize(object_key_pos);
-    }
-    return endpoint;
-  }
 
   template<typename Response, typename Start>
   std::optional<Response>
@@ -975,7 +953,13 @@ Application_::main(int& argc, char** argv) noexcept
         opt_ref.set_value(*opt_endpoint);
       }
 
-      const std::string endpoint = normalize_endpoint(*opt_ref);
+      const std::string& endpoint = *opt_ref;
+      if (endpoint.empty() || endpoint.find("corbaloc:") == 0 ||
+        endpoint.find("IOR:") == 0 || endpoint.find('/') != std::string::npos)
+      {
+        throw Exception("Expected gRPC endpoint host:port; object references are not supported");
+      }
+
       ClientHolder client_holder = create_client(endpoint);
       auto client_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
         &client_holder,

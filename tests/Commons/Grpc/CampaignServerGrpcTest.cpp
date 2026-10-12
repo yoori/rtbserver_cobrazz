@@ -1,5 +1,6 @@
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <thread>
 #include <unordered_map>
@@ -273,31 +274,97 @@ namespace
   template<class Native, class Proto>
   Native* native_fixture()
   {
-    auto value = std::make_unique<Native>();
-    CampaignGrpc::unpack(fixture<Proto>(), *value);
+    static_assert(std::is_same_v<Native, Proto>, "Campaign API must use protobuf directly");
+    auto value = std::make_unique<Native>(fixture<Proto>());
+    CampaignGrpc::validate(*value);
     return value.release();
   }
 
+  void check_invalid_fields(
+    google::protobuf::Message& message, const std::function<void()>& validate)
+  {
+    using Field = google::protobuf::FieldDescriptor;
+    const auto* descriptor = message.GetDescriptor();
+    const auto* reflection = message.GetReflection();
+    for (int i = 0; i < descriptor->field_count(); ++i)
+    {
+      const auto* field = descriptor->field(i);
+      if (field->cpp_type() == Field::CPPTYPE_MESSAGE)
+      {
+        if (field->is_repeated())
+        {
+          for (int j = 0; j < reflection->FieldSize(message, field); ++j)
+          {
+            check_invalid_fields(*reflection->MutableRepeatedMessage(&message, field, j), validate);
+          }
+        }
+        else if (reflection->HasField(message, field))
+        {
+          check_invalid_fields(*reflection->MutableMessage(&message, field), validate);
+        }
+
+        continue;
+      }
+
+      const auto name = descriptor->name() + "." + field->name();
+      const bool bytes = packed_sizes.count(name);
+      const bool character = character_fields.count(name);
+      const bool enumeration = field->cpp_type() == Field::CPPTYPE_ENUM;
+      if (!bytes && !character && !enumeration)
+      {
+        continue;
+      }
+
+      std::unique_ptr<google::protobuf::Message> saved(message.New());
+      saved->CopyFrom(message);
+      if (bytes)
+      {
+        reflection->SetString(&message, field, "x");
+      }
+      else if (character)
+      {
+        reflection->SetUInt32(&message, field, 256);
+      }
+      else
+      {
+        reflection->SetEnumValue(&message, field, 999);
+      }
+
+      bool rejected = false;
+      try
+      {
+        validate();
+      }
+      catch (const std::invalid_argument&)
+      {
+        rejected = true;
+      }
+
+      message.CopyFrom(*saved);
+      require(rejected, name.c_str());
+    }
+  }
+
   template<class Native, class Proto>
-  void roundtrip()
+  void validate_fixture()
   {
     const auto source = fixture<Proto>();
+    static_assert(std::is_same_v<Native, Proto>, "Campaign API must use protobuf directly");
     Native native;
-    CampaignGrpc::unpack(source, native);
-    Proto restored;
-    CampaignGrpc::pack(native, restored);
-    CampaignGrpc::pack(native, restored);
-    require(google::protobuf::util::MessageDifferencer::Equals(source, restored),
+    CampaignGrpc::validate(source);
+    require(native.ParseFromString(source.SerializeAsString()), "Protobuf parsing failed");
+    CampaignGrpc::validate(native);
+    require(google::protobuf::util::MessageDifferencer::Equals(source, native),
       source.GetDescriptor()->name().c_str());
+    check_invalid_fields(native, [&native]() { CampaignGrpc::validate(native); });
   }
 
   template<class Proto, class Native>
   void check_value(const Native& value)
   {
-    Proto actual;
-    CampaignGrpc::pack(value, actual);
-    require(google::protobuf::util::MessageDifferencer::Equals(fixture<Proto>(), actual),
-      actual.GetDescriptor()->name().c_str());
+    static_assert(std::is_same_v<Native, Proto>, "Campaign API must use protobuf directly");
+    require(google::protobuf::util::MessageDifferencer::Equals(fixture<Proto>(), value),
+      value.GetDescriptor()->name().c_str());
   }
 
   class Source final : public CampaignServerApi
@@ -307,6 +374,7 @@ namespace
     std::atomic<int> calls{0};
     std::atomic<int> delay_ms{0};
     std::atomic<int> large_count{0};
+    std::atomic<bool> malformed_response{false};
     void check();
     CampaignConfigUpdateInfo* get_config(
       const CampaignGetConfigSettings& get_config_settings) override;
@@ -358,11 +426,16 @@ namespace
       native_fixture<CampaignConfigUpdateInfo, rpc::CampaignConfigUpdateInfo>());
     if (large_count)
     {
-      result->sizes.resize(large_count);
-      for (std::uint32_t i = 0; i < result->sizes.size(); ++i)
+      GrpcAlgs::resize_repeated(*result->mutable_sizes(), large_count);
+      for (auto& size : *result->mutable_sizes())
       {
-        CampaignGrpc::unpack(fixture<rpc::SizeInfo>(), result->sizes[i]);
+        size = fixture<rpc::SizeInfo>();
       }
+    }
+
+    if (malformed_response)
+    {
+      result->set_master_stamp("x");
     }
 
     return result.release();
@@ -383,8 +456,9 @@ namespace
       static_cast<unsigned char>(request_timestamp[0]) == 129,
       "request timestamp");
     auto result = std::make_unique<EcpmSeq>();
-    result->resize(1);
-    CampaignGrpc::unpack(fixture<rpc::CampaignEcpmInfo>(), (*result)[0]);
+    result->Add();
+    CampaignGrpc::validate(fixture<rpc::CampaignEcpmInfo>());
+    (*result)[0] = fixture<rpc::CampaignEcpmInfo>();
     return result.release();
   }
 
@@ -444,8 +518,9 @@ namespace
   {
     check();
     auto result = std::make_unique<ColocationFlagsSeq>();
-    result->resize(1);
-    CampaignGrpc::unpack(fixture<rpc::ColocationFlags>(), (*result)[0]);
+    result->Add();
+    CampaignGrpc::validate(fixture<rpc::ColocationFlags>());
+    (*result)[0] = fixture<rpc::ColocationFlags>();
     return result.release();
   }
 
@@ -621,40 +696,33 @@ int main(int argc, char** argv)
       throw std::runtime_error("Expected NotReady from unconfigured CampaignServer");
     }
 
-    const auto zero_time = std::string(8, '\0');
-    require(BriefBehavParamInfo{}.timestamp == zero_time, "Default behavior timestamp changed");
-    require(BriefKeyBehavParamInfo{}.timestamp == zero_time, "Default key timestamp changed");
-    require(BriefSimpleChannelAnswer{}.timezone_offset == zero_time,
-      "Default timezone changed");
-    require(BriefSimpleChannelAnswer{}.master_stamp == zero_time,
-      "Default master timestamp changed");
-
-    roundtrip<AppFormatInfo, rpc::AppFormatInfo>();
-    roundtrip<SizeInfo, rpc::SizeInfo>();
-    roundtrip<CreativeOptionInfo, rpc::CreativeOptionInfo>();
-    roundtrip<OptionValueInfo, rpc::OptionValueInfo>();
-    roundtrip<CountryInfo, rpc::CountryInfo>();
-    roundtrip<ExternalCategoryInfo, rpc::ExternalCategoryInfo>();
-    roundtrip<CreativeCategoryInfo, rpc::CreativeCategoryInfo>();
-    roundtrip<CreativeSizeInfo, rpc::CreativeSizeInfo>();
-    roundtrip<CreativeInfo, rpc::CreativeInfo>();
-    roundtrip<ChannelWeight, rpc::ChannelWeight>();
-    roundtrip<DeletedIdInfo, rpc::DeletedIdInfo>();
-    roundtrip<DeletedStringIdInfo, rpc::DeletedStringIdInfo>();
-    roundtrip<CampaignEcpmInfo, rpc::CampaignEcpmInfo>();
-    roundtrip<ExpressionInfo, rpc::ExpressionInfo>();
-    roundtrip<ExpressionChannelInfo, rpc::ExpressionChannelInfo>();
+    validate_fixture<AppFormatInfo, rpc::AppFormatInfo>();
+    validate_fixture<SizeInfo, rpc::SizeInfo>();
+    validate_fixture<CreativeOptionInfo, rpc::CreativeOptionInfo>();
+    validate_fixture<OptionValueInfo, rpc::OptionValueInfo>();
+    validate_fixture<CountryInfo, rpc::CountryInfo>();
+    validate_fixture<ExternalCategoryInfo, rpc::ExternalCategoryInfo>();
+    validate_fixture<CreativeCategoryInfo, rpc::CreativeCategoryInfo>();
+    validate_fixture<CreativeSizeInfo, rpc::CreativeSizeInfo>();
+    validate_fixture<CreativeInfo, rpc::CreativeInfo>();
+    validate_fixture<ChannelWeight, rpc::ChannelWeight>();
+    validate_fixture<DeletedIdInfo, rpc::DeletedIdInfo>();
+    validate_fixture<DeletedStringIdInfo, rpc::DeletedStringIdInfo>();
+    validate_fixture<CampaignEcpmInfo, rpc::CampaignEcpmInfo>();
+    validate_fixture<ExpressionInfo, rpc::ExpressionInfo>();
+    validate_fixture<ExpressionChannelInfo, rpc::ExpressionChannelInfo>();
     {
       auto source = fixture<rpc::ExpressionChannelInfo>();
       source.set_channel_rate_id(0);
       source.clear_imp_revenue();
       source.clear_click_revenue();
       ExpressionChannelInfo native;
-      CampaignGrpc::unpack(source, native);
-      require(native.imp_revenue.empty() && native.click_revenue.empty(),
+      CampaignGrpc::validate(source);
+      native = source;
+      require(native.imp_revenue().empty() && native.click_revenue().empty(),
         "Channel without a rate must preserve absent revenues");
       rpc::ExpressionChannelInfo restored;
-      CampaignGrpc::pack(native, restored);
+      restored = native;
       require(source.SerializeAsString() == restored.SerializeAsString(),
         "Channel without a rate roundtrip");
 
@@ -676,7 +744,7 @@ int main(int argc, char** argv)
             bool rejected = false;
             try
             {
-              CampaignGrpc::unpack(malformed, native);
+              CampaignGrpc::validate(malformed);
             }
             catch (const std::invalid_argument&)
             {
@@ -689,86 +757,86 @@ int main(int argc, char** argv)
       }
     }
 
-    roundtrip<BehavioralParameterInfo, rpc::BehavioralParameterInfo>();
-    roundtrip<WeeklyRunInterval, rpc::WeeklyRunInterval>();
-    roundtrip<CampaignDeliveryLimitsInfo, rpc::CampaignDeliveryLimitsInfo>();
-    roundtrip<TagDeliveryInfo, rpc::TagDeliveryInfo>();
-    roundtrip<ContractInfo, rpc::ContractInfo>();
-    roundtrip<CampaignInfo, rpc::CampaignInfo>();
-    roundtrip<TagPricingInfo, rpc::TagPricingInfo>();
-    roundtrip<TemplateOptionsInfo, rpc::TemplateOptionsInfo>();
-    roundtrip<TagSizeInfo, rpc::TagSizeInfo>();
-    roundtrip<TagInfo, rpc::TagInfo>();
-    roundtrip<SiteInfo, rpc::SiteInfo>();
-    roundtrip<ColocationInfo, rpc::ColocationInfo>();
-    roundtrip<ColocationFlags, rpc::ColocationFlags>();
-    roundtrip<FreqCapInfo, rpc::FreqCapInfo>();
-    roundtrip<CreativeTemplateFileInfo, rpc::CreativeTemplateFileInfo>();
-    roundtrip<CreativeTemplateInfo, rpc::CreativeTemplateInfo>();
-    roundtrip<CurrencyInfo, rpc::CurrencyInfo>();
-    roundtrip<CampaignKeywordInfo, rpc::CampaignKeywordInfo>();
-    roundtrip<AdvActionInfo, rpc::AdvActionInfo>();
-    roundtrip<AccountInfo, rpc::AccountInfo>();
-    roundtrip<CategoryChannelLocalizationInfo, rpc::CategoryChannelLocalizationInfo>();
-    roundtrip<CategoryChannelInfo, rpc::CategoryChannelInfo>();
-    roundtrip<PriceRangeInfo, rpc::PriceRange>();
-    roundtrip<BehavParameter, rpc::BehavParameter>();
-    roundtrip<BehavParamInfo, rpc::BehavParamInfo>();
-    roundtrip<KeyBehavParamInfo, rpc::KeyBehavParamInfo>();
-    roundtrip<BriefBehavParamInfo, rpc::BriefBehavParamInfo>();
-    roundtrip<BriefKeyBehavParamInfo, rpc::BriefKeyBehavParamInfo>();
-    roundtrip<SimpleChannelKey, rpc::SimpleChannelKey>();
-    roundtrip<BriefSimpleChannelKey, rpc::BriefSimpleChannelKey>();
-    roundtrip<GeoIPRegionCityInfo, rpc::GeoIPRegionCityInfo>();
-    roundtrip<GeoChannelInfo, rpc::GeoChannelInfo>();
-    roundtrip<GeoCoordChannelInfo, rpc::GeoCoordChannelInfo>();
-    roundtrip<BlockChannelInfo, rpc::BlockChannelInfo>();
-    roundtrip<FraudConditionInfo, rpc::FraudConditionInfo>();
-    roundtrip<SearchEngineRegExpInfo, rpc::SearchEngineRegExpInfo>();
-    roundtrip<SearchEngineInfo, rpc::SearchEngineInfo>();
-    roundtrip<WebBrowserDetectorInfo, rpc::WebBrowserDetectorInfo>();
-    roundtrip<WebBrowserInfo, rpc::WebBrowserInfo>();
-    roundtrip<PlatformDetectorInfo, rpc::PlatformDetectorInfo>();
-    roundtrip<PlatformInfo, rpc::PlatformInfo>();
-    roundtrip<WebOperationInfo, rpc::WebOperationInfo>();
-    roundtrip<CampaignConfigUpdateInfo, rpc::CampaignConfigUpdateInfo>();
-    roundtrip<CreativeStatInfo, rpc::CreativeStatInfo>();
-    roundtrip<PublisherCCGStatInfo, rpc::PublisherCCGStatInfo>();
-    roundtrip<TagCCGStatInfo, rpc::TagCCGStatInfo>();
-    roundtrip<CtrResetStatInfo, rpc::CtrResetStatInfo>();
-    roundtrip<CCGStatInfo, rpc::CCGStatInfo>();
-    roundtrip<CampaignStatInfo, rpc::CampaignStatInfo>();
-    roundtrip<AmountStatInfo, rpc::AmountStatInfo>();
-    roundtrip<StatInfo, rpc::StatInfo>();
-    roundtrip<DayAmount, rpc::DayAmount>();
-    roundtrip<AmountDistributionInfo, rpc::AmountDistributionInfo>();
-    roundtrip<AccountAmountDistributionInfo, rpc::AccountAmountDistributionInfo>();
-    roundtrip<DayAmountCount, rpc::DayAmountCount>();
-    roundtrip<AmountCountDistributionInfo, rpc::AmountCountDistributionInfo>();
-    roundtrip<CampaignAmountDistributionInfo, rpc::CampaignAmountDistributionInfo>();
-    roundtrip<CCGAmountDistributionInfo, rpc::CCGAmountDistributionInfo>();
-    roundtrip<BillStatInfo, rpc::BillStatInfo>();
-    roundtrip<DiscoverChannel, rpc::DiscoverChannel>();
-    roundtrip<SimpleChannelAnswer, rpc::SimpleChannelAnswer>();
-    roundtrip<BriefSimpleChannelAnswer, rpc::BriefSimpleChannelAnswer>();
-    roundtrip<BehaveInfo, rpc::BehaveInfo>();
-    roundtrip<CSSimpleChannel, rpc::CSSimpleChannel>();
-    roundtrip<ChannelServerChannelAnswer, rpc::ChannelServerChannelAnswer>();
-    roundtrip<CampaignGetConfigSettings, rpc::CampaignGetConfigSettings>();
-    roundtrip<FraudConditionConfig, rpc::FraudConditionConfig>();
-    roundtrip<DetectorsConfig, rpc::DetectorsConfig>();
-    roundtrip<FreqCapConfigInfo, rpc::FreqCapConfigInfo>();
-    roundtrip<ExpressionChannelCCGInfo, rpc::ExpressionChannelCCGInfo>();
-    roundtrip<ChannelTriggersInfo, rpc::ChannelTriggersInfo>();
-    roundtrip<ExpressionChannelsInfo, rpc::ExpressionChannelsInfo>();
-    roundtrip<AccountDeliveryInfo, rpc::AccountDeliveryInfo>();
-    roundtrip<CampaignDeliveryInfo, rpc::CampaignDeliveryInfo>();
-    roundtrip<CCGDeliveryInfo, rpc::CCGDeliveryInfo>();
-    roundtrip<CampaignServer::GetExpressionChannelsInfo, rpc::GetExpressionChannelsInfo>();
-    roundtrip<CampaignServer::GetSimpleChannelsInfo, rpc::GetSimpleChannelsInfo>();
-    roundtrip<CampaignServer::PassbackInfo, rpc::PassbackInfo>();
-    roundtrip<CampaignServer::ColocationPropInfo, rpc::ColocationPropInfo>();
-    roundtrip<CampaignServer::DeliveryLimitConfigInfo, rpc::DeliveryLimitConfigInfo>();
+    validate_fixture<BehavioralParameterInfo, rpc::BehavioralParameterInfo>();
+    validate_fixture<WeeklyRunInterval, rpc::WeeklyRunInterval>();
+    validate_fixture<CampaignDeliveryLimitsInfo, rpc::CampaignDeliveryLimitsInfo>();
+    validate_fixture<TagDeliveryInfo, rpc::TagDeliveryInfo>();
+    validate_fixture<ContractInfo, rpc::ContractInfo>();
+    validate_fixture<CampaignInfo, rpc::CampaignInfo>();
+    validate_fixture<TagPricingInfo, rpc::TagPricingInfo>();
+    validate_fixture<TemplateOptionsInfo, rpc::TemplateOptionsInfo>();
+    validate_fixture<TagSizeInfo, rpc::TagSizeInfo>();
+    validate_fixture<TagInfo, rpc::TagInfo>();
+    validate_fixture<SiteInfo, rpc::SiteInfo>();
+    validate_fixture<ColocationInfo, rpc::ColocationInfo>();
+    validate_fixture<ColocationFlags, rpc::ColocationFlags>();
+    validate_fixture<FreqCapInfo, rpc::FreqCapInfo>();
+    validate_fixture<CreativeTemplateFileInfo, rpc::CreativeTemplateFileInfo>();
+    validate_fixture<CreativeTemplateInfo, rpc::CreativeTemplateInfo>();
+    validate_fixture<CurrencyInfo, rpc::CurrencyInfo>();
+    validate_fixture<CampaignKeywordInfo, rpc::CampaignKeywordInfo>();
+    validate_fixture<AdvActionInfo, rpc::AdvActionInfo>();
+    validate_fixture<AccountInfo, rpc::AccountInfo>();
+    validate_fixture<CategoryChannelLocalizationInfo, rpc::CategoryChannelLocalizationInfo>();
+    validate_fixture<CategoryChannelInfo, rpc::CategoryChannelInfo>();
+    validate_fixture<PriceRangeInfo, rpc::PriceRange>();
+    validate_fixture<BehavParameter, rpc::BehavParameter>();
+    validate_fixture<BehavParamInfo, rpc::BehavParamInfo>();
+    validate_fixture<KeyBehavParamInfo, rpc::KeyBehavParamInfo>();
+    validate_fixture<BriefBehavParamInfo, rpc::BriefBehavParamInfo>();
+    validate_fixture<BriefKeyBehavParamInfo, rpc::BriefKeyBehavParamInfo>();
+    validate_fixture<SimpleChannelKey, rpc::SimpleChannelKey>();
+    validate_fixture<BriefSimpleChannelKey, rpc::BriefSimpleChannelKey>();
+    validate_fixture<GeoIPRegionCityInfo, rpc::GeoIPRegionCityInfo>();
+    validate_fixture<GeoChannelInfo, rpc::GeoChannelInfo>();
+    validate_fixture<GeoCoordChannelInfo, rpc::GeoCoordChannelInfo>();
+    validate_fixture<BlockChannelInfo, rpc::BlockChannelInfo>();
+    validate_fixture<FraudConditionInfo, rpc::FraudConditionInfo>();
+    validate_fixture<SearchEngineRegExpInfo, rpc::SearchEngineRegExpInfo>();
+    validate_fixture<SearchEngineInfo, rpc::SearchEngineInfo>();
+    validate_fixture<WebBrowserDetectorInfo, rpc::WebBrowserDetectorInfo>();
+    validate_fixture<WebBrowserInfo, rpc::WebBrowserInfo>();
+    validate_fixture<PlatformDetectorInfo, rpc::PlatformDetectorInfo>();
+    validate_fixture<PlatformInfo, rpc::PlatformInfo>();
+    validate_fixture<WebOperationInfo, rpc::WebOperationInfo>();
+    validate_fixture<CampaignConfigUpdateInfo, rpc::CampaignConfigUpdateInfo>();
+    validate_fixture<CreativeStatInfo, rpc::CreativeStatInfo>();
+    validate_fixture<PublisherCCGStatInfo, rpc::PublisherCCGStatInfo>();
+    validate_fixture<TagCCGStatInfo, rpc::TagCCGStatInfo>();
+    validate_fixture<CtrResetStatInfo, rpc::CtrResetStatInfo>();
+    validate_fixture<CCGStatInfo, rpc::CCGStatInfo>();
+    validate_fixture<CampaignStatInfo, rpc::CampaignStatInfo>();
+    validate_fixture<AmountStatInfo, rpc::AmountStatInfo>();
+    validate_fixture<StatInfo, rpc::StatInfo>();
+    validate_fixture<DayAmount, rpc::DayAmount>();
+    validate_fixture<AmountDistributionInfo, rpc::AmountDistributionInfo>();
+    validate_fixture<AccountAmountDistributionInfo, rpc::AccountAmountDistributionInfo>();
+    validate_fixture<DayAmountCount, rpc::DayAmountCount>();
+    validate_fixture<AmountCountDistributionInfo, rpc::AmountCountDistributionInfo>();
+    validate_fixture<CampaignAmountDistributionInfo, rpc::CampaignAmountDistributionInfo>();
+    validate_fixture<CCGAmountDistributionInfo, rpc::CCGAmountDistributionInfo>();
+    validate_fixture<BillStatInfo, rpc::BillStatInfo>();
+    validate_fixture<DiscoverChannel, rpc::DiscoverChannel>();
+    validate_fixture<SimpleChannelAnswer, rpc::SimpleChannelAnswer>();
+    validate_fixture<BriefSimpleChannelAnswer, rpc::BriefSimpleChannelAnswer>();
+    validate_fixture<BehaveInfo, rpc::BehaveInfo>();
+    validate_fixture<CSSimpleChannel, rpc::CSSimpleChannel>();
+    validate_fixture<ChannelServerChannelAnswer, rpc::ChannelServerChannelAnswer>();
+    validate_fixture<CampaignGetConfigSettings, rpc::CampaignGetConfigSettings>();
+    validate_fixture<FraudConditionConfig, rpc::FraudConditionConfig>();
+    validate_fixture<DetectorsConfig, rpc::DetectorsConfig>();
+    validate_fixture<FreqCapConfigInfo, rpc::FreqCapConfigInfo>();
+    validate_fixture<ExpressionChannelCCGInfo, rpc::ExpressionChannelCCGInfo>();
+    validate_fixture<ChannelTriggersInfo, rpc::ChannelTriggersInfo>();
+    validate_fixture<ExpressionChannelsInfo, rpc::ExpressionChannelsInfo>();
+    validate_fixture<AccountDeliveryInfo, rpc::AccountDeliveryInfo>();
+    validate_fixture<CampaignDeliveryInfo, rpc::CampaignDeliveryInfo>();
+    validate_fixture<CCGDeliveryInfo, rpc::CCGDeliveryInfo>();
+    validate_fixture<CampaignServer::GetExpressionChannelsInfo, rpc::GetExpressionChannelsInfo>();
+    validate_fixture<CampaignServer::GetSimpleChannelsInfo, rpc::GetSimpleChannelsInfo>();
+    validate_fixture<CampaignServer::PassbackInfo, rpc::PassbackInfo>();
+    validate_fixture<CampaignServer::ColocationPropInfo, rpc::ColocationPropInfo>();
+    validate_fixture<CampaignServer::DeliveryLimitConfigInfo, rpc::DeliveryLimitConfigInfo>();
     Source source;
     CampaignServerGrpcService service(source);
     grpc::ServerBuilder builder;
@@ -841,11 +909,23 @@ int main(int argc, char** argv)
       native_fixture<CampaignGetConfigSettings, rpc::CampaignGetConfigSettings>());
     source.large_count = 150000;
     std::unique_ptr<CampaignConfigUpdateInfo> large(client.get_config(*settings));
-    require(large->sizes.size() == 150000, "large response truncated");
-    rpc::CampaignConfigUpdateInfo wire;
-    CampaignGrpc::pack(*large, wire);
-    require(wire.ByteSizeLong() > 4 * 1024 * 1024, "large response must exceed 4 MiB");
+    require(large->sizes_size() == 150000, "large response truncated");
+    require(large->ByteSizeLong() > 4 * 1024 * 1024, "large response must exceed 4 MiB");
     source.large_count = 0;
+
+    source.malformed_response = true;
+    bool malformed_rejected = false;
+    try
+    {
+      std::unique_ptr<CampaignConfigUpdateInfo> result(client.get_config(*settings));
+    }
+    catch (const CampaignServer::ImplementationException&)
+    {
+      malformed_rejected = true;
+    }
+
+    require(malformed_rejected, "Client must reject malformed response");
+    source.malformed_response = false;
 
     CampaignServerPool pool({endpoint, endpoint}, Generics::Time(0, 20000));
     auto first = pool.get_object(0);
@@ -871,11 +951,10 @@ int main(int argc, char** argv)
 
     rpc::CampaignEcpmInfo malformed;
     malformed.set_ecpm("x");
-    CampaignEcpmInfo native;
     bool rejected = false;
     try
     {
-      CampaignGrpc::unpack(malformed, native);
+      CampaignGrpc::validate(malformed);
     }
     catch (const std::invalid_argument&)
     {

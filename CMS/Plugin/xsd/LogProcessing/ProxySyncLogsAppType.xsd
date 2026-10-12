@@ -17,7 +17,7 @@
   <xsd:complexType name="ProxySyncLogsThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>Legacy thread setting; ignored.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -41,7 +41,7 @@
       <xsd:element name="threadParams" type="ProxySyncLogsThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            Legacy thread setting; ignored.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

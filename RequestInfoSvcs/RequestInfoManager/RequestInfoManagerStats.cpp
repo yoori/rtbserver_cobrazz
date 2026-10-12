@@ -9,7 +9,7 @@ namespace AdServer::RequestInfoSvcs
   const Generics::StringHashAdapter StatNames::FILE_COUNT("fileCount");
   const Generics::StringHashAdapter StatNames::LAST_PROCESSED_TIMESTAMP(
     "lastProcessedFileTimestamp");
-  const char* StatNames::LOG_CORBA_NAMES[StatNames::LOG_COUNT] =
+  const char* StatNames::LOG_STAT_PREFIXES[StatNames::LOG_COUNT] =
   {
     "advertiserAction.",
     "click.",

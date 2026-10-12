@@ -550,14 +550,14 @@
       <xsd:element name="campaignServerRef" type="CampaignServerGrpcRef" minOccurs="1" maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA reference to CampaignServer.
+            CampaignServer gRPC endpoint.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="sTunnelRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="sTunnelRef" type="STunnelRef" minOccurs="1" maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA reference to sTunnel.
+            STunnel TCP endpoint.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

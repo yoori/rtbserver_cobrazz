@@ -97,7 +97,6 @@ namespace AdServer::RequestInfoSvcs
     return res;
   }
 
-
   LogProcessing::LogFlushTraits*
   read_flush_policy(
     const xsd::cxx::tree::optional<
@@ -1342,19 +1341,20 @@ namespace AdServer::RequestInfoSvcs
           std::unique_ptr<AdServer::CampaignSvcs::FraudConditionConfig> fraud_config_info(
             campaign_server->fraud_conditions());
 
-          const AdServer::CampaignSvcs::FraudConditionSeq& fraud_conds = fraud_config_info->rules;
+          const AdServer::CampaignSvcs::FraudConditionSeq& fraud_conds =
+            fraud_config_info->rules();
 
           UserFraudProtectionContainer::Config_var config(
             new UserFraudProtectionContainer::Config());
 
-          config->deactivate_period = GrpcAlgs::unpack_time(fraud_config_info->deactivate_period);
+          config->deactivate_period = GrpcAlgs::unpack_time(fraud_config_info->deactivate_period());
 
-          for (std::uint32_t fraud_i = 0; fraud_i < fraud_conds.size(); ++fraud_i)
+          for (int fraud_i = 0; fraud_i < fraud_conds.size(); ++fraud_i)
           {
             UserFraudProtectionContainer::Config::FraudRule rule;
-            rule.limit = fraud_conds[fraud_i].limit;
-            rule.period = GrpcAlgs::unpack_time(fraud_conds[fraud_i].period);
-            if (fraud_conds[fraud_i].type == 'I')
+            rule.limit = fraud_conds[fraud_i].limit();
+            rule.period = GrpcAlgs::unpack_time(fraud_conds[fraud_i].period());
+            if (static_cast<char>(fraud_conds[fraud_i].type()) == 'I')
             {
               config->imp_rules.add_rule(rule);
             }

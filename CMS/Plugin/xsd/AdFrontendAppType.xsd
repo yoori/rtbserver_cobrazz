@@ -19,7 +19,7 @@
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
-         Port for CORBA interface.
+         Legacy service port exported by CMS.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -51,7 +51,7 @@
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
-         Port for CORBA interface.
+         Legacy service port exported by CMS.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -83,7 +83,7 @@
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
-         Port for CORBA interface.
+         Legacy service port exported by CMS.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -115,7 +115,7 @@
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
-         Port for CORBA interface.
+         Legacy service port exported by CMS.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -147,7 +147,7 @@
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
-         Port for CORBA interface.
+         Legacy service port exported by CMS.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -246,7 +246,7 @@
       <xsd:element name="threadParams" type="FrontendThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            Legacy thread setting; ignored.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -456,7 +456,7 @@
   <xsd:complexType name="FrontendThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>Legacy thread setting; ignored.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>

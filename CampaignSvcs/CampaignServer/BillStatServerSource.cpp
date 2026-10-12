@@ -94,29 +94,30 @@ namespace AdServer::CampaignSvcs
   {
     BillStatSource::Stat_var stat(new BillStatSource::Stat());
 
-    for (std::uint32_t i = 0; i < update.accounts.size(); ++i)
+    for (int i = 0; i < update.accounts().size(); ++i)
     {
-      auto& account_info = update.accounts[i];
+      auto& account_info = update.accounts()[i];
       BillStatSource::Stat::Account new_account;
-      convert_amount_distribution_(new_account, account_info.amount_distribution);
-      stat->accounts.insert(std::make_pair(account_info.account_id, new_account));
+      convert_amount_distribution_(new_account, account_info.amount_distribution());
+      stat->accounts.insert(std::make_pair(account_info.account_id(), new_account));
     }
 
-    for (std::uint32_t i = 0; i < update.campaigns.size(); ++i)
+    for (int i = 0; i < update.campaigns().size(); ++i)
     {
-      auto& campaign_info = update.campaigns[i];
+      auto& campaign_info = update.campaigns()[i];
       BillStatSource::Stat::Campaign new_campaign;
       convert_amount_count_distribution_(
-        static_cast<BillStatSource::Stat::AmountCountDistribution&>(new_campaign), campaign_info.amount_count_distribution);
-      stat->campaigns.insert(std::make_pair(campaign_info.campaign_id, new_campaign));
+        static_cast<BillStatSource::Stat::AmountCountDistribution&>(new_campaign),
+        campaign_info.amount_count_distribution());
+      stat->campaigns.insert(std::make_pair(campaign_info.campaign_id(), new_campaign));
     }
 
-    for (std::uint32_t i = 0; i < update.ccgs.size(); ++i)
+    for (int i = 0; i < update.ccgs().size(); ++i)
     {
-      auto& ccg_info = update.ccgs[i];
+      auto& ccg_info = update.ccgs()[i];
       BillStatSource::Stat::CCG new_ccg;
-      convert_amount_count_distribution_(new_ccg, ccg_info.amount_count_distribution);
-      stat->ccgs.insert(std::make_pair(ccg_info.ccg_id, new_ccg));
+      convert_amount_count_distribution_(new_ccg, ccg_info.amount_count_distribution());
+      stat->ccgs.insert(std::make_pair(ccg_info.ccg_id(), new_ccg));
     }
 
     return stat;
@@ -128,17 +129,16 @@ namespace AdServer::CampaignSvcs
     const AmountDistributionInfo& amount_distribution_info)
     noexcept
   {
-    amount_distribution.prev_days_amount =
-      GrpcAlgs::unpack_decimal<RevenueDecimal>(amount_distribution_info.prev_days_amount.amount);
-    amount_distribution.prev_day = GrpcAlgs::unpack_time(
-      amount_distribution_info.prev_days_amount.day);
+    amount_distribution.prev_days_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+      amount_distribution_info.prev_days_amount().amount());
+    amount_distribution.prev_day =
+      GrpcAlgs::unpack_time(amount_distribution_info.prev_days_amount().day());
 
-    for (std::uint32_t i = 0; i < amount_distribution_info.day_amounts.size(); ++i)
+    for (int i = 0; i < amount_distribution_info.day_amounts().size(); ++i)
     {
-      auto& day_info = amount_distribution_info.day_amounts[i];
-      amount_distribution.day_amounts.insert(std::make_pair(
-        GrpcAlgs::unpack_time(day_info.day),
-        GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount)));
+      auto& day_info = amount_distribution_info.day_amounts()[i];
+      amount_distribution.day_amounts.insert(std::make_pair(GrpcAlgs::unpack_time(day_info.day()),
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount())));
     }
   }
 
@@ -148,29 +148,23 @@ namespace AdServer::CampaignSvcs
     const AmountCountDistributionInfo& amount_count_distribution_info)
     noexcept
   {
-    amount_count_distribution.prev_days_amount =
-      GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        amount_count_distribution_info.prev_days_amount_count.amount);
-    amount_count_distribution.prev_days_imps =
-      GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
-        amount_count_distribution_info.prev_days_amount_count.imps);
-    amount_count_distribution.prev_days_clicks =
-      GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
-        amount_count_distribution_info.prev_days_amount_count.clicks);
-    amount_count_distribution.prev_day = GrpcAlgs::unpack_time(
-      amount_count_distribution_info.prev_days_amount_count.day);
+    amount_count_distribution.prev_days_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+      amount_count_distribution_info.prev_days_amount_count().amount());
+    amount_count_distribution.prev_days_imps = GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
+      amount_count_distribution_info.prev_days_amount_count().imps());
+    amount_count_distribution.prev_days_clicks = GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(
+      amount_count_distribution_info.prev_days_amount_count().clicks());
+    amount_count_distribution.prev_day =
+      GrpcAlgs::unpack_time(amount_count_distribution_info.prev_days_amount_count().day());
 
-    for (std::uint32_t i = 0; i < amount_count_distribution_info.day_amount_counts.size(); ++i)
+    for (int i = 0; i < amount_count_distribution_info.day_amount_counts().size(); ++i)
     {
-      auto& day_info = amount_count_distribution_info.day_amount_counts[i];
-      amount_count_distribution.day_amount_counts.insert(std::make_pair(
-        GrpcAlgs::unpack_time(day_info.day),
-        Stat::AmountCount(
-          GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount),
-          GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps),
-          GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
-          ))
-        );
+      auto& day_info = amount_count_distribution_info.day_amount_counts()[i];
+      amount_count_distribution.day_amount_counts.insert(
+        std::make_pair(GrpcAlgs::unpack_time(day_info.day()),
+          Stat::AmountCount(GrpcAlgs::unpack_decimal<RevenueDecimal>(day_info.amount()),
+            GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps()),
+            GrpcAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks()))));
     }
   }
 }

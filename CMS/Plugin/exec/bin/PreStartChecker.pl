@@ -10,7 +10,8 @@ sub print_list;
 sub system_for_output;
 
 my $usage =
-  "Usage: $0 --serv-<service name>=<host name>#<corba ref|grpc://host:port>,.. --ssh-identity=<> --env=<> [options]\n" .
+  "Usage: $0 --serv-<service name>=<host name>#grpc://host:port,.. " .
+  "--ssh-identity=<> --env=<> [options]\n" .
   "  'serv' encoded location of service to be checked\n" .
   "  'ssh-identity' identity file\n" .
   "  'env' environment arguments\n" .
@@ -53,7 +54,13 @@ while (my ($arg_key, $arg_value) = each(%$args))
           die "Invalid reference format: $service_ref";
         }
 
-        $services{$service_name}->{$1} = $2;
+        my ($host, $reference) = ($1, $2);
+        if ($reference !~ m{^grpc://(?:[A-Za-z0-9_.-]+|\[[0-9A-Fa-f:]+\]):[0-9]+$})
+        {
+          die "Expected grpc://host:port reference: $reference\n";
+        }
+
+        $services{$service_name}->{$host} = $reference;
       }
     }
   }
@@ -70,10 +77,7 @@ foreach my $service_name(keys(%services))
   my @comments;
   foreach my $service_host(keys(%$service_refs))
   {
-    # check corba ref
-    my $status = 'ready';
-    my ($res, $comment) = check_service(
-      $service_host, $service_refs->{$service_host}, $status, $args);
+    my ($res, $comment) = check_service($service_host, $service_refs->{$service_host}, $args);
 
     if ($res)
     {
@@ -197,20 +201,8 @@ sub print_list
 
 sub check_service
 {
-  my ($host, $reference, $status, $args) = @_;
-
-  my $probe_command;
-  if ($reference =~ m|^grpc://(.+)$|)
-  {
-    $probe_command = "GrpcProbeObj $1";
-  }
-  else
-  {
-    my $probe_util = "ProbeObj";
-    $probe_command =
-      "$probe_util -status $status $reference || " .
-      "{ $probe_util -comment $reference 2>/dev/null ; exit 1 ; }";
-  }
+  my ($host, $reference, $args) = @_;
+  my $probe_command = "GrpcProbeObj " . substr($reference, 7);
 
   my $command =
     "ssh -i " . $args->{'ssh-identity'} . " $host '" .

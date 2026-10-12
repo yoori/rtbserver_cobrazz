@@ -8,14 +8,12 @@ function(add_bidding_request_info_filler_perf_test target)
       BiddingFrontend
       CommonModule
       Commons
-      CORBACommons
       DomainConfigXSD
       DomainParser
       FeConfigXSD
       Generics
       HTTP
       Logger
-      ProcessControlIDL
       Sync
       UserIdController
   )

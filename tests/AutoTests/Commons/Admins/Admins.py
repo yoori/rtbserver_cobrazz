@@ -49,8 +49,6 @@ admSource = 'AdminsList.cpp'
 # @class CampaignAdmin
 # @brief CampaignAdmin with aspect 'campaign'.
 # Examine loaded by AdServer campaigns.
-# CampaignAdmin command call string:
-# CampaignAdmin show campaign=$ccg_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('CampaignAdmin',
       Cmd('CampaignManager', 'campaign',
@@ -87,8 +85,6 @@ Admin('CampaignAdmin',
 # @class AccountAdmin
 # @brief CampaignAdmin with aspect 'account'.
 # Examine loaded by AdServer accountss.
-# CampaignAdmin command call string:
-# CampaignAdmin account account_id=$account_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('AccountAdmin',
       Cmd('CampaignManager', 'account',
@@ -118,8 +114,6 @@ Admin('AccountAdmin',
 
 # @class StatAccountAdmin
 # @brief CampaignAdmin with aspect 'stat-account'.
-# CampaignAdmin call string:
-# CampaignAdmin stat-account server=corbaloc::$campaign_server_host:$campaign_server_port/CampaignServer
 
 Admin('StatAccountAdmin',
       Cmd('CampaignServer', 'stat_account',
@@ -135,8 +129,6 @@ Admin('StatAccountAdmin',
 # @class CreativeAdmin
 # @brief CampaignAdmin with aspect 'creative'.
 # Examine loaded by AdServer creatives.
-# CampaignAdmin command call string:
-# CampaignAdmin show creative=$cc_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('CreativeAdmin',
       Cmd('CampaignManager', 'creative',
@@ -154,8 +146,6 @@ Admin('CreativeAdmin',
 # @class ActionAdmin
 # @brief CampaignAdmin with aspect 'action_adv'.
 # Examine loaded actions.
-# CampaignAdmin call string:
-# CampaignAdmin show adv-action=$action_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('ActionAdmin',
       Cmd('CampaignManager', 'adv_action',
@@ -169,8 +159,6 @@ Admin('ActionAdmin',
 # @class FreqCapAdmin
 # @brief CampaignAdmin with aspect 'freq-cap'.
 # Examines frequency caps objects.
-# CampaignAdmin call string:
-# CampaignAdmin show freq-cap=$freq_cap_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('FreqCapAdmin',
       Cmd('CampaignManager', 'freq_cap',
@@ -184,8 +172,6 @@ Admin('FreqCapAdmin',
 # @class ColocationAdmin
 # @brief CampaignAdmin with aspect 'colocations'.
 # Examine loaded by AdServer colocations.
-# CampaignAdmin call string:
-# CampaignAdmin show colocations colo_id=$colo_id manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('ColocationAdmin',
       Cmd('CampaignManager', 'colocations',
@@ -200,8 +186,6 @@ Admin('ColocationAdmin',
 # @class GlobalsAdmin
 # @brief CampaignAdmin with aspect 'globals'.
 # Examine globals AdServer parameters.
-# CampaignAdmin call string:
-# CampaignAdmin show globals manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('GlobalsAdmin',
       Cmd('CampaignManager', 'globals'),
@@ -216,8 +200,6 @@ Admin('GlobalsAdmin',
 # @class CreativeTemplatesAdmin
 # @brief CampaignAdmin with aspect 'creative_templates'.
 # Examine crative templates.
-# CampaignAdmin call string:
-# CampaignAdmin creative_templates manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('CreativeTemplatesAdmin',
       Cmd('CampaignManager', 'creative_templates'),
@@ -235,8 +217,6 @@ Admin('CreativeTemplatesAdmin',
 # @class CreativeCategoryAdmin
 # @brief CampaignAdmin with aspect 'creative_categories'.
 # Examine creative categories.
-# CampaignAdmin call string:
-# CampaignAdmin show creative_categories manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('CreativeCategoryAdmin',
       Cmd('CampaignManager', 'creative_categories',
@@ -249,8 +229,6 @@ Admin('CreativeCategoryAdmin',
 # @class ChannelCategoryAdmin
 # @brief CampaignAdmin with aspect 'category_channel'.
 # Examine channel categories.
-# CampaignAdmin call string:
-# CampaignAdmin show category_channel manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 Admin('ChannelCategoryAdmin',
       Cmd('CampaignManager', 'category_channel',
           [number('category', 'channel_id=')]),
@@ -263,8 +241,6 @@ Admin('ChannelCategoryAdmin',
 # @class MarginAdmin
 # @brief CampaignAdmin with aspect 'margin'.
 # Examine margin rules.
-# CampaignAdmin call string:
-# CampaignAdmin show margin manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 Admin('MarginAdmin',
       Cmd('CampaignManager', 'margin',
           [number('margin', 'margin_rule_id=')]),
@@ -283,8 +259,6 @@ Admin('MarginAdmin',
 # @class SiteAdmin
 # @brief CampaignAdmin with aspect 'sites'.
 # Examine sites.
-# CampaignAdmin call string:
-# CampaignAdmin show sites manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('SiteAdmin',
       Cmd('CampaignManager', 'sites',
@@ -302,8 +276,6 @@ Admin('SiteAdmin',
 # @class TagAdmin
 # @brief CampaignAdmin with aspect 'tags'.
 # Examine tags.
-# CampaignAdmin call string:
-# CampaignAdmin show tags manager=corbaloc::$campaign_manager_host:$campaign_manager_port/CampaignManager
 
 Admin('TagAdmin',
       Cmd('CampaignManager', 'tags',
@@ -320,8 +292,6 @@ Admin('TagAdmin',
 # @class CampaignAdminSimpleChannel
 # @brief CampaignAdmin with aspect 'simple-channel'.
 # Examine simple channels.
-# CampaignAdmin call string:
-# CampaignAdmin simple-channel server=corbaloc::$campaign_server_host:$campaign_server_port/CampaignServer
 
 Admin('SimpleChannelAdmin',
       Cmd('CampaignServer', 'simple_channel',
@@ -339,8 +309,6 @@ Admin('SimpleChannelAdmin',
 # @class CampaignAdminExprChannels
 # @brief CampaignAdmin with aspect 'expression-channels'.
 # Examine expression channels.
-# CampaignAdmin call string:
-# CampaignAdmin show expression-channels mabager=corbaloc::$campaign_server_host:$campaign_server_port/CampaignServer
 
 Admin('ExpressionChannelAdmin',
       Cmd('CampaignServer', 'expression_channel',
@@ -357,8 +325,6 @@ Admin('ExpressionChannelAdmin',
 # @class CampaignAdminStatCcg
 # @brief CampaignAdmin with aspect 'stat-ccg'.
 # Examine expression channels.
-# CampaignAdmin call string:
-# CampaignAdmin show stat-ccg server=corbaloc::$campaign_server_host:$campaign_server_port/CampaignServer
 
 Admin('CampaignAdminStatCcg',
       Cmd('CampaignServer', 'stat_ccg',
@@ -392,7 +358,6 @@ Admin('SearchEngineAdmin',
 # Examine base user profile.
 # UserInfoAdmin command call string:
 # UserInfoAdmin print --uid=<UUID>
-#   --manager=corbaloc::$user_info_manager_host:$user_info_manager_port/UserInfoManager
 
 Admin('BaseProfileAdmin',
       Cmd(('UserInfoManagerController', 'UserInfoSrv'), 'print-base',
@@ -426,7 +391,6 @@ Admin('BaseProfileAdmin',
 # Examine additional user profile.
 # UserInfoAdmin command call string:
 # UserInfoAdmin print --uid=<UUID>
-#   --manager=corbaloc::$user_info_manager_host:$user_info_manager_port/UserInfoManager
 
 Admin('AdditionalProfileAdmin',
       Cmd(('UserInfoManagerController', 'UserInfoSrv'), 'print-add',
@@ -459,7 +423,6 @@ Admin('AdditionalProfileAdmin',
 # Examine history user profile.
 # UserInfoAdmin command call string:
 # UserInfoAdmin print --uid=<UUID>
-#   --manager=corbaloc::$user_info_manager_host:$user_info_manager_port/UserInfoManager
 
 Admin('HistoryProfileAdmin',
       Cmd(('UserInfoManagerController', 'UserInfoSrv'), 'print-history',
@@ -476,7 +439,6 @@ Admin('HistoryProfileAdmin',
 # Examine frequency cap user profile.
 # UserInfoAdmin command call string:
 # UserInfoAdmin print-freq-cap --uid=<UUID>
-#   --manager=corbaloc::$user_info_manager_host:$user_info_manager_port/UserInfoManager
 
 Admin('FreqCapProfileAdmin',
       Cmd(('UserInfoManagerController', 'UserInfoSrv'), 'print-freq-cap',
@@ -662,8 +624,6 @@ Admin('ChannelCheckAdmin',
 # @class CCGKeywordAdmin
 # @brief ChannelAdmin with aspect 'pos_ccg'.
 # Examine keywords associations with CCGs.
-# ChannelAdmin call string:
-# ChannelAdmin pos_ccg  -r manager=corbaloc::$channel_server_host:$channel_server_port/ChannelUpdate
 
 Admin('CCGKeywordAdmin',
       Cmd(('ChannelManagerController', 'ChannelSrv'),

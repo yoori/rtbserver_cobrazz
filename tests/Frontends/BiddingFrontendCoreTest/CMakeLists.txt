@@ -7,14 +7,12 @@ target_link_libraries(BiddingFrontendCoreTest
     BiddingFrontend
     Commons
     CommonModule
-    CORBACommons
     CampaignManagerGrpcClient
     ChannelServerGrpcClient
     FrontendServerCommons
     Generics
     HTTP
     Logger
-    ProcessControlIDL
     Sync
     UserBindServerGrpcClient
     UserInfoManagerGrpcClient

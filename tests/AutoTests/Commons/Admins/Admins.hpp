@@ -230,10 +230,10 @@ namespace AutoTest
   protected:
 
     /**
-     * @brief CORBA address for Admin.
+     * @brief gRPC endpoint for Admin.
      *
      * Defines location of the AdServer service (CampaignManager
-     * or ChannelManagerController for example) that is responsible
+     * or ChannelServer for example) that is responsible
      * for objects of some kind of type.
      * Represents address string with the following format:
      * "host_address:port_number".
@@ -560,7 +560,7 @@ namespace AutoTest
      * @brief Make call string for admin using aspect value.
      *
      * @param aspect_value aspect value
-     * @param address CORBA address of AdServer service.
+     * @param address gRPC endpoint of AdServer service.
      */
     void cmd (const char* aspect_value, const char* address)
     {
@@ -572,7 +572,7 @@ namespace AutoTest
      * @brief Make call string for admin using aspect value.
      *
      * @param aspect_value aspect value
-     * @param address CORBA address of AdServer service.
+     * @param address gRPC endpoint of AdServer service.
      */
     void cmd (const std::string& aspect_value, const char* address)
     {

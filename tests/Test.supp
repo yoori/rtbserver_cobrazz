@@ -1,21 +1,7 @@
 {
-   TAO make_TSS_TYPE
-   Memcheck:Leak
-   fun:*nothrow_t*
-   fun:*make_TSS_TYPE*
-   fun:*ts_get*
-}
-
-{
    SSL_read returns uninitialized
    Memcheck:Value4
    fun:*ACE_SSL_SOCK_Stream*recv*
-}
-
-{
-   SSL_pending returns uninitialized
-   Memcheck:Cond
-   fun:*TAO*SSLIOP*Connection_Handler*pos_io_hook*
 }
 
 {
@@ -291,18 +277,4 @@
    Memcheck:Leak
    fun:malloc
    fun:apr_allocator_create
-}
-
-{
-   TAO ACE Frontends
-   Memcheck:Leak
-   fun:malloc
-   fun:_dl_signal_error
-   fun:_dl_signal_cerror
-   fun:_dl_lookup_symbol_x
-   fun:do_sym
-   fun:dlsym_doit
-   fun:_dl_catch_error
-   fun:_dlerror_run
-   fun:dlsym
 }

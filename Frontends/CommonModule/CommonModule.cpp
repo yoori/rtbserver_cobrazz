@@ -299,67 +299,62 @@ namespace AdServer
           std::unique_ptr<AdServer::CampaignSvcs::DetectorsConfig> detectors(
             campaign_server->detectors(GrpcAlgs::pack_time(matchers_timestamp_)));
 
-          if (GrpcAlgs::unpack_time(detectors->timestamp) > matchers_timestamp_)
+          if (GrpcAlgs::unpack_time(detectors->timestamp()) > matchers_timestamp_)
           {
             FrontendCommons::UrlMatcher_var new_url_matcher(new FrontendCommons::UrlMatcher());
 
-            for (std::uint32_t i = 0; i < detectors->engines.size(); ++i)
+            for (int i = 0; i < detectors->engines_size(); ++i)
             {
-              const AdServer::CampaignSvcs::SearchEngineInfo& se = detectors->engines[i];
+              const AdServer::CampaignSvcs::SearchEngineInfo& se =
+                detectors->engines()[i];
 
-              for (std::uint32_t re_i = 0; re_i < se.regexps.size(); ++re_i)
+              for (int re_i = 0; re_i < se.regexps().size(); ++re_i)
               {
-                new_url_matcher->add_rule(
-                  se.id,
-                  se.regexps[re_i].host_postfix.c_str(),
-                  se.regexps[re_i].regexp.c_str(),
-                  se.regexps[re_i].decoding_depth,
-                  se.regexps[re_i].encoding.c_str(),
-                  se.regexps[re_i].post_encoding.c_str());
+                new_url_matcher->add_rule(se.id(), se.regexps()[re_i].host_postfix().c_str(),
+                  se.regexps()[re_i].regexp().c_str(), se.regexps()[re_i].decoding_depth(),
+                  se.regexps()[re_i].encoding().c_str(),
+                  se.regexps()[re_i].post_encoding().c_str());
               }
             }
 
             FrontendCommons::WebBrowserMatcher_var new_web_browser_matcher(
               new FrontendCommons::WebBrowserMatcher());
 
-            for (std::uint32_t i = 0; i < detectors->web_browsers.size(); ++i)
+            for (int i = 0; i < detectors->web_browsers_size(); ++i)
             {
-              const AdServer::CampaignSvcs::WebBrowserInfo& info = detectors->web_browsers[i];
+              const AdServer::CampaignSvcs::WebBrowserInfo& info =
+                detectors->web_browsers()[i];
 
-              for (std::uint32_t det_i = 0; det_i < info.detectors.size(); ++det_i)
+              for (int det_i = 0; det_i < info.detectors().size(); ++det_i)
               {
-                new_web_browser_matcher->add_rule(
-                  String::SubString(info.name),
-                  info.detectors[det_i].marker.c_str(),
-                  info.detectors[det_i].regexp.c_str(),
-                  info.detectors[det_i].regexp_required,
-                  info.detectors[det_i].priority);
+                new_web_browser_matcher->add_rule(String::SubString(info.name()),
+                  info.detectors()[det_i].marker().c_str(),
+                  info.detectors()[det_i].regexp().c_str(),
+                  info.detectors()[det_i].regexp_required(), info.detectors()[det_i].priority());
               }
             }
 
             FrontendCommons::PlatformMatcher_var new_platform_matcher(
               new FrontendCommons::PlatformMatcher());
 
-            for (std::uint32_t i = 0; i < detectors->platforms.size(); ++i)
+            for (int i = 0; i < detectors->platforms_size(); ++i)
             {
-              const AdServer::CampaignSvcs::PlatformInfo& info = detectors->platforms[i];
+              const AdServer::CampaignSvcs::PlatformInfo& info =
+                detectors->platforms()[i];
 
-              for (std::uint32_t det_i = 0; det_i < info.detectors.size(); ++det_i)
+              for (int det_i = 0; det_i < info.detectors().size(); ++det_i)
               {
-                new_platform_matcher->add_rule(
-                  info.platform_id,
-                  String::SubString(info.name),
-                  info.type.c_str(),
-                  info.detectors[det_i].use_name.c_str(),
-                  info.detectors[det_i].marker.c_str(),
-                  info.detectors[det_i].match_regexp.c_str(),
-                  info.detectors[det_i].output_regexp.c_str(),
-                  info.detectors[det_i].priority);
+                new_platform_matcher->add_rule(info.platform_id(), String::SubString(info.name()),
+                  info.type().c_str(), info.detectors()[det_i].use_name().c_str(),
+                  info.detectors()[det_i].marker().c_str(),
+                  info.detectors()[det_i].match_regexp().c_str(),
+                  info.detectors()[det_i].output_regexp().c_str(),
+                  info.detectors()[det_i].priority());
               }
             }
 
             // create new search engine matcher for received rules
-            matchers_timestamp_ = GrpcAlgs::unpack_time(detectors->timestamp);
+            matchers_timestamp_ = GrpcAlgs::unpack_time(detectors->timestamp());
 
             SyncPolicy::WriteGuard lock(matchers_lock_);
             url_matcher_.swap(new_url_matcher);

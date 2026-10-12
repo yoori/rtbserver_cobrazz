@@ -17,7 +17,7 @@
 
 /**
  * Parses command line parameters, loads configuration file,
- * runs orb, creates corba objects, etc.
+ * starts the gRPC service.
  * Responsible for general configuration, logging and error handling.
  */
 class CampaignServerApp_ :
@@ -33,7 +33,7 @@ public:
 
   /**
    * Parses command line, opens config file,
-   * creates corba objects, initialize.
+   * initializes the gRPC service.
    */
   void main(int& argc, char** argv) noexcept;
 

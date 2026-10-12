@@ -68,6 +68,15 @@ namespace
     Decimal restored_from_sequence;
     WireAlgs::unpack_decimal_from_seq(restored_from_sequence, sequence, 3);
     require(restored_from_sequence == value, "Decimal sequence round trip failed");
+
+    google::protobuf::RepeatedField<std::uint32_t> protobuf_sequence;
+    protobuf_sequence.Add(41);
+    protobuf_sequence.Add(42);
+    WireAlgs::pack_decimal_into_seq(protobuf_sequence, value);
+    require(std::equal(sequence.begin(), sequence.end(),
+      protobuf_sequence.begin(), protobuf_sequence.end()), "Protobuf decimal sequence changed");
+    WireAlgs::unpack_decimal_from_seq(restored_from_sequence, protobuf_sequence, 3);
+    require(restored_from_sequence == value, "Protobuf decimal sequence round trip failed");
   }
 
   void test_ids()
@@ -83,6 +92,49 @@ namespace
     require(GrpcAlgs::unpack_request_id({}) == AdServer::Commons::RequestId(),
       "Empty request ID changed");
   }
+
+  void test_repeated_fields()
+  {
+    google::protobuf::RepeatedField<int> numbers;
+    GrpcAlgs::resize_repeated(numbers, 2);
+    numbers[0] = 7;
+    GrpcAlgs::resize_repeated(numbers, 1);
+    GrpcAlgs::resize_repeated(numbers, 3);
+    require(numbers.size() == 3 && numbers[0] == 7 && !numbers[1] && !numbers[2],
+      "Repeated scalar resize");
+
+    google::protobuf::RepeatedPtrField<std::string> strings;
+    GrpcAlgs::resize_repeated(strings, 2);
+    strings[0] = "retained";
+    strings[1] = "removed";
+    GrpcAlgs::resize_repeated(strings, 1);
+    GrpcAlgs::resize_repeated(strings, 2);
+    require(strings[0] == "retained" && strings[1].empty(), "Repeated string resize");
+
+    const auto too_large = static_cast<std::size_t>(std::numeric_limits<int>::max()) + 1;
+    bool rejected = false;
+    try
+    {
+      GrpcAlgs::resize_repeated(numbers, too_large);
+    }
+    catch (const std::length_error&)
+    {
+      rejected = true;
+    }
+
+    require(rejected && numbers.size() == 3, "Repeated scalar size overflow");
+    rejected = false;
+    try
+    {
+      GrpcAlgs::resize_repeated(strings, too_large);
+    }
+    catch (const std::length_error&)
+    {
+      rejected = true;
+    }
+
+    require(rejected && strings.size() == 2, "Repeated string size overflow");
+  }
 }
 
 int main()
@@ -97,6 +149,7 @@ int main()
     test_decimal(ImpRevenueDecimal("1234567890123456789.12345678"));
     test_decimal(ImpRevenueDecimal("-1.00000001"));
     test_ids();
+    test_repeated_fields();
     std::cout << "PASS: time, decimal, optional decimal, decimal sequences and IDs\n";
     return 0;
   }

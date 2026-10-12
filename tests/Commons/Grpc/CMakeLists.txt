@@ -25,6 +25,10 @@ target_link_libraries(DeferredClientDeletionTest PRIVATE Commons Generics GrpcBa
 add_executable(CampaignServerGrpcTest CampaignServerGrpcTest.cpp)
 target_link_libraries(CampaignServerGrpcTest PRIVATE CampaignServerGrpc Generics Logger)
 
+add_executable(CampaignConfigGrpcTest CampaignConfigGrpcTest.cpp)
+target_link_libraries(CampaignConfigGrpcTest
+  PRIVATE CampaignServerGrpc CampaignTypes ExpressionChannel Generics)
+
 add_executable(DrainCallbackLifetimeTest DrainCallbackLifetimeTest.cpp)
 target_link_libraries(DrainCallbackLifetimeTest PRIVATE Commons Generics GrpcBatch)
 

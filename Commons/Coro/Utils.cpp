@@ -9,6 +9,7 @@ namespace AdServer::Commons
   namespace
   {
     thread_local const CoroutineResumeScheduler* resume_queue = nullptr;
+    thread_local const CoroutineResumeScheduler* detached_resume_scheduler = nullptr;
 
     struct ResumeState final
     {
@@ -46,6 +47,42 @@ namespace AdServer::Commons
     {
       draining_ = false;
     }
+
+    [[gnu::always_inline]]
+    inline void drain_resume_queue(ResumeState& state, std::coroutine_handle<> handle)
+    {
+      state.pending.push_back(handle);
+      if (state.draining)
+      {
+        return;
+      }
+
+      std::exception_ptr exception;
+      DrainGuard guard(state.draining);
+      // A failed handle must not strand continuations queued by earlier nested resumes.
+      while (!state.pending.empty())
+      {
+        const auto next = state.pending.front();
+        state.pending.pop_front();
+
+        try
+        {
+          next.resume();
+        }
+        catch (...)
+        {
+          if (!exception)
+          {
+            exception = std::current_exception();
+          }
+        }
+      }
+
+      if (exception)
+      {
+        std::rethrow_exception(exception);
+      }
+    }
   }
 
   ScopedCoroutineResumeQueue::ScopedCoroutineResumeQueue(
@@ -59,6 +96,16 @@ namespace AdServer::Commons
   {
     resume_queue = previous_;
     current_coroutine_symmetric_transfer_ref() = previous_transfer_;
+  }
+
+  ScopedDetachedCoroutineResumeScheduler::ScopedDetachedCoroutineResumeScheduler(
+    const CoroutineResumeScheduler& scheduler) noexcept
+    : previous_(std::exchange(detached_resume_scheduler, &scheduler))
+  {}
+
+  ScopedDetachedCoroutineResumeScheduler::~ScopedDetachedCoroutineResumeScheduler() noexcept
+  {
+    detached_resume_scheduler = previous_;
   }
 
   void
@@ -75,37 +122,22 @@ namespace AdServer::Commons
       return;
     }
 
-    auto& state = resume_state();
-    state.pending.push_back(handle);
-    if (state.draining)
+    drain_resume_queue(resume_state(), handle);
+  }
+
+  void resume_detached_coroutine(std::coroutine_handle<> handle)
+  {
+    if (!handle)
     {
       return;
     }
 
-    std::exception_ptr exception;
-    DrainGuard guard(state.draining);
-    // A failed handle must not strand continuations queued by earlier nested resumes.
-    while (!state.pending.empty())
-    {
-      const auto next = state.pending.front();
-      state.pending.pop_front();
-
-      try
-      {
-        next.resume();
-      }
-      catch (...)
-      {
-        if (!exception)
-        {
-          exception = std::current_exception();
-        }
-      }
-    }
-
-    if (exception)
-    {
-      std::rethrow_exception(exception);
-    }
+    // Neither the first start nor a later inline callback may join a request-owned group.
+    const CoroutineResumeScheduler queue = &resume_detached_coroutine;
+    ScopedCoroutineResumeScheduler scheduler_scope(
+      detached_resume_scheduler ? *detached_resume_scheduler : queue);
+    ScopedCoroutineResumeQueue queue_scope(queue, true);
+    thread_local ResumeState state;
+    drain_resume_queue(state, handle);
   }
 }

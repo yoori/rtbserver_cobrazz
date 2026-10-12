@@ -2,7 +2,8 @@ add_subdirectory(Grpc)
 add_subdirectory(PmrTests)
 
 add_executable(GrpcAlgsTest GrpcAlgsTest.cpp)
-target_link_libraries(GrpcAlgsTest PRIVATE Generics)
+target_link_libraries(GrpcAlgsTest
+  PRIVATE Generics protobuf::libprotobuf absl::log_internal_check_op absl::log_internal_message)
 
 add_executable(AsyncMutexTest
   AsyncMutexTest.cpp
@@ -36,6 +37,9 @@ target_link_libraries(MonoStartableAwaitableTest PRIVATE Commons Generics)
 add_executable(CooperativeGroupTest CooperativeGroupTest.cpp)
 target_link_libraries(CooperativeGroupTest PRIVATE Commons)
 target_link_options(CooperativeGroupTest PRIVATE "-Wl,--wrap=pthread_mutex_lock")
+
+add_executable(DetachedCoroutineTest DetachedCoroutineTest.cpp)
+target_link_libraries(DetachedCoroutineTest PRIVATE Commons Generics)
 
 add_executable(FastSchedulerPerfTest
   FastSchedulerPerfTest.cpp

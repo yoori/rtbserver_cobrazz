@@ -185,6 +185,7 @@ namespace AdServer::Commons
     current_io_service_ = &io_service;
 
     CoroutineResumeScheduler resume_scheduler;
+    CoroutineResumeScheduler detached_resume_scheduler;
     if (resume_strategy_ == ResumeStrategy::CurrentContext)
     {
       resume_scheduler =
@@ -192,6 +193,10 @@ namespace AdServer::Commons
         {
           schedule_resume_(handle, context_index);
         };
+      detached_resume_scheduler = [this, context_index](std::coroutine_handle<> handle)
+      {
+        schedule_resume_<true>(handle, context_index);
+      };
     }
     else
     {
@@ -200,9 +205,14 @@ namespace AdServer::Commons
         {
           schedule_resume_(handle);
         };
+      detached_resume_scheduler = [this](std::coroutine_handle<> handle)
+      {
+        schedule_resume_<true>(handle);
+      };
     }
 
     ScopedCoroutineResumeScheduler scheduler_scope(resume_scheduler);
+    ScopedDetachedCoroutineResumeScheduler detached_scheduler_scope(detached_resume_scheduler);
 
     while (active())
     {
@@ -240,44 +250,6 @@ namespace AdServer::Commons
   ExecutorPool::io_service(ContextIndex context_index) noexcept
   {
     return *contexts_[context_index].io_service;
-  }
-
-  void
-  ExecutorPool::resume_(std::coroutine_handle<> handle) noexcept
-  {
-    try
-    {
-      resume_coroutine(handle);
-    }
-    catch (...)
-    {
-      report_exception_(std::current_exception());
-    }
-  }
-
-  void
-  ExecutorPool::schedule_resume_(
-    std::coroutine_handle<> handle,
-    std::optional<ContextIndex> context_index) noexcept
-  {
-    resumes_scheduled_.fetch_add(1, std::memory_order_relaxed);
-    try
-    {
-      dispatch(
-        [this, handle]() mutable
-        {
-          resumes_executed_.fetch_add(1, std::memory_order_relaxed);
-          resume_(handle);
-        },
-        context_index);
-    }
-    catch (...)
-    {
-      resume_schedule_failures_.fetch_add(1, std::memory_order_relaxed);
-      report_exception_(std::current_exception());
-      resumes_executed_.fetch_add(1, std::memory_order_relaxed);
-      resume_(handle);
-    }
   }
 
   void

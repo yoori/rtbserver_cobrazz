@@ -67,10 +67,8 @@ target_link_libraries(ChannelServer
     PkgConfig::Jemalloc
     HTTP
     HttpServer
-    CORBACommons
     Generics
     Logger
-    ProcessControlIDL
     AdServerCommonsXSD
     Postgres
     ChannelServerConfigXSD

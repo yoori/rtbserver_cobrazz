@@ -95,10 +95,8 @@ add_executable(RequestInfoManager
 target_link_libraries(RequestInfoManager
   PRIVATE
     PkgConfig::Jemalloc
-    CORBACommons
     Generics
     GrpcBatch
-    ProcessControlIDL
     SNMPAgent
     Sync
     RequestInfoManagerGrpcProto

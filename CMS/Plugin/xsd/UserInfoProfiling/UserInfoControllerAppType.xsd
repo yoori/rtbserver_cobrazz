@@ -16,7 +16,7 @@
   <xsd:complexType name="UserInfoControllerNetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
-        <xsd:documentation>Port to accept CORBA ProcessControl connections.</xsd:documentation>
+        <xsd:documentation>gRPC listen port; takes precedence over grpc_port.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional">
@@ -29,7 +29,7 @@
   <xsd:complexType name="UserInfoControllerThreadParamsType">
     <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
       <xsd:annotation>
-        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+        <xsd:documentation>Legacy thread setting; ignored.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -61,7 +61,7 @@
       <xsd:element name="threadParams" type="UserInfoControllerThreadParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA thread pool.
+            Legacy thread setting; ignored.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

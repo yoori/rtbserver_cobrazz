@@ -21,7 +21,6 @@
 %define __cms_plugin_dst_dir    /opt/cms/var/spool
 
 %define __apache_ver_req        1:2.2.21.4
-%define __ace_ver_req           6.2.1.17
 %define __glibc_ver_req         2.28
 %define __geoip_ver_req         1.6.12-7
 %define __net_snmp_ver_req      5.8-25
@@ -44,7 +43,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv684%{?dist}
+Release: ssv685%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -68,8 +67,9 @@ BuildRequires: glibc-devel = %__glibc_ver_req
 #Requires: glibc
 Requires: glibc = %__glibc_ver_req
 
-BuildRequires: ace-tao-devel >= %__ace_ver_req
-Requires: ace-tao = %__ace_ver_req
+# HTTP/Stream use ACE independently of TAO.
+BuildRequires: pkgconfig(ACE) = 6.2.1
+Requires: libACE.so.6.2.1()(64bit)
 BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
@@ -295,8 +295,6 @@ cmake --install %{__product}/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_
 ln -s "%{__inst_root}/lib/libHTTP.so" "%{buildroot}%{__inst_root}/lib/libhttp.so"
 ln -s "%{__inst_root}/lib/libTestCommons.so" "%{buildroot}%{__inst_root}/lib/libCheckCommons.so"
 ln -s "%{__inst_root}/lib/libSNMPAgent.so" "%{buildroot}%{__inst_root}/lib/libSNMPAgentX.so"
-ln -s "%{__inst_root}/lib/libCORBAInfResolveServerIDL.so" "%{buildroot}%{__inst_root}/lib/libInfResolveStubs.so"
-ln -s "%{__inst_root}/lib/libCORBAInfResolveClientIDL.so" "%{buildroot}%{__inst_root}/lib/libInfResolveClientStubs.so"
 ln -s "%{__inst_root}/lib/libGeoip.so" "%{buildroot}%{__inst_root}/lib/libIPMap.so"
 
 # TODO: tests have files in xsd too

@@ -10,8 +10,8 @@
 #include <Commons/Algs.hpp>
 #include <Commons/PathManip.hpp>
 
-#include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
-#include <CampaignSvcs/CampaignCommons/CorbaCampaignTypes.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannelGrpc.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigGrpc.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
 #include "CampaignManagerCore.hpp"
@@ -603,29 +603,29 @@ namespace AdServer::CampaignSvcs
     const Contract& contract)
     noexcept
   {
-    contract_info.contract_id = contract.contract_id;
+    contract_info.set_contract_id(contract.contract_id);
 
-    contract_info.number = contract.number;
-    contract_info.date = contract.date;
-    contract_info.type = contract.type;
-    contract_info.vat_included = contract.vat_included;
-    contract_info.parent_contract_id = contract.parent_contract ?
-      contract.parent_contract->contract_id : 0;
+    contract_info.set_number(contract.number);
+    contract_info.set_date(contract.date);
+    contract_info.set_type(contract.type);
+    contract_info.set_vat_included(contract.vat_included);
+    contract_info.set_parent_contract_id(
+      contract.parent_contract ? contract.parent_contract->contract_id : 0);
 
-    contract_info.ord_contract_id = contract.ord_contract_id;
-    contract_info.ord_ado_id = contract.ord_ado_id;
-    contract_info.subject_type = contract.subject_type;
-    contract_info.action_type = contract.action_type;
-    contract_info.agent_acting_for_publisher = contract.agent_acting_for_publisher;
+    contract_info.set_ord_contract_id(contract.ord_contract_id);
+    contract_info.set_ord_ado_id(contract.ord_ado_id);
+    contract_info.set_subject_type(contract.subject_type);
+    contract_info.set_action_type(contract.action_type);
+    contract_info.set_agent_acting_for_publisher(contract.agent_acting_for_publisher);
 
-    contract_info.client_id = contract.client_id;
-    contract_info.client_name = contract.client_name;
-    contract_info.client_legal_form = contract.client_legal_form;
+    contract_info.set_client_id(contract.client_id);
+    contract_info.set_client_name(contract.client_name);
+    contract_info.set_client_legal_form(contract.client_legal_form);
 
-    contract_info.contractor_id = contract.contractor_id;
-    contract_info.contractor_name = contract.contractor_name;
-    contract_info.contractor_legal_form = contract.contractor_legal_form;
-    contract_info.timestamp = GrpcAlgs::pack_time(contract.timestamp);
+    contract_info.set_contractor_id(contract.contractor_id);
+    contract_info.set_contractor_name(contract.contractor_name);
+    contract_info.set_contractor_legal_form(contract.contractor_legal_form);
+    contract_info.set_timestamp(GrpcAlgs::pack_time(contract.timestamp));
   }
 
   void

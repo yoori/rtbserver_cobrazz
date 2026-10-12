@@ -135,24 +135,24 @@ namespace
     noexcept
   {
     freq_cap_config.confirm_timeout = confirm_timeout;
-    const std::uint32_t freq_caps_length = freq_cap_config_info.freq_caps.size();
+    const std::uint32_t freq_caps_length = freq_cap_config_info.freq_caps().size();
     freq_cap_config.freq_caps.reserve(freq_caps_length);
 
     for (std::uint32_t i = 0; i < freq_caps_length; ++i)
     {
-      const AdServer::CampaignSvcs::FreqCapInfo& fc = freq_cap_config_info.freq_caps[i];
+      const AdServer::CampaignSvcs::FreqCapInfo& fc = freq_cap_config_info.freq_caps()[i];
       AdServer::Commons::FreqCap freq_cap;
-      freq_cap.fc_id = fc.fc_id;
-      freq_cap.lifelimit = fc.lifelimit;
-      freq_cap.period = Generics::Time(fc.period);
-      freq_cap.window_limit = fc.window_limit;
-      freq_cap.window_time = Generics::Time(fc.window_time);
+      freq_cap.fc_id = fc.fc_id();
+      freq_cap.lifelimit = fc.lifelimit();
+      freq_cap.period = Generics::Time(fc.period());
+      freq_cap.window_limit = fc.window_limit();
+      freq_cap.window_time = Generics::Time(fc.window_time());
       freq_cap_config.freq_caps.emplace(freq_cap.fc_id, freq_cap);
     }
 
-    freq_cap_config.campaign_ids.reserve(freq_cap_config_info.campaign_ids.size());
+    freq_cap_config.campaign_ids.reserve(freq_cap_config_info.campaign_ids().size());
     freq_cap_config.campaign_ids.insert(
-      freq_cap_config_info.campaign_ids.begin(), freq_cap_config_info.campaign_ids.end());
+      freq_cap_config_info.campaign_ids().begin(), freq_cap_config_info.campaign_ids().end());
   }
 
   AdServer::UserInfoSvcs::UserInfoConfigSourcePtr
@@ -255,18 +255,19 @@ namespace AdServer::UserInfoSvcs
         SimpleChannelPropertiesList channel_properties_list;
 
         CampaignSvcs::CampaignServer::GetSimpleChannelsInfo settings;
-        settings.portions_number = PORTIONS_NUMBER;
-        settings.channel_statuses = "AW";
+        settings.set_portions_number(PORTIONS_NUMBER);
+        settings.set_channel_statuses("AW");
 
         unsigned long res_length = 0;
 
         for (unsigned long portion = 0; portion < PORTIONS_NUMBER; ++portion)
         {
-          settings.portion = portion;
+          settings.set_portion(portion);
           std::unique_ptr<CampaignSvcs::BriefSimpleChannelAnswer> channels_to_load(
             campaign_server->brief_simple_channels(settings));
 
-          const std::uint32_t simple_channels_length = channels_to_load->simple_channels.size();
+          const std::uint32_t simple_channels_length =
+            channels_to_load->simple_channels_size();
           res_length += simple_channels_length;
           config.channels_config->channel_features.reserve(
             config.channels_config->channel_features.size() +
@@ -275,28 +276,26 @@ namespace AdServer::UserInfoSvcs
           for (std::uint32_t i = 0; i < simple_channels_length; ++i)
           {
             const CampaignSvcs::BriefSimpleChannelKey& channel =
-              channels_to_load->simple_channels[i];
+              channels_to_load->simple_channels()[i];
 
-            channel_properties_list.push_back(SimpleChannelProperties(
-              channel.channel_id,
-              channel.discover,
-              channel.behav_param_list_id,
-              channel.str_behav_param_list_id.c_str()));
+            channel_properties_list.push_back(
+              SimpleChannelProperties(channel.channel_id(), channel.discover(),
+                channel.behav_param_list_id(), channel.str_behav_param_list_id().c_str()));
 
-            auto& categories = config.channels_config->channel_categories[channel.channel_id];
+            auto& categories = config.channels_config->channel_categories[channel.channel_id()];
             categories.insert(
-              categories.end(), channel.categories.begin(), channel.categories.end());
+              categories.end(), channel.categories().begin(), channel.categories().end());
 
             config.channels_config->channel_features.insert(std::make_pair(
-              channel.channel_id,
-              ChannelFeatures(channel.discover, channel.threshold)));
+              channel.channel_id(), ChannelFeatures(channel.discover(), channel.threshold())));
           }
 
-          for (std::uint32_t i = 0; i < channels_to_load->behav_params.size(); ++i)
+          for (int i = 0; i < channels_to_load->behav_params_size(); ++i)
           {
-            const CampaignSvcs::BriefBehavParamInfo& bpi = channels_to_load->behav_params[i];
+            const CampaignSvcs::BriefBehavParamInfo& bpi =
+              channels_to_load->behav_params()[i];
 
-            if (bpi.bp_seq.size() != 0)
+            if (bpi.bp_seq().size() != 0)
             {
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
@@ -304,14 +303,14 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
-              for (std::uint32_t j = 0; j < bpi.bp_seq.size(); ++j)
+              for (int j = 0; j < bpi.bp_seq().size(); ++j)
               {
-                const CampaignSvcs::BehavParameter& bp = bpi.bp_seq[j];
+                const CampaignSvcs::BehavParameter& bp = bpi.bp_seq()[j];
 
                 ChannelIntervalsPack_var target_cip;
                 bool unknown_trigger_type = false;
 
-                switch (bp.trigger_type)
+                switch (static_cast<char>(bp.trigger_type()))
                 {
                 case PAGE_CHANNEL:
                   target_cip = page_cip;
@@ -335,55 +334,44 @@ namespace AdServer::UserInfoSvcs
 
                 if (!unknown_trigger_type)
                 {
-                  if (bp.trigger_type == AUDIENCE_CHANNEL)
+                  if (static_cast<char>(bp.trigger_type()) == AUDIENCE_CHANNEL)
                   {
-                    if (bp.time_from != 0 || bp.time_to == 0 || bp.min_visits != 1)
+                    if (bp.time_from() != 0 || bp.time_to() == 0 || bp.min_visits() != 1)
                     {
                       logger_->stream(
-                        Logging::Logger::WARNING,
-                        Aspect::USER_INFO_MANAGER,
-                        "ADS-IMPL-75")
-                        << FUN
-                        << ": Audience channel with BEHAV_PARAMS_LIST_ID = "
-                        << bpi.id << " is incorrect.";
+                        Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-75")
+                        << FUN << ": Audience channel with BEHAV_PARAMS_LIST_ID = " << bpi.id()
+                        << " is incorrect.";
                     }
                     else
                     {
-                      ChannelInterval ci(
-                        Generics::Time(bp.time_from),
-                        Generics::Time(bp.time_to),
-                        bp.min_visits,
-                        bp.weight);
+                      ChannelInterval ci(Generics::Time(bp.time_from()),
+                        Generics::Time(bp.time_to()), bp.min_visits(), bp.weight());
                       push_channel_interval_(target_cip, ci);
                     }
                   }
-                  else if (bp.time_from == 0 && bp.time_to == 0)
+                  else if (bp.time_from() == 0 && bp.time_to() == 0)
                   {
-                    if (bp.min_visits == 1)
+                    if (bp.min_visits() == 1)
                     {
                       target_cip->contextual = true;
                       target_cip->zero_channel = true;
-                      target_cip->weight += bp.weight;
+                      target_cip->weight += bp.weight();
                     }
                     else
                     {
                       logger_->stream(
-                        Logging::Logger::WARNING,
-                        Aspect::USER_INFO_MANAGER,
-                        "ADS-IMPL-75")
-                        << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = "
-                        << bpi.id << " is incorrect.";
+                        Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-75")
+                        << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " << bpi.id()
+                        << " is incorrect.";
                     }
                   }
-                  else if (bp.time_from < bp.time_to)
+                  else if (bp.time_from() < bp.time_to())
                   {
-                    ChannelInterval ci(
-                      Generics::Time(bp.time_from),
-                      Generics::Time(bp.time_to),
-                      bp.min_visits,
-                      bp.weight);
+                    ChannelInterval ci(Generics::Time(bp.time_from()), Generics::Time(bp.time_to()),
+                      bp.min_visits(), bp.weight());
 
-                    if (bp.time_from == 0 && bp.min_visits == 1)
+                    if (bp.time_from() == 0 && bp.min_visits() == 1)
                     {
                       target_cip->contextual = true;
                     }
@@ -393,11 +381,9 @@ namespace AdServer::UserInfoSvcs
                   else
                   {
                     logger_->stream(
-                      Logging::Logger::WARNING,
-                      Aspect::USER_INFO_MANAGER,
-                      "ADS-IMPL-74")
-                      << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = "
-                      << bpi.id << " is incorrect.";
+                      Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-74")
+                      << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " << bpi.id()
+                      << " is incorrect.";
                   }
                 }
               }
@@ -409,21 +395,21 @@ namespace AdServer::UserInfoSvcs
                 url_keyword_cip,
                 audience_cip);
 
-              behav_channel_interval_map[BehavIdTypeKey(bpi.id, PAGE_CHANNEL)] = page_cip;
-              behav_channel_interval_map[BehavIdTypeKey(bpi.id, URL_CHANNEL)] = url_cip;
-              behav_channel_interval_map[BehavIdTypeKey(
-                bpi.id, URL_KEYWORD_CHANNEL)] = url_keyword_cip;
-              behav_channel_interval_map[BehavIdTypeKey(bpi.id, SEARCH_CHANNEL)] = search_cip;
-              behav_channel_interval_map[BehavIdTypeKey(bpi.id, AUDIENCE_CHANNEL)] = audience_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id(), PAGE_CHANNEL)] = page_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id(), URL_CHANNEL)] = url_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id(), URL_KEYWORD_CHANNEL)] =
+                url_keyword_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id(), SEARCH_CHANNEL)] = search_cip;
+              behav_channel_interval_map[BehavIdTypeKey(bpi.id(), AUDIENCE_CHANNEL)] = audience_cip;
             }
           }
 
-          for (std::uint32_t i = 0; i < channels_to_load->key_behav_params.size(); ++i)
+          for (int i = 0; i < channels_to_load->key_behav_params_size(); ++i)
           {
             const CampaignSvcs::BriefKeyBehavParamInfo& kbpi =
-              channels_to_load->key_behav_params[i];
+              channels_to_load->key_behav_params()[i];
 
-            if (kbpi.bp_seq.size() != 0)
+            if (kbpi.bp_seq().size() != 0)
             {
               ChannelIntervalsPack_var page_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var search_cip = new ChannelIntervalsPack();
@@ -431,14 +417,14 @@ namespace AdServer::UserInfoSvcs
               ChannelIntervalsPack_var url_keyword_cip = new ChannelIntervalsPack();
               ChannelIntervalsPack_var audience_cip = new ChannelIntervalsPack();
 
-              for (std::uint32_t j = 0; j < kbpi.bp_seq.size(); ++j)
+              for (int j = 0; j < kbpi.bp_seq().size(); ++j)
               {
-                const CampaignSvcs::BehavParameter& bp = kbpi.bp_seq[j];
+                const CampaignSvcs::BehavParameter& bp = kbpi.bp_seq()[j];
 
                 ChannelIntervalsPack_var target_cip;
                 bool unknown_trigger_type = false;
 
-                switch (bp.trigger_type)
+                switch (static_cast<char>(bp.trigger_type()))
                 {
                 case PAGE_CHANNEL:
                   target_cip = page_cip;
@@ -462,54 +448,46 @@ namespace AdServer::UserInfoSvcs
 
                 if (!unknown_trigger_type)
                 {
-                  if (bp.trigger_type == AUDIENCE_CHANNEL)
+                  if (static_cast<char>(bp.trigger_type()) == AUDIENCE_CHANNEL)
                   {
-                    if (bp.time_from != 0 || bp.time_to == 0 || bp.min_visits != 1)
+                    if (bp.time_from() != 0 || bp.time_to() == 0 || bp.min_visits() != 1)
                     {
                       logger_->stream(
-                        Logging::Logger::WARNING,
-                        Aspect::USER_INFO_MANAGER,
-                        "ADS-IMPL-75") <<
-                        FUN << ": Audience channel with "
-                        "BEHAV_PARAMS_LIST_ID = " << kbpi.id << " is incorrect.";
+                        Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-75")
+                        << FUN
+                        << ": Audience channel with "
+                           "BEHAV_PARAMS_LIST_ID = "
+                        << kbpi.id() << " is incorrect.";
                     }
                     else
                     {
-                      ChannelInterval ci(
-                        Generics::Time(bp.time_from),
-                        Generics::Time(bp.time_to),
-                        bp.min_visits,
-                        bp.weight);
+                      ChannelInterval ci(Generics::Time(bp.time_from()),
+                        Generics::Time(bp.time_to()), bp.min_visits(), bp.weight());
                       push_channel_interval_(target_cip, ci);
                     }
                   }
-                  else if (bp.time_from == 0 && bp.time_to == 0)
+                  else if (bp.time_from() == 0 && bp.time_to() == 0)
                   {
-                    if (bp.min_visits == 1)
+                    if (bp.min_visits() == 1)
                     {
                       target_cip->contextual = true;
                       target_cip->zero_channel = true;
-                      target_cip->weight += bp.weight;
+                      target_cip->weight += bp.weight();
                     }
                     else
                     {
                       logger_->stream(
-                        Logging::Logger::WARNING,
-                        Aspect::USER_INFO_MANAGER,
-                        "ADS-IMPL-75") <<
-                        FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " <<
-                        kbpi.id << " is incorrect.";
+                        Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-75")
+                        << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " << kbpi.id()
+                        << " is incorrect.";
                     }
                   }
-                  else if (bp.time_from < bp.time_to)
+                  else if (bp.time_from() < bp.time_to())
                   {
-                    ChannelInterval ci(
-                      Generics::Time(bp.time_from),
-                      Generics::Time(bp.time_to),
-                      bp.min_visits,
-                      bp.weight);
+                    ChannelInterval ci(Generics::Time(bp.time_from()), Generics::Time(bp.time_to()),
+                      bp.min_visits(), bp.weight());
 
-                    if (bp.time_from == 0 && bp.min_visits == 1)
+                    if (bp.time_from() == 0 && bp.min_visits() == 1)
                     {
                       target_cip->contextual = true;
                     }
@@ -519,11 +497,9 @@ namespace AdServer::UserInfoSvcs
                   else
                   {
                     logger_->stream(
-                      Logging::Logger::WARNING,
-                      Aspect::USER_INFO_MANAGER,
-                      "ADS-IMPL-74") <<
-                      FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " <<
-                      kbpi.id << " is incorrect.";
+                      Logging::Logger::WARNING, Aspect::USER_INFO_MANAGER, "ADS-IMPL-74")
+                      << FUN << ": Channel with BEHAV_PARAMS_LIST_ID = " << kbpi.id()
+                      << " is incorrect.";
                   }
                 }
               }
@@ -535,16 +511,16 @@ namespace AdServer::UserInfoSvcs
                 url_keyword_cip,
                 audience_cip);
 
+              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id().c_str(), PAGE_CHANNEL)] =
+                page_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id().c_str(), URL_CHANNEL)] =
+                url_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id.c_str(), PAGE_CHANNEL)] = page_cip;
+                kbpi.id().c_str(), URL_KEYWORD_CHANNEL)] = url_keyword_cip;
+              str_behav_channel_interval_map[StrBehavIdTypeKey(kbpi.id().c_str(), SEARCH_CHANNEL)] =
+                search_cip;
               str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id.c_str(), URL_CHANNEL)] = url_cip;
-              str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id.c_str(), URL_KEYWORD_CHANNEL)] = url_keyword_cip;
-              str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id.c_str(), SEARCH_CHANNEL)] = search_cip;
-              str_behav_channel_interval_map[StrBehavIdTypeKey(
-                kbpi.id.c_str(), AUDIENCE_CHANNEL)] = audience_cip;
+                kbpi.id().c_str(), AUDIENCE_CHANNEL)] = audience_cip;
             }
           }
         }

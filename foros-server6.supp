@@ -12,12 +12,6 @@
 }
 
 {
-   SSL_pending returns uninitialized
-   Memcheck:Cond
-   fun:*TAO*SSLIOP*Connection_Handler*pos_io_hook*
-}
-
-{
    Crypto
    Memcheck:Cond
    obj:/usr/lib64/libcrypto.so.*

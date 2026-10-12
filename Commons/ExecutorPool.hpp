@@ -12,6 +12,7 @@
 
 #include <boost/asio.hpp>
 
+#include <Commons/Coro/Utils.hpp>
 #include <Commons/DelegateActiveObject.hpp>
 #include <Generics/Time.hpp>
 
@@ -130,11 +131,11 @@ namespace AdServer::Commons
     IoService&
     io_service(ContextIndex context_index) noexcept;
 
-    void
-    resume_(std::coroutine_handle<> handle) noexcept;
+    template<bool Detached = false>
+    void resume_(std::coroutine_handle<> handle) noexcept;
 
-    void
-    schedule_resume_(
+    template<bool Detached = false>
+    void schedule_resume_(
       std::coroutine_handle<> handle,
       std::optional<ContextIndex> context_index = std::nullopt) noexcept;
 
@@ -153,4 +154,48 @@ namespace AdServer::Commons
     static thread_local const ExecutorPool* current_executor_pool_;
     static thread_local IoService* current_io_service_;
   };
+
+  template<bool Detached>
+  inline void ExecutorPool::resume_(std::coroutine_handle<> handle) noexcept
+  {
+    try
+    {
+      if constexpr (Detached)
+      {
+        resume_detached_coroutine(handle);
+      }
+      else
+      {
+        resume_coroutine(handle);
+      }
+    }
+    catch (...)
+    {
+      report_exception_(std::current_exception());
+    }
+  }
+
+  template<bool Detached>
+  inline void ExecutorPool::schedule_resume_(
+    std::coroutine_handle<> handle, std::optional<ContextIndex> context_index) noexcept
+  {
+    resumes_scheduled_.fetch_add(1, std::memory_order_relaxed);
+    try
+    {
+      dispatch(
+        [this, handle]() mutable
+        {
+          resumes_executed_.fetch_add(1, std::memory_order_relaxed);
+          resume_<Detached>(handle);
+        },
+        context_index);
+    }
+    catch (...)
+    {
+      resume_schedule_failures_.fetch_add(1, std::memory_order_relaxed);
+      report_exception_(std::current_exception());
+      resumes_executed_.fetch_add(1, std::memory_order_relaxed);
+      resume_<Detached>(handle);
+    }
+  }
 }

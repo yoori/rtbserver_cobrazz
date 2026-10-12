@@ -6,7 +6,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include <Generics/ActiveObject.hpp>
@@ -50,28 +49,6 @@ namespace
   remove_uuid_escape(const char* uuid)
   {
     return uuid[0] == '\\' ? std::string(uuid + 1) : std::string(uuid);
-  }
-
-  std::string
-  normalize_endpoint(std::string endpoint)
-  {
-    constexpr std::string_view corbaloc_prefix = "corbaloc::";
-    constexpr std::string_view iiop_prefix = "corbaloc:iiop:";
-    if (endpoint.compare(0, corbaloc_prefix.size(), corbaloc_prefix) == 0)
-    {
-      endpoint.erase(0, corbaloc_prefix.size());
-    }
-    else if (endpoint.compare(0, iiop_prefix.size(), iiop_prefix) == 0)
-    {
-      endpoint.erase(0, iiop_prefix.size());
-    }
-
-    const std::size_t object_key_pos = endpoint.find('/');
-    if (object_key_pos != std::string::npos)
-    {
-      endpoint.resize(object_key_pos);
-    }
-    return endpoint;
   }
 
   template<typename Response, typename Start>
@@ -381,8 +358,7 @@ Application_::print_user_navigation(
   }
 }
 
-void
-Application_::main(int& argc, char** argv) noexcept
+int Application_::main(int& argc, char** argv) noexcept
 {
   try
   {
@@ -431,7 +407,7 @@ Application_::main(int& argc, char** argv) noexcept
     if (commands.empty() || opt_help.enabled() || *commands.begin() == "help")
     {
       std::cout << USAGE << std::endl;
-      return;
+      return 0;
     }
 
     const std::string& command = *commands.begin();
@@ -444,16 +420,22 @@ Application_::main(int& argc, char** argv) noexcept
        command != "daily-process")
     {
       std::cout << "Unknown command '" << command << "'. See usage:\n" << USAGE << std::endl;
-      return;
+      return 0;
     }
 
     if (!opt_expression_matcher.installed())
     {
       std::cout << "ExpressionMatcher gRPC endpoint isn't specified.\n" << USAGE << std::endl;
-      return;
+      return 0;
     }
 
-    const std::string endpoint = normalize_endpoint(*opt_expression_matcher);
+    const std::string& endpoint = *opt_expression_matcher;
+    if (endpoint.empty() || endpoint.find("corbaloc:") == 0 ||
+      endpoint.find("IOR:") == 0 || endpoint.find('/') != std::string::npos)
+    {
+      throw Exception("Expected gRPC endpoint host:port; object references are not supported");
+    }
+
     ClientHolder client_holder = create_client(endpoint);
     auto client_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
       &client_holder,
@@ -472,20 +454,20 @@ Application_::main(int& argc, char** argv) noexcept
         {
           expression_matcher.run_daily_processing(request, std::move(callback));
         });
-      return;
+      return 0;
     }
 
     // Kept for compatibility with existing scripts. The legacy command did
     // not issue an ExpressionMatcher request either.
     if (command == "print-est")
     {
-      return;
+      return 0;
     }
 
     if (!(opt_user_id.installed() || commands.size() > 1))
     {
       std::cout << "Profile id isn't specified.\n" << USAGE << std::endl;
-      return;
+      return 0;
     }
 
     const std::string id = remove_uuid_escape(command_id(commands, opt_user_id));
@@ -516,14 +498,16 @@ Application_::main(int& argc, char** argv) noexcept
       print_household_colo_reach(expression_matcher, id.c_str());
     }
   }
-  catch(const std::exception& ex)
+  catch (const std::exception& ex)
   {
     std::cerr << "Caught std::exception: " << ex.what() << std::endl;
+    return 1;
   }
+
+  return 0;
 }
 
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
-  Application::instance().main(argc, argv);
+  return Application::instance().main(argc, argv);
 }

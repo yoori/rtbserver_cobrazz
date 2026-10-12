@@ -5,8 +5,6 @@ target_link_libraries(ImprTrackActionValueTest
     ImprTrackFrontend
     CommonModule
     CampaignManagerGrpc
-    CORBACommons
     FCGI
     Logger
-    ProcessControlIDL
 )

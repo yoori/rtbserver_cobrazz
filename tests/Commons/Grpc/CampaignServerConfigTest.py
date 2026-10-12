@@ -82,6 +82,18 @@ def test():
         refs = client.findall(".//cfg:CampaignServerGrpcRefs/cfg:Ref", NS)
         assert refs and all(ref.get("endpoint").endswith(":" + port) for ref in refs), name
         assert client.find(".//cfg:CampaignServerCorbaRef", NS) is None
+        assert client.find(".//cfg:CorbaConfig", NS) is None, name
+        if name in ("CampaignManager", "BillingServer", "ChannelController"):
+          schema_folder = "ChannelSvcs" if name == "ChannelController" else "CampaignSvcs"
+          schema = ROOT / "xsd" / schema_folder / (name + "Config.xsd")
+          run(["xmllint", "--nonet", "--noout", "--schema", str(schema),
+            str(work / (name + ".xml"))], work)
+          invalid = copy.deepcopy(client)
+          invalid.getroot()[0].insert(0, etree.Element(Q + "CorbaConfig"))
+          invalid.write(str(work / "invalid.xml"))
+          result = subprocess.run(["xmllint", "--nonet", "--noout", "--schema", str(schema),
+            str(work / "invalid.xml")], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          assert result.returncode == 3, name + " accepted retired CorbaConfig"
       client = transform(work, config, "AdFrontend", "Frontend",
         "//service[@descriptor='AdCluster/FrontendSubCluster/HttpFrontend'][1]")
       refs = client.findall(".//cfg:CampaignServerGrpcRefs/cfg:Ref", NS)

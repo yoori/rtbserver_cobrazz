@@ -6,11 +6,9 @@ target_link_libraries(UserInfoAdmin
   PRIVATE
     ChannelMatcher
     Commons
-    CORBACommons
     Generics
     GrpcBatch
     Logger
-    ProcessControlIDL
     UserFreqCapProfile
     UserInfoClient
     UserInfoManagerGrpc

@@ -18,7 +18,7 @@ public:
   Application_() noexcept;
   virtual ~Application_() noexcept;
 
-  void main(int& argc, char** argv) noexcept;
+  int main(int& argc, char** argv) noexcept;
 
 protected:
   void print(Client& expression_matcher, const char* user_id) noexcept;

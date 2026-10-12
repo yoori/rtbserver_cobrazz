@@ -32,7 +32,7 @@ namespace AdServer::Frontends
 
     /**
      * Parses command line, opens config file,
-     * creates corba objects, initialize.
+     * initializes the FastCGI service.
      */
     void
     main(int& argc, char** argv) noexcept;

@@ -26,6 +26,22 @@ namespace AdServer::Commons
     bool previous_transfer_;
   };
 
+  class ScopedDetachedCoroutineResumeScheduler final
+  {
+  public:
+    explicit ScopedDetachedCoroutineResumeScheduler(const CoroutineResumeScheduler& scheduler)
+      noexcept;
+    ~ScopedDetachedCoroutineResumeScheduler() noexcept;
+    ScopedDetachedCoroutineResumeScheduler(const ScopedDetachedCoroutineResumeScheduler&) = delete;
+    ScopedDetachedCoroutineResumeScheduler& operator=(const ScopedDetachedCoroutineResumeScheduler&)
+      = delete;
+
+  private:
+    const CoroutineResumeScheduler* previous_;
+  };
+
   void
   resume_coroutine(std::coroutine_handle<> handle);
+
+  void resume_detached_coroutine(std::coroutine_handle<> handle);
 }

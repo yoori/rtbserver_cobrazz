@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <type_traits>
+#include <google/protobuf/repeated_field.h>
 
 namespace WireAlgs
 {
@@ -16,7 +18,15 @@ namespace WireAlgs
     value.pack(buf);
 
     std::uint32_t pos = seq.size();
-    seq.resize(pos + EL_NUMBER + 1);
+    if constexpr (std::is_same_v<ULongSeqType, google::protobuf::RepeatedField<uint32_t>>)
+    {
+      seq.Resize(pos + EL_NUMBER + 1, 0);
+    }
+    else
+    {
+      seq.resize(pos + EL_NUMBER + 1);
+    }
+
     seq[pos] = 0;
     for (std::uint32_t i = 0; i < EL_NUMBER; ++i)
     {

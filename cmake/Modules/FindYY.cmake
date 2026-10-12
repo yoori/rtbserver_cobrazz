@@ -1,9 +1,7 @@
-set(IDL_FOUND TRUE)
+set(YY_FOUND TRUE)
 
 function(add_yy _target _yyfile target_dir)
-  get_filename_component(IDL_FILE_NAME_WE ${_yyfile} NAME_WE)
-  set(MIDL_OUTPUT_PATH ${target_dir})
-  set(OUTPUTCPP ${MIDL_OUTPUT_PATH}/${_yyfile}.cpp)
+  set(OUTPUTCPP ${target_dir}/${_yyfile}.cpp)
 
   include_directories(${target_dir})
 
@@ -23,5 +21,5 @@ function(add_yy _target _yyfile target_dir)
     ${OUTPUTCPP}
   )
   add_dependencies(${_target} ${BISON_TARGET})
-  target_include_directories(${_target} INTERFACE ${MIDL_OUTPUT_PATH})
+  target_include_directories(${_target} INTERFACE ${target_dir})
 endfunction()

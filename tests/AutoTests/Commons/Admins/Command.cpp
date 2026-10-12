@@ -67,6 +67,6 @@ namespace AutoTest
       }
     }
     cmd.add_cmd_i("-r");
-    cmd.add_cmd_i(std::string("corbaloc::") + address + "/" +  SERVICES[srv_id].name);
+    cmd.add_cmd_i(address);
   }
 }

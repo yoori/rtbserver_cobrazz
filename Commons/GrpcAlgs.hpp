@@ -1,7 +1,11 @@
 #pragma once
 
 #include <cassert>
+#include <limits>
+#include <stdexcept>
 #include <string>
+#include <google/protobuf/repeated_field.h>
+#include <google/protobuf/repeated_ptr_field.h>
 
 #include <Generics/Time.hpp>
 
@@ -10,6 +14,37 @@
 
 namespace GrpcAlgs
 {
+  template<typename Value>
+  void resize_repeated(google::protobuf::RepeatedField<Value>& values, std::size_t size)
+  {
+    if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+      throw std::length_error("Protobuf repeated field exceeds INT_MAX");
+    }
+
+    values.Resize(static_cast<int>(size), Value{});
+  }
+
+  template<typename Value>
+  void resize_repeated(google::protobuf::RepeatedPtrField<Value>& values, std::size_t size)
+  {
+    if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+      throw std::length_error("Protobuf repeated field exceeds INT_MAX");
+    }
+
+    const auto count = static_cast<int>(size);
+    while (values.size() > count)
+    {
+      values.RemoveLast();
+    }
+
+    while (values.size() < count)
+    {
+      values.Add();
+    }
+  }
+
   inline
   std::string
   pack_time(const Generics::Time& ts)

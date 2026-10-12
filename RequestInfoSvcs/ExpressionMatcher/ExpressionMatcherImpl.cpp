@@ -20,7 +20,7 @@
 
 #include <UserInfoSvcs/UserInfoClient/UserInfoDistributedGrpcClient.hpp>
 #include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
-#include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannelGrpc.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 
 #include "UserTriggerMatchProfileProviderImpl.hpp"
@@ -1059,29 +1059,29 @@ namespace AdServer::RequestInfoSvcs
         try
         {
           CampaignSvcs::CampaignServer::GetExpressionChannelsInfo request_settings;
-          request_settings.timestamp = GrpcAlgs::pack_time(Generics::Time::ZERO);
-          request_settings.portions_number = PORTIONS_NUMBER;
-          request_settings.channel_types = "KBEGVTA";
-          request_settings.channel_statuses = "AW";
-          request_settings.provide_ccg_links = false;
-          request_settings.provide_channel_triggers =
-            expression_matcher_config_.TriggerImpsConfig().present();
-          request_settings.provide_overlap_channel_ids = false;
+          request_settings.set_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+          request_settings.set_portions_number(PORTIONS_NUMBER);
+          request_settings.set_channel_types("KBEGVTA");
+          request_settings.set_channel_statuses("AW");
+          request_settings.set_provide_ccg_links(false);
+          request_settings.set_provide_channel_triggers(
+            expression_matcher_config_.TriggerImpsConfig().present());
+          request_settings.set_provide_overlap_channel_ids(false);
 
           for (unsigned long portion = 0;
             portion < PORTIONS_NUMBER && !(interrupted = !active()); ++portion)
           {
             // update expressions
             std::unique_ptr<CampaignSvcs::ExpressionChannelsInfo> expression_channels_info;
-            request_settings.portion = portion;
+            request_settings.set_portion(portion);
             expression_channels_info.reset(
               campaign_server->get_expression_channels(request_settings));
 
             // fill expression channels index
             const CampaignSvcs::ExpressionChannelSeq& expression_channels =
-              expression_channels_info->expression_channels;
+              expression_channels_info->expression_channels();
 
-            for (std::uint32_t i = 0; i < expression_channels.size(); ++i)
+            for (int i = 0; i < expression_channels.size(); ++i)
             {
               CampaignSvcs::ExpressionChannelBase_var new_channel = CampaignSvcs::unpack_channel(
                 expression_channels[i], new_config->expression_channels);
@@ -1107,52 +1107,47 @@ namespace AdServer::RequestInfoSvcs
 
             // fill trigger match index
             const CampaignSvcs::ChannelTriggersSeq& channels =
-              expression_channels_info->activate_channel_triggers;
+              expression_channels_info->activate_channel_triggers();
 
-            for (std::uint32_t i = 0; i < channels.size(); ++i)
+            for (int i = 0; i < channels.size(); ++i)
             {
-              if (channels[i].page_triggers.size() ||
-                channels[i].search_triggers.size() ||
-                channels[i].url_triggers.size() ||
-                channels[i].url_keyword_triggers.size())
+              if (channels[i].page_triggers().size() || channels[i].search_triggers().size() ||
+                channels[i].url_triggers().size() || channels[i].url_keyword_triggers().size())
               {
                 UserTriggerMatchContainer::Config::ChannelInfo_var channel =
                   new UserTriggerMatchContainer::Config::ChannelInfo();
 
-                channel->page_time_to = channels[i].page_time_to;
-                channel->search_time_to = channels[i].search_time_to;
-                channel->url_time_to = channels[i].url_time_to;
-                channel->url_keyword_time_to = channels[i].url_keyword_time_to;
-                channel->page_min_visits = channels[i].page_min_visits;
-                channel->search_min_visits = channels[i].search_min_visits;
-                channel->url_min_visits = channels[i].url_min_visits;
-                channel->url_keyword_min_visits = channels[i].url_keyword_min_visits;
+                channel->page_time_to = channels[i].page_time_to();
+                channel->search_time_to = channels[i].search_time_to();
+                channel->url_time_to = channels[i].url_time_to();
+                channel->url_keyword_time_to = channels[i].url_keyword_time_to();
+                channel->page_min_visits = channels[i].page_min_visits();
+                channel->search_min_visits = channels[i].search_min_visits();
+                channel->url_min_visits = channels[i].url_min_visits();
+                channel->url_keyword_min_visits = channels[i].url_keyword_min_visits();
 
-                channel->page_triggers.reserve(channels[i].page_triggers.size());
-                channel->search_triggers.reserve(channels[i].search_triggers.size());
-                channel->url_triggers.reserve(channels[i].url_triggers.size());
-                channel->url_keyword_triggers.reserve(channels[i].url_keyword_triggers.size());
-                std::copy(
-                  channels[i].page_triggers.data(),
-                  channels[i].page_triggers.data() + channels[i].page_triggers.size(),
+                channel->page_triggers.reserve(channels[i].page_triggers().size());
+                channel->search_triggers.reserve(channels[i].search_triggers().size());
+                channel->url_triggers.reserve(channels[i].url_triggers().size());
+                channel->url_keyword_triggers.reserve(channels[i].url_keyword_triggers().size());
+                std::copy(channels[i].page_triggers().data(),
+                  channels[i].page_triggers().data() + channels[i].page_triggers().size(),
                   std::back_inserter(channel->page_triggers));
-                std::copy(
-                  channels[i].search_triggers.data(),
-                  channels[i].search_triggers.data() + channels[i].search_triggers.size(),
+                std::copy(channels[i].search_triggers().data(),
+                  channels[i].search_triggers().data() + channels[i].search_triggers().size(),
                   std::back_inserter(channel->search_triggers));
-                std::copy(
-                  channels[i].url_triggers.data(),
-                  channels[i].url_triggers.data() + channels[i].url_triggers.size(),
+                std::copy(channels[i].url_triggers().data(),
+                  channels[i].url_triggers().data() + channels[i].url_triggers().size(),
                   std::back_inserter(channel->url_triggers));
-                std::copy(
-                  channels[i].url_keyword_triggers.data(),
-                  channels[i].url_keyword_triggers.data() + channels[i].url_keyword_triggers.size(),
+                std::copy(channels[i].url_keyword_triggers().data(),
+                  channels[i].url_keyword_triggers().data() +
+                    channels[i].url_keyword_triggers().size(),
                   std::back_inserter(channel->url_keyword_triggers));
 
                 if (load_trigger_match_config)
                 {
                   new_trigger_match_config->channels.insert(
-                    std::make_pair(channels[i].channel_id, channel));
+                    std::make_pair(channels[i].channel_id(), channel));
                 }
               }
             }
@@ -1160,11 +1155,11 @@ namespace AdServer::RequestInfoSvcs
             if (load_trigger_match_config)
             {
               const CampaignSvcs::DeletedIdSeq& delete_simple_channels =
-                expression_channels_info->delete_simple_channels;
+                expression_channels_info->delete_simple_channels();
 
-              for (std::uint32_t del_i = 0; del_i < delete_simple_channels.size(); ++del_i)
+              for (int del_i = 0; del_i < delete_simple_channels.size(); ++del_i)
               {
-                new_trigger_match_config->channels.erase(delete_simple_channels[del_i].id);
+                new_trigger_match_config->channels.erase(delete_simple_channels[del_i].id());
               }
             }
 
@@ -1184,10 +1179,9 @@ namespace AdServer::RequestInfoSvcs
             placement_colo_props(
               campaign_server->get_colocation_prop(expression_matcher_config_.colo_id()));
 
-          *placement_colo_holder_ = new PlacementColo(
-            placement_colo_props->found ?
-              GrpcAlgs::unpack_time(placement_colo_props->time_offset) :
-              Generics::Time());
+          *placement_colo_holder_ = new PlacementColo(placement_colo_props->found()
+              ? GrpcAlgs::unpack_time(placement_colo_props->time_offset())
+              : Generics::Time());
 
           break;
         }

@@ -6,13 +6,6 @@ REFLECT_UNIT(SpecificProfilesAbsent) ("UserProfiling", AUTO_TEST_SLOW);
 namespace
 {
 
-  enum CorbaRefOptEnum
-  {
-    CROE_Controller,
-    CROE_Manager,
-    CROE_Ref
-  };
-
   enum UserIdOptEnum
   {
     UIOE_User,
@@ -26,25 +19,18 @@ namespace
 
   protected:
 
-    std::string admin_;
-    std::string command_;
-    std::string service_;
     /**
      * @brief Makes admin call string.
      * @param admin - admin to use
      * @param command - command to ask
-     * @param service - service corba object name
      * @param UUID.
-     * @param address manager object address.
-     * @param controller - corba reference option switch
+     * @param address gRPC endpoint (host:port).
      * @param user - uid option switch
      */
-    void make_cmd (const char* admin,
+    void make_cmd(const char* admin,
       const char* command,
-      const char* service,
       const char* uuid,
       const char* address,
-      CorbaRefOptEnum controller = CROE_Controller,
       UserIdOptEnum user = UIOE_User);
 
   public:
@@ -53,18 +39,14 @@ namespace
      * @brief Creates AdminCmd object and initialize it.
      * @param admin - admin to use
      * @param command - command to ask
-     * @param service - service corba object name
      * @param UUID.
-     * @param address manager object address.
-     * @param controller - corba reference option switch
+     * @param address gRPC endpoint (host:port).
      * @param user - uid option switch
      */
     ProfileAdminCmd(const char* admin,
       const char* command,
-      const char* service,
       const char* uuid,
       const char* address,
-      CorbaRefOptEnum controller = CROE_Controller,
       UserIdOptEnum user = UIOE_User);
 
     class Examiner;
@@ -258,40 +240,35 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "UserInfoAdmin", "print-base",
-          "UserInfoManager", uid.c_str(),
-          uim_manager.c_str(), CROE_Manager).check(examiner)),
+          uid.c_str(), uim_manager.c_str()).check(examiner)),
       "profile UserInfoAdmin print-base not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "UserInfoAdmin", "print-add",
-          "UserInfoManager", uid.c_str(),
-          uim_manager.c_str(), CROE_Manager).check(examiner)),
+          uid.c_str(), uim_manager.c_str()).check(examiner)),
       "profile UserInfoAdmin print-add not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "UserInfoAdmin", "print-history",
-          "UserInfoManager", uid.c_str(),
-          uim_manager.c_str(), CROE_Manager).check(examiner)),
+          uid.c_str(), uim_manager.c_str()).check(examiner)),
       "profile UserInfoAdmin print-history not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "UserInfoAdmin", "print-wd",
-          "UserInfoManager", uid.c_str(),
-          uim_manager.c_str(), CROE_Manager).check(examiner)),
+          uid.c_str(), uim_manager.c_str()).check(examiner)),
       "profile UserInfoAdmin print-wd not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "UserInfoAdmin", "print-freq-cap",
-          "UserInfoManager", uid.c_str(),
-          uim_manager.c_str(),CROE_Manager).check(examiner)),
+          uid.c_str(), uim_manager.c_str()).check(examiner)),
       "profile UserInfoAdmin print-freq-cap not empty ");
   }
 
@@ -305,40 +282,35 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "RequestInfoAdmin", "print-reach",
-          "RequestInfoManager", uid.c_str(),
-          rim_manager.c_str(), CROE_Ref).check(examiner)),
+          uid.c_str(), rim_manager.c_str()).check(examiner)),
       "profile RequestInfoAdmin print-reach not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "RequestInfoAdmin", "print-action",
-          "RequestInfoManager", uid.c_str(),
-          rim_manager.c_str(),CROE_Ref).check(examiner)),
+          uid.c_str(), rim_manager.c_str()).check(examiner)),
       "profile RequestInfoAdmin print-action not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "RequestInfoAdmin", "print-fraud",
-          "RequestInfoManager", uid.c_str(),
-          rim_manager.c_str(), CROE_Ref).check(examiner)),
+          uid.c_str(), rim_manager.c_str()).check(examiner)),
       "profile RequestInfoAdmin print-fraud not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "RequestInfoAdmin", "print-site-reach",
-          "RequestInfoManager", uid.c_str(),
-          rim_manager.c_str(), CROE_Ref).check(examiner)),
+          uid.c_str(), rim_manager.c_str()).check(examiner)),
       "profile RequestInfoAdmin print-site-reach not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "RequestInfoAdmin", "print-tag-request-groups",
-          "RequestInfoManager", uid.c_str(),
-          rim_manager.c_str(), CROE_Ref).check(examiner)),
+          uid.c_str(), rim_manager.c_str()).check(examiner)),
       "profile RequestInfoAdmin print-tag-request-groups not empty ");
   }
 
@@ -352,32 +324,28 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "ExpressionMatcherAdmin", "print",
-          "ExpressionMatcher", uid.c_str(), em_manager.c_str(),
-          CROE_Ref, UIOE_None).check(examiner)),
+          uid.c_str(), em_manager.c_str(), UIOE_None).check(examiner)),
       "ExpressionMatcherAdmin print not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "ExpressionMatcherAdmin", "print-est",
-          "ExpressionMatcher", uid.c_str(), em_manager.c_str(),
-          CROE_Ref, UIOE_None).check(examiner)),
+          uid.c_str(), em_manager.c_str(), UIOE_None).check(examiner)),
       "ExpressionMatcherAdmin print-est not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "ExpressionMatcherAdmin", "print-user-trigger-match",
-          "ExpressionMatcher", uid.c_str(),
-          em_manager.c_str(), CROE_Ref, UIOE_None).check(examiner)),
+          uid.c_str(), em_manager.c_str(), UIOE_None).check(examiner)),
       "ExpressionMatcherAdmin print-user-trigger-match not empty ");
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ProfileAdminCmd(
           "ExpressionMatcherAdmin", "print-request-trigger-match",
-          "ExpressionMatcher", uid.c_str(),
-          em_manager.c_str(), CROE_Ref, UIOE_None).check(examiner)),
+          uid.c_str(), em_manager.c_str(), UIOE_None).check(examiner)),
       "ExpressionMatcherAdmin print-request-trigger-match not empty ");
   }
 }
@@ -386,13 +354,11 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
 namespace
 {
   void
-  ProfileAdminCmd::make_cmd (const char* admin,
-     const char* command,
-     const char* service,
-     const char* uuid,
-     const char* address,
-     CorbaRefOptEnum controller,
-     UserIdOptEnum user)
+  ProfileAdminCmd::make_cmd(const char* admin,
+    const char* command,
+    const char* uuid,
+    const char* address,
+    UserIdOptEnum user)
   {
     clear();
     add_cmd_i(admin);
@@ -415,37 +381,17 @@ namespace
         break;
       }
     }
-    switch (controller)
-    {
-    case CROE_Controller :
-      {
-        add_cmd_i(std::string("-r orbaloc::") +  address + "/" + service);
-        break;
-      }
-    case CROE_Manager :
-      {
-        add_cmd_i(std::string("-r corbaloc::") +  address + "/" + service);
-        break;
-      }
-    case CROE_Ref :
-      {
-        add_cmd_i(std::string("-r corbaloc::") +  address + "/" + service);
-        break;
-      }
-    };
+    add_cmd_i("-r");
+    add_cmd_i(address);
   }
+
   ProfileAdminCmd::ProfileAdminCmd(const char* admin,
     const char* command,
-    const char* service,
     const char* uuid,
     const char* address,
-    CorbaRefOptEnum controller,
     UserIdOptEnum user)
   {
-    admin_ = admin;
-    command_ = command;
-    service_ = service;
-    make_cmd(admin, command, service, uuid, address, controller, user);
+    make_cmd(admin, command, uuid, address, user);
   }
 
   bool ProfileAdminCmd::check(ProfileAdminCmd::Examiner& examiner)

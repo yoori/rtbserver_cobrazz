@@ -13,7 +13,6 @@
 #include <Commons/GranularContainer.hpp>
 #include <Commons/Algs.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignConfigTypes.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignCommons_s.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -1686,15 +1685,13 @@ namespace AdServer::CampaignSvcs
       initial_contract_id(0),
       sys_options(sys_options_val)
   {
-    for (std::uint32_t token_i = 0; token_i < tokens_val.size(); ++token_i)
+    for (const auto& token : tokens_val)
     {
-      tokens.insert(
-        std::make_pair(tokens_val[token_i].option_id, tokens_val[token_i].value.c_str()));
+      tokens.emplace(token.option_id(), token.value());
     }
 
     categories.insert(categories_val.begin(), categories_val.end());
   }
-
 
   //
   // FreqCapDef class
@@ -1780,7 +1777,6 @@ namespace AdServer::CampaignSvcs
       mime_format == right.mime_format &&
       track_impr == right.track_impr && template_file == right.template_file && type == right.type;
   }
-
 
   inline bool
   CreativeTemplateDef::operator==(const CreativeTemplateDef& right) const noexcept

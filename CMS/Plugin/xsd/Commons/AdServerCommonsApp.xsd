@@ -103,54 +103,9 @@
     <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional"/>
   </xsd:complexType>
 
-  <xsd:complexType name="SimpleCorbaRef">
-    <xsd:sequence>
-      <xsd:element name="secureParams" type="SecureSimpleCorbaRefParams" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA secure reference.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-    </xsd:sequence>
-    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
-      <xsd:annotation>
-        <xsd:documentation>
-          Host of service.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
-      <xsd:annotation>
-        <xsd:documentation>
-          Port of service.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-  </xsd:complexType>
-
-  <xsd:complexType name="SecureSimpleCorbaRefParams">
-    <xsd:attribute name="key" type="NoLeadingTrailingSpaces" default="skey.pem">
-      <xsd:annotation>
-        <xsd:documentation>
-          Secure key for connection.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="certificate" type="NoLeadingTrailingSpaces" default="scert.pem">
-      <xsd:annotation>
-        <xsd:documentation>
-          Secure certificate for connection.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="password" type="NoLeadingTrailingSpaces" default="adserver">
-      <xsd:annotation>
-        <xsd:documentation>
-          Password.
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
+  <xsd:complexType name="STunnelRef">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="NetworkParamsType">

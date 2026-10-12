@@ -34,14 +34,7 @@
       <xsd:element name="campaignServerRef" type="CampaignServerGrpcRef" minOccurs="0" maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
-            CORBA references.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name="channelControllerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="unbounded">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA references.
+            CampaignServer gRPC endpoints.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

@@ -37,7 +37,10 @@ def test():
         "bin/ProcessControlVarsTest", "lib/libProcessControlIDL.so",
         "lib/libLogGeneralizerIDL.so", "lib/libLogGeneralizerIDL.so.1",
         "lib/libLogGeneralizerIDL.a", "lib/libLogGeneralizerGrpc.so",
-        "lib/libCampaignServerIDL.so", "lib/libCampaignCommonsIDL.so", "lib/libBillStatInfoIDL.so"):
+        "lib/libCampaignServerIDL.so", "lib/libCampaignCommonsIDL.so", "lib/libBillStatInfoIDL.so",
+        "lib/libCORBACommons.so", "lib/libCORBACommons.a", "lib/libTAO.so", "lib/libACE.so",
+        "lib/libInfResolveStubs.so", "lib/libInfResolveClientStubs.so", "bin/ProbeObj",
+        "bin/ProcessControl", "bin/CORBAOverload"):
       path = work / name
       path.parent.mkdir(parents=True, exist_ok=True)
       path.write_text("test fixture\n")
@@ -59,10 +62,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib/")
     assert "bin/SVMGenerator" in installed, installed
     assert "lib/libChannelContainer.so" in installed, installed
     assert "lib/libChannelUpdateGrpcClient.so" in installed, installed
-    assert "lib/libProcessControlIDL.so" in installed, installed
     assert "lib/libLogGeneralizerGrpc.so" in installed, installed
-    for name in ("CampaignServerIDL", "CampaignCommonsIDL", "BillStatInfoIDL"):
-      assert "lib/lib" + name + ".so" in installed, installed
+    assert "lib/libACE.so" in installed, installed
+    for retired in ("IDL", "CORBA", "TAO", "InfResolve", "ProbeObj", "ProcessControl"):
+      assert not any(retired in path for path in installed), installed
     assert not any("v350" in path for path in installed), installed
     assert not any("ProcessControlVars" in path for path in installed), installed
     assert not any("ChannelSearch" in path for path in installed), installed

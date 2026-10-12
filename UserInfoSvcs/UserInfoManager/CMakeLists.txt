@@ -75,14 +75,12 @@ target_link_libraries(UserInfoManager
     Allocator
     CampaignServerGrpc
     Commons
-    CORBACommons
     Generics
     GrpcBatch
     HttpServer
     LogCommons
     Logger
     PrivacyFilter
-    ProcessControlIDL
     ProfilingCommons
     ProfileMap
     Sync

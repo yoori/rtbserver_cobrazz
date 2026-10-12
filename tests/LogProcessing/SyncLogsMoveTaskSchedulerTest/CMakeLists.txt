@@ -9,6 +9,5 @@ target_link_libraries(SyncLogsMoveTaskSchedulerTest
     Generics
     Sync
     Commons
-    CORBACommons
     LogCommons
 )

@@ -41,7 +41,8 @@ lastDBUpdateTime OBJECT-TYPE
   SYNTAX DisplayString (SIZE(0..32))
   MAX-ACCESS read-only
   STATUS current
-  DESCRIPTION "Absolute GMT time point when finished last update (db update in central, corba update in remote)"
+  DESCRIPTION "Absolute GMT time point when finished last update
+    (db update in central, gRPC update in remote)"
   ::= { campaignServer 103 }
 
 lastDBUpdateDelay OBJECT-TYPE
@@ -59,4 +60,3 @@ expressionChannelCount OBJECT-TYPE
   ::= { campaignServer 105 }
 
 END
-

@@ -13,9 +13,9 @@
 
 #include <CampaignSvcs/CampaignServer/CampaignServerTypes.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CorbaCampaignTypes.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignConfigGrpc.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
-#include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannelGrpc.hpp>
 #include <CampaignSvcs/CampaignManager/CreativeTextGenerator.hpp>
 
 #include "CampaignManagerDeclarations.hpp"
@@ -280,15 +280,15 @@ namespace AdServer::CampaignSvcs
   {
     Creative::CategorySet categories;
 
-    categories.insert(creative_info.categories.begin(), creative_info.categories.end());
+    categories.insert(creative_info.categories().begin(), creative_info.categories().end());
 
     std::string short_click_url;
     std::string click_url_domain;
-    if (creative_info.click_url.value[0])
+    if (creative_info.click_url().value()[0])
     {
       try
       {
-        HTTP::BrowserAddress http_url(String::SubString(creative_info.click_url.value));
+        HTTP::BrowserAddress http_url(String::SubString(creative_info.click_url().value()));
         http_url.get_view(
           HTTP::HTTPAddress::VW_PROTOCOL |
           HTTP::HTTPAddress::VW_HOSTNAME |
@@ -301,29 +301,22 @@ namespace AdServer::CampaignSvcs
       {}
     }
 
-    Creative* result = new Creative(
-      campaign,
-      creative_info.ccid,
-      creative_info.creative_id,
-      creative_info.fc_id,
-      creative_info.weight,
-      creative_info.creative_format.c_str(),
-      creative_info.version_id.c_str(),
-      OptionValue(creative_info.click_url.option_id, creative_info.click_url.value),
-      click_url_domain.c_str(),
-      short_click_url.c_str(),
-      categories);
+    Creative* result = new Creative(campaign, creative_info.ccid(), creative_info.creative_id(),
+      creative_info.fc_id(), creative_info.weight(), creative_info.creative_format().c_str(),
+      creative_info.version_id().c_str(),
+      OptionValue(creative_info.click_url().option_id(), creative_info.click_url().value()),
+      click_url_domain.c_str(), short_click_url.c_str(), categories);
 
-    result->status = creative_info.status;
-    result->order_set_id = creative_info.order_set_id;
+    result->status = static_cast<char>(creative_info.status());
+    result->order_set_id = creative_info.order_set_id();
 
-    for (std::uint32_t size_i = 0; size_i < creative_info.sizes.size(); ++size_i)
+    for (int size_i = 0; size_i < creative_info.sizes().size(); ++size_i)
     {
-      Creative::Size& res_size = result->sizes[creative_info.sizes[size_i].size_id];
-      res_size.up_expand_space = creative_info.sizes[size_i].up_expand_space;
-      res_size.right_expand_space = creative_info.sizes[size_i].right_expand_space;
-      res_size.down_expand_space = creative_info.sizes[size_i].down_expand_space;
-      res_size.left_expand_space = creative_info.sizes[size_i].left_expand_space;
+      Creative::Size& res_size = result->sizes[creative_info.sizes()[size_i].size_id()];
+      res_size.up_expand_space = creative_info.sizes()[size_i].up_expand_space();
+      res_size.right_expand_space = creative_info.sizes()[size_i].right_expand_space();
+      res_size.down_expand_space = creative_info.sizes()[size_i].down_expand_space();
+      res_size.left_expand_space = creative_info.sizes()[size_i].left_expand_space();
       res_size.expandable = (
         res_size.up_expand_space > 0 ||
         res_size.right_expand_space > 0 ||
@@ -373,22 +366,22 @@ namespace AdServer::CampaignSvcs
             }
 
             CampaignGetConfigSettings get_config_settings;
-            get_config_settings.timestamp = GrpcAlgs::pack_time(Generics::Time::ZERO);
-            get_config_settings.server_id = 0;
-            get_config_settings.portion = portion;
-            get_config_settings.portions_number = PORTIONS_NUMBER;
+            get_config_settings.set_timestamp(GrpcAlgs::pack_time(Generics::Time::ZERO));
+            get_config_settings.set_server_id(0);
+            get_config_settings.set_portion(portion);
+            get_config_settings.set_portions_number(PORTIONS_NUMBER);
 
-            get_config_settings.colo_id = 0;
+            get_config_settings.set_colo_id(0);
 
-            get_config_settings.campaign_statuses = campaigns_types_;
-            get_config_settings.channel_statuses = "A";
+            get_config_settings.set_campaign_statuses(campaigns_types_);
+            get_config_settings.set_channel_statuses("A");
 
-            get_config_settings.provide_only_tags = false;
-            get_config_settings.no_deleted = true;
-            get_config_settings.provide_channel_triggers = false;
+            get_config_settings.set_provide_only_tags(false);
+            get_config_settings.set_no_deleted(true);
+            get_config_settings.set_provide_channel_triggers(false);
 
-            get_config_settings.geo_channels_timestamp = GrpcAlgs::pack_time(
-              old_config ? old_config->geo_channels_timestamp : Generics::Time::ZERO);
+            get_config_settings.set_geo_channels_timestamp(GrpcAlgs::pack_time(
+              old_config ? old_config->geo_channels_timestamp : Generics::Time::ZERO));
 
             std::unique_ptr<CampaignConfigUpdateInfo> update_info;
 
@@ -396,25 +389,29 @@ namespace AdServer::CampaignSvcs
 
             if (logger_->log_level() >= Logging::Logger::TRACE)
             {
-              logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) << FUN <<
-                ": config update contains (portion = " << portion << "): " <<
-                update_info->countries.size() << " updated countries," <<
-                update_info->colocations.size() << " updated colocations," <<
-                update_info->deleted_colocations.size() << " deleted colocations," <<
-                update_info->campaigns.size() << " updated campaigns, " <<
-                update_info->deleted_campaigns.size() << " deleted campaigns; " <<
-                update_info->campaign_keywords.size() << " updated keywords, " <<
-                update_info->deleted_keywords.size() << " deleted keywords; " <<
-                update_info->creative_categories.size() << " updated creative categories, " <<
-                update_info->tags.size() << " updated tags, " <<
-                update_info->deleted_tags.size() << " deleted tags; " <<
-                update_info->expression_channels.size() << " updated expression channels, " <<
-                update_info->deleted_expression_channels.size() <<
-                " deleted expression channels, " <<
-                update_info->category_channels.size() << " updated category channels, " <<
-                update_info->deleted_category_channels.size() << " deleted category channels, " <<
-                update_info->activate_geo_channels.size() << " updated geo channels(" <<
-                  GrpcAlgs::unpack_time(update_info->geo_channels_timestamp).get_gm_time() << ")";
+              logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE)
+                << FUN << ": config update contains (portion = " << portion
+                << "): " << update_info->countries_size() << " updated countries,"
+                << update_info->colocations_size() << " updated colocations,"
+                << update_info->deleted_colocations_size() << " deleted colocations,"
+                << update_info->campaigns_size() << " updated campaigns, "
+                << update_info->deleted_campaigns_size() << " deleted campaigns; "
+                << update_info->campaign_keywords_size() << " updated keywords, "
+                << update_info->deleted_keywords_size() << " deleted keywords; "
+                << update_info->creative_categories_size()
+                << " updated creative categories, " << update_info->tags_size()
+                << " updated tags, " << update_info->deleted_tags_size()
+                << " deleted tags; " << update_info->expression_channels_size()
+                << " updated expression channels, "
+                << update_info->deleted_expression_channels_size()
+                << " deleted expression channels, "
+                << update_info->category_channels_size()
+                << " updated category channels, "
+                << update_info->deleted_category_channels_size()
+                << " deleted category channels, "
+                << update_info->activate_geo_channels_size() << " updated geo channels("
+                << GrpcAlgs::unpack_time(update_info->geo_channels_timestamp()).get_gm_time()
+                << ")";
             }
 
             apply_config_update_(*new_config, config_update_links, *update_info, old_config);
@@ -517,50 +514,51 @@ namespace AdServer::CampaignSvcs
 
     if (new_config.master_stamp == Generics::Time::ZERO)
     {
-      new_config.master_stamp = GrpcAlgs::unpack_time(update_info.master_stamp);
+      new_config.master_stamp = GrpcAlgs::unpack_time(update_info.master_stamp());
     }
 
-    new_config.first_load_stamp = GrpcAlgs::unpack_time(update_info.first_load_stamp);
-    new_config.finish_load_stamp = GrpcAlgs::unpack_time(update_info.finish_load_stamp);
+    new_config.first_load_stamp = GrpcAlgs::unpack_time(update_info.first_load_stamp());
+    new_config.finish_load_stamp = GrpcAlgs::unpack_time(update_info.finish_load_stamp());
     new_config.global_params_timestamp =
-      GrpcAlgs::unpack_time(update_info.global_params_timestamp);
+      GrpcAlgs::unpack_time(update_info.global_params_timestamp());
 
-    new_config.currency_exchange_id = update_info.currency_exchange_id;
-    new_config.fraud_user_deactivate_period = GrpcAlgs::unpack_time(
-      update_info.fraud_user_deactivate_period);
-    new_config.cost_limit = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.cost_limit);
-    new_config.google_publisher_account_id = update_info.google_publisher_account_id;
+    new_config.currency_exchange_id = update_info.currency_exchange_id();
+    new_config.fraud_user_deactivate_period =
+      GrpcAlgs::unpack_time(update_info.fraud_user_deactivate_period());
+    new_config.cost_limit = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.cost_limit());
+    new_config.google_publisher_account_id = update_info.google_publisher_account_id();
 
     apply_sizes_update_(update_info, new_config);
     apply_app_formats_update_(update_info, new_config);
     apply_creative_options_update_(update_info, new_config);
     apply_account_update_(update_info, new_config, config_update_links);
 
-    for (std::uint32_t i = 0; i < update_info.ecpms.size(); ++i)
+    for (int i = 0; i < update_info.ecpms().size(); ++i)
     {
       ConfigUpdateLinks::EcpmHolder ecpm;
-      ecpm.ecpm = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms[i].ecpm);
-      ecpm.ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms[i].ctr);
+      ecpm.ecpm = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms()[i].ecpm());
+      ecpm.ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(update_info.ecpms()[i].ctr());
 
-      config_update_links.campaign_ecpms.insert(std::make_pair(update_info.ecpms[i].ccg_id, ecpm));
+      config_update_links.campaign_ecpms.insert(
+        std::make_pair(update_info.ecpms()[i].ccg_id(), ecpm));
     }
 
-    for (std::uint32_t i = 0; i < update_info.adv_actions.size(); i++)
+    for (int i = 0; i < update_info.adv_actions().size(); i++)
     {
-      const AdvActionInfo& ai_info = update_info.adv_actions[i];
-      AdvActionDef& ai = new_config.adv_actions[ai_info.action_id];
-      ai.action_id = ai_info.action_id;
-      ai.timestamp = GrpcAlgs::unpack_time(ai_info.timestamp);
+      const AdvActionInfo& ai_info = update_info.adv_actions()[i];
+      AdvActionDef& ai = new_config.adv_actions[ai_info.action_id()];
+      ai.action_id = ai_info.action_id();
+      ai.timestamp = GrpcAlgs::unpack_time(ai_info.timestamp());
 
-      std::uint32_t j = 0;
-      for (; j < ai_info.ccg_ids.size() && ai_info.ccg_ids[j] != 0; ++j)
+      int j = 0;
+      for (; j < ai_info.ccg_ids().size() && ai_info.ccg_ids()[j] != 0; ++j)
       {
-        ai.ccg_ids.push_back(ai_info.ccg_ids[j]);
+        ai.ccg_ids.push_back(ai_info.ccg_ids()[j]);
       }
 
-      if (j < ai_info.ccg_ids.size())
+      if (j < ai_info.ccg_ids().size())
       {
-        WireAlgs::unpack_decimal_from_seq(ai.cur_value, ai_info.ccg_ids, j + 1);
+        WireAlgs::unpack_decimal_from_seq(ai.cur_value, ai_info.ccg_ids(), j + 1);
       }
     }
 
@@ -1676,7 +1674,6 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-
     if (logger_->log_level() >= Logging::Logger::TRACE)
     {
       logger_->stream(Logging::Logger::TRACE, Aspect::CAMPAIGN_CONFIG_SOURCE) <<
@@ -1767,19 +1764,19 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.creative_categories.size(); i++)
+    for (int i = 0; i < update_info.creative_categories().size(); i++)
     {
-      const CreativeCategoryInfo& ccat_info = update_info.creative_categories[i];
-      CreativeCategory& ccat = new_config.creative_categories[ccat_info.creative_category_id];
-      ccat.cct_id = static_cast<
-        AdServer::CampaignSvcs::AdInstances::CreativeCategoryType>(ccat_info.cct_id);
-      ccat.name = ccat_info.name;
-      for (std::uint32_t ec_i = 0; ec_i < ccat_info.external_categories.size(); ++ec_i)
+      const CreativeCategoryInfo& ccat_info = update_info.creative_categories()[i];
+      CreativeCategory& ccat = new_config.creative_categories[ccat_info.creative_category_id()];
+      ccat.cct_id =
+        static_cast<AdServer::CampaignSvcs::AdInstances::CreativeCategoryType>(ccat_info.cct_id());
+      ccat.name = ccat_info.name();
+      for (int ec_i = 0; ec_i < ccat_info.external_categories().size(); ++ec_i)
       {
-        const auto& external_category = ccat_info.external_categories[ec_i];
-        auto& names = ccat.external_categories[
-          static_cast<AdRequestType>(external_category.ad_request_type)];
-        names.insert(external_category.names.begin(), external_category.names.end());
+        const auto& external_category = ccat_info.external_categories()[ec_i];
+        auto& names =
+          ccat.external_categories[static_cast<AdRequestType>(external_category.ad_request_type())];
+        names.insert(external_category.names().begin(), external_category.names().end());
       }
 
       // ADSC-9551
@@ -1790,7 +1787,7 @@ namespace AdServer::CampaignSvcs
         ccat.external_categories[AR_APPNEXUS].insert(ccat.name);
       }
 
-      ccat.timestamp = GrpcAlgs::unpack_time(ccat_info.timestamp);
+      ccat.timestamp = GrpcAlgs::unpack_time(ccat_info.timestamp());
 
       // fill external categories mapping to internal categories
       for (CreativeCategory::ExternalCategoryMap::const_iterator ext_ccat_it =
@@ -1800,8 +1797,8 @@ namespace AdServer::CampaignSvcs
         for (StringSet::const_iterator ext_ccat_name_it = ext_ccat_it->second.begin();
           ext_ccat_name_it != ext_ccat_it->second.end(); ++ext_ccat_name_it)
         {
-          new_config.external_creative_categories[
-            ext_ccat_it->first][*ext_ccat_name_it].insert(ccat_info.creative_category_id);
+          new_config.external_creative_categories[ext_ccat_it->first][*ext_ccat_name_it].insert(
+            ccat_info.creative_category_id());
         }
       }
 
@@ -1816,8 +1813,8 @@ namespace AdServer::CampaignSvcs
 
           if (!ccat.exclude_domain.empty())
           {
-            config_update_links.domain_category_exclusions[
-              ccat.exclude_domain].insert(ccat_info.creative_category_id);
+            config_update_links.domain_category_exclusions[ccat.exclude_domain].insert(
+              ccat_info.creative_category_id());
           }
         }
         catch(...)
@@ -1832,19 +1829,19 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.currencies.size(); ++i)
+    for (int i = 0; i < update_info.currencies().size(); ++i)
     {
-      const AdServer::CampaignSvcs::CurrencyInfo& currency_info = update_info.currencies[i];
+      const AdServer::CampaignSvcs::CurrencyInfo& currency_info = update_info.currencies()[i];
 
       Currency_var p_currency = new Currency();
 
-      p_currency->currency_id = currency_info.currency_id;
-      p_currency->currency_exchange_id = currency_info.currency_exchange_id;
-      p_currency->effective_date = currency_info.effective_date;
-      p_currency->rate = GrpcAlgs::unpack_decimal<RevenueDecimal>(currency_info.rate);
-      p_currency->timestamp = GrpcAlgs::unpack_time(currency_info.timestamp);
-      p_currency->fraction = currency_info.fraction_digits;
-      p_currency->currency_code = currency_info.currency_code;
+      p_currency->currency_id = currency_info.currency_id();
+      p_currency->currency_exchange_id = currency_info.currency_exchange_id();
+      p_currency->effective_date = currency_info.effective_date();
+      p_currency->rate = GrpcAlgs::unpack_decimal<RevenueDecimal>(currency_info.rate());
+      p_currency->timestamp = GrpcAlgs::unpack_time(currency_info.timestamp());
+      p_currency->fraction = currency_info.fraction_digits();
+      p_currency->currency_code = currency_info.currency_code();
 
       new_config.currencies[p_currency->currency_id] = p_currency;
       new_config.currency_codes[p_currency->currency_code] = p_currency;
@@ -1857,22 +1854,17 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.frequency_caps.size(); i++)
+    for (int i = 0; i < update_info.frequency_caps().size(); i++)
     {
-      const AdServer::CampaignSvcs::FreqCapInfo& freq_cap_info = update_info.frequency_caps[i];
+      const AdServer::CampaignSvcs::FreqCapInfo& freq_cap_info = update_info.frequency_caps()[i];
 
       /* filter non active freq caps */
-      if (freq_cap_info.lifelimit || freq_cap_info.period || freq_cap_info.window_limit)
+      if (freq_cap_info.lifelimit() || freq_cap_info.period() || freq_cap_info.window_limit())
       {
-        new_config.freq_caps.emplace(
-          freq_cap_info.fc_id,
-          FreqCap(
-            freq_cap_info.fc_id,
-            GrpcAlgs::unpack_time(freq_cap_info.timestamp),
-            freq_cap_info.lifelimit,
-            Generics::Time(freq_cap_info.period),
-            freq_cap_info.window_limit,
-            Generics::Time(freq_cap_info.window_time)));
+        new_config.freq_caps.emplace(freq_cap_info.fc_id(),
+          FreqCap(freq_cap_info.fc_id(), GrpcAlgs::unpack_time(freq_cap_info.timestamp()),
+            freq_cap_info.lifelimit(), Generics::Time(freq_cap_info.period()),
+            freq_cap_info.window_limit(), Generics::Time(freq_cap_info.window_time())));
       }
     }
   }
@@ -1884,27 +1876,27 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.creative_templates.size(); ++i)
+    for (int i = 0; i < update_info.creative_templates().size(); ++i)
     {
-      const CreativeTemplateInfo& cr_templ_info = update_info.creative_templates[i];
+      const CreativeTemplateInfo& cr_templ_info = update_info.creative_templates()[i];
 
       ConfigUpdateLinks::TemplateOptionsLink& template_options_link =
-        config_update_links.template_option_values[cr_templ_info.id];
+        config_update_links.template_option_values[cr_templ_info.id()];
 
       ConfigUpdateLinks::OptionTokenValueMap_var tokens = new RCOptionTokenValueMap();
-      unpack_option_value_map(template_options_link.unlinked_tokens, cr_templ_info.tokens);
+      unpack_option_value_map(template_options_link.unlinked_tokens, cr_templ_info.tokens());
       template_options_link.tokens_ref = tokens;
 
       ConfigUpdateLinks::OptionTokenValueMap_var hidden_tokens = new RCOptionTokenValueMap();
       unpack_option_value_map(
-        template_options_link.unlinked_hidden_tokens, cr_templ_info.hidden_tokens);
+        template_options_link.unlinked_hidden_tokens, cr_templ_info.hidden_tokens());
       template_options_link.hidden_tokens_ref = hidden_tokens;
 
-      for (std::uint32_t ctf_i = 0; ctf_i < cr_templ_info.files.size(); ++ctf_i)
+      for (int ctf_i = 0; ctf_i < cr_templ_info.files().size(); ++ctf_i)
       {
-        const CreativeTemplateFileInfo& ctf_info = cr_templ_info.files[ctf_i];
+        const CreativeTemplateFileInfo& ctf_info = cr_templ_info.files()[ctf_i];
 
-        if (ctf_info.type == AdServer::CampaignSvcs::CTT_XSLT)
+        if (ctf_info.type() == AdServer::CampaignSvcs::CTT_XSLT)
         {
           continue;
         }
@@ -1912,20 +1904,14 @@ namespace AdServer::CampaignSvcs
         std::string templ_path;
 
         new_config.creative_templates.insert(
-          CreativeTemplateKey(
-            ctf_info.creative_format.c_str(),
-            ctf_info.creative_size.c_str(),
-            ctf_info.app_format.c_str()),
-          CreativeTemplate(
-            adopt_template_path(ctf_info.template_file.c_str(), templ_path),
-            adopt_template_type(ctf_info.type),
-            ctf_info.mime_format.c_str(),
-            ctf_info.track_impr,
-            tokens,
-            hidden_tokens,
-            GrpcAlgs::unpack_time(cr_templ_info.timestamp)));
+          CreativeTemplateKey(ctf_info.creative_format().c_str(), ctf_info.creative_size().c_str(),
+            ctf_info.app_format().c_str()),
+          CreativeTemplate(adopt_template_path(ctf_info.template_file().c_str(), templ_path),
+            adopt_template_type(ctf_info.type()), ctf_info.mime_format().c_str(),
+            ctf_info.track_impr(), tokens, hidden_tokens,
+            GrpcAlgs::unpack_time(cr_templ_info.timestamp())));
 
-        new_config.all_template_appformats.emplace(ctf_info.app_format.c_str());
+        new_config.all_template_appformats.emplace(ctf_info.app_format().c_str());
       }
     }
   }
@@ -1936,17 +1922,17 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.sizes.size(); i++)
+    for (int i = 0; i < update_info.sizes().size(); i++)
     {
       Size_var new_size = new Size();
-      new_size->size_id = update_info.sizes[i].size_id;
-      new_size->protocol_name = update_info.sizes[i].protocol_name;
-      new_size->size_type_id = update_info.sizes[i].size_type_id;
-      new_size->width = update_info.sizes[i].width;
-      new_size->height = update_info.sizes[i].height;
-      new_size->timestamp = GrpcAlgs::unpack_time(update_info.sizes[i].timestamp);
+      new_size->size_id = update_info.sizes()[i].size_id();
+      new_size->protocol_name = update_info.sizes()[i].protocol_name();
+      new_size->size_type_id = update_info.sizes()[i].size_type_id();
+      new_size->width = update_info.sizes()[i].width();
+      new_size->height = update_info.sizes()[i].height();
+      new_size->timestamp = GrpcAlgs::unpack_time(update_info.sizes()[i].timestamp());
 
-      new_config.sizes.emplace(update_info.sizes[i].size_id, new_size);
+      new_config.sizes.emplace(update_info.sizes()[i].size_id(), new_size);
     }
   }
 
@@ -1956,13 +1942,12 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.app_formats.size(); i++)
+    for (int i = 0; i < update_info.app_formats().size(); i++)
     {
-      new_config.app_formats.insert(std::make_pair(
-        update_info.app_formats[i].app_format.c_str(),
-        AppFormatDef(
-          update_info.app_formats[i].mime_format.c_str(),
-          GrpcAlgs::unpack_time(update_info.app_formats[i].timestamp))));
+      new_config.app_formats.insert(
+        std::make_pair(update_info.app_formats()[i].app_format().c_str(),
+          AppFormatDef(update_info.app_formats()[i].mime_format().c_str(),
+            GrpcAlgs::unpack_time(update_info.app_formats()[i].timestamp()))));
     }
   }
 
@@ -1971,16 +1956,16 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.activate_creative_options.size(); i++)
+    for (int i = 0; i < update_info.activate_creative_options().size(); i++)
     {
-      const CreativeOptionInfo& co_info = update_info.activate_creative_options[i];
-      CreativeOptionDef& co = new_config.creative_options[co_info.option_id];
+      const CreativeOptionInfo& co_info = update_info.activate_creative_options()[i];
+      CreativeOptionDef& co = new_config.creative_options[co_info.option_id()];
 
-      co.token = co_info.token.c_str();
-      co.timestamp = GrpcAlgs::unpack_time(co_info.timestamp);
-      co.type = co_info.type;
+      co.token = co_info.token().c_str();
+      co.timestamp = GrpcAlgs::unpack_time(co_info.timestamp());
+      co.type = static_cast<char>(co_info.type());
 
-      co.token_relations.insert(co_info.token_relations.begin(), co_info.token_relations.end());
+      co.token_relations.insert(co_info.token_relations().begin(), co_info.token_relations().end());
       if (co.token == CreativeTokens::ADV_CLICK_URL)
       {
         co.token_relations.insert(CreativeTokens::CLICK_METRIKA_PARAMS);
@@ -1988,38 +1973,38 @@ namespace AdServer::CampaignSvcs
 
       if (co.type == 'L')
       {
-        new_config.token_processors[co_info.option_id] = new LinkTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new LinkTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else if (co.type == 'U')
       {
-        new_config.token_processors[co_info.option_id] = new UrlTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new UrlTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else if (co.type == 'F')
       {
-        new_config.token_processors[co_info.option_id] = new FileTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new FileTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else if (co.type == 'D')
       {
-        new_config.token_processors[co_info.option_id] = new DynamicContentUrlTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new DynamicContentUrlTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else if (co.type == 'u')
       {
-        new_config.token_processors[co_info.option_id] = new PublisherUrlTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new PublisherUrlTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else if (co.type == 'f')
       {
-        new_config.token_processors[co_info.option_id] = new PublisherFileTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new PublisherFileTokenProcessor(co.token.c_str(), co.token_relations);
       }
       else
       {
-        new_config.token_processors[co_info.option_id] = new BaseTokenProcessor(
-          co.token.c_str(), co.token_relations);
+        new_config.token_processors[co_info.option_id()] =
+          new BaseTokenProcessor(co.token.c_str(), co.token_relations);
       }
     }
 
@@ -2062,48 +2047,48 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.accounts.size(); i++)
+    for (int i = 0; i < update_info.accounts().size(); i++)
     {
-      const AccountInfo& acc_info = update_info.accounts[i];
+      const AccountInfo& acc_info = update_info.accounts()[i];
 
       Account_var p_acc = new AccountDef();
-      p_acc->account_id = acc_info.account_id;
-      p_acc->internal_account_id = acc_info.internal_account_id;
-      p_acc->legal_name = acc_info.legal_name;
-      p_acc->flags = acc_info.flags;
-      p_acc->at_flags = acc_info.at_flags;
-      p_acc->text_adserving = acc_info.text_adserving;
-      p_acc->country = acc_info.country.c_str();
-      p_acc->time_offset = GrpcAlgs::unpack_time(acc_info.time_offset);
-      p_acc->commision = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.commision);
+      p_acc->account_id = acc_info.account_id();
+      p_acc->internal_account_id = acc_info.internal_account_id();
+      p_acc->legal_name = acc_info.legal_name();
+      p_acc->flags = acc_info.flags();
+      p_acc->at_flags = acc_info.at_flags();
+      p_acc->text_adserving = static_cast<char>(acc_info.text_adserving());
+      p_acc->country = acc_info.country().c_str();
+      p_acc->time_offset = GrpcAlgs::unpack_time(acc_info.time_offset());
+      p_acc->commision = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.commision());
       p_acc->media_handling_fee = RevenueDecimal::ZERO;
-      for (std::uint32_t wa_i = 0; wa_i < acc_info.walled_garden_accounts.size(); ++wa_i)
+      for (int wa_i = 0; wa_i < acc_info.walled_garden_accounts().size(); ++wa_i)
       {
-        if (acc_info.walled_garden_accounts[wa_i] > 4000000000)
+        if (acc_info.walled_garden_accounts()[wa_i] > 4000000000)
         {
           p_acc->media_handling_fee = RevenueDecimal::div(
-            RevenueDecimal(false, acc_info.walled_garden_accounts[wa_i] - 4000000000, 0),
+            RevenueDecimal(false, acc_info.walled_garden_accounts()[wa_i] - 4000000000, 0),
             RevenueDecimal(false, 100000000, 0));
           break;
         }
       }
-      p_acc->budget = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.budget);
-      p_acc->paid_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.paid_amount);
-      p_acc->status = acc_info.status;
-      p_acc->eval_status = acc_info.eval_status;
-      p_acc->timestamp = GrpcAlgs::unpack_time(acc_info.timestamp);
+      p_acc->budget = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.budget());
+      p_acc->paid_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.paid_amount());
+      p_acc->status = static_cast<char>(acc_info.status());
+      p_acc->eval_status = static_cast<char>(acc_info.eval_status());
+      p_acc->timestamp = GrpcAlgs::unpack_time(acc_info.timestamp());
       p_acc->walled_garden_accounts.insert(
-        acc_info.walled_garden_accounts.begin(), acc_info.walled_garden_accounts.end());
-      p_acc->auction_rate = static_cast<AuctionRateType>(acc_info.auction_rate);
-      p_acc->use_pub_pixels = acc_info.use_pub_pixels;
-      p_acc->pub_pixel_optin = acc_info.pub_pixel_optin.c_str();
-      p_acc->pub_pixel_optout = acc_info.pub_pixel_optout.c_str();
-      p_acc->self_service_commission = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        acc_info.self_service_commission);
+        acc_info.walled_garden_accounts().begin(), acc_info.walled_garden_accounts().end());
+      p_acc->auction_rate = static_cast<AuctionRateType>(acc_info.auction_rate());
+      p_acc->use_pub_pixels = acc_info.use_pub_pixels();
+      p_acc->pub_pixel_optin = acc_info.pub_pixel_optin().c_str();
+      p_acc->pub_pixel_optout = acc_info.pub_pixel_optout().c_str();
+      p_acc->self_service_commission =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(acc_info.self_service_commission());
 
       // agency and currency will be linked after
 
-      new_config.accounts[acc_info.account_id] = p_acc;
+      new_config.accounts[acc_info.account_id()] = p_acc;
 
       if (p_acc->is_active())
       {
@@ -2122,12 +2107,12 @@ namespace AdServer::CampaignSvcs
       }
 
       config_update_links.account_currencies.insert(
-        std::make_pair(acc_info.account_id, acc_info.currency_id));
+        std::make_pair(acc_info.account_id(), acc_info.currency_id()));
 
-      if (acc_info.agency_account_id)
+      if (acc_info.agency_account_id())
       {
         config_update_links.account_agencies.insert(
-          std::make_pair(acc_info.account_id, acc_info.agency_account_id));
+          std::make_pair(acc_info.account_id(), acc_info.agency_account_id()));
       }
     }
   }
@@ -2138,34 +2123,34 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.campaigns.size(); i++)
+    for (int i = 0; i < update_info.campaigns().size(); i++)
     {
-      const CampaignInfo& campaign_info = update_info.campaigns[i];
+      const CampaignInfo& campaign_info = update_info.campaigns()[i];
 
       config_update_links.campaign_accounts.emplace(
-          campaign_info.campaign_id, campaign_info.account_id);
+        campaign_info.campaign_id(), campaign_info.account_id());
 
       config_update_links.campaign_advertisers.emplace(
-          campaign_info.campaign_id, campaign_info.advertiser_id);
+        campaign_info.campaign_id(), campaign_info.advertiser_id());
 
       Campaign_var campaign = new Campaign();
 
-      campaign->campaign_id = campaign_info.campaign_id;
-      campaign->timestamp = GrpcAlgs::unpack_time(campaign_info.timestamp);
-      campaign->campaign_group_id = campaign_info.campaign_group_id;
-      campaign->fc_id = campaign_info.fc_id;
-      campaign->group_fc_id = campaign_info.group_fc_id;
-      campaign->flags = campaign_info.flags;
-      campaign->marketplace = campaign_info.marketplace;
-      campaign->imp_revenue = GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.imp_revenue);
-      campaign->click_revenue = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        campaign_info.click_revenue);
-      campaign->action_revenue = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        campaign_info.action_revenue);
-      campaign->commision = GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.commision);
+      campaign->campaign_id = campaign_info.campaign_id();
+      campaign->timestamp = GrpcAlgs::unpack_time(campaign_info.timestamp());
+      campaign->campaign_group_id = campaign_info.campaign_group_id();
+      campaign->fc_id = campaign_info.fc_id();
+      campaign->group_fc_id = campaign_info.group_fc_id();
+      campaign->flags = campaign_info.flags();
+      campaign->marketplace = static_cast<char>(campaign_info.marketplace());
+      campaign->imp_revenue = GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.imp_revenue());
+      campaign->click_revenue =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.click_revenue());
+      campaign->action_revenue =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.action_revenue());
+      campaign->commision = GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.commision());
 
       ExpressionChannel::Expression expr;
-      unpack_expression(expr, campaign_info.expression, new_config.expression_channels);
+      unpack_expression(expr, campaign_info.expression(), new_config.expression_channels);
 
       if (!(expr == ExpressionChannel::Expression::EMPTY))
       {
@@ -2174,71 +2159,72 @@ namespace AdServer::CampaignSvcs
       }
 
       ExpressionChannel::Expression stat_expr;
-      unpack_expression(stat_expr, campaign_info.stat_expression, new_config.expression_channels);
+      unpack_expression(stat_expr, campaign_info.stat_expression(), new_config.expression_channels);
 
       if (!(stat_expr == ExpressionChannel::Expression::EMPTY))
       {
         campaign->stat_channel = new ExpressionChannel(stat_expr);
       }
 
-      campaign->ccg_rate_id = campaign_info.ccg_rate_id;
-      campaign->ccg_rate_type = static_cast<CCGRateType>(campaign_info.ccg_rate_type);
+      campaign->ccg_rate_id = campaign_info.ccg_rate_id();
+      campaign->ccg_rate_type =
+        static_cast<CCGRateType>(static_cast<char>(campaign_info.ccg_rate_type()));
 
-      campaign->status = campaign_info.status;
-      campaign->eval_status = campaign_info.eval_status;
-      campaign->ccg_type = static_cast<CCGType>(campaign_info.ccg_type);
-      campaign->targeting_type = campaign_info.target_type;
-      campaign->start_user_group_id = campaign_info.start_user_group_id;
-      campaign->end_user_group_id = campaign_info.end_user_group_id;
-      campaign->ctr_reset_id = campaign_info.ctr_reset_id;
-      campaign->mode = static_cast<CampaignMode>(campaign_info.mode);
-      campaign->min_uid_age = GrpcAlgs::unpack_time(campaign_info.min_uid_age);
-      campaign->seq_set_rotate_imps = campaign_info.seq_set_rotate_imps;
-      campaign->delivery_coef = campaign_info.delivery_coef;
+      campaign->status = static_cast<char>(campaign_info.status());
+      campaign->eval_status = static_cast<char>(campaign_info.eval_status());
+      campaign->ccg_type = static_cast<CCGType>(static_cast<char>(campaign_info.ccg_type()));
+      campaign->targeting_type = static_cast<char>(campaign_info.target_type());
+      campaign->start_user_group_id = campaign_info.start_user_group_id();
+      campaign->end_user_group_id = campaign_info.end_user_group_id();
+      campaign->ctr_reset_id = campaign_info.ctr_reset_id();
+      campaign->mode = static_cast<CampaignMode>(campaign_info.mode());
+      campaign->min_uid_age = GrpcAlgs::unpack_time(campaign_info.min_uid_age());
+      campaign->seq_set_rotate_imps = campaign_info.seq_set_rotate_imps();
+      campaign->delivery_coef = campaign_info.delivery_coef();
 
       unpack_delivery_limits(
-        campaign->campaign_delivery_limits,
-        campaign_info.campaign_delivery_limits);
-      unpack_delivery_limits(campaign->ccg_delivery_limits, campaign_info.ccg_delivery_limits);
-      campaign->max_pub_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        campaign_info.max_pub_share);
+        campaign->campaign_delivery_limits, campaign_info.campaign_delivery_limits());
+      unpack_delivery_limits(campaign->ccg_delivery_limits, campaign_info.ccg_delivery_limits());
+      campaign->max_pub_share =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.max_pub_share());
       campaign->has_custom_actions = false;
 
-      campaign->country = campaign_info.country.c_str();
-      campaign->bid_strategy = static_cast<BidStrategy>(campaign_info.bid_strategy);
+      campaign->country = campaign_info.country().c_str();
+      campaign->bid_strategy = static_cast<BidStrategy>(campaign_info.bid_strategy());
 
       {
         // configure base ctr goal
-        const RevenueDecimal min_ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-          campaign_info.min_ctr_goal);
+        const RevenueDecimal min_ctr =
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.min_ctr_goal());
         campaign->ctr_modifiable = true; // TODO: flag control
         campaign->base_min_ctr_goal = min_ctr;
         campaign->set_min_ctr_goal(min_ctr);
       }
 
-      campaign->min_vtr_goal = GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.min_vtr_goal);
+      campaign->min_vtr_goal =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(campaign_info.min_vtr_goal());
 
-      convert_interval_sequence(campaign->weekly_run_intervals, campaign_info.weekly_run_intervals);
+      convert_interval_sequence(
+        campaign->weekly_run_intervals, campaign_info.weekly_run_intervals());
 
-      campaign->sites.insert(campaign_info.sites.begin(), campaign_info.sites.end());
+      campaign->sites.insert(campaign_info.sites().begin(), campaign_info.sites().end());
 
       campaign->colocations.insert(
-        campaign_info.colocations.begin(), campaign_info.colocations.end());
+        campaign_info.colocations().begin(), campaign_info.colocations().end());
 
       campaign->exclude_pub_accounts.insert(
-        campaign_info.exclude_pub_accounts.begin(), campaign_info.exclude_pub_accounts.end());
+        campaign_info.exclude_pub_accounts().begin(), campaign_info.exclude_pub_accounts().end());
 
-      for (std::uint32_t tag_i = 0; tag_i < campaign_info.exclude_tags.size(); ++tag_i)
+      for (int tag_i = 0; tag_i < campaign_info.exclude_tags().size(); ++tag_i)
       {
-        campaign->exclude_tags.insert(std::make_pair(
-          campaign_info.exclude_tags[tag_i].tag_id,
-          campaign_info.exclude_tags[tag_i].delivery_value));
+        campaign->exclude_tags.insert(std::make_pair(campaign_info.exclude_tags()[tag_i].tag_id(),
+          campaign_info.exclude_tags()[tag_i].delivery_value()));
       }
 
       // fill creatives
-      for (std::uint32_t j = 0; j < campaign_info.creatives.size(); j++)
+      for (int j = 0; j < campaign_info.creatives().size(); j++)
       {
-        const CreativeInfo& creative_info = campaign_info.creatives[j];
+        const CreativeInfo& creative_info = campaign_info.creatives()[j];
 
         try
         {
@@ -2246,38 +2232,37 @@ namespace AdServer::CampaignSvcs
           campaign->add_creative(cr.in());
 
           OptionValueMap option_values;
-          unpack_option_value_map(option_values, creative_info.tokens);
+          unpack_option_value_map(option_values, creative_info.tokens());
           // TODO: remove from protocol as separate field when will be changed CampaignServer interface
-          if (creative_info.html_url.option_id)
+          if (creative_info.html_url().option_id())
           {
-            option_values.insert(
-              std::make_pair(
-                creative_info.html_url.option_id, creative_info.html_url.value.c_str()));
+            option_values.insert(std::make_pair(
+              creative_info.html_url().option_id(), creative_info.html_url().value().c_str()));
           }
-          config_update_links.creative_option_values[
-            creative_info.ccid].swap(option_values);
+          config_update_links.creative_option_values[creative_info.ccid()].swap(option_values);
 
-          for (std::uint32_t size_i = 0; size_i < creative_info.sizes.size(); ++size_i)
+          for (int size_i = 0; size_i < creative_info.sizes().size(); ++size_i)
           {
             OptionValueMap size_option_values;
-            unpack_option_value_map(size_option_values, creative_info.sizes[size_i].tokens);
-            config_update_links.creative_size_option_values[
-              creative_info.ccid][
-                creative_info.sizes[size_i].size_id].swap(size_option_values);
+            unpack_option_value_map(size_option_values, creative_info.sizes()[size_i].tokens());
+            config_update_links
+              .creative_size_option_values[creative_info.ccid()]
+                                          [creative_info.sizes()[size_i].size_id()]
+              .swap(size_option_values);
           }
 
           new_config.campaign_creatives.emplace(cr->ccid, cr);
 
-          Creative_var& tcr = new_config.creatives[creative_info.creative_id];
+          Creative_var& tcr = new_config.creatives[creative_info.creative_id()];
           if (!tcr.in() || cr->ccid < tcr->ccid)
           {
             tcr = cr;
           }
 
-          if (creative_info.initial_contract_id)
+          if (creative_info.initial_contract_id())
           {
             config_update_links.creative_contracts.emplace(
-              creative_info.ccid, creative_info.initial_contract_id);
+              creative_info.ccid(), creative_info.initial_contract_id());
           }
         }
         catch(const Exception& ex)
@@ -2291,7 +2276,7 @@ namespace AdServer::CampaignSvcs
         }
       }
 
-      new_config.campaigns.emplace(campaign_info.campaign_id, campaign);
+      new_config.campaigns.emplace(campaign_info.campaign_id(), campaign);
     }
   }
 
@@ -2301,37 +2286,37 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     noexcept
   {
-    for (std::uint32_t i = 0; i < update_info.contracts.size(); i++)
+    for (int i = 0; i < update_info.contracts().size(); i++)
     {
-      const ContractInfo& contract_info = update_info.contracts[i];
+      const ContractInfo& contract_info = update_info.contracts()[i];
       Contract_var contract(new Contract());
-      contract->contract_id = contract_info.contract_id;
+      contract->contract_id = contract_info.contract_id();
 
-      contract->number = contract_info.number;
-      contract->date = contract_info.date;
-      contract->type = contract_info.type;
-      contract->vat_included = contract_info.vat_included;
+      contract->number = contract_info.number();
+      contract->date = contract_info.date();
+      contract->type = contract_info.type();
+      contract->vat_included = contract_info.vat_included();
 
-      contract->ord_contract_id = contract_info.ord_contract_id;
-      contract->ord_ado_id = contract_info.ord_ado_id;
-      contract->subject_type = contract_info.subject_type;
-      contract->action_type = contract_info.action_type;
-      contract->agent_acting_for_publisher = contract_info.agent_acting_for_publisher;
+      contract->ord_contract_id = contract_info.ord_contract_id();
+      contract->ord_ado_id = contract_info.ord_ado_id();
+      contract->subject_type = contract_info.subject_type();
+      contract->action_type = contract_info.action_type();
+      contract->agent_acting_for_publisher = contract_info.agent_acting_for_publisher();
 
-      contract->client_id = contract_info.client_id;
-      contract->client_name = contract_info.client_name;
-      contract->client_legal_form = contract_info.client_legal_form;
+      contract->client_id = contract_info.client_id();
+      contract->client_name = contract_info.client_name();
+      contract->client_legal_form = contract_info.client_legal_form();
 
-      contract->contractor_id = contract_info.contractor_id;
-      contract->contractor_name = contract_info.contractor_name;
-      contract->contractor_legal_form = contract_info.contractor_legal_form;
+      contract->contractor_id = contract_info.contractor_id();
+      contract->contractor_name = contract_info.contractor_name();
+      contract->contractor_legal_form = contract_info.contractor_legal_form();
 
-      new_config.contracts.emplace(contract_info.contract_id, contract);
+      new_config.contracts.emplace(contract_info.contract_id(), contract);
 
-      if (contract_info.parent_contract_id)
+      if (contract_info.parent_contract_id())
       {
         config_update_links.contract_parent_contracts.emplace(
-          contract_info.contract_id, contract_info.parent_contract_id);
+          contract_info.contract_id(), contract_info.parent_contract_id());
       }
     }
   }
@@ -2342,14 +2327,13 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.expression_channels.size(); ++i)
+    for (int i = 0; i < update_info.expression_channels().size(); ++i)
     {
-      ExpressionChannelBase_var new_channel = unpack_channel(
-        update_info.expression_channels[i],
-        new_config.expression_channels);
+      ExpressionChannelBase_var new_channel =
+        unpack_channel(update_info.expression_channels()[i], new_config.expression_channels);
 
-      CampaignConfig::ChannelMap::iterator ch_it = new_config.expression_channels.find(
-        update_info.expression_channels[i].channel_id);
+      CampaignConfig::ChannelMap::iterator ch_it =
+        new_config.expression_channels.find(update_info.expression_channels()[i].channel_id());
 
       ExpressionChannelHolder_var channel_holder;
 
@@ -2358,7 +2342,7 @@ namespace AdServer::CampaignSvcs
         channel_holder = new ExpressionChannelHolder(new_channel);
 
         new_config.expression_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
+          std::make_pair(update_info.expression_channels()[i].channel_id(), channel_holder));
       }
       else
       {
@@ -2369,13 +2353,13 @@ namespace AdServer::CampaignSvcs
       if (new_channel->params().type == 'V')
       {
         config_update_links.platform_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
+          std::make_pair(update_info.expression_channels()[i].channel_id(), channel_holder));
       }
 
       if (new_channel->params().discover_params.in())
       {
         new_config.discover_channels.insert(
-          std::make_pair(update_info.expression_channels[i].channel_id, channel_holder));
+          std::make_pair(update_info.expression_channels()[i].channel_id(), channel_holder));
       }
     }
   }
@@ -2386,34 +2370,32 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.sites.size(); i++)
+    for (int i = 0; i < update_info.sites().size(); i++)
     {
-      const SiteInfo& site_info = update_info.sites[i];
+      const SiteInfo& site_info = update_info.sites()[i];
 
-      config_update_links.site_accounts.emplace(site_info.site_id, site_info.account_id);
+      config_update_links.site_accounts.emplace(site_info.site_id(), site_info.account_id());
 
       Site_var p_site = new Site();
 
-      p_site->site_id = site_info.site_id;
-      p_site->timestamp = GrpcAlgs::unpack_time(site_info.timestamp);
-      p_site->freq_cap_id = site_info.freq_cap_id;
-      p_site->noads_timeout = site_info.noads_timeout;
-      p_site->status = site_info.status;
-      p_site->flags = site_info.flags;
+      p_site->site_id = site_info.site_id();
+      p_site->timestamp = GrpcAlgs::unpack_time(site_info.timestamp());
+      p_site->freq_cap_id = site_info.freq_cap_id();
+      p_site->noads_timeout = site_info.noads_timeout();
+      p_site->status = static_cast<char>(site_info.status());
+      p_site->flags = site_info.flags();
 
       /* fill accepted & rejected creative category  */
-      p_site->approved_creative_categories.insert(
-        site_info.approved_creative_categories.begin(),
-        site_info.approved_creative_categories.end());
+      p_site->approved_creative_categories.insert(site_info.approved_creative_categories().begin(),
+        site_info.approved_creative_categories().end());
 
-      p_site->rejected_creative_categories.insert(
-        site_info.rejected_creative_categories.begin(),
-        site_info.rejected_creative_categories.end());
+      p_site->rejected_creative_categories.insert(site_info.rejected_creative_categories().begin(),
+        site_info.rejected_creative_categories().end());
 
       p_site->approved_creatives.insert(
-        site_info.approved_creatives.begin(), site_info.approved_creatives.end());
+        site_info.approved_creatives().begin(), site_info.approved_creatives().end());
       p_site->rejected_creatives.insert(
-        site_info.rejected_creatives.begin(), site_info.rejected_creatives.end());
+        site_info.rejected_creatives().begin(), site_info.rejected_creatives().end());
 
       new_config.sites[p_site->site_id] = p_site;
     }
@@ -2425,72 +2407,69 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.tags.size(); i++)
+    for (int i = 0; i < update_info.tags().size(); i++)
     {
-      const TagInfo& tag_info = update_info.tags[i];
+      const TagInfo& tag_info = update_info.tags()[i];
 
-      config_update_links.tag_sites.emplace(tag_info.tag_id, tag_info.site_id);
+      config_update_links.tag_sites.emplace(tag_info.tag_id(), tag_info.site_id());
 
       Tag_var p_tag = new Tag();
 
-      p_tag->tag_id = tag_info.tag_id;
-      p_tag->tag_pricings_timestamp = GrpcAlgs::unpack_time(tag_info.tag_pricings_timestamp);
-      p_tag->timestamp = GrpcAlgs::unpack_time(tag_info.timestamp);
+      p_tag->tag_id = tag_info.tag_id();
+      p_tag->tag_pricings_timestamp = GrpcAlgs::unpack_time(tag_info.tag_pricings_timestamp());
+      p_tag->timestamp = GrpcAlgs::unpack_time(tag_info.timestamp());
 
-      for (std::uint32_t size_i = 0; size_i < tag_info.sizes.size(); ++size_i)
+      for (int size_i = 0; size_i < tag_info.sizes().size(); ++size_i)
       {
         Tag::Size_var res_size = new Tag::Size();
-        res_size->max_text_creatives = tag_info.sizes[size_i].max_text_creatives;
+        res_size->max_text_creatives = tag_info.sizes()[size_i].max_text_creatives();
         unpack_option_value_map(
-          config_update_links.tag_size_option_values[
-            p_tag->tag_id][tag_info.sizes[size_i].size_id],
-          tag_info.sizes[size_i].tokens);
+          config_update_links
+            .tag_size_option_values[p_tag->tag_id][tag_info.sizes()[size_i].size_id()],
+          tag_info.sizes()[size_i].tokens());
         unpack_option_value_map(
-          config_update_links.tag_size_option_hidden_values[
-            p_tag->tag_id][tag_info.sizes[size_i].size_id],
-          tag_info.sizes[size_i].hidden_tokens);
-        p_tag->sizes.emplace(tag_info.sizes[size_i].size_id, res_size);
+          config_update_links
+            .tag_size_option_hidden_values[p_tag->tag_id][tag_info.sizes()[size_i].size_id()],
+          tag_info.sizes()[size_i].hidden_tokens());
+        p_tag->sizes.emplace(tag_info.sizes()[size_i].size_id(), res_size);
       }
 
-      p_tag->flags = tag_info.flags;
-      p_tag->marketplace = tag_info.marketplace;
-      p_tag->imp_track_pixel = tag_info.imp_track_pixel;
+      p_tag->flags = tag_info.flags();
+      p_tag->marketplace = static_cast<char>(tag_info.marketplace());
+      p_tag->imp_track_pixel = tag_info.imp_track_pixel();
 
-      p_tag->passback = tag_info.passback;
-      p_tag->passback_type = tag_info.passback_type;
+      p_tag->passback = tag_info.passback();
+      p_tag->passback_type = tag_info.passback_type();
 
-      p_tag->adjustment = GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.adjustment);
-      p_tag->cost_coef = GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.cost_coef);
+      p_tag->adjustment = GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.adjustment());
+      p_tag->cost_coef = GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.cost_coef());
       p_tag->skip_min_ecpm = false;
 
       // fill tag pricings
       bool default_tag_pricing_found = false;
-      const TagPricingInfoSeq& tag_pricing_list = tag_info.tag_pricings;
+      const TagPricingInfoSeq& tag_pricing_list = tag_info.tag_pricings();
 
-      for (unsigned int j = 0; j < tag_pricing_list.size(); j++)
+      for (int j = 0; j < tag_pricing_list.size(); j++)
       {
         const TagPricingInfo& tag_pricing_ref = tag_pricing_list[j];
         Tag::TagPricing tag_pricing;
-        tag_pricing.site_rate_id = tag_pricing_ref.site_rate_id;
-        tag_pricing.revenue_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-          tag_pricing_ref.revenue_share);
+        tag_pricing.site_rate_id = tag_pricing_ref.site_rate_id();
+        tag_pricing.revenue_share =
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_pricing_ref.revenue_share());
         tag_pricing.imp_revenue = RevenueDecimal::div(
-          GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_pricing_ref.imp_revenue),
-          REVENUE_ONE + p_tag->cost_coef,
-          Generics::DDR_CEIL);
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_pricing_ref.imp_revenue()),
+          REVENUE_ONE + p_tag->cost_coef, Generics::DDR_CEIL);
 
-        if (tag_pricing_ref.country_code[0] == 0)
+        if (tag_pricing_ref.country_code()[0] == 0)
         {
           default_tag_pricing_found = true;
         }
 
-        p_tag->tag_pricings.insert(
-          std::make_pair(
-            Tag::TagPricingKey(
-              tag_pricing_ref.country_code.c_str(),
-              static_cast<CCGType>(tag_pricing_ref.ccg_type),
-              static_cast<CCGRateType>(tag_pricing_ref.ccg_rate_type)),
-            tag_pricing));
+        p_tag->tag_pricings.insert(std::make_pair(
+          Tag::TagPricingKey(tag_pricing_ref.country_code().c_str(),
+            static_cast<CCGType>(static_cast<char>(tag_pricing_ref.ccg_type())),
+            static_cast<CCGRateType>(static_cast<char>(tag_pricing_ref.ccg_rate_type()))),
+          tag_pricing));
       }
 
       if (!p_tag->tag_pricings.empty() && !default_tag_pricing_found)
@@ -2499,35 +2478,31 @@ namespace AdServer::CampaignSvcs
           std::make_pair(Tag::TagPricingKey("", CT_ALL, CR_ALL), Tag::TagPricing()));
       }
 
-      p_tag->accepted_categories.insert(
-        tag_info.accepted_categories.data(),
-        tag_info.accepted_categories.data() +
-        tag_info.accepted_categories.size());
+      p_tag->accepted_categories.insert(tag_info.accepted_categories().data(),
+        tag_info.accepted_categories().data() + tag_info.accepted_categories().size());
 
-      p_tag->rejected_categories.insert(
-        tag_info.rejected_categories.data(),
-        tag_info.rejected_categories.data() +
-        tag_info.rejected_categories.size());
+      p_tag->rejected_categories.insert(tag_info.rejected_categories().data(),
+        tag_info.rejected_categories().data() + tag_info.rejected_categories().size());
 
-      p_tag->allow_expandable = tag_info.allow_expandable;
+      p_tag->allow_expandable = tag_info.allow_expandable();
 
       p_tag->min_visibility = 0;
 
-      p_tag->auction_max_ecpm_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        tag_info.auction_max_ecpm_share);
-      p_tag->auction_prop_probability_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        tag_info.auction_prop_probability_share);
-      p_tag->auction_random_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(
-        tag_info.auction_random_share);
+      p_tag->auction_max_ecpm_share =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.auction_max_ecpm_share());
+      p_tag->auction_prop_probability_share =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.auction_prop_probability_share());
+      p_tag->auction_random_share =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(tag_info.auction_random_share());
 
       OptionValueMap option_values;
-      unpack_option_value_map(option_values, tag_info.tokens);
+      unpack_option_value_map(option_values, tag_info.tokens());
 
       OptionValueMap hidden_option_values;
-      unpack_option_value_map(hidden_option_values, tag_info.hidden_tokens);
+      unpack_option_value_map(hidden_option_values, tag_info.hidden_tokens());
 
       OptionValueMap passback_option_values;
-      unpack_option_value_map(passback_option_values, tag_info.passback_tokens);
+      unpack_option_value_map(passback_option_values, tag_info.passback_tokens());
 
       // fill min_visibility by specific option (2.5)
       OptionValueMap::const_iterator min_visibility_option_it =
@@ -2566,11 +2541,11 @@ namespace AdServer::CampaignSvcs
       p_tag->max_random_cpm = RevenueDecimal::ZERO;
 
       ConfigUpdateLinks::TemplateOptionValueMap template_option_values;
-      for (std::uint32_t templ_i = 0; templ_i < tag_info.template_tokens.size(); ++templ_i)
+      for (int templ_i = 0; templ_i < tag_info.template_tokens().size(); ++templ_i)
       {
         unpack_option_value_map(
-          template_option_values[tag_info.template_tokens[templ_i].template_name.c_str()],
-          tag_info.template_tokens[templ_i].tokens);
+          template_option_values[tag_info.template_tokens()[templ_i].template_name().c_str()],
+          tag_info.template_tokens()[templ_i].tokens());
       }
 
       new_config.tags[p_tag->tag_id] = p_tag;
@@ -2589,15 +2564,15 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& /*config_update_links*/)
     /*throw(Exception, eh::Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.campaign_keywords.size(); ++i)
+    for (int i = 0; i < update_info.campaign_keywords().size(); ++i)
     {
       CampaignKeywordBase ccg_kw;
-      ccg_kw.ccg_keyword_id = update_info.campaign_keywords[i].ccg_keyword_id;
-      ccg_kw.click_url = update_info.campaign_keywords[i].click_url;
-      ccg_kw.original_keyword = update_info.campaign_keywords[i].original_keyword;
+      ccg_kw.ccg_keyword_id = update_info.campaign_keywords()[i].ccg_keyword_id();
+      ccg_kw.click_url = update_info.campaign_keywords()[i].click_url();
+      ccg_kw.original_keyword = update_info.campaign_keywords()[i].original_keyword();
 
       new_config.ccg_keyword_click_info_map.insert(
-        std::make_pair(update_info.campaign_keywords[i].ccg_keyword_id, ccg_kw));
+        std::make_pair(update_info.campaign_keywords()[i].ccg_keyword_id(), ccg_kw));
     }
   }
 
@@ -2607,28 +2582,27 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.colocations.size(); ++i)
+    for (int i = 0; i < update_info.colocations().size(); ++i)
     {
-      const AdServer::CampaignSvcs::ColocationInfo& colo_info = update_info.colocations[i];
+      const AdServer::CampaignSvcs::ColocationInfo& colo_info = update_info.colocations()[i];
 
-      config_update_links.colocation_accounts.emplace(colo_info.colo_id, colo_info.account_id);
+      config_update_links.colocation_accounts.emplace(colo_info.colo_id(), colo_info.account_id());
 
       Colocation_var colo = new Colocation();
-      colo->colo_id = colo_info.colo_id;
-      colo->colo_rate_id = colo_info.colo_rate_id;
-      colo->colo_name = colo_info.colo_name;
-      colo->at_flags = colo_info.at_flags;
-      colo->revenue_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(colo_info.revenue_share);
-      colo->ad_serving = static_cast<ColocationAdServingType>(colo_info.ad_serving);
-      colo->hid_profile = colo_info.hid_profile;
-      colo->timestamp = GrpcAlgs::unpack_time(colo_info.timestamp);
+      colo->colo_id = colo_info.colo_id();
+      colo->colo_rate_id = colo_info.colo_rate_id();
+      colo->colo_name = colo_info.colo_name();
+      colo->at_flags = colo_info.at_flags();
+      colo->revenue_share = GrpcAlgs::unpack_decimal<RevenueDecimal>(colo_info.revenue_share());
+      colo->ad_serving = static_cast<ColocationAdServingType>(colo_info.ad_serving());
+      colo->hid_profile = colo_info.hid_profile();
+      colo->timestamp = GrpcAlgs::unpack_time(colo_info.timestamp());
 
-      new_config.colocations.emplace(colo_info.colo_id, colo);
+      new_config.colocations.emplace(colo_info.colo_id(), colo);
 
       OptionValueMap option_values;
-      unpack_option_value_map(option_values, colo_info.tokens);
-      config_update_links.colocation_option_values[
-        colo_info.colo_id].swap(option_values);
+      unpack_option_value_map(option_values, colo_info.tokens());
+      config_update_links.colocation_option_values[colo_info.colo_id()].swap(option_values);
     }
   }
 
@@ -2638,46 +2612,44 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.countries.size(); ++i)
+    for (int i = 0; i < update_info.countries().size(); ++i)
     {
-      const AdServer::CampaignSvcs::CountryInfo& country_info = update_info.countries[i];
+      const AdServer::CampaignSvcs::CountryInfo& country_info = update_info.countries()[i];
 
       Country_var country = new Country();
-      country->timestamp = GrpcAlgs::unpack_time(country_info.timestamp);
+      country->timestamp = GrpcAlgs::unpack_time(country_info.timestamp());
 
-      new_config.countries.emplace(country_info.country_code.c_str(), country);
+      new_config.countries.emplace(country_info.country_code().c_str(), country);
 
       OptionValueMap option_values;
-      unpack_option_value_map(option_values, country_info.tokens);
-      config_update_links.country_option_values[
-        country_info.country_code.c_str()].swap(option_values);
+      unpack_option_value_map(option_values, country_info.tokens());
+      config_update_links.country_option_values[country_info.country_code().c_str()].swap(
+        option_values);
     }
   }
-
 
   void CampaignConfigSource::apply_category_channels_update_(
     const CampaignConfigUpdateInfo& update_info,
     CampaignConfig& new_config)
     /*throw(Exception, eh::Exception)*/
   {
-    for (std::uint32_t i = 0; i < update_info.category_channels.size(); i++)
+    for (int i = 0; i < update_info.category_channels().size(); i++)
     {
-      const CategoryChannelInfo& cc_info = update_info.category_channels[i];
+      const CategoryChannelInfo& cc_info = update_info.category_channels()[i];
       CategoryChannel_var category_channel(new CategoryChannel());
-      category_channel->channel_id = cc_info.channel_id;
-      category_channel->name = cc_info.name.c_str();
-      category_channel->newsgate_name = cc_info.newsgate_name.c_str();
-      category_channel->flags = cc_info.flags;
-      category_channel->parent_channel_id = cc_info.parent_channel_id;
+      category_channel->channel_id = cc_info.channel_id();
+      category_channel->name = cc_info.name().c_str();
+      category_channel->newsgate_name = cc_info.newsgate_name().c_str();
+      category_channel->flags = cc_info.flags();
+      category_channel->parent_channel_id = cc_info.parent_channel_id();
 
-      for (std::uint32_t loc_i = 0; loc_i < cc_info.localizations.size(); ++loc_i)
+      for (int loc_i = 0; loc_i < cc_info.localizations().size(); ++loc_i)
       {
-        category_channel->localizations.emplace(
-          cc_info.localizations[loc_i].language.c_str(),
-          cc_info.localizations[loc_i].name.c_str()) ;
+        category_channel->localizations.emplace(cc_info.localizations()[loc_i].language().c_str(),
+          cc_info.localizations()[loc_i].name().c_str());
       }
-      category_channel->timestamp = GrpcAlgs::unpack_time(cc_info.timestamp);
-      new_config.category_channels.emplace(cc_info.channel_id, category_channel);
+      category_channel->timestamp = GrpcAlgs::unpack_time(cc_info.timestamp());
+      new_config.category_channels.emplace(cc_info.channel_id(), category_channel);
     }
   }
 
@@ -2686,15 +2658,15 @@ namespace AdServer::CampaignSvcs
     CampaignConfig& new_config)
     /*throw(Exception, eh::Exception)*/
   {
-    const SimpleChannelKeySeq& updated_simple_channels = update_info.simple_channels;
+    const SimpleChannelKeySeq& updated_simple_channels = update_info.simple_channels();
 
-    for (std::uint32_t i = 0; i < updated_simple_channels.size(); i++)
+    for (int i = 0; i < updated_simple_channels.size(); i++)
     {
       SimpleChannelCategories_var simple_channel(new SimpleChannelCategories);
-      simple_channel->categories.assign(
-        updated_simple_channels[i].categories.begin(), updated_simple_channels[i].categories.end());
+      simple_channel->categories.assign(updated_simple_channels[i].categories().begin(),
+        updated_simple_channels[i].categories().end());
 
-      new_config.simple_channels[updated_simple_channels[i].channel_id] = simple_channel;
+      new_config.simple_channels[updated_simple_channels[i].channel_id()] = simple_channel;
     }
   }
 
@@ -2705,8 +2677,8 @@ namespace AdServer::CampaignSvcs
     const CampaignConfig* old_config)
     noexcept
   {
-    const Generics::Time geo_channels_timestamp = GrpcAlgs::unpack_time(
-      update_info.geo_channels_timestamp);
+    const Generics::Time geo_channels_timestamp =
+      GrpcAlgs::unpack_time(update_info.geo_channels_timestamp());
 
     if (!old_config || geo_channels_timestamp > old_config->geo_channels_timestamp)
     {
@@ -2727,30 +2699,25 @@ namespace AdServer::CampaignSvcs
         }
       }
 
-      for (std::uint32_t i = 0; i < update_info.activate_geo_channels.size(); i++)
+      for (int i = 0; i < update_info.activate_geo_channels().size(); i++)
       {
-        const GeoChannelInfo& geo_channel_info = update_info.activate_geo_channels[i];
+        const GeoChannelInfo& geo_channel_info = update_info.activate_geo_channels()[i];
 
-        if (geo_channel_info.geoip_targets.size())
+        if (geo_channel_info.geoip_targets().size())
         {
-          for (std::uint32_t geoip_target_i = 0;
-            geoip_target_i < geo_channel_info.geoip_targets.size();
+          for (int geoip_target_i = 0; geoip_target_i < geo_channel_info.geoip_targets().size();
             ++geoip_target_i)
           {
-            new_config.geo_channels->add(
-              String::SubString(geo_channel_info.country),
-              String::SubString(geo_channel_info.geoip_targets[geoip_target_i].region),
-              String::SubString(geo_channel_info.geoip_targets[geoip_target_i].city),
-              geo_channel_info.channel_id);
+            new_config.geo_channels->add(String::SubString(geo_channel_info.country()),
+              String::SubString(geo_channel_info.geoip_targets()[geoip_target_i].region()),
+              String::SubString(geo_channel_info.geoip_targets()[geoip_target_i].city()),
+              geo_channel_info.channel_id());
           }
         }
         else
         {
-          new_config.geo_channels->add(
-            String::SubString(geo_channel_info.country),
-            String::SubString(),
-            String::SubString(),
-            geo_channel_info.channel_id);
+          new_config.geo_channels->add(String::SubString(geo_channel_info.country()),
+            String::SubString(), String::SubString(), geo_channel_info.channel_id());
         }
       }
     }
@@ -2765,19 +2732,18 @@ namespace AdServer::CampaignSvcs
       new_config.geo_coord_channels = new GeoCoordChannelIndex();
     }
 
-    for (std::uint32_t geo_channel_i = 0;
-        geo_channel_i < update_info.activate_geo_coord_channels.size();
-        ++geo_channel_i)
+    for (int geo_channel_i = 0; geo_channel_i < update_info.activate_geo_coord_channels().size();
+      ++geo_channel_i)
     {
       const AdServer::CampaignSvcs::GeoCoordChannelInfo& coord_channel_info =
-        update_info.activate_geo_coord_channels[geo_channel_i];
+        update_info.activate_geo_coord_channels()[geo_channel_i];
 
       new_config.geo_coord_channels->add(
         GeoCoordChannelIndex::Key(
-          GrpcAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.longitude),
-          GrpcAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.latitude),
-          GrpcAlgs::unpack_decimal<AccuracyDecimal>(coord_channel_info.radius)),
-        coord_channel_info.channel_id);
+          GrpcAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.longitude()),
+          GrpcAlgs::unpack_decimal<CoordDecimal>(coord_channel_info.latitude()),
+          GrpcAlgs::unpack_decimal<AccuracyDecimal>(coord_channel_info.radius())),
+        coord_channel_info.channel_id());
     }
   }
 
@@ -2787,12 +2753,12 @@ namespace AdServer::CampaignSvcs
     const CampaignConfigUpdateInfo& update_info)
     noexcept
   {
-    for (std::uint32_t i = 0; i < update_info.platforms.size(); ++i)
+    for (int i = 0; i < update_info.platforms().size(); ++i)
     {
-      std::string platform_name = update_info.platforms[i].name.c_str();
+      std::string platform_name = update_info.platforms()[i].name().c_str();
       String::AsciiStringManip::to_lower(platform_name);
       new_config.platforms.insert(
-        std::make_pair(update_info.platforms[i].platform_id, platform_name));
+        std::make_pair(update_info.platforms()[i].platform_id(), platform_name));
     }
   }
 
@@ -2802,15 +2768,15 @@ namespace AdServer::CampaignSvcs
     const CampaignConfigUpdateInfo& update_info)
     noexcept
   {
-    for (std::uint32_t i = 0; i < update_info.web_operations.size(); ++i)
+    for (int i = 0; i < update_info.web_operations().size(); ++i)
     {
-      const WebOperationInfo& op = update_info.web_operations[i];
+      const WebOperationInfo& op = update_info.web_operations()[i];
       WebOperation_var opval = new WebOperation;
-      opval->id = op.id;
-      opval->app = op.app;
-      opval->source = op.source;
-      opval->operation = op.operation;
-      opval->flags = op.flags;
+      opval->id = op.id();
+      opval->app = op.app();
+      opval->source = op.source();
+      opval->operation = op.operation();
+      opval->flags = op.flags();
       new_config.web_operations[WebOperationKey(
         opval->app.c_str(), opval->source.c_str(), opval->operation.c_str())] = opval;
     }
@@ -2822,13 +2788,12 @@ namespace AdServer::CampaignSvcs
     ConfigUpdateLinks& config_update_links)
     /*throw(Exception, eh::Exception)*/
   {
-    for (std::uint32_t block_channel_i = 0;
-      block_channel_i < update_info.activate_block_channels.size();
+    for (int block_channel_i = 0; block_channel_i < update_info.activate_block_channels().size();
       ++block_channel_i)
     {
-      config_update_links.block_channels[
-        update_info.activate_block_channels[block_channel_i].size_id].push_back(
-          update_info.activate_block_channels[block_channel_i].channel_id);
+      config_update_links
+        .block_channels[update_info.activate_block_channels()[block_channel_i].size_id()]
+        .push_back(update_info.activate_block_channels()[block_channel_i].channel_id());
     }
   }
 

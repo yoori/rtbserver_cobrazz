@@ -29,7 +29,6 @@
   GetVirtualServers
   GetLowestHost
   GetServiceRefs
-  FillCorbaRef
   AddUserInfoManagerControllerGroups
   substring-before-last
   substring-after-last
@@ -472,34 +471,6 @@
 
   </xsl:for-each>
  </Refs>
-</xsl:template>
-
-<xsl:template name="FillCorbaRef">
-  <xsl:param name="service-path"/>
-  <xsl:param name="services-config"/>
-  <xsl:param name="default-port"/>
-  <xsl:param name="obj-name"/>
-
-  <xsl:variable name="hosts">
-    <xsl:call-template name="GetHosts">
-      <xsl:with-param name="hosts" select="$service-path/@host"/>
-      <xsl:with-param name="error-prefix" select="concat('Resolving of ', $obj-name)"/>
-    </xsl:call-template>
-  </xsl:variable>
-
-  <xsl:variable name="port"><xsl:value-of select="$service-path/*/cfg:networkParams/@port"/>
-    <xsl:if test="count($service-path/*/cfg:networkParams/@port) = 0">
-      <xsl:value-of select="$services-config/cfg:networkParams/@port"/>
-      <xsl:if test="count($services-config/cfg:networkParams/@port) = 0">
-        <xsl:value-of select="$default-port"/>
-      </xsl:if>
-    </xsl:if>
-  </xsl:variable>
-
-  <xsl:attribute name="ref">
-    <xsl:value-of select="concat('corbaloc:iiop:', exsl:node-set($hosts)//host[1],
-      ':', $port, $obj-name)"/>
-  </xsl:attribute>
 </xsl:template>
 
 <xsl:template name="AddUserBindControllerGroups">

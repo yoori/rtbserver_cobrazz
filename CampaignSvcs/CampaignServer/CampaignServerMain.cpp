@@ -361,7 +361,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
       catch(const eh::Exception& e)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Can't read Campaign Server Corba Object Reference: " << e.what();
+        ostr << FUN << ": Can't read CampaignServer gRPC endpoint: " << e.what();
         throw Exception(ostr);
       }
 
@@ -400,7 +400,7 @@ CampaignServerApp_::read_config(const char* filename, const char* argv0)
         catch(const eh::Exception& e)
         {
           Stream::Error ostr;
-          ostr << FUN << ": Can't read primary Campaign Servers Corba Object References: " <<
+          ostr << FUN << ": Can't read primary CampaignServer gRPC endpoints: " <<
             e.what();
           throw Exception(ostr);
         }

@@ -1,74 +1,40 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <string>
-#include <vector>
+#include <CampaignSvcs/CampaignServer/CampaignServer.pb.h>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/WireTypes.hpp>
 
 namespace AdServer::CampaignSvcs
 {
-  struct DayAmount
-  {
-    AdServer::Commons::TimestampInfo day{};
-    AdServer::Commons::DecimalInfo amount{};
-  };
+  using DayAmount = adserver::campaign::server::DayAmount;
 
-  using DayAmountSeq = std::vector<DayAmount>;
+  using DayAmountSeq = google::protobuf::RepeatedPtrField<DayAmount>;
 
-  struct AmountDistributionInfo
-  {
-    DayAmount prev_days_amount{};
-    DayAmountSeq day_amounts{};
-  };
+  using AmountDistributionInfo = adserver::campaign::server::AmountDistributionInfo;
 
-  using AmountDistributionSeq = std::vector<AmountDistributionInfo>;
+  using AmountDistributionSeq = google::protobuf::RepeatedPtrField<AmountDistributionInfo>;
 
-  struct AccountAmountDistributionInfo
-  {
-    std::uint32_t account_id{};
-    AmountDistributionInfo amount_distribution{};
-  };
+  using AccountAmountDistributionInfo = adserver::campaign::server::AccountAmountDistributionInfo;
 
-  using AccountAmountDistributionSeq = std::vector<AccountAmountDistributionInfo>;
+  using AccountAmountDistributionSeq =
+    google::protobuf::RepeatedPtrField<AccountAmountDistributionInfo>;
 
-  struct DayAmountCount
-  {
-    AdServer::Commons::TimestampInfo day{};
-    AdServer::Commons::DecimalInfo amount{};
-    AdServer::Commons::DecimalInfo imps{};
-    AdServer::Commons::DecimalInfo clicks{};
-  };
+  using DayAmountCount = adserver::campaign::server::DayAmountCount;
 
-  using DayAmountCountSeq = std::vector<DayAmountCount>;
+  using DayAmountCountSeq = google::protobuf::RepeatedPtrField<DayAmountCount>;
 
-  struct AmountCountDistributionInfo
-  {
-    DayAmountCount prev_days_amount_count{};
-    DayAmountCountSeq day_amount_counts{};
-  };
+  using AmountCountDistributionInfo = adserver::campaign::server::AmountCountDistributionInfo;
 
-  struct CampaignAmountDistributionInfo
-  {
-    std::uint32_t campaign_id{};
-    AmountCountDistributionInfo amount_count_distribution{};
-  };
+  using CampaignAmountDistributionInfo = adserver::campaign::server::CampaignAmountDistributionInfo;
 
-  using CampaignAmountDistributionSeq = std::vector<CampaignAmountDistributionInfo>;
+  using CampaignAmountDistributionSeq =
+    google::protobuf::RepeatedPtrField<CampaignAmountDistributionInfo>;
 
-  struct CCGAmountDistributionInfo
-  {
-    std::uint32_t ccg_id{};
-    AmountCountDistributionInfo amount_count_distribution{};
-  };
+  using CCGAmountDistributionInfo = adserver::campaign::server::CCGAmountDistributionInfo;
 
-  using CCGAmountDistributionSeq = std::vector<CCGAmountDistributionInfo>;
+  using CCGAmountDistributionSeq = google::protobuf::RepeatedPtrField<CCGAmountDistributionInfo>;
 
-  struct BillStatInfo
-  {
-    AccountAmountDistributionSeq accounts{};
-    CampaignAmountDistributionSeq campaigns{};
-    CCGAmountDistributionSeq ccgs{};
-  };
-
+  using BillStatInfo = adserver::campaign::server::BillStatInfo;
 }

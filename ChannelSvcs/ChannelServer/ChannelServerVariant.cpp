@@ -187,8 +187,8 @@ namespace AdServer::ChannelSvcs
       std::unique_ptr<AdServer::CampaignSvcs::ChannelServerChannelAnswer> res;
       std::uint32_t portion = 0;
       AdServer::CampaignSvcs::CampaignServer::GetSimpleChannelsInfo settings;
-      settings.portions_number = COUNT_PORTIONS;
-      settings.channel_statuses = "AIW";
+      settings.set_portions_number(COUNT_PORTIONS);
+      settings.set_channel_statuses("AIW");
       ChannelIdToMatchInfo_var info_ptr = new ChannelIdToMatchInfo;
       for (;;)
       {
@@ -205,9 +205,9 @@ namespace AdServer::ChannelSvcs
         {
           for (; portion < COUNT_PORTIONS; ++portion)
           {
-            settings.portion = portion;
+            settings.set_portion(portion);
             res.reset(campaign_server->chsv_simple_channels(settings));
-            process_portion_(res->simple_channels, *info_ptr);
+            process_portion_(res->simple_channels(), *info_ptr);
           }
           break;
         }
@@ -225,7 +225,7 @@ namespace AdServer::ChannelSvcs
       }
 
       update_data->cost_limit =
-        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(res->cost_limit);
+        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(res->cost_limit());
       add_special_(c_special_track, *info_ptr);
       add_special_(c_special_adv, *info_ptr);
       update_data->info_ptr = info_ptr;
@@ -247,30 +247,31 @@ namespace AdServer::ChannelSvcs
     ChannelIdToMatchInfo& info)
     /*throw(eh::Exception)*/
   {
-    for (std::uint32_t i = 0; i < channels.size(); ++i)
+    for (int i = 0; i < channels.size(); ++i)
     {
-      if ((channels[i].channel_type == 'A' && channels[i].status != 'A') ||
-          channels[i].channel_type == 'W' ||
-          !is_my_id_(channels[i].channel_id))
+      if ((static_cast<char>(channels[i].channel_type()) == 'A' &&
+            static_cast<char>(channels[i].status()) != 'A') ||
+        static_cast<char>(channels[i].channel_type()) == 'W' ||
+        !is_my_id_(channels[i].channel_id()))
       {//skip inactive uid channels, bad channels, not from my source channels
         continue;
       }
-      MatchInfo& m_info = info[channels[i].channel_id];
-      m_info.country = channels[i].country_code;
-      m_info.lang = channels[i].language;
+      MatchInfo& m_info = info[channels[i].channel_id()];
+      m_info.country = channels[i].country_code();
+      m_info.lang = channels[i].language();
       m_info.channel_size = 0;
       Channel& ch = m_info.channel;
-      ch.id = channels[i].channel_id;
-      ch.set_status(channels[i].status);
-      if (channels[i].channel_type == 'P')
+      ch.id = channels[i].channel_id();
+      ch.set_status(static_cast<char>(channels[i].status()));
+      if (static_cast<char>(channels[i].channel_type()) == 'P')
       {
         ch.mark_type(Channel::CT_BLACK_LIST);
       }
-      for (std::uint32_t j = 0; j < channels[i].behave_info.size(); ++j)
+      for (int j = 0; j < channels[i].behave_info().size(); ++j)
       {
         size_t index_type;
         bool ignore = false;
-        switch(channels[i].behave_info[j].trigger_type)
+        switch (static_cast<char>(channels[i].behave_info()[j].trigger_type()))
         {
           case 'U':
           case 'u':
@@ -302,9 +303,9 @@ namespace AdServer::ChannelSvcs
           break;
         }
         ch.mark_type(index_type);
-        if (channels[i].behave_info[j].is_context && index_type < CT_MAX)
+        if (channels[i].behave_info()[j].is_context() && index_type < CT_MAX)
         {
-          ch.set_weight(index_type, channels[i].behave_info[j].weight);
+          ch.set_weight(index_type, channels[i].behave_info()[j].weight());
         }
       }
     }

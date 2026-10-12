@@ -52,9 +52,7 @@ target_link_libraries(BillingServer
     BillingServerConfigXSD
     Generics
     Logger
-    ProcessControlIDL
     Sync
-    CORBACommons
     PkgConfig::Jemalloc
 )
 

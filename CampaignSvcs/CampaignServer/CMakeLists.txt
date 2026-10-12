@@ -14,7 +14,6 @@ target_link_libraries(BillStatServerSource
   PRIVATE
     Generics
     Commons
-    CORBACommons
     CampaignServerGrpc
 )
 
@@ -28,7 +27,6 @@ target_link_libraries(CampaignConfigModifier
   PRIVATE
     Generics
     Commons
-    CORBACommons
     Postgres
     LogGeneralizerGrpc
 )
@@ -52,7 +50,6 @@ target_link_libraries(CampaignServer
     Postgres
     BillStatServerSource
     CampaignConfigModifier
-    CORBACommons
     CampaignServerGrpc
     AdServerCommonsXSD
     Generics
@@ -62,5 +59,4 @@ target_link_libraries(CampaignServer
     CampaignServerConfigXSD
     DomainConfigXSD
     HostDistributionFileXSD
-    ProcessControlIDL
 )

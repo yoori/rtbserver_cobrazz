@@ -335,16 +335,6 @@
       </xsl:when>
     </xsl:choose>
 
-    <cfg:CorbaConfig>
-      <xsl:attribute name="threading-pool">2</xsl:attribute>
-
-      <cfg:Endpoint host="*" port="{$campaign-manager-port}">
-        <!-- this object can be used only in utils -->
-        <cfg:Object servant="CampaignManager" name="CampaignManager"/>
-        <cfg:Object servant="CampaignManager" name="{$current-campaign-manager-obj}"/>
-      </cfg:Endpoint>
-    </cfg:CorbaConfig>
-
     <cfg:GrpcConfig
       process_threads="{$campaign-manager-grpc-process-threads}"
       cq_threads="4"

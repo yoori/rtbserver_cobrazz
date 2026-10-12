@@ -10,7 +10,6 @@ target_link_libraries(UserInfoManagerCorePerfTest
     Allocator
     LogCommons
     Commons
-    CORBACommons
     Logger
     PrivacyFilter
     ProfilingCommons

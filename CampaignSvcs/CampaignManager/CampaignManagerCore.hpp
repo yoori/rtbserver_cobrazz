@@ -1507,7 +1507,7 @@ namespace AdServer::CampaignSvcs
   {
     for (const auto& triggered_channel : triggered_channels)
     {
-      res.insert(std::make_pair(triggered_channel.channel_id, triggered_channel.weight));
+      res.insert(std::make_pair(triggered_channel.channel_id(), triggered_channel.weight()));
     }
   }
 

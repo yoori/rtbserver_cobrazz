@@ -3,10 +3,10 @@
 
 #include <Generics/AppUtils.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/ChannelMatcher.hpp>
-#include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignCommons/ExpressionChannelGrpc.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
 #include <CampaignSvcs/CampaignServer/ExpressionChannelParser.hpp>
-#include <CampaignSvcs/CampaignServer/NonLinkedExpressionChannelCorbaAdapter.hpp>
+#include <CampaignSvcs/CampaignServer/NonLinkedExpressionChannelGrpc.hpp>
 
 using namespace AdServer::CampaignSvcs;
 
