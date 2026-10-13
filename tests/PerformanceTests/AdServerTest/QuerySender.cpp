@@ -1,7 +1,6 @@
 
-#include <ace/Reactor.h>
-
 #include "QuerySender.hpp"
+#include "ShutdownSignal.hpp"
 #include <HTTP/HttpSync.hpp>
 #include "SecondStartWaiter.hpp"
 #include "Report.hpp"
@@ -55,7 +54,7 @@ bool need_send(unsigned long request_index, double percentage)
 
 QueryScheduledTask::QueryScheduledTask(QuerySender* owner, BaseRequest* request) :
   owner_(owner),
-  request_(request)
+  request_(ReferenceCounting::add_ref(request))
 { }
 
 QueryScheduledTask::~QueryScheduledTask() noexcept
@@ -75,7 +74,6 @@ QuerySender::QuerySender(
   Generics::Planner_var& scheduler,
   HttpActiveInterface_var& http_pool,
   HttpPoolPolicy* http_policy) :
-  ACE_Task<ACE_MT_SYNCH> (ACE_Thread_Manager::instance ()), // FIXME Get rid of ACE
   cfg_(cfg),
   logger_(logger),
   scheduler_(scheduler),
@@ -119,23 +117,46 @@ QuerySender::QuerySender(
 
 QuerySender::~QuerySender() noexcept
 {
+  shutdown();
+  wait();
 }
 
 void QuerySender::start() /*throw(Exception)*/
 {
   logger_->stream(Logging::Logger::TRACE) << "Query sender start";
+  if (worker_.joinable())
+  {
+    throw Exception("QuerySender thread already started");
+  }
+
   _init_clients();
-  int error = ACE_Task<ACE_MT_SYNCH>::activate (THR_NEW_LWP, 1); // FIXME Get rid of ACE
-  if ( error != 0)
+  try
+  {
+    worker_ = std::thread([this]()
     {
-      logger_->stream(Logging::Logger::CRITICAL) << "QuerySender thread start failed";
-      throw Exception("QuerySender thread start failed");
-    }
+      svc();
+      shutdown();
+    });
+  }
+  catch (const std::system_error& error)
+  {
+    Stream::Error message;
+    message << "QuerySender thread start failed: " << error.what();
+    throw Exception(message);
+  }
 }
 
 void QuerySender::shutdown()
 {
   _shutdown_set();
+}
+
+void QuerySender::wait()
+{
+  if (worker_.joinable())
+  {
+    worker_.join();
+  }
 }
 
 
@@ -180,7 +201,7 @@ int QuerySender::svc() noexcept
         unsigned long sended_requests = _send_queued_requests(request_per_sec);
 
         // Send 'ns-lookup' request
-        for (unsigned int i = 0; i < request_per_sec - sended_requests; i++)
+        for (unsigned long i = sended_requests; i < request_per_sec && !_shutdown_check(); ++i)
         {
           _send_main_request();
         }
@@ -196,8 +217,6 @@ int QuerySender::svc() noexcept
         }
 
         request_per_sec+=_get_requests_increment();
-
-        ACE_Reactor::instance()->handle_events(); // FIXME Get rid of ACE
       }
       return 0;
     }
@@ -216,14 +235,18 @@ int QuerySender::svc() noexcept
 
 bool QuerySender::_shutdown_check()
 {
-  ReadGuard_ guard(shutdown_lock_);
-  return deactivated_;
+  std::lock_guard<std::mutex> guard(queue_lock_);
+  return deactivated_ || ShutdownSignal::received();
 }
 
 void QuerySender::_shutdown_set()
 {
-  WriteGuard_ guard(shutdown_lock_);
-  deactivated_ = true;
+  std::deque<Request_var> pending;
+  {
+    std::lock_guard<std::mutex> guard(queue_lock_);
+    deactivated_ = true;
+    pending.swap(requests_);
+  }
 }
 
 void QuerySender::_init_clients()
@@ -239,13 +262,19 @@ void QuerySender::_init_clients()
 
 void QuerySender::dump(bool need_full)
 {
+  std::size_t queued_requests;
+  {
+    std::lock_guard<std::mutex> guard(queue_lock_);
+    queued_requests = requests_.size();
+  }
+
   // Using queues
   pool_queue_constraint_->set_value(http_policy_->get_request_queue_size());
-  sender_queue_constraint_->set_value(msg_queue()->message_count());
+  sender_queue_constraint_->set_value(queued_requests);
   execution_time_constraint_->set_value(get_total_duration());
 
   logger_->stream(Logging::Logger::INFO) <<
-    "Resource usage: sender queue=" << msg_queue()->message_count() <<
+    "Resource usage: sender queue=" << queued_requests <<
     ", pool queue=" << http_policy_->get_request_queue_size() <<
     ", pool threads=" << http_policy_->get_threads_count() <<
     ", connections=" << http_policy_->get_connections_count();
@@ -289,7 +318,7 @@ void QuerySender::_send_main_request()
   std::string server;
   unsigned long srv_idx = Generics::safe_rand(cfg_.server_urls()->size());
   cfg_.server_urls()->get(srv_idx, server);
-  ParamsRequest* request = 0;
+  Request_var request;
   const RequestConfig_var& request_cfg = cfg_.client_config()->ns_request();
   unsigned long client_id = Generics::safe_rand(clients_.size());
   if (request_cfg.get() != 0)
@@ -301,7 +330,11 @@ void QuerySender::_send_main_request()
                                   server.c_str(),
                                   cfg_.client_config()->ad_all_optouts);
   }
-  _process_request(request);
+
+  if (request)
+  {
+    _process_request(request);
+  }
 }
 
 bool QuerySender::_need_optout()
@@ -312,7 +345,7 @@ bool QuerySender::_need_optout()
 
 void QuerySender::_process_request(BaseRequest* request)
 {
-  ResponseCallback_var response_cb_(request);
+  ResponseCallback_var response_cb_(ReferenceCounting::add_ref(request));
   std::string url = request->url();
   HeaderList headers;
   request->headers(headers);
@@ -448,22 +481,22 @@ void QuerySender::_log_response(const char* http_request, int response_code, con
     "Receive response on request '" << http_request << "' status=" << response_code;
 }
 
-void QuerySender::enqueue_request(BaseRequest* request)
+void QuerySender::enqueue_request(BaseRequest* request) noexcept
 {
-  ACE_Message_Block* message = request; // FIXME Get rid of ACE
-  if (putq(message) == -1)
+  try
+  {
+    Request_var owned_request(ReferenceCounting::add_ref(request));
+    std::lock_guard<std::mutex> guard(queue_lock_);
+    if (!deactivated_ && !ShutdownSignal::received())
     {
-      int error = ACE_OS::last_error();
-      message->release();
-
-      char buf[256];
-      logger_->stream(Logging::Logger::CRITICAL) <<
-        "Generics::TaskRunner::enqueue_task: putq() failed. "
-        "Errno " << error  << ". : " <<
-        strerror_r(error, buf, sizeof(buf));
-      _shutdown_set();
-
+      requests_.push_back(std::move(owned_request));
     }
+  }
+  catch (const std::exception& error)
+  {
+    logger_->stream(Logging::Logger::CRITICAL) << "Request enqueue failed: " << error.what();
+    _shutdown_set();
+  }
 }
 
 void QuerySender::_schedule_request(BaseRequest* request, unsigned long request_delay)
@@ -483,22 +516,16 @@ void QuerySender::_schedule_child_requests(unsigned long client_id,
   cfg_.server_urls()->get(srv_idx, server);
   if (url_not_empty(click_url) && need_send(click_count_++, cfg_.client_config()->click_rate))
   {
-    ClickRequest* request = new ClickRequest(this,
-                                             client_id,
-                                             is_opted_out,
-                                             cfg_.client_config()->click_request(),
-                                             click_url);
+    Request_var request(new ClickRequest(
+      this, client_id, is_opted_out, cfg_.client_config()->click_request(), click_url));
     _schedule_request(request, 0);
   }
 
   if (url_not_empty(passback_url) &&
       need_send(passback_count_++,  cfg_.client_config()->passback_rate))
   {
-    PassbackRequest* request = new PassbackRequest(this,
-                                                   client_id,
-                                                   is_opted_out,
-                                                   cfg_.client_config()->passback_request(),
-                                                   passback_url);
+    Request_var request(new PassbackRequest(
+      this, client_id, is_opted_out, cfg_.client_config()->passback_request(), passback_url));
     _schedule_request(request, 0);
   }
 
@@ -506,34 +533,21 @@ void QuerySender::_schedule_child_requests(unsigned long client_id,
 
 unsigned long QuerySender::_send_queued_requests(unsigned long max_requests)
 {
-  for (unsigned int i=0; i < max_requests; i++ )
+  for (unsigned long i = 0; i < max_requests; ++i)
+  {
+    Request_var request;
     {
-      if  (!msg_queue()->message_count())
-        {
-          return i;
-        }
-      ACE_Message_Block* message = 0;
-      int result = getq(message);
-      if (result == -1)
-        {
-          int error = ACE_OS::last_error();
-          char buf[256];
-          std::ostringstream ostr;
-          ostr << "Generics::TaskRunner::svc: internal error. : " << "getq() failed, errno "
-               << error << ", " << strerror_r(error, buf, sizeof(buf));
-          logger_->log(ostr.str(), Logging::Logger::CRITICAL);
-          _shutdown_set();
-          return 0;
-        }
+      std::lock_guard<std::mutex> guard(queue_lock_);
+      if (deactivated_ || ShutdownSignal::received() || requests_.empty())
+      {
+        return i;
+      }
 
-      if (message)
-        {
-          BaseRequest* request = dynamic_cast<BaseRequest*>(message);
-          _process_request(request);
-        }
+      request = std::move(requests_.front());
+      requests_.pop_front();
     }
+    _process_request(request);
+  }
   return max_requests;
 }
-
-
 

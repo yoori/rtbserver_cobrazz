@@ -6,6 +6,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 REMOVED = (
+  "cmake/Modules/FindACE.cmake",
   "cmake/Modules/FindTAO.cmake",
   "cmake/Modules/FindIDL.cmake",
   "Commons/CorbaAlgs.hpp",
@@ -35,6 +36,7 @@ CORBA_INCLUDE = re.compile(
   r'CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter\.hpp|'
   r'CampaignSvcs/(?:CampaignCommons|CampaignServer)/[^">]*Corba[^">]*\.hpp|'
   r'[^">]*_[cs]\.hpp)', re.MULTILINE)
+ACE_USAGE = re.compile(r'^\s*#\s*include\s*[<"]ace/|\bACE_\w+|\bACE::', re.MULTILINE)
 
 
 def test():
@@ -43,8 +45,7 @@ def test():
 
   spec = (ROOT / "RPM/SPECS/server.spec").read_text()
   assert not re.search(r"ace-tao|__ace_ver_req|CORBAInfResolve", spec), "Retired RPM dependencies"
-  assert "BuildRequires: pkgconfig(ACE)" in spec, "HTTP/Stream still require ACE headers"
-  assert "Requires: libACE.so.6.2.1()(64bit)" in spec, "HTTP/Stream still require the ACE runtime"
+  assert not re.search(r"pkgconfig\(ACE\)|libACE", spec), "Retired ACE RPM dependencies"
   for name in ("CampaignCommons/CampaignConfigTypes.hpp", "CampaignServer/CampaignServerTypes.hpp",
       "CampaignServer/StatTypes.hpp", "CampaignServer/BillStatTypes.hpp"):
     source = (ROOT / "CampaignSvcs" / name).read_text()
@@ -55,18 +56,27 @@ def test():
 
   for name in ("foros-server.supp", "foros-server6.supp", "tests/Test.supp",
       "tests/AutoTests/Commons/Admins/Admins.hpp"):
-    assert not re.search(r"CORBA|TAO", (ROOT / name).read_text()), name
+    assert not re.search(r"CORBA|TAO|\bACE\b|\bACE_", (ROOT / name).read_text()), name
 
   unixcommons = ROOT.parent / "unixcommons_cobrazz"
   assert unixcommons.is_dir(), "Missing unixcommons source tree: " + str(unixcommons)
-  for name in ("cmake/Modules/FindTAO.cmake", "cmake/Modules/FindIDL.cmake",
+  for root in (ROOT, unixcommons):
+    for name in ("CMakeLists.txt", "cmake/SetupEnvironment.cmake"):
+      source = (root / name).read_text()
+      assert not re.search(r"\bACE\b|-Wno-address", source), str(root / name)
+  for name in ("tests/Sync/MutexTest/Main.cpp", "tests/Sync/MutexTest/CMakeLists.txt"):
+    source = (unixcommons / name).read_text()
+    assert not re.search(r"\bACE\b|\bACE_|ace/", source), name
+  assert "<ace/" not in (ROOT / "tests/AutoTests/Commons/Logger.cpp").read_text()
+  for name in ("cmake/Modules/FindACE.cmake", "cmake/Modules/FindTAO.cmake",
+      "cmake/Modules/FindIDL.cmake",
       "src/xsd/RepositoryConfig.xsd"):
     assert not (unixcommons / name).exists(), name
   for name in ("src/CORBA", "tests/CORBA"):
     directory = unixcommons / name
     assert not any(path.is_file() for path in directory.rglob("*")), str(directory)
   for name in ("src/Generics/Values.hpp", "src/Generics/Singleton.hpp", "tests/Test.supp"):
-    assert not re.search(r"CORBA|Corba|TAO|DP_CLIENT_ORBS",
+    assert not re.search(r"CORBA|Corba|TAO|DP_CLIENT_ORBS|\bACE\b|\bACE_",
       (unixcommons / name).read_text()), name
 
   for directory in SOURCE_ROOTS:
@@ -75,6 +85,7 @@ def test():
         continue
       if path.suffix in (".cpp", ".hpp", ".h"):
         assert not CORBA_INCLUDE.search(path.read_text()), str(path)
+        assert not ACE_USAGE.search(path.read_text()), str(path)
       elif path.name == "CMakeLists.txt":
         assert not re.search(r"\b(?:CORBAConfig|CORBACommons|ProcessControlIDL)\b",
           path.read_text()), str(path)

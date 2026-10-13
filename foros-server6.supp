@@ -1,17 +1,4 @@
 {
-   ACE::sendv points to unitialized
-   Memcheck:Param
-   writev(vector[...])
-   fun:*ACE*sendv*
-}
-
-{
-   SSL_read returns uninitialized
-   Memcheck:Value8
-   fun:*ACE_SSL_SOCK_Stream*recv*
-}
-
-{
    Crypto
    Memcheck:Cond
    obj:/usr/lib64/libcrypto.so.*

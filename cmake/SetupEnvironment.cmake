@@ -2,9 +2,9 @@ include_guard(GLOBAL)
 
 # set base compile options
 set(CPP_DEBUGINFO_FLAGS "-ggdb3")
-# -Wno-address suppresses warnings from ACE headers.
 # -mno-sse2 : required for disable movdqa instruction usage on non aligned uint32 access (Plain library)
-set(CPP_COMMON_FLAGS "-Wno-deprecated-declarations -Wno-address -D_REENTRANT -m64 -march=x86-64 -DPIC -pthread -W -Wall -mno-sse2")
+set(CPP_COMMON_FLAGS "-Wno-deprecated-declarations -D_REENTRANT -m64 -march=x86-64")
+string(APPEND CPP_COMMON_FLAGS " -DPIC -pthread -W -Wall -mno-sse2")
 set(CPP_COMMON_CXX_FLAGS "${CPP_COMMON_FLAGS} -fcoroutines")
 set(CPP_DEBUG_OPT_FLAGS "-O0 -g3 -fno-inline -DDEV_DEBUG -rdynamic")
 set(CPP_RELEASE_OPT_FLAGS "-O3")

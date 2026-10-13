@@ -1,6 +1,9 @@
 add_subdirectory(Grpc)
 add_subdirectory(PmrTests)
 
+add_executable(PerformanceShutdownSignalTest PerformanceShutdownSignalTest.cpp)
+target_link_libraries(PerformanceShutdownSignalTest PRIVATE Threads::Threads)
+
 add_executable(GrpcAlgsTest GrpcAlgsTest.cpp)
 target_link_libraries(GrpcAlgsTest
   PRIVATE Generics protobuf::libprotobuf absl::log_internal_check_op absl::log_internal_message)

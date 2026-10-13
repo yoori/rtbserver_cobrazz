@@ -67,9 +67,6 @@ BuildRequires: glibc-devel = %__glibc_ver_req
 #Requires: glibc
 Requires: glibc = %__glibc_ver_req
 
-# The unixcommons MutexTest benchmark still uses ACE.
-BuildRequires: pkgconfig(ACE) = 6.2.1
-BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
@@ -127,7 +124,6 @@ Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: libpq-devel >= %{__libpq_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
-#BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
 BuildRequires: grpc-devel = %{__grpc_ver_req}
 BuildRequires: grpc-plugins = %{__grpc_ver_req}
@@ -158,7 +154,7 @@ Requires: %{__boost_package} = %__boost_ver_req
 Requires: folly = %__folly_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 1:2.1.2-8.el8
-Requires: cryptopp libatomic libev
+Requires: libatomic libev
 Requires: grpc = %{__grpc_ver_req}
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
@@ -179,8 +175,6 @@ Requires: clickhouse-client = %{__clickhouse_ver_req}
 BuildRequires: xgboost-devel%{?_isa} >= 2.0.2-ssv5
 BuildRequires: xgboost-devel(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 Requires: xgboost(cxx-abi)%{?_isa} = %{foros_cxx_abi}
-BuildRequires: gtest-devel = 1.12.1
-Requires: gtest = 1.12.1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense

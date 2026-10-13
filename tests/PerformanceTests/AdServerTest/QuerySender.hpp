@@ -3,7 +3,9 @@
 
 #include <time.h>
 
-#include <ace/Task.h>
+#include <deque>
+#include <mutex>
+#include <thread>
 #include <ReferenceCounting/Vector.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Scheduler.hpp>
@@ -50,7 +52,7 @@ public:
 
 private:
   QuerySender* owner_;
-  BaseRequest* request_;
+  Request_var request_;
 };
 
 
@@ -126,13 +128,8 @@ private:
  * @brief HTTP-request sender for performance test.
  *        Main class setting a test logic.
  */
-class QuerySender : public QuerySenderBase,
-                    public ACE_Task<ACE_MT_SYNCH> // FIXME Get rid of ACE
+class QuerySender : public QuerySenderBase
 {
-
-  typedef Sync::PosixRWLock Mutex_;
-  typedef Sync::PosixRGuard ReadGuard_;
-  typedef Sync::PosixWGuard WriteGuard_;
 
 public:
 
@@ -171,6 +168,8 @@ public:
    */
   void shutdown();
 
+  void wait();
+
   /**
    * @brief Callback calling from BaseRequest after getting correct response.
    */
@@ -193,12 +192,12 @@ public:
   /**
    * @brief test work thread.
    */
-  virtual int svc (void) noexcept;
+  int svc() noexcept;
 
   /**
    * @brief pop request from sender's query
    */
-  void enqueue_request(BaseRequest* request);
+  void enqueue_request(BaseRequest* request) noexcept;
 
   /**
    * @brief Dumping statistic to log
@@ -241,7 +240,7 @@ private:
   HttpPoolPolicy* http_policy_;
   ConstraintsContainer constraints_;
   Statistics stats_;
-  volatile sig_atomic_t deactivated_;
+  bool deactivated_;
   unsigned long action_count_;
   unsigned long click_count_;
   unsigned long passback_count_;
@@ -250,8 +249,9 @@ private:
   ReferenceCounting::Vector<HttpInterface_var> clients_;
   ReferenceCounting::Vector<CookiePool_var> cookies_;
 
-  mutable Mutex_ lock_;
-  mutable Mutex_ shutdown_lock_;
+  std::mutex queue_lock_;
+  std::deque<Request_var> requests_;
+  std::thread worker_;
 
   ThresholdConstraint<unsigned long>* pool_queue_constraint_;
   ThresholdConstraint<unsigned long>* sender_queue_constraint_;

@@ -20,11 +20,9 @@ int main (int argc, char** argv)
   }
   try
     {
-      //ACE::init ();
       Application app(atoi(argv[1]), argv[2]);
       app.init();
       app.run();
-      //ACE::fini ();
     }
   catch (eh::Exception& e)
     {

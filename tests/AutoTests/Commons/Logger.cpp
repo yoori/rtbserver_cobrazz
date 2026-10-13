@@ -1,6 +1,5 @@
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <ace/OS_NS_Thread.h>
 #include <fstream>
 #include <Logger/StreamLogger.hpp>
 

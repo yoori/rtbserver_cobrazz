@@ -4,7 +4,7 @@
 #include <tests/AutoTests/Commons/DebugInfo.hpp>
 #include <tests/AutoTests/Commons/Request/OpenRTBRequest.hpp>
 
-#include <ace/Message_Block.h>
+#include <csignal>
 
 #include "ConfigCommons.hpp"
 #include "HttpPoolPolicies.hpp"
@@ -17,8 +17,7 @@
  */
 class BaseRequest :
   public ResponseCallback,
-  public ReferenceCounting::AtomicImpl,
-  public ACE_Message_Block // FIXME Get rid of ACE
+  public ReferenceCounting::AtomicImpl
 {
 public:
 
@@ -621,7 +620,7 @@ private:
 };
 
 
-typedef ReferenceCounting::SmartPtr<BaseRequest> Request_var;
+using Request_var = ReferenceCounting::SmartPtr<BaseRequest>;
 
 inline
 std::ostream&

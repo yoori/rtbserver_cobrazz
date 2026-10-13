@@ -24,7 +24,7 @@ set(Boost_DIR
   CACHE PATH "Boost CMake config directory"
   FORCE)
 
-find_package(Boost 1.85.0 CONFIG REQUIRED COMPONENTS system thread)
+find_package(Boost 1.85.0 CONFIG REQUIRED COMPONENTS system)
 
 if (NOT TARGET Boost::headers)
   message(FATAL_ERROR "Boost::headers target not found")
@@ -42,7 +42,6 @@ if (NOT "-msse2" IN_LIST BOOST_HEADERS_COMPILE_OPTIONS)
 endif()
 unset(BOOST_HEADERS_COMPILE_OPTIONS)
 
-find_package(ACE REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(Threads REQUIRED)

@@ -1,6 +1,5 @@
 
 #include <array>
-#include <ace/Reactor.h>
 #include "Application.hpp"
 
 //constants
@@ -27,35 +26,12 @@ inline unsigned min(unsigned x, unsigned y)
 
 
 
-// SignalHandler class
-
-SignalHandler::SignalHandler(Application* app) :
-  app_(app)
-{ }
-
-int SignalHandler::handle_signal (int signum, siginfo_t *, ucontext_t * )
-{
-  switch(signum)
-    {
-    case SIGINT:
-      app_->shutdown();
-      break;
-    case SIGTERM:
-      app_->shutdown();
-      break;
-    default:
-      break;
-    }
-  return 0;
-}
-
 // Application class
 
 Application::Application(unsigned long log_level, const char* cfg_file_path) :
   log_level_(log_level),
   config_(cfg_file_path),
   logger_(),
-  sig_handler_(this),
   task_runner_(),
   scheduler_(),
   http_pool_policy_(),
@@ -106,41 +82,45 @@ void Application::init() /*throw(eh::Exception)*/
   http_pool_policy_ = http_pool_policy;
   http_pool_ = CreatePool(http_pool_policy_.in(), task_runner_);
   sender_      = new QuerySender(config_, logger_, scheduler_, http_pool_, http_pool_policy);
-  ACE_Reactor::instance()->register_handler(SIGTERM, &sig_handler_); // FIXME Get rid of ACE
-  ACE_Reactor::instance()->register_handler(SIGINT, &sig_handler_); // FIXME Get rid of ACE
 }
 
 void Application::run()
 {
   try
-    {
-      task_runner_->activate_object();
-      scheduler_->activate_object();
-      http_pool_->activate_object();
-      sender_->start();
-      sender_->wait();
-      sender_->close();
-      _stop();
-      sender_->dump(true);
-      sender_->dump_confluence_report();
-      _log_execution_time();
-    }
+  {
+    task_runner_->activate_object();
+    scheduler_->activate_object();
+    http_pool_->activate_object();
+    sender_->start();
+    sender_->wait();
+    _stop();
+    sender_->dump(true);
+    sender_->dump_confluence_report();
+    _log_execution_time();
+  }
   catch (eh::Exception& e)
-    {
-      logger_->stream(Logging::Logger::CRITICAL) <<
-        "Application stopping by exception: " << e.what();
-      shutdown();
-    }
+  {
+    logger_->stream(Logging::Logger::CRITICAL) <<
+      "Application stopping by exception: " << e.what();
+    shutdown();
+    sender_->wait();
+    _stop();
+  }
   catch (...)
-    {
-      logger_->stream(Logging::Logger::CRITICAL) << "Application stopping by unexpected exception";
-      shutdown();
-    }
+  {
+    logger_->stream(Logging::Logger::CRITICAL) << "Application stopping by unexpected exception";
+    shutdown();
+    sender_->wait();
+    _stop();
+  }
 }
 
 void Application::shutdown()
 {
-  sender_->shutdown();
+  if (sender_)
+  {
+    sender_->shutdown();
+  }
 }
 
 void Application::_stop()
@@ -151,6 +131,7 @@ void Application::_stop()
       http_pool_->wait_object();
       scheduler_->deactivate_object();
       scheduler_->wait_object();
+      scheduler_->clear();
       task_runner_->deactivate_object();
       task_runner_->wait_object();
     }
@@ -182,8 +163,6 @@ void Application::report_error(
     "Application stopped due task runner error: " << description;
   shutdown();
 }
-
-
 
 
 
