@@ -2,7 +2,8 @@
 #include <string>
 #include <sstream>
 
-#include <tests/AutoTests/Commons/Common.hpp>
+#include <tests/AutoTests/Commons/ClientRequest.hpp>
+#include <tests/AutoTests/Commons/GlobalSettings.hpp>
 
 namespace AutoTest
 {
@@ -64,16 +65,14 @@ namespace AutoTest
     bytes_out_ = 0;
     bytes_in_ = 0;
 
-    HTTP::HTTP_Connection::HttpBody* body = 0;
+    HTTP::HTTP_Connection::HttpBody body;
 
     try
     {
       size_t data_len = request_data_.length();
       if (data_len)
       {
-        body = new HTTP::HTTP_Connection::HttpBody(data_len);
-        memcpy(body->wr_ptr(), request_data_.data(), data_len);
-        body->wr_ptr(data_len);
+        body = request_data_;
       }
 
       finish_time_= Generics::Time::ZERO;
@@ -84,18 +83,7 @@ namespace AutoTest
 
       http_connection_->connect(&timeout_);
 
-      // socket options
-
-      struct linger linger_info = {1, 0};
-      if (
-        http_connection_->stream().set_option(
-          SOL_SOCKET,
-          SO_LINGER,
-          &linger_info,
-          sizeof (linger_info)) == -1)
-      {
-        throw Exception("ClientRequest::send: unable to set socket " "option (SO_LINGER)");
-      }
+      http_connection_->set_linger(true, 0);
 
       try
       {
@@ -122,13 +110,7 @@ namespace AutoTest
 
       if (need_response)
       {
-        HTTP::HTTP_Connection::HttpBody* body_ptr = body;
-
-        while (body_ptr)
-        {
-          response_data_.append(body_ptr->base(), body_ptr->size());
-          body_ptr = body_ptr->cont();
-        }
+        response_data_ = body.value_or(std::string());
       }
       else
       {
@@ -145,12 +127,6 @@ namespace AutoTest
 
       time = finish_time_ - start_time_;
 
-      if (body)
-      {
-        body->release();
-        body = NULL;
-      }
-
       response_headers_.clear();
 
       Stream::Error ostr;
@@ -158,12 +134,6 @@ namespace AutoTest
         "while requesting " << address_.url() << ". :" << std::endl << e.what();
 
       throw Exception(ostr);
-    }
-
-    if (body)
-    {
-      body->release();
-      body = NULL;
     }
 
     return true;
@@ -189,4 +159,3 @@ namespace AutoTest
   }
 
 } //namespace AutoTest
-

@@ -14,14 +14,6 @@ namespace AdServer::LogProcessing
 
   const char DEFERRED_DIR[] = "Deferred";
 
-  namespace {
-
-  //const char ASPECT[] = "LogGeneralizerImpl";
-
-  const Generics::Time XSEARCH_REQUEST_TIMEOUT(600);
-
-  } // namespace
-
   const char *LOG_GEN_DB_ERR_CODE_0    = "ADS-DB-1000";
   const char *LOG_GEN_DB_ERR_CODE_1    = "ADS-DB-1001";
   const char *LOG_GEN_DB_ERR_CODE_2    = "ADS-DB-1002";
@@ -80,13 +72,6 @@ namespace AdServer::LogProcessing
       db_conn_factory_composite_->add_child_object(pg_conn_factory_impl_.in());
 
       add_child_object(db_conn_factory_composite_);
-    }
-
-    if (config.XSearchStatParams().present())
-    {
-      xsearch_stat_url_ = config.XSearchStatParams().get().url();
-      http_interface_ = HTTP::CreateSyncHttp(&XSEARCH_REQUEST_TIMEOUT,
-        &XSEARCH_REQUEST_TIMEOUT, &XSEARCH_REQUEST_TIMEOUT);
     }
 
     {

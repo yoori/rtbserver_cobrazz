@@ -107,8 +107,7 @@ def test(binary_dir):
     require("Test DB failure" in (work / "log/DBAccess/DBAccess.log").read_text(),
       "DACS did not log partial failure")
     targets([(name, normal) for name in ("LogGeneralizer", "CampaignServer", "ChannelServer")])
-    for module in ("LogProcessing::LogGeneralizer", "CampaignSvcs::CampaignServer",
-        "ChannelSvcs::ChannelServer"):
+    for module in ("LogProcessing::LogGeneralizer", "ChannelSvcs::ChannelServer"):
       status = dacs_command("AdServer::" + module, "db_status")
       run(["bash", "-c", status], env, 1)
     run(["bash", "-c", dacs_command("AdServer::DBAccess", "start")], env)

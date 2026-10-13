@@ -67,9 +67,8 @@ BuildRequires: glibc-devel = %__glibc_ver_req
 #Requires: glibc
 Requires: glibc = %__glibc_ver_req
 
-# HTTP/Stream use ACE independently of TAO.
+# The unixcommons MutexTest benchmark still uses ACE.
 BuildRequires: pkgconfig(ACE) = 6.2.1
-Requires: libACE.so.6.2.1()(64bit)
 BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++

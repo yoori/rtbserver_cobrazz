@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import concurrent.futures
 from http.client import HTTPConnection
 import json
@@ -71,7 +72,7 @@ def generate_config(work, grpc_port, http_port):
       ns=NS, work=quoteattr(str(work)), cache=quoteattr(str(work / "cache")),
       root=quoteattr(str(ROOT)), service=service)
   fixture.write_text(cluster)
-  xpath = "/*/application/serviceGroup/serviceGroup/service"
+  xpath = "/colo:colocation/application/serviceGroup/serviceGroup/service"
   command = ["xsltproc", "--stringparam", "XPATH", xpath, "-o", config, STYLE, fixture]
   run(command, cwd=work)
   run(["xmllint", "--noout", "--schema", SCHEMA, config])
@@ -79,7 +80,9 @@ def generate_config(work, grpc_port, http_port):
   storage = tree.getroot().find("{" + NS + "}UrlInfoStorageConfig")
   require(storage.get("rocksdb_batch_size") == "64", "CMS ignored storage settings")
   require(storage.get("rocksdb_workers") == "2", "CMS defaults missing")
-  require((work / "urlInfoStorage.port").exists(), "CMS port metadata missing")
+  ports = (work / "urlInfoStorage.port").read_text()
+  require("['urlInfoStorageGrpc', {}]".format(grpc_port) in ports, "CMS gRPC port missing")
+  require("['urlInfoStorageHttp', {}]".format(http_port) in ports, "CMS HTTP port missing")
 
   fixture.write_text(cluster.replace(service, service + service))
   require(run(command, cwd=work, check=False).returncode != 0, "CMS accepted two instances")
@@ -111,9 +114,9 @@ def generate_config(work, grpc_port, http_port):
     "--plugin-root", plugin, "--out-dir", optional_output]
   run([plugin / "exec/ServiceConf.sh", *options, "--xsl", STYLE,
     "--out-file", "UrlInfoStorage.xml"], cwd=work)
-  run([plugin / "exec/CurrentEnvGen.sh", *options, "--service-name", "url_info_storage",
-    "--search-xpath", "configuration/cfg:urlInfoStorage",
-    "--out-file", "CurrentEnv/be.sh"], cwd=work)
+  backend_script = (plugin / "exec/BackendSubClusterConf.sh").read_text()
+  require('--service-name "url_info_storage"' not in backend_script,
+    "CMS still generates the retired UrlInfoStorage CORBA port")
   require(not list(optional_output.iterdir()), "CMS generated an absent service")
   fixture.write_text(cluster)
   return config
@@ -175,9 +178,14 @@ def test_http(port):
     results[3]["status"] == 400, "CAS batch contract failed")
 
 
-def test():
+def test(config_only=False):
   with tempfile.TemporaryDirectory(prefix="url-info-storage-") as directory:
     work = Path(directory)
+    if config_only:
+      generate_config(work, 10433, 10434)
+      print("UrlInfoStorage CMS configuration checks passed")
+      return
+
     grpc_port, http_port = free_ports()
     config = generate_config(work, grpc_port, http_port)
     (work / "run").mkdir()
@@ -217,4 +225,6 @@ def test():
 
 
 if __name__ == "__main__":
-  test()
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--config-only", action="store_true")
+  test(config_only=parser.parse_args().config_only)

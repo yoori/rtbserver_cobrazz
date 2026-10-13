@@ -6,7 +6,8 @@
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
-  extension-element-prefixes="exsl" exclude-result-prefixes="dyn xsd">
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  extension-element-prefixes="exsl" exclude-result-prefixes="dyn xsd colo">
   <xsl:include href="../Functions.xsl"/>
   <xsl:output method="xml" indent="yes" encoding="utf-8"/>
   <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>

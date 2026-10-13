@@ -12,7 +12,6 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <HTTP/HttpAsync.hpp>
 
 #include <Commons/DbStateChanger.hpp>
 #include <LogCommons/FileReceiver.hpp>
@@ -339,7 +338,6 @@ namespace AdServer::LogProcessing
     Generics::Planner_var scheduler_;
     std::string in_logs_dir_;
     std::string out_logs_dir_;
-    std::string xsearch_stat_url_;
 
     unsigned long days_to_keep_;
 
@@ -349,8 +347,6 @@ namespace AdServer::LogProcessing
 
     PostgresConnectionFactoryImpl_var pg_conn_factory_impl_;
     Generics::CompositeActiveObject_var db_conn_factory_composite_;
-
-    HTTP::HttpInterface_var http_interface_;
 
     LogGeneralizerStatMapBundle_var log_generalizer_stat_map_bundle_;
 

@@ -21,7 +21,6 @@ target_link_libraries(LogGeneralizerLib
     Postgres
     Commons
     Generics
-    HTTP
     Logger
     Sync
 )

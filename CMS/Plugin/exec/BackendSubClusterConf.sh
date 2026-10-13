@@ -381,17 +381,6 @@ $EXEC/ServiceConf.sh \
 
 let "EXIT_CODE|=$?"
 
-$EXEC/CurrentEnvGen.sh \
-  --service-name "url_info_storage" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:urlInfoStorage" \
-  --services-xpath "$URL_INFO_STORAGE_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/be.sh
-
-let "EXIT_CODE|=$?"
-
 ### DictionaryProvider
 DICTIONARY_PROVIDER_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$DICTIONARY_PROVIDER_DESCR']"
 

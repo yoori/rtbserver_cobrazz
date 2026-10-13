@@ -49,7 +49,8 @@ TMP_FILE=''
 
 if [ "$MACROSES" != "" ]
 then
-  TMP_FILE="/tmp/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1).xslt"
+  TMP_FILE=$(mktemp /tmp/foros-xslt-XXXXXXXX.xslt) || exit 1
+  trap 'rm -f -- "$TMP_FILE"' EXIT
   #echo ">>>>>>>>>>>>>>>>>>>>>> sed '$MACROSES'"
   cat "$XSL_FILE" | sed "$MACROSES" >"$TMP_FILE"
   PXSL_FILE="$TMP_FILE"
