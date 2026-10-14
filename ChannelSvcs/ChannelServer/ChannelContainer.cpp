@@ -1,4 +1,5 @@
 
+#include <algorithm>
 #include <string_view>
 #include <optional>
 
@@ -19,6 +20,15 @@ namespace AdServer::ChannelSvcs
   {
     const unsigned long PATH_DEPTH = 12;
     const std::string EMPTY_STRING;
+
+    std::size_t keyword_length(const String::SubString& word) noexcept
+    {
+      // Trigger parts are normalized UTF-8; compare characters rather than encoded bytes.
+      return std::count_if(word.begin(), word.end(), [](unsigned char value)
+      {
+        return (value & 0xC0) != 0x80;
+      });
+    }
 
     std::size_t next_url_prefix(const MatchUrl& url, std::size_t length, std::size_t depth) noexcept
     {
@@ -415,15 +425,29 @@ namespace AdServer::ChannelSvcs
   unsigned int ChannelContainer::choose_word_(
     const ChannelChunkArray& array,
     const SubStringVector& parts,
-    const LexemesPtrVector& lexemes) const
+    const LexemesPtrVector& lexemes,
+    bool prefer_longest) const
     noexcept
   {
     unsigned int word_num = 0;
     unsigned int raiting = UINT_MAX;
     unsigned int i = 0;
+    std::size_t longest = 0;
+    if (prefer_longest)
+    {
+      for (const auto& part : parts)
+      {
+        longest = std::max(longest, keyword_length(part));
+      }
+    }
 
     for (auto word_it = parts.begin(); word_it != parts.end(); ++word_it, i++)
     {
+      if (prefer_longest && keyword_length(*word_it) != longest)
+      {
+        continue;
+      }
+
       long word_raiting;
       if (lexemes.size() > i && lexemes[i])
       {
@@ -732,7 +756,7 @@ namespace AdServer::ChannelSvcs
       else
       {
         // for keyword select one possible key
-        word_num = choose_word_(*match_chunks, parts, lexemes);
+        word_num = choose_word_(*match_chunks, parts, lexemes, !new_matcher->exact());
       }
 
       new_matcher->configure_matching_info(parts, lexemes, word_num);

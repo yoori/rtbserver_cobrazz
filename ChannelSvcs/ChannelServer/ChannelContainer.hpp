@@ -508,7 +508,8 @@ namespace AdServer::ChannelSvcs
     unsigned int choose_word_(
       const ChannelChunkArray& array,
       const SubStringVector& parts,
-      const LexemesPtrVector& lexemes) const
+      const LexemesPtrVector& lexemes,
+      bool prefer_longest) const
       noexcept;
 
     ChannelMatchInfo* get_rules_() const
