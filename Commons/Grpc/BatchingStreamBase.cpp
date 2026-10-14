@@ -19,6 +19,7 @@
 #include <Generics/MonoAllocator.hpp>
 
 #include <Commons/ActivityGate.hpp>
+#include <Commons/Grpc/BatchRequestBuffer.hpp>
 #include <Commons/Grpc/BatchingQueue.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 
@@ -118,6 +119,16 @@ namespace AdServer::Grpc
     struct WriteTag;
     struct WritesDoneTag;
     struct FinishTag;
+
+    struct WriteSlotGuard
+    {
+      explicit WriteSlotGuard(Impl& impl_val) noexcept;
+      ~WriteSlotGuard() noexcept;
+      void release() noexcept;
+
+      Impl& impl;
+      bool released = false;
+    };
 
     class DetachedBatchStorage final
     {
@@ -309,12 +320,46 @@ namespace AdServer::Grpc
     std::unique_ptr<BatchTransport> batch_stub_;
     grpc::ClientAsyncReaderWriter<BatchRequest, BatchResponse>* stream_ = nullptr;
     grpc::Status finish_status_;
-    google::protobuf::Arena write_arena_;
+    Detail::BatchRequestBuffer write_buffer_;
 
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     const unsigned int queue_index_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor::CQ> grpc_queue_;
   };
+
+  BatchingStreamBase::Impl::WriteSlotGuard::WriteSlotGuard(Impl& impl_val) noexcept
+    : impl(impl_val)
+  {}
+
+  BatchingStreamBase::Impl::WriteSlotGuard::~WriteSlotGuard() noexcept
+  {
+    if (released)
+    {
+      return;
+    }
+
+    StreamAction action = StreamAction::None;
+    impl.write_buffer_.clear();
+
+    {
+      std::lock_guard<std::mutex> lock(impl.state_lock_);
+      impl.write_state_ = WriteState::Idle;
+      if (impl.stream_state_.load() != StreamState::Open)
+      {
+        action = impl.plan_shutdown_i_();
+      }
+    }
+
+    if (action != StreamAction::None)
+    {
+      impl.execute_stream_action_(action);
+    }
+  }
+
+  void BatchingStreamBase::Impl::WriteSlotGuard::release() noexcept
+  {
+    released = true;
+  }
 
   BatchingStreamBase::Impl::DetachedBatchStorage::BatchGuardPtr
   BatchingStreamBase::Impl::DetachedBatchStorage::register_batch(
@@ -912,45 +957,6 @@ namespace AdServer::Grpc
     bool measure_consumer_stream_write,
     std::vector<PendingRequest>* failed_batch)
   {
-    struct WriteSlotGuard
-    {
-      explicit WriteSlotGuard(Impl& impl_val)
-        : impl(impl_val)
-      {}
-
-      ~WriteSlotGuard()
-      {
-        if (released)
-        {
-          return;
-        }
-
-        StreamAction action = StreamAction::None;
-
-        {
-          std::lock_guard<std::mutex> lock(impl.state_lock_);
-          impl.write_state_ = WriteState::Idle;
-          if (impl.stream_state_.load() != StreamState::Open)
-          {
-            action = impl.plan_shutdown_i_();
-          }
-        }
-
-        if (action != StreamAction::None)
-        {
-          impl.execute_stream_action_(action);
-        }
-      }
-
-      void release() noexcept
-      {
-        released = true;
-      }
-
-      Impl& impl;
-      bool released = false;
-    };
-
     WriteSlotGuard write_slot_guard(*this);
 
     if (pending_batch.empty())
@@ -958,8 +964,7 @@ namespace AdServer::Grpc
       return true;
     }
 
-    write_arena_.Reset();
-    auto* write_batch = google::protobuf::Arena::Create<BatchRequest>(&write_arena_);
+    auto* write_batch = &write_buffer_.get();
     std::vector<PendingRequest> accepted_requests;
     accepted_requests.reserve(pending_batch.size());
     std::optional<std::vector<std::pair<PendingRequest, Generics::Time>>> timed_out_requests;
@@ -1025,7 +1030,7 @@ namespace AdServer::Grpc
     const auto batch_size = write_batch->items_size();
     if (batch_size == 0)
     {
-      write_arena_.Reset();
+      write_buffer_.clear();
 
       bool stream_open = false;
       StreamAction action = StreamAction::None;
@@ -1064,6 +1069,7 @@ namespace AdServer::Grpc
 
     if (!batch_guard)
     {
+      write_buffer_.clear();
       StreamAction action = StreamAction::None;
 
       {
@@ -1085,7 +1091,6 @@ namespace AdServer::Grpc
         }
       }
 
-      write_arena_.Reset();
       execute_stream_action_(action);
       return false;
     }
@@ -1118,6 +1123,7 @@ namespace AdServer::Grpc
 
     if (!operation_start.has_value() || !*operation_start)
     {
+      write_buffer_.clear();
       bool shutdown_completed = false;
       const bool grpc_queue_shutdown = !operation_start.has_value();
 
@@ -1160,8 +1166,6 @@ namespace AdServer::Grpc
           failed_batch->emplace_back(std::move(request));
         }
       }
-
-      write_arena_.Reset();
 
       return false;
     }
@@ -1597,7 +1601,7 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::process_write_completion_cq_(bool ok, std::uint64_t batch_id)
   {
-    write_arena_.Reset();
+    write_buffer_.clear();
 
     bool stream_open = false;
     StreamAction action = StreamAction::None;

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <atomic>
 #include <set>
+#include <utility>
 
 #include <google/protobuf/arena.h>
 
@@ -226,14 +227,6 @@ namespace AdServer::Bidding
         location->set_region(source.geo_location[i].region);
         location->set_city(source.geo_location[i].city);
       }
-      target.mutable_coord_location()->Reserve(source.coord_location.size());
-      for (std::size_t i = 0; i < source.coord_location.size(); ++i)
-      {
-        auto* coord = target.add_coord_location();
-        coord->set_longitude(GrpcAlgs::pack_decimal(source.coord_location[i].longitude));
-        coord->set_latitude(GrpcAlgs::pack_decimal(source.coord_location[i].latitude));
-        coord->set_accuracy(GrpcAlgs::pack_decimal(source.coord_location[i].accuracy));
-      }
       target.set_full_referer(source.full_referer);
       target.set_referer(source.referer);
       pack_strings(source.urls, target.mutable_urls());
@@ -243,15 +236,6 @@ namespace AdServer::Bidding
       target.set_preclick_url(source.preclick_url);
       target.set_click_prefix_url(source.click_prefix_url);
       target.set_original_url(source.original_url);
-      if (source.track_user_id.has_value())
-      {
-        target.set_track_user_id(GrpcAlgs::pack_user_id(*source.track_user_id));
-      }
-
-      if (source.user_id.has_value())
-      {
-        target.set_user_id(GrpcAlgs::pack_user_id(*source.user_id));
-      }
       target.set_user_status(source.user_status);
       target.set_peer_ip(source.peer_ip);
       target.set_user_agent(source.user_agent);
@@ -321,7 +305,6 @@ namespace AdServer::Bidding
       target.set_fill_track_pixel(source.fill_track_pixel);
       target.set_fill_iurl(source.fill_iurl);
       target.set_ad_instantiate_type(source.ad_instantiate_type);
-      target.set_only_display_ad(source.only_display_ad);
       target.set_search_engine_id(source.search_engine_id);
       target.set_search_words(source.search_words);
       target.set_page_keywords_present(!source.keywords.empty());
@@ -377,7 +360,6 @@ namespace AdServer::Bidding
         dst->set_fill_track_html(src.fill_track_html);
         pack_tokens(src.tokens, dst->mutable_tokens());
       }
-      target.set_need_debug_info(source.need_debug_info);
       target.set_page_keywords(source.keywords);
       target.set_url_keywords(source.url_keywords);
     }
@@ -1472,7 +1454,7 @@ namespace AdServer::Bidding
 
             if (!ref_words.empty())
             {
-              channel_request->set_first_url_words(ref_words);
+              channel_request->set_first_url_words(std::move(ref_words));
             }
           }
           catch(const eh::Exception& e)
@@ -1507,10 +1489,10 @@ namespace AdServer::Bidding
             }
           }
 
-          channel_request->set_urls(urls_str);
+          channel_request->set_urls(std::move(urls_str));
           if (!urls_words_str.empty())
           {
-            channel_request->set_urls_words(urls_words_str);
+            channel_request->set_urls_words(std::move(urls_words_str));
           }
 
           if (!request_task->channel_keywords().empty())
@@ -2206,9 +2188,21 @@ namespace AdServer::Bidding
       // Fill user info
       if (!user_id.is_null())
       {
-        const auto packed_user_id = GrpcAlgs::pack_user_id(user_id);
+        auto packed_user_id = GrpcAlgs::pack_user_id(user_id);
         common_info->set_user_id(packed_user_id);
-        common_info->set_track_user_id(packed_user_id);
+        common_info->set_track_user_id(std::move(packed_user_id));
+      }
+      else
+      {
+        if (request_info.user_id.has_value())
+        {
+          common_info->set_user_id(GrpcAlgs::pack_user_id(*request_info.user_id));
+        }
+
+        if (request_info.track_user_id.has_value())
+        {
+          common_info->set_track_user_id(GrpcAlgs::pack_user_id(*request_info.track_user_id));
+        }
       }
 
       // Fill debug-info & process fraud
@@ -2217,26 +2211,28 @@ namespace AdServer::Bidding
         history_match_result ? &history_match_result->match_result() : nullptr;
       request_params_pb.set_profiling_available(profiling_available);
       request_params_pb.set_fraud(history_result && history_result->fraud_request());
+      bool need_debug_info = request_info.need_debug_info;
       if (request_params_pb.ad_slots_size() > 0)
       {
         if (!interrupted)
         {
-          request_params_pb.set_need_debug_info(true);
+          need_debug_info |= DebugSink::require_debug_info(
+            String::SubString(request_info.require_debug_info));
           request_params_pb.mutable_ad_slots(0)->set_debug_ccg(request_info.debug_ccg);
         }
 
         for (int i = 0; i < request_params_pb.ad_slots_size(); ++i)
         {
           auto* ad_slot = request_params_pb.mutable_ad_slots(i);
+          need_debug_info |= !interrupted && ad_slot->debug_ccg() != 0;
           ad_slot->set_passback(
             ad_slot->passback() ||
             passback || interrupted || (history_result && history_result->fraud_request()));
         }
       }
+      request_params_pb.set_need_debug_info(need_debug_info);
 
       // Fill user history data
-      request_params_pb.set_client_create_time(GrpcAlgs::pack_time(Generics::Time::ZERO));
-      request_params_pb.set_session_start(GrpcAlgs::pack_time(Generics::Time::ZERO));
       if (history_result)
       {
         request_params_pb.set_client_create_time(history_result->create_time());
@@ -2288,6 +2284,19 @@ namespace AdServer::Bidding
           target->set_longitude(source.longitude());
           target->set_latitude(source.latitude());
           target->set_accuracy(source.accuracy());
+        }
+      }
+      else
+      {
+        request_params_pb.set_client_create_time(GrpcAlgs::pack_time(Generics::Time::ZERO));
+        request_params_pb.set_session_start(GrpcAlgs::pack_time(Generics::Time::ZERO));
+        common_info->mutable_coord_location()->Reserve(request_info.coord_location.size());
+        for (const auto& source : request_info.coord_location)
+        {
+          auto* target = common_info->add_coord_location();
+          target->set_longitude(GrpcAlgs::pack_decimal(source.longitude));
+          target->set_latitude(GrpcAlgs::pack_decimal(source.latitude));
+          target->set_accuracy(GrpcAlgs::pack_decimal(source.accuracy));
         }
       }
 

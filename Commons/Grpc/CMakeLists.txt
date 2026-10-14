@@ -13,6 +13,7 @@ target_sources(GrpcBatch PRIVATE
   DbAccess.hpp
   AsyncBatchingClientBase.cpp
   AsyncBatchingClientBase.hpp
+  BatchRequestBuffer.hpp
   BatchingQueue.cpp
   BatchingQueue.hpp
   BatchingStreamBase.cpp

@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -93,24 +94,36 @@ namespace
 
     using AsyncBatchingClientBase::stats;
 
-    void submit(std::atomic<unsigned int>& completed, std::atomic<unsigned int>& errors)
-    {
-      BatchRequest request;
-      request.set_batch_id(42);
-      using Response = AdServer::Grpc::ResponseHolder<BatchRequest>;
-      std::function<void(const grpc::Status&, Response)> callback =
-        [&completed, &errors](const grpc::Status& status, auto response)
-        {
-          if (!status.ok() || response->batch_id() != 42)
-          {
-            errors.fetch_add(1);
-          }
-          completed.fetch_add(1);
-        };
-      enqueue_request_<BatchRequest, BatchRequest>(
-        "/test.Echo", request, std::move(callback), "invalid echo response");
-    }
+    void submit(std::atomic<unsigned int>& completed, std::atomic<unsigned int>& errors,
+      const std::string& payload = {});
   };
+
+  void Client::submit(std::atomic<unsigned int>& completed, std::atomic<unsigned int>& errors,
+    const std::string& payload)
+  {
+    BatchRequest request;
+    request.set_batch_id(42);
+    if (!payload.empty())
+    {
+      request.add_items()->set_payload(payload);
+    }
+
+    using Response = AdServer::Grpc::ResponseHolder<BatchRequest>;
+    std::function<void(const grpc::Status&, Response)> callback =
+      [&completed, &errors, payload](const grpc::Status& status, auto response)
+      {
+        if (!status.ok() || response->batch_id() != 42 ||
+          response->items_size() != (payload.empty() ? 0 : 1) ||
+          (!payload.empty() && response->items(0).payload() != payload))
+        {
+          errors.fetch_add(1);
+        }
+
+        completed.fetch_add(1);
+      };
+    enqueue_request_<BatchRequest, BatchRequest>(
+      "/test.Echo", request, std::move(callback), "invalid echo response");
+  }
 
   class CompletionPause
   {
@@ -352,6 +365,28 @@ namespace
     fixture.await_completion(33 + 8 * 101);
     require(fixture.errors_ == 0, "concurrent producers returned errors");
   }
+
+  void test_write_batch_reuse()
+  {
+    Fixture fixture(2);
+    fixture.start_executor();
+    unsigned int completed = 0;
+    for (const std::size_t size : {4096, 0, 768 * 1024, 64, 0})
+    {
+      const std::string payload(size, static_cast<char>('a' + completed));
+      fixture.client_->submit(fixture.completed_, fixture.errors_, payload);
+      fixture.client_->submit(fixture.completed_, fixture.errors_, payload);
+      completed += 2;
+      fixture.await_completion(completed);
+      require(fixture.errors_ == 0, "reused batch corrupted a payload");
+    }
+
+    fixture.submit(1);
+    fixture.await_completion(++completed);
+    require(fixture.errors_ == 0, "reused batch corrupted its final tail");
+    require(fixture.service_.batch_sizes() == std::vector<int>({2, 2, 2, 2, 2, 1}),
+      "reused batches must not retain items from previous writes");
+  }
 }
 
 int main()
@@ -363,6 +398,7 @@ int main()
     test_failed_connect_resume();
     test_busy_stream_resume();
     test_concurrent_producers_and_readiness();
+    test_write_batch_reuse();
     std::cout << "BatchingTimerTest passed\n";
     return 0;
   }

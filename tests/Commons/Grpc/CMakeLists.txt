@@ -17,6 +17,9 @@ add_executable(BatchingTimerTest
   BatchingTimerTest.cpp
 )
 
+add_executable(BatchRequestBufferTest BatchRequestBufferTest.cpp)
+target_link_libraries(BatchRequestBufferTest PRIVATE GrpcBatch)
+
 add_executable(DeferredClientDeletionTest DeferredClientDeletionTest.cpp)
 add_executable(DbAccessTest DbAccessTest.cpp)
 target_link_libraries(DbAccessTest PRIVATE GrpcBatch)
