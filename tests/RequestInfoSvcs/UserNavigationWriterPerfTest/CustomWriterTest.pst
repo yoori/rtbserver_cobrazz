@@ -1,0 +1,55 @@
+namespace PlainCustomTest
+{
+  struct ItemDescriptor
+  {
+    char flag;
+    int signed_value;
+    uint value;
+    uint64 big;
+    string text;
+    bytes blob;
+  };
+  autowriter ItemWriter<ItemDescriptor>;
+  autoreader ItemReader<ItemDescriptor>;
+
+  struct FixedDescriptor
+  {
+    uint value;
+  };
+  autowriter FixedWriter<FixedDescriptor>;
+
+  struct ProfileDescriptor
+  {
+    uint version;
+    ItemDescriptor embedded;
+    ItemDescriptor hidden;
+    FixedDescriptor fixed;
+    array<ItemDescriptor> entries;
+    list<ItemDescriptor> old_entries;
+    array<uint> numbers;
+    list<uint64> old_numbers;
+  };
+
+  writer ProfileWriter<ProfileDescriptor>
+  {
+    version;
+    ItemWriter embedded;
+    FixedWriter fixed;
+    array<ItemWriter>(cpp_vector) entries;
+    list<ItemWriter> old_entries;
+    array<uint>(cpp_vector) numbers;
+    old_numbers;
+  };
+
+  writer FullWriter<ProfileDescriptor>
+  {
+    version;
+    ItemWriter embedded;
+    ItemWriter hidden;
+    FixedWriter fixed;
+    array<ItemWriter>(cpp_vector) entries;
+    list<ItemWriter> old_entries;
+    array<uint>(cpp_vector) numbers;
+    old_numbers;
+  };
+}

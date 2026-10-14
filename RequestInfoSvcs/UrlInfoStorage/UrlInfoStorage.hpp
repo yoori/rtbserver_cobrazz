@@ -20,6 +20,10 @@ namespace AdServer::RequestInfoSvcs
     Commons::StartableAwaitable<void> set_url_profile(std::string url, std::string text) const;
     Commons::StartableAwaitable<bool> compare_exchange_url_profile(
       std::string url, std::string expected, std::string text) const;
+    Commons::StartableAwaitable<std::string> get_url_description(std::string url) const;
+    Commons::StartableAwaitable<void> set_url_description(std::string url, std::string text) const;
+    Commons::StartableAwaitable<bool> compare_exchange_url_description(
+      std::string url, std::string expected, std::string text) const;
 
   protected:
     ~UrlInfoStorage() noexcept override;
@@ -38,7 +42,13 @@ namespace AdServer::RequestInfoSvcs
     mutable std::mutex writes_mutex_;
     mutable std::unordered_map<std::string, std::deque<std::function<void()>>> writes_;
     using ProfileMap = ProfilingCommons::RocksDBBatchingProfileMap<std::string>;
+    Commons::StartableAwaitable<std::string> get_(ProfileMap& map, std::string url) const;
+    Commons::StartableAwaitable<void> set_(
+      ProfileMap& map, std::string url, std::string text) const;
+    Commons::StartableAwaitable<bool> compare_exchange_(
+      ProfileMap& map, std::string url, std::string expected, std::string text) const;
     ReferenceCounting::SmartPtr<ProfileMap> profiles_;
+    ReferenceCounting::SmartPtr<ProfileMap> descriptions_;
   };
 
   using UrlInfoStorage_var = ReferenceCounting::SmartPtr<UrlInfoStorage>;

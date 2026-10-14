@@ -1,0 +1,7 @@
+add_executable(UserNavigationWriterPerfTest UserNavigationWriterPerfTest.cpp)
+target_link_libraries(UserNavigationWriterPerfTest
+  PRIVATE PkgConfig::Jemalloc UserNavigationProfilePST Generics)
+
+add_pst(CustomWriterTestPST CustomWriterTest.pst ${CMAKE_CURRENT_BINARY_DIR})
+add_executable(PlainCustomWriterTest PlainCustomWriterTest.cpp)
+target_link_libraries(PlainCustomWriterTest PRIVATE CustomWriterTestPST Generics)

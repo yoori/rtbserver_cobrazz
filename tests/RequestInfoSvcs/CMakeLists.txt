@@ -1,3 +1,4 @@
 add_subdirectory(UserNavigationContainerTest)
+add_subdirectory(UserNavigationWriterPerfTest)
 add_subdirectory(PostClickActionValueTest)
 add_subdirectory(UrlInfoStorageTest)

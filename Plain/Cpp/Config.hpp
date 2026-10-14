@@ -9,6 +9,8 @@ namespace Cpp
   const char FIXED_BUFFER_PREFIX[] = "fixed_buf_";
 
   const char INCLUDE_LIST[] =
+    "#include <array>\n"
+    "#include <Plain/CustomWriter.hpp>\n"
     "#include <string>\n"
     "#include <utility>\n"
     "#include <Plain/Base.hpp>\n"

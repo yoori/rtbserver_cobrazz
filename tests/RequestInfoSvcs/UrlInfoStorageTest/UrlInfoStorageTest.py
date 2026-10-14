@@ -122,11 +122,12 @@ def generate_config(work, grpc_port, http_port):
   return config
 
 
-def test_http(port):
-  get_path = "/get_url_profile"
-  set_path = "/set_url_profile"
-  require(http(port, get_path, {"url": "https://grpc.test/profile"}) ==
-    (200, {"text": 'Привет\n"text"\\'}), "gRPC profile is not visible through HTTP")
+def test_http(port, kind="profile"):
+  get_path = "/get_url_" + kind
+  set_path = "/set_url_" + kind
+  if kind == "profile":
+    require(http(port, get_path, {"url": "https://grpc.test/profile"}) ==
+      (200, {"text": 'Привет\n"text"\\'}), "gRPC profile is not visible through HTTP")
   require(http(port, get_path, [{"url": "https://missing.test/"},
     {"url": "https://grpc.test/empty"}]) == (200, [{"text": ""}, {"text": ""}]),
     "HTTP missing/empty profile mismatch")
@@ -156,7 +157,7 @@ def test_http(port):
   with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
     list(executor.map(roundtrip, range(32)))
 
-  cas_path = "/compare_exchange_url_profile"
+  cas_path = "/compare_exchange_url_" + kind
   require(http(port, cas_path, {"url": "cas", "expected": "", "text": "start"}) ==
     (200, {"updated": True}), "CAS insert failed")
   require(http(port, cas_path, {"url": "cas", "expected": "", "text": "stale"}) ==
@@ -213,6 +214,13 @@ def test(config_only=False):
           if iteration == 0:
             print(run([BIN / "UrlInfoStorageGrpcTest", endpoint, "test"]).stdout, end="")
             test_http(http_port)
+            test_http(http_port, "description")
+            require(http(http_port, "/set_url_description",
+              {"url": "same", "text": "site report"}) == (200, {}), "description write failed")
+          require(http(http_port, "/get_url_description", {"url": "same"}) ==
+            (200, {"text": "site report"}), "description lost on restart")
+          require(http(http_port, "/get_url_profile", {"url": "same"}) ==
+            (200, {"text": "last"}), "description overwrote categories")
           print(run([BIN / "UrlInfoStorageGrpcTest", endpoint, "persisted"]).stdout, end="")
           process.send_signal(stop_signal)
           require(process.wait(timeout=15) == 0, "service shutdown failed")

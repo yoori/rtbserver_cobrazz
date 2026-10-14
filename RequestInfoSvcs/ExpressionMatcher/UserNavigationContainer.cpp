@@ -12,6 +12,7 @@
 #include <type_traits>
 
 #include <Commons/Coro/SetAwaitable.hpp>
+#include <Commons/PlainMonoAllocatorTypes.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserNavigationProfile.hpp>
 
@@ -22,10 +23,15 @@ namespace AdServer::RequestInfoSvcs
     const Generics::Time NAVIGATION_HISTORY_PERIOD = Generics::Time::ONE_DAY * 30;
     constexpr std::uint64_t SECONDS_IN_DAY = 86400;
 
+    using WritingTypes = Commons::PlainMonoAllocatorTypes;
+    using UserNavigationCustomWriter = UserNavigationProfileCustomWriter<WritingTypes>;
+    using CustomNavigationDayWriter = NavigationDayCustomWriter<WritingTypes>;
+    using CustomNavigationWriter = NavigationCustomWriter<WritingTypes>;
+
     template<typename Entry>
     auto& navigation_value(Entry& entry) noexcept
     {
-      if constexpr (std::is_same_v<std::remove_cv_t<Entry>, NavigationWriter>)
+      if constexpr (std::is_same_v<std::remove_cv_t<Entry>, CustomNavigationWriter>)
       {
         return entry.url();
       }
@@ -35,13 +41,12 @@ namespace AdServer::RequestInfoSvcs
       }
     }
 
-    std::size_t day_size(const NavigationDayWriter& day) noexcept
+    std::size_t day_size(const CustomNavigationDayWriter& day) noexcept
     {
       return day.navigations().size() + day.page_keywords().size();
     }
 
-    std::size_t
-    navigation_count(const UserNavigationProfileWriter::days_Container& days) noexcept
+    std::size_t navigation_count(const UserNavigationCustomWriter::days_Container& days) noexcept
     {
       std::size_t result = 0;
       for (const auto& day : days)
@@ -51,10 +56,8 @@ namespace AdServer::RequestInfoSvcs
       return result;
     }
 
-    void
-    erase_oldest_navigations(
-      UserNavigationProfileWriter::days_Container& days,
-      std::size_t erase_count)
+    void erase_oldest_navigations(
+      UserNavigationCustomWriter::days_Container& days, std::size_t erase_count)
     {
       auto first_day = days.begin();
       while (first_day != days.end() && erase_count >= day_size(*first_day))
@@ -74,7 +77,8 @@ namespace AdServer::RequestInfoSvcs
         {
           if (keyword_count == keywords.size() ||
             (url_count < navigations.size() &&
-              navigations[url_count].url() < keywords[keyword_count].keyword()))
+              std::string_view(navigations[url_count].url()) <
+              std::string_view(keywords[keyword_count].keyword())))
           {
             ++url_count;
           }
@@ -97,19 +101,21 @@ namespace AdServer::RequestInfoSvcs
     template<typename Entries>
     void merge_navigations(Entries& target, Entries& source)
     {
-      Entries merged;
+      Entries merged(target.context());
       merged.reserve(target.size() + source.size());
 
       auto target_it = target.begin();
       auto source_it = source.begin();
       while (target_it != target.end() && source_it != source.end())
       {
-        if (navigation_value(*target_it) < navigation_value(*source_it))
+        if (std::string_view(navigation_value(*target_it)) <
+          std::string_view(navigation_value(*source_it)))
         {
           merged.push_back(std::move(*target_it));
           ++target_it;
         }
-        else if (navigation_value(*source_it) < navigation_value(*target_it))
+        else if (std::string_view(navigation_value(*source_it)) <
+          std::string_view(navigation_value(*target_it)))
         {
           merged.push_back(std::move(*source_it));
           ++source_it;
@@ -134,10 +140,9 @@ namespace AdServer::RequestInfoSvcs
       target = std::move(merged);
     }
 
-    void
-    merge_days(
-      UserNavigationProfileWriter::days_Container& target,
-      UserNavigationProfileWriter::days_Container& source)
+    void merge_days(
+      UserNavigationCustomWriter::days_Container& target,
+      UserNavigationCustomWriter::days_Container& source)
     {
       if (!source.empty() && (target.empty() || target.back().date() < source.front().date()))
       {
@@ -154,7 +159,7 @@ namespace AdServer::RequestInfoSvcs
           target.begin(),
           target.end(),
           source_day.date(),
-          [](const NavigationDayWriter& day, std::uint32_t date) noexcept
+          [](const CustomNavigationDayWriter& day, std::uint32_t date) noexcept
           {
             return day.date() < date;
           });
@@ -183,17 +188,17 @@ namespace AdServer::RequestInfoSvcs
         }
         const auto entry = std::lower_bound(
           entries.begin(), entries.end(), value,
-          [](const auto& left, std::string_view right) noexcept
+          [](const auto& left, std::string_view right)
           {
             return std::string_view(navigation_value(left)) < right;
           });
-        if (entry != entries.end() && navigation_value(*entry) == value)
+        if (entry != entries.end() && std::string_view(navigation_value(*entry)) == value)
         {
           entry->count() = add_saturated(entry->count(), 1);
         }
         else
         {
-          typename Entries::value_type new_entry;
+          typename Entries::value_type new_entry(entries.context());
           navigation_value(new_entry).assign(value.data(), value.size());
           new_entry.count() = 1;
           entries.insert(entry, std::move(new_entry));
@@ -425,7 +430,8 @@ namespace AdServer::RequestInfoSvcs
       Generics::transfer_membuf(legacy_profile);
     const Generics::ConstSmartMemBuf_var adapted_profile =
       UserNavigationProfileAdapter()(legacy_const_profile.in());
-    UserNavigationProfileWriter legacy_writer;
+    WritingTypes::Context context;
+    UserNavigationCustomWriter legacy_writer(context);
     legacy_writer.init(adapted_profile->membuf().data(), adapted_profile->membuf().size());
 
     const Generics::Time now = Generics::Time::get_time_of_day();
@@ -436,7 +442,7 @@ namespace AdServer::RequestInfoSvcs
       legacy_days.begin(),
       legacy_days.end(),
       oldest_date,
-      [](const NavigationDayWriter& day, std::uint32_t date) noexcept
+      [](const CustomNavigationDayWriter& day, std::uint32_t date) noexcept
       {
         return day.date() < date;
       });
@@ -446,7 +452,7 @@ namespace AdServer::RequestInfoSvcs
     while (day != legacy_days.end())
     {
       const std::uint32_t period_id = navigation_period_id_(day->date());
-      UserNavigationProfileWriter part_writer;
+      UserNavigationCustomWriter part_writer(context);
       part_writer.version() = CURRENT_USER_NAVIGATION_PROFILE_VERSION;
       auto& part_days = part_writer.days();
       do
@@ -459,7 +465,7 @@ namespace AdServer::RequestInfoSvcs
       UserNavigationMap::Transaction_var transaction =
         co_await user_map_->co_get_transaction(UserNavigationKey(user_id, period_id));
       Generics::ConstSmartMemBuf_var profile = co_await transaction->co_get_profile();
-      UserNavigationProfileWriter profile_writer;
+      UserNavigationCustomWriter profile_writer(context);
       if (profile.in())
       {
         profile = UserNavigationProfileAdapter()(profile.in());
@@ -508,6 +514,7 @@ namespace AdServer::RequestInfoSvcs
     try
     {
       const std::size_t periods_count = last_period_id - first_period_id + 1;
+      // Keep every adapted buffer alive while the merged Writer borrows its strings.
       std::vector<Generics::ConstSmartMemBuf_var> profiles(periods_count + 1);
       std::vector<AdServer::Commons::StartableAwaitable<void>> operations;
       operations.reserve(profiles.size());
@@ -524,7 +531,8 @@ namespace AdServer::RequestInfoSvcs
       co_await AdServer::Commons::SetAwaitable(std::move(operations));
 
       bool profile_found = false;
-      UserNavigationProfileWriter profile_writer;
+      WritingTypes::Context context;
+      UserNavigationCustomWriter profile_writer(context);
       profile_writer.version() = CURRENT_USER_NAVIGATION_PROFILE_VERSION;
       for (auto& profile : profiles)
       {
@@ -536,7 +544,7 @@ namespace AdServer::RequestInfoSvcs
         profile_found = true;
         profile = UserNavigationProfileAdapter()(profile.in());
 
-        UserNavigationProfileWriter part_writer;
+        UserNavigationCustomWriter part_writer(context);
         part_writer.init(profile->membuf().data(), profile->membuf().size());
         merge_days(profile_writer.days(), part_writer.days());
       }
@@ -556,7 +564,7 @@ namespace AdServer::RequestInfoSvcs
         days.begin(),
         days.end(),
         oldest_date,
-        [](const NavigationDayWriter& day, std::uint32_t actual_date) noexcept
+        [](const CustomNavigationDayWriter& day, std::uint32_t actual_date) noexcept
         {
           return day.date() < actual_date;
         });
@@ -574,7 +582,7 @@ namespace AdServer::RequestInfoSvcs
           days.begin(),
           days.end(),
           *date,
-          [](std::uint32_t requested_date, const NavigationDayWriter& day) noexcept
+          [](std::uint32_t requested_date, const CustomNavigationDayWriter& day) noexcept
           {
             return requested_date < day.date();
           });
@@ -663,7 +671,8 @@ namespace AdServer::RequestInfoSvcs
         throw Exception(ostr);
       }
 
-      UserNavigationProfileWriter profile_writer;
+      WritingTypes::Context context;
+      UserNavigationCustomWriter profile_writer(context);
       if (mem_buf.in())
       {
         mem_buf = UserNavigationProfileAdapter()(mem_buf.in());
@@ -679,7 +688,7 @@ namespace AdServer::RequestInfoSvcs
         days.begin(),
         days.end(),
         oldest_date,
-        [](const NavigationDayWriter& day, std::uint32_t date) noexcept
+        [](const CustomNavigationDayWriter& day, std::uint32_t date) noexcept
         {
           return day.date() < date;
         });
@@ -690,7 +699,7 @@ namespace AdServer::RequestInfoSvcs
       auto day = days.end();
       if (days.empty() || days.back().date() < request_date)
       {
-        NavigationDayWriter new_day;
+        CustomNavigationDayWriter new_day(context);
         new_day.date() = request_date;
         days.push_back(std::move(new_day));
         day = std::prev(days.end());
@@ -705,14 +714,14 @@ namespace AdServer::RequestInfoSvcs
           days.begin(),
           days.end(),
           request_date,
-          [](const NavigationDayWriter& left, std::uint32_t right) noexcept
+          [](const CustomNavigationDayWriter& left, std::uint32_t right) noexcept
           {
             return left.date() < right;
           });
 
         if (day == days.end() || day->date() != request_date)
         {
-          NavigationDayWriter new_day;
+          CustomNavigationDayWriter new_day(context);
           new_day.date() = request_date;
           day = days.insert(day, std::move(new_day));
         }

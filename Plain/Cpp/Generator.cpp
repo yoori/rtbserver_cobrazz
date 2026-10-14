@@ -1,4 +1,5 @@
 #include "Config.hpp"
+#include "CustomWriterGenerator.hpp"
 #include "DescriptorGenerator.hpp"
 #include "ReaderGenerator.hpp"
 #include "WriterGenerator.hpp"
@@ -124,6 +125,7 @@ namespace Cpp
       assert(struct_descriptor.in());
 
       DescriptorGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(struct_descriptor);
+      CustomWriterGenerator(out_, offset_.c_str()).generate(struct_descriptor);
     }
     else
     {
@@ -146,6 +148,7 @@ namespace Cpp
         assert(struct_writer.in());
 
         WriterGenerator(out_, out_cpp_, offset_.c_str()).generate_decl(struct_writer);
+        CustomWriterGenerator(out_, offset_.c_str()).generate(struct_writer);
       }
     }
   }
