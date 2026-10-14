@@ -994,7 +994,7 @@ namespace AdServer::Grpc
       auto* item = write_batch->add_items();
       item->set_request_id(current_request_id);
       item->set_full_method(pending.request->full_method);
-      item->set_payload(pending.request->payload);
+      item->set_payload(std::move(pending.request->payload));
 
       accepted_requests.emplace_back(std::move(pending));
     }
