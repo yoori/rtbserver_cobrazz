@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     auto logger = Config::LoggerConfigReader::create(config.Logger(), argv[0]);
     AdServer::Commons::PidFileGuard pid_file(std::string(config.pid_file()));
     UrlInfoStorage_var storage = new UrlInfoStorage(
-      config.storage_path(), config.rocksdb_workers(), config.rocksdb_batch_size());
+      logger, config.storage_path(), config.rocksdb_workers(), config.rocksdb_batch_size());
     auto stop_storage = AdServer::Commons::make_scope_guard([&storage]()
     {
       storage->deactivate_object();

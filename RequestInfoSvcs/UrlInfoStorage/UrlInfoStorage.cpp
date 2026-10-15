@@ -2,12 +2,16 @@
 
 #include <filesystem>
 #include <stdexcept>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/Coro/CallbackAwaiter.hpp>
 
 namespace AdServer::RequestInfoSvcs
 {
   UrlInfoStorage::UrlInfoStorage(
-    const std::string& path, unsigned long workers, unsigned long batch_size)
+    Logging::Logger* logger, const std::string& path, unsigned long workers,
+    unsigned long batch_size)
+    : Generics::RefCountableCompositeActiveObject(true),
+      logger_(ReferenceCounting::add_ref(logger))
   {
     if (path.empty() || workers == 0 || batch_size == 0)
     {
@@ -21,9 +25,46 @@ namespace AdServer::RequestInfoSvcs
     std::filesystem::create_directories(descriptions_path);
     descriptions_ = new ProfileMap(descriptions_path, Generics::Time::ZERO, workers, batch_size);
     add_child_object(descriptions_);
+    Generics::ActiveObjectCallback_var callback =
+      new Logging::ActiveObjectCallbackImpl(logger_, "UrlInfoStorage", "UrlInfoStorage");
+    count_executor_ = std::make_shared<Commons::ExecutorPool>(
+      callback, 1, Commons::ExecutorPool::ResumeStrategy::CurrentContext, "url-count");
+    add_child_object(count_executor_);
+    // Drain queued and running counts before stopping their executor and the profile maps.
+    count_gate_ = std::make_shared<Commons::ActivityGate>();
+    add_child_object(count_gate_);
   }
 
   UrlInfoStorage::~UrlInfoStorage() noexcept = default;
+
+  Commons::StartableAwaitable<std::uint64_t> UrlInfoStorage::get_url_profile_count() const
+  {
+    return count_(*profiles_);
+  }
+
+  Commons::StartableAwaitable<std::uint64_t> UrlInfoStorage::get_url_description_count() const
+  {
+    return count_(*descriptions_);
+  }
+
+  Commons::StartableAwaitable<std::uint64_t> UrlInfoStorage::count_(ProfileMap& map) const
+  {
+    auto activity = count_gate_->enter();
+    if (!activity)
+    {
+      throw std::runtime_error("UrlInfoStorage is stopping");
+    }
+
+    co_await Commons::ExecutorPool::yield(count_executor_);
+    std::uint64_t count = 0;
+    // size() is only a RocksDB estimate; an iterator counts distinct keys in its snapshot.
+    map.process_keys_from(std::nullopt, [&count](const std::string&)
+    {
+      ++count;
+      return true;
+    });
+    co_return count;
+  }
 
   Commons::StartableAwaitable<std::string> UrlInfoStorage::get_url_profile(std::string url) const
   {

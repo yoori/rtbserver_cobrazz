@@ -272,7 +272,8 @@ namespace AdServer::ChannelSvcs
           }
           else if (!(item.flags & TriggerMatchItem::TMI_NEGATIVE))
           {
-            item.trigger_ids[type].push_back(match_it->channel_trigger_id);
+            item.trigger_ids[type].insert(match_it->channel_trigger_id);
+            // Weights and counters track hits, including repeated hits of the same trigger.
             ++count_new_ids;
             if (channel->match(Channel::CT_WEIGHT) && channel->weight_[type] > 0)
             {

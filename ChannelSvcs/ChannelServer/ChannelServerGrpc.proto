@@ -27,11 +27,12 @@ message ChannelAtom {
 }
 
 message TriggerMatchResult {
+  // Each ChannelAtom sequence is sorted and unique by (id, trigger_channel_id).
   repeated ChannelAtom page_channels = 1;
   repeated ChannelAtom search_channels = 2;
   repeated ChannelAtom url_channels = 3;
   repeated ChannelAtom url_keyword_channels = 4;
-  repeated uint64 uid_channels = 5;
+  repeated uint64 uid_channels = 5; // Sorted and unique by channel ID.
 }
 
 message ContentChannelAtom {

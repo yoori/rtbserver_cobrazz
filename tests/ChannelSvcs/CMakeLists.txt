@@ -1,5 +1,10 @@
 add_subdirectory(ChannelContainerPerfTest)
 
+add_executable(ChannelMatchMergeTest ChannelMatchMergeTest.cpp)
+target_link_libraries(ChannelMatchMergeTest
+  PRIVATE ChannelGrpcClient ChannelServerGrpcClient ChannelContainer ChannelCommons
+    BLogic Generics Logger HTTP)
+
 add_executable(DictionaryProviderGrpcTest DictionaryProviderGrpcTest.cpp)
 target_link_libraries(DictionaryProviderGrpcTest PRIVATE DictionaryProviderImpl ChannelContainer)
 

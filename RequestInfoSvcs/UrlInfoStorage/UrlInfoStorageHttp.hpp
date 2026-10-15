@@ -5,6 +5,8 @@
 
 namespace AdServer::RequestInfoSvcs
 {
+  // GET /get_url_profile_count and /get_url_description_count -> {"count":N}.
+  // Counts scan a RocksDB snapshot, including empty values, and take O(number of keys).
   // POST /get_url_profile: {"url":"..."} -> {"text":"..."}.
   // POST /set_url_profile: {"url":"...","text":"..."} -> {}.
   // A JSON array invokes a batch, returning an array in request order (HTTP 200).

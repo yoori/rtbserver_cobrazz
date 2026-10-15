@@ -368,11 +368,9 @@ namespace AdServer::ChannelSvcs
       TMI_UID = 0x02
     };
 
-    explicit TriggerMatchItem(Generics::MonoAllocatorArena& arena) noexcept
-      : TriggerMatchItem(arena, std::make_index_sequence<CT_MAX>())
-    {}
+    explicit TriggerMatchItem(Generics::MonoAllocatorArena& arena) noexcept;
 
-    using value_type = Generics::MonoVector<IdType>;
+    using value_type = Generics::MonoSet<IdType>;
 
     unsigned int flags = 0;
     unsigned int weight = 0;
@@ -380,10 +378,18 @@ namespace AdServer::ChannelSvcs
 
   private:
     template<std::size_t... Indexes>
-    TriggerMatchItem(Generics::MonoAllocatorArena& arena, std::index_sequence<Indexes...>) noexcept
-      : trigger_ids{(static_cast<void>(Indexes), value_type(&arena))...}
-    {}
+    TriggerMatchItem(Generics::MonoAllocatorArena& arena, std::index_sequence<Indexes...>) noexcept;
   };
+
+  inline TriggerMatchItem::TriggerMatchItem(Generics::MonoAllocatorArena& arena) noexcept
+    : TriggerMatchItem(arena, std::make_index_sequence<CT_MAX>())
+  {}
+
+  template<std::size_t... Indexes>
+  TriggerMatchItem::TriggerMatchItem(
+    Generics::MonoAllocatorArena& arena, std::index_sequence<Indexes...>) noexcept
+    : trigger_ids{(static_cast<void>(Indexes), value_type(&arena))...}
+  {}
 
   using TriggerMatchData = Generics::MonoMap<unsigned int, TriggerMatchItem>;
 
@@ -392,7 +398,7 @@ namespace AdServer::ChannelSvcs
     Generics::MonoAllocatorFixedArena<4096> storage;
   };
 
-  // The arena must outlive the map and its nested vectors.
+  // The arena must outlive the map and its nested sets.
   class TriggerMatchRes:
     private TriggerMatchArena,
     public TriggerMatchData

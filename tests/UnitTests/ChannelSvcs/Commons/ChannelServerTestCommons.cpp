@@ -144,9 +144,9 @@ namespace AdServer::UnitTests
       const ChannelSvcs::TriggerMatchItem& item = it->second;
       for (size_t j = 0; j < ChannelSvcs::CT_MAX; j++)
       {
-        for (size_t k = 0; k < item.trigger_ids[j].size(); k++)
+        for (const auto trigger_id : item.trigger_ids[j])
         {
-          out << " " << item.trigger_ids[j][k];
+          out << " " << trigger_id;
         }
       }
     }

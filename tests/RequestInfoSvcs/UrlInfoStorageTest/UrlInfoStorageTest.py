@@ -179,6 +179,57 @@ def test_http(port, kind="profile"):
     results[3]["status"] == 400, "CAS batch contract failed")
 
 
+def read_counts(port):
+  counts = {}
+  for kind in ("profile", "description"):
+    status, result = http(port, "/get_url_" + kind + "_count", "", method="GET", raw=True)
+    require(status == 200 and set(result) == {"count"}, "invalid count response")
+    require(type(result["count"]) is int and result["count"] >= 0, "invalid count value")
+    counts[kind] = result["count"]
+  return counts
+
+
+def test_counts(port):
+  expected = read_counts(port)
+  for kind in ("profile", "description"):
+    path = "/get_url_" + kind + "_count"
+    for method in ("POST", "PUT", "DELETE"):
+      require(http(port, path, {}, method=method)[0] == 405, "count accepted invalid method")
+    set_path = "/set_url_" + kind
+    get_path = "/get_url_" + kind
+    cas_path = "/compare_exchange_url_" + kind
+    require(http(port, get_path, {"url": "count-missing"}) == (200, {"text": ""}),
+      "missing count test key found")
+    require(http(port, set_path, [
+      {"url": "count-overwrite", "text": "first"},
+      {"url": "count-overwrite", "text": "second"},
+      {"url": "count-empty", "text": ""}]) == (200, [{}, {}, {}]), "count test writes failed")
+    expected[kind] += 2
+    require(read_counts(port) == expected, "count must include distinct keys and empty values")
+    require(http(port, cas_path,
+      {"url": "count-cas", "expected": "missing", "text": "rejected"}) ==
+      (200, {"updated": False}), "failed CAS unexpectedly inserted a key")
+    require(read_counts(port) == expected, "failed CAS or missing read changed count")
+    require(http(port, cas_path, [
+      {"url": "count-cas", "expected": "", "text": "created"},
+      {"url": "count-cas", "expected": "created", "text": "updated"}]) ==
+      (200, [{"updated": True}, {"updated": True}]), "count test CAS failed")
+    expected[kind] += 1
+
+    def write(index):
+      require(http(port, set_path, [
+        {"url": "count-shared", "text": str(index)},
+        {"url": "count-concurrent/" + str(index), "text": ""}]) == (200, [{}, {}]),
+        "concurrent count test write failed")
+      counts = read_counts(port)
+      require(counts[kind] >= expected[kind], "count lost committed keys during writes")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+      list(executor.map(write, range(16)))
+    expected[kind] += 17
+    require(read_counts(port) == expected, "concurrent writes or other map changed count")
+
+
 def test(config_only=False):
   with tempfile.TemporaryDirectory(prefix="url-info-storage-") as directory:
     work = Path(directory)
@@ -192,6 +243,7 @@ def test(config_only=False):
     (work / "run").mkdir()
     (work / "log/UrlInfoStorage").mkdir(parents=True)
     endpoint = "127.0.0.1:{}".format(grpc_port)
+    expected_counts = {"profile": 0, "description": 0}
     for iteration, stop_signal in enumerate((signal.SIGTERM, signal.SIGINT)):
       with (work / "process.out").open("w") as output:
         process = subprocess.Popen([str(BIN / "UrlInfoStorage"), str(config)],
@@ -209,6 +261,8 @@ def test(config_only=False):
             time.sleep(0.05)
           pidfile = work / "run/UrlInfoStorage.pid"
           require(pidfile.exists(), "pidfile missing")
+          require(read_counts(http_port) == expected_counts,
+            "empty/reopened storage count mismatch")
           duplicate = run([BIN / "UrlInfoStorage", config], check=False)
           require(duplicate.returncode != 0, "duplicate process accepted")
           if iteration == 0:
@@ -217,6 +271,8 @@ def test(config_only=False):
             test_http(http_port, "description")
             require(http(http_port, "/set_url_description",
               {"url": "same", "text": "site report"}) == (200, {}), "description write failed")
+            test_counts(http_port)
+            expected_counts = read_counts(http_port)
           require(http(http_port, "/get_url_description", {"url": "same"}) ==
             (200, {"text": "site report"}), "description lost on restart")
           require(http(http_port, "/get_url_profile", {"url": "same"}) ==

@@ -122,6 +122,36 @@ namespace AdServer::RequestInfoSvcs
     }
 
     Commons::StartableAwaitable<HttpServer::Response>
+    handle_count(UrlInfoStorage_var storage, HttpServer::Request request, bool description)
+    {
+      if (request.method != "GET")
+      {
+        co_return HttpServer::Response{405, "application/json",
+          to_json(error_value(405, "GET required"))};
+      }
+
+      try
+      {
+        std::uint64_t count;
+        if (description)
+        {
+          count = co_await storage->get_url_description_count();
+        }
+        else
+        {
+          count = co_await storage->get_url_profile_count();
+        }
+        co_return HttpServer::Response{200, "application/json",
+          "{\"count\":" + std::to_string(count) + "}"};
+      }
+      catch (const std::exception& error)
+      {
+        co_return HttpServer::Response{500, "application/json",
+          to_json(error_value(500, error.what()))};
+      }
+    }
+
+    Commons::StartableAwaitable<HttpServer::Response>
     handle_request(UrlInfoStorage_var storage, HttpServer::Request request, int operation,
       bool description = false)
     {
@@ -164,6 +194,14 @@ namespace AdServer::RequestInfoSvcs
   void add_url_info_storage_http_handlers(HttpServer& server, UrlInfoStorage* storage)
   {
     UrlInfoStorage_var holder = ReferenceCounting::add_ref(storage);
+    server.add_handler("/get_url_profile_count", [holder](HttpServer::Request request)
+    {
+      return handle_count(holder, std::move(request), false);
+    });
+    server.add_handler("/get_url_description_count", [holder](HttpServer::Request request)
+    {
+      return handle_count(holder, std::move(request), true);
+    });
     server.add_handler("/get_url_profile", [holder](HttpServer::Request request)
       {
         return handle_request(holder, std::move(request), false);

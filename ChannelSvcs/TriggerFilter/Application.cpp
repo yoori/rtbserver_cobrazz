@@ -247,10 +247,10 @@ namespace AdServer
           }
           else
           {
-            if (data.trigger_ids[ChannelSvcs::CT_PAGE].front() != it->first)
+            if (*data.trigger_ids[ChannelSvcs::CT_PAGE].begin() != it->first)
             {
               std::cerr << "Expect matching '" << it->second << "', got '"
-                << triggers_[data.trigger_ids[ChannelSvcs::CT_PAGE].front()] << "'" << std::endl;
+                << triggers_[*data.trigger_ids[ChannelSvcs::CT_PAGE].begin()] << "'" << std::endl;
             }
             ++it;
           }

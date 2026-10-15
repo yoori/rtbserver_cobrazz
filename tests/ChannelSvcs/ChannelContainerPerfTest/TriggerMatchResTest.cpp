@@ -18,7 +18,7 @@ int main()
       assert(count == 0);
     }
 
-    // Exceed the inline arena and grow each nested vector several times.
+    // Exceed the inline arena to exercise release and reuse with nested sets.
     for (unsigned int id = 1; id <= 1000; ++id)
     {
       auto& item = result[id];
@@ -31,7 +31,8 @@ int main()
         assert(ids.get_allocator().arena() == result.get_allocator().arena());
         for (unsigned int trigger = 0; trigger < 32; ++trigger)
         {
-          ids.push_back(id * 100 + trigger);
+          ids.insert(id * 100 + 31 - trigger);
+          ids.insert(id * 100 + 31 - trigger);
           ++result.count_channels[type];
         }
       }
@@ -45,9 +46,10 @@ int main()
       for (const auto& ids : item.trigger_ids)
       {
         assert(ids.size() == 32);
-        for (unsigned int trigger = 0; trigger < 32; ++trigger)
+        unsigned int trigger = 0;
+        for (const auto trigger_id : ids)
         {
-          assert(ids[trigger] == id * 100 + trigger);
+          assert(trigger_id == id * 100 + trigger++);
         }
       }
     }
@@ -55,9 +57,9 @@ int main()
     result.clear();
   }
 
-  result[7].trigger_ids[CS::CT_URL].push_back(17);
-  other[7].trigger_ids[CS::CT_URL].push_back(27);
+  result[7].trigger_ids[CS::CT_URL].insert(17);
+  other[7].trigger_ids[CS::CT_URL].insert(27);
   result.clear();
-  assert(other[7].trigger_ids[CS::CT_URL].front() == 27);
+  assert(*other[7].trigger_ids[CS::CT_URL].begin() == 27);
   std::cout << "TriggerMatchResTest passed\n";
 }

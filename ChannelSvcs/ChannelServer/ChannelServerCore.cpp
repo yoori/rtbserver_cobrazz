@@ -1311,9 +1311,9 @@ namespace AdServer::ChannelSvcs
     const TriggerMatchItem::value_type& in,
     std::vector<ChannelServerCore::ChannelAtom>& out)
   {
-    for (size_t i = 0; i < in.size(); ++i)
+    for (const auto trigger_id : in)
     {
-      out.push_back({channel_id, in[i]});
+      out.push_back({channel_id, trigger_id});
     }
   }
 

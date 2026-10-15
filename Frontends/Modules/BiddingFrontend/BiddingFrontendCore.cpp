@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <set>
 #include <utility>
 
 #include <google/protobuf/arena.h>
@@ -598,34 +597,6 @@ namespace AdServer::Bidding
       stage->started_at = now - request_started_at;
       return &*stage;
     }
-
-    struct ChannelMatch
-    {
-      ChannelMatch(unsigned long channel_id_val, unsigned long channel_trigger_id_val)
-        : channel_id(channel_id_val),
-          channel_trigger_id(channel_trigger_id_val)
-      {}
-
-      bool operator<(const ChannelMatch& right) const
-      {
-        return
-          (channel_id < right.channel_id ||
-           (channel_id == right.channel_id && channel_trigger_id < right.channel_trigger_id));
-      }
-
-      unsigned long channel_id;
-      unsigned long channel_trigger_id;
-    };
-
-    struct GetChannelTriggerId
-    {
-      ChannelMatch
-      operator() (const adserver::channel_svcs::channel_server::ChannelAtom& atom)
-        noexcept
-      {
-        return ChannelMatch(atom.id(), atom.trigger_channel_id());
-      }
-    };
   }
 
   namespace
@@ -1652,7 +1623,6 @@ namespace AdServer::Bidding
       {
         try
         {
-          typedef std::set<ChannelMatch> ChannelMatchSet;
           google::protobuf::Arena history_match_request_arena;
           auto* history_match_request =
             google::protobuf::Arena::Create<
@@ -1694,47 +1664,25 @@ namespace AdServer::Bidding
           if (trigger_match.result && !trigger_match.failed && !trigger_match.result->no_track())
           {
             const auto& matched_channels = trigger_match.result->matched_channels();
-            ChannelMatchSet page_channels;
-            ChannelMatchSet url_channels;
-            ChannelMatchSet search_channels;
-            ChannelMatchSet url_keyword_channels;
-
-            std::transform(
-              matched_channels.page_channels().begin(),
-              matched_channels.page_channels().end(),
-              std::inserter(page_channels, page_channels.end()),
-              GetChannelTriggerId());
-            std::transform(
-              matched_channels.url_channels().begin(),
-              matched_channels.url_channels().end(),
-              std::inserter(url_channels, url_channels.end()),
-              GetChannelTriggerId());
-            std::transform(
-              matched_channels.search_channels().begin(),
-              matched_channels.search_channels().end(),
-              std::inserter(search_channels, search_channels.end()),
-              GetChannelTriggerId());
-            std::transform(
-              matched_channels.url_keyword_channels().begin(),
-              matched_channels.url_keyword_channels().end(),
-              std::inserter(url_keyword_channels, url_keyword_channels.end()),
-              GetChannelTriggerId());
-
             const auto fill_channel_matches = [](auto* out, const auto& in)
             {
+              out->Reserve(in.size());
               for (const auto& channel_match : in)
               {
                 auto* result = out->Add();
-                result->set_channel_id(channel_match.channel_id);
-                result->set_channel_trigger_id(channel_match.channel_trigger_id);
+                result->set_channel_id(channel_match.id());
+                result->set_channel_trigger_id(channel_match.trigger_channel_id());
               }
             };
-            fill_channel_matches(match_params->mutable_page_channel_ids(), page_channels);
-            fill_channel_matches(match_params->mutable_url_channel_ids(), url_channels);
-            fill_channel_matches(match_params->mutable_search_channel_ids(), search_channels);
+            fill_channel_matches(
+              match_params->mutable_page_channel_ids(), matched_channels.page_channels());
+            fill_channel_matches(
+              match_params->mutable_url_channel_ids(), matched_channels.url_channels());
+            fill_channel_matches(
+              match_params->mutable_search_channel_ids(), matched_channels.search_channels());
             fill_channel_matches(
               match_params->mutable_url_keyword_channel_ids(),
-              url_keyword_channels);
+              matched_channels.url_keyword_channels());
           }
 
           StageCallTimeGuard call_time(history_match_stage);
