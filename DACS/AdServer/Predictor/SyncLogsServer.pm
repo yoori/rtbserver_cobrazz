@@ -15,16 +15,20 @@ sub start
     "mkdir -p \${log_root}/Predictor/CTRConfig && " .
     "mkdir -p \${log_root}/Predictor/VTRConfig && " .
     "mkdir -p \${log_root}/Predictor/ConvConfig && " .
+    "mkdir -p \${log_root}/Predictor/BidCostConfig && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchBid && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchImpression && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostImpression && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostClick && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchPostConvClick && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchClick && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchAction && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchWebStat && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/ResearchProf && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/BidCostStat && " .
     "mkdir -p \${log_root}/Predictor/ResearchLogs/Geo && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/SiteReferrerStats && " .
+    "mkdir -p \${log_root}/Predictor/ResearchLogs/ChannelTriggerStats && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchBid && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchImpression && " .
     "mkdir -p \${log_root}/Predictor/Backup/ResearchClick && " .

@@ -15,6 +15,10 @@ sub start
     "mkdir -p \${workspace_root}/run && " .
     "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Temp && " .
     "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Out && " .
+    "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Out/PostClickAction && " .
+    "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Out/" .
+      "YandexPostClickEstimationStat && " .
+    "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Out/PostClickConvNames && " .
     "mkdir -p \${workspace_root}/log/YandexPostClickImporter/Log && " .
     AdServer::Functions::pidfile_start_guard($pid_file, "YandexPostClickImporter.py") . " && " .
     "{ setsid -f YandexPostClickImporter.py " .

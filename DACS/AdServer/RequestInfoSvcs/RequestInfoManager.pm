@@ -30,6 +30,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickStat_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickConvStat && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/PostClickConvStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostImpStat && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/PostImpStat_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat && " .
@@ -82,6 +84,8 @@ sub start
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchClick_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostClick && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostClick_ && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostConvClick && " .
+    "mkdir -p \${log_root}/RequestInfoManager/Out/ResearchPostConvClick_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/RequestOperation && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/RequestOperation_ && " .
     "mkdir -p \${log_root}/RequestInfoManager/Out/ConsiderAction && " .
