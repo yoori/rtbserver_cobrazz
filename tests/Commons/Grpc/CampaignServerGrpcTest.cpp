@@ -2,6 +2,8 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -17,11 +19,11 @@ namespace rpc = adserver::campaign::server;
 
 namespace
 {
-  void require(bool condition, const char* message)
+  void require(bool condition, std::string_view message)
   {
     if (!condition)
     {
-      throw std::runtime_error(message);
+      throw std::runtime_error(std::string(message));
     }
   }
 
@@ -202,7 +204,7 @@ namespace
     for (int i = 0; i < descriptor->field_count(); ++i)
     {
       const auto* field = descriptor->field(i);
-      const std::string key = descriptor->name() + "." + field->name();
+      const auto key = std::string(descriptor->name()).append(".").append(field->name());
       const bool repeated = field->is_repeated();
       switch (field->cpp_type())
       {
@@ -306,7 +308,7 @@ namespace
         continue;
       }
 
-      const auto name = descriptor->name() + "." + field->name();
+      const auto name = std::string(descriptor->name()).append(".").append(field->name());
       const bool bytes = packed_sizes.count(name);
       const bool character = character_fields.count(name);
       const bool enumeration = field->cpp_type() == Field::CPPTYPE_ENUM;
@@ -341,7 +343,7 @@ namespace
       }
 
       message.CopyFrom(*saved);
-      require(rejected, name.c_str());
+      require(rejected, name);
     }
   }
 
@@ -355,7 +357,7 @@ namespace
     require(native.ParseFromString(source.SerializeAsString()), "Protobuf parsing failed");
     CampaignGrpc::validate(native);
     require(google::protobuf::util::MessageDifferencer::Equals(source, native),
-      source.GetDescriptor()->name().c_str());
+      source.GetDescriptor()->name());
     check_invalid_fields(native, [&native]() { CampaignGrpc::validate(native); });
   }
 
@@ -364,7 +366,7 @@ namespace
   {
     static_assert(std::is_same_v<Native, Proto>, "Campaign API must use protobuf directly");
     require(google::protobuf::util::MessageDifferencer::Equals(fixture<Proto>(), value),
-      value.GetDescriptor()->name().c_str());
+      value.GetDescriptor()->name());
   }
 
   class Source final : public CampaignServerApi
@@ -934,6 +936,8 @@ int main(int argc, char** argv)
     auto second = pool.get_object(0);
     require(second.operator->() == pool.get_object(1).operator->(), "failover");
     second->update_stat();
+    // The RPC can outlive the short recovery interval of the first endpoint.
+    first.release_bad(String::SubString("failed"));
     second.release_bad(String::SubString("failed"));
     bool all_bad = false;
     try

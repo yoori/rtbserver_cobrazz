@@ -1,5 +1,6 @@
 #include "GoogleBidRequestState.hpp"
 
+#include <cstdint>
 #include <string_view>
 
 #include <Commons/GrpcAlgs.hpp>
@@ -21,42 +22,42 @@ namespace AdServer::Bidding
     // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
     namespace Response::Google
     {
-      const ::google::protobuf::int32 CREATIVE_ATTR[] =
+      const std::int32_t CREATIVE_ATTR[] =
       {
         8, // CookieTargeting: IsCookieTargeted
         9, // UserInterestTargeting: IsUserInterestTargeted
       };
 
       // RichMediaCapabilityType: RichMediaCapabilitySSL
-      const ::google::protobuf::int32 CREATIVE_SECURE = 47;
+      const std::int32_t CREATIVE_SECURE = 47;
 
       // Expanding attributes
       //   ExpandingDirection: ExpandingNone
-      const ::google::protobuf::int32 CREATIVE_EXPAND_NONE = 12;
+      const std::int32_t CREATIVE_EXPAND_NONE = 12;
       //   ExpandingDirection: ExpandingUp
-      const ::google::protobuf::int32 CREATIVE_EXPAND_UP = 13;
+      const std::int32_t CREATIVE_EXPAND_UP = 13;
       //   ExpandingDirection: ExpandingDown
-      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN = 14;
+      const std::int32_t CREATIVE_EXPAND_DOWN = 14;
       //   ExpandingDirection: ExpandingLeft
-      const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT = 15;
+      const std::int32_t CREATIVE_EXPAND_LEFT = 15;
       //   ExpandingDirection: ExpandingRight
-      const ::google::protobuf::int32 CREATIVE_EXPAND_RIGHT = 16;
+      const std::int32_t CREATIVE_EXPAND_RIGHT = 16;
       //   ExpandingDirection: ExpandingUpLeft
-      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_LEFT = 17;
+      const std::int32_t CREATIVE_EXPAND_UP_LEFT = 17;
       //   ExpandingDirection: ExpandingUpRight
-      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_RIGHT = 18;
+      const std::int32_t CREATIVE_EXPAND_UP_RIGHT = 18;
       //   ExpandingDirection: ExpandingDownLeft
-      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_LEFT = 19;
+      const std::int32_t CREATIVE_EXPAND_DOWN_LEFT = 19;
       //   ExpandingDirection: ExpandingDownRight
-      const ::google::protobuf::int32 CREATIVE_EXPAND_DOWN_RIGHT = 20;
+      const std::int32_t CREATIVE_EXPAND_DOWN_RIGHT = 20;
       //   ExpandingDirection: ExpandingUpOrDown
-      const ::google::protobuf::int32 CREATIVE_EXPAND_UP_OR_DOWN = 25;
+      const std::int32_t CREATIVE_EXPAND_UP_OR_DOWN = 25;
       //   ExpandingDirection: ExpandingLeftOrRight
-      const ::google::protobuf::int32 CREATIVE_EXPAND_LEFT_OR_RIGHT = 26;
+      const std::int32_t CREATIVE_EXPAND_LEFT_OR_RIGHT = 26;
       //   ExpandingDirection: ExpandingAnyDiagonal
-      const ::google::protobuf::int32 CREATIVE_EXPAND_ANY_DIAGONAL = 27;
+      const std::int32_t CREATIVE_EXPAND_ANY_DIAGONAL = 27;
 
-      const ::google::protobuf::int32 CREATIVE_EXPAND_MAP[] =
+      const std::int32_t CREATIVE_EXPAND_MAP[] =
       {
         // expanding = 0
         CREATIVE_EXPAND_NONE,
@@ -134,7 +135,7 @@ namespace AdServer::Bidding
       {
         for (short i = 1; i <= expanding; ++i)
         {
-          ::google::protobuf::int32 current = Response::Google::CREATIVE_EXPAND_MAP[i];
+          std::int32_t current = Response::Google::CREATIVE_EXPAND_MAP[i];
 
           if ((i & expanding) == i && current != -1)
           {

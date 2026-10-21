@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -441,7 +442,7 @@ namespace
   void
   add_ids(
     const std::vector<unsigned long>& ids,
-    google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+    google::protobuf::RepeatedField<std::uint64_t>* target)
   {
     for (const auto id : ids)
     {
@@ -464,7 +465,7 @@ namespace
   void
   fill_channels(
     const Generics::AppUtils::StringOption& channels,
-    google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+    google::protobuf::RepeatedField<std::uint64_t>* target)
   {
     if (channels.installed())
     {
@@ -977,7 +978,7 @@ namespace
 
   std::string
   decimal_from_ulong_tail(
-    const google::protobuf::RepeatedField<google::protobuf::uint64>& values,
+    const google::protobuf::RepeatedField<std::uint64_t>& values,
     int pos)
   {
     using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;

@@ -6,8 +6,10 @@
 #include "GoogleBidRequestState.hpp"
 #include "OpenRtbBidRequestState.hpp"
 
+#include <cstdint>
 #include <algorithm>
 #include <atomic>
+#include <string_view>
 #include <utility>
 
 #include <google/protobuf/arena.h>
@@ -136,10 +138,19 @@ namespace AdServer::Bidding
       Generics::Time started_at_;
     };
 
+    template<typename MutableField>
+    void set_if_not_empty(std::string_view value, MutableField mutable_field)
+    {
+      if (!value.empty())
+      {
+        mutable_field()->assign(value.data(), value.size());
+      }
+    }
+
     template<typename SourceSeq>
     void pack_ids(
       const SourceSeq& source,
-      google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+      google::protobuf::RepeatedField<std::uint64_t>* target)
     {
       target->Add(source.begin(), source.end());
     }
@@ -158,7 +169,7 @@ namespace AdServer::Bidding
 
     template<typename TargetSeq>
     void unpack_ids(
-      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      const google::protobuf::RepeatedField<std::uint64_t>& source,
       TargetSeq& target)
     {
       target.resize(source.size());
@@ -188,8 +199,8 @@ namespace AdServer::Bidding
       for (std::size_t i = 0; i < source.size(); ++i)
       {
         auto* token = target->Add();
-        token->set_name(source[i].name);
-        token->set_value(source[i].value);
+        set_if_not_empty(source[i].name, [&] { return token->mutable_name(); });
+        set_if_not_empty(source[i].value, [&] { return token->mutable_value(); });
       }
     }
 
@@ -210,54 +221,58 @@ namespace AdServer::Bidding
       target.set_time(GrpcAlgs::pack_time(source.time));
       target.set_request_id(GrpcAlgs::pack_request_id(source.request_id));
       target.set_debug_request_id(GrpcAlgs::pack_request_id(source.debug_request_id));
-      target.set_creative_instantiate_type(source.creative_instantiate_type);
+      set_if_not_empty(
+        source.creative_instantiate_type,
+        [&] { return target.mutable_creative_instantiate_type(); });
       target.set_request_type(source.request_type);
       target.set_random(source.random);
       target.set_test_request(source.test_request);
       target.set_log_as_test(source.log_as_test);
       target.set_colo_id(source.colo_id);
-      target.set_external_user_id(source.external_user_id);
-      target.set_source_id(source.source_id);
+      set_if_not_empty(source.external_user_id, [&] { return target.mutable_external_user_id(); });
+      set_if_not_empty(source.source_id, [&] { return target.mutable_source_id(); });
       target.mutable_location()->Reserve(source.geo_location.size());
       for (std::size_t i = 0; i < source.geo_location.size(); ++i)
       {
         auto* location = target.add_location();
-        location->set_country(source.geo_location[i].country);
-        location->set_region(source.geo_location[i].region);
-        location->set_city(source.geo_location[i].city);
+        set_if_not_empty(
+          source.geo_location[i].country, [&] { return location->mutable_country(); });
+        set_if_not_empty(source.geo_location[i].region, [&] { return location->mutable_region(); });
+        set_if_not_empty(source.geo_location[i].city, [&] { return location->mutable_city(); });
       }
-      target.set_full_referer(source.full_referer);
-      target.set_referer(source.referer);
+      set_if_not_empty(source.full_referer, [&] { return target.mutable_full_referer(); });
+      set_if_not_empty(source.referer, [&] { return target.mutable_referer(); });
       pack_strings(source.urls, target.mutable_urls());
-      target.set_security_token(source.security_token);
-      target.set_pub_impr_track_url(source.pub_impr_track_url);
-      target.set_pub_param(source.pub_param);
-      target.set_preclick_url(source.preclick_url);
-      target.set_click_prefix_url(source.click_prefix_url);
-      target.set_original_url(source.original_url);
+      set_if_not_empty(source.security_token, [&] { return target.mutable_security_token(); });
+      set_if_not_empty(
+        source.pub_impr_track_url, [&] { return target.mutable_pub_impr_track_url(); });
+      set_if_not_empty(source.pub_param, [&] { return target.mutable_pub_param(); });
+      set_if_not_empty(source.preclick_url, [&] { return target.mutable_preclick_url(); });
+      set_if_not_empty(source.click_prefix_url, [&] { return target.mutable_click_prefix_url(); });
+      set_if_not_empty(source.original_url, [&] { return target.mutable_original_url(); });
       target.set_user_status(source.user_status);
-      target.set_peer_ip(source.peer_ip);
-      target.set_user_agent(source.user_agent);
-      target.set_cohort(source.cohort);
+      set_if_not_empty(source.peer_ip, [&] { return target.mutable_peer_ip(); });
+      set_if_not_empty(source.user_agent, [&] { return target.mutable_user_agent(); });
+      set_if_not_empty(source.cohort, [&] { return target.mutable_cohort(); });
       target.set_hpos(source.hpos);
-      target.set_ext_track_params(source.ext_track_params);
+      set_if_not_empty(source.ext_track_params, [&] { return target.mutable_ext_track_params(); });
       pack_tokens(source.tokens, target.mutable_tokens());
       target.set_set_cookie(source.set_cookie);
-      target.set_passback_type(source.passback_type);
-      target.set_passback_url(source.passback_url);
+      set_if_not_empty(source.passback_type, [&] { return target.mutable_passback_type(); });
+      set_if_not_empty(source.passback_url, [&] { return target.mutable_passback_url(); });
     }
 
     void pack_context_ad_request_info(const RequestInfo& source, PB::ContextAdRequestInfo& target)
     {
       target.set_enabled_notice(source.enabled_notice);
-      target.set_client(source.client);
-      target.set_client_version(source.client_version);
+      set_if_not_empty(source.client, [&] { return target.mutable_client(); });
+      set_if_not_empty(source.client_version, [&] { return target.mutable_client_version(); });
       pack_ids(source.platform_ids, target.mutable_platform_ids());
       pack_ids(source.geo_channels, target.mutable_geo_channels());
-      target.set_platform(source.platform);
-      target.set_full_platform(source.full_platform);
-      target.set_web_browser(source.web_browser);
-      target.set_ip_hash(source.ip_hash);
+      set_if_not_empty(source.platform, [&] { return target.mutable_platform(); });
+      set_if_not_empty(source.full_platform, [&] { return target.mutable_full_platform(); });
+      set_if_not_empty(source.web_browser, [&] { return target.mutable_web_browser(); });
+      set_if_not_empty(source.ip_hash, [&] { return target.mutable_ip_hash(); });
       target.set_profile_referer(source.profile_referer);
       target.set_page_load_id(source.page_load_id);
       target.set_full_referer_hash(source.full_referer_hash);
@@ -305,7 +320,7 @@ namespace AdServer::Bidding
       target.set_fill_iurl(source.fill_iurl);
       target.set_ad_instantiate_type(source.ad_instantiate_type);
       target.set_search_engine_id(source.search_engine_id);
-      target.set_search_words(source.search_words);
+      set_if_not_empty(source.search_words, [&] { return target.mutable_search_words(); });
       target.set_page_keywords_present(!source.keywords.empty());
       target.set_preview_ccid(source.preview_ccid);
       target.mutable_ad_slots()->Reserve(source.ad_slots.size());
@@ -314,12 +329,13 @@ namespace AdServer::Bidding
         const auto& src = source.ad_slots[i];
         auto* dst = target.add_ad_slots();
         dst->set_ad_slot_id(src.ad_slot_id);
-        dst->set_format(src.format);
+        set_if_not_empty(src.format, [&] { return dst->mutable_format(); });
         dst->set_tag_id(src.tag_id);
         pack_strings(src.sizes, dst->mutable_sizes());
-        dst->set_ext_tag_id(src.ext_tag_id);
+        set_if_not_empty(src.ext_tag_id, [&] { return dst->mutable_ext_tag_id(); });
         dst->mutable_min_ecpm()->set_value(GrpcAlgs::pack_decimal(src.min_ecpm));
-        dst->set_min_ecpm_currency_code(src.min_ecpm_currency_code);
+        set_if_not_empty(
+          src.min_ecpm_currency_code, [&] { return dst->mutable_min_ecpm_currency_code(); });
         pack_strings(src.currency_codes, dst->mutable_currency_codes());
         dst->set_passback(src.passback);
         dst->set_up_expand_space(src.up_expand_space);
@@ -343,14 +359,14 @@ namespace AdServer::Bidding
         for (std::size_t j = 0; j < src.native_data_tokens.size(); ++j)
         {
           auto* token = dst->add_native_data_tokens();
-          token->set_name(src.native_data_tokens[j].name);
+          set_if_not_empty(src.native_data_tokens[j].name, [&] { return token->mutable_name(); });
           token->set_required(src.native_data_tokens[j].required);
         }
         dst->mutable_native_image_tokens()->Reserve(src.native_image_tokens.size());
         for (std::size_t j = 0; j < src.native_image_tokens.size(); ++j)
         {
           auto* token = dst->add_native_image_tokens();
-          token->set_name(src.native_image_tokens[j].name);
+          set_if_not_empty(src.native_image_tokens[j].name, [&] { return token->mutable_name(); });
           token->set_required(src.native_image_tokens[j].required);
           token->set_width(src.native_image_tokens[j].width);
           token->set_height(src.native_image_tokens[j].height);
@@ -359,8 +375,8 @@ namespace AdServer::Bidding
         dst->set_fill_track_html(src.fill_track_html);
         pack_tokens(src.tokens, dst->mutable_tokens());
       }
-      target.set_page_keywords(source.keywords);
-      target.set_url_keywords(source.url_keywords);
+      set_if_not_empty(source.keywords, [&] { return target.mutable_page_keywords(); });
+      set_if_not_empty(source.url_keywords, [&] { return target.mutable_url_keywords(); });
     }
 
     void unpack_request_creative_result(
@@ -2187,20 +2203,12 @@ namespace AdServer::Bidding
         request_params_pb.set_session_start(history_result->session_start());
 
         request_params_pb.clear_full_freq_caps();
-        request_params_pb.mutable_full_freq_caps()->Reserve(history_result->full_freq_caps_size());
-        for (int i = 0; i < history_result->full_freq_caps_size(); ++i)
-        {
-          request_params_pb.mutable_full_freq_caps()->Add(history_result->full_freq_caps(i));
-        }
+        pack_ids(history_result->full_freq_caps(), request_params_pb.mutable_full_freq_caps());
 
         request_params_pb.clear_exclude_pubpixel_accounts();
-        request_params_pb.mutable_exclude_pubpixel_accounts()->Reserve(
-          history_result->exclude_pubpixel_accounts_size());
-        for (int i = 0; i < history_result->exclude_pubpixel_accounts_size(); ++i)
-        {
-          request_params_pb.mutable_exclude_pubpixel_accounts()->Add(
-            history_result->exclude_pubpixel_accounts(i));
-        }
+        pack_ids(
+          history_result->exclude_pubpixel_accounts(),
+          request_params_pb.mutable_exclude_pubpixel_accounts());
 
         request_params_pb.clear_campaign_freqs();
         request_params_pb.mutable_campaign_freqs()->Reserve(history_result->campaign_freqs_size());
@@ -2258,20 +2266,17 @@ namespace AdServer::Bidding
 
       const int history_channels_size = history_result ? history_result->channels_size() : 0;
       request_params_pb.clear_channels();
-      request_params_pb.mutable_channels()->Reserve(history_channels_size + uid_channels_length);
+      auto* channels = request_params_pb.mutable_channels();
+      channels->Reserve(history_channels_size + uid_channels_length);
 
       for (int i = 0; i < history_channels_size; ++i)
       {
-        request_params_pb.mutable_channels()->Add(history_result->channels(i).channel_id());
+        channels->Add(history_result->channels(i).channel_id());
       }
 
       if (trigger_match_result)
       {
-        const auto& uid_channels = trigger_match_result->matched_channels().uid_channels();
-        for (int i = 0; i < uid_channels.size(); ++i)
-        {
-          request_params_pb.mutable_channels()->Add(uid_channels[i]);
-        }
+        pack_ids(trigger_match_result->matched_channels().uid_channels(), channels);
       }
 
       request_params_pb.clear_trigger_match_result();
@@ -2305,12 +2310,7 @@ namespace AdServer::Bidding
           matched_channels.url_keyword_channels(),
           trigger_match_pb->mutable_ukw_channels());
 
-        auto* trigger_uid_channels = trigger_match_pb->mutable_uid_channels();
-        trigger_uid_channels->Reserve(matched_channels.uid_channels_size());
-        for (int i = 0; i < matched_channels.uid_channels_size(); ++i)
-        {
-          trigger_uid_channels->Add(matched_channels.uid_channels(i));
-        }
+        pack_ids(matched_channels.uid_channels(), trigger_match_pb->mutable_uid_channels());
       }
 
       // Fill CCG keywords

@@ -31,12 +31,14 @@ namespace
     first_item->set_full_method("/test.First");
     first_item->set_payload(std::string(4096, 'a'));
     first.add_items()->set_payload(std::string(1024, 'b'));
+    const auto retained_bytes = first.items().SpaceUsedExcludingSelfLong();
 
     buffer.clear();
     auto& second = buffer.get();
     require(&second == &first, "small batches must reuse their message");
     require(second.ByteSizeLong() == 0, "old batch fields must be cleared");
-    require(second.items().ClearedCount() == 2, "item storage must be retained");
+    require(second.items().SpaceUsedExcludingSelfLong() == retained_bytes,
+      "item storage must be retained");
 
     auto* second_item = second.add_items();
     require(second_item == first_item, "item objects must be reused");
@@ -70,7 +72,8 @@ namespace
 
     buffer.clear();
     auto& next = buffer.get();
-    require(next.items().ClearedCount() == 0, "oversized string capacity must be released");
+    require(next.items().SpaceUsedExcludingSelfLong() == 0,
+      "oversized string capacity must be released");
     require(next.ByteSizeLong() == 0, "reset buffer must be empty");
   }
 
@@ -80,16 +83,19 @@ namespace
     auto& first = buffer.get();
     first.add_items()->set_payload(std::string(6000, 'a'));
     first.add_items()->set_payload(std::string(6000, 'b'));
+    const auto retained_bytes = first.items().SpaceUsedExcludingSelfLong();
     buffer.clear();
 
     auto& second = buffer.get();
-    require(second.items().ClearedCount() == 2, "first batch must fit the retention limit");
+    require(second.items().SpaceUsedExcludingSelfLong() == retained_bytes,
+      "first batch must fit the retention limit");
     second.add_items()->set_payload(std::string(11000, 'c'));
-    require(second.items_size() == 1 && second.items().ClearedCount() == 1,
+    require(second.items_size() == 1 &&
+      second.items().SpaceUsedExcludingSelfLong() >= retained_bytes,
       "test must retain an inactive item from the previous batch");
     buffer.clear();
 
-    require(buffer.get().items().ClearedCount() == 0,
+    require(buffer.get().items().SpaceUsedExcludingSelfLong() == 0,
       "inactive string buffers must count towards the retention limit");
   }
 }

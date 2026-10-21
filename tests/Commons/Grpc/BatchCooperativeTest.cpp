@@ -250,7 +250,7 @@ namespace
 
     Response* create_response() override
     {
-      return google::protobuf::Arena::CreateMessage<Response>(&arena_);
+      return google::protobuf::Arena::Create<Response>(&arena_);
     }
 
     void publish_response(Response* response) noexcept override
@@ -600,7 +600,7 @@ namespace
     }
 
     google::protobuf::Arena arena;
-    auto& response = *google::protobuf::Arena::CreateMessage<Response>(&arena);
+    auto& response = *google::protobuf::Arena::Create<Response>(&arena);
     ServiceBase::BatchProcessingHandle handle;
     std::promise<void> completion;
     auto future = completion.get_future();
@@ -776,7 +776,7 @@ namespace
     for (unsigned i = 0; i < iterations; ++i)
     {
       google::protobuf::Arena arena;
-      auto& response = *google::protobuf::Arena::CreateMessage<Response>(&arena);
+      auto& response = *google::protobuf::Arena::Create<Response>(&arena);
       ServiceBase::BatchProcessingHandle handle;
       std::promise<void> completion;
       const auto start_batch = [&]

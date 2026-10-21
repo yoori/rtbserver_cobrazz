@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <map>
 
+#include <google/protobuf/arena.h>
+
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <Stream/MemoryStream.hpp>
 
@@ -15,24 +17,24 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
 
     void merge_channel_atoms_(
       google::protobuf::RepeatedPtrField<PB::ChannelAtom>* target,
-      const google::protobuf::RepeatedPtrField<PB::ChannelAtom>& source)
+      const google::protobuf::RepeatedPtrField<PB::ChannelAtom>& source,
+      google::protobuf::RepeatedPtrField<PB::ChannelAtom>* merged)
     {
       if (source.empty())
       {
         return;
       }
 
-      google::protobuf::RepeatedPtrField<PB::ChannelAtom> merged(target->GetArena());
-      merged.Reserve(target->size() + source.size());
+      merged->Reserve(target->size() + source.size());
       std::set_union(
         target->begin(), target->end(), source.begin(), source.end(),
-        google::protobuf::RepeatedPtrFieldBackInserter(&merged),
+        google::protobuf::RepeatedPtrFieldBackInserter(merged),
         [](const auto& left, const auto& right)
         {
           return left.id() < right.id() ||
             (left.id() == right.id() && left.trigger_channel_id() < right.trigger_channel_id());
         });
-      target->Swap(&merged);
+      target->Swap(merged);
     }
 
     void throw_channel_exception_(const grpc::Status& status)
@@ -51,23 +53,35 @@ namespace AdServer::ChannelSvcs::GrpcAlgs
     auto* target_channels = target.mutable_matched_channels();
     const auto& source_channels = source.matched_channels();
 
-    merge_channel_atoms_(target_channels->mutable_page_channels(), source_channels.page_channels());
+    // Repeated fields derive their Arena from their owning message in protobuf 36.
+    PB::TriggerMatchResult local;
+    auto* arena = target_channels->GetArena();
+    auto* merged_channels = arena ? google::protobuf::Arena::Create<PB::TriggerMatchResult>(arena) :
+      &local;
+
     merge_channel_atoms_(
-      target_channels->mutable_search_channels(), source_channels.search_channels());
-    merge_channel_atoms_(target_channels->mutable_url_channels(), source_channels.url_channels());
+      target_channels->mutable_page_channels(), source_channels.page_channels(),
+      merged_channels->mutable_page_channels());
     merge_channel_atoms_(
-      target_channels->mutable_url_keyword_channels(), source_channels.url_keyword_channels());
+      target_channels->mutable_search_channels(), source_channels.search_channels(),
+      merged_channels->mutable_search_channels());
+    merge_channel_atoms_(
+      target_channels->mutable_url_channels(), source_channels.url_channels(),
+      merged_channels->mutable_url_channels());
+    merge_channel_atoms_(
+      target_channels->mutable_url_keyword_channels(), source_channels.url_keyword_channels(),
+      merged_channels->mutable_url_keyword_channels());
 
     auto* target_uids = target_channels->mutable_uid_channels();
     const auto& source_uids = source_channels.uid_channels();
     if (!source_uids.empty())
     {
-      google::protobuf::RepeatedField<std::uint64_t> merged(target_uids->GetArena());
-      merged.Reserve(target_uids->size() + source_uids.size());
+      auto* merged = merged_channels->mutable_uid_channels();
+      merged->Reserve(target_uids->size() + source_uids.size());
       std::set_union(
         target_uids->begin(), target_uids->end(), source_uids.begin(), source_uids.end(),
-        google::protobuf::RepeatedFieldBackInserter(&merged));
-      target_uids->Swap(&merged);
+        google::protobuf::RepeatedFieldBackInserter(merged));
+      target_uids->Swap(merged);
     }
 
     std::map<std::uint32_t, std::uint32_t> content_weights;

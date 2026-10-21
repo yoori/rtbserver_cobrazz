@@ -114,6 +114,8 @@ namespace
         std::vector<Pair> actual;
         for (const auto& atom : *fields[type])
         {
+          require(atom.GetArena() == result.GetArena(),
+            "merged channel atoms must use the destination Arena");
           actual.emplace_back(atom.id(), atom.trigger_channel_id());
         }
 
@@ -121,7 +123,9 @@ namespace
           "merge lost pairs, retained duplicates or changed their order");
       }
 
-      const auto& actual_uids = result.matched_channels().uid_channels();
+      auto& actual_uids = *result.mutable_matched_channels()->mutable_uid_channels();
+      require(actual_uids.GetArena() == result.GetArena(),
+        "merged UID channels must use the destination Arena");
       require(std::vector<std::uint64_t>(actual_uids.begin(), actual_uids.end()) ==
         std::vector<std::uint64_t>{1, 3, 7, 9}, "UID channels must be sorted and unique");
       require(result.content_channels_size() == 1 && result.content_channels(0).id() == 42 &&

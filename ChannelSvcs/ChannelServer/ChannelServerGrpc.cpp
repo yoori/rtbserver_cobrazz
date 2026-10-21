@@ -1,6 +1,7 @@
 #include "ChannelServerGrpc.hpp"
 #include "ChannelServerCore.hpp"
 
+#include <cstdint>
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
@@ -167,7 +168,7 @@ namespace AdServer::ChannelSvcs
     }
 
     std::vector<unsigned long>
-    unpack_sources(const google::protobuf::RepeatedField<::google::protobuf::uint64>& source)
+    unpack_sources(const google::protobuf::RepeatedField<std::uint64_t>& source)
     {
       std::vector<unsigned long> result;
       result.reserve(source.size());

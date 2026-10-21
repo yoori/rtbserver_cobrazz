@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <algorithm>
 #include <cassert>
 #include <charconv>
@@ -201,7 +202,7 @@ namespace AdServer::Bidding::Google
   // https://storage.googleapis.com/adx-rtb-dictionaries/
   // publisher-excludable-creative-attributes.txt
   //
-  const google::protobuf::int32 UP_EXPANDING[] =
+  const std::int32_t UP_EXPANDING[] =
   {
     13, // ExpandingDirection: ExpandingUp
     17, // ExpandingDirection: ExpandingUpLeft
@@ -209,7 +210,7 @@ namespace AdServer::Bidding::Google
     25  // ExpandingDirection: ExpandingUpOrDown
   };
 
-  const google::protobuf::int32 DOWN_EXPANDING[] =
+  const std::int32_t DOWN_EXPANDING[] =
   {
     14, // ExpandingDirection: ExpandingDown
     19, // ExpandingDirection: ExpandingDownLeft
@@ -217,7 +218,7 @@ namespace AdServer::Bidding::Google
     25  // ExpandingDirection: ExpandingUpOrDown
   };
 
-  const google::protobuf::int32 LEFT_EXPANDING[] =
+  const std::int32_t LEFT_EXPANDING[] =
   {
     15, // ExpandingDirection: ExpandingLeft
     17, // ExpandingDirection: ExpandingUpLeft
@@ -225,7 +226,7 @@ namespace AdServer::Bidding::Google
     26  // ExpandingDirection: ExpandingLeftOrRight
   };
 
-  const google::protobuf::int32 RIGHT_EXPANDING[] =
+  const std::int32_t RIGHT_EXPANDING[] =
   {
     16,// ExpandingDirection: ExpandingRight
     18,// ExpandingDirection: ExpandingUpRight
@@ -233,23 +234,23 @@ namespace AdServer::Bidding::Google
     26 // ExpandingDirection: ExpandingLeftOrRight
   };
 
-  const google::protobuf::int32 CREATIVE_ATTR[] =
+  const std::int32_t CREATIVE_ATTR[] =
   {
     8, // CookieTargeting: IsCookieTargeted
     9 // UserInterestTargeting: IsUserInterestTargeted
   };
 
   // CreativeType: Html
-  const ::google::protobuf::int32 CREATIVETYPE_HTML  = 21;
+  const std::int32_t CREATIVETYPE_HTML  = 21;
   // CreativeType: VastVideo
-  const ::google::protobuf::int32 CREATIVETYPE_VIDEO = 22;
+  const std::int32_t CREATIVETYPE_VIDEO = 22;
 
   // RichMediaCapabilityType: RichMediaCapabilityFlash
-  const ::google::protobuf::int32 CREATIVETYPE_FLASH = 34;
+  const std::int32_t CREATIVETYPE_FLASH = 34;
   const std::string_view CREATIVETYPE_FLASH_STR("34");
 
   // RichMediaCapabilityType: RichMediaCapabilityNonSSL
-  const ::google::protobuf::int32 NON_SECURE = 48;
+  const std::int32_t NON_SECURE = 48;
 
   const AdServer::CampaignSvcs::ExtRevenueDecimal BIDFLOOR_MULTIPLIER =
     AdServer::CampaignSvcs::ExtRevenueDecimal::div(
@@ -1236,7 +1237,7 @@ namespace AdServer::Bidding
         adslot.allowed_ad_types(),
         ::Google::BidRequest_AdSlot_AllowedAdType_ALLOWED_AD_TYPE_VIDEO);
 
-      std::set<google::protobuf::int32> excluded_attributes(
+      std::set<std::int32_t> excluded_attributes(
         adslot.excluded_attribute().begin(),
         adslot.excluded_attribute().end());
 

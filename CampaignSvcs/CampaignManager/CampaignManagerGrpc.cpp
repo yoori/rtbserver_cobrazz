@@ -1,5 +1,6 @@
 #include "CampaignManagerGrpc.hpp"
 
+#include <cstdint>
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
@@ -155,13 +156,13 @@ namespace AdServer::CampaignSvcs
     void
     pack_ids(
       const CampaignManagerCore::IdArray& source,
-      google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+      google::protobuf::RepeatedField<std::uint64_t>* target)
     {
       target->Add(source.begin(), source.end());
     }
 
     CampaignManagerCore::IdArray
-    unpack_ids(const google::protobuf::RepeatedField<google::protobuf::uint64>& source)
+    unpack_ids(const google::protobuf::RepeatedField<std::uint64_t>& source)
     {
       CampaignManagerCore::IdArray result;
       result.reserve(source.size());
@@ -175,7 +176,7 @@ namespace AdServer::CampaignSvcs
     template<typename IdContainer>
     void
     unpack_ids_to(
-      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      const google::protobuf::RepeatedField<std::uint64_t>& source,
       IdContainer& target)
     {
       target.clear();
@@ -195,7 +196,7 @@ namespace AdServer::CampaignSvcs
 
     void
     unpack_ids_to(
-      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      const google::protobuf::RepeatedField<std::uint64_t>& source,
       ChannelIdHashSet& target)
     {
       target.clear();
@@ -753,7 +754,7 @@ namespace AdServer::CampaignSvcs
     void
     pack_config_ids(
       const SourceSeq& source,
-      google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+      google::protobuf::RepeatedField<std::uint64_t>* target)
     {
       for (const auto& id : source)
       {
@@ -764,7 +765,7 @@ namespace AdServer::CampaignSvcs
     template<typename DecimalType>
     void
     pack_decimal_into_config_ids(
-      google::protobuf::RepeatedField<google::protobuf::uint64>* target,
+      google::protobuf::RepeatedField<std::uint64_t>* target,
       const DecimalType& value)
     {
       const unsigned long EL_NUMBER = DecimalType::PACK_SIZE / 4 +

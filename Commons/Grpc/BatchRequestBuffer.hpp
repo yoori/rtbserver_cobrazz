@@ -36,7 +36,7 @@ namespace AdServer::Grpc::Detail
   {
     if (!request_)
     {
-      request_ = google::protobuf::Arena::CreateMessage<adserver::grpc::BatchRequest>(&arena_);
+      request_ = google::protobuf::Arena::Create<adserver::grpc::BatchRequest>(&arena_);
     }
 
     return *request_;

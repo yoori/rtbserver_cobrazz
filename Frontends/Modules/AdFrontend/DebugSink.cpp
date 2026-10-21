@@ -1,5 +1,6 @@
 #include "DebugSink.hpp"
 
+#include <cstdint>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/Hostname.hpp>
 
@@ -30,10 +31,7 @@ namespace AdServer
       }
     };
 
-    void
-    print_ids(
-      DebugStream& out,
-      const google::protobuf::RepeatedField<google::protobuf::uint64>& ids)
+    void print_ids(DebugStream& out, const google::protobuf::RepeatedField<std::uint64_t>& ids)
     {
       for (int i = 0; i < ids.size(); ++i)
       {

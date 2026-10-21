@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <string_view>
 
 #include <boost/asio.hpp>

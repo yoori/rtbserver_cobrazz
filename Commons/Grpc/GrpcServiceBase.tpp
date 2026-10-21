@@ -307,7 +307,7 @@ namespace AdServer::Grpc
         ::grpc::Status status;
         if (use_arena_for_response)
         {
-          auto* response = google::protobuf::Arena::CreateMessage<Response>(&response_arena);
+          auto* response = google::protobuf::Arena::Create<Response>(&response_arena);
           co_await handler(std::move(request), *response, status);
 
           batch_response.set_status_code(status.error_code());
