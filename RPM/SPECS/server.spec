@@ -124,12 +124,14 @@ Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: libpq-devel >= %{__libpq_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
+BuildRequires: protobuf-devel(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 BuildRequires: c-ares-devel >= 1.18.1
 BuildRequires: grpc-devel = %{__grpc_ver_req}
 BuildRequires: grpc-plugins = %{__grpc_ver_req}
 BuildRequires: jemalloc-devel = %__jemalloc_ver_req
 
 Requires: protobuf = %{__protobuf_ver_req}
+Requires: protobuf(cxx-abi)%{?_isa} = %{foros_cxx_abi}
 Requires: jemalloc = %__jemalloc_ver_req
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
 Requires: rsync >= 3.1.3-21.el8_10
