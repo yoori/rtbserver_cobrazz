@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <set>
+#include <string_view>
 #include <utility>
 
 #include <google/protobuf/arena.h>
@@ -155,7 +156,7 @@ namespace AdServer
       channel_request->set_return_negative(false);
       channel_request->set_simplify_page(false);
       channel_request->set_fill_content(false);
-      channel_request->set_statuses("A", 2);
+      channel_request->set_statuses(std::string_view("A", 2));
       channel_request->set_pwords(keywords_);
       channel_request->set_first_url(referer_);
 

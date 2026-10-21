@@ -354,7 +354,7 @@ main(int argc, char** argv)
       request.set_swords(*swords);
       request.set_uid(::GrpcAlgs::pack_user_id(
         uid->empty() ? Generics::Uuid() : Generics::Uuid(*uid, true)));
-      request.set_statuses(status->data(), status->size());
+      request.set_statuses(*status);
       request.set_non_strict_word_match(false);
       request.set_non_strict_url_match(false);
       request.set_return_negative(false);

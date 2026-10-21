@@ -20,6 +20,9 @@ add_executable(BatchingTimerTest
 add_executable(BatchRequestBufferTest BatchRequestBufferTest.cpp)
 target_link_libraries(BatchRequestBufferTest PRIVATE GrpcBatch)
 
+add_executable(ServiceMicroStringTest ServiceMicroStringTest.cpp)
+target_link_libraries(ServiceMicroStringTest PRIVATE CampaignManagerGrpc ChannelServerGrpc)
+
 add_executable(DeferredClientDeletionTest DeferredClientDeletionTest.cpp)
 add_executable(DbAccessTest DbAccessTest.cpp)
 target_link_libraries(DbAccessTest PRIVATE GrpcBatch)

@@ -138,12 +138,12 @@ namespace AdServer::Bidding
       Generics::Time started_at_;
     };
 
-    template<typename MutableField>
-    void set_if_not_empty(std::string_view value, MutableField mutable_field)
+    template<typename Setter>
+    void set_if_not_empty(std::string_view value, Setter setter)
     {
       if (!value.empty())
       {
-        mutable_field()->assign(value.data(), value.size());
+        setter(value);
       }
     }
 
@@ -199,8 +199,8 @@ namespace AdServer::Bidding
       for (std::size_t i = 0; i < source.size(); ++i)
       {
         auto* token = target->Add();
-        set_if_not_empty(source[i].name, [&] { return token->mutable_name(); });
-        set_if_not_empty(source[i].value, [&] { return token->mutable_value(); });
+        set_if_not_empty(source[i].name, [&](std::string_view value) { token->set_name(value); });
+        set_if_not_empty(source[i].value, [&](std::string_view value) { token->set_value(value); });
       }
     }
 
@@ -223,56 +223,94 @@ namespace AdServer::Bidding
       target.set_debug_request_id(GrpcAlgs::pack_request_id(source.debug_request_id));
       set_if_not_empty(
         source.creative_instantiate_type,
-        [&] { return target.mutable_creative_instantiate_type(); });
+        [&](std::string_view value) { target.set_creative_instantiate_type(value); });
       target.set_request_type(source.request_type);
       target.set_random(source.random);
       target.set_test_request(source.test_request);
       target.set_log_as_test(source.log_as_test);
       target.set_colo_id(source.colo_id);
-      set_if_not_empty(source.external_user_id, [&] { return target.mutable_external_user_id(); });
-      set_if_not_empty(source.source_id, [&] { return target.mutable_source_id(); });
+      set_if_not_empty(
+        source.external_user_id,
+        [&](std::string_view value) { target.set_external_user_id(value); });
+      set_if_not_empty(
+        source.source_id,
+        [&](std::string_view value) { target.set_source_id(value); });
       target.mutable_location()->Reserve(source.geo_location.size());
       for (std::size_t i = 0; i < source.geo_location.size(); ++i)
       {
         auto* location = target.add_location();
         set_if_not_empty(
-          source.geo_location[i].country, [&] { return location->mutable_country(); });
-        set_if_not_empty(source.geo_location[i].region, [&] { return location->mutable_region(); });
-        set_if_not_empty(source.geo_location[i].city, [&] { return location->mutable_city(); });
+          source.geo_location[i].country,
+          [&](std::string_view value) { location->set_country(value); });
+        set_if_not_empty(
+          source.geo_location[i].region,
+          [&](std::string_view value) { location->set_region(value); });
+        set_if_not_empty(
+          source.geo_location[i].city,
+          [&](std::string_view value) { location->set_city(value); });
       }
-      set_if_not_empty(source.full_referer, [&] { return target.mutable_full_referer(); });
-      set_if_not_empty(source.referer, [&] { return target.mutable_referer(); });
-      pack_strings(source.urls, target.mutable_urls());
-      set_if_not_empty(source.security_token, [&] { return target.mutable_security_token(); });
       set_if_not_empty(
-        source.pub_impr_track_url, [&] { return target.mutable_pub_impr_track_url(); });
-      set_if_not_empty(source.pub_param, [&] { return target.mutable_pub_param(); });
-      set_if_not_empty(source.preclick_url, [&] { return target.mutable_preclick_url(); });
-      set_if_not_empty(source.click_prefix_url, [&] { return target.mutable_click_prefix_url(); });
-      set_if_not_empty(source.original_url, [&] { return target.mutable_original_url(); });
+        source.full_referer,
+        [&](std::string_view value) { target.set_full_referer(value); });
+      set_if_not_empty(source.referer, [&](std::string_view value) { target.set_referer(value); });
+      pack_strings(source.urls, target.mutable_urls());
+      set_if_not_empty(
+        source.security_token,
+        [&](std::string_view value) { target.set_security_token(value); });
+      set_if_not_empty(
+        source.pub_impr_track_url,
+        [&](std::string_view value) { target.set_pub_impr_track_url(value); });
+      set_if_not_empty(
+        source.pub_param,
+        [&](std::string_view value) { target.set_pub_param(value); });
+      set_if_not_empty(
+        source.preclick_url,
+        [&](std::string_view value) { target.set_preclick_url(value); });
+      set_if_not_empty(
+        source.click_prefix_url,
+        [&](std::string_view value) { target.set_click_prefix_url(value); });
+      set_if_not_empty(
+        source.original_url,
+        [&](std::string_view value) { target.set_original_url(value); });
       target.set_user_status(source.user_status);
-      set_if_not_empty(source.peer_ip, [&] { return target.mutable_peer_ip(); });
-      set_if_not_empty(source.user_agent, [&] { return target.mutable_user_agent(); });
-      set_if_not_empty(source.cohort, [&] { return target.mutable_cohort(); });
+      set_if_not_empty(source.peer_ip, [&](std::string_view value) { target.set_peer_ip(value); });
+      set_if_not_empty(
+        source.user_agent,
+        [&](std::string_view value) { target.set_user_agent(value); });
+      set_if_not_empty(source.cohort, [&](std::string_view value) { target.set_cohort(value); });
       target.set_hpos(source.hpos);
-      set_if_not_empty(source.ext_track_params, [&] { return target.mutable_ext_track_params(); });
+      set_if_not_empty(
+        source.ext_track_params,
+        [&](std::string_view value) { target.set_ext_track_params(value); });
       pack_tokens(source.tokens, target.mutable_tokens());
       target.set_set_cookie(source.set_cookie);
-      set_if_not_empty(source.passback_type, [&] { return target.mutable_passback_type(); });
-      set_if_not_empty(source.passback_url, [&] { return target.mutable_passback_url(); });
+      set_if_not_empty(
+        source.passback_type,
+        [&](std::string_view value) { target.set_passback_type(value); });
+      set_if_not_empty(
+        source.passback_url,
+        [&](std::string_view value) { target.set_passback_url(value); });
     }
 
     void pack_context_ad_request_info(const RequestInfo& source, PB::ContextAdRequestInfo& target)
     {
       target.set_enabled_notice(source.enabled_notice);
-      set_if_not_empty(source.client, [&] { return target.mutable_client(); });
-      set_if_not_empty(source.client_version, [&] { return target.mutable_client_version(); });
+      set_if_not_empty(source.client, [&](std::string_view value) { target.set_client(value); });
+      set_if_not_empty(
+        source.client_version,
+        [&](std::string_view value) { target.set_client_version(value); });
       pack_ids(source.platform_ids, target.mutable_platform_ids());
       pack_ids(source.geo_channels, target.mutable_geo_channels());
-      set_if_not_empty(source.platform, [&] { return target.mutable_platform(); });
-      set_if_not_empty(source.full_platform, [&] { return target.mutable_full_platform(); });
-      set_if_not_empty(source.web_browser, [&] { return target.mutable_web_browser(); });
-      set_if_not_empty(source.ip_hash, [&] { return target.mutable_ip_hash(); });
+      set_if_not_empty(
+        source.platform,
+        [&](std::string_view value) { target.set_platform(value); });
+      set_if_not_empty(
+        source.full_platform,
+        [&](std::string_view value) { target.set_full_platform(value); });
+      set_if_not_empty(
+        source.web_browser,
+        [&](std::string_view value) { target.set_web_browser(value); });
+      set_if_not_empty(source.ip_hash, [&](std::string_view value) { target.set_ip_hash(value); });
       target.set_profile_referer(source.profile_referer);
       target.set_page_load_id(source.page_load_id);
       target.set_full_referer_hash(source.full_referer_hash);
@@ -320,7 +358,9 @@ namespace AdServer::Bidding
       target.set_fill_iurl(source.fill_iurl);
       target.set_ad_instantiate_type(source.ad_instantiate_type);
       target.set_search_engine_id(source.search_engine_id);
-      set_if_not_empty(source.search_words, [&] { return target.mutable_search_words(); });
+      set_if_not_empty(
+        source.search_words,
+        [&](std::string_view value) { target.set_search_words(value); });
       target.set_page_keywords_present(!source.keywords.empty());
       target.set_preview_ccid(source.preview_ccid);
       target.mutable_ad_slots()->Reserve(source.ad_slots.size());
@@ -329,13 +369,16 @@ namespace AdServer::Bidding
         const auto& src = source.ad_slots[i];
         auto* dst = target.add_ad_slots();
         dst->set_ad_slot_id(src.ad_slot_id);
-        set_if_not_empty(src.format, [&] { return dst->mutable_format(); });
+        set_if_not_empty(src.format, [&](std::string_view value) { dst->set_format(value); });
         dst->set_tag_id(src.tag_id);
         pack_strings(src.sizes, dst->mutable_sizes());
-        set_if_not_empty(src.ext_tag_id, [&] { return dst->mutable_ext_tag_id(); });
+        set_if_not_empty(
+          src.ext_tag_id,
+          [&](std::string_view value) { dst->set_ext_tag_id(value); });
         dst->mutable_min_ecpm()->set_value(GrpcAlgs::pack_decimal(src.min_ecpm));
         set_if_not_empty(
-          src.min_ecpm_currency_code, [&] { return dst->mutable_min_ecpm_currency_code(); });
+          src.min_ecpm_currency_code,
+          [&](std::string_view value) { dst->set_min_ecpm_currency_code(value); });
         pack_strings(src.currency_codes, dst->mutable_currency_codes());
         dst->set_passback(src.passback);
         dst->set_up_expand_space(src.up_expand_space);
@@ -359,14 +402,18 @@ namespace AdServer::Bidding
         for (std::size_t j = 0; j < src.native_data_tokens.size(); ++j)
         {
           auto* token = dst->add_native_data_tokens();
-          set_if_not_empty(src.native_data_tokens[j].name, [&] { return token->mutable_name(); });
+          set_if_not_empty(
+            src.native_data_tokens[j].name,
+            [&](std::string_view value) { token->set_name(value); });
           token->set_required(src.native_data_tokens[j].required);
         }
         dst->mutable_native_image_tokens()->Reserve(src.native_image_tokens.size());
         for (std::size_t j = 0; j < src.native_image_tokens.size(); ++j)
         {
           auto* token = dst->add_native_image_tokens();
-          set_if_not_empty(src.native_image_tokens[j].name, [&] { return token->mutable_name(); });
+          set_if_not_empty(
+            src.native_image_tokens[j].name,
+            [&](std::string_view value) { token->set_name(value); });
           token->set_required(src.native_image_tokens[j].required);
           token->set_width(src.native_image_tokens[j].width);
           token->set_height(src.native_image_tokens[j].height);
@@ -375,8 +422,12 @@ namespace AdServer::Bidding
         dst->set_fill_track_html(src.fill_track_html);
         pack_tokens(src.tokens, dst->mutable_tokens());
       }
-      set_if_not_empty(source.keywords, [&] { return target.mutable_page_keywords(); });
-      set_if_not_empty(source.url_keywords, [&] { return target.mutable_url_keywords(); });
+      set_if_not_empty(
+        source.keywords,
+        [&](std::string_view value) { target.set_page_keywords(value); });
+      set_if_not_empty(
+        source.url_keywords,
+        [&](std::string_view value) { target.set_url_keywords(value); });
     }
 
     void unpack_request_creative_result(
@@ -1428,7 +1479,7 @@ namespace AdServer::Bidding
           channel_request->set_return_negative(false);
           channel_request->set_simplify_page(true);
           channel_request->set_fill_content(true);
-          channel_request->set_statuses("A", 2);
+          channel_request->set_statuses(std::string_view("A", 2));
           channel_request->set_first_url(request_info.referer);
 
           try

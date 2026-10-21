@@ -1,6 +1,7 @@
 
 #include <atomic>
 #include <sstream>
+#include <string_view>
 #include <algorithm>
 #include <set>
 #include <type_traits>
@@ -1490,7 +1491,7 @@ namespace AdServer
     request.set_return_negative(false);
     request.set_simplify_page(true);
     request.set_fill_content(true);
-    request.set_statuses("A", 2);
+    request.set_statuses(std::string_view("A", 2));
     return request;
   }
 
@@ -1708,7 +1709,7 @@ namespace AdServer
 
         if (!ad_slot_result.mime_format().empty())
         {
-          context->response_ptr->set_content_type(ad_slot_result.mime_format());
+          context->response_ptr->set_content_type(std::string(ad_slot_result.mime_format()));
         }
         else
         {
@@ -1903,22 +1904,22 @@ namespace AdServer
       if ((((double)request_info.random * 100.0) / CampaignSvcs::RANDOM_PARAM_MAX)
           <= common_config_->profiling_log_sampling())
       {
-        bool added = false;
-        if (!request_info.full_text_words.empty())
-        {
-          request_params.set_page_keywords(request_info.full_text_words);
-          added = true;
-        }
+        std::string page_keywords;
+        page_keywords.reserve(
+          request_info.full_text_words.size() + request_info.page_words.size() + 1);
+        page_keywords.append(request_info.full_text_words);
 
         if (!request_info.page_words.empty())
         {
-          if (added)
+          if (!page_keywords.empty())
           {
-            request_params.mutable_page_keywords()->append(" ");
+            page_keywords += ' ';
           }
-          request_params.mutable_page_keywords()->append(request_info.page_words);
-          added = true;
+
+          page_keywords.append(request_info.page_words);
         }
+
+        request_params.set_page_keywords(page_keywords);
 
         if (!request_info.referer_url_words.empty())
         {

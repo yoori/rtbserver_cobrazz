@@ -652,16 +652,21 @@ namespace AdServer::Instantiate
       click_info.set_referer(request_info.referer);
       click_info.set_match_user_id(GrpcAlgs::pack_user_id(
         !request_info.user_id.is_null() ? request_info.user_id : request_info.track_user_id));
-      click_info.set_page_keywords(request_info.full_text_words);
+      std::string page_keywords;
+      page_keywords.reserve(
+        request_info.full_text_words.size() + request_info.page_words.size() + 1);
+      page_keywords.append(request_info.full_text_words);
       if (!request_info.page_words.empty())
       {
-        if (!click_info.page_keywords().empty())
+        if (!page_keywords.empty())
         {
-          click_info.mutable_page_keywords()->append(" ");
+          page_keywords += ' ';
         }
 
-        click_info.mutable_page_keywords()->append(request_info.page_words);
+        page_keywords.append(request_info.page_words);
       }
+
+      click_info.set_page_keywords(page_keywords);
 
       adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
         click_url_request;
@@ -679,8 +684,8 @@ namespace AdServer::Instantiate
       {
         response->add_header_nocopy_name(
           Response::Header::LOCATION,
-          request_info.click_prefix_url +
-            click_url_result.response.click_result_info().url());
+          std::string(request_info.click_prefix_url).append(
+            click_url_result.response.click_result_info().url()));
         co_return 302;
       }
 
@@ -879,7 +884,7 @@ namespace AdServer::Instantiate
       else if (!inst_ad_result.creative_body().empty())
       {
         std::string response_body(inst_ad_result.creative_body());
-        response->set_content_type(inst_ad_result.mime_format());
+        response->set_content_type(std::string(inst_ad_result.mime_format()));
 
         response->get_output_stream().write(response_body.c_str(), response_body.length());
 

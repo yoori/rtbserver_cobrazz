@@ -102,8 +102,7 @@ namespace AdServer::CampaignSvcs
       const Generics::Time start_time_ = Generics::Time::get_time_of_day();
     };
 
-    Generics::Time
-    unpack_time(const std::string& source)
+    Generics::Time unpack_time(std::string_view source)
     {
       Generics::Time result;
       if (source.size() != Generics::Time::TIME_PACK_LEN)
@@ -123,14 +122,12 @@ namespace AdServer::CampaignSvcs
       return GrpcAlgs::pack_time(source);
     }
 
-    AdServer::Commons::UserId
-    unpack_user_id(const std::string& source)
+    AdServer::Commons::UserId unpack_user_id(std::string_view source)
     {
       return GrpcAlgs::unpack_user_id(source);
     }
 
-    AdServer::Commons::RequestId
-    unpack_request_id(const std::string& source)
+    AdServer::Commons::RequestId unpack_request_id(std::string_view source)
     {
       return GrpcAlgs::unpack_request_id(source);
     }
@@ -188,8 +185,7 @@ namespace AdServer::CampaignSvcs
     }
 
     template<typename String>
-    void
-    assign_string(String& target, const std::string& source)
+    void assign_string(String& target, std::string_view source)
     {
       target.assign(source.data(), source.size());
     }
@@ -240,7 +236,7 @@ namespace AdServer::CampaignSvcs
       target.reserve(source.size());
       for (const auto& item : source)
       {
-        target.push_back({item.name(), item.value()});
+        target.push_back({std::string(item.name()), std::string(item.value())});
       }
     }
 
@@ -286,7 +282,8 @@ namespace AdServer::CampaignSvcs
     CampaignManagerCore::GeoInfo
     unpack_geo_info(const pb::GeoInfo& source)
     {
-      return {source.country(), source.region(), source.city()};
+      return {
+        std::string(source.country()), std::string(source.region()), std::string(source.city())};
     }
 
     CampaignManagerCore::GeoCoordInfo
@@ -381,8 +378,8 @@ namespace AdServer::CampaignSvcs
         source.channel_id(),
         unpack_revenue_decimal(source.max_cpc()),
         unpack_revenue_decimal(source.ctr()),
-        source.click_url(),
-        source.original_keyword()
+        std::string(source.click_url()),
+        std::string(source.original_keyword())
       };
     }
 
@@ -543,13 +540,13 @@ namespace AdServer::CampaignSvcs
       target.native_data_tokens.reserve(source.native_data_tokens_size());
       for (const auto& token : source.native_data_tokens())
       {
-        target.native_data_tokens.push_back({token.name(), token.required()});
+        target.native_data_tokens.push_back({std::string(token.name()), token.required()});
       }
       target.native_image_tokens.reserve(source.native_image_tokens_size());
       for (const auto& token : source.native_image_tokens())
       {
         target.native_image_tokens.push_back({
-          token.name(),
+          std::string(token.name()),
           token.required(),
           token.width(),
           token.height()});
@@ -1343,12 +1340,12 @@ namespace AdServer::CampaignSvcs
           auto* item = target.add_geo_channels();
           item->set_channel_id(src.second);
           const std::string_view country = src.first.country();
-          item->set_country(country.data(), country.size());
+          item->set_country(country);
           auto* geoip_target = item->add_geoip_targets();
           const std::string_view region = src.first.region();
-          geoip_target->set_region(region.data(), region.size());
+          geoip_target->set_region(region);
           const std::string_view city = src.first.city();
-          geoip_target->set_city(city.data(), city.size());
+          geoip_target->set_city(city);
           item->set_timestamp(pack_time(Generics::Time::ZERO));
         }
 
@@ -2086,8 +2083,8 @@ namespace AdServer::CampaignSvcs
 
     try
     {
-      const auto file = co_await core_->co_get_file(request.file_name());
-      response.set_file(file.data(), file.size());
+      const auto file = co_await core_->co_get_file(std::string(request.file_name()));
+      response.set_file(std::string_view(reinterpret_cast<const char*>(file.data()), file.size()));
       result_status = ::grpc::Status::OK;
     }
     catch(const eh::Exception& ex)
@@ -2341,7 +2338,7 @@ namespace AdServer::CampaignSvcs
   {
     try
     {
-      const auto result = core_->get_category_channels(request.language());
+      const auto result = core_->get_category_channels(std::string(request.language()));
       for (const auto& channel : result)
       {
         pack_category_channel_node(channel, *response.add_channels());
@@ -2401,7 +2398,7 @@ namespace AdServer::CampaignSvcs
     try
     {
       const auto result = core_->get_pub_pixels(
-        request.country(),
+        std::string(request.country()),
         request.user_status(),
         unpack_ids(request.publisher_account_ids()));
 
@@ -2511,15 +2508,15 @@ namespace AdServer::CampaignSvcs
       core_->verify_opt_operation(
         request.time(),
         request.colo_id(),
-        request.referer(),
+        std::string(request.referer()),
         operation,
         request.status(),
         request.user_status(),
         request.log_as_test(),
-        request.browser(),
-        request.os(),
-        request.ct(),
-        request.curct(),
+        std::string(request.browser()),
+        std::string(request.os()),
+        std::string(request.ct()),
+        std::string(request.curct()),
         GrpcAlgs::unpack_user_id(request.user_id()));
       result_status = ::grpc::Status::OK;
     }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <sstream>
+#include <string_view>
 
 #include <Logger/Logger.hpp>
 #include <Stream/MemoryStream.hpp>
@@ -96,7 +97,7 @@ namespace AdServer
     channel_request.set_return_negative(false);
     channel_request.set_simplify_page(false);
     channel_request.set_fill_content(false);
-    channel_request.set_statuses("A", 2);
+    channel_request.set_statuses(std::string_view("A", 2));
 
     std::ostringstream keywords_ostr;
     keywords_ostr << "poadclick poadclicka" << advertiser_id_ << " poadclickc" << campaign_id_;

@@ -624,7 +624,7 @@ namespace AdServer::Action
       channel_request.set_return_negative(false);
       channel_request.set_simplify_page(false);
       channel_request.set_fill_content(false);
-      channel_request.set_statuses("A", 2);
+      channel_request.set_statuses(std::string_view("A", 2));
       std::ostringstream keywords_ostr;
       keywords_ostr << "poadcp";
       if (conv_id)
@@ -991,16 +991,22 @@ namespace AdServer::Action
       }
 
       verify_action_info.set_referer(request_info.referer);
-      verify_action_info.set_page_keywords(request_info.full_text_words);
+      std::string page_keywords;
+      page_keywords.reserve(
+        request_info.full_text_words.size() + request_info.page_words.size() + 1);
+      page_keywords.append(request_info.full_text_words);
       if (!request_info.page_words.empty())
       {
-        if (!verify_action_info.page_keywords().empty())
+        if (!page_keywords.empty())
         {
-          verify_action_info.mutable_page_keywords()->append(" ");
+          page_keywords += ' ';
         }
 
-        verify_action_info.mutable_page_keywords()->append(request_info.page_words);
+        page_keywords.append(request_info.page_words);
       }
+
+      verify_action_info.set_page_keywords(page_keywords);
+
       if (request_info.value.present())
       {
         verify_action_info.mutable_action_value()->set_value(

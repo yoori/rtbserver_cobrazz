@@ -6,6 +6,7 @@ add_grpc_sources(
   CampaignManagerGrpc
   ${CAMPAIGN_MANAGER_GRPC_PROTO}
   ${CAMPAIGN_MANAGER_GRPC_PROTO_DIR}
+  --cpp_opt=experimental_cpp_micro_string
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
 target_link_libraries(CampaignManagerGrpc

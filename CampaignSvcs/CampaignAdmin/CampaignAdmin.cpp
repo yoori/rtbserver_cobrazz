@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -597,8 +598,7 @@ namespace
     }
   }
 
-  std::string
-  hex_value(const std::string& value)
+  std::string hex_value(std::string_view value)
   {
     if (value.empty())
     {
@@ -615,8 +615,7 @@ namespace
     return out.str();
   }
 
-  std::string
-  bytes_value(const std::string& value)
+  std::string bytes_value(std::string_view value)
   {
     if (value.empty())
     {
@@ -666,8 +665,7 @@ namespace
     return std::to_string(decimal.integer<uint64_t>());
   }
 
-  std::string
-  time_value(const std::string& value)
+  std::string time_value(std::string_view value)
   {
     if (value.size() != Generics::Time::TIME_PACK_LEN)
     {
@@ -680,7 +678,7 @@ namespace
   std::string
   option_value(const cm::ConfigOptionValue& value)
   {
-    return value.value();
+    return std::string(value.value());
   }
 
   template<typename Repeated>
@@ -782,8 +780,7 @@ namespace
     return value.value().empty() ? std::string("null") : decimal_value(value);
   }
 
-  std::string
-  time_offset_value(const std::string& value)
+  std::string time_offset_value(std::string_view value)
   {
     const Generics::Time time_offset = GrpcAlgs::unpack_time(value);
     std::ostringstream out;

@@ -64,7 +64,7 @@ namespace
         co_return FrontendCommons::RequestResult::written();
       }
 
-      callback(result.response.file());
+      callback(std::string(result.response.file()));
     }
     catch(...)
     {

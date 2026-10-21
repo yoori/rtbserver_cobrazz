@@ -251,7 +251,7 @@ namespace AdServer::CampaignSvcs
   }
 
   CampaignManagerDistributedGrpcClient::PoolPtr
-  CampaignManagerDistributedGrpcClient::get_pool_(const std::string& service_index) const
+  CampaignManagerDistributedGrpcClient::get_pool_(std::string_view service_index) const
   {
     if (!service_index.empty())
     {
@@ -266,7 +266,7 @@ namespace AdServer::CampaignSvcs
   }
 
   std::optional<CampaignManagerDistributedGrpcClient::Pool::Ref>
-  CampaignManagerDistributedGrpcClient::get_ref_(const std::string& service_index) const
+  CampaignManagerDistributedGrpcClient::get_ref_(std::string_view service_index) const
   {
     auto pool = get_pool_(service_index);
     return pool ? pool->get_object() : std::nullopt;
@@ -290,12 +290,11 @@ namespace AdServer::CampaignSvcs
   }
 
   template<typename Request, typename Response, typename Callback, typename Call>
-  void
-  CampaignManagerDistributedGrpcClient::call_(
+  void CampaignManagerDistributedGrpcClient::call_(
     const Request& request,
     Callback callback,
     Call call,
-    const std::string& service_index)
+    std::string_view service_index)
   {
     if (!active())
     {

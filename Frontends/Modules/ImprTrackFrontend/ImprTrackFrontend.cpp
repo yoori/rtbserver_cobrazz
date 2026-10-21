@@ -411,16 +411,21 @@ namespace AdServer::ImprTrack
           verify_impression_info.set_request_type(request_info.request_type);
           verify_impression_info.set_user_id(GrpcAlgs::pack_user_id(request_info.actual_user_id));
           verify_impression_info.set_referer(request_info.referer);
-          verify_impression_info.set_page_keywords(request_info.full_text_words);
+          std::string page_keywords;
+          page_keywords.reserve(
+            request_info.full_text_words.size() + request_info.page_words.size() + 1);
+          page_keywords.append(request_info.full_text_words);
           if (!request_info.page_words.empty())
           {
-            if (!verify_impression_info.page_keywords().empty())
+            if (!page_keywords.empty())
             {
-              verify_impression_info.mutable_page_keywords()->append(" ");
+              page_keywords += ' ';
             }
 
-            verify_impression_info.mutable_page_keywords()->append(request_info.page_words);
+            page_keywords.append(request_info.page_words);
           }
+
+          verify_impression_info.set_page_keywords(page_keywords);
           verify_impression_info.set_viewability(request_info.viewability);
           verify_impression_info.set_action_name(request_info.action_name);
           verify_impression_info.set_action_value(request_info.action_value);
@@ -1148,7 +1153,7 @@ namespace AdServer::ImprTrack
     channel_request->set_return_negative(false);
     channel_request->set_simplify_page(false);
     channel_request->set_fill_content(false);
-    channel_request->set_statuses("A", 2);
+    channel_request->set_statuses(std::string_view("A", 2));
 
     std::ostringstream keywords_ostr;
     keywords_ostr << "poadimp";

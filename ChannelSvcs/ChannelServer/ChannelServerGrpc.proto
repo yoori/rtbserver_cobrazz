@@ -1,5 +1,7 @@
 edition = "2023";
 
+import "google/protobuf/cpp_features.proto";
+
 option features.field_presence = IMPLICIT;
 option features.enum_type = OPEN;
 option features.repeated_field_encoding = PACKED;
@@ -41,15 +43,15 @@ message ContentChannelAtom {
 }
 
 message MatchRequest {
-  string request_id = 1;
-  bytes first_url = 2;
-  bytes first_url_words = 3;
-  bytes urls = 4;
-  bytes urls_words = 5;
-  bytes pwords = 6;
-  bytes swords = 7;
-  bytes uid = 8;
-  bytes statuses = 9;
+  string request_id = 1 [features.(pb.cpp).string_type = VIEW];
+  bytes first_url = 2 [features.(pb.cpp).string_type = VIEW];
+  bytes first_url_words = 3 [features.(pb.cpp).string_type = VIEW];
+  bytes urls = 4 [features.(pb.cpp).string_type = VIEW];
+  bytes urls_words = 5 [features.(pb.cpp).string_type = VIEW];
+  bytes pwords = 6 [features.(pb.cpp).string_type = VIEW];
+  bytes swords = 7 [features.(pb.cpp).string_type = VIEW];
+  bytes uid = 8 [features.(pb.cpp).string_type = VIEW];
+  bytes statuses = 9 [features.(pb.cpp).string_type = VIEW];
   bool non_strict_word_match = 10;
   bool non_strict_url_match = 11;
   bool return_negative = 12;

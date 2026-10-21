@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <eh/Exception.hpp>
@@ -148,9 +149,9 @@ namespace AdServer::CampaignSvcs
     void deactivate_object_() override;
     void wait_object_() override;
 
-    PoolPtr get_pool_(const std::string& service_index = std::string()) const;
+    PoolPtr get_pool_(std::string_view service_index = {}) const;
 
-    std::optional<Pool::Ref> get_ref_(const std::string& service_index = std::string()) const;
+    std::optional<Pool::Ref> get_ref_(std::string_view service_index = {}) const;
 
     static std::string unavailable_description_(const PoolPtr& pool);
 
@@ -159,7 +160,7 @@ namespace AdServer::CampaignSvcs
       const Request& request,
       Callback callback,
       Call call,
-      const std::string& service_index = std::string());
+      std::string_view service_index = {});
 
     static void merge_stats_(
       AdServer::Grpc::Stats& result,
@@ -170,7 +171,7 @@ namespace AdServer::CampaignSvcs
     std::shared_ptr<AdServer::Commons::DeferredDeletionQueue> deletion_queue_;
     std::vector<ClientHolderPtr> client_holders_;
     PoolPtr default_pool_;
-    std::map<std::string, PoolPtr> service_index_pools_;
+    std::map<std::string, PoolPtr, std::less<>> service_index_pools_;
   };
 
   using CampaignManagerDistributedGrpcClientPtr =

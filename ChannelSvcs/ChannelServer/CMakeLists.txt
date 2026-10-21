@@ -23,6 +23,7 @@ add_grpc_sources(
   ChannelServerGrpc
   ${CHANNEL_SERVER_GRPC_PROTO}
   ${CHANNEL_SERVER_GRPC_PROTO_DIR}
+  --cpp_opt=experimental_cpp_micro_string
   --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
 
 target_link_libraries(ChannelServerGrpc

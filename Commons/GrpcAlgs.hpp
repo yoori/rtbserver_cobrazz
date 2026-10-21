@@ -4,6 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <google/protobuf/repeated_field.h>
 #include <google/protobuf/repeated_ptr_field.h>
 
@@ -55,9 +56,7 @@ namespace GrpcAlgs
     return result;
   }
 
-  inline
-  Generics::Time
-  unpack_time(const std::string& str)
+  inline Generics::Time unpack_time(std::string_view str)
   {
     Generics::Time result;
     assert(str.size() == Generics::Time::TIME_PACK_LEN);
@@ -82,9 +81,7 @@ namespace GrpcAlgs
     return std::string(request_id.begin(), request_id.end());
   }
 
-  inline
-  AdServer::Commons::RequestId
-  unpack_request_id(const std::string& request_id_str)
+  inline AdServer::Commons::RequestId unpack_request_id(std::string_view request_id_str)
   {
     if (request_id_str.empty())
     {
@@ -97,9 +94,7 @@ namespace GrpcAlgs
         request_id_str.size());
   }
 
-  inline
-  AdServer::Commons::UserId
-  unpack_user_id(const std::string& user_id_str)
+  inline AdServer::Commons::UserId unpack_user_id(std::string_view user_id_str)
   {
     if (user_id_str.empty())
     {
@@ -122,8 +117,7 @@ namespace GrpcAlgs
   }
 
   template<typename DecimalType>
-  DecimalType
-  unpack_decimal(const std::string& str)
+  DecimalType unpack_decimal(std::string_view str)
   {
     DecimalType result;
     assert(str.size() == DecimalType::PACK_SIZE);
@@ -141,7 +135,7 @@ namespace GrpcAlgs
   }
 
   template<typename DecimalType>
-  AdServer::Commons::Optional<DecimalType> unpack_optional_decimal(const std::string& value)
+  AdServer::Commons::Optional<DecimalType> unpack_optional_decimal(std::string_view value)
   {
     if (value.empty())
     {
