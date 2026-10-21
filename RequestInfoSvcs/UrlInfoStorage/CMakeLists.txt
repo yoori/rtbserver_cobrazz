@@ -13,6 +13,7 @@ add_library(UrlInfoStorageImpl STATIC
   UrlInfoStorage.cpp UrlInfoStorageGrpc.cpp UrlInfoStorageHttp.cpp)
 target_link_libraries(UrlInfoStorageImpl
   PUBLIC UrlInfoStorageGrpcProto ProfileMapRocksDB Commons HttpServer Generics Logger)
+target_link_libraries(UrlInfoStorageImpl PRIVATE OpenSSL::Crypto)
 
 add_executable(UrlInfoStorage UrlInfoStorageMain.cpp)
 target_link_libraries(UrlInfoStorage PRIVATE UrlInfoStorageImpl UrlInfoStorageConfigXSD)

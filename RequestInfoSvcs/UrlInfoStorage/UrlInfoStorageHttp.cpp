@@ -57,8 +57,10 @@ namespace AdServer::RequestInfoSvcs
 
         for (const auto& field : request.struct_value().fields())
         {
-          if (field.first != "url" && !(operation && field.first == "text") &&
-            !(operation == 2 && field.first == "expected"))
+          if (field.first != "url" &&
+            !((operation == 1 || operation == 2) && field.first == "text") &&
+            !(operation == 2 && field.first == "expected") &&
+            !(operation == 4 && (field.first == "version" || field.first == "job_id")))
           {
             throw std::invalid_argument("unknown field: " + field.first);
           }
@@ -67,7 +69,19 @@ namespace AdServer::RequestInfoSvcs
         const auto& url = string_field(request, "url");
         Value result;
         auto& fields = *result.mutable_struct_value()->mutable_fields();
-        if (operation == 2)
+        if (operation == 4)
+        {
+          const auto version = co_await storage.order_url_description_full_indexing(
+            url, string_field(request, "version"), string_field(request, "job_id"));
+          if (!version)
+          {
+            status = 409;
+            co_return error_value(status, "VERSION_CONFLICT");
+          }
+          fields["updated"].set_bool_value(true);
+          fields["version"].set_string_value(*version);
+        }
+        else if (operation == 2)
         {
           const auto& expected = string_field(request, "expected");
           const auto& text = string_field(request, "text");
@@ -105,6 +119,10 @@ namespace AdServer::RequestInfoSvcs
             text = co_await storage.get_url_profile(url);
           }
           fields["text"].set_string_value(text);
+          if (operation == 3)
+          {
+            fields["version"].set_string_value(UrlInfoStorage::description_version(text));
+          }
         }
 
         co_return result;
@@ -226,5 +244,13 @@ namespace AdServer::RequestInfoSvcs
       {
         return handle_request(holder, std::move(request), 2, true);
       });
+    server.add_handler("/get_url_description_versioned", [holder](HttpServer::Request request)
+    {
+      return handle_request(holder, std::move(request), 3, true);
+    });
+    server.add_handler("/order_url_description_full_indexing", [holder](HttpServer::Request request)
+    {
+      return handle_request(holder, std::move(request), 4, true);
+    });
   }
 }

@@ -6,6 +6,8 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string_view>
 #include <unordered_map>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
@@ -31,6 +33,10 @@ namespace AdServer::RequestInfoSvcs
     Commons::StartableAwaitable<void> set_url_description(std::string url, std::string text) const;
     Commons::StartableAwaitable<bool> compare_exchange_url_description(
       std::string url, std::string expected, std::string text) const;
+    static std::string description_version(std::string_view text);
+    Commons::StartableAwaitable<std::optional<std::string>>
+    order_url_description_full_indexing(std::string url, std::string version, std::string job_id)
+      const;
     Commons::StartableAwaitable<std::uint64_t> get_url_profile_count() const;
     Commons::StartableAwaitable<std::uint64_t> get_url_description_count() const;
 

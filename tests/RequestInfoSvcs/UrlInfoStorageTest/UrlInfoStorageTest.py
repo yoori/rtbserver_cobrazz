@@ -2,6 +2,7 @@
 
 import argparse
 import concurrent.futures
+import hashlib
 from http.client import HTTPConnection
 import json
 from pathlib import Path
@@ -179,6 +180,50 @@ def test_http(port, kind="profile"):
     results[3]["status"] == 400, "CAS batch contract failed")
 
 
+def test_full_indexing_state(port):
+  get_path = "/get_url_description_versioned"
+  order_path = "/order_url_description_full_indexing"
+  value = {"url": "ordered", "fetch_mode": "NON_FULL", "success": True,
+    "description": "existing description", "description_hash": "unchanged",
+    "indexing": {"state": "NOT_QUEUED"}}
+  text = json.dumps(value)
+  http(port, "/set_url_description", {"url": "ordered", "text": text})
+  status, snapshot = http(port, get_path, {"url": "ordered"})
+  require(status == 200 and snapshot == {
+    "text": text, "version": hashlib.sha256(text.encode()).hexdigest()}, "invalid version")
+  request = {"url": "ordered", "version": snapshot["version"], "job_id": "job"}
+  status, result = http(port, order_path, [
+    {**request, "version": "stale"}, request, request, {"url": "invalid"}])
+  require(status == 200 and result[0]["error"] == "VERSION_CONFLICT" and
+    result[1]["updated"] and result[2]["error"] == "VERSION_CONFLICT" and
+    result[3]["status"] == 400, "per-record ordering conflict contract failed")
+  current = http(port, get_path, {"url": "ordered"})[1]
+  require(current["version"] == result[1]["version"] != snapshot["version"],
+    "ordering did not change profile version")
+  value["indexing"] = {"state": "PASSED_TO_FULL_INDEXING", "job_id": "job"}
+  require(json.loads(current["text"]) == value, "ordering changed description payload")
+  require(http(port, order_path, {**request, "version": current["version"]})[1] == result[1],
+    "repeated ordering changed version")
+  value["fetch_mode"] = "FULL"
+  value["indexing"] = {"state": "COMPLETE"}
+  http(port, "/set_url_description", {"url": "ordered", "text": json.dumps(value)})
+  require(http(port, order_path, {**request, "version": current["version"]}) ==
+    (409, {"error": "VERSION_CONFLICT", "status": 409}), "late ordering overwrote FULL")
+  fresh = http(port, get_path, {"url": "ordered"})[1]
+  require(http(port, order_path, {**request, "version": fresh["version"]}) ==
+    (200, {"updated": True, "version": fresh["version"]}), "FULL is not an ordering no-op")
+  require(http(port, get_path, {"url": "ordered"})[1] == fresh, "FULL was downgraded")
+
+  # Competing ordering updates share the same writer lock with ordinary set/CAS operations.
+  http(port, "/set_url_description", {"url": "ordered", "text": text})
+  def compete(index):
+    return http(port, order_path, {**request, "job_id": str(index)})[0]
+  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    statuses = list(executor.map(compete, range(32)))
+  require(statuses.count(200) == 1 and statuses.count(409) == 31,
+    "multiple ordering updates won the same version")
+
+
 def read_counts(port):
   counts = {}
   for kind in ("profile", "description"):
@@ -269,6 +314,7 @@ def test(config_only=False):
             print(run([BIN / "UrlInfoStorageGrpcTest", endpoint, "test"]).stdout, end="")
             test_http(http_port)
             test_http(http_port, "description")
+            test_full_indexing_state(http_port)
             require(http(http_port, "/set_url_description",
               {"url": "same", "text": "site report"}) == (200, {}), "description write failed")
             test_counts(http_port)

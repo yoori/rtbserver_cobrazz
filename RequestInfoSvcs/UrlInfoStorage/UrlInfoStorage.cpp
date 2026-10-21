@@ -2,6 +2,9 @@
 
 #include <filesystem>
 #include <stdexcept>
+#include <openssl/sha.h>
+#include <google/protobuf/struct.pb.h>
+#include <google/protobuf/util/json_util.h>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Commons/Coro/CallbackAwaiter.hpp>
 
@@ -99,6 +102,87 @@ namespace AdServer::RequestInfoSvcs
     std::string url, std::string expected, std::string text) const
   {
     return compare_exchange_(*descriptions_, std::move(url), std::move(expected), std::move(text));
+  }
+
+  std::string UrlInfoStorage::description_version(std::string_view text)
+  {
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+    SHA256(reinterpret_cast<const unsigned char*>(text.data()), text.size(), digest);
+    constexpr char hex[] = "0123456789abcdef";
+    std::string result(SHA256_DIGEST_LENGTH * 2, '0');
+    for (std::size_t i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    {
+      result[i * 2] = hex[digest[i] >> 4];
+      result[i * 2 + 1] = hex[digest[i] & 15];
+    }
+    return result;
+  }
+
+  Commons::StartableAwaitable<std::optional<std::string>>
+  UrlInfoStorage::order_url_description_full_indexing(
+    std::string url, std::string version, std::string job_id) const
+  {
+    if (url.empty() || version.empty() || job_id.empty())
+    {
+      throw std::invalid_argument("url, version and job_id must not be empty");
+    }
+
+    co_await Commons::CallbackAwaiter<>(
+      [this, &url](auto ready) { acquire_write_(url, std::move(ready)); });
+    WriteGuard guard{*this, url};
+    const auto text = co_await get_(*descriptions_, url);
+    if (description_version(text) != version)
+    {
+      co_return std::nullopt;
+    }
+
+    google::protobuf::Struct value;
+    if (!google::protobuf::util::JsonStringToMessage(text, &value).ok())
+    {
+      throw std::invalid_argument("description must be a JSON object");
+    }
+
+    auto& fields = *value.mutable_fields();
+    const auto string_value = [&fields](const char* name) -> std::string
+    {
+      const auto it = fields.find(name);
+      return it == fields.end() ? std::string() : it->second.string_value();
+    };
+    const auto success = fields.find("success");
+    if (success == fields.end() || !success->second.bool_value())
+    {
+      throw std::invalid_argument("description is not ready");
+    }
+
+    if (string_value("fetch_mode") == "FULL" || string_value("scope") == "app")
+    {
+      co_return version;
+    }
+
+    if (string_value("fetch_mode") != "NON_FULL")
+    {
+      throw std::invalid_argument("invalid description fetch_mode");
+    }
+
+    auto& indexing = *fields["indexing"].mutable_struct_value()->mutable_fields();
+    const auto state = indexing.find("state");
+    if (state != indexing.end() && state->second.string_value() == "PASSED_TO_FULL_INDEXING")
+    {
+      co_return version;
+    }
+    indexing["state"].set_string_value("PASSED_TO_FULL_INDEXING");
+    indexing["job_id"].set_string_value(job_id);
+    std::string updated;
+    const auto status = google::protobuf::util::MessageToJsonString(value, &updated);
+    if (!status.ok())
+    {
+      throw std::runtime_error(status.ToString());
+    }
+
+    Generics::ConstSmartMemBuf_var profile =
+      new Generics::ConstSmartMemBuf(updated.data(), updated.size());
+    co_await descriptions_->co_save_profile(url, profile);
+    co_return description_version(updated);
   }
 
   Commons::StartableAwaitable<std::string>
