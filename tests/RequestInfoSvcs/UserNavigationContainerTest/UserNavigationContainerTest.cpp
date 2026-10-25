@@ -1,11 +1,15 @@
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -13,6 +17,7 @@
 
 #include <Commons/Algs.hpp>
 #include <Commons/Coro/StartableAwaitable.hpp>
+#include <Commons/PlainMonoAllocatorTypes.hpp>
 #include <Logger/Logger.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfileAdapter.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/Compatibility/UserNavigationProfile_v1.hpp>
@@ -360,11 +365,118 @@ namespace
     user_map.second->wait_object();
     return result;
   }
+
+  std::vector<std::vector<char>>
+  load_user_navigation_profile_dumps(const std::filesystem::path& directory)
+  {
+    std::vector<std::filesystem::path> paths;
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+      if (entry.is_regular_file() && entry.path().extension() == ".bin")
+      {
+        paths.push_back(entry.path());
+      }
+    }
+    std::sort(paths.begin(), paths.end());
+    if (paths.empty())
+    {
+      throw std::runtime_error("No profile dumps found");
+    }
+
+    std::vector<std::vector<char>> profiles;
+    profiles.reserve(paths.size());
+    for (const auto& path : paths)
+    {
+      std::ifstream input(path, std::ios::binary);
+      if (!input)
+      {
+        throw std::runtime_error("Failed to open profile dump: " + path.string());
+      }
+      profiles.emplace_back(
+        std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+      if (profiles.back().empty())
+      {
+        throw std::runtime_error("Empty profile dump: " + path.string());
+      }
+    }
+
+    return profiles;
+  }
+
+  __attribute__((noinline))
+  void
+  replay_user_navigation_profiles(
+    const std::vector<std::vector<char>>& profiles,
+    std::size_t iterations)
+  {
+    using WritingTypes = AdServer::Commons::PlainMonoAllocatorTypes;
+    using ProfileWriter =
+      AdServer::RequestInfoSvcs::UserNavigationProfileCustomWriter<WritingTypes>;
+    using PageKeywordWriter =
+      AdServer::RequestInfoSvcs::PageKeywordCustomWriter<WritingTypes>;
+
+    std::size_t elements = 0;
+    std::vector<std::size_t> elements_per_profile;
+    elements_per_profile.reserve(profiles.size());
+    for (std::size_t iteration = 0; iteration < iterations; ++iteration)
+    {
+      for (const auto& profile : profiles)
+      {
+        WritingTypes::Context context;
+        ProfileWriter writer(context);
+        writer.init(profile.data(), profile.size());
+        std::size_t profile_elements = 0;
+        for (const auto& day : writer.days())
+        {
+          profile_elements += day.page_keywords().size();
+        }
+        elements += profile_elements;
+        if (iteration == 0)
+        {
+          elements_per_profile.push_back(profile_elements);
+        }
+      }
+    }
+
+    std::sort(elements_per_profile.begin(), elements_per_profile.end());
+    const auto middle = elements_per_profile.size() / 2;
+    const double median = elements_per_profile.size() % 2 == 0 ?
+      (elements_per_profile[middle - 1] + elements_per_profile[middle]) / 2.0 :
+      elements_per_profile[middle];
+    std::cout << "Replayed " << profiles.size() << " profiles x " << iterations <<
+      " iterations, " << elements << " page keywords; per-profile keywords min/median/avg/max="
+      << elements_per_profile.front() << '/' << median << '/'
+      << static_cast<double>(elements) / (profiles.size() * iterations) << '/'
+      << elements_per_profile.back() << "; sizeof(PageKeywordCustomWriter)="
+      << sizeof(PageKeywordWriter) << "; copy-constructible="
+      << std::is_copy_constructible_v<PageKeywordWriter> << "; trivially-copyable="
+      << std::is_trivially_copyable_v<PageKeywordWriter> << std::endl;
+  }
 }
 
-int
-main()
+int main(int argc, char** argv)
 {
+  if ((argc == 3 || argc == 4) &&
+    std::string_view(argv[1]) == "--replay-user-navigation-dumps")
+  {
+    try
+    {
+      const auto profiles = load_user_navigation_profile_dumps(argv[2]);
+      const std::size_t iterations = argc == 4 ? std::stoull(argv[3]) : 1;
+      if (iterations == 0)
+      {
+        throw std::invalid_argument("Replay iterations must be positive");
+      }
+      replay_user_navigation_profiles(profiles, iterations);
+      return 0;
+    }
+    catch (const std::exception& ex)
+    {
+      std::cerr << "UserNavigation profile replay: " << ex.what() << std::endl;
+      return 1;
+    }
+  }
+
   constexpr std::size_t USER_NAVIGATIONS_LIMIT = 4;
   constexpr unsigned long USER_NAVIGATION_PERIOD_DAYS = 10;
 

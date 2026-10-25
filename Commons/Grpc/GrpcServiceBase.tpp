@@ -173,7 +173,7 @@ namespace AdServer::Grpc
         batch_response.set_status_message(status.error_message());
         if (status.ok())
         {
-          response->SerializeToString(batch_response.mutable_payload());
+          (void)response->SerializeToString(batch_response.mutable_payload());
         }
       });
   }
@@ -266,7 +266,7 @@ namespace AdServer::Grpc
             batch_response.set_status_message(status.error_message());
             if (status.ok())
             {
-              response->SerializeToString(batch_response.mutable_payload());
+              (void)response->SerializeToString(batch_response.mutable_payload());
             }
           }
           else
@@ -278,7 +278,7 @@ namespace AdServer::Grpc
             batch_response.set_status_message(status.error_message());
             if (status.ok())
             {
-              response.SerializeToString(batch_response.mutable_payload());
+              (void)response.SerializeToString(batch_response.mutable_payload());
             }
           }
         },
@@ -314,7 +314,7 @@ namespace AdServer::Grpc
           batch_response.set_status_message(status.error_message());
           if (status.ok())
           {
-            response->SerializeToString(batch_response.mutable_payload());
+            (void)response->SerializeToString(batch_response.mutable_payload());
           }
         }
         else
@@ -326,7 +326,7 @@ namespace AdServer::Grpc
           batch_response.set_status_message(status.error_message());
           if (status.ok())
           {
-            response.SerializeToString(batch_response.mutable_payload());
+            (void)response.SerializeToString(batch_response.mutable_payload());
           }
         }
       }

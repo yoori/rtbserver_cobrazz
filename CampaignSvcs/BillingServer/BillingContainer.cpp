@@ -1947,7 +1947,7 @@ namespace AdServer::CampaignSvcs
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
       DeliveryLimitsType>::get_date_in_adv_tz(delivery_limits, now);
 
-    bool add_amount_result;
+    [[maybe_unused]] bool add_amount_result;
 
     {
       StateSyncPolicy::WriteGuard lock(amounts_lock);
@@ -1987,7 +1987,7 @@ namespace AdServer::CampaignSvcs
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
       DeliveryLimitsType>::get_date_in_adv_tz(delivery_limits, now);
 
-    bool add_amount_result;
+    [[maybe_unused]] bool add_amount_result;
 
     {
       StateSyncPolicy::WriteGuard lock(amounts_lock);

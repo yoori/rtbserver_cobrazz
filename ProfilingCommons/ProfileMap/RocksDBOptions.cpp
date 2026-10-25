@@ -31,7 +31,7 @@ namespace AdServer::ProfilingCommons
 
     constexpr std::size_t BLOCK_CACHE_SIZE = 1024ULL * 1024 * 1024;
     constexpr std::uint64_t BLOCK_SIZE = 8 * 1024;
-    constexpr std::size_t WRITE_BUFFER_SIZE = 256ULL * 1024 * 1024;
+    constexpr std::size_t WRITE_BUFFER_SIZE = 512ULL * 1024 * 1024;
     constexpr std::uint64_t TARGET_FILE_SIZE_BASE = 64ULL * 1024 * 1024;
     constexpr std::uint64_t SYNC_EVERY_BYTES = 1024ULL * 1024;
     constexpr double BLOOM_BITS_PER_KEY = 10.0;

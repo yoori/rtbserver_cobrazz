@@ -436,8 +436,8 @@ namespace AdServer::CampaignSvcs
   StatSource::Stat::add(const Stat& stat) noexcept
   {
     {
-      Generics::ExtendedTime left_check_time = check_time.get_gm_time();
-      Generics::ExtendedTime right_check_time = stat.check_time.get_gm_time();
+      [[maybe_unused]] Generics::ExtendedTime left_check_time = check_time.get_gm_time();
+      [[maybe_unused]] Generics::ExtendedTime right_check_time = stat.check_time.get_gm_time();
 
       assert(Generics::ExtendedTime(
         right_check_time.tm_year + 1900,

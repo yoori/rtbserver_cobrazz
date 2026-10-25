@@ -92,53 +92,70 @@ namespace AdServer::ProfilingCommons
 
   struct NumericSerializer
   {
+    static void read(uint64_t& key, void* buf, unsigned long buf_size);
+
+    template <typename NumberType>
     static void
-    read(uint64_t& key, void* buf, unsigned long buf_size)
-    {
-      assert(buf_size == 8);
-      key = *static_cast<const uint64_t*>(buf);
-    }
+    read(Generics::NumericHashAdapter<NumberType>& key, void* buf, unsigned long buf_size);
 
-    template<typename NumberType>
+    static void write(void* buf, unsigned long buf_size, uint64_t key);
+
+    template <typename NumberType>
     static void
-    read(Generics::NumericHashAdapter<NumberType>& key, void* buf, unsigned long buf_size)
-    {
-      assert(buf_size == 8);
-      key = Generics::NumericHashAdapter<NumberType>(*static_cast<const uint64_t*>(buf));
-    }
+    write(void* buf, unsigned long buf_size, const Generics::NumericHashAdapter<NumberType>& key);
 
-    static void
-    write(void* buf, unsigned long buf_size, uint64_t key)
-    {
-      assert(buf_size == 8);
-      *static_cast<uint64_t*>(buf) = key;
-    }
+    template <typename NumberType>
+    static unsigned long size(const Generics::NumericHashAdapter<NumberType>&);
 
-    template<typename NumberType>
-    static void
-    write(void* buf, unsigned long buf_size, const Generics::NumericHashAdapter<NumberType>& key)
-    {
-      assert(buf_size == 8);
-      *static_cast<uint64_t*>(buf) = key.value();
-    }
-
-    template<typename NumberType>
-    static unsigned long
-    size(const Generics::NumericHashAdapter<NumberType>&)
-    {
-      return sizeof(NumberType);
-    }
-
-    static unsigned long
-    size(uint64_t)
-    {
-      return 8;
-    }
+    static unsigned long size(uint64_t);
   };
 }
 
 namespace AdServer::ProfilingCommons
 {
+  inline void NumericSerializer::read(uint64_t& key, void* buf, unsigned long buf_size)
+  {
+    (void)buf_size;
+    assert(buf_size == 8);
+    key = *static_cast<const uint64_t*>(buf);
+  }
+
+  template <typename NumberType>
+  void NumericSerializer::read(
+    Generics::NumericHashAdapter<NumberType>& key, void* buf, unsigned long buf_size)
+  {
+    (void)buf_size;
+    assert(buf_size == 8);
+    key = Generics::NumericHashAdapter<NumberType>(*static_cast<const uint64_t*>(buf));
+  }
+
+  inline void NumericSerializer::write(void* buf, unsigned long buf_size, uint64_t key)
+  {
+    (void)buf_size;
+    assert(buf_size == 8);
+    *static_cast<uint64_t*>(buf) = key;
+  }
+
+  template <typename NumberType>
+  void NumericSerializer::write(
+    void* buf, unsigned long buf_size, const Generics::NumericHashAdapter<NumberType>& key)
+  {
+    (void)buf_size;
+    assert(buf_size == 8);
+    *static_cast<uint64_t*>(buf) = key.value();
+  }
+
+  template <typename NumberType>
+  unsigned long NumericSerializer::size(const Generics::NumericHashAdapter<NumberType>&)
+  {
+    return sizeof(NumberType);
+  }
+
+  inline unsigned long NumericSerializer::size(uint64_t)
+  {
+    return 8;
+  }
+
   /* UuidPackHashAdapter */
   inline
   UuidPackHashAdapter::UuidPackHashAdapter()

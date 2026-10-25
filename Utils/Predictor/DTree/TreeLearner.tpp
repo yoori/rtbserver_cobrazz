@@ -79,22 +79,7 @@ namespace Vanga
       }
     }
 
-    void
-    wait(unsigned long all_tasks)
-    {
-      unsigned long prev_tasks_in_progress = 0;
-      Sync::ConditionalGuard guard(cond_);
-      while (tasks_in_progress > 0)
-      {
-        guard.wait();
-
-        if (tasks_in_progress % 100 == 0 && tasks_in_progress != tasks_in_progress)
-        {
-          prev_tasks_in_progress = tasks_in_progress;
-          std::cout << "processed " << (all_tasks - tasks_in_progress) << "/" << tasks_in_progress << " features" << std::endl;
-        }
-      }
-    }
+    void wait(unsigned long all_tasks);
 
     bool
     get_result(BestChoose& res) const
@@ -126,6 +111,23 @@ namespace Vanga
   protected:
     virtual ~GetBestFeatureResult() noexcept = default;
   };
+
+  inline void GetBestFeatureResult::wait(unsigned long all_tasks)
+  {
+    unsigned long prev_tasks_in_progress = 0;
+    Sync::ConditionalGuard guard(cond_);
+    while (tasks_in_progress > 0)
+    {
+      guard.wait();
+
+      if (tasks_in_progress % 100 == 0 && tasks_in_progress != prev_tasks_in_progress)
+      {
+        prev_tasks_in_progress = tasks_in_progress;
+        std::cout << "processed " << (all_tasks - tasks_in_progress) << "/" << all_tasks <<
+          " features" << std::endl;
+      }
+    }
+  }
 
   typedef ReferenceCounting::SmartPtr<GetBestFeatureResult>
     GetBestFeatureResult_var;

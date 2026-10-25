@@ -17,26 +17,27 @@
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 
 <!--
-  The points are rounded p75 per-host runnable shares per thread. They were measured on targetrtb
-  during the 2026-09-15 10-minute sampling window. Thread counts controlled by CMS are emitted
-  separately below; this list contains only fixed-size pools.
+  The points are rounded p75 across eight hosts of per-thread runtime plus runqueue wait,
+  expressed as a percentage of wall time, with a minimum of one. Single-CPU-pinned threads were
+  sampled on adfe100-103 and adfe200-203 for five minutes on 2026-10-23 (ssv692). Thread counts
+  controlled by CMS are emitted separately below; this list contains only fixed-size pools.
 -->
 <xsl:variable name="fixed-pools">
   <services>
     <service name="CampaignManager">
-      <pool name="bs-grpc" threads="4" points="13"/>
-      <pool name="bs-grpc-c" threads="1" points="34"/>
-      <pool name="event_engine" threads="16" points="21"/>
+      <pool name="bs-grpc" threads="4" points="1"/>
+      <pool name="bs-grpc-c" threads="1" points="4"/>
+      <pool name="event_engine" threads="16" points="8"/>
       <pool name="fast-scheduler" threads="1" points="1"/>
       <pool name="grpc_global" threads="1" points="1"/>
       <pool name="grpcpp_sync" threads="1" points="1"/>
       <pool name="http-server" threads="4" points="1"/>
       <pool name="jemalloc_bg" threads="4" points="1"/>
       <pool name="lifeguard" threads="1" points="1"/>
-      <pool name="task-runner" threads="5" points="16"/>
+      <pool name="task-runner" threads="5" points="7"/>
     </service>
     <service name="ChannelServer">
-      <pool name="event_engine" threads="16" points="16"/>
+      <pool name="event_engine" threads="16" points="7"/>
       <pool name="fast-scheduler" threads="1" points="1"/>
       <pool name="grpc_global" threads="1" points="1"/>
       <pool name="grpcpp_sync" threads="2" points="1"/>
@@ -46,17 +47,17 @@
       <pool name="task-runner" threads="2" points="1"/>
     </service>
     <service name="FCGIRtbServer">
-      <pool name="event_engine" threads="16" points="41"/>
-      <pool name="grpc-common" threads="16" points="53"/>
+      <pool name="event_engine" threads="16" points="14"/>
+      <pool name="grpc-common" threads="16" points="11"/>
       <pool name="grpc_global" threads="1" points="1"/>
       <pool name="http-server" threads="4" points="1"/>
-      <pool name="jemalloc_bg" threads="4" points="2"/>
+      <pool name="jemalloc_bg" threads="4" points="1"/>
       <pool name="lifeguard" threads="1" points="1"/>
-      <pool name="task-runner" threads="9" points="2"/>
+      <pool name="task-runner" threads="9" points="1"/>
     </service>
     <service name="UserBindServer">
-      <pool name="event_engine" threads="16" points="29"/>
-      <pool name="fast-scheduler" threads="1" points="52"/>
+      <pool name="event_engine" threads="16" points="5"/>
+      <pool name="fast-scheduler" threads="1" points="13"/>
       <pool name="grpc_global" threads="1" points="1"/>
       <pool name="http-server" threads="4" points="1"/>
       <pool name="jemalloc_bg" threads="4" points="1"/>
@@ -64,8 +65,8 @@
       <pool name="task-runner" threads="13" points="1"/>
     </service>
     <service name="UserInfoManager">
-      <pool name="event_engine" threads="16" points="22"/>
-      <pool name="fast-scheduler" threads="1" points="31"/>
+      <pool name="event_engine" threads="16" points="7"/>
+      <pool name="fast-scheduler" threads="1" points="8"/>
       <pool name="grpc_global" threads="1" points="1"/>
       <pool name="grpcpp_sync" threads="1" points="1"/>
       <pool name="http-server" threads="4" points="1"/>
@@ -219,8 +220,8 @@
     <xsl:with-param name="config" select="$config"/>
     <xsl:with-param name="service" select="'CampaignManager'"/>
     <xsl:with-param name="process-pool" select="'cm-grpc-p'"/>
-    <xsl:with-param name="process-points" select="41"/>
-    <xsl:with-param name="server-points" select="16"/>
+    <xsl:with-param name="process-points" select="16"/>
+    <xsl:with-param name="server-points" select="4"/>
     <xsl:with-param name="default-process-threads" select="32"/>
     <xsl:with-param name="default-cq-threads" select="4"/>
   </xsl:call-template>
@@ -229,7 +230,7 @@
     <xsl:with-param name="service" select="'CampaignManager'"/>
     <xsl:with-param name="pool" select="'cm-logging'"/>
     <xsl:with-param name="threads" select="$logging-threads"/>
-    <xsl:with-param name="points" select="56"/>
+    <xsl:with-param name="points" select="19"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -339,28 +340,28 @@
     <xsl:with-param name="service" select="'FCGIRtbServer'"/>
     <xsl:with-param name="pool" select="'bid-request'"/>
     <xsl:with-param name="threads" select="$rtb-threads"/>
-    <xsl:with-param name="points" select="82"/>
+    <xsl:with-param name="points" select="31"/>
   </xsl:call-template>
   <xsl:call-template name="emit-pool">
     <xsl:with-param name="numa-node" select="$numa-node"/>
     <xsl:with-param name="service" select="'FCGIRtbServer'"/>
     <xsl:with-param name="pool" select="'fast-scheduler'"/>
     <xsl:with-param name="threads" select="$rtb-interrupt-threads"/>
-    <xsl:with-param name="points" select="61"/>
+    <xsl:with-param name="points" select="5"/>
   </xsl:call-template>
   <xsl:call-template name="emit-pool">
     <xsl:with-param name="numa-node" select="$numa-node"/>
     <xsl:with-param name="service" select="'FCGIRtbServer'"/>
     <xsl:with-param name="pool" select="'fcgi-accept'"/>
     <xsl:with-param name="threads" select="number($accept-threads) * 4"/>
-    <xsl:with-param name="points" select="77"/>
+    <xsl:with-param name="points" select="16"/>
   </xsl:call-template>
   <xsl:call-template name="emit-pool">
     <xsl:with-param name="numa-node" select="$numa-node"/>
     <xsl:with-param name="service" select="'FCGIRtbServer'"/>
     <xsl:with-param name="pool" select="'grpc-asio-p'"/>
     <xsl:with-param name="threads" select="$grpc-coalesce-threads"/>
-    <xsl:with-param name="points" select="53"/>
+    <xsl:with-param name="points" select="19"/>
   </xsl:call-template>
   <xsl:call-template name="emit-fixed-pools">
     <xsl:with-param name="numa-node" select="$numa-node"/>
@@ -378,7 +379,7 @@
     <xsl:with-param name="service" select="'FCGIUserBindServer'"/>
     <xsl:with-param name="pool" select="'bid-request'"/>
     <xsl:with-param name="threads" select="$user-bind-threads"/>
-    <xsl:with-param name="points" select="5"/>
+    <xsl:with-param name="points" select="1"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -411,8 +412,8 @@
               select="$service-config | $group-config[count($service-config) = 0]"/>
             <xsl:with-param name="service" select="'ChannelServer'"/>
             <xsl:with-param name="process-pool" select="'cs-grpc-p'"/>
-            <xsl:with-param name="process-points" select="54"/>
-            <xsl:with-param name="server-points" select="13"/>
+            <xsl:with-param name="process-points" select="12"/>
+            <xsl:with-param name="server-points" select="5"/>
             <xsl:with-param name="default-process-threads" select="32"/>
             <xsl:with-param name="default-cq-threads" select="4"/>
           </xsl:call-template>
@@ -434,12 +435,12 @@
             <xsl:with-param name="config" select="$config"/>
             <xsl:with-param name="service" select="'UserBindServer'"/>
             <xsl:with-param name="process-pool" select="'ub-grpc-p'"/>
-            <xsl:with-param name="process-points" select="80"/>
-            <xsl:with-param name="server-points" select="19"/>
+            <xsl:with-param name="process-points" select="14"/>
+            <xsl:with-param name="server-points" select="4"/>
             <xsl:with-param name="default-process-threads" select="32"/>
             <xsl:with-param name="default-cq-threads" select="4"/>
             <xsl:with-param name="batching-threads" select="$batching-threads"/>
-            <xsl:with-param name="batching-points" select="81"/>
+            <xsl:with-param name="batching-points" select="4"/>
           </xsl:call-template>
         </xsl:when>
         <xsl:when test="@descriptor = $user-info-manager-descriptor">
@@ -455,12 +456,12 @@
             <xsl:with-param name="config" select="$config"/>
             <xsl:with-param name="service" select="'UserInfoManager'"/>
             <xsl:with-param name="process-pool" select="'uim-grpc-p'"/>
-            <xsl:with-param name="process-points" select="62"/>
-            <xsl:with-param name="server-points" select="11"/>
+            <xsl:with-param name="process-points" select="20"/>
+            <xsl:with-param name="server-points" select="4"/>
             <xsl:with-param name="default-process-threads" select="16"/>
             <xsl:with-param name="default-cq-threads" select="4"/>
             <xsl:with-param name="batching-threads" select="$batching-threads"/>
-            <xsl:with-param name="batching-points" select="50"/>
+            <xsl:with-param name="batching-points" select="14"/>
           </xsl:call-template>
         </xsl:when>
       </xsl:choose>

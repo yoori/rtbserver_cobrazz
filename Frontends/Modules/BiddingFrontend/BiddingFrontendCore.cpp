@@ -2193,7 +2193,7 @@ namespace AdServer::Bidding
     {
       auto* token = tokens->Add();
       token->set_name(token_name);
-      token->set_value(std::string(token_value.data(), token_value.size()));
+      token->set_value(std::string_view(token_value.data(), token_value.size()));
     };
 
     try

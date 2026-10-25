@@ -222,7 +222,7 @@ namespace AdServer::LogProcessing
     if (!files_.empty())
     {
       res = *files_.begin();
-      bool inserted = in_progress_files_.insert(res).second;
+      [[maybe_unused]] bool inserted = in_progress_files_.insert(res).second;
       assert(inserted);
       files_.erase(files_.begin());
     }
@@ -305,7 +305,7 @@ namespace AdServer::LogProcessing
   FileReceiver::file_processed_(const char* file_name) noexcept
   {
     SyncPolicy::WriteGuard guard(files_lock_);
-    const bool erased = in_progress_files_.erase(file_name);
+    [[maybe_unused]] const bool erased = in_progress_files_.erase(file_name);
     assert(erased);
 
     if (fetch_internal_in_progress_)
@@ -321,7 +321,7 @@ namespace AdServer::LogProcessing
 
     {
       SyncPolicy::WriteGuard guard(files_lock_);
-      const bool erased = in_progress_files_.erase(name);
+      [[maybe_unused]] const bool erased = in_progress_files_.erase(name);
       assert(erased);
       top = add_file_i_(name);
     }

@@ -368,6 +368,28 @@ namespace PlainTypes
     if constexpr (std::is_same_v<S, typename T::template Vector<Element>>)
     {
       this->reserve(size);
+
+      if constexpr (std::is_trivially_copyable_v<Element> &&
+        std::is_copy_constructible_v<Element> &&
+        (std::is_constructible_v<Element, Context&> ||
+          std::is_default_constructible_v<Element>))
+      {
+        if (this->size() < size)
+        {
+          if constexpr (std::is_constructible_v<Element, Context&>)
+          {
+            Element default_element(*context_);
+            S::resize(size, default_element);
+          }
+          else
+          {
+            Element default_element{};
+            S::resize(size, default_element);
+          }
+
+          return;
+        }
+      }
     }
 
     while (this->size() < size)

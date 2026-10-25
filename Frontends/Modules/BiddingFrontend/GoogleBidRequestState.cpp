@@ -167,7 +167,7 @@ namespace AdServer::Bidding
     try
     {
       const std::string_view body = request_holder_->request().body();
-      bid_request_.ParseFromArray(body.data(), static_cast<int>(body.size()));
+      (void)bid_request_.ParseFromArray(body.data(), static_cast<int>(body.size()));
 
       /*
       if (bid_frontend_->logger()->log_level() >= Logging::Logger::TRACE)
@@ -378,7 +378,7 @@ namespace AdServer::Bidding
       Stream::BinaryStreamWriter response_writer(&response->get_output_stream());
       bid_response.set_processing_time_ms(
         (Generics::Time::get_time_of_day() - start_processing_time()).microseconds() / 1000);
-      bid_response.SerializeToOstream(&response_writer);
+      (void)bid_response.SerializeToOstream(&response_writer);
       response_writer.flush();
       write_response_(200, response);
 
@@ -403,7 +403,7 @@ namespace AdServer::Bidding
       Google::BidResponse empty_bid_response;
       empty_bid_response.set_processing_time_ms(
         (Generics::Time::get_time_of_day() - start_processing_time_).microseconds() / 1000);
-      empty_bid_response.SerializeToOstream(&response_writer);
+      (void)empty_bid_response.SerializeToOstream(&response_writer);
       response_writer.flush();
 
       write_response_(200, response, response_claimed);

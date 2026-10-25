@@ -2529,7 +2529,7 @@ namespace AdServer::CampaignSvcs
         option_values.find(SKIP_MIN_ECPM_OPTION_ID);
       if (skip_min_ecpm_option_it != option_values.end())
       {
-        int v;
+        int v = 0;
         String::StringManip::str_to_int(skip_min_ecpm_option_it->second, v);
         p_tag->skip_min_ecpm = (v != 0);
       }
