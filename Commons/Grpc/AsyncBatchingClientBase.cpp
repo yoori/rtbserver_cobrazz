@@ -1059,7 +1059,7 @@ namespace AdServer::Grpc
 
   void
   AsyncBatchingClientBase::handle_stream_drained_(
-    BatchingStreamBase* stream,
+    [[maybe_unused]] BatchingStreamBase* stream,
     const StreamHolderPtr& stream_holder) noexcept
   {
     assert(stream);

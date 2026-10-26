@@ -56,6 +56,8 @@ def test(binary_dir):
     require("ProcessControl" not in status_command and "ProbeObj" not in status_command,
       "status still depends on ProcessControl")
     require("kill -TERM" in stop_command, "DACS stop does not send SIGTERM")
+    require("kill -9" not in stop_command, "DACS stop force-kills after timeout")
+    require("pid file retained" in stop_command, "DACS stop hides a timeout")
     require("run/LogGeneralizer.pid" in start_command, "DACS start has no pidfile guard")
     guard_script = (
       'use AdServer::Functions; '
@@ -73,6 +75,28 @@ def test(binary_dir):
     require(shell(status_command, False).returncode != 0, "foreign PID reported alive")
     shell(stop_command)
     require(not pidfile.exists(), "stale pidfile was not removed")
+
+    hanging_process = subprocess.Popen(
+      ["bash", "-c", "trap '' TERM; while true; do sleep 1; done"], env=env)
+    try:
+      time.sleep(0.1)
+      pidfile.write_text(str(hanging_process.pid) + "\n")
+      command_script = (
+        'use AdServer::Functions; '
+        'print AdServer::Functions::stop_pidfile_command($ARGV[0], $ARGV[1]);')
+      timeout_stop_command = run(
+        ["perl", "-Mthreads", "-Mthreads::shared", "-e", command_script,
+          str(pidfile), "bash"], env).stdout.replace("seq 1 60", "seq 1 1")
+      stop_result = shell(timeout_stop_command, False)
+      require(stop_result.returncode != 0, "stop succeeded while process stayed alive")
+      require("pid file retained" in stop_result.stderr, "stop timeout was not reported")
+      require(pidfile.exists(), "pidfile was removed while process stayed alive")
+      require(hanging_process.poll() is None, "stop force-killed the process")
+    finally:
+      hanging_process.kill()
+      hanging_process.wait()
+      if pidfile.exists():
+        pidfile.unlink()
 
     for mode in ("pidfile", "SIGINT", "without-db", "without-http"):
       with socket.socket() as listener, socket.socket() as http_listener, \

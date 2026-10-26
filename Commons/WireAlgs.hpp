@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -37,17 +38,8 @@ namespace WireAlgs
   template<typename ULongSeqType, typename DecimalType>
   void unpack_decimal_from_seq(DecimalType& value, const ULongSeqType& seq, std::uint32_t pos)
   {
-    const unsigned long EL_NUMBER = DecimalType::PACK_SIZE / 4 +
-      (DecimalType::PACK_SIZE % 4 ? 1 : 0);
-    uint32_t buf[EL_NUMBER];
-
-    assert(seq.size() - pos == EL_NUMBER);
-
-    for (std::uint32_t i = 0; i < EL_NUMBER; ++i)
-    {
-      buf[i] = seq[pos + i];
-    }
-
-    value.unpack(buf);
+    assert(pos <= static_cast<std::size_t>(seq.size()));
+    assert(seq.size() - pos == (DecimalType::PACK_SIZE + 3) / 4);
+    value.unpack(seq.data() + pos);
   }
 }

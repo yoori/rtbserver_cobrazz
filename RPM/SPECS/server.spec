@@ -67,7 +67,6 @@ BuildRequires: glibc-devel = %__glibc_ver_req
 #Requires: glibc
 Requires: glibc = %__glibc_ver_req
 
-BuildRequires: autoconf >= 2.63
 BuildRequires: gcc-toolset-%{foros_gcc_toolset}-gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
@@ -95,11 +94,10 @@ BuildRequires: valgrind-devel
 %endif
 BuildRequires: pcre2-devel >= 10.32
 #BuildRequires: prelink
-BuildRequires: selinux-policy
 BuildRequires: xerces-c-devel = 3.2.5-1.el8
 BuildRequires: xsd >= 4.1.0
-BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req} lm_sensors-libs
-Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
+BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req}
+Requires: net-snmp >= %{__net_snmp_ver_req}
 #Requires: net-snmp-subagent >= 2.1.3.1
 #BuildRequires: java-1.8.0-oracle-devel >= 1.7.0.45
 BuildRequires: java-1.8.0-openjdk-devel
@@ -140,10 +138,7 @@ Requires: perl-Template-Toolkit
 #Requires: perl-Path-Iterator-Rule
 Requires: perl-List-BinarySearch
 Requires: perl-List-BinarySearch-XS
-Requires: perl-Proc-Daemon
-Requires: perl-Log-Dispatch
 Requires: perl-Log-Dispatch-FileRotate
-Requires: perl-Specio
 Requires: perl-Hash-MultiKey perl-Digest-CRC perl-open
 
 Requires: xerces-c = 3.2.5-1.el8
@@ -155,8 +150,7 @@ Requires: vanga = %__vanga_ver_req
 Requires: %{__boost_package} = %__boost_ver_req
 Requires: folly = %__folly_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
-Requires: gflags = 1:2.1.2-8.el8
-Requires: libatomic libev
+Requires: libev
 Requires: grpc = %{__grpc_ver_req}
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller

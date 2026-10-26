@@ -48,8 +48,10 @@ sub stop_pidfile_command
       "$alive || { rm -f \"$pid_file\"; exit 0; }; " .
       "sleep 1; " .
     "done; " .
-    "$alive && kill -9 \"\$pid\" 2>/dev/null || true; " .
-    "test -e \"$pid_file\" && rm -f \"$pid_file\" || true )";
+    "test -e \"$pid_file\" || exit 0; " .
+    "$alive || { rm -f \"$pid_file\"; exit 0; }; " .
+    "echo \"Timed out waiting for process PID \$pid to stop; pid file retained\" >&2; " .
+    "exit 1 )";
 }
 
 sub stop_by_pidfile

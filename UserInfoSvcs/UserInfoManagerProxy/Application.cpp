@@ -270,9 +270,14 @@ namespace
       dump::DumpRecord record;
       record.request_time_us = request_time;
       record.method = method;
-      request->SerializeToString(&record.request_bytes);
       record.response_time_us = response_time;
-      response->SerializeToString(&record.response_bytes);
+      if (!request->SerializeToString(&record.request_bytes) ||
+        !response->SerializeToString(&record.response_bytes))
+      {
+        std::cerr << "failed to serialize dump for " << method << '\n';
+        return status;
+      }
+
       dump_writer_->write(record);
 
       return status;
@@ -345,7 +350,17 @@ namespace
 
       response_item.set_status_code(status.error_code());
       response_item.set_status_message(status.error_message());
-      response.SerializeToString(response_item.mutable_payload());
+      if (!response.SerializeToString(response_item.mutable_payload()))
+      {
+        response_item.clear_payload();
+        if (status.ok())
+        {
+          response_item.set_status_code(grpc::StatusCode::INTERNAL);
+          response_item.set_status_message("failed to serialize batch response payload");
+        }
+
+        return;
+      }
 
       dump::DumpRecord record;
       record.request_time_us = request_time;

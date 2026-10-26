@@ -1,3 +1,6 @@
+# Assertions are test checks and must run in optimized builds too.
+add_compile_options(-UNDEBUG)
+
 add_subdirectory(LogProcessing)
 add_subdirectory(RequestInfoSvcs)
 add_subdirectory(Commons)

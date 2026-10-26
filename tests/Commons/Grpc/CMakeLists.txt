@@ -9,10 +9,8 @@ add_executable(DistributedPartitionPoolTest
 add_executable(BatchPartialResponseTest
   BatchPartialResponseTest.cpp
 )
-target_compile_options(BatchPartialResponseTest PRIVATE -UNDEBUG)
 
 add_executable(BatchCooperativeTest BatchCooperativeTest.cpp)
-target_compile_options(BatchCooperativeTest PRIVATE -UNDEBUG)
 target_link_libraries(BatchCooperativeTest PRIVATE PkgConfig::Jemalloc Commons Generics GrpcBatch)
 
 add_executable(BatchingTimerTest
