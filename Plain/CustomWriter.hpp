@@ -16,6 +16,29 @@
 
 namespace PlainTypes
 {
+  struct String;
+  struct Buffer;
+
+  template<typename Element>
+  struct Vector;
+
+  template<typename Element>
+  struct List;
+
+  template<typename Element, Element Read(const void*), Element& Write(void*),
+    unsigned long Step>
+  struct SimpleVector;
+
+  template<typename Element, Element Read(const void*), Element& Write(void*),
+    unsigned long Step>
+  struct SimpleList;
+
+  template<typename CustomTypes, typename String>
+  class CustomString;
+
+  template<typename CustomTypes>
+  class CustomBuffer;
+
   // Context must outlive writers, their copies and their container elements. Context-dependent
   // allocators must retain the context on copy and propagate it on assignment and swap.
   // CustomTypes supplies Context, String, Buffer, Vector<T>, List<T> and make<T>(Context&).
@@ -34,6 +57,12 @@ namespace PlainTypes
     template<typename T>
     using List = std::list<T>;
 
+    template<typename Types>
+    using StringWriter = CustomString<Types, typename Types::String>;
+
+    template<typename Types>
+    using BufferWriter = CustomBuffer<Types>;
+
     template<typename T>
     static T make(Context& context);
   };
@@ -45,6 +74,8 @@ namespace PlainTypes
     using Base = String;
     using Context = typename CustomTypes::Context;
     using Base::operator=;
+    static constexpr bool HAS_DYNAMIC_DATA = true;
+    static constexpr bool REQUIRES_DYNAMIC_END = true;
     static constexpr unsigned long FIXED_SIZE = 4;
 
     explicit CustomString(Context& context);
@@ -54,6 +85,7 @@ namespace PlainTypes
     CustomString& operator=(CustomString&& other) noexcept(std::is_nothrow_move_assignable_v<Base>);
     void init_default() noexcept;
     void init(const void* buf, unsigned long size);
+    const char* init(const void* buf, unsigned long size, const char* dynamic_buf_end);
     unsigned long dyn_size_() const noexcept;
     void save_(void* fixed_buf, void* dyn_buf) const noexcept;
   };
@@ -65,12 +97,15 @@ namespace PlainTypes
     using Base = typename CustomTypes::Buffer;
     using Context = typename CustomTypes::Context;
     using Base::assign;
+    static constexpr bool HAS_DYNAMIC_DATA = true;
+    static constexpr bool REQUIRES_DYNAMIC_END = false;
     static constexpr unsigned long FIXED_SIZE = 8;
 
     explicit CustomBuffer(Context& context);
     void assign(const void* buf, unsigned long size);
     void init_default() noexcept;
     void init(const void* buf, unsigned long size);
+    const char* init(const void* buf, unsigned long size, const char* dynamic_buf_end);
     unsigned long dyn_size_() const noexcept;
     void save_(void* fixed_buf, void* dyn_buf) const noexcept;
   };
@@ -79,8 +114,12 @@ namespace PlainTypes
   struct CustomDynamicElement
   {
     static constexpr unsigned long FIXED_SIZE = Element::FIXED_SIZE;
+    static constexpr bool HAS_DYNAMIC_DATA = Element::HAS_DYNAMIC_DATA;
+    static constexpr bool REQUIRES_DYNAMIC_END = Element::REQUIRES_DYNAMIC_END;
 
     static void init(Element& element, const void* buf, unsigned long size);
+    static const char* init(Element& element, const void* buf, unsigned long size,
+      const char* dynamic_buf_end);
     static unsigned long dyn_size(const Element& element);
     static void save(const Element& element, void* fixed_buf, void* dyn_buf);
   };
@@ -89,8 +128,12 @@ namespace PlainTypes
   struct CustomSimpleElement
   {
     static constexpr unsigned long FIXED_SIZE = Step;
+    static constexpr bool HAS_DYNAMIC_DATA = false;
+    static constexpr bool REQUIRES_DYNAMIC_END = false;
 
     static void init(Element& element, const void* buf, unsigned long size);
+    static const char* init(Element& element, const void* buf, unsigned long size,
+      const char* dynamic_buf_end);
     static unsigned long dyn_size(const Element& element) noexcept;
     static void save(const Element& element, void* fixed_buf, void* dyn_buf) noexcept;
   };
@@ -106,6 +149,8 @@ namespace PlainTypes
     using Storage::emplace;
     using Storage::emplace_back;
     static constexpr unsigned long FIXED_SIZE = HeaderSize;
+    static constexpr bool HAS_DYNAMIC_DATA = true;
+    static constexpr bool REQUIRES_DYNAMIC_END = Codec::REQUIRES_DYNAMIC_END;
     static_assert(Codec::FIXED_SIZE > 0, "Array elements must have a nonempty fixed part");
 
     explicit CustomContainer(Context& context);
@@ -116,6 +161,7 @@ namespace PlainTypes
     void swap(CustomContainer& other);
     void init_default() noexcept;
     void init(const void* buf, unsigned long size);
+    const char* init(const void* buf, unsigned long size, const char* dynamic_buf_end);
     unsigned long dyn_size_() const;
     void save_(void* fixed_buf, void* dyn_buf) const;
 
@@ -141,6 +187,54 @@ namespace PlainTypes
   using CustomSimpleList = CustomContainer<Types, typename Types::template List<Element>,
     CustomSimpleElement<Element, Read, Write, Step>, HeaderSize>;
 
+  template<typename WriterTypes, typename Holder, unsigned long FixedSize>
+  struct WriterType
+  {
+    using Type = typename Holder::template CustomWriter<WriterTypes>;
+  };
+
+  template<typename WriterTypes, unsigned long FixedSize>
+  struct WriterType<WriterTypes, String, FixedSize>
+  {
+    using Type = typename WriterTypes::template StringWriter<WriterTypes>;
+  };
+
+  template<typename WriterTypes, unsigned long FixedSize>
+  struct WriterType<WriterTypes, Buffer, FixedSize>
+  {
+    using Type = typename WriterTypes::template BufferWriter<WriterTypes>;
+  };
+
+  template<typename WriterTypes, typename Element, unsigned long FixedSize>
+  struct WriterType<WriterTypes, Vector<Element>, FixedSize>
+  {
+    using ElementType = typename WriterType<WriterTypes, Element,
+      Element::FIXED_SIZE>::Type;
+    using Type = CustomVector<WriterTypes, ElementType, FixedSize>;
+  };
+
+  template<typename WriterTypes, typename Element, unsigned long FixedSize>
+  struct WriterType<WriterTypes, List<Element>, FixedSize>
+  {
+    using ElementType = typename WriterType<WriterTypes, Element,
+      Element::FIXED_SIZE>::Type;
+    using Type = CustomList<WriterTypes, ElementType, FixedSize>;
+  };
+
+  template<typename WriterTypes, typename Element, Element Read(const void*),
+    Element& Write(void*), unsigned long Step, unsigned long FixedSize>
+  struct WriterType<WriterTypes, SimpleVector<Element, Read, Write, Step>, FixedSize>
+  {
+    using Type = CustomSimpleVector<WriterTypes, Element, Read, Write, Step, FixedSize>;
+  };
+
+  template<typename WriterTypes, typename Element, Element Read(const void*),
+    Element& Write(void*), unsigned long Step, unsigned long FixedSize>
+  struct WriterType<WriterTypes, SimpleList<Element, Read, Write, Step>, FixedSize>
+  {
+    using Type = CustomSimpleList<WriterTypes, Element, Read, Write, Step, FixedSize>;
+  };
+
   template<typename T>
   T DefaultWritingTypes::make(Context&)
   {
@@ -164,7 +258,8 @@ namespace PlainTypes
   CustomString<CustomTypes, String>::operator=(const CustomString&) = default;
 
   template<typename CustomTypes, typename String>
-  CustomString<CustomTypes, String>& CustomString<CustomTypes, String>::operator=(CustomString&&)
+  CustomString<CustomTypes, String>&
+  CustomString<CustomTypes, String>::operator=(CustomString&&)
     noexcept(std::is_nothrow_move_assignable_v<Base>) = default;
 
   template<typename CustomTypes, typename String>
@@ -174,7 +269,8 @@ namespace PlainTypes
   }
 
   template<typename CustomTypes, typename String>
-  void CustomString<CustomTypes, String>::init(const void* buf, unsigned long size)
+  void CustomString<CustomTypes, String>::init(const void* buf,
+    unsigned long size)
   {
     if (size < FIXED_SIZE)
     {
@@ -199,13 +295,47 @@ namespace PlainTypes
   }
 
   template<typename CustomTypes, typename String>
+  const char* CustomString<CustomTypes, String>::init(
+    const void* buf, unsigned long size, const char* dynamic_buf_end)
+  {
+    if (size < FIXED_SIZE)
+    {
+      throw CorruptedStruct("CustomString: truncated header");
+    }
+
+    const char* begin = static_cast<const char*>(buf);
+    if (dynamic_buf_end < begin || dynamic_buf_end > begin + size)
+    {
+      throw CorruptedStruct("CustomString: invalid dynamic boundary");
+    }
+
+    std::uint32_t offset;
+    std::memcpy(&offset, buf, sizeof(offset));
+    if (offset < FIXED_SIZE || offset >= size)
+    {
+      throw CorruptedStruct("CustomString: invalid offset");
+    }
+
+    const char* data = begin + offset;
+    if (dynamic_buf_end <= data)
+    {
+      throw CorruptedStruct("CustomString: invalid dynamic boundary");
+    }
+
+    const auto dynamic_size = static_cast<unsigned long>(dynamic_buf_end - data);
+    this->assign(data, dynamic_size - 1);
+    return data;
+  }
+
+  template<typename CustomTypes, typename String>
   unsigned long CustomString<CustomTypes, String>::dyn_size_() const noexcept
   {
     return this->size() + 1;
   }
 
   template<typename CustomTypes, typename String>
-  void CustomString<CustomTypes, String>::save_(void* fixed_buf, void* dyn_buf) const noexcept
+  void CustomString<CustomTypes, String>::save_(void* fixed_buf,
+    void* dyn_buf) const noexcept
   {
     const std::uint32_t offset = static_cast<char*>(dyn_buf) - static_cast<char*>(fixed_buf);
     std::memcpy(fixed_buf, &offset, sizeof(offset));
@@ -252,6 +382,34 @@ namespace PlainTypes
   }
 
   template<typename CustomTypes>
+  const char* CustomBuffer<CustomTypes>::init(
+    const void* buf, unsigned long size, const char* dynamic_buf_end)
+  {
+    if (size < FIXED_SIZE)
+    {
+      throw CorruptedStruct("CustomBuffer: truncated header");
+    }
+
+    std::uint32_t header[2];
+    std::memcpy(header, buf, sizeof(header));
+    const char* begin = static_cast<const char*>(buf);
+    if (header[0] < FIXED_SIZE || header[0] > size || header[1] > size - header[0])
+    {
+      throw CorruptedStruct("CustomBuffer: invalid dynamic range");
+    }
+
+    const char* data = begin + header[0];
+    if (dynamic_buf_end < data || dynamic_buf_end > begin + size ||
+      header[1] != static_cast<unsigned long>(dynamic_buf_end - data))
+    {
+      throw CorruptedStruct("CustomBuffer: invalid dynamic boundary");
+    }
+
+    assign(data, header[1]);
+    return data;
+  }
+
+  template<typename CustomTypes>
   unsigned long CustomBuffer<CustomTypes>::dyn_size_() const noexcept
   {
     return this->size();
@@ -274,6 +432,13 @@ namespace PlainTypes
   void CustomDynamicElement<Element>::init(Element& element, const void* buf, unsigned long size)
   {
     element.init(buf, size);
+  }
+
+  template<typename Element>
+  const char* CustomDynamicElement<Element>::init(
+    Element& element, const void* buf, unsigned long size, const char* dynamic_buf_end)
+  {
+    return element.init(buf, size, dynamic_buf_end);
   }
 
   template<typename Element>
@@ -301,6 +466,14 @@ namespace PlainTypes
       std::memcpy(value, buf, Step);
       element = Read(value);
     }
+  }
+
+  template<typename E, E Read(const void*), E& Write(void*), unsigned long Step>
+  const char* CustomSimpleElement<E, Read, Write, Step>::init(
+    E& element, const void* buf, unsigned long size, const char*)
+  {
+    init(element, buf, size);
+    return static_cast<const char*>(buf) + Step;
   }
 
   template<typename E, E Read(const void*), E& Write(void*), unsigned long Step>
@@ -414,6 +587,12 @@ namespace PlainTypes
   template<typename T, typename S, typename C, unsigned long H>
   void CustomContainer<T, S, C, H>::init(const void* buf, unsigned long size)
   {
+    if constexpr (REQUIRES_DYNAMIC_END)
+    {
+      init(buf, size, static_cast<const char*>(buf) + size);
+      return;
+    }
+
     if (size < FIXED_SIZE)
     {
       throw CorruptedStruct("CustomContainer: truncated header");
@@ -434,6 +613,64 @@ namespace PlainTypes
       C::init(element, static_cast<const char*>(buf) + offset, size - offset);
       offset += C::FIXED_SIZE;
     }
+  }
+
+  template<typename T, typename S, typename C, unsigned long H>
+  const char* CustomContainer<T, S, C, H>::init(
+    const void* buf, unsigned long size, const char* dynamic_buf_end)
+  {
+    if (size < FIXED_SIZE)
+    {
+      throw CorruptedStruct("CustomContainer: truncated header");
+    }
+
+    std::uint32_t header[2];
+    std::memcpy(header, buf, sizeof(header));
+    if (header[0] < FIXED_SIZE || header[0] > header[1] || header[1] > size ||
+      (header[1] - header[0]) % C::FIXED_SIZE != 0)
+    {
+      throw CorruptedStruct("CustomContainer: invalid range");
+    }
+
+    const char* begin = static_cast<const char*>(buf);
+    const char* dynamic_begin = begin + header[0];
+    if (dynamic_buf_end < dynamic_begin || dynamic_buf_end > begin + size ||
+      dynamic_buf_end < begin + header[1])
+    {
+      throw CorruptedStruct("CustomContainer: invalid dynamic range");
+    }
+
+    resize((header[1] - header[0]) / C::FIXED_SIZE);
+    if constexpr (REQUIRES_DYNAMIC_END)
+    {
+      auto it = this->end();
+      auto offset = header[1];
+      while (it != this->begin())
+      {
+        --it;
+        offset -= C::FIXED_SIZE;
+        const char* element_buf = begin + offset;
+        const char* element_begin = C::init(*it, element_buf, size - offset,
+          dynamic_buf_end);
+        if (element_begin < begin + header[1] || element_begin > dynamic_buf_end)
+        {
+          throw CorruptedStruct("CustomContainer: invalid element dynamic boundary");
+        }
+
+        dynamic_buf_end = element_begin;
+      }
+    }
+    else
+    {
+      auto offset = header[0];
+      for (auto& element : *this)
+      {
+        C::init(element, begin + offset, size - offset);
+        offset += C::FIXED_SIZE;
+      }
+    }
+
+    return dynamic_begin;
   }
 
   template<typename T, typename S, typename C, unsigned long H>

@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <Generics/MonoAllocator.hpp>
+#include <Plain/CustomWriter.hpp>
 
 namespace AdServer::Commons
 {
@@ -18,6 +19,12 @@ namespace AdServer::Commons
 
     template<typename T>
     using List = Generics::MonoList<T>;
+
+    template<typename Types>
+    using StringWriter = PlainTypes::CustomString<Types, typename Types::String>;
+
+    template<typename Types>
+    using BufferWriter = PlainTypes::CustomBuffer<Types>;
 
     template<typename T>
     static T make(Context& context);

@@ -9,7 +9,15 @@ namespace PlainCustomTest
     string text;
     bytes blob;
   };
-  autowriter ItemWriter<ItemDescriptor>;
+  writer ItemWriter<ItemDescriptor>
+  {
+    flag;
+    signed_value;
+    value;
+    big;
+    (next_dyn_offset) text;
+    blob;
+  };
   autoreader ItemReader<ItemDescriptor>;
 
   struct FixedDescriptor

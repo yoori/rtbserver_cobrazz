@@ -3,7 +3,7 @@ add_library(CampaignManagerGrpcDistributedClient SHARED
 )
 
 target_link_libraries(CampaignManagerGrpcDistributedClient
-  PRIVATE
+  PUBLIC
     GrpcBatch
     CampaignManagerGrpcClient
     gRPC::grpc++

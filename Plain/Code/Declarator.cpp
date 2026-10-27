@@ -3,6 +3,36 @@
 
 namespace Code
 {
+  namespace
+  {
+    class CppWriteTraitsGeneratorStringImpl:
+      public Declaration::SimpleWriter::CppWriteTraitsGenerator
+    {
+    public:
+      explicit CppWriteTraitsGeneratorStringImpl(
+        Declaration::SimpleWriter::CppWriteTraits* traits)
+        : traits_(traits)
+      {}
+
+      bool check_mapping_specifier(const char* specifier) noexcept override
+      {
+        return ::strcmp(specifier, "next_dyn_offset") == 0;
+      }
+
+      Declaration::SimpleWriter::CppWriteTraits_var generate(
+        const Declaration::MappingSpecifierSet&) noexcept override
+      {
+        return traits_;
+      }
+
+    protected:
+      ~CppWriteTraitsGeneratorStringImpl() noexcept override = default;
+
+    private:
+      Declaration::SimpleWriter::CppWriteTraits_var traits_;
+    };
+  }
+
   Declarator::Declarator(
     Declaration::Namespace* root_namespace_val,
     Code::ElementList* elements_val)
@@ -115,16 +145,15 @@ namespace Code
           false,
           "const char*"),
         Declaration::SimpleWriter::CppWriteTraitsGenerator_var(
-          new Declaration::CppWriteTraitsGeneratorNoSpecifiersImpl(
-            Declaration::SimpleWriter::CppWriteTraits_var(
-              new Declaration::SimpleWriter::CppWriteTraits(
-                "std::string&",
-                "",
-                "const std::string&",
-                "",
-                "std::string",
-                "PlainTypes::String"))))
-      )));
+          new CppWriteTraitsGeneratorStringImpl(
+            new Declaration::SimpleWriter::CppWriteTraits(
+              "std::string&",
+              "",
+              "const std::string&",
+              "",
+              "std::string",
+              "PlainTypes::String"))
+      ))));
 
     root_namespace_->add_type(Declaration::BaseType_var(
       new Declaration::SimpleType(

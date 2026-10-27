@@ -155,15 +155,13 @@ namespace AdServer::Bidding
       target->Add(source.begin(), source.end());
     }
 
-    template<typename SourceSeq>
-    void pack_strings(
-      const SourceSeq& source,
-      google::protobuf::RepeatedPtrField<std::string>* target)
+    template<typename SourceSeq, typename String>
+    void pack_strings(const SourceSeq& source, google::protobuf::RepeatedPtrField<String>* target)
     {
       target->Reserve(source.size());
       for (std::size_t i = 0; i < source.size(); ++i)
       {
-        *target->Add() = source[i];
+        target->Add()->assign(source[i].data(), source[i].size());
       }
     }
 
@@ -179,15 +177,13 @@ namespace AdServer::Bidding
       }
     }
 
-    template<typename TargetSeq>
-    void unpack_strings(
-      const google::protobuf::RepeatedPtrField<std::string>& source,
-      TargetSeq& target)
+    template<typename String, typename TargetSeq>
+    void unpack_strings(const google::protobuf::RepeatedPtrField<String>& source, TargetSeq& target)
     {
       target.resize(source.size());
       for (int i = 0; i < source.size(); ++i)
       {
-        target[i] = source[i];
+        target[i].assign(source[i].data(), source[i].size());
       }
     }
 

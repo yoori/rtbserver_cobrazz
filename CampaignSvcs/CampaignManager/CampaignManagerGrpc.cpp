@@ -203,27 +203,27 @@ namespace AdServer::CampaignSvcs
       }
     }
 
-    void
-    unpack_strings(
-      const google::protobuf::RepeatedPtrField<std::string>& source,
+    template<typename String>
+    void unpack_strings(
+      const google::protobuf::RepeatedPtrField<String>& source,
       CampaignManagerCore::StringArray& target)
     {
       target.clear();
       target.reserve(source.size());
       for (const auto& item : source)
       {
-        target.push_back(item);
+        target.emplace_back(item.data(), item.size());
       }
     }
 
-    void
-    pack_strings(
+    template<typename String>
+    void pack_strings(
       const CampaignManagerCore::StringArray& source,
-      google::protobuf::RepeatedPtrField<std::string>* target)
+      google::protobuf::RepeatedPtrField<String>* target)
     {
       for (const auto& item : source)
       {
-        *target->Add() = item;
+        target->Add()->assign(item.data(), item.size());
       }
     }
 
@@ -1158,7 +1158,7 @@ namespace AdServer::CampaignSvcs
         item->set_type(static_cast<unsigned char>(src.second.type));
         for (const auto& relation : src.second.token_relations)
         {
-          *item->add_token_relations() = relation;
+          item->add_token_relations(relation);
         }
         item->set_timestamp(pack_time(src.second.timestamp));
       }
@@ -1300,7 +1300,7 @@ namespace AdServer::CampaignSvcs
           external_category->set_ad_request_type(src_category.first);
           for (const auto& name : src_category.second)
           {
-            *external_category->add_names() = name;
+            external_category->add_names(name);
           }
         }
         item->set_timestamp(pack_time(src.second.timestamp));

@@ -27,6 +27,8 @@ namespace PlainTypes
   template<typename ElementType>
   struct Vector: public BaseVector<ElementType>
   {
+    static constexpr unsigned long FIXED_SIZE = 8;
+
     Vector() = default;
 
     Vector(const Vector&) = default;
@@ -60,6 +62,8 @@ namespace PlainTypes
     const unsigned long STEP>
   struct SimpleVector: public BaseVector<ElementType>
   {
+    static constexpr unsigned long FIXED_SIZE = 8;
+
     SimpleVector() = default;
 
     SimpleVector(const SimpleVector&) = default;

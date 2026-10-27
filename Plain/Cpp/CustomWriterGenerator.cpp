@@ -2,7 +2,6 @@
 #include <ostream>
 #include <vector>
 
-#include <Declaration/CompleteTemplateDescriptor.hpp>
 #include <Declaration/SimpleWriter.hpp>
 
 #include "Config.hpp"
@@ -33,30 +32,10 @@ namespace Cpp
       return name + "CustomWriter";
     }
 
-    std::string custom_holder(const std::string& holder, Declaration::BaseDescriptor* descriptor)
+    std::string writer_type(const std::string& holder, unsigned long fixed_size)
     {
-      if (holder == "PlainTypes::String" || holder == "PlainTypes::Buffer")
-      {
-        return "PlainTypes::Custom" + holder.substr(12) + "<CustomTypes>";
-      }
-
-      Declaration::CompleteTemplateDescriptor_var array = descriptor->as_complete_template();
-      if (array.in())
-      {
-        const auto begin = holder.find('<');
-        const auto end = holder.rfind('>');
-        const std::string container = holder.substr(0, begin);
-        std::string arguments = holder.substr(begin + 1, end - begin - 1);
-        if (container == "PlainTypes::List" || container == "PlainTypes::Vector")
-        {
-          arguments = custom_holder(arguments, array->args().front());
-        }
-
-        return "PlainTypes::Custom" + container.substr(12) + "<CustomTypes, " + arguments +
-          ", " + std::to_string(descriptor->fixed_size()) + ">";
-      }
-
-      return custom_name(holder) + "<CustomTypes>";
+      return "typename PlainTypes::WriterType<WriterTypes, " + holder + ", " +
+        std::to_string(fixed_size) + ">::Type";
     }
 
     struct Field
@@ -128,14 +107,14 @@ namespace Cpp
 
       if (!member.fixed)
       {
-        member.holder = custom_holder(holder, field_descriptor);
+        member.holder = writer_type(holder, member.fixed_size);
       }
 
       members.push_back(std::move(member));
     }
 
     const std::string base = std::string(descriptor->name()) + BASE_SUFFIX;
-    const std::string type = name + "<CustomTypes>";
+    const std::string type = name + "<WriterTypes>";
     const auto line = [this](const std::string& value)
     {
       out_ << offset_ << value << '\n';
@@ -143,7 +122,7 @@ namespace Cpp
     const auto method = [&](const std::string& result, const std::string& signature)
     {
       line("");
-      line("template<typename CustomTypes>");
+      line("template<typename WriterTypes>");
       if (!result.empty())
       {
         line(result);
@@ -152,11 +131,11 @@ namespace Cpp
     };
 
     line("");
-    line("template<typename CustomTypes>");
+    line("template<typename WriterTypes>");
     line("class " + name + ": public " + base);
     line("{");
     line("public:");
-    line("  using Context = typename CustomTypes::Context;");
+    line("  using Context = typename WriterTypes::Context;");
     for (const auto& member : members)
     {
       if (!member.fixed)
@@ -170,6 +149,18 @@ namespace Cpp
         }
       }
     }
+    std::string has_dynamic_data = "false";
+    std::string requires_dynamic_end = "false";
+    for (const auto& member : members)
+    {
+      if (!member.fixed)
+      {
+        has_dynamic_data += " || " + member.name + "_Type::HAS_DYNAMIC_DATA";
+        requires_dynamic_end += " || " + member.name + "_Type::REQUIRES_DYNAMIC_END";
+      }
+    }
+    line("  static constexpr bool HAS_DYNAMIC_DATA = " + has_dynamic_data + ";");
+    line("  static constexpr bool REQUIRES_DYNAMIC_END = " + requires_dynamic_end + ";");
     line("");
     line("  explicit " + name + "(Context& context, bool init_defaults = false);");
     line("  " + name + "(Context& context, const void* buf, unsigned long size);");
@@ -178,6 +169,8 @@ namespace Cpp
     line("  Context& context() const noexcept;");
     line("  void init_default() noexcept;");
     line("  void init(const void* buf, unsigned long size);");
+    line("  const char* init(const void* buf, unsigned long size,");
+    line("    const char* dynamic_buf_end);");
     line("  void unsafe_init(const void* buf, unsigned long size);");
     line("  unsigned long size() const;");
     line("  unsigned long dyn_size_() const;");
@@ -257,24 +250,72 @@ namespace Cpp
     line("}");
     method("void", "init(const void* buf, unsigned long size)");
     line("{");
-    line("  if (size < FIXED_SIZE)");
+    line("  if constexpr (REQUIRES_DYNAMIC_END)");
     line("  {");
-    line("    throw PlainTypes::CorruptedStruct(\"CustomWriter: truncated fixed buffer\");");
+    line("    init(buf, size, static_cast<const char*>(buf) + size);");
     line("  }");
-    line("");
+    line("  else");
+    line("  {");
+    line("    if (size < FIXED_SIZE)");
+    line("    {");
+    line("      throw PlainTypes::CorruptedStruct(\"CustomWriter: truncated fixed buffer\");");
+    line("    }");
     for (const auto& member : members)
     {
       if (!member.fixed)
       {
-        line("  " + member.name + "_.init(static_cast<const char*>(buf) + " + member.name +
+        line("    " + member.name + "_.init(static_cast<const char*>(buf) + " + member.name +
           "_OFFSET, size - " + member.name + "_OFFSET);");
       }
       else
       {
-        line("  std::memcpy(" + member.name + "_.data(), static_cast<const char*>(buf) + " +
+        line("    std::memcpy(" + member.name + "_.data(), static_cast<const char*>(buf) + " +
           member.name + "_OFFSET, " + std::to_string(member.fixed_size) + ");");
       }
     }
+    line("  }");
+    line("}");
+    method("const char*", "init(const void* buf, unsigned long size,");
+    line("  const char* dynamic_buf_end)");
+    line("{");
+    line("  if (size < FIXED_SIZE)");
+    line("  {");
+    line("    throw PlainTypes::CorruptedStruct(\"CustomWriter: truncated fixed buffer\");");
+    line("  }");
+    line("  const char* begin = static_cast<const char*>(buf);");
+    line("  const char* dynamic_end = dynamic_buf_end;");
+    line("  if (dynamic_end < begin || dynamic_end > begin + size)");
+    line("  {");
+    line("    throw PlainTypes::CorruptedStruct(\"CustomWriter: invalid dynamic boundary\");");
+    line("  }");
+    line("");
+    for (std::size_t reverse_index = members.size(); reverse_index > 0; --reverse_index)
+    {
+      const auto& member = members[reverse_index - 1];
+      if (!member.fixed)
+      {
+        line("  if constexpr (" + member.name + "_Type::HAS_DYNAMIC_DATA)");
+        line("  {");
+        line("    dynamic_end = " + member.name + "_.init(begin + " + member.name +
+          "_OFFSET, size - " + member.name + "_OFFSET, dynamic_end);");
+        line("  }");
+        line("  else");
+        line("  {");
+        line("    " + member.name + "_.init(begin + " + member.name +
+          "_OFFSET, size - " + member.name + "_OFFSET);");
+        line("  }");
+      }
+      else
+      {
+        line("  std::memcpy(" + member.name + "_.data(), begin + " +
+          member.name + "_OFFSET, " + std::to_string(member.fixed_size) + ");");
+      }
+    }
+    line("  if constexpr (HAS_DYNAMIC_DATA)");
+    line("  {");
+    line("    return dynamic_end;");
+    line("  }");
+    line("  return begin + FIXED_SIZE;");
     line("}");
     method("void", "unsafe_init(const void* buf, unsigned long size)");
     line("{");

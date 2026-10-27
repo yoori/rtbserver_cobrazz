@@ -20,6 +20,8 @@ namespace PlainTypes
   public:
     using Base = std::string_view;
     using Context = typename CustomTypes::Context;
+    static constexpr bool HAS_DYNAMIC_DATA = true;
+    static constexpr bool REQUIRES_DYNAMIC_END = true;
     static constexpr unsigned long FIXED_SIZE = 4;
 
     explicit CustomString(Context& context) noexcept;
@@ -39,6 +41,7 @@ namespace PlainTypes
     void clear() noexcept;
     void init_default() noexcept;
     void init(const void* buf, unsigned long size);
+    const char* init(const void* buf, unsigned long size, const char* dynamic_buf_end);
     unsigned long dyn_size_() const;
     void save_(void* fixed_buf, void* dyn_buf) const;
 
@@ -203,6 +206,40 @@ namespace PlainTypes
 
     value_ = std::string_view(static_cast<const char*>(buf) + offset, size - offset);
     length_known_ = false;
+  }
+
+  template<typename T>
+  const char* CustomString<T, std::string_view>::init(
+    const void* buf, unsigned long size, const char* dynamic_buf_end)
+  {
+    if (size < FIXED_SIZE)
+    {
+      throw CorruptedStruct("CustomString: truncated header");
+    }
+
+    const char* begin = static_cast<const char*>(buf);
+    if (dynamic_buf_end < begin || dynamic_buf_end > begin + size)
+    {
+      throw CorruptedStruct("CustomString: invalid dynamic boundary");
+    }
+
+    std::uint32_t offset;
+    std::memcpy(&offset, buf, sizeof(offset));
+    if (offset < FIXED_SIZE || offset >= size)
+    {
+      throw CorruptedStruct("CustomString: invalid offset");
+    }
+
+    const char* data = begin + offset;
+    if (dynamic_buf_end <= data)
+    {
+      throw CorruptedStruct("CustomString: invalid dynamic boundary");
+    }
+
+    const auto dynamic_size = static_cast<unsigned long>(dynamic_buf_end - data);
+    value_ = std::string_view(data, dynamic_size - 1);
+    length_known_ = true;
+    return data;
   }
 
   template<typename T>

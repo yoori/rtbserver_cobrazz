@@ -384,6 +384,11 @@ namespace Cpp
 
     std::string class_name = std::string(struct_descriptor->name()) +
       PROTECTED_WRITER_SUFFIX;
+    const std::string custom_writer_name = std::string(struct_descriptor->name()) +
+      "_CustomProtectedWriter";
+
+    out_ << offset_ << "template<typename WriterTypes> class " << custom_writer_name << ";" <<
+      std::endl << std::endl;
 
     out_ << offset_ << "class " << class_name << ": protected " <<
         struct_descriptor->name() << DEFAULT_BUFFERS_SUFFIX << "," << std::endl <<
@@ -392,6 +397,10 @@ namespace Cpp
       offset_ << "{" << std::endl << offset_ << "public:" << std::endl;
 
     offset_ += "  ";
+
+    out_ << offset_ << "template<typename WriterTypes>" << std::endl <<
+      offset_ << "using CustomWriter = " << custom_writer_name << "<WriterTypes>;" <<
+      std::endl << std::endl;
 
     generate_common_funs_decl_(class_name.c_str());
 
@@ -428,6 +437,23 @@ namespace Cpp
 
     Declaration::StructWriter::FieldWriterList_var write_fields = struct_writer->fields();
 
+    std::string custom_writer_name = struct_writer->name();
+    const std::string writer_suffix = "Writer";
+    if (custom_writer_name.size() >= writer_suffix.size() &&
+      custom_writer_name.compare(custom_writer_name.size() - writer_suffix.size(),
+        writer_suffix.size(), writer_suffix) == 0)
+    {
+      custom_writer_name.replace(custom_writer_name.size() - writer_suffix.size(),
+        writer_suffix.size(), "CustomWriter");
+    }
+    else
+    {
+      custom_writer_name += "CustomWriter";
+    }
+
+    out_ << offset_ << "template<typename WriterTypes> class " << custom_writer_name << ";" <<
+      std::endl << std::endl;
+
     Declaration::StructDescriptor::PosedFieldList_var fields = struct_descriptor->fields();
 
     out_ << offset_ << "class " << struct_writer->name() << ": protected " <<
@@ -437,6 +463,10 @@ namespace Cpp
       offset_ << "{" << std::endl << offset_ << "public:" << std::endl;
 
     offset_ += "  ";
+
+    out_ << offset_ << "template<typename WriterTypes>" << std::endl <<
+      offset_ << "using CustomWriter = " << custom_writer_name << "<WriterTypes>;" <<
+      std::endl << std::endl;
 
     generate_field_types_decl_(struct_writer);
 

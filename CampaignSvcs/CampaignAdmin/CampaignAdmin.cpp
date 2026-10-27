@@ -1367,8 +1367,8 @@ namespace
     return "unknown";
   }
 
-  std::string
-  join_strings(const google::protobuf::RepeatedPtrField<std::string>& values)
+  template<typename String>
+  std::string join_strings(const google::protobuf::RepeatedPtrField<String>& values)
   {
     std::ostringstream out;
     for (int i = 0; i < values.size(); ++i)
@@ -1377,7 +1377,7 @@ namespace
       {
         out << ',';
       }
-      out << values.Get(i);
+      out << std::string_view(values.Get(i).data(), values.Get(i).size());
     }
     return out.str();
   }
@@ -2248,7 +2248,7 @@ main(int argc, char** argv)
         &AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient::get_pub_pixels);
       for (const auto& pixel : response.pixels())
       {
-        std::cout << pixel << '\n';
+        std::cout << std::string_view(pixel.data(), pixel.size()) << '\n';
       }
     }
     else if (command == "category_channels")

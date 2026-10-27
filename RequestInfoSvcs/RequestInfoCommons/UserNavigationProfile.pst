@@ -17,7 +17,11 @@ namespace RequestInfoSvcs
 
   autoreader NavigationReader<NavigationDescriptor>;
 
-  autowriter NavigationWriter<NavigationDescriptor>;
+  writer NavigationWriter<NavigationDescriptor>
+  {
+    (next_dyn_offset) url;
+    count;
+  };
 
   struct PageKeywordDescriptor
   {
@@ -26,7 +30,11 @@ namespace RequestInfoSvcs
   };
 
   autoreader PageKeywordReader<PageKeywordDescriptor>;
-  autowriter PageKeywordWriter<PageKeywordDescriptor>;
+  writer PageKeywordWriter<PageKeywordDescriptor>
+  {
+    (next_dyn_offset) keyword;
+    count;
+  };
 
   struct NavigationDayDescriptor
   {

@@ -366,7 +366,8 @@ namespace
     UserNavigationProfileWriter expected;
     fill_profile(expected, ProfileData{1, {"url"}, {"keyword"}});
     const auto buffer = serialize(expected);
-    for (const auto size : {std::size_t(0), std::size_t(4), buffer.size() - 1})
+    for (const auto size : {std::size_t(0), std::size_t(4),
+      static_cast<std::size_t>(Writer::FIXED_SIZE - 1)})
     {
       typename Writer::Context context;
       Writer actual(context);

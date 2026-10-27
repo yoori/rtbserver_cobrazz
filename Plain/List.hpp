@@ -43,6 +43,8 @@ namespace PlainTypes
   template<typename ElementType>
   struct List: public BaseList<ElementType>
   {
+    static constexpr unsigned long FIXED_SIZE = 12;
+
     List() = default;
 
     List(const List&) = default;
@@ -76,6 +78,8 @@ namespace PlainTypes
     const unsigned long STEP>
   struct SimpleList: public BaseList<ElementType>
   {
+    static constexpr unsigned long FIXED_SIZE = 12;
+
     SimpleList() = default;
 
     SimpleList(const SimpleList&) = default;

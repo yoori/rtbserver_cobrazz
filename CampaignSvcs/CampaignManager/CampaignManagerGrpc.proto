@@ -150,7 +150,7 @@ message GetPubPixelsRequest {
 }
 
 message GetPubPixelsResponse {
-  repeated bytes pixels = 1;
+  repeated bytes pixels = 1 [features.(pb.cpp).string_type = VIEW];
   bytes hostname = 2 [features.(pb.cpp).string_type = VIEW];
 }
 
@@ -225,11 +225,11 @@ message AdSlotInfo {
   uint64 ad_slot_id = 1;
   bytes format = 2 [features.(pb.cpp).string_type = VIEW];
   uint64 tag_id = 3;
-  repeated bytes sizes = 4;
+  repeated bytes sizes = 4 [features.(pb.cpp).string_type = VIEW];
   bytes ext_tag_id = 5 [features.(pb.cpp).string_type = VIEW];
   DecimalInfo min_ecpm = 6;
   bytes min_ecpm_currency_code = 7 [features.(pb.cpp).string_type = VIEW];
-  repeated bytes currency_codes = 8;
+  repeated bytes currency_codes = 8 [features.(pb.cpp).string_type = VIEW];
   bool passback = 9;
   int64 up_expand_space = 10;
   int64 right_expand_space = 11;
@@ -244,8 +244,8 @@ message AdSlotInfo {
   int64 video_allow_unskippable = 20;
   uint64 video_width = 21;
   uint64 video_height = 22;
-  repeated bytes exclude_categories = 23;
-  repeated bytes required_categories = 24;
+  repeated bytes exclude_categories = 23 [features.(pb.cpp).string_type = VIEW];
+  repeated bytes required_categories = 24 [features.(pb.cpp).string_type = VIEW];
   uint64 debug_ccg = 25;
   repeated uint64 allowed_durations = 26;
   repeated NativeDataToken native_data_tokens = 27;
@@ -270,7 +270,7 @@ message CommonAdRequestInfo {
   repeated GeoCoordInfo coord_location = 12;
   bytes full_referer = 13 [features.(pb.cpp).string_type = VIEW];
   bytes referer = 14 [features.(pb.cpp).string_type = VIEW];
-  repeated bytes urls = 15;
+  repeated bytes urls = 15 [features.(pb.cpp).string_type = VIEW];
   bytes security_token = 16 [features.(pb.cpp).string_type = VIEW];
   bytes pub_impr_track_url = 17 [features.(pb.cpp).string_type = VIEW];
   bytes pub_param = 18 [features.(pb.cpp).string_type = VIEW];
@@ -393,7 +393,7 @@ message InstantiateAdInfo {
 message InstantiateAdResult {
   bytes creative_body = 1 [features.(pb.cpp).string_type = VIEW];
   bytes mime_format = 2 [features.(pb.cpp).string_type = VIEW];
-  repeated bytes request_ids = 3;
+  repeated bytes request_ids = 3 [features.(pb.cpp).string_type = VIEW];
 }
 
 message CreativeSelectResult {
@@ -471,7 +471,7 @@ message AdSlotResult {
   bytes passback_url = 4 [features.(pb.cpp).string_type = VIEW];
   bytes creative_body = 5 [features.(pb.cpp).string_type = VIEW];
   bytes notice_url = 6 [features.(pb.cpp).string_type = VIEW];
-  repeated bytes track_pixel_urls = 7;
+  repeated bytes track_pixel_urls = 7 [features.(pb.cpp).string_type = VIEW];
   bytes yandex_track_params = 8 [features.(pb.cpp).string_type = VIEW];
   bytes creative_url = 9 [features.(pb.cpp).string_type = VIEW];
   bytes track_pixel_params = 10 [features.(pb.cpp).string_type = VIEW];
@@ -480,8 +480,8 @@ message AdSlotResult {
   bytes iurl = 13 [features.(pb.cpp).string_type = VIEW];
   bool test_request = 14;
   repeated CreativeSelectResult selected_creatives = 15;
-  repeated bytes external_visual_categories = 16;
-  repeated bytes external_content_categories = 17;
+  repeated bytes external_visual_categories = 16 [features.(pb.cpp).string_type = VIEW];
+  repeated bytes external_content_categories = 17 [features.(pb.cpp).string_type = VIEW];
   bytes pub_currency_code = 18 [features.(pb.cpp).string_type = VIEW];
   uint64 overlay_width = 19;
   uint64 overlay_height = 20;
@@ -666,7 +666,7 @@ message ConsiderWebOperationRequest {
   uint32 result = 13;
   uint64 user_status = 14;
   bool test_request = 15;
-  repeated bytes request_ids = 16;
+  repeated bytes request_ids = 16 [features.(pb.cpp).string_type = VIEW];
   bytes global_request_id = 17 [features.(pb.cpp).string_type = VIEW];
   bytes referer = 18 [features.(pb.cpp).string_type = VIEW];
   bytes ip_address = 19 [features.(pb.cpp).string_type = VIEW];
@@ -744,7 +744,7 @@ message ConfigOptionValue {
 
 message ConfigExternalCategory {
   uint64 ad_request_type = 1;
-  repeated bytes names = 2;
+  repeated bytes names = 2 [features.(pb.cpp).string_type = VIEW];
 }
 
 message ConfigAppFormat {
@@ -766,7 +766,7 @@ message ConfigCreativeOption {
   int64 option_id = 1;
   bytes token = 2 [features.(pb.cpp).string_type = VIEW];
   uint32 type = 3;
-  repeated bytes token_relations = 4;
+  repeated bytes token_relations = 4 [features.(pb.cpp).string_type = VIEW];
   bytes timestamp = 5 [features.(pb.cpp).string_type = VIEW];
 }
 
