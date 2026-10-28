@@ -75,6 +75,97 @@ class YandexPostClickImporterTest(unittest.TestCase):
       self.assertTrue(pathlib.Path(app.conversions.names_dir).is_dir())
       self.assertEqual(app.logs_expiry_hours, 72)
 
+  def test_api_retries_429_for_all_endpoints(self):
+    for method, args, verb in (
+        ('goals', (), 'get'), ('timezone', (), 'get'), ('reporting', ({},), 'get'),
+        ('create_log_request', (self.event_date, 'lastsign'), 'post'),
+        ('evaluate_log_fields', (self.event_date, 'lastsign'), 'get'),
+        ('get_log_request', (11,), 'get'), ('download_log_part', (11, 0), 'get'),
+        ('clean_log_request', (11,), 'post')):
+      with self.subTest(method=method):
+        limited = Mock(status_code=429, text='Quota exceeded\nOAuth secret-token')
+        success = Mock(status_code=200, text='downloaded data')
+        success.json.return_value = {
+          'goals': [], 'counter': {'time_zone_offset': 180},
+          'log_request': {'request_id': 11, 'status': 'created'},
+          'log_request_evaluation': {'possible': True}}
+        logger = Mock()
+        api = IMPORTER.YandexApi('secret-token', 123, 17, logger=logger)
+        with patch.object(IMPORTER.requests, verb, side_effect=[limited, success],
+            create=True) as request, patch.object(IMPORTER.time, 'sleep') as sleep:
+          getattr(api, method)(*args)
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(request.call_args_list[0], request.call_args_list[1])
+        self.assertEqual(sum(call.args[0] for call in sleep.call_args_list), 10)
+        limited.close.assert_called_once()
+        limited.raise_for_status.assert_not_called()
+        success.raise_for_status.assert_called_once()
+        logger.assert_called_once()
+        message = logger.call_args.args[1]
+        self.assertIn('retry 1/30 in 10s', message)
+        self.assertIn('response_body="Quota exceeded\\nOAuth [REDACTED]"', message)
+        self.assertNotIn('secret-token', message)
+
+  def test_api_stops_after_30_retries(self):
+    limited = Mock(status_code=429, text='Quota exceeded')
+    error = RuntimeError('HTTP 429')
+    error.response = limited
+    limited.raise_for_status.side_effect = error
+    api = IMPORTER.YandexApi('secret', 123, 17)
+    with patch.object(IMPORTER.requests, 'get', return_value=limited, create=True) as get, \
+        patch.object(IMPORTER.time, 'sleep') as sleep:
+      with self.assertRaises(RuntimeError) as caught:
+        api.reporting({})
+    self.assertIs(caught.exception, error)
+    self.assertEqual(get.call_count, 31)
+    self.assertEqual(limited.close.call_count, 30)
+    self.assertEqual(sum(call.args[0] for call in sleep.call_args_list), 300)
+
+  def test_api_does_not_retry_other_errors(self):
+    for status in (400, 401, 403, 500, 503):
+      with self.subTest(status=status):
+        response = Mock(status_code=status)
+        response.raise_for_status.side_effect = RuntimeError(f'HTTP {status}')
+        api = IMPORTER.YandexApi('secret', 123, 17)
+        with patch.object(IMPORTER.requests, 'get', return_value=response, create=True) as get, \
+            patch.object(IMPORTER.time, 'sleep') as sleep:
+          with self.assertRaises(RuntimeError):
+            api.reporting({})
+        get.assert_called_once()
+        sleep.assert_not_called()
+
+  def test_api_does_not_retry_transport_failure(self):
+    api = IMPORTER.YandexApi('secret', 123, 17)
+    with patch.object(IMPORTER.requests, 'get', side_effect=TimeoutError(),
+        create=True) as get, patch.object(IMPORTER.time, 'sleep') as sleep:
+      with self.assertRaises(TimeoutError):
+        api.reporting({})
+    get.assert_called_once()
+    sleep.assert_not_called()
+
+  def test_api_retry_wait_is_interruptible(self):
+    limited = Mock(status_code=429, text='Quota exceeded')
+    verify_running = Mock(side_effect=[None, None, IMPORTER.StopService()])
+    api = IMPORTER.YandexApi('secret', 123, 17, verify_running=verify_running)
+    with patch.object(IMPORTER.requests, 'get', return_value=limited, create=True) as get, \
+        patch.object(IMPORTER.time, 'sleep') as sleep:
+      with self.assertRaises(IMPORTER.StopService):
+        api.reporting({})
+    get.assert_called_once()
+    limited.close.assert_called_once()
+    sleep.assert_called_once_with(1)
+
+  def test_robot_probe_propagates_stop_and_exhausted_429(self):
+    limited = RuntimeError('HTTP 429')
+    limited.response = types.SimpleNamespace(status_code=429)
+    for error in (IMPORTER.StopService(), limited):
+      with self.subTest(error=type(error).__name__):
+        api = Mock(counter_id=123)
+        api.evaluate_log_fields.side_effect = error
+        with self.assertRaises(type(error)):
+          self.application._is_robot_metric_available(api, self.event_date)
+        self.assertNotIn(123, self.application._robot_metric_available)
+
   def test_reporting_api_contract(self):
     class Api:
       def timezone(self):
@@ -512,6 +603,48 @@ class YandexPostClickImporterTest(unittest.TestCase):
       ('reset',),
       ('connect',),
     ])
+
+  def test_on_timer_logs_http_error_response_body(self):
+    cursor = types.SimpleNamespace(execute=lambda *args: None,
+      fetchall=lambda: [(17, 'secret-token', 123, 'A')])
+    self.application.pg = types.SimpleNamespace(
+      cursor=lambda: nullcontext(cursor), commit=lambda: None)
+    self.application.request_timeout = 11
+    self.application.verify_running = Mock()
+    self.application._connect = Mock()
+    self.application._reset_connections = Mock()
+    self.application.print_ = Mock()
+    self.application._mark_fetch_time = Mock()
+
+    class ErrorResponse:
+      def __init__(self, text):
+        self.text = text
+
+      def __bool__(self):
+        return False
+
+    for status, body in (
+        (429, '{"errors":[{"message":"Лимит запросов"}]}'),
+        (500, '<html>Upstream error\nsecond line</html>'),
+        (403, 'OAuth secret-token\r\nForbidden'),
+        (502, '')):
+      with self.subTest(status=status):
+        error = RuntimeError(f'HTTP {status} for counter 123')
+        error.response = ErrorResponse(body)
+        self.application._load_reporting = Mock(side_effect=error)
+        self.application.print_.reset_mock()
+        self.application._mark_fetch_time.reset_mock()
+
+        self.application.on_timer()
+
+        expected_body = json.dumps(body.replace('secret-token', '[REDACTED]'),
+          ensure_ascii=False)
+        self.application.print_.assert_called_once_with(0,
+          f'Unable to import Yandex counter 123 via connection 17: HTTP {status} '
+          f'for counter 123; response_body={expected_body}')
+        self.application._mark_fetch_time.assert_called_once_with(17, False)
+        self.assertNotIn('secret-token', self.application.print_.call_args.args[1])
+        self.assertNotIn('\n', self.application.print_.call_args.args[1])
 
   def test_on_timer_tries_another_token_for_the_same_counter(self):
     calls = []

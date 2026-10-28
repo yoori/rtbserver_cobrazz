@@ -8,6 +8,7 @@ import io
 import json
 import os
 import re
+import time
 import urllib.parse
 
 import clickhouse_connect
@@ -232,27 +233,51 @@ def request_chunk(request_id, chunks_count):
 
 
 class YandexApi:
-  def __init__(self, token, counter_id, timeout):
+  RETRY_DELAY = 10
+  MAX_RETRIES = 30
+
+  def __init__(self, token, counter_id, timeout, logger=None, verify_running=None):
     self.counter_id = counter_id
     self.timeout = timeout
     self.headers = {'Authorization': 'OAuth ' + token}
     self._reporting_timezone = None
     self._timezone = None
+    self.logger = logger
+    self.verify_running = verify_running
+
+  def _request(self, method, url, **kwargs):
+    for attempt in range(self.MAX_RETRIES + 1):
+      if self.verify_running is not None:
+        self.verify_running()
+      response = method(url, headers=self.headers, timeout=self.timeout, **kwargs)
+      if getattr(response, 'status_code', None) != 429 or attempt == self.MAX_RETRIES:
+        response.raise_for_status()
+        return response
+
+      if self.logger is not None:
+        body = response.text
+        token = self.headers['Authorization'][len('OAuth '):]
+        if token:
+          body = body.replace(token, '[REDACTED]')
+        self.logger(0, f'Yandex counter {self.counter_id}: HTTP 429; '
+          f'retry {attempt + 1}/{self.MAX_RETRIES} in {self.RETRY_DELAY}s; '
+          f'response_body={json.dumps(body, ensure_ascii=False)}')
+      response.close()
+      for _ in range(self.RETRY_DELAY):
+        if self.verify_running is not None:
+          self.verify_running()
+        time.sleep(1)
 
   def goals(self):
-    response = requests.get(
+    response = self._request(requests.get,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/goals',
-      params={'useDeleted': 'true'}, headers=self.headers, timeout=self.timeout)
-    response.raise_for_status()
+      params={'useDeleted': 'true'})
     return response.json()['goals']
 
   def _load_timezone(self):
     if self._timezone is None:
-      response = requests.get(
-        f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}',
-        headers=self.headers,
-        timeout=self.timeout)
-      response.raise_for_status()
+      response = self._request(requests.get,
+        f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}')
       offset_minutes = int(response.json()['counter']['time_zone_offset'])
       self._reporting_timezone = format_timezone_offset(offset_minutes)
       self._timezone = datetime.timezone(datetime.timedelta(minutes=offset_minutes))
@@ -266,19 +291,16 @@ class YandexApi:
     return self._timezone
 
   def reporting(self, params):
-    response = requests.get(
+    response = self._request(requests.get,
       'https://api-metrika.yandex.net/stat/v1/data',
-      params={'ids': self.counter_id, **params},
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      params={'ids': self.counter_id, **params})
     return response.json()
 
   def create_log_request(self, event_date, attribution, include_robot=False):
     fields = ','.join(field.replace('<attribution>', attribution) for field in LOG_FIELDS)
     if include_robot:
       fields += ',' + ROBOT_LOG_FIELD
-    response = requests.post(
+    response = self._request(requests.post,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/logrequests',
       params={
         'date1': event_date.isoformat(),
@@ -286,17 +308,14 @@ class YandexApi:
         'fields': fields,
         'source': 'visits',
         'attribution': attribution.upper(),
-      },
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      })
     return response.json()['log_request']
 
   def evaluate_log_fields(self, event_date, attribution, include_robot=False):
     fields = ','.join(field.replace('<attribution>', attribution) for field in LOG_FIELDS)
     if include_robot:
       fields += ',' + ROBOT_LOG_FIELD
-    response = requests.get(
+    response = self._request(requests.get,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/'
       'logrequests/evaluate',
       params={
@@ -305,37 +324,25 @@ class YandexApi:
         'fields': fields,
         'source': 'visits',
         'attribution': attribution.upper(),
-      },
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      })
     return response.json().get('log_request_evaluation', {}).get('possible', False)
 
   def get_log_request(self, request_id):
-    response = requests.get(
+    response = self._request(requests.get,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/'
-      f'logrequest/{request_id}',
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      f'logrequest/{request_id}')
     return response.json()['log_request']
 
   def download_log_part(self, request_id, part_number):
-    response = requests.get(
+    response = self._request(requests.get,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/logrequest/'
-      f'{request_id}/part/{part_number}/download',
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      f'{request_id}/part/{part_number}/download')
     return response.text
 
   def clean_log_request(self, request_id):
-    response = requests.post(
+    self._request(requests.post,
       f'https://api-metrika.yandex.net/management/v1/counter/{self.counter_id}/logrequest/'
-      f'{request_id}/clean',
-      headers=self.headers,
-      timeout=self.timeout)
-    response.raise_for_status()
+      f'{request_id}/clean')
 
 
 class Application(Service):
@@ -439,7 +446,8 @@ class Application(Service):
         try:
           if active:
             self._mark_fetch_time(connection_id, False)
-          api = YandexApi(token, counter_id, self.request_timeout)
+          api = YandexApi(token, counter_id, self.request_timeout,
+            logger=self.print_, verify_running=self.verify_running)
           self.residual.bootstrap(counter_id, api.timezone)
           self.residual.finalize()
           if not active:
@@ -453,8 +461,17 @@ class Application(Service):
         except StopService:
           raise
         except Exception as ex:
+          message = str(ex)
+          response = getattr(ex, 'response', None)
+          if response is not None:
+            body = response.text
+            if token:
+              body = body.replace(token, '[REDACTED]')
+            message += '; response_body=' + json.dumps(body, ensure_ascii=False)
+          if token:
+            message = message.replace(token, '[REDACTED]')
           self.print_(0, f'Unable to import Yandex counter {counter_id} '
-            f'via connection {connection_id}: {ex}')
+            f'via connection {connection_id}: {message}')
           self._reset_connections()
           try:
             self._connect()
@@ -665,7 +682,11 @@ class Application(Service):
     try:
       available = bool(api.evaluate_log_fields(
         event_date, self.attribution, include_robot=True))
-    except Exception:
+    except StopService:
+      raise
+    except Exception as ex:
+      if getattr(getattr(ex, 'response', None), 'status_code', None) == 429:
+        raise
       available = False
     cache[counter_id] = available
     return available

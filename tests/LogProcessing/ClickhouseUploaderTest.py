@@ -99,6 +99,13 @@ class ClickhouseMigrationRunnerTest(unittest.TestCase):
 
 
 class ClickhouseAdapterTest(unittest.TestCase):
+  def test_rpostconvclick_adapter_is_directly_executable(self):
+    adapter = REPOSITORY_ROOT / 'bin' / 'RPostConvClickClickhouseAdapter.py'
+    self.assertEqual(adapter.stat().st_mode & 0o111, 0o111)
+    result = subprocess.run(
+      [str(adapter), '--help'], text=True, capture_output=True, check=True, timeout=10)
+    self.assertIn('RPostConvClick ClickHouse adapter', result.stdout)
+
   def run_adapter(self, adapter_name, rows, header=None):
     input_files = []
     with tempfile.TemporaryDirectory() as temp_dir:
