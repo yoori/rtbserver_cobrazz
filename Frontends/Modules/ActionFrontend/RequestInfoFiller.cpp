@@ -268,7 +268,7 @@ namespace AdServer::Action
 
     request_info.time = Generics::Time::get_time_of_day();
 
-    const HTTP::SubHeaderList& headers = request.headers();
+    HTTP::SubHeaderSpan headers = request.headers();
     const HTTP::ParamList& params = request.params();
     std::map<std::string, std::string> path_params;
 
@@ -286,7 +286,7 @@ namespace AdServer::Action
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);

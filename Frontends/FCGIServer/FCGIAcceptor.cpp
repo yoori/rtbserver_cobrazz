@@ -240,7 +240,6 @@ namespace FCGI
   int HttpRequestHolder::finish_()
   {
     auto params = flatten_(params_buffers_, buf_);
-    HTTP::SubHeaderList headers;
     while (!params.empty())
     {
       std::size_t name_size = 0;
@@ -279,18 +278,17 @@ namespace FCGI
       else if (name == HTTPS)
       {
         http_request_.set_secure(true);
-        headers.push_back(HTTP::SubHeader(PASS_SECURE, PASS_SECURE_VALUE));
+        http_request_.add_header(PASS_SECURE, PASS_SECURE_VALUE);
       }
       else if (name == REMOTE_ADDR)
       {
-        headers.push_back(HTTP::SubHeader(PASS_REMOTE_ADDR, value));
+        http_request_.add_header(PASS_REMOTE_ADDR, value);
       }
       else if (name.size() > 5 && name.compare(0, 5, "HTTP_") == 0)
       {
-        headers.push_back(HTTP::SubHeader(name.substr(5), value));
+        http_request_.add_header(name.substr(5), value);
       }
     }
-    http_request_.set_headers(std::move(headers));
 
     const auto body = flatten_(body_buffers_, body_buf_);
     http_request_.set_body(String::SubString(body.data(), body.size()));

@@ -376,8 +376,7 @@ namespace AdServer::ImprTrack
 
         ostr << "Headers ("<< request.headers().size() << "):"  << std::endl;
 
-        for (HTTP::SubHeaderList::const_iterator it =
-          request.headers().begin(); it != request.headers().end(); ++it)
+        for (auto it = request.headers().begin(); it != request.headers().end(); ++it)
         {
           ostr << "    " << it->name << " : " << it->value << std::endl;
         }

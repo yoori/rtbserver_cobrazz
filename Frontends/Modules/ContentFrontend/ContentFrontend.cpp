@@ -311,8 +311,8 @@ namespace AdServer
   void ContentFrontend::parse_headers_(const FCGI::HttpRequest& request, bool& secure) noexcept
   {
     secure = false;
-    const HTTP::SubHeaderList& headers = request.headers();
-    for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+    HTTP::SubHeaderSpan headers = request.headers();
+    for (auto it = headers.begin(); it != headers.end(); ++it)
     {
       const String::SubString& name = it->name;
       if (name == Request::Header::SECURE)

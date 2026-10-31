@@ -60,7 +60,7 @@ namespace AdServer::PassbackPixel
 
     void fill_track(
       PassbackTrackInfo& passback_track_info,
-      const HTTP::SubHeaderList& headers,
+      HTTP::SubHeaderSpan headers,
       const HTTP::ParamList& params) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 

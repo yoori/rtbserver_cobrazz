@@ -478,7 +478,7 @@ namespace AdServer::WebStat
   void
   RequestInfoFiller::fill_by_yandex_notification(
     std::vector<RequestInfo>& request_info_list,
-    const HTTP::SubHeaderList& /*headers*/,
+    HTTP::SubHeaderSpan /*headers*/,
     const HTTP::ParamList& /*params*/,
     const char* bid_request) const
   {
@@ -543,7 +543,7 @@ namespace AdServer::WebStat
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const HTTP::SubHeaderList& headers,
+    HTTP::SubHeaderSpan headers,
     const HTTP::ParamList& params) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {
@@ -554,7 +554,7 @@ namespace AdServer::WebStat
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         std::string name = it->name.str();
         String::AsciiStringManip::to_lower(name);

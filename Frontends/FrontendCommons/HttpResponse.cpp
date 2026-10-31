@@ -33,11 +33,15 @@ OutputStream::write(const char_type* s, streamsize n)
 }
 
 
-HttpResponse::HttpResponse(uint16_t /*id*/) noexcept
+HttpResponse::HttpResponse(uint16_t /*id*/)
   : status_(200),
+    headers_(header_arena_.arena()),
+    string_holders_(header_arena_.arena()),
     output_stream_(this),
     cookie_installed_(false)
-{}
+{
+  headers_.reserve(INLINE_HEADER_COUNT);
+}
 
 void
 HttpResponse::set_status(int status) noexcept
@@ -55,7 +59,7 @@ void
 HttpResponse::add_header_nocopy(const String::SubString& name, const String::SubString& value)
   /*throw(eh::Exception)*/
 {
-  headers_.push_back(HTTP::SubHeader(name, value));
+  headers_.emplace_back(name, value);
 }
 
 void
@@ -113,8 +117,7 @@ HttpResponse::write(const String::SubString& str) noexcept
   return str.size();
 }
 
-const HTTP::SubHeaderList&
-HttpResponse::headers() const noexcept
+HTTP::SubHeaderSpan HttpResponse::headers() const noexcept
 {
   return headers_;
 }

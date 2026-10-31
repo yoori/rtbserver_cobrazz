@@ -487,8 +487,7 @@ namespace FrontendCommons
 
     ostr << "Headers ("<< request.headers().size() << "):"  << std::endl;
 
-    for (HTTP::SubHeaderList::const_iterator it =
-           request.headers().begin(); it != request.headers().end(); ++it)
+    for (auto it = request.headers().begin(); it != request.headers().end(); ++it)
     {
       ostr << "    " << it->name << " : " << it->value << std::endl;
     }
@@ -606,10 +605,10 @@ namespace FrontendCommons
       /*throw(eh::Exception)*/
     {
       const String::SubString ORIGIN("origin");
-      const HTTP::SubHeaderList& headers = request.headers();
+      HTTP::SubHeaderSpan headers = request.headers();
       String::SubString origin;
 
-      for (HTTP::SubHeaderList::const_iterator ci = headers.begin(); ci != headers.end(); ++ci)
+      for (auto ci = headers.begin(); ci != headers.end(); ++ci)
       {
         std::string name = ci->name.str();
         String::AsciiStringManip::to_lower(name);

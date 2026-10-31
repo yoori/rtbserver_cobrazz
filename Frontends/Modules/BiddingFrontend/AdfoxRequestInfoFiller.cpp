@@ -468,7 +468,7 @@ namespace AdServer::Bidding
       has_video = has_video || is_video(place.code_type);
     }
 
-    const HTTP::SubHeaderList& headers = request.headers();
+    HTTP::SubHeaderSpan headers = request.headers();
     std::string_view peer_ip;
     std::string_view forwarded_ip;
     std::string_view user_agent;

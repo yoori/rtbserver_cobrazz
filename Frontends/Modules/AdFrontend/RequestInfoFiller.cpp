@@ -668,7 +668,7 @@ namespace AdServer
 
     AdFrontendHTTPConstrain::apply(request);
 
-    const HTTP::SubHeaderList& headers = request.headers();
+    HTTP::SubHeaderSpan headers = request.headers();
     const HTTP::ParamList& params = request.params();
 
     /* fill ad request parameters */
@@ -691,7 +691,7 @@ namespace AdServer
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
 

@@ -83,12 +83,12 @@ namespace AdServer::WebStat
     void
     fill_by_yandex_notification(
       std::vector<RequestInfo>& request_info,
-      const HTTP::SubHeaderList& headers,
+      HTTP::SubHeaderSpan headers,
       const HTTP::ParamList& params,
       const char* bid_request) const;
 
     void fill(RequestInfo& request_info,
-      const HTTP::SubHeaderList& headers,
+      HTTP::SubHeaderSpan headers,
       const HTTP::ParamList& params) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 

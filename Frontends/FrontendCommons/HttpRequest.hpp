@@ -17,6 +17,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <HTTP/HttpMisc.hpp>
+#include <Generics/MonoAllocator.hpp>
 
 namespace tinyfcgi
 {
@@ -90,11 +91,14 @@ namespace FCGI
         params);
     }
 
-    HttpRequest() noexcept
+    HttpRequest()
       : method_(RM_GET),
+        headers_(header_arena_.arena()),
         header_only_(false),
         secure_(false)
-    {}
+    {
+      headers_.reserve(INLINE_HEADER_COUNT);
+    }
 
     Method
     method() const noexcept { return method_; }
@@ -117,11 +121,11 @@ namespace FCGI
     const HTTP::ParamList&
     params() const noexcept { return params_; }
 
-    const HTTP::SubHeaderList&
-    headers() const noexcept { return headers_; }
+    HTTP::SubHeaderSpan headers() const noexcept { return headers_; }
 
-    void
-    set_headers(HTTP::SubHeaderList&& headers) noexcept;
+    void clear_headers() noexcept { headers_.clear(); }
+
+    void add_header(const String::SubString& name, const String::SubString& value);
 
     std::string_view
     body() const noexcept
@@ -161,7 +165,9 @@ namespace FCGI
     String::SubString server_name_;
     String::SubString query_string_;
     HTTP::ParamList params_;
-    HTTP::SubHeaderList headers_;
+    static constexpr std::size_t INLINE_HEADER_COUNT = 16;
+    Generics::MonoAllocatorFixedArena<INLINE_HEADER_COUNT * sizeof(HTTP::SubHeader)> header_arena_;
+    Generics::MonoVector<HTTP::SubHeader> headers_;
     bool header_only_;
     bool secure_;
   };
@@ -273,10 +279,9 @@ namespace FCGI
     query_string_ = query_string;
   }
 
-  inline void
-  HttpRequest::set_headers(HTTP::SubHeaderList&& headers) noexcept
+  inline void HttpRequest::add_header(const String::SubString& name, const String::SubString& value)
   {
-    headers_ = std::move(headers);
+    headers_.emplace_back(name, value);
   }
 
   inline void

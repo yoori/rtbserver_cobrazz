@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <list>
 #include <new>
@@ -507,7 +508,7 @@ namespace AdServer::Bidding
 
     using SourceMap = StringFlatMap<SourceTraits>;
 
-    using ExternalUserIdSet = std::set<std::string>;
+    using ExternalUserIdSet = std::set<std::string, std::less<>>;
 
     struct EncryptionKeys: public ReferenceCounting::AtomicImpl
     {

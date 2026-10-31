@@ -62,7 +62,7 @@ namespace AdServer::Passback
     void
     fill(
       PassbackInfo& passback_info,
-      const HTTP::SubHeaderList& headers,
+      HTTP::SubHeaderSpan headers,
       const HTTP::ParamList& params) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 
@@ -86,8 +86,7 @@ namespace AdServer::Passback
     PassbackProcessorMap cookie_processors_;
 
   private:
-    void
-    cookies_processing_(PassbackInfo& passback_info, const HTTP::SubHeaderList& headers) const
+    void cookies_processing_(PassbackInfo& passback_info, HTTP::SubHeaderSpan headers) const
       /*throw(InvalidParamException, Exception)*/;
   };
 } /*Passback*/

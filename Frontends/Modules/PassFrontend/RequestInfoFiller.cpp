@@ -239,7 +239,7 @@ namespace AdServer::Passback
   void
   RequestInfoFiller::fill(
     PassbackInfo& passback_info,
-    const HTTP::SubHeaderList& headers,
+    HTTP::SubHeaderSpan headers,
     const HTTP::ParamList& params) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {
@@ -335,7 +335,7 @@ namespace AdServer::Passback
   void
   RequestInfoFiller::cookies_processing_(
     PassbackInfo& passback_info,
-    const HTTP::SubHeaderList& headers) const
+    HTTP::SubHeaderSpan headers) const
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::cookies_processing_()";

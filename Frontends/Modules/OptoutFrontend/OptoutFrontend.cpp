@@ -202,7 +202,7 @@ namespace
         //-----------------------------------------------------------------------
         // 1. Load required request parameters
         //-----------------------------------------------------------------------
-        const HTTP::SubHeaderList& headers = request.headers();
+        HTTP::SubHeaderSpan headers = request.headers();
         HTTP::CookieList cookies;
 
         request_info_filler_->fill(request_info, headers, request.params(), cookies);

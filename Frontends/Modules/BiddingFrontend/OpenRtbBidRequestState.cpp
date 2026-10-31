@@ -347,9 +347,9 @@ namespace AdServer::Bidding
 
       // check gzip
       bool apply_unzip = false;
-      const HTTP::SubHeaderList& headers = request.headers();
+      HTTP::SubHeaderSpan headers = request.headers();
 
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         if ((Response::Header::CONTENT_ENCODING.compare(it->name) == 0 ||
             Response::Header::CONTENT_ENCODING2.compare(it->name) == 0) &&

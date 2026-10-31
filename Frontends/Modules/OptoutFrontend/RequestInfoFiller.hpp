@@ -81,7 +81,7 @@ namespace AdServer::OptOut
     void
     fill(
       RequestInfo& request_info,
-      const HTTP::SubHeaderList& headers,
+      HTTP::SubHeaderSpan headers,
       const HTTP::ParamList& params,
       HTTP::CookieList& cookies) const
       /*throw(BadParameter, FillerException)*/;

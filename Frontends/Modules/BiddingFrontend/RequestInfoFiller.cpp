@@ -3385,7 +3385,7 @@ namespace AdServer::Bidding
   bool
   RequestInfoFiller::use_external_user_id_(std::string_view external_user_id) const noexcept
   {
-    return skip_external_ids_.find(std::string(external_user_id)) == skip_external_ids_.end();
+    return skip_external_ids_.find(external_user_id) == skip_external_ids_.end();
   }
 
   void
@@ -3810,7 +3810,7 @@ namespace AdServer::Bidding
       ++platform_name_it)
     {
       const std::string_view platform = norm_keyword_ext_(request_info, *platform_name_it);
-      std::string keyword;
+      Generics::MonoString keyword(request_info.arena().get());
       keyword.reserve(11 + platform.size());
       keyword += "rtbplatform";
       keyword.append(platform.data(), platform.size());
@@ -3822,7 +3822,7 @@ namespace AdServer::Bidding
       std::string_view app_id = norm_keyword_ext_(request_info, request_info.application_id);
       if (!app_id.empty())
       {
-        std::string keyword;
+        Generics::MonoString keyword(request_info.arena().get());
         keyword.reserve(6 + app_id.size());
         keyword += "rtbapp";
         keyword.append(app_id.data(), app_id.size());
@@ -3834,7 +3834,7 @@ namespace AdServer::Bidding
         app_id = norm_keyword_ext_(request_info, alt_app_id);
         if (!app_id.empty())
         {
-          std::string keyword;
+          Generics::MonoString keyword(request_info.arena().get());
           keyword.reserve(6 + app_id.size());
           keyword += "rtbapp";
           keyword.append(app_id.data(), app_id.size());
@@ -3850,7 +3850,7 @@ namespace AdServer::Bidding
       if (!context->language.empty())
       {
         const std::string_view language = norm_keyword_ext_(request_info, context->language);
-        std::string keyword;
+        Generics::MonoString keyword(request_info.arena().get());
         keyword.reserve(11 + language.size());
         keyword += "rtblanguage";
         keyword.append(language.data(), language.size());

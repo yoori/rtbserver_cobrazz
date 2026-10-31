@@ -197,13 +197,10 @@ namespace AdServer::Frontends
       request.set_args(String::SubString(query_));
       request.set_body(String::SubString(body_));
 
-      HTTP::SubHeaderList headers;
       if (!authority_.empty())
       {
-        headers.push_back(
-          HTTP::SubHeader(String::SubString(HOST_HEADER), String::SubString(authority_)));
+        request.add_header(String::SubString(HOST_HEADER), String::SubString(authority_));
       }
-      request.set_headers(std::move(headers));
     }
 
   protected:

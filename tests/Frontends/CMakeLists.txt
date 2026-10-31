@@ -9,3 +9,6 @@ add_subdirectory(PlatformMatcherTest)
 add_subdirectory(FCGIRequestTest)
 add_subdirectory(ImprTrackActionValueTest)
 add_subdirectory(Http2ResponseTest)
+
+add_subdirectory(HttpRequestHeadersTest)
+add_subdirectory(HttpResponseHeadersTest)

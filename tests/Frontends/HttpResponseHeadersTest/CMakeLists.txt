@@ -1,0 +1,3 @@
+add_executable(HttpResponseHeadersTest HttpResponseHeadersTest.cpp)
+
+target_link_libraries(HttpResponseHeadersTest PRIVATE FCGI Generics)

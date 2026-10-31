@@ -109,7 +109,7 @@ namespace AdServer::PubPixel
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const HTTP::SubHeaderList& headers,
+    HTTP::SubHeaderSpan headers,
     const HTTP::ParamList& params) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {
@@ -118,7 +118,7 @@ namespace AdServer::PubPixel
     try
     {
       // headers processing
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);

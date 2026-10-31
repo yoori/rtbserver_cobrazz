@@ -522,9 +522,9 @@ namespace AdServer::UserBind
     const FCGI::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
-    const HTTP::SubHeaderList& headers = request.headers();
+    HTTP::SubHeaderSpan headers = request.headers();
 
-    for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+    for (auto it = headers.begin(); it != headers.end(); ++it)
     {
       std::string header_name = it->name.str();
       String::AsciiStringManip::to_lower(header_name);

@@ -116,7 +116,7 @@ namespace AdServer::PassbackPixel
   void
   RequestInfoFiller::fill_track(
     PassbackTrackInfo& passback_track_info,
-    const HTTP::SubHeaderList& headers,
+    HTTP::SubHeaderSpan headers,
     const HTTP::ParamList& params) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {
@@ -128,7 +128,7 @@ namespace AdServer::PassbackPixel
 
     try
     {
-      for (HTTP::SubHeaderList::const_iterator it = headers.begin(); it != headers.end(); ++it)
+      for (auto it = headers.begin(); it != headers.end(); ++it)
       {
         std::string header_name = it->name.str();
         String::AsciiStringManip::to_lower(header_name);

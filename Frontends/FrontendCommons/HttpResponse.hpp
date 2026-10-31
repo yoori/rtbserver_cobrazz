@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <iostream>
-#include <list>
 #include <vector>
 
 #include <Stream/BinaryStream.hpp>
@@ -13,6 +12,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <HTTP/HttpMisc.hpp>
+#include <Generics/MonoAllocator.hpp>
 #include "HttpRequest.hpp"
 
 namespace FCGI
@@ -38,7 +38,7 @@ namespace FCGI
   class HttpResponse: public ReferenceCounting::AtomicImpl
   {
   public:
-    HttpResponse(uint16_t id = 1) noexcept;
+    HttpResponse(uint16_t id = 1);
 
     void
     set_status(int status) noexcept;
@@ -76,8 +76,7 @@ namespace FCGI
     ssize_t
     write(const String::SubString& str) noexcept;
 
-    const HTTP::SubHeaderList&
-    headers() const noexcept;
+    HTTP::SubHeaderSpan headers() const noexcept;
 
     const std::vector<std::string>&
     cookies() const noexcept;
@@ -93,8 +92,10 @@ namespace FCGI
 
   private:
     int status_;
-    HTTP::SubHeaderList headers_;
-    std::list<std::string> string_holders_;
+    static constexpr std::size_t INLINE_HEADER_COUNT = 16;
+    Generics::MonoAllocatorFixedArena<INLINE_HEADER_COUNT * sizeof(HTTP::SubHeader)> header_arena_;
+    Generics::MonoVector<HTTP::SubHeader> headers_;
+    Generics::MonoList<std::string> string_holders_;
     std::vector<std::string> cookies_;
     std::string body_;
     OutputStream output_stream_;
